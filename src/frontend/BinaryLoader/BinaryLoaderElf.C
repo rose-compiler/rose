@@ -306,6 +306,7 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
 
     /* Perform relocations on all mapped sections of all the headers of this interpretation */
     if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: performing relocation fixups...\n");
+#if 0
     SgAsmElfSectionPtrList mappedSections;
     for (size_t h=0; h < headers.size(); ++h) {
         SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(headers[h]);
@@ -319,11 +320,32 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
         }
     }
     //std::sort(mappedSections.begin(),mappedSections.end(),extentSorterActualVA);
+#endif
     for (size_t h=0; h<headers.size(); ++h) {
         SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(headers[h]);
         ROSE_ASSERT(NULL != elfHeader);
-        performRelocations(elfHeader, mappedSections, masterSymbolMap);
+        performRelocations(elfHeader, masterSymbolMap, interp->get_map());
     }
+}
+
+SgAsmGenericSection *
+BinaryLoaderElf::find_section_by_preferred_va(SgAsmGenericHeader* header, rose_addr_t va)
+{
+    SgAsmGenericSection *retval = NULL;
+    SgAsmGenericSectionPtrList sections = header->get_sections_by_va(va, true);
+    for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
+        SgAsmElfSection *elf_section = isSgAsmElfSection(*si);
+        if (elf_section && elf_section->get_section_entry()) {
+            if ((elf_section->get_section_entry()->get_sh_flags() & SgAsmElfSectionTableEntry::SHF_TLS) &&
+                elf_section->get_section_entry()->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS) {
+                /* TODO: handle .tbss correctly */
+            } else {
+                ROSE_ASSERT(!retval); /* There should be only one */
+                retval = elf_section;
+            }
+        }
+    }
+    return retval;
 }
     
 /*========================================================================================================================
@@ -419,10 +441,8 @@ BinaryLoaderElf::SymbolMapEntry::get_vsymbol(const VersionedSymbol &version) con
 
     std::string neededVersion = version.get_version_need()->get_name()->c_str();
     for (size_t i=0; i<p_versions.size(); ++i) {
-        SgAsmElfSymverDefinedEntry* def = p_versions[i].get_version_def();
-        if (NULL == def)
-            continue;
-        if (neededVersion == def->get_entries()->get_entries().front()->get_name()->c_str())
+        SgAsmElfSymverDefinedEntry *def = p_versions[i].get_version_def();
+        if (def && neededVersion == def->get_entries()->get_entries().front()->get_name()->c_str())
             return p_versions[i];
     }
     ROSE_ASSERT(false);/* TODO, handle cases where input uses versioning, but definition does not */
@@ -633,8 +653,199 @@ BinaryLoaderElf::SymverResolver::makeVersionedSymbolMap(SgAsmElfSymbolSection* d
     }
 }
 
+void
+BinaryLoaderElf::get_fixup_info(SgAsmElfRelocEntry *reloc, const SymbolMap &masterSymbolMap, const SymverResolver &resolver,
+                                SgAsmElfSymbol **source_symbol_p/*out*/, rose_addr_t *source_adj_p/*out*/,
+                                SgAsmElfSymbol **reloc_symbol_p/*out*/, rose_addr_t *reloc_adj_p/*out*/)
+{
+    ROSE_ASSERT(NULL != reloc);
+    SgAsmElfSection *reloc_section = SageInterface::getEnclosingNode<SgAsmElfSection>(reloc);
+    ROSE_ASSERT(NULL != reloc_section);
+    SgAsmElfSymbolSection* linkedSymbolSection = isSgAsmElfSymbolSection(reloc_section->get_linked_section());
+    ROSE_ASSERT(NULL != linkedSymbolSection);
 
+    /* Find the symbol associated with the relocation entry, and the corresponding defining symbol. */
+    SgAsmElfSymbol *relocSymbol=NULL, *sourceSymbol=NULL;
+    if (reloc->get_sym()>0) {
+        /* Relocation references a symbol. Get the symbol. */
+        ROSE_ASSERT(reloc->get_sym() < linkedSymbolSection->get_symbols()->get_symbols().size());
+        relocSymbol = linkedSymbolSection->get_symbols()->get_symbols()[reloc->get_sym()];
+        ROSE_ASSERT(NULL != relocSymbol);
+        VersionedSymbol relocVSymbol = resolver.get_versioned_symbol(relocSymbol);
+        if (get_debug())
+            fprintf(get_debug(), "    reloc symbol: %s\n", relocVSymbol.get_versioned_name().c_str());
 
+        /* Find the defining symbol associated with the relocation symbol.  Call this the source symbol. */
+        std::string symbolName=relocVSymbol.get_name();
+        const SymbolMapEntry *symbolEntry = masterSymbolMap.lookup(symbolName);
+        bool is_weak = relocSymbol->get_elf_binding()==SgAsmElfSymbol::STB_WEAK;
+        if (!symbolEntry && !is_weak) {
+            if (get_debug())
+                fprintf(get_debug(), "    could not find symbol in symbol map (skipping relocation)\n");
+            throw Exception(symbolName + " not defined in masterSymbolMap");
+        }
+        if (symbolEntry) {
+            VersionedSymbol sourceVSymbol = symbolEntry->get_vsymbol(relocVSymbol);
+            sourceSymbol = sourceVSymbol.get_symbol();
+            ROSE_ASSERT(NULL != sourceSymbol);
+            ROSE_ASSERT(0 != sourceSymbol->get_st_shndx());/* test an assumption [MCB] */
+        }
+    }
+
+    /* Get the relocation target adjustment. The target is the address where the relocation fixup is applied. The adjustment
+     * is calculated as follows: find the section containg the relocation's offset interpreted as a virtual address.  The
+     * adjustment is the difference between the section's actual mapped address and its preferred mapped address. */
+    SgAsmGenericHeader* relocHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc->get_parent());
+    SgAsmGenericSection* targetSection = find_section_by_preferred_va(relocHeader, reloc->get_r_offset());
+    ROSE_ASSERT(targetSection!=NULL);
+    rose_addr_t target_adj = targetSection->get_mapped_actual_va() - targetSection->get_mapped_preferred_va();
+    rose_addr_t target_va = reloc->get_r_offset() + target_adj;
+    if (get_debug()) {
+        fprintf(get_debug(), "    target: file=\"%s\"\n", relocHeader->get_file()->get_name().c_str());
+        fprintf(get_debug(), "            section=[%d] \"%s\"\n", targetSection->get_id(), targetSection->get_name()->c_str());
+        fprintf(get_debug(), "            preferred=0x%08"PRIx64", actual=0x%08"PRIx64"\n",
+                targetSection->get_mapped_preferred_va(), targetSection->get_mapped_actual_va());
+        fprintf(get_debug(), "            va 0x%08"PRIx64" + adjustment 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                reloc->get_r_offset(), target_adj, target_va);
+    }
+
+    /* Get the relocation source adjustment. The source is the defining (source) symbol corresponding to the symbol referred
+     * to by the relocation, if any, as calculated above.  The adjustment is determined by finding the section containing the
+     * symbol's value interpreted as an address, and taking the difference between the section's actual mapped address and its
+     * preferred mapped address. */
+    rose_addr_t symbol_va = 0;
+    rose_addr_t source_adj = 0;
+    if (sourceSymbol) {
+        SgAsmGenericHeader* symbolHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(sourceSymbol);
+        SgAsmGenericSection* sourceSection = find_section_by_preferred_va(symbolHeader, sourceSymbol->get_value());
+        ROSE_ASSERT(sourceSection!=NULL);
+        source_adj = sourceSection->get_mapped_actual_va() - sourceSection->get_mapped_preferred_va();
+        symbol_va = sourceSymbol->get_value() + source_adj;
+        if (get_debug()) {
+            fprintf(get_debug(), "    source: file=\"%s\"\n", symbolHeader->get_file()->get_name().c_str());
+            fprintf(get_debug(), "            section=[%d] \"%s\"\n",
+                    sourceSection->get_id(), sourceSection->get_name()->c_str());
+            fprintf(get_debug(), "            preferred=0x%08"PRIx64", actual=0x%08"PRIx64"\n",
+                    sourceSection->get_mapped_preferred_va(), sourceSection->get_mapped_actual_va());
+            fprintf(get_debug(), "            value 0x%08"PRIx64" + adjustment 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                    sourceSymbol->get_value(), source_adj, symbol_va);
+        }
+    } else if (get_debug()) {
+        fprintf(get_debug(), "    source: weak and not defined; using zero as value\n");
+    }
+    
+    /* Return values */
+    if (source_symbol_p)
+        *source_symbol_p = sourceSymbol;
+    if (source_adj_p)
+        *source_adj_p = source_adj;
+    if (reloc_symbol_p)
+        *reloc_symbol_p = relocSymbol;
+    if (reloc_adj_p)
+        *reloc_adj_p = target_adj;
+}
+
+void
+BinaryLoaderElf::fixup_symbol_value(SgAsmElfRelocEntry* reloc, const SymbolMap &masterSymbolMap, const SymverResolver &resolver,
+                                    const size_t addrSize, MemoryMap *memmap)
+{
+    SgAsmElfSymbol *relocSymbol=NULL, *sourceSymbol=NULL;
+    rose_addr_t source_adj, target_adj;
+    get_fixup_info(reloc, masterSymbolMap, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
+    rose_addr_t symbol_va = sourceSymbol ? sourceSymbol->get_value() + source_adj : 0;
+    rose_addr_t target_va = reloc->get_r_offset() + target_adj;
+    
+    /* Fixup mapped memory. FIXME: we're assuming the specimen is for a little-endian CPU [RPM 2010-09-15] */
+    if (get_debug()) {
+        fprintf(get_debug(), "    writing 0x%08"PRIx64" (%zu bytes) to address 0x%08"PRIx64"\n",
+                symbol_va, addrSize, target_va);
+    }
+    switch (addrSize) {
+        case 4: {
+            uint32_t le;
+            SgAsmExecutableFileFormat::host_to_le(symbol_va, &le);
+            size_t nwrite = memmap->write(&le, target_va, sizeof le);
+            ROSE_ASSERT(nwrite==sizeof le);
+            break;
+        }
+        case 8: {
+            uint64_t le;
+            SgAsmExecutableFileFormat::host_to_le(symbol_va, &le);
+            size_t nwrite = memmap->write(&le, target_va, sizeof le);
+            ROSE_ASSERT(nwrite==sizeof le);
+            break;
+        }
+        default:
+            ROSE_ASSERT(!"not implemented");
+    }
+}
+
+void
+BinaryLoaderElf::fixup_symbol_copy(SgAsmElfRelocEntry* reloc, const SymbolMap &masterSymbolMap, const SymverResolver &resolver,
+                                   MemoryMap *memmap)
+{
+    SgAsmElfSymbol *relocSymbol=NULL, *sourceSymbol=NULL;
+    rose_addr_t source_adj, target_adj;
+    get_fixup_info(reloc, masterSymbolMap, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
+    ROSE_ASSERT(sourceSymbol!=NULL);
+    rose_addr_t symbol_va = sourceSymbol->get_value() + source_adj;
+    size_t      symbol_sz = sourceSymbol->get_size();
+    rose_addr_t target_va = reloc->get_r_offset() + target_adj;
+    
+    if (get_debug()) {
+        fprintf(get_debug(), "    writing 0x%08"PRIx64" (%zu byte%s) to address 0x%08"PRIx64"\n",
+                symbol_va, symbol_sz, 1==symbol_sz?"":"s", target_va);
+    }
+    while (symbol_sz>0) {
+        uint8_t buf[4096];
+        size_t nbytes = std::min(symbol_sz, sizeof buf);
+        size_t nread = memmap->read(buf, symbol_va, nbytes);
+        ROSE_ASSERT(nread==nbytes);
+        size_t nwrite = memmap->write(buf, target_va, nbytes);
+        ROSE_ASSERT(nwrite==nbytes);
+        symbol_sz -= nbytes;
+        symbol_va += nbytes;
+        target_va += nbytes;
+    }
+}
+
+void
+BinaryLoaderElf::fixup_relative(SgAsmElfRelocEntry *reloc, const SymbolMap &masterSymbolMap, const SymverResolver &resolver, 
+                                const size_t addr_size, MemoryMap *memmap)
+{
+    SgAsmElfSymbol *relocSymbol=NULL, *sourceSymbol=NULL;
+    rose_addr_t source_adj, target_adj;
+    get_fixup_info(reloc, masterSymbolMap, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
+    ROSE_ASSERT(relocSymbol==NULL); /* _RELATIVE relocs must set their symbol index to zero */
+    rose_addr_t target_va = reloc->get_r_offset() + target_adj;
+
+    /* FIXME: Assumes reloc is a RELA. REL relocs require reading from specimen memory. [RPM 2010-09-15] */
+    rose_addr_t value = reloc->get_r_addend() + target_adj;
+
+    /* FIXME: assumes specimen is little endian. [RPM 2010-09-15] */
+    if (get_debug()) {
+        fprintf(get_debug(), "    writing 0x%08"PRIx64" (%zu bytes) to address 0x%08"PRIx64"\n",
+                value, addr_size, target_va);
+    }
+    switch (addr_size) {
+        case 4: {
+            uint32_t le;
+            SgAsmExecutableFileFormat::host_to_le(value, &le);
+            size_t nwrite = memmap->write(&le, target_va, sizeof le);
+            ROSE_ASSERT(nwrite==sizeof le);
+            break;
+        }
+        case 8: {
+            uint64_t le;
+            SgAsmExecutableFileFormat::host_to_le(value, &le);
+            size_t nwrite = memmap->write(&le, target_va, sizeof le);
+            ROSE_ASSERT(nwrite==sizeof le);
+            break;
+        }
+        default:
+            ROSE_ASSERT(!"not implemented");
+    }
+}
 
 
 /*************************************************************************************************************************
@@ -694,111 +905,7 @@ Thus, we're performing
 *Z = E
 
 */
-SgAsmGenericSection *
-BinaryLoaderElf::find_mapped_section(SgAsmGenericHeader* header, rose_addr_t va)
-{
-    SgAsmGenericSectionPtrList sections = header->get_sections_by_va(va, false);
-    SgAsmGenericSection* section=NULL;
-    for (size_t sec=0; sec < sections.size(); ++sec) {
-        SgAsmElfSection* elfSection = isSgAsmElfSection(sections[sec]);
-        if (NULL == elfSection)
-            continue;
-        ROSE_ASSERT(true == elfSection->is_mapped());// this should be guaranteed by get_sections_by_rva
 
-        if (NULL == elfSection->get_section_entry())
-            continue;
-        if ((elfSection->get_section_entry()->get_sh_flags() & SgAsmElfSectionTableEntry::SHF_TLS)
-            && (elfSection->get_section_entry()->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS)) {
-            //TODO handle .tbss correctly
-            continue;
-        }
-
-        // there should be only one - could also just assume its the case, and break
-        ROSE_ASSERT(NULL == section);
-        section = elfSection;
-    }
-    return section;
-}
-
-void
-BinaryLoaderElf::relocate_X86_JMP_SLOT(SgAsmElfRelocEntry* reloc,
-                                       SgAsmElfRelocSection* parentSection,
-                                       const SymbolMap &masterSymbolMap,
-                                       const SymverResolver &resolver,
-                                       const size_t addrSize)
-{
-    ROSE_ASSERT(NULL != reloc);
-    ROSE_ASSERT(NULL != parentSection); // could fix to just use getEnclosingNode
-
-    SgAsmElfSymbolSection* linkedSymbolSection = isSgAsmElfSymbolSection(parentSection->get_linked_section());
-    ROSE_ASSERT(NULL != linkedSymbolSection);
-
-    SgAsmElfSymbol* relocSymbol = linkedSymbolSection->get_symbols()->get_symbols()[reloc->get_sym()];
-    ROSE_ASSERT(NULL != relocSymbol);
-
-    VersionedSymbol relocVSymbol = resolver.get_versioned_symbol(relocSymbol);
-    if (get_verbose() > 0)
-        printf("relocVSymbol: %s\n", relocVSymbol.get_versioned_name().c_str());
-
-    std::string symbolName=relocVSymbol.get_name();
-    const SymbolMapEntry *symbolEntry = masterSymbolMap.lookup(symbolName);
-
-    if (NULL == symbolEntry) { // TODO check for weak relocsymbol
-        printf("Could not find symbol '%s'\n", relocSymbol->get_name()->c_str());
-        return;
-    }
-
-    VersionedSymbol sourceVSymbol = symbolEntry->get_vsymbol(relocVSymbol);
-    SgAsmElfSymbol* sourceSymbol=sourceVSymbol.get_symbol();
-    ROSE_ASSERT(NULL != sourceSymbol);
-
-    ROSE_ASSERT(0 != sourceSymbol->get_st_shndx());// test an assumption
-
-    SgAsmGenericHeader* symbolHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(sourceSymbol);
-
-
-    // The symbol contains a virtual address in a section in the same file as the symbol
-    //  however, since that section may have been moved, we need to adjust the resulted symbol value (an address)
-    //  to do that, we have to find the relavant section via va (i.e. preferred address)
-    SgAsmGenericSection* sourceSection=find_mapped_section(symbolHeader,sourceSymbol->get_value());
-
-    // investiage SHN_COMMON
-
-    SgAsmGenericHeader* relocHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc->get_parent());
-    SgAsmGenericSection* targetSection=find_mapped_section(relocHeader,reloc->get_r_offset());
-    ROSE_ASSERT(NULL != targetSection);
-
-    // reloc->get_r_offset is the va assuming the library was not moved
-    //  so we have to adjust it by the same amount the library WAS moved
-    const rose_addr_t reloc_va = reloc->get_r_offset() +
-                                 (targetSection->get_mapped_actual_va() - targetSection->get_mapped_preferred_va());
-
-    // offset from start of section
-    rose_addr_t relocSectionOffset = reloc_va - targetSection->get_mapped_actual_va();
-
-    const rose_addr_t symbol_va = sourceSymbol->get_value() +
-                                  (sourceSection->get_mapped_actual_va() - sourceSection->get_mapped_preferred_va());
-
-    SgFileContentList contents = targetSection->get_data();
-
-    if (addrSize == 4) {
-        ROSE_ASSERT(symbol_va <= UINT_MAX);
-        uint32_t reloc_value_32 = symbol_va;
-        memcpy(&(contents.at(relocSectionOffset)),&reloc_value_32,addrSize);
-    } else if(addrSize == 8) {
-        // TODO Throw some asserts around this
-        memcpy(&(contents.at(relocSectionOffset)),&symbol_va,addrSize);
-    }
-
-    if (get_verbose() > 0) {
-        const char* targetSectionName = targetSection->get_name()->c_str();
-        const char* sourceSectionName = "";
-        if (sourceSection)
-            sourceSectionName = sourceSection->get_name()->c_str();
-
-        printf("*0x%08"PRIx64"[%s]=0x%08"PRIx64"[%s]\n",reloc_va,targetSectionName,symbol_va,sourceSectionName);
-    }
-}
 
 void
 BinaryLoaderElf::relocate_X86_64_RELATIVE(SgAsmElfRelocEntry* reloc,
@@ -816,7 +923,7 @@ BinaryLoaderElf::relocate_X86_64_RELATIVE(SgAsmElfRelocEntry* reloc,
     ROSE_ASSERT(0 == reloc->get_sym());// _RELATIVE relocs must set their symbol index to zero
 
     SgAsmGenericHeader* relocHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc->get_parent());
-    SgAsmGenericSection* targetSection=find_mapped_section(relocHeader,reloc->get_r_offset());
+    SgAsmGenericSection* targetSection=find_section_by_preferred_va(relocHeader, reloc->get_r_offset());
     ROSE_ASSERT(NULL != targetSection);
 
     rose_addr_t targetSectionShift=(targetSection->get_mapped_actual_va() - targetSection->get_mapped_preferred_va());
@@ -892,13 +999,13 @@ BinaryLoaderElf::relocate_X86_64_64(SgAsmElfRelocEntry* reloc,
     // The symbol contains a virtual address in a section in the same file as the symbol
     //  however, since that section may have been moved, we need to adjust the resulted symbol value (an address)
     //  to do that, we have to find the relavant section via va (i.e. preferred address)
-    SgAsmGenericSection* sourceSection=find_mapped_section(symbolHeader,sourceSymbol->get_value());
+    SgAsmGenericSection* sourceSection=find_section_by_preferred_va(symbolHeader, sourceSymbol->get_value());
 
     // investiage SHN_COMMON
 
 
     SgAsmGenericHeader* relocHeader = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc->get_parent());
-    SgAsmGenericSection* targetSection=find_mapped_section(relocHeader,reloc->get_r_offset());
+    SgAsmGenericSection* targetSection=find_section_by_preferred_va(relocHeader,reloc->get_r_offset());
     ROSE_ASSERT(NULL != targetSection);
 
     // reloc->get_r_offset is the va assuming the library was not moved
@@ -934,48 +1041,44 @@ BinaryLoaderElf::relocate_X86_64_64(SgAsmElfRelocEntry* reloc,
 }
 
 void
-BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc,
-                                   SgAsmElfRelocSection* parentSection,
-                                   const SgAsmElfSectionPtrList& extentSortedSections,
-                                   const SymverResolver &resolver,
-                                   const SymbolMap& masterSymbolMap)
+BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, const SymbolMap& masterSymbolMap,
+                                   MemoryMap *memmap)
 {
     ROSE_ASSERT(NULL != reloc);
+    SgAsmElfRelocSection *parentSection = SageInterface::getEnclosingNode<SgAsmElfRelocSection>(reloc);
     ROSE_ASSERT(NULL != parentSection); // could fix to just use getEnclosingNode
-
+    ROSE_ASSERT(NULL != memmap);
     SgAsmGenericHeader* header = parentSection->get_header();
-    ROSE_ASSERT(NULL != header);// need the header to determine ISA
-
+    ROSE_ASSERT(NULL != header);
     SgAsmGenericHeader::InsSetArchitecture isa = header->get_isa();
     
-    {
-        SgAsmElfSymbolSection* linkedSymbolSection = isSgAsmElfSymbolSection(parentSection->get_linked_section());
-        ROSE_ASSERT(NULL != linkedSymbolSection);
-
-        SgAsmElfSymbol* relocSymbol = linkedSymbolSection->get_symbols()->get_symbols()[reloc->get_sym()];
-        ROSE_ASSERT(NULL != relocSymbol);
-
-#if 0 /* may be null according to SgAsmElfRelocSection::ctor() [RPM 2010-09-13] */
-        SgAsmElfSection* targetSection=parentSection->get_target_section();
-        ROSE_ASSERT(NULL != targetSection);
-#endif
-
-        std::string symbolName=relocSymbol->get_name()->c_str();
-
-        std::string relocStr;
-        if (header)
-            relocStr = reloc->to_string(reloc->get_type(),isa);
-        printf("%16s '%25s' 0x%016lx",relocStr.c_str(),symbolName.c_str(),reloc->get_r_offset());
+    SgAsmElfSymbolSection* linkedSymbolSection = isSgAsmElfSymbolSection(parentSection->get_linked_section());
+    ROSE_ASSERT(NULL != linkedSymbolSection);
+    SgAsmElfSymbol* relocSymbol = linkedSymbolSection->get_symbols()->get_symbols()[reloc->get_sym()];
+    ROSE_ASSERT(NULL != relocSymbol);
+    if (get_debug()) {
+        fprintf(get_debug(), "  0x%08"PRIx64" %16s for \"%s\"\n",
+                reloc->get_r_offset(), reloc->reloc_name().c_str(), relocSymbol->get_name()->c_str());
     }
 
-    // TODO support other than x86
     switch (isa & SgAsmGenericHeader::ISA_FAMILY_MASK) {
         case SgAsmGenericHeader::ISA_IA32_Family:
             switch (reloc->get_type()) {
-                //case SgAsmElfRelocEntry::R_386_JMP_SLOT:relocate_X86_JMP_SLOT(reloc,parentSection,masterSymbolMap,resolver,extentSortedSections,4);break;
-                //case SgAsmElfRelocEntry::R_386_GLOB_DAT:relocate_X86_GLOB_DAT(reloc,symbol,symbolMap,extentSortedSections,4);break;
-                //case SgAsmElfRelocEntry::R_386_32:      relocate_386_32      (reloc,symbol,symbolMap,extentSortedSections,4);break;
-                //case SgAsmElfRelocEntry::R_386_RELATIVE:relocate_386_RELATIVE(reloc,symbol,symbolMap,extentSortedSections);break;
+                case SgAsmElfRelocEntry::R_386_JMP_SLOT:
+                case SgAsmElfRelocEntry::R_386_GLOB_DAT:
+                    fixup_symbol_value(reloc, masterSymbolMap, resolver, 4, memmap);
+                    break;
+                case SgAsmElfRelocEntry::R_386_COPY:
+                    fixup_symbol_copy(reloc, masterSymbolMap, resolver, memmap);
+                    break;
+                case SgAsmElfRelocEntry::R_386_RELATIVE:
+                    fixup_relative(reloc, masterSymbolMap, resolver, 4, memmap);
+                    break;
+#if 0
+                case SgAsmElfRelocEntry::R_386_32:
+                    relocate_386_32(reloc, symbol, symbolMap, extentSortedSections, 4);
+                    break;
+#endif
                 case SgAsmElfRelocEntry::R_386_TLS_TPOFF:
                 case SgAsmElfRelocEntry::R_386_TLS_IE:
                 case SgAsmElfRelocEntry::R_386_TLS_GOTIE:
@@ -996,10 +1099,14 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc,
                 case SgAsmElfRelocEntry::R_386_TLS_DTPMOD32:
                 case SgAsmElfRelocEntry::R_386_TLS_DTPOFF32:
                 case SgAsmElfRelocEntry::R_386_TLS_TPOFF32:
-                    printf(" Thread Local Storage not supported");
+                    if (get_debug())
+                        fprintf(get_debug(), "    thread local storage not supported\n");
+                    throw Exception("relocation " + reloc->reloc_name() + " not supported");
                     break;
                 default:
-                    printf(" <unresolved>");
+                    if (get_debug())
+                        fprintf(get_debug(), "    not implemented\n");
+                    throw Exception("relocation " + reloc->reloc_name() + " not implemented");
                     break;
             };
             break;
@@ -1007,13 +1114,19 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc,
         case SgAsmGenericHeader::ISA_X8664_Family:
             switch (reloc->get_type()) {
                 case SgAsmElfRelocEntry::R_X86_64_JUMP_SLOT:
-                    relocate_X86_JMP_SLOT(reloc, parentSection, masterSymbolMap, resolver, 8);
-                    break;
                 case SgAsmElfRelocEntry::R_X86_64_GLOB_DAT:
-                    relocate_X86_JMP_SLOT(reloc, parentSection, masterSymbolMap, resolver, 8);
+                    fixup_symbol_value(reloc, masterSymbolMap, resolver, 8, memmap);
                     break;
-                //case SgAsmElfRelocEntry::R_X86_64_32:      relocate_X86_32      (reloc,symbol,symbolMap,extentSortedSections,4);break;// TODO should zero extend symbol value
-                //case SgAsmElfRelocEntry::R_X86_64_32S:     relocate_386_32      (reloc,symbol,symbolMap,extentSortedSections,4);break;// TODO should sign extend symbol value
+#if 0
+                case SgAsmElfRelocEntry::R_X86_64_32:
+                    /* TODO should zero extend symbol value [MCB] */
+                    relocate_X86_32(reloc, symbol, symbolMap, extentSortedSections, 4);
+                    break;
+                case SgAsmElfRelocEntry::R_X86_64_32S:
+                    /* TODO should sign extend symbol value */
+                    relocate_386_32(reloc, symbol, symbolMap, extentSortedSections, 4);
+                    break;
+#endif
                 case SgAsmElfRelocEntry::R_X86_64_64:
                     relocate_X86_64_64(reloc, parentSection, masterSymbolMap, resolver, 8);
                     break;
@@ -1021,21 +1134,22 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc,
                     relocate_X86_64_RELATIVE(reloc, parentSection, masterSymbolMap, resolver, 8);
                     break;
                 default:
-                    printf(" <unresolved>");
+                    if (get_debug())
+                        fprintf(get_debug(), "    not implemented\n");
+                    throw Exception("relocation " + reloc->reloc_name() + " not implemented");
                     break;
-            };
+            }
             break;
 
         default:
-            printf(" <unresolved>");
+            if (get_debug())
+                fprintf(get_debug(), "    not implemented\n");
+            throw Exception("relocation " + reloc->reloc_name() + " not implemented");
     }
-    printf("\n");
 }
 
 void
-BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader,
-                                    const SgAsmElfSectionPtrList& extentSortedSections,
-                                    const SymbolMap& masterSymbolMap)
+BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const SymbolMap& masterSymbolMap, MemoryMap *memmap)
 {
     SymverResolver resolver(elfHeader);
     SgAsmGenericSectionPtrList sections = elfHeader->get_sectab_sections();
@@ -1047,7 +1161,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader,
         SgAsmElfRelocEntryPtrList &relocs = relocSection->get_entries()->get_entries();
         for (size_t r=0; r <  relocs.size(); ++r) {
             SgAsmElfRelocEntry* reloc = relocs[r];
-            performRelocation(reloc, relocSection, extentSortedSections,resolver,masterSymbolMap);
+            performRelocation(reloc, resolver, masterSymbolMap, memmap);
         }
     }
 }
@@ -1116,7 +1230,6 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader,
 
 
 /* This is a big section of commented out code. I'm prefixing all lines with "//" to make it more obvious. [RPM 2010-08-31] */
-// #if 0
 //
 // typedef std::map<string,SgAsmElfSectionPtrList> SectionNameMap;
 //
@@ -1469,132 +1582,90 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader,
 //     printSymbolMapEntry(entry,extentSortedSections);
 //   }
 // }
-//
-// ElfSymbolMapEntry chooseSymbol(const ElfSymbolMapEntryList& entries,
-//                                SgAsmElfSectionTableEntry::SectionType sh_type=SgAsmElfSectionTableEntry::SHT_NULL)
+// 
+// ElfSymbolMapEntry
+// BinaryLoaderElf::chooseSymbol(const ElfSymbolMapEntryList& entries, SgAsmElfSectionTableEntry::SectionType sh_type)
 // {
-//   ROSE_ASSERT(!entries.empty());
-//   ElfSymbolMapEntry best = ElfSymbolMapEntry();
-//   bool bestGlobalBinding = false;
-//   bool bestIsSection = false;
-//   // indicates that section type is an important filter
-//   bool checkSectionType = (sh_type != SgAsmElfSectionTableEntry::SHT_NULL);
-//   for(size_t i=0; i < entries.size(); ++i){
-//     SgAsmElfSection* section = isSgAsmElfSection(entries[i].section);
-//     SgAsmElfSectionTableEntry* sectionEntry = NULL;
-//     if(section)
-//       sectionEntry = section->get_section_entry();
-//
-//     if(checkSectionType &&
-//        (!sectionEntry || sectionEntry->get_sh_type() != sh_type)){
-//       // we're asked to check the section type, but it is not a section
-//       //  or its the wrong type, so we just drop it completely.
-//       continue;
+//     ROSE_ASSERT(!entries.empty());
+//     ElfSymbolMapEntry best = ElfSymbolMapEntry();
+//     bool bestGlobalBinding = false;
+//     bool bestIsSection = false;
+//     bool checkSectionType = (sh_type != SgAsmElfSectionTableEntry::SHT_NULL); /* is the section type is an important filter? */
+// 
+//     for (size_t i=0; i<entries.size(); ++i) {
+//         SgAsmElfSection* section = isSgAsmElfSection(entries[i].section);
+//         SgAsmElfSectionTableEntry* sectionEntry = NULL;
+//         if (section)
+//             sectionEntry = section->get_section_entry();
+// 
+//         if (checkSectionType && (!sectionEntry || sectionEntry->get_sh_type() != sh_type)) {
+//             /* We're asked to check the section type, but it is not a section or it's the wrong type, so we just drop it
+//              * completely. */
+//             continue;
+//         }
+// 
+//         bool globalBinding = entries[i].symbol->get_elf_binding() == SgAsmElfSymbol::STB_GLOBAL;
+//         bool isSection = (sectionEntry != NULL);/* sections must have a section entry */
+// 
+//         if (bestGlobalBinding == globalBinding && (bestIsSection || !isSection)) {
+//             /* If the global binding is the same and we are not a section (and best IS), we lose. */
+//             continue;
+//         } else if (bestGlobalBinding && !globalBinding) {
+//             /* The current best is globally bound, and we are not, we lose */
+//             continue;
+//         } else {
+//             /* we are globally bound and/or we are a section */
+//             bestGlobalBinding = globalBinding;
+//             bestIsSection = isSection;
+//             best = entries[i];
+//         }
 //     }
-//
-//     bool globalBinding = entries[i].symbol->get_elf_binding() == SgAsmElfSymbol::STB_GLOBAL;
-//     bool isSection = (sectionEntry != NULL);// sections must have a section entry
-//
-//     if(bestGlobalBinding == globalBinding &&
-//        (bestIsSection || !isSection)){
-//       // if the global binding is the same
-//       //  and we are not a section (and best IS), we lose
-//       continue;
-//     }
-//     else if(bestGlobalBinding && !globalBinding){
-//       // the current best is globally bound, and we are not, we lose
-//       continue;
-//     }
-//     else{
-//       // we are globally bound and/or we are a section
-//       bestGlobalBinding = globalBinding;
-//       bestIsSection = isSection;
-//       best = entries[i];
-//     }
-//   }
-//   return best;
+//     return best;
 // }
 //                      
-//
-// rose_addr_t symbolValue(const SgAsmElfSymbol* relocSymbol,
-//                      const SymbolMap &symbolMap,
-//                      const SgAsmElfSectionPtrList& extentSortedSections,
-//                      SgAsmGenericSection* &symbolSection)
-// {
-//   ROSE_ASSERT(relocSymbol);
-//   string symbolName = relocSymbol->get_name()->c_str();
-//   SymbolMap::const_iterator findIter = symbolMap.find(symbolName);
-//   if(findIter == symbolMap.end() || findIter->second.empty()){
-//     if(relocSymbol->get_elf_binding() == SgAsmElfSymbol::STB_WEAK){
-//       return 0;// Its okay to have an undefined symbol if the RELOCATION's symbol is weak
-//     }
-//     else{
-//       printf("Unresolved relocation : Symbol not found: %s\n ",symbolName.c_str());
-//       return 0;
-//     }
-//   }
-//   else{
-//     const ElfSymbolMapEntryList &entryList = findIter->second;
-//     ElfSymbolMapEntry sourceSymbolEntry = chooseSymbol(entryList/*,SgAsmElfSectionTableEntry::SHT_PROGBITS.text*/);
-//     SgAsmElfSymbol* sourceSymbol = isSgAsmElfSymbol(sourceSymbolEntry.symbol);
-//
-//     rose_addr_t symbol_va = sourceSymbol->get_value() + SageInterface::getEnclosingNode<SgAsmElfSection>(sourceSymbol)->get_base_va();
-//
-//     symbolSection = sourceSymbolEntry.section;
-//     ROSE_ASSERT(symbolSection != NULL);
-//     return symbol_va;
-//   }
-//
-// }
-//                      
-//
+// 
 // void
-// relocate_X86_Symbol(const SgAsmElfRelocEntry* reloc,
-//                  const SgAsmElfSymbol* symbol,
-//                  const SymbolMap &symbolMap,
-//                  const SgAsmElfSectionPtrList& extentSortedSections,
+// BinaryLoaderElf::relocate_X86_Symbol(const SgAsmElfRelocEntry* reloc, const SgAsmElfSymbol* symbol,
+//                  const SymbolMap &symbolMap, const SgAsmElfSectionPtrList& extentSortedSections,
 //                  const rose_addr_t addrSize)
 // {
-//   ROSE_ASSERT(reloc != NULL);
-//   ROSE_ASSERT(symbol != NULL);
-//   SgAsmGenericSection *sourceSection = NULL;
-//   rose_addr_t symbol_va = symbolValue(symbol,symbolMap,extentSortedSections,sourceSection);
-//
-//   const SgAsmElfSection* relocSection=SageInterface::getEnclosingNode<SgAsmElfSection>(reloc);
-//   ROSE_ASSERT(relocSection != NULL);
-//
-//   const rose_addr_t reloc_va = reloc->get_r_offset() + relocSection->get_base_va();
-//
-//   SgAsmElfSection* targetSection = chooseSectionAtAddress(reloc_va,extentSortedSections);
-//   ROSE_ASSERT(targetSection);
-//
-//   // the relocation should come from the same SgAsmFile as the target, we use base_va as a proxy for this
-//   ROSE_ASSERT(relocSection->get_base_va() == targetSection->get_base_va());
-//
-//   /// offset from start of section
-//   rose_addr_t relocSectionOffset = reloc_va - targetSection ->get_mapped_actual_va();
-//
-//   SgFileContentList contents = targetSection->get_data();
-//   const rose_addr_t reloc_value = symbol_va;
-//
-//   if(addrSize == 4){
-//     ROSE_ASSERT(symbol_va <= UINT_MAX);
-//     uint32_t reloc_value_32 = symbol_va;
-//     memcpy(&(contents.at(relocSectionOffset)),&reloc_value_32,addrSize);
-//   }
-//   else if(addrSize == 8){
-//     // TODO Throw some asserts around this
-//     memcpy(&(contents.at(relocSectionOffset)),&symbol_va,addrSize);
-//   }
-//
-//   if(get_verbose() > 0){
-//     const char* targetSectionName = targetSection->get_name()->c_str();
-//     const char* sourceSectionName = "";
-//     if(sourceSection)
-//       sourceSectionName = sourceSection->get_name()->c_str();
-//
-//     printf("*0x%08"PRIx64"[%s]=0x%08"PRIx64"[%s]\n",reloc_va,targetSectionName,symbol_va,sourceSectionName);
-//   }
+//     ROSE_ASSERT(reloc != NULL);
+//     ROSE_ASSERT(symbol != NULL);
+//     SgAsmGenericSection *sourceSection = NULL;
+//     rose_addr_t symbol_va = symbolValue(symbol, symbolMap, extentSortedSections, sourceSection);
+// 
+//     const SgAsmElfSection* relocSection=SageInterface::getEnclosingNode<SgAsmElfSection>(reloc);
+//     ROSE_ASSERT(relocSection != NULL);
+// 
+//     const rose_addr_t reloc_va = reloc->get_r_offset() + relocSection->get_base_va();
+// 
+//     SgAsmElfSection* targetSection = chooseSectionAtAddress(reloc_va,extentSortedSections);
+//     ROSE_ASSERT(targetSection);
+// 
+//     /* The relocation should come from the same SgAsmFile as the target, we use base_va as a proxy for this */
+//     ROSE_ASSERT(relocSection->get_base_va() == targetSection->get_base_va());
+// 
+//     /* offset from start of section */
+//     rose_addr_t relocSectionOffset = reloc_va - targetSection ->get_mapped_actual_va();
+// 
+//     SgFileContentList contents = targetSection->get_data();
+//     const rose_addr_t reloc_value = symbol_va;
+// 
+//     if (addrSize == 4) {
+//         ROSE_ASSERT(symbol_va <= UINT_MAX);
+//         uint32_t reloc_value_32 = symbol_va;
+//         memcpy(&(contents.at(relocSectionOffset)),&reloc_value_32,addrSize);
+//     } else if (addrSize == 8) {
+//         /* TODO Throw some asserts around this */
+//         memcpy(&(contents.at(relocSectionOffset)),&symbol_va,addrSize);
+//     }
+// 
+//     if (get_debug()) {
+//         const char* targetSectionName = targetSection->get_name()->c_str();
+//         const char* sourceSectionName = sourceSection ? sourceSection->get_name()->c_str() : "";
+//         fprintf(get_debug(), ": *0x%08"PRIx64"[%s]=0x%08"PRIx64"[%s]\n",
+//                 reloc_va, targetSectionName, symbol_va, sourceSectionName);
+//     }
 // }
 //
 //
@@ -1662,15 +1733,13 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader,
 //    *reloc_va (.got) = symbol->address (.data);
 //  */
 // void
-// relocate_X86_GLOB_DAT(const SgAsmElfRelocEntry* reloc,
-//                    const SgAsmElfSymbol* symbol,
-//                    const SymbolMap &symbolMap,
-//                    const SgAsmElfSectionPtrList& extentSortedSections,
+// BinaryLoaderElf::relocate_X86_GLOB_DAT(const SgAsmElfRelocEntry* reloc, const SgAsmElfSymbol* symbol,
+//                    const SymbolMap &symbolMap, const SgAsmElfSectionPtrList& extentSortedSections,
 //                    const size_t addrSize)
 // {
 //   relocate_X86_Symbol(reloc,symbol,symbolMap,extentSortedSections,addrSize);
 // }
-//
+// 
 // void
 // relocate_386_32(const SgAsmElfRelocEntry* reloc,
 //              const SgAsmElfSymbol* symbol,
@@ -1855,4 +1924,3 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader,
 //   }
 // }
 //
-// #endif

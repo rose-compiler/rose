@@ -1789,7 +1789,7 @@ HEADER_ELF_RELOC_ENTRY_START
 		void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const
 			{dump(f, prefix, idx, NULL);}
-		static std::string to_string(RelocType,InsSetArchitecture);
+		std::string reloc_name() const;
 	private:
 		void ctor(SgAsmElfRelocSection*);
 

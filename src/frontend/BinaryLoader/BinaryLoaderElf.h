@@ -156,6 +156,9 @@ public:
             return get_vsymbol().get_symbol();
         }
 
+        /** Find definition of symbol. The specified versioned symbol is probably a symbol referenced by a relocation. This
+         *  method will scan the list of definitions in this SymbolEntryMap and return the first (only) symbol that has the
+         *  same name as the supplied symbol's needed version. */
         VersionedSymbol get_vsymbol(const VersionedSymbol &version) const;
 
         /** Returns the section where the base version symbol was defined. */
@@ -249,6 +252,45 @@ protected:
                                              rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
                                              ConflictResolution *resolve);
 
+    /** Find the section containing the specified virtual address.  Only ELF Sections of the specified header are searched,
+     *  and we search based on the preferred mapping location of the section (not the actual mapping location).  The null
+     *  pointer is returned if no suitable section can be found. */
+    virtual SgAsmGenericSection *find_section_by_preferred_va(SgAsmGenericHeader*, rose_addr_t va);
+
+    /** Finds basic relocation parameters for relocations.  Given a relocation entry, a symbol table, and a symbol resolver,
+     *  return the following information:
+     *  <ul>
+     *    <li>The symbol, if any, associated with the relocation, returned through the @p reloc_symbol_p argument.</li>
+     *    <li>The symbol, if any, which is the corresponding definition for the relocation symbol by consulting
+     *        the supplied resolver object.  This symbol is returned via the @p source_symbol_p argument.</li>
+     *    <li>The adjustment due to memory mapping that must be applied to the source symbol value. The adjustment
+     *        is the difference between the actual mapped address and the preferred mapped address of the source
+     *        symbol's section (i.e., the section containing the symbol's value interpreted as an address).</li>
+     *    <li>The adjustment due to memory mapping of the relocation offset.  This is the difference between
+     *        the actual mapped address and the preferred mapped address of the section containing the relocation
+     *        offset interpreted as an address.</li>
+     *  </ul>
+     *
+     *  If the relocation does not reference a symbol then @p reloc_symbol_p will point to the null pointer and
+     *  @p reloc_adj_p will point to zero.  If the relocation does not reference a symbol, or the symbol has no definition
+     *  then @p source_symbol_p will point to the null pointer and @p source_adj_p will point to zero. */
+    void get_fixup_info(SgAsmElfRelocEntry *reloc, const SymbolMap &masterSymbolMap, const SymverResolver &resolver,
+                        SgAsmElfSymbol **source_symbol_p/*out*/, rose_addr_t *source_adj_p/*out*/,
+                        SgAsmElfSymbol **reloc_symbol_p/*out*/, rose_addr_t *reloc_adj_p/*out*/);
+
+    /** Performs relocation fixup by inserting a symbol value into memory.  The symbol value is adjusted according to how much
+     *  the symbol's section was translated during memory mapping. */
+    void fixup_symbol_value(SgAsmElfRelocEntry*, const SymbolMap&, const SymverResolver&, size_t nbytes, MemoryMap*);
+
+    /** Copies symbol memory to the relocation target.  This is usually used to copy initialized library data (initialized by
+     *  the loader calling a constructor) into a common location in the executable's .bss. */
+    void fixup_symbol_copy(SgAsmElfRelocEntry*, const SymbolMap&, const SymverResolver&, MemoryMap*);
+
+    /** Performs a relative fixup. The quantity A+B is written to the relocation target, where A is the addend either from the
+     *  specimen memory (REL) or the relocation record (RELA) and B is the base address (difference between actual mapped
+     *  address and preferred address for the section containing the relocation target). */
+    void fixup_relative(SgAsmElfRelocEntry*, const SymbolMap&, const SymverResolver&, const size_t addr_size, MemoryMap*);
+
     /*========================================================================================================================
      * Functions moved here from the BinaryLoader_ElfSupport name space.
      *======================================================================================================================== */
@@ -256,19 +298,19 @@ protected:
     /* FIXME: Move this to src/ROSETTA where it belongs. [RPM 2010-08-31] */
     typedef Rose_STL_Container<SgAsmElfSection*> SgAsmElfSectionPtrList;
     static int get_verbose() {return 5;}
-    static SgAsmGenericSection *find_mapped_section(SgAsmGenericHeader*, rose_addr_t va);
-    static void relocate_X86_JMP_SLOT(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SymbolMap&, const SymverResolver&,
-                                      const size_t addrSize);
-    static void relocate_X86_64_RELATIVE(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SymbolMap&, const SymverResolver&,
+
+    void relocate_X86_GLOB_DAT(const SgAsmElfRelocEntry*, const SgAsmElfSymbol*, const SymbolMap&, const SgAsmElfSectionPtrList&,
+                               const size_t addrSize);
+
+
+    void relocate_X86_64_RELATIVE(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SymbolMap&, const SymverResolver&,
                                          const size_t addrSize);
-    static void relocate_X86_64_64(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SymbolMap&, const SymverResolver&,
+    void relocate_X86_64_64(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SymbolMap&, const SymverResolver&,
                                    const size_t addrSize);
-    static void performRelocation(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SgAsmElfSectionPtrList& extentSortedSections,
-                                  const SymverResolver&, const SymbolMap&);
-    static void performRelocations(SgAsmElfFileHeader*, const SgAsmElfSectionPtrList& extentSortedSections,
-                                   const SymbolMap&);
 
 
+    void performRelocation(SgAsmElfRelocEntry*, const SymverResolver&, const SymbolMap&, MemoryMap*);
+    void performRelocations(SgAsmElfFileHeader*, const SymbolMap&, MemoryMap*);
 
 
 };
