@@ -371,18 +371,6 @@ protected:
      * Functions moved here from the BinaryLoader_ElfSupport name space.
      *======================================================================================================================== */
 protected:
-    /* FIXME: Move this to src/ROSETTA where it belongs. [RPM 2010-08-31] */
-    typedef Rose_STL_Container<SgAsmElfSection*> SgAsmElfSectionPtrList;
-    static int get_verbose() {return 5;}
-
-    void relocate_X86_GLOB_DAT(const SgAsmElfRelocEntry*, const SgAsmElfSymbol*, const SgAsmElfSectionPtrList&,
-                               const size_t addrSize);
-
-
-    void relocate_X86_64_RELATIVE(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SymverResolver&, const size_t addrSize);
-    void relocate_X86_64_64(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SymverResolver&, const size_t addrSize);
-
-
     void performRelocation(SgAsmElfRelocEntry*, const SymverResolver&, MemoryMap*);
     void performRelocations(SgAsmElfFileHeader*, MemoryMap*);
 
