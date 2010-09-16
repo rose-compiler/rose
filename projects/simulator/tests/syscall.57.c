@@ -1,6 +1,10 @@
 #include <unistd.h>
 #include <err.h>
 
+char *TCID = "syscall.57";
+int TST_TOTAL = 1;
+
+
 int main() {
   int result = setpgid(0,0);
 

@@ -2,6 +2,10 @@
 #include <unistd.h>
 #include <err.h>
 
+char *TCID = "syscall.20";
+int TST_TOTAL = 1;
+
+
 int main() {
   int result = getpid();
 

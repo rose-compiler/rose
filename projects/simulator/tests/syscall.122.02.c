@@ -3,6 +3,10 @@
 
 #include <err.h>
 
+char *TCID = "syscall.122";
+int TST_TOTAL = 1;
+
+
 int main(int ac, char **av)
 {
   int result = uname((struct utsname *)-1);

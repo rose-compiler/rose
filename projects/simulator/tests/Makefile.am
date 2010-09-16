@@ -14,7 +14,7 @@ nullstring :=
 space= $(nullstring) # end of the line
 define compile
 $(basename $(1)): $(addprefix $(SYSCALLDIR), $(1))
-	$(CC) -m32 -o $$@ $$<
+	$(CC) -m32 -o $$@ $$< $(srcdir)/parse_opts.c $(srcdir)/tst_res.c $(srcdir)/tst_sig.c $(srcdir)/tst_tmpdir.c $(srcdir)/rmobj.c 
 endef
 
 define checkFile
@@ -30,6 +30,9 @@ $(foreach file, $(SYSCALL_FILES), $(eval $(call compile, $(notdir $(file)))))
 $(foreach file, $(SYSCALL_FILES), $(eval $(call checkFile, $(basename $(notdir $(file))))))
 
 check-local: $(foreach file,$(SYSCALL_FILES), $(addprefix check-,$(basename $(notdir $(file)))))
+
+EXTRA_DIST = compiler.h  rmobj.h  test.h  usctest.h parse_opts.c tst_res.c tst_sig.c tst_tmpdir.c rmobj.c 
+
 
 clean-local:
 	-rm -r syscall* tfile*

@@ -6,6 +6,10 @@
 
 #include <err.h>
 
+char *TCID = "syscall.3";
+int TST_TOTAL = 1;
+
+
 int main() {
   int randomfd = open("/dev/urandom", O_NONBLOCK);
   char buf[1];

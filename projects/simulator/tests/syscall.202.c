@@ -1,6 +1,10 @@
 #include <sys/types.h>
 #include <err.h>
 
+char *TCID = "syscall.202";
+int TST_TOTAL = 1;
+
+
 int main() {
   int result = syscall(202);
 

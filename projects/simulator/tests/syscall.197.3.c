@@ -11,6 +11,10 @@
 #include <stdlib.h>
 #include <err.h>
 
+char *TCID = "syscall.197";
+int TST_TOTAL = 1;
+
+
 char fname[255];
 int fd;
 struct stat64 statter;

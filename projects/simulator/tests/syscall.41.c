@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <err.h>
 
+char *TCID = "syscall.41";
+int TST_TOTAL = 1;
+
+
 int main() {
   char fname[40] = "";
 

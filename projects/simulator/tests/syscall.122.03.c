@@ -5,6 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
+
+char *TCID = "syscall.122";
+int TST_TOTAL = 1;
+
+
 int main(int ac, char **av)
 {
 	struct utsname *buf;

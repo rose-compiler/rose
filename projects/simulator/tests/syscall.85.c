@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <err.h>
 
+char *TCID = "syscall.85";
+int TST_TOTAL = 1;
+
+
 char vartmp[40];
 
 void setup() {

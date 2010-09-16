@@ -1,6 +1,10 @@
 #include <unistd.h>
 #include <err.h>
 
+char *TCID = "syscall.65";
+int TST_TOTAL = 1;
+
+
 int main() {
   int result = getpgrp();
 
