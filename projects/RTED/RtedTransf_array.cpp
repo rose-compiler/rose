@@ -112,8 +112,11 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName,
       SgExpression* fromMalloc = buildIntVal( 0 );
       if ( array -> onHeap ) {
         ROSE_ASSERT( array -> size );
+#ifdef  _WIN64
         size = buildCastExp( array -> size, buildLongLongType() );
-
+#else
+        size = buildCastExp( array -> size, buildLongType() );
+#endif
         // track whether heap memory was allocated via malloc or new, to ensure
         // that free/delete matches
         if( array -> fromMalloc )
