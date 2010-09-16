@@ -1107,11 +1107,11 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 			//If we have an assigning operation, we want to list everything on the LHS as being defined
 			//Otherwise, everything is being used.
 			VariantT type = op->variantT();
+			std::vector<SgNode*> uses;
 			switch (type)
 			{
-				//Catch all the types of Ops that define the LHS
+				//All the following ops both use and define the lhs
 				case V_SgAndAssignOp:
-				case V_SgAssignOp:
 				case V_SgDivAssignOp:
 				case V_SgIorAssignOp:
 				case V_SgLshiftAssignOp:
@@ -1123,13 +1123,20 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 				case V_SgRshiftAssignOp:
 				case V_SgXorAssignOp:
 				{
+					//All the uses from the LHS are propagated
+					uses.insert(uses.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
+					uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
+				}
+				//The assign op defines, but does not use the LHS. Notice that the other assignments also fall through,
+				//as they also define the LHS
+				case V_SgAssignOp:
+				{
 					//We want to set all the right-most varRef from LHS as being defined
 					std::vector<SgNode*> defs;
 					defs.insert(defs.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
 					defs.insert(defs.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
 
 					//We want to set all the varRefs from the RHS as being used here
-					std::vector<SgNode*> uses;
 					uses.insert(uses.end(), attrs[1].getDefs().begin(), attrs[1].getDefs().end());
 					uses.insert(uses.end(), attrs[1].getUses().begin(), attrs[1].getUses().end());
 
