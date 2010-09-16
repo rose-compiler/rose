@@ -11751,7 +11751,7 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
     {
 #ifdef _MSC_VER
      // DQ (11/28/2009): This is related to the use of covariant return types (I think).
-     SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
+		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
 #pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
 		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
 		ROSE_ASSERT(false);

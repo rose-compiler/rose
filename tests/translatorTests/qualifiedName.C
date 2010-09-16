@@ -24,9 +24,9 @@ main (int argc, char *argv[])
 	if (sfile) {
 		cout << "FILENAME : " << sfile->getFileName() << endl;
 		SgGlobal* global = isSgGlobal(sfile->get_globalScope());
-                std::vector< SgNode * > nodes=	sfile->get_traversalSuccessorContainer ();
-                std::vector< SgNode * >::const_iterator it2=nodes.begin();
-                for (;it2!=nodes.end();++it2) {
+		 std::vector< SgNode * > nodes=	sfile->get_traversalSuccessorContainer ();
+		 std::vector< SgNode * >::const_iterator it2=nodes.begin();
+		for (;it2!=nodes.end();++it2) {
 			SgNode* node= isSgNode(*it2);
 			if (node) {
 				// right now this finds SgGlobal but it should find also
