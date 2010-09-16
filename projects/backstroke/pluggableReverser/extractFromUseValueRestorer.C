@@ -87,6 +87,13 @@ vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenam
 		else if (isSgPlusPlusOp(useSite) || isSgMinusMinusOp(useSite))
 		{
 			SgUnaryOp* incOrDecrOp = isSgUnaryOp(useSite);
+
+			//For floating point values, we can't extract the previous value by undoing the increment due to rounding
+			if (!incOrDecrOp->get_operand()->get_type()->isIntegerType())
+			{
+				continue;
+			}
+			
 			ROSE_ASSERT(VariableRenaming::getVarName(incOrDecrOp->get_operand()) == varName);
 
 			//Ok, so we have something like a++. The initial version of a is 1 and the final version of a is 2. (for example)
