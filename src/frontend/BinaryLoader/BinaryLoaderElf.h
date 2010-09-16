@@ -304,16 +304,64 @@ protected:
      *  address and memory map are used to read the addend from specimen memory.
      *
      *  The @p nbytes arguments indicates how many bytes are read from the specimen's memory if the relocation is not of the
-     *  RELA variety.  The byte sex is obtained from information in the relocation's file header.
+     *  RELA variety.  If the size is zero (the default) then it is obtained from the relocation's file header.  The byte sex
+     *  is always obtained from information in the relocation's file header.
      *
      *  An Exception is thrown if an attempt is made to read from memory which is not mapped or not readable. */
-    rose_addr_t fixup_info_addend(SgAsmElfRelocEntry*, rose_addr_t target_va, MemoryMap*, size_t nbytes);
+    rose_addr_t fixup_info_addend(SgAsmElfRelocEntry*, rose_addr_t target_va, MemoryMap*, size_t nbytes=0);
+
+    /** Evaluates a simple postfix expression and returns the result.  The expression consists of terms, operators, and
+     *  settings each consisting of a single character. They are defined as follows, and for the most part match various
+     *  linker documentation from Sun Microsystems "Linker and Libraries Guide", April 2008, page 239:
+     *
+     *  <ul>
+     *    <li>"0", "4", and "8" are settings for the size (in bytes) of memory accesses when performing operations
+     *        such as reading addend values from specimen memory.  The default "0" indicates that the size should
+     *        be determined from the word size specified by the relocation entrie's file header.</li>
+     *    <li>"A" is the addend used to compute the value of the relocatable field. See fixup_info_addend(). The size
+     *        of the addend is determined from the current nbytes setting.</li>
+     *    <li>"B" is the base address at which a shared object is loaded into memory during execution. Generally,
+     *        a shared object file is built with a base virtual address of zero. However, the execution address of
+     *        the shared object is different. See the adjustment argument of fixup_info_symbol_va().</li>
+     *    <li>"S" is the value of the symbol whose index resides in the relocation entry.  Specifically, this is the
+     *        value of the associated defining symbol adjusted for remapping. See fixup_info_symbol_va().</li>
+     *    <li>"+" replaces the top two values of the stack with their sum.</li>
+     *    <li>"-" replaces the top two values of the stack with their difference, subtracting the top value from the
+     *        second-to-top value.</li>
+     *  </ul>
+     *
+     *  In addition to the primary return value, these additional values are returned through pointers when the pointer is
+     *  non-null:
+     *
+     *  <ul>
+     *    <li>@p target_va_t is the virtual address where the relocation should be applied.
+     *        See fixup_info_target_va().</li>
+     *  </ul>
+     *
+     * Debugging information is conditionally emitted and indented four spaces.  Most debugging information comes from
+     * the underlying fixup_info_* methods that are called.
+     *
+     * Exceptions are thrown when something goes wrong.  Most exceptions come from the underlying fixup_info_* methods. */
+    rose_addr_t fixup_info_expr(const std::string &expression, SgAsmElfRelocEntry *reloc, const SymverResolver &resolver,
+                                MemoryMap *memmap, rose_addr_t *target_va_p=NULL);
+
+
 
     /*========================================================================================================================
      * Methods that apply a relocation fixup.  These names all begin with "fixup_apply_".
      *======================================================================================================================== */
 protected:
-
+    /** Writes a value into memory at the relocation target. The target virtual address is either specified by a non-zero
+     *  value for the @p target_va argument, or (re)computed from the supplied relocation entry.  This method is usually
+     *  called by the othe fixup_apply_* methods. The value is truncated and/or byte-swapped if necessary according to the
+     *  file header containing the relocation entry. If @p nbytes is zero (the default) then the size will be determined from
+     *  the relocation's file header.
+     *
+     *  Debugging information is conditionally emitted and indented four spaces.
+     *
+     *  An Exception is thrown if the value cannot be written to the specimen memory due to memory not being mapped or not
+     *  being writable. */
+    void fixup_apply(rose_addr_t value, SgAsmElfRelocEntry*, MemoryMap*, rose_addr_t target_va=0, size_t nbytes=0);
 
     /** Performs relocation fixup by inserting a symbol value into memory.  The symbol value is adjusted according to how much
      *  the symbol's section was translated during memory mapping. */
@@ -326,7 +374,7 @@ protected:
     /** Performs a relative fixup. The quantity A+B is written to the relocation target, where A is the addend either from the
      *  specimen memory (REL) or the relocation record (RELA) and B is the base address (difference between actual mapped
      *  address and preferred address for the section containing the relocation target). */
-    void fixup_apply_relative(SgAsmElfRelocEntry*, const SymverResolver&, const size_t addr_size, MemoryMap*);
+    void fixup_apply_relative(SgAsmElfRelocEntry*, const SymverResolver&, size_t nbytes, MemoryMap*);
 
     /*========================================================================================================================
      * Functions moved here from the BinaryLoader_ElfSupport name space.
