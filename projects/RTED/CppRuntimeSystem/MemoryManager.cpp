@@ -87,7 +87,7 @@ bool MemoryType::operator< (const MemoryType & other) const
 bool MemoryType::isInitialized(int offsetFrom, int offsetTo) const
 {
     assert(offsetFrom<offsetTo);
-    assert(((unsigned int)offsetFrom) < size && ((unsigned int)offsetTo) <= size);
+    assert(offsetFrom < size && offsetTo <= size);
 
     for(int i= offsetFrom; i<offsetTo; i++)
         if(! initialized[i])
@@ -99,7 +99,7 @@ bool MemoryType::isInitialized(int offsetFrom, int offsetTo) const
 void MemoryType::initialize(int offsetFrom, int offsetTo)
 {
     assert(offsetFrom<offsetTo);
-    assert(((unsigned int)offsetFrom) < size && ((unsigned int)offsetTo) <= size);
+    assert(offsetFrom < size && offsetTo <= size);
 
     for(int i=offsetFrom; i<offsetTo; i++)
         initialized[i]=true;

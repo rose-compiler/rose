@@ -803,7 +803,7 @@ void RtedTransformation::appendAddressAndSize(
     	else
           appendExpression(
                 arg_list,
-                buildSizeOfOp( isSgExpression( buildIntVal(0)))
+                buildSizeOfOp( isSgExpression( buildLongLongIntVal(0)))
             );
 
     }
@@ -892,22 +892,13 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
     if (exp)
      cast_op=   buildCastExp(
             buildAddressOfOp( copy_exp ),
-#ifdef  _WIN64
             buildUnsignedLongLongType()
-#else
-            buildUnsignedLongType()
-#endif
         );
     else
         cast_op=   buildCastExp(
-               buildIntVal( 0),
-#ifdef  _WIN64
-           buildUnsignedLongLongType()
-#else
-            buildUnsignedLongType()
-#endif
+               buildLongLongIntVal( 0),
+               buildUnsignedLongLongType()
            );
-
 
     if( offset != NULL ) {
         ROSE_ASSERT( exp != NULL );

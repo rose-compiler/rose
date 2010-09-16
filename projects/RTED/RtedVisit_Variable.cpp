@@ -193,7 +193,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
           // If we're in C, the function declaration could be just about
           // anything.  In particular, it's not guaranteed that it has as many
           // parameters as our callsite has arguments.
-          if( (int)fndecl -> get_parameterList() -> get_args().size() > param_index ) {
+          if( fndecl -> get_parameterList() -> get_args().size() > param_index ) {
               SgInitializedName* param
                     = fndecl -> get_parameterList() 
                         -> get_args()[ param_index ];
