@@ -977,6 +977,20 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 39: { /* 0x27, mkdir */
+            syscall_enter("kill", "dd");
+	    uint32_t pathname = arg(0);
+            std::string sys_pathname = read_string(pathname);
+	    mode_t mode = arg(1);
+	    std::cout << "Making dir" << sys_pathname << " in mode " <<mode << std::endl;
+
+	    int result = mkdir(sys_pathname.c_str(), mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+
+	}
 
         case 41: { /*0x29, dup*/
             syscall_enter("dup", "d");
