@@ -212,21 +212,12 @@ BinaryLoaderElf::add_lib_defaults(SgAsmGenericHeader *hdr/*=NULL*/)
     add_directory("/usr/lib");
 }
 
-/* Reference Elf TIS Portal Formats Specification, Version 1.1 */
 void
-BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
+BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
 {
     typedef std::vector<std::pair<SgAsmGenericSection*, SymbolMap*> > SymbolMapList;
 
-
-    // build map for each symbol table map<std::string,SgElfSymbol>
-    // compute global symbol resolution
-    //   in the DT_SYMBOLIC case, start w/ local map(s) before proceeding
-    //
-    // build map from SgAsmGenericSection to its symbolmap map<SgAsmGenericSection*,SymbolMap>
-    // biuld list of
-
-    /* Build a mapping (symbolMaps) from each ".dynsym" section (one per file header) to a SymbolMap::BaseMap. The BaseMap
+    /* Build a mapping (symbolMaps) from each ".dynsym" section (one per file header) to a SymbolMap. The SymbolMap
      * holds the symbols defined (i.e., not local, hidden, or only referenced) by the section. */
     SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
     SymbolMapList symbolMaps; /*maps each .dynsym section to a SymbolMap::BaseMap object. */
@@ -246,7 +237,7 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
         ROSE_ASSERT(dynsym->get_section_entry());
         ROSE_ASSERT(SgAsmElfSectionTableEntry::SHT_DYNSYM == dynsym->get_section_entry()->get_sh_type());
 
-        /* Add each symbol definition to the BaseMap and then add the BaseMap to the symbolMaps */
+        /* Add each symbol definition to the SymbolMap and then add the SymbolMap to the symbolMaps */
         SymbolMap* symbolMap = new SymbolMap;
         for (size_t symbol_idx=0; symbol_idx<dynsym->get_symbols()->get_symbols().size(); symbol_idx++) {
             if (0==symbol_idx) continue; /*this must be undefined, so we can skip it*/
@@ -277,19 +268,19 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
         symbolMaps.push_back(std::make_pair(dynsym, symbolMap));
     }
 
-    /* Construct a masterSymbolMap by merging all the definitions from the symbolMaps we created above. */
-    if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: resolving dynamic symbols...\n");
-    SymbolMap masterSymbolMap;
+    /* Initialize the p_symbols master symbol table by merging all the definitions from the symbolMaps we created above. */
+    if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: building master symbol table...\n");
+    p_symbols.clear();
     for (SymbolMapList::const_iterator smi=symbolMaps.begin(); smi!=symbolMaps.end(); ++smi) {
         const SymbolMap *symbolMap = smi->second;
         for(SymbolMap::const_iterator newSymbolIter=symbolMap->begin(); newSymbolIter!=symbolMap->end(); ++newSymbolIter) {
             const SymbolMapEntry &newEntry = newSymbolIter->second;
             const std::string symName = newSymbolIter->first;
-            SymbolMap::iterator oldSymbolIter=masterSymbolMap.find(symName);
+            SymbolMap::iterator oldSymbolIter=p_symbols.find(symName);
 
-            if (oldSymbolIter == masterSymbolMap.end()) {
+            if (oldSymbolIter == p_symbols.end()) {
                 /* no symbol yet, set it (this is the most common case) */
-                masterSymbolMap[symName] = newSymbolIter->second;
+                p_symbols[symName] = newSymbolIter->second;
             } else {
                 /* We have to go through version by version to 'merge' a complete map */
                 oldSymbolIter->second.merge(newEntry);
@@ -297,34 +288,26 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
         }
     }
     if (get_debug()) {
-        for (SymbolMap::const_iterator bmi=masterSymbolMap.begin(); bmi!=masterSymbolMap.end(); ++bmi) {
+        for (SymbolMap::const_iterator bmi=p_symbols.begin(); bmi!=p_symbols.end(); ++bmi) {
             const std::string name = bmi->first;
             const SymbolMapEntry &entry = bmi->second;
             fprintf(get_debug(), "  %s\n", entry.get_vsymbol().get_versioned_name().c_str());
         }
     }
+}
 
-    /* Perform relocations on all mapped sections of all the headers of this interpretation */
+/* Reference Elf TIS Portal Formats Specification, Version 1.1 */
+void
+BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
+{
     if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: performing relocation fixups...\n");
-#if 0
-    SgAsmElfSectionPtrList mappedSections;
-    for (size_t h=0; h < headers.size(); ++h) {
-        SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(headers[h]);
-        ROSE_ASSERT(elfHeader != NULL);
-        SgAsmGenericSectionPtrList sections = elfHeader->get_sectab_sections();
-        for (size_t i=0; i<sections.size(); ++i) {
-            if (sections[i]->is_mapped()) {
-                ROSE_ASSERT(NULL != isSgAsmElfSection(sections[i]));
-                mappedSections.push_back(isSgAsmElfSection(sections[i]));
-            }
-        }
-    }
-    //std::sort(mappedSections.begin(),mappedSections.end(),extentSorterActualVA);
-#endif
+    SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
+    build_master_symbol_table(interp);
+
     for (size_t h=0; h<headers.size(); ++h) {
         SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(headers[h]);
         ROSE_ASSERT(NULL != elfHeader);
-        performRelocations(elfHeader, masterSymbolMap, interp->get_map());
+        performRelocations(elfHeader, interp->get_map());
     }
 }
 
@@ -653,8 +636,12 @@ BinaryLoaderElf::SymverResolver::makeVersionedSymbolMap(SgAsmElfSymbolSection* d
     }
 }
 
+/*========================================================================================================================
+ * Relocation fixups
+ *======================================================================================================================== */
+
 void
-BinaryLoaderElf::get_fixup_info(SgAsmElfRelocEntry *reloc, const SymbolMap &masterSymbolMap, const SymverResolver &resolver,
+BinaryLoaderElf::get_fixup_info(SgAsmElfRelocEntry *reloc, const SymverResolver &resolver,
                                 SgAsmElfSymbol **source_symbol_p/*out*/, rose_addr_t *source_adj_p/*out*/,
                                 SgAsmElfSymbol **reloc_symbol_p/*out*/, rose_addr_t *reloc_adj_p/*out*/)
 {
@@ -677,12 +664,12 @@ BinaryLoaderElf::get_fixup_info(SgAsmElfRelocEntry *reloc, const SymbolMap &mast
 
         /* Find the defining symbol associated with the relocation symbol.  Call this the source symbol. */
         std::string symbolName=relocVSymbol.get_name();
-        const SymbolMapEntry *symbolEntry = masterSymbolMap.lookup(symbolName);
+        const SymbolMapEntry *symbolEntry = p_symbols.lookup(symbolName);
         bool is_weak = relocSymbol->get_elf_binding()==SgAsmElfSymbol::STB_WEAK;
         if (!symbolEntry && !is_weak) {
             if (get_debug())
                 fprintf(get_debug(), "    could not find symbol in symbol map (skipping relocation)\n");
-            throw Exception(symbolName + " not defined in masterSymbolMap");
+            throw Exception(symbolName + " not defined in master symbol table");
         }
         if (symbolEntry) {
             VersionedSymbol sourceVSymbol = symbolEntry->get_vsymbol(relocVSymbol);
@@ -746,12 +733,12 @@ BinaryLoaderElf::get_fixup_info(SgAsmElfRelocEntry *reloc, const SymbolMap &mast
 }
 
 void
-BinaryLoaderElf::fixup_symbol_value(SgAsmElfRelocEntry* reloc, const SymbolMap &masterSymbolMap, const SymverResolver &resolver,
+BinaryLoaderElf::fixup_symbol_value(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver,
                                     const size_t addrSize, MemoryMap *memmap)
 {
     SgAsmElfSymbol *relocSymbol=NULL, *sourceSymbol=NULL;
     rose_addr_t source_adj, target_adj;
-    get_fixup_info(reloc, masterSymbolMap, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
+    get_fixup_info(reloc, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
     rose_addr_t symbol_va = sourceSymbol ? sourceSymbol->get_value() + source_adj : 0;
     rose_addr_t target_va = reloc->get_r_offset() + target_adj;
     
@@ -781,12 +768,12 @@ BinaryLoaderElf::fixup_symbol_value(SgAsmElfRelocEntry* reloc, const SymbolMap &
 }
 
 void
-BinaryLoaderElf::fixup_symbol_copy(SgAsmElfRelocEntry* reloc, const SymbolMap &masterSymbolMap, const SymverResolver &resolver,
+BinaryLoaderElf::fixup_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver,
                                    MemoryMap *memmap)
 {
     SgAsmElfSymbol *relocSymbol=NULL, *sourceSymbol=NULL;
     rose_addr_t source_adj, target_adj;
-    get_fixup_info(reloc, masterSymbolMap, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
+    get_fixup_info(reloc, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
     ROSE_ASSERT(sourceSymbol!=NULL);
     rose_addr_t symbol_va = sourceSymbol->get_value() + source_adj;
     size_t      symbol_sz = sourceSymbol->get_size();
@@ -810,12 +797,12 @@ BinaryLoaderElf::fixup_symbol_copy(SgAsmElfRelocEntry* reloc, const SymbolMap &m
 }
 
 void
-BinaryLoaderElf::fixup_relative(SgAsmElfRelocEntry *reloc, const SymbolMap &masterSymbolMap, const SymverResolver &resolver, 
+BinaryLoaderElf::fixup_relative(SgAsmElfRelocEntry *reloc, const SymverResolver &resolver, 
                                 const size_t addr_size, MemoryMap *memmap)
 {
     SgAsmElfSymbol *relocSymbol=NULL, *sourceSymbol=NULL;
     rose_addr_t source_adj, target_adj;
-    get_fixup_info(reloc, masterSymbolMap, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
+    get_fixup_info(reloc, resolver, &sourceSymbol, &source_adj, &relocSymbol, &target_adj);
     ROSE_ASSERT(relocSymbol==NULL); /* _RELATIVE relocs must set their symbol index to zero */
     rose_addr_t target_va = reloc->get_r_offset() + target_adj;
 
@@ -910,7 +897,6 @@ Thus, we're performing
 void
 BinaryLoaderElf::relocate_X86_64_RELATIVE(SgAsmElfRelocEntry* reloc,
                                           SgAsmElfRelocSection* parentSection,
-                                          const SymbolMap &masterSymbolMap,
                                           const SymverResolver &resolver,
                                           const size_t addrSize)
 {
@@ -963,7 +949,6 @@ BinaryLoaderElf::relocate_X86_64_RELATIVE(SgAsmElfRelocEntry* reloc,
 void
 BinaryLoaderElf::relocate_X86_64_64(SgAsmElfRelocEntry* reloc,
                                     SgAsmElfRelocSection* parentSection,
-                                    const SymbolMap &masterSymbolMap,
                                     const SymverResolver &resolver,
                                     const size_t addrSize)
 {
@@ -981,7 +966,7 @@ BinaryLoaderElf::relocate_X86_64_64(SgAsmElfRelocEntry* reloc,
         printf("relocVSymbol: %s\n", relocVSymbol.get_versioned_name().c_str());
 
     std::string symbolName=relocVSymbol.get_name();
-    const SymbolMapEntry *symbolEntry = masterSymbolMap.lookup(symbolName);
+    const SymbolMapEntry *symbolEntry = p_symbols.lookup(symbolName);
 
     if (NULL == symbolEntry) { // TODO check for weak relocsymbol
         printf("Could not find symbol '%s'\n", relocSymbol->get_name()->c_str());
@@ -1041,8 +1026,7 @@ BinaryLoaderElf::relocate_X86_64_64(SgAsmElfRelocEntry* reloc,
 }
 
 void
-BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, const SymbolMap& masterSymbolMap,
-                                   MemoryMap *memmap)
+BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, MemoryMap *memmap)
 {
     ROSE_ASSERT(NULL != reloc);
     SgAsmElfRelocSection *parentSection = SageInterface::getEnclosingNode<SgAsmElfRelocSection>(reloc);
@@ -1066,13 +1050,13 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
             switch (reloc->get_type()) {
                 case SgAsmElfRelocEntry::R_386_JMP_SLOT:
                 case SgAsmElfRelocEntry::R_386_GLOB_DAT:
-                    fixup_symbol_value(reloc, masterSymbolMap, resolver, 4, memmap);
+                    fixup_symbol_value(reloc, resolver, 4, memmap);
                     break;
                 case SgAsmElfRelocEntry::R_386_COPY:
-                    fixup_symbol_copy(reloc, masterSymbolMap, resolver, memmap);
+                    fixup_symbol_copy(reloc, resolver, memmap);
                     break;
                 case SgAsmElfRelocEntry::R_386_RELATIVE:
-                    fixup_relative(reloc, masterSymbolMap, resolver, 4, memmap);
+                    fixup_relative(reloc, resolver, 4, memmap);
                     break;
 #if 0
                 case SgAsmElfRelocEntry::R_386_32:
@@ -1115,7 +1099,7 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
             switch (reloc->get_type()) {
                 case SgAsmElfRelocEntry::R_X86_64_JUMP_SLOT:
                 case SgAsmElfRelocEntry::R_X86_64_GLOB_DAT:
-                    fixup_symbol_value(reloc, masterSymbolMap, resolver, 8, memmap);
+                    fixup_symbol_value(reloc, resolver, 8, memmap);
                     break;
 #if 0
                 case SgAsmElfRelocEntry::R_X86_64_32:
@@ -1128,10 +1112,10 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                     break;
 #endif
                 case SgAsmElfRelocEntry::R_X86_64_64:
-                    relocate_X86_64_64(reloc, parentSection, masterSymbolMap, resolver, 8);
+                    relocate_X86_64_64(reloc, parentSection, resolver, 8);
                     break;
                 case SgAsmElfRelocEntry::R_X86_64_RELATIVE:
-                    relocate_X86_64_RELATIVE(reloc, parentSection, masterSymbolMap, resolver, 8);
+                    relocate_X86_64_RELATIVE(reloc, parentSection, resolver, 8);
                     break;
                 default:
                     if (get_debug())
@@ -1149,7 +1133,7 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
 }
 
 void
-BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const SymbolMap& masterSymbolMap, MemoryMap *memmap)
+BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, MemoryMap *memmap)
 {
     SymverResolver resolver(elfHeader);
     SgAsmGenericSectionPtrList sections = elfHeader->get_sectab_sections();
@@ -1161,7 +1145,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const SymbolM
         SgAsmElfRelocEntryPtrList &relocs = relocSection->get_entries()->get_entries();
         for (size_t r=0; r <  relocs.size(); ++r) {
             SgAsmElfRelocEntry* reloc = relocs[r];
-            performRelocation(reloc, resolver, masterSymbolMap, memmap);
+            performRelocation(reloc, resolver, memmap);
         }
     }
 }

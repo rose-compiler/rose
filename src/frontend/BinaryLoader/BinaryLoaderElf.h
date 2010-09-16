@@ -257,6 +257,11 @@ protected:
      *  pointer is returned if no suitable section can be found. */
     virtual SgAsmGenericSection *find_section_by_preferred_va(SgAsmGenericHeader*, rose_addr_t va);
 
+    /** Builds the master symbol table. This table is built just before relocations are fixed up and contains information
+     *  about all the symbols that might be necessary during that process.  The symbol table describes one entire
+     *  interpretation. */
+    void build_master_symbol_table(SgAsmInterpretation*);
+
     /** Finds basic relocation parameters for relocations.  Given a relocation entry, a symbol table, and a symbol resolver,
      *  return the following information:
      *  <ul>
@@ -274,44 +279,51 @@ protected:
      *  If the relocation does not reference a symbol then @p reloc_symbol_p will point to the null pointer and
      *  @p reloc_adj_p will point to zero.  If the relocation does not reference a symbol, or the symbol has no definition
      *  then @p source_symbol_p will point to the null pointer and @p source_adj_p will point to zero. */
-    void get_fixup_info(SgAsmElfRelocEntry *reloc, const SymbolMap &masterSymbolMap, const SymverResolver &resolver,
+    void get_fixup_info(SgAsmElfRelocEntry *reloc, const SymverResolver &resolver,
                         SgAsmElfSymbol **source_symbol_p/*out*/, rose_addr_t *source_adj_p/*out*/,
                         SgAsmElfSymbol **reloc_symbol_p/*out*/, rose_addr_t *reloc_adj_p/*out*/);
 
     /** Performs relocation fixup by inserting a symbol value into memory.  The symbol value is adjusted according to how much
      *  the symbol's section was translated during memory mapping. */
-    void fixup_symbol_value(SgAsmElfRelocEntry*, const SymbolMap&, const SymverResolver&, size_t nbytes, MemoryMap*);
+    void fixup_symbol_value(SgAsmElfRelocEntry*, const SymverResolver&, size_t nbytes, MemoryMap*);
 
     /** Copies symbol memory to the relocation target.  This is usually used to copy initialized library data (initialized by
      *  the loader calling a constructor) into a common location in the executable's .bss. */
-    void fixup_symbol_copy(SgAsmElfRelocEntry*, const SymbolMap&, const SymverResolver&, MemoryMap*);
+    void fixup_symbol_copy(SgAsmElfRelocEntry*, const SymverResolver&, MemoryMap*);
 
     /** Performs a relative fixup. The quantity A+B is written to the relocation target, where A is the addend either from the
      *  specimen memory (REL) or the relocation record (RELA) and B is the base address (difference between actual mapped
      *  address and preferred address for the section containing the relocation target). */
-    void fixup_relative(SgAsmElfRelocEntry*, const SymbolMap&, const SymverResolver&, const size_t addr_size, MemoryMap*);
+    void fixup_relative(SgAsmElfRelocEntry*, const SymverResolver&, const size_t addr_size, MemoryMap*);
 
     /*========================================================================================================================
      * Functions moved here from the BinaryLoader_ElfSupport name space.
      *======================================================================================================================== */
-
+protected:
     /* FIXME: Move this to src/ROSETTA where it belongs. [RPM 2010-08-31] */
     typedef Rose_STL_Container<SgAsmElfSection*> SgAsmElfSectionPtrList;
     static int get_verbose() {return 5;}
 
-    void relocate_X86_GLOB_DAT(const SgAsmElfRelocEntry*, const SgAsmElfSymbol*, const SymbolMap&, const SgAsmElfSectionPtrList&,
+    void relocate_X86_GLOB_DAT(const SgAsmElfRelocEntry*, const SgAsmElfSymbol*, const SgAsmElfSectionPtrList&,
                                const size_t addrSize);
 
 
-    void relocate_X86_64_RELATIVE(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SymbolMap&, const SymverResolver&,
-                                         const size_t addrSize);
-    void relocate_X86_64_64(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SymbolMap&, const SymverResolver&,
-                                   const size_t addrSize);
+    void relocate_X86_64_RELATIVE(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SymverResolver&, const size_t addrSize);
+    void relocate_X86_64_64(SgAsmElfRelocEntry*, SgAsmElfRelocSection*, const SymverResolver&, const size_t addrSize);
 
 
-    void performRelocation(SgAsmElfRelocEntry*, const SymverResolver&, const SymbolMap&, MemoryMap*);
-    void performRelocations(SgAsmElfFileHeader*, const SymbolMap&, MemoryMap*);
+    void performRelocation(SgAsmElfRelocEntry*, const SymverResolver&, MemoryMap*);
+    void performRelocations(SgAsmElfFileHeader*, MemoryMap*);
 
+    /*========================================================================================================================
+     * Data members
+     *======================================================================================================================== */
+protected:
+
+    /** Symbol table for an entire interpretation.  This symbol table is created by the fixup() method via
+     *  build_master_symbol_table() and used by various relocation fixups. */
+    SymbolMap p_symbols;
+    
 
 };
 
