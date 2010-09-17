@@ -18,23 +18,23 @@ main (int argc, char *argv[])
   std::vector<SgFile*> files = project->get_fileList_ptr()->get_listOfFiles();
   std::vector<SgFile*>::const_iterator it = files.begin();
   for (;it!=files.end();++it) {
-	SgFile* file = isSgFile(*it);
-	ROSE_ASSERT(file);
-	SgSourceFile* sfile = isSgSourceFile(file);
-	if (sfile) {
-		cout << "FILENAME : " << sfile->getFileName() << endl;
-		SgGlobal* global = isSgGlobal(sfile->get_globalScope());
-		 std::vector< SgNode * > nodes=	sfile->get_traversalSuccessorContainer ();
-		 std::vector< SgNode * >::const_iterator it2=nodes.begin();
-		for (;it2!=nodes.end();++it2) {
-			SgNode* node= isSgNode(*it2);
-			if (node) {
-				// right now this finds SgGlobal but it should find also
-				// SgVariableDeclaration and SgFunctionDeclaration
-				cout << "Found node : " << node->class_name() << endl;
-			}
-		}
+    SgFile* file = isSgFile(*it);
+    ROSE_ASSERT(file);
+    SgSourceFile* sfile = isSgSourceFile(file);
+    if (sfile) {
+      cout << "FILENAME : " << sfile->getFileName() << endl;
+      SgGlobal* global = isSgGlobal(sfile->get_globalScope());
+      std::vector< SgNode * > nodes=	sfile->get_traversalSuccessorContainer ();
+      std::vector< SgNode * >::const_iterator it2=nodes.begin();
+      for (;it2!=nodes.end();++it2) {
+	SgNode* node= isSgNode(*it2);
+	if (node) {
+	  // right now this finds SgGlobal but it should find also
+	  // SgVariableDeclaration and SgFunctionDeclaration
+	  cout << "Found node : " << node->class_name() << endl;
 	}
+      }
+    }
   }
 
   Rose_STL_Container<SgNode*> initNames = NodeQuery::querySubTree(project, V_SgInitializedName);
