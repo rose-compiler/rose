@@ -158,7 +158,9 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
      ROSE_ASSERT(stmt != NULL);
 
-  // printf ("In FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement ( stmt = %p = %s ) \n",stmt,stmt->class_name().c_str());
+#if 0
+     printf ("In FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement ( stmt = %p = %s ) language = %s \n",stmt,stmt->class_name().c_str(),languageName().c_str());
+#endif
 
   // DQ (11/17/2007): Add numeric lables where they apply, this is called in UnparseLanguageIndependentConstructs::unparseStatement().
   // unparseStatementNumbers(stmt);
@@ -1929,7 +1931,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
 
      SgInitializedNamePtrList::iterator i = vardecl->get_variables().begin();
      VariantT variantType = (*i)->get_type()->variantT();
-  // printf ("variantType = %d \n",(int)variantType);
+  // printf ("In unparseVarDeclStmt(): variantType = %d \n",(int)variantType);
 
   // Detect the case of mixed scalar and array typed variables where multiple variables are 
   // specified in a type declaration.  The alternative is that we could build separate 
@@ -2022,17 +2024,28 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
                                          (isSgAsteriskShapeExp(arrayTypeDimensionList->get_expressions()[i])    == NULL) &&
                                          (isSgSubscriptExpression(arrayTypeDimensionList->get_expressions()[i]) == NULL) )
 #endif
-                                      { // SgAsteriskShapeExp
+                                      {
+                                     // SgAsteriskShapeExp
                                      // We have to turn off an internal error checking mechanism just to call the unparseToString() function.
                                      // Turn OFF the error checking which triggers an if the default SgUnparse_Info constructor is called
                                         SgUnparse_Info::set_forceDefaultConstructorToTriggerError(false);
 
                                      // printf ("Calling unparseToString() arrayTypeDimensionList->get_expressions()[i] = %s \n",arrayTypeDimensionList->get_expressions()[i]->class_name().c_str());
 
-                                     // We want to know if these are the same, but lacking an AST equality checker, it is reasonable to just check theunparsed strings for equality.
+                                     // We want to know if these are the same, but lacking an AST equality checker, it is reasonable to just check the unparsed strings for equality.
                                         string arrayTypeDimensionListString         = arrayTypeDimensionList->get_expressions()[i]->unparseToString(&info);
                                         string previousArrayTypeDimensionListString = previousArrayTypeDimensionList->get_expressions()[i]->unparseToString(&info);
-
+#if 0
+                                     // DQ (9/6/2010): If this is true then we can use the global type table.
+                                        if (arrayTypeDimensionList->get_expressions()[i] == previousArrayTypeDimensionList->get_expressions()[i])
+                                           {
+                                             ROSE_ASSERT (arrayTypeDimensionListString == previousArrayTypeDimensionListString);
+                                           }
+                                          else
+                                           {
+                                             ROSE_ASSERT (arrayTypeDimensionListString != previousArrayTypeDimensionListString);
+                                           }
+#endif
                                      // Turn ON the error checking which triggers an if the default SgUnparse_Info constructor is called
                                      // FMZ (5/19/2008): since we are using unparser to generate ".rmod" file, we need to turn off this 
 #if 0
@@ -2077,6 +2090,8 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
           previousType = type;
           i++;
         }
+
+  // printf ("Just output the type \n");
 
 #if 0
   // This fails for the case of: "INTEGER, DIMENSION(:,:), ALLOCATABLE :: a"
@@ -3443,39 +3458,51 @@ FortranCodeGeneration_locatedNode::unparseInquireStatement(SgStatement* stmt, Sg
 
      curprint("INQUIRE (");
 
-     unparse_IO_Support(stmt,info);
+     if (inquireStatement->get_iolengthExp() != NULL)
+        {
+       // This is the "INQUIRE (IOLENGTH=IOL)" case.
+       // unparse_IO_Control_Support("IOLENGTH",inquireStatement->get_iolengthExp(),info);
+          curprint("IOLENGTH=");
+          unparseExpression(inquireStatement->get_iolengthExp(),info);
+        }
+       else
+        {
+       // This is the "INQUIRE(inquire-spec-list)" case.
 
-     unparse_IO_Control_Support("FILE",inquireStatement->get_file(),info);
-     unparse_IO_Control_Support("ACCESS",inquireStatement->get_access(),info);
-     unparse_IO_Control_Support("FORM",inquireStatement->get_form(),info);
-     unparse_IO_Control_Support("RECL",inquireStatement->get_recl(),info);
-     unparse_IO_Control_Support("BLANK",inquireStatement->get_blank(),info);
-     unparse_IO_Control_Support("EXIST",inquireStatement->get_exist(),info);
-     unparse_IO_Control_Support("OPENED",inquireStatement->get_opened(),info);
-     unparse_IO_Control_Support("NUMBER",inquireStatement->get_number(),info);
-     unparse_IO_Control_Support("NAMED",inquireStatement->get_named(),info);
-     unparse_IO_Control_Support("NAME",inquireStatement->get_name(),info);
-     unparse_IO_Control_Support("SEQUENTIAL",inquireStatement->get_sequential(),info);
-     unparse_IO_Control_Support("DIRECT",inquireStatement->get_direct(),info);
-     unparse_IO_Control_Support("FORMATTED",inquireStatement->get_formatted(),info);
-     unparse_IO_Control_Support("UNFORMATTED",inquireStatement->get_unformatted(),info);
-     unparse_IO_Control_Support("NEXTREC",inquireStatement->get_nextrec(),info);
+          unparse_IO_Support(stmt,info);
 
-  // F90 specific 
-     unparse_IO_Control_Support("POSITION",inquireStatement->get_position(),info);
-     unparse_IO_Control_Support("ACTION",inquireStatement->get_action(),info);
-     unparse_IO_Control_Support("READ",inquireStatement->get_read(),info);
-     unparse_IO_Control_Support("WRITE",inquireStatement->get_write(),info);
-     unparse_IO_Control_Support("READWRITE",inquireStatement->get_readwrite(),info);
-     unparse_IO_Control_Support("DELIM",inquireStatement->get_delim(),info);
-     unparse_IO_Control_Support("PAD",inquireStatement->get_pad(),info);
+          unparse_IO_Control_Support("FILE",inquireStatement->get_file(),info);
+          unparse_IO_Control_Support("ACCESS",inquireStatement->get_access(),info);
+          unparse_IO_Control_Support("FORM",inquireStatement->get_form(),info);
+          unparse_IO_Control_Support("RECL",inquireStatement->get_recl(),info);
+          unparse_IO_Control_Support("BLANK",inquireStatement->get_blank(),info);
+          unparse_IO_Control_Support("EXIST",inquireStatement->get_exist(),info);
+          unparse_IO_Control_Support("OPENED",inquireStatement->get_opened(),info);
+          unparse_IO_Control_Support("NUMBER",inquireStatement->get_number(),info);
+          unparse_IO_Control_Support("NAMED",inquireStatement->get_named(),info);
+          unparse_IO_Control_Support("NAME",inquireStatement->get_name(),info);
+          unparse_IO_Control_Support("SEQUENTIAL",inquireStatement->get_sequential(),info);
+          unparse_IO_Control_Support("DIRECT",inquireStatement->get_direct(),info);
+          unparse_IO_Control_Support("FORMATTED",inquireStatement->get_formatted(),info);
+          unparse_IO_Control_Support("UNFORMATTED",inquireStatement->get_unformatted(),info);
+          unparse_IO_Control_Support("NEXTREC",inquireStatement->get_nextrec(),info);
 
-  // F2003 specific
-     unparse_IO_Control_Support("ASYNCHRONOUS",inquireStatement->get_asynchronous(),info);
-     unparse_IO_Control_Support("DECIMAL",inquireStatement->get_decimal(),info);
-     unparse_IO_Control_Support("STREAM",inquireStatement->get_stream(),info);
-     unparse_IO_Control_Support("SIZE",inquireStatement->get_size(),info);
-     unparse_IO_Control_Support("PENDING",inquireStatement->get_pending(),info);
+       // F90 specific 
+          unparse_IO_Control_Support("POSITION",inquireStatement->get_position(),info);
+          unparse_IO_Control_Support("ACTION",inquireStatement->get_action(),info);
+          unparse_IO_Control_Support("READ",inquireStatement->get_read(),info);
+          unparse_IO_Control_Support("WRITE",inquireStatement->get_write(),info);
+          unparse_IO_Control_Support("READWRITE",inquireStatement->get_readwrite(),info);
+          unparse_IO_Control_Support("DELIM",inquireStatement->get_delim(),info);
+          unparse_IO_Control_Support("PAD",inquireStatement->get_pad(),info);
+
+       // F2003 specific
+          unparse_IO_Control_Support("ASYNCHRONOUS",inquireStatement->get_asynchronous(),info);
+          unparse_IO_Control_Support("DECIMAL",inquireStatement->get_decimal(),info);
+          unparse_IO_Control_Support("STREAM",inquireStatement->get_stream(),info);
+          unparse_IO_Control_Support("SIZE",inquireStatement->get_size(),info);
+          unparse_IO_Control_Support("PENDING",inquireStatement->get_pending(),info);
+        }
 
      curprint(") ");
 

@@ -55,7 +55,7 @@ SgAsmElfSection::init_from_section_table(SgAsmElfSectionTableEntry *shdr, SgAsmE
     /* Memory mapping */
     if (shdr->get_sh_addr() > 0) {
         set_mapped_preferred_rva(shdr->get_sh_addr());
-        set_mapped_actual_rva(0); /*will be assigned by Loader*/
+        set_mapped_actual_va(0); /*will be assigned by Loader*/
         set_mapped_size(shdr->get_sh_size());
         set_mapped_rperm(true);
         set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
@@ -63,7 +63,7 @@ SgAsmElfSection::init_from_section_table(SgAsmElfSectionTableEntry *shdr, SgAsmE
         set_mapped_alignment(shdr->get_sh_addralign());
     } else {
         set_mapped_preferred_rva(0);
-        set_mapped_actual_rva(0); /*will be assigned by Loader*/
+        set_mapped_actual_va(0); /*will be assigned by Loader*/
         set_mapped_size(0);
         set_mapped_rperm(false);
         set_mapped_wperm(false);
@@ -100,27 +100,27 @@ SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool m
         /* Name */
         char name[128];
         switch (shdr->get_type()) {
-          case SgAsmElfSegmentTableEntry::PT_LOAD:         strcpy(name, "ELF Load");          break;
-          case SgAsmElfSegmentTableEntry::PT_DYNAMIC:      strcpy(name, "ELF Dynamic");       break;
-          case SgAsmElfSegmentTableEntry::PT_INTERP:       strcpy(name, "ELF Interpreter");   break;
-          case SgAsmElfSegmentTableEntry::PT_NOTE:         strcpy(name, "ELF Note");          break;
-          case SgAsmElfSegmentTableEntry::PT_SHLIB:        strcpy(name, "ELF Shlib");         break;
-          case SgAsmElfSegmentTableEntry::PT_PHDR:         strcpy(name, "ELF Segment Table"); break;
-          case SgAsmElfSegmentTableEntry::PT_GNU_EH_FRAME: strcpy(name, "GNU EH Frame");      break;
-          case SgAsmElfSegmentTableEntry::PT_GNU_STACK:    strcpy(name, "GNU Stack");         break;
-          case SgAsmElfSegmentTableEntry::PT_GNU_RELRO:    strcpy(name, "GNU Reloc RO");      break;
-          case SgAsmElfSegmentTableEntry::PT_PAX_FLAGS:    strcpy(name, "PAX Flags");         break;
-          case SgAsmElfSegmentTableEntry::PT_SUNWBSS:      strcpy(name, "Sun WBSS");          break;
-          case SgAsmElfSegmentTableEntry::PT_SUNWSTACK:    strcpy(name, "Sun WStack");        break;
-          default:                                         sprintf(name, "ELF type 0x%08x", shdr->get_type()); break;
+          case SgAsmElfSegmentTableEntry::PT_LOAD:         strcpy(name, "LOAD");        break;
+          case SgAsmElfSegmentTableEntry::PT_DYNAMIC:      strcpy(name, "DYNAMIC");     break;
+          case SgAsmElfSegmentTableEntry::PT_INTERP:       strcpy(name, "INTERP");      break;
+          case SgAsmElfSegmentTableEntry::PT_NOTE:         strcpy(name, "NOTE");        break;
+          case SgAsmElfSegmentTableEntry::PT_SHLIB:        strcpy(name, "SHLIB");       break;
+          case SgAsmElfSegmentTableEntry::PT_PHDR:         strcpy(name, "PHDR");        break;
+          case SgAsmElfSegmentTableEntry::PT_GNU_EH_FRAME: strcpy(name, "EH_FRAME");    break;
+          case SgAsmElfSegmentTableEntry::PT_GNU_STACK:    strcpy(name, "GNU_STACK");   break;
+          case SgAsmElfSegmentTableEntry::PT_GNU_RELRO:    strcpy(name, "GNU_RELRO");   break;
+          case SgAsmElfSegmentTableEntry::PT_PAX_FLAGS:    strcpy(name, "PAX_FLAGS");   break;
+          case SgAsmElfSegmentTableEntry::PT_SUNWBSS:      strcpy(name, "SUNWBSS");     break;
+          case SgAsmElfSegmentTableEntry::PT_SUNWSTACK:    strcpy(name, "SUNWSTACK");   break;
+          default:                                         sprintf(name, "PT_0x%08x", shdr->get_type()); break;
         }
-        sprintf(name+strlen(name), " (segment %zu)", shdr->get_index());
+        sprintf(name+strlen(name), "#%zu", shdr->get_index());
         set_name(new SgAsmBasicString(name));
     }
     
     /* Memory mapping */
     set_mapped_preferred_rva(shdr->get_vaddr());
-    set_mapped_actual_rva(0); /*will be assigned by Loader*/
+    set_mapped_actual_va(0); /*will be assigned by Loader*/
     set_mapped_size(shdr->get_memsz());
     set_mapped_alignment(shdr->get_align());
     set_mapped_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);

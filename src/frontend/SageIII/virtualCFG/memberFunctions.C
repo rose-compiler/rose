@@ -1,9 +1,15 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "sageInterface.h" // for isConstType
+#include "CallGraph.h"
 #include <vector>
+
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 using namespace std;
 using namespace VirtualCFG;
+
+bool virtualInterproceduralControlFlowGraphs = false;
 
 unsigned int
 SgNode::cfgIndexForEnd() const {
@@ -30,18 +36,19 @@ SgNode::cfgFindNextChildIndex(SgNode*) {
 }
 
 std::vector<CFGEdge>
-SgNode::cfgOutEdges(unsigned int) {
+SgNode::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
   return std::vector<CFGEdge>();
 }
 
 std::vector<CFGEdge>
-SgNode::cfgInEdges(unsigned int) {
+SgNode::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
   return std::vector<CFGEdge>();
 }
 
-static void makeEdge(CFGNode from, CFGNode to, vector<CFGEdge>& result) {
+template <class NodeT, class EdgeT>
+void makeEdge(NodeT from, NodeT to, vector<EdgeT>& result) {
   // Makes a CFG edge, adding appropriate labels
   SgNode* fromNode = from.getNode();
   unsigned int fromIndex = from.getIndex();
@@ -155,7 +162,16 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
     ROSE_ASSERT (decl);
     return CFGNode(decl->get_definition(), 1);
   }
-  return CFGNode(parent, parent->cfgFindNextChildIndex(n));
+  unsigned int idx = parent->cfgFindNextChildIndex(n);
+  if ( idx > parent->cfgIndexForEnd() ) {
+    if (SgProject::get_verbose() >= 3) {
+      std::cerr << "getNodeJustAfter has bad index:" << std::endl;
+      std::cerr << parent->get_file_info()->get_filename() << ":" << parent->get_file_info()->get_line() << std::endl;
+      std::cerr << parent->unparseToString() << std::endl;
+    }
+    ROSE_ASSERT (!"Bad index in getNodeJustAfterInContainer");
+  }
+  return CFGNode(parent, idx);
 }
 
 //! Find the CFG node of which n is a child (subtree descended into)
@@ -170,7 +186,9 @@ static CFGNode findParentNode(SgNode* n) {
     ROSE_ASSERT (decl);
     return CFGNode(decl->get_definition(), 0);
   }
-  return CFGNode(parent, parent->cfgFindChildIndex(n));
+  unsigned int idx = parent->cfgFindChildIndex(n);
+  ROSE_ASSERT( idx <= parent->cfgIndexForEnd() );
+  return CFGNode(parent, idx);
 }
 
 static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
@@ -206,14 +224,14 @@ SgStatement::cfgFindNextChildIndex(SgNode* n) {
   }
 
 std::vector<CFGEdge>
-SgStatement::cfgOutEdges(unsigned int) {
+SgStatement::cfgOutEdges(unsigned int idx) {
     std::cerr << "Bad statement case " << this->class_name() << " in cfgOutEdges()" << std::endl;
     ROSE_ASSERT (false);
     return std::vector<CFGEdge>();
   }
 
 std::vector<CFGEdge>
-SgStatement::cfgInEdges(unsigned int) {
+SgStatement::cfgInEdges(unsigned int idx) {
     std::cerr << "Bad statement case " << this->class_name() << " in cfgInEdges()" << std::endl;
     ROSE_ASSERT (false);
     return std::vector<CFGEdge>();
@@ -231,6 +249,16 @@ std::vector<CFGEdge> SgGlobal::cfgOutEdges(unsigned int idx) {
 
 std::vector<CFGEdge> SgGlobal::cfgInEdges(unsigned int idx) {
   return std::vector<CFGEdge>();
+}
+
+unsigned int
+SgGlobal::cfgIndexForEnd() const {
+  return 0;
+}
+
+bool 
+SgGlobal::cfgIsIndexInteresting(unsigned int idx) const {
+  return false;
 }
 
 unsigned int
@@ -287,7 +315,7 @@ SgIfStmt::cfgFindChildIndex(SgNode* n)
         {
           return 0;
         }
-       else
+     else
           if (n != NULL && (n == this->get_true_body() || n == this->get_false_body()))
              {
                return 1;
@@ -744,17 +772,36 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 2: /* No out edges */ break;
+    case SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX: { 
+      if (virtualInterproceduralControlFlowGraphs) { 
+        ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
+        Rose_STL_Container<SgExpression*> exps;
+        CallTargetSet::getExpressionsForDefinition(this, &classHierarchy, exps);
+        foreach (SgExpression* exp, exps) 
+          makeEdge(CFGNode(this, idx), exp->cfgForEnd(), result);
+      }
+      break;
+    }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
   }
   return result;
 }
 
-std::vector<CFGEdge> SgFunctionDefinition::cfgInEdges(unsigned int idx) {
+std::vector<CFGEdge> 
+SgFunctionDefinition::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
-    case 0: /* No in edges */ break;
+    case 0: {
+      if (virtualInterproceduralControlFlowGraphs) {
+        ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
+        Rose_STL_Container<SgExpression*> exps;
+        CallTargetSet::getExpressionsForDefinition(this, &classHierarchy, exps);
+        foreach (SgExpression* exp, exps) 
+          makeEdge(exp->cfgForEnd(), CFGNode(this, idx), result);
+      }
+      break;
+    }
     case 1: makeEdge(this->get_declaration()->get_parameterList()->cfgForEnd(), CFGNode(this, idx), result); break;
     case 2: {
       makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result);
@@ -785,7 +832,7 @@ SgMemberFunctionDeclaration::cfgIndexForEnd() const {
 std::vector<CFGEdge> SgMemberFunctionDeclaration::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
-  // makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+  makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
@@ -793,7 +840,7 @@ std::vector<CFGEdge> SgMemberFunctionDeclaration::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
-  // makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+  makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
   return result;
 }
 
@@ -1174,7 +1221,14 @@ std::vector<CFGEdge> SgTryStmt::cfgOutEdges(unsigned int idx) {
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for SgTryStmt");
+    default: {
+               if (SgProject::get_verbose() >= 3) {
+                 std::cerr << "SgTryStmt::cfgOutEdges failed" << std::endl;
+                 std::cerr << get_file_info()->get_filename() << ":" << get_file_info()->get_line() << std::endl;
+                 std::cerr << unparseToString() << std::endl;
+               }
+               ROSE_ASSERT (!"Bad index for SgTryStmt");
+             }
   }
   return result;
 }
@@ -1185,7 +1239,14 @@ std::vector<CFGEdge> SgTryStmt::cfgInEdges(unsigned int idx) {
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
     case 1: makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result); break;
-    default: ROSE_ASSERT (!"Bad index for SgTryStmt");
+    default: {
+               if (SgProject::get_verbose() >= 3) {
+                 std::cerr << "SgTryStmt::cfgInEdges failed" << std::endl;
+                 std::cerr << get_file_info()->get_filename() << ":" << get_file_info()->get_line() << std::endl;
+                 std::cerr << unparseToString() << std::endl;
+               }
+               ROSE_ASSERT (!"Bad index for SgTryStmt");
+             }
   }
   return result;
 }
@@ -1203,9 +1264,11 @@ std::vector<CFGEdge> SgCatchStatementSeq::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   // FIXME
   if (idx == this->get_catch_statement_seq().size()) {
-    makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+    //makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   } else if (idx < this->get_catch_statement_seq().size()) {
     makeEdge(CFGNode(this, idx), this->get_catch_statement_seq()[idx]->cfgForBeginning(), result);
+  } else {
+    ROSE_ASSERT (!"Bad index for SgCatchStatementSeq");
   }
   return result;
 }
@@ -1215,7 +1278,7 @@ std::vector<CFGEdge> SgCatchStatementSeq::cfgInEdges(unsigned int idx) {
   addIncomingFortranGotos(this, idx, result);
   // FIXME
   if (idx == 0) {
-    makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+    //makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
   } else if (idx <= this->get_catch_statement_seq().size()) {
     makeEdge(this->get_catch_statement_seq()[idx - 1]->cfgForEnd(), CFGNode(this, idx), result);
   } else ROSE_ASSERT (!"Bad index for SgCatchStatementSeq");
@@ -2673,7 +2736,7 @@ SgExpression::cfgFindNextChildIndex(SgNode* n) {
     return this->cfgFindChildIndex(n) + 1;
   }
 
-  std::vector<CFGEdge> SgExpression::cfgOutEdges(unsigned int) {
+  std::vector<CFGEdge> SgExpression::cfgOutEdges(unsigned int idx) {
     std::cerr << "Bad expression case " << this->class_name() << " in cfgOutEdges()" << std::endl;
     ROSE_ASSERT (false);
 
@@ -2681,7 +2744,7 @@ SgExpression::cfgFindNextChildIndex(SgNode* n) {
      return std::vector<CFGEdge>();
   }
 
-  std::vector<CFGEdge> SgExpression::cfgInEdges(unsigned int) {
+  std::vector<CFGEdge> SgExpression::cfgInEdges(unsigned int idx) {
     std::cerr << "Bad expression case " << this->class_name() << " in cfgInEdges()" << std::endl;
     ROSE_ASSERT (false);
 
@@ -2728,6 +2791,49 @@ SgUnaryOp::cfgInEdges(unsigned int idx)
 				break;
 			}
           default: ROSE_ASSERT (!"Bad index for SgUnaryOp");
+        }
+
+     return result;
+   }
+
+unsigned int
+SgThrowOp::cfgIndexForEnd() const 
+   {
+     return (get_operand() == NULL) ? 0 : 1;
+   }
+
+std::vector<CFGEdge>
+SgThrowOp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     switch (idx)
+        {
+          case 0: {
+                    if (get_operand() == NULL) 
+                      makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+                    else
+                      makeEdge(CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); 
+                    break;
+                  }
+          case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+          default: ROSE_ASSERT (!"Bad index for SgThrowOp");
+        }
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgThrowOp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+          case 1: {
+                    ROSE_ASSERT(get_operand() != NULL);
+                    makeEdge(get_operand()->cfgForEnd(), CFGNode(this, idx), result); 
+                    break;
+                  }
+          default: ROSE_ASSERT (!"Bad index for SgThrowOp");
         }
 
      return result;
@@ -2984,21 +3090,23 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
   }
 
   std::vector<CFGEdge> SgFunctionCallExp::cfgOutEdges(unsigned int idx) {
+    ROSE_ASSERT(this);
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_function()->cfgForBeginning(), result); break;
       case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
-      case 2: {
-	SgFunctionDeclaration* decl =
-	  interproceduralControlFlowGraph ?
-	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
-	if (decl)
-	  makeEdge(CFGNode(this, idx), decl->cfgForBeginning(),
-                   result);
-        else
-          makeEdge(CFGNode(this, idx),
-                   CFGNode(this, 3), result);
-        break;
+      case SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX: {
+                if (virtualInterproceduralControlFlowGraphs) {
+                  ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
+                  Rose_STL_Container<SgFunctionDefinition*> defs;
+                  CallTargetSet::getDefinitionsForExpression(this, &classHierarchy, defs);
+                  foreach (SgFunctionDefinition* def, defs) 
+                    makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
+                }
+                else {
+                  makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);
+                }
+                break;
       }
       case 3: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
       default: ROSE_ASSERT (!"Bad index for SgFunctionCallExp");
@@ -3007,22 +3115,23 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
   }
 
   std::vector<CFGEdge> SgFunctionCallExp::cfgInEdges(unsigned int idx) {
+    ROSE_ASSERT(this);
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
       case 1: makeEdge(this->get_function()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 2: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
       case 3: {
-	SgFunctionDeclaration* decl =
-	  interproceduralControlFlowGraph ?
-	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
-        if (decl)
-          makeEdge(decl->cfgForEnd(), CFGNode(this, idx),
-                   result);
-        else
-          makeEdge(CFGNode(this, 2),
-                   CFGNode(this, idx), result);
-        break;
+                if (virtualInterproceduralControlFlowGraphs) {
+                  ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
+                  Rose_STL_Container<SgFunctionDefinition*> defs;
+                  CallTargetSet::getDefinitionsForExpression(this, &classHierarchy, defs);
+                  foreach (SgFunctionDefinition* def, defs) 
+                    makeEdge(def->cfgForEnd(), CFGNode(this, idx), result);
+                }
+                else
+                  makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
+                break;
       }
       default: ROSE_ASSERT (!"Bad index for SgFunctionCallExp");
     }
@@ -3434,11 +3543,30 @@ SgAggregateInitializer::cfgInEdges(unsigned int idx)
      return result;
    }
 
+unsigned int SgConstructorInitializer::cfgIndexForEnd() const 
+  {
+    return 2;
+  }
+
 std::vector<CFGEdge> SgConstructorInitializer::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
-      case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+      case SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX: {
+                if (virtualInterproceduralControlFlowGraphs) {
+                  SgFunctionDeclaration* decl = get_declaration();
+                  if (decl != NULL) {
+                    SgFunctionDefinition* def = decl->get_definition();
+                    if (def != NULL) {
+                      makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
+                      break;
+                    }
+                  }
+                }
+                makeEdge(CFGNode(this, idx), CFGNode(this, idx + 1), result);
+                break;
+              }
+      case 2: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
       default: ROSE_ASSERT (!"Bad index for SgConstructorInitializer");
     }
     return result;
@@ -3449,6 +3577,20 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx) {
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
       case 1: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
+      case 2: {
+                if (virtualInterproceduralControlFlowGraphs) {
+                  SgFunctionDeclaration* decl = get_declaration();
+                  if (decl != NULL) {
+                    SgFunctionDefinition* def = decl->get_definition();
+                    if (def != NULL) { 
+                      makeEdge(def->cfgForEnd(), CFGNode(this, idx), result);
+                      break;
+                    }
+                  }
+                }
+                makeEdge(CFGNode(this, idx - 1), CFGNode(this, idx), result);
+                break;
+              }
       default: ROSE_ASSERT (!"Bad index for SgConstructorInitializer");
     }
     return result;
@@ -3490,6 +3632,37 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx) {
     ROSE_ASSERT (idx == 0);
     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
     return result;
+  }
+
+unsigned int SgCtorInitializerList::cfgIndexForEnd() const 
+  {
+    return get_ctors().size();
+  }
+
+std::vector<CFGEdge> SgCtorInitializerList::cfgOutEdges(unsigned int idx) {
+     std::vector<CFGEdge> result;
+     //FIXME 
+     return result;
+     if (idx == this->get_ctors().size()) 
+       makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     else if (idx < this->get_ctors().size()) 
+       makeEdge(CFGNode(this, idx), this->get_ctors()[idx]->cfgForBeginning(), result);
+     else 
+       ROSE_ASSERT (!"Bad index for SgCtorInitializerList");
+     return result;
+  }
+
+std::vector<CFGEdge> SgCtorInitializerList::cfgInEdges(unsigned int idx) {
+     std::vector<CFGEdge> result;
+     //FIXME 
+     return result;
+     if (idx == 0) 
+       makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     else if (idx <= this->get_ctors().size()) 
+       makeEdge(this->get_ctors()[idx - 1]->cfgForEnd(), CFGNode(this, idx), result);
+     else 
+       ROSE_ASSERT (!"Bad index for SgCtorInitializerList");
+     return result;
   }
 
 unsigned int

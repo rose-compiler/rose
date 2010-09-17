@@ -214,16 +214,18 @@ It does, however, support \lstinline{break}, \lstinline{continue},
 
 \subsection{Interprocedural control flow analysis}
 
-A limited form of interprocedural control flow analysis is supported.  That
-feature is enabled with a global variable named
-\lstinline{interproceduralControlFlowGraph}.  Setting that variable to
-\lstinline{true} changes the out edges of function calls and the in edges
-of nodes just after function calls when the function references are known.
-Although this causes interprocedural behavior, it also leads to a mismatch
-between the in and out edges between certain pairs of nodes.  Solving this
-problem would require a precomputed call graph for the program, which
-defeats the goal of not requiring any precomputed or cached information to
-traverse the control flow graph.
+In virtual CFGs, interprocedural control flow analysis is disabled by default. It can be enabled
+by setting the parameter \texttt{virtualInteproceduralControlFlowGraphs} in SgNode::cfgInEdges, 
+SgNode::cfgOutEdges, and their subclasses' definitions. Interprocedural edges are labeled 
+with the \texttt{eckInterprocedural} EdgeConditionKind.
+
+In cases where the flow of control cannot be determined statically (calls of virtual
+functions, function pointers, or functors), the interprocedural control flow
+graph contains all possible options. In keeping with the `virtual' nature of
+ROSE's control flow graphs, the set of options is computed on-the-fly;
+therefore, changes to the AST will be reflected in subsequent interaction with
+the control flow graph.  
+
 
 \section{Node filtering}
 
@@ -300,5 +302,19 @@ The example input code is given in
 Fig.~\ref{Tutorial:exampleInputCode_virtualCFG}. Debug and interesting static CFG 
 are shown in Fig.~\ref{tutorial:exampleOutputCodeDebugPDF} and
 Fig.~\ref{tutorial:exampleOutputCodeInterestingPDF}, respectively.
+
+\section{Static, Interprocedural CFGs}
+
+ROSE supports construction of interprocedural control flow graphs using the InterproceduralCFG class, 
+a subclass of StaticCFG. Like the StaticCFG, the InterproceduralCFG can be constructed 
+from any SgNode that affects control flow. If an InterproceduralCFG is constructed from a given node, 
+it will contain all possible paths of execution from that point. 
+Edges between procedures will be labelled with the `eckInterprocedural' 
+{\tt EdgeConditionKind}.
+
+In cases where a function call cannot be statically resolved to a function definition, the 
+InterproceduralCFG includes edges from the call node to all possible definitions, which are
+determined by ROSE's CallGraph.  
+
 
 % \section{Control flow graph on binaries}

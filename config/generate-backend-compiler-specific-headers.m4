@@ -123,6 +123,21 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
         echo "Error in ${srcdir}/config/create_system_headers: nonzero exit code returned to caller error_code = $error_code"
         exit 1
    fi
+
+ # DQ (9/15/2010): Copy the upc.h header file from the config directory to our include-staging/${BACKEND_C_COMPILER}_HEADERS directory.
+ # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accedentally find them), but this should be discussed.
+   echo "Copying UPC header files into ./include-staging/${BACKEND_C_COMPILER}_HEADERS directory ..."
+   cp ${srcdir}/config/upc.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
+   cp ${srcdir}/config/upc_relaxed.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
+   cp ${srcdir}/config/upc_strict.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
+   cp ${srcdir}/config/upc_collective.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
+
+   error_code=$?
+   echo "error_code = $error_code"
+   if test $error_code != 0; then
+        echo "Error in coping of upc.h header file: nonzero exit code returned to caller error_code = $error_code"
+        exit 1
+   fi
 ])
 
 

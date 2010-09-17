@@ -280,12 +280,6 @@ set(roseBinaryFormats_fileList_part0
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeStringTable.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeSymbolTable.C
 
-   ### Simulated Loader Memory Mapping ###
-   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/Loader.C 
-   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/LoaderELF.C 
-   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/LoaderELFObj.C 
-   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/LoaderPE.C 
-
    ### Other Formats (partial implementations and not so well tested) ###
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExecDOS.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExecNE.C 
@@ -293,9 +287,10 @@ set(roseBinaryFormats_fileList_part0
    )
 
 set(roseBinaryLoader_SRC
-   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryLoader/binaryLoader.C
-   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryLoader/BinaryLoaderGeneric.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryLoader/BinaryLoader.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryLoader/BinaryLoaderElf.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryLoader/BinaryLoaderElfObj.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryLoader/BinaryLoaderPe.C
    )
 
 set( roseAsmUnparser_SRC 

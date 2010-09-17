@@ -50,9 +50,12 @@ while (my $filename = $files->next_file) {
       }
     }
     close FILE;
-    if ($nlong && !$verbose) {
-      print $desc unless $nfail++;
-      printf "  %6d (%4d%%) lines in %1s%1s\n", $nlong, 100*$nlong/$nlines, $filename, $warning;
+    if ($nlong) {
+      $nfail++;
+      if (!$verbose) {
+	print $desc if 1==$nfail;
+	printf "  %6d (%4d%%) lines in %1s%1s\n", $nlong, 100*$nlong/$nlines, $filename, $warning;
+      }
     }
   }
 }

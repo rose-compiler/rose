@@ -678,7 +678,9 @@ mangleExpression (const SgExpression* expr)
 bool
 declarationHasTranslationUnitScope (const SgDeclarationStatement* decl)
    {
+     ROSE_ASSERT(decl != NULL);
      SgNode *declParent = decl->get_parent();
+     ROSE_ASSERT(declParent != NULL);
      VariantT declParentV = declParent->variantT();
 
      if (declParentV == V_SgGlobal || declParentV == V_SgNamespaceDefinitionStatement)
