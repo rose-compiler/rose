@@ -7,15 +7,15 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SYSCALLDIR = $(srcdir)/
 
 #Syscalls that can be compiled in a standalone fashion
-SYSCALL_FILES_SA = $(wildcard $(SYSCALLDIR)syscall_sa*c)
+SYSCALL_FILES_SA = $(wildcard $(SYSCALLDIR)/syscall_sa*/*c) $(wildcard $(SYSCALLDIR)syscall_sa*c)
 
 # Syscall tests that need to link with -rt
-SYSCALL_FILES_RT = $(wildcard $(SYSCALLDIR)syscall_rt*c)
+SYSCALL_FILES_RT = $(wildcard $(SYSCALLDIR)/syscall_rt*/*c) $(wildcard $(SYSCALLDIR)syscall_rt*c)
 
 # Syscall tests that needs to link with parse_opts.c, tst_res.c, tst_sig.c, tst_tmpdir.c, rmobj.c
-SYSCALL_FILES_TST = $(wildcard $(SYSCALLDIR)syscall_tst*c)
+SYSCALL_FILES_TST = $(wildcard $(SYSCALLDIR)/syscall_tst*/*c) $(wildcard $(SYSCALLDIR)/syscall_tst*c) 
 
-SYSCALL_FILES_CHK = $(SYSCALL_FILES_SA) 
+SYSCALL_FILES_CHK = $(SYSCALL_FILES_SA)  $(SYSCALL_FILES_TST)
 
 # Do we need this?
 ##noinst_PROGRAMS = $(notdir $(SYSCALL_FILES:%.c:%))
@@ -23,8 +23,8 @@ SYSCALL_FILES_CHK = $(SYSCALL_FILES_SA)
 nullstring :=
 space= $(nullstring) # end of the line
 define compile
-$(basename $(1)): $(addprefix $(SYSCALLDIR), $(1))
-	$(CC) -m32 -o $$@ $(2) $$<  
+$(basename $(notdir $(1))): $(addprefix $(dir $(1)), $(notdir $(1)))
+	$(CC) -m32 -o $$@ $(2) -I$(SYSCALLDIR) $$<  
 endef
 
 define checkFile
@@ -35,11 +35,11 @@ $(addprefix check-, $(1)): $(1)
 endef
 
 
-$(foreach file, $(SYSCALL_FILES_SA), $(eval $(call compile, $(notdir $(file)))))
+$(foreach file, $(SYSCALL_FILES_SA), $(eval $(call compile, $(file))))
 
-$(foreach file, $(SYSCALL_FILES_RT), $(eval $(call compile, $(notdir $(file)), -lrt  ) ))
+$(foreach file, $(SYSCALL_FILES_RT), $(eval $(call compile, $(file), -lrt  ) ))
 
-$(foreach file, $(SYSCALL_FILES_TST), $(eval $(call compile, $(notdir $(file)), $(srcdir)/parse_opts.c $(srcdir)/tst_res.c $(srcdir)/tst_sig.c $(srcdir)/tst_tmpdir.c $(srcdir)/rmobj.c )))
+$(foreach file, $(SYSCALL_FILES_TST), $(eval $(call compile, $(file), $(srcdir)/parse_opts.c $(srcdir)/tst_res.c $(srcdir)/tst_sig.c $(srcdir)/tst_tmpdir.c $(srcdir)/rmobj.c )))
 
 # TESTING CODE BELOW
 
@@ -47,6 +47,7 @@ $(foreach file, $(SYSCALL_FILES_CHK), $(eval $(call checkFile, $(basename $(notd
 
 test_file_permission: syscall_rt.18 
 	mkdir -p tst-file-permission
+	echo $(SYSCALL_FILES_TST)
 	USER=`whoami`
 	../x86sim ./syscall_rt.18 tst $(USER) $(USER) ;
 	rmdir tst-file-permission
