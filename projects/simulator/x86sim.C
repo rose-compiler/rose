@@ -912,6 +912,20 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 12: { /* 0xc, chdir */
+            syscall_enter("chdir", "s");
+	    uint32_t path = arg(0);
+            std::string sys_path = read_string(path);
+
+	    int result = chdir(sys_path.c_str());
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
+
 
         case 13: { /*0xd, time */
             syscall_enter("time", "p");
@@ -938,6 +952,21 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+	case 15: { /* 0xf, chmod */
+            syscall_enter("chmod", "sd");
+	    uint32_t filename = arg(0);
+            std::string sys_filename = read_string(filename);
+	    mode_t mode = arg(1);
+
+	    int result = chmod(sys_filename.c_str(), mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
 
         case 20: { /*0x14, getpid*/
             syscall_enter("getpid", "");
@@ -978,18 +1007,17 @@ EmulationPolicy::emulate_syscall()
         }
 
 	case 39: { /* 0x27, mkdir */
-            syscall_enter("kill", "dd");
+            syscall_enter("mkdir", "sd");
 	    uint32_t pathname = arg(0);
             std::string sys_pathname = read_string(pathname);
 	    mode_t mode = arg(1);
-	    std::cout << "Making dir" << sys_pathname << " in mode " <<mode << std::endl;
 
 	    int result = mkdir(sys_pathname.c_str(), mode);
             if (result == -1) result = -errno;
             writeGPR(x86_gpr_ax, result);
 
             syscall_leave("d");
-
+            break;
 	}
 
         case 41: { /*0x29, dup*/
@@ -1478,6 +1506,24 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 196: { /*0xc4, lstat64*/
+            syscall_enter("lstat64", "sp");
+            uint32_t name_va=arg(0), sb_va=arg(1);
+            std::string name = read_string(name_va);
+            struct stat64 sb;
+            int result = lstat64(name.c_str(), &sb);
+            if (result<0) {
+                result = -errno;
+            } else {
+	        map->write(&sb, sb_va, sizeof sb);
+                //copy_stat64(&sb, sb_va);
+            }
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
+
         case 197: { /*0xc5, fstat64*/
             syscall_enter("fstat64", "dp");
             int fd=arg(0);
@@ -1526,6 +1572,16 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 212: { /*0xd4, chown */
+            syscall_enter("chown", "sdd");
+	    std::string filename = read_string(arg(0));
+            uid_t user = arg(1);
+	    gid_t group = arg(2);
+	    int result = chown(filename.c_str(),user,group);
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
         case 221: { // fcntl
             syscall_enter("fcntl", "ddp");
             uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);
@@ -1870,6 +1926,8 @@ main(int argc, char *argv[])
             /* specimen has exited */
             if (WIFEXITED(e.status)) {
                 fprintf(stderr, "specimen exited with status %d\n", WEXITSTATUS(e.status));
+		if( WEXITSTATUS(e.status) )
+		  exit( WEXITSTATUS(e.status) );
             } else if (WIFSIGNALED(e.status)) {
                 fprintf(stderr, "specimen exited due to signal %d (%s)%s\n",
                         WTERMSIG(e.status), strsignal(WTERMSIG(e.status)), 
