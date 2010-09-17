@@ -657,8 +657,9 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     for (size_t i=0; i<entries.size(); ++i) {
         SgAsmElfSymverNeededAux* aux = entries[i];
-        aux->dump(f, p, i);
-        fprintf(f,   "%s%-*s =                                 0x%04zx 0x%08x 0x%04x %s\n", p, w, "", 
+        char auxname[32];
+        sprintf(auxname, "aux[%zu]", i);
+        fprintf(f,   "%s%-*s =                                 0x%04zx 0x%08x 0x%04x %s\n", p, w, auxname, 
                 aux->get_other(), aux->get_hash(), aux->get_flags(), aux->get_name()->c_str());
     }
     fprintf(f, "\n");
