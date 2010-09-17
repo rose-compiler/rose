@@ -6,8 +6,9 @@
 #include <GraphDotOutput.h>
 #include <VirtualGraphCreate.h>
 #endif
-//#include <sage3basic.h>
 //#include <rose.h>
+#include <sage3basic.h>
+#include "AstAttributeMechanism.h"
 #include "virtualCFG.h"
 #include <map>
 #include <set>
@@ -28,6 +29,7 @@ using VirtualCFG::CFGEdge;
 
 class CFG
 {
+protected:
     SgIncidenceDirectedGraph* graph_;
     std::map<CFGNode, SgGraphNode*> all_nodes_;
     SgNode* start_;
@@ -43,7 +45,7 @@ public:
         buildCFG();
     }
 
-    ~CFG() 
+    virtual ~CFG()
     { clearNodesAndEdges(); }
 
     // Set the start node for graph building. 
@@ -55,16 +57,16 @@ public:
 
 
     // Build CFG according to the 'is_filtered_' flag.
-    void buildCFG()
+    virtual void buildCFG()
     {
         if (is_filtered_) buildFilteredCFG();
         else buildFullCFG();
     }
 
     // Build CFG for debugging.
-    void buildFullCFG();
+    virtual void buildFullCFG();
     // Build filtered CFG which only contains interesting nodes.
-    void buildFilteredCFG();
+    virtual void buildFilteredCFG();
     
 
 #if 0
@@ -93,7 +95,7 @@ public:
         ofile << "}\n";
     }
 
-private:
+protected:
     //void buildCFG(CFGNode n);
     template <class NodeT, class EdgeT>
     void buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored);
@@ -110,8 +112,39 @@ private:
 };
 
 
-// The following are some auxiliary functions, since SgGraphNode cannot provide them.
+// This class is to store index of each node as an attribuite of SgGraphNode.
+class CFGNodeAttribute : public AstAttribute
+{
+    int index_;
+    SgIncidenceDirectedGraph* graph_;
 
+public:
+    CFGNodeAttribute(int idx = 0, SgIncidenceDirectedGraph* graph = NULL) 
+        : index_(idx), graph_(graph) {}
+
+    int getIndex() const { return index_; }
+    void setIndex(int idx) { index_ = idx; }
+
+    const SgIncidenceDirectedGraph* getGraph() const { return graph_; }
+    SgIncidenceDirectedGraph* getGraph() { return graph_; }
+
+    void setGraph(SgIncidenceDirectedGraph* graph)
+    { graph_ = graph; }
+};
+
+template <class EdgeT>
+class CFGEdgeAttribute : public AstAttribute
+{
+    EdgeT edge_;
+public:
+    CFGEdgeAttribute(const EdgeT& e) : edge_(e) {}
+    void setEdge(const EdgeT& e)
+    { edge_ = e; }
+    EdgeT getEdge() const
+    { return edge_; }
+};
+
+// The following are some auxiliary functions, since SgGraphNode cannot provide them.
 std::vector<SgDirectedGraphEdge*> outEdges(SgGraphNode* node);
 std::vector<SgDirectedGraphEdge*> inEdges(SgGraphNode* node);
 

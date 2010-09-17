@@ -1,18 +1,18 @@
 using this memory map for disassembly:
-    va 0x08048000 + 0x00000114 = 0x08048114 r-x at base aaa  + 0x00000000 ELF Load (segment 2)
-    va 0x08048114 + 0x00000013 = 0x08048127 r-- at base aaa  + 0x00000114 .interp
-    va 0x08048127 + 0x00000001 = 0x08048128 r-x at base aaa  + 0x00000127 ELF Load (segment 2)
-    va 0x08048128 + 0x0000013f = 0x08048267 r-- at base aaa  + 0x00000128 .hash+.note.ABI-tag+.dynsym+.dynstr
-    va 0x08048267 + 0x00000001 = 0x08048268 r-x at base aaa  + 0x00000267 ELF Load (segment 2)
-    va 0x08048268 + 0x00000060 = 0x080482c8 r-- at base aaa  + 0x00000268 .rel.plt+.rel.dyn+.gnu.version+....
-    va 0x080482c8 + 0x000002e4 = 0x080485ac r-x at base aaa  + 0x000002c8 .fini+.text+.plt+.init+ELF Load ...
-    va 0x080485ac + 0x00000017 = 0x080485c3 r-- at base aaa  + 0x000005ac .rodata
-    va 0x080485c3 + 0x00000001 = 0x080485c4 r-x at base aaa  + 0x000005c3 .fini+.text+.plt+.init+ELF Load ...
-    va 0x080485c4 + 0x00000004 = 0x080485c8 r-- at base aaa  + 0x000005c4 .eh_frame
-    va 0x080485c8 + 0x00000a38 = 0x08049000 r-x at anonymous + 0x00000000 ELF Load (segment 2)
-    va 0x08049000 + 0x000006d4 = 0x080496d4 rw- at base aaa  + 0x00000000 .data+.got.plt+.got+.dynamic+.jc...
-    va 0x080496d4 + 0x0000092c = 0x0804a000 rw- at anonymous + 0x00000000 .bss+ELF Load (segment 3)
-disassembled 1915 instructions and 0 failures
+    va 0x08048000 + 0x00000114 = 0x08048114 r-x at base aaa  + 0x00000000 i686-test1.O0.bin(LOAD#2+PHDR#0)
+    va 0x08048114 + 0x00000013 = 0x08048127 r-- at base aaa  + 0x00000114 i686-test1.O0.bin(.interp)
+    va 0x08048127 + 0x00000001 = 0x08048128 r-x at base aaa  + 0x00000127 i686-test1.O0.bin(LOAD#2+PHDR#0)
+    va 0x08048128 + 0x0000013f = 0x08048267 r-- at base aaa  + 0x00000128 i686-test1.O0.bin(.dynstr+.dynsym+.hash+.note.ABI-tag)
+    va 0x08048267 + 0x00000001 = 0x08048268 r-x at base aaa  + 0x00000267 i686-test1.O0.bin(LOAD#2+PHDR#0)
+    va 0x08048268 + 0x00000060 = 0x080482c8 r-- at base aaa  + 0x00000268 i686-test1.O0.bin(.gnu.version+.gnu.version_r+.rel.d...
+    va 0x080482c8 + 0x000002e4 = 0x080485ac r-x at base aaa  + 0x000002c8 i686-test1.O0.bin(.fini+.init+.plt+.text+LOAD#2+PHDR#0)
+    va 0x080485ac + 0x00000017 = 0x080485c3 r-- at base aaa  + 0x000005ac i686-test1.O0.bin(.rodata)
+    va 0x080485c3 + 0x00000001 = 0x080485c4 r-x at base aaa  + 0x000005c3 i686-test1.O0.bin(.fini+.init+.plt+.text+LOAD#2+PHDR#0)
+    va 0x080485c4 + 0x00000004 = 0x080485c8 r-- at base aaa  + 0x000005c4 i686-test1.O0.bin(.eh_frame)
+    va 0x080485c8 + 0x00000a38 = 0x08049000 r-x at anonymous + 0x00000000 i686-test1.O0.bin(LOAD#2)
+    va 0x08049000 + 0x000006d4 = 0x080496d4 rw- at base aaa  + 0x00000000 i686-test1.O0.bin(.ctors+.data+.dtors+.dynamic+.got+...
+    va 0x080496d4 + 0x0000092c = 0x0804a000 rw- at anonymous + 0x00000000 i686-test1.O0.bin(.bss+LOAD#3)
+disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 Functions detected in this interpretation:
     Key for reason(s) address is a suspected function:
       E = entry address         C = call target           X = exception frame
@@ -44,6 +44,7 @@ Functions detected in this interpretation:
      20 0x08048558 0x08048560     8/8      ........N..  unknown 0907d8af90186095
      21 0x08048560 0x08048590    19/48     .C..S......  unknown 8e463b9c4de1346f __do_global_ctors_aux
      22 0x08048590 0x080485aa    12/26     .C..S......  unknown f292102830d08b90 _fini
+     23 0x080485aa 0x080485ac     1/2      ........N..  unknown 5a2f3261bed4019c
     --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------
 0x080482c8: ============================ Function (call target, symbol) <_init>
 0x080482c8: 55                |U     |   push   ebp
@@ -353,6 +354,9 @@ Functions detected in this interpretation:
 0x080485a8: c9                |.     |   leave  
 0x080485a9: c3                |.     |   ret    
             (successors:...)
+0x080485aa: ============================ Function (padding) unknown name
+0x080485aa: 00 00             |..    |   add    BYTE PTR ds:[eax], al
+            (successors: 0x080485ac)
 
 
 generating ASCII dump...

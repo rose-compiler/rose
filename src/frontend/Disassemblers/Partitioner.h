@@ -433,6 +433,9 @@ public:
      *  will be merged with the existing function, and the existing function will be given the specified name if it has none. */
     virtual Function* add_function(rose_addr_t entry_va, unsigned reasons, std::string name="");
 
+    /** Looks up a function by address.  Returns the function pointer if found, the null pointer if not found. */
+    virtual Function* find_function(rose_addr_t entry_va);
+
     /** Builds the AST describing all the functions. The return value is an SgAsmBlock node that points to a list of
      *  SgAsmFunctionDeclaration nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
      *  blocks). Any basic blocks that were not assigned to a function by the Partitioner will be added to a function named

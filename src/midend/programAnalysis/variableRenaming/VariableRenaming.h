@@ -1,9 +1,4 @@
-/* 
- * File:   VariableRenaming.h
- * Author: frye5
- *
- * Created on June 15, 2010, 4:12 PM
- */
+//Author: Justin Frye
 
 #ifndef SSAANALYSIS_H
 #define	SSAANALYSIS_H
@@ -236,12 +231,6 @@ private:
      */
     DefUseTable useTable;
 
-    /** This is the table that is populated with all the use information for all the variables
-     * at all the nodes. It is populated during the VarDefUse Traversal and contains the varRefs
-     * to the actual uses of the variables.
-     */
-    DefUseTable useLocTable;
-
     /** Holds a list of the locations that a particular name is first
      * defined.
      *
@@ -462,13 +451,13 @@ public:
 
     void printRenameTable(const VarName& var);
 
-    void printRenameTable(const NodeNumRenameTable& table);
+    static void printRenameTable(const NodeNumRenameTable& table);
 
-    void printRenameTable(const NumNodeRenameTable& table);
+    static void printRenameTable(const NumNodeRenameTable& table);
 
-    void printRenameEntry(const NodeNumRenameEntry& entry);
+    static void printRenameEntry(const NodeNumRenameEntry& entry);
     
-    void printRenameEntry(const NumNodeRenameEntry& entry);
+    static void printRenameEntry(const NumNodeRenameEntry& entry);
 
 
 
@@ -601,6 +590,13 @@ public:
      */
     NumNodeRenameEntry getReachingDefsAtNodeForName(SgNode* node, const VarName& var);
 
+    /** Get the final versions if all variables at the end of the given scope.
+     *
+     * @param bb The scope to get variables for.
+     * @return A table of VarName->(num, defNode) for all variables at the end of the scope. Empty table otherwise.
+     */
+    NumNodeRenameTable getReachingDefsAtScopeEnd(SgScopeStatement* scope);
+
     /** Get the final versions if all variables at the end of the given function.
      *
      * @param node The function to get variables for.
@@ -631,12 +627,21 @@ public:
      */
     NumNodeRenameEntry getReachingDefsAtFunctionStartForName(SgFunctionDefinition* node, const VarName& var);
 
-    /** Get name:num mappings for all uses at this node.
+    /** Get name:num mappings for all uses at this node. For example, if p.x appears,
+     * there will be a use for both p and p.x
      *
      * @param node The node to get uses for.
      * @return A table mapping VarName->(num, defNode) for every varName used at node. Empty table otherwise.
      */
     NumNodeRenameTable getUsesAtNode(SgNode* node);
+
+    /** Get name:num mappings for the original uses at this node. For example, if p.x appears,
+     * there will be a use for p.x, but not for p.
+     *
+     * @param node The node to get uses for.
+     * @return A table mapping VarName->(num, defNode) for every varName used at node. Empty table otherwise.
+     */
+    NumNodeRenameTable getOriginalUsesAtNode(SgNode* node);
 
     /** Get name:num mapping for use of the given variable at this node.
      *

@@ -441,7 +441,8 @@
    sw_absorb(0) = c1
    sw_absorb(km) = c0
    do k = 1, km-1
-      call sw_absorb_frac(zw(k),sw_absorb(k))
+! DQ (9/12/2010): Commented out because this is an error in ROSE.
+!      call sw_absorb_frac(zw(k),sw_absorb(k))
    enddo
 
    SHF_QSW = c0

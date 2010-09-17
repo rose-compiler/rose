@@ -267,6 +267,7 @@ struct BtorFunctionPolicy {
 
   void hlt();
   void interrupt(uint8_t num);
+  void sysenter();
   BtorWordType<64> rdtsc();
 
 

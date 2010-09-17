@@ -538,6 +538,11 @@ namespace SymbolicSemantics {
             cur_state = State(); /*reset entire machine state*/
         }
 
+        /** Called for SYSENTER instruction. */
+        void sysenter() {
+            cur_state = State(); /*reset entire machine state*/
+        }
+
 
 
         /*************************************************************************************************************************

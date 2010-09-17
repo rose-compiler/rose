@@ -3,6 +3,9 @@
 //#include <boost/lexical_cast.hpp>
 #include "CallGraph.h"
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 #ifdef HAVE_SQLITE3
 #include "sqlite3x.h"
 using namespace sqlite3x;
@@ -207,7 +210,7 @@ bool is_functions_types_equal(SgFunctionType* f1, SgFunctionType* f2)
     }// Different number of arguments
   }
 
-  std::cout << "is_functions_types_equal: " << f1->unparseToString() << " " << f2->unparseToString() <<  ( functions_are_equal == true ? " true " : " false " ) << std::endl;
+  //std::cout << "is_functions_types_equal: " << f1->unparseToString() << " " << f2->unparseToString() <<  ( functions_are_equal == true ? " true " : " false " ) << std::endl;
 
   return functions_are_equal;
 };
@@ -356,11 +359,11 @@ CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgP
   // SgUnparse_Info ui;
   // string type1str = fctType->get_mangled( ui ).str();
   string type1str = fctType->get_mangled().str();
-  cout << "Return type of function pointer " << type1str << "\n";
+  // cout << "Return type of function pointer " << type1str << "\n";
 
-  cout << " Line: " << pointerDerefExp->get_file_info()->get_filenameString() <<  
-    " l" << pointerDerefExp->get_file_info()->get_line() << 
-    " c" << pointerDerefExp->get_file_info()->get_col()  << std::endl;
+  // cout << " Line: " << pointerDerefExp->get_file_info()->get_filenameString() <<  
+  //  " l" << pointerDerefExp->get_file_info()->get_line() << 
+  //  " c" << pointerDerefExp->get_file_info()->get_col()  << std::endl;
   // getting all possible functions with the same type
   // DQ (1/31/2006): Changed name and made global function type symbol table a static data member.
   // SgType *ty = Sgfunc_type_table.lookup_function_type( fctType->get_mangled( ui ) );
@@ -380,7 +383,7 @@ CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgP
   vv.push_back(V_SgTemplateInstantiationFunctionDecl);
 
   functionList =  AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(solveFunctionPointerCallsFunctional), fctType), &vv );
-  std::cout << "The size of the list: " << functionList.size() << std::endl;
+  //std::cout << "The size of the list: " << functionList.size() << std::endl;
 
   std::vector<Properties*> returnProperties;
   for( SgFunctionDeclarationPtrList::iterator funcItr = functionList.begin();
@@ -433,8 +436,8 @@ CallTargetSet::solveMemberFunctionPointerCall ( SgExpression *functionExp, Class
   // right side of the expression should have member function type
   memberFunctionType = isSgMemberFunctionType( right->get_type()->findBaseType() );
   ROSE_ASSERT( memberFunctionType );
-  std::cout << "The member function type: " << memberFunctionType->get_mangled().getString() << std::endl;
-  std::cout << "The member function type: " << functionExp->unparseToString() << std::endl;
+  //std::cout << "The member function type: " << memberFunctionType->get_mangled().getString() << std::endl;
+  //std::cout << "The member function type: " << functionExp->unparseToString() << std::endl;
 
   SgDeclarationStatementPtrList &allMembers = classDefinition->get_members();
   for ( SgDeclarationStatementPtrList::iterator it = allMembers.begin(); it != allMembers.end(); it++ )
@@ -544,7 +547,12 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
   // we need the inclass declaration so we can determine if it is a virtual function
   if ( functionDeclarationInClass->get_functionModifier().isVirtual() && polymorphic )
   {
-    SgFunctionDefinition *functionDefinition = memberFunctionDeclaration->get_definition();
+    SgFunctionDefinition *functionDefinition = NULL;
+    SgMemberFunctionDeclaration* memberFunctionDefDeclaration = 
+      isSgMemberFunctionDeclaration(memberFunctionDeclaration->get_definingDeclaration());
+    if (memberFunctionDefDeclaration != NULL) {
+      functionDefinition = memberFunctionDefDeclaration->get_definition();
+    }
 
     // if it's not pure virtual then
     // the current function declaration is a candidate function to be called
@@ -557,8 +565,9 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
       functionList.push_back( fctProps );
 
     }
-    else
-      functionDeclarationInClass->get_file_info()->display( "Pure virtual function found" );
+    else {
+      // functionDeclarationInClass->get_file_info()->display( "Pure virtual function found" );
+    }
 
     // search down the class hierarchy to get
     // all redeclarations of the current member function
@@ -593,21 +602,23 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
       for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
       {
         SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
+        if (cls_mb_decl == NULL) continue;
 
-        f2 = cls_mb_decl->get_mangled_name().str();
-        //if ( f1 == f2 )
-        if ( is_functions_types_equal(isSgMemberFunctionType(memberFunctionDeclaration->get_type()), 
-              isSgMemberFunctionType(cls_mb_decl->get_type())) )
+        ROSE_ASSERT(cls_mb_decl != NULL);
+        SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
+        SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
+        if (funcType1 == NULL || funcType2 == NULL) continue;
+        if ( is_functions_types_equal(funcType1, funcType2) )
         {
           SgMemberFunctionDeclaration *nonDefDecl =
             isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
           SgMemberFunctionDeclaration *defDecl =
             isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
-          ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
-          if ( nonDefDecl )
-            functionDeclarationInClass = nonDefDecl;
-          else
-            functionDeclarationInClass = defDecl;
+
+          // MD 2010/07/08 defDecl might be NULL
+          // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
+          
+          functionDeclarationInClass = (nonDefDecl) ? nonDefDecl : defDecl;
           ROSE_ASSERT ( functionDeclarationInClass );
           if ( !( functionDeclarationInClass->get_functionModifier().isPureVirtual() ) )
           {
@@ -684,8 +695,301 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
   return functionList; 
 }
 
+std::vector<Properties*>
+CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit) { 
+  std::vector<Properties*> props;
+  SgMemberFunctionDeclaration* decl = sgCtorInit->get_declaration();
+  if (decl != NULL) {
+    SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+    if (defDecl != NULL) {
+      props.push_back(new Properties(defDecl));
+    }
+  }
+  return props;
+}
+
+//
+// Add the declaration for functionCallExp to functionList. In the case of 
+// function pointers and virtual functions, append the set of declarations
+// to functionList. 
+void 
+getPropertiesForSgConstructorInitializer(SgConstructorInitializer* sgCtorInit, 
+                         ClassHierarchyWrapper* classHierarchy,
+                         Rose_STL_Container<Properties *>& functionList) {
+  // currently, all constructor initializers can be handled by solveConstructorInitializer
+  const std::vector<Properties*>& props = CallTargetSet::solveConstructorInitializer(sgCtorInit);
+  foreach (Properties* prop, props) {
+    functionList.push_back(prop); //TODO faster way to append vectors?
+  }
+}
+
+// Add the declaration for functionCallExp to functionList. In the case of 
+// function pointers and virtual functions, append the set of declarations
+// to functionList. 
+void 
+getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp, 
+                         ClassHierarchyWrapper* classHierarchy,
+                         Rose_STL_Container<Properties *>& functionList) {
+  SgExpression* functionExp = sgFunCallExp->get_function();
+  ROSE_ASSERT ( functionExp != NULL );
+
+  switch ( functionExp->variantT() )
+  {
+    case V_SgArrowStarOp:
+    case V_SgDotStarOp:
+      {
+        std::vector<Properties*> fD =
+          CallTargetSet::solveMemberFunctionPointerCall( functionExp, classHierarchy );
+        for (std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++ )
+        {
+          //			 ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
+          ROSE_ASSERT((*it)->functionType ); functionList.push_back( *it );
+          //                         if( (*it)-> )
+          //                        std::cout << "Found member function Pointer Call " << (*it)->unparseToString() << std::endl;
+        }
+      }
+      break;
+    case V_SgDotExp:
+    case V_SgArrowExp:
+      {
+        SgMemberFunctionDeclaration *memberFunctionDeclaration = NULL;
+        SgClassType *crtClass = NULL;
+        ROSE_ASSERT ( isSgBinaryOp( functionExp ) );
+
+        SgExpression *leftSide = isSgBinaryOp( functionExp )->get_lhs_operand();
+        SgType *leftType = leftSide->get_type()->findBaseType();
+        crtClass = isSgClassType( leftType );
+
+        if (SgMemberFunctionRefExp *memberFunctionRefExp =
+            isSgMemberFunctionRefExp( isSgBinaryOp( functionExp )->get_rhs_operand() ) )
+        {
+
+          //AS(122805) In the case of a constructor initializer it is possible that a call to a constructor initializer may
+          //return a type corresponding to an operator some-type() declared within the constructed class. An example is:
+          //   struct Foo {
+          //      operator  bool () const
+          //          { return true; }
+          //   };
+          //
+          //   struct Bar {
+          //      bool foobar()
+          //          { return Foo (); }
+          //   };
+          //where the call to the constructor of the class Foo will cause a call to the operator bool(), where bool corresponds
+          //type of the member function foobar declared within Bar.
 
 
+          if(isSgConstructorInitializer(leftSide)!= NULL)
+          {
+            SgClassDeclaration* constInit = isSgConstructorInitializer(leftSide)->get_class_decl();
+
+            //ROSE_ASSERT(constInit!=NULL);
+            if(constInit)
+              crtClass = constInit->get_type();
+            else{
+              //AS(010306) A compiler constructed SgConstructorInitializer may wrap a function call which return a class type.
+              //In an dot or arrow expression this returned class type may be used as an expression left hand side. To handle
+              //this case the returned class type must be extracted from the expression list. An example demonstrating this is:
+              //class Vector3d {
+              //   public:
+              //    Vector3d(){};
+              //    Vector3d(const Vector3d &vector3d){};
+              //   Vector3d     cross() const
+              //        { return Vector3d();};
+              //   void   GetZ(){};
+              //};
+              //void foo(){
+              //  Vector3d vn1;
+              //  (vn1.cross()).GetZ();
+              //}
+
+              SgExprListExp* expLst = isSgExprListExp(isSgConstructorInitializer(leftSide)->get_args());
+              ROSE_ASSERT(expLst!=NULL);
+              ROSE_ASSERT(expLst->get_expressions().size()==1);
+              SgClassType* lhsClassType = isSgClassType(isSgFunctionCallExp(*expLst->get_expressions().begin())->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE) );
+              //                        std::cout << "expLst:" << expLst->unparseToString() << " " << (*expLst->get_expressions().begin())->get_type(SgType::STRIP_TYPEDEF_TYPE)->class_name()  << std::endl;
+              crtClass = lhsClassType;
+            }
+
+            ROSE_ASSERT(crtClass!=NULL);
+          }
+
+          memberFunctionDeclaration =
+            isSgMemberFunctionDeclaration( memberFunctionRefExp->get_symbol()->get_declaration() );
+          ROSE_ASSERT ( memberFunctionDeclaration && crtClass );
+
+          //Set function to first non-defining declaration
+          SgMemberFunctionDeclaration *nonDefDecl =
+            isSgMemberFunctionDeclaration( memberFunctionDeclaration->get_firstNondefiningDeclaration() );
+          if ( nonDefDecl )
+            memberFunctionDeclaration = nonDefDecl;
+
+          //Construct the Properties
+
+          Properties* fctProps = createEmptyProperty(memberFunctionDeclaration, memberFunctionDeclaration->get_type()->findBaseType());
+
+          ROSE_ASSERT ( isSgFunctionDeclaration( fctProps->functionDeclaration ) );
+          ROSE_ASSERT ( fctProps->functionType );
+
+          if ( !( isSgThisExp( leftSide ) || !( memberFunctionDeclaration->get_functionModifier().isVirtual() ) ) )
+          {
+            fctProps->isPolymorphic = true;
+            fctProps->invokedClass = isSgClassDeclaration( crtClass->get_declaration()->get_definingDeclaration() )->get_definition();
+            ROSE_ASSERT(fctProps->invokedClass!=NULL);
+            //cout << "SET polymorphic on class " << fctProps->invokedClass->get_qualified_name().getString()
+            //  << "\t" << fctProps << "\n";
+          }
+
+          //functionList.push_back( fctProps );
+
+          // returns the list of all in-class declarations of functions potentially called
+          // ( may be several because of polymorphism )
+          bool polymorphic = false;
+          if ( !isSgThisExp( leftSide ) )
+            polymorphic = true;
+
+          std::vector<Properties*> fD =
+            CallTargetSet::solveMemberFunctionCall( crtClass, classHierarchy,
+                memberFunctionDeclaration, polymorphic );
+          for ( std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++ )
+          {
+            ROSE_ASSERT((*it)->functionType ); 
+            functionList.push_back( *it );
+            //std::cout << "Found member function Call " << (*it)->unparseToString() << std::endl;
+          }
+        }
+      }
+      break;
+    case V_SgPointerDerefExp:
+      {
+        std::vector<Properties*> fD =
+          CallTargetSet::solveFunctionPointerCall( isSgPointerDerefExp( functionExp ), SageInterface::getProject());
+        for ( std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++ )
+        {
+          //                       ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
+          functionList.push_back( *it );
+        }
+        /*
+        //FIXME: Is the next sentence needed?
+        Properties* fctProps = createEmptyProperty( NULL, 
+        isSgFunctionType( isSgPointerDerefExp( functionExp )->get_type()->findBaseType() )  );
+
+        fctProps->isPointer = true;
+        ROSE_ASSERT ( fctProps->functionType );
+
+        functionList.push_back( fctProps );
+        */
+      }
+      break;
+    case V_SgMemberFunctionRefExp:
+    case V_SgFunctionRefExp:
+      {
+        SgFunctionDeclaration *fctDecl =
+          isSgFunctionRefExp( functionExp ) ?
+          isSgFunctionDeclaration( isSgFunctionRefExp( functionExp )->get_symbol()->get_declaration() )
+          : isSgFunctionDeclaration( isSgMemberFunctionRefExp( functionExp )->get_symbol()->get_declaration() )
+          ;
+        ROSE_ASSERT ( fctDecl );
+        SgFunctionDeclaration *nonDefDecl =
+          isSgFunctionDeclaration( fctDecl->get_firstNondefiningDeclaration() );
+
+        //Constrution Function Props
+        if ( nonDefDecl )
+          fctDecl = nonDefDecl;
+
+        Properties* fctProps = createEmptyProperty(fctDecl,
+            fctDecl->get_type()->findBaseType() );
+
+        ROSE_ASSERT ( isSgFunctionDeclaration( fctProps->functionDeclaration ) );
+        ROSE_ASSERT(fctProps->functionType ); 
+        ROSE_ASSERT(fctProps->functionDeclaration != NULL);
+        functionList.push_back( fctProps );
+      }
+      break;
+    default:
+      {
+        cout << "Error, unexpected type of functionRefExp: " << functionExp->sage_class_name() << "!!!\n";
+        ROSE_ASSERT ( false );
+      }
+  }
+}
+// Add the declaration for functionCallExp to functionList. In the case of 
+// function pointers and virtual functions, append the set of declarations
+// to functionList. 
+void 
+CallTargetSet::getPropertiesForExpression(SgExpression* sgexp, 
+                         ClassHierarchyWrapper* classHierarchy,
+                         Rose_STL_Container<Properties *>& functionList) {
+  switch( sgexp->variantT() ) {
+    case V_SgFunctionCallExp: {
+            getPropertiesForSgFunctionCallExp(isSgFunctionCallExp(sgexp), 
+                                              classHierarchy, 
+                                              functionList);
+            break;
+         }
+    case V_SgConstructorInitializer: {
+            getPropertiesForSgConstructorInitializer(isSgConstructorInitializer(sgexp), 
+                                                     classHierarchy, 
+                                                     functionList);
+            break;
+         }
+    default: {
+            std::cerr << "Error: cannot determine Properties for " << sgexp->class_name() << std::endl; 
+            break;
+         }
+  }
+}
+
+void 
+CallTargetSet::getDefinitionsForExpression(SgExpression* sgexp, 
+                         ClassHierarchyWrapper* classHierarchy,
+                         Rose_STL_Container<SgFunctionDefinition*>& defList) {
+  Rose_STL_Container<Properties*> props;
+  CallTargetSet::getPropertiesForExpression(sgexp, classHierarchy, props);
+  foreach (Properties* prop, props) {
+    SgFunctionDeclaration* candidateDecl = prop->functionDeclaration;
+    ROSE_ASSERT(candidateDecl);
+    candidateDecl = isSgFunctionDeclaration(candidateDecl->get_definingDeclaration());
+    if (candidateDecl != NULL) {
+      SgFunctionDefinition* candidateDef = candidateDecl->get_definition();
+      if (candidateDef != NULL) {
+        defList.push_back(candidateDef);
+      }
+    }
+  }
+}
+
+void 
+CallTargetSet::getExpressionsForDefinition(SgFunctionDefinition* targetDef, 
+                                           ClassHierarchyWrapper* classHierarchy,
+                                           Rose_STL_Container<SgExpression*>& exps) {
+  VariantVector vv(V_SgFunctionCallExp);
+  Rose_STL_Container<SgNode*> callCandidates = NodeQuery::queryMemoryPool(vv);
+  foreach (SgNode* callCandidate, callCandidates) {
+    SgFunctionCallExp* callexp = isSgFunctionCallExp(callCandidate);
+    Rose_STL_Container<SgFunctionDefinition*> candidateDefs;
+    CallTargetSet::getDefinitionsForExpression(callexp, classHierarchy, candidateDefs);
+    foreach (SgFunctionDefinition* candidateDef, candidateDefs) {
+      if (candidateDef == targetDef) {
+        exps.push_back(callexp);
+        break;
+      }
+    }
+  }
+  VariantVector vv2(V_SgConstructorInitializer);
+  Rose_STL_Container<SgNode*> ctorCandidates = NodeQuery::queryMemoryPool(vv2);
+  foreach (SgNode* ctorCandidate, ctorCandidates) {
+    SgConstructorInitializer* ctorInit = isSgConstructorInitializer(ctorCandidate);
+    Rose_STL_Container<SgFunctionDefinition*> candidateDefs;
+    CallTargetSet::getDefinitionsForExpression(ctorInit, classHierarchy, candidateDefs);
+    foreach (SgFunctionDefinition* candidateDef, candidateDefs) {
+      if (candidateDef == targetDef) {
+        exps.push_back(ctorInit);
+        break;
+      }
+    }
+  }
+}
 
 FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     SgProject *project, ClassHierarchyWrapper *classHierarchy )
@@ -723,218 +1027,21 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     ROSE_ASSERT ( defDecl );
     ROSE_ASSERT ( functionDefinition != NULL );
     hasDefinition = true;
-    Rose_STL_Container<SgNode*> functionCallExpList;
-    functionCallExpList = NodeQuery::querySubTree ( functionDefinition, V_SgFunctionCallExp );
 
-    // printf ("functionCallExpList.size() = %zu \n",functionCallExpList.size());
+    Rose_STL_Container<SgNode*> functionCallExpList = 
+      NodeQuery::querySubTree(functionDefinition, V_SgFunctionCallExp);
+    foreach (SgNode* functionCallExp, functionCallExpList) {
+      CallTargetSet::getPropertiesForExpression(isSgFunctionCallExp(functionCallExp), 
+                                                classHierarchy, 
+                                                functionList);
+    }
 
-    // list<SgFunctionDeclaration*> functionList;
-    Rose_STL_Container<SgNode*>::iterator i = functionCallExpList.begin();
-
-    // for all functions getting called in the body of the current function
-    // we need to get their declarations, or the set of declarations for
-    // function pointers and virtual functions
-    while (i != functionCallExpList.end())
-    {
-
-      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(*i);
-      ROSE_ASSERT ( functionCallExp != NULL );
-
-      SgExpression* functionExp = functionCallExp->get_function();
-      ROSE_ASSERT ( functionExp != NULL );
-
-      switch ( functionExp->variantT() )
-      {
-        case V_SgArrowStarOp:
-        case V_SgDotStarOp:
-          {
-
-            std::vector<Properties*> fD =
-              CallTargetSet::solveMemberFunctionPointerCall( functionExp, classHierarchy );
-            for (std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++ )
-            {
-              //			 ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
-
-
-              ROSE_ASSERT((*it)->functionType ); functionList.push_back( *it );
-              //                         if( (*it)-> )
-              //                        std::cout << "Found member function Pointer Call " << (*it)->unparseToString() << std::endl;
-            }
-          }
-          break;
-        case V_SgDotExp:
-        case V_SgArrowExp:
-          {
-            SgMemberFunctionDeclaration *memberFunctionDeclaration = NULL;
-            SgClassType *crtClass = NULL;
-            ROSE_ASSERT ( isSgBinaryOp( functionExp ) );
-
-            SgExpression *leftSide = isSgBinaryOp( functionExp )->get_lhs_operand();
-            SgType *leftType = leftSide->get_type()->findBaseType();
-            crtClass = isSgClassType( leftType );
-
-            if (SgMemberFunctionRefExp *memberFunctionRefExp =
-              isSgMemberFunctionRefExp( isSgBinaryOp( functionExp )->get_rhs_operand() ) )
-            {
-
-              //AS(122805) In the case of a constructor initializer it is possible that a call to a constructor initializer may
-              //return a type corresponding to an operator some-type() declared within the constructed class. An example is:
-              //   struct Foo {
-              //      operator  bool () const
-              //          { return true; }
-              //   };
-              //
-              //   struct Bar {
-              //      bool foobar()
-              //          { return Foo (); }
-              //   };
-              //where the call to the constructor of the class Foo will cause a call to the operator bool(), where bool corresponds
-              //type of the member function foobar declared within Bar.
-
-
-
-              if(isSgConstructorInitializer(leftSide)!= NULL)
-              {
-                SgClassDeclaration* constInit = isSgConstructorInitializer(leftSide)->get_class_decl();
-
-                //ROSE_ASSERT(constInit!=NULL);
-                if(constInit)
-                  crtClass = constInit->get_type();
-                else{
-                  //AS(010306) A compiler constructed SgConstructorInitializer may wrap a function call which return a class type.
-                  //In an dot or arrow expression this returned class type may be used as an expression left hand side. To handle
-                  //this case the returned class type must be extracted from the expression list. An example demonstrating this is:
-                  //class Vector3d {
-                  //   public:
-                  //    Vector3d(){};
-                  //    Vector3d(const Vector3d &vector3d){};
-                  //   Vector3d     cross() const
-                  //        { return Vector3d();};
-                  //   void   GetZ(){};
-                  //};
-                  //void foo(){
-                  //  Vector3d vn1;
-                  //  (vn1.cross()).GetZ();
-                  //}
-
-                  SgExprListExp* expLst = isSgExprListExp(isSgConstructorInitializer(leftSide)->get_args());
-                  ROSE_ASSERT(expLst!=NULL);
-                  ROSE_ASSERT(expLst->get_expressions().size()==1);
-                  SgClassType* lhsClassType = isSgClassType(isSgFunctionCallExp(*expLst->get_expressions().begin())->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE) );
-                  //                        std::cout << "expLst:" << expLst->unparseToString() << " " << (*expLst->get_expressions().begin())->get_type(SgType::STRIP_TYPEDEF_TYPE)->class_name()  << std::endl;
-                  crtClass = lhsClassType;
-                }
-
-
-                ROSE_ASSERT(crtClass!=NULL);
-              }
-
-              memberFunctionDeclaration =
-                isSgMemberFunctionDeclaration( memberFunctionRefExp->get_symbol()->get_declaration() );
-              ROSE_ASSERT ( memberFunctionDeclaration && crtClass );
-
-              //Set function to first non-defining declaration
-              SgMemberFunctionDeclaration *nonDefDecl =
-                isSgMemberFunctionDeclaration( memberFunctionDeclaration->get_firstNondefiningDeclaration() );
-              if ( nonDefDecl )
-                memberFunctionDeclaration = nonDefDecl;
-
-
-              //Construct the Properties
-
-              Properties* fctProps = createEmptyProperty(memberFunctionDeclaration, memberFunctionDeclaration->get_type()->findBaseType());
-
-              ROSE_ASSERT ( isSgFunctionDeclaration( fctProps->functionDeclaration ) );
-              ROSE_ASSERT ( fctProps->functionType );
-
-              if ( !( isSgThisExp( leftSide ) || !( memberFunctionDeclaration->get_functionModifier().isVirtual() ) ) )
-              {
-                fctProps->isPolymorphic = true;
-                fctProps->invokedClass = isSgClassDeclaration( crtClass->get_declaration()->get_definingDeclaration() )->get_definition();
-                ROSE_ASSERT(fctProps->invokedClass!=NULL);
-                cout << "SET polymorphic on class " << fctProps->invokedClass->get_qualified_name().getString()
-                  << "\t" << fctProps << "\n";
-              }
-
-              functionList.push_back( fctProps );
-
-              // returns the list of all in-class declarations of functions potentially called
-              // ( may be several because of polymorphism )
-              bool polymorphic = false;
-              if ( !isSgThisExp( leftSide ) )
-                polymorphic = true;
-
-              std::vector<Properties*> fD =
-                CallTargetSet::solveMemberFunctionCall( crtClass, classHierarchy,
-                    memberFunctionDeclaration, polymorphic );
-              for ( std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++ )
-              {
-                ROSE_ASSERT((*it)->functionType ); 
-                functionList.push_back( *it );
-
-                //                       std::cout << "Found member function Call " << (*it)->unparseToString() << std::endl;
-
-              }
-
-            }
-
-          }
-          break;
-        case V_SgPointerDerefExp:
-          {
-            std::vector<Properties*> fD =
-              CallTargetSet::solveFunctionPointerCall( isSgPointerDerefExp( functionExp ), project );
-            for ( std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++ )
-            {
-              //                       ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
-              functionList.push_back( *it );
-            }
-/*
-            //FIXME: Is the next sentence needed?
-            Properties* fctProps = createEmptyProperty( NULL, 
-                isSgFunctionType( isSgPointerDerefExp( functionExp )->get_type()->findBaseType() )  );
-
-            fctProps->isPointer = true;
-            ROSE_ASSERT ( fctProps->functionType );
-
-            functionList.push_back( fctProps );
-            */
-          }
-          break;
-        case V_SgMemberFunctionRefExp:
-        case V_SgFunctionRefExp:
-          {
-            SgFunctionDeclaration *fctDecl =
-              isSgFunctionRefExp( functionExp ) ?
-              isSgFunctionDeclaration( isSgFunctionRefExp( functionExp )->get_symbol()->get_declaration() )
-              : isSgFunctionDeclaration( isSgMemberFunctionRefExp( functionExp )->get_symbol()->get_declaration() )
-              ;
-            ROSE_ASSERT ( fctDecl );
-            SgFunctionDeclaration *nonDefDecl =
-              isSgFunctionDeclaration( fctDecl->get_firstNondefiningDeclaration() );
-
-            //Constrution Function Props
-            if ( nonDefDecl )
-              fctDecl = nonDefDecl;
-
-            Properties* fctProps = createEmptyProperty(fctDecl,
-                fctDecl->get_type()->findBaseType() );
-
-            ROSE_ASSERT ( isSgFunctionDeclaration( fctProps->functionDeclaration ) );
-            ROSE_ASSERT(fctProps->functionType ); 
-            ROSE_ASSERT(fctProps->functionDeclaration != NULL);
-            functionList.push_back( fctProps );
-          }
-          break;
-        default:
-          {
-            cout << "Error, unexpected type of functionRefExp: " << functionExp->sage_class_name() << "!!!\n";
-            ROSE_ASSERT ( false );
-          }
-      }
-      //ROSE_ASSERT ( !( fctProps->functionDeclaration ) || isSgFunctionDeclaration( fctProps->functionDeclaration ) );
-      //ROSE_ASSERT ( isSgType( fctProps->functionType ) );
-      i++;
+    Rose_STL_Container<SgNode*> ctorInitList = 
+      NodeQuery::querySubTree(functionDefinition, V_SgConstructorInitializer);
+    foreach (SgNode* ctorInit, ctorInitList) {
+      CallTargetSet::getPropertiesForExpression(isSgConstructorInitializer(ctorInit), 
+                                                classHierarchy, 
+                                                functionList);
     }
   }
 }

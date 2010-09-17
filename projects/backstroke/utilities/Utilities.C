@@ -12,7 +12,7 @@ using namespace SageBuilder;
  * @param baseName the word to be included in the variable names. */
 string backstroke_util::GenerateUniqueVariableName(SgScopeStatement* scope, std::string baseName)
 {
-	//TODO: This implementation tends to generate numbers that are unnecessarily high.
+	//This implementation tends to generate numbers that are unnecessarily high.
 	static int counter = 0;
 
 	string name;
@@ -140,6 +140,41 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> backstroke_util::Creat
 	}
 
 	return make_tuple(tempVarDeclaration, assignment, varRefExpression);
+}
+
+
+vector<SgExpression*> backstroke_util::findVarReferences(VariableRenaming::VarName var, SgNode* root)
+{
+	class SearchTraversal : public AstTopDownProcessing<bool>
+	{
+	public:
+		VariableRenaming::VarName desiredVar;
+		vector<SgExpression*> result;
+
+		virtual bool evaluateInheritedAttribute(SgNode* node, bool isParentReference)
+		{
+			if (isParentReference)
+			{
+				return true;
+			}
+
+			if (VariableRenaming::getVarName(node) == desiredVar)
+			{
+				ROSE_ASSERT(isSgExpression(node)); //The variable name should always be attached to an expression
+				result.push_back(isSgExpression(node));
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	};
+
+	SearchTraversal traversal;
+	traversal.desiredVar = var;
+	traversal.traverse(root, false);
+	return traversal.result;
 }
 
 #define ISZERO(value, ValType) \
@@ -526,4 +561,24 @@ void backstroke_util::removeUselessParen(SgNode* root)
                 isSgValueExp(exp))
             exp->set_need_paren(false);
     }
+}
+
+SgBasicBlock* backstroke_util::getFunctionBody(SgFunctionDeclaration* func_decl)
+{
+	SgFunctionDeclaration* func_defining_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
+	if (func_defining_decl)
+		return func_defining_decl->get_definition()->get_body();
+	else
+		return NULL;
+}
+
+SgStatement* backstroke_util::getEnclosingIfBody(SgNode* node)
+{
+	while (node)
+	{
+		if (SgIfStmt* if_stmt = isSgIfStmt(node->get_parent()))
+			if (node == if_stmt->get_true_body() || node == if_stmt->get_false_body())
+				return isSgStatement(node);
+		node = node->get_parent();
+	}
 }

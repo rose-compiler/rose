@@ -1,7 +1,11 @@
 #ifndef ROSE_MEMORY_MAP_H
 #define ROSE_MEMORY_MAP_H
 
+/* Increase ADDR if necessary to make it a multiple of ALMNT */
+#define ALIGN_UP(ADDR,ALMNT)       ((((ADDR)+(ALMNT)-1)/(ALMNT))*(ALMNT))
 
+/* Decrease ADDR if necessary to make it a multiple of ALMNT */
+#define ALIGN_DN(ADDR,ALMNT)       (((ADDR)/(ALMNT))*(ALMNT))
 
 /** A MemoryMap is an efficient mapping from virtual addresses to source bytes.  The source bytes can be bytes of a file,
  *  bytes stored in some memory buffer, or bytes initialized to zero and are described by the MemoryMap::MapElement class.
@@ -16,6 +20,15 @@ public:
         MM_PROT_EXEC    = 0x4,          /**< Pages can be executed. */
         MM_PROT_NONE    = 0x0           /**< Pages cannot be accessed. */
     };
+
+    /** Data structure for memory map names.  Often, memory map element names used for debugging are of the form
+     *  \code
+     *   FILE1(NAME1a+NAME1b+...)+FILE2(NAME2a+NAME2b+...)+...
+     *  \endcode
+     *
+     *  where the file names are all unique. We'd like to be able to operate on these name strings in order to do things like
+     *  merging two elements. This data type facilitates these kinds of operations. */
+    typedef std::map<std::string, std::set<std::string> > NamePairings;
     
     /** A MemoryMap is composed of zero or more MapElements. Each map element describes a mapping from contiguous virtual
      *  addresses to contiguous file/memory bytes. A map element can point to a buffer supplied by the caller or a buffer
@@ -142,6 +155,15 @@ public:
         const std::string &get_name() const {
             return name;
         }
+
+        /** Parses the name assigned to this map element. If the name is of the form described for the NamePairings data type
+         *  then load the pairings into the @p pairings argument.  Whatever is not parsed is returned.
+         *  argument. */
+        std::string get_name_pairings(NamePairings*) const;
+        
+        /** Sets the name of this map element from the supplied pairings. Two additional strings can be concatenated into the
+         *  result. */
+        MapElement& set_name(const NamePairings&, const std::string &s1="", const std::string &s2="");
 
 #ifdef _MSC_VER
         /* CH (4/15/2010): Make < operator be its member function instead of non-member function outside to avoid template
@@ -292,6 +314,10 @@ public:
 
     MemoryMap() : sorted(false) {}
 
+    /** Clear the entire memory map by erasing all addresses that are defined. Erasing an address range frees reference
+     *  counted anonymous mappings but not user-provided buffers. */
+    void clear();
+
     /** Insert the specified map element. Adjacent elements are coalesced when possible (see MapElement::merge()). */
     void insert(MapElement elmt);
 
@@ -309,6 +335,11 @@ public:
      *  exception if the search fails to find free space. */
     rose_addr_t find_free(rose_addr_t start_va, size_t size, rose_addr_t mem_alignment=1) const;
 
+    /** Finds the highest area of unmapped addresses.  The return value is the starting address of the highest contiguous
+     *  region of unmapped address space that starts at or below the specified maximum.  If no unmapped region exists then a
+     *  MemoryMap::NoFreeSpace exception is thrown. */
+    rose_addr_t find_last_free(rose_addr_t max=(rose_addr_t)(-1)) const;
+
     /** Returns the currently defined map elements sorted by virtual address. */
     const std::vector<MapElement> &get_elements() const;
 
@@ -319,24 +350,22 @@ public:
      *  virtual address space to copy begins at @p start_va and continues for @p desired bytes. The data is copied into the
      *  beginning of the @p dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer
      *  than the number of  bytes desired if the mapping does not include part of the address space requested or part of the
-     *  address space does not have MM_PROT_READ permission (or the specified permissions). The @p dst_buf bytes that do not correpond
-     *  to mapped virtual addresses will be zero filled so that @p desired bytes are always initialized. */
+     *  address space does not have MM_PROT_READ permission (or the specified permissions). The @p dst_buf bytes that do not
+     *  correpond to mapped virtual addresses will be zero filled so that @p desired bytes are always initialized. */
     size_t read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
 
     /** Copies data from a supplied buffer into the specified virtual addresses.  If part of the destination address space is
      *  not mapped, then all bytes up to that location are copied and no additional bytes are copied.  The write is also
-     *  aborted early if a map element is marked read-only or if its protection lacks the MM_PROT_WRITE bit (or specified bits).  The
-     *  return value is the number of bytes copied. */
+     *  aborted early if a map element is marked read-only or if its protection lacks the MM_PROT_WRITE bit (or specified
+     *  bits).  The return value is the number of bytes copied. */
     size_t write(const void *src_buf, rose_addr_t start_va, size_t size, unsigned req_perms=MM_PROT_WRITE) const;
 
     /** Returns just the virtual address extents for a memory map. */
     ExtentMap va_extents() const;
 
-    /** Returns the highest mapped address. */
-    rose_addr_t highest_va() const;
-
-    /** Sets protection bits for the specified address range.  The entire address range must already be mapped. */
-    void mprotect(const MapElement &elmt);
+    /** Sets protection bits for the specified address range.  The entire address range must already be mapped, but if @p
+     *  relax is set then no exception is thrown if part of the range is not mapped (that part is just ignored). */
+    void mprotect(const MapElement &elmt, bool relax=false);
 
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output. */

@@ -44,6 +44,7 @@ class rose_rva_t {
 		rose_rva_t(rose_addr_t rva) : addr(rva), section(0) {} //implicit
 		rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section) : addr(rva), section(0) {set_section(section);}
 		rose_addr_t get_rva() const;
+		rose_addr_t get_va() const;
 		rose_addr_t get_rel() const;	/* returns address relative to linked section */
 		rose_addr_t get_rel(SgAsmGenericSection*); /*returns address relative to specified section*/
 		rose_rva_t& set_rva(rose_addr_t rva);
@@ -189,10 +190,6 @@ class mutex
 
 //! declaration of variable to control internal output of debugging information (default = 0)
 extern int SAGE_DEBUG;
-
-// JJW (1/19/2007): Added global variable for whether virtual CFG is
-// interprocedural
-extern bool interproceduralControlFlowGraph;
 
 // Introduce a way to change from std::list to std::vector easily as a test to improve performance of traversals.
 // This is now moved to ROSE/util/commandLineProcessing/setup.h so that all of ROSE will see it.
@@ -1820,9 +1817,11 @@ HEADER_START
         // virtual std::string unparseToString(SgUnparse_Info* info = NULL) const;
         // Jeremiah (11/9/2007): The default value is not recognized by gdb.
            virtual std::string unparseToString(SgUnparse_Info* info) const;
-           inline std::string unparseToString() const {
-              return this->unparseToString(NULL);
-            }
+
+        // DQ (9/6/2010): Move this to the source file (we want to eliminate function definitions in header files).
+        // The existence of this function addresses a bug in gdb (see comment from Jeremiah (11/9/2007) above).
+        // inline std::string unparseToString() const { return this->unparseToString(NULL); }
+           std::string unparseToString() const;
 
        //! This function unparses the AST node (including comments and white space)
           std::string unparseToCompleteString();
@@ -2018,10 +2017,10 @@ HEADER_START
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
 
       /*! \brief Find the out edges of a CFG node -- internal version. */
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index = false);
 
       /*! \brief Find the in edges of a CFG node -- internal version. */
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index = false);
 #if 0
       /*! \brief Find the out edges of a CFG node from a static CFG -- internal version. */
           virtual std::vector<SgDirectedGraphEdge*> cfgOutEdges(unsigned int index, StaticCFG::CFG* cfg)
@@ -2125,10 +2124,6 @@ SOURCE_START
 
 // declaration of variable to control internal output of debuging information
 int SAGE_DEBUG = 0;  // default value is zero
-
-// JJW (1/19/2007): Added global variable for whether virtual CFG is
-// interprocedural
-bool interproceduralControlFlowGraph = false;
 
 // ###############################
 // Start of source code for SgNode
@@ -2625,6 +2620,13 @@ $CLASSNAME::unparseToString(SgUnparse_Info* info) const
   // default settings).
      std::string outputString = globalUnparseToString(this,info);
      return outputString;
+   }
+
+std::string
+$CLASSNAME::unparseToString() const
+   {
+  // DQ (9/6/2010): Move this to the source file (we want to eliminate function definitions in header files).
+     return this->unparseToString(NULL);
    }
 
 std::string

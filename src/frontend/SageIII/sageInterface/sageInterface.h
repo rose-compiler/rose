@@ -370,11 +370,9 @@ struct hash_nodeptr
   void clearMangledNameCache (SgGlobal * globalScope);
   void resetMangledNameCache (SgGlobal * globalScope);
   std::string getMangledNameFromCache (SgNode * astNode);
-  std::string addMangledNameToCache (SgNode * astNode,
-                                     const std::string & mangledName);
+  std::string addMangledNameToCache (SgNode * astNode, const std::string & mangledName);
 
-  SgDeclarationStatement * getNonInstantiatonDeclarationForClass
-    (SgTemplateInstantiationMemberFunctionDecl * memberFunctionInstantiation);
+  SgDeclarationStatement * getNonInstantiatonDeclarationForClass (SgTemplateInstantiationMemberFunctionDecl * memberFunctionInstantiation);
 
   //! a better version for SgVariableDeclaration::set_baseTypeDefininingDeclaration(), handling all side effects automatically
   //! Used to have a struct declaration embedded into a variable declaration
@@ -383,26 +381,20 @@ struct hash_nodeptr
   // DQ (10/14/2006): This function tests the AST to see if for a non-defining declaration, the 
   // bool declarationPreceedsDefinition ( SgClassDeclaration* classNonDefiningDeclaration, SgClassDeclaration* classDefiningDeclaration );
   //! Check if a defining declaration comes before of after the non-defining declaration.
-  bool declarationPreceedsDefinition (SgDeclarationStatement *
-				      nonDefiningDeclaration,
-				      SgDeclarationStatement *
-				      definingDeclaration);
+  bool declarationPreceedsDefinition (SgDeclarationStatement *nonDefiningDeclaration, SgDeclarationStatement *definingDeclaration);
 
   // DQ (10/19/2006): Function calls have interesting context dependent rules to determine if 
   // they are output with a global qualifier or not.  Were this is true we have to avoid global 
   // qualifiers, since the function's scope has not been defined.  This is an example of where
   // qualification of function names in function calls are context dependent; an interesting
   // example of where the C++ language is not friendly to source-to-source processing :-).
-  bool
-    functionCallExpressionPreceedsDeclarationWhichAssociatesScope
-    (SgFunctionCallExp * functionCall);
+  bool functionCallExpressionPreceedsDeclarationWhichAssociatesScope (SgFunctionCallExp * functionCall);
 
  /*! \brief Compute the intersection set for two ASTs.
 
      This is part of a test done by the copy function to compute those IR nodes in the copy that still reference the original AST.
   */
-    std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy,
-                                             SgCopyHelp * help = NULL);
+    std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy, SgCopyHelp * help = NULL);
   //! Deep copy an arbitrary subtree
    SgNode* deepCopyNode (const SgNode* subtree); 
 

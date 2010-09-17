@@ -7,6 +7,9 @@
 #include "pluggableReverser/statementProcessor.h"
 #include "pluggableReverser/straightlineStatementProcessor.h"
 #include "pluggableReverser/akgulStyleExpressionProcessor.h"
+#include "pluggableReverser/returnStatementHandler.h"
+#include "pluggableReverser/variableDeclarationHandler.h"
+
 
 int main(int argc, char** argv)
 {
@@ -29,21 +32,24 @@ int main(int argc, char** argv)
 	backstroke_norm::normalizeEvent(functionDeclaration);
 
 	//Create a reverser for this function
-        VariableRenaming var_renaming(project);
-        var_renaming.run();
+	VariableRenaming var_renaming(project);
+	var_renaming.run();
 	EventProcessor event_processor(NULL, &var_renaming);
 
-	//Add the processors in order of priority. The lower ones will be used only if higher ones do not produce results
-	//Expression processors:
-        event_processor.addExpressionProcessor(new ConstructiveExpressionProcessor);
-        event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
-	event_processor.addExpressionProcessor(new AkgulStyleExpressionProcessor);
-        event_processor.addExpressionProcessor(new StoreAndRestoreExpressionProcessor);
+	//Add the handlers in order of priority. The lower ones will be used only if higher ones do not produce results
+	//Expression handlers:
+	event_processor.addExpressionHandler(new IdentityExpressionHandler);
+	event_processor.addExpressionHandler(new ConstructiveExpressionHandler);
+	event_processor.addExpressionHandler(new AkgulStyleExpressionProcessor);
+	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
 
-	//Statement processors
-	event_processor.addStatementProcessor(new ReturnStatementProcessor);
-	event_processor.addStatementProcessor(new StraightlineStatementProcessor);
+	//Statement handler
+	event_processor.addStatementHandler(new ReturnStatementHandler);
+	event_processor.addStatementHandler(new VariableDeclarationHandler);
+	event_processor.addStatementHandler(new StraightlineStatementProcessor);
+	event_processor.addStatementHandler(new NullStatementHandler);
 
+	//Variable value extraction handlers
 	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
 	event_processor.addVariableValueRestorer(new ExtractFromUseRestorer);
 
@@ -74,5 +80,5 @@ int main(int argc, char** argv)
 	//Unparse
 	SageInterface::fixVariableReferences(globalScope);
 	AstTests::runAllTests(project);
-	backend(project);
+	return backend(project);
 }

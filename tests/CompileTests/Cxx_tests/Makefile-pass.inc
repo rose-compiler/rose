@@ -601,7 +601,6 @@ test2007_52.C \
 test2007_53.C \
 test2007_55.C \
 test2007_57.C \
-test2007_58.C \
 test2007_59.C \
 test2007_62.C \
 test2007_70.C \

@@ -1,7 +1,6 @@
 #ifndef __FORTRANPARSERSTATE_H_
 #define __FORTRANPARSERSTATE_H_
 
-
 #include "fortran_support.h"
 
 #define astScopeStack              (*(FortranParserState::getCurrentScopeStack()))
@@ -21,6 +20,9 @@
 #define astFunctionAttributeStack  (*(FortranParserState::getCurrentFunctionAttributeStack()))
 #define astIncludeStack            (*(FortranParserState::getCurrentIncludeStack()))
 
+// DQ (9/11/2010): Added support for lists of unresolved functions.
+#define astUnresolvedFunctionsList (*(FortranParserState::getCurrentUnresolvedFunctionsList()))
+
 
 using std::string;
 using std::map;
@@ -30,7 +32,9 @@ using std::vector;
 
 
 class FortranParserState
-  {
+   {
+  // This class supports a stack of the collections of stacks required to represent 
+  // the state within the trnslation of the OFP actions to build the ROSE AST.
 
      private:
        static stack<FortranParserState*>  statesStack;
@@ -53,21 +57,24 @@ class FortranParserState
        AstNameListType         currFunctionAttributeStack;
        vector<string>          currAstIncludeStack;
 
+    // DQ (9/11/2010): Added support for lists of unresolved functions.
+       list<SgStatement*>      currUnresolvedFunctionsList;
+
        void clearStacks();
 
      public:
 
      // DQ (7/30/2010): Added empty function to if there are entries in the stack
         static bool empty()
-         { return statesStack.empty(); }
+          { return statesStack.empty(); }
 
-     // DQ (7/30/2010): Added assertions to all the functions below.
-       // following functions will called by macro in ofp-rose connection files
+    // DQ (7/30/2010): Added assertions to all the functions below.
+    // following functions will called by macro in ofp-rose connection files
        static  list<SgScopeStatement*>  *getCurrentScopeStack()
-        {
-          ROSE_ASSERT(statesStack.empty() == false);
-          return &(statesStack.top()->currScopeStack);
-        }
+          {
+            ROSE_ASSERT(statesStack.empty() == false);
+            return &(statesStack.top()->currScopeStack);
+          }
 
        static  list<SgExpression*>      *getCurrentExpressionStack()
           {
@@ -159,15 +166,21 @@ class FortranParserState
             return &(statesStack.top()->currAstIncludeStack);
           }
 
-       //Constructor:
-       //   push "this" object of FortranParserState into the "statesStack"
+    // DQ (9/11/2010): Added support for lists of unresolved functions.
+       static  list<SgStatement*>  *getCurrentUnresolvedFunctionsList()
+        {
+          ROSE_ASSERT(statesStack.empty() == false);
+          return &(statesStack.top()->currUnresolvedFunctionsList);
+        }
+
+    // Constructor:
+    //   push "this" object of FortranParserState into the "statesStack"
        FortranParserState();
 
        
-       // Destructor: 
-       //   Pop out the stack, clean all the member stacks 
+    // Destructor: 
+    //   Pop out the stack, clean all the member stacks 
        ~FortranParserState();
-
-  };
+   };
 
 #endif /*__FORTRANPARSERSTATE_H_*/

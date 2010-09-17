@@ -7,8 +7,8 @@
 static const char *usage = "\
 Synopsis:\n\
   %s [SWITCHES] CONTAINER_FILE\n\
-  %s [SWITCHES] --raw=ENTRY RAW_FILE ADDRESS ...\n\
-  %s [SWITCHES] --raw=ENTRY MEMORY_MAP.index\n\
+  %s [SWITCHES] --raw=ENTRIES RAW_FILE ADDRESS ...\n\
+  %s [SWITCHES] --raw=ENTRIES MEMORY_MAP.index\n\
 \n\
 Description:\n\
   Disassembles machine instructions from a container such as ELF or PE, or from\n\
@@ -34,6 +34,11 @@ Description:\n\
     Causes the disassembler to spew (or not) diagnostics to standard error.\n\
     This is intended for ROSE developers. The default is to not spew.\n\
 \n\
+  --debug-loader\n\
+  --no-debug-loader\n\
+    Causes the loader/linker to spew (or not) diagnostics to standard error.\n\
+    This is intended for ROSE developers. The default is to not spew.\n\
+\n\
   --debug-partitioner\n\
   --no-debug-partitioner\n\
     Causes the instruction partitioner to spew (or not) diagnostics to standard\n\
@@ -41,8 +46,8 @@ Description:\n\
 \n\
   --debug\n\
   --no-debug\n\
-    Convenience switch that turns on (or off) the --debug-disassembler and\n\
-    --debug-partitioner switches.\n\
+    Convenience switch that turns on (or off) the --debug-disassembler,\n\
+    --debug-loader, and --debug-partitioner switches.\n\
 \n\
   --disassemble\n\
     Call the disassembler explicitly, using the instruction search flags\n\
@@ -70,15 +75,20 @@ Description:\n\
     Suppresses (or not) the instruction listing that is normally emitted to the\n\
     standard output stream.  The default is to not suppress.\n\
 \n\
-  --raw=ENTRY\n\
+  --raw=ENTRIES\n\
     Indicates that the specified file(s) contains raw machine instructions\n\
-    rather than a binary container such as ELF or PE.  The non-switch,\n\
-    positional arguments are either the name of an index file that was\n\
-    created by MemoryMap::dump(), or pairs of file names and virtual\n\
+    rather than a binary container such as ELF or PE.  The ENTRIES argument\n\
+    is a comma-separated list of one or more virtual addresses that will be\n\
+    used to seed the recursive disassembler and instruction partitioner. The\n\
+    non-switch, positional arguments are either the name of an index file that\n\
+    was created by MemoryMap::dump() (see documentation for MemoryMap::load()\n\
+    for details about the file format), or pairs of file names and virtual\n\
     addresses where the file contents are to be mapped.  The virtual addresses\n\
     can be suffixed with the letters 'r' (read), 'w' (write), and/or 'x'\n\
     (execute) to specify mapping permissions other than the default read and\n\
-    execute permission.\n\
+    execute permission.  By default, ROSE will only disassemble instructions\n\
+    appearing in parts of the memory address space containing execute\n\
+    permission.\n\
 \n\
   --reassemble\n\
   --no-reassemble\n\
@@ -135,6 +145,7 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #include <sys/mman.h>
 
 #include "AsmUnparser.h"
+#include "BinaryLoader.h"
 #include "VirtualMachineSemantics.h"
 #include "SMTSolver.h"
 #include "bincfg.h"
@@ -605,7 +616,7 @@ int
 main(int argc, char *argv[]) 
 {
     bool show_bad = false;
-    bool do_debug_disassembler = false, do_debug_partitioner=false;
+    bool do_debug_disassembler=false, do_debug_partitioner=false, do_debug_loader=false;
     bool do_reassemble = false;
     bool do_ast_dot = false;
     bool do_cfg_dot = false;
@@ -614,12 +625,11 @@ main(int argc, char *argv[])
     bool do_show_extents = false;
     bool do_show_coverage = false;
     bool do_show_functions = false;
-    bool do_raw = false;
     bool do_rose_help = false;
     bool do_call_disassembler = false;
     bool do_show_hashes = false;
 
-    rose_addr_t raw_entry_va = 0;
+    Disassembler::AddressSet raw_entries;
     MemoryMap raw_map;
     unsigned disassembler_search = Disassembler::SEARCH_DEFAULT;
     unsigned partitioner_search = SgAsmFunctionDeclaration::FUNC_DEFAULT;
@@ -630,12 +640,13 @@ main(int argc, char *argv[])
      * understand so they can be handled by ROSE if frontend() is called.
      *------------------------------------------------------------------------------------------------------------------------*/
     char **new_argv = (char**)calloc(argc+2, sizeof(char*));
-    int new_argc=0;
+    int new_argc=0, nposargs=0;
+    char *arg0 = strrchr(argv[0], '/') ? strrchr(argv[0], '/')+1 : argv[0];
     new_argv[new_argc++] = argv[0];
     new_argv[new_argc++] = strdup("-rose:read_executable_file_format_only");
     for (int i=1; i<argc; i++) {
         if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
-            fprintf(stderr, "%s: search-related switches have been moved into ROSE's -rose:disassembler_search switch\n", argv[0]);
+            fprintf(stderr, "%s: search-related switches have been moved into ROSE's -rose:disassembler_search switch\n", arg0);
             exit(1);
         } else if (!strcmp(argv[i], "--ast-dot")) {             /* generate GraphViz dot files for the AST */
             do_ast_dot = true;
@@ -660,13 +671,13 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[i], "-?") ||
                    !strcmp(argv[i], "-help") ||
                    !strcmp(argv[i], "--help")) {
-            printf(usage, argv[0], argv[0], argv[0]);
+            printf(usage, arg0, arg0, arg0);
             exit(0);
         } else if (!strcmp(argv[i], "--rose-help")) {
             new_argv[new_argc++] = strdup("--help");
             do_rose_help = true;
         } else if (!strcmp(argv[i], "--skip-dos")) {
-            fprintf(stderr, "%s: --skip-dos has been replaced by --no-dos, which is now the default.\n", argv[0]);
+            fprintf(stderr, "%s: --skip-dos has been replaced by --no-dos, which is now the default.\n", arg0);
             do_dos = false;
         } else if (!strcmp(argv[i], "--show-bad")) {            /* show details about failed disassembly or assembly */
             show_bad = true;
@@ -692,33 +703,41 @@ main(int argc, char *argv[])
             do_reassemble = true;
         } else if (!strcmp(argv[i], "--no-reassemble")) {
             do_reassemble = false;
-        } else if (!strcmp(argv[i], "--raw")) {                 /* disassemble a naked buffer of instructions; arg is entry va */
-            ROSE_ASSERT(i+1<argc);
-            do_raw = true;
-            char *rest;
-            raw_entry_va = strtoull(argv[++i], &rest, 0);
-            if (rest && *rest) {
-                fprintf(stderr, "%s: raw entry address expected after --raw switch", argv[0]);
+        } else if (!strcmp(argv[i], "--raw") || !strncmp(argv[i], "--raw=", 6)) {
+            char *s = !strncmp(argv[i], "--raw=", 6) ? argv[i]+6 : (i+1<argc ? argv[++i] : NULL);
+            if (!s || !*s) {
+                fprintf(stderr, "%s: raw entry address(es) expceted for --raw switch\n", arg0);
                 exit(1);
             }
-        } else if (!strncmp(argv[i], "--raw=", 6)) {
-            do_raw = true;
-            char *rest;
-            raw_entry_va = strtoull(argv[i]+6, &rest, 0);
-            if (!argv[i][6] || (rest && *rest)) {
-                fprintf(stderr, "%s: usage --raw=ENTRY_ADDR\n",argv[0]);
-                exit(1);
+            while (*s) {
+                char *rest;
+                errno = 0;
+                rose_addr_t raw_entry_va = strtoull(s, &rest, 0);
+                if (rest==s || errno!=0) {
+                    fprintf(stderr, "%s: raw entry address expected at: %s\n", arg0, s);
+                    exit(0);
+                }
+                raw_entries.insert(raw_entry_va);
+                if (','==*rest) rest++;
+                while (isspace(*rest)) rest++;
+                s = rest;
             }
         } else if (!strcmp(argv[i], "--debug")) {               /* dump lots of debugging information */
             do_debug_disassembler = true;
+            do_debug_loader = true;
             do_debug_partitioner = true;
         } else if (!strcmp(argv[i], "--no-debug")) {
             do_debug_disassembler = false;
+            do_debug_loader = false;
             do_debug_partitioner = false;
         } else if (!strcmp(argv[i], "--debug-disassembler")) {
             do_debug_disassembler = true;
         } else if (!strcmp(argv[i], "--no-debug-disassembler")) {
             do_debug_disassembler = false;
+        } else if (!strcmp(argv[i], "--debug-loader")) {
+            do_debug_loader = true;
+        } else if (!strcmp(argv[i], "--no-debug-loader")) {
+            do_debug_loader = false;
         } else if (!strcmp(argv[i], "--debug-partitioner")) {
             do_debug_partitioner = true;
         } else if (!strcmp(argv[i], "--no-debug-partitioner")) {
@@ -767,7 +786,8 @@ main(int argc, char *argv[])
             new_argv[new_argc++] = argv[i];
         } else if (argv[i][0]=='-') {
             new_argv[new_argc++] = argv[i];
-        } else if (do_raw) {
+        } else if (!raw_entries.empty()) {
+            nposargs++;
             char *raw_filename = argv[i];
             char *extension = strrchr(raw_filename, '.');
             if (extension && !strcmp(extension, ".index")) {
@@ -784,14 +804,14 @@ main(int argc, char *argv[])
                  * combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when no suffix is present
                  * is 'rx'. */
                 if (++i>=argc) {
-                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
+                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", arg0, raw_filename);
                     exit(1);
                 }
                 char *suffix;
                 errno = 0;
                 rose_addr_t start_va = strtoull(argv[i], &suffix, 0);
                 if (suffix==argv[i] || errno) {
-                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", argv[0], raw_filename);
+                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", arg0, raw_filename);
                     exit(1);
                 }
                 unsigned perm = 0;
@@ -800,18 +820,18 @@ main(int argc, char *argv[])
                         case 'r': perm |= MemoryMap::MM_PROT_READ;  break;
                         case 'w': perm |= MemoryMap::MM_PROT_WRITE; break;
                         case 'x': perm |= MemoryMap::MM_PROT_EXEC;  break;
-                        default: fprintf(stderr, "%s: invalid map permissions: %s\n", argv[0], suffix-1); exit(1);
+                        default: fprintf(stderr, "%s: invalid map permissions: %s\n", arg0, suffix-1); exit(1);
                     }
                 }
                 if (!perm) perm = MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC;
                 int fd = open(raw_filename, O_RDONLY);
                 if (fd<0) {
-                    fprintf(stderr, "%s: cannot open %s: %s\n", argv[0], raw_filename, strerror(errno));
+                    fprintf(stderr, "%s: cannot open %s: %s\n", arg0, raw_filename, strerror(errno));
                     exit(1);
                 }
                 struct stat sb;
                 if (fstat(fd, &sb)<0) {
-                    fprintf(stderr, "%s: cannot stat %s: %s\n", argv[0], raw_filename, strerror(errno));
+                    fprintf(stderr, "%s: cannot stat %s: %s\n", arg0, raw_filename, strerror(errno));
                     exit(1);
                 }
                 uint8_t *buffer = new uint8_t[sb.st_size];
@@ -823,22 +843,22 @@ main(int argc, char *argv[])
                 raw_map.insert(melmt);
             }
         } else {
+            nposargs++;
             new_argv[new_argc++] = argv[i];
         }
     }
+    if (0==nposargs) {
+        fprintf(stderr, "%s: incorrect usage; see --help for details.\n", arg0);
+        exit(1);
+    }
 
     /*------------------------------------------------------------------------------------------------------------------------
-     * Choose a disassembler
+     * Parse, link, remap, relocate
      *------------------------------------------------------------------------------------------------------------------------*/
 
-    Disassembler *disassembler = NULL;
-    SgAsmInterpretation *interp = NULL;         /* Interpretation to disassemble if not disassembling a raw buffer */
     SgProject *project = NULL;                  /* Project if not disassembling a raw buffer */
-
-    if (do_raw && !do_rose_help) {
-        /* We don't have any information about the architecture, so assume the ROSE defaults (i386) */
-        disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()))->clone();
-    } else {
+    SgAsmInterpretation *interp = NULL;         /* Interpretation to disassemble if not disassembling a raw buffer */
+    if (raw_entries.empty()) {
         /* Choose a disassembler based on the SgAsmInterpretation that we're disassembling */
         project = frontend(new_argc, new_argv); /*parse container but do not disassemble yet*/
         std::vector<SgAsmInterpretation*> interps
@@ -849,6 +869,28 @@ main(int argc, char *argv[])
         ROSE_ASSERT(!interps.empty());
         interp = do_dos ? interps.front() : interps.back();
 
+        /* Clear the interpretation's memory map because frontend() may have already done the mapping. We want to re-do the
+         * mapping here because we may want to see debugging output, etc. */
+        if (interp->get_map()!=NULL)
+            interp->get_map()->clear();
+
+        BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
+        if (do_debug_loader) loader->set_debug(stderr);
+        //loader->set_perform_dynamic_linking(true);
+        //loader->add_directory("/lib32");
+        loader->load(interp);
+    }
+
+
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Choose a disassembler
+     *------------------------------------------------------------------------------------------------------------------------*/
+
+    Disassembler *disassembler = NULL;
+    if (!raw_entries.empty() && !do_rose_help) {
+        /* We don't have any information about the architecture, so assume the ROSE defaults (i386) */
+        disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()))->clone();
+    } else {
         disassembler = Disassembler::lookup(interp)->clone();
     }
 
@@ -893,24 +935,20 @@ main(int argc, char *argv[])
     MemoryMap *map = NULL;
     Disassembler::AddressSet worklist;
 
-    if (do_raw) {
+    if (!raw_entries.empty()) {
          /* We computed the memory map when we processed command-line arguments. */
         map = &raw_map;
-        worklist.insert(raw_entry_va);
-        partitioner->add_function(raw_entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, "entry_function");
+        for (Disassembler::AddressSet::iterator i=raw_entries.begin(); i!=raw_entries.end(); i++) {
+            worklist.insert(*i);
+            partitioner->add_function(*i, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, "entry_function");
+        }
     } else {
-        /* See Disassembler::disassembleInterp() for how to construct a memory map from an interpretation. */
-        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-        map = new MemoryMap();
-        for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
-            /* Load appropriate sections into the memory map */
-            Loader *loader = Loader::find_loader(*hi);
-            if (disassembler->get_search() & Disassembler::SEARCH_NONEXE) {
-                loader->map_all_sections(map, (*hi)->get_sections()->get_sections());
-            } else {
-                loader->map_code_sections(map, (*hi)->get_sections()->get_sections());
-            }
+        map = interp->get_map();
+        assert(map!=NULL);
 
+
+        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+        for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
             /* Seed disassembler work list with entry addresses */
             SgRVAList entry_rvalist = (*hi)->get_entry_rvas();
             for (size_t i=0; i<entry_rvalist.size(); i++) {
