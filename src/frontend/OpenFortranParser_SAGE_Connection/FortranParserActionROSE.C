@@ -2932,9 +2932,35 @@ void c_action_ac_implied_do()
   // DQ (5/4/2008): Moving back to using astExpressionStack from astInitializerStack
   // The second entry in the astExpressionStack should be the SgVarRefExp
      ROSE_ASSERT(astExpressionStack.empty() == false);
+
+     printf ("What kind of expression is this: astExpressionStack.front() = %s \n",astExpressionStack.front()->class_name().c_str());
+
+  // DQ (9/15/2010): Added support for more general form of implied do loop.
      SgVarRefExp* doLoopVar = isSgVarRefExp(astExpressionStack.front());
+  // astExpressionStack.pop_front();
+     if (doLoopVar != NULL)
+        {
+          astExpressionStack.pop_front();
+        }
+       else
+        {
+       // This is not a simple variable (could be a function of the do loop index, in which case 
+       // we have to find the variable inside our use the function reference expression directly).
+          SgFunctionCallExp* functionExpression = isSgFunctionCallExp(astExpressionStack.front());
+          if (functionExpression != NULL)
+             {
+            // This is the case of rtest2010_49.f90
+            // Dig out the variable reference used for the doLoopVar
+               doLoopVar = NULL;
+               ROSE_ASSERT(doLoopVar != NULL);
+             }
+            else
+             {
+               printf ("We have not hnadled this case previously, need an example tests code before this can be fixed! \n");
+               ROSE_ASSERT(false);
+             }
+        }
      ROSE_ASSERT(doLoopVar != NULL);
-     astExpressionStack.pop_front();
   // setSourcePosition(doLoopVar);
 #else
   // However, we want to treat index values (base and bound) for implcit do-loop 
@@ -10186,7 +10212,7 @@ void c_action_if_then_stmt( Token_t *label, Token_t *id, Token_t *ifKeyword, Tok
 
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R803 c_action_if_then_stmt()");
 #endif
@@ -17716,7 +17742,7 @@ void c_action_end_of_stmt(Token_t * eos)
   // test2007_19.f90) then do so.
   // build_implicit_program_statement_if_required();
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1238 c_action_end_of_stmt()");
 #endif
