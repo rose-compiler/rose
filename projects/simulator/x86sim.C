@@ -989,7 +989,7 @@ EmulationPolicy::emulate_syscall()
             writeGPR(x86_gpr_ax, result);
 
             syscall_leave("d");
-
+            break;
 	}
 
         case 41: { /*0x29, dup*/
@@ -1463,7 +1463,8 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 195:       /*0xc3, stat64*/
-        case 196: {     /*0xc4, lstat64*/
+        case 196:       /*0xc4, lstat64*/
+        case 197: {     /*0xc5, fstat64*/
             /* We need to be a bit careful with xstat64 calls. The C library invokes one of the xstat64 system calls, which
              * writes a kernel data structure into a temporary buffer, and which the C library then massages into a struct
              * stat64. When simulating, we don't want the C library to monkey with the data returned from the system call
@@ -1471,51 +1472,109 @@ EmulationPolicy::emulate_syscall()
              *
              * Therefore, we will invoke the system call directly, bypassing the C library, and then copy the result into
              * specimen memory.  Fortunately, the kernel data structure that's returned has the same layout on AMD64 (which is
-             * probably how ROSE is running) and i386 (which is probably how the specimen is running). */
-            syscall_enter(195==callno?"stat64":"lstat64", "sp");
-            uint32_t name_va=arg(0), sb_va=arg(1);
-            std::string name = read_string(name_va);
-
-            /* For some unknown reason, if we invoke the system call with buf allocated on the stack we'll get -EFAULT (-14)
+             * probably how ROSE is running) and i386 (which is probably how the specimen is running).
+             *
+             * For some unknown reason, if we invoke the system call with buf allocated on the stack we'll get -EFAULT (-14)
              * as the result; if we allocate it statically there's no problem.  Also, just in case the size is different than
-             * we think, we'll allocate a guard area on either side of the kernel_stat64 and check that the syscall didn't
-             * write into them.  We use one on either side because we're not sure how GCC will lay out the memory, but they'll
-             * probably be contiguous in any case. */
-            static uint8_t guard0[96];                  /* multiple of 8 */
-            static uint8_t kernel_stat64[96];
-            static uint8_t guard1[96];                  /* same size as guard0 */
-            memset(guard0, 0xaa, sizeof guard0);
-            memset(guard1, 0xaa, sizeof guard1);
-            int result = 0xdeadbeef;
-            asm volatile("int $0x80"
-                         : "=a"(result)
-                         : "0"(callno), "b"(name.c_str()), "c"(kernel_stat64)
-                         : "memory");
-            ROSE_ASSERT(0==memcmp(guard0, guard1, sizeof guard0));
-            map->write(kernel_stat64, sb_va, sizeof kernel_stat64);
-            writeGPR(x86_gpr_ax, result);
-            syscall_leave("d");
-            break;
-        }
+             * we think, we'll allocate a guard area above the kernel_stat and check that the syscall didn't write into it. */
+            if (195==callno || 196==callno) {
+                syscall_enter(195==callno?"stat64":"lstat64", "sp");
+            } else {
+                syscall_enter("fstat64", "dp");
+            }
 
-        case 197: { /*0xc5, fstat64*/
-            /* See notes for syscall 195 (stat64) */
-            syscall_enter("fstat64", "dp");
-            int fd=arg(0);
-            uint32_t sb_va=arg(1);
+#ifdef SYS_stat64       /* x86sim must be running on i386 */
+            ROSE_ASSERT(4==sizeof(long));
+            int host_callno = 195==callno ? SYS_stat64 : (196==callno ? SYS_lstat64 : SYS_fstat64);
+            static const size_t kernel_stat_size = 96;
+#else                   /* x86sim must be running on amd64 */
+            ROSE_ASSERT(8==sizeof(long));
+            int host_callno = 195==callno ? SYS_stat : (196==callno ? SYS_lstat : SYS_fstat);
+            static const size_t kernel_stat_size = 144;
+#endif
 
-            static uint8_t guard0[96];                  /* multiple of 8 */
-            static uint8_t kernel_stat64[96];
-            static uint8_t guard1[96];                  /* same size as guard0 */
-            memset(guard0, 0xaa, sizeof guard0);
-            memset(guard1, 0xaa, sizeof guard1);
+            static uint8_t kernel_stat[kernel_stat_size+100];
+            memset(kernel_stat, 0xff, sizeof kernel_stat);
             int result = 0xdeadbeef;
-            asm volatile("int $0x80"
-                         : "=a"(result)
-                         : "0"(callno), "b"(fd), "c"(kernel_stat64)
-                         : "memory");
-            ROSE_ASSERT(0==memcmp(guard0, guard1, sizeof guard0));
-            map->write(kernel_stat64, sb_va, sizeof kernel_stat64);
+
+#if 1
+            if (195==callno || 196==callno) {
+                std::string name = read_string(arg(0));
+                result = syscall(host_callno, (unsigned long)name.c_str(), (unsigned long)kernel_stat);
+            } else {
+                result = syscall(host_callno, (unsigned long)arg(0), (unsigned long)kernel_stat);
+            }
+            if (-1==result)
+                result = -errno;
+#else
+            if (195==callno || 196==callno) {
+                std::string name = read_string(arg(0));
+                asm volatile("int $0x80"
+                             : "=a"(result)
+                             : "0"(host_callno), "b"(name.c_str()), "c"(kernel_stat64)
+                             : "memory");
+            } else {
+                asm volatile("int $0x80"
+                             : "=a"(result)
+                             : "0"(host_callno), "b"(arg(0)), "c"(kernel_stat64)
+                             : "memory");
+            }
+#endif
+            /* Check for overflow */
+            for (size_t i=kernel_stat_size; i<sizeof kernel_stat; i++)
+                ROSE_ASSERT(0xff==kernel_stat[i]);
+
+            if (result>=0) {
+                /* Check that the kernel initialized as much data as we thought it should.  We initialized the kernel_stat to
+                 * all 0xff bytes before making the system call.  The last data member of kernel_stat is either an 8-byte
+                 * inode (i386) or zero (amd64), which in either case the high order byte is almost certainly not 0xff. */
+                ROSE_ASSERT(0xff!=kernel_stat[kernel_stat_size-1]);
+                
+                /* On amd64 we need to translate the 64-bit struct to a 32-bit struct. We do it in place. */
+                if (144==kernel_stat_size) {
+                    if (debug && trace_syscall)
+                        fprintf(debug, "[translating 64-bit to 32-bit kernel struct stat]\n");
+                    /* quadword-0 (st_dev)                <-- (st_dev)                          */
+                    /* quadword-1 (0xffffffff, st_ino[4]) <-- (ino)           postponed to qw-B */
+                    /* quadword-2 (mode[4], nlink[4])        <-- (nlink)                        */
+                    memmove(kernel_stat+20, kernel_stat+24, 4);                 /*nlink*/
+                    memmove(kernel_stat+16, kernel_stat+24, 4);                 /*mode*/
+                    /* quadword-3 (user[4],group[4])         <-- (mode[4],user[4])              */
+                    memmove(kernel_stat+20, kernel_stat+28, 4);                 /*user*/
+                    memmove(kernel_stat+24, kernel_stat+32, 4);                 /*group*/
+                    /* quadword-4 (zero?)                    <-- (group[4],zero[4])             */
+                    memset(kernel_stat+32, 0, 8);                               /*zero*/
+                    /* quadword-5 (0xffffffff,size[lo4])     <-- (zero?)                        */
+                    memset(kernel_stat+40, 0xff, 4);                            /*0xfffffff*/
+                    memmove(kernel_stat+44, kernel_stat+48, 4);                 /*size[lo4]*/
+                    /* quadword-6 (size[hi4],blksize)        <-- (size)                         */
+                    memmove(kernel_stat+48, kernel_stat+52, 4);                 /*size[hi4]*/
+                    memmove(kernel_stat+52, kernel_stat+56, 4);                 /*blksize*/
+                    /* quadword-7 (nblocks)                  <-- (blksize)                      */
+                    memmove(kernel_stat+56, kernel_stat+64, 8);                 /*nblocks*/
+                    /* quadword-8 (atim.sec[4],atim.nsec[4]) <-- (nblocks)                      */
+                    memmove(kernel_stat+64, kernel_stat+72, 4);                 /*atim.sec*/
+                    memmove(kernel_stat+68, kernel_stat+80, 4);                 /*atim.nsec*/
+                    /* quadword-9 (mtim.sec[4],mtim.nsec[4]) <-- (atim.sec)                     */
+                    memmove(kernel_stat+72, kernel_stat+88, 4);                 /*mtim.sec*/
+                    memmove(kernel_stat+76, kernel_stat+96, 4);                 /*mtim.nsec*/
+                    /* quadword-A (ctim.sec[4],ctim.nsec[4]) <-- (atim.nsec)                    */
+                    memmove(kernel_stat+80, kernel_stat+104, 4);                /*ctim.sec*/
+                    memmove(kernel_stat+84, kernel_stat+112, 4);                /*ctim.nsec*/
+                    /* quadword-B (ino)                      <-- (mtim.sec)        also do qw-0 */
+                    memmove(kernel_stat+88, kernel_stat+8, 8);                  /*ino[8]*/
+                    memmove(kernel_stat+12, kernel_stat+8, 4);                  /*ino[4]*/
+                    memset(kernel_stat+8, 0xff, 4);                             /*0xffffffff*/
+                    /* quadword-C (unused)                   <-- (mtim.nsec)                    */
+                    /* quadword-D (unused)                   <-- (ctim.sec)                     */
+                    /* quadword-E (unused)                   <-- (ctim.nsec)                    */
+                    /* quadword-F (unused)                   <-- (zero?)                        */
+                    /* quadword-G (unused)                   <-- (zero?)                        */
+                    /* quadword-H (unused)                   <-- (zero?)                        */
+                }
+            }
+
+            map->write(kernel_stat, arg(1), 96);
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
