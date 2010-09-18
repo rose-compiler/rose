@@ -128,9 +128,11 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
  # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accedentally find them), but this should be discussed.
    echo "Copying UPC header files into ./include-staging/${BACKEND_C_COMPILER}_HEADERS directory ..."
    cp ${srcdir}/config/upc.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
+   cp ${srcdir}/config/upc_io.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
    cp ${srcdir}/config/upc_relaxed.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
    cp ${srcdir}/config/upc_strict.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
    cp ${srcdir}/config/upc_collective.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
+   cp ${srcdir}/config/bupc_extensions.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
 
    error_code=$?
    echo "error_code = $error_code"
