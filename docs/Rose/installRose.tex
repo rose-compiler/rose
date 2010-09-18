@@ -428,12 +428,12 @@ these can be ignored.
      \item Add JAVA environment variables. \\
            For example:\\
            {\tt export JAVA\_HOME=/usr/apps/java/jdk1.5.0\_11} \\
-        {\tt export
-        LD\_LIBRARY\_PATH=\$JAVA\_HOME/jre/lib/i386/server:\$LD\_LIBRARY\_PATH}
+           {\tt export LD\_LIBRARY\_PATH=\$JAVA\_HOME/jre/lib/i386/server:\$LD\_LIBRARY\_PATH}
 
      \item Add the Boost library path into your LD\_LIBRARY\_PATH.\\
            For example: {\tt
            LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:/home/youraccount/opt/boost\_1\_36\_0/lib}
+
      \item Run the {\tt configure} script. \\
            Type {\tt \{AbsoluteOrRelativePath\}/configure --prefix=`pwd` --with-boost=[BOOST\_installTree]} 
            to run the ROSE {\tt configure} script.  The path to the configure script 
@@ -445,17 +445,24 @@ these can be ignored.
            autoconf and automake tools for its build system. As of ROSE-0.8.9a, the
            default setting for the install directory (prefix) is the build tree.
            For more on ROSE configure options, see section \ref{gettingStarted:configureOptions}.
+           {\em Note: If configure is not present, you may have a development version. 
+           In that case, see the next section
+           (\ref{gettingStarted:UserInstructionsForDevelopmentVersion}) for installation instructions.}
+
      \item Run {\tt make}. \\
            Type {\tt make} to build all the source files. See details of running 
            {\tt make} in parallel in section \ref{gettingStarted:parallelMake}.
+
      \item To test ROSE (optional). \\
            Type {\tt make check} to test the ROSE library against a collection of test codes.
            See details of running make in parallel \ref{gettingStarted:parallelMake}.
+
      \item To install ROSE, type {\tt make install}. \\
            Installation is optional, but suggested. Users can simplify their use of ROSE 
            by using it from an installed version of ROSE.  This permits compilation 
            using a single include directory and the specification of only two libraries.
            See details of installing ROSE in section \ref{gettingStarted:installation}.
+
      \item Testing the installation of ROSE (optional). \\
            To test the installation and the location where ROSE is installed, against a
            collection of test codes (the application examples in {\tt ROSE/tutorial}), 
@@ -464,6 +471,7 @@ these can be ignored.
 \end{enumerate}
 
 \subsection{Building ROSE from a Development Version}
+\label{gettingStarted:UserInstructionsForDevelopmentVersion}
 Building ROSE from an internal or external development version is very
 similar to building it from a distribution. The major difference is that
 for development versions, you have to type ./build in the source tree to 

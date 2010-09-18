@@ -395,9 +395,13 @@ typeSizes.o: $(TRANSLATOR)
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 
+# DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
+io_netcdf_testcode_01.o: $(TRANSLATOR) gather_scatter.o netcdf.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-# io_netcdf_testcode_01.o: $(TRANSLATOR) gather_scatter.o netcdf.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+# DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
+io_netcdf_testcode_02.o: $(TRANSLATOR) gather_scatter.o netcdf.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 
 

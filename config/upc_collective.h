@@ -25,7 +25,6 @@ typdef enum {
   UPC_NONCOMM_FUNC
   } upc_opt_t;
 
-typedef int upc_flag_t; /* Not mentioned in the specification about where to define this ? */
 
 /* 7.3.1 Re-localization Operations*/
 extern void upc_all_broadcast(shared void * restrict dst, shared const void * restrict src, size_t nbytes, upc_flag_t flags);
