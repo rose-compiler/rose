@@ -1462,33 +1462,60 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 195: { /*0xc3, stat64*/
-            syscall_enter("stat64", "sp");
+        case 195:       /*0xc3, stat64*/
+        case 196: {     /*0xc4, lstat64*/
+            /* We need to be a bit careful with xstat64 calls. The C library invokes one of the xstat64 system calls, which
+             * writes a kernel data structure into a temporary buffer, and which the C library then massages into a struct
+             * stat64. When simulating, we don't want the C library to monkey with the data returned from the system call
+             * because the simulated C library will do the monkeying (it must only happen once).
+             *
+             * Therefore, we will invoke the system call directly, bypassing the C library, and then copy the result into
+             * specimen memory.  Fortunately, the kernel data structure that's returned has the same layout on AMD64 (which is
+             * probably how ROSE is running) and i386 (which is probably how the specimen is running). */
+            syscall_enter(195==callno?"stat64":"lstat64", "sp");
             uint32_t name_va=arg(0), sb_va=arg(1);
             std::string name = read_string(name_va);
-            struct stat64 sb;
-            int result = stat64(name.c_str(), &sb);
-            if (result<0) {
-                result = -errno;
-            } else {
-                copy_stat64(&sb, sb_va);
-            }
+
+            /* For some unknown reason, if we invoke the system call with buf allocated on the stack we'll get -EFAULT (-14)
+             * as the result; if we allocate it statically there's no problem.  Also, just in case the size is different than
+             * we think, we'll allocate a guard area on either side of the kernel_stat64 and check that the syscall didn't
+             * write into them.  We use one on either side because we're not sure how GCC will lay out the memory, but they'll
+             * probably be contiguous in any case. */
+            static uint8_t guard0[96];                  /* multiple of 8 */
+            static uint8_t kernel_stat64[96];
+            static uint8_t guard1[96];                  /* same size as guard0 */
+            memset(guard0, 0xaa, sizeof guard0);
+            memset(guard1, 0xaa, sizeof guard1);
+            int result = 0xdeadbeef;
+            asm volatile("int $0x80"
+                         : "=a"(result)
+                         : "0"(callno), "b"(name.c_str()), "c"(kernel_stat64)
+                         : "memory");
+            ROSE_ASSERT(0==memcmp(guard0, guard1, sizeof guard0));
+            map->write(kernel_stat64, sb_va, sizeof kernel_stat64);
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
         }
 
         case 197: { /*0xc5, fstat64*/
+            /* See notes for syscall 195 (stat64) */
             syscall_enter("fstat64", "dp");
             int fd=arg(0);
             uint32_t sb_va=arg(1);
-            struct stat64 sb;
-            int result = fstat64(fd, &sb);
-            if (result<0) {
-                result = -errno;
-            } else {
-                copy_stat64(&sb, sb_va);
-            }
+
+            static uint8_t guard0[96];                  /* multiple of 8 */
+            static uint8_t kernel_stat64[96];
+            static uint8_t guard1[96];                  /* same size as guard0 */
+            memset(guard0, 0xaa, sizeof guard0);
+            memset(guard1, 0xaa, sizeof guard1);
+            int result = 0xdeadbeef;
+            asm volatile("int $0x80"
+                         : "=a"(result)
+                         : "0"(callno), "b"(fd), "c"(kernel_stat64)
+                         : "memory");
+            ROSE_ASSERT(0==memcmp(guard0, guard1, sizeof guard0));
+            map->write(kernel_stat64, sb_va, sizeof kernel_stat64);
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
@@ -1665,7 +1692,7 @@ EmulationPolicy::emulate_syscall()
 
         case 270: { /*0x10e tgkill*/
             syscall_enter("tgkill", "ddd");
-            uint32_t tgid=arg(0), pid=arg(1), sig=arg(2);
+            uint32_t /*tgid=arg(0), pid=arg(1),*/ sig=arg(2);
             // TODO: Actually check thread group and kill properly
             if (debug && trace_syscall) fputs("(throwing...)\n", debug);
             throw Exit(__W_EXITCODE(0, sig));
