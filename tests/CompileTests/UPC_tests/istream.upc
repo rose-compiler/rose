@@ -35,6 +35,9 @@
 # define MAX(x,y) ((x)>(y)?(x):(y))
 # endif
 
+// Added macro to define IBY4 (what is this anyway)
+#define IBY4
+
 #if defined (IBY4)
 # define MY_MAX_N     40000000
 # define NTIMES       10

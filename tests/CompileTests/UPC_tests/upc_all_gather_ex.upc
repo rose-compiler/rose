@@ -8,7 +8,13 @@ function as described in Section 7.3.1.3 in the UPC Spec v1.2.
 
 #define NELEMS 10
 shared [NELEMS] int A[NELEMS*THREADS];
+
+/* 
+Note: EDG reports that a dynamic THREADS dimension requires a definite block size "shared []".
 shared [] int B[NELEMS*THREADS];
+So this test codes has been modified.  We need some expert advice on this subject.
+*/
+shared [NELEMS] int B[NELEMS*THREADS];
 
 int main()
 {
