@@ -31,7 +31,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      typedef.upc \
      upc_all_alloc_ex.upc upc_all_broadcast_ex.upc upc_all_exchange_ex.upc upc_all_gather_all_ex.upc \
      upc_all_gather_ex.upc upc_all_lock_alloc_ex.upc upc_all_permute_ex.upc upc_all_prefix_reduceL_ex.upc \
-     upc_all_reduceL_ex.upc upc_all_scatter_ex.upc istream.upc
+     upc_all_reduceL_ex.upc upc_all_scatter_ex.upc istream.upc \
+     bupc_test.upc
+
 
 #upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in EDG's IL
