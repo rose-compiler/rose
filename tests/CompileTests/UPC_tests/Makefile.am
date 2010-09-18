@@ -28,7 +28,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2004_22.upc \
      threads.upc \
      threads_2.upc \
-     typedef.upc
+     typedef.upc \
+     upc_all_alloc_ex.upc upc_all_broadcast_ex.upc upc_all_exchange_ex.upc upc_all_gather_all_ex.upc \
+     upc_all_gather_ex.upc upc_all_lock_alloc_ex.upc upc_all_permute_ex.upc upc_all_prefix_reduceL_ex.upc \
+     upc_all_reduceL_ex.upc upc_all_scatter_ex.upc istream.upc \
+     bupc_test.upc
+
 
 #upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in EDG's IL
@@ -85,10 +90,7 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 # DQ (9/15/2010): Moved UPC standard header files to be included automatically (moved to the ROSE compiler include directory).
 # put the headers here for now. TODO: Move them to a better place
 # EXTRA_DIST = $(ALL_TESTCODES) upc.h upc_relaxed.h upc_strict.h upc_collective.h
-EXTRA_DIST = $(ALL_TESTCODES) \
-   upc_all_alloc_ex.upc upc_all_broadcast_ex.upc upc_all_exchange_ex.upc upc_all_gather_all_ex.upc \
-   upc_all_gather_ex.upc upc_all_lock_alloc_ex.upc upc_all_permute_ex.upc upc_all_prefix_reduceL_ex.upc \
-   upc_all_reduceL_ex.upc upc_all_scatter_ex.upc istream.upc
+EXTRA_DIST = $(ALL_TESTCODES) 
 
 check-local:
 	@echo "Tests for UPC examples."

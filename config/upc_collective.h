@@ -11,9 +11,9 @@
 #include <stdio.h>
 
 /* 7.3.2 Computational Operations */
-typdef enum {
+typedef enum {
   UPC_ADD,
-  UPC_MULT;
+  UPC_MULT,
   UPC_AND,
   UPC_OR,
   UPC_XOR,
@@ -24,7 +24,6 @@ typdef enum {
   UPC_FUNC,
   UPC_NONCOMM_FUNC
   } upc_opt_t;
-
 
 /* 7.3.1 Re-localization Operations*/
 extern void upc_all_broadcast(shared void * restrict dst, shared const void * restrict src, size_t nbytes, upc_flag_t flags);
@@ -41,16 +40,18 @@ extern void upc_all_permute(shared void * restrict dst, shared const void * rest
 
 /* 7.3.2 Computational Operations */
 
-#define UPC_TWO_REDUCE_PROTOTYPES(typecode, fulltype) \
-  extern void upc_all_reduce##typecode (share void * restrict dst, \
+/* DQ (9/18/2010): Added upc_op_t type (not clear why it is not already defined) */
+typedef size_t upc_op_t;
+
+#define UPC_TWO_REDUCE_PROTOTYPES(typecode,fulltype) \
+  extern void upc_all_reduce##typecode (shared void * restrict dst, \
                                      shared const void * restrict src, \
                                      upc_op_t op, \
                                      size_t nelems, \
                                      size_t blk_size, \
-                                     fulltype (*func)(fulltype, fulltype),\
-                                     upc_flag_t flags);
-
-  extern void upc_all_prefix_reduce##typecode (share void * restrict dst, \
+                                     fulltype (*func)(fulltype,fulltype), \
+                                     upc_flag_t flags); \
+  extern void upc_all_prefix_reduce##typecode (shared void * restrict dst, \
                                      shared const void * restrict src, \
                                      upc_op_t op, \
                                      size_t nelems, \
