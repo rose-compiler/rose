@@ -1,9 +1,13 @@
 #ifndef _BUPC_EXTENSIONS_H_
 #define _BUPC_EXTENSIONS_H_
 
-#if !defined(__BERKELEY_UPC_FIRST_PREPROCESS__) && !defined(__BERKELEY_UPC_ONLY_PREPROCESS__)
-#error This file should only be included during initial preprocess
-#endif
+// DQ (9/18/2010): Commented out control by UCB UPC to check that this is first
+// #if !defined(__BERKELEY_UPC_FIRST_PREPROCESS__) && !defined(__BERKELEY_UPC_ONLY_PREPROCESS__)
+// #error This file should only be included during initial preprocess
+// #endif
+
+// DQ (9/18/2010): Added call to stddef.h since that is where ptrdiff_t is defined and it is needed below.
+#include<stddef.h>
 
 #include <upc.h>
 
