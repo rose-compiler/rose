@@ -1449,12 +1449,12 @@ EmulationPolicy::emulate_syscall()
             char buf[size];
             char* ret_buf = getcwd(buf, size);
 	    if (ret_buf == 0) {
-	      //Buffer is not big enough
+              //Buffer is not big enough
 	      errno=ERANGE;
 	      writeGPR(x86_gpr_ax, 0);
-	    }else{ 
-	      writeGPR(x86_gpr_ax, buf_va);
-	    }
+             }else{ 
+              writeGPR(x86_gpr_ax, buf_va);
+             } 
 
 	    //As an extension to the POSIX.1-2001 standard, 
 	    //Linux (libc4, libc5, glibc) getcwd() allocates the 
@@ -1464,8 +1464,8 @@ EmulationPolicy::emulate_syscall()
 	    uint8_t byte;
             size_t nread = map->read(&byte, buf_va, 1);
 	    if(!byte){
-	      map->write(buf, buf_va, size);
-	    }
+             map->write(buf, buf_va, size);
+            }
 
             syscall_leave("d");
             break;
@@ -1997,7 +1997,7 @@ main(int argc, char *argv[])
             if (WIFEXITED(e.status)) {
                 fprintf(stderr, "specimen exited with status %d\n", WEXITSTATUS(e.status));
 		if( WEXITSTATUS(e.status) )
-		  exit( WEXITSTATUS(e.status) );
+                   exit( WEXITSTATUS(e.status) );
             } else if (WIFSIGNALED(e.status)) {
                 fprintf(stderr, "specimen exited due to signal %d (%s)%s\n",
                         WTERMSIG(e.status), strsignal(WTERMSIG(e.status)), 
