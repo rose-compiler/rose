@@ -1389,8 +1389,8 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 191: { /*0xbf, getrlimit*/
-            syscall_enter("getrlimit", "dp");
+        case 191: { /*0xbf, ugetrlimit*/
+            syscall_enter("ugetrlimit", "dp");
             int resource=arg(0);
             uint32_t rl_va=arg(1);
             struct rlimit rl;
@@ -1613,7 +1613,7 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 221: { // fcntl
-            syscall_enter("fcntl", "ddp");
+            syscall_enter("fcntl64", "ddp");
             uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);
             int result = -EINVAL;
             switch (cmd) {
