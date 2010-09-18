@@ -1959,7 +1959,9 @@ HEADER_ELF_NOTE_ENTRY_START
 		rose_addr_t parse(rose_addr_t starting_offset);
 		rose_addr_t unparse(std::ostream &f, rose_addr_t starting_offset);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		SgAsmGenericString *get_name() const;
 		void set_name(SgAsmGenericString *name);
+		void set_payload(const void*, size_t nbytes);
 		rose_addr_t calculate_size() const;
 	private:
 		void ctor(SgAsmElfNoteSection *section);

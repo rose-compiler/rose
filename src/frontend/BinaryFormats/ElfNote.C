@@ -13,9 +13,17 @@ SgAsmElfNoteEntry::ctor(SgAsmElfNoteSection *section)
     section->get_entries()->get_entries().push_back(this);
     ROSE_ASSERT(section->get_entries()->get_entries().size()>0);
     set_parent(section->get_entries());
+    set_name(new SgAsmBasicString(""));
 }
 
-/** Set name and adjust parent */
+/** Get name of note. */
+SgAsmGenericString *
+SgAsmElfNoteEntry::get_name() const
+{
+    return p_name;
+}
+
+/** Set name and adjust parent. */
 void
 SgAsmElfNoteEntry::set_name(SgAsmGenericString *name)
 {
@@ -29,6 +37,17 @@ SgAsmElfNoteEntry::set_name(SgAsmGenericString *name)
             p_name->set_parent(this);
         set_isModified(true);
     }
+}
+
+/** Set payload. This is in addition to the version that takes an SgUnsignedCharList argument. */
+void
+SgAsmElfNoteEntry::set_payload(const void *_buf, size_t nbytes)
+{
+    const unsigned char *buf = (const unsigned char*)_buf;
+    p_payload.clear();
+    p_payload.reserve(nbytes);
+    for (size_t i=0; i<nbytes; i++)
+        p_payload.push_back(buf[i]);
 }
 
 /** Initialize a note by parsing it from the specified location in the note section. Return value is the offset to the
@@ -69,7 +88,7 @@ SgAsmElfNoteEntry::parse(rose_addr_t at)
     at = (at+3) & ~0x3; /* payload is aligned on a four-byte offset */
 
     /* Set properties */
-    set_name(new SgAsmBasicString(note_name));
+    get_name()->set_string(note_name);
     set_type(type);
     p_payload = notes->read_content_local_ucl(at, payload_size);
 
