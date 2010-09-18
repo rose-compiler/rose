@@ -285,7 +285,12 @@ int usc_global_setup_hook();
  * iterating.
  *
  ***********************************************************************/
-#define TEST_LOOPING usc_test_looping
+#define TEST_LOOPING simple_test_looping
+
+
+//FIXME: Floating point not supported in the simulator so we need to replace 
+//this function with one that does NOT contain floating point instructions. 
+//#define TEST_LOOPING usc_test_looping
 int usc_test_looping(int counter);
 
 /***********************************************************************
