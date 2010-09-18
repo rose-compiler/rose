@@ -912,6 +912,20 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 12: { /* 0xc, chdir */
+            syscall_enter("chdir", "s");
+	    uint32_t path = arg(0);
+            std::string sys_path = read_string(path);
+
+	    int result = chdir(sys_path.c_str());
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
+
 
         case 13: { /*0xd, time */
             syscall_enter("time", "p");
@@ -938,6 +952,21 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+	case 15: { /* 0xf, chmod */
+            syscall_enter("chmod", "sd");
+	    uint32_t filename = arg(0);
+            std::string sys_filename = read_string(filename);
+	    mode_t mode = arg(1);
+
+	    int result = chmod(sys_filename.c_str(), mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
 
         case 20: { /*0x14, getpid*/
             syscall_enter("getpid", "");
@@ -978,13 +1007,25 @@ EmulationPolicy::emulate_syscall()
         }
 
 	case 39: { /* 0x27, mkdir */
-            syscall_enter("kill", "dd");
+            syscall_enter("mkdir", "sd");
 	    uint32_t pathname = arg(0);
             std::string sys_pathname = read_string(pathname);
 	    mode_t mode = arg(1);
-	    std::cout << "Making dir" << sys_pathname << " in mode " <<mode << std::endl;
 
 	    int result = mkdir(sys_pathname.c_str(), mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
+	case 40: { /* 0x28, rmdir */
+            syscall_enter("rmdir", "s");
+	    uint32_t pathname = arg(0);
+            std::string sys_pathname = read_string(pathname);
+
+	    int result = rmdir(sys_pathname.c_str());
             if (result == -1) result = -errno;
             writeGPR(x86_gpr_ax, result);
 
@@ -1260,6 +1301,18 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 133: { /* 0x85, fchdir */
+            syscall_enter("fchdir", "d");
+	    uint32_t file_descriptor = arg(0);
+
+	    int result = fchdir(file_descriptor);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
         case 125: { /*0x7d, mprotect*/
             static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
             syscall_enter("mprotect", "pdf", pflags);
@@ -1388,6 +1441,35 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+	case 183: { /* 0xb7, getcwd */
+            syscall_enter("getcwd", "pd");
+            
+	    uint32_t buf_va=arg(0), size=arg(1);
+            char buf[size];
+            char* ret_buf = getcwd(buf, size);
+	    if (ret_buf == 0) {
+              //Buffer is not big enough
+	      errno=ERANGE;
+	      writeGPR(x86_gpr_ax, 0);
+             }else{ 
+              writeGPR(x86_gpr_ax, buf_va);
+             } 
+
+	    //As an extension to the POSIX.1-2001 standard, 
+	    //Linux (libc4, libc5, glibc) getcwd() allocates the 
+	    //buffer dynamically using malloc() if buf is NULL on call. 
+	    //In this case, the allocated buffer has the length size 
+	    //unless size is zero, when buf is allocated as big as necessary. 
+	    uint8_t byte;
+            size_t nread = map->read(&byte, buf_va, 1);
+	    if(!byte){
+             map->write(buf, buf_va, size);
+            }
+
+            syscall_leave("d");
+            break;
+	}
 
         case 191: { /*0xbf, ugetrlimit*/
             syscall_enter("ugetrlimit", "dp");
@@ -1612,6 +1694,16 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 212: { /*0xd4, chown */
+            syscall_enter("chown", "sdd");
+	    std::string filename = read_string(arg(0));
+            uid_t user = arg(1);
+	    gid_t group = arg(2);
+	    int result = chown(filename.c_str(),user,group);
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
         case 221: { // fcntl
             syscall_enter("fcntl64", "ddp");
             uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);
@@ -1758,6 +1850,22 @@ EmulationPolicy::emulate_syscall()
             break;
 
         }
+
+	case 306: { /* 0x132, fchmodat */
+            syscall_enter("fchmodat", "dsd");
+	    int dirfd = arg(0);
+	    uint32_t path = arg(1);
+            std::string sys_path = read_string(path);
+	    mode_t mode = arg(2);
+	    int flags = arg(3);
+
+	    int result = fchmodat(dirfd, sys_path.c_str(), mode, flags);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
 
         case 311: { /*0x137, set_robust_list*/
             syscall_enter("set_robust_list", "pd");
@@ -1956,6 +2064,8 @@ main(int argc, char *argv[])
             /* specimen has exited */
             if (WIFEXITED(e.status)) {
                 fprintf(stderr, "specimen exited with status %d\n", WEXITSTATUS(e.status));
+		if( WEXITSTATUS(e.status) )
+                   exit( WEXITSTATUS(e.status) );
             } else if (WIFSIGNALED(e.status)) {
                 fprintf(stderr, "specimen exited due to signal %d (%s)%s\n",
                         WTERMSIG(e.status), strsignal(WTERMSIG(e.status)), 

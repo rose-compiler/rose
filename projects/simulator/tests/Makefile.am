@@ -7,15 +7,18 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SYSCALLDIR = $(srcdir)/
 
 #Syscalls that can be compiled in a standalone fashion
-SYSCALL_FILES_SA = $(wildcard $(SYSCALLDIR)/syscall_sa*/*c) $(wildcard $(SYSCALLDIR)syscall_sa*c)
+SYSCALL_FILES_SA =  $(wildcard $(SYSCALLDIR)syscall_sa*c)
 
 # Syscall tests that need to link with -rt
-SYSCALL_FILES_RT = $(wildcard $(SYSCALLDIR)/syscall_rt*/*c) $(wildcard $(SYSCALLDIR)syscall_rt*c)
+SYSCALL_FILES_RT =  $(wildcard $(SYSCALLDIR)syscall_rt*c)
 
 # Syscall tests that needs to link with parse_opts.c, tst_res.c, tst_sig.c, tst_tmpdir.c, rmobj.c
-SYSCALL_FILES_TST = $(wildcard $(SYSCALLDIR)/syscall_tst*/*c) $(wildcard $(SYSCALLDIR)/syscall_tst*c) 
+SYSCALL_FILES_TST = $(wildcard $(SYSCALLDIR)/syscall_tst*c) 
+
+SYSCALL_FILES_FAIL_TST = $(wildcard $(SYSCALLDIR)/syscall_fail_tst*c) 
 
 SYSCALL_FILES_CHK = $(SYSCALL_FILES_SA)  $(SYSCALL_FILES_TST)
+SYSCALL_FILES_FAIL_CHK = $(SYSCALL_FILES_FAIL_TST)
 
 # Do we need this?
 ##noinst_PROGRAMS = $(notdir $(SYSCALL_FILES:%.c:%))
@@ -39,11 +42,14 @@ $(foreach file, $(SYSCALL_FILES_SA), $(eval $(call compile, $(file))))
 
 $(foreach file, $(SYSCALL_FILES_RT), $(eval $(call compile, $(file), -lrt  ) ))
 
-$(foreach file, $(SYSCALL_FILES_TST), $(eval $(call compile, $(file), $(srcdir)/parse_opts.c $(srcdir)/tst_res.c $(srcdir)/tst_sig.c $(srcdir)/tst_tmpdir.c $(srcdir)/rmobj.c )))
+$(foreach file, $(SYSCALL_FILES_TST), $(eval $(call compile, $(file), $(srcdir)/parse_opts.c $(srcdir)/tst_res.c $(srcdir)/tst_sig.c $(srcdir)/tst_tmpdir.c $(srcdir)/rmobj.c $(srcdir)/simple_test_looping.c )))
+
+$(foreach file, $(SYSCALL_FILES_FAIL_TST), $(eval $(call compile, $(file), $(srcdir)/parse_opts.c $(srcdir)/tst_res.c $(srcdir)/tst_sig.c $(srcdir)/tst_tmpdir.c $(srcdir)/rmobj.c $(srcdir)/simple_test_looping.c )))
 
 # TESTING CODE BELOW
 
 $(foreach file, $(SYSCALL_FILES_CHK), $(eval $(call checkFile, $(basename $(notdir $(file))))))
+$(foreach file, $(SYSCALL_FILES_FAIL_CHK), $(eval $(call checkFile, $(basename $(notdir $(file))))))
 
 test_file_permission: syscall_rt.18 
 	mkdir -p tst-file-permission
@@ -55,7 +61,8 @@ test_file_permission: syscall_rt.18
 syscall_tst_fail:
 	./syscall_tst.133
 
-failing_tests: test_file_permission syscall_tst_fail
+failing_tests: test_file_permission syscall_tst_fail  $(foreach file,$(SYSCALL_FILES_FAIL_CHK), $(addprefix check-,$(basename $(notdir $(file)))))
+
 
 check-local: $(foreach file,$(SYSCALL_FILES_CHK), $(addprefix check-,$(basename $(notdir $(file)))))
 
