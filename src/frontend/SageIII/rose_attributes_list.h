@@ -143,7 +143,7 @@ class  PreprocessingInfo
             // DQ (11/20/2008): Added classification for blank line (a language independent form of comment).
                CpreprocessorBlankLine,
 
-            // These are translated into IR nodes
+            // These used to be translated into IR nodes (and will be in the future).
                CpreprocessorIncludeDeclaration,
                CpreprocessorIncludeNextDeclaration,
                CpreprocessorDefineDeclaration,
