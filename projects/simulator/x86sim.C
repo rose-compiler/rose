@@ -1020,6 +1020,19 @@ EmulationPolicy::emulate_syscall()
             break;
 	}
 
+	case 40: { /* 0x28, rmdir */
+            syscall_enter("rmdir", "s");
+	    uint32_t pathname = arg(0);
+            std::string sys_pathname = read_string(pathname);
+
+	    int result = rmdir(sys_pathname.c_str());
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
         case 41: { /*0x29, dup*/
             syscall_enter("dup", "d");
             uint32_t fd = arg(0);
@@ -1288,6 +1301,18 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 133: { /* 0x85, fchdir */
+            syscall_enter("fchdir", "d");
+	    uint32_t file_descriptor = arg(0);
+
+	    int result = fchdir(file_descriptor);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
         case 125: { /*0x7d, mprotect*/
             static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
             syscall_enter("mprotect", "pdf", pflags);
@@ -1416,6 +1441,35 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+	case 183: { /* 0xb7, getcwd */
+            syscall_enter("getcwd", "pd");
+            
+	    uint32_t buf_va=arg(0), size=arg(1);
+            char buf[size];
+            char* ret_buf = getcwd(buf, size);
+	    if (ret_buf == 0) {
+	      //Buffer is not big enough
+	      errno=ERANGE;
+	      writeGPR(x86_gpr_ax, 0);
+	    }else{ 
+	      writeGPR(x86_gpr_ax, buf_va);
+	    }
+
+	    //As an extension to the POSIX.1-2001 standard, 
+	    //Linux (libc4, libc5, glibc) getcwd() allocates the 
+	    //buffer dynamically using malloc() if buf is NULL on call. 
+	    //In this case, the allocated buffer has the length size 
+	    //unless size is zero, when buf is allocated as big as necessary. 
+	    uint8_t byte;
+            size_t nread = map->read(&byte, buf_va, 1);
+	    if(!byte){
+	      map->write(buf, buf_va, size);
+	    }
+
+            syscall_leave("d");
+            break;
+	}
 
         case 191: { /*0xbf, getrlimit*/
             syscall_enter("getrlimit", "dp");
@@ -1728,6 +1782,22 @@ EmulationPolicy::emulate_syscall()
             break;
 
         }
+
+	case 306: { /* 0x132, fchmodat */
+            syscall_enter("fchmodat", "dsd");
+	    int dirfd = arg(0);
+	    uint32_t path = arg(1);
+            std::string sys_path = read_string(path);
+	    mode_t mode = arg(2);
+	    int flags = arg(3);
+
+	    int result = fchmodat(dirfd, sys_path.c_str(), mode, flags);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
 
         case 311: { /*0x137, set_robust_list*/
             syscall_enter("set_robust_list", "pd");
