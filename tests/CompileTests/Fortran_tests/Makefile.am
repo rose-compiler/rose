@@ -331,6 +331,7 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_36.f90 \
      test2010_43.f90 \
      test2010_48.f90 \
+     test2010_49.f90 \
      fCaller.f90 \
      triangle.f90
 
