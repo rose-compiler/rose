@@ -68,11 +68,13 @@ back to ROSE.
 
 Alternatively ROSE provides function identification based on header files
 where the declarations occured and this would be used to automate the recognition of UPC 
-specific runtime support functions.  See the {\em tests/roseTests/fileLocation\_tests}
+specific runtime support functions.  See the use of the {\em classifyFileName()}
+function in {\em tests/roseTests/fileLocation\_tests}
 directory for examples of how file names can be classified.  Alternatively,
 just the infomation in the source position reports the file name of the
 original declaration and this can be used to identify specific functions as 
-defined in: {\em upc\_collective.h}, {\em upc\_io.h}, etc.; or {\em bupc\_extensions.h}.
+defined in there associated header files, e.g. {\em upc\_collective.h}, 
+{\em upc\_io.h}, or {\em bupc\_extensions.h}.
 
 %-------------------------------------------------------------
 %-------------------------------------------------------------
