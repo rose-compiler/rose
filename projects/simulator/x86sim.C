@@ -186,6 +186,11 @@ public:
                 readFlag(x86_flag_cf).known_value()?"cy":"nc");
     }
 
+    /* Generate an ELF Core Dump on behalf of the specimen.  This is a real core dump that can be used with GDB and contains
+     * the same information as if the specimen had been running natively and dumped its own core. In other words, the core
+     * dump we generate here does not have references to the simulator even though it is being dumped by the simulator. */
+    void dump_core(int signo);
+
     /* Recursively load an executable and its libraries libraries into memory, creating the MemoryMap object that describes
      * the mapping from the specimen's address space to the simulator's address space.
      *
@@ -284,7 +289,7 @@ public:
     /* Reads memory from the memory map rather than the super class. */
     template <size_t Len> VirtualMachineSemantics::ValueType<Len>
     readMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
-               const VirtualMachineSemantics::ValueType<1> cond) const {
+               const VirtualMachineSemantics::ValueType<1> cond) {
         ROSE_ASSERT(0==Len % 8 && Len<=64);
         uint32_t base = segreg_shadow[sr].base;
         uint32_t offset = addr.known_value();
@@ -297,8 +302,8 @@ public:
             size_t nread = map->read(buf, base+offset, Len/8);
             if (nread!=Len/8) {
                 fprintf(stderr, "read %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
-                fprintf(stderr, "memory map at failure:\n");
-                map->dump(stderr, "  ");
+                fprintf(stderr, "dumping specimen core and possibly our own...\n");
+                dump_core(SIGSEGV);
                 abort();
             }
             uint64_t result = 0;
@@ -336,8 +341,8 @@ public:
             size_t nwritten = map->write(buf, base+offset, Len/8);
             if (nwritten!=Len/8) {
                 fprintf(stderr, "write %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
-                fprintf(stderr, "memory map at failure:\n");
-                map->dump(stderr, "  ");
+                fprintf(stderr, "dumping specimen core and possibly our own...\n");
+                dump_core(SIGSEGV);
                 abort();
             }
         }
@@ -658,13 +663,244 @@ EmulationPolicy::current_insn()
         insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
     } catch (Disassembler::Exception &e) {
         std::cerr <<e <<"\n";
-        std::cerr <<"dumping specimen's memory into core* files (this might take a while)...\n";
-        map->dump("core");
+        std::cerr <<"dumping specimen core...\n";
+        dump_core(SIGSEGV);
         throw;
     }
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
     icache.insert(std::make_pair(ip, insn));
     return insn;
+}
+
+void
+EmulationPolicy::dump_core(int signo)
+{
+    fprintf(stderr, "memory map at time of core dump:\n");
+    map->dump(stderr, "  ");
+
+    SgAsmGenericFile *ef = new SgAsmGenericFile;
+    ef->set_truncate_zeros(false);
+
+    SgAsmElfFileHeader *fhdr = new SgAsmElfFileHeader(ef);
+    fhdr->get_exec_format()->set_purpose(SgAsmExecutableFileFormat::PURPOSE_CORE_DUMP);
+    fhdr->add_entry_rva(rose_rva_t(0, NULL));
+
+    SgAsmElfSegmentTable *segtab = new SgAsmElfSegmentTable(fhdr);
+    
+    /*========================================================================================================================
+     * NOTE section
+     *======================================================================================================================== */
+
+    SgAsmElfNoteSection *notes = new SgAsmElfNoteSection(fhdr);
+    segtab->add_section(notes);
+    notes->get_segment_entry()->set_type(SgAsmElfSegmentTableEntry::PT_NOTE);
+    
+    /* Note CORE.PRSTATUS(1)              (144 bytes) */
+    struct prstatus {
+        uint32_t signo;                 /* signal number */
+        uint32_t code;                  /* extra signal code */
+        uint32_t err_num;
+        uint32_t cursig;                /* current signal; 2-bytes followed by 2 bytes of zero padding */
+        uint32_t sigpend;               /* pending signals */
+        uint32_t sighold;               /* set of held signals */
+        uint32_t pid;
+        uint32_t ppid;
+        uint32_t pgrp;
+        uint32_t sid;
+        uint32_t user_sec;              /* user time */
+        uint32_t user_usec;
+        uint32_t sys_sec;               /* system time */
+        uint32_t sys_usec;
+        uint32_t cuser_sec;             /* cummulative user time */
+        uint32_t cuser_usec;
+        uint32_t csys_sec;              /* cummulative system time */
+        uint32_t csys_usec;
+        uint32_t bx;                    /* general purpose registers */
+        uint32_t cx;
+        uint32_t dx;
+        uint32_t si;
+        uint32_t di;
+        uint32_t bp;
+        uint32_t ax;
+        uint32_t ds;
+        uint32_t es;
+        uint32_t fs;
+        uint32_t gs;
+        uint32_t orig_ax;               /* ax value before syscall? */
+        uint32_t ip;
+        uint32_t cs;
+        uint32_t flags;
+        uint32_t sp;
+        uint32_t ss;
+        uint32_t fpvalid;               /* is math coprocessor being used? */
+    } __attribute__((packed));
+    struct prstatus prstatus;
+    ROSE_ASSERT(144==sizeof prstatus);
+    memset(&prstatus, 0, sizeof prstatus);
+    prstatus.signo = prstatus.cursig = signo;
+    prstatus.pid = getpid();
+    prstatus.ppid = getppid();
+    prstatus.pgrp = getpgrp();
+    prstatus.sid = getsid(0);
+    prstatus.bx = readGPR(x86_gpr_bx).known_value();
+    prstatus.cx = readGPR(x86_gpr_cx).known_value();
+    prstatus.dx = readGPR(x86_gpr_dx).known_value();
+    prstatus.si = readGPR(x86_gpr_si).known_value();
+    prstatus.di = readGPR(x86_gpr_di).known_value();
+    prstatus.bp = readGPR(x86_gpr_bp).known_value();
+    prstatus.ax = readGPR(x86_gpr_ax).known_value();
+    prstatus.ds = readSegreg(x86_segreg_ds).known_value();
+    prstatus.es = readSegreg(x86_segreg_es).known_value();
+    prstatus.fs = readSegreg(x86_segreg_fs).known_value();
+    prstatus.gs = readSegreg(x86_segreg_gs).known_value();
+    prstatus.orig_ax = readGPR(x86_gpr_ax).known_value();
+    prstatus.ip = readIP().known_value();
+    prstatus.cs = readSegreg(x86_segreg_cs).known_value();
+    prstatus.flags = 0;
+#define ADD_PRSTATUS_FLAG(NAME, BITPOS) \
+    prstatus.flags |= readFlag(NAME).is_known() ? readFlag(NAME).known_value() << (BITPOS) : 0
+    ADD_PRSTATUS_FLAG(x86_flag_cf, 0);
+    ADD_PRSTATUS_FLAG(x86_flag_1, 1);
+    ADD_PRSTATUS_FLAG(x86_flag_pf, 2);
+    ADD_PRSTATUS_FLAG(x86_flag_3, 3);
+    ADD_PRSTATUS_FLAG(x86_flag_af, 4);
+    ADD_PRSTATUS_FLAG(x86_flag_5, 5);
+    ADD_PRSTATUS_FLAG(x86_flag_zf, 6);
+    ADD_PRSTATUS_FLAG(x86_flag_sf, 7);
+    ADD_PRSTATUS_FLAG(x86_flag_tf, 8);
+    ADD_PRSTATUS_FLAG(x86_flag_if, 9);
+    ADD_PRSTATUS_FLAG(x86_flag_df, 10);
+    ADD_PRSTATUS_FLAG(x86_flag_of, 11);
+    ADD_PRSTATUS_FLAG(x86_flag_iopl0, 12);
+    ADD_PRSTATUS_FLAG(x86_flag_iopl1, 13);
+    ADD_PRSTATUS_FLAG(x86_flag_nt, 14);
+    ADD_PRSTATUS_FLAG(x86_flag_15, 15);
+    ADD_PRSTATUS_FLAG(x86_flag_rf, 16);
+    ADD_PRSTATUS_FLAG(x86_flag_vm, 17);
+    ADD_PRSTATUS_FLAG(x86_flag_ac, 18);
+    ADD_PRSTATUS_FLAG(x86_flag_vif, 19);
+    ADD_PRSTATUS_FLAG(x86_flag_vip, 20);
+    ADD_PRSTATUS_FLAG(x86_flag_id, 21);
+#undef ADD_PRSTATUS_FLAG
+    prstatus.sp = readGPR(x86_gpr_sp).known_value();
+    prstatus.ss = readSegreg(x86_segreg_ss).known_value();
+    prstatus.fpvalid = 0;     /*ROSE doesn't support floating point yet*/
+
+    SgAsmElfNoteEntry *prstatus_note = new SgAsmElfNoteEntry(notes);
+    prstatus_note->get_name()->set_string("CORE");
+    prstatus_note->set_type(1); /*ET_PRSTATUS*/
+    prstatus_note->set_payload(&prstatus, sizeof prstatus);
+            
+    /* Note CORE.PRPSINFO(3)              (124 bytes) */
+    struct {
+        uint8_t state;                                          /* numeric process state */
+        uint8_t sname;                                          /* char for state (is this what ps(1) prints? */
+        uint8_t zombie;
+        uint8_t nice;                                           /* nice value */
+        uint32_t flags;
+        uint16_t uid;
+        uint16_t gid;
+        uint32_t pid;
+        uint32_t ppid;
+        uint32_t pgrp;
+        uint32_t sid;
+        char fname[16];                                         /* filename of executable */
+        char psargs[80];                                        /* initial part of arg list */
+    } __attribute__((packed)) prpsinfo;
+    ROSE_ASSERT(124==sizeof prpsinfo);
+    memset(&prpsinfo, 0, sizeof prpsinfo);
+    prpsinfo.state = 0;                                         /* runable */
+    prpsinfo.sname = 'R';
+    prpsinfo.zombie = 0;
+    prpsinfo.nice = getpriority(PRIO_PROCESS, getpid());
+    prpsinfo.flags = 0;                                         /* see linux/sched.h PF_* bits */
+    prpsinfo.uid = geteuid();
+    prpsinfo.gid = getegid();
+    prpsinfo.ppid = getppid();
+    prpsinfo.pgrp = getpgrp();
+    prpsinfo.sid = getsid(0);
+    strncpy(prpsinfo.fname, "/home/matzke/syscall_tst_18", sizeof(prpsinfo.fname));   /*FIXME*/
+    strncpy(prpsinfo.psargs, "/home/matzke/syscall_tst_18", sizeof(prpsinfo.psargs)); /*FIXME*/
+    
+    SgAsmElfNoteEntry *prpsinfo_note = new SgAsmElfNoteEntry(notes);
+    prpsinfo_note->get_name()->set_string("CORE");
+    prpsinfo_note->set_type(3); /*ET_PRPSINFO*/
+    prpsinfo_note->set_payload(&prpsinfo, sizeof prpsinfo);
+
+    /* Note CORE.AUXV(6)                  (144 bytes) */
+    SgAsmElfNoteEntry *auxv_note = new SgAsmElfNoteEntry(notes);
+    auxv_note->get_name()->set_string("CORE");
+    auxv_note->set_type(6);
+    auxv_note->set_payload(&auxv[0], 4*auxv.size());
+
+    /* Note CORE.PRFPREG(2)               (108 bytes) */
+    /* Note LINUX.PRXFPREG(0x45e62b7f)    (512 bytes) */
+    /* Note LINUX.386_TLS(0x200)          (48 bytes)  i386 TLS slots (struct user_desc)*/
+    
+    /*========================================================================================================================
+     * LOAD sections
+     *======================================================================================================================== */
+
+    class SegmentBuilder: public SgAsmElfSection {
+        MemoryMap       *map;                                   /* memory map for specimen's process address space */
+    public:
+        SegmentBuilder(SgAsmElfFileHeader *fhdr, MemoryMap *map, rose_addr_t va, rose_addr_t sz, unsigned perms)
+            : SgAsmElfSection(fhdr), map(map) {
+            set_purpose(SgAsmGenericSection::SP_PROGRAM);       /* Program-supplied text, data, etc. */
+            set_offset(ALIGN_UP(get_offset(), 4096));
+            set_size(sz);
+            set_file_alignment(4096);
+            set_mapped_alignment(4096);
+            set_mapped_preferred_rva(va); /*va==rva for ELF*/
+            set_mapped_size(sz);
+            set_mapped_rperm(0!=(perms & MemoryMap::MM_PROT_READ));
+            set_mapped_wperm(0!=(perms & MemoryMap::MM_PROT_WRITE));
+            set_mapped_xperm(0!=(perms & MemoryMap::MM_PROT_EXEC));
+        }
+        virtual void unparse(std::ostream &f) const {
+            uint8_t buf[8192];
+            rose_addr_t cur_va = get_mapped_preferred_va();     /* current virtual address */
+            rose_addr_t nremain = get_mapped_size();            /* bytes remaining to be written to the file */
+            rose_addr_t offset = 0;                             /* byte offset with respect to beginning of section */
+            while (nremain>0) {
+                rose_addr_t to_write = std::min(nremain, (rose_addr_t)sizeof buf);
+                size_t nread = map->read(buf, cur_va, to_write);
+                ROSE_ASSERT(nread==to_write);
+                offset = write(f, offset, to_write, buf);
+                cur_va += to_write;
+                nremain -= to_write;
+            }
+        }
+    };
+
+    /* We dump everything to the core file, although linux (by default) skips private and shared mappings that have backing
+     * store. */
+    const std::vector<MemoryMap::MapElement> &elmts = map->get_elements();
+    std::vector<MemoryMap::MapElement>::const_iterator ei=elmts.begin();
+    while (ei!=elmts.end()) {
+        rose_addr_t va = ei->get_va();
+        rose_addr_t sz = ei->get_size();
+        unsigned perms = ei->get_mapperms();
+
+        /* Combine elmts[i] with as many following elements as possible. */
+        std::vector<MemoryMap::MapElement>::const_iterator ej=ei+1;
+        while (ej!=elmts.end() && va+sz==ej->get_va() && perms==ej->get_mapperms())
+            sz += (ej++)->get_size();
+        ei = ej;
+
+        /* Create a segment */
+        SgAsmElfSection *segment = new SegmentBuilder(fhdr, map, va, sz, perms);
+        segtab->add_section(segment);
+        segment->get_segment_entry()->set_type(SgAsmElfSegmentTableEntry::PT_LOAD);
+    }
+
+    /*========================================================================================================================
+     * Generate the core file.
+     *======================================================================================================================== */
+
+    /*FIXME: will replace with a more suitable name when working*/    
+    SgAsmExecutableFileFormat::unparseBinaryFormat("x-core.rose", ef);
+    //deleteAST(ef); /*FIXME [RPM 2010-09-18]*/
 }
 
 void *
@@ -1831,8 +2067,8 @@ EmulationPolicy::emulate_syscall()
             for (int i=0; i<6; i++)
                 fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", arg(i));
             fprintf(stderr, ") is not implemented yet\n\n");
-            fprintf(stderr, "dumping specimen's memory into core* files (this might take a while)...\n");
-            map->dump("core");
+            fprintf(stderr, "dumping specimen core...\n");
+            dump_core(SIGSYS);
             abort();
         }
     }
@@ -1983,8 +2219,8 @@ main(int argc, char *argv[])
     while (true) {
         try {
             if (dump_at!=0 && dump_at == policy.readIP().known_value()) {
-                fprintf(stderr, "Reached dump point. Dumping pseudo-core files...\n");
-                policy.map->dump(dump_name);
+                fprintf(stderr, "Reached dump point. Dumping specimen core...\n");
+                policy.dump_core(SIGABRT);
                 dump_at = 0;
             }
             SgAsmx86Instruction *insn = policy.current_insn();
@@ -2013,6 +2249,8 @@ main(int argc, char *argv[])
                 fprintf(stderr, "specimen exited due to signal %d (%s)%s\n",
                         WTERMSIG(e.status), strsignal(WTERMSIG(e.status)), 
                         WCOREDUMP(e.status)?" core dumped":"");
+                /* Eventually we'll put this where the signal is thrown. [RPM 2010-09-18] */
+                policy.dump_core(WTERMSIG(e.status));
             } else if (WIFSTOPPED(e.status)) {
                 fprintf(stderr, "specimen is stopped due to signal %d (%s)\n", 
                         WSTOPSIG(e.status), strsignal(WSTOPSIG(e.status)));
