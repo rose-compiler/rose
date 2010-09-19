@@ -1038,7 +1038,7 @@ HEADER_GENERIC_FILE_START
 		SgAsmGenericFile* parse(std::string file_name);		/* Attach an existing file for parsing */
 		void reallocate();					/* Make consistent before calling unparse */
 		void unparse(std::ostream&) const;			/* Unparse the file -- mirror image of parsing */
-		void extend_to_eof(std::ostream&);			/* Write zeros to logical EOF */
+		void extend_to_eof(std::ostream&) const;		/* Write zeros to logical EOF */
 		void dump(FILE*) const;                                 /* Print some top-level debugging info */
 		void dump_all(bool in_cwd=true, const char *ext=NULL);	/* Recursively print all known info about the file */
 		void dump_all(const std::string& dumpname);		/* Recursively print all known info about the file */
