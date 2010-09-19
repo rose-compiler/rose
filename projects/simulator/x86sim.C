@@ -101,6 +101,14 @@ public:
     bool mmap_recycle;                          /* If false, then never reuse mmap addresses */
     SignalAction signal_action[_NSIG+1];        /* Simulated actions for signal handling */
     uint64_t signal_mask;                       /* Set by sigsetmask() */
+    std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
+    static const uint32_t brk_base=0x40000000;  /* Initial brk() value */
+
+    /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
+     * behavior here. If the value is less than the highest address mapped by the main executable, then the latter is used
+     * instead (see BinaryLoaderElf::rebase()) */
+    static const rose_addr_t ld_linux_base_va = 0x40000000;
+
 
 #if 0
     uint32_t gsOffset;
@@ -223,9 +231,6 @@ public:
     /* Reads a vector of NUL-terminated strings from specimen memory. */
     std::vector<std::string> read_string_vector(uint32_t va);
 
-    /* Copies a stat buffer into specimen memory. */
-    void copy_stat64(struct stat64 *sb, uint32_t va);
-
     /* Called by X86InstructionSemantics. Used by x86_and instruction to set AF flag */
     VirtualMachineSemantics::ValueType<1> undefined_() {
         return 1;
@@ -339,8 +344,6 @@ public:
     }
 };
 
-#if 1 /* Switch between the new BinaryLoader interface and the older Loader-like interface [RPM 2010-09-08] */
-
 /* Using the new interface is still about as complicated as the old interface because we need to perform only a partial link.
  * We want ROSE to link the interpreter (usually /lib/ld-linux.so) into the AST but not link in any other shared objects.
  * Then we want ROSE to map the interpreter (if present) and all main ELF Segments into the specimen address space but not
@@ -416,11 +419,6 @@ public:
 SgAsmGenericHeader*
 EmulationPolicy::load(const char *name)
 {
-    /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
-     * behavior here. If the value is less than the highest address mapped by the main executable, then the latter is used
-     * instead (see BinaryLoaderElf::rebase()) */
-    rose_addr_t ld_linux_base_va = 0x40000000;
-
     /* Link the main binary into the AST without further linking, mapping, or relocating. */
     if (debug)
         fprintf(debug, "loading %s...\n", name);
@@ -460,84 +458,10 @@ EmulationPolicy::load(const char *name)
 
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
      * below where ld-linux.so.2 was loaded, the stack, etc. */
-    brk_va = ALIGN_UP(map->find_last_free(0x40000000), PAGE_SIZE);
+    brk_va = ALIGN_UP(map->find_last_free(brk_base), PAGE_SIZE);
 
     return fhdr;
 }
-
-#else
-
-SgAsmGenericHeader*
-EmulationPolicy::load(const char *name)
-{
-    if (debug)
-        fprintf(debug, "loading %s...\n", name);
-    char *frontend_args[4];
-    frontend_args[0] = strdup("-");
-    frontend_args[1] = strdup("-rose:read_executable_file_format_only"); /*delay disassembly until later*/
-    frontend_args[2] = strdup(name);
-    frontend_args[3] = NULL;
-    SgProject *project = frontend(3, frontend_args);
-
-    /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
-     * (we'll use the PE interpretation). */
-    SgAsmInterpretation *interp = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
-    SgAsmGenericHeader *fhdr = interp->get_headers()->get_headers().front();
-    writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
-
-    /* Find a suitable disassembler and clone it in case we want to set properties locally. We only do this for the first
-     * (non-recursive) call of load() and assume that all dynamically linked libraries would use the same disassembler. */
-    if (!disassembler) {
-        disassembler = Disassembler::lookup(fhdr)->clone();
-        ROSE_ASSERT(disassembler!=NULL);
-    }
-
-    /* Determine which mappable sections should be loaded into the specimen's address space.  We load LOAD and INTERP
-     * segments. INTERP segments will additionally cause EmulationPolicy::load() to run recursively.  Note that
-     * LoaderELF::order_sections() cause SgAsmGenericSections which are both ELF Sections and ELF Segments to appear twice in
-     * the list that's ultimately processed by Loader::create_map(). Therefore we need to keep track of what sections we've
-     * actually seen. */
-    struct T2: public BinaryLoader::Selector {
-        EmulationPolicy *policy;
-        std::set<SgAsmGenericSection*> seen;
-        T2(EmulationPolicy *policy): policy(policy) {}
-        virtual BinaryLoader::Contribution contributes(SgAsmGenericSection *_section) {
-            SgAsmElfSection *section = isSgAsmElfSection(_section);
-            SgAsmElfSegmentTableEntry *segment = section ? section->get_segment_entry() : NULL;
-            if (segment && seen.find(section)==seen.end()) {
-                seen.insert(section);
-                switch (segment->get_type()) {
-                    case SgAsmElfSegmentTableEntry::PT_LOAD:
-                        return BinaryLoader::CONTRIBUTE_ADD;
-                    case SgAsmElfSegmentTableEntry::PT_INTERP:
-                        char interp_name[section->get_size()+1];
-                        section->read_content_local(0, interp_name, section->get_size());
-                        interp_name[section->get_size()] = '\0';
-                        policy->load(interp_name);
-                        return BinaryLoader::CONTRIBUTE_ADD;
-                    case SgAsmElfSegmentTableEntry::PT_PHDR:
-                        policy->phdr_va = section->get_mapped_preferred_rva();
-                        return BinaryLoader::CONTRIBUTE_NONE;
-                    default:
-                        return BinaryLoader::CONTRIBUTE_NONE;
-                }
-            }
-            return BinaryLoader::CONTRIBUTE_NONE;
-        }
-    } selector(this);
-
-    /* Load applicable sections into specimen's memory recursively, defining a MemoryMap that describes how the specimen
-     * address spaces maps to our own (the simulator's) address space. */
-    BinaryLoader *loader = BinaryLoader::lookup(fhdr)->clone();
-    ROSE_ASSERT(loader!=NULL);
-    loader->create_map(&map, fhdr->get_mapped_sections(), &selector);
-
-    /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address.
-     * Note that we haven't mapped the stack yet, which is typically above all the segments loaded from the file. */
-    brk_va = ALIGN_UP(map->highest_va()+1, PAGE_SIZE);
-    return fhdr;
-}
-#endif
 
 void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[])
 {
@@ -593,67 +517,109 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         } t1;
         t1.traverse(fhdr, preorder);
 
-        /* AT_PHDR */
-        pointers.push_back(3); /*AT_PHDR*/
-        pointers.push_back(t1.phdr_rva + fhdr->get_base_va());
+        auxv.clear();
+#if 0 /*FIXME: the simulator certainly doesn't have all these capabilities, but I'm not sure what the bit numbers are. */
+        /* AT_HWCAP */
+        auxv.push_back(16);
+        auxv.push_back(0xbfebfbff); /*fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts
+                                         * acpi mmx fxsr sse sse2 ss ht tm pbe */
         if (trace_loader)
-            fprintf(stderr, "AT_PHDR = 0x%08"PRIx32"\n", pointers.back());
-
-        /*AT_PHENT*/
-        pointers.push_back(4);
-        pointers.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
-        if (trace_loader)
-            fprintf(stderr, "AT_PHENT = 0x%08"PRIx32"\n", pointers.back());
-
-        /* AT_PHNUM */
-        pointers.push_back(5);
-        pointers.push_back(fhdr->get_e_phnum());
-        if (trace_loader)
-            fprintf(stderr, "AT_PHNUM = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
+#endif
 
         /* AT_PAGESZ */
-        pointers.push_back(6);
-        pointers.push_back(PAGE_SIZE);
+        auxv.push_back(6);
+        auxv.push_back(PAGE_SIZE);
         if (trace_loader)
-            fprintf(stderr, "AT_PAGESZ = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_PAGESZ:        %"PRId32"\n", auxv.back());
+
+        /* AT_CLKTCK */
+        auxv.push_back(17);
+        auxv.push_back(100);
+        if (trace_loader)
+            fprintf(stderr, "AT_CLKTCK:        %"PRId32"\n", auxv.back());
+
+        /* AT_PHDR */
+        auxv.push_back(3); /*AT_PHDR*/
+        auxv.push_back(t1.phdr_rva + fhdr->get_base_va());
+        if (trace_loader)
+            fprintf(stderr, "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
+
+        /*AT_PHENT*/
+        auxv.push_back(4);
+        auxv.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
+        if (trace_loader)
+            fprintf(stderr, "AT_PHENT:         %"PRId32"\n", auxv.back());
+
+        /* AT_PHNUM */
+        auxv.push_back(5);
+        auxv.push_back(fhdr->get_e_phnum());
+        if (trace_loader)
+            fprintf(stderr, "AT_PHNUM:         %"PRId32"\n", auxv.back());
+
+        /* AT_BASE */
+        auxv.push_back(7);
+        auxv.push_back(ld_linux_base_va);
+        if (trace_loader)
+            fprintf(stderr, "AT_BASE:          0x%08"PRIx32"\n", auxv.back());
+
+        /* AT_FLAGS */
+        auxv.push_back(8);
+        auxv.push_back(0);
+        if (trace_loader)
+            fprintf(stderr, "AT_FLAGS:         0x%08"PRIx32"\n", auxv.back());
 
         /* AT_ENTRY */
-        pointers.push_back(9);
-        pointers.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
+        auxv.push_back(9);
+        auxv.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
         if (trace_loader)
-            fprintf(stderr, "AT_ENTRY = 0x%08"PRIx32"\n", pointers.back());
+            fprintf(stderr, "AT_ENTRY:         0x%08"PRIx32"\n", auxv.back());
 
         /* AT_UID */
-        pointers.push_back(11);
-        pointers.push_back(getuid());
+        auxv.push_back(11);
+        auxv.push_back(getuid());
         if (trace_loader)
-            fprintf(stderr, "AT_UID = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_UID:           %"PRId32"\n", auxv.back());
 
         /* AT_EUID */
-        pointers.push_back(12);
-        pointers.push_back(geteuid());
+        auxv.push_back(12);
+        auxv.push_back(geteuid());
         if (trace_loader)
-            fprintf(stderr, "AT_EUID = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_EUID:          %"PRId32"\n", auxv.back());
 
         /* AT_GID */
-        pointers.push_back(13);
-        pointers.push_back(getgid());
+        auxv.push_back(13);
+        auxv.push_back(getgid());
         if (trace_loader)
-            fprintf(stderr, "AT_GID = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_GID:           %"PRId32"\n", auxv.back());
 
         /* AT_EGID */
-        pointers.push_back(14);
-        pointers.push_back(getegid());
+        auxv.push_back(14);
+        auxv.push_back(getegid());
         if (trace_loader)
-            fprintf(stderr, "AT_EGID = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_EGID:          %"PRId32"\n", auxv.back());
 
         /* AT_SECURE */
-        pointers.push_back(23);
-        pointers.push_back(false);
+        auxv.push_back(23);
+        auxv.push_back(false);
         if (trace_loader)
-            fprintf(stderr, "AT_SECURE = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_SECURE:        %"PRId32"\n", auxv.back());
+
+        /*FIXME: AT_PLATFORM should be i386 but not sure of the number. Setting it to i686 causes ld.so to execute floating
+         *       point instructions that are not handled by the simulator.  [RPM 2010-09-18] */
+#if 0
+        /* AT_PLATFORM */
+        auxv.push_back(16);
+        auxv.push_back(0xbffff04b); /*i686*/
+        if (trace_loader)
+            fprintf(stderr, "AT_PLATFORM:      0x%08"PRIx32"\n", auxv.back());
+#endif
     }
-    pointers.push_back(0); /*AT_NULL*/          pointers.push_back(0);
+
+    /* AT_NULL */
+    auxv.push_back(0);
+    auxv.push_back(0);
+    pointers.insert(pointers.end(), auxv.begin(), auxv.end());
 
     /* Finalize stack initialization by writing all the pointers to data we've pushed:
      *    argc
@@ -754,29 +720,6 @@ EmulationPolicy::read_string_vector(uint32_t va)
       va+=4;
     }
     return vec;
-}
-
-
-void
-EmulationPolicy::copy_stat64(struct stat64 *sb, uint32_t va) {
-    writeMemory<16>(x86_segreg_ds, va+0,  sb->st_dev,     true_());
-    writeMemory<32>(x86_segreg_ds, va+12, sb->st_ino,     true_());
-    writeMemory<32>(x86_segreg_ds, va+16, sb->st_mode,    true_());
-    writeMemory<32>(x86_segreg_ds, va+20, sb->st_nlink,   true_());
-    writeMemory<32>(x86_segreg_ds, va+24, sb->st_uid,     true_());
-    writeMemory<32>(x86_segreg_ds, va+28, sb->st_gid,     true_());
-    writeMemory<16>(x86_segreg_ds, va+32, sb->st_rdev,    true_());
-    writeMemory<64>(x86_segreg_ds, va+44, sb->st_size,    true_());
-    writeMemory<32>(x86_segreg_ds, va+52, sb->st_blksize, true_());
-    writeMemory<32>(x86_segreg_ds, va+56, sb->st_blocks,  true_());
-#ifdef FIXME
-    writeMemory<32>(x86_segreg_ds, va+64, sb->st_atime,   true_());
-#else
-    writeMemory<32>(x86_segreg_ds, va+64, 1279897465ul,   true_()); /*use same time always for consistency when debugging*/
-#endif
-    writeMemory<32>(x86_segreg_ds, va+72, sb->st_mtime,   true_());
-    writeMemory<32>(x86_segreg_ds, va+80, sb->st_ctime,   true_());
-    writeMemory<64>(x86_segreg_ds, va+88, sb->st_ino,     true_());
 }
 
 void
