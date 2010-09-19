@@ -1558,7 +1558,7 @@ EmulationPolicy::emulate_syscall()
                 /* On amd64 we need to translate the 64-bit struct to a 32-bit struct. We do it in place. */
                 if (144==kernel_stat_size) {
                     if (debug && trace_syscall)
-                        fprintf(debug, "[translating 64-bit to 32-bit kernel struct stat]\n");
+                        fprintf(debug, "[64-to-32] ");
                     /* quadword-0 (st_dev)                   <-- (st_dev)     no change         */
                     /* quadword-1 (0xffffffff, st_ino[4])    <-- (ino)        postponed to qw-B */
                     /* quadword-2 (mode[4], nlink[4])        <-- (nlink)                        */
@@ -1567,15 +1567,15 @@ EmulationPolicy::emulate_syscall()
                     /* quadword-3 (user[4],group[4])         <-- (mode[4],user[4])              */
                     memmove(kernel_stat+24, kernel_stat+28, 4);                 /*user*/
                     memmove(kernel_stat+28, kernel_stat+32, 4);                 /*group*/
-                    /* quadword-4 (zero?)                    <-- (group[4],zero[4])             */
-                    memset(kernel_stat+32, 0, 8);                               /*zero*/
+                    /* quadword-4 (rdev[4],zero?)            <-- (group[4],zero[4])             */
+                    memset(kernel_stat+32, 0, 8);                               /*rdev (FIXME)*/
                     /* quadword-5 (0xffffffff,size[lo4])     <-- (zero?)                        */
                     memset(kernel_stat+40, 0xff, 4);                            /*0xfffffff*/
                     memmove(kernel_stat+44, kernel_stat+48, 4);                 /*size[lo4]*/
                     /* quadword-6 (size[hi4],blksize)        <-- (size)                         */
                     memmove(kernel_stat+48, kernel_stat+52, 4);                 /*size[hi4]*/
                     memmove(kernel_stat+52, kernel_stat+56, 4);                 /*blksize*/
-                    /* quadword-7 (nblocks)                  <-- (blksize)                      */
+                    /* quadword-7 (nblocks[4],zero?)         <-- (blksize)                      */
                     memmove(kernel_stat+56, kernel_stat+64, 8);                 /*nblocks*/
                     /* quadword-8 (atim.sec[4],atim.nsec[4]) <-- (nblocks)                      */
                     memmove(kernel_stat+64, kernel_stat+72, 4);                 /*atim.sec*/
