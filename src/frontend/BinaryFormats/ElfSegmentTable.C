@@ -67,9 +67,10 @@ SgAsmElfSegmentTableEntry::update_from_section(SgAsmElfSection *section)
 {
     set_offset(section->get_offset());
     set_filesz(section->get_size());
-
     set_vaddr(section->get_mapped_preferred_va());
     set_memsz(section->get_mapped_size());
+    set_align(section->is_mapped() ? section->get_mapped_alignment() : section->get_file_alignment());
+
     if (section->get_mapped_rperm()) {
         set_flags((SegmentFlags)(p_flags | PF_RPERM));
     } else {
