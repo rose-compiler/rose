@@ -106,6 +106,10 @@ public:
     uint64_t signal_mask;                       /* Set by sigsetmask() */
     std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
     static const uint32_t brk_base=0x40000000;  /* Initial brk() value */
+    std::string vdso_name;                      /* Optional name of virtual dynamic shared object from kernel */
+    std::vector<std::string> vdso_paths;        /* Directories to search for vdso_name */
+    rose_addr_t vdso_va;                        /* Address where vdso is mapped into specimen, or zero */
+    rose_addr_t vdso_entry;                     /* Entry address for vdso, or zero */
 
     /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
      * behavior here. If the value is less than the highest address mapped by the main executable, then the latter is used
@@ -132,8 +136,19 @@ public:
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
+          vdso_va(0), vdso_entry(0),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false) {
+
+        vdso_name = "x86vdso";
+        vdso_paths.push_back(".");
+#ifdef X86_VDSO_PATH_1
+        vdso_paths.push_back(X86_VDSO_PATH_1);
+#endif
+#ifdef X86_VDSO_PATH_2
+        vdso_paths.push_back(X86_VDSO_PATH_2);
+#endif
+        
 
         for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
             writeGPR((X86GeneralPurposeRegister)i, 0);
@@ -489,9 +504,45 @@ EmulationPolicy::load(const char *name)
 
     /* Map all segments into simulated memory */
     loader->load(interp);
-    delete loader;
-    loader = NULL;
     map = interp->get_map();
+
+    /* Map the virtual dynamic shared object.  We'll load a version from a file if possible, none otherwise. */
+    if (!loader->interpreter) {
+        fprintf(stderr, "warning: static executable; no vdso necessary\n");
+    } else if (vdso_name.empty()) {
+        fprintf(stderr, "warning: no virtual dynamic shared object (vdso)\n");
+    } else {
+        for (size_t i=0; i<vdso_paths.size() && 0==vdso_va; i++) {
+            std::string vdso_name = vdso_paths[i] + "/" + this->vdso_name;
+            if (debug && trace_loader) fprintf(debug, "looking for vdso: %s\n", vdso_name.c_str());
+            int vdso_fd = open(vdso_name.c_str(), O_RDONLY);
+            if (vdso_fd>=0) {
+                struct stat sb;
+                fstat(vdso_fd, &sb);
+                uint8_t *vdso = new uint8_t[sb.st_size];
+                ssize_t nread = read(vdso_fd, vdso, sb.st_size);
+                ROSE_ASSERT(nread==sb.st_size);
+                close(vdso_fd); vdso_fd=-1;
+
+                vdso_va = ALIGN_UP(map->find_last_free(), PAGE_SIZE);
+                vdso_entry = vdso_va + 0x420; /* determined by parsing x86vdso */
+                MemoryMap::MapElement me(vdso_va, sb.st_size, vdso, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+                me.set_name("[vdso]");
+                map->insert(me);
+
+                if (sb.st_size!=ALIGN_UP(sb.st_size, PAGE_SIZE)) {
+                    MemoryMap::MapElement me2(vdso_va+sb.st_size, ALIGN_UP(sb.st_size, PAGE_SIZE)-sb.st_size,
+                                              MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+                    me2.set_name(me.get_name());
+                    map->insert(me2);
+                }
+
+                if (debug && trace_loader) fprintf(debug, "loaded %s at 0x%08"PRIx64"\n", vdso_name.c_str(), vdso_va);
+            }
+        }
+        if (0==vdso_va)
+            fprintf(stderr, "warning: cannot find virtual dynamic shared object: %s\n", vdso_name.c_str());
+    }
 
     /* Find a disassembler. */
     if (!disassembler)
@@ -501,6 +552,7 @@ EmulationPolicy::load(const char *name)
      * below where ld-linux.so.2 was loaded, the stack, etc. */
     brk_va = ALIGN_UP(map->find_last_free(brk_base), PAGE_SIZE);
 
+    delete loader;
     return fhdr;
 }
 
@@ -565,8 +617,22 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
             }
         } t1;
         t1.traverse(fhdr, preorder);
-
         auxv.clear();
+
+        if (vdso_va!=0) {
+            /* AT_SYSINFO_ENTRY */
+            auxv.push_back(0x20);
+            auxv.push_back(vdso_entry);
+            if (trace_loader)
+                fprintf(stderr, "AT_SYSINFO_ENTRY: 0x%08"PRIx32"\n", auxv.back());
+
+            /* AT_SYSINFO */
+            auxv.push_back(0x21);
+            auxv.push_back(vdso_va);
+            if (trace_loader)
+                fprintf(stderr, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
+        }
+
 #if 0 /*FIXME: the simulator certainly doesn't have all these capabilities, but I'm not sure what the bit numbers are. */
         /* AT_HWCAP */
         auxv.push_back(16);
@@ -654,14 +720,18 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         if (trace_loader)
             fprintf(stderr, "AT_SECURE:        %"PRId32"\n", auxv.back());
 
-        /*FIXME: AT_PLATFORM should be i386 but not sure of the number. Setting it to i686 causes ld.so to execute floating
-         *       point instructions that are not handled by the simulator.  [RPM 2010-09-18] */
 #if 0
         /* AT_PLATFORM */
-        auxv.push_back(16);
-        auxv.push_back(0xbffff04b); /*i686*/
-        if (trace_loader)
-            fprintf(stderr, "AT_PLATFORM:      0x%08"PRIx32"\n", auxv.back());
+        {
+            const char *platform = "i686";
+            size_t len = strlen(platform)+1;
+            sp -= len;
+            map->write(platform, sp, len);
+            auxv.push_back(16);
+            auxv.push_back(sp);
+            if (trace_loader)
+                fprintf(stderr, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
+        }
 #endif
     }
 
