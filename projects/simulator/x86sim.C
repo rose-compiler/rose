@@ -17,6 +17,7 @@
 #include "VirtualMachineSemantics.h"
 #include "BinaryLoaderElf.h"
 #include <stdarg.h>
+#include <boost/regex.hpp>
 
 /* These are necessary for the system call emulation */
 #include <asm/ldt.h>
@@ -90,6 +91,8 @@ public:
     };
 
 public:
+    std::string exename;                        /* Name of executable without any path components */
+    std::vector<std::string> exeargs;           /* Specimen argv with PATH-resolved argv[0] */
     MemoryMap *map;                             /* Describes how specimen's memory is mapped to simulator memory */
     Disassembler *disassembler;                 /* Disassembler to use for obtaining instructions */
     Disassembler::InstructionMap icache;        /* Cache of disassembled instructions */
@@ -424,13 +427,46 @@ public:
 SgAsmGenericHeader*
 EmulationPolicy::load(const char *name)
 {
+    /* Find the executable by searching the PATH environment variable. The executable name and full path name are both saved
+     * in the class (exename and exeargs[0]). */ 
+    ROSE_ASSERT(exename.empty() && exeargs.empty());
+    if (strchr(name, '/')) {
+        if (access(name, R_OK)<0) {
+            fprintf(stderr, "%s: %s\n", name, strerror(errno));
+            exit(1);
+        }
+        exename = strrchr(name, '/')+1;
+        exeargs.push_back(std::string(name));
+    } else {
+        const char *path_env = getenv("PATH");
+        if (path_env) {
+            std::string s = path_env;
+            boost::regex re;
+            re.assign("[:;]");
+            boost::sregex_token_iterator iter(s.begin(), s.end(), re, -1);
+            boost::sregex_token_iterator iterEnd;
+            for (; iter!=iterEnd; ++iter) {
+                std::string fullname = *iter + "/" + name;
+                if (access(fullname.c_str(), R_OK)>=0) {
+                    exename = name;
+                    exeargs.push_back(fullname);
+                    break;
+                }
+            }
+        }
+    }
+    if (exeargs.empty()) {
+        fprintf(stderr, "%s: not found\n", name);
+        exit(1);
+    }
+       
     /* Link the main binary into the AST without further linking, mapping, or relocating. */
     if (debug)
-        fprintf(debug, "loading %s...\n", name);
+        fprintf(debug, "loading %s...\n", exeargs[0].c_str());
     char *frontend_args[4];
     frontend_args[0] = strdup("-");
     frontend_args[1] = strdup("-rose:read_executable_file_format_only"); /*delay disassembly until later*/
-    frontend_args[2] = strdup(name);
+    frontend_args[2] = strdup(exeargs[0].c_str());
     frontend_args[3] = NULL;
     SgProject *project = frontend(3, frontend_args);
 
@@ -482,16 +518,24 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     melmt.set_name("stack");
     map->insert(melmt);
 
-    /* Initialize the stack with specimen's argc and argv */
+    /* Initialize the stack with specimen's argc and argv. Also save the arguments in the class. */
+    ROSE_ASSERT(exeargs.size()==1);                     /* contains only the executable path */
     std::vector<uint32_t> pointers;                     /* pointers pushed onto stack at the end of initialization */
     pointers.push_back(argc);
     for (int i=0; i<argc; i++) {
-        size_t len = strlen(argv[i]) + 1; /*inc. NUL termination*/
+        std::string arg;
+        if (0==i) {
+            arg = exeargs[0];
+        } else {
+            arg = argv[i];
+            exeargs.push_back(arg);
+        }
+        size_t len = arg.size() + 1; /*inc. NUL termination*/
         sp -= len;
-        map->write(argv[i], sp, len);
+        map->write(arg.c_str(), sp, len);
         pointers.push_back(sp);
         if (trace_loader)
-            fprintf(stderr, "argv[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, argv[i]);
+            fprintf(stderr, "argv[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, arg.c_str());
     }
     pointers.push_back(0); /*the argv NULL terminator*/
 
