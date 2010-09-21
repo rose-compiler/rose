@@ -1432,7 +1432,7 @@ HEADER_ELF_SECTION_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor();}
 		virtual SgAsmElfSectionTable *parse();
-		void add_section(SgAsmElfSection*);
+		SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*);
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
@@ -2209,7 +2209,7 @@ HEADER_ELF_SEGMENT_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor();}
 		virtual SgAsmElfSegmentTable *parse();
-		void add_section(SgAsmElfSection*);
+		SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*);
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
