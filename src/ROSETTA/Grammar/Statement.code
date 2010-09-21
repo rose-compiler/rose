@@ -8639,7 +8639,13 @@ SgFunctionDefinition::get_qualified_name() const
 // this (constructor) definition. NULL if this has no such list.
 SgCtorInitializerList* 
 SgFunctionDefinition::get_CtorInitializerList() {
-   std::cerr << "foo@!" << std::endl;
+  SgMemberFunctionDeclaration* memDecl = NULL;
+  SgCtorInitializerList* ctorList = NULL;
+  if ((memDecl = isSgMemberFunctionDeclaration(get_declaration())) != NULL &&
+      (ctorList = memDecl->get_CtorInitializerList()) != NULL)
+      return ctorList;
+  else
+    return NULL;
 }
 
 SOURCE_FUNCTION_DEFINTION_STATEMENT_END
