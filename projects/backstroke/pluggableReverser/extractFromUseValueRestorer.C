@@ -81,7 +81,10 @@ vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenam
 			if (useExpressionValue != NULL)
 			{
 				SgExpression* restoredVarValue = restoreVariableFromExpression(varName, availableVariables, useExpression, useExpressionValue);
-				results.push_back(restoredVarValue);
+				if (restoredVarValue != NULL)
+				{
+					results.push_back(restoredVarValue);
+				}
 			}
 		}
 		else if (isSgPlusPlusOp(useSite) || isSgMinusMinusOp(useSite))
@@ -141,18 +144,19 @@ vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenam
 			VariableRenaming::VarName lhsVariable = VariableRenaming::getVarName(useAssignOp->get_lhs_operand());
 			ROSE_ASSERT(lhsVariable != VariableRenaming::emptyName);
 
+			//First, find the version of the assigned variable after the assignment and restore it
+			VariableRenaming::NumNodeRenameEntry versionAfterAssign =
+					variableRenamingAnalysis.getDefsAtNodeForName(useAssignOp, lhsVariable);
+
+			SgExpression* valueAfterAssign = getEventProcessor()->restoreVariable(lhsVariable, availableVariables, versionAfterAssign);
+			if (valueAfterAssign == NULL)
+			{
+				continue;
+			}
+
 			if (lhsVariable == varName)
 			{
 				//We have a situation such as x += <exp> and we would like to restore the value of x
-				//First, find the version of x after the assignment and restore it
-				VariableRenaming::NumNodeRenameEntry versionAfterAssign = 
-						variableRenamingAnalysis.getDefsAtNodeForName(useAssignOp, varName);
-
-				SgExpression* valueAfterAssign = getEventProcessor()->restoreVariable(varName, availableVariables, versionAfterAssign);
-				if (valueAfterAssign == NULL)
-				{
-					continue;
-				}
 
 				//Now, restore the other expression involved in the assignment
 				SgExpression* rhsValue = getEventProcessor()->restoreExpressionValue(useAssignOp->get_rhs_operand(), availableVariables);
@@ -180,6 +184,44 @@ vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenam
 				}
 
 				results.push_back(desiredVal);
+			}
+			else if (!variableRenamingAnalysis.getUsesAtNodeForName(useAssignOp->get_rhs_operand(), varName).empty())
+			{
+				//We have a situation such as a += (x ^ 2) where we want to extract x. We have already restored the new value of a
+				//We need to restore the old value of a, and the difference is the rhs (x ^ 2)
+				VariableRenaming::NumNodeRenameEntry versionBeforeAssign = 
+						variableRenamingAnalysis.getUsesAtNodeForName(useAssignOp, lhsVariable);
+
+				SgExpression* valueBeforeAssign = getEventProcessor()->restoreVariable(lhsVariable, availableVariables, versionBeforeAssign);
+				if (valueBeforeAssign == NULL)
+				{
+					SageInterface::deepDelete(valueBeforeAssign);
+					continue;
+				}
+
+				SgExpression* rhsValue = NULL;
+				switch (useAssignOp->variantT())
+				{
+					case V_SgPlusAssignOp:
+						rhsValue = SageBuilder::buildSubtractOp(valueAfterAssign, valueBeforeAssign);
+						break;
+					case V_SgMinusAssignOp:
+						rhsValue = SageBuilder::buildSubtractOp(valueBeforeAssign, valueAfterAssign);
+						break;
+					case V_SgXorAssignOp:
+						rhsValue = SageBuilder::buildBitXorOp(valueBeforeAssign, valueAfterAssign);
+						break;
+					default:
+						ROSE_ASSERT(false);
+				}
+
+				SgExpression* restoredVarValue =
+						restoreVariableFromExpression(varName, availableVariables, useAssignOp->get_rhs_operand(), rhsValue);
+
+				if (restoredVarValue != NULL)
+				{
+					results.push_back(restoredVarValue);
+				}
 			}
 		}
 	}
