@@ -321,7 +321,6 @@ public:
             size_t nread = map->read(buf, base+offset, Len/8);
             if (nread!=Len/8) {
                 fprintf(stderr, "read %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
-                fprintf(stderr, "dumping specimen core and possibly our own...\n");
                 dump_core(SIGSEGV);
                 abort();
             }
@@ -360,7 +359,6 @@ public:
             size_t nwritten = map->write(buf, base+offset, Len/8);
             if (nwritten!=Len/8) {
                 fprintf(stderr, "write %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
-                fprintf(stderr, "dumping specimen core and possibly our own...\n");
                 dump_core(SIGSEGV);
                 abort();
             }
@@ -779,7 +777,6 @@ EmulationPolicy::current_insn()
         insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
     } catch (Disassembler::Exception &e) {
         std::cerr <<e <<"\n";
-        std::cerr <<"dumping specimen core...\n";
         dump_core(SIGSEGV);
         throw;
     }
@@ -791,6 +788,7 @@ EmulationPolicy::current_insn()
 void
 EmulationPolicy::dump_core(int signo)
 {
+    fprintf(stderr, "dumping specimen core...\n");
     fprintf(stderr, "memory map at time of core dump:\n");
     map->dump(stderr, "  ");
 
@@ -2183,7 +2181,6 @@ EmulationPolicy::emulate_syscall()
             for (int i=0; i<6; i++)
                 fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", arg(i));
             fprintf(stderr, ") is not implemented yet\n\n");
-            fprintf(stderr, "dumping specimen core...\n");
             dump_core(SIGSYS);
             abort();
         }
@@ -2336,7 +2333,7 @@ main(int argc, char *argv[])
     while (true) {
         try {
             if (dump_at!=0 && dump_at == policy.readIP().known_value()) {
-                fprintf(stderr, "Reached dump point. Dumping specimen core...\n");
+                fprintf(stderr, "Reached dump point.\n");
                 policy.dump_core(SIGABRT);
                 dump_at = 0;
             }
