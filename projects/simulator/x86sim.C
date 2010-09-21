@@ -105,7 +105,7 @@ public:
     SignalAction signal_action[_NSIG+1];        /* Simulated actions for signal handling */
     uint64_t signal_mask;                       /* Set by sigsetmask() */
     std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
-    static const uint32_t brk_base=0x40000000;  /* Initial brk() value */
+    static const uint32_t brk_base=0x08000000;  /* Initial brk() value */
     std::string vdso_name;                      /* Optional name of virtual dynamic shared object from kernel */
     std::vector<std::string> vdso_paths;        /* Directories to search for vdso_name */
     rose_addr_t vdso_va;                        /* Address where vdso is mapped into specimen, or zero */
@@ -550,7 +550,8 @@ EmulationPolicy::load(const char *name)
 
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
      * below where ld-linux.so.2 was loaded, the stack, etc. */
-    brk_va = ALIGN_UP(map->find_last_free(brk_base), PAGE_SIZE);
+    rose_addr_t free_area = std::max(map->find_last_free(ld_linux_base_va), (rose_addr_t)brk_base);
+    brk_va = ALIGN_UP(free_area, PAGE_SIZE);
 
     delete loader;
     return fhdr;
