@@ -10,20 +10,28 @@ ROSE leverages the EDG frontend to parse input UPC programs and generate EDG IR 
 It then converts the EDG IR into ROSE's internal AST and provides unparsing support for the AST.
 An example UPC-to-C translator is also provided to demonstrate how one can use ROSE to 
 translate UPC programs into C programs with runtime calls to the Berkeley UPC (BUPC) runtime system V. 2.6.0~\cite{BUPC:Web}.
+More information on UPC is availalbe from the language specification at: 
+\htmladdnormallink{UPC Language Specifications (pdf)}{http://www.gwu.edu/~upc/publications/LBNL-59208.pdf}.
 
 %-------------------------------------------------------------
 %-------------------------------------------------------------
 \section{Supported UPC Constructs}
-ROSE currently supports all UPC constructs as defined in UPC 1.1.1.
+% ROSE currently supports all UPC constructs as defined in UPC 1.1.1.
+ROSE currently supports all UPC constructs as defined in UPC 1.2, using
+all the standard header files: {\em upc.h}, {\em upc\_relaxed.h}, {\em upc\_strict.h}, 
+{\em upc\_collective.h}, {\em upc\_io.h}. Additional Non-standard Berkeley 
+UPC extensions are supported using the UCB {\em bupc\_extensions.h} header file.
+
 \footnote{
 The supported version is limited by the EDG
 frontend, which only supports UPC 1.1.1 (\lstinline{__UPC_VERSION__} string
 is defined as 200310L).
-ROSE uses EDG 3.3 currently and it originally only supported UPC 1.0. 
+ROSE uses EDG 3.3 currently and it originally only supported UPC 1.0.
 We merged the UPC 1.1.1 support from EDG 3.10 into our EDG 3.3 frontend. 
-It seems like that the latest EDG 4.0 still only supports UPC 1.1.1 but we
-can easily extend it to support UPC 1.2 given the minor language changes
-from 1.1.1 to 1.2.}.
+%It seems like that the latest EDG 4.0 still only supports UPC 1.1.1 but we
+%can easily extend it to support UPC 1.2 given the minor language changes from 1.1.1 to 1.2.
+We have also added the required wotk to support UPC 1.2. Please let us know if anything is
+left out and we will fix it.}.
 A list of those UPC constructs and their corresponding ROSE AST representations are given below:
 \begin{verbatim}
 MYTHREAD                SgUpcMythread
@@ -43,6 +51,30 @@ As we can see, most UPC constructs are represented by their corresponding dedica
 A few others, such as \lstinline{strict}, \lstinline{relaxed} and
 \lstinline{shared}, are represented as instances of \lstinline{SgUPC_AccessModifier}.
 \lstinline{UPC_MAX_BLOCKSIZE} is treated as a macro and is expanded to a predefined integer constant value.
+
+Much of the UPC language is supported via UPC specific language runtime
+libraries.  These calls are simply normal functions and not represented 
+as special UPC specific IR nodes.  
+Such runtime library function calls are, in general, 
+not a property of the UPC grammar and thus not represented in the AST 
+as specialized IR nodes.
+The function names are those from the 
+UPC Langauge Specifications and so must be detected based on the function
+name.  No specialized support in currently present in ROSE to classify 
+these function or identify them as UPC secific, but such functionality
+could be easily written. Such support could be added to the SageInteface.
+If users write such specific support they are welcme to contribute it 
+back to ROSE.
+
+Alternatively ROSE provides function identification based on header files
+where the declarations occured and this would be used to automate the recognition of UPC 
+specific runtime support functions.  See the use of the {\em classifyFileName()}
+function in {\em tests/roseTests/fileLocation\_tests}
+directory for examples of how file names can be classified.  Alternatively,
+just the infomation in the source position reports the file name of the
+original declaration and this can be used to identify specific functions as 
+defined in there associated header files, e.g. {\em upc\_collective.h}, 
+{\em upc\_io.h}, or {\em bupc\_extensions.h}.
 
 %-------------------------------------------------------------
 %-------------------------------------------------------------

@@ -395,6 +395,22 @@ typeSizes.o: $(TRANSLATOR)
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 
+# DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
+io_netcdf_testcode_01.o: $(TRANSLATOR) gather_scatter.o netcdf.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+# DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
+io_netcdf_testcode_02.o: $(TRANSLATOR) gather_scatter.o netcdf.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+
+
+
+
+
+
+
+
 # Example of how to call the OpenFortranParser
 #	java parser.java.FortranMain --class parser.java.FortranParserActionJNI $(srcdir)/$(@:.o=.f90)
 
@@ -434,10 +450,12 @@ listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_F
 check-parsing:
 	@echo "First make POP code using testParser."
 	@$(MAKE) TRANSLATOR_EXECUTABLE=testParser $(PASSING_TEST_Objects)
+	@echo "Test of check-parsing rule terminated normally..."
 
 check-analysis:
 	@echo "Second make POP code using testAnalysis."
 	@$(MAKE) TRANSLATOR_EXECUTABLE=testAnalysis $(PASSING_TEST_Objects)
+	@echo "Test of check-analysis rule terminated normally..."
 
 check-local:
 	@echo "Tests for Fortran (LANL POP)."

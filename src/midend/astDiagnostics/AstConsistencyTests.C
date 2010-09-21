@@ -2953,12 +2953,16 @@ TestExpressionTypes::visit ( SgNode* node )
                          SgValueExp *parentValueExpr = isSgValueExp(parentExpr);
                          if (parentValueExpr == NULL || expression != parentValueExpr->get_originalExpressionTree())
                             {
-                              printf ("Warning: encountered a case where an array type did not decay to a pointer type\n"
-                                      "  parentExpr = %p = %s, expression = %p = %s, parentType = %p = %s, type = %p = %s\n",
-                                              parentExpr, parentExpr->sage_class_name(),
-                                              expression, expression->sage_class_name(),
-                                              parentType, parentType->sage_class_name(),
-                                              type, type->sage_class_name());
+                           // DQ (9/14/2010): Make this a level 1 warning. It is common for Fortran code but never see for C++ code.
+                              if ( SgProject::get_verbose() > 0 )
+                                 {
+                                   printf ("Warning: encountered a case where an array type did not decay to a pointer type\n"
+                                           "  parentExpr = %p = %s, expression = %p = %s, parentType = %p = %s, type = %p = %s\n",
+                                                   parentExpr, parentExpr->sage_class_name(),
+                                                   expression, expression->sage_class_name(),
+                                                   parentType, parentType->sage_class_name(),
+                                                   type, type->sage_class_name());
+                                 }
                            // ROSE_ASSERT(false);
                             }
                        }

@@ -101,6 +101,14 @@ public:
     bool mmap_recycle;                          /* If false, then never reuse mmap addresses */
     SignalAction signal_action[_NSIG+1];        /* Simulated actions for signal handling */
     uint64_t signal_mask;                       /* Set by sigsetmask() */
+    std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
+    static const uint32_t brk_base=0x40000000;  /* Initial brk() value */
+
+    /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
+     * behavior here. If the value is less than the highest address mapped by the main executable, then the latter is used
+     * instead (see BinaryLoaderElf::rebase()) */
+    static const rose_addr_t ld_linux_base_va = 0x40000000;
+
 
 #if 0
     uint32_t gsOffset;
@@ -178,6 +186,11 @@ public:
                 readFlag(x86_flag_cf).known_value()?"cy":"nc");
     }
 
+    /* Generate an ELF Core Dump on behalf of the specimen.  This is a real core dump that can be used with GDB and contains
+     * the same information as if the specimen had been running natively and dumped its own core. In other words, the core
+     * dump we generate here does not have references to the simulator even though it is being dumped by the simulator. */
+    void dump_core(int signo);
+
     /* Recursively load an executable and its libraries libraries into memory, creating the MemoryMap object that describes
      * the mapping from the specimen's address space to the simulator's address space.
      *
@@ -222,9 +235,6 @@ public:
 
     /* Reads a vector of NUL-terminated strings from specimen memory. */
     std::vector<std::string> read_string_vector(uint32_t va);
-
-    /* Copies a stat buffer into specimen memory. */
-    void copy_stat64(struct stat64 *sb, uint32_t va);
 
     /* Called by X86InstructionSemantics. Used by x86_and instruction to set AF flag */
     VirtualMachineSemantics::ValueType<1> undefined_() {
@@ -279,7 +289,7 @@ public:
     /* Reads memory from the memory map rather than the super class. */
     template <size_t Len> VirtualMachineSemantics::ValueType<Len>
     readMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
-               const VirtualMachineSemantics::ValueType<1> cond) const {
+               const VirtualMachineSemantics::ValueType<1> cond) {
         ROSE_ASSERT(0==Len % 8 && Len<=64);
         uint32_t base = segreg_shadow[sr].base;
         uint32_t offset = addr.known_value();
@@ -292,8 +302,8 @@ public:
             size_t nread = map->read(buf, base+offset, Len/8);
             if (nread!=Len/8) {
                 fprintf(stderr, "read %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
-                fprintf(stderr, "memory map at failure:\n");
-                map->dump(stderr, "  ");
+                fprintf(stderr, "dumping specimen core and possibly our own...\n");
+                dump_core(SIGSEGV);
                 abort();
             }
             uint64_t result = 0;
@@ -331,15 +341,13 @@ public:
             size_t nwritten = map->write(buf, base+offset, Len/8);
             if (nwritten!=Len/8) {
                 fprintf(stderr, "write %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
-                fprintf(stderr, "memory map at failure:\n");
-                map->dump(stderr, "  ");
+                fprintf(stderr, "dumping specimen core and possibly our own...\n");
+                dump_core(SIGSEGV);
                 abort();
             }
         }
     }
 };
-
-#if 1 /* Switch between the new BinaryLoader interface and the older Loader-like interface [RPM 2010-09-08] */
 
 /* Using the new interface is still about as complicated as the old interface because we need to perform only a partial link.
  * We want ROSE to link the interpreter (usually /lib/ld-linux.so) into the AST but not link in any other shared objects.
@@ -416,11 +424,6 @@ public:
 SgAsmGenericHeader*
 EmulationPolicy::load(const char *name)
 {
-    /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
-     * behavior here. If the value is less than the highest address mapped by the main executable, then the latter is used
-     * instead (see BinaryLoaderElf::rebase()) */
-    rose_addr_t ld_linux_base_va = 0x40000000;
-
     /* Link the main binary into the AST without further linking, mapping, or relocating. */
     if (debug)
         fprintf(debug, "loading %s...\n", name);
@@ -460,84 +463,10 @@ EmulationPolicy::load(const char *name)
 
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
      * below where ld-linux.so.2 was loaded, the stack, etc. */
-    brk_va = ALIGN_UP(map->find_last_free(0x40000000), PAGE_SIZE);
+    brk_va = ALIGN_UP(map->find_last_free(brk_base), PAGE_SIZE);
 
     return fhdr;
 }
-
-#else
-
-SgAsmGenericHeader*
-EmulationPolicy::load(const char *name)
-{
-    if (debug)
-        fprintf(debug, "loading %s...\n", name);
-    char *frontend_args[4];
-    frontend_args[0] = strdup("-");
-    frontend_args[1] = strdup("-rose:read_executable_file_format_only"); /*delay disassembly until later*/
-    frontend_args[2] = strdup(name);
-    frontend_args[3] = NULL;
-    SgProject *project = frontend(3, frontend_args);
-
-    /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
-     * (we'll use the PE interpretation). */
-    SgAsmInterpretation *interp = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
-    SgAsmGenericHeader *fhdr = interp->get_headers()->get_headers().front();
-    writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
-
-    /* Find a suitable disassembler and clone it in case we want to set properties locally. We only do this for the first
-     * (non-recursive) call of load() and assume that all dynamically linked libraries would use the same disassembler. */
-    if (!disassembler) {
-        disassembler = Disassembler::lookup(fhdr)->clone();
-        ROSE_ASSERT(disassembler!=NULL);
-    }
-
-    /* Determine which mappable sections should be loaded into the specimen's address space.  We load LOAD and INTERP
-     * segments. INTERP segments will additionally cause EmulationPolicy::load() to run recursively.  Note that
-     * LoaderELF::order_sections() cause SgAsmGenericSections which are both ELF Sections and ELF Segments to appear twice in
-     * the list that's ultimately processed by Loader::create_map(). Therefore we need to keep track of what sections we've
-     * actually seen. */
-    struct T2: public BinaryLoader::Selector {
-        EmulationPolicy *policy;
-        std::set<SgAsmGenericSection*> seen;
-        T2(EmulationPolicy *policy): policy(policy) {}
-        virtual BinaryLoader::Contribution contributes(SgAsmGenericSection *_section) {
-            SgAsmElfSection *section = isSgAsmElfSection(_section);
-            SgAsmElfSegmentTableEntry *segment = section ? section->get_segment_entry() : NULL;
-            if (segment && seen.find(section)==seen.end()) {
-                seen.insert(section);
-                switch (segment->get_type()) {
-                    case SgAsmElfSegmentTableEntry::PT_LOAD:
-                        return BinaryLoader::CONTRIBUTE_ADD;
-                    case SgAsmElfSegmentTableEntry::PT_INTERP:
-                        char interp_name[section->get_size()+1];
-                        section->read_content_local(0, interp_name, section->get_size());
-                        interp_name[section->get_size()] = '\0';
-                        policy->load(interp_name);
-                        return BinaryLoader::CONTRIBUTE_ADD;
-                    case SgAsmElfSegmentTableEntry::PT_PHDR:
-                        policy->phdr_va = section->get_mapped_preferred_rva();
-                        return BinaryLoader::CONTRIBUTE_NONE;
-                    default:
-                        return BinaryLoader::CONTRIBUTE_NONE;
-                }
-            }
-            return BinaryLoader::CONTRIBUTE_NONE;
-        }
-    } selector(this);
-
-    /* Load applicable sections into specimen's memory recursively, defining a MemoryMap that describes how the specimen
-     * address spaces maps to our own (the simulator's) address space. */
-    BinaryLoader *loader = BinaryLoader::lookup(fhdr)->clone();
-    ROSE_ASSERT(loader!=NULL);
-    loader->create_map(&map, fhdr->get_mapped_sections(), &selector);
-
-    /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address.
-     * Note that we haven't mapped the stack yet, which is typically above all the segments loaded from the file. */
-    brk_va = ALIGN_UP(map->highest_va()+1, PAGE_SIZE);
-    return fhdr;
-}
-#endif
 
 void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[])
 {
@@ -593,67 +522,109 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         } t1;
         t1.traverse(fhdr, preorder);
 
-        /* AT_PHDR */
-        pointers.push_back(3); /*AT_PHDR*/
-        pointers.push_back(t1.phdr_rva + fhdr->get_base_va());
+        auxv.clear();
+#if 0 /*FIXME: the simulator certainly doesn't have all these capabilities, but I'm not sure what the bit numbers are. */
+        /* AT_HWCAP */
+        auxv.push_back(16);
+        auxv.push_back(0xbfebfbff); /*fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts
+                                         * acpi mmx fxsr sse sse2 ss ht tm pbe */
         if (trace_loader)
-            fprintf(stderr, "AT_PHDR = 0x%08"PRIx32"\n", pointers.back());
-
-        /*AT_PHENT*/
-        pointers.push_back(4);
-        pointers.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
-        if (trace_loader)
-            fprintf(stderr, "AT_PHENT = 0x%08"PRIx32"\n", pointers.back());
-
-        /* AT_PHNUM */
-        pointers.push_back(5);
-        pointers.push_back(fhdr->get_e_phnum());
-        if (trace_loader)
-            fprintf(stderr, "AT_PHNUM = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
+#endif
 
         /* AT_PAGESZ */
-        pointers.push_back(6);
-        pointers.push_back(PAGE_SIZE);
+        auxv.push_back(6);
+        auxv.push_back(PAGE_SIZE);
         if (trace_loader)
-            fprintf(stderr, "AT_PAGESZ = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_PAGESZ:        %"PRId32"\n", auxv.back());
+
+        /* AT_CLKTCK */
+        auxv.push_back(17);
+        auxv.push_back(100);
+        if (trace_loader)
+            fprintf(stderr, "AT_CLKTCK:        %"PRId32"\n", auxv.back());
+
+        /* AT_PHDR */
+        auxv.push_back(3); /*AT_PHDR*/
+        auxv.push_back(t1.phdr_rva + fhdr->get_base_va());
+        if (trace_loader)
+            fprintf(stderr, "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
+
+        /*AT_PHENT*/
+        auxv.push_back(4);
+        auxv.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
+        if (trace_loader)
+            fprintf(stderr, "AT_PHENT:         %"PRId32"\n", auxv.back());
+
+        /* AT_PHNUM */
+        auxv.push_back(5);
+        auxv.push_back(fhdr->get_e_phnum());
+        if (trace_loader)
+            fprintf(stderr, "AT_PHNUM:         %"PRId32"\n", auxv.back());
+
+        /* AT_BASE */
+        auxv.push_back(7);
+        auxv.push_back(ld_linux_base_va);
+        if (trace_loader)
+            fprintf(stderr, "AT_BASE:          0x%08"PRIx32"\n", auxv.back());
+
+        /* AT_FLAGS */
+        auxv.push_back(8);
+        auxv.push_back(0);
+        if (trace_loader)
+            fprintf(stderr, "AT_FLAGS:         0x%08"PRIx32"\n", auxv.back());
 
         /* AT_ENTRY */
-        pointers.push_back(9);
-        pointers.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
+        auxv.push_back(9);
+        auxv.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
         if (trace_loader)
-            fprintf(stderr, "AT_ENTRY = 0x%08"PRIx32"\n", pointers.back());
+            fprintf(stderr, "AT_ENTRY:         0x%08"PRIx32"\n", auxv.back());
 
         /* AT_UID */
-        pointers.push_back(11);
-        pointers.push_back(getuid());
+        auxv.push_back(11);
+        auxv.push_back(getuid());
         if (trace_loader)
-            fprintf(stderr, "AT_UID = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_UID:           %"PRId32"\n", auxv.back());
 
         /* AT_EUID */
-        pointers.push_back(12);
-        pointers.push_back(geteuid());
+        auxv.push_back(12);
+        auxv.push_back(geteuid());
         if (trace_loader)
-            fprintf(stderr, "AT_EUID = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_EUID:          %"PRId32"\n", auxv.back());
 
         /* AT_GID */
-        pointers.push_back(13);
-        pointers.push_back(getgid());
+        auxv.push_back(13);
+        auxv.push_back(getgid());
         if (trace_loader)
-            fprintf(stderr, "AT_GID = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_GID:           %"PRId32"\n", auxv.back());
 
         /* AT_EGID */
-        pointers.push_back(14);
-        pointers.push_back(getegid());
+        auxv.push_back(14);
+        auxv.push_back(getegid());
         if (trace_loader)
-            fprintf(stderr, "AT_EGID = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_EGID:          %"PRId32"\n", auxv.back());
 
         /* AT_SECURE */
-        pointers.push_back(23);
-        pointers.push_back(false);
+        auxv.push_back(23);
+        auxv.push_back(false);
         if (trace_loader)
-            fprintf(stderr, "AT_SECURE = %"PRId32"\n", pointers.back());
+            fprintf(stderr, "AT_SECURE:        %"PRId32"\n", auxv.back());
+
+        /*FIXME: AT_PLATFORM should be i386 but not sure of the number. Setting it to i686 causes ld.so to execute floating
+         *       point instructions that are not handled by the simulator.  [RPM 2010-09-18] */
+#if 0
+        /* AT_PLATFORM */
+        auxv.push_back(16);
+        auxv.push_back(0xbffff04b); /*i686*/
+        if (trace_loader)
+            fprintf(stderr, "AT_PLATFORM:      0x%08"PRIx32"\n", auxv.back());
+#endif
     }
-    pointers.push_back(0); /*AT_NULL*/          pointers.push_back(0);
+
+    /* AT_NULL */
+    auxv.push_back(0);
+    auxv.push_back(0);
+    pointers.insert(pointers.end(), auxv.begin(), auxv.end());
 
     /* Finalize stack initialization by writing all the pointers to data we've pushed:
      *    argc
@@ -692,13 +663,244 @@ EmulationPolicy::current_insn()
         insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
     } catch (Disassembler::Exception &e) {
         std::cerr <<e <<"\n";
-        std::cerr <<"dumping specimen's memory into core* files (this might take a while)...\n";
-        map->dump("core");
+        std::cerr <<"dumping specimen core...\n";
+        dump_core(SIGSEGV);
         throw;
     }
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
     icache.insert(std::make_pair(ip, insn));
     return insn;
+}
+
+void
+EmulationPolicy::dump_core(int signo)
+{
+    fprintf(stderr, "memory map at time of core dump:\n");
+    map->dump(stderr, "  ");
+
+    SgAsmGenericFile *ef = new SgAsmGenericFile;
+    ef->set_truncate_zeros(false);
+
+    SgAsmElfFileHeader *fhdr = new SgAsmElfFileHeader(ef);
+    fhdr->get_exec_format()->set_purpose(SgAsmExecutableFileFormat::PURPOSE_CORE_DUMP);
+    fhdr->add_entry_rva(rose_rva_t(0, NULL));
+
+    SgAsmElfSegmentTable *segtab = new SgAsmElfSegmentTable(fhdr);
+    
+    /*========================================================================================================================
+     * NOTE section
+     *======================================================================================================================== */
+
+    SgAsmElfNoteSection *notes = new SgAsmElfNoteSection(fhdr);
+    segtab->add_section(notes);
+    notes->get_segment_entry()->set_type(SgAsmElfSegmentTableEntry::PT_NOTE);
+    
+    /* Note CORE.PRSTATUS(1)              (144 bytes) */
+    struct prstatus {
+        uint32_t signo;                 /* signal number */
+        uint32_t code;                  /* extra signal code */
+        uint32_t err_num;
+        uint32_t cursig;                /* current signal; 2-bytes followed by 2 bytes of zero padding */
+        uint32_t sigpend;               /* pending signals */
+        uint32_t sighold;               /* set of held signals */
+        uint32_t pid;
+        uint32_t ppid;
+        uint32_t pgrp;
+        uint32_t sid;
+        uint32_t user_sec;              /* user time */
+        uint32_t user_usec;
+        uint32_t sys_sec;               /* system time */
+        uint32_t sys_usec;
+        uint32_t cuser_sec;             /* cummulative user time */
+        uint32_t cuser_usec;
+        uint32_t csys_sec;              /* cummulative system time */
+        uint32_t csys_usec;
+        uint32_t bx;                    /* general purpose registers */
+        uint32_t cx;
+        uint32_t dx;
+        uint32_t si;
+        uint32_t di;
+        uint32_t bp;
+        uint32_t ax;
+        uint32_t ds;
+        uint32_t es;
+        uint32_t fs;
+        uint32_t gs;
+        uint32_t orig_ax;               /* ax value before syscall? */
+        uint32_t ip;
+        uint32_t cs;
+        uint32_t flags;
+        uint32_t sp;
+        uint32_t ss;
+        uint32_t fpvalid;               /* is math coprocessor being used? */
+    } __attribute__((packed));
+    struct prstatus prstatus;
+    ROSE_ASSERT(144==sizeof prstatus);
+    memset(&prstatus, 0, sizeof prstatus);
+    prstatus.signo = prstatus.cursig = signo;
+    prstatus.pid = getpid();
+    prstatus.ppid = getppid();
+    prstatus.pgrp = getpgrp();
+    prstatus.sid = getsid(0);
+    prstatus.bx = readGPR(x86_gpr_bx).known_value();
+    prstatus.cx = readGPR(x86_gpr_cx).known_value();
+    prstatus.dx = readGPR(x86_gpr_dx).known_value();
+    prstatus.si = readGPR(x86_gpr_si).known_value();
+    prstatus.di = readGPR(x86_gpr_di).known_value();
+    prstatus.bp = readGPR(x86_gpr_bp).known_value();
+    prstatus.ax = readGPR(x86_gpr_ax).known_value();
+    prstatus.ds = readSegreg(x86_segreg_ds).known_value();
+    prstatus.es = readSegreg(x86_segreg_es).known_value();
+    prstatus.fs = readSegreg(x86_segreg_fs).known_value();
+    prstatus.gs = readSegreg(x86_segreg_gs).known_value();
+    prstatus.orig_ax = readGPR(x86_gpr_ax).known_value();
+    prstatus.ip = readIP().known_value();
+    prstatus.cs = readSegreg(x86_segreg_cs).known_value();
+    prstatus.flags = 0;
+#define ADD_PRSTATUS_FLAG(NAME, BITPOS) \
+    prstatus.flags |= readFlag(NAME).is_known() ? readFlag(NAME).known_value() << (BITPOS) : 0
+    ADD_PRSTATUS_FLAG(x86_flag_cf, 0);
+    ADD_PRSTATUS_FLAG(x86_flag_1, 1);
+    ADD_PRSTATUS_FLAG(x86_flag_pf, 2);
+    ADD_PRSTATUS_FLAG(x86_flag_3, 3);
+    ADD_PRSTATUS_FLAG(x86_flag_af, 4);
+    ADD_PRSTATUS_FLAG(x86_flag_5, 5);
+    ADD_PRSTATUS_FLAG(x86_flag_zf, 6);
+    ADD_PRSTATUS_FLAG(x86_flag_sf, 7);
+    ADD_PRSTATUS_FLAG(x86_flag_tf, 8);
+    ADD_PRSTATUS_FLAG(x86_flag_if, 9);
+    ADD_PRSTATUS_FLAG(x86_flag_df, 10);
+    ADD_PRSTATUS_FLAG(x86_flag_of, 11);
+    ADD_PRSTATUS_FLAG(x86_flag_iopl0, 12);
+    ADD_PRSTATUS_FLAG(x86_flag_iopl1, 13);
+    ADD_PRSTATUS_FLAG(x86_flag_nt, 14);
+    ADD_PRSTATUS_FLAG(x86_flag_15, 15);
+    ADD_PRSTATUS_FLAG(x86_flag_rf, 16);
+    ADD_PRSTATUS_FLAG(x86_flag_vm, 17);
+    ADD_PRSTATUS_FLAG(x86_flag_ac, 18);
+    ADD_PRSTATUS_FLAG(x86_flag_vif, 19);
+    ADD_PRSTATUS_FLAG(x86_flag_vip, 20);
+    ADD_PRSTATUS_FLAG(x86_flag_id, 21);
+#undef ADD_PRSTATUS_FLAG
+    prstatus.sp = readGPR(x86_gpr_sp).known_value();
+    prstatus.ss = readSegreg(x86_segreg_ss).known_value();
+    prstatus.fpvalid = 0;     /*ROSE doesn't support floating point yet*/
+
+    SgAsmElfNoteEntry *prstatus_note = new SgAsmElfNoteEntry(notes);
+    prstatus_note->get_name()->set_string("CORE");
+    prstatus_note->set_type(1); /*ET_PRSTATUS*/
+    prstatus_note->set_payload(&prstatus, sizeof prstatus);
+            
+    /* Note CORE.PRPSINFO(3)              (124 bytes) */
+    struct {
+        uint8_t state;                                          /* numeric process state */
+        uint8_t sname;                                          /* char for state (is this what ps(1) prints? */
+        uint8_t zombie;
+        uint8_t nice;                                           /* nice value */
+        uint32_t flags;
+        uint16_t uid;
+        uint16_t gid;
+        uint32_t pid;
+        uint32_t ppid;
+        uint32_t pgrp;
+        uint32_t sid;
+        char fname[16];                                         /* filename of executable */
+        char psargs[80];                                        /* initial part of arg list */
+    } __attribute__((packed)) prpsinfo;
+    ROSE_ASSERT(124==sizeof prpsinfo);
+    memset(&prpsinfo, 0, sizeof prpsinfo);
+    prpsinfo.state = 0;                                         /* runable */
+    prpsinfo.sname = 'R';
+    prpsinfo.zombie = 0;
+    prpsinfo.nice = getpriority(PRIO_PROCESS, getpid());
+    prpsinfo.flags = 0;                                         /* see linux/sched.h PF_* bits */
+    prpsinfo.uid = geteuid();
+    prpsinfo.gid = getegid();
+    prpsinfo.ppid = getppid();
+    prpsinfo.pgrp = getpgrp();
+    prpsinfo.sid = getsid(0);
+    strncpy(prpsinfo.fname, "/home/matzke/syscall_tst_18", sizeof(prpsinfo.fname));   /*FIXME*/
+    strncpy(prpsinfo.psargs, "/home/matzke/syscall_tst_18", sizeof(prpsinfo.psargs)); /*FIXME*/
+    
+    SgAsmElfNoteEntry *prpsinfo_note = new SgAsmElfNoteEntry(notes);
+    prpsinfo_note->get_name()->set_string("CORE");
+    prpsinfo_note->set_type(3); /*ET_PRPSINFO*/
+    prpsinfo_note->set_payload(&prpsinfo, sizeof prpsinfo);
+
+    /* Note CORE.AUXV(6)                  (144 bytes) */
+    SgAsmElfNoteEntry *auxv_note = new SgAsmElfNoteEntry(notes);
+    auxv_note->get_name()->set_string("CORE");
+    auxv_note->set_type(6);
+    auxv_note->set_payload(&auxv[0], 4*auxv.size());
+
+    /* Note CORE.PRFPREG(2)               (108 bytes) */
+    /* Note LINUX.PRXFPREG(0x45e62b7f)    (512 bytes) */
+    /* Note LINUX.386_TLS(0x200)          (48 bytes)  i386 TLS slots (struct user_desc)*/
+    
+    /*========================================================================================================================
+     * LOAD sections
+     *======================================================================================================================== */
+
+    class SegmentBuilder: public SgAsmElfSection {
+        MemoryMap       *map;                                   /* memory map for specimen's process address space */
+    public:
+        SegmentBuilder(SgAsmElfFileHeader *fhdr, MemoryMap *map, rose_addr_t va, rose_addr_t sz, unsigned perms)
+            : SgAsmElfSection(fhdr), map(map) {
+            set_purpose(SgAsmGenericSection::SP_PROGRAM);       /* Program-supplied text, data, etc. */
+            set_offset(ALIGN_UP(get_offset(), 4096));
+            set_size(sz);
+            set_file_alignment(4096);
+            set_mapped_alignment(4096);
+            set_mapped_preferred_rva(va); /*va==rva for ELF*/
+            set_mapped_size(sz);
+            set_mapped_rperm(0!=(perms & MemoryMap::MM_PROT_READ));
+            set_mapped_wperm(0!=(perms & MemoryMap::MM_PROT_WRITE));
+            set_mapped_xperm(0!=(perms & MemoryMap::MM_PROT_EXEC));
+        }
+        virtual void unparse(std::ostream &f) const {
+            uint8_t buf[8192];
+            rose_addr_t cur_va = get_mapped_preferred_va();     /* current virtual address */
+            rose_addr_t nremain = get_mapped_size();            /* bytes remaining to be written to the file */
+            rose_addr_t offset = 0;                             /* byte offset with respect to beginning of section */
+            while (nremain>0) {
+                rose_addr_t to_write = std::min(nremain, (rose_addr_t)sizeof buf);
+                size_t nread = map->read(buf, cur_va, to_write);
+                ROSE_ASSERT(nread==to_write);
+                offset = write(f, offset, to_write, buf);
+                cur_va += to_write;
+                nremain -= to_write;
+            }
+        }
+    };
+
+    /* We dump everything to the core file, although linux (by default) skips private and shared mappings that have backing
+     * store. */
+    const std::vector<MemoryMap::MapElement> &elmts = map->get_elements();
+    std::vector<MemoryMap::MapElement>::const_iterator ei=elmts.begin();
+    while (ei!=elmts.end()) {
+        rose_addr_t va = ei->get_va();
+        rose_addr_t sz = ei->get_size();
+        unsigned perms = ei->get_mapperms();
+
+        /* Combine elmts[i] with as many following elements as possible. */
+        std::vector<MemoryMap::MapElement>::const_iterator ej=ei+1;
+        while (ej!=elmts.end() && va+sz==ej->get_va() && perms==ej->get_mapperms())
+            sz += (ej++)->get_size();
+        ei = ej;
+
+        /* Create a segment */
+        SgAsmElfSection *segment = new SegmentBuilder(fhdr, map, va, sz, perms);
+        segtab->add_section(segment);
+        segment->get_segment_entry()->set_type(SgAsmElfSegmentTableEntry::PT_LOAD);
+    }
+
+    /*========================================================================================================================
+     * Generate the core file.
+     *======================================================================================================================== */
+
+    /*FIXME: will replace with a more suitable name when working*/    
+    SgAsmExecutableFileFormat::unparseBinaryFormat("x-core.rose", ef);
+    //deleteAST(ef); /*FIXME [RPM 2010-09-18]*/
 }
 
 void *
@@ -754,29 +956,6 @@ EmulationPolicy::read_string_vector(uint32_t va)
       va+=4;
     }
     return vec;
-}
-
-
-void
-EmulationPolicy::copy_stat64(struct stat64 *sb, uint32_t va) {
-    writeMemory<16>(x86_segreg_ds, va+0,  sb->st_dev,     true_());
-    writeMemory<32>(x86_segreg_ds, va+12, sb->st_ino,     true_());
-    writeMemory<32>(x86_segreg_ds, va+16, sb->st_mode,    true_());
-    writeMemory<32>(x86_segreg_ds, va+20, sb->st_nlink,   true_());
-    writeMemory<32>(x86_segreg_ds, va+24, sb->st_uid,     true_());
-    writeMemory<32>(x86_segreg_ds, va+28, sb->st_gid,     true_());
-    writeMemory<16>(x86_segreg_ds, va+32, sb->st_rdev,    true_());
-    writeMemory<64>(x86_segreg_ds, va+44, sb->st_size,    true_());
-    writeMemory<32>(x86_segreg_ds, va+52, sb->st_blksize, true_());
-    writeMemory<32>(x86_segreg_ds, va+56, sb->st_blocks,  true_());
-#ifdef FIXME
-    writeMemory<32>(x86_segreg_ds, va+64, sb->st_atime,   true_());
-#else
-    writeMemory<32>(x86_segreg_ds, va+64, 1279897465ul,   true_()); /*use same time always for consistency when debugging*/
-#endif
-    writeMemory<32>(x86_segreg_ds, va+72, sb->st_mtime,   true_());
-    writeMemory<32>(x86_segreg_ds, va+80, sb->st_ctime,   true_());
-    writeMemory<64>(x86_segreg_ds, va+88, sb->st_ino,     true_());
 }
 
 void
@@ -912,6 +1091,20 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 12: { /* 0xc, chdir */
+            syscall_enter("chdir", "s");
+	    uint32_t path = arg(0);
+            std::string sys_path = read_string(path);
+
+	    int result = chdir(sys_path.c_str());
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
+
 
         case 13: { /*0xd, time */
             syscall_enter("time", "p");
@@ -938,6 +1131,21 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+	case 15: { /* 0xf, chmod */
+            syscall_enter("chmod", "sd");
+	    uint32_t filename = arg(0);
+            std::string sys_filename = read_string(filename);
+	    mode_t mode = arg(1);
+
+	    int result = chmod(sys_filename.c_str(), mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
 
         case 20: { /*0x14, getpid*/
             syscall_enter("getpid", "");
@@ -977,6 +1185,32 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 39: { /* 0x27, mkdir */
+            syscall_enter("mkdir", "sd");
+	    uint32_t pathname = arg(0);
+            std::string sys_pathname = read_string(pathname);
+	    mode_t mode = arg(1);
+
+	    int result = mkdir(sys_pathname.c_str(), mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
+	case 40: { /* 0x28, rmdir */
+            syscall_enter("rmdir", "s");
+	    uint32_t pathname = arg(0);
+            std::string sys_pathname = read_string(pathname);
+
+	    int result = rmdir(sys_pathname.c_str());
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
 
         case 41: { /*0x29, dup*/
             syscall_enter("dup", "d");
@@ -1246,6 +1480,18 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 133: { /* 0x85, fchdir */
+            syscall_enter("fchdir", "d");
+	    uint32_t file_descriptor = arg(0);
+
+	    int result = fchdir(file_descriptor);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
+
         case 125: { /*0x7d, mprotect*/
             static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
             syscall_enter("mprotect", "pdf", pflags);
@@ -1375,8 +1621,37 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 191: { /*0xbf, getrlimit*/
-            syscall_enter("getrlimit", "dp");
+	case 183: { /* 0xb7, getcwd */
+            syscall_enter("getcwd", "pd");
+            
+	    uint32_t buf_va=arg(0), size=arg(1);
+            char buf[size];
+            char* ret_buf = getcwd(buf, size);
+	    if (ret_buf == 0) {
+              //Buffer is not big enough
+	      errno=ERANGE;
+	      writeGPR(x86_gpr_ax, 0);
+             }else{ 
+              writeGPR(x86_gpr_ax, buf_va);
+             } 
+
+	    //As an extension to the POSIX.1-2001 standard, 
+	    //Linux (libc4, libc5, glibc) getcwd() allocates the 
+	    //buffer dynamically using malloc() if buf is NULL on call. 
+	    //In this case, the allocated buffer has the length size 
+	    //unless size is zero, when buf is allocated as big as necessary. 
+	    uint8_t byte;
+            size_t nread = map->read(&byte, buf_va, 1);
+	    if(!byte){
+             map->write(buf, buf_va, size);
+            }
+
+            syscall_leave("d");
+            break;
+	}
+
+        case 191: { /*0xbf, ugetrlimit*/
+            syscall_enter("ugetrlimit", "dp");
             int resource=arg(0);
             uint32_t rl_va=arg(1);
             struct rlimit rl;
@@ -1448,33 +1723,119 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 195: { /*0xc3, stat64*/
-            syscall_enter("stat64", "sp");
-            uint32_t name_va=arg(0), sb_va=arg(1);
-            std::string name = read_string(name_va);
-            struct stat64 sb;
-            int result = stat64(name.c_str(), &sb);
-            if (result<0) {
-                result = -errno;
+        case 195:       /*0xc3, stat64*/
+        case 196:       /*0xc4, lstat64*/
+        case 197: {     /*0xc5, fstat64*/
+            /* We need to be a bit careful with xstat64 calls. The C library invokes one of the xstat64 system calls, which
+             * writes a kernel data structure into a temporary buffer, and which the C library then massages into a struct
+             * stat64. When simulating, we don't want the C library to monkey with the data returned from the system call
+             * because the simulated C library will do the monkeying (it must only happen once).
+             *
+             * Therefore, we will invoke the system call directly, bypassing the C library, and then copy the result into
+             * specimen memory.  Fortunately, the kernel data structure that's returned has the same layout on AMD64 (which is
+             * probably how ROSE is running) and i386 (which is probably how the specimen is running).
+             *
+             * For some unknown reason, if we invoke the system call with buf allocated on the stack we'll get -EFAULT (-14)
+             * as the result; if we allocate it statically there's no problem.  Also, just in case the size is different than
+             * we think, we'll allocate a guard area above the kernel_stat and check that the syscall didn't write into it. */
+            if (195==callno || 196==callno) {
+                syscall_enter(195==callno?"stat64":"lstat64", "sp");
             } else {
-                copy_stat64(&sb, sb_va);
+                syscall_enter("fstat64", "dp");
             }
-            writeGPR(x86_gpr_ax, result);
-            syscall_leave("d");
-            break;
-        }
 
-        case 197: { /*0xc5, fstat64*/
-            syscall_enter("fstat64", "dp");
-            int fd=arg(0);
-            uint32_t sb_va=arg(1);
-            struct stat64 sb;
-            int result = fstat64(fd, &sb);
-            if (result<0) {
-                result = -errno;
+#ifdef SYS_stat64       /* x86sim must be running on i386 */
+            ROSE_ASSERT(4==sizeof(long));
+            int host_callno = 195==callno ? SYS_stat64 : (196==callno ? SYS_lstat64 : SYS_fstat64);
+            static const size_t kernel_stat_size = 96;
+#else                   /* x86sim must be running on amd64 */
+            ROSE_ASSERT(8==sizeof(long));
+            int host_callno = 195==callno ? SYS_stat : (196==callno ? SYS_lstat : SYS_fstat);
+            static const size_t kernel_stat_size = 144;
+#endif
+
+            static uint8_t kernel_stat[kernel_stat_size+100];
+            memset(kernel_stat, 0xff, sizeof kernel_stat);
+            int result = 0xdeadbeef;
+
+#if 1
+            if (195==callno || 196==callno) {
+                std::string name = read_string(arg(0));
+                result = syscall(host_callno, (unsigned long)name.c_str(), (unsigned long)kernel_stat);
             } else {
-                copy_stat64(&sb, sb_va);
+                result = syscall(host_callno, (unsigned long)arg(0), (unsigned long)kernel_stat);
             }
+            if (-1==result)
+                result = -errno;
+#else
+            if (195==callno || 196==callno) {
+                std::string name = read_string(arg(0));
+                asm volatile("int $0x80"
+                             : "=a"(result)
+                             : "0"(host_callno), "b"(name.c_str()), "c"(kernel_stat64)
+                             : "memory");
+            } else {
+                asm volatile("int $0x80"
+                             : "=a"(result)
+                             : "0"(host_callno), "b"(arg(0)), "c"(kernel_stat64)
+                             : "memory");
+            }
+#endif
+            /* Check for overflow */
+            for (size_t i=kernel_stat_size; i<sizeof kernel_stat; i++)
+                ROSE_ASSERT(0xff==kernel_stat[i]);
+
+            if (result>=0) {
+                /* Check that the kernel initialized as much data as we thought it should.  We initialized the kernel_stat to
+                 * all 0xff bytes before making the system call.  The last data member of kernel_stat is either an 8-byte
+                 * inode (i386) or zero (amd64), which in either case the high order byte is almost certainly not 0xff. */
+                ROSE_ASSERT(0xff!=kernel_stat[kernel_stat_size-1]);
+                
+                /* On amd64 we need to translate the 64-bit struct to a 32-bit struct. We do it in place. */
+                if (144==kernel_stat_size) {
+                    if (debug && trace_syscall)
+                        fprintf(debug, "[64-to-32] ");
+                    /* quadword-0 (st_dev)                   <-- (st_dev)     no change         */
+                    /* quadword-1 (0xffffffff, st_ino[4])    <-- (ino)        postponed to qw-B */
+                    /* quadword-2 (mode[4], nlink[4])        <-- (nlink)                        */
+                    memmove(kernel_stat+20, kernel_stat+16, 4);                 /*nlink*/
+                    memmove(kernel_stat+16, kernel_stat+24, 4);                 /*mode*/
+                    /* quadword-3 (user[4],group[4])         <-- (mode[4],user[4])              */
+                    memmove(kernel_stat+24, kernel_stat+28, 4);                 /*user*/
+                    memmove(kernel_stat+28, kernel_stat+32, 4);                 /*group*/
+                    /* quadword-4 (rdev[4],zero?)            <-- (group[4],zero[4])             */
+                    memset(kernel_stat+32, 0, 8);                               /*rdev (FIXME)*/
+                    /* quadword-5 (0xffffffff,size[lo4])     <-- (zero?)                        */
+                    memset(kernel_stat+40, 0xff, 4);                            /*0xfffffff*/
+                    memmove(kernel_stat+44, kernel_stat+48, 4);                 /*size[lo4]*/
+                    /* quadword-6 (size[hi4],blksize)        <-- (size)                         */
+                    memmove(kernel_stat+48, kernel_stat+52, 4);                 /*size[hi4]*/
+                    memmove(kernel_stat+52, kernel_stat+56, 4);                 /*blksize*/
+                    /* quadword-7 (nblocks[4],zero?)         <-- (blksize)                      */
+                    memmove(kernel_stat+56, kernel_stat+64, 8);                 /*nblocks*/
+                    /* quadword-8 (atim.sec[4],atim.nsec[4]) <-- (nblocks)                      */
+                    memmove(kernel_stat+64, kernel_stat+72, 4);                 /*atim.sec*/
+                    memmove(kernel_stat+68, kernel_stat+80, 4);                 /*atim.nsec*/
+                    /* quadword-9 (mtim.sec[4],mtim.nsec[4]) <-- (atim.sec)                     */
+                    memmove(kernel_stat+72, kernel_stat+88, 4);                 /*mtim.sec*/
+                    memmove(kernel_stat+76, kernel_stat+96, 4);                 /*mtim.nsec*/
+                    /* quadword-A (ctim.sec[4],ctim.nsec[4]) <-- (atim.nsec)                    */
+                    memmove(kernel_stat+80, kernel_stat+104, 4);                /*ctim.sec*/
+                    memmove(kernel_stat+84, kernel_stat+112, 4);                /*ctim.nsec*/
+                    /* quadword-B (ino)                      <-- (mtim.sec)        also do qw-0 */
+                    memmove(kernel_stat+88, kernel_stat+8, 8);                  /*ino[8]*/
+                    memmove(kernel_stat+12, kernel_stat+8, 4);                  /*ino[4]*/
+                    memset(kernel_stat+8, 0xff, 4);                             /*0xffffffff*/
+                    /* quadword-C (unused)                   <-- (mtim.nsec)                    */
+                    /* quadword-D (unused)                   <-- (ctim.sec)                     */
+                    /* quadword-E (unused)                   <-- (ctim.nsec)                    */
+                    /* quadword-F (unused)                   <-- (zero?)                        */
+                    /* quadword-G (unused)                   <-- (zero?)                        */
+                    /* quadword-H (unused)                   <-- (zero?)                        */
+                }
+            }
+
+            map->write(kernel_stat, arg(1), 96);
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
@@ -1512,8 +1873,18 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 212: { /*0xd4, chown */
+            syscall_enter("chown", "sdd");
+	    std::string filename = read_string(arg(0));
+            uid_t user = arg(1);
+	    gid_t group = arg(2);
+	    int result = chown(filename.c_str(),user,group);
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
         case 221: { // fcntl
-            syscall_enter("fcntl", "ddp");
+            syscall_enter("fcntl64", "ddp");
             uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);
             int result = -EINVAL;
             switch (cmd) {
@@ -1651,13 +2022,29 @@ EmulationPolicy::emulate_syscall()
 
         case 270: { /*0x10e tgkill*/
             syscall_enter("tgkill", "ddd");
-            uint32_t tgid=arg(0), pid=arg(1), sig=arg(2);
+            uint32_t /*tgid=arg(0), pid=arg(1),*/ sig=arg(2);
             // TODO: Actually check thread group and kill properly
             if (debug && trace_syscall) fputs("(throwing...)\n", debug);
             throw Exit(__W_EXITCODE(0, sig));
             break;
 
         }
+
+	case 306: { /* 0x132, fchmodat */
+            syscall_enter("fchmodat", "dsd");
+	    int dirfd = arg(0);
+	    uint32_t path = arg(1);
+            std::string sys_path = read_string(path);
+	    mode_t mode = arg(2);
+	    int flags = arg(3);
+
+	    int result = fchmodat(dirfd, sys_path.c_str(), mode, flags);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	}
 
         case 311: { /*0x137, set_robust_list*/
             syscall_enter("set_robust_list", "pd");
@@ -1680,8 +2067,8 @@ EmulationPolicy::emulate_syscall()
             for (int i=0; i<6; i++)
                 fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", arg(i));
             fprintf(stderr, ") is not implemented yet\n\n");
-            fprintf(stderr, "dumping specimen's memory into core* files (this might take a while)...\n");
-            map->dump("core");
+            fprintf(stderr, "dumping specimen core...\n");
+            dump_core(SIGSYS);
             abort();
         }
     }
@@ -1832,8 +2219,8 @@ main(int argc, char *argv[])
     while (true) {
         try {
             if (dump_at!=0 && dump_at == policy.readIP().known_value()) {
-                fprintf(stderr, "Reached dump point. Dumping pseudo-core files...\n");
-                policy.map->dump(dump_name);
+                fprintf(stderr, "Reached dump point. Dumping specimen core...\n");
+                policy.dump_core(SIGABRT);
                 dump_at = 0;
             }
             SgAsmx86Instruction *insn = policy.current_insn();
@@ -1856,10 +2243,14 @@ main(int argc, char *argv[])
             /* specimen has exited */
             if (WIFEXITED(e.status)) {
                 fprintf(stderr, "specimen exited with status %d\n", WEXITSTATUS(e.status));
+		if( WEXITSTATUS(e.status) )
+                   exit( WEXITSTATUS(e.status) );
             } else if (WIFSIGNALED(e.status)) {
                 fprintf(stderr, "specimen exited due to signal %d (%s)%s\n",
                         WTERMSIG(e.status), strsignal(WTERMSIG(e.status)), 
                         WCOREDUMP(e.status)?" core dumped":"");
+                /* Eventually we'll put this where the signal is thrown. [RPM 2010-09-18] */
+                policy.dump_core(WTERMSIG(e.status));
             } else if (WIFSTOPPED(e.status)) {
                 fprintf(stderr, "specimen is stopped due to signal %d (%s)\n", 
                         WSTOPSIG(e.status), strsignal(WSTOPSIG(e.status)));

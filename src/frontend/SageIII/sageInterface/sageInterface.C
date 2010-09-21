@@ -5128,16 +5128,249 @@ SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   return isSgStatement(n);
 }
 
+// DQ (/20/2010):" control debugging output for SageInterface::removeStatement() function.
+#define REMOVE_STATEMENT_DEBUG 0
+
 //! Remove a statement: TODO consider side effects for symbol tables
 void SageInterface::removeStatement(SgStatement* stmt)
-{
-  ROSE_ASSERT(stmt);
+   {
+     ROSE_ASSERT(stmt != NULL);
+
 #ifndef _MSC_VER
-  LowLevelRewrite::remove(stmt);
-#else
-  ROSE_ASSERT(false);
+  // LowLevelRewrite::remove(stmt);
+
+  // This function only supports the removal of a whole statement (not an expression within a statement)
+     SgStatement* targetStmt = stmt;
+     ROSE_ASSERT (targetStmt != NULL);
+
+     SgStatement * parentStatement = isSgStatement(targetStmt->get_parent());
+
+  // Can't assert this since SgFile is the parent of SgGlobal, and SgFile is not a statement.
+  // Even so SgGlobal can't be removed from SgFile, but isRemovableStatement() takes a SgStatement.
+  // ROSE_ASSERT (parentStatement != NULL);
+
+  // Test cast of void* to int*
+  // extern void *MY_upc_all_alloc();
+  // int* x = MY_upc_all_alloc();
+
+     if (parentStatement != NULL)
+        {
+          bool isRemovable = LowLevelRewrite::isRemovableStatement(targetStmt);
+#if REMOVE_STATEMENT_DEBUG
+          printf ("In parentStatement = %s remove targetStatement = %s (isRemovable = %s) \n",
+               parentStatement->sage_class_name(),
+               targetStmt->sage_class_name(),
+               isRemovable ? "true" : "false");
 #endif
-}
+       // ROSE_ASSERT(isRemovable == true);
+
+       // DQ (9/19/2010): Disable this new (not completely working feature) so that I can checkin the latest UPC/UPC++ work.
+#if 1
+       // DQ (9/16/2010): Added support to move comments and CPP directives marked to 
+       // appear before the statment to be attached to the inserted statement (and marked 
+       // to appear before that statement).
+          ROSE_ASSERT(targetStmt != NULL);
+          AttachedPreprocessingInfoType* comments = targetStmt->getAttachedPreprocessingInfo();
+
+       // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
+       // I thnk that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
+       // if (comments != NULL && newStmt->getAttachedPreprocessingInfo() == NULL)
+       // if (comments != NULL && isSgBasicBlock(newStmt) == NULL)
+          if (comments != NULL)
+       // if (comments != NULL && isRemovable == true )
+          if (comments != NULL && isRemovable == true && isSgBasicBlock(targetStmt) == NULL )
+             {
+               vector<int> captureList;
+#if REMOVE_STATEMENT_DEBUG
+               printf ("Found attached comments (removing %p = %s): comments->size() = %zu \n",targetStmt,targetStmt->class_name().c_str(),comments->size());
+#endif
+
+            // First debug the case of comments appearing before the statement being removed.
+            // bool insertBefore = true;
+
+            // Since this statement will be removed we have to relocate all the associated comments and CPP directives.
+               int commentIndex = 0;
+               AttachedPreprocessingInfoType::iterator i;
+               for (i = comments->begin(); i != comments->end(); i++)
+                  {
+                    ROSE_ASSERT ( (*i) != NULL );
+#if REMOVE_STATEMENT_DEBUG
+                    printf ("          Attached Comment (relativePosition=%s): %s\n",
+                         ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                         (*i)->getString().c_str());
+                    printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+                    (*i)->get_file_info()->display("comment/directive location debug");
+#endif
+
+                 // **** Note **** We are only getting the comments and CPP directives that appear before the statement being removed.
+                 // Handle the comments that appear before the statement being removed.
+                    if ((*i)->getRelativePosition() == PreprocessingInfo::before)
+                       {
+                      // accumulate into list
+                         captureList.push_back(commentIndex);
+                       }
+
+                    commentIndex++;
+                  }
+#if REMOVE_STATEMENT_DEBUG
+               printf ("captureList.size() = %zu \n",captureList.size());
+#endif
+               if (captureList.empty() == false)
+                  {
+                 // Remove these comments and/or CPP directives and put them into the previous statement (marked to be output after the statement).
+                 // SgStatement* surroundingStatement = (insertBefore == true) ? getPreviousStatement(targetStmt) : getNextStatement(targetStmt);
+                    SgStatement* surroundingStatement = getPreviousStatement(targetStmt);
+                    ROSE_ASSERT(surroundingStatement != targetStmt);
+                    ROSE_ASSERT(surroundingStatement != NULL);
+#if REMOVE_STATEMENT_DEBUG
+                    printf ("targetStmt->get_file_info()->get_file_id() = %d \n",targetStmt->get_file_info()->get_file_id());
+                    printf ("Searching toward the top of the file for a statement to attach comments and CPP directives to: surroundingStatement = %p = %s file = %s file id = %d line = %d \n",
+                         surroundingStatement,surroundingStatement->class_name().c_str(),
+                         surroundingStatement->get_file_info()->get_filenameString().c_str(),
+                         surroundingStatement->get_file_info()->get_file_id(),
+                         surroundingStatement->get_file_info()->get_line());
+#endif
+                 // DQ (9/18/2010): This can't be asserted on targetStmt (see rose_inputloopUnrolling.C as an example of where this fails).
+                 // ROSE_ASSERT(targetStmt->get_file_info()->get_file_id() >= 0);
+
+                 // DQ (9/20/2010): Assume that the first surrounding statment is at least from the same file.
+                 // ROSE_ASSERT(surroundingStatement->get_file_info()->get_file_id() >= 0);
+                    if (surroundingStatement->get_file_info()->get_file_id() >= 0)
+                       {
+                 // printf ("   targetStmt->get_file_info()->get_file_id()           = %d \n",targetStmt->get_file_info()->get_file_id());
+                 // printf ("   surroundingStatement->get_file_info()->get_file_id() = %d \n",surroundingStatement->get_file_info()->get_file_id());
+
+                    while (surroundingStatement->get_file_info()->get_file_id() != targetStmt->get_file_info()->get_file_id())
+                       {
+                      // Start by going up in the source sequence.
+                      // This is a declaration from the wrong file so go to the next statement.
+                      // surroundingStatement = (insertBefore == true) ? getNextStatement(surroundingStatement) : getPreviousStatement(surroundingStatement);
+                      // surroundingStatement = (insertBefore == true) ? getPreviousStatement(surroundingStatement) : getNextStatement(surroundingStatement);
+                         surroundingStatement = getPreviousStatement(surroundingStatement);
+#if REMOVE_STATEMENT_DEBUG
+                         if (surroundingStatement != NULL)
+                            {
+                              printf ("Looping toward the top of the file for a statement to attach comments and CPP directives to: surroundingStatement = %p = %s file = %s file id = %d line = %d \n",
+                                   surroundingStatement,surroundingStatement->class_name().c_str(),
+                                   surroundingStatement->get_file_info()->get_filenameString().c_str(),
+                                   surroundingStatement->get_file_info()->get_file_id(),
+                                   surroundingStatement->get_file_info()->get_line());
+                            }
+                           else
+                            {
+                              printf ("surroundingStatement == NULL \n");
+                            }
+#endif
+                      // As a last resort restart and go down in the statement sequence.
+                         if (surroundingStatement == NULL)
+                            {
+                           // This is triggered by rose_inputloopUnrolling.C
+#if REMOVE_STATEMENT_DEBUG
+                              printf ("We just ran off the start (top) of the file... targetStmt = %p = %s \n",targetStmt,targetStmt->class_name().c_str());
+#endif
+#if 0
+                              ROSE_ASSERT(false);
+#endif
+                           // Restart by going the other direction (down in the source sequence)
+                              surroundingStatement = targetStmt;
+                              SgStatement* previousStatement = surroundingStatement;
+                           // surroundingStatement = getNextStatement(surroundingStatement);
+                              while ( (surroundingStatement != NULL) && (surroundingStatement->get_file_info()->get_file_id() != targetStmt->get_file_info()->get_file_id()) )
+                                 {
+                                   previousStatement = surroundingStatement;
+                                   surroundingStatement = getNextStatement(surroundingStatement);
+
+                                   if (surroundingStatement == NULL)
+                                      {
+#if REMOVE_STATEMENT_DEBUG
+                                        printf ("We just ran off the end (bottom) of the file... \n");
+#endif
+#if 0
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
+                                 }
+
+                              surroundingStatement = previousStatement;
+                            }
+                       }
+
+                 // If we can't identify a valid surroundingStatement then we can ignore attaching comments (at least for now).
+                    if (surroundingStatement != NULL)
+                       {
+                      // Now add the entries from the captureList to the surroundingStatement and remove them from the targetStmt.
+                      // printf ("This is a valid surrounding statement = %s for insertBefore = %s \n",surroundingStatement->class_name().c_str(),insertBefore ? "true" : "false");
+                         vector<int>::iterator j = captureList.begin();
+                         while (j != captureList.end())
+                            {
+                           // Add the captured comments to the new statement. Likely we need to make sure that the order is preserved.
+                              ROSE_ASSERT(surroundingStatement->get_file_info() != NULL);
+#if REMOVE_STATEMENT_DEBUG
+                              printf ("Attaching comments to surroundingStatement = %p = %s on file = %s line %d \n",
+                                   surroundingStatement,surroundingStatement->class_name().c_str(),
+                                   surroundingStatement->get_file_info()->get_filenameString().c_str(),
+                                   surroundingStatement->get_file_info()->get_line());
+#endif
+                              surroundingStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
+
+                           // Remove them from the targetStmt. (set them to NULL and then remove them in a separate step).
+#if REMOVE_STATEMENT_DEBUG
+                              printf ("Removing entry from comments list on targetStmt = %p = %s \n",targetStmt,targetStmt->class_name().c_str());
+#endif
+                              (*comments)[*j] = NULL;
+
+                              j++;
+                            }
+
+                      // Now remove each NULL entries in the comments vector.
+                      // Because of iterator invalidation we must reset the iterators after each call to erase (I think).
+                         for (size_t n = 0; n < captureList.size(); n++)
+                            {
+#if REMOVE_STATEMENT_DEBUG
+                              printf ("Erase entry from comments list on comments->size() %zu \n",comments->size());
+#endif
+                              bool modifiedList = false;
+                              AttachedPreprocessingInfoType::iterator k = comments->begin();
+                              while (k != comments->end() && modifiedList == false)
+                                 {
+                                // Only modify the list once per iteration over the captureList
+                                // if ((*comments)[*k] == NULL)
+                                   if (*k == NULL)
+                                      {
+                                        comments->erase(k);
+                                        modifiedList = true;
+                                      }
+                                   k++;
+                                 }
+                            }
+                       }
+                       }
+                      else
+                       {
+                      // DQ (9/20/2010): Separting out this case is at least an incremental improvement toward comment and CPP directive relocation.
+                         printf ("Warning: First surroundingStatement get_file_id() = %d < 0 (this is a special statment comments not reloated) \n",surroundingStatement->get_file_info()->get_file_id());
+                       }
+                  }
+             }
+            else
+             {
+#if 0
+               printf ("No attached comments (at %p of type: %s): \n",targetStmt,targetStmt->class_name().c_str());
+#endif
+             }
+#endif
+
+          if ( isRemovable == true )
+               parentStatement->remove_statement(targetStmt);
+        }
+
+
+
+#else
+     printf ("Error: This is not supported within Microsoft Windows. \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 
 #ifndef USE_ROSE
@@ -7123,73 +7356,211 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
   //TODO handle more side effect like SageBuilder::append_statement() does
   //Merge myStatementInsert()
   // insert  SageInterface::insertStatement()
-  void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore)
-  {
+void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore)
+   {
+     ROSE_ASSERT(targetStmt &&newStmt);
+     ROSE_ASSERT(targetStmt != newStmt); // should not share statement nodes!
+     SgNode* parent = targetStmt->get_parent();
+     if (parent==NULL)
+        {
+          cerr<<"Empty parent pointer for target statement. May be caused by the wrong order of target and new statements in insertStatement(targetStmt, newStmt)"<<endl;
+          ROSE_ASSERT(parent);
+        }
 
-    ROSE_ASSERT(targetStmt &&newStmt);
-    ROSE_ASSERT(targetStmt != newStmt); // should not share statement nodes!
-    SgNode* parent = targetStmt->get_parent();
-    if (parent==NULL)
-    {
-      cerr<<"Empty parent pointer for target statement. May be caused by the wrong order of target and new statements in insertStatement(targetStmt, newStmt)"<<endl;
-      ROSE_ASSERT(parent);
-    }
-
-    // We now have single statement true/false body for IfStmt etc
-    // However, IfStmt::insert_child() is ambiguous and not implemented
-    // So we make SgBasicBlock out of the single statement and 
-    // essentially call SgBasicBlock::insert_child() instead.
-    // TODO: add test cases for If, variable, variable/struct inside if, etc 
+  // We now have single statement true/false body for IfStmt etc
+  // However, IfStmt::insert_child() is ambiguous and not implemented
+  // So we make SgBasicBlock out of the single statement and 
+  // essentially call SgBasicBlock::insert_child() instead.
+  // TODO: add test cases for If, variable, variable/struct inside if, etc 
     
-    parent = ensureBasicBlockAsParent(targetStmt);
-    // must get the new scope after ensureBasicBlockAsParent ()
-    SgScopeStatement* scope= targetStmt->get_scope();
-    ROSE_ASSERT(scope);
+     parent = ensureBasicBlockAsParent(targetStmt);
 
-    newStmt->set_parent(targetStmt->get_parent());
-    fixStatement(newStmt,scope);
+  // must get the new scope after ensureBasicBlockAsParent ()
+     SgScopeStatement* scope= targetStmt->get_scope();
+     ROSE_ASSERT(scope);
 
-    if (isSgIfStmt(parent)) {
-      if (isSgIfStmt(parent)->get_conditional()==targetStmt)
-	insertStatement(isSgStatement(parent),newStmt,insertBefore);
-      else if (isSgIfStmt(parent)->get_true_body()==targetStmt) {
-	//ensureBasicBlockAsParent(targetStmt);
-	insertStatement(isSgStatement(parent),newStmt,insertBefore);
-      }
-      else if (isSgIfStmt(parent)->get_false_body()==targetStmt) {
-	//ensureBasicBlockAsParent(targetStmt);
-	insertStatement(isSgStatement(parent),newStmt,insertBefore);
-      }
-    } else if (isSgWhileStmt(parent)) {
-      if (isSgWhileStmt(parent)->get_condition()==targetStmt)
-	insertStatement(isSgStatement(parent),newStmt,insertBefore);
-      else if (isSgWhileStmt(parent)->get_body()==targetStmt) {
-	//ensureBasicBlockAsParent(targetStmt);
-	insertStatement(isSgStatement(parent),newStmt,insertBefore);
-      }
-    } else if (isSgDoWhileStmt(parent)) {
-      if (isSgDoWhileStmt(parent)->get_condition()==targetStmt)
-	insertStatement(isSgStatement(parent),newStmt,insertBefore);
-      else if (isSgDoWhileStmt(parent)->get_body()==targetStmt) {
-	//ensureBasicBlockAsParent(targetStmt);
-	insertStatement(isSgStatement(parent),newStmt,insertBefore);
-      }
-    } else if (isSgForStatement(parent)) {
-      if (isSgForStatement(parent)->get_loop_body()==targetStmt) {
-	//ensureBasicBlockAsParent(targetStmt);
-	insertStatement(isSgStatement(parent),newStmt,insertBefore);
-      }
-      else if (isSgForStatement(parent)->get_test()==targetStmt) {
-	insertStatement(isSgStatement(parent),newStmt,insertBefore);
-      }
+     newStmt->set_parent(targetStmt->get_parent());
+     fixStatement(newStmt,scope);
 
-    } else
-      isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
+  // DQ (9/16/2010): Added assertion that appears to be required to be true.
+  // However, if this is required to be true then what about statements in 
+  // SgStatementExpression IR nodes?
+     ROSE_ASSERT(isSgStatement(parent) != NULL);
 
-    // update the links after insertion!
-    if (isSgFunctionDeclaration(newStmt))
-     updateDefiningNondefiningLinks(isSgFunctionDeclaration(newStmt),scope);
-  }
+  // DQ (9/16/2010): Added support to move comments and CPP directives marked to 
+  // appear before the statment to be attached to the inserted statement (and marked 
+  // to appear before that statement).
+     ROSE_ASSERT(targetStmt != NULL);
+     AttachedPreprocessingInfoType* comments = targetStmt->getAttachedPreprocessingInfo();
+
+  // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
+  // I thnk that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
+  // if (comments != NULL && newStmt->getAttachedPreprocessingInfo() == NULL)
+  // if (comments != NULL)
+     if (comments != NULL && isSgBasicBlock(newStmt) == NULL)
+        {
+          vector<int> captureList;
+#if 0
+          printf ("Found attached comments (at %p = %s, inserting %p = %s insertBefore = %s): comments->size() = %zu \n",
+               targetStmt,targetStmt->class_name().c_str(),newStmt,newStmt->class_name().c_str(),insertBefore ? "true" : "false",comments->size());
+#endif
+       // DQ (9/17/2010): Assert that the new statement being inserted has no attached comments or CPP directives.
+          if (newStmt->getAttachedPreprocessingInfo() != NULL && newStmt->getAttachedPreprocessingInfo()->empty() == false)
+             {
+            // If the inserted statment has attached comments or CPP directives then this is gets a little 
+            // bit more comple and we don't support that at present.
+               printf ("Warning: at present statements being inserted should not have attached comments of CPP directives (could be a problem, but comment relocation is not disabled). \n");
+             }
+       // DQ (9/17/2010): commented out because it fails test in projects/OpenMP_Translator/for_firstprivate.c
+          ROSE_ASSERT((newStmt->getAttachedPreprocessingInfo() == NULL) || (newStmt->getAttachedPreprocessingInfo() != NULL && newStmt->getAttachedPreprocessingInfo()->empty() == false));
+
+          int commentIndex = 0;
+          AttachedPreprocessingInfoType::iterator i;
+          for (i = comments->begin(); i != comments->end(); i++)
+             {
+               ROSE_ASSERT ( (*i) != NULL );
+#if 0
+               printf ("          Attached Comment (relativePosition=%s): %s\n",
+                    ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                    (*i)->getString().c_str());
+               printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+               (*i)->get_file_info()->display("comment/directive location");
+#endif
+               PreprocessingInfo::RelativePositionType relativePosition = (insertBefore == true) ? PreprocessingInfo::before : PreprocessingInfo::after;
+               if ((*i)->getRelativePosition() == relativePosition)
+                  {
+                 // accumulate into list
+                    captureList.push_back(commentIndex);
+                  }
+
+               commentIndex++;
+             }
+
+       // printf ("captureList.size() = %zu \n",captureList.size());
+          if (captureList.empty() == false)
+             {
+            // Remove these comments and/or CPP directives and put them into the previous statement (marked to be output after the statement).
+            // SgStatement* surroundingStatement = (insertBefore == true) ? getPreviousStatement(targetStmt) : getNextStatement(targetStmt);
+            // SgStatement* surroundingStatement = (insertBefore == true) ? newStmt : newStmt;
+               SgStatement* surroundingStatement = newStmt;
+               ROSE_ASSERT(surroundingStatement != targetStmt);
+               ROSE_ASSERT(surroundingStatement != NULL);
+#if 0
+               if (surroundingStatement == NULL)
+                  {
+                 // printf ("Warning: the surrounding statement for insertBefore = %s is NULL (so use the newStmt) \n",insertBefore ? "true" : "false");
+                    surroundingStatement = (insertBefore == true) ? newStmt : newStmt;
+                  }
+#endif
+            // Now add the entries from the captureList to the surroundingStatement and remove them from the targetStmt.
+            // printf ("This is a valid surrounding statement = %s for insertBefore = %s \n",surroundingStatement->class_name().c_str(),insertBefore ? "true" : "false");
+               vector<int>::iterator j = captureList.begin();
+               while (j != captureList.end())
+                  {
+                 // Add the captured comments to the new statement. Likely we need to make sure that the order is preserved.
+                 // printf ("Attaching comments to newStmt = %p = %s \n",newStmt,newStmt->class_name().c_str());
+                    newStmt->addToAttachedPreprocessingInfo((*comments)[*j]);
+
+                 // Remove them from the targetStmt. (set them to NULL and then remove them in a separate step).
+                 // printf ("Removing entry from comments list on targetStmt = %p = %s \n",targetStmt,targetStmt->class_name().c_str());
+                    (*comments)[*j] = NULL;
+
+                    j++;
+                  }
+
+            // Now remove each NULL entries in the comments vector.
+            // Because of iterator invalidation we must reset the iterators after each call to erase (I think).
+               for (size_t n = 0; n < captureList.size(); n++)
+                  {
+                    bool modifiedList = false;
+                    AttachedPreprocessingInfoType::iterator k = comments->begin();
+                    while (k != comments->end() && modifiedList == false)
+                       {
+                      // Only modify the list once per iteration over the captureList
+                      // if ((*comments)[*k] == NULL)
+                         if (*k == NULL)
+                            {
+                              comments->erase(k);
+                              modifiedList = true;
+                            }
+                         k++;
+                       }
+                  }
+             }
+        }
+       else
+        {
+       // printf ("No attached comments (at %p of type: %s): \n",targetStmt,targetStmt->class_name().c_str());
+       // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
+       // I thnk that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
+          if (comments != NULL)
+             {
+               printf ("Warning: special rules appear to apply to the insertion of a SgBasicBlock which has attached comments and/or CPP directives (comment relocation disabled). \n");
+             }
+        }
+
+     if (isSgIfStmt(parent))
+        {
+          if (isSgIfStmt(parent)->get_conditional()==targetStmt)
+               insertStatement(isSgStatement(parent),newStmt,insertBefore);
+            else
+               if (isSgIfStmt(parent)->get_true_body()==targetStmt)
+                  {
+                 // ensureBasicBlockAsParent(targetStmt);
+                    insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                  }
+                 else
+                    if (isSgIfStmt(parent)->get_false_body()==targetStmt)
+                       {
+	                   // ensureBasicBlockAsParent(targetStmt);
+                         insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                       }
+        }
+       else
+          if (isSgWhileStmt(parent))
+             {
+               if (isSgWhileStmt(parent)->get_condition()==targetStmt)
+                    insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                 else
+                    if (isSgWhileStmt(parent)->get_body()==targetStmt)
+                       {
+                      // ensureBasicBlockAsParent(targetStmt);
+                         insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                       }
+             }
+            else
+               if (isSgDoWhileStmt(parent))
+                  {
+                    if (isSgDoWhileStmt(parent)->get_condition()==targetStmt)
+                         insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                      else
+                         if (isSgDoWhileStmt(parent)->get_body()==targetStmt)
+                            {
+                           // ensureBasicBlockAsParent(targetStmt);
+                              insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                            }
+                  }
+                 else
+                    if (isSgForStatement(parent))
+                       {
+                         if (isSgForStatement(parent)->get_loop_body()==targetStmt)
+                            {
+                           // ensureBasicBlockAsParent(targetStmt);
+                              insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                            }
+                           else
+                              if (isSgForStatement(parent)->get_test()==targetStmt)
+                                 {
+                                   insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                                 }
+                       }
+                      else
+                         isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
+
+  // update the links after insertion!
+     if (isSgFunctionDeclaration(newStmt))
+          updateDefiningNondefiningLinks(isSgFunctionDeclaration(newStmt),scope);
+   }
 
   void SageInterface::insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) {
     if (insertBefore) {
@@ -10643,6 +11014,7 @@ SageInterface::deleteAST ( SgNode* n )
 
 	//Use MemoryPoolTraversal to count the number of references to a certain symbol
 	//This class defines the visitors for the MemoryPoolTraversal
+
 	class ClassicVisitor : public ROSE_VisitorPattern
 	{
 		private: 
@@ -10884,9 +11256,8 @@ SageInterface::deleteAST ( SgNode* n )
 			SgEnumFieldSymbolPtr = NULL;											
 		}		
 		
-	// Override virtural function defined in base class
 	
-	// SgVariableSymbol	
+	// SgVariableSymbol and SgEnumFieldSymbol	
 		void visit(SgInitializedName* node)
 		{
 			if(SgVariableSymbolPtr !=NULL){
@@ -10931,14 +11302,15 @@ SageInterface::deleteAST ( SgNode* n )
 					}	
 				}
 			}		
-			
+#if 0
 			if(function_decl!=NULL){
 				if(node->get_symbol_from_symbol_table() == NULL){
 					SgDeclarationStatement * define = ((SgDeclarationStatement*)node)->get_definingDeclaration();
 					SgDeclarationStatement * first_nondefine = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
-					//if(node!=function_decl && (define==function_decl || first_nondefine==function_decl)) delete node;
+					if(node!=function_decl && (define==function_decl || first_nondefine==function_decl)) delete node;
 				}
 			}
+#endif
 		}
 	
 		void visit(SgFunctionRefExp* node)
@@ -11138,7 +11510,7 @@ SageInterface::deleteAST ( SgNode* n )
 	};
 	
 	
-	//Traverse AST in post order, delete nodes and their symbol if it's safe to do so
+	//Tan August,25,2010 //Traverse AST in post order, delete nodes and their symbols if it's safe to do so
 	class DeleteAST : public SgSimpleProcessing,  ROSE_VisitTraversal  
 		{
 			public:
@@ -11147,8 +11519,9 @@ SageInterface::deleteAST ( SgNode* n )
 			{
 			//These nodes are manually deleted because they cannot be visited by the traversal
 				/*////////////////////////////////////////////////
-				/remove SgVariableDefinition and SgVariableSymbol
+				/remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
 				/////////////////////////////////////////////////*/
+
 				if(isSgInitializedName(node) !=NULL){
 					//remove SgVariableDefinition
 					SgDeclarationStatement* var_def;
@@ -11179,7 +11552,7 @@ SageInterface::deleteAST ( SgNode* n )
 								if(visitor.get_num_EnumField_pointers()==1){
 									((SgInitializedName*)node)->get_scope()->get_symbol_table()->remove(symbol); 				
 									delete symbol;
-									printf("A SgEnumFieldSymbol was deleted\n");
+									//printf("A SgEnumFieldSymbol was deleted\n");
 								}
 							}
 							
@@ -11427,7 +11800,9 @@ SageInterface::deleteAST ( SgNode* n )
 					}						    
 					ClassicVisitor visitor((SgMemberFunctionDeclaration*) node);
 					traverseMemoryPoolVisitorPattern(visitor);
+
 				}
+//Tan: I have no idea why the codes below cannot work. Perhaps it conflicts with some prior works
 #if 0				
 				if(isSgMemberFunctionRefExp(node) !=NULL){
 					SgMemberFunctionSymbol* symbol = ((SgMemberFunctionRefExp*)node)->get_symbol_i();
@@ -11449,8 +11824,44 @@ SageInterface::deleteAST ( SgNode* n )
 						//printf("A SgFunctionTypeSymbol was deleted\n");  
 					}									
 				}
+#endif
 
+                                /*////////////////////////////////////////////////
+                                /remove SgInterfaceSymbol and SgModuleSymbol
+                                /////////////////////////////////////////////////*/
+
+				if(isSgInterfaceStatement(node) !=NULL){
+					if(((SgDeclarationStatement*)node)->get_scope()!=NULL){
+						if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+							SgSymbol* symbol = ((SgDeclarationStatement*)node)->get_symbol_from_symbol_table();
+							if(isSgInterfaceSymbol(symbol)){
+								((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
+								delete symbol;
+								//printf("A SgInterfaceSymbol was deleted\n");  
+							}
+						}
+					}		
+								
+				}			
 				
+				
+				if(isSgModuleStatement(node) !=NULL){
+					if(((SgClassDeclaration*)node)->get_scope()!=NULL){
+						if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+							SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
+							if(isSgModuleSymbol(symbol)){
+								((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+								delete symbol;
+								//printf("A SgModuleSymbol was deleted\n");  
+							}
+						}
+					}		
+								
+				}	
+
+
+//Tan: I got stuck in deleting the SgTemplateArgument 
+#if 0				
 				if(isSgTemplateInstantiationMemberFunctionDecl(node) !=NULL){     
 				   	if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()!=NULL){
 						if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()->get_symbol_table()!=NULL){	
@@ -11553,12 +11964,14 @@ SageInterface::deleteAST ( SgNode* n )
 					traverseMemoryPoolVisitorPattern(visitor);		
 				}											
 					
-
 #endif
+
 			//Normal nodes  will be removed in a post-order way
 			delete node;
 			}
 		};
+
+
      	  DeleteAST deleteTree;
 
           // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
@@ -11751,7 +12164,7 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
     {
 #ifdef _MSC_VER
      // DQ (11/28/2009): This is related to the use of covariant return types (I think).
-     SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
+SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
 #pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
 		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
 		ROSE_ASSERT(false);
