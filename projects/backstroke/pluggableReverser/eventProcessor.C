@@ -36,46 +36,6 @@ FuncDeclPairs EventProcessor::processEvent(SgFunctionDeclaration* event)
 	return result;
 }
 
-vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
-{
-	vector<EvaluationResult> results;
-
-	// If two results have the same variable table, we remove the one which has the higher cost.
-	foreach(ExpressionReversalHandler* exp_processor, exp_processors_)
-	{
-		vector<EvaluationResult> res = exp_processor->evaluate(exp, var_table, is_value_used);
-
-		foreach(const EvaluationResult& r1, res)
-		{
-			ROSE_ASSERT(r1.getExpressionInput() == exp);
-			bool discard = false;
-#if 1
-			for (size_t i = 0; i < results.size(); ++i)
-			{
-				const EvaluationResult& r2 = results[i];
-				if (r1.getVarTable() == r2.getVarTable())
-				{
-					if (r1.getCost() > r2.getCost())
-					{
-						discard = true;
-						break;
-					}
-					else if (r1.getCost() < r2.getCost())
-					{
-						results.erase(results.begin() + i);
-						--i;
-					}
-				}
-			}
-#endif
-
-			if (!discard)
-				results.push_back(r1);
-		}
-		//output.insert(output.end(), result.begin(), result.end());
-	}
-	return results;
-}
 
 vector<EvaluationResult> EventProcessor::filterResults(const vector<EvaluationResult>& results)
 {
@@ -103,6 +63,25 @@ vector<EvaluationResult> EventProcessor::filterResults(const vector<EvaluationRe
 	return new_results;
 }
 
+vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
+{
+	vector<EvaluationResult> results;
+
+	foreach(ExpressionReversalHandler* exp_processor, exp_processors_)
+	{
+		vector<EvaluationResult> res = exp_processor->evaluate(exp, var_table, is_value_used);
+
+		foreach(const EvaluationResult& r1, res)
+		{
+			ROSE_ASSERT(r1.getExpressionInput() == exp);
+			results.push_back(r1);
+		}
+		//output.insert(output.end(), result.begin(), result.end());
+	}
+	// If two results have the same variable table, we remove the one which has the higher cost.
+	return filterResults(results);
+}
+
 vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	vector<EvaluationResult> results;
@@ -116,7 +95,7 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
 	// after processing statement 3, we can remove t from the variable version table because it's not
 	// useful for our transformation anymore.
 
-	vector<SgExpression*> vars = VariableVersionTable::getAllVariables(stmt);
+	vector<SgExpression*> vars = backstroke_util::getAllVariables(stmt);
 	vector<SgExpression*> vars_to_remove;
 #if 0
 
@@ -139,35 +118,13 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
 			{
 				r1.getVarTable().removeVariable(var);
 			}
-
-			// If two results have the same variable table, we remove the one which has the higher cost.
-			bool discard = false;
-#if 0
-			for (size_t i = 0; i < results.size(); ++i)
-			{
-				const EvaluationResult& r2 = results[i];
-				if (r1.getVarTable() == r2.getVarTable())
-				{
-					if (r1.getCost() > r2.getCost())
-					{
-						discard = true;
-						break;
-					}
-					else if (r1.getCost() < r2.getCost())
-					{
-						results.erase(results.begin() + i);
-						--i;
-					}
-				}
-			}
-#endif
-
-			if (!discard)
-				results.push_back(r1);
+			results.push_back(r1);
 		}
 		//results.insert(results.end(), result.begin(), result.end());
 	}
-	return filterResults	(results);
+
+	// If two results have the same variable table, we remove the one which has the higher cost.
+	return filterResults(results);
 }
 
 
@@ -330,7 +287,7 @@ FuncDeclPairs EventProcessor::processEvent()
 		// Here we check the validity for each result above. We have to make sure
 		// every state variable has the version 1.
 		if (!checkForInitialVersions(res.getVarTable()))
-			continue;
+			;//continue;
 
 		// Print all handlers used in this result.
 		res.printHandlers();

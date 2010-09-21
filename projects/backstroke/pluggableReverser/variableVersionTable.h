@@ -20,8 +20,7 @@ public:
 	VariableVersionTable(SgFunctionDeclaration* func_decl, VariableRenaming* var_renaming);
 
 	// TODO: we may avoid to provide this interface.
-	const std::map<VariableRenaming::VarName, std::set<int> >&
-	getTable() const
+	const TableType& getTable() const
 	{ return table_; }
 
 	/** Returns the version of the variable, or an empty set if the variable is not in the table. */
@@ -60,9 +59,7 @@ public:
 
 	/** Remove a variable from the current table. */
 	void removeVariable(SgNode* node)
-	{
-		table_.erase(VariableRenaming::getVarName(node));
-	}
+	{ table_.erase(VariableRenaming::getVarName(node)); }
 
 
 	//! This function gets two variable version tables for true/false bodies in an if statement.
@@ -73,6 +70,11 @@ public:
 	//! remove the versions killed by this def in var table of the true body. And vice versa.
 	std::pair<VariableVersionTable, VariableVersionTable>
 	getVarTablesForIfBodies(SgStatement* true_body, SgStatement* false_body) const;
+
+	//! This function gets the variable version tables for the loop body in an for/while/do-while statement.
+	//! Since currently there is no fi function in implementation, this is a workaround to get the
+	//! correct vartable at the end of the body.
+	VariableVersionTable getVarTablesForLoopBody(SgStatement* loop_body) const;
 
 	/** Intersect this variable version table to another one. For each variable inside, we set its
 	* new version which is the common indices from those two tables. */
@@ -89,7 +91,7 @@ public:
 
 	/** If the given node is using its first definition. It's useful to decide whether to reverse the value or not. */
 	//FIXME I don't like this name!
-	bool isUsingFirstDefinition(SgNode* node) const;
+	bool isUsingFirstDef(SgNode* node) const;
 
 	/** If the given node is using its first use. It's useful to decide whether to remove a variable from variable version table. */
 	//FIXME I don't like this name!
@@ -99,8 +101,6 @@ public:
 	* @param varName name of the variable to look up
 	* @param version version that the variable should have (list of possible definitions). */
 	bool matchesVersion(VariableRenaming::VarName varName, VariableRenaming::NumNodeRenameEntry version) const;
-
-	static std::vector<SgExpression*> getAllVariables(SgNode* node);
 
 	void print() const;
 };

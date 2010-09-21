@@ -97,15 +97,25 @@ void event3(model* m)
     int k = j;
 #endif
 }
-#endif
 
 
 void event4(model* m)
 {
+    //int q,w,e,r,t,y,u,i,o,p,a,s,d,f,g;
     m->i = 10;
     if (m->j)
         m->i += 10;
     if (m->k)
         m->i = 10;
     m->i = 10;
+}
+#endif
+
+void event5(model* m)
+{
+    m->i = 0;
+    while(1)
+    {
+        m->i++;
+    }
 }

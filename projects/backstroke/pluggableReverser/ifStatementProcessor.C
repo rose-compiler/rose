@@ -2,20 +2,15 @@
 #include "pluggableReverser/variableVersionTable.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
-#include "utilities/CPPDefinesAndNamespaces.h"
 
 using namespace std;
 using namespace boost;
-using namespace SageBuilder;
 using namespace SageInterface;
+using namespace SageBuilder;
 
-struct IfStmtConditionAttribute : public EvaluationResultAttribute
-{
-    IfStmtConditionAttribute() : cond(NULL) {}
-    SgExpression* cond;
-};
+#define foreach BOOST_FOREACH
 
-typedef boost::shared_ptr<IfStmtConditionAttribute> IfStmtConditionAttributePtr;
+
 
 StatementReversal IfStatementProcessor::generateReverseAST(SgStatement* stmt, const EvaluationResult& evalResult)
 {
@@ -82,10 +77,8 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
 	cout << "false_body_var_table:\n";
 	false_body_var_table.print();
 
-    vector<EvaluationResult> true_body_res =
-            evaluateStatement(true_body, true_body_var_table);
-    vector<EvaluationResult> false_body_res =
-            evaluateStatement(false_body, false_body_var_table);
+    vector<EvaluationResult> true_body_res = evaluateStatement(true_body, true_body_var_table);
+    vector<EvaluationResult> false_body_res = evaluateStatement(false_body, false_body_var_table);
 
     SimpleCostModel cost;
 
@@ -130,14 +123,16 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
             cout << endl;
 #endif
 
-            vector<EvaluationResult> cond_results = evaluateStatement(if_stmt->get_conditional(), var_table);
+            vector<EvaluationResult> cond_results = evaluateStatement(if_stmt->get_conditional(), new_table);
 
             foreach (const EvaluationResult& res3, cond_results)
             {
-				EvaluationResult totalEvaluationResult(this, stmt, var_table);
+				EvaluationResult totalEvaluationResult(this, stmt, new_table);
 				totalEvaluationResult.addChildEvaluationResult(res1);
 				totalEvaluationResult.addChildEvaluationResult(res2);
 				totalEvaluationResult.addChildEvaluationResult(res3);
+
+				// FIXME Should addChildEvaluationResult update var table?
 				totalEvaluationResult.setVarTable(new_table);
 
                 // Here we should do an analysis to decide whether to store the branch flag.

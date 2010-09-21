@@ -55,36 +55,6 @@ void VariableVersionTable::print() const
 	}
 }
 
-/** This function get all variables in an AST node. Note that for a variable a.b or a->b,
-	only a.b or a->b is returned, not a or b. */
-vector<SgExpression*> VariableVersionTable::getAllVariables(SgNode* node)
-{
-	vector<SgExpression*> vars;
-
-	vector<SgExpression*> exps = querySubTree<SgExpression>(node);
-
-	//ROSE_ASSERT(!exps.empty());
-
-	foreach(SgExpression* exp, exps)
-	{
-		SgExpression* cand = NULL;
-		if (isSgVarRefExp(exp))
-			cand = exp;
-		else if (isSgDotExp(exp) && isSgVarRefExp(isSgDotExp(exp)->get_rhs_operand()))
-			cand = exp;
-		else if (isSgArrowExp(exp) && isSgVarRefExp(isSgArrowExp(exp)->get_rhs_operand()))
-			cand = exp;
-
-		if (cand != NULL &&
-				isSgDotExp(cand->get_parent()) == NULL &&
-				isSgArrowExp(cand->get_parent()) == NULL)
-		{
-			vars.push_back(cand);
-		}
-	}
-
-	return vars;
-}
 
 bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
 {
@@ -332,8 +302,9 @@ VariableVersionTable::getVarTablesForIfBodies(SgStatement* true_body, SgStatemen
 	VariableVersionTable true_body_var_table = *this;
 	VariableVersionTable false_body_var_table = *this;
 
-	foreach (TableType::value_type var_version, table_)
+	foreach (const TableType::value_type& var_version, table_)
 	{
+		const VariableRenaming::VarName& var_name = var_version.first;
 		foreach (int version, var_version.second)
 		{
 			SgNode* def_node = var_renaming_->getNodeForRenameNumber(var_version.first, version);
@@ -341,10 +312,11 @@ VariableVersionTable::getVarTablesForIfBodies(SgStatement* true_body, SgStatemen
 			if (if_body == true_body)
 			{
 				VariableRenaming::NumNodeRenameEntry num_node_entry =
-						var_renaming_->getReachingDefsAtNodeForName(true_body, var_version.first);
-				foreach (VariableRenaming::NumNodeRenameEntry::value_type num_node, num_node_entry)
-					if (true_body_var_table.table_[var_version.first].count(num_node.first) > 0)
-						true_body_var_table.table_[var_version.first].erase(num_node.first);
+						var_renaming_->getReachingDefsAtNodeForName(true_body, var_name);
+				foreach (const VariableRenaming::NumNodeRenameEntry::value_type& num_node, num_node_entry)
+				{
+					true_body_var_table.table_[var_name].erase(num_node.first);
+				}
 
 				//true_body_var_table.table_[var_version.first].clear();
 				//true_body_var_table.table_[var_version.first].insert(version);
@@ -352,26 +324,54 @@ VariableVersionTable::getVarTablesForIfBodies(SgStatement* true_body, SgStatemen
 			else if (if_body == false_body)
 			{
 				VariableRenaming::NumNodeRenameEntry num_node_entry =
-						var_renaming_->getReachingDefsAtNodeForName(false_body, var_version.first);
-				foreach (VariableRenaming::NumNodeRenameEntry::value_type num_node, num_node_entry)
-					if (false_body_var_table.table_[var_version.first].count(num_node.first) > 0)
-						false_body_var_table.table_[var_version.first].erase(num_node.first);
+						var_renaming_->getReachingDefsAtNodeForName(false_body, var_name);
+				foreach (const VariableRenaming::NumNodeRenameEntry::value_type& num_node, num_node_entry)
+				{
+					false_body_var_table.table_[var_name].erase(num_node.first);
+				}
 				//false_body_var_table.table_[var_version.first].clear();
 				//false_body_var_table.table_[var_version.first].insert(version);
 			}
 
 			if (SageInterface::isAncestor(true_body, def_node))
 			{
-				false_body_var_table.table_[var_version.first].erase(version);
+				false_body_var_table.table_[var_name].erase(version);
 			}
 			else if (SageInterface::isAncestor(false_body, def_node))
 			{
-				true_body_var_table.table_[var_version.first].erase(version);
+				true_body_var_table.table_[var_name].erase(version);
 			}
 		}
 	}
 
 	return make_pair(true_body_var_table, false_body_var_table);
+}
+
+VariableVersionTable VariableVersionTable::getVarTablesForLoopBody(SgStatement* loop_body) const
+{
+	VariableVersionTable loop_body_var_table = *this;
+
+	foreach (const TableType::value_type& var_version, table_)
+	{
+		const VariableRenaming::VarName& var_name = var_version.first;
+		foreach (int version, var_version.second)
+		{
+			SgNode* def_node = var_renaming_->getNodeForRenameNumber(var_version.first, version);
+			SgStatement* enclosing_body = backstroke_util::getEnclosingLoopBody(def_node);
+			if (enclosing_body == loop_body)
+			{
+				VariableRenaming::NumNodeRenameEntry num_node_entry =
+						var_renaming_->getReachingDefsAtNodeForName(loop_body->get_parent(), var_name);
+				foreach (const VariableRenaming::NumNodeRenameEntry::value_type& num_node, num_node_entry)
+				{
+					cout << "$^$^%$^$" << num_node.first << endl;
+					loop_body_var_table.table_[var_version.first].erase(num_node.first);
+				}
+			}
+		}
+	}
+
+	return loop_body_var_table;
 }
 
 void VariableVersionTable::intersect(const VariableVersionTable& var_table)
@@ -424,7 +424,7 @@ void VariableVersionTable::setUnion(const VariableVersionTable& var_table)
 	}
 }
 
-bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
+bool VariableVersionTable::isUsingFirstDef(SgNode* node) const
 {
 	VariableRenaming::VarName varName = VariableRenaming::getVarName(node);
 	ROSE_ASSERT(varName != VariableRenaming::emptyName);
@@ -453,7 +453,7 @@ bool VariableVersionTable::isUsingFirstUse(SgNode* node) const
 	// The first definition has the number 1
 	// FIXME This may not be true for branch case!
 	if (num_table.size() == 1 && num_table.count(1) > 0)
-		return isUsingFirstDefinition(node);
+		return isUsingFirstDef(node);
 	return false;
 }
 
