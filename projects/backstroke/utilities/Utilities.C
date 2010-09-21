@@ -584,6 +584,31 @@ SgStatement* backstroke_util::getEnclosingIfBody(SgNode* node)
 	return NULL;
 }
 
+SgStatement* backstroke_util::getEnclosingLoopBody(SgNode* node)
+{
+	while (node)
+	{
+		SgNode* parent = node->get_parent();
+		if (SgForStatement* for_stmt = isSgForStatement(parent))
+		{
+			if (node == for_stmt->get_loop_body())
+				return isSgStatement(node);
+		}
+		else if (SgWhileStmt* while_stmt = isSgWhileStmt(parent))
+		{
+			if (node == while_stmt->get_body())
+				return isSgStatement(node);
+		}
+		else if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(parent))
+		{
+			if (node == do_while_stmt->get_body())
+				return isSgStatement(node);
+		}
+		node = node->get_parent();
+	}
+	return NULL;
+}
+
 vector<SgExpression*> backstroke_util::getAllVariables(SgNode* node)
 {
 	vector<SgExpression*> vars;

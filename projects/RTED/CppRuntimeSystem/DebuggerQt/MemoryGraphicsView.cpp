@@ -44,7 +44,7 @@ void MemoryGraphicsView::setMemoryType(MemoryType * _mt)
 
     byteBoxes.resize(mt->getSize());
     QRectF box(0,0,BOX_WIDTH,BOX_HEIGHT);
-    for(int b = 0 ; b < mt->getSize(); b++)
+    for(unsigned int b = 0 ; b < mt->getSize(); b++)
     {
         byteBoxes[b] = new QGraphicsRectItem(box);
         byteBoxes[b]->moveBy(b*BOX_WIDTH,0);
@@ -117,7 +117,7 @@ RsTypeGraphicsRect::RsTypeGraphicsRect(RsType * t_,addr_type a,QGraphicsItem * p
     QFontMetrics fm (font);
     QRect textBoundingRect = fm.boundingRect(text);
     int textWidth = textBoundingRect.width();
-    int boxWidth = boundingRect().width();
+    int boxWidth = (int)boundingRect().width();
 
     if(textWidth > boxWidth)
     {
@@ -128,7 +128,7 @@ RsTypeGraphicsRect::RsTypeGraphicsRect(RsType * t_,addr_type a,QGraphicsItem * p
         textOffset.setX((boxWidth-textWidth)/2);    // center text in box
 
     // Center in y direction
-    int yOffset =  (rect().height() - fm.height() ) /2;
+    int yOffset = (int) (rect().height() - fm.height() ) /2;
     if(yOffset < 0)
         yOffset=0;
     textOffset.setY(yOffset + fm.height()-2);

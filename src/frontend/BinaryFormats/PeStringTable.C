@@ -55,7 +55,7 @@ SgAsmPESection::init_from_section_table(SgAsmPESectionTableEntry *entry, int id)
     /* Memory mapping */
     if (entry->get_rva() > 0) {
         set_mapped_preferred_rva(entry->get_rva());
-        set_mapped_actual_rva(0); /*will be asigned by Loader*/
+        set_mapped_actual_va(0); /*will be asigned by Loader*/
         set_mapped_size(entry->get_virtual_size());
         set_mapped_alignment(fhdr->get_e_section_align());
         set_mapped_rperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE)
@@ -66,7 +66,7 @@ SgAsmPESection::init_from_section_table(SgAsmPESectionTableEntry *entry, int id)
                          == SgAsmPESectionTableEntry::OF_EXECUTABLE);
     } else {
         set_mapped_preferred_rva(0);
-        set_mapped_actual_rva(0); /*will be assigned by Loader*/
+        set_mapped_actual_va(0); /*will be assigned by Loader*/
         set_mapped_size(0);
         set_mapped_rperm(false);
         set_mapped_wperm(false);

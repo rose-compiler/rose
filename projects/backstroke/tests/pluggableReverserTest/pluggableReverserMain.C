@@ -2,6 +2,7 @@
 #include <pluggableReverser/expressionProcessor.h>
 #include <pluggableReverser/statementProcessor.h>
 #include <pluggableReverser/ifStatementProcessor.h>
+#include <pluggableReverser/whileStatementProcessor.h>
 #include <pluggableReverser/akgulStyleExpressionProcessor.h>
 #include "pluggableReverser/variableDeclarationHandler.h"
 #include <utilities/Utilities.h>
@@ -62,8 +63,6 @@ int main(int argc, char * argv[])
 	event_processor.addExpressionHandler(new NullExpressionHandler);
 	event_processor.addExpressionHandler(new IdentityExpressionHandler);
 	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
-	event_processor.addExpressionHandler(new ConstructiveExpressionHandler);
-	//event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
 	event_processor.addExpressionHandler(new AkgulStyleExpressionProcessor);
 
 	// Add all statement handlers to the statement pool.
@@ -71,6 +70,7 @@ int main(int argc, char * argv[])
 	event_processor.addStatementHandler(new VariableDeclarationHandler);
 	event_processor.addStatementHandler(new CombinatorialBasicBlockHandler);
 	event_processor.addStatementHandler(new IfStatementProcessor);
+	event_processor.addStatementHandler(new WhileStatementProcessor);
 	event_processor.addStatementHandler(new ReturnStatementHandler);
 	event_processor.addStatementHandler(new NullStatementHandler);
 

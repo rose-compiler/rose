@@ -97,7 +97,6 @@ void event3(model* m)
     int k = j;
 #endif
 }
-#endif
 
 
 void event4(model* m)
@@ -110,8 +109,13 @@ void event4(model* m)
         m->i = 10;
     m->i = 10;
 }
+#endif
 
 void event5(model* m)
 {
-    int a;
+    m->i = 0;
+    while(1)
+    {
+        m->i++;
+    }
 }

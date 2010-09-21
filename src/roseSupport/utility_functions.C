@@ -1102,6 +1102,10 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
      SgScopeStatement *scope             = currentStatement->get_scope();
      ROSE_ASSERT (scope != NULL);
 
+  // DQ (9/18/2010): If we try to get the next statement from SgGlobal, then return NULL.
+     if (isSgGlobal(currentStatement) != NULL)
+          return NULL;
+
   // Make sure that we didn't get ourselves back from the get_scope() 
   // function (previous bug fixed, but tested here).
      ROSE_ASSERT (scope != currentStatement);
@@ -1188,8 +1192,16 @@ ROSE::getPreviousStatement ( SgStatement *targetStatement )
      SgScopeStatement *scope             = targetStatement->get_scope();
      ROSE_ASSERT (scope != NULL);
 
+  // DQ (9/18/2010): If we try to get the previous statement from SgGlobal, then return NULL.
+     if (isSgGlobal(targetStatement) != NULL)
+          return NULL;
+
   // Make sure that we didn't get ourselves back from the get_scope() 
   // function (previous bug fixed, but tested here).
+     if (scope == targetStatement)
+        {
+          printf ("Error: targetStatement = %p = %s \n",targetStatement,targetStatement->class_name().c_str());
+        }
      ROSE_ASSERT (scope != targetStatement);
 
 #if 0

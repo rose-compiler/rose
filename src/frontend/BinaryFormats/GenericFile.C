@@ -553,7 +553,7 @@ SgAsmGenericFile::get_sections_by_va(addr_t va) const
             retval.push_back(*i);
 
         /* Header sections */
-        const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_va(va);
+        const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_va(va, true);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;
@@ -1337,11 +1337,17 @@ SgAsmGenericFile::unparse(std::ostream &f) const
     /* Write file headers (and indirectly, all that they reference) */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i)
         (*i)->unparse(f);
+
+    /* Extend the file to the full size. The unparser will not write zero bytes at the end of a file because some files
+     * actually use the fact that sections that extend past the EOF will be zero padded.  For the time being we'll extend the
+     * file to its full size. */
+    if (!get_truncate_zeros())
+        extend_to_eof(f);
 }
 
 /** Extend the output file by writing the last byte if it hasn't been written yet. */
 void
-SgAsmGenericFile::extend_to_eof(std::ostream &f)
+SgAsmGenericFile::extend_to_eof(std::ostream &f) const
 {
     f.seekp(0, std::ios::end);
     if (f.tellp()<(off_t)get_current_size()) {

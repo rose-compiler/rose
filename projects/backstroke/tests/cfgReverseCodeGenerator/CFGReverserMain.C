@@ -41,7 +41,6 @@ int main(int argc, char** argv)
 	//Add the handlers in order of priority. The lower ones will be used only if higher ones do not produce results
 	//Expression handlers:
 	event_processor.addExpressionHandler(new IdentityExpressionHandler);
-	event_processor.addExpressionHandler(new ConstructiveExpressionHandler);
 	event_processor.addExpressionHandler(new AkgulStyleExpressionProcessor);
 	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
 

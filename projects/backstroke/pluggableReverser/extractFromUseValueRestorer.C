@@ -3,8 +3,8 @@
 #include "eventProcessor.h"
 #include <rose.h>
 
-vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenaming::VarName varName, const VariableVersionTable& availableVariables,
-		VariableRenaming::NumNodeRenameEntry definitions)
+vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenaming::VarName varName, 
+		const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions)
 {
 	VariableRenaming& variableRenamingAnalysis = *getEventProcessor()->getVariableRenaming();
 	vector<SgExpression*> results;
@@ -29,10 +29,10 @@ vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenam
 		}
 	}
 
-	//printf("\nLooking for uses of %s:\n", VariableRenaming::keyToString(varName).c_str());
+	//printf("\nLooking for uses of %s version ", VariableRenaming::keyToString(varName).c_str());
+	//VariableRenaming::printRenameEntry(definitions);
 
 	//We've collected all the use sites!
-	//Print them out to check if this is right
 	//Then process them to extract the variables!
 	reverse_foreach (SgNode* useSite, useSites)
 	{
@@ -121,6 +121,65 @@ vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenam
 				}
 
 				results.push_back(result);
+			}
+		}
+		else if (isSgMinusAssignOp(useSite) || isSgPlusAssignOp(useSite) || isSgXorAssignOp(useSite))
+		{
+			//Assignments such as +=, -=, and |= are use sites of the lhs variable.
+			//Let's say we have x += <exp>. If we know the new value of x and the value of <exp>, we can extract the previous
+			//value of x
+			SgBinaryOp* useAssignOp = isSgBinaryOp(useSite);
+
+			if ((isSgMinusAssignOp(useAssignOp) || isSgPlusAssignOp(useAssignOp))
+					&& !useAssignOp->get_type()->isIntegerType())
+			{
+				//We can't extract values out of floating point types due to rounding
+				continue;
+			}
+
+			//The left-hand side should have been normalized to be a variable
+			VariableRenaming::VarName lhsVariable = VariableRenaming::getVarName(useAssignOp->get_lhs_operand());
+			ROSE_ASSERT(lhsVariable != VariableRenaming::emptyName);
+
+			if (lhsVariable == varName)
+			{
+				//We have a situation such as x += <exp> and we would like to restore the value of x
+				//First, find the version of x after the assignment and restore it
+				VariableRenaming::NumNodeRenameEntry versionAfterAssign = 
+						variableRenamingAnalysis.getDefsAtNodeForName(useAssignOp, varName);
+
+				SgExpression* valueAfterAssign = getEventProcessor()->restoreVariable(varName, availableVariables, versionAfterAssign);
+				if (valueAfterAssign == NULL)
+				{
+					continue;
+				}
+
+				//Now, restore the other expression involved in the assignment
+				SgExpression* rhsValue = getEventProcessor()->restoreExpressionValue(useAssignOp->get_rhs_operand(), availableVariables);
+				if (rhsValue == NULL)
+				{
+					SageInterface::deepDelete(valueAfterAssign);
+					continue;
+				}
+
+				//Combine the lhs and rhs values to get the desired value of x
+				SgExpression* desiredVal = NULL;
+				switch (useAssignOp->variantT())
+				{
+					case V_SgPlusAssignOp:
+						desiredVal = SageBuilder::buildSubtractOp(valueAfterAssign, rhsValue);
+						break;
+					case V_SgMinusAssignOp:
+						desiredVal = SageBuilder::buildAddOp(valueAfterAssign, rhsValue);
+						break;
+					case V_SgXorAssignOp:
+						desiredVal = SageBuilder::buildBitXorOp(valueAfterAssign, rhsValue);
+						break;
+					default:
+						ROSE_ASSERT(false);
+				}
+
+				results.push_back(desiredVal);
 			}
 		}
 	}

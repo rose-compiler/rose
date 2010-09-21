@@ -44,6 +44,7 @@ class rose_rva_t {
 		rose_rva_t(rose_addr_t rva) : addr(rva), section(0) {} //implicit
 		rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section) : addr(rva), section(0) {set_section(section);}
 		rose_addr_t get_rva() const;
+		rose_addr_t get_va() const;
 		rose_addr_t get_rel() const;	/* returns address relative to linked section */
 		rose_addr_t get_rel(SgAsmGenericSection*); /*returns address relative to specified section*/
 		rose_rva_t& set_rva(rose_addr_t rva);

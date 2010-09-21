@@ -656,7 +656,9 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                          lengthExpression = isSgIntVal(astTypeParameterStack.front());
                          if (lengthExpression == NULL)
                             {
+#if 0
                               printf ("Warning type parameter is non integer type (OK for F90) \n");
+#endif
                               lengthExpression = astTypeParameterStack.front();
                             }
                          ROSE_ASSERT(lengthExpression != NULL);
@@ -1195,7 +1197,8 @@ void c_action_real_literal_constant(Token_t * realConstant,
      if (kindParam != NULL)
         {
        // If we do have a kind parameter then we use it to build different sizes of integer values
-          printf ("In c_action_real_literal_constant(): kind parameter support not implemented, kindParam = %s \n",kindParam->text);
+          if ( SgProject::get_verbose() > 0 )
+               printf ("In c_action_real_literal_constant(): kind parameter support not implemented, kindParam = %s \n",kindParam->text);
         }
 
   // Handle ethe case of a regular int (the kind parameter will allow for short, and long sizes)
@@ -1395,14 +1398,15 @@ void c_action_char_length(ofp_bool hasTypeParamValue)
      outputState("At TOP of R426 list c_action_char_length()");
 #endif
 
-     printf ("astBaseTypeStack.empty() = %s \n",astBaseTypeStack.empty() ? "true" : "false");
+  // printf ("astBaseTypeStack.empty() = %s \n",astBaseTypeStack.empty() ? "true" : "false");
 
   // if (astTypeStack.empty() == true)
      if (astBaseTypeStack.empty() == true)
         {
        // This is a CHARACTER*<char_length> instead of CHARACTER var*<char_length>.
        // The details of this case will be handled in the construciton of the type.
-          printf ("In R426: This is a CHARACTER*<char_length> instead of CHARACTER var*<char_length> \n");
+          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+               printf ("In R426: This is a CHARACTER*<char_length> instead of CHARACTER var*<char_length> \n");
         }
        else
         {
@@ -2119,7 +2123,9 @@ void c_action_component_decl(Token_t * id,
 #else
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
   // void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarraySpec, ofp_bool hasCharLength)
-     printf ("Warning: calling c_action_entity_decl() with new and unknown OFP 0.8.0 specific options \n");
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("Warning: calling c_action_entity_decl() with new and unknown OFP 0.8.0 specific options \n");
+
      c_action_entity_decl(id,false,false,false,false);
 #else
      c_action_entity_decl(id);
@@ -2517,7 +2523,8 @@ void c_action_derived_type_spec(Token_t * typeName, ofp_bool hasTypeParamSpecLis
         {
        // Case of where we are referencing a type that we have not seen yet in the source sequence.
        // We will have to make up something (perhaps using SgDefaultType) and then fix it up at the end of the module.
-          printf ("Warning: type referenced has not been seen in the source sequence yet, using SgTypeDefault (will be fixed up at the end of the module processing). \n");
+          if ( SgProject::get_verbose() > 0 )
+               printf ("Warning: type referenced has not been seen in the source sequence yet, using SgTypeDefault (will be fixed up at the end of the module processing). \n");
 
        // DQ (9/6/2010): Fix this later!
        // derivedType = SgTypeDefault::createType();
@@ -2925,9 +2932,35 @@ void c_action_ac_implied_do()
   // DQ (5/4/2008): Moving back to using astExpressionStack from astInitializerStack
   // The second entry in the astExpressionStack should be the SgVarRefExp
      ROSE_ASSERT(astExpressionStack.empty() == false);
+
+     printf ("What kind of expression is this: astExpressionStack.front() = %s \n",astExpressionStack.front()->class_name().c_str());
+
+  // DQ (9/15/2010): Added support for more general form of implied do loop.
      SgVarRefExp* doLoopVar = isSgVarRefExp(astExpressionStack.front());
+  // astExpressionStack.pop_front();
+     if (doLoopVar != NULL)
+        {
+          astExpressionStack.pop_front();
+        }
+       else
+        {
+       // This is not a simple variable (could be a function of the do loop index, in which case 
+       // we have to find the variable inside our use the function reference expression directly).
+          SgFunctionCallExp* functionExpression = isSgFunctionCallExp(astExpressionStack.front());
+          if (functionExpression != NULL)
+             {
+            // This is the case of rtest2010_49.f90
+            // Dig out the variable reference used for the doLoopVar
+               doLoopVar = NULL;
+               ROSE_ASSERT(doLoopVar != NULL);
+             }
+            else
+             {
+               printf ("We have not hnadled this case previously, need an example tests code before this can be fixed! \n");
+               ROSE_ASSERT(false);
+             }
+        }
      ROSE_ASSERT(doLoopVar != NULL);
-     astExpressionStack.pop_front();
   // setSourcePosition(doLoopVar);
 #else
   // However, we want to treat index values (base and bound) for implcit do-loop 
@@ -3659,8 +3692,10 @@ void c_action_entity_decl(Token_t * id)
 
      if (functionSymbol != NULL)
         {
+#if 0
        // printf ("Warning: found functionSymbol != NULL (avoid resetting the type): name = %s \n",name.str());
           printf ("Warning: found functionSymbol != NULL (now reset the type): function name = %s \n",name.str());
+#endif
 
 #if 0
        // Output debugging information about saved state (stack) information.
@@ -3994,7 +4029,7 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
                     astExpressionStack.pop_front();
 #else
                  // DQ (4/7/2010): test2010_01.f90 demonstrates that we need this expression as an initializer for F90 code.
-                    printf ("Skip poping a seemingly useless expression off the stack (It is the initializer for a variable (see test2010_01.f90) = %p = %s = %s \n",astExpressionStack.front(),astExpressionStack.front()->class_name().c_str(),SageInterface::get_name(astExpressionStack.front()).c_str());
+                 // printf ("Skip poping a seemingly useless expression off the stack (It is the initializer for a variable (see test2010_01.f90) = %p = %s = %s \n",astExpressionStack.front(),astExpressionStack.front()->class_name().c_str(),SageInterface::get_name(astExpressionStack.front()).c_str());
 #endif
                   }
 #endif
@@ -4322,7 +4357,8 @@ void c_action_array_spec_element(int type)
  */
 void c_action_explicit_shape_spec(ofp_bool hasUpperBound)
    {
-     printf ("In c_action_explicit_shape_spec(): hasUpperBound = %s \n",hasUpperBound ? "true" : "false");
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_explicit_shape_spec(): hasUpperBound = %s \n",hasUpperBound ? "true" : "false");
    }
 
 /** R511 list
@@ -4333,12 +4369,14 @@ void c_action_explicit_shape_spec(ofp_bool hasUpperBound)
  */
 void c_action_explicit_shape_spec_list__begin()
    {
-     printf ("In c_action_explicit_shape_spec_list__begin() \n");
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_explicit_shape_spec_list__begin() \n");
    }
 
 void c_action_explicit_shape_spec_list(int count)
    {
-     printf ("In c_action_explicit_shape_spec_list(): count = %d \n",count);
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_explicit_shape_spec_list(): count = %d \n",count);
 
   // DQ (2/20/2008): Call the mechanism used to build an array type
      c_action_array_spec(count);
@@ -10174,7 +10212,7 @@ void c_action_if_then_stmt( Token_t *label, Token_t *id, Token_t *ifKeyword, Tok
 
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R803 c_action_if_then_stmt()");
 #endif
@@ -15180,7 +15218,7 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
                                 // SgAliasSymbol* aliasSymbol = new SgAliasSymbol(functionSymbol,/* isRenamed = true */ true,interfaceName);
                                 // SgRenameSymbol* renameSymbol = new SgRenameSymbol(functionSymbol,interfaceName);
                                    SgRenameSymbol* renameSymbol = new SgRenameSymbol(functionSymbol->get_declaration(),functionSymbol,interfaceName);
-#if 0
+#if 1
                                    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                                         printf ("R1106 Insert aliased symbol name = %s (renamed from functionName = %s )\n",interfaceName.str(),functionName.str());
 #endif
@@ -15378,7 +15416,11 @@ void c_action_module_subprogram(ofp_bool hasPrefix)
 // void c_action_use_stmt(Token_t * label, ofp_bool hasModuleNature, ofp_bool hasRenameList, ofp_bool hasOnly)
 void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t *onlyKeyword, Token_t *eos, ofp_bool hasModuleNature, ofp_bool hasRenameList, ofp_bool hasOnly)
    {
+#if 0
+  // DQ (9/14/2010): I want to track the calling of use statements for debugging
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+#endif
+        {
           printf ("In c_action_use_stmt(): label = %p = %s useKeyword = %p = %s id = %p = %s onlyKeyword = %p = %s hasModuleNature = %s hasRenameList = %s hasOnly = %s \n",
                label,label != NULL ? label->text : "NULL",
                useKeyword,useKeyword != NULL ? useKeyword->text : "NULL",
@@ -15387,6 +15429,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                hasModuleNature ? "true" : "false",
                hasRenameList ? "true" : "false",
                hasOnly ? "true" : "false");
+        }
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -15427,6 +15470,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 
        // FMZ:(5/28/2008) importing the module declaration from modName.rmod file
        // save the global variable
+          printf ("Importing the module declaration from %s.rmod file \n",name.str());
         
        // FMZ(10/22008) in the new version (rice branch) SgFile*=>SgSourceFile
        // SgFile* savedFilePointer = OpenFortranParser_globalFilePointer;
@@ -15470,6 +15514,8 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 #endif
           ROSE_ASSERT(classDeclaration->get_definition() != NULL);
 
+          printf ("Found cached (or local) module declaration in AST for module = %s \n",name.str());
+
           moduleStatement = isSgModuleStatement(classDeclaration);
           ROSE_ASSERT(moduleStatement != NULL);
         }
@@ -15479,12 +15525,23 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
   // to alias symbols in the module statement.
      useStatement->set_module(moduleStatement);
 
+  // DQ (9/14/2010): This this should clarify that the current scope was set to be where the use
+  // statement is located and that the moduleStatement is the module that is extracted from an
+  // rmod file or exists in the current file and was visited previously.
+     ROSE_ASSERT(currentScope != moduleStatement->get_definition());
+
   // Found the module, now read the module's symbols for public members...
   // printf ("Found the module, now read the symbols from the module's symbol table for all public members...\n");
 
   // This appears to always be false, and I think it is a bug in OFP.
   // Actually, the c_action_only steals the result, so this does work when not using the "only" option.
   // ROSE_ASSERT(hasRenameList == false);
+
+#if 0
+  // DQ (9/14/2010): Added as a test for specific code where this is true!
+  // hasOnly = false;
+     ROSE_ASSERT (hasOnly == false);
+#endif
 
   // Only supporting hasOnly == false in initial work.
      if (hasOnly == false)
@@ -15494,7 +15551,8 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
           SgClassDefinition* classDefinition = moduleStatement->get_definition();
           ROSE_ASSERT(classDefinition != NULL);
 
-          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+       // if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          if ( SgProject::get_verbose() > -1 )
                printf ("Case hasOnly == false: astNodeStack.size() = %zu \n",astNodeStack.size());
 
           if (astNodeStack.empty() == true)
@@ -15510,12 +15568,28 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                     if (isPubliclyAccessible(symbol) == true)
                        {
                          SgName symbolName = symbol->get_name();
-                         SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed */ false);
-#if 0
-                         if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                              printf ("R1109 (hasOnly == false && empty astNodeStack) Insert aliased symbol name = %s \n",symbolName.str());
+
+                      // DQ (9/13/2010): Check if this symbol is already in the symbol table and avoid adding it redundently.
+                      // This is (I think) related to a bug causing an exponential number of symbols to be used.
+#define EXPONENTIAL_SYMBOL_TABLE_PROBLEM_A 1
+#if EXPONENTIAL_SYMBOL_TABLE_PROBLEM_A
+                      // if (classDefinition->symbol_exists(symbolName) == false)
+                         if (currentScope->symbol_exists(symbolName) == false)
 #endif
-                         currentScope->insert_symbol(symbolName,aliasSymbol);
+                            {
+                              SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed */ false);
+#if 0
+                              if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+                                   printf ("R1109 (hasOnly == false && empty astNodeStack) Insert aliased symbol name = %s \n",symbolName.str());
+#endif
+                              currentScope->insert_symbol(symbolName,aliasSymbol);
+                            }
+#if EXPONENTIAL_SYMBOL_TABLE_PROBLEM_A
+                           else
+                            {
+                           // printf ("R1109 (hasOnly == false && astNodeStack.empty() == true) This symbol already exists (at least using this name = %s) in the symbol table. \n",symbolName.str());
+                            }
+#endif
                        }
 
                  // Look at the next symbol in the module's symbol table
@@ -15555,7 +15629,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                               bool isRenamed = hasRenameList;
                               SgName declarationName = renamePair->get_local_name();
                               SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed = true */ true,declarationName);
-#if 0
+#if 1
                               if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                                    printf ("R1109 (non-empty astNodeStack)Insert aliased symbol name = %s (renamed = %s)\n",declarationName.str(),isRenamed ? "true" : "false");
 #endif
@@ -15586,7 +15660,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                       // Add the symbols not renamed explicitly.
                          SgName symbolName = symbol->get_name();
                          SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed */ false);
-#if 0
+#if 1
                          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                               printf ("R1109 (add the non-renamed symbols) Insert aliased symbol name = %s (non-renamed symbol) \n",symbolName.str());
 #endif
@@ -15624,6 +15698,11 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                     printf ("renamePair->get_local_name() = %s renamePair->get_use_name() = %s \n",renamePair->get_local_name().str(),renamePair->get_use_name().str());
 
+            // DQ (9/13/2010): I think this may be the cause of some inefficency in the symbol table handling, 
+            // but it is only for the short number of entries on the stack, so not likely significant.
+#if 0
+               printf ("*** There is a more efficient way to find the symbol that matches the name of a symbol to rename. \n");
+#endif
             // DQ (9/29/2008): inject symbols from module's symbol table into local symbol table at current scope.
                SgSymbol* symbol = classDefinition->first_any_symbol();
                while(symbol != NULL)
@@ -15631,10 +15710,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                  // Assume for now that there is no renaming of declarations
                     bool isRenamed = ( renamePair->get_use_name() != renamePair->get_local_name() );
 
-                    SgName local_name = renamePair->get_local_name();
+                    SgName local_name  = renamePair->get_local_name();
                     SgName use_name    = renamePair->get_use_name();
                  // SgName declarationName = symbol->get_name();
-                    SgName symbolName = symbol->get_name();
+                    SgName symbolName  = symbol->get_name();
 
                     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                          printf ("Test: local_name = %s use_name = %s symbol = %p = %s symbol name = %s \n",local_name.str(),use_name.str(),symbol,symbol->class_name().c_str(),symbolName.str());
@@ -15644,20 +15723,44 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                       // This should be a public sysmbol, but check to make sure!
                          ROSE_ASSERT(isPubliclyAccessible(symbol) == true);
 
-                         SgAliasSymbol* aliasSymbol = NULL;
-                         if (isRenamed == true)
+                      // DQ (9/13/2010): I think this is true by definition, so we need a better predicate in the conditional below!
+                         ROSE_ASSERT(classDefinition->symbol_exists(symbolName) == true);
+
+                      // DQ (9/13/2010): Check that the symbol using the "local_name" does not already exist in the symbol table.
+#define EXPONENTIAL_SYMBOL_TABLE_PROBLEM_B 1
+#if EXPONENTIAL_SYMBOL_TABLE_PROBLEM_B
+                      // if (classDefinition->symbol_exists(local_name) == false)
+                         if (currentScope->symbol_exists(local_name) == false)
+#endif
                             {
-                              aliasSymbol = new SgAliasSymbol(symbol,isRenamed,renamePair->get_local_name());
+                              SgAliasSymbol* aliasSymbol = NULL;
+                              if (isRenamed == true)
+                                 {
+                                   aliasSymbol = new SgAliasSymbol(symbol,isRenamed,renamePair->get_local_name());
+                                 }
+                                else
+                                 {
+                                   aliasSymbol = new SgAliasSymbol(symbol,isRenamed);
+                                 }
+#if 0
+                              if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+                                   printf ("R1109 (hasOnly == true && astNodeStack.empty() == false) Insert aliased symbol name = %s isRenamed = %s \n",local_name.str(),isRenamed ? "true" : "false");
+#endif
+                              currentScope->insert_symbol(local_name,aliasSymbol);
                             }
+#if EXPONENTIAL_SYMBOL_TABLE_PROBLEM_B
                            else
                             {
-                              aliasSymbol = new SgAliasSymbol(symbol,isRenamed);
-                            }
 #if 0
-                         if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                              printf ("R1109 (hasOnly == false && astNodeStack.empty() == false) Insert aliased symbol name = %s isRenamed = %s \n",local_name.str(),isRenamed ? "true" : "false");
+                              printf ("R1109 (hasOnly == true && astNodeStack.empty() == false) This symbol already exists (at least using this name = %s) in the symbol table. \n",symbolName.str());
 #endif
-                         currentScope->insert_symbol(local_name,aliasSymbol);
+                            }
+#endif
+                       }
+                      else
+                       {
+                         if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+                              printf ("The use name is different from the symbol's name (in the declaration) (%s vs. %s) \n",use_name.str(),symbolName.str());
                        }
 
                  // Increment to the next symbol in the module's symbol table
@@ -15672,6 +15775,29 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
           ROSE_ASSERT(false);
 #endif
         }
+
+#if 1
+     int    line       = useStatement->get_file_info()->get_line();
+     string filename   = useStatement->get_file_info()->get_filename();
+     string moduleName = "empty default name";
+
+  // DQ (9/14/2010): The use statement need not appear only in a module body (for example, it can be in the main program).
+     SgClassDefinition* moduleDefinition = isSgClassDefinition(useStatement->get_parent());
+     if (moduleDefinition != NULL)
+        {
+          ROSE_ASSERT(moduleDefinition == astScopeStack.front());
+       // SgClassDeclaration* module = isSgClassDeclaration(moduleDefinition->get_declaration());
+          SgClassDeclaration* moduleDeclaration = moduleDefinition->get_declaration();
+          ROSE_ASSERT(moduleDeclaration != NULL);
+          moduleName = moduleDeclaration->get_name();
+        }
+
+     size_t numberOfROSE_IR_Nodes = numberOfNodes();
+     size_t numberOfAliasSymbols  = SgAliasSymbol::numberOfNodes();
+
+     printf ("--- At BOTTOM of R1109 c_action_use_stmt(): moduleName = %s symbol table size = %d numberOfNodes = %zu numberOfAliasSymbols = %zu in file = %s line = %d \n",
+             moduleName.c_str(),astScopeStack.front()->get_symbol_table()->size(),numberOfROSE_IR_Nodes,numberOfAliasSymbols,filename.c_str(),line);
+#endif
 
   // astScopeStack.front()->print_symboltable("Output from R1109 c_action_use_stmt()");
 
@@ -15855,7 +15981,7 @@ void c_action_only_list(int count)
                ROSE_ASSERT(astNameStack.empty() == false);
                SgName name = astNameStack.front()->text;
 
-               printf ("In c_action_only_list(): Building SgRenamePair for name = %s (not renamed) \n",name.str());
+            // printf ("In c_action_only_list(): Building SgRenamePair for name = %s (not renamed) \n",name.str());
                if (matchingName(name,"OPERATOR") == true)
                   {
                  // Then get the next token and append it to the name.
@@ -15866,7 +15992,6 @@ void c_action_only_list(int count)
 #else
                     name = operatorName;
 #endif
-
                     printf ("In c_action_only_list() this is an operator: name = %s \n",name.str());
                   }
 
@@ -17617,7 +17742,7 @@ void c_action_end_of_stmt(Token_t * eos)
   // test2007_19.f90) then do so.
   // build_implicit_program_statement_if_required();
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1238 c_action_end_of_stmt()");
 #endif
