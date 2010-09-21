@@ -5128,6 +5128,8 @@ SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   return isSgStatement(n);
 }
 
+// DQ (/20/2010):" control debugging output for SageInterface::removeStatement() function.
+#define REMOVE_STATEMENT_DEBUG 0
 
 //! Remove a statement: TODO consider side effects for symbol tables
 void SageInterface::removeStatement(SgStatement* stmt)
@@ -5154,7 +5156,7 @@ void SageInterface::removeStatement(SgStatement* stmt)
      if (parentStatement != NULL)
         {
           bool isRemovable = LowLevelRewrite::isRemovableStatement(targetStmt);
-#if 0
+#if REMOVE_STATEMENT_DEBUG
           printf ("In parentStatement = %s remove targetStatement = %s (isRemovable = %s) \n",
                parentStatement->sage_class_name(),
                targetStmt->sage_class_name(),
@@ -5163,7 +5165,7 @@ void SageInterface::removeStatement(SgStatement* stmt)
        // ROSE_ASSERT(isRemovable == true);
 
        // DQ (9/19/2010): Disable this new (not completely working feature) so that I can checkin the latest UPC/UPC++ work.
-#if 0
+#if 1
        // DQ (9/16/2010): Added support to move comments and CPP directives marked to 
        // appear before the statment to be attached to the inserted statement (and marked 
        // to appear before that statement).
@@ -5175,10 +5177,11 @@ void SageInterface::removeStatement(SgStatement* stmt)
        // if (comments != NULL && newStmt->getAttachedPreprocessingInfo() == NULL)
        // if (comments != NULL && isSgBasicBlock(newStmt) == NULL)
           if (comments != NULL)
-          if (comments != NULL && isRemovable == true )
+       // if (comments != NULL && isRemovable == true )
+          if (comments != NULL && isRemovable == true && isSgBasicBlock(targetStmt) == NULL )
              {
                vector<int> captureList;
-#if 0
+#if REMOVE_STATEMENT_DEBUG
                printf ("Found attached comments (removing %p = %s): comments->size() = %zu \n",targetStmt,targetStmt->class_name().c_str(),comments->size());
 #endif
 
@@ -5191,7 +5194,7 @@ void SageInterface::removeStatement(SgStatement* stmt)
                for (i = comments->begin(); i != comments->end(); i++)
                   {
                     ROSE_ASSERT ( (*i) != NULL );
-#if 0
+#if REMOVE_STATEMENT_DEBUG
                     printf ("          Attached Comment (relativePosition=%s): %s\n",
                          ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
                          (*i)->getString().c_str());
@@ -5209,7 +5212,7 @@ void SageInterface::removeStatement(SgStatement* stmt)
 
                     commentIndex++;
                   }
-#if 0
+#if REMOVE_STATEMENT_DEBUG
                printf ("captureList.size() = %zu \n",captureList.size());
 #endif
                if (captureList.empty() == false)
@@ -5219,7 +5222,7 @@ void SageInterface::removeStatement(SgStatement* stmt)
                     SgStatement* surroundingStatement = getPreviousStatement(targetStmt);
                     ROSE_ASSERT(surroundingStatement != targetStmt);
                     ROSE_ASSERT(surroundingStatement != NULL);
-#if 0
+#if REMOVE_STATEMENT_DEBUG
                     printf ("targetStmt->get_file_info()->get_file_id() = %d \n",targetStmt->get_file_info()->get_file_id());
                     printf ("Searching toward the top of the file for a statement to attach comments and CPP directives to: surroundingStatement = %p = %s file = %s file id = %d line = %d \n",
                          surroundingStatement,surroundingStatement->class_name().c_str(),
@@ -5229,8 +5232,11 @@ void SageInterface::removeStatement(SgStatement* stmt)
 #endif
                  // DQ (9/18/2010): This can't be asserted on targetStmt (see rose_inputloopUnrolling.C as an example of where this fails).
                  // ROSE_ASSERT(targetStmt->get_file_info()->get_file_id() >= 0);
-                    ROSE_ASSERT(surroundingStatement->get_file_info()->get_file_id() >= 0);
 
+                 // DQ (9/20/2010): Assume that the first surrounding statment is at least from the same file.
+                 // ROSE_ASSERT(surroundingStatement->get_file_info()->get_file_id() >= 0);
+                    if (surroundingStatement->get_file_info()->get_file_id() >= 0)
+                       {
                  // printf ("   targetStmt->get_file_info()->get_file_id()           = %d \n",targetStmt->get_file_info()->get_file_id());
                  // printf ("   surroundingStatement->get_file_info()->get_file_id() = %d \n",surroundingStatement->get_file_info()->get_file_id());
 
@@ -5241,18 +5247,25 @@ void SageInterface::removeStatement(SgStatement* stmt)
                       // surroundingStatement = (insertBefore == true) ? getNextStatement(surroundingStatement) : getPreviousStatement(surroundingStatement);
                       // surroundingStatement = (insertBefore == true) ? getPreviousStatement(surroundingStatement) : getNextStatement(surroundingStatement);
                          surroundingStatement = getPreviousStatement(surroundingStatement);
-#if 0
-                         printf ("Looping toward the top of the file for a statement to attach comments and CPP directives to: surroundingStatement = %p = %s file = %s file id = %d line = %d \n",
-                              surroundingStatement,surroundingStatement->class_name().c_str(),
-                              surroundingStatement->get_file_info()->get_filenameString().c_str(),
-                              surroundingStatement->get_file_info()->get_file_id(),
-                              surroundingStatement->get_file_info()->get_line());
+#if REMOVE_STATEMENT_DEBUG
+                         if (surroundingStatement != NULL)
+                            {
+                              printf ("Looping toward the top of the file for a statement to attach comments and CPP directives to: surroundingStatement = %p = %s file = %s file id = %d line = %d \n",
+                                   surroundingStatement,surroundingStatement->class_name().c_str(),
+                                   surroundingStatement->get_file_info()->get_filenameString().c_str(),
+                                   surroundingStatement->get_file_info()->get_file_id(),
+                                   surroundingStatement->get_file_info()->get_line());
+                            }
+                           else
+                            {
+                              printf ("surroundingStatement == NULL \n");
+                            }
 #endif
                       // As a last resort restart and go down in the statement sequence.
                          if (surroundingStatement == NULL)
                             {
                            // This is triggered by rose_inputloopUnrolling.C
-#if 0
+#if REMOVE_STATEMENT_DEBUG
                               printf ("We just ran off the start (top) of the file... targetStmt = %p = %s \n",targetStmt,targetStmt->class_name().c_str());
 #endif
 #if 0
@@ -5260,14 +5273,16 @@ void SageInterface::removeStatement(SgStatement* stmt)
 #endif
                            // Restart by going the other direction (down in the source sequence)
                               surroundingStatement = targetStmt;
-                              surroundingStatement = getNextStatement(surroundingStatement);
-                              while (surroundingStatement->get_file_info()->get_file_id() != targetStmt->get_file_info()->get_file_id())
+                              SgStatement* previousStatement = surroundingStatement;
+                           // surroundingStatement = getNextStatement(surroundingStatement);
+                              while ( (surroundingStatement != NULL) && (surroundingStatement->get_file_info()->get_file_id() != targetStmt->get_file_info()->get_file_id()) )
                                  {
+                                   previousStatement = surroundingStatement;
                                    surroundingStatement = getNextStatement(surroundingStatement);
 
                                    if (surroundingStatement == NULL)
                                       {
-#if 0
+#if REMOVE_STATEMENT_DEBUG
                                         printf ("We just ran off the end (bottom) of the file... \n");
 #endif
 #if 0
@@ -5275,6 +5290,8 @@ void SageInterface::removeStatement(SgStatement* stmt)
 #endif
                                       }
                                  }
+
+                              surroundingStatement = previousStatement;
                             }
                        }
 
@@ -5288,7 +5305,7 @@ void SageInterface::removeStatement(SgStatement* stmt)
                             {
                            // Add the captured comments to the new statement. Likely we need to make sure that the order is preserved.
                               ROSE_ASSERT(surroundingStatement->get_file_info() != NULL);
-#if 0
+#if REMOVE_STATEMENT_DEBUG
                               printf ("Attaching comments to surroundingStatement = %p = %s on file = %s line %d \n",
                                    surroundingStatement,surroundingStatement->class_name().c_str(),
                                    surroundingStatement->get_file_info()->get_filenameString().c_str(),
@@ -5297,7 +5314,7 @@ void SageInterface::removeStatement(SgStatement* stmt)
                               surroundingStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
 
                            // Remove them from the targetStmt. (set them to NULL and then remove them in a separate step).
-#if 0
+#if REMOVE_STATEMENT_DEBUG
                               printf ("Removing entry from comments list on targetStmt = %p = %s \n",targetStmt,targetStmt->class_name().c_str());
 #endif
                               (*comments)[*j] = NULL;
@@ -5309,6 +5326,9 @@ void SageInterface::removeStatement(SgStatement* stmt)
                       // Because of iterator invalidation we must reset the iterators after each call to erase (I think).
                          for (size_t n = 0; n < captureList.size(); n++)
                             {
+#if REMOVE_STATEMENT_DEBUG
+                              printf ("Erase entry from comments list on comments->size() %zu \n",comments->size());
+#endif
                               bool modifiedList = false;
                               AttachedPreprocessingInfoType::iterator k = comments->begin();
                               while (k != comments->end() && modifiedList == false)
@@ -5323,6 +5343,12 @@ void SageInterface::removeStatement(SgStatement* stmt)
                                    k++;
                                  }
                             }
+                       }
+                       }
+                      else
+                       {
+                      // DQ (9/20/2010): Separting out this case is at least an incremental improvement toward comment and CPP directive relocation.
+                         printf ("Warning: First surroundingStatement get_file_id() = %d < 0 (this is a special statment comments not reloated) \n",surroundingStatement->get_file_info()->get_file_id());
                        }
                   }
              }
