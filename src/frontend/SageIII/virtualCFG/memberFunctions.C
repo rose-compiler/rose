@@ -772,18 +772,14 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
     case 1: {
-        SgMemberFunctionDeclaration* memDecl = isSgMemberFunctionDeclaration(get_declaration());
-        SgCtorInitializerList* ctorList = NULL;
-        if (memDecl != NULL) ctorList = memDecl->get_CtorInitializerList();
-        if (ctorList != NULL) {
-          std::cerr << "found ctor list" << std::endl;
-          makeEdge(CFGNode(this, idx), ctorList->cfgForBeginning(), result);
-        }
-        else {
-          makeEdge(CFGNode(this, idx), get_body()->cfgForBeginning(), result);
-        }
-        break;
-      }
+              SgCtorInitializerList* ctorList;
+              if ((ctorList = get_CtorInitializerList()) != NULL) {
+                makeEdge(CFGNode(this, idx), ctorList->cfgForBeginning(), result);
+              } else {
+                makeEdge(CFGNode(this, idx), get_body()->cfgForBeginning(), result);
+              }
+              break;
+            }
     case SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX:
       if (virtualInterproceduralControlFlowGraphs) { 
         ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
