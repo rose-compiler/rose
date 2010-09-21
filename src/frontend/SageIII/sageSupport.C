@@ -1150,8 +1150,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // It is an extension of C, so also set C mode. 
   // Liao, 6/19/2008
   //
-    // set_UPC_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
-    // ROSE_ASSERT (get_UPC_only() == false);
+  // set_UPC_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
+  // ROSE_ASSERT (get_UPC_only() == false);
      bool hasRoseUpcEnabled = CommandlineProcessing::isOption(argv,"-rose:","(UPC|UPC_only)",true) ;
      bool hasEdgUpcEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
      bool hasEdgUpcEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc)",true) ;
@@ -1167,8 +1167,27 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"--edg:","(restrict)",true);
         }
 
-    // two situations: either of -rose:upc_threads n  and --edg:upc_threads n appears.
-    // set flags and remove both.
+  // DQ (9/19/2010): Added support for UPC++.  This uses the UPC mode and internally processes the code as C++ instead of C.
+  // set_UPCpp_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
+  // ROSE_ASSERT (get_UPCxx_only() == false);
+     bool hasRoseUpcppEnabled = CommandlineProcessing::isOption(argv,"-rose:","(UPCxx|UPCxx_only)",true) ;
+     bool hasEdgUpcppEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc++)",true) ;
+     bool hasEdgUpcppEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc++)",true) ;
+
+     if (hasRoseUpcppEnabled||hasEdgUpcppEnabled2||hasEdgUpcppEnabled) 
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("UPC++ mode ON \n");
+          set_C_only(false);
+          set_Cxx_only(true);
+          set_UPCxx_only(true);
+       // remove edg:restrict since we will add it back in SgFile::build_EDG_CommandLine()
+          CommandlineProcessing::isOption(argv,"-edg:","(restrict)",true);
+          CommandlineProcessing::isOption(argv,"--edg:","(restrict)",true);
+        }
+
+  // two situations: either of -rose:upc_threads n  and --edg:upc_threads n appears.
+  // set flags and remove both.
      int integerOptionForUPCThreads  = 0;
      int integerOptionForUPCThreads2 = 0;
      bool hasRoseUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"-rose:","(upc_threads)", integerOptionForUPCThreads,true);
@@ -3458,25 +3477,41 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      edgOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"--edg_parameter:");
      CommandlineProcessing::addListToCommandLine(inputCommandLine,"--",edgOptionList);
 
+  // *******************************************************************
+  //                       Handle UPC modes
+  // *******************************************************************
 
+  // DQ (9/19/2010): Added UPC++ mode (UPC (C modes) should have UPC++ == false.
   // Liao, 6/20/2008, handle UPC specific EDG options.
   // Generate --upc 
-    if (get_UPC_only()) 
-    {
-       inputCommandLine.push_back("--upc");
-       inputCommandLine.push_back("--restrict");
-    }  
+  // if (get_UPC_only()) 
+     if ((get_UPC_only() == true) && (get_UPCxx_only() == false)) 
+        {
+          inputCommandLine.push_back("--upc");
+          inputCommandLine.push_back("--restrict");
+        }
 
+  // DQ (9/19/2010): Added support for UPC++. Previously the UPC used the C++ language internally this had to 
+  // be put back to C to provide less strict type-checking and so the new UPC++ option allows us to continue 
+  // to play with UPC++ as an idea for future work. This modes will also have (UPC == true).
+  // Generate --upc++
+     if (get_UPCxx_only() == true) 
+        {
+       // DQ (9/19/2010): Testing use of newly added EDG option to control use 
+       // of C_dialect to allow C++ with UPC (which defines initial UPC++ work).
+          inputCommandLine.push_back("--upc++");
+          inputCommandLine.push_back("--restrict");
+        }
 
   // Generate --upc_threads n 
      int intOptionUpcThreads = get_upc_threads();  
-     if (intOptionUpcThreads>0) 
-     { 
-       stringstream ss;
-       ss<<intOptionUpcThreads;
-       inputCommandLine.push_back("--upc_threads");
-       inputCommandLine.push_back(ss.str());
-     }  
+     if (intOptionUpcThreads > 0) 
+        {
+          stringstream ss;
+          ss << intOptionUpcThreads;
+          inputCommandLine.push_back("--upc_threads");
+          inputCommandLine.push_back(ss.str());
+        }  
        
 
   // *******************************************************************
@@ -4405,6 +4440,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:disassembler_search" ||
           argument == "-rose:partitioner_search" ||
           argument == "-rose:partitioner_config" ||
+
+       // DQ (9/19/2010): UPC support for upc_threads to define the "THREADS" variable.
+          argument == "-rose:upc_threads" ||
           false)
         {
           result = true;
@@ -5970,9 +6008,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     }
 
     /* Disassemble each interpretation */
-    if (get_read_executable_file_format_only()) {
-        printf ("\nWARNING: Skipping instruction disassembly \n\n");
-    } else {
+    if (!get_read_executable_file_format_only()) {
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
             Disassembler::disassembleInterpretation(interps[i]);

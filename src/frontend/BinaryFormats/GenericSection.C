@@ -169,7 +169,7 @@ SgAsmGenericSection::clear_mapped()
 {
     set_mapped_size(0);
     set_mapped_preferred_rva(0);
-    set_mapped_actual_rva(0);
+    set_mapped_actual_va(0);
     set_mapped_rperm(false);
     set_mapped_wperm(false);
     set_mapped_xperm(false);
@@ -220,20 +220,6 @@ SgAsmGenericSection::get_mapped_preferred_va() const
     if (is_mapped())
         return get_base_va() + get_mapped_preferred_rva();
     return 0;
-}
-
-/** Returns (non-relative) virtual address where section was mapped. The address corresponds to the latest call into the
- *  Loader classes.  Depending on the loader employed, it's possible for a section to be mapped, the p_mapped_actual_rva value
- *  to be set, and then some other section to be mapped over the top of all or part of the first section. In that case, the
- *  p_mapped_actual_rva of the first section is not reset to zero.  The return value is not conditional upon is_mapped() since
- *  that predicate applies only to preferred mapping attributes. Also, the base virtual address is always added to the
- *  p_mapped_actual_rva regardless of whether p_mapped_actual_rva is non-zero (this doesn't matter in ELF, where the base
- *  virtual address is always zero anyway). */
-rose_addr_t
-SgAsmGenericSection::get_mapped_actual_va() const
-{
-    ROSE_ASSERT(this != NULL);
-    return get_base_va() + get_mapped_actual_rva();
 }
 
 /** Returns base virtual address for a section, or zero if the section is not associated with a header. */
@@ -780,7 +766,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 
     fprintf(f, "%s%-*s = %s\n", p, w, "contains_code", get_contains_code()?"true":"false");
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") \n", p, w, "mapped_actual_rva", p_mapped_actual_rva, p_mapped_actual_rva);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") \n", p, w, "mapped_actual_va", p_mapped_actual_va, p_mapped_actual_va);
 
     // DQ (8/31/2008): Output the contents if this not derived from (there is likely a 
     // better implementation if the hexdump function was a virtual member function).

@@ -210,7 +210,7 @@ setSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList )
 void
 setSourcePosition  ( SgInitializedName* initializedName, Token_t* token )
    {
-     if ( SgProject::get_verbose() > 0 )
+     if ( SgProject::get_verbose() > 1 )
           printf ("In setSourcePosition initializedName = %p = %s token = %p line = %d \n",initializedName,initializedName->get_name().str(),token,token != NULL ? token->line : -1);
 
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
@@ -293,37 +293,6 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
      locatedNode->get_startOfConstruct()->set_parent(locatedNode);
      locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
    }
-
-#if 0
-// DQ (10/6/2008): the need for this is eliminated by moving some nodes that have source 
-// position from SgSupport to teh new SgLocatedNodeSupport subtree of SgLocatedNode.
-
-// DQ (10/4/2008): Added support to marking the source position of Use statement names/rename IR nodes.
-void
-setSourcePosition  ( SgSupport* namePair, Token_t* token )
-   {
-  // if ( SgProject::get_verbose() > 0 )
-  //      printf ("In setSourcePosition namePair = %p = %s token = %p line = %d \n",namePair,namePair->get_local_name().str(),token,token != NULL ? token->line : -1);
-
-  // The SgRenamePair has both a startOfConstruct and endOfConstruct source position.
-     ROSE_ASSERT(namePair != NULL);
-
-     ROSE_ASSERT(token != NULL);
-
-     ROSE_ASSERT(token->line > 0);
-
-     string filename = getCurrentFilename();
-  // printf ("In setSourcePosition(SgRenamePair %p = %s) line = %d column = %d filename = %s \n",namePair,namePair->get_local_name().str(),token->line,token->col,filename.c_str());
-     ROSE_ASSERT(filename.empty() == false);
-
-  // Set these based on the source position information from the tokens
-     namePair->set_startOfConstruct (new Sg_File_Info(filename,token->line,token->col));
-  // namePair->set_file_info(new Sg_File_Info(filename,token->line,token->col));
-
-     namePair->get_startOfConstruct()->set_parent(namePair);
-  // namePair->get_file_info()->set_parent(namePair);
-   }
-#endif
 
 void
 setSourcePosition  ( SgInitializedName* initializedName, const TokenListType & tokenList )
@@ -2225,7 +2194,9 @@ buildDerivedTypeStatementAndDefinition (string name, SgScopeStatement* scope)
   // DQ (8/28/2010): Save the attributes used and clear the astAttributeSpecStack for this declaration (see test2010_34.f90).
      while (astAttributeSpecStack.empty() == false)
         {
+#if 0
           printf ("Process attribute spec %d \n",astAttributeSpecStack.front());
+#endif
           setDeclarationAttributeSpec(classDeclaration,astAttributeSpecStack.front());
 
           if (astAttributeSpecStack.front() == AttrSpec_PUBLIC || astAttributeSpecStack.front() == AttrSpec_PRIVATE)
@@ -3677,7 +3648,8 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
 #if 1
             // DQ (8/29/2010): This should be enabled so that we can at least see that it is not implemented.
             // FMZ 6/15/2009 : this should be ok
-               printf ("Error: POINTER (ComponentAttrSpec_pointer) is an attribute specifier that effects the associated type (no flag is provided) \n");
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("Error: POINTER (ComponentAttrSpec_pointer) is an attribute specifier that effects the associated type (no flag is provided) \n");
             // ROSE_ASSERT(false);
 #endif
                break;
@@ -3741,7 +3713,8 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
 
        // DQ (8/29/2010): Added support for new enum values
           case ComponentAttrSpec_dimension:
-               printf ("Error: ComponentAttrSpec_dimension used as an attribute specifier (unclear how to process this) \n");
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("Error: ComponentAttrSpec_dimension used as an attribute specifier (unclear how to process this) \n");
             // ROSE_ASSERT(false);
                variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();
                break;
@@ -4004,8 +3977,11 @@ convertTypeOnStackToArrayType( int count )
      SgExpression* sizeExpression = new SgNullExpression();
      setSourcePosition(sizeExpression);
 
-  // Build the array type
+#if 0
      printf ("I think we need to call the SgArrayType::createType() interface instead of new SgArrayType()\n");
+#endif
+
+  // Build the array type
      SgArrayType* arrayType = new SgArrayType(baseType,sizeExpression);
      ROSE_ASSERT(arrayType != NULL);
 
@@ -4802,7 +4778,9 @@ isPubliclyAccessible( SgSymbol* symbol )
                          if (initializedName->get_protected_declaration() == true)
                             {
                            // This should not be considered a publicly accessible variable (don't put it into the synbol table as an aliased symbol.
-                              printf ("In isPubliclyAccessible(): Note that this variable is marked as protected (so must be included as an aliased symbol \n");
+                              if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                                   printf ("In isPubliclyAccessible(): Note that this variable is marked as protected (so must be included as an aliased symbol \n");
+
                               returnValue = true;
                             }
                        }
@@ -5115,7 +5093,8 @@ fixupModuleScope( SgClassDefinition* moduleScope )
                if (tempSymbol == NULL)
                   {
                  // These function without a valid symbol need to be fixed up.
-                    printf ("(tempSymbol == NULL): Identified a function declaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+                    if ( SgProject::get_verbose() > 0 )
+                         printf ("(tempSymbol == NULL): Identified a function declaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
 
                     SgName variableName              = functionDeclaration->get_name();
                     SgVariableSymbol* variableSymbol = NULL;
