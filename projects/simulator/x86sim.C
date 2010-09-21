@@ -1650,7 +1650,7 @@ EmulationPolicy::emulate_syscall()
                 uint32_t buf_sz_le;
                 nread = map->read(&buf_sz_le, iov_va+i*8+4, 4);
                 ROSE_ASSERT(4==nread);
-                uint32_t buf_sz = SgAsmExecutableFileFormat::le_to_host(buf_va_le);
+                uint32_t buf_sz = SgAsmExecutableFileFormat::le_to_host(buf_sz_le);
 
                 if (debug)
                     fprintf(debug, "    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32"\n", i, buf_va, buf_sz);
