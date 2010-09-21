@@ -17,7 +17,7 @@ libBackstrokePluggableReverser_a_include_HEADERS = expressionProcessor.h stateme
 					ifStatementProcessor.h eventProcessor.h variableVersionTable.h costModel.h \
 					handlerTypes.h straightlineStatementProcessor.h akgulStyleExpressionProcessor.h \
 					returnStatementHandler.h variableDeclarationHandler.h redefineValueRestorer.h \
-					extractFromUseValueRestorer.C
+					extractFromUseValueRestorer.h
 
 EXTRA_DIST = 
 
