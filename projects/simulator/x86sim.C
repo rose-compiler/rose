@@ -2437,9 +2437,15 @@ main(int argc, char *argv[])
                 policy.dump_registers(policy.debug);
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
+#if 0
+            policy.dump_core(SIGILL);
             abort();
+#else
+            std::cerr <<"Ignored. Continuing with a corrupt state...\n";
+#endif
         } catch (const VirtualMachineSemantics::Policy::Exception &e) {
             std::cerr <<e <<"\n\n";
+            policy.dump_core(SIGILL);
             abort();
         } catch (const EmulationPolicy::Exit &e) {
             /* specimen has exited */
