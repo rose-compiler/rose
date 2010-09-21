@@ -3969,7 +3969,7 @@ SOURCE_INITIALIZER_EXPRESSION_END
 SOURCE_AGGREGATE_INITIALIZER_EXPRESSION_START
 
 void
-$CLASSNAME::post_construction_initialization() 
+SgAggregateInitializer::post_construction_initialization() 
    {
      if (get_initializers())
           get_initializers()->set_parent(this);
@@ -3978,7 +3978,7 @@ $CLASSNAME::post_construction_initialization()
 #if 1
 // DQ: trying to remove the nested iterator class
 void
-$CLASSNAME::append_initializer(SgExpression* what)
+SgAggregateInitializer::append_initializer(SgExpression* what)
    {
      assert(this != NULL);
 
@@ -4002,7 +4002,7 @@ $CLASSNAME::append_initializer(SgExpression* what)
 // DQ: trying to remove the nested iterator class
 // $CLASSNAME::insert_initializer(const SgExpression::iterator& where, SgExpression* what) 
 void
-$CLASSNAME::insert_initializer(const SgExpressionPtrList::iterator& where, SgExpression* what) 
+SgAggregateInitializer::insert_initializer(const SgExpressionPtrList::iterator& where, SgExpression* what) 
    {
      p_initializers->insert_expression(where,what);
    }
@@ -4010,7 +4010,7 @@ $CLASSNAME::insert_initializer(const SgExpressionPtrList::iterator& where, SgExp
 
 //#if 0
 SgExpression*
-$CLASSNAME::get_next(int& n) const
+SgAggregateInitializer::get_next(int& n) const
    {
      if(n==0)
         {
@@ -4023,7 +4023,7 @@ $CLASSNAME::get_next(int& n) const
 //#endif
 
 int
-$CLASSNAME::replace_expression(SgExpression* o, SgExpression* n)
+SgAggregateInitializer::replace_expression(SgExpression* o, SgExpression* n)
    {
   // DQ (12/17/2006): This function should have the semantics that it will represent a  
   // structural change to the AST, thus it is free to set the parent of the new expression.
@@ -4044,13 +4044,15 @@ $CLASSNAME::replace_expression(SgExpression* o, SgExpression* n)
    }
 
 SgType*
-$CLASSNAME::get_type() const
+SgAggregateInitializer::get_type() const
    {
      if (p_expression_type != NULL)
-          return p_expression_type;
-     else
         {
-          printf ("$CLASSNAME::get_type(): default case\n");
+          return p_expression_type;
+        }
+       else
+        {
+       // printf ("SgAggregateInitializer::get_type(): default case\n");
           return SgTypeDefault::createType();
         }
    }

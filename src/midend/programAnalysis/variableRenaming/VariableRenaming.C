@@ -1107,11 +1107,11 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 			//If we have an assigning operation, we want to list everything on the LHS as being defined
 			//Otherwise, everything is being used.
 			VariantT type = op->variantT();
+			std::vector<SgNode*> uses;
 			switch (type)
 			{
-				//Catch all the types of Ops that define the LHS
+				//All the following ops both use and define the lhs
 				case V_SgAndAssignOp:
-				case V_SgAssignOp:
 				case V_SgDivAssignOp:
 				case V_SgIorAssignOp:
 				case V_SgLshiftAssignOp:
@@ -1123,13 +1123,20 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 				case V_SgRshiftAssignOp:
 				case V_SgXorAssignOp:
 				{
+					//All the uses from the LHS are propagated
+					uses.insert(uses.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
+					uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
+				}
+				//The assign op defines, but does not use the LHS. Notice that the other assignments also fall through,
+				//as they also define the LHS
+				case V_SgAssignOp:
+				{
 					//We want to set all the right-most varRef from LHS as being defined
 					std::vector<SgNode*> defs;
 					defs.insert(defs.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
 					defs.insert(defs.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
 
 					//We want to set all the varRefs from the RHS as being used here
-					std::vector<SgNode*> uses;
 					uses.insert(uses.end(), attrs[1].getDefs().begin(), attrs[1].getDefs().end());
 					uses.insert(uses.end(), attrs[1].getUses().begin(), attrs[1].getUses().end());
 
@@ -2632,6 +2639,87 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getDefsForSubtree(SgNode*
      traversal.traverse(node, preorder);
 
      return traversal.result;
+}
+
+VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtScopeEnd(SgScopeStatement* bb)
+{
+	ROSE_ASSERT(bb);
+    NumNodeRenameTable result;
+
+    //Keep track of visited nodes
+    set<SgNode*> visited;
+    
+    queue<cfgNode> worklist;
+
+    cfgNode current = cfgNode(bb->cfgForBeginning());
+    worklist.push(current);
+
+    while(!worklist.empty())
+    {
+        //Get the node to work on
+        current = worklist.front();
+		worklist.pop();
+
+		SgNode* currentNode = current.getNode();
+		visited.insert(currentNode);
+		
+		//Find if any of the children exit the basic block.
+		cfgEdgeVec outEdges = current.outEdges();
+		foreach(cfgEdge edge, outEdges)
+		{
+			SgNode* targetNode = edge.target().getNode();
+
+			//Prevent infinite looping
+			if (visited.count(targetNode) > 0)
+			{
+				continue;
+			}
+
+			if (!SageInterface::isAncestor(bb, targetNode))
+			{
+				//This edge leads outside the basic block! Gotta save the variable versions here
+				NumNodeRenameTable temp = getReachingDefsAtNode(currentNode);
+
+				//Merge the tables
+				foreach(NumNodeRenameTable::value_type& entry, temp)
+				{
+					//Insert the entry wholesale
+					if (result.count(entry.first) == 0)
+					{
+						result[entry.first] = entry.second;
+					}
+					//Or merge it with an existing one
+					else
+					{
+						foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
+						{
+							//Insert the entry wholesale
+							if (result[entry.first].count(tableEntry.first) == 0)
+							{
+								result[entry.first][tableEntry.first] = tableEntry.second;
+							}
+							else
+							{
+								//Check for equivalence
+								if (result[entry.first][tableEntry.first] != tableEntry.second)
+								{
+									cout << "Error: Same Renaming number has two different definition points." << endl;
+									ROSE_ASSERT(false);
+								}
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				//Still in the basic block, add this edge to the worklist
+				worklist.push(edge.target());
+			}
+		}
+    }
+
+	return result;
 }
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunctionEnd(SgFunctionDefinition* node)
