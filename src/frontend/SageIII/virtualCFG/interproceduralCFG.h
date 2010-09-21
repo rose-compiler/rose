@@ -23,7 +23,7 @@ using VirtualCFG::CFGEdge;
 class InterproceduralCFG : public CFG
 {
 protected:
-    void buildCFG(CFGNode n, 
+    virtual void buildCFG(CFGNode n, 
                   std::map<CFGNode, SgGraphNode*>& all_nodes, 
                   std::set<CFGNode>& explored,
                   ClassHierarchyWrapper* classHierarchy);
@@ -32,7 +32,18 @@ public:
 
     // The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName
     InterproceduralCFG(SgNode* node, bool is_filtered = false) 
-      : CFG(node, is_filtered) {}
+      : CFG() {
+        graph_ = NULL;
+        is_filtered_ = is_filtered;
+        start_ = node;
+        buildCFG();
+      }
+
+    // Build CFG according to the 'is_filtered_' flag.
+    virtual void buildCFG()
+    {
+        buildFullCFG();
+    }
 
     // Build CFG for debugging.
     virtual void buildFullCFG();
