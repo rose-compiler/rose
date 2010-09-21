@@ -770,9 +770,21 @@ std::vector<CFGEdge>
 SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
-    case 0: makeEdge(CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
-    case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX: { 
+    case 0: makeEdge(CFGNode(this, idx), get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
+    case 1: {
+        SgMemberFunctionDeclaration* memDecl = isSgMemberFunctionDeclaration(get_declaration());
+        SgCtorInitializerList* ctorList = NULL;
+        if (memDecl != NULL) ctorList = memDecl->get_CtorInitializerList();
+        if (ctorList != NULL) {
+          std::cerr << "found ctor list" << std::endl;
+          makeEdge(CFGNode(this, idx), ctorList->cfgForBeginning(), result);
+        }
+        else {
+          makeEdge(CFGNode(this, idx), get_body()->cfgForBeginning(), result);
+        }
+        break;
+      }
+    case SGFUNCTIONDEFINITION_INTERPROCEDURAL_INDEX:
       if (virtualInterproceduralControlFlowGraphs) { 
         ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
         Rose_STL_Container<SgExpression*> exps;
@@ -781,7 +793,6 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
           makeEdge(CFGNode(this, idx), exp->cfgForEnd(), result);
       }
       break;
-    }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
   }
   return result;
