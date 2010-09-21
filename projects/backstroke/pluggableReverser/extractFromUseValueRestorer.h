@@ -17,6 +17,22 @@ public:
 			const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions);
 
 private:
+
+	//! Extracts the value of a variable from its use in a SgAssignOp or SgAssignInitializer
+	//! @returns desired variable value on success, NULL on failure
+	SgExpression* extractFromAssignOp(VariableRenaming::VarName varName, const VariableVersionTable& availableVariables,
+			SgNode* use);
+
+	//! Extracts the value of a variable from its use in a SgPlusPlusOp or SgMinusMinusOp
+	//! @returns desired variable value on success, NULL on failure
+	SgExpression* extractFromIncrementOp(VariableRenaming::VarName varName, const VariableVersionTable& availableVariables,
+			SgNode* use);
+
+	//! Extracts the value of a variable from its use in a +=, -=, or ^=
+	//! @returns desired variable value on success, NULL on failure
+	SgExpression* extractFromUseAssignOp(VariableRenaming::VarName varName, const VariableVersionTable& availableVariables,
+			SgNode* use);
+
 	//! Given a variable used in an expression, and the value of that expresion, restore the value of the variable.
 	//! @param variable the variable whose value should be extracted
 	//! @param availableVariables versions of all the variables currently defined
