@@ -1216,6 +1216,10 @@ HEADER_FUNCTION_DEFINITION_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
+       // MD (09/20/2010): Accessor for preinitialization lists associated with 
+       // this (constructor) definition. NULL if this has no such list.
+          virtual SgCtorInitializerList* get_CtorInitializerList();
+
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
@@ -8630,6 +8634,13 @@ SgFunctionDefinition::get_qualified_name() const
      return returnName;
    }
 
+
+// MD (09/20/2010): Accessor for preinitialization lists associated with 
+// this (constructor) definition. NULL if this has no such list.
+SgCtorInitializerList* 
+SgFunctionDefinition::get_CtorInitializerList() {
+   std::cerr << "foo@!" << std::endl;
+}
 
 SOURCE_FUNCTION_DEFINTION_STATEMENT_END
 
