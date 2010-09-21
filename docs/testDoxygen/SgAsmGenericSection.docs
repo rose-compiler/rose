@@ -9,11 +9,17 @@
  *  This is the relative virtual address where the section prefers to be mapped. The RVA where the section will ultimately be
  *  mapped by the loader might be different due to file and/or memory alignment constraints and conflicts with other sections. */
 
-/** @var rose_addr_t SgAsmGenericSection::p_mapped_actual_rva
+/** @var rose_addr_t SgAsmGenericSection::p_mapped_actual_va
  *
- *  This is the address where ROSE simulates a loader mapping the section. The actual mapping is sometimes different than the
- *  preferred mapping indicated in the section table due to file and/or memory alignment constraints or conflicts with other
- *  sections.  The only place values are assigned to this data member is in the Loader class and subclasses thereof. */
+ *  This is the virtual address where ROSE simulates a loader mapping the section. The actual mapping is sometimes different
+ *  than the preferred mapping indicated in the section table due to file and/or memory alignment constraints or conflicts
+ *  with other sections.  The only place values are assigned to this data member is in the BinaryLoader class and subclasses
+ *  thereof.
+ *  
+ *  The address corresponds to the latest call into the Loader classes.  Depending on the loader employed, it's possible for a
+ *  section to be mapped, the p_mapped_actual_va value  to be set, and then some other section to be mapped over the top of
+ *  all or part of the first section. In that case, the p_mapped_actual_va of the first section is not reset to zero.  The
+ *  return value is not conditional upon is_mapped() since that predicate applies only to preferred mapping attributes. */
 
 /** @var bool SgAsmGenericSection::p_contains_code
  *
