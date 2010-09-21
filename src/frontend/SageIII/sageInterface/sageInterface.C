@@ -5232,8 +5232,11 @@ void SageInterface::removeStatement(SgStatement* stmt)
 #endif
                  // DQ (9/18/2010): This can't be asserted on targetStmt (see rose_inputloopUnrolling.C as an example of where this fails).
                  // ROSE_ASSERT(targetStmt->get_file_info()->get_file_id() >= 0);
-                    ROSE_ASSERT(surroundingStatement->get_file_info()->get_file_id() >= 0);
 
+                 // DQ (9/20/2010): Assume that the first surrounding statment is at least from the same file.
+                 // ROSE_ASSERT(surroundingStatement->get_file_info()->get_file_id() >= 0);
+                    if (surroundingStatement->get_file_info()->get_file_id() >= 0)
+                       {
                  // printf ("   targetStmt->get_file_info()->get_file_id()           = %d \n",targetStmt->get_file_info()->get_file_id());
                  // printf ("   surroundingStatement->get_file_info()->get_file_id() = %d \n",surroundingStatement->get_file_info()->get_file_id());
 
@@ -5340,6 +5343,12 @@ void SageInterface::removeStatement(SgStatement* stmt)
                                    k++;
                                  }
                             }
+                       }
+                       }
+                      else
+                       {
+                      // DQ (9/20/2010): Separting out this case is at least an incremental improvement toward comment and CPP directive relocation.
+                         printf ("Warning: First surroundingStatement get_file_id() = %d < 0 (this is a special statment comments not reloated) \n",surroundingStatement->get_file_info()->get_file_id());
                        }
                   }
              }
