@@ -583,3 +583,32 @@ SgStatement* backstroke_util::getEnclosingIfBody(SgNode* node)
 	}
 	return NULL;
 }
+
+vector<SgExpression*> backstroke_util::getAllVariables(SgNode* node)
+{
+	vector<SgExpression*> vars;
+
+	vector<SgExpression*> exps = querySubTree<SgExpression > (node);
+
+	//ROSE_ASSERT(!exps.empty());
+
+	foreach(SgExpression* exp, exps)
+	{
+		SgExpression* cand = NULL;
+		if (isSgVarRefExp(exp))
+			cand = exp;
+		else if (isSgDotExp(exp) && isSgVarRefExp(isSgDotExp(exp)->get_rhs_operand()))
+			cand = exp;
+		else if (isSgArrowExp(exp) && isSgVarRefExp(isSgArrowExp(exp)->get_rhs_operand()))
+			cand = exp;
+
+		if (cand != NULL &&
+				isSgDotExp(cand->get_parent()) == NULL &&
+				isSgArrowExp(cand->get_parent()) == NULL)
+		{
+			vars.push_back(cand);
+		}
+	}
+
+	return vars;
+}
