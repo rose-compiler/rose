@@ -25,13 +25,15 @@ TESTCODES_REQUIRED_TO_PASS = \
      sharedArrayInit.upc \
      sharedInit.upc \
      strict.upc \
-     test2004_22.upc \
      threads.upc \
      threads_2.upc \
      typedef.upc \
      upc_all_alloc_ex.upc upc_all_broadcast_ex.upc upc_all_exchange_ex.upc upc_all_gather_all_ex.upc \
      upc_all_gather_ex.upc upc_all_lock_alloc_ex.upc upc_all_permute_ex.upc upc_all_prefix_reduceL_ex.upc \
-     upc_all_reduceL_ex.upc upc_all_scatter_ex.upc istream.upc \
+     upc_all_reduceL_ex.upc upc_all_scatter_ex.upc \
+     upc_all_exchange_ex_dynamic.upc upc_all_gather_all_ex_dynamic.upc \
+     upc_all_gather_ex_dynamic.upc upc_all_scatter_ex_dynamic.upc \
+     istream.upc \
      bupc_test.upc
 
 
@@ -56,7 +58,7 @@ if ROSE_USE_NEW_EDG_INTERFACE
 # JJW (12/15/2008): Force C99 mode so we can have declarations in the initializers of forall statements
 ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc --edg:c99
 else
-ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep -rose:UPC -rose:verbose 0
+ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:skipfinalCompileStep -rose:upc_threads 1 
 #ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc
 endif
 #ROSE_FLAGS = --edg:no_warnings -w --edg:restrict --edg:upc -rose:verbose 3
@@ -65,10 +67,20 @@ PASSING_TEST_Output = $(addprefix rose_,${TESTCODES})
 TEST_Output = $(addprefix rose_,${ALL_TESTCODES})
 
 $(TEST_Output): ../../testTranslator $(srcdir)/$(@:rose_%=%)
-	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:rose_%=%)
+	../../testTranslator -rose:UPC $(ROSE_FLAGS) -c $(srcdir)/$(@:rose_%=%)
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
+
+# DQ (9/19/2010): Separated this UPC++ test out from the UPC tests. This test code simply uses some C++ specific 
+# constructs and does not represent any special work to build UPC++ work. Basically just UPC that allows C++ code.
+UPCXX_TESTCODES      = test2004_22.upc test2010_01.upc test2010_02.upc
+UPCXX_TEST_Objects = ${UPCXX_TESTCODES:.upc=.o}
+
+# $(UPCXX_TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
+$(UPCXX_TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
+	../../testTranslator -rose:UPCxx $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.upc)
+
 
 rose_shared.upc.aa:rose_shared.upc
 	split -36 rose_shared.upc rose_shared.upc.
@@ -90,12 +102,14 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 # DQ (9/15/2010): Moved UPC standard header files to be included automatically (moved to the ROSE compiler include directory).
 # put the headers here for now. TODO: Move them to a better place
 # EXTRA_DIST = $(ALL_TESTCODES) upc.h upc_relaxed.h upc_strict.h upc_collective.h
-EXTRA_DIST = $(ALL_TESTCODES) 
+EXTRA_DIST = $(ALL_TESTCODES)  $(UPCXX_TESTCODES)
 
 check-local:
 	@echo "Tests for UPC examples."
 	@$(MAKE) $(PASSING_TEST_Output)
 	@$(MAKE) rose_shared.upc.aa
+	@echo "Tests for UPC++ examples."
+	@$(MAKE) $(UPCXX_TEST_Objects)
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/UPC_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
