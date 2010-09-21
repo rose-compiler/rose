@@ -45,6 +45,10 @@ private:
 	//! Given a statement, return all evaluation results using all statement processors.
 	std::vector<EvaluationResult> evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
+	/** Given a set of results, if two results of them have the same variable table, we remove
+	 *  the one which has the higher cost. */
+	std::vector<EvaluationResult> filterResults(const std::vector<EvaluationResult>& results);
+
 	//! The following methods are for expression and statement processors for store and restore.
 	SgExpression* getStackVar(SgType* type);
 	SgExpression* pushVal(SgExpression* exp, SgType* type);

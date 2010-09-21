@@ -13,6 +13,8 @@
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "pluggableReverser/returnStatementHandler.h"
 #include "pluggableReverser/akgulStyleExpressionProcessor.h"
+#include "pluggableReverser/redefineValueRestorer.h"
+#include "pluggableReverser/extractFromUseValueRestorer.h"
 
 
 
@@ -60,8 +62,6 @@ int main(int argc, char * argv[])
 	event_processor.addExpressionHandler(new NullExpressionHandler);
 	event_processor.addExpressionHandler(new IdentityExpressionHandler);
 	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
-	event_processor.addExpressionHandler(new ConstructiveExpressionHandler);
-	//event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
 	event_processor.addExpressionHandler(new AkgulStyleExpressionProcessor);
 
 	// Add all statement handlers to the statement pool.
@@ -74,7 +74,7 @@ int main(int argc, char * argv[])
 
 	//Variable value extraction handlers
 	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
-	event_processor.addVariableValueRestorer(new ExtractFromUseRestorer);
+	event_processor.addVariableValueRestorer(new ExtractFromUseValueRestorer);
 
 	foreach(SgFunctionDeclaration* decl, func_decls)
 	{

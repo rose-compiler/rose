@@ -39,12 +39,6 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmGenericFile
         ef->reallocate();
 
     ef->unparse(f);
-
-    /* Extend the file to the full size. The unparser will not write zero bytes at the end of a file because some files
-     * actually use the fact that sections that extend past the EOF will be zero padded.  For the time being we'll extend the
-     * file to its full size. */
-    if (!ef->get_truncate_zeros())
-        ef->extend_to_eof(f);
 }
 
 SgAsmGenericFile *

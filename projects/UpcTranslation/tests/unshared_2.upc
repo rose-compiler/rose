@@ -13,7 +13,9 @@ int * pint;
 
 /*special case: pointer to shared */
 shared[4] int * p2s_p1; 
-extern shared int * p2s_p3; 
+extern shared int * p2s_p3;
+
+// DQ (9/20/2010): This line has to be compiled with the -rose:UPCxx option.
 shared int * p2s_p2 = &gsj ;  /* global pointer to shared data */
 
 /*pointer to other TLD*/

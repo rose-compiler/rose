@@ -97,7 +97,7 @@ void EvaluationResult::printHandlers() const
 	static int tab_num = 0;
 
 	for (int i = 0; i < tab_num; ++i)
-		cout << "\t";
+		cout << "    ";
 	cout << handler_used_->getName() << endl;
 
 	++tab_num;

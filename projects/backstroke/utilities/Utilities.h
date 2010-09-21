@@ -109,7 +109,7 @@ namespace backstroke_util
 	bool containsModifyingExpression(SgExpression* exp);
 
 	/** Returns if an expression is an assignment operator (including +=, etc.). */
-	bool isAssignmentOp(SgExpression* e);
+	bool isAssignmentOp(SgNode* e);
 
 	/** Given a function declaration, get its definition's body. If it does not have a definition, return NULL. */
 	SgBasicBlock* getFunctionBody(SgFunctionDeclaration* func_decl);

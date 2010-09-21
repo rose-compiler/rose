@@ -1379,6 +1379,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                 else
                                    curprint ( (*i)->getString());
                             }
+						else
+						   curprint ( (*i)->getString());
                          break;
 
                  // Comment out these declarations where they occur because we don't need

@@ -688,14 +688,14 @@ void
 Disassembler::search_function_symbols(AddressSet *worklist, const MemoryMap *map, SgAsmGenericHeader *header)
 {
     struct T: public AstSimpleProcessing {
-        T(AddressSet *wl, const MemoryMap *map, rose_addr_t base_va, FILE *f)
-            : worklist(wl), map(map), base_va(base_va), p_debug(f) {}
+        T(AddressSet *wl, const MemoryMap *map, FILE *f)
+            : worklist(wl), map(map), p_debug(f) {}
         void visit(SgNode *node) {
             SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node);
             if (symbol && symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC) {
                 SgAsmGenericSection *section = symbol->get_bound();
                 if (section && (section->is_mapped() || section->get_contains_code())) {
-                    rose_addr_t va = base_va + section->get_mapped_actual_rva();
+                    rose_addr_t va = section->get_mapped_actual_va();
                     if (map->find(va)) {
                         if (p_debug)
                             fprintf(p_debug, "Disassembler: SEARCH_FUNCSYMS added 0x%08"PRIx64" for \"%s\"\n",
@@ -707,9 +707,8 @@ Disassembler::search_function_symbols(AddressSet *worklist, const MemoryMap *map
         }
         AddressSet *worklist;
         const MemoryMap *map;
-        rose_addr_t base_va;
         FILE *p_debug;
-    } t(worklist, map, header->get_base_va(), p_debug);
+    } t(worklist, map, p_debug);
     t.traverse(header, preorder);
 }
 
