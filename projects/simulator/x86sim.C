@@ -276,6 +276,7 @@ public:
 
     /* Called by X86InstructionSemantics for the SYSENTER instruction */
     void sysenter() {
+        fprintf(stderr, "ROBB: syscall is working...\n"); /*DEBUGGING [RPM 2010-09-20]*/
         emulate_syscall();
     }
 
@@ -2212,6 +2213,7 @@ EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
     va_start(ap, format);
 
     if (debug && trace_syscall) {
+        fprintf(debug, "0x%08"PRIx64": ", readIP().known_value());
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], arg(i), args+i, ap);
