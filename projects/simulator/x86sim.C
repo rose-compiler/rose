@@ -464,8 +464,7 @@ public:
         return retval;
     }
 
-#if 0
-    /* Same as superclass but round file size up to a page */
+#if 0 /*DEBUGGING [RPM 2010-09-22]*/
     virtual MappingContribution align_values(SgAsmGenericSection *section, MemoryMap *map,
                                              rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                                              rose_addr_t *va_p, rose_addr_t *mem_size_p,
@@ -475,7 +474,8 @@ public:
         MappingContribution retval = BinaryLoaderElf::align_values(section, map, malign_lo_p, malign_hi_p, va_p,
                                                                    mem_size_p, offset_p, file_size_p, va_offset_p,
                                                                    anon_lo_p, anon_hi_p, resolve_p);
-        *file_size_p = ALIGN_UP(*file_size_p, PAGE_SIZE);
+        if (section->get_mapped_preferred_va() % *malign_lo_p)
+            fprintf(stderr, "ROBB: alignment\n");
         return retval;
     }
 #endif
@@ -1112,7 +1112,11 @@ EmulationPolicy::dump_core(int signo, std::string base_name)
             while (nremain>0) {
                 rose_addr_t to_write = std::min(nremain, (rose_addr_t)sizeof buf);
                 size_t nread = map->read(buf, cur_va, to_write);
+#if 1
+                memset(buf+nread, 0, to_write-nread);
+#else
                 ROSE_ASSERT(nread==to_write);
+#endif
                 offset = write(f, offset, to_write, buf);
                 cur_va += to_write;
                 nremain -= to_write;
@@ -1131,8 +1135,10 @@ EmulationPolicy::dump_core(int signo, std::string base_name)
 
         /* Combine elmts[i] with as many following elements as possible. */
         std::vector<MemoryMap::MapElement>::const_iterator ej=ei+1;
+#if 0
         while (ej!=elmts.end() && va+sz==ej->get_va() && perms==ej->get_mapperms())
             sz += (ej++)->get_size();
+#endif
         ei = ej;
 
         /* Create a segment */
