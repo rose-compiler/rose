@@ -1476,7 +1476,7 @@ EmulationPolicy::emulate_syscall()
 
         case 45: { /*0x2d, brk*/
             syscall_enter("brk", "x");
-            uint32_t newbrk = ALIGN_DN(arg(0), PAGE_SIZE);
+            uint32_t newbrk = arg(0);
             int retval = 0;
 
             if (newbrk >= 0xb0000000ul) {
