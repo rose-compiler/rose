@@ -2280,7 +2280,7 @@ EmulationPolicy::emulate_syscall()
         }
 
 	case 306: { /* 0x132, fchmodat */
-            syscall_enter("fchmodat", "dsd");
+            syscall_enter("fchmodat", "dsdd");
 	    int dirfd = arg(0);
 	    uint32_t path = arg(1);
             std::string sys_path = read_string(path);
