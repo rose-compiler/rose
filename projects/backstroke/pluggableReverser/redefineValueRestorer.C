@@ -1,5 +1,5 @@
 #include "redefineValueRestorer.h"
-#include "eventProcessor.h"
+#include "eventHandler.h"
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "utilities/Utilities.h"
 #include <rose.h>
@@ -60,11 +60,11 @@ vector<SgExpression*> RedefineValueRestorer::handleUseAssignDefinition(VariableR
 
 	//Find the version of the variable before the assignment
 	VariableRenaming::NumNodeRenameEntry lhsVersion =
-			getEventProcessor()->getVariableRenaming()->getReachingDefsAtNodeForName(assignment->get_lhs_operand(), destroyedVarName);
+			getEventHandler()->getVariableRenaming()->getReachingDefsAtNodeForName(assignment->get_lhs_operand(), destroyedVarName);
 
 	//Restore the left-hand side and the right-hand side
-	SgExpression* lhsValue = getEventProcessor()->restoreVariable(destroyedVarName, availableVariables, lhsVersion);
-	SgExpression* rhsValue = getEventProcessor()->restoreExpressionValue(assignment->get_rhs_operand(), availableVariables);
+	SgExpression* lhsValue = getEventHandler()->restoreVariable(destroyedVarName, availableVariables, lhsVersion);
+	SgExpression* rhsValue = getEventHandler()->restoreExpressionValue(assignment->get_rhs_operand(), availableVariables);
 
 	//Combine the lhs and rhs according to the assignment type to restore the value
 	if (lhsValue != NULL && rhsValue != NULL)
@@ -131,11 +131,11 @@ vector<SgExpression*> RedefineValueRestorer::handleIncrementDecrementDefinition(
 	vector<SgExpression*> results;
 
 	//See what version of the variable was before it was incremented
-	VariableRenaming::NumNodeRenameEntry versionIncremented = getEventProcessor()->getVariableRenaming()->
+	VariableRenaming::NumNodeRenameEntry versionIncremented = getEventHandler()->getVariableRenaming()->
 			getUsesAtNodeForName(incrementOp->get_operand(), destroyedVarName);
 
 	//Restore that version
-	SgExpression* valueBeforeIncrement = getEventProcessor()->restoreVariable(destroyedVarName, availableVariables, versionIncremented);
+	SgExpression* valueBeforeIncrement = getEventHandler()->restoreVariable(destroyedVarName, availableVariables, versionIncremented);
 	if (valueBeforeIncrement != NULL)
 	{
 		SgExpression* restoredValue;
@@ -205,7 +205,7 @@ vector<SgExpression*> RedefineValueRestorer::handleAssignOp(VariableRenaming::Va
 
 	//Ok, so the variable was previously defined by assignment to initExpression.
 	//Now we need to see if we can re-execute that expression
-	SgExpression* definitionExpressionValue = getEventProcessor()->restoreExpressionValue(definitionExpression, availableVariables);
+	SgExpression* definitionExpressionValue = getEventHandler()->restoreExpressionValue(definitionExpression, availableVariables);
 	if (definitionExpressionValue != NULL)
 	{
 		results.push_back(definitionExpressionValue);

@@ -2,11 +2,11 @@
 #include <VariableRenaming.h>
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "normalizations/expNormalization.h"
-#include "pluggableReverser/eventProcessor.h"
-#include "pluggableReverser/expressionProcessor.h"
-#include "pluggableReverser/statementProcessor.h"
-#include "pluggableReverser/straightlineStatementProcessor.h"
-#include "pluggableReverser/akgulStyleExpressionProcessor.h"
+#include "pluggableReverser/eventHandler.h"
+#include "pluggableReverser/expressionHandler.h"
+#include "pluggableReverser/statementHandler.h"
+#include "pluggableReverser/straightlineStatementHandler.h"
+#include "pluggableReverser/akgulStyleExpressionHandler.h"
 #include "pluggableReverser/returnStatementHandler.h"
 #include "pluggableReverser/variableDeclarationHandler.h"
 #include "pluggableReverser/redefineValueRestorer.h"
@@ -36,28 +36,28 @@ int main(int argc, char** argv)
 	//Create a reverser for this function
 	VariableRenaming var_renaming(project);
 	var_renaming.run();
-	EventProcessor event_processor(NULL, &var_renaming);
+	EventHandler event_handler(NULL, &var_renaming);
 
 	//Add the handlers in order of priority. The lower ones will be used only if higher ones do not produce results
 	//Expression handlers:
-	event_processor.addExpressionHandler(new IdentityExpressionHandler);
-	event_processor.addExpressionHandler(new AkgulStyleExpressionProcessor);
-	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
+	event_handler.addExpressionHandler(new IdentityExpressionHandler);
+	event_handler.addExpressionHandler(new AkgulStyleExpressionHandler);
+	event_handler.addExpressionHandler(new StoreAndRestoreExpressionHandler);
 
 	//Statement handler
-	event_processor.addStatementHandler(new ReturnStatementHandler);
-	event_processor.addStatementHandler(new VariableDeclarationHandler);
-	event_processor.addStatementHandler(new StraightlineStatementProcessor);
-	event_processor.addStatementHandler(new NullStatementHandler);
+	event_handler.addStatementHandler(new ReturnStatementHandler);
+	event_handler.addStatementHandler(new VariableDeclarationHandler);
+	event_handler.addStatementHandler(new StraightlineStatementHandler);
+	event_handler.addStatementHandler(new NullStatementHandler);
 
 	//Variable value extraction handlers
-	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
-	event_processor.addVariableValueRestorer(new ExtractFromUseValueRestorer);
+	event_handler.addVariableValueRestorer(new RedefineValueRestorer);
+	event_handler.addVariableValueRestorer(new ExtractFromUseValueRestorer);
 
 	//Call the reverser and get the results
 	SageBuilder::pushScopeStack(globalScope);
-	vector<FuncDeclPair> forwardReversePairs = event_processor.processEvent(functionDeclaration);
-	vector<SgVariableDeclaration*> generatedVariables = event_processor.getAllStackDeclarations();
+	vector<FuncDeclPair> forwardReversePairs = event_handler.processEvent(functionDeclaration);
+	vector<SgVariableDeclaration*> generatedVariables = event_handler.getAllStackDeclarations();
 
 	//Insert all the generated functions right after the original function
 	foreach(FuncDeclPair originalAndInstrumented, forwardReversePairs)

@@ -1,12 +1,12 @@
 #include "extractFromUseValueRestorer.h"
 #include "utilities/CPPDefinesAndNamespaces.h"
-#include "eventProcessor.h"
+#include "eventHandler.h"
 #include <rose.h>
 
 vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenaming::VarName varName, 
 		const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions)
 {
-	VariableRenaming& variableRenamingAnalysis = *getEventProcessor()->getVariableRenaming();
+	VariableRenaming& variableRenamingAnalysis = *getEventHandler()->getVariableRenaming();
 	vector<SgExpression*> results;
 
 	set<SgNode*> useSites;
@@ -65,7 +65,7 @@ SgExpression* ExtractFromUseValueRestorer::extractFromAssignOp(VariableRenaming:
 {
 	//If we're restoring x and we have the assignment a = x, we
 	//can extract x from the value of a. An assign initializer is almost exactly like an assign op
-	VariableRenaming& variableRenamingAnalysis = *getEventProcessor()->getVariableRenaming();
+	VariableRenaming& variableRenamingAnalysis = *getEventHandler()->getVariableRenaming();
 
 	VariableRenaming::VarName lhsVar;
 	SgExpression* useExpression;
@@ -102,7 +102,7 @@ SgExpression* ExtractFromUseValueRestorer::extractFromAssignOp(VariableRenaming:
 	VariableRenaming::printRenameEntry(lhsVersion);
 	printf(" on line %d\n", useSite->get_file_info()->get_line());
 
-	SgExpression* useExpressionValue = getEventProcessor()->restoreVariable(lhsVar, availableVariables, lhsVersion);
+	SgExpression* useExpressionValue = getEventHandler()->restoreVariable(lhsVar, availableVariables, lhsVersion);
 	if (useExpressionValue != NULL)
 	{
 		return restoreVariableFromExpression(varName, availableVariables, useExpression, useExpressionValue);
@@ -116,7 +116,7 @@ SgExpression* ExtractFromUseValueRestorer::extractFromIncrementOp(VariableRenami
 		const VariableVersionTable& availableVariables,	SgNode* useSite)
 {
 	ROSE_ASSERT(isSgPlusPlusOp(useSite) || isSgMinusAssignOp(useSite));
-	VariableRenaming& variableRenamingAnalysis = *getEventProcessor()->getVariableRenaming();
+	VariableRenaming& variableRenamingAnalysis = *getEventHandler()->getVariableRenaming();
 	SgUnaryOp* incOrDecrOp = isSgUnaryOp(useSite);
 
 	//For floating point values, we can't extract the previous value by undoing the increment due to rounding
@@ -133,7 +133,7 @@ SgExpression* ExtractFromUseValueRestorer::extractFromIncrementOp(VariableRenami
 	printf("Recursively restoring variable '%s' to version ", VariableRenaming::keyToString(varName).c_str());
 	VariableRenaming::printRenameEntry(versionAfterIncrement);
 
-	SgExpression* valueAfterIncrement = getEventProcessor()->restoreVariable(varName, availableVariables, versionAfterIncrement);
+	SgExpression* valueAfterIncrement = getEventHandler()->restoreVariable(varName, availableVariables, versionAfterIncrement);
 	if (valueAfterIncrement != NULL)
 	{
 		//Success! Now all we have to do is subtract 1 to recover the value we want
@@ -165,7 +165,7 @@ SgExpression* ExtractFromUseValueRestorer:: extractFromUseAssignOp(VariableRenam
 	//Let's say we have x += <exp>. If we know the new value of x and the value of <exp>, we can extract the previous
 	//value of x
 	ROSE_ASSERT(isSgMinusAssignOp(useSite) || isSgPlusAssignOp(useSite) || isSgXorAssignOp(useSite));
-	VariableRenaming& variableRenamingAnalysis = *getEventProcessor()->getVariableRenaming();
+	VariableRenaming& variableRenamingAnalysis = *getEventHandler()->getVariableRenaming();
 	SgBinaryOp* useAssignOp = isSgBinaryOp(useSite);
 
 	if ((isSgMinusAssignOp(useAssignOp) || isSgPlusAssignOp(useAssignOp))
@@ -183,7 +183,7 @@ SgExpression* ExtractFromUseValueRestorer:: extractFromUseAssignOp(VariableRenam
 	VariableRenaming::NumNodeRenameEntry versionAfterAssign =
 			variableRenamingAnalysis.getDefsAtNodeForName(useAssignOp, lhsVariable);
 
-	SgExpression* valueAfterAssign = getEventProcessor()->restoreVariable(lhsVariable, availableVariables, versionAfterAssign);
+	SgExpression* valueAfterAssign = getEventHandler()->restoreVariable(lhsVariable, availableVariables, versionAfterAssign);
 	if (valueAfterAssign == NULL)
 	{
 		return NULL;
@@ -194,7 +194,7 @@ SgExpression* ExtractFromUseValueRestorer:: extractFromUseAssignOp(VariableRenam
 		//We have a situation such as x += <exp> and we would like to restore the value of x
 
 		//Now, restore the other expression involved in the assignment
-		SgExpression* rhsValue = getEventProcessor()->restoreExpressionValue(useAssignOp->get_rhs_operand(), availableVariables);
+		SgExpression* rhsValue = getEventHandler()->restoreExpressionValue(useAssignOp->get_rhs_operand(), availableVariables);
 		if (rhsValue == NULL)
 		{
 			SageInterface::deepDelete(valueAfterAssign);
@@ -227,7 +227,7 @@ SgExpression* ExtractFromUseValueRestorer:: extractFromUseAssignOp(VariableRenam
 		VariableRenaming::NumNodeRenameEntry versionBeforeAssign =
 				variableRenamingAnalysis.getUsesAtNodeForName(useAssignOp, lhsVariable);
 
-		SgExpression* valueBeforeAssign = getEventProcessor()->restoreVariable(lhsVariable, availableVariables, versionBeforeAssign);
+		SgExpression* valueBeforeAssign = getEventHandler()->restoreVariable(lhsVariable, availableVariables, versionBeforeAssign);
 		if (valueBeforeAssign == NULL)
 		{
 			SageInterface::deepDelete(valueBeforeAssign);
@@ -261,7 +261,7 @@ SgExpression* ExtractFromUseValueRestorer:: extractFromUseAssignOp(VariableRenam
 SgExpression* ExtractFromUseValueRestorer::restoreVariableFromExpression(VariableRenaming::VarName variable,
 			const VariableVersionTable& availableVariables, SgExpression* expression, SgExpression* expressionValue)
 {
-	VariableRenaming& varRenaming = *getEventProcessor()->getVariableRenaming();
+	VariableRenaming& varRenaming = *getEventHandler()->getVariableRenaming();
 
 	if (VariableRenaming::getVarName(expression) != VariableRenaming::emptyName)
 	{
@@ -303,7 +303,7 @@ SgExpression* ExtractFromUseValueRestorer::restoreVariableFromExpression(Variabl
 
 		//Whichever side the variable is in, we need to restore the value of the other one
 		SgExpression* otherOperand = usedLeft ? binaryOp->get_rhs_operand() : binaryOp->get_lhs_operand();
-		SgExpression* otherOperandValue = getEventProcessor()->restoreExpressionValue(otherOperand, availableVariables);
+		SgExpression* otherOperandValue = getEventHandler()->restoreExpressionValue(otherOperand, availableVariables);
 		if (otherOperandValue == NULL)
 		{
 			SageInterface::deepDelete(expressionValue);
