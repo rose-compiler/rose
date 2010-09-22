@@ -60,6 +60,8 @@ typedef modify_ldt_ldt_s user_desc;
 #include <asm/ldt.h>
 #include <linux/unistd.h>
 
+enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
+
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
@@ -110,6 +112,8 @@ public:
     std::vector<std::string> vdso_paths;        /* Directories to search for vdso_name */
     rose_addr_t vdso_va;                        /* Address where vdso is mapped into specimen, or zero */
     rose_addr_t vdso_entry;                     /* Entry address for vdso, or zero */
+    unsigned core_styles;                       /* What kind of core dump(s) to make for dump_core() */
+    std::string core_base_name;                 /* Name to use for core files ("core") */
 
     /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
      * behavior here. If the value is less than the highest address mapped by the main executable, then the latter is used
@@ -136,7 +140,7 @@ public:
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
-          vdso_va(0), vdso_entry(0),
+          vdso_va(0), vdso_entry(0), core_styles(CORE_ELF), core_base_name("x-core.rose"),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false) {
 
@@ -207,7 +211,7 @@ public:
     /* Generate an ELF Core Dump on behalf of the specimen.  This is a real core dump that can be used with GDB and contains
      * the same information as if the specimen had been running natively and dumped its own core. In other words, the core
      * dump we generate here does not have references to the simulator even though it is being dumped by the simulator. */
-    void dump_core(int signo);
+    void dump_core(int signo, std::string base_name="");
 
     /* Recursively load an executable and its libraries libraries into memory, creating the MemoryMap object that describes
      * the mapping from the specimen's address space to the simulator's address space.
@@ -812,11 +816,25 @@ EmulationPolicy::current_insn()
 }
 
 void
-EmulationPolicy::dump_core(int signo)
+EmulationPolicy::dump_core(int signo, std::string base_name)
 {
+    if (base_name.empty())
+        base_name = core_base_name;
+
     fprintf(stderr, "dumping specimen core...\n");
     fprintf(stderr, "memory map at time of core dump:\n");
     map->dump(stderr, "  ");
+
+    if (core_styles & CORE_ROSE)
+        map->dump(base_name);
+    if (0==(core_styles & CORE_ELF))
+        return;
+
+    /* Get current instruction pointer. We subtract the size of the current instruction if we're in the middle of processing
+     * an instruction because it would have already been incremented by the semantics. */ 
+    uint32_t eip = readIP().known_value();
+    if (get_insn())
+        eip -= get_insn()->get_raw_bytes().size();
 
     SgAsmGenericFile *ef = new SgAsmGenericFile;
     ef->set_truncate_zeros(false);
@@ -1108,8 +1126,7 @@ EmulationPolicy::dump_core(int signo)
      * Generate the core file.
      *======================================================================================================================== */
 
-    /*FIXME: will replace with a more suitable name when working*/    
-    SgAsmExecutableFileFormat::unparseBinaryFormat("x-core.rose", ef);
+    SgAsmExecutableFileFormat::unparseBinaryFormat(base_name, ef);
     //deleteAST(ef); /*FIXME [RPM 2010-09-18]*/
 }
 
@@ -2353,7 +2370,7 @@ main(int argc, char *argv[])
     EmulationPolicy policy;
     Semantics t(policy);
     uint32_t dump_at = 0;               /* dump core the first time we hit this address, before the instruction is executed */
-    std::string dump_name = "core";
+    std::string dump_name = "dump";
 
     /* Parse command-line */
     int argno = 1;
@@ -2398,6 +2415,21 @@ main(int argc, char *argv[])
             policy.trace_insn = true;
             policy.trace_syscall = true;
             argno++;
+        } else if (!strncmp(argv[argno], "--core=", 7)) {
+            policy.core_styles = 0;
+            for (char *s=argv[argno]+7; s && *s; /*void*/) {
+                if (!strncmp(s, "elf", 3)) {
+                    s += 3;
+                    policy.core_styles |= CORE_ELF;
+                } else if (!strncmp(s, "rose", 4)) {
+                    s += 4;
+                    policy.core_styles |= CORE_ROSE;
+                } else {
+                    fprintf(stderr, "%s: unknown core dump type for %s\n", argv[0], argv[argno]);
+                }
+                while (','==*s) s++;
+            }
+            argno++;
         } else if (!strncmp(argv[argno], "--dump=", 7)) {
             char *rest;
             errno = 0;
@@ -2430,7 +2462,7 @@ main(int argc, char *argv[])
         try {
             if (dump_at!=0 && dump_at == policy.readIP().known_value()) {
                 fprintf(stderr, "Reached dump point.\n");
-                policy.dump_core(SIGABRT);
+                policy.dump_core(SIGABRT, dump_name);
                 dump_at = 0;
             }
             SgAsmx86Instruction *insn = policy.current_insn();
