@@ -1009,6 +1009,7 @@ EmulationPolicy::dump_core(int signo, std::string base_name)
     auxv_note->set_type(6);
     auxv_note->set_payload(&auxv[0], 4*auxv.size());
 
+#if 0
     /* Note CORE.PRFPREG(2)               (108 bytes) */
     /* This was just copied straight from an actual core dump because we shouldn't need it here anyway. It's the
      * user_i387_struct defined in linux source code <include/asm/user_32.h> containing 27 doublewords. */
@@ -1024,7 +1025,9 @@ EmulationPolicy::dump_core(int signo, std::string base_name)
     prfpreg_note->get_name()->set_string("CORE");
     prfpreg_note->set_type(2);
     prfpreg_note->set_payload(prfpreg, sizeof prfpreg);
+#endif
  
+#if 0
     /* Note LINUX.PRXFPREG(0x46e62b7f)    (512 bytes) */
     /* FIXME: This was just copied straight from a real core dump. It's the user32_fxsr_struct defined in the linux source
      *        code <include/asm/user_32.h>.  I don't think we need it because we're not using floating point registers. */
@@ -1066,6 +1069,7 @@ EmulationPolicy::dump_core(int signo, std::string base_name)
     prxfpreg_note->get_name()->set_string("LINUX");
     prxfpreg_note->set_type(0x46e62b7f);
     prxfpreg_note->set_payload(prxfpreg, sizeof prxfpreg);
+#endif
 
     /* Note LINUX.386_TLS(0x200)          (48 bytes)  i386 TLS slots (struct user_desc)*/
     uint8_t i386_tls[] = {
