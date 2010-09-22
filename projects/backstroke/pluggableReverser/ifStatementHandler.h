@@ -1,9 +1,9 @@
-#ifndef IFSTATEMENTPROCESSOR_H
-#define	IFSTATEMENTPROCESSOR_H
+#ifndef IFSTATEMENTHANDLER_H
+#define	IFSTATEMENTHANDLER_H
 
 #include "handlerTypes.h"
 
-class IfStatementProcessor : public StatementReversalHandler
+class IfStatementHandler : public StatementReversalHandler
 {
 	struct IfStmtConditionAttribute : public EvaluationResultAttribute
 	{
@@ -16,7 +16,7 @@ class IfStatementProcessor : public StatementReversalHandler
 	typedef boost::shared_ptr<IfStmtConditionAttribute> IfStmtConditionAttributePtr;
 
 public:
-    IfStatementProcessor() { name_ = "If Statement Processor"; }
+    IfStatementHandler() { name_ = "If Statement Processor"; }
 
     virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult&);
     virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
@@ -26,5 +26,5 @@ public:
 
 
 
-#endif	/* IFSTATEMENTPROCESSOR_H */
+#endif	/* IfStatementHandler_H */
 

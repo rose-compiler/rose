@@ -637,3 +637,38 @@ vector<SgExpression*> backstroke_util::getAllVariables(SgNode* node)
 
 	return vars;
 }
+
+bool backstroke_util::hasContinueOrBreak(SgStatement* loop_stmt)
+{
+	ROSE_ASSERT(isSgForStatement(loop_stmt) || 
+			isSgWhileStmt(loop_stmt) || 
+			isSgDoWhileStmt(loop_stmt));
+
+	vector<SgContinueStmt*> continues = querySubTree<SgContinueStmt>(loop_stmt);
+	foreach (SgContinueStmt* continue_stmt, continues)
+	{
+		if (getEnclosingLoopBody(continue_stmt) == loop_stmt)
+			return true;
+	}
+
+	vector<SgBreakStmt*> breaks = querySubTree<SgBreakStmt>(loop_stmt);
+	foreach (SgBreakStmt* break_stmt, breaks)
+	{
+		SgNode* node = break_stmt;
+		while (node = node->get_parent())
+		{
+			if (isSgForStatement(node) ||
+				isSgWhileStmt(node) ||
+				isSgDoWhileStmt(node) ||
+				isSgSwitchStatement(node))
+			{
+				if (node == loop_stmt)
+					return true;
+				else
+					break;
+			}
+		}
+	}
+
+	return false;
+}

@@ -9,7 +9,7 @@
 class ExpressionReversalHandler;
 class StatementReversalHandler;
 class ReversalHandlerBase;
-class EventProcessor;
+class EventHandler;
 
 //TODO: Just use std::pair here
 struct ExpressionReversal
@@ -46,14 +46,14 @@ class EvaluationResult
 	// Cost model
 	SimpleCostModel cost_;
 
-	/** The processor which produced this evaluation result. This is used during the
+	/** The handler which produced this evaluation result. This is used during the
 	* generation phrase to generate the actual expression. */
 	ReversalHandlerBase* handler_used_;
 
 	//!The expression or statement to which this evaluation result pertains
 	SgNode* input_;
 
-	/** Additional attribute that the processor may choose to attach to the evaluation result. */
+	/** Additional attribute that the handler may choose to attach to the evaluation result. */
 	EvaluationResultAttributePtr attribute_;
 
 	/** Evaluation choices made in order to get this result. For example, for a basic block, what
@@ -119,7 +119,7 @@ inline bool operator<(const EvaluationResult& r1, const EvaluationResult& r2)
 
 class ReversalHandlerBase
 {
-	EventProcessor* event_processor_;
+	EventHandler* event_handler_;
 
 protected:
 	std::string name_;
@@ -150,18 +150,18 @@ protected:
 
 public:
 
-	ReversalHandlerBase() : event_processor_(NULL) { }
+	ReversalHandlerBase() : event_handler_(NULL) { }
 
-	ReversalHandlerBase(const std::string& name) : event_processor_(NULL), name_(name) { }
+	ReversalHandlerBase(const std::string& name) : event_handler_(NULL), name_(name) { }
 
 	std::string getName() const
 	{
 		return name_;
 	}
 
-	void setEventProcessor(EventProcessor* processor)
+	void setEventHandler(EventHandler* handler)
 	{
-		event_processor_ = processor;
+		event_handler_ = handler;
 	}
 
 	virtual ~ReversalHandlerBase()
@@ -204,21 +204,21 @@ public:
 	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 			VariableRenaming::NumNodeRenameEntry definitions) = 0;
 
-	VariableValueRestorer() : eventProcessor(NULL) { }
+	VariableValueRestorer() : eventHandler(NULL) { }
 
-	void setEventProcessor(EventProcessor* eventProcessor)
+	void setEventHandler(EventHandler* eventHandler)
 	{
-		this->eventProcessor = eventProcessor;
+		this->eventHandler = eventHandler;
 	}
 
-	EventProcessor* getEventProcessor()
+	EventHandler* getEventHandler()
 	{
-		return eventProcessor;
+		return eventHandler;
 	}
 
 private:
 
-	EventProcessor* eventProcessor;
+	EventHandler* eventHandler;
 };
 
 

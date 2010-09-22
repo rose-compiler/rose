@@ -113,9 +113,8 @@ void event4(model* m)
 
 void event5(model* m)
 {
-    m->i = 0;
     while(1)
     {
-        m->i++;
+        ++m->i;
     }
 }

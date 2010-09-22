@@ -361,7 +361,7 @@ VariableVersionTable VariableVersionTable::getVarTablesForLoopBody(SgStatement* 
 			if (enclosing_body == loop_body)
 			{
 				VariableRenaming::NumNodeRenameEntry num_node_entry =
-						var_renaming_->getReachingDefsAtNodeForName(loop_body->get_parent(), var_name);
+						var_renaming_->getReachingDefsAtNodeForName(loop_body, var_name);
 				foreach (const VariableRenaming::NumNodeRenameEntry::value_type& num_node, num_node_entry)
 				{
 					cout << "$^$^%$^$" << num_node.first << endl;

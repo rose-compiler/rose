@@ -1,4 +1,4 @@
-#include "ifStatementProcessor.h"
+#include "ifStatementHandler.h"
 #include "pluggableReverser/variableVersionTable.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
@@ -12,7 +12,7 @@ using namespace SageBuilder;
 
 
 
-StatementReversal IfStatementProcessor::generateReverseAST(SgStatement* stmt, const EvaluationResult& evalResult)
+StatementReversal IfStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evalResult)
 {
 	ROSE_ASSERT(evalResult.getChildResults().size() == 3);
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
@@ -57,7 +57,7 @@ StatementReversal IfStatementProcessor::generateReverseAST(SgStatement* stmt, co
     return StatementReversal(fwd_stmt, rvs_stmt);
 }
 
-vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+vector<EvaluationResult> IfStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     vector<EvaluationResult> results;
     SgIfStmt* if_stmt = isSgIfStmt(stmt);

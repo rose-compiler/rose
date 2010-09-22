@@ -1,8 +1,8 @@
-#ifndef REVERSE_COMPUTATION_EXP_PROCESSOR_H
-#define REVERSE_COMPUTATION_EXP_PROCESSOR_H
+#ifndef REVERSE_COMPUTATION_EXP_HANDLER_H
+#define REVERSE_COMPUTATION_EXP_HANDLER_H
 
 #include <rose.h>
-#include "eventProcessor.h"
+#include "eventHandler.h"
 
 //! This handler generates a NULL reverse expression.
 class NullExpressionHandler : public ExpressionReversalHandler

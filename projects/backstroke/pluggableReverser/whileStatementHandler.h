@@ -3,10 +3,10 @@
 
 #include "handlerTypes.h"
 
-class WhileStatementProcessor : public StatementReversalHandler
+class WhileStatementHandler : public StatementReversalHandler
 {
 public:
-    WhileStatementProcessor() { name_ = "While Statement Processor"; }
+    WhileStatementHandler() { name_ = "While Statement Processor"; }
 
 	SgStatement* assembleLoopCounter(SgStatement* loop_stmt);
 	SgStatement* buildForLoop(SgStatement* loop_body);

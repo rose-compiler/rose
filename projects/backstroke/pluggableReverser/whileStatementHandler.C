@@ -1,4 +1,4 @@
-#include "whileStatementProcessor.h"
+#include "whileStatementHandler.h"
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <utilities/Utilities.h>
@@ -9,7 +9,7 @@ using namespace SageBuilder;
 using namespace SageInterface;
 #define foreach BOOST_FOREACH
 
-SgStatement* WhileStatementProcessor::assembleLoopCounter(SgStatement* loop_stmt)
+SgStatement* WhileStatementHandler::assembleLoopCounter(SgStatement* loop_stmt)
 {
 	static int counter = 0;
 	string counter_name = "loop_counter_" + lexical_cast<string > (counter++);
@@ -66,7 +66,7 @@ SgStatement* WhileStatementProcessor::assembleLoopCounter(SgStatement* loop_stmt
 	return buildBasicBlock(counter_decl, loop_stmt, store_counter);
 }
 
-SgStatement* WhileStatementProcessor::buildForLoop(SgStatement* loop_body)
+SgStatement* WhileStatementHandler::buildForLoop(SgStatement* loop_body)
 {
 	// build a simple for loop like: for (int i = N; i > 0; --i)
 
@@ -84,7 +84,7 @@ SgStatement* WhileStatementProcessor::buildForLoop(SgStatement* loop_body)
 	return for_stmt;
 }
 
-StatementReversal WhileStatementProcessor::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
+StatementReversal WhileStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
 {
 	ROSE_ASSERT(eval_result.getChildResults().size() == 1);
     SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
@@ -101,7 +101,7 @@ StatementReversal WhileStatementProcessor::generateReverseAST(SgStatement* stmt,
     return StatementReversal(fwd_stmt, rvs_stmt);
 }
 
-vector<EvaluationResult> WhileStatementProcessor::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+vector<EvaluationResult> WhileStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	// Suppose the condition of this while statement does not contain modifying expressions.
 	
@@ -109,12 +109,16 @@ vector<EvaluationResult> WhileStatementProcessor::evaluate(SgStatement* stmt, co
 
     vector<EvaluationResult> results;
     SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
-    if (while_stmt == NULL)
+	
+	// If this while statement has any break or continue inside, we cannot handle it.
+    if (while_stmt == NULL || backstroke_util::hasContinueOrBreak(while_stmt))
         return results;
 
 	SgStatement* body = while_stmt->get_body();
+
 	cout << "New table:\n";
 	var_table.getVarTablesForLoopBody(body).print();
+
 	vector<EvaluationResult> loop_body_results = evaluateStatement(body, var_table.getVarTablesForLoopBody(body));
 	foreach (EvaluationResult& res, loop_body_results)
 	{
