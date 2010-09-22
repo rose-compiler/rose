@@ -8,7 +8,7 @@ template< class T > void foo( T* t ) {
 
 
 int main() {
-	int NULL=0;
+
     foo( (int*) NULL );
 
     return 0;

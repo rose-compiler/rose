@@ -1,6 +1,5 @@
 
 class Test {
-public:
   Test() {
     p = new int;
   }

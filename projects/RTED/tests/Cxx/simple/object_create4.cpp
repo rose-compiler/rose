@@ -1,5 +1,4 @@
 #include "object_create4.h"
-#define NULL 0
 
 Test3::Test3() {}
 
