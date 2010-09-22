@@ -949,7 +949,7 @@ EmulationPolicy::dump_core(int signo, std::string base_name)
     prstatus.fs = readSegreg(x86_segreg_fs).known_value();
     prstatus.gs = readSegreg(x86_segreg_gs).known_value();
     prstatus.orig_ax = readGPR(x86_gpr_ax).known_value();
-    prstatus.ip = readIP().known_value();
+    prstatus.ip = eip;
     prstatus.cs = readSegreg(x86_segreg_cs).known_value();
     prstatus.flags = get_eflags();
     prstatus.sp = readGPR(x86_gpr_sp).known_value();
