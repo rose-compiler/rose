@@ -140,6 +140,7 @@ SgAsmElfSegmentTableEntry::to_string(SegmentType kind)
         case PT_NOTE:    s = "PT_NOTE";    break; // 4
         case PT_SHLIB:   s = "PT_SHLIB";   break; // 5
         case PT_PHDR:    s = "PT_PHDR";    break; // 6
+        case PT_TLS:     s = "PT_TLS";     break; // 7
 
         // DQ (10/31/2008): Added mising enum values to prevent run-time warnings
         /* OS- and Processor-specific ranges */
