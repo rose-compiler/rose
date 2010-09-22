@@ -464,7 +464,8 @@ public:
         return retval;
     }
 
-    /* Same as superclass but do not use anonymous mapping for high alignment area */
+#if 0
+    /* Same as superclass but round file size up to a page */
     virtual MappingContribution align_values(SgAsmGenericSection *section, MemoryMap *map,
                                              rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                                              rose_addr_t *va_p, rose_addr_t *mem_size_p,
@@ -474,9 +475,10 @@ public:
         MappingContribution retval = BinaryLoaderElf::align_values(section, map, malign_lo_p, malign_hi_p, va_p,
                                                                    mem_size_p, offset_p, file_size_p, va_offset_p,
                                                                    anon_lo_p, anon_hi_p, resolve_p);
-        //*anon_hi_p = false;
+        *file_size_p = ALIGN_UP(*file_size_p, PAGE_SIZE);
         return retval;
     }
+#endif
 };
 
 SgAsmGenericHeader*
@@ -1098,6 +1100,7 @@ EmulationPolicy::dump_core(int signo, std::string base_name)
             set_mapped_xperm(0!=(perms & MemoryMap::MM_PROT_EXEC));
         }
         virtual void unparse(std::ostream &f) const {
+            if (0==get_size()) return;
             uint8_t buf[8192];
             rose_addr_t cur_va = get_mapped_preferred_va();     /* current virtual address */
             rose_addr_t nremain = get_mapped_size();            /* bytes remaining to be written to the file */
