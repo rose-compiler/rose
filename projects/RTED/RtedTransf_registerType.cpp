@@ -75,7 +75,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 					SgInitializedName* initName = *itvar;
 					string name = initName->get_mangled_name();
 					string type = initName->get_type()->class_name();
-//					VariantT variant = initName->get_type()->variantT();
+					VariantT variant = initName->get_type()->variantT();
 					//cerr << " *********** VarientT = " << getSgVariant(variant) << endl;
 
 					RtedClassElement* el;
@@ -95,21 +95,12 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 		}
 	}
 
-	ROSE_ASSERT(cdef);
-	ROSE_ASSERT(cdef->get_declaration()->get_type());
-	string classmanglnametype=cdef->get_declaration()->get_type()->class_name();
-//	string classmanglname=cdef->get_mangled_name().str(); //problem line!!! need to debug more. fails under 32bit
-	SgName classmname = cdef->get_qualified_name();
-	string classmanglname=classmname.str();
-	int elementssize = elements.size();
-	SgExpression* sizeofop = buildSizeOfOp( cdef->get_declaration()->get_type() );
-	std::vector<RtedClassElement*> _elements = elements;
 	RtedClassDefinition* cd = new RtedClassDefinition(cdef,
-			classmanglname,
-			classmanglnametype,
-			elementssize,
-			sizeofop,
-			_elements);
+			cdef->get_mangled_name().str(),
+			cdef->get_declaration()->get_type()->class_name(),
+			elements.size(),
+			buildSizeOfOp( cdef->get_declaration()->get_type() ),
+			elements);
 	std::map<SgClassDefinition*,RtedClassDefinition*>::const_iterator it =
 	class_definitions.find(cdef);
 	if (it==class_definitions.end()) {

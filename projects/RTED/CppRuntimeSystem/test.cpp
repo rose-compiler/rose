@@ -28,7 +28,7 @@ ostream & out = cout;
                 << " : " <<  __LINE__                              \
                 << endl;                                           \
             exit(1);                                               \
-        }                                                          \
+        }                                                          \       
         errorFound=true;                                           \
     }                                                              \
     if(!errorFound)                                                \
@@ -151,7 +151,6 @@ ostream & out = cout;
 void testSuccessfulMallocFree()
 {
     TEST_INIT("Testing Successful Malloc Free");
-    errorFound=false; /*tps unused variable - removing warning */
 
     rs->createMemory(42,10);
 
@@ -460,7 +459,6 @@ void testFileInvalidAccess()
 void testScopeFreesStack()
 {
     TEST_INIT("Testing that exiting a scope frees stack variables")
-    errorFound=false; /*tps unused variable - removing warning */
 
 
     rs->beginScope("main");
@@ -481,7 +479,6 @@ void testScopeFreesStack()
 void testImplicitScope()
 {
     TEST_INIT("Testing that an implicit scope exists for globals/main")
-    errorFound=false; /*tps unused variable - removing warning */
 
     rs->createVariable(
         (addr_type) 4,
@@ -526,10 +523,10 @@ void testImplicitScope()
         rs->registerPointerChange("p1_to_10",NULL);
         rs->registerPointerChange("p1_to_20",NULL);
         */
-        try{ rs->registerPointerChange("mangled_p1_to_10",0); }
+        try{ rs->registerPointerChange("mangled_p1_to_10",NULL); }
         TEST_CATCH(RuntimeViolation::MEM_WITHOUT_POINTER)
 
-        try{ rs->registerPointerChange("mangled_p1_to_18",0); }
+        try{ rs->registerPointerChange("mangled_p1_to_18",NULL); }
         TEST_CATCH(RuntimeViolation::MEM_WITHOUT_POINTER)
 
     rs->endScope();
@@ -674,7 +671,6 @@ void testInvalidPointerAssign()
 void testPointerTracking()
 {
     TEST_INIT("Testing Pointer tracking")
-    errorFound=false; /*tps unused variable - removing warning */
 
     TypeSystem * ts = rs->getTypeSystem();
 
@@ -787,7 +783,6 @@ void testArrayAccess()
 void testDoubleArrayHeapAccess()
 {
     TEST_INIT("Testing Heap Double Array (e.g. int**)")
-    errorFound=false; /*tps unused variable - removing warning */
     TypeSystem * ts = rs -> getTypeSystem();
 
     RsType* int_ptr = ts -> getPointerType( "SgTypeInt", 1 );
@@ -1041,7 +1036,7 @@ void test_meminit_nullterm_included()
 {
     TEST_INIT(  "Testing that strcpy et. al set the full destination "
                 "initialized, including the null terminator");
-    errorFound=false; /*tps unused variable - removing warning */
+
     size_t n = 9; // sizeof("a string") + 1 for \0
     char s1[ 9 ];
     char s2[ 9 ] = "a string";
@@ -1222,7 +1217,7 @@ void testTypeSystemMerge()
 
 void testPartialTypeSystemArrayAccess() {
     TEST_INIT("Testing types: array access of type with subtype overlap")
-    errorFound=false; /*tps unused variable - removing warning */
+
     MemoryManager *mm = rs -> getMemManager();
     TypeSystem *ts = rs -> getTypeSystem();
 
@@ -1237,7 +1232,7 @@ void testPartialTypeSystemArrayAccess() {
 
     addr_type Addr = 0x42;
     size_t el2_offset = sizeof( Typ );
-  //  size_t el2_a_offset = el2_offset + offsetof( Typ, a );
+    size_t el2_a_offset = el2_offset + offsetof( Typ, a );
     size_t el2_b_offset = el2_offset + offsetof( Typ, b );
 
     rs -> createMemory( Addr, 2 * sizeof( Typ ) ); 
@@ -1265,7 +1260,7 @@ void testPartialTypeSystemArrayAccess() {
 
 void testTypeSystemSubtypes() {
     TEST_INIT("Testing types: createObject should handle subtypes")
-    errorFound=false; /*tps unused variable - removing warning */
+
     MemoryManager* mm = rs -> getMemManager();
     TypeSystem* ts = rs -> getTypeSystem();
 
@@ -1307,7 +1302,7 @@ void testTypeSystemSubtypes() {
 
 void testTypeSystemNested() {
     TEST_INIT("Testing types: createObject should ignore nested types")
-    errorFound=false; /*tps unused variable - removing warning */
+
     MemoryManager* mm = rs -> getMemManager();
     TypeSystem* ts = rs -> getTypeSystem();
 
@@ -1345,7 +1340,7 @@ void testTypeSystemNested() {
 
 void testTypeConsistencyChecking() {
     TEST_INIT("Testing type consistency checking")
-    errorFound=false; /*tps unused variable - removing warning */
+
     TypeSystem *ts = rs -> getTypeSystem();
 
     // register user types

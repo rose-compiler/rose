@@ -372,7 +372,7 @@ TRANSFORMING_FILES +=  -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
 TRANSFORMING_FILES += if [ $$? -ne 0 ]; then exit 1; fi;
 
 TRANSFORMING_FILES += rm $(patsubst %_rose$(strip $(1)), %.bin, $@);
-TRANSFORMING_FILES += echo " done. ";
+TRANSFORMING_FILES += echo " done.";
 TRANSFORMING_FILES += echo -n "    running transformation ... $(patsubst %_rose$(strip $(1)), %.bin, $@)";
 
 TRANSFORMING_FILES += ./runtimeCheck 2 $(filter rted_source/%$(strip $(1)), $^) \

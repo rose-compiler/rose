@@ -5,15 +5,9 @@
 
 #include <string>
 
-#ifndef  _WIN64
-#define unsigned_int unsigned int
-#define unsigned_long unsigned long
-#else
-#define unsigned_int unsigned long
-#define unsigned_long unsigned long long
-#endif
 
-typedef unsigned_long addr_type;
+
+typedef unsigned long addr_type;
 
 
 

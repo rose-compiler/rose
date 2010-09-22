@@ -192,7 +192,7 @@ void PointerManager::deletePointerInRegion( addr_type from, addr_type to, bool c
     for(; it != end; ++it)
         toDelete.push_back( *it );
 
-    for(unsigned int i=0; i<toDelete.size(); i++ )
+    for(int i=0; i<toDelete.size(); i++ )
     {
         bool check_this_pointer = 
             checks && (
@@ -258,11 +258,8 @@ void PointerManager::registerPointerChange( addr_type src, addr_type target, boo
                 // be treated as invalid
                 pi -> setTargetAddressForce( 0 );
                 targetToPointerMap.insert(TargetToPointerMap::value_type(0,pi));
-                if( !( rs -> testingMode )) {
-                    int* position= (int*) (pi -> getSourceAddress());
-                    *position = 0; /*tps changed this to avoid warning */
-//                    *((int*) (pi -> getSourceAddress())) = NULL;
-                }
+                if( !( rs -> testingMode ))
+                    *((int*) (pi -> getSourceAddress())) = NULL;
             } else {
                 // repeat check but throw invalid ptr assign
                 mm -> checkIfSameChunk(
@@ -403,6 +400,7 @@ bool PointerManager::removeFromRevMap(PointerInfo * pi)
 {
     typedef TargetToPointerMap::iterator MapIter;
     pair<MapIter,MapIter> range = targetToPointerMap.equal_range(pi->getTargetAddress());
+    bool found=false;
     for(MapIter i = range.first; i !=  range.second; ++i)
     {
         if( i->second == pi)
