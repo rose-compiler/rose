@@ -201,11 +201,48 @@ public:
                     segregToString(sr), readSegreg(sr).known_value(), segreg_shadow[sr].base, segreg_shadow[sr].limit,
                     segreg_shadow[sr].present?"yes":"no");
         }
-        fprintf(f, "    flags: %s %s %s %s %s %s %s\n", 
-                readFlag(x86_flag_of).known_value()?"ov":"nv", readFlag(x86_flag_df).known_value()?"dn":"up",
-                readFlag(x86_flag_sf).known_value()?"ng":"pl", readFlag(x86_flag_zf).known_value()?"zr":"nz",
-                readFlag(x86_flag_af).known_value()?"ac":"na", readFlag(x86_flag_pf).known_value()?"pe":"po", 
-                readFlag(x86_flag_cf).known_value()?"cy":"nc");
+
+        uint32_t eflags = get_eflags();
+        fprintf(f, "    flags: 0x%08"PRIx32":", eflags);
+        static const char *flag_name[] = {"cf",  "#1",  "pf",   "#3",    "af",    "#5",  "zf",  "sf",
+                                          "tf",  "if",  "df",   "of", "iopl0", "iopl1",  "nt", "#15",
+                                          "rf",  "vm",  "ac",  "vif",   "vip",    "id", "#22", "#23",
+                                          "#24", "#25", "#26", "#27",   "#28",   "#29", "#30", "#31"};
+        for (uint32_t i=0; i<32; i++) {
+            if (eflags & (1u<<i))
+                fprintf(f, " %s", flag_name[i]);
+        }
+        fprintf(f, "\n");
+    }
+
+    uint32_t get_eflags() const {
+        uint32_t eflags = 0;
+#define ADD_PRSTATUS_FLAG(NAME, BITPOS) \
+            eflags |= readFlag(NAME).is_known() ? readFlag(NAME).known_value() << (BITPOS) : 0
+        ADD_PRSTATUS_FLAG(x86_flag_cf, 0);
+        ADD_PRSTATUS_FLAG(x86_flag_1, 1);
+        ADD_PRSTATUS_FLAG(x86_flag_pf, 2);
+        ADD_PRSTATUS_FLAG(x86_flag_3, 3);
+        ADD_PRSTATUS_FLAG(x86_flag_af, 4);
+        ADD_PRSTATUS_FLAG(x86_flag_5, 5);
+        ADD_PRSTATUS_FLAG(x86_flag_zf, 6);
+        ADD_PRSTATUS_FLAG(x86_flag_sf, 7);
+        ADD_PRSTATUS_FLAG(x86_flag_tf, 8);
+        ADD_PRSTATUS_FLAG(x86_flag_if, 9);
+        ADD_PRSTATUS_FLAG(x86_flag_df, 10);
+        ADD_PRSTATUS_FLAG(x86_flag_of, 11);
+        ADD_PRSTATUS_FLAG(x86_flag_iopl0, 12);
+        ADD_PRSTATUS_FLAG(x86_flag_iopl1, 13);
+        ADD_PRSTATUS_FLAG(x86_flag_nt, 14);
+        ADD_PRSTATUS_FLAG(x86_flag_15, 15);
+        ADD_PRSTATUS_FLAG(x86_flag_rf, 16);
+        ADD_PRSTATUS_FLAG(x86_flag_vm, 17);
+        ADD_PRSTATUS_FLAG(x86_flag_ac, 18);
+        ADD_PRSTATUS_FLAG(x86_flag_vif, 19);
+        ADD_PRSTATUS_FLAG(x86_flag_vip, 20);
+        ADD_PRSTATUS_FLAG(x86_flag_id, 21);
+#undef ADD_PRSTATUS_FLAG
+        return eflags;
     }
 
     /* Generate an ELF Core Dump on behalf of the specimen.  This is a real core dump that can be used with GDB and contains
@@ -914,32 +951,7 @@ EmulationPolicy::dump_core(int signo, std::string base_name)
     prstatus.orig_ax = readGPR(x86_gpr_ax).known_value();
     prstatus.ip = readIP().known_value();
     prstatus.cs = readSegreg(x86_segreg_cs).known_value();
-    prstatus.flags = 0;
-#define ADD_PRSTATUS_FLAG(NAME, BITPOS) \
-    prstatus.flags |= readFlag(NAME).is_known() ? readFlag(NAME).known_value() << (BITPOS) : 0
-    ADD_PRSTATUS_FLAG(x86_flag_cf, 0);
-    ADD_PRSTATUS_FLAG(x86_flag_1, 1);
-    ADD_PRSTATUS_FLAG(x86_flag_pf, 2);
-    ADD_PRSTATUS_FLAG(x86_flag_3, 3);
-    ADD_PRSTATUS_FLAG(x86_flag_af, 4);
-    ADD_PRSTATUS_FLAG(x86_flag_5, 5);
-    ADD_PRSTATUS_FLAG(x86_flag_zf, 6);
-    ADD_PRSTATUS_FLAG(x86_flag_sf, 7);
-    ADD_PRSTATUS_FLAG(x86_flag_tf, 8);
-    ADD_PRSTATUS_FLAG(x86_flag_if, 9);
-    ADD_PRSTATUS_FLAG(x86_flag_df, 10);
-    ADD_PRSTATUS_FLAG(x86_flag_of, 11);
-    ADD_PRSTATUS_FLAG(x86_flag_iopl0, 12);
-    ADD_PRSTATUS_FLAG(x86_flag_iopl1, 13);
-    ADD_PRSTATUS_FLAG(x86_flag_nt, 14);
-    ADD_PRSTATUS_FLAG(x86_flag_15, 15);
-    ADD_PRSTATUS_FLAG(x86_flag_rf, 16);
-    ADD_PRSTATUS_FLAG(x86_flag_vm, 17);
-    ADD_PRSTATUS_FLAG(x86_flag_ac, 18);
-    ADD_PRSTATUS_FLAG(x86_flag_vif, 19);
-    ADD_PRSTATUS_FLAG(x86_flag_vip, 20);
-    ADD_PRSTATUS_FLAG(x86_flag_id, 21);
-#undef ADD_PRSTATUS_FLAG
+    prstatus.flags = get_eflags();
     prstatus.sp = readGPR(x86_gpr_sp).known_value();
     prstatus.ss = readSegreg(x86_segreg_ss).known_value();
     prstatus.fpvalid = 0;     /*ROSE doesn't support floating point yet*/
@@ -2454,6 +2466,10 @@ main(int argc, char *argv[])
     if (policy.debug && policy.trace_mmap) {
         fprintf(policy.debug, "memory map after program load:\n");
         policy.map->dump(policy.debug, "  ");
+    }
+    if (policy.debug && policy.trace_state) {
+        fprintf(policy.debug, "Initial state:\n");
+        policy.dump_registers(policy.debug);
     }
 
     /* Execute the program */
