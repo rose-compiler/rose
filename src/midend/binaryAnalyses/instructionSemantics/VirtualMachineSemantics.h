@@ -285,6 +285,11 @@ public:
         return ninsns;
     }
 
+    /** Returns current instruction. Returns the null pointer if no instruction is being processed. */
+    SgAsmInstruction *get_insn() const {
+        return cur_insn;
+    }
+
     /** Returns the current state. */
     const State& get_state() const { return cur_state; }
     State& get_state() { return cur_state; }

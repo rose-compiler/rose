@@ -6,6 +6,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = tests
 
+EXTRA_DIST = README
+
 include_HEADERS = mymemory.h simulate.h x86print.h
 
 noinst_PROGRAMS = sandbox x86sim test1

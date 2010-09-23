@@ -110,38 +110,15 @@ MemoryMap::MapElement::consistent(const MapElement &other) const
         return false;
     } else if (get_mapperms()!=other.get_mapperms()) {
         return false;
-    } else if (is_anonymous() && other.is_anonymous()) {
+    } else if (is_anonymous() && other.is_anonymous() && anonymous==other.anonymous) {
         return true;
     } else if (is_anonymous() || other.is_anonymous()) {
+        return false;
+    } else if (get_base()!=other.get_base()) { /*neither is anonymous*/
         return false;
     } else {
         return va - other.va == offset - other.offset;
     }
-}
-
-void
-MemoryMap::MapElement::merge_anonymous(const MapElement &other, size_t oldsize)
-{
-    /* This element must have already been merged with the other, except for the base ptr */
-    ROSE_ASSERT(is_anonymous());
-    ROSE_ASSERT(other.is_anonymous());
-    ROSE_ASSERT(va<=other.va);
-    ROSE_ASSERT(offset<=other.offset);
-    ROSE_ASSERT(size>=other.size);
-
-    if (NULL==other.base)
-        return;
-    
-    uint8_t *newbase = new uint8_t[offset+size];
-    memset(newbase, 0, offset+size);
-    if (base)
-        memcpy(newbase+offset, (uint8_t*)base+offset, oldsize);
-    memcpy(newbase+offset+(other.va-va), (uint8_t*)other.base+other.offset, other.size);
-
-    if (1==*anonymous)
-        delete[] (uint8_t*)base;
-    base = newbase;
-    *anonymous = 1;
 }
 
 std::string
@@ -235,7 +212,6 @@ MemoryMap::MapElement::merge_names(const MapElement &other)
 bool
 MemoryMap::MapElement::merge(const MapElement &other)
 {
-    size_t oldsize = size;
     if (va+size < other.va || va > other.va+other.size) {
         /* Other element is left or right of this one and not contiguous with it. */
         return false;
@@ -283,12 +259,6 @@ MemoryMap::MapElement::merge(const MapElement &other)
         size = (other.va + other.size) - va;
         merge_names(other);
     }
-
-    /* Adjust backing store for anonymous elements. This is necessary because two anonymous elements are consistent if they
-     * are adjacent or overlap, even if their base addresses are different or their offsets are inconsistent. By merging
-     * anonymous elements we can reduce the number of memory allocations that are necessary. */
-    if (is_anonymous())
-        merge_anonymous(other, oldsize);
 
     return true;
 }
@@ -489,7 +459,10 @@ MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned re
         size_t m_offset = start_va - m->get_va();
         ROSE_ASSERT(m_offset < m->get_size());
         size_t n = std::min(desired-ncopied, m->get_size()-m_offset);
-        if (m->is_anonymous() && NULL==m->get_base()) {
+
+        /* If there have been no writes to an anonymous element and no base has been allocated, then just fill
+         * the return value with zeros */
+        if (m->is_anonymous() && NULL==m->get_base(false)) {
             memset((uint8_t*)dst_buf+ncopied, 0, n);
         } else {
             memcpy((uint8_t*)dst_buf+ncopied, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
@@ -513,12 +486,6 @@ MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes, unsig
         size_t m_offset = start_va - m->get_va();
         ROSE_ASSERT(m_offset < m->get_size());
         size_t n = std::min(nbytes-ncopied, m->get_size()-m_offset);
-        if (m->is_anonymous() && NULL==m->get_base()) {
-            ROSE_ASSERT(*m->anonymous==0);
-            *(m->anonymous) = 1;
-            m->base = new uint8_t[m->get_size()];
-            memset(m->base, 0, m->get_size());
-        }
         memcpy((uint8_t*)m->get_base()+m->get_offset()+m_offset, (uint8_t*)src_buf+ncopied, n);
         ncopied += n;
     }
@@ -647,7 +614,6 @@ MemoryMap::dump(FILE *f, const char *prefix) const
     for (size_t i=0; i<elements.size(); i++) {
         const MapElement &me = elements[i];
         std::string basename;
-        std::map<void*,std::string>::iterator found = bases.find(me.get_base());
 
         /* Convert the base address to a unique name like "aaa", "aab", "aac", etc. This makes it easier to compare outputs
          * from different runs since the base addresses are likely to be different between runs but the names aren't. */   
@@ -655,18 +621,20 @@ MemoryMap::dump(FILE *f, const char *prefix) const
             basename = "anonymous";
         } else if (NULL==me.get_base()) {
             basename = "base null";
-        } else if (found==bases.end()) {
-            size_t j = bases.size();
-            ROSE_ASSERT(j<26*26*26);
-            basename = "base ";
-            basename += 'a'+(j/(26*26))%26;
-            basename += 'a'+(j/26)%26;
-            basename += 'a'+(j%26);
-            bases.insert(std::make_pair(me.get_base(), basename));
         } else {
-            basename = found->second;
+            std::map<void*,std::string>::iterator found = bases.find(me.get_base());
+            if (found==bases.end()) {
+                size_t j = bases.size();
+                ROSE_ASSERT(j<26*26*26);
+                basename = "base ";
+                basename += 'a'+(j/(26*26))%26;
+                basename += 'a'+(j/26)%26;
+                basename += 'a'+(j%26);
+                bases.insert(std::make_pair(me.get_base(), basename));
+            } else {
+                basename = found->second;
+            }
         }
-
 
         fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c at %-9s + 0x%08"PRIx64,
                 prefix, me.get_va(), me.get_size(), me.get_va()+me.get_size(),
@@ -704,7 +672,7 @@ MemoryMap::dump(const std::string &basename) const
         int fd = open((basename+ext).c_str(), O_CREAT|O_TRUNC|O_RDWR, 0666);
 #endif
         ROSE_ASSERT(fd>0);
-        if (!me.get_base()) {
+        if (me.is_anonymous() && NULL==me.get_base(false)) {
             /* anonymous and no memory allocated. Zero-fill the file */
             ROSE_ASSERT(me.get_size()>0);
 #ifdef _MSC_VER
