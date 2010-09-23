@@ -37,14 +37,23 @@ $(addprefix check-, $(1)): $(1)
 	../x86sim $(1)
 endef
 
+TST_FILES_LINKING= $(srcdir)/parse_opts.c \
+                   $(srcdir)/tst_res.c \
+                   $(srcdir)/tst_sig.c \
+                   $(srcdir)/tst_tmpdir.c \
+                   $(srcdir)/rmobj.c \
+                   $(srcdir)/simple_test_looping.c \
+                   $(srcdir)/audit_parse_verify.c \
+                   $(srcdir)/audit_parse_verify_utils.c \
+                   $(srcdir)/audit_utils.c -lselinux
 
 $(foreach file, $(SYSCALL_FILES_SA), $(eval $(call compile, $(file))))
 
 $(foreach file, $(SYSCALL_FILES_RT), $(eval $(call compile, $(file), -lrt  ) ))
 
-$(foreach file, $(SYSCALL_FILES_TST), $(eval $(call compile, $(file), $(srcdir)/parse_opts.c $(srcdir)/tst_res.c $(srcdir)/tst_sig.c $(srcdir)/tst_tmpdir.c $(srcdir)/rmobj.c $(srcdir)/simple_test_looping.c )))
+$(foreach file, $(SYSCALL_FILES_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING) )))
 
-$(foreach file, $(SYSCALL_FILES_FAIL_TST), $(eval $(call compile, $(file), $(srcdir)/parse_opts.c $(srcdir)/tst_res.c $(srcdir)/tst_sig.c $(srcdir)/tst_tmpdir.c $(srcdir)/rmobj.c $(srcdir)/simple_test_looping.c )))
+$(foreach file, $(SYSCALL_FILES_FAIL_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING) )))
 
 # TESTING CODE BELOW
 
