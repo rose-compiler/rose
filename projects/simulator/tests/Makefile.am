@@ -17,8 +17,11 @@ SYSCALL_FILES_TST = $(wildcard $(SYSCALLDIR)/syscall_tst*c)
 
 SYSCALL_FILES_FAIL_TST = $(wildcard $(SYSCALLDIR)/syscall_fail_tst*c) 
 
+#Syscalls that can be compiled in a standalone fashion
+SYSCALL_FILES_FAIL_SA =  $(wildcard $(SYSCALLDIR)syscall_fail_sa*c)
+
 SYSCALL_FILES_CHK = $(SYSCALL_FILES_SA)  $(SYSCALL_FILES_TST)
-SYSCALL_FILES_FAIL_CHK = $(SYSCALL_FILES_FAIL_TST)
+SYSCALL_FILES_FAIL_CHK =  $(wildcard $(SYSCALLDIR)/syscall_fail_*c)  
 
 # Do we need this?
 ##noinst_PROGRAMS = $(notdir $(SYSCALL_FILES:%.c:%))
@@ -54,6 +57,8 @@ $(foreach file, $(SYSCALL_FILES_RT), $(eval $(call compile, $(file), -lrt  ) ))
 $(foreach file, $(SYSCALL_FILES_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING) )))
 
 $(foreach file, $(SYSCALL_FILES_FAIL_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING) )))
+
+$(foreach file, $(SYSCALL_FILES_FAIL_SA), $(eval $(call compile, $(file))))
 
 # TESTING CODE BELOW
 

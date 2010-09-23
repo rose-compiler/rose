@@ -31,6 +31,7 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
+#include <utime.h>
 
 #ifndef HAVE_USER_DESC
 typedef modify_ldt_ldt_s user_desc;
@@ -1307,7 +1308,21 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
-                
+             
+        case 8: { /* 0x8, creat */
+            syscall_enter("creat", "sd");
+     	    uint32_t filename = arg(0);
+            std::string sys_filename = read_string(filename);
+	        mode_t mode = arg(1);
+
+	        int result = creat(sys_filename.c_str(), mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	    }  
+   
         case 10: { /*0xa, unlink*/
             syscall_enter("unlink", "s");
             uint32_t filename_va = arg(0);
@@ -1412,6 +1427,58 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+        case 30: { /* 0x1e, utime */
+
+            /*
+               int utime(const char *filename, const struct utimbuf *times);
+
+               The utimbuf structure is:
+
+               struct utimbuf {
+               time_t actime;       // access time 
+                   time_t modtime;  // modification time 
+                 };
+
+               The utime() system call changes the access and modification times of the inode
+               specified by filename to the actime and modtime fields of times respectively.
+
+               If times is NULL, then the access and modification times of the file are set
+               to the current time.
+            */
+            syscall_enter("utime", "sp");
+
+            std::string filename = read_string(arg(0));
+
+            //Check to see if times is NULL
+            uint8_t byte;
+            size_t nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+
+            int result;
+            if( byte != NULL )
+            {
+              struct kernel_utimebuf {
+                uint32_t actime;
+                uint32_t modtime;
+              };
+
+              kernel_utimebuf ubuf;
+
+              size_t nread = map->read(&ubuf, arg(1), sizeof(kernel_utimebuf));
+
+              ROSE_ASSERT(nread == sizeof(kernel_utimebuf));
+
+              result = utime(filename.c_str(), (utimbuf*) &ubuf);
+
+            }else
+              result = utime(filename.c_str(), NULL);
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+
+            break;
+        };
 
         case 33: { /*0x21, access*/
             static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
