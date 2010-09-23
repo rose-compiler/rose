@@ -2232,6 +2232,7 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 			PT_NOTE         = 4,            /* auxiliary information */
 			PT_SHLIB        = 5,            /* Reserved w/unspecified semantics; such a file is nonconforming */
 			PT_PHDR         = 6,            /* Segment contains the segment table itself (program header array) */
+			PT_TLS		= 7,		/* Thread local storage */
 
 			/* OS- and Processor-specific ranges */
 			PT_LOOS         = 0x60000000,   /* Values reserved for OS-specific semantics */
