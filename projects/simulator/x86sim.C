@@ -1774,6 +1774,45 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 141: {     /*0x8d, getdents*/
+	    /* 
+               int getdents(unsigned int fd, struct linux_dirent *dirp,
+                           unsigned int count);
+
+          struct linux_dirent {
+              unsigned long  d_ino;     // Inode number 
+              unsigned long  d_off;     // Offset to next linux_dirent 
+              unsigned short d_reclen;  // Length of this linux_dirent 
+              char           d_name[];  // Filename (null-terminated) 
+                                 // length is actually (d_reclen - 2 -
+              		         //          offsetof(struct linux_dirent, d_name) 
+          }
+
+          The system call getdents() reads several linux_dirent structures from the
+          directory referred to by the open file descriptor fd into the buffer pointed
+          to by dirp.  The argument count specifies the size of that buffer.
+        */
+
+        syscall_enter("getdents", "dpd");
+	    unsigned int fd = arg(0);
+
+	    // Create a buffer of the same length as the buffer in the specimen
+        const size_t dirent_size = arg(2);
+
+        uint8_t dirent[dirent_size];
+        memset(dirent, 0xff, sizeof dirent);
+
+	    //Call the system call and write result to the buffer in the specimen
+	    int result = 0xdeadbeef;
+	    result = syscall(141, fd, dirent, dirent_size);
+
+        map->write(dirent, arg(1), dirent_size);
+        writeGPR(x86_gpr_ax, result);
+
+        syscall_leave("d");
+	    break;
+        }
+
         case 146: { /*0x92, writev*/
             syscall_enter("writev", "dpd");
             uint32_t fd=arg(0), iov_va=arg(1);
@@ -2283,7 +2322,7 @@ EmulationPolicy::emulate_syscall()
         }
 
 	case 306: { /* 0x132, fchmodat */
-            syscall_enter("fchmodat", "dsd");
+            syscall_enter("fchmodat", "dsdd");
 	    int dirfd = arg(0);
 	    uint32_t path = arg(1);
             std::string sys_path = read_string(path);
