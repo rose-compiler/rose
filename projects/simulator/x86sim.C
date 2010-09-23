@@ -2321,6 +2321,42 @@ EmulationPolicy::emulate_syscall()
 
         }
 
+        case 271: {
+            /*
+                int utimes(const char *filename, const struct timeval times[2]);
+
+                The utimes() system call changes the access and modification times of the inode
+                specified by filename to the actime and modtime fields of times respectively.
+
+                times[0] specifies the new access time, and times[1] specifies the new
+                modification time.  If times is NULL, then analogously to utime(), the access
+                and modification times of the file are set to the current time.
+
+
+            */
+            syscall_enter("utimes", "sp");
+
+            struct timeval {
+              long tv_sec;        /* seconds */
+              long tv_usec;       /* microseconds */
+            };
+
+
+#ifdef SYS_stat64       /* x86sim must be running on i386 */
+            ROSE_ASSERT(4==sizeof(long));
+            int host_callno = 195==callno ? SYS_stat64 : (196==callno ? SYS_lstat64 : SYS_fstat64);
+            static const size_t kernel_stat_size = 96;
+#else                   /* x86sim must be running on amd64 */
+            ROSE_ASSERT(8==sizeof(long));
+            int host_callno = 195==callno ? SYS_stat : (196==callno ? SYS_lstat : SYS_fstat);
+            static const size_t kernel_stat_size = 144;
+#endif
+
+            syscall_leave("utimes", "d");
+            break;
+
+        }
+
 	case 306: { /* 0x132, fchmodat */
             syscall_enter("fchmodat", "dsdd");
 	    int dirfd = arg(0);
