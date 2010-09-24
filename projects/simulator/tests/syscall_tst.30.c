@@ -115,7 +115,7 @@ void syscall_success()
 	TEST_RETURN = -1;       /* reset verify value */
 	int fd;				/* file descriptor  */	
 	int rc=0;
-    char filename[40] ="filename";
+    char filename[40] ="test-input-success-utime";
 
 	/* utime setup  */
 	/* variabls below are globals used also in the fail case */
@@ -136,6 +136,7 @@ void syscall_success()
 	}else {
 		tst_resm(TINFO, "utime for success test succeeded.");
 	}
+    remove(filename);
 }
 
 void syscall_fail()

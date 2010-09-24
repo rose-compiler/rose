@@ -1744,6 +1744,48 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 94: { /* 0x5d, fchmod */
+
+            /*
+                int fchmod(int fd, mode_t mode);
+
+                fchmod() changes the permissions of the file referred to by the open file
+                         descriptor fd.
+            */
+            syscall_enter("fchmod", "dd");
+	        uint32_t fd = arg(0);
+	        mode_t mode = arg(1);
+
+	        int result = fchmod(fd, mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	    }
+
+     	case 95: { /*0x5f, fchown */
+            /*
+                   int fchown(int fd, uid_t owner, gid_t group);
+
+                   typedef unsigned short  __kernel_old_uid_t;
+                   typedef unsigned short  __kernel_old_gid_t;
+
+                   fchown() changes the ownership of the file referred to by the open file
+                            descriptor fd.
+
+               */
+
+            syscall_enter("fchown16", "ddd");
+	        uint32_t fd = arg(0);
+            unsigned short  user = arg(1);
+	        unsigned short  group = arg(2);
+	        int result = syscall(95,fd,user,group);
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
         case 102: { // socketcall
             syscall_enter("socketcall", "dp");
             //uint32_t call=arg(0), args=arg(1);
@@ -2233,7 +2275,28 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-	case 212: { /*0xd4, chown */
+        case 207: { /*0xcf, fchown */
+                   /*
+                      int fchown(int fd, uid_t owner, gid_t group);
+
+                      typedef unsigned short  __kernel_old_uid_t;
+                      typedef unsigned short  __kernel_old_gid_t;
+
+                      fchown() changes the ownership of the file referred to by the open file
+                      descriptor fd.
+
+                    */
+
+                   syscall_enter("fchown16", "ddd");
+                   uint32_t fd = arg(0);
+                   uid_t  user = arg(1);
+                   gid_t group = arg(2);
+                   int result = syscall(207,fd,user,group);
+                   writeGPR(x86_gpr_ax, result);
+                   syscall_leave("d");
+                   break;
+                 }
+        case 212: { /*0xd4, chown */
             syscall_enter("chown", "sdd");
 	    std::string filename = read_string(arg(0));
             uid_t user = arg(1);
@@ -2243,6 +2306,7 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
         case 221: { // fcntl
             syscall_enter("fcntl64", "ddp");
             uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);

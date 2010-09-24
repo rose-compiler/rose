@@ -91,7 +91,6 @@ int TST_TOTAL = 6;
 extern int Tst_count;
 
 #define LOG_HEADER_SIZE 100
-char filename[40] = "filename1234";
 
 void syscall_success();
 void syscall_fail();
@@ -113,6 +112,8 @@ void syscall_success()
 	struct timeval tvp;
 	int rc=0;
 
+    char filename[40] = "test-input-success-utimes";
+
 	/* utimes setup  */
 	/* tvp[0].tv_sec = actime */
 	/* tvp[1].tv_sec = modtime */
@@ -129,9 +130,12 @@ void syscall_success()
 	if (TEST_RETURN == -1) {
 		tst_resm(TFAIL, "utimes for success test failed. %d",
 				errno);
+        exit(1);
 	} else {
 		tst_resm(TINFO, "utimes for success test succeeded.");
 	}
+
+    remove(filename);
 }
 
 void syscall_fail()
