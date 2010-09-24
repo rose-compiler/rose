@@ -7,6 +7,7 @@
 
 class VariableVersionTable
 {
+	typedef VariableRenaming::VarName VarName;
 	typedef std::map<VariableRenaming::VarName, std::set<int> > TableType;
 	
 	TableType table_;
@@ -69,7 +70,7 @@ public:
 	//! this version in var table of the false body, and if thie def's enclosing if body is true body,
 	//! remove the versions killed by this def in var table of the true body. And vice versa.
 	std::pair<VariableVersionTable, VariableVersionTable>
-	getVarTablesForIfBodies(SgStatement* true_body, SgStatement* false_body) const;
+	getVarTablesForIfBodies(SgBasicBlock* true_body, SgBasicBlock* false_body) const;
 
 	//! This function gets the variable version tables for the loop body in an for/while/do-while statement.
 	//! Since currently there is no fi function in implementation, this is a workaround to get the
@@ -100,9 +101,12 @@ public:
 	/** Returns true if a variable is at the specified version.
 	* @param varName name of the variable to look up
 	* @param version version that the variable should have (list of possible definitions). */
-	bool matchesVersion(VariableRenaming::VarName varName, VariableRenaming::NumNodeRenameEntry version) const;
+	bool matchesVersion(VarName varName, VariableRenaming::NumNodeRenameEntry version) const;
 
 	void print() const;
+
+	static VarName getVarName(SgNode* node)
+	{ return VariableRenaming::getVarName(node); };
 };
 
 inline bool operator ==(const VariableVersionTable& t1, const VariableVersionTable& t2)

@@ -105,8 +105,6 @@ vector<EvaluationResult> WhileStatementHandler::evaluate(SgStatement* stmt, cons
 {
 	// Suppose the condition of this while statement does not contain modifying expressions.
 	
-	var_table.print();
-
     vector<EvaluationResult> results;
     SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
 	

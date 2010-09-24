@@ -128,5 +128,7 @@ namespace backstroke_util
 	loop body directly. "continue"s or "break"s belonging to its substatement don't count. "break"s belonging to
 	a switch statement don't count. */
 	bool hasContinueOrBreak(SgStatement* loop_stmt);
+
+
 }
 

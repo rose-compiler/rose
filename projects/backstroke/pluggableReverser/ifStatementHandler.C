@@ -67,8 +67,10 @@ vector<EvaluationResult> IfStatementHandler::evaluate(SgStatement* stmt, const V
     // Make sure every if statement has a true and false body after being normalized.
     ROSE_ASSERT(if_stmt->get_false_body());
 
-	SgStatement* true_body = if_stmt->get_true_body();
-	SgStatement* false_body = if_stmt->get_false_body();
+	SgBasicBlock* true_body = isSgBasicBlock(if_stmt->get_true_body());
+	SgBasicBlock* false_body = isSgBasicBlock(if_stmt->get_false_body());
+	ROSE_ASSERT(true_body && false_body);
+	
 	VariableVersionTable true_body_var_table, false_body_var_table;
 	tie(true_body_var_table, false_body_var_table) = var_table.getVarTablesForIfBodies(true_body, false_body);
 
