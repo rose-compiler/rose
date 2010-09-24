@@ -21,9 +21,11 @@ At present ROSE compiles about all of the POP code.  Specific tests include:
 Commented out parts of POP files required to compile using ROSE:
 
 1) File: mpif.h
-   ROSE calles the gfortran syntax checking which reports that REAL*8 is not standard for F90.
+   ROSE calls the gfortran syntax checking which reports that REAL*8 is not standard for F90.
  This is not a ROSE specific issue, but since we use gfortran for syntax checking of input
-code it is a problem to address at some point.  This is mostly a strictness issue in gfortran.
+code it is a problem to address at some point.  This is mostly a strictness issue in
+gfortran.  We first run any input for through gfortran for syntax checking, and using
+the "-fsyntax-only -std=f95" option the following is an error:
 
      ! DQ (8/5/2010): Bug in use of gfortran for syntax checking of input to ROSE.
      ! REAL*8 MPI_WTIME, MPI_WTICK
@@ -31,15 +33,18 @@ code it is a problem to address at some point.  This is mostly a strictness issu
        REAL MPI_WTIME, MPI_WTICK
        REAL PMPI_WTIME, PMPI_WTICK
 
+We can process this if we turn off syntax checking, but that would see to be a bad
+solution.
+
 
 2) Files: netcdf_eightbyte.f90, netcdf_expanded.f90, netcdf_text_variables.f90
-This problem happend in 3 files and is the same problem in each file (in multiple
+This problem happens in 3 files and is the same problem in each file (in multiple
     locations in each file).  It is related to implicit do loops and I don't
 currently understand the problem.
 
 ! DQ (9/11/2010): I don't understand this code well enough, so comment out for now!
 !    localMap   (:numDims  ) = (/ 1, (product(localCount(:counter)), counter = 1, numDims - 1) /)
- 
+
 
 3) File: io_netcdf.F90
   I don't understand this error, but with these 5 locations in this file commented out the
@@ -70,7 +75,7 @@ whole file compiles cleanly with ROSE.  So this will be revisited later.
 !     inquire(file=path, exist=header_exists)
 
 
-5) File: ROSE file: src/frontend/SageIII/attachPreprocessingInfoTraversal.C
+5) FIXED: File: ROSE file: src/frontend/SageIII/attachPreprocessingInfoTraversal.C
    Unclear what sort of error this might be, does not happen in C/C++ and only in this
    specific (large) fortran 90 file.
 
@@ -100,7 +105,7 @@ AND
 !  zgrid(km+1) = -zw(km)
 
 
-8) Another problem is that aliased symbols appear to be growing exponentially, so I need
+8) FIXED: Another problem is that aliased symbols appear to be growing exponentially, so I need
    to check this soon.  I think that including them from multiple modules is causing them 
    to be redundentaly entered into the symbol tables and this is a mistake (but it does
    not fail; it just represents a performance issue in the compiling (especially with

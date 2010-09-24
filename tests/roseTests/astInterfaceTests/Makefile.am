@@ -22,50 +22,51 @@ noinst_PROGRAMS = \
     buildForStmt canonicalLoop loopNormalization collectReadWriteVariables \
     typeTraits livenessAnalysis buildProcedureHeaderStatement replaceMacroCalls \
     buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
-    deepDelete
-
+    deepDelete insertStatementBeforeFunction removeStatementCommentRelocation
 
 # list of test SAGE AST builders 
-deepDelete_SOURCES               = deepDelete.C 
-buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
-buildNondefiningFunction_SOURCES = buildNondefiningFunction.C
-findMain_SOURCES                 = findMain.C
-buildVariableDeclaration_SOURCES = buildVariableDeclaration.C
-buildAssignmentStmt_SOURCES      = buildAssignmentStmt.C
-buildFunctionCalls_SOURCES       = buildFunctionCalls.C 
-buildPragmaDeclaration_SOURCES   = buildPragmaDeclaration.C
-attachComment_SOURCES            = attachComment.C
-insertHeader_SOURCES             = insertHeader.C
-buildExpression_SOURCES          = buildExpression.C
-buildStructDeclaration_SOURCES   = buildStructDeclaration.C
-buildStructDeclaration2_SOURCES   = buildStructDeclaration2.C
-lookupNamedType_SOURCES          = lookupNamedType.C           
-buildFile_SOURCES                = buildFile.C           
-movePreprocessingInfo_SOURCES    = movePreprocessingInfo.C
-buildIfStmt_SOURCES              = buildIfStmt.C
+deepDelete_SOURCES                       = deepDelete.C 
+buildFunctionDeclaration_SOURCES         = buildFunctionDeclaration.C
+buildNondefiningFunction_SOURCES         = buildNondefiningFunction.C
+findMain_SOURCES                         = findMain.C
+buildVariableDeclaration_SOURCES         = buildVariableDeclaration.C
+buildAssignmentStmt_SOURCES              = buildAssignmentStmt.C
+buildFunctionCalls_SOURCES               = buildFunctionCalls.C 
+buildPragmaDeclaration_SOURCES           = buildPragmaDeclaration.C
+attachComment_SOURCES                    = attachComment.C
+insertHeader_SOURCES                     = insertHeader.C
+buildExpression_SOURCES                  = buildExpression.C
+buildStructDeclaration_SOURCES           = buildStructDeclaration.C
+buildStructDeclaration2_SOURCES          = buildStructDeclaration2.C
+lookupNamedType_SOURCES                  = lookupNamedType.C           
+buildFile_SOURCES                        = buildFile.C           
+movePreprocessingInfo_SOURCES            = movePreprocessingInfo.C
+buildIfStmt_SOURCES                      = buildIfStmt.C
 buildCpreprocessorDefineDeclaration_SOURCES = buildCpreprocessorDefineDeclaration.C
-instrumentEndOfFunction_SOURCES  = instrumentEndOfFunction.C
-isUpcSharedType_SOURCES          = isUpcSharedType.C
-isUpcPhaseLessSharedType_SOURCES = isUpcPhaseLessSharedType.C
-buildLabelStatement_SOURCES      = buildLabelStatement.C
-buildSizeOfOp_SOURCES            = buildSizeOfOp.C
-abiStuffTest_SOURCES             = abiStuffTest.C
-abiStuffTestUPC_SOURCES          = abiStuffTestUPC.C
-buildNullStatement_SOURCES       = buildNullStatement.C
-buildForStmt_SOURCES             = buildForStmt.C
-canonicalLoop_SOURCES            = canonicalLoop.C
-loopNormalization_SOURCES        = loopNormalization.C 
-collectReadWriteVariables_SOURCES=collectReadWriteVariables.C
-typeTraits_SOURCES               =typeTraits.C
-livenessAnalysis_SOURCES         =livenessAnalysis.C
-buildProcedureHeaderStatement_SOURCES = buildProcedureHeaderStatement.C
-replaceMacroCalls_SOURCES             = replaceMacroCalls.C
-buildAbstractHandle_SOURCES         = buildAbstractHandle.C
-buildTypedefDeclaration_SOURCES         = buildTypedefDeclaration.C
-loopUnrolling_SOURCES               = loopUnrolling.C
-getDependentDecls_SOURCES           = getDependentDecls.C
-loopInterchange_SOURCES             = loopInterchange.C
-loopTiling_SOURCES                  = loopTiling.C
+instrumentEndOfFunction_SOURCES          = instrumentEndOfFunction.C
+isUpcSharedType_SOURCES                  = isUpcSharedType.C
+isUpcPhaseLessSharedType_SOURCES         = isUpcPhaseLessSharedType.C
+buildLabelStatement_SOURCES              = buildLabelStatement.C
+buildSizeOfOp_SOURCES                    = buildSizeOfOp.C
+abiStuffTest_SOURCES                     = abiStuffTest.C
+abiStuffTestUPC_SOURCES                  = abiStuffTestUPC.C
+buildNullStatement_SOURCES               = buildNullStatement.C
+buildForStmt_SOURCES                     = buildForStmt.C
+canonicalLoop_SOURCES                    = canonicalLoop.C
+loopNormalization_SOURCES                = loopNormalization.C 
+collectReadWriteVariables_SOURCES        = collectReadWriteVariables.C
+typeTraits_SOURCES                       = typeTraits.C
+livenessAnalysis_SOURCES                 = livenessAnalysis.C
+buildProcedureHeaderStatement_SOURCES    = buildProcedureHeaderStatement.C
+replaceMacroCalls_SOURCES                = replaceMacroCalls.C
+buildAbstractHandle_SOURCES              = buildAbstractHandle.C
+buildTypedefDeclaration_SOURCES          = buildTypedefDeclaration.C
+loopUnrolling_SOURCES                    = loopUnrolling.C
+getDependentDecls_SOURCES                = getDependentDecls.C
+loopInterchange_SOURCES                  = loopInterchange.C
+loopTiling_SOURCES                       = loopTiling.C
+insertStatementBeforeFunction_SOURCES    = insertStatementBeforeFunction.C
+removeStatementCommentRelocation_SOURCES = removeStatementCommentRelocation.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -117,7 +118,9 @@ generatedCodeExamples = \
   rose_inputgetDependentDecls.C \
   rose_inputloopInterchange.C \
   rose_inputloopTiling.C \
-  rose_inputdeepDelete.C
+  rose_inputdeepDelete.C \
+  rose_inputinsertStatementBeforeFunction.C \
+  rose_inputRemoveStatementCommentRelocation.C
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -255,6 +258,21 @@ rose_inputreplaceMacroCalls.C:replaceMacroCalls
 # comment out since boost:wave causes seg fault on 64-bit machines
 #	./replaceMacroCalls$(EXEEXT) $(TEST_CXXFLAGS) -rose:wave -c $(srcdir)/inputreplaceMacroCalls.C
 
+# DQ (9/16/2010): Added this test code to demonstrate problem with adding statments around statments with comments or CPP directives attached.
+rose_inputinsertStatementBeforeFunction.C: insertStatementBeforeFunction $(srcdir)/inputinsertStatementBeforeFunction_1.h $(srcdir)/inputinsertStatementBeforeFunction_2.h
+	./insertStatementBeforeFunction$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputinsertStatementBeforeFunction.C
+
+# There are a lot of different cases that we now test for with the relocation of comments support in the removeStatement() function.
+rose_inputRemoveStatementCommentRelocation.C: removeStatementCommentRelocation $(srcdir)/inputRemoveStatementCommentRelocation_1.h $(srcdir)/inputRemoveStatementCommentRelocation_2.h
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withTopBoundingStatement.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withoutTopBoundingStatement.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withBottomBoundingStatement.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withoutBottomBoundingStatement.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withTopandBottomBoundingStatement.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C
+
+
 # MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
        inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
@@ -269,7 +287,17 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputlivenessAnalysis.C inputbuildProcedureHeaderStatement.f inputreplaceMacroCalls.C \
        inputbuildAbstractHandle.C inputloopUnrolling.C inputgetDependentDecls.C \
        inputloopInterchange.C inputloopTiling.C inputbuildStructDeclaration2.C \
-       inputbuildTypedefDeclaration.C inputdeepDelete.C
+       inputbuildTypedefDeclaration.C inputdeepDelete.C \
+       inputinsertStatementBeforeFunction.C inputinsertStatementBeforeFunction_1.h \
+       inputinsertStatementBeforeFunction_2.h inputRemoveStatementCommentRelocation.C \
+       inputRemoveStatementCommentRelocation_1.h inputRemoveStatementCommentRelocation_2.h \
+       inputRemoveStatementCommentRelocation_withBottomBoundingStatement.C \
+       inputRemoveStatementCommentRelocation_withTopBoundingStatement.C \
+       inputRemoveStatementCommentRelocation_withTopandBottomBoundingStatement.C \
+       inputRemoveStatementCommentRelocation_withoutBottomBoundingStatement.C \
+       inputRemoveStatementCommentRelocation_withoutTopBoundingStatement.C \
+       inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C
+
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."

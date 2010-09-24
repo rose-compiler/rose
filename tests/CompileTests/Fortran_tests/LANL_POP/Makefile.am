@@ -395,9 +395,13 @@ typeSizes.o: $(TRANSLATOR)
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 
+# DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
+io_netcdf_testcode_01.o: $(TRANSLATOR) gather_scatter.o netcdf.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
-# io_netcdf_testcode_01.o: $(TRANSLATOR) gather_scatter.o netcdf.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+# DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
+io_netcdf_testcode_02.o: $(TRANSLATOR) gather_scatter.o netcdf.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 
 
@@ -458,9 +462,9 @@ check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 if !ROSE_USING_GFORTRAN_VERSION_4_0
-	@$(MAKE) check-parsing
+#	@$(MAKE) check-parsing
 #	@$(MAKE) clean
-#	@$(MAKE) check-analysis
+	@$(MAKE) check-analysis
 else
 	@echo "Skipping POP code tests when using the gfortran version 4.0.x compiler (fails to compile POP code)."
 endif

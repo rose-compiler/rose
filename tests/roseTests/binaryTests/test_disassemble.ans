@@ -11,7 +11,8 @@ using this memory map for disassembly:
     va 0x080485c4 + 0x00000004 = 0x080485c8 r-- at base aaa  + 0x000005c4 i686-test1.O0.bin(.eh_frame)
     va 0x080485c8 + 0x00000a38 = 0x08049000 r-x at anonymous + 0x00000000 i686-test1.O0.bin(LOAD#2)
     va 0x08049000 + 0x000006d4 = 0x080496d4 rw- at base aaa  + 0x00000000 i686-test1.O0.bin(.ctors+.data+.dtors+.dynamic+.got+...
-    va 0x080496d4 + 0x0000092c = 0x0804a000 rw- at anonymous + 0x00000000 i686-test1.O0.bin(.bss+LOAD#3)
+    va 0x080496d4 + 0x00000008 = 0x080496dc rw- at anonymous + 0x00000000 i686-test1.O0.bin(.bss)
+    va 0x080496dc + 0x00000924 = 0x0804a000 rw- at anonymous + 0x00000008 i686-test1.O0.bin(LOAD#3)
 disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 Functions detected in this interpretation:
     Key for reason(s) address is a suspected function:
