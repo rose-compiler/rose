@@ -2388,9 +2388,15 @@ EmulationPolicy::emulate_syscall()
 
         }
 
-        case 271: {
+        case 271: { /* 0x10f, utimes */
             /*
                 int utimes(const char *filename, const struct timeval times[2]);
+
+                struct timeval {
+                    long tv_sec;        // seconds 
+                    long tv_usec;   // microseconds 
+                };
+
 
                 The utimes() system call changes the access and modification times of the inode
                 specified by filename to the actime and modtime fields of times respectively.
@@ -2401,25 +2407,38 @@ EmulationPolicy::emulate_syscall()
 
 
             */
-            syscall_enter("utimes", "sp");
-
-            struct timeval {
-              long tv_sec;        /* seconds */
-              long tv_usec;       /* microseconds */
-            };
+            syscall_enter("utimes", "s");
 
 
-#ifdef SYS_stat64       /* x86sim must be running on i386 */
-            ROSE_ASSERT(4==sizeof(long));
-            int host_callno = 195==callno ? SYS_stat64 : (196==callno ? SYS_lstat64 : SYS_fstat64);
-            static const size_t kernel_stat_size = 96;
-#else                   /* x86sim must be running on amd64 */
-            ROSE_ASSERT(8==sizeof(long));
-            int host_callno = 195==callno ? SYS_stat : (196==callno ? SYS_lstat : SYS_fstat);
-            static const size_t kernel_stat_size = 144;
-#endif
+            std::string filename = read_string(arg(0));
 
-            syscall_leave("utimes", "d");
+            //Check to see if times is NULL
+            uint8_t byte;
+            size_t nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+
+            int result;
+            if( byte != NULL )
+            {
+
+              struct kernel_timeval {
+                uint32_t tv_sec;        /* seconds */
+                uint32_t tv_usec;       /* microseconds */
+              };
+
+              kernel_timeval ubuf;
+
+              size_t nread = map->read(&ubuf, arg(1), sizeof(kernel_timeval)*2);
+
+              ROSE_ASSERT(nread == (sizeof(kernel_timeval)*2 ));
+
+              result = utimes(filename.c_str(), (timeval*) &ubuf);
+
+            }else
+              result = utimes(filename.c_str(), NULL);
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
 
         }
