@@ -1464,12 +1464,14 @@ EmulationPolicy::emulate_syscall()
               };
 
               kernel_utimebuf ubuf;
-
               size_t nread = map->read(&ubuf, arg(1), sizeof(kernel_utimebuf));
-
               ROSE_ASSERT(nread == sizeof(kernel_utimebuf));
 
-              result = utime(filename.c_str(), (utimbuf*) &ubuf);
+              utimbuf ubuf64;
+              ubuf64.actime  = ubuf.actime;
+              ubuf64.modtime = ubuf.modtime;
+
+              result = utime(filename.c_str(), &ubuf64);
 
             }else
               result = utime(filename.c_str(), NULL);
@@ -2426,13 +2428,22 @@ EmulationPolicy::emulate_syscall()
                 uint32_t tv_usec;       /* microseconds */
               };
 
-              kernel_timeval ubuf;
+              size_t size_timeval_sample = sizeof(kernel_timeval)*2;
 
-              size_t nread = map->read(&ubuf, arg(1), sizeof(kernel_timeval)*2);
+              kernel_timeval ubuf[1];
 
-              ROSE_ASSERT(nread == (sizeof(kernel_timeval)*2 ));
+              size_t nread = map->read(&ubuf, arg(1), size_timeval_sample);
 
-              result = utimes(filename.c_str(), (timeval*) &ubuf);
+
+              timeval timeval64[1];
+              timeval64[0].tv_sec  = ubuf[0].tv_sec;
+              timeval64[0].tv_usec = ubuf[0].tv_usec;
+              timeval64[1].tv_sec  = ubuf[1].tv_sec;
+              timeval64[1].tv_usec = ubuf[1].tv_usec;
+
+              ROSE_ASSERT(nread == size_timeval_sample);
+
+              result = utimes(filename.c_str(), timeval64);
 
             }else
               result = utimes(filename.c_str(), NULL);
