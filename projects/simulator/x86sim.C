@@ -317,8 +317,12 @@ public:
 
     /* Called by X86InstructionSemantics for the SYSENTER instruction */
     void sysenter() {
-        fprintf(stderr, "ROBB: syscall is working...\n"); /*DEBUGGING [RPM 2010-09-20]*/
         emulate_syscall();
+
+        /* On linux, SYSENTER is followed by zero or more NOPs, followed by a JMP back to just before the SYSENTER in order to
+         * restart interrupted system calls, followed by POPs for the callee-saved registers. A non-interrupted system call
+         * should return to the first POP instruction, which happens to be 9 bytes after the end of the SYSENTER. */
+        writeIP(add(readIP(), number<32>(9)));
     }
 
     /* Called by X86InstructionSemantics */
