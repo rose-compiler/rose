@@ -734,7 +734,7 @@ SgFunctionParameterList::cfgInEdges(unsigned int idx)
 
 unsigned int
 SgFunctionDefinition::cfgIndexForEnd() const {
-  return 2;
+  return (get_CtorInitializerList() == NULL) ? 2 : 3;
 }
 
 bool
