@@ -8,7 +8,9 @@
 int main( int argc, char * argv[] ) 
    {
   // Build the AST used by ROSE
-     SgProject* project = frontend(argc,argv);
+    std::vector<std::string> newArgv(argv,argv+argc);
+    newArgv.push_back("-rose:wave");
+    SgProject* project = frontend(newArgv);
 	std::vector<SgNode*> macroVec2 = linearize_subtree(project);
  
     createMap map_tokenToAST(macroVec2,wave_tokenStream);
