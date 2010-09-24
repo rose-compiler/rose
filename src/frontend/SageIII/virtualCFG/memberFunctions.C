@@ -815,17 +815,36 @@ SgFunctionDefinition::cfgInEdges(unsigned int idx) {
     }
     case 1: makeEdge(this->get_declaration()->get_parameterList()->cfgForEnd(), CFGNode(this, idx), result); break;
     case 2: {
-      makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result);
-      // Liao, 5/21/2010. bad implementation since vectors are created/destroyed  multiple times
-      //std::vector<SgReturnStmt*> returnStmts = SageInterface::findReturnStmts(this);
-     //      Rose_STL_Container <SgNode*> returnStmts = NodeQuery::querySubTree(this,V_SgReturnStmt);
-     VariantVector vv(V_SgReturnStmt);
-     Rose_STL_Container<SgNode*> returnStmts = NodeQuery::queryMemoryPool(vv);
-     for (unsigned int i = 0; i < returnStmts.size(); ++i) {
-       if (SageInterface::isAncestor(this,returnStmts[i] ))
-         makeEdge(isSgReturnStmt(returnStmts[i])->cfgForEnd(), CFGNode(this, idx), result);
-     }
+      SgCtorInitializerList* ctorList;
+      if ((ctorList = get_CtorInitializerList()) != NULL) {
+        makeEdge(this->get_CtorInitializerList()->cfgForEnd(), CFGNode(this, idx), result);
+      } else {
+        makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result);
+        // Liao, 5/21/2010. bad implementation since vectors are created/destroyed  multiple times
+        //std::vector<SgReturnStmt*> returnStmts = SageInterface::findReturnStmts(this);
+        //      Rose_STL_Container <SgNode*> returnStmts = NodeQuery::querySubTree(this,V_SgReturnStmt);
+        VariantVector vv(V_SgReturnStmt);
+        Rose_STL_Container<SgNode*> returnStmts = NodeQuery::queryMemoryPool(vv);
+        for (unsigned int i = 0; i < returnStmts.size(); ++i) {
+          if (SageInterface::isAncestor(this,returnStmts[i] ))
+            makeEdge(isSgReturnStmt(returnStmts[i])->cfgForEnd(), CFGNode(this, idx), result);
+        }
+      }
       break;
+    }
+    case 3: {
+        ROSE_ASSERT(get_CtorInitializerList() != NULL);
+        makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result);
+        // Liao, 5/21/2010. bad implementation since vectors are created/destroyed  multiple times
+        //std::vector<SgReturnStmt*> returnStmts = SageInterface::findReturnStmts(this);
+        //      Rose_STL_Container <SgNode*> returnStmts = NodeQuery::querySubTree(this,V_SgReturnStmt);
+        VariantVector vv(V_SgReturnStmt);
+        Rose_STL_Container<SgNode*> returnStmts = NodeQuery::queryMemoryPool(vv);
+        for (unsigned int i = 0; i < returnStmts.size(); ++i) {
+          if (SageInterface::isAncestor(this,returnStmts[i] ))
+            makeEdge(isSgReturnStmt(returnStmts[i])->cfgForEnd(), CFGNode(this, idx), result);
+        }
+        break;
     }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
   }
