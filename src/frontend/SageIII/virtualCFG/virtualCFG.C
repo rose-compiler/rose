@@ -40,7 +40,8 @@ namespace VirtualCFG {
       switch (index) {
           case 0: s << "Start("; break; 
           case 1: s << "After parameters("; break;
-          case 2: s << "End("; break;
+          case 2: s << "After pre-initialization("; break;
+          case 3: s << "End("; break;
           default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
       }
       s << isSgFunctionDefinition(node)->get_declaration()->get_qualified_name().str() << ")" << std::endl; 
