@@ -1218,7 +1218,7 @@ HEADER_FUNCTION_DEFINITION_STATEMENT_START
 
        // MD (09/20/2010): Accessor for preinitialization lists associated with 
        // this (constructor) definition. NULL if this has no such list.
-          virtual SgCtorInitializerList* get_CtorInitializerList();
+          virtual SgCtorInitializerList* get_CtorInitializerList() const;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -8638,7 +8638,7 @@ SgFunctionDefinition::get_qualified_name() const
 // MD (09/20/2010): Accessor for preinitialization lists associated with 
 // this (constructor) definition. NULL if this has no such list.
 SgCtorInitializerList* 
-SgFunctionDefinition::get_CtorInitializerList() {
+SgFunctionDefinition::get_CtorInitializerList() const {
   SgMemberFunctionDeclaration* memDecl = NULL;
   SgCtorInitializerList* ctorList = NULL;
   if ((memDecl = isSgMemberFunctionDeclaration(get_declaration())) != NULL &&
