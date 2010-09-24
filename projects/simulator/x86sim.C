@@ -642,15 +642,36 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     }
     pointers.push_back(0); /*the argv NULL terminator*/
 
-    /* Initialize the stack with specimen's environment. For now we'll use the same environment as this simulator. */
-    for (int i=0; true; i++) {
-        if (!environ[i]) break;
-        size_t len = strlen(environ[i]) + 1;
-        sp -= len;
-        map->write(environ[i], sp, len);
-        pointers.push_back(sp);
-        if (trace_loader)
-            fprintf(stderr, "environ[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, environ[i]);
+    /* Create new environment variables by stripping "X86SIM_" off the front of any environment variable and using that
+     * value to override the non-X86SIM_ value, if any. New variables are in the same order as originally (aside from the
+     * X86SIM_ variables being removed. */
+    std::map<std::string, std::string> env_overrides;
+    for (int i=0; environ[i]; i++) {
+        if (!strncmp(environ[i], "X86SIM_", 7)) {
+            char *eq = strchr(environ[i], '=');
+            ROSE_ASSERT(eq!=NULL);
+            std::string name(environ[i]+7, eq-(environ[i]+7));
+            env_overrides.insert(std::make_pair(name, std::string(eq+1)));
+        }
+    }
+    for (int i=0; environ[i]; i++) {
+        if (strncmp(environ[i], "X86SIM_", 7)) {
+            char *eq = strchr(environ[i], '=');
+            ROSE_ASSERT(eq!=NULL);
+            std::string name(environ[i], eq-environ[i]);
+            std::map<std::string, std::string>::iterator oi=env_overrides.find(name);
+            std::string env;
+            if (oi!=env_overrides.end()) {
+                env = name + "=" + oi->second;
+            } else {
+                env = environ[i];
+            }
+            sp -= env.size()+1;
+            map->write(env.c_str(), sp, env.size()+1);
+            pointers.push_back(sp);
+            if (trace_loader)
+                fprintf(stderr, "environ[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, env.size(), sp, env.c_str());
+        }
     }
     pointers.push_back(0); /*environment NULL terminator*/
 
