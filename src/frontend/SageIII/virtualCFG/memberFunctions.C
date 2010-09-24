@@ -785,28 +785,13 @@ SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
               if ((ctorList = get_CtorInitializerList()) != NULL) {
                 makeEdge(CFGNode(this, idx), get_body()->cfgForBeginning(), result);
               } else {
-                if (virtualInterproceduralControlFlowGraphs) { 
-                  ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
-                  Rose_STL_Container<SgExpression*> exps;
-                  CallTargetSet::getExpressionsForDefinition(this, &classHierarchy, exps);
-                  foreach (SgExpression* exp, exps) 
-                    makeEdge(CFGNode(this, idx), exp->cfgForEnd(), result);
-                }
-              break;
+                // Terminal case for non-constructors
               }
+              break;
               }
       case 3: {
-              SgCtorInitializerList* ctorList;
-              if ((ctorList = get_CtorInitializerList()) != NULL) {
-                if (virtualInterproceduralControlFlowGraphs) { 
-                  ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
-                  Rose_STL_Container<SgExpression*> exps;
-                  CallTargetSet::getExpressionsForDefinition(this, &classHierarchy, exps);
-                  foreach (SgExpression* exp, exps) 
-                    makeEdge(CFGNode(this, idx), exp->cfgForEnd(), result);
-                }
-              }
-              break;
+                // Terminal case for constructors
+                break;
               }
     default: ROSE_ASSERT (!"Bad index for SgFunctionDefinition");
   }
