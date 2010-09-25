@@ -5,18 +5,14 @@
 #include <stddef.h>
 
 #ifndef  _WIN64
-#define unsigned_int unsigned int
-#define unsigned_long unsigned long
-#define signed_int int
-#define signed_long long
+#define unsigned_long_long unsigned long 
+#define signed_long_long long
 #else
-#define unsigned_int unsigned long
-#define unsigned_long unsigned long long
-#define signed_int long
-#define signed_long long long
+#define unsigned_long_long unsigned long long
+#define signed_long_long long long
 #endif
 
-typedef unsigned_long addr_type;
+typedef unsigned long addr_type;
 
 
 
@@ -52,7 +48,7 @@ void RuntimeSystem_roseCreateHeap(
         const char* lineTransformed, int dimensions, ...);
 
 void RuntimeSystem_roseAccessHeap(const char* filename,
-		unsigned long int base_address, // &( array[ 0 ])
+		addr_type base_address, // &( array[ 0 ])
 		addr_type address, long int size, int read_write_mask, // 1 = read, 2 = write
 		const char* line, const char* lineTransformed);
 /***************************** ARRAY FUNCTIONS *************************************/
@@ -149,7 +145,7 @@ int RuntimeSystem_roseCreateObject(
 
 int RuntimeSystem_roseInitVariable(const char* typeOfVar2,
 		const char* baseType2, size_t indirection_level,
-		const char* class_name, unsigned long long address, unsigned int size,
+		const char* class_name, addr_type address, unsigned int size,
 		int ismalloc, int pointer_changed, const char* filename,
 		const char* line, const char* lineTransformed);
 
@@ -173,7 +169,7 @@ int RuntimeSystem_roseInitVariable(const char* typeOfVar2,
  * a pointer to allocated memory.
  */
 void RuntimeSystem_roseMovePointer(
-                unsigned long long address,
+                addr_type address,
                 const char* type,
                 const char* base_type,
                 size_t indirection_level,
@@ -183,9 +179,9 @@ void RuntimeSystem_roseMovePointer(
                 const char* lineTransformed);
 
 void RuntimeSystem_roseAccessVariable(
-        unsigned long long address,
+        addr_type address,
         unsigned int size, 
-        unsigned long long write_address, 
+        addr_type write_address, 
         unsigned int write_size,
         int read_write_mask, //1 = read, 2 = write
         const char* filename, const char* line,
