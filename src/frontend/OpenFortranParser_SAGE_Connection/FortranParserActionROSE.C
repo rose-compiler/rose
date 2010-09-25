@@ -2936,9 +2936,10 @@ void c_action_ac_implied_do()
      printf ("What kind of expression is this: astExpressionStack.front() = %s \n",astExpressionStack.front()->class_name().c_str());
 
   // DQ (9/15/2010): Added support for more general form of implied do loop.
-     SgVarRefExp* doLoopVar = isSgVarRefExp(astExpressionStack.front());
+  // SgVarRefExp* doLoopVar = isSgVarRefExp(astExpressionStack.front());
+     SgExpression* doLoopVarExp = isSgExpression(astExpressionStack.front());
   // astExpressionStack.pop_front();
-     if (doLoopVar != NULL)
+     if (doLoopVarExp != NULL)
         {
           astExpressionStack.pop_front();
         }
@@ -2950,9 +2951,9 @@ void c_action_ac_implied_do()
           if (functionExpression != NULL)
              {
             // This is the case of rtest2010_49.f90
-            // Dig out the variable reference used for the doLoopVar
-               doLoopVar = NULL;
-               ROSE_ASSERT(doLoopVar != NULL);
+            // Dig out the variable reference used for the doLoopVarExp
+               doLoopVarExp = NULL;
+               ROSE_ASSERT(doLoopVarExp != NULL);
              }
             else
              {
@@ -2960,8 +2961,8 @@ void c_action_ac_implied_do()
                ROSE_ASSERT(false);
              }
         }
-     ROSE_ASSERT(doLoopVar != NULL);
-  // setSourcePosition(doLoopVar);
+     ROSE_ASSERT(doLoopVarExp != NULL);
+  // setSourcePosition(doLoopVarExp);
 #else
   // However, we want to treat index values (base and bound) for implcit do-loop 
   // as expressions on the astExpressionStack, so don't use this code.
@@ -2984,26 +2985,33 @@ void c_action_ac_implied_do()
   // SgExpression* variableReference = astExpressionStack.front();
   // astExpressionStack.pop_front();
 
-     ROSE_ASSERT(doLoopVar->get_symbol() != NULL);
+  // DQ (9/22/2010): I think this code might be wrong! Unclear when object list is required. See test2010_49.f90.
+#if 1
+     ROSE_ASSERT(doLoopVarExp->get_symbol() != NULL);
 
   // Build another reference for the "i,i=0,10,2" expression
-     SgVarRefExp* variableReference = new SgVarRefExp(doLoopVar->get_symbol());
+     SgVarRefExp* variableReference = new SgVarRefExp(doLoopVarExp->get_symbol());
      setSourcePosition(variableReference);
      objectList->append_expression(variableReference);
+#else
+     SgVarRefExp* variableReference = NULL;
+#endif
 
   // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
   // SgImpliedDo* impliedDo = new SgImpliedDo(variableReference,doLoopVar,lowerBound,upperBound,increment,objectList);
   // SgImpliedDo* impliedDo = new SgImpliedDo(variableReference,doLoopVar,lowerBound,upperBound,increment,objectList);
-     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
+     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVarExp,lowerBound,upperBound,increment,objectList);
      setSourcePosition(impliedDo);
 
      objectList->set_parent(impliedDo);
-     doLoopVar->set_parent(impliedDo);
+     doLoopVarExp->set_parent(impliedDo);
      upperBound->set_parent(impliedDo);
      lowerBound->set_parent(impliedDo);
      increment->set_parent(impliedDo);
 
-     variableReference->set_parent(impliedDo);
+  // DQ (9/22/2010): Handle case when this is NULL.
+     if (variableReference != NULL)
+          variableReference->set_parent(impliedDo);
 
   // DQ (4/21/2008): We want to use the astInitializerStack for initialization purposes, actually the R469 ac-value
   // will be called and it should transfer the implicit do-loop from the astExpressionStack to the 
@@ -13636,6 +13644,10 @@ void c_action_io_implied_do_control()
 
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgVarRefExp* doLoopVar = isSgVarRefExp(astExpressionStack.front());
+
+  // DQ (9/22/2010): I think we can assert this!
+     ROSE_ASSERT(doLoopVar != NULL);
+
      astExpressionStack.pop_front();
   // setSourcePosition(doLoopVar);
 
