@@ -3789,7 +3789,7 @@ SgImpliedDo::cfgOutEdges(unsigned int idx)
      std::vector<CFGEdge> result;
      switch (idx)
         {
-          case 0: makeEdge(CFGNode(this, idx), this->get_do_var()->cfgForBeginning(), result); break;
+          case 0: makeEdge(CFGNode(this, idx), this->get_do_var_exp()->cfgForBeginning(), result); break;
           case 1: makeEdge(CFGNode(this, idx), this->get_first_val()->cfgForBeginning(), result); break;
           case 2: makeEdge(CFGNode(this, idx), this->get_last_val()->cfgForBeginning(), result); break;
           case 3: makeEdge(CFGNode(this, idx), this->get_increment()->cfgForBeginning(), result); break;
@@ -3807,7 +3807,7 @@ SgImpliedDo::cfgInEdges(unsigned int idx)
      switch (idx)
         {
           case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
-          case 1: makeEdge(this->get_do_var()->cfgForEnd(), CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_do_var_exp()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 2: makeEdge(this->get_first_val()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 3: makeEdge(this->get_last_val()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 4: makeEdge(this->get_increment()->cfgForEnd(), CFGNode(this, idx), result); break;

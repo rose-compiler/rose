@@ -332,6 +332,8 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_43.f90 \
      test2010_48.f90 \
      test2010_49.f90 \
+     test2010_50.f90 \
+     test2010_51.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -354,7 +356,13 @@ F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2007_241.f \
      test2007_252.f \
      test2008_02.f \
-     test2008_03.f
+     test2008_03.f \
+     test2010_52.f \
+     test2010_53.f \
+     test2010_54.f \
+     test2010_55.f \
+     test2010_56.f \
+     test2010_57.f 
 
 F03_TESTCODES_CURRENTLY_FAILING = \
      test2007_18.f03 \
@@ -578,7 +586,7 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
    test2007_suffixTest_01.f test2007_suffixTest_02.f77 test2007_suffixTest_03.f90 test2007_suffixTest_04.f95 \
    test2007_suffixTest_05.f03 test2007_suffixTest_06.F test2007_suffixTest_07.F90 test2007_suffixTest_08.F95 \
    test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08 \
-   module_A_file.f90 module_B_file.f90 test2010_31_header.f90
+   module_A_file.f90 module_B_file.f90 test2010_31_header.f90 test2010_50.h test2010_54.h test2010_55.h
 
 # DQ (3/12/2010): Fortran 2008 tests from OFP
 # f08-tests
