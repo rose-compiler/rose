@@ -48,15 +48,15 @@ TST_FILES_LINKING= $(srcdir)/parse_opts.c \
                    $(srcdir)/simple_test_looping.c \
                    $(srcdir)/audit_parse_verify.c \
                    $(srcdir)/audit_parse_verify_utils.c \
-                   $(srcdir)/audit_utils.c -lselinux
+                   $(srcdir)/audit_utils.c
 
 $(foreach file, $(SYSCALL_FILES_SA), $(eval $(call compile, $(file))))
 
 $(foreach file, $(SYSCALL_FILES_RT), $(eval $(call compile, $(file), -lrt  ) ))
 
-$(foreach file, $(SYSCALL_FILES_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING) )))
+$(foreach file, $(SYSCALL_FILES_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING) -lselinux )))
 
-$(foreach file, $(SYSCALL_FILES_FAIL_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING) )))
+$(foreach file, $(SYSCALL_FILES_FAIL_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING) -lselinx )))
 
 $(foreach file, $(SYSCALL_FILES_FAIL_SA), $(eval $(call compile, $(file))))
 
@@ -80,7 +80,7 @@ failing_tests: test_file_permission syscall_tst_fail  $(foreach file,$(SYSCALL_F
 
 check-local: $(foreach file,$(SYSCALL_FILES_CHK), $(addprefix check-,$(basename $(notdir $(file)))))
 
-EXTRA_DIST = compiler.h  rmobj.h  test.h  usctest.h parse_opts.c tst_res.c tst_sig.c tst_tmpdir.c rmobj.c 
+EXTRA_DIST = $(TST_FILES_LINKING) compiler.h  rmobj.h  test.h  usctest.h parse_opts.c tst_res.c tst_sig.c tst_tmpdir.c rmobj.c 
 
 
 clean-local:
