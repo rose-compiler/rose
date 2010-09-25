@@ -210,7 +210,7 @@ bool initialize_next_array = false;
 void
 RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
 			      const char* type, const char* basetype, size_t indirection_level,
-			      unsigned long int address, long int size,
+			      addr_type address, long int size,
 			      long int mallocSize, int fromMalloc, const char* class_name,
 			      const char* filename, const char* line, const char* lineTransformed,
 			      int dimensionality, ...){
@@ -288,7 +288,7 @@ RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
  ********************************************************/
 void
 RuntimeSystem_roseAccessHeap(const char* filename,
-			      unsigned long int base_address, unsigned long int address, long int size, 
+			      unsigned long int base_address, addr_type address, long int size, 
 			      int read_write_mask, const char* line, const char* lineTransformed){
 
 
@@ -305,7 +305,7 @@ RuntimeSystem_roseAccessHeap(const char* filename,
 // ***************************************** ARRAY FUNCTIONS *************************************
 
 
-void RuntimeSystem_checkMemoryAccess( unsigned long int address, long int size, int read_write_mask ) {
+void RuntimeSystem_checkMemoryAccess( addr_type address, long int size, int read_write_mask ) {
 
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 
@@ -759,7 +759,7 @@ int RuntimeSystem_roseCreateVariable( const char* name,
 				      const char* type,
 				      const char* basetype,
 				      size_t indirection_level,
-				      unsigned long int address,
+				      addr_type address,
 				      unsigned int size,
 				      int init,
 
@@ -809,7 +809,7 @@ int RuntimeSystem_roseCreateObject(
         const char* type_name,
         const char* base_type,
         size_t indirection_level,
-        unsigned long int address,
+        addr_type address,
         unsigned int size,
         const char* filename,
         const char* line,

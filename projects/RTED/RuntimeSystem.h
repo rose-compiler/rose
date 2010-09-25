@@ -4,6 +4,22 @@
 //#include <cstdio>
 #include <stddef.h>
 
+#ifndef  _WIN64
+#define unsigned_int unsigned int
+#define unsigned_long unsigned long
+#define signed_int int
+#define signed_long long
+#else
+#define unsigned_int unsigned long
+#define unsigned_long unsigned long long
+#define signed_int long
+#define signed_long long long
+#endif
+
+typedef unsigned_long addr_type;
+
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,7 +43,7 @@ void RuntimeSystem_roseCreateHeap(
         const char* basetype, 
         size_t indirection_level,       // how many dereferences to get to a non-pointer type
                                         // e.g. int*** has indirection level 3
-        unsigned long int address, 
+        addr_type address, 
         long int size, 
         long int mallocSize,
         int fromMalloc,                 // 1 if from call to malloc
@@ -37,7 +53,7 @@ void RuntimeSystem_roseCreateHeap(
 
 void RuntimeSystem_roseAccessHeap(const char* filename,
 		unsigned long int base_address, // &( array[ 0 ])
-		unsigned long int address, long int size, int read_write_mask, // 1 = read, 2 = write
+		addr_type address, long int size, int read_write_mask, // 1 = read, 2 = write
 		const char* line, const char* lineTransformed);
 /***************************** ARRAY FUNCTIONS *************************************/
 
@@ -80,7 +96,7 @@ void RuntimeSystem_roseFreeMemory(
 void RuntimeSystem_roseReallocateMemory(void* ptr, unsigned long int size,
 		const char* filename, const char* line, const char* lineTransformed);
 
-void RuntimeSystem_checkMemoryAccess(unsigned long int address, long int size,
+void RuntimeSystem_checkMemoryAccess(addr_type address, long int size,
 		int read_write_mask);
 /***************************** MEMORY FUNCTIONS *************************************/
 
@@ -111,7 +127,7 @@ extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 
 int RuntimeSystem_roseCreateVariable(const char* name,
 		const char* mangled_name, const char* type, const char* basetype,
-		size_t indirection_level, unsigned long int address, unsigned int size,
+		size_t indirection_level, addr_type address, unsigned int size,
 		int init, const char* className, const char* filename,
 		const char* line, const char* lineTransformed);
 
@@ -125,7 +141,7 @@ int RuntimeSystem_roseCreateObject(
         const char* type,
         const char* basetype,
         size_t indirection_level,
-        unsigned long int address,
+        addr_type address,
         unsigned int size,
         const char* filename,
         const char* line,
