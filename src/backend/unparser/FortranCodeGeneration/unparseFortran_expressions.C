@@ -1168,12 +1168,16 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
 
      SgExprListExp* object_list = ioitem_expr->get_object_list();
 
-     SgVarRefExp* varRef = ioitem_expr->get_do_var();
-     SgExpression* lb    = ioitem_expr->get_first_val();
-     SgExpression* ub    = ioitem_expr->get_last_val();
-     SgExpression* step  = ioitem_expr->get_increment();
+  // DQ (9/22/2010): test2010_49.f90 demonstrates that this can be an expression in terms of an 
+  // index variable, so this is more general that first exptected and as a result has changed 
+  // the IR and the name of the datamember.
+  // SgVarRefExp* varRef = ioitem_expr->get_do_var();
+     SgExpression* indexExpression = ioitem_expr->get_do_var_exp();
+     SgExpression* lb              = ioitem_expr->get_first_val();
+     SgExpression* ub              = ioitem_expr->get_last_val();
+     SgExpression* step            = ioitem_expr->get_increment();
 
-     if (varRef == NULL)
+     if (indexExpression == NULL)
         {
        // OFP dos not yet provide a loop index variable for the case of an implied do loop 
        // in an initializer to a variable declaration or a data statement (only for an IO 
@@ -1219,10 +1223,10 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
              }
 
           ROSE_ASSERT(indexVariable != NULL);
-          varRef = indexVariable;
+          indexExpression = indexVariable;
         }
 
-     ROSE_ASSERT(varRef != NULL);
+     ROSE_ASSERT(indexExpression != NULL);
      ROSE_ASSERT(lb != NULL);
      ROSE_ASSERT(ub != NULL);
      ROSE_ASSERT(step != NULL);
@@ -1231,9 +1235,9 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
      if (object_list != NULL)
         {
           unparseExprList(object_list, info, false /*paren*/);
+          curprint(",");
         }
-     curprint(",");
-     unparseExpression(varRef, info);
+     unparseExpression(indexExpression, info);
      curprint(" = ");
      unparseExpression(lb, info);
      curprint(", ");
