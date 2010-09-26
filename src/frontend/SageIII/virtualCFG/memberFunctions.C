@@ -186,6 +186,11 @@ static CFGNode findParentNode(SgNode* n) {
   SgNode* parent = n->get_parent();
   ROSE_ASSERT (parent);
   if (isSgFunctionDefinition(n)) return CFGNode(0, 0); // Should not be used
+  if (isSgCtorInitializerList(n)) {
+    SgFunctionDeclaration* decl = isSgFunctionDeclaration(isSgCtorInitializerList(n)->get_parent());
+    ROSE_ASSERT (decl);
+    return CFGNode(decl->get_definition(), 1);
+  }
   if (isSgFunctionParameterList(n)) {
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(isSgFunctionParameterList(n)->get_parent());
     ROSE_ASSERT (decl);
