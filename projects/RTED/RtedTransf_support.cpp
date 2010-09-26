@@ -803,7 +803,7 @@ void RtedTransformation::appendAddressAndSize(
     	else
           appendExpression(
                 arg_list,
-                buildSizeOfOp( isSgExpression( buildLongLongIntVal(0)))
+                buildSizeOfOp( isSgExpression( buildLongIntVal(0)))
             );
 
     }
@@ -892,12 +892,12 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
     if (exp)
      cast_op=   buildCastExp(
             buildAddressOfOp( copy_exp ),
-            buildUnsignedLongLongType()
+            buildUnsignedLongType()
         );
     else
         cast_op=   buildCastExp(
                buildLongLongIntVal( 0),
-               buildUnsignedLongLongType()
+               buildUnsignedLongType()
            );
 
     if( offset != NULL ) {
