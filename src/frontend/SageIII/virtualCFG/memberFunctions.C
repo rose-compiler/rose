@@ -179,10 +179,7 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
   return CFGNode(parent, idx);
 }
 
-//! Find the CFG node of which n is a child (subtree descended into)
-//! This is mostly just doing lookups in the children of n's parent to find
-//! out which index n is at
-static CFGNode findParentNode(SgNode* n) {
+static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
   SgNode* parent = n->get_parent();
   ROSE_ASSERT (parent);
   if (isSgFunctionDefinition(n)) return CFGNode(0, 0); // Should not be used
@@ -201,11 +198,8 @@ static CFGNode findParentNode(SgNode* n) {
   return CFGNode(parent, idx);
 }
 
-static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
-  // Only handles previous-statement control flow
-  return findParentNode(n);
-}
 //---------------------------------------
+
 unsigned int
 SgStatement::cfgIndexForEnd() const {
     std::cerr << "Bad statement case " << this->class_name() << " in cfgIndexForEnd()" << std::endl;
