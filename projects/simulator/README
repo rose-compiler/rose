@@ -1,0 +1,175 @@
+x86sim is a simulator for 32-bit Linux programs, and runs on either
+32- or 64-bit linux.
+
+== Definitions ==
+
+* The "specimen" is the 32-bit Linux program being executed inside the
+  simulator.
+
+* The "host OS" is the system for which ROSE was compiled and on which
+  the x86sim is running.
+
+* The "guest OS" is the Linux environment (system calls, etc) provided
+  by x86sim to the specimen.
+
+== Usage ==
+
+Usage: x86sim [SWITCHES] SPECIMEN [SPECIMEN_ARGS...]
+
+Switches are:
+
+* "--debug=WORDS" where WORDS is a comma-separated list of one or more
+  of the following:
+
+** "insn" shows disassembled instructions as they are executed.  If
+   stderr is a terminal then ANSI escape sequences are used to prevent
+   other debugging output from immediately scrolling off the screen.
+   If you need to see every individual instruction then redirect
+   stderr to a non-tty.
+
+** "state" shows register contents after each instruction is executed.
+
+** "mem" shows memory read and write operations.
+
+** "mmap" shows the specimen memory map (similar to /proc/self/maps)
+   every time the map changes.
+
+** "syscall" shows system calls, arguments, and return values (similar
+   to the strace utility).
+
+** "loader" shows a variety of loading, linking, mapping, and
+   relocation operations.
+
+** "all" turns on all possible debugging switches.
+
+* "--debug" by itself is the same as "--debug=syscall,insn"
+
+* "--core=STYLE" where STYLE is a comma-separated list of core dump
+  types. Currently supported are "elf", which produces a standard ELF
+  Core Dump, and "rose" which produces a multi-file memory dump.  The
+  default is "elf".  If multiple styles are specified then multiple
+  core dumps are created.
+
+* "--dump=ADDRESS[,NAME]" produces a core dump the first time x86sim
+  executes an instruction at the specified address.  The core file
+  name is optional, but it's often useful to avoid a subsequent dump
+  from overwriting this one.  Once the core dump(s) is produced x86sim
+  will continue to execute the specimen.
+
+Positional arguments:
+
+* "SPECIMEN" is the name of the program to simulate.  x86sim will
+  locate this program using the same rules as the shell: using the
+  name directly if it contains a slash, or consulting the PATH
+  environment variable otherwise.  NOTE: For temporary backward
+  compatibility, x86sim also searches the CWD, but does so last (do
+  not depend on this feature).
+
+* "SPECIMEN_ARGS" are all the arguments for the specimen.
+
+== System calls ==
+
+If you see a message like "syscall_131(....) is not implemented yet"
+then you may implement it.  Look up the call number in
+<asm/unistd_32.h> (not <asm/unistd_64.h> since 32- and 64-bit syscall
+numbers differ).
+
+Add a new case to the big switch statement in
+EmulationPolicy::emulate_syscall().  System call arguments can be
+obtained with arg(N) methods and are always register values.  If an
+argument is a pointer to a string then the string can be obtained with
+code like "read_string(arg(N))".  Other data structures passed into a
+system call must first be copied from specimen memory to x86sim
+memory, converted to a 64-bit layout if the host OS is 64-bit, and
+then passed to the real system call.
+
+The real system call can be invoked with syscall(), but a hard-coded
+system call number must be supplied since the __SYS_* constants are
+for the host OS, which might be either 32- or 64-bit.  Note that
+direct system calls don't always follow the same semantics nor use the
+same data structures as the corresponding C library call.  For
+example,  the brk() library function returns a different value than
+the SYS_brk system call.  Likewise, the "stat" family of functions
+have a different data structure in the C library than they do in the
+kernel.  But in most cases it's probably safe to call the C library
+function rather than the direct system call.
+
+Some system calls (like the "stat" family of calls) return a different
+data structure than what is eventually returned by the C library.  In
+these cases it's best if x86sim uses syscall() since this prevents the
+C library from converting the kernel data structure to the C library
+data structure, an action that must be undone in x86sim so that the
+specimen's emulated C library can re-do it.
+
+System calls return an exit status in the EAX register, with certain
+negative values indicating an error.  Sometimes the C library will
+make additional checks and return a failure even if the underlying
+system call was successful. It's best to invoke the system call with
+syscall() in these cases and then let the specimen's emulated C
+library detect the error itself.
+
+The syscall() function returns -1 on error with the actual error code
+in 'errno'.  Thus, the typical way to end system call emulation in the
+x86sim big switch statement is like:
+
+    int retval = syscall(....);
+    if (-1==retval) retval = -errno;
+    ...
+    writeGPR(x86_gpr_ax, retval);
+
+
+== Debugging Tricks and Tips ==
+
+It's often difficult to determine why a specimen runs differently
+under x86sim than natively. It could be due to differences in the
+environment provided by x86sim (like the fact that x86sim runs the
+specimen with slightly different AUXV (one of the pieces of
+information that gets pushed onto the specimen's initial stack).  You
+can see values in x86sim with "--debug=loader" and natively by setting
+the LD_SHOW_AUXV environment variable.
+
+It could be due to differences in the way memory is layed out.  A
+simple way to test this is to somehow get the specimen to dump its
+memory map and compare that to the map printed with
+"--debug=mmap".  If the specimen is the standard "cat" command for
+instance, you could just run "cat /proc/self/maps".
+
+Another way to look at memory maps is by looking at the ELF Segment
+Table in a core dump, either a core dump produced by x86sim or by
+running the command natively.  For native core dumps you might need to
+first execute "ulimit -Sc unlimited".  See the "--dump" switch for
+x86sim.  An easy way to get a core dump at an arbitrary process for a
+natively run specimen is to fire it up under GDB, set a break point at
+the address of interest (e.g., "break *0x08040444"), run to the break
+point, and then send a core producing signal to the specimen. You can
+see the ELF Segment Table with a variety of tools: readelf, objdump,
+or from ROSE itself using tests/roseTests/binaryTests/execFormatsTest:
+
+    $ execFormatsTests -rose:read_executable_file_format_only core
+    $ less core.dump
+
+The GDB "set disassembly-flavor intel" will cause GDB to use the Intel
+format which is used by most tools (other than GCC) including ROSE
+itself.  Same can be done with objdump's "-Mintel" switch.
+
+An easy way to view memory contents (other than GDB) is to run x86sim
+with "--core=rose --dump=0x12345678,mem" and then look at the
+resulting mem.index file. Find the address of interest in the index,
+then look in the appropriate mem-*.dat file. (0x12345678 is the
+address where the dump is taken.)
+
+Here's another way (besides GDB) to get an assembly listing of memory
+contents based on what's been executed. Run with "--core=rose
+--dump=0x12345678,mem --debug=insn" and capture stderr to find all the
+executed "call" instructions that are followed by a constant target
+address, sort the call targets addresses into a unique list, separate
+the targets from one another with only a comma, and store the result
+in a file named "targets".  Then run the "disassemble" tool found in
+tests/roseTests/binaryTests:
+
+    $ disassemble -rose:partitioner_search -leftovers \
+                  --raw=$(cat targets) mem.index
+
+See also "disassemble --help" because it takes a lot of different,
+useful switches and improvements continue to be added (it's the
+test bed for the latest binary capabilities).

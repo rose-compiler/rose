@@ -17,6 +17,7 @@
 #include "VirtualMachineSemantics.h"
 #include "BinaryLoaderElf.h"
 #include <stdarg.h>
+#include <boost/regex.hpp>
 
 /* These are necessary for the system call emulation */
 #include <asm/ldt.h>
@@ -59,6 +60,8 @@ typedef modify_ldt_ldt_s user_desc;
 #include <asm/ldt.h>
 #include <linux/unistd.h>
 
+enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
+
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
@@ -90,6 +93,8 @@ public:
     };
 
 public:
+    std::string exename;                        /* Name of executable without any path components */
+    std::vector<std::string> exeargs;           /* Specimen argv with PATH-resolved argv[0] */
     MemoryMap *map;                             /* Describes how specimen's memory is mapped to simulator memory */
     Disassembler *disassembler;                 /* Disassembler to use for obtaining instructions */
     Disassembler::InstructionMap icache;        /* Cache of disassembled instructions */
@@ -102,7 +107,13 @@ public:
     SignalAction signal_action[_NSIG+1];        /* Simulated actions for signal handling */
     uint64_t signal_mask;                       /* Set by sigsetmask() */
     std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
-    static const uint32_t brk_base=0x40000000;  /* Initial brk() value */
+    static const uint32_t brk_base=0x08000000;  /* Lowest possible brk() value */
+    std::string vdso_name;                      /* Optional name of virtual dynamic shared object from kernel */
+    std::vector<std::string> vdso_paths;        /* Directories to search for vdso_name */
+    rose_addr_t vdso_va;                        /* Address where vdso is mapped into specimen, or zero */
+    rose_addr_t vdso_entry;                     /* Entry address for vdso, or zero */
+    unsigned core_styles;                       /* What kind of core dump(s) to make for dump_core() */
+    std::string core_base_name;                 /* Name to use for core files ("core") */
 
     /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
      * behavior here. If the value is less than the highest address mapped by the main executable, then the latter is used
@@ -129,8 +140,19 @@ public:
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
+          vdso_va(0), vdso_entry(0), core_styles(CORE_ELF), core_base_name("x-core.rose"),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false) {
+
+        vdso_name = "x86vdso";
+        vdso_paths.push_back(".");
+#ifdef X86_VDSO_PATH_1
+        vdso_paths.push_back(X86_VDSO_PATH_1);
+#endif
+#ifdef X86_VDSO_PATH_2
+        vdso_paths.push_back(X86_VDSO_PATH_2);
+#endif
+        
 
         for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
             writeGPR((X86GeneralPurposeRegister)i, 0);
@@ -179,17 +201,54 @@ public:
                     segregToString(sr), readSegreg(sr).known_value(), segreg_shadow[sr].base, segreg_shadow[sr].limit,
                     segreg_shadow[sr].present?"yes":"no");
         }
-        fprintf(f, "    flags: %s %s %s %s %s %s %s\n", 
-                readFlag(x86_flag_of).known_value()?"ov":"nv", readFlag(x86_flag_df).known_value()?"dn":"up",
-                readFlag(x86_flag_sf).known_value()?"ng":"pl", readFlag(x86_flag_zf).known_value()?"zr":"nz",
-                readFlag(x86_flag_af).known_value()?"ac":"na", readFlag(x86_flag_pf).known_value()?"pe":"po", 
-                readFlag(x86_flag_cf).known_value()?"cy":"nc");
+
+        uint32_t eflags = get_eflags();
+        fprintf(f, "    flags: 0x%08"PRIx32":", eflags);
+        static const char *flag_name[] = {"cf",  "#1",  "pf",   "#3",    "af",    "#5",  "zf",  "sf",
+                                          "tf",  "if",  "df",   "of", "iopl0", "iopl1",  "nt", "#15",
+                                          "rf",  "vm",  "ac",  "vif",   "vip",    "id", "#22", "#23",
+                                          "#24", "#25", "#26", "#27",   "#28",   "#29", "#30", "#31"};
+        for (uint32_t i=0; i<32; i++) {
+            if (eflags & (1u<<i))
+                fprintf(f, " %s", flag_name[i]);
+        }
+        fprintf(f, "\n");
+    }
+
+    uint32_t get_eflags() const {
+        uint32_t eflags = 0;
+#define ADD_PRSTATUS_FLAG(NAME, BITPOS) \
+            eflags |= readFlag(NAME).is_known() ? readFlag(NAME).known_value() << (BITPOS) : 0
+        ADD_PRSTATUS_FLAG(x86_flag_cf, 0);
+        ADD_PRSTATUS_FLAG(x86_flag_1, 1);
+        ADD_PRSTATUS_FLAG(x86_flag_pf, 2);
+        ADD_PRSTATUS_FLAG(x86_flag_3, 3);
+        ADD_PRSTATUS_FLAG(x86_flag_af, 4);
+        ADD_PRSTATUS_FLAG(x86_flag_5, 5);
+        ADD_PRSTATUS_FLAG(x86_flag_zf, 6);
+        ADD_PRSTATUS_FLAG(x86_flag_sf, 7);
+        ADD_PRSTATUS_FLAG(x86_flag_tf, 8);
+        ADD_PRSTATUS_FLAG(x86_flag_if, 9);
+        ADD_PRSTATUS_FLAG(x86_flag_df, 10);
+        ADD_PRSTATUS_FLAG(x86_flag_of, 11);
+        ADD_PRSTATUS_FLAG(x86_flag_iopl0, 12);
+        ADD_PRSTATUS_FLAG(x86_flag_iopl1, 13);
+        ADD_PRSTATUS_FLAG(x86_flag_nt, 14);
+        ADD_PRSTATUS_FLAG(x86_flag_15, 15);
+        ADD_PRSTATUS_FLAG(x86_flag_rf, 16);
+        ADD_PRSTATUS_FLAG(x86_flag_vm, 17);
+        ADD_PRSTATUS_FLAG(x86_flag_ac, 18);
+        ADD_PRSTATUS_FLAG(x86_flag_vif, 19);
+        ADD_PRSTATUS_FLAG(x86_flag_vip, 20);
+        ADD_PRSTATUS_FLAG(x86_flag_id, 21);
+#undef ADD_PRSTATUS_FLAG
+        return eflags;
     }
 
     /* Generate an ELF Core Dump on behalf of the specimen.  This is a real core dump that can be used with GDB and contains
      * the same information as if the specimen had been running natively and dumped its own core. In other words, the core
      * dump we generate here does not have references to the simulator even though it is being dumped by the simulator. */
-    void dump_core(int signo);
+    void dump_core(int signo, std::string base_name="");
 
     /* Recursively load an executable and its libraries libraries into memory, creating the MemoryMap object that describes
      * the mapping from the specimen's address space to the simulator's address space.
@@ -258,6 +317,7 @@ public:
 
     /* Called by X86InstructionSemantics for the SYSENTER instruction */
     void sysenter() {
+        fprintf(stderr, "ROBB: syscall is working...\n"); /*DEBUGGING [RPM 2010-09-20]*/
         emulate_syscall();
     }
 
@@ -302,7 +362,6 @@ public:
             size_t nread = map->read(buf, base+offset, Len/8);
             if (nread!=Len/8) {
                 fprintf(stderr, "read %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
-                fprintf(stderr, "dumping specimen core and possibly our own...\n");
                 dump_core(SIGSEGV);
                 abort();
             }
@@ -341,7 +400,6 @@ public:
             size_t nwritten = map->write(buf, base+offset, Len/8);
             if (nwritten!=Len/8) {
                 fprintf(stderr, "write %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
-                fprintf(stderr, "dumping specimen core and possibly our own...\n");
                 dump_core(SIGSEGV);
                 abort();
             }
@@ -406,7 +464,7 @@ public:
         return retval;
     }
 
-    /* Same as superclass but do not use anonymous mapping for high alignment area */
+#if 0 /*DEBUGGING [RPM 2010-09-22]*/
     virtual MappingContribution align_values(SgAsmGenericSection *section, MemoryMap *map,
                                              rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                                              rose_addr_t *va_p, rose_addr_t *mem_size_p,
@@ -416,21 +474,64 @@ public:
         MappingContribution retval = BinaryLoaderElf::align_values(section, map, malign_lo_p, malign_hi_p, va_p,
                                                                    mem_size_p, offset_p, file_size_p, va_offset_p,
                                                                    anon_lo_p, anon_hi_p, resolve_p);
-        //*anon_hi_p = false;
+        if (section->get_mapped_preferred_va() % *malign_lo_p)
+            fprintf(stderr, "ROBB: alignment\n");
         return retval;
     }
+#endif
 };
 
 SgAsmGenericHeader*
 EmulationPolicy::load(const char *name)
 {
+    /* Find the executable by searching the PATH environment variable. The executable name and full path name are both saved
+     * in the class (exename and exeargs[0]). */ 
+    ROSE_ASSERT(exename.empty() && exeargs.empty());
+    if (strchr(name, '/')) {
+        if (access(name, R_OK)<0) {
+            fprintf(stderr, "%s: %s\n", name, strerror(errno));
+            exit(1);
+        }
+        exename = strrchr(name, '/')+1;
+        exeargs.push_back(std::string(name));
+    } else {
+        const char *path_env = getenv("PATH");
+        if (path_env) {
+            std::string s = path_env;
+            boost::regex re;
+            re.assign("[:;]");
+            boost::sregex_token_iterator iter(s.begin(), s.end(), re, -1);
+            boost::sregex_token_iterator iterEnd;
+            for (; iter!=iterEnd; ++iter) {
+                std::string fullname = *iter + "/" + name;
+                if (access(fullname.c_str(), R_OK)>=0) {
+                    exename = name;
+                    exeargs.push_back(fullname);
+                    break;
+                }
+            }
+        }
+    }
+    if (exeargs.empty()) {
+        fprintf(stderr, "%s: not found\n", name);
+#if 1 /* Waiting for makefiles to be fixed [RPM 2010-09-21] */
+        if (access(name, R_OK)<0)
+            exit(1);
+        fprintf(stderr, "(found in CWD, but CWD is not in $PATH; please use \"./%s\")\n", name);
+        exename = name;
+        exeargs.push_back(std::string("./")+name);
+#else
+        exit(1);
+#endif
+    }
+       
     /* Link the main binary into the AST without further linking, mapping, or relocating. */
     if (debug)
-        fprintf(debug, "loading %s...\n", name);
+        fprintf(debug, "loading %s...\n", exeargs[0].c_str());
     char *frontend_args[4];
     frontend_args[0] = strdup("-");
     frontend_args[1] = strdup("-rose:read_executable_file_format_only"); /*delay disassembly until later*/
-    frontend_args[2] = strdup(name);
+    frontend_args[2] = strdup(exeargs[0].c_str());
     frontend_args[3] = NULL;
     SgProject *project = frontend(3, frontend_args);
 
@@ -453,9 +554,45 @@ EmulationPolicy::load(const char *name)
 
     /* Map all segments into simulated memory */
     loader->load(interp);
-    delete loader;
-    loader = NULL;
     map = interp->get_map();
+
+    /* Map the virtual dynamic shared object.  We'll load a version from a file if possible, none otherwise. */
+    if (!loader->interpreter) {
+        fprintf(stderr, "warning: static executable; no vdso necessary\n");
+    } else if (vdso_name.empty()) {
+        fprintf(stderr, "warning: no virtual dynamic shared object (vdso)\n");
+    } else {
+        for (size_t i=0; i<vdso_paths.size() && 0==vdso_va; i++) {
+            std::string vdso_name = vdso_paths[i] + "/" + this->vdso_name;
+            if (debug && trace_loader) fprintf(debug, "looking for vdso: %s\n", vdso_name.c_str());
+            int vdso_fd = open(vdso_name.c_str(), O_RDONLY);
+            if (vdso_fd>=0) {
+                struct stat sb;
+                fstat(vdso_fd, &sb);
+                uint8_t *vdso = new uint8_t[sb.st_size];
+                ssize_t nread = read(vdso_fd, vdso, sb.st_size);
+                ROSE_ASSERT(nread==sb.st_size);
+                close(vdso_fd); vdso_fd=-1;
+
+                vdso_va = ALIGN_UP(map->find_last_free(), PAGE_SIZE);
+                vdso_entry = vdso_va + 0x420; /* determined by parsing x86vdso */
+                MemoryMap::MapElement me(vdso_va, sb.st_size, vdso, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+                me.set_name("[vdso]");
+                map->insert(me);
+
+                if (sb.st_size!=ALIGN_UP(sb.st_size, PAGE_SIZE)) {
+                    MemoryMap::MapElement me2(vdso_va+sb.st_size, ALIGN_UP(sb.st_size, PAGE_SIZE)-sb.st_size,
+                                              MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+                    me2.set_name(me.get_name());
+                    map->insert(me2);
+                }
+
+                if (debug && trace_loader) fprintf(debug, "loaded %s at 0x%08"PRIx64"\n", vdso_name.c_str(), vdso_va);
+            }
+        }
+        if (0==vdso_va)
+            fprintf(stderr, "warning: cannot find virtual dynamic shared object: %s\n", vdso_name.c_str());
+    }
 
     /* Find a disassembler. */
     if (!disassembler)
@@ -463,8 +600,10 @@ EmulationPolicy::load(const char *name)
 
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
      * below where ld-linux.so.2 was loaded, the stack, etc. */
-    brk_va = ALIGN_UP(map->find_last_free(brk_base), PAGE_SIZE);
+    rose_addr_t free_area = std::max(map->find_last_free(ld_linux_base_va), (rose_addr_t)brk_base);
+    brk_va = ALIGN_UP(free_area, PAGE_SIZE);
 
+    delete loader;
     return fhdr;
 }
 
@@ -482,16 +621,24 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     melmt.set_name("stack");
     map->insert(melmt);
 
-    /* Initialize the stack with specimen's argc and argv */
+    /* Initialize the stack with specimen's argc and argv. Also save the arguments in the class. */
+    ROSE_ASSERT(exeargs.size()==1);                     /* contains only the executable path */
     std::vector<uint32_t> pointers;                     /* pointers pushed onto stack at the end of initialization */
     pointers.push_back(argc);
     for (int i=0; i<argc; i++) {
-        size_t len = strlen(argv[i]) + 1; /*inc. NUL termination*/
+        std::string arg;
+        if (0==i) {
+            arg = exeargs[0];
+        } else {
+            arg = argv[i];
+            exeargs.push_back(arg);
+        }
+        size_t len = arg.size() + 1; /*inc. NUL termination*/
         sp -= len;
-        map->write(argv[i], sp, len);
+        map->write(arg.c_str(), sp, len);
         pointers.push_back(sp);
         if (trace_loader)
-            fprintf(stderr, "argv[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, argv[i]);
+            fprintf(stderr, "argv[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, arg.c_str());
     }
     pointers.push_back(0); /*the argv NULL terminator*/
 
@@ -521,13 +668,45 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
             }
         } t1;
         t1.traverse(fhdr, preorder);
-
         auxv.clear();
-#if 0 /*FIXME: the simulator certainly doesn't have all these capabilities, but I'm not sure what the bit numbers are. */
-        /* AT_HWCAP */
+
+        if (vdso_va!=0) {
+            /* AT_SYSINFO_ENTRY */
+            auxv.push_back(0x20);
+            auxv.push_back(vdso_entry);
+            if (trace_loader)
+                fprintf(stderr, "AT_SYSINFO_ENTRY: 0x%08"PRIx32"\n", auxv.back());
+
+            /* AT_SYSINFO */
+            auxv.push_back(0x21);
+            auxv.push_back(vdso_va);
+            if (trace_loader)
+                fprintf(stderr, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
+        }
+
+#if 0 /*Disabled because it causes ld.so to execute MXX instructions [RPM 2010-09-21]*/
+        /* AT_HWCAP (see linux <include/asm/cpufeature.h>) */
         auxv.push_back(16);
-        auxv.push_back(0xbfebfbff); /*fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts
-                                         * acpi mmx fxsr sse sse2 ss ht tm pbe */
+        auxv.push_back(
+                       //(1u<<3)  |       /*pse           page size extensions*/
+                       //(1u<<4)  |       /*tsc           time stamp counter*/
+                       //(1u<<5)  |       /*msr           model-specific registers*/
+                       //(1u<<6)  |       /*pae           physical address extensions*/
+                       //(1u<<7)  |       /*mce           machine check exception*/
+                       //(1u<<8)  |       /*cx8           CMPXCHG8 instruction*/
+                       //(1u<<9)  |       /*apic          onboard APIC*/
+                       (1u<<11) |       /*sep           SYSENTER/SYSEXIT instructions*/
+                       //(1u<<12) |       /*mtrr          memory type range registers*/
+                       //(1u<<13) |       /*pge           page global enable*/
+                       //(1u<<14) |       /*mca           machine check architecture */
+                       (1u<<15) |       /*cmov          CMOV instructions (and floating point varieties with FPU)*/
+                       //(1u<<16) |       /*pat           page attribute table*/
+                       //(1u<<17) |       /*pse36         36-bit PSEs*/
+                       //(1u<<18) |       /*clflush       CLFLUSH instruction*/
+                       //(1u<<22) |       /*acpi          ACPI via MSR*/
+                       //(1u<<29) |       /*acc           "tm" automatic clock control*/
+                       //(1u<<31) |       /*pbe           pending break enable*/
+                       0);
         if (trace_loader)
             fprintf(stderr, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
 #endif
@@ -610,14 +789,18 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         if (trace_loader)
             fprintf(stderr, "AT_SECURE:        %"PRId32"\n", auxv.back());
 
-        /*FIXME: AT_PLATFORM should be i386 but not sure of the number. Setting it to i686 causes ld.so to execute floating
-         *       point instructions that are not handled by the simulator.  [RPM 2010-09-18] */
-#if 0
+#if 0 /*Disabled because it causes ld.so to execute MXX instructions [RPM 2010-09-21]*/
         /* AT_PLATFORM */
-        auxv.push_back(16);
-        auxv.push_back(0xbffff04b); /*i686*/
-        if (trace_loader)
-            fprintf(stderr, "AT_PLATFORM:      0x%08"PRIx32"\n", auxv.back());
+        {
+            const char *platform = "i386";
+            size_t len = strlen(platform)+1;
+            sp -= len;
+            map->write(platform, sp, len);
+            auxv.push_back(16);
+            auxv.push_back(sp);
+            if (trace_loader)
+                fprintf(stderr, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
+        }
 #endif
     }
 
@@ -663,7 +846,6 @@ EmulationPolicy::current_insn()
         insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
     } catch (Disassembler::Exception &e) {
         std::cerr <<e <<"\n";
-        std::cerr <<"dumping specimen core...\n";
         dump_core(SIGSEGV);
         throw;
     }
@@ -673,10 +855,25 @@ EmulationPolicy::current_insn()
 }
 
 void
-EmulationPolicy::dump_core(int signo)
+EmulationPolicy::dump_core(int signo, std::string base_name)
 {
+    if (base_name.empty())
+        base_name = core_base_name;
+
+    fprintf(stderr, "dumping specimen core...\n");
     fprintf(stderr, "memory map at time of core dump:\n");
     map->dump(stderr, "  ");
+
+    if (core_styles & CORE_ROSE)
+        map->dump(base_name);
+    if (0==(core_styles & CORE_ELF))
+        return;
+
+    /* Get current instruction pointer. We subtract the size of the current instruction if we're in the middle of processing
+     * an instruction because it would have already been incremented by the semantics. */ 
+    uint32_t eip = readIP().known_value();
+    if (get_insn())
+        eip -= get_insn()->get_raw_bytes().size();
 
     SgAsmGenericFile *ef = new SgAsmGenericFile;
     ef->set_truncate_zeros(false);
@@ -754,34 +951,9 @@ EmulationPolicy::dump_core(int signo)
     prstatus.fs = readSegreg(x86_segreg_fs).known_value();
     prstatus.gs = readSegreg(x86_segreg_gs).known_value();
     prstatus.orig_ax = readGPR(x86_gpr_ax).known_value();
-    prstatus.ip = readIP().known_value();
+    prstatus.ip = eip;
     prstatus.cs = readSegreg(x86_segreg_cs).known_value();
-    prstatus.flags = 0;
-#define ADD_PRSTATUS_FLAG(NAME, BITPOS) \
-    prstatus.flags |= readFlag(NAME).is_known() ? readFlag(NAME).known_value() << (BITPOS) : 0
-    ADD_PRSTATUS_FLAG(x86_flag_cf, 0);
-    ADD_PRSTATUS_FLAG(x86_flag_1, 1);
-    ADD_PRSTATUS_FLAG(x86_flag_pf, 2);
-    ADD_PRSTATUS_FLAG(x86_flag_3, 3);
-    ADD_PRSTATUS_FLAG(x86_flag_af, 4);
-    ADD_PRSTATUS_FLAG(x86_flag_5, 5);
-    ADD_PRSTATUS_FLAG(x86_flag_zf, 6);
-    ADD_PRSTATUS_FLAG(x86_flag_sf, 7);
-    ADD_PRSTATUS_FLAG(x86_flag_tf, 8);
-    ADD_PRSTATUS_FLAG(x86_flag_if, 9);
-    ADD_PRSTATUS_FLAG(x86_flag_df, 10);
-    ADD_PRSTATUS_FLAG(x86_flag_of, 11);
-    ADD_PRSTATUS_FLAG(x86_flag_iopl0, 12);
-    ADD_PRSTATUS_FLAG(x86_flag_iopl1, 13);
-    ADD_PRSTATUS_FLAG(x86_flag_nt, 14);
-    ADD_PRSTATUS_FLAG(x86_flag_15, 15);
-    ADD_PRSTATUS_FLAG(x86_flag_rf, 16);
-    ADD_PRSTATUS_FLAG(x86_flag_vm, 17);
-    ADD_PRSTATUS_FLAG(x86_flag_ac, 18);
-    ADD_PRSTATUS_FLAG(x86_flag_vif, 19);
-    ADD_PRSTATUS_FLAG(x86_flag_vip, 20);
-    ADD_PRSTATUS_FLAG(x86_flag_id, 21);
-#undef ADD_PRSTATUS_FLAG
+    prstatus.flags = get_eflags();
     prstatus.sp = readGPR(x86_gpr_sp).known_value();
     prstatus.ss = readSegreg(x86_segreg_ss).known_value();
     prstatus.fpvalid = 0;     /*ROSE doesn't support floating point yet*/
@@ -813,29 +985,103 @@ EmulationPolicy::dump_core(int signo)
     prpsinfo.sname = 'R';
     prpsinfo.zombie = 0;
     prpsinfo.nice = getpriority(PRIO_PROCESS, getpid());
-    prpsinfo.flags = 0;                                         /* see linux/sched.h PF_* bits */
+    prpsinfo.flags = 0x2400; /* see linux/sched.h PF_* bits (0x2000=>dumped core; 0x400=>forked but not exec*/
     prpsinfo.uid = geteuid();
     prpsinfo.gid = getegid();
+    prpsinfo.pid = getpid();
     prpsinfo.ppid = getppid();
     prpsinfo.pgrp = getpgrp();
     prpsinfo.sid = getsid(0);
-    strncpy(prpsinfo.fname, "/home/matzke/syscall_tst_18", sizeof(prpsinfo.fname));   /*FIXME*/
-    strncpy(prpsinfo.psargs, "/home/matzke/syscall_tst_18", sizeof(prpsinfo.psargs)); /*FIXME*/
+    strncpy(prpsinfo.fname, exename.c_str(), sizeof(prpsinfo.fname));
+    std::string all_args;
+    for (size_t i=0; i<exeargs.size(); i++)
+        all_args += exeargs[i] + " "; /*yes, there's an extra space at the end*/
+    strncpy(prpsinfo.psargs, all_args.c_str(), sizeof(prpsinfo.psargs));
     
     SgAsmElfNoteEntry *prpsinfo_note = new SgAsmElfNoteEntry(notes);
     prpsinfo_note->get_name()->set_string("CORE");
     prpsinfo_note->set_type(3); /*ET_PRPSINFO*/
     prpsinfo_note->set_payload(&prpsinfo, sizeof prpsinfo);
 
-    /* Note CORE.AUXV(6)                  (144 bytes) */
+    /* Note CORE.AUXV(6) */
     SgAsmElfNoteEntry *auxv_note = new SgAsmElfNoteEntry(notes);
     auxv_note->get_name()->set_string("CORE");
     auxv_note->set_type(6);
     auxv_note->set_payload(&auxv[0], 4*auxv.size());
 
+#if 0
     /* Note CORE.PRFPREG(2)               (108 bytes) */
-    /* Note LINUX.PRXFPREG(0x45e62b7f)    (512 bytes) */
+    /* This was just copied straight from an actual core dump because we shouldn't need it here anyway. It's the
+     * user_i387_struct defined in linux source code <include/asm/user_32.h> containing 27 doublewords. */
+    uint8_t prfpreg[] = {
+        0x7f, 0x03, 0xff, 0xff, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+        0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    SgAsmElfNoteEntry *prfpreg_note = new SgAsmElfNoteEntry(notes);
+    prfpreg_note->get_name()->set_string("CORE");
+    prfpreg_note->set_type(2);
+    prfpreg_note->set_payload(prfpreg, sizeof prfpreg);
+#endif
+ 
+#if 0
+    /* Note LINUX.PRXFPREG(0x46e62b7f)    (512 bytes) */
+    /* FIXME: This was just copied straight from a real core dump. It's the user32_fxsr_struct defined in the linux source
+     *        code <include/asm/user_32.h>.  I don't think we need it because we're not using floating point registers. */
+    uint8_t prxfpreg[] = {
+        0x7f, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x1f, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+    SgAsmElfNoteEntry *prxfpreg_note = new SgAsmElfNoteEntry(notes);
+    prxfpreg_note->get_name()->set_string("LINUX");
+    prxfpreg_note->set_type(0x46e62b7f);
+    prxfpreg_note->set_payload(prxfpreg, sizeof prxfpreg);
+#endif
+
     /* Note LINUX.386_TLS(0x200)          (48 bytes)  i386 TLS slots (struct user_desc)*/
+    uint8_t i386_tls[] = {
+        0x0c, 0x00, 0x00, 0x00, 0xb0, 0xd6, 0x18, 0x40, 0xff, 0xff, 0x0f, 0x00, 0x51, 0x00, 0x00, 0x00,
+        0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00,
+        0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00
+    };
+    SgAsmElfNoteEntry *i386_tls_note = new SgAsmElfNoteEntry(notes);
+    i386_tls_note->get_name()->set_string("LINUX");
+    i386_tls_note->set_type(0x200);
+    i386_tls_note->set_payload(i386_tls, sizeof i386_tls);
+
     
     /*========================================================================================================================
      * LOAD sections
@@ -858,6 +1104,7 @@ EmulationPolicy::dump_core(int signo)
             set_mapped_xperm(0!=(perms & MemoryMap::MM_PROT_EXEC));
         }
         virtual void unparse(std::ostream &f) const {
+            if (0==get_size()) return;
             uint8_t buf[8192];
             rose_addr_t cur_va = get_mapped_preferred_va();     /* current virtual address */
             rose_addr_t nremain = get_mapped_size();            /* bytes remaining to be written to the file */
@@ -865,7 +1112,11 @@ EmulationPolicy::dump_core(int signo)
             while (nremain>0) {
                 rose_addr_t to_write = std::min(nremain, (rose_addr_t)sizeof buf);
                 size_t nread = map->read(buf, cur_va, to_write);
+#if 1
+                memset(buf+nread, 0, to_write-nread);
+#else
                 ROSE_ASSERT(nread==to_write);
+#endif
                 offset = write(f, offset, to_write, buf);
                 cur_va += to_write;
                 nremain -= to_write;
@@ -884,8 +1135,10 @@ EmulationPolicy::dump_core(int signo)
 
         /* Combine elmts[i] with as many following elements as possible. */
         std::vector<MemoryMap::MapElement>::const_iterator ej=ei+1;
+#if 0
         while (ej!=elmts.end() && va+sz==ej->get_va() && perms==ej->get_mapperms())
             sz += (ej++)->get_size();
+#endif
         ei = ej;
 
         /* Create a segment */
@@ -898,8 +1151,7 @@ EmulationPolicy::dump_core(int signo)
      * Generate the core file.
      *======================================================================================================================== */
 
-    /*FIXME: will replace with a more suitable name when working*/    
-    SgAsmExecutableFileFormat::unparseBinaryFormat("x-core.rose", ef);
+    SgAsmExecutableFileFormat::unparseBinaryFormat(base_name, ef);
     //deleteAST(ef); /*FIXME [RPM 2010-09-18]*/
 }
 
@@ -1224,7 +1476,7 @@ EmulationPolicy::emulate_syscall()
 
         case 45: { /*0x2d, brk*/
             syscall_enter("brk", "x");
-            uint32_t newbrk = ALIGN_DN(arg(0), PAGE_SIZE);
+            uint32_t newbrk = arg(0);
             int retval = 0;
 
             if (newbrk >= 0xb0000000ul) {
@@ -1522,6 +1774,45 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+	case 141: {     /*0x8d, getdents*/
+	    /* 
+               int getdents(unsigned int fd, struct linux_dirent *dirp,
+                           unsigned int count);
+
+          struct linux_dirent {
+              unsigned long  d_ino;     // Inode number 
+              unsigned long  d_off;     // Offset to next linux_dirent 
+              unsigned short d_reclen;  // Length of this linux_dirent 
+              char           d_name[];  // Filename (null-terminated) 
+                                 // length is actually (d_reclen - 2 -
+              		         //          offsetof(struct linux_dirent, d_name) 
+          }
+
+          The system call getdents() reads several linux_dirent structures from the
+          directory referred to by the open file descriptor fd into the buffer pointed
+          to by dirp.  The argument count specifies the size of that buffer.
+        */
+
+        syscall_enter("getdents", "dpd");
+	    unsigned int fd = arg(0);
+
+	    // Create a buffer of the same length as the buffer in the specimen
+        const size_t dirent_size = arg(2);
+
+        uint8_t dirent[dirent_size];
+        memset(dirent, 0xff, sizeof dirent);
+
+	    //Call the system call and write result to the buffer in the specimen
+	    int result = 0xdeadbeef;
+	    result = syscall(141, fd, dirent, dirent_size);
+
+        map->write(dirent, arg(1), dirent_size);
+        writeGPR(x86_gpr_ax, result);
+
+        syscall_leave("d");
+	    break;
+        }
+
         case 146: { /*0x92, writev*/
             syscall_enter("writev", "dpd");
             uint32_t fd=arg(0), iov_va=arg(1);
@@ -1536,7 +1827,7 @@ EmulationPolicy::emulate_syscall()
                 uint32_t buf_sz_le;
                 nread = map->read(&buf_sz_le, iov_va+i*8+4, 4);
                 ROSE_ASSERT(4==nread);
-                uint32_t buf_sz = SgAsmExecutableFileFormat::le_to_host(buf_va_le);
+                uint32_t buf_sz = SgAsmExecutableFileFormat::le_to_host(buf_sz_le);
 
                 if (debug)
                     fprintf(debug, "    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32"\n", i, buf_va, buf_sz);
@@ -2031,7 +2322,7 @@ EmulationPolicy::emulate_syscall()
         }
 
 	case 306: { /* 0x132, fchmodat */
-            syscall_enter("fchmodat", "dsd");
+            syscall_enter("fchmodat", "dsdd");
 	    int dirfd = arg(0);
 	    uint32_t path = arg(1);
             std::string sys_path = read_string(path);
@@ -2067,7 +2358,6 @@ EmulationPolicy::emulate_syscall()
             for (int i=0; i<6; i++)
                 fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", arg(i));
             fprintf(stderr, ") is not implemented yet\n\n");
-            fprintf(stderr, "dumping specimen core...\n");
             dump_core(SIGSYS);
             abort();
         }
@@ -2097,6 +2387,7 @@ EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
     va_start(ap, format);
 
     if (debug && trace_syscall) {
+        fprintf(debug, "0x%08"PRIx64": ", readIP().known_value());
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], arg(i), args+i, ap);
@@ -2143,7 +2434,7 @@ main(int argc, char *argv[])
     EmulationPolicy policy;
     Semantics t(policy);
     uint32_t dump_at = 0;               /* dump core the first time we hit this address, before the instruction is executed */
-    std::string dump_name = "core";
+    std::string dump_name = "dump";
 
     /* Parse command-line */
     int argno = 1;
@@ -2188,6 +2479,21 @@ main(int argc, char *argv[])
             policy.trace_insn = true;
             policy.trace_syscall = true;
             argno++;
+        } else if (!strncmp(argv[argno], "--core=", 7)) {
+            policy.core_styles = 0;
+            for (char *s=argv[argno]+7; s && *s; /*void*/) {
+                if (!strncmp(s, "elf", 3)) {
+                    s += 3;
+                    policy.core_styles |= CORE_ELF;
+                } else if (!strncmp(s, "rose", 4)) {
+                    s += 4;
+                    policy.core_styles |= CORE_ROSE;
+                } else {
+                    fprintf(stderr, "%s: unknown core dump type for %s\n", argv[0], argv[argno]);
+                }
+                while (','==*s) s++;
+            }
+            argno++;
         } else if (!strncmp(argv[argno], "--dump=", 7)) {
             char *rest;
             errno = 0;
@@ -2213,14 +2519,18 @@ main(int argc, char *argv[])
         fprintf(policy.debug, "memory map after program load:\n");
         policy.map->dump(policy.debug, "  ");
     }
+    if (policy.debug && policy.trace_state) {
+        fprintf(policy.debug, "Initial state:\n");
+        policy.dump_registers(policy.debug);
+    }
 
     /* Execute the program */
     bool seen_entry_va = false;
     while (true) {
         try {
             if (dump_at!=0 && dump_at == policy.readIP().known_value()) {
-                fprintf(stderr, "Reached dump point. Dumping specimen core...\n");
-                policy.dump_core(SIGABRT);
+                fprintf(stderr, "Reached dump point.\n");
+                policy.dump_core(SIGABRT, dump_name);
                 dump_at = 0;
             }
             SgAsmx86Instruction *insn = policy.current_insn();
@@ -2235,9 +2545,15 @@ main(int argc, char *argv[])
                 policy.dump_registers(policy.debug);
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
+#if 0
+            policy.dump_core(SIGILL);
             abort();
+#else
+            std::cerr <<"Ignored. Continuing with a corrupt state...\n";
+#endif
         } catch (const VirtualMachineSemantics::Policy::Exception &e) {
             std::cerr <<e <<"\n\n";
+            policy.dump_core(SIGILL);
             abort();
         } catch (const EmulationPolicy::Exit &e) {
             /* specimen has exited */

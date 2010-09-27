@@ -65,7 +65,7 @@ while (my $filename = $files->next_file) {
   if ($filename =~ /\.(h|hh|c|cpp|C)$/ && open FILE, "<", $filename) {
 
     # Determine indentation delta distributions for space-only indentation vs. tab indentation
-    my($indent,$nlines,%spc_deltas,%tab_deltas);
+    my($indent,$nspc,$ntab,%spc_deltas,%tab_deltas);
     while (<FILE>) {
       my $line = expand($_); # uses 8-column tab-stops
       my $actual = length $1 if $line =~ /^(\s*)\S/;
@@ -73,8 +73,10 @@ while (my $filename = $files->next_file) {
       $indent = $actual;
       if ($delta) {
 	if (/^\s*?\t/) {
+	  $nspc++;
 	  $tab_deltas{$delta}++;
 	} else {
+	  $ntab++;
 	  $spc_deltas{$delta}++;
 	}
       }
@@ -82,6 +84,10 @@ while (my $filename = $files->next_file) {
     close FILE;
 
     # Base indentation is computed from spaces since spaces are a known width and generally more common than tabs.
+    # However, if less than 5% of the lines are SPC indented then abandon the policy checker--there is probably not
+    # enough data to make the determination.
+    next if $ntab==0;
+    next if $nspc / ($nspc+$ntab) < 0.05;
     my $base = base_indentation \%spc_deltas;
     if (0) {
       print $filename, ":\n";
