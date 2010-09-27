@@ -262,6 +262,9 @@ public:
     /* Print the return value of a system call in a manner like strace */
     void syscall_leave(const char *format, ...);
 
+    /* Print the contents of a struct filled in by a system call. */
+    void syscall_result(uint32_t ptr, size_t sz, ArgInfo::StructPrinter);
+
     /* Initializes an ArgInfo object to pass to syscall printing functions. */
     void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list ap);
 
@@ -2405,6 +2408,13 @@ EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_li
         case 's':       /*NUL-terminated string*/
             info->str = read_string(val);
             break;
+        case 'P': {       /*ptr to a struct*/
+            info->struct_size = va_arg(ap, size_t);
+            info->struct_printer = va_arg(ap, ArgInfo::StructPrinter);
+            info->struct_buf = new uint8_t[info->struct_size];
+            info->struct_nread = map->read(info->struct_buf, info->val, info->struct_size);
+            break;
+        }
     }
 }
 
@@ -2440,6 +2450,21 @@ EmulationPolicy::syscall_leave(const char *format, ...)
     }
 }
 
+void
+EmulationPolicy::syscall_result(uint32_t va, size_t sz, ArgInfo::StructPrinter printer)
+{
+    if (debug && trace_syscall) {
+        ArgInfo info;
+        info.val = va;
+        info.struct_printer = printer;
+        info.struct_buf = new uint8_t[sz];
+        info.struct_size = sz;
+        info.struct_nread = map->read(info.struct_buf, va, sz);
+        fprintf(debug, "    ");
+        print_single(debug, 'P',  &info);
+        fprintf(debug, "\n");
+    }
+}
 
 uint32_t
 EmulationPolicy::arg(int idx)
