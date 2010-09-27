@@ -32,10 +32,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-#ifndef HAVE_USER_DESC
-typedef modify_ldt_ldt_s user_desc;
-#endif
-
 
 /* AS extra required headrs for system call simulation */
 #include <sys/types.h>
@@ -61,6 +57,83 @@ typedef modify_ldt_ldt_s user_desc;
 #include <linux/unistd.h>
 
 enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
+
+#ifndef HAVE_USER_DESC
+typedef modify_ldt_ldt_s user_desc;
+#endif
+
+static int
+print_user_desc(FILE *f, const uint8_t *_ud, size_t sz)
+{
+    const user_desc *ud = (const user_desc*)_ud;
+    assert(sizeof(*ud)==sz);
+
+    return fprintf(f, "entry=%d, base=0x%08lx, limit=0x%08lx, %s, %u, %s, %s, %s, %s",
+                   (int)ud->entry_number, (unsigned long)ud->base_addr, (unsigned long)ud->limit,
+                   ud->seg_32bit ? "32bit" : "16bit",
+                   ud->contents, ud->read_exec_only ? "read_exec" : "writable",
+                   ud->limit_in_pages ? "page_gran" : "byte_gran",
+                   ud->seg_not_present ? "not_present" : "present",
+                   ud->useable ? "usable" : "not_usable");
+}
+
+/* Kernel stat data structure on 32-bit platforms; the data written back to the specimen's memory */
+struct kernel_stat_32 {
+    uint64_t        dev;                    /* see 64.dev */
+    uint32_t        pad_1;                  /* all bits set */
+    uint32_t        ino_lo;                 /* low-order bits only */
+    uint32_t        mode;
+    uint32_t        nlink;
+    uint32_t        user;
+    uint32_t        group;
+    uint64_t        rdev;
+    uint32_t        pad_2;                  /* all bits set */
+    uint64_t        size;                   /* 32-bit alignment */
+    uint32_t        blksize;
+    uint64_t        nblocks;
+    uint32_t        atim_sec;
+    uint32_t        atim_nsec;              /* always zero */
+    uint32_t        mtim_sec;
+    uint32_t        mtim_nsec;              /* always zero */
+    uint32_t        ctim_sec;
+    uint32_t        ctim_nsec;              /* always zero */
+    uint64_t        ino;
+} __attribute__((packed));
+
+/* Kernel stat data structure on 64-bit platforms; */
+struct kernel_stat_64 {
+    uint64_t        dev;                   /* probably not 8 bytes, but MSBs seem to be zero anyway */
+    uint64_t        ino;
+    uint64_t        nlink;
+    uint32_t        mode;
+    uint32_t        user;
+    uint32_t        group;
+    uint32_t        pad_1;
+    uint64_t        rdev;
+    uint64_t        size;
+    uint64_t        blksize;
+    uint64_t        nblocks;
+    uint64_t        atim_sec;
+    uint64_t        atim_nsec;              /* always zero */
+    uint64_t        mtim_sec;
+    uint64_t        mtim_nsec;              /* always zero */
+    uint64_t        ctim_sec;
+    uint64_t        ctim_nsec;              /* always zero */
+    uint64_t        pad_2;
+    uint64_t        pad_3;
+    uint64_t        pad_4;
+};
+
+static int
+print_kernel_stat_32(FILE *f, const uint8_t *_sb, size_t sz)
+{
+    assert(sz==sizeof(kernel_stat_32));
+    const kernel_stat_32 *sb = (const kernel_stat_32*)_sb;
+    return fprintf(f, "dev=%"PRIu64", ino=%"PRIu64", mode=0%03"PRIo32", nlink=%"PRIu32", uid=%"PRIu32", gid=%"PRIu32
+                   ", rdev=%"PRIu64", size=%"PRIu64", blksz=%"PRIu32", blocks=%"PRIu64", ...",
+                   sb->dev, sb->ino, sb->mode, sb->nlink, sb->user, sb->group,
+                   sb->rdev, sb->size, sb->blksize, sb->nblocks);
+}
 
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
@@ -2160,6 +2233,8 @@ EmulationPolicy::emulate_syscall()
 
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
+            if (result>=0)
+                syscall_result(arg(1), sizeof(kernel_stat_32), print_kernel_stat_32);
             break;
         }
 
@@ -2266,31 +2341,20 @@ EmulationPolicy::emulate_syscall()
             fprintf(stderr, "futex syscall is returning ENOSYS for now.\n"); /*FIXME*/
             break;
         }
-            
+
         case 243: { /*0xf3, set_thread_area*/
-            syscall_enter("set_thread_area", "p");
+            syscall_enter("set_thread_area", "P", sizeof(user_desc), print_user_desc);
             uint32_t u_info_va=arg(0);
             user_desc ud;
             size_t nread = map->read(&ud, u_info_va, sizeof ud);
             ROSE_ASSERT(nread==sizeof ud);
-#if 1 /*FIXME: should be using syscall_enter*/
-            if (debug && trace_syscall) {
-                fprintf(debug, "  set_thread_area({%d, 0x%08lx, 0x%08x, %s, %u, %s, %s, %s, %s})\n",
-                        (int)ud.entry_number, (unsigned long)ud.base_addr, ud.limit,
-                        ud.seg_32bit ? "32bit" : "16bit",
-                        ud.contents, ud.read_exec_only ? "read_exec" : "writable",
-                        ud.limit_in_pages ? "page_gran" : "byte_gran",
-                        ud.seg_not_present ? "not_present" : "present",
-                        ud.useable ? "usable" : "not_usable");
-            }
-#endif
             if (ud.entry_number==(unsigned)-1) {
                 for (ud.entry_number=0x33>>3; ud.entry_number<n_gdt; ud.entry_number++) {
                     if (!gdt[ud.entry_number].useable) break;
                 }
                 ROSE_ASSERT(ud.entry_number<8192);
                 if (debug && trace_syscall)
-                    fprintf(debug, "  assigned entry number = %d\n", (int)ud.entry_number);
+                    fprintf(debug, "[entry #%d] ", (int)ud.entry_number);
             }
             gdt[ud.entry_number] = ud;
             size_t nwritten = map->write(&ud, u_info_va, sizeof ud);
