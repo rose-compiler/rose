@@ -896,7 +896,7 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
         );
     else
         cast_op=   buildCastExp(
-               buildLongLongIntVal( 0),
+               buildLongIntVal( 0),
                buildUnsignedLongType()
            );
 
