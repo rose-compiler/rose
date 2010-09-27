@@ -37,7 +37,7 @@ define checkFile
 $(addprefix check-, $(1)): $(1)
 # Ignore output of actual files. Some require non 0 exit values
 	$(addprefix ./, $(1))
-	../x86sim $(1)
+	../x86sim ./$(notdir $(1))
 endef
 
 TST_FILES_LINKING= $(srcdir)/parse_opts.c \
