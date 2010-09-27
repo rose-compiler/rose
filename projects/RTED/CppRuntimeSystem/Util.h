@@ -5,7 +5,11 @@
 
 #include <string>
 
-
+#ifndef  _WIN64
+#define unsigned_long_long unsigned long
+#else
+#define unsigned_long_long unsigned long long
+#endif
 
 typedef unsigned long addr_type;
 

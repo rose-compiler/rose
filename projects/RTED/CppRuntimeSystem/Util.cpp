@@ -50,7 +50,7 @@ string SourcePosition::getTransformedFile() const
     string fileWithoutSuffix  = file.substr(0,pos);
 
     string suffix;
-    if(pos <= file.size() )
+    if(pos <= (int)file.size() )
         suffix = file.substr(pos);
 
     return fileWithoutSuffix + "_rose" + suffix;
