@@ -217,31 +217,10 @@ public:
 
     uint32_t get_eflags() const {
         uint32_t eflags = 0;
-#define ADD_PRSTATUS_FLAG(NAME, BITPOS) \
-            eflags |= readFlag(NAME).is_known() ? readFlag(NAME).known_value() << (BITPOS) : 0
-        ADD_PRSTATUS_FLAG(x86_flag_cf, 0);
-        ADD_PRSTATUS_FLAG(x86_flag_1, 1);
-        ADD_PRSTATUS_FLAG(x86_flag_pf, 2);
-        ADD_PRSTATUS_FLAG(x86_flag_3, 3);
-        ADD_PRSTATUS_FLAG(x86_flag_af, 4);
-        ADD_PRSTATUS_FLAG(x86_flag_5, 5);
-        ADD_PRSTATUS_FLAG(x86_flag_zf, 6);
-        ADD_PRSTATUS_FLAG(x86_flag_sf, 7);
-        ADD_PRSTATUS_FLAG(x86_flag_tf, 8);
-        ADD_PRSTATUS_FLAG(x86_flag_if, 9);
-        ADD_PRSTATUS_FLAG(x86_flag_df, 10);
-        ADD_PRSTATUS_FLAG(x86_flag_of, 11);
-        ADD_PRSTATUS_FLAG(x86_flag_iopl0, 12);
-        ADD_PRSTATUS_FLAG(x86_flag_iopl1, 13);
-        ADD_PRSTATUS_FLAG(x86_flag_nt, 14);
-        ADD_PRSTATUS_FLAG(x86_flag_15, 15);
-        ADD_PRSTATUS_FLAG(x86_flag_rf, 16);
-        ADD_PRSTATUS_FLAG(x86_flag_vm, 17);
-        ADD_PRSTATUS_FLAG(x86_flag_ac, 18);
-        ADD_PRSTATUS_FLAG(x86_flag_vif, 19);
-        ADD_PRSTATUS_FLAG(x86_flag_vip, 20);
-        ADD_PRSTATUS_FLAG(x86_flag_id, 21);
-#undef ADD_PRSTATUS_FLAG
+        for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
+            if (readFlag((X86Flag)i).is_known())
+                eflags |= readFlag((X86Flag)i).known_value() ? 1u<<i : 0u;
+        }
         return eflags;
     }
 
