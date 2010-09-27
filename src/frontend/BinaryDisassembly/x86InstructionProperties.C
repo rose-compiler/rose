@@ -528,7 +528,7 @@ const char* flagToString(X86Flag n) {
       /*18*/ "ac",
       /*19*/ "vif",
       /*20*/ "vip",
-      /*21*/ "id"
+      /*21*/ "id",
       /*22*/ "?22",
       /*23*/ "?23",
       /*24*/ "?24",
@@ -540,6 +540,6 @@ const char* flagToString(X86Flag n) {
       /*30*/ "?30",
       /*31*/ "?31"
   };
-  ROSE_ASSERT ((int)n >= 0 && (int)n <= 32);
+  ROSE_ASSERT ((int)n >= 0 && (int)n < 32);
   return names[(int)n];
 }
