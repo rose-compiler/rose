@@ -1435,17 +1435,15 @@ EmulationPolicy::emulate_syscall()
             break;
 	}
 
-
-
         case 13: { /*0xd, time */
             syscall_enter("time", "p");
-            uint32_t t = arg(0);
             time_t result = time(NULL);
-            if (t) {
-              uint32_t t_le;
-              SgAsmExecutableFileFormat::host_to_le(t, &t_le);
-              size_t nwritten = map->write(&t_le, result, 4);
-              ROSE_ASSERT(4==nwritten);    }
+            if (arg(0)) {
+                uint32_t t_le;
+                SgAsmExecutableFileFormat::host_to_le(result, &t_le);
+                size_t nwritten = map->write(&t_le, arg(0), 4);
+                ROSE_ASSERT(4==nwritten);
+            }
             writeGPR(x86_gpr_ax, result);
             syscall_leave("t");
             break;
