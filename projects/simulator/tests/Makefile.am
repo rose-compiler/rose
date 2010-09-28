@@ -54,9 +54,9 @@ $(foreach file, $(SYSCALL_FILES_SA), $(eval $(call compile, $(file))))
 
 $(foreach file, $(SYSCALL_FILES_RT), $(eval $(call compile, $(file), -lrt  ) ))
 
-$(foreach file, $(SYSCALL_FILES_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING) -lselinux )))
+$(foreach file, $(SYSCALL_FILES_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING) ) -lrt ))
 
-$(foreach file, $(SYSCALL_FILES_FAIL_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING) -lselinx )))
+$(foreach file, $(SYSCALL_FILES_FAIL_TST), $(eval $(call compile, $(file), $(TST_FILES_LINKING)  ) -lrt ))
 
 $(foreach file, $(SYSCALL_FILES_FAIL_SA), $(eval $(call compile, $(file))))
 

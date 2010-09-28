@@ -1543,6 +1543,37 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 42: { /*0x2a, pipe*/
+            /*
+               int pipe(int filedes[2]); 
+
+               pipe() creates a pair of file descriptors, pointing to a pipe inode, and 
+               places them in the array pointed to by filedes. filedes[0] is for reading, 
+               filedes[1] is for writing. 
+
+            */
+            syscall_enter("pipe", "p");
+
+
+            int32_t filedes_kernel[2];
+            size_t  size_filedes = sizeof(int32_t)*2;
+
+
+            int filedes[2];
+            int result = pipe(filedes);
+
+            filedes_kernel[0] = filedes[0];
+            filedes_kernel[1] = filedes[1];
+
+            map->write(filedes_kernel, arg(0), size_filedes);
+
+
+            if (-1==result) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
         case 45: { /*0x2d, brk*/
             syscall_enter("brk", "x");
             uint32_t newbrk = arg(0);
@@ -2307,6 +2338,47 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+ 	case 220: {     /*0xdc, getdents64*/
+	    /* 
+
+          long sys_getdents64(unsigned int fd, struct linux_dirent64 __user * dirent, unsigned int count) 
+
+          struct linux_dirent {
+              unsigned long  d_ino;     // Inode number 
+              unsigned long  d_off;     // Offset to next linux_dirent 
+              unsigned short d_reclen;  // Length of this linux_dirent 
+              char           d_name[];  // Filename (null-terminated) 
+                                 // length is actually (d_reclen - 2 -
+              		         //          offsetof(struct linux_dirent, d_name) 
+          }
+
+          The system call getdents() reads several linux_dirent structures from the
+          directory referred to by the open file descriptor fd into the buffer pointed
+          to by dirp.  The argument count specifies the size of that buffer.
+        */
+
+        syscall_enter("getdents64", "dpd");
+	    unsigned int fd = arg(0);
+
+	    // Create a buffer of the same length as the buffer in the specimen
+        const size_t dirent_size = arg(2);
+
+        uint8_t dirent[dirent_size];
+        memset(dirent, 0xff, sizeof dirent);
+
+	    //Call the system call and write result to the buffer in the specimen
+	    int result = 0xdeadbeef;
+	    result = syscall(220, fd, dirent, dirent_size);
+
+        map->write(dirent, arg(1), dirent_size);
+        writeGPR(x86_gpr_ax, result);
+
+        syscall_leave("d");
+	    break;
+        }
+
+
+
         case 221: { // fcntl
             syscall_enter("fcntl64", "ddp");
             uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);
@@ -2441,6 +2513,73 @@ EmulationPolicy::emulate_syscall()
                 fprintf(debug, "  memory map after set_tid_address syscall:\n");
                 map->dump(debug, "    ");
             }
+            break;
+        }
+
+        case 264:    /* 0x108, clock_settime */
+        case 265:    /* 0x109, clock_gettime */
+        case 266: {  /* 0x1a, clock_getres */
+                /*
+                  int clock_getres(clockid_t clk_id, struct timespec *res);
+                  int clock_gettime(clockid_t clk_id, struct timespec *tp);
+                  int clock_settime(clockid_t clk_id, const struct timespec *tp); 
+
+                  struct timespec {
+                      time_t   tv_sec;        // seconds 
+                      long     tv_nsec;       // nanoseconds 
+                  };
+
+                  The function clock_getres() finds the resolution (precision) of the 
+                  specified clock clk_id, and, if res is non-NULL, stores it in the 
+                  struct timespec pointed to by res. The resolution of clocks depends 
+                  on the implementation and cannot be configured by a particular process. 
+                  If the time value pointed to by the argument tp of clock_settime() is
+                  not a multiple of res, then it is truncated to a multiple of res. 
+            */
+
+            syscall_enter("clock_gettime", "dp");
+ 
+            int32_t which_clock = arg(0);
+            
+            //Check to see if times is NULL
+            uint8_t byte;
+            size_t nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+
+            int result;
+            if( byte != NULL )
+            {
+
+              struct kernel_timespec {
+                uint32_t   tv_sec;        // seconds 
+                uint32_t   tv_nsec;       // nanoseconds 
+              };
+
+
+
+              size_t size_timespec_sample = sizeof(kernel_timespec);
+
+              kernel_timespec ubuf;
+
+              size_t nread = map->read(&ubuf, arg(1), size_timespec_sample);
+
+              ROSE_ASSERT(nread == size_timespec_sample);
+
+              timespec timespec64;
+              timespec64.tv_sec  = ubuf.tv_sec;
+              timespec64.tv_nsec = ubuf.tv_nsec;
+              result = syscall(callno, which_clock, (unsigned long) &timespec64 );
+
+              ubuf.tv_sec = timespec64.tv_sec;
+              ubuf.tv_nsec = timespec64.tv_nsec;
+              map->write(&ubuf, arg(1), size_timespec_sample);
+    
+            }else
+              result = syscall(callno, which_clock, (unsigned long) NULL );
+
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
             break;
         }
 
