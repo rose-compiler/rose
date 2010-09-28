@@ -68,10 +68,17 @@ print_user_desc(FILE *f, const uint8_t *_ud, size_t sz)
     const user_desc *ud = (const user_desc*)_ud;
     assert(sizeof(*ud)==sz);
 
-    return fprintf(f, "entry=%d, base=0x%08lx, limit=0x%08lx, %s, %u, %s, %s, %s, %s",
+    const char *content_type = "unknown";
+    switch (ud->contents) {
+        case 0: content_type = "data"; break;
+        case 1: content_type = "stack"; break;
+        case 2: content_type = "code"; break;
+    }
+
+    return fprintf(f, "entry=%d, base=0x%08lx, limit=0x%08lx, %s, %s, %s, %s, %s, %s",
                    (int)ud->entry_number, (unsigned long)ud->base_addr, (unsigned long)ud->limit,
                    ud->seg_32bit ? "32bit" : "16bit",
-                   ud->contents, ud->read_exec_only ? "read_exec" : "writable",
+                   content_type, ud->read_exec_only ? "read_exec" : "writable",
                    ud->limit_in_pages ? "page_gran" : "byte_gran",
                    ud->seg_not_present ? "not_present" : "present",
                    ud->useable ? "usable" : "not_usable");
