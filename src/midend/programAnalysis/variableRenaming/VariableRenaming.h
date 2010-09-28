@@ -110,35 +110,39 @@ public:
         return name;
     }
 };
-
 /** Struct containing a filtering function to determine what CFG nodes
  * are interesting during the DefUse traversal.
  */
 struct IsDefUseFilter
 {
-    /** Determines if the provided CFG node should be traversed during DefUse.
-     *
-     * @param cfgn The node in question.
-     * @return Whether it should be traversed.
-     */
-    bool operator() (CFGNode cfgn) const
-    {
-        SgNode *node = cfgn.getNode();
+	/** Determines if the provided CFG node should be traversed during DefUse.
+	 *
+	 * @param cfgn The node in question.
+	 * @return Whether it should be traversed.
+	 */
+	bool operator() (CFGNode cfgn) const
+	{
+		SgNode *node = cfgn.getNode();
 
-        //If it is the last node in a function call, keep it
-        if(isSgFunctionCallExp(node) && cfgn == node->cfgForEnd())
-            return true;
-        
-        //Remove all non-interesting nodes
-        if (!cfgn.isInteresting())
-            return false;
+		//If it is the last node in a function call, keep it
+		if (isSgFunctionCallExp(node) && cfgn == node->cfgForEnd())
+			return true;
 
-        //Remove all non-beginning nodes for initNames
-        if (isSgInitializedName(node) && cfgn != node->cfgForBeginning())
-            return false;
+		//The begin edges of basic blocks are not considered interesting, but we would like to keep them
+		//This is so we can propagate reachable defs to the top of a basic block
+		if (isSgBasicBlock(node) && cfgn == node->cfgForBeginning())
+			return true;
 
-        return true; 
-    }
+		//Remove all non-interesting nodes
+		if (!cfgn.isInteresting())
+			return false;
+
+		//Remove all non-beginning nodes for initNames
+		if (isSgInitializedName(node) && cfgn != node->cfgForBeginning())
+			return false;
+
+		return true;
+	}
 };
 
 /** Class that defines an VariableRenaming of a program
