@@ -1666,7 +1666,7 @@ EmulationPolicy::emulate_syscall()
 
         case 57: { /*0x39, setpgid*/
             syscall_enter("setpgid", "dd");
-            uint32_t pid=arg(0), pgid=arg(1);
+            pid_t pid=arg(0), pgid=arg(1);
             int result = setpgid(pid, pgid);
             if (-1==result) { result = -errno; }
             writeGPR(x86_gpr_ax, result);
