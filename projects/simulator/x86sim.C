@@ -2310,9 +2310,8 @@ EmulationPolicy::emulate_syscall()
                 T_END };
             syscall_enter("futex", "pfdppd", opflags);
             //uint32_t addr1=arg(0), op=arg(1), val1=arg(2), ptimeout=arg(3), addr2=arg(4), val3=arg(5);
-            writeGPR(x86_gpr_ax, -ENOSYS);
+            writeGPR(x86_gpr_ax, -ENOSYS); /*FIXME*/
             syscall_leave("d");
-            fprintf(stderr, "futex syscall is returning ENOSYS for now.\n"); /*FIXME*/
             break;
         }
 
