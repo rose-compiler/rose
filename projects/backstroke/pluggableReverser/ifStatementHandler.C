@@ -1,23 +1,18 @@
-#include "ifStatementProcessor.h"
+#include "ifStatementHandler.h"
 #include "pluggableReverser/variableVersionTable.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
-#include "utilities/CPPDefinesAndNamespaces.h"
 
 using namespace std;
 using namespace boost;
-using namespace SageBuilder;
 using namespace SageInterface;
+using namespace SageBuilder;
 
-struct IfStmtConditionAttribute : public EvaluationResultAttribute
-{
-    IfStmtConditionAttribute() : cond(NULL) {}
-    SgExpression* cond;
-};
+#define foreach BOOST_FOREACH
 
-typedef boost::shared_ptr<IfStmtConditionAttribute> IfStmtConditionAttributePtr;
 
-StatementReversal IfStatementProcessor::generateReverseAST(SgStatement* stmt, const EvaluationResult& evalResult)
+
+StatementReversal IfStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evalResult)
 {
 	ROSE_ASSERT(evalResult.getChildResults().size() == 3);
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
@@ -62,7 +57,7 @@ StatementReversal IfStatementProcessor::generateReverseAST(SgStatement* stmt, co
     return StatementReversal(fwd_stmt, rvs_stmt);
 }
 
-vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+vector<EvaluationResult> IfStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     vector<EvaluationResult> results;
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
@@ -72,8 +67,10 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
     // Make sure every if statement has a true and false body after being normalized.
     ROSE_ASSERT(if_stmt->get_false_body());
 
-	SgStatement* true_body = if_stmt->get_true_body();
-	SgStatement* false_body = if_stmt->get_false_body();
+	SgBasicBlock* true_body = isSgBasicBlock(if_stmt->get_true_body());
+	SgBasicBlock* false_body = isSgBasicBlock(if_stmt->get_false_body());
+	ROSE_ASSERT(true_body && false_body);
+	
 	VariableVersionTable true_body_var_table, false_body_var_table;
 	tie(true_body_var_table, false_body_var_table) = var_table.getVarTablesForIfBodies(true_body, false_body);
 
@@ -82,10 +79,8 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
 	cout << "false_body_var_table:\n";
 	false_body_var_table.print();
 
-    vector<EvaluationResult> true_body_res =
-            evaluateStatement(true_body, true_body_var_table);
-    vector<EvaluationResult> false_body_res =
-            evaluateStatement(false_body, false_body_var_table);
+    vector<EvaluationResult> true_body_res = evaluateStatement(true_body, true_body_var_table);
+    vector<EvaluationResult> false_body_res = evaluateStatement(false_body, false_body_var_table);
 
     SimpleCostModel cost;
 
@@ -130,14 +125,16 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
             cout << endl;
 #endif
 
-            vector<EvaluationResult> cond_results = evaluateStatement(if_stmt->get_conditional(), var_table);
+            vector<EvaluationResult> cond_results = evaluateStatement(if_stmt->get_conditional(), new_table);
 
             foreach (const EvaluationResult& res3, cond_results)
             {
-				EvaluationResult totalEvaluationResult(this, stmt, var_table);
+				EvaluationResult totalEvaluationResult(this, stmt, new_table);
 				totalEvaluationResult.addChildEvaluationResult(res1);
 				totalEvaluationResult.addChildEvaluationResult(res2);
 				totalEvaluationResult.addChildEvaluationResult(res3);
+
+				// FIXME Should addChildEvaluationResult update var table?
 				totalEvaluationResult.setVarTable(new_table);
 
                 // Here we should do an analysis to decide whether to store the branch flag.

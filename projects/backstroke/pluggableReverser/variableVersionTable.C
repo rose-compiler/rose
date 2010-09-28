@@ -31,7 +31,7 @@ VariableVersionTable::VariableVersionTable(SgFunctionDeclaration* func_decl, Var
 }
 
 /** Returns the version of the variable, or an empty set if the variable is not in the table. */
-set<int> VariableVersionTable::getVersion(VariableRenaming::VarName varName) const
+set<int> VariableVersionTable::getVersion(VarName varName) const
 {
 	if (table_.count(varName) == 0)
 	{
@@ -44,9 +44,7 @@ set<int> VariableVersionTable::getVersion(VariableRenaming::VarName varName) con
 
 void VariableVersionTable::print() const
 {
-	typedef pair<VariableRenaming::VarName, std::set<int> > VarIdxPair;
-
-	foreach(VarIdxPair var_idx, table_)
+	foreach(const TableType::value_type& var_idx, table_)
 	{
 		cout << VariableRenaming::keyToString(var_idx.first) << " : ";
 		foreach(int i, var_idx.second)
@@ -55,36 +53,6 @@ void VariableVersionTable::print() const
 	}
 }
 
-/** This function get all variables in an AST node. Note that for a variable a.b or a->b,
-	only a.b or a->b is returned, not a or b. */
-vector<SgExpression*> VariableVersionTable::getAllVariables(SgNode* node)
-{
-	vector<SgExpression*> vars;
-
-	vector<SgExpression*> exps = querySubTree<SgExpression>(node);
-
-	//ROSE_ASSERT(!exps.empty());
-
-	foreach(SgExpression* exp, exps)
-	{
-		SgExpression* cand = NULL;
-		if (isSgVarRefExp(exp))
-			cand = exp;
-		else if (isSgDotExp(exp) && isSgVarRefExp(isSgDotExp(exp)->get_rhs_operand()))
-			cand = exp;
-		else if (isSgArrowExp(exp) && isSgVarRefExp(isSgArrowExp(exp)->get_rhs_operand()))
-			cand = exp;
-
-		if (cand != NULL &&
-				isSgDotExp(cand->get_parent()) == NULL &&
-				isSgArrowExp(cand->get_parent()) == NULL)
-		{
-			vars.push_back(cand);
-		}
-	}
-
-	return vars;
-}
 
 bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
 {
@@ -94,7 +62,7 @@ bool VariableVersionTable::checkVersionForUse(SgExpression* exp) const
 	foreach(SgExpression* var, vars)
 	{
 		// When checking a USE var's version, we search its reaching def's version.
-		VariableRenaming::VarName name = VariableRenaming::getVarName(var);
+		VarName name = getVarName(var);
 		VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
 
 		ROSE_ASSERT(!defs.empty());
@@ -121,7 +89,7 @@ bool VariableVersionTable::checkVersionForDef(SgExpression* exp) const
 	foreach(SgExpression* var, vars)
 	{
 		// When checking a USE var's version, we search its reaching def's version.
-		VariableRenaming::VarName name = VariableRenaming::getVarName(var);
+		VarName name = getVarName(var);
 		VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getDefsAtNodeForName(var->get_parent(), name);
 
 		ROSE_ASSERT(!defs.empty());
@@ -159,7 +127,7 @@ bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) co
 
 	//foreach (SgExpression* var, lhs_vars)
 	{
-		VariableRenaming::VarName name = VariableRenaming::getVarName(lhs_var);
+		VarName name = getVarName(lhs_var);
 		VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getDefsAtNodeForName(lhs_var->get_parent(), name);
 
 		ROSE_ASSERT(!defs.empty());
@@ -189,7 +157,7 @@ bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) co
 		if (backstroke_util::areSameVariable(lhs_var, var))
 			continue;
 
-		VariableRenaming::VarName name = VariableRenaming::getVarName(var);
+		VarName name = getVarName(var);
 		VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
 
 		ROSE_ASSERT(!defs.empty());
@@ -219,7 +187,7 @@ bool VariableVersionTable::checkRhsVersion(SgNode* node) const
 
 	foreach(SgExpression* var, vars)
 	{
-		VariableRenaming::VarName name = VariableRenaming::getVarName(var);
+		VarName name = getVarName(var);
 		VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getReachingDefsAtNodeForName(var, name);
 
 		ROSE_ASSERT(!defs.empty());
@@ -248,7 +216,7 @@ bool VariableVersionTable::checkLhsVersion(SgNode* node) const
 
 	foreach(SgExpression* var, vars)
 	{
-		VariableRenaming::VarName name = VariableRenaming::getVarName(var);
+		VarName name = getVarName(var);
 		VariableRenaming::NumNodeRenameEntry defs = var_renaming_->getDefsAtNodeForName(var->get_parent(), name);
 
 		ROSE_ASSERT(!defs.empty());
@@ -269,7 +237,7 @@ bool VariableVersionTable::checkLhsVersion(SgNode* node) const
 void VariableVersionTable::setLastVersion(SgInitializedName* init_name)
 {
 	//FIXME: This does not set the versions of all the expanded variables
-	VariableRenaming::VarName name;
+	VarName name;
 	name.push_back(init_name);
 	SgFunctionDefinition* enclosing_func = SageInterface::getEnclosingFunctionDefinition(init_name->get_declaration());
 	VariableRenaming::NumNodeRenameEntry num_table = var_renaming_->getReachingDefsAtFunctionEndForName(enclosing_func, name);
@@ -285,7 +253,7 @@ void VariableVersionTable::reverseVersion(SgNode* node)
 {
 	// Note all expanded nodes are reversed here. For example, for m->a, both m->a
 	// and m are reversed.
-	VariableRenaming::VarName name = VariableRenaming::getVarName(node);
+	VarName name = getVarName(node);
 	ROSE_ASSERT(name != VariableRenaming::emptyName);
 
 	while (!name.empty())
@@ -307,14 +275,14 @@ void VariableVersionTable::reverseVersion(SgNode* node)
 
 void VariableVersionTable::setNullVersion(SgInitializedName* name)
 {
-	VariableRenaming::VarName var_name(1, name);
+	VarName var_name(1, name);
 	ROSE_ASSERT(table_.find(var_name) != table_.end());
 	table_[var_name].clear();
 }
 
 void VariableVersionTable::setNullVersion(SgNode* node)
 {
-	VariableRenaming::VarName varName = VariableRenaming::getVarName(node);
+	VarName varName = getVarName(node);
 	ROSE_ASSERT(varName != VariableRenaming::emptyName);
 	ROSE_ASSERT(table_.find(varName) != table_.end());
 	table_[varName].clear();
@@ -327,13 +295,63 @@ void VariableVersionTable::setNullVersion(SgNode* node)
  * this version in var table of the false body, and if thie def's enclosing if body is true body,
  * remove other versions in var table of the true body. And vice versa.  */
 std::pair<VariableVersionTable, VariableVersionTable>
-VariableVersionTable::getVarTablesForIfBodies(SgStatement* true_body, SgStatement* false_body) const
+VariableVersionTable::getVarTablesForIfBodies(SgBasicBlock* true_body, SgBasicBlock* false_body) const
 {
 	VariableVersionTable true_body_var_table = *this;
 	VariableVersionTable false_body_var_table = *this;
 
-	foreach (TableType::value_type var_version, table_)
+	VariableRenaming::NumNodeRenameTable true_body_defs = var_renaming_->getReachingDefsAtScopeEnd(true_body);
+	VariableRenaming::NumNodeRenameTable false_body_defs = var_renaming_->getReachingDefsAtScopeEnd(false_body);
+
+	foreach (const TableType::value_type& var_version, table_)
 	{
+		const VarName& var_name = var_version.first;
+
+		// Get the correct versions for var_name for true body.
+		if (true_body_defs.count(var_name) > 0)
+		{
+			set<int> true_body_versions;
+			// Get version for var_name from reaching defs at scope end.
+			foreach (const VariableRenaming::NumNodeRenameTable::mapped_type::value_type& num_node,
+				true_body_defs[var_name])
+				true_body_versions.insert(num_node.first);
+		
+			set<int> new_versions;
+			std::set_intersection(true_body_var_table.table_[var_name].begin(),
+					true_body_var_table.table_[var_name].end(),
+					true_body_versions.begin(), true_body_versions.end(),
+					inserter(new_versions, new_versions.begin()));
+			true_body_var_table.table_[var_name] = new_versions;
+		}
+		else
+		{
+			true_body_var_table.table_.erase(var_name);
+		}
+
+		// Get the correct versions for var_name for false body.
+		if (false_body_defs.count(var_name) > 0)
+		{
+			set<int> false_body_versions;
+			// Get version for var_name from reaching defs at scope end.
+			foreach (const VariableRenaming::NumNodeRenameTable::mapped_type::value_type& num_node,
+				false_body_defs[var_name])
+				false_body_versions.insert(num_node.first);
+
+			set<int> new_versions;
+			std::set_intersection(false_body_var_table.table_[var_name].begin(),
+					false_body_var_table.table_[var_name].end(),
+					false_body_versions.begin(), false_body_versions.end(),
+					inserter(new_versions, new_versions.begin()));
+			false_body_var_table.table_[var_name] = new_versions;
+		}
+		else
+		{
+			false_body_var_table.table_.erase(var_name);
+		}
+
+#if 0
+
+
 		foreach (int version, var_version.second)
 		{
 			SgNode* def_node = var_renaming_->getNodeForRenameNumber(var_version.first, version);
@@ -341,10 +359,11 @@ VariableVersionTable::getVarTablesForIfBodies(SgStatement* true_body, SgStatemen
 			if (if_body == true_body)
 			{
 				VariableRenaming::NumNodeRenameEntry num_node_entry =
-						var_renaming_->getReachingDefsAtNodeForName(true_body, var_version.first);
-				foreach (VariableRenaming::NumNodeRenameEntry::value_type num_node, num_node_entry)
-					if (true_body_var_table.table_[var_version.first].count(num_node.first) > 0)
-						true_body_var_table.table_[var_version.first].erase(num_node.first);
+						var_renaming_->getReachingDefsAtNodeForName(true_body, var_name);
+				foreach (const VariableRenaming::NumNodeRenameEntry::value_type& num_node, num_node_entry)
+				{
+					true_body_var_table.table_[var_name].erase(num_node.first);
+				}
 
 				//true_body_var_table.table_[var_version.first].clear();
 				//true_body_var_table.table_[var_version.first].insert(version);
@@ -352,34 +371,67 @@ VariableVersionTable::getVarTablesForIfBodies(SgStatement* true_body, SgStatemen
 			else if (if_body == false_body)
 			{
 				VariableRenaming::NumNodeRenameEntry num_node_entry =
-						var_renaming_->getReachingDefsAtNodeForName(false_body, var_version.first);
-				foreach (VariableRenaming::NumNodeRenameEntry::value_type num_node, num_node_entry)
-					if (false_body_var_table.table_[var_version.first].count(num_node.first) > 0)
-						false_body_var_table.table_[var_version.first].erase(num_node.first);
+						var_renaming_->getReachingDefsAtNodeForName(false_body, var_name);
+				foreach (const VariableRenaming::NumNodeRenameEntry::value_type& num_node, num_node_entry)
+				{
+					false_body_var_table.table_[var_name].erase(num_node.first);
+				}
 				//false_body_var_table.table_[var_version.first].clear();
 				//false_body_var_table.table_[var_version.first].insert(version);
 			}
 
 			if (SageInterface::isAncestor(true_body, def_node))
 			{
-				false_body_var_table.table_[var_version.first].erase(version);
+				false_body_var_table.table_[var_name].erase(version);
 			}
 			else if (SageInterface::isAncestor(false_body, def_node))
 			{
-				true_body_var_table.table_[var_version.first].erase(version);
+				true_body_var_table.table_[var_name].erase(version);
+			}
+		}
+#endif
+	}
+
+	cout << "True body VVT:\n";
+	true_body_var_table.print();
+	cout << "False body VVT:\n";
+	false_body_var_table.print();
+
+	return make_pair(true_body_var_table, false_body_var_table);
+}
+
+VariableVersionTable VariableVersionTable::getVarTablesForLoopBody(SgStatement* loop_body) const
+{
+	VariableVersionTable loop_body_var_table = *this;
+
+	foreach (const TableType::value_type& var_version, table_)
+	{
+		const VarName& var_name = var_version.first;
+		foreach (int version, var_version.second)
+		{
+			SgNode* def_node = var_renaming_->getNodeForRenameNumber(var_version.first, version);
+			SgStatement* enclosing_body = backstroke_util::getEnclosingLoopBody(def_node);
+			if (enclosing_body == loop_body)
+			{
+				VariableRenaming::NumNodeRenameEntry num_node_entry =
+						var_renaming_->getReachingDefsAtNodeForName(loop_body, var_name);
+				foreach (const VariableRenaming::NumNodeRenameEntry::value_type& num_node, num_node_entry)
+				{
+					//cout << "$^$^%$^$" << num_node.first << endl;
+					loop_body_var_table.table_[var_version.first].erase(num_node.first);
+				}
 			}
 		}
 	}
 
-	return make_pair(true_body_var_table, false_body_var_table);
+	return loop_body_var_table;
 }
 
 void VariableVersionTable::intersect(const VariableVersionTable& var_table)
 {
 	ROSE_ASSERT(var_table.table_.size() == this->table_.size());
 	
-	for (std::map<VariableRenaming::VarName, std::set<int> >::iterator it = table_.begin();
-			it != table_.end(); ++it)
+	for (TableType::iterator it = table_.begin(); it != table_.end(); ++it)
 	{
 		ROSE_ASSERT(var_table.table_.find(it->first) != var_table.table_.end());
 
@@ -403,8 +455,7 @@ void VariableVersionTable::setUnion(const VariableVersionTable& var_table)
 {
 	ROSE_ASSERT(var_table.table_.size() == this->table_.size());
 
-	for (std::map<VariableRenaming::VarName, std::set<int> >::iterator it = table_.begin();
-			it != table_.end(); ++it)
+	for (TableType::iterator it = table_.begin(); it != table_.end(); ++it)
 	{
 		ROSE_ASSERT(var_table.table_.find(it->first) != var_table.table_.end());
 
@@ -424,9 +475,9 @@ void VariableVersionTable::setUnion(const VariableVersionTable& var_table)
 	}
 }
 
-bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
+bool VariableVersionTable::isUsingFirstDef(SgNode* node) const
 {
-	VariableRenaming::VarName varName = VariableRenaming::getVarName(node);
+	VarName varName = getVarName(node);
 	ROSE_ASSERT(varName != VariableRenaming::emptyName);
 	VariableRenaming::NumNodeRenameEntry num_table = var_renaming_->getReachingDefsAtNodeForName(node, varName);
 
@@ -446,21 +497,21 @@ bool VariableVersionTable::isUsingFirstDefinition(SgNode* node) const
 
 bool VariableVersionTable::isUsingFirstUse(SgNode* node) const
 {
-	VariableRenaming::VarName varName = VariableRenaming::getVarName(node);
+	VarName varName = getVarName(node);
 	ROSE_ASSERT(varName != VariableRenaming::emptyName);
 	VariableRenaming::NumNodeRenameEntry num_table = var_renaming_->getUsesAtNodeForName(node, varName);
 
 	// The first definition has the number 1
 	// FIXME This may not be true for branch case!
 	if (num_table.size() == 1 && num_table.count(1) > 0)
-		return isUsingFirstDefinition(node);
+		return isUsingFirstDef(node);
 	return false;
 }
 
 /** Returns true if a variable is at the specified version.
  * @param varName name of the variable to look up
  * @param version version that the variable should have (list of possible definitions). */
-bool VariableVersionTable::matchesVersion(VariableRenaming::VarName varName, VariableRenaming::NumNodeRenameEntry version) const
+bool VariableVersionTable::matchesVersion(VarName varName, VariableRenaming::NumNodeRenameEntry version) const
 {
 	//If the variable is not in the table, the versions can't match.
 	if (table_.count(varName) == 0)

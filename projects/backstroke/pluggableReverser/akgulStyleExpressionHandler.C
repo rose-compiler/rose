@@ -1,7 +1,6 @@
-#include "akgulStyleExpressionProcessor.h"
+#include "akgulStyleExpressionHandler.h"
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "utilities/Utilities.h"
-#include "pluggableReverser/eventProcessor.h"
 
 #include <numeric>
 #include <algorithm>
@@ -16,7 +15,7 @@ struct StoredExpressionReversal : public EvaluationResultAttribute
 	ExpressionReversal reversal;
 };
 
-vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* expression, const VariableVersionTable& varTable,
+vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* expression, const VariableVersionTable& varTable,
 		bool isReverseValueUsed)
 {
 	VariableRenaming::VarName destroyedVarName;
@@ -89,7 +88,7 @@ vector<EvaluationResult> AkgulStyleExpressionProcessor::evaluate(SgExpression* e
 	return vector<EvaluationResult>();
 }
 
-ExpressionReversal AkgulStyleExpressionProcessor::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
+ExpressionReversal AkgulStyleExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
 	StoredExpressionReversal* reversalResult = dynamic_cast<StoredExpressionReversal*>(evaluationResult.getAttribute().get());
 	ROSE_ASSERT(reversalResult != NULL);
@@ -102,7 +101,7 @@ ExpressionReversal AkgulStyleExpressionProcessor::generateReverseAST(SgExpressio
 /** Returns the variable name referred by the expression. Also returns
  *  the AST expression for referring to that variable (using the variable renaming analysis).
   * Handles comma ops correctly. */
-pair<VariableRenaming::VarName, SgExpression*> AkgulStyleExpressionProcessor::getReferredVariable(SgExpression* exp)
+pair<VariableRenaming::VarName, SgExpression*> AkgulStyleExpressionHandler::getReferredVariable(SgExpression* exp)
 {
 	if (SgCommaOpExp* commaOp = isSgCommaOpExp(exp))
 	{
@@ -113,7 +112,7 @@ pair<VariableRenaming::VarName, SgExpression*> AkgulStyleExpressionProcessor::ge
 }
 
 
-multimap<int, SgExpression*> AkgulStyleExpressionProcessor::collectUsesForVariable(VariableRenaming::VarName name, SgNode* node)
+multimap<int, SgExpression*> AkgulStyleExpressionHandler::collectUsesForVariable(VariableRenaming::VarName name, SgNode* node)
 {
 	class CollectUses : public AstBottomUpProcessing<bool>
 	{

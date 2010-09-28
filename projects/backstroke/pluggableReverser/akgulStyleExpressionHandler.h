@@ -6,9 +6,9 @@
 #include "VariableRenaming.h"
 #include <map>
 #include <set>
-#include <pluggableReverser/eventProcessor.h>
+#include <pluggableReverser/eventHandler.h>
 
-class AkgulStyleExpressionProcessor : public ExpressionReversalHandler
+class AkgulStyleExpressionHandler : public ExpressionReversalHandler
 {
 public:
 	virtual ExpressionReversal generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult);

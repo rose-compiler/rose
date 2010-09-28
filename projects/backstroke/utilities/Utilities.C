@@ -583,3 +583,92 @@ SgStatement* backstroke_util::getEnclosingIfBody(SgNode* node)
 	}
 	return NULL;
 }
+
+SgStatement* backstroke_util::getEnclosingLoopBody(SgNode* node)
+{
+	while (node)
+	{
+		SgNode* parent = node->get_parent();
+		if (SgForStatement* for_stmt = isSgForStatement(parent))
+		{
+			if (node == for_stmt->get_loop_body())
+				return isSgStatement(node);
+		}
+		else if (SgWhileStmt* while_stmt = isSgWhileStmt(parent))
+		{
+			if (node == while_stmt->get_body())
+				return isSgStatement(node);
+		}
+		else if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(parent))
+		{
+			if (node == do_while_stmt->get_body())
+				return isSgStatement(node);
+		}
+		node = node->get_parent();
+	}
+	return NULL;
+}
+
+vector<SgExpression*> backstroke_util::getAllVariables(SgNode* node)
+{
+	vector<SgExpression*> vars;
+
+	vector<SgExpression*> exps = querySubTree<SgExpression > (node);
+
+	//ROSE_ASSERT(!exps.empty());
+
+	foreach(SgExpression* exp, exps)
+	{
+		SgExpression* cand = NULL;
+		if (isSgVarRefExp(exp))
+			cand = exp;
+		else if (isSgDotExp(exp) && isSgVarRefExp(isSgDotExp(exp)->get_rhs_operand()))
+			cand = exp;
+		else if (isSgArrowExp(exp) && isSgVarRefExp(isSgArrowExp(exp)->get_rhs_operand()))
+			cand = exp;
+
+		if (cand != NULL &&
+				isSgDotExp(cand->get_parent()) == NULL &&
+				isSgArrowExp(cand->get_parent()) == NULL)
+		{
+			vars.push_back(cand);
+		}
+	}
+
+	return vars;
+}
+
+bool backstroke_util::hasContinueOrBreak(SgStatement* loop_stmt)
+{
+	ROSE_ASSERT(isSgForStatement(loop_stmt) || 
+			isSgWhileStmt(loop_stmt) || 
+			isSgDoWhileStmt(loop_stmt));
+
+	vector<SgContinueStmt*> continues = querySubTree<SgContinueStmt>(loop_stmt);
+	foreach (SgContinueStmt* continue_stmt, continues)
+	{
+		if (getEnclosingLoopBody(continue_stmt) == loop_stmt)
+			return true;
+	}
+
+	vector<SgBreakStmt*> breaks = querySubTree<SgBreakStmt>(loop_stmt);
+	foreach (SgBreakStmt* break_stmt, breaks)
+	{
+		SgNode* node = break_stmt;
+		while (node = node->get_parent())
+		{
+			if (isSgForStatement(node) ||
+				isSgWhileStmt(node) ||
+				isSgDoWhileStmt(node) ||
+				isSgSwitchStatement(node))
+			{
+				if (node == loop_stmt)
+					return true;
+				else
+					break;
+			}
+		}
+	}
+
+	return false;
+}

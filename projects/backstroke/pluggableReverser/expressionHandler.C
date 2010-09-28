@@ -1,14 +1,14 @@
-#include "expressionProcessor.h"
+#include "expressionHandler.h"
 #include "utilities/Utilities.h"
 #include "utilities/CPPDefinesAndNamespaces.h"
-#include "pluggableReverser/eventProcessor.h"
+#include "pluggableReverser/eventHandler.h"
 
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace backstroke_util;
 
 /******************************************************************************
- ******** Definition of member functions of NullExpressionProcessor ***********/
+ ******** Definition of member functions of NullExpressionHandler  ***********/
 
 ExpressionReversal NullExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
@@ -36,7 +36,7 @@ vector<EvaluationResult> NullExpressionHandler::evaluate(SgExpression* exp, cons
 }
 
 /******************************************************************************
- **** Definition of member functions of IdentityExpressionProcessor ***********/
+ **** Definition of member functions of IdentityExpressionHandler  ***********/
 
 struct IdentityExpressionAttribute : public EvaluationResultAttribute
 {
@@ -82,7 +82,7 @@ vector<EvaluationResult> IdentityExpressionHandler::evaluate(SgExpression* exp, 
 }
 
 /******************************************************************************
- **** Definition of member functions of StoreAndRestoreExpressionProcessor ****/
+ **** Definition of member functions of StoreAndRestoreExpressionHandler ****/
 
 struct StoreAndRestoreAttribute : public EvaluationResultAttribute
 {

@@ -116,5 +116,19 @@ namespace backstroke_util
 
 	//! Get the closest enclosing if body (either true or false body) of the given node.
 	SgStatement* getEnclosingIfBody(SgNode* node);
+
+	//! Get the closest enclosing loop body (for/while/do-while body) of the given node.
+	SgStatement* getEnclosingLoopBody(SgNode* node);
+
+	/** This function get all variables in an AST node. Note that for a variable a.b or a->b,
+	only a.b or a->b is returned, not a or b. */
+	std::vector<SgExpression*> getAllVariables(SgNode* node);
+
+	/** Detect if the given loop statement (for/while/do-while) contains "continue" or "break" which belongs to this
+	loop body directly. "continue"s or "break"s belonging to its substatement don't count. "break"s belonging to
+	a switch statement don't count. */
+	bool hasContinueOrBreak(SgStatement* loop_stmt);
+
+
 }
 

@@ -1,10 +1,10 @@
-#include "straightlineStatementProcessor.h"
+#include "straightlineStatementHandler.h"
 
 #include "utilities/CPPDefinesAndNamespaces.h"
 
 #include "rose.h"
-#include "statementProcessor.h"
-#include "pluggableReverser/eventProcessor.h"
+#include "statementHandler.h"
+#include "pluggableReverser/eventHandler.h"
 
 struct StoredStatementReversal : public EvaluationResultAttribute
 {
@@ -16,7 +16,7 @@ struct StoredStatementReversal : public EvaluationResultAttribute
 	StatementReversal reversal;
 };
 
-vector<EvaluationResult> StraightlineStatementProcessor::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
+vector<EvaluationResult> StraightlineStatementHandler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
 {
 	if (SgBasicBlock * basicBlock = isSgBasicBlock(statement))
 	{
@@ -32,7 +32,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluate(SgStatement* s
 
 
 /** Process an expression statement by using the first expression handler returning a valid result. */
-vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionStatement(SgExprStatement* statement, const VariableVersionTable& var_table)
+vector<EvaluationResult> StraightlineStatementHandler::evaluateExpressionStatement(SgExprStatement* statement, const VariableVersionTable& var_table)
 {
     ROSE_ASSERT(statement);
     
@@ -41,7 +41,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 	//If none of the expression handlers could handle the code, we can't reverse it!
 	ROSE_ASSERT(!expressions.empty());
 
-	//This simple processor just takes the first valid reverse expression returned
+	//This simple handler just takes the first valid reverse expression returned
 	EvaluationResult& expressionReversalOption = expressions.front();
 	ExpressionReversal expressionReversal = expressionReversalOption.generateReverseExpression();
 	SgStatement* forwardStatement = NULL;
@@ -66,7 +66,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateExpressionState
 	return result;
 }
 
-StatementReversal StraightlineStatementProcessor::generateReverseAST(SgStatement* statement, const EvaluationResult& reversal)
+StatementReversal StraightlineStatementHandler::generateReverseAST(SgStatement* statement, const EvaluationResult& reversal)
 {
 	ROSE_ASSERT(reversal.getChildResults().size() == 0);
 	ROSE_ASSERT(reversal.getStatementHandler() == this);
@@ -78,7 +78,7 @@ StatementReversal StraightlineStatementProcessor::generateReverseAST(SgStatement
 }
 
 
-vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& var_table)
+vector<EvaluationResult> StraightlineStatementHandler::evaluateBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& var_table)
 {
     ROSE_ASSERT(basicBlock);
     
@@ -141,7 +141,7 @@ vector<EvaluationResult> StraightlineStatementProcessor::evaluateBasicBlock(SgBa
 	//Second pass: reverse all the statements
 	reverse_foreach(SgStatement* s, basicBlock->get_statements())
 	{
-		//In this simple processor, we just take the first valid statement available
+		//In this simple handler, we just take the first valid statement available
 		vector<EvaluationResult> possibleStatements = evaluateStatement(s, currentVariableVersions);
 		if (possibleStatements.empty())
 		{

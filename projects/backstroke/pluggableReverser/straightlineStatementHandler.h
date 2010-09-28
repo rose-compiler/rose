@@ -1,10 +1,10 @@
 #pragma once
 
-#include "eventProcessor.h"
+#include "eventHandler.h"
 
-/** The straightline statement processor runs the expression/statement handlers in the order in which they were installed
+/** The straightline statement handler runs the expression/statement handlers in the order in which they were installed
   * and picks the first valid result. This allows for very fast code generation. */
-class StraightlineStatementProcessor : public StatementReversalHandler
+class StraightlineStatementHandler : public StatementReversalHandler
 {
 public:
 	virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
