@@ -32,10 +32,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-#ifndef HAVE_USER_DESC
-typedef modify_ldt_ldt_s user_desc;
-#endif
-
 
 /* AS extra required headrs for system call simulation */
 #include <sys/types.h>
@@ -61,6 +57,83 @@ typedef modify_ldt_ldt_s user_desc;
 #include <linux/unistd.h>
 
 enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
+
+#ifndef HAVE_USER_DESC
+typedef modify_ldt_ldt_s user_desc;
+#endif
+
+static int
+print_user_desc(FILE *f, const uint8_t *_ud, size_t sz)
+{
+    const user_desc *ud = (const user_desc*)_ud;
+    assert(sizeof(*ud)==sz);
+
+    return fprintf(f, "entry=%d, base=0x%08lx, limit=0x%08lx, %s, %u, %s, %s, %s, %s",
+                   (int)ud->entry_number, (unsigned long)ud->base_addr, (unsigned long)ud->limit,
+                   ud->seg_32bit ? "32bit" : "16bit",
+                   ud->contents, ud->read_exec_only ? "read_exec" : "writable",
+                   ud->limit_in_pages ? "page_gran" : "byte_gran",
+                   ud->seg_not_present ? "not_present" : "present",
+                   ud->useable ? "usable" : "not_usable");
+}
+
+/* Kernel stat data structure on 32-bit platforms; the data written back to the specimen's memory */
+struct kernel_stat_32 {
+    uint64_t        dev;                    /* see 64.dev */
+    uint32_t        pad_1;                  /* all bits set */
+    uint32_t        ino_lo;                 /* low-order bits only */
+    uint32_t        mode;
+    uint32_t        nlink;
+    uint32_t        user;
+    uint32_t        group;
+    uint64_t        rdev;
+    uint32_t        pad_2;                  /* all bits set */
+    uint64_t        size;                   /* 32-bit alignment */
+    uint32_t        blksize;
+    uint64_t        nblocks;
+    uint32_t        atim_sec;
+    uint32_t        atim_nsec;              /* always zero */
+    uint32_t        mtim_sec;
+    uint32_t        mtim_nsec;              /* always zero */
+    uint32_t        ctim_sec;
+    uint32_t        ctim_nsec;              /* always zero */
+    uint64_t        ino;
+} __attribute__((packed));
+
+/* Kernel stat data structure on 64-bit platforms; */
+struct kernel_stat_64 {
+    uint64_t        dev;                   /* probably not 8 bytes, but MSBs seem to be zero anyway */
+    uint64_t        ino;
+    uint64_t        nlink;
+    uint32_t        mode;
+    uint32_t        user;
+    uint32_t        group;
+    uint32_t        pad_1;
+    uint64_t        rdev;
+    uint64_t        size;
+    uint64_t        blksize;
+    uint64_t        nblocks;
+    uint64_t        atim_sec;
+    uint64_t        atim_nsec;              /* always zero */
+    uint64_t        mtim_sec;
+    uint64_t        mtim_nsec;              /* always zero */
+    uint64_t        ctim_sec;
+    uint64_t        ctim_nsec;              /* always zero */
+    uint64_t        pad_2;
+    uint64_t        pad_3;
+    uint64_t        pad_4;
+};
+
+static int
+print_kernel_stat_32(FILE *f, const uint8_t *_sb, size_t sz)
+{
+    assert(sz==sizeof(kernel_stat_32));
+    const kernel_stat_32 *sb = (const kernel_stat_32*)_sb;
+    return fprintf(f, "dev=%"PRIu64", ino=%"PRIu64", mode=0%03"PRIo32", nlink=%"PRIu32", uid=%"PRIu32", gid=%"PRIu32
+                   ", rdev=%"PRIu64", size=%"PRIu64", blksz=%"PRIu32", blocks=%"PRIu64", ...",
+                   sb->dev, sb->ino, sb->mode, sb->nlink, sb->user, sb->group,
+                   sb->rdev, sb->size, sb->blksize, sb->nblocks);
+}
 
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
@@ -217,31 +290,10 @@ public:
 
     uint32_t get_eflags() const {
         uint32_t eflags = 0;
-#define ADD_PRSTATUS_FLAG(NAME, BITPOS) \
-            eflags |= readFlag(NAME).is_known() ? readFlag(NAME).known_value() << (BITPOS) : 0
-        ADD_PRSTATUS_FLAG(x86_flag_cf, 0);
-        ADD_PRSTATUS_FLAG(x86_flag_1, 1);
-        ADD_PRSTATUS_FLAG(x86_flag_pf, 2);
-        ADD_PRSTATUS_FLAG(x86_flag_3, 3);
-        ADD_PRSTATUS_FLAG(x86_flag_af, 4);
-        ADD_PRSTATUS_FLAG(x86_flag_5, 5);
-        ADD_PRSTATUS_FLAG(x86_flag_zf, 6);
-        ADD_PRSTATUS_FLAG(x86_flag_sf, 7);
-        ADD_PRSTATUS_FLAG(x86_flag_tf, 8);
-        ADD_PRSTATUS_FLAG(x86_flag_if, 9);
-        ADD_PRSTATUS_FLAG(x86_flag_df, 10);
-        ADD_PRSTATUS_FLAG(x86_flag_of, 11);
-        ADD_PRSTATUS_FLAG(x86_flag_iopl0, 12);
-        ADD_PRSTATUS_FLAG(x86_flag_iopl1, 13);
-        ADD_PRSTATUS_FLAG(x86_flag_nt, 14);
-        ADD_PRSTATUS_FLAG(x86_flag_15, 15);
-        ADD_PRSTATUS_FLAG(x86_flag_rf, 16);
-        ADD_PRSTATUS_FLAG(x86_flag_vm, 17);
-        ADD_PRSTATUS_FLAG(x86_flag_ac, 18);
-        ADD_PRSTATUS_FLAG(x86_flag_vif, 19);
-        ADD_PRSTATUS_FLAG(x86_flag_vip, 20);
-        ADD_PRSTATUS_FLAG(x86_flag_id, 21);
-#undef ADD_PRSTATUS_FLAG
+        for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
+            if (readFlag((X86Flag)i).is_known())
+                eflags |= readFlag((X86Flag)i).known_value() ? 1u<<i : 0u;
+        }
         return eflags;
     }
 
@@ -283,6 +335,9 @@ public:
     /* Print the return value of a system call in a manner like strace */
     void syscall_leave(const char *format, ...);
 
+    /* Print the contents of a struct filled in by a system call. */
+    void syscall_result(uint32_t ptr, size_t sz, ArgInfo::StructPrinter);
+
     /* Initializes an ArgInfo object to pass to syscall printing functions. */
     void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list ap);
 
@@ -317,8 +372,12 @@ public:
 
     /* Called by X86InstructionSemantics for the SYSENTER instruction */
     void sysenter() {
-        fprintf(stderr, "ROBB: syscall is working...\n"); /*DEBUGGING [RPM 2010-09-20]*/
         emulate_syscall();
+
+        /* On linux, SYSENTER is followed by zero or more NOPs, followed by a JMP back to just before the SYSENTER in order to
+         * restart interrupted system calls, followed by POPs for the callee-saved registers. A non-interrupted system call
+         * should return to the first POP instruction, which happens to be 9 bytes after the end of the SYSENTER. */
+        writeIP(add(readIP(), number<32>(9)));
     }
 
     /* Called by X86InstructionSemantics */
@@ -642,15 +701,36 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     }
     pointers.push_back(0); /*the argv NULL terminator*/
 
-    /* Initialize the stack with specimen's environment. For now we'll use the same environment as this simulator. */
-    for (int i=0; true; i++) {
-        if (!environ[i]) break;
-        size_t len = strlen(environ[i]) + 1;
-        sp -= len;
-        map->write(environ[i], sp, len);
-        pointers.push_back(sp);
-        if (trace_loader)
-            fprintf(stderr, "environ[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, environ[i]);
+    /* Create new environment variables by stripping "X86SIM_" off the front of any environment variable and using that
+     * value to override the non-X86SIM_ value, if any. New variables are in the same order as originally (aside from the
+     * X86SIM_ variables being removed. */
+    std::map<std::string, std::string> env_overrides;
+    for (int i=0; environ[i]; i++) {
+        if (!strncmp(environ[i], "X86SIM_", 7)) {
+            char *eq = strchr(environ[i], '=');
+            ROSE_ASSERT(eq!=NULL);
+            std::string name(environ[i]+7, eq-(environ[i]+7));
+            env_overrides.insert(std::make_pair(name, std::string(eq+1)));
+        }
+    }
+    for (int i=0; environ[i]; i++) {
+        if (strncmp(environ[i], "X86SIM_", 7)) {
+            char *eq = strchr(environ[i], '=');
+            ROSE_ASSERT(eq!=NULL);
+            std::string name(environ[i], eq-environ[i]);
+            std::map<std::string, std::string>::iterator oi=env_overrides.find(name);
+            std::string env;
+            if (oi!=env_overrides.end()) {
+                env = name + "=" + oi->second;
+            } else {
+                env = environ[i];
+            }
+            sp -= env.size()+1;
+            map->write(env.c_str(), sp, env.size()+1);
+            pointers.push_back(sp);
+            if (trace_loader)
+                fprintf(stderr, "environ[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, env.size(), sp, env.c_str());
+        }
     }
     pointers.push_back(0); /*environment NULL terminator*/
 
@@ -1124,8 +1204,8 @@ EmulationPolicy::dump_core(int signo, std::string base_name)
         }
     };
 
-    /* We dump everything to the core file, although linux (by default) skips private and shared mappings that have backing
-     * store. */
+    /* We dump everything to the core file, although linux (by default) skips private and shared non-writable mappings that
+     * have backing store. */
     const std::vector<MemoryMap::MapElement> &elmts = map->get_elements();
     std::vector<MemoryMap::MapElement>::const_iterator ei=elmts.begin();
     while (ei!=elmts.end()) {
@@ -2023,8 +2103,7 @@ EmulationPolicy::emulate_syscall()
              * because the simulated C library will do the monkeying (it must only happen once).
              *
              * Therefore, we will invoke the system call directly, bypassing the C library, and then copy the result into
-             * specimen memory.  Fortunately, the kernel data structure that's returned has the same layout on AMD64 (which is
-             * probably how ROSE is running) and i386 (which is probably how the specimen is running).
+             * specimen memory. If the syscall is made on an amd64 host we need to convert it to an i386 host.
              *
              * For some unknown reason, if we invoke the system call with buf allocated on the stack we'll get -EFAULT (-14)
              * as the result; if we allocate it statically there's no problem.  Also, just in case the size is different than
@@ -2035,21 +2114,70 @@ EmulationPolicy::emulate_syscall()
                 syscall_enter("fstat64", "dp");
             }
 
+            /* Kernel data structure on 32-bit platforms; the data written back to the specimen's memory */
+            struct kernel_stat_32 {
+                uint64_t        dev;                    /* see 64.dev */
+                uint32_t        pad_1;                  /* all bits set */
+                uint32_t        ino_lo;                 /* low-order bits only */
+                uint32_t        mode;
+                uint32_t        nlink;
+                uint32_t        user;
+                uint32_t        group;
+                uint64_t        rdev;
+                uint32_t        pad_2;                  /* all bits set */
+                uint64_t        size;                   /* 32-bit alignment */
+                uint32_t        blksize;
+                uint64_t        nblocks;
+                uint32_t        atim_sec;
+                uint32_t        atim_nsec;              /* always zero */
+                uint32_t        mtim_sec;
+                uint32_t        mtim_nsec;              /* always zero */
+                uint32_t        ctim_sec;
+                uint32_t        ctim_nsec;              /* always zero */
+                uint64_t        ino;
+            } __attribute__((packed));
+            ROSE_ASSERT(96==sizeof(kernel_stat_32));
+
+            /* Kernel data structure on 64-bit platforms; */
+            struct kernel_stat_64 {
+                uint64_t        dev;                   /* probably not 8 bytes, but MSBs seem to be zero anyway */
+                uint64_t        ino;
+                uint64_t        nlink;
+                uint32_t        mode;
+                uint32_t        user;
+                uint32_t        group;
+                uint32_t        pad_1;
+                uint64_t        rdev;
+                uint64_t        size;
+                uint64_t        blksize;
+                uint64_t        nblocks;
+                uint64_t        atim_sec;
+                uint64_t        atim_nsec;              /* always zero */
+                uint64_t        mtim_sec;
+                uint64_t        mtim_nsec;              /* always zero */
+                uint64_t        ctim_sec;
+                uint64_t        ctim_nsec;              /* always zero */
+                uint64_t        pad_2;
+                uint64_t        pad_3;
+                uint64_t        pad_4;
+            };
+            ROSE_ASSERT(144==sizeof(struct kernel_stat_64));
+
 #ifdef SYS_stat64       /* x86sim must be running on i386 */
             ROSE_ASSERT(4==sizeof(long));
             int host_callno = 195==callno ? SYS_stat64 : (196==callno ? SYS_lstat64 : SYS_fstat64);
-            static const size_t kernel_stat_size = 96;
+            static const size_t kernel_stat_size = sizeof(kernel_stat_32);
 #else                   /* x86sim must be running on amd64 */
             ROSE_ASSERT(8==sizeof(long));
             int host_callno = 195==callno ? SYS_stat : (196==callno ? SYS_lstat : SYS_fstat);
-            static const size_t kernel_stat_size = 144;
+            static const size_t kernel_stat_size = sizeof(kernel_stat_64);
 #endif
 
             static uint8_t kernel_stat[kernel_stat_size+100];
             memset(kernel_stat, 0xff, sizeof kernel_stat);
             int result = 0xdeadbeef;
 
-#if 1
+            /* Make the system call without going through the C library. Well, we go through syscall(), but nothing else. */
             if (195==callno || 196==callno) {
                 std::string name = read_string(arg(0));
                 result = syscall(host_callno, (unsigned long)name.c_str(), (unsigned long)kernel_stat);
@@ -2058,77 +2186,55 @@ EmulationPolicy::emulate_syscall()
             }
             if (-1==result)
                 result = -errno;
-#else
-            if (195==callno || 196==callno) {
-                std::string name = read_string(arg(0));
-                asm volatile("int $0x80"
-                             : "=a"(result)
-                             : "0"(host_callno), "b"(name.c_str()), "c"(kernel_stat64)
-                             : "memory");
-            } else {
-                asm volatile("int $0x80"
-                             : "=a"(result)
-                             : "0"(host_callno), "b"(arg(0)), "c"(kernel_stat64)
-                             : "memory");
-            }
-#endif
+
             /* Check for overflow */
             for (size_t i=kernel_stat_size; i<sizeof kernel_stat; i++)
                 ROSE_ASSERT(0xff==kernel_stat[i]);
 
+
             if (result>=0) {
-                /* Check that the kernel initialized as much data as we thought it should.  We initialized the kernel_stat to
-                 * all 0xff bytes before making the system call.  The last data member of kernel_stat is either an 8-byte
-                 * inode (i386) or zero (amd64), which in either case the high order byte is almost certainly not 0xff. */
+                /* Check for underflow.  Check that the kernel initialized as much data as we thought it should.  We
+                 * initialized the kernel_stat to all 0xff bytes before making the system call.  The last data member of
+                 * kernel_stat is either an 8-byte inode (i386) or zero (amd64), which in either case the high order byte is
+                 * almost certainly not 0xff. */
                 ROSE_ASSERT(0xff!=kernel_stat[kernel_stat_size-1]);
-                
-                /* On amd64 we need to translate the 64-bit struct to a 32-bit struct. We do it in place. */
-                if (144==kernel_stat_size) {
+
+                /* On amd64 we need to translate the 64-bit struct that we got back from the host kernel to the 32-bit struct
+                 * that the specimen should get back from the guest kernel. */           
+                if (sizeof(kernel_stat_64)==kernel_stat_size) {
                     if (debug && trace_syscall)
                         fprintf(debug, "[64-to-32] ");
-                    /* quadword-0 (st_dev)                   <-- (st_dev)     no change         */
-                    /* quadword-1 (0xffffffff, st_ino[4])    <-- (ino)        postponed to qw-B */
-                    /* quadword-2 (mode[4], nlink[4])        <-- (nlink)                        */
-                    memmove(kernel_stat+20, kernel_stat+16, 4);                 /*nlink*/
-                    memmove(kernel_stat+16, kernel_stat+24, 4);                 /*mode*/
-                    /* quadword-3 (user[4],group[4])         <-- (mode[4],user[4])              */
-                    memmove(kernel_stat+24, kernel_stat+28, 4);                 /*user*/
-                    memmove(kernel_stat+28, kernel_stat+32, 4);                 /*group*/
-                    /* quadword-4 (rdev[4],zero?)            <-- (group[4],zero[4])             */
-                    memset(kernel_stat+32, 0, 8);                               /*rdev (FIXME)*/
-                    /* quadword-5 (0xffffffff,size[lo4])     <-- (zero?)                        */
-                    memset(kernel_stat+40, 0xff, 4);                            /*0xfffffff*/
-                    memmove(kernel_stat+44, kernel_stat+48, 4);                 /*size[lo4]*/
-                    /* quadword-6 (size[hi4],blksize)        <-- (size)                         */
-                    memmove(kernel_stat+48, kernel_stat+52, 4);                 /*size[hi4]*/
-                    memmove(kernel_stat+52, kernel_stat+56, 4);                 /*blksize*/
-                    /* quadword-7 (nblocks[4],zero?)         <-- (blksize)                      */
-                    memmove(kernel_stat+56, kernel_stat+64, 8);                 /*nblocks*/
-                    /* quadword-8 (atim.sec[4],atim.nsec[4]) <-- (nblocks)                      */
-                    memmove(kernel_stat+64, kernel_stat+72, 4);                 /*atim.sec*/
-                    memmove(kernel_stat+68, kernel_stat+80, 4);                 /*atim.nsec*/
-                    /* quadword-9 (mtim.sec[4],mtim.nsec[4]) <-- (atim.sec)                     */
-                    memmove(kernel_stat+72, kernel_stat+88, 4);                 /*mtim.sec*/
-                    memmove(kernel_stat+76, kernel_stat+96, 4);                 /*mtim.nsec*/
-                    /* quadword-A (ctim.sec[4],ctim.nsec[4]) <-- (atim.nsec)                    */
-                    memmove(kernel_stat+80, kernel_stat+104, 4);                /*ctim.sec*/
-                    memmove(kernel_stat+84, kernel_stat+112, 4);                /*ctim.nsec*/
-                    /* quadword-B (ino)                      <-- (mtim.sec)        also do qw-0 */
-                    memmove(kernel_stat+88, kernel_stat+8, 8);                  /*ino[8]*/
-                    memmove(kernel_stat+12, kernel_stat+8, 4);                  /*ino[4]*/
-                    memset(kernel_stat+8, 0xff, 4);                             /*0xffffffff*/
-                    /* quadword-C (unused)                   <-- (mtim.nsec)                    */
-                    /* quadword-D (unused)                   <-- (ctim.sec)                     */
-                    /* quadword-E (unused)                   <-- (ctim.nsec)                    */
-                    /* quadword-F (unused)                   <-- (zero?)                        */
-                    /* quadword-G (unused)                   <-- (zero?)                        */
-                    /* quadword-H (unused)                   <-- (zero?)                        */
+                    kernel_stat_64 *in = (kernel_stat_64*)kernel_stat;
+                    kernel_stat_32 out;
+                    out.dev = in->dev;
+                    out.pad_1 = (uint32_t)(-1);
+                    out.ino_lo = in->ino;
+                    out.mode = in->mode;
+                    out.nlink = in->nlink;
+                    out.user = in->user;
+                    out.group = in->group;
+                    out.rdev = in->rdev;
+                    out.pad_2 = (uint32_t)(-1);
+                    out.size = in->size;
+                    out.blksize = in->blksize;
+                    out.nblocks = in->nblocks;
+                    out.atim_sec = in->atim_sec;
+                    out.atim_nsec = in->atim_nsec;
+                    out.mtim_sec = in->mtim_sec;
+                    out.mtim_nsec = in->mtim_nsec;
+                    out.ctim_sec = in->ctim_sec;
+                    out.ctim_nsec = in->ctim_nsec;
+                    out.ino = in->ino;
+                    map->write(&out, arg(1), sizeof out);
+                } else {
+                    map->write(kernel_stat, arg(1), kernel_stat_size);
                 }
             }
 
-            map->write(kernel_stat, arg(1), 96);
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
+            if (result>=0)
+                syscall_result(arg(1), sizeof(kernel_stat_32), print_kernel_stat_32);
             break;
         }
 
@@ -2235,31 +2341,20 @@ EmulationPolicy::emulate_syscall()
             fprintf(stderr, "futex syscall is returning ENOSYS for now.\n"); /*FIXME*/
             break;
         }
-            
+
         case 243: { /*0xf3, set_thread_area*/
-            syscall_enter("set_thread_area", "p");
+            syscall_enter("set_thread_area", "P", sizeof(user_desc), print_user_desc);
             uint32_t u_info_va=arg(0);
             user_desc ud;
             size_t nread = map->read(&ud, u_info_va, sizeof ud);
             ROSE_ASSERT(nread==sizeof ud);
-#if 1 /*FIXME: should be using syscall_enter*/
-            if (debug && trace_syscall) {
-                fprintf(debug, "  set_thread_area({%d, 0x%08lx, 0x%08x, %s, %u, %s, %s, %s, %s})\n",
-                        (int)ud.entry_number, (unsigned long)ud.base_addr, ud.limit,
-                        ud.seg_32bit ? "32bit" : "16bit",
-                        ud.contents, ud.read_exec_only ? "read_exec" : "writable",
-                        ud.limit_in_pages ? "page_gran" : "byte_gran",
-                        ud.seg_not_present ? "not_present" : "present",
-                        ud.useable ? "usable" : "not_usable");
-            }
-#endif
             if (ud.entry_number==(unsigned)-1) {
                 for (ud.entry_number=0x33>>3; ud.entry_number<n_gdt; ud.entry_number++) {
                     if (!gdt[ud.entry_number].useable) break;
                 }
                 ROSE_ASSERT(ud.entry_number<8192);
                 if (debug && trace_syscall)
-                    fprintf(debug, "  assigned entry number = %d\n", (int)ud.entry_number);
+                    fprintf(debug, "[entry #%d] ", (int)ud.entry_number);
             }
             gdt[ud.entry_number] = ud;
             size_t nwritten = map->write(&ud, u_info_va, sizeof ud);
@@ -2377,6 +2472,13 @@ EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_li
         case 's':       /*NUL-terminated string*/
             info->str = read_string(val);
             break;
+        case 'P': {       /*ptr to a struct*/
+            info->struct_size = va_arg(ap, size_t);
+            info->struct_printer = va_arg(ap, ArgInfo::StructPrinter);
+            info->struct_buf = new uint8_t[info->struct_size];
+            info->struct_nread = map->read(info->struct_buf, info->val, info->struct_size);
+            break;
+        }
     }
 }
 
@@ -2412,6 +2514,21 @@ EmulationPolicy::syscall_leave(const char *format, ...)
     }
 }
 
+void
+EmulationPolicy::syscall_result(uint32_t va, size_t sz, ArgInfo::StructPrinter printer)
+{
+    if (debug && trace_syscall) {
+        ArgInfo info;
+        info.val = va;
+        info.struct_printer = printer;
+        info.struct_buf = new uint8_t[sz];
+        info.struct_size = sz;
+        info.struct_nread = map->read(info.struct_buf, va, sz);
+        fprintf(debug, "    ");
+        print_single(debug, 'P',  &info);
+        fprintf(debug, "\n");
+    }
+}
 
 uint32_t
 EmulationPolicy::arg(int idx)
