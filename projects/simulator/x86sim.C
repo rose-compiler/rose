@@ -1466,15 +1466,12 @@ EmulationPolicy::emulate_syscall()
 	    uint32_t filename = arg(0);
             std::string sys_filename = read_string(filename);
 	    mode_t mode = arg(1);
-
 	    int result = chmod(sys_filename.c_str(), mode);
             if (result == -1) result = -errno;
             writeGPR(x86_gpr_ax, result);
-
             syscall_leave("d");
             break;
 	}
-
 
         case 20: { /*0x14, getpid*/
             syscall_enter("getpid", "");
@@ -1497,7 +1494,7 @@ EmulationPolicy::emulate_syscall()
             std::string name = read_string(name_va);
             int mode=arg(1);
             int result = access(name.c_str(), mode);
-            if (result<0) result = -errno;
+            if (-1==result) result = -errno;
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
