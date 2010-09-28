@@ -1760,22 +1760,61 @@ EmulationPolicy::emulate_syscall()
         case 114: { /*0x72, wait4*/
             static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
             syscall_enter("wait4", "dpfp", wflags);
-            uint32_t pid=arg(0), status_ptr=arg(1), options=arg(2), rusage_ptr=arg(3);
-            uint32_t status;
-            size_t nread = map->read(&status, status_ptr, 4);
-            ROSE_ASSERT(nread == 4);
-            struct rusage sys_rusage;
-            int result = wait4(pid, &status, options, &sys_rusage);
+            pid_t pid=arg(0);
+            uint32_t status_va=arg(1), rusage_va=arg(3);
+            int options=arg(2);
+            int status;
+            struct rusage rusage;
+            int result = wait4(pid, &status, options, &rusage);
             if( result == -1) {
                 result = -errno;
             } else {
-                if (status_ptr != 0) {
-                    size_t nwritten = map->write(&status, status_ptr, 4);
+                if (status_va != 0) {
+                    size_t nwritten = map->write(&status, status_va, 4);
                     ROSE_ASSERT(nwritten == 4);
                 }
-                if (rusage_ptr != 0) {
-                    size_t nwritten = map->write(&sys_rusage, rusage_ptr, sizeof(struct rusage));
-                    ROSE_ASSERT(nwritten == sizeof(struct rusage));
+                if (rusage_va != 0) {
+                    struct rusage_32 {
+                        uint32_t utime_sec;     /* user time used; seconds */
+                        uint32_t utime_usec;    /* user time used; microseconds */
+                        uint32_t stime_sec;     /* system time used; seconds */
+                        uint32_t stime_usec;    /* system time used; microseconds */
+                        uint32_t maxrss;        /* maximum resident set size */
+                        uint32_t ixrss;         /* integral shared memory size */
+                        uint32_t idrss;         /* integral unshared data size */
+                        uint32_t isrss;         /* integral unshared stack size */
+                        uint32_t minflt;        /* page reclaims */
+                        uint32_t majflt;        /* page faults */
+                        uint32_t nswap;         /* swaps */
+                        uint32_t inblock;       /* block input operations */
+                        uint32_t oublock;       /* block output operations */
+                        uint32_t msgsnd;        /* messages sent */
+                        uint32_t msgrcv;        /* messages received */
+                        uint32_t nsignals;      /* signals received */
+                        uint32_t nvcsw;         /* voluntary context switches */
+                        uint32_t nivcsw;        /* involuntary " */
+                    } __attribute__((packed));
+                    struct rusage_32 out;
+                    ROSE_ASSERT(18*4==sizeof(out));
+                    out.utime_sec = rusage.ru_utime.tv_sec;
+                    out.utime_usec = rusage.ru_utime.tv_usec;
+                    out.stime_sec = rusage.ru_stime.tv_sec;
+                    out.stime_usec = rusage.ru_stime.tv_usec;
+                    out.maxrss = rusage.ru_maxrss;
+                    out.ixrss = rusage.ru_ixrss;
+                    out.idrss = rusage.ru_idrss;
+                    out.isrss = rusage.ru_isrss;
+                    out.minflt = rusage.ru_minflt;
+                    out.majflt = rusage.ru_majflt;
+                    out.nswap = rusage.ru_nswap;
+                    out.inblock = rusage.ru_inblock;
+                    out.msgsnd = rusage.ru_msgsnd;
+                    out.msgrcv = rusage.ru_msgrcv;
+                    out.nsignals = rusage.ru_nsignals;
+                    out.nvcsw = rusage.ru_nvcsw;
+                    out.nivcsw = rusage.ru_nivcsw;
+                    size_t nwritten = map->write(&out, rusage_va, sizeof out);
+                    ROSE_ASSERT(nwritten == sizeof out);
                 }
             }
             writeGPR(x86_gpr_ax, result);
