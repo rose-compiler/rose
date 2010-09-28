@@ -2040,6 +2040,9 @@ EmulationPolicy::emulate_syscall()
 
         case 191: { /*0xbf, ugetrlimit*/
             syscall_enter("ugetrlimit", "dp");
+#if 1 /*FIXME: We need to translate between 64-bit host and 32-bit guest. [RPM 2010-09-28] */
+            writeGPR(x86_gpr_ax, -ENOSYS);
+#else
             int resource=arg(0);
             uint32_t rl_va=arg(1);
             struct rlimit rl;
@@ -2053,6 +2056,7 @@ EmulationPolicy::emulate_syscall()
                 }
                 writeGPR(x86_gpr_ax, 0);
             }
+#endif
             syscall_leave("d");
             break;
         }
