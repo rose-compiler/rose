@@ -19,7 +19,8 @@ noinst_PROGRAMS = \
        bug125 \
        qualifiedName \
        testTranslator2010_01 \
-       testTranslator2010_02
+       testTranslator2010_02 \
+       ompVariableCollecting
 
 # Example translators used in regression tests
 bug125_SOURCES = bug125.C
@@ -29,6 +30,7 @@ testFortranParameter_SOURCES = testFortranParameter.C
 
 testTranslator2010_01_SOURCES = testTranslator2010_01.C
 testTranslator2010_02_SOURCES = testTranslator2010_02.C
+ompVariableCollecting_SOURCES = ompVariableCollecting.C
 
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
@@ -48,6 +50,8 @@ test_testDataMemberOfConst: testDataMemberOfConst
 test_testFortranParameter: testFortranParameter
 	./testFortranParameter $(srcdir)/CompileTests/Fortran_tests/parameter.f -o /dev/null
 
+test_ompVariableCollecting: ompVariableCollecting
+	./ompVariableCollecting -rose:OpenMP:ast_only -c $(srcdir)/input_ompVariableCollecting.C
 
 #testTranslator2010_01_test: testTranslator2010_01 
 #	./testTranslator2010_01 -rose:verbose 2
@@ -62,7 +66,7 @@ EXTRA_DIST = CMakeLists.txt inputbug125.C input_testTranslator2010_2.C
 
 check-local:
 #	@$(MAKE) testbug125 testqualifiedName testTranslator2010_01_test
-	@$(MAKE) testbug125 testqualifiedName
+	@$(MAKE) testbug125 testqualifiedName test_ompVariableCollecting
 	@$(MAKE) testTranslator2010_02_test
 	@echo "****************************************************************************************"
 	@echo "****** ROSE/tests/translatorTests: make check rule complete (terminated normally) ******"
