@@ -195,13 +195,6 @@ public:
         }
     };
 
-    /* Must be the same size and layout as struct sigaction on 32-bit linux */
-    struct SignalAction {
-        uint32_t        handler;
-        sigset_t        mask;                   /* same size on 32- and 64-bit linux */
-        uint32_t        flags;
-    };
-
     /* Thrown by exit system calls. */
     struct Exit {
         explicit Exit(int status): status(status) {}
@@ -220,7 +213,7 @@ public:
     SegmentInfo segreg_shadow[6];               /* Shadow values of segment registers from GDT */
     uint32_t mmap_start;                        /* Minimum address to use when looking for mmap free space */
     bool mmap_recycle;                          /* If false, then never reuse mmap addresses */
-    SignalAction signal_action[_NSIG+1];        /* Simulated actions for signal handling */
+    sigaction_32 signal_action[_NSIG+1];        /* Simulated actions for signal handling */
     uint64_t signal_mask;                       /* Set by sigsetmask() */
     std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
     static const uint32_t brk_base=0x08000000;  /* Lowest possible brk() value */
@@ -2007,25 +2000,25 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 174: { /*0xae, rt_sigaction*/
-            syscall_enter("rt_sigaction", "dppd");
+            syscall_enter("rt_sigaction", "dPpd", sizeof(sigaction_32), print_sigaction_32);
             int signum=arg(0);
             uint32_t action_va=arg(1), oldact_va=arg(2);
-            //size_t sigsetsize=arg(3);
-
+            size_t sigsetsize=arg(3);
+            ROSE_ASSERT(sigsetsize==8);
 
             if (signum<1 || signum>_NSIG) {
                 writeGPR(x86_gpr_ax, -EINVAL);
                 break;
             }
 
-            SignalAction saved = signal_action[signum];
+            sigaction_32 saved = signal_action[signum];
             if (action_va) {
                 size_t nread = map->read(signal_action+signum, action_va, sizeof saved);
-                ROSE_ASSERT(nread==sizeof(*signal_action));
+                ROSE_ASSERT(nread==sizeof saved);
             }
             if (oldact_va) {
                 size_t nwritten = map->write(&saved, oldact_va, sizeof saved);
-                ROSE_ASSERT(nwritten==sizeof(*signal_action));
+                ROSE_ASSERT(nwritten==sizeof saved);
             }
 
             writeGPR(x86_gpr_ax, 0);
@@ -2351,9 +2344,44 @@ EmulationPolicy::emulate_syscall()
 #endif
 #endif
                 T_END };
-            syscall_enter("futex", "pfdppd", opflags);
-            //uint32_t addr1=arg(0), op=arg(1), val1=arg(2), ptimeout=arg(3), addr2=arg(4), val3=arg(5);
-            writeGPR(x86_gpr_ax, -ENOSYS); /*FIXME*/
+
+            /* Variable arguments */
+            switch (arg(1) & FUTEX_CMD_MASK) {
+                case FUTEX_WAIT:
+                    syscall_enter("futex", "PfdP--", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
+                    break;
+                case FUTEX_WAKE:
+                case FUTEX_FD:
+                    syscall_enter("futex", "Pfd---", 4, print_int_32, opflags);
+                    break;
+                case FUTEX_REQUEUE:
+                    syscall_enter("futex", "Pfd-P-", 4, print_int_32, opflags, 4, print_int_32);
+                    break;
+                case FUTEX_CMP_REQUEUE:
+                    syscall_enter("futex", "Pfd-Pd", 4, print_int_32, opflags, 4, print_int_32);
+                    break;
+                default:
+                    syscall_enter("futex", "PfdPPd", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
+                                  4, print_int_32);
+                    break;
+            }
+            uint32_t futex1_va=arg(0), op=arg(1), val1=arg(2), timeout_va=arg(3), futex2_va=arg(4), val2=arg(5);
+            int *futex1 = (int*)my_addr(futex1_va);
+            int *futex2 = (int*)my_addr(futex2_va);
+
+            struct timespec timespec_buf, *timespec=NULL;
+            if (timeout_va) {
+                timespec_32 ts;
+                size_t nread = map->read(&ts, timeout_va, sizeof ts);
+                ROSE_ASSERT(nread==sizeof ts);
+                timespec_buf.tv_sec = ts.sec;
+                timespec_buf.tv_nsec = ts.nsec;
+                timespec = &timespec_buf;
+            }
+
+            int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val2);
+            if (-1==result) result = -errno;
+            writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
         }
@@ -2400,7 +2428,7 @@ EmulationPolicy::emulate_syscall()
             if (sizeof(int)>4) {
                 tidptr = new int;
                 *tidptr = 0;
-                size_t nread = map->read(tidptr, tid_va, 4);
+                size_t nread = map->read(tidptr, tid_va, 4); /*only low-order bytes*/
                 ROSE_ASSERT(4==nread);
                 const MemoryMap::MapElement *orig = map->find(tid_va);
                 MemoryMap::MapElement submap(tid_va, 4, tidptr, 0, orig->get_mapperms());
