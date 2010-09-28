@@ -2317,9 +2317,8 @@ EmulationPolicy::emulate_syscall()
 
         case 243: { /*0xf3, set_thread_area*/
             syscall_enter("set_thread_area", "P", sizeof(user_desc), print_user_desc);
-            uint32_t u_info_va=arg(0);
             user_desc ud;
-            size_t nread = map->read(&ud, u_info_va, sizeof ud);
+            size_t nread = map->read(&ud, arg(0), sizeof ud);
             ROSE_ASSERT(nread==sizeof ud);
             if (ud.entry_number==(unsigned)-1) {
                 for (ud.entry_number=0x33>>3; ud.entry_number<n_gdt; ud.entry_number++) {
@@ -2330,7 +2329,7 @@ EmulationPolicy::emulate_syscall()
                     fprintf(debug, "[entry #%d] ", (int)ud.entry_number);
             }
             gdt[ud.entry_number] = ud;
-            size_t nwritten = map->write(&ud, u_info_va, sizeof ud);
+            size_t nwritten = map->write(&ud, arg(0), sizeof ud);
             ROSE_ASSERT(nwritten==sizeof ud);
             writeGPR(x86_gpr_ax, 0);
             /* Reload all the segreg shadow values from the (modified) descriptor table */
