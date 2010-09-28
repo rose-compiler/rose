@@ -2135,55 +2135,8 @@ EmulationPolicy::emulate_syscall()
                 syscall_enter("fstat64", "dp");
             }
 
-            /* Kernel data structure on 32-bit platforms; the data written back to the specimen's memory */
-            struct kernel_stat_32 {
-                uint64_t        dev;                    /* see 64.dev */
-                uint32_t        pad_1;                  /* all bits set */
-                uint32_t        ino_lo;                 /* low-order bits only */
-                uint32_t        mode;
-                uint32_t        nlink;
-                uint32_t        user;
-                uint32_t        group;
-                uint64_t        rdev;
-                uint32_t        pad_2;                  /* all bits set */
-                uint64_t        size;                   /* 32-bit alignment */
-                uint32_t        blksize;
-                uint64_t        nblocks;
-                uint32_t        atim_sec;
-                uint32_t        atim_nsec;              /* always zero */
-                uint32_t        mtim_sec;
-                uint32_t        mtim_nsec;              /* always zero */
-                uint32_t        ctim_sec;
-                uint32_t        ctim_nsec;              /* always zero */
-                uint64_t        ino;
-            } __attribute__((packed));
             ROSE_ASSERT(96==sizeof(kernel_stat_32));
-
-            /* Kernel data structure on 64-bit platforms; */
-            struct kernel_stat_64 {
-                uint64_t        dev;                   /* probably not 8 bytes, but MSBs seem to be zero anyway */
-                uint64_t        ino;
-                uint64_t        nlink;
-                uint32_t        mode;
-                uint32_t        user;
-                uint32_t        group;
-                uint32_t        pad_1;
-                uint64_t        rdev;
-                uint64_t        size;
-                uint64_t        blksize;
-                uint64_t        nblocks;
-                uint64_t        atim_sec;
-                uint64_t        atim_nsec;              /* always zero */
-                uint64_t        mtim_sec;
-                uint64_t        mtim_nsec;              /* always zero */
-                uint64_t        ctim_sec;
-                uint64_t        ctim_nsec;              /* always zero */
-                uint64_t        pad_2;
-                uint64_t        pad_3;
-                uint64_t        pad_4;
-            };
-            ROSE_ASSERT(144==sizeof(struct kernel_stat_64));
-
+            ROSE_ASSERT(144==sizeof(kernel_stat_64));
 #ifdef SYS_stat64       /* x86sim must be running on i386 */
             ROSE_ASSERT(4==sizeof(long));
             int host_callno = 195==callno ? SYS_stat64 : (196==callno ? SYS_lstat64 : SYS_fstat64);
