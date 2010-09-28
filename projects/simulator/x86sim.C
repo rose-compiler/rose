@@ -84,6 +84,13 @@ print_user_desc(FILE *f, const uint8_t *_ud, size_t sz)
                    ud->useable ? "usable" : "not_usable");
 }
 
+static int
+print_int_32(FILE *f, const uint8_t *ptr, size_t sz)
+{
+    assert(4==sz);
+    return fprintf(f, "%"PRId32, *(const int32_t*)ptr);
+}
+
 /* Kernel stat data structure on 32-bit platforms; the data written back to the specimen's memory */
 struct kernel_stat_32 {
     uint64_t        dev;                    /* see 64.dev */
@@ -140,6 +147,35 @@ print_kernel_stat_32(FILE *f, const uint8_t *_sb, size_t sz)
                    ", rdev=%"PRIu64", size=%"PRIu64", blksz=%"PRIu32", blocks=%"PRIu64", ...",
                    sb->dev, sb->ino, sb->mode, sb->nlink, sb->user, sb->group,
                    sb->rdev, sb->size, sb->blksize, sb->nblocks);
+}
+
+struct timespec_32 {
+    uint32_t sec;
+    uint32_t nsec;
+} __attribute__((packed));
+
+static int
+print_timespec_32(FILE *f, const uint8_t *_ts, size_t sz)
+{
+    assert(sz==sizeof(timespec_32));
+    const timespec_32 *ts = (const timespec_32*)_ts;
+    return fprintf(f, "sec=%"PRIu32", nsec=%"PRIu32, ts->sec, ts->nsec);
+}
+
+struct sigaction_32 {
+    int (*handler)(int);
+    uint32_t flags;
+    void (*restorer)();
+    uint64_t mask;
+} __attribute__((packed));
+
+static int
+print_sigaction_32(FILE *f, const uint8_t *_sa, size_t sz)
+{
+    assert(sz==sizeof(sigaction_32));
+    const sigaction_32 *sa = (const sigaction_32*)_sa;
+    return fprintf(f, "handler=0x%08"PRIx64", flags=0x%"PRIx32", restorer=0x%08"PRIx64", mask=0x%016"PRIx64,
+                   (uint64_t)sa->handler, sa->flags, (uint64_t)sa->restorer, sa->mask);
 }
 
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
