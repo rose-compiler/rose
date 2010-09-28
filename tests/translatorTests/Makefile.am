@@ -51,7 +51,7 @@ test_testFortranParameter: testFortranParameter
 	./testFortranParameter $(srcdir)/CompileTests/Fortran_tests/parameter.f -o /dev/null
 
 test_ompVariableCollecting: ompVariableCollecting
-	./ompVariableCollecting -rose:OpenMP:ast_only -c $(srcdir)/input_ompVariableCollecting.C
+	./ompVariableCollecting -I$(top_srcdir)/src/frontend/SageIII -rose:OpenMP:ast_only -c $(srcdir)/input_ompVariableCollecting.C
 
 #testTranslator2010_01_test: testTranslator2010_01 
 #	./testTranslator2010_01 -rose:verbose 2

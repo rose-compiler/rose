@@ -6,7 +6,6 @@ variable references within OpenMP pragma
 #include <omp.h>
 #endif
 
-
 void foo()
 {
   float x;
