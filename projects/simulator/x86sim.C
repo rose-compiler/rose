@@ -1277,7 +1277,8 @@ EmulationPolicy::my_addr(uint32_t va)
     /* Read from specimen in order to make sure that the memory is allocated and mapped into ROSE. */
     uint32_t word;
     size_t nread = map->read(&word, va, sizeof word);
-    ROSE_ASSERT(nread==sizeof word);
+    if (nread!=sizeof word)
+        return NULL;
 
     /* Obtain mapping information */
     const MemoryMap::MapElement *me = map->find(va);
