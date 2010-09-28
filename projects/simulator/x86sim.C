@@ -2027,32 +2027,16 @@ EmulationPolicy::emulate_syscall()
 
 	case 183: { /* 0xb7, getcwd */
             syscall_enter("getcwd", "pd");
-            
-	    uint32_t buf_va=arg(0), size=arg(1);
-            char buf[size];
-            char* ret_buf = getcwd(buf, size);
-	    if (ret_buf == 0) {
-              //Buffer is not big enough
-	      errno=ERANGE;
-	      writeGPR(x86_gpr_ax, 0);
-             }else{ 
-              writeGPR(x86_gpr_ax, buf_va);
-             } 
-
-	    //As an extension to the POSIX.1-2001 standard, 
-	    //Linux (libc4, libc5, glibc) getcwd() allocates the 
-	    //buffer dynamically using malloc() if buf is NULL on call. 
-	    //In this case, the allocated buffer has the length size 
-	    //unless size is zero, when buf is allocated as big as necessary. 
-	    uint8_t byte;
-            size_t nread = map->read(&byte, buf_va, 1);
-	    if(!byte){
-             map->write(buf, buf_va, size);
+            char buf[arg(1)];
+            int result = getcwd(buf, arg(1)) ? 0 : -errno;
+            if (result>=0) {
+                size_t nwritten = map->write(buf, arg(0), arg(1));
+                ROSE_ASSERT(nwritten==arg(1));
             }
-
+            writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
-	}
+        }
 
         case 191: { /*0xbf, ugetrlimit*/
             syscall_enter("ugetrlimit", "dp");
