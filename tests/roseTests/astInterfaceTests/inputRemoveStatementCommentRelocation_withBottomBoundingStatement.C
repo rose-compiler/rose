@@ -6,16 +6,13 @@
 // variable declaration below it will fail to compile and will cause an error.
 #include<inputRemoveStatementCommentRelocation_1.h>
 
-#if 1
 // Use this function to test removal, if it cause removal of the #include then
 // there will be an error (since variable_hidden_in_header_file will not be defined).
 int removeThisFunctionToTestAttachedInfoBeforeStatement()
    {
      return 0;
    }
-#endif
 
-#if 0
 int removeThisFunctionToTestAttachedInfoBeforeStatement_var = variable_hidden_in_header_file;
 
 // Use this function to test removing statements to avoid an error in the next
@@ -34,4 +31,6 @@ int removeThisFunctionToTestAttachedInfoAfterStatement()
 #include<inputRemoveStatementCommentRelocation_2.h>
 
 int tempVar = variable_hidden_in_header_file_2;
-#endif
+
+int abc;
+

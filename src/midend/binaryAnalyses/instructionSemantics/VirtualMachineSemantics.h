@@ -204,7 +204,7 @@ typedef std::vector<MemoryCell> Memory;
 struct State {
     static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
     static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
-    static const size_t n_flags = 16;           /**< Number of flag registers in this state. */
+    static const size_t n_flags = 32;           /**< Number of flag registers in this state. */
 
     ValueType<32> ip;                           /**< Instruction pointer. */
     ValueType<32> gpr[n_gprs];                  /**< General-purpose registers */
@@ -283,6 +283,11 @@ public:
     /** Returns the number of instructions processed. This counter is incremented at the beginning of each instruction. */
     size_t get_ninsns() const {
         return ninsns;
+    }
+
+    /** Returns current instruction. Returns the null pointer if no instruction is being processed. */
+    SgAsmInstruction *get_insn() const {
+        return cur_insn;
     }
 
     /** Returns the current state. */

@@ -156,7 +156,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 	    "    with number of datamembers: " << vec.size() << "   defining " <<
 	    (classDecl->get_definingDeclaration()==classDecl) << endl;
 	  if (hasPrivateDataMembers(classDecl)) {
-	    SgClassDeclaration* cdl = instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
+	    /*SgClassDeclaration* cdl = */instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
 	    //traverseClasses.push_back(cdl);
 	  } //else
 	    traverseClasses.push_back(classDecl);

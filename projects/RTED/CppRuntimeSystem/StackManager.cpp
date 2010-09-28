@@ -33,7 +33,7 @@ VariablesType * StackManager::getVariable(addr_type addr)
 
 VariablesType * StackManager::getVariable(const string & mangledName)
 {
-    for(int i=0; i <  stack.size(); i++)
+    for(unsigned int i=0; i <  stack.size(); i++)
     {
         if(stack[i]->getMangledName() == mangledName)
             return stack[i];
@@ -43,7 +43,7 @@ VariablesType * StackManager::getVariable(const string & mangledName)
 
 void StackManager::getVariableByName(const std::string & name, vector<VariablesType*> & result)
 {
-    for(int i=0; i <  stack.size(); i++)
+    for(unsigned int i=0; i <  stack.size(); i++)
     {
         if(stack[i]->getName() == name)
             result.push_back(stack[i]);
@@ -72,7 +72,7 @@ void StackManager::endScope()
         stack.pop_back();
     }
 
-    assert(stack.size() == lastScope.stackIndex);
+    assert((int)stack.size() == lastScope.stackIndex);
 }
 
 int StackManager::getScopeCount()  const
@@ -83,14 +83,14 @@ int StackManager::getScopeCount()  const
 const std::string & StackManager::getScopeName(int i) const
 {
     assert(i >=0 );
-    assert(i < scope.size());
+    assert(i < (int)scope.size());
     return scope[i].name;
 }
 
 StackManager::VariableIter StackManager::variablesBegin(int i) const
 {
     assert(i >=0 );
-    assert(i < scope.size());
+    assert(i < (int)scope.size());
 
     return stack.begin() + scope[i].stackIndex;
 }
@@ -98,9 +98,9 @@ StackManager::VariableIter StackManager::variablesBegin(int i) const
 StackManager::VariableIter StackManager::variablesEnd(int i) const
 {
     assert(i >=0 );
-    assert(i < scope.size());
+    assert(i < (int)scope.size());
 
-    if(i+1 == scope.size())
+    if(i+1 == (int)scope.size())
         return stack.end();
     else
         return stack.begin() + scope[i+1].stackIndex;
@@ -124,7 +124,7 @@ void StackManager::print(ostream & os) const
     os << endl;
     os << "------------------------------- Stack Status --------------------------------------" << endl << endl;
 
-    for(int sc=0; sc < scope.size(); sc++)
+    for(unsigned int sc=0; sc < scope.size(); sc++)
     {
         os << scope[sc].name << ":" << endl;
 

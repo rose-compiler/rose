@@ -5128,17 +5128,22 @@ SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   return isSgStatement(n);
 }
 
+// DQ (/20/2010): Control debugging output for SageInterface::removeStatement() function.
+#define REMOVE_STATEMENT_DEBUG 0
 
 //! Remove a statement: TODO consider side effects for symbol tables
-void SageInterface::removeStatement(SgStatement* stmt)
+void SageInterface::removeStatement(SgStatement* targetStmt)
    {
-     ROSE_ASSERT(stmt != NULL);
+  // This function removes the input statement.
+  // If there are comments and/or CPP directives then those comments and/or CPP directives will
+  // be moved to a new SgStatement.  The new SgStatement is selected using the findSurroundingStatementFromSameFile()
+  // function and if there is not statement found then the SgGlobal IR node will be selected.
+  // this work is tested by the tests/roseTests/astInterfaceTests/removeStatementCommentRelocation.C
+  // translator and a number of input codes that represent a range of contexts which exercise different
+  // cases in the code below.
 
 #ifndef _MSC_VER
-  // LowLevelRewrite::remove(stmt);
-
   // This function only supports the removal of a whole statement (not an expression within a statement)
-     SgStatement* targetStmt = stmt;
      ROSE_ASSERT (targetStmt != NULL);
 
      SgStatement * parentStatement = isSgStatement(targetStmt->get_parent());
@@ -5147,43 +5152,30 @@ void SageInterface::removeStatement(SgStatement* stmt)
   // Even so SgGlobal can't be removed from SgFile, but isRemovableStatement() takes a SgStatement.
   // ROSE_ASSERT (parentStatement != NULL);
 
-  // Test cast of void* to int*
-  // extern void *MY_upc_all_alloc();
-  // int* x = MY_upc_all_alloc();
+     bool isRemovable = (parentStatement != NULL) ? LowLevelRewrite::isRemovableStatement(targetStmt) : false;
 
-     if (parentStatement != NULL)
-        {
-          bool isRemovable = LowLevelRewrite::isRemovableStatement(targetStmt);
-#if 0
-          printf ("In parentStatement = %s remove targetStatement = %s (isRemovable = %s) \n",
-               parentStatement->sage_class_name(),
-               targetStmt->sage_class_name(),
-               isRemovable ? "true" : "false");
+#if REMOVE_STATEMENT_DEBUG
+     printf ("In parentStatement = %s remove targetStatement = %s (isRemovable = %s) \n",parentStatement->class_name().c_str(),targetStmt->class_name().c_str(),isRemovable ? "true" : "false");
 #endif
-       // ROSE_ASSERT(isRemovable == true);
 
+     if (isRemovable == true)
+        {
        // DQ (9/19/2010): Disable this new (not completely working feature) so that I can checkin the latest UPC/UPC++ work.
-#if 0
+#if 1
        // DQ (9/16/2010): Added support to move comments and CPP directives marked to 
        // appear before the statment to be attached to the inserted statement (and marked 
        // to appear before that statement).
-          ROSE_ASSERT(targetStmt != NULL);
           AttachedPreprocessingInfoType* comments = targetStmt->getAttachedPreprocessingInfo();
 
        // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
-       // I thnk that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
-       // if (comments != NULL && newStmt->getAttachedPreprocessingInfo() == NULL)
-       // if (comments != NULL && isSgBasicBlock(newStmt) == NULL)
-          if (comments != NULL)
-          if (comments != NULL && isRemovable == true )
+       // I think that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
+       // if (comments != NULL && isRemovable == true && isSgBasicBlock(targetStmt) == NULL )
+          if (comments != NULL && isSgBasicBlock(targetStmt) == NULL )
              {
                vector<int> captureList;
-#if 0
+#if REMOVE_STATEMENT_DEBUG
                printf ("Found attached comments (removing %p = %s): comments->size() = %zu \n",targetStmt,targetStmt->class_name().c_str(),comments->size());
 #endif
-
-            // First debug the case of comments appearing before the statement being removed.
-            // bool insertBefore = true;
 
             // Since this statement will be removed we have to relocate all the associated comments and CPP directives.
                int commentIndex = 0;
@@ -5191,159 +5183,294 @@ void SageInterface::removeStatement(SgStatement* stmt)
                for (i = comments->begin(); i != comments->end(); i++)
                   {
                     ROSE_ASSERT ( (*i) != NULL );
-#if 0
+#if REMOVE_STATEMENT_DEBUG
                     printf ("          Attached Comment (relativePosition=%s): %s\n",
                          ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
                          (*i)->getString().c_str());
                     printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
                     (*i)->get_file_info()->display("comment/directive location debug");
 #endif
-
-                 // **** Note **** We are only getting the comments and CPP directives that appear before the statement being removed.
-                 // Handle the comments that appear before the statement being removed.
-                    if ((*i)->getRelativePosition() == PreprocessingInfo::before)
-                       {
-                      // accumulate into list
-                         captureList.push_back(commentIndex);
-                       }
-
+                    captureList.push_back(commentIndex);
                     commentIndex++;
                   }
-#if 0
+
+#if REMOVE_STATEMENT_DEBUG
                printf ("captureList.size() = %zu \n",captureList.size());
 #endif
+
                if (captureList.empty() == false)
                   {
                  // Remove these comments and/or CPP directives and put them into the previous statement (marked to be output after the statement).
-                 // SgStatement* surroundingStatement = (insertBefore == true) ? getPreviousStatement(targetStmt) : getNextStatement(targetStmt);
-                    SgStatement* surroundingStatement = getPreviousStatement(targetStmt);
-                    ROSE_ASSERT(surroundingStatement != targetStmt);
-                    ROSE_ASSERT(surroundingStatement != NULL);
-#if 0
-                    printf ("targetStmt->get_file_info()->get_file_id() = %d \n",targetStmt->get_file_info()->get_file_id());
-                    printf ("Searching toward the top of the file for a statement to attach comments and CPP directives to: surroundingStatement = %p = %s file = %s file id = %d line = %d \n",
-                         surroundingStatement,surroundingStatement->class_name().c_str(),
-                         surroundingStatement->get_file_info()->get_filenameString().c_str(),
-                         surroundingStatement->get_file_info()->get_file_id(),
-                         surroundingStatement->get_file_info()->get_line());
-#endif
-                 // DQ (9/18/2010): This can't be asserted on targetStmt (see rose_inputloopUnrolling.C as an example of where this fails).
-                 // ROSE_ASSERT(targetStmt->get_file_info()->get_file_id() >= 0);
-                    ROSE_ASSERT(surroundingStatement->get_file_info()->get_file_id() >= 0);
+                 // Find the surrounding statement by first looking up in the sequence of statements in this block, then down, we need another 
+                 // statement from the same file.
+                    bool surroundingStatementPreceedsTargetStatement = false;
+                    SgStatement* surroundingStatement = findSurroundingStatementFromSameFile(targetStmt,surroundingStatementPreceedsTargetStatement);
 
-                 // printf ("   targetStmt->get_file_info()->get_file_id()           = %d \n",targetStmt->get_file_info()->get_file_id());
-                 // printf ("   surroundingStatement->get_file_info()->get_file_id() = %d \n",surroundingStatement->get_file_info()->get_file_id());
-
-                    while (surroundingStatement->get_file_info()->get_file_id() != targetStmt->get_file_info()->get_file_id())
-                       {
-                      // Start by going up in the source sequence.
-                      // This is a declaration from the wrong file so go to the next statement.
-                      // surroundingStatement = (insertBefore == true) ? getNextStatement(surroundingStatement) : getPreviousStatement(surroundingStatement);
-                      // surroundingStatement = (insertBefore == true) ? getPreviousStatement(surroundingStatement) : getNextStatement(surroundingStatement);
-                         surroundingStatement = getPreviousStatement(surroundingStatement);
-#if 0
-                         printf ("Looping toward the top of the file for a statement to attach comments and CPP directives to: surroundingStatement = %p = %s file = %s file id = %d line = %d \n",
-                              surroundingStatement,surroundingStatement->class_name().c_str(),
-                              surroundingStatement->get_file_info()->get_filenameString().c_str(),
-                              surroundingStatement->get_file_info()->get_file_id(),
-                              surroundingStatement->get_file_info()->get_line());
-#endif
-                      // As a last resort restart and go down in the statement sequence.
-                         if (surroundingStatement == NULL)
-                            {
-                           // This is triggered by rose_inputloopUnrolling.C
-#if 0
-                              printf ("We just ran off the start (top) of the file... targetStmt = %p = %s \n",targetStmt,targetStmt->class_name().c_str());
-#endif
-#if 0
-                              ROSE_ASSERT(false);
-#endif
-                           // Restart by going the other direction (down in the source sequence)
-                              surroundingStatement = targetStmt;
-                              surroundingStatement = getNextStatement(surroundingStatement);
-                              while (surroundingStatement->get_file_info()->get_file_id() != targetStmt->get_file_info()->get_file_id())
-                                 {
-                                   surroundingStatement = getNextStatement(surroundingStatement);
-
-                                   if (surroundingStatement == NULL)
-                                      {
-#if 0
-                                        printf ("We just ran off the end (bottom) of the file... \n");
-#endif
-#if 0
-                                        ROSE_ASSERT(false);
-#endif
-                                      }
-                                 }
-                            }
-                       }
-
-                 // If we can't identify a valid surroundingStatement then we can ignore attaching comments (at least for now).
+                 // ROSE_ASSERT(surroundingStatement != NULL);
                     if (surroundingStatement != NULL)
                        {
-                      // Now add the entries from the captureList to the surroundingStatement and remove them from the targetStmt.
-                      // printf ("This is a valid surrounding statement = %s for insertBefore = %s \n",surroundingStatement->class_name().c_str(),insertBefore ? "true" : "false");
-                         vector<int>::iterator j = captureList.begin();
-                         while (j != captureList.end())
-                            {
-                           // Add the captured comments to the new statement. Likely we need to make sure that the order is preserved.
-                              ROSE_ASSERT(surroundingStatement->get_file_info() != NULL);
-#if 0
-                              printf ("Attaching comments to surroundingStatement = %p = %s on file = %s line %d \n",
-                                   surroundingStatement,surroundingStatement->class_name().c_str(),
-                                   surroundingStatement->get_file_info()->get_filenameString().c_str(),
-                                   surroundingStatement->get_file_info()->get_line());
+                      // If we have identified a valid surrounding statemen, then move the comments and CPP directives to that statement.
+#if REMOVE_STATEMENT_DEBUG
+                         printf ("In removeStatement(): surroundingStatementPreceedsTargetStatement = %s \n",surroundingStatementPreceedsTargetStatement ? "true" : "false");
 #endif
-                              surroundingStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
-
-                           // Remove them from the targetStmt. (set them to NULL and then remove them in a separate step).
-#if 0
-                              printf ("Removing entry from comments list on targetStmt = %p = %s \n",targetStmt,targetStmt->class_name().c_str());
-#endif
-                              (*comments)[*j] = NULL;
-
-                              j++;
-                            }
-
-                      // Now remove each NULL entries in the comments vector.
-                      // Because of iterator invalidation we must reset the iterators after each call to erase (I think).
-                         for (size_t n = 0; n < captureList.size(); n++)
-                            {
-                              bool modifiedList = false;
-                              AttachedPreprocessingInfoType::iterator k = comments->begin();
-                              while (k != comments->end() && modifiedList == false)
-                                 {
-                                // Only modify the list once per iteration over the captureList
-                                // if ((*comments)[*k] == NULL)
-                                   if (*k == NULL)
-                                      {
-                                        comments->erase(k);
-                                        modifiedList = true;
-                                      }
-                                   k++;
-                                 }
-                            }
+                         moveCommentsToNewStatement(targetStmt,captureList,surroundingStatement,surroundingStatementPreceedsTargetStatement);
                        }
+                  }
+             }
+#endif
+
+          parentStatement->remove_statement(targetStmt);
+        }
+#else
+     printf ("Error: This is not supported within Microsoft Windows (I forget why). \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+//! Relocate comments and CPP directives from one statement to another.
+void
+SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const vector<int> & indexList, SgStatement* targetStatement , bool surroundingStatementPreceedsTargetStatement)
+   {
+     AttachedPreprocessingInfoType* comments = sourceStatement->getAttachedPreprocessingInfo();
+
+#if REMOVE_STATEMENT_DEBUG
+     printf ("In moveCommentsToNewStatement(): surroundingStatementPreceedsTargetStatement = %s \n",surroundingStatementPreceedsTargetStatement ? "true" : "false");
+#endif
+
+  // Now add the entries from the captureList to the surroundingStatement and remove them from the targetStmt.
+  // printf ("This is a valid surrounding statement = %s for insertBefore = %s \n",surroundingStatement->class_name().c_str(),insertBefore ? "true" : "false");
+     vector<int>::const_iterator j = indexList.begin();
+     while (j != indexList.end())
+        {
+       // Add the captured comments to the new statement. Likely we need to make sure that the order is preserved.
+          ROSE_ASSERT(targetStatement->get_file_info() != NULL);
+#if REMOVE_STATEMENT_DEBUG
+          printf ("Attaching comments to targetStatement = %p = %s on file = %s line %d \n",
+               targetStatement,targetStatement->class_name().c_str(),
+               targetStatement->get_file_info()->get_filenameString().c_str(),
+               targetStatement->get_file_info()->get_line());
+
+          printf ("(*comments)[*j]->getRelativePosition() = %s \n",PreprocessingInfo::relativePositionName((*comments)[*j]->getRelativePosition()).c_str());
+#endif
+
+          if (surroundingStatementPreceedsTargetStatement == true)
+             {
+               if ((*comments)[*j]->getRelativePosition() == PreprocessingInfo::before)
+                  {
+                    (*comments)[*j]->setRelativePosition(PreprocessingInfo::after);
+                    ROSE_ASSERT((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after);
+                  }
+                 else
+                  {
+                 // If is is not before, I hope it can only be after.
+                    ROSE_ASSERT((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after);
                   }
              }
             else
              {
-#if 0
-               printf ("No attached comments (at %p of type: %s): \n",targetStmt,targetStmt->class_name().c_str());
-#endif
-             }
-#endif
+               if ((*comments)[*j]->getRelativePosition() == PreprocessingInfo::before)
+                  {
+                 // Leave the comments marked as being before the associated statement.
+                  }
+                 else
+                  {
+                 // If is is not before, I hope it can only be after.
+                    ROSE_ASSERT((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after);
+                    (*comments)[*j]->setRelativePosition(PreprocessingInfo::before);
+                    ROSE_ASSERT((*comments)[*j]->getRelativePosition() == PreprocessingInfo::before);
+                  }
 
-          if ( isRemovable == true )
-               parentStatement->remove_statement(targetStmt);
+            // printf (" This case (surroundingStatementPreceedsTargetStatement == false) is not handled yet. \n");
+            // ROSE_ASSERT(false);
+             }
+
+          targetStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
+
+       // Remove them from the targetStmt. (set them to NULL and then remove them in a separate step).
+#if REMOVE_STATEMENT_DEBUG
+          printf ("Marking entry from comments list as NULL on sourceStatement = %p = %s \n",sourceStatement,sourceStatement->class_name().c_str());
+#endif
+          (*comments)[*j] = NULL;
+
+          j++;
         }
 
-
-
-#else
-     printf ("Error: This is not supported within Microsoft Windows. \n");
-     ROSE_ASSERT(false);
+  // Now remove each NULL entries in the comments vector.
+  // Because of iterator invalidation we must reset the iterators after each call to erase (I think).
+     for (size_t n = 0; n < indexList.size(); n++)
+        {
+#if REMOVE_STATEMENT_DEBUG
+          printf ("Erase entry from comments list on comments->size() %zu \n",comments->size());
 #endif
+          bool modifiedList = false;
+          AttachedPreprocessingInfoType::iterator k = comments->begin();
+          while (k != comments->end() && modifiedList == false)
+             {
+            // Only modify the list once per iteration over the captureList
+            // if ((*comments)[*k] == NULL)
+               if (*k == NULL)
+                  {
+                    comments->erase(k);
+                    modifiedList = true;
+                  }
+               k++;
+             }
+        }
+   }
+
+
+//! Remove a statement: TODO consider side effects for symbol tables
+SgStatement* 
+SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, bool & surroundingStatementPreceedsTargetStatement)
+   {
+  // Note that if the return value is SgGlobal (global scope), then surroundingStatementPreceedsTargetStatement is false, but meaningless.
+  // This function can not return a NULL pointer.
+
+     ROSE_ASSERT(targetStmt != NULL);
+
+     SgStatement* surroundingStatement = targetStmt;
+     int surroundingStatement_fileId   = Sg_File_Info::BAD_FILE_ID; // No file id can have this value.
+
+#if REMOVE_STATEMENT_DEBUG
+     printf ("TOP of findSurroundingStatementFromSameFile(): surroundingStatementPreceedsTargetStatement = %s \n",surroundingStatementPreceedsTargetStatement ? "true" : "false");
+#endif
+
+  // Only handle relocation for statements that exist in the file (at least for now while debugging).
+     if (targetStmt->get_file_info()->get_file_id() >= 0)
+        {
+          surroundingStatementPreceedsTargetStatement = true;
+
+#if REMOVE_STATEMENT_DEBUG
+          printf ("   targetStmt->get_file_info()->get_file_id()           = %d \n",targetStmt->get_file_info()->get_file_id());
+#endif
+          bool returningNullSurroundingStatement = false;
+       // while (surroundingStatement->get_file_info()->get_file_id() != targetStmt->get_file_info()->get_file_id())
+          while ((returningNullSurroundingStatement == false) && (surroundingStatement != NULL) && surroundingStatement_fileId != targetStmt->get_file_info()->get_file_id())
+             {
+            // Start by going up in the source sequence.
+            // This is a declaration from the wrong file so go to the next statement.
+            // surroundingStatement = (insertBefore == true) ? getNextStatement(surroundingStatement) : getPreviousStatement(surroundingStatement);
+            // surroundingStatement = (insertBefore == true) ? getPreviousStatement(surroundingStatement) : getNextStatement(surroundingStatement);
+               surroundingStatement = getPreviousStatement(surroundingStatement);
+               if (surroundingStatement == NULL)
+                  {
+                    surroundingStatement_fileId = Sg_File_Info::BAD_FILE_ID;
+#if REMOVE_STATEMENT_DEBUG
+                    printf ("   surroundingStatement_fileId set to Sg_File_Info::BAD_FILE_ID \n");
+#endif
+                  }
+                 else
+                  {
+                    surroundingStatement_fileId = surroundingStatement->get_file_info()->get_file_id();
+#if REMOVE_STATEMENT_DEBUG
+                    printf ("   surroundingStatement = %p = %s surroundingStatement->get_file_info()->get_file_id() = %d \n",
+                         surroundingStatement,surroundingStatement->class_name().c_str(),surroundingStatement->get_file_info()->get_file_id());
+#endif
+                  }
+
+#if REMOVE_STATEMENT_DEBUG
+               if (surroundingStatement != NULL)
+                  {
+                    printf ("Looping toward the top of the file for a statement to attach comments and CPP directives to: surroundingStatement = %p = %s file = %s file id = %d line = %d \n",
+                         surroundingStatement,surroundingStatement->class_name().c_str(),
+                         surroundingStatement->get_file_info()->get_filenameString().c_str(),
+                         surroundingStatement->get_file_info()->get_file_id(),
+                         surroundingStatement->get_file_info()->get_line());
+                  }
+                 else
+                  {
+                    printf ("surroundingStatement == NULL \n");
+                  }
+#endif
+            // As a last resort restart and go down in the statement sequence.
+            // if (surroundingStatement == NULL)
+               if (surroundingStatement == NULL || isSgGlobal(surroundingStatement) != NULL)
+                  {
+                 // This is triggered by rose_inputloopUnrolling.C
+#if REMOVE_STATEMENT_DEBUG
+                    printf ("We just ran off the start (top) of the file... targetStmt = %p = %s \n",targetStmt,targetStmt->class_name().c_str());
+#endif
+#if 0
+                    ROSE_ASSERT(false);
+#endif
+                 // A statement in the same file could not be identified, so this is false.
+                    surroundingStatementPreceedsTargetStatement = false;
+
+                 // Restart by going the other direction (down in the source sequence)
+                    surroundingStatement = targetStmt;
+                    SgStatement* previousStatement = surroundingStatement;
+                 // surroundingStatement = getNextStatement(surroundingStatement);
+                    surroundingStatement_fileId = Sg_File_Info::BAD_FILE_ID;
+                 // while ( (surroundingStatement != NULL) && (surroundingStatement->get_file_info()->get_file_id() != targetStmt->get_file_info()->get_file_id()) )
+                    while ( (surroundingStatement != NULL) && (surroundingStatement_fileId != targetStmt->get_file_info()->get_file_id()) )
+                       {
+                         previousStatement = surroundingStatement;
+                         surroundingStatement = getNextStatement(surroundingStatement);
+
+                         if (surroundingStatement == NULL)
+                            {
+                              surroundingStatement_fileId = Sg_File_Info::BAD_FILE_ID;
+#if REMOVE_STATEMENT_DEBUG
+                              printf ("We just ran off the end (bottom) of the file... \n");
+#endif
+#if 0
+                              ROSE_ASSERT(false);
+#endif
+                              returningNullSurroundingStatement = true;
+                            }
+                           else
+                            {
+                              surroundingStatement_fileId = surroundingStatement->get_file_info()->get_file_id();
+#if REMOVE_STATEMENT_DEBUG
+                              printf ("Looping toward the bottom of the file for a statement to attach comments and CPP directives to: surroundingStatement = %p = %s file = %s file id = %d line = %d \n",
+                                   surroundingStatement,surroundingStatement->class_name().c_str(),
+                                   surroundingStatement->get_file_info()->get_filenameString().c_str(),
+                                   surroundingStatement->get_file_info()->get_file_id(),
+                                   surroundingStatement->get_file_info()->get_line());
+#endif
+                            }
+                       }
+
+                    if (surroundingStatement == NULL)
+                       {
+#if REMOVE_STATEMENT_DEBUG
+                         printf ("Resetting the surroundingStatement to the previousStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
+#endif
+                         surroundingStatement = previousStatement;
+
+                      // Check if this is the input statement we are removing (since the we have to attach comments to the global scope IR node.
+                         if (surroundingStatement == targetStmt)
+                            {
+                           // This can happen if there was only a single statement in a file and it was removed.
+                           // All associated comments would have to be relocated to the SgGlobal IR node.
+#if REMOVE_STATEMENT_DEBUG
+                              printf ("Setting the surroundingStatement to be global scope \n");
+#endif
+                              surroundingStatement = TransformationSupport::getGlobalScope(targetStmt);
+                            }
+                       }
+                  }
+             }
+
+          ROSE_ASSERT(surroundingStatement != NULL);
+        }
+       else
+        {
+          printf ("This is a special statement (not associated with the original source code, comment relocation is not supported for these statements) targetStmt file id = %d \n",targetStmt->get_file_info()->get_file_id());
+          surroundingStatement = NULL;
+        }
+
+#if REMOVE_STATEMENT_DEBUG
+     printf ("BOTTOM of findSurroundingStatementFromSameFile(): surroundingStatementPreceedsTargetStatement = %s surroundingStatement = %p \n",surroundingStatementPreceedsTargetStatement ? "true" : "false",surroundingStatement);
+     if (surroundingStatement != NULL)
+        {
+          printf ("surroundingStatement = %p = %s \n",surroundingStatement,surroundingStatement->class_name().c_str());
+        }
+#endif
+
+  // ROSE_ASSERT(surroundingStatement != NULL);
+
+     return surroundingStatement;
    }
 
 

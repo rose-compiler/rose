@@ -1432,7 +1432,7 @@ HEADER_ELF_SECTION_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor();}
 		virtual SgAsmElfSectionTable *parse();
-		void add_section(SgAsmElfSection*);
+		SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*);
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
@@ -1954,7 +1954,7 @@ HEADER_ELF_NOTE_SECTION_END
 HEADER_ELF_NOTE_ENTRY_START
 	public:
 		SgAsmElfNoteEntry(SgAsmElfNoteSection *section)
-			: p_type(0)
+			: p_type(0), p_name(NULL)
 			{ctor(section);}
 		rose_addr_t parse(rose_addr_t starting_offset);
 		rose_addr_t unparse(std::ostream &f, rose_addr_t starting_offset);
@@ -2209,7 +2209,7 @@ HEADER_ELF_SEGMENT_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor();}
 		virtual SgAsmElfSegmentTable *parse();
-		void add_section(SgAsmElfSection*);
+		SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*);
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
@@ -2232,6 +2232,7 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 			PT_NOTE         = 4,            /* auxiliary information */
 			PT_SHLIB        = 5,            /* Reserved w/unspecified semantics; such a file is nonconforming */
 			PT_PHDR         = 6,            /* Segment contains the segment table itself (program header array) */
+			PT_TLS		= 7,		/* Thread local storage */
 
 			/* OS- and Processor-specific ranges */
 			PT_LOOS         = 0x60000000,   /* Values reserved for OS-specific semantics */
