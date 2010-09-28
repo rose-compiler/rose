@@ -1718,14 +1718,14 @@ EmulationPolicy::emulate_syscall()
 
         case 85: { /*0x55, readlink*/
             syscall_enter("readlink", "spd");
-            uint32_t path=arg(0), buf=arg(1), bufsize=arg(2);
+            uint32_t path=arg(0), buf_va=arg(1), bufsize=arg(2);
             char sys_buf[bufsize];
             std::string sys_path = read_string(path);
             int result = readlink(sys_path.c_str(), sys_buf, bufsize);
             if (result == -1) {
                 result = -errno;
             } else {
-                size_t nwritten = map->write(sys_buf, buf, result);
+                size_t nwritten = map->write(sys_buf, buf_va, result);
                 ROSE_ASSERT(nwritten == (size_t)result);
             }
             writeGPR(x86_gpr_ax, result);
