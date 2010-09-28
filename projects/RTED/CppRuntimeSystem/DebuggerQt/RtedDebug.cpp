@@ -157,6 +157,7 @@ void RtedDebug::printDbg(const QString & s)
 {
     return;
 
+    //    if(gui.id == -1 || rtsi.id == -1) /*tps fixed signed/unsigned warning */
     if(gui.id < 0 || rtsi.id < 0)
     {
         qDebug() << "Not yet initialized" << gui.id << rtsi.id ;

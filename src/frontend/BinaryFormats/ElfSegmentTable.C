@@ -140,6 +140,7 @@ SgAsmElfSegmentTableEntry::to_string(SegmentType kind)
         case PT_NOTE:    s = "PT_NOTE";    break; // 4
         case PT_SHLIB:   s = "PT_SHLIB";   break; // 5
         case PT_PHDR:    s = "PT_PHDR";    break; // 6
+        case PT_TLS:     s = "PT_TLS";     break; // 7
 
         // DQ (10/31/2008): Added mising enum values to prevent run-time warnings
         /* OS- and Processor-specific ranges */
@@ -321,8 +322,10 @@ SgAsmElfSegmentTable::parse()
  *  
  *  ELF Segments are represented by SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much in their
  *  features and thus should share an interface. An SgAsmElfSection can appear in the ELF Section Table and/or the ELF Segment
- *  Table and you can determine where it was located by calling get_section_entry() and get_segment_entry(). */
-void
+ *  Table and you can determine where it was located by calling get_section_entry() and get_segment_entry().
+ *
+ *  Returns the new segment table entry linked into the AST. */
+SgAsmElfSegmentTableEntry *
 SgAsmElfSegmentTable::add_section(SgAsmElfSection *section)
 {
     ROSE_ASSERT(section!=NULL);
@@ -342,6 +345,8 @@ SgAsmElfSegmentTable::add_section(SgAsmElfSection *section)
     shdr->set_index(idx);
     shdr->update_from_section(section);
     section->set_segment_entry(shdr);
+
+    return shdr;
 }
 
 /** Returns info about the size of the entries based on information already available. Any or all arguments may be null
