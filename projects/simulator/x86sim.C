@@ -162,10 +162,26 @@ print_timespec_32(FILE *f, const uint8_t *_ts, size_t sz)
     return fprintf(f, "sec=%"PRIu32", nsec=%"PRIu32, ts->sec, ts->nsec);
 }
 
+static const Translate signal_names[] = {
+    TE(SIGHUP), TE(SIGINT), TE(SIGQUIT), TE(SIGILL), TE(SIGTRAP), TE(SIGABRT), TE(SIGBUS), TE(SIGFPE), TE(SIGKILL),
+    TE(SIGUSR1), TE(SIGSEGV), TE(SIGUSR2), TE(SIGPIPE), TE(SIGALRM), TE(SIGTERM), TE(SIGSTKFLT), TE(SIGCHLD), TE(SIGCONT),
+    TE(SIGSTOP), TE(SIGTSTP), TE(SIGTTIN), TE(SIGTTOU), TE(SIGURG), TE(SIGXCPU), TE(SIGXFSZ), TE(SIGVTALRM), TE(SIGPROF),
+    TE(SIGWINCH), TE(SIGIO), TE(SIGPWR), TE(SIGSYS), TE2(32, SIGRT32), TE2(33, SIGRT33), TE2(34, SIGRT34), TE2(35, SIGRT35),
+    TE2(36, SIGRT36), TE2(37, SIGRT37), TE2(38, SIGRT38), TE2(39, SIGRT39), TE2(40, SIGRT40), TE2(41, SIGRT41),
+    TE2(42, SIGRT42), TE2(43, SIGRT43), TE2(44, SIGRT44), TE2(45, SIGRT45), TE2(46, SIGRT46), TE2(47, SIGRT47),
+    TE2(48, SIGRT48), TE2(49, SIGRT49), TE2(50, SIGRT50), TE2(51, SIGRT51), TE2(52, SIGRT52), TE2(53, SIGRT53),
+    TE2(54, SIGRT54), TE2(55, SIGRT55), TE2(56, SIGRT56), TE2(57, SIGRT57), TE2(58, SIGRT58), TE2(59, SIGRT59),
+    TE2(60, SIGRT60), TE2(61, SIGRT61), TE2(62, SIGRT62), TE2(63, SIGRT63),
+    T_END};
+
+static const Translate signal_flags[] = {
+    TF(SA_NOCLDSTOP), TF(SA_NOCLDWAIT), TF(SA_NODEFER), TF(SA_ONSTACK), TF(SA_RESETHAND), TF(SA_RESTART),
+    TF(SA_SIGINFO), T_END};
+
 struct sigaction_32 {
-    int (*handler)(int);
+    uint32_t handler_va;
     uint32_t flags;
-    void (*restorer)();
+    uint32_t restorer_va;
     uint64_t mask;
 } __attribute__((packed));
 
@@ -174,8 +190,9 @@ print_sigaction_32(FILE *f, const uint8_t *_sa, size_t sz)
 {
     assert(sz==sizeof(sigaction_32));
     const sigaction_32 *sa = (const sigaction_32*)_sa;
-    return fprintf(f, "handler=0x%08"PRIx64", flags=0x%"PRIx32", restorer=0x%08"PRIx64", mask=0x%016"PRIx64,
-                   (uint64_t)sa->handler, sa->flags, (uint64_t)sa->restorer, sa->mask);
+    return (fprintf(f, "handler=0x%08"PRIx32", flags=", sa->handler_va) +
+            print_flags(f, signal_flags, sa->flags) +
+            fprintf(f, ", restorer=0x%08"PRIx32", mask=0x%016"PRIx64, sa->restorer_va, sa->mask));
 }
 
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
@@ -1538,9 +1555,9 @@ EmulationPolicy::emulate_syscall()
         }
 
 	case 37: { /* 0x25, kill */
-            syscall_enter("kill", "dd");
-            pid_t pid = readGPR(x86_gpr_bx).known_value();
-            int   sig = readGPR(x86_gpr_cx).known_value();
+            syscall_enter("kill", "df", signal_names);
+            pid_t pid=arg(0);
+            int sig=arg(1);
             int result = kill(pid, sig);
             if (result == -1) result = -errno;
             writeGPR(x86_gpr_ax, result);
@@ -2001,7 +2018,7 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 174: { /*0xae, rt_sigaction*/
-            syscall_enter("rt_sigaction", "dPpd", sizeof(sigaction_32), print_sigaction_32);
+            syscall_enter("rt_sigaction", "fPpd", signal_names, sizeof(sigaction_32), print_sigaction_32);
             int signum=arg(0);
             uint32_t action_va=arg(1), oldact_va=arg(2);
             size_t sigsetsize=arg(3);
@@ -2451,7 +2468,7 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 270: { /*0x10e tgkill*/
-            syscall_enter("tgkill", "ddd");
+            syscall_enter("tgkill", "ddf", signal_names);
             uint32_t /*tgid=arg(0), pid=arg(1),*/ sig=arg(2);
             // TODO: Actually check thread group and kill properly
             if (debug && trace_syscall) fputs("(throwing...)\n", debug);
