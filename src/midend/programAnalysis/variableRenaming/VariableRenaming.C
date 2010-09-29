@@ -12,6 +12,7 @@
 #include <fstream>
 #include <stack>
 #include <boost/foreach.hpp>
+#include <boost/unordered_set.hpp>
 #define foreach BOOST_FOREACH
 
 using namespace std;
@@ -1339,7 +1340,7 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 void VariableRenaming::runDefUse(SgFunctionDefinition* func)
 {
     //Keep track of visited nodes
-    vector<SgNode*> visited;
+    boost::unordered_set<SgNode*> visited;
 
     //Reset the first def list to prevent errors with global vars.
     firstDefList.clear();
@@ -1416,7 +1417,7 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
                         cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
                 }
                 //If the next node has not yet been visited
-                else if(std::find(visited.begin(), visited.end(), nextNode.getNode()) == visited.end())
+				else if (visited.count(nextNode.getNode()) == 0)
                 {
                     //Add it to the worklist
                     worklist.push_back(nextNode);
@@ -1428,7 +1429,7 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
         }
 
         //Mark the current node as seen
-        visited.push_back(current.getNode());
+        visited.insert(current.getNode());
     }
 }
 
