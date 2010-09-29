@@ -2828,6 +2828,61 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
     }
 }
 
+VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtStatementStart(SgStatement* statement)
+{
+	ROSE_ASSERT(statement);
+    NumNodeRenameTable result;
+
+	//Get all the incoming edges for the statement
+	vector<CFGEdge> inEdges = statement->cfgForBeginning().inEdges();
+
+	//Mere in the defs from any cfg edge that is not a child of the statement
+	foreach (CFGEdge inEdge, inEdges)
+	{
+		SgNode* sourceNode = inEdge.source().getNode();
+		if (SageInterface::isAncestor(statement, sourceNode))
+		{
+			continue;
+		}
+
+		NumNodeRenameTable temp = getReachingDefsAtNode(sourceNode);
+
+		//Merge the tables
+		//TODO: Factor this out into a function
+		foreach(NumNodeRenameTable::value_type& entry, temp)
+		{
+			//Insert the entry wholesale
+			if (result.count(entry.first) == 0)
+			{
+				result[entry.first] = entry.second;
+			}
+			//Or merge it with an existing one
+			else
+			{
+				foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
+				{
+					//Insert the entry wholesale
+					if (result[entry.first].count(tableEntry.first) == 0)
+					{
+						result[entry.first][tableEntry.first] = tableEntry.second;
+					}
+					else
+					{
+						//Check for equivalence
+						if (result[entry.first][tableEntry.first] != tableEntry.second)
+						{
+							cout << "Error: Same Renaming number has two different definition points." << endl;
+							ROSE_ASSERT(false);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunctionStart(SgFunctionDefinition* node)
 {
     return getReachingDefsAtNode(node);

@@ -617,7 +617,17 @@ public:
      */
     NumNodeRenameEntry getReachingDefsAtFunctionEndForName(SgFunctionDefinition* node, const VarName& var);
 
-    /** Get the versions of all variables at the start of the given function.
+	/** Gets the versions of all variables reaching a statment before its execution. Notice that this method and 
+	 * getReachingDefsAtNode potentially return different values for loops. With loops, variable values from the body
+	 * of the loop flow to the top; hence getReachingDefsAtNode returns definitions from the loop body. On the other hand,
+	 * getReachingDefsAtStatementStart does not return definitions coming in from a loop body.
+	 * 
+     * @param statement
+     * @return A table of VarName->(num, defNode) for all variables at the beginning of the statement
+     */
+	NumNodeRenameTable getReachingDefsAtStatementStart(SgStatement* statement);
+
+	/** Get the versions of all variables at the start of the given function.
      *
      * @param node The function to get variables for.
      * @return A table of VarName->(num, defNode) for all variables at the start of the function. Empty table otherwise.
