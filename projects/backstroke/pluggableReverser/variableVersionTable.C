@@ -321,7 +321,7 @@ VariableVersionTable::getVarTablesForIfBodies(SgBasicBlock* true_body, SgBasicBl
 					true_body_var_table.table_[var_name].end(),
 					true_body_versions.begin(), true_body_versions.end(),
 					inserter(new_versions, new_versions.begin()));
-			true_body_var_table.table_[var_name] = new_versions;
+			true_body_var_table.table_[var_name].swap(new_versions);
 		}
 		else
 		{
@@ -342,7 +342,7 @@ VariableVersionTable::getVarTablesForIfBodies(SgBasicBlock* true_body, SgBasicBl
 					false_body_var_table.table_[var_name].end(),
 					false_body_versions.begin(), false_body_versions.end(),
 					inserter(new_versions, new_versions.begin()));
-			false_body_var_table.table_[var_name] = new_versions;
+			false_body_var_table.table_[var_name].swap(new_versions);
 		}
 		else
 		{
