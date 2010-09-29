@@ -283,6 +283,11 @@ class SgExpression;
 typedef Rose_STL_Container<SgExpression*>   SgExpressionPtrList;
 typedef SgExpressionPtrList*                SgExpressionPtrListPtr;
 
+// Liao 9/27/2010: new typedef for SgVarRefExp list
+class SgVarRefExp;
+typedef Rose_STL_Container<SgVarRefExp*>   SgVarRefExpPtrList;
+typedef SgVarRefExpPtrList*                SgVarRefExpPtrListPtr;
+
 class SgAttribute;
 typedef Rose_STL_Container<SgAttribute*>    SgAttributePtrList;
 typedef SgAttributePtrList*                 SgAttributePtrListPtr;
