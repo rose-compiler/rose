@@ -2665,7 +2665,7 @@ EmulationPolicy::emulate_syscall()
 	    mode_t mode = arg(2);
 	    int flags = arg(3);
 
-	    int result = fchmodat(dirfd, sys_path.c_str(), mode, flags);
+	    int result = syscall( 306, dirfd, (long) sys_path.c_str(), mode, flags);
             if (result == -1) result = -errno;
             writeGPR(x86_gpr_ax, result);
 
