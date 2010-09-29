@@ -386,9 +386,7 @@ Grammar::setUpNodes ()
                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
  
      // clauses with variable lists 
-     // Liao 9/27/2010, per user's report, modeling the variable reference use SgVarRefExp
-     //OmpVariablesClause.setDataPrototype ( "SgInitializedNamePtrList", "variables", "",
-     OmpVariablesClause.setDataPrototype ( "SgVarRefExpPtrList", "variables", "",
+     OmpVariablesClause.setDataPrototype ( "SgInitializedNamePtrList", "variables", "",
                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
       // default (private | firstprivate | shared | none)
