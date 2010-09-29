@@ -204,7 +204,7 @@ typedef std::vector<MemoryCell> Memory;
 struct State {
     static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
     static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
-    static const size_t n_flags = 16;           /**< Number of flag registers in this state. */
+    static const size_t n_flags = 32;           /**< Number of flag registers in this state. */
 
     ValueType<32> ip;                           /**< Instruction pointer. */
     ValueType<32> gpr[n_gprs];                  /**< General-purpose registers */
