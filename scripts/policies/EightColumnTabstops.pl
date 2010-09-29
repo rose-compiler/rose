@@ -49,7 +49,7 @@ sub show {
   }
 }
 
-# Basic tab width is the lowest SPC delta with at least 40% occurrence
+# Basic indentation amount is the lowest delta with at least 40% occurrence.
 sub base_indentation {
   my($deltas) = @_;
   my $total = total($deltas);
@@ -59,41 +59,100 @@ sub base_indentation {
   return 1;
 }
 
+# Returns a list of basic indentation amounts for files where more than one amount is used.
+
+
+sub DEBUG {
+  my $prefix = sprintf "%-8s", shift @_;
+  my @data = split /\n/, join "", @_;
+  print "$prefix |", shift(@data), "\n";
+  print " " x length($prefix), " |", $_, "\n" for @data;
+}
+
+# Returns a closure that reads one line. String literals and comments that span multiple lines are treated as a single line
+# as are certain other constructs that are typically not indented like others.
+sub line_factory {
+  my $s = join "", @_;
+  return sub {
+    my($plevel,$ret)=(0);
+
+    # CPP directives don't always contain balanced parens, so match them as a whole at the beginning of a line.
+    # Furthermore, they don't typically follow the C/C++ indentation since they're not part of the language, so ignore them.
+    if ($s =~ /\G(\s*#(.*?\\\n)*(.*?)\n)/cg) {
+      my $cpp = $1;
+      return "\n" x $cpp =~ tr/\n/\n/;
+    }
+
+    while (1) {
+      $s =~ /\G([ \t]+)/cg and do {$ret.=$1;next};
+      $s =~ /\G(\()/cg    and do {$ret.=$1;$plevel++;next};
+      $s =~ /\G(\))/cg    and do {$ret.=$1;$plevel-=1 if $plevel;next};
+      $s =~ /\G(\/\/.*)/cg and do {$ret.=$1;next};		# "//" comment
+      $s =~ /\G(\/\*.*?\*\/)/cgs and do {$ret.=$1;next};	# C style comment
+      $s =~ /\G("(\\[0-7]{,3}|\\.|[^"\\])*")/cgs and do {$ret.=$1;next}; # string literal
+      $s =~ /\G(\n)/cg and do {$ret.=$1;return $ret unless $plevel};
+      $s =~ /\G(.)/cgs and do {$ret.=$1;next};
+      $s =~ /\G$/ and return $ret;
+    }
+    return $ret;
+  }
+}
+
+# Returns a list of logical "lines" from a file.
+sub lines {
+  local(*FILE) = @_;
+  my $line_factory = line_factory <FILE>;
+  my @lines;
+  local($_);
+  while ($_=&$line_factory) {
+    push @lines, $_;
+  }
+  return @lines;
+}
+
 my $nfail=0;
 my $files = FileLister->new(@ARGV);
 while (my $filename = $files->next_file) {
   if ($filename =~ /\.(h|hh|c|cpp|C)$/ && open FILE, "<", $filename) {
+    #DEBUG "FILE", $filename;
+    my @lines = lines(\*FILE);
+    close FILE;
 
-    # Determine indentation delta distributions for space-only indentation vs. tab indentation
+    # Determine indentation delta distributions for space-only indentation vs. tab indentation. Look only at increasing
+    # levels of indentation.  We look at changes in indentation rather than absolute indentation because it often happens
+    # that some one writes a bunch of code, and then someone else inserts more code using a different indentation style
+    # but offsetting their new code according to the indentation level of the old code at the insertion point.
     my($indent,$nspc,$ntab,%spc_deltas,%tab_deltas);
-    while (<FILE>) {
+    for (@lines) {
       my $line = expand($_); # uses 8-column tab-stops
+      #DEBUG "LINE", $line;
       my $actual = length $1 if $line =~ /^(\s*)\S/;
-      my $delta = abs $indent-$actual;
+      my $delta = $actual - $indent;
       $indent = $actual;
-      if ($delta) {
+      if ($delta>0) {
 	if (/^\s*?\t/) {
-	  $nspc++;
-	  $tab_deltas{$delta}++;
-	} else {
 	  $ntab++;
+	  $tab_deltas{$delta}++;
+	  #DEBUG "TAB", $delta;
+	} else {
+	  $nspc++;
 	  $spc_deltas{$delta}++;
+	  #DEBUG "SPC", $delta;
 	}
       }
     }
-    close FILE;
 
     # Base indentation is computed from spaces since spaces are a known width and generally more common than tabs.
-    # However, if less than 5% of the lines are SPC indented then abandon the policy checker--there is probably not
-    # enough data to make the determination.
+    # However, if less than 5% of the lines are SPC indented then there is probably not enough data to make the
+    # determination. If there are at least 25 lines then assume that the base indentation is eight since a TAB-indented
+    # files will appear as eight-column indentation in most default-configured editors, printers, xterms, web browsers, etc.
     next if $ntab==0;
-    next if $nspc / ($nspc+$ntab) < 0.05;
-    my $base = base_indentation \%spc_deltas;
-    if (0) {
-      print $filename, ":\n";
-      print "  base indentation = ", $base, "\n";
-      show \%spc_deltas if $base < 4;
-      #show \%tab_deltas;
+    my $base;
+    if ($nspc<10 || $nspc / ($nspc+$ntab) < 0.05) {
+      next if $nspc+$ntab < 25;
+      $base = 8;
+    } else {
+      $base = base_indentation \%spc_deltas;
     }
 
     # Does file violate this policy?
@@ -101,35 +160,40 @@ while (my $filename = $files->next_file) {
     for my $delta (sort {$a <=> $b} keys %tab_deltas) {
       $nviolations += $tab_deltas{$delta} if $delta % $base;
     }
-    if (!$verbose && $nviolations>0) {
-      print $desc unless $nfail++;
-      print "  $filename (base=$base, violations=$nviolations)\n";
+    next unless $nviolations;
+
+    print $desc if 0==$nfail++ && !$verbose;
+    print "  $filename (base=$base, violations=$nviolations)\n";
+
+    if (0) {
+      printf "    nspc=%d(%d%%); ntab=%d\n", $nspc, 100*$nspc/($nspc+$ntab), $ntab;
+      show \%spc_deltas if $base < 4;
+      #show \%tab_deltas;
     }
 
-
-    # Look for TAB indentation that is not a multiple of the base indentation.
+    # Look for TAB indentation that is not a multiple of the base indentation.  Use the same rule as used to build the
+    # %tab_deltas, otherwise we might get errors in verbose mode that aren't reported for non-verbose, or vice versa.
     if ($verbose && $nviolations) {
-      open FILE, "<", $filename or die;
       $indent = 0;
-      my $linenum=0;
-      while (<FILE>) {
-	$linenum++;
+      my $linenum=1;
+      for (@lines) {
 	my $line = expand($_);
 	my $actual = length $1 if $line =~ /^(\s*)\S/;
-	my $delta = abs $indent-$actual;
+	my $delta = $actual - $indent;
 	$indent = $actual;
-	if ($delta && /^\s*?\t/ && $delta % $base) {
+        #DEBUG $linenum, $line;
+	if ($delta>0 && /^\s*?\t/ && $delta % $base) {
 	  if ($verbose) {
 	    $nfail++;
-	    print "$filename:$linenum: TAB-based indentation is not a multiple of $base\n";
+	    print "$filename:$linenum: TAB-based indentation (delta=$delta) is not a multiple of $base\n";
 	  } else {
 	    print $desc unless $nfail++;
 	    print "  $filename\n";
 	    last;
 	  }
 	}
+	$linenum += tr/\n/\n/;
       }
-      close FILE;
     }
   }
 }
