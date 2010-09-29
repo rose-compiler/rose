@@ -173,3 +173,12 @@ tests/roseTests/binaryTests:
 See also "disassemble --help" because it takes a lot of different,
 useful switches and improvements continue to be added (it's the
 test bed for the latest binary capabilities).
+
+The behavior of the dynamic linker (ld.so) in the specimen can be
+controlled by setting environment variables documented in its
+man page. However, to prevent those variables from affecting the
+loading and linking of ROSE itself, prefix the variable's name
+with "X86SIM_". For example, to adjust the library load path
+do this:
+    
+    $ X86SIM_LD_LIBRARY_PATH=somedir ./x86sim a.out
