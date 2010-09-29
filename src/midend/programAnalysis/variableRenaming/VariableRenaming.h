@@ -13,6 +13,7 @@
 #include <sstream>
 #include <boost/foreach.hpp>
 #include "filteredCFG.h"
+#include <boost/unordered_map.hpp>
 
 /** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
  * This is used to assign absolute names to VarRefExp nodes during VariableRenaming.
@@ -174,10 +175,10 @@ public:
     typedef std::map<VarName, NodeVec> TableEntry;
     /** A table storing the name->node mappings for every node in the program.
      */
-    typedef std::map<SgNode*, TableEntry> DefUseTable;
+    typedef boost::unordered_map<SgNode*, TableEntry> DefUseTable;
     /** A table mapping a name to a single node.
      */
-    typedef std::map<VarName, SgNode*> FirstDefTable;
+    typedef boost::unordered_map<VarName, SgNode*> FirstDefTable;
     /** A list of names.
      */
     typedef std::vector<VarName> GlobalTable;
@@ -201,13 +202,13 @@ public:
     typedef std::map<SgNode*, int> NodeNumRenameEntry;
     /** A table that maps a name to it's node->number renamings.
      */
-    typedef std::map<VarName, NodeNumRenameEntry> NodeNumRenameTable;
+    typedef boost::unordered_map<VarName, NodeNumRenameEntry> NodeNumRenameTable;
     /** An entry in the rename table that maps a number to a node.
      */
     typedef std::map<int, SgNode*> NumNodeRenameEntry;
     /** A table that maps a name to it's number->node renamings.
      */
-    typedef std::map<VarName, NumNodeRenameEntry> NumNodeRenameTable;
+    typedef boost::unordered_map<VarName, NumNodeRenameEntry> NumNodeRenameTable;
 
 
 private:
