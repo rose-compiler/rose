@@ -96,8 +96,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 	}
 
 	RtedClassDefinition* cd = new RtedClassDefinition(cdef,
-  			cdef->get_mangled_name().str(),
-  //			cdef->get_qualified_name().str(),
+			cdef->get_mangled_name().str(),
 			cdef->get_declaration()->get_type()->class_name(),
 			elements.size(),
 			buildSizeOfOp( cdef->get_declaration()->get_type() ),

@@ -92,7 +92,7 @@ RuntimeSystem_roseRtedClose(char* from) {
  * whose base non-array type is base_type.
  */
 RsArrayType* RuntimeSystem_getRsArrayType(
-					  va_list *vl,
+					  va_list vl,
 					  size_t dimensionality,
 					  long int size,
 					  string base_type) {
@@ -105,7 +105,7 @@ RsArrayType* RuntimeSystem_getRsArrayType(
   size_t elements = 1;
   std::vector< unsigned int > dimensions;
   for( unsigned int i = 0; i < dimensionality; ++i ) {
-    dimensions.push_back( va_arg( *vl, unsigned int ));
+    dimensions.push_back( va_arg( vl, unsigned int ));
     elements *= dimensions.back();
   }
   size_t base_size = size / elements;
@@ -229,7 +229,7 @@ RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
     // Aug 6 : TODO : move this to createVariable
     va_list vl;
     va_start( vl, dimensionality );
-    RsArrayType* type = RuntimeSystem_getRsArrayType( &vl, dimensionality, size, base_type );
+    RsArrayType* type = RuntimeSystem_getRsArrayType( vl, dimensionality, size, base_type );
 
     rs -> createArray( address, name, mangl_name, type );
 
@@ -1017,7 +1017,7 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
       if( type == "SgArrayType" ) {
         unsigned int dimensionality = va_arg( vl, unsigned int );
         i += dimensionality + 1;
-        t = RuntimeSystem_getRsArrayType( &vl, dimensionality, size, base_type );
+        t = RuntimeSystem_getRsArrayType( vl, dimensionality, size, base_type );
       } else {
         t = RuntimeSystem_getRsType( type, base_type, "", indirection_level );
       }

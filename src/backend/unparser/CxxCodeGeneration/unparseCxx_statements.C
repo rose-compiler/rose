@@ -5909,10 +5909,10 @@ void Unparse_ExprStmt::unparseOmpVariablesClause(SgOmpVariablesClause* clause, S
   }
 
   //unparse variable list then
-  SgVarRefExpPtrList::iterator p = clause->get_variables().begin();
+  SgInitializedNamePtrList::iterator p = clause->get_variables().begin();
   while ( p != clause->get_variables().end() )
   {
-    SgInitializedName* init_name = (*p)->get_symbol()->get_declaration();           
+    SgInitializedName* init_name = *p;           
     SgName tmp_name  = init_name->get_name();
     curprint( tmp_name.str());
 
@@ -6025,12 +6025,10 @@ Unparse_ExprStmt::unparseOmpThreadprivateStatement(SgOmpThreadprivateStatement* 
   ROSE_ASSERT(stmt != NULL);
   curprint(string ("#pragma omp threadprivate("));
   //unparse variable list then
-  SgVarRefExpPtrList::iterator p = stmt->get_variables().begin();
+  SgInitializedNamePtrList::iterator p = stmt->get_variables().begin();
   while ( p != stmt->get_variables().end() )
   {
-    ROSE_ASSERT ( (*p)->get_symbol() != NULL);
-    SgInitializedName* init_name = (*p)->get_symbol()->get_declaration();
-    ROSE_ASSERT (init_name);
+    SgInitializedName* init_name = *p;
     SgName tmp_name  = init_name->get_name();
     curprint( tmp_name.str());
 
@@ -6053,12 +6051,10 @@ Unparse_ExprStmt::unparseOmpFlushStatement(SgOmpFlushStatement* stmt, SgUnparse_
   ROSE_ASSERT(stmt != NULL);
   curprint(string ("#pragma omp flush("));
   //unparse variable list then
-  SgVarRefExpPtrList::iterator p = stmt->get_variables().begin();
+  SgInitializedNamePtrList::iterator p = stmt->get_variables().begin();
   while ( p != stmt->get_variables().end() )
   {
-    ROSE_ASSERT ((*p)->get_symbol() != NULL);
-    SgInitializedName* init_name = (*p)->get_symbol()->get_declaration();
-    ROSE_ASSERT (init_name != NULL);
+    SgInitializedName* init_name = *p;
     SgName tmp_name  = init_name->get_name();
     curprint( tmp_name.str());
 

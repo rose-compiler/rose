@@ -1954,7 +1954,7 @@ HEADER_ELF_NOTE_SECTION_END
 HEADER_ELF_NOTE_ENTRY_START
 	public:
 		SgAsmElfNoteEntry(SgAsmElfNoteSection *section)
-			: p_type(0), p_name(NULL)
+			: p_type(0)
 			{ctor(section);}
 		rose_addr_t parse(rose_addr_t starting_offset);
 		rose_addr_t unparse(std::ostream &f, rose_addr_t starting_offset);

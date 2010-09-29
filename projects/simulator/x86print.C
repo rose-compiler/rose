@@ -70,18 +70,6 @@ print_pointer(FILE *f, uint32_t value)
 }
 
 int
-print_struct(FILE *f, uint32_t value, ArgInfo::StructPrinter printer, const uint8_t *buf, size_t need, size_t have)
-{
-    if (0==value)
-        return fprintf(f, "NULL");
-    if (have<need)
-        return fprintf(f, "0x%08"PRIx32" {<short read>}", value);
-    return (fprintf(f, "0x%08"PRIx32" {", value) +
-            (printer)(f, buf, have) +
-            fprintf(f, "}"));
-}
-
-int
 print_hex(FILE *f, uint32_t value)
 {
     if (value<10)
@@ -138,14 +126,11 @@ print_single(FILE *f, char fmt, const ArgInfo *info)
         case 'e':
             retval += print_enum(f, info->xlate, info->val);
             break;
-        case 'f':
+        case 'f': {
             retval += print_flags(f, info->xlate, info->val);
             break;
         case 'p':
             retval += print_pointer(f, info->val);
-            break;
-        case 'P':
-            retval += print_struct(f, info->val, info->struct_printer, info->struct_buf, info->struct_size, info->struct_nread);
             break;
         case 's':
             retval += print_string(f, info->str);
@@ -156,6 +141,7 @@ print_single(FILE *f, char fmt, const ArgInfo *info)
         case 'x':
             retval += print_hex(f, info->val);
             break;
+        }
         default: abort();
     }
     return retval;
