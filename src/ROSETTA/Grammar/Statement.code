@@ -13401,15 +13401,10 @@ SgOmpThreadprivateStatement::get_mangled_name(void) const
      ROSE_ASSERT(scope != NULL);
 
      SgName variableNames;
-     SgVarRefExpPtrList::const_iterator p = get_variables().begin();
+     SgInitializedNamePtrList::const_iterator p = get_variables().begin();
      while ( p != get_variables().end() )
         {
-          ROSE_ASSERT ((*p)->get_symbol() != NULL);
-          SgVariableSymbol * sym = isSgVariableSymbol ((*p)->get_symbol());
-          ROSE_ASSERT (sym != NULL);
-          ROSE_ASSERT (sym->get_declaration() != NULL);
-          variableNames += SgName("_variable_type_") + (*p)->get_symbol()->get_type()->get_mangled() + 
-                        SgName("_variable_name_") + sym->get_declaration()->get_mangled_name();
+          variableNames += SgName("_variable_type_") + (*p)->get_type()->get_mangled() + SgName("_variable_name_") + (*p)->get_mangled_name();
 
           p++;
         }

@@ -3057,15 +3057,12 @@ Grammar::setUpStatements ()
 //    	                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 //    OmpSectionsStatement.setDataPrototype("SgOmpClausePtrList", "clauses", "",
 //         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    // directives with variable lists
+    // direcitves with variable lists
 	    // omp flush [(var-list)]   
-    // Liao 9/27/2010, per user's report, modeling the variable reference use SgVarRefExp
-    //OmpFlushStatement.setDataPrototype( "SgInitializedNamePtrList", "variables", "",
-    OmpFlushStatement.setDataPrototype( "SgVarRefExpPtrList", "variables", "",
+    OmpFlushStatement.setDataPrototype( "SgInitializedNamePtrList", "variables", "",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 	    // omp threadprivate [(var-list)]   
-    //OmpThreadprivateStatement.setDataPrototype( "SgInitializedNamePtrList", "variables", "",
-    OmpThreadprivateStatement.setDataPrototype( "SgVarRefExpPtrList", "variables", "",
+    OmpThreadprivateStatement.setDataPrototype( "SgInitializedNamePtrList", "variables", "",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
    // Directives with a statement/ structured body
     OmpBodyStatement.setDataPrototype ( "SgStatement*", "body",        "= NULL",
