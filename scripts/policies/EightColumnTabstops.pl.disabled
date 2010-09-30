@@ -74,7 +74,9 @@ sub DEBUG {
 sub line_factory {
   my $s = join "", @_;
   return sub {
-    my($plevel,$ret)=(0);
+    my $plevel=0;		# nesting level for parentheses
+    my $eos=0;			# if true, parse to at least the next ';'
+    my $ret;			# return value
 
     # CPP directives don't always contain balanced parens, so match them as a whole at the beginning of a line.
     # Furthermore, they don't typically follow the C/C++ indentation since they're not part of the language, so ignore them.
@@ -84,15 +86,17 @@ sub line_factory {
     }
 
     while (1) {
-      $s =~ /\G([ \t]+)/cg and do {$ret.=$1;next};
-      $s =~ /\G(\()/cg    and do {$ret.=$1;$plevel++;next};
-      $s =~ /\G(\))/cg    and do {$ret.=$1;$plevel-=1 if $plevel;next};
-      $s =~ /\G(\/\/.*)/cg and do {$ret.=$1;next};		# "//" comment
+      $s =~ /\G([ \t]+)/cg       and do {$ret.=$1;next};
+      $s =~ /\G(\()/cg           and do {$ret.=$1;$plevel++;next};
+      $s =~ /\G(\))/cg           and do {$ret.=$1;$plevel-=1 if $plevel;next};
+      $s =~ /\G(<<)/cg           and do {$ret.=$1;$eos=1;next};
+      $s =~ /\G(\/\/.*)/cg       and do {$ret.=$1;next};		# "//" comment
       $s =~ /\G(\/\*.*?\*\/)/cgs and do {$ret.=$1;next};	# C style comment
       $s =~ /\G("(\\[0-7]{,3}|\\.|[^"\\])*")/cgs and do {$ret.=$1;next}; # string literal
-      $s =~ /\G(\n)/cg and do {$ret.=$1;return $ret unless $plevel};
-      $s =~ /\G(.)/cgs and do {$ret.=$1;next};
-      $s =~ /\G$/ and return $ret;
+      $s =~ /\G(\n)/cg 		 and do {$ret.=$1;return $ret unless $plevel || $eos};
+      $s =~ /\G(;)/cg            and do {$ret.=$1;$eos=0;next};
+      $s =~ /\G(.)/cgs 		 and do {$ret.=$1;next};
+      $s =~ /\G$/      		 and return $ret;
     }
     return $ret;
   }
@@ -118,6 +122,12 @@ while (my $filename = $files->next_file) {
     my @lines = lines(\*FILE);
     close FILE;
 
+    # Look for certain settings in the first line of source code.  This allows authors to override this policy checker
+    # and to advertise how indentation is handled.
+    next if $lines[0] =~ /\bECTS_skip\b/;
+    my $base;
+    $base = $1 if $lines[0] =~ /\bECTS_base=(\d+)/;
+
     # Determine indentation delta distributions for space-only indentation vs. tab indentation. Look only at increasing
     # levels of indentation.  We look at changes in indentation rather than absolute indentation because it often happens
     # that some one writes a bunch of code, and then someone else inserts more code using a different indentation style
@@ -142,17 +152,20 @@ while (my $filename = $files->next_file) {
       }
     }
 
-    # Base indentation is computed from spaces since spaces are a known width and generally more common than tabs.
-    # However, if less than 5% of the lines are SPC indented then there is probably not enough data to make the
-    # determination. If there are at least 25 lines then assume that the base indentation is eight since a TAB-indented
-    # files will appear as eight-column indentation in most default-configured editors, printers, xterms, web browsers, etc.
+    # Base indentation is computed from spaces since spaces are a known width and generally more common than tabs. We cannot
+    # use TAB characters to compute base indentation because their size is ambiguous, depending on where tab stops were set
+    # in the editor where the source was composed.  However, if less than 10% of the lines are SPC indented then there is
+    # probably not enough data to make the determination. If there are at least 25 lines then assume that the base indentation
+    # is eight since a TAB-indented file will appear as eight-column indentation in most default-configured editors, printers,
+    # terminals, web browsers, etc.
     next if $ntab==0;
-    my $base;
-    if ($nspc<10 || $nspc / ($nspc+$ntab) < 0.05) {
-      next if $nspc+$ntab < 25;
-      $base = 8;
-    } else {
-      $base = base_indentation \%spc_deltas;
+    if (!defined $base) {
+      if ($nspc<10 || $nspc / ($nspc+$ntab) < 0.1) {
+	next if $nspc+$ntab < 25;
+	$base = 8;
+      } else {
+	$base = base_indentation \%spc_deltas;
+      }
     }
 
     # Does file violate this policy?
@@ -165,9 +178,9 @@ while (my $filename = $files->next_file) {
     print $desc if 0==$nfail++ && !$verbose;
     print "  $filename (base=$base, violations=$nviolations)\n";
 
-    if (0) {
-      printf "    nspc=%d(%d%%); ntab=%d\n", $nspc, 100*$nspc/($nspc+$ntab), $ntab;
-      show \%spc_deltas if $base < 4;
+    if (1) {
+      printf "    nspc=%d(%d%%); ntab=%d(%d%%)\n", $nspc, 100*$nspc/($nspc+$ntab), $ntab, 100*$ntab/($nspc+$ntab);
+      show \%spc_deltas;
       #show \%tab_deltas;
     }
 
