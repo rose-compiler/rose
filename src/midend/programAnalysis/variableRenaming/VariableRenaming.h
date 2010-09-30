@@ -1,9 +1,4 @@
-/* 
- * File:   VariableRenaming.h
- * Author: frye5
- *
- * Created on June 15, 2010, 4:12 PM
- */
+//Author: Justin Frye
 
 #ifndef SSAANALYSIS_H
 #define	SSAANALYSIS_H
@@ -594,6 +589,13 @@ public:
      * @return A table of (num, defNode) for the given variable. Empty table otherwise.
      */
     NumNodeRenameEntry getReachingDefsAtNodeForName(SgNode* node, const VarName& var);
+
+    /** Get the final versions if all variables at the end of the given scope.
+     *
+     * @param bb The scope to get variables for.
+     * @return A table of VarName->(num, defNode) for all variables at the end of the scope. Empty table otherwise.
+     */
+    NumNodeRenameTable getReachingDefsAtScopeEnd(SgScopeStatement* scope);
 
     /** Get the final versions if all variables at the end of the given function.
      *
