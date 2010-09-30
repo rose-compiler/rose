@@ -2833,14 +2833,51 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtStatemen
 	ROSE_ASSERT(statement);
     NumNodeRenameTable result;
 
-	//Get all the incoming edges for the statement
+	//Get all the incoming edges for the statement. These are UNFILTERED nodes, so we get the true beginning of the statement
 	vector<CFGEdge> inEdges = statement->cfgForBeginning().inEdges();
 
-	//Mere in the defs from any cfg edge that is not a child of the statement
+	//Trace back from an unfiltered node to all the filtered nodes immediately leading to it
+	queue <CFGNode> unfilteredNodes;
+	set<CFGNode> visited;
+	vector<CFGNode> filteredNodes;
+
+	//Add all the unfiltered inEdges to the initial worklist
 	foreach (CFGEdge inEdge, inEdges)
 	{
-		SgNode* sourceNode = inEdge.source().getNode();
-		if (SageInterface::isAncestor(statement, sourceNode))
+		unfilteredNodes.push(inEdge.source());
+	}
+
+	while (!unfilteredNodes.empty())
+	{
+		CFGNode node = unfilteredNodes.front();
+		unfilteredNodes.pop();
+		visited.insert(node);
+
+		//If we reached a filtered node, we're done
+		IsDefUseFilter filter;
+		if (filter(node))
+		{
+			filteredNodes.push_back(node);
+		}
+		//This node is unfiltered, explore its parents
+		else
+		{
+			foreach (CFGEdge inEdge, node.inEdges())
+			{
+				CFGNode parentNode = inEdge.source();
+				if (visited.count(parentNode) == 0)
+				{
+					unfilteredNodes.push(parentNode);
+				}
+			}
+		}
+	}
+
+	//Merge in the defs from the reaching CFG nodes that are not children of the current statement
+	foreach (CFGNode cfgNode, filteredNodes)
+	{
+		SgNode* sourceNode = cfgNode.getNode();
+		if (statement == sourceNode || SageInterface::isAncestor(statement, sourceNode))
 		{
 			continue;
 		}
