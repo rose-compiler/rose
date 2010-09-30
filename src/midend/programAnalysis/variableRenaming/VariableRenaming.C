@@ -12,6 +12,7 @@
 #include <fstream>
 #include <stack>
 #include <boost/foreach.hpp>
+#include <boost/unordered_set.hpp>
 #define foreach BOOST_FOREACH
 
 using namespace std;
@@ -1339,7 +1340,7 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 void VariableRenaming::runDefUse(SgFunctionDefinition* func)
 {
     //Keep track of visited nodes
-    vector<SgNode*> visited;
+    boost::unordered_set<SgNode*> visited;
 
     //Reset the first def list to prevent errors with global vars.
     firstDefList.clear();
@@ -1416,7 +1417,7 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
                         cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
                 }
                 //If the next node has not yet been visited
-                else if(std::find(visited.begin(), visited.end(), nextNode.getNode()) == visited.end())
+				else if (visited.count(nextNode.getNode()) == 0)
                 {
                     //Add it to the worklist
                     worklist.push_back(nextNode);
@@ -1428,7 +1429,7 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
         }
 
         //Mark the current node as seen
-        visited.push_back(current.getNode());
+        visited.insert(current.getNode());
     }
 }
 
@@ -2825,6 +2826,61 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
 
         return result;
     }
+}
+
+VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtStatementStart(SgStatement* statement)
+{
+	ROSE_ASSERT(statement);
+    NumNodeRenameTable result;
+
+	//Get all the incoming edges for the statement
+	vector<CFGEdge> inEdges = statement->cfgForBeginning().inEdges();
+
+	//Mere in the defs from any cfg edge that is not a child of the statement
+	foreach (CFGEdge inEdge, inEdges)
+	{
+		SgNode* sourceNode = inEdge.source().getNode();
+		if (SageInterface::isAncestor(statement, sourceNode))
+		{
+			continue;
+		}
+
+		NumNodeRenameTable temp = getReachingDefsAtNode(sourceNode);
+
+		//Merge the tables
+		//TODO: Factor this out into a function
+		foreach(NumNodeRenameTable::value_type& entry, temp)
+		{
+			//Insert the entry wholesale
+			if (result.count(entry.first) == 0)
+			{
+				result[entry.first] = entry.second;
+			}
+			//Or merge it with an existing one
+			else
+			{
+				foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
+				{
+					//Insert the entry wholesale
+					if (result[entry.first].count(tableEntry.first) == 0)
+					{
+						result[entry.first][tableEntry.first] = tableEntry.second;
+					}
+					else
+					{
+						//Check for equivalence
+						if (result[entry.first][tableEntry.first] != tableEntry.second)
+						{
+							cout << "Error: Same Renaming number has two different definition points." << endl;
+							ROSE_ASSERT(false);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return result;
 }
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunctionStart(SgFunctionDefinition* node)

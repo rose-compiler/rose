@@ -4784,10 +4784,7 @@ bool SgCommaOpExp::isChildUsedAsLValue(const SgExpression* child) const
 		return false;
 	else if (get_rhs_operand() == child)
 	{
-		if (!isUsedAsLValue())
-			return true;
-		else
-			return false;
+		return isUsedAsLValue();
 	}
 	else
 	{
