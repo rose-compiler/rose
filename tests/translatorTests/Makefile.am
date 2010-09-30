@@ -5,7 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 
 # an better alternative to identityTranslator
 # Liao 1/29/2009
-bin_PROGRAMS = roseCompiler testDataMemberOfConst testFortranParameter 
+bin_PROGRAMS = roseCompiler testDataMemberOfConst testFortranParameter testFortranProtected
 
 roseCompiler_SOURCES = roseCompiler.C
 
@@ -26,6 +26,7 @@ bug125_SOURCES = bug125.C
 qualifiedName_SOURCES = qualifiedName.C
 testDataMemberOfConst_SOURCES = testDataMemberOfConst.C
 testFortranParameter_SOURCES = testFortranParameter.C
+testFortranProtected_SOURCES = testFortranProtected.C
 
 testTranslator2010_01_SOURCES = testTranslator2010_01.C
 testTranslator2010_02_SOURCES = testTranslator2010_02.C
@@ -47,6 +48,10 @@ test_testDataMemberOfConst: testDataMemberOfConst
 
 test_testFortranParameter: testFortranParameter
 	./testFortranParameter $(srcdir)/CompileTests/Fortran_tests/parameter.f -o /dev/null
+
+test_testFortranProtected: testFortranProtected
+	gfortran -c $(srcdir)/../CompileTests/Fortran_tests/protected_mod.f03
+	gdb --args .libs/testFortranProtected $(srcdir)/../CompileTests/Fortran_tests/protected.f03 -o /dev/null
 
 
 #testTranslator2010_01_test: testTranslator2010_01 
