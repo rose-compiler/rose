@@ -13,6 +13,7 @@
 #include <sstream>
 #include <boost/foreach.hpp>
 #include "filteredCFG.h"
+#include <boost/unordered_map.hpp>
 
 /** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
  * This is used to assign absolute names to VarRefExp nodes during VariableRenaming.
@@ -174,10 +175,10 @@ public:
     typedef std::map<VarName, NodeVec> TableEntry;
     /** A table storing the name->node mappings for every node in the program.
      */
-    typedef std::map<SgNode*, TableEntry> DefUseTable;
+    typedef boost::unordered_map<SgNode*, TableEntry> DefUseTable;
     /** A table mapping a name to a single node.
      */
-    typedef std::map<VarName, SgNode*> FirstDefTable;
+    typedef boost::unordered_map<VarName, SgNode*> FirstDefTable;
     /** A list of names.
      */
     typedef std::vector<VarName> GlobalTable;
@@ -201,13 +202,13 @@ public:
     typedef std::map<SgNode*, int> NodeNumRenameEntry;
     /** A table that maps a name to it's node->number renamings.
      */
-    typedef std::map<VarName, NodeNumRenameEntry> NodeNumRenameTable;
+    typedef boost::unordered_map<VarName, NodeNumRenameEntry> NodeNumRenameTable;
     /** An entry in the rename table that maps a number to a node.
      */
     typedef std::map<int, SgNode*> NumNodeRenameEntry;
     /** A table that maps a name to it's number->node renamings.
      */
-    typedef std::map<VarName, NumNodeRenameEntry> NumNodeRenameTable;
+    typedef boost::unordered_map<VarName, NumNodeRenameEntry> NumNodeRenameTable;
 
 
 private:
@@ -616,7 +617,17 @@ public:
      */
     NumNodeRenameEntry getReachingDefsAtFunctionEndForName(SgFunctionDefinition* node, const VarName& var);
 
-    /** Get the versions of all variables at the start of the given function.
+	/** Gets the versions of all variables reaching a statment before its execution. Notice that this method and 
+	 * getReachingDefsAtNode potentially return different values for loops. With loops, variable values from the body
+	 * of the loop flow to the top; hence getReachingDefsAtNode returns definitions from the loop body. On the other hand,
+	 * getReachingDefsAtStatementStart does not return definitions coming in from a loop body.
+	 * 
+     * @param statement
+     * @return A table of VarName->(num, defNode) for all variables at the beginning of the statement
+     */
+	NumNodeRenameTable getReachingDefsAtStatementStart(SgStatement* statement);
+
+	/** Get the versions of all variables at the start of the given function.
      *
      * @param node The function to get variables for.
      * @return A table of VarName->(num, defNode) for all variables at the start of the function. Empty table otherwise.
