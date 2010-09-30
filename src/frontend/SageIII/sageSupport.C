@@ -9065,7 +9065,7 @@ void build_OpenMP_AST(SgSourceFile *sageFilePtr)
    }
 
 // Liao, 5/31/2009 an entry point for OpenMP related processing
-// including parsing, AST construction, and later on tranlation
+// including parsing, AST construction, and later on translation
 void processOpenMP(SgSourceFile *sageFilePtr)
    {
   // DQ (4/4/2010): This function processes both C/C++ and Fortran code.
