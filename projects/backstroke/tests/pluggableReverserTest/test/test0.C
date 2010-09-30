@@ -111,14 +111,24 @@ void event4(model* m)
 }
 #endif
 
+struct A {int i;};
+
 void event5(model* m)
 {
-    int a = m->i;
-    m->j += a;
-    a = 10;
+    A p, q;
+    q.i = 0;
+    q = p;
+    
 #if 1
+    int a;// = m->i;
+    //m->j += a;
+    //a = 10;
+    m->i = 1;
+    m->i = 1;
     while(1)
     {
+        m->i = 1;
+#if 0
         if (1)
         {
             if (1)
@@ -128,10 +138,11 @@ void event5(model* m)
         else
         {
             if (1) 
-                a = 0;
+                ;//a = 0;
         }
 
         //++m->i;
+#endif
     }
 #endif
 }

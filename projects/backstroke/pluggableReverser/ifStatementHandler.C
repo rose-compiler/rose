@@ -42,10 +42,10 @@ StatementReversal IfStatementHandler::generateReverseAST(SgStatement* stmt, cons
     {
         // In this situation, we don't have to store branch flag.
         appendStatement(buildExprStatement(
-                pushVal(buildBoolValExp(true), buildBoolType())),
+                pushVal(buildBoolValExp(true))),
                 fwd_true_block_body);
         appendStatement(buildExprStatement(
-                pushVal(buildBoolValExp(false), buildBoolType())),
+                pushVal(buildBoolValExp(false))),
                 fwd_false_block_body);
         cond_stmt = buildExprStatement(popVal(buildBoolType()));
     }
@@ -74,10 +74,12 @@ vector<EvaluationResult> IfStatementHandler::evaluate(SgStatement* stmt, const V
 	VariableVersionTable true_body_var_table, false_body_var_table;
 	tie(true_body_var_table, false_body_var_table) = var_table.getVarTablesForIfBodies(true_body, false_body);
 
+#if 0
 	cout << "true_body_var_table:\n";
 	true_body_var_table.print();
 	cout << "false_body_var_table:\n";
 	false_body_var_table.print();
+#endif
 
     vector<EvaluationResult> true_body_res = evaluateStatement(true_body, true_body_var_table);
     vector<EvaluationResult> false_body_res = evaluateStatement(false_body, false_body_var_table);

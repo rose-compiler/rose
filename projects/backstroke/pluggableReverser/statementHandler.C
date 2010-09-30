@@ -186,12 +186,16 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 					} 
 					else
 					{
+						// We decide always to store every local variable's value. Those stores and restores can
+						// be removed after analysis on generated code.
+#if 0
 						/****************************************************************************************/
 						// Here we choose not to restore its value.
 						EvaluationResult new_res1 = res;
 						attr.local_var_restorer[init_name] = make_pair(false, static_cast<SgExpression*> (NULL));
 						new_res1.setAttribute(LocalVarRestoreAttributePtr(new LocalVarRestoreAttribute(attr)));
 						queue[1 - i].push_back(new_res1);
+#endif
 
 
 						/****************************************************************************************/

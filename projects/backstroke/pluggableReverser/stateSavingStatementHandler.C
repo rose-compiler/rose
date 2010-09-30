@@ -24,9 +24,9 @@ SgVarRefExp* getMostLeftVariable(SgExpression* exp)
 	return NULL;
 }
 
-set<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
+vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 {
-	set<SgExpression*> modified_vars;
+	vector<SgExpression*> modified_vars;
 
 	vector<SgExpression*> exps = backstroke_util::querySubTree<SgExpression>(stmt);
 	foreach (SgExpression* exp, exps)
@@ -49,9 +49,7 @@ set<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 
 		if (var)
 		{
-			SgVarRefExp* var_ref = getMostLeftVariable(var);
-
-			if (var_ref)
+			if (SgVarRefExp* var_ref = getMostLeftVariable(var))
 			{
 				// Get the declaration of this variable to see if it's declared inside of the given statement.
 				// In this case, we don't have to store this variable.
@@ -61,38 +59,85 @@ set<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 					// We store each variable once.
 					if (find_if(modified_vars.begin(), modified_vars.end(),
 							bind(backstroke_util::areSameVariable, _1, var)) == modified_vars.end())
-						modified_vars.insert(var);
+						modified_vars.push_back(var);
 				}
 			}
 		}
 	}
+
+	return modified_vars;
 }
 
 StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
 {
-	return StatementReversal(NULL, NULL);
+	EvaluationResultAttributePtr attr = eval_result.getAttribute();
+	vector<SgExpression*> modified_vars = attr->getAttribute<vector<SgExpression*> >();
+
+	SgBasicBlock* fwd_stmt = buildBasicBlock();
+    SgBasicBlock* rvs_stmt = buildBasicBlock();
+
+	foreach (SgExpression* var, modified_vars)
+	{
+		SgExpression* fwd_exp = pushVal(copyExpression(var));
+		SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
+			copyExpression(var), popVal(var->get_type()));
+		
+		appendStatement(buildExprStatement(fwd_exp), fwd_stmt);
+		appendStatement(buildExprStatement(rvs_exp), rvs_stmt);
+	}
+	
+	appendStatement(copyStatement(stmt), fwd_stmt);
+
+	return StatementReversal(fwd_stmt, rvs_stmt);
 }
 
 std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	vector<EvaluationResult> results;
+	if (isSgWhileStmt(stmt) == NULL)
+		return results;
 
-	vector<EvaluationResult> eval_results = evaluateStatement(stmt, var_table);
-	set<SgExpression*> modified_vars = getAllModifiedVariables(stmt);
+	// In case of infinite calling to this function.
+	if (evaluating_stmts_.count(stmt) > 0)
+		return results;
+	evaluating_stmts_.insert(stmt);
 
+	cout << "Enter\n";
+
+	//vector<EvaluationResult> eval_results = evaluateStatement(stmt, var_table);
+	evaluating_stmts_.erase(stmt);
+
+	vector<SgExpression*> modified_vars = getAllModifiedVariables(stmt);
+
+	cout << "Got all modified vars.\n";
+
+	cout << "\n\n";
+	var_table.print();
+	cout << "\n\n";
 
 	VariableVersionTable new_table = var_table;
-	foreach (SgExpression* var, modified_vars)
-	{
-		//new_table.reverseVersion(var, stmt);
-	}
+	new_table.reverseVersionAtStatementStart(modified_vars, stmt);
 
+	cout << "\n\n";
+	new_table.print();
+	cout << "\n\n";
+
+#if 0
 	foreach (const EvaluationResult& eval_result, eval_results)
 	{
-		EvaluationResult new_eval_result(this, stmt, new_table);
+		EvaluationResult result(this, stmt, new_table);
+		result.addChildEvaluationResult(eval_result);
+		results.push_back(result);
 	}
+#endif
+	EvaluationResult result(this, stmt, new_table);
+	
+	// Add the attribute to the result.
+	EvaluationResultAttributePtr attr(new EvaluationResultAttribute);
+	attr->setAttribute(modified_vars);
+	result.setAttribute(attr);
 
+	results.push_back(result);
 
-	// For each result from other handlers, we try to store all kinds of combinations of modifed variables.
 	return results;
 }

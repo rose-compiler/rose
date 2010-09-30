@@ -98,10 +98,10 @@ ExpressionReversal StoreAndRestoreExpressionHandler::generateReverseAST(SgExpres
 	SgExpression* var_to_save = attribute->var_to_save;
 	ROSE_ASSERT(var_to_save);
 
-	SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp > (
-			pushVal(copyExpression(var_to_save), var_to_save->get_type()),
+	SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
+			pushVal(copyExpression(var_to_save)),
 			copyExpression(exp));
-	SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp > (
+	SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
 			copyExpression(var_to_save),
 			popVal(var_to_save->get_type()));
 

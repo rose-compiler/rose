@@ -58,6 +58,10 @@ public:
 	//! statement containing the given variable is reversed successfully. 
 	void reverseVersion(SgNode* node);
 
+	//! Given a set of vars and a statement, reverse versions of those vars to theirs versions at the start of
+	//! the statement.
+	void reverseVersionAtStatementStart(const std::vector<SgExpression*>& vars, SgStatement* stmt);
+
 	/** Remove a variable from the current table. */
 	void removeVariable(SgNode* node)
 	{ table_.erase(VariableRenaming::getVarName(node)); }
@@ -75,7 +79,7 @@ public:
 	//! This function gets the variable version tables for the loop body in an for/while/do-while statement.
 	//! Since currently there is no fi function in implementation, this is a workaround to get the
 	//! correct vartable at the end of the body.
-	VariableVersionTable getVarTablesForLoopBody(SgStatement* loop_body) const;
+	VariableVersionTable getVarTablesForLoopBody(SgBasicBlock* loop_body) const;
 
 	/** Intersect this variable version table to another one. For each variable inside, we set its
 	* new version which is the common indices from those two tables. */

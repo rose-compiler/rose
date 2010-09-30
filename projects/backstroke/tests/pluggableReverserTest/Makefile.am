@@ -20,7 +20,7 @@ CLEANFILES =
 
 #TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
-TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test
+TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test -I/opt/local/include
 
 $(TEST_Objects):pluggableReverser 
 	@cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test/$(@:.o=.C) $(@:.o=.C)

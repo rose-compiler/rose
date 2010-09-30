@@ -2,6 +2,7 @@
 #define	HANDLERBASE_H
 
 #include <boost/shared_ptr.hpp>
+#include <boost/any.hpp>
 #include "variableVersionTable.h"
 #include "costModel.h"
 
@@ -31,12 +32,27 @@ struct StatementReversal
 	SgStatement* rvs_stmt;
 };
 
-class EvaluationResultAttribute
+struct EvaluationResultAttribute
 {
-public:
+	//! We don't have to declare a new attribute class everytime, but consider to use the following variable which
+	//! can be assigned by another variable of any type.
+	boost::any attribute;
+
+	template<class T>
+	void setAttribute(const T& attr)
+	{ attribute = attr; }
+
+	template<class T>
+	const T& getAttribute() const
+	{ return boost::any_cast<T>(attribute); }
+
+	template<class T>
+	T getAttribute()
+	{ return boost::any_cast<T>(attribute); }
 
 	virtual ~EvaluationResultAttribute() { }
 };
+
 typedef boost::shared_ptr<EvaluationResultAttribute> EvaluationResultAttributePtr;
 
 class EvaluationResult
@@ -140,6 +156,8 @@ protected:
 			VariableRenaming::NumNodeRenameEntry definitions);
 
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
+	SgExpression* pushVal(SgExpression* exp)
+	{ return pushVal(exp, exp->get_type()); }
 	SgExpression* popVal(SgType* type);
 
 	//! Return if the given variable is a state variable (currently, it should be the parameter of event function).

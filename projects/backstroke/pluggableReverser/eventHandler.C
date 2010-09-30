@@ -184,10 +184,12 @@ SgExpression* EventHandler::getStackVar(SgType* type)
 
 	if (isSgTypeInt(type))
 		type_name = "int";
-	if (isSgTypeBool(type))
+	else if (isSgTypeBool(type))
 		type_name = "bool";
-	if (isSgTypeFloat(type))
+	else if (isSgTypeFloat(type))
 		type_name = "float";
+	else
+		type_name = "any";
 
 	string stack_name = event_->get_name() + "_" + type_name + "_stack";
 	if (stack_decls_.count(stack_name) == 0)
@@ -245,7 +247,7 @@ SgExpression* EventHandler::pushVal(SgExpression* exp, SgType* type)
 
 SgExpression* EventHandler::popVal(SgType* type)
 {
-	return buildFunctionCallExp("pop", type,
+	return buildFunctionCallExp("pop< " + get_type_name(type) + " >", type,
 					buildExprListExp(getStackVar(type)));
 }
 
