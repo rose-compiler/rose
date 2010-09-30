@@ -47,59 +47,6 @@ SgAsmx86Instruction* SageBuilderAsm::buildx86Instruction( X86InstructionKind kin
      return instruction;
    }
 
-#if 0
-SgAsmx86RegisterReferenceExpression* SageBuilderAsm::buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, int register_number, X86PositionInRegister position_in_register)
-   {
-     SgAsmx86RegisterReferenceExpression* exp = new SgAsmx86RegisterReferenceExpression(register_class,register_number,position_in_register);
-
-  // Put tests for correctness of SgAsmx86RegisterReferenceExpression here.
-
-     return exp;
-   }
-#endif
-
-SgAsmx86RegisterReferenceExpression*
-SageBuilderAsm::buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::regnames8l_enum register_number, X86PositionInRegister position_in_register)
-   {
-     SgAsmx86RegisterReferenceExpression* exp = new SgAsmx86RegisterReferenceExpression(register_class,(int)register_number,position_in_register);
-     return exp;
-   }
-
-SgAsmx86RegisterReferenceExpression*
-SageBuilderAsm::buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::regnames8h_enum register_number, X86PositionInRegister position_in_register)
-   {
-     SgAsmx86RegisterReferenceExpression* exp = new SgAsmx86RegisterReferenceExpression(register_class,(int)register_number,position_in_register);
-     return exp;
-   }
-
-SgAsmx86RegisterReferenceExpression*
-SageBuilderAsm::buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::regnames16_enum register_number, X86PositionInRegister position_in_register)
-   {
-     SgAsmx86RegisterReferenceExpression* exp = new SgAsmx86RegisterReferenceExpression(register_class,(int)register_number,position_in_register);
-     return exp;
-   }
-
-SgAsmx86RegisterReferenceExpression*
-SageBuilderAsm::buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::regnames32_enum register_number, X86PositionInRegister position_in_register)
-   {
-     SgAsmx86RegisterReferenceExpression* exp = new SgAsmx86RegisterReferenceExpression(register_class,(int)register_number,position_in_register);
-     return exp;
-   }
-
-SgAsmx86RegisterReferenceExpression*
-SageBuilderAsm::buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::regnames64_enum register_number, X86PositionInRegister position_in_register)
-   {
-     SgAsmx86RegisterReferenceExpression* exp = new SgAsmx86RegisterReferenceExpression(register_class,(int)register_number,position_in_register);
-     return exp;
-   }
-
-SgAsmx86RegisterReferenceExpression*
-SageBuilderAsm::buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::segregnames_enum register_number, X86PositionInRegister position_in_register)
-   {
-     SgAsmx86RegisterReferenceExpression* exp = new SgAsmx86RegisterReferenceExpression(register_class,(int)register_number,position_in_register);
-     return exp;
-   }
-
 SgAsmDoubleWordValueExpression*
 SageBuilderAsm::buildAsmDWordValue(uint32_t val)
    {
