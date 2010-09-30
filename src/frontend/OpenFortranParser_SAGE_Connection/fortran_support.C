@@ -1826,12 +1826,13 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
             // See jacobi.f for an example of this. Also, currently test2010_45.f90 demonstrates a case of "integer x = 42, y = x" 
             // where the initializer to "y" is not built as a symbol yet as part of the construction of the variable declaration.
 #if 1
-               outputState("scope marked as implict none, so we must construct function in trace_back_through_parent_scopes_lookup_variable_symbol()");
+               outputState("scope marked as implicit none, so we must construct function in trace_back_through_parent_scopes_lookup_variable_symbol()");
 
             // DQ (9/11/2010): Since this must be a function, we can build a function reference expression and a function declaration, but in what scope.
             // Or we could define a list of unresolved functions and fix them up at the end of the module or global scope.  This is a general problem
             // and demonstrated by test2010_46.f90 
-
+               if (astNameStack.empty() != false)
+                    cerr<<"Error: name stack is empty when handling variable:"<<variableName.str()<<endl;
                ROSE_ASSERT(astNameStack.empty() == false);
                ROSE_ASSERT(astNameStack.front()->text != NULL);
 
@@ -4172,7 +4173,7 @@ generateFunctionCall( Token_t* nameToken )
    {
      ROSE_ASSERT(nameToken != NULL);
 
-     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+     if ( ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL ) || (astExpressionStack.empty() != false) )
           printf ("Inside of generateFunctionCall(): nameToken = %s \n",nameToken->text);
 
   // The next element on the stack is the expression list of function arguments
