@@ -4331,13 +4331,13 @@ bool SgMinusMinusOp::isChildUsedAsLValue(const SgExpression* child) const
 		}
 		else
 		{
-			return isUsedAsLValue();
+			return true;
 		}
 	}
 	/*! std:5.3.2 par:2 */
 	else
 	{
-		return isUsedAsLValue();
+		return true;
 	}
 }
 
@@ -4368,13 +4368,13 @@ bool SgPlusPlusOp::isChildUsedAsLValue(const SgExpression* child) const
 		}
 		else
 		{
-			return isUsedAsLValue();
+			return true;
 		}
 	}
 	/*! std:5.3.2 par:1 */
 	else
 	{
-		return isUsedAsLValue();
+		return true;
 	}
 }
 
@@ -4784,7 +4784,7 @@ bool SgCommaOpExp::isChildUsedAsLValue(const SgExpression* child) const
 		return false;
 	else if (get_rhs_operand() == child)
 	{
-		if (!isUsedAsLValue())
+		if (isUsedAsLValue())
 			return true;
 		else
 			return false;
