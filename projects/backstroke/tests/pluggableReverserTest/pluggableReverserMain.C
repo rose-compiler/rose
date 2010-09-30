@@ -3,6 +3,7 @@
 #include <pluggableReverser/statementHandler.h>
 #include <pluggableReverser/ifStatementHandler.h>
 #include <pluggableReverser/whileStatementHandler.h>
+#include <pluggableReverser/stateSavingStatementHandler.h>
 #include <pluggableReverser/akgulStyleExpressionHandler.h>
 #include "pluggableReverser/variableDeclarationHandler.h"
 #include <utilities/Utilities.h>
@@ -60,7 +61,7 @@ int main(int argc, char * argv[])
 	EventHandler event_handler(NULL, &var_renaming);
 
 	// Add all expression handlers to the expression pool.
-	event_handler.addExpressionHandler(new NullExpressionHandler);
+	//event_handler.addExpressionHandler(new NullExpressionHandler);
 	event_handler.addExpressionHandler(new IdentityExpressionHandler);
 	event_handler.addExpressionHandler(new StoreAndRestoreExpressionHandler);
 	event_handler.addExpressionHandler(new AkgulStyleExpressionHandler);
@@ -72,7 +73,8 @@ int main(int argc, char * argv[])
 	event_handler.addStatementHandler(new IfStatementHandler);
 	event_handler.addStatementHandler(new WhileStatementHandler);
 	event_handler.addStatementHandler(new ReturnStatementHandler);
-	event_handler.addStatementHandler(new NullStatementHandler);
+	event_handler.addStatementHandler(new StateSavingStatementHandler);
+	//event_handler.addStatementHandler(new NullStatementHandler);
 
 	//Variable value extraction handlers
 	event_handler.addVariableValueRestorer(new RedefineValueRestorer);

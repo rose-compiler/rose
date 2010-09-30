@@ -5,6 +5,7 @@
 
 class StateSavingStatementHandler : public StatementReversalHandler
 {
+	std::set<SgStatement*> evaluating_stmts_;
 public:
     StateSavingStatementHandler() { name_ = "State Saving Statement Handler"; }
 

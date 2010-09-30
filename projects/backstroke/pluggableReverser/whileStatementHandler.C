@@ -112,8 +112,11 @@ vector<EvaluationResult> WhileStatementHandler::evaluate(SgStatement* stmt, cons
     if (while_stmt == NULL || backstroke_util::hasContinueOrBreak(while_stmt))
         return results;
 
-	SgStatement* body = while_stmt->get_body();
+	SgBasicBlock* body = isSgBasicBlock(while_stmt->get_body());
+	ROSE_ASSERT(body);
 
+	cout << "Old table:\n";
+	var_table.print();
 	cout << "New table:\n";
 	var_table.getVarTablesForLoopBody(body).print();
 

@@ -113,17 +113,11 @@ void event4(model* m)
 
 void event5(model* m)
 {
-    int a = 0;
-    if (a)
-        m->i = 1;
-    else
-        ;//m->i = 2;
-
     
-#if 0
-    int a = m->i;
-    m->j += a;
-    a = 10;
+#if 1
+    int a;// = m->i;
+    //m->j += a;
+    //a = 10;
     while(1)
     {
         if (1)

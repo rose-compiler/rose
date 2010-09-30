@@ -24,9 +24,9 @@ SgVarRefExp* getMostLeftVariable(SgExpression* exp)
 	return NULL;
 }
 
-set<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
+vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 {
-	set<SgExpression*> modified_vars;
+	vector<SgExpression*> modified_vars;
 
 	vector<SgExpression*> exps = backstroke_util::querySubTree<SgExpression>(stmt);
 	foreach (SgExpression* exp, exps)
@@ -61,11 +61,13 @@ set<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 					// We store each variable once.
 					if (find_if(modified_vars.begin(), modified_vars.end(),
 							bind(backstroke_util::areSameVariable, _1, var)) == modified_vars.end())
-						modified_vars.insert(var);
+						modified_vars.push_back(var);
 				}
 			}
 		}
 	}
+
+	return modified_vars;
 }
 
 StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
@@ -76,23 +78,36 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	vector<EvaluationResult> results;
+	// In case of infinite calling to this function.
+	if (evaluating_stmts_.count(stmt) > 0)
+		return results;
+	evaluating_stmts_.insert(stmt);
 
-	vector<EvaluationResult> eval_results = evaluateStatement(stmt, var_table);
-	set<SgExpression*> modified_vars = getAllModifiedVariables(stmt);
+	cout << "Enter\n";
 
+	//vector<EvaluationResult> eval_results = evaluateStatement(stmt, var_table);
+	evaluating_stmts_.erase(stmt);
+
+	vector<SgExpression*> modified_vars = getAllModifiedVariables(stmt);
+
+	cout << "Got all modified vars.\n";
 
 	VariableVersionTable new_table = var_table;
-	foreach (SgExpression* var, modified_vars)
-	{
-		//new_table.reverseVersion(var, stmt);
-	}
+	new_table.reverseVersionAtStatementStart(modified_vars, stmt);
 
+	cout << "\n\n";
+	new_table.print();
+	cout << "\n\n";
+
+#if 0
 	foreach (const EvaluationResult& eval_result, eval_results)
 	{
-		EvaluationResult new_eval_result(this, stmt, new_table);
+		EvaluationResult result(this, stmt, new_table);
+		result.addChildEvaluationResult(eval_result);
+		results.push_back(result);
 	}
+#endif
+	results.push_back(EvaluationResult(this, stmt, new_table));
 
-
-	// For each result from other handlers, we try to store all kinds of combinations of modifed variables.
 	return results;
 }
