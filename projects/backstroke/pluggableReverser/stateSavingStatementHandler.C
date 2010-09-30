@@ -4,13 +4,12 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 #include <utilities/Utilities.h>
+#include <utilities/CPPDefinesAndNamespaces.h>
 
-using namespace std;
-using namespace boost;
 using namespace boost::lambda;
 using namespace SageBuilder;
 using namespace SageInterface;
-#define foreach BOOST_FOREACH
+
 
 /** Get the left most variable. For example, a.b returns a, a->b returns a. */
 SgVarRefExp* getMostLeftVariable(SgExpression* exp)
