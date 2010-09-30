@@ -794,6 +794,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "Sg_File_Info*" , "startOfConstruct", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
+
   // DQ (9/2/2008): We want to move this to be in the SgSourceFile
 #if 0
      File.setDataPrototype         ( "SgGlobal*", "root", "= NULL",
