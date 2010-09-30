@@ -33,11 +33,6 @@ namespace SageInterface
 
      bool isInstructionKind ( SgAsmInstruction* asmInstruction, X86InstructionKind instuctionKind );
 
-     bool isAsmSegmentRegisterReferenceExpression ( SgAsmRegisterReferenceExpression* asmRegisterReferenceExpression, X86RegisterClass registerClass, X86SegmentRegister segmentRegister );
-
-
-  // bool isAsmRegisterReferenceExpression ( SgAsmRegisterReferenceExpression* asmRegisterReferenceExpression, X86RegisterClass registerClass, X86GeneralPurposeRegister generalPurposeRegister, X86SegmentRegister segmentRegister );
-
      typedef bool (*EquivalenceTestFunctionType) (SgNode* x, SgNode* y);
 
   // Definition of object equivalence for purposes of the AST matching using for instruction recognition.
