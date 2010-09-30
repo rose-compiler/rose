@@ -1186,10 +1186,12 @@ AC_ARG_ENABLE(ofp-version,
 # DQ (7/31/2010): Changed the default version of OFP to 0.8.1 (now distributed with ROSE).
 echo "enable_ofp_version = $enable_ofp_version"
 if test "x$enable_ofp_version" = "x"; then
-   echo "Default version of OFP used (0.8.1)"
+   echo "Default version of OFP used (0.8.2)"
    ofp_major_version_number=0
    ofp_minor_version_number=8
-   ofp_patch_version_number=1
+ # DQ (9/26/2010): Changed default version to 0.8.2
+ # ofp_patch_version_number=1
+   ofp_patch_version_number=2
 else
    ofp_major_version_number=`echo $enable_ofp_version | cut -d\. -f1`
    ofp_minor_version_number=`echo $enable_ofp_version | cut -d\. -f2`
@@ -1200,20 +1202,28 @@ echo "ofp_major_version_number = $ofp_major_version_number"
 echo "ofp_minor_version_number = $ofp_minor_version_number"
 echo "ofp_patch_version_number = $ofp_patch_version_number"
 
+ofp_jar_file_contains_java_file = false
 if test "x$ofp_major_version_number" = "x0"; then
    echo "Recognized an accepted major version number."
    if test "x$ofp_minor_version_number" = "x8"; then
-      echo "Recognized an accepted minor version number."
-      if test "x$ofp_patch_version_number" = "x1"; then
-         echo "Recognized an accepted patch version number."
+      echo "Recognized an accepted minor version number (any 0.8.x version is allowed)."
+#     echo "Recognized an accepted minor version number."
+      if test "x$ofp_patch_version_number" = "x0"; then
+         echo "Recognized an accepted patch version number (very old version of OFP)."
       else
-         if test "x$ofp_patch_version_number" = "x2"; then
-            echo "Recognized an accepted patch version number ONLY for testing."
+         if test "x$ofp_patch_version_number" = "x1"; then
+            echo "Recognized an olded but accepted patch version number ONLY for testing."
          else
-            echo "ERROR: Could not identify the OFP patch version number."
-            exit 1
+            ofp_jar_file_contains_java_file = true
+            if test "x$ofp_patch_version_number" = "x2"; then
+               echo "Recognized an accepted patch version number ONLY for testing."
+            else
+#              echo "ERROR: Could not identify the OFP patch version number."
+               echo "Recognized an accepted patch version number (later than default)."
+               exit 1
+            fi
          fi
-       # exit 1
+#       # exit 1
       fi
    else
       if test "x$ofp_minor_version_number" = "x7"; then
@@ -1233,6 +1243,10 @@ else
       exit 1
    fi
 fi
+
+# DQ (9/28/2010): Newer versions of the OFP jar file contains fortran/ofp/parser/java/IFortranParserAction.java
+# we need this to maintain backward compatability.
+AM_CONDITIONAL(ROSE_OFP_CONTAINS_JAVA_FILE, [test "x$ofp_jar_file_contains_java_file" = true])
 
 AC_DEFINE_UNQUOTED([ROSE_OFP_MAJOR_VERSION_NUMBER], $ofp_major_version_number , [OFP major version number])
 AC_DEFINE_UNQUOTED([ROSE_OFP_MINOR_VERSION_NUMBER], $ofp_minor_version_number , [OFP minor version number])
