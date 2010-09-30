@@ -40,7 +40,8 @@ namespace VirtualCFG {
       switch (index) {
           case 0: s << "Start("; break; 
           case 1: s << "After parameters("; break;
-          case 2: s << "End("; break;
+          case 2: s << "After pre-initialization("; break;
+          case 3: s << "End("; break;
           default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
       }
       s << isSgFunctionDefinition(node)->get_declaration()->get_qualified_name().str() << ")" << std::endl; 
@@ -347,13 +348,21 @@ namespace VirtualCFG {
       } else {
 	return eckFalse;
       }
-    } else if (isSgFunctionCallExp(srcNode) && 
-               srcIndex == 2 && 
+    } else if (isSgFunctionCallExp(srcNode) &&
+               srcIndex == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX &&
                !isSgFunctionCallExp(tgtNode)) {
         return eckInterprocedural;
-    } else if (isSgFunctionCallExp(tgtNode) && 
-               tgtIndex == 3 && 
+    } else if (isSgFunctionCallExp(tgtNode) &&
+               tgtIndex == SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX+1 &&
                !isSgFunctionCallExp(srcNode)) {
+        return eckInterprocedural;
+    } else if (isSgConstructorInitializer(srcNode) &&
+               srcIndex == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX &&
+               !isSgConstructorInitializer(tgtNode)) {
+        return eckInterprocedural;
+    } else if (isSgConstructorInitializer(tgtNode) &&
+               tgtIndex == SGCONSTRUCTORINITIALIZER_INTERPROCEDURAL_INDEX+1 &&
+               !isSgConstructorInitializer(srcNode)) {
         return eckInterprocedural;
     } else {
       // No key

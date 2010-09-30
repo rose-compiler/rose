@@ -124,5 +124,6 @@ void VariablesType::print(ostream & os) const
 ostream& operator<< (ostream &os, const VariablesType & m)
 {
     m.print(os);
+    return os;
 }
 

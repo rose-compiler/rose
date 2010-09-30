@@ -210,7 +210,7 @@ bool initialize_next_array = false;
 void
 RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
 			      const char* type, const char* basetype, size_t indirection_level,
-			      unsigned long int address, long int size,
+			      addr_type address, long int size,
 			      long int mallocSize, int fromMalloc, const char* class_name,
 			      const char* filename, const char* line, const char* lineTransformed,
 			      int dimensionality, ...){
@@ -288,7 +288,7 @@ RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
  ********************************************************/
 void
 RuntimeSystem_roseAccessHeap(const char* filename,
-			      unsigned long int base_address, unsigned long int address, long int size, 
+			      addr_type base_address, addr_type address, long int size, 
 			      int read_write_mask, const char* line, const char* lineTransformed){
 
 
@@ -305,7 +305,7 @@ RuntimeSystem_roseAccessHeap(const char* filename,
 // ***************************************** ARRAY FUNCTIONS *************************************
 
 
-void RuntimeSystem_checkMemoryAccess( unsigned long int address, long int size, int read_write_mask ) {
+void RuntimeSystem_checkMemoryAccess( addr_type address, long int size, int read_write_mask ) {
 
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 
@@ -759,7 +759,7 @@ int RuntimeSystem_roseCreateVariable( const char* name,
 				      const char* type,
 				      const char* basetype,
 				      size_t indirection_level,
-				      unsigned long int address,
+				      addr_type address,
 				      unsigned int size,
 				      int init,
 
@@ -809,7 +809,7 @@ int RuntimeSystem_roseCreateObject(
         const char* type_name,
         const char* base_type,
         size_t indirection_level,
-        unsigned long int address,
+        addr_type address,
         unsigned int size,
         const char* filename,
         const char* line,
@@ -842,7 +842,7 @@ RuntimeSystem_roseInitVariable(
 			       const char* base_type,
 			       size_t indirection_level,
 			       const char* class_name,
-			       unsigned long long address,
+			       addr_type address,
 			       unsigned int size,
 			       int ismalloc,
 			       int pointer_changed,
@@ -898,7 +898,7 @@ RuntimeSystem_roseInitVariable(
 //    int q = *p;
 void
 RuntimeSystem_roseMovePointer(
-			      unsigned long long address,
+			      addr_type address,
 			      const char* type,
 			      const char* base_type,
 			      size_t indirection_level,
@@ -926,9 +926,9 @@ RuntimeSystem_roseMovePointer(
  * This function tells the runtime system that a variable is used
  ********************************************************/
 void RuntimeSystem_roseAccessVariable(
-				      unsigned long long address, 
+				      addr_type address, 
 				      unsigned int size,
-				      unsigned long long write_address,
+				      addr_type write_address,
 				      unsigned int write_size,
 				      int read_write_mask,
 				      const char* filename, const char* line,
@@ -983,7 +983,7 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
   const char* isUnionType = va_arg(vl,const char*);
   bool isUnion=false;
   if (*isUnionType=='1') isUnion=true;
-  unsigned long long sizeC = va_arg(vl,unsigned long long);
+  addr_type sizeC = va_arg(vl,addr_type);
   //cerr << " +++++ Register Class : " << nameC << " size : " << sizeC << "  isUnion : " << isUnion << endl;
   int i=0;
   
@@ -1010,7 +1010,7 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
       string type = va_arg(vl,const char*);
       string base_type = va_arg(vl,const char*);
       int indirection_level = va_arg( vl, int );
-      addr_type offset = va_arg(vl,unsigned long long);
+      addr_type offset = va_arg(vl,addr_type);
       size_t size = va_arg(vl,size_t);
 
       RsType* t;

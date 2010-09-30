@@ -69,13 +69,13 @@ RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopA
 
 bool  RsType::checkSubtypeRecursive(addr_type offset,  RsType* type)
 {
-    RuntimeSystem * rs = RuntimeSystem::instance();
+  //  RuntimeSystem * rs = RuntimeSystem::instance();
     //rs->printMessage("    >>> checkSubtypeRecursive ");
     RsType * result = this;
     size_t size = type -> getByteSize();
 
     bool isunion = false;
-    int resultsize = result->getByteSize();
+    unsigned int resultsize = result->getByteSize();
     while(resultsize >= size)
     {
       //rs->printMessage("   >> while result->getByteSize() >= size "+
@@ -109,7 +109,7 @@ bool  RsType::checkSubtypeRecursive(addr_type offset,  RsType* type)
 	    // iterate over the members and find the matching one
             for (;it!=subTypeIdvec.end();++it) {
                 subTypeId = *it;
-                addr_type temp_offset = offset- result->getSubtypeOffset(subTypeId);
+  //              addr_type temp_offset = offset- result->getSubtypeOffset(subTypeId);
                 RsType* temp_result =  result->getSubtype(subTypeId);
                 if (temp_result==type)
                     break;
@@ -191,7 +191,7 @@ int RsArrayType::getSubtypeCount() const
 
 RsType * RsArrayType::getSubtype(int i) const
 {
-    if(i>=0 && i<elementCount)
+    if(i>=0 && i<(int)elementCount)
         return baseType;
     else
         return NULL;
@@ -199,7 +199,7 @@ RsType * RsArrayType::getSubtype(int i) const
 
 int RsArrayType::getSubtypeOffset(int id) const
 {
-    if(id >= 0 && id < elementCount)
+    if(id >= 0 && id < (int)elementCount)
         return id*baseType->getByteSize(); //no padding because homogenous types
     else
         return -1;
@@ -224,7 +224,7 @@ RsType * RsArrayType::getSubtypeAt ( addr_type offset) const
 
 bool  RsArrayType::isValidOffset(addr_type offset) const
 {
-    RuntimeSystem * rs = RuntimeSystem::instance();
+   // RuntimeSystem * rs = RuntimeSystem::instance();
     //rs->printMessage("        ... isValidOffset: offset >= getByteSize()   "+
     //		     ToString(offset)+ " >= "+ToString(getByteSize()));
     if(offset >= getByteSize())
@@ -250,9 +250,9 @@ string RsArrayType::getArrayTypeName(RsType * basetype, size_t size)
 
 string RsArrayType::getSubTypeString(int id) const
 {
-    assertme(id >=0 && id < elementCount,"RsArrayType::getSubTypeString( - id >=0 && id < elementCount",
+    assertme(id >=0 && id < (int)elementCount,"RsArrayType::getSubTypeString( - id >=0 && id < elementCount",
              ToString(id),ToString(elementCount));
-    assert(id >=0 && id < elementCount);
+    assert(id >=0 && id < (int)elementCount);
     stringstream ss;
     ss << "[" << id << "]";
     return ss.str();
@@ -331,8 +331,8 @@ int RsClassType::addMember(const std::string & name, RsType * type, addr_type of
         RtedDebug::instance()->addMessage(mess);
     }
 #endif
-
-    if(offset==-1)
+    // tps : this seems to be incorrect since addr_type is unsigned int
+    if((int)offset==-1)
     {
         offset=0;
         if(members.size() > 0)
@@ -375,7 +375,7 @@ bool RsClassType::isComplete(bool verbose) const
     if(verbose)
     {
         cout << "Padding info for type " << stringId << endl;
-        for(int i=1; i<members.size(); i++)
+        for(unsigned int i=1; i<members.size(); i++)
         {
 
             int diff = members[i].offset;
@@ -406,19 +406,19 @@ int RsClassType::getSubtypeCount() const
 
 RsType * RsClassType::getSubtype(int i) const
 {
-    assert(i>=0 && i<members.size());
+    assert(i>=0 && i<(int)members.size());
     return members[i].type;
 }
 
 int RsClassType::getSubtypeOffset(int id) const
 {
-    assert(id>=0 && id<members.size());
+    assert(id>=0 && id<(int)members.size());
     return members[id].offset;
 }
 
 int RsClassType::getSubtypeIdAt(addr_type offset) const
 {
-    RuntimeSystem * rs = RuntimeSystem::instance(); 
+   // RuntimeSystem * rs = RuntimeSystem::instance();
     //rs->printMessage("      ....... isValidOffset(offset >=getByteSize) : "+
     //		     ToString(offset)+"  >= "+ToString(getByteSize()));
     if( offset >= getByteSize())
@@ -443,7 +443,7 @@ int RsClassType::getSubtypeIdAt(addr_type offset) const
 std::vector<int> RsClassType::getSubtypeUnionIdAt(addr_type offset) const
 {
     vector<int>retvalvec;
-    RuntimeSystem * rs = RuntimeSystem::instance(); 
+   // RuntimeSystem * rs = RuntimeSystem::instance();
     //rs->printMessage("      ....... isValidOffset(offset >=getByteSize) : "+
     //		     ToString(offset)+"  >= "+ToString(getByteSize()));
     if( offset >= getByteSize())
@@ -496,7 +496,7 @@ bool RsClassType::isValidOffset(addr_type offset) const
 
 string RsClassType::getSubTypeString(int id) const
 {
-    assert(id >=0 && id < members.size());
+    assert(id >=0 && id < (int)members.size());
     return members[id].name;
 }
 
@@ -506,7 +506,7 @@ void RsClassType::print(ostream & os) const
 {
     os << "Class " << getName() << " Size: " << byteSize <<endl;
 
-    for(int i=0; i < members.size(); i++)
+    for(unsigned int i=0; i < members.size(); i++)
     {
         os << "  " << members[i].offset << " " <<
                       members[i].name << "\t" <<

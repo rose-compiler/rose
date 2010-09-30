@@ -285,8 +285,10 @@ SgAsmElfSectionTable::parse()
  *  associated string table then the @p section will be used as the string table to hold the section names.
  *
  *  This method complements SgAsmElfSection::init_from_section_table. This method initializes the section table from the
- *  section while init_from_section_table() initializes the section from the section table. */
-void
+ *  section while init_from_section_table() initializes the section from the section table.
+ *
+ *  Returns the new section table entry linked into the AST. */
+SgAsmElfSectionTableEntry *
 SgAsmElfSectionTable::add_section(SgAsmElfSection *section)
 {
     ROSE_ASSERT(section!=NULL);
@@ -333,6 +335,8 @@ SgAsmElfSectionTable::add_section(SgAsmElfSection *section)
     SgAsmElfSectionTableEntry *shdr = new SgAsmElfSectionTableEntry;
     shdr->update_from_section(section);
     section->set_section_entry(shdr);
+
+    return shdr;
 }
 
 /** Make this section's name to be stored in the specified string table. */

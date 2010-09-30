@@ -78,9 +78,8 @@ public:
          *  is not allocated (and the base address is not assigned) until a write attempt is made. The implementation is free
          *  to coalesce compatible adjacent anonymous regions as it sees fit, reallocating memory as necessary. */
         MapElement(rose_addr_t va, size_t size, unsigned perms=MM_PROT_READ)
-            : va(va), size(size), base(NULL), offset(0), read_only(false), mapperms(perms), anonymous(new size_t) {
-            *anonymous = 0; /*no storage allocated yet for 'base'*/
-        }
+            : va(va), size(size), base(NULL), offset(0), read_only(false), mapperms(perms), anonymous(new Anonymous)
+            {}
 
         /** Returns the starting virtual address for this map element. */
         rose_addr_t get_va() const {
@@ -119,10 +118,19 @@ public:
             mapperms = new_perms;
         }
 
-        /** Returns the buffer to which the offset applies.  The base for anonymous elements is probably not of interest to a
-         *  caller since the implementation is free to allocate anonymous memory as it sees fit (in fact, it might not even
-         *  use a large contiguous buffer). */
-        void *get_base() const {
+        /** Returns the buffer to which the offset applies.  Invoking this method on an anonymouse map element will cause
+         *  memory to be allocated if it hasen't been already (unless allocate_anonymous is false). */
+        void *get_base(bool allocate_anonymous=true) const {
+            if (anonymous) {
+                if (NULL==anonymous->base) {
+                    ROSE_ASSERT(NULL==base);
+                    base = anonymous->base = new uint8_t[get_size()];
+                    memset(anonymous->base, 0, get_size());
+                } else {
+                    ROSE_ASSERT(base==anonymous->base);
+                }
+            }
+
             return base;
         }
 
@@ -168,9 +176,9 @@ public:
 #ifdef _MSC_VER
         /* CH (4/15/2010): Make < operator be its member function instead of non-member function outside to avoid template
          * parameter deduction failure in MSVC */
-        // tps : commented out because of operatror < is ambigious.
-		// there is a function at the end of the file that is ambigious
-		//inline bool operator<(const MemoryMap::MapElement &a, const MemoryMap::MapElement &b) {
+// tps : commented out because of operatror < is ambigious.
+// there is a function at the end of the file that is ambigious
+//inline bool operator<(const MemoryMap::MapElement &a, const MemoryMap::MapElement &b) {
 //        bool operator<(const MapElement &a) const {
  //           return this->get_va() < a.get_va();
   //      }
@@ -183,38 +191,35 @@ public:
         void init(const MapElement &other) {
             va = other.va;
             size = other.size;
-            anonymous = other.anonymous;
             base = other.base;
             offset = other.offset;
             read_only = other.read_only;
             mapperms = other.mapperms;
             name = other.name;
-            if (anonymous && *anonymous>0)
-                (*anonymous)++;
+
+            anonymous = other.anonymous;
+            if (anonymous)
+                anonymous->refcount++;
         }
 
         /** Make this a null mapping, releasing any anonymous memory that might be referenced. */
         void nullify() {
-            if (anonymous  && *anonymous==1) {
-                delete anonymous;
-                delete[] (uint8_t*)base;
-            } else if (anonymous && *anonymous>1) {
-                (*anonymous)--;
+            if (anonymous) {
+                if (0==--(anonymous->refcount)) {
+                    delete[] anonymous->base;
+                    delete anonymous;
+                }
             }
+
+            anonymous = NULL;
             va = 0;
             size = 0;
-            anonymous = NULL;
             base = NULL;
             offset = 0;
             read_only = 0;
             mapperms = MM_PROT_NONE;
             name = "";
         }
-
-        /** Helper function for merge() when this and @p other element are both anonymous. This method will allocate storage
-         *  for this anonymous element if necessary and initialize it with the contents of the @p other element. The @p
-         *  oldsize argument is the size of this element before we merged it with the other. */
-        void merge_anonymous(const MapElement &other, size_t oldsize);
 
         /** Adjust the debugging name when merging two map elements. */
         void merge_names(const MapElement &other);
@@ -243,18 +248,23 @@ public:
 
         rose_addr_t va;                 /**< Virtual address for start of region */
         size_t size;                    /**< Number of bytes in region */
-        mutable void *base;             /**< The buffer to which 'offset' applies */
+        mutable void *base;             /**< The buffer to which 'offset' applies (access only through get_base()) */
         rose_addr_t offset;             /**< Offset with respect to 'base' */
         bool read_only;                 /**< If set then write() is not allowed */
         unsigned mapperms;              /**< Mapping permissions (MM_PROT_{READ,WRITE,EXEC} from Protection enum) */
         std::string name;               /**< Name used for debugging purposes */
 
-        /** If non-null then the element describes an anonymous mapping, one that is initially all zero.  The 'base' data
-         *  member in this case will initially be NULL and will be allocated when a MemoryMap::write() modifies the anonymous
-         *  region. When 'base' is allocated, then anonymous will point to a one and will be incremented each time the element
-         *  is copied and decremented when the element is overwritten or destroyed.  Each allocated 'base' will have it's own
-         *  allocated reference counter. */
-        size_t *anonymous;
+        /** Reference counter for anonymous mappings.  The buffer for anonymous mappings is allocated and freed by this class
+         *  rather than the user.  Anonymous mappings are indicated by a non-null pointer. */
+        class Anonymous {
+        private:
+            Anonymous(const Anonymous &other) { abort(); }
+            Anonymous &operator=(const Anonymous &other) { abort(); }
+        public:
+            Anonymous(): refcount(1), base(NULL) {}
+            size_t refcount;
+            uint8_t *base;
+        } *anonymous;
     };
 
     /** Exceptions for MemoryMap operations. */
