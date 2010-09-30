@@ -4,6 +4,9 @@
 #ifndef RTEDTRANS_H
 #define RTEDTRANS_H
 
+
+
+
 #include <set>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -89,36 +92,15 @@ class RtedTransformation : public AstSimpleProcessing {
 
   // The following are vars that are needed for transformations
   // and retrieved through the visit function
-  SgFunctionSymbol* roseCreateHeap;
-  SgFunctionSymbol* roseAccessHeap;
-  SgFunctionSymbol* roseFunctionCall;
-  SgFunctionSymbol* roseAssertFunctionSignature;
-  SgFunctionSymbol* roseConfirmFunctionSignature;
-  SgFunctionSymbol* roseFreeMemory;
-  SgFunctionSymbol* roseReallocateMemory;
-  SgFunctionSymbol* roseIOFunctionCall;
-  SgFunctionSymbol* roseConvertIntToString;
   SgClassSymbol* runtimeClassSymbol;
   SgScopeStatement* rememberTopNode;
   SgStatement* mainLast;
   SgStatement* mainFirst;
   SgBasicBlock* mainBody;
   Sg_File_Info* mainEnd;
-  SgFunctionSymbol* roseCheckpoint;
   bool mainEndsWithReturn;
   bool mainHasBeenChanged;
   SgReturnStmt* mainReturnStmt;
-  SgFunctionSymbol* roseCallStack;
-  SgFunctionSymbol* roseCreateVariable;
-  SgFunctionSymbol* roseCreateObject;
-  SgFunctionSymbol* roseInitVariable;
-  SgFunctionSymbol* roseMovePointer;
-  SgFunctionSymbol* roseAccessVariable;
-  SgFunctionSymbol* roseEnterScope;
-  SgFunctionSymbol* roseExitScope;
-  SgFunctionSymbol* roseRegisterTypeCall;
-  SgFunctionSymbol* roseCheckIfThisNULL;
-  SgType* size_t_member;
 
   // FUNCTIONS ------------------------------------------------------------
   // Helper function
@@ -338,14 +320,6 @@ class RtedTransformation : public AstSimpleProcessing {
   RtedTransformation() {
     //inputFiles=files;
     globalScope=NULL;
-    roseCreateHeap=NULL;
-    roseAccessHeap=NULL;
-    roseCheckpoint=NULL;
-    roseFunctionCall=NULL;
-    roseAssertFunctionSignature=NULL;
-    roseConfirmFunctionSignature=NULL;
-    roseConvertIntToString=NULL;
-    roseCallStack=NULL;
     symbols = new RtedSymbols();
     mainFirst=NULL;
     mainEnd=NULL;
@@ -353,15 +327,9 @@ class RtedTransformation : public AstSimpleProcessing {
     mainBody = NULL;
     mainEndsWithReturn=false;
     mainHasBeenChanged=false;
-    roseCreateVariable=NULL;
-    roseCreateObject=NULL;
-    roseInitVariable=NULL;
-    roseMovePointer=NULL;
-    roseAccessVariable=NULL;
     globConstructor=false;
     globalConstructorVariable=NULL;
     globalFunction=NULL;
-    roseCheckIfThisNULL=NULL;
   };
   virtual ~RtedTransformation(){
 
@@ -377,6 +345,7 @@ class RtedTransformation : public AstSimpleProcessing {
 
   // Run frontend and return project
   SgProject* parse(int argc, char** argv);
+  void loadFunctionSymbols(SgProject* project);
 
   void appendTypeInformation(SgInitializedName* initName, SgExprListExp* arg_list);
   void appendTypeInformation(SgInitializedName* initName, SgType* type, SgExprListExp* arg_list);
@@ -416,7 +385,7 @@ class RtedTransformation : public AstSimpleProcessing {
 
 
 
-
+  void executeTransformations();
 
 };
 
