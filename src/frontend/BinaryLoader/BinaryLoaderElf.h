@@ -191,7 +191,7 @@ public:
          *  appending it to the symbol name. */
         const SymbolMapEntry *lookup(std::string name, std::string version) const;
     };
-    
+
     class SymverResolver {
     public:
         SymverResolver(SgAsmGenericHeader *header) { ctor(header); }

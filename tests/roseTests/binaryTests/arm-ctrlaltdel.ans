@@ -33,7 +33,7 @@
    ElfFileHeader.Header.Section.header                            = not associated
    ElfFileHeader.Header.Section.purpose                           = executable format header
    ElfFileHeader.Header.Section.mapped                            = <not mapped>
-@@ -499,22 +498,21 @@
+@@ -322,22 +321,21 @@
    ElfStringSection.Strtab.StringStorage[11].sec,offset,val       = section [5] ".dynstr", offset 0x00000059 (89), "stderr"
    ElfStringSection.Strtab.StringStorage[12].sec,offset,val       = section [5] ".dynstr", offset 0x00000029 (41), "abort"
    ElfStringSection.Strtab.StringStorage[13].sec,offset,val       = section [5] ".dynstr", offset 0x00000065 (101), "bindtextdomain"

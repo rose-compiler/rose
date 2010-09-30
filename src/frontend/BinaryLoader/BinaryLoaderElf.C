@@ -247,14 +247,16 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
             if (get_debug()) fprintf(get_debug(), "  symbol [%zu] \"%s\" ", symbol_idx, symbol->get_name()->c_str());
 
             VersionedSymbol symver = versionResolver.get_versioned_symbol(symbol);
-            if (symver.is_local()) {
-                /* Symbols in the dynsym should never be local (if this is isn't the case, we can ignore them). Symbol
-                 * versioning also may make symbols "local". */
-                if (get_debug()) fprintf(get_debug(), " local (ignoring)\n");
-            } else if (symver.is_hidden()) {
-                /* Symbol versioning can result in 'hidden' symbols that should be ignored. */
-                if (get_debug()) fprintf(get_debug(), " hidden (ignoring)\n");
-            } else if (symver.is_reference()) {
+// I think we need all symbols in the symbol table for relocations. [RPM 2010-09-16]
+//            if (symver.is_local()) {
+//                /* Symbols in the dynsym should never be local (if this is isn't the case, we can ignore them). Symbol
+//                 * versioning also may make symbols "local". */
+//                if (get_debug()) fprintf(get_debug(), " local (ignoring)\n");
+//            } else if (symver.is_hidden()) {
+//                /* Symbol versioning can result in 'hidden' symbols that should be ignored. */
+//                if (get_debug()) fprintf(get_debug(), " hidden (ignoring)\n");
+//            } else
+            if (symver.is_reference()) {
                 /* Symbol versioning lets us determine which symbols are 'references' i.e.  that are only used to help
                  * relocating */     
                 if (get_debug()) fprintf(get_debug(), " reference (ignoring)\n");
@@ -358,7 +360,7 @@ BinaryLoaderElf::VersionedSymbol::is_hidden() const
 bool
 BinaryLoaderElf::VersionedSymbol::is_reference() const
 {
-    return NULL != p_version_need;
+    return NULL!=p_version_need || NULL==get_symbol()->get_bound();
 }
 
 bool
@@ -551,20 +553,6 @@ BinaryLoaderElf::SymverResolver::ctor(SgAsmGenericHeader* header)
     makeVersionedSymbolMap(dynsym, symver);     /* for p_versionedSymbolMap */
 }
 
-BinaryLoaderElf::VersionedSymbol
-BinaryLoaderElf::SymverResolver::get_versioned_symbol(SgAsmElfSymbol* symbol) const
-{
-    /* If we don't actually have versioned symbols, return the identity version. */
-    if (p_versionedSymbolMap.empty())
-        return VersionedSymbol(symbol);
-
-    /* We should have every symbol that might get looked up in here */
-    VersionedSymbolMap::const_iterator iter = p_versionedSymbolMap.find(symbol);
-    ROSE_ASSERT(p_versionedSymbolMap.end() != iter);
-    return *(iter->second);
-}
-
-
 void
 BinaryLoaderElf::SymverResolver::makeSymbolVersionDefMap(SgAsmElfSymverDefinedSection* section)
 {
@@ -586,7 +574,7 @@ BinaryLoaderElf::SymverResolver::makeSymbolVersionNeedMap(SgAsmElfSymverNeededSe
         SgAsmElfSymverNeededAuxPtrList& auxes = needEntry->get_entries()->get_entries();
         for (size_t aux=0; aux < auxes.size(); ++aux) {
             SgAsmElfSymverNeededAux* auxEntry = auxes[aux];
-            p_symbolVersionNeedMap[auxEntry->get_other()]=auxEntry;
+            p_symbolVersionNeedMap[auxEntry->get_other()] = auxEntry;
         }
     }
 }
@@ -609,24 +597,31 @@ BinaryLoaderElf::SymverResolver::makeVersionedSymbolMap(SgAsmElfSymbolSection* d
 
         if (symver) {
             SgAsmElfSymverEntry *symverEntry = symver->get_entries()->get_entries()[symbol_idx];
-            uint16_t value=symverEntry->get_value();
+            uint16_t value = symverEntry->get_value();
 
-            /*  VERSYM_HIDDEN = 0x8000 - if set, we should actually completely ignore the symbol
-             *  unless this version is specifically requested (which is the normal case anwyay?)
-             *  at any rate - we need to strip bit-15
-             * This appears to be poorly documented by the spec  [MCB] */
-            value &= ~0x8000;
+            /* From the Sun Microsystem "Linker and Libraries Guide" April 2008, page 254:
+             *
+             *     STV_HIDDEN: A symbol that is defined in the current component is hidden if its name is not visible in other
+             *                 components. Such a symbol is necessarily protected. This attribute is used to control the
+             *                 external interface of a component. An object named by such a symbol can still be referenced
+             *                 from another component if its address is passed outside.  A hidden symbol contained in a
+             *                 relocatable object is either removed or converted to STB_LOCAL binding when the object is
+             *                 included in an executable file or shared object.
+             *
+             * Therefore, we will also treat this symbol as local. */
+            if (value & VERSYM_HIDDEN)
+                value = 0;
 
-            if (0 == value || 1 == value) {
-                /* 0 and 1 are special (local and global respectively) they DO NOT correspond to entries on symver_def
-                 * Also, (no documentation for this) if bit 15 is set, this symbol should be ignored? [MCB] */
-                versionedSymbol->set_version_entry(symverEntry);    
-            } else {
+            versionedSymbol->set_version_entry(symverEntry);
+
+            /* 0 and 1 are special (local and global respectively) they DO NOT correspond to entries in the ELF Symbol
+             * Version Definition Table or the ELF Symbol Version Requirements Table. Otherwise the value should exist in
+             * exactly one of those tables. */
+            if (0 != value && 1 != value) {
                 SymbolVersionDefinitionMap::const_iterator defIter = p_symbolVersionDefMap.find(value);
                 SymbolVersionNeededMap::const_iterator needIter = p_symbolVersionNeedMap.find(value);
                 /* We must have a match from defs or needs, not both, not neither. */
                 ROSE_ASSERT((p_symbolVersionDefMap.end() == defIter) != (p_symbolVersionNeedMap.end() == needIter));
-                versionedSymbol->set_version_entry(symverEntry);
                 if (p_symbolVersionDefMap.end() != defIter) {
                     versionedSymbol->set_version_def(defIter->second);
                 } else if (p_symbolVersionNeedMap.end() != needIter) {
@@ -636,6 +631,20 @@ BinaryLoaderElf::SymverResolver::makeVersionedSymbolMap(SgAsmElfSymbolSection* d
         }
     }
 }
+
+BinaryLoaderElf::VersionedSymbol
+BinaryLoaderElf::SymverResolver::get_versioned_symbol(SgAsmElfSymbol* symbol) const
+{
+    /* If we don't actually have versioned symbols, return the identity version. */
+    if (p_versionedSymbolMap.empty())
+        return VersionedSymbol(symbol);
+
+    /* We should have every symbol that might get looked up in here */
+    VersionedSymbolMap::const_iterator iter = p_versionedSymbolMap.find(symbol);
+    ROSE_ASSERT(p_versionedSymbolMap.end() != iter);
+    return *(iter->second);
+}
+
 
 /*========================================================================================================================
  * Relocation fixup information methods. Names all begin with "fixup_info_".
@@ -661,12 +670,30 @@ BinaryLoaderElf::fixup_info_reloc_symbol(SgAsmElfRelocEntry *reloc, const Symver
     VersionedSymbol reloc_vsym = resolver.get_versioned_symbol(reloc_sym);
     if (get_debug())
         fprintf(get_debug(), "    reloc symbol: %s\n", reloc_vsym.get_versioned_name().c_str());
+    bool is_weak = reloc_sym->get_elf_binding() == SgAsmElfSymbol::STB_WEAK;
+    bool is_local = reloc_vsym.is_hidden() || reloc_vsym.is_local();
 
-    /* Find the defining versioned symbol associated with the relocation symbol.  This is the return value. */
+    /* Find the defining versioned symbol associated with the relocation symbol. */
+    SgAsmElfSymbol *retval = NULL;
     std::string symbol_name = reloc_vsym.get_name();
     const SymbolMapEntry *symbol_entry = p_symbols.lookup(symbol_name);
-    bool is_weak = reloc_sym->get_elf_binding() == SgAsmElfSymbol::STB_WEAK;
     if (!symbol_entry) {
+        retval = NULL;
+    } else {
+        VersionedSymbol source_vsym = symbol_entry->get_vsymbol(reloc_vsym);
+        if (source_vsym.is_reference()) {
+            if (get_debug()) fprintf(get_debug(), "    reference symbol is being treated as undefined\n");
+        } else if (is_local && reloc_vsym.get_section()->get_header()!=source_vsym.get_section()->get_header()) {
+            if (get_debug()) fprintf(get_debug(), "    hidden/local symbol is being treated as undefined\n");
+        } else {
+            retval = source_vsym.get_symbol();
+            ROSE_ASSERT(retval!=NULL);
+            ROSE_ASSERT(0 != retval->get_st_shndx());/* test an assumption [MCB] */
+        }
+    }
+
+    /* Handle case when defined symbol doesn't exist (or we made it not to exist because it's local). */
+    if (!retval) {
         if (!is_weak) {
             if (get_debug()) fprintf(get_debug(), "    could not find symbol in master symbol table\n");
             throw Exception(symbol_name + " not defined in master symbol table");
@@ -674,11 +701,6 @@ BinaryLoaderElf::fixup_info_reloc_symbol(SgAsmElfRelocEntry *reloc, const Symver
         return NULL; /*weak symbol with no definition*/
     }
 
-    /* Convert versioned symbol into an ELF Symbol */
-    VersionedSymbol source_vsym = symbol_entry->get_vsymbol(reloc_vsym);
-    SgAsmElfSymbol *retval = source_vsym.get_symbol();
-    ROSE_ASSERT(retval!=NULL);
-    ROSE_ASSERT(0 != retval->get_st_shndx());/* test an assumption [MCB] */
     return retval;
 }
 
