@@ -270,35 +270,6 @@ SageInterface::isInstructionKind ( SgAsmInstruction* asmInstruction, X86Instruct
    }
 
 bool
-SageInterface::isAsmGeneralPurposeRegisterReferenceExpression( SgAsmRegisterReferenceExpression* asmRegisterReferenceExpression, X86RegisterClass registerClass, X86GeneralPurposeRegister generalPurposeRegister )
-   {
-  // Found the top level SgAsmMemoryReferenceExpression in a SgInstruction
-     ROSE_ASSERT(asmRegisterReferenceExpression != NULL);
-
-     bool foundAsmRegisterReferenceExpression = false;
-     SgAsmx86RegisterReferenceExpression* asmx86RegisterReferenceExpression = isSgAsmx86RegisterReferenceExpression(asmRegisterReferenceExpression);
-     if (asmx86RegisterReferenceExpression != NULL)
-        {
-       // Detect the "ds" segment register (might want to use a switch statement).
-       // bool isRegisterClass = (asmx86RegisterReferenceExpression->get_register_class() == registerClass);
-          bool isGeneralPurposeRegister = (asmx86RegisterReferenceExpression->get_register_class() == registerClass);
-       // printf ("isRegisterClass = %s \n",isRegisterClass ? "true" : "false");
-
-       // We need to fix the IR to have the "ds" register not require a magic number!
-       // bool isSpecificSegment = (isRegisterClass == true && asmx86RegisterReferenceExpression->get_register_number() == segmentRegister);
-          bool isSpecificRegister = (isGeneralPurposeRegister == true && asmx86RegisterReferenceExpression->get_register_number() == generalPurposeRegister);
-       // printf ("isRegisterClass = %s \n",isRegisterClass ? "true" : "false");
-
-          if (isSpecificRegister == true)
-             {
-               foundAsmRegisterReferenceExpression = true;
-             }
-        }
-
-     return foundAsmRegisterReferenceExpression;
-   }
-
-bool
 SageInterface::isAsmSegmentRegisterReferenceExpression( SgAsmRegisterReferenceExpression* asmRegisterReferenceExpression, X86RegisterClass registerClass,  X86SegmentRegister segmentRegister )
    {
   // Found the top level SgAsmMemoryReferenceExpression in a SgInstruction

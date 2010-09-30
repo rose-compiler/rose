@@ -33,7 +33,6 @@ namespace SageInterface
 
      bool isInstructionKind ( SgAsmInstruction* asmInstruction, X86InstructionKind instuctionKind );
 
-     bool isAsmGeneralPurposeRegisterReferenceExpression ( SgAsmRegisterReferenceExpression* asmRegisterReferenceExpression, X86RegisterClass registerClass, X86GeneralPurposeRegister generalPurposeRegister );
      bool isAsmSegmentRegisterReferenceExpression ( SgAsmRegisterReferenceExpression* asmRegisterReferenceExpression, X86RegisterClass registerClass, X86SegmentRegister segmentRegister );
 
 
