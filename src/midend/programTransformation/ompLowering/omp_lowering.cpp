@@ -1326,10 +1326,10 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     SgOmpThreadprivateStatement* target = isSgOmpThreadprivateStatement(node);
     ROSE_ASSERT(target != NULL );
 
-    SgInitializedNamePtrList nameList = target->get_variables ();
+    SgVarRefExpPtrList nameList = target->get_variables ();
     for (size_t i = 0; i<nameList.size(); i++)
     {
-      SgInitializedName* init_name = nameList[i];
+      SgInitializedName* init_name = nameList[i]->get_symbol()->get_declaration();
       ROSE_ASSERT(init_name != NULL);
       SgVariableDeclaration*  decl = isSgVariableDeclaration(init_name-> get_declaration());
       ROSE_ASSERT (decl != NULL);
@@ -1372,7 +1372,12 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
       NodeQuery::queryNodeList<SgOmpClause>(clause_stmt->get_clauses(),vvt);
     for (size_t i =0; i< p_clause.size(); i++) // can have multiple reduction clauses of different reduction operations
     {  
-      result2 = isSgOmpVariablesClause(p_clause[i])->get_variables();  
+      //result2 = isSgOmpVariablesClause(p_clause[i])->get_variables();  
+      // get initialized name from varRefExp
+      SgVarRefExpPtrList refs = isSgOmpVariablesClause(p_clause[i])->get_variables();
+      result2.clear();
+      for (size_t j =0; j< refs.size(); j++)
+         result2.push_back(refs[j]->get_symbol()->get_declaration()); 
       std::copy(result2.begin(), result2.end(), back_inserter(result));
     }
     return result;
@@ -1418,7 +1423,10 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
      {
        SgOmpReductionClause* r_clause = isSgOmpReductionClause(p_clause[i]);
        ROSE_ASSERT(r_clause != NULL );
-       SgInitializedNamePtrList var_list = isSgOmpVariablesClause(r_clause)->get_variables();
+       SgVarRefExpPtrList refs = isSgOmpVariablesClause(r_clause)->get_variables();
+       SgInitializedNamePtrList var_list ; //= isSgOmpVariablesClause(r_clause)->get_variables();
+       for (size_t j=0; j< refs.size(); j++)
+         var_list.push_back (refs[j]->get_symbol()->get_declaration());
        SgInitializedNamePtrList::const_iterator iter = find (var_list.begin(), var_list.end(), init_name);
        if (iter != var_list.end())
        {
@@ -1992,7 +2000,7 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
       // Insert only if the variable is not in the list
       if (!isInClauseVariableList(var, clause_stmt, vt)) 
       {
-        target_clause->get_variables().push_back(var);
+        target_clause->get_variables().push_back(buildVarRefExp(var));
       }
     }
     
@@ -2048,7 +2056,10 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
      std::vector<SgOmpThreadprivateStatement*>::const_iterator c_iter;
      for (c_iter = tp_stmts.begin(); c_iter != tp_stmts.end(); c_iter ++)
      {
-       SgInitializedNamePtrList var_list = (*c_iter)->get_variables();
+       SgVarRefExpPtrList refs = (*c_iter)->get_variables();
+       SgInitializedNamePtrList var_list; // = (*c_iter)->get_variables();
+       for (size_t j =0; j<refs.size(); j++)
+         var_list.push_back(refs[j]->get_symbol()->get_declaration());
        std::copy(var_list.begin(), var_list.end(), std::inserter(result, result.end()));
      }
      return result;

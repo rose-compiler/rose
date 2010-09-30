@@ -262,8 +262,15 @@ rose_inputreplaceMacroCalls.C:replaceMacroCalls
 rose_inputinsertStatementBeforeFunction.C: insertStatementBeforeFunction $(srcdir)/inputinsertStatementBeforeFunction_1.h $(srcdir)/inputinsertStatementBeforeFunction_2.h
 	./insertStatementBeforeFunction$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputinsertStatementBeforeFunction.C
 
+# There are a lot of different cases that we now test for with the relocation of comments support in the removeStatement() function.
 rose_inputRemoveStatementCommentRelocation.C: removeStatementCommentRelocation $(srcdir)/inputRemoveStatementCommentRelocation_1.h $(srcdir)/inputRemoveStatementCommentRelocation_2.h
 	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withTopBoundingStatement.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withoutTopBoundingStatement.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withBottomBoundingStatement.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withoutBottomBoundingStatement.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withTopandBottomBoundingStatement.C
+	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C
 
 
 # MUST keep this up-to-date!!
@@ -283,7 +290,13 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputbuildTypedefDeclaration.C inputdeepDelete.C \
        inputinsertStatementBeforeFunction.C inputinsertStatementBeforeFunction_1.h \
        inputinsertStatementBeforeFunction_2.h inputRemoveStatementCommentRelocation.C \
-       inputRemoveStatementCommentRelocation_1.h inputRemoveStatementCommentRelocation_2.h
+       inputRemoveStatementCommentRelocation_1.h inputRemoveStatementCommentRelocation_2.h \
+       inputRemoveStatementCommentRelocation_withBottomBoundingStatement.C \
+       inputRemoveStatementCommentRelocation_withTopBoundingStatement.C \
+       inputRemoveStatementCommentRelocation_withTopandBottomBoundingStatement.C \
+       inputRemoveStatementCommentRelocation_withoutBottomBoundingStatement.C \
+       inputRemoveStatementCommentRelocation_withoutTopBoundingStatement.C \
+       inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C
 
 
 check-local:
