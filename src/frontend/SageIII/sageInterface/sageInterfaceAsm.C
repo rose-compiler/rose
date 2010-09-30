@@ -269,69 +269,6 @@ SageInterface::isInstructionKind ( SgAsmInstruction* asmInstruction, X86Instruct
      return foundInstructionKind;
    }
 
-bool
-SageInterface::isAsmSegmentRegisterReferenceExpression( SgAsmRegisterReferenceExpression* asmRegisterReferenceExpression, X86RegisterClass registerClass,  X86SegmentRegister segmentRegister )
-   {
-  // Found the top level SgAsmMemoryReferenceExpression in a SgInstruction
-     bool foundAsmRegisterReferenceExpression = false;
-
-     ROSE_ASSERT(asmRegisterReferenceExpression != NULL);
-  // SgAsmRegisterReferenceExpression* asmRegisterReferenceExpression = isSgAsmRegisterReferenceExpression(asmInstruction);
-
-     SgAsmx86RegisterReferenceExpression* asmx86RegisterReferenceExpression = isSgAsmx86RegisterReferenceExpression(asmRegisterReferenceExpression);
-     if (asmx86RegisterReferenceExpression != NULL)
-        {
-       // Detect the "ds" segment register (might want to use a switch statement).
-          bool isRegisterClass = (asmx86RegisterReferenceExpression->get_register_class() == registerClass);
-       // printf ("isRegisterClass = %s \n",isRegisterClass ? "true" : "false");
-
-       // We need to fix the IR to have the "ds" register not require a magic number!
-          bool isSpecificSegment = (isRegisterClass == true && asmx86RegisterReferenceExpression->get_register_number() == segmentRegister);
-       // printf ("isRegisterClass = %s \n",isRegisterClass ? "true" : "false");
-
-          if (isSpecificSegment == true)
-             {
-               foundAsmRegisterReferenceExpression = true;
-             }
-        }
-
-     return foundAsmRegisterReferenceExpression;
-   }
-
-#if 0
-bool
-SageInterface::isAsmMemoryReferenceExpression( SgAsmInstruction* asmInstruction, X86RegisterClass registerClass, X86SegmentRegister segmentRegister )
-   {
-  // Found the top level SgAsmMemoryReferenceExpression in a SgInstruction
-     SgAsmExpression* addressOrBinaryExpression = isSgAsmExpression(childAttributes[SgAsmMemoryReferenceExpression_address].node);
-     SgAsmExpression* segmentExpression         = isSgAsmExpression(childAttributes[SgAsmMemoryReferenceExpression_segment].node);
-
-     SgAsmx86RegisterReferenceExpression* asmx86RegisterReferenceExpression = isSgAsmx86RegisterReferenceExpression(segmentExpression);
-     if (asmx86RegisterReferenceExpression != NULL)
-        {
-       // Detect the "ds" segment register (might want to use a switch statement).
-          bool isSegment = (asmx86RegisterReferenceExpression->get_register_class() == x86_regclass_segment);
-       // printf ("isSegment = %s \n",isSegment ? "true" : "false");
-
-       // We need to fix the IR to have the "ds" register not require a magic number!
-          bool isSpecificSegment = (isSegment == true && asmx86RegisterReferenceExpression->get_register_number() == x86_segreg_ds);
-       // printf ("isDataSegment = %s \n",isDataSegment ? "true" : "false");
-
-          if (isSpecificSegment == true)
-             {
-            // printf ("Found a asmx86RegisterReferenceExpression for ds \n");
-            // Save the register reference and pass it up the AST.
-               localResult.segmentRegisterReference = asmx86RegisterReferenceExpression;
-             }
-        }
-   }
-#endif
-
-
-
-
-
-
 // Definition of object equivalence for purposes of the AST matching using for instruction recognition.
 bool
 SageInterface::equivalenceTest(SgNode* x, SgNode* y)
