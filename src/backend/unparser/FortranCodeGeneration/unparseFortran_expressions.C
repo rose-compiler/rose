@@ -1235,7 +1235,10 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
      if (object_list != NULL)
         {
           unparseExprList(object_list, info, false /*paren*/);
-          curprint(",");
+
+       // DQ (9/26/2010): Handle cases where the list is empty (see test2010_49.f90)
+          if (object_list->empty() == false)
+               curprint(",");
         }
      unparseExpression(indexExpression, info);
      curprint(" = ");

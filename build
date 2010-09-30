@@ -44,28 +44,36 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
+# Extracts dotted version number from a tool's "--version" message. Assigns result to $VERSION.
+get_version () {
+    local message=$1
+    export VERSION=$(echo $message | head -n1 | perl -pe 's/.*?([0-9\.]+).*/$1/')
+}
+
 # Returns ok (0) if $need is at least as large as $have, where both are version numbers
 # of the form X.Y.Z where X, Y, and Z are non-negative integers. Returns not-ok (1) otherwise.
 version_ok () {
     local have="$1" need="$2"
+	
     local have_major=$(echo $have |cut -d. -f1)
     local have_minor=$(echo $have |cut -d. -f2)
     local have_patch=$(echo $have |cut -d. -f3)
+    if [[ -z $have_patch ]]; then have_patch=0; fi
+
     local need_major=$(echo $need |cut -d. -f1)
     local need_minor=$(echo $need |cut -d. -f2)
     local need_patch=$(echo $need |cut -d. -f3)
-    [[ ${have_major:-0} -gt $need_major ]] && return 0
-    [[ ${have_major:-0} -lt $need_major ]] && return 1
-    [[ ${have_minor:-0} -gt $need_minor ]] && return 0
-    [[ ${have_minor:-0} -lt $need_minor ]] && return 1
-    [[ ${have_patch:-0} -ge $need_patch ]] && return 0
-    return 1
-}
+    if [[ -z $need_patch ]]; then need_patch=0; fi
 
-# DQ (9/15/2010): Add df call to check on diskspace (debugging)
-#echo "Report on diskspace availablity for this build."
-#df
-#echo ""
+    OK=0; NOT_OK=1
+    if (( have_major > need_major )); then return $OK; fi
+    if (( have_major < need_major )); then return $NOT_OK; fi
+    if (( have_minor > need_minor )); then return $OK; fi
+    if (( have_minor < need_minor )); then return $NOT_OK; fi
+    if (( have_patch > need_patch )); then return $OK; fi
+    if (( have_patch < need_patch )); then return $NOT_OK; fi
+    return $OK
+}
 
 # DQ (12/22/2005): remove the autoconf caches
 rm -rf autom4te.cache
@@ -92,7 +100,7 @@ fi
 
 # Version required and version actually present.
 LIBTOOL_VERSION_PREREQ=1.5.6
-LIBTOOL_VERSION=$($libtoolize_name --version |head -n1 |perl -pe 's/.*?([0-9\.]{5,}).*/$1/')
+get_version "`$libtoolize_name --version`"; LIBTOOL_VERSION=$VERSION
 if [[ -z "$LIBTOOL_VERSION" ]]; then
     echo "$0: warning: cannot determine libtool version; skipping libtoolize" 2>&1
 elif version_ok "$LIBTOOL_VERSION" "$LIBTOOL_VERSION_PREREQ"; then
@@ -109,7 +117,7 @@ fi
 ###############################################################################################################################
 
 AUTOMAKE_VERSION_REQ=1.9.6
-AUTOMAKE_VERSION=$(automake --version |head -n1 |perl -pe 's/.*?([0-9\.]{5,}).*/$1/')
+get_version "`automake --version`"; AUTOMAKE_VERSION=$VERSION
 if [[ -z "$AUTOMAKE_VERSION" ]]; then
     echo "$0: warning: cannot determine automake version" 2>&1
 elif version_ok "$AUTOMAKE_VERSION" "$AUTOMAKE_VERSION_PREREQ"; then

@@ -1883,7 +1883,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
                functionDeclaration->set_parent(globalScope);
                ROSE_ASSERT(functionDeclaration->get_parent() != NULL);
 
-               printf ("Adding function name = %s to the global scope (even thouhg we have not seen the definition yet) \n",name.str());
+               printf ("Adding function name = %s to the global scope (even though we have not seen the definition yet) \n",name.str());
                globalScope->insert_symbol(name,functionSymbol);
 
             // Add this function to the list of unresolved functions so that we can fixup the AST afterward (close of module scope or close of global scope).

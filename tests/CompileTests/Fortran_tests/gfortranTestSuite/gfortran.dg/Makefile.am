@@ -1,0 +1,891 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+# DQ (9/27/2010): These directories are from gfortran tests.
+SUBDIRS = 
+
+# #######################
+#      PASSING TESTS
+# #######################
+
+F90_TESTCODES_REQUIRED_TO_PASS = \
+   PR19754_2.f90 \
+   PR19872.f \
+   PR40660.f90 \
+   achar_1.f90 \
+   actual_array_constructor_3.f90 \
+   actual_array_interface_1.f90 \
+   actual_pointer_function_1.f90 \
+   actual_procedure_1.f90 \
+   advance_1.f90 \
+   advance_4.f90 \
+   advance_5.f90 \
+   aint_anint_1.f90 \
+   aliasing_dummy_2.f90 \
+   aliasing_dummy_3.f90 \
+   aliasing_dummy_5.f90 \
+   all_bounds_1.f90 \
+   allocatable_module_1.f90 \
+   allocate_char_star_scalar_1.f90 \
+   allocate_error_1.f90 \
+   allocate_zerosize_1.f90 \
+   allocate_zerosize_2.f90 \
+   allocate_zerosize_3.f \
+   anint_1.f90 \
+   any_all_1.f90 \
+   any_all_2.f90 \
+   append_1.f90 \
+   array_1.f90 \
+   array_2.f90 \
+   array_alloc_1.f90 \
+   array_alloc_2.f90 \
+   array_alloc_3.f90 \
+   array_constructor_11.f90 \
+   array_constructor_12.f90 \
+   array_constructor_15.f90 \
+   array_constructor_16.f90 \
+   array_constructor_19.f90 \
+   array_constructor_4.f90 \
+   array_constructor_5.f90 \
+   array_constructor_type_9.f \
+   array_function_1.f90 \
+   array_function_2.f90 \
+   array_initializer_2.f90 \
+   array_memcpy_4.f90 \
+   array_memcpy_5.f90 \
+   array_memset_2.f90 \
+   array_return_value_1.f90 \
+   array_section_2.f90 \
+   array_simplify_1.f90 \
+   array_temporaries_1.f90 \
+   array_temporaries_2.f90 \
+   arrayio_1.f90 \
+   arrayio_10.f90 \
+   arrayio_11.f90 \
+   arrayio_2.f90 \
+   arrayio_3.f90 \
+   arrayio_4.f90 \
+   arrayio_5.f90 \
+   arrayio_6.f90 \
+   arrayio_7.f90 \
+   arrayio_9.f90 \
+   arrayio_derived_1.f90 \
+   arrayio_derived_2.f90 \
+   assign_10.f90 \
+   assign_9.f90 \
+   assign_func_dtcomp_1.f90 \
+   assignment_1.f90 \
+   associated_1.f90 \
+   associated_2.f90 \
+   associated_4.f90 \
+   associated_5.f90 \
+   associated_target_2.f90 \
+   assumed_charlen_arg_1.f90 \
+   assumed_charlen_needed_1.f90 \
+   assumed_charlen_sharing.f90 \
+   assumed_dummy_1.f90 \
+   assumed_shape_ranks_2.f90 \
+   assumed_size_refs_3.f90 \
+   auto_array_1.f90 \
+   auto_char_dummy_array_1.f90 \
+   automatic_char_len_2.f90 \
+   automatic_default_init_1.f90 \
+   backslash_3.f \
+   backspace_1.f \
+   backspace_7.f90 \
+   bound_1.f90 \
+   bound_3.f90 \
+   bound_5.f90 \
+   bound_6.f90 \
+   bound_8.f90 \
+   bounds_check_1.f90 \
+   bounds_check_2.f \
+   bounds_check_5.f90 \
+   bounds_check_7.f90 \
+   bounds_check_8.f90 \
+   bounds_check_9.f90 \
+   bounds_check_array_ctor_1.f90 \
+   bounds_check_array_ctor_2.f90 \
+   bounds_check_array_ctor_4.f90 \
+   bounds_check_array_ctor_6.f90 \
+   bounds_check_array_ctor_7.f90 \
+   bounds_check_array_ctor_8.f90 \
+   bounds_check_fail_2.f90 \
+   bounds_check_fail_3.f90 \
+   bounds_check_fail_4.f90 \
+   bounds_check_strlen_1.f90 \
+   bounds_check_strlen_2.f90 \
+   bounds_check_strlen_3.f90 \
+   bounds_check_strlen_5.f90 \
+   bounds_check_strlen_6.f90 \
+   char_array_constructor_3.f90 \
+   char_associated_1.f90 \
+   char_bounds_check_fail_1.f90 \
+   char_comparison_1.f \
+   char_component_initializer_1.f90 \
+   char_component_initializer_2.f90 \
+   char_cons_len.f90 \
+   char_cshift_3.f90 \
+   char_decl_1.f90 \
+   char_initialiser_actual.f90 \
+   char_length_14.f90 \
+   char_length_17.f90 \
+   char_pointer_assign.f90 \
+   char_pointer_assign_5.f90 \
+   char_pointer_comp_assign.f90 \
+   char_pointer_dependency.f90 \
+   char_pointer_dummy.f90 \
+   char_pointer_func.f90 \
+   char_result_10.f90 \
+   char_result_11.f90 \
+   char_result_9.f90 \
+   char_type_len.f90 \
+   character_comparison_3.f90 \
+   cmplx_intrinsic_1.f90 \
+   comma.f \
+   comma_format_extension_4.f \
+   common_1.f90 \
+   common_2.f90 \
+   common_equivalence_1.f \
+   common_pointer_1.f90 \
+   complex_intrinsic_1.f90 \
+   complex_read.f90 \
+   complex_write.f90 \
+   constant_substring.f \
+   contained_equivalence_1.f90 \
+   continuation_10.f90 \
+   continuation_3.f90 \
+   continuation_4.f90 \
+   continuation_5.f \
+   continuation_6.f \
+   continuation_8.f90 \
+   convert_1.f90 \
+   convert_implied_open.f90 \
+   count_mask_1.f90 \
+   cshift_bounds_1.f90 \
+   cshift_bounds_2.f90 \
+   cshift_bounds_3.f90 \
+   cshift_bounds_4.f90 \
+   cshift_nan_1.f90 \
+   csqrt_2.f \
+   data_array_4.f90 \
+   data_char_2.f90 \
+   deallocate_error_1.f90 \
+   deallocate_error_2.f90 \
+   deallocate_stat.f90 \
+   debug_2.f \
+   default_format_1.f90 \
+   default_format_2.f90 \
+   default_format_denormal_1.f90 \
+   default_format_denormal_2.f90 \
+   default_initialization_2.f90 \
+   dependency_13.f90 \
+   dependency_2.f90 \
+   dependency_20.f90 \
+   dependency_21.f90 \
+   dependency_22.f90 \
+   dependency_27.f90 \
+   dependency_3.f90 \
+   dependency_32.f90 \
+   dependency_33.f90 \
+   dependency_34.f90 \
+   dependency_35.f90 \
+   dependent_decls_1.f90 \
+   der_array_1.f90 \
+   der_array_io_3.f90 \
+   der_io_3.f90 \
+   der_pointer_2.f90 \
+   der_pointer_3.f90 \
+   der_ptr_component_1.f90 \
+   derived_comp_array_ref_3.f90 \
+   derived_comp_array_ref_4.f90 \
+   derived_constructor_comps_1.f90 \
+   derived_pointer_recursion_2.f90 \
+   dev_null.F90 \
+   dev_null_postprocessed.f90 \
+   direct_io_1.f90 \
+   direct_io_10.f \
+   direct_io_11.f90 \
+   direct_io_12.f90 \
+   direct_io_2.f90 \
+   direct_io_4.f90 \
+   direct_io_5.f90 \
+   direct_io_6.f90 \
+   direct_io_8.f90 \
+   direct_io_9.f \
+   do_1.f90 \
+   do_check_1.f90 \
+   do_check_2.f90 \
+   do_check_4.f90 \
+   do_iterator_2.f90 \
+   dollar_edit_descriptor_1.f \
+   dollar_edit_descriptor_2.f \
+   dos_eol.f \
+   dummy_functions_1.f90 \
+   e_d_fmt.f90 \
+   edit_real_1.f90 \
+   elemental_dependency_3.f90 \
+   elemental_subroutine_1.f90 \
+   elemental_subroutine_3.f90 \
+   elemental_subroutine_7.f90 \
+   empty_format_1.f90 \
+   endfile.f \
+   endfile.f90 \
+   endfile_2.f90 \
+   endfile_3.f90 \
+   endfile_4.f90 \
+   entry_3.f90 \
+   entry_array_specs_2.f \
+   eof_1.f90 \
+   eof_2.f90 \
+   eof_3.f90 \
+   eor_1.f90 \
+   eor_handling_3.f90 \
+   eor_handling_4.f90 \
+   eor_handling_5.f90 \
+   eoshift.f90 \
+   eoshift_bounds_1.f90 \
+   equiv_constraint_4.f90 \
+   error_format.f90 \
+   exponent_1.f90 \
+   exponent_2.f90 \
+   extended_char_comparison_1.f \
+   f2c_3.f90 \
+   f2c_6.f90 \
+   f2c_7.f90 \
+   fgetc_1.f90 \
+   fgetc_2.f90 \
+   float_1.f90 \
+   fmt_bz_bn.f \
+   fmt_bz_bn_err.f \
+   fmt_cache_2.f \
+   fmt_colon.f90 \
+   fmt_error_4.f90 \
+   fmt_error_5.f90 \
+   fmt_error_9.f \
+   fmt_exhaust.f90 \
+   fmt_f0_1.f90 \
+   fmt_f_an_p.f \
+   fmt_float.f90 \
+   fmt_huge.f90 \
+   fmt_int_sign.f90 \
+   fmt_missing_period_3.f \
+   fmt_p_1.f90 \
+   fmt_read.f90 \
+   fmt_t_1.f90 \
+   fmt_t_2.f90 \
+   fmt_t_3.f90 \
+   fmt_t_4.f90 \
+   fmt_t_6.f \
+   fmt_tl.f \
+   fmt_with_extra.f \
+   fmt_zero_precision.f90 \
+   fold_nearest.f90 \
+   forall_13.f90 \
+   forall_3.f90 \
+   forall_7.f90 \
+   forall_char_dependencies_1.f90 \
+   ftell_1.f90 \
+   ftell_2.f90 \
+   func_derived_1.f90 \
+   func_derived_2.f90 \
+   func_result_1.f90 \
+   func_result_2.f90 \
+   function_charlen_2.f90 \
+   function_charlen_3.f \
+   g77_intrinsics_funcs.f \
+   g77_intrinsics_sub.f \
+   generic_15.f90 \
+   generic_4.f90 \
+   generic_6.f90 \
+   getenv_1.f90 \
+   global_references_2.f90 \
+   host_assoc_call_6.f90 \
+   host_assoc_function_3.f90 \
+   host_assoc_function_4.f90 \
+   iargc.f90 \
+   ichar_2.f90 \
+   implicit_10.f90 \
+   implicit_3.f90
+   implicit_6.f90
+   implied_do_1.f90
+   in_pack_rank7.f90
+   init_flag_2.f90
+   init_flag_3.f90
+   init_flag_4.f90
+   init_flag_5.f90
+   init_flag_6.f90
+   init_flag_7.f90
+   initialization_11.f90
+   initialization_18.f90
+   initialization_19.f90
+   initialization_25.f90
+   int_conv_1.f90
+   integer_exponentiation_1.f90
+   interface_14.f90
+   interface_assignment_1.f90
+   internal_pack_3.f90
+   internal_pack_4.f90
+   internal_pack_5.f90
+   internal_pack_8.f90
+   internal_readwrite_2.f90
+   internal_write_1.f90
+   intrinsic_5.f90
+   intrinsic_modulo_1.f90
+   intrinsic_pack_4.f90
+   intrinsic_product_1.f90
+   intrinsic_sign_1.f90
+   intrinsic_sign_2.f90
+   intrinsic_spread_3.f90
+   intrinsic_std_4.f90
+   intrinsic_unpack_3.f90
+   intrinsic_verify_1.f90
+   io_real_boz2.f90
+   iostat_1.f90
+   ishft_2.f90
+   ishft_4.f90
+   itime_idate_1.f
+   itime_idate_2.f
+   label_4.f90
+   large_integer_kind_1.f90
+   large_integer_kind_2.f90
+   large_real_kind_1.f90
+   large_real_kind_form_io_2.f90
+   largeequiv_1.f90
+   linked_list_1.f90
+   list_read_1.f90
+   list_read_10.f90
+   list_read_2.f90
+   list_read_3.f90
+   list_read_4.f90
+   list_read_6.f90
+   list_read_7.f90
+   list_read_8.f90
+   list_read_9.f90
+   literal_character_constant_1_x.F
+   literal_character_constant_1_y.F
+   literal_character_constant_1_z.F
+   logical_1.f90
+   logical_data_1.f90
+   logical_dot_product.f90
+   malloc_free_1.f90
+   matmul_1.f90
+   matmul_2.f90
+   matmul_3.f90
+   matmul_4.f90
+   matmul_5.f90
+   matmul_6.f90
+   matmul_7.f90
+   matmul_bounds_2.f90
+   matmul_bounds_3.f90
+   matmul_bounds_4.f90
+   matmul_bounds_5.f90
+   maxloc_1.f90
+   maxloc_bounds_1.f90
+   maxloc_bounds_2.f90
+   maxloc_bounds_3.f90
+   maxloc_bounds_4.f90
+   maxloc_bounds_5.f90
+   maxloc_bounds_6.f90
+   maxloc_bounds_7.f90
+   maxloc_bounds_8.f90
+   maxlocval_1.f90
+   maxlocval_3.f90
+   merge_char_1.f90
+   merge_char_3.f90
+   merge_char_const.f90
+   min_max_optional_1.f90
+   min_max_optional_5.f90
+   minlocval_2.f90
+   minlocval_3.f90
+   minmaxloc_2.f90
+   minmaxloc_4.f90
+   minmaxloc_5.f90
+   minmaxloc_6.f90
+   missing_optional_dummy_1.f90
+   missing_optional_dummy_6.f90
+   missing_parens_2.f90
+   module_blank_common.f90
+   module_commons_1.f90
+   module_commons_2.f90
+   module_commons_3.f90
+   module_double_reuse.f90
+   module_equivalence_1.f90
+   module_equivalence_2.f90
+   module_equivalence_5.f90
+   module_equivalence_6.f90
+   module_interface_1.f90
+   module_md5_1.f90
+   module_private_array_refs_1.f90
+   module_proc_external_dummy.f90
+   module_read_1.f90
+   multiple_allocation_1.f90
+   multiple_allocation_2.f90
+   mvbits_1.f90
+   mvbits_2.f90
+   mvbits_3.f90
+   mvbits_4.f90
+   mvbits_5.f90
+   mvbits_6.f90
+   mvbits_8.f90
+   namelist_12.f
+   namelist_13.f90
+   namelist_15.f90
+   namelist_17.f90
+   namelist_18.f90
+   namelist_19.f90
+   namelist_20.f90
+   namelist_24.f90
+   namelist_25.f90
+   namelist_31.f90
+   namelist_37.f90
+   namelist_41.f90
+   namelist_45.f90
+   namelist_46.f90
+   namelist_58.f90
+   namelist_60.f90
+   namelist_62.f90
+   nearest_1.f90
+   negative-z-descriptor.f90
+   negative_automatic_size.f90
+   nested_modules_2.f90
+   nested_modules_3.f90
+   nested_reshape.f90
+   nesting_1.f90
+   nint_1.f90
+   nint_2.f90
+   noadv_size.f90
+   nonreturning_statements.f90
+   nosigned_zero_1.f90
+   nosigned_zero_2.f90
+   nullify_3.f90
+   open-options-blanks.f
+   open_access_append_1.f90
+   open_access_append_2.f90
+   open_new.f90
+   open_readonly_1.f90
+   open_status_1.f90
+   open_status_2.f90
+   open_status_3.f90
+   output_exponents_1.f90
+   overload_1.f90
+   overwrite_1.f
+   pack_bounds_1.f90
+   pack_mask_1.f90
+   pad_no.f90
+   parameter_array_init_5.f90
+   parameter_unused.f90
+   parens_3.f90
+   parens_4.f90
+   parens_5.f90
+   parens_6.f90
+   past_eor.f90
+   pointer_1.f90
+   pointer_assign_4.f90
+   pointer_function_actual_2.f90
+   pointer_init_1.f90
+   power.f90
+   pr12884.f
+   pr15129.f90
+   pr15140.f90
+   pr15324.f90
+   pr15957.f90
+   pr15959.f90
+   pr16433.f
+   pr16597.f90
+   pr16861.f90
+   pr16935.f90
+   pr17090.f90
+   pr17143.f90
+   pr17164.f90
+   pr17285.f90
+   pr17286.f90
+   pr17472.f
+   pr17612.f90
+   pr17615.f90
+   pr17706.f90
+   pr18025.f90
+   pr18122.f90
+   pr18210.f90
+   pr18392.f90
+   pr19155.f
+   pr19216.f
+   pr19467.f90
+   pr19657.f
+   pr19926.f90
+   pr19928-2.f90
+   pr20086.f90
+   pr20124.f90
+   pr20257.f90
+   pr20480.f90
+   pr20755.f
+   pr20954.f
+   pr21730.f
+   pr22491.f
+   pr25603.f
+   pr29581.f90
+   pr29713.f90
+   pr32533.f90
+   pr32738.f90
+   pr33794.f90
+   pr35662.f90
+   pr35944-1.f90
+   pr35944-2.f90
+   pr36286.f90
+   pr41162.f
+   pr41212.f90
+   pr43505.f90
+   pr43866.f90
+   print_fmt_1.f90
+   program_name_1.f90
+   promotion.f90
+   pure_byref_1.f90
+   pure_byref_2.f90
+   pure_byref_3.f90
+   pure_formal_proc_2.f90
+   random_3.f90
+   read_2.f90
+   read_bad_advance.f90
+   read_comma.f
+   read_empty_file.f
+   read_eof_4.f90
+   read_eof_6.f
+   read_eof_7.f90
+   read_eof_8.f90
+   read_eor.f90
+   read_float_1.f90
+   read_float_3.f90
+   read_infnan_1.f90
+   read_logical.f90
+   read_many_1.f
+   read_noadvance.f90
+   read_repeat.f90
+   read_size_noadvance.f90
+   read_x_eof.f90
+   read_x_eor.f90
+   readwrite_unf_direct_eor_1.f90
+   real_const_1.f
+   real_const_2.f90
+   record_marker_2.f
+   recursive_check_10.f90
+   recursive_check_11.f90
+   recursive_check_12.f90
+   recursive_check_13.f90
+   recursive_check_14.f90
+   recursive_check_7.f90
+   recursive_check_8.f90
+   recursive_check_9.f90
+   recursive_stack.f90
+   reduction.f90
+   repeat_1.f90
+   repeat_3.f90
+   repeat_5.f90
+   reshape-alloc.f90
+   reshape-complex.f90
+   reshape.f90
+   reshape_3.f90
+   reshape_4.f90
+   reshape_order_1.f90
+   reshape_order_2.f90
+   reshape_order_3.f90
+   reshape_order_4.f90
+   reshape_pad_1.f90
+   reshape_rank7.f90
+   reshape_transpose_1.f90
+   reshape_zerosize_1.f90
+   result_default_init_1.f90
+   result_in_spec_2.f90
+   ret_array_1.f90
+   ret_pointer_1.f90
+   ret_pointer_2.f90
+   rose_dev_null.F90
+   rrspacing_1.f90
+   runtime_warning_1.f90
+   save_1.f90
+   save_2.f90
+   scalar_mask_1.f90
+   scalar_mask_2.f90
+   scale_1.f90
+   scan_1.f90
+   secnds-1.f
+   secnds.f
+   select_1.f90
+   select_2.f90
+   select_3.f90
+   select_5.f90
+   select_char_1.f90
+   selected_kind_1.f90
+   shape_2.f90
+   shape_3.f90
+   shape_4.f90
+   shift-alloc.f90
+   shift-kind.f90
+   shift-kind_2.f90
+   simplify_modulo.f90
+   single_char_string.f90
+   size_optional_dim_1.f90
+   slash_1.f90
+   sms-1.f90
+   spec_expr_4.f90
+   spec_expr_5.f90
+   specification_type_resolution_1.f90
+   spread_bounds_1.f90
+   spread_scalar_source.f90
+   spread_shape_1.f90
+   spread_size_limit.f90
+   spread_zerosize_1.f90
+   stfunc_1.f90
+   streamio_4.f90
+   streamio_5.f90
+   streamio_9.f90
+   string_null_compare_1.f
+   string_pad_trunc.f90
+   substr_2.f
+   substr_3.f
+   sum_zero_array_1.f90
+   t_editing.f
+   temporary_1.f90
+   test_com_block.f90
+   tiny_1.f90
+   tiny_2.f90
+   tl_editing.f90
+   transfer_simplify_5.f90
+   transpose_1.f90
+   transpose_2.f90
+   transpose_conjg_1.f90
+   transpose_reshape_r10.f90
+   trim_optimize_1.f90
+   trim_optimize_2.f90
+   unf_read_corrupted_2.f90
+   unformatted_recl_1.f90
+   unit_1.f90
+   unpack_bounds_1.f90
+   unpack_bounds_2.f90
+   unpack_bounds_3.f90
+   unpack_mask_1.f90
+   unpack_zerosize_1.f90
+   use_11.f90
+   use_13.f90
+   use_allocated_1.f90
+   use_only_1.f90
+   use_rename_2.f90
+   use_rename_3.f90
+   used_dummy_types_1.f90
+   used_types_11.f90
+   used_types_12.f90
+   used_types_19.f90
+   used_types_5.f90
+   userdef_operator_1.f90
+   vector_subscript_2.f90
+   vector_subscript_3.f90
+   vector_subscript_4.f90
+   warn_conversion_2.f90
+   warn_std_1.f90
+   warn_std_2.f90
+   warn_std_3.f90
+   warn_unused_var.f90
+   where_nested_1.f90
+   whole_file_12.f90
+   whole_file_13.f90
+   whole_file_19.f90
+   whole_file_21.f90
+   whole_file_22.f90
+   whole_file_25.f90
+   whole_file_26.f90
+   whole_file_5.f90
+   whole_file_6.f90
+   write_0_pe_format.f90
+   write_back.f
+   write_check3.f90
+   write_direct_eor.f90
+   write_fmt_trim.f90
+   write_padding.f90
+   write_recursive.f90
+   write_rewind_1.f
+   write_rewind_2.f
+   write_to_null.F90
+   wtruncate.f
+   wtruncate.f90
+   x_slash_1.f
+   x_slash_2.f
+   zero_array_components_1.f90
+   zero_length_1.f90
+   zero_sized_1.f90
+   zero_sized_3.f90
+   zero_sized_4.f90
+   zero_sized_5.f90
+
+
+F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
+     test2010_30.f
+
+F03_TESTCODES_REQUIRED_TO_PASS = \
+     test2007_176.f03
+
+# DQ (4/3/2010): Added test code used in Fortran OpenMP tests.
+OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS = \
+     testNewOFP.f
+
+
+F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS += $(OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS)
+
+
+if !ROSE_USING_GFORTRAN_VERSION_4_1
+   F03_TESTCODES_REQUIRED_TO_PASS += test2007_43.f03
+endif
+
+# #######################
+#      FAILING TESTS
+# #######################
+
+F90_TESTCODES_CURRENTLY_FAILING = \
+     triangle.f90
+
+F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
+     test2010_57.f 
+
+F03_TESTCODES_CURRENTLY_FAILING = \
+     test2010_27.f03
+
+
+noinst_headers =
+
+# Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
+F90_TESTCODES = \
+$(F90_TESTCODES_REQUIRED_TO_PASS)
+
+F77_TESTCODES = \
+$(F77_TESTCODES_REQUIRED_TO_PASS)
+
+F77_FIXED_FORMAT_TESTCODES = \
+$(F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS)
+
+F03_TESTCODES = \
+$(F03_TESTCODES_REQUIRED_TO_PASS)
+
+# QMTest allows both passing and failing tests.
+ALL_F90_TESTCODES = \
+$(F90_TESTCODES_REQUIRED_TO_PASS) \
+$(F90_TESTCODES_CURRENTLY_FAILING)
+
+ALL_F77_TESTCODES = \
+$(F77_TESTCODES_REQUIRED_TO_PASS) \
+$(F77_TESTCODES_CURRENTLY_FAILING)
+
+ALL_F77_FIXED_FORMAT_TESTCODES = \
+$(F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS) \
+$(F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING)
+
+ALL_F03_TESTCODES = \
+$(F03_TESTCODES_REQUIRED_TO_PASS) \
+$(F03_TESTCODES_CURRENTLY_FAILING)
+
+# File option to accumulate performance information about the compilation
+PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FORTRAN_ROSE_PERFORMANCE_DATA.csv
+
+# ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
+# ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
+# ROSE_FLAGS = -rose:verbose 0
+ROSE_FLAGS = -rose:verbose 0 -rose:output_parser_actions
+
+# VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
+# VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
+# VALGRIND = valgrind $(VALGRIND_OPTIONS)
+VALGRIND =
+
+PASSING_TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
+PASSING_TEST_F77_Objects = ${F77_TESTCODES:.f77=.o}
+
+# DQ (3/11/2010): F77 tests were not being run, this fixes this.
+# PASSING_TEST_F77_FIXED_FORMAT_Objects = ${F77_TESTCODES:.f=.o}
+PASSING_TEST_F77_FIXED_FORMAT_Objects = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.o}
+
+PASSING_TEST_F03_Objects = ${F03_TESTCODES:.f03=.o}
+TEST_F90_Objects = ${ALL_F90_TESTCODES:.f90=.o}
+TEST_F77_Objects = ${ALL_F77_TESTCODES:.f77=.o}
+TEST_F77_FIXED_FORMAT_Objects = ${ALL_F77_FIXED_FORMAT_TESTCODES:.f=.o}
+TEST_F03_Objects = ${ALL_F03_TESTCODES:.f03=.o}
+
+PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
+
+if ROSE_USE_OPEN_FORTRAN_PARSER
+
+# Go back and build the translator we are using to test Fortran (in case make check 
+# is run directly in this directory before make has been run from the root of the 
+# ROSE directory structure).  This does not appear to work!
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
+
+testTranslator: ../../testTranslator
+
+$(TEST_F90_Objects): ../../testTranslator ${ALL_TESTCODES}
+# $(TEST_F90_Objects): ../../testTranslator
+# How to call a ROSE translator with a Fortran source file.
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+#	$(VALGRIND) ../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+
+$(TEST_F77_Objects): ../../testTranslator ${ALL_TESTCODES}
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+
+$(TEST_F77_FIXED_FORMAT_Objects): ../../testTranslator ${ALL_TESTCODES}
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+
+# Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
+#       So we use -rose:skip_syntax_check to avoid the frontend syntax checking and -rose:skipfinalCompileStep
+#       to avoid processing the generated code (which would have the same problem).  It is easier to just use
+#       the version 4.1 gfortran which has better Fortran 2003 syntax checking support. This problem is confirmed 
+#       on versions of gfortran 4.2 and 4.3.
+$(TEST_F03_Objects): ../../testTranslator
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
+#	Since gfortran does not support F03, and thus we skip the compileation using the backend gfortran compiler, we have to force the generation of an object file. 
+#	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
+	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
+	@touch $@
+
+
+
+
+tests:
+	@$(MAKE) $(PASSING_TEST_Objects)
+	@echo "***************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make tests rule complete (terminated normally) ******"
+	@echo "***************************************************************************************************"
+
+check-local:
+	@echo "Tests for Fortran."
+#  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
+#	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
+if !ROSE_USING_GFORTRAN_VERSION_4_0
+	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
+#	DQ (4/6/2010): This fails on Hudson, but I don't know why.
+#	@$(MAKE) testParser
+else
+	@echo "Skipping Fortran code tests when using the gfortran version 4.0.x compiler (fails to support common command line options of later versions)."
+endif
+	@echo "***************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make check rule complete (terminated normally) ******"
+	@echo "***************************************************************************************************"
+
+else
+
+# Fortran support not available in ROSE unless specified on the configure command line.
+check-local:
+	@echo "***********************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Fortran_tests: FORTRAN NOT CONFIGURED IN ROSE ******"
+	@echo "***********************************************************************************"
+endif
+
+# This will output the example testcodes that are failing
+listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_FAILING) $(F03_TESTCODES_CURRENTLY_FAILING) $(F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING)
+	egrep -n "*"  $(srcdir)/$(?)
+
+# Make sure that all the test codes end up in the distribution
+# EXTRA_DIST = $(ALL_TESTCODES)
+EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES) \
+   module_A_file.f90 module_B_file.f90 test2010_31_header.f90 test2010_50.h test2010_54.h test2010_55.h
+
+clean-local:
+	rm -f *.o rose_*.f* *.rmod
+	rm -f *.s *.mod rose_*.f rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
+

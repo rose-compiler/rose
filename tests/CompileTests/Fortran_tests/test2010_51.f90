@@ -4,8 +4,12 @@
 !    void c_action_common_block_object(Token_t*, ofp_bool): Assertion `variableSymbol != __null' failed.
 ! Aborted
 
+! The problem here is that "naa" is declared after the common block declaration.
+! Thus the variable can't be found (variableSymbol is NULL).
+
 program cg
      implicit none
-     common / partit_size  /    naa
+   ! common / partit_size  /    naa
+     common /partit_size/    naa
      integer                    naa
 end

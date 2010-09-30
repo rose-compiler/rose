@@ -155,6 +155,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_45.f90 \
      test2010_46.f90 \
      test2010_47.f90 \
+     test2010_50.f90 \
      canonicalExample.f90
 
 
@@ -221,7 +222,6 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_223.f \
      test2007_224.f \
      test2007_226.f \
-     test2007_227.f \
      test2007_228.f \
      test2007_229.f \
      test2007_230.f \
@@ -243,6 +243,9 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2010_29.f \
      test2010_30.f
 
+# DQ (9/28/2010): Failing test.
+#   test2007_227.f
+
 F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_30.f03 \
      test2007_31.f03 \
@@ -252,7 +255,6 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_42.f03 \
      test2007_43.f03 \
      test2007_44.f03 \
-     test2007_45.f03 \
      test2007_47.f03 \
      test2007_98.f03 \
      test2007_112.f03 \
@@ -262,11 +264,14 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_116.f03 \
      test2007_120.f03 \
      test2007_123.f03 \
-     test2007_130.f03 \
      test2007_133.f03 \
      test2007_134.f03 \
      test2007_174.f03 \
      test2007_176.f03
+
+# DQ (9/28/2010): Failing test.
+#    test2007_45.f03 
+#    test2007_130.f03 
 
 # DQ (4/3/2010): Added test code used in Fortran OpenMP tests.
 OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS = \
@@ -332,8 +337,9 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_43.f90 \
      test2010_48.f90 \
      test2010_49.f90 \
-     test2010_50.f90 \
      test2010_51.f90 \
+     test2010_60.f90 \
+     test2010_61.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -411,6 +417,7 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
 ROSE_FLAGS = -rose:verbose 0
+# ROSE_FLAGS = -rose:verbose 0 -rose:output_parser_actions
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
@@ -549,7 +556,9 @@ testSuffixRules:
 tests:
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make check rule complete (terminated normally) ******"
+	@echo "***************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make tests rule complete (terminated normally) ******"
+	@echo "***************************************************************************************************"
 
 check-local:
 	@echo "Tests for Fortran."

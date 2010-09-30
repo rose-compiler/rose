@@ -13,7 +13,11 @@
 
 program BT
      implicit none
+
      include 'test2010_50.h'
+!    integer problem_size
+!    parameter (problem_size=12)
+
      integer           BLOCK_SIZE
      parameter        (BLOCK_SIZE=5)
 end
