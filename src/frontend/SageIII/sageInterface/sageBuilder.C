@@ -1971,7 +1971,7 @@ SageBuilder::buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scope
   ROSE_ASSERT(initname);
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
-  ROSE_ASSERT(scope != NULL); 
+ // ROSE_ASSERT(scope != NULL); 
 
   SgVarRefExp *varRef = NULL;
   // there is assertion for get_scope() != NULL in get_symbol_from_symbol_table()
