@@ -76,8 +76,6 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 	SgBasicBlock* fwd_stmt = buildBasicBlock();
     SgBasicBlock* rvs_stmt = buildBasicBlock();
 
-	appendStatement(copyStatement(stmt), fwd_stmt);
-
 	foreach (SgExpression* var, modified_vars)
 	{
 		SgExpression* fwd_exp = pushVal(copyExpression(var));
@@ -87,6 +85,8 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 		appendStatement(buildExprStatement(fwd_exp), fwd_stmt);
 		appendStatement(buildExprStatement(rvs_exp), rvs_stmt);
 	}
+	
+	appendStatement(copyStatement(stmt), fwd_stmt);
 
 	return StatementReversal(fwd_stmt, rvs_stmt);
 }
