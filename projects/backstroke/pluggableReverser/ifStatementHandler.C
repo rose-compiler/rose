@@ -42,10 +42,10 @@ StatementReversal IfStatementHandler::generateReverseAST(SgStatement* stmt, cons
     {
         // In this situation, we don't have to store branch flag.
         appendStatement(buildExprStatement(
-                pushVal(buildBoolValExp(true), buildBoolType())),
+                pushVal(buildBoolValExp(true))),
                 fwd_true_block_body);
         appendStatement(buildExprStatement(
-                pushVal(buildBoolValExp(false), buildBoolType())),
+                pushVal(buildBoolValExp(false))),
                 fwd_false_block_body);
         cond_stmt = buildExprStatement(popVal(buildBoolType()));
     }

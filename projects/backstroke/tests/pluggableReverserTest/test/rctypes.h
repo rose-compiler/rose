@@ -6,6 +6,8 @@
 #include <queue>
 #include <boost/any.hpp>
 
+using boost::any;
+
 template <class T>
 T push(std::stack<T>& data_stack, T val)
 {

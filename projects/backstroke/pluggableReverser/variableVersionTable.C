@@ -281,6 +281,8 @@ void VariableVersionTable::reverseVersionAtStatementStart(const std::vector<SgEx
 	{
 		VarName name = getVarName(var);
 
+		cout << VariableRenaming::keyToString(name) << endl;
+
 		ROSE_ASSERT(name != VariableRenaming::emptyName);
 		ROSE_ASSERT(var_versions.count(name) > 0);
 		ROSE_ASSERT(table_.count(name) > 0);

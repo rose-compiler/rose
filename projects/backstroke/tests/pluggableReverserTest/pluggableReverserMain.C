@@ -64,7 +64,7 @@ int main(int argc, char * argv[])
 	//event_handler.addExpressionHandler(new NullExpressionHandler);
 	event_handler.addExpressionHandler(new IdentityExpressionHandler);
 	event_handler.addExpressionHandler(new StoreAndRestoreExpressionHandler);
-	event_handler.addExpressionHandler(new AkgulStyleExpressionHandler);
+	//event_handler.addExpressionHandler(new AkgulStyleExpressionHandler);
 
 	// Add all statement handlers to the statement pool.
 	event_handler.addStatementHandler(new CombinatorialExprStatementHandler);

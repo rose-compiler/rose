@@ -49,9 +49,7 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 
 		if (var)
 		{
-			SgVarRefExp* var_ref = getMostLeftVariable(var);
-
-			if (var_ref)
+			if (SgVarRefExp* var_ref = getMostLeftVariable(var))
 			{
 				// Get the declaration of this variable to see if it's declared inside of the given statement.
 				// In this case, we don't have to store this variable.
@@ -72,12 +70,33 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 
 StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
 {
-	return StatementReversal(NULL, NULL);
+	EvaluationResultAttributePtr attr = eval_result.getAttribute();
+	vector<SgExpression*> modified_vars = attr->getAttribute<vector<SgExpression*> >();
+
+	SgBasicBlock* fwd_stmt = buildBasicBlock();
+    SgBasicBlock* rvs_stmt = buildBasicBlock();
+
+	appendStatement(copyStatement(stmt), fwd_stmt);
+
+	foreach (SgExpression* var, modified_vars)
+	{
+		SgExpression* fwd_exp = pushVal(copyExpression(var));
+		SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
+			copyExpression(var), popVal(var->get_type()));
+		
+		appendStatement(buildExprStatement(fwd_exp), fwd_stmt);
+		appendStatement(buildExprStatement(rvs_exp), rvs_stmt);
+	}
+
+	return StatementReversal(fwd_stmt, rvs_stmt);
 }
 
 std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	vector<EvaluationResult> results;
+	if (isSgWhileStmt(stmt) == NULL)
+		return results;
+
 	// In case of infinite calling to this function.
 	if (evaluating_stmts_.count(stmt) > 0)
 		return results;
@@ -91,6 +110,10 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	vector<SgExpression*> modified_vars = getAllModifiedVariables(stmt);
 
 	cout << "Got all modified vars.\n";
+
+	cout << "\n\n";
+	var_table.print();
+	cout << "\n\n";
 
 	VariableVersionTable new_table = var_table;
 	new_table.reverseVersionAtStatementStart(modified_vars, stmt);
@@ -107,7 +130,14 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 		results.push_back(result);
 	}
 #endif
-	results.push_back(EvaluationResult(this, stmt, new_table));
+	EvaluationResult result(this, stmt, new_table);
+	
+	// Add the attribute to the result.
+	EvaluationResultAttributePtr attr(new EvaluationResultAttribute);
+	attr->setAttribute(modified_vars);
+	result.setAttribute(attr);
+
+	results.push_back(result);
 
 	return results;
 }

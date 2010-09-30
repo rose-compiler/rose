@@ -61,7 +61,7 @@ SgStatement* WhileStatementHandler::assembleLoopCounter(SgStatement* loop_stmt)
 		}
 	}
 
-	SgStatement* store_counter = buildExprStatement(pushVal(copyExpression(counter_var), counter_var->get_type()));
+	SgStatement* store_counter = buildExprStatement(pushVal(copyExpression(counter_var)));
 
 	return buildBasicBlock(counter_decl, loop_stmt, store_counter);
 }
