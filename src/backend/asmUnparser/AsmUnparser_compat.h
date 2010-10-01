@@ -42,7 +42,7 @@ enum ArmSignForExpressionUnparsing {
 
 std::string unparseArmMnemonic(SgAsmArmInstruction*);
 std::string unparseArmExpression(SgAsmExpression*);
-std::string unparseX86Register(X86RegisterClass, int reg, X86PositionInRegister);
+std::string unparseX86Register(const RegisterDescriptor&);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
  * PowerPC

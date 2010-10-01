@@ -305,29 +305,9 @@ SageInterface::equivalenceTest(SgNode* x, SgNode* y)
 
           case V_SgAsmx86RegisterReferenceExpression:
              {
-            // Look at the register kind and the register number only.
-               SgAsmx86RegisterReferenceExpression* x_exp = isSgAsmx86RegisterReferenceExpression(x);
-               SgAsmx86RegisterReferenceExpression* y_exp = isSgAsmx86RegisterReferenceExpression(y);
-
-               bool isSameRegisterClass      = (x_exp->get_register_class() == y_exp->get_register_class());
-
-            // Offset the register numbers in the template by one since they use the new form of enum not yet put into the disassembler.
-               bool isSameRegister           = (x_exp->get_register_number() == y_exp->get_register_number());
-
-            // bool isSamePositionInRegister = (x_exp->get_position_in_register() == y_exp->get_position_in_register());
-
-               if (isSameRegisterClass == true && isSameRegister == true )
-                  {
-                    result = true;
-                  }
-#if 0
-            // Debugging
-               printf ("Comparing x_exp = %s to y_exp = %s (%s) \n",unparseX86Expression(x_exp,false).c_str(),unparseX86Expression(y_exp,false).c_str(),result ? "passed" : "failed");
-               if (result == false)
-                  {
-                    printf ("   isSameRegisterClass = %s isSameRegister = %s isSamePositionInRegister = %s \n",isSameRegisterClass ? "true" : "false",isSameRegister ? "true" : "false",isSamePositionInRegister ? "true" : "false");
-                  }
-#endif
+               SgAsmRegisterReferenceExpression* x_exp = isSgAsmRegisterReferenceExpression(x);
+               SgAsmRegisterReferenceExpression* y_exp = isSgAsmRegisterReferenceExpression(y);
+               result = x_exp->get_descriptor().equal(y_exp->get_descriptor());
                break;
              }
 
