@@ -15,7 +15,7 @@ using namespace std;
 
 
 void
-RoseBin_Emulate::getRegister_val(RegisterDescriptor code,
+RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
                                  X86PositionInRegister pos,
                                  uint64_t &val) {
   uint8_t b_val=0xF;
@@ -38,7 +38,7 @@ RoseBin_Emulate::getRegister_val(RegisterDescriptor code,
 }
 
 void
-RoseBin_Emulate::getRegister_val(RegisterDescriptor code,
+RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
                                  X86PositionInRegister pos,
                                  uint8_t &b_val,
                                  uint16_t &w_val,
@@ -199,7 +199,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
   else if (binInst->get_kind() == x86_int) {
     operands += " :: specialOp Int";
     //clearRegisters();
-    getRegister_val(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 32), x86_regpos_qword, rax);
+    getRegister_val(std::make_pair(x86_regclass_gpr, x86_gpr_ax), x86_regpos_qword, rax);
     // should get the values from memory!
     string values = "";
     rose_hash::unordered_map <uint64_t, uint64_t>::iterator it = memory.begin();
@@ -238,7 +238,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
 
   int counter=0;
   SgAsmx86RegisterReferenceExpression* refExpr =NULL;
-  RegisterDescriptor code ;
+  std::pair<X86RegisterClass, int>  code ;
   X86PositionInRegister pos ;
 
   // iterate through the operands (for x86 = 2 operands)
@@ -256,7 +256,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
       // check what it could be
       // ******** 1. its a RegisterReferenceExpression on the left side
       if (refExpr) {
-	code = refExpr->get_descriptor();
+	code = refExpr->get_identifier();
 	pos = refExpr->get_position_in_register();
 	operands = "\\nleft :: refExpr ";
 	//SgAsmExpression* expression = refExpr->get_offset();
@@ -367,9 +367,9 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
       else if (refExprR) {
         // ****** 2. referenceExpression
 	// the right hand side is also a register or memory location
-	RegisterDescriptor codeR ;
+	std::pair<X86RegisterClass, int>  codeR ;
 	X86PositionInRegister posR ;
-	codeR = refExprR->get_descriptor();
+	codeR = refExprR->get_identifier();
 	posR = refExprR->get_position_in_register();
 
 	operands += "right ::  refExpr ";
@@ -431,10 +431,10 @@ RoseBin_Emulate::printRegister(std::string text, uint64_t reg) {
 
 
 uint64_t
-RoseBin_Emulate::getRegister(RegisterDescriptor code) {
+RoseBin_Emulate::getRegister(std::pair<X86RegisterClass, int>  code) {
   uint64_t reg=0;
-  ROSE_ASSERT (code.get_major() == x86_regclass_gpr);
-  switch (code.get_minor()) {
+  ROSE_ASSERT (code.first == x86_regclass_gpr);
+ switch (code.second) {
   case x86_gpr_ax: {
     reg = rax;
     break;
@@ -493,15 +493,15 @@ RoseBin_Emulate::getMemory(uint64_t position) {
  * resolve expression
  ****************************************************/
 void
-RoseBin_Emulate::assignRegister(RegisterDescriptor code,
+RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
                                 X86PositionInRegister pos,
                                 uint8_t &b_val,
                                 uint16_t &w_val,
                                 uint32_t &dw_val,
                                 uint64_t &qw_val) {
-  switch (code.get_major()) {
+  switch (code.first) {
     case x86_regclass_gpr: {
-      switch (code.get_minor()) {
+      switch (code.second) {
         case x86_gpr_ax: {
           if (pos==x86_regpos_low_byte) {
             rax &=~0xFFULL;
@@ -674,10 +674,10 @@ RoseBin_Emulate::assignRegister(RegisterDescriptor code,
 
 
 void
-RoseBin_Emulate::assignRegister(RegisterDescriptor code,
+RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
                                 uint64_t &qw_val) {
-  if (code.get_major() != x86_regclass_gpr) return;
-  switch (code.get_minor()) {
+  if (code.first != x86_regclass_gpr) return;
+  switch (code.second) {
     case x86_gpr_ax: {
       rax = qw_val;
       break;
@@ -720,13 +720,13 @@ void RoseBin_Emulate::clearRegisters() {
   uint16_t cv2 = 0xFF;
   uint32_t cv3 = 0xFFFF;
   uint64_t cv4 = 0xFFFFFFFF;
-  assignRegister(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 32) ,
+  assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_ax) ,
                  x86_regpos_qword, cv1, cv2, cv3, cv4);
-  assignRegister(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bx, 0, 32) ,
+  assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_bx) ,
                  x86_regpos_qword, cv1, cv2, cv3, cv4);
-  assignRegister(RegisterDescriptor(x86_regclass_gpr, x86_gpr_cx, 0, 32) ,
+  assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_cx) ,
                  x86_regpos_qword, cv1, cv2, cv3, cv4);
-  assignRegister(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32) ,
+  assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_dx) ,
                  x86_regpos_qword, cv1, cv2, cv3, cv4);
 }
 
