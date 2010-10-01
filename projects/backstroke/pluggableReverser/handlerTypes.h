@@ -32,34 +32,6 @@ struct StatementReversal
 	SgStatement* rvs_stmt;
 };
 
-#if 0
-class EvaluationResultAttribute
-{
-	//! We don't have to declare a new attribute class everytime, but consider to use the following variable which
-	//! can be assigned by another variable of any type.
-	boost::any attribute_;
-
-public:
-	
-	template<class T>
-	void setAttribute(const T& attr)
-	{ attribute_ = attr; }
-
-	template<class T>
-	const T& getAttribute() const
-	{ return boost::any_cast<T>(attribute_); }
-
-	template<class T>
-	T getAttribute()
-	{ return boost::any_cast<T>(attribute_); }
-
-	virtual ~EvaluationResultAttribute() { }
-};
-
-typedef boost::shared_ptr<EvaluationResultAttribute> EvaluationResultAttributePtr;
-
-#endif
-
 class EvaluationResult
 {
 	//TODO: This table is not necessary once the result is added to the parent results
@@ -76,7 +48,6 @@ class EvaluationResult
 
 	/** Additional attribute that the handler may choose to attach to the evaluation result. */
 	boost::any attribute_;
-	//EvaluationResultAttributePtr attribute_;
 
 	/** Evaluation choices made in order to get this result. For example, for a basic block, what
 	* were the evaluations of all the statements? */
@@ -115,10 +86,6 @@ public:
 	const SimpleCostModel& getCost() const;
 
 	void setCost(const SimpleCostModel& cost);
-
-	//EvaluationResultAttributePtr getAttribute() const;
-
-	//void setAttribute(EvaluationResultAttributePtr attr);
 
 	template <class T>
 	void setAttribute(const T& attr)

@@ -93,7 +93,6 @@ bool StateSavingStatementHandler::checkStatement(SgStatement* stmt) const
 
 StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
 {
-	//EvaluationResultAttributePtr attr = eval_result.getAttribute();
 	vector<SgExpression*> modified_vars = eval_result.getAttribute<vector<SgExpression*> >();
 
 	SgBasicBlock* fwd_stmt = buildBasicBlock();
@@ -163,10 +162,7 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	EvaluationResult result(this, stmt, new_table);
 	
 	// Add the attribute to the result.
-	//EvaluationResultAttributePtr attr(new EvaluationResultAttribute);
-	//attr->setAttribute(modified_vars);
 	result.setAttribute(modified_vars);
-
 	results.push_back(result);
 
 	return results;

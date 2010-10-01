@@ -655,7 +655,7 @@ bool backstroke_util::hasContinueOrBreak(SgStatement* loop_stmt)
 	foreach (SgBreakStmt* break_stmt, breaks)
 	{
 		SgNode* node = break_stmt;
-		while ((node = node->get_parent())
+		while ((node = node->get_parent()))
 		{
 			if (isSgForStatement(node) ||
 				isSgWhileStmt(node) ||

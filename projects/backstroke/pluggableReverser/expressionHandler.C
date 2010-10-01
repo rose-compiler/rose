@@ -38,19 +38,10 @@ vector<EvaluationResult> NullExpressionHandler::evaluate(SgExpression* exp, cons
 /******************************************************************************
  **** Definition of member functions of IdentityExpressionHandler  ***********/
 
-#if 0
-struct IdentityExpressionAttribute : public EvaluationResultAttribute
-{
-	bool reverseIsNull;
-};
-#endif
-
 ExpressionReversal IdentityExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
 	ROSE_ASSERT(evaluationResult.getExpressionHandler() == this && evaluationResult.getChildResults().size() == 0);
-	//IdentityExpressionAttribute* attribute = dynamic_cast<IdentityExpressionAttribute*>(evaluationResult.getAttribute().get());
 	bool reverseIsNull = evaluationResult.getAttribute<bool>();
-	//ROSE_ASSERT(attribute != NULL);
 
 	SgExpression* forwardExpression = SageInterface::copyExpression(exp);
 	SgExpression* reverseExpression;
@@ -84,21 +75,9 @@ vector<EvaluationResult> IdentityExpressionHandler::evaluate(SgExpression* exp, 
 /******************************************************************************
  **** Definition of member functions of StoreAndRestoreExpressionHandler ****/
 
-#if 0
-struct StoreAndRestoreAttribute : public EvaluationResultAttribute
-{
-	StoreAndRestoreAttribute(SgExpression* varExp) : var_to_save(varExp) {}
-
-	SgExpression* var_to_save;
-};
-#endif
-
 ExpressionReversal StoreAndRestoreExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
-	//StoreAndRestoreAttribute* attribute = dynamic_cast<StoreAndRestoreAttribute*>(evaluationResult.getAttribute().get());
 	SgExpression* var_to_save = evaluationResult.getAttribute<SgExpression*>();
-	//ROSE_ASSERT(attribute != NULL);
-	//SgExpression* var_to_save = attribute->var_to_save;
 	ROSE_ASSERT(var_to_save);
 
 	SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(

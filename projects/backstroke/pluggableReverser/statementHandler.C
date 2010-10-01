@@ -73,7 +73,7 @@ StatementReversal CombinatorialBasicBlockHandler::generateReverseAST(SgStatement
 					SgStatement* decl = buildVariableDeclaration(
 							init_name->get_name(),
 							init_name->get_type(),
-							buildAssignInitializer(copyExpression(val)),
+							buildAssignInitializer(val),
 							rvs_body);
 
 					appendStatement(decl, rvs_body);
@@ -97,14 +97,6 @@ StatementReversal CombinatorialBasicBlockHandler::generateReverseAST(SgStatement
 					appendStatement(store_var, fwd_body);
 					appendStatement(decl_restore_var, rvs_body);
 				}
-				
-#if 0
-				else
-				{
-					SgStatement* just_decl = buildVariableDeclaration(init_name->get_name(), init_name->get_type(), NULL, rvs_body);
-					appendStatement(just_decl, rvs_body);
-				}
-#endif
 			}
 		}
 	}
@@ -161,19 +153,13 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 			{
 				foreach (EvaluationResult& res, queue[i])
 				{
-					//LocalVarRestoreAttribute attr =
-					//		*dynamic_cast<LocalVarRestoreAttribute*> (res.getAttribute().get());
-
 					LocalVarRestoreAttribute attr = res.getAttribute<LocalVarRestoreAttribute>();
 
 					//First, check if we can restore the variable without savings its value.
 					VariableRenaming::VarName var_name;
 					var_name.push_back(init_name);
-					//cout << "!!!" << VariableRenaming::keyToString(var_name) << ":" << getLastVersion(init_name).begin()->first << endl;
-					//res.getVarTable().print();
 					SgExpression* restored_value = restoreVariable(var_name, res.getVarTable(), getLastVersion(init_name));
-
-					
+		
 					if (restored_value != NULL)
 					{
 						// Then we can restore the value from without state saving.
@@ -184,8 +170,6 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 						// Remember to update the version of this variable.
 						new_res.getVarTable().setLastVersion(init_name);
 						queue[1 - i].push_back(new_res);
-
-						//new_res.getVarTable().print();
 					} 
 					else
 					{

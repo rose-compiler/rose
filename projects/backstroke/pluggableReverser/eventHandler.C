@@ -334,6 +334,7 @@ FuncDeclPairs EventHandler::processEvent()
 
 SgExpression* EventHandler::restoreExpressionValue(SgExpression* expression, const VariableVersionTable& availableVariables)
 {
+	ROSE_ASSERT(expression != NULL);
 	//Right now, if the expression has side effects we just assume we can't reevaluate it
 	if (backstroke_util::containsModifyingExpression(expression))
 	{

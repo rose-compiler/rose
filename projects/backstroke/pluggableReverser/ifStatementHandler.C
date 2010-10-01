@@ -2,22 +2,16 @@
 #include "pluggableReverser/variableVersionTable.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
+#include "utilities/CPPDefinesAndNamespaces.h"
 
-using namespace std;
-using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
-
-#define foreach BOOST_FOREACH
-
-
 
 StatementReversal IfStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evalResult)
 {
 	ROSE_ASSERT(evalResult.getChildResults().size() == 3);
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
     ROSE_ASSERT(if_stmt);
-
 
 	// Get three child handlers.
     StatementReversal proc_cond = evalResult.getChildResults()[2].generateReverseStatement();
@@ -35,7 +29,7 @@ StatementReversal IfStatementHandler::generateReverseAST(SgStatement* stmt, cons
     SgExpression* condition = evalResult.getAttribute<SgExpression*>();
     SgStatement* cond_stmt = NULL;
     if (condition)
-        cond_stmt = buildExprStatement(copyExpression(condition));
+        cond_stmt = buildExprStatement(condition);
     else
     {
         // In this situation, we don't have to store branch flag.
@@ -100,12 +94,6 @@ vector<EvaluationResult> IfStatementHandler::evaluate(SgStatement* stmt, const V
             // Set the cost of false body.
             cost.setBranchCost(if_stmt, res2.getCost(), false);
 
-            //EvaluationResult new_res = res1;
-
-            // FIXME Note here we cannot use update function. We may create a new function
-            // to combine variable tables from true and false bodies.
-            //new_res.update(res2);
-
             // Here we merge two variable version table from true and false bodies.
             // For each variable, if it has the different versions from those two tables, we
             // clear its version (it has no version now).
@@ -146,11 +134,7 @@ vector<EvaluationResult> IfStatementHandler::evaluate(SgStatement* stmt, const V
 				SgExpression* attr = NULL;
 				
                 SgExpression* cond = isSgExprStatement(if_stmt->get_conditional())->get_expression();
-                if (cond && var_table.checkVersionForUse(cond))
-				{
-                    attr = cond;
-				}
-				else if (SgExpression* restored_exp = restoreExpressionValue(cond, var_table))
+				if (SgExpression* restored_exp = restoreExpressionValue(cond, var_table))
 				{
 					// If we can restore the value of condition, we can use it without storing the flag.
 					attr = restored_exp;

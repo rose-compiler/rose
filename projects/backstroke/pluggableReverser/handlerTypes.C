@@ -1,10 +1,7 @@
 #include "handlerTypes.h"
 #include "eventHandler.h"
 #include <boost/foreach.hpp>
-
-#define reverse_foreach BOOST_REVERSE_FOREACH
-using namespace std;
-
+#include "utilities/CPPDefinesAndNamespaces.h"
 
 const std::vector<EvaluationResult>& EvaluationResult::getChildResults() const
 {
@@ -36,18 +33,6 @@ void EvaluationResult::setCost(const SimpleCostModel& cost)
 {
 	cost_ = cost;
 }
-
-#if 0
-EvaluationResultAttributePtr EvaluationResult::getAttribute() const
-{
-	return attribute_;
-}
-
-void EvaluationResult::setAttribute(EvaluationResultAttributePtr attr)
-{
-	attribute_ = attr;
-}
-#endif
 
 SgExpression* EvaluationResult::getExpressionInput() const
 {
