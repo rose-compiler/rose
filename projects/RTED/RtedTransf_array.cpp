@@ -136,10 +136,10 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName,
       array -> appendDimensionInformation( arg_list );
 
       //      appendExpression(arg_list, buildString(stmt->unparseToString()));
-      ROSE_ASSERT(roseCreateHeap);
-      string symbolName2 = roseCreateHeap->get_name().str();
+      ROSE_ASSERT(symbols->roseCreateHeap);
+      string symbolName2 = symbols->roseCreateHeap->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseCreateHeap);
+      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  symbols->roseCreateHeap);
       //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
 
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
@@ -391,11 +391,11 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 
 
 
-    ROSE_ASSERT(roseAccessHeap);
-    string symbolName2 = roseAccessHeap->get_name().str();
+    ROSE_ASSERT(symbols->roseAccessHeap);
+    string symbolName2 = symbols->roseAccessHeap->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
     SgFunctionRefExp* memRef_r = buildFunctionRefExp(
-    		roseAccessHeap);
+    		symbols->roseAccessHeap);
     //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
 
     SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
