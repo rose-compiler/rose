@@ -4231,8 +4231,9 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
        // Note that the auto-generated version of this is const
           virtual SgAsmType* get_type();
 
-      //! Get a unique identifier for this particular register
-          std::pair<X86RegisterClass, int> get_identifier() const;
+	SgAsmx86RegisterReferenceExpression(X86RegisterClass regcls, int regnum, X86PositionInRegister pos_size);
+	SgAsmx86RegisterReferenceExpression(const RegisterDescriptor&);
+
 HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
 
 
@@ -5030,6 +5031,47 @@ SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION_END
 
 SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
 
+SgAsmx86RegisterReferenceExpression::SgAsmx86RegisterReferenceExpression(const RegisterDescriptor &rdesc) {
+	p_descriptor = rdesc;
+}
+
+SgAsmx86RegisterReferenceExpression::SgAsmx86RegisterReferenceExpression(X86RegisterClass regcls, int regnum,
+	X86PositionInRegister pos_size)
+	: SgAsmRegisterReferenceExpression() {
+	RegisterDescriptor rdesc;
+	rdesc.set_major(regcls);
+	rdesc.set_minor(regnum);
+	switch (pos_size) {
+		case x86_regpos_unknown:
+			rdesc.set_offset(0);
+			rdesc.set_nbits(0);
+			break;
+		case x86_regpos_low_byte:
+			rdesc.set_offset(0);
+			rdesc.set_nbits(8);
+			break;
+		case x86_regpos_high_byte:
+			rdesc.set_offset(8);
+			rdesc.set_nbits(8);
+			break;
+		case x86_regpos_word:
+			rdesc.set_offset(0);
+			rdesc.set_nbits(16);
+			break;
+		case x86_regpos_dword:
+			rdesc.set_offset(0);
+			rdesc.set_nbits(32);
+			break;
+		case x86_regpos_qword:
+			rdesc.set_offset(0);
+			rdesc.set_nbits(64);
+			break;
+		case x86_regpos_all:
+			ROSE_ASSERT(!"we need to know an actual size");
+	}
+	p_descriptor = rdesc;
+}
+
 std::string
 SgAsmx86RegisterReferenceExpression::get_regnames8l(regnames8l_enum n)
    {
@@ -5087,11 +5129,6 @@ SgAsmx86RegisterReferenceExpression::get_segregnames(segregnames_enum n)
 // Note that the auto-generated version of this is const
 SgAsmType* SgAsmx86RegisterReferenceExpression::get_type() {
   return p_type;
-}
-
-std::pair<X86RegisterClass, int>
-SgAsmx86RegisterReferenceExpression::get_identifier() const {
-  return std::make_pair(this->get_register_class(), this->get_register_number());
 }
 
 SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END

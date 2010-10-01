@@ -2049,28 +2049,21 @@ Grammar::setUpBinaryInstructions ()
 
      AsmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION",
                                                          "../Grammar/BinaryInstruction.code");
-     // added by tps on 3Apr07 and removed on 16Jan08
-     //AsmRegisterReferenceExpression.setDataPrototype("SgAsmExpression*","offset","= NULL",
-     //                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     // Added by JJW on 2-12-2008
      AsmRegisterReferenceExpression.setDataPrototype("SgAsmType*","type","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
      Asmx86RegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION",
                                                             "../Grammar/BinaryInstruction.code");
-     Asmx86RegisterReferenceExpression.setDataPrototype("X86RegisterClass","register_class","= x86_regclass_unknown",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Asmx86RegisterReferenceExpression.setDataPrototype("int","register_number","= 0",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Asmx86RegisterReferenceExpression.setDataPrototype("X86PositionInRegister","position_in_register","= x86_regpos_unknown",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
      AsmArmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION",
                                                             "../Grammar/BinaryInstruction.code");
+     /* FIXME: arm_register_code should eventually use RegisterDescriptor in the parent class. [RPM 2010-09-30] */
      AsmArmRegisterReferenceExpression.setDataPrototype("SgAsmArmRegisterReferenceExpression::arm_register_enum",
                                                         "arm_register_code",
                                                         "= SgAsmArmRegisterReferenceExpression::undefined_arm_register",
@@ -2082,6 +2075,8 @@ Grammar::setUpBinaryInstructions ()
                                                                 "../Grammar/BinaryInstruction.code");
      AsmPowerpcRegisterReferenceExpression.setDataPrototype("PowerpcRegisterClass","register_class","= powerpc_regclass_unknown",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     /* FIXME: register_number and conditionRegisterGranularity should eventually use RegisterDescriptor in the parent
+      *        class. [RPM 2010-09-30] */
      // GPR, FPR, SPR, TBR, etc. number, or condition register field or bit number
      AsmPowerpcRegisterReferenceExpression.setDataPrototype("int","register_number","= 0",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

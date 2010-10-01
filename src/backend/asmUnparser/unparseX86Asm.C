@@ -27,79 +27,85 @@ std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
 /****************************************************
  * resolve expression
  ****************************************************/
-std::string unparseX86Register(X86RegisterClass cl, int reg, X86PositionInRegister pos) {
-  switch (cl) {
-    case x86_regclass_gpr: {
-      static const char* regnames8l[16] = {"al", "cl", "dl", "bl", "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
-      static const char* regnames8h[16] = {"ah", "ch", "dh", "bh", "", "", "", "", "", "", "", "", "", "", "", ""};
-      static const char* regnames16[16] = {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w"};
-      static const char* regnames32[16] = {"eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"};
-      static const char* regnames64[16] = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
-      ROSE_ASSERT (reg >= 0 && reg <= 15);
-      switch (pos) {
-        case x86_regpos_low_byte: return regnames8l[reg];
-        case x86_regpos_high_byte: ROSE_ASSERT (reg <= 3); return regnames8h[reg];
-        case x86_regpos_word: return regnames16[reg];
-        case x86_regpos_dword: return regnames32[reg];
-        case x86_regpos_qword: return regnames64[reg];
-        case x86_regpos_unknown: return regnames64[reg];
-        case x86_regpos_all: return regnames64[reg];
-        default: ROSE_ASSERT (!"Bad position in register");
-      }
+std::string unparseX86Register(const RegisterDescriptor &reg) {
+    switch (reg.get_major()) {
+        case x86_regclass_gpr: {
+            static const char* regnames8l[16] = {"al", "cl", "dl", "bl", "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b",
+                                                 "r11b", "r12b", "r13b", "r14b", "r15b"};
+            static const char* regnames8h[16] = {"ah", "ch", "dh", "bh", "", "", "", "", "", "", "", "", "", "", "", ""};
+            static const char* regnames16[16] = {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "r8w", "r9w", "r10w",
+                                                 "r11w", "r12w", "r13w", "r14w", "r15w"};
+            static const char* regnames32[16] = {"eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "r8d", "r9d", "r10d",
+                                                 "r11d", "r12d", "r13d", "r14d", "r15d"};
+            static const char* regnames64[16] = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10",
+                                                 "r11", "r12", "r13", "r14", "r15"};
+            ROSE_ASSERT (reg.get_minor() >= 0 && reg.get_minor() <= 15);
+            if (0==reg.get_offset()) {
+                switch (reg.get_nbits()) {
+                    case 8: return regnames8l[reg.get_minor()];
+                    case 16: return regnames16[reg.get_minor()];
+                    case 32: return regnames32[reg.get_minor()];
+                    case 64: return regnames64[reg.get_minor()];
+                    default: ROSE_ASSERT (!"Bad position in register");
+                }
+            } else if (8==reg.get_offset() && 8==reg.get_nbits()) {
+                ROSE_ASSERT (reg.get_minor() <= 3);
+                return regnames8h[reg.get_minor()];
+            } else {
+                ROSE_ASSERT(!"Bad position in register");
+            }
+        }
+        case x86_regclass_segment: {
+            ROSE_ASSERT (reg.get_minor() >= 0 && reg.get_minor() <= 5);
+            static const char* segregnames[6] = {"es", "cs", "ss", "ds", "fs", "gs"};
+            return segregnames[reg.get_minor()];
+        }
+        case x86_regclass_st_top: {
+            return "st";
+        }
+        case x86_regclass_st: {
+            return "st(" + StringUtility::numberToString(reg.get_minor()) + ")";
+        }
+        case x86_regclass_ip: {
+            ROSE_ASSERT(0==reg.get_offset());
+            switch (reg.get_nbits()) {
+                case 16: return "ip";
+                case 32: return "eip";
+                case 64: return "rip";
+                default: ROSE_ASSERT (!"Bad position in register");
+            }
+        } 
+        case x86_regclass_mm: {
+            return "mm" + StringUtility::numberToString(reg.get_minor());
+        }
+        case x86_regclass_xmm: {
+            return "xmm" + StringUtility::numberToString(reg.get_minor());
+        }
+        case x86_regclass_cr: {
+            return "cr" + StringUtility::numberToString(reg.get_minor());
+        }
+        case x86_regclass_dr: {
+            return "dr" + StringUtility::numberToString(reg.get_minor());
+        }
+        case x86_regclass_flags: {
+            ROSE_ASSERT(0==reg.get_offset());
+            switch (reg.get_nbits()) {
+                case 16: return "flags";
+                case 32: return "eflags";
+                case 64: return "rflags";
+                default: ROSE_ASSERT (!"Bad position in register");
+            }
+        }
+        case x86_regclass_unknown: {
+            return "unknown";
+        }
+        default:
+            std::cerr << " Undefined Register " << reg << std::endl;
+            abort();
+            // DQ (11/29/2009): Avoid MSVC warning.
+            return "error in unparseX86Register()";
+            break;
     }
-    case x86_regclass_segment: {
-      ROSE_ASSERT (reg >= 0 && reg <= 5);
-      static const char* segregnames[6] = {"es", "cs", "ss", "ds", "fs", "gs"};
-      return segregnames[reg];
-    }
-    case x86_regclass_st_top: {
-      return "st";
-    }
-    case x86_regclass_st: {
-      return "st(" + StringUtility::numberToString(reg) + ")";
-    }
-    case x86_regclass_ip: {
-      switch (pos) {
-        case x86_regpos_word: return "ip";
-        case x86_regpos_dword: return "eip";
-        case x86_regpos_qword: return "rip";
-        case x86_regpos_unknown: return "rip";
-        case x86_regpos_all: return "rip";
-        default: ROSE_ASSERT (!"Bad position in register");
-      }
-    } 
-    case x86_regclass_mm: {
-      return "mm" + StringUtility::numberToString(reg);
-    }
-    case x86_regclass_xmm: {
-      return "xmm" + StringUtility::numberToString(reg);
-    }
-    case x86_regclass_cr: {
-      return "cr" + StringUtility::numberToString(reg);
-    }
-    case x86_regclass_dr: {
-      return "dr" + StringUtility::numberToString(reg);
-    }
-    case x86_regclass_flags: {
-      switch (pos) {
-        case x86_regpos_word: return "flags";
-        case x86_regpos_dword: return "eflags";
-        case x86_regpos_qword: return "rflags";
-        case x86_regpos_unknown: return "rflags";
-        case x86_regpos_all: return "rflags";
-        default: ROSE_ASSERT (!"Bad position in register");
-      }
-    }
-    case x86_regclass_unknown: {
-      return "unknown";
-    }
-    default:
-      std::cerr << " Undefined Register - class=" << regclassToString(cl) << " number=" << reg << std::endl;
-      abort();
-      // DQ (11/29/2009): Avoid MSVC warning.
-      return "error in unparseX86Register()";
-      break;
-  }
 }
 
 static std::string x86TypeToPtrName(SgAsmType* ty) {
@@ -155,7 +161,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
         }
         case V_SgAsmx86RegisterReferenceExpression: {
             SgAsmx86RegisterReferenceExpression* rr = isSgAsmx86RegisterReferenceExpression(expr);
-            result = unparseX86Register(rr->get_register_class(), rr->get_register_number(), rr->get_position_in_register());
+            result = unparseX86Register(rr->get_descriptor());
             break;
         }
         case V_SgAsmByteValueExpression: {

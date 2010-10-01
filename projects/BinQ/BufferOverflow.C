@@ -60,7 +60,7 @@ BufferOverflow::run(string& name, SgGraphNode* node,
 	  bool memRef = false;
 	  std::pair<X86RegisterClass, int> code;
 	  code = check_isRegister(pre, asmPre, false, memRef);
-	  string codeStr = unparseX86Register(code.first, code.second, x86_regpos_qword);
+	  string codeStr = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64));
 	  if (codeStr=="rdi")
 	    value = getValueOfInstr(asmPre, true);
 	  else if (debug)

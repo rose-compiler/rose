@@ -17,8 +17,8 @@ static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferen
     X86SegmentRegister segreg = x86_segreg_none;
     SgAsmx86RegisterReferenceExpression* seg = isSgAsmx86RegisterReferenceExpression(mr->get_segment());
     if (seg) {
-        ROSE_ASSERT(seg->get_register_class() == x86_regclass_segment);
-        segreg = (X86SegmentRegister)(seg->get_register_number());
+        ROSE_ASSERT(seg->get_descriptor().get_major() == x86_regclass_segment);
+        segreg = (X86SegmentRegister)(seg->get_descriptor().get_minor());
     } else {
         ROSE_ASSERT(!"Bad segment expr");
     }
@@ -186,14 +186,16 @@ struct X86InstructionSemantics {
         switch (e->variantT()) {
             case V_SgAsmx86RegisterReferenceExpression: {
                 SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
-                switch (rre->get_register_class()) {
+                switch (rre->get_descriptor().get_major()) {
                     case x86_regclass_gpr: {
-                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
+                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_descriptor().get_minor());
                         Word(32) rawValue = policy.readGPR(reg);
-                        switch (rre->get_position_in_register()) {
-                            case x86_regpos_low_byte: return extract<0, 8>(rawValue);
-                            case x86_regpos_high_byte: return extract<8, 16>(rawValue);
-                            default: throw Exception("Bad position in register", current_instruction);
+                        if (0==rre->get_descriptor().get_offset() && 8==rre->get_descriptor().get_nbits()) {
+                            return extract<0, 8>(rawValue);
+                        } else if (8==rre->get_descriptor().get_offset() && 8==rre->get_descriptor().get_nbits()) {
+                            return extract<8, 16>(rawValue);
+                        } else {
+                            throw Exception("Bad position in register", current_instruction);
                         }
                     }
                     default: {
@@ -235,16 +237,16 @@ struct X86InstructionSemantics {
         switch (e->variantT()) {
             case V_SgAsmx86RegisterReferenceExpression: {
                 SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
-                if (rre->get_position_in_register() != x86_regpos_word)
+                if (rre->get_descriptor().get_nbits()!=16 || rre->get_descriptor().get_offset()!=0)
                     throw Exception("size not implemented", current_instruction);
-                switch (rre->get_register_class()) {
+                switch (rre->get_descriptor().get_major()) {
                     case x86_regclass_gpr: {
-                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
+                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_descriptor().get_minor());
                         Word(32) rawValue = policy.readGPR(reg);
                         return extract<0, 16>(rawValue);
                     }
                     case x86_regclass_segment: {
-                        X86SegmentRegister sr = (X86SegmentRegister)(rre->get_register_number());
+                        X86SegmentRegister sr = (X86SegmentRegister)(rre->get_descriptor().get_minor());
                         Word(16) value = policy.readSegreg(sr);
                         return value;
                     }
@@ -287,25 +289,22 @@ struct X86InstructionSemantics {
         switch (e->variantT()) {
             case V_SgAsmx86RegisterReferenceExpression: {
                 SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
-                switch (rre->get_register_class()) {
+                switch (rre->get_descriptor().get_major()) {
                     case x86_regclass_gpr: {
-                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
+                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_descriptor().get_minor());
                         Word(32) rawValue = policy.readGPR(reg);
-                        switch (rre->get_position_in_register()) {
-                            case x86_regpos_dword:
-                            case x86_regpos_all:
-                                return rawValue;
-                            case x86_regpos_word:
-                                return policy.concat(extract<0, 16>(rawValue), number<16>(0));
-                            default:
-                                throw Exception("bad position in register", current_instruction);
+                        if (0==rre->get_descriptor().get_offset() && 32==rre->get_descriptor().get_nbits()) {
+                            return rawValue;
+                        } else if (0==rre->get_descriptor().get_offset() && 16==rre->get_descriptor().get_nbits()) {
+                            return policy.concat(extract<0, 16>(rawValue), number<16>(0));
+                        } else {
+                            throw Exception("bad position in register", current_instruction);
                         }
                     }
                     case x86_regclass_segment: {
-                        if (rre->get_position_in_register() != x86_regpos_dword &&
-                            rre->get_position_in_register() != x86_regpos_all)
+                        if (0!=rre->get_descriptor().get_offset() || 32!=rre->get_descriptor().get_nbits())
                             throw Exception("size not implemented", current_instruction);
-                        X86SegmentRegister sr = (X86SegmentRegister)(rre->get_register_number());
+                        X86SegmentRegister sr = (X86SegmentRegister)(rre->get_descriptor().get_minor());
                         Word(16) value = policy.readSegreg(sr);
                         return policy.concat(value, number<16>(0));
                     }
@@ -367,14 +366,15 @@ struct X86InstructionSemantics {
         switch (e->variantT()) {
             case V_SgAsmx86RegisterReferenceExpression: {
                 SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
-                switch (rre->get_register_class()) {
+                switch (rre->get_descriptor().get_major()) {
                     case x86_regclass_gpr: {
-                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
-                        switch (rre->get_position_in_register()) {
-                            case x86_regpos_low_byte: updateGPRLowByte(reg, value); break;
-                            case x86_regpos_high_byte: updateGPRHighByte(reg, value); break;
-                            default: throw Exception("size not implemented", current_instruction);
-
+                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_descriptor().get_minor());
+                        if (0==rre->get_descriptor().get_offset() && 8==rre->get_descriptor().get_nbits()) {
+                            updateGPRLowByte(reg, value);
+                        } else if (8==rre->get_descriptor().get_offset() && 8==rre->get_descriptor().get_nbits()) {
+                            updateGPRHighByte(reg, value);
+                        } else {
+                            throw Exception("size not implemented", current_instruction);
                         }
                         break;
                     }
@@ -401,18 +401,18 @@ struct X86InstructionSemantics {
         switch (e->variantT()) {
             case V_SgAsmx86RegisterReferenceExpression: {
                 SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
-                switch (rre->get_register_class()) {
+                switch (rre->get_descriptor().get_major()) {
                     case x86_regclass_gpr: {
-                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
-                        switch (rre->get_position_in_register()) {
-                            case x86_regpos_word: updateGPRLowWord(reg, value); break;
-                            default: throw Exception("size not implemented", current_instruction);
-
+                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_descriptor().get_minor());
+                        if (0==rre->get_descriptor().get_offset() && 16==rre->get_descriptor().get_nbits()) {
+                            updateGPRLowWord(reg, value);
+                        } else {
+                            throw Exception("size not implemented", current_instruction);
                         }
                         break;
                     }
                     case x86_regclass_segment: {
-                        X86SegmentRegister sr = (X86SegmentRegister)(rre->get_register_number());
+                        X86SegmentRegister sr = (X86SegmentRegister)(rre->get_descriptor().get_minor());
                         policy.writeSegreg(sr, value);
                         break;
                     }
@@ -439,22 +439,16 @@ struct X86InstructionSemantics {
         switch (e->variantT()) {
             case V_SgAsmx86RegisterReferenceExpression: {
                 SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
-                switch (rre->get_register_class()) {
+                switch (rre->get_descriptor().get_major()) {
                     case x86_regclass_gpr: {
-                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
-                        switch (rre->get_position_in_register()) {
-                            case x86_regpos_dword:
-                            case x86_regpos_all: {
-                                break;
-                            }
-                            default: throw Exception("size not implemented", current_instruction);
-
-                        }
+                        X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_descriptor().get_minor());
+                        if (0!=rre->get_descriptor().get_offset() || 32!=rre->get_descriptor().get_nbits())
+                            throw Exception("size not implemented", current_instruction);
                         policy.writeGPR(reg, value);
                         break;
                     }
                     case x86_regclass_segment: { // Used for pop of segment registers
-                        X86SegmentRegister sr = (X86SegmentRegister)(rre->get_register_number());
+                        X86SegmentRegister sr = (X86SegmentRegister)(rre->get_descriptor().get_minor());
                         policy.writeSegreg(sr, extract<0, 16>(value));
                         break;
                     }

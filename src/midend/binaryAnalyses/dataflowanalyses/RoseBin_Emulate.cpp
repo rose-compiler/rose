@@ -176,7 +176,22 @@ uint64_t RoseBin_Emulate::getRandomValue(int val) {
 }
 
 
-
+X86PositionInRegister
+get_position_in_register(const RegisterDescriptor &rdesc) {
+    if (0==rdesc.get_offset()) {
+        switch (rdesc.get_nbits()) {
+            case 8: return x86_regpos_low_byte;
+            case 16: return x86_regpos_word;
+            case 32: return x86_regpos_dword;
+            case 64: return x86_regpos_qword;
+            default: return x86_regpos_all;
+        }
+    } else if (8==rdesc.get_offset() && 8==rdesc.get_nbits()) {
+        return x86_regpos_high_byte;
+    } else {
+        return x86_regpos_unknown;
+    }
+}
 
 bool
 RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& operands) {
@@ -256,8 +271,8 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
       // check what it could be
       // ******** 1. its a RegisterReferenceExpression on the left side
       if (refExpr) {
-	code = refExpr->get_identifier();
-	pos = refExpr->get_position_in_register();
+        code = std::make_pair((X86RegisterClass)refExpr->get_descriptor().get_major(), refExpr->get_descriptor().get_minor());
+	pos = get_position_in_register(refExpr->get_descriptor());
 	operands = "\\nleft :: refExpr ";
 	//SgAsmExpression* expression = refExpr->get_offset();
 	//memRef = isSgAsmMemoryReferenceExpression(expression);
@@ -369,8 +384,8 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
 	// the right hand side is also a register or memory location
 	std::pair<X86RegisterClass, int>  codeR ;
 	X86PositionInRegister posR ;
-	codeR = refExprR->get_identifier();
-	posR = refExprR->get_position_in_register();
+	codeR = std::make_pair((X86RegisterClass)refExprR->get_descriptor().get_major(), refExprR->get_descriptor().get_minor());
+	posR = get_position_in_register(refExprR->get_descriptor());
 
 	operands += "right ::  refExpr ";
 

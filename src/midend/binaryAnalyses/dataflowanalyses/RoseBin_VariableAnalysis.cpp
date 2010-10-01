@@ -38,8 +38,8 @@ RoseBin_VariableAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
       check_isRegister(defNode, inst, true, memRef);
 
     if (RoseBin_support::DEBUG_MODE()) {
-      string regName = unparseX86Register(reg.first, reg.second, x86_regpos_qword);
-      string regNameRight = unparseX86Register(regRight.first, regRight.second, x86_regpos_qword);
+      string regName = unparseX86Register(RegisterDescriptor(reg.first, reg.second, 0, 64));
+      string regNameRight = unparseX86Register(RegisterDescriptor(regRight.first, regRight.second, 0, 64));
       cout << " VarAnalysis: getValueForDef . " << regName << "  right hand : " << regNameRight <<endl;
     }
     if (regRight.first == x86_regclass_unknown) {
@@ -537,7 +537,7 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
 		bool memRef = false;
 		std::pair<X86RegisterClass, int>  code;
 		code = check_isRegister(pre, asmPre, false, memRef);
-		string codeStr = unparseX86Register(code.first, code.second, x86_regpos_qword);
+		string codeStr = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64));
 		if (codeStr=="rsp")
 		  value = getValueOfInstr(asmPre, true);
 		else

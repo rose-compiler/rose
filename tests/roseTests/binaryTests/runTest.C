@@ -29,7 +29,7 @@ void checkNode(RoseBin_DataFlowAnalysis* dfanalysis,
 	       set<uint64_t>& result, 
                X86RegisterClass regclass,
                int regnum) {
-  string registerName = unparseX86Register(regclass, regnum, x86_regpos_qword);
+  string registerName = unparseX86Register(RegisterDescriptor(regclass, regnum, 0, 64));
   SgGraphNode* node = dfanalysis->getNodeFor(address);
   SgAsmInstruction* inst = NULL;
   string unparsed ="";

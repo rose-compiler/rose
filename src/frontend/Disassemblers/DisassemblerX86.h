@@ -187,8 +187,7 @@ private:
 
     /** Constructs a register reference expression. The @p registerType is only used for vector registers that can have more
      *  than one type. */
-    static SgAsmx86RegisterReferenceExpression *makeRegister(uint8_t fullRegisterNumber, RegisterMode,
-                                                             SgAsmType *registerType=NULL);
+    SgAsmx86RegisterReferenceExpression *makeRegister(uint8_t fullRegisterNumber, RegisterMode, SgAsmType *registerType=NULL) const;
 
     /* FIXME: documentation? */
     SgAsmx86RegisterReferenceExpression *makeRegisterEffective(uint8_t fullRegisterNumber) {
@@ -201,7 +200,7 @@ private:
     }
 
     /** Constructs a register reference expression for a segment register. */
-    static SgAsmExpression *makeSegmentRegister(X86SegmentRegister so, bool insn64);
+    SgAsmExpression *makeSegmentRegister(X86SegmentRegister so, bool insn64) const;
 
 
 

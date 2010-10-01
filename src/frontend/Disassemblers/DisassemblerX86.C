@@ -846,8 +846,25 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
 SgAsmx86RegisterReferenceExpression *
 DisassemblerX86::makeIP()
 {
-    SgAsmx86RegisterReferenceExpression* r = new SgAsmx86RegisterReferenceExpression(x86_regclass_ip, 0);
-    r->set_position_in_register(sizeToPos(insnSize));
+    RegisterDescriptor rdesc;
+    rdesc.set_major(x86_regclass_ip);
+    rdesc.set_minor(0);
+    rdesc.set_offset(0);
+    switch (insnSize) {
+        case x86_insnsize_16:
+            rdesc.set_nbits(16);
+            break;
+        case x86_insnsize_32:
+            rdesc.set_nbits(32);
+            break;
+        case x86_insnsize_64:
+            rdesc.set_nbits(64);
+            break;
+        case x86_insnsize_none:
+            ROSE_ASSERT(!"unknown instruction size");
+            break;
+    }
+    SgAsmx86RegisterReferenceExpression *r = new SgAsmx86RegisterReferenceExpression(rdesc);
     r->set_type(sizeToType(insnSize));
     return r;
 }
@@ -867,80 +884,84 @@ DisassemblerX86::makeOperandRegisterFull(bool rexExtension, uint8_t registerNumb
 }
 
 SgAsmx86RegisterReferenceExpression *
-DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmType *registerType)
+DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmType *registerType) const
 {
     if (m == rmReturnNull)
         return NULL;
     SgAsmx86RegisterReferenceExpression *ref = NULL;
     switch (m) {
         case rmLegacyByte: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber % 4);
-            ref->set_position_in_register((fullRegisterNumber & 4) ? x86_regpos_high_byte : x86_regpos_low_byte);
+            RegisterDescriptor rdesc(x86_regclass_gpr, fullRegisterNumber % 4, 0, 8);
+            if (fullRegisterNumber & 4)
+                rdesc.set_offset(8);
+            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
             ref->set_type(BYTET);
             break;
         }
         case rmRexByte: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_low_byte);
+            RegisterDescriptor rdesc(x86_regclass_gpr, fullRegisterNumber, 0, 8);
+            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
             ref->set_type(BYTET);
             break;
         }
         case rmWord: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_word);
+            RegisterDescriptor rdesc(x86_regclass_gpr, fullRegisterNumber, 0, 16);
+            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
             ref->set_type(WORDT);
             break;
         }
         case rmDWord: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_dword);
+            RegisterDescriptor rdesc(x86_regclass_gpr, fullRegisterNumber, 0, 32);
+            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
             ref->set_type(DWORDT);
             break;
         }
         case rmQWord: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_qword);
+            RegisterDescriptor rdesc(x86_regclass_gpr, fullRegisterNumber, 0, 64);
+            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
             ref->set_type(QWORDT);
             break;
         }
         case rmSegment: {
             if (fullRegisterNumber >= 6)
                 throw Exception("register number out of bounds");
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_segment, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
+            RegisterDescriptor rdesc(x86_regclass_segment, fullRegisterNumber, 0, 16);
+            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
             ref->set_type(WORDT);
             break;
         }
         case rmST: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_st, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
+            RegisterDescriptor rdesc(x86_regclass_st, fullRegisterNumber, 0, 80);
+            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
             ref->set_type(LDOUBLET);
             break;
         }
         case rmMM: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_mm, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
+            RegisterDescriptor rdesc(x86_regclass_mm, fullRegisterNumber, 0, 64);
+            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
             ROSE_ASSERT(registerType);
             ref->set_type(registerType);
             break;
         }
         case rmXMM: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_xmm, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
+            RegisterDescriptor rdesc(x86_regclass_xmm, fullRegisterNumber, 0, 128);
+            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
             ROSE_ASSERT(registerType);
             ref->set_type(registerType);
             break;
         }
         case rmControl: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_cr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
+            int nbits = insnSize==x86_insnsize_64 ? 64 : 32;
+            RegisterDescriptor rdesc(x86_regclass_cr, fullRegisterNumber, 0, nbits);
+            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
             ROSE_ASSERT(registerType);
             ref->set_type(registerType);
             break;
         }
         case rmDebug: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_dr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
+            int nbits = insnSize==x86_insnsize_64 ? 64 : 32;
+            RegisterDescriptor rdesc(x86_regclass_dr, fullRegisterNumber, 0, nbits);
+            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
             ROSE_ASSERT(registerType);
             ref->set_type(registerType);
             break;
@@ -953,7 +974,7 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
 }
 
 SgAsmExpression *
-DisassemblerX86::makeSegmentRegister(X86SegmentRegister so, bool insn64)
+DisassemblerX86::makeSegmentRegister(X86SegmentRegister so, bool insn64) const
 {
     switch (so) {
         case x86_segreg_none: ROSE_ASSERT(!"makeSegmentRegister does not support x86_segreg_none");
