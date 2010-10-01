@@ -2642,6 +2642,52 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getDefsForSubtree(SgNode*
      return traversal.result;
 }
 
+VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalDefsForSubtree(SgNode* node)
+{
+    class DefSearchTraversal : public AstSimpleProcessing
+     {
+     public:
+         VariableRenaming::NumNodeRenameTable result;
+         VariableRenaming* varRenamingAnalysis;
+
+         virtual void visit(SgNode* node)
+         {
+             //Look up defs at this particular node
+             VariableRenaming::NumNodeRenameTable defsAtNode = varRenamingAnalysis->getOriginalDefsAtNode(node);
+
+             //Traverse the defs
+             foreach(VariableRenaming::NumNodeRenameTable::value_type& entry, defsAtNode)
+             {
+                 //If this is the first time the var has been seen, add it wholesale
+                 if(result.count(entry.first) == 0)
+                 {
+                     result[entry.first] = entry.second;
+                     continue;
+                 }
+                 //Traverse each definition of the variable
+                 foreach(VariableRenaming::NumNodeRenameEntry::value_type& tableEntry, entry.second)
+                 {
+                     if(result[entry.first].count(tableEntry.first) == 0)
+                     {
+                         result[entry.first][tableEntry.first] = tableEntry.second;
+                     }
+                     else
+                     {
+                         cout << "Error: Same rename number defined on multiple nodes." << endl;
+                         ROSE_ASSERT(false);
+                     }
+                 }
+             }
+         }
+     };
+
+     DefSearchTraversal traversal;
+     traversal.varRenamingAnalysis = this;
+     traversal.traverse(node, preorder);
+
+     return traversal.result;
+}
+
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtScopeEnd(SgScopeStatement* bb)
 {
 	ROSE_ASSERT(bb);
