@@ -5,6 +5,7 @@
 #include <numeric>
 #include <algorithm>
 
+#if 0
 struct StoredExpressionReversal : public EvaluationResultAttribute
 {
 	StoredExpressionReversal(const ExpressionReversal& reversal) : reversal(reversal)
@@ -14,6 +15,7 @@ struct StoredExpressionReversal : public EvaluationResultAttribute
 	
 	ExpressionReversal reversal;
 };
+#endif
 
 vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* expression, const VariableVersionTable& varTable,
 		bool isReverseValueUsed)
@@ -77,7 +79,8 @@ vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* exp
 			ExpressionReversal reversalResult(forwardExp, reverseExpression);
 
 			EvaluationResult reversalInfo(this, expression, newVarTable);
-			reversalInfo.setAttribute(EvaluationResultAttributePtr(new StoredExpressionReversal(reversalResult)));
+			//reversalInfo.setAttribute(EvaluationResultAttributePtr(new StoredExpressionReversal(reversalResult)));
+			reversalInfo.setAttribute(reversalResult);
 
 			vector<EvaluationResult> result;
 			result.push_back(reversalInfo);
@@ -90,11 +93,15 @@ vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* exp
 
 ExpressionReversal AkgulStyleExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
+#if 0
 	StoredExpressionReversal* reversalResult = dynamic_cast<StoredExpressionReversal*>(evaluationResult.getAttribute().get());
 	ROSE_ASSERT(reversalResult != NULL);
-	ROSE_ASSERT(evaluationResult.getExpressionHandler() == this);
 
 	return reversalResult->reversal;
+#endif
+
+	ROSE_ASSERT(evaluationResult.getExpressionHandler() == this);
+	return evaluationResult.getAttribute<ExpressionReversal>();
 }
 
 

@@ -37,6 +37,7 @@ void EvaluationResult::setCost(const SimpleCostModel& cost)
 	cost_ = cost;
 }
 
+#if 0
 EvaluationResultAttributePtr EvaluationResult::getAttribute() const
 {
 	return attribute_;
@@ -46,6 +47,7 @@ void EvaluationResult::setAttribute(EvaluationResultAttributePtr attr)
 {
 	attribute_ = attr;
 }
+#endif
 
 SgExpression* EvaluationResult::getExpressionInput() const
 {
@@ -137,6 +139,11 @@ SgExpression* ReversalHandlerBase::restoreVariable(VariableRenaming::VarName var
 		const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions)
 {
 	return event_handler_->restoreVariable(variable, availableVariables, definitions);
+}
+
+SgExpression* ReversalHandlerBase::restoreExpressionValue(SgExpression* expression, const VariableVersionTable& availableVariables)
+{
+	return event_handler_->restoreExpressionValue(expression, availableVariables);
 }
 
 VariableRenaming* ReversalHandlerBase::getVariableRenaming()

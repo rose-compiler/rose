@@ -115,16 +115,17 @@ struct A {int i;};
 
 void event5(model* m)
 {
+#if 0
     A p, q;
     q.i = 0;
     q = p;
     
-#if 1
     int a;// = m->i;
     //m->j += a;
     //a = 10;
     m->i = 1;
-    m->i = 1;
+#endif
+    //m->i = 1;
     while(1)
     {
         m->i = 1;
@@ -144,5 +145,4 @@ void event5(model* m)
         //++m->i;
 #endif
     }
-#endif
 }

@@ -18,14 +18,9 @@ StatementReversal IfStatementHandler::generateReverseAST(SgStatement* stmt, cons
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
     ROSE_ASSERT(if_stmt);
 
-    // Get the attribute which tells us whether to store the branch flag.
-    EvaluationResultAttributePtr attr = evalResult.getAttribute();
-    ROSE_ASSERT(attr);
-    IfStmtConditionAttribute* cond_attr = dynamic_cast<IfStmtConditionAttribute*>(attr.get());
-    ROSE_ASSERT(cond_attr);
 
+	// Get three child handlers.
     StatementReversal proc_cond = evalResult.getChildResults()[2].generateReverseStatement();
-
     StatementReversal proc_true_body = evalResult.getChildResults()[1].generateReverseStatement();
     StatementReversal proc_false_body = evalResult.getChildResults()[0].generateReverseStatement();
 
@@ -35,9 +30,12 @@ StatementReversal IfStatementHandler::generateReverseAST(SgStatement* stmt, cons
     ROSE_ASSERT(fwd_true_block_body);
     ROSE_ASSERT(fwd_false_block_body);
 
-    SgStatement* cond_stmt;
-    if (cond_attr->cond)
-        cond_stmt = buildExprStatement(copyExpression(cond_attr->cond));
+
+    // Get the attribute which tells us whether to store the branch flag.
+    SgExpression* condition = evalResult.getAttribute<SgExpression*>();
+    SgStatement* cond_stmt = NULL;
+    if (condition)
+        cond_stmt = buildExprStatement(copyExpression(condition));
     else
     {
         // In this situation, we don't have to store branch flag.
@@ -141,18 +139,23 @@ vector<EvaluationResult> IfStatementHandler::evaluate(SgStatement* stmt, const V
 
                 // Here we should do an analysis to decide whether to store the branch flag.
                 // If the value of the condition is not modified during both true and false bodies,
-                // we can still use that expression. Or we can retieve the same value from other
+                // we can still use that expression. Or we can retrieve the same value from other
                 // expressions. Even more comlicated analysis may be performed here.
 
                 SimpleCostModel new_cost = cost;
-                IfStmtConditionAttributePtr attr(new IfStmtConditionAttribute);
-
+				SgExpression* attr = NULL;
+				
                 SgExpression* cond = isSgExprStatement(if_stmt->get_conditional())->get_expression();
                 if (cond && var_table.checkVersionForUse(cond))
-                {
-                    attr->cond = cond;
-                }
-                else
+				{
+                    attr = cond;
+				}
+				else if (SgExpression* restored_exp = restoreExpressionValue(cond, var_table))
+				{
+					// If we can restore the value of condition, we can use it without storing the flag.
+					attr = restored_exp;
+				}
+				else
                 {
                     // Since we store the branch flag here, we add the cost by 1.
                     new_cost.increaseStoreCount();

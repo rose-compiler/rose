@@ -5,16 +5,6 @@
 
 class IfStatementHandler : public StatementReversalHandler
 {
-	struct IfStmtConditionAttribute : public EvaluationResultAttribute
-	{
-
-		IfStmtConditionAttribute() : cond(NULL)
-		{}
-		SgExpression* cond;
-	};
-
-	typedef boost::shared_ptr<IfStmtConditionAttribute> IfStmtConditionAttributePtr;
-
 public:
     IfStatementHandler() { name_ = "If Statement Processor"; }
 

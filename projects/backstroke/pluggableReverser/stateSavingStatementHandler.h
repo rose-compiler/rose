@@ -6,6 +6,9 @@
 class StateSavingStatementHandler : public StatementReversalHandler
 {
 	std::set<SgStatement*> evaluating_stmts_;
+
+	//! Check if this handler can handle the given statement.
+	bool checkStatement(SgStatement* stmt) const;
 public:
     StateSavingStatementHandler() { name_ = "State Saving Statement Handler"; }
 

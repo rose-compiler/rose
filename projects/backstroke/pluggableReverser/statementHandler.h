@@ -31,13 +31,9 @@ public:
 
 private:
 
-	struct LocalVarRestoreAttribute : public EvaluationResultAttribute
-	{
-		//! For each local variable, we record whether to restore it and how to restore it.
-		//! (if SgExpression* is NULL, we push and pop its value. Otherwise, we use it to restore) */
-		std::map < SgInitializedName*, std::pair<bool, SgExpression*> > local_var_restorer;
-	};
-	typedef boost::shared_ptr<LocalVarRestoreAttribute> LocalVarRestoreAttributePtr;
+	//! For each local variable, we record how to restore it.
+	//! (if SgExpression* is NULL, we push and pop its value. Otherwise, we use it to restore) 
+	typedef std::map < SgInitializedName*, SgExpression* > LocalVarRestoreAttribute;
 
 	//! Get the final version for a local variable before leaving its scope.
 	VariableRenaming::NumNodeRenameEntry getLastVersion(SgInitializedName* init_name);

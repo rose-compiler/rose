@@ -68,10 +68,34 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 	return modified_vars;
 }
 
+bool StateSavingStatementHandler::checkStatement(SgStatement* stmt) const
+{
+	bool flag = false;
+	if (isSgWhileStmt(stmt) ||
+			isSgIfStmt(stmt) ||
+			isSgDoWhileStmt(stmt) ||
+			isSgForStatement(stmt) ||
+			isSgSwitchStatement(stmt))
+		flag = true;
+	if (isSgBasicBlock(stmt))
+	{
+		SgNode* parent_stmt = stmt->get_parent();
+		if (isSgWhileStmt(parent_stmt) ||
+			isSgIfStmt(parent_stmt) ||
+			isSgDoWhileStmt(parent_stmt) ||
+			isSgForStatement(parent_stmt) ||
+			isSgSwitchStatement(parent_stmt))
+			flag = false;
+		else
+			flag = true;
+	}
+	return flag;
+}
+
 StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
 {
-	EvaluationResultAttributePtr attr = eval_result.getAttribute();
-	vector<SgExpression*> modified_vars = attr->getAttribute<vector<SgExpression*> >();
+	//EvaluationResultAttributePtr attr = eval_result.getAttribute();
+	vector<SgExpression*> modified_vars = eval_result.getAttribute<vector<SgExpression*> >();
 
 	SgBasicBlock* fwd_stmt = buildBasicBlock();
     SgBasicBlock* rvs_stmt = buildBasicBlock();
@@ -94,7 +118,10 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	vector<EvaluationResult> results;
-	if (isSgWhileStmt(stmt) == NULL)
+
+	// Currently, we just perform this state saving handler on if/while/for/do-while/switch statements and pure
+	// basic block which is not the body of if/while/for/do-while/switch statements.
+	if (!checkStatement(stmt))
 		return results;
 
 	// In case of infinite calling to this function.
@@ -102,25 +129,29 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 		return results;
 	evaluating_stmts_.insert(stmt);
 
-	cout << "Enter\n";
+	//cout << "Enter\n";
 
 	//vector<EvaluationResult> eval_results = evaluateStatement(stmt, var_table);
 	evaluating_stmts_.erase(stmt);
 
 	vector<SgExpression*> modified_vars = getAllModifiedVariables(stmt);
 
+#if 0
 	cout << "Got all modified vars.\n";
 
 	cout << "\n\n";
 	var_table.print();
 	cout << "\n\n";
+#endif
 
 	VariableVersionTable new_table = var_table;
 	new_table.reverseVersionAtStatementStart(modified_vars, stmt);
 
+#if 0
 	cout << "\n\n";
 	new_table.print();
 	cout << "\n\n";
+#endif
 
 #if 0
 	foreach (const EvaluationResult& eval_result, eval_results)
@@ -133,9 +164,9 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	EvaluationResult result(this, stmt, new_table);
 	
 	// Add the attribute to the result.
-	EvaluationResultAttributePtr attr(new EvaluationResultAttribute);
-	attr->setAttribute(modified_vars);
-	result.setAttribute(attr);
+	//EvaluationResultAttributePtr attr(new EvaluationResultAttribute);
+	//attr->setAttribute(modified_vars);
+	result.setAttribute(modified_vars);
 
 	results.push_back(result);
 

@@ -275,13 +275,19 @@ void VariableVersionTable::reverseVersion(SgNode* node)
 
 void VariableVersionTable::reverseVersionAtStatementStart(const std::vector<SgExpression*>& vars, SgStatement* stmt)
 {
+
 	VariableRenaming::NumNodeRenameTable var_versions = var_renaming_->getReachingDefsAtStatementStart(stmt);
+
+#if 0
+	cout << "\n!!!\n";
+	VariableRenaming::printRenameTable(var_versions);
+
 
 	foreach (SgExpression* var, vars)
 	{
 		VarName name = getVarName(var);
 
-		cout << VariableRenaming::keyToString(name) << endl;
+		//cout << VariableRenaming::keyToString(name) << endl;
 
 		ROSE_ASSERT(name != VariableRenaming::emptyName);
 		ROSE_ASSERT(var_versions.count(name) > 0);
@@ -291,6 +297,17 @@ void VariableVersionTable::reverseVersionAtStatementStart(const std::vector<SgEx
 		foreach (const VariableRenaming::NumNodeRenameEntry::value_type& num_node, var_versions[name])
 			new_version.insert(num_node.first);
 		table_[name].swap(new_version);
+	}
+#endif
+
+	table_.clear();
+	foreach(VariableRenaming::NumNodeRenameTable::value_type name_to_num, var_versions)
+	{
+		foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, name_to_num.second)
+		{
+
+			table_[name_to_num.first].insert(num_to_node.first);
+		}
 	}
 }
 
