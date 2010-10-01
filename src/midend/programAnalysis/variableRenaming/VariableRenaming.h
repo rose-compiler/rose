@@ -738,13 +738,21 @@ public:
      */
     NumNodeRenameEntry getExpandedDefsAtNodeForName(SgNode* node, const VarName& var);
 
-    /** Get all definitions for the subtree rooted at this node.
+    /** Get all definitions for the subtree rooted at this node. If m.x is defined,
+	 * the resulting table will also include a definition for m.
      *
      * @param node The root of the subtree to get definitions for.
      * @return The table mapping VarName->(num, node) for every definition.
      */
     NumNodeRenameTable getDefsForSubtree(SgNode* node);
 
+	/** Get all original definitions for the subtree rooted at this node. No expanded definitions
+	 * will be included - for example, if m.x is defined, there will be no definition for the structure m.
+     *
+     * @param node The root of the subtree to get definitions for.
+     * @return The table mapping VarName->(num, node) for every definition.
+     */
+    NumNodeRenameTable getOriginalDefsForSubtree(SgNode* node);
 
     /*
      *   Static Utility Functions
