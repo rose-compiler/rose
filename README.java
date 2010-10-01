@@ -13,3 +13,4 @@ setenv MY_BOOST_ROOT /home/dquinlan/local/boost_1_37_0.gxx-4.2.4
 
 setenv LD_LIBRARY_PATH {$MY_BOOST_ROOT}/lib:$LD_LIBRARY_PATH
 setenv LD_LIBRARY_PATH {$MY_BOOST_ROOT}/lib64:$LD_LIBRARY_PATH
+
