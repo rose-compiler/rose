@@ -115,10 +115,12 @@ vector<EvaluationResult> WhileStatementHandler::evaluate(SgStatement* stmt, cons
 	SgBasicBlock* body = isSgBasicBlock(while_stmt->get_body());
 	ROSE_ASSERT(body);
 
+#if 0
 	cout << "Old table:\n";
 	var_table.print();
 	cout << "New table:\n";
 	var_table.getVarTablesForLoopBody(body).print();
+#endif
 
 	vector<EvaluationResult> loop_body_results = evaluateStatement(body, var_table.getVarTablesForLoopBody(body));
 	foreach (EvaluationResult& res, loop_body_results)

@@ -3,6 +3,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
+#include <boost/range/algorithm.hpp>
 #include <utilities/Utilities.h>
 #include <utilities/CPPDefinesAndNamespaces.h>
 
@@ -10,6 +11,8 @@ using namespace boost::lambda;
 using namespace SageBuilder;
 using namespace SageInterface;
 
+
+#if 0
 
 /** Get the left most variable. For example, a.b returns a, a->b returns a. */
 SgVarRefExp* getMostLeftVariable(SgExpression* exp)
@@ -56,8 +59,7 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 				if (!isAncestor(stmt, decl))
 				{
 					// We store each variable once.
-					if (find_if(modified_vars.begin(), modified_vars.end(),
-							bind(backstroke_util::areSameVariable, _1, var)) == modified_vars.end())
+					if (boost::find_if(modified_vars, bind(backstroke_util::areSameVariable, _1, var)) == modified_vars.end())
 						modified_vars.push_back(var);
 				}
 			}
@@ -67,48 +69,71 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 	return modified_vars;
 }
 
+#endif
+
+
+
+vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllModifiedVariables(SgStatement* stmt)
+{
+	vector<VariableRenaming::VarName> modified_vars;
+	foreach (const VariableRenaming::NumNodeRenameTable::value_type& num_node,
+			getVariableRenaming()->getOriginalDefsForSubtree(stmt))
+			modified_vars.push_back(num_node.first);
+	return modified_vars;
+}
+
 bool StateSavingStatementHandler::checkStatement(SgStatement* stmt) const
 {
-	bool flag = false;
 	if (isSgWhileStmt(stmt) ||
-			isSgIfStmt(stmt) ||
-			isSgDoWhileStmt(stmt) ||
-			isSgForStatement(stmt) ||
-			isSgSwitchStatement(stmt))
-		flag = true;
+		isSgIfStmt(stmt) ||
+		isSgDoWhileStmt(stmt) ||
+		isSgForStatement(stmt) ||
+		isSgSwitchStatement(stmt))
+		return true;
+
 	if (isSgBasicBlock(stmt))
 	{
 		SgNode* parent_stmt = stmt->get_parent();
 		if (isSgWhileStmt(parent_stmt) ||
-			isSgIfStmt(parent_stmt) ||
 			isSgDoWhileStmt(parent_stmt) ||
 			isSgForStatement(parent_stmt) ||
 			isSgSwitchStatement(parent_stmt))
-			flag = false;
+			return false;
 		else
-			flag = true;
+			return true;
 	}
-	return flag;
+	return false;
 }
 
 StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
 {
-	vector<SgExpression*> modified_vars = eval_result.getAttribute<vector<SgExpression*> >();
-
 	SgBasicBlock* fwd_stmt = buildBasicBlock();
     SgBasicBlock* rvs_stmt = buildBasicBlock();
 
-	foreach (SgExpression* var, modified_vars)
+	// If the following child result is empty, we don't have to reverse the target statement.
+	vector<EvaluationResult> child_result = eval_result.getChildResults();
+	if (!child_result.empty())
 	{
-		SgExpression* fwd_exp = pushVal(copyExpression(var));
+		StatementReversal child_reversal = child_result[0].generateReverseStatement();
+		prependStatement(child_reversal.fwd_stmt, fwd_stmt);
+		appendStatement(child_reversal.rvs_stmt, rvs_stmt);
+	}
+	else
+	{
+		prependStatement(copyStatement(stmt), fwd_stmt);
+	}
+
+	vector<VariableRenaming::VarName> modified_vars = eval_result.getAttribute<vector<VariableRenaming::VarName> >();
+	foreach (const VariableRenaming::VarName& var_name, modified_vars)
+	{
+		SgExpression* var = VariableRenaming::buildVariableReference(var_name);
+		SgExpression* fwd_exp = pushVal(var);
 		SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
 			copyExpression(var), popVal(var->get_type()));
 		
-		appendStatement(buildExprStatement(fwd_exp), fwd_stmt);
+		prependStatement(buildExprStatement(fwd_exp), fwd_stmt);
 		appendStatement(buildExprStatement(rvs_exp), rvs_stmt);
 	}
-	
-	appendStatement(copyStatement(stmt), fwd_stmt);
 
 	return StatementReversal(fwd_stmt, rvs_stmt);
 }
@@ -125,25 +150,18 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	// In case of infinite calling to this function.
 	if (evaluating_stmts_.count(stmt) > 0)
 		return results;
-	evaluating_stmts_.insert(stmt);
 
-	//cout << "Enter\n";
-
-	//vector<EvaluationResult> eval_results = evaluateStatement(stmt, var_table);
-	evaluating_stmts_.erase(stmt);
-
-	vector<SgExpression*> modified_vars = getAllModifiedVariables(stmt);
+	//vector<SgExpression*> modified_vars = getAllModifiedVariables(stmt);
 
 #if 0
-	cout << "Got all modified vars.\n";
-
 	cout << "\n\n";
 	var_table.print();
 	cout << "\n\n";
 #endif
 
+	vector<VariableRenaming::VarName> modified_vars = getAllModifiedVariables(stmt);
 	VariableVersionTable new_table = var_table;
-	new_table.reverseVersionAtStatementStart(modified_vars, stmt);
+	new_table.reverseVersionAtStatementStart(stmt);
 
 #if 0
 	cout << "\n\n";
@@ -151,16 +169,25 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	cout << "\n\n";
 #endif
 
-#if 0
+	// Reverse the target statement using other handlers.
+	evaluating_stmts_.insert(stmt);
+	vector<EvaluationResult> eval_results = evaluateStatement(stmt, var_table);
+	evaluating_stmts_.erase(stmt);
+
+	// We combine both state saving and reversed target statement together.
+	// In a following analysis on generated code, those extra store and restores will be removed.
 	foreach (const EvaluationResult& eval_result, eval_results)
 	{
 		EvaluationResult result(this, stmt, new_table);
 		result.addChildEvaluationResult(eval_result);
+		// Add the attribute to the result.
+		result.setAttribute(modified_vars);
 		results.push_back(result);
 	}
-#endif
-	EvaluationResult result(this, stmt, new_table);
+
+	// Here we just use state saving.
 	
+	EvaluationResult result(this, stmt, new_table);
 	// Add the attribute to the result.
 	result.setAttribute(modified_vars);
 	results.push_back(result);

@@ -289,7 +289,7 @@ FuncDeclPairs EventHandler::processEvent()
 		// Here we check the validity for each result above. We have to make sure
 		// every state variable has the version 1.
 		if (!checkForInitialVersions(res.getVarTable()))
-			continue;
+			;//continue;
 
 		// Print all handlers used in this result.
 		res.printHandlers();
@@ -297,6 +297,12 @@ FuncDeclPairs EventHandler::processEvent()
 		res.getVarTable().print();
 
 		StatementReversal stmt = res.generateReverseStatement();
+
+		// Normalize the result.
+		backstroke_util::removeUselessBraces(stmt.fwd_stmt);
+		backstroke_util::removeUselessBraces(stmt.rvs_stmt);
+		backstroke_util::removeUselessParen(stmt.fwd_stmt);
+		backstroke_util::removeUselessParen(stmt.rvs_stmt);
 
 		fixVariableReferences(stmt.fwd_stmt);
 		fixVariableReferences(stmt.rvs_stmt);
