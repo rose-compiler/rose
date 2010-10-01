@@ -4394,10 +4394,7 @@ bool SgFunctionCallExp::isLValue() const
 	}
 	else
 	{
-		// depends on the return-type being a reference type
-//		if (ftype->get_return_type()->get_ref_to() == NULL)
-//		if (isSgReferenceType(ftype->get_return_type()) != NULL)
-		if (SageInterface::isReferenceType(ftype->get_return_type()) != NULL)
+		if (SageInterface::isReferenceType(ftype->get_return_type()))
 			return true;
 		else
 			return false;
@@ -4425,29 +4422,27 @@ bool SgCastExp::isLValue() const
 	switch (cast_type())
 	{
 		case e_C_style_cast:
-//			if (get_type()->get_ref_to() != NULL) /*! std:5.4 par:1 */
-//			if (isSgReferenceType(get_type()) != NULL) /*! std:5.4 par:1 */
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.4 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.4 par:1 */
 				return true;
 			else
 				return false;
 		case e_const_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.11 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.11 par:1 */
 				return true;
 			else
 				return false;
 		case e_static_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.9 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.9 par:1 */
 				return true;
 			else
 				return false;
 		case e_dynamic_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.7 par:2 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.7 par:2 */
 				return true;
 			else
 				return false;
 		case e_reinterpret_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.10 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.10 par:1 */
 				return true;
 			else
 				return false;
@@ -4805,7 +4800,7 @@ bool SgCommaOpExp::isChildUsedAsLValue(const SgExpression* child) const
 /*! std:8.5.3 par:5 */
 bool SgExprListExp::isChildUsedAsLValue(const SgExpression* child) const
 {
-	for (SgExpressionPtrList::iterator i = get_expressions.begin(); i != get_expressions.end(); ++i)
+	for (SgExpressionPtrList::const_iterator i = get_expressions().begin(); i != get_expressions().end(); ++i)
 	{
 		if (child == *i)
 		{
@@ -4815,7 +4810,7 @@ bool SgExprListExp::isChildUsedAsLValue(const SgExpression* child) const
 				return false;
 		}
 	}
-	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgRshiftAssignOp");
+	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgExprListExp");
 	return false;
 }
 
@@ -4824,12 +4819,12 @@ bool SgReturnStmt::isChildUsedAsLValue(const SgExpression* child) const
 {
 	if (get_expression() == child)
 	{
-		if (SageInterface::isNonconstReference(SageInterface::getEnclosingFunctionDeclaration(this)->get_return_type))
+		if (SageInterface::isNonconstReference(SageInterface::getEnclosingFunctionDeclaration(const_cast<SgReturnStmt*>(this))->get_type()->get_return_type()))
 			return true;
 		else
 			return false;
 	}
-	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgRshiftAssignOp");
+	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgReturnStmt");
 	return false;
 }
 
