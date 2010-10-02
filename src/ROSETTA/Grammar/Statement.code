@@ -1216,6 +1216,10 @@ HEADER_FUNCTION_DEFINITION_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
+       // MD (09/20/2010): Accessor for preinitialization lists associated with 
+       // this (constructor) definition. NULL if this has no such list.
+          virtual SgCtorInitializerList* get_CtorInitializerList() const;
+
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
@@ -8631,6 +8635,19 @@ SgFunctionDefinition::get_qualified_name() const
    }
 
 
+// MD (09/20/2010): Accessor for preinitialization lists associated with 
+// this (constructor) definition. NULL if this has no such list.
+SgCtorInitializerList* 
+SgFunctionDefinition::get_CtorInitializerList() const {
+  SgMemberFunctionDeclaration* memDecl = NULL;
+  SgCtorInitializerList* ctorList = NULL;
+  if ((memDecl = isSgMemberFunctionDeclaration(get_declaration())) != NULL &&
+      (ctorList = memDecl->get_CtorInitializerList()) != NULL)
+      return ctorList;
+  else
+    return NULL;
+}
+
 SOURCE_FUNCTION_DEFINTION_STATEMENT_END
 
 SOURCE_FUNCTION_DEFINTION_STATEMENT_PARSER_START
@@ -13384,10 +13401,15 @@ SgOmpThreadprivateStatement::get_mangled_name(void) const
      ROSE_ASSERT(scope != NULL);
 
      SgName variableNames;
-     SgInitializedNamePtrList::const_iterator p = get_variables().begin();
+     SgVarRefExpPtrList::const_iterator p = get_variables().begin();
      while ( p != get_variables().end() )
         {
-          variableNames += SgName("_variable_type_") + (*p)->get_type()->get_mangled() + SgName("_variable_name_") + (*p)->get_mangled_name();
+          ROSE_ASSERT ((*p)->get_symbol() != NULL);
+          SgVariableSymbol * sym = isSgVariableSymbol ((*p)->get_symbol());
+          ROSE_ASSERT (sym != NULL);
+          ROSE_ASSERT (sym->get_declaration() != NULL);
+          variableNames += SgName("_variable_type_") + (*p)->get_symbol()->get_type()->get_mangled() + 
+                        SgName("_variable_name_") + sym->get_declaration()->get_mangled_name();
 
           p++;
         }

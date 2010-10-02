@@ -112,8 +112,7 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName,
       SgExpression* fromMalloc = buildIntVal( 0 );
       if ( array -> onHeap ) {
         ROSE_ASSERT( array -> size );
-        size = buildCastExp( array -> size, buildLongLongType() );
-
+        size = buildCastExp( array -> size, buildLongType() );
         // track whether heap memory was allocated via malloc or new, to ensure
         // that free/delete matches
         if( array -> fromMalloc )
@@ -137,10 +136,10 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName,
       array -> appendDimensionInformation( arg_list );
 
       //      appendExpression(arg_list, buildString(stmt->unparseToString()));
-      ROSE_ASSERT(roseCreateHeap);
-      string symbolName2 = roseCreateHeap->get_name().str();
+      ROSE_ASSERT(symbols->roseCreateHeap);
+      string symbolName2 = symbols->roseCreateHeap->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseCreateHeap);
+      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  symbols->roseCreateHeap);
       //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
 
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
@@ -392,11 +391,11 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 
 
 
-    ROSE_ASSERT(roseAccessHeap);
-    string symbolName2 = roseAccessHeap->get_name().str();
+    ROSE_ASSERT(symbols->roseAccessHeap);
+    string symbolName2 = symbols->roseAccessHeap->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
     SgFunctionRefExp* memRef_r = buildFunctionRefExp(
-    		roseAccessHeap);
+    		symbols->roseAccessHeap);
     //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
 
     SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,

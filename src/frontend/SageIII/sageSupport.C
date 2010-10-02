@@ -8427,7 +8427,7 @@ static   SgOmpClause::omp_reduction_operator_enum toSgOmpClauseReductionOperator
   ROSE_ASSERT(result != SgOmpClause::e_omp_reduction_unkown);
   return result;
 }
-//A helper function to set SgInitializedNamePtrList  from OmpAttribute's construct-varlist map
+//A helper function to set SgVarRefExpPtrList  from OmpAttribute's construct-varlist map
 static void setClauseVariableList(SgOmpVariablesClause* target, OmpAttribute* att, omp_construct_enum key)
 {
   ROSE_ASSERT(target&&att);
@@ -8444,7 +8444,8 @@ static void setClauseVariableList(SgOmpVariablesClause* target, OmpAttribute* at
   {
     SgInitializedName* iname = isSgInitializedName((*iter).second);
     ROSE_ASSERT(iname !=NULL);
-    target->get_variables().push_back(iname);
+    //target->get_variables().push_back(iname);
+    target->get_variables().push_back(buildVarRefExp(iname));
   }
 }
 
@@ -8745,7 +8746,7 @@ SgOmpFlushStatement* buildOmpFlushStatement(OmpAttribute* att)
   {
     SgInitializedName* iname = isSgInitializedName((*iter).second);
     ROSE_ASSERT(iname !=NULL);
-    result->get_variables().push_back(iname);
+    result->get_variables().push_back(buildVarRefExp(iname));
   }
   return result;
 }
@@ -8764,7 +8765,7 @@ SgOmpThreadprivateStatement* buildOmpThreadprivateStatement(OmpAttribute* att)
   {
     SgInitializedName* iname = isSgInitializedName((*iter).second);
     ROSE_ASSERT(iname !=NULL);
-    result->get_variables().push_back(iname);
+    result->get_variables().push_back(buildVarRefExp(iname));
   }
   result->set_definingDeclaration(result);
   return result;

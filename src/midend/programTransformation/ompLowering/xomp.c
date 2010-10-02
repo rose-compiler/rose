@@ -87,7 +87,7 @@ void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread)
   GOMP_parallel_start (func, data, numThread);
   func(data);
 #else   
-  _ompc_do_parallel (func, data); 
+  _ompc_do_parallel ((void (*)(void **))func, data); 
 #endif    
 }
 
@@ -235,7 +235,7 @@ bool XOMP_loop_static_start (long start, long end, long incr, long chunk_size,lo
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_static_start (start, end, incr, chunk_size, istart, iend);
 #else   
-  return _ompc_static_sched_next(istart, iend);
+  return _ompc_static_sched_next((int*)istart, (int*)iend);
 #endif    
 }
 
@@ -244,7 +244,7 @@ bool XOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size,l
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_dynamic_start (start, end, incr, chunk_size, istart, iend);
 #else   
-  return _ompc_dynamic_sched_next(istart, iend);
+  return _ompc_dynamic_sched_next((int*)istart, (int*) iend);
 #endif    
 
 }
@@ -253,7 +253,7 @@ bool XOMP_loop_guided_start (long start, long end, long incr, long chunk_size,lo
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_guided_start (start, end, incr, chunk_size, istart, iend);
 #else   
-  return _ompc_guided_sched_next(istart, iend);
+  return _ompc_guided_sched_next((int*)istart, (int*)iend);
 #endif    
 
 }
@@ -262,7 +262,7 @@ bool XOMP_loop_runtime_start (long start, long end, long incr, long *istart, lon
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_runtime_start (start, end, incr, istart, iend);
 #else   
-  return _ompc_runtime_sched_next(istart, iend);
+  return _ompc_runtime_sched_next((int*)istart, (int*)iend);
 #endif    
 
 }
@@ -273,7 +273,7 @@ bool XOMP_loop_ordered_static_start (long start, long end, long incr, long chunk
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_ordered_static_start (start, end, incr, chunk_size, istart, iend);
 #else   
-  return _ompc_static_sched_next (istart, iend); 
+  return _ompc_static_sched_next ((int*)istart, (int*)iend); 
 #endif    
 }
 
@@ -282,7 +282,7 @@ bool XOMP_loop_ordered_dynamic_start (long start, long end, long incr, long chun
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_ordered_dynamic_start (start, end, incr, chunk_size, istart, iend);
 #else   
-  return _ompc_dynamic_sched_next (istart, iend); 
+  return _ompc_dynamic_sched_next ((int*)istart, (int*)iend); 
 #endif    
 }
 
@@ -291,7 +291,7 @@ bool XOMP_loop_ordered_guided_start (long start, long end, long incr, long chunk
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_ordered_guided_start (start, end, incr, chunk_size, istart, iend);
 #else   
-  return _ompc_guided_sched_next (istart, iend); 
+  return _ompc_guided_sched_next ((int*)istart, (int*)iend); 
 #endif    
 }
 
@@ -310,7 +310,7 @@ bool XOMP_loop_static_next (long * l, long *u)
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_static_next (l, u);
 #else   
-   return _ompc_static_sched_next(l, u);
+   return _ompc_static_sched_next((int*)l, (int*)u);
 #endif    
 }
 
@@ -319,7 +319,7 @@ bool XOMP_loop_dynamic_next (long *l, long *u)
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_dynamic_next (l, u);
 #else   
-   return _ompc_dynamic_sched_next(l, u);
+   return _ompc_dynamic_sched_next((int*)l, (int*)u);
 #endif    
 }
 
@@ -329,7 +329,7 @@ bool XOMP_loop_guided_next (long *l, long *u)
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_guided_next (l, u);
 #else   
-   return _ompc_guided_sched_next(l, u);
+   return _ompc_guided_sched_next((int *)l,(int *) u);
 #endif    
 }
 
@@ -339,7 +339,7 @@ bool XOMP_loop_runtime_next (long *l, long *u)
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   return GOMP_loop_runtime_next (l, u);
 #else   
-   return _ompc_runtime_sched_next(l, u);
+   return _ompc_runtime_sched_next((int *)l, (int *)u);
 #endif    
 }
 
@@ -351,7 +351,7 @@ bool XOMP_loop_ordered_static_next (long *a, long * b)
 //  printf ("debug xomp: a =%d, b = %d \n",*a, *b);
   return rt;
 #else 
-  return _ompc_static_sched_next (a,b);
+  return _ompc_static_sched_next ((int *)a,(int *)b);
 #endif    
 }
 
@@ -360,7 +360,7 @@ bool XOMP_loop_ordered_dynamic_next (long * a, long * b)
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
  return GOMP_loop_ordered_dynamic_next (a, b);
 #else   
-  return _ompc_dynamic_sched_next (a,b);
+  return _ompc_dynamic_sched_next ((int *)a,(int *)b);
 #endif    
 }
 bool XOMP_loop_ordered_guided_next (long *a, long *b)
@@ -368,7 +368,7 @@ bool XOMP_loop_ordered_guided_next (long *a, long *b)
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
  return GOMP_loop_ordered_guided_next (a, b);
 #else   
-  return _ompc_guided_sched_next (a,b);
+  return _ompc_guided_sched_next ((int *)a,(int *)b);
 #endif    
 }
 bool XOMP_loop_ordered_runtime_next (long *a, long *b)
@@ -376,7 +376,7 @@ bool XOMP_loop_ordered_runtime_next (long *a, long *b)
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
  return GOMP_loop_ordered_runtime_next (a, b);
 #else   
-  return _ompc_runtime_sched_next (a,b);
+  return _ompc_runtime_sched_next ((int*)a,(int*)b);
 #endif    
 }
 
