@@ -6792,7 +6792,7 @@ void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
 
   // To be referenced in the common block it should have been defined already, but this is not required
   // ROSE_ASSERT(variableSymbol != NULL);
-     printf ("In c_action_common_block_object(): variableSymbol = %p \n",variableSymbol);
+  // printf ("In c_action_common_block_object(): variableSymbol = %p \n",variableSymbol);
      if (variableSymbol != NULL)
         {
           SgVarRefExp* variableReference = new SgVarRefExp(variableSymbol);
@@ -11451,7 +11451,7 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
                Token_t* variableToken = astNameStack.front();
                ROSE_ASSERT(astNameStack.empty() == false);
                SgName variableName = variableToken->text;
-               printf ("Generating reference for index variable name = %s \n",variableName.str());
+            // printf ("Generating reference for index variable name = %s \n",variableName.str());
                astNameStack.pop_front();
                SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName, astScopeStack.front());
             // ROSE_ASSERT(variableSymbol != NULL);
@@ -15462,6 +15462,10 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
           printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 
 #if 1
+     printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
+#endif
+
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1106 c_action_end_module_stmt()");
 #endif
@@ -15475,13 +15479,21 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
   // printf ("moduleScope = %p = %s \n",moduleScope,moduleScope->class_name().c_str());
 
   // FMZ: 05/30/2008  add the subtree root to the map
-     string  fileName = moduleStatement->get_name();
+     string fileName = moduleStatement->get_name();
+
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("Creating a module file %s using module name = %s \n",StringUtility::convertToLowerCase(fileName).c_str(),fileName.c_str());
 
   // DQ (11/12/2008): Modified to force filename to lower case.
-  // printf ("Creating a module file %s using module name = %s \n",StringUtility::convertToLowerCase(fileName).c_str(),fileName.c_str());
      fileName = StringUtility::convertToLowerCase(fileName);
 
+  // DQ (10/1/2010): This has been moved to FortranModuleInfo::getModule() as a work around for the c_action_end_module_stmt()
+  // rule not being called and thus this function not being visited for the first module in a chain of modules containing use 
+  // statements. See the test_forcing.F90 example test code.
+#if 0
+     printf (" This may be redundant now the we address c_action_end_module_stmt not being called for OFP 0.8.2 fileName = %s \n",fileName.c_str());
      FortranModuleInfo::addMapping(fileName,moduleStatement);
+#endif
 
      setStatementNumericLabel(moduleStatement,label);
 
@@ -15760,7 +15772,7 @@ void c_action_module_subprogram(ofp_bool hasPrefix)
 // void c_action_use_stmt(Token_t * label, ofp_bool hasModuleNature, ofp_bool hasRenameList, ofp_bool hasOnly)
 void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t *onlyKeyword, Token_t *eos, ofp_bool hasModuleNature, ofp_bool hasRenameList, ofp_bool hasOnly)
    {
-#if 0
+#if 1
   // DQ (9/14/2010): I want to track the calling of use statements for debugging
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
 #endif
@@ -15812,11 +15824,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
        // support in place for reading the *.mod files of any previously declared modules 
        // from other translation units.
 
-       // FMZ:(5/28/2008) importing the module declaration from modName.rmod file
-       // save the global variable
-          printf ("Importing the module declaration from %s.rmod file \n",name.str());
-        
-       // FMZ(10/22008) in the new version (rice branch) SgFile*=>SgSourceFile
+       // FMZ (5/28/2008) importing the module declaration from modName.rmod file save the global variable
+       // printf ("Importing the module declaration from %s.rmod file \n",name.str());
+
+       // FMZ (10/22008) in the new version (rice branch) SgFile*=>SgSourceFile
        // SgFile* savedFilePointer = OpenFortranParser_globalFilePointer;
           SgSourceFile* savedFilePointer = OpenFortranParser_globalFilePointer;
         
@@ -15829,6 +15840,9 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
        // Fortran is case insensitive so this maps any module name to 
        // a unique name module file.
           modName = StringUtility::convertToLowerCase(modName);
+
+          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+               printf ("Calling FortranModuleInfo::getModule(modName) for modName = %s \n",modName.c_str());
 
        // This should open the appropriate *.rmod file using ROSE and read it.
        // DQ (1/28/2009): Currently there is a bug which causes a Fortran include
@@ -15896,7 +15910,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
           ROSE_ASSERT(classDefinition != NULL);
 
        // if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          if ( SgProject::get_verbose() > -1 )
+          if ( SgProject::get_verbose() > 2 )
                printf ("Case hasOnly == false: astNodeStack.size() = %zu \n",astNodeStack.size());
 
           if (astNodeStack.empty() == true)
@@ -16120,7 +16134,8 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 #endif
         }
 
-#if 1
+#if 0
+  // Debugging output for tracking down exponential grown of the number of alias symbols in symbol tables (introduced as part of use statement support).
      int    line       = useStatement->get_file_info()->get_line();
      string filename   = useStatement->get_file_info()->get_filename();
      string moduleName = "empty default name";
