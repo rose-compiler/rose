@@ -22,7 +22,12 @@ class FortranModuleInfo
 
      private:
        static SgProject*                      currentProject;
-       static map<string, SgModuleStatement*> moduleNameAstMap;
+
+    // DQ (10/1/2010): Added a typedef to simplify code using the moduleNameAstMap data member.
+    // static map<string, SgModuleStatement*> moduleNameAstMap;
+       typedef map<string, SgModuleStatement*> ModuleMapType;
+       static ModuleMapType moduleNameAstMap;
+
        static unsigned                        nestedSgFile; 
        static vector<string>                  inputDirs   ;
 
