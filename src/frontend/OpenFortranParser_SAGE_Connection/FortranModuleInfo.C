@@ -232,7 +232,7 @@ FortranModuleInfo::createSgSourceFile(string modName)
 
      nestedSgFile++;
 
-     if ( SgProject::get_verbose() > -1 )
+     if ( SgProject::get_verbose() > 1 )
           printf ("START FortranModuleInfo::createSgSourceFile(%s): nestedSgFile = %d \n",rmodFileName.c_str(),nestedSgFile);
 
      SgProject*  project = getCurrentProject();
@@ -253,7 +253,7 @@ FortranModuleInfo::createSgSourceFile(string modName)
 
      project->set_file(*newFile);
 
-     if ( SgProject::get_verbose() > -1 )
+     if ( SgProject::get_verbose() > 1 )
           printf ("END FortranModuleInfo::createSgSourceFile(%s): nestedSgFile = %d \n",rmodFileName.c_str(),nestedSgFile);
 
      nestedSgFile--;
@@ -263,7 +263,8 @@ FortranModuleInfo::createSgSourceFile(string modName)
 
 
 #if 0
-void       
+// DQ (10/1/2010): This support is now better implemented directly in the FortranModuleInfo::getModule() function.
+void
 FortranModuleInfo::addMapping(string modName,SgModuleStatement* modNode)
    {
      printf ("In FortranModuleInfo::addMapping() modName = %s modNode = %p \n",modName.c_str(),modNode);
