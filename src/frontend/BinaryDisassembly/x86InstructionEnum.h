@@ -38,7 +38,7 @@ enum X86RegisterClass {
   x86_regclass_cr, // Numbers are cr0..cr15
   x86_regclass_dr, // Numbers are dr0..dr15
   x86_regclass_st, // Numbers are st0..st7
-  x86_regclass_mm, // Numbers are mm0..mm7
+  x86_regclass_mm, // Numbers are mm0..mm7             Note that these should reference st(i), so don't use this constant
   x86_regclass_xmm, // Numbers are xmm0..xmm15
   x86_regclass_ip, // Only value allowed is 0
   x86_regclass_st_top, // Only value allowed is 0
