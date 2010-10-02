@@ -42,7 +42,8 @@ class Unparser_Nameq;
 // characters then test2010_61.f90 will not unparse its include statement
 // correctly (a bug in ROSE).
 // #define MAX_F90_LINE_LEN 72
-#define MAX_F90_LINE_LEN 132
+// #define MAX_F90_LINE_LEN 132
+#define MAX_F90_LINE_LEN 1024
 
 // DQ (2/6/03):
 // The unparser should not write to (modify) the AST.  This fix skips and locations
