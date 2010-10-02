@@ -120,11 +120,11 @@ void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef) {
         appendFileInfo( body, arg_list );
 
         // create the function call and prepend it to the constructor's body
-        ROSE_ASSERT( roseCreateObject );
+        ROSE_ASSERT( symbols->roseCreateObject );
         SgExprStatement* fncall =
         buildExprStatement(
                         buildFunctionCallExp(
-                                        buildFunctionRefExp( roseCreateObject ),
+                                        buildFunctionRefExp( symbols->roseCreateObject ),
                                         arg_list ));
         attachComment( fncall, "", PreprocessingInfo::before );
         attachComment(
@@ -404,9 +404,9 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
         SgExpression* linenrTransformed = buildString("x%%x");
         appendExpression(arg_list, linenrTransformed);
 
-        ROSE_ASSERT(roseCreateVariable);
-        string symbolName2 = roseCreateVariable->get_name().str();
-        SgFunctionRefExp* memRef_r = buildFunctionRefExp(roseCreateVariable);
+        ROSE_ASSERT(symbols->roseCreateVariable);
+        string symbolName2 = symbols->roseCreateVariable->get_name().str();
+        SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols->roseCreateVariable);
 
         return buildFunctionCallExp(memRef_r, arg_list);
 }
@@ -514,9 +514,9 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
 
         //appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
 
-        ROSE_ASSERT(roseInitVariable);
-        string symbolName2 = roseInitVariable->get_name().str();
-        SgFunctionRefExp* memRef_r = buildFunctionRefExp(roseInitVariable);
+        ROSE_ASSERT(symbols->roseInitVariable);
+        string symbolName2 = symbols->roseInitVariable->get_name().str();
+        SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols->roseInitVariable);
         SgExpression* result = buildFunctionCallExp(memRef_r, arg_list);
 #if 0
         resultSet.push_back(result);
@@ -714,11 +714,11 @@ void RtedTransformation::insertCheckIfThisNull(SgThisExp* texp) {
 
                         // appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
 
-                        ROSE_ASSERT(roseCheckIfThisNULL);
-                        string symbolName2 = roseCheckIfThisNULL->get_name().str();
+                        ROSE_ASSERT(symbols->roseCheckIfThisNULL);
+                        string symbolName2 = symbols->roseCheckIfThisNULL->get_name().str();
                         //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
                         SgFunctionRefExp* memRef_r =
-                                        buildFunctionRefExp(roseCheckIfThisNULL);
+                                        buildFunctionRefExp(symbols->roseCheckIfThisNULL);
                         SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
                                         arg_list);
                         SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
@@ -908,11 +908,11 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
 
                         // appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
 
-                        ROSE_ASSERT(roseAccessVariable);
-                        string symbolName2 = roseAccessVariable->get_name().str();
+                        ROSE_ASSERT(symbols->roseAccessVariable);
+                        string symbolName2 = symbols->roseAccessVariable->get_name().str();
                         //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
                         SgFunctionRefExp* memRef_r =
-                                        buildFunctionRefExp(roseAccessVariable);
+                                        buildFunctionRefExp(symbols->roseAccessVariable);
                         SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
                                         arg_list);
                         SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
