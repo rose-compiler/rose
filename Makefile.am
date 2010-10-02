@@ -42,6 +42,17 @@ all-local: rose.docs
 
 all: remove_sage3basic_h_pch
 
+# DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't 
+# allow exactly this (what was I thinking?). Commented out until I get a better fix.
+# DQ (9/29/2010): Next three lines are a modification suggested by Scott Warren to 
+# support Eclipse.  Supports Eclipse feature called "makefile project with existing code" 
+# which wants to have a single target to force the build.
+#.PHONY: all-install
+
+#all-install: all install
+
+#install: all
+
 remove_sage3basic_h_pch:
 	touch $(top_builddir)/src/frontend/SageIII/sage3basic.h.pch
 	rm    $(top_builddir)/src/frontend/SageIII/sage3basic.h.pch

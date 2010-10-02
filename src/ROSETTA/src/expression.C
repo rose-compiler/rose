@@ -1396,7 +1396,13 @@ Grammar::setUpExpressions ()
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      ImpliedDo.setFunctionPrototype ( "HEADER_IMPLIED_DO", "../Grammar/Expression.code" );
-     ImpliedDo.setDataPrototype     ( "SgVarRefExp*", "do_var", "= NULL",
+
+  // DQ (9/22/2010): This is only an simple varRef in trivial cases, this is more generally 
+  // where an expression in terms of an index is put (e.g. a function of an index as in 
+  // "(product(localCount(:j)), j = 1, numDims - 1)" in test2010_49.f90).
+  // ImpliedDo.setDataPrototype     ( "SgVarRefExp*", "do_var", "= NULL",
+  //                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ImpliedDo.setDataPrototype     ( "SgExpression*", "do_var_exp", "= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ImpliedDo.setDataPrototype     ( "SgExpression*", "first_val", "= NULL",
 				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
