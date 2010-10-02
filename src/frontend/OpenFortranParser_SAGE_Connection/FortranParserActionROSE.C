@@ -531,7 +531,9 @@ void c_action_type_param_value(ofp_bool hasExpr, ofp_bool hasAsterisk, ofp_bool 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_type_param_value(): hasExpr = %s hasAsterisk = %s hasColon = %s \n",hasExpr ? "true" : "false",hasAsterisk ? "true" : "false",hasColon ? "true" : "false");
 
-#if 0
+  // DQ (9/28/2010): This function is no longer called for each type parameter, and is only called for the length parameter.
+
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R402 c_action_type_param_value()");
 #endif
@@ -553,11 +555,28 @@ void c_action_type_param_value(ofp_bool hasExpr, ofp_bool hasAsterisk, ofp_bool 
         {
           ROSE_ASSERT(astExpressionStack.empty() == false);
           ROSE_ASSERT(astTypeParameterStack.empty() == true);
+
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+#if 1
           astTypeParameterStack.push_front(astExpressionStack.front());
           astExpressionStack.pop_front();
+#else
+          while (astExpressionStack.empty() == false)
+             {
+               printf ("Transfering the expressions from the astExpressionStack to the astTypeParameterStack \n");
+            // astTypeParameterStack.push_front(astExpressionStack.front());
+               astTypeParameterStack.push_front(astExpressionStack.front());
+               astExpressionStack.pop_front();
+             }
+#endif
+#else
+       // DQ (pre 0.8.2 code)
+          astTypeParameterStack.push_front(astExpressionStack.front());
+          astExpressionStack.pop_front();
+#endif
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R402 c_action_type_param_value()");
 #endif
@@ -962,7 +981,8 @@ void c_action_kind_selector(Token_t * token1, Token_t * token2, ofp_bool hasExpr
 #endif
 
   // For the case of "real*8" this is the only rule called before seeing the base type ("real")
-#if 0  //FMZ (07/06/2010): work around, wait for a "real fix" from OFP 
+#if 0
+  // FMZ (07/06/2010): work around, wait for a "real fix" from OFP 
      if (token2 != NULL)
 #else
      if (token2 != NULL && atoi(token2->text) != atoi("="))
@@ -981,7 +1001,8 @@ void c_action_kind_selector(Token_t * token1, Token_t * token2, ofp_bool hasExpr
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("In c_action_kind_selector(): token2 = %s integerValue = %d \n",token2->text,integerValue->get_value());
 
-#if 0       // FMZ (07/06/2010): fix the bug cause "kind" value lost for decl like: integer*8 etc.
+#if 0
+       // FMZ (07/06/2010): fix the bug cause "kind" value lost for decl like: integer*8 etc.
        // Push the integer value onto the expression stack
           astExpressionStack.push_front(integerValue);
 #else
@@ -1008,8 +1029,10 @@ void c_action_kind_selector(Token_t * token1, Token_t * token2, ofp_bool hasExpr
  * @param sign The sign: positive, negative, or null.
  */
 void c_action_signed_int_literal_constant(Token_t * sign)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_signed_int_literal_constant(): sign = %p = %s \n",sign,(sign != NULL) ? sign->text : "NULL"); 
+   }
 
 /** R406
  * int_literal_constant
@@ -1049,7 +1072,8 @@ void c_action_int_literal_constant(Token_t * digitString, Token_t * kindParam)
 
   // Push the integer value onto the expression stack
      astExpressionStack.push_front(integerValue);
-#else //FMZ added  10/27/2009
+#else
+  // FMZ added  10/27/2009
      if ( kindParam!=NULL &&  atoi(kindParam->text)==8) {
             long  value = atol(digitString->text);
 
@@ -1298,6 +1322,134 @@ void c_action_char_selector(Token_t * type_keyword, Token_t * optional_keyword, 
                type_keyword,type_keyword != NULL ? type_keyword->text : "NULL",
                optional_keyword,optional_keyword != NULL ? optional_keyword->text : "NULL",kindOrLen1,kindOrLen2,hasAsterisk ? "true" : "false");
 
+  // DQ (9/27/2010): New for OFP 0.8.2 is that the c_action_type_param_value() is 
+  // only called for the length type parameter and not for the kind parameter. It
+  // used to be called for each parameter.
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("TOP of R424 list c_action_char_selector()");
+#endif
+
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+  // DQ (9/28/2010): This function used to be called twice for "CHARACTER(kind=1,len=2) C"
+  // In this version R404 is now not called as well (a previous OFP bug).  This changes
+  // what is on the stack and thus how it is processed.
+     if (kindOrLen1 == KindLenParam_none)
+        {
+          if (hasAsterisk == true)
+             {
+            // See test2007_196.f for an example of this case
+            // printf ("In c_action_char_selector(): astTypeParameterStack.empty() = %s \n",astTypeParameterStack.empty() ? "true" : "false");
+               if (astTypeParameterStack.empty() == false)
+                  {
+                    ROSE_ASSERT(astTypeParameterStack.empty() == false);
+                    ROSE_ASSERT(astTypeKindStack.empty() == true);
+                 // astTypeKindStack.push_front(astTypeParameterStack.front());
+                    astExpressionStack.push_front(astTypeParameterStack.front());
+                    astTypeParameterStack.pop_front();
+                  }
+                 else
+                  {
+                 // Not sure what to do here, I think we have to push an Asterisk onto the astExpressionStack 
+                 // and a KindLenParam_len onto either the astTypeParameterStack of the astTypeKindStack.
+                 // printf ("In c_action_char_selector(): R424 astTypeParameterStack.empty() == true), but hasAsterisk == true, so this is character*(*) \n");
+#if 0
+                    SgAsteriskShapeExp* asteriskShapeExp = new SgAsteriskShapeExp();
+                    astExpressionStack.push_front(asteriskShapeExp);
+#endif
+                  }
+             }
+            else
+             {
+               ROSE_ASSERT(astTypeParameterStack.empty() == true);
+               ROSE_ASSERT(astTypeKindStack.empty() == true);
+             }
+        }
+       else
+        {
+       // This is the first parameter (if it is "kind=")
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER < 2
+          if (kindOrLen1 == KindLenParam_kind && kindOrLen2 == KindLenParam_none)
+             {
+            // ROSE_ASSERT(astTypeKindStack.size() == 1);
+
+            // This appears to be a bug in OFP.
+            // R404 was called even though the "kind=" was explicitly specified,
+            // so move the entry put into the KindStack from the astParameterStack
+               ROSE_ASSERT(astTypeParameterStack.empty() == false);
+               ROSE_ASSERT(astTypeKindStack.empty() == true);
+               astTypeKindStack.push_front(astTypeParameterStack.front());
+               astTypeParameterStack.pop_front();
+             }
+
+          if (kindOrLen1 == KindLenParam_len)
+               ROSE_ASSERT(astTypeParameterStack.size() == 1);
+
+          if (kindOrLen2 == KindLenParam_none)
+             {
+            // or
+               ROSE_ASSERT(astTypeParameterStack.size() == 1 || astTypeKindStack.size() == 1);
+             }
+            else
+             {
+            // and
+               if (astTypeKindStack.size() != 1)
+                  {
+                    printf ("astTypeKindStack.size() = %zu \n",astTypeKindStack.size());
+#if 1
+                 // Output debugging information about saved state (stack) information.
+                    outputState("Error in R424 list c_action_char_selector()");
+#endif
+                  }
+               ROSE_ASSERT(astTypeKindStack.size() == 1);
+               ROSE_ASSERT(astTypeParameterStack.size() == 1);
+             }
+#else
+          ROSE_ASSERT(hasAsterisk == false);
+          printf ("In R424: kindOrLen1 = %d kindOrLen2 = %d \n",kindOrLen1,kindOrLen2);
+
+          if (kindOrLen1 == KindLenParam_kind)
+             {
+            // This needs to transfered from the astExpressionStack to the astTypeKindStack
+               ROSE_ASSERT(astExpressionStack.size() == 1);
+               ROSE_ASSERT(astTypeKindStack.empty() == true);
+
+               astTypeKindStack.push_front(astExpressionStack.front());
+               astExpressionStack.pop_front();
+             }
+            else
+             {
+               if (kindOrLen1 == KindLenParam_len)
+                  {
+                 // This should have already been moved to the parameter stack.
+                  }
+                 else
+                  {
+                  }
+             }
+
+          if (kindOrLen2 == KindLenParam_kind)
+             {
+            // This needs to transfered from the astExpressionStack to the astTypeKindStack
+               ROSE_ASSERT(astExpressionStack.size() == 1);
+               ROSE_ASSERT(astTypeKindStack.empty() == true);
+
+               astTypeKindStack.push_front(astExpressionStack.front());
+               astExpressionStack.pop_front();
+             }
+            else
+             {
+               if (kindOrLen2 == KindLenParam_len)
+                  {
+                  }
+                 else
+                  {
+                  }
+             }
+#endif
+        }
+#else
      if (kindOrLen1 == KindLenParam_none)
         {
           if (hasAsterisk == true)
@@ -1356,12 +1508,20 @@ void c_action_char_selector(Token_t * type_keyword, Token_t * optional_keyword, 
             else
              {
             // and
+               if (astTypeKindStack.size() != 1)
+                  {
+                    printf ("astTypeKindStack.size() = %zu \n",astTypeKindStack.size());
+#if 1
+                 // Output debugging information about saved state (stack) information.
+                    outputState("Error in R424 list c_action_char_selector()");
+#endif
+                  }
                ROSE_ASSERT(astTypeKindStack.size() == 1);
                ROSE_ASSERT(astTypeParameterStack.size() == 1);
              }
         }
-
-#if 0
+#endif
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R424 list c_action_char_selector()");
 #endif
@@ -2856,6 +3016,17 @@ void c_action_ac_implied_do()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_implied_do() \n");
 
+  // DQ (9/26/2010): Within the statement: real, dimension (3) :: b = (/(j+i,j=1,3)/)
+  // "(j+i,j=1,3)" is the ac_implied_do expression.
+  // "j+i" is the ac-value-list
+  // "j=1" is the ac-do-variable = scalar-int-exp.
+  // and "3" is another scalar-int-exp (interpreted as the upper bound)
+  // A current problem is that OFP is not providing the ac-do-variable (this is getting fixed).
+  // This similar problem happens for the io-implied-do rule (both are being fixed uniformally in OFP).
+  // When this if fixed in OFP:
+  //    1) What is now the doLoopVarExp, will be the first element of the object_list.
+  //    2) We can remove the doLoopVarExp from the IR and fix the unparser.
+
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R470 list c_action_ac_implied_do()");
@@ -2922,13 +3093,16 @@ void c_action_ac_implied_do()
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExpression* loopVar = astExpressionStack.front();
      astExpressionStack.pop_front();
-//     setSourcePosition(loopVar);
+  // setSourcePosition(loopVar);
 
      SgAssignOp* assignment = new SgAssignOp(loopVar,lowerBound,NULL);
      setSourcePosition(assignment);
 #endif
 
 #if 1
+  // DQ (9/26/2010): Note that this is where the object_list is used, to hold the doLoopVarExp.
+  // This support will be implemented when the ac-do-variable is available in OFP (being fixed).
+
   // DQ (5/4/2008): Moving back to using astExpressionStack from astInitializerStack
   // The second entry in the astExpressionStack should be the SgVarRefExp
      ROSE_ASSERT(astExpressionStack.empty() == false);
@@ -2936,9 +3110,10 @@ void c_action_ac_implied_do()
      printf ("What kind of expression is this: astExpressionStack.front() = %s \n",astExpressionStack.front()->class_name().c_str());
 
   // DQ (9/15/2010): Added support for more general form of implied do loop.
-     SgVarRefExp* doLoopVar = isSgVarRefExp(astExpressionStack.front());
+  // SgVarRefExp* doLoopVar = isSgVarRefExp(astExpressionStack.front());
+     SgExpression* doLoopVarExp = isSgExpression(astExpressionStack.front());
   // astExpressionStack.pop_front();
-     if (doLoopVar != NULL)
+     if (doLoopVarExp != NULL)
         {
           astExpressionStack.pop_front();
         }
@@ -2950,9 +3125,9 @@ void c_action_ac_implied_do()
           if (functionExpression != NULL)
              {
             // This is the case of rtest2010_49.f90
-            // Dig out the variable reference used for the doLoopVar
-               doLoopVar = NULL;
-               ROSE_ASSERT(doLoopVar != NULL);
+            // Dig out the variable reference used for the doLoopVarExp
+               doLoopVarExp = NULL;
+               ROSE_ASSERT(doLoopVarExp != NULL);
              }
             else
              {
@@ -2960,8 +3135,8 @@ void c_action_ac_implied_do()
                ROSE_ASSERT(false);
              }
         }
-     ROSE_ASSERT(doLoopVar != NULL);
-  // setSourcePosition(doLoopVar);
+     ROSE_ASSERT(doLoopVarExp != NULL);
+  // setSourcePosition(doLoopVarExp);
 #else
   // However, we want to treat index values (base and bound) for implcit do-loop 
   // as expressions on the astExpressionStack, so don't use this code.
@@ -2984,26 +3159,43 @@ void c_action_ac_implied_do()
   // SgExpression* variableReference = astExpressionStack.front();
   // astExpressionStack.pop_front();
 
-     ROSE_ASSERT(doLoopVar->get_symbol() != NULL);
+  // DQ (9/22/2010): I think this code might be wrong! Unclear when object list is required. See test2010_49.f90.
+#if 0
+     ROSE_ASSERT(doLoopVarExp->get_symbol() != NULL);
 
   // Build another reference for the "i,i=0,10,2" expression
-     SgVarRefExp* variableReference = new SgVarRefExp(doLoopVar->get_symbol());
+     SgVarRefExp* variableReference = new SgVarRefExp(doLoopVarExp->get_symbol());
      setSourcePosition(variableReference);
      objectList->append_expression(variableReference);
+#else
+  // SgVarRefExp* variableReference = NULL;
+     SgVarRefExp* variableReference = isSgVarRefExp(doLoopVarExp);
+     printf ("doLoopVarExp = %p = %s variableReference = %p \n",doLoopVarExp,doLoopVarExp->class_name().c_str(),variableReference);
+     if (variableReference != NULL)
+        {
+          objectList->append_expression(variableReference);
+        }
+       else
+        {
+          objectList->append_expression(doLoopVarExp);
+        }
+#endif
 
   // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
   // SgImpliedDo* impliedDo = new SgImpliedDo(variableReference,doLoopVar,lowerBound,upperBound,increment,objectList);
   // SgImpliedDo* impliedDo = new SgImpliedDo(variableReference,doLoopVar,lowerBound,upperBound,increment,objectList);
-     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
+     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVarExp,lowerBound,upperBound,increment,objectList);
      setSourcePosition(impliedDo);
 
      objectList->set_parent(impliedDo);
-     doLoopVar->set_parent(impliedDo);
+     doLoopVarExp->set_parent(impliedDo);
      upperBound->set_parent(impliedDo);
      lowerBound->set_parent(impliedDo);
      increment->set_parent(impliedDo);
 
-     variableReference->set_parent(impliedDo);
+  // DQ (9/22/2010): Handle case when this is NULL.
+     if (variableReference != NULL)
+          variableReference->set_parent(impliedDo);
 
   // DQ (4/21/2008): We want to use the astInitializerStack for initialization purposes, actually the R469 ac-value
   // will be called and it should transfer the implicit do-loop from the astExpressionStack to the 
@@ -6600,6 +6792,7 @@ void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
 
   // To be referenced in the common block it should have been defined already, but this is not required
   // ROSE_ASSERT(variableSymbol != NULL);
+  // printf ("In c_action_common_block_object(): variableSymbol = %p \n",variableSymbol);
      if (variableSymbol != NULL)
         {
           SgVarRefExp* variableReference = new SgVarRefExp(variableSymbol);
@@ -6623,6 +6816,7 @@ void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
        else
         {
        // The variable has not previously been declared.
+       // OR it maybe declared at some point in the future (see test2010_51.90).
 
        // Note that the second time we look for it we will get a valid symbol.
           variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,getTopOfScopeStack());
@@ -6638,7 +6832,7 @@ void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
      ROSE_ASSERT(constructedReference != NULL);
      astExpressionStack.push_front(constructedReference);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R558 c_action_common_block_object()");
 #endif
@@ -8458,10 +8652,21 @@ void c_action_mult_operand__mult_op(Token_t * multOp)
  * @param addOp Optional add_op for this operand
  * @param numAddOps The number of optional add_ops
  */
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+void c_action_add_operand(int numAddOps)
+#else
 void c_action_add_operand(Token_t * addOp, int numAddOps)
+#endif
    {
   // I am unclear about the purpose of this rule!
 
+  // DQ (9/26/2010): Added support for OFP version 0.8.2
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+  // printf ("WARNING: In OFP versions 0.8.2 and greater it is not clear what to do in c_action_add_operand() \n");
+
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_add_operand(): numAddOps = %d \n",numAddOps);
+#else
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_add_operand(): addOp = %p = %s numAddOps = %d \n",addOp,addOp != NULL ? addOp->text : "NULL",numAddOps);
 
@@ -8508,9 +8713,74 @@ void c_action_add_operand(Token_t * addOp, int numAddOps)
        // Save the expression on the stack
           astExpressionStack.push_front(expr);
         }
+#endif
 
   // ROSE_ASSERT(addOp != NULL);
    }
+
+/** R705 addition:
+ * This rule has been added so the unary plus/minus has the correct
+ * precedence when actions are fired.
+ *   :   (add_op)? mult_operand
+ *  
+ * @param addOp Optinoal add_op for this operand
+ */
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+void c_action_signed_operand(Token_t *addOp)
+   {
+  // DQ (9/26/2010): Moved the support for selecting unary +/- to fix Rice fortran bug (test2010_??.f90).
+
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_signed_operand(): addOp = %p = %s \n",addOp,addOp != NULL ? addOp->text : "NULL");
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R705 c_action_signed_operand()");
+#endif
+
+     if (addOp != NULL)
+        {
+       // printf ("In c_action_signed_operand(): this might be a unary minus! \n");
+
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* operand = astExpressionStack.front();
+          astExpressionStack.pop_front();
+
+          ROSE_ASSERT(addOp != NULL);
+       // printf ("addOp->text[0] = %c \n",addOp->text[0]);
+
+          SgUnaryOp* expr = NULL;
+          if (addOp->text[0] == '+')
+             {
+               expr = new SgUnaryAddOp(operand,NULL);
+             }
+            else
+             {
+               if (addOp->text[0] == '-')
+                  {
+                    expr = new SgMinusOp(operand,NULL);
+                  }
+                 else
+                  {
+                    printf ("Error: addOp->text not + or - addOp->text = %s \n",addOp->text);
+                    ROSE_ASSERT(false);
+                  }
+             }
+
+          ROSE_ASSERT(expr != NULL);
+          setSourcePosition(expr,addOp);
+
+          ROSE_ASSERT(addOp != NULL);
+          setOperatorSourcePosition(expr,addOp);
+
+       // Save the expression on the stack
+          astExpressionStack.push_front(expr);
+        }
+
+  // printf ("ERROR: Unimplemented OFP 0.8.2 function \n");
+  // ROSE_ASSERT(false);
+   }
+#endif
 
 void c_action_add_operand__add_op(Token_t * addOp)
    {
@@ -11131,7 +11401,7 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
           printf ("   eos         = %p = %s \n",eos,(eos != NULL) ? eos->text : "NULL");
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R827 c_action_do_stmt()");
 #endif
@@ -11148,7 +11418,11 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
         {
        // We have a "DO I=1,100" style loop
 
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+          if (astExpressionStack.size() == 3)
+#else
           if (astExpressionStack.size() == 4)
+#endif
              {
             // There is a stride expression on the top of the stack
                stride = astExpressionStack.front();
@@ -11160,7 +11434,11 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
             // setSourcePosition(stride);
              }
 
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+          if (astExpressionStack.size() == 2)
+#else
           if (astExpressionStack.size() == 3)
+#endif
              {
             // There is a ending index, starting, index, and the index variable on the stack
                endingIndex = astExpressionStack.front();
@@ -11169,12 +11447,33 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
                SgExpression* startingIndex = astExpressionStack.front();
                astExpressionStack.pop_front();
 
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+               Token_t* variableToken = astNameStack.front();
+               ROSE_ASSERT(astNameStack.empty() == false);
+               SgName variableName = variableToken->text;
+            // printf ("Generating reference for index variable name = %s \n",variableName.str());
+               astNameStack.pop_front();
+               SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName, astScopeStack.front());
+            // ROSE_ASSERT(variableSymbol != NULL);
+               if (variableSymbol == NULL)
+                  {
+                    printf ("Rerunning trace_back_through_parent_scopes_lookup_variable_symbol() \n");
+                    variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName, astScopeStack.front());
+                  }
+               ROSE_ASSERT(variableSymbol != NULL);
+               SgExpression* index = new SgVarRefExp(variableSymbol);
+               setSourcePosition(index,variableToken);
+#else
+               ROSE_ASSERT(astExpressionStack.empty() == false);
                SgExpression* index = astExpressionStack.front();
                astExpressionStack.pop_front();
-
-            // The index expression is the "I=1" part (which is built so that we can hand it to the SgFortranDo constructor
+#endif
+            // The index expression is the "I=1" part (which is built so that we can hand it to the SgFortranDo constructor)
                indexExpression = new SgAssignOp(index,startingIndex,NULL);
 
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+            // index->set_parent(indexExpression);
+#endif
             // Note that the "=" does not exist as a token in OFP
             // setSourcePosition(indexExpression);
                ROSE_ASSERT(doKeyword != NULL);
@@ -11185,8 +11484,19 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
              }
             else
              {
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
                if (astExpressionStack.size() == 1)
+#else
+               if (astExpressionStack.size() == 1)
+#endif
                   {
+#if 0
+                 // Output debugging information about saved state (stack) information.
+                    outputState("Error in R827 c_action_do_stmt()");
+                    printf ("Error: astExpressionStack.size() incorrect for do_stmt astExpressionStack.size() = %zu \n",astExpressionStack.size());
+                    ROSE_ASSERT(false);
+#endif
+
                  // This is the case of a "DO WHILE" loop, with the condition on the astExpressionStack...
                     buildWhileLoop = true;
                     predicate = astExpressionStack.front();
@@ -11194,11 +11504,19 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
                   }
                  else
                   {
+#if 1
+                 // Output debugging information about saved state (stack) information.
+                    outputState("Error in R827 c_action_do_stmt()");
+#endif
                     printf ("Error: astExpressionStack.size() incorrect for do_stmt astExpressionStack.size() = %zu \n",astExpressionStack.size());
                     ROSE_ASSERT(false);
                   }
              }
 
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("Middle of R827 c_action_do_stmt()");
+#endif
        // DQ (11/16/2007): I think that stack should be empty now!
           ROSE_ASSERT(astExpressionStack.empty() == true);
         }
@@ -11392,14 +11710,28 @@ void c_action_loop_control(Token_t * whileKeyword, ofp_bool hasOptExpr)
 /**
  * R831
  * do_variable
+ * do_variable is scalar-int-variable-name
  *
  */
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+void c_action_do_variable(Token_t *id)
+   {
+  // This identifies the do loop index variable, but at this point it is on the astExpressionStack already.
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        printf ("In c_action_do_variable() id = %s \n",(id != NULL) ? id->text : "NULL");
+
+  // DQ (9/27/2010): Push this so that we can have it on the stack and determine the name of the 
+  // variable in the implied-do-control loop. This is also used in the c_action_do_stmt.
+     astNameStack.push_front(id);
+   }
+#else
 void c_action_do_variable()
    {
   // This identifies the do loop index variable, but at this point it is on the astExpressionStack already.
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_do_variable() \n");
    }
+#endif
 
 /**
  * R833
@@ -13605,10 +13937,18 @@ void c_action_io_implied_do_object()
  * io_implied_do_control
  *
  */
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+void c_action_io_implied_do_control(ofp_bool xxx)
+#else
 void c_action_io_implied_do_control()
+#endif
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
+        printf ("In c_action_io_implied_do_control() xxx = %s \n",xxx ? "true" : "false");
+#else
           printf ("In c_action_io_implied_do_control() \n");
+#endif
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -13636,6 +13976,10 @@ void c_action_io_implied_do_control()
 
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgVarRefExp* doLoopVar = isSgVarRefExp(astExpressionStack.front());
+
+  // DQ (9/22/2010): I think we can assert this!
+     ROSE_ASSERT(doLoopVar != NULL);
+
      astExpressionStack.pop_front();
   // setSourcePosition(doLoopVar);
 
@@ -15037,8 +15381,8 @@ void c_action_end_program_stmt(Token_t *label, Token_t *endKeyword, Token_t *pro
   // ROSE_ASSERT(functionDeclaration->get_name().getString() == id->get_lexeme_string());
      if (id != NULL)
         {
-		  //printf("%s == %s\n", programDeclaration->get_name().getString().c_str(), id->text);
-          ROSE_ASSERT(programDeclaration->get_name().getString() == string(id->text));
+		 // printf("%s == %s\n", programDeclaration->get_name().getString().c_str(), id->text);
+       // ROSE_ASSERT(programDeclaration->get_name().getString() == string(id->text));
           programDeclaration->set_named_in_end_statement(true);
         }
 #endif
@@ -15118,6 +15462,10 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
           printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 
 #if 1
+     printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
+#endif
+
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1106 c_action_end_module_stmt()");
 #endif
@@ -15131,13 +15479,21 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
   // printf ("moduleScope = %p = %s \n",moduleScope,moduleScope->class_name().c_str());
 
   // FMZ: 05/30/2008  add the subtree root to the map
-     string  fileName = moduleStatement->get_name();
+     string fileName = moduleStatement->get_name();
+
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("Creating a module file %s using module name = %s \n",StringUtility::convertToLowerCase(fileName).c_str(),fileName.c_str());
 
   // DQ (11/12/2008): Modified to force filename to lower case.
-  // printf ("Creating a module file %s using module name = %s \n",StringUtility::convertToLowerCase(fileName).c_str(),fileName.c_str());
      fileName = StringUtility::convertToLowerCase(fileName);
 
+  // DQ (10/1/2010): This has been moved to FortranModuleInfo::getModule() as a work around for the c_action_end_module_stmt()
+  // rule not being called and thus this function not being visited for the first module in a chain of modules containing use 
+  // statements. See the test_forcing.F90 example test code.
+#if 0
+     printf (" This may be redundant now the we address c_action_end_module_stmt not being called for OFP 0.8.2 fileName = %s \n",fileName.c_str());
      FortranModuleInfo::addMapping(fileName,moduleStatement);
+#endif
 
      setStatementNumericLabel(moduleStatement,label);
 
@@ -15416,7 +15772,7 @@ void c_action_module_subprogram(ofp_bool hasPrefix)
 // void c_action_use_stmt(Token_t * label, ofp_bool hasModuleNature, ofp_bool hasRenameList, ofp_bool hasOnly)
 void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t *onlyKeyword, Token_t *eos, ofp_bool hasModuleNature, ofp_bool hasRenameList, ofp_bool hasOnly)
    {
-#if 0
+#if 1
   // DQ (9/14/2010): I want to track the calling of use statements for debugging
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
 #endif
@@ -15468,11 +15824,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
        // support in place for reading the *.mod files of any previously declared modules 
        // from other translation units.
 
-       // FMZ:(5/28/2008) importing the module declaration from modName.rmod file
-       // save the global variable
-          printf ("Importing the module declaration from %s.rmod file \n",name.str());
-        
-       // FMZ(10/22008) in the new version (rice branch) SgFile*=>SgSourceFile
+       // FMZ (5/28/2008) importing the module declaration from modName.rmod file save the global variable
+       // printf ("Importing the module declaration from %s.rmod file \n",name.str());
+
+       // FMZ (10/22008) in the new version (rice branch) SgFile*=>SgSourceFile
        // SgFile* savedFilePointer = OpenFortranParser_globalFilePointer;
           SgSourceFile* savedFilePointer = OpenFortranParser_globalFilePointer;
         
@@ -15485,6 +15840,9 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
        // Fortran is case insensitive so this maps any module name to 
        // a unique name module file.
           modName = StringUtility::convertToLowerCase(modName);
+
+          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+               printf ("Calling FortranModuleInfo::getModule(modName) for modName = %s \n",modName.c_str());
 
        // This should open the appropriate *.rmod file using ROSE and read it.
        // DQ (1/28/2009): Currently there is a bug which causes a Fortran include
@@ -15552,7 +15910,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
           ROSE_ASSERT(classDefinition != NULL);
 
        // if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          if ( SgProject::get_verbose() > -1 )
+          if ( SgProject::get_verbose() > 2 )
                printf ("Case hasOnly == false: astNodeStack.size() = %zu \n",astNodeStack.size());
 
           if (astNodeStack.empty() == true)
@@ -15776,7 +16134,8 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 #endif
         }
 
-#if 1
+#if 0
+  // Debugging output for tracking down exponential grown of the number of alias symbols in symbol tables (introduced as part of use statement support).
      int    line       = useStatement->get_file_info()->get_line();
      string filename   = useStatement->get_file_info()->get_filename();
      string moduleName = "empty default name";
@@ -18220,6 +18579,7 @@ void c_action_rice_co_with_team_stmt(Token_t *carg_0, Token_t *carg_1){};
 void c_action_rice_end_with_team_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2){};
 #endif
 #endif
+
 
 #ifdef __cplusplus
 } /* End extern C. */

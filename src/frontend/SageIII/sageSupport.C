@@ -5293,7 +5293,13 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              {
             // For now let's consider f90 to be syntax checked under f95 rules (since gfortran does not support a f90 specific mode)
                if (relaxSyntaxCheckInputCode == false)
-                    fortranCommandLine.push_back("-std=f95");
+                  {
+                 // DQ (9/24/2010): Relaxed syntax checking would allow "REAL*8" syntax with F90 if we used "-std=legacy" instead of "-std=f95".
+                 // We will implement a strict syntax checking option with a default of false so that we can by default support codes using
+                 // the "REAL*8" syntax with F90 (which appear to be common).
+                 // fortranCommandLine.push_back("-std=f95");
+                    fortranCommandLine.push_back("-std=legacy");
+                  }
 
             // DQ (5/20/2008)
             // fortranCommandLine.push_back("-ffree-line-length-none");
@@ -5305,7 +5311,12 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                   {
                  // fortranCommandLine.push_back("-std=f2003");
                     if (relaxSyntaxCheckInputCode == false)
+                       {
+                      // DQ (9/24/2010): We need to consider making a strict syntax checking option and allowing this to be relaxed 
+                      // by default.  It is however not clear that this is required for F2003 code where it does appear to be required 
+                      // for F90 code.  So this needs to be tested, see comments above relative to use of "-std=legacy".
                          fortranCommandLine.push_back("-std=f2003");
+                       }
 
                  // DQ (5/20/2008)
                  // fortranCommandLine.push_back("-ffree-line-length-none");
