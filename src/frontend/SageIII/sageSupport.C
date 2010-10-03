@@ -606,6 +606,17 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_wave(true);
         }
 
+  // DQ (10/3/2010): Adding support for CPP directives to be optionally a part of the AST as declarations 
+  // in global scope instead of handled similar to comments.
+     set_addCppDirectivesToAST(false);
+     ROSE_ASSERT (get_addCppDirectivesToAST() == false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","addCppDirectivesToAST",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In SgProject: addCppDirectivesToAST mode ON \n");
+          set_addCppDirectivesToAST(true);
+        }
+
      
   //
   // prelink option
@@ -2126,6 +2137,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (2/5/2009): Remove use of "-rose:binary" to prevent it being passed on.
      optionCount = sla(argv, "-rose:", "($)", "(binary|binary_only)",1);
+
+  // DQ (10/3/2010): Adding support for having CPP directives explicitly in the AST (as IR nodes instead of handled similar to comments).
+     optionCount = sla(argv, "-rose:", "($)^", "(addCppDirectivesToAST)",filename,1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
@@ -4819,17 +4833,18 @@ SgFile::callFrontEnd()
 #if 0
                this->get_project()->display("SgProject::callFrontEnd()");
                display("SgFile::callFrontEnd()");
-               printf ("get_C_only()              = %s \n",(get_C_only()       == true) ? "true" : "false");
-               printf ("get_C99_only()            = %s \n",(get_C99_only()     == true) ? "true" : "false");
-               printf ("get_Cxx_only()            = %s \n",(get_Cxx_only()     == true) ? "true" : "false");
-               printf ("get_Fortran_only()        = %s \n",(get_Fortran_only() == true) ? "true" : "false");
-               printf ("get_F77_only()            = %s \n",(get_F77_only()     == true) ? "true" : "false");
-               printf ("get_F90_only()            = %s \n",(get_F90_only()     == true) ? "true" : "false");
-               printf ("get_F95_only()            = %s \n",(get_F95_only()     == true) ? "true" : "false");
-               printf ("get_F2003_only()          = %s \n",(get_F2003_only()   == true) ? "true" : "false");
-               printf ("get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only()   == true) ? "true" : "false");
-               printf ("get_PHP_only()            = %s \n",(get_PHP_only()     == true) ? "true" : "false");
-               printf ("get_binary_only()         = %s \n",(get_binary_only()  == true) ? "true" : "false");
+               printf ("get_C_only()                = %s \n",(get_C_only()       == true) ? "true" : "false");
+               printf ("get_C99_only()              = %s \n",(get_C99_only()     == true) ? "true" : "false");
+               printf ("get_Cxx_only()              = %s \n",(get_Cxx_only()     == true) ? "true" : "false");
+               printf ("get_Fortran_only()          = %s \n",(get_Fortran_only() == true) ? "true" : "false");
+               printf ("get_F77_only()              = %s \n",(get_F77_only()     == true) ? "true" : "false");
+               printf ("get_F90_only()              = %s \n",(get_F90_only()     == true) ? "true" : "false");
+               printf ("get_F95_only()              = %s \n",(get_F95_only()     == true) ? "true" : "false");
+               printf ("get_F2003_only()            = %s \n",(get_F2003_only()   == true) ? "true" : "false");
+               printf ("get_CoArrayFortran_only()   = %s \n",(get_CoArrayFortran_only()   == true) ? "true" : "false");
+               printf ("get_PHP_only()              = %s \n",(get_PHP_only()     == true) ? "true" : "false");
+               printf ("get_binary_only()           = %s \n",(get_binary_only()  == true) ? "true" : "false");
+               printf ("get_addCppDirectivesToAST() = %s \n",(get_addCppDirectivesToAST()  == true) ? "true" : "false");
 
             // DQ (18/2008): We now explicit mark files that require C preprocessing...
                printf ("get_requires_C_preprocessor() = %s \n",(get_requires_C_preprocessor() == true) ? "true" : "false");

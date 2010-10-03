@@ -191,6 +191,16 @@ Grammar::setUpTypes ()
   //     Type.setDataPrototype("SgTypePtrList","typedefs","",
   //		   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
 #endif
+
+#if 1
+  // DQ (10/3/2010): Note that without the NO_DELETE the Fortran jacobi.f file will sometimes fail.
+  // DQ (10/2/10): This is the better place for the Fortran kind mechanism (only meaningful for Fortran)
+  // DQ (9/17/2007): Support for Fortran kind mechanism
+  // Type.setDataPrototype("SgExpression*","type_kind","= NULL", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
+     Type.setDataPrototype("SgExpression*","type_kind","= NULL",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+#endif
+     
 #if 1
   // DQ (1/24/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.  Beata appears to use attributes
@@ -201,14 +211,6 @@ Grammar::setUpTypes ()
      Type.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 #endif
 
-#if 1
-  // DQ (10/3/2010): Note that without the NO_DELETE the Fortran jacobi.f file will sometimes fail.
-  // DQ (10/2/10): This is the better place for the Fortran kind mechanism (only meaningful for Fortran)
-  // DQ (9/17/2007): Support for Fortran kind mechanism
-  // Type.setDataPrototype("SgExpression*","type_kind","= NULL", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
-     Type.setDataPrototype("SgExpression*","type_kind","= NULL", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
-#endif
-     
 #ifdef BUILD_X_VERSION_TERMINALS
 
 #error "DEAD CODE"

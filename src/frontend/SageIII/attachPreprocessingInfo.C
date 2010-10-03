@@ -66,7 +66,7 @@ findNodes(SgNode* astNode)
 
 // AS (011306) Support for Wave preprocessor
 void
-attachPreprocessingInfo(SgSourceFile *sageFilePtr,  std::map<std::string,ROSEAttributesList*>* attrMap)
+attachPreprocessingInfo(SgSourceFile *sageFilePtr, std::map<std::string,ROSEAttributesList*>* attrMap)
    {
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Comment Processing (using Wave, inner part):");
@@ -599,46 +599,45 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 #endif
 
 #ifndef  CXX_IS_ROSE_CODE_GENERATION
-     // DQ (7/6/2005): Introduce tracking of performance of ROSE.
+  // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Comment and CPP Directive Processing (not using Wave):");
 
-     // Dummy attribute (nothing is done here since this is an empty class)
+  // Dummy attribute (nothing is done here since this is an empty class)
      AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh;
 
-     // DQ (4/19/2006): Now supporting either the collection or ALL comments and CPP directives 
-     // into header file AST nodes or just the collection of the comments and CPP directives 
-     // into the source file.
-     // printf ("sageFilePtr->get_collectAllCommentsAndDirectives() = %s \n",sageFilePtr->get_collectAllCommentsAndDirectives() ? "true" : "false");
+  // DQ (4/19/2006): Now supporting either the collection or ALL comments and CPP directives 
+  // into header file AST nodes or just the collection of the comments and CPP directives 
+  // into the source file.
+  // printf ("sageFilePtr->get_collectAllCommentsAndDirectives() = %s \n",sageFilePtr->get_collectAllCommentsAndDirectives() ? "true" : "false");
 
      bool processAllFiles = sageFilePtr->get_collectAllCommentsAndDirectives();
      AttachPreprocessingInfoTreeTrav tt(sageFilePtr,processAllFiles);
 
-     //When using Wave get all the preprocessing dirctives for all the files.
+  // When using Wave get all the preprocessing dirctives for all the files.
      if ( sageFilePtr->get_wave() == true )
      {
        attachPreprocessingInfoUsingWave(sageFilePtr, tt.get_attributeMapForAllFiles() );
 
      }
 
-     // DQ (12/19/2008): Added support for Fortran CPP files.
-     // If this is a Fortran file requiring CPP processing then we want to call traverse, instead of 
-     // traverseWithinFile, so that the whole AST will be processed (which is in a SgSourceFile 
-     // using a name without the "_preprocessed" suffix, though the statements in the file are 
-     // marked with a source position from the filename with the "_preprocessed" suffix).
+  // DQ (12/19/2008): Added support for Fortran CPP files.
+  // If this is a Fortran file requiring CPP processing then we want to call traverse, instead of 
+  // traverseWithinFile, so that the whole AST will be processed (which is in a SgSourceFile 
+  // using a name without the "_preprocessed" suffix, though the statements in the file are 
+  // marked with a source position from the filename with the "_preprocessed" suffix).
      bool requiresCPP = sageFilePtr->get_requires_C_preprocessor();
 
      if (processAllFiles == true || requiresCPP == true)
-     {
-       tt.traverse(sageFilePtr, inh);
-     }
-     else
-     {
-       tt.traverseWithinFile(sageFilePtr,inh);
-     }
+        {
+          tt.traverse(sageFilePtr, inh);
+        }
+       else
+        {
+          tt.traverseWithinFile(sageFilePtr,inh);
+        }
 
-// endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
+  // endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
 #endif
-
 
 #if 0
      // This is pointless since at this point the last step of the traversla has reset the lists (state held in tt).
