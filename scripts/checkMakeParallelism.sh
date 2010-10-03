@@ -39,4 +39,4 @@ sed -i "0,/Making all in src/s//Making all in (src\/3rdPartyLibraries\/libharu-x
 sed -i "0,/Making all in src/s//Making all in (src\/roseExtensions\/roseHPCToolkit's) src/" filtered_example_make.out
 
 # Run grep with -n (line numbering) to generate input for associated perl script.
-grep -n "Making all in " filtered_example_make.out | ./checkMakeParallelism.pl
+grep -n "Making all in " filtered_example_make.out | ../scripts/checkMakeParallelism.pl
