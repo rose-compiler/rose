@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # This script runs on the output of "make" within ROSE and 
 # filters the output of make and then computes the number of
 # files that were compiled in each directory as a measure of

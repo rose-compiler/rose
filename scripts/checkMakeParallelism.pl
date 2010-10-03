@@ -60,7 +60,7 @@ sub numerically { int $a <=> int $b }
 # @sortedList = reverse sort numerically @newlineArray;
 @sortedList = sort numerically @newlineArray;
 
-print "\n\n";
+print "\n\n\n";
 print "*********************************************************** \n";
 print "***********  Least Parallel Build Directories  ************ \n";
 print "**** (values represent the number of files to compile) **** \n";
