@@ -299,6 +299,10 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
    echo "Computing compile time spew"
    grep -n "Making all in " filtered_make_output.txt | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
    echo "Done with compile time spew"
+
+ # DQ (10/2/2010): Added test for parallelism of build system.
+   echo "Measure Build System Parallelism"
+   ../scripts/checkMakeParallelism.sh make_output.txt
 else
    echo "Test compile step"
 
