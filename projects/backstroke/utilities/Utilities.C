@@ -4,6 +4,7 @@
 #include "rose.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/range/algorithm.hpp>
 
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -507,22 +508,25 @@ void backstroke_util::removeUselessBraces(SgNode* root)
     foreach (SgBasicBlock* block, block_list)
     {
         // Make sure this block is not the body of if, while, etc.
-        if (!isSgBasicBlock(block->get_parent()))
+        if (isSgBasicBlock(block->get_parent()) == NULL)
+		{
+			if (block->get_statements().size() == 1)
+			{
+				SgBasicBlock* child_block = isSgBasicBlock(block->get_statements()[0]);
+				if (child_block)
+				{
+					foreach(SgStatement* stmt, child_block->get_statements())
+						appendStatement(copyStatement(stmt), block);
+					replaceStatement(child_block, buildNullStatement(), true);
+				}
+			}
             continue;
+		}
 
         // If there is no declaration in a basic block and this basic block 
         // belongs to another basic block, the braces can be removed.
-        bool has_decl = false;
-        foreach (SgStatement* stmt, block->get_statements())
-        {
-            if (isSgDeclarationStatement(stmt))
-            {
-                has_decl = true;
-                break;
-            }
-        }
-
-        if (!has_decl)
+		if (block->get_statements().end() == boost::find_if(block->get_statements(),
+			static_cast<SgDeclarationStatement*(&)(SgNode*)>(isSgDeclarationStatement)))
         {
             foreach (SgStatement* stmt, block->get_statements())
                 insertStatement(block, copyStatement(stmt));

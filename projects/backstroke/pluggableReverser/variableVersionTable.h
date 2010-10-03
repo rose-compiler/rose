@@ -58,9 +58,8 @@ public:
 	//! statement containing the given variable is reversed successfully. 
 	void reverseVersion(SgNode* node);
 
-	//! Given a set of vars and a statement, reverse versions of those vars to theirs versions at the start of
-	//! the statement.
-	void reverseVersionAtStatementStart(const std::vector<SgExpression*>& vars, SgStatement* stmt);
+	//! Reverse versions of those vars to theirs versions at the start of the statement.
+	void reverseVersionAtStatementStart(SgStatement* stmt);
 
 	/** Remove a variable from the current table. */
 	void removeVariable(SgNode* node)
