@@ -3184,7 +3184,9 @@ void c_action_ac_implied_do()
   // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
   // SgImpliedDo* impliedDo = new SgImpliedDo(variableReference,doLoopVar,lowerBound,upperBound,increment,objectList);
   // SgImpliedDo* impliedDo = new SgImpliedDo(variableReference,doLoopVar,lowerBound,upperBound,increment,objectList);
-     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVarExp,lowerBound,upperBound,increment,objectList);
+     SgScopeStatement* implied_do_scope = NULL; // new SgBasicBlock();
+  // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVarExp,lowerBound,upperBound,increment,objectList);
+     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVarExp,lowerBound,upperBound,increment,objectList,implied_do_scope);
      setSourcePosition(impliedDo);
 
      objectList->set_parent(impliedDo);
@@ -5253,7 +5255,9 @@ void c_action_data_implied_do(Token_t *id, ofp_bool hasThirdExpr)
 
      setSourcePosition(objectList);
 
-     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
+     SgScopeStatement* implied_do_scope = NULL; // new SgBasicBlock();
+  // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
+     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList,implied_do_scope);
      setSourcePosition(impliedDo);
 
      objectList->set_parent(impliedDo);
@@ -13870,9 +13874,11 @@ void c_action_io_implied_do()
 
   // objectList->append_expression(variableReference);
 
+     SgScopeStatement* implied_do_scope = NULL; // new SgBasicBlock();
   // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,assignment,upperBound,increment,objectList);
   // SgImpliedDo* impliedDo = new SgImpliedDo(variableReference,doLoopVar,lowerBound,upperBound,increment,objectList);
-     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
+  // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
+     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList,implied_do_scope);
      setSourcePosition(impliedDo);
 
      objectList->set_parent(impliedDo);
