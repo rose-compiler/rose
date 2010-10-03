@@ -473,7 +473,7 @@ void backstroke_util::printCompilerError(SgNode* badNode, const char * message)
 // Returns if an expression modifies any value.
 bool backstroke_util::isModifyingExpression(SgExpression* exp)
 {
-    if (isAssignmentOp(exp))
+    if (SageInterface::isAssignmentStatement(exp))
         return true;
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
         return true;
@@ -498,21 +498,6 @@ bool backstroke_util::containsModifyingExpression(SgExpression* exp)
             return true;
     }
     return false;
-}
-
-bool backstroke_util::isAssignmentOp(SgNode* e)
-{
-    return isSgAssignOp(e) ||
-        isSgPlusAssignOp(e) ||
-        isSgMinusAssignOp(e) ||
-        isSgMultAssignOp(e) ||
-        isSgDivAssignOp(e) ||
-        isSgModAssignOp(e) ||
-        isSgIorAssignOp(e) ||
-        isSgAndAssignOp(e) ||
-        isSgXorAssignOp(e) ||
-        isSgLshiftAssignOp(e) ||
-        isSgRshiftAssignOp(e);
 }
 
 void backstroke_util::removeUselessBraces(SgNode* root)

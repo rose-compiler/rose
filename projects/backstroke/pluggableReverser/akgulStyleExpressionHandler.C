@@ -13,7 +13,7 @@ vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* exp
 	VariableRenaming::NumNodeRenameEntry reachingDefs;
 
 	//First, find out what variable was destroyed and what are its reaching definitions
-	if (backstroke_util::isAssignmentOp(expression))
+	if (SageInterface::isAssignmentStatement(expression))
 	{
 		SgBinaryOp* assignOp = isSgBinaryOp(expression);
 		ROSE_ASSERT(assignOp != NULL && "All assignments should be binary ops");

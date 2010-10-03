@@ -3,16 +3,14 @@
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "pluggableReverser/eventHandler.h"
 
-using namespace SageInterface;
 using namespace SageBuilder;
-using namespace backstroke_util;
 
 /******************************************************************************
  ******** Definition of member functions of NullExpressionHandler  ***********/
 
 ExpressionReversal NullExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
-	return ExpressionReversal(copyExpression(exp), NULL);
+	return ExpressionReversal(SageInterface::copyExpression(exp), NULL);
 }
 
 vector<EvaluationResult> NullExpressionHandler::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
@@ -81,10 +79,10 @@ ExpressionReversal StoreAndRestoreExpressionHandler::generateReverseAST(SgExpres
 	ROSE_ASSERT(var_to_save);
 
 	SgExpression* fwd_exp = buildBinaryExpression<SgCommaOpExp>(
-			pushVal(copyExpression(var_to_save)),
-			copyExpression(exp));
+			pushVal(SageInterface::copyExpression(var_to_save)),
+			SageInterface::copyExpression(exp));
 	SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-			copyExpression(var_to_save),
+			SageInterface::copyExpression(var_to_save),
 			popVal(var_to_save->get_type()));
 
 	return ExpressionReversal(fwd_exp, rvs_exp);
@@ -96,7 +94,7 @@ vector<EvaluationResult> StoreAndRestoreExpressionHandler::evaluate(SgExpression
 
 	if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
 		var_to_save = isSgUnaryOp(exp)->get_operand();
-	else if (isAssignmentOp(exp))
+	else if (SageInterface::isAssignmentStatement(exp))
 		var_to_save = isSgBinaryOp(exp)->get_lhs_operand();
 
 	vector<EvaluationResult> results;

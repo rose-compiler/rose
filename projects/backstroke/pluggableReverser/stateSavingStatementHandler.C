@@ -32,7 +32,7 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 	{
 		SgExpression* var = NULL;
 
-		if (backstroke_util::isAssignmentOp(exp))
+		if (SageInterface::isAssignmentStatement(exp))
 		{
 			var = isSgBinaryOp(exp)->get_lhs_operand();
 		}
