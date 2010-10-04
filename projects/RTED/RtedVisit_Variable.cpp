@@ -24,15 +24,18 @@ InheritedAttribute
 VariableTraversal::evaluateInheritedAttribute (
       SgNode* astNode,
       InheritedAttribute inheritedAttribute ) {
+   printf ("  evaluateInheritedAttr Node...%s  isGlobal %d  isFunction %d \n",astNode->class_name().c_str(),
+         inheritedAttribute.global,inheritedAttribute.function );
    if (isSgGlobal(astNode))    {
-      // The inherited attribute is true iff we are inside a function.
-      InheritedAttribute ia(inheritedAttribute.global,true);
+      InheritedAttribute ia(true,inheritedAttribute.function);
+      printf ("  >>>>> evaluateInheritedAttr isGlobal yes...\n");
       return ia;
    }
 
    if (isSgFunctionDefinition(astNode))    {
       // The inherited attribute is true iff we are inside a function.
-      InheritedAttribute ia(true,inheritedAttribute.function);
+      InheritedAttribute ia(inheritedAttribute.global, true);
+      printf ("  >>>>> evaluateInheritedAttr isFunctionDefinition yes...\n");
       return ia;
    }
 
@@ -44,27 +47,22 @@ VariableTraversal::evaluateSynthesizedAttribute (
       SgNode* astNode,
       InheritedAttribute inheritedAttribute,
       SynthesizedAttributesList childAttributes ) {
-   if (inheritedAttribute.global == false)
-   {
-      // The inherited attribute is false, i.e. we are not inside any
-      // function, so there can be no loops here.
-      return false;
-   }
-   else
+   printf ("      evaluateSynthesizedAttribute Node...%s\n",astNode->class_name().c_str());
+   if (inheritedAttribute.function == true)
    {
       // Fold up the list of child attributes using logical or, i.e. the local
       // result will be true iff one of the child attributes is true.
       SynthesizedAttribute localResult =
-            std::accumulate(childAttributes.begin(), childAttributes.end(),
-                  false, std::logical_or<bool>());
+            std::accumulate(childAttributes.begin(), childAttributes.end(),  false, std::logical_or<bool>());
       if (isSgFunctionDefinition(astNode) && localResult == true)
       {
-         printf ("Found a function containing a varRefExp ...\n");
+         printf ("  >>>>> evaluateSynthesizedAttribute Found a function containing a varRefExp ...\n");
       }
       if (isSgVarRefExp(astNode))
       {
          transf->visit_isSgVarRefExp(isSgVarRefExp(astNode));
          localResult = true;
+         printf ("  >>>>> evaluateSynthesizedAttribute isSgVarRefExp...\n");
       }
       return localResult;
    }
