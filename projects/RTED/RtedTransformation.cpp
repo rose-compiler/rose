@@ -59,11 +59,10 @@ void RtedTransformation::loadFunctionSymbols(SgProject* project) {
 }
 
 /* -----------------------------------------------------------
- * Perform all transformations needed (Step 2)
+ * Perform all transformations needed
  * -----------------------------------------------------------*/
 void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
-   if (RTEDDEBUG())
-      cout << "Running Transformation..." << endl;
+   if (RTEDDEBUG())   cout << "Running Transformation..." << endl;
    globalScope = getFirstGlobalScope(isSgProject(project));
    ROSE_ASSERT( project);
 
@@ -71,18 +70,17 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
    loadFunctionSymbols(project);
 
    // Traverse Variables
-   InheritedAttribute inheritedAttribute(false,false);
-   VariableTraversal varTraversal(this);
-   // Call the traversal starting at the project (root) node of the AST
-   varTraversal.traverseInputFiles(project,inheritedAttribute);
-   // traverse visit function further below
+   performInheritedSynthesizedTraversal(project);
+
+   // Find all the places which need to be transformed, i.e. where code needs to be inserted.
+   // To do this traverse visit function further below
    traverseInputFiles(project,preorder);
 
 
+   // tps: Traverse all classes that appear in header files and create copy in source file within a namespace.
+   // We need to know the sizeOf classes. To do so we need to modify the class but do not want to do this in the header file right now.
    vector<SgClassDeclaration*> traverseClasses;
    insertNamespaceIntoSourceFile(project,traverseClasses);
-
-
    // traverse all header files and collect information
    vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
    for (;travClassIt!=traverseClasses.end();++travClassIt) {
@@ -95,6 +93,13 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 }
 
 
+void RtedTransformation::performInheritedSynthesizedTraversal(SgProject* project) {
+   // Traverse Variables
+   InheritedAttribute inheritedAttribute(false,false);
+   VariableTraversal varTraversal(this);
+   // Call the traversal starting at the project (root) node of the AST
+   varTraversal.traverseInputFiles(project,inheritedAttribute);
+}
 
 
 /* -----------------------------------------------------------
