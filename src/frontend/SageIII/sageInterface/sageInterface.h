@@ -529,7 +529,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
                            SgFunctionDeclaration * functionDeclaration,
 			   SgDeclarationStatement * startingAtDeclaration);
 
-  //!check if node1 is an ancestor of node 2, mostly used to compare which scope node is in higher level
+  //!check if node1 is a strict ancestor of node 2. (a node is not considered its own ancestor)
   bool isAncestor(SgNode* node1, SgNode* node2);
 //@}
 //------------------------------------------------------------------------
