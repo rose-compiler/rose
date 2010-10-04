@@ -1,5 +1,7 @@
 # Editor backups
 *~
+# .svn files
+.svn
 # editor temp file
 .*swo
 *.swp
