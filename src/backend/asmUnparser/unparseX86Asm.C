@@ -1,12 +1,5 @@
-/****************************************************
- * RoseBin :: Binary Analysis for ROSE
- * Author : tps
- * Date : 5Apr07
- * Decription : unparser
- ****************************************************/
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "Registers.h"
 #include <iomanip>
 
 #define __STDC_FORMAT_MACROS
@@ -24,88 +17,20 @@ std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
     }
     return result;
 }
-/****************************************************
- * resolve expression
- ****************************************************/
+
+/** Returns the name of an X86 register.
+ *
+ *  We use the amd64 architecture because, since it's backward compatible with the 8086, it contains definitions for all the
+ *  registers from older architectures. */
 std::string unparseX86Register(const RegisterDescriptor &reg) {
-    switch (reg.get_major()) {
-        case x86_regclass_gpr: {
-            static const char* regnames8l[16] = {"al", "cl", "dl", "bl", "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b",
-                                                 "r11b", "r12b", "r13b", "r14b", "r15b"};
-            static const char* regnames8h[16] = {"ah", "ch", "dh", "bh", "", "", "", "", "", "", "", "", "", "", "", ""};
-            static const char* regnames16[16] = {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "r8w", "r9w", "r10w",
-                                                 "r11w", "r12w", "r13w", "r14w", "r15w"};
-            static const char* regnames32[16] = {"eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "r8d", "r9d", "r10d",
-                                                 "r11d", "r12d", "r13d", "r14d", "r15d"};
-            static const char* regnames64[16] = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10",
-                                                 "r11", "r12", "r13", "r14", "r15"};
-            ROSE_ASSERT (reg.get_minor() >= 0 && reg.get_minor() <= 15);
-            if (0==reg.get_offset()) {
-                switch (reg.get_nbits()) {
-                    case 8: return regnames8l[reg.get_minor()];
-                    case 16: return regnames16[reg.get_minor()];
-                    case 32: return regnames32[reg.get_minor()];
-                    case 64: return regnames64[reg.get_minor()];
-                    default: ROSE_ASSERT (!"Bad position in register");
-                }
-            } else if (8==reg.get_offset() && 8==reg.get_nbits()) {
-                ROSE_ASSERT (reg.get_minor() <= 3);
-                return regnames8h[reg.get_minor()];
-            } else {
-                ROSE_ASSERT(!"Bad position in register");
-            }
-        }
-        case x86_regclass_segment: {
-            ROSE_ASSERT (reg.get_minor() >= 0 && reg.get_minor() <= 5);
-            static const char* segregnames[6] = {"es", "cs", "ss", "ds", "fs", "gs"};
-            return segregnames[reg.get_minor()];
-        }
-        case x86_regclass_st_top: {
-            return "st";
-        }
-        case x86_regclass_st: {
-            return "st(" + StringUtility::numberToString(reg.get_minor()) + ")";
-        }
-        case x86_regclass_ip: {
-            ROSE_ASSERT(0==reg.get_offset());
-            switch (reg.get_nbits()) {
-                case 16: return "ip";
-                case 32: return "eip";
-                case 64: return "rip";
-                default: ROSE_ASSERT (!"Bad position in register");
-            }
-        } 
-        case x86_regclass_mm: {
-            return "mm" + StringUtility::numberToString(reg.get_minor());
-        }
-        case x86_regclass_xmm: {
-            return "xmm" + StringUtility::numberToString(reg.get_minor());
-        }
-        case x86_regclass_cr: {
-            return "cr" + StringUtility::numberToString(reg.get_minor());
-        }
-        case x86_regclass_dr: {
-            return "dr" + StringUtility::numberToString(reg.get_minor());
-        }
-        case x86_regclass_flags: {
-            ROSE_ASSERT(0==reg.get_offset());
-            switch (reg.get_nbits()) {
-                case 16: return "flags";
-                case 32: return "eflags";
-                case 64: return "rflags";
-                default: ROSE_ASSERT (!"Bad position in register");
-            }
-        }
-        case x86_regclass_unknown: {
-            return "unknown";
-        }
-        default:
-            std::cerr << " Undefined Register " << reg << std::endl;
-            abort();
-            // DQ (11/29/2009): Avoid MSVC warning.
-            return "error in unparseX86Register()";
-            break;
+    const RegisterDictionary *dict = RegisterDictionary::amd64();
+    std::string name = dict->lookup(reg);
+    if (name.empty()) {
+        std::cerr <<"unparseX86Register(" <<reg <<"): register descriptor not found in dictionary.\n";
+        //std::cerr <<dict;
+        ROSE_ASSERT(!"register descriptor not found in dictionary");
     }
+    return name;
 }
 
 static std::string x86TypeToPtrName(SgAsmType* ty) {
