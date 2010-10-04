@@ -52,6 +52,7 @@ int main(int argc, char * argv[])
 			continue;
 
 		//Normalize this event function.
+		cout << "Function " << decl->get_name().str() << " is normalized!\n" << endl;
 		backstroke_norm::normalizeEvent(decl);
 	}
 

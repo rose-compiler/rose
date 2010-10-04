@@ -507,9 +507,9 @@ void backstroke_util::removeUselessBraces(SgNode* root)
 
     foreach (SgBasicBlock* block, block_list)
     {
-        // Make sure this block is not the body of if, while, etc.
-        if (isSgBasicBlock(block->get_parent()) == NULL)
+        if (!isSgBasicBlock(block->get_parent()))
 		{
+#if 0
 			if (block->get_statements().size() == 1)
 			{
 				SgBasicBlock* child_block = isSgBasicBlock(block->get_statements()[0]);
@@ -520,19 +520,21 @@ void backstroke_util::removeUselessBraces(SgNode* root)
 					replaceStatement(child_block, buildNullStatement(), true);
 				}
 			}
-            continue;
+#endif
 		}
-
-        // If there is no declaration in a basic block and this basic block 
-        // belongs to another basic block, the braces can be removed.
-		if (block->get_statements().end() == boost::find_if(block->get_statements(),
-			static_cast<SgDeclarationStatement*(&)(SgNode*)>(isSgDeclarationStatement)))
-        {
-            foreach (SgStatement* stmt, block->get_statements())
-                insertStatement(block, copyStatement(stmt));
-            replaceStatement(block, buildNullStatement(), true);
-            //removeStatement(block);
-        }
+		else
+		{
+			// If there is no declaration in a basic block and this basic block
+			// belongs to another basic block, the braces can be removed.
+			if (block->get_statements().end() == boost::find_if(block->get_statements(),
+				static_cast<SgDeclarationStatement*(&)(SgNode*)>(isSgDeclarationStatement)))
+			{
+				foreach (SgStatement* stmt, block->get_statements())
+					insertStatement(block, copyStatement(stmt));
+				replaceStatement(block, buildNullStatement(), true);
+				//removeStatement(block);
+			}
+		}
     }
 }
 

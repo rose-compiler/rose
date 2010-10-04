@@ -145,4 +145,27 @@ void event5(model* m)
         //++m->i;
 #endif
     }
+
+    
+}
+
+#define NEW_BLOCK 0
+
+void event6()
+{
+    
+     int x = 1;
+     int z = 1;
+     switch(x)
+        {
+          case 1:
+#if NEW_BLOCK
+             { 
+#endif
+               int y = 47;
+               y++; 
+#if NEW_BLOCK
+             }
+#endif
+        }
 }
