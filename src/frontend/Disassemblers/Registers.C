@@ -224,9 +224,7 @@ RegisterDictionary::i386()
         regs->insert("dr0", x86_regclass_dr, 0, 0, 32);
         regs->insert("dr1", x86_regclass_dr, 1, 0, 32);
         regs->insert("dr2", x86_regclass_dr, 2, 0, 32);
-        regs->insert("dr3", x86_regclass_dr, 3, 0, 32);
-        regs->insert("dr4", x86_regclass_dr, 4, 0, 32);
-        regs->insert("dr5", x86_regclass_dr, 5, 0, 32);
+        regs->insert("dr3", x86_regclass_dr, 3, 0, 32);                 /* dr4 and dr5 are reserved */
         regs->insert("dr6", x86_regclass_dr, 6, 0, 32);
         regs->insert("dr7", x86_regclass_dr, 7, 0, 32);
         
@@ -324,10 +322,13 @@ RegisterDictionary::pentium4()
 /** Amd64 registers.
  *
  *  The AMD64 architecture increases the size of the general purpose registers, base registers, index registers, instruction
- *  pointer, and flags register to 64-bits.  Register names from the Pentium architecture still exist and refer to 32-bit
+ *  pointer, and flags register to 64-bits.  Most register names from the Pentium architecture still exist and refer to 32-bit
  *  quantities, while the AMD64 adds new names that start with "r" rather than "e" (such as "rax" for the 64-bit register and
  *  "eax" for the 32 low-order bits of the same register).  It also adds eight additional 64-bit general purpose registers
- *  named "r8" through "r15". */
+ *  named "r8" through "r15" along with "b", "w", and "d" suffixes for the low-order 8, 16, and 32 bits, respectively.
+ *
+ *  The only registers that are not retained are the control registers cr0-cr4, which are replaced by 64-bit registers of the
+ *  same name, and debug registers dr0-dr7, which are also replaced by 64-bit registers of the same name. */
 const RegisterDictionary *
 RegisterDictionary::amd64()
 {
@@ -368,8 +369,14 @@ RegisterDictionary::amd64()
         regs->lookup("cr3")->set_nbits(64);
         regs->lookup("cr4")->set_nbits(64);
         regs->insert("cr8", x86_regclass_cr, 8, 0, 64);
-        
 
+        /* Debug registers become 64 bits */
+        regs->lookup("dr0")->set_nbits(64);
+        regs->lookup("dr1")->set_nbits(64);
+        regs->lookup("dr2")->set_nbits(64);
+        regs->lookup("dr3")->set_nbits(64);                             /* dr4 and dr5 are reserved */
+        regs->lookup("dr6")->set_nbits(64);
+        regs->lookup("dr7")->set_nbits(64);
     }
     return regs;
 }
