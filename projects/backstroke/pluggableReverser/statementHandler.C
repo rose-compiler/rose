@@ -62,49 +62,40 @@ StatementReversal CombinatorialBasicBlockHandler::generateReverseAST(SgStatement
 		{
 			foreach (SgInitializedName* init_name, var_decl->get_variables())
 			{
-				LocalVarRestoreAttribute* attr =
-						dynamic_cast<LocalVarRestoreAttribute*> (evaluationResult.getAttribute().get());
+				LocalVarRestoreAttribute attr = evaluationResult.getAttribute<LocalVarRestoreAttribute>();
 
-				ROSE_ASSERT(attr->local_var_restorer.count(init_name) > 0);
+				ROSE_ASSERT(attr.count(init_name) > 0);
 
-				if (attr->local_var_restorer[init_name].first)
+				SgExpression* val = attr[init_name];
+				if (val != NULL)
 				{
-					if (attr->local_var_restorer[init_name].second)
-					{
-						// Retrieve its value from another expression.
-						SgStatement* decl = buildVariableDeclaration(
-								init_name->get_name(),
-								init_name->get_type(),
-								buildAssignInitializer(copyExpression(attr->local_var_restorer[init_name].second)),
-								rvs_body);
+					// Retrieve its value from another expression.
+					SgStatement* decl = buildVariableDeclaration(
+							init_name->get_name(),
+							init_name->get_type(),
+							buildAssignInitializer(val),
+							rvs_body);
 
-						appendStatement(decl, rvs_body);
-					}
-					else
-					{
-						// Store and restore this local variable using stack.
-						
-						// Store the value of local variables at the end of the basic block.
-						SgVarRefExp* var_stored = buildVarRefExp(init_name->get_name());
-						SgStatement* store_var = buildExprStatement(
-								pushVal(var_stored, init_name->get_type()));
-
-						// Retrieve the value which is used to initialize that local variable.
-						SgVariableDeclaration* decl_restore_var = buildVariableDeclaration(
-								init_name->get_name(),
-								init_name->get_type(),
-								buildAssignInitializer(popVal(init_name->get_type())),
-								isSgBasicBlock(rvs_body));
-
-						appendStatement(store_var, fwd_body);
-						appendStatement(decl_restore_var, rvs_body);
-					}
+					appendStatement(decl, rvs_body);
 				}
 				else
 				{
-					SgStatement* just_decl = buildVariableDeclaration(init_name->get_name(), init_name->get_type(), NULL, rvs_body);
+					// Store and restore this local variable using stack.
 
-					appendStatement(just_decl, rvs_body);
+					// Store the value of local variables at the end of the basic block.
+					SgVarRefExp* var_stored = buildVarRefExp(init_name->get_name());
+					SgStatement* store_var = buildExprStatement(
+							pushVal(var_stored, init_name->get_type()));
+
+					// Retrieve the value which is used to initialize that local variable.
+					SgVariableDeclaration* decl_restore_var = buildVariableDeclaration(
+							init_name->get_name(),
+							init_name->get_type(),
+							buildAssignInitializer(popVal(init_name->get_type())),
+							isSgBasicBlock(rvs_body));
+
+					appendStatement(store_var, fwd_body);
+					appendStatement(decl_restore_var, rvs_body);
 				}
 			}
 		}
@@ -148,7 +139,7 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 
 	// Set the initial result and push it into the first vector.
 	EvaluationResult init_res(this, stmt, new_var_table);
-	init_res.setAttribute(LocalVarRestoreAttributePtr(new LocalVarRestoreAttribute));
+	init_res.setAttribute(LocalVarRestoreAttribute());
     queue[i].push_back(init_res);
 
 	// For each local variable, we try to restore it using akgul's method first. If we cannot get its
@@ -162,43 +153,43 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 			{
 				foreach (EvaluationResult& res, queue[i])
 				{
-					LocalVarRestoreAttribute attr =
-							*dynamic_cast<LocalVarRestoreAttribute*> (res.getAttribute().get());
+					LocalVarRestoreAttribute attr = res.getAttribute<LocalVarRestoreAttribute>();
 
 					//First, check if we can restore the variable without savings its value.
 					VariableRenaming::VarName var_name;
 					var_name.push_back(init_name);
-					//cout << "!!!" << VariableRenaming::keyToString(var_name) << ":" << getLastVersion(init_name).begin()->first << endl;
-					//res.getVarTable().print();
 					SgExpression* restored_value = restoreVariable(var_name, res.getVarTable(), getLastVersion(init_name));
-
+		
 					if (restored_value != NULL)
 					{
+						// Then we can restore the value from without state saving.
 						cout << "Retrieving value from " << get_name(restored_value) << endl;
 						EvaluationResult new_res = res;
-						attr.local_var_restorer[init_name] = make_pair(true, restored_value);
-						new_res.setAttribute(LocalVarRestoreAttributePtr(new LocalVarRestoreAttribute(attr)));
+						attr[init_name] = restored_value;
+						new_res.setAttribute(attr);
 						// Remember to update the version of this variable.
 						new_res.getVarTable().setLastVersion(init_name);
 						queue[1 - i].push_back(new_res);
-
-						//new_res.getVarTable().print();
 					} 
 					else
 					{
+						// We decide always to store every local variable's value. Those stores and restores can
+						// be removed after analysis on generated code.
+#if 0
 						/****************************************************************************************/
 						// Here we choose not to restore its value.
 						EvaluationResult new_res1 = res;
 						attr.local_var_restorer[init_name] = make_pair(false, static_cast<SgExpression*> (NULL));
 						new_res1.setAttribute(LocalVarRestoreAttributePtr(new LocalVarRestoreAttribute(attr)));
 						queue[1 - i].push_back(new_res1);
+#endif
 
 
 						/****************************************************************************************/
 						// Here we choose to restore its value.
 						EvaluationResult new_res2 = res;
-						attr.local_var_restorer[init_name] = make_pair(true, static_cast<SgExpression*> (NULL));
-						new_res2.setAttribute(LocalVarRestoreAttributePtr(new LocalVarRestoreAttribute(attr)));
+						attr[init_name] = NULL;
+						new_res2.setAttribute(attr);
 
 						// Assign the correct version to this variable and add the cost by 1.
 						new_res2.getVarTable().setLastVersion(init_name);

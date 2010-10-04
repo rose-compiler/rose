@@ -184,10 +184,12 @@ SgExpression* EventHandler::getStackVar(SgType* type)
 
 	if (isSgTypeInt(type))
 		type_name = "int";
-	if (isSgTypeBool(type))
+	else if (isSgTypeBool(type))
 		type_name = "bool";
-	if (isSgTypeFloat(type))
+	else if (isSgTypeFloat(type))
 		type_name = "float";
+	else
+		type_name = "any";
 
 	string stack_name = event_->get_name() + "_" + type_name + "_stack";
 	if (stack_decls_.count(stack_name) == 0)
@@ -245,7 +247,7 @@ SgExpression* EventHandler::pushVal(SgExpression* exp, SgType* type)
 
 SgExpression* EventHandler::popVal(SgType* type)
 {
-	return buildFunctionCallExp("pop", type,
+	return buildFunctionCallExp("pop< " + get_type_name(type) + " >", type,
 					buildExprListExp(getStackVar(type)));
 }
 
@@ -287,7 +289,7 @@ FuncDeclPairs EventHandler::processEvent()
 		// Here we check the validity for each result above. We have to make sure
 		// every state variable has the version 1.
 		if (!checkForInitialVersions(res.getVarTable()))
-			continue;
+			;//continue;
 
 		// Print all handlers used in this result.
 		res.printHandlers();
@@ -295,6 +297,12 @@ FuncDeclPairs EventHandler::processEvent()
 		res.getVarTable().print();
 
 		StatementReversal stmt = res.generateReverseStatement();
+
+		// Normalize the result.
+		backstroke_util::removeUselessBraces(stmt.fwd_stmt);
+		backstroke_util::removeUselessBraces(stmt.rvs_stmt);
+		backstroke_util::removeUselessParen(stmt.fwd_stmt);
+		backstroke_util::removeUselessParen(stmt.rvs_stmt);
 
 		fixVariableReferences(stmt.fwd_stmt);
 		fixVariableReferences(stmt.rvs_stmt);
@@ -332,6 +340,7 @@ FuncDeclPairs EventHandler::processEvent()
 
 SgExpression* EventHandler::restoreExpressionValue(SgExpression* expression, const VariableVersionTable& availableVariables)
 {
+	ROSE_ASSERT(expression != NULL);
 	//Right now, if the expression has side effects we just assume we can't reevaluate it
 	if (backstroke_util::containsModifyingExpression(expression))
 	{

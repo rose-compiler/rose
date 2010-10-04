@@ -6,16 +6,6 @@
 #include "statementHandler.h"
 #include "pluggableReverser/eventHandler.h"
 
-struct StoredStatementReversal : public EvaluationResultAttribute
-{
-	StoredStatementReversal(const StatementReversal& reversal) : reversal(reversal)
-	{
-
-	}
-
-	StatementReversal reversal;
-};
-
 vector<EvaluationResult> StraightlineStatementHandler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
 {
 	if (SgBasicBlock * basicBlock = isSgBasicBlock(statement))
@@ -58,7 +48,8 @@ vector<EvaluationResult> StraightlineStatementHandler::evaluateExpressionStateme
 	//We just do all the work in the evaluation step and save it as an attribute
 	EvaluationResult statementResult(this, statement, expressionReversalOption.getVarTable(), expressionReversalOption.getCost());
 	StatementReversal statementReversal(forwardStatement, reverseStatement);
-	statementResult.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(statementReversal)));
+	//statementResult.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(statementReversal)));
+	statementResult.setAttribute(statementReversal);
 
 	vector<EvaluationResult> result;
 	result.push_back(statementResult);
@@ -68,13 +59,8 @@ vector<EvaluationResult> StraightlineStatementHandler::evaluateExpressionStateme
 
 StatementReversal StraightlineStatementHandler::generateReverseAST(SgStatement* statement, const EvaluationResult& reversal)
 {
-	ROSE_ASSERT(reversal.getChildResults().size() == 0);
 	ROSE_ASSERT(reversal.getStatementHandler() == this);
-
-	StoredStatementReversal* storedResult = dynamic_cast<StoredStatementReversal*>(reversal.getAttribute().get());
-	ROSE_ASSERT(storedResult != NULL);
-
-	return storedResult->reversal;
+	return reversal.getAttribute<StatementReversal>();
 }
 
 
@@ -195,7 +181,7 @@ vector<EvaluationResult> StraightlineStatementHandler::evaluateBasicBlock(SgBasi
 	//We actually did both cost evaluation and code generation. Store the result as an attribute
 	StatementReversal result(forwardBody, reverseBody);
 	EvaluationResult costAndStuff(this, basicBlock, currentVariableVersions, totalCost);
-	costAndStuff.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(result)));
+	costAndStuff.setAttribute(result);
 
 	vector<EvaluationResult> out;
 	out.push_back(costAndStuff);

@@ -61,7 +61,7 @@ SgStatement* WhileStatementHandler::assembleLoopCounter(SgStatement* loop_stmt)
 		}
 	}
 
-	SgStatement* store_counter = buildExprStatement(pushVal(copyExpression(counter_var), counter_var->get_type()));
+	SgStatement* store_counter = buildExprStatement(pushVal(copyExpression(counter_var)));
 
 	return buildBasicBlock(counter_decl, loop_stmt, store_counter);
 }
@@ -112,10 +112,15 @@ vector<EvaluationResult> WhileStatementHandler::evaluate(SgStatement* stmt, cons
     if (while_stmt == NULL || backstroke_util::hasContinueOrBreak(while_stmt))
         return results;
 
-	SgStatement* body = while_stmt->get_body();
+	SgBasicBlock* body = isSgBasicBlock(while_stmt->get_body());
+	ROSE_ASSERT(body);
 
+#if 0
+	cout << "Old table:\n";
+	var_table.print();
 	cout << "New table:\n";
 	var_table.getVarTablesForLoopBody(body).print();
+#endif
 
 	vector<EvaluationResult> loop_body_results = evaluateStatement(body, var_table.getVarTablesForLoopBody(body));
 	foreach (EvaluationResult& res, loop_body_results)

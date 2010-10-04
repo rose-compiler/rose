@@ -2,6 +2,7 @@
 #define	HANDLERBASE_H
 
 #include <boost/shared_ptr.hpp>
+#include <boost/any.hpp>
 #include "variableVersionTable.h"
 #include "costModel.h"
 
@@ -31,14 +32,6 @@ struct StatementReversal
 	SgStatement* rvs_stmt;
 };
 
-class EvaluationResultAttribute
-{
-public:
-
-	virtual ~EvaluationResultAttribute() { }
-};
-typedef boost::shared_ptr<EvaluationResultAttribute> EvaluationResultAttributePtr;
-
 class EvaluationResult
 {
 	//TODO: This table is not necessary once the result is added to the parent results
@@ -54,7 +47,7 @@ class EvaluationResult
 	SgNode* input_;
 
 	/** Additional attribute that the handler may choose to attach to the evaluation result. */
-	EvaluationResultAttributePtr attribute_;
+	boost::any attribute_;
 
 	/** Evaluation choices made in order to get this result. For example, for a basic block, what
 	* were the evaluations of all the statements? */
@@ -94,9 +87,13 @@ public:
 
 	void setCost(const SimpleCostModel& cost);
 
-	EvaluationResultAttributePtr getAttribute() const;
+	template <class T>
+	void setAttribute(const T& attr)
+	{ attribute_ = attr; }
 
-	void setAttribute(EvaluationResultAttributePtr attr);
+	template<class T>
+	T getAttribute() const
+	{ return boost::any_cast<T>(attribute_); }
 
 	//! Returns the expression which was processed to produce this evaluation result
 	SgExpression* getExpressionInput() const;
@@ -139,7 +136,16 @@ protected:
 	SgExpression* restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 			VariableRenaming::NumNodeRenameEntry definitions);
 
+	//! Restores the value of an expression given a set of currently available variables. For example, if the
+	//! expression is (a + b), the values of a and b will be extracted from the currently available variables, and then
+	//! the expression val(a) + val(b) will be returned.
+	//!
+	//! @returns expression evaluating to the same value as the original, or NULL on failure
+	SgExpression* restoreExpressionValue(SgExpression* expression, const VariableVersionTable& availableVariables);
+
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
+	SgExpression* pushVal(SgExpression* exp)
+	{ return pushVal(exp, exp->get_type()); }
 	SgExpression* popVal(SgType* type);
 
 	//! Return if the given variable is a state variable (currently, it should be the parameter of event function).

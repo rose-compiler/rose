@@ -1,10 +1,7 @@
 #include "handlerTypes.h"
 #include "eventHandler.h"
 #include <boost/foreach.hpp>
-
-#define reverse_foreach BOOST_REVERSE_FOREACH
-using namespace std;
-
+#include "utilities/CPPDefinesAndNamespaces.h"
 
 const std::vector<EvaluationResult>& EvaluationResult::getChildResults() const
 {
@@ -35,16 +32,6 @@ const SimpleCostModel& EvaluationResult::getCost() const
 void EvaluationResult::setCost(const SimpleCostModel& cost)
 {
 	cost_ = cost;
-}
-
-EvaluationResultAttributePtr EvaluationResult::getAttribute() const
-{
-	return attribute_;
-}
-
-void EvaluationResult::setAttribute(EvaluationResultAttributePtr attr)
-{
-	attribute_ = attr;
 }
 
 SgExpression* EvaluationResult::getExpressionInput() const
@@ -137,6 +124,11 @@ SgExpression* ReversalHandlerBase::restoreVariable(VariableRenaming::VarName var
 		const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions)
 {
 	return event_handler_->restoreVariable(variable, availableVariables, definitions);
+}
+
+SgExpression* ReversalHandlerBase::restoreExpressionValue(SgExpression* expression, const VariableVersionTable& availableVariables)
+{
+	return event_handler_->restoreExpressionValue(expression, availableVariables);
 }
 
 VariableRenaming* ReversalHandlerBase::getVariableRenaming()

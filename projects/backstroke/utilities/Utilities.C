@@ -4,6 +4,7 @@
 #include "rose.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/range/algorithm.hpp>
 
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -473,7 +474,7 @@ void backstroke_util::printCompilerError(SgNode* badNode, const char * message)
 // Returns if an expression modifies any value.
 bool backstroke_util::isModifyingExpression(SgExpression* exp)
 {
-    if (isAssignmentOp(exp))
+    if (SageInterface::isAssignmentStatement(exp))
         return true;
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
         return true;
@@ -500,21 +501,6 @@ bool backstroke_util::containsModifyingExpression(SgExpression* exp)
     return false;
 }
 
-bool backstroke_util::isAssignmentOp(SgNode* e)
-{
-    return isSgAssignOp(e) ||
-        isSgPlusAssignOp(e) ||
-        isSgMinusAssignOp(e) ||
-        isSgMultAssignOp(e) ||
-        isSgDivAssignOp(e) ||
-        isSgModAssignOp(e) ||
-        isSgIorAssignOp(e) ||
-        isSgAndAssignOp(e) ||
-        isSgXorAssignOp(e) ||
-        isSgLshiftAssignOp(e) ||
-        isSgRshiftAssignOp(e);
-}
-
 void backstroke_util::removeUselessBraces(SgNode* root)
 {
     vector<SgBasicBlock*> block_list = querySubTree<SgBasicBlock>(root, postorder);
@@ -522,22 +508,25 @@ void backstroke_util::removeUselessBraces(SgNode* root)
     foreach (SgBasicBlock* block, block_list)
     {
         // Make sure this block is not the body of if, while, etc.
-        if (!isSgBasicBlock(block->get_parent()))
+        if (isSgBasicBlock(block->get_parent()) == NULL)
+		{
+			if (block->get_statements().size() == 1)
+			{
+				SgBasicBlock* child_block = isSgBasicBlock(block->get_statements()[0]);
+				if (child_block)
+				{
+					foreach(SgStatement* stmt, child_block->get_statements())
+						appendStatement(copyStatement(stmt), block);
+					replaceStatement(child_block, buildNullStatement(), true);
+				}
+			}
             continue;
+		}
 
         // If there is no declaration in a basic block and this basic block 
         // belongs to another basic block, the braces can be removed.
-        bool has_decl = false;
-        foreach (SgStatement* stmt, block->get_statements())
-        {
-            if (isSgDeclarationStatement(stmt))
-            {
-                has_decl = true;
-                break;
-            }
-        }
-
-        if (!has_decl)
+		if (block->get_statements().end() == boost::find_if(block->get_statements(),
+			static_cast<SgDeclarationStatement*(&)(SgNode*)>(isSgDeclarationStatement)))
         {
             foreach (SgStatement* stmt, block->get_statements())
                 insertStatement(block, copyStatement(stmt));
@@ -655,7 +644,7 @@ bool backstroke_util::hasContinueOrBreak(SgStatement* loop_stmt)
 	foreach (SgBreakStmt* break_stmt, breaks)
 	{
 		SgNode* node = break_stmt;
-		while (node = node->get_parent())
+		while ((node = node->get_parent()))
 		{
 			if (isSgForStatement(node) ||
 				isSgWhileStmt(node) ||

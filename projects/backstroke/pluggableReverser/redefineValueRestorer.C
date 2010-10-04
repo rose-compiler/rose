@@ -31,7 +31,7 @@ vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::V
 	{
 		return handleIncrementDecrementDefinition(destroyedVarName, availableVariables, reachingDefinition);
 	}
-	else if (backstroke_util::isAssignmentOp(reachingDefinition))
+	else if (SageInterface::isAssignmentStatement(reachingDefinition))
 	{
 		return handleUseAssignDefinition(destroyedVarName, availableVariables, reachingDefinition);
 	}
@@ -51,7 +51,7 @@ vector<SgExpression*> RedefineValueRestorer::handleUseAssignDefinition(VariableR
 		const VariableVersionTable& availableVariables, SgNode* reachingDefinition)
 {
 	vector<SgExpression*> results;
-	ROSE_ASSERT(backstroke_util::isAssignmentOp(reachingDefinition) && !isSgAssignOp(reachingDefinition));
+	ROSE_ASSERT(SageInterface::isAssignmentStatement(reachingDefinition) && !isSgAssignOp(reachingDefinition));
 
 	//These are all the assignments that also use the left value in addition to the right.
 	//E.g. /=,  *=, &=, etc. We restore both the left and the right operands to their pre-assignment version

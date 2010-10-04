@@ -273,6 +273,44 @@ void VariableVersionTable::reverseVersion(SgNode* node)
 	}
 }
 
+void VariableVersionTable::reverseVersionAtStatementStart(SgStatement* stmt)
+{
+
+	VariableRenaming::NumNodeRenameTable var_versions = var_renaming_->getReachingDefsAtStatementStart(stmt);
+
+#if 0
+	cout << "\n!!!\n";
+	VariableRenaming::printRenameTable(var_versions);
+
+
+	foreach (SgExpression* var, vars)
+	{
+		VarName name = getVarName(var);
+
+		//cout << VariableRenaming::keyToString(name) << endl;
+
+		ROSE_ASSERT(name != VariableRenaming::emptyName);
+		ROSE_ASSERT(var_versions.count(name) > 0);
+		ROSE_ASSERT(table_.count(name) > 0);
+
+		set<int> new_version;
+		foreach (const VariableRenaming::NumNodeRenameEntry::value_type& num_node, var_versions[name])
+			new_version.insert(num_node.first);
+		table_[name].swap(new_version);
+	}
+#endif
+
+	table_.clear();
+	foreach(VariableRenaming::NumNodeRenameTable::value_type name_to_num, var_versions)
+	{
+		//boost::insert(table_[name_to_num.first], );
+		foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, name_to_num.second)
+		{
+			table_[name_to_num.first].insert(num_to_node.first);
+		}
+	}
+}
+
 void VariableVersionTable::setNullVersion(SgInitializedName* name)
 {
 	VarName var_name(1, name);
@@ -303,6 +341,11 @@ VariableVersionTable::getVarTablesForIfBodies(SgBasicBlock* true_body, SgBasicBl
 	VariableRenaming::NumNodeRenameTable true_body_defs = var_renaming_->getReachingDefsAtScopeEnd(true_body);
 	VariableRenaming::NumNodeRenameTable false_body_defs = var_renaming_->getReachingDefsAtScopeEnd(false_body);
 
+#if 0
+	cout << "Current VVT:\n";
+	print();
+#endif
+
 	foreach (const TableType::value_type& var_version, table_)
 	{
 		const VarName& var_name = var_version.first;
@@ -321,11 +364,12 @@ VariableVersionTable::getVarTablesForIfBodies(SgBasicBlock* true_body, SgBasicBl
 					true_body_var_table.table_[var_name].end(),
 					true_body_versions.begin(), true_body_versions.end(),
 					inserter(new_versions, new_versions.begin()));
-			true_body_var_table.table_[var_name] = new_versions;
+			true_body_var_table.table_[var_name].swap(new_versions);
 		}
 		else
 		{
-			true_body_var_table.table_.erase(var_name);
+			//true_body_var_table.table_.erase(var_name);
+			true_body_var_table.table_[var_name].clear();
 		}
 
 		// Get the correct versions for var_name for false body.
@@ -342,11 +386,12 @@ VariableVersionTable::getVarTablesForIfBodies(SgBasicBlock* true_body, SgBasicBl
 					false_body_var_table.table_[var_name].end(),
 					false_body_versions.begin(), false_body_versions.end(),
 					inserter(new_versions, new_versions.begin()));
-			false_body_var_table.table_[var_name] = new_versions;
+			false_body_var_table.table_[var_name].swap(new_versions);
 		}
 		else
 		{
-			false_body_var_table.table_.erase(var_name);
+			//false_body_var_table.table_.erase(var_name);
+			false_body_var_table.table_[var_name].clear();
 		}
 
 #if 0
@@ -392,21 +437,59 @@ VariableVersionTable::getVarTablesForIfBodies(SgBasicBlock* true_body, SgBasicBl
 #endif
 	}
 
+#if 0
 	cout << "True body VVT:\n";
 	true_body_var_table.print();
 	cout << "False body VVT:\n";
 	false_body_var_table.print();
+#endif
 
 	return make_pair(true_body_var_table, false_body_var_table);
 }
 
-VariableVersionTable VariableVersionTable::getVarTablesForLoopBody(SgStatement* loop_body) const
+VariableVersionTable VariableVersionTable::getVarTablesForLoopBody(SgBasicBlock* loop_body) const
 {
 	VariableVersionTable loop_body_var_table = *this;
+
+	VariableRenaming::NumNodeRenameTable loop_body_defs = var_renaming_->getReachingDefsAtScopeEnd(loop_body);
+
 
 	foreach (const TableType::value_type& var_version, table_)
 	{
 		const VarName& var_name = var_version.first;
+
+		// Get the correct versions for var_name for true body.
+		if (loop_body_defs.count(var_name) > 0)
+		{
+			set<int> loop_body_versions;
+			// Get version for var_name from reaching defs at scope end.
+			foreach (const VariableRenaming::NumNodeRenameTable::mapped_type::value_type& num_node,
+				loop_body_defs[var_name])
+				loop_body_versions.insert(num_node.first);
+
+			set<int> new_versions;
+			std::set_intersection(loop_body_var_table.table_[var_name].begin(),
+					loop_body_var_table.table_[var_name].end(),
+					loop_body_versions.begin(), loop_body_versions.end(),
+					inserter(new_versions, new_versions.begin()));
+			loop_body_var_table.table_[var_name].swap(new_versions);
+		}
+		else
+		{
+			//true_body_var_table.table_.erase(var_name);
+			loop_body_var_table.table_[var_name].clear();
+		}
+	}
+
+
+
+
+#if 0
+
+	foreach (const TableType::value_type& var_version, table_)
+	{
+		const VarName& var_name = var_version.first;
+		// For each version of var, if the def of this version is inside of loop body,
 		foreach (int version, var_version.second)
 		{
 			SgNode* def_node = var_renaming_->getNodeForRenameNumber(var_version.first, version);
@@ -418,11 +501,20 @@ VariableVersionTable VariableVersionTable::getVarTablesForLoopBody(SgStatement* 
 				foreach (const VariableRenaming::NumNodeRenameEntry::value_type& num_node, num_node_entry)
 				{
 					//cout << "$^$^%$^$" << num_node.first << endl;
-					loop_body_var_table.table_[var_version.first].erase(num_node.first);
+					loop_body_var_table.table_[var_name].erase(num_node.first);
 				}
 			}
 		}
 	}
+
+#endif
+
+#if 0
+	cout << "\nLoop body VVT:\n";
+	loop_body_var_table.print();
+	cout << endl;
+#endif
+
 
 	return loop_body_var_table;
 }

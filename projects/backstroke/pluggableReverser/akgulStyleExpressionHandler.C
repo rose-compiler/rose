@@ -5,16 +5,6 @@
 #include <numeric>
 #include <algorithm>
 
-struct StoredExpressionReversal : public EvaluationResultAttribute
-{
-	StoredExpressionReversal(const ExpressionReversal& reversal) : reversal(reversal)
-	{
-		
-	}
-	
-	ExpressionReversal reversal;
-};
-
 vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* expression, const VariableVersionTable& varTable,
 		bool isReverseValueUsed)
 {
@@ -23,7 +13,7 @@ vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* exp
 	VariableRenaming::NumNodeRenameEntry reachingDefs;
 
 	//First, find out what variable was destroyed and what are its reaching definitions
-	if (backstroke_util::isAssignmentOp(expression))
+	if (SageInterface::isAssignmentStatement(expression))
 	{
 		SgBinaryOp* assignOp = isSgBinaryOp(expression);
 		ROSE_ASSERT(assignOp != NULL && "All assignments should be binary ops");
@@ -77,7 +67,8 @@ vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* exp
 			ExpressionReversal reversalResult(forwardExp, reverseExpression);
 
 			EvaluationResult reversalInfo(this, expression, newVarTable);
-			reversalInfo.setAttribute(EvaluationResultAttributePtr(new StoredExpressionReversal(reversalResult)));
+			//reversalInfo.setAttribute(EvaluationResultAttributePtr(new StoredExpressionReversal(reversalResult)));
+			reversalInfo.setAttribute(reversalResult);
 
 			vector<EvaluationResult> result;
 			result.push_back(reversalInfo);
@@ -90,11 +81,8 @@ vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* exp
 
 ExpressionReversal AkgulStyleExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
 {
-	StoredExpressionReversal* reversalResult = dynamic_cast<StoredExpressionReversal*>(evaluationResult.getAttribute().get());
-	ROSE_ASSERT(reversalResult != NULL);
 	ROSE_ASSERT(evaluationResult.getExpressionHandler() == this);
-
-	return reversalResult->reversal;
+	return evaluationResult.getAttribute<ExpressionReversal>();
 }
 
 
