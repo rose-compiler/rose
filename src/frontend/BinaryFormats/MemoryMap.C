@@ -665,7 +665,7 @@ MemoryMap::dump(const std::string &basename) const
         const MapElement &me = elements[i];
 
         char ext[256];
-        sprintf(ext, "-0x%08"PRIx64".data", me.get_va());
+        sprintf(ext, "-%08"PRIx64".data", me.get_va());
 #ifdef _MSC_VER
         int fd = _open((basename+ext).c_str(), O_CREAT|O_TRUNC|O_RDWR, 0666);
 #else
