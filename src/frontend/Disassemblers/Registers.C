@@ -212,6 +212,24 @@ RegisterDictionary::i386()
         /* Additional flags */
         regs->insert("rf", x86_regclass_flags, 0, 16, 1);               /* resume system flag */
         regs->insert("vm", x86_regclass_flags, 0, 17, 1);               /* virtual 8086 mode flag */
+
+        /* Control registers */
+        regs->insert("cr0", x86_regclass_cr, 0, 0, 32);
+        regs->insert("cr1", x86_regclass_cr, 1, 0, 32);
+        regs->insert("cr2", x86_regclass_cr, 2, 0, 32);
+        regs->insert("cr3", x86_regclass_cr, 3, 0, 32);
+        regs->insert("cr4", x86_regclass_cr, 4, 0, 32);
+
+        /* Debug registers */
+        regs->insert("dr0", x86_regclass_dr, 0, 0, 32);
+        regs->insert("dr1", x86_regclass_dr, 1, 0, 32);
+        regs->insert("dr2", x86_regclass_dr, 2, 0, 32);
+        regs->insert("dr3", x86_regclass_dr, 3, 0, 32);
+        regs->insert("dr4", x86_regclass_dr, 4, 0, 32);
+        regs->insert("dr5", x86_regclass_dr, 5, 0, 32);
+        regs->insert("dr6", x86_regclass_dr, 6, 0, 32);
+        regs->insert("dr7", x86_regclass_dr, 7, 0, 32);
+        
     }
     return regs;
 }
@@ -342,6 +360,16 @@ RegisterDictionary::amd64()
             regs->insert(std::string("mmx")+StringUtility::numberToString(i),
                          x86_regclass_xmm, i, 0, 128);
         }
+
+        /* Control registers become 64 bits, and cr8 is added */
+        regs->lookup("cr0")->set_nbits(64);
+        regs->lookup("cr1")->set_nbits(64);
+        regs->lookup("cr2")->set_nbits(64);
+        regs->lookup("cr3")->set_nbits(64);
+        regs->lookup("cr4")->set_nbits(64);
+        regs->insert("cr8", x86_regclass_cr, 8, 0, 64);
+        
+
     }
     return regs;
 }
