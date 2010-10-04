@@ -4382,7 +4382,6 @@ bool SgPlusPlusOp::isChildUsedAsLValue(const SgExpression* child) const
 bool SgFunctionCallExp::isLValue() const
 {
 	//! Function Pointers don't have a declaration!
-//	if (getAssociatedFunctionDeclaration()->get_orig_return_type()->get_ref_to() != NULL)
 	SgType* type = get_function()->get_type();
 	while (SgTypedefType* type2 = isSgTypedefType(type))
 		type = type2->get_base_type();
@@ -4394,10 +4393,7 @@ bool SgFunctionCallExp::isLValue() const
 	}
 	else
 	{
-		// depends on the return-type being a reference type
-//		if (ftype->get_return_type()->get_ref_to() == NULL)
-//		if (isSgReferenceType(ftype->get_return_type()) != NULL)
-		if (SageInterface::isReferenceType(ftype->get_return_type()) != NULL)
+		if (SageInterface::isReferenceType(ftype->get_return_type()))
 			return true;
 		else
 			return false;
@@ -4421,33 +4417,30 @@ bool SgFunctionCallExp::isChildUsedAsLValue(const SgExpression* child) const
 /*! std:5.4 par:1; std:5.2.11 par:1; std:5.2.9 par:1; std:5.2.7 par:2; std:5.2.10 par:1 */
 bool SgCastExp::isLValue() const
 {
-//	printf("%d: %s : %s\n", get_file_info()->get_line(), unparseToString().c_str(), get_type()->unparseToString().c_str());
 	switch (cast_type())
 	{
 		case e_C_style_cast:
-//			if (get_type()->get_ref_to() != NULL) /*! std:5.4 par:1 */
-//			if (isSgReferenceType(get_type()) != NULL) /*! std:5.4 par:1 */
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.4 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.4 par:1 */
 				return true;
 			else
 				return false;
 		case e_const_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.11 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.11 par:1 */
 				return true;
 			else
 				return false;
 		case e_static_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.9 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.9 par:1 */
 				return true;
 			else
 				return false;
 		case e_dynamic_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.7 par:2 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.7 par:2 */
 				return true;
 			else
 				return false;
 		case e_reinterpret_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.10 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.10 par:1 */
 				return true;
 			else
 				return false;
@@ -4507,7 +4500,10 @@ bool SgMemberFunctionRefExp::isChildUsedAsLValue(const SgExpression* child) cons
 bool SgVarRefExp::isDefinable() const
 {
 	// if not constant
-	return !SageInterface::isConstType(get_type());
+	if (SageInterface::isConstType(get_type()))
+		return false;
+	// if it is protected, it is not definable
+	return true;
 }
 
 /*! std:5.1 par:7,8 */
@@ -4795,4 +4791,6 @@ bool SgCommaOpExp::isChildUsedAsLValue(const SgExpression* child) const
 		return false;
 	}
 }
+
+
 

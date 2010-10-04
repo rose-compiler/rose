@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS = testWave testWave2 testRewrapping 
+bin_PROGRAMS = testWave testWave2 testWaveTokens testRewrapping 
 
 testRewrapping_SOURCES = \
           testRewrapping.C	
@@ -15,6 +15,11 @@ testWave2_SOURCES = \
 	testWave2.C
 
 testWave2_LDADD = $(ROSE_LIBS)
+
+testWaveTokens_SOURCES = \
+	testWaveTokens.C
+
+testWaveTokens_LDADD = $(ROSE_LIBS)
 
 INCLUDES = $(ROSE_INCLUDES) 
 
@@ -48,6 +53,7 @@ $(TESTCODES_REQUIRED_TO_PASS)
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects  = ${ALL_TESTCODES:.c=.o}
 TEST_Objects2 = ${ALL_TESTCODES:.c=.o}
+TEST_ObjectsTokens = ${ALL_TESTCODES:.c=.o}
 
 $(TEST_Objects): testWave $(srcdir)/$(@:.o=.C)
 	rm -f $(@:.o=.c).out
@@ -60,6 +66,21 @@ $(TEST_Objects2): testWave2 $(srcdir)/$(@:.o=.C)
 	rm -f $(@:.o=.c).out  
 	./testWave2 -c $(srcdir)/out/$(@:.o=.c) -o $(@:.c=.o)  -DHYPRE_SEQUENTIAL -DHYPRE_TIMING -DHYPRE_USING_OPENMP
 	if [ "`diff $(srcdir)/out/$(@:.o=.c).test2.out $(@:.o=.c).test2.out | wc -l`" != "0" ]; then exit 1; fi
+	rm -f $(@:.c=.o)
+
+$(TEST_ObjectsTokens): testWaveTokens $(srcdir)/$(@:.o=.C)
+	rm -f tokens_$(@:.o=.c)
+	./testWaveTokens -c $(srcdir)/out/$(@:.o=.c) -o $(@:.c=.o)
+
+foo:
+	echo tokens_input.cxx | python -c ' \
+		import sys \
+		while sys.stdin: \
+			line = sys.stdin.readline() \
+			print ":::",line \
+		skip'
+#	if [ "`diff $(srcdir)/out/$(@:.o=.c).out $(@:.o=.c).out | wc -l`" != "0" ]; then exit 1; fi
+#	if [ "`diff $(srcdir)/out/rose_$(@:.o=.c) rose_$(@:.o=.c) | wc -l`" != "0" ]; then exit 1; fi
 	rm -f $(@:.c=.o)
 
 $(TEST_Rewrap): testRewrapping $(srcdir)/$(@:.o=.C)
