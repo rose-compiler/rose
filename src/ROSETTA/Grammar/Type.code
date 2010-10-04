@@ -1192,9 +1192,10 @@ SgType::SgType()
      p_ptr_to(NULL),
      p_modifiers(NULL),
      p_typedefs(NULL),
-     p_attributeMechanism(NULL)
+  // DQ (10/3/2010): Readded to the SgType since it is used uniformally within Fortran types.
   // DQ (12/1/2007): This has been moved to the SgModifierType
-  // p_type_kind(NULL)
+     p_type_kind(NULL),
+     p_attributeMechanism(NULL)
    {
      ROSE_ASSERT(p_ref_to == NULL);
      ROSE_ASSERT(p_ptr_to == NULL);
@@ -1202,7 +1203,7 @@ SgType::SgType()
      p_typedefs = new SgTypedefSeq();
      ROSE_ASSERT(p_typedefs != NULL);
 
-  //FMZ (2/6/2009): Added a flag for CoArray
+  // FMZ (2/6/2009): Added a flag for CoArray
      p_isCoArray = false;
 
   // DQ (12/1/2007): This has been moved to the SgModifierType
@@ -1221,9 +1222,10 @@ SgType::SgType(const SgType & X)
      p_ptr_to(X.p_ptr_to),
      p_modifiers(X.p_modifiers),
      p_typedefs(X.p_typedefs),
-     p_attributeMechanism(X.p_attributeMechanism)
+  // DQ (10/3/2010): Readded to the SgType since it is used uniformally within Fortran types.
   // DQ (12/1/2007): This has been moved to the SgModifierType
-  // p_type_kind(X.p_type_kind)
+     p_type_kind(X.p_type_kind),
+     p_attributeMechanism(X.p_attributeMechanism)
    {
   // DQ (10/17/2007): This copy constructor is built to support the AST copy mechanism where for
   // some declarations that generate named types, the types are copied. and fixed up in a later 
@@ -1241,7 +1243,7 @@ SgType::SgType(const SgType & X)
   // ROSE_ASSERT(p_type_kind == NULL);
 #endif
 
-     //FMZ (2/6/2009): Added a flag for CoArray
+  // FMZ (2/6/2009): Added a flag for CoArray
      p_isCoArray = false;
 
      p_typedefs = new SgTypedefSeq();

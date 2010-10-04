@@ -25,15 +25,15 @@ RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
 	buildVarRefExp("runtimeSystem", globalScope);
       string symbolName = varRef_l->get_symbol()->get_name().str();
 #endif
-      ROSE_ASSERT(roseCheckpoint);
+      ROSE_ASSERT(symbols->roseCheckpoint);
 
       SgExprListExp* arg_list = buildExprListExp();
       appendFileInfo( mainEnd , arg_list );
 
-      string symbolName2 = roseCheckpoint->get_name().str();
+      string symbolName2 = symbols->roseCheckpoint->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
       SgFunctionRefExp* memRef_r = buildFunctionRefExp(
-								   roseCheckpoint);
+    		  symbols->roseCheckpoint);
       //      SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 							    arg_list);
