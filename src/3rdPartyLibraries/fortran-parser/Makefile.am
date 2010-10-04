@@ -1,6 +1,7 @@
 javadir=$(libdir)
 
 OFP_VERSION=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+
 # DQ (4/5/2010): Think about if we need the test using an Automake conditional since the jar file always exists.
 if ROSE_USE_OPEN_FORTRAN_PARSER
 dist_java_DATA = OpenFortranParser-${OFP_VERSION}.jar
@@ -17,6 +18,10 @@ endif
 
 # This appears to be a stable URL for downloading OFP...
 EXTERNAL_OFP_JAR_FILE_URL=http://sourceforge.net/projects/fortran-parser/files/OpenFortranParser/version_${OFP_VERSION}/OpenFortranParser-${OFP_VERSION}.jar/download
+
+# DQ (9/26/2010): If there is a newer version of OFP then copy it into the compile tree...
+OpenFortranParser-${OFP_VERSION}.jar: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar
+	cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar
 
 # DQ (3/13/2010): I think we need to use: "--no-check-certificate"
 # Using --no-check-certificate to handle errors:
@@ -41,6 +46,7 @@ get_jar_file:
 
 TEST_OFP_VERSION=0.8.0
 TEST_EXTERNAL_OFP_JAR_FILE_URL=http://hivelocity.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${TEST_OFP_VERSION}
+
 test_get_new_jar_file:
 	test -e OpenFortranParser-${TEST_OFP_VERSION}.jar || \
      (test -e ${srcdir}/OpenFortranParser-${TEST_OFP_VERSION}.jar && cp ${srcdir}/OpenFortranParser-${TEST_OFP_VERSION}.jar .) || \
@@ -49,6 +55,8 @@ test_get_new_jar_file:
 # DQ (4/4/2010): This needs to be an explicit path list for each file since some are all located in different subdirectories.
 # OFP_SOURCE_FILES = FortranParserAction.h c_actions_jni.c token.h token.c ActionEnums.h jni_token_funcs.h jni_token_funcs.c
 # Laksono (07/09/2010): remove IFortranParserAction.java
+# DQ (9/26/2010): I need fortran/ofp/parser/java/IFortranParserAction.java so I can get the names of new parameters
+# in c_actions that I discover are modified in newer versions of OFP.  Please do not remove.
 OFP_SOURCE_FILES = \
    fortran/ofp/parser/c/FortranParserAction.h \
    fortran/ofp/parser/c/jni/c_actions_jni.c \
@@ -56,7 +64,11 @@ OFP_SOURCE_FILES = \
    fortran/ofp/parser/c/token.c \
    fortran/ofp/parser/c/ActionEnums.h \
    fortran/ofp/parser/c/jni/jni_token_funcs.h \
-   fortran/ofp/parser/c/jni/jni_token_funcs.c 
+   fortran/ofp/parser/c/jni/jni_token_funcs.c
+
+if ROSE_OFP_CONTAINS_JAVA_FILE
+   OFP_SOURCE_FILES += fortran/ofp/parser/java/IFortranParserAction.java
+endif
 
 # DQ (4/5/2010): And we need a version of this macro withouth the paths.
 OFP_SOURCE_FILES_WITHOUT_PATHS = \
@@ -67,10 +79,17 @@ OFP_SOURCE_FILES_WITHOUT_PATHS = \
    ActionEnums.h \
    jni_token_funcs.h \
    jni_token_funcs.c 
+
 # Liao 8/4/2010, based on Jean Utke's suggestion on [Rose-public] Fortran built-ins
 if ROSE_USE_OPEN_FORTRAN_PARSER
 include_HEADERS = ActionEnums.h token.h FortranParserAction.h
 endif
+
+# DQ (9/26/2010): Add the jar file as a dependency so that when it is 
+# updated it will force the required files to be extracted automatically.
+# extract_rose_required_ofp_source_files: get_jar_file
+# extract_rose_required_ofp_source_files: get_jar_file OpenFortranParser-${OFP_VERSION}.jar
+# extract_rose_required_ofp_source_files: get_jar_file ${OFP_SOURCE_FILES_WITHOUT_PATHS}
 extract_rose_required_ofp_source_files: get_jar_file
 	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
       echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
