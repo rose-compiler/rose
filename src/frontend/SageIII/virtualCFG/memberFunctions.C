@@ -4331,13 +4331,13 @@ bool SgMinusMinusOp::isChildUsedAsLValue(const SgExpression* child) const
 		}
 		else
 		{
-			return isUsedAsLValue();
+			return true;
 		}
 	}
 	/*! std:5.3.2 par:2 */
 	else
 	{
-		return isUsedAsLValue();
+		return true;
 	}
 }
 
@@ -4368,13 +4368,13 @@ bool SgPlusPlusOp::isChildUsedAsLValue(const SgExpression* child) const
 		}
 		else
 		{
-			return isUsedAsLValue();
+			return true;
 		}
 	}
 	/*! std:5.3.2 par:1 */
 	else
 	{
-		return isUsedAsLValue();
+		return true;
 	}
 }
 
@@ -4564,7 +4564,13 @@ bool SgAssignOp::isChildUsedAsLValue(const SgExpression* child) const
 	if (get_lhs_operand() == child)
 		return true;
 	else if (get_rhs_operand() == child)
-		return false;
+	{
+		/*! std:8.5.3 par:5 */
+		if (SageInterface::isNonconstReference(get_lhs_operand()->get_type()))
+			return true;
+		else
+			return false;
+	}
 	else
 	{
 		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAssignOp");
@@ -4780,7 +4786,7 @@ bool SgCommaOpExp::isChildUsedAsLValue(const SgExpression* child) const
 		return false;
 	else if (get_rhs_operand() == child)
 	{
-		if (!isUsedAsLValue())
+		if (isUsedAsLValue())
 			return true;
 		else
 			return false;
@@ -4792,5 +4798,34 @@ bool SgCommaOpExp::isChildUsedAsLValue(const SgExpression* child) const
 	}
 }
 
+/*! std:8.5.3 par:5 */
+bool SgExprListExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	for (SgExpressionPtrList::const_iterator i = get_expressions().begin(); i != get_expressions().end(); ++i)
+	{
+		if (child == *i)
+		{
+			if (SageInterface::isNonconstReference(child->get_type()))
+				return true;
+			else
+				return false;
+		}
+	}
+	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgExprListExp");
+	return false;
+}
 
+/*! std:8.5.3 par:5 */
+bool SgReturnStmt::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_expression() == child)
+	{
+		if (SageInterface::isNonconstReference(SageInterface::getEnclosingFunctionDeclaration(const_cast<SgReturnStmt*>(this))->get_type()->get_return_type()))
+			return true;
+		else
+			return false;
+	}
+	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgReturnStmt");
+	return false;
+}
 
