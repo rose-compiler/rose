@@ -549,14 +549,15 @@ void
 DisassemblerX86::init(size_t wordsize)
 {
     switch (wordsize) {
-        case 2: insnSize = x86_insnsize_16; break;
-        case 4: insnSize = x86_insnsize_32; break;
-        case 8: insnSize = x86_insnsize_64; break;
+        case 2: insnSize = x86_insnsize_16; p_registers = RegisterDictionary::i286();  break;
+        case 4: insnSize = x86_insnsize_32; p_registers = RegisterDictionary::i386();  break;
+        case 8: insnSize = x86_insnsize_64; p_registers = RegisterDictionary::amd64(); break;
         default: ROSE_ASSERT(!"unknown x86 instruction size");
     }
     set_wordsize(wordsize);
     set_alignment(1);
     set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
+    ROSE_ASSERT(p_registers);
 
     /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data
      * members to reasonable values for debugging. */
@@ -846,25 +847,17 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
 SgAsmx86RegisterReferenceExpression *
 DisassemblerX86::makeIP()
 {
-    RegisterDescriptor rdesc;
-    rdesc.set_major(x86_regclass_ip);
-    rdesc.set_minor(0);
-    rdesc.set_offset(0);
+    const char *name = NULL;
     switch (insnSize) {
-        case x86_insnsize_16:
-            rdesc.set_nbits(16);
-            break;
-        case x86_insnsize_32:
-            rdesc.set_nbits(32);
-            break;
-        case x86_insnsize_64:
-            rdesc.set_nbits(64);
-            break;
-        case x86_insnsize_none:
-            ROSE_ASSERT(!"unknown instruction size");
-            break;
+        case x86_insnsize_16: name="ip"; break;
+        case x86_insnsize_32: name="eip"; break;
+        case x86_insnsize_64: name="rip"; break;
+        case x86_insnsize_none: ROSE_ASSERT(!"unknown instruction size");
     }
-    SgAsmx86RegisterReferenceExpression *r = new SgAsmx86RegisterReferenceExpression(rdesc);
+    ROSE_ASSERT(p_registers!=NULL);
+    const RegisterDescriptor *rdesc = p_registers->lookup(name);
+    ROSE_ASSERT(rdesc!=NULL);
+    SgAsmx86RegisterReferenceExpression *r = new SgAsmx86RegisterReferenceExpression(*rdesc);
     r->set_type(sizeToType(insnSize));
     return r;
 }
@@ -886,91 +879,118 @@ DisassemblerX86::makeOperandRegisterFull(bool rexExtension, uint8_t registerNumb
 SgAsmx86RegisterReferenceExpression *
 DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmType *registerType) const
 {
+    static const char* regnames8l[16] = {
+        "al",  "cl",  "dl",  "bl",  "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"
+    };
+    static const char* regnames8h[4] = {
+        "ah",  "ch",  "dh",  "bh"
+    };
+    static const char* regnames16[16] = {
+        "ax",  "cx",  "dx",  "bx",  "sp",  "bp",  "si",  "di",  "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w"
+    };
+    static const char* regnames32[16] = {
+        "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"
+    };
+    static const char* regnames64[16] = {
+        "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8",  "r9",  "r10",  "r11",  "r12",  "r13",  "r14",  "r15"
+    };
+    static const char* regnamesSeg[6] = {
+        "es", "cs", "ss", "ds", "fs", "gs"
+    };
+
     if (m == rmReturnNull)
         return NULL;
-    SgAsmx86RegisterReferenceExpression *ref = NULL;
+
+    std::string name;
+    RegisterDescriptor expected;
     switch (m) {
-        case rmLegacyByte: {
-            RegisterDescriptor rdesc(x86_regclass_gpr, fullRegisterNumber % 4, 0, 8);
-            if (fullRegisterNumber & 4)
-                rdesc.set_offset(8);
-            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
-            ref->set_type(BYTET);
+        case rmLegacyByte:
+            if (fullRegisterNumber >= 8)
+                throw Exception("register number out of bounds");
+            if (fullRegisterNumber & 4) {
+                name = regnames8h[fullRegisterNumber % 4];
+                expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber%4, 8, 8);
+            } else {
+                name = regnames8l[fullRegisterNumber % 4];
+                expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber%4, 0, 8);
+            }
+            registerType = BYTET;
             break;
-        }
-        case rmRexByte: {
-            RegisterDescriptor rdesc(x86_regclass_gpr, fullRegisterNumber, 0, 8);
-            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
-            ref->set_type(BYTET);
+        case rmRexByte:
+            if (fullRegisterNumber >= 16)
+                throw Exception("register number out of bounds");
+            name = regnames8l[fullRegisterNumber];
+            registerType = BYTET;
+            expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber, 0, 8);
             break;
-        }
-        case rmWord: {
-            RegisterDescriptor rdesc(x86_regclass_gpr, fullRegisterNumber, 0, 16);
-            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
-            ref->set_type(WORDT);
+        case rmWord:
+            if (fullRegisterNumber >= 16)
+                throw Exception("register number out of bounds");
+            name = regnames16[fullRegisterNumber];
+            registerType = WORDT;
+            expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber, 0, 16);
             break;
-        }
-        case rmDWord: {
-            RegisterDescriptor rdesc(x86_regclass_gpr, fullRegisterNumber, 0, 32);
-            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
-            ref->set_type(DWORDT);
+        case rmDWord:
+            if (fullRegisterNumber >= 16)
+                throw Exception("register number out of bounds");
+            name = regnames32[fullRegisterNumber];
+            registerType = DWORDT;
+            expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber, 0, 32);
             break;
-        }
-        case rmQWord: {
-            RegisterDescriptor rdesc(x86_regclass_gpr, fullRegisterNumber, 0, 64);
-            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
-            ref->set_type(QWORDT);
+        case rmQWord:
+            if (fullRegisterNumber >= 16)
+                throw Exception("register number out of bounds");
+            name = regnames64[fullRegisterNumber];
+            registerType = QWORDT;
+            expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber, 0, 64);
             break;
-        }
-        case rmSegment: {
+        case rmSegment:
             if (fullRegisterNumber >= 6)
                 throw Exception("register number out of bounds");
-            RegisterDescriptor rdesc(x86_regclass_segment, fullRegisterNumber, 0, 16);
-            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
-            ref->set_type(WORDT);
+            name = regnamesSeg[fullRegisterNumber];
+            registerType = WORDT;
+            expected = RegisterDescriptor(x86_regclass_segment, fullRegisterNumber, 0, 16);
             break;
-        }
-        case rmST: {
-            RegisterDescriptor rdesc(x86_regclass_st, fullRegisterNumber, 0, 80);
-            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
-            ref->set_type(LDOUBLET);
+        case rmST:
+            name = "st(" + StringUtility::numberToString(fullRegisterNumber) + ")";
+            registerType = LDOUBLET;
+            expected = RegisterDescriptor(x86_regclass_st, fullRegisterNumber, 0, 80);
             break;
-        }
-        case rmMM: {
-            RegisterDescriptor rdesc(x86_regclass_mm, fullRegisterNumber, 0, 64);
-            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
-            ROSE_ASSERT(registerType);
-            ref->set_type(registerType);
+        case rmMM:
+            name = "mm" + StringUtility::numberToString(fullRegisterNumber);
+            expected = RegisterDescriptor(x86_regclass_mm, fullRegisterNumber, 0, 64);
             break;
-        }
-        case rmXMM: {
-            RegisterDescriptor rdesc(x86_regclass_xmm, fullRegisterNumber, 0, 128);
-            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
-            ROSE_ASSERT(registerType);
-            ref->set_type(registerType);
+        case rmXMM:
+            name = "mmx" + StringUtility::numberToString(fullRegisterNumber);
+            expected = RegisterDescriptor(x86_regclass_xmm, fullRegisterNumber, 0, 128);
             break;
-        }
-        case rmControl: {
-            int nbits = insnSize==x86_insnsize_64 ? 64 : 32;
-            RegisterDescriptor rdesc(x86_regclass_cr, fullRegisterNumber, 0, nbits);
-            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
-            ROSE_ASSERT(registerType);
-            ref->set_type(registerType);
+        case rmControl:
+            name = "cr" + StringUtility::numberToString(fullRegisterNumber);
+            expected = RegisterDescriptor(x86_regclass_cr, fullRegisterNumber, 0, x86_insnsize_64==insnSize?64:32);
             break;
-        }
-        case rmDebug: {
-            int nbits = insnSize==x86_insnsize_64 ? 64 : 32;
-            RegisterDescriptor rdesc(x86_regclass_dr, fullRegisterNumber, 0, nbits);
-            ref = new SgAsmx86RegisterReferenceExpression(rdesc);
-            ROSE_ASSERT(registerType);
-            ref->set_type(registerType);
+        case rmDebug:
+            name = "dr" + StringUtility::numberToString(fullRegisterNumber);
+            expected = RegisterDescriptor(x86_regclass_dr, fullRegisterNumber, 0, x86_insnsize_64==insnSize?64:32);
             break;
-        }
-        default:
-            ROSE_ASSERT(false);
+        case rmReturnNull:
+            ROSE_ASSERT(!"case not handled");
     }
-    ROSE_ASSERT(ref);
-    return ref;
+    
+    if (name.empty())
+        ROSE_ASSERT(!"unknown register mode");
+
+    ROSE_ASSERT(p_registers!=NULL);
+    const RegisterDescriptor *rdesc = p_registers->lookup(name);
+    if (!rdesc)
+        throw Exception("register \"" + name + "\" is not available on this architecture");
+    if (!rdesc->equal(expected)) {
+        std::cerr <<"internal error: found register " <<*rdesc <<" does not match expected " <<expected <<"\n";
+        ROSE_ASSERT(!"registers do not match");
+    }
+    SgAsmx86RegisterReferenceExpression *rre = new SgAsmx86RegisterReferenceExpression(*rdesc);
+    ROSE_ASSERT(rre);
+    rre->set_type(registerType);
+    return rre;
 }
 
 SgAsmExpression *
