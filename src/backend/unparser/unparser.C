@@ -896,7 +896,9 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
      string returnString;
 
 // tps (Jun 24 2008) added because OpenMP crashes all the time at the unparser
+#if ROSE_GCC_OMP
 #pragma omp critical (unparser)
+#endif
      {
        returnString=globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
      }

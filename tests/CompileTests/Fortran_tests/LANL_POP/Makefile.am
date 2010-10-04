@@ -403,7 +403,14 @@ io_netcdf_testcode_01.o: $(TRANSLATOR) gather_scatter.o netcdf.o
 io_netcdf_testcode_02.o: $(TRANSLATOR) gather_scatter.o netcdf.o
 	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
+test_kinds_mod.o:$(TRANSLATOR)
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
+test_constants.o:$(TRANSLATOR) test_kinds_mod.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
+
+test_forcing.o:$(TRANSLATOR) test_constants.o
+	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
 
 
 

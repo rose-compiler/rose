@@ -144,7 +144,7 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     SgExpression* callNameExp = buildString(args->f_name);
 
     //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
-    ROSE_ASSERT(roseFunctionCall);
+    ROSE_ASSERT(symbols->roseFunctionCall);
 
     SgExprListExp* arg_list = buildExprListExp();
     appendExpression(arg_list, sizeExp);
@@ -275,14 +275,14 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  // handle integers as parameters
 	  SgFunctionRefExp* memRef_r2 = NULL;
 	  if (isSgTypeInt(type)) {
-	    ROSE_ASSERT(roseConvertIntToString);
-	    memRef_r2 = buildFunctionRefExp( roseConvertIntToString);
+	    ROSE_ASSERT(symbols->roseConvertIntToString);
+	    memRef_r2 = buildFunctionRefExp( symbols->roseConvertIntToString);
 	  } else {
 	    cerr << "RtedTransformation - unknown type : " << type->class_name() << endl;
 	    ROSE_ASSERT(false);
 	  }
 	  ROSE_ASSERT(memRef_r2);
-	  string symbolName3 = roseConvertIntToString->get_name().str();
+	  string symbolName3 = symbols->roseConvertIntToString->get_name().str();
 	  cerr << " >>>>>>>> Symbol Member::: " << symbolName3 << endl;
 
 	  SgExprListExp* arg_list2 = buildExprListExp();
@@ -323,9 +323,9 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
       }
     }
 
-    string symbolName2 = roseFunctionCall->get_name().str();
+    string symbolName2 = symbols->roseFunctionCall->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-    SgFunctionRefExp* memRef_r = buildFunctionRefExp(roseFunctionCall);
+    SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols->roseFunctionCall);
     SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r, arg_list);
     SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
     // create the function call and its comment
@@ -401,7 +401,7 @@ RtedTransformation::insertAssertFunctionSignature( SgFunctionCallExp* fncall ) {
 		stmt,
 		buildExprStatement(
 			buildFunctionCallExp(
-				buildFunctionRefExp( roseAssertFunctionSignature ),
+				buildFunctionRefExp( symbols->roseAssertFunctionSignature ),
 				arg_list
 	)));
 }
@@ -457,7 +457,7 @@ RtedTransformation::insertFreeCall( SgExpression* free ) {
 		stmt, 
 		buildExprStatement(
 			buildFunctionCallExp(
-				buildFunctionRefExp( roseFreeMemory),
+				buildFunctionRefExp( symbols->roseFreeMemory),
 				arg_list
 	)));
 }
@@ -491,7 +491,7 @@ RtedTransformation::insertReallocateCall( SgFunctionCallExp* realloc_call ) {
 		stmt, 
 		buildExprStatement(
 			buildFunctionCallExp(
-				buildFunctionRefExp( roseReallocateMemory),
+				buildFunctionRefExp( symbols->roseReallocateMemory),
 				arg_list
 	)));
 }

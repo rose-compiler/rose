@@ -10,9 +10,7 @@ extern "C" {
 
 extern void _ompc_init(int argc, char *argv[]);
 extern void _ompc_terminate (int);
-//extern int _ompc_do_parallel();
 extern void _ompc_do_parallel(void (*func)(void **),void *args);
-//extern void _ompc_do_parallel(...);
 //extern unsigned __ompc_output(char [],...);
 extern void _ompc_default_sched(int *lb, int *ub, int *step);
 extern void _ompc_reduction(void *in_p,void *out_p,int type, int op);
