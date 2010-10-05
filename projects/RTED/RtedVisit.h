@@ -10,10 +10,24 @@ class InheritedAttribute
       // Depth in AST
          bool global;
          bool function;
+         bool isAssignInitializer;
+         bool isArrowExp;
+         bool isAddressOfOp;
+         bool isLValue;
 
        // Specific constructors are required
-	 InheritedAttribute (bool g, bool f) : global(g), function(f) {};
-	 InheritedAttribute ( const InheritedAttribute & X ) : global(X.global), function(X.function){};
+	 InheritedAttribute (bool g, bool f, bool a, bool ae, bool ao, bool l) : global(g),
+	                                               function(f),
+	                                               isAssignInitializer(a),
+	                                               isArrowExp(ae),
+	                                               isAddressOfOp(ao),
+	                                               isLValue(l) {};
+	 InheritedAttribute ( const InheritedAttribute & X ) : global(X.global),
+	                                                       function(X.function),
+	                                                       isAssignInitializer(X.isAssignInitializer),
+	                                                       isArrowExp(X.isArrowExp),
+	                                                       isAddressOfOp(X.isAddressOfOp),
+	                                                       isLValue(X.isLValue) {};
    };
 
 typedef bool SynthesizedAttribute;

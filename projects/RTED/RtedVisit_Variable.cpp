@@ -1,7 +1,7 @@
 // ROSE is a tool for building preprocessors, this file is an example preprocessor built with ROSE.
 #include "rose.h"
 
-// DQ (2/9/2010): Testing use of ROE to compile ROSE.
+// DQ (2/9/2010): Testing use of ROSE to compile ROSE.
 #ifndef USE_ROSE
 
 #include <algorithm>
@@ -24,20 +24,66 @@ InheritedAttribute
 VariableTraversal::evaluateInheritedAttribute (
       SgNode* astNode,
       InheritedAttribute inheritedAttribute ) {
-   printf ("  evaluateInheritedAttr Node...%s  isGlobal %d  isFunction %d \n",astNode->class_name().c_str(),
-         inheritedAttribute.global,inheritedAttribute.function );
+   printf ("  evaluateInheritedAttr Node...%s  isGlobal %d  isFunction %d  isAssign %d \n",astNode->class_name().c_str(),
+         inheritedAttribute.global,inheritedAttribute.function,inheritedAttribute.isAssignInitializer );
    if (isSgGlobal(astNode))    {
-      InheritedAttribute ia(true,inheritedAttribute.function);
+      InheritedAttribute ia(true,
+                            inheritedAttribute.function,
+                            inheritedAttribute.isAssignInitializer,
+                            inheritedAttribute.isArrowExp,
+                            inheritedAttribute.isAddressOfOp,
+                            inheritedAttribute.isLValue);
       printf ("  >>>>> evaluateInheritedAttr isGlobal yes...\n");
       return ia;
    }
 
    if (isSgFunctionDefinition(astNode))    {
       // The inherited attribute is true iff we are inside a function.
-      InheritedAttribute ia(inheritedAttribute.global, true);
+      InheritedAttribute ia(inheritedAttribute.global,
+                            true,
+                            inheritedAttribute.isAssignInitializer,
+                            inheritedAttribute.isArrowExp,
+                            inheritedAttribute.isAddressOfOp,
+                            inheritedAttribute.isLValue);
       printf ("  >>>>> evaluateInheritedAttr isFunctionDefinition yes...\n");
       return ia;
    }
+
+   if (isSgAssignInitializer(astNode))    {
+       // The inherited attribute is true iff we are inside a function.
+       InheritedAttribute ia(inheritedAttribute.global,
+                             inheritedAttribute.function,
+                             true,
+                             inheritedAttribute.isArrowExp,
+                             inheritedAttribute.isAddressOfOp,
+                             inheritedAttribute.isLValue);
+       printf ("  >>>>> evaluateInheritedAttr isAssignInit yes...\n");
+       return ia;
+    }
+
+   if (isSgArrowExp(astNode))
+      return InheritedAttribute (inheritedAttribute.global,
+                                   inheritedAttribute.function,
+                                   inheritedAttribute.isAssignInitializer,
+                                   true,
+                                   inheritedAttribute.isAddressOfOp,
+                                   inheritedAttribute.isLValue);
+
+   if (isSgAddressOfOp(astNode))
+      return InheritedAttribute (inheritedAttribute.global,
+                                   inheritedAttribute.function,
+                                   inheritedAttribute.isAssignInitializer,
+                                   inheritedAttribute.isArrowExp,
+                                   true,
+                                   inheritedAttribute.isLValue);
+
+   if (isSgExpression(astNode))
+      return InheritedAttribute (inheritedAttribute.global,
+                                   inheritedAttribute.function,
+                                   inheritedAttribute.isAssignInitializer,
+                                   inheritedAttribute.isArrowExp,
+                                   inheritedAttribute.isAddressOfOp,
+                                   isSgExpression(astNode)->isLValue());
 
    return inheritedAttribute;
 }
@@ -47,43 +93,39 @@ VariableTraversal::evaluateSynthesizedAttribute (
       SgNode* astNode,
       InheritedAttribute inheritedAttribute,
       SynthesizedAttributesList childAttributes ) {
-   printf ("      evaluateSynthesizedAttribute Node...%s\n",astNode->class_name().c_str());
+   printf ("      evaluateSynthesizedAttribute Node...%s  isGlobal %d  isFunction %d  isAssign %d \n",astNode->class_name().c_str(),
+         inheritedAttribute.global,inheritedAttribute.function,inheritedAttribute.isAssignInitializer);
+   SynthesizedAttribute localResult =
+         std::accumulate(childAttributes.begin(), childAttributes.end(),  false, std::logical_or<bool>());
    if (inheritedAttribute.function == true)
    {
       // Fold up the list of child attributes using logical or, i.e. the local
       // result will be true iff one of the child attributes is true.
-      SynthesizedAttribute localResult =
-            std::accumulate(childAttributes.begin(), childAttributes.end(),  false, std::logical_or<bool>());
       if (isSgFunctionDefinition(astNode) && localResult == true)
       {
          printf ("  >>>>> evaluateSynthesizedAttribute Found a function containing a varRefExp ...\n");
       }
-      if (isSgVarRefExp(astNode))
+      if (isSgVarRefExp(astNode) && !inheritedAttribute.isArrowExp && !inheritedAttribute.isAddressOfOp)
       {
          transf->visit_isSgVarRefExp(isSgVarRefExp(astNode));
          localResult = true;
          printf ("  >>>>> evaluateSynthesizedAttribute isSgVarRefExp...\n");
       }
-      return localResult;
    }
+   return localResult;
 }
 
 
 
 
-// FIXME 2: This introduces superfluous calls to access var for dot expressions
-// 	e.g., in the following
-// 		a = *(my_struct.field);
-// 	it is necessary to read &*(my_struct.field), but we will do so twice because
-// 	of the two var refs ('my_struct', and 'field')
+
 void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
    cerr <<"\n$$$$$ visit_isSgVarRefExp : " << n->unparseToString() <<
          "  in line : " << n->get_file_info()->get_line() << " -------------------------------------" <<endl;
 
    SgInitializedName *name = n -> get_symbol() -> get_declaration();
    if( name  && !isInInstrumentedFile( name -> get_declaration() )) {
-      // we're not instrumenting the file that contains the declaration, so
-      // we'll always complain about accesses
+      // we're not instrumenting the file that contains the declaration, so we'll always complain about accesses
       return;
    }
 
@@ -107,30 +149,18 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
          SgInitializedName* grandparent = isSgInitializedName( parent -> get_parent() );
          // make sure that we came from the right hand side of the assignment
          SgExpression* right = isSgAssignInitializer(parent)->get_operand();
-         if (    right==last
-               && !(
-                     // consider, e.g:
-                     //  int& ref = x;
-                     // which is not a read of x
-                     grandparent
-                     && isSgReferenceType( grandparent -> get_type())))
+         if (    right==last      && !(  grandparent   && isSgReferenceType( grandparent -> get_type())))
             variable_access_varref.push_back(n);
          stopSearch=true;
          cerr << " $$$$ *********************************** DEBUGGING   parent (assigniniit) = " << parent->class_name() << endl;
          break;
       }
-      else if (		isSgAssignOp( parent )
-            || isSgAndAssignOp( parent )
-            || isSgDivAssignOp( parent )
-            || isSgIorAssignOp( parent )
-            || isSgLshiftAssignOp( parent )
-            || isSgMinusAssignOp( parent )
-            || isSgModAssignOp( parent )
-            || isSgMultAssignOp( parent )
-            || isSgPlusAssignOp( parent )
-            || isSgPointerAssignOp( parent )
-            || isSgRshiftAssignOp( parent )
-            || isSgXorAssignOp( parent )) {
+      else if (		isSgAssignOp( parent )            || isSgAndAssignOp( parent )
+            || isSgDivAssignOp( parent )            || isSgIorAssignOp( parent )
+            || isSgLshiftAssignOp( parent )            || isSgMinusAssignOp( parent )
+            || isSgModAssignOp( parent )            || isSgMultAssignOp( parent )
+            || isSgPlusAssignOp( parent )            || isSgPointerAssignOp( parent )
+            || isSgRshiftAssignOp( parent )            || isSgXorAssignOp( parent )) {
 
          SgExpression* left = isSgBinaryOp( parent ) -> get_lhs_operand();
          // make sure that we came from the right hand side of the assignment
@@ -138,8 +168,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
          // consider
          //		int arr[2];
          //		int *x = arr;
-         // the assignment is not a var ref of arr since arr's address is statically
-         // determined
+         // the assignment is not a var ref of arr since arr's address is statically determined
          if (    right == last &&
                !isSgArrayType( right -> get_type() ) &&
                !isSgNewExp(right)
@@ -151,13 +180,11 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
                   "   right hand side type: " << right->get_type()->class_name() <<
                   "   right exp: " << right->class_name() << endl;
             variable_access_varref.push_back(n);
-            //stopSearch=true;
          } else {
             // tps (09/15/2009): added this
             cerr <<"$$$$$ Unhandled case (AssignOp) : " << parent->unparseToString() << endl;
             cerr <<"$$$$$ right : " << right->unparseToString() <<
                   "    last : " << last->unparseToString() << endl;
-            //exit(1);
          }
          stopSearch=true;
          //cerr << "*********************************** DEBUGGING   parent (assign) = " << parent->class_name() << endl;
@@ -165,7 +192,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
       }
       else if (isSgPointerDerefExp(parent)) {
       } else if ( isSgArrowExp( parent )) {
-         stopSearch = true;
+        // stopSearch = true;
          break;
       }
       else if (isSgExprListExp(parent) && isSgFunctionCallExp(parent->get_parent())) {
@@ -174,9 +201,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
          SgType* param_type = NULL;
 
          // try to determine the parameter type
-         SgFunctionDeclaration* fndecl
-         = isSgFunctionCallExp( parent -> get_parent() )
-         -> getAssociatedFunctionDeclaration();
+         SgFunctionDeclaration* fndecl = isSgFunctionCallExp( parent -> get_parent() )-> getAssociatedFunctionDeclaration();
          if( fndecl ) {
             int param_index = -1;
             SgExpressionPtrList& args = isSgExprListExp( parent ) -> get_expressions();
@@ -192,20 +217,14 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
             // anything.  In particular, it's not guaranteed that it has as many
             // parameters as our callsite has arguments.
             if( (int)fndecl -> get_parameterList() -> get_args().size() > param_index ) {
-               SgInitializedName* param
-               = fndecl -> get_parameterList()
-               -> get_args()[ param_index ];
-               if( param )
-                  param_type = param -> get_type();
+               SgInitializedName* param  = fndecl -> get_parameterList()-> get_args()[ param_index ];
+               if( param )  param_type = param -> get_type();
             }
          }
 
-         if (      (   arg_type
-               // Pointers are passed as pointers
-               && isUsableAsSgArrayType( arg_type ) != NULL )
+         if ((   arg_type   && isUsableAsSgArrayType( arg_type ) != NULL )
                || (param_type
-                     // References do not have to be initialized.  They can be
-                     // initialized in the function body
+                     // References do not have to be initialized.  They can be initialized in the function body
                      && isUsableAsSgReferenceType( param_type ) != NULL ))
             stopSearch=true;
          break;
@@ -214,51 +233,28 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
          // 	int x;
          // 	int* y = &x;
          // it is not necessary for x to be initialized
-         stopSearch = true;
+     //    stopSearch = true;
          break;
       } else if( isSgWhileStmt( parent )
             || isSgDoWhileStmt( parent )
             || isSgIfStmt( parent )) {
-         // FIXME 1: while, getSurroundingStatement( n ) will get the
-         // scopestatement, but we also need to append to the body.  consider, e.g.
-         // 	int *x = ...
-         // 	while( *x > 2 ) { x = NULL; }'
-         //
-         // perhaps only true for pointers
-         //
-         // FIXME 1: dowhile has an additional problem with false positives because
-         // of checks before the dowhile rather than in the body. consider:
-         //    int *x = NULL;
-         //    do {
-         //        *x = 200;
-         //    } while( *x > 0 );
+
          break;
       } else if( isSgForStatement( parent )) {
          SgForStatement* for_stmt = isSgForStatement( parent );
-
          // Capture for( int i = 0;
-         vector< SgNode* > initialized_names
-         = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgInitializedName );
+         vector< SgNode* > initialized_names = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgInitializedName );
 
          // Capture int i; for( i = 0;
-         vector< SgNode* > init_var_refs
-         = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgVarRefExp );
-         for(      vector< SgNode* >::iterator i = init_var_refs.begin();
-               i != init_var_refs.end();
-               ++i) {
-
+         vector< SgNode* > init_var_refs = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgVarRefExp );
+         for(vector< SgNode* >::iterator i = init_var_refs.begin(); i != init_var_refs.end();  ++i) {
             initialized_names.push_back(
                   // map the var refs to their initialized names
                   isSgVarRefExp( *i ) -> get_symbol() -> get_declaration()
             );
          }
 
-         // FIXME 1: This isn't true for pointers -- in general checks need to be
-         // added to for's body.  consider, e.g.:
-         // 	int *x = ...
-         // 	for( ; *x > 2; ) { x = NULL; }'
-         if(   find( initialized_names.begin(), initialized_names.end(), name )
-               != initialized_names.end() ) {
+         if( find( initialized_names.begin(), initialized_names.end(), name )  != initialized_names.end() ) {
             // no need to check the ref
             stopSearch = true;
          }
@@ -296,6 +292,26 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
    }
    if (isSgArrayType( n -> get_type() ))
       donothing=true;
+   if( isSgForStatement( parent )) {
+           SgForStatement* for_stmt = isSgForStatement( parent );
+           // Capture for( int i = 0;
+           vector< SgNode* > initialized_names = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgInitializedName );
+
+           // Capture int i; for( i = 0;
+           vector< SgNode* > init_var_refs = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgVarRefExp );
+           for(vector< SgNode* >::iterator i = init_var_refs.begin(); i != init_var_refs.end();  ++i) {
+              initialized_names.push_back(
+                    // map the var refs to their initialized names
+                    isSgVarRefExp( *i ) -> get_symbol() -> get_declaration()
+              );
+           }
+
+           if( find( initialized_names.begin(), initialized_names.end(), name )  != initialized_names.end() ) {
+              // no need to check the ref
+              donothing = true;
+           }
+           // either way, no need to keep going up the AST
+        }
 
    if (donothing==false)
       variable_access_varref.push_back(n);
