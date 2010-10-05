@@ -25,7 +25,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::emptyRenameTable;
 VariableRenaming::NumNodeRenameEntry VariableRenaming::emptyRenameEntry;
 
 //Printing functions
-std::string VariableRenaming::keyToString(VarName vec)
+std::string VariableRenaming::keyToString(const VarName& vec)
 {
     std::string name = "";
     foreach(VarName::value_type& iter, vec)
