@@ -39,6 +39,9 @@ FuncDeclPairs EventHandler::processEvent(SgFunctionDeclaration* event)
 
 vector<EvaluationResult> EventHandler::filterResults(const vector<EvaluationResult>& results)
 {
+	//// Temporarily do not filter results here.
+	//return results;
+	
 	set<size_t> discarded_idx;
 	for (size_t i = 0; i < results.size(); ++i)
 	{

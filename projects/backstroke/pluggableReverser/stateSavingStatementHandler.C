@@ -2,12 +2,12 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/lambda/lambda.hpp>
+#include <boost/lambda/algorithm.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/range/algorithm.hpp>
 #include <utilities/Utilities.h>
 #include <utilities/CPPDefinesAndNamespaces.h>
 
-using namespace boost::lambda;
 using namespace SageBuilder;
 using namespace SageInterface;
 
@@ -71,14 +71,39 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 
 #endif
 
+bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::VarName& var2)
+{
+	if (var1.size() <= var2.size())
+		return false;
+	if (std::search(var1.begin(), var1.end(), var2.begin(), var2.end()) == var1.begin())
+		return true;
+	return false;
+}
 
-
-vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllModifiedVariables(SgStatement* stmt)
+vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefs(SgStatement* stmt)
 {
 	vector<VariableRenaming::VarName> modified_vars;
 	foreach (const VariableRenaming::NumNodeRenameTable::value_type& num_node,
 			getVariableRenaming()->getOriginalDefsForSubtree(stmt))
-			modified_vars.push_back(num_node.first);
+	{
+		const VariableRenaming::VarName& var_name = num_node.first;
+		// Get the declaration of this variable to see if it's declared inside of the given statement.
+		// If so, we don't have to store this variable.
+		if (!isAncestor(stmt, var_name[0]->get_declaration()))
+			modified_vars.push_back(var_name);
+	}
+
+	// Sort those names in lexicographical order.
+	using namespace boost::lambda;
+	std::sort(modified_vars.begin(), modified_vars.end(), 
+			bind(ll::lexicographical_compare(),
+			bind(call_begin(), _1), bind(call_end(), _1),
+			bind(call_begin(), _2), bind(call_end(), _2)));
+
+	modified_vars.erase(
+		std::unique(modified_vars.begin(), modified_vars.end(), bind(isMemberOf, _2, _1)),
+		modified_vars.end());
+	
 	return modified_vars;
 }
 
@@ -159,7 +184,17 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	cout << "\n\n";
 #endif
 
-	vector<VariableRenaming::VarName> modified_vars = getAllModifiedVariables(stmt);
+	vector<VariableRenaming::VarName> modified_vars = getAllDefs(stmt);
+
+	cout << "Modified vars:\n";
+	foreach (const VariableRenaming::VarName& name, modified_vars)
+		cout << VariableRenaming::keyToString(name) << endl;
+	cout << "^^^\n";
+
+	// If there is no variable modified in this statement, just return empty.
+	if (modified_vars.empty())
+		return results;
+	
 	VariableVersionTable new_table = var_table;
 	new_table.reverseVersionAtStatementStart(stmt);
 
