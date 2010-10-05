@@ -126,11 +126,14 @@ extract_rose_required_ofp_source_files: get_jar_file
       rm -rf fortran; \
    fi;
 
-# We distribute the default version of the OFP jar file (version 0.8.1)
-# OpenFortranParser-0.8.1.jar but this is handled using the dist_java_DATA 
-# automake variable. Also add the generated/downloaded/unpacked files from 
-# the OFP jar file.
-EXTRA_DIST = CMakeLists.txt $(OFP_SOURCE_FILES_WITHOUT_PATHS)
+# DQ (10/4/2010): We only watn to distribute the jar file for OFP, and then
+# extract what we require from the jar file (putting it into the build tree).
+# OLD COMMENT: We distribute the default version of the OFP jar file (version 0.8.1)
+# OLD COMMENT: OpenFortranParser-0.8.1.jar but this is handled using the dist_java_DATA 
+# OLD COMMENT: automake variable. Also add the generated/downloaded/unpacked files from 
+# OLD COMMENT: the OFP jar file.
+# EXTRA_DIST = CMakeLists.txt $(OFP_SOURCE_FILES_WITHOUT_PATHS)
+EXTRA_DIST = CMakeLists.txt
 
 clean-local:
 	rm -f OpenFortranParser-${OFP_VERSION}.jar FortranParserAction.h c_actions_jni.c

@@ -79,7 +79,7 @@ std::string
 SgValueExp::get_constant_folded_value_as_string()
    {
   // DQ (8/18/2009): Added support for generating a string from a SgValueExp.
-  // Note that the point is not not call unparse since that would providethe 
+  // Note that the point is not to call unparse since that would provide the 
   // expression tree and we want the constant folded value.
 
      string s;
@@ -94,6 +94,18 @@ SgValueExp::get_constant_folded_value_as_string()
                int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %d \n",numericValue);
                snprintf (buffer,max_buffer_size,"%d",numericValue);
+               s = buffer;
+               break;
+             }
+
+       // DQ (10/4/2010): Added case
+          case V_SgLongIntVal: 
+             {
+               SgLongIntVal* integerValueExpression = isSgLongIntVal(this);
+               ROSE_ASSERT(integerValueExpression != NULL);
+               long int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%ld",numericValue);
                s = buffer;
                break;
              }
@@ -159,6 +171,54 @@ SgValueExp::get_constant_folded_value_as_string()
                SgCharVal* charValueExpression = isSgCharVal(this);
                ROSE_ASSERT(charValueExpression != NULL);
                s = charValueExpression->get_value();
+               break;
+             }
+
+       // DQ (10/4/2010): Added case
+          case V_SgFloatVal:
+             {
+               SgFloatVal* floatValueExpression = isSgFloatVal(this);
+               ROSE_ASSERT(floatValueExpression != NULL);
+               float numericValue = floatValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %f \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%f",numericValue);
+               s = buffer;
+               break;
+             }
+
+       // DQ (10/4/2010): Added case
+          case V_SgDoubleVal:
+             {
+               SgDoubleVal* floatValueExpression = isSgDoubleVal(this);
+               ROSE_ASSERT(floatValueExpression != NULL);
+               double numericValue = floatValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %f \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%lf",numericValue);
+               s = buffer;
+               break;
+             }
+
+       // DQ (10/4/2010): Added case
+          case V_SgLongDoubleVal:
+             {
+               SgLongDoubleVal* floatValueExpression = isSgLongDoubleVal(this);
+               ROSE_ASSERT(floatValueExpression != NULL);
+               long double numericValue = floatValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %f \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%Lf",numericValue);
+               s = buffer;
+               break;
+             }
+
+       // DQ (10/4/2010): Added case
+          case V_SgEnumVal: 
+             {
+               SgEnumVal* enumValueExpression = isSgEnumVal(this);
+               ROSE_ASSERT(enumValueExpression != NULL);
+               int numericValue = enumValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %d \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%d",numericValue);
+               s = string("_enum_") + string(buffer);
                break;
              }
 

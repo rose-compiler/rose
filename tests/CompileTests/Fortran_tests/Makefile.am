@@ -341,6 +341,7 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_60.f90 \
      test2010_61.f90 \
      test2010_62.f90 \
+     test2010_63.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -451,22 +452,33 @@ if ROSE_USE_OPEN_FORTRAN_PARSER
 
 testTranslator: ../../testTranslator
 
-$(TEST_F90_Objects): ../../testTranslator ${ALL_TESTCODES}
+../../testGraphGeneration:
+	cd ../..; $(MAKE) testGraphGeneration
+
+testGraphGeneration: ../../testGraphGeneration
+
+# DQ (10/4/2010): Added tests to make sure that the AST graphs can be generated for all
+# Fortran input test codes. This tests a problem that was reported previously by Rice.
+$(TEST_F90_Objects): ../../testTranslator testGraphGeneration ${ALL_TESTCODES}
 # $(TEST_F90_Objects): ../../testTranslator
 # Example of how to call the OpenFortranParser
 #	java parser.java.FortranMain --class parser.java.FortranParserActionJNI $(srcdir)/$(@:.o=.f90)
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f90)
 # How to call a ROSE translator with a Fortran source file.
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 
-$(TEST_F77_Objects): ../../testTranslator ${ALL_TESTCODES}
+$(TEST_F77_Objects): ../../testTranslator testGraphGeneration ${ALL_TESTCODES}
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f77)
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 
-$(TEST_F77_FIXED_FORMAT_Objects): ../../testTranslator ${ALL_TESTCODES}
+$(TEST_F77_FIXED_FORMAT_Objects): ../../testTranslator testGraphGeneration ${ALL_TESTCODES}
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f)
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+
 
 # Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
 #       So we use -rose:skip_syntax_check to avoid the frontend syntax checking and -rose:skipfinalCompileStep
@@ -477,6 +489,7 @@ $(TEST_F03_Objects): ../../testTranslator
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f03)
 #	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
+	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
 #	Since gfortran does not support F03, and thus we skip the compileation using the backend gfortran compiler, we have to force the generation of an object file. 
 #	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
 	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
@@ -529,29 +542,34 @@ current_OFP_error:
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
 PASSING_MODULE_TEST_Objects = module_B_file.o
 
+# DQ (10/4/2010): Test calling OFP directly and ROSE for different filename extensions.
+CALL_OFP = java -Djava.class.path=$(top_srcdir)/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:$(top_builddir)/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.2.jar fortran.ofp.FrontEnd
 testSuffixRules:
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_01.f
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_01.f
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_01.f
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_02.f77
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_02.f77
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_02.f77
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_03.f90
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_03.f90
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_03.f90
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_04.f95
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_04.f95
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_04.f95
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_05.f03
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_05.f03
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_05.f03
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_06.F
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_06.F
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_06.F
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_07.F90
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_07.F90
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_07.F90
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_08.F95
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_08.F95
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_08.F95
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_09.F03
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_09.F03
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_09.F03
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_10.F08
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_10.F08
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_10.F08
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_11.f08
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_11.f08
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_11.f08
+
+testOFP:
+	 $(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_01.f
 
 
 tests:
