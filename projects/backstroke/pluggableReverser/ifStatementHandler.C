@@ -1,36 +1,20 @@
-#include "ifStatementProcessor.h"
+#include "ifStatementHandler.h"
 #include "pluggableReverser/variableVersionTable.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
 #include "utilities/CPPDefinesAndNamespaces.h"
 
-using namespace std;
-using namespace boost;
-using namespace SageBuilder;
 using namespace SageInterface;
+using namespace SageBuilder;
 
-struct IfStmtConditionAttribute : public EvaluationResultAttribute
-{
-    IfStmtConditionAttribute() : cond(NULL) {}
-    SgExpression* cond;
-};
-
-typedef boost::shared_ptr<IfStmtConditionAttribute> IfStmtConditionAttributePtr;
-
-StatementReversal IfStatementProcessor::generateReverseAST(SgStatement* stmt, const EvaluationResult& evalResult)
+StatementReversal IfStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evalResult)
 {
 	ROSE_ASSERT(evalResult.getChildResults().size() == 3);
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
     ROSE_ASSERT(if_stmt);
 
-    // Get the attribute which tells us whether to store the branch flag.
-    EvaluationResultAttributePtr attr = evalResult.getAttribute();
-    ROSE_ASSERT(attr);
-    IfStmtConditionAttribute* cond_attr = dynamic_cast<IfStmtConditionAttribute*>(attr.get());
-    ROSE_ASSERT(cond_attr);
-
+	// Get three child handlers.
     StatementReversal proc_cond = evalResult.getChildResults()[2].generateReverseStatement();
-
     StatementReversal proc_true_body = evalResult.getChildResults()[1].generateReverseStatement();
     StatementReversal proc_false_body = evalResult.getChildResults()[0].generateReverseStatement();
 
@@ -40,17 +24,20 @@ StatementReversal IfStatementProcessor::generateReverseAST(SgStatement* stmt, co
     ROSE_ASSERT(fwd_true_block_body);
     ROSE_ASSERT(fwd_false_block_body);
 
-    SgStatement* cond_stmt;
-    if (cond_attr->cond)
-        cond_stmt = buildExprStatement(copyExpression(cond_attr->cond));
+
+    // Get the attribute which tells us whether to store the branch flag.
+    SgExpression* condition = evalResult.getAttribute<SgExpression*>();
+    SgStatement* cond_stmt = NULL;
+    if (condition)
+        cond_stmt = buildExprStatement(condition);
     else
     {
         // In this situation, we don't have to store branch flag.
         appendStatement(buildExprStatement(
-                pushVal(buildBoolValExp(true), buildBoolType())),
+                pushVal(buildBoolValExp(true))),
                 fwd_true_block_body);
         appendStatement(buildExprStatement(
-                pushVal(buildBoolValExp(false), buildBoolType())),
+                pushVal(buildBoolValExp(false))),
                 fwd_false_block_body);
         cond_stmt = buildExprStatement(popVal(buildBoolType()));
     }
@@ -62,7 +49,7 @@ StatementReversal IfStatementProcessor::generateReverseAST(SgStatement* stmt, co
     return StatementReversal(fwd_stmt, rvs_stmt);
 }
 
-vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+vector<EvaluationResult> IfStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     vector<EvaluationResult> results;
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
@@ -72,20 +59,22 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
     // Make sure every if statement has a true and false body after being normalized.
     ROSE_ASSERT(if_stmt->get_false_body());
 
-	SgStatement* true_body = if_stmt->get_true_body();
-	SgStatement* false_body = if_stmt->get_false_body();
+	SgBasicBlock* true_body = isSgBasicBlock(if_stmt->get_true_body());
+	SgBasicBlock* false_body = isSgBasicBlock(if_stmt->get_false_body());
+	ROSE_ASSERT(true_body && false_body);
+	
 	VariableVersionTable true_body_var_table, false_body_var_table;
 	tie(true_body_var_table, false_body_var_table) = var_table.getVarTablesForIfBodies(true_body, false_body);
 
+#if 0
 	cout << "true_body_var_table:\n";
 	true_body_var_table.print();
 	cout << "false_body_var_table:\n";
 	false_body_var_table.print();
+#endif
 
-    vector<EvaluationResult> true_body_res =
-            evaluateStatement(if_stmt->get_true_body(), true_body_var_table);
-    vector<EvaluationResult> false_body_res =
-            evaluateStatement(if_stmt->get_false_body(), false_body_var_table);
+    vector<EvaluationResult> true_body_res = evaluateStatement(true_body, true_body_var_table);
+    vector<EvaluationResult> false_body_res = evaluateStatement(false_body, false_body_var_table);
 
     SimpleCostModel cost;
 
@@ -104,12 +93,6 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
         {
             // Set the cost of false body.
             cost.setBranchCost(if_stmt, res2.getCost(), false);
-
-            //EvaluationResult new_res = res1;
-
-            // FIXME Note here we cannot use update function. We may create a new function
-            // to combine variable tables from true and false bodies.
-            //new_res.update(res2);
 
             // Here we merge two variable version table from true and false bodies.
             // For each variable, if it has the different versions from those two tables, we
@@ -130,30 +113,33 @@ vector<EvaluationResult> IfStatementProcessor::evaluate(SgStatement* stmt, const
             cout << endl;
 #endif
 
-            vector<EvaluationResult> cond_results = evaluateStatement(if_stmt->get_conditional(), var_table);
+            vector<EvaluationResult> cond_results = evaluateStatement(if_stmt->get_conditional(), new_table);
 
             foreach (const EvaluationResult& res3, cond_results)
             {
-				EvaluationResult totalEvaluationResult(this, stmt, var_table);
+				EvaluationResult totalEvaluationResult(this, stmt, new_table);
 				totalEvaluationResult.addChildEvaluationResult(res1);
 				totalEvaluationResult.addChildEvaluationResult(res2);
 				totalEvaluationResult.addChildEvaluationResult(res3);
+
+				// FIXME Should addChildEvaluationResult update var table?
 				totalEvaluationResult.setVarTable(new_table);
 
                 // Here we should do an analysis to decide whether to store the branch flag.
                 // If the value of the condition is not modified during both true and false bodies,
-                // we can still use that expression. Or we can retieve the same value from other
+                // we can still use that expression. Or we can retrieve the same value from other
                 // expressions. Even more comlicated analysis may be performed here.
 
                 SimpleCostModel new_cost = cost;
-                IfStmtConditionAttributePtr attr(new IfStmtConditionAttribute);
-
+				SgExpression* attr = NULL;
+				
                 SgExpression* cond = isSgExprStatement(if_stmt->get_conditional())->get_expression();
-                if (cond && var_table.checkVersionForUse(cond))
-                {
-                    attr->cond = cond;
-                }
-                else
+				if (SgExpression* restored_exp = restoreExpressionValue(cond, var_table))
+				{
+					// If we can restore the value of condition, we can use it without storing the flag.
+					attr = restored_exp;
+				}
+				else
                 {
                     // Since we store the branch flag here, we add the cost by 1.
                     new_cost.increaseStoreCount();
