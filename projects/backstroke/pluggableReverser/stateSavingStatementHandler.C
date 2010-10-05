@@ -3,7 +3,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
-#include <boost/range/algorithm.hpp>
 #include <utilities/Utilities.h>
 #include <utilities/CPPDefinesAndNamespaces.h>
 
