@@ -697,7 +697,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                  // SgTypeString* stringType = new SgTypeString(integerExpression);
                  // SgTypeString* stringType = SgTypeString::createType(integerExpression);
                     SgTypeString* stringType = NULL;
-                    printf ("In c_action_intrinsic_type_spec(): lengthExpression = %s \n",lengthExpression->class_name().c_str());
+                 // printf ("In c_action_intrinsic_type_spec(): lengthExpression = %s \n",lengthExpression->class_name().c_str());
 #if 0
                     SgIntVal* integerValue = isSgIntVal(lengthExpression);
                     if (integerValue != NULL)
@@ -1450,7 +1450,7 @@ void c_action_char_selector(Token_t * type_keyword, Token_t * optional_keyword, 
              }
 #else
           ROSE_ASSERT(hasAsterisk == false);
-          printf ("In R424: kindOrLen1 = %d kindOrLen2 = %d \n",kindOrLen1,kindOrLen2);
+       // printf ("In R424: kindOrLen1 = %d kindOrLen2 = %d \n",kindOrLen1,kindOrLen2);
 
           if (kindOrLen1 == KindLenParam_kind)
              {

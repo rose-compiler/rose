@@ -4155,12 +4155,12 @@ $CLASSNAME::createType(int bitLength, SgExpression* optional_fortran_type_kind)
         }
 
      SgName name = temp_type->get_mangled();
-#if 1
+#if 0
      printf ("Mangled type name for $CLASSNAME = %s get_globalTypeTable()->get_type_table()->size() = %d \n",name.str(),get_globalTypeTable()->get_type_table()->size());
 #endif
 
      SgType* t = get_globalTypeTable()->lookup_type(name);
-#if 1
+#if 0
      printf ("In $CLASSNAME::createType(): type from lookup_type = %p \n",t);
 #endif
      if (t == NULL)
