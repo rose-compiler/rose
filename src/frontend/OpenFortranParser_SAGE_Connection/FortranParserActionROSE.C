@@ -762,6 +762,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
 
                case V_SgTypeFloat:
                   {
+#if 0
                  // Floating point is mapped to existing and different SgType IR nodes in ROSE.
                     SgIntVal* integerValue = isSgIntVal(lengthExpression);
 
@@ -838,16 +839,26 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                     delete lengthExpression;
                     lengthExpression = NULL;
 #endif
+#else
+                    ROSE_ASSERT(lengthExpression->get_parent() == NULL);
+                    SgTypeFloat* floatType = SgTypeFloat::createType(lengthExpression);
+                    lengthExpression->set_parent(floatType);
+                    ROSE_ASSERT(lengthExpression->get_parent() != NULL);
+
+                 // Replace the base type with the just built string type
+                    astBaseTypeStack.pop_front();
+                    astBaseTypeStack.push_front(floatType);
+#endif
                     break;
                   }
 
                case V_SgTypeInt:
                   {
                  // Note that this does not have to be an integer value and can be another variable or "c_int" (for example)
+#if 0
                     SgIntVal* integerValue = isSgIntVal(lengthExpression);
                     if (integerValue != NULL)
                        {
-#if 0
                          int value = integerValue->get_value();
                       // DQ (9/3/2010): We want to support always wrapping types to include the kind when it is specified explicitly.
                          switch(value)
@@ -902,19 +913,6 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                       // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
                          delete lengthExpression;
                          lengthExpression = NULL;
-#else
-                      // DQ (10/4/2010): Moved to new (improved) design of type_kind data member in SgType.
-                      // DQ (9/3/2010): This restores the previous handling with wrapped all types explicitly marked with kind.
-                      // SgModifierType* typeFromKindExpression = SageBuilder::buildFortranKindType(SgTypeInt::createType(),lengthExpression);
-                      // ROSE_ASSERT(typeFromKindExpression != NULL);
-                      // Replace the base type with the just built string type
-                      // astBaseTypeStack.pop_front();
-                      // astBaseTypeStack.push_front(typeFromKindExpression);
-                         ROSE_ASSERT(lengthExpression->get_parent() == NULL);
-                         intrinsicType->set_type_kind(lengthExpression);
-                         lengthExpression->set_parent(intrinsicType);
-                         ROSE_ASSERT(lengthExpression->get_parent() != NULL);
-#endif
                        }
                       else
                        {
@@ -933,6 +931,25 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                          astBaseTypeStack.pop_front();
                          astBaseTypeStack.push_front(typeFromKindExpression);
                        }
+#else
+                 // DQ (10/4/2010): Moved to new (improved) design of type_kind data member in SgType.
+                 // DQ (9/3/2010): This restores the previous handling with wrapped all types explicitly marked with kind.
+                 // SgModifierType* typeFromKindExpression = SageBuilder::buildFortranKindType(SgTypeInt::createType(),lengthExpression);
+                 // ROSE_ASSERT(typeFromKindExpression != NULL);
+                 // Replace the base type with the just built string type
+                 // astBaseTypeStack.pop_front();
+                 // astBaseTypeStack.push_front(typeFromKindExpression);
+                    ROSE_ASSERT(lengthExpression->get_parent() == NULL);
+                 // intrinsicType->set_type_kind(lengthExpression);
+                 // lengthExpression->set_parent(intrinsicType);
+                    SgTypeInt* integerType = SgTypeInt::createType(0,lengthExpression);
+                    lengthExpression->set_parent(integerType);
+                    ROSE_ASSERT(lengthExpression->get_parent() != NULL);
+
+                 // Replace the base type with the just built string type
+                    astBaseTypeStack.pop_front();
+                    astBaseTypeStack.push_front(integerType);
+#endif
                     break;
                   }
 

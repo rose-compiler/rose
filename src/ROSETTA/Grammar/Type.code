@@ -4117,6 +4117,7 @@ $CLASSNAME::createType(int bitLength, SgExpression* optional_fortran_type_kind)
      p_builtin_type[bitLength]->p_freepointer = AST_FileIO::IS_VALID_POINTER();
      return p_builtin_type[bitLength];
 #else
+#if 0
   // DQ (1/31/2006): Convert to a single builtin pointer rather than an array of them.
   // I don't think we really need an array of these internally.
      if (p_builtin_type == NULL)
@@ -4143,6 +4144,45 @@ $CLASSNAME::createType(int bitLength, SgExpression* optional_fortran_type_kind)
 
      ROSE_ASSERT(p_builtin_type != NULL);
      return p_builtin_type;
+#else
+  // DQ (10/5/2010): New version of code to support multiple kinds of SgTypeInt as required for the Fortran type_kind support within ROSE.
+  // Note that this implementation does not use p_builtin_type, since with the global type table it is not required.
+
+     $CLASSNAME* temp_type = new $CLASSNAME();
+     if (optional_fortran_type_kind != NULL)
+        {
+          temp_type->set_type_kind(optional_fortran_type_kind);
+        }
+
+     SgName name = temp_type->get_mangled();
+#if 1
+     printf ("Mangled type name for $CLASSNAME = %s get_globalTypeTable()->get_type_table()->size() = %d \n",name.str(),get_globalTypeTable()->get_type_table()->size());
+#endif
+
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+#if 1
+     printf ("In $CLASSNAME::createType(): type from lookup_type = %p \n",t);
+#endif
+     if (t == NULL)
+        {
+          get_globalTypeTable()->insert_type(name,temp_type);
+        }
+       else
+        {
+       // If t is the same as p_builtin_type then we can't delete it...(only comes up in merging AST's read from files).
+          if (t != temp_type)
+             {
+               delete temp_type;
+               temp_type = NULL;
+             }
+
+       // Reuse this tempType variable so we can use the same code below.
+          temp_type = is$CLASSNAME(t);
+          ROSE_ASSERT(temp_type != NULL);
+        }
+
+     return temp_type;
+#endif
 #endif
    }
 
