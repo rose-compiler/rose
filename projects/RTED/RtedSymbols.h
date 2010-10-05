@@ -1,6 +1,8 @@
 #ifndef RTEDSYM_H
 #define RTEDSYM_H
 
+bool RTEDDEBUG();
+
 /* -----------------------------------------------------------
  * tps : 6March 2009: This class adds transformations
  * so that runtime errors are caught at runtime before they happen

@@ -48,7 +48,7 @@ endif
 
 RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
 runtimeCheck_SOURCES = runtimeCheck.cpp \
-                       RtedTransformation.cpp \
+                       RtedTransformation.cpp ExecuteTransformations.cpp \
                        RtedSymbols.cpp RtedTransf_registerType.cpp \
                        RtedTransf_array.cpp RtedTransf_prolog.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \

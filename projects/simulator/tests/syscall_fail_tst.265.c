@@ -96,55 +96,52 @@ void testcase_cleanup()
 
 void syscall_success()
 {
-	int errnum, rc;
-	struct timespec tspec;
-	clockid_t clock = CLOCK_REALTIME;
-	rc = clock_gettime(clock, &tspec);
-	if (rc) {
-		errnum = errno;
-		tst_brkm(TBROK, testcase_cleanup, "Unable to extract time: "
-				"errno=[%d], %s", errnum, strerror(errnum));
-	}
+  int errnum, rc;
+  struct timespec tspec;
+  clockid_t clock = CLOCK_REALTIME;
+  rc = clock_gettime(clock, &tspec);
+  if (rc) {
+    errnum = errno;
+    tst_brkm(TBROK, testcase_cleanup, "Unable to extract time: "
+        "errno=[%d], %s", errnum, strerror(errnum));
+  }
 
-	/* Check if syscall got expected return code. */
-	if (rc) {
-		tst_resm(TFAIL, "clock_settime for success test failed. "
-				"rc=[%d] errno=[%d]", rc, errnum);
-        exit(1);
-    } else {
-		tst_resm(TINFO, "clock_settime for success test succeeded.");
-
-	}
+  /* Check if syscall got expected return code. */
+  if (rc) {
+    tst_resm(TFAIL, "clock_settime for success test failed. "
+        "rc=[%d] errno=[%d]", rc, errnum);
+    exit(1);
+  } else {
+    tst_resm(TINFO, "clock_settime for success test succeeded.");
+  }
 }
 
 void syscall_fail()
 {
-	int err, errnum, rc;
-	struct timespec tspec;
-	clockid_t clock = CLOCK_REALTIME;
-	rc = clock_gettime(clock, &tspec);
+  int err, errnum, rc;
+  struct timespec tspec;
+  clockid_t clock = CLOCK_REALTIME;
+  rc = clock_gettime(clock, &tspec);
 
-    if (rc) {
-		errnum = errno;
-		tst_brkm(TBROK, testcase_cleanup, "Unable to extract time: "
-				"errno=[%d], %s", errnum, strerror(errnum));
-	}
+  if (rc) {
+    errnum = errno;
+    tst_brkm(TBROK, testcase_cleanup, "Unable to extract time: "
+        "errno=[%d], %s", errnum, strerror(errnum));
+  }
 
-	/* Check if syscall got expected return code. */
-	if ((rc) && (errnum != EPERM)) {
-		tst_resm(TFAIL, "Expected EPERM, got rc=[%d] errno=[%d], %s",
-				rc, errnum), strerror(errnum);
-        exit(1);
-    } else {
-		tst_resm(TINFO, "clock_settime returned expected EPERM error");
-
-	}
+  /* Check if syscall got expected return code. */
+  if ((rc) && (errnum != EPERM)) {
+    tst_resm(TFAIL, "Expected EPERM, got rc=[%d] errno=[%d], %s",
+        rc, errnum), strerror(errnum);
+    exit(1);
+  } else {
+    tst_resm(TINFO, "clock_settime returned expected EPERM error");
+  }
 }
 
 int main(int argc, char **argv)
 {
-	syscall_success();
-	syscall_fail();
-
-	return 0;
+  syscall_success();
+  syscall_fail();
+  return 0;
 }

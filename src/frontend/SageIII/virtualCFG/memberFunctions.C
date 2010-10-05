@@ -3800,7 +3800,7 @@ SgImpliedDo::cfgOutEdges(unsigned int idx)
      std::vector<CFGEdge> result;
      switch (idx)
         {
-          case 0: makeEdge(CFGNode(this, idx), this->get_do_var()->cfgForBeginning(), result); break;
+          case 0: makeEdge(CFGNode(this, idx), this->get_do_var_exp()->cfgForBeginning(), result); break;
           case 1: makeEdge(CFGNode(this, idx), this->get_first_val()->cfgForBeginning(), result); break;
           case 2: makeEdge(CFGNode(this, idx), this->get_last_val()->cfgForBeginning(), result); break;
           case 3: makeEdge(CFGNode(this, idx), this->get_increment()->cfgForBeginning(), result); break;
@@ -3818,7 +3818,7 @@ SgImpliedDo::cfgInEdges(unsigned int idx)
      switch (idx)
         {
           case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
-          case 1: makeEdge(this->get_do_var()->cfgForEnd(), CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_do_var_exp()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 2: makeEdge(this->get_first_val()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 3: makeEdge(this->get_last_val()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 4: makeEdge(this->get_increment()->cfgForEnd(), CFGNode(this, idx), result); break;
@@ -4331,13 +4331,13 @@ bool SgMinusMinusOp::isChildUsedAsLValue(const SgExpression* child) const
 		}
 		else
 		{
-			return isUsedAsLValue();
+			return true;
 		}
 	}
 	/*! std:5.3.2 par:2 */
 	else
 	{
-		return isUsedAsLValue();
+		return true;
 	}
 }
 
@@ -4368,13 +4368,13 @@ bool SgPlusPlusOp::isChildUsedAsLValue(const SgExpression* child) const
 		}
 		else
 		{
-			return isUsedAsLValue();
+			return true;
 		}
 	}
 	/*! std:5.3.2 par:1 */
 	else
 	{
-		return isUsedAsLValue();
+		return true;
 	}
 }
 
@@ -4394,10 +4394,7 @@ bool SgFunctionCallExp::isLValue() const
 	}
 	else
 	{
-		// depends on the return-type being a reference type
-//		if (ftype->get_return_type()->get_ref_to() == NULL)
-//		if (isSgReferenceType(ftype->get_return_type()) != NULL)
-		if (SageInterface::isReferenceType(ftype->get_return_type()) != NULL)
+		if (SageInterface::isReferenceType(ftype->get_return_type()))
 			return true;
 		else
 			return false;
@@ -4425,29 +4422,27 @@ bool SgCastExp::isLValue() const
 	switch (cast_type())
 	{
 		case e_C_style_cast:
-//			if (get_type()->get_ref_to() != NULL) /*! std:5.4 par:1 */
-//			if (isSgReferenceType(get_type()) != NULL) /*! std:5.4 par:1 */
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.4 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.4 par:1 */
 				return true;
 			else
 				return false;
 		case e_const_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.11 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.11 par:1 */
 				return true;
 			else
 				return false;
 		case e_static_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.9 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.9 par:1 */
 				return true;
 			else
 				return false;
 		case e_dynamic_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.7 par:2 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.7 par:2 */
 				return true;
 			else
 				return false;
 		case e_reinterpret_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.10 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.10 par:1 */
 				return true;
 			else
 				return false;
@@ -4568,7 +4563,13 @@ bool SgAssignOp::isChildUsedAsLValue(const SgExpression* child) const
 	if (get_lhs_operand() == child)
 		return true;
 	else if (get_rhs_operand() == child)
-		return false;
+	{
+		/*! std:8.5.3 par:5 */
+		if (SageInterface::isNonconstReference(get_lhs_operand()->get_type()))
+			return true;
+		else
+			return false;
+	}
 	else
 	{
 		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAssignOp");
@@ -4784,15 +4785,43 @@ bool SgCommaOpExp::isChildUsedAsLValue(const SgExpression* child) const
 		return false;
 	else if (get_rhs_operand() == child)
 	{
-		if (!isUsedAsLValue())
-			return true;
-		else
-			return false;
+		return isUsedAsLValue();
 	}
 	else
 	{
 		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgCommaOpExp");
 		return false;
 	}
+}
+
+/*! std:8.5.3 par:5 */
+bool SgExprListExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	for (SgExpressionPtrList::const_iterator i = get_expressions().begin(); i != get_expressions().end(); ++i)
+	{
+		if (child == *i)
+		{
+			if (SageInterface::isNonconstReference(child->get_type()))
+				return true;
+			else
+				return false;
+		}
+	}
+	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgExprListExp");
+	return false;
+}
+
+/*! std:8.5.3 par:5 */
+bool SgReturnStmt::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_expression() == child)
+	{
+		if (SageInterface::isNonconstReference(SageInterface::getEnclosingFunctionDeclaration(const_cast<SgReturnStmt*>(this))->get_type()->get_return_type()))
+			return true;
+		else
+			return false;
+	}
+	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgReturnStmt");
+	return false;
 }
 

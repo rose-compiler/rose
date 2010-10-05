@@ -440,9 +440,15 @@ UnparseFortran_type::unparseModifierType(SgType* type, SgUnparse_Info& info)
 
   // DQ (12/1/2007): This has been moved from SgType to the SgModifierType
      SgExpression* kindExpression          = mod_type->get_type_kind();
-     SgExpression* typeParameterExpression = mod_type->get_type_parameter();
+
+  // DQ (10/2/2010): The type parameter is not longer used since the length is represented explicitly for strings in SgTypeString.
+  // SgExpression* typeParameterExpression = mod_type->get_type_parameter();
+
   // printf ("In UnparseFortran_type::unparseModifierType(): mod_type->get_type_kind() = %p mod_type->get_type_parameter() = %p \n",mod_type->get_type_kind(),mod_type->get_type_parameter());
-     if (kindExpression != NULL || typeParameterExpression != NULL)
+
+  // DQ (10/2/2010): The type parameter is not longer used since the length is represented explicitly for strings in SgTypeString.
+  // if (kindExpression != NULL || typeParameterExpression != NULL)
+     if (kindExpression != NULL)
         {
           curprint("(");
           if (kindExpression != NULL)
@@ -450,7 +456,8 @@ UnparseFortran_type::unparseModifierType(SgType* type, SgUnparse_Info& info)
                curprint("kind=");
                unp->u_fortran_locatedNode->unparseExpression(kindExpression,info);
              }
-
+#if 0
+        // DQ (10/2/2010): The type parameter is not longer used since the length is represented explicitly for strings in SgTypeString.
           if (typeParameterExpression != NULL)
              {
                if (kindExpression != NULL)
@@ -460,6 +467,7 @@ UnparseFortran_type::unparseModifierType(SgType* type, SgUnparse_Info& info)
                curprint("len=");
                unp->u_fortran_locatedNode->unparseExpression(typeParameterExpression,info);
              }
+#endif
           curprint(")");
         }
    }

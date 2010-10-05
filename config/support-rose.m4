@@ -1058,15 +1058,15 @@ ROSE_WITH_GOMP_OPENMP_LIBRARY
 ROSE_SUPPORT_GCC_OMP
 
 # Configuration commandline support for OpenMP in ROSE
-AM_CONDITIONAL(ROSE_USE_GCC_OMP,test ! "$with_gcc_omp" = no)
+AM_CONDITIONAL(ROSE_USE_GCC_OMP,test ! "$with_parallel_ast_traversal_omp" = no)
 
 
 # JJW and TP (3-17-2008) -- added MPI support
-AC_ARG_WITH(mpi,
-[  --with-mpi                    Use this option ONLY if you inted to traverse the AST in parallel using MPI.],
+AC_ARG_WITH(parallel_ast_traversal_mpi,
+[  --with-parallel_ast_traversal_mpi     Enable AST traversal in parallel using MPI.],
 [ echo "Setting up optional MPI-based tools"
 ])
-AM_CONDITIONAL(ROSE_MPI,test "$with_mpi" = yes)
+AM_CONDITIONAL(ROSE_MPI,test "$with_parallel_ast_traversal_mpi" = yes)
 AC_CHECK_TOOLS(MPICXX, [mpiCC mpic++ mpicxx])
 
 
@@ -1079,10 +1079,10 @@ AM_CONDITIONAL(ROSE_PCH,test "$with_pch" = yes)
 if test "x$with_pch" = xyes; then
   CPPFLAGS="-U_REENTRANT $CPPFLAGS";
   AC_MSG_NOTICE( "PCH enabled: You got the following CPPFLAGS: $CPPFLAGS" );
-if test "x$with_mpi" = xyes; then
+if test "x$with_parallel_ast_traversal_mpi" = xyes; then
   AC_MSG_ERROR( "PCH Support cannot be configured together with MPI support" );
 fi
-if test "x$with_gcc_omp" = xyes; then
+if test "x$with_parallel_ast_traversal_omp" = xyes; then
   AC_MSG_ERROR( "PCH Support cannot be configured together with GCC_OMP support" );
 fi
 else
@@ -1186,10 +1186,12 @@ AC_ARG_ENABLE(ofp-version,
 # DQ (7/31/2010): Changed the default version of OFP to 0.8.1 (now distributed with ROSE).
 echo "enable_ofp_version = $enable_ofp_version"
 if test "x$enable_ofp_version" = "x"; then
-   echo "Default version of OFP used (0.8.1)"
+   echo "Default version of OFP used (0.8.2)"
    ofp_major_version_number=0
    ofp_minor_version_number=8
-   ofp_patch_version_number=1
+ # DQ (9/26/2010): Changed default version to 0.8.2
+ # ofp_patch_version_number=1
+   ofp_patch_version_number=2
 else
    ofp_major_version_number=`echo $enable_ofp_version | cut -d\. -f1`
    ofp_minor_version_number=`echo $enable_ofp_version | cut -d\. -f2`
@@ -1200,20 +1202,28 @@ echo "ofp_major_version_number = $ofp_major_version_number"
 echo "ofp_minor_version_number = $ofp_minor_version_number"
 echo "ofp_patch_version_number = $ofp_patch_version_number"
 
+ofp_jar_file_contains_java_file = false
 if test "x$ofp_major_version_number" = "x0"; then
    echo "Recognized an accepted major version number."
    if test "x$ofp_minor_version_number" = "x8"; then
-      echo "Recognized an accepted minor version number."
-      if test "x$ofp_patch_version_number" = "x1"; then
-         echo "Recognized an accepted patch version number."
+      echo "Recognized an accepted minor version number (any 0.8.x version is allowed)."
+#     echo "Recognized an accepted minor version number."
+      if test "x$ofp_patch_version_number" = "x0"; then
+         echo "Recognized an accepted patch version number (very old version of OFP)."
       else
-         if test "x$ofp_patch_version_number" = "x2"; then
-            echo "Recognized an accepted patch version number ONLY for testing."
+         if test "x$ofp_patch_version_number" = "x1"; then
+            echo "Recognized an olded but accepted patch version number ONLY for testing."
          else
-            echo "ERROR: Could not identify the OFP patch version number."
-            exit 1
+            ofp_jar_file_contains_java_file = true
+            if test "x$ofp_patch_version_number" = "x2"; then
+               echo "Recognized an accepted patch version number ONLY for testing."
+            else
+#              echo "ERROR: Could not identify the OFP patch version number."
+               echo "Recognized an accepted patch version number (later than default)."
+               exit 1
+            fi
          fi
-       # exit 1
+#       # exit 1
       fi
    else
       if test "x$ofp_minor_version_number" = "x7"; then
@@ -1233,6 +1243,10 @@ else
       exit 1
    fi
 fi
+
+# DQ (9/28/2010): Newer versions of the OFP jar file contains fortran/ofp/parser/java/IFortranParserAction.java
+# we need this to maintain backward compatability.
+AM_CONDITIONAL(ROSE_OFP_CONTAINS_JAVA_FILE, [test "x$ofp_jar_file_contains_java_file" = true])
 
 AC_DEFINE_UNQUOTED([ROSE_OFP_MAJOR_VERSION_NUMBER], $ofp_major_version_number , [OFP major version number])
 AC_DEFINE_UNQUOTED([ROSE_OFP_MINOR_VERSION_NUMBER], $ofp_minor_version_number , [OFP minor version number])
