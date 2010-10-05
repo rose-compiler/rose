@@ -697,12 +697,14 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                  // SgTypeString* stringType = new SgTypeString(integerExpression);
                  // SgTypeString* stringType = SgTypeString::createType(integerExpression);
                     SgTypeString* stringType = NULL;
+                    printf ("In c_action_intrinsic_type_spec(): lengthExpression = %s \n",lengthExpression->class_name().c_str());
+#if 0
                     SgIntVal* integerValue = isSgIntVal(lengthExpression);
                     if (integerValue != NULL)
                        {
                       // create a string type using an integer literal instead of an integer expression.
                          size_t value = integerValue->get_value();
-                      // printf ("Building a string type (SgTypeString) using an integer literal = %zu \n",value);
+                         printf ("Building a string type (SgTypeString) using an integer literal = %zu \n",value);
                          stringType = SgTypeString::createType(NULL,value);
 
                       // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
@@ -717,6 +719,12 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                          ROSE_ASSERT(lengthExpression != NULL);
                          stringType = SgTypeString::createType(lengthExpression,0);
                        }
+#else
+                 // DQ (10/4/2010): Always use the expression form of length representation (scalar representation of lenght is deprecated).
+                    ROSE_ASSERT(lengthExpression != NULL);
+                    stringType = SgTypeString::createType(lengthExpression,0);
+                    ROSE_ASSERT(lengthExpression->get_parent() != NULL);
+#endif
                     ROSE_ASSERT(stringType != NULL);
 
                  // Replace the base type with the just built string type
@@ -727,6 +735,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
 
                case V_SgTypeBool:
                   {
+#if 0
                  // Ignore this case since will for more the moment map logical types of all sizes to a SgTypeBool.
                  // We may want to add fortran specific logical type to the ROSE IR to support this in the future.
                  // This would allow us to save the information about the byte width of the representation.
@@ -735,6 +744,19 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                  // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
                     delete lengthExpression;
                     lengthExpression = NULL;
+#else
+                 // DQ (10/4/2010): Logical types are now represented with the associated kind.
+                    ROSE_ASSERT(lengthExpression != NULL);
+                 // intrinsicType->set_type_kind(lengthExpression);
+                    SgTypeBool* boolType = SgTypeBool::createType(lengthExpression);
+                    ROSE_ASSERT(lengthExpression->get_parent() == NULL);
+                 // lengthExpression->set_parent(intrinsicType);
+                    lengthExpression->set_parent(boolType);
+
+                 // Replace the base type with the just built string type
+                    astBaseTypeStack.pop_front();
+                    astBaseTypeStack.push_front(boolType);
+#endif
                     break;
                   }
 
@@ -881,13 +903,17 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                          delete lengthExpression;
                          lengthExpression = NULL;
 #else
+                      // DQ (10/4/2010): Moved to new (improved) design of type_kind data member in SgType.
                       // DQ (9/3/2010): This restores the previous handling with wrapped all types explicitly marked with kind.
-                         SgModifierType* typeFromKindExpression = SageBuilder::buildFortranKindType(SgTypeInt::createType(),lengthExpression);
-                         ROSE_ASSERT(typeFromKindExpression != NULL);
-
+                      // SgModifierType* typeFromKindExpression = SageBuilder::buildFortranKindType(SgTypeInt::createType(),lengthExpression);
+                      // ROSE_ASSERT(typeFromKindExpression != NULL);
                       // Replace the base type with the just built string type
-                         astBaseTypeStack.pop_front();
-                         astBaseTypeStack.push_front(typeFromKindExpression);
+                      // astBaseTypeStack.pop_front();
+                      // astBaseTypeStack.push_front(typeFromKindExpression);
+                         ROSE_ASSERT(lengthExpression->get_parent() == NULL);
+                         intrinsicType->set_type_kind(lengthExpression);
+                         lengthExpression->set_parent(intrinsicType);
+                         ROSE_ASSERT(lengthExpression->get_parent() != NULL);
 #endif
                        }
                       else
