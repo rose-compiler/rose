@@ -136,7 +136,7 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 #if 1
   // DQ (12/1/2007): This has been moved to the SgModifierType
      SgExpression* kindExpression = type->get_type_kind();
-     printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
+  // printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
      if (kindExpression != NULL)
         {
           curprint("(");
