@@ -70,27 +70,6 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeString:           unparseStringType(type, info); break;
 
        // scalar integral types
-#if 0
-          case V_SgTypeShort:            curprint("INTEGER(ROSE_TY_I2)"); break;
-          case V_SgTypeSignedShort:      curprint("INTEGER(ROSE_TY_I2)"); break;
-          case V_SgTypeUnsignedShort:    curprint("INTEGER(ROSE_TY_I2)"); break;
-
-          case V_SgTypeInt:              curprint("INTEGER(ROSE_TY_I4)"); break;
-          case V_SgTypeSignedInt:        curprint("INTEGER(ROSE_TY_I4)"); break;
-          case V_SgTypeUnsignedInt:      curprint("INTEGER(ROSE_TY_I4)"); break;
-
-          case V_SgTypeLong:             curprint("INTEGER(ROSE_TY_I4)"); break;
-          case V_SgTypeSignedLong:       curprint("INTEGER(ROSE_TY_I4)"); break;
-          case V_SgTypeUnsignedLong:     curprint("INTEGER(ROSE_TY_I4)"); break;
-
-          case V_SgTypeLongLong:         curprint("INTEGER(ROSE_TY_I8)"); break;
-          case V_SgTypeUnsignedLongLong: curprint("INTEGER(ROSE_TY_I8)"); break;
-
-       // scalar floating point types
-          case V_SgTypeFloat:            curprint("REAL(ROSE_TY_R4)"); break;
-          case V_SgTypeDouble:           curprint("REAL(ROSE_TY_R8)"); break;
-          case V_SgTypeLongDouble:       curprint("REAL(ROSE_TY_R8)"); break;
-#else
        // Craig suggests, as I understand his email, that the size information should be 
        // specified using the kind mechanism or use the default, but don't hard code the 
        // size information directly.
@@ -113,7 +92,6 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeFloat:            curprint("REAL"); break;
           case V_SgTypeDouble:           curprint("DOUBLE PRECISION"); break;
           case V_SgTypeLongDouble:       curprint("QUAD PRECISION"); break;
-#endif
 
        // scalar boolean type
           case V_SgTypeBool:             curprint("LOGICAL"); break;
@@ -155,13 +133,14 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-#if 0
+#if 1
   // DQ (12/1/2007): This has been moved to the SgModifierType
      SgExpression* kindExpression = type->get_type_kind();
      printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
      if (kindExpression != NULL)
         {
           curprint("(");
+          curprint("kind=");
           unp->u_fortran_locatedNode->unparseExpression(kindExpression,info);
           curprint(")");
         }
@@ -196,7 +175,7 @@ UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info)
      if (string_type->get_definedUsingScalarLength())
         {
        // Output the scalar integer value
-           curprint(StringUtility::numberToString(string_type->get_lengthScalar()));
+          curprint(StringUtility::numberToString(string_type->get_lengthScalar()));
         }
        else
         {

@@ -110,6 +110,18 @@ SgValueExp::get_constant_folded_value_as_string()
                break;
              }
 
+       // DQ (10/5/2010): Added case
+          case V_SgShortVal: 
+             {
+               SgShortVal* integerValueExpression = isSgShortVal(this);
+               ROSE_ASSERT(integerValueExpression != NULL);
+               short int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%d",numericValue);
+               s = buffer;
+               break;
+             }
+
           case V_SgUnsignedLongLongIntVal:
              {
                SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);
