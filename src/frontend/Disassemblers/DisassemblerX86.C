@@ -876,9 +876,26 @@ DisassemblerX86::makeOperandRegisterFull(bool rexExtension, uint8_t registerNumb
                         sizeToMode(insnSize));
 }
 
+/* At one time this function created x86-specific register reference expressions (RREs) that had hard-coded values for register
+ * class, register number, and register position. These values had the same meanings across all x86 architectures and
+ * corresponded to various enums in x86InstructionEnums.h.
+ *
+ * The new approach (added Oct 2010) replaces x86-specific values with a more generic RegisterDescriptor struct, where each
+ * register is described by a major number (formerly the register class), a minor number (formerly the register number), and a
+ * bit offset and size (formerly both represented by the register position).  The idea is that a RegisterDescriptor does not
+ * need to contain machine-specific values. Therefore, we've added a level of indirection:  makeRegister() converts
+ * machine-specific values to a register name, which is then looked up in a RegisterDictionary to return a
+ * RegisterDescriptor.  The entries in the dictionary determine what registers are available to the disassembler.
+ *
+ * Currently (2010-10-05) the old class and numbers are used as the major and minor values but users should not assume that
+ * this is the case. They can assume that unrelated registers (e.g., "eax" vs "ebx") have descriptors that map to
+ * non-overlapping areas of the descriptor address space {major,minor,offset,size} while related registers (e.g., "eax" vs
+ * "ax") map to overlapping areas of the descriptor address space. */
 SgAsmx86RegisterReferenceExpression *
 DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmType *registerType) const
 {
+    /* Register names for various RegisterMode, indexed by the fullRegisterNumber. The names and order of these names come from
+     * Intel documentation. */
     static const char* regnames8l[16] = {
         "al",  "cl",  "dl",  "bl",  "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"
     };
@@ -898,21 +915,16 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
         "es", "cs", "ss", "ds", "fs", "gs"
     };
 
-    if (m == rmReturnNull)
-        return NULL;
-
+    /* Obtain a the register name. Also, override the registerType value for certain registers. */
     std::string name;
-    RegisterDescriptor expected;
     switch (m) {
         case rmLegacyByte:
             if (fullRegisterNumber >= 8)
                 throw Exception("register number out of bounds");
             if (fullRegisterNumber & 4) {
                 name = regnames8h[fullRegisterNumber % 4];
-                expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber%4, 8, 8);
             } else {
                 name = regnames8l[fullRegisterNumber % 4];
-                expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber%4, 0, 8);
             }
             registerType = BYTET;
             break;
@@ -921,72 +933,60 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
                 throw Exception("register number out of bounds");
             name = regnames8l[fullRegisterNumber];
             registerType = BYTET;
-            expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber, 0, 8);
             break;
         case rmWord:
             if (fullRegisterNumber >= 16)
                 throw Exception("register number out of bounds");
             name = regnames16[fullRegisterNumber];
             registerType = WORDT;
-            expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber, 0, 16);
             break;
         case rmDWord:
             if (fullRegisterNumber >= 16)
                 throw Exception("register number out of bounds");
             name = regnames32[fullRegisterNumber];
             registerType = DWORDT;
-            expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber, 0, 32);
             break;
         case rmQWord:
             if (fullRegisterNumber >= 16)
                 throw Exception("register number out of bounds");
             name = regnames64[fullRegisterNumber];
             registerType = QWORDT;
-            expected = RegisterDescriptor(x86_regclass_gpr, fullRegisterNumber, 0, 64);
             break;
         case rmSegment:
             if (fullRegisterNumber >= 6)
                 throw Exception("register number out of bounds");
             name = regnamesSeg[fullRegisterNumber];
             registerType = WORDT;
-            expected = RegisterDescriptor(x86_regclass_segment, fullRegisterNumber, 0, 16);
             break;
         case rmST:
             name = "st(" + StringUtility::numberToString(fullRegisterNumber) + ")";
             registerType = LDOUBLET;
-            expected = RegisterDescriptor(x86_regclass_st, fullRegisterNumber, 0, 80);
             break;
         case rmMM:
             name = "mm" + StringUtility::numberToString(fullRegisterNumber);
-            expected = RegisterDescriptor(x86_regclass_mm, fullRegisterNumber, 0, 64);
             break;
         case rmXMM:
             name = "mmx" + StringUtility::numberToString(fullRegisterNumber);
-            expected = RegisterDescriptor(x86_regclass_xmm, fullRegisterNumber, 0, 128);
             break;
         case rmControl:
             name = "cr" + StringUtility::numberToString(fullRegisterNumber);
-            expected = RegisterDescriptor(x86_regclass_cr, fullRegisterNumber, 0, x86_insnsize_64==insnSize?64:32);
             break;
         case rmDebug:
             name = "dr" + StringUtility::numberToString(fullRegisterNumber);
-            expected = RegisterDescriptor(x86_regclass_dr, fullRegisterNumber, 0, x86_insnsize_64==insnSize?64:32);
             break;
         case rmReturnNull:
-            ROSE_ASSERT(!"case not handled");
+            return NULL;
     }
-    
+
+    /* Now that we have a register name, obtain the register descriptor from the dictionary. */
     if (name.empty())
         ROSE_ASSERT(!"unknown register mode");
-
     ROSE_ASSERT(p_registers!=NULL);
     const RegisterDescriptor *rdesc = p_registers->lookup(name);
     if (!rdesc)
         throw Exception("register \"" + name + "\" is not available on this architecture");
-    if (!rdesc->equal(expected)) {
-        std::cerr <<"internal error: found register " <<*rdesc <<" does not match expected " <<expected <<"\n";
-        ROSE_ASSERT(!"registers do not match");
-    }
+
+    /* Construct the return value. */
     SgAsmx86RegisterReferenceExpression *rre = new SgAsmx86RegisterReferenceExpression(*rdesc);
     ROSE_ASSERT(rre);
     rre->set_type(registerType);
