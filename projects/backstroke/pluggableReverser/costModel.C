@@ -1,7 +1,9 @@
 #include "costModel.h"
+#include <rose.h>
 #include <boost/foreach.hpp>
 
 #define foreach BOOST_FOREACH
+using namespace std;
 
 void SimpleCostModel::setBranchCost(SgNode* node, const SimpleCostModel& cost, bool is_true_body)
 {
@@ -33,35 +35,41 @@ bool SimpleCostModel::isZeroCost() const
     return true;
 }
 
+void SimpleCostModel::print() const
+{
+	cout << "Store Count: " << store_count_ << endl;
+	foreach (BranchCostType::value_type branch_cost, branch_cost_)
+	{
+		cout << SageInterface::get_name(branch_cost.first) << endl;
+		branch_cost.second.first.print();
+		branch_cost.second.second.print();
+	}
+}
+
 bool operator ==(const SimpleCostModel& cost1, const SimpleCostModel& cost2)
 {
     if (cost1.store_count_ != cost2.store_count_)
         return false;
 
-    typedef std::pair<SgNode*, std::pair<SimpleCostModel, SimpleCostModel> > BranchCost;
-    foreach (const BranchCost& branch_cost, cost1.branch_cost_)
+    foreach (const SimpleCostModel::BranchCostType::value_type& branch_cost, cost1.branch_cost_)
     {
         if (branch_cost.second.first.isZeroCost() &&
                 branch_cost.second.second.isZeroCost())
             continue;
         if (cost2.branch_cost_.count(branch_cost.first) == 0)
             return false;
-        if (cost2.branch_cost_.find(branch_cost.first)->second.first != branch_cost.second.first ||
-                cost2.branch_cost_.find(branch_cost.first)->second.second != branch_cost.second.second)
+        if (cost2.branch_cost_.find(branch_cost.first)->second != branch_cost.second)
             return false;
     }
-    foreach (const BranchCost& branch_cost, cost2.branch_cost_)
+    foreach (const SimpleCostModel::BranchCostType::value_type& branch_cost, cost2.branch_cost_)
     {
         if (branch_cost.second.first.isZeroCost() &&
                 branch_cost.second.second.isZeroCost())
             continue;
         if (cost1.branch_cost_.count(branch_cost.first) == 0)
             return false;
-        /*
-        if (cost1.branch_cost_[branch_cost.first].first != branch_cost.second.first ||
-                cost1.branch_cost_[branch_cost.first].second != branch_cost.second.second)
+        if (cost1.branch_cost_.find(branch_cost.first)->second != branch_cost.second)
             return false;
-        */
     }
 
     return true;
@@ -72,16 +80,15 @@ bool operator <(const SimpleCostModel& cost1, const SimpleCostModel& cost2)
     if (cost1.store_count_ > cost2.store_count_)
         return false;
 
-    typedef std::pair<SgNode*, std::pair<SimpleCostModel, SimpleCostModel> > BranchCost;
-    foreach (const BranchCost& branch_cost, cost1.branch_cost_)
+    foreach (const SimpleCostModel::BranchCostType::value_type& branch_cost, cost1.branch_cost_)
     {
         if (branch_cost.second.first.isZeroCost() &&
                 branch_cost.second.second.isZeroCost())
             continue;
         if (cost2.branch_cost_.count(branch_cost.first) == 0)
             return false;
-        if (cost2.branch_cost_.find(branch_cost.first)->second.first > branch_cost.second.first ||
-                cost2.branch_cost_.find(branch_cost.first)->second.second > branch_cost.second.second)
+        if (cost2.branch_cost_.find(branch_cost.first)->second.first < branch_cost.second.first ||
+                cost2.branch_cost_.find(branch_cost.first)->second.second < branch_cost.second.second)
             return false;
     }
 

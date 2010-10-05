@@ -11,16 +11,16 @@
 
 class VariableRenaming;
 
-class EventProcessor
+class EventHandler
 {
 	//! This is the current event function to handle.
 	SgFunctionDeclaration* event_;
 
-	//! All expression processors which are added by the user.
-	std::vector<ExpressionReversalHandler*> exp_processors_;
+	//! All expression handlers which are added by the user.
+	std::vector<ExpressionReversalHandler*> exp_handlers_;
 
-	//! All statement processors which are added by the user.
-	std::vector<StatementReversalHandler*> stmt_processors_;
+	//! All statement handlers which are added by the user.
+	std::vector<StatementReversalHandler*> stmt_handlers_;
 
 	/** Handlers which can restore a variable value without state saving. */
 	std::vector<VariableValueRestorer*> variableValueRestorers;
@@ -39,13 +39,17 @@ class EventProcessor
 
 private:
 
-	//! Given an expression, return all evaluation results using all expression processors.
+	//! Given an expression, return all evaluation results using all expression handlers.
 	std::vector<EvaluationResult> evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 
-	//! Given a statement, return all evaluation results using all statement processors.
+	//! Given a statement, return all evaluation results using all statement handlers.
 	std::vector<EvaluationResult> evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
-	//! The following methods are for expression and statement processors for store and restore.
+	//! Given a set of results, if two results of them have the same variable table, we remove
+	//! the one which has the higher cost.
+	std::vector<EvaluationResult> filterResults(const std::vector<EvaluationResult>& results);
+
+	//! The following methods are for expression and statement handlers for store and restore.
 	SgExpression* getStackVar(SgType* type);
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
 	SgExpression* popVal(SgType* type);
@@ -53,14 +57,14 @@ private:
 
 public:
 
-	EventProcessor(SgFunctionDeclaration* func_decl = NULL, VariableRenaming* var_renaming = NULL)
+	EventHandler(SgFunctionDeclaration* func_decl = NULL, VariableRenaming* var_renaming = NULL)
 	: event_(func_decl), var_renaming_(var_renaming) { }
 
 	//! Add an expression handler to the pool of expression handlers.
-	void addExpressionHandler(ExpressionReversalHandler* exp_processor);
+	void addExpressionHandler(ExpressionReversalHandler* exp_handler);
 
 	//! Add a statement handler to the pool of statement handlers
-	void addStatementHandler(StatementReversalHandler* stmt_processor);
+	void addStatementHandler(StatementReversalHandler* stmt_handler);
 
 	//! Add a value extractor to the pool of variable value restorers
 	void addVariableValueRestorer(VariableValueRestorer* restorer);
