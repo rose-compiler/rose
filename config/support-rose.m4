@@ -2315,6 +2315,7 @@ projects/backstroke/tests/restrictedLanguageTest/Makefile
 projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
 projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
 projects/backstroke/tests/pluggableReverserTest/Makefile
+projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/utilities/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile

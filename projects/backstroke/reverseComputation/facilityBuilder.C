@@ -26,7 +26,9 @@ SgStatement* initializeMember(SgExpression* exp)
         return buildFunctionCallStmt("memset", buildPointerType(buildVoidType()), memset_para);
     }
 	else if (backstroke_util::isSTLContainer(real_type))
+	{
         return NULL;
+	}
     else if (SgClassType* class_t = isSgClassType(real_type))
     {
         SgBasicBlock* block = buildBasicBlock();

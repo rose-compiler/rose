@@ -126,6 +126,8 @@ namespace backstroke_util
 	a switch statement don't count. */
 	bool hasContinueOrBreak(SgStatement* loop_stmt);
 
+	//! Returns if the first given var is a member of the second one. For example, a.i is a member of a.
+	bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::VarName& var2);
 
 }
 

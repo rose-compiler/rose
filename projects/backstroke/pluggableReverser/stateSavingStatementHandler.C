@@ -6,10 +6,13 @@
 #include <boost/lambda/bind.hpp>
 #include <boost/range/algorithm.hpp>
 #include <utilities/Utilities.h>
-#include <utilities/CPPDefinesAndNamespaces.h>
 
+using namespace boost;
+using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
+
+#define foreach BOOST_FOREACH
 
 
 #if 0
@@ -71,15 +74,6 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 
 #endif
 
-bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::VarName& var2)
-{
-	if (var1.size() <= var2.size())
-		return false;
-	if (std::search(var1.begin(), var1.end(), var2.begin(), var2.end()) == var1.begin())
-		return true;
-	return false;
-}
-
 vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefs(SgStatement* stmt)
 {
 	vector<VariableRenaming::VarName> modified_vars;
@@ -101,7 +95,7 @@ vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefs(SgStat
 			bind(call_begin(), _2), bind(call_end(), _2)));
 
 	modified_vars.erase(
-		std::unique(modified_vars.begin(), modified_vars.end(), bind(isMemberOf, _2, _1)),
+		std::unique(modified_vars.begin(), modified_vars.end(), bind(backstroke_util::isMemberOf, _2, _1)),
 		modified_vars.end());
 	
 	return modified_vars;
