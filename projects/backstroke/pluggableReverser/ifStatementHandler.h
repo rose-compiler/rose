@@ -1,17 +1,20 @@
-#ifndef IFSTATEMENTPROCESSOR_H
-#define	IFSTATEMENTPROCESSOR_H
+#ifndef IFSTATEMENTHANDLER_H
+#define	IFSTATEMENTHANDLER_H
 
 #include "handlerTypes.h"
 
-class IfStatementProcessor : public StatementReversalHandler
+class IfStatementHandler : public StatementReversalHandler
 {
 public:
-    IfStatementProcessor() { name_ = "If Statement Processor"; }
+    IfStatementHandler() { name_ = "If Statement Handler"; }
 
     virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult&);
     virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
+
 };
 
 
-#endif	/* IFSTATEMENTPROCESSOR_H */
+
+
+#endif	/* IfStatementHandler_H */
 

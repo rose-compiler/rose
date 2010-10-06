@@ -12,6 +12,7 @@
 #include <fstream>
 #include <stack>
 #include <boost/foreach.hpp>
+#include <boost/unordered_set.hpp>
 #define foreach BOOST_FOREACH
 
 using namespace std;
@@ -1107,11 +1108,11 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 			//If we have an assigning operation, we want to list everything on the LHS as being defined
 			//Otherwise, everything is being used.
 			VariantT type = op->variantT();
+			std::vector<SgNode*> uses;
 			switch (type)
 			{
-				//Catch all the types of Ops that define the LHS
+				//All the following ops both use and define the lhs
 				case V_SgAndAssignOp:
-				case V_SgAssignOp:
 				case V_SgDivAssignOp:
 				case V_SgIorAssignOp:
 				case V_SgLshiftAssignOp:
@@ -1123,13 +1124,20 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 				case V_SgRshiftAssignOp:
 				case V_SgXorAssignOp:
 				{
+					//All the uses from the LHS are propagated
+					uses.insert(uses.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
+					uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
+				}
+				//The assign op defines, but does not use the LHS. Notice that the other assignments also fall through,
+				//as they also define the LHS
+				case V_SgAssignOp:
+				{
 					//We want to set all the right-most varRef from LHS as being defined
 					std::vector<SgNode*> defs;
 					defs.insert(defs.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
 					defs.insert(defs.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
 
 					//We want to set all the varRefs from the RHS as being used here
-					std::vector<SgNode*> uses;
 					uses.insert(uses.end(), attrs[1].getDefs().begin(), attrs[1].getDefs().end());
 					uses.insert(uses.end(), attrs[1].getUses().begin(), attrs[1].getUses().end());
 
@@ -1332,7 +1340,7 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 void VariableRenaming::runDefUse(SgFunctionDefinition* func)
 {
     //Keep track of visited nodes
-    vector<SgNode*> visited;
+    boost::unordered_set<SgNode*> visited;
 
     //Reset the first def list to prevent errors with global vars.
     firstDefList.clear();
@@ -1409,7 +1417,7 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
                         cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
                 }
                 //If the next node has not yet been visited
-                else if(std::find(visited.begin(), visited.end(), nextNode.getNode()) == visited.end())
+				else if (visited.count(nextNode.getNode()) == 0)
                 {
                     //Add it to the worklist
                     worklist.push_back(nextNode);
@@ -1421,7 +1429,7 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
         }
 
         //Mark the current node as seen
-        visited.push_back(current.getNode());
+        visited.insert(current.getNode());
     }
 }
 
@@ -2634,6 +2642,52 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getDefsForSubtree(SgNode*
      return traversal.result;
 }
 
+VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalDefsForSubtree(SgNode* node)
+{
+    class DefSearchTraversal : public AstSimpleProcessing
+     {
+     public:
+         VariableRenaming::NumNodeRenameTable result;
+         VariableRenaming* varRenamingAnalysis;
+
+         virtual void visit(SgNode* node)
+         {
+             //Look up defs at this particular node
+             VariableRenaming::NumNodeRenameTable defsAtNode = varRenamingAnalysis->getOriginalDefsAtNode(node);
+
+             //Traverse the defs
+             foreach(VariableRenaming::NumNodeRenameTable::value_type& entry, defsAtNode)
+             {
+                 //If this is the first time the var has been seen, add it wholesale
+                 if(result.count(entry.first) == 0)
+                 {
+                     result[entry.first] = entry.second;
+                     continue;
+                 }
+                 //Traverse each definition of the variable
+                 foreach(VariableRenaming::NumNodeRenameEntry::value_type& tableEntry, entry.second)
+                 {
+                     if(result[entry.first].count(tableEntry.first) == 0)
+                     {
+                         result[entry.first][tableEntry.first] = tableEntry.second;
+                     }
+                     else
+                     {
+                         cout << "Error: Same rename number defined on multiple nodes." << endl;
+                         ROSE_ASSERT(false);
+                     }
+                 }
+             }
+         }
+     };
+
+     DefSearchTraversal traversal;
+     traversal.varRenamingAnalysis = this;
+     traversal.traverse(node, preorder);
+
+     return traversal.result;
+}
+
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtScopeEnd(SgScopeStatement* bb)
 {
 	ROSE_ASSERT(bb);
@@ -2818,6 +2872,98 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
 
         return result;
     }
+}
+
+VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtStatementStart(SgStatement* statement)
+{
+	ROSE_ASSERT(statement);
+    NumNodeRenameTable result;
+
+	//Get all the incoming edges for the statement. These are UNFILTERED nodes, so we get the true beginning of the statement
+	vector<CFGEdge> inEdges = statement->cfgForBeginning().inEdges();
+
+	//Trace back from an unfiltered node to all the filtered nodes immediately leading to it
+	queue <CFGNode> unfilteredNodes;
+	set<CFGNode> visited;
+	vector<CFGNode> filteredNodes;
+
+	//Add all the unfiltered inEdges to the initial worklist
+	foreach (CFGEdge inEdge, inEdges)
+	{
+		unfilteredNodes.push(inEdge.source());
+	}
+
+	while (!unfilteredNodes.empty())
+	{
+		CFGNode node = unfilteredNodes.front();
+		unfilteredNodes.pop();
+		visited.insert(node);
+
+		//If we reached a filtered node, we're done
+		IsDefUseFilter filter;
+		if (filter(node))
+		{
+			filteredNodes.push_back(node);
+		}
+		//This node is unfiltered, explore its parents
+		else
+		{
+			foreach (CFGEdge inEdge, node.inEdges())
+			{
+				CFGNode parentNode = inEdge.source();
+				if (visited.count(parentNode) == 0)
+				{
+					unfilteredNodes.push(parentNode);
+				}
+			}
+		}
+	}
+
+	//Merge in the defs from the reaching CFG nodes that are not children of the current statement
+	foreach (CFGNode cfgNode, filteredNodes)
+	{
+		SgNode* sourceNode = cfgNode.getNode();
+		if (statement == sourceNode || SageInterface::isAncestor(statement, sourceNode))
+		{
+			continue;
+		}
+
+		NumNodeRenameTable temp = getReachingDefsAtNode(sourceNode);
+
+		//Merge the tables
+		//TODO: Factor this out into a function
+		foreach(NumNodeRenameTable::value_type& entry, temp)
+		{
+			//Insert the entry wholesale
+			if (result.count(entry.first) == 0)
+			{
+				result[entry.first] = entry.second;
+			}
+			//Or merge it with an existing one
+			else
+			{
+				foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
+				{
+					//Insert the entry wholesale
+					if (result[entry.first].count(tableEntry.first) == 0)
+					{
+						result[entry.first][tableEntry.first] = tableEntry.second;
+					}
+					else
+					{
+						//Check for equivalence
+						if (result[entry.first][tableEntry.first] != tableEntry.second)
+						{
+							cout << "Error: Same Renaming number has two different definition points." << endl;
+							ROSE_ASSERT(false);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return result;
 }
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunctionStart(SgFunctionDefinition* node)

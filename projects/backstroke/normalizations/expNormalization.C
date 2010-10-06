@@ -84,7 +84,7 @@ void getAndReplaceModifyingExpression(SgExpression*& e)
         return;
 
     // The following binary expressions return lvalue.
-    if (isAssignmentOp(e))
+    if (SageInterface::isAssignmentStatement(e))
     {
         // a = b  ==>  a = b, a
         SgExpression* new_exp = buildBinaryExpression<SgCommaOpExp>(
