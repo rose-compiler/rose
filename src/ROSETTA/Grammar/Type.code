@@ -904,7 +904,8 @@ HEADER_TYPE_INT_TYPE_END
 
 HEADER_TYPE_COMPLEX_TYPE_START
       //! function returns example of type
-          static $CLASSNAME* createType(SgType* base_type);
+       // static $CLASSNAME* createType(SgType* base_type);
+          static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
 HEADER_TYPE_COMPLEX_TYPE_END
 
 HEADER_POINTER_MEMBER_TYPE_START
@@ -914,7 +915,8 @@ HEADER_POINTER_MEMBER_TYPE_END
 
 HEADER_TYPE_STRING_TYPE_START
        // DQ (8/17/2010): Support for Fortran use of SgTypeString.
-          static $CLASSNAME* createType(SgExpression*, size_t length);
+       // static $CLASSNAME* createType(SgExpression*, size_t length, SgExpression* optional_fortran_type_kind = NULL);
+          static $CLASSNAME* createType(SgExpression*, SgExpression* optional_fortran_type_kind = NULL);
 
       //! Performs final initialization of data members (called by constructors)
           void post_construction_initialization();
@@ -1090,9 +1092,25 @@ SOURCE_GET_MANGLED_STRING_TYPE_START
 SgName
 SgTypeString::get_mangled (void) const
    {
+  // DQ (10/5/2010): Note that we do not include the type_kind data member in the mangled name,
+  // but for Fortran this value must always be "1" and the data member is only relevant for Fortran.
+
      ROSE_ASSERT(this != NULL);
 
+  // DQ (10/5/2010): This is now always false (this fails for test2007_15.f90)
+  // ROSE_ASSERT(this->p_definedUsingScalarLength == false);
+
      SgName mangled_length_name;
+
+  // Note that a better implementation would separate out the mangling of scalar valued length expressions.
+     SgValueExp* valueExpression = isSgValueExp(p_lengthExpression);
+#if 0
+     if (valueExpression != NULL)
+        {
+          printf ("In SgTypeString::get_mangled(): separate out case of where lengthExpression is a SgValueExp. \n");
+        }
+#endif
+#if 0
      if (this->p_definedUsingScalarLength == true)
         {
           mangled_length_name = StringUtility::numberToString(this->p_lengthScalar);
@@ -1103,6 +1121,18 @@ SgTypeString::get_mangled (void) const
        // mangled_length_name = this->p_lengthExpression->get_mangled_name();
           mangled_length_name = SageInterface::generateUniqueName(p_lengthExpression,false);
         }
+#else
+     ROSE_ASSERT(this->p_lengthExpression != NULL);
+  // mangled_length_name = this->p_lengthExpression->get_mangled_name();
+     if (valueExpression != NULL)
+        {
+          mangled_length_name = valueExpression->get_constant_folded_value_as_string();
+        }
+       else
+        {
+          mangled_length_name = SageInterface::generateUniqueName(p_lengthExpression,false);
+        }
+#endif
 
      SgName mangled_name;
      mangled_name << "__" << "MANGLED_ID_STRING" << "b__" // start tag
@@ -2116,6 +2146,8 @@ SgTypeString::post_construction_initialization()
    {
   // printf ("Inside of SgTypeString::post_construction_initialization() \n");
 
+  // DQ (10/5/2010): We no longer use this scalar mechanism (comment out).
+#if 0
      p_definedUsingScalarLength = (p_lengthExpression == NULL);
 
      if (p_definedUsingScalarLength && p_lengthScalar == 0)
@@ -2123,6 +2155,7 @@ SgTypeString::post_construction_initialization()
        // DQ (8/21/2010): This is not a problem.
        // printf ("Warning: Zero length string specified, might be OK. \n");
         }
+#endif
    }
 
 SOURCE_TYPE_STRING_TYPE_END
@@ -4657,16 +4690,23 @@ SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_STRING_TYPE_START
 
+// SgTypeString* SgTypeString::createType ( SgExpression* idx, size_t length, SgExpression* optional_fortran_type_kind )
 SgTypeString*
-SgTypeString::createType ( SgExpression* idx, size_t length )
+SgTypeString::createType ( SgExpression* lengthExpression, SgExpression* optional_fortran_type_kind )
    {
   // DQ (8/17/2010): This is the new SgStringType IR node (now used in Fortran, but not previously used in C/C++).
 
-  // DQ (8/17/2010): idx can be NULL, and even the length could be zero (e.g. for a empty string).
+  // DQ (8/17/2010): lengthExpression can be NULL, and even the length could be zero (e.g. for a empty string).
   // ROSE_ASSERT(idx != NULL);
   // ROSE_ASSERT((idx != NULL) || (length > 0));
 
-     SgTypeString* returnType = new SgTypeString(idx,length);
+  // SgTypeString* returnType = new SgTypeString(lengthExpression,length);
+     SgTypeString* returnType = new SgTypeString(lengthExpression);
+     if (optional_fortran_type_kind != NULL)
+        {
+          returnType->set_type_kind(optional_fortran_type_kind);
+          optional_fortran_type_kind->set_parent(returnType);
+        }
      ROSE_ASSERT(returnType != NULL);
 
      SgName name = returnType->get_mangled();
@@ -4702,10 +4742,10 @@ SgTypeString::createType ( SgExpression* idx, size_t length )
 
   // DQ (2/20/2007): Added setting the parent (which should not have been set already)
   // note also that the index expression is not required to be specified.
-     if (idx != NULL)
+     if (lengthExpression != NULL)
         {
-          ROSE_ASSERT(idx->get_parent() == NULL);
-          idx->set_parent(returnType);
+          ROSE_ASSERT(lengthExpression->get_parent() == NULL);
+          lengthExpression->set_parent(returnType);
         }
 
      return returnType;
@@ -4947,7 +4987,7 @@ SOURCE_CREATE_TYPE_FOR_COMPLEX_TYPE_START
 // DQ (8/27/2006): This code is used for both SgTypeComplex and SgTypeImaginary.
 
 $CLASSNAME*
-$CLASSNAME::createType(SgType* t)
+$CLASSNAME::createType(SgType* t, SgExpression* optional_fortran_type_kind)
    {
   // Not clear why this is using a map???
      static std::map<SgType*, $CLASSNAME*> cache;
