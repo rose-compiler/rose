@@ -28,7 +28,7 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::emptyRenameEntry;
 std::string VariableRenaming::keyToString(const VarName& vec)
 {
     std::string name = "";
-    foreach(VarName::value_type& iter, vec)
+    foreach(const VarName::value_type& iter, vec)
     {
         if(iter != vec.front())
         {
