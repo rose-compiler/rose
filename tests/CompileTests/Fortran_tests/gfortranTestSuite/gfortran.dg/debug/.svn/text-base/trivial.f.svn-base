@@ -1,2 +1,0 @@
-      program trivial
-      end

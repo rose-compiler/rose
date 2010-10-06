@@ -1,10 +1,7 @@
 #include "handlerTypes.h"
-#include "eventProcessor.h"
+#include "eventHandler.h"
 #include <boost/foreach.hpp>
-
-#define reverse_foreach BOOST_REVERSE_FOREACH
-using namespace std;
-
+#include "utilities/CPPDefinesAndNamespaces.h"
 
 const std::vector<EvaluationResult>& EvaluationResult::getChildResults() const
 {
@@ -35,16 +32,6 @@ const SimpleCostModel& EvaluationResult::getCost() const
 void EvaluationResult::setCost(const SimpleCostModel& cost)
 {
 	cost_ = cost;
-}
-
-EvaluationResultAttributePtr EvaluationResult::getAttribute() const
-{
-	return attribute_;
-}
-
-void EvaluationResult::setAttribute(EvaluationResultAttributePtr attr)
-{
-	attribute_ = attr;
 }
 
 SgExpression* EvaluationResult::getExpressionInput() const
@@ -97,7 +84,7 @@ void EvaluationResult::printHandlers() const
 	static int tab_num = 0;
 
 	for (int i = 0; i < tab_num; ++i)
-		cout << "\t";
+		cout << "    ";
 	cout << handler_used_->getName() << endl;
 
 	++tab_num;
@@ -108,38 +95,43 @@ void EvaluationResult::printHandlers() const
 
 SgExpression* ReversalHandlerBase::pushVal(SgExpression* exp, SgType* type)
 {
-    return event_processor_->pushVal(exp, type);
+    return event_handler_->pushVal(exp, type);
 }
 
 SgExpression* ReversalHandlerBase::popVal(SgType* type)
 {
-    return event_processor_->popVal(type);
+    return event_handler_->popVal(type);
 }
 
 vector<EvaluationResult> ReversalHandlerBase::evaluateExpression(SgExpression* exp,
 		const VariableVersionTable& var_table, bool is_value_used)
 {
-    return event_processor_->evaluateExpression(exp, var_table, is_value_used);
+    return event_handler_->evaluateExpression(exp, var_table, is_value_used);
 }
 
 vector<EvaluationResult> ReversalHandlerBase::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-    return event_processor_->evaluateStatement(stmt, var_table);
+    return event_handler_->evaluateStatement(stmt, var_table);
 }
 
 
 bool ReversalHandlerBase::isStateVariable(SgExpression* exp)
 {
-    return event_processor_->isStateVariable(exp);
+    return event_handler_->isStateVariable(exp);
 }
 
 SgExpression* ReversalHandlerBase::restoreVariable(VariableRenaming::VarName variable, 
 		const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions)
 {
-	return event_processor_->restoreVariable(variable, availableVariables, definitions);
+	return event_handler_->restoreVariable(variable, availableVariables, definitions);
+}
+
+SgExpression* ReversalHandlerBase::restoreExpressionValue(SgExpression* expression, const VariableVersionTable& availableVariables)
+{
+	return event_handler_->restoreExpressionValue(expression, availableVariables);
 }
 
 VariableRenaming* ReversalHandlerBase::getVariableRenaming()
 {
-	return event_processor_->getVariableRenaming();
+	return event_handler_->getVariableRenaming();
 }
