@@ -11,9 +11,32 @@ std::ostream& operator<<(std::ostream &o, const RegisterDescriptor &reg) {
     return o;
 }
 
+/* class method */
+uint64_t
+RegisterDictionary::hash(const RegisterDescriptor &d)
+{
+    uint64_t h = d.get_major() << 24;
+    h ^= d.get_minor() << 16;
+    h ^= d.get_offset() << 8;
+    h ^= d.get_nbits();
+    return h;
+}
+
 void
 RegisterDictionary::insert(const std::string &name, const RegisterDescriptor &rdesc) {
-    regs[name] = rdesc;
+    /* Erase the name from the reverse lookup map, indexed by the old descriptor. */
+    Entries::iterator fi = forward.find(name);
+    if (fi!=forward.end()) {
+        Reverse::iterator ri = reverse.find(hash(fi->second));
+        ROSE_ASSERT(ri!=reverse.end());
+        std::vector<std::string>::iterator vi=std::find(ri->second.begin(), ri->second.end(), name);
+        ROSE_ASSERT(vi!=ri->second.end());
+        ri->second.erase(vi);
+    }
+
+    /* Insert or replace old descriptor with a new one and insert reverse lookup info. */
+    forward[name] = rdesc;
+    reverse[hash(rdesc)].push_back(name);
 }
 
 void
@@ -36,46 +59,61 @@ RegisterDictionary::insert(const RegisterDictionary *other) {
 
 const RegisterDescriptor *
 RegisterDictionary::lookup(const std::string &name) const {
-    Entries::const_iterator found = regs.find(name);
-    if (found==regs.end())
+    Entries::const_iterator fi = forward.find(name);
+    if (fi==forward.end())
         return NULL;
-    return &(found->second);
-}
-
-RegisterDescriptor *
-RegisterDictionary::lookup(const std::string &name) {
-    Entries::iterator found = regs.find(name);
-    if (found==regs.end())
-        return NULL;
-    return &(found->second);
+    return &(fi->second);
 }
 
 const std::string &
 RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
-    /* This might be too slow. We may need to build a reverse lookup map. [RPM 2010-10-01] */
-    for (Entries::const_iterator ri=regs.begin(); ri!=regs.end(); ++ri) {
-        if (rdesc.equal(ri->second))
-            return ri->first;
+    Reverse::const_iterator ri = reverse.find(hash(rdesc));
+    if (ri!=reverse.end()) {
+        for (size_t i=ri->second.size(); i>0; --i) {
+            const std::string &name = ri->second[i-1];
+            Entries::const_iterator fi = forward.find(name);
+            ROSE_ASSERT(fi!=forward.end());
+            if (fi->second.equal(rdesc))
+                return name;
+        }
     }
+    
     static const std::string empty;
     return empty;
 }
 
+void
+RegisterDictionary::resize(const std::string &name, unsigned new_nbits) {
+    const RegisterDescriptor *old_desc = lookup(name);
+    ROSE_ASSERT(old_desc!=NULL);
+    RegisterDescriptor new_desc = *old_desc;
+    new_desc.set_nbits(new_nbits);
+    insert(name, new_desc);
+}
+
 const RegisterDictionary::Entries &
 RegisterDictionary::get_registers() const {
-    return regs;
+    return forward;
 }
 
 RegisterDictionary::Entries &
 RegisterDictionary::get_registers() {
-    return regs;
+    return forward;
 }
 
 void
 RegisterDictionary::print(std::ostream &o) const {
-    o <<"RegisterDictionary \"" <<name <<"\" contains " <<regs.size() <<" " <<(1==regs.size()?"entry":"entries") <<"\n";
-    for (Entries::const_iterator ri=regs.begin(); ri!=regs.end(); ++ri)
-        o <<"  \"" <<ri->first <<"\" " <<ri->second <<"\n";
+    o <<"RegisterDictionary \"" <<name <<"\" contains " <<forward.size() <<" " <<(1==forward.size()?"entry":"entries") <<"\n";
+    for (Entries::const_iterator ri=forward.begin(); ri!=forward.end(); ++ri)
+        o <<"  \"" <<ri->first <<"\" " <<StringUtility::addrToString(hash(ri->second)) <<" " <<ri->second <<"\n";
+
+    for (Reverse::const_iterator ri=reverse.begin(); ri!=reverse.end(); ++ri) {
+        o <<"  " <<StringUtility::addrToString(ri->first);
+        for (std::vector<std::string>::const_iterator vi=ri->second.begin(); vi!=ri->second.end(); ++vi) {
+            o <<" " <<*vi;
+        }
+        o <<"\n";
+    }
 }
 
 /** Intel 8086 registers.
@@ -363,20 +401,20 @@ RegisterDictionary::amd64()
         }
 
         /* Control registers become 64 bits, and cr8 is added */
-        regs->lookup("cr0")->set_nbits(64);
-        regs->lookup("cr1")->set_nbits(64);
-        regs->lookup("cr2")->set_nbits(64);
-        regs->lookup("cr3")->set_nbits(64);
-        regs->lookup("cr4")->set_nbits(64);
+        regs->resize("cr0", 64);
+        regs->resize("cr1", 64);
+        regs->resize("cr2", 64);
+        regs->resize("cr3", 64);
+        regs->resize("cr4", 64);
         regs->insert("cr8", x86_regclass_cr, 8, 0, 64);
 
         /* Debug registers become 64 bits */
-        regs->lookup("dr0")->set_nbits(64);
-        regs->lookup("dr1")->set_nbits(64);
-        regs->lookup("dr2")->set_nbits(64);
-        regs->lookup("dr3")->set_nbits(64);                             /* dr4 and dr5 are reserved */
-        regs->lookup("dr6")->set_nbits(64);
-        regs->lookup("dr7")->set_nbits(64);
+        regs->resize("dr0", 64);
+        regs->resize("dr1", 64);
+        regs->resize("dr2", 64);
+        regs->resize("dr3", 64);                                /* dr4 and dr5 are reserved */
+        regs->resize("dr6", 64);
+        regs->resize("dr7", 64);
     }
     return regs;
 }
@@ -503,8 +541,12 @@ RegisterDictionary::powerpc()
         /**********************************************************************************************************************
          * Special purpose registers. There are 1024 of these, some of which have special names.  We name all 1024 consistently
          * and create aliases for the special ones. This allows the disassembler to look them up generically.  Because the
-         * special names appear before the generic names, a reverse lookup will return the special name.
+         * special names appear after the generic names, a reverse lookup will return the special name.
          **********************************************************************************************************************/
+        /* Generic names for them all */
+        for (unsigned i=0; i<1024; i++)
+            regs->insert("spr"+StringUtility::numberToString(i), powerpc_regclass_spr, i, 0, 32);
+
         /* The link register contains the address to return to at the end of a function call.  Each branch instruction encoding
          * has an LK bit. If the LK bit is 1, the branch instruction moves the program counter to the link register. Also, the
          * conditional branch instruction BCLR branches to the value in the link register. */
@@ -524,21 +566,16 @@ RegisterDictionary::powerpc()
         regs->insert("dar", powerpc_regclass_spr, powerpc_spr_dar, 0, 32);
         regs->insert("dec", powerpc_regclass_spr, powerpc_spr_dec, 0, 32);
 
-        /* Generic names for them all */
-        for (unsigned i=0; i<1024; i++)
-            regs->insert("spr"+StringUtility::numberToString(i), powerpc_regclass_spr, i, 0, 32);
-
-
         /**********************************************************************************************************************
          * Time base registers. There are 1024 of these, some of which have special names. We name all 1024 consistently and
          * create aliases for the special ones. This allows the disassembler to look them up generically.  Because the special
-         * names appear before the generic names, a reverse lookup will return the special name.
+         * names appear after the generic names, a reverse lookup will return the special name.
          **********************************************************************************************************************/
-        regs->insert("tbl", powerpc_regclass_tbr, powerpc_tbr_tbl, 0, 32);      /* time base lower */
-        regs->insert("tbu", powerpc_regclass_tbr, powerpc_tbr_tbu, 0, 32);      /* time base upper */
         for (unsigned i=0; i<1024; i++)
             regs->insert("tbr"+StringUtility::numberToString(i), powerpc_regclass_tbr, i, 0, 32);
 
+        regs->insert("tbl", powerpc_regclass_tbr, powerpc_tbr_tbl, 0, 32);      /* time base lower */
+        regs->insert("tbu", powerpc_regclass_tbr, powerpc_tbr_tbu, 0, 32);      /* time base upper */
     }
     return regs;
 }

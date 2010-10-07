@@ -71,14 +71,18 @@ public:
      *  names in this dictionary will replace the definitions in this dictionary. */
     void insert(const RegisterDictionary&);
 
-    /** Returns a descriptor for a given register name. Returns the null pointer if the name is not found. */
+    /** Changes the size of a register.  This is a common enough operation that we have a special method to do it.  To change
+     *  other properties of a register you would look up the register descriptor, change the property, then re-insert the
+     *  register into the dictionary using the new descriptor.  This method does exactly that. */
+    void resize(const std::string &name, unsigned new_nbits);
+
+    /** Returns a descriptor for a given register name. Returns the null pointer if the name is not found. It is not possible
+     *  to modify a descriptor in the dictionary because doing so would interfere with the dictionaries data structures for
+     *  reverse lookups. */
     const RegisterDescriptor *lookup(const std::string &name) const;
 
-    /** Returns a descriptor for a given register name. Returns the null pointer if the name is not found. */
-    RegisterDescriptor *lookup(const std::string &name);
-
     /** Returns a register name for a given descriptor. Returns the empty string if the descriptor cannot be found. If more
-     *  than one register has the same descriptor then one of the matching names is arbitrarily chosen for the return value. */
+     *  than one register has the same descriptor then the name added latest is returned. */
     const std::string &lookup(const RegisterDescriptor&) const;
 
     /** Returns the list of all register definitions in the dictionary. */
@@ -92,8 +96,12 @@ public:
     friend std::ostream& operator<<(std::ostream&, const RegisterDictionary&);
 
 private:
+    typedef std::map<uint64_t/*desc_hash*/, std::vector<std::string> > Reverse;
+    static uint64_t hash(const RegisterDescriptor&);
     std::string name; /*name of the dictionary, usually an architecture name like 'i386'*/
-    std::map<std::string/*name*/, RegisterDescriptor> regs;
+    Entries forward;
+    Reverse reverse;
+
 };
 
 #endif /*!ROSE_BINARY_REGISTERRS_H*/
