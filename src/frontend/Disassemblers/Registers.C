@@ -380,3 +380,56 @@ RegisterDictionary::amd64()
     }
     return regs;
 }
+
+/**  ARM7 registers.
+ *
+ * The CPU has a total of 37 registers, each 32 bits wide: 31 general purpose registers named and six status registers named.
+ * At most 16 (8 in Thumb mode) general purpose registers are visible at a time depending on the mode of operation. They have
+ * names rN where N is an integer between 0 and 15, inclusive and are mapped onto a subset of the 31 physical general purpose
+ * registers. Register r13 and r14 are, by convention, a stack pointer and link register (the link register holds the return
+ * address for a function call). Register r15 is the instruction pointer.  Also, at most two status registers are available at
+ * a time.
+ *
+ * The major number of a RegisterDescriptor is used to indicate the type of register: 0=general purpose, 1=status. The minor
+ * number indicates the register number: 0-15 for general purpose, 0 or 1 for status. */
+const RegisterDictionary *
+RegisterDictionary::arm7() {
+    /* Documentation of the Nintendo GameBoy Advance is pretty decent. It's located here:
+     * http:// nocash.emubase.de/gbatek.htm */
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("arm7");
+
+        /* The (up-to) 16 general purpose registers available within the current mode. */
+        for (unsigned i=0; i<16; i++)
+            regs->insert("r"+StringUtility::numberToString(i), arm_regclass_gpr, i, 0, 32);
+
+        /* The (up to) two status registers available within the current mode. */
+        regs->insert("cpsr", arm_regclass_psr, arm_psr_current, 0, 32);      /* current program status register */
+        regs->insert("spsr", arm_regclass_psr, arm_psr_saved,   0, 32);      /* saved program status register */
+
+        /* Individual parts of the cpsr register */
+        regs->insert("cpsr_m", arm_regclass_psr, arm_psr_current,  0, 5);    /* Mode bits indicating current operating mode */
+        regs->insert("cpsr_t", arm_regclass_psr, arm_psr_current,  5, 1);    /* State bit (0=>ARM; 1=>THUMB) */
+        regs->insert("cpsr_f", arm_regclass_psr, arm_psr_current,  6, 1);    /* FIQ disable (0=>enable; 1=>disable) */
+        regs->insert("cpsr_i", arm_regclass_psr, arm_psr_current,  7, 1);    /* IRQ disable (0=>enable; 1=>disable) */
+        regs->insert("cpsr_q", arm_regclass_psr, arm_psr_current, 27, 1);    /* sticky overflow (ARMv5TE and up only) */
+        regs->insert("cpsr_v", arm_regclass_psr, arm_psr_current, 28, 1);    /* overflow flag (0=>no overflow; 1=overflow) */
+        regs->insert("cpsr_c", arm_regclass_psr, arm_psr_current, 29, 1);    /* carry flag (1=>no carry; 1=>carry) */
+        regs->insert("cpsr_z", arm_regclass_psr, arm_psr_current, 30, 1);    /* zero flag (0=>not zero; 1=>zero) */
+        regs->insert("cpsr_n", arm_regclass_psr, arm_psr_current, 31, 1);    /* sign flag (0=>not signed; 1=>signed) */
+
+        /* The six spsr registers (at most one available depending on the operating mode), have the same bit fields as the cpsr
+         * register. When an exception occurs, the current status (in cpsr) is copied to one of the spsr registers. */
+        regs->insert("spsr_m", arm_regclass_psr, arm_psr_saved,  0, 5);    /* Mode bits indicating saved operating mode */
+        regs->insert("spsr_t", arm_regclass_psr, arm_psr_saved,  5, 1);    /* State bit (0=>ARM; 1=>THUMB) */
+        regs->insert("spsr_f", arm_regclass_psr, arm_psr_saved,  6, 1);    /* FIQ disable (0=>enable; 1=>disable) */
+        regs->insert("spsr_i", arm_regclass_psr, arm_psr_saved,  7, 1);    /* IRQ disable (0=>enable; 1=>disable) */
+        regs->insert("spsr_q", arm_regclass_psr, arm_psr_saved, 27, 1);    /* sticky overflow (ARMv5TE and up only) */
+        regs->insert("spsr_v", arm_regclass_psr, arm_psr_saved, 28, 1);    /* overflow flag (0=>no overflow; 1=overflow) */
+        regs->insert("spsr_c", arm_regclass_psr, arm_psr_saved, 29, 1);    /* carry flag (1=>no carry; 1=>carry) */
+        regs->insert("spsr_z", arm_regclass_psr, arm_psr_saved, 30, 1);    /* zero flag (0=>not zero; 1=>zero) */
+        regs->insert("spsr_n", arm_regclass_psr, arm_psr_saved, 31, 1);    /* sign flag (0=>not signed; 1=>signed) */
+    }
+    return regs;
+}

@@ -2063,11 +2063,8 @@ Grammar::setUpBinaryInstructions ()
 
      AsmArmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION",
                                                             "../Grammar/BinaryInstruction.code");
-     /* FIXME: arm_register_code should eventually use RegisterDescriptor in the parent class. [RPM 2010-09-30] */
-     AsmArmRegisterReferenceExpression.setDataPrototype("SgAsmArmRegisterReferenceExpression::arm_register_enum",
-                                                        "arm_register_code",
-                                                        "= SgAsmArmRegisterReferenceExpression::undefined_arm_register",
-                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmArmRegisterReferenceExpression.setDataPrototype("unsigned", "psr_mask", "=0",
+                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 

@@ -301,15 +301,13 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       binNode = new SgAsmx86RegisterReferenceExpression(registerSg.first, registerSg.second, regSize);
       isSgAsmx86RegisterReferenceExpression(binNode)->set_type(getRegisterType(regSize));
     } else if (RoseAssemblyLanguage==arm) {
-      SgAsmArmRegisterReferenceExpression::arm_register_enum registerSg = 
-	SgAsmArmRegisterReferenceExpression::undefined_arm_register;
+      RegisterDescriptor registerSg;
       string symbol = RoseBin_support::str_to_upper(expt->symbol);
       
       resolveRegister(symbol, &registerSg);
       //      binNode = new SgAsmRegisterReferenceExpression(registerSg, regSize);
-      binNode = new SgAsmArmRegisterReferenceExpression();
+      binNode = new SgAsmArmRegisterReferenceExpression(registerSg);
       // todo : find out types for ARM
-      (isSgAsmArmRegisterReferenceExpression(binNode))->set_arm_register_code(registerSg);
     }
   } else {
     cerr << " ERROR ... buildTree ... wrong type " << endl;

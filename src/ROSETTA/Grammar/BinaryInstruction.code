@@ -4239,38 +4239,6 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
 
 
 HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
-	enum arm_register_enum { // The exact numbers here are important
-		undefined_arm_register = 0, /*!< unknown (error or unitialized value) */
-		reg0 = 1,
-		reg1 = 2,
-		reg2 = 3,
-		reg3 = 4,
-		reg4 = 5,
-		reg5 = 6,
-		reg6 = 7,
-		reg7 = 8,
-		reg8 = 9,
-		reg9  = 10,
-		reg10 = 11,
-		reg11 = 12,
-		reg12 = 13,
-		reg13 = 14,
-		reg14 = 15,
-		reg15 = 16,
-		cpsr = 17,
-		spsr = 18,
-		cpsr_fields = 19, /* 16 values -- add arm_suffix_field_enum */
-		spsr_fields = 35, /* 16 values -- add arm_suffix_field_enum */
-		last_arm_register = spsr_fields + 16
-	};
-
-	enum arm_position_in_register_enum {
-		undefined_arm_position_in_register = 0, /*!< unknown (error or unitialized value) */
-		arm_dword = 1, /*!< lower 32 bit part of larger register (typically the first part of a 64 bit register) */
-		arm_qword = 2, /*!< 64 bit part of 128 bit register (not in common use) */
-		last_arm_position_in_register
-	};
-
 	enum arm_suffix_field_enum {
 		undefined_position_in_suffix = 0, /*!< unknown (error or unitialized value) */
 		c = 1, // control field mask bit
@@ -4279,6 +4247,10 @@ HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
 		f = 8, // flags field mask bit
 		last_position_in_suffix
 	};
+
+	SgAsmArmRegisterReferenceExpression(const RegisterDescriptor &rdesc) {
+		p_descriptor = rdesc;
+	}
 
 	// Note that the auto-generated version of this is const
 	virtual SgAsmType* get_type();

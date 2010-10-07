@@ -3,6 +3,16 @@
 
 #include <string>
 
+enum ArmRegisterClass {
+    arm_regclass_gpr,           /* general purpose registers */
+    arm_regclass_psr		/* program status registers */
+};
+
+enum ArmProgramStatusRegister {
+    arm_psr_current,
+    arm_psr_saved
+};
+
 enum ArmInstructionKind {
   arm_unknown_instruction = 0,
   arm_adc,                              /**< add with carry */

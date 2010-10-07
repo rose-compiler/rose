@@ -31,7 +31,7 @@ class RoseBin_buildTree  {
 		       X86PositionInRegister *regSize);
 
   void resolveRegister(std::string symbol, 
-		       SgAsmArmRegisterReferenceExpression::arm_register_enum *registerSg);
+		       RegisterDescriptor *registerSg);
 
  public:
   RoseBin_buildTree() {};

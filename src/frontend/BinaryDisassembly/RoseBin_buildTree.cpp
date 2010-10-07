@@ -14,78 +14,36 @@ using namespace std;
 /****************************************************
  * return information about the register
  ****************************************************/
-void RoseBin_buildTree::resolveRegister(string symbol, 
-                                        SgAsmArmRegisterReferenceExpression::arm_register_enum *registerSg) {
-  // ARM architecture 
-  if (symbol=="R0") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg0;
-  } else if (symbol=="R1") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg1;
-  }
-  else if (symbol=="R2") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg2;
-  }
-  else if (symbol=="R3") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg3;
-  }
-  else if (symbol=="R4") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg4;
-  }
-  else if (symbol=="R5") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg5;
-  }
-  else if (symbol=="R6") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg6;
-  }
-  else if (symbol=="R7") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg7;
-  }
-  else if (symbol=="R8") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg8;
-  }
-  else if (symbol=="R9") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg9;
-  }
-  else if (symbol=="R10") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg10;
-  }
-  else if (symbol=="R11") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg11;
-  }
-  else if (symbol=="R12") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg12;
-  }
-  else if (symbol=="R13") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg13;
-  }
-  else if (symbol=="R14") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg14;
-  }
-  else if (symbol=="R15") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg15;
+void RoseBin_buildTree::resolveRegister(string symbol,
+                                        RegisterDescriptor *registerSg) {
+
+  // ARM architecture
+  const RegisterDictionary *rdict = RegisterDictionary::arm7();
+
+  /* Symbol is upper case. Dictionary stores register names in lower case. */
+  for (string::size_type i=0; i<symbol.size(); i++)
+    symbol[i] = tolower(symbol[i]);
+
+  // Some of the names pased in here are not present in the dictionary. The dictionary doesn't have these names because these
+  // registers are not always used for this purpose.
+  if (symbol=="sp") {
+    symbol = "r13";
+  } else if (symbol=="pc") {
+    symbol = "r15";
+  } else if (symbol=="lr") {
+    symbol = "r14";
+  } else if (symbol=="sl") {
+    symbol = "r10";
+  } else if (symbol=="ip") {
+    symbol = "r12";
+  } else if (symbol=="fp") {
+    symbol = "r11";
   }
 
-  else if (symbol=="SP") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg13;
-  }
-  else if (symbol=="PC") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg15;
-  }
-  else if (symbol=="LR") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg14;
-  }
-  else if (symbol=="SL") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg10;
-  }
-  else if (symbol=="IP") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg12;
-  }
-  else if (symbol=="FP") {
-    *registerSg = SgAsmArmRegisterReferenceExpression::reg11;
-  }
-
-
-  else {
+  const RegisterDescriptor *rdesc = rdict->lookup(symbol);
+  if (rdesc) {
+    *registerSg = *rdesc;
+  } else {
     cerr << "ERROR !!! ::: arm symbol could not be resolved! : " << symbol << "\n" << endl;
   }
 }

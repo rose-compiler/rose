@@ -35,6 +35,7 @@ public:
     static const RegisterDictionary *pentium();
     static const RegisterDictionary *pentium4();
     static const RegisterDictionary *amd64();
+    static const RegisterDictionary *arm7();
 
     RegisterDictionary(const std::string &name)
         :name(name) {}
