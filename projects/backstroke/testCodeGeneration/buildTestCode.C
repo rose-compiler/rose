@@ -1,6 +1,3 @@
-#ifndef ROSE_REVERSE_COMPUTATION_BUILDEVENT_H
-#define ROSE_REVERSE_COMPUTATION_BUILDEVENT_H
-
 #include "buildTestCode.h"
 #include <vector>
 #include <boost/lexical_cast.hpp>
@@ -548,6 +545,4 @@ int main()
     TestCodeBuilder builder(project);
     builder.buildTestCode();
 }
-#endif
-
 #endif

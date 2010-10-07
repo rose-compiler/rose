@@ -78,10 +78,7 @@ protected:
 	SgExpression* exp_;
 
 public:
-	virtual void build()
-	{
-		results_.push_back(SageBuilder::buildExprStatement(exp_));
-	}
+	virtual void build();
 };
 
 class IfStatementBuilder

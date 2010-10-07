@@ -18,16 +18,16 @@ void UnaryExpressionBuilder::build()
 	{
 		if (operand_->isDefinable())
 		{
-			results_.push_back(buildPlusPlusOp(copyExpression(operand), SgUnaryOp::prefix));
-			results_.push_back(buildMinusMinusOp(copyExpression(operand), SgUnaryOp::prefix));
-			results_.push_back(buildPlusPlusOp(copyExpression(operand), SgUnaryOp::postfix));
-			results_.push_back(buildMinusMinusOp(copyExpression(operand), SgUnaryOp::postfix));
+			results_.push_back(buildPlusPlusOp(copyExpression(operand_), SgUnaryOp::prefix));
+			results_.push_back(buildMinusMinusOp(copyExpression(operand_), SgUnaryOp::prefix));
+			results_.push_back(buildPlusPlusOp(copyExpression(operand_), SgUnaryOp::postfix));
+			results_.push_back(buildMinusMinusOp(copyExpression(operand_), SgUnaryOp::postfix));
 		}
 
-		results_.push_back(buildUnaryExpression<SgNotOp>(copyExpression(operand)));
-		results_.push_back(buildUnaryExpression<SgMinusOp>(copyExpression(operand)));
-		results_.push_back(buildUnaryExpression<SgUnaryAddOp>(copyExpression(operand)));
-		results_.push_back(buildUnaryExpression<SgBitComplementOp>(copyExpression(operand)));
+		results_.push_back(buildUnaryExpression<SgNotOp>(copyExpression(operand_)));
+		results_.push_back(buildUnaryExpression<SgMinusOp>(copyExpression(operand_)));
+		results_.push_back(buildUnaryExpression<SgUnaryAddOp>(copyExpression(operand_)));
+		results_.push_back(buildUnaryExpression<SgBitComplementOp>(copyExpression(operand_)));
 	}
 }
 
@@ -65,6 +65,7 @@ void ExpressionStatementBuilder::build()
 
 SgFunctionDeclaration* EventFunctionBuilder::buildEventFunction(const std::string& event_name, const std::vector<SgStatement*>& stmts)
 {
+#if 0
 	SgType* model_type = model_decl_->get_type();
 	//if (model_obj_ == NULL)
 	//model_object_ = buildInitializedName(model_obj_name_, buildPointerType(model_type_));
@@ -82,6 +83,7 @@ SgFunctionDeclaration* EventFunctionBuilder::buildEventFunction(const std::strin
 	//buildBasicBlock());
 	//fixVariableReferences(decl);
 	return func_decl;
+#endif
 }
 
 
@@ -89,10 +91,10 @@ SgExpression* ModelBuilder::getMemberExpression(const std::string& name) const
 {
 	foreach (const MemberType& member, members_)
 	{
-		if (member->get<0> == name)
+		if (member.get<0>() == name)
 		{
-			ROSE_ASSERT(member->get<2>());
-			return member->get<2>();
+			ROSE_ASSERT(member.get<2>());
+			return member.get<2>();
 		}
 	}
 	return NULL;
@@ -104,10 +106,10 @@ std::vector<SgExpression*> ModelBuilder::getMemberExpression(SgType* type) const
 	foreach (const MemberType& member, members_)
 	{
 		// It seems that every type has only one object in the memory pool in ROSE.
-		if (member->get<1> == type)
+		if (member.get<1>() == type)
 		{
-			ROSE_ASSERT(member->get<2>());
-			exps.push_back(member->get<2>());
+			ROSE_ASSERT(member.get<2>());
+			exps.push_back(member.get<2>());
 		}
 	}
 	return exps;
@@ -117,9 +119,9 @@ void ModelBuilder::build()
 {
 	model_decl_ = buildStructDeclaration(name_);
 	SgClassDefinition* model_def = buildClassDefinition(model_decl_);
-	SgInitializedName* model_init_name_ = buildInitializedName(name_, buildPointerType(model_decl_->get_type()));
+	SgInitializedName* model_init_name = buildInitializedName(name_, buildPointerType(model_decl_->get_type()));
 
-	pushScopeStack(isSgScopeStatement(def));
+	pushScopeStack(isSgScopeStatement(model_def));
 
 	// Build declarations for all members.
 	foreach (MemberType& member, members_)
@@ -127,8 +129,8 @@ void ModelBuilder::build()
 		SgVariableDeclaration* var_decl = buildVariableDeclaration(member.get<0>(), member.get<1>());
 		model_def->append_member(var_decl);
 		// Build an expression for each member like m->i.
-		member.get<2> = buildBinaryExpression<SgArrowExp>(
-				buildVarRefExp(model_decl_), buildVarRefExp(var_decl));
+		member.get<2>() = buildBinaryExpression<SgArrowExp>(
+				buildVarRefExp(model_init_name), buildVarRefExp(var_decl));
 	}
 
 	popScopeStack();

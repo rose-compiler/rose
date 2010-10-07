@@ -94,6 +94,8 @@ vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefs(SgStat
 			bind(call_begin(), _1), bind(call_end(), _1),
 			bind(call_begin(), _2), bind(call_end(), _2)));
 
+	// Here if a def is a member of another def, we only include the latter one. For example, if both a and a.i
+	// are modified, we only include a in the results.
 	modified_vars.erase(
 		std::unique(modified_vars.begin(), modified_vars.end(), bind(backstroke_util::isMemberOf, _2, _1)),
 		modified_vars.end());
