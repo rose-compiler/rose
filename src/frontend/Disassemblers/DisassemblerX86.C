@@ -549,15 +549,15 @@ void
 DisassemblerX86::init(size_t wordsize)
 {
     switch (wordsize) {
-        case 2: insnSize = x86_insnsize_16; p_registers = RegisterDictionary::i286();  break;
-        case 4: insnSize = x86_insnsize_32; p_registers = RegisterDictionary::i386();  break;
-        case 8: insnSize = x86_insnsize_64; p_registers = RegisterDictionary::amd64(); break;
+        case 2: insnSize = x86_insnsize_16; set_registers(RegisterDictionary::i286());  break;
+        case 4: insnSize = x86_insnsize_32; set_registers(RegisterDictionary::i386());  break;
+        case 8: insnSize = x86_insnsize_64; set_registers(RegisterDictionary::amd64()); break;
         default: ROSE_ASSERT(!"unknown x86 instruction size");
     }
     set_wordsize(wordsize);
     set_alignment(1);
     set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
-    ROSE_ASSERT(p_registers);
+    ROSE_ASSERT(get_registers()!=NULL);
 
     /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data
      * members to reasonable values for debugging. */
@@ -854,8 +854,8 @@ DisassemblerX86::makeIP()
         case x86_insnsize_64: name="rip"; break;
         case x86_insnsize_none: ROSE_ASSERT(!"unknown instruction size");
     }
-    ROSE_ASSERT(p_registers!=NULL);
-    const RegisterDescriptor *rdesc = p_registers->lookup(name);
+    ROSE_ASSERT(get_registers()!=NULL);
+    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
     ROSE_ASSERT(rdesc!=NULL);
     SgAsmx86RegisterReferenceExpression *r = new SgAsmx86RegisterReferenceExpression(*rdesc);
     r->set_type(sizeToType(insnSize));
@@ -915,7 +915,7 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
         "es", "cs", "ss", "ds", "fs", "gs"
     };
 
-    /* Obtain a the register name. Also, override the registerType value for certain registers. */
+    /* Obtain a register name. Also, override the registerType value for certain registers. */
     std::string name;
     switch (m) {
         case rmLegacyByte:
@@ -977,14 +977,13 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
         case rmReturnNull:
             return NULL;
     }
+    ROSE_ASSERT(!name.empty());
 
     /* Now that we have a register name, obtain the register descriptor from the dictionary. */
-    if (name.empty())
-        ROSE_ASSERT(!"unknown register mode");
-    ROSE_ASSERT(p_registers!=NULL);
-    const RegisterDescriptor *rdesc = p_registers->lookup(name);
+    ROSE_ASSERT(get_registers()!=NULL);
+    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
     if (!rdesc)
-        throw Exception("register \"" + name + "\" is not available on this architecture");
+        throw Exception("register \"" + name + "\" is not available for " + get_registers()->get_architecture_name());
 
     /* Construct the return value. */
     SgAsmx86RegisterReferenceExpression *rre = new SgAsmx86RegisterReferenceExpression(*rdesc);

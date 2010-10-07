@@ -4259,18 +4259,9 @@ HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
 
 
 HEADER_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION_START
-	enum powerpc_register_enum { // The exact numbers here are important
-		undefined_powerpc_register = 0, /*!< unknown (error or unitialized value) */
-		reg0 = 1,
-		reg1 = 2,
-		reg2 = 3,
-		reg3 = 4,
-		reg4 = 5,
-		reg5 = 6,
-		reg6 = 7,
-		reg7 = 8,
-		last_powerpc_register
-	};
+	SgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor &rdesc) {
+		p_descriptor = rdesc;
+	}
 
 	// Note that the auto-generated version of this is const
 	virtual SgAsmType* get_type();

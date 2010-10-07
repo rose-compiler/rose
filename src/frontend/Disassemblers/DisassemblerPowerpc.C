@@ -134,6 +134,7 @@ DisassemblerPowerpc::init()
     set_wordsize(4);
     set_alignment(4);
     set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
+    set_registers(RegisterDictionary::powerpc());
 }
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space. */
@@ -233,27 +234,103 @@ DisassemblerPowerpc::makeInstructionWithoutOperands(uint64_t address, const std:
      return instruction;
 }
 
+/* At one time this function created PowerPC-specific register reference expressions (RREs) that had hard-coded values for
+ * register class, register number, and register position.
+ *
+ * The new approach (added Oct 2010) replaces the PowerPC-specific numbers with a more generic RegisterDescriptor struct, where
+ * each register is described by a major number (fomerly the PowerpcRegisterClass), a minor number (formerly the reg_number),
+ * and a bit offset and size (usually zero and 32, but also implied by the PowerpcConditionRegisterAccessGranularity and
+ * reg_number combination).  The new idea is that a RegisterDescriptor does not need to contain machine-specific
+ * values. Therefore, we've added a level of indirection: makeRegister() converts machine specific values to a register name,
+ * which is then looked up in a RegisterDictionary to return a RegisterDescriptor.  The entries in the dictionary determine
+ * what registers are available to the disassembler.
+ *
+ * Currently (2010-10-09) the old class and numbers are used as the major and minor values (except in the case of the "cr"
+ * register), but users should not assume that this is always the case. They can assume that unrelated registers (e.g., "r0"
+ * and "r1") have descriptors that map to non-overlapping areas of the descriptor address space {major,minor,offset,size} while
+ * related registers (e.g., "spr8" and "lr") map to overlapping areas of the descriptor address space. */
 SgAsmPowerpcRegisterReferenceExpression*
 DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number,
-                                  PowerpcConditionRegisterAccessGranularity reg_grainularity)
+                                  PowerpcConditionRegisterAccessGranularity cr_granularity) const
 {
-  // Make sure this will translate to a value register.
-     ROSE_ASSERT(reg_class > powerpc_regclass_unknown);
-     ROSE_ASSERT(reg_class < powerpc_last_register_class);
+    /* Obtain a register name */
+    std::string name;
+    switch (reg_class) {
+        case powerpc_regclass_gpr:
+            ROSE_ASSERT(reg_number>=0 && reg_number<1024);
+            name = "r" + StringUtility::numberToString(reg_number);
+            break;
+        case powerpc_regclass_fpr:
+            ROSE_ASSERT(reg_number>=0 && reg_number<1024);
+            name = "f" + StringUtility::numberToString(reg_number);
+            break;
+        case powerpc_regclass_cr:
+            name = "cr";
+            switch (cr_granularity) {
+                case powerpc_condreggranularity_whole:
+                    ROSE_ASSERT(0==reg_number);
+                    break;
+                case powerpc_condreggranularity_field:
+                    /* cr has eight 4-bit fields numbered 0..7 with names like "cr0" */
+                    ROSE_ASSERT(reg_number>=0 && reg_number<8);
+                    name += StringUtility::numberToString(reg_number);
+                    break;
+                case powerpc_condreggranularity_bit: {
+                    /* each field has four bits with names. The full name of each bit is "crF*4+B" where "F" is the field
+                     * number like above and "B" is the bit name. For instance, "cr0*4+eq". */
+                    ROSE_ASSERT(reg_number>=0 && reg_number<32);
+                    static const char *bitname[] = {"lt", "gt", "eq", "so"};
+                    name += StringUtility::numberToString(reg_number/4) + "*4+" + bitname[reg_number%4];
+                    break;
+                }
+            }
+            break;
+        case powerpc_regclass_fpscr:
+            ROSE_ASSERT(0==reg_number);
+            name = "fpscr";
+            break;
+        case powerpc_regclass_spr:
+            /* Some special purpose registers have special names, but the dictionary has the generic name as well. */
+            ROSE_ASSERT(reg_number>=0 && reg_number<1024);
+            name = "spr" + StringUtility::numberToString(reg_number);
+            break;
+        case powerpc_regclass_tbr:
+            /* Some time base registers have special names, but the dictionary has the generic name as well. */
+            ROSE_ASSERT(reg_number>=0 && reg_number<1024);
+            name = "tbr" + StringUtility::numberToString(reg_number);
+            break;
+        case powerpc_regclass_msr:
+            ROSE_ASSERT(0==reg_number);
+            name = "msr";
+            break;
+        case powerpc_regclass_sr:
+            /* FIXME: not implemented yet [RPM 2010-10-09] */
+            name = "sr" + StringUtility::numberToString(reg_number);
+            break;
+        case powerpc_regclass_iar:
+            /* Instruction address register is not a real register, and so should never appear in disassembled code. */
+            ROSE_ASSERT(!"iar is not a real register");
+        case powerpc_regclass_pvr:
+            ROSE_ASSERT(0==reg_number);
+            name = "pvr";
+            break;
+        case powerpc_regclass_unknown:
+        case powerpc_last_register_class:
+            ROSE_ASSERT(!"not a real register");
+        /* Don't add a "default" or else we won't get compiler warnings if a new class is defined. */
+    }
+    ROSE_ASSERT(!name.empty());
 
-     ROSE_ASSERT(reg_number >= 0);
-     ROSE_ASSERT(reg_number < 1024);
-
-     ROSE_ASSERT(reg_grainularity >= powerpc_condreggranularity_whole);
-     ROSE_ASSERT(reg_grainularity <= powerpc_condreggranularity_bit);
-
-  // DQ (10/13/2008): Need to sync up with Jeremiah on work he may be doing here!
-  // r->set_powerpc_register_code((SgAsmPowerpcRegisterReferenceExpression::powerpc_register_enum)(reg + 1));
-  // r->set_register_class((SgAsmPowerpcRegisterReferenceExpression::powerpc_register_enum)(reg + 1));
-
-     SgAsmPowerpcRegisterReferenceExpression* r = new SgAsmPowerpcRegisterReferenceExpression(reg_class, reg_number, reg_grainularity);
-
-     return r;
+    /* Obtain a register descriptor from the dictionary */
+    ROSE_ASSERT(get_registers()!=NULL);
+    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
+    if (!rdesc)
+        throw Exception("register \"" + name + "\" is not available for " + get_registers()->get_architecture_name());
+    
+    /* Construct the return value */
+    SgAsmPowerpcRegisterReferenceExpression *rre = new SgAsmPowerpcRegisterReferenceExpression(*rdesc);
+    ROSE_ASSERT(rre);
+    return rre;
 }
 
 SgAsmPowerpcInstruction*

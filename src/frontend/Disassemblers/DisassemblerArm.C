@@ -259,10 +259,10 @@ DisassemblerArm::makeRegister(uint8_t reg) const
  *  indicating which individual fields of the register are selected.
  *
  *  The field bits are
- *     0x01 => c
- *     0x02 => x
- *     0x04 => s
- *     0x08 => f
+ *     0x01 => c   control field mask bit
+ *     0x02 => x   extension field mask bit
+ *     0x04 => s   status field mask bit
+ *     0x08 => f   flags field mask bit
  */
 SgAsmArmRegisterReferenceExpression *
 DisassemblerArm::makePsrFields(bool useSPSR, uint8_t fields) const

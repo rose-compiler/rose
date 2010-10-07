@@ -16,67 +16,16 @@
 /****************************************************
  * resolve expression
  ****************************************************/
-static std::string unparsePowerpcRegister(PowerpcRegisterClass cl, int reg, PowerpcConditionRegisterAccessGranularity gr) {
-  switch (cl) {
-    case powerpc_regclass_gpr: {
-        return "r" + boost::lexical_cast<std::string>(reg);
+static std::string unparsePowerpcRegister(const RegisterDescriptor &rdesc)
+{
+    const RegisterDictionary *rdict = RegisterDictionary::powerpc();
+    std::string name = rdict->lookup(rdesc);
+    if (name.empty()) {
+        std::cerr <<"unparsePowerpcRegister(" <<rdesc <<"): register descriptor not found in dictionary.\n";
+        //std::cerr <<rdict;
+        ROSE_ASSERT(!"register descriptor not found in dictionary");
     }
-    case powerpc_regclass_fpr: {
-        return "f" + boost::lexical_cast<std::string>(reg);
-    }
-    case powerpc_regclass_cr: {
-      switch (gr) {
-        case powerpc_condreggranularity_whole: {
-          return "cr";
-        }
-        case powerpc_condreggranularity_field: {
-            return "cr" + boost::lexical_cast<std::string>(reg);
-        }
-        case powerpc_condreggranularity_bit: {
-          const char* crbitnames[4] = {"lt", "gt", "eq", "so"};
-          return "cr" + boost::lexical_cast<std::string>(reg / 4) + "*4+" + crbitnames[reg % 4];
-        }
-        default: {
-          ROSE_ASSERT (!"Bad condition register granularity");
-        }
-      }
-    }
-    case powerpc_regclass_fpscr: {
-      return "fpscr";
-    }
-    case powerpc_regclass_spr: {
-#ifndef _MSC_VER
-		return sprToString((PowerpcSpecialPurposeRegister)reg);
-#else
-		return "WARNING: Unsupported in Windows: prToString((PowerpcSpecialPurposeRegister)reg)";
-#endif
-   }
-    case powerpc_regclass_tbr: {
-#ifndef _MSC_VER
-      return tbrToString((PowerpcTimeBaseRegister)reg);
-#else
-		return "WARNING: Unsupported in Windows: tbrToString((PowerpcTimeBaseRegister)reg);";
-#endif
-    }
-    case powerpc_regclass_msr: {
-      return "msr";
-    }
-    case powerpc_regclass_sr: {
-        return "sr" + boost::lexical_cast<std::string>(reg);
-    }
-    case powerpc_regclass_unknown: {
-      return "unknown";
-    }
-    default:
-      std::cerr << " Undefined Register - class=" << cl << " number=" << reg << std::endl;
-      abort();
-      break;
-  }
-
-#ifdef _MSC_VER
-  // DQ (11/29/2009): MSVC reports a warning for a path that does not have a return stmt.
-     return "ERROR in unparsePowerpcRegister()";
-#endif
+    return name;
 }
 
 /* Helper for unparsePowerpcExpression(SgAsmExpression*) */
@@ -114,8 +63,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, bool useHex) 
         }
         case V_SgAsmPowerpcRegisterReferenceExpression: {
             SgAsmPowerpcRegisterReferenceExpression* rr = isSgAsmPowerpcRegisterReferenceExpression(expr);
-            result = unparsePowerpcRegister(rr->get_register_class(), rr->get_register_number(),
-                                            rr->get_conditionRegisterGranularity());
+            result = unparsePowerpcRegister(rr->get_descriptor());
             break;
         }
         case V_SgAsmByteValueExpression:

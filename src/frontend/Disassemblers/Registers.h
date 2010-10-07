@@ -36,11 +36,23 @@ public:
     static const RegisterDictionary *pentium4();
     static const RegisterDictionary *amd64();
     static const RegisterDictionary *arm7();
+    static const RegisterDictionary *powerpc();
 
     RegisterDictionary(const std::string &name)
         :name(name) {}
     RegisterDictionary(const RegisterDictionary& other) {
         *this = other;
+    }
+
+    /** Obtain the name of the dictionary. */
+    const std::string &get_architecture_name() const {
+        return name;
+    }
+
+    /** Set the name of the dictionary. Dictionary names are generally architecture names.  Dictionaries created by one of the
+     *  built-in static methods of this class have the same name as the method that created it. */
+    void set_architecture_name(const std::string &name) {
+        this->name = name;
     }
 
     /** Insert a definition into the dictionary.  If the name already exists in the dictionary then the new RegisterDescriptor

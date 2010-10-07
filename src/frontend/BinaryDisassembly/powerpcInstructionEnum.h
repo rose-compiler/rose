@@ -451,18 +451,19 @@ enum PowerpcInstructionKind
      powerpc_last_instruction
    };
 
-enum PowerpcRegisterClass
-   {
-     powerpc_regclass_unknown,
-     powerpc_regclass_gpr, // General Purpose Register
-     powerpc_regclass_fpr, // Floating-Point Register
-     powerpc_regclass_cr,  // Condition Register (only particular fields or bits may be used)
-     powerpc_regclass_fpscr, // Floating point status and control register
-     powerpc_regclass_spr, // Special-purpose register (0..1023)
-     powerpc_regclass_tbr, // Time base register (0..1023)
-     powerpc_regclass_msr, // Machine state register
-     powerpc_regclass_sr, // Segment register
-     powerpc_last_register_class // last enum value
+enum PowerpcRegisterClass {
+    powerpc_regclass_unknown,
+    powerpc_regclass_gpr,       // General Purpose Register (0..31)
+    powerpc_regclass_fpr,       // Floating-Point Register (0..31; 64 bits each)
+    powerpc_regclass_cr,        // Condition Register (only particular fields or bits may be used)
+    powerpc_regclass_fpscr,     // Floating point status and control register
+    powerpc_regclass_spr,       // Special-purpose register (0..1023)
+    powerpc_regclass_tbr,       // Time base register (0..1023)
+    powerpc_regclass_msr,       // Machine state register
+    powerpc_regclass_sr,        // Segment register
+    powerpc_regclass_iar,       // instruction address (pseudo) register
+    powerpc_regclass_pvr,       // processor version register
+    powerpc_last_register_class // last enum value
 };
 
 enum PowerpcConditionRegisterAccessGranularity {
@@ -472,12 +473,12 @@ enum PowerpcConditionRegisterAccessGranularity {
 };
 
 enum PowerpcSpecialPurposeRegister { // These must match the processor's numbers
-  powerpc_spr_xer = 1,
-  powerpc_spr_lr = 8,
-  powerpc_spr_ctr = 9,
-  powerpc_spr_dsisr = 18,
-  powerpc_spr_dar = 19,
-  powerpc_spr_dec = 22 // FIXME: fill in the rest of these
+    powerpc_spr_xer = 1,        // fixed-point exception register
+    powerpc_spr_lr = 8,         // link register
+    powerpc_spr_ctr = 9,        // count register
+    powerpc_spr_dsisr = 18,
+    powerpc_spr_dar = 19,
+    powerpc_spr_dec = 22        // FIXME: fill in the rest of these
 };
 
 enum PowerpcTimeBaseRegister { // These must match the processor's numbers
