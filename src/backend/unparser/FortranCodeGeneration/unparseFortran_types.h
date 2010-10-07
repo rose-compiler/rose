@@ -48,6 +48,11 @@ class UnparseFortran_type
           bool generateElaboratedType(SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info );
 
           bool isCharType(SgType* type);
+
+       // DQ (10/5/2010): Added unparse support for types with fortran kind parameters.
+          void unparseTypeKind(SgType* type, SgUnparse_Info & info);
+          void unparseTypeLengthAndKind(SgType* type, SgExpression* lengthExpression, SgUnparse_Info & info);
+          void unparseBaseType(SgType* type, const std::string & nameOfType, SgUnparse_Info & info);
    };
 
 #endif

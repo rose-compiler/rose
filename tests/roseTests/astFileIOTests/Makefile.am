@@ -403,6 +403,9 @@ test-read-tiny_03:
 	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir) -c $(srcdir)/input_tiny_03b.C
 	$(READ_TRANSLATOR) input_tiny_03a.C input_tiny_03b.C temp_output_tiny_03.C 
 
+testFileGeneration:
+	$(MAKE) $(TEST_Objects)
+
 check-local:
 	$(MAKE) $(TEST_Objects)
 	$(MAKE) test-read

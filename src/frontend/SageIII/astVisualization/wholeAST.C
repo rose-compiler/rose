@@ -1335,6 +1335,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                ROSE_ASSERT(valueExp->get_parent() != NULL);
             // labelWithSourceCode = "\\n value = " + valueExp->unparseToString() + "\\n" + StringUtility::numberToString(node) + "  ";
             // labelWithSourceCode = string("\\n value = nnn") + "\\n" + StringUtility::numberToString(node) + "  ";
+
+            // DQ (10/4/2010): Output the value so that we can provide more information.
+               labelWithSourceCode += string("\\n value = ") + valueExp->get_constant_folded_value_as_string() + "  ";
              }
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
