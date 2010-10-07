@@ -2070,16 +2070,6 @@ Grammar::setUpBinaryInstructions ()
 
      AsmPowerpcRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION",
                                                                 "../Grammar/BinaryInstruction.code");
-     AsmPowerpcRegisterReferenceExpression.setDataPrototype("PowerpcRegisterClass","register_class","= powerpc_regclass_unknown",
-                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     /* FIXME: register_number and conditionRegisterGranularity should eventually use RegisterDescriptor in the parent
-      *        class. [RPM 2010-09-30] */
-     // GPR, FPR, SPR, TBR, etc. number, or condition register field or bit number
-     AsmPowerpcRegisterReferenceExpression.setDataPrototype("int","register_number","= 0",
-                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPowerpcRegisterReferenceExpression.setDataPrototype("PowerpcConditionRegisterAccessGranularity",
-                                                            "conditionRegisterGranularity", "= powerpc_condreggranularity_whole",
-                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
