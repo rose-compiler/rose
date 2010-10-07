@@ -3,6 +3,7 @@
 
 #include <rose.h>
 #include <boost/tuple/tuple.hpp>
+#include <boost/shared_ptr.hpp>
 
 class ExpressionBuilder
 {
@@ -17,6 +18,23 @@ public:
 		return results_;
 	}
 
+};
+
+typedef boost::shared_ptr<ExpressionBuilder> ExpressionBuilderPtr;
+
+
+class ExpressionBuilderPool : public ExpressionBuilder
+{
+	std::vector<ExpressionBuilderPtr> exp_builders_;
+	
+public:
+	void addExpressionBuilder(ExpressionBuilder* builder)
+	{ exp_builders_.push_back(ExpressionBuilderPtr(builder)); }
+
+	void addExpressionBuilder(ExpressionBuilderPtr builder)
+	{ exp_builders_.push_back(builder); }
+
+	virtual void build();
 };
 
 class UnaryExpressionBuilder : public ExpressionBuilder
@@ -102,10 +120,12 @@ class SwitchStatementBuilder
 };
 
 
-class ModelBuilder
+class StateClassBuilder
 {
+protected:
 	std::string name_;
-	SgClassDeclaration* model_decl_;
+	std::string obj_name_;
+	SgClassDeclaration* state_decl_;
 	//std::vector<std::pair<std::string, SgType*> > members_;
 	//std::vector<std::pair<std::string, SgExpression*> > members_;
 
@@ -113,8 +133,11 @@ class ModelBuilder
 	std::vector<MemberType> members_;
 
 public:
-	ModelBuilder(const std::string& name)
-	: name_(name), model_decl_(NULL) {}
+	StateClassBuilder(const std::string& name)
+	:name_(name), 
+	obj_name_(name + "_obj"),
+	state_decl_(NULL)
+	{}
 
 	void addMember(const std::string& name, SgType* type)
 	{ members_.push_back(MemberType(name, type, NULL)); }
@@ -125,65 +148,139 @@ public:
 	//! Given a type, get all corresponding members as expressions.
 	std::vector<SgExpression*> getMemberExpression(SgType* type) const;
 
-	//! Get the type of this model structure.
-	SgType* getModelType() const
+	//! Get the type of this state structure.
+	SgType* getStateClassType() const
 	{
-		ROSE_ASSERT(model_decl_);
-		return model_decl_->get_type();
+		ROSE_ASSERT(state_decl_);
+		return state_decl_->get_type();
 	}
 
+	SgClassDeclaration* getStateClassDeclaration() const
+	{ return state_decl_; }
 
-	//! This method builds declaration of the model structure, and all declarations of its members.
+	std::string getStateObjectName() const
+	{ return obj_name_; }
+
+
+	//! This method builds declaration of the state class, and all declarations of its members.
 	//! At the same time, an arrow expression is build for each member so that we can use it to access
 	//! this member in the event function.
 	void build();
 	
 };
 
+class SimpleStateClass
+{
+	StateClassBuilder* state_builder_;
+public:
+	SimpleStateClass()
+	{
+	}
+
+	SgClassDeclaration* build()
+	{
+		return NULL;
+	}
+
+};
 
 
+//! This class is used to build event functions.
+//! This event function builder can build both C and C++ style events (ROSS vs SPEEDES).
 class EventFunctionBuilder
 {
+	//! The function name of the event.
 	std::string event_name_;
+
+	//! The state object parameter's name.
+	std::string state_name_;
+
+	//! The function body of the event.
+	SgBasicBlock* event_body_;
+
+	//! All statements inside of the function body.
 	std::vector<SgStatement*> stmts_;
 
-	SgInitializedName* model_object_;
-	ModelBuilder* model_builder_;
+	SgInitializedName* state_object_;
+	
+	//! A state class builder to build the state class.
+	StateClassBuilder* state_builder_;
+
+	//! All parameters.
+	std::vector<SgInitializedName*> parameters_;
+
+	//! Return type.
+	SgType* return_type_;
 
 public:
-	EventFunctionBuilder() {}
+	EventFunctionBuilder(const std::string& name, SgBasicBlock* body = NULL)
+	: event_name_(name),
+	state_name_("m"),
+	event_body_(body),
+	return_type_(SageBuilder::buildVoidType())
+	{}
 
-	//SgFunctionDeclaration* build();
+	//! Given a member in state class, return its real accessing variable in function body.
+	SgExpression* getStateVariable(SgExpression*) const;
 
-	SgFunctionDeclaration* buildEventFunction(const std::string& event_name, const std::vector<SgStatement*>& stmts);
+	void setEventBody(SgBasicBlock* body)
+	{ event_body_ = body; }
+
+	void addParameter(SgType* type, const std::string& name)
+	{ parameters_.push_back(SageBuilder::buildInitializedName(name, type)); }
+
+	void addParameter(SgInitializedName* para)
+	{ parameters_.push_back(para); }
+
+	void setReturnType(SgType* type)
+	{ return_type_ = type; }
+
+	SgType* getReturnType() const
+	{ return return_type_; }
+
+	SgFunctionDeclaration* build();
+
+	//SgFunctionDeclaration* buildEventFunction(const std::string& event_name, const std::vector<SgStatement*>& stmts);
 };
 
 
 
+//! This class is used to build a source file as test code including declarations of state class and events.
+//! Since it's an abstract class, the concrete test code is built using a concrete class inheriting this class.
 class TestCodeBuilder
 {
+protected:
+	//! The file name of test code.
 	std::string file_name_;
+
+	//! A SgSourceFile object which creates the final output.
+	SgSourceFile* source_file_;
+
+	//! All declarations of events.
 	std::vector<SgFunctionDeclaration*> events_;
 
-	SgClassDeclaration* model_;
+	//SgClassDeclaration* state_;
+	
+	//! A state class builder to build the state class.
+	StateClassBuilder* state_builder_;
+
+	virtual void build_() = 0;
 
 public:
-	TestCodeBuilder() {}
+	TestCodeBuilder(const std::string& filename)
+	: file_name_(filename),
+	source_file_(NULL) {}
 
-	void build()
-	{
-
-	}
+	void build();
 };
 
 class BasicExpressionTest : public TestCodeBuilder
 {
+protected:
+	virtual void build_();
 public:
-	void build()
-	{
-		ModelBuilder model_generator("Model");
-	}
-	
+	BasicExpressionTest(const std::string& filename)
+	: TestCodeBuilder(filename) {}
 };
 
 

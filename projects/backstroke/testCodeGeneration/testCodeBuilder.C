@@ -1,5 +1,6 @@
 #include "testCodeBuilder.h"
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace boost;
@@ -7,6 +8,16 @@ using namespace SageBuilder;
 using namespace SageInterface;
 
 #define foreach BOOST_FOREACH
+
+void ExpressionBuilderPool::build()
+{
+	foreach (ExpressionBuilderPtr builder, exp_builders_)
+	{
+		builder->build();
+		std::vector<SgExpression*> res = builder->getGeneratedExpressions();
+		results_.insert(results_.end(), res.begin(), res.end());
+	}
+}
 
 void UnaryExpressionBuilder::build()
 {
@@ -63,14 +74,30 @@ void ExpressionStatementBuilder::build()
 	results_.push_back(buildExprStatement(exp_));
 }
 
+SgFunctionDeclaration* EventFunctionBuilder::build()
+{
+	// Build the parameter list.
+	SgFunctionParameterList* para_list = buildFunctionParameterList();
+	foreach (SgInitializedName* para, parameters_)
+		para_list->append_arg(para);
+	
+	SgFunctionDeclaration* func_decl = buildDefiningFunctionDeclaration(event_name_, return_type_, para_list);
+
+	SgBasicBlock* event_body = func_decl->get_definition()->get_body();
+	ROSE_ASSERT(event_body);
+	replaceStatement(event_body, event_body_);
+
+	return func_decl;
+}
+
+#if 0
 SgFunctionDeclaration* EventFunctionBuilder::buildEventFunction(const std::string& event_name, const std::vector<SgStatement*>& stmts)
 {
-#if 0
-	SgType* model_type = model_decl_->get_type();
-	//if (model_obj_ == NULL)
-	//model_object_ = buildInitializedName(model_obj_name_, buildPointerType(model_type_));
+	SgType* state_type = state_decl_->get_type();
+	//if (state_obj_ == NULL)
+	//state_object_ = buildInitializedName(state_obj_name_, buildPointerType(state_type_));
 
-	SgFunctionParameterList* para_list = buildFunctionParameterList(model_object_);
+	SgFunctionParameterList* para_list = buildFunctionParameterList(state_object_);
 	SgFunctionDeclaration* func_decl = buildDefiningFunctionDeclaration(event_name, buildVoidType(), para_list);
 
 	SgBasicBlock* event_body = func_decl->get_definition()->get_body();
@@ -83,11 +110,11 @@ SgFunctionDeclaration* EventFunctionBuilder::buildEventFunction(const std::strin
 	//buildBasicBlock());
 	//fixVariableReferences(decl);
 	return func_decl;
-#endif
 }
+#endif
 
 
-SgExpression* ModelBuilder::getMemberExpression(const std::string& name) const
+SgExpression* StateClassBuilder::getMemberExpression(const std::string& name) const
 {
 	foreach (const MemberType& member, members_)
 	{
@@ -100,7 +127,7 @@ SgExpression* ModelBuilder::getMemberExpression(const std::string& name) const
 	return NULL;
 }
 
-std::vector<SgExpression*> ModelBuilder::getMemberExpression(SgType* type) const
+std::vector<SgExpression*> StateClassBuilder::getMemberExpression(SgType* type) const
 {
 	std::vector<SgExpression*> exps;
 	foreach (const MemberType& member, members_)
@@ -115,23 +142,108 @@ std::vector<SgExpression*> ModelBuilder::getMemberExpression(SgType* type) const
 	return exps;
 }
 
-void ModelBuilder::build()
+void StateClassBuilder::build()
 {
-	model_decl_ = buildStructDeclaration(name_);
-	SgClassDefinition* model_def = buildClassDefinition(model_decl_);
-	SgInitializedName* model_init_name = buildInitializedName(name_, buildPointerType(model_decl_->get_type()));
+	state_decl_ = buildStructDeclaration(name_);
+	SgClassDefinition* state_def = buildClassDefinition(state_decl_);
+	//SgInitializedName* state_init_name = buildInitializedName(name_, buildPointerType(state_decl_->get_type()));
 
-	pushScopeStack(isSgScopeStatement(model_def));
+	pushScopeStack(isSgScopeStatement(state_def));
 
 	// Build declarations for all members.
 	foreach (MemberType& member, members_)
 	{
 		SgVariableDeclaration* var_decl = buildVariableDeclaration(member.get<0>(), member.get<1>());
-		model_def->append_member(var_decl);
+		state_def->append_member(var_decl);
 		// Build an expression for each member like m->i.
-		member.get<2>() = buildBinaryExpression<SgArrowExp>(
-				buildVarRefExp(model_init_name), buildVarRefExp(var_decl));
+		member.get<2>() = buildVarRefExp(var_decl);
+		//member.get<2>() = buildBinaryExpression<SgArrowExp>(
+		//		buildVarRefExp(state_init_name), buildVarRefExp(var_decl));
 	}
+
+	popScopeStack();
+}
+
+void TestCodeBuilder::build()
+{
+	// We give the first arg empty since it is supposed to be the name of the executed program.
+	vector<string> args(1, "");
+
+	// Then we create a new empty file which will be our output.
+	FILE* file = ::fopen(file_name_.c_str(), "w");
+	::fclose(file);
+
+	args.push_back(file_name_);
+
+	SgProject* project = frontend(args);
+
+	// Since we have only one file as the input, the first file is what we want.
+	SgSourceFile* source_file_ = isSgSourceFile((*project)[0]);
+	ROSE_ASSERT(source_file_);
+
+	// Build the concrete test code here.
+	build_();
+
+	backend(project);
+}
+
+void BasicExpressionTest::build_()
+{
+	// First, we build a state structure.
+	StateClassBuilder state_builder("Model");
+	state_builder.addMember("i", buildIntType());
+	state_builder.addMember("f", buildFloatType());
+	state_builder.build();
+
+	// Build the state object first, which will be added into event function as a parameter later.
+	SgInitializedName* state_init_name = buildInitializedName("m", state_builder.getStateClassType());
+	SgExpression* state_obj = buildVarRefExp(state_init_name);
+
+	SgExpression* int_var = buildBinaryExpression<SgArrowExp>(
+			buildVarRefExp(state_init_name), state_builder.getMemberExpression("i"));
+	SgExpression* float_var = buildBinaryExpression<SgArrowExp>(
+			buildVarRefExp(state_init_name), state_builder.getMemberExpression("f"));
+
+
+	// A expression builder pool uses its child builders to build expressions.
+	ExpressionBuilderPool builders;
+	builders.addExpressionBuilder(new UnaryExpressionBuilder(int_var));
+	builders.addExpressionBuilder(new UnaryExpressionBuilder(float_var));
+	builders.addExpressionBuilder(new BinaryExpressionBuilder(int_var, float_var));
+	builders.addExpressionBuilder(new BinaryExpressionBuilder(float_var, int_var));
+	builders.build();
+
+	int counter = 0;
+	std::vector<SgExpression*> exps = builders.getGeneratedExpressions();
+	foreach (SgExpression* exp, exps)
+	{
+		SgExprStatement* stmt = buildExprStatement(exp);
+		SgBasicBlock* body = buildBasicBlock(stmt);
+
+		string event_name = "event" + lexical_cast<string>(counter++);
+		EventFunctionBuilder event_builder(event_name, body);
+		event_builder.addParameter(state_builder.getStateClassType(), state_builder.getStateObjectName());
+		SgFunctionDeclaration* event_decl = event_builder.build();
+		// Add the new defined event function in the event collection.
+		events_.push_back(event_decl);
+	}
+
+	// Once we get the declarations of the state class and event functions, we can generate a C++ source file.
+
+	//SgSourceFile* src_file = isSgSourceFile((*project_)[i]);
+	//src_file->set_unparse_output_filename(src_file->getFileName());
+
+	SgGlobal* global_scope = source_file_->get_globalScope();
+	pushScopeStack(isSgScopeStatement(global_scope));
+
+	// Add state declaration.
+	appendStatement(state_builder.getStateClassDeclaration());
+	// Add events.
+	foreach (SgFunctionDeclaration* event, events_)
+		appendStatement(event);
+
+	// Fix variable references here because of bottom up build.
+	fixVariableReferences(global_scope);
 
 	popScopeStack();
 }
