@@ -11,6 +11,8 @@ protected:
 	std::vector<SgExpression*> results_;
 
 public:
+	virtual ~ExpressionBuilder() {}
+	
 	virtual void build() = 0;
 
 	std::vector<SgExpression*> getGeneratedExpressions() const
@@ -29,7 +31,7 @@ class ExpressionBuilderPool : public ExpressionBuilder
 	
 public:
 	void addExpressionBuilder(ExpressionBuilder* builder)
-	{ exp_builders_.push_back(ExpressionBuilderPtr(builder)); }
+	{ addExpressionBuilder(ExpressionBuilderPtr(builder)); }
 
 	void addExpressionBuilder(ExpressionBuilderPtr builder)
 	{ exp_builders_.push_back(builder); }
@@ -192,19 +194,19 @@ class EventFunctionBuilder
 	//! The function name of the event.
 	std::string event_name_;
 
-	//! The state object parameter's name.
-	std::string state_name_;
+	////! The state object parameter's name.
+	//std::string state_name_;
 
 	//! The function body of the event.
 	SgBasicBlock* event_body_;
 
-	//! All statements inside of the function body.
-	std::vector<SgStatement*> stmts_;
+	////! All statements inside of the function body.
+	//std::vector<SgStatement*> stmts_;
 
-	SgInitializedName* state_object_;
+	//SgInitializedName* state_object_;
 	
-	//! A state class builder to build the state class.
-	StateClassBuilder* state_builder_;
+	////! A state class builder to build the state class.
+	//StateClassBuilder* state_builder_;
 
 	//! All parameters.
 	std::vector<SgInitializedName*> parameters_;
@@ -215,7 +217,7 @@ class EventFunctionBuilder
 public:
 	EventFunctionBuilder(const std::string& name, SgBasicBlock* body = NULL)
 	: event_name_(name),
-	state_name_("m"),
+	//state_name_("m"),
 	event_body_(body),
 	return_type_(SageBuilder::buildVoidType())
 	{}
@@ -223,22 +225,28 @@ public:
 	//! Given a member in state class, return its real accessing variable in function body.
 	SgExpression* getStateVariable(SgExpression*) const;
 
+	//! Set the event body.
 	void setEventBody(SgBasicBlock* body)
 	{ event_body_ = body; }
 
+	//! Add a parameter to the event function.
 	void addParameter(SgType* type, const std::string& name)
 	{ parameters_.push_back(SageBuilder::buildInitializedName(name, type)); }
 
+	//! Add a parameter to the event function.
 	void addParameter(SgInitializedName* para)
 	{ parameters_.push_back(para); }
 
+	//! Set the return type of the event function.
 	void setReturnType(SgType* type)
 	{ return_type_ = type; }
 
+	//! Get the return type of the event function.
 	SgType* getReturnType() const
 	{ return return_type_; }
 
-	SgFunctionDeclaration* build();
+	//! Build the event function declaration.
+	SgFunctionDeclaration* buildEventFunction();
 
 	//SgFunctionDeclaration* buildEventFunction(const std::string& event_name, const std::vector<SgStatement*>& stmts);
 };
@@ -264,12 +272,43 @@ protected:
 	//! A state class builder to build the state class.
 	StateClassBuilder* state_builder_;
 
+	//! The initialized name of the state object parameter in event functions.
+	SgInitializedName* state_init_name_;
+
 	virtual void build_() = 0;
+
+	void setStateClassName(const std::string& name)
+	{
+		if (state_builder_)
+			delete state_builder_;
+		state_builder_ = new StateClassBuilder(name);
+	}
+
+	void addStateMember(const std::string& name, SgType* type)
+	{
+		ROSE_ASSERT(state_builder_);
+		state_builder_->addMember(name, type);
+	}
+
+	void buildStateClass();
+
+	SgExpression* buildStateMemberExpression(const std::string& name);
+
+	void buildTestCode(const std::vector<SgBasicBlock*> bodies);
 
 public:
 	TestCodeBuilder(const std::string& filename)
 	: file_name_(filename),
-	source_file_(NULL) {}
+	source_file_(NULL),
+	state_builder_(NULL),
+	state_init_name_(NULL)
+	{}
+
+	~TestCodeBuilder()
+	{
+		delete state_builder_;
+		delete state_init_name_;
+	}
 
 	void build();
 };
