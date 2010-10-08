@@ -80,9 +80,10 @@ SgFunctionDeclaration* EventFunctionBuilder::build()
 	SgFunctionParameterList* para_list = buildFunctionParameterList();
 	foreach (SgInitializedName* para, parameters_)
 		para_list->append_arg(para);
-	
-	SgFunctionDeclaration* func_decl = buildDefiningFunctionDeclaration(event_name_, return_type_, para_list);
 
+	cout << 1;
+	SgFunctionDeclaration* func_decl = buildDefiningFunctionDeclaration(event_name_, return_type_, para_list);
+	cout << 2 << endl;
 	SgBasicBlock* event_body = func_decl->get_definition()->get_body();
 	ROSE_ASSERT(event_body);
 	replaceStatement(event_body, event_body_);
@@ -197,13 +198,12 @@ void BasicExpressionTest::build_()
 
 	// Build the state object first, which will be added into event function as a parameter later.
 	SgInitializedName* state_init_name = buildInitializedName("m", state_builder.getStateClassType());
-	SgExpression* state_obj = buildVarRefExp(state_init_name);
+	//SgExpression* state_obj = buildVarRefExp(state_init_name);
 
 	SgExpression* int_var = buildBinaryExpression<SgArrowExp>(
 			buildVarRefExp(state_init_name), state_builder.getMemberExpression("i"));
 	SgExpression* float_var = buildBinaryExpression<SgArrowExp>(
 			buildVarRefExp(state_init_name), state_builder.getMemberExpression("f"));
-
 
 	// A expression builder pool uses its child builders to build expressions.
 	ExpressionBuilderPool builders;
@@ -212,6 +212,12 @@ void BasicExpressionTest::build_()
 	builders.addExpressionBuilder(new BinaryExpressionBuilder(int_var, float_var));
 	builders.addExpressionBuilder(new BinaryExpressionBuilder(float_var, int_var));
 	builders.build();
+
+	// Push global scope here to make sure every event funciton is built with a valid scope.
+	SgGlobal* global_scope = source_file_->get_globalScope();
+	ROSE_ASSERT(global_scope);
+	pushScopeStack(isSgScopeStatement(global_scope));
+
 
 	int counter = 0;
 	std::vector<SgExpression*> exps = builders.getGeneratedExpressions();
@@ -233,8 +239,8 @@ void BasicExpressionTest::build_()
 	//SgSourceFile* src_file = isSgSourceFile((*project_)[i]);
 	//src_file->set_unparse_output_filename(src_file->getFileName());
 
-	SgGlobal* global_scope = source_file_->get_globalScope();
-	pushScopeStack(isSgScopeStatement(global_scope));
+	cout << "Events built done!\n";
+
 
 	// Add state declaration.
 	appendStatement(state_builder.getStateClassDeclaration());

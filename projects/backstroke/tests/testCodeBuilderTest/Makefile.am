@@ -5,7 +5,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS = testCodeBuilderTest
 testCodeBuilderTest_SOURCES = testCodeBuilderTestMain.C
-testCodeBuilderTest_LDADD =	$(top_builddir)/projects/backstroke/utilities/libBackstrokeTestCodeBuilder.a \
+testCodeBuilderTest_LDADD =	$(top_builddir)/projects/backstroke/testCodeGeneration/libBackstrokeTestCodeBuilder.a \
 			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = 
@@ -18,3 +18,7 @@ check-local:
 	@echo "* ROSE/projects/backstroke/tests/testCodeBuilderTest: make check rule complete (terminated normally) *"
 	@echo "*********************************************************************************************************"
 
+test: FORCE
+	./testCodeBuilderTest
+
+FORCE:
