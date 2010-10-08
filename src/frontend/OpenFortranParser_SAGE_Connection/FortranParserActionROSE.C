@@ -605,7 +605,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
           printf ("In c_action_intrinsic_type_spec(): keyword1 = %p = %s keyword2 = %p = %s type = %d, hasKindSelector = %s \n",
                keyword1,keyword1 != NULL ? keyword1->text : "NULL",keyword2,keyword2 != NULL ? keyword2->text : "NULL",type,hasKindSelector ? "true" : "false");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R403 c_action_intrinsic_type_spec()");
 #endif
@@ -622,15 +622,16 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
   // printf ("hasKindSelector = %s \n",hasKindSelector ? "true" : "false");
      if (hasKindSelector == true)
         {
-#if 0
+#if 1
        // Output debugging information about saved state (stack) information.
           outputState("hasKindSelector == true in R403 c_action_intrinsic_type_spec()");
 #endif
           int rank = astExpressionStack.size();
-       // printf ("In R403 c_action_intrinsic_type_spec(): rank = %d \n",rank);
+          printf ("In R403 c_action_intrinsic_type_spec(): rank = %d \n",rank);
 
        // We want this to be either a SgAsteriskShapeExp or an SgIntVal
           SgExpression* lengthExpression = NULL;
+          SgExpression* kindExpression   = NULL;
 
        // DQ (8/21/2010): The length expression (kind, length, or tyep-spec) for the 
        // type is what we are trying to identify.  Depending on the version of Fortran 
@@ -640,6 +641,9 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
        // where it is a kind parameter it is on the astTypeKindStack.
           if (astExpressionStack.empty() == false)
              {
+#if 0
+               printf ("Taking the length parameter from the stack <type>*<n> syntax used \n");
+#endif
                lengthExpression = astExpressionStack.front();
                astExpressionStack.pop_front();
              }
@@ -650,8 +654,13 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                  // Note that it is (I think) possible for a string to be declared "character*n" where
                  // "n" is an integer expression.  I need a test code for this before I can fix it.
                  // lengthExpression = isSgIntVal(astTypeKindStack.front());
+#if 0
                     lengthExpression = astTypeKindStack.front();
                     ROSE_ASSERT(lengthExpression != NULL);
+#else
+                    kindExpression = astTypeKindStack.front();
+                    ROSE_ASSERT(kindExpression != NULL);
+#endif
                     astTypeKindStack.pop_front();
                   }
 
@@ -659,13 +668,13 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                   {
                  // For character strings the kind should always be 1.
                  // ROSE_ASSERT(lengthExpression->get_value() == 1);
-
+#if 0
                     if (lengthExpression != NULL)
                        {
                          delete lengthExpression;
                          lengthExpression = NULL;
                        }
-
+#endif
                  // Find the length of the string in the astTypeParameterStack
                     if (astTypeParameterStack.empty() == false)
                        {
@@ -685,7 +694,9 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                        }
                   }
              }
-
+#if 0
+          printf ("intrinsicType = %p = %s \n",intrinsicType,intrinsicType->class_name().c_str());
+#endif
        // Base on the base type, we want to inteprete the type parameters, kind parameters, etc. 
        // and generate the correct mapping to the type IR node in the ROSE and use that in the AST.
           switch(intrinsicType->variantT())
@@ -694,30 +705,19 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                   {
                     ROSE_ASSERT(rank == 1);
                     ROSE_ASSERT(lengthExpression != NULL);
-                 // SgTypeString* stringType = new SgTypeString(integerExpression);
-                 // SgTypeString* stringType = SgTypeString::createType(integerExpression);
-                    SgTypeString* stringType = NULL;
-                    SgIntVal* integerValue = isSgIntVal(lengthExpression);
-                    if (integerValue != NULL)
-                       {
-                      // create a string type using an integer literal instead of an integer expression.
-                         size_t value = integerValue->get_value();
-                      // printf ("Building a string type (SgTypeString) using an integer literal = %zu \n",value);
-                         stringType = SgTypeString::createType(NULL,value);
+                 // printf ("In c_action_intrinsic_type_spec(): lengthExpression = %s \n",lengthExpression->class_name().c_str());
 
-                      // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
-                         delete lengthExpression;
-                         lengthExpression = NULL;
-                       }
-                      else
-                       {
-                      // create a string type using an integer expression.
-                      // Note that the SgTypeString is used where for other types (e.g. integer, float) a SgModifierType is used to how the expression
-                      // (in these cases the expression is specific to the kind where in the case of SgTypeChar this is specific to length).
-                         ROSE_ASSERT(lengthExpression != NULL);
-                         stringType = SgTypeString::createType(lengthExpression,0);
-                       }
+                 // DQ (10/4/2010): Always use the expression form of length representation (scalar representation of lenght is deprecated).
+                    ROSE_ASSERT(lengthExpression != NULL);
+                 // stringType = SgTypeString::createType(lengthExpression,0);
+                 // SgTypeString* stringType = SgTypeString::createType(lengthExpression,0,kindExpression);
+                    SgTypeString* stringType = SgTypeString::createType(lengthExpression,kindExpression);
                     ROSE_ASSERT(stringType != NULL);
+                    ROSE_ASSERT(lengthExpression->get_parent() != NULL);
+                    if (kindExpression != NULL)
+                       {
+                         ROSE_ASSERT(kindExpression->get_parent() != NULL);
+                       }
 
                  // Replace the base type with the just built string type
                     astBaseTypeStack.pop_front();
@@ -725,188 +725,83 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                     break;
                   }
 
+               case V_SgTypeInt:
+                  {
+                 // Note that this does not have to be an integer value and can be another variable or "c_int" (for example)
+                 // DQ (10/4/2010): Moved to new (improved) design of type_kind data member in SgType.
+#if 0
+                    ROSE_ASSERT(lengthExpression->get_parent() == NULL);
+                    SgTypeInt* integerType = SgTypeInt::createType(0,lengthExpression);
+                    lengthExpression->set_parent(integerType);
+                    ROSE_ASSERT(lengthExpression->get_parent() != NULL);
+#else
+                    ROSE_ASSERT(kindExpression->get_parent() == NULL);
+                    SgTypeInt* integerType = SgTypeInt::createType(0,kindExpression);
+                    kindExpression->set_parent(integerType);
+                    ROSE_ASSERT(kindExpression->get_parent() != NULL);
+#endif
+                 // Replace the base type with the just built string type
+                    astBaseTypeStack.pop_front();
+                    astBaseTypeStack.push_front(integerType);
+                    break;
+                  }
+
                case V_SgTypeBool:
                   {
-                 // Ignore this case since will for more the moment map logical types of all sizes to a SgTypeBool.
-                 // We may want to add fortran specific logical type to the ROSE IR to support this in the future.
-                 // This would allow us to save the information about the byte width of the representation.
-                    printf ("WARNING: For more the moment, we map all logical types (of all sizes: logical*1 logical*2, logical*4, and logical*8) to a single SgTypeBool in the IR. \n");
-
-                 // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
-                    delete lengthExpression;
-                    lengthExpression = NULL;
+                 // DQ (10/4/2010): Logical types are now represented with the associated kind.
+#if 0
+                    ROSE_ASSERT(lengthExpression != NULL);
+                 // intrinsicType->set_type_kind(lengthExpression);
+                    SgTypeBool* boolType = SgTypeBool::createType(lengthExpression);
+                    ROSE_ASSERT(lengthExpression->get_parent() == NULL);
+                 // lengthExpression->set_parent(intrinsicType);
+                    lengthExpression->set_parent(boolType);
+#else
+                    SgTypeBool* boolType = SgTypeBool::createType(kindExpression);
+                    ROSE_ASSERT(kindExpression->get_parent() == NULL);
+                    kindExpression->set_parent(boolType);
+#endif
+                 // Replace the base type with the just built string type
+                    astBaseTypeStack.pop_front();
+                    astBaseTypeStack.push_front(boolType);
                     break;
                   }
 
                case V_SgTypeFloat:
                   {
-                 // Floating point is mapped to existing and different SgType IR nodes in ROSE.
-                    SgIntVal* integerValue = isSgIntVal(lengthExpression);
-
-                 // We are enforcing that the type parameter or kind is an integer, but where the base type 
-                 // is an integer it can be variable, it might be that this has be be more flexable as well.
-                 // E.g. this fails for "real (r8), parameter, public :: c0 = 0.0_r8"
-                 // ROSE_ASSERT(integerValue != NULL);
-                    if (integerValue != NULL)
-                       {
-                         int value = integerValue->get_value();
-                         switch(value)
-                            {
-                              case 4: 
-                                 {
-                                // Nothing to do here, this is the 4 byte floating point type (already on the astBaseTypeStack).
-                                   break;
-                                 }
-
-                              case 8: 
-                                 {
-                                   SgTypeDouble* doubleType = SgTypeDouble::createType();
-                                   ROSE_ASSERT(doubleType != NULL);
-
-                                // Replace the base type with the just built string type
-                                   astBaseTypeStack.pop_front();
-                                   astBaseTypeStack.push_front(doubleType);
-                                   break;
-                                 }
-
-                              case 16: 
-                                 {
-                                   SgTypeLongDouble* longdoubleType = SgTypeLongDouble::createType();
-                                   ROSE_ASSERT(longdoubleType != NULL);
-
-                                // Replace the base type with the just built string type
-                                   astBaseTypeStack.pop_front();
-                                   astBaseTypeStack.push_front(longdoubleType);
-                                   break;
-                                 }
-
-                              default:
-                                 {
-                                   printf ("Error: not clear what size of float is required kind specified as %d \n",value);
-                                   ROSE_ASSERT(false);
-                                 }
-                            }
-#if 1
-                      // DQ (8/29/2010): The lengthExpression should only be deleted when it is a 
-                      // simple integer expression (else the expression is saved and used in the type).
-                      // We can ignore the lengthExpression because we use different specific types 
-                      // (IR nodes) to distinguish the floating point sizes.
-                      // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
-                         delete lengthExpression;
-                         lengthExpression = NULL;
-#endif
-                       }
-                      else
-                       {
-                      // This is the case of code such as "real (r8), parameter, public :: c0 = 0.0_r8"
-                      // for the moment we will ignore the kind specifier.
-                      // printf ("Warning: ignoring the kind specified for real types: lengthExpression = %s \n",lengthExpression->class_name().c_str());
-
-                         SgModifierType* typeFromKindExpression = SageBuilder::buildFortranKindType(SgTypeFloat::createType(),lengthExpression);
-                         ROSE_ASSERT(typeFromKindExpression != NULL);
-
-                      // Replace the base type with the just built string type
-                         astBaseTypeStack.pop_front();
-                         astBaseTypeStack.push_front(typeFromKindExpression);
-                       }
 #if 0
-                 // We can ignore the lengthExpression because we use different specific types 
-                 // (IR nodes) to distinguish the floating point sizes.
-                 // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
-                    delete lengthExpression;
-                    lengthExpression = NULL;
+                    ROSE_ASSERT(lengthExpression->get_parent() == NULL);
+                    SgTypeFloat* floatType = SgTypeFloat::createType(lengthExpression);
+                    lengthExpression->set_parent(floatType);
+                    ROSE_ASSERT(lengthExpression->get_parent() != NULL);
+#else
+                    ROSE_ASSERT(kindExpression->get_parent() == NULL);
+                    SgTypeFloat* floatType = SgTypeFloat::createType(kindExpression);
+                    kindExpression->set_parent(floatType);
+                    ROSE_ASSERT(kindExpression->get_parent() != NULL);
 #endif
+                 // Replace the base type with the just built string type
+                    astBaseTypeStack.pop_front();
+                    astBaseTypeStack.push_front(floatType);
                     break;
                   }
 
-               case V_SgTypeInt:
+               case V_SgTypeComplex:
                   {
-                 // Note that this does not have to be an integer value and can be another variable or "c_int" (for example)
-                    SgIntVal* integerValue = isSgIntVal(lengthExpression);
-                    if (integerValue != NULL)
-                       {
 #if 0
-                         int value = integerValue->get_value();
-                      // DQ (9/3/2010): We want to support always wrapping types to include the kind when it is specified explicitly.
-                         switch(value)
-                            {
-                              case 1: 
-                                 {
-                                   SgTypeSignedChar* byteType = SgTypeSignedChar::createType();
-                                   ROSE_ASSERT(byteType != NULL);
-
-                                // Replace the base type with the just built string type
-                                   astBaseTypeStack.pop_front();
-                                   astBaseTypeStack.push_front(byteType);
-                                   break;
-                                 }
-
-                              case 2: 
-                                 {
-                                   SgTypeShort* shortType = SgTypeShort::createType();
-                                   ROSE_ASSERT(shortType != NULL);
-
-                                // Replace the base type with the just built string type
-                                   astBaseTypeStack.pop_front();
-                                   astBaseTypeStack.push_front(shortType);
-                                   break;
-                                 }
-
-                              case 4: 
-                                 {
-                                // Nothing to do here, this is the 4 byte integer type (already on the astBaseTypeStack).
-                                   break;
-                                 }
-
-                              case 8: 
-                                 {
-                                   SgTypeLong* longType = SgTypeLong::createType();
-                                   ROSE_ASSERT(longType != NULL);
-
-                                // Replace the base type with the just built string type
-                                   astBaseTypeStack.pop_front();
-                                   astBaseTypeStack.push_front(longType);
-                                   break;
-                                 }
-
-                              default:
-                                 {
-                                   printf ("Error: not clear what size of integer is required kind specified as %d \n",value);
-                                   ROSE_ASSERT(false);
-                                 }
-                            }
-                      // We can ignore the lengthExpression because we use different specific types 
-                      // (IR nodes) to distinguish the floating point sizes.
-                      // Delete the lengthExpression that we are ignoring (to prevent an error in ROSE).
-                         delete lengthExpression;
-                         lengthExpression = NULL;
+                    ROSE_ASSERT(lengthExpression->get_parent() == NULL);
+                    SgTypeComplex* complexType = SgTypeComplex::createType(lengthExpression);
+                    lengthExpression->set_parent(complexType);
+                    ROSE_ASSERT(lengthExpression->get_parent() != NULL);
 #else
-                      // DQ (9/3/2010): This restores the previous handling with wrapped all types explicitly marked with kind.
-                         SgModifierType* typeFromKindExpression = SageBuilder::buildFortranKindType(SgTypeInt::createType(),lengthExpression);
-                         ROSE_ASSERT(typeFromKindExpression != NULL);
-
-                      // Replace the base type with the just built string type
-                         astBaseTypeStack.pop_front();
-                         astBaseTypeStack.push_front(typeFromKindExpression);
+                    ROSE_ASSERT(kindExpression->get_parent() == NULL);
+                    SgTypeComplex* complexType = SgTypeComplex::createType(SgTypeFloat::createType(kindExpression),kindExpression);
+                    kindExpression->set_parent(complexType);
+                    ROSE_ASSERT(kindExpression->get_parent() != NULL);
 #endif
-                       }
-                      else
-                       {
-                      // This is a non-integer kind specifier, but we can't support this currently, so just map it 
-                      // to the default SgTypeInt that is already present on the astBaseTypeStack (i.e. do nothing).
-                      // printf ("Warning: Integer kind mapped to default integer SgTypeInt! lengthExpression = %p = %s \n",lengthExpression,lengthExpression->class_name().c_str());
-
-#if 0
-                      // Output debugging information about saved state (stack) information.
-                         outputState("hasKindSelector == true (typeFromKindExpression) in R403 c_action_intrinsic_type_spec()");
-#endif
-                         SgModifierType* typeFromKindExpression = SageBuilder::buildFortranKindType(SgTypeInt::createType(),lengthExpression);
-                         ROSE_ASSERT(typeFromKindExpression != NULL);
-
-                      // Replace the base type with the just built string type
-                         astBaseTypeStack.pop_front();
-                         astBaseTypeStack.push_front(typeFromKindExpression);
-                       }
+                 // Replace the base type with the just built string type
+                    astBaseTypeStack.pop_front();
+                    astBaseTypeStack.push_front(complexType);
                     break;
                   }
 
@@ -1407,7 +1302,7 @@ void c_action_char_selector(Token_t * type_keyword, Token_t * optional_keyword, 
              }
 #else
           ROSE_ASSERT(hasAsterisk == false);
-          printf ("In R424: kindOrLen1 = %d kindOrLen2 = %d \n",kindOrLen1,kindOrLen2);
+       // printf ("In R424: kindOrLen1 = %d kindOrLen2 = %d \n",kindOrLen1,kindOrLen2);
 
           if (kindOrLen1 == KindLenParam_kind)
              {
@@ -15467,7 +15362,7 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 
-#if 1
+#if 0
      printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 #endif
 

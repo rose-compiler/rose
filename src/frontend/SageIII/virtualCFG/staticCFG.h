@@ -44,7 +44,9 @@ public:
     {
         buildCFG();
     }
-
+    SgIncidenceDirectedGraph* getGraph() {
+        return graph_;
+    }
     virtual ~CFG()
     { clearNodesAndEdges(); }
 
