@@ -179,7 +179,7 @@ void TestCodeBuilder::build()
 	SgProject* project = frontend(args);
 
 	// Since we have only one file as the input, the first file is what we want.
-	SgSourceFile* source_file_ = isSgSourceFile((*project)[0]);
+	source_file_ = isSgSourceFile((*project)[0]);
 	ROSE_ASSERT(source_file_);
 
 	// Build the concrete test code here.
@@ -197,7 +197,8 @@ void BasicExpressionTest::build_()
 	state_builder.build();
 
 	// Build the state object first, which will be added into event function as a parameter later.
-	SgInitializedName* state_init_name = buildInitializedName("m", state_builder.getStateClassType());
+	SgInitializedName* state_init_name =
+			buildInitializedName("m", buildPointerType(state_builder.getStateClassType()));
 	//SgExpression* state_obj = buildVarRefExp(state_init_name);
 
 	SgExpression* int_var = buildBinaryExpression<SgArrowExp>(
@@ -227,8 +228,10 @@ void BasicExpressionTest::build_()
 		SgBasicBlock* body = buildBasicBlock(stmt);
 
 		string event_name = "event" + lexical_cast<string>(counter++);
+		body = buildBasicBlock(stmt);
 		EventFunctionBuilder event_builder(event_name, body);
-		event_builder.addParameter(state_builder.getStateClassType(), state_builder.getStateObjectName());
+		event_builder.addParameter(
+			buildPointerType(state_builder.getStateClassType()), state_builder.getStateObjectName());
 		SgFunctionDeclaration* event_decl = event_builder.build();
 		// Add the new defined event function in the event collection.
 		events_.push_back(event_decl);
@@ -239,17 +242,18 @@ void BasicExpressionTest::build_()
 	//SgSourceFile* src_file = isSgSourceFile((*project_)[i]);
 	//src_file->set_unparse_output_filename(src_file->getFileName());
 
-	cout << "Events built done!\n";
-
-
+	
 	// Add state declaration.
 	appendStatement(state_builder.getStateClassDeclaration());
 	// Add events.
 	foreach (SgFunctionDeclaration* event, events_)
 		appendStatement(event);
 
+	popScopeStack();
+	
+	cout << "Events built done!\n";
 	// Fix variable references here because of bottom up build.
 	fixVariableReferences(global_scope);
+	cout << "Events built done!\n";
 
-	popScopeStack();
 }
