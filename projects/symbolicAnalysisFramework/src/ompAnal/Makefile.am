@@ -29,9 +29,9 @@ include_HEADERS = ompUtils.h #ompNormalForm.h
 #errorExample_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #
 #check-local:selfTest
-#	./selfTest $(srcdir)/test_example.c
+#	./selfTest $(srcdir)/test_example.C
 
-EXTRA_DIST =  fanExchange.C fanoutBcast.C fanInGather.C pCFG_Partitioned.C
+EXTRA_DIST =  errorExample.C  regexTest.C  selfTest.C
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cpp *.patch *.loT
 

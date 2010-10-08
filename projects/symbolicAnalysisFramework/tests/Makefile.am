@@ -6,8 +6,10 @@ noinst_PROGRAMS = factPlacer latticePlacer scalarFWDataflow pathSensitive genInt
 # runtimeBoundAnalysis.C  scalarFWDataflow_example.C
 factPlacer_SOURCES = factPlacer.C
 latticePlacer_SOURCES = latticePlacer.C
-scalarFWDataflow_SOURCES = scalarFWDataflow.C
-pathSensitive_SOURCES = pathSensitive.C
+scalarFWDataflow_SOURCES = scalarFWDataflow.C scalarFWDataflow.h
+pathSensitive_SOURCES = pathSensitive.C pathSensitive.h
+genInterestingCFG_SOURCES = genInterestingCFG.C
+genCFG_SOURCES = genCFG.C
 
 # Liao 10/7/2010
 # the order of some la files matter:
@@ -37,8 +39,7 @@ check-local:factPlacer latticePlacer scalarFWDataflow pathSensitive
 # assertion failure	
 #	./pathSensitive $(srcdir)/test_examples/pathSensitive_example.cpp > pathSensitive_out
 
-EXTRA_DIST =  fanExchange.C fanoutBcast.C fanInGather.C pCFG_Partitioned.C \
-            test_examples 
+EXTRA_DIST =  test_examples 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cpp *.patch *.loT *_out
 

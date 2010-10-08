@@ -20,11 +20,11 @@
 #include "variables.h"
 #include "cfgUtils.h"
 #include "DataflowCFG.h"
-#if 0  // Liao 10/7/2010, not found
+#if 0  // Liao 10/7/2010, not found or redefinition issue for Function::Function()
 #include "DataflowCFG.cfgToDot.h"
 #endif 
-#include "CallGraphTraverse.h"
 #include "CallGraphTraverse.C"
+#include "CallGraphTraverse.h"
 using namespace std;
 using namespace cfgUtils;
 //using namespace CallGraph;
