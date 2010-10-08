@@ -25,6 +25,7 @@ public:
 typedef boost::shared_ptr<ExpressionBuilder> ExpressionBuilderPtr;
 
 
+//! This class is used to build expressions from other expression builders.
 class ExpressionBuilderPool : public ExpressionBuilder
 {
 	std::vector<ExpressionBuilderPtr> exp_builders_;
@@ -122,25 +123,33 @@ class SwitchStatementBuilder
 };
 
 
+//! This class is used to build the declaration and definition of the state class.
 class StateClassBuilder
 {
 protected:
+	//! The name of the state class.
 	std::string name_;
-	std::string obj_name_;
+
+	//std::string obj_name_;
+
+	//! The declaration of the state class.
 	SgClassDeclaration* state_decl_;
 	//std::vector<std::pair<std::string, SgType*> > members_;
 	//std::vector<std::pair<std::string, SgExpression*> > members_;
 
 	typedef boost::tuple<std::string, SgType*, SgExpression*> MemberType;
+
+	//! All data members of the state class.
 	std::vector<MemberType> members_;
 
 public:
 	StateClassBuilder(const std::string& name)
-	:name_(name), 
-	obj_name_(name + "_obj"),
-	state_decl_(NULL)
+	:	name_(name),
+		//obj_name_(name + "_obj"),
+		state_decl_(NULL)
 	{}
 
+	//! Add a data member to the state class.
 	void addMember(const std::string& name, SgType* type)
 	{ members_.push_back(MemberType(name, type, NULL)); }
 
@@ -150,18 +159,19 @@ public:
 	//! Given a type, get all corresponding members as expressions.
 	std::vector<SgExpression*> getMemberExpression(SgType* type) const;
 
-	//! Get the type of this state structure.
+	//! Get the type of this state structure. Note that the class must be built.
 	SgType* getStateClassType() const
 	{
 		ROSE_ASSERT(state_decl_);
 		return state_decl_->get_type();
 	}
 
+	//! Get the declaration of the state class. 
 	SgClassDeclaration* getStateClassDeclaration() const
 	{ return state_decl_; }
 
-	std::string getStateObjectName() const
-	{ return obj_name_; }
+	//std::string getStateObjectName() const
+	//{ return obj_name_; }
 
 
 	//! This method builds declaration of the state class, and all declarations of its members.
@@ -211,15 +221,19 @@ class EventFunctionBuilder
 	//! All parameters.
 	std::vector<SgInitializedName*> parameters_;
 
+	//! The scope the built funtion belongs to.
+	SgScopeStatement* scope_;
+
 	//! Return type.
 	SgType* return_type_;
 
 public:
 	EventFunctionBuilder(const std::string& name, SgBasicBlock* body = NULL)
-	: event_name_(name),
-	//state_name_("m"),
-	event_body_(body),
-	return_type_(SageBuilder::buildVoidType())
+	:	event_name_(name),
+		//state_name_("m"),
+		event_body_(body),
+		scope_(NULL),
+		return_type_(SageBuilder::buildVoidType())
 	{}
 
 	//! Given a member in state class, return its real accessing variable in function body.
@@ -245,8 +259,12 @@ public:
 	SgType* getReturnType() const
 	{ return return_type_; }
 
+	//! Set the scope to put event functions.
+	void setScope(SgScopeStatement* scope)
+	{ scope_ = scope; }
+
 	//! Build the event function declaration.
-	SgFunctionDeclaration* buildEventFunction();
+	SgFunctionDeclaration* buildEventFunction(bool is_cxx_style);
 
 	//SgFunctionDeclaration* buildEventFunction(const std::string& event_name, const std::vector<SgStatement*>& stmts);
 };
@@ -258,6 +276,9 @@ public:
 class TestCodeBuilder
 {
 protected:
+	//! Build test code as C++ style. That is, event functions are members of state class.
+	bool is_cxx_style_;
+
 	//! The file name of test code.
 	std::string file_name_;
 
@@ -267,16 +288,16 @@ protected:
 	//! All declarations of events.
 	std::vector<SgFunctionDeclaration*> events_;
 
-	//SgClassDeclaration* state_;
-	
 	//! A state class builder to build the state class.
 	StateClassBuilder* state_builder_;
 
 	//! The initialized name of the state object parameter in event functions.
 	SgInitializedName* state_init_name_;
 
+	//! This is a pure virtual function which needs to be overridden.
 	virtual void build_() = 0;
 
+	//! Set the state class's name.
 	void setStateClassName(const std::string& name)
 	{
 		if (state_builder_)
@@ -284,24 +305,30 @@ protected:
 		state_builder_ = new StateClassBuilder(name);
 	}
 
+	//! Add a data member to the state class.
 	void addStateMember(const std::string& name, SgType* type)
 	{
 		ROSE_ASSERT(state_builder_);
 		state_builder_->addMember(name, type);
 	}
 
+	//! Build the state class.
 	void buildStateClass();
 
+	//! Given a name, search the state class for its data members. If found, return a VarRefExp or arrow
+	//! expression based on the flag is_cxx_style_.
 	SgExpression* buildStateMemberExpression(const std::string& name);
 
+	//! Build the final test source file.
 	void buildTestCode(const std::vector<SgBasicBlock*> bodies);
 
 public:
-	TestCodeBuilder(const std::string& filename)
-	: file_name_(filename),
-	source_file_(NULL),
-	state_builder_(NULL),
-	state_init_name_(NULL)
+	TestCodeBuilder(const std::string& filename, bool is_cxx_style = true)
+	:	is_cxx_style_(is_cxx_style),
+		file_name_(filename),
+		source_file_(NULL),
+		state_builder_(NULL),
+		state_init_name_(NULL)
 	{}
 
 	~TestCodeBuilder()
@@ -310,6 +337,7 @@ public:
 		delete state_init_name_;
 	}
 
+	//! Once all is set, call this funtion to create the test source file.
 	void build();
 };
 

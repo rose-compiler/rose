@@ -14,7 +14,7 @@ void ExpressionBuilderPool::build()
 	foreach (ExpressionBuilderPtr builder, exp_builders_)
 	{
 		builder->build();
-		std::vector<SgExpression*> res = builder->getGeneratedExpressions();
+		vector<SgExpression*> res = builder->getGeneratedExpressions();
 		results_.insert(results_.end(), res.begin(), res.end());
 	}
 }
@@ -27,7 +27,7 @@ void UnaryExpressionBuilder::build()
 
 	if (isScalarType(type))
 	{
-		if (operand_->isDefinable())
+		if (operand_->isLValue())
 		{
 			results_.push_back(buildPlusPlusOp(copyExpression(operand_), SgUnaryOp::prefix));
 			results_.push_back(buildMinusMinusOp(copyExpression(operand_), SgUnaryOp::prefix));
@@ -48,7 +48,7 @@ void BinaryExpressionBuilder::build()
 	SgType* lhs_type = lhs_operand_->get_type();
 	SgType* rhs_type = rhs_operand_->get_type();
 
-	if (lhs_operand_->isDefinable())
+	if (lhs_operand_->isLValue())
 	{
 		results_.push_back(buildBinaryExpression<SgAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
 		results_.push_back(buildBinaryExpression<SgPlusAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
@@ -81,14 +81,19 @@ void ExpressionStatementBuilder::build()
 	results_.push_back(buildExprStatement(exp_));
 }
 
-SgFunctionDeclaration* EventFunctionBuilder::buildEventFunction()
+SgFunctionDeclaration* EventFunctionBuilder::buildEventFunction(bool is_cxx_style)
 {
 	// Build the parameter list.
 	SgFunctionParameterList* para_list = buildFunctionParameterList();
 	foreach (SgInitializedName* para, parameters_)
 		para_list->append_arg(para);
 
-	SgFunctionDeclaration* func_decl = buildDefiningFunctionDeclaration(event_name_, return_type_, para_list);
+	SgFunctionDeclaration* func_decl = NULL;
+	if (is_cxx_style)
+		func_decl = buildDefiningMemberFunctionDeclaration(event_name_, return_type_, para_list, scope_);
+	else
+		func_decl = buildDefiningFunctionDeclaration(event_name_, return_type_, para_list, scope_);
+
 	SgBasicBlock* event_body = func_decl->get_definition()->get_body();
 	ROSE_ASSERT(event_body);
 	replaceStatement(event_body, event_body_);
@@ -97,7 +102,7 @@ SgFunctionDeclaration* EventFunctionBuilder::buildEventFunction()
 }
 
 #if 0
-SgFunctionDeclaration* EventFunctionBuilder::buildEventFunction(const std::string& event_name, const std::vector<SgStatement*>& stmts)
+SgFunctionDeclaration* EventFunctionBuilder::buildEventFunction(const string& event_name, const vector<SgStatement*>& stmts)
 {
 	SgType* state_type = state_decl_->get_type();
 	//if (state_obj_ == NULL)
@@ -120,7 +125,7 @@ SgFunctionDeclaration* EventFunctionBuilder::buildEventFunction(const std::strin
 #endif
 
 
-SgExpression* StateClassBuilder::getMemberExpression(const std::string& name) const
+SgExpression* StateClassBuilder::getMemberExpression(const string& name) const
 {
 	foreach (const MemberType& member, members_)
 	{
@@ -133,9 +138,9 @@ SgExpression* StateClassBuilder::getMemberExpression(const std::string& name) co
 	return NULL;
 }
 
-std::vector<SgExpression*> StateClassBuilder::getMemberExpression(SgType* type) const
+vector<SgExpression*> StateClassBuilder::getMemberExpression(SgType* type) const
 {
-	std::vector<SgExpression*> exps;
+	vector<SgExpression*> exps;
 	foreach (const MemberType& member, members_)
 	{
 		// It seems that every type has only one object in the memory pool in ROSE.
@@ -182,20 +187,26 @@ void TestCodeBuilder::buildStateClass()
 		buildInitializedName("state", buildPointerType(state_builder_->getStateClassType()));
 }
 
-SgExpression* TestCodeBuilder::buildStateMemberExpression(const std::string& name)
+SgExpression* TestCodeBuilder::buildStateMemberExpression(const string& name)
 {
 	ROSE_ASSERT(state_builder_);
 	if (SgExpression* member_exp = state_builder_->getMemberExpression(name))
-		return buildBinaryExpression<SgArrowExp>(buildVarRefExp(state_init_name_), member_exp);
+	{
+		if (is_cxx_style_)
+			return member_exp;
+		else
+			return buildBinaryExpression<SgArrowExp>(buildVarRefExp(state_init_name_), member_exp);
+	}
 	return NULL;
 }
 
-void TestCodeBuilder::buildTestCode(const std::vector<SgBasicBlock*> bodies)
+void TestCodeBuilder::buildTestCode(const vector<SgBasicBlock*> bodies)
 {
+	ROSE_ASSERT(state_builder_);
+	
 	// Push global scope here to make sure every event funciton is built with a valid scope.
 	SgGlobal* global_scope = source_file_->get_globalScope();
 	ROSE_ASSERT(global_scope);
-	pushScopeStack(isSgScopeStatement(global_scope));
 
 	int counter = 0;
 	foreach (SgBasicBlock* body, bodies)
@@ -203,19 +214,35 @@ void TestCodeBuilder::buildTestCode(const std::vector<SgBasicBlock*> bodies)
 		string event_name = "event" + lexical_cast<string>(counter++);
 		EventFunctionBuilder event_builder(event_name, body);
 		event_builder.addParameter(state_init_name_);
-		SgFunctionDeclaration* event_decl = event_builder.buildEventFunction();
+		if (is_cxx_style_)
+			event_builder.setScope(state_builder_->getStateClassDeclaration()->get_definition());
+		else
+			event_builder.setScope(global_scope);
+		
+		SgFunctionDeclaration* event_decl = event_builder.buildEventFunction(is_cxx_style_);
 		// Add the new defined event function in the event collection.
 		events_.push_back(event_decl);
 	}
 
 	// Add state declaration.
-	ROSE_ASSERT(state_builder_);
-	appendStatement(state_builder_->getStateClassDeclaration());
+	SgClassDeclaration* state_decl = state_builder_->getStateClassDeclaration();
+	appendStatement(state_decl, global_scope);
+
 	// Add events.
 	foreach (SgFunctionDeclaration* event, events_)
-		appendStatement(event);
-
-	popScopeStack();
+	{
+		if (is_cxx_style_)
+		{
+			//SgMemberFunctionDeclaration* decl = isSgMemberFunctionDeclaration(event);
+			//ROSE_ASSERT(decl);
+			//decl->set_associatedClassDeclaration(state_decl);
+			appendStatement(event, state_decl->get_definition());
+			//state_decl->get_definition()->append_member(event);
+			//event->set_parent(state_decl);
+		}
+		else
+			appendStatement(event, global_scope);
+	}
 
 	// Fix variable references here because of bottom up build.
 	fixVariableReferences(global_scope);
@@ -266,7 +293,7 @@ void BasicExpressionTest::build_()
 	builders.addExpressionBuilder(new BinaryExpressionBuilder(float_var, int_var));
 	builders.build();
 
-	std::vector<SgExpression*> exps = builders.getGeneratedExpressions();
+	vector<SgExpression*> exps = builders.getGeneratedExpressions();
 	vector<SgBasicBlock*> bodies;
 	foreach (SgExpression* exp, exps)
 	{
