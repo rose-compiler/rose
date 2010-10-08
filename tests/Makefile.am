@@ -12,7 +12,7 @@ endif
 #  Phase 1) Analysis only, compiles the original code
 #  Phase 2) Analysis and code generation, compiles the original code
 #  Phase 3) analysis, code generation, and compiling the generated code
-bin_PROGRAMS = testParser testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead parallelASTMerge
+bin_PROGRAMS = testParser testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead parallelASTMerge testGraphGeneration
 
 
 # Phase 0 tests code:
@@ -48,6 +48,9 @@ testAstFileRead_SOURCES = testAstFileRead.C
 
 # This test the parallel merge of AST files using Cong's threaded implmentation of the merge infrastructure.
 parallelASTMerge_SOURCES = parallelASTMerge.C
+
+# This tests the ability to generate dot file (AST and WholeGraph) for the input application.
+testGraphGeneration_SOURCES = testGraphGeneration.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)

@@ -334,7 +334,9 @@ HEADER_COMMON_CREATE_TYPE_START
        // static void set_builtin_type($CLASSNAME* builtin_type);
 
       //! function returns example of type
-          static $CLASSNAME* createType(void);
+       // DQ (10/4/2010): Added support for optional Fotran type_kind specification.
+       // static $CLASSNAME* createType(void);
+          static $CLASSNAME* createType(SgExpression* optional_fortran_type_kind = NULL);
 HEADER_COMMON_CREATE_TYPE_END
 
 
@@ -350,7 +352,9 @@ HEADER_CREATE_TYPE_WITH_PARAMETER_START
        // static void set_builtin_type($CLASSNAME* builtin_type);
 
       //! more sophisticated version for more complex types like $CLASSNAME (types whose constructors take parameters)
-          static $CLASSNAME* createType(CREATE_TYPE_PARAMETER);
+       // DQ (10/4/2010): Added support for optional Fotran type_kind specification.
+       // static $CLASSNAME* createType(CREATE_TYPE_PARAMETER);
+          static $CLASSNAME* createType(CREATE_TYPE_PARAMETER, SgExpression* optional_fortran_type_kind = NULL);
 HEADER_CREATE_TYPE_WITH_PARAMETER_END
 
 
@@ -900,7 +904,8 @@ HEADER_TYPE_INT_TYPE_END
 
 HEADER_TYPE_COMPLEX_TYPE_START
       //! function returns example of type
-          static $CLASSNAME* createType(SgType* base_type);
+       // static $CLASSNAME* createType(SgType* base_type);
+          static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
 HEADER_TYPE_COMPLEX_TYPE_END
 
 HEADER_POINTER_MEMBER_TYPE_START
@@ -910,7 +915,8 @@ HEADER_POINTER_MEMBER_TYPE_END
 
 HEADER_TYPE_STRING_TYPE_START
        // DQ (8/17/2010): Support for Fortran use of SgTypeString.
-          static $CLASSNAME* createType(SgExpression*, size_t length);
+       // static $CLASSNAME* createType(SgExpression*, size_t length, SgExpression* optional_fortran_type_kind = NULL);
+          static $CLASSNAME* createType(SgExpression*, SgExpression* optional_fortran_type_kind = NULL);
 
       //! Performs final initialization of data members (called by constructors)
           void post_construction_initialization();
@@ -943,7 +949,27 @@ SgName
 $CLASSNAME::get_mangled (void) const
    {
      ROSE_ASSERT(this != NULL);
-     return SgName("MANGLED_ID_STRING");
+
+  // DQ (10/4/2010): Modified to provide Fortran support (type_kind is a data member used for Fortran only, it is always NULL for other languages)
+  // return SgName("MANGLED_ID_STRING");
+     SgName name = "MANGLED_ID_STRING";
+     if (get_type_kind() != NULL)
+        {
+       // name += get_type_kind()->get_mangled();
+       // name += SageInterface::generateUniqueName(get_type_kind(),false);
+          SgValueExp* value = isSgValueExp(get_type_kind());
+          if (value != NULL)
+             {
+            // name += string("_") + StringUtility::numberToString(value->get_value());
+               name += string("_kind") + value->get_constant_folded_value_as_string();
+             }
+            else
+             {
+               name += SageInterface::generateUniqueName(get_type_kind(),false);
+             }
+        }
+
+     return name;
    }
 #endif
 SOURCE_GET_MANGLED_END
@@ -1066,9 +1092,25 @@ SOURCE_GET_MANGLED_STRING_TYPE_START
 SgName
 SgTypeString::get_mangled (void) const
    {
+  // DQ (10/5/2010): Note that we do not include the type_kind data member in the mangled name,
+  // but for Fortran this value must always be "1" and the data member is only relevant for Fortran.
+
      ROSE_ASSERT(this != NULL);
 
+  // DQ (10/5/2010): This is now always false (this fails for test2007_15.f90)
+  // ROSE_ASSERT(this->p_definedUsingScalarLength == false);
+
      SgName mangled_length_name;
+
+  // Note that a better implementation would separate out the mangling of scalar valued length expressions.
+     SgValueExp* valueExpression = isSgValueExp(p_lengthExpression);
+#if 0
+     if (valueExpression != NULL)
+        {
+          printf ("In SgTypeString::get_mangled(): separate out case of where lengthExpression is a SgValueExp. \n");
+        }
+#endif
+#if 0
      if (this->p_definedUsingScalarLength == true)
         {
           mangled_length_name = StringUtility::numberToString(this->p_lengthScalar);
@@ -1079,6 +1121,18 @@ SgTypeString::get_mangled (void) const
        // mangled_length_name = this->p_lengthExpression->get_mangled_name();
           mangled_length_name = SageInterface::generateUniqueName(p_lengthExpression,false);
         }
+#else
+     ROSE_ASSERT(this->p_lengthExpression != NULL);
+  // mangled_length_name = this->p_lengthExpression->get_mangled_name();
+     if (valueExpression != NULL)
+        {
+          mangled_length_name = valueExpression->get_constant_folded_value_as_string();
+        }
+       else
+        {
+          mangled_length_name = SageInterface::generateUniqueName(p_lengthExpression,false);
+        }
+#endif
 
      SgName mangled_name;
      mangled_name << "__" << "MANGLED_ID_STRING" << "b__" // start tag
@@ -2092,6 +2146,8 @@ SgTypeString::post_construction_initialization()
    {
   // printf ("Inside of SgTypeString::post_construction_initialization() \n");
 
+  // DQ (10/5/2010): We no longer use this scalar mechanism (comment out).
+#if 0
      p_definedUsingScalarLength = (p_lengthExpression == NULL);
 
      if (p_definedUsingScalarLength && p_lengthScalar == 0)
@@ -2099,6 +2155,7 @@ SgTypeString::post_construction_initialization()
        // DQ (8/21/2010): This is not a problem.
        // printf ("Warning: Zero length string specified, might be OK. \n");
         }
+#endif
    }
 
 SOURCE_TYPE_STRING_TYPE_END
@@ -3599,8 +3656,11 @@ SOURCE_COMMON_CREATE_TYPE_START
 // $CLASSNAME* $CLASSNAME::builtin_type = new $CLASSNAME();
 $CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
 
+
+// DQ (10/4/2010): Added support for optional Fotran type_kind specification.
+// $CLASSNAME* $CLASSNAME::createType(void) 
 $CLASSNAME*
-$CLASSNAME::createType(void) 
+$CLASSNAME::createType(SgExpression* optional_fortran_type_kind)
    {
   // DQ (12/22/2005): Jochen thinks that we need this because the SgNode constructor 
   // is not called (likely because static initialization is compiler dependent).
@@ -3608,6 +3668,7 @@ $CLASSNAME::createType(void)
   // builtin_type.p_freepointer = AST_FileIO::IS_VALID_POINTER();
   // return &builtin_type;
 
+#if 0
      static bool firstCallToFunction = true;
      if (firstCallToFunction == true)
         {
@@ -3621,6 +3682,11 @@ $CLASSNAME::createType(void)
           if (p_builtin_type == NULL)
              {
                p_builtin_type = new $CLASSNAME();
+               if (optional_fortran_type_kind != NULL)
+                  {
+                 // DQ (10/4/2010): Added fortran type kind support (must be in place before the mangled name is generated).
+                    p_builtin_type->set_type_kind(optional_fortran_type_kind);
+                  }
              }
           ROSE_ASSERT(p_builtin_type != NULL);
 
@@ -3665,6 +3731,59 @@ $CLASSNAME::createType(void)
      p_builtin_type->p_freepointer = AST_FileIO::IS_VALID_POINTER();
 
      return p_builtin_type;
+#else
+  // DQ (10/4/2010): New version of code to support multiple kinds of bool as required for the Fortran type_kind support within ROSE.
+  // Note that this implementation does not use p_builtin_type, since with the global type table it is not required.
+
+     $CLASSNAME* temp_type = new $CLASSNAME();
+     if (optional_fortran_type_kind != NULL)
+        {
+          temp_type->set_type_kind(optional_fortran_type_kind);
+        }
+#if 0
+       else
+        {
+       // Let p_builtin_type refer to the unadorned type (no type kind).
+          p_builtin_type = temp_type;
+        }
+#endif
+
+     SgName name = temp_type->get_mangled();
+#if 0
+     printf ("Mangled type name for $CLASSNAME = %s get_globalTypeTable()->get_type_table()->size() = %d \n",name.str(),get_globalTypeTable()->get_type_table()->size());
+#endif
+
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+#if 0
+     printf ("In $CLASSNAME::createType(): type from lookup_type = %p \n",t);
+#endif
+     if (t == NULL)
+        {
+          get_globalTypeTable()->insert_type(name,temp_type);
+        }
+       else
+        {
+       // If t is the same as p_builtin_type then we can't delete it...(only comes up in merging AST's read from files).
+          if (t != temp_type)
+             {
+               delete temp_type;
+               temp_type = NULL;
+#if 0
+            // Should we clear the p_builtin_type? I think we have to, but it will be overwritten below.
+               if (optional_fortran_type_kind != NULL)
+                  {
+                    p_builtin_type = NULL;
+                  }
+#endif
+             }
+
+       // Reuse this tempType variable so we can use the same code below.
+          temp_type = is$CLASSNAME(t);
+          ROSE_ASSERT(temp_type != NULL);
+        }
+
+     return temp_type;
+#endif
    }
 
 SOURCE_COMMON_CREATE_TYPE_END
@@ -3674,10 +3793,14 @@ SOURCE_COMMON_CREATE_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_PARTIAL_FUNCTION_TYPE_START
+// $CLASSNAME* $CLASSNAME::createType(SgType* rtype)
 $CLASSNAME* 
-$CLASSNAME::createType(SgType* rtype)
+$CLASSNAME::createType(SgType* rtype,SgExpression* optional_fortran_type_kind)
    {
   // return new $CLASSNAME(rtype);
+
+  // DQ (10/4/2010): I don't think this type can have a fortran type kind parameter.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
      $CLASSNAME* returnType = new $CLASSNAME(rtype);
      ROSE_ASSERT(returnType != NULL);
@@ -3689,11 +3812,15 @@ SOURCE_CREATE_TYPE_FOR_PARTIAL_FUNCTION_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_TYPEDEF_TYPE_START
-$CLASSNAME*
-$CLASSNAME::createType(SgTypedefDeclaration *decl) 
+// SgTypedefType* SgTypedefType::createType(SgTypedefDeclaration *decl) 
+SgTypedefType*
+SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_fortran_type_kind) 
    {
   // printf ("Inside of SgTypedefType::createType() \n");
      assert(decl != NULL);
+
+  // DQ (10/4/2010): I don't think this type can have a fortran type kind parameter.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
   // if (!decl->get_type())
      if (decl->get_type() == NULL)
@@ -3798,12 +3925,16 @@ SOURCE_CREATE_TYPE_FOR_TYPEDEF_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_FUNCTION_TYPE_START
+// SgFunctionType* SgFunctionType::createType(SgPartialFunctionType* ft)
 SgFunctionType*
-SgFunctionType::createType(SgPartialFunctionType* ft)
+SgFunctionType::createType(SgPartialFunctionType* ft, SgExpression* optional_fortran_type_kind)
    {
   // The problem with this function is that I have not added the name mangling into SAGE 3 yet!
 
      ROSE_ASSERT(ft != NULL);
+
+  // DQ (10/4/2010): I don't think this type can have a fortran type kind parameter.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
 #if 1
   // DQ (3/29/2006): 
@@ -3875,12 +4006,16 @@ SOURCE_CREATE_TYPE_FOR_FUNCTION_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_MEMBER_FUNCTION_TYPE_START
+// SgMemberFunctionType* SgMemberFunctionType::createType(SgPartialFunctionType* ft)
 SgMemberFunctionType*
-SgMemberFunctionType::createType(SgPartialFunctionType* ft)
+SgMemberFunctionType::createType(SgPartialFunctionType* ft, SgExpression* optional_fortran_type_kind)
    {
      ROSE_ASSERT(ft != NULL);
   // printf ("In $CLASSNAME::createType(SgPartialFunctionType* ft): calling ft->get_mangled_type \n");
   // SgName nname = ft->get_mangled_type();
+
+  // DQ (10/4/2010): I don't think this type can have a fortran type kind parameter.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
 #if 1
   // DQ (3/29/2006): 
@@ -3948,9 +4083,13 @@ SOURCE_CREATE_TYPE_FOR_MEMBER_FUNCTION_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_POINTER_MEMBER_TYPE_START
+// $CLASSNAME* $CLASSNAME::createType ( SgType* base_type, SgType *class_type )
 $CLASSNAME*
-$CLASSNAME::createType ( SgType* base_type, SgType *class_type )
+$CLASSNAME::createType ( SgType* base_type, SgType *class_type, SgExpression* optional_fortran_type_kind )
    {
+  // DQ (10/4/2010): I don't think this type can have a fortran type kind parameter.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
      $CLASSNAME* returnType = new $CLASSNAME(base_type,class_type);
      assert(returnType != NULL);
      return returnType;
@@ -3980,8 +4119,10 @@ SgTypeInt* SgTypeInt::p_builtin_type[maxBitLength] = { NULL,NULL,NULL,NULL,NULL,
 SgTypeInt* SgTypeInt::p_builtin_type = NULL;
 #endif
 
+// DQ (10/4/2010): Added support for fortran type kind expressions.
+// $CLASSNAME* $CLASSNAME::createType(int bitLength)
 $CLASSNAME*
-$CLASSNAME::createType(int bitLength) 
+$CLASSNAME::createType(int bitLength, SgExpression* optional_fortran_type_kind)
    {
 #if 0
      static bool firstCallToFunction = true;
@@ -4009,6 +4150,7 @@ $CLASSNAME::createType(int bitLength)
      p_builtin_type[bitLength]->p_freepointer = AST_FileIO::IS_VALID_POINTER();
      return p_builtin_type[bitLength];
 #else
+#if 0
   // DQ (1/31/2006): Convert to a single builtin pointer rather than an array of them.
   // I don't think we really need an array of these internally.
      if (p_builtin_type == NULL)
@@ -4018,6 +4160,13 @@ $CLASSNAME::createType(int bitLength)
 #else
        // DQ (7/22/2010): Use the global type table to get the type.
           p_builtin_type = new $CLASSNAME(bitLength);
+
+          if (optional_fortran_type_kind != NULL)
+             {
+            // DQ (10/4/2010): Added fortran type kind support (must be in place before the mangled name is generated).
+               p_builtin_type->set_type_kind(optional_fortran_type_kind);
+             }
+
           SgName name = p_builtin_type->get_mangled();
 #if 0
           printf ("Mangled type name for $CLASSNAME = %s \n",name.str());
@@ -4025,8 +4174,48 @@ $CLASSNAME::createType(int bitLength)
           get_globalTypeTable()->insert_type(name,p_builtin_type);
 #endif
         }
+
      ROSE_ASSERT(p_builtin_type != NULL);
      return p_builtin_type;
+#else
+  // DQ (10/5/2010): New version of code to support multiple kinds of SgTypeInt as required for the Fortran type_kind support within ROSE.
+  // Note that this implementation does not use p_builtin_type, since with the global type table it is not required.
+
+     $CLASSNAME* temp_type = new $CLASSNAME();
+     if (optional_fortran_type_kind != NULL)
+        {
+          temp_type->set_type_kind(optional_fortran_type_kind);
+        }
+
+     SgName name = temp_type->get_mangled();
+#if 0
+     printf ("Mangled type name for $CLASSNAME = %s get_globalTypeTable()->get_type_table()->size() = %d \n",name.str(),get_globalTypeTable()->get_type_table()->size());
+#endif
+
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+#if 0
+     printf ("In $CLASSNAME::createType(): type from lookup_type = %p \n",t);
+#endif
+     if (t == NULL)
+        {
+          get_globalTypeTable()->insert_type(name,temp_type);
+        }
+       else
+        {
+       // If t is the same as p_builtin_type then we can't delete it...(only comes up in merging AST's read from files).
+          if (t != temp_type)
+             {
+               delete temp_type;
+               temp_type = NULL;
+             }
+
+       // Reuse this tempType variable so we can use the same code below.
+          temp_type = is$CLASSNAME(t);
+          ROSE_ASSERT(temp_type != NULL);
+        }
+
+     return temp_type;
+#endif
 #endif
    }
 
@@ -4045,10 +4234,14 @@ SOURCE_CREATE_TYPE_FOR_TYPE_INT_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_ENUM_TYPE_START
-$CLASSNAME*
-$CLASSNAME::createType(SgEnumDeclaration* cd)
+// SgEnumType* SgEnumType::createType(SgEnumDeclaration* cd)
+SgEnumType*
+SgEnumType::createType(SgEnumDeclaration* cd, SgExpression* optional_fortran_type_kind)
    {
-     $CLASSNAME* returnType = NULL;
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     SgEnumType* returnType = NULL;
   // return cd->get_type() ? cd->get_type() : new $CLASSNAME(cd); 
 
      assert(cd != NULL);
@@ -4056,11 +4249,11 @@ $CLASSNAME::createType(SgEnumDeclaration* cd)
      if (returnType == NULL)
         {
 #if 0
-          returnType = new $CLASSNAME(cd);
+          returnType = new SgEnumType(cd);
 #else
        // DQ (7/22/2010): Use the global type table to get the type.
 
-          returnType = new $CLASSNAME(cd);
+          returnType = new SgEnumType(cd);
           ROSE_ASSERT(returnType != NULL);
 
        // We have to build the type before we can generate a mangle name for it.
@@ -4107,7 +4300,7 @@ $CLASSNAME::createType(SgEnumDeclaration* cd)
 
                  // Reuse this returnType variable so we can use the same code below.
                     ROSE_ASSERT(t != NULL);
-                    returnType = is$CLASSNAME(t);
+                    returnType = isSgEnumType(t);
 
                     if (returnType == NULL)
                        {
@@ -4120,7 +4313,7 @@ $CLASSNAME::createType(SgEnumDeclaration* cd)
 #endif
         }
 #if 0
-     printf ("This $CLASSNAME::createType() function does NOT set the type in the SgEnumDeclaration = %p \n",cd);
+     printf ("This SgEnumType::createType() function does NOT set the type in the SgEnumDeclaration = %p \n",cd);
 #endif
 
      ROSE_ASSERT(returnType != NULL);
@@ -4133,10 +4326,14 @@ SOURCE_CREATE_TYPE_FOR_ENUM_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_CLASS_TYPE_START
 
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
 SgClassType*
-SgClassType::createType(SgClassDeclaration * cd)
+SgClassType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
    {
      ROSE_ASSERT(cd != NULL);
+
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
 #if 0
      printf ("cd = %p = %s cd->get_definition() = %p = %s \n",
@@ -4240,10 +4437,15 @@ SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_POINTER_TYPE_START
+// SgPointerType* SgPointerType::createType(SgType* base_type)
 SgPointerType*
-SgPointerType::createType(SgType* base_type)
+SgPointerType::createType(SgType* base_type, SgExpression* optional_fortran_type_kind)
    {
      ROSE_ASSERT(base_type != NULL);
+
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
      if (base_type->p_ptr_to != NULL)
         {
           return base_type->p_ptr_to;
@@ -4324,10 +4526,15 @@ SOURCE_CREATE_TYPE_FOR_POINTER_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_REFERENCE_TYPE_START
+// SgReferenceType* SgReferenceType::createType(SgType* base_type)
 SgReferenceType*
-SgReferenceType::createType(SgType* base_type)
+SgReferenceType::createType(SgType* base_type, SgExpression* optional_fortran_type_kind)
    {
      ROSE_ASSERT(base_type != NULL);
+
+  // DQ (10/4/2010): I think that reference types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
      if (base_type->p_ref_to)
         {
           return base_type->p_ref_to;
@@ -4401,10 +4608,14 @@ SOURCE_CREATE_TYPE_FOR_REFERENCE_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_START
 
+// SgArrayType* SgArrayType::createType ( SgType* base_type, SgExpression* idx )
 SgArrayType*
-SgArrayType::createType ( SgType* base_type, SgExpression* idx )
+SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* optional_fortran_type_kind)
    {
   // DQ (8/11/2010): It is OK for idx to be NULL, since it implies a declaration such as: "int array[]" which can be OK.
+
+  // DQ (10/4/2010): I think that reference types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
 #if 0
      SgArrayType* returnType = new SgArrayType(base_type, idx);
@@ -4479,16 +4690,23 @@ SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_STRING_TYPE_START
 
+// SgTypeString* SgTypeString::createType ( SgExpression* idx, size_t length, SgExpression* optional_fortran_type_kind )
 SgTypeString*
-SgTypeString::createType ( SgExpression* idx, size_t length )
+SgTypeString::createType ( SgExpression* lengthExpression, SgExpression* optional_fortran_type_kind )
    {
   // DQ (8/17/2010): This is the new SgStringType IR node (now used in Fortran, but not previously used in C/C++).
 
-  // DQ (8/17/2010): idx can be NULL, and even the length could be zero (e.g. for a empty string).
+  // DQ (8/17/2010): lengthExpression can be NULL, and even the length could be zero (e.g. for a empty string).
   // ROSE_ASSERT(idx != NULL);
   // ROSE_ASSERT((idx != NULL) || (length > 0));
 
-     SgTypeString* returnType = new SgTypeString(idx,length);
+  // SgTypeString* returnType = new SgTypeString(lengthExpression,length);
+     SgTypeString* returnType = new SgTypeString(lengthExpression);
+     if (optional_fortran_type_kind != NULL)
+        {
+          returnType->set_type_kind(optional_fortran_type_kind);
+          optional_fortran_type_kind->set_parent(returnType);
+        }
      ROSE_ASSERT(returnType != NULL);
 
      SgName name = returnType->get_mangled();
@@ -4524,10 +4742,10 @@ SgTypeString::createType ( SgExpression* idx, size_t length )
 
   // DQ (2/20/2007): Added setting the parent (which should not have been set already)
   // note also that the index expression is not required to be specified.
-     if (idx != NULL)
+     if (lengthExpression != NULL)
         {
-          ROSE_ASSERT(idx->get_parent() == NULL);
-          idx->set_parent(returnType);
+          ROSE_ASSERT(lengthExpression->get_parent() == NULL);
+          lengthExpression->set_parent(returnType);
         }
 
      return returnType;
@@ -4538,12 +4756,16 @@ SOURCE_CREATE_TYPE_FOR_STRING_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_MODIFIER_TYPE_START
 
+// SgModifierType* SgModifierType::createType(SgType* base_type, unsigned int f)
 SgModifierType*
-SgModifierType::createType(SgType* base_type, unsigned int f)
+SgModifierType::createType(SgType* base_type, unsigned int f, SgExpression* optional_fortran_type_kind )
    {
   // DQ (7/28/2010): Now we make it an error to call this function!
      printf ("ERROR: This function should not be called (replaced by different API plus insertModifierTypeIntoTypeTable()) \n");
      ROSE_ASSERT(false);
+
+  // DQ (10/4/2010): I think that reference types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
 #if 0
   // DQ (7/26/2010): Note that "unsigned int f" is not used!
@@ -4739,10 +4961,14 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
 SOURCE_CREATE_TYPE_FOR_MODIFIER_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_QUALIFIED_NAME_TYPE_START
+// $CLASSNAME* $CLASSNAME::createType(SgType* base_type, unsigned int f)
 $CLASSNAME*
-$CLASSNAME::createType(SgType* base_type, unsigned int f)
+$CLASSNAME::createType(SgType* base_type, unsigned int f, SgExpression* optional_fortran_type_kind)
    {
      ROSE_ASSERT(base_type != NULL);
+
+  // DQ (10/4/2010): I think that reference types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
   // DQ (12/21/2005): This is a copy of the function from SgModifierType 
   // (I think we need it to override the base class implementation).
@@ -4761,7 +4987,7 @@ SOURCE_CREATE_TYPE_FOR_COMPLEX_TYPE_START
 // DQ (8/27/2006): This code is used for both SgTypeComplex and SgTypeImaginary.
 
 $CLASSNAME*
-$CLASSNAME::createType(SgType* t)
+$CLASSNAME::createType(SgType* t, SgExpression* optional_fortran_type_kind)
    {
   // Not clear why this is using a map???
      static std::map<SgType*, $CLASSNAME*> cache;

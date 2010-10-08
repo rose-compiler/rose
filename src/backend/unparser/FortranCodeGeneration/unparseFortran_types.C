@@ -51,80 +51,63 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
              }
 
        // case V_SgTypeVoid:             curprint(type->sage_class_name()); break;
-       //   case V_SgTypeVoid:             curprint("void"); break;
-          //FMZ 6/17/2009 
+       // case V_SgTypeVoid:             curprint("void"); break;
+
+       // DQ (10/5/2010): Comment added: SgTypeVoid might be required for function handling, but for Fortran we don't unparse anything here.
+       // FMZ 6/17/2009 
           case V_SgTypeVoid:              break;
 
        // DQ (8/16/2007): I don't think that SgGlobalVoid is used!
        // case V_SgTypeGlobalVoid:       curprint(type->sage_class_name()); break;
 
-       // character, string types
-          case V_SgTypeChar:             curprint("CHARACTER"); break;
-          case V_SgTypeSignedChar:       curprint("CHARACTER"); break;
-          case V_SgTypeUnsignedChar:     curprint("CHARACTER"); break;
-
-          case V_SgTypeWchar:            curprint(type->sage_class_name()); break;
+       // DQ (10/5/2010): I don't think that SgTypeWchar is used!
+       // case V_SgTypeWchar:            curprint(type->sage_class_name()); break;
 
        // DQ (8/15/2010): I think we were not using the SgStringType before now.
        // case V_SgTypeString:           curprint("CHARACTER(LEN=*)"); break;
           case V_SgTypeString:           unparseStringType(type, info); break;
 
        // scalar integral types
-#if 0
-          case V_SgTypeShort:            curprint("INTEGER(ROSE_TY_I2)"); break;
-          case V_SgTypeSignedShort:      curprint("INTEGER(ROSE_TY_I2)"); break;
-          case V_SgTypeUnsignedShort:    curprint("INTEGER(ROSE_TY_I2)"); break;
+          case V_SgTypeChar:            unparseBaseType(type,"CHARACTER",info); break;
+       // case V_SgTypeSignedChar:       unparseBaseType(type,"CHARACTER",info); break;
+       // case V_SgTypeUnsignedChar:     unparseBaseType(type,"CHARACTER",info); break;
 
-          case V_SgTypeInt:              curprint("INTEGER(ROSE_TY_I4)"); break;
-          case V_SgTypeSignedInt:        curprint("INTEGER(ROSE_TY_I4)"); break;
-          case V_SgTypeUnsignedInt:      curprint("INTEGER(ROSE_TY_I4)"); break;
+       // case V_SgTypeShort:            unparseBaseType(type,"INTEGER",info); break;
+       // case V_SgTypeSignedShort:      unparseBaseType(type,"INTEGER",info); break;
+       // case V_SgTypeUnsignedShort:    unparseBaseType(type,"INTEGER",info); break;
 
-          case V_SgTypeLong:             curprint("INTEGER(ROSE_TY_I4)"); break;
-          case V_SgTypeSignedLong:       curprint("INTEGER(ROSE_TY_I4)"); break;
-          case V_SgTypeUnsignedLong:     curprint("INTEGER(ROSE_TY_I4)"); break;
+          case V_SgTypeInt:              unparseBaseType(type,"INTEGER",info); break;
+          case V_SgTypeSignedInt:        unparseBaseType(type,"INTEGER",info); break;
+          case V_SgTypeUnsignedInt:      unparseBaseType(type,"INTEGER",info); break;
 
-          case V_SgTypeLongLong:         curprint("INTEGER(ROSE_TY_I8)"); break;
-          case V_SgTypeUnsignedLongLong: curprint("INTEGER(ROSE_TY_I8)"); break;
+       // case V_SgTypeLong:             unparseBaseType(type,"INTEGER",info); break;
+       // case V_SgTypeSignedLong:       unparseBaseType(type,"INTEGER",info); break;
+       // case V_SgTypeUnsignedLong:     unparseBaseType(type,"INTEGER",info); break;
 
-       // scalar floating point types
-          case V_SgTypeFloat:            curprint("REAL(ROSE_TY_R4)"); break;
-          case V_SgTypeDouble:           curprint("REAL(ROSE_TY_R8)"); break;
-          case V_SgTypeLongDouble:       curprint("REAL(ROSE_TY_R8)"); break;
-#else
-       // Craig suggests, as I understand his email, that the size information should be 
-       // specified using the kind mechanism or use the default, but don't hard code the 
-       // size information directly.
-          case V_SgTypeShort:            curprint("INTEGER"); break;
-          case V_SgTypeSignedShort:      curprint("INTEGER"); break;
-          case V_SgTypeUnsignedShort:    curprint("INTEGER"); break;
-
-          case V_SgTypeInt:              curprint("INTEGER"); break;
-          case V_SgTypeSignedInt:        curprint("INTEGER"); break;
-          case V_SgTypeUnsignedInt:      curprint("INTEGER"); break;
-
-          case V_SgTypeLong:             curprint("INTEGER"); break;
-          case V_SgTypeSignedLong:       curprint("INTEGER"); break;
-          case V_SgTypeUnsignedLong:     curprint("INTEGER"); break;
-
-          case V_SgTypeLongLong:         curprint("INTEGER"); break;
-          case V_SgTypeUnsignedLongLong: curprint("INTEGER"); break;
+       // case V_SgTypeLongLong:         unparseBaseType(type,"INTEGER",info); break;
+       // case V_SgTypeUnsignedLongLong: unparseBaseType(type,"INTEGER",info); break;
 
        // scalar floating point types
-          case V_SgTypeFloat:            curprint("REAL"); break;
-          case V_SgTypeDouble:           curprint("DOUBLE PRECISION"); break;
-          case V_SgTypeLongDouble:       curprint("QUAD PRECISION"); break;
-#endif
+          case V_SgTypeFloat:            unparseBaseType(type,"REAL",info); break;
+          case V_SgTypeDouble:           unparseBaseType(type,"DOUBLE PRECISION",info); break;
+       // case V_SgTypeLongDouble:       unparseBaseType(type,"QUAD PRECISION",info); break;
 
        // scalar boolean type
-          case V_SgTypeBool:             curprint("LOGICAL"); break;
+          case V_SgTypeBool:             unparseBaseType(type,"LOGICAL",info); break;
 
        // complex type
-          case V_SgTypeComplex:          curprint("COMPLEX"); break;
+          case V_SgTypeComplex:          unparseBaseType(type,"COMPLEX",info); break;
+
+       // FMZ (2/2/2009): Add image_team for co-array team declaration
+          case V_SgTypeCAFTeam:          unparseBaseType(type,"TEAM",info); break;
+
+       // FMZ (4/14/2009): Added cray pointer
+          case V_SgTypeCrayPointer:      unparseBaseType(type,"POINTER",info); break;
 
        // array type
           case V_SgArrayType:            unparseArrayType(type, info); break;
-    
-       // FIXME:eraxxon
+
+       // pointer and reference support    
           case V_SgPointerType:          unparsePointerType(type, info); break;
           case V_SgReferenceType:        unparseReferenceType(type, info); break;
 
@@ -133,11 +116,6 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
        // DQ (12/1/2007): We need to unparse the kind and type parameters
           case V_SgModifierType:         unparseModifierType(type, info); break;
-
-       // FMZ (2/2/2009): Add image_team for co-array team declaration
-          case V_SgTypeCAFTeam:          curprint("TEAM"); break;
-       // FMZ (4/14/2009): Added cray pointer
-          case V_SgTypeCrayPointer:      curprint("POINTER "); break;
 
 #if 0
        // DQ (8/15/2007): I don't think these apply to Fortran.
@@ -158,10 +136,11 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 #if 0
   // DQ (12/1/2007): This has been moved to the SgModifierType
      SgExpression* kindExpression = type->get_type_kind();
-     printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
+  // printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
      if (kindExpression != NULL)
         {
           curprint("(");
+          curprint("kind=");
           unp->u_fortran_locatedNode->unparseExpression(kindExpression,info);
           curprint(")");
         }
@@ -180,6 +159,63 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
 
 void 
+UnparseFortran_type::unparseTypeKind(SgType* type, SgUnparse_Info& info)
+   {
+  // DQ (12/1/2007): This has been moved to the SgModifierType
+     SgExpression* kindExpression = type->get_type_kind();
+  // printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
+     if (kindExpression != NULL)
+        {
+          curprint("(");
+          curprint("kind=");
+          unp->u_fortran_locatedNode->unparseExpression(kindExpression,info);
+          curprint(")");
+        }
+   }
+
+void
+UnparseFortran_type::unparseTypeLengthAndKind(SgType* type, SgExpression* lengthExpression, SgUnparse_Info & info)
+   {
+  // DQ (12/1/2007): This has been moved to the SgModifierType
+     SgExpression* kindExpression = type->get_type_kind();
+  // printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
+
+     if (lengthExpression != NULL || kindExpression != NULL)
+        {
+          curprint("(");
+
+          if (lengthExpression != NULL)
+             {
+               curprint("len=");
+               unp->u_fortran_locatedNode->unparseExpression(lengthExpression,info);
+
+            // Check if there will be a kind paramter.
+               if (kindExpression != NULL)
+                  {
+                    curprint(",");
+                  }
+             }
+
+          if (kindExpression != NULL)
+             {
+               curprint("kind=");
+               unp->u_fortran_locatedNode->unparseExpression(kindExpression,info);
+             }
+
+          curprint(")");
+        }
+   }
+
+void 
+UnparseFortran_type::unparseBaseType(SgType* type, const std::string & nameOfType, SgUnparse_Info & info)
+   {
+  // printf ("Inside of UnparserFort::unparseBaseType \n");
+  // cur << "\n/* Inside of UnparserFort::unparseBaseType */\n";
+     curprint(nameOfType);
+     unparseTypeKind(type,info);
+   }
+
+void 
 UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info)
    {
   // printf ("Inside of UnparserFort::unparseStringType \n");
@@ -187,7 +223,7 @@ UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info)
   
      SgTypeString* string_type = isSgTypeString(type);
      ROSE_ASSERT(string_type != NULL);
-
+#if 0
   // curprint("CHARACTER(LEN=*)");
      curprint("CHARACTER(LEN=");
 
@@ -196,7 +232,7 @@ UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info)
      if (string_type->get_definedUsingScalarLength())
         {
        // Output the scalar integer value
-           curprint(StringUtility::numberToString(string_type->get_lengthScalar()));
+          curprint(StringUtility::numberToString(string_type->get_lengthScalar()));
         }
        else
         {
@@ -209,6 +245,10 @@ UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info)
         }
 
      curprint(")");
+#else
+     curprint ("character");
+     unparseTypeLengthAndKind(string_type,string_type->get_lengthExpression(),info);
+#endif
 
   // printf ("Leaving of UnparserFortran_type::unparseStringType \n");
   // cur << "\n/* Leaving of UnparserFort::unparseStringType */\n";
