@@ -22,15 +22,11 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
 
-// TODO move the following OpenMP processing code into a separated source file
-// maybe in src/midend/openmpSupport ?
-// -----------------------------------------------------------------------------
-
-// an internal data structure to avoid redundant AST traversal to find OpenMP pragmas
-static std::list<SgPragmaDeclaration* > omp_pragma_list; 
 
 namespace OmpSupport
 { 
+  // an internal data structure to avoid redundant AST traversal to find OpenMP pragmas
+  static std::list<SgPragmaDeclaration* > omp_pragma_list; 
   // find all SgPragmaDeclaration nodes within a file and parse OpenMP pragmas into OmpAttribute info.
   void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
   {
