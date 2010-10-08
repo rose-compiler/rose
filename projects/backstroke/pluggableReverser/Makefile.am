@@ -8,15 +8,17 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 noinst_LIBRARIES =  libBackstrokePluggableReverser.a
 
 libBackstrokePluggableReverser_a_DEPENDENCIES =
-libBackstrokePluggableReverser_a_SOURCES = expressionProcessor.C statementProcessor.C ifStatementProcessor.C eventProcessor.C \
-					variableVersionTable.C costModel.C akgulStyleExpressionProcessor.C \
-					straightlineStatementProcessor.C handlerTypes.C returnStatementHandler.C \
-					variableDeclarationHandler.C
+libBackstrokePluggableReverser_a_SOURCES = expressionHandler.C statementHandler.C ifStatementHandler.C eventHandler.C \
+					variableVersionTable.C costModel.C akgulStyleExpressionHandler.C \
+					straightlineStatementHandler.C handlerTypes.C returnStatementHandler.C \
+					variableDeclarationHandler.C redefineValueRestorer.C extractFromUseValueRestorer.C \
+					whileStatementHandler.C stateSavingStatementHandler.C
 libBackstrokePluggableReverser_a_includedir = $(includedir)/backstroke
-libBackstrokePluggableReverser_a_include_HEADERS = expressionProcessor.h statementProcessor.h \
-					ifStatementProcessor.h eventProcessor.h variableVersionTable.h costModel.h \
-					handlerTypes.h straightlineStatementProcessor.h akgulStyleExpressionProcessor.h \
-					returnStatementHandler.h variableDeclarationHandler.h
+libBackstrokePluggableReverser_a_include_HEADERS = expressionHandler.h statementHandler.h \
+					ifStatementHandler.h eventHandler.h variableVersionTable.h costModel.h \
+					handlerTypes.h straightlineStatementHandler.h akgulStyleExpressionHandler.h \
+					returnStatementHandler.h variableDeclarationHandler.h redefineValueRestorer.h \
+					extractFromUseValueRestorer.h whileStatementHandler.h stateSavingStatementHandler.h
 
 EXTRA_DIST = 
 

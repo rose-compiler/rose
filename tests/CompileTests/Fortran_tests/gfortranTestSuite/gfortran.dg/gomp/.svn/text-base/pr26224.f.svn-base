@@ -1,8 +1,0 @@
-C PR fortran/26224
-C { dg-do compile }
-
-      PROGRAM PR26224
-      INTEGER FOO
-C$OMP SINGLE
-C$OMP END SINGLE COPYPRIVATE (FOO, BAR)
-      END

@@ -2,6 +2,8 @@
 *~
 # libtool temp dir
 .libs
+# .svn files
+.svn
 # editor temp file
 .*swo
 *.swp

@@ -193,12 +193,14 @@ Grammar::setUpTypes ()
 #endif
 
 #if 1
+  // DQ (10/5/2010): I think we can move back to an implementation with DEF_DELETE now (the other uninitialized memory problem was fixed).
   // DQ (10/3/2010): Note that without the NO_DELETE the Fortran jacobi.f file will sometimes fail.
   // DQ (10/2/10): This is the better place for the Fortran kind mechanism (only meaningful for Fortran)
   // DQ (9/17/2007): Support for Fortran kind mechanism
   // Type.setDataPrototype("SgExpression*","type_kind","= NULL", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
+  // Type.setDataPrototype("SgExpression*","type_kind","= NULL", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgExpression*","type_kind","= NULL",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
 #endif
      
 #if 1
@@ -347,11 +349,12 @@ Grammar::setUpTypes ()
   // This type now has a length parameter, so we cannot use a single static builtin_type to represent all of the variations.
   // TypeString.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (10/5/2010): Removed the lengthScalar and definedUsingScalarLength data members (no longer required).
   // DQ (8/6/2010): Add string length to type (this type is used only in Fortran support, as I recall, but might be used for string literals in all langauges).
   // A fixed length string is the most common form, but fortran also permits a variable length string so we have to support an expression as well.
      TypeString.setDataPrototype           ("SgExpression*", "lengthExpression"        , "= NULL" , CONSTRUCTOR_PARAMETER   , BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
-     TypeString.setDataPrototype           ("size_t"       , "lengthScalar"            , "= 0"    , CONSTRUCTOR_PARAMETER   , BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TypeString.setDataPrototype           ("bool"         , "definedUsingScalarLength", "= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TypeString.setDataPrototype           ("size_t"       , "lengthScalar"            , "= 0"    , CONSTRUCTOR_PARAMETER   , BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TypeString.setDataPrototype           ("bool"         , "definedUsingScalarLength", "= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TypeBool.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeDefault.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
