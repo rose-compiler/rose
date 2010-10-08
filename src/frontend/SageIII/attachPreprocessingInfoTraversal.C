@@ -164,7 +164,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // This is the main function called to insert all PreprocessingInfo objects into IR nodes.  This function currently 
   // adds the PreprocessingInfo objects as attributes, but will be modified to insert the CPP directive specific
   // PreprocessingInfo objects as separate IR nodes and leave PreprocessingInfo objects that are comments inserts
-  // as attributes.  Note that attributes imply PreprocessingInfo specific atributes and not the more general 
+  // as attributes.  Note that attributes imply PreprocessingInfo specific atrributes and not the more general 
   // mechanism available in ROSE for user defined attributes to be saved into the AST.
 
      ROSE_ASSERT(currentListOfAttributes != NULL);
@@ -1075,8 +1075,6 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                          // Iterate over the list of comments and directives and add them to the AST
                             bool reset_start_index = true;
-                         // iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
-                         //    ( targetNode, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index,inheritedAttribute.currentListOfAttributes );
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                                ( targetNode, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
 

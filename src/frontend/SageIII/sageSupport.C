@@ -7827,7 +7827,7 @@ SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* current
           case PreprocessingInfo::ClinkageSpecificationStart:
           case PreprocessingInfo::ClinkageSpecificationEnd:
              {
-               printf ("Error: these cases chould not generate a new IR node (directiveTypeName = %s) \n",PreprocessingInfo::directiveTypeName(directive).c_str());
+               printf ("Error: these cases could not generate a new IR node (directiveTypeName = %s) \n",PreprocessingInfo::directiveTypeName(directive).c_str());
                ROSE_ASSERT(false);
                break;
              }
