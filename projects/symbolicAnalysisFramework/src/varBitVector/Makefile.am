@@ -24,7 +24,7 @@ check-local:selfTest
 # Liao assertion failure here
 #	./selfTest $(srcdir)/test_example.cpp
 
-EXTRA_DIST =  test_example.c
+EXTRA_DIST =  test_example.cpp
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cpp *.patch *.loT
 

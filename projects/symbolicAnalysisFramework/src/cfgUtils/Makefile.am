@@ -26,7 +26,7 @@ selfTest_LDADD += $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #check-local:selfTest
 #	./selfTest $(srcdir)/test_example.cpp
-EXTRA_DIST =  test_example.c
+EXTRA_DIST =  test_example.cpp
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cpp *.patch *.loT
 
