@@ -56,7 +56,7 @@
 #include <sys/ioctl.h>
 #include <asm/ldt.h>
 #include <linux/unistd.h>
-
+#include <sys/sysinfo.h> 
 enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
 
 #ifndef HAVE_USER_DESC
@@ -1345,6 +1345,253 @@ EmulationPolicy::read_string_vector(uint32_t va)
     return vec;
 }
 
+#define SEMOP		 1
+#define SEMGET		 2
+#define SEMCTL		 3
+#define SEMTIMEDOP	 4
+#define MSGSND		11
+#define MSGRCV		12
+#define MSGGET		13
+#define MSGCTL		14
+#define SHMAT		21
+#define SHMDT		22
+#define SHMGET		23
+#define SHMCTL		24
+
+
+int ipc(uint32_t call, int32_t first, int32_t second, int32_t third, uint8_t ptr, uint32_t fifth)
+{
+	int version, ret;
+    size_t size_ptr;
+    int result;
+
+
+
+    /* semop system calls takes an array of these. */
+    struct sembuf {
+      unsigned short  sem_num;    /* semaphore index in array */
+      short       sem_op;     /* semaphore operation */
+      short       sem_flg;    /* operation flags */
+    };
+
+    switch(call)
+    {
+
+      case SEMGET:
+        //return sys_semget(first, second, third);
+        result = syscall(117,first, second, third, ptr, fifth);
+
+   
+        break;
+
+      case SEMCTL: {
+                     /*
+                        union semun {
+                            int val;            
+                            struct semid_ds __user *buf;    
+                            unsigned short __user *array;   
+                            struct seminfo __user *__buf;   
+                            void __user *__pad;
+                        };
+                     */  
+                     /*
+                     union semun fourth;
+                     if (!ptr)
+                       return -EINVAL;
+                     if (get_user(fourth.__pad, (void __user * __user *) ptr))
+                       return -EFAULT;
+                     return sys_semctl(first, second, third, fourth);
+                     */
+
+                     break;
+                   }
+
+#if 0
+
+      case SEMOP:
+        //return sys_semtimedop(first, (struct sembuf __user *)ptr,
+        //    second, NULL);
+ 
+        //result = syscall( 117, fi, (long) sys_path.c_str(), mode, flags);
+ 
+        size_ptr = sizeof(sembuf);
+
+        break;
+      case SEMTIMEDOP:
+       /* return sys_semtimedop(first, (struct sembuf __user *)ptr,
+            second,
+            (const struct timespec __user *)fifth);
+      */
+
+        size_ptr = sizeof(sembuf);
+
+        break;
+      case SEMCTL: {
+          /*           union semun fourth;
+                     if (!ptr)
+                       return -EINVAL;
+                     if (get_user(fourth.__pad, (void __user * __user *) ptr))
+                       return -EFAULT;
+                     return sys_semctl(first, second, third, fourth);
+                     */
+
+                     break;
+                   }
+
+      case MSGSND:
+                   //return sys_msgsnd(first, (struct msgbuf __user *) ptr,
+                    //   second, third);
+                   break;
+      case MSGRCV:
+                   /*
+                   switch (version) {
+                     case 0: {
+                               struct ipc_kludge tmp;
+                               if (!ptr)
+                                 return -EINVAL;
+
+                               if (copy_from_user(&tmp,
+                                     (struct ipc_kludge __user *) ptr,
+                                     sizeof(tmp)))
+                                 return -EFAULT;
+                               return sys_msgrcv(first, tmp.msgp, second,
+                                   tmp.msgtyp, third);
+                             }
+                     default:
+                             return sys_msgrcv(first,
+                                 (struct msgbuf __user *) ptr,
+                                 second, fifth, third);
+                   }
+                   */
+                   break;
+      case MSGGET:
+                   //return sys_msgget((key_t) first, second);
+                   break;
+      case MSGCTL:
+                   //return sys_msgctl(first, second, (struct msqid_ds __user *)ptr);
+                   break;
+
+      case SHMAT:
+                   /*
+                   switch (version) {
+                     default: {
+                                unsigned long raddr;
+                                ret = do_shmat(first, (char __user *)ptr,
+                                    second, &raddr);
+                                if (ret)
+                                  return ret;
+                                return put_user(raddr, (unsigned long __user *) third);
+                              }
+                     case 1:
+                              return -EINVAL;
+                   }
+    */
+                   break;
+      case SHMDT:
+                   //return sys_shmdt((char __user *)ptr);
+                   break;
+      case SHMGET:
+                   //return sys_shmget(first, second, third);
+                   break;
+      case SHMCTL:
+                   //return sys_shmctl(first, second,
+                   //    (struct shmid_ds __user *) ptr);
+                   break;
+
+#endif
+
+      default:
+                   std::cout << "Call is: " << call << std::endl;
+                   //return -ENOSYS;
+    
+                   break;
+    }
+
+
+    //syscall(117,first, second, third, ptr, fifth);
+
+    return result;
+#if 0
+	version = call >> 16; /* hack for backward compatibility */
+	call &= 0xffff;
+
+	switch (call) {
+	case SEMOP:
+		return sys_semtimedop(first, (struct sembuf __user *)ptr,
+				      second, NULL);
+	case SEMTIMEDOP:
+		return sys_semtimedop(first, (struct sembuf __user *)ptr,
+				      second,
+				      (const struct timespec __user *)fifth);
+
+	case SEMGET:
+		return sys_semget(first, second, third);
+	case SEMCTL: {
+		union semun fourth;
+		if (!ptr)
+			return -EINVAL;
+		if (get_user(fourth.__pad, (void __user * __user *) ptr))
+			return -EFAULT;
+		return sys_semctl(first, second, third, fourth);
+	}
+
+	case MSGSND:
+		return sys_msgsnd(first, (struct msgbuf __user *) ptr,
+				  second, third);
+	case MSGRCV:
+		switch (version) {
+		case 0: {
+			struct ipc_kludge tmp;
+			if (!ptr)
+				return -EINVAL;
+
+			if (copy_from_user(&tmp,
+					   (struct ipc_kludge __user *) ptr,
+					   sizeof(tmp)))
+				return -EFAULT;
+			return sys_msgrcv(first, tmp.msgp, second,
+					   tmp.msgtyp, third);
+		}
+		default:
+			return sys_msgrcv(first,
+					   (struct msgbuf __user *) ptr,
+					   second, fifth, third);
+		}
+	case MSGGET:
+		return sys_msgget((key_t) first, second);
+	case MSGCTL:
+		return sys_msgctl(first, second, (struct msqid_ds __user *)ptr);
+
+	case SHMAT:
+		switch (version) {
+		default: {
+			unsigned long raddr;
+			ret = do_shmat(first, (char __user *)ptr,
+				       second, &raddr);
+			if (ret)
+				return ret;
+			return put_user(raddr, (unsigned long __user *) third);
+		}
+		case 1:
+			/*
+			 * This was the entry point for kernel-originating calls
+			 * from iBCS2 in 2.2 days.
+			 */
+			return -EINVAL;
+		}
+	case SHMDT:
+		return sys_shmdt((char __user *)ptr);
+	case SHMGET:
+		return sys_shmget(first, second, third);
+	case SHMCTL:
+		return sys_shmctl(first, second,
+				   (struct shmid_ds __user *) ptr);
+	default:
+		return -ENOSYS;
+	}
+
+#endif
+}
 void
 EmulationPolicy::emulate_syscall()
 {
@@ -2018,6 +2265,119 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 116: { /* 0x74, sysinfo*/
+
+            /*
+
+               int sysinfo(struct sysinfo *info);   
+
+               struct sysinfo {
+               long uptime;             // Seconds since boot 
+                    unsigned long loads[3];  // 1, 5, and 15 minute load averages 
+                    unsigned long totalram;  // Total usable main memory size 
+                    unsigned long freeram;   // Available memory size 
+                    unsigned long sharedram; // Amount of shared memory 
+                    unsigned long bufferram; // Memory used by buffers 
+                    unsigned long totalswap; // Total swap space size 
+                    unsigned long freeswap;  // swap space still available 
+                    unsigned short procs;    // Number of current processes 
+                    unsigned long totalhigh; // Total high memory size 
+                    unsigned long freehigh;  // Available high memory size 
+                    unsigned int mem_unit;   // Memory unit size in bytes 
+                    char _f[20-2*sizeof(long)-sizeof(int)]; // Padding for libc5 
+                  };
+
+            */
+            syscall_enter("sysinfo", "p");
+
+
+            struct kernel_sysinfo {
+              int32_t uptime;             /* Seconds since boot */
+              uint32_t loads[3];  /* 1, 5, and 15 minute load averages */
+              uint32_t totalram;  /* Total usable main memory size */
+              uint32_t freeram;   /* Available memory size */
+              uint32_t sharedram; /* Amount of shared memory */
+              uint32_t bufferram; /* Memory used by buffers */
+              uint32_t totalswap; /* Total swap space size */
+              uint32_t freeswap;  /* swap space still available */
+              unsigned short procs;    /* Number of current processes */
+              uint32_t totalhigh; /* Total high memory size */
+              uint32_t freehigh;  /* Available high memory size */
+              uint32_t mem_unit;   /* Memory unit size in bytes */
+              char _f[20-2*sizeof(uint32_t)-sizeof(int32_t)]; /* Padding for libc5 */
+            };
+
+            struct sysinfo {
+              long uptime;             // Seconds since boot 
+              unsigned long loads[3];  // 1, 5, and 15 minute load averages 
+              unsigned long totalram;  // Total usable main memory size 
+              unsigned long freeram;   // Available memory size 
+              unsigned long sharedram; // Amount of shared memory 
+              unsigned long bufferram; // Memory used by buffers 
+              unsigned long totalswap; // Total swap space size 
+              unsigned long freeswap;  // swap space still available 
+              unsigned short procs;    // Number of current processes 
+              unsigned long totalhigh; // Total high memory size 
+              unsigned long freehigh;  // Available high memory size 
+              unsigned int mem_unit;   // Memory unit size in bytes 
+              char _f[20-2*sizeof(long)-sizeof(int)]; // Padding for libc5 
+            };
+
+            sysinfo sys;
+            int result  = syscall( 116, &sys );
+
+            kernel_sysinfo kernel_sys;
+            kernel_sys.uptime = sys.uptime;
+            for(int i = 0 ; i < 3 ; i++)
+               kernel_sys.loads[i] = sys.loads[i];
+            kernel_sys.totalram    = sys.totalram;
+            kernel_sys.freeram     = sys.freeram;
+            kernel_sys.sharedram   = sys.sharedram;
+            kernel_sys.bufferram   = sys.bufferram;
+            kernel_sys.totalswap   = sys.totalswap;
+            kernel_sys.freeswap    = sys.freeswap;
+            kernel_sys.procs       = sys.procs;
+            kernel_sys.totalhigh   = sys.totalhigh;
+            kernel_sys.mem_unit    = sys.mem_unit;
+            for (int i = 0; i < 20-2*sizeof(long)-sizeof(int) ; i++)
+              kernel_sys._f[i] = sys._f[i];
+
+            map->write(&kernel_sys, arg(0), sizeof(kernel_sysinfo));
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+
+            break;
+        };
+
+        case 117: { /* 0x75, ipc */
+            //int ipc(unsigned int call, int first, int second, int third, void *ptr, long fifth)
+            syscall_enter("ipc", "ddddpd");
+ 
+            uint32_t call, fifth, ptr;
+            int32_t  first, second, third;
+            call   = arg(0);
+            first  = arg(1);
+            second = arg(2);
+            third  = arg(3);
+            ptr    = arg(4);
+            fifth  = arg(5);
+
+            uint8_t ptr_addr;
+            size_t nread = map->read(&ptr_addr, ptr, 1);
+            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+
+            std::cout << "ERROR: ipc system call not implemented" << std::endl;
+            exit(1);
+
+            int result = ipc(call, first, second, third, ptr_addr, fifth);
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+
+            break;
+        }
+
         case 122: { /*0x7a, uname*/
             syscall_enter("uname", "p");
             uint32_t dest_va=arg(0);
@@ -2083,6 +2443,37 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+    case 140: { /* 0x8c, llseek */
+        /*
+           int _llseek(unsigned int fd, unsigned long offset_high,            unsigned
+           long offset_low, loff_t *result,            unsigned int whence);
+
+
+        */
+
+        syscall_enter("llseek","dddpd");
+        uint32_t fd = arg(0);
+        uint32_t offset_high = arg(1);
+        uint32_t offset_low  = arg(2);
+
+        long long whence      = arg(4);
+
+        loff_t llseek_result2; 
+        int result = syscall(140, fd, offset_high, offset_low, llseek_result2, whence );
+
+        //FIXME: Is this the correct way of changing this pointer?
+        //And is it correct that this is a 'long long*'? That is what it seems like to
+        //me by typedef long long        __kernel_loff_t; typedef __kernel_loff_t loff_t
+        map->write(&llseek_result2, arg(3), 8);
+
+
+        writeGPR(x86_gpr_ax, result);
+
+        syscall_leave("d");
+
+        break;
+
+    };
 	case 141: {     /*0x8d, getdents*/
 	    /* 
                int getdents(unsigned int fd, struct linux_dirent *dirp,
@@ -2232,6 +2623,79 @@ EmulationPolicy::emulate_syscall()
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
+        }
+
+        case 186: { /* 0xba, sigaltstack*/
+          /*
+             int sigaltstack(const stack_t *restrict ss, stack_t *restrict oss);
+
+             The sigaltstack() function allows a process to define and examine the state of an alternate stack for signal handlers for the current thread. Signals that have been explicitly declared to execute on the alternate stack shall be delivered on the alternate stack.
+
+             If ss is not a null pointer, it points to a stack_t structure that specifies the alternate signal stack that shall take effect upon return from sigaltstack(). The ss_flags member specifies the new stack state. If it is set to SS_DISABLE, the stack is disabled and ss_sp and ss_size are ignored. Otherwise, the stack shall be enabled, and the ss_sp and ss_size members specify the new address and size of the stack.
+
+             The range of addresses starting at ss_sp up to but not including ss_sp+ ss_size is available to the implementation for use as the stack. This function makes no assumptions regarding which end is the stack base and in which direction the stack grows as items are pushed.
+
+             If oss is not a null pointer, on successful completion it shall point to a stack_t structure that specifies the alternate signal stack that was in effect prior to the call to sigaltstack(). The ss_sp and ss_size members specify the address and size of that stack. The ss_flags member specifies the stack's state, and may contain one of the following values:
+
+             SS_ONSTACK
+             The process is currently executing on the alternate signal stack. Attempts to modify the alternate signal stack while the process is executing on it fail. This flag shall not be modified by processes.
+             SS_DISABLE
+             The alternate signal stack is currently disabled.
+          */
+              syscall_enter("sigaltstack", "pp");
+#if 0
+
+              struct stack_t_kernel{
+                uint8_t  ss_sp;
+                int32_t  ss_flags;
+                uint32_t ss_size;
+
+              };
+
+              stack_t_kernel fakestack_ss;
+              size_t nread = map->read(&fakestack_ss, arg(0), sizeof(stack_t_kernel));
+              ROSE_ASSERT(nread == sizeof(stack_t_kernel));
+
+              //Read in the contents from the fake stack
+
+              void* ss_sp_ss  = malloc(fakestack_ss.ss_size);
+              nread = map->read(&ss_sp_ss, fakestack_ss.ss_sp, fakestack_ss.ss_size);
+              stack_t fakestack_ss_arg;
+              fakestack_ss_arg.ss_flags = fakestack_ss.ss_flags;
+              fakestack_ss_arg.ss_size  = fakestack_ss.ss_size;
+              fakestack_ss_arg.ss_sp    = ss_sp_ss;
+
+              //SECOND ARGUMENT OSS CAN BE NULL
+#endif
+              int result;
+#if 0
+              if( arg(1) != NULL )
+              {
+
+                ROSE_ASSERT(false == true);
+                stack_t_kernel fakestack_oss;
+                nread = map->read(&fakestack_oss, arg(1), sizeof(stack_t_kernel));
+                ROSE_ASSERT(nread == sizeof(stack_t_kernel));
+
+
+                void* ss_sp_oss = malloc(fakestack_oss.ss_size);
+
+              }else{
+                std::cout << "Executing syscall" << std::endl;
+//                result = sigaltstack(&fakestack_ss_arg,NULL);
+              }
+#endif
+              if (result == -1) result = -errno;
+
+              result = -errno;
+              writeGPR(x86_gpr_ax, result);
+
+              syscall_leave("d");
+
+
+              break;
+
+
         }
 
         case 191: { /*0xbf, ugetrlimit*/
