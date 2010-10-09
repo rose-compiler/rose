@@ -1,0 +1,6 @@
+analysis_OBJ = ${ANALYSIS_ROOT}/src/analysis/obj/analysis.o ${ANALYSIS_ROOT}/src/analysis/obj/analysisCommon.o ${ANALYSIS_ROOT}/src/analysis/obj/partitionedAnalysis.o
+analysis_H = ${ANALYSIS_ROOT}/src/analysis/analysis.h ${ANALYSIS_ROOT}/src/analysis/analysisCommon.h ${ANALYSIS_ROOT}/src/analysis/dataflow.h ${ANALYSIS_ROOT}/src/analysis/partitionedAnalysis.h
+
+.PHONY: analysis
+analysis:
+	cd ${ANALYSIS_ROOT}/src/analysis; ${MAKE} all; cd ${ANALYSIS_ROOT}/src/${Component}
