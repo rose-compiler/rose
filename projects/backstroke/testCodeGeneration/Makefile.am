@@ -7,8 +7,9 @@ LINK	 = $(CXXLINK)
 noinst_LIBRARIES =  libBackstrokeTestCodeBuilder.a
 
 libBackstrokeTestCodeBuilder_a_DEPENDENCIES = 
-libBackstrokeTestCodeBuilder_a_SOURCES = testCodeBuilder.C 
-libBackstrokeTestCodeBuilder_a_include_HEADERS = testCodeBuilder.h
+libBackstrokeTestCodeBuilder_a_SOURCES = builderTypes.C testCodeBuilder.C testExpressionBuilder.C testStatementBuilder.C
+libBackstrokeTestCodeBuilder_a_include_HEADERS = builderTypes.h testCodeBuilder.h testExpressionBuilder.h testStatementBuilder.h
+
 libBackstrokeTestCodeBuilder_a_includedir = $(includedir)/backstroke
 
 
