@@ -1765,6 +1765,11 @@ void c_action_end_type_stmt(Token_t *label, Token_t *endKeyword, Token_t *typeKe
 #if !SKIP_C_ACTION_IMPLEMENTATION
   // Pop the class definition (SgClassDefinition) used to hold Fortran derived types
      ROSE_ASSERT(astScopeStack.empty() == false);
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
      astScopeStack.pop_front();
 #endif
    }
@@ -2694,8 +2699,16 @@ void c_action_enumerator_list(int count)
  */
 // void c_action_end_enum_stmt(Token_t * label)
 void c_action_end_enum_stmt(Token_t *label, Token_t *endKeyword, Token_t *enumKeyword, Token_t *eos)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_end_enum_stmt() label = %p id = %p \n",label,endKeyword);
+
+     ROSE_ASSERT(astScopeStack.empty() == false);
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+   }
 
 /** R465
  * array_constructor
@@ -15398,6 +15411,12 @@ void c_action_end_program_stmt(Token_t *label, Token_t *endKeyword, Token_t *pro
        // ROSE_ASSERT(programDeclaration->get_name().getString() == string(id->text));
           programDeclaration->set_named_in_end_statement(true);
         }
+
+     ROSE_ASSERT(astScopeStack.empty() == false);
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 #endif
    }
 
