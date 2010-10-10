@@ -627,7 +627,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
           outputState("hasKindSelector == true in R403 c_action_intrinsic_type_spec()");
 #endif
           int rank = astExpressionStack.size();
-          printf ("In R403 c_action_intrinsic_type_spec(): rank = %d \n",rank);
+       // printf ("In R403 c_action_intrinsic_type_spec(): rank = %d \n",rank);
 
        // We want this to be either a SgAsteriskShapeExp or an SgIntVal
           SgExpression* lengthExpression = NULL;
@@ -2958,6 +2958,10 @@ void c_action_ac_implied_do()
   // we always generate all three SgExpression objects.
      ROSE_ASSERT(expressionList.size() == 3);
 
+#if 1
+     increment = expressionList.back();
+     expressionList.pop_back();
+#else
      if (expressionList.size() == 3)
         {
           ROSE_ASSERT(expressionList.empty() == false);
@@ -2969,6 +2973,7 @@ void c_action_ac_implied_do()
           increment = new SgNullExpression();
           setSourcePosition(increment);
         }
+#endif
 
      ROSE_ASSERT(expressionList.empty() == false);
      SgExpression* upperBound = expressionList.back();
@@ -2994,6 +2999,7 @@ void c_action_ac_implied_do()
      setSourcePosition(assignment);
 #endif
 
+#if 0
 #if 1
   // DQ (9/26/2010): Note that this is where the object_list is used, to hold the doLoopVarExp.
   // This support will be implemented when the ac-do-variable is available in OFP (being fixed).
@@ -3041,6 +3047,9 @@ void c_action_ac_implied_do()
      ROSE_ASSERT(doLoopVar != NULL);
      astInitializerStack.pop_front();
 #endif
+#else
+     SgExpression* doLoopVarExp = lowerBound;
+#endif
 
   // These are not required!
   // SgExpression* increment   = new SgNullExpression();
@@ -3054,6 +3063,12 @@ void c_action_ac_implied_do()
   // SgExpression* variableReference = astExpressionStack.front();
   // astExpressionStack.pop_front();
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At MIDDLE of R470 list c_action_ac_implied_do()");
+#endif
+
+#if 0
   // DQ (9/22/2010): I think this code might be wrong! Unclear when object list is required. See test2010_49.f90.
 #if 0
      ROSE_ASSERT(doLoopVarExp->get_symbol() != NULL);
@@ -3075,24 +3090,47 @@ void c_action_ac_implied_do()
           objectList->append_expression(doLoopVarExp);
         }
 #endif
+#else
+  // DQ (10/9/2010): This should be empty at this point.
+     ROSE_ASSERT(objectList->get_expressions().empty() == true);
+
+     ROSE_ASSERT(astExpressionStack.empty() == false);
+     SgExpression* objectListEntry = astExpressionStack.front();
+     astExpressionStack.pop_front();
+
+     objectList->append_expression(objectListEntry);
+
+  // DQ (10/9/2010): Not clear if we can assert this!
+  // ROSE_ASSERT(astExpressionStack.empty() == true);
+#endif
+
+#if 0
+     printf ("objectList   = %p = %s \n",objectList,objectList->class_name().c_str());
+     printf ("doLoopVarExp = %p = %s \n",doLoopVarExp,doLoopVarExp->class_name().c_str());
+     printf ("upperBound   = %p = %s \n",upperBound,upperBound->class_name().c_str());
+     printf ("increment    = %p = %s \n",increment,increment->class_name().c_str());
+#endif
 
   // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
   // SgImpliedDo* impliedDo = new SgImpliedDo(variableReference,doLoopVar,lowerBound,upperBound,increment,objectList);
   // SgImpliedDo* impliedDo = new SgImpliedDo(variableReference,doLoopVar,lowerBound,upperBound,increment,objectList);
      SgScopeStatement* implied_do_scope = NULL; // new SgBasicBlock();
   // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVarExp,lowerBound,upperBound,increment,objectList);
-     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVarExp,lowerBound,upperBound,increment,objectList,implied_do_scope);
+  // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVarExp,lowerBound,upperBound,increment,objectList,implied_do_scope);
+     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVarExp,upperBound,increment,objectList,implied_do_scope);
      setSourcePosition(impliedDo);
 
      objectList->set_parent(impliedDo);
      doLoopVarExp->set_parent(impliedDo);
      upperBound->set_parent(impliedDo);
-     lowerBound->set_parent(impliedDo);
+  // lowerBound->set_parent(impliedDo);
      increment->set_parent(impliedDo);
 
+#if 0
   // DQ (9/22/2010): Handle case when this is NULL.
      if (variableReference != NULL)
           variableReference->set_parent(impliedDo);
+#endif
 
   // DQ (4/21/2008): We want to use the astInitializerStack for initialization purposes, actually the R469 ac-value
   // will be called and it should transfer the implicit do-loop from the astExpressionStack to the 
@@ -3153,10 +3191,33 @@ void c_action_ac_implied_do_control( ofp_bool hasStride )
   // setSourcePosition(lowerBound);
   // printf ("lowerBound = %p \n",lowerBound);
 
+#if 1
+  // DQ (10/9/2010): Reimplementation of support for implied do loop support.
+  // We have to form the implied do loop variable initialization. Note that this is not 
+  // a variable declaration, since if implicit none is used, the variable must have 
+  // already been declared.
+     ROSE_ASSERT(astNameStack.empty() == false);
+     SgName do_variable_name = astNameStack.front()->text;
+     astNameStack.pop_front();
+
+  // printf ("implied do loop variable name = %s \n",do_variable_name.str());
+
+     SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(do_variable_name,astScopeStack.front());
+     ROSE_ASSERT(variableSymbol != NULL);
+
+     SgVarRefExp* doLoopVar = SageBuilder::buildVarRefExp(variableSymbol);
+     ROSE_ASSERT(doLoopVar != NULL);
+
+     SgExpression* doVariableInitialization = SageBuilder::buildAssignOp(doLoopVar,lowerBound);
+     ROSE_ASSERT(doVariableInitialization != NULL);
+  // printf ("doVariableInitialization = %p = %s \n",doVariableInitialization,doVariableInitialization->class_name().c_str());
+#endif
+
      SgExprListExp* loopControl = new SgExprListExp();
      setSourcePosition(loopControl);
 
-     loopControl->append_expression(lowerBound);
+  // loopControl->append_expression(lowerBound);
+     loopControl->append_expression(doVariableInitialization);
      loopControl->append_expression(upperBound);
      loopControl->append_expression(increment);
 
@@ -3165,6 +3226,11 @@ void c_action_ac_implied_do_control( ofp_bool hasStride )
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R471 list c_action_ac_implied_do_control()");
+#endif
+
+#if 0
+     printf ("In c_action_ac_implied_do_control(): handling the implied do control support \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -5143,7 +5209,7 @@ void c_action_data_implied_do(Token_t *id, ofp_bool hasThirdExpr)
   // This is not available from OFP, so we might have to dig for it later.
      printf ("Warning: implied do loop variable is not availble in OFP \n");
      SgVarRefExp*  doLoopVar  = NULL;
-  // ROSE_ASSERT(doLoopVar != NULL);
+     ROSE_ASSERT(doLoopVar != NULL);
 
      SgExprListExp* objectList = isSgExprListExp(astExpressionStack.front());
      astExpressionStack.pop_front();
@@ -5152,7 +5218,8 @@ void c_action_data_implied_do(Token_t *id, ofp_bool hasThirdExpr)
 
      SgScopeStatement* implied_do_scope = NULL; // new SgBasicBlock();
   // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
-     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList,implied_do_scope);
+  // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList,implied_do_scope);
+     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,upperBound,increment,objectList,implied_do_scope);
      setSourcePosition(impliedDo);
 
      objectList->set_parent(impliedDo);
@@ -13730,7 +13797,7 @@ void c_action_io_implied_do()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("c_action_io_implied_do() \n");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R917 list c_action_io_implied_do()");
 #endif
@@ -13743,6 +13810,8 @@ void c_action_io_implied_do()
 
      SgExprListExp* implied_do_control = isSgExprListExp(implied_do_control_temp);
      ROSE_ASSERT(implied_do_control != NULL);
+
+#if 0
      ROSE_ASSERT(implied_do_control->get_expressions().size() == 3);
 
      SgVarRefExp*  doLoopVar  = isSgVarRefExp(implied_do_control->get_expressions()[0]);
@@ -13753,6 +13822,16 @@ void c_action_io_implied_do()
 
      SgExpression* upperBound = implied_do_control->get_expressions()[2];
      ROSE_ASSERT(upperBound != NULL);
+#else
+  // DQ (10/9/2010): This improved design uses a single expression to hold the do loop variable initialization.
+     ROSE_ASSERT(implied_do_control->get_expressions().size() == 2);
+
+     SgExpression*  doLoopVarInitialization  = implied_do_control->get_expressions()[0];
+     ROSE_ASSERT(doLoopVarInitialization != NULL);
+
+     SgExpression* upperBound = implied_do_control->get_expressions()[1];
+     ROSE_ASSERT(upperBound != NULL);
+#endif
 
      implied_do_control->get_expressions().clear();
      delete implied_do_control;
@@ -13762,6 +13841,7 @@ void c_action_io_implied_do()
      ROSE_ASSERT(increment != NULL);
      setSourcePosition(increment);
 
+     ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExprListExp* objectList = isSgExprListExp(astExpressionStack.front());
      astExpressionStack.pop_front();
 
@@ -13773,18 +13853,21 @@ void c_action_io_implied_do()
   // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,assignment,upperBound,increment,objectList);
   // SgImpliedDo* impliedDo = new SgImpliedDo(variableReference,doLoopVar,lowerBound,upperBound,increment,objectList);
   // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList);
-     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList,implied_do_scope);
+  // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVar,lowerBound,upperBound,increment,objectList,implied_do_scope);
+  // SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVarInitialization,lowerBound,upperBound,increment,objectList,implied_do_scope);
+     SgImpliedDo* impliedDo = new SgImpliedDo(doLoopVarInitialization,upperBound,increment,objectList,implied_do_scope);
      setSourcePosition(impliedDo);
 
      objectList->set_parent(impliedDo);
      upperBound->set_parent(impliedDo);
   // lowerBound->set_parent(assignment);
-     lowerBound->set_parent(impliedDo);
-     doLoopVar->set_parent(impliedDo);
+  // lowerBound->set_parent(impliedDo);
+  // doLoopVar->set_parent(impliedDo);
+     doLoopVarInitialization->set_parent(impliedDo);
 
      astExpressionStack.push_front(impliedDo);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R917 list c_action_io_implied_do()");
 #endif
@@ -13851,7 +13934,7 @@ void c_action_io_implied_do_control()
           printf ("In c_action_io_implied_do_control() \n");
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R919 c_action_io_implied_do_control()");
 #endif
@@ -13875,6 +13958,7 @@ void c_action_io_implied_do_control()
   // SgAssignOp* assignment = new SgAssignOp(loopVar,lowerBound,NULL);
   // setSourcePosition(assignment);
 
+#if 0
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgVarRefExp* doLoopVar = isSgVarRefExp(astExpressionStack.front());
 
@@ -13883,19 +13967,47 @@ void c_action_io_implied_do_control()
 
      astExpressionStack.pop_front();
   // setSourcePosition(doLoopVar);
+#else
+  // DQ (10/9/2010): Reimplementation of support for implied do loop support.
+  // We have to form the implied do loop variable initialization. Note that this is not 
+  // a variable declaration, since if implicit none is used, the variable must have 
+  // already been declared.
+     ROSE_ASSERT(astNameStack.empty() == false);
+     SgName do_variable_name = astNameStack.front()->text;
+     astNameStack.pop_front();
+
+  // printf ("implied do loop variable name = %s \n",do_variable_name.str());
+
+     SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(do_variable_name,astScopeStack.front());
+     ROSE_ASSERT(variableSymbol != NULL);
+
+     SgVarRefExp* doLoopVar = SageBuilder::buildVarRefExp(variableSymbol);
+     ROSE_ASSERT(doLoopVar != NULL);
+
+     SgExpression* doVariableInitialization = SageBuilder::buildAssignOp(doLoopVar,lowerBound);
+     ROSE_ASSERT(doVariableInitialization != NULL);
+  // printf ("doVariableInitialization = %p = %s \n",doVariableInitialization,doVariableInitialization->class_name().c_str());
+#endif
 
      SgExprListExp* implied_do_control = new SgExprListExp();
      ROSE_ASSERT(implied_do_control != NULL);
 
-     implied_do_control->append_expression(doLoopVar);
-     implied_do_control->append_expression(lowerBound);
+  // implied_do_control->append_expression(doLoopVar);
+     implied_do_control->append_expression(doVariableInitialization);
+  // implied_do_control->append_expression(lowerBound);
      implied_do_control->append_expression(upperBound);
+
+     ROSE_ASSERT(implied_do_control->get_expressions().size() == 2);
 
      astExpressionStack.push_front(implied_do_control);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R919 c_action_io_implied_do_control()");
+#endif
+#if 0
+     printf ("Exiting at the end of c_action_io_implied_do_control() \n");
+     ROSE_ASSERT(false);
 #endif
    }
 

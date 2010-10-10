@@ -19,10 +19,21 @@ endif
 # This appears to be a stable URL for downloading OFP...
 EXTERNAL_OFP_JAR_FILE_URL=http://sourceforge.net/projects/fortran-parser/files/OpenFortranParser/version_${OFP_VERSION}/OpenFortranParser-${OFP_VERSION}.jar/download
 
-# DQ (9/26/2010): If there is a newer version of OFP then copy it into the compile tree...
-OpenFortranParser-${OFP_VERSION}.jar: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar
-	cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar
+TARGET_OFP_SOURCE_FILES = token.c jni_token_funcs.c c_actions_jni.c
 
+# DQ (10/9/2010): I am eternally trying to get the makefiles dependence information correct...
+# token.c: OpenFortranParser-${OFP_VERSION}.jar
+# jni_token_funcs.c: OpenFortranParser-${OFP_VERSION}.jar
+# c_actions_jni.c: OpenFortranParser-${OFP_VERSION}.jar
+
+# DQ (10/9/2010): If the jar file in the build tree if older than that in the source tree then copy the jar file from the source tree to the build tree.
+# DQ (9/26/2010): If there is a newer version of OFP then copy it into the compile tree...
+# OpenFortranParser-${OFP_VERSION}.jar: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar
+# ${build_dir}/OpenFortranParser-${OFP_VERSION}.jar: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar
+#./OpenFortranParser-${OFP_VERSION}.jar: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar
+#	cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar
+
+# DQ (10/9/2010): If the jar file in the source tree is not present then use wget to fetch it from the OFP web site.
 # DQ (3/13/2010): I think we need to use: "--no-check-certificate"
 # Using --no-check-certificate to handle errors:
 # Resolving sgone.llnl.gov... 128.115.27.11
@@ -31,26 +42,56 @@ OpenFortranParser-${OFP_VERSION}.jar: ${srcdir}/OpenFortranParser-${OFP_VERSION}
 #   of use at https://www.verisign.com/rpa (c)09/CN=VeriSign Class 3 Secure Server CA - G2': Unable to locally verify the issuer's authority.
 # To connect to sgone.llnl.gov insecurely, use `--no-check-certificate'.
 # Unable to establish SSL connection.
-get_jar_file:
-	test -e OpenFortranParser-${OFP_VERSION}.jar || \
-      (test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar && cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar .) || \
-      (wget --no-check-certificate ${EXTERNAL_OFP_JAR_FILE_URL} || exit 1;);
+# get_jar_file:
+# get_jar_file: OpenFortranParser-${OFP_VERSION}.jar
+# OpenFortranParser-${OFP_VERSION}.jar:
+# ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar:
+OpenFortranParser-${OFP_VERSION}.jar:
+	@echo "Check the web for this specific version of OFP: OpenFortranParser-${OFP_VERSION}.jar"
+	test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar || (wget --no-check-certificate ${EXTERNAL_OFP_JAR_FILE_URL} || exit 1;);
 	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
       echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
    else \
-      echo "Error: OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
-      exit 1; \
+      echo "Note: OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
+	   @if test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar; then \
+         echo "Found valid ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file."; \
+         cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar; \
+      else \
+         echo "Error: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
+      fi; \
    fi;
+
+# Older version of shell code to automatically get OFP from the web.
+#	test -e OpenFortranParser-${OFP_VERSION}.jar || \
+#      (test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar && cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar .) || \
+#      (wget --no-check-certificate ${EXTERNAL_OFP_JAR_FILE_URL} || exit 1;);
+#	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
+#      echo "Found valid ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file."; \
+#   else \
+#      echo "Error: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
+#      exit 1; \
+#
+
+# token.c: extract_rose_required_ofp_source_files 
+# extract_rose_required_ofp_source_files: token.c
+# extract_rose_required_ofp_source_files: $(OFP_SOURCE_FILES)
+# extract_rose_required_ofp_source_files: $(TARGET_OFP_SOURCE_FILES)
+# extract_rose_required_ofp_source_files: $(OFP_SOURCE_FILES_WITHOUT_PATHS)
+extract_rose_required_ofp_source_files: token.c
+#	@echo "files: extract_rose_required_ofp_source_files is out of date compared to $(TARGET_OFP_SOURCE_FILES)"
 
 #     (wget --no-check-certificate ${EXTERNAL_OFP_JAR_FILE_URL}/OpenFortranParser-${OFP_VERSION}.jar || exit 1;);
 
-TEST_OFP_VERSION=0.8.0
-TEST_EXTERNAL_OFP_JAR_FILE_URL=http://hivelocity.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${TEST_OFP_VERSION}
+TEST_OFP_VERSION=0.8.1
+# TEST_EXTERNAL_OFP_JAR_FILE_URL=http://hivelocity.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${TEST_OFP_VERSION}
+TEST_EXTERNAL_OFP_JAR_FILE_URL=http://sourceforge.net/projects/fortran-parser/files/OpenFortranParser/version_${TEST_OFP_VERSION}/OpenFortranParser-${TEST_OFP_VERSION}.jar/download
 
+# This is a rule for testing the download of OFP from the web.
 test_get_new_jar_file:
-	test -e OpenFortranParser-${TEST_OFP_VERSION}.jar || \
-     (test -e ${srcdir}/OpenFortranParser-${TEST_OFP_VERSION}.jar && cp ${srcdir}/OpenFortranParser-${TEST_OFP_VERSION}.jar .) || \
-     wget --no-check-certificate ${TEST_EXTERNAL_OFP_JAR_FILE_URL}/OpenFortranParser-${TEST_OFP_VERSION}.jar
+#	test -e OpenFortranParser-${TEST_OFP_VERSION}.jar || \
+#     (test -e ${srcdir}/OpenFortranParser-${TEST_OFP_VERSION}.jar && cp ${srcdir}/OpenFortranParser-${TEST_OFP_VERSION}.jar .) || \
+#     wget --no-check-certificate ${TEST_EXTERNAL_OFP_JAR_FILE_URL}/OpenFortranParser-${TEST_OFP_VERSION}.jar
+	test -e OpenFortranParser-${TEST_OFP_VERSION}.jar || (wget --no-check-certificate ${TEST_EXTERNAL_OFP_JAR_FILE_URL} || exit 1;);
 
 # DQ (4/4/2010): This needs to be an explicit path list for each file since some are all located in different subdirectories.
 # OFP_SOURCE_FILES = FortranParserAction.h c_actions_jni.c token.h token.c ActionEnums.h jni_token_funcs.h jni_token_funcs.c
@@ -85,17 +126,45 @@ if ROSE_USE_OPEN_FORTRAN_PARSER
 include_HEADERS = ActionEnums.h token.h FortranParserAction.h
 endif
 
+# I don't know why this does not seem to work, but that we need three separate rules.
+#$(OFP_SOURCE_FILES): OpenFortranParser-${OFP_VERSION}.jar
+#	echo "files: $(OFP_SOURCE_FILES) are out of date compared to OpenFortranParser-${OFP_VERSION}.jar"
+#token.c: OpenFortranParser-${OFP_VERSION}.jar
+#	echo "files: token.c are out of date compared to OpenFortranParser-${OFP_VERSION}.jar"
+# jni_token_funcs.c: OpenFortranParser-${OFP_VERSION}.jar
+#	echo "files: jni_token_funcs.c are out of date compared to OpenFortranParser-${OFP_VERSION}.jar"
+# c_actions_jni.c: OpenFortranParser-${OFP_VERSION}.jar
+#	echo "files: c_actions_jni.c are out of date compared to OpenFortranParser-${OFP_VERSION}.jar"
+
 # DQ (9/26/2010): Add the jar file as a dependency so that when it is 
 # updated it will force the required files to be extracted automatically.
 # extract_rose_required_ofp_source_files: get_jar_file
 # extract_rose_required_ofp_source_files: get_jar_file OpenFortranParser-${OFP_VERSION}.jar
 # extract_rose_required_ofp_source_files: get_jar_file ${OFP_SOURCE_FILES_WITHOUT_PATHS}
-extract_rose_required_ofp_source_files: get_jar_file
+# extract_rose_required_ofp_source_files: get_jar_file
+# extract_rose_required_ofp_source_files: OpenFortranParser-${OFP_VERSION}.jar
+# extract_rose_required_ofp_source_files: token.c jni_token_funcs.c c_actions_jni.c
+# OpenFortranParser-${OFP_VERSION}.jar: token.c jni_token_funcs.c c_actions_jni.c
+# $(OFP_SOURCE_FILES): OpenFortranParser-${OFP_VERSION}.jar
+# YYY: OpenFortranParser-${OFP_VERSION}.jar
+# token.c: OpenFortranParser-${OFP_VERSION}.jar
+# $(TARGET_OFP_SOURCE_FILES): OpenFortranParser-${OFP_VERSION}.jar
+# $(OFP_SOURCE_FILES): OpenFortranParser-${OFP_VERSION}.jar
+# extract_rose_required_ofp_source_files: OpenFortranParser-${OFP_VERSION}.jar
+# token.c: OpenFortranParser-${OFP_VERSION}.jar
+# token.c: ./OpenFortranParser-${OFP_VERSION}.jar
+token.c: OpenFortranParser-${OFP_VERSION}.jar
 	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
       echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
    else \
       echo "Error: OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
-      exit 1; \
+      @if test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar; then \
+         echo "Found valid ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file."; \
+         cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar; \
+      else \
+         echo "Error: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
+         exit 1; \
+      fi; \
    fi;
 	jar xf OpenFortranParser-${OFP_VERSION}.jar $(OFP_SOURCE_FILES)
 	@list='$(OFP_SOURCE_FILES)'; for f in $$list; do \

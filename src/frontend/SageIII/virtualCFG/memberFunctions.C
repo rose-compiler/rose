@@ -3800,11 +3800,20 @@ SgImpliedDo::cfgOutEdges(unsigned int idx)
      std::vector<CFGEdge> result;
      switch (idx)
         {
+#if 0
+       // DQ (10/9/2010): Old design
           case 0: makeEdge(CFGNode(this, idx), this->get_do_var_exp()->cfgForBeginning(), result); break;
           case 1: makeEdge(CFGNode(this, idx), this->get_first_val()->cfgForBeginning(), result); break;
           case 2: makeEdge(CFGNode(this, idx), this->get_last_val()->cfgForBeginning(), result); break;
           case 3: makeEdge(CFGNode(this, idx), this->get_increment()->cfgForBeginning(), result); break;
           case 4: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+#else
+       // DQ (10/9/2010): New design
+          case 0: makeEdge(CFGNode(this, idx), this->get_do_var_initialization()->cfgForBeginning(), result); break;
+          case 1: makeEdge(CFGNode(this, idx), this->get_last_val()->cfgForBeginning(), result); break;
+          case 2: makeEdge(CFGNode(this, idx), this->get_increment()->cfgForBeginning(), result); break;
+          case 3: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+#endif
           default: ROSE_ASSERT (!"Bad index for SgImpliedDo");
         }
 
@@ -3817,11 +3826,20 @@ SgImpliedDo::cfgInEdges(unsigned int idx)
      std::vector<CFGEdge> result;
      switch (idx)
         {
+#if 0
+       // DQ (10/9/2010): Old design
           case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
           case 1: makeEdge(this->get_do_var_exp()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 2: makeEdge(this->get_first_val()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 3: makeEdge(this->get_last_val()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 4: makeEdge(this->get_increment()->cfgForEnd(), CFGNode(this, idx), result); break;
+#else
+       // DQ (10/9/2010): New design
+          case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_do_var_initialization()->cfgForEnd(), CFGNode(this, idx), result); break;
+          case 3: makeEdge(this->get_last_val()->cfgForEnd(), CFGNode(this, idx), result); break;
+          case 4: makeEdge(this->get_increment()->cfgForEnd(), CFGNode(this, idx), result); break;
+#endif
           default: ROSE_ASSERT (!"Bad index for SgImpliedDo");
         }
 
