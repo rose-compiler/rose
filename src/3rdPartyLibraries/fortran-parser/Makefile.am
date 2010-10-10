@@ -158,7 +158,7 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
       echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
    else \
       echo "Error: OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
-      @if test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar; then \
+      if test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar; then \
          echo "Found valid ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file."; \
          cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar; \
       else \

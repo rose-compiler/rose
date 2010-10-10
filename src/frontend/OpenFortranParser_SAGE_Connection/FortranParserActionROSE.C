@@ -15474,7 +15474,7 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 
-#if 0
+#if 1
      printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 #endif
 
