@@ -1977,6 +1977,8 @@ HEADER_RETURN_STATEMENT_START
 
           int replace_expression(SgExpression * original_expression, SgExpression * new_expression );
 
+       // get lvalue
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL
 HEADER_RETURN_STATEMENT_END
 
 

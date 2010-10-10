@@ -431,6 +431,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
      if (SgProject::get_verbose() >= 1)
           printf ("DONE: Adding the preinclude file \n");
 
+		// Start Lexing
      try{ 
 // DQ (8/29/2009): It appears that this test fails to compile using ROSE (some template name contains "____L" as a substring).
 #ifndef USE_ROSE
@@ -511,8 +512,30 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
                << "(" << current_position.get_line() << "): "
                << "unexpected exception caught." << endl;
         }
+		// End Lexing
 
      attributeListMap.attach_line_to_macro_call();
+
+#if 1
+	// King84 (2010.09.23): We capture the raw token stream because the tokens that aren't pre-processed tokens don't show up in the individual file's list of tokens.  Also, #line directives get obeyed and mapped into different files.  If we want to reproduce the original file failthfully, we have to use the raw list.  I leave the rest here for future reference, since it took some figuring out to get right.
+     if (SgProject::get_verbose() >= 1)
+	     std::cout << "File " << sourceFileName << " has " << ctx.get_hooks().tokens.size() << " tokens." << std::endl;
+	 for (std::list< token_type >::iterator i = ctx.get_hooks().tokens.begin(); i != ctx.get_hooks().tokens.end(); ++i)
+	 {
+		sageFilePtr->get_rawTokenStream().push_back(*i);
+	 }
+#else
+//     sageFilePtr->get_rawTokenStream().clear();
+     assert(attributeListMap.currentMapOfAttributes.find(sourceFileName) != attributeListMap.currentMapOfAttributes.end());
+	 for (std::vector<PreprocessingInfo*>::iterator i = attributeListMap.currentMapOfAttributes[sourceFileName]->getList().begin(); i != attributeListMap.currentMapOfAttributes[sourceFileName]->getList().end(); ++i)
+	 {
+		// King84 (2010.09.23): We aren't doing tokens, so we cheat by stringizing everything.  I guess we could get the tokens out of here, but I'm lazy, since we aren't doing this for real anyway
+        {
+            token_type holder = token_type(boost::wave::T_CPPCOMMENT, (**i).getString().c_str(), boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(), 0, 0));
+			sageFilePtr->get_rawTokenStream().push_back( holder );
+        }
+	 }
+#endif
 
 #if 0
   // Get all SgFile nodes in the AST so that the attributes can be attached to them
@@ -543,6 +566,9 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 
           ROSEAttributesList*  attrList = it_files->second;
           mapFilenameToAttributes[filename2] = attrList;
+
+		  // TODO:
+		  // King84 (2010.09.22) Add preprocessing info vector to file object, so we can access it later for unparsing
 
           if (SgProject::get_verbose() >= 1)
             std::cout << "source file name:" << sageFilePtr->generate_C_preprocessor_intermediate_filename(filename2) << std::endl;

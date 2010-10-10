@@ -430,9 +430,11 @@ else
 	@echo "  TESTING $@ (the Yices SMT-solver is not supported for this configuration; test skipped)"
 endif
 
+# Do not use the "--show-functions" switch.  The table that's output is different on systems with libgcrypt vs systems
+# without libgcrypt, and therefore the test can fail.
 test_disassemble.result: disassemble
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./disassemble --show-functions -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown -rose:partitioner_search -leftovers $(BINARY_SAMPLES)/i686-test1.O0.bin >test_disassemble.ans 2>$@.tmp; \
+	@$(VALGRIND) ./disassemble -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown -rose:partitioner_search -leftovers $(BINARY_SAMPLES)/i686-test1.O0.bin >test_disassemble.ans 2>$@.tmp; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassemble.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
