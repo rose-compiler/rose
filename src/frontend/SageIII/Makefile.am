@@ -22,7 +22,7 @@ AM_LFLAGS =
 # avoid unused Flex functions which are automatically generated
 #CXXFLAGS+= -DYY_NO_TOP_STATE -DYY_NO_POP_STATE $(ROSE_OPTIMIZATION_LEVEL)
 
-CXXFLAGS+= $(ROSE_OPTIMIZATION_LEVEL) $(ROSE_VERBOSE)
+CXXFLAGS += $(ROSE_OPTIMIZATION_LEVEL) $(ROSE_VERBOSE)
 
 # omplexer.cc needs a header generaetd from ompparser.yy
 omplexer.lo: ompparser.h omplexer.cc
@@ -229,8 +229,11 @@ BUILT_SOURCES = $(GENERATED_SOURCE) ompparser.cc ompparser.h omplexer.cc
 # DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support (in sageSupport.C).
 sageSupport.C: extract_rose_required_ofp_source_files
 
+# DQ (10/9/2010): We are now trying to properly represent the dependences so avoid redundant
+# extraction of the OFP source files used within ROSE. Using token.c as a representative file.
 extract_rose_required_ofp_source_files:
 	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) extract_rose_required_ofp_source_files
+#	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) token.c
 
 
 # DQ (9/9/2007): Put C++_include_files.h back into place

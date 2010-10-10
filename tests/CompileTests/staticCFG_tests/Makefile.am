@@ -489,11 +489,11 @@ QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
 # Make rule to build the QMTest database files
 CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): testStaticCFG $(srcdir)/$(@:.qmt=.C)
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testStaticCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+#$(QMTEST_Objects): testStaticCFG $(srcdir)/$(@:.qmt=.C)
+#	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testStaticCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # Include makefile rules specific to QMTest
-include $(top_srcdir)/config/QMTest_makefile.inc
+#include $(top_srcdir)/config/QMTest_makefile.inc
 
 EXTRA_DIST = 
 
@@ -545,5 +545,5 @@ $(F03_FILES): ./testInterproceduralCFG
 #	./testInterproceduralCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
 
 # Make rule to build the QMTest database files
-$(QMTEST_Objects): testInterproceduralCFG $(srcdir)/$(@:.qmt=.C)
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testInterproceduralCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+#$(QMTEST_Objects): testInterproceduralCFG $(srcdir)/$(@:.qmt=.C)
+#	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testInterproceduralCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
