@@ -160,6 +160,10 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_49.f90 \
      test2010_50.f90 \
      test2010_59.f90 \
+     test2010_60.f90 \
+     test2010_61.f90 \
+     test2010_62.f90 \
+     test2010_63.f90 \
      test2010_64.f90 \
      canonicalExample.f90
 
@@ -337,10 +341,6 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_43.f90 \
      test2010_48.f90 \
      test2010_51.f90 \
-     test2010_60.f90 \
-     test2010_61.f90 \
-     test2010_62.f90 \
-     test2010_63.f90 \
      fCaller.f90 \
      triangle.f90
 
