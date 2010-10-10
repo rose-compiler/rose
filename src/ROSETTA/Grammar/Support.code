@@ -4851,7 +4851,19 @@ HEADER_APPLICATION_FILE_START
 HEADER_APPLICATION_FILE_END
 
 HEADER_APPLICATION_SOURCE_FILE_START
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
      public:
+		// King84 (2010.09.22): Added support for getting the preprocessed token stream and the raw token stream.
+		typedef boost::wave::cpplexer::lex_token<>  token_type;
+		typedef std::list<token_type>             LexTokenList;
+	protected:
+		LexTokenList rawTokenStream;
+	public:
+		LexTokenList& get_rawTokenStream() {	return rawTokenStream;	}
+#else
+	public:
+#endif
+
        // SgSourceFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
           SgSourceFile(std::vector<std::string>& argv, SgProject* project = NULL);
           virtual int callFrontEnd();
