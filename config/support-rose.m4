@@ -2079,6 +2079,7 @@ src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
+src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Makefile
 src/3rdPartyLibraries/qrose/Framework/Makefile
 src/3rdPartyLibraries/qrose/QRoseLib/Makefile
@@ -2106,6 +2107,7 @@ src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
+src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile

@@ -673,6 +673,16 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_Fortran_only(true);
         }
 
+  // DQ (10/11/2010): Adding initial Java support.
+     set_Java_only(false);
+     ROSE_ASSERT (get_Java_only() == false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(j|J|Java)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In SgProject: Java only mode ON \n");
+          set_Java_only(true);
+        }
+
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","wave",false) == true )
         {
        // printf ("Option -c found (compile only)! \n");
@@ -1321,6 +1331,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              {
                printf ("Warning, Non binary file name specificed with explicit -rose:binary option! \n");
                set_binary_only(false);
+             }
+        }
+
+  // DQ (10/11/2010): Adding initial Java support.
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(j|J|Java)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Java only mode ON \n");
+          set_Java_only(true);
+          if (get_sourceFileUsesJavaFileExtension() == false)
+             {
+               printf ("Warning, Non Java source file name specificed with explicit -rose:Java Java language option! \n");
+               set_Java_only(false);
              }
         }
 

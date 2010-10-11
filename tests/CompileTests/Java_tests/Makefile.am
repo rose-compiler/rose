@@ -39,6 +39,15 @@ testTranslator=../../testTranslator
 $(TEST_Objects): ../../testTranslator
 	$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.java)
 
+testJava:
+#	Java library path specifies where the *.so file is located (JavaTraversal.so)
+#	The class path (-cp) the ROSE version of the ECJ Java front-end.
+#	The we specify the ROSE specific JavaTraversal class file (that we execute)
+#	Then we specify two input java source files.
+	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:. $(top_srcdir)/src/3rdPartyLibraries/java-parser/JavaTraversal $(srcdir)/HelloWorld.java $(srcdir)/HelloWorld2.java
+
+# Execute the java file using: java -Djava.library.path=. HelloWorld
+
 EXTRA_DIST = $(ALL_TESTCODES)
 
 check-local:
