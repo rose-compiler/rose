@@ -30,7 +30,7 @@
 #endif
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-//FMZ (5/19/2008): 
+// FMZ (5/19/2008): 
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #include "FortranModuleInfo.h"
 #include "FortranParserState.h"

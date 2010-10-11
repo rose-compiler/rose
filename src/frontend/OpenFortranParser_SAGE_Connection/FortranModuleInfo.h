@@ -7,50 +7,51 @@
 #ifndef __FORTRANMODULEINFO_H_
 #define __FORTRANMODULEINFO_H_
 
-//#include "rose.h"
-#include "fortran_support.h"
+// #include "rose.h"
+// #include "fortran_support.h"
 
 #define  MOD_FILE_SUFFIX   ".rmod"
 #define  SKIP_SYNTAX_CHECK "-rose:skip_syntax_check"
 
-using std::vector;
-using std::map;
-using std::string;
+// DQ (10/11/2010): Never use using declarations in a header file since
+// they apply to the whole translation unit and have global effects.
+// using std::vector;
+// using std::map;
+// using std::string;
 
 class FortranModuleInfo
   {
-
      private:
        static SgProject*                      currentProject;
 
     // DQ (10/1/2010): Added a typedef to simplify code using the moduleNameAstMap data member.
     // static map<string, SgModuleStatement*> moduleNameAstMap;
-       typedef map<string, SgModuleStatement*> ModuleMapType;
+       typedef std::map<std::string, SgModuleStatement*> ModuleMapType;
        static ModuleMapType moduleNameAstMap;
 
-       static unsigned                        nestedSgFile; 
-       static vector<string>                  inputDirs   ;
+       static unsigned int             nestedSgFile; 
+       static std::vector<std::string> inputDirs   ;
 
      public:
        static bool                 isRmodFile();
        static void                 setCurrentProject(SgProject*);
        static SgProject*           getCurrentProject();
 
-       static SgModuleStatement*   getModule(string modName);
-       static void                 addMapping(string modName,SgModuleStatement* modStmt);
+       static SgModuleStatement*   getModule(std::string modName);
+       static void                 addMapping(std::string modName,SgModuleStatement* modStmt);
 
-static string find_file_from_inputDirs(string name);
+       static std::string find_file_from_inputDirs(std::string name);
 
-static void set_inputDirs(SgProject* );
+       static void set_inputDirs(SgProject* );
  
        FortranModuleInfo(){};
 
-       ~FortranModuleInfo(){};
+      ~FortranModuleInfo(){};
 
      private:
-       static SgSourceFile*               createSgSourceFile(string modName);
-       static void                  clearMap();
-       static void                  dumpMap();
+       static SgSourceFile*  createSgSourceFile(std::string modName);
+       static void           clearMap();
+       static void           dumpMap();
 
   };
 
