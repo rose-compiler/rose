@@ -468,6 +468,105 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
      targetLocatedNode->get_endOfConstruct  ()->set_parent(targetLocatedNode);
    }
 
+void
+resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token )
+   {
+  // DQ (10/10/2010): This function is added to support resetting the end 
+  // of the blocks (required to get comments woven into the AST properly).
+#if 0
+     ROSE_ASSERT(astScopeStack.empty() == false);
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(token != NULL);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+     printf ("astScopeStack.front()->get_startOfConstruct()->get_line() = %d \n",astScopeStack.front()->get_startOfConstruct()->get_line());
+     printf ("astScopeStack.front()->get_endOfConstruct()->get_line()   = %d \n",astScopeStack.front()->get_endOfConstruct()->get_line());
+
+     int newEndingLineNumber = token->line;
+     printf ("newEndingLineNumber = %d \n",newEndingLineNumber);
+     astScopeStack.front()->get_endOfConstruct()->set_line(newEndingLineNumber);
+     printf ("astScopeStack.front()->get_endOfConstruct()->get_line()   = %d \n",astScopeStack.front()->get_endOfConstruct()->get_line());
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+#else
+     ROSE_ASSERT(token != NULL);
+     int newLineNumber = token->line;
+     resetEndingSourcePosition(targetLocatedNode,newLineNumber);
+
+     SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(targetLocatedNode);
+     if (functionDefinition != NULL)
+        {
+       // Also set the ending position of the function declaration.
+       // printf ("In resetEndingSourcePosition(): Set the ending position of the related function declaration \n");
+          SgDeclarationStatement* functionDeclaration = functionDefinition->get_declaration();
+          resetEndingSourcePosition(functionDeclaration,token);
+        }
+
+  // If this is the top level scope then iterate over the outer scopes to reset the end of each scope on the stack.
+     if (astScopeStack.front() == targetLocatedNode)
+        {
+          list<SgScopeStatement*>::iterator i = astScopeStack.begin();
+          ROSE_ASSERT(targetLocatedNode == *i);
+          while (i != astScopeStack.end())
+             {
+               resetEndingSourcePosition(*i,newLineNumber);
+               i++;
+             }
+        }
+#endif
+   }
+
+void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, SgStatement* sourceStatement )
+   {
+#if 0
+     printf ("targetLocatedNode = %s get_startOfConstruct()->get_line() = %d \n",targetLocatedNode->class_name().c_str(),targetLocatedNode->get_startOfConstruct()->get_line());
+     printf ("targetLocatedNode = %s get_endOfConstruct()->get_line()   = %d \n",targetLocatedNode->class_name().c_str(),targetLocatedNode->get_endOfConstruct()->get_line());
+
+     int newLineNumber = sourceStatement->get_endOfConstruct()->get_line();
+     int oldLineNumber = targetLocatedNode->get_endOfConstruct()->get_line();
+     if (newLineNumber > oldLineNumber)
+        {
+          printf ("Resetting the ending line number from %d to %d \n",oldLineNumber,newLineNumber);
+          targetLocatedNode->get_endOfConstruct()->set_line(newLineNumber);
+        }
+
+     ROSE_ASSERT(targetLocatedNode->get_endOfConstruct()->get_line() != targetLocatedNode->get_startOfConstruct()->get_line());
+#else
+
+  // If this is not the same file then the line numbers will not make any sense.
+     if (targetLocatedNode->get_endOfConstruct()->isSameFile(sourceStatement->get_endOfConstruct()) == true)
+        {
+          int newLineNumber = sourceStatement->get_endOfConstruct()->get_line();
+          resetEndingSourcePosition(targetLocatedNode,newLineNumber);
+        }
+       else
+        {
+       // Increment the position by "1" since we have at least processed a Fortran include file on it's one line.
+       // printf ("Processing special case of source statement not in same file as the start of the scope. \n");
+          resetEndingSourcePosition(astScopeStack.front(),astScopeStack.front()->get_endOfConstruct()->get_line()+1);
+        }
+#endif
+   }
+
+void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNumber )
+   {
+#if 0
+     printf ("targetLocatedNode = %s get_startOfConstruct()->get_line() = %d \n",targetLocatedNode->class_name().c_str(),targetLocatedNode->get_startOfConstruct()->get_line());
+     printf ("targetLocatedNode = %s get_endOfConstruct()->get_line()   = %d \n",targetLocatedNode->class_name().c_str(),targetLocatedNode->get_endOfConstruct()->get_line());
+#endif
+
+     int oldLineNumber = targetLocatedNode->get_endOfConstruct()->get_line();
+     if (newLineNumber > oldLineNumber)
+        {
+       // printf ("Resetting the ending line number from %d to %d \n",oldLineNumber,newLineNumber);
+          targetLocatedNode->get_endOfConstruct()->set_line(newLineNumber);
+        }
+
+  // DQ (10/10/2010): See example test2007_17.f90 of if statment on a single line for were we can't enforce this.
+  // ROSE_ASSERT(targetLocatedNode->get_endOfConstruct()->get_line() != targetLocatedNode->get_startOfConstruct()->get_line());
+   }
+
 
 SgType*
 createType(int typeCode)
@@ -2511,6 +2610,8 @@ void
 initialize_global_scope_if_required()
    {
   // First we have to get the global scope initialized (and pushed onto the stack).
+
+  // printf ("In initialize_global_scope_if_required(): astScopeStack.empty() = %s \n",astScopeStack.empty() ? "true" : "false");
      if (astScopeStack.empty() == true)
         {
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
@@ -2530,6 +2631,17 @@ initialize_global_scope_if_required()
        // be the front).  I have used a vector instead of a stack for now, this might change later.
           ROSE_ASSERT(astScopeStack.empty() == true);
           astScopeStack.push_front(globalScope);
+
+       // DQ (10/10/2010): Set the start position of global scope to "1".
+          globalScope->get_startOfConstruct()->set_line(1);
+
+       // DQ (10/10/2010): Set this position to the same value so that if we increment 
+       // by "1" the start and end will not be the same value.
+          globalScope->get_endOfConstruct()->set_line(1);
+#if 0
+          astScopeStack.front()->get_startOfConstruct()->display("In initialize_global_scope_if_required(): start");
+          astScopeStack.front()->get_endOfConstruct  ()->display("In initialize_global_scope_if_required(): end");
+#endif
         }
    }
 
@@ -3332,7 +3444,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
           while (astIntentSpecStack.empty() == false)
              {
             // DQ (4/5/2010): Debugging missing INTENT keyword in ROSE output of test2009_19.f90.
-               printf ("Calling attributeSpecificationStatement->set_intent(intent) \n");
+            // printf ("Calling attributeSpecificationStatement->set_intent(intent) \n");
 
                int intent = astIntentSpecStack.front();
                attributeSpecificationStatement->set_intent(intent);
@@ -3419,6 +3531,8 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
   // Set the numeric label if it exists
      setStatementNumericLabel(attributeSpecificationStatement,label);
+
+  // printf ("In buildAttributeSpecificationStatement(): attributeSpecificationStatement: start = %d end = %d \n",attributeSpecificationStatement->get_startOfConstruct()->get_line(),attributeSpecificationStatement->get_endOfConstruct()->get_line());
    }
 
 
@@ -4256,8 +4370,9 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
 
   // This will be the defining declaration
      ROSE_ASSERT(procedureDeclaration != NULL);
-//FMZTEST
-//cout <<"NAME::" << procedureDeclaration->get_name().str()<<endl;
+
+  // FMZTEST
+  // cout <<"NAME::" << procedureDeclaration->get_name().str()<<endl;
 
      procedureDeclaration->set_definingDeclaration(procedureDeclaration);
      procedureDeclaration->set_firstNondefiningDeclaration(NULL);
@@ -4349,8 +4464,8 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
 
      if (functionSymbol != NULL)
         {
-//FMZTEST
-//cout <<"FMZTEST:Frontend::" << functionSymbol->get_name().str()<<endl;
+       // FMZTEST
+       // cout <<"FMZTEST:Frontend::" << functionSymbol->get_name().str()<<endl;
           SgFunctionDeclaration* nondefiningDeclaration = functionSymbol->get_declaration();
           ROSE_ASSERT(nondefiningDeclaration != NULL);
 
@@ -4359,7 +4474,7 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
        // And set the defining declaration in the non-defining declaration
           nondefiningDeclaration->set_definingDeclaration(procedureDeclaration);
 
-// if the procedure is defined in same module, it should be visiable for the non-definingDeclaration.
+      // if the procedure is defined in same module, it should be visiable for the non-definingDeclaration.
          if (isSgClassDefinition(currentScopeOfFunctionDeclaration) != NULL) {
                    nondefiningDeclaration->set_scope(currentScopeOfFunctionDeclaration);
           }
@@ -4478,6 +4593,16 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
   // Now setup the function type and reset it in the procedureDeclaration
   // SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),false);
   // procedureDeclaration->set_type(functionType);
+
+#if 0
+  // DQ (10/10/2010): Added tests to make sure that start and end positions are set reasonably.
+     ROSE_ASSERT(procedureDeclaration->get_startOfConstruct()->get_line() > 0);
+     ROSE_ASSERT(procedureDefinition->get_startOfConstruct()->get_line()  > 0);
+     ROSE_ASSERT(procedureBody->get_startOfConstruct()->get_line()        > 0);
+     ROSE_ASSERT(procedureDeclaration->get_endOfConstruct()->get_line() >= procedureDeclaration->get_startOfConstruct()->get_line());
+     ROSE_ASSERT(procedureDefinition->get_endOfConstruct()->get_line()  >= procedureDefinition->get_startOfConstruct()->get_line());
+     ROSE_ASSERT(procedureBody->get_endOfConstruct()->get_line()        >= procedureBody->get_startOfConstruct()->get_line());
+#endif
    }
 
 

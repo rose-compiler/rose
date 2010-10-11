@@ -1766,6 +1766,8 @@ void c_action_end_type_stmt(Token_t *label, Token_t *endKeyword, Token_t *typeKe
   // Pop the class definition (SgClassDefinition) used to hold Fortran derived types
      ROSE_ASSERT(astScopeStack.empty() == false);
 
+     resetEndingSourcePosition(astScopeStack.front(),endKeyword);
+
   // DQ (10/10/2010): Test ending position
      ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
      ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
@@ -6998,16 +7000,41 @@ void c_action_data_ref(int numPartRef)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R612 c_action_data_ref(): (variable built here) numPartRef = %d \n",numPartRef);
 
-   //----FMZ (2/8/2010)  fixed derived type component references
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R612 c_action_data_ref()");
+#endif
+
+  // ----FMZ (2/8/2010)  fixed derived type component references
      SgType* data_type = NULL;
      SgClassDefinition* class_def = isSgClassDefinition(astScopeStack.front());
      bool need_push_back_scp_stk = false;
 
-     if (class_def!=NULL )
+     if (class_def != NULL )
         {
           SgDerivedTypeStatement*  derived_type = isSgDerivedTypeStatement(class_def->get_declaration());
           if (derived_type !=NULL  && numPartRef == 1)
              {
+            // DQ (10/10/2010): Test ending position
+               ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+               SgStatement* lastStatement = astScopeStack.front()->lastStatement();
+            // printf ("In c_action_data_ref(): lastStatement = %p \n",lastStatement);
+            // ROSE_ASSERT(lastStatement != NULL);
+            // resetEndingSourcePosition(astScopeStack.front(),lastStatement);
+               if (lastStatement != NULL)
+                  {
+                    resetEndingSourcePosition(astScopeStack.front(),lastStatement);
+                  }
+                 else
+                  {
+                 // DQ (10/10/2010): Set the end position to be on the next line (for now)
+                 // printf ("Setting end position to astScopeStack.front()->get_endOfConstruct()->get_line()+1 = %d \n",astScopeStack.front()->get_endOfConstruct()->get_line()+1);
+                    resetEndingSourcePosition(astScopeStack.front(),astScopeStack.front()->get_endOfConstruct()->get_line()+1);
+                  }
+
+               ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
                astScopeStack.pop_front();
                need_push_back_scp_stk = true;
                if (astExpressionStack.empty() == false && isSgNullExpression(astExpressionStack.front())!=NULL)
@@ -7017,7 +7044,7 @@ void c_action_data_ref(int numPartRef)
 
 #if 0
   // Output debugging information about saved state (stack) information.
-     outputState("At TOP of R612 c_action_data_ref()");
+     outputState("At MIDDLE of R612 c_action_data_ref()");
 #endif
 
   // FMZ (2/11/2009): Here we could have SgCAFCoExpression in the astExpressionStack
@@ -7552,9 +7579,15 @@ data_type = variableType;
           SgExpression* rhs = astExpressionStack.front();
           astExpressionStack.pop_front();
 
-//FMZ (2/8/2010): derived type
+       // FMZ (2/8/2010): derived type
           if (numPartRef >2)
-              astScopeStack.pop_front();
+             {
+            // DQ (10/10/2010): Test ending position
+               ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+               ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
+               astScopeStack.pop_front();
+             }
 
           c_action_data_ref(numPartRef-1);
           SgExpression* lhs = astExpressionStack.front();
@@ -9697,6 +9730,16 @@ void c_action_where_stmt(Token_t *label, Token_t *whereKeyword)
      SgBasicBlock* body  = isSgBasicBlock(astScopeStack.front());
      ROSE_ASSERT(body != NULL);
 
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+     SgStatement* lastStatement = astScopeStack.front()->lastStatement();
+  // printf ("In c_action_where_stmt(): lastStatement = %p \n",lastStatement);
+     ROSE_ASSERT(lastStatement != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),lastStatement);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
   // DQ (11/15/2007): Pop the SgBasicBlock that was previously pushed on the stack for the body!
      astScopeStack.pop_front();
 
@@ -9945,6 +9988,15 @@ void c_action_masked_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_
      }
      ROSE_ASSERT(elseWhereBody != NULL);
 
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+  // DQ (10/10/2010): Set the end position using the endKeyword.
+     ROSE_ASSERT(elseKeyword != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),elseKeyword);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
      astScopeStack.pop_front();
      astScopeStack.push_front(elseWhereBody);
 
@@ -10032,6 +10084,15 @@ void c_action_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_t *wher
      }
      ROSE_ASSERT(elseWhereBody != NULL);
 
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+  // DQ (10/10/2010): Set the end position using the endKeyword.
+     ROSE_ASSERT(elseKeyword != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),elseKeyword);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
      astScopeStack.pop_front();
      astScopeStack.push_front(elseWhereBody);
    }
@@ -10050,7 +10111,7 @@ void c_action_elsewhere_stmt__end(int numBodyConstructs)
      SgBasicBlock* basicBlock = isSgBasicBlock(astScopeStack.front());
      ROSE_ASSERT(basicBlock != NULL);
 
-     //     astScopeStack.pop_front();
+  // astScopeStack.pop_front();
    }
 
 /** R751 
@@ -10077,6 +10138,16 @@ void c_action_end_where_stmt(Token_t *label, Token_t *endKeyword, Token_t *where
 
   // The c_action_where_stmt() is called when we don't have an end where statement
   //   whereStatement->set_has_end_statement(true);
+
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+  // DQ (10/10/2010): Set the end position using the endKeyword.
+     ROSE_ASSERT(endKeyword != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),endKeyword);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
      astScopeStack.pop_front();
 
@@ -10314,6 +10385,16 @@ void c_action_forall_stmt(Token_t *label, Token_t *forallKeyword)
      ROSE_ASSERT(forAllHeader != NULL);
      astNodeStack.pop_front();
 
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+     SgStatement* lastStatement = astScopeStack.front()->lastStatement();
+  // printf ("In c_action_forall_stmt(): lastStatement = %p \n",lastStatement);
+     ROSE_ASSERT(lastStatement != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),lastStatement);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
      SgBasicBlock* body = isSgBasicBlock(astScopeStack.front());
      ROSE_ASSERT(body != NULL);
      astScopeStack.pop_front();
@@ -10353,6 +10434,29 @@ void c_action_block()
 
   // Pop off the select block!
      ROSE_ASSERT(astScopeStack.empty() == false);
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+  // DQ (10/10/2010): Set the end position to a better value.
+     SgStatement* lastStatement = astScopeStack.front()->lastStatement();
+  // printf ("In c_action_block(): lastStatement = %p \n",lastStatement);
+     if (lastStatement != NULL)
+        {
+#if 0
+          printf ("In c_action_block(): lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+          lastStatement->get_startOfConstruct()->display("In c_action_block(): lastStatement: start");
+          lastStatement->get_endOfConstruct  ()->display("In c_action_block(): lastStatement: end");
+#endif
+          resetEndingSourcePosition(astScopeStack.front(),lastStatement);
+        }
+       else
+        {
+       // DQ (10/10/2010): Set the end position to be on the next line (for now)
+          resetEndingSourcePosition(astScopeStack.front(),astScopeStack.front()->get_endOfConstruct()->get_line()+1);
+        }
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
   // This scope on the stack shuold be a SgBasicBlock
      ROSE_ASSERT(isSgBasicBlock(astScopeStack.front()) != NULL);
@@ -10611,7 +10715,14 @@ void c_action_else_stmt(Token_t *label, Token_t *elseKeyword, Token_t *id, Token
 void c_action_end_if_stmt(Token_t *label, Token_t *endKeyword, Token_t *ifKeyword, Token_t *id, Token_t *eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_end_if_stmt(): label = %p id = %p \n",label,id);
+        {
+       // printf ("In c_action_end_if_stmt(): label = %p id = %p \n",label,id);
+          printf ("In R1230 c_action_end_function_stmt(): label = %p = %s endKeyword = %p = %s ifKeyword = %p = %s id = %p = %s \n",
+               label,label != NULL ? label->text : "NULL",
+               endKeyword,endKeyword != NULL ? endKeyword->text : "NULL",
+               ifKeyword,ifKeyword != NULL ? ifKeyword->text : "NULL",
+               id,id != NULL ? id->text : "NULL");
+        }
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -10639,7 +10750,17 @@ void c_action_end_if_stmt(Token_t *label, Token_t *endKeyword, Token_t *ifKeywor
   // printf ("START: astScopeStack.front() = %p \n",astScopeStack.front());
      while (astScopeStack.empty() == false && astScopeStack.front() != startingIfStatement)
         {
-       // printf ("LOOP: astScopeStack.front() = %p \n",astScopeStack.front());
+       // Unwind through all the accumulated IF ... ELSE using a single END IF.
+       // printf ("LOOP: (unwinding through if ... else statements) astScopeStack.front() = %p = %s \n",astScopeStack.front(),astScopeStack.front()->class_name().c_str());
+
+       // DQ (10/10/2010): Test ending position
+          ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+          ROSE_ASSERT(endKeyword != NULL);
+          resetEndingSourcePosition(astScopeStack.front(),endKeyword);
+
+          ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
           astScopeStack.pop_front();
         }
   // printf ("END: astScopeStack.front() = %p \n",astScopeStack.front());
@@ -10658,6 +10779,15 @@ void c_action_end_if_stmt(Token_t *label, Token_t *endKeyword, Token_t *ifKeywor
 
      if (label != NULL)
           setStatementEndNumericLabel(ifStatement,label);
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+     ROSE_ASSERT(endKeyword != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),endKeyword);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
   // Pop off the if scope (it is a scope in C/C++, even if not in Fortran)
   // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
@@ -10757,8 +10887,29 @@ void c_action_if_stmt(Token_t *label, Token_t *ifKeyword)
           i++;
         }     
 
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+     SgStatement* lastStatement = astScopeStack.front()->lastStatement();
+  // printf ("In c_action_if_stmt(): lastStatement = %p \n",lastStatement);
+     ROSE_ASSERT(lastStatement != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),lastStatement);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
   // Now pop the SgBasicBlock
      astScopeStack.pop_front();
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+     SgStatement* nextLastStatement = astScopeStack.front()->lastStatement();
+  // printf ("In c_action_if_stmt(): nextLastStatement = %p \n",nextLastStatement);
+     ROSE_ASSERT(nextLastStatement != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),nextLastStatement);
+
+  // DQ (10/10/2010): See example test2007_17.f90 of if statment on a single line for were we can't enforce this.
+  // ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
   // Pop the if scope (it is a scope in C/C++, even if not in Fortran)
   // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
@@ -10968,6 +11119,16 @@ void c_action_end_select_stmt(Token_t *label, Token_t *endKeyword, Token_t *sele
           ROSE_ASSERT(label->text != NULL);
           printf ("label->text = %s \n",label->text);
         }
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+  // DQ (10/10/2010): Moved the poping of the stack to this function so that we could set the source end position of the scope.
+     ROSE_ASSERT(endKeyword != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),endKeyword);
+     
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
   // Pop off the select block!
      ROSE_ASSERT(astScopeStack.empty() == false);
@@ -11285,6 +11446,15 @@ void c_action_end_associate_stmt(Token_t *label, Token_t *endKeyword, Token_t *a
   // Pop off the body
   // astScopeStack.pop_front();
 
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+     ROSE_ASSERT(endKeyword != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),endKeyword);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
   // Pop off the SgAssociateStatement (which is a scope, derived from SgScopeStatement)
      astScopeStack.pop_front();
 
@@ -11338,6 +11508,11 @@ void c_action_type_guard_stmt(Token_t *label, Token_t *typeKeyword, Token_t *isO
 // void c_action_end_select_type_stmt(Token_t * label, Token_t * id)
 void c_action_end_select_type_stmt(Token_t *label, Token_t *endKeyword, Token_t *selectKeyword, Token_t *id, Token_t *eos)
    {
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
    }
 
 /**
@@ -11436,7 +11611,7 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
             // ROSE_ASSERT(variableSymbol != NULL);
                if (variableSymbol == NULL)
                   {
-                    printf ("Rerunning trace_back_through_parent_scopes_lookup_variable_symbol() \n");
+                 // printf ("Rerunning trace_back_through_parent_scopes_lookup_variable_symbol() \n");
                     variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName, astScopeStack.front());
                   }
                ROSE_ASSERT(variableSymbol != NULL);
@@ -11722,6 +11897,11 @@ void c_action_end_do()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_do() \n");
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R833 c_action_end_do()");
+#endif
+
   // DQ (12/12/2007): After implimenting the support for the select and case statements
   // it made more sense to pop the scope in R801 instead of here.
 
@@ -11730,10 +11910,26 @@ void c_action_end_do()
   // This function is called for each of the two ways which close off the Fortran "DO" loop.
   // astScopeStack.pop_front();
 
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+#if 0
+  // ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+     if (astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line())
+        {
+          printf ("In c_action_end_do(): astScopeStack.front()->get_startOfConstruct()->get_line() = %d \n",astScopeStack.front()->get_startOfConstruct()->get_line());
+          printf ("In c_action_end_do(): astScopeStack.front()->get_endOfConstruct()->get_line()   = %d \n",astScopeStack.front()->get_endOfConstruct()->get_line());
+          printf ("WARNING: In c_action_end_do() -- astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line() \n");
+        }
+#endif
+
   // Pop off the loop construct's scope (it is a scope in C/C++, even if not in Fortran)
   // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
      ROSE_ASSERT(astScopeStack.empty() == false);
-     astScopeStack.pop_front();
+
+  // printf ("NOTE: Moved call to pop astScopeStack from R833 c_action_end_do() both R834 c_action_end_do_stmt() and R838 c_action_do_term_action_stmt() \n");
+  // astScopeStack.pop_front();
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -11754,7 +11950,7 @@ void c_action_end_do()
 void c_action_end_do_stmt(Token_t *label, Token_t *endKeyword, Token_t *doKeyword, Token_t *id, Token_t *eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_end_do_stmt() (popping the scope) \n");
+          printf ("In R834 c_action_end_do_stmt() (popping the scope) \n");
 
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
         {
@@ -11768,7 +11964,31 @@ void c_action_end_do_stmt(Token_t *label, Token_t *endKeyword, Token_t *doKeywor
           printf ("End of token output! \n");
         }
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R834 c_action_end_do_stmt()");
+#endif
+
+  // printf ("***** Calling markDoLoopAsUsingEndDo() from c_action_end_do_stmt() \n");
      markDoLoopAsUsingEndDo();
+
+  // printf ("In c_action_end_do_stmt(): We should pop the astScopeStack here instead of in c_action_end_do() \n");
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+  // DQ (10/10/2010): Moved the poping of the stack to this function so that we could set the source end position of the scope.
+     ROSE_ASSERT(endKeyword != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),endKeyword);
+     
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
+     astScopeStack.pop_front();
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R834 c_action_end_do_stmt()");
+#endif
    }
 
 /** R838
@@ -11789,7 +12009,7 @@ void c_action_end_do_stmt(Token_t *label, Token_t *endKeyword, Token_t *doKeywor
 void c_action_do_term_action_stmt(Token_t *label, Token_t *endKeyword, Token_t *doKeyword, Token_t *id, Token_t *eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_do_term_action_stmt() \n");
+          printf ("In R838 c_action_do_term_action_stmt() \n");
 
   // This is repeated code from R834
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
@@ -11804,18 +12024,48 @@ void c_action_do_term_action_stmt(Token_t *label, Token_t *endKeyword, Token_t *
           printf ("End of token output! \n");
         }
 
-  // This rule can be called even where the end-do does nt exist (in this case, the endKeyword == NULL).
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R838 c_action_do_term_action_stmt()");
+#endif
+
+  // This rule can be called even where the end-do does not exist (in this case, the endKeyword == NULL).
      if (endKeyword != NULL)
         {
        // There is a valid "end do" statement in the source code, so mark this as a do statement using the new (F90) syntax.
+       // printf ("***** Calling markDoLoopAsUsingEndDo() from c_action_do_term_action_stmt() \n");
           markDoLoopAsUsingEndDo();
+
+       // DQ (10/10/2010): Moved the poping of the stack to this function so that we could set the source end position of the scope.
+          ROSE_ASSERT(endKeyword != NULL);
+          resetEndingSourcePosition(astScopeStack.front(),endKeyword);
         }
        else
         {
        // These was no "end do" statement in the source code, even though this rule was called by the parser.
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("Warning, c_action_do_term_action_stmt() called, yet no 'end do' exists in the source code \n");
+               printf ("***** WARNING, c_action_do_term_action_stmt() called, yet no 'end do' exists in the source code \n");
         }
+
+     if (endKeyword == NULL && label != NULL)
+        {
+       // DQ (10/10/2010): This is the backup when endKeyword == NULL
+          resetEndingSourcePosition(astScopeStack.front(),label);
+        }
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
+     astScopeStack.pop_front();
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R838 c_action_do_term_action_stmt()");
+#endif
+
    }
 
 /** R843
@@ -12288,7 +12538,13 @@ void c_action_continue_stmt(Token_t *label, Token_t *continueKeyword, Token_t *e
         }
 #endif
 
-#if 0
+#if 1
+  // DQ (10/10/2010): Mark the end of the do loop scope using the continueKeyword token.
+     ROSE_ASSERT(continueKeyword != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),continueKeyword);
+#endif
+
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R848 c_action_continue_stmt()");
 #endif
@@ -12704,7 +12960,11 @@ void c_action_close_stmt(Token_t *label, Token_t *closeKeyword, Token_t *eos)
 
      SgCloseStatement* closeStatement = new SgCloseStatement();
      ROSE_ASSERT(closeStatement != NULL);
-     setSourcePosition(closeStatement);
+
+  // DQ (10/10/2010): Set the source position using the closeKeyword
+  // setSourcePosition(closeStatement);
+     ROSE_ASSERT(closeKeyword != NULL);
+     setSourcePosition(closeStatement,closeKeyword);
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -14173,7 +14433,10 @@ void c_action_backspace_stmt(Token_t *label, Token_t *backspaceKeyword, Token_t 
 
      SgBackspaceStatement* backspaceStatement = new SgBackspaceStatement();
      ROSE_ASSERT(backspaceStatement != NULL);
-     setSourcePosition(backspaceStatement);
+
+  // setSourcePosition(backspaceStatement);
+     ROSE_ASSERT(backspaceKeyword != NULL);
+     setSourcePosition(backspaceStatement,backspaceKeyword);
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -15150,9 +15413,32 @@ void c_action_main_program(ofp_bool hasProgramStmt, ofp_bool hasExecutionPart, o
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
      ROSE_ASSERT(astScopeStack.empty() == false);
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
      astScopeStack.pop_front(); // Pop off the SgBasicBlock
 
      ROSE_ASSERT(astScopeStack.empty() == false);
+
+  // resetSourcePosition(astScopeStack.front(),endKeyword);
+     SgStatement* lastStatement = astScopeStack.front()->lastStatement();
+  // printf ("In c_action_main_program__begin(): lastStatement = %p \n",lastStatement);
+     if (lastStatement != NULL)
+        {
+          resetEndingSourcePosition(astScopeStack.front(),lastStatement);
+        }
+       else
+        {
+       // DQ (10/10/2010): Set the end position to be on the next line (for now)
+          resetEndingSourcePosition(astScopeStack.front(),astScopeStack.front()->get_endOfConstruct()->get_line()+1);
+        }
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
      astScopeStack.pop_front(); // Pop off the SgFunctionDefinition
 
      ROSE_ASSERT(astScopeStack.empty() == false);
@@ -15165,6 +15451,9 @@ void c_action_main_program(ofp_bool hasProgramStmt, ofp_bool hasExecutionPart, o
   // ROSE_ASSERT(globalScope->get_endOfConstruct()   == NULL);
   // ROSE_ASSERT(globalScope->get_endOfConstruct()   != NULL);
 
+#if 0
+  // DQ (10/10/2010): I don't think we need this and we certainly don't want to be
+  // calling globalScope->get_endOfConstruct()->setSourcePositionUnavailableInFrontend();
      if (globalScope->get_endOfConstruct() == NULL)
         {
         // printf ("In c_action_main_program(): Setting the endOfConstruct in globalScope \n");
@@ -15172,6 +15461,7 @@ void c_action_main_program(ofp_bool hasProgramStmt, ofp_bool hasExecutionPart, o
           globalScope->get_endOfConstruct()->set_parent(globalScope);
           globalScope->get_endOfConstruct()->setSourcePositionUnavailableInFrontend();
         }
+#endif
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("Leaving c_action_main_program() \n");
@@ -15413,10 +15703,23 @@ void c_action_end_program_stmt(Token_t *label, Token_t *endKeyword, Token_t *pro
         }
 
      ROSE_ASSERT(astScopeStack.empty() == false);
-
+#if 1
+     resetEndingSourcePosition(astScopeStack.front(),endKeyword);
+#else
   // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(endKeyword != NULL);
      ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+     printf ("astScopeStack.front()->get_startOfConstruct()->get_line() = %d \n",astScopeStack.front()->get_startOfConstruct()->get_line());
+     printf ("astScopeStack.front()->get_endOfConstruct()->get_line()   = %d \n",astScopeStack.front()->get_endOfConstruct()->get_line());
+
+     int newEndingLineNumber = endKeyword->line;
+     printf ("newEndingLineNumber = %d \n",newEndingLineNumber);
+     astScopeStack.front()->get_endOfConstruct()->set_line(newEndingLineNumber);
+     printf ("astScopeStack.front()->get_endOfConstruct()->get_line()   = %d \n",astScopeStack.front()->get_endOfConstruct()->get_line());
+
      ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+#endif
 #endif
    }
 
@@ -15528,6 +15831,31 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
 #endif
 
      setStatementNumericLabel(moduleStatement,label);
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+#if 1
+  // DQ (10/10/2010): Set the end position using the endKeyword.
+     ROSE_ASSERT(endKeyword != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),endKeyword);
+#else
+  // DQ (10/10/2010): Set the end position to a better value.
+     SgStatement* lastStatement = astScopeStack.front()->lastStatement();
+  // printf ("In c_action_end_module_stmt(): lastStatement = %p \n",lastStatement);
+     if (lastStatement != NULL)
+        {
+          resetEndingSourcePosition(astScopeStack.front(),lastStatement);
+        }
+       else
+        {
+       // DQ (10/10/2010): Set the end position to be on the next line (for now)
+          resetEndingSourcePosition(astScopeStack.front(),astScopeStack.front()->get_endOfConstruct()->get_line()+1);
+        }
+#endif
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
   // Pop the module's scope
      astScopeStack.pop_front();
@@ -16507,6 +16835,16 @@ void c_action_end_block_data_stmt(Token_t *label, Token_t *endKeyword, Token_t *
           printf ("In c_action_end_block_data_stmt(): label = %p id= %p \n",label,id);
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+  // DQ (10/10/2010): Set the end position of the block.
+     ROSE_ASSERT(endKeyword != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),endKeyword);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
   // Pop off the function body (SgBasicBlock)
      ROSE_ASSERT(astScopeStack.empty() == false);
   // printf ("astScopeStack.front() = %p = %s \n",astScopeStack.front(),astScopeStack.front()->class_name().c_str());
@@ -16514,16 +16852,30 @@ void c_action_end_block_data_stmt(Token_t *label, Token_t *endKeyword, Token_t *
 
   // Pop off the function definition (SgFunctionDefinition)
      ROSE_ASSERT(astScopeStack.empty() == false);
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+  // DQ (10/10/2010): Set the end position of the block.
+     ROSE_ASSERT(endKeyword != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),endKeyword);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
   // printf ("astScopeStack.front() = %p = %s \n",astScopeStack.front(),astScopeStack.front()->class_name().c_str());
      astScopeStack.pop_front();
 
+     ROSE_ASSERT(astScopeStack.empty() == false);
      SgScopeStatement* topOfStack = getTopOfScopeStack();
-  // printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
+     printf ("In c_action_end_block_data_stmt(): topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
      ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
 
+  // DQ (10/10/2010): I don't see why we are setting the data members of the global scope here!
+#if 0
      topOfStack->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfo());
      topOfStack->get_endOfConstruct()->set_parent(topOfStack);
      topOfStack->get_endOfConstruct()->setSourcePositionUnavailableInFrontend();
+#endif
 #endif
    }
 
@@ -17598,53 +17950,90 @@ void c_action_result_name()
 void c_action_end_function_stmt(Token_t * label, Token_t * keyword1, Token_t * keyword2, Token_t * name, Token_t * eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_end_function_stmt(): label = %p name = %p \n",label,name);
+        {
+          printf ("In R1230 c_action_end_function_stmt(): label = %p = %s keyword1 = %p = %s keyword2 = %p = %s name = %p = %s \n",
+               label,label != NULL ? label->text : "NULL",
+               keyword1,keyword1 != NULL ? keyword1->text : "NULL",
+               keyword2,keyword2 != NULL ? keyword2->text : "NULL",
+               name,name != NULL ? name->text : "NULL");
+        }
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
   // *** Note that functions and subroutine code is the same ***
 
   // Pop off the function body (SgBasicBlock)
      ROSE_ASSERT(astScopeStack.empty() == false);
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+     ROSE_ASSERT(keyword1 != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),keyword1);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
      astScopeStack.pop_front();
 
   // Pop off the function definition (SgFunctionDefinition)
      ROSE_ASSERT(astScopeStack.empty() == false);
      SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(getTopOfScopeStack());
 
-   //FMZ(6/9/2010): with "implicit none" presented, a function must have type explicitly declared
-     ROSE_ASSERT(functionDefinition!=NULL);
-     SgProcedureHeaderStatement* func_decl= isSgProcedureHeaderStatement(functionDefinition->get_declaration());
+  // FMZ(6/9/2010): with "implicit none" presented, a function must have type explicitly declared
+     ROSE_ASSERT(functionDefinition != NULL);
+     SgProcedureHeaderStatement* func_decl = isSgProcedureHeaderStatement(functionDefinition->get_declaration());
      string func_name = func_decl->get_name().str();
-    bool isAnImplicitScope = isImplicitNoneScope();
+     bool isAnImplicitScope = isImplicitNoneScope();
 
-    if (func_decl!= NULL && func_decl->isFunction() == true) {
-        SgFunctionType*  func_type = func_decl->get_type();
-        SgType* func_return_type = func_type->get_return_type();
+     if (func_decl!= NULL && func_decl->isFunction() == true)
+        {
+          SgFunctionType*  func_type = func_decl->get_type();
+          SgType* func_return_type = func_type->get_return_type();
 
-        if (isSgTypeVoid(func_return_type) !=NULL) {
-             if (isAnImplicitScope == true) {
-                   cout << "Error: '" << func_name << "' has not been explicitly declared." << endl;
-             } else {
-                 SgFunctionType* implicit_type = generateImplicitFunctionType(func_name);
-                 ROSE_ASSERT(implicit_type != NULL);
-                 func_decl->set_type(implicit_type);
+          if (isSgTypeVoid(func_return_type) !=NULL)
+             {
+               if (isAnImplicitScope == true)
+                  {
+                    cout << "Error: '" << func_name << "' has not been explicitly declared." << endl;
+                  }
+                 else
+                  {
+                    SgFunctionType* implicit_type = generateImplicitFunctionType(func_name);
+                    ROSE_ASSERT(implicit_type != NULL);
+                    func_decl->set_type(implicit_type);
+                  }
              }
-         }
-       }
+        }
 
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+#if 0
+     func_decl->get_startOfConstruct()->display("In R1230 c_action_end_function_stmt(): start");
+     func_decl->get_endOfConstruct  ()->display("In R1230 c_action_end_function_stmt(): end");
+#endif
+
+     ROSE_ASSERT(keyword1 != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),keyword1);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
      astScopeStack.pop_front();
 
-     SgScopeStatement* topOfStack = getTopOfScopeStack();
+  // SgScopeStatement* topOfStack = getTopOfScopeStack();
   // printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
   
   // DQ (2/1/2008): This does not have to be true since a function can be defined as a nested 
   // function in an existing function (SgProgramHeaderStatement).
   // ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
 
+#if 0
+  // DQ (10/10/2010): I don't think we need this and we certainly don't want to be
+  // calling globalScope->get_endOfConstruct()->setSourcePositionUnavailableInFrontend();
      topOfStack->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfo());
      topOfStack->get_endOfConstruct()->set_parent(topOfStack);
      topOfStack->get_endOfConstruct()->setSourcePositionUnavailableInFrontend();
+#endif
 
      if (name != NULL)
         {
@@ -17859,7 +18248,13 @@ void c_action_dummy_arg_list(int count)
 void c_action_end_subroutine_stmt(Token_t * label, Token_t * keyword1, Token_t * keyword2, Token_t * name, Token_t * eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In R1234 c_action_end_subroutine_stmt(): label = %p = %s name = %p = %s \n",label,label != NULL ? label->text : "NULL",name,name != NULL ? name->text : "NULL");
+        {
+          printf ("In R1234 c_action_end_subroutine_stmt(): label = %p = %s keyword1 = %p = %s keyword2 = %p = %s name = %p = %s \n",
+               label,label != NULL ? label->text : "NULL",
+               keyword1,keyword1 != NULL ? keyword1->text : "NULL",
+               keyword2,keyword2 != NULL ? keyword2->text : "NULL",
+               name,name != NULL ? name->text : "NULL");
+        }
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -17867,6 +18262,30 @@ void c_action_end_subroutine_stmt(Token_t * label, Token_t * keyword1, Token_t *
 #endif
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+#if 0
+     resetSourcePosition(astScopeStack.front(),lastStatement);
+     SgStatement* lastStatement = astScopeStack.front()->lastStatement();
+  // printf ("In c_action_main_program__begin(): lastStatement = %p \n",lastStatement);
+     if (lastStatement != NULL)
+        {
+          resetEndingSourcePosition(astScopeStack.front(),lastStatement);
+        }
+       else
+        {
+       // DQ (10/10/2010): Set the end position to be on the next line (for now)
+          resetEndingSourcePosition(astScopeStack.front(),astScopeStack.front()->get_endOfConstruct()->get_line()+1);
+        }
+#else
+     ROSE_ASSERT(keyword1 != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),keyword1);
+#endif
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
   // Pop off the function body (SgBasicBlock)
      ROSE_ASSERT(astScopeStack.empty() == false);
   // printf ("astScopeStack.front() = %p = %s \n",astScopeStack.front(),astScopeStack.front()->class_name().c_str());
@@ -17879,17 +18298,30 @@ void c_action_end_subroutine_stmt(Token_t * label, Token_t * keyword1, Token_t *
   // printf ("astScopeStack.front() = %p = %s \n",astScopeStack.front(),astScopeStack.front()->class_name().c_str());
      SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(getTopOfScopeStack());
      ROSE_ASSERT(functionDefinition != NULL);
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+
+     ROSE_ASSERT(keyword1 != NULL);
+     resetEndingSourcePosition(astScopeStack.front(),keyword1);
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
      astScopeStack.pop_front();
 
      SgScopeStatement* topOfStack = getTopOfScopeStack();
 
   // DQ (11/21/2007): This is not required, and not true for subroutines in an interface block.
-  // printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
+  // printf ("In R1234 c_action_end_subroutine_stmt(): topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
   // ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
 
+#if 0
+  // DQ (10/10/2010): I don't think we need this and we certainly don't want to be
+  // calling globalScope->get_endOfConstruct()->setSourcePositionUnavailableInFrontend();
      topOfStack->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfo());
      topOfStack->get_endOfConstruct()->set_parent(topOfStack);
      topOfStack->get_endOfConstruct()->setSourcePositionUnavailableInFrontend();
+#endif
 
      if (name != NULL)
         {
@@ -18304,7 +18736,7 @@ void c_action_end_of_file(const char * filename)
      string filenameString = astIncludeStack.back();
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_end_of_file() filenameString = %s \n",filenameString.c_str());
+          printf ("In c_action_end_of_file(): filenameString = %s \n",filenameString.c_str());
 
      astIncludeStack.pop_back();
 
@@ -18317,6 +18749,43 @@ void c_action_end_of_file(const char * filename)
         {
           printf ("   statement in scope = %p = %s = %s line = %d file = %s \n",(*i),(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(*i)->get_file_info()->get_line(),(*i)->get_file_info()->get_filenameString().c_str());
         }
+#endif
+
+  // DQ (10/10/2010): Set the end position to a better value.
+     SgStatement* lastStatement = astScopeStack.front()->lastStatement();
+  // printf ("In c_action_end_of_file(): lastStatement = %p \n",lastStatement);
+     if (lastStatement != NULL)
+        {
+#if 0
+          printf ("In c_action_end_of_file(): lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+          printf ("In c_action_end_of_file(): lastStatement->get_startOfConstruct()->get_line() = %d \n",lastStatement->get_startOfConstruct()->get_line());
+          printf ("In c_action_end_of_file(): lastStatement->get_endOfConstruct()->get_line()   = %d \n",lastStatement->get_endOfConstruct()->get_line());
+#endif
+          resetEndingSourcePosition(astScopeStack.front(),lastStatement);
+        }
+       else
+        {
+       // DQ (10/10/2010): Set the end position to be on the next line (for now)
+          resetEndingSourcePosition(astScopeStack.front(),astScopeStack.front()->get_endOfConstruct()->get_line()+1);
+        }
+
+#if 0
+     astScopeStack.front()->get_startOfConstruct()->display("In c_action_end_of_file(): start");
+     astScopeStack.front()->get_endOfConstruct  ()->display("In c_action_end_of_file(): end");
+#endif
+
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
+#if 0
+     printf ("In c_action_end_of_file(): astScopeStack.front() = %s get_startOfConstruct()->get_line() = %d \n",astScopeStack.front()->class_name().c_str(),astScopeStack.front()->get_startOfConstruct()->get_line());
+     printf ("In c_action_end_of_file(): astScopeStack.front() = %s get_endOfConstruct()->get_line()   = %d \n",astScopeStack.front()->class_name().c_str(),astScopeStack.front()->get_endOfConstruct()->get_line());
+     astScopeStack.front()->get_startOfConstruct()->display("In c_action_end_of_file(): startOfConstruct");
+     astScopeStack.front()->get_endOfConstruct()->display("In c_action_end_of_file(): endOfConstruct");
+#endif
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of c_action_end_of_file()");
 #endif
    }
 
@@ -18544,6 +19013,11 @@ void c_action_rice_co_with_team_stmt(Token_t *label, Token_t *team_id) {
  * @param team_id: the team ID (optional)
  */
 void c_action_rice_end_with_team_stmt(Token_t *label, Token_t *team_id, Token_t *eos) {
+
+  // DQ (10/10/2010): Test ending position
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
      astScopeStack.pop_front();
 
