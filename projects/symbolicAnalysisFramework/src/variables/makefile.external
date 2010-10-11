@@ -1,0 +1,7 @@
+variables_OBJ = ${ANALYSIS_ROOT}/src/variables/obj/variables.o ${ANALYSIS_ROOT}/src/variables/obj/varSets.o
+variables_H = ${ANALYSIS_ROOT}/src/variables/variables.h ${ANALYSIS_ROOT}/src/variables/varSets.h
+variables_INC = -I../variables -I../cfgUtils
+
+.PHONY: variables
+variables:
+	cd ${ANALYSIS_ROOT}/src/variables; ${MAKE} all; cd ${ANALYSIS_ROOT}/src/${Component}

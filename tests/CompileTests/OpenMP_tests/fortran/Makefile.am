@@ -17,7 +17,7 @@ F77_TESTCODES_TO_PASS = \
 F77_TESTCODES_TO_PASS += testNewOFP.f
 
 F90_TESTCODES_TO_PASS = \
-  paralledo.f90 \
+  paralleldo.f90 \
   collapse.f90 \
   critical.f90 \
   continuation.f90
