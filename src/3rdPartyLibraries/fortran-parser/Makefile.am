@@ -78,7 +78,10 @@ OpenFortranParser-${OFP_VERSION}.jar:
 # extract_rose_required_ofp_source_files: $(TARGET_OFP_SOURCE_FILES)
 # extract_rose_required_ofp_source_files: $(OFP_SOURCE_FILES_WITHOUT_PATHS)
 extract_rose_required_ofp_source_files: token.c
-#	@echo "files: extract_rose_required_ofp_source_files is out of date compared to $(TARGET_OFP_SOURCE_FILES)"
+	@echo "files: extract_rose_required_ofp_source_files is out of date compared to token.c"
+	@echo "calling ls -l --full-time"
+	ls -l --full-time
+	@echo "after ls"
 
 #     (wget --no-check-certificate ${EXTERNAL_OFP_JAR_FILE_URL}/OpenFortranParser-${OFP_VERSION}.jar || exit 1;);
 
@@ -154,6 +157,9 @@ endif
 # token.c: OpenFortranParser-${OFP_VERSION}.jar
 # token.c: ./OpenFortranParser-${OFP_VERSION}.jar
 token.c: OpenFortranParser-${OFP_VERSION}.jar
+	@echo "***********************************************************************"
+	@echo "Extracting required OFP files from OpenFortranParser-${OFP_VERSION}.jar"
+	@echo "***********************************************************************"
 	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
       echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
    else \
@@ -202,7 +208,30 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
 # OLD COMMENT: automake variable. Also add the generated/downloaded/unpacked files from 
 # OLD COMMENT: the OFP jar file.
 # EXTRA_DIST = CMakeLists.txt $(OFP_SOURCE_FILES_WITHOUT_PATHS)
-EXTRA_DIST = CMakeLists.txt
+# EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt OpenFortranParser-${OFP_VERSION}.jar
+
+# DQ (10/11/2010): Fixing bug in "make distcheck" rule.
+# The files (token.c token.h ActionEnums.h jni_token_funcs.h jni_token_funcs.c) are copied 
+# by the "make dist" rule into ${distdir}.  I don't know why!  But because they are in the
+# source directory of the distribution they are not extracted from the OpenFortranParser-${OFP_VERSION}.jar
+# file and thus are not in the build tree for use in compiling sageSupport.C in the src/frontend/SageIII
+# directory.
+dist-hook:
+	@echo "calling ls -l --full-time ${distdir}"
+	ls -l --full-time ${distdir}
+	@echo "after ls: removing these files from distdir since they should not be copied here"
+	rm -f ${distdir}/ActionEnums.h
+	rm -f ${distdir}/c_actions_jni.c
+	rm -f ${distdir}/FortranParserAction.h
+	rm -f ${distdir}/jni_token_funcs.c
+	rm -f ${distdir}/token.h
+	rm -f ${distdir}/token.c
+	@echo "calling ls -l --full-time ${distdir}"
+	ls -l --full-time ${distdir}
+	@echo "after ls"
+#	exit 1
+
 
 clean-local:
 	rm -f OpenFortranParser-${OFP_VERSION}.jar FortranParserAction.h c_actions_jni.c
