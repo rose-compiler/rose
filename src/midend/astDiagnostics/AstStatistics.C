@@ -139,7 +139,7 @@ AstNodeMemoryPoolStatistics::AstNodeMemoryPoolStatistics()
   // Initialize the total amount of memory used so that we can report fractional percentage of use per IR node.
      totalMemoryUsed = memoryUsage();
      printf ("Total memory used = %d \n",totalMemoryUsed);
-     printf ("numberOfNodes = %d \n",numberOfNodes());
+     printf ("numberOfNodes = %zu \n",numberOfNodes());
    }
 
 AstNodeMemoryPoolStatistics::~AstNodeMemoryPoolStatistics()
