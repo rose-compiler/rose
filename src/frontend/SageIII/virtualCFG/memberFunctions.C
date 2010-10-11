@@ -4382,7 +4382,6 @@ bool SgPlusPlusOp::isChildUsedAsLValue(const SgExpression* child) const
 bool SgFunctionCallExp::isLValue() const
 {
 	//! Function Pointers don't have a declaration!
-//	if (getAssociatedFunctionDeclaration()->get_orig_return_type()->get_ref_to() != NULL)
 	SgType* type = get_function()->get_type();
 	while (SgTypedefType* type2 = isSgTypedefType(type))
 		type = type2->get_base_type();
@@ -4418,7 +4417,6 @@ bool SgFunctionCallExp::isChildUsedAsLValue(const SgExpression* child) const
 /*! std:5.4 par:1; std:5.2.11 par:1; std:5.2.9 par:1; std:5.2.7 par:2; std:5.2.10 par:1 */
 bool SgCastExp::isLValue() const
 {
-//	printf("%d: %s : %s\n", get_file_info()->get_line(), unparseToString().c_str(), get_type()->unparseToString().c_str());
 	switch (cast_type())
 	{
 		case e_C_style_cast:
@@ -4502,7 +4500,10 @@ bool SgMemberFunctionRefExp::isChildUsedAsLValue(const SgExpression* child) cons
 bool SgVarRefExp::isDefinable() const
 {
 	// if not constant
-	return !SageInterface::isConstType(get_type());
+	if (SageInterface::isConstType(get_type()))
+		return false;
+	// if it is protected, it is not definable
+	return true;
 }
 
 /*! std:5.1 par:7,8 */
@@ -4552,6 +4553,28 @@ bool SgConditionalExp::isChildUsedAsLValue(const SgExpression* child) const
 	}
 }
 
+bool SgAssignInitializer::isLValue() const
+{
+	return get_operand()->isLValue();
+}
+
+bool SgAssignInitializer::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_operand() == child)
+	{
+		/*! std:8.5.3 par:5 */
+		if (SageInterface::isNonconstReference(get_type()))
+			return true;
+		else
+			return false;
+	}
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAssignInitializer");
+		return false;
+	}
+}
+
 /*! std:5.17 par:1 */
 bool SgAssignOp::isLValue() const
 {
@@ -4563,13 +4586,7 @@ bool SgAssignOp::isChildUsedAsLValue(const SgExpression* child) const
 	if (get_lhs_operand() == child)
 		return true;
 	else if (get_rhs_operand() == child)
-	{
-		/*! std:8.5.3 par:5 */
-		if (SageInterface::isNonconstReference(get_lhs_operand()->get_type()))
-			return true;
-		else
-			return false;
-	}
+		return false;
 	else
 	{
 		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAssignOp");
@@ -4797,14 +4814,74 @@ bool SgCommaOpExp::isChildUsedAsLValue(const SgExpression* child) const
 /*! std:8.5.3 par:5 */
 bool SgExprListExp::isChildUsedAsLValue(const SgExpression* child) const
 {
+	// King84 (2010.10.05) This is very context-dependant, depending even on the parent expression.  Note that it does not depend on if the parent is used as an lvalue.
+	int idx = 0;
 	for (SgExpressionPtrList::const_iterator i = get_expressions().begin(); i != get_expressions().end(); ++i)
 	{
+		++idx;
 		if (child == *i)
 		{
-			if (SageInterface::isNonconstReference(child->get_type()))
-				return true;
-			else
-				return false;
+			SgFunctionType* funt = NULL;
+			if (SgFunctionCallExp* fun = isSgFunctionCallExp(get_parent()))
+				funt = isSgFunctionType(fun->get_function()->get_type());
+			else if (SgConstructorInitializer* construct = isSgConstructorInitializer(get_parent()))
+				funt = isSgFunctionType(construct->get_declaration()->get_type());
+			else if (SgAggregateInitializer* aggri = isSgAggregateInitializer(get_parent()))
+			{
+				SgType* destType = aggri->get_type()->findBaseType();
+				SgClassType* ctype = isSgClassType(destType);
+				if (ctype) // otherwise it's an array
+				{
+					SgClassDeclaration* decl = isSgClassDeclaration(ctype->get_declaration()->get_definingDeclaration());
+					ROSE_ASSERT(decl);
+					SgClassDefinition* defn = decl->get_definition();
+					// King84 (2010.10.05): Note that it is illegal to initialize with an aggregate intitializer if there is any inheritance going on
+					int jdx = 0;
+					// Go through all the declarations in order and find the corresponding index for the current child.
+					for(SgDeclarationStatementPtrList::iterator i = defn->get_members().begin(); i != defn->get_members().end(); ++i)
+					{
+						if (SgVariableDeclaration* fun = isSgVariableDeclaration(*i))
+						{ 
+							for (SgInitializedNamePtrList::iterator j = fun->get_variables().begin(); j != fun->get_variables().end(); ++j)
+							{
+								++jdx;
+								if (jdx == idx)
+								{
+									if (SageInterface::isNonconstReference((*j)->get_type()))
+										return true;
+									else
+										return false;
+								}
+							}
+						}
+					}
+					ROSE_ASSERT(!"Unable to find declaration to match with initializing child in isChildUsedAsLValue on SgExprListExp");
+
+				}
+				else
+				{
+					if (SageInterface::isNonconstReference(destType)) // note that currently we cannot have arrays of references
+						return true;
+					else
+						return false;
+				}
+			}
+			if (funt)
+			{
+				int jdx = 0;
+				for (SgTypePtrList::const_iterator j = funt->get_arguments().begin(); j != funt->get_arguments().end(); ++i)
+				{
+					++jdx;
+					if (jdx == idx)
+					{
+						if (SageInterface::isNonconstReference(*j))
+							return true;
+						else
+							return false;
+					}
+				}
+				ROSE_ASSERT(!"Unable to find parameter for child as argument in isChildUsedAsLValue on SgExprListExp");
+			}
 		}
 	}
 	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgExprListExp");

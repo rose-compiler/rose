@@ -964,6 +964,10 @@ HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_START
           SgExpression * get_operand() const;
           void set_operand(SgExpression * exp);
 
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_END
 
 HEADER_REPLACE_EXPRESSION_START
