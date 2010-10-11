@@ -80,7 +80,7 @@ OpenFortranParser-${OFP_VERSION}.jar:
 extract_rose_required_ofp_source_files: token.c
 	@echo "files: extract_rose_required_ofp_source_files is out of date compared to token.c"
 	@echo "calling ls -l --full-time"
-	ls -l --full-time
+	ls -l 
 	@echo "after ls"
 
 #     (wget --no-check-certificate ${EXTERNAL_OFP_JAR_FILE_URL}/OpenFortranParser-${OFP_VERSION}.jar || exit 1;);
@@ -228,7 +228,7 @@ dist-hook:
 	rm -f ${distdir}/token.h
 	rm -f ${distdir}/token.c
 	@echo "calling ls -l --full-time ${distdir}"
-	ls -l --full-time ${distdir}
+	ls -l ${distdir}
 	@echo "after ls"
 #	exit 1
 
