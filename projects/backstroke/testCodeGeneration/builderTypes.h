@@ -99,6 +99,8 @@ public:
 	//! this member in the event function.
 	void build();
 
+	//void buildInitializationFunction()
+
 };
 
 class SimpleStateClass
@@ -202,8 +204,11 @@ protected:
 	//! The file name of test code.
 	std::string file_name_;
 
-	//! A SgSourceFile object which creates the final output.
-	SgSourceFile* source_file_;
+	////! A SgSourceFile object which creates the final output.
+	//SgSourceFile* source_file_;
+
+	//! The ROSE project.
+	SgProject* project_;
 
 	//! All declarations of events.
 	std::vector<SgFunctionDeclaration*> events_;
@@ -214,23 +219,23 @@ protected:
 	//! The initialized name of the state object parameter in event functions.
 	SgInitializedName* state_init_name_;
 
-	//! This is a pure virtual function which needs to be overridden.
-	virtual void build_() = 0;
+	//! The name of the state class.
+	std::string state_name_;
+
+	//! All members in the state class.
+	std::vector<std::pair<std::string, SgType*> > state_members_;
 
 	//! Set the state class's name.
 	void setStateClassName(const std::string& name)
-	{
-		if (state_builder_)
-			delete state_builder_;
-		state_builder_ = new StateClassBuilder(name);
-	}
+	{ state_name_ = name; }
 
 	//! Add a data member to the state class.
 	void addStateMember(const std::string& name, SgType* type)
-	{
-		ROSE_ASSERT(state_builder_);
-		state_builder_->addMember(name, type);
-	}
+	{ state_members_.push_back(std::make_pair(name, type)); }
+
+	//! Remove all added state members.
+	void clearStateMembers()
+	{ state_members_.clear(); }
 
 	//! Build the state class.
 	void buildStateClass();
@@ -240,13 +245,12 @@ protected:
 	SgExpression* buildStateMemberExpression(const std::string& name);
 
 	//! Build the final test source file.
-	void buildTestCode(const std::vector<SgBasicBlock*> bodies);
+	void buildTestCode(const std::vector<SgBasicBlock*>& bodies);
 
 public:
-	TestCodeBuilder(const std::string& filename, bool is_cxx_style = true)
+	TestCodeBuilder(SgProject* project, bool is_cxx_style)
 	:	is_cxx_style_(is_cxx_style),
-		file_name_(filename),
-		source_file_(NULL),
+		project_(project),
 		state_builder_(NULL),
 		state_init_name_(NULL)
 	{}
@@ -258,7 +262,39 @@ public:
 	}
 
 	//! Once all is set, call this funtion to create the test source file.
-	void build();
+	//! Note this is a pure virtual function which needs to be overridden.
+	virtual void build() = 0;
+
+	//! Get the declaration of the state class.
+	SgClassDeclaration* getStateClassDeclaration()
+	{ return state_builder_->getStateClassDeclaration(); }
+};
+
+
+
+class TestCodeAssembler
+{
+	bool is_cxx_style_;
+
+	SgClassDeclaration* state_class_;
+
+	std::vector<std::pair<SgFunctionDeclaration*, std::vector<std::pair<SgFunctionDeclaration*, SgFunctionDeclaration*> > > > events_;
+
+public:
+	TestCodeAssembler(SgClassDeclaration* state_decl)
+	: state_class_(state_decl)
+	{
+		ROSE_ASSERT(isSgClassDeclaration(state_class_));
+	}
+
+	//void setStateClass(SgClassDeclaration* state_decl)
+	//{ state_class_ = state_decl; }
+
+	SgFunctionDeclaration* buildInitializationFunction();
+
+	SgStatement* initializeMember(SgExpression* exp);
+
+	void assemble();
 };
 
 #endif	/* BUILDERTYPES_H */

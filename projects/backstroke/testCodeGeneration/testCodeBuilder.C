@@ -9,7 +9,7 @@ using namespace SageInterface;
 
 #define foreach BOOST_FOREACH
 
-void BasicExpressionTest::build_()
+void BasicExpressionTest::build()
 {
 	// First build the state class.
 	setStateClassName("Model");

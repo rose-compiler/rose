@@ -283,10 +283,10 @@ FuncDeclPairs EventHandler::processEvent()
 	vector<EvaluationResult> results = evaluateStatement(body, var_table);
 
 
-	int ctr = 0;
-	// Sort the generated bodies so that those with the least cost appears first.
+	// Sort the generated bodies so that those with the least cost appear first.
 	sort(results.begin(), results.end());
 
+	int ctr = 0;
 	foreach(EvaluationResult& res, results)
 	{
 		// Here we check the validity for each result above. We have to make sure
