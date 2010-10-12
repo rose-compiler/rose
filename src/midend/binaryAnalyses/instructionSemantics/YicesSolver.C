@@ -1,6 +1,7 @@
-#include "rose.h"
+#include "sage3basic.h"
 #include "YicesSolver.h"
 
+#undef  __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
