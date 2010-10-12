@@ -2684,6 +2684,8 @@ FortranCodeGeneration_locatedNode::unparseDoStmt(SgStatement* stmt, SgUnparse_In
           (doloop->get_body()->get_statements().size() > 1) || 
           (doloop->get_string_label().empty() == false);
 #endif
+
+  // printf ("In unparseDoStmt(): output_enddo = %s \n",output_enddo ? "true" : "false");
      if (output_enddo == true)
         {
           unparseStatementNumbersSupport(doloop->get_end_numeric_label(),info);

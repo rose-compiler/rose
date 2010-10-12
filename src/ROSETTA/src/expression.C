@@ -1402,15 +1402,18 @@ Grammar::setUpExpressions ()
   // "(product(localCount(:j)), j = 1, numDims - 1)" in test2010_49.f90).
   // ImpliedDo.setDataPrototype     ( "SgVarRefExp*", "do_var", "= NULL",
   //                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     ImpliedDo.setDataPrototype     ( "SgExpression*", "do_var_exp", "= NULL",
+  // ImpliedDo.setDataPrototype     ( "SgExpression*", "do_var_exp", "= NULL",
+  //                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ImpliedDo.setDataPrototype     ( "SgExpression*", "do_var_initialization", "= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (10/9/2010): This data member is now replaced by the do_var_exp_initialization.
   // DQ (10/2/2010): This should be a SgVariableDeclaration instead of an expression.  
   // This was suggested at the Sept Portlan Fortran Adventure meeting.
   // ImpliedDo.setDataPrototype     ( "SgExpression*", "first_val", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     ImpliedDo.setDataPrototype     ( "SgExpression*", "first_val", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // ImpliedDo.setDataPrototype     ( "SgExpression*", "first_val", "= NULL",
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ImpliedDo.setDataPrototype     ( "SgExpression*", "last_val", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ImpliedDo.setDataPrototype     ( "SgExpression*", "increment", "= NULL",

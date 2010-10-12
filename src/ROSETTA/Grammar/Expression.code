@@ -964,6 +964,10 @@ HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_START
           SgExpression * get_operand() const;
           void set_operand(SgExpression * exp);
 
+       // get lvalue
+          virtual bool isLValue() const;
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
 HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_END
 
 HEADER_REPLACE_EXPRESSION_START
@@ -4636,8 +4640,13 @@ SgStringVal::get_type(void) const
         }
 #endif
 
+  // DQ (10/5/2010): Modified to used new API (only lengthExpression is supported).
   // Use the literal size and assume that there is no associated expression.
-     return SgTypeString::createType(NULL,stringSize);
+  // return SgTypeString::createType(NULL,stringSize);
+     Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+     SgIntVal* lengthExpression = new SgIntVal(fileInfo,(int)stringSize,"");
+     ROSE_ASSERT(lengthExpression != NULL);
+     return SgTypeString::createType(lengthExpression);
    }
 
 SOURCE_GET_TYPE_STRING_END
