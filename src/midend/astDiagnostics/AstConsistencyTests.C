@@ -4053,8 +4053,11 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                   {
                  // Add the child to the set in the map
                     it->second.insert(v[i].first);
-                 // ROSE_ASSERT(node != NULL);
+
+                 // DQ (10/2/2010): Debugging SgType :: type_kind  data member.
+                    ROSE_ASSERT(node != NULL);
                  // ROSE_ASSERT(v[i].first != NULL);
+
                     if (v[i].first == node)
                          {
                            nodeFound = true;
