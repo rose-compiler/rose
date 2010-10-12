@@ -21,10 +21,18 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 rose_paths.C:
 	cd $(top_builddir); $(MAKE) src/util/rose_paths.C
 
+# The stringify.h and stringify.C files contain functions for converting an enum constant into
+# a string.
+rose_headers=$(shell find $(top_srcdir)/src \( -name CxxFrontend -prune \) -o -name '*.h')
+stringify.h: stringify.C
+stringify.C: $(top_srcdir)/scripts/stringify.pl
+	@echo "  GEN     $@"
+	@$(top_srcdir)/scripts/stringify.pl --generic --header --output=$@ $(rose_headers)
+
 noinst_LTLIBRARIES = libroseutil.la
 
 # libroseutil_la_SOURCES = processSupport.C processSupport.h
-libroseutil_la_SOURCES = processSupport.C rose_getline.C
+libroseutil_la_SOURCES = processSupport.C rose_getline.C stringify.C
 nodist_libroseutil_la_SOURCES = rose_paths.C
 libroseutil_la_LIBADD = \
 	stringSupport/libRoseStringSupport.la \
@@ -38,13 +46,13 @@ libroseutil_la_LIBADD = \
 # DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 # DISTCLEANFILES = rose_paths.C
 
-include_HEADERS = setup.h processSupport.h rose_paths.h rose_getline.h
+include_HEADERS = setup.h processSupport.h rose_paths.h rose_getline.h stringify.h
 
 EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 
 # DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_paths.C
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_paths.C stringify.[Ch]
 
 distclean-local:
 	rm -rf Templates.DB
