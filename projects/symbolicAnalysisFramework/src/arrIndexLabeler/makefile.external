@@ -1,0 +1,6 @@
+arrIndexLabeler_OBJ = ${ANALYSIS_ROOT}/src/arrIndexLabeler/obj/arrIndexLabeler.o
+arrIndexLabeler_H = ${ANALYSIS_ROOT}/src/arrIndexLabeler/arrIndexLabeler.h
+
+.PHONY: arrIndexLabeler
+arrIndexLabeler:
+	cd ${ANALYSIS_ROOT}/src/arrIndexLabeler; ${MAKE} all; cd ${ANALYSIS_ROOT}/src/${Component}

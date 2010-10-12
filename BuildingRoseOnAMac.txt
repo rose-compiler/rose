@@ -1,0 +1,51 @@
+How I got ROSE to work on my Mac
+--------------------------------
+
+Environment:
+   MacBook Pro 15" Core i5 & 4 GB RAM running Mac OS X 10.6.4
+   ROSE trunk revision 831
+
+The following steps were necessary to get ROSE to build without errors:
+
+1. Needed libtoolize.
+	=> installed libtools 2.2.8 in /usr/local.
+
+2. Needed boost.
+	=> installed boost 1.43.0 in custom location.
+
+3. Found three bugs in <ROSE>/build.
+	-- fixed & submitted to Dan.
+
+4. Needed wget.
+	=> installed wget 1.9.1 in /usr/local.
+
+5. Warning during configure from "libltdl/configure" about ROSEy options.
+	=> ignored for now
+
+6. [FIXED by commit 9194a388defe330d7cec0432800834dfacb0d78d on 2010-08-23]
+   At src/frontend/Disassemblers/AssemblerX86.C:1768, 'tmpnam_r' was not declared.
+	=> replaced with std 'tmpnam'.
+
+7. [FIXED by commit e84734364fcbe8c4e95a054f3986535a0ac9ed81 on 2010-08-23]
+   At src/frontend/Disassemblers/AssemblerX86.C:1777 & 1824, 'TEMP_FAILURE_RETRY'
+   was not declared. (Sometimes found in ??). Added the following to that file:
+
+	#ifndef TEMP_FAILURE_RETRY
+	#define TEMP_FAILURE_RETRY(expression) \
+	(__extension__	 \
+	({ long int __result;	 \
+	do __result = (long int) (expression);	 \
+	while (__result == -1L && errno == EINTR);	 \
+	__result; }))
+	#endif
+
+8. [FIXED by commit e84734364fcbe8c4e95a054f3986535a0ac9ed81 on 2010-08-23]
+   Ditto(8) for src/frontend/BinaryFormats/MemoryMap.C.
+
+9. Build ok until late step testing whether can link against ROSE: "dyld: Library not loaded".
+	=> in Mac OS X, set DYLD_LIBRARY_PATH, not LD_LIBRARY_PATH
+
+
+
+
+

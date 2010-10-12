@@ -1,0 +1,13 @@
+v 1.0
+d aMx_0:i24 aMx_3:i24 bMyPc_0:i24 bMyPc_3:i24 bMy_0:i24 bMy_3:i24 rel_0:i1 rel_3:i1 x:i24 y:i24 final:i1
+c aMx_0 * x 5:i24
+c bMy_0 * y 3:i24
+c bMyPc_0 + bMy_0 10:i24
+c rel_0 sle aMx_0 bMyPc_0
+c aMx_3 * x 5:i24
+c bMy_3 * y 3:i24
+c bMyPc_3 + bMy_3 10:i24
+c rel_3 sle aMx_3 bMyPc_3
+c final => rel_0 rel_3
+p ~ final
+

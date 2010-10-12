@@ -3146,7 +3146,8 @@ SgTypeString * SageBuilder::buildStringType()
      return result;
    }
 
-SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral ) 
+// SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral ) 
+SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpression ) 
    {
   // DQ (8/21/2010): This is a new API for this function.  This type is specific to Fortran use,
   // in C/C++ a string is just an array of char. We could have a consistant handling between
@@ -3157,7 +3158,8 @@ SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpressio
   // This function needs to use a different API to handle a literal 
   // value for the string size (typical) or an expression for the string size (rare).
 
-     SgTypeString* result = SgTypeString::createType(stringLengthExpression,stringLengthLiteral); 
+  // SgTypeString* result = SgTypeString::createType(stringLengthExpression,stringLengthLiteral); 
+     SgTypeString* result = SgTypeString::createType(stringLengthExpression);
      ROSE_ASSERT(result != NULL); 
      return result;
    }

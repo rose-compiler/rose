@@ -191,6 +191,18 @@ Grammar::setUpTypes ()
   //     Type.setDataPrototype("SgTypePtrList","typedefs","",
   //		   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
 #endif
+
+#if 1
+  // DQ (10/5/2010): I think we can move back to an implementation with DEF_DELETE now (the other uninitialized memory problem was fixed).
+  // DQ (10/3/2010): Note that without the NO_DELETE the Fortran jacobi.f file will sometimes fail.
+  // DQ (10/2/10): This is the better place for the Fortran kind mechanism (only meaningful for Fortran)
+  // DQ (9/17/2007): Support for Fortran kind mechanism
+  // Type.setDataPrototype("SgExpression*","type_kind","= NULL", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
+  // Type.setDataPrototype("SgExpression*","type_kind","= NULL", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+     Type.setDataPrototype("SgExpression*","type_kind","= NULL",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
+#endif
+     
 #if 1
   // DQ (1/24/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.  Beata appears to use attributes
@@ -201,11 +213,6 @@ Grammar::setUpTypes ()
      Type.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 #endif
 
-  // DQ (9/17/2007): Support for Fortran kind mechanism
-  // Type.setDataPrototype("SgExpression*","type_kind","= NULL",
-  //      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
-
-     
 #ifdef BUILD_X_VERSION_TERMINALS
 
 #error "DEAD CODE"
@@ -342,11 +349,12 @@ Grammar::setUpTypes ()
   // This type now has a length parameter, so we cannot use a single static builtin_type to represent all of the variations.
   // TypeString.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (10/5/2010): Removed the lengthScalar and definedUsingScalarLength data members (no longer required).
   // DQ (8/6/2010): Add string length to type (this type is used only in Fortran support, as I recall, but might be used for string literals in all langauges).
   // A fixed length string is the most common form, but fortran also permits a variable length string so we have to support an expression as well.
      TypeString.setDataPrototype           ("SgExpression*", "lengthExpression"        , "= NULL" , CONSTRUCTOR_PARAMETER   , BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
-     TypeString.setDataPrototype           ("size_t"       , "lengthScalar"            , "= 0"    , CONSTRUCTOR_PARAMETER   , BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TypeString.setDataPrototype           ("bool"         , "definedUsingScalarLength", "= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TypeString.setDataPrototype           ("size_t"       , "lengthScalar"            , "= 0"    , CONSTRUCTOR_PARAMETER   , BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TypeString.setDataPrototype           ("bool"         , "definedUsingScalarLength", "= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TypeBool.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeDefault.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -527,14 +535,17 @@ Grammar::setUpTypes ()
 					NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#if 0
+  // DQ (10/2/2010): The Fortran specific support for kind has been moved to the base class because so
+  // many types in Fortran can have a kind parameter that is better to represent it in the base class.
   // DQ (12/1/2007): Support for Fortran kind mechanism (moved from SgType to SgModifierType)
      ModifierType.setDataPrototype("SgExpression*","type_kind","= NULL",
           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
   // DQ (12/1/2007): Added support for Fortran type parameter mechanism
   // Note that CHARACTER*52 becomes a statically types array of CHARACTER, but CHARACTER*52 becomes SGModifierType with a CHARACTER base type
-     ModifierType.setDataPrototype("SgExpression*","type_parameter","= NULL",
-          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
-
+  // ModifierType.setDataPrototype("SgExpression*","type_parameter","= NULL",
+  //      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
+#endif
 
   // DQ (10/10/2006): The idea here is that these would be wrappers for existing types, 
   // but I think this was ultimately a problem to make it really work (because it could 

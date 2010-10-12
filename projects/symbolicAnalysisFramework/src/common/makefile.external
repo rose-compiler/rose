@@ -1,0 +1,8 @@
+common_OBJ = ${ANALYSIS_ROOT}/src/common/lib/libCommon.a
+common_Threaded_OBJ = ${ANALYSIS_ROOT}/src/common/lib/libCommon.threaded.a
+common_H = ${ANALYSIS_ROOT}/src/common/genUID.h
+common_INC = -I../common
+
+.PHONY: common
+common:
+	cd ${ANALYSIS_ROOT}/src/common; ${MAKE} all; cd ${ANALYSIS_ROOT}/src/${Component}

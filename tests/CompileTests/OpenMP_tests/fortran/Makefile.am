@@ -9,13 +9,15 @@ F77_TESTCODES_TO_PASS = \
     exampleA11f.f \
     exmpaleA221f.f \
     exampleA251f.f \
+    parallel-1.f \
+    parallel.f \
     schedule.f
 
 # DQ (3/4/2010): Added simple test code to debug fortran OFP usage.
 F77_TESTCODES_TO_PASS += testNewOFP.f
 
 F90_TESTCODES_TO_PASS = \
-  paralledo.f90 \
+  paralleldo.f90 \
   collapse.f90 \
   critical.f90 \
   continuation.f90
@@ -36,6 +38,7 @@ F90_TESTCODES_TO_PASS = \
 # exampleA41f.f90:  test code has error?
 TESTCODES_CURRENTLY_FAILING = \
     helloworld0.f \
+    parallel-2.f \
     exampleA211f.f \
     exampleA281f.f \
     exampleA102f.f90 \

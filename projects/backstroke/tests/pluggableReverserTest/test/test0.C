@@ -85,6 +85,7 @@ void event2(model* m)
 
 #endif
 
+#if 0
 void event3(model* m)
 {
     int t = m->i;
@@ -97,10 +98,74 @@ void event3(model* m)
 #endif
 }
 
+
 void event4(model* m)
 {
-    if (m->j)
-        if (m->k)
-            m->i += 10;
+    //int q,w,e,r,t,y,u,i,o,p,a,s,d,f,g;
     m->i = 10;
+    if (m->j)
+        m->i += 10;
+    if (m->k)
+        m->i = 10;
+    m->i = 10;
+}
+#endif
+
+struct A {int i;};
+
+void event5(model* m)
+{
+#if 0
+    A p, q;
+    q.i = 0;
+    q = p;
+    
+    int a;// = m->i;
+    //m->j += a;
+    //a = 10;
+    m->i = 1;
+#endif
+    //m->i = 1;
+    while(1)
+    {
+        m->i = 1;
+#if 0
+        if (1)
+        {
+            if (1)
+                a = 0;
+
+        }
+        else
+        {
+            if (1) 
+                ;//a = 0;
+        }
+
+        //++m->i;
+#endif
+    }
+
+    
+}
+
+#define NEW_BLOCK 0
+
+void event6()
+{
+    
+     int x = 1;
+     int z = 1;
+     switch(x)
+        {
+          case 1:
+#if NEW_BLOCK
+             { 
+#endif
+               int y = 47;
+               y++; 
+#if NEW_BLOCK
+             }
+#endif
+        }
 }

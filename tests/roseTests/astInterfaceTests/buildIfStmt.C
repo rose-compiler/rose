@@ -17,7 +17,12 @@ int main (int argc, char *argv[])
 
 // DQ (8/21/2010): buildStringType constructs a SgTypeString which is only used in Fortran!
 // SgInitializedName* arg2 = buildInitializedName("desc",buildStringType());
-  SgInitializedName* arg2 = buildInitializedName("desc",buildStringType(NULL,4));
+// SgInitializedName* arg2 = buildInitializedName("desc",buildStringType(NULL,4));
+   int stringSize = 7;
+   Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+   SgIntVal* lengthExpression = new SgIntVal(fileInfo,stringSize,"7");
+   ROSE_ASSERT(lengthExpression != NULL);
+   SgInitializedName* arg2 = buildInitializedName("desc",buildStringType(lengthExpression));
 
   SgFunctionParameterList * paraList = buildFunctionParameterList();
   appendArg(paraList, arg1);

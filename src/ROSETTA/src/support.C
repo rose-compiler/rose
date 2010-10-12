@@ -794,6 +794,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "Sg_File_Info*" , "startOfConstruct", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
+
   // DQ (9/2/2008): We want to move this to be in the SgSourceFile
 #if 0
      File.setDataPrototype         ( "SgGlobal*", "root", "= NULL",
@@ -1660,6 +1661,10 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype ( "bool", "Fortran_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/3/2010): Adding support for having CPP directives explicitly in the AST (as IR nodes instead of handled similar to comments).
+     Project.setDataPrototype ( "bool", "addCppDirectivesToAST", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

@@ -21,7 +21,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += \
-      C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests UPC_tests \
+      C_tests Java_tests Cxx_tests C_subset_of_Cxx_tests C99_tests UPC_tests \
       copyAST_tests RoseExample_tests PythonExample_tests \
       colorAST_tests mergeAST_tests unparseToString_tests \
       sourcePosition_tests \
