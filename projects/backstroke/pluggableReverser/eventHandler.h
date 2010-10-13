@@ -2,11 +2,11 @@
 #define	BACKSTROKE_EVENTPROCESSOR_H
 
 #include <rose.h>
-#include <utilities/types.h>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include "variableVersionTable.h"
 #include "handlerTypes.h"
+#include "utilities/types.h"
 
 
 class VariableRenaming;

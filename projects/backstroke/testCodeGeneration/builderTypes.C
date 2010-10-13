@@ -2,6 +2,7 @@
 #include <utilities/Utilities.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <stdlib.h>
 
 using namespace std;
 using namespace boost;
@@ -117,11 +118,15 @@ void TestCodeBuilder::buildStateClass()
 
 	state_builder_->build();
 
-	// Build the initialized name of the state object parameter in event functions.
-	if (state_init_name_)
-		delete state_init_name_;
-	state_init_name_ =
-		buildInitializedName("state", buildPointerType(state_builder_->getStateClassType()));
+	// In C style test code, we need the following initialized name to build the paramenter.
+	if (!is_cxx_style_)
+	{
+		// Build the initialized name of the state object parameter in event functions.
+		if (state_init_name_)
+			delete state_init_name_;
+		state_init_name_ =
+			buildInitializedName("state", buildPointerType(state_builder_->getStateClassType()));
+	}
 }
 
 SgExpression* TestCodeBuilder::buildStateMemberExpression(const string& name)
@@ -132,7 +137,10 @@ SgExpression* TestCodeBuilder::buildStateMemberExpression(const string& name)
 		if (is_cxx_style_)
 			return member_exp;
 		else
+		{
+			ROSE_ASSERT(state_init_name_);
 			return buildBinaryExpression<SgArrowExp>(buildVarRefExp(state_init_name_), member_exp);
+		}
 	}
 	return NULL;
 }
@@ -143,7 +151,14 @@ void TestCodeBuilder::buildTestCode(const vector<SgBasicBlock*>& bodies)
 
 	// Push global scope here to make sure every event funciton is built with a valid scope.
 	//SgGlobal* global_scope = source_file_->get_globalScope();
-	SgGlobal* global_scope = getGlobalScope(project_);
+
+	// Set the file name of the output code the same as input.
+	ROSE_ASSERT(project_->get_fileList().size() == 1);
+	SgSourceFile* source_file = isSgSourceFile((*project_)[0]);
+	ROSE_ASSERT(source_file);
+	source_file->set_unparse_output_filename(source_file->getFileName());
+
+	SgGlobal* global_scope = source_file->get_globalScope();
 	ROSE_ASSERT(global_scope);
 
 	int counter = 0;
@@ -158,6 +173,7 @@ void TestCodeBuilder::buildTestCode(const vector<SgBasicBlock*>& bodies)
 		else
 		{
 			// Note that in C++ style, we don't add the following parameter.
+			ROSE_ASSERT(state_init_name_);
 			event_builder.addParameter(state_init_name_);
 			event_builder.setScope(global_scope);
 		}
@@ -199,26 +215,114 @@ SgFunctionDeclaration* TestCodeAssembler::buildInitializationFunction()
 	SgInitializedName* state_para =	buildInitializedName("state", buildPointerType(state_class_->get_type()));
 	SgFunctionParameterList* para_list = buildFunctionParameterList(state_para);
 	SgFunctionDeclaration* init_func = buildDefiningFunctionDeclaration(
-			"initialize", buildVoidType(), para_list);
+			"initialize", buildVoidType(), para_list, getScope(state_class_));
 
 	SgExpression* state_var = buildVarRefExp(state_para);
-	SgStatement* body = isSgBasicBlock(initializeMember(state_var));
-	ROSE_ASSERT(body);
 
-	SgBasicBlock* prev_body = init_func->get_definition()->get_body();
-	ROSE_ASSERT(prev_body);
-	replaceStatement(prev_body, body);
+	//SgBasicBlock* body = buildBasicBlock();
+	SgBasicBlock* body = init_func->get_definition()->get_body();
+	
+	foreach (SgDeclarationStatement* decl, state_class_->get_definition()->get_members())
+	{
+		if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl))
+		{
+			foreach (SgInitializedName* init_name, var_decl->get_variables())
+			{
+				SgVarRefExp* member_var = buildVarRefExp(init_name);
+				SgExpression* var = buildBinaryExpression<SgArrowExp>(state_var, member_var);
+
+				// Push the current scope to make sure that buildFunctionCallExp has a valid scope.
+				pushScopeStack(body);
+				appendStatement(initializeMember(var));
+				popScopeStack();
+			}
+		}
+	}
+
+	//SgBasicBlock* prev_body = init_func->get_definition()->get_body();
+	//ROSE_ASSERT(prev_body);
+	//replaceStatement(prev_body, body);
 
 	return init_func;
 }
 
+SgFunctionDeclaration* TestCodeAssembler::buildComparisonFunction()
+{
+	ROSE_ASSERT(state_class_);
+
+	// Build the parameter list.
+	SgInitializedName* state_para1 =	buildInitializedName("state1", buildPointerType(state_class_->get_type()));
+	SgInitializedName* state_para2 =	buildInitializedName("state2", buildPointerType(state_class_->get_type()));
+	SgFunctionParameterList* para_list = buildFunctionParameterList(state_para1, state_para2);
+	SgFunctionDeclaration* comp_func = buildDefiningFunctionDeclaration(
+			"compare", buildBoolType(), para_list, getScope(state_class_));
+
+	SgExpression* state_var1 = buildVarRefExp(state_para1);
+	SgExpression* state_var2 = buildVarRefExp(state_para2);
+
+	SgBasicBlock* body = comp_func->get_definition()->get_body();
+
+	foreach (SgDeclarationStatement* decl, state_class_->get_definition()->get_members())
+	{
+		if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl))
+		{
+			foreach (SgInitializedName* init_name, var_decl->get_variables())
+			{
+				SgVarRefExp* member_var = buildVarRefExp(init_name);
+				SgExpression* var1 = buildBinaryExpression<SgArrowExp>(state_var1, member_var);
+				SgExpression* var2 = buildBinaryExpression<SgArrowExp>(state_var2, member_var);
+
+				// Push the current scope to make sure that buildFunctionCallExp has a valid scope.
+				pushScopeStack(body);
+				appendStatement(compareValue(var1, var2));
+				popScopeStack();
+			}
+		}
+	}
+
+	// At the end of this function, return true.
+	appendStatement(buildReturnStmt(buildBoolValExp(true)), body);
+	return comp_func;
+}
+
+SgStatement* TestCodeAssembler::compareValue(SgExpression* var1, SgExpression* var2)
+{
+	ROSE_ASSERT(var1->get_type() == var2->get_type());
+	
+    SgType* type = var1->get_type()->stripTypedefsAndModifiers();
+	
+    if (isSgArrayType(type))
+    {
+		// This part should be modified.
+		ROSE_ASSERT(false);
+
+        SgExprListExp* memcmp_para = buildExprListExp(
+                var1, var2,
+                buildSizeOfOp(var1));
+        SgStatement* cmp = buildFunctionCallStmt("memcmp", buildPointerType(buildVoidType()), memcmp_para);
+        return buildIfStmt(cmp, buildReturnStmt(buildIntVal(0)), NULL);
+    }
+	// For a STL object, we use defined operator !=.
+	else if (backstroke_util::isSTLContainer(type))
+	{
+		// This part should be added.
+		ROSE_ASSERT(false);
+	}
+	// For basic types, just use operator !=.
+    else
+    {
+        SgNotEqualOp* compare_exp = buildBinaryExpression<SgNotEqualOp>(var1, var2);
+        return buildIfStmt(compare_exp, buildReturnStmt(buildBoolValExp(false)), NULL);
+    }
+    return NULL;
+}
+
 SgStatement* TestCodeAssembler::initializeMember(SgExpression* exp)
 {
-	SgType* exp_type = exp->get_type();
-	SgType* real_type = exp_type->stripTypedefsAndModifiers();
+	SgType* type = exp->get_type()->stripTypedefsAndModifiers();
 
 	// An array uses a loop to initialized its members.
-	if (isSgArrayType(real_type))
+	if (isSgArrayType(type))
 	{
 		// Initialize int array member
 		SgExprListExp* memset_para = buildExprListExp(
@@ -226,23 +330,30 @@ SgStatement* TestCodeAssembler::initializeMember(SgExpression* exp)
 		return buildFunctionCallStmt("memset", buildPointerType(buildVoidType()), memset_para);
 	}
 	// For a STL object, currently we do not initialize it.
-	else if (backstroke_util::isSTLContainer(real_type))
+	else if (backstroke_util::isSTLContainer(type))
 	{
 		return NULL;
 	}
 	// For a class object, we initialize all its members, if we can access them.
-	else if (SgClassType* class_t = isSgClassType(real_type))
+	else if (SgClassType* class_t = isSgClassType(type))
 	{
 		SgBasicBlock* block = buildBasicBlock();
 		SgClassDeclaration* class_decl = isSgClassDeclaration(class_t->get_declaration()->get_definingDeclaration());
-		SgDeclarationStatementPtrList members = class_decl->get_definition()->get_members();
-		foreach (SgDeclarationStatement* decl, members)
+		
+		foreach (SgDeclarationStatement* decl, class_decl->get_definition()->get_members())
 		{
 			if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl))
 			{
-				SgVarRefExp* member_var = buildVarRefExp(var_decl->get_variables()[0]);
-				SgExpression* var = buildBinaryExpression<SgDotExp>(exp, member_var);
-				appendStatement(initializeMember(var), block);
+				foreach (SgInitializedName* var, var_decl->get_variables())
+				{
+					SgVarRefExp* member_var = buildVarRefExp(var);
+					SgExpression* var = buildBinaryExpression<SgDotExp>(exp, member_var);
+
+					// Push the current scope to make sure that buildFunctionCallExp has a valid scope.
+					pushScopeStack(block);
+					appendStatement(initializeMember(var), block);
+					popScopeStack();
+				}
 			}
 		}
 		return block;
@@ -263,6 +374,9 @@ void TestCodeAssembler::assemble()
 	ROSE_ASSERT(isSgGlobal(global_scope));
 
 	// Build the initialization function.
-	SgFunctionDeclaration* init_func = buildInitializationFunction();
-	appendStatement(init_func, global_scope);
+	appendStatement(buildInitializationFunction(), global_scope);
+	appendStatement(buildComparisonFunction(), global_scope);
+
+	// Since we use rand() function which needs the following header.
+	insertHeader("stdlib.h", PreprocessingInfo::after, true, global_scope);
 }

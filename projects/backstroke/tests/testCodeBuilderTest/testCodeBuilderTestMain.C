@@ -14,16 +14,18 @@ bool isStateClassDeclaration(SgClassDeclaration* class_decl)
 }
 
 
-void assembleTestCode(const string& file_name)
+void assembleTestCode(SgProject* project)
 {
-	vector<string> args(1, "");
-	args.push_back(file_name);
-	SgProject* project = frontend(args);
-
 	cout << "Test code loaded!\n";
 
-	SgGlobal* global_scope = getGlobalScope(project);
+	ROSE_ASSERT(project->get_fileList().size() == 1);
+	SgSourceFile* source_file = isSgSourceFile((*project)[0]);
+	source_file->set_unparse_output_filename(source_file->getFileName());
 
+	SgGlobal* global_scope = source_file->get_globalScope();
+	ROSE_ASSERT(global_scope);
+
+	// Find the state class out.
 	SgClassDeclaration* state_class = NULL;
 	foreach (SgDeclarationStatement* decl, global_scope->get_declarations())
 	{
@@ -42,9 +44,6 @@ void assembleTestCode(const string& file_name)
 		assembler.assemble();
 		cout << "Done!\n";
 	}
-
-	AstTests::runAllTests(project);
-	backend(project);
 }
 
 
@@ -54,31 +53,29 @@ int main(int argn, char** argv)
 
 	// First, build a test code file.
 	string filename = "test.C";
-	// Then we create a new empty file which will be our output.
-	FILE* file = ::fopen(filename.c_str(), "w");
-	::fclose(file);
+	
+	// Then we create a new file which will be our output.
+	ofstream ofs(filename.c_str());
+	//ofs << "#define __attribute__(x) ;\n";
+	//ofs << "#include <stdlib.h>\n";
+	//ofs << "int foo() __attribute__((visibility(\"default\")));\n";
+	ofs.close();
 
 	args.push_back(filename);
 	SgProject* project = frontend(args);
 
-	// Since we have only one file as the input, the first file is what we want.
-	SgSourceFile* source_file = isSgSourceFile((*project)[0]);
-	ROSE_ASSERT(source_file);
-	source_file->set_unparse_output_filename(filename);
+	{
+		BasicExpressionTest test(project, false);
+		test.build();
+	}
 
-	BasicExpressionTest test(project, false);
-	test.build();
-
-
-	AstTests::runAllTests(project);
-	backend(project);
 
 	// Reverse event functions inside.
 
-
 	// Add initialization, comparison and main functions to this file.
-	//assembleTestCode(filename);
+	assembleTestCode(project);
 
-	return 0;
+	AstTests::runAllTests(project);
+	return backend(project);
 }
 

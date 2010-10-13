@@ -1,5 +1,5 @@
 #include "Utilities.h"
-#include "CPPDefinesAndNamespaces.h"
+#include "cppDefinesAndNamespaces.h"
 
 #include "rose.h"
 #include <boost/lexical_cast.hpp>

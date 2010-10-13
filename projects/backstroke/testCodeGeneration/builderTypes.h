@@ -255,7 +255,7 @@ public:
 		state_init_name_(NULL)
 	{}
 
-	~TestCodeBuilder()
+	virtual ~TestCodeBuilder()
 	{
 		delete state_builder_;
 		delete state_init_name_;
@@ -282,9 +282,9 @@ class TestCodeAssembler
 
 public:
 	TestCodeAssembler(SgClassDeclaration* state_decl)
-	: state_class_(state_decl)
+	: state_class_(isSgClassDeclaration(state_decl->get_definingDeclaration()))
 	{
-		ROSE_ASSERT(isSgClassDeclaration(state_class_));
+		ROSE_ASSERT(state_class_);
 	}
 
 	//void setStateClass(SgClassDeclaration* state_decl)
@@ -292,7 +292,11 @@ public:
 
 	SgFunctionDeclaration* buildInitializationFunction();
 
+	SgFunctionDeclaration* buildComparisonFunction();
+
 	SgStatement* initializeMember(SgExpression* exp);
+
+	SgStatement* compareValue(SgExpression* var1, SgExpression* var2);
 
 	void assemble();
 };

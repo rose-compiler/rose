@@ -12,7 +12,7 @@ using namespace SageInterface;
 void BasicExpressionTest::build()
 {
 	// First build the state class.
-	setStateClassName("Model");
+	setStateClassName("State");
 	addStateMember("i", buildIntType());
 	addStateMember("f", buildFloatType());
 	buildStateClass();
