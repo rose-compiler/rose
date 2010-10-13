@@ -2705,21 +2705,24 @@ EmulationPolicy::emulate_syscall()
             //size_t sigsetsize=arg(3);
 
             uint64_t saved=signal_mask, sigset=0;
-            size_t nread = map->read(&sigset, set_va, sizeof sigset);
-            ROSE_ASSERT(nread==sizeof sigset);
+            if ( set_va != NULL ) {
 
-            if (0==how) {
-                /* SIG_BLOCK */
-                signal_mask |= sigset;
-            } else if (1==how) {
-                /* SIG_UNBLOCK */
-                signal_mask &= ~sigset;
-            } else if (2==how) {
-                /* SIG_SETMASK */
-                signal_mask = sigset;
-            } else {
-                writeGPR(x86_gpr_ax, -EINVAL);
-                break;
+                size_t nread = map->read(&sigset, set_va, sizeof sigset);
+                ROSE_ASSERT(nread==sizeof sigset);
+
+                if (0==how) {
+                    /* SIG_BLOCK */
+                    signal_mask |= sigset;
+                } else if (1==how) {
+                    /* SIG_UNBLOCK */
+                    signal_mask &= ~sigset;
+                } else if (2==how) {
+                    /* SIG_SETMASK */
+                    signal_mask = sigset;
+                } else {
+                    writeGPR(x86_gpr_ax, -EINVAL);
+                    break;
+                }
             }
 
             if (get_va) {
