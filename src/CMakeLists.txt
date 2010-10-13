@@ -136,6 +136,7 @@ set( sage3_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/fixupCopy_references.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/rtiHelpers.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/OmpAttribute.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompAstConstruction.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompFortranParser.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/dwarfSupport.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/rose_graph_support.C

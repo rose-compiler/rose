@@ -251,7 +251,9 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_260.f \
      test2007_261.f \
      test2010_29.f \
-     test2010_30.f
+     test2010_30.f \
+     test2010_63.f \
+     test2010_64.f
 
 F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_30.f03 \
