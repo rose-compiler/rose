@@ -20,8 +20,10 @@ endif
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    libroseOpenFortranParserlibraries = frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la
+   libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
 else
    libroseOpenFortranParserlibraries =
+   libroseJavaParserlibraries =
 endif
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
@@ -79,6 +81,7 @@ libroseLibraries = \
    $(top_builddir)/src/backend/unparser/formatSupport/libunparseFormatSupport.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseOpenFortranParserlibraries) \
+   $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \

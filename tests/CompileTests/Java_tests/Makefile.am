@@ -7,6 +7,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TESTCODES_REQUIRED_TO_PASS = \
      simple.java
 
+# This class does not match the file name.
+#    simple_fortran.java
+
 TESTCODE_CURRENTLY_FAILING = 
 
 noinst_headers = 
@@ -24,7 +27,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
 
-ROSE_FLAGS = -rose:java
+ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
 
 PASSING_TEST_Objects = ${TESTCODES:.java=.o}
 TEST_Objects = ${ALL_TESTCODES:.java=.o}
@@ -39,12 +42,25 @@ testTranslator=../../testTranslator
 $(TEST_Objects): ../../testTranslator
 	$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.java)
 
-testJava:
+testJavaTraversal:
 #	Java library path specifies where the *.so file is located (JavaTraversal.so)
 #	The class path (-cp) the ROSE version of the ECJ Java front-end.
 #	The we specify the ROSE specific JavaTraversal class file (that we execute)
 #	Then we specify two input java source files.
-	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:. $(top_srcdir)/src/3rdPartyLibraries/java-parser/JavaTraversal $(srcdir)/HelloWorld.java $(srcdir)/HelloWorld2.java
+#	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:. $(top_srcdir)/src/3rdPartyLibraries/java-parser/JavaTraversal $(srcdir)/HelloWorld.java $(srcdir)/HelloWorld2.java
+#	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:. JavaTraversal $(srcdir)/HelloWorld.java $(srcdir)/HelloWorld2.java
+#	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:. libjava_ecj_parser_c_jni_JavaParserActionJNI $(srcdir)/HelloWorld.java $(srcdir)/HelloWorld2.java
+#	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:. libjava_ecj_parser_c_jni_JavaParserActionJNI 
+#	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection/.libs -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:. libjava_ecj_parser_c_jni_JavaParserActionJNI 
+#	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection/.libs -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:. JavaTraversal
+#	java -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection/.libs JavaTraversal
+	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection/.libs -cp $(top_builddir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:$(top_builddir)/src/3rdPartyLibraries/java-parser:. JavaTraversal $(srcdir)/simple.java
+
+workingJava:
+	java -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar
+
+testECJ:
+	java -cp ecjROSE.jar org.eclipse.jdt.internal.compiler.batch.Main $(srcdir)/simple.java
 
 # Execute the java file using: java -Djava.library.path=. HelloWorld
 
@@ -60,5 +76,5 @@ check-local:
 	@echo "************************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[java] rose_performance_report_lockfile.lock *.out
+	rm -f *.dot *.class rose_*.java rose_performance_report_lockfile.lock *.out
 

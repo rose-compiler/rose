@@ -14,32 +14,46 @@ DISTCLEANFILES =
 if ROSE_USE_OPEN_FORTRAN_PARSER
 # To build a similar library using libtool we indicate that we want an installed 
 # library (which will then be made into a dynamic shared library).
-  lib_LTLIBRARIES = libjava_ecj_parser_c_jni_JavaParserActionJNI.la
+# lib_LTLIBRARIES = libjava_ecj_parser_c_jni_JavaParserActionJNI.la
+  lib_LTLIBRARIES = libJavaTraversal.la
 endif
 
 # DQ (10/21/2007): build (JJW: either empty or non-empty) lib file so that ROSE/src/Makefile.am need not be conditional on Fortran.
+# noinst_LTLIBRARIES = libroseJava.la
+# noinst_LTLIBRARIES = libJavaTraversal.la
 noinst_LTLIBRARIES = libroseJava.la
 
+JavaTraversal.C: JavaTraversal.h
+
+JavaTraversal.h:
+	cd ${top_builddir}/src/3rdPartyLibraries/parser-parser; $(MAKE) extract_rose_required_ecj_source_files
+
 if ROSE_USE_OPEN_FORTRAN_PARSER
-  libroseFortran_la_SOURCES = JavaTraversal.c
-#  libroseFortran_la_SOURCES = 
+ # libroseJava_la_SOURCES = JavaTraversal.c
+ # libJavaTraversal_la_SOURCES = JavaTraversal.C
+ # libJavaTraversal_la_SOURCES = openJavaParser_main.C 
+ # libroseJava_la_SOURCES = 
+   libroseJava_la_SOURCES = openJavaParser_main.C ecj.C
 else
-# Compile using a function that represents the API of the Open Fortran Parser
-  libroseFortran_la_SOURCES = dummy_JavaParser_main.C
+ # Compile using a function that represents the API of the Open Fortran Parser
+ # libroseJava_la_SOURCES = dummy_JavaParser_main.C
+ # libJavaTraversal_la_SOURCES = dummy_JavaParser_main.C
+   libroseJava_la_SOURCES = dummy_JavaParser_main.C
 endif
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
-OFP_DIR = $(top_builddir)/src/3rdPartyLibraries/java-parser
-libjava_ecj_parser_c_jni_JavaParserActionJNI_la_SOURCES = JavaParserActionROSE.C $(OFP_DIR)/token.c $(OFP_DIR)/jni_token_funcs.c $(OFP_DIR)/c_actions_jni.c
+ECJ_DIR = $(top_builddir)/src/3rdPartyLibraries/java-parser
+# libjava_ecj_parser_c_jni_JavaParserActionJNI_la_SOURCES = JavaTraversal.C $(ECJ_DIR)/token.c $(ECJ_DIR)/jni_token_funcs.c $(ECJ_DIR)/c_actions_jni.c
+# libjava_ecj_parser_c_jni_JavaParserActionJNI_la_SOURCES = JavaTraversal.C 
+libJavaTraversal_la_SOURCES = JavaTraversal.C 
 
 # DQ (10/11/2010): Put any required header files here.
 include_HEADERS = 
 
-OFP_SOURCE_FILES =
+# OFP_SOURCE_FILES =
+# $(OFP_SOURCE_FILES): extract_rose_required_ecj_source_files
 
-$(OFP_SOURCE_FILES): extract_rose_required_ecj_source_files
-
-JavaParserActionROSE.C: $(OFP_DIR)/token.h $(OFP_DIR)/ActionEnums.h $(OFP_DIR)/jni_token_funcs.h
+JavaParserActionROSE.C: $(ECJ_DIR)/token.h $(ECJ_DIR)/ActionEnums.h $(ECJ_DIR)/jni_token_funcs.h
 
 extract_rose_required_ecj_source_files:
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files

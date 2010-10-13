@@ -14157,7 +14157,7 @@ void c_action_io_implied_do_object()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_io_implied_do_object() \n");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R918 c_action_io_implied_do_object()");
 #endif
@@ -14166,6 +14166,7 @@ void c_action_io_implied_do_object()
      astExpressionStack.pop_front();
 
   // Accumulate the entries into a SgExprListExp that we replace at the top of the list.
+     ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExprListExp* implied_do_object_list = isSgExprListExp(astExpressionStack.front());
      if (implied_do_object_list == NULL)
         {
@@ -16867,7 +16868,7 @@ void c_action_end_block_data_stmt(Token_t *label, Token_t *endKeyword, Token_t *
 
      ROSE_ASSERT(astScopeStack.empty() == false);
      SgScopeStatement* topOfStack = getTopOfScopeStack();
-     printf ("In c_action_end_block_data_stmt(): topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
+  // printf ("In c_action_end_block_data_stmt(): topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
      ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
 
   // DQ (10/10/2010): I don't see why we are setting the data members of the global scope here!
@@ -18309,7 +18310,7 @@ void c_action_end_subroutine_stmt(Token_t * label, Token_t * keyword1, Token_t *
 
      astScopeStack.pop_front();
 
-     SgScopeStatement* topOfStack = getTopOfScopeStack();
+  // SgScopeStatement* topOfStack = getTopOfScopeStack();
 
   // DQ (11/21/2007): This is not required, and not true for subroutines in an interface block.
   // printf ("In R1234 c_action_end_subroutine_stmt(): topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
