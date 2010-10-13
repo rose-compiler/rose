@@ -59,6 +59,7 @@
 #include <sys/sysinfo.h> 
 enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
 
+#define CONV_FIELD(var1, var2, field) var1.field = var2.field
 #ifndef HAVE_USER_DESC
 typedef modify_ldt_ldt_s user_desc;
 #endif
@@ -2005,7 +2006,7 @@ EmulationPolicy::emulate_syscall()
             uint32_t cmd=arg(1), arg2=arg(2);
             int result = -ENOSYS;
             switch (cmd) {
-                case TCGETS: { /*tcgetattr*/
+                case TCGETS: { /* 0x00005401, tcgetattr*/
                     struct termios ti;
                     result = tcgetattr(fd, &ti);
                     if (-1==result) {
@@ -2018,8 +2019,106 @@ EmulationPolicy::emulate_syscall()
                     }
                     break;
                 }
-                    
-                case TIOCGPGRP: { /*tcgetpgrp*/
+                
+                case TCSETSW: { /* 0x00005403, tcsetattr  */
+                    /* Equivalent to 
+                         int tcsetattr(int fd, int optional_actions, const struct termios *termios_p);
+                         tcsetattr(fd, TCSADRAIN, argp).
+                       Allow the output buffer to drain, and set the current serial port settings. 
+
+                       typedef unsigned int     tcflag_t;
+                       typedef unsigned char    cc_t;
+                       typedef unsigned int     speed_t;
+
+                       struct termios {
+                         tcflag_t c_iflag;
+                         tcflag_t c_oflag;
+                         tcflag_t c_cflag;
+                         tcflag_t c_lflag;
+                         cc_t c_cc[NCCS];
+                         speed_t c_ispeed;
+                         speed_t c_ospeed;
+                       };
+
+
+                     */
+                    uint32_t optional_actions = arg(2);
+
+                    //Convert between 32 bit termios and whatever is
+                    //used on this machine
+                    struct termios_kernel {
+                         uint32_t c_iflag;
+                         uint32_t c_oflag;
+                         uint32_t c_cflag;
+                         uint32_t c_lflag;
+                         unsigned char c_cc[NCCS];
+                         uint32_t c_ispeed;
+                         uint32_t c_ospeed;
+                    };
+
+                    termios_kernel tik;
+
+                    size_t nread = map->read(&tik, arg(3), sizeof(termios_kernel));
+                    ROSE_ASSERT(sizeof(termios_kernel) == nread);
+ 
+                    struct termios ti;
+
+                    CONV_FIELD(ti,tik,c_iflag);
+                    CONV_FIELD(ti,tik,c_oflag);
+                    CONV_FIELD(ti,tik,c_cflag);
+                    CONV_FIELD(ti,tik,c_lflag);
+                    CONV_FIELD(ti,tik,c_ispeed);
+
+                    for (int i = 0 ; i < NCCS ; i++ )
+                      ti.c_cc[i] = tik.c_cc[i];
+
+                    CONV_FIELD(ti,tik,c_ospeed);
+
+                    result = tcsetattr(fd, optional_actions, &ti);
+
+                    if (result==-1) {
+                        result = -errno;
+                    } 
+  
+                    break;
+                }
+
+                case TCGETA: { /* 0x,00005405 */
+                    /* gets a data structure of type 
+                           struct termio * 
+
+                       struct termio {
+                         unsigned short c_iflag;     // input mode flags 
+                         unsigned short c_oflag;     // output mode flags 
+                         unsigned short c_cflag;     // control mode flags 
+                         unsigned short c_lflag;     // local mode flags 
+                         unsigned char c_line;       // line discipline 
+                         unsigned char c_cc[NCC];    // control characters 
+                       };
+
+                     */
+
+                    termio to;
+
+                    result = ioctl(fd, TCGETA, &to);
+                    if (-1==result) {
+                        result = -errno;
+                    } else {
+                        size_t nwritten = map->write(&to, arg2, sizeof to);
+                        ROSE_ASSERT(nwritten==sizeof to);
+                    }
+
+                    break;
+                }
+
+                case TIOCGPGRP: { /* 0x0000540F, tcgetpgrp*/
+                    /* equivalent to 
+                        pid_t tcgetpgrp(int fd);
+                       The  function tcgetpgrp() returns the process group ID of the foreground process group 
+                       on the terminal associated to fd, which must be the controlling terminal of the calling 
+                       process.
+                    */
+
                     pid_t pgrp = tcgetpgrp(fd);
                     if (-1==pgrp) {
                         result = -errno;
@@ -2033,7 +2132,7 @@ EmulationPolicy::emulate_syscall()
                     break;
                 }
                     
-                case TIOCSPGRP: { /*tcsetpgrp*/
+                case TIOCSPGRP: { /* 0x5410, tcsetpgrp*/
                     uint32_t pgid_le;
                     size_t nread = map->read(&pgid_le, arg2, 4);
                     ROSE_ASSERT(4==nread);
@@ -2044,7 +2143,26 @@ EmulationPolicy::emulate_syscall()
                     break;
                 }
 
-                case TIOCGWINSZ: {
+                case TIOCSWINSZ: { /* 0x5413, the winsize is const */
+                    /* Set window size.
+                       struct winsize {
+                          unsigned short ws_row;
+                          unsigned short ws_col;
+                          unsigned short ws_xpixel;   // unused 
+                          unsigned short ws_ypixel;   // unused 
+                       };
+                    */
+                    winsize ws;
+                    size_t nread = map->read(&ws, arg(2), sizeof(winsize));
+                    ROSE_ASSERT(sizeof(winsize) == nread);
+
+                    result = ioctl(fd, TIOCSWINSZ, &ws);
+                    if (-1==result)
+                        result = -errno;
+                    break;
+                }
+
+                case TIOCGWINSZ: /* 0x5414, */ {
                     struct winsize ws;
                     result = ioctl(fd, TIOCGWINSZ, &ws);
                     if (-1==result) {
@@ -2055,7 +2173,6 @@ EmulationPolicy::emulate_syscall()
                     }
                     break;
                 }
-                    
                 default:
                     fprintf(stderr, "  unhandled ioctl: %u\n", cmd);
                     abort();
@@ -2265,6 +2382,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+#if 0
         case 116: { /* 0x74, sysinfo*/
 
             /*
@@ -2377,6 +2495,7 @@ EmulationPolicy::emulate_syscall()
 
             break;
         }
+#endif
 
         case 122: { /*0x7a, uname*/
             syscall_enter("uname", "p");
@@ -2625,6 +2744,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+#if 0
         case 186: { /* 0xba, sigaltstack*/
           /*
              int sigaltstack(const stack_t *restrict ss, stack_t *restrict oss);
@@ -2643,7 +2763,7 @@ EmulationPolicy::emulate_syscall()
              The alternate signal stack is currently disabled.
           */
               syscall_enter("sigaltstack", "pp");
-#if 0
+#if 1
 
               struct stack_t_kernel{
                 uint8_t  ss_sp;
@@ -2659,7 +2779,7 @@ EmulationPolicy::emulate_syscall()
               //Read in the contents from the fake stack
 
               void* ss_sp_ss  = malloc(fakestack_ss.ss_size);
-              nread = map->read(&ss_sp_ss, fakestack_ss.ss_sp, fakestack_ss.ss_size);
+              nread = map->read(ss_sp_ss, fakestack_ss.ss_sp, fakestack_ss.ss_size);
               stack_t fakestack_ss_arg;
               fakestack_ss_arg.ss_flags = fakestack_ss.ss_flags;
               fakestack_ss_arg.ss_size  = fakestack_ss.ss_size;
@@ -2668,7 +2788,7 @@ EmulationPolicy::emulate_syscall()
               //SECOND ARGUMENT OSS CAN BE NULL
 #endif
               int result;
-#if 0
+#if 1
               if( arg(1) != NULL )
               {
 
@@ -2682,7 +2802,7 @@ EmulationPolicy::emulate_syscall()
 
               }else{
                 std::cout << "Executing syscall" << std::endl;
-//                result = sigaltstack(&fakestack_ss_arg,NULL);
+                result = sigaltstack(&fakestack_ss_arg,NULL);
               }
 #endif
               if (result == -1) result = -errno;
@@ -2697,7 +2817,7 @@ EmulationPolicy::emulate_syscall()
 
 
         }
-
+#endif
         case 191: { /*0xbf, ugetrlimit*/
             syscall_enter("ugetrlimit", "dp");
 #if 1 /*FIXME: We need to translate between 64-bit host and 32-bit guest. [RPM 2010-09-28] */
@@ -3031,7 +3151,7 @@ EmulationPolicy::emulate_syscall()
 #endif
 #endif
                 T_END };
-
+#if 0
             /* Variable arguments */
             switch (arg(1) & FUTEX_CMD_MASK) {
                 case FUTEX_WAIT:
@@ -3069,6 +3189,9 @@ EmulationPolicy::emulate_syscall()
             int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val2);
             if (-1==result) result = -errno;
             writeGPR(x86_gpr_ax, result);
+#endif
+            writeGPR(x86_gpr_ax, -ENOSYS);
+
             syscall_leave("d");
             break;
         }
@@ -3318,6 +3441,7 @@ EmulationPolicy::emulate_syscall()
             abort();
         }
     }
+    ROSE_ASSERT( this != NULL  );
 }
 
 void
