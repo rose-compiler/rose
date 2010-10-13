@@ -1396,20 +1396,40 @@ Grammar::setUpExpressions ()
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      ImpliedDo.setFunctionPrototype ( "HEADER_IMPLIED_DO", "../Grammar/Expression.code" );
-     ImpliedDo.setDataPrototype     ( "SgVarRefExp*", "do_var", "= NULL",
+
+  // DQ (9/22/2010): This is only an simple varRef in trivial cases, this is more generally 
+  // where an expression in terms of an index is put (e.g. a function of an index as in 
+  // "(product(localCount(:j)), j = 1, numDims - 1)" in test2010_49.f90).
+  // ImpliedDo.setDataPrototype     ( "SgVarRefExp*", "do_var", "= NULL",
+  //                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // ImpliedDo.setDataPrototype     ( "SgExpression*", "do_var_exp", "= NULL",
+  //                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ImpliedDo.setDataPrototype     ( "SgExpression*", "do_var_initialization", "= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     ImpliedDo.setDataPrototype     ( "SgExpression*", "first_val", "= NULL",
-				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/9/2010): This data member is now replaced by the do_var_exp_initialization.
+  // DQ (10/2/2010): This should be a SgVariableDeclaration instead of an expression.  
+  // This was suggested at the Sept Portlan Fortran Adventure meeting.
+  // ImpliedDo.setDataPrototype     ( "SgExpression*", "first_val", "= NULL",
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // ImpliedDo.setDataPrototype     ( "SgExpression*", "first_val", "= NULL",
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ImpliedDo.setDataPrototype     ( "SgExpression*", "last_val", "= NULL",
-				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ImpliedDo.setDataPrototype     ( "SgExpression*", "increment", "= NULL",
-				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // For "((A(i),B(i,j),i=0,10,2),j=0,20,3)" A(i) and B(i,j) are the objects in the object_list 
   // for the inner most implided do loop.  The inner most implied do loop is in the object list 
   // for the outer implied do loop.
      ImpliedDo.setDataPrototype     ( "SgExprListExp*", "object_list", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
+#if 1
+  // DQ (10/2/2010): Added scope to hold the SgVariableDeclaration and support nested scopes of 
+  // multi-dimensional implied do loops. However this scope should not be traversed since its
+  // purpose is to hold a symbol table, but we don't want just have a symbol table directly.
+     ImpliedDo.setDataPrototype     ( "SgScopeStatement*", "implied_do_scope", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
   // DQ (11/24/2007): Added new IR node to handle unknown array reference vs. function call problem in Fortran.
   // These are translated to either array references or function calls within post-processing steps.
      UnknownArrayOrFunctionReference.setFunctionPrototype ( "HEADER_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE", "../Grammar/Expression.code" );
