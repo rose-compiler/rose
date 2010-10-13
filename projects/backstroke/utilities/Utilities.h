@@ -5,7 +5,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <VariableRenaming.h>
 
-namespace backstroke_util
+namespace BackstrokeUtility
 {
 	/** Generate a name that is unique in the current scope and any parent and children scopes.
 	* @param baseName the word to be included in the variable names. */

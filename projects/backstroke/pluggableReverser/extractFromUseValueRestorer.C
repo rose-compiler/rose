@@ -1,7 +1,9 @@
 #include "extractFromUseValueRestorer.h"
-#include "utilities/CPPDefinesAndNamespaces.h"
-#include "eventHandler.h"
+#include "utilities/cppDefinesAndNamespaces.h"
+#include "eventProcessor.h"
 #include <rose.h>
+
+using namespace std;
 
 vector<SgExpression*> ExtractFromUseValueRestorer::restoreVariable(VariableRenaming::VarName varName, 
 		const VariableVersionTable& availableVariables, VariableRenaming::NumNodeRenameEntry definitions)

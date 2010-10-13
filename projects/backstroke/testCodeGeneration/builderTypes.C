@@ -1,5 +1,5 @@
 #include "builderTypes.h"
-#include <utilities/Utilities.h>
+#include <utilities/utilities.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <stdlib.h>
@@ -303,7 +303,7 @@ SgStatement* TestCodeAssembler::compareValue(SgExpression* var1, SgExpression* v
         return buildIfStmt(cmp, buildReturnStmt(buildIntVal(0)), NULL);
     }
 	// For a STL object, we use defined operator !=.
-	else if (backstroke_util::isSTLContainer(type))
+	else if (BackstrokeUtility::isSTLContainer(type))
 	{
 		// This part should be added.
 		ROSE_ASSERT(false);
@@ -330,7 +330,7 @@ SgStatement* TestCodeAssembler::initializeMember(SgExpression* exp)
 		return buildFunctionCallStmt("memset", buildPointerType(buildVoidType()), memset_para);
 	}
 	// For a STL object, currently we do not initialize it.
-	else if (backstroke_util::isSTLContainer(type))
+	else if (BackstrokeUtility::isSTLContainer(type))
 	{
 		return NULL;
 	}

@@ -1,28 +1,19 @@
-#include <pluggableReverser/eventHandler.h>
-#include <pluggableReverser/expressionHandler.h>
-#include <pluggableReverser/statementHandler.h>
-#include <pluggableReverser/ifStatementHandler.h>
-#include <pluggableReverser/whileStatementHandler.h>
-#include <pluggableReverser/stateSavingStatementHandler.h>
-#include <pluggableReverser/akgulStyleExpressionHandler.h>
-#include "pluggableReverser/variableDeclarationHandler.h"
-#include <utilities/Utilities.h>
+#include <pluggableReverser/eventProcessor.h>
+#include <pluggableReverser/expAndStmtHandlers.h>
+#include <utilities/utilities.h>
 #include <normalizations/expNormalization.h>
 #include <boost/algorithm/string.hpp>
 #include <string>
 #include <boost/timer.hpp>
 
-#include "utilities/CPPDefinesAndNamespaces.h"
-#include "pluggableReverser/returnStatementHandler.h"
-#include "pluggableReverser/akgulStyleExpressionHandler.h"
-#include "pluggableReverser/redefineValueRestorer.h"
-#include "pluggableReverser/extractFromUseValueRestorer.h"
+#include "utilities/cppDefinesAndNamespaces.h"
 
 
-
+using namespace std;
+using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
-using namespace backstroke_util;
+using namespace BackstrokeUtility;
 
 
 int main(int argc, char * argv[])
@@ -44,7 +35,7 @@ int main(int argc, char * argv[])
 	pushScopeStack(isSgScopeStatement(global));
 
 	// Get every function declaration and identify if it's an event function.
-	vector<SgFunctionDeclaration*> func_decls = backstroke_util::querySubTree<SgFunctionDeclaration > (global);
+	vector<SgFunctionDeclaration*> func_decls = BackstrokeUtility::querySubTree<SgFunctionDeclaration > (global);
 	foreach(SgFunctionDeclaration* decl, func_decls)
 	{
 		string func_name = decl->get_name();
@@ -53,33 +44,33 @@ int main(int argc, char * argv[])
 
 		//Normalize this event function.
 		cout << "Function " << decl->get_name().str() << " is normalized!\n" << endl;
-		backstroke_norm::normalizeEvent(decl);
+		BackstrokeNorm::normalizeEvent(decl);
 	}
 
 	VariableRenaming var_renaming(project);
 	var_renaming.run();
 
-	EventHandler event_handler(NULL, &var_renaming);
+	EventProcessor event_processor(NULL, &var_renaming);
 
 	// Add all expression handlers to the expression pool.
-	//event_handler.addExpressionHandler(new NullExpressionHandler);
-	event_handler.addExpressionHandler(new IdentityExpressionHandler);
-	event_handler.addExpressionHandler(new StoreAndRestoreExpressionHandler);
-	//event_handler.addExpressionHandler(new AkgulStyleExpressionHandler);
+	//event_processor.addExpressionHandler(new NullExpressionHandler);
+	event_processor.addExpressionHandler(new IdentityExpressionHandler);
+	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
+	//event_processor.addExpressionHandler(new AkgulStyleExpressionHandler);
 
 	// Add all statement handlers to the statement pool.
-	event_handler.addStatementHandler(new CombinatorialExprStatementHandler);
-	event_handler.addStatementHandler(new VariableDeclarationHandler);
-	event_handler.addStatementHandler(new CombinatorialBasicBlockHandler);
-	event_handler.addStatementHandler(new IfStatementHandler);
-	event_handler.addStatementHandler(new WhileStatementHandler);
-	event_handler.addStatementHandler(new ReturnStatementHandler);
-	event_handler.addStatementHandler(new StateSavingStatementHandler);
-	//event_handler.addStatementHandler(new NullStatementHandler);
+	event_processor.addStatementHandler(new CombinatorialExprStatementHandler);
+	event_processor.addStatementHandler(new VariableDeclarationHandler);
+	event_processor.addStatementHandler(new CombinatorialBasicBlockHandler);
+	event_processor.addStatementHandler(new IfStatementHandler);
+	event_processor.addStatementHandler(new WhileStatementHandler);
+	event_processor.addStatementHandler(new ReturnStatementHandler);
+	event_processor.addStatementHandler(new StateSavingStatementHandler);
+	//event_processor.addStatementHandler(new NullStatementHandler);
 
 	//Variable value extraction handlers
-	event_handler.addVariableValueRestorer(new RedefineValueRestorer);
-	event_handler.addVariableValueRestorer(new ExtractFromUseValueRestorer);
+	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
+	event_processor.addVariableValueRestorer(new ExtractFromUseValueRestorer);
 
 	foreach(SgFunctionDeclaration* decl, func_decls)
 	{
@@ -89,20 +80,21 @@ int main(int argc, char * argv[])
 
 		timer t;
 		// Here reverse the event function into several versions.
-		FuncDeclPairs output = event_handler.processEvent(decl);
+		FuncDeclPairs output = event_processor.processEvent(decl);
 
 		cout << "Time used: " << t.elapsed() << endl;
 		cout << "Event is processed successfully!\n";
 
-		foreach(FuncDeclPair& func_decl_pair, output)
+		reverse_foreach (FuncDeclPair& func_decl_pair, output)
 		{
-			appendStatement(func_decl_pair.first);
-			appendStatement(func_decl_pair.second);
+			// Put the generated statement after the original event.
+			insertStatement(decl, func_decl_pair.second, false);
+			insertStatement(decl, func_decl_pair.first, false);
 		}
 	}
 
 	// Declare all stack variables on top of the generated file.
-	vector<SgVariableDeclaration*> stack_decls = event_handler.getAllStackDeclarations();
+	vector<SgVariableDeclaration*> stack_decls = event_processor.getAllStackDeclarations();
 	foreach(SgVariableDeclaration* decl, stack_decls)
 	{
 		prependStatement(decl);

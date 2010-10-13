@@ -1,13 +1,15 @@
-#include "Utilities.h"
+#include "utilities.h"
 #include "cppDefinesAndNamespaces.h"
 
 #include "rose.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 
-namespace backstroke_util
+namespace BackstrokeUtility
 {
 
+using namespace std;
+using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
 
@@ -106,7 +108,7 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForE
 	}
 
 	//Generate a unique variable name
-	string name = backstroke_util::GenerateUniqueVariableName(scope);
+	string name = BackstrokeUtility::GenerateUniqueVariableName(scope);
 
 	//Initialize the temporary variable to an evaluation of the expression
 	SgAssignInitializer* initializer = NULL;

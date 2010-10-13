@@ -56,9 +56,6 @@ int main(int argn, char** argv)
 	
 	// Then we create a new file which will be our output.
 	ofstream ofs(filename.c_str());
-	//ofs << "#define __attribute__(x) ;\n";
-	//ofs << "#include <stdlib.h>\n";
-	//ofs << "int foo() __attribute__((visibility(\"default\")));\n";
 	ofs.close();
 
 	args.push_back(filename);

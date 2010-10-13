@@ -4,7 +4,7 @@
 #include <rose.h>
 #include "ExtractFunctionArguments.h"
 
-namespace backstroke_norm
+namespace BackstrokeNorm
 {
 
 
