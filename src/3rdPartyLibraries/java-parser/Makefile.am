@@ -10,8 +10,9 @@ endif
 # extract_rose_required_ecj_source_files: buildJavaSupport
 # extract_rose_required_ecj_source_files: ${srcdir}/JavaTraversal.java
 extract_rose_required_ecj_source_files: JavaTraversal.class
-	@echo "In extract_rose_required_ecj_source_files: After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir"
-	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
+#	@echo "In extract_rose_required_ecj_source_files: After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir"
+#	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
+	@echo "In extract_rose_required_ecj_source_files: output the directory listing."
 	@pwd
 	@echo "calling ls -l --full-time"
 	ls -l 
