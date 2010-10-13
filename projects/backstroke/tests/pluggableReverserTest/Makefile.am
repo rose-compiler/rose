@@ -10,6 +10,7 @@ pluggableReverser_LDADD = $(top_builddir)/projects/backstroke/restrictedLanguage
 			$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a \
 			$(top_builddir)/projects/backstroke/pluggableReverser/libBackstrokePluggableReverser.a \
 			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
+			$(top_builddir)/projects/backstroke/libBackstroke.a \
 			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = 

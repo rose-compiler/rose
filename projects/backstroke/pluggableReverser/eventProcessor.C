@@ -33,9 +33,7 @@ void EventProcessor::addVariableValueRestorer(VariableValueRestorer* restorer)
 FuncDeclPairs EventProcessor::processEvent(SgFunctionDeclaration* event)
 {
 	event_ = event;
-	FuncDeclPairs result = processEvent();
-	event_ = NULL;
-	return result;
+	return processEvent();
 }
 
 

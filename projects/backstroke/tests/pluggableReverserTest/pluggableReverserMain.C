@@ -1,3 +1,4 @@
+#include <backstroke.h>
 #include <pluggableReverser/eventProcessor.h>
 #include <pluggableReverser/expAndStmtHandlers.h>
 #include <utilities/utilities.h>
@@ -15,43 +16,18 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace BackstrokeUtility;
 
-
-int main(int argc, char * argv[])
+bool isEvent(SgFunctionDeclaration* func)
 {
-	vector<string> args(argv, argv + argc);
-	SgProject* project = frontend(args);
+	string func_name = func->get_name();
+	if (starts_with(func_name, "event") &&
+			!ends_with(func_name, "reverse") &&
+			!ends_with(func_name, "forward"))
+		return true;
+	return false;
+}
 
-	SgGlobal* global = getFirstGlobalScope(project);
-
-	// Prepend includes to test files.
-	string includes = "#include <rctypes.h>\n"
-			"#include <stdio.h>\n"
-			"#include <stdlib.h>\n"
-			"#include <time.h>\n"
-			"#include <assert.h>\n"
-			"#include <memory.h>\n";
-	addTextForUnparser(global, includes, AstUnparseAttribute::e_before);
-
-	pushScopeStack(isSgScopeStatement(global));
-
-	// Get every function declaration and identify if it's an event function.
-	vector<SgFunctionDeclaration*> func_decls = BackstrokeUtility::querySubTree<SgFunctionDeclaration > (global);
-	foreach(SgFunctionDeclaration* decl, func_decls)
-	{
-		string func_name = decl->get_name();
-		if (!starts_with(func_name, "event") ||	ends_with(func_name, "reverse") || ends_with(func_name, "forward"))
-			continue;
-
-		//Normalize this event function.
-		cout << "Function " << decl->get_name().str() << " is normalized!\n" << endl;
-		BackstrokeNorm::normalizeEvent(decl);
-	}
-
-	VariableRenaming var_renaming(project);
-	var_renaming.run();
-
-	EventProcessor event_processor(NULL, &var_renaming);
-
+void addHandlers(EventProcessor& event_processor)
+{
 	// Add all expression handlers to the expression pool.
 	//event_processor.addExpressionHandler(new NullExpressionHandler);
 	event_processor.addExpressionHandler(new IdentityExpressionHandler);
@@ -71,11 +47,48 @@ int main(int argc, char * argv[])
 	//Variable value extraction handlers
 	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
 	event_processor.addVariableValueRestorer(new ExtractFromUseValueRestorer);
+}
+
+void reverseEvents(SgProject* project)
+{
+	EventProcessor event_processor(NULL);
+	addHandlers(event_processor);
+
+	Backstroke::reverseEvents(&event_processor, isEvent, project);
+	return;
+
+
+	SgGlobal* global = getFirstGlobalScope(project);
+	// Prepend includes to test files.
+	string includes = "#include <rctypes.h>\n"
+			"#include <stdio.h>\n"
+			"#include <stdlib.h>\n"
+			"#include <time.h>\n"
+			"#include <assert.h>\n"
+			"#include <memory.h>\n";
+	addTextForUnparser(global, includes, AstUnparseAttribute::e_before);
+
+	pushScopeStack(isSgScopeStatement(global));
+
+	// Get every function declaration and identify if it's an event function.
+	vector<SgFunctionDeclaration*> func_decls = BackstrokeUtility::querySubTree<SgFunctionDeclaration > (global);
+	foreach(SgFunctionDeclaration* decl, func_decls)
+	{
+		if (isEvent(decl))
+		{
+			//Normalize this event function.
+			BackstrokeNorm::normalizeEvent(decl);
+			cout << "Function " << decl->get_name().str() << " is normalized!\n" << endl;
+		}
+	}
+
+	VariableRenaming var_renaming(project);
+	var_renaming.run();
+
 
 	foreach(SgFunctionDeclaration* decl, func_decls)
 	{
-		string func_name = decl->get_name();
-		if (!starts_with(func_name, "event") || ends_with(func_name, "reverse") || ends_with(func_name, "forward"))
+		if (!isEvent(decl))
 			continue;
 
 		timer t;
@@ -94,8 +107,7 @@ int main(int argc, char * argv[])
 	}
 
 	// Declare all stack variables on top of the generated file.
-	vector<SgVariableDeclaration*> stack_decls = event_processor.getAllStackDeclarations();
-	foreach(SgVariableDeclaration* decl, stack_decls)
+	foreach(SgVariableDeclaration* decl, event_processor.getAllStackDeclarations())
 	{
 		prependStatement(decl);
 	}
@@ -103,9 +115,15 @@ int main(int argc, char * argv[])
 	popScopeStack();
 
 	// Fix all variable references here.
-	cout << "VarRef fixed: " <<	fixVariableReferences(global) << endl;
+	fixVariableReferences(global);
 	AstTests::runAllTests(project);
 	cout << "Test Done!\n";
+}
 
+
+int main(int argc, char * argv[])
+{
+	SgProject* project = frontend(argc, argv);
+	reverseEvents(project);
 	return backend(project);
 }

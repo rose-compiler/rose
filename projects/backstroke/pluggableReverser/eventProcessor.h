@@ -85,10 +85,11 @@ public:
 	//! Get all declarations of stacks which store values of different types.
 	std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;
 
+	void setVariableRenaming(VariableRenaming* var_renaming)
+	{ var_renaming_ = var_renaming; }
+
 	VariableRenaming* getVariableRenaming() const
-	{
-		return var_renaming_;
-	}
+	{ return var_renaming_;	}
 
 	/**
 	* Given a variable and a version, returns an expression evaluating to the value of the variable
