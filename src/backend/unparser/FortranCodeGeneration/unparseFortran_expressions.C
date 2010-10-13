@@ -1168,18 +1168,24 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
 
      SgExprListExp* object_list = ioitem_expr->get_object_list();
 
-     SgVarRefExp* varRef = ioitem_expr->get_do_var();
-     SgExpression* lb    = ioitem_expr->get_first_val();
-     SgExpression* ub    = ioitem_expr->get_last_val();
-     SgExpression* step  = ioitem_expr->get_increment();
+  // DQ (9/22/2010): test2010_49.f90 demonstrates that this can be an expression in terms of an 
+  // index variable, so this is more general that first exptected and as a result has changed 
+  // the IR and the name of the datamember.
+  // SgVarRefExp* varRef = ioitem_expr->get_do_var();
+  // SgExpression* indexExpression = ioitem_expr->get_do_var_exp();
+  // SgExpression* lb              = ioitem_expr->get_first_val();
+     SgExpression* lb   = ioitem_expr->get_do_var_initialization();
+     SgExpression* ub   = ioitem_expr->get_last_val();
+     SgExpression* step = ioitem_expr->get_increment();
 
-     if (varRef == NULL)
+#if 0
+     if (indexExpression == NULL)
         {
        // OFP dos not yet provide a loop index variable for the case of an implied do loop 
        // in an initializer to a variable declaration or a data statement (only for an IO 
        // statement).  So we have to build one.  I have elected to do so by looking for it
        // in the SgPntrArrRefExp objects found in the object_list, however this is unsafe.
-          printf ("Warning, implied do loop index variable not found (unavailalbe in OFP for initilizers and data statements) lookinf for one to use in the object_list \n");
+          printf ("Warning, implied do loop index variable not found (unavailable in OFP for initilizers and data statements) lookinf for one to use in the object_list \n");
 
           SgExpressionPtrList & expressionList = object_list->get_expressions();
           SgExpressionPtrList::iterator i = expressionList.begin();
@@ -1219,10 +1225,12 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
              }
 
           ROSE_ASSERT(indexVariable != NULL);
-          varRef = indexVariable;
+          indexExpression = indexVariable;
         }
 
-     ROSE_ASSERT(varRef != NULL);
+     ROSE_ASSERT(indexExpression != NULL);
+#endif
+
      ROSE_ASSERT(lb != NULL);
      ROSE_ASSERT(ub != NULL);
      ROSE_ASSERT(step != NULL);
@@ -1231,11 +1239,26 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
      if (object_list != NULL)
         {
           unparseExprList(object_list, info, false /*paren*/);
+
+       // DQ (9/26/2010): Handle cases where the list is empty (see test2010_49.f90)
+          if (object_list->empty() == false)
+               curprint(",");
         }
-     curprint(",");
-     unparseExpression(varRef, info);
-     curprint(" = ");
+  // unparseExpression(indexExpression, info);
+  // curprint(" = ");
+#if 0
      unparseExpression(lb, info);
+#else
+  // DQ (10/9/2010): This is an iterative step in the correct handling of implied do expressions.
+  // Unparse the lhs and rhs separately to about extra "()".  A little later this will be a 
+  // variable declaration, but we will not be able to unparse it as such since the type 
+  // (integer) is not explicitly represented.
+     SgBinaryOp* binaryExpression = isSgBinaryOp(lb);
+     unparseExpression(binaryExpression->get_lhs_operand(), info);
+     curprint(" = ");
+     unparseExpression(binaryExpression->get_rhs_operand(), info);
+#endif
+
      curprint(", ");
      unparseExpression(ub, info);
 

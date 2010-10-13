@@ -24,6 +24,7 @@ struct Translate {
 #define TF(X)           {X, X, #X}              /**< Define a bit flag. */
 #define TF2(M,X)        {M, X, #X}              /**< Define a bit vector with possible zero bits. */
 #define TE(X)           {(uint32_t)-1, X, #X}   /**< Define an enumerated constant. */
+#define TE2(V,X)        {(uint32_t)-1, V, #X}   /**< Define an enumerated constant with no predefined name symbol. */
 #define T_END           {0, 0, NULL}            /**< Terminates a Translate table. */
 
 /** Holds information needed for printing */

@@ -132,6 +132,9 @@ print_single(FILE *f, char fmt, const ArgInfo *info)
 {
     int retval=0;
     switch (fmt) {
+        case '-':
+            retval += fprintf(f, "<unused>");
+            break;
         case 'd':
             retval += print_signed(f, info->val);
             break;

@@ -1,7 +1,6 @@
 #include "rose.h"
 #include "VirtualMachineSemantics.h"
 #include <ostream>
-#include <strstream>
 
 #ifdef HAVE_GCRYPT_H
 #include <gcrypt.h>

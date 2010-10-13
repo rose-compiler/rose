@@ -1,0 +1,11 @@
+simpleAnalyses_OBJ = ${ANALYSIS_ROOT}/src/simpleAnalyses/obj/divAnalysis.o ${ANALYSIS_ROOT}/src/simpleAnalyses/obj/sgnAnalysis.o \
+                     ${ANALYSIS_ROOT}/src/simpleAnalyses/obj/nodeConstAnalysis.o \
+                     ${ANALYSIS_ROOT}/src/simpleAnalyses/obj/printAnalysisStates.o ${ANALYSIS_ROOT}/src/simpleAnalyses/obj/affineInequality.o \
+                     ${ANALYSIS_ROOT}/src/simpleAnalyses/obj/saveDotAnalysis.o ${ANALYSIS_ROOT}/src/simpleAnalyses/obj/placeUIDs.o
+simpleAnalyses_H = ${ANALYSIS_ROOT}/src/simpleAnalyses/divAnalysis.h ${ANALYSIS_ROOT}/src/simpleAnalyses/sgnAnalysis.h \
+                   ${ANALYSIS_ROOT}/src/simpleAnalyses/printAnalysisStates.h ${ANALYSIS_ROOT}/src/simpleAnalyses/affineInequality.h \
+                   ${ANALYSIS_ROOT}/src/simpleAnalyses/saveDotAnalysis.h ${ANALYSIS_ROOT}/src/simpleAnalyses/placeUIDs.h
+
+.PHONY: simpleAnalyses
+simpleAnalyses:
+	cd ${ANALYSIS_ROOT}/src/simpleAnalyses; ${MAKE} all; cd ${ANALYSIS_ROOT}/src/${Component}

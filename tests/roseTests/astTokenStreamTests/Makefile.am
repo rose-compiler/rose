@@ -2,12 +2,17 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_SQLITE_DATABASE
 
-bin_PROGRAMS = testLinearization
+bin_PROGRAMS = testLinearization testScopeMatching
 
 testLinearization_SOURCES = \
-	testLinearization.C 
+	testLinearization.C  
 
 testLinearization_LDADD = $(ROSE_LIBS)
+
+testScopeMatching_SOURCES = \
+	testScopeMatching.C  
+
+testScopeMatching_LDADD = $(ROSE_LIBS)
 
 # DQ (3/8/2009): Fixed error: -I. and $(BOOST_CPPFLAGS) is included in $(ROSE_INCLUDES).
 # INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.

@@ -904,7 +904,7 @@ check-local:
 	@echo "***************************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC]
+	rm -f *.o rose_*.[cC] *.dot *.C_copy_graph_old_nodes
 	rm -rf QMTest
 
 distclean-local:

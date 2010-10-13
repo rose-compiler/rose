@@ -76,7 +76,7 @@ corresponding C type is union name defaults to YYSTYPE.
           void* ptype; /* For expressions */
         }
 
-/*Some operators have a suffix 2 to avoid name conficts with ROSE's existing types, We may want to reuse them if it is proper. Liao*/
+/*Some operators have a suffix 2 to avoid name conflicts with ROSE's existing types, We may want to reuse them if it is proper. Liao*/
 %token  OMP PARALLEL IF NUM_THREADS ORDERED SCHEDULE STATIC DYNAMIC GUIDED RUNTIME SECTIONS SINGLE NOWAIT SECTION
         FOR MASTER CRITICAL BARRIER ATOMIC FLUSH 
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
