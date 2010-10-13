@@ -17,7 +17,10 @@ import org.eclipse.jdt.internal.compiler.problem.*;
 import org.eclipse.jdt.internal.compiler.util.*;
 
 
-class JavaTraversal  {
+// DQ (10/12/2010): Make more like the OFP implementation (using Callable<Boolean> abstract base class). 
+// class JavaTraversal {
+import java.util.concurrent.Callable;
+class JavaTraversal  implements Callable<Boolean> {
     static Main main;
     static BufferedWriter out;
 
@@ -27,6 +30,10 @@ class JavaTraversal  {
     private native void invokeEND ();
     private native void invokeNODE(String className, int nr);
     private native void invokeEDGE(String className1, int nr,String className2, int nr2);
+
+ // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
+    private static boolean hasErrorOccurred = false;
+
     static {
 	System.loadLibrary("JavaTraversal");
     }
@@ -1009,14 +1016,28 @@ class JavaTraversal  {
 
 
     public static void main(String args[])    {
-	/* tps : set up and configure ---------------------------------------------- */
+/* tps : set up and configure ---------------------------------------------- */
 	System.out.println("Compiling ...");
+
+// DQ (10/12/2010) Comment this out for now while we debug this.
+   if (true)
+      {
+// This line of code will run, but the first use of "main" fails.
 	main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
-	main.configure(args);
+
+// This is the last message printed to the console ...
+	System.out.println("test 1 .... (note call to main.configure(args); fails silently)");
+
+// This line of code will fail when run ...
+  	main.configure(args);
+
+	System.out.println("test 2 ...");
 	FileSystem environment = main.getLibraryAccess();
+	System.out.println("test 3 ...");
 	main.compilerOptions = new CompilerOptions(main.options);
 	main.compilerOptions.performMethodsFullRecovery = false;
 	main.compilerOptions.performStatementsRecovery = false;
+	System.out.println("test 4 ...");
 	main.batchCompiler =  new Compiler(  environment,
 					    main.getHandlingPolicy(),
 					    main.compilerOptions,
@@ -1024,6 +1045,7 @@ class JavaTraversal  {
 					    main.getProblemFactory(),
 					    null,
 					    main.progress);
+	System.out.println("test 5 ...");
 
 	/* tps : handle compilation units--------------------------------------------- */
 	ICompilationUnit[] sourceUnits = main.getCompilationUnits();
@@ -1077,9 +1099,36 @@ class JavaTraversal  {
 	    out.write("}\n");
 	    out.close();
 	} catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
+   
+      }
+     else
+      {
+        System.out.println("Skipping major internal parts of ECJ frontend");
+      }
 
-
-	System.out.println("Done compiling");
+      System.out.println("Done compiling");
     }
+
+
+ // DQ (10/12/2010): Implemented abstract baseclass "call()" member function (similar to OFP).
+   public Boolean call() throws Exception {
+   // boolean error = false;
+      boolean error   = true;
+      boolean verbose = true;
+
+      if (error != false) {
+           System.out.println("Parser failed");
+         } else {
+           if (verbose)
+                System.out.println("Parser exiting normally");
+         }// end else(parser exited normally)
+
+      return new Boolean(error);
+   }// end call()
+
+ // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
+   public static boolean getError() {
+      return hasErrorOccurred;
+   }
 
 }

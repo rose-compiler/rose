@@ -233,6 +233,7 @@ sageSupport.C: extract_rose_required_ofp_source_files
 # extraction of the OFP source files used within ROSE. Using token.c as a representative file.
 extract_rose_required_ofp_source_files:
 	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) extract_rose_required_ofp_source_files
+	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
 #	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) token.c
 
 

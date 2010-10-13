@@ -79,9 +79,11 @@ OpenFortranParser-${OFP_VERSION}.jar:
 # extract_rose_required_ofp_source_files: $(OFP_SOURCE_FILES_WITHOUT_PATHS)
 extract_rose_required_ofp_source_files: token.c
 	@echo "files: extract_rose_required_ofp_source_files is out of date compared to token.c"
-	@echo "calling ls -l --full-time"
-	ls -l 
-	@echo "after ls"
+
+#	@pwd
+#	@echo "calling ls -l --full-time"
+#	ls -l 
+#	@echo "after ls"
 
 #     (wget --no-check-certificate ${EXTERNAL_OFP_JAR_FILE_URL}/OpenFortranParser-${OFP_VERSION}.jar || exit 1;);
 
@@ -201,7 +203,7 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
       rm -rf fortran; \
    fi;
 
-# DQ (10/4/2010): We only watn to distribute the jar file for OFP, and then
+# DQ (10/4/2010): We only want to distribute the jar file for OFP, and then
 # extract what we require from the jar file (putting it into the build tree).
 # OLD COMMENT: We distribute the default version of the OFP jar file (version 0.8.1)
 # OLD COMMENT: OpenFortranParser-0.8.1.jar but this is handled using the dist_java_DATA 
