@@ -36,7 +36,7 @@ testJavaTraversal: ${srcdir}/JavaTraversal.java
 	javah -jni JavaTraversal
 
 
-EXTRA_DIST = CMakeLists.txt OpenJavaParser-${ECJ_VERSION}.jar
+EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java
 
 clean-local:
 	rm -f OpenJavaParser-${ECJ_VERSION}.jar FortranParserAction.h c_actions_jni.c

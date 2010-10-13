@@ -26,7 +26,7 @@ noinst_LTLIBRARIES = libroseJava.la
 JavaTraversal.C: JavaTraversal.h
 
 JavaTraversal.h:
-	cd ${top_builddir}/src/3rdPartyLibraries/parser-parser; $(MAKE) extract_rose_required_ecj_source_files
+	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
  # libroseJava_la_SOURCES = JavaTraversal.c
@@ -38,7 +38,7 @@ else
  # Compile using a function that represents the API of the Open Fortran Parser
  # libroseJava_la_SOURCES = dummy_JavaParser_main.C
  # libJavaTraversal_la_SOURCES = dummy_JavaParser_main.C
-   libroseJava_la_SOURCES = dummy_JavaParser_main.C
+   libroseJava_la_SOURCES = dummy_openJavaParser_main.C
 endif
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
