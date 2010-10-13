@@ -388,6 +388,7 @@ public:
    void executeTransformations();
    void insertNamespaceIntoSourceFile(  SgProject* project, std::vector<SgClassDeclaration*> &traverseClasses);
    void performInheritedSynthesizedTraversal(SgProject* project);
+
 };
 
 
