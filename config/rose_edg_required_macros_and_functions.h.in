@@ -11,6 +11,18 @@
 
 // $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
+
+/* DQ (10/13/2010): This is a specific fix suggested by Cong Hou for an OSX problem. 
+ * The use of __BLOCKS__ (being defined as a macro) controls the code that ROSE will 
+ * see in the Mac OSX header files.  If it is defined then ROSE will try to parse 
+ * some nonstandard code that represents a Max OSX (or Apple) language extension.
+ * So in this fix we detect if we are on an OSX OS (thus using OSX header files)
+ * and we undefine the __BLOCKS__ macro.
+ */
+#ifdef __APPLE__
+#undef __BLOCKS__
+#endif
+
 /* This does not work since the include path may not be set to include this file. 
    Also including this is problematic since it would be used in both the compilation 
    of ROSE source code and source code using ROSE (which is awkward).
