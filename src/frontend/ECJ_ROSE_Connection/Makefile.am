@@ -48,7 +48,7 @@ ECJ_DIR = $(top_builddir)/src/3rdPartyLibraries/java-parser
 libJavaTraversal_la_SOURCES = JavaTraversal.C 
 
 # DQ (10/11/2010): Put any required header files here.
-include_HEADERS = 
+include_HEADERS = ecj.h
 
 # OFP_SOURCE_FILES =
 # $(OFP_SOURCE_FILES): extract_rose_required_ecj_source_files
