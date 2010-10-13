@@ -162,6 +162,9 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
 	@echo "***********************************************************************"
 	@echo "Extracting required OFP files from OpenFortranParser-${OFP_VERSION}.jar"
 	@echo "***********************************************************************"
+	@echo "Jar command being used: JAR = $JAR"
+	@echo "Jar command being used: JAR = ${JAR}"
+	@echo "Jar command being used: JAR = $(JAR)"
 	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
       echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
    else \
@@ -174,7 +177,10 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
          exit 1; \
       fi; \
    fi;
-	jar xf OpenFortranParser-${OFP_VERSION}.jar $(OFP_SOURCE_FILES)
+#	DQ (10/13/2010): "jar" is not in the path of some system, but our configure tests 
+#	for this and only passes if it is found (and sets the JAR macro, so use it).
+#	jar xf OpenFortranParser-${OFP_VERSION}.jar $(OFP_SOURCE_FILES)
+	$(JAR) xf OpenFortranParser-${OFP_VERSION}.jar $(OFP_SOURCE_FILES)
 	@list='$(OFP_SOURCE_FILES)'; for f in $$list; do \
 	   echo "building $$f file"; \
 	   filename=`basename $$f`; \

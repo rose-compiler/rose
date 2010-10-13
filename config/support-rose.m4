@@ -1228,10 +1228,10 @@ if test "x$USE_JAVA" = x1; then
       exit 1
     fi
   else
-    AC_MSG_RESULT([no ... gfortran cannot be found (try --with-gfortran)])
+    AC_MSG_RESULT([no ... gfortran cannot be found (try --with-gfortran=<path>)])
   fi
 else
-  AC_MSG_RESULT([no ... Java cannot be found (try --with-java)])
+  AC_MSG_RESULT([no ... Java cannot be found (try --with-java=<path>)])
 fi
 AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER, [test "x$ofp_enabled" = "xyes"])
 AC_SUBST(GFORTRAN_PATH)
@@ -1343,7 +1343,7 @@ AC_PROG_SWIG(1.3.31)
 SWIG_ENABLE_CXX
 #AS (10/23/07): introduced conditional use of javaport
 AC_ARG_WITH(javaport,
-   [  --with-javaport ... Enable Java bindings using Swig],
+   [  --with-javaport ... Enable generation of Java bindings for ROSE using Swig],
    [with_javaport=yes],
    [with_javaport=no])
 AM_CONDITIONAL(ENABLE_JAVAPORT,test "$with_javaport" = yes)
