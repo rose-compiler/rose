@@ -10,7 +10,6 @@ BUILT_SOURCES = buildCheckers.C checkers.h
 
 lib_LTLIBRARIES = libCompassVerifierCheckers.la
 libCompassVerifierCheckers_la_SOURCES = buildCheckers.C checkers.h
-libCompassVerifierCheckers_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la
 
 libCompassVerifierCheckers.la: $(libCompassVerifierCheckers_la_OBJECTS) $(libCompassVerifierCheckers_la_DEPENDENCIES) $(COMPASS_CHECKER_OBJS)
 	$(CXXLINK) -rpath $(libdir) $(libCompassVerifierCheckers_la_LDFLAGS) $(libCompassVerifierCheckers_la_OBJECTS) $(COMPASS_CHECKER_OBJS) $(libCompassVerifierCheckers_la_LIBADD) $(LIBS)
