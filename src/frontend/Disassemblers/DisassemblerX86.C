@@ -752,18 +752,6 @@ DisassemblerX86::sizeToMode(X86InstructionSize s)
     }
 }
 
-X86PositionInRegister
-DisassemblerX86::sizeToPos(X86InstructionSize s)
-{
-    switch (s) {
-        case x86_insnsize_none: return x86_regpos_all;
-        case x86_insnsize_16: return x86_regpos_word;
-        case x86_insnsize_32: return x86_regpos_dword;
-        case x86_insnsize_64: return x86_regpos_qword;
-		default: { abort(); /* avoid MSCV warning by adding return stmt */ return x86_regpos_all; }
-    }
-}
-
 SgAsmType *
 DisassemblerX86::sizeToType(X86InstructionSize s)
 {
@@ -878,7 +866,7 @@ DisassemblerX86::makeOperandRegisterFull(bool rexExtension, uint8_t registerNumb
 
 /* At one time this function created x86-specific register reference expressions (RREs) that had hard-coded values for register
  * class, register number, and register position. These values had the same meanings across all x86 architectures and
- * corresponded to various enums in x86InstructionEnums.h.
+ * corresponded to various enums in ROSE.
  *
  * The new approach (added Oct 2010) replaces x86-specific values with a more generic RegisterDescriptor struct, where each
  * register is described by a major number (formerly the register class), a minor number (formerly the register number), and a

@@ -151,10 +151,6 @@ private:
     /** Returns the register mode for the specified instruction size. */
     static RegisterMode sizeToMode(X86InstructionSize);
 
-    /** Returns a register position for an instruction size.  For instance, x86_regpos_dword is returned for 32-bit
-     *  instructions. */
-    static X86PositionInRegister sizeToPos(X86InstructionSize s);
-
     /** Returns a data type associated with an instruction size. For instance, a 32-bit instruction returns the type for a
      *  double word. */
     static SgAsmType *sizeToType(X86InstructionSize s);
