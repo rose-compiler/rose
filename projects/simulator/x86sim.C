@@ -31,6 +31,7 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
+#include <utime.h>
 
 
 /* AS extra required headrs for system call simulation */
@@ -1440,7 +1441,21 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
-                
+             
+        case 8: { /* 0x8, creat */
+            syscall_enter("creat", "sd");
+     	    uint32_t filename = arg(0);
+            std::string sys_filename = read_string(filename);
+	        mode_t mode = arg(1);
+
+	        int result = creat(sys_filename.c_str(), mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	    }  
+   
         case 10: { /*0xa, unlink*/
             syscall_enter("unlink", "s");
             uint32_t filename_va = arg(0);
@@ -1541,6 +1556,60 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 30: { /* 0x1e, utime */
+
+            /*
+               int utime(const char *filename, const struct utimbuf *times);
+
+               The utimbuf structure is:
+
+               struct utimbuf {
+               time_t actime;       // access time 
+                   time_t modtime;  // modification time 
+                 };
+
+               The utime() system call changes the access and modification times of the inode
+               specified by filename to the actime and modtime fields of times respectively.
+
+               If times is NULL, then the access and modification times of the file are set
+               to the current time.
+            */
+            syscall_enter("utime", "sp");
+
+            std::string filename = read_string(arg(0));
+
+            //Check to see if times is NULL
+            uint8_t byte;
+            size_t nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+
+            int result;
+            if( byte != NULL )
+            {
+              struct kernel_utimebuf {
+                uint32_t actime;
+                uint32_t modtime;
+              };
+
+              kernel_utimebuf ubuf;
+              size_t nread = map->read(&ubuf, arg(1), sizeof(kernel_utimebuf));
+              ROSE_ASSERT(nread == sizeof(kernel_utimebuf));
+
+              utimbuf ubuf64;
+              ubuf64.actime  = ubuf.actime;
+              ubuf64.modtime = ubuf.modtime;
+
+              result = utime(filename.c_str(), &ubuf64);
+
+            }else
+              result = utime(filename.c_str(), NULL);
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+
+            break;
+        };
+
         case 33: { /*0x21, access*/
             static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
             syscall_enter("access", "sf", flags);
@@ -1596,6 +1665,37 @@ EmulationPolicy::emulate_syscall()
             syscall_enter("dup", "d");
             uint32_t fd = arg(0);
             int result = dup(fd);
+            if (-1==result) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
+        case 42: { /*0x2a, pipe*/
+            /*
+               int pipe(int filedes[2]); 
+
+               pipe() creates a pair of file descriptors, pointing to a pipe inode, and 
+               places them in the array pointed to by filedes. filedes[0] is for reading, 
+               filedes[1] is for writing. 
+
+            */
+            syscall_enter("pipe", "p");
+
+
+            int32_t filedes_kernel[2];
+            size_t  size_filedes = sizeof(int32_t)*2;
+
+
+            int filedes[2];
+            int result = pipe(filedes);
+
+            filedes_kernel[0] = filedes[0];
+            filedes_kernel[1] = filedes[1];
+
+            map->write(filedes_kernel, arg(0), size_filedes);
+
+
             if (-1==result) result = -errno;
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
@@ -1799,6 +1899,48 @@ EmulationPolicy::emulate_syscall()
                 map->dump(debug, "    ");
             }
             writeGPR(x86_gpr_ax, 0);
+            syscall_leave("d");
+            break;
+        }
+
+        case 94: { /* 0x5d, fchmod */
+
+            /*
+                int fchmod(int fd, mode_t mode);
+
+                fchmod() changes the permissions of the file referred to by the open file
+                         descriptor fd.
+            */
+            syscall_enter("fchmod", "dd");
+	        uint32_t fd = arg(0);
+	        mode_t mode = arg(1);
+
+	        int result = fchmod(fd, mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	    }
+
+     	case 95: { /*0x5f, fchown */
+            /*
+                   int fchown(int fd, uid_t owner, gid_t group);
+
+                   typedef unsigned short  __kernel_old_uid_t;
+                   typedef unsigned short  __kernel_old_gid_t;
+
+                   fchown() changes the ownership of the file referred to by the open file
+                            descriptor fd.
+
+               */
+
+            syscall_enter("fchown16", "ddd");
+	        uint32_t fd = arg(0);
+            unsigned short  user = arg(1);
+	        unsigned short  group = arg(2);
+	        int result = syscall(95,fd,user,group);
+            writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
         }
@@ -2298,7 +2440,28 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-	case 212: { /*0xd4, chown */
+        case 207: { /*0xcf, fchown */
+                   /*
+                      int fchown(int fd, uid_t owner, gid_t group);
+
+                      typedef unsigned short  __kernel_old_uid_t;
+                      typedef unsigned short  __kernel_old_gid_t;
+
+                      fchown() changes the ownership of the file referred to by the open file
+                      descriptor fd.
+
+                    */
+
+                   syscall_enter("fchown16", "ddd");
+                   uint32_t fd = arg(0);
+                   uid_t  user = arg(1);
+                   gid_t group = arg(2);
+                   int result = syscall(207,fd,user,group);
+                   writeGPR(x86_gpr_ax, result);
+                   syscall_leave("d");
+                   break;
+                 }
+        case 212: { /*0xd4, chown */
             syscall_enter("chown", "sdd");
 	    std::string filename = read_string(arg(0));
             uid_t user = arg(1);
@@ -2308,6 +2471,48 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+ 	case 220: {     /*0xdc, getdents64*/
+	    /* 
+
+          long sys_getdents64(unsigned int fd, struct linux_dirent64 __user * dirent, unsigned int count) 
+
+          struct linux_dirent {
+              unsigned long  d_ino;     // Inode number 
+              unsigned long  d_off;     // Offset to next linux_dirent 
+              unsigned short d_reclen;  // Length of this linux_dirent 
+              char           d_name[];  // Filename (null-terminated) 
+                                 // length is actually (d_reclen - 2 -
+              		         //          offsetof(struct linux_dirent, d_name) 
+          }
+
+          The system call getdents() reads several linux_dirent structures from the
+          directory referred to by the open file descriptor fd into the buffer pointed
+          to by dirp.  The argument count specifies the size of that buffer.
+        */
+
+        syscall_enter("getdents64", "dpd");
+	    unsigned int fd = arg(0);
+
+	    // Create a buffer of the same length as the buffer in the specimen
+        const size_t dirent_size = arg(2);
+
+        uint8_t dirent[dirent_size];
+        memset(dirent, 0xff, sizeof dirent);
+
+	    //Call the system call and write result to the buffer in the specimen
+	    int result = 0xdeadbeef;
+	    result = syscall(220, fd, dirent, dirent_size);
+
+        map->write(dirent, arg(1), dirent_size);
+        writeGPR(x86_gpr_ax, result);
+
+        syscall_leave("d");
+	    break;
+        }
+
+
+
         case 221: { // fcntl
             syscall_enter("fcntl64", "ddp");
             uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);
@@ -2467,12 +2672,143 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 264:    /* 0x108, clock_settime */
+        case 265:    /* 0x109, clock_gettime */
+        case 266: {  /* 0x1a, clock_getres */
+                /*
+                  int clock_getres(clockid_t clk_id, struct timespec *res);
+                  int clock_gettime(clockid_t clk_id, struct timespec *tp);
+                  int clock_settime(clockid_t clk_id, const struct timespec *tp); 
+
+                  struct timespec {
+                      time_t   tv_sec;        // seconds 
+                      long     tv_nsec;       // nanoseconds 
+                  };
+
+                  The function clock_getres() finds the resolution (precision) of the 
+                  specified clock clk_id, and, if res is non-NULL, stores it in the 
+                  struct timespec pointed to by res. The resolution of clocks depends 
+                  on the implementation and cannot be configured by a particular process. 
+                  If the time value pointed to by the argument tp of clock_settime() is
+                  not a multiple of res, then it is truncated to a multiple of res. 
+            */
+
+            syscall_enter("clock_gettime", "dp");
+ 
+            int32_t which_clock = arg(0);
+            
+            //Check to see if times is NULL
+            uint8_t byte;
+            size_t nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+
+            int result;
+            if( byte != NULL )
+            {
+
+              struct kernel_timespec {
+                uint32_t   tv_sec;        // seconds 
+                uint32_t   tv_nsec;       // nanoseconds 
+              };
+
+
+
+              size_t size_timespec_sample = sizeof(kernel_timespec);
+
+              kernel_timespec ubuf;
+
+              size_t nread = map->read(&ubuf, arg(1), size_timespec_sample);
+
+              ROSE_ASSERT(nread == size_timespec_sample);
+
+              timespec timespec64;
+              timespec64.tv_sec  = ubuf.tv_sec;
+              timespec64.tv_nsec = ubuf.tv_nsec;
+              result = syscall(callno, which_clock, (unsigned long) &timespec64 );
+
+              ubuf.tv_sec = timespec64.tv_sec;
+              ubuf.tv_nsec = timespec64.tv_nsec;
+              map->write(&ubuf, arg(1), size_timespec_sample);
+    
+            }else
+              result = syscall(callno, which_clock, (unsigned long) NULL );
+
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+        }
+
         case 270: { /*0x10e tgkill*/
             syscall_enter("tgkill", "ddf", signal_names);
             uint32_t /*tgid=arg(0), pid=arg(1),*/ sig=arg(2);
             // TODO: Actually check thread group and kill properly
             if (debug && trace_syscall) fputs("(throwing...)\n", debug);
             throw Exit(__W_EXITCODE(0, sig));
+            break;
+
+        }
+
+        case 271: { /* 0x10f, utimes */
+            /*
+                int utimes(const char *filename, const struct timeval times[2]);
+
+                struct timeval {
+                    long tv_sec;        // seconds 
+                    long tv_usec;   // microseconds 
+                };
+
+
+                The utimes() system call changes the access and modification times of the inode
+                specified by filename to the actime and modtime fields of times respectively.
+
+                times[0] specifies the new access time, and times[1] specifies the new
+                modification time.  If times is NULL, then analogously to utime(), the access
+                and modification times of the file are set to the current time.
+
+
+            */
+            syscall_enter("utimes", "s");
+
+
+            std::string filename = read_string(arg(0));
+
+            //Check to see if times is NULL
+            uint8_t byte;
+            size_t nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+
+            int result;
+            if( byte != NULL )
+            {
+
+              struct kernel_timeval {
+                uint32_t tv_sec;        /* seconds */
+                uint32_t tv_usec;       /* microseconds */
+              };
+
+              size_t size_timeval_sample = sizeof(kernel_timeval)*2;
+
+              kernel_timeval ubuf[1];
+
+              size_t nread = map->read(&ubuf, arg(1), size_timeval_sample);
+
+
+              timeval timeval64[1];
+              timeval64[0].tv_sec  = ubuf[0].tv_sec;
+              timeval64[0].tv_usec = ubuf[0].tv_usec;
+              timeval64[1].tv_sec  = ubuf[1].tv_sec;
+              timeval64[1].tv_usec = ubuf[1].tv_usec;
+
+              ROSE_ASSERT(nread == size_timeval_sample);
+
+              result = utimes(filename.c_str(), timeval64);
+
+            }else
+              result = utimes(filename.c_str(), NULL);
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
 
         }
@@ -2485,7 +2821,7 @@ EmulationPolicy::emulate_syscall()
 	    mode_t mode = arg(2);
 	    int flags = arg(3);
 
-	    int result = fchmodat(dirfd, sys_path.c_str(), mode, flags);
+	    int result = syscall( 306, dirfd, (long) sys_path.c_str(), mode, flags);
             if (result == -1) result = -errno;
             writeGPR(x86_gpr_ax, result);
 

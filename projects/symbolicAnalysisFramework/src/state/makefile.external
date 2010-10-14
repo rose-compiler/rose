@@ -1,0 +1,7 @@
+state_Threaded_OBJ = ${ANALYSIS_ROOT}/src/state/lib/libState.threaded.a # ${ANALYSIS_ROOT}/src/state/obj/nodeState.o ${ANALYSIS_ROOT}/src/state/obj/functionState.o
+state_OBJ = ${ANALYSIS_ROOT}/src/state/lib/libState.a # ${ANALYSIS_ROOT}/src/state/obj/nodeState.o ${ANALYSIS_ROOT}/src/state/obj/functionState.o
+state_H = ${ANALYSIS_ROOT}/src/state/nodeState.h ${ANALYSIS_ROOT}/src/state/functionState.h ${ANALYSIS_ROOT}/src/state/logical.h
+
+.PHONY: state
+state:
+	cd ${ANALYSIS_ROOT}/src/state; ${MAKE} all; cd ${ANALYSIS_ROOT}/src/${Component}

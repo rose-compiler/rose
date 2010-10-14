@@ -1,11 +1,14 @@
 #include "rose.h"
 #include "RtedSymbols.h"
 
+bool RTEDDEBUG() {return false;}
+
 #define LOOKUP( __x ) \
     {\
       SgFunctionSymbol* func = isSgScopeStatement(n)->lookup_function_symbol("RuntimeSystem_" #__x); \
       if( isSgFunctionSymbol( func )) {\
         __x = isSgFunctionSymbol( func );\
+        if (RTEDDEBUG())\
         cerr << "Found MemberName : " #__x << endl;\
       }\
     }
@@ -18,8 +21,6 @@ void RtedSymbols::visit(SgNode* n) {
 
   if (n == NULL)
     return;
-  // *********************** NEEDED to insert RuntimeSystem runtimeSystem = new RuntimeSystem() ***************
-
   // ******************** DETECT Member functions in RuntimeSystem.h *************************************************************
 
   if (isSgScopeStatement(n)) {
@@ -51,7 +52,8 @@ void RtedSymbols::visit(SgNode* n) {
 		if (name=="size_t") {
 			SgType* baseType = typed->get_base_type ();
 			size_t_member=baseType;
-			cerr << "Found Type : " << name << endl;
+			if (RTEDDEBUG())
+			  cerr << "Found Type : " << name << endl;
 		}
   }
 

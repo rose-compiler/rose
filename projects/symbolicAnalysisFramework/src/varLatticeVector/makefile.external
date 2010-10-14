@@ -1,0 +1,6 @@
+varLatticeVector_OBJ = ${ANALYSIS_ROOT}/src/varLatticeVector/obj/varLatticeVector.o ${ANALYSIS_ROOT}/src/varLatticeVector/obj/boolPlus.o
+varLatticeVector_H = ${ANALYSIS_ROOT}/src/varLatticeVector/varLatticeVector.h ${ANALYSIS_ROOT}/src/varLatticeVector/boolPlus.h
+
+.PHONY: varLatticeVector
+varLatticeVector:
+	cd ${ANALYSIS_ROOT}/src/varLatticeVector; ${MAKE} all; cd ${ANALYSIS_ROOT}/src/${Component}

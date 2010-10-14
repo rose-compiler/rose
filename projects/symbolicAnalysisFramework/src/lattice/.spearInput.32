@@ -1,0 +1,11 @@
+v 1.0
+d AND_l1_0_9:i1 aMx_10:i32 aMx_11:i32 bMyPc_10:i32 bMyPc_11:i32 bMy_10:i32 bMy_11:i32 rel_10:i1 rel_11:i1 x:i32 y:i32 
+c aMx_10 * x 5:i32
+c bMy_10 * y 3:i32
+c bMyPc_10 + bMy_10 10:i32
+c rel_10 sle aMx_10 bMyPc_10
+c aMx_11 * x 5:i32
+c bMy_11 * y 3:i32
+c bMyPc_11 + bMy_11 10:i32
+c rel_11 sgt aMx_11 bMyPc_11
+p & rel_10 rel_11

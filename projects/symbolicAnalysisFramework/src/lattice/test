@@ -1,0 +1,25 @@
+v 1.0
+d AND_l1_0_12:i1 aMx_13:i32 aMx_3:i32 aMx_6:i32 bMyPc_13:i32 bMyPc_3:i32 bMyPc_6:i32 bMy_13:i32 bMy_3:i32 bMy_6:i32 rel_13:i1 rel_3:i1 rel_6:i1 x:i32 y:i32 z:i32 final:i1
+d xSLE:i1 ySLE:i1 zSLE:i1 xySLE:i1 xyzSLE:i1 Precond:i1
+c xSLE sle x 1000000:i32
+c ySLE sle y 1000000:i32
+c zSLE sle z 1000000:i32
+c xySLE & xSLE ySLE
+c xyzSLE & xySLE zSLE
+c aMx_3 * x 1:i32
+c bMy_3 * y 1:i32
+c bMyPc_3 + bMy_3 0:i32
+c rel_3 sle aMx_3 bMyPc_3
+c aMx_6 * y 1:i32
+c bMy_6 * z 1:i32
+c bMyPc_6 + bMy_6 6:i32
+c rel_6 sle aMx_6 bMyPc_6
+c AND_l1_0_12 & rel_3 rel_6
+c Precond & xyzSLE AND_l1_0_12
+c aMx_13 * x 1:i32
+c bMy_13 * z 1:i32
+c bMyPc_13 + bMy_13 7:i32
+c rel_13 sle aMx_13 bMyPc_13
+c final => Precond rel_13
+p ~ final
+

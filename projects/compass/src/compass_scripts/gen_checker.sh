@@ -406,4 +406,7 @@ END
 echo $PREREQ_DIRECTORY
 #exit 0
 find $PREREQ_DIRECTORY -name "*.h" | awk -F/ '{print "#include \"" $NF "\""}' > ${SOURCE_DIRECTORY_NAME}/prerequisites.h
-tail -1 $PREREQ_DIRECTORY/*.h | grep "extern" | sed -e 's@extern[\t\ ]*@Compass::@g' | awk '{print $1 " Compass::" $2}' > ${SOURCE_DIRECTORY_NAME}/instantiate_prerequisites.h
+
+# DQ (9/28/2010): Suggested change by Matt (Portland Fortran Adventure).
+# tail -1 $PREREQ_DIRECTORY/*.h | grep "extern" | sed -e 's@extern[\t\ ]*@Compass::@g' | awk '{print $1 " Compass::" $2}' > ${SOURCE_DIRECTORY_NAME}/instantiate_prerequisites.h
+tail -n 1 $PREREQ_DIRECTORY/*.h | grep "extern" | sed -e 's@extern[\t\ ]*@Compass::@g' | awk '{print $1 " Compass::" $2}' > ${SOURCE_DIRECTORY_NAME}/instantiate_prerequisites.h

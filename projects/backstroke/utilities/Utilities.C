@@ -473,7 +473,7 @@ void backstroke_util::printCompilerError(SgNode* badNode, const char * message)
 // Returns if an expression modifies any value.
 bool backstroke_util::isModifyingExpression(SgExpression* exp)
 {
-    if (isAssignmentOp(exp))
+    if (SageInterface::isAssignmentStatement(exp))
         return true;
     if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
         return true;
@@ -500,50 +500,41 @@ bool backstroke_util::containsModifyingExpression(SgExpression* exp)
     return false;
 }
 
-bool backstroke_util::isAssignmentOp(SgExpression* e)
-{
-    return isSgAssignOp(e) ||
-        isSgPlusAssignOp(e) ||
-        isSgMinusAssignOp(e) ||
-        isSgMultAssignOp(e) ||
-        isSgDivAssignOp(e) ||
-        isSgModAssignOp(e) ||
-        isSgIorAssignOp(e) ||
-        isSgAndAssignOp(e) ||
-        isSgXorAssignOp(e) ||
-        isSgLshiftAssignOp(e) ||
-        isSgRshiftAssignOp(e);
-}
-
 void backstroke_util::removeUselessBraces(SgNode* root)
 {
     vector<SgBasicBlock*> block_list = querySubTree<SgBasicBlock>(root, postorder);
 
     foreach (SgBasicBlock* block, block_list)
     {
-        // Make sure this block is not the body of if, while, etc.
         if (!isSgBasicBlock(block->get_parent()))
-            continue;
-
-        // If there is no declaration in a basic block and this basic block 
-        // belongs to another basic block, the braces can be removed.
-        bool has_decl = false;
-        foreach (SgStatement* stmt, block->get_statements())
-        {
-            if (isSgDeclarationStatement(stmt))
-            {
-                has_decl = true;
-                break;
-            }
-        }
-
-        if (!has_decl)
-        {
-            foreach (SgStatement* stmt, block->get_statements())
-                insertStatement(block, copyStatement(stmt));
-            replaceStatement(block, buildNullStatement(), true);
-            //removeStatement(block);
-        }
+		{
+#if 0
+			if (block->get_statements().size() == 1)
+			{
+				SgBasicBlock* child_block = isSgBasicBlock(block->get_statements()[0]);
+				if (child_block)
+				{
+					foreach(SgStatement* stmt, child_block->get_statements())
+						appendStatement(copyStatement(stmt), block);
+					replaceStatement(child_block, buildNullStatement(), true);
+				}
+			}
+#endif
+		}
+		else
+		{
+			// If there is no declaration in a basic block and this basic block
+			// belongs to another basic block, the braces can be removed.
+			const vector<SgStatement*>& stmts = block->get_statements();
+			if (stmts.end() == std::find_if(stmts.begin(), stmts.end(),
+				static_cast<SgDeclarationStatement*(&)(SgNode*)>(isSgDeclarationStatement)))
+			{
+				foreach (SgStatement* stmt, stmts)
+					insertStatement(block, copyStatement(stmt));
+				replaceStatement(block, buildNullStatement(), true);
+				//removeStatement(block);
+			}
+		}
     }
 }
 
@@ -581,4 +572,94 @@ SgStatement* backstroke_util::getEnclosingIfBody(SgNode* node)
 				return isSgStatement(node);
 		node = node->get_parent();
 	}
+	return NULL;
+}
+
+SgStatement* backstroke_util::getEnclosingLoopBody(SgNode* node)
+{
+	while (node)
+	{
+		SgNode* parent = node->get_parent();
+		if (SgForStatement* for_stmt = isSgForStatement(parent))
+		{
+			if (node == for_stmt->get_loop_body())
+				return isSgStatement(node);
+		}
+		else if (SgWhileStmt* while_stmt = isSgWhileStmt(parent))
+		{
+			if (node == while_stmt->get_body())
+				return isSgStatement(node);
+		}
+		else if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(parent))
+		{
+			if (node == do_while_stmt->get_body())
+				return isSgStatement(node);
+		}
+		node = node->get_parent();
+	}
+	return NULL;
+}
+
+vector<SgExpression*> backstroke_util::getAllVariables(SgNode* node)
+{
+	vector<SgExpression*> vars;
+
+	vector<SgExpression*> exps = querySubTree<SgExpression > (node);
+
+	//ROSE_ASSERT(!exps.empty());
+
+	foreach(SgExpression* exp, exps)
+	{
+		SgExpression* cand = NULL;
+		if (isSgVarRefExp(exp))
+			cand = exp;
+		else if (isSgDotExp(exp) && isSgVarRefExp(isSgDotExp(exp)->get_rhs_operand()))
+			cand = exp;
+		else if (isSgArrowExp(exp) && isSgVarRefExp(isSgArrowExp(exp)->get_rhs_operand()))
+			cand = exp;
+
+		if (cand != NULL &&
+				isSgDotExp(cand->get_parent()) == NULL &&
+				isSgArrowExp(cand->get_parent()) == NULL)
+		{
+			vars.push_back(cand);
+		}
+	}
+
+	return vars;
+}
+
+bool backstroke_util::hasContinueOrBreak(SgStatement* loop_stmt)
+{
+	ROSE_ASSERT(isSgForStatement(loop_stmt) || 
+			isSgWhileStmt(loop_stmt) || 
+			isSgDoWhileStmt(loop_stmt));
+
+	vector<SgContinueStmt*> continues = querySubTree<SgContinueStmt>(loop_stmt);
+	foreach (SgContinueStmt* continue_stmt, continues)
+	{
+		if (getEnclosingLoopBody(continue_stmt) == loop_stmt)
+			return true;
+	}
+
+	vector<SgBreakStmt*> breaks = querySubTree<SgBreakStmt>(loop_stmt);
+	foreach (SgBreakStmt* break_stmt, breaks)
+	{
+		SgNode* node = break_stmt;
+		while ((node = node->get_parent()))
+		{
+			if (isSgForStatement(node) ||
+				isSgWhileStmt(node) ||
+				isSgDoWhileStmt(node) ||
+				isSgSwitchStatement(node))
+			{
+				if (node == loop_stmt)
+					return true;
+				else
+					break;
+			}
+		}
+	}
+
+	return false;
 }
