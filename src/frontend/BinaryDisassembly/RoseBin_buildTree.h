@@ -25,13 +25,7 @@ class RoseBin_buildTree  {
   /****************************************************
    * return information about the register
    ****************************************************/
-  void resolveRegister(std::string symbol, 
-                       X86RegisterClass* regClass,
-		       int *registerNum,
-		       X86PositionInRegister *regSize);
-
-  void resolveRegister(std::string symbol, 
-		       RegisterDescriptor *registerSg);
+  void resolveRegister(std::string symbol, RegisterDescriptor*);
 
  public:
   RoseBin_buildTree() {};

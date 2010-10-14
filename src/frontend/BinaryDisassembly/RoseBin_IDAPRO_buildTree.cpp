@@ -12,20 +12,17 @@ using namespace std;
 
 using namespace RoseBin_Def;
 
-SgAsmType* getRegisterType(X86PositionInRegister regSize) {
-	SgAsmType* type = NULL;
-	switch(regSize) {
-        case x86_regpos_unknown : type = SgAsmTypeByte::createType(); break;
-	case x86_regpos_low_byte : type=SgAsmTypeByte::createType(); break; 
-	case x86_regpos_high_byte : type=SgAsmTypeByte::createType(); break; 
-	case x86_regpos_word : type=SgAsmTypeWord::createType(); break; 
-	case x86_regpos_dword : type=SgAsmTypeDoubleWord::createType(); break; 
-	case x86_regpos_qword : type=SgAsmTypeQuadWord::createType(); break; 
-	case x86_regpos_all : type=SgAsmTypeQuadWord::createType(); break; 
-	default:
-	  ROSE_ASSERT(false);
-	}
-	return type;
+SgAsmType* getRegisterType(const RegisterDescriptor &rdesc) {
+        SgAsmType* type = NULL;
+        switch(rdesc.get_nbits()) {
+                case 8:  type = SgAsmTypeByte::createType(); break;
+                case 16: type = SgAsmTypeWord::createType(); break;
+                case 32: type = SgAsmTypeDoubleWord::createType(); break; 
+                case 64: type = SgAsmTypeQuadWord::createType(); break; 
+                default:
+                        ROSE_ASSERT(false);
+        }
+        return type;
 }
 
 /****************************************************
@@ -72,13 +69,11 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       }
       SgAsmExpression* child = *(children->begin());
       ROSE_ASSERT(RoseAssemblyLanguage==x86);
-      std::pair<X86RegisterClass, int> registerSg = 
-	std::make_pair(x86_regclass_unknown, 0);
-      X86PositionInRegister regSize = x86_regpos_unknown;
-      resolveRegister(symbol, &registerSg.first, &registerSg.second, &regSize);
+      RegisterDescriptor regDesc;
+      resolveRegister(symbol, &regDesc);
       if (isSgAsmMemoryReferenceExpression(child)) {
-        binNode = new SgAsmx86RegisterReferenceExpression(registerSg.first, registerSg.second, regSize);
-	isSgAsmx86RegisterReferenceExpression(binNode)->set_type(getRegisterType(regSize));
+        binNode = new SgAsmx86RegisterReferenceExpression(regDesc);
+	isSgAsmx86RegisterReferenceExpression(binNode)->set_type(getRegisterType(regDesc));
 	isSgAsmMemoryReferenceExpression(child)->set_segment(binNode);
 	binNode->set_parent(child);
 	binNode=child;
@@ -291,22 +286,20 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       cout << " its a register .... " << endl;
 
     if (RoseAssemblyLanguage==x86) {
-      std::pair<X86RegisterClass, int> registerSg = 
-        std::make_pair(x86_regclass_unknown, 0);
-      X86PositionInRegister regSize = x86_regpos_unknown;
+      RegisterDescriptor regDesc;
       string symbol = RoseBin_support::str_to_upper(expt->symbol);
       
-      resolveRegister(symbol, &registerSg.first, &registerSg.second, &regSize);
+      resolveRegister(symbol, &regDesc);
       //binNode = new SgAsmRegisterReferenceExpression(registerSg, regSize);
-      binNode = new SgAsmx86RegisterReferenceExpression(registerSg.first, registerSg.second, regSize);
-      isSgAsmx86RegisterReferenceExpression(binNode)->set_type(getRegisterType(regSize));
+      binNode = new SgAsmx86RegisterReferenceExpression(regDesc);
+      isSgAsmx86RegisterReferenceExpression(binNode)->set_type(getRegisterType(regDesc));
     } else if (RoseAssemblyLanguage==arm) {
-      RegisterDescriptor registerSg;
+      RegisterDescriptor regDesc;
       string symbol = RoseBin_support::str_to_upper(expt->symbol);
       
-      resolveRegister(symbol, &registerSg);
+      resolveRegister(symbol, &regDesc);
       //      binNode = new SgAsmRegisterReferenceExpression(registerSg, regSize);
-      binNode = new SgAsmArmRegisterReferenceExpression(registerSg);
+      binNode = new SgAsmArmRegisterReferenceExpression(regDesc);
       // todo : find out types for ARM
     }
   } else {
