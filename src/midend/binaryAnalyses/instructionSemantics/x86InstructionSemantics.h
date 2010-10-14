@@ -1561,15 +1561,71 @@ struct X86InstructionSemantics {
                 break;
             }
 
-            case x86_bts: {
+            case x86_btr: {             /* Bit test and reset */
                 if (operands.size()!=2)
                     throw Exception("instruction must have two operands", insn);
+                
                 /* All flags except CF are undefined */
                 policy.writeFlag(x86_flag_of, policy.undefined_());
                 policy.writeFlag(x86_flag_sf, policy.undefined_());
                 policy.writeFlag(x86_flag_zf, policy.undefined_());
                 policy.writeFlag(x86_flag_af, policy.undefined_());
                 policy.writeFlag(x86_flag_pf, policy.undefined_());
+                
+                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmx86RegisterReferenceExpression(operands[1])) {
+                    /* Special case allowing multi-word offsets into memory */
+                    Word(32) addr = readEffectiveAddress(operands[0]);
+                    int numBytes = numBytesInAsmType(operands[1]->get_type());
+                    Word(32) bitnum = numBytes == 2 ? signExtend<16, 32>(read16(operands[1])) : read32(operands[1]);
+                    Word(32) adjustedAddr = policy.add(addr, signExtend<29, 32>(extract<3, 32>(bitnum)));
+                    Word(8) val = readMemory<8>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(operands[0])),
+                                                adjustedAddr, policy.true_());
+                    Word(1) bitval = extract<0, 1>(policy.rotateRight(val, extract<0, 3>(bitnum)));
+                    Word(8) result = policy.and_(val,
+                                                 policy.invert(policy.rotateLeft(number<8>(1),
+                                                                                 extract<0, 3>(bitnum))));
+                    policy.writeFlag(x86_flag_cf, bitval);
+                    policy.writeMemory(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(operands[0])),
+                                       adjustedAddr, result, policy.true_());
+                } else {
+                    /* Simple case */
+                    switch (numBytesInAsmType(operands[0]->get_type())) {
+                        case 2: {
+                            Word(16) op0 = read16(operands[0]);
+                            Word(4) bitnum = extract<0, 4>(read16(operands[1]));
+                            Word(1) bitval = extract<0, 1>(policy.rotateRight(op0, bitnum));
+                            Word(16) result = policy.and_(op0, policy.invert(policy.rotateLeft(number<16>(1), bitnum)));
+                            policy.writeFlag(x86_flag_cf, bitval);
+                            write16(operands[0], result);
+                            break;
+                        }
+                        case 4: {
+                            Word(32) op0 = read32(operands[0]);
+                            Word(5) bitnum = extract<0, 5>(read32(operands[1]));
+                            Word(1) bitval = extract<0, 1>(policy.rotateRight(op0, bitnum));
+                            Word(32) result = policy.and_(op0, policy.invert(policy.rotateLeft(number<32>(1), bitnum)));
+                            policy.writeFlag(x86_flag_cf, bitval);
+                            write32(operands[0], result);
+                            break;
+                        }
+                        default:
+                            throw Exception("size not implemented", insn);
+                    }
+                }
+                break;
+            }
+
+            case x86_bts: {             /* bit test and set */
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
+                
+                /* All flags except CF are undefined */
+                policy.writeFlag(x86_flag_of, policy.undefined_());
+                policy.writeFlag(x86_flag_sf, policy.undefined_());
+                policy.writeFlag(x86_flag_zf, policy.undefined_());
+                policy.writeFlag(x86_flag_af, policy.undefined_());
+                policy.writeFlag(x86_flag_pf, policy.undefined_());
+                
                 if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmx86RegisterReferenceExpression(operands[1])) {
                     /* Special case allowing multi-word offsets into memory */
                     Word(32) addr = readEffectiveAddress(operands[0]);
