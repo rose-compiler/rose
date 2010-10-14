@@ -151,6 +151,15 @@ if test "x$enableval" = "xyes"; then
    echo "Setting: support_php_only = $support_php_only"
 fi
 
+AC_ARG_ENABLE([only-java],AS_HELP_STRING([--enable-only-java],[Only support Java using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
+support_java_only=no
+echo "BEFORE Setting: enableval = $enableval support_java_only = $support_java_only"
+if test "x$enableval" = "xyes"; then
+   support_java_only=yes
+   support_language_only=yes
+   echo "Setting: support_java_only = $support_java_only"
+fi
+
 AC_ARG_ENABLE([only-binary-analysis],AS_HELP_STRING([--enable-only-binary-analysis],[Only support Binary Analysis using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
 support_binary_analysis_only=no
 echo "BEFORE Setting: enableval = $enableval support_binary_analysis_only = $support_binary_analysis_only"
@@ -166,6 +175,7 @@ echo "   support_c_only               = $support_c_only"
 echo "   support_cxx_only             = $support_cxx_only"
 echo "   support_fortran_only         = $support_fortran_only"
 echo "   support_php_only             = $support_php_only"
+echo "   support_java_only            = $support_java_only"
 echo "   support_binary_analysis_only = $support_binary_analysis_only"
 
 AC_MSG_CHECKING([error checking language only selections])
@@ -178,6 +188,9 @@ if test "x$support_c_only" = "xyes" -o "x$support_cxx_only" = "xyes"; then
    fi
    if test "x$support_php_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-c or --enable-only-cxx is inconsistant with use of --enable-only-php])
+   fi
+   if test "x$support_java_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-c or --enable-only-cxx is inconsistant with use of --enable-only-java])
    fi
    if test "x$support_binary_analysis_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-c or --enable-only-cxx is inconsistant with use of --enable-only-binary-analysis])
@@ -192,6 +205,9 @@ if test "x$support_fortran_only" = "xyes"; then
    if test "x$support_php_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-fortran is inconsistant with use of --enable-only-php])
    fi
+   if test "x$support_java_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-fortran is inconsistant with use of --enable-only-java])
+   fi
    if test "x$support_binary_analysis_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-fortran is inconsistant with use of --enable-only-binary-analysis])
    fi
@@ -205,8 +221,27 @@ if test "x$support_php_only" = "xyes"; then
    if test "x$support_fortran_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-php is inconsistant with use of --enable-only-fortran])
    fi
+   if test "x$support_java_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-php is inconsistant with use of --enable-only-java])
+   fi
    if test "x$support_binary_analysis_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-php is inconsistant with use of --enable-only-binary-analysis])
+   fi
+   disable_languages=yes
+fi
+
+if test "x$support_java_only" = "xyes"; then
+   if test "x$support_c_only" = "xyes" -o "x$support_cxx_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-java is inconsistant with use of either C or C++ support])
+   fi
+   if test "x$support_fortran_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-java is inconsistant with use of --enable-only-fortran])
+   fi
+   if test "x$support_php_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-java is inconsistant with use of --enable-only-php])
+   fi
+   if test "x$support_binary_analysis_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-java is inconsistant with use of --enable-only-binary-analysis])
    fi
    disable_languages=yes
 fi
@@ -221,6 +256,9 @@ if test "x$support_binary_analysis_only" = "xyes"; then
    if test "x$support_php_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-binary-analysis is inconsistant with use of --enable-only-php])
    fi
+   if test "x$support_java_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-binary-analysis is inconsistant with use of --enable-only-java])
+   fi
    disable_languages=yes
 fi
 AC_MSG_RESULT(ok)
@@ -232,7 +270,7 @@ AC_MSG_RESULT(ok)
 
 # DQ (4/15/2010): Added support to specify selected languages to support in ROSE.
 AC_MSG_CHECKING([selecting languages to support])
-AC_ARG_ENABLE([languages],AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,c,c++,fortran,php,binaries (default=all)]),,enableval=all)
+AC_ARG_ENABLE([languages],AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,c,c++,fortran,java,php,binaries (default=all)]),,enableval=all)
 
 LANGUAGES_TO_BUILD=""
 case "$enableval" in
@@ -241,6 +279,7 @@ case "$enableval" in
       support_c_language=yes
       support_cxx_language=yes
       support_fortran_language=yes
+      support_java_language=yes
       support_php_language=yes
       support_binaries=yes
       support_cuda_language=yes
@@ -251,6 +290,7 @@ case "$enableval" in
       support_c_language=no
       support_cxx_language=no
       support_fortran_language=no
+      support_java_language=no
       support_php_language=no
       support_binaries=no
       support_cuda_language=no
@@ -267,6 +307,9 @@ case "$enableval" in
            ;;
         fortran) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD fortran"
            support_fortran_language=yes
+           ;;
+        java) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD java"
+           support_java_language=yes
            ;;
         php) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
            support_php_language=yes
@@ -294,6 +337,7 @@ esac
 echo "support_c_language       = $support_c_language"
 echo "support_cxx_language     = $support_cxx_language"
 echo "support_fortran_language = $support_fortran_language"
+echo "support_java_language    = $support_java_language"
 echo "support_php_language     = $support_php_language"
 echo "support_binaries         = $support_binaries"
 echo "support_cuda_language    = $support_cuda_language"
@@ -304,12 +348,13 @@ AC_MSG_CHECKING([for language specific options to generate a minimal ROSE config
 if test "x$support_c_only" = "xyes"; then
 
    support_fortran_language=no
+   support_java_language=no
    support_php_language=no
    support_binaries=no
    support_cuda_language=no
    support_opencl_language=no
 
-   AC_MSG_RESULT(haskell:off fortran:off php:off)
+   AC_MSG_RESULT(haskell:off fortran:off java:off php:off)
 fi
 
 # Specify how to set the ROSE configure options when a minimal configuration of ROSE for only Fortran language support is required (support requested by Rice and LANL)
@@ -319,6 +364,13 @@ if test "x$support_fortran_only" = "xyes"; then
  # version of the macro instead of the "without_" version of the macro.
  # without_haskell=yes
    with_haskell=no
+
+ # When using fortran only assume that we are not interested in java language support in ROSE.
+ # However, currently the --with-java option controls the use of java support for both Fortran 
+ # and Java language support. Now that we have added Java language support to ROSE this is 
+ # unintentionally confusing. So we can't turn this off since the Fortran support requires 
+ # internal java (JVM) support.
+ # with_java=no
 
  # So these should be expressed in terms of the "with" and "enable" versions of each option's macro.
  # without_php=yes
@@ -378,6 +430,7 @@ echo "LANGUAGES_TO_BUILD = $LANGUAGES_TO_BUILD"
 echo "support_c_language       = $support_c_language"
 echo "support_cxx_language     = $support_cxx_language"
 echo "support_fortran_language = $support_fortran_language"
+echo "support_java_language    = $support_java_language"
 echo "support_php_language     = $support_php_language"
 echo "support_binaries         = $support_binaries"
 echo "support_cuda_language    = $support_cuda_language"
@@ -400,6 +453,12 @@ if test "x$support_fortran_language" = "xyes"; then
    AC_DEFINE([ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT], [], [Build ROSE to support the Fortran langauge])
 else
    echo "Support for Fortran language support is disabled..."
+fi
+
+if test "x$support_java_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_JAVA_LANGUAGE_SUPPORT], [], [Build ROSE to support the Java langauge])
+else
+   echo "Support for Java language support is disabled..."
 fi
 
 if test "x$support_php_language" = "xyes"; then
@@ -430,6 +489,7 @@ fi
 AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT, [test "x$support_java_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_language" = xyes])
@@ -1058,15 +1118,15 @@ ROSE_WITH_GOMP_OPENMP_LIBRARY
 ROSE_SUPPORT_GCC_OMP
 
 # Configuration commandline support for OpenMP in ROSE
-AM_CONDITIONAL(ROSE_USE_GCC_OMP,test ! "$with_gcc_omp" = no)
+AM_CONDITIONAL(ROSE_USE_GCC_OMP,test ! "$with_parallel_ast_traversal_omp" = no)
 
 
 # JJW and TP (3-17-2008) -- added MPI support
-AC_ARG_WITH(mpi,
-[  --with-mpi                    Use this option ONLY if you inted to traverse the AST in parallel using MPI.],
+AC_ARG_WITH(parallel_ast_traversal_mpi,
+[  --with-parallel_ast_traversal_mpi     Enable AST traversal in parallel using MPI.],
 [ echo "Setting up optional MPI-based tools"
 ])
-AM_CONDITIONAL(ROSE_MPI,test "$with_mpi" = yes)
+AM_CONDITIONAL(ROSE_MPI,test "$with_parallel_ast_traversal_mpi" = yes)
 AC_CHECK_TOOLS(MPICXX, [mpiCC mpic++ mpicxx])
 
 
@@ -1079,10 +1139,10 @@ AM_CONDITIONAL(ROSE_PCH,test "$with_pch" = yes)
 if test "x$with_pch" = xyes; then
   CPPFLAGS="-U_REENTRANT $CPPFLAGS";
   AC_MSG_NOTICE( "PCH enabled: You got the following CPPFLAGS: $CPPFLAGS" );
-if test "x$with_mpi" = xyes; then
+if test "x$with_parallel_ast_traversal_mpi" = xyes; then
   AC_MSG_ERROR( "PCH Support cannot be configured together with MPI support" );
 fi
-if test "x$with_gcc_omp" = xyes; then
+if test "x$with_parallel_ast_traversal_omp" = xyes; then
   AC_MSG_ERROR( "PCH Support cannot be configured together with GCC_OMP support" );
 fi
 else
@@ -1168,10 +1228,10 @@ if test "x$USE_JAVA" = x1; then
       exit 1
     fi
   else
-    AC_MSG_RESULT([no ... gfortran cannot be found (try --with-gfortran)])
+    AC_MSG_RESULT([no ... gfortran cannot be found (try --with-gfortran=<path>)])
   fi
 else
-  AC_MSG_RESULT([no ... Java cannot be found (try --with-java)])
+  AC_MSG_RESULT([no ... Java cannot be found (try --with-java=<path>)])
 fi
 AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER, [test "x$ofp_enabled" = "xyes"])
 AC_SUBST(GFORTRAN_PATH)
@@ -1186,10 +1246,12 @@ AC_ARG_ENABLE(ofp-version,
 # DQ (7/31/2010): Changed the default version of OFP to 0.8.1 (now distributed with ROSE).
 echo "enable_ofp_version = $enable_ofp_version"
 if test "x$enable_ofp_version" = "x"; then
-   echo "Default version of OFP used (0.8.1)"
+   echo "Default version of OFP used (0.8.2)"
    ofp_major_version_number=0
    ofp_minor_version_number=8
-   ofp_patch_version_number=1
+ # DQ (9/26/2010): Changed default version to 0.8.2
+ # ofp_patch_version_number=1
+   ofp_patch_version_number=2
 else
    ofp_major_version_number=`echo $enable_ofp_version | cut -d\. -f1`
    ofp_minor_version_number=`echo $enable_ofp_version | cut -d\. -f2`
@@ -1200,20 +1262,28 @@ echo "ofp_major_version_number = $ofp_major_version_number"
 echo "ofp_minor_version_number = $ofp_minor_version_number"
 echo "ofp_patch_version_number = $ofp_patch_version_number"
 
+ofp_jar_file_contains_java_file = false
 if test "x$ofp_major_version_number" = "x0"; then
    echo "Recognized an accepted major version number."
    if test "x$ofp_minor_version_number" = "x8"; then
-      echo "Recognized an accepted minor version number."
-      if test "x$ofp_patch_version_number" = "x1"; then
-         echo "Recognized an accepted patch version number."
+      echo "Recognized an accepted minor version number (any 0.8.x version is allowed)."
+#     echo "Recognized an accepted minor version number."
+      if test "x$ofp_patch_version_number" = "x0"; then
+         echo "Recognized an accepted patch version number (very old version of OFP)."
       else
-         if test "x$ofp_patch_version_number" = "x2"; then
-            echo "Recognized an accepted patch version number ONLY for testing."
+         if test "x$ofp_patch_version_number" = "x1"; then
+            echo "Recognized an olded but accepted patch version number ONLY for testing."
          else
-            echo "ERROR: Could not identify the OFP patch version number."
-            exit 1
+            ofp_jar_file_contains_java_file = true
+            if test "x$ofp_patch_version_number" = "x2"; then
+               echo "Recognized an accepted patch version number ONLY for testing."
+            else
+#              echo "ERROR: Could not identify the OFP patch version number."
+               echo "Recognized an accepted patch version number (later than default)."
+               exit 1
+            fi
          fi
-       # exit 1
+#       # exit 1
       fi
    else
       if test "x$ofp_minor_version_number" = "x7"; then
@@ -1233,6 +1303,10 @@ else
       exit 1
    fi
 fi
+
+# DQ (9/28/2010): Newer versions of the OFP jar file contains fortran/ofp/parser/java/IFortranParserAction.java
+# we need this to maintain backward compatability.
+AM_CONDITIONAL(ROSE_OFP_CONTAINS_JAVA_FILE, [test "x$ofp_jar_file_contains_java_file" = true])
 
 AC_DEFINE_UNQUOTED([ROSE_OFP_MAJOR_VERSION_NUMBER], $ofp_major_version_number , [OFP major version number])
 AC_DEFINE_UNQUOTED([ROSE_OFP_MINOR_VERSION_NUMBER], $ofp_minor_version_number , [OFP minor version number])
@@ -1269,7 +1343,7 @@ AC_PROG_SWIG(1.3.31)
 SWIG_ENABLE_CXX
 #AS (10/23/07): introduced conditional use of javaport
 AC_ARG_WITH(javaport,
-   [  --with-javaport ... Enable Java bindings using Swig],
+   [  --with-javaport ... Enable generation of Java bindings for ROSE using Swig],
    [with_javaport=yes],
    [with_javaport=no])
 AM_CONDITIONAL(ENABLE_JAVAPORT,test "$with_javaport" = yes)
@@ -2065,6 +2139,7 @@ src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
+src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Makefile
 src/3rdPartyLibraries/qrose/Framework/Makefile
 src/3rdPartyLibraries/qrose/QRoseLib/Makefile
@@ -2092,6 +2167,7 @@ src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
+src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
@@ -2206,66 +2282,29 @@ src/roseExtensions/roseHPCToolkit/include/rosehpct/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/docs/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
-projects/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
-projects/autoParallelization/Makefile
-projects/autoParallelization/tests/Makefile
-projects/autoTuning/Makefile
-projects/autoTuning/tests/Makefile
-projects/autoTuning/doc/Makefile
+projects/BabelPreprocessor/Makefile
 projects/BinQ/Makefile
-projects/CertSecureCodeProject/Makefile
-projects/compass/Makefile
-projects/compass/src/Makefile
-projects/compass/src/compassSupport/Makefile
-projects/compass/src/util/Makefile
-projects/compass/src/util/C-API/Makefile
-projects/compass/src/util/MPIAbstraction/Makefile
-projects/compass/src/util/MPIAbstraction/alt-mpi-headers/Makefile
-projects/compass/src/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/Makefile
-projects/compass/src/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/Makefile
-projects/compass/src/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/mpi2c++/Makefile
-projects/compass/tools/Makefile
-projects/compass/tools/compass/Makefile
-projects/compass/tools/compass/doc/compass.tex
-projects/compass/tools/compass/gui/Makefile
-projects/compass/tools/compass/gui2/Makefile
-projects/compass/tools/compass/buildInterpreter/Makefile
-projects/compass/tools/compass/doc/Makefile
-projects/compass/tools/compass/tests/Makefile
-projects/compass/tools/compass/tests/Compass_C_tests/Makefile
-projects/compass/tools/compass/tests/Compass_Cxx_tests/Makefile
-projects/compass/tools/compass/tests/Compass_OpenMP_tests/Makefile
-projects/compass/tools/sampleCompassSubset/Makefile
-projects/compass/tools/compassVerifier/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/gui/Makefile
-projects/binCompass/Makefile
-projects/binCompass/analyses/Makefile
-projects/binCompass/graphanalyses/Makefile
-projects/binaryVisualization/Makefile
-projects/highLevelGrammars/Makefile
-projects/BabelPreprocessor/Makefile
-projects/checkPointExample/Makefile
+projects/C_to_Promela/Makefile
+projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
-projects/arrayOptimization/Makefile
-projects/arrayOptimization/test/Makefile
-projects/dataStructureGraphing/Makefile
-projects/programModeling/Makefile
-projects/FiniteStateModelChecker/Makefile
 projects/DatalogAnalysis/Makefile
-projects/DatalogAnalysis/src/Makefile
-projects/DatalogAnalysis/src/DBFactories/Makefile
 projects/DatalogAnalysis/relationTranslatorGenerator/Makefile
+projects/DatalogAnalysis/src/DBFactories/Makefile
+projects/DatalogAnalysis/src/Makefile
 projects/DatalogAnalysis/tests/Makefile
 projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
-projects/RTED/Makefile
-projects/RTED/CppRuntimeSystem/Makefile
-projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
-projects/taintcheck/Makefile
-projects/C_to_Promela/Makefile
+projects/FiniteStateModelChecker/Makefile
+projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
+projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
+projects/HeaderFilesInclusion/Makefile
+projects/MPICodeMotion/Makefile
+projects/MacroRewrapper/Makefile
+projects/Makefile
 projects/OpenMP_Analysis/Makefile
 projects/OpenMP_Translator/Makefile
 projects/OpenMP_Translator/includes/Makefile
@@ -2273,7 +2312,6 @@ projects/OpenMP_Translator/tests/Makefile
 projects/OpenMP_Translator/tests/cvalidationsuite/Makefile
 projects/OpenMP_Translator/tests/developmentTests/Makefile
 projects/OpenMP_Translator/tests/epcc-c/Makefile
-projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/BT/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/EP/Makefile
@@ -2281,62 +2319,120 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/FT/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/IS/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
+projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
-projects/MPICodeMotion/Makefile
-projects/javaport/Makefile
-projects/haskellport/Makefile
-projects/haskellport/rose.cabal.in
-projects/haskellport/Setup.hs
-projects/palette/Makefile
-projects/assemblyToSourceAst/Makefile
-projects/assemblyToSourceAst/tests/Makefile
+projects/PolyhedralDependenceAnalysis/CodeGenerator/Makefile
+projects/PolyhedralDependenceAnalysis/Common/Makefile
+projects/PolyhedralDependenceAnalysis/Makefile
+projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
+projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
+projects/PolyhedralDependenceAnalysis/RoseToPPL/Makefile
+projects/PolyhedralDependenceAnalysis/Schedule/Makefile
+projects/QtDesignerPlugins/Makefile
+projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
+projects/RTED/CppRuntimeSystem/Makefile
+projects/RTED/Makefile
+projects/RoseQt/AstViewer/Makefile
+projects/RoseQt/Makefile
+projects/SatSolver/Makefile
 projects/SemanticSignatureVectors/Makefile
 projects/SemanticSignatureVectors/tests/Makefile
-projects/bugSeeding/Makefile
-projects/bugSeeding/bugSeeding.tex
 projects/UpcTranslation/Makefile
 projects/UpcTranslation/tests/Makefile
-projects/MacroRewrapper/Makefile
-projects/QtDesignerPlugins/Makefile
-projects/RoseQt/Makefile
-projects/RoseQt/AstViewer/Makefile
-projects/interpreter/Makefile
+projects/arrayOptimization/Makefile
+projects/arrayOptimization/test/Makefile
+projects/assemblyToSourceAst/Makefile
+projects/assemblyToSourceAst/tests/Makefile
+projects/autoParallelization/Makefile
+projects/autoParallelization/tests/Makefile
+projects/autoTuning/Makefile
+projects/autoTuning/doc/Makefile
+projects/autoTuning/tests/Makefile
 projects/backstroke/Makefile
-projects/backstroke/restrictedLanguage/Makefile
-projects/backstroke/reverseComputation/Makefile
 projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
 projects/backstroke/pluggableReverser/Makefile
+projects/backstroke/restrictedLanguage/Makefile
+projects/backstroke/reverseComputation/Makefile
 projects/backstroke/tests/Makefile
-projects/backstroke/tests/expNormalizationTest/Makefile
-projects/backstroke/tests/restrictedLanguageTest/Makefile
-projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
 projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
+projects/backstroke/tests/expNormalizationTest/Makefile
+projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
 projects/backstroke/tests/pluggableReverserTest/Makefile
+projects/backstroke/tests/restrictedLanguageTest/Makefile
 projects/backstroke/utilities/Makefile
-projects/HeaderFilesInclusion/Makefile
-projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
-projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
-projects/SatSolver/Makefile
-projects/simulator/Makefile
-projects/simulator/tests/Makefile
+projects/binCompass/Makefile
+projects/binCompass/analyses/Makefile
+projects/binCompass/graphanalyses/Makefile
+projects/binaryVisualization/Makefile
+projects/bugSeeding/Makefile
+projects/bugSeeding/bugSeeding.tex
+projects/checkPointExample/Makefile
+projects/compass/Makefile
+projects/compass/src/Makefile
+projects/compass/src/compassSupport/Makefile
+projects/compass/src/util/C-API/Makefile
+projects/compass/src/util/MPIAbstraction/Makefile
+projects/compass/src/util/MPIAbstraction/alt-mpi-headers/Makefile
+projects/compass/src/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/Makefile
+projects/compass/src/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/Makefile
+projects/compass/src/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/mpi2c++/Makefile
+projects/compass/src/util/Makefile
+projects/compass/tools/Makefile
+projects/compass/tools/compass/Makefile
+projects/compass/tools/compass/buildInterpreter/Makefile
+projects/compass/tools/compass/doc/Makefile
+projects/compass/tools/compass/doc/compass.tex
+projects/compass/tools/compass/gui/Makefile
+projects/compass/tools/compass/gui2/Makefile
+projects/compass/tools/compass/tests/Compass_C_tests/Makefile
+projects/compass/tools/compass/tests/Compass_Cxx_tests/Makefile
+projects/compass/tools/compass/tests/Compass_OpenMP_tests/Makefile
+projects/compass/tools/compass/tests/Makefile
+projects/compass/tools/compassVerifier/Makefile
+projects/compass/tools/sampleCompassSubset/Makefile
+projects/dataStructureGraphing/Makefile
+projects/haskellport/Makefile
+projects/haskellport/Setup.hs
+projects/haskellport/rose.cabal.in
+projects/highLevelGrammars/Makefile
+projects/interpreter/Makefile
+projects/javaport/Makefile
+projects/palette/Makefile
+projects/programModeling/Makefile
+projects/roseToLLVM/Analysis/Alias/Makefile
+projects/roseToLLVM/Analysis/Alias/src/Makefile
+projects/roseToLLVM/Analysis/Alias/tests/Makefile
+projects/roseToLLVM/Analysis/Makefile
 projects/roseToLLVM/Makefile
 projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
-projects/roseToLLVM/Analysis/Makefile
-projects/roseToLLVM/Analysis/Alias/Makefile
-projects/roseToLLVM/Analysis/Alias/src/Makefile
-projects/roseToLLVM/Analysis/Alias/tests/Makefile
-projects/PolyhedralDependenceAnalysis/Makefile
-projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
-projects/PolyhedralDependenceAnalysis/Common/Makefile
-projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
-projects/PolyhedralDependenceAnalysis/RoseToPPL/Makefile
-projects/PolyhedralDependenceAnalysis/Schedule/Makefile
-projects/PolyhedralDependenceAnalysis/CodeGenerator/Makefile
+projects/simulator/Makefile
+projects/simulator/tests/Makefile
+projects/symbolicAnalysisFramework/Makefile
+projects/symbolicAnalysisFramework/src/analysis/Makefile
+projects/symbolicAnalysisFramework/src/arrIndexLabeler/Makefile
+projects/symbolicAnalysisFramework/src/cfgUtils/Makefile
+projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
+projects/symbolicAnalysisFramework/src/common/Makefile
+projects/symbolicAnalysisFramework/src/external/Makefile
+projects/symbolicAnalysisFramework/src/lattice/Makefile
+projects/symbolicAnalysisFramework/src/mpiAnal/Makefile
+projects/symbolicAnalysisFramework/src/ompAnal/Makefile
+projects/symbolicAnalysisFramework/src/rwAccessLabeler/Makefile
+projects/symbolicAnalysisFramework/src/simpleAnalyses/Makefile
+projects/symbolicAnalysisFramework/src/state/Makefile
+projects/symbolicAnalysisFramework/src/unionFind/Makefile
+projects/symbolicAnalysisFramework/src/varBitVector/Makefile
+projects/symbolicAnalysisFramework/src/variables/Makefile
+projects/symbolicAnalysisFramework/src/varLatticeVector/Makefile
+projects/symbolicAnalysisFramework/src/Makefile
+projects/symbolicAnalysisFramework/tests/Makefile
+projects/symbolicAnalysisFramework/include/Makefile
+projects/taintcheck/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2367,6 +2463,7 @@ tests/CompileTests/ElsaTestCases/kandr/Makefile
 tests/CompileTests/ElsaTestCases/std/Makefile
 tests/CompileTests/C_tests/Makefile
 tests/CompileTests/C99_tests/Makefile
+tests/CompileTests/Java_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
 tests/CompileTests/Fortran_tests/Makefile

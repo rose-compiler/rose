@@ -140,6 +140,14 @@ if test "x$USE_JAVA" = x1; then
   fi
 fi
 
+# DQ (10/13/2010): Added checking for jar command (common in Linux, but not on some platforms; e.g NMI machines).
+# AC_CHECK_PROGS(JAR, [jar])
+# AM_CONDITIONAL(ROSE_USE_JAR, [test "x$JAR" = "xjar"])
+# echo "value of JAR variable = $JAR"
+# if test $JAR; then
+#   AC_DEFINE([USE_ROSE_JAR_SUPPORT],[],[Controls use of ROSE support for Java.])
+# fi
+
 if test $USE_JAVA; then
   AC_DEFINE([USE_ROSE_JAVA_SUPPORT],[],[Controls use of ROSE support for Java.])
 fi
@@ -151,6 +159,7 @@ AC_SUBST(JAVA_JVM_INCLUDE)
 AC_SUBST(JAVA)
 AC_SUBST(JAVAC)
 AC_SUBST(JAR)
+
 
 # End macro ROSE_SUPPORT_JAVA.
 ]

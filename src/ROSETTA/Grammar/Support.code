@@ -947,7 +947,7 @@ HEADER_UPC_ACCESS_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m );
-		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+          friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechanism to clear all bits
           void reset();
@@ -4851,7 +4851,19 @@ HEADER_APPLICATION_FILE_START
 HEADER_APPLICATION_FILE_END
 
 HEADER_APPLICATION_SOURCE_FILE_START
+#ifndef ROSE_SKIP_COMPILATION_OF_WAVE
      public:
+		// King84 (2010.09.22): Added support for getting the preprocessed token stream and the raw token stream.
+		typedef boost::wave::cpplexer::lex_token<>  token_type;
+		typedef std::list<token_type>             LexTokenList;
+	protected:
+		LexTokenList rawTokenStream;
+	public:
+		LexTokenList& get_rawTokenStream() {	return rawTokenStream;	}
+#else
+	public:
+#endif
+
        // SgSourceFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
           SgSourceFile(std::vector<std::string>& argv, SgProject* project = NULL);
           virtual int callFrontEnd();
@@ -4867,6 +4879,9 @@ HEADER_APPLICATION_SOURCE_FILE_START
 
       //! Divide up the handling of different languages
           int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+
+      //! Support for processing Java source files.
+          int build_Java_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
 #endif          
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
@@ -5097,6 +5112,9 @@ HEADER_APPLICATION_PROJECT_START
           void set_Fortran_only (bool value);
 
           bool get_PHP_only(void) const;
+
+          bool get_Java_only (void) const;
+          void set_Java_only (bool value);
 
        // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
        // bool get_binary_only (void) const;
@@ -11143,6 +11161,9 @@ X aggressive
 
      p_sourceFileUsesPHPFileExtension = false;
 
+  // DQ (10/11/2010): Adding Java support.
+     p_sourceFileUsesJavaFileExtension = false;
+
      p_sourceFileUsesBinaryFileExtension = false;
 
   // This will cause only the binary file format to be read and skipps instruction disassembly
@@ -11673,6 +11694,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_sourceFileUsesFortran90FileExtension = %s \n",(p_sourceFileUsesFortran90FileExtension == true) ? "true" : "false");
      printf ("     p_sourceFileUsesFortran95FileExtension = %s \n",(p_sourceFileUsesFortran95FileExtension == true) ? "true" : "false");
      printf ("     p_sourceFileUsesPHPFileExtension       = %s \n",(p_sourceFileUsesPHPFileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesJavaFileExtension      = %s \n",(p_sourceFileUsesJavaFileExtension == true) ? "true" : "false");
      printf ("     p_sourceFileUsesBinaryFileExtension    = %s \n",(p_sourceFileUsesBinaryFileExtension == true) ? "true" : "false");
      printf ("     p_read_executable_file_format_only     = %s \n",(p_read_executable_file_format_only == true) ? "true" : "false");
      printf ("     p_read_instructions_only               = %s \n",(p_read_instructions_only == true) ? "true" : "false");
@@ -12032,6 +12054,12 @@ SgProject::initialization()
      p_directoryList = new SgDirectoryList();
      assert(p_directoryList != NULL);
      p_directoryList->set_parent(this);
+
+  // DQ (10/3/2010): Added entries that had not be properly set previously.
+     p_C_only                = false;
+     p_Cxx_only              = false;
+     p_Fortran_only          = false;
+     p_addCppDirectivesToAST = false;
    }
 
 // DQ (2/1/2007): Added new operator so that w could depricate the inconsistant usage of 
@@ -12462,6 +12490,27 @@ SgProject::get_PHP_only (void) const
         }
      return result;
    }
+
+void
+SgProject::set_Java_only (bool value)
+   {
+     ROSE_ASSERT(this != NULL);
+     p_Java_only = value;
+   }
+
+bool
+SgProject::get_Java_only (void) const
+   {
+  // look at how the files are set.
+     bool result = p_Java_only;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Java_only();
+        }
+     return result;
+   }
+
 
 #if 0
 // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
