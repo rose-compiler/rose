@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 
 // DQ (5/1/2010): This is required to support the function: SgAsmInstruction* SageBuilderAsm::buildMultibyteNopInstruction(int n)
-#include "x86InstructionEnum.h"
+#include "InstructionEnumsX86.h"
 
 
 using namespace std;

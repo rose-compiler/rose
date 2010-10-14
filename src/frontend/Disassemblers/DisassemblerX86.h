@@ -3,6 +3,8 @@
 #ifndef ROSE_DISASSEMBLER_X86_H
 #define ROSE_DISASSEMBLER_X86_H
 
+#include "InstructionEnumsX86.h"
+
 /** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
  *  really not much reason to use this class directly or to call any of these methods directly. */
 class DisassemblerX86: public Disassembler {

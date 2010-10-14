@@ -125,12 +125,9 @@ namespace ELF{
 
 #include "AST_BIN_Traversal.h"
 
-#include "AssemblerX86Init.h"
-#include "x86InstructionEnum.h"
+#include "InstructionEnumsX86.h"
 #include "x86InstructionProperties.h"
-
 #include "armInstructionEnum.h"
-
 #include "powerpcInstructionEnum.h"
 #include "powerpcInstructionProperties.h"
 
