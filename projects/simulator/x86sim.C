@@ -393,7 +393,7 @@ public:
     void syscall_result(uint32_t ptr, size_t sz, ArgInfo::StructPrinter);
 
     /* Initializes an ArgInfo object to pass to syscall printing functions. */
-    void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list ap);
+    void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list *ap);
 
     /* Returns the memory address in ROSE where the specified specimen address is located. */
     void *my_addr(uint32_t va);
@@ -2857,21 +2857,21 @@ EmulationPolicy::emulate_syscall()
 }
 
 void
-EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list ap)
+EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *ap)
 {
     ROSE_ASSERT(info!=NULL);
     info->val = val;
     switch (format) {
         case 'f':       /*flags*/
         case 'e':       /*enum*/
-            info->xlate = va_arg(ap, const Translate*);
+            info->xlate = va_arg(*ap, const Translate*);
             break;
         case 's':       /*NUL-terminated string*/
             info->str = read_string(val);
             break;
         case 'P': {       /*ptr to a struct*/
-            info->struct_size = va_arg(ap, size_t);
-            info->struct_printer = va_arg(ap, ArgInfo::StructPrinter);
+            info->struct_size = va_arg(*ap, size_t);
+            info->struct_printer = va_arg(*ap, ArgInfo::StructPrinter);
             info->struct_buf = new uint8_t[info->struct_size];
             info->struct_nread = map->read(info->struct_buf, info->val, info->struct_size);
             break;
@@ -2889,7 +2889,7 @@ EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
         fprintf(debug, "0x%08"PRIx64": ", readIP().known_value());
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
-            syscall_arginfo(format[i], arg(i), args+i, ap);
+            syscall_arginfo(format[i], arg(i), args+i, &ap);
         print_enter(debug, name, format, args);
     }
     
@@ -2906,7 +2906,7 @@ EmulationPolicy::syscall_leave(const char *format, ...)
     if (debug && trace_syscall) {
         ArgInfo info;
         uint32_t value = readGPR(x86_gpr_ax).known_value();
-        syscall_arginfo(format[0], value, &info, ap);
+        syscall_arginfo(format[0], value, &info, &ap);
         print_leave(debug, format[0], &info);
     }
 }
