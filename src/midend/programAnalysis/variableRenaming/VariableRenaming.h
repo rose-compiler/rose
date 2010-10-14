@@ -13,6 +13,7 @@
 #include <sstream>
 #include <boost/foreach.hpp>
 #include "filteredCFG.h"
+#include <boost/unordered_map.hpp>
 
 /** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
  * This is used to assign absolute names to VarRefExp nodes during VariableRenaming.
@@ -110,35 +111,39 @@ public:
         return name;
     }
 };
-
 /** Struct containing a filtering function to determine what CFG nodes
  * are interesting during the DefUse traversal.
  */
 struct IsDefUseFilter
 {
-    /** Determines if the provided CFG node should be traversed during DefUse.
-     *
-     * @param cfgn The node in question.
-     * @return Whether it should be traversed.
-     */
-    bool operator() (CFGNode cfgn) const
-    {
-        SgNode *node = cfgn.getNode();
+	/** Determines if the provided CFG node should be traversed during DefUse.
+	 *
+	 * @param cfgn The node in question.
+	 * @return Whether it should be traversed.
+	 */
+	bool operator() (CFGNode cfgn) const
+	{
+		SgNode *node = cfgn.getNode();
 
-        //If it is the last node in a function call, keep it
-        if(isSgFunctionCallExp(node) && cfgn == node->cfgForEnd())
-            return true;
-        
-        //Remove all non-interesting nodes
-        if (!cfgn.isInteresting())
-            return false;
+		//If it is the last node in a function call, keep it
+		if (isSgFunctionCallExp(node) && cfgn == node->cfgForEnd())
+			return true;
 
-        //Remove all non-beginning nodes for initNames
-        if (isSgInitializedName(node) && cfgn != node->cfgForBeginning())
-            return false;
+		//The begin edges of basic blocks are not considered interesting, but we would like to keep them
+		//This is so we can propagate reachable defs to the top of a basic block
+		if (isSgBasicBlock(node) && cfgn == node->cfgForBeginning())
+			return true;
 
-        return true; 
-    }
+		//Remove all non-interesting nodes
+		if (!cfgn.isInteresting())
+			return false;
+
+		//Remove all non-beginning nodes for initNames
+		if (isSgInitializedName(node) && cfgn != node->cfgForBeginning())
+			return false;
+
+		return true;
+	}
 };
 
 /** Class that defines an VariableRenaming of a program
@@ -170,10 +175,10 @@ public:
     typedef std::map<VarName, NodeVec> TableEntry;
     /** A table storing the name->node mappings for every node in the program.
      */
-    typedef std::map<SgNode*, TableEntry> DefUseTable;
+    typedef boost::unordered_map<SgNode*, TableEntry> DefUseTable;
     /** A table mapping a name to a single node.
      */
-    typedef std::map<VarName, SgNode*> FirstDefTable;
+    typedef boost::unordered_map<VarName, SgNode*> FirstDefTable;
     /** A list of names.
      */
     typedef std::vector<VarName> GlobalTable;
@@ -197,13 +202,13 @@ public:
     typedef std::map<SgNode*, int> NodeNumRenameEntry;
     /** A table that maps a name to it's node->number renamings.
      */
-    typedef std::map<VarName, NodeNumRenameEntry> NodeNumRenameTable;
+    typedef boost::unordered_map<VarName, NodeNumRenameEntry> NodeNumRenameTable;
     /** An entry in the rename table that maps a number to a node.
      */
     typedef std::map<int, SgNode*> NumNodeRenameEntry;
     /** A table that maps a name to it's number->node renamings.
      */
-    typedef std::map<VarName, NumNodeRenameEntry> NumNodeRenameTable;
+    typedef boost::unordered_map<VarName, NumNodeRenameEntry> NumNodeRenameTable;
 
 
 private:
@@ -612,7 +617,17 @@ public:
      */
     NumNodeRenameEntry getReachingDefsAtFunctionEndForName(SgFunctionDefinition* node, const VarName& var);
 
-    /** Get the versions of all variables at the start of the given function.
+	/** Gets the versions of all variables reaching a statment before its execution. Notice that this method and 
+	 * getReachingDefsAtNode potentially return different values for loops. With loops, variable values from the body
+	 * of the loop flow to the top; hence getReachingDefsAtNode returns definitions from the loop body. On the other hand,
+	 * getReachingDefsAtStatementStart does not return definitions coming in from a loop body.
+	 * 
+     * @param statement
+     * @return A table of VarName->(num, defNode) for all variables at the beginning of the statement
+     */
+	NumNodeRenameTable getReachingDefsAtStatementStart(SgStatement* statement);
+
+	/** Get the versions of all variables at the start of the given function.
      *
      * @param node The function to get variables for.
      * @return A table of VarName->(num, defNode) for all variables at the start of the function. Empty table otherwise.
@@ -723,13 +738,21 @@ public:
      */
     NumNodeRenameEntry getExpandedDefsAtNodeForName(SgNode* node, const VarName& var);
 
-    /** Get all definitions for the subtree rooted at this node.
+    /** Get all definitions for the subtree rooted at this node. If m.x is defined,
+	 * the resulting table will also include a definition for m.
      *
      * @param node The root of the subtree to get definitions for.
      * @return The table mapping VarName->(num, node) for every definition.
      */
     NumNodeRenameTable getDefsForSubtree(SgNode* node);
 
+	/** Get all original definitions for the subtree rooted at this node. No expanded definitions
+	 * will be included - for example, if m.x is defined, there will be no definition for the structure m.
+     *
+     * @param node The root of the subtree to get definitions for.
+     * @return The table mapping VarName->(num, node) for every definition.
+     */
+    NumNodeRenameTable getOriginalDefsForSubtree(SgNode* node);
 
     /*
      *   Static Utility Functions
