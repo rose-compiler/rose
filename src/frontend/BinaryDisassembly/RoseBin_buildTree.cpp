@@ -11,11 +11,30 @@
 
 using namespace std;
 
+
 /****************************************************
  * return information about the register
  ****************************************************/
-void RoseBin_buildTree::resolveRegister(string symbol,
-                                        RegisterDescriptor *registerSg) {
+void RoseBin_buildTree::resolveRegisterX86(string symbol,
+                                           RegisterDescriptor *registerSg)
+{
+    const RegisterDictionary *rdict = RegisterDictionary::amd64();
+
+    /* Symbol is upper case. Dictionary stores register names in lower case. */
+    for (string::size_type i=0; i<symbol.size(); i++)
+        symbol[i] = tolower(symbol[i]);
+
+    const RegisterDescriptor *rdesc = rdict->lookup(symbol);
+    if (rdesc) {
+        *registerSg = *rdesc;
+    } else {
+        cerr <<"ERROR !!! ::: x86 symbol could not be resolved! : " <<symbol <<"\n" <<endl;
+    }
+}
+
+
+void RoseBin_buildTree::resolveRegisterArm(string symbol,
+                                           RegisterDescriptor *registerSg) {
 
   // ARM architecture
   const RegisterDictionary *rdict = RegisterDictionary::arm7();
