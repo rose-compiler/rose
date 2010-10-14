@@ -485,7 +485,7 @@ test_rot13.result: rot13
 
 test_testRegisters.result: testRegisters
 	@echo "  TESTING $@"
-	./testRegisters
+	@./testRegisters
 	@touch $@
 
 # Tests for detecting the locations of functions, written this way for parallelism.
