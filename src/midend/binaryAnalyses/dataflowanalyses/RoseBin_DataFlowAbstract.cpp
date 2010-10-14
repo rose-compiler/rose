@@ -605,21 +605,23 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
 
 /************************************************************
  * checks if an instruction has a RegisterReference on the
- * right (bool) or left side
+ * right (bool) or left side.
+ * Return value is meaningless if registerReference return value is false.
  ***********************************************************/
 std::pair<X86RegisterClass, int>
 RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
                                            SgAsmx86Instruction* inst,
-					   bool rightSide, bool& memoryReference ) {
+					   bool rightSide, bool& memoryReference, bool& registerReference ) {
   // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
   // false = checking the left side (of instruction operands) for a registerReference
+  registerReference = false;
   SgAsmOperandList* opList = inst->get_operandList();
   ROSE_ASSERT(opList);
 
 
   SgAsmx86RegisterReferenceExpression* refExpr =NULL;
-  std::pair<X86RegisterClass, int>  code = std::make_pair(x86_regclass_unknown, 0);
+  std::pair<X86RegisterClass, int>  code = std::make_pair(x86_regclass_gpr, 0); // meaningless
   int counter=0;
   int endCounter=0;
   if (rightSide)
@@ -646,11 +648,13 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
 	if (isSgAsmx86RegisterReferenceExpression(memOff)) {
 	  SgAsmx86RegisterReferenceExpression* memRegRef = isSgAsmx86RegisterReferenceExpression(memOff);
 	  code = std::make_pair((X86RegisterClass)memRegRef->get_descriptor().get_major(), memRegRef->get_descriptor().get_minor());
+          registerReference = true;
 	}
     }
     refExpr = isSgAsmx86RegisterReferenceExpression(expr);
     if (refExpr) {
       code = std::make_pair((X86RegisterClass)refExpr->get_descriptor().get_major(), refExpr->get_descriptor().get_minor());
+      registerReference = true;
     }
   }
 
@@ -669,10 +673,12 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
 	if (isSgAsmx86RegisterReferenceExpression(memOff)) {
 	  SgAsmx86RegisterReferenceExpression* memRegRef = isSgAsmx86RegisterReferenceExpression(memOff);
 	  code = memRegRef->get_identifier();
+          registerReference = true;
 	}
       } else {
 	// is a register reference
 	code = refExpr->get_identifier();
+        registerReference = true;
 	//      }
       }
     }

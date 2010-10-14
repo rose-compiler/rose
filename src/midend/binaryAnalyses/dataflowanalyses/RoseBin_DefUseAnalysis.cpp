@@ -433,11 +433,10 @@ RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
     bool use=false;
 
     // check if right hand side has use of register
-    bool isMemoryReferenceR = false;
+    bool isMemoryReferenceR = false, isRegisterReferenceR;
     std::pair<X86RegisterClass, int> codeR =
-      check_isRegister(node, asmNode, true, isMemoryReferenceR); // true == right hand side
-    if (!isMemoryReferenceR &&
-	codeR.first != x86_regclass_unknown) {
+      check_isRegister(node, asmNode, true, isMemoryReferenceR, isRegisterReferenceR); // true == right hand side
+    if (!isMemoryReferenceR && isRegisterReferenceR) {
       use = true;
     }
 
@@ -447,9 +446,9 @@ RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
     else definition=true;
 
     if (alteringInstruction) {
-      bool isMemoryReference = false;
+      bool isMemoryReference = false, isRegisterReference = false;
       std::pair<X86RegisterClass, int> code =
-	check_isRegister(node, asmNode, false, isMemoryReference); // false == left hand side
+        check_isRegister(node, asmNode, false, isMemoryReference, isRegisterReference); // false == left hand side
 
       // make sure that there is a register on the left hand side
       if (isMemoryReference) {
@@ -459,7 +458,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
 	node->append_properties(SgGraph::dfa_unresolved_func,"");
 	nrOfMemoryWrites++;
       } else
-	if (code.first != x86_regclass_unknown) {
+	if (isRegisterReference) {
 	  // we have found a write to a register
 	  // find out the registerName
           string registerName = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64));
