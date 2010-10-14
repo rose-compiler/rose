@@ -486,6 +486,4 @@ enum PowerpcTimeBaseRegister { // These must match the processor's numbers
   powerpc_tbr_tbu = 269
 };
 
-std::string toString(PowerpcInstructionKind k);
-
 #endif /* ROSE_POWERPC_INSTRUCTION_ENUM_H */

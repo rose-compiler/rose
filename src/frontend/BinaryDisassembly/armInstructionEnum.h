@@ -137,6 +137,4 @@ enum ArmInstructionCondition {
   arm_cond_nv = 16                      /*??*/
 };
 
-std::string toString(ArmInstructionKind k);
-
 #endif /* ROSE_ARMINSTRUCTIONENUM_H */
