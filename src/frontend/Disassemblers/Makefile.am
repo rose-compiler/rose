@@ -17,7 +17,8 @@ libroseDisassemblers_la_SOURCES = \
 include_HEADERS = \
 	Partitioner.h Registers.h \
 	Disassembler.h DisassemblerArm.h DisassemblerPowerpc.h DisassemblerX86.h \
-	Assembler.h AssemblerX86.h AssemblerX86Init.h 
+	Assembler.h AssemblerX86.h AssemblerX86Init.h \
+	InstructionEnumsX86.h
 
 dist_include_HEADERS =
 
