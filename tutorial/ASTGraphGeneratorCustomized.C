@@ -18,11 +18,12 @@ struct ExtraNodeInfo
                 if (SgExpression* expr = isSgExpression(node))
 		{
 			extra += std::string("Mods: ") +
-                                     (SageInterface::isConstType    (expr->get_type()) ? "c" : "") +
+                     (SageInterface::isConstType    (expr->get_type()) ? "c" : "") +
 				     (SageInterface::isVolatileType (expr->get_type()) ? "v" : "") +
 				     (SageInterface::isReferenceType(expr->get_type()) ? "&" : "") +
 				     "\\n";
-                        extra += (expr->isDefinable() ? "Definable\\n" : "!Definable\\n");
+			extra += (expr->isDefinable() ? "Definable\\n" : "!Definable\\n");
+			extra += (expr->isUsedAsLValue() ? "Is Used As LValue\\n" : "Is Not Used As LValue\\n");
 		}
 		else if (SgPointerDerefExp* expr = isSgPointerDerefExp(node))
 		{
@@ -142,27 +143,6 @@ int main( int argc, char * argv[] )
 {
 	// Build the AST used by ROSE
 	SgProject* project = frontend(argc,argv);
-	SgFunctionDeclaration* mainDecl = SageInterface::findMain(project);
-	if (mainDecl)
-	{
-		SgBasicBlock* body = mainDecl->get_definition()->get_body();
-		std::vector<SgReferenceType*> referenceTypes = SageInterface::querySubTree<SgReferenceType>(body, V_SgReferenceType);
-		
-		BOOST_FOREACH(SgReferenceType* type, referenceTypes)
-		{
-			printf("%s\n", type->unparseToString().c_str());
-		}
-
-		BOOST_FOREACH(SgStatement* stmt, body->get_statements())
-		{
-			std::vector<SgReferenceType*> referenceTypes = SageInterface::querySubTree<SgReferenceType>(stmt, V_SgReferenceType);
-			
-			BOOST_FOREACH(SgReferenceType* type, referenceTypes)
-			{
-				printf("%d: %s : %s\n", stmt->get_file_info()->get_line(), stmt->unparseToString().c_str(), type->unparseToString().c_str());
-			}
-		}
-	}
 
 	// Generate a DOT file to use in visualizing the AST graph.
 //	generateDOTExtended( *project, std::string(), AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo(), AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions(), AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo(), AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions() );

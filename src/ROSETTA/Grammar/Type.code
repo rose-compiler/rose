@@ -4748,6 +4748,14 @@ SgTypeString::createType ( SgExpression* lengthExpression, SgExpression* optiona
           lengthExpression->set_parent(returnType);
         }
 
+  // DQ (10/9/2010): Added setting the parent (which should not have been set already)
+  // note also that the index expression is not required to be specified.
+     if (optional_fortran_type_kind != NULL && optional_fortran_type_kind->get_parent() == NULL)
+        {
+       // ROSE_ASSERT(optional_fortran_type_kind->get_parent() == NULL);
+          optional_fortran_type_kind->set_parent(returnType);
+        }
+
      return returnType;
    }
 

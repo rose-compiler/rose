@@ -1,0 +1,8 @@
+lattice_OBJ = ${ANALYSIS_ROOT}/src/lattice/obj/lattice.o ${ANALYSIS_ROOT}/src/lattice/obj/ConstrGraph.o \
+              ${ANALYSIS_ROOT}/src/lattice/obj/intArithLogical.o
+lattice_H = ${ANALYSIS_ROOT}/src/lattice/lattice.h ${ANALYSIS_ROOT}/src/lattice/latticeFull.h \
+            ${ANALYSIS_ROOT}/src/lattice/ConstrGraph.h ${ANALYSIS_ROOT}/src/lattice/intArithLogical.h
+
+.PHONY: lattice
+lattice:
+	cd ${ANALYSIS_ROOT}/src/lattice; ${MAKE} all; cd ${ANALYSIS_ROOT}/src/${Component}

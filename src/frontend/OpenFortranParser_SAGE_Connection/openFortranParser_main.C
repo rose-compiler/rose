@@ -120,9 +120,14 @@ int openFortranParser_main(int argc, char **argv)
     assert(env_status == 0);
 #endif
 
-    if (SgProject::get_verbose() > 1)
+    if (SgProject::get_verbose() > 0)
        {
-         printf ("Call the function that will start a JVM and call the OFP \n");
+         printf ("Call the function that will start a JVM and call the OFP \n\n");
+
+      // DQ (10/12/2010): Added debugging support.
+         string JVM_command_line = CommandlineProcessing::generateStringFromArgList(CommandlineProcessing::generateArgListFromArgcArgv(argc, argv));
+         printf ("Java JVM commandline = %s \n",JVM_command_line.c_str());
+         printf ("ROSE modified %s = %s \n",ROSE_SHLIBPATH_VAR,new_value.c_str());
        }
 
 #ifdef ENABLE_FORTRAN_ERROR_HANDLER
@@ -134,6 +139,11 @@ int openFortranParser_main(int argc, char **argv)
 #ifdef ENABLE_FORTRAN_ERROR_HANDLER
     fortran_error_handler_end();
 #endif
+
+    if (SgProject::get_verbose() > 0)
+       {
+         printf ("JVM processing done.\n\n");
+       }
 
  /* Reset to the saved value */
 #if OVERWRITE_LD_LIBRARY_PATH

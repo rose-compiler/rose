@@ -1,6 +1,7 @@
 #ifndef __FORTRANPARSERSTATE_H_
 #define __FORTRANPARSERSTATE_H_
 
+// DQ (10/11/2010): We only require this include to support the type: AstNameListType.
 #include "fortran_support.h"
 
 #define astScopeStack              (*(FortranParserState::getCurrentScopeStack()))

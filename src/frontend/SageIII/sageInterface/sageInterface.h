@@ -483,6 +483,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   bool is_UPC_dynamic_threads();
   bool is_C99_language ();
   bool is_Cxx_language ();
+  bool is_Java_language ();
   bool is_Fortran_language ();
   bool is_CAF_language ();
   bool is_PHP_language();
@@ -832,7 +833,7 @@ bool loopTiling(SgForStatement* loopNest, size_t targetLevel, size_t tileSize);
 
 //! Query a subtree to get all nodes of a given type, with an appropriate downcast.
 template <typename NodeType>
-std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = NodeType::static_variant)
+std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = (VariantT)NodeType::static_variant)
 {
   Rose_STL_Container<SgNode*> nodes = NodeQuery::querySubTree(top,variant);
   std::vector<NodeType*> result(nodes.size(), NULL);
