@@ -227,10 +227,12 @@ BUILT_SOURCES = $(GENERATED_SOURCE) ompparser.cc ompparser.h omplexer.cc
 
 
 # DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support (in sageSupport.C).
+if ROSE_USE_OPEN_FORTRAN_PARSER
 sageSupport.C: extract_rose_required_ofp_source_files
 
 extract_rose_required_ofp_source_files:
 	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) extract_rose_required_ofp_source_files
+endif
 
 
 # DQ (9/9/2007): Put C++_include_files.h back into place
