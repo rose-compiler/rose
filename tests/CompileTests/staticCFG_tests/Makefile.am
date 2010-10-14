@@ -500,7 +500,7 @@ $(QMTEST_Objects): testStaticCFG testInterproceduralCFG $(srcdir)/$(@:.qmt=.C)
 	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testInterproceduralCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # Include makefile rules specific to QMTest
-include $(top_srcdir)/config/QMTest_makefile.inc
+#include $(top_srcdir)/config/QMTest_makefile.inc
 
 EXTRA_DIST = 
 

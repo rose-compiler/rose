@@ -108,7 +108,7 @@ rose_Stress2.cc: ../autoPar Stress2.cc
 test_diff.out : ../autoPar $(top_srcdir)/tests/CompileTests/OpenMP_tests/jacobi.c
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -rose:autopar:enable_diff -c $(top_srcdir)/tests/CompileTests/OpenMP_tests/jacobi.c > test_diff.out
 
-# Too files are singled out since their output will be put in tutorial text
+# Two files are singled out since their output will be put in tutorial text
 doall_2.out: ../autoPar doall_2.c 
 	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/doall_2.c > doall_2.out
 inner_only.out: ../autoPar inner_only.c 
@@ -129,7 +129,7 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C doall_vector.C doall_vector2.C \
-	Stress2.cc clibfunc.annot SegDB.annot doall_2.c inner_only.c
+	Stress2.cc clibfunc.annot SegDB.annot doall_2.c inner_only.c std_vector.annot
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cc *.patch

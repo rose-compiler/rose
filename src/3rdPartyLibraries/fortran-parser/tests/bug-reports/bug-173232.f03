@@ -1,4 +1,0 @@
-inte&
-&ger i
-
-end

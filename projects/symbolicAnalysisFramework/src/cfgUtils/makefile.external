@@ -1,0 +1,9 @@
+cfgUtils_OBJ = ../cfgUtils/obj/CFGRewrite.o  \
+               ../cfgUtils/obj/DataflowCFG.o  ../cfgUtils/obj/VirtualCFGIterator.o  ../cfgUtils/obj/cfgUtils.o # ../cfgUtils/obj/DataflowCFG.cfgToDot.o 
+cfgUtils_H = ../cfgUtils/CFGRewrite.h  ../cfgUtils/CallGraphTraverse.h ../cfgUtils/CallGraphTraverse.C \
+             ../cfgUtils/DataflowCFG.h  ../cfgUtils/VirtualCFGIterator.h  ../cfgUtils/cfgUtils.h # ../cfgUtils/DataflowCFG.cfgToDot.h
+cfgUtils_INC = -I../cfgUtils -I../common
+
+.PHONY: cfgUtils
+cfgUtils:
+	cd ${ANALYSIS_ROOT}/src/cfgUtils; ${MAKE} all; cd ${ANALYSIS_ROOT}/src/${Component}

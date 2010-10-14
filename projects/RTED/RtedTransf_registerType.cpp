@@ -96,7 +96,8 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 	}
 
 	RtedClassDefinition* cd = new RtedClassDefinition(cdef,
-			cdef->get_mangled_name().str(),
+  			cdef->get_mangled_name().str(),
+  //			cdef->get_qualified_name().str(),
 			cdef->get_declaration()->get_type()->class_name(),
 			elements.size(),
 			buildSizeOfOp( cdef->get_declaration()->get_type() ),
@@ -346,10 +347,10 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 				SgExpression* andOp = buildAddressOfOp(dotExp);
 				SgExpression* castOp = NULL;
 				if (rtedModifiedClass==NULL && classHasConstructor==false)
-				castOp = buildCastExp(andOp, size_t_member);
+				castOp = buildCastExp(andOp, symbols->size_t_member);
 				else {
 					SgExpression* minus = buildSubtractOp(andOp, buildIntVal(0));
-					castOp = buildCastExp(minus, size_t_member);
+					castOp = buildCastExp(minus, symbols->size_t_member);
 				}
 
 				appendExpression(arg_list, castOp);
@@ -363,9 +364,9 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 			}
 		}
 
-		ROSE_ASSERT(roseRegisterTypeCall);
+		ROSE_ASSERT(symbols->roseRegisterTypeCall);
 		//cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-		SgFunctionRefExp* memRef_r = buildFunctionRefExp( roseRegisterTypeCall);
+		SgFunctionRefExp* memRef_r = buildFunctionRefExp( symbols->roseRegisterTypeCall);
 		SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 				arg_list);
 		SgExprStatement* exprStmt = buildExprStatement(funcCallExp);

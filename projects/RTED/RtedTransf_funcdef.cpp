@@ -82,7 +82,7 @@ RtedTransformation::insertConfirmFunctionSignature( SgFunctionDefinition* fndef 
 	fndef -> get_body() -> prepend_statement(
 		buildExprStatement(
 			buildFunctionCallExp(
-				buildFunctionRefExp( roseConfirmFunctionSignature ),
+				buildFunctionRefExp( symbols->roseConfirmFunctionSignature ),
 				arg_list ))
 	);
 }

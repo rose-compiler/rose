@@ -3,41 +3,42 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # Add Projects that are associated with capabilities that belong to ROSE here
 SUBDIRS = \
      AstEquivalence \
-     autoParallelization \
-     autoTuning\
-     backstroke \
+     BabelPreprocessor \
      BinQ \
-     CertSecureCodeProject \
      BinaryCloneDetection \
-     SemanticSignatureVectors \
-     binCompass \
+     C_to_Promela \
+     CertSecureCodeProject \
      CloneDetection \
      DatalogAnalysis \
      DocumentationGenerator \
+     FiniteStateModelChecker \
+     HeaderFilesInclusion \
+     MPICodeMotion \
+     MacroRewrapper \
      OpenMP_Analysis \
      OpenMP_Translator \
-     BabelPreprocessor \
-     FiniteStateModelChecker \
-     programModeling \
-     arrayOptimization \
-     HeaderFilesInclusion \
-     highLevelGrammars \
-     dataStructureGraphing \
-     checkPointExample \
-     C_to_Promela \
-     MPICodeMotion \
-     javaport \
-     haskellport \
-     assemblyToSourceAst \
-     bugSeeding \
-     binaryVisualization \
-     MacroRewrapper \
-     UpcTranslation \
-     taintcheck \
+     PolyhedralDependenceAnalysis \
      QtDesignerPlugins \
      RoseQt \
+     SemanticSignatureVectors \
+     UpcTranslation \
+     arrayOptimization \
+     assemblyToSourceAst \
+     autoParallelization \
+     autoTuning\
+     backstroke \
+     binCompass \
+     binaryVisualization \
+     bugSeeding \
+     checkPointExample \
+     dataStructureGraphing \
+     haskellport \
+     highLevelGrammars \
+     javaport \
+     programModeling \
      roseToLLVM \
-     PolyhedralDependenceAnalysis
+     symbolicAnalysisFramework \
+     taintcheck 
 
 # DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
 # DQ (7/21/2010): Removed simulator since it is a problem to compile with ROSE (projects/simulator/emulator.C).

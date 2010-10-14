@@ -411,6 +411,9 @@ HEADER_SCOPE_STATEMENT_START
           void append_statement ( SgStatement* stmt );
           void prepend_statement ( SgStatement* stmt );
 
+          SgStatement* firstStatement() const;
+          SgStatement* lastStatement() const;
+
   // protected:
 
 #if ALT_FIXUP_COPY
@@ -1977,6 +1980,8 @@ HEADER_RETURN_STATEMENT_START
 
           int replace_expression(SgExpression * original_expression, SgExpression * new_expression );
 
+       // get lvalue
+		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL
 HEADER_RETURN_STATEMENT_END
 
 
@@ -4929,17 +4934,19 @@ SgScopeStatement::generateStatementList() const
         }
        else
         {
-       // Handle special case of two lists in a single statement (just append the 2nd list to the 1st list
+       // Handle special case of two lists in a single statement (just append the 2nd list to the 1st list)
           const SgIfStmt* ifStatement = isSgIfStmt(this);
           if (ifStatement != NULL)
              {
-               if (isSgScopeStatement(ifStatement->get_true_body())) {
-                 returnList = isSgScopeStatement(ifStatement->get_true_body())->getStatementList();
-               }
-               if (isSgScopeStatement(ifStatement->get_false_body())) {
-                 const SgStatementPtrList& falseList = isSgScopeStatement(ifStatement->get_false_body())->getStatementList();
-                 returnList.insert(returnList.end(), falseList.begin(), falseList.end());
-               }
+               if (isSgScopeStatement(ifStatement->get_true_body()))
+                  {
+                    returnList = isSgScopeStatement(ifStatement->get_true_body())->getStatementList();
+                  }
+               if (isSgScopeStatement(ifStatement->get_false_body()))
+                  {
+                    const SgStatementPtrList& falseList = isSgScopeStatement(ifStatement->get_false_body())->getStatementList();
+                    returnList.insert(returnList.end(), falseList.begin(), falseList.end());
+                  }
              }
             else
              {
@@ -4961,7 +4968,9 @@ SgScopeStatement::generateUniqueStatementNumberForScope( SgStatement* statement 
      return counter;
    }
 
-bool SgScopeStatement::generateUniqueStatementNumberForScopeHelper(unsigned int& counter, SgStatement* statement) {
+bool
+SgScopeStatement::generateUniqueStatementNumberForScopeHelper(unsigned int& counter, SgStatement* statement)
+   {
   // DQ (2/20/2007): This function supports the AST merge mechanism, but is general 
   // and may be useful for the mangled name generation in the future.
 
@@ -5063,6 +5072,121 @@ bool SgScopeStatement::generateUniqueStatementNumberForScopeHelper(unsigned int&
      printf ("In generateUniqueStatementNumberForScope(): counter = %u \n",counter);
 
      return counter;
+   }
+
+SgStatement*
+SgScopeStatement::firstStatement() const
+   {
+     const SgStatementPtrList & statementList = getStatementList();
+
+     SgStatement* first = NULL;
+     if (statementList.empty() == false)
+          first = *(statementList.begin());
+
+     return first;
+   }
+
+SgStatement*
+SgScopeStatement::lastStatement() const
+   {
+     SgStatement* last = NULL;
+
+#if 0
+     const SgStatementPtrList & statementList = getStatementList();
+     if (statementList.empty() == false)
+          last = *(statementList.rbegin());
+#else
+  // This function has to handle the details of looking for the last statement dependent 
+  // upon if the scope contains a list of SgDeclarationStatement or SgStatement.
+     SgStatementPtrList returnList;
+     if (containsOnlyDeclarations() == true)
+        {
+          const SgDeclarationStatementPtrList & declarationList = getDeclarationList();
+          if (declarationList.empty() == false)
+               last = *(declarationList.rbegin());
+        }
+       else
+        {
+       // Handle special case of two lists in a single statement (just append the 2nd list to the 1st list)
+          const SgIfStmt* ifStatement = isSgIfStmt(this);
+          if (ifStatement != NULL)
+             {
+            // Both the true and false bodies can be either a SgBasicBlock or any SgStatement.
+            // NOTE: If the false body is empty then use the last statement of the true body.
+            // Having an empty false body is a common normalization within the IR, though less 
+            // so for C/C++ recently and more for Fortrna (as I recall).
+               SgScopeStatement* ifScopeFalseBody = isSgScopeStatement(ifStatement->get_false_body());
+               if (ifScopeFalseBody != NULL && ifScopeFalseBody->getStatementList().empty() == false)
+                  {
+                 // const SgStatementPtrList& falseList = isSgScopeStatement(ifStatement->get_false_body())->getStatementList();
+                 // returnList.insert(returnList.end(), falseList.begin(), falseList.end());
+                    const SgStatementPtrList & statementList = ifScopeFalseBody->getStatementList();
+#if 1
+                    ROSE_ASSERT (statementList.empty() == false);
+                    last = *(statementList.rbegin());
+#else
+                    if (statementList.empty() == false)
+                       {
+                         last = *(statementList.rbegin());
+                       }
+                      else
+                       {
+                      // I think that this path should not be possible!
+                         printf ("ERROR: false branch statementList.empty() == true \n");
+                         ROSE_ASSERT(false);
+                       }
+#endif
+                  }
+                 else
+                  {
+                    SgStatement* falseStatement = ifStatement->get_false_body();
+                    if (falseStatement != NULL)
+                       {
+                         last = falseStatement;
+                       }
+                      else
+                       {
+                      // If there is no false body then we have to look at the bottom of the true body.
+                      // Both the true and false bodies can be either a SgBasicBlock or any SgStatement.
+                         if (isSgScopeStatement(ifStatement->get_true_body()) != NULL)
+                            {
+                           // returnList = isSgScopeStatement(ifStatement->get_true_body())->getStatementList();
+                              const SgStatementPtrList & statementList = isSgScopeStatement(ifStatement->get_true_body())->getStatementList();
+                              if (statementList.empty() == false)
+                                 {
+                                   last = *(statementList.rbegin());
+                                 }
+                                else
+                                 {
+                                   printf ("ERROR: true branch statementList.empty() == true \n");
+                                   ROSE_ASSERT(false);
+                                 }
+                            }
+                           else
+                            {
+                              SgStatement* trueStatement = ifStatement->get_true_body();
+                              last = trueStatement;
+                            }
+
+                         ROSE_ASSERT(last != NULL);
+                       }
+
+                    ROSE_ASSERT(last != NULL);
+                  }
+
+               ROSE_ASSERT(last != NULL);
+             }
+            else
+             {
+            // returnList = getStatementList();
+               const SgStatementPtrList & statementList = getStatementList();
+               if (statementList.empty() == false)
+                    last = *(statementList.rbegin());
+             }
+        }
+#endif
+
+     return last;
    }
 
 SOURCE_SCOPE_STATEMENT_END
@@ -13401,10 +13525,15 @@ SgOmpThreadprivateStatement::get_mangled_name(void) const
      ROSE_ASSERT(scope != NULL);
 
      SgName variableNames;
-     SgInitializedNamePtrList::const_iterator p = get_variables().begin();
+     SgVarRefExpPtrList::const_iterator p = get_variables().begin();
      while ( p != get_variables().end() )
         {
-          variableNames += SgName("_variable_type_") + (*p)->get_type()->get_mangled() + SgName("_variable_name_") + (*p)->get_mangled_name();
+          ROSE_ASSERT ((*p)->get_symbol() != NULL);
+          SgVariableSymbol * sym = isSgVariableSymbol ((*p)->get_symbol());
+          ROSE_ASSERT (sym != NULL);
+          ROSE_ASSERT (sym->get_declaration() != NULL);
+          variableNames += SgName("_variable_type_") + (*p)->get_symbol()->get_type()->get_mangled() + 
+                        SgName("_variable_name_") + sym->get_declaration()->get_mangled_name();
 
           p++;
         }

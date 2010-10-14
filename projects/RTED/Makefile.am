@@ -7,7 +7,7 @@ EXTRA_DIST = index_array.txt \
 	     extract-actual-error.sed extract-expected-error.sed
 
 # Currently, we exclude 32bit and MacOS
-if !OS_VENDOR_REDHAT_32BIT
+#if !OS_VENDOR_REDHAT_32BIT
 if !OS_MACOSX
 
 # To keep compile commands tidy, please ONLY put required include flags here.
@@ -48,7 +48,7 @@ endif
 
 RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
 runtimeCheck_SOURCES = runtimeCheck.cpp \
-                       RtedTransformation.cpp \
+                       RtedTransformation.cpp ExecuteTransformations.cpp \
                        RtedSymbols.cpp RtedTransf_registerType.cpp \
                        RtedTransf_array.cpp RtedTransf_prolog.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \
@@ -855,4 +855,4 @@ endif
 
 
 endif
-endif
+#endif

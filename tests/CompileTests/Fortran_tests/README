@@ -3,3 +3,18 @@ Fortran Tests fail with certain libraries enabled.
 Libraries in question are:
     - boost iostream
     - libraries added when building with qt
+
+Laksono has sent email with three bugs in ROSE.
+Zung has provided ROSE bugs on my USB stick.
+Craig will send some ROSE bugs in a tarball via email (much later in the year)).
+
+Types will be changed to include a Fortran specific data member in 
+SgType to hold the kind parameter when it is specified (NULL is not).
+This data member will be a SgExpression*
+
+We will modify SgImpliedDo to have a SgScopeStatement* data member.
+This will store the "j=1" as a variable declaration with the scope to
+be one created and stored in the SgImpliedDo expression.  This is
+the first case of a scope being held by an expression.
+
+

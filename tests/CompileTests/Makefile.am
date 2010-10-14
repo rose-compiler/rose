@@ -38,7 +38,7 @@ SUBDIRS += OpenMP_tests
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += Fortran_tests
-
+   SUBDIRS += Java_tests 
 # DQ (8/4/2010): This test directory should not be included.
 # CAF_tests
 endif
