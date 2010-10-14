@@ -1,3 +1,14 @@
+/*AS FAILING because hudson can't open /dev/tty
+./syscall_tst.54
+specimen exited with status 0
+specimen exited with status 0
+audit_syscall_ioctl    1  TFAIL  :  ERROR: Cannot open tty device  /dev/tty
+
+audit_syscall_ioctl    2  TFAIL  :  ioctl for success test failed.
+make[4]: *** [check-syscall_tst.54] Error 1
+make[4]: *** Waiting for unfinished jobs....
+
+*/
 /*
  *   Copyright (c) International Business Machines  Corp., 2005,2006,2007
  *
