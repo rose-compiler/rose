@@ -12,12 +12,16 @@ SUBDIRS = SageIII
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += CxxFrontend
 endif
+
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += OpenFortranParser_SAGE_Connection
+   SUBDIRS += ECJ_ROSE_Connection
 endif
+
 # if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader
 # endif
+
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    SUBDIRS += PHPFrontend
 endif
