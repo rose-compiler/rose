@@ -285,7 +285,7 @@ public:
         for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
             writeFlag((X86Flag)i, 0);
         writeIP(0);
-        writeFlag(x86_flag_1, true_());
+        writeFlag((X86Flag)1, true_());
         writeGPR(x86_gpr_sp, 0xc0000000ul);
 
         memset(gdt, 0, sizeof gdt);
