@@ -21,13 +21,15 @@ extract_rose_required_ecj_source_files: JavaTraversal.class
 # buildJavaSupport: ${srcdir}/JavaTraversal.java
 # JavaTraversal.class:
 JavaTraversal.class: ${srcdir}/JavaTraversal.java
-	@echo "After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir"
+#	@echo "After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir"
 	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
 	@echo "copy the JavaTraversal.java from the srcdir to the build directory."
 	cp ${srcdir}/JavaTraversal.java JavaTraversal.java
 	@echo "Using the build directory's copy of ecjROSE.jar."
-	javac -cp ecjROSE.jar JavaTraversal.java
-	javah -jni JavaTraversal
+#	javac -cp ecjROSE.jar JavaTraversal.java
+	javac -cp ${srcdir}/ecjROSE.jar JavaTraversal.java
+#	$LD_LIBRARY_PATH=${srcdir} && javah -jni -cp JavaTraversal
+	javah -jni -classpath ${srcdir}/ecjROSE.jar JavaTraversal
 
 
 # These are the commands to generate the files we need (in the build tree).

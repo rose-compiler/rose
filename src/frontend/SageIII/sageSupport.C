@@ -5261,9 +5261,12 @@ global_build_classpath()
      string ecj_class_path_jarfile = "src/3rdPartyLibraries/java-parser/" + ecj_jar_file_name;
      classpath += findRoseSupportPathFromBuild(ecj_class_path_jarfile, string("lib/") + ecj_jar_file_name) + ":";
 
-  // Java (ECJ front-end) support (adding path)
+  // Java (ECJ front-end) support (adding path to source tree for the jar file).
+  // This allows us to avoid copying the jar file to the build tree which is 
+  // write protected in the execution of the "make distcheck" rule.
      string ecj_class_path = "src/3rdPartyLibraries/java-parser/";
-     classpath += findRoseSupportPathFromBuild(ecj_class_path, string("lib/") ) + ":";
+  // classpath += findRoseSupportPathFromBuild(ecj_class_path, string("lib/") ) + ":";
+     classpath += findRoseSupportPathFromSource(ecj_class_path, string("lib/") ) + ":";
 
   // Everything else?
      classpath += ".";
