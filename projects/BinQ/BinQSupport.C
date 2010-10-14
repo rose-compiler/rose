@@ -16,6 +16,7 @@
 //#include "disks.xpm"
 #include "folder.xpm"
 #include "BinQSupport.h"
+#include "stringify.h"
 
 #define EMACS
 
@@ -206,7 +207,7 @@ BinQSupport::evaluateMemoryExpression(SgAsmx86Instruction* destInst,
     //cerr << " print : " << regClass << endl;
     string val = "NULL";
     if (regClass>=0 && regClass <=10)
-      val = regclassToString(regClass);
+      val = stringifyX86RegisterClass(regClass, "x86_regclass_");
     rose_addr_t next_addr = destInst->get_address() + destInst->get_raw_bytes().size();
     if (val=="ip") {
       resolveAddr+=next_addr;
