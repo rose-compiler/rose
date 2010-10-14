@@ -78,7 +78,7 @@ extract_rose_required_ofp_source_files: get_jar_file
       echo "Error: OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
       exit 1; \
    fi;
-	${JAR} xf OpenFortranParser-${OFP_VERSION}.jar $(OFP_SOURCE_FILES)
+	jar xf OpenFortranParser-${OFP_VERSION}.jar $(OFP_SOURCE_FILES)
 	@list='$(OFP_SOURCE_FILES)'; for f in $$list; do \
 	   echo "building $$f file"; \
 	   filename=`basename $$f`; \
