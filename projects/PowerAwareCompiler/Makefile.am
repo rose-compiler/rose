@@ -21,7 +21,7 @@ testSimulator:
 	$(THRIFTY_SIMULATOR)/build/sesc.mem -h0x6000000 -c../sesc/confs/mem.conf ../sesc/tests/mcf ../sesc/tests/mcf.in
 
 
-check-local: testBufferOverflow_arrayIndexing
+check-local: 
 
 clean-local:
 	rm -f *.o rose_*.c
