@@ -229,7 +229,9 @@ BUILT_SOURCES = $(GENERATED_SOURCE) ompparser.cc ompparser.h omplexer.cc
 
 
 # DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support (in sageSupport.C).
+if ROSE_USE_OPEN_FORTRAN_PARSER
 sageSupport.C: extract_rose_required_ofp_source_files
+endif
 
 # DQ (10/9/2010): We are now trying to properly represent the dependences so avoid redundant
 # extraction of the OFP source files used within ROSE. Using token.c as a representative file.
