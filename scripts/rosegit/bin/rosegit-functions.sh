@@ -57,14 +57,15 @@ rosegit_filter_make_error () {
 }
 
 # Finds the top of a build tree by looking at the specified directory and all ancestors and returning the first one that is
-# either empty (a freshly created build tree) or which contains a config.status file (already configured build tree).
+# either empty (a freshly created build tree) or which contains eitehr a config.status or CMakeCache.txt file (already
+# configured build tree).
 rosegit_find_builddir () {
     local dir="$1"; [ -n "$dir" ] || dir=.
     [ -d "$dir" ] || rosegit die "not a directory: $dir"
     dir=$(cd $dir && pwd)
     origdir=$dir
     while [ "$dir" != "/" ]; do
-	if [ -f "$dir/config.status" -o -f "$dir/config.log" -o "$(echo $dir/*)" = "$dir/*" ]; then
+	if [ -f "$dir/config.status" -o -f "$dir/config.log" -o -f "$dir/CMakeCache.txt" -o "$(echo $dir/*)" = "$dir/*" ]; then
 	    echo $dir
 	    return 0
 	fi
