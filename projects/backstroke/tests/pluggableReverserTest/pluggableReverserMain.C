@@ -51,7 +51,7 @@ void addHandlers(EventProcessor& event_processor)
 
 void reverseEvents(SgProject* project)
 {
-	EventProcessor event_processor(NULL);
+	EventProcessor event_processor;
 	addHandlers(event_processor);
 
 	Backstroke::reverseEvents(&event_processor, isEvent, project);

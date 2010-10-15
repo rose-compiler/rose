@@ -91,6 +91,7 @@ ExpressionReversal StoreAndRestoreExpressionHandler::generateReverseAST(SgExpres
 
 vector<EvaluationResult> StoreAndRestoreExpressionHandler::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
 {
+	vector<EvaluationResult> results;
 	SgExpression* var_to_save = NULL;
 
 	if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
@@ -98,7 +99,9 @@ vector<EvaluationResult> StoreAndRestoreExpressionHandler::evaluate(SgExpression
 	else if (SageInterface::isAssignmentStatement(exp))
 		var_to_save = isSgBinaryOp(exp)->get_lhs_operand();
 
-	vector<EvaluationResult> results;
+	if (var_to_save == NULL)
+		return results;
+
 	if (VariableRenaming::getVarName(var_to_save) != VariableRenaming::emptyName)
 	{
 		// Update the variable version table.

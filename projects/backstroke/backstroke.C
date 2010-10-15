@@ -22,7 +22,8 @@ reverseEvents(EventProcessor* event_processor,
 	// Get the global scope.
 	SgGlobal* global = getFirstGlobalScope(project);
 
-	pushScopeStack(isSgScopeStatement(global));
+	//generateGraphOfAST(project,"graph");
+	//generateWholeGraphOfAST("graph");
 
 	// Get every function declaration and identify if it's an event function.
 	vector<SgFunctionDeclaration*> func_decls = BackstrokeUtility::querySubTree<SgFunctionDeclaration > (global);
@@ -36,24 +37,31 @@ reverseEvents(EventProcessor* event_processor,
 		}
 	}
 
+
 	VariableRenaming var_renaming(project);
 	var_renaming.run();
 
 	// Make sure a VariableRenaming object is set for out event processor.
 	event_processor->setVariableRenaming(&var_renaming);
 
+	pushScopeStack(isSgScopeStatement(global));
+	
 	map<SgFunctionDeclaration*, FuncDeclPairs> output;
+
+#if 1
 	foreach(SgFunctionDeclaration* decl, func_decls)
 	{
 		if (!is_event(decl))
 			continue;
 
 		timer t;
+
+		cout << decl->get_definition()->get_body()->get_statements().size() << endl;
 		// Here reverse the event function into several versions.
 		output[decl] = event_processor->processEvent(decl);
 
 		cout << "Time used: " << t.elapsed() << endl;
-		cout << "Event is processed successfully!\n";
+		cout << "Event \"" << get_name(decl) << "\" is processed successfully!\n";
 
 		reverse_foreach (const FuncDeclPair& func_decl_pair, output[decl])
 		{
@@ -66,7 +74,7 @@ reverseEvents(EventProcessor* event_processor,
 	// Declare all stack variables on top of the generated file.
 	foreach(SgVariableDeclaration* decl, event_processor->getAllStackDeclarations())
 	{
-		prependStatement(decl);
+		prependStatement(decl, global);
 	}
 
 	// Prepend includes to test files.
@@ -76,6 +84,7 @@ reverseEvents(EventProcessor* event_processor,
 
 	// Fix all variable references here.
 	fixVariableReferences(global);
+#endif
 
 	return output;
 }

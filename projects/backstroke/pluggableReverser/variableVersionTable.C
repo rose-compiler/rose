@@ -11,7 +11,7 @@ VariableVersionTable::VariableVersionTable(SgFunctionDeclaration* func_decl, Var
 {
 	SgFunctionDefinition* func_def = isSgFunctionDeclaration(func_decl->get_definingDeclaration())->get_definition();
 	VariableRenaming::NumNodeRenameTable num_node_table = var_renaming_->getReachingDefsAtFunctionEnd(func_def);
-
+	//cout << num_node_table.size() << endl;
 	foreach(VariableRenaming::NumNodeRenameTable::value_type name_to_num, num_node_table)
 	{
 		foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, name_to_num.second)
@@ -24,6 +24,7 @@ VariableVersionTable::VariableVersionTable(SgFunctionDeclaration* func_decl, Var
 			{
 				//cout << VariableRenaming::keyToString(name_to_num.first) << endl;
 				table_[name_to_num.first];
+				table_[name_to_num.first].insert(num_to_node.first);
 			}
 			else
 				table_[name_to_num.first].insert(num_to_node.first);

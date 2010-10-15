@@ -276,6 +276,9 @@ FuncDeclPairs EventProcessor::processEvent()
 	// Before processing, build a variable version table for the event function.
 	VariableVersionTable var_table(event_, var_renaming_);
 
+	//cout << "VVT:\n";
+	//var_table.print();
+
 	SgBasicBlock* body = isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
 	FuncDeclPairs outputs;
 

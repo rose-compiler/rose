@@ -6,12 +6,18 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS = testCodeBuilderTest
 testCodeBuilderTest_SOURCES = testCodeBuilderTestMain.C
 testCodeBuilderTest_LDADD =	$(top_builddir)/projects/backstroke/testCodeGeneration/libBackstrokeTestCodeBuilder.a \
+			$(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.a \
+			$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a \
+			$(top_builddir)/projects/backstroke/pluggableReverser/libBackstrokePluggableReverser.a \
 			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
+			$(top_builddir)/projects/backstroke/libBackstroke.a \
 			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = 
 
-CLEANFILES = 
+CLEANFILES =
+
+TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test -I/opt/local/include
 
 check-local:
 #@$(MAKE) $(TEST_Objects)
@@ -20,6 +26,6 @@ check-local:
 	@echo "*********************************************************************************************************"
 
 test: FORCE
-	./testCodeBuilderTest
+	./testCodeBuilderTest $(TESTCODE_INCLUDES)
 
 FORCE:

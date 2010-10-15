@@ -265,6 +265,9 @@ public:
 	//! Note this is a pure virtual function which needs to be overridden.
 	virtual void build() = 0;
 
+	std::vector<SgFunctionDeclaration*> getAllEvents() const
+	{ return events_; }
+
 	//! Get the declaration of the state class.
 	SgClassDeclaration* getStateClassDeclaration()
 	{ return state_builder_->getStateClassDeclaration(); }
