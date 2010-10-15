@@ -3,7 +3,7 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ddisc_union=union" )
 
 
 #include_directories( ${ROSE_INCLUDES} )
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} )
+include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src/util)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
@@ -72,6 +72,14 @@ SET_SOURCE_FILES_PROPERTIES(
      PROPERTIES GENERATED 1
      )
 
+# Tell cmake that these files are generated (see src/util/CMakeLists.txt).
+SET_SOURCE_FILES_PROPERTIES(
+     ${CMAKE_BINARY_DIR}/src/util/stringify.C
+     ${CMAKE_BINARY_DIR}/src/util/stringify.h
+     PROPERTIES GENERATED 1
+     )
+
+
 ####### SOURCE FILES IN ROSE
 
 set( STORAGECLASSES_SRC      
@@ -88,6 +96,7 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+      ${CMAKE_BINARY_DIR}/src/util/stringify.C
       ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
       ${CMAKE_SOURCE_DIR}/src/util/graphs/DGBaseGraphImpl.C
       ${CMAKE_SOURCE_DIR}/src/util/graphs/TransAnalysis.C
@@ -788,7 +797,7 @@ set(rose_LIB_SRCS ${rose_LIB_SRCS} ${AST_REWRITE_SRC})
 endif (NOT WIN32)
 
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
-add_dependencies(ROSE_DLL ROSETTA OMPPARSER ROSE_PREPROCESSOR edg33 libhpdf) 
+add_dependencies(ROSE_DLL ROSETTA OMPPARSER ROSE_PREPROCESSOR edg33 libhpdf generate_stringify) 
 
 # tps : independant Components : ROSE, libhpdf
 set(LINK_FILES

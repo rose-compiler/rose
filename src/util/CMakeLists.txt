@@ -6,10 +6,26 @@ add_subdirectory(commandlineProcessing)
 add_subdirectory(support)
 add_subdirectory(graphs)
 
+###############################################################################################################################
+# Generating stringify.C and stringify.h.  These two files contain definitions and prototypes for functions that convert
+# enum constants to strings.
+###############################################################################################################################
 
+add_custom_command(
+     OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/stringify.C ${CMAKE_CURRENT_BINARY_DIR}/stringify.h
+     COMMAND ${CMAKE_SOURCE_DIR}/scripts/stringify.pl --header --generic --output=${CMAKE_CURRENT_BINARY_DIR}/stringify.C ${CMAKE_SOURCE_DIR}/src
+     # This should also depend on all the header files that contain enums, but I'm not sure how to do that.
+     DEPENDS ${CMAKE_SOURCE_DIR}/scripts/stringify.pl
+     )
+add_custom_target(
+     generate_stringify
+     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stringify.C ${CMAKE_CURRENT_BINARY_DIR}/stringify.h
+     )
 
+###############################################################################################################################
 #Generating "rose_paths.C"
 #We may want to generate it in a different way in the future
+###############################################################################################################################
 file( REMOVE ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C )
 file( WRITE  ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C "\#include <string> \n\n" )
 #file( APPEND ${ROSE_TOP_BINARY_DIR}/test.txt we have ${CMAKE_Fortran_COMPILER} )
