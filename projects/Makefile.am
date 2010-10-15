@@ -38,7 +38,8 @@ SUBDIRS = \
      programModeling \
      roseToLLVM \
      symbolicAnalysisFramework \
-     taintcheck 
+     taintcheck \
+     PowerAwareCompiler
 
 # DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
 # DQ (7/21/2010): Removed simulator since it is a problem to compile with ROSE (projects/simulator/emulator.C).
