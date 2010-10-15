@@ -76,6 +76,8 @@ enforce_policies:
 # (because it has the file: config/Makefile.for.ROSE.includes.and.libs)
 # EXTRA_DIST = stamp-h.in stamp-h1.in GNU_HEADERS config
 # EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
+# EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
+#              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 
@@ -105,7 +107,11 @@ uninstall-local:
 distclean-local:
 	-rm -rf $(top_builddir)/include-staging/
 
-nodist_include_HEADERS = rose_config.h
+# DQ (10/14/2010): We want to make sure that this does not go out to the install tree
+# it also should not be in the distribution (since we want rose_config.h.in to be put 
+# into the distribution instead; from which then rose_config.h is generated).
+# nodist_include_HEADERS = rose_config.h
+noinst_HEADERS = rose_config.h
 
 # DQ (4/5/2009): This rule is not called when compiling this directory, it is only
 # called when compiling the /src/util directory (perhaps it should be located in 
@@ -272,6 +278,50 @@ CheckinCounts:
 	@echo "*****************************************************"
 	cd $(top_srcdir); git shortlog -s -n
 	@echo "*****************************************************"
+
+
+FindFileRequiringRoseConfigHeader:
+#	grep "#define" rose_config.h | cut --delimiter=" " -f 2 
+#	@list=`grep \"\#define\" rose_config.h | cut --delimiter=" " -f 2`; for f in $$list; do 
+#	list=`ls -l | cut --delimiter=" " -f 2`; for f in $$list; do
+	list=`grep \#define rose_config.h | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/src/* | grep "\.C:" | cut --delimiter=":" -f 1; \
+   done
+
+FindFileRequiringRoseConfigHeaderLong:
+	list=`grep \#define rose_config.h | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/src/* | grep "\.h:"; \
+   done
+
+XXXFindFileRequiringRoseConfigHeader:
+#	grep "#define" rose_config.h | cut --delimiter=" " -f 2 
+	@list='grep \"#define\" rose_config.h | cut --delimiter=\" \" -f 2'; for f in $$list; do \
+	   echo "Searching for $$f macro"; \
+	   filename=`basename $$f`; \
+      echo "filename = $$filename"; \
+      if test -e $$f; then \
+         echo "Using OFP source file $$f from version $(OFP_VERSION) found in OpenFortranParser-${OFP_VERSION}.jar file."; \
+         cp $$f $$filename; \
+      else \
+         echo "Warning: $$f is not found in jar file."; \
+         if test "x$(OFP_VERSION)" = "x0.8.1"; then \
+            echo "Using OFP source file $$f from version $(OFP_VERSION) distributed with ROSE."; \
+            if test -e $$filename; then \
+               echo "Note: OFP source file $$filename is already present."; \
+            else \
+               echo "Copying OFP source file $$filename from source tree to build tree."; \
+               cp ${srcdir}/$$filename $$filename; \
+            fi; \
+         else \
+            echo "Error: can't use default (version 0.8.1) OFP source file $filename_without_path with OpenFortranParser-${OFP_VERSION}.jar file."; \
+            exit 1; \
+         fi; \
+      fi; \
+   done
 
 # DQ (2/12/2010): Report the areas of ROSE where we have skipped some tests of ROSE 
 # either doing analysis, code generation, or translation of the ROSE source code.
