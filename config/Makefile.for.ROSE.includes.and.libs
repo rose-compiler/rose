@@ -207,6 +207,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/frontend/SageIII/astHiddenTypeAndDeclarationLists \
      -I$(top_builddir)/src/frontend/SageIII/astFileIO \
      -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
+     -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
      -I$(top_srcdir)/src/frontend/PHPFrontend \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
      -I$(top_srcdir)/src/frontend/BinaryFormats \

@@ -483,6 +483,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   bool is_UPC_dynamic_threads();
   bool is_C99_language ();
   bool is_Cxx_language ();
+  bool is_Java_language ();
   bool is_Fortran_language ();
   bool is_CAF_language ();
   bool is_PHP_language();
