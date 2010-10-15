@@ -18,7 +18,7 @@
  ****************************************************/
 static std::string unparsePowerpcRegister(const RegisterDescriptor &rdesc)
 {
-    const RegisterDictionary *rdict = RegisterDictionary::powerpc();
+    const RegisterDictionary *rdict = RegisterDictionary::dictionary_powerpc();
     std::string name = rdict->lookup(rdesc);
     if (name.empty()) {
         std::cerr <<"unparsePowerpcRegister(" <<rdesc <<"): register descriptor not found in dictionary.\n";

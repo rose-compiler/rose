@@ -27,16 +27,16 @@ public:
     typedef std::map<std::string/*name*/, RegisterDescriptor> Entries;
 
     /* Functions that return a dictionary for a particular machine architecute. (See implementation for documentation.) */
-    static const RegisterDictionary *i8086();
-    static const RegisterDictionary *i8088();
-    static const RegisterDictionary *i286();
-    static const RegisterDictionary *i386();
-    static const RegisterDictionary *i486();
-    static const RegisterDictionary *pentium();
-    static const RegisterDictionary *pentium4();
-    static const RegisterDictionary *amd64();
-    static const RegisterDictionary *arm7();
-    static const RegisterDictionary *powerpc();
+    static const RegisterDictionary *dictionary_i8086();
+    static const RegisterDictionary *dictionary_i8088();
+    static const RegisterDictionary *dictionary_i286();
+    static const RegisterDictionary *dictionary_i386();
+    static const RegisterDictionary *dictionary_i486();
+    static const RegisterDictionary *dictionary_pentium();
+    static const RegisterDictionary *dictionary_pentium4();
+    static const RegisterDictionary *dictionary_amd64();
+    static const RegisterDictionary *dictionary_arm7();
+    static const RegisterDictionary *dictionary_powerpc();
 
     RegisterDictionary(const std::string &name)
         :name(name) {}

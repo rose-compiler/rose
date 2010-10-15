@@ -4,7 +4,7 @@
 int
 main()
 {
-    const RegisterDictionary *dict = RegisterDictionary::powerpc();
+    const RegisterDictionary *dict = RegisterDictionary::dictionary_powerpc();
     ROSE_ASSERT(dict!=NULL);
     // std::cout <<*dict;
 

@@ -126,7 +126,7 @@ RegisterDictionary::print(std::ostream &o) const {
  *  indexing. The FLAGS register contains flags such as carry flag, overflow flag and zero flag. Finally, the instruction
  *  pointer (IP) points to the next instruction that will be fetched from memory and then executed. */
 const RegisterDictionary *
-RegisterDictionary::i8086() {
+RegisterDictionary::dictionary_i8086() {
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("i8086");
@@ -191,12 +191,12 @@ RegisterDictionary::i8086() {
  *
  *  Intel 8088 has the same set of registers as Intel 8086. */
 const RegisterDictionary *
-RegisterDictionary::i8088()
+RegisterDictionary::dictionary_i8088()
 {
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("i8088");
-        regs->insert(i8086());
+        regs->insert(dictionary_i8086());
     }
     return regs;
 }
@@ -205,12 +205,12 @@ RegisterDictionary::i8088()
  *
  *  The 80286 has the same registers as the 8086 but adds two new flags to the "flags" register. */
 const RegisterDictionary *
-RegisterDictionary::i286()
+RegisterDictionary::dictionary_i286()
 {
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("i286");
-        regs->insert(i8086());
+        regs->insert(dictionary_i8086());
         regs->insert("iopl", x86_regclass_flags, 0, 12, 2);             /*  I/O privilege level flag */
         regs->insert("nt",   x86_regclass_flags, 0, 14, 1);             /*  nested task system flag */
     }
@@ -224,12 +224,12 @@ RegisterDictionary::i286()
  *  the full 32 bits are accessed by names prefixed with "e" as in "eax" (the "e" means "extended"). Two new segment registers
  *  (FS and GS) were added and all segment registers remain 16 bits. */
 const RegisterDictionary *
-RegisterDictionary::i386()
+RegisterDictionary::dictionary_i386()
 {
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("i386");
-        regs->insert(i286());
+        regs->insert(dictionary_i286());
 
         /* Additional 32-bit registers */
         regs->insert("eax", x86_regclass_gpr, x86_gpr_ax, 0, 32);
@@ -275,12 +275,12 @@ RegisterDictionary::i386()
  *  The 80486 has the same registers as the 80386 but adds a new flag to the "eflags" register and adds floating-point registers
  *  previously in the 8087, 80287, and 80387 math coprocessors. */
 const RegisterDictionary *
-RegisterDictionary::i486()
+RegisterDictionary::dictionary_i486()
 {
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("i486");
-        regs->insert(i386());
+        regs->insert(dictionary_i386());
 
         /* Additional flags */
         regs->insert("ac", x86_regclass_flags, 0, 18, 1);               /* alignment check system flag */
@@ -305,12 +305,12 @@ RegisterDictionary::i486()
  *
  *  The Pentium has the same registers as the 80486 but adds a few flags to the "eflags" register and MMX registers. */
 const RegisterDictionary *
-RegisterDictionary::pentium()
+RegisterDictionary::dictionary_pentium()
 {
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("pentium");
-        regs->insert(i486());
+        regs->insert(dictionary_i486());
 
         /* Additional flags */
         regs->insert("vif", x86_regclass_flags, 0, 19, 1);              /* virtual interrupt flag */
@@ -338,12 +338,12 @@ RegisterDictionary::pentium()
  *  The Pentium 4 has the same register set as the Pentium but adds the MMX0 through MMX7 registers for the SSE instruction
  *  set. */
 const RegisterDictionary *
-RegisterDictionary::pentium4()
+RegisterDictionary::dictionary_pentium4()
 {
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("pentium4");
-        regs->insert(pentium());
+        regs->insert(dictionary_pentium());
         regs->insert("mmx0", x86_regclass_xmm, 0, 0, 128);
         regs->insert("mmx1", x86_regclass_xmm, 1, 0, 128);
         regs->insert("mmx2", x86_regclass_xmm, 2, 0, 128);
@@ -368,12 +368,12 @@ RegisterDictionary::pentium4()
  *  The only registers that are not retained are the control registers cr0-cr4, which are replaced by 64-bit registers of the
  *  same name, and debug registers dr0-dr7, which are also replaced by 64-bit registers of the same name. */
 const RegisterDictionary *
-RegisterDictionary::amd64()
+RegisterDictionary::dictionary_amd64()
 {
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("amd64");
-        regs->insert(pentium4());
+        regs->insert(dictionary_pentium4());
 
         /* Additional 64-bit (and hi-end 32-bit) registers */
         regs->insert("rax", x86_regclass_gpr, x86_gpr_ax, 0, 64);
@@ -431,7 +431,7 @@ RegisterDictionary::amd64()
  * The major number of a RegisterDescriptor is used to indicate the type of register: 0=general purpose, 1=status. The minor
  * number indicates the register number: 0-15 for general purpose, 0 or 1 for status. */
 const RegisterDictionary *
-RegisterDictionary::arm7() {
+RegisterDictionary::dictionary_arm7() {
     /* Documentation of the Nintendo GameBoy Advance is pretty decent. It's located here:
      * http:// nocash.emubase.de/gbatek.htm */
     static RegisterDictionary *regs = NULL;
@@ -474,7 +474,7 @@ RegisterDictionary::arm7() {
 
 /** PowerPC registers. */
 const RegisterDictionary *
-RegisterDictionary::powerpc()
+RegisterDictionary::dictionary_powerpc()
 {
     static RegisterDictionary *regs = NULL;
     if (!regs) {

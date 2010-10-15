@@ -18,7 +18,7 @@ using namespace std;
 void RoseBin_buildTree::resolveRegisterX86(string symbol,
                                            RegisterDescriptor *registerSg)
 {
-    const RegisterDictionary *rdict = RegisterDictionary::amd64();
+    const RegisterDictionary *rdict = RegisterDictionary::dictionary_amd64();
 
     /* Symbol is upper case. Dictionary stores register names in lower case. */
     for (string::size_type i=0; i<symbol.size(); i++)
@@ -37,7 +37,7 @@ void RoseBin_buildTree::resolveRegisterArm(string symbol,
                                            RegisterDescriptor *registerSg) {
 
   // ARM architecture
-  const RegisterDictionary *rdict = RegisterDictionary::arm7();
+  const RegisterDictionary *rdict = RegisterDictionary::dictionary_arm7();
 
   /* Symbol is upper case. Dictionary stores register names in lower case. */
   for (string::size_type i=0; i<symbol.size(); i++)

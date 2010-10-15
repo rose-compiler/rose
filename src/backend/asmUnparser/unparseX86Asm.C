@@ -23,7 +23,7 @@ std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
  *  We use the amd64 architecture because, since it's backward compatible with the 8086, it contains definitions for all the
  *  registers from older architectures. */
 std::string unparseX86Register(const RegisterDescriptor &reg) {
-    const RegisterDictionary *dict = RegisterDictionary::amd64();
+    const RegisterDictionary *dict = RegisterDictionary::dictionary_amd64();
     std::string name = dict->lookup(reg);
     if (name.empty()) {
         std::cerr <<"unparseX86Register(" <<reg <<"): register descriptor not found in dictionary.\n";

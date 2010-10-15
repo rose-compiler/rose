@@ -134,7 +134,7 @@ DisassemblerPowerpc::init()
     set_wordsize(4);
     set_alignment(4);
     set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
-    set_registers(RegisterDictionary::powerpc());
+    set_registers(RegisterDictionary::dictionary_powerpc());
 }
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space. */

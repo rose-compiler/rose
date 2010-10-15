@@ -5,7 +5,7 @@
 
 static std::string unparseArmRegister(SgAsmArmRegisterReferenceExpression *reg) {
     const RegisterDescriptor &rdesc = reg->get_descriptor();
-    const RegisterDictionary *dict = RegisterDictionary::arm7();
+    const RegisterDictionary *dict = RegisterDictionary::dictionary_arm7();
     
     std::string name = dict->lookup(rdesc);
     if (name.empty()) {
