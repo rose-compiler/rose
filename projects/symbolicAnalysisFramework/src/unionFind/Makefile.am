@@ -22,7 +22,7 @@ selfTest_LDADD = \
 selfTest_LDADD += $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 check-local:selfTest
-	./selfTest $(srcdir)/test_example.c
+#	./selfTest $(srcdir)/test_example.c
 
 EXTRA_DIST =  test_example.c
 clean-local:
