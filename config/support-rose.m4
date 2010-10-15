@@ -2433,6 +2433,7 @@ projects/symbolicAnalysisFramework/src/Makefile
 projects/symbolicAnalysisFramework/tests/Makefile
 projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
+projects/PowerAwareCompiler/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile

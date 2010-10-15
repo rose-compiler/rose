@@ -280,48 +280,26 @@ CheckinCounts:
 	@echo "*****************************************************"
 
 
-FindFileRequiringRoseConfigHeader:
+# This rule is useful for identifing source files where "rose_config.h" should be included.
+FindFileRequiringRoseConfigHeaderShort:
 #	grep "#define" rose_config.h | cut --delimiter=" " -f 2 
 #	@list=`grep \"\#define\" rose_config.h | cut --delimiter=" " -f 2`; for f in $$list; do 
 #	list=`ls -l | cut --delimiter=" " -f 2`; for f in $$list; do
 	list=`grep \#define rose_config.h | cut --delimiter=" " -f 2`; \
    for f in $$list; do \
         echo "Searching for -->$$f<-- macro"; \
-        grep -r $$f $(top_srcdir)/src/* | grep "\.C:" | cut --delimiter=":" -f 1; \
+        grep -r $$f $(top_srcdir)/projects/* | grep "\.C:" | cut --delimiter=":" -f 1; \
    done
 
+# This rule is useful for identifing header files where "rose_config.h" is required and 
+# thus should be fixed to not require this file.
 FindFileRequiringRoseConfigHeaderLong:
 	list=`grep \#define rose_config.h | cut --delimiter=" " -f 2`; \
    for f in $$list; do \
         echo "Searching for -->$$f<-- macro"; \
-        grep -r $$f $(top_srcdir)/src/* | grep "\.h:"; \
+        grep -r $$f $(top_srcdir)/projects/* | grep "\.h:"; \
    done
 
-XXXFindFileRequiringRoseConfigHeader:
-#	grep "#define" rose_config.h | cut --delimiter=" " -f 2 
-	@list='grep \"#define\" rose_config.h | cut --delimiter=\" \" -f 2'; for f in $$list; do \
-	   echo "Searching for $$f macro"; \
-	   filename=`basename $$f`; \
-      echo "filename = $$filename"; \
-      if test -e $$f; then \
-         echo "Using OFP source file $$f from version $(OFP_VERSION) found in OpenFortranParser-${OFP_VERSION}.jar file."; \
-         cp $$f $$filename; \
-      else \
-         echo "Warning: $$f is not found in jar file."; \
-         if test "x$(OFP_VERSION)" = "x0.8.1"; then \
-            echo "Using OFP source file $$f from version $(OFP_VERSION) distributed with ROSE."; \
-            if test -e $$filename; then \
-               echo "Note: OFP source file $$filename is already present."; \
-            else \
-               echo "Copying OFP source file $$filename from source tree to build tree."; \
-               cp ${srcdir}/$$filename $$filename; \
-            fi; \
-         else \
-            echo "Error: can't use default (version 0.8.1) OFP source file $filename_without_path with OpenFortranParser-${OFP_VERSION}.jar file."; \
-            exit 1; \
-         fi; \
-      fi; \
-   done
 
 # DQ (2/12/2010): Report the areas of ROSE where we have skipped some tests of ROSE 
 # either doing analysis, code generation, or translation of the ROSE source code.
