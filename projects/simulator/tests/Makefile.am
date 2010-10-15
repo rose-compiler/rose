@@ -78,10 +78,10 @@ syscall_tst_fail:
 failing_tests: test_file_permission syscall_tst_fail  $(foreach file,$(SYSCALL_FILES_FAIL_CHK), $(addprefix check-,$(basename $(notdir $(file)))))
 
 
-#check-local: $(foreach file,$(SYSCALL_FILES_CHK), $(addprefix check-,$(basename $(notdir $(file)))))
-check-local: 
-	echo "I have to temporarily turn this check off since it has been merged into master without passing tests, Liao 9/30/2010"
-	echo "Please restore the tests once the bugs are fixed. "
+check-local: $(foreach file,$(SYSCALL_FILES_CHK), $(addprefix check-,$(basename $(notdir $(file)))))
+#check-local: 
+#	echo "I have to temporarily turn this check off since it has been merged into master without passing tests, Liao 9/30/2010"
+#	echo "Please restore the tests once the bugs are fixed. "
 
 EXTRA_DIST = $(TST_FILES_LINKING) compiler.h  rmobj.h  test.h  usctest.h parse_opts.c tst_res.c tst_sig.c tst_tmpdir.c rmobj.c 
 
