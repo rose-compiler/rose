@@ -236,9 +236,11 @@ endif
 # DQ (10/9/2010): We are now trying to properly represent the dependences so avoid redundant
 # extraction of the OFP source files used within ROSE. Using token.c as a representative file.
 extract_rose_required_ofp_source_files:
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) extract_rose_required_ofp_source_files
+#	endif
+#	if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
-#	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) token.c
 endif
 
 
