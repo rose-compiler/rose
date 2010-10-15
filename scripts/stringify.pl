@@ -3,6 +3,12 @@ my $help = <<EOF;
 Scans C++ source file(s) for "enum" definitions and generates
 functions that convert enums to strings.
 
+The input arguments are either C/C++ source file names (with an
+appropriate file name extension) or directories. A directory causes a
+recursive search for C/C++ source files under that directory.  If no
+source arguments are specified then the current working directory
+is assumed.
+
 When invoked with "--output=FILE" the generated definitions will be
 sent to FILE along with all necessary boilerplate. Without this
 switch, declarations or definitions (depending on whether the --header
@@ -27,7 +33,10 @@ is inserted to improve readability. For instance, the stringifier for
 "Disassembler::Heuristic" is "stringifyDisassemblerHeuristic".
 EOF
 
+BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 use strict;
+use policies::FileLister;
+use Cwd qw/getcwd abs_path/;
 my %enum;			# key is enum name; values are a hash mapping value to name
 my %enum_loc;			# key is enum name; value is "file:linenumber"
 my @name_stack;
@@ -36,7 +45,7 @@ sub usage {
   my($arg0) = $0 =~ /([^\/]+)$/;
   return "usage: $arg0 \\
     [--generic] [--header] [--output=FILE] \\
-    [--] SOURCE_FILES...\n";
+    [--] SOURCES...\n";
 }
 
 # Useful function for printing debugging info.
@@ -52,6 +61,7 @@ sub make_lexer {
   open SOURCE, "<", $source_file or die "$source_file: $!\n";
   my $s = join "", <SOURCE>;
   my $linenum = 1;
+  my @cpp = (1); # stack of CPP directives; 1=>source code included; 0=>source code excluded; undef=>unknown
   close SOURCE;
   return sub {
     if (@_) {
@@ -60,21 +70,102 @@ sub make_lexer {
       exit 1 if $_[0] eq 'fatal';
       return;
     }
+
     while (1) {
+      # White space: skip over it
       $s =~ /\G$/cgs and return undef;
       $s =~ /\G[ \t]+/cg and next;	# skip over white space
       $s =~ /\G\n/cg and do {$linenum++; next};
+
+      # Comments: skip over them
       $s =~ /\G\/\/.*?(\n|$)/cgs and do {$linenum++; next}; # skip over C++ comments
       $s =~ /\G(\/\*.*?(\*\/|$))/cgs and do {local $_=$1; $linenum+=tr/\n/\n/; next}; # skip over C comment
-      $s =~ /\G(#\s*(include|define|undef|if(def)?|elif|else|endif)(.*?\\\n)*(.*?)\n)/cg and
-	do {local $_=$1; $linenum+=tr/\n/\n/; next}; # skip CPP directives
-      $s =~ /\G("(\\[0-7]{1,3}|\\.|[^"\\])*")/cgs and
-	do {local $_=$1; $linenum+=tr/\n/\n/; return $1};
-      $s =~ /\G('(\\[0-7]{1,3}|\\.|[^'\\])*')/cgs and return $1;
-      $s =~ /\G([a-z_A-Z]\w+)/cg and return $1;
-      $s =~ /\G([-+]?(0x[\da-fA-F]+|0[0-7]+|0|\d+))/cg and return $1; # integers
-      $s =~ /\G(::)/cg and return $1; # so as not to be confused with ':'
-      $s =~ /\G(.)/cgs and return $1;
+
+      # CPP directives: track nesting level and whether source is known to be included or excluded. Other than noting
+      # its presence, skip over it.  Watch out for directives that are continued across multiple lines.
+      $s =~ /\G(#\s*if(n?def)?\s*(\S+)(.*?\\\n)*(.*?)\n)/cg and do {
+	local $_ = $1;
+	my $expr = $3;
+	#print STDERR "$source_file:$linenum: ROBB if $expr (", join(" ", map {defined($_)?$_:"undef"} @cpp), ")\n";
+	$linenum += tr/\n/\n/;
+	if ($expr eq "0") {
+	  push @cpp, 0;
+	} elsif ($expr eq "1") {
+	  push @cpp, 1;
+	} else {
+	  push @cpp, undef;
+	}
+	next;
+      };
+      $s =~ /\G(#\s*elif\s*(\S+)(.*?\\\n)*(.*?)\n)/cg and do {
+	local $_ = $1;
+	my $expr = $2;
+	#print STDERR "$source_file:$linenum: ROBB elif $expr (", join(" ", map {defined($_)?$_:"undef"} @cpp), ")\n";
+	print STDERR "$source_file:$linenum: warning: unbalanced CPP directive\n" unless @cpp>1;
+	$linenum += tr/\n/\n/;
+	if ($expr eq "0") {
+	  $cpp[-1] = 0;
+	} elsif ($expr eq "1") {
+	  $cpp[-1] = 1 if defined($cpp[-1]) && 0==$cpp[-1];
+	} else {
+	  $cpp[-1] = undef;
+	}
+	next;
+      };
+      $s =~ /\G(#\s*else(.*?\\\n)*(.*?)\n)/cg and do {
+	local $_ = $1;
+	#print STDERR "$source_file:$linenum: ROBB else (", join(" ", map {defined($_)?$_:"undef"} @cpp), ")\n";
+	print STDERR "$source_file:$linenum: warning: unbalanced CPP directive\n" unless @cpp>1;
+	$linenum += tr/\n/\n/;
+	$cpp[-1] = !$cpp[-1] if defined $cpp[-1];
+	next;
+      };
+      $s =~ /\G(#\s*endif(.*?\\\n)*(.*?)\n)/cg and do {
+	local $_ = $1;
+	#print STDERR "$source_file:$linenum: ROBB endif (", join(" ", map {defined($_)?$_:"undef"} @cpp), ")\n";
+	print STDERR "$source_file:$linenum: warning: unbalanced CPP directive\n" unless @cpp>1;
+	$linenum += tr/\n/\n/;
+	pop @cpp;
+	next;
+      };
+      $s =~ /\G(#\s*(include|define|undef)(.*?\\\n)*(.*?)\n)/cg and do {
+	local $_ = $1;
+	$linenum += tr/\n/\n/;
+	next;
+      };
+
+      # String and character literals: return them, but make sure to handle backslash escapes.
+      $s =~ /\G("(\\[0-7]{1,3}|\\.|[^"\\])*")/cgs and do {
+	local $_ = $1;
+	$linenum += tr/\n/\n/;
+	return $1 unless defined($cpp[-1]) && !$cpp[-1];
+      };
+      $s =~ /\G('(\\[0-7]{1,3}|\\.|[^'\\])*')/cgs and do {
+	next if defined($cpp[-1]) && !$cpp[-1];
+	return $1;
+      };
+
+      # Symbols and numbers.
+      $s =~ /\G([a-z_A-Z]\w+)/cg and do {
+	next if defined($cpp[-1]) && !$cpp[-1];
+	return $1;
+      };
+      $s =~ /\G([-+]?(0x[\da-fA-F]+|0[0-7]+|0|\d+))/cg and do {
+	next if defined($cpp[-1]) && !$cpp[-1];
+	return $1;
+      };
+
+      # Misc multi-character tokens.
+      $s =~ /\G(::)/cg and do {
+	next if defined($cpp[-1]) && !$cpp[-1];
+	return $1;
+      };
+
+      # Default
+      $s =~ /\G(.)/cgs and do {
+	next if defined($cpp[-1]) && !$cpp[-1];
+	return $1;
+      };
     }
   }
 }
@@ -164,11 +255,13 @@ sub parse_enum {
     } else {
       $member_value = $next_value;
     }
-    if (exists $enum{$enum_name}{$member_value}) {
-      &$lexer("warning", "enum member \"$member_name\" duplicates \"$enum{$enum_name}{$member_value}\" and will be ignored.");
+    if (defined $member_value) {
+      if (exists $enum{$enum_name}{$member_value}) {
+	&$lexer("warning", "enum member \"$member_name\" duplicates \"$enum{$enum_name}{$member_value}\" and will be ignored.");
+      }
+      $enum{$enum_name}{$member_value} = $member_name;
+      $forward{$member_name} = $member_value;
     }
-    $enum{$enum_name}{$member_value} = $member_name;
-    $forward{$member_name} = $member_value;
     last if $token eq '}';
     &$lexer("expected ',' but got '$token'") unless $token eq ',';
     $next_value = $member_value+1;
@@ -178,6 +271,7 @@ sub parse_enum {
 # Emit forward declarations
 sub output_decl {
   my($generic,$output_name) = @_;
+  local(*OUTPUT);
   if ($output_name) {
     open OUTPUT, ">", $output_name or die "$output_name: $!\n";
     print OUTPUT "// DO NOT EDIT -- This file was generated by $0.\n\n";
@@ -188,7 +282,7 @@ sub output_decl {
     print OUTPUT "#define $const\n\n";
     print OUTPUT "#include <string>\n\n";
   } else {
-    local(*OUTPUT) = *STDOUT;
+    *OUTPUT = *STDOUT;
     print OUTPUT "// DO NOT EDIT -- These declarations were automatically generated by $0.\n" if keys %enum;
   }
   for my $name (sort {$a cmp $b} keys %enum) {
@@ -201,9 +295,22 @@ sub output_decl {
   }
 }
 
+sub shorten_file_name {
+  my($file,$line) = split /:/, $_[0];
+  my(@cwd) = split /\//, getcwd();
+  my(@file) = split /\//, abs_path($file);
+  while (@cwd && $cwd[0] eq $file[0]) {
+    shift @cwd;
+    shift @file;
+  }
+  die unless @file;
+  return join ":", join("/", @file), $line;
+}
+
 # Emit definitions
 sub output_defn {
   my($generic,$output_name) = @_;
+  local(*OUTPUT);
   if ($output_name) {
     open OUTPUT, ">", $output_name or die "$output_name: $!\n";
     print OUTPUT "// DO NOT EDIT -- This file was generated by $0.\n\n";
@@ -213,7 +320,7 @@ sub output_defn {
     print OUTPUT "#include <cassert>\n";
     print OUTPUT "#include <cstring>\n";
   } else {
-    local(*OUTPUT) = *STDOUT;
+    *OUTPUT = *STDOUT;
   }
 
   for my $name (sort {$a cmp $b} keys %enum) {
@@ -221,6 +328,7 @@ sub output_defn {
     print OUTPUT <<"EOF";
 
 // DO NOT EDIT -- This function was automatically generated by $0.
+// $name is defined at @{[shorten_file_name($enum_loc{$name})]}
 /** Converts an enum of type $name to a string.
  *
  *  If the supplied value is not a member of the enumeration type then the returned string will look like a C type cast but
@@ -287,8 +395,10 @@ if ($defn_output) {
 }
 
 # Scan C++ files to generate %enum hash
-for my $source_file (@ARGV) {
-  my($lexer) = make_lexer $source_file;
+my $files = FileLister->new(@ARGV);
+while (my $filename = $files->next_file) {
+  next unless $filename =~ /\.(h|hh|c|cpp|C)$/;
+  my($lexer) = make_lexer $filename;
   my($token);
   while (defined($token=&$lexer())) {
     debug $lexer, "token [$token]";
