@@ -64,6 +64,12 @@ enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
 typedef modify_ldt_ldt_s user_desc;
 #endif
 
+static const int PROGRESS_INTERVAL = 10; /* seconds */
+static int had_alarm = 0;
+static void alarm_handler(int) {
+    had_alarm = 1;
+}
+
 static int
 print_user_desc(FILE *f, const uint8_t *_ud, size_t sz)
 {
@@ -265,12 +271,13 @@ public:
     bool trace_mmap;                            /* Show changes in the memory map */
     bool trace_syscall;                         /* Show each system call */
     bool trace_loader;                          /* Show diagnostics for the program loading */
+    bool trace_progress;			/* Show progress now and then */
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
           vdso_va(0), vdso_entry(0), core_styles(CORE_ELF), core_base_name("x-core.rose"),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
-          trace_loader(false) {
+          trace_loader(false), trace_progress(false) {
 
         vdso_name = "x86vdso";
         vdso_paths.push_back(".");
@@ -3561,6 +3568,7 @@ main(int argc, char *argv[])
                     policy.trace_mmap = true;
                     policy.trace_syscall = true;
                     policy.trace_loader = true;
+                    policy.trace_progress = true;
                 } else if (word=="insn") {
                     policy.trace_insn = true;
                 } else if (word=="state") {
@@ -3573,6 +3581,8 @@ main(int argc, char *argv[])
                     policy.trace_syscall = true;
                 } else if (word=="loader") {
                     policy.trace_loader = true;
+                } else if (word=="progress") {
+                    policy.trace_progress = true;
                 } else {
                     fprintf(stderr, "%s: debug words must be from the set: insn, state, mem, mmap, syscall\n", argv[0]);
                     exit(1);
@@ -3628,10 +3638,32 @@ main(int argc, char *argv[])
         fprintf(policy.debug, "Initial state:\n");
         policy.dump_registers(policy.debug);
     }
+    if (policy.debug && policy.trace_progress) {
+        struct sigaction sa;
+        sa.sa_handler = alarm_handler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = SA_RESTART;
+        sigaction(SIGALRM, &sa, NULL);
+        alarm(PROGRESS_INTERVAL);
+    }
 
     /* Execute the program */
+    struct timeval sim_start_time;
+    gettimeofday(&sim_start_time, NULL);
     bool seen_entry_va = false;
     while (true) {
+        if (had_alarm) {
+            had_alarm = 0;
+            alarm(PROGRESS_INTERVAL);
+            if (policy.debug && policy.trace_progress) {
+                struct timeval cur_time;
+                gettimeofday(&cur_time, NULL);
+                double nsec = cur_time.tv_sec + cur_time.tv_usec/1e6 - (sim_start_time.tv_sec + sim_start_time.tv_usec/1e6);
+                double insn_rate = nsec>0 ? policy.get_ninsns() / nsec : 0;
+                fprintf(policy.debug, "x86sim: processed %zu insns in %d sec (%d insns/sec)\n",
+                        policy.get_ninsns(), (int)(nsec+0.5), (int)(insn_rate+0.5));
+            }
+        }
         try {
             if (dump_at!=0 && dump_at == policy.readIP().known_value()) {
                 fprintf(stderr, "Reached dump point.\n");
