@@ -4,8 +4,8 @@
  * a regular file. Then it is used to generate the rose_config.h file in the
  * cmake build tree.
  * If new macros are defined they should be defined using either 
- * #define or #cmakedefine.  #define macros will always be defined
- * however they are set in this file, while #cmakedefine will be
+ * define or cmakedefine.  define macros will always be defined
+ * however they are set in this file, while cmakedefine will be
  * set or left unset based on the cmake configurations step
  * (running cmake before running make within the build process).
  */
