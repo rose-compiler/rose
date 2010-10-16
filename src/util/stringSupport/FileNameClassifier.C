@@ -285,6 +285,8 @@ using namespace std;
 	    "vector",
 	    NULL };
 
+#if 0
+// DQ (10/14/2010): This is defined but not used.
 	const char * GLIBCXX0X_INCLUDES[] = {
 	    "array",
 	    "random",
@@ -294,6 +296,7 @@ using namespace std;
 	    "unordered_map",
 	    "unordered_set",
 	    NULL };
+#endif
 
 
 	bool

@@ -1,16 +1,13 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-//#include "astMergeAPI.h"
 
 #include "rose_paths.h"
-//#include "setup.h"
 #include "astPostProcessing.h"
 #include <sys/stat.h>
 
 #include "omp_lowering.h"
 #include "attachPreprocessingInfo.h"
 #include "astMergeAPI.h"
-//#include "sageSupport.h"
 
 #include "BinaryLoader.h"
 #include "Partitioner.h"
@@ -29,31 +26,38 @@
 #include <libgen.h>
 #endif
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 // FMZ (5/19/2008): 
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-#include "FortranModuleInfo.h"
-#include "FortranParserState.h"
-#include "unparseFortran_modfile.h"
+   #include "FortranModuleInfo.h"
+   #include "FortranParserState.h"
+   #include "unparseFortran_modfile.h"
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
 #ifdef HAVE_DLADDR
-#include <dlfcn.h>
+   #include <dlfcn.h>
 #endif
 
 #if USING_OLD_EXECUTABLE_FORMAT_SUPPORT
 // DQ (8/12/2008): This constructor is implemented in sageSupport.C and 
 // will be removed later once the new IR nodes are integrated into use.
-#include "ExecELF.h"
+   #include "ExecELF.h"
 #endif
 
-//Needed for boost::filesystem::exists(...)
+// Needed for boost::filesystem::exists(...)
 #include "boost/filesystem.hpp"
 #include <stdio.h>
 
 // Liao 10/8/2010, refactored OpenMP related code to ompAstConstruction.C
 #include "ompAstConstruction.h"
+
+
 #if 0
 //Liao, 10/27/2008: parsing OpenMP pragma here
 //Handle OpenMP pragmas. This should be called after preprocessing information is attached since macro calls may exist within pragmas, Liao, 3/31/2009
@@ -66,10 +70,13 @@ void processOpenMP(SgSourceFile* sageFilePtr);
 void parse_fortran_openmp(SgSourceFile *sageFilePtr);
 
 #endif
+
+
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
+
 
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
@@ -5234,8 +5241,6 @@ SgFile::secondaryPassOverSourceFile()
    }
 
 
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 // DQ (9/30/2008): Refactored the setup of the class path for Java and OFP.
 string
 global_build_classpath()
@@ -5282,12 +5287,22 @@ global_build_classpath()
 string
 SgSourceFile::build_classpath()
    {
-     return global_build_classpath();
+     string returnClasspath;
+
+     returnClasspath = global_build_classpath();
+
+#ifndef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     fprintf(stderr, "Fortran and Java parser not supported (lack of access to JVM support)\n");
+     ROSE_ASSERT(false);
+#endif
+
+     return returnClasspath;
    }
 
 int
 SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine )
    {
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // This is how we pass the pointer to the SgFile created in ROSE before the Open 
   // Fortran Parser is called to the Open Fortran Parser.  In the case of C/C++ using
   // EDG the SgFile is passed through the edg_main() function, but not so with the 
@@ -5903,45 +5918,22 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // printf ("######################### Leaving SgSourceFile::build_Fortran_AST() ############################ \n");
 
      return frontendErrorLevel;
-   }
-#else // for !USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-
-// DQ (11/26/2008): I am unclear why this is required (I think it was added by Rice).
-string
-SgSourceFile::build_classpath()
-   {
+#else
      fprintf(stderr, "Fortran parser not supported \n");
      ROSE_ASSERT(false);
-  // abort();
 
-  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
-	 return "error in SgSourceFile::build_classpath()";
+     return -1;
+#endif
    }
 
-int
-SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine )
-   {
-     fprintf(stderr, "Fortran parser not supported \n");
-     ROSE_ASSERT(false);
-  // abort();
-
-  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
-	 return -1;
-   }
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-
-#endif // ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT   
 
 
 
-
-
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
 int
 SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
    {
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // This is how we pass the pointer to the SgFile created in ROSE before the Open 
   // Fortran Parser is called to the Open Fortran Parser.  In the case of C/C++ using
   // EDG the SgFile is passed through the edg_main() function, but not so with the 
@@ -5957,8 +5949,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
   // DQ (10/11/2010): We don't need syntax checking because ECJ will do that.
   // bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
-     bool syntaxCheckInputCode = false;
-
+  // bool syntaxCheckInputCode = false;
   // printf ("In build_Java_AST(): syntaxCheckInputCode = %s \n",syntaxCheckInputCode ? "true" : "false");
 
   // Build the classpath list for Java support.
@@ -6215,23 +6206,13 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // printf ("######################### Leaving SgSourceFile::build_Java_AST() ############################ \n");
 
      return frontendErrorLevel;
-   }
-#else // for !USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-
-int
-SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
-   {
+#else
      fprintf(stderr, "Java language parser not supported \n");
      ROSE_ASSERT(false);
 
-  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
-	 return -1;
+     return -1;
+#endif
    }
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-
-#endif // ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT   
-
-
 
 
 
@@ -7127,8 +7108,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
    } // end of SgFile::buildCompilerCommandLineOptions()
 
 
+// DQ (10/14/2010): Removing reference to macros defined in rose_config.h (defined in the header file as a default parameter).
+// int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
 int
-SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
+SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
    {
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Object Code Generation (compile output):");
@@ -7168,6 +7151,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
 
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
+
+     const string compilerNameOrig = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
 
   // BP : 11/13/2001, checking to see that the compiler name is set
      string compilerName = compilerNameOrig + " ";
@@ -7306,8 +7291,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
 // three cases: 1. preprocessing only
 //              2. compilation: 
 //              3. linking:
+// int SgProject::compileOutput( const std::string& compilerName )
 int
-SgProject::compileOutput( const std::string& compilerName )
+SgProject::compileOutput()
    {
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Backend Compilation (SgProject):");
@@ -7316,10 +7302,12 @@ SgProject::compileOutput( const std::string& compilerName )
      int linkingReturnVal = 0;
      int i = 0;
 
+     std::string compilerName;
+
      if (numberOfFiles() == 0)
         {
        // printf ("Note in SgProject::compileOutput(%s): numberOfFiles() == 0 \n",compilerName.c_str());
-          printf ("ROSE using %s as backend compiler: no input files \n",compilerName.c_str());
+       // printf ("ROSE using %s as backend compiler: no input files \n",compilerName.c_str());
 
        // DQ (8/24/2008): We can't recreate same behavior on exit as GNU on exit with no
        // files since it causes the test immediately after building librose.so to fail.
@@ -7353,7 +7341,7 @@ SgProject::compileOutput( const std::string& compilerName )
        // DQ (8/6/2006): Test for g++ and use gcc with "-E" option 
        // (makes a different for header file processing in ARES configuration)
        // string compilerNameString = compilerName;
-          string& compilerNameString = originalCommandLine[0];
+          string & compilerNameString = originalCommandLine[0];
           if (get_C_only() == true)
              {
                compilerNameString = BACKEND_C_COMPILER_NAME_WITH_PATH;
@@ -7423,7 +7411,8 @@ SgProject::compileOutput( const std::string& compilerName )
             // DQ (8/13/2006): Only use the first file (I don't think this
             // makes sense with multiple files specified on the commandline)!
             // int localErrorCode = file.compileOutput(i, compilerName);
-               int localErrorCode = file.compileOutput(0, compilerName);
+            // int localErrorCode = file.compileOutput(0, compilerName);
+               int localErrorCode = file.compileOutput(0);
 
                if (localErrorCode > errorCode)
                     errorCode = localErrorCode;
@@ -7444,15 +7433,16 @@ SgProject::compileOutput( const std::string& compilerName )
            // In this case, we cannot have a single one level command line to compile and link those two files
            // We have to compile each of them first and finally link the object files.
 #ifndef _MSC_VER
-		  // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
-		  // todo windows: put this back in.
-		  linkingReturnVal = link (compilerName);
+     // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
+     // todo windows: put this back in.
+     // linkingReturnVal = link (compilerName);
+        linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
 #else
-#pragma message ("sageSupport.C : linkingReturnVal = link (compilerName); not implemented yet.")
+   #pragma message ("sageSupport.C : linkingReturnVal = link (compilerName); not implemented yet.")
 #endif
         } // end if preprocessing-only is false
 
-     //return errorCode;
+  // return errorCode;
      return errorCode + linkingReturnVal;
    }
 
@@ -7490,9 +7480,10 @@ SgFile::isPrelinkPhase() const
   // return (project == NULL) ? false : project->get_prelink();
    }
 
+// DQ (10/14/2010): Removing reference to macros defined in rose_config.h (defined in the header file as a default parameter).
 //! Preprocessing command line and pass it to generate the final linking command line
-int
-SgProject::link ( std::string linkerName )
+// int SgProject::link ()
+int SgProject::link ( std::string linkerName )
    {
   // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
   // or perhaps define a more simple function to use more directly.
@@ -7531,6 +7522,7 @@ SgProject::link ( std::string linkerName )
   // error checking
      if (numberOfFiles()!= 0) 
           ROSE_ASSERT (argcArgvList.size() > 1);
+
      ROSE_ASSERT(linkerName != "");
 
   // strip out any rose options before passing the command line.
@@ -7601,11 +7593,12 @@ SgProject::link ( std::string linkerName )
      return errorCode;
    }
 
-int
-SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
+// DQ (10/14/2010): Removing reference to macros defined in rose_config.h (defined in the header file as a default parameter).
+// int SgProject::link ( const std::vector<std::string>& argv )
+int SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
    {
-       // argv.size could be 0 after strip off compiler name, original source file, etc
-      // ROSE_ASSERT(argv.size() > 0);
+  // argv.size could be 0 after strip off compiler name, original source file, etc
+  // ROSE_ASSERT(argv.size() > 0);
 
   // This link function will be moved into the SgProject IR node when complete
      const std::string whiteSpace = " ";
