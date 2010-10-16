@@ -2,6 +2,10 @@
 // #                           Header Files                       #
 // ################################################################
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
+
 // DQ (3/22/2009): This is redundant with inclusion in "grammar.h"
 // #include "ROSETTA_macros.h"
 

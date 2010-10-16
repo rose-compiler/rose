@@ -64,6 +64,7 @@ remove_sage3basic_h_pch:
 #    4. header files must not have names that conflict with headers in other directories
 # etc.
 enforce_policies:
+	@echo "The \"make check\" rule has been run in all subdirectories, now enforcing source code policies."
 	(cd $(top_srcdir) && ./scripts/policies-checker.sh)
 
 
@@ -285,19 +286,35 @@ FindFileRequiringRoseConfigHeaderShort:
 #	grep "#define" rose_config.h | cut --delimiter=" " -f 2 
 #	@list=`grep \"\#define\" rose_config.h | cut --delimiter=" " -f 2`; for f in $$list; do 
 #	list=`ls -l | cut --delimiter=" " -f 2`; for f in $$list; do
-	list=`grep \#define rose_config.h | cut --delimiter=" " -f 2`; \
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
    for f in $$list; do \
         echo "Searching for -->$$f<-- macro"; \
-        grep -r $$f $(top_srcdir)/projects/* | grep "\.C:" | cut --delimiter=":" -f 1; \
+        grep -r $$f $(top_srcdir)/src/* | grep "\.h:" | cut --delimiter=":" -f 1; \
    done
 
 # This rule is useful for identifing header files where "rose_config.h" is required and 
-# thus should be fixed to not require this file.
+# thus should be fixed to not require this file. In the case of #undef it is represented 
+# as "/* #undef" so we have to detect and remove the "/* " using sed.
+# And ignore the macro definitions for "const|error_t|inline|off_t|size_t".
 FindFileRequiringRoseConfigHeaderLong:
-	list=`grep \#define rose_config.h | cut --delimiter=" " -f 2`; \
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
    for f in $$list; do \
         echo "Searching for -->$$f<-- macro"; \
-        grep -r $$f $(top_srcdir)/projects/* | grep "\.h:"; \
+        grep -r $$f $(top_srcdir)/src/* | grep "\.h:"; \
+   done
+
+FindFileRequiringRoseConfigSourceLong:
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/src/* | grep "\.C:"; \
+   done
+
+FindFileRequiringRoseConfigSourceAndHeadersLong:
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/src/* | egrep "\.C:|\.h:"; \
    done
 
 

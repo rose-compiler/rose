@@ -58,8 +58,14 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 // #include "sage3.h"
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
+
 #include "attachPreprocessingInfo.h"
 #include "attachPreprocessingInfoTraversal.h"
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
