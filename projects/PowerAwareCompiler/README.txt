@@ -12,3 +12,20 @@ Work Flow:
    2) The ROSE transformed code (source code) is fed to the GCC MIPs cross compiler to 
       build a modified executable.
    3) The modified executable is then executed on the Thrify simulator.
+
+
+
+
+Details about using ROSE:
+   1) The ROSE configure command must use the option:
+         "--with-alternate_backend_C_compiler=<your path>/sescutils-ins/bin/gcc"
+      To support this run "ln -s mipseb-linux-gcc gcc" in the "<your path>/sescutils-ins/bin" 
+      directory.
+   2) Run "make" as usual after configure is finished.
+
+   3) Test the use of ROSE with the Thrifty Simulator by running "make check"
+      in the compile tree's "projects/PowerAwareCompiler" directory.
+
+   4) It should also be possible to run "make check" in the top level directory for 
+      all of ROSE.
+
