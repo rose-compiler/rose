@@ -5,6 +5,10 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
+
 using namespace std;
 
 // DQ (5/3/2009): We might want a version of this function expressed in terms of the node_index and edge_index (integer) values.
