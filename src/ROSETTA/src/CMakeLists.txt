@@ -76,12 +76,6 @@ set(GRAMMAR_SOURCE_FILES
    )
 
 add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS} ${rose_util_src})
-set_source_files_properties(
-  ${CMAKE_BINARY_DIR}/src/util/stringify.C
-  ${CMAKE_BINARY_DIR}/src/util/stringify.h
-  PROPERTIES GENERATED 1
-  )
-add_dependencies(CxxGrammarMetaProgram generate_stringify)
 
 # build ROSETTA code generator
 #target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib ${Boost_LIBRARIES})

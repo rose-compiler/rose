@@ -3,7 +3,7 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ddisc_union=union" )
 
 
 #include_directories( ${ROSE_INCLUDES} )
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src/util)
+include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src/roseSupport)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
@@ -74,8 +74,8 @@ SET_SOURCE_FILES_PROPERTIES(
 
 # Tell cmake that these files are generated (see src/util/CMakeLists.txt).
 SET_SOURCE_FILES_PROPERTIES(
-     ${CMAKE_BINARY_DIR}/src/util/stringify.C
-     ${CMAKE_BINARY_DIR}/src/util/stringify.h
+     ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C
+     ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.h
      PROPERTIES GENERATED 1
      )
 
@@ -96,7 +96,6 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
-      ${CMAKE_BINARY_DIR}/src/util/stringify.C
       ${CMAKE_SOURCE_DIR}/src/util/graphs/TypedFusion.C
       ${CMAKE_SOURCE_DIR}/src/util/graphs/DGBaseGraphImpl.C
       ${CMAKE_SOURCE_DIR}/src/util/graphs/TransAnalysis.C
@@ -198,6 +197,7 @@ set(rose_support_src
       ${CMAKE_SOURCE_DIR}/src/roseSupport/roseTranslators.C 
       ${CMAKE_SOURCE_DIR}/src/roseSupport/utility_functions.C 
       ${CMAKE_SOURCE_DIR}/src/roseSupport/memoryUsage.C
+      ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C
      )
 
 
