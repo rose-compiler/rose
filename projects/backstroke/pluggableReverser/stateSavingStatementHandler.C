@@ -4,7 +4,6 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/algorithm.hpp>
 #include <boost/lambda/bind.hpp>
-#include <boost/range/algorithm.hpp>
 #include <utilities/utilities.h>
 
 using namespace boost;
