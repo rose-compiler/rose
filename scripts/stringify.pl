@@ -233,7 +233,7 @@ sub parse_enum {
 
   $enum_name = canonic_name $enum_name;
   if ($enum{$enum_name}) {
-    &$lexer("error", "enum is multiply defined, this one ignored", $enum_name);
+    &$lexer("error", "enum is multiply defined, this one ignored for stringification", $enum_name);
     print STDERR $enum_loc{$enum_name}, ": previous definition is here\n";
   }
   $enum{$enum_name} = {};
@@ -250,14 +250,16 @@ sub parse_enum {
 	$token = $forward{$token} if $token=~/^[a-z_A-Z]\w*$/ && exists $forward{$token};
 	push @tokens, $token;
       }
-      $member_value = eval join " ", @tokens;
-      &$lexer("warning", "enum member value must be an integer constant", join " ", @tokens) unless defined $member_value;
+      $member_value = eval join "", "no warnings 'all';", @tokens;
+      &$lexer("warning", "enum member value must be an integer constant for stringification",
+	      join "", @tokens) unless defined $member_value;
     } else {
       $member_value = $next_value;
     }
     if (defined $member_value) {
       if (exists $enum{$enum_name}{$member_value}) {
-	&$lexer("warning", "enum member \"$member_name\" duplicates \"$enum{$enum_name}{$member_value}\" and will be ignored.");
+	&$lexer("warning", "enum member \"$member_name\" duplicates \"".
+		$enum{$enum_name}{$member_value} . "\" and will be ignored for stringification");
       }
       $enum{$enum_name}{$member_value} = $member_name;
       $forward{$member_name} = $member_value;
@@ -318,6 +320,7 @@ sub output_defn {
     $header =~ s/\.[^\.]$/.h/;
     print OUTPUT "#include \"$header\"\n";
     print OUTPUT "#include <cassert>\n";
+    print OUTPUT "#include <cstdio>\n";
     print OUTPUT "#include <cstring>\n";
   } else {
     *OUTPUT = *STDOUT;
@@ -396,6 +399,7 @@ if ($defn_output) {
 
 # Scan C++ files to generate %enum hash
 my $files = FileLister->new(@ARGV);
+$files->{build} = 1; # include machine generated files
 while (my $filename = $files->next_file) {
   next unless $filename =~ /\.(h|hh|c|cpp|C)$/;
   my($lexer) = make_lexer $filename;
