@@ -2307,6 +2307,11 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
         }
         }
 
+  // Liao (10/14/2010): This helps handle cases such as 
+  //    c$OMP END PARALLEL
+  //          END
+     unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::inside);
+
 #if 0
   // DQ (10/6/2008): This does not appear to be required (passes all tests).
      unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);

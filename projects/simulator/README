@@ -67,6 +67,80 @@ Positional arguments:
 
 * "SPECIMEN_ARGS" are all the arguments for the specimen.
 
+== Design ==
+
+x86sim uses ROSE's binary support to simulate a process:
+
+* The memory address space of the specimen is represented by an
+  instance of ROSE's MemoryMap class.  Keeping the specimen's address
+  space separated from x86sim's address space allows the specimen to
+  use its entire address space however it chooses, and it prevents the
+  specimen from being able to access x86sim's address space.
+
+  The main drawback of this design is that every specimen memory
+  access must go through the MemoryMap, and x86sim must marshal data
+  between the specimen's and x86sim's address spaces when performing a
+  system call on behalf of the specimen.  This has an impact on
+  performance.
+
+* The specimen's instructions are simulated rather than executed
+  directly by the CPU.  The simulation is performed by the
+  X86InstructionSemantics class defined in ROSE and an EmulationPolicy
+  class defined in x86sim.  The X86InstructionSemantics class defines
+  what basic operations must be performed by each instruction, while
+  the EmulationPolicy class defines the operations themselves.
+
+  Simulating each instruction has a number of advantages:
+
+     * the specimen can be for a different architecture than that on
+       which x86sim is running.
+
+     * x86sim handles priviledged instructions the same way as all
+       other instructions.
+
+     * it's easy to modify x86sim to do something special for
+       certain instructions.
+
+     * it allows x86sim to keep the specimen in a separate address
+       space that doesn't overlap with x86sim's address space.
+
+     * it's a good way to gain confidence that ROSE's instruction
+       semantics are working properly.  A bug in the implementation
+       would likely cause the specimen to fail.
+
+  The main disadvantage of simulating each instruction is that it
+  is much slower than executing instructions directly.
+
+* The ROSE Disassembler is used to build an intermediate
+  representation of each instruction before the instruction can be
+  simulated.  Disassembly at some level is necessary in order to
+  simulate instructions, and the level of disassembly that x86sim uses
+  is the same as that which ROSE uses for all other binary
+  analyses. Besides being necessary for simulation, this also gives us
+  confidence that the disassembler is functioning properly.
+
+* Dynamic linking. x86sim loads the specimen's main executable into an
+  address space (MemoryMap) like the OS would do, and then begins
+  simulation.  If the main executable has an interpreter, then the
+  interpreter is also loaded and simulation starts in the
+  interpreter. In this way, x86sim is able to simulate dynamically
+  linked executables -- it simulates the linker itself (i.e., it
+  simulates the ld-linux.so interpreter).
+
+  ROSE also has it's own dynamic linking capability which is under
+  development. The simulator could use this capability instead, which
+  would give the user more control over the linking process.
+
+* System calls. x86sim supports either the "INT 0x80" interface or
+  they "SYSENTER" interface.  In either case, the instruction is
+  intercepted and x86sim processes the system call. It does one of two
+  things: (1) x86sim may invoke the system call on behalf of the
+  specimen, or (2) x86sim may update the simulated state of the
+  specimen directly.
+
+  Handling of system calls actually makes up the bulk of the
+  EmulationPolicy class in x86sim.
+
 == System calls ==
 
 If you see a message like "syscall_131(....) is not implemented yet"
