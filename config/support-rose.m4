@@ -98,11 +98,10 @@ fi
 
 # exit 1
 
-#AC_MSG_WARN([Exiting as a test!])
-#AC_MSG_ERROR([Exiting as a test!])
-#echo "Exiting as a test!"
-#exit 1
-
+# AC_MSG_WARN([Exiting as a test!])
+# AC_MSG_ERROR([Exiting as a test!])
+# echo "Exiting as a test!"
+# exit 1
 
 # ***************************************************************
 # Options to enable selection of only a single language
@@ -472,7 +471,6 @@ if test "x$support_binaries" = "xyes"; then
 else
    echo "Support for binary analysis support is disabled..."
 fi
-
 if test "x$support_cuda_language" = "xyes"; then
    AC_DEFINE([ROSE_BUILD_CUDA_LANGUAGE_SUPPORT], [], [Build ROSE to support the CUDA langauge])
 else
@@ -745,6 +743,53 @@ AM_CONDITIONAL(DOT_TO_GML_TRANSLATOR,test "$enable_dot2gml_translator" = yes)
 # echo "Before test for CANONICAL HOST: CC (CC = $CC)"
 
 AC_CANONICAL_HOST
+
+ROSE_FLAG_C_OPTIONS
+ROSE_FLAG_CXX_OPTIONS
+
+echo "CFLAGS   = $CFLAGS"
+echo "CXXFLAGS = $CXXFLAGS"
+echo "CPPFLAGS = $CPPFLAGS"
+
+# *****************************************************************
+#    Option to define a uniform debug level for ROSE development
+# *****************************************************************
+
+# DQ (10/17/2010): This defines an advanced level of uniform support for debugging and compiler warnings in ROSE.
+AC_MSG_CHECKING([for enabled advanced warning support])
+# Default is that advanced warnings is off, but this can be changed later so that advanced warnings would have to be explicitly turned off.
+AC_ARG_ENABLE(advanced_warnings, AS_HELP_STRING([--enable-advanced-warnings], [Support for an advanced uniform warning level for ROSE development]),[enableval=yes],[enableval=no])
+AM_CONDITIONAL(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT, [test "x$enable_advanced_warnings" = xyes])
+if test "x$enable_advanced_warnings" = "xyes"; then
+  AC_MSG_WARN([Using an advanced uniform warning level for ROSE development.])
+  AC_DEFINE([ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT], [], [Support for an advanced uniform warning level for ROSE development])
+
+# Suggested C++ specific flags (used to be run before Hudson, but fail currently).
+  CXX_ADVANCED_WARNINGS+=" -D_GLIBCXX_CONCEPT_CHECKS -D_GLIBCXX_DEBUG"
+
+# Additional flag (suggested by George).
+  CXX_ADVANCED_WARNINGS+=" -D_GLIBCXX_DEBUG_PEDANTIC"
+
+# Incrementally add the advanced options
+  if test "$CXX_ADVANCED_WARNINGS"; then CXXFLAGS="$CXXFLAGS $CXX_ADVANCED_WARNINGS"; fi
+fi
+# ROSE_USE_UNIFORM_DEBUG_SUPPORT=7
+AC_SUBST(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT)
+
+echo "After processing --enable-advanced-warnings: CXX_ADVANCED_WARNINGS = ${CXX_ADVANCED_WARNINGS}"
+echo "After processing --enable-advanced-warnings: CXX_WARNINGS = ${CXX_WARNINGS}"
+echo "After processing --enable-advanced-warnings: C_WARNINGS   = ${C_WARNINGS}"
+
+# exit 1;
+
+echo "CFLAGS   = $CFLAGS"
+echo "CXXFLAGS = $CXXFLAGS"
+echo "CPPFLAGS = $CPPFLAGS"
+
+# AC_MSG_WARN([Exiting as a test!])
+# AC_MSG_ERROR([Exiting as a test!])
+# echo "Exiting as a test!"
+# exit 1
 
 # DQ: added here to see if it would be defined for the template tests and avoid placing 
 # a $(CXX_TEMPLATE_REPOSITORY_PATH) directory in the top level build directory (a minor error)
@@ -1400,6 +1445,7 @@ if test "x$enable_cuda" = "xyes"; then
   AC_MSG_WARN([Using incomplete CUDA langauge support in ROSE.])
   AC_DEFINE([ROSE_USE_CUDA_SUPPORT], [], [Whether to use CUDA language support or not within ROSE])
 fi
+# DQ (10/17/2010): Why is this set to the value "7".
 ROSE_USE_CUDA_SUPPORT=7
 AC_SUBST(ROSE_USE_CUDA_SUPPORT)
 
@@ -1536,6 +1582,10 @@ AC_SUBST(ROSE_USE_PPL)
 AC_SUBST(PPL_LDFLAGS)
 AC_SUBST(PPL_CPPFLAGS)
 
+# *****************************************************************
+#            Option to define DOXYGEN SUPPORT
+# *****************************************************************
+
 # allow either user or developer level documentation using Doxygen
 ROSE_SUPPORT_DOXYGEN
 
@@ -1628,7 +1678,8 @@ AC_MSG_RESULT($CXX_ID-$CXX_VERSION)
 
 # Define various C++ compiler options.
 # echo "Before ROSE_FLAG _ CXX_OPTIONS macro"
-ROSE_FLAG_CXX_OPTIONS
+# ROSE_FLAG_C_OPTIONS
+# ROSE_FLAG_CXX_OPTIONS
 # echo "Outside of ROSE_FLAG _ CXX_OPTIONS macro: CXX_DEBUG= $CXX_DEBUG"
 
 # Enable turning on purify and setting its options, etc.
