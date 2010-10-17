@@ -57,13 +57,19 @@ endif
 #    compass
 
 if !ROSE_USING_ROSE_CODE_GENERATION
+
+# DQ (10/17/2010): This seems to be problem for Java, we can fix this later.
+if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
    SUBDIRS += compass
+endif
 
-
+# DQ (10/17/2010): Since we can't process Compass with Java we can't compiler palette (which requires Compass).
+if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
  # DQ (2/13/2010): This appears to have a dependence on compass, but I don't know why.
  # All projects should be independent of each other so that they should be able to be
  # compiled in any order. It was originally listed after "haskellport".
    SUBDIRS += palette
+endif
 endif
 
 if ROSE_MPI

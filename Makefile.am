@@ -317,6 +317,31 @@ FindFileRequiringRoseConfigSourceAndHeadersLong:
         grep -r $$f $(top_srcdir)/src/* | egrep "\.C:|\.h:"; \
    done
 
+FILTER_MAKEFILES = grep "Makefile\.am" | grep -v "Makefile\.am~"
+NumberOfMakefiles:
+	@echo "Number of Makefile.am files in root directory: "
+	@du -a $(srcdir) | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in src directory: "
+	@du -a $(srcdir)/src | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in projects directory: "
+	@du -a $(srcdir)/projects | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in tests directory: "
+	@du -a $(srcdir)/tests | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in exampleTranslators directory: "
+	@du -a $(srcdir)/exampleTranslators | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in tutorial directory: "
+	@du -a $(srcdir)/tutorial | $(FILTER_MAKEFILES)| wc -l
+	@echo "Number of Makefile.am files in docs directory: "
+	@du -a $(srcdir)/docs | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in demo directory: "
+	@du -a $(srcdir)/demo | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in binaries directory: "
+	@du -a $(srcdir)/binaries | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in tools directory: "
+	@du -a $(srcdir)/tools | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in config directory: "
+	@du -a $(srcdir)/config | $(FILTER_MAKEFILES) | wc -l
+
 
 # DQ (2/12/2010): Report the areas of ROSE where we have skipped some tests of ROSE 
 # either doing analysis, code generation, or translation of the ROSE source code.
