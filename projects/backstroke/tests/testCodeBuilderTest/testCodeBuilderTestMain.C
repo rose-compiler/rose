@@ -25,7 +25,7 @@ bool isStateClassDeclaration(SgClassDeclaration* class_decl)
 }
 
 
-void assembleTestCode(SgProject* project)
+void assembleTestCode(SgProject* project, const map<SgFunctionDeclaration*, FuncDeclPairs>& results)
 {
 	cout << "Test code loaded!\n";
 
@@ -51,7 +51,7 @@ void assembleTestCode(SgProject* project)
 	if (state_class)
 	{
 		cout << "Start to assemble the test code\n";
-		TestCodeAssembler assembler(state_class);
+		TestCodeAssembler assembler(state_class, results);
 		assembler.assemble();
 		cout << "Done!\n";
 	}
@@ -63,7 +63,7 @@ void addHandlers(EventProcessor& event_processor)
 	//event_processor.addExpressionHandler(new NullExpressionHandler);
 	event_processor.addExpressionHandler(new IdentityExpressionHandler);
 	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
-	//event_processor.addExpressionHandler(new AkgulStyleExpressionHandler);
+	event_processor.addExpressionHandler(new AkgulStyleExpressionHandler);
 
 	// Add all statement handlers to the statement pool.
 	event_processor.addStatementHandler(new CombinatorialExprStatementHandler);
@@ -132,16 +132,17 @@ int main(int argc, char* argv[])
 	// Reverse event functions inside.
 	EventProcessor event_processor;
 	addHandlers(event_processor);
-	Backstroke::reverseEvents(
-			&event_processor,
-			isEvent2,//bind(isEvent, _1, events),
-			project);
+	map<SgFunctionDeclaration*, FuncDeclPairs> results =
+			Backstroke::reverseEvents(
+				&event_processor,
+				isEvent2,//bind(isEvent, _1, events),
+				project);
 
 	cout << "Events reversed.\n";
 
 
 	// Add initialization, comparison and main functions to this file.
-	assembleTestCode(project);
+	assembleTestCode(project, results);
 
 	AstTests::runAllTests(project);
 	return backend(project);

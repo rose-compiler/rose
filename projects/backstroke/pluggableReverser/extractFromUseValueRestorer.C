@@ -117,12 +117,14 @@ SgExpression* ExtractFromUseValueRestorer::extractFromAssignOp(VariableRenaming:
 SgExpression* ExtractFromUseValueRestorer::extractFromIncrementOp(VariableRenaming::VarName varName,
 		const VariableVersionTable& availableVariables,	SgNode* useSite)
 {
-	ROSE_ASSERT(isSgPlusPlusOp(useSite) || isSgMinusAssignOp(useSite));
+	ROSE_ASSERT(isSgPlusPlusOp(useSite) || isSgMinusMinusOp(useSite));
 	VariableRenaming& variableRenamingAnalysis = *getEventHandler()->getVariableRenaming();
 	SgUnaryOp* incOrDecrOp = isSgUnaryOp(useSite);
 
-	//For floating point values, we can't extract the previous value by undoing the increment due to rounding
-	if (!incOrDecrOp->get_operand()->get_type()->isIntegerType())
+	// For floating point values, we can't extract the previous value by undoing the increment due to rounding
+	// For bool type, we also cannot do this.
+	if (!incOrDecrOp->get_operand()->get_type()->isIntegerType() ||
+			isSgTypeBool(incOrDecrOp->get_operand()->get_type()))
 	{
 		return NULL;
 	}
@@ -171,7 +173,7 @@ SgExpression* ExtractFromUseValueRestorer:: extractFromUseAssignOp(VariableRenam
 	SgBinaryOp* useAssignOp = isSgBinaryOp(useSite);
 
 	if ((isSgMinusAssignOp(useAssignOp) || isSgPlusAssignOp(useAssignOp))
-			&& !useAssignOp->get_type()->isIntegerType())
+			&& (!useAssignOp->get_type()->isIntegerType() || !useAssignOp->get_rhs_operand()->get_type()->isIntegerType()))
 	{
 		//We can't extract values out of floating point types due to rounding
 		return NULL;

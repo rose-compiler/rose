@@ -27,5 +27,7 @@ check-local:
 
 test: FORCE
 	./testCodeBuilderTest $(TESTCODE_INCLUDES)
+	g++ test.C -o test $(TESTCODE_INCLUDES)
+	./test
 
 FORCE:
