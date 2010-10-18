@@ -1,7 +1,7 @@
 TITLE="testing default on all linux platforms"
-DESCRIPTION="minimal configuration options, gcc 4.2.4, boost 1.35"
-PREREQS="gcc-4.2.4, boost-1.35.0, java-1.5.0_08"
-CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall"
+DESCRIPTION="minimal configuration options, gcc 4.2.4, boost 1.36"
+PREREQS="gcc-4.2.4, boost-1.36.0, java-1.5.0_08"
+CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall"
 
 # JAVA_HOME="/prereq/java-1.5.0_08"
 

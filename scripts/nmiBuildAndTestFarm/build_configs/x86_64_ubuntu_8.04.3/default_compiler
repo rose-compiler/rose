@@ -1,4 +1,4 @@
 TITLE="testing default compiler on all linux platforms"
-DESCRIPTION="default ROSE configuration options, gcc ?, boost 1.35, without java"
-PREREQS="boost-1.35.0"
-CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall --without-java --with-CXX_DEBUG=-g --with-C_DEBUG=-g"
+DESCRIPTION="default ROSE configuration options, gcc ?, boost 1.36, without java"
+PREREQS="boost-1.36.0"
+CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java --with-CXX_DEBUG=-g --with-C_DEBUG=-g"

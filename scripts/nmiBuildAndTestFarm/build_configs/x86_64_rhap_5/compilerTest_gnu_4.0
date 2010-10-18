@@ -1,10 +1,10 @@
 TITLE="testing 64-bit gnu 4.0 compiler on specific linux platforms"
 DESCRIPTION="minimal configuration options, gcc 4.0.4, without java"
-PREREQS="gcc-4.0.4, boost-1.35.0, automake-1.10, autoconf-2.63"
+PREREQS="gcc-4.0.4, boost-1.36.0, automake-1.10, autoconf-2.63"
 
 # DQ (9/13/2009): Disable rosehpct since GNU g++ 4.0.4 reports that -fPIC is required (see if we can pass the tests without rosehpct).
 # Error in LINK    librosehpct.la
 #    /usr/bin/ld: /prereq/gcc-4.0.4/lib/../lib64/libstdc++.a(functexcept.o): relocation R_X86_64_32 against `std::bad_typeid::~bad_typeid()' can not be used when making a shared object; recompile with -fPIC
 #    /prereq/gcc-4.0.4/lib/../lib64/libstdc++.a: could not read symbols: Bad value
-# CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall --without-java"
-CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall --without-java --disable-rosehpct"
+# CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java"
+CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java --disable-rosehpct"
