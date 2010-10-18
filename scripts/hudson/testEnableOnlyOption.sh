@@ -2,6 +2,7 @@
 # A hudson-friendly script to 
 # x) test --enable-only-fortran --enable-only-c  --enable-only-cxx 
 #         --enable-only-php     --enable-only-binary-analysis
+#         --enable-only-java
 # 
 # Liao 4/19/2010
 

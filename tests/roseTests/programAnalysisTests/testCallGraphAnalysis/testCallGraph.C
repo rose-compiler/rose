@@ -1,3 +1,8 @@
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 // DQ (8/15/2009): This is a call graph test program that I have 
 // modified from CG.C to generate tests more specific my own 
 // requirements for testing.
