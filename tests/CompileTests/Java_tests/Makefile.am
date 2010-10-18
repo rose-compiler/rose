@@ -32,6 +32,8 @@ ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
 PASSING_TEST_Objects = ${TESTCODES:.java=.o}
 TEST_Objects = ${ALL_TESTCODES:.java=.o}
 
+if ROSE_USE_OPEN_FORTRAN_PARSER
+
 testTranslator=../../testTranslator
 
 ../../testTranslator:
@@ -74,6 +76,13 @@ check-local:
 	@echo "************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"
+else
+check-local:
+	@echo "Tests for Java."
+	@echo "************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Java_tests: JAVA NOT CONFIGURED IN ROSE ******"
+	@echo "************************************************************************************************"
+endif
 
 clean-local:
 	rm -f *.dot *.class rose_*.java rose_performance_report_lockfile.lock *.out
