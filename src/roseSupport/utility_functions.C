@@ -1,9 +1,9 @@
 
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
 #include "checkIsModifiedFlag.h"
 #include "AstPDFGeneration.h"
-//#include "DotGeneration.h"
 #include "AstDOTGeneration.h"
 #include "wholeAST_API.h"
 
@@ -14,8 +14,10 @@
 // DQ (10/11/2007): This is commented out to avoid use of this mechanism.
 // #include <copy_unparser.h>
 
-// DQ (1/2/2008): This si not used (so it should be removed)
-// #include "templateSupport.h"
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -353,15 +355,16 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
        // This could be done in the 
           if (project->get_C_only() == true)
              {
-               printf ("Link using the C language linker (when handling C programs) \n");
-               finalCombinedExitStatus = project->link("gcc");
+                printf ("Link using the C language linker (when handling C programs) = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
+            // finalCombinedExitStatus = project->link("gcc");
+               finalCombinedExitStatus = project->link(BACKEND_C_COMPILER_NAME_WITH_PATH);
              }
             else
              {
             // Use the default name for C++ compiler (defined at configure time)
-              if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-                 printf ("Link using the default linker (when handling non-C programs) \n");
-               finalCombinedExitStatus = project->link();
+               if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
+                  printf ("Link using the default linker (when handling non-C programs) = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+               finalCombinedExitStatus = project->link(BACKEND_CXX_COMPILER_NAME_WITH_PATH);
              }
 
        // printf ("DONE with link! \n");
@@ -476,6 +479,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
        // When we just have a list of object files then we can't assume anything (and project->get_C_only() will be false).
 
        // Note that commandLineToGenerateObjectFile is just the name of the backend compiler to use!
+       // finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile);
           finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile);
         }
 

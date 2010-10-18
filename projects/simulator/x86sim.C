@@ -1,6 +1,11 @@
 /* Emulates an executable. */
 #include "rose.h"
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 /* Define one CPP symbol to determine whether this simulator can be compiled.  The definition of this one symbol depends on
  * all the header file prerequisites. */
 #if defined(HAVE_ASM_LDT_H) && defined(HAVE_ELF_H) && \
