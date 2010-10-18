@@ -17,7 +17,7 @@ endif
 # EXTERNAL_OFP_JAR_FILE_URL=http://voxel.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}/OpenFortranParser-${OFP_VERSION}.jar
 
 # This appears to be a stable URL for downloading OFP...
-EXTERNAL_OFP_JAR_FILE_URL=http://sourceforge.net/projects/fortran-parser/files/OpenFortranParser/version_${OFP_VERSION}/OpenFortranParser-${OFP_VERSION}.jar/download
+EXTERNAL_OFP_JAR_FILE_URL = http://sourceforge.net/projects/fortran-parser/files/OpenFortranParser/version_${OFP_VERSION}/OpenFortranParser-${OFP_VERSION}.jar/download
 
 TARGET_OFP_SOURCE_FILES = token.c jni_token_funcs.c c_actions_jni.c
 
@@ -126,9 +126,13 @@ OFP_SOURCE_FILES_WITHOUT_PATHS = \
    jni_token_funcs.h \
    jni_token_funcs.c 
 
+# DQ (10/17/2010): This is the better way to control this.
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 # Liao 8/4/2010, based on Jean Utke's suggestion on [Rose-public] Fortran built-ins
 if ROSE_USE_OPEN_FORTRAN_PARSER
-include_HEADERS = ActionEnums.h token.h FortranParserAction.h
+# include_HEADERS = ActionEnums.h token.h FortranParserAction.h
+include_HEADERS = token.h ActionEnums.h FortranParserAction.h
+endif
 endif
 
 # I don't know why this does not seem to work, but that we need three separate rules.
