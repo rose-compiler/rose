@@ -1,5 +1,12 @@
 // tps : Switching from rose.h to sage3 changed size from 17,4 MB to 7MB
 #include <sage3basic.h>
+
+// DQ (10/16/2010): This is needed to use the HAVE_SQLITE3 macro.
+// DQ (10/14/2010): This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 #include <boost/lexical_cast.hpp>
 #include "CallGraph.h"
 
