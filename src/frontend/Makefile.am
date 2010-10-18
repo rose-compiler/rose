@@ -18,6 +18,9 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += ECJ_ROSE_Connection
 endif
 
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+endif
+
 # if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader
 # endif

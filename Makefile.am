@@ -64,6 +64,7 @@ remove_sage3basic_h_pch:
 #    4. header files must not have names that conflict with headers in other directories
 # etc.
 enforce_policies:
+	@echo "The \"make check\" rule has been run in all subdirectories, now enforcing source code policies."
 	(cd $(top_srcdir) && ./scripts/policies-checker.sh)
 
 
@@ -76,6 +77,8 @@ enforce_policies:
 # (because it has the file: config/Makefile.for.ROSE.includes.and.libs)
 # EXTRA_DIST = stamp-h.in stamp-h1.in GNU_HEADERS config
 # EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
+# EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
+#              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 
@@ -105,7 +108,11 @@ uninstall-local:
 distclean-local:
 	-rm -rf $(top_builddir)/include-staging/
 
-nodist_include_HEADERS = rose_config.h
+# DQ (10/14/2010): We want to make sure that this does not go out to the install tree
+# it also should not be in the distribution (since we want rose_config.h.in to be put 
+# into the distribution instead; from which then rose_config.h is generated).
+# nodist_include_HEADERS = rose_config.h
+noinst_HEADERS = rose_config.h
 
 # DQ (4/5/2009): This rule is not called when compiling this directory, it is only
 # called when compiling the /src/util directory (perhaps it should be located in 
@@ -272,6 +279,69 @@ CheckinCounts:
 	@echo "*****************************************************"
 	cd $(top_srcdir); git shortlog -s -n
 	@echo "*****************************************************"
+
+
+# This rule is useful for identifing source files where "rose_config.h" should be included.
+FindFileRequiringRoseConfigHeaderShort:
+#	grep "#define" rose_config.h | cut --delimiter=" " -f 2 
+#	@list=`grep \"\#define\" rose_config.h | cut --delimiter=" " -f 2`; for f in $$list; do 
+#	list=`ls -l | cut --delimiter=" " -f 2`; for f in $$list; do
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/src/* | grep "\.h:" | cut --delimiter=":" -f 1; \
+   done
+
+# This rule is useful for identifing header files where "rose_config.h" is required and 
+# thus should be fixed to not require this file. In the case of #undef it is represented 
+# as "/* #undef" so we have to detect and remove the "/* " using sed.
+# And ignore the macro definitions for "const|error_t|inline|off_t|size_t".
+FindFileRequiringRoseConfigHeaderLong:
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/src/* | grep "\.h:"; \
+   done
+
+FindFileRequiringRoseConfigSourceLong:
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/src/* | grep "\.C:"; \
+   done
+
+FindFileRequiringRoseConfigSourceAndHeadersLong:
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/src/* | egrep "\.C:|\.h:"; \
+   done
+
+FILTER_MAKEFILES = grep "Makefile\.am" | grep -v "Makefile\.am~"
+NumberOfMakefiles:
+	@echo "Number of Makefile.am files in root directory: "
+	@du -a $(srcdir) | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in src directory: "
+	@du -a $(srcdir)/src | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in projects directory: "
+	@du -a $(srcdir)/projects | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in tests directory: "
+	@du -a $(srcdir)/tests | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in exampleTranslators directory: "
+	@du -a $(srcdir)/exampleTranslators | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in tutorial directory: "
+	@du -a $(srcdir)/tutorial | $(FILTER_MAKEFILES)| wc -l
+	@echo "Number of Makefile.am files in docs directory: "
+	@du -a $(srcdir)/docs | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in demo directory: "
+	@du -a $(srcdir)/demo | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in binaries directory: "
+	@du -a $(srcdir)/binaries | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in tools directory: "
+	@du -a $(srcdir)/tools | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in config directory: "
+	@du -a $(srcdir)/config | $(FILTER_MAKEFILES) | wc -l
+
 
 # DQ (2/12/2010): Report the areas of ROSE where we have skipped some tests of ROSE 
 # either doing analysis, code generation, or translation of the ROSE source code.

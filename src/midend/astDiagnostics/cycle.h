@@ -79,6 +79,13 @@
 
 /***************************************************************************/
 
+
+
+// DQ (10/14/2010): I think this is not used anywhere.
+#error "cycle.h is an example header file (of timers) that should not be used in ROSE source files."
+
+
+
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
 # include <time.h>
