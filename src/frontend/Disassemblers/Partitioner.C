@@ -995,7 +995,7 @@ pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
     if (opands1.size()!=1) return insns.end();
     SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands1[0]);
     if (!rre) return insns.end();
-    if (rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_bp) return insns.end();
+    if (rre->get_descriptor().get_major()!=x86_regclass_gpr || rre->get_descriptor().get_minor()!=x86_gpr_bp) return insns.end();
 
     /* Look for "mov rbp,rsp" */
     Disassembler::InstructionMap::const_iterator ij=insns.find(ii->first + insn1->get_raw_bytes().size());
@@ -1007,10 +1007,10 @@ pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
     if (opands2.size()!=2) return insns.end();
     rre = isSgAsmx86RegisterReferenceExpression(opands2[0]);
     if (!rre) return insns.end();
-    if (rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_bp) return insns.end();
+    if (rre->get_descriptor().get_major()!=x86_regclass_gpr || rre->get_descriptor().get_minor()!=x86_gpr_bp) return insns.end();
     rre = isSgAsmx86RegisterReferenceExpression(opands2[1]);
     if (!rre) return insns.end();
-    if (rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_sp) return insns.end();
+    if (rre->get_descriptor().get_major()!=x86_regclass_gpr || rre->get_descriptor().get_minor()!=x86_gpr_sp) return insns.end();
 
     return ii;
 }
@@ -1225,7 +1225,7 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
         SgAsmBinaryExpression *mref_bin = isSgAsmBinaryExpression(mref_addr);
         SgAsmx86RegisterReferenceExpression *reg = isSgAsmx86RegisterReferenceExpression(mref_bin->get_lhs());
         SgAsmValueExpression *val = isSgAsmValueExpression(mref_bin->get_rhs());
-        if (reg->get_register_class()==x86_regclass_ip && val!=NULL) {
+        if (reg->get_descriptor().get_major()==x86_regclass_ip && val!=NULL) {
             retval = value_of(val) + insn->get_address() + insn->get_raw_bytes().size();
         }
     } else if (isSgAsmValueExpression(mref_addr)) {

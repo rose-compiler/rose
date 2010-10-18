@@ -147,12 +147,6 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 
   uint64_t getValueInExpression(SgAsmValueExpression* valExp);
 
-
-  // should be removed after the reference from unparse_visitor is solved
-  void getRegister_val(std::pair<X86RegisterClass, int>  code,
-                       X86PositionInRegister pos,
-		       uint64_t &qw_val) {};
-
   int64_t trackValueForRegister(
 				SgGraphNode* node,
 				std::pair<X86RegisterClass, int>  codeSearch,
@@ -162,7 +156,7 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 
   std::pair<X86RegisterClass, int>
     check_isRegister(SgGraphNode* node, SgAsmx86Instruction* inst,
-                     bool rightSide, bool& memoryReference );
+                     bool rightSide, bool& memoryReference, bool& registerReference );
 
   SgAsmExpression* getOperand(SgAsmx86Instruction* inst,
 						bool rightSide );

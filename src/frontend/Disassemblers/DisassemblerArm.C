@@ -51,7 +51,7 @@ static bool modifies_ip(SgAsmArmInstruction *insn)
             for (size_t i=0; i<elist->get_expressions().size(); i++) {
                 SgAsmArmRegisterReferenceExpression *reg = isSgAsmArmRegisterReferenceExpression(elist->get_expressions()[i]);
                 ROSE_ASSERT(reg);
-                if (reg->get_arm_register_code()==SgAsmArmRegisterReferenceExpression::reg15) {
+                if (reg->get_descriptor().get_major()==arm_regclass_gpr && reg->get_descriptor().get_minor()==15) {
                     return true;
                 }
             }
@@ -69,7 +69,8 @@ static bool modifies_ip(SgAsmArmInstruction *insn)
             const std::vector<SgAsmExpression*> &exprs = insn->get_operandList()->get_operands();
             if (exprs.size()>=1) {
                 SgAsmArmRegisterReferenceExpression *rre = isSgAsmArmRegisterReferenceExpression(exprs[0]);
-                if (rre && rre->get_arm_register_code()==SgAsmArmRegisterReferenceExpression::reg15) {
+                if (rre &&
+                    rre->get_descriptor().get_major()==arm_regclass_gpr && rre->get_descriptor().get_minor()==15) {
                     return true;
                 }
             }
@@ -113,7 +114,7 @@ SgAsmArmInstruction::get_successors(bool *complete) {
             ROSE_ASSERT(exprs.size()==1);
             SgAsmArmRegisterReferenceExpression *rre = isSgAsmArmRegisterReferenceExpression(exprs[0]);
             ROSE_ASSERT(rre);
-            if (rre->get_arm_register_code()==SgAsmArmRegisterReferenceExpression::reg15) {
+            if (rre->get_descriptor().get_major()==arm_regclass_gpr && rre->get_descriptor().get_minor()==15) {
                 retval.insert(get_address()+4);
             } else {
                 *complete = false;
@@ -168,6 +169,7 @@ DisassemblerArm::init()
     set_wordsize(4);
     set_alignment(4);
     set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
+    set_registers(RegisterDictionary::dictionary_arm7());
 }
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the ArmDisassembler name space. */
@@ -239,28 +241,46 @@ DisassemblerArm::makeInstructionWithoutOperands(uint32_t address, const std::str
     return instruction;
 }
 
+/** Creates a general-purpose register reference expression. */
 SgAsmArmRegisterReferenceExpression *
-DisassemblerArm::makeRegister(uint8_t reg)
+DisassemblerArm::makeRegister(uint8_t reg) const
 {
-    SgAsmArmRegisterReferenceExpression* r = new SgAsmArmRegisterReferenceExpression();
-    r->set_arm_register_code((SgAsmArmRegisterReferenceExpression::arm_register_enum)(reg + 1));
+    ROSE_ASSERT(get_registers()!=NULL);
+    ROSE_ASSERT(reg<16);
+    std::string name = "r" + StringUtility::numberToString(reg);
+    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
+    ROSE_ASSERT(rdesc!=NULL);
+    SgAsmArmRegisterReferenceExpression* r = new SgAsmArmRegisterReferenceExpression(*rdesc);
+    return r;
+}
+
+/** Create a reference to one of the program status registers. If @p useSPSR is true then create a reference to the saved
+ *  program status register, otherwise create a reference to the current program status register. The @p fields is a 4-bit mask
+ *  indicating which individual fields of the register are selected.
+ *
+ *  The field bits are
+ *     0x01 => c   control field mask bit
+ *     0x02 => x   extension field mask bit
+ *     0x04 => s   status field mask bit
+ *     0x08 => f   flags field mask bit
+ */
+SgAsmArmRegisterReferenceExpression *
+DisassemblerArm::makePsrFields(bool useSPSR, uint8_t fields) const
+{
+    ROSE_ASSERT(get_registers()!=NULL);
+    std::string name = useSPSR ? "spsr" : "cpsr";
+    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
+    ROSE_ASSERT(rdesc!=NULL);
+    SgAsmArmRegisterReferenceExpression *r = new SgAsmArmRegisterReferenceExpression(*rdesc);
+    if (fields!=0)
+        r->set_psr_mask(fields);
     return r;
 }
 
 SgAsmArmRegisterReferenceExpression *
-DisassemblerArm::makePsrFields(bool useSPSR, uint8_t fields)
+DisassemblerArm::makePsr(bool useSPSR) const
 {
-    SgAsmArmRegisterReferenceExpression* r = new SgAsmArmRegisterReferenceExpression();
-    r->set_arm_register_code((SgAsmArmRegisterReferenceExpression::arm_register_enum)((useSPSR ? SgAsmArmRegisterReferenceExpression::spsr_fields : SgAsmArmRegisterReferenceExpression::cpsr_fields) + fields));
-    return r;
-}
-
-SgAsmArmRegisterReferenceExpression *
-DisassemblerArm::makePsr(bool useSPSR)
-{
-    SgAsmArmRegisterReferenceExpression* r = new SgAsmArmRegisterReferenceExpression();
-    r->set_arm_register_code((SgAsmArmRegisterReferenceExpression::arm_register_enum)(useSPSR ? SgAsmArmRegisterReferenceExpression::spsr : SgAsmArmRegisterReferenceExpression::cpsr));
-    return r;
+    return makePsrFields(useSPSR, 0);
 }
 
 

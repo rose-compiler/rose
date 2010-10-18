@@ -56,11 +56,10 @@ binaryClauseSimplify_LDADD = -lroseSatProblem
 lookForErrors_SOURCES = lookForErrors.C satProblem.h x86AssemblyToNetlist.h
 lookForErrors_LDADD = -lroseSatProblem $(ROSE_LIBS)
 btorUnroll_SOURCES = btorUnroll.C
-btorUnroll_LDADD = -lroseBtorSupport
+btorUnroll_LDADD = -lroseBtorSupport $(ROSE_LIBS)
 btorCleanup_SOURCES = btorCleanup.C
-btorCleanup_LDADD = -lroseBtorSupport
+btorCleanup_LDADD = -lroseBtorSupport $(ROSE_LIBS)
 libroseBtorSupport_la_SOURCES = btorProblem.C x86AssemblyToBtor.C btorProblem.h
-libroseBtorSupport_la_LIBADD = $(ROSE_LIBS)
 libroseSatProblem_la_SOURCES = satProblem.h satProblem.C
 
 include_HEADERS = x86AssemblyToC.h satProblem.h powerpcInstructionSemantics.h x86AssemblyToNetlist.h x86AssemblyToBtor.h btorProblem.h

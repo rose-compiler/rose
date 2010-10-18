@@ -13,6 +13,19 @@
 
 std::vector<BinaryLoader*> BinaryLoader::loaders;
 
+std::ostream&
+operator<<(std::ostream &o, const BinaryLoader::Exception &e)
+{
+    e.print(o);
+    return o;
+}
+
+void
+BinaryLoader::Exception::print(std::ostream &o) const
+{
+    o <<mesg;
+}
+
 /* We put some initializations here in a *.C file so we don't need to recompile so much if we need to change how a
  * BinaryLoader is constructed and we're just making the change for debugging purposes. */
 void

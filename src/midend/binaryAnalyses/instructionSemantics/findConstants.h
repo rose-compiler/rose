@@ -1184,7 +1184,7 @@ public:
                     SgAsmx86RegisterReferenceExpression *op1 = (opands.size()==2 ?
                                                                 isSgAsmx86RegisterReferenceExpression(opands[0]) : NULL);
                     if (op1 && insn->get_kind()==x86_and &&
-                        op1->get_register_class()==x86_regclass_gpr && op1->get_register_number()==x86_gpr_sp &&
+                        op1->get_descriptor().get_major()==x86_regclass_gpr && op1->get_descriptor().get_minor()==x86_gpr_sp &&
                         !le2.isTop) {
                         /* Yes, we're aligning the stack pointer. */
                         LatticeElement<Len> newval = le1; /* stack pointer */

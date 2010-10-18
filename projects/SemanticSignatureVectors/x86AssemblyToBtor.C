@@ -105,21 +105,21 @@ void BtorTranslationPolicy::setInitialState(uint32_t entryPoint, bool initialCon
     }
     writeIP(initialEip);
     writeFlag(x86_flag_cf, problem.build_var(1, "initial_cf"));
-    writeFlag(x86_flag_1, true_());
+    writeFlag((X86Flag)1, true_());
     writeFlag(x86_flag_pf, problem.build_var(1, "initial_pf"));
-    writeFlag(x86_flag_3, false_());
+    writeFlag((X86Flag)3, false_());
     writeFlag(x86_flag_af, problem.build_var(1, "initial_af"));
-    writeFlag(x86_flag_5, false_());
+    writeFlag((X86Flag)5, false_());
     writeFlag(x86_flag_zf, problem.build_var(1, "initial_zf"));
     writeFlag(x86_flag_sf, problem.build_var(1, "initial_sf"));
     writeFlag(x86_flag_tf, false_());
     writeFlag(x86_flag_if, true_());
     writeFlag(x86_flag_df, problem.build_var(1, "initial_df"));
     writeFlag(x86_flag_of, problem.build_var(1, "initial_of"));
-    writeFlag(x86_flag_iopl0, false_());
-    writeFlag(x86_flag_iopl1, false_());
+    writeFlag((X86Flag)(x86_flag_iopl+0), false_());
+    writeFlag((X86Flag)(x86_flag_iopl+1), false_());
     writeFlag(x86_flag_nt, false_());
-    writeFlag(x86_flag_15, false_());
+    writeFlag((X86Flag)15, false_());
   } else {
     writeGPR(x86_gpr_ax, zero(32));
     writeGPR(x86_gpr_cx, zero(32));
@@ -131,21 +131,21 @@ void BtorTranslationPolicy::setInitialState(uint32_t entryPoint, bool initialCon
     writeGPR(x86_gpr_di, zero(32));
     writeIP(number<32>(entryPoint));
     writeFlag(x86_flag_cf, false_());
-    writeFlag(x86_flag_1, true_());
+    writeFlag((X86Flag)1, true_());
     writeFlag(x86_flag_pf, false_());
-    writeFlag(x86_flag_3, false_());
+    writeFlag((X86Flag)3, false_());
     writeFlag(x86_flag_af, false_());
-    writeFlag(x86_flag_5, false_());
+    writeFlag((X86Flag)5, false_());
     writeFlag(x86_flag_zf, false_());
     writeFlag(x86_flag_sf, false_());
     writeFlag(x86_flag_tf, false_());
     writeFlag(x86_flag_if, true_());
     writeFlag(x86_flag_df, false_());
     writeFlag(x86_flag_of, false_());
-    writeFlag(x86_flag_iopl0, false_());
-    writeFlag(x86_flag_iopl1, false_());
+    writeFlag((X86Flag)(x86_flag_iopl+0), false_());
+    writeFlag((X86Flag)(x86_flag_iopl+1), false_());
     writeFlag(x86_flag_nt, false_());
-    writeFlag(x86_flag_15, false_());
+    writeFlag((X86Flag)15, false_());
   }
   writeBackReset();
 }

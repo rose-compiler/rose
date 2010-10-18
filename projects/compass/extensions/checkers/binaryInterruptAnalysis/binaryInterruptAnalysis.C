@@ -560,16 +560,16 @@ CompassAnalyses::BinaryInterruptAnalysis::Traversal::getValueForDefinition(std::
     ROSE_ASSERT(inst);
     positions.push_back(inst->get_address());
     // the right hand side of the instruction is either a use or a value
-    bool memRef = false;
+    bool memRef = false, regRef = false;
     std::pair<X86RegisterClass, int> regRight =
-      check_isRegister(defNode, inst, true, memRef);
+      check_isRegister(defNode, inst, true, memRef, regRef);
 
     if (RoseBin_support::DEBUG_MODE()) {
-      string regName = unparseX86Register(reg.first, reg.second, x86_regpos_qword);
-      string regNameRight = unparseX86Register(regRight.first, regRight.second, x86_regpos_qword);
+      string regName = unparseX86Register(RegisterDescriptor(reg.first, reg.second, 0, 64));
+      string regNameRight = unparseX86Register(RegisterDescriptor(regRight.first, regRight.second, 0, 64));
       cout << " VarAnalysis: getValueForDef . " << regName << "  right hand : " << regNameRight <<endl;
     }
-    if (regRight.first == x86_regclass_unknown) {
+    if (!regRef) {
       // it is either a memref or a value
       if (!memRef) {
 	// get value of right hand side instruction

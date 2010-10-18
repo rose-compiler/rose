@@ -7,10 +7,11 @@
 #include <cstdio>
 #include <iostream>
 #include "integerOps.h"
+#include "stringify.h"
 
-#include "SgAsmExpression.h"
-#include "SgAsmPowerpcInstruction.h"
-#include "conversions.h"
+//#include "SgAsmExpression.h"
+//#include "SgAsmPowerpcInstruction.h"
+//#include "conversions.h"
 
 #ifdef Word
 #error "Having a macro called \"Word\" conflicts with powerpcInstructionSemantics.h"
@@ -89,11 +90,11 @@ struct PowerpcInstructionSemantics {
       case V_SgAsmPowerpcRegisterReferenceExpression: {
         SgAsmPowerpcRegisterReferenceExpression* ref = isSgAsmPowerpcRegisterReferenceExpression(e);
         ROSE_ASSERT(ref != NULL);
-        switch(ref->get_register_class())
+        switch(ref->get_descriptor().get_major())
            {
              case powerpc_regclass_gpr:
                 {
-                  Word(32) val = policy.readGPR(ref->get_register_number());
+                  Word(32) val = policy.readGPR(ref->get_descriptor().get_minor());
                   return val;
                 }
               
@@ -102,13 +103,15 @@ struct PowerpcInstructionSemantics {
                // printf ("Need support for reading SPR in policy! \n");
                // ROSE_ASSERT(false);
                // printf ("ref->get_register_number() = %d \n",ref->get_register_number());
-                  Word(32) val = policy.readSPR(ref->get_register_number());
+                  Word(32) val = policy.readSPR(ref->get_descriptor().get_minor());
                   return val;
                 }
               
              default:
                 {
-                  fprintf(stderr, "Bad register class %s\n", regclassToString(ref->get_register_class())); abort();
+                  fprintf(stderr, "Bad register class %s\n",
+                          stringifyPowerpcRegisterClass(ref->get_descriptor().get_major()).c_str());
+                  abort();
                 }
            }
         
@@ -185,11 +188,11 @@ struct PowerpcInstructionSemantics {
       }
       case V_SgAsmPowerpcRegisterReferenceExpression: {
         SgAsmPowerpcRegisterReferenceExpression* ref = isSgAsmPowerpcRegisterReferenceExpression(e);
-        switch(ref->get_register_class())
+        switch(ref->get_descriptor().get_major())
            {
              case powerpc_regclass_gpr:
                 {
-                  policy.writeGPR(ref->get_register_number(),value);
+                  policy.writeGPR(ref->get_descriptor().get_minor(),value);
                   break;
                 }
               
@@ -198,13 +201,15 @@ struct PowerpcInstructionSemantics {
                // printf ("Need support for writing SPR in policy! \n");
                // ROSE_ASSERT(false);
 
-                  policy.writeSPR(ref->get_register_number(),value);
+                  policy.writeSPR(ref->get_descriptor().get_minor(),value);
 		          break;
                 }
               
              default:
                 {
-                  fprintf(stderr, "Bad register class %s\n", regclassToString(ref->get_register_class())); abort();
+                    fprintf(stderr, "Bad register class %s\n",
+                            stringifyPowerpcRegisterClass(ref->get_descriptor().get_major()).c_str());
+                    abort();
                 }
            }
         
@@ -761,14 +766,14 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            SgAsmPowerpcRegisterReferenceExpression* bf = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(bf != NULL);
-           ROSE_ASSERT(bf->get_register_class() == powerpc_regclass_cr);
-           ROSE_ASSERT(bf->get_conditionRegisterGranularity() == powerpc_condreggranularity_field);
+           ROSE_ASSERT(bf->get_descriptor().get_major() == powerpc_regclass_cr);
+           ROSE_ASSERT(bf->get_descriptor().get_nbits()==4); /* field */
 
         // This should be a helper function!
            Word(1) SO = extract<31,32>(policy.readSPR(powerpc_spr_xer));
            
 
-           policy.writeCRField(bf->get_register_number(),policy.concat(SO,c));
+           policy.writeCRField(bf->get_descriptor().get_offset(),policy.concat(SO,c));
            break;
          }
 
@@ -799,14 +804,14 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            SgAsmPowerpcRegisterReferenceExpression* bf = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(bf != NULL);
-           ROSE_ASSERT(bf->get_register_class() == powerpc_regclass_cr);
-           ROSE_ASSERT(bf->get_conditionRegisterGranularity() == powerpc_condreggranularity_field);
+           ROSE_ASSERT(bf->get_descriptor().get_major() == powerpc_regclass_cr);
+           ROSE_ASSERT(bf->get_descriptor().get_nbits() == 4); /* field */
 
         // This should be a helper function!
            Word(1) SO = extract<31,32>(policy.readSPR(powerpc_spr_xer));
            
 
-           policy.writeCRField(bf->get_register_number(),policy.concat(SO,c));
+           policy.writeCRField(bf->get_descriptor().get_offset(),policy.concat(SO,c));
            break;
          }
 
@@ -835,11 +840,11 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            SgAsmPowerpcRegisterReferenceExpression* BI = isSgAsmPowerpcRegisterReferenceExpression(operands[1]);
            ROSE_ASSERT(BI != NULL);
-           ROSE_ASSERT(BI->get_register_class() == powerpc_regclass_cr);
-           ROSE_ASSERT(BI->get_conditionRegisterGranularity() == powerpc_condreggranularity_bit);
+           ROSE_ASSERT(BI->get_descriptor().get_major() == powerpc_regclass_cr);
+           ROSE_ASSERT(BI->get_descriptor().get_nbits() == 1);
 
         // This needs a collection of helpfer functions!
-           int bi_value = BI->get_register_number();
+           int bi_value = BI->get_descriptor().get_offset();
            Word(4) CR_field = policy.readCRField(bi_value/4);
            Word(1) CR_bi = extract<0,1>(policy.shiftRight(CR_field,number<2>(3 - bi_value % 4)));
            Word(1) COND_ok = BO_0 ? policy.true_() : BO_1 ? CR_bi : policy.invert(CR_bi);
@@ -890,11 +895,11 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            SgAsmPowerpcRegisterReferenceExpression* BI = isSgAsmPowerpcRegisterReferenceExpression(operands[1]);
            ROSE_ASSERT(BI != NULL);
-           ROSE_ASSERT(BI->get_register_class() == powerpc_regclass_cr);
-           ROSE_ASSERT(BI->get_conditionRegisterGranularity() == powerpc_condreggranularity_bit);
+           ROSE_ASSERT(BI->get_descriptor().get_major() == powerpc_regclass_cr);
+           ROSE_ASSERT(BI->get_descriptor().get_nbits() == 1);
 
         // This needs a collection of helpfer functions!
-           int bi_value = BI->get_register_number();
+           int bi_value = BI->get_descriptor().get_offset();
            Word(4) CR_field = policy.readCRField(bi_value/4);
            Word(1) CR_bi = extract<0,1>(policy.shiftRight(CR_field,number<2>(3 - bi_value % 4)));
            Word(1) COND_ok = BO_0 ? policy.true_() : BO_1 ? CR_bi : policy.invert(CR_bi);
@@ -928,13 +933,13 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            SgAsmPowerpcRegisterReferenceExpression* bf = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(bf != NULL);
-           ROSE_ASSERT(bf->get_register_class() == powerpc_regclass_cr);
-           ROSE_ASSERT(bf->get_conditionRegisterGranularity() == powerpc_condreggranularity_field);
+           ROSE_ASSERT(bf->get_descriptor().get_major() == powerpc_regclass_cr);
+           ROSE_ASSERT(bf->get_descriptor().get_nbits() == 4); /* field */
 
         // This should be a helper function!
            Word(1) SO = extract<31,32>(policy.readSPR(powerpc_spr_xer));
 
-           policy.writeCRField(bf->get_register_number(),policy.concat(SO,c));
+           policy.writeCRField(bf->get_descriptor().get_offset(),policy.concat(SO,c));
            break;
          }
 
@@ -1006,13 +1011,13 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            SgAsmPowerpcRegisterReferenceExpression* bf = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(bf != NULL);
-           ROSE_ASSERT(bf->get_register_class() == powerpc_regclass_cr);
-           ROSE_ASSERT(bf->get_conditionRegisterGranularity() == powerpc_condreggranularity_field);
+           ROSE_ASSERT(bf->get_descriptor().get_major() == powerpc_regclass_cr);
+           ROSE_ASSERT(bf->get_descriptor().get_nbits() == 4); /* field */
 
         // This should be a helper function!
            Word(1) SO = extract<31,32>(policy.readSPR(powerpc_spr_xer));
 
-           policy.writeCRField(bf->get_register_number(),policy.concat(SO,c));
+           policy.writeCRField(bf->get_descriptor().get_offset(),policy.concat(SO,c));
            break;
          }
 
@@ -1136,11 +1141,11 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            SgAsmPowerpcRegisterReferenceExpression* BI = isSgAsmPowerpcRegisterReferenceExpression(operands[1]);
            ROSE_ASSERT(BI != NULL);
-           ROSE_ASSERT(BI->get_register_class() == powerpc_regclass_cr);
-           ROSE_ASSERT(BI->get_conditionRegisterGranularity() == powerpc_condreggranularity_bit);
+           ROSE_ASSERT(BI->get_descriptor().get_major() == powerpc_regclass_cr);
+           ROSE_ASSERT(BI->get_descriptor().get_nbits() == 1);
 
         // This needs a collection of helpfer functions!
-           int bi_value = BI->get_register_number();
+           int bi_value = BI->get_descriptor().get_offset();
            Word(4) CR_field = policy.readCRField(bi_value/4);
            Word(1) CR_bi = extract<0,1>(policy.shiftRight(CR_field,number<2>(3 - bi_value % 4)));
            Word(1) COND_ok = BO_0 ? policy.true_() : BO_1 ? CR_bi : policy.invert(CR_bi);
@@ -1162,11 +1167,11 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            SgAsmPowerpcRegisterReferenceExpression* BI = isSgAsmPowerpcRegisterReferenceExpression(operands[1]);
            ROSE_ASSERT(BI != NULL);
-           ROSE_ASSERT(BI->get_register_class() == powerpc_regclass_cr);
-           ROSE_ASSERT(BI->get_conditionRegisterGranularity() == powerpc_condreggranularity_bit);
+           ROSE_ASSERT(BI->get_descriptor().get_major() == powerpc_regclass_cr);
+           ROSE_ASSERT(BI->get_descriptor().get_nbits() == 1);
 
         // This needs a collection of helpfer functions!
-           int bi_value = BI->get_register_number();
+           int bi_value = BI->get_descriptor().get_offset();
            Word(4) CR_field = policy.readCRField(bi_value/4);
            Word(1) CR_bi = extract<0,1>(policy.shiftRight(CR_field,number<2>(3 - bi_value % 4)));
            Word(1) COND_ok = BO_0 ? policy.true_() : BO_1 ? CR_bi : policy.invert(CR_bi);
@@ -1196,9 +1201,9 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            SgAsmPowerpcRegisterReferenceExpression* RS = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(RS != NULL);
-           ROSE_ASSERT(RS->get_register_class() == powerpc_regclass_gpr);
+           ROSE_ASSERT(RS->get_descriptor().get_major() == powerpc_regclass_gpr);
 
-           uint8_t r = RS->get_register_number();
+           uint8_t r = RS->get_descriptor().get_minor();
            uint32_t offset = 0;
 
            while (r <= 31)
@@ -1218,9 +1223,9 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            SgAsmPowerpcRegisterReferenceExpression* RT = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(RT != NULL);
-           ROSE_ASSERT(RT->get_register_class() == powerpc_regclass_gpr);
+           ROSE_ASSERT(RT->get_descriptor().get_major() == powerpc_regclass_gpr);
 
-           uint8_t r = RT->get_register_number();
+           uint8_t r = RT->get_descriptor().get_minor();
            uint32_t offset = 0;
 
            while (r <= 31)
