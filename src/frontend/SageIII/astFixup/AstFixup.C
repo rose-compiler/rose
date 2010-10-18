@@ -3,8 +3,6 @@
 
 // Most source code originally in this file has been separated into individual source files
 
-
-
 // DQ (2/6/2010): This codes was moved from tests/trestTranslator.C
 // It is not currently called within the the fixup of the AST.
 // Note that this used to be called using: 
