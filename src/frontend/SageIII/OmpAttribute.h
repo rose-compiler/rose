@@ -141,6 +141,9 @@ namespace OmpSupport
   // Better using OmpSupport::toString() to avoid ambiguous 
   std::string toString(omp_construct_enum omp_type);
 
+  //! Check if the construct is a Fortran END ... directive
+  bool isFortranEndDirective(omp_construct_enum omp_type);
+
   //! Check if an OpenMP construct is a directive
   bool isDirective(omp_construct_enum omp_type);
 
@@ -161,6 +164,9 @@ namespace OmpSupport
 
   //! Add OmpAttribute to a SgNode
   void addOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
+
+  //! Remove OmpAttribute from a SgNode
+  void removeOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
 
   //! Check if two OmpAttributes are semantically equivalent to each other 
   bool isEquivalentOmpAttribute (OmpAttribute* a1, OmpAttribute* a2);
@@ -388,6 +394,11 @@ namespace OmpSupport
       //! Convert a variable list to x,y,z ,without parenthesis.
       std::string toOpenMPString(std::vector<std::pair<std::string,SgNode* > >);
   }; // end class OmpAttribute
+
+
+ // save encountered Fortran OpenMP directives here.
+ // We reuse the list later on to build OpenMP AST for Fortran
+  extern std::list<OmpAttribute* > omp_comment_list;
 
 
 } //end namespace OmpSupport

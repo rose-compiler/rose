@@ -31,28 +31,50 @@ namespace OmpSupport{
   {
     ROSE_ASSERT(node);
     ROSE_ASSERT(ompattribute);
-   OmpAttributeList* cur_list =  getOmpAttributeList(node);
+    OmpAttributeList* cur_list =  getOmpAttributeList(node);
     if (!cur_list)
     {
       cur_list = new OmpAttributeList();
       node->addNewAttribute("OmpAttributeList",cur_list);
-    // cout<<"OmpSupport::addOmpAttribute() tries to the first one attribute to "<<endl;
+      // cout<<"OmpSupport::addOmpAttribute() tries to the first one attribute to "<<endl;
       SgLocatedNode * lnode = isSgLocatedNode(node);
       ROSE_ASSERT (lnode != NULL);
-    //  cout<<" memory address: "<<lnode<<endl;
-    //  cout<<lnode->get_file_info()->get_filename()<<"@" <<lnode->get_file_info()->get_line()<<endl;
+      //  cout<<" memory address: "<<lnode<<endl;
+      //  cout<<lnode->get_file_info()->get_filename()<<"@" <<lnode->get_file_info()->get_line()<<endl;
     }
     else
     {
-     // cout<<"Warning: OmpSupport::addOmpAttribute() tries to add more than one attribute to "<<endl;
+      // cout<<"Warning: OmpSupport::addOmpAttribute() tries to add more than one attribute to "<<endl;
       SgLocatedNode * lnode = isSgLocatedNode(node);
       ROSE_ASSERT (lnode != NULL);
-     // cout<<" memory address: "<<lnode<<endl;
-     // cout<<lnode->get_file_info()->get_filename()<<"@" <<lnode->get_file_info()->get_line()<<endl;
+      // cout<<" memory address: "<<lnode<<endl;
+      // cout<<lnode->get_file_info()->get_filename()<<"@" <<lnode->get_file_info()->get_line()<<endl;
     }
+    if (ompattribute->getNode () == NULL)
+      ompattribute->setNode (node); // This may violate some rules: not from both proprocessingInfo and SgPragmaDeclaration
+    else
+      {
+       ROSE_ASSERT (ompattribute->getNode () == node);
+      }
     //TODO avoid duplicated ompattributes for the same OpenMP directive
     cur_list->ompAttriList.push_back(ompattribute);
   }
+
+   //! Remove OmpAttribute from a SgNode's OmpAttributeList
+   void removeOmpAttribute(OmpAttribute* ompattribute, SgNode* node)
+   {
+     ROSE_ASSERT(node);
+     ROSE_ASSERT(ompattribute);
+     ROSE_ASSERT (ompattribute->getNode() == node);
+
+     OmpAttributeList* cur_list =  getOmpAttributeList(node);
+     ROSE_ASSERT (cur_list != NULL);
+     vector <OmpAttribute* > ompattlist = cur_list->ompAttriList;
+     vector <OmpAttribute* >::iterator h_pos = find (ompattlist.begin(), ompattlist.end(), ompattribute);
+     ROSE_ASSERT (h_pos != ompattlist.end());
+     ompattlist.erase (h_pos);
+   }
+   
   //! Check if two OmpAttributes are semantically equivalent to each other 
   // It should tolerate different order of variables within variable lists
   bool isEquivalentOmpAttribute (OmpAttribute* a1, OmpAttribute* a2)
@@ -544,6 +566,19 @@ namespace OmpSupport{
     }
     return result;
   }
+
+  //! Check if the construct is a Fortran END ... directive
+  bool isFortranEndDirective(omp_construct_enum omp_type)
+  {
+    bool rt;
+     string name = toString(omp_type);
+     if (name.find ("e_end_",0) == 0 )
+       rt = true;
+     else 
+       rt = false;
+     return rt;  
+  }
+
   //! Check if an OpenMP directive has a structured body
   bool isDirectiveWithBody(omp_construct_enum omp_type)
   {

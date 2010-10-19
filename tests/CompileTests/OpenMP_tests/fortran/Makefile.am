@@ -47,7 +47,8 @@ TESTCODES_CURRENTLY_FAILING = \
     exampleA41f.f90 \
     exampleA134f.f90
 
-ROSE_FLAGS = -rose:openmp
+#ROSE_FLAGS = -rose:openmp
+ROSE_FLAGS = -rose:openmp:ast_only
 
 TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
