@@ -24,6 +24,8 @@ distributedScripts =				\
      policies/NoUsingInHeaders.pl		\
      policies/UniqueHeaderNames.pl		\
      policies/UnixLineTermination.pl		\
+     policies/UnusedHeaders.pl                  \
+     policies/UnusedSources.pl                  \
      runscript					\
      sample_binary_rules.pl			\
      stringify.pl
