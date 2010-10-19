@@ -434,10 +434,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
   // DQ (12/10/2007): Declare Fortran specific lexical pass function explicitly.
   // extern int getFortranFixedFormatPreprocessorDirectives( std::string fileName );
   // extern int getFortranFreeFormatPreprocessorDirectives ( std::string fileName );
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      extern std::list <stream_element*>* getFortranFixedFormatPreprocessorDirectives( std::string fileName );
      extern std::list <stream_element*>* getFortranFreeFormatPreprocessorDirectives ( std::string fileName );
-#endif
+// #endif
 #endif 
      ROSEAttributesList* returnListOfAttributes = new ROSEAttributesList();
 
@@ -490,7 +490,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                }
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
             // This is either of two different kinds of Fortran programs: fixed format or free format
             //    * fix format is generally used for older Fortran code, F77 and earlier, and 
             //    * free format is generall used for newer codes, F90 and later
@@ -564,10 +564,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                ROSE_ASSERT(false);
 #endif
 
-#else // for !USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-               fprintf(stderr, "Fortran parser not enabled \n");
-               ROSE_ABORT();
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #else // for !USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+//               fprintf(stderr, "Fortran parser not enabled \n");
+//               ROSE_ABORT();
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif // for #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
              }
             else
