@@ -3,6 +3,16 @@
 
 #include <string>
 
+enum ArmRegisterClass {
+    arm_regclass_gpr,           /* general purpose registers */
+    arm_regclass_psr		/* program status registers */
+};
+
+enum ArmProgramStatusRegister {
+    arm_psr_current,
+    arm_psr_saved
+};
+
 enum ArmInstructionKind {
   arm_unknown_instruction = 0,
   arm_adc,                              /**< add with carry */
@@ -126,7 +136,5 @@ enum ArmInstructionCondition {
   arm_cond_al = 15,                     /**< always (normally omitted) */
   arm_cond_nv = 16                      /*??*/
 };
-
-std::string toString(ArmInstructionKind k);
 
 #endif /* ROSE_ARMINSTRUCTIONENUM_H */

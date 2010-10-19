@@ -6,10 +6,10 @@ add_subdirectory(commandlineProcessing)
 add_subdirectory(support)
 add_subdirectory(graphs)
 
-
-
+###############################################################################################################################
 #Generating "rose_paths.C"
 #We may want to generate it in a different way in the future
+###############################################################################################################################
 file( REMOVE ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C )
 file( WRITE  ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C "\#include <string> \n\n" )
 #file( APPEND ${ROSE_TOP_BINARY_DIR}/test.txt we have ${CMAKE_Fortran_COMPILER} )

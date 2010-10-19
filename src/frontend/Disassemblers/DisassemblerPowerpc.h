@@ -40,8 +40,9 @@ private:
         }
     };
 
-    static SgAsmPowerpcRegisterReferenceExpression *makeRegister(PowerpcRegisterClass reg_class, int reg_number,
-                                   PowerpcConditionRegisterAccessGranularity reg_grainularity = powerpc_condreggranularity_whole);
+    SgAsmPowerpcRegisterReferenceExpression *
+    makeRegister(PowerpcRegisterClass reg_class, int reg_number,
+                 PowerpcConditionRegisterAccessGranularity reg_grainularity = powerpc_condreggranularity_whole) const;
 
     static SgAsmPowerpcInstruction *makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic,
                                                                    PowerpcInstructionKind kind, uint32_t insn);

@@ -49,21 +49,21 @@ void BtorFunctionPolicy::makeRegMap(BTRegisterInfo& rm, const std::string& prefi
   }
   rm.ip = problem.build_var(32, prefix + "eip");
   writeFlag(x86_flag_cf, problem.build_var(1, "cf"));
-  writeFlag(x86_flag_1, true_());
+  writeFlag((X86Flag)1, true_());
   writeFlag(x86_flag_pf, problem.build_var(1, "pf"));
-  writeFlag(x86_flag_3, false_());
+  writeFlag((X86Flag)3, false_());
   writeFlag(x86_flag_af, problem.build_var(1, "af"));
-  writeFlag(x86_flag_5, false_());
+  writeFlag((X86Flag)5, false_());
   writeFlag(x86_flag_zf, problem.build_var(1, "zf"));
   writeFlag(x86_flag_sf, problem.build_var(1, "sf"));
   writeFlag(x86_flag_tf, false_());
   writeFlag(x86_flag_if, true_());
   writeFlag(x86_flag_df, problem.build_var(1, "df"));
   writeFlag(x86_flag_of, problem.build_var(1, "of"));
-  writeFlag(x86_flag_iopl0, false_());
-  writeFlag(x86_flag_iopl1, false_());
+  writeFlag((X86Flag)(x86_flag_iopl+0), false_());
+  writeFlag((X86Flag)(x86_flag_iopl+1), false_());
   writeFlag(x86_flag_nt, false_());
-  writeFlag(x86_flag_15, false_());
+  writeFlag((X86Flag)15, false_());
   rm.memory = problem.build_array(8, 32, prefix + "memory");
 }
 

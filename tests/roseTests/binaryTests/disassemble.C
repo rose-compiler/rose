@@ -877,8 +877,15 @@ main(int argc, char *argv[])
         BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
         if (do_debug_loader) loader->set_debug(stderr);
         //loader->set_perform_dynamic_linking(true);
+        loader->set_perform_remap(true);
+        //loader->set_perform_relocations(true);
         //loader->add_directory("/lib32");
-        loader->load(interp);
+        try {
+            loader->load(interp);
+        } catch (const BinaryLoader::Exception &e) {
+            std::cerr <<arg0 <<": BinaryLoader exception: " <<e <<"\n";
+            exit(1);
+        }
     }
 
 

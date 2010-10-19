@@ -151,8 +151,8 @@ MallocAndFree::visit(SgNode* node) {
 	      }
 	    } //for
 	    if (mem && reg) {
-	      X86RegisterClass cl = reg->get_register_class();
-	      int regNr = reg->get_register_number();
+              X86RegisterClass cl = (X86RegisterClass)reg->get_descriptor().get_major();
+	      int regNr = reg->get_descriptor().get_minor();
 	      if (cl == x86_regclass_gpr && regNr==x86_gpr_ax) {
 		// this mov matches, now store the address of the mem
 		// so we can find out if this address is freed later.

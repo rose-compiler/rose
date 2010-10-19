@@ -252,6 +252,7 @@ struct ReadAndWriteSetPolicy {
 
   void hlt() {} // FIXME
   void interrupt(uint8_t num) {readAndWriteSets[currentAddr].readMemory |= false;}
+  void sysenter() {readAndWriteSets[currentAddr].readMemory |= false;}
   W<64> rdtsc() {return W<64>();} // FIXME
 
   void startBlock(uint64_t addr) {
