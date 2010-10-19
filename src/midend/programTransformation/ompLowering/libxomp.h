@@ -32,7 +32,7 @@ extern void XOMP_task (void (*) (void *), void *, void (*) (void *, void *),
                        long, long, bool, unsigned);
 extern void XOMP_taskwait (void);
 
-// scheduler functions, union of runtime libary functions
+// scheduler functions, union of runtime library functions
 // empty body if not used by one
 // scheduler initialization, only meaningful used for OMNI
 extern void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size);

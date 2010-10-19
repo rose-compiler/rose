@@ -58,8 +58,14 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 // #include "sage3.h"
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
+
 #include "attachPreprocessingInfo.h"
 #include "attachPreprocessingInfoTraversal.h"
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -164,7 +170,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // This is the main function called to insert all PreprocessingInfo objects into IR nodes.  This function currently 
   // adds the PreprocessingInfo objects as attributes, but will be modified to insert the CPP directive specific
   // PreprocessingInfo objects as separate IR nodes and leave PreprocessingInfo objects that are comments inserts
-  // as attributes.  Note that attributes imply PreprocessingInfo specific atributes and not the more general 
+  // as attributes.  Note that attributes imply PreprocessingInfo specific atrributes and not the more general 
   // mechanism available in ROSE for user defined attributes to be saved into the AST.
 
      ROSE_ASSERT(currentListOfAttributes != NULL);
@@ -1075,8 +1081,6 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                          // Iterate over the list of comments and directives and add them to the AST
                             bool reset_start_index = true;
-                         // iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
-                         //    ( targetNode, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index,inheritedAttribute.currentListOfAttributes );
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                                ( targetNode, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
 

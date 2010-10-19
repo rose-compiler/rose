@@ -5,13 +5,11 @@
 #include <boost/lambda/algorithm.hpp>
 #include <boost/lambda/bind.hpp>
 #include <utilities/utilities.h>
+#include <utilities/cppDefinesAndNamespaces.h>
 
-using namespace boost;
-using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
-
-#define foreach BOOST_FOREACH
+using namespace std;
 
 
 #if 0

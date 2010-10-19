@@ -104,8 +104,7 @@ jofp_get_cons_method()
     static jmethodID  consMethod;
 
     if (consMethod == NULL) 
-	consMethod = jofp_get_method(REGULAR_METHOD, "<init>", 
-	"([Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+         consMethod = jofp_get_method(REGULAR_METHOD, "<init>","([Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     return consMethod;
 }
 

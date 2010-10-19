@@ -56,7 +56,7 @@ void RtedTransformation::insert_pointer_change( SgExpression* exp ) {
     SgExprStatement* mp_call = 
         buildExprStatement(
             buildFunctionCallExp(
-                buildFunctionRefExp( roseMovePointer ),
+                buildFunctionRefExp( symbols->roseMovePointer ),
                 mp_args
             ));
 

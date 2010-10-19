@@ -39,7 +39,7 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
 
     ROSE_ASSERT( stmt );
     ROSE_ASSERT( exit_file_info );
-    ROSE_ASSERT( roseEnterScope );
+    ROSE_ASSERT( symbols->roseEnterScope );
 
     SgExprListExp* enter_scope_args = buildExprListExp();
     appendExpression(
@@ -56,7 +56,7 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
     SgExprStatement* fncall_enter 
         = buildExprStatement(
             buildFunctionCallExp(
-              buildFunctionRefExp( roseEnterScope),
+              buildFunctionRefExp( symbols->roseEnterScope),
               enter_scope_args
             )
           );
@@ -109,7 +109,7 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
     SgExprStatement* exit_scope_call = 
         buildExprStatement(
           buildFunctionCallExp(
-            buildFunctionRefExp( roseExitScope),
+            buildFunctionRefExp( symbols->roseExitScope),
             exit_scope_args
           )
         );

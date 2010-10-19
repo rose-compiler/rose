@@ -6,7 +6,7 @@ AC_MSG_CHECKING([for Java (javac first, then java, then jvm)])
 
 AC_ARG_WITH([java],
             AS_HELP_STRING([--with-java],
-                           [use Java for Fortran or Javaport support (default is YES if Java can be found)]),
+                           [use Java for Fortran and Java language support in ROSE and/or Javaport support to build Java wrapers of ROSE functions (default is YES if Java can be found)]),
             [javasetting=$withval],
             [javasetting=try])
 
@@ -96,8 +96,9 @@ else
 fi
 
 # echo "Before checking for Java JVM: JAVA_PATH = ${JAVA_PATH}"
-
 if test "x$USE_JAVA" = x1; then
+
+  echo "Now verifying aspects of the found java software (java, javac, javah, jar)..."
 
   JAVA_BIN="${JAVA_PATH}/bin"
   JAVA="${JAVA_BIN}/java"
@@ -138,7 +139,31 @@ if test "x$USE_JAVA" = x1; then
   else
     AC_MSG_ERROR([jar not found in $JAVA_PATH])
   fi
+
+  JAVAC="${JAVA_BIN}/javac"
+  AC_MSG_CHECKING(for javac)
+  if test -x "${JAVAC}"; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_ERROR([javac not found in $JAVA_PATH])
+  fi
+
+  JAVAH="${JAVA_BIN}/javah"
+  AC_MSG_CHECKING(for javah)
+  if test -x "${JAVAH}"; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_ERROR([javah not found in $JAVA_PATH])
+  fi
 fi
+
+# DQ (10/13/2010): Added checking for jar command (common in Linux, but not on some platforms; e.g NMI machines).
+# AC_CHECK_PROGS(JAR, [jar])
+# AM_CONDITIONAL(ROSE_USE_JAR, [test "x$JAR" = "xjar"])
+# echo "value of JAR variable = $JAR"
+# if test $JAR; then
+#   AC_DEFINE([USE_ROSE_JAR_SUPPORT],[],[Controls use of ROSE support for Java.])
+# fi
 
 if test $USE_JAVA; then
   AC_DEFINE([USE_ROSE_JAVA_SUPPORT],[],[Controls use of ROSE support for Java.])
@@ -150,7 +175,9 @@ AC_SUBST(JAVA_JVM_LINK)
 AC_SUBST(JAVA_JVM_INCLUDE)
 AC_SUBST(JAVA)
 AC_SUBST(JAVAC)
+AC_SUBST(JAVAH)
 AC_SUBST(JAR)
+
 
 # End macro ROSE_SUPPORT_JAVA.
 ]

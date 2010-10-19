@@ -46,7 +46,7 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args  ) {
     SgExpression* callNameExp = buildString(args->f_name);
 
     //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
-    ROSE_ASSERT(roseIOFunctionCall);
+    ROSE_ASSERT(symbols->roseIOFunctionCall);
 
     SgExprListExp* arg_list = buildExprListExp();
     //appendExpression(arg_list, sizeExp);
@@ -133,9 +133,9 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args  ) {
       abort();
     }
 
-    string symbolName2 = roseIOFunctionCall->get_name().str();
+    string symbolName2 = symbols->roseIOFunctionCall->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-    SgFunctionRefExp* memRef_r = buildFunctionRefExp(roseIOFunctionCall);
+    SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols->roseIOFunctionCall);
     SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r, arg_list);
     SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
     // create the function call and its comment

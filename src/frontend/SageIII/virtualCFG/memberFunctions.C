@@ -3800,11 +3800,20 @@ SgImpliedDo::cfgOutEdges(unsigned int idx)
      std::vector<CFGEdge> result;
      switch (idx)
         {
-          case 0: makeEdge(CFGNode(this, idx), this->get_do_var()->cfgForBeginning(), result); break;
+#if 0
+       // DQ (10/9/2010): Old design
+          case 0: makeEdge(CFGNode(this, idx), this->get_do_var_exp()->cfgForBeginning(), result); break;
           case 1: makeEdge(CFGNode(this, idx), this->get_first_val()->cfgForBeginning(), result); break;
           case 2: makeEdge(CFGNode(this, idx), this->get_last_val()->cfgForBeginning(), result); break;
           case 3: makeEdge(CFGNode(this, idx), this->get_increment()->cfgForBeginning(), result); break;
           case 4: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+#else
+       // DQ (10/9/2010): New design
+          case 0: makeEdge(CFGNode(this, idx), this->get_do_var_initialization()->cfgForBeginning(), result); break;
+          case 1: makeEdge(CFGNode(this, idx), this->get_last_val()->cfgForBeginning(), result); break;
+          case 2: makeEdge(CFGNode(this, idx), this->get_increment()->cfgForBeginning(), result); break;
+          case 3: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+#endif
           default: ROSE_ASSERT (!"Bad index for SgImpliedDo");
         }
 
@@ -3817,11 +3826,20 @@ SgImpliedDo::cfgInEdges(unsigned int idx)
      std::vector<CFGEdge> result;
      switch (idx)
         {
+#if 0
+       // DQ (10/9/2010): Old design
           case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
-          case 1: makeEdge(this->get_do_var()->cfgForEnd(), CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_do_var_exp()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 2: makeEdge(this->get_first_val()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 3: makeEdge(this->get_last_val()->cfgForEnd(), CFGNode(this, idx), result); break;
           case 4: makeEdge(this->get_increment()->cfgForEnd(), CFGNode(this, idx), result); break;
+#else
+       // DQ (10/9/2010): New design
+          case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_do_var_initialization()->cfgForEnd(), CFGNode(this, idx), result); break;
+          case 3: makeEdge(this->get_last_val()->cfgForEnd(), CFGNode(this, idx), result); break;
+          case 4: makeEdge(this->get_increment()->cfgForEnd(), CFGNode(this, idx), result); break;
+#endif
           default: ROSE_ASSERT (!"Bad index for SgImpliedDo");
         }
 
@@ -4331,13 +4349,13 @@ bool SgMinusMinusOp::isChildUsedAsLValue(const SgExpression* child) const
 		}
 		else
 		{
-			return isUsedAsLValue();
+			return true;
 		}
 	}
 	/*! std:5.3.2 par:2 */
 	else
 	{
-		return isUsedAsLValue();
+		return true;
 	}
 }
 
@@ -4368,13 +4386,13 @@ bool SgPlusPlusOp::isChildUsedAsLValue(const SgExpression* child) const
 		}
 		else
 		{
-			return isUsedAsLValue();
+			return true;
 		}
 	}
 	/*! std:5.3.2 par:1 */
 	else
 	{
-		return isUsedAsLValue();
+		return true;
 	}
 }
 
@@ -4382,7 +4400,6 @@ bool SgPlusPlusOp::isChildUsedAsLValue(const SgExpression* child) const
 bool SgFunctionCallExp::isLValue() const
 {
 	//! Function Pointers don't have a declaration!
-//	if (getAssociatedFunctionDeclaration()->get_orig_return_type()->get_ref_to() != NULL)
 	SgType* type = get_function()->get_type();
 	while (SgTypedefType* type2 = isSgTypedefType(type))
 		type = type2->get_base_type();
@@ -4394,10 +4411,7 @@ bool SgFunctionCallExp::isLValue() const
 	}
 	else
 	{
-		// depends on the return-type being a reference type
-//		if (ftype->get_return_type()->get_ref_to() == NULL)
-//		if (isSgReferenceType(ftype->get_return_type()) != NULL)
-		if (SageInterface::isReferenceType(ftype->get_return_type()) != NULL)
+		if (SageInterface::isReferenceType(ftype->get_return_type()))
 			return true;
 		else
 			return false;
@@ -4421,33 +4435,30 @@ bool SgFunctionCallExp::isChildUsedAsLValue(const SgExpression* child) const
 /*! std:5.4 par:1; std:5.2.11 par:1; std:5.2.9 par:1; std:5.2.7 par:2; std:5.2.10 par:1 */
 bool SgCastExp::isLValue() const
 {
-//	printf("%d: %s : %s\n", get_file_info()->get_line(), unparseToString().c_str(), get_type()->unparseToString().c_str());
 	switch (cast_type())
 	{
 		case e_C_style_cast:
-//			if (get_type()->get_ref_to() != NULL) /*! std:5.4 par:1 */
-//			if (isSgReferenceType(get_type()) != NULL) /*! std:5.4 par:1 */
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.4 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.4 par:1 */
 				return true;
 			else
 				return false;
 		case e_const_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.11 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.11 par:1 */
 				return true;
 			else
 				return false;
 		case e_static_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.9 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.9 par:1 */
 				return true;
 			else
 				return false;
 		case e_dynamic_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.7 par:2 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.7 par:2 */
 				return true;
 			else
 				return false;
 		case e_reinterpret_cast:
-			if (SageInterface::isReferenceType(get_type()) != NULL) /*! std:5.2.10 par:1 */
+			if (SageInterface::isReferenceType(get_type())) /*! std:5.2.10 par:1 */
 				return true;
 			else
 				return false;
@@ -4507,7 +4518,10 @@ bool SgMemberFunctionRefExp::isChildUsedAsLValue(const SgExpression* child) cons
 bool SgVarRefExp::isDefinable() const
 {
 	// if not constant
-	return !SageInterface::isConstType(get_type());
+	if (SageInterface::isConstType(get_type()))
+		return false;
+	// if it is protected, it is not definable
+	return true;
 }
 
 /*! std:5.1 par:7,8 */
@@ -4553,6 +4567,28 @@ bool SgConditionalExp::isChildUsedAsLValue(const SgExpression* child) const
 	else// if (!isChild(const_cast<SgExpression*>(child)))
 	{
 		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgConditionalExp");
+		return false;
+	}
+}
+
+bool SgAssignInitializer::isLValue() const
+{
+	return get_operand()->isLValue();
+}
+
+bool SgAssignInitializer::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_operand() == child)
+	{
+		/*! std:8.5.3 par:5 */
+		if (SageInterface::isNonconstReference(get_type()))
+			return true;
+		else
+			return false;
+	}
+	else
+	{
+		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAssignInitializer");
 		return false;
 	}
 }
@@ -4791,5 +4827,96 @@ bool SgCommaOpExp::isChildUsedAsLValue(const SgExpression* child) const
 		ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgCommaOpExp");
 		return false;
 	}
+}
+
+/*! std:8.5.3 par:5 */
+bool SgExprListExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+	// King84 (2010.10.05) This is very context-dependant, depending even on the parent expression.  Note that it does not depend on if the parent is used as an lvalue.
+	int idx = 0;
+	for (SgExpressionPtrList::const_iterator i = get_expressions().begin(); i != get_expressions().end(); ++i)
+	{
+		++idx;
+		if (child == *i)
+		{
+			SgFunctionType* funt = NULL;
+			if (SgFunctionCallExp* fun = isSgFunctionCallExp(get_parent()))
+				funt = isSgFunctionType(fun->get_function()->get_type());
+			else if (SgConstructorInitializer* construct = isSgConstructorInitializer(get_parent()))
+				funt = isSgFunctionType(construct->get_declaration()->get_type());
+			else if (SgAggregateInitializer* aggri = isSgAggregateInitializer(get_parent()))
+			{
+				SgType* destType = aggri->get_type()->findBaseType();
+				SgClassType* ctype = isSgClassType(destType);
+				if (ctype) // otherwise it's an array
+				{
+					SgClassDeclaration* decl = isSgClassDeclaration(ctype->get_declaration()->get_definingDeclaration());
+					ROSE_ASSERT(decl);
+					SgClassDefinition* defn = decl->get_definition();
+					// King84 (2010.10.05): Note that it is illegal to initialize with an aggregate intitializer if there is any inheritance going on
+					int jdx = 0;
+					// Go through all the declarations in order and find the corresponding index for the current child.
+					for(SgDeclarationStatementPtrList::iterator i = defn->get_members().begin(); i != defn->get_members().end(); ++i)
+					{
+						if (SgVariableDeclaration* fun = isSgVariableDeclaration(*i))
+						{ 
+							for (SgInitializedNamePtrList::iterator j = fun->get_variables().begin(); j != fun->get_variables().end(); ++j)
+							{
+								++jdx;
+								if (jdx == idx)
+								{
+									if (SageInterface::isNonconstReference((*j)->get_type()))
+										return true;
+									else
+										return false;
+								}
+							}
+						}
+					}
+					ROSE_ASSERT(!"Unable to find declaration to match with initializing child in isChildUsedAsLValue on SgExprListExp");
+
+				}
+				else
+				{
+					if (SageInterface::isNonconstReference(destType)) // note that currently we cannot have arrays of references
+						return true;
+					else
+						return false;
+				}
+			}
+			if (funt)
+			{
+				int jdx = 0;
+				for (SgTypePtrList::const_iterator j = funt->get_arguments().begin(); j != funt->get_arguments().end(); ++i)
+				{
+					++jdx;
+					if (jdx == idx)
+					{
+						if (SageInterface::isNonconstReference(*j))
+							return true;
+						else
+							return false;
+					}
+				}
+				ROSE_ASSERT(!"Unable to find parameter for child as argument in isChildUsedAsLValue on SgExprListExp");
+			}
+		}
+	}
+	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgExprListExp");
+	return false;
+}
+
+/*! std:8.5.3 par:5 */
+bool SgReturnStmt::isChildUsedAsLValue(const SgExpression* child) const
+{
+	if (get_expression() == child)
+	{
+		if (SageInterface::isNonconstReference(SageInterface::getEnclosingFunctionDeclaration(const_cast<SgReturnStmt*>(this))->get_type()->get_return_type()))
+			return true;
+		else
+			return false;
+	}
+	ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgReturnStmt");
+	return false;
 }
 

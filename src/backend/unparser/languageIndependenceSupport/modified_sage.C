@@ -6,9 +6,14 @@
 
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
 #include "unparser.h"
 #include "modified_sage.h"
-// include "bool.h"
+
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -1830,21 +1835,21 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
              }
           if (functionDeclaration->get_functionModifier().hasOpenclVecTypeHint())
              {
-               SgType * opencl_vec_type = functionDeclaration->get_functionModifier().get_opencl_vec_type();
-               //curprint( "__attribute__((vec_type_hint(" << get_type_name(opencl_vec_type) << "))) ");
-               //curprint( "__attribute__((vec_type_hint(" << unp->u_type->unparseType(opencl_vec_type) << "))) ");
+            // SgType * opencl_vec_type = functionDeclaration->get_functionModifier().get_opencl_vec_type();
+            // curprint( "__attribute__((vec_type_hint(" << get_type_name(opencl_vec_type) << "))) ");
+            // curprint( "__attribute__((vec_type_hint(" << unp->u_type->unparseType(opencl_vec_type) << "))) ");
                curprint( "__attribute__((vec_type_hint(type))) ");
              }
           if (functionDeclaration->get_functionModifier().hasOpenclWorkGroupSizeHint())
              {
                SgFunctionModifier::opencl_work_group_size_t opencl_work_group_size = functionDeclaration->get_functionModifier().get_opencl_work_group_size();
-               //curprint( "__attribute__((work_group_size_hint(" << opencl_work_group_size.x << ", " << opencl_work_group_size.y << ", " << opencl_work_group_size.z << "))) ");
+            // curprint( "__attribute__((work_group_size_hint(" << opencl_work_group_size.x << ", " << opencl_work_group_size.y << ", " << opencl_work_group_size.z << "))) ");
                curprint( "__attribute__((work_group_size_hint(X, Y, Z))) ");
              }
           if (functionDeclaration->get_functionModifier().hasOpenclWorkGroupSizeReq())
              {
                SgFunctionModifier::opencl_work_group_size_t opencl_work_group_size = functionDeclaration->get_functionModifier().get_opencl_work_group_size();
-               //curprint( "__attribute__((work_group_size_hint(" << opencl_work_group_size.x << ", " << opencl_work_group_size.y << ", " << opencl_work_group_size.z << "))) ");
+            // curprint( "__attribute__((work_group_size_hint(" << opencl_work_group_size.x << ", " << opencl_work_group_size.y << ", " << opencl_work_group_size.z << "))) ");
                curprint( "__attribute__((work_group_size_hint(X, Y, Z))) ");
              }
         }

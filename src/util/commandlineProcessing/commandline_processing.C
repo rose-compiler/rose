@@ -104,10 +104,11 @@ CommandlineProcessing::generateArgListFromString ( string commandline )
    }
 
 //! Convert a vector of string to a single string
-std::string CommandlineProcessing::generateStringFromArgList( Rose_STL_Container<std::string> & argList)
+// std::string CommandlineProcessing::generateStringFromArgList( Rose_STL_Container<std::string> & argList)
+std::string CommandlineProcessing::generateStringFromArgList( const Rose_STL_Container<std::string> & argList)
 {
   string result; 
-  Rose_STL_Container<std::string>::iterator iter;
+  Rose_STL_Container<std::string>::const_iterator iter;
   for (iter = argList.begin(); iter != argList.end(); iter ++)
   {
     if (iter !=argList.begin())
@@ -979,6 +980,26 @@ CommandlineProcessing::isOpenCLFileNameSuffix ( const std::string & suffix )
      return returnValue;
    }
 
+bool
+CommandlineProcessing::isJavaFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "java" )
+#else//It is a case insensitive system
+     if ( suffix == "java" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+   
+
 void
 CommandlineProcessing::initSourceFileSuffixList ( )
    {
@@ -1021,15 +1042,20 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".F03");
           validSourceFileSuffixes.push_back(".F08");
           validSourceFileSuffixes.push_back(".CAF");
-          validSourceFileSuffixes.push_back(".rmod"); //FMZ 5/28/2008
 
-     // Liao (6/6/2008)  Support for UPC   
+       // FMZ 5/28/2008
+          validSourceFileSuffixes.push_back(".rmod");
+
+       // Liao (6/6/2008)  Support for UPC   
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
-     // TV (05/17/2010) Support for CUDA
+       // TV (05/17/2010) Support for CUDA
           validSourceFileSuffixes.push_back(".cu");
-     // TV (05/17/2010) Support for OpenCL
+       // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
+
+       // DQ (10/11/2010): Adding support for java.
+          validSourceFileSuffixes.push_back(".java");
 #else 
        // it is a case insensitive system
           validSourceFileSuffixes.push_back(".c");
@@ -1058,13 +1084,20 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".F03");
           validSourceFileSuffixes.push_back(".F08");
           validSourceFileSuffixes.push_back(".CAF");
-          validSourceFileSuffixes.push_back(".rmod"); //FMZ 5/28/2008
+
+       // FMZ 5/28/2008
+          validSourceFileSuffixes.push_back(".rmod");
+
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
-     // TV (05/17/2010) Support for CUDA
+
+       // TV (05/17/2010) Support for CUDA
           validSourceFileSuffixes.push_back(".cu");
-     // TV (05/17/2010) Support for OpenCL
+       // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
+
+       // DQ (10/11/2010): Adding support for java.
+          validSourceFileSuffixes.push_back(".java");
 #endif
           first_call = false;
         }

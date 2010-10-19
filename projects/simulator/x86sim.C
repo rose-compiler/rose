@@ -1,6 +1,11 @@
 /* Emulates an executable. */
 #include "rose.h"
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 /* Define one CPP symbol to determine whether this simulator can be compiled.  The definition of this one symbol depends on
  * all the header file prerequisites. */
 #if defined(HAVE_ASM_LDT_H) && defined(HAVE_ELF_H) && \
@@ -31,6 +36,7 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
+#include <utime.h>
 
 
 /* AS extra required headrs for system call simulation */
@@ -55,12 +61,22 @@
 #include <sys/ioctl.h>
 #include <asm/ldt.h>
 #include <linux/unistd.h>
+#include <sys/sysinfo.h> 
+#include <sys/sem.h>
+
 
 enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
 
+#define CONV_FIELD(var1, var2, field) var1.field = var2.field
 #ifndef HAVE_USER_DESC
 typedef modify_ldt_ldt_s user_desc;
 #endif
+
+static const int PROGRESS_INTERVAL = 10; /* seconds */
+static int had_alarm = 0;
+static void alarm_handler(int) {
+    had_alarm = 1;
+}
 
 static int
 print_user_desc(FILE *f, const uint8_t *_ud, size_t sz)
@@ -68,13 +84,27 @@ print_user_desc(FILE *f, const uint8_t *_ud, size_t sz)
     const user_desc *ud = (const user_desc*)_ud;
     assert(sizeof(*ud)==sz);
 
-    return fprintf(f, "entry=%d, base=0x%08lx, limit=0x%08lx, %s, %u, %s, %s, %s, %s",
+    const char *content_type = "unknown";
+    switch (ud->contents) {
+        case 0: content_type = "data"; break;
+        case 1: content_type = "stack"; break;
+        case 2: content_type = "code"; break;
+    }
+
+    return fprintf(f, "entry=%d, base=0x%08lx, limit=0x%08lx, %s, %s, %s, %s, %s, %s",
                    (int)ud->entry_number, (unsigned long)ud->base_addr, (unsigned long)ud->limit,
                    ud->seg_32bit ? "32bit" : "16bit",
-                   ud->contents, ud->read_exec_only ? "read_exec" : "writable",
+                   content_type, ud->read_exec_only ? "read_exec" : "writable",
                    ud->limit_in_pages ? "page_gran" : "byte_gran",
                    ud->seg_not_present ? "not_present" : "present",
                    ud->useable ? "usable" : "not_usable");
+}
+
+static int
+print_int_32(FILE *f, const uint8_t *ptr, size_t sz)
+{
+    assert(4==sz);
+    return fprintf(f, "%"PRId32, *(const int32_t*)ptr);
 }
 
 /* Kernel stat data structure on 32-bit platforms; the data written back to the specimen's memory */
@@ -135,6 +165,52 @@ print_kernel_stat_32(FILE *f, const uint8_t *_sb, size_t sz)
                    sb->rdev, sb->size, sb->blksize, sb->nblocks);
 }
 
+struct timespec_32 {
+    uint32_t sec;
+    uint32_t nsec;
+} __attribute__((packed));
+
+static int
+print_timespec_32(FILE *f, const uint8_t *_ts, size_t sz)
+{
+    assert(sz==sizeof(timespec_32));
+    const timespec_32 *ts = (const timespec_32*)_ts;
+    return fprintf(f, "sec=%"PRIu32", nsec=%"PRIu32, ts->sec, ts->nsec);
+}
+
+static const Translate signal_names[] = {
+    TE(SIGHUP), TE(SIGINT), TE(SIGQUIT), TE(SIGILL), TE(SIGTRAP), TE(SIGABRT), TE(SIGBUS), TE(SIGFPE), TE(SIGKILL),
+    TE(SIGUSR1), TE(SIGSEGV), TE(SIGUSR2), TE(SIGPIPE), TE(SIGALRM), TE(SIGTERM), TE(SIGSTKFLT), TE(SIGCHLD), TE(SIGCONT),
+    TE(SIGSTOP), TE(SIGTSTP), TE(SIGTTIN), TE(SIGTTOU), TE(SIGURG), TE(SIGXCPU), TE(SIGXFSZ), TE(SIGVTALRM), TE(SIGPROF),
+    TE(SIGWINCH), TE(SIGIO), TE(SIGPWR), TE(SIGSYS), TE2(32, SIGRT32), TE2(33, SIGRT33), TE2(34, SIGRT34), TE2(35, SIGRT35),
+    TE2(36, SIGRT36), TE2(37, SIGRT37), TE2(38, SIGRT38), TE2(39, SIGRT39), TE2(40, SIGRT40), TE2(41, SIGRT41),
+    TE2(42, SIGRT42), TE2(43, SIGRT43), TE2(44, SIGRT44), TE2(45, SIGRT45), TE2(46, SIGRT46), TE2(47, SIGRT47),
+    TE2(48, SIGRT48), TE2(49, SIGRT49), TE2(50, SIGRT50), TE2(51, SIGRT51), TE2(52, SIGRT52), TE2(53, SIGRT53),
+    TE2(54, SIGRT54), TE2(55, SIGRT55), TE2(56, SIGRT56), TE2(57, SIGRT57), TE2(58, SIGRT58), TE2(59, SIGRT59),
+    TE2(60, SIGRT60), TE2(61, SIGRT61), TE2(62, SIGRT62), TE2(63, SIGRT63),
+    T_END};
+
+static const Translate signal_flags[] = {
+    TF(SA_NOCLDSTOP), TF(SA_NOCLDWAIT), TF(SA_NODEFER), TF(SA_ONSTACK), TF(SA_RESETHAND), TF(SA_RESTART),
+    TF(SA_SIGINFO), T_END};
+
+struct sigaction_32 {
+    uint32_t handler_va;
+    uint32_t flags;
+    uint32_t restorer_va;
+    uint64_t mask;
+} __attribute__((packed));
+
+static int
+print_sigaction_32(FILE *f, const uint8_t *_sa, size_t sz)
+{
+    assert(sz==sizeof(sigaction_32));
+    const sigaction_32 *sa = (const sigaction_32*)_sa;
+    return (fprintf(f, "handler=0x%08"PRIx32", flags=", sa->handler_va) +
+            print_flags(f, signal_flags, sa->flags) +
+            fprintf(f, ", restorer=0x%08"PRIx32", mask=0x%016"PRIx64, sa->restorer_va, sa->mask));
+}
+
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
@@ -150,13 +226,6 @@ public:
             limit = ud.limit_in_pages ? (ud.limit << 12) | 0xfff : ud.limit;
             present = !ud.seg_not_present && ud.useable;
         }
-    };
-
-    /* Must be the same size and layout as struct sigaction on 32-bit linux */
-    struct SignalAction {
-        uint32_t        handler;
-        sigset_t        mask;                   /* same size on 32- and 64-bit linux */
-        uint32_t        flags;
     };
 
     /* Thrown by exit system calls. */
@@ -177,7 +246,7 @@ public:
     SegmentInfo segreg_shadow[6];               /* Shadow values of segment registers from GDT */
     uint32_t mmap_start;                        /* Minimum address to use when looking for mmap free space */
     bool mmap_recycle;                          /* If false, then never reuse mmap addresses */
-    SignalAction signal_action[_NSIG+1];        /* Simulated actions for signal handling */
+    sigaction_32 signal_action[_NSIG+1];        /* Simulated actions for signal handling */
     uint64_t signal_mask;                       /* Set by sigsetmask() */
     std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
     static const uint32_t brk_base=0x08000000;  /* Lowest possible brk() value */
@@ -210,12 +279,13 @@ public:
     bool trace_mmap;                            /* Show changes in the memory map */
     bool trace_syscall;                         /* Show each system call */
     bool trace_loader;                          /* Show diagnostics for the program loading */
+    bool trace_progress;			/* Show progress now and then */
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
           vdso_va(0), vdso_entry(0), core_styles(CORE_ELF), core_base_name("x-core.rose"),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
-          trace_loader(false) {
+          trace_loader(false), trace_progress(false) {
 
         vdso_name = "x86vdso";
         vdso_paths.push_back(".");
@@ -232,7 +302,7 @@ public:
         for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
             writeFlag((X86Flag)i, 0);
         writeIP(0);
-        writeFlag(x86_flag_1, true_());
+        writeFlag((X86Flag)1, true_());
         writeGPR(x86_gpr_sp, 0xc0000000ul);
 
         memset(gdt, 0, sizeof gdt);
@@ -339,7 +409,7 @@ public:
     void syscall_result(uint32_t ptr, size_t sz, ArgInfo::StructPrinter);
 
     /* Initializes an ArgInfo object to pass to syscall printing functions. */
-    void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list ap);
+    void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list *ap);
 
     /* Returns the memory address in ROSE where the specified specimen address is located. */
     void *my_addr(uint32_t va);
@@ -464,6 +534,10 @@ public:
             }
         }
     }
+
+    int 
+    ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_t third, uint32_t ptr, uint8_t ptr_addr, uint32_t fifth);
+
 };
 
 /* Using the new interface is still about as complicated as the old interface because we need to perform only a partial link.
@@ -1241,7 +1315,8 @@ EmulationPolicy::my_addr(uint32_t va)
     /* Read from specimen in order to make sure that the memory is allocated and mapped into ROSE. */
     uint32_t word;
     size_t nread = map->read(&word, va, sizeof word);
-    ROSE_ASSERT(nread==sizeof word);
+    if (nread!=sizeof word)
+        return NULL;
 
     /* Obtain mapping information */
     const MemoryMap::MapElement *me = map->find(va);
@@ -1290,12 +1365,291 @@ EmulationPolicy::read_string_vector(uint32_t va)
     return vec;
 }
 
+#define SEMOP		 1
+#define SEMGET		 2
+#define SEMCTL		 3
+#define SEMTIMEDOP	 4
+#define MSGSND		11
+#define MSGRCV		12
+#define MSGGET		13
+#define MSGCTL		14
+#define SHMAT		21
+#define SHMDT		22
+#define SHMGET		23
+#define SHMCTL		24
+
+
+int 
+EmulationPolicy::ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_t third, uint32_t ptr, uint8_t ptr_addr, uint32_t fifth)
+{
+	int version, ret;
+    size_t size_ptr;
+    int result;
+
+
+
+    /* semop system calls takes an array of these. */
+    struct sembuf {
+      unsigned short  sem_num;    /* semaphore index in array */
+      short       sem_op;     /* semaphore operation */
+      short       sem_flg;    /* operation flags */
+    };
+
+    switch(call)
+    {
+
+      case SEMGET: /* semget */
+        /* Equivalent to 
+             int semget(key_t key, int nsems, int semflg);
+           
+           The types are described as
+              typedef signed int s32;
+              typedef s32 compat_key_t;
+        */
+        return semget(first, second, third);
+        break;
+
+      case SEMCTL: {
+                     /*
+                        union semun {
+                            int val;            
+                            struct semid_ds __user *buf;    
+                            unsigned short __user *array;   
+                            struct seminfo __user *__buf;   
+                            void __user *__pad;
+                        };
+                     */  
+                     /*
+                     union semun fourth;
+                     if (!ptr)
+                       return -EINVAL;
+                     if (get_user(fourth.__pad, (void __user * __user *) ptr))
+                       return -EFAULT;
+                     return sys_semctl(first, second, third, fourth);
+                     */
+        std::cerr << "Error: system call ipc case SEMCTL not implemented" << std::endl;
+        exit(1);
+
+                     break;
+                   }
+
+#if 1
+
+      case SEMOP:
+        //return sys_semtimedop(first, (struct sembuf __user *)ptr,
+        //    second, NULL);
+ 
+        //result = syscall( 117, fi, (long) sys_path.c_str(), mode, flags);
+        std::cerr << "Error: system call ipc case SEMOP not implemented" << std::endl;
+        exit(1);
+
+        size_ptr = sizeof(sembuf);
+
+        break;
+      case SEMTIMEDOP:
+       /* return sys_semtimedop(first, (struct sembuf __user *)ptr,
+            second,
+            (const struct timespec __user *)fifth);
+      */
+        std::cerr << "Error: system call ipc case SEMTIMEDOP not implemented" << std::endl;
+        exit(1);
+
+        size_ptr = sizeof(sembuf);
+
+        break;
+      case MSGSND:
+                   //return sys_msgsnd(first, (struct msgbuf __user *) ptr,
+                    //   second, third);
+
+                   std::cerr << "Error: system call ipc case MSGSND not implemented" << std::endl;
+                   exit(1);
+
+                   break;
+      case MSGRCV:
+                   /*
+                   switch (version) {
+                     case 0: {
+                               struct ipc_kludge tmp;
+                               if (!ptr)
+                                 return -EINVAL;
+
+                               if (copy_from_user(&tmp,
+                                     (struct ipc_kludge __user *) ptr,
+                                     sizeof(tmp)))
+                                 return -EFAULT;
+                               return sys_msgrcv(first, tmp.msgp, second,
+                                   tmp.msgtyp, third);
+                             }
+                     default:
+                             return sys_msgrcv(first,
+                                 (struct msgbuf __user *) ptr,
+                                 second, fifth, third);
+                   }
+                   */
+        std::cerr << "Error: system call ipc case MSGRCV not implemented" << std::endl;
+        exit(1);
+
+                   break;
+      case MSGGET:
+                   //return sys_msgget((key_t) first, second);
+        std::cerr << "Error: system call ipc case MSGGET not implemented" << std::endl;
+        exit(1);
+
+                   break;
+      case MSGCTL:
+                   //return sys_msgctl(first, second, (struct msqid_ds __user *)ptr);
+        std::cerr << "Error: system call ipc case MSGCTL not implemented" << std::endl;
+        exit(1);
+
+                   break;
+
+      case SHMAT:
+                   /*
+                   switch (version) {
+                     default: {
+                                unsigned long raddr;
+                                ret = do_shmat(first, (char __user *)ptr,
+                                    second, &raddr);
+                                if (ret)
+                                  return ret;
+                                return put_user(raddr, (unsigned long __user *) third);
+                              }
+                     case 1:
+                              return -EINVAL;
+                   }
+    */
+        std::cerr << "Error: system call ipc case SHMAT not implemented" << std::endl;
+        exit(1);
+
+                   break;
+      case SHMDT:
+                   //return sys_shmdt((char __user *)ptr);
+        std::cerr << "Error: system call ipc case SHMT not implemented" << std::endl;
+        exit(1);
+
+                   break;
+      case SHMGET:
+                   //return sys_shmget(first, second, third);
+        std::cerr << "Error: system call ipc case SHMGET not implemented" << std::endl;
+        exit(1);
+
+                   break;
+      case SHMCTL:
+                   //return sys_shmctl(first, second,
+                   //    (struct shmid_ds __user *) ptr);
+        std::cerr << "Error: system call ipc case SGMCTL not implemented" << std::endl;
+        exit(1);
+
+                   break;
+
+#endif
+
+      default:
+                   std::cout << "Call is: " << call << std::endl;
+                   //return -ENOSYS;
+    
+                   break;
+    }
+
+
+    //syscall(117,first, second, third, ptr, fifth);
+
+    return result;
+#if 0
+	version = call >> 16; /* hack for backward compatibility */
+	call &= 0xffff;
+
+	switch (call) {
+	case SEMOP:
+		return sys_semtimedop(first, (struct sembuf __user *)ptr,
+				      second, NULL);
+	case SEMTIMEDOP:
+		return sys_semtimedop(first, (struct sembuf __user *)ptr,
+				      second,
+				      (const struct timespec __user *)fifth);
+
+	case SEMGET:
+		return sys_semget(first, second, third);
+	case SEMCTL: {
+		union semun fourth;
+		if (!ptr)
+			return -EINVAL;
+		if (get_user(fourth.__pad, (void __user * __user *) ptr))
+			return -EFAULT;
+		return sys_semctl(first, second, third, fourth);
+	}
+
+	case MSGSND:
+		return sys_msgsnd(first, (struct msgbuf __user *) ptr,
+				  second, third);
+	case MSGRCV:
+		switch (version) {
+		case 0: {
+			struct ipc_kludge tmp;
+			if (!ptr)
+				return -EINVAL;
+
+			if (copy_from_user(&tmp,
+					   (struct ipc_kludge __user *) ptr,
+					   sizeof(tmp)))
+				return -EFAULT;
+			return sys_msgrcv(first, tmp.msgp, second,
+					   tmp.msgtyp, third);
+		}
+		default:
+			return sys_msgrcv(first,
+					   (struct msgbuf __user *) ptr,
+					   second, fifth, third);
+		}
+	case MSGGET:
+		return sys_msgget((key_t) first, second);
+	case MSGCTL:
+		return sys_msgctl(first, second, (struct msqid_ds __user *)ptr);
+
+	case SHMAT:
+		switch (version) {
+		default: {
+			unsigned long raddr;
+			ret = do_shmat(first, (char __user *)ptr,
+				       second, &raddr);
+			if (ret)
+				return ret;
+			return put_user(raddr, (unsigned long __user *) third);
+		}
+		case 1:
+			/*
+			 * This was the entry point for kernel-originating calls
+			 * from iBCS2 in 2.2 days.
+			 */
+			return -EINVAL;
+		}
+	case SHMDT:
+		return sys_shmdt((char __user *)ptr);
+	case SHMGET:
+		return sys_shmget(first, second, third);
+	case SHMCTL:
+		return sys_shmctl(first, second,
+				   (struct shmid_ds __user *) ptr);
+	default:
+		return -ENOSYS;
+	}
+
+#endif
+}
 void
 EmulationPolicy::emulate_syscall()
 {
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
      *          according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers. */
     unsigned callno = readGPR(x86_gpr_ax).known_value();
+
+    struct kernel_timeval {
+        uint32_t tv_sec;        /* seconds */
+        uint32_t tv_usec;       /* microseconds */
+    };
+
+
+
     switch (callno) {
         case 3: { /*read*/
             syscall_enter("read", "dpd");
@@ -1370,24 +1724,37 @@ EmulationPolicy::emulate_syscall()
             static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
             syscall_enter("waitpid", "dpf", wflags);
             pid_t pid=arg(0);
-            uint32_t status=arg(1), options=arg(2);
+            uint32_t status_va=arg(1);
+            int options=arg(2);
             int sys_status;
             int result = waitpid(pid, &sys_status, options);
             if (result == -1) {
                 result = -errno;
-            } else {
-                if (status) {
-                  uint32_t status_le;
-                  SgAsmExecutableFileFormat::host_to_le(status, &status_le);
-                  size_t nwritten = map->write(&status_le, sys_status, 4);
-                  ROSE_ASSERT(4==nwritten);
-                }
+            } else if (status_va) {
+                uint32_t status_le;
+                SgAsmExecutableFileFormat::host_to_le(sys_status, &status_le);
+                size_t nwritten = map->write(&status_le, status_va, 4);
+                ROSE_ASSERT(4==nwritten);
             }
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
         }
-                
+             
+        case 8: { /* 0x8, creat */
+            syscall_enter("creat", "sd");
+     	    uint32_t filename = arg(0);
+            std::string sys_filename = read_string(filename);
+	        mode_t mode = arg(1);
+
+	        int result = creat(sys_filename.c_str(), mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	    }  
+   
         case 10: { /*0xa, unlink*/
             syscall_enter("unlink", "s");
             uint32_t filename_va = arg(0);
@@ -1436,17 +1803,15 @@ EmulationPolicy::emulate_syscall()
             break;
 	}
 
-
-
         case 13: { /*0xd, time */
             syscall_enter("time", "p");
-            uint32_t t = arg(0);
             time_t result = time(NULL);
-            if (t) {
-              uint32_t t_le;
-              SgAsmExecutableFileFormat::host_to_le(t, &t_le);
-              size_t nwritten = map->write(&t_le, result, 4);
-              ROSE_ASSERT(4==nwritten);    }
+            if (arg(0)) {
+                uint32_t t_le;
+                SgAsmExecutableFileFormat::host_to_le(result, &t_le);
+                size_t nwritten = map->write(&t_le, arg(0), 4);
+                ROSE_ASSERT(4==nwritten);
+            }
             writeGPR(x86_gpr_ax, result);
             syscall_leave("t");
             break;
@@ -1455,11 +1820,11 @@ EmulationPolicy::emulate_syscall()
         case 14: { /*0xe, mknod*/
             syscall_enter("mknod", "sdd");
             uint32_t path_va = arg(0);
-            uint32_t mode = arg(1);
-            uint32_t dev = arg(2);
+            int mode = arg(1);
+            unsigned dev = arg(2);
             std::string path = read_string(path_va);
-            int result = mknod(path.c_str(),mode,dev);
-            writeGPR(x86_gpr_ax, result<0 ? -errno : result);
+            int result = mknod(path.c_str(), mode, dev);
+            writeGPR(x86_gpr_ax, -1==result ? -errno : result);
             syscall_leave("d");
             break;
         }
@@ -1469,15 +1834,12 @@ EmulationPolicy::emulate_syscall()
 	    uint32_t filename = arg(0);
             std::string sys_filename = read_string(filename);
 	    mode_t mode = arg(1);
-
 	    int result = chmod(sys_filename.c_str(), mode);
             if (result == -1) result = -errno;
             writeGPR(x86_gpr_ax, result);
-
             syscall_leave("d");
             break;
 	}
-
 
         case 20: { /*0x14, getpid*/
             syscall_enter("getpid", "");
@@ -1493,6 +1855,60 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 30: { /* 0x1e, utime */
+
+            /*
+               int utime(const char *filename, const struct utimbuf *times);
+
+               The utimbuf structure is:
+
+               struct utimbuf {
+               time_t actime;       // access time 
+                   time_t modtime;  // modification time 
+                 };
+
+               The utime() system call changes the access and modification times of the inode
+               specified by filename to the actime and modtime fields of times respectively.
+
+               If times is NULL, then the access and modification times of the file are set
+               to the current time.
+            */
+            syscall_enter("utime", "sp");
+
+            std::string filename = read_string(arg(0));
+
+            //Check to see if times is NULL
+            uint8_t byte;
+            size_t nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+
+            int result;
+            if( byte)
+            {
+              struct kernel_utimebuf {
+                uint32_t actime;
+                uint32_t modtime;
+              };
+
+              kernel_utimebuf ubuf;
+              size_t nread = map->read(&ubuf, arg(1), sizeof(kernel_utimebuf));
+              ROSE_ASSERT(nread == sizeof(kernel_utimebuf));
+
+              utimbuf ubuf64;
+              ubuf64.actime  = ubuf.actime;
+              ubuf64.modtime = ubuf.modtime;
+
+              result = utime(filename.c_str(), &ubuf64);
+
+            }else
+              result = utime(filename.c_str(), NULL);
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+
+            break;
+        };
+
         case 33: { /*0x21, access*/
             static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
             syscall_enter("access", "sf", flags);
@@ -1500,16 +1916,16 @@ EmulationPolicy::emulate_syscall()
             std::string name = read_string(name_va);
             int mode=arg(1);
             int result = access(name.c_str(), mode);
-            if (result<0) result = -errno;
+            if (-1==result) result = -errno;
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
         }
 
 	case 37: { /* 0x25, kill */
-            syscall_enter("kill", "dd");
-            pid_t pid = readGPR(x86_gpr_bx).known_value();
-            int   sig = readGPR(x86_gpr_cx).known_value();
+            syscall_enter("kill", "df", signal_names);
+            pid_t pid=arg(0);
+            int sig=arg(1);
             int result = kill(pid, sig);
             if (result == -1) result = -errno;
             writeGPR(x86_gpr_ax, result);
@@ -1548,6 +1964,37 @@ EmulationPolicy::emulate_syscall()
             syscall_enter("dup", "d");
             uint32_t fd = arg(0);
             int result = dup(fd);
+            if (-1==result) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
+        case 42: { /*0x2a, pipe*/
+            /*
+               int pipe(int filedes[2]); 
+
+               pipe() creates a pair of file descriptors, pointing to a pipe inode, and 
+               places them in the array pointed to by filedes. filedes[0] is for reading, 
+               filedes[1] is for writing. 
+
+            */
+            syscall_enter("pipe", "p");
+
+
+            int32_t filedes_kernel[2];
+            size_t  size_filedes = sizeof(int32_t)*2;
+
+
+            int filedes[2];
+            int result = pipe(filedes);
+
+            filedes_kernel[0] = filedes[0];
+            filedes_kernel[1] = filedes[1];
+
+            map->write(filedes_kernel, arg(0), size_filedes);
+
+
             if (-1==result) result = -errno;
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
@@ -1610,7 +2057,7 @@ EmulationPolicy::emulate_syscall()
             uint32_t cmd=arg(1), arg2=arg(2);
             int result = -ENOSYS;
             switch (cmd) {
-                case TCGETS: { /*tcgetattr*/
+                case TCGETS: { /* 0x00005401, tcgetattr*/
                     struct termios ti;
                     result = tcgetattr(fd, &ti);
                     if (-1==result) {
@@ -1623,8 +2070,115 @@ EmulationPolicy::emulate_syscall()
                     }
                     break;
                 }
-                    
-                case TIOCGPGRP: { /*tcgetpgrp*/
+
+                case TCSETS:  /* 0x,00005402,  tcsetattr */
+                    /* TCSETS const struct termios *argp
+                       Equivalent to
+                          int tcsetattr(int fd, int optional_actions, const struct termios *termios_p);
+                          tcsetattr(fd, TCSANOW, argp).
+                       Set the current serial port settings. 
+                    */
+                case TCSETSW: { /* 0x00005403, tcsetattr  */
+                    /* Equivalent to 
+                         int tcsetattr(int fd, int optional_actions, const struct termios *termios_p);
+                         tcsetattr(fd, TCSADRAIN, argp).
+                       Allow the output buffer to drain, and set the current serial port settings. 
+
+                       Value of second argument is the only difference between TCSETS and TCSETSW
+
+                       typedef unsigned int     tcflag_t;
+                       typedef unsigned char    cc_t;
+                       typedef unsigned int     speed_t;
+
+                       struct termios {
+                         tcflag_t c_iflag;
+                         tcflag_t c_oflag;
+                         tcflag_t c_cflag;
+                         tcflag_t c_lflag;
+                         cc_t c_cc[NCCS];
+                         speed_t c_ispeed;
+                         speed_t c_ospeed;
+                       };
+
+
+                     */
+                    uint32_t optional_actions = arg(2);
+
+                    //Convert between 32 bit termios and whatever is
+                    //used on this machine
+                    struct termios_kernel {
+                         uint32_t c_iflag;
+                         uint32_t c_oflag;
+                         uint32_t c_cflag;
+                         uint32_t c_lflag;
+                         unsigned char c_cc[NCCS];
+                         uint32_t c_ispeed;
+                         uint32_t c_ospeed;
+                    };
+
+                    termios_kernel tik;
+
+                    size_t nread = map->read(&tik, arg(3), sizeof(termios_kernel));
+                    ROSE_ASSERT(sizeof(termios_kernel) == nread);
+ 
+                    struct termios ti;
+
+                    CONV_FIELD(ti,tik,c_iflag);
+                    CONV_FIELD(ti,tik,c_oflag);
+                    CONV_FIELD(ti,tik,c_cflag);
+                    CONV_FIELD(ti,tik,c_lflag);
+                    CONV_FIELD(ti,tik,c_ispeed);
+
+                    for (int i = 0 ; i < NCCS ; i++ )
+                      ti.c_cc[i] = tik.c_cc[i];
+
+                    CONV_FIELD(ti,tik,c_ospeed);
+
+                    result = tcsetattr(fd, optional_actions, &ti);
+
+                    if (result==-1) {
+                        result = -errno;
+                    } 
+  
+                    break;
+                }
+
+                case TCGETA: { /* 0x,00005405 */
+                    /* gets a data structure of type 
+                           struct termio * 
+
+                       struct termio {
+                         unsigned short c_iflag;     // input mode flags 
+                         unsigned short c_oflag;     // output mode flags 
+                         unsigned short c_cflag;     // control mode flags 
+                         unsigned short c_lflag;     // local mode flags 
+                         unsigned char c_line;       // line discipline 
+                         unsigned char c_cc[NCC];    // control characters 
+                       };
+
+                     */
+
+                    termio to;
+
+                    result = ioctl(fd, TCGETA, &to);
+                    if (-1==result) {
+                        result = -errno;
+                    } else {
+                        size_t nwritten = map->write(&to, arg2, sizeof to);
+                        ROSE_ASSERT(nwritten==sizeof to);
+                    }
+
+                    break;
+                }
+
+                case TIOCGPGRP: { /* 0x0000540F, tcgetpgrp*/
+                    /* equivalent to 
+                        pid_t tcgetpgrp(int fd);
+                       The  function tcgetpgrp() returns the process group ID of the foreground process group 
+                       on the terminal associated to fd, which must be the controlling terminal of the calling 
+                       process.
+                    */
+
                     pid_t pgrp = tcgetpgrp(fd);
                     if (-1==pgrp) {
                         result = -errno;
@@ -1638,7 +2192,7 @@ EmulationPolicy::emulate_syscall()
                     break;
                 }
                     
-                case TIOCSPGRP: { /*tcsetpgrp*/
+                case TIOCSPGRP: { /* 0x5410, tcsetpgrp*/
                     uint32_t pgid_le;
                     size_t nread = map->read(&pgid_le, arg2, 4);
                     ROSE_ASSERT(4==nread);
@@ -1649,7 +2203,26 @@ EmulationPolicy::emulate_syscall()
                     break;
                 }
 
-                case TIOCGWINSZ: {
+                case TIOCSWINSZ: { /* 0x5413, the winsize is const */
+                    /* Set window size.
+                       struct winsize {
+                          unsigned short ws_row;
+                          unsigned short ws_col;
+                          unsigned short ws_xpixel;   // unused 
+                          unsigned short ws_ypixel;   // unused 
+                       };
+                    */
+                    winsize ws;
+                    size_t nread = map->read(&ws, arg(2), sizeof(winsize));
+                    ROSE_ASSERT(sizeof(winsize) == nread);
+
+                    result = ioctl(fd, TIOCSWINSZ, &ws);
+                    if (-1==result)
+                        result = -errno;
+                    break;
+                }
+
+                case TIOCGWINSZ: /* 0x5414, */ {
                     struct winsize ws;
                     result = ioctl(fd, TIOCGWINSZ, &ws);
                     if (-1==result) {
@@ -1660,7 +2233,6 @@ EmulationPolicy::emulate_syscall()
                     }
                     break;
                 }
-                    
                 default:
                     fprintf(stderr, "  unhandled ioctl: %u\n", cmd);
                     abort();
@@ -1672,7 +2244,7 @@ EmulationPolicy::emulate_syscall()
 
         case 57: { /*0x39, setpgid*/
             syscall_enter("setpgid", "dd");
-            uint32_t pid=arg(0), pgid=arg(1);
+            pid_t pid=arg(0), pgid=arg(1);
             int result = setpgid(pid, pgid);
             if (-1==result) { result = -errno; }
             writeGPR(x86_gpr_ax, result);
@@ -1724,14 +2296,14 @@ EmulationPolicy::emulate_syscall()
 
         case 85: { /*0x55, readlink*/
             syscall_enter("readlink", "spd");
-            uint32_t path=arg(0), buf=arg(1), bufsize=arg(2);
+            uint32_t path=arg(0), buf_va=arg(1), bufsize=arg(2);
             char sys_buf[bufsize];
             std::string sys_path = read_string(path);
             int result = readlink(sys_path.c_str(), sys_buf, bufsize);
             if (result == -1) {
                 result = -errno;
             } else {
-                size_t nwritten = map->write(sys_buf, buf, result);
+                size_t nwritten = map->write(sys_buf, buf_va, result);
                 ROSE_ASSERT(nwritten == (size_t)result);
             }
             writeGPR(x86_gpr_ax, result);
@@ -1755,6 +2327,48 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 94: { /* 0x5d, fchmod */
+
+            /*
+                int fchmod(int fd, mode_t mode);
+
+                fchmod() changes the permissions of the file referred to by the open file
+                         descriptor fd.
+            */
+            syscall_enter("fchmod", "dd");
+	        uint32_t fd = arg(0);
+	        mode_t mode = arg(1);
+
+	        int result = fchmod(fd, mode);
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	    }
+
+     	case 95: { /*0x5f, fchown */
+            /*
+                   int fchown(int fd, uid_t owner, gid_t group);
+
+                   typedef unsigned short  __kernel_old_uid_t;
+                   typedef unsigned short  __kernel_old_gid_t;
+
+                   fchown() changes the ownership of the file referred to by the open file
+                            descriptor fd.
+
+               */
+
+            syscall_enter("fchown16", "ddd");
+	        uint32_t fd = arg(0);
+            unsigned short  user = arg(1);
+	        unsigned short  group = arg(2);
+	        int result = syscall(95,fd,user,group);
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
         case 102: { // socketcall
             syscall_enter("socketcall", "dp");
             //uint32_t call=arg(0), args=arg(1);
@@ -1766,28 +2380,180 @@ EmulationPolicy::emulate_syscall()
         case 114: { /*0x72, wait4*/
             static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
             syscall_enter("wait4", "dpfp", wflags);
-            uint32_t pid=arg(0), status_ptr=arg(1), options=arg(2), rusage_ptr=arg(3);
-            uint32_t status;
-            size_t nread = map->read(&status, status_ptr, 4);
-            ROSE_ASSERT(nread == 4);
-            struct rusage sys_rusage;
-            int result = wait4(pid, &status, options, &sys_rusage);
+            pid_t pid=arg(0);
+            uint32_t status_va=arg(1), rusage_va=arg(3);
+            int options=arg(2);
+            int status;
+            struct rusage rusage;
+            int result = wait4(pid, &status, options, &rusage);
             if( result == -1) {
                 result = -errno;
             } else {
-                if (status_ptr != 0) {
-                    size_t nwritten = map->write(&status, status_ptr, 4);
+                if (status_va != 0) {
+                    size_t nwritten = map->write(&status, status_va, 4);
                     ROSE_ASSERT(nwritten == 4);
                 }
-                if (rusage_ptr != 0) {
-                    size_t nwritten = map->write(&sys_rusage, rusage_ptr, sizeof(struct rusage));
-                    ROSE_ASSERT(nwritten == sizeof(struct rusage));
+                if (rusage_va != 0) {
+                    struct rusage_32 {
+                        uint32_t utime_sec;     /* user time used; seconds */
+                        uint32_t utime_usec;    /* user time used; microseconds */
+                        uint32_t stime_sec;     /* system time used; seconds */
+                        uint32_t stime_usec;    /* system time used; microseconds */
+                        uint32_t maxrss;        /* maximum resident set size */
+                        uint32_t ixrss;         /* integral shared memory size */
+                        uint32_t idrss;         /* integral unshared data size */
+                        uint32_t isrss;         /* integral unshared stack size */
+                        uint32_t minflt;        /* page reclaims */
+                        uint32_t majflt;        /* page faults */
+                        uint32_t nswap;         /* swaps */
+                        uint32_t inblock;       /* block input operations */
+                        uint32_t oublock;       /* block output operations */
+                        uint32_t msgsnd;        /* messages sent */
+                        uint32_t msgrcv;        /* messages received */
+                        uint32_t nsignals;      /* signals received */
+                        uint32_t nvcsw;         /* voluntary context switches */
+                        uint32_t nivcsw;        /* involuntary " */
+                    } __attribute__((packed));
+                    struct rusage_32 out;
+                    ROSE_ASSERT(18*4==sizeof(out));
+                    out.utime_sec = rusage.ru_utime.tv_sec;
+                    out.utime_usec = rusage.ru_utime.tv_usec;
+                    out.stime_sec = rusage.ru_stime.tv_sec;
+                    out.stime_usec = rusage.ru_stime.tv_usec;
+                    out.maxrss = rusage.ru_maxrss;
+                    out.ixrss = rusage.ru_ixrss;
+                    out.idrss = rusage.ru_idrss;
+                    out.isrss = rusage.ru_isrss;
+                    out.minflt = rusage.ru_minflt;
+                    out.majflt = rusage.ru_majflt;
+                    out.nswap = rusage.ru_nswap;
+                    out.inblock = rusage.ru_inblock;
+                    out.msgsnd = rusage.ru_msgsnd;
+                    out.msgrcv = rusage.ru_msgrcv;
+                    out.nsignals = rusage.ru_nsignals;
+                    out.nvcsw = rusage.ru_nvcsw;
+                    out.nivcsw = rusage.ru_nivcsw;
+                    size_t nwritten = map->write(&out, rusage_va, sizeof out);
+                    ROSE_ASSERT(nwritten == sizeof out);
                 }
             }
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
         }
+
+#if 1
+        case 116: { /* 0x74, sysinfo*/
+
+            /*
+
+               int sysinfo(struct sysinfo *info);   
+
+               struct sysinfo {
+               long uptime;             // Seconds since boot 
+                    unsigned long loads[3];  // 1, 5, and 15 minute load averages 
+                    unsigned long totalram;  // Total usable main memory size 
+                    unsigned long freeram;   // Available memory size 
+                    unsigned long sharedram; // Amount of shared memory 
+                    unsigned long bufferram; // Memory used by buffers 
+                    unsigned long totalswap; // Total swap space size 
+                    unsigned long freeswap;  // swap space still available 
+                    unsigned short procs;    // Number of current processes 
+                    unsigned long totalhigh; // Total high memory size 
+                    unsigned long freehigh;  // Available high memory size 
+                    unsigned int mem_unit;   // Memory unit size in bytes 
+                    char _f[20-2*sizeof(long)-sizeof(int)]; // Padding for libc5 
+                  };
+
+            */
+            syscall_enter("sysinfo", "p");
+
+
+            struct kernel_sysinfo {
+              int32_t uptime;             /* Seconds since boot */
+              uint32_t loads[3];  /* 1, 5, and 15 minute load averages */
+              uint32_t totalram;  /* Total usable main memory size */
+              uint32_t freeram;   /* Available memory size */
+              uint32_t sharedram; /* Amount of shared memory */
+              uint32_t bufferram; /* Memory used by buffers */
+              uint32_t totalswap; /* Total swap space size */
+              uint32_t freeswap;  /* swap space still available */
+              unsigned short procs;    /* Number of current processes */
+              uint32_t totalhigh; /* Total high memory size */
+              uint32_t freehigh;  /* Available high memory size */
+              uint32_t mem_unit;   /* Memory unit size in bytes */
+              char _f[20-2*sizeof(uint32_t)-sizeof(int32_t)]; /* Padding for libc5 */
+            };
+
+            struct sysinfo {
+              long uptime;             // Seconds since boot 
+              unsigned long loads[3];  // 1, 5, and 15 minute load averages 
+              unsigned long totalram;  // Total usable main memory size 
+              unsigned long freeram;   // Available memory size 
+              unsigned long sharedram; // Amount of shared memory 
+              unsigned long bufferram; // Memory used by buffers 
+              unsigned long totalswap; // Total swap space size 
+              unsigned long freeswap;  // swap space still available 
+              unsigned short procs;    // Number of current processes 
+              unsigned long totalhigh; // Total high memory size 
+              unsigned long freehigh;  // Available high memory size 
+              unsigned int mem_unit;   // Memory unit size in bytes 
+              char _f[20-2*sizeof(long)-sizeof(int)]; // Padding for libc5 
+            };
+
+            sysinfo sys;
+            int result  = syscall( 116, &sys );
+
+            kernel_sysinfo kernel_sys;
+            kernel_sys.uptime = sys.uptime;
+            for(int i = 0 ; i < 3 ; i++)
+               kernel_sys.loads[i] = sys.loads[i];
+            kernel_sys.totalram    = sys.totalram;
+            kernel_sys.freeram     = sys.freeram;
+            kernel_sys.sharedram   = sys.sharedram;
+            kernel_sys.bufferram   = sys.bufferram;
+            kernel_sys.totalswap   = sys.totalswap;
+            kernel_sys.freeswap    = sys.freeswap;
+            kernel_sys.procs       = sys.procs;
+            kernel_sys.totalhigh   = sys.totalhigh;
+            kernel_sys.mem_unit    = sys.mem_unit;
+            for (int i = 0; i < 20-2*sizeof(long)-sizeof(int) ; i++)
+              kernel_sys._f[i] = sys._f[i];
+
+            map->write(&kernel_sys, arg(0), sizeof(kernel_sysinfo));
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+
+            break;
+        };
+
+        case 117: { /* 0x75, ipc */
+            //int ipc(unsigned int call, int first, int second, int third, void *ptr, long fifth)
+            syscall_enter("ipc", "ddddpd");
+ 
+            uint32_t call, fifth, ptr;
+            int32_t  first, second, third;
+            call   = arg(0);
+            first  = arg(1);
+            second = arg(2);
+            third  = arg(3);
+            ptr    = arg(4);
+            fifth  = arg(5);
+
+            uint8_t ptr_addr;
+
+            size_t nread = map->read(&ptr_addr, ptr, 1);
+            ROSE_ASSERT(nread == 1);
+
+            int result = ipc_kernel(call, first, second, third, ptr, ptr_addr, fifth);
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+
+            break;
+        }
+#endif
 
         case 122: { /*0x7a, uname*/
             syscall_enter("uname", "p");
@@ -1854,6 +2620,37 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+    case 140: { /* 0x8c, llseek */
+        /*
+           int _llseek(unsigned int fd, unsigned long offset_high,            unsigned
+           long offset_low, loff_t *result,            unsigned int whence);
+
+
+        */
+
+        syscall_enter("llseek","dddpd");
+        uint32_t fd = arg(0);
+        uint32_t offset_high = arg(1);
+        uint32_t offset_low  = arg(2);
+
+        long long whence      = arg(4);
+
+        loff_t llseek_result2; 
+        int result = syscall(140, fd, offset_high, offset_low, llseek_result2, whence );
+
+        //FIXME: Is this the correct way of changing this pointer?
+        //And is it correct that this is a 'long long*'? That is what it seems like to
+        //me by typedef long long        __kernel_loff_t; typedef __kernel_loff_t loff_t
+        map->write(&llseek_result2, arg(3), 8);
+
+
+        writeGPR(x86_gpr_ax, result);
+
+        syscall_leave("d");
+
+        break;
+
+    };
 	case 141: {     /*0x8d, getdents*/
 	    /* 
                int getdents(unsigned int fd, struct linux_dirent *dirp,
@@ -1893,6 +2690,127 @@ EmulationPolicy::emulate_syscall()
 	    break;
         }
 
+        case 142: { /*0x8e , select */
+            /* The select system call
+                  int select(int nfds, fd_set *readfds, fd_set *writefds,
+                                    fd_set *exceptfds, struct timeval *timeout);
+               #undef __NFDBITS
+               #define __NFDBITS       (8 * sizeof(unsigned long))
+
+               #undef __FD_SETSIZE
+               #define __FD_SETSIZE    1024
+
+               #undef __FDSET_LONGS
+               #define __FDSET_LONGS   (__FD_SETSIZE/__NFDBITS)
+
+               //The size of this datastructure should allow for 
+               //1024 file descriptors
+               typedef struct {
+                   unsigned long fds_bits [__FDSET_LONGS];
+               } __kernel_fd_set;
+
+               typedef __kernel_fd_set fd_set;
+
+               select()  and  pselect()  allow  a  program to monitor multiple file 
+               descriptors, waiting until one or more of the file descriptors
+               become "ready" for some class of I/O operation (e.g., input possible).  
+               A file descriptor is considered ready if it is possible  to
+               perform the corresponding I/O operation (e.g., read(2)) without blocking.
+
+
+            */
+            syscall_enter("select", "dpppp");
+
+            struct fd_set32{
+                unsigned long fds_bits[32];
+            };
+
+            uint32_t fd = arg(0);
+
+            //FIXME:
+            //System call is currently only tested on 32 bit, the data structure does
+            //seem to be of the same size for 32 and 64 bit, but for 64 bit the field 
+            //fd_set32.fds_bits is of length 16 instead of 32. I am not quite sure 
+            //how to convert between the two.
+            ROSE_ASSERT(sizeof( fd_set32) == sizeof(fd_set) );
+
+
+            fd_set* readfds   = NULL;
+            fd_set* writefds  = NULL;
+            fd_set* exceptfds = NULL;
+
+            uint8_t byte;
+            size_t nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread);
+
+            if( byte){ 
+                readfds = new fd_set;
+                nread = map->read(readfds, arg(1), sizeof(fd_set) );
+                ROSE_ASSERT( nread == sizeof(fd_set) );
+            }
+
+            nread = map->read(&byte, arg(2), 1);
+
+            ROSE_ASSERT(1==nread);
+
+            if( byte ){
+                writefds = new fd_set;
+                nread = map->read(writefds, arg(2), sizeof(fd_set) );
+                ROSE_ASSERT( nread == sizeof(fd_set) );
+            }
+
+            nread = map->read(&byte, arg(3), 1);
+            ROSE_ASSERT(1==nread);
+
+
+            if( byte){
+                exceptfds = new fd_set;
+                nread = map->read(exceptfds, arg(3), sizeof(fd_set) );
+                ROSE_ASSERT( nread == sizeof(fd_set) );
+            }
+
+            kernel_timeval timeout;
+            nread = map->read(&timeout, arg(4), sizeof(kernel_timeval) );
+            ROSE_ASSERT( nread == sizeof(kernel_timeval) );
+
+            timeval timeout64;
+            timeout64.tv_sec  = timeout.tv_sec;
+            timeout64.tv_usec = timeout.tv_usec;
+
+            select(fd, readfds, writefds, exceptfds, &timeout64);
+
+            nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread);
+
+
+            if( byte ){
+                size_t nwritten = map->write(readfds, arg(1), sizeof(fd_set) );
+                ROSE_ASSERT(nwritten==sizeof(fd_set) );
+                delete readfds;
+            }
+
+            nread = map->read(&byte, arg(2), 1);
+            ROSE_ASSERT(1==nread);
+
+
+            if( byte ){
+                size_t nwritten = map->write(writefds, arg(2), sizeof(fd_set));
+                ROSE_ASSERT( nwritten==sizeof(fd_set) );
+                delete writefds;
+            }
+
+            nread = map->read(&byte, arg(3), 1);
+            ROSE_ASSERT(1==nread);
+
+
+            if( byte ){
+                size_t nwritten = map->write(exceptfds, arg(3), sizeof(fd_set) );
+                ROSE_ASSERT(nwritten==sizeof(fd_set));
+                delete exceptfds;
+            }
+
+            break;
+        }
         case 146: { /*0x92, writev*/
             syscall_enter("writev", "dpd");
             uint32_t fd=arg(0), iov_va=arg(1);
@@ -1931,25 +2849,25 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 174: { /*0xae, rt_sigaction*/
-            syscall_enter("rt_sigaction", "dppd");
+            syscall_enter("rt_sigaction", "fPpd", signal_names, sizeof(sigaction_32), print_sigaction_32);
             int signum=arg(0);
             uint32_t action_va=arg(1), oldact_va=arg(2);
-            //size_t sigsetsize=arg(3);
-
+            size_t sigsetsize=arg(3);
+            ROSE_ASSERT(sigsetsize==8);
 
             if (signum<1 || signum>_NSIG) {
                 writeGPR(x86_gpr_ax, -EINVAL);
                 break;
             }
 
-            SignalAction saved = signal_action[signum];
+            sigaction_32 saved = signal_action[signum];
             if (action_va) {
                 size_t nread = map->read(signal_action+signum, action_va, sizeof saved);
-                ROSE_ASSERT(nread==sizeof(*signal_action));
+                ROSE_ASSERT(nread==sizeof saved);
             }
             if (oldact_va) {
                 size_t nwritten = map->write(&saved, oldact_va, sizeof saved);
-                ROSE_ASSERT(nwritten==sizeof(*signal_action));
+                ROSE_ASSERT(nwritten==sizeof saved);
             }
 
             writeGPR(x86_gpr_ax, 0);
@@ -1966,21 +2884,24 @@ EmulationPolicy::emulate_syscall()
             //size_t sigsetsize=arg(3);
 
             uint64_t saved=signal_mask, sigset=0;
-            size_t nread = map->read(&sigset, set_va, sizeof sigset);
-            ROSE_ASSERT(nread==sizeof sigset);
+            if ( set_va != NULL ) {
 
-            if (0==how) {
-                /* SIG_BLOCK */
-                signal_mask |= sigset;
-            } else if (1==how) {
-                /* SIG_UNBLOCK */
-                signal_mask &= ~sigset;
-            } else if (2==how) {
-                /* SIG_SETMASK */
-                signal_mask = sigset;
-            } else {
-                writeGPR(x86_gpr_ax, -EINVAL);
-                break;
+                size_t nread = map->read(&sigset, set_va, sizeof sigset);
+                ROSE_ASSERT(nread==sizeof sigset);
+
+                if (0==how) {
+                    /* SIG_BLOCK */
+                    signal_mask |= sigset;
+                } else if (1==how) {
+                    /* SIG_UNBLOCK */
+                    signal_mask &= ~sigset;
+                } else if (2==how) {
+                    /* SIG_SETMASK */
+                    signal_mask = sigset;
+                } else {
+                    writeGPR(x86_gpr_ax, -EINVAL);
+                    break;
+                }
             }
 
             if (get_va) {
@@ -1994,35 +2915,96 @@ EmulationPolicy::emulate_syscall()
 
 	case 183: { /* 0xb7, getcwd */
             syscall_enter("getcwd", "pd");
-            
-	    uint32_t buf_va=arg(0), size=arg(1);
-            char buf[size];
-            char* ret_buf = getcwd(buf, size);
-	    if (ret_buf == 0) {
-              //Buffer is not big enough
-	      errno=ERANGE;
-	      writeGPR(x86_gpr_ax, 0);
-             }else{ 
-              writeGPR(x86_gpr_ax, buf_va);
-             } 
-
-	    //As an extension to the POSIX.1-2001 standard, 
-	    //Linux (libc4, libc5, glibc) getcwd() allocates the 
-	    //buffer dynamically using malloc() if buf is NULL on call. 
-	    //In this case, the allocated buffer has the length size 
-	    //unless size is zero, when buf is allocated as big as necessary. 
-	    uint8_t byte;
-            size_t nread = map->read(&byte, buf_va, 1);
-	    if(!byte){
-             map->write(buf, buf_va, size);
+            char buf[arg(1)];
+            int result = getcwd(buf, arg(1)) ? 0 : -errno;
+            if (result>=0) {
+                size_t nwritten = map->write(buf, arg(0), arg(1));
+                ROSE_ASSERT(nwritten==arg(1));
             }
-
+            writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
-	}
+        }
+
+
+        case 186: { /* 0xba, sigaltstack*/
+          /*
+             int sigaltstack(const stack_t *restrict ss, stack_t *restrict oss);
+
+             The sigaltstack() function allows a process to define and examine the state of an alternate stack for signal handlers for the current thread. Signals that have been explicitly declared to execute on the alternate stack shall be delivered on the alternate stack.
+
+             If ss is not a null pointer, it points to a stack_t structure that specifies the alternate signal stack that shall take effect upon return from sigaltstack(). The ss_flags member specifies the new stack state. If it is set to SS_DISABLE, the stack is disabled and ss_sp and ss_size are ignored. Otherwise, the stack shall be enabled, and the ss_sp and ss_size members specify the new address and size of the stack.
+
+             The range of addresses starting at ss_sp up to but not including ss_sp+ ss_size is available to the implementation for use as the stack. This function makes no assumptions regarding which end is the stack base and in which direction the stack grows as items are pushed.
+
+             If oss is not a null pointer, on successful completion it shall point to a stack_t structure that specifies the alternate signal stack that was in effect prior to the call to sigaltstack(). The ss_sp and ss_size members specify the address and size of that stack. The ss_flags member specifies the stack's state, and may contain one of the following values:
+
+             SS_ONSTACK
+             The process is currently executing on the alternate signal stack. Attempts to modify the alternate signal stack while the process is executing on it fail. This flag shall not be modified by processes.
+             SS_DISABLE
+             The alternate signal stack is currently disabled.
+          */
+              syscall_enter("sigaltstack", "pp");
+#if 1
+
+              struct stack_t_kernel{
+                uint8_t  ss_sp;
+                int32_t  ss_flags;
+                uint32_t ss_size;
+
+              };
+
+              stack_t_kernel fakestack_ss;
+              size_t nread = map->read(&fakestack_ss, arg(0), sizeof(stack_t_kernel));
+              ROSE_ASSERT(nread == sizeof(stack_t_kernel));
+
+              //Read in the contents from the fake stack
+
+              void* ss_sp_ss  = malloc(fakestack_ss.ss_size);
+              nread = map->read(ss_sp_ss, fakestack_ss.ss_sp, fakestack_ss.ss_size);
+              stack_t fakestack_ss_arg;
+              fakestack_ss_arg.ss_flags = fakestack_ss.ss_flags;
+              fakestack_ss_arg.ss_size  = fakestack_ss.ss_size;
+              fakestack_ss_arg.ss_sp    = ss_sp_ss;
+
+              //SECOND ARGUMENT OSS CAN BE NULL
+#endif
+              int result;
+#if 1
+              if( arg(1) != NULL )
+              {
+
+                ROSE_ASSERT(false == true);
+                stack_t_kernel fakestack_oss;
+                nread = map->read(&fakestack_oss, arg(1), sizeof(stack_t_kernel));
+                ROSE_ASSERT(nread == sizeof(stack_t_kernel));
+
+
+                void* ss_sp_oss = malloc(fakestack_oss.ss_size);
+
+              }else{
+                std::cout << "Executing syscall" << std::endl;
+                result = sigaltstack(&fakestack_ss_arg,NULL);
+              }
+#endif
+              if (result == -1) result = -errno;
+
+              result = -errno;
+              writeGPR(x86_gpr_ax, result);
+
+              syscall_leave("d");
+
+
+              break;
+
+
+        }
 
         case 191: { /*0xbf, ugetrlimit*/
             syscall_enter("ugetrlimit", "dp");
+#if 1 /*FIXME: We need to translate between 64-bit host and 32-bit guest. [RPM 2010-09-28] */
+            writeGPR(x86_gpr_ax, -ENOSYS);
+#else
             int resource=arg(0);
             uint32_t rl_va=arg(1);
             struct rlimit rl;
@@ -2036,6 +3018,7 @@ EmulationPolicy::emulate_syscall()
                 }
                 writeGPR(x86_gpr_ax, 0);
             }
+#endif
             syscall_leave("d");
             break;
         }
@@ -2114,55 +3097,8 @@ EmulationPolicy::emulate_syscall()
                 syscall_enter("fstat64", "dp");
             }
 
-            /* Kernel data structure on 32-bit platforms; the data written back to the specimen's memory */
-            struct kernel_stat_32 {
-                uint64_t        dev;                    /* see 64.dev */
-                uint32_t        pad_1;                  /* all bits set */
-                uint32_t        ino_lo;                 /* low-order bits only */
-                uint32_t        mode;
-                uint32_t        nlink;
-                uint32_t        user;
-                uint32_t        group;
-                uint64_t        rdev;
-                uint32_t        pad_2;                  /* all bits set */
-                uint64_t        size;                   /* 32-bit alignment */
-                uint32_t        blksize;
-                uint64_t        nblocks;
-                uint32_t        atim_sec;
-                uint32_t        atim_nsec;              /* always zero */
-                uint32_t        mtim_sec;
-                uint32_t        mtim_nsec;              /* always zero */
-                uint32_t        ctim_sec;
-                uint32_t        ctim_nsec;              /* always zero */
-                uint64_t        ino;
-            } __attribute__((packed));
             ROSE_ASSERT(96==sizeof(kernel_stat_32));
-
-            /* Kernel data structure on 64-bit platforms; */
-            struct kernel_stat_64 {
-                uint64_t        dev;                   /* probably not 8 bytes, but MSBs seem to be zero anyway */
-                uint64_t        ino;
-                uint64_t        nlink;
-                uint32_t        mode;
-                uint32_t        user;
-                uint32_t        group;
-                uint32_t        pad_1;
-                uint64_t        rdev;
-                uint64_t        size;
-                uint64_t        blksize;
-                uint64_t        nblocks;
-                uint64_t        atim_sec;
-                uint64_t        atim_nsec;              /* always zero */
-                uint64_t        mtim_sec;
-                uint64_t        mtim_nsec;              /* always zero */
-                uint64_t        ctim_sec;
-                uint64_t        ctim_nsec;              /* always zero */
-                uint64_t        pad_2;
-                uint64_t        pad_3;
-                uint64_t        pad_4;
-            };
-            ROSE_ASSERT(144==sizeof(struct kernel_stat_64));
-
+            ROSE_ASSERT(144==sizeof(kernel_stat_64));
 #ifdef SYS_stat64       /* x86sim must be running on i386 */
             ROSE_ASSERT(4==sizeof(long));
             int host_callno = 195==callno ? SYS_stat64 : (196==callno ? SYS_lstat64 : SYS_fstat64);
@@ -2270,7 +3206,28 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-	case 212: { /*0xd4, chown */
+        case 207: { /*0xcf, fchown */
+                   /*
+                      int fchown(int fd, uid_t owner, gid_t group);
+
+                      typedef unsigned short  __kernel_old_uid_t;
+                      typedef unsigned short  __kernel_old_gid_t;
+
+                      fchown() changes the ownership of the file referred to by the open file
+                      descriptor fd.
+
+                    */
+
+                   syscall_enter("fchown16", "ddd");
+                   uint32_t fd = arg(0);
+                   uid_t  user = arg(1);
+                   gid_t group = arg(2);
+                   int result = syscall(207,fd,user,group);
+                   writeGPR(x86_gpr_ax, result);
+                   syscall_leave("d");
+                   break;
+                 }
+        case 212: { /*0xd4, chown */
             syscall_enter("chown", "sdd");
 	    std::string filename = read_string(arg(0));
             uid_t user = arg(1);
@@ -2280,6 +3237,48 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+ 	case 220: {     /*0xdc, getdents64*/
+	    /* 
+
+          long sys_getdents64(unsigned int fd, struct linux_dirent64 __user * dirent, unsigned int count) 
+
+          struct linux_dirent {
+              unsigned long  d_ino;     // Inode number 
+              unsigned long  d_off;     // Offset to next linux_dirent 
+              unsigned short d_reclen;  // Length of this linux_dirent 
+              char           d_name[];  // Filename (null-terminated) 
+                                 // length is actually (d_reclen - 2 -
+              		         //          offsetof(struct linux_dirent, d_name) 
+          }
+
+          The system call getdents() reads several linux_dirent structures from the
+          directory referred to by the open file descriptor fd into the buffer pointed
+          to by dirp.  The argument count specifies the size of that buffer.
+        */
+
+        syscall_enter("getdents64", "dpd");
+	    unsigned int fd = arg(0);
+
+	    // Create a buffer of the same length as the buffer in the specimen
+        const size_t dirent_size = arg(2);
+
+        uint8_t dirent[dirent_size];
+        memset(dirent, 0xff, sizeof dirent);
+
+	    //Call the system call and write result to the buffer in the specimen
+	    int result = 0xdeadbeef;
+	    result = syscall(220, fd, dirent, dirent_size);
+
+        map->write(dirent, arg(1), dirent_size);
+        writeGPR(x86_gpr_ax, result);
+
+        syscall_leave("d");
+	    break;
+        }
+
+
+
         case 221: { // fcntl
             syscall_enter("fcntl64", "ddp");
             uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);
@@ -2334,19 +3333,55 @@ EmulationPolicy::emulate_syscall()
 #endif
 #endif
                 T_END };
-            syscall_enter("futex", "pfdppd", opflags);
-            //uint32_t addr1=arg(0), op=arg(1), val1=arg(2), ptimeout=arg(3), addr2=arg(4), val3=arg(5);
+#if 0
+            /* Variable arguments */
+            switch (arg(1) & FUTEX_CMD_MASK) {
+                case FUTEX_WAIT:
+                    syscall_enter("futex", "PfdP--", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
+                    break;
+                case FUTEX_WAKE:
+                case FUTEX_FD:
+                    syscall_enter("futex", "Pfd---", 4, print_int_32, opflags);
+                    break;
+                case FUTEX_REQUEUE:
+                    syscall_enter("futex", "Pfd-P-", 4, print_int_32, opflags, 4, print_int_32);
+                    break;
+                case FUTEX_CMP_REQUEUE:
+                    syscall_enter("futex", "Pfd-Pd", 4, print_int_32, opflags, 4, print_int_32);
+                    break;
+                default:
+                    syscall_enter("futex", "PfdPPd", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
+                                  4, print_int_32);
+                    break;
+            }
+            uint32_t futex1_va=arg(0), op=arg(1), val1=arg(2), timeout_va=arg(3), futex2_va=arg(4), val2=arg(5);
+            int *futex1 = (int*)my_addr(futex1_va);
+            int *futex2 = (int*)my_addr(futex2_va);
+
+            struct timespec timespec_buf, *timespec=NULL;
+            if (timeout_va) {
+                timespec_32 ts;
+                size_t nread = map->read(&ts, timeout_va, sizeof ts);
+                ROSE_ASSERT(nread==sizeof ts);
+                timespec_buf.tv_sec = ts.sec;
+                timespec_buf.tv_nsec = ts.nsec;
+                timespec = &timespec_buf;
+            }
+
+            int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val2);
+            if (-1==result) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+#endif
             writeGPR(x86_gpr_ax, -ENOSYS);
+
             syscall_leave("d");
-            fprintf(stderr, "futex syscall is returning ENOSYS for now.\n"); /*FIXME*/
             break;
         }
 
         case 243: { /*0xf3, set_thread_area*/
             syscall_enter("set_thread_area", "P", sizeof(user_desc), print_user_desc);
-            uint32_t u_info_va=arg(0);
             user_desc ud;
-            size_t nread = map->read(&ud, u_info_va, sizeof ud);
+            size_t nread = map->read(&ud, arg(0), sizeof ud);
             ROSE_ASSERT(nread==sizeof ud);
             if (ud.entry_number==(unsigned)-1) {
                 for (ud.entry_number=0x33>>3; ud.entry_number<n_gdt; ud.entry_number++) {
@@ -2357,7 +3392,7 @@ EmulationPolicy::emulate_syscall()
                     fprintf(debug, "[entry #%d] ", (int)ud.entry_number);
             }
             gdt[ud.entry_number] = ud;
-            size_t nwritten = map->write(&ud, u_info_va, sizeof ud);
+            size_t nwritten = map->write(&ud, arg(0), sizeof ud);
             ROSE_ASSERT(nwritten==sizeof ud);
             writeGPR(x86_gpr_ax, 0);
             /* Reload all the segreg shadow values from the (modified) descriptor table */
@@ -2385,7 +3420,7 @@ EmulationPolicy::emulate_syscall()
             if (sizeof(int)>4) {
                 tidptr = new int;
                 *tidptr = 0;
-                size_t nread = map->read(tidptr, tid_va, 4);
+                size_t nread = map->read(tidptr, tid_va, 4); /*only low-order bytes*/
                 ROSE_ASSERT(4==nread);
                 const MemoryMap::MapElement *orig = map->find(tid_va);
                 MemoryMap::MapElement submap(tid_va, 4, tidptr, 0, orig->get_mapperms());
@@ -2406,12 +3441,138 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 264:    /* 0x108, clock_settime */
+        case 265:    /* 0x109, clock_gettime */
+        case 266: {  /* 0x1a, clock_getres */
+                /*
+                  int clock_getres(clockid_t clk_id, struct timespec *res);
+                  int clock_gettime(clockid_t clk_id, struct timespec *tp);
+                  int clock_settime(clockid_t clk_id, const struct timespec *tp); 
+
+                  struct timespec {
+                      time_t   tv_sec;        // seconds 
+                      long     tv_nsec;       // nanoseconds 
+                  };
+
+                  The function clock_getres() finds the resolution (precision) of the 
+                  specified clock clk_id, and, if res is non-NULL, stores it in the 
+                  struct timespec pointed to by res. The resolution of clocks depends 
+                  on the implementation and cannot be configured by a particular process. 
+                  If the time value pointed to by the argument tp of clock_settime() is
+                  not a multiple of res, then it is truncated to a multiple of res. 
+            */
+
+            syscall_enter("clock_gettime", "dp");
+ 
+            int32_t which_clock = arg(0);
+            
+            //Check to see if times is NULL
+            uint8_t byte;
+            size_t nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+
+            int result;
+            if( byte )
+            {
+
+              struct kernel_timespec {
+                uint32_t   tv_sec;        // seconds 
+                uint32_t   tv_nsec;       // nanoseconds 
+              };
+
+
+
+              size_t size_timespec_sample = sizeof(kernel_timespec);
+
+              kernel_timespec ubuf;
+
+              size_t nread = map->read(&ubuf, arg(1), size_timespec_sample);
+
+              ROSE_ASSERT(nread == size_timespec_sample);
+
+              timespec timespec64;
+              timespec64.tv_sec  = ubuf.tv_sec;
+              timespec64.tv_nsec = ubuf.tv_nsec;
+              result = syscall(callno, which_clock, (unsigned long) &timespec64 );
+
+              ubuf.tv_sec = timespec64.tv_sec;
+              ubuf.tv_nsec = timespec64.tv_nsec;
+              map->write(&ubuf, arg(1), size_timespec_sample);
+    
+            }else
+              result = syscall(callno, which_clock, (unsigned long) NULL );
+
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+        }
+
         case 270: { /*0x10e tgkill*/
-            syscall_enter("tgkill", "ddd");
+            syscall_enter("tgkill", "ddf", signal_names);
             uint32_t /*tgid=arg(0), pid=arg(1),*/ sig=arg(2);
             // TODO: Actually check thread group and kill properly
             if (debug && trace_syscall) fputs("(throwing...)\n", debug);
             throw Exit(__W_EXITCODE(0, sig));
+            break;
+
+        }
+
+        case 271: { /* 0x10f, utimes */
+            /*
+                int utimes(const char *filename, const struct timeval times[2]);
+
+                struct timeval {
+                    long tv_sec;        // seconds 
+                    long tv_usec;   // microseconds 
+                };
+
+
+                The utimes() system call changes the access and modification times of the inode
+                specified by filename to the actime and modtime fields of times respectively.
+
+                times[0] specifies the new access time, and times[1] specifies the new
+                modification time.  If times is NULL, then analogously to utime(), the access
+                and modification times of the file are set to the current time.
+
+
+            */
+            syscall_enter("utimes", "s");
+
+
+            std::string filename = read_string(arg(0));
+
+            //Check to see if times is NULL
+            uint8_t byte;
+            size_t nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+
+            int result;
+            if( byte )
+            {
+
+              size_t size_timeval_sample = sizeof(kernel_timeval)*2;
+
+              kernel_timeval ubuf[1];
+
+              size_t nread = map->read(&ubuf, arg(1), size_timeval_sample);
+
+
+              timeval timeval64[1];
+              timeval64[0].tv_sec  = ubuf[0].tv_sec;
+              timeval64[0].tv_usec = ubuf[0].tv_usec;
+              timeval64[1].tv_sec  = ubuf[1].tv_sec;
+              timeval64[1].tv_usec = ubuf[1].tv_usec;
+
+              ROSE_ASSERT(nread == size_timeval_sample);
+
+              result = utimes(filename.c_str(), timeval64);
+
+            }else
+              result = utimes(filename.c_str(), NULL);
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
             break;
 
         }
@@ -2424,7 +3585,7 @@ EmulationPolicy::emulate_syscall()
 	    mode_t mode = arg(2);
 	    int flags = arg(3);
 
-	    int result = fchmodat(dirfd, sys_path.c_str(), mode, flags);
+	    int result = syscall( 306, dirfd, (long) sys_path.c_str(), mode, flags);
             if (result == -1) result = -errno;
             writeGPR(x86_gpr_ax, result);
 
@@ -2457,24 +3618,25 @@ EmulationPolicy::emulate_syscall()
             abort();
         }
     }
+    ROSE_ASSERT( this != NULL  );
 }
 
 void
-EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list ap)
+EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *ap)
 {
     ROSE_ASSERT(info!=NULL);
     info->val = val;
     switch (format) {
         case 'f':       /*flags*/
         case 'e':       /*enum*/
-            info->xlate = va_arg(ap, const Translate*);
+            info->xlate = va_arg(*ap, const Translate*);
             break;
         case 's':       /*NUL-terminated string*/
             info->str = read_string(val);
             break;
         case 'P': {       /*ptr to a struct*/
-            info->struct_size = va_arg(ap, size_t);
-            info->struct_printer = va_arg(ap, ArgInfo::StructPrinter);
+            info->struct_size = va_arg(*ap, size_t);
+            info->struct_printer = va_arg(*ap, ArgInfo::StructPrinter);
             info->struct_buf = new uint8_t[info->struct_size];
             info->struct_nread = map->read(info->struct_buf, info->val, info->struct_size);
             break;
@@ -2492,7 +3654,7 @@ EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
         fprintf(debug, "0x%08"PRIx64": ", readIP().known_value());
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
-            syscall_arginfo(format[i], arg(i), args+i, ap);
+            syscall_arginfo(format[i], arg(i), args+i, &ap);
         print_enter(debug, name, format, args);
     }
     
@@ -2509,7 +3671,7 @@ EmulationPolicy::syscall_leave(const char *format, ...)
     if (debug && trace_syscall) {
         ArgInfo info;
         uint32_t value = readGPR(x86_gpr_ax).known_value();
-        syscall_arginfo(format[0], value, &info, ap);
+        syscall_arginfo(format[0], value, &info, &ap);
         print_leave(debug, format[0], &info);
     }
 }
@@ -2573,6 +3735,7 @@ main(int argc, char *argv[])
                     policy.trace_mmap = true;
                     policy.trace_syscall = true;
                     policy.trace_loader = true;
+                    policy.trace_progress = true;
                 } else if (word=="insn") {
                     policy.trace_insn = true;
                 } else if (word=="state") {
@@ -2585,6 +3748,8 @@ main(int argc, char *argv[])
                     policy.trace_syscall = true;
                 } else if (word=="loader") {
                     policy.trace_loader = true;
+                } else if (word=="progress") {
+                    policy.trace_progress = true;
                 } else {
                     fprintf(stderr, "%s: debug words must be from the set: insn, state, mem, mmap, syscall\n", argv[0]);
                     exit(1);
@@ -2640,10 +3805,32 @@ main(int argc, char *argv[])
         fprintf(policy.debug, "Initial state:\n");
         policy.dump_registers(policy.debug);
     }
+    if (policy.debug && policy.trace_progress) {
+        struct sigaction sa;
+        sa.sa_handler = alarm_handler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = SA_RESTART;
+        sigaction(SIGALRM, &sa, NULL);
+        alarm(PROGRESS_INTERVAL);
+    }
 
     /* Execute the program */
+    struct timeval sim_start_time;
+    gettimeofday(&sim_start_time, NULL);
     bool seen_entry_va = false;
     while (true) {
+        if (had_alarm) {
+            had_alarm = 0;
+            alarm(PROGRESS_INTERVAL);
+            if (policy.debug && policy.trace_progress) {
+                struct timeval cur_time;
+                gettimeofday(&cur_time, NULL);
+                double nsec = cur_time.tv_sec + cur_time.tv_usec/1e6 - (sim_start_time.tv_sec + sim_start_time.tv_usec/1e6);
+                double insn_rate = nsec>0 ? policy.get_ninsns() / nsec : 0;
+                fprintf(policy.debug, "x86sim: processed %zu insns in %d sec (%d insns/sec)\n",
+                        policy.get_ninsns(), (int)(nsec+0.5), (int)(insn_rate+0.5));
+            }
+        }
         try {
             if (dump_at!=0 && dump_at == policy.readIP().known_value()) {
                 fprintf(stderr, "Reached dump point.\n");

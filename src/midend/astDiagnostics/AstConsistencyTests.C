@@ -3,11 +3,12 @@
 
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
 // tps : needed to define this here as it is defined in rose.h
 #include "markCompilerGenerated.h"
 #include "AstDiagnostics.h"
 #ifndef ASTTESTS_C
-#define ASTTESTS_C
+   #define ASTTESTS_C
 // DQ (8/9/2004): Modified to put code below outside of ASTTESTS_C if ... endif
 #endif
 
@@ -23,6 +24,10 @@
 
 // This controls output for debugging
 #define WARN_ABOUT_ATYPICAL_LVALUES 0
+
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
 
 
 // DQ (12/31/2005): This is OK if not declared in a header file
@@ -4053,8 +4058,11 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                   {
                  // Add the child to the set in the map
                     it->second.insert(v[i].first);
-                 // ROSE_ASSERT(node != NULL);
+
+                 // DQ (10/2/2010): Debugging SgType :: type_kind  data member.
+                    ROSE_ASSERT(node != NULL);
                  // ROSE_ASSERT(v[i].first != NULL);
+
                     if (v[i].first == node)
                          {
                            nodeFound = true;

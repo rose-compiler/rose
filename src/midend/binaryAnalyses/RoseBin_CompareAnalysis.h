@@ -55,7 +55,7 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
 
   bool tookSrcNodeFromStack;
 
-  std::string resolveRegister(std::pair<X86RegisterClass, int> reg);
+  std::string resolveRegister(const RegisterDescriptor &reg);
 
   SgAsmValueExpression* valExp;     
   SgAsmx86RegisterReferenceExpression* refExp_Left; 

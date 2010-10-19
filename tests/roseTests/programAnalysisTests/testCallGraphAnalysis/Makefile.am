@@ -5,7 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 # INCLUDES =
 
 ## Don't use the repository in ../src
-CXX_TEMPLATE_REPOSITORY_PATH = .
+# CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # This test program does not require the rest of ROSE so it can be handled locally
 bin_PROGRAMS  = \

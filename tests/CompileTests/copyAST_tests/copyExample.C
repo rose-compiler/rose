@@ -268,7 +268,10 @@ main ( int argc, char* argv[] )
         }
 #endif
 
-#if 1
+#if 0
+  // DQ (10/3/2010): This is part of a mechanism to visualize the copy of the AST.
+  // It generates a file that is used only for debugging.  This was work done by 
+  // Jeremiah and it is very help; but not meant to be called in normal use.
      if (numberOfNodes() < 4000)
         {
        // graphNodesAfterCopy(oldNodes, "graph.dot");
@@ -277,7 +280,8 @@ main ( int argc, char* argv[] )
         }
 #endif
 
-#if 1
+#if 0
+  // DQ (10/3/2010): This is part of a debug the AST copy mechanism (it should be off in normal testing).
      if (project->get_verbose() > 0)
           printf ("Generate the dot output of the SAGE III AST \n");
      generateDOT ( *project );

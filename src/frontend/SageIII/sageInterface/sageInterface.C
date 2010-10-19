@@ -3283,6 +3283,24 @@ SageInterface::is_Cxx_language()
    }
 
 bool
+SageInterface::is_Java_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Java_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+
+bool
 SageInterface::is_Fortran_language()
    {
      bool returnValue = false;

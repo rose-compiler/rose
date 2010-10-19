@@ -26,7 +26,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
 		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble disassembleBuffer testEtherInsns \
 		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics testAssembler testAstIO \
-		symbolicSemantics yicesSemanticsExe yicesSemanticsLib
+		symbolicSemantics yicesSemanticsExe yicesSemanticsLib testRegisters
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -136,6 +136,10 @@ testAssembler_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 testAstIO_SOURCES=testAstIO.C
 testAstIO_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
+# Program to test the RegisterDescriptor and RegisterDictionary classes.
+testRegisters_SOURCES=testRegisters.C
+testRegisters_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 ###############################################################################################################################
 # DEMOS
 #
@@ -232,6 +236,9 @@ demo_rot13: rot13
 	: no demo yet for rot13
 
 demo_testAstIO: testAstIO
+	: no demo yet for $<
+
+demo_testRegisters: testRegisters
 	: no demo yet for $<
 
 
@@ -430,9 +437,11 @@ else
 	@echo "  TESTING $@ (the Yices SMT-solver is not supported for this configuration; test skipped)"
 endif
 
+# Do not use the "--show-functions" switch.  The table that's output is different on systems with libgcrypt vs systems
+# without libgcrypt, and therefore the test can fail.
 test_disassemble.result: disassemble
 	@echo "  TESTING $@"
-	@$(VALGRIND) ./disassemble --show-functions -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown -rose:partitioner_search -leftovers $(BINARY_SAMPLES)/i686-test1.O0.bin >test_disassemble.ans 2>$@.tmp; \
+	@$(VALGRIND) ./disassemble -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown -rose:partitioner_search -leftovers $(BINARY_SAMPLES)/i686-test1.O0.bin >test_disassemble.ans 2>$@.tmp; \
 	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassemble.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
@@ -475,6 +484,11 @@ test_rot13.result: rot13
 	 [ $$? -eq 0 ] && diff $(BINARY_SAMPLES)/i686-test1.O0.bin test_rot13.ans >>$@.tmp 2>&1; \
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+
+test_testRegisters.result: testRegisters
+	@echo "  TESTING $@"
+	@./testRegisters
+	@touch $@
 
 # Tests for detecting the locations of functions, written this way for parallelism.
 test_functionBoundaries_1.result: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin test_disassemble.result

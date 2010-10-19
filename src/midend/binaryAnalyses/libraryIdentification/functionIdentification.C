@@ -14,6 +14,10 @@
 // Used for conversions of types to and from strings.
 #include <boost/lexical_cast.hpp>
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
+
 // For debugging, this allows us to alternatively skip the MD5 checksum.
 #define USE_MD5_AS_HASH 1
 

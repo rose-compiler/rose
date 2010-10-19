@@ -16,6 +16,7 @@
 //#include "disks.xpm"
 #include "folder.xpm"
 #include "BinQSupport.h"
+#include "stringify.h"
 
 #define EMACS
 
@@ -200,13 +201,13 @@ BinQSupport::evaluateMemoryExpression(SgAsmx86Instruction* destInst,
     SgAsmValueExpression* rightVal = isSgAsmValueExpression(right);
     X86RegisterClass regClass;
     if (leftReg) 
-      regClass = leftReg->get_register_class();
+      regClass = (X86RegisterClass)leftReg->get_descriptor().get_major();
     if (rightReg) 
-      regClass = rightReg->get_register_class();
+      regClass = (X86RegisterClass)rightReg->get_descriptor().get_major();
     //cerr << " print : " << regClass << endl;
     string val = "NULL";
     if (regClass>=0 && regClass <=10)
-      val = regclassToString(regClass);
+      val = stringifyX86RegisterClass(regClass, "x86_regclass_");
     rose_addr_t next_addr = destInst->get_address() + destInst->get_raw_bytes().size();
     if (val=="ip") {
       resolveAddr+=next_addr;
@@ -257,12 +258,12 @@ BinQSupport::memoryExpressionContainsRegister(X86RegisterClass cl, int registerN
     X86RegisterClass regClass ;
     int regNr =0;
     if (leftReg) {
-      regClass = leftReg->get_register_class();
-      regNr = leftReg->get_register_number();
+      regClass = (X86RegisterClass)leftReg->get_descriptor().get_major();
+      regNr = leftReg->get_descriptor().get_minor();
     }
     if (rightReg) {
-      regClass = rightReg->get_register_class();
-      regNr = rightReg->get_register_number();
+      regClass = (X86RegisterClass)rightReg->get_descriptor().get_major();
+      regNr = rightReg->get_descriptor().get_minor();
     }
     if (cl == regClass && regNr==registerNumber) {
       containsRegister=true;
