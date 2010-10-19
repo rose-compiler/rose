@@ -95,9 +95,11 @@ int openJavaParser_main(int argc, char **argv)
 #if OVERWRITE_LD_LIBRARY_PATH
     int overwrite = 1;
     int env_status = setenv(ROSE_SHLIBPATH_VAR,new_value.c_str(),overwrite);
+     env_status = setenv("CLASSPATH","/export/panas2/c++workspace/build-windows-rc/src/3rdPartyLibraries/java-parser/ecjROSE.jar:/export/panas2/c++workspace/build-windows-rc/src/3rdPartyLibraries/java-parser/",overwrite);
     assert(env_status == 0);
 #endif
 
+    SgProject::set_verbose(1);
     if (SgProject::get_verbose() > 0)
        {
          printf ("Call the function that will start a JVM and call the ECJ \n\n");
@@ -106,6 +108,7 @@ int openJavaParser_main(int argc, char **argv)
          string JVM_command_line = CommandlineProcessing::generateStringFromArgList(CommandlineProcessing::generateArgListFromArgcArgv(argc, argv));
          printf ("Java JVM commandline = %s \n",JVM_command_line.c_str());
          printf ("ROSE modified %s = %s \n",ROSE_SHLIBPATH_VAR,new_value.c_str());
+         printf ("CLASSPATH  %s \n",getenv("CLASSPATH"));
        }
 
 #ifdef ENABLE_FORTRAN_ERROR_HANDLER

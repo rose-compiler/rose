@@ -18,5 +18,5 @@ extern jmethodID    jserver_GetMethodID(int, jclass, const char*, const char*);
 extern void         jserver_handleException();
 extern void         jserver_init();
 extern void         jserver_finish();
-
+extern JNIEnv* get_env(); //tps
 #endif
