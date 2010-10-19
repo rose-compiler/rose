@@ -8,46 +8,6 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 ########### next target ###############
 
 #BEGIN ***************** GENERATING armInstructionEnumPrinter.C *******************
-FILE(READ x86InstructionEnum.h contents)
-
-file( REMOVE ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/x86InstructionEnumPrinter.C )
-file( WRITE  ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/x86InstructionEnumPrinter.C "\#include \"x86InstructionEnum.h\"\n" )
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/x86InstructionEnumPrinter.C "\#include <string>\n" )
-
-# Convert file contents into a CMake list (where each element in the list
-# is one line of the file)
-#
-STRING(REGEX REPLACE ";" "\\\\;" contents "${contents}")
-STRING(REGEX REPLACE "\n" ";" contents "${contents}")
-#STRING(REGEX REPLACE ", *//.*;" ".*,,;" contents "${contents}")
-
-set(found_first FALSE)
-
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/x86InstructionEnumPrinter.C "static const char* x86InstructionStrings[] = {\n" )
-foreach(v ${contents})
-  if(v MATCHES "arm_unknown_instruction.*" )
-    set(found_first TRUE)
-  endif()
-
-  if( found_first )
-    string( REGEX REPLACE ", *//.*" "" v2 ${v}  )
-    string( REGEX MATCH "[a-zA-Z0-9_]+" v3 ${v2}  )
-    set(v4 "\"${v3}\",")
-    string( REGEX REPLACE "_record" "." v4 ${v4}  )
-    file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/x86InstructionEnumPrinter.C "${v4}\n" )
-  endif()
-  if( v MATCHES ".*arm_last_instruction.*" )
-    break()
-  endif()
-endforeach()
-
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/x86InstructionEnumPrinter.C "\"\"};\n" )
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/x86InstructionEnumPrinter.C "std::string toString(X86InstructionKind k) {static const int s = sizeof(x86InstructionStrings) / sizeof(*x86InstructionStrings); if ((int)k < 0 || (int)k >= s) return \"\"; else return x86InstructionStrings[(int)k];}\n" )
-
-#END ***************** GENERATING x86InstructionEnumPrinter.C *******************
-
-
-#BEGIN ***************** GENERATING armInstructionEnumPrinter.C *******************
 FILE(READ armInstructionEnum.h contents)
 
 file( REMOVE ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C )

@@ -19,7 +19,6 @@ bool x86InstructionIsConditionalBranch(SgAsmx86Instruction* inst);
 bool x86InstructionIsDataTransfer(SgAsmx86Instruction* inst);
 bool x86GetKnownBranchTarget(SgAsmx86Instruction* insn, uint64_t& addr);
 
-const char* regclassToString(X86RegisterClass n);
 const char* gprToString(X86GeneralPurposeRegister n);
 const char* segregToString(X86SegmentRegister n);
 const char* flagToString(X86Flag n);

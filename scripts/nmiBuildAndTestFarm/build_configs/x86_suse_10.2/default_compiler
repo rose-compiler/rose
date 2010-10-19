@@ -1,5 +1,5 @@
 TITLE="testing default compiler (4.1.2) without java"
-DESCRIPTION="default ROSE configuration options, boost 1.35 without java"
-PREREQS="boost-1.35.0, libxml2-2.7.3"
-CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall --without-java"
+DESCRIPTION="default ROSE configuration options, boost 1.36 without java"
+PREREQS="boost-1.36.0, libxml2-2.7.3"
+CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java"
 ACLOCAL_INCLUDES="-I /prereq/libxml2-2.7.3/share/aclocal/"

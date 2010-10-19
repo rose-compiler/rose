@@ -15,7 +15,9 @@
 // We need the paths and functions from here, but not the redefinition of
 // operator<< on vectors
 #include "rose_paths.h"
+
 class SgProject;
+
 #include "string_functions.h"
 #include "commandline_processing.h"
 

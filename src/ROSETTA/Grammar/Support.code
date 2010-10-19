@@ -4726,7 +4726,8 @@ HEADER_APPLICATION_FILE_START
 
       //! Member function to compile the resulting output file from unparsing
       //  BP : 11/13/2001, modified to include compiler name
-          int compileOutput ( int fileNameIndex, const std::string& compilerName );
+      //  int compileOutput ( int fileNameIndex, const std::string& compilerName );
+         int compileOutput ( int fileNameIndex );
 
        // function to generate PDF output file for AST
        // void outputPDF();
@@ -4797,7 +4798,8 @@ HEADER_APPLICATION_FILE_START
        // BP : 11/13/2001, modified to include compiler name
           std::vector<std::string> buildCompilerCommandLineOptions ( std::vector<std::string> & argv, int fileNameIndex, const std::string& compilerName );
        // BP : 11/13/2001, modified to include compiler name
-          int compileOutput ( std::vector<std::string> & argv, int fileNameIndex, const std::string& compilerName );
+       // int compileOutput ( std::vector<std::string> & argv, int fileNameIndex, const std::string& compilerName );
+          int compileOutput ( std::vector<std::string> & argv, int fileNameIndex );
 
           void display ( const std::string & label ) const;
 
@@ -4873,7 +4875,7 @@ HEADER_APPLICATION_SOURCE_FILE_START
        // SgSourceFile() ROSE_DEPRECATED_FUNCTION;
 
           virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 6/25/2010, support enable-only-c and haskell
+// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 6/25/2010, support enable-only-c and haskell
       //! Support for setting Java's classpath (to support the Open Fortran Parser (OFP))
           static std::string build_classpath();
 
@@ -4882,7 +4884,7 @@ HEADER_APPLICATION_SOURCE_FILE_START
 
       //! Support for processing Java source files.
           int build_Java_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-#endif          
+// #endif          
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
@@ -5046,21 +5048,27 @@ HEADER_APPLICATION_PROJECT_START
        // DQ (5/8/2010): Added support for resetting the source position information.
           void resetSourcePositionToGeneratedCode ( UnparseFormatHelp *unparseFormatHelp = NULL );
 
+      // DQ (10/14/2010): Removing reference to macros defined in rose_config.h.
       // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
       //! function to compile the output from unparsing the project
        // BP : 11/13/2001, modified to take compiler name
        // int compileOutput( char *compilerName = CXX_COMPILER_NAME );
-          int compileOutput( const std::string& compilerName = BACKEND_CXX_COMPILER_NAME_WITH_PATH );
+       // int compileOutput( const std::string& compilerName = BACKEND_CXX_COMPILER_NAME_WITH_PATH );
+         int compileOutput();
 
+      // DQ (10/14/2010): Removing reference to macros defined in rose_config.h.
       // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
       //! function to preform linking!
        // int link ( std::string linkerName = CXX_COMPILER_NAME );
-          int link ( std::string linkerName = BACKEND_CXX_COMPILER_NAME_WITH_PATH );
+       // int link ( std::string linkerName = BACKEND_CXX_COMPILER_NAME_WITH_PATH );
+          int link ( std::string linkerName );
 
+      // DQ (10/14/2010): Removing reference to macros defined in rose_config.h.
       // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
       //! function to preform linking!
        // int link ( int argc, char** argv, std::string linkerName = CXX_COMPILER_NAME );
-          int link ( const std::vector<std::string>& argv, std::string linkerName = BACKEND_CXX_COMPILER_NAME_WITH_PATH );
+       // int link ( const std::vector<std::string>& argv, std::string linkerName = BACKEND_CXX_COMPILER_NAME_WITH_PATH );
+          int link ( const std::vector<std::string>& argv, std::string linkerName );
 
        // function to generate PDF output file for AST
        // void outputPDF();
@@ -11216,8 +11224,9 @@ SgSourceFile::get_root() const
    }
 #endif
 
+// int SgFile::compileOutput ( int fileNameIndex, const std::string& compilerName )
 int
-SgFile::compileOutput ( int fileNameIndex, const std::string& compilerName )
+SgFile::compileOutput ( int fileNameIndex )
    {
   // Compile the output file from the unparing
      vector<string> argv = get_originalCommandLineArgumentList();
@@ -11240,7 +11249,8 @@ SgFile::compileOutput ( int fileNameIndex, const std::string& compilerName )
      stripEdgCommandLineOptions( argv );
 
   // Call the compile
-     int errorCode = compileOutput ( argv, fileNameIndex, compilerName );
+  // int errorCode = compileOutput ( argv, fileNameIndex, compilerName );
+     int errorCode = compileOutput ( argv, fileNameIndex );
 
   // return the error code from the compilation
      return errorCode;

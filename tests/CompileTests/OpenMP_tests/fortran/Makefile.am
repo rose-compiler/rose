@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 F77_TESTCODES_TO_PASS = \
     helloworld.f \
+    helloworld0.f \
     helloworld2.f \
     jacobi.f \
     default.f \
@@ -9,15 +10,16 @@ F77_TESTCODES_TO_PASS = \
     exampleA11f.f \
     exmpaleA221f.f \
     exampleA251f.f \
-    parallel-1.f \
     parallel.f \
+    parallel-1.f \
+    parallel-2.f \
     schedule.f
 
 # DQ (3/4/2010): Added simple test code to debug fortran OFP usage.
 F77_TESTCODES_TO_PASS += testNewOFP.f
 
 F90_TESTCODES_TO_PASS = \
-  paralledo.f90 \
+  paralleldo.f90 \
   collapse.f90 \
   critical.f90 \
   continuation.f90
@@ -30,22 +32,20 @@ F90_TESTCODES_TO_PASS = \
 #endif
 #endif
 
-# see bug 350, wrong position for C$OMP END PARALLEL
 # case insensitive in symobl lookup for Fortran
 # exampleA281f.f: case insensitive for included header file's name, also bug 354
 # flush2.f : wrong position for flush (scope becomes function, not inner block)
 # conditional.f:  conditional compilation
 # exampleA41f.f90:  test code has error?
 TESTCODES_CURRENTLY_FAILING = \
-    helloworld0.f \
-    parallel-2.f \
     exampleA211f.f \
     exampleA281f.f \
     exampleA102f.f90 \
     exampleA161f.f90 \
     flush2.f \
     conditional.f \
-    exampleA41f.f90
+    exampleA41f.f90 \
+    exampleA134f.f90
 
 ROSE_FLAGS = -rose:openmp
 

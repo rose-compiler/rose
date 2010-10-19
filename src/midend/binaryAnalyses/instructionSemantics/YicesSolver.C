@@ -1,6 +1,14 @@
-#include "rose.h"
+#include "sage3basic.h"
+
+// DQ (10/16/2010): This is needed to use the HAVE_SQLITE3 macro.
+// DQ (10/14/2010): This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 #include "YicesSolver.h"
 
+#undef  __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

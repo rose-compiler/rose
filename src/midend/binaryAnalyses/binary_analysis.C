@@ -1,5 +1,6 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "stringify.h"
 
 #include "AsmUnparser_compat.h"
 #include <binary_analysis.h>
@@ -161,7 +162,7 @@ void addBlocksFromFunctionToGraph(SgIncidenceDirectedGraph* graph, std::map<rose
 
     if(block->get_statementList().size()>0 )
     {
-      opCode = toString(isSgAsmx86Instruction( block->get_statementList().back() )->get_kind());
+      opCode = stringifyX86InstructionKind(isSgAsmx86Instruction( block->get_statementList().back() )->get_kind());
       std::cout <<"Statement opcode " << opCode << std::endl;
     }else
       std::cout <<"No statements " << block->class_name() << std::endl;

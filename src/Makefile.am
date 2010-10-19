@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = util ROSETTA frontend midend backend roseSupport \
+SUBDIRS = util ROSETTA roseSupport frontend midend backend \
           3rdPartyLibraries roseIndependentSupport roseExtensions
 
 # This lists a large number of directories.  If "make install"
