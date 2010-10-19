@@ -1,7 +1,6 @@
 /* ELF Section Tables (SgAsmElfSectionTable and related classes) */
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "stringify.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -458,41 +457,25 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 std::string
 SgAsmElfSectionTableEntry::to_string(SectionType t)
 {
-    switch (t) {
-      case SHT_NULL:     return "SHT_NULL";
-      case SHT_PROGBITS: return "SHT_PROGBITS";
-      case SHT_SYMTAB:   return "SHT_SYMTAB";
-      case SHT_STRTAB:   return "SHT_STRTAB";
-      case SHT_RELA:     return "SHT_RELA";
-      case SHT_HASH:     return "SHT_HASH";
-      case SHT_DYNAMIC:  return "SHT_DYNAMIC";
-      case SHT_NOTE:     return "SHT_NOTE";
-      case SHT_NOBITS:   return "SHT_NOBITS";
-      case SHT_REL:      return "SHT_REL";
-      case SHT_SHLIB:    return "SHT_SHLIB";
-      case SHT_DYNSYM:   return "SHT_DYNSYM";
-
-	// extensions
-      case SHT_GNU_verdef: return "SHT_GNU_verdef";
-      case SHT_GNU_verneed: return "SHT_GNU_verneed";
-      case SHT_GNU_versym: return "SHT_GNU_versym";
-      default:{
-        char buf[128];
-	if(t>=SHT_LOOS && t <= SHT_HIOS) {
-            snprintf(buf,sizeof(buf),"os-specific (%zu)",size_t(t)) ;
-            return buf;
-	} else if (t>=SHT_LOPROC && t<=SHT_HIPROC) {
-            snprintf(buf,sizeof(buf),"processor-specific (%zu)",size_t(t)) ;
-            return buf;
-	} else if (t>=SHT_LOUSER && t<=SHT_HIUSER) {
-            snprintf(buf,sizeof(buf),"application-specific (%zu)",size_t(t)) ;
-            return buf;
-	} else {
-            snprintf(buf,sizeof(buf),"unknown section type (%zu)",size_t(t)) ;
-            return buf;
-        }
-      }
-    };
+    std::string retval = stringifySgAsmElfSectionTableEntrySectionType(t);
+    if ('('!=retval[0])
+        return retval;
+    
+    char buf[128];
+    if(t>=SHT_LOOS && t <= SHT_HIOS) {
+        snprintf(buf,sizeof(buf),"os-specific (%zu)",size_t(t)) ;
+        return buf;
+    }
+    if (t>=SHT_LOPROC && t<=SHT_HIPROC) {
+        snprintf(buf,sizeof(buf),"processor-specific (%zu)",size_t(t)) ;
+        return buf;
+    }
+    if (t>=SHT_LOUSER && t<=SHT_HIUSER) {
+        snprintf(buf,sizeof(buf),"application-specific (%zu)",size_t(t)) ;
+        return buf;
+    }
+    snprintf(buf,sizeof(buf),"unknown section type (%zu)",size_t(t)) ;
+    return buf;
 }
 
 std::string
