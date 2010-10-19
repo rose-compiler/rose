@@ -29,6 +29,10 @@ namespace OmpSupport
 { 
   // an internal data structure to avoid redundant AST traversal to find OpenMP pragmas
   static std::list<SgPragmaDeclaration* > omp_pragma_list; 
+
+  // a similar list to save encountered Fortran comments which are OpenMP directives
+  std::list<OmpAttribute* > omp_comment_list; 
+
   // find all SgPragmaDeclaration nodes within a file and parse OpenMP pragmas into OmpAttribute info.
   void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
   {
@@ -978,6 +982,164 @@ This is no perfect solution until we handle preprocessing information as structu
       } // end for (OmpAttribute)
     }// end for (omp_pragma_list)
   }
+  //! Convert OpenMP Fortran comments to pragmas
+  //  main purpose is to 
+  //     x. Generate pragmas from OmpAttributes and insert them into the right places
+  //        since the floating comments are very difficult to work with
+  //        we move them to the fake pragmas to ease later translations. 
+  //        The backend has been extended to unparse the pragma in order to debug this step.
+  //     x. Enclose affected Fortran statement into a basic block
+  //     x. Merge clauses from END directives to the begin directive
+  // This will temporarily introduce C/C++-like AST with pragmas attaching OmpAttributes.
+  // This should be fine since we have SgBasicBlock in Fortran AST also.
+  //
+  // The benefit is that pragma-to-AST conversion written for C/C++ can 
+  // be reused for Fortran after this pass.
+  // Liao 10/18/2010
+  void convert_Fortran_OMP_Comments_to_Pragmas (SgSourceFile *sageFilePtr)
+  {
+    ROSE_ASSERT (sageFilePtr != NULL);
+    // step 1: Each OmpAttribute will have a dedicated SgPragmaDeclaration for it
+    list <OmpAttribute *>::iterator iter; 
+    for (iter = omp_comment_list.begin(); iter != omp_comment_list.end(); iter ++)
+    {
+      OmpAttribute * att = *iter;
+      omp_construct_enum omp_type = att->getOmpDirectiveType();
+      ROSE_ASSERT (att->getNode() !=NULL);
+      SgStatement* stmt = isSgStatement(att->getNode());
+      // TODO verify this assertion is true for Fortran OpenMP comments
+      ROSE_ASSERT (stmt != NULL);
+      //cout<<"debug at ompAstConstruction.cpp:"<<stmt <<" " << stmt->getAttachedPreprocessingInfo ()->size() <<endl;
+      ROSE_ASSERT (stmt->getAttachedPreprocessingInfo ()->size() != 0);
+      // So we process the directive if it's anchor node is either within the same file or marked as transformation
+      if (stmt->get_file_info()->get_filename()!= sageFilePtr->get_file_info()->get_filename()
+          && !(stmt->get_file_info()->isTransformation()))
+        continue;
+      SgScopeStatement * scope = stmt->get_scope();
+      ROSE_ASSERT (scope != NULL);
+      // the pragma will have string to ease debugging
+      string p_name = att->toOpenMPString();
+      SgPragmaDeclaration * p_decl = buildPragmaDeclaration("omp "+ p_name, scope);
+
+      // move the attribute to the pragma
+      //  remove the attribute from the original statement 's OmpAttributeList
+      removeOmpAttribute(att, stmt);
+      //cout<<"debug at after removeOmpAttribute:"<<stmt <<" " << stmt->getAttachedPreprocessingInfo ()->size() <<endl;
+      // remove the getPreprocessingInfo also 
+      PreprocessingInfo* info = att->getPreprocessingInfo(); 
+      ROSE_ASSERT (info != NULL);
+      att->setPreprocessingInfo(NULL);// set this as if the OmpAttribute was from a pragma, not from a comment
+      AttachedPreprocessingInfoType *comments = stmt ->getAttachedPreprocessingInfo ();
+      ROSE_ASSERT (comments != NULL);
+      ROSE_ASSERT (comments->size() !=0);
+      AttachedPreprocessingInfoType::iterator m_pos = find (comments->begin(), comments->end(), info);
+      if (m_pos == comments->end())
+      {
+        cerr<<"Cannot find a Fortran comment from a node: "<<endl;
+        cerr<<"The comment is "<<info->getString()<<endl;
+        cerr<<"The AST Node is "<<stmt->class_name()<<endl;
+        stmt->get_file_info()->display("debug here");
+        AttachedPreprocessingInfoType::iterator i;
+        for (i = comments->begin(); i!= comments->end(); i++)
+        {
+          cerr<<(*i)->getString()<<endl;
+        }
+        //cerr<<"The AST Node is at line:"<<stmt->get_file_info().get_line()<<endl;
+        ROSE_ASSERT (m_pos != comments->end());
+      }
+      comments->erase (m_pos);
+      att->setNode(p_decl);
+      addOmpAttribute(att, p_decl); 
+
+      //cout<<"debug at after addOmpAttribute:"<<stmt <<" " << stmt->getAttachedPreprocessingInfo ()->size() <<endl;
+      // two cases for where to insert the pragma, depending on where the preprocessing info is attached to stmt
+      //  1. PreprocessingInfo::before
+      //     insert the pragma right before the original Fortran statement
+      //  2. PreprocessingInfo::inside
+      //      insert it as the last statement within stmt
+      PreprocessingInfo::RelativePositionType position = info->getRelativePosition ();      
+      if (position == PreprocessingInfo::before)
+      { 
+        // Don't automatically move comments here!
+        insertStatementBefore (stmt, p_decl, false);
+      }
+      else if (position == PreprocessingInfo::inside)
+      {
+        SgScopeStatement* scope = isSgScopeStatement(stmt);
+        ROSE_ASSERT (scope != NULL);
+        appendStatement(p_decl, scope);
+      }
+      else if (position == PreprocessingInfo::after)
+      {
+        insertStatementAfter(stmt, p_decl, false);
+      }
+      else
+      {
+        cerr<<"ompAstConstruction.cpp , illegal PreprocessingInfo::RelativePositionType:"<<position<<endl;
+        ROSE_ASSERT (false);
+      }
+      //cout<<"debug at after appendStmt:"<<stmt <<" " << stmt->getAttachedPreprocessingInfo ()->size() <<endl;
+    } // end for omp_comment_list
+
+    // skip if the construct is Fortran end directive of any kinds
+    // since we always start the conversion from a begin directive
+    //if (isFortranEndDirective(omp_type))
+    //  continue;
+  } // end convert_Fortran_OMP_Comments_to_Pragmas ()
+
+#if 0 // this is too messy, not perfect reuse of existing code
+  //! Convert OpenMP Fortran comments to SgOmpXXX nodes
+  void convert_Fortran_Comments_to_AST (SgSourceFile *sageFilePtr)
+  {
+    ROSE_ASSERT (sageFilePtr != NULL);
+    // bottom up handling for nested cases
+    list <OmpAttribute *>::reverse_iterator iter; 
+    for (iter = omp_comment_list.rbegin(); iter != omp_comment_list.rend(); iter ++);
+    {
+      OmpAttribute * att = *iter;
+      omp_construct_enum omp_type = att->getOmpDirectiveType();
+      // skip if the construct is Fortran end directive of any kinds
+      // since we always start the conversion from a begin directive
+      if (isFortranEndDirective(omp_type))
+        continue;
+      SgStatement* stmt = isSgStatement(att->getNode());
+      // TODO verify this assertion is true for Fortran OpenMP comments
+      ROSE_ASSERT (stmt != NULL);
+      // So we process the directive if it's anchor node is either within the same file or marked as transformation
+      if (stmt->get_file_info()->get_filename()!= sageFilePtr->get_file_info()->get_filename()
+          && !(stmt->get_file_info()->isTransformation()))
+        continue;
+      OmpAttributeList* oattlist= getOmpAttributeList(stmt);  
+      ROSE_ASSERT (oattlist != NULL) ;
+      vector <OmpAttribute* > ompattlist = oattlist->ompAttriList;
+      ROSE_ASSERT (ompattlist.size() != 0) ;
+      vector <OmpAttribute* >::iterator i = ompattlist.begin();
+      for (; i!=ompattlist.end(); i++)
+      {
+        OmpAttribute* oa = *i;
+        omp_construct_enum omp_type = oa->getOmpDirectiveType();
+        ROSE_ASSERT(isDirective(omp_type));
+        SgStatement* omp_stmt = NULL;
+        switch (omp_type)
+        {
+          case e_parallel:
+            {
+              omp_stmt = buildOmpBodyStatement(oa);
+              break;
+            }
+          default:
+            {
+              cerr<<"Error: convert_OpenMP_pragma_to_AST(): unhandled OpenMP directive type:"<<OmpSupport::toString(omp_type)<<endl;
+              assert (false);
+              break;
+            }
+        } // end switch
+        setOneSourcePositionForTransformation(omp_stmt);
+        //replaceOmpPragmaWithOmpStatement(decl, omp_stmt);//???
+      }  // end for ompattlist
+    } // end for omp_comment_list
+  } // end convert_Fortran_Comments_to_AST ()
+#endif 
 
   void build_OpenMP_AST(SgSourceFile *sageFilePtr)
   {
@@ -987,7 +1149,8 @@ This is no perfect solution until we handle preprocessing information as structu
         sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
     {
       printf("AST construction for Fortran OpenMP is not yet implemented. \n");
-      assert(false);
+      //assert(false);
+      convert_Fortran_OMP_Comments_to_Pragmas (sageFilePtr);
       // end if (fortran)
     }
     else
@@ -997,7 +1160,7 @@ This is no perfect solution until we handle preprocessing information as structu
       {
         printf ("Calling convert_OpenMP_pragma_to_AST() \n");
       }
-
+      // TODO move out of this if false body.
       convert_OpenMP_pragma_to_AST( sageFilePtr);
     }
   }

@@ -297,8 +297,11 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
        // case V_SgGotoStatement:              unparseGotoStmt(stmt, info); break;
        // executable statements, other
        // case V_SgExprStatement:              unparseExprStmt(stmt, info); break;
+       //  Liao 10/18/2010, I turn on the pragma unparsing here to help debugging OpenMP programs
+       //  , where OpenMP directive comments are used to generate C/C++-like pragmas internally.
+       //  Those pragmas later are used to reuse large portion of OpenMP AST construction of C/C++
        // pragmas
-       // case V_SgPragmaDeclaration:          unparsePragmaDeclStmt(stmt, info); break;
+        case V_SgPragmaDeclaration:          unparsePragmaDeclStmt(stmt, info); break;
 
 #if 0
        // Optional support for unparsing Fortran from C
@@ -3713,6 +3716,7 @@ FortranCodeGeneration_locatedNode::unparsePragmaDeclStmt (SgStatement* stmt, SgU
   string txt = pragma->get_pragma();
   curprint("!pragma ");
   curprint(txt);
+  curprint("\n");
 }
 
 
