@@ -144,6 +144,9 @@ namespace OmpSupport
   //! Check if the construct is a Fortran END ... directive
   bool isFortranEndDirective(omp_construct_enum omp_type);
 
+  //! Check if the construct is a Fortran directive which can (optionally) have a corresponding END directive
+  bool isFortranBeginDirective(omp_construct_enum omp_type);
+
   //! Check if an OpenMP construct is a directive
   bool isDirective(omp_construct_enum omp_type);
 
@@ -174,6 +177,18 @@ namespace OmpSupport
   class OmpAttributeList;
   //! Get OmpAttribute from a SgNode, return NULL if not found
   OmpAttributeList* getOmpAttributeList(SgNode* node);
+
+  //! Get the first OmpAttribute from a SgNode, return NULL if not found
+  OmpAttribute* getOmpAttribute(SgNode* node);
+
+  //! Get omp enum from an OpenMP pragma attached with OmpAttribute
+  omp_construct_enum getOmpConstructEnum(SgPragmaDeclaration* decl);
+
+  //! Get the corresponding begin construct enum from an end construct enum
+  omp_construct_enum getBeginOmpConstructEnum (omp_construct_enum end_enum);
+
+  //! Get the corresponding end construct enum from a begin construct enum
+  omp_construct_enum getEndOmpConstructEnum (omp_construct_enum begin_enum);
 
   //! Generate a pragma declaration from OmpAttribute attached to a statement
   void generatePragmaFromOmpAttribute(SgNode* sg_node); 
