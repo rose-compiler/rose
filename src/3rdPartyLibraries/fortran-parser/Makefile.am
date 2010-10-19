@@ -132,8 +132,20 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 # Liao 8/4/2010, based on Jean Utke's suggestion on [Rose-public] Fortran built-ins
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 # include_HEADERS = ActionEnums.h token.h FortranParserAction.h
-include_HEADERS = token.h ActionEnums.h FortranParserAction.h
+include_HEADERS = ActionEnums.h token.h FortranParserAction.h
 # endif
+endif
+
+OFP_DIR = $(top_builddir)/src/3rdPartyLibraries/fortran-parser
+if !ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+token.h:
+	touch token.h
+
+ActionEnums.h:
+	touch ActionEnums.h
+
+FortranParserAction.h:
+	touch FortranParserAction.h
 endif
 
 # I don't know why this does not seem to work, but that we need three separate rules.
