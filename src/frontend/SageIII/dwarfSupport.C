@@ -21,6 +21,11 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
+
+
 // Allow "string" and "pair" to be used (whether or not USE_ROSE_DWARF_SUPPORT id defined to be true).
 using namespace std;
 

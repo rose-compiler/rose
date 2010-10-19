@@ -7,7 +7,7 @@
 
 
 HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_START
-#include "x86InstructionEnum.h"
+#include "InstructionEnumsX86.h" /* register numbers, instruction size, etc. */
 HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_END
 
 HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION_START
@@ -970,7 +970,7 @@ HEADER_GENERIC_HEADER_START
 	public:
           	explicit SgAsmGenericHeader(SgAsmGenericFile *ef)
 			: SgAsmGenericSection(ef, NULL),
-			p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_symbols(NULL), p_sections(NULL)
+			p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_sections(NULL)
 			{ctor();}
 
 		virtual ~SgAsmGenericHeader();
@@ -988,10 +988,6 @@ HEADER_GENERIC_HEADER_START
 		        ROSE_ASSERT(p_dlls != NULL);
 			return p_dlls->get_dlls();
 		}
-
-		/* Functions for symbols */
-		void add_symbol(SgAsmGenericSymbol*); /* add a new symbol to the symbol table. Duplicates are allowed. */
-		SgAsmGenericSymbolPtrList& get_symbol_list();
 
 		/* Accessors for protected/private members */
 		std::vector<unsigned char>& get_magic() {return p_magic;}
@@ -1793,7 +1789,7 @@ HEADER_ELF_RELOC_ENTRY_START
 		void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const
 			{dump(f, prefix, idx, NULL);}
-		static std::string to_string(RelocType,InsSetArchitecture);
+		std::string reloc_name() const;
 	private:
 		void ctor(SgAsmElfRelocSection*);
 
@@ -4235,45 +4231,13 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
        // Note that the auto-generated version of this is const
           virtual SgAsmType* get_type();
 
-      //! Get a unique identifier for this particular register
-          std::pair<X86RegisterClass, int> get_identifier() const;
+	SgAsmx86RegisterReferenceExpression(const RegisterDescriptor&);
+
 HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
 
 
 
 HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
-	enum arm_register_enum { // The exact numbers here are important
-		undefined_arm_register = 0, /*!< unknown (error or unitialized value) */
-		reg0 = 1,
-		reg1 = 2,
-		reg2 = 3,
-		reg3 = 4,
-		reg4 = 5,
-		reg5 = 6,
-		reg6 = 7,
-		reg7 = 8,
-		reg8 = 9,
-		reg9  = 10,
-		reg10 = 11,
-		reg11 = 12,
-		reg12 = 13,
-		reg13 = 14,
-		reg14 = 15,
-		reg15 = 16,
-		cpsr = 17,
-		spsr = 18,
-		cpsr_fields = 19, /* 16 values -- add arm_suffix_field_enum */
-		spsr_fields = 35, /* 16 values -- add arm_suffix_field_enum */
-		last_arm_register = spsr_fields + 16
-	};
-
-	enum arm_position_in_register_enum {
-		undefined_arm_position_in_register = 0, /*!< unknown (error or unitialized value) */
-		arm_dword = 1, /*!< lower 32 bit part of larger register (typically the first part of a 64 bit register) */
-		arm_qword = 2, /*!< 64 bit part of 128 bit register (not in common use) */
-		last_arm_position_in_register
-	};
-
 	enum arm_suffix_field_enum {
 		undefined_position_in_suffix = 0, /*!< unknown (error or unitialized value) */
 		c = 1, // control field mask bit
@@ -4283,6 +4247,10 @@ HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
 		last_position_in_suffix
 	};
 
+	SgAsmArmRegisterReferenceExpression(const RegisterDescriptor &rdesc) {
+		p_descriptor = rdesc;
+	}
+
 	// Note that the auto-generated version of this is const
 	virtual SgAsmType* get_type();
 HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
@@ -4290,18 +4258,9 @@ HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
 
 
 HEADER_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION_START
-	enum powerpc_register_enum { // The exact numbers here are important
-		undefined_powerpc_register = 0, /*!< unknown (error or unitialized value) */
-		reg0 = 1,
-		reg1 = 2,
-		reg2 = 3,
-		reg3 = 4,
-		reg4 = 5,
-		reg5 = 6,
-		reg6 = 7,
-		reg7 = 8,
-		last_powerpc_register
-	};
+	SgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor &rdesc) {
+		p_descriptor = rdesc;
+	}
 
 	// Note that the auto-generated version of this is const
 	virtual SgAsmType* get_type();
@@ -5034,6 +4993,10 @@ SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION_END
 
 SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
 
+SgAsmx86RegisterReferenceExpression::SgAsmx86RegisterReferenceExpression(const RegisterDescriptor &rdesc) {
+	p_descriptor = rdesc;
+}
+
 std::string
 SgAsmx86RegisterReferenceExpression::get_regnames8l(regnames8l_enum n)
    {
@@ -5091,11 +5054,6 @@ SgAsmx86RegisterReferenceExpression::get_segregnames(segregnames_enum n)
 // Note that the auto-generated version of this is const
 SgAsmType* SgAsmx86RegisterReferenceExpression::get_type() {
   return p_type;
-}
-
-std::pair<X86RegisterClass, int>
-SgAsmx86RegisterReferenceExpression::get_identifier() const {
-  return std::make_pair(this->get_register_class(), this->get_register_number());
 }
 
 SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
@@ -5157,13 +5115,6 @@ const char *
 SgAsmGenericHeader::format_name() const
    {
      return "ASM_GENERIC_HEADER";
-   }
-
-SgAsmGenericSymbolPtrList & 
-SgAsmGenericHeader::get_symbol_list()
-   {
-     ROSE_ASSERT(p_symbols != NULL);
-     return p_symbols->get_symbols();
    }
 
 SgAsmGenericFormat::ByteOrder

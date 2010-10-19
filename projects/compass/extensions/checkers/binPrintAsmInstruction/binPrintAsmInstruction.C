@@ -4,6 +4,7 @@
 
 #include "rose.h"
 #include "compass.h"
+#include "stringify.h"
 
 #ifndef COMPASS_BIN_PRINT_ASM_INSTRUCTION_H
 #define COMPASS_BIN_PRINT_ASM_INSTRUCTION_H
@@ -139,7 +140,7 @@ visit(SgNode* n)
   if (binInst==NULL) return;
   ROSE_ASSERT(binInst);
 
-  string className = toString(binInst->get_kind());
+  string className = stringifyX86InstructionKind(binInst->get_kind(), "x86_");
   int nr = 1;
 
 //rose_hash::unordered_map<std::string, int>::const_iterator it = instMap.find(className);

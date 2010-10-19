@@ -32,7 +32,7 @@ genInterestingCFG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 genCFG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 check-local:factPlacer latticePlacer scalarFWDataflow pathSensitive
-	./factPlacer    $(srcdir)/test_examples/factPlacer_example.cpp > factPlacer_out
+#	./factPlacer    $(srcdir)/test_examples/factPlacer_example.cpp > factPlacer_out
 # This test passes all but make distcheck for gcc 4.1.2	
 #	./latticePlacer $(srcdir)/test_examples/latticePlacer_example.c > latticePlacer_out
 # scalarFWDataflow_example.c is not compilable , Liao

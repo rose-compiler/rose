@@ -68,17 +68,6 @@ BUILD_BINARY_PROTO(Subtract)
      SgAsmMemoryReferenceExpression* buildAsmMemoryReferenceExpression(SgAsmExpression* addr, SgAsmExpression* segment = NULL, SgAsmType* t = NULL);
      SgAsmBinaryAdd*                 buildAsmAddExpression(SgAsmExpression* lhs, SgAsmExpression* rhs);
 
-  // New functions not in the list of "make" functions
-  // SgAsmx86RegisterReferenceExpression* buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class = x86_regclass_unknown, int register_number = 0, X86PositionInRegister position_in_register = x86_regpos_unknown);
-  // SgAsmx86RegisterReferenceExpression* buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, int register_number, X86PositionInRegister position_in_register = x86_regpos_unknown);
-     SgAsmx86RegisterReferenceExpression* buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::regnames8l_enum register_number, X86PositionInRegister position_in_register = x86_regpos_low_byte);
-     SgAsmx86RegisterReferenceExpression* buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::regnames8h_enum register_number, X86PositionInRegister position_in_register = x86_regpos_high_byte);
-     SgAsmx86RegisterReferenceExpression* buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::regnames16_enum register_number, X86PositionInRegister position_in_register = x86_regpos_word);
-     SgAsmx86RegisterReferenceExpression* buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::regnames32_enum register_number, X86PositionInRegister position_in_register = x86_regpos_dword);
-     SgAsmx86RegisterReferenceExpression* buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::regnames64_enum register_number, X86PositionInRegister position_in_register = x86_regpos_qword);
-
-     SgAsmx86RegisterReferenceExpression* buildAsmx86RegisterReferenceExpression( X86RegisterClass register_class, SgAsmx86RegisterReferenceExpression::segregnames_enum register_number, X86PositionInRegister position_in_register = x86_regpos_all);
-
      SgAsmTypeByte*           buildAsmTypeByte();
      SgAsmTypeWord*           buildAsmTypeWord();
      SgAsmTypeDoubleWord*     buildAsmTypeDoubleWord();

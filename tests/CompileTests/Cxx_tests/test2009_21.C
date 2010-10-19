@@ -9,8 +9,18 @@ namespace mynamespace{
 
 namespace mynamespace
 {
+  void foo2()
+  {}
+
+// some comments here
+}
+
+namespace mynamespace
+{
   void foo()
   {}
 
 #include <LogicalPath.cpp>
 }
+
+
