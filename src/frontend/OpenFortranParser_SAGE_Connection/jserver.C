@@ -189,7 +189,7 @@ jserver_start(JvmT* je)
   // DQ (3/12/2010): We can't use this since we don't include the ROSE header files 
   // (however, this might simplify the design).
   // string classpath = SgSourceFile::build_classpath();
-     //     string classpath = global_build_classpath();
+     string classpath = global_build_classpath();
 #endif
 
 #if 0
@@ -248,31 +248,16 @@ jserver_start(JvmT* je)
    jvm_args.ignoreUnrecognized = JNI_FALSE;
 #endif
 
-     jvm_args.version = JNI_VERSION_1_6;
-     jvm_args.nOptions = 2;
-     //JavaVMOption options[jvm_args.nOptions];
- 
+     jvm_args.version = JNI_VERSION_1_4;
+     jvm_args.nOptions = 1;
      jvm_args.options = new JavaVMOption[jvm_args.nOptions];
-     //     jvm_args.options[0].optionString = strdup(classpath.c_str());
-
-     string s1="-verbose:gc,class,jni";
-     jvm_args.options[0].optionString =(char*)s1.c_str();
-     string s2="-Djava.class.path=/export/panas2/c++workspace/build-windows-rc/src/3rdPartyLibraries/java-parser/:/export/panas2/c++workspace/build-windows-rc/src/3rdPartyLibraries/java-parser/ecj.jar";
-     jvm_args.options[1].optionString =(char*)s2.c_str();
-     //     options[1].optionString = (char*)s2.c_str(); 
-
-     //jvm_args.options=options;
-
+     jvm_args.options[0].optionString = strdup(classpath.c_str());
      jvm_args.ignoreUnrecognized = JNI_FALSE;
 
   // JNI_CreateJavaVM(&jvm, (void **)&env, &jvm_args);
   // handleExceptionMaybe(jvm, env);
 
-
-     //     printf ("tps: Running JNI_CreateJavaVM() with args %s \n",jvm_args);
-     printf ("tps: option1 %s \n",jvm_args.options[0]);
-     printf ("tps: option2 %s \n",jvm_args.options[1]);
-
+  // printf ("Create and load the Java VM: Calling JNI_CreateJavaVM(); \n");
      
   /* Create and load the Java VM.  */
      res = JNI_CreateJavaVM(&(je->jvm), (void **)&(je->env), &jvm_args);

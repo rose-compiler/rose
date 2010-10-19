@@ -20,9 +20,6 @@ static int       jofp_invoke(int, char **);
 // int       jofp_invoke(int, char **);
 
 
-static const char* myclass="JavaTraversal";
-//static const char* myclass="org.eclipse.jdt.internal.compiler.batch.Main";
-
 int 
 jvm_ecj_processing(int argc,char** argv)
 {  
@@ -38,8 +35,7 @@ jofp_get_class()
     static jclass ofp_class ;
     if (ofp_class == NULL)  {
      // ofp_class = jserver_FindClass("fortran/ofp/FrontEnd");
-      //        ofp_class = jserver_FindClass("JavaTraversal");
-        ofp_class = jserver_FindClass(myclass);
+        ofp_class = jserver_FindClass("JavaTraversal");
      // ofp_class = jserver_FindClass("org.eclipse.jdt.internal.compiler.batch.Main");
 
         if (ofp_class == NULL)  jserver_handleException();
@@ -53,7 +49,6 @@ jofp_get_new_object(jmethodID method, jobjectArray args, jstring name, jstring t
 {
     return jserver_getNewObject(jofp_get_class(),method, args, name, type);
 }
-
 
 
 static int 
@@ -76,30 +71,16 @@ jofp_invoke(int argc, char **argv)
 
   // jstring type = jserver_getJavaString("fortran.ofp.parser.java.FortranParserActionNull");
   // jstring type = jserver_getJavaString("JavaTraversal");
-     jstring type = jserver_getJavaString(myclass);
+     jstring type = jserver_getJavaString("JavaTraversal");
 
      if (fileName == NULL || args == NULL || type == NULL) jserver_handleException(); 
 
-
-     jclass jc = jofp_get_class();
-     if (jc==NULL) 
-       printf("Error class not found\n");
-     jmethodID meth = jofp_get_main();
-     if (meth==NULL) 
-       printf("Error method not found\n");
-     printf("CHECK: We are calling class %s and function main with args \n",myclass);
-     for (int i=0;i<argc;++i) 
-       printf(" %s ",argv[i]);
-     printf("\n-----------------------------\nCalling main method...\n");
-     jserver_callMethod(jc, jofp_get_main(), args);
+     jserver_callMethod(jofp_get_class(), jofp_get_main(), args);
 
   // DQ (10/12/2010): This function is not implemented in the ECJ parser (only in OFP).
      jobject new_ofp_class = jofp_get_new_object(jofp_get_cons_method(),args, fileName, type);
-     if (new_ofp_class==NULL) {
-       printf("ERROR : Unable to create object from class \n");
-     }
+
   // DQ (10/12/2010): This function is not implemented in the ECJ parser (only in OFP).
-       printf("Calling boolean method get_error.\n");
      retval = jserver_callBooleanMethod(new_ofp_class, jofp_get_error_method());
 
      if (retval != 0)  {
