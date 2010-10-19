@@ -1320,7 +1320,6 @@ SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStm
   * otherwise generate a SgBasicBlock in between. If s is the body of a loop, catch, or if statement and is already
   * a basic block, s is returned unmodified. Else, the (potentially new) parent of s is returned. */
 SgLocatedNode* ensureBasicBlockAsParent(SgStatement* s);
-//SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
 
 //! Fix up ifs, loops, etc. to have blocks as all components and add dummy else
 //! clauses to if statements that don't have them

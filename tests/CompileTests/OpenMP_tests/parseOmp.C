@@ -7,6 +7,7 @@ Last Modified: 9/19/2008
 #include <iostream>
 #include <string>
 #include "OmpAttribute.h"
+using namespace std;
 using namespace OmpSupport;
 
 class visitorTraversal : public AstSimpleProcessing
@@ -21,7 +22,11 @@ void visitorTraversal::visit(SgNode* node)
   // e.g., omp for is attached to both the pragma and the loop. 
   OmpAttributeList* attributelist = getOmpAttributeList(node);
   if (attributelist)
+  {
+    cout<<"Found att attached to "<<node->class_name()<<" at line "
+      <<node->get_file_info()->get_line()<<endl;
     attributelist->print();//debug only for now
+  }
 }
 
 // must have argc and argv here!!
