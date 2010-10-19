@@ -1,8 +1,7 @@
-
-// #include "rose.h"
 #include "sage3basic.h"
 #include "errno.h"
 #include "rose_attributes_list.h"
+#include "stringify.h"
 
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
@@ -869,35 +868,9 @@ PreprocessingInfo::display (const string & label) const
 
 std::string
 PreprocessingInfo::relativePositionName (const RelativePositionType & position)
-   {
-     string returnString;
-     switch (position)
-        {
-          case defaultValue: 
-             returnString = "defaultValue";
-             break;
-          case undef: 
-             returnString = "undef";
-             break;
-          case before: 
-             returnString = "before";
-             break;
-          case after: 
-             returnString = "after";
-             break;
-          case inside: 
-             returnString = "inside";
-             break;
-
-          default:
-             returnString = "ERROR DEFAULT REACHED";
-             printf ("Default reached in PreprocessingInfo::relativePositionName() exiting ... \n");
-             ROSE_ABORT();
-             break;
-        }
-
-     return returnString;
-   }
+{
+    return stringifyPreprocessingInfoRelativePositionType(position);
+}
 
 
 PreprocessingInfo::RelativePositionType
