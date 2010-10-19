@@ -53,7 +53,7 @@ void read_file (std::string line, const char *format, ...) {
   char* s;
   string str;
   const char* delimiters =	"\t\n";
-  //const char* quote_delimiters =	"\"";
+  const char* quote_delimiters =	"\"";
 
   s = strtok((char*)line.c_str(), delimiters);
 
