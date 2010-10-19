@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 
 	cout << "1. Generating test code now.\n";
 	
-	BasicExpressionTest test(project, false);
+	ComplexExpressionTest test(project, false);
 	test.build();
 	vector<SgFunctionDeclaration*> events = test.getAllEvents();
 

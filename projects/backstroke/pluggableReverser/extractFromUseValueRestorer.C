@@ -172,11 +172,17 @@ SgExpression* ExtractFromUseValueRestorer:: extractFromUseAssignOp(VariableRenam
 	VariableRenaming& variableRenamingAnalysis = *getEventHandler()->getVariableRenaming();
 	SgBinaryOp* useAssignOp = isSgBinaryOp(useSite);
 
-	if ((isSgMinusAssignOp(useAssignOp) || isSgPlusAssignOp(useAssignOp))
-			&& (!useAssignOp->get_type()->isIntegerType() || !useAssignOp->get_rhs_operand()->get_type()->isIntegerType()))
+	// Both lhs and rhs operands should be integer types.
+	// The lhs operand shall not be of bool type.
+	if (isSgMinusAssignOp(useAssignOp) || isSgPlusAssignOp(useAssignOp))
 	{
-		//We can't extract values out of floating point types due to rounding
-		return NULL;
+		if (!useAssignOp->get_type()->isIntegerType() ||
+			!useAssignOp->get_rhs_operand()->get_type()->isIntegerType() ||
+			isSgTypeBool(useAssignOp->get_lhs_operand()->get_type()))
+		{
+			//We can't extract values out of floating point types due to rounding
+			return NULL;
+		}
 	}
 
 	//The left-hand side should have been normalized to be a variable
