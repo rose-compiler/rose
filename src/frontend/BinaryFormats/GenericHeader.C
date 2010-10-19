@@ -23,10 +23,6 @@ SgAsmGenericHeader::ctor()
     get_file()->add_header(this);
 
     /* Create child IR nodes and set their parent (initialized to null in real constructor) */
-    ROSE_ASSERT(p_symbols == NULL);
-    p_symbols = new SgAsmGenericSymbolList;
-    p_symbols->set_parent(this);
-
     ROSE_ASSERT(p_dlls == NULL);
     p_dlls    = new SgAsmGenericDLLList;
     p_dlls->set_parent(this);
@@ -59,7 +55,6 @@ SgAsmGenericHeader::~SgAsmGenericHeader()
     //set_file(NULL);   -- the file pointer was moved into the superclass in order to be easily available to all sections
 
     /* Delete children */
-    delete p_symbols;     p_symbols     = NULL;
     delete p_dlls;        p_dlls        = NULL;
     delete p_exec_format; p_exec_format = NULL;
     delete p_sections;    p_sections    = NULL;
@@ -149,33 +144,6 @@ SgAsmGenericHeader::add_dll(SgAsmGenericDLL *dll)
     p_dlls->get_dlls().push_back(dll);
 
     dll->set_parent(p_dlls);
-}
-
-/** Add a new symbol to the symbol table. The SgAsmGenericHeader has a list of symbol pointers. These pointers point to symbols
- *  that are defined in various sections throughout the executable. It's not absolutely necessary to store them here since the
- *  sections where they're defined also point to them--they're here only for convenience.
- * 
- *  FIXME: If symbols are stored in one central location we should probably use something other than an
- *         unsorted list. (RPM 2008-08-19) */
-void
-SgAsmGenericHeader::add_symbol(SgAsmGenericSymbol *symbol)
-{
-    ROSE_ASSERT(p_symbols);
-    p_symbols->set_isModified(true);
-
-#if 0 /*turned off because too slow!!! (RPM 2008-08-19)*/
-#ifndef NDEBUG
-    for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
-        ROSE_ASSERT(p_symbols->get_symbols()[i] != symbol); /*duplicate*/
-    }
-#endif
-#endif
-    p_symbols->get_symbols().push_back(symbol);
-
-    /* FIXME: symbols have two parents: the header's p_symbols list and the list in the section where the symbol was defined.
-     *        We probably want to keep them only with the section that defines them. For example, SgAsmElfSymbolSection.
-     *        (RPM 2008-08-19) */
-    p_symbols->get_symbols().back()->set_parent(p_symbols);
 }
 
 /** Returns the list of sections that are memory mapped */
@@ -402,9 +370,5 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %zu entries\n", p, w, "DLL.size", p_dlls->get_dlls().size());
     for (size_t i = 0; i < p_dlls->get_dlls().size(); i++)
         p_dlls->get_dlls()[i]->dump(f, p, i);
-
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "Symbol.size", p_symbols->get_symbols().size());
-    for (size_t i = 0; i < p_symbols->get_symbols().size(); i++)
-        p_symbols->get_symbols()[i]->dump(f, p, i);
 }
 

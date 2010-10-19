@@ -44,7 +44,7 @@ EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 
 # DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_paths.C
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_paths.C stringify.[Ch]
 
 distclean-local:
 	rm -rf Templates.DB

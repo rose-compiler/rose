@@ -325,13 +325,15 @@ public:
         DefinitionT const& definition, bool is_predefined)
     {
 #if 0
-       string name(macro_name.get_value().c_str());
-       //add all macros which is not a builtin macro to ROSE attribute
-       if(! (name.substr(0,2)=="__")
-            //&&(name.substr(name.length()-2,name.length())=="__"))
-        ){
-       //AS(041906) Filter out macros defined on the commandline as they are not
-       //part of a file and is therefore not interesting for macro-rewrapping.
+// The "#if 0" was already here, but I also commented these lines out because '{' and '}' do not balance otherwise. The
+// unbalanced braces cause some problems for some tools (indenting, automatic enum detection, etc) [RPM 2010-10-11]
+//       string name(macro_name.get_value().c_str());
+//       //add all macros which is not a builtin macro to ROSE attribute
+//       if(! (name.substr(0,2)=="__")
+//            //&&(name.substr(name.length()-2,name.length())=="__"))
+//        ){
+//       //AS(041906) Filter out macros defined on the commandline as they are not
+//       //part of a file and is therefore not interesting for macro-rewrapping.
 #endif
        //if(is_predefined!=true)
        if( macro_name.get_position().get_file().size()!=0 )
