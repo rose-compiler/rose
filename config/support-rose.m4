@@ -98,11 +98,10 @@ fi
 
 # exit 1
 
-#AC_MSG_WARN([Exiting as a test!])
-#AC_MSG_ERROR([Exiting as a test!])
-#echo "Exiting as a test!"
-#exit 1
-
+# AC_MSG_WARN([Exiting as a test!])
+# AC_MSG_ERROR([Exiting as a test!])
+# echo "Exiting as a test!"
+# exit 1
 
 # ***************************************************************
 # Options to enable selection of only a single language
@@ -151,6 +150,15 @@ if test "x$enableval" = "xyes"; then
    echo "Setting: support_php_only = $support_php_only"
 fi
 
+AC_ARG_ENABLE([only-java],AS_HELP_STRING([--enable-only-java],[Only support Java using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
+support_java_only=no
+echo "BEFORE Setting: enableval = $enableval support_java_only = $support_java_only"
+if test "x$enableval" = "xyes"; then
+   support_java_only=yes
+   support_language_only=yes
+   echo "Setting: support_java_only = $support_java_only"
+fi
+
 AC_ARG_ENABLE([only-binary-analysis],AS_HELP_STRING([--enable-only-binary-analysis],[Only support Binary Analysis using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
 support_binary_analysis_only=no
 echo "BEFORE Setting: enableval = $enableval support_binary_analysis_only = $support_binary_analysis_only"
@@ -166,6 +174,7 @@ echo "   support_c_only               = $support_c_only"
 echo "   support_cxx_only             = $support_cxx_only"
 echo "   support_fortran_only         = $support_fortran_only"
 echo "   support_php_only             = $support_php_only"
+echo "   support_java_only            = $support_java_only"
 echo "   support_binary_analysis_only = $support_binary_analysis_only"
 
 AC_MSG_CHECKING([error checking language only selections])
@@ -178,6 +187,9 @@ if test "x$support_c_only" = "xyes" -o "x$support_cxx_only" = "xyes"; then
    fi
    if test "x$support_php_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-c or --enable-only-cxx is inconsistant with use of --enable-only-php])
+   fi
+   if test "x$support_java_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-c or --enable-only-cxx is inconsistant with use of --enable-only-java])
    fi
    if test "x$support_binary_analysis_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-c or --enable-only-cxx is inconsistant with use of --enable-only-binary-analysis])
@@ -192,6 +204,9 @@ if test "x$support_fortran_only" = "xyes"; then
    if test "x$support_php_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-fortran is inconsistant with use of --enable-only-php])
    fi
+   if test "x$support_java_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-fortran is inconsistant with use of --enable-only-java])
+   fi
    if test "x$support_binary_analysis_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-fortran is inconsistant with use of --enable-only-binary-analysis])
    fi
@@ -205,8 +220,27 @@ if test "x$support_php_only" = "xyes"; then
    if test "x$support_fortran_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-php is inconsistant with use of --enable-only-fortran])
    fi
+   if test "x$support_java_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-php is inconsistant with use of --enable-only-java])
+   fi
    if test "x$support_binary_analysis_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-php is inconsistant with use of --enable-only-binary-analysis])
+   fi
+   disable_languages=yes
+fi
+
+if test "x$support_java_only" = "xyes"; then
+   if test "x$support_c_only" = "xyes" -o "x$support_cxx_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-java is inconsistant with use of either C or C++ support])
+   fi
+   if test "x$support_fortran_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-java is inconsistant with use of --enable-only-fortran])
+   fi
+   if test "x$support_php_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-java is inconsistant with use of --enable-only-php])
+   fi
+   if test "x$support_binary_analysis_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-java is inconsistant with use of --enable-only-binary-analysis])
    fi
    disable_languages=yes
 fi
@@ -221,6 +255,9 @@ if test "x$support_binary_analysis_only" = "xyes"; then
    if test "x$support_php_only" = "xyes"; then
       AC_MSG_ERROR([Specification of --enable-only-binary-analysis is inconsistant with use of --enable-only-php])
    fi
+   if test "x$support_java_only" = "xyes"; then
+      AC_MSG_ERROR([Specification of --enable-only-binary-analysis is inconsistant with use of --enable-only-java])
+   fi
    disable_languages=yes
 fi
 AC_MSG_RESULT(ok)
@@ -232,7 +269,7 @@ AC_MSG_RESULT(ok)
 
 # DQ (4/15/2010): Added support to specify selected languages to support in ROSE.
 AC_MSG_CHECKING([selecting languages to support])
-AC_ARG_ENABLE([languages],AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,c,c++,fortran,php,binaries (default=all)]),,enableval=all)
+AC_ARG_ENABLE([languages],AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,c,c++,fortran,java,php,binaries (default=all)]),,enableval=all)
 
 LANGUAGES_TO_BUILD=""
 case "$enableval" in
@@ -241,6 +278,7 @@ case "$enableval" in
       support_c_language=yes
       support_cxx_language=yes
       support_fortran_language=yes
+      support_java_language=yes
       support_php_language=yes
       support_binaries=yes
       support_cuda_language=yes
@@ -251,6 +289,7 @@ case "$enableval" in
       support_c_language=no
       support_cxx_language=no
       support_fortran_language=no
+      support_java_language=no
       support_php_language=no
       support_binaries=no
       support_cuda_language=no
@@ -267,6 +306,9 @@ case "$enableval" in
            ;;
         fortran) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD fortran"
            support_fortran_language=yes
+           ;;
+        java) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD java"
+           support_java_language=yes
            ;;
         php) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
            support_php_language=yes
@@ -294,6 +336,7 @@ esac
 echo "support_c_language       = $support_c_language"
 echo "support_cxx_language     = $support_cxx_language"
 echo "support_fortran_language = $support_fortran_language"
+echo "support_java_language    = $support_java_language"
 echo "support_php_language     = $support_php_language"
 echo "support_binaries         = $support_binaries"
 echo "support_cuda_language    = $support_cuda_language"
@@ -304,12 +347,13 @@ AC_MSG_CHECKING([for language specific options to generate a minimal ROSE config
 if test "x$support_c_only" = "xyes"; then
 
    support_fortran_language=no
+   support_java_language=no
    support_php_language=no
    support_binaries=no
    support_cuda_language=no
    support_opencl_language=no
 
-   AC_MSG_RESULT(haskell:off fortran:off php:off)
+   AC_MSG_RESULT(haskell:off fortran:off java:off php:off)
 fi
 
 # Specify how to set the ROSE configure options when a minimal configuration of ROSE for only Fortran language support is required (support requested by Rice and LANL)
@@ -319,6 +363,13 @@ if test "x$support_fortran_only" = "xyes"; then
  # version of the macro instead of the "without_" version of the macro.
  # without_haskell=yes
    with_haskell=no
+
+ # When using fortran only assume that we are not interested in java language support in ROSE.
+ # However, currently the --with-java option controls the use of java support for both Fortran 
+ # and Java language support. Now that we have added Java language support to ROSE this is 
+ # unintentionally confusing. So we can't turn this off since the Fortran support requires 
+ # internal java (JVM) support.
+ # with_java=no
 
  # So these should be expressed in terms of the "with" and "enable" versions of each option's macro.
  # without_php=yes
@@ -378,6 +429,7 @@ echo "LANGUAGES_TO_BUILD = $LANGUAGES_TO_BUILD"
 echo "support_c_language       = $support_c_language"
 echo "support_cxx_language     = $support_cxx_language"
 echo "support_fortran_language = $support_fortran_language"
+echo "support_java_language    = $support_java_language"
 echo "support_php_language     = $support_php_language"
 echo "support_binaries         = $support_binaries"
 echo "support_cuda_language    = $support_cuda_language"
@@ -402,6 +454,12 @@ else
    echo "Support for Fortran language support is disabled..."
 fi
 
+if test "x$support_java_language" = "xyes"; then
+   AC_DEFINE([ROSE_BUILD_JAVA_LANGUAGE_SUPPORT], [], [Build ROSE to support the Java langauge])
+else
+   echo "Support for Java language support is disabled..."
+fi
+
 if test "x$support_php_language" = "xyes"; then
    AC_DEFINE([ROSE_BUILD_PHP_LANGUAGE_SUPPORT], [], [Build ROSE to support the PHP langauge])
 else
@@ -413,7 +471,6 @@ if test "x$support_binaries" = "xyes"; then
 else
    echo "Support for binary analysis support is disabled..."
 fi
-
 if test "x$support_cuda_language" = "xyes"; then
    AC_DEFINE([ROSE_BUILD_CUDA_LANGUAGE_SUPPORT], [], [Build ROSE to support the CUDA langauge])
 else
@@ -430,6 +487,7 @@ fi
 AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT, [test "x$support_java_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_language" = xyes])
@@ -685,6 +743,53 @@ AM_CONDITIONAL(DOT_TO_GML_TRANSLATOR,test "$enable_dot2gml_translator" = yes)
 # echo "Before test for CANONICAL HOST: CC (CC = $CC)"
 
 AC_CANONICAL_HOST
+
+ROSE_FLAG_C_OPTIONS
+ROSE_FLAG_CXX_OPTIONS
+
+echo "CFLAGS   = $CFLAGS"
+echo "CXXFLAGS = $CXXFLAGS"
+echo "CPPFLAGS = $CPPFLAGS"
+
+# *****************************************************************
+#    Option to define a uniform debug level for ROSE development
+# *****************************************************************
+
+# DQ (10/17/2010): This defines an advanced level of uniform support for debugging and compiler warnings in ROSE.
+AC_MSG_CHECKING([for enabled advanced warning support])
+# Default is that advanced warnings is off, but this can be changed later so that advanced warnings would have to be explicitly turned off.
+AC_ARG_ENABLE(advanced_warnings, AS_HELP_STRING([--enable-advanced-warnings], [Support for an advanced uniform warning level for ROSE development]),[enableval=yes],[enableval=no])
+AM_CONDITIONAL(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT, [test "x$enable_advanced_warnings" = xyes])
+if test "x$enable_advanced_warnings" = "xyes"; then
+  AC_MSG_WARN([Using an advanced uniform warning level for ROSE development.])
+  AC_DEFINE([ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT], [], [Support for an advanced uniform warning level for ROSE development])
+
+# Suggested C++ specific flags (used to be run before Hudson, but fail currently).
+  CXX_ADVANCED_WARNINGS+=" -D_GLIBCXX_CONCEPT_CHECKS -D_GLIBCXX_DEBUG"
+
+# Additional flag (suggested by George).
+  CXX_ADVANCED_WARNINGS+=" -D_GLIBCXX_DEBUG_PEDANTIC"
+
+# Incrementally add the advanced options
+  if test "$CXX_ADVANCED_WARNINGS"; then CXXFLAGS="$CXXFLAGS $CXX_ADVANCED_WARNINGS"; fi
+fi
+# ROSE_USE_UNIFORM_DEBUG_SUPPORT=7
+AC_SUBST(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT)
+
+echo "After processing --enable-advanced-warnings: CXX_ADVANCED_WARNINGS = ${CXX_ADVANCED_WARNINGS}"
+echo "After processing --enable-advanced-warnings: CXX_WARNINGS = ${CXX_WARNINGS}"
+echo "After processing --enable-advanced-warnings: C_WARNINGS   = ${C_WARNINGS}"
+
+# exit 1;
+
+echo "CFLAGS   = $CFLAGS"
+echo "CXXFLAGS = $CXXFLAGS"
+echo "CPPFLAGS = $CPPFLAGS"
+
+# AC_MSG_WARN([Exiting as a test!])
+# AC_MSG_ERROR([Exiting as a test!])
+# echo "Exiting as a test!"
+# exit 1
 
 # DQ: added here to see if it would be defined for the template tests and avoid placing 
 # a $(CXX_TEMPLATE_REPOSITORY_PATH) directory in the top level build directory (a minor error)
@@ -971,6 +1076,11 @@ ROSE_SUPPORT_IDA
 # Setup Automake conditional in projects/AstEquivalence/Makefile.am
 AM_CONDITIONAL(ROSE_USE_IDA,test ! "$with_ida" = no)
 
+# DQ (10/15/2010): Adding execution trace file analysis support to ROSE (default is off).
+trace_support="no"
+# ROSE_SUPPORT_TRACE_ANALYSIS
+AM_CONDITIONAL(ROSE_USE_TRACE_ANALYSIS, [test "x$trace_support" = xyes])
+
 # Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
 ROSE_SUPPORT_YICES
 
@@ -1168,10 +1278,10 @@ if test "x$USE_JAVA" = x1; then
       exit 1
     fi
   else
-    AC_MSG_RESULT([no ... gfortran cannot be found (try --with-gfortran)])
+    AC_MSG_RESULT([no ... gfortran cannot be found (try --with-gfortran=<path>)])
   fi
 else
-  AC_MSG_RESULT([no ... Java cannot be found (try --with-java)])
+  AC_MSG_RESULT([no ... Java cannot be found (try --with-java=<path>)])
 fi
 AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER, [test "x$ofp_enabled" = "xyes"])
 AC_SUBST(GFORTRAN_PATH)
@@ -1283,7 +1393,7 @@ AC_PROG_SWIG(1.3.31)
 SWIG_ENABLE_CXX
 #AS (10/23/07): introduced conditional use of javaport
 AC_ARG_WITH(javaport,
-   [  --with-javaport ... Enable Java bindings using Swig],
+   [  --with-javaport ... Enable generation of Java bindings for ROSE using Swig],
    [with_javaport=yes],
    [with_javaport=no])
 AM_CONDITIONAL(ENABLE_JAVAPORT,test "$with_javaport" = yes)
@@ -1335,6 +1445,7 @@ if test "x$enable_cuda" = "xyes"; then
   AC_MSG_WARN([Using incomplete CUDA langauge support in ROSE.])
   AC_DEFINE([ROSE_USE_CUDA_SUPPORT], [], [Whether to use CUDA language support or not within ROSE])
 fi
+# DQ (10/17/2010): Why is this set to the value "7".
 ROSE_USE_CUDA_SUPPORT=7
 AC_SUBST(ROSE_USE_CUDA_SUPPORT)
 
@@ -1471,6 +1582,10 @@ AC_SUBST(ROSE_USE_PPL)
 AC_SUBST(PPL_LDFLAGS)
 AC_SUBST(PPL_CPPFLAGS)
 
+# *****************************************************************
+#            Option to define DOXYGEN SUPPORT
+# *****************************************************************
+
 # allow either user or developer level documentation using Doxygen
 ROSE_SUPPORT_DOXYGEN
 
@@ -1563,7 +1678,8 @@ AC_MSG_RESULT($CXX_ID-$CXX_VERSION)
 
 # Define various C++ compiler options.
 # echo "Before ROSE_FLAG _ CXX_OPTIONS macro"
-ROSE_FLAG_CXX_OPTIONS
+# ROSE_FLAG_C_OPTIONS
+# ROSE_FLAG_CXX_OPTIONS
 # echo "Outside of ROSE_FLAG _ CXX_OPTIONS macro: CXX_DEBUG= $CXX_DEBUG"
 
 # Enable turning on purify and setting its options, etc.
@@ -2079,6 +2195,7 @@ src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
+src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Makefile
 src/3rdPartyLibraries/qrose/Framework/Makefile
 src/3rdPartyLibraries/qrose/QRoseLib/Makefile
@@ -2106,6 +2223,7 @@ src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
+src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
@@ -2371,6 +2489,8 @@ projects/symbolicAnalysisFramework/src/Makefile
 projects/symbolicAnalysisFramework/tests/Makefile
 projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
+projects/PowerAwareCompiler/Makefile
+projects/traceAnalysis/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile

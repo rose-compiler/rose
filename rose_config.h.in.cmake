@@ -1,4 +1,14 @@
-/* rose_config.h.cmake.  Generated from configure.in by autoheader.  */
+/* ---  rose_config.h.cmake  ---
+ * DQ (10/16/2010): Comment added to clarify how this works and how to set macros.
+ * This is not an automatically generated file, it is checked into git as
+ * a regular file. Then it is used to generate the rose_config.h file in the
+ * cmake build tree.
+ * If new macros are defined they should be defined using either 
+ * define or cmakedefine.  define macros will always be defined
+ * however they are set in this file, while cmakedefine will be
+ * set or left unset based on the cmake configurations step
+ * (running cmake before running make within the build process).
+ */
 
 /* Define to 1 if you have the `argz_append' function. */
 #cmakedefine HAVE_ARGZ_APPEND 1
@@ -718,3 +728,10 @@
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
+
+/* DQ (10/16/2010): Added OFP required macros as part of move to exclude 
+ * rose_config.h from the ROSE header files.
+ */
+#define ROSE_OFP_MAJOR_VERSION_NUMBER 0
+#define ROSE_OFP_MINOR_VERSION_NUMBER 8
+#define ROSE_OFP_PATCH_VERSION_NUMBER 2

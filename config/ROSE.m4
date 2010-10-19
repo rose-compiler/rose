@@ -63,13 +63,40 @@ dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
 
 echo "Setup CXX_WARNING CXX = $CXX"
 
-AC_ARG_WITH(CXX_WARNINGS, [  --with-CXX_WARNINGS=ARG   manually set the C++ compiler warning flags
-                           to ARG (leave blank to choose automatically)])
-if test "$with_CXX_WARNINGS" = yes; then
-  # CXX_WARNINGS was activated but not specified, so set it.
+# AC_ARG_ENABLE(warnings, AS_HELP_STRING([--enable-warnings], [Support for a uniform warning level for ROSE development]),[enableval=yes],[enableval=yes])
+# AC_ARG_WITH(CXX_WARNINGS, [  --with-CXX_WARNINGS=ARG   manually set the C++ compiler warning flags to ARG (leave blank to choose automatically)])
+AC_ARG_WITH(CXX_WARNINGS, AS_HELP_STRING([--with-CXX_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=yes])
+# AC_ARG_WITH(CXX_WARNINGS, AS_HELP_STRING([--with-CXX_WARNINGS], [Support for a uniform warning level for ROSE development]),[with_CXX_WARNINGS=yes],[with_CXX_WARNINGS=yes])
+
+echo "withval = $withval"
+echo "with_CXX_WARNINGS = $with_CXX_WARNINGS"
+
+if test "x$with_CXX_WARNINGS" = "x"; then
+   if test "x$withval" = "xyes"; then
+      with_CXX_WARNINGS=$withval
+   else 
+      if test "x$withval" = "xno"; then
+         with_CXX_WARNINGS=$withval
+      fi
+   fi
+else
+   echo "with_CXX_WARNINGS is explictly set to: $with_CXX_WARNINGS"
+fi
+
+echo "After initialization: with_CXX_WARNINGS = $with_CXX_WARNINGS"
+
+# echo "Setting with_CXX_WARNINGS to withval = $withval"
+# with_CXX_WARNINGS=$withval
+
+if test "x$with_CXX_WARNINGS" = "xyes"; then
+# CXX_WARNINGS was activated but not specified, so set it.
+  echo "Using default options for maximal warnings (true case)"
   case $CXX in
     g++)
-      CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
+    # cc1plus: warning: command line option "-Wstrict-prototypes" is valid for Ada/C/ObjC but not for C++
+    # cc1plus: warning: command line option "-Wmissing-prototypes" is valid for Ada/C/ObjC but not for C++
+    # CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
+      CXX_WARNINGS="-Wall"
       ;;
     icpc)
     # For Intel turn on 64bit migration/portability warnings
@@ -85,9 +112,10 @@ if test "$with_CXX_WARNINGS" = yes; then
     esac
     ;;
   esac
-elif test "$with_CXX_WARNINGS" = no; then
+elif test "x$with_CXX_WARNINGS" = "xno"; then
   CXX_WARNINGS=''
 # DQ (1/15/2007): turn on warnings by default.
+  echo "Using at least some default (minimal) options for warnings (false case)"
   case $CC in
     g++)
     # CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
@@ -108,9 +136,13 @@ elif test "$with_CXX_WARNINGS" = no; then
     ;;
   esac
 else
+# Settings specified explicitly by the user.
+  echo "Using user provided options for CXX_WARNINGS..."
   CXX_WARNINGS=$with_CXX_WARNINGS
 fi
+
 AC_SUBST(CXX_WARNINGS)
+
 if test "$CXX_WARNINGS"; then CXXFLAGS="$CXXFLAGS $CXX_WARNINGS"; fi
 
 # echo "debugging: CXX_ID               = $CXX_ID"
@@ -126,6 +158,15 @@ AC_SUBST(CXX_TEMPLATE_OBJECTS)
 ## Don't do this here since we have to use the unmodified CXXFLAGS variable for the 
 ## configure compilation tests (and we want don't want those templates in our repository)
 dnl if test "$CXX_TEMPLATES"; then CXXFLAGS="$CXXFLAGS $CXX_TEMPLATES"; fi
+
+echo "C_DEBUG   = $C_DEBUG"
+echo "CXX_DEBUG = $CXX_DEBUG"
+
+echo "C_WARNINGS   = $C_WARNINGS"
+echo "CXX_WARNINGS = $CXX_WARNINGS"
+
+# echo "Exiting at the base of ROSE FLAG CXX OPTIONS..."
+# exit 1;
 
 # End macro ROSE_FLAG_CXX_OPTIONS.
 ])
@@ -195,9 +236,28 @@ dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
 
 echo "Setup C_WARNINGS CC = $CC"
 
-AC_ARG_WITH(C_WARNINGS, [  --with-C_WARNINGS=ARG   manually set the C compiler warning flags
-                           to ARG (leave blank to choose automatically)])
-if test "$with_C_WARNINGS" = yes; then
+# AC_ARG_WITH(C_WARNINGS, [  --with-C_WARNINGS=ARG   manually set the C compiler warning flags to ARG (leave blank to choose automatically)])
+# AC_ARG_WITH(C_WARNINGS, AS_HELP_STRING([--with-C_WARNINGS], [Support for a uniform warning level for ROSE development]),[with_C_WARNINGS=yes],[with_C_WARNINGS=yes])
+AC_ARG_WITH(C_WARNINGS, AS_HELP_STRING([--with-C_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=yes])
+
+echo "withval = $withval"
+echo "with_C_WARNINGS = $with_C_WARNINGS"
+
+if test "x$with_C_WARNINGS" = "x"; then
+   if test "x$withval" = "xyes"; then
+      with_C_WARNINGS=$withval
+   else 
+      if test "x$withval" = "xno"; then
+         with_C_WARNINGS=$withval
+      fi
+   fi
+else
+   echo "with_C_WARNINGS is explictly set to: $with_C_WARNINGS"
+fi
+
+echo "After initialization: with_C_WARNINGS = $with_C_WARNINGS"
+
+if test "x$with_C_WARNINGS" = "xyes"; then
   # C_WARNINGS was activated but not specified, so set it.
   case $CC in
     gcc)
@@ -217,7 +277,7 @@ if test "$with_C_WARNINGS" = yes; then
     esac
     ;;
   esac
-elif test "$with_C_WARNINGS" = no; then
+elif test "x$with_C_WARNINGS" = "xno"; then
   C_WARNINGS=''
 # DQ (1/15/2007): turn on warnings by default.
   case $CC in
@@ -242,8 +302,19 @@ elif test "$with_C_WARNINGS" = no; then
 else
   C_WARNINGS=$with_C_WARNINGS
 fi
+
 AC_SUBST(C_WARNINGS)
+
 if test "$C_WARNINGS"; then CFLAGS="$CFLAGS $C_WARNINGS"; fi
+
+echo "C_DEBUG   = $C_DEBUG"
+echo "CXX_DEBUG = $CXX_DEBUG"
+
+echo "C_WARNINGS   = $C_WARNINGS"
+echo "CXX_WARNINGS = $CXX_WARNINGS"
+
+# echo "Exiting at the base of ROSE FLAG C OPTIONS..."
+# exit 1;
 
 # End macro ROSE_FLAG_C_OPTIONS.
 ])

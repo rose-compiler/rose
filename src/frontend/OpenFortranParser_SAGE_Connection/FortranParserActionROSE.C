@@ -1,23 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2005, 2006 Los Alamos National Security, LLC.
- * This material was produced under U.S. Government contract DE-AC52-06NA25396
- * for Los Alamos National Laboratory (LANL), which is operated by the Los Alamos
- * National Security, LLC (LANS) for the U.S. Department of Energy. The U.S. Government has
- * rights to use, reproduce, and distribute this software. NEITHER THE
- * GOVERNMENT NOR LANS MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
- * ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. If software is modified
- * to produce derivative works, such modified software should be clearly marked,
- * so as not to confuse it with the version available from LANL.
- *
- * Additionally, this program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
 
 #include "sage3basic.h"
 #include "fortran_support.h"
 #include "FortranParserState.h"
+
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
 
@@ -14157,7 +14146,7 @@ void c_action_io_implied_do_object()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_io_implied_do_object() \n");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R918 c_action_io_implied_do_object()");
 #endif
@@ -14166,6 +14155,7 @@ void c_action_io_implied_do_object()
      astExpressionStack.pop_front();
 
   // Accumulate the entries into a SgExprListExp that we replace at the top of the list.
+     ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExprListExp* implied_do_object_list = isSgExprListExp(astExpressionStack.front());
      if (implied_do_object_list == NULL)
         {
@@ -16867,7 +16857,7 @@ void c_action_end_block_data_stmt(Token_t *label, Token_t *endKeyword, Token_t *
 
      ROSE_ASSERT(astScopeStack.empty() == false);
      SgScopeStatement* topOfStack = getTopOfScopeStack();
-     printf ("In c_action_end_block_data_stmt(): topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
+  // printf ("In c_action_end_block_data_stmt(): topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
      ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
 
   // DQ (10/10/2010): I don't see why we are setting the data members of the global scope here!
@@ -18309,7 +18299,7 @@ void c_action_end_subroutine_stmt(Token_t * label, Token_t * keyword1, Token_t *
 
      astScopeStack.pop_front();
 
-     SgScopeStatement* topOfStack = getTopOfScopeStack();
+  // SgScopeStatement* topOfStack = getTopOfScopeStack();
 
   // DQ (11/21/2007): This is not required, and not true for subroutines in an interface block.
   // printf ("In R1234 c_action_end_subroutine_stmt(): topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());

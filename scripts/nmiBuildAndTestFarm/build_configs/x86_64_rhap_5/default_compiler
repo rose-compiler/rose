@@ -1,4 +1,4 @@
 TITLE="testing default compiler"
-DESCRIPTION="default configuration options, gcc 4.0.4, boost 1.35, without java"
-PREREQS="boost-1.35.0"
-CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall --without-java"
+DESCRIPTION="default configuration options, gcc 4.0.4, boost 1.36, without java"
+PREREQS="boost-1.36.0"
+CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java"
