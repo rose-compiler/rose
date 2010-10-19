@@ -200,6 +200,7 @@ sub parse_namespace {
 sub parse_class {
   my($lexer) = @_;
   my($token) = &$lexer();
+  $token = &$lexer() if $token eq "ROSE_DLL_API"; # e.g., "class ROSE_DLL_API SgAsmElfRelocEntry : public ..."
   if ($token eq '{') {
     push @name_stack, undef;
   } elsif ($token =~ /^[a-z_A-Z]\w*$/) {
@@ -260,9 +261,10 @@ sub parse_enum {
       if (exists $enum{$enum_name}{$member_value}) {
 	&$lexer("warning", "enum member \"$member_name\" duplicates \"".
 		$enum{$enum_name}{$member_value} . "\" and will be ignored for stringification");
+      } else {
+	$enum{$enum_name}{$member_value} = $member_name;
+	$forward{$member_name} = $member_value;
       }
-      $enum{$enum_name}{$member_value} = $member_name;
-      $forward{$member_name} = $member_value;
     }
     last if $token eq '}';
     &$lexer("expected ',' but got '$token'") unless $token eq ',';
