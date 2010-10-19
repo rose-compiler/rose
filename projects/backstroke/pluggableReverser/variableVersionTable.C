@@ -1,16 +1,17 @@
 #include "variableVersionTable.h"
 #include <VariableRenaming.h>
-#include <utilities/Utilities.h>
-#include <utilities/CPPDefinesAndNamespaces.h>
+#include <utilities/utilities.h>
+#include <utilities/cppDefinesAndNamespaces.h>
 
-using namespace backstroke_util;
+using namespace std;
+using namespace BackstrokeUtility;
 
 VariableVersionTable::VariableVersionTable(SgFunctionDeclaration* func_decl, VariableRenaming* var_renaming)
 : var_renaming_(var_renaming)
 {
 	SgFunctionDefinition* func_def = isSgFunctionDeclaration(func_decl->get_definingDeclaration())->get_definition();
 	VariableRenaming::NumNodeRenameTable num_node_table = var_renaming_->getReachingDefsAtFunctionEnd(func_def);
-
+	//cout << num_node_table.size() << endl;
 	foreach(VariableRenaming::NumNodeRenameTable::value_type name_to_num, num_node_table)
 	{
 		foreach(VariableRenaming::NumNodeRenameEntry::value_type num_to_node, name_to_num.second)
@@ -18,11 +19,12 @@ VariableVersionTable::VariableVersionTable(SgFunctionDeclaration* func_decl, Var
 			// If the variable is a local variable of the given function (except parameters), we will set its
 			// version to NULL.
 			if (SageInterface::isAncestor(
-					backstroke_util::getFunctionBody(func_decl),
+					BackstrokeUtility::getFunctionBody(func_decl),
 					name_to_num.first[0]->get_declaration()))
 			{
 				//cout << VariableRenaming::keyToString(name_to_num.first) << endl;
 				table_[name_to_num.first];
+				table_[name_to_num.first].insert(num_to_node.first);
 			}
 			else
 				table_[name_to_num.first].insert(num_to_node.first);
@@ -154,7 +156,7 @@ bool VariableVersionTable::checkVersion(SgExpression* lhs, SgExpression* rhs) co
 		// to check its version. For example,
 		//        a(2) = a(1) + b(1)
 		// where the versions of a in lhs and rhs operand are different.
-		if (backstroke_util::areSameVariable(lhs_var, var))
+		if (BackstrokeUtility::areSameVariable(lhs_var, var))
 			continue;
 
 		VarName name = getVarName(var);
@@ -400,7 +402,7 @@ VariableVersionTable::getVarTablesForIfBodies(SgBasicBlock* true_body, SgBasicBl
 		foreach (int version, var_version.second)
 		{
 			SgNode* def_node = var_renaming_->getNodeForRenameNumber(var_version.first, version);
-			SgStatement* if_body = backstroke_util::getEnclosingIfBody(def_node);
+			SgStatement* if_body = BackstrokeUtility::getEnclosingIfBody(def_node);
 			if (if_body == true_body)
 			{
 				VariableRenaming::NumNodeRenameEntry num_node_entry =
@@ -493,7 +495,7 @@ VariableVersionTable VariableVersionTable::getVarTablesForLoopBody(SgBasicBlock*
 		foreach (int version, var_version.second)
 		{
 			SgNode* def_node = var_renaming_->getNodeForRenameNumber(var_version.first, version);
-			SgStatement* enclosing_body = backstroke_util::getEnclosingLoopBody(def_node);
+			SgStatement* enclosing_body = BackstrokeUtility::getEnclosingLoopBody(def_node);
 			if (enclosing_body == loop_body)
 			{
 				VariableRenaming::NumNodeRenameEntry num_node_entry =

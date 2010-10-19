@@ -1,8 +1,9 @@
 #include "statementHandler.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/lexical_cast.hpp>
-#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/cppDefinesAndNamespaces.h"
 
+using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 

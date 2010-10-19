@@ -4,11 +4,12 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/algorithm.hpp>
 #include <boost/lambda/bind.hpp>
-#include <utilities/Utilities.h>
-#include <utilities/CPPDefinesAndNamespaces.h>
+#include <utilities/utilities.h>
+#include <utilities/cppDefinesAndNamespaces.h>
 
 using namespace SageBuilder;
 using namespace SageInterface;
+using namespace std;
 
 
 #if 0
@@ -29,7 +30,7 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 {
 	vector<SgExpression*> modified_vars;
 
-	vector<SgExpression*> exps = backstroke_util::querySubTree<SgExpression>(stmt);
+	vector<SgExpression*> exps = BackstrokeUtility::querySubTree<SgExpression>(stmt);
 	foreach (SgExpression* exp, exps)
 	{
 		SgExpression* var = NULL;
@@ -58,7 +59,7 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 				if (!isAncestor(stmt, decl))
 				{
 					// We store each variable once.
-					if (boost::find_if(modified_vars, bind(backstroke_util::areSameVariable, _1, var)) == modified_vars.end())
+					if (boost::find_if(modified_vars, bind(BackstrokeUtility::areSameVariable, _1, var)) == modified_vars.end())
 						modified_vars.push_back(var);
 				}
 			}
@@ -69,15 +70,6 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 }
 
 #endif
-
-bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::VarName& var2)
-{
-	if (var1.size() <= var2.size())
-		return false;
-	if (std::search(var1.begin(), var1.end(), var2.begin(), var2.end()) == var1.begin())
-		return true;
-	return false;
-}
 
 vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefs(SgStatement* stmt)
 {
@@ -99,8 +91,10 @@ vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefs(SgStat
 			bind(call_begin(), _1), bind(call_end(), _1),
 			bind(call_begin(), _2), bind(call_end(), _2)));
 
+	// Here if a def is a member of another def, we only include the latter one. For example, if both a and a.i
+	// are modified, we only include a in the results.
 	modified_vars.erase(
-		std::unique(modified_vars.begin(), modified_vars.end(), bind(isMemberOf, _2, _1)),
+		std::unique(modified_vars.begin(), modified_vars.end(), bind(BackstrokeUtility::isMemberOf, _2, _1)),
 		modified_vars.end());
 	
 	return modified_vars;
