@@ -32,7 +32,8 @@ ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
 PASSING_TEST_Objects = ${TESTCODES:.java=.o}
 TEST_Objects = ${ALL_TESTCODES:.java=.o}
 
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
 testTranslator=../../testTranslator
 

@@ -69,7 +69,8 @@ ALL_TESTCODES =\
 
 # follow the astOutlining test to guide fortran tests  
 # Liao, 5/27/2009
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 if ROSE_USE_SSL_SUPPORT
 	@echo "Fortran tests for ROSE OpenMP parser"

@@ -124,7 +124,8 @@ generatedCodeExamples = \
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   generatedCodeExamples += \
     rose_inputbuildProcedureHeaderStatement.f 
 endif
@@ -214,15 +215,17 @@ rose_inputlivenessAnalysis.C:livenessAnalysis
 rose_inputbuildProcedureHeaderStatement.f : buildProcedureHeaderStatement
 # DQ (9/13/2010): I think that we need both levels of if tests else --without-java will not work.
 # DQ (3/18/2009): Make this dependent upon if ROSE was configured to use Fortran.
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	./buildProcedureHeaderStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildProcedureHeaderStatement.f
-else
-	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests (ROSE_USE_OPEN_FORTRAN_PARSER)."
-endif
 else
 	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests (ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT)."
 endif
+
+# else
+#	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests (ROSE_USE_OPEN_FORTRAN_PARSER)."
+# endif
 
 rose_inputbuildAbstractHandle.C:buildAbstractHandle
 	./buildAbstractHandle$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildAbstractHandle.C
