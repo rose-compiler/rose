@@ -8575,3 +8575,66 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 }
 #endif
 
+
+// DQ (10/19/2010): This is moved from src/ROSETTA/Grammar/Cxx_GlobalDeclarations.macro to here
+// since it is code in the header files that we would like to avoid.  My fear is that because of
+// the way it works it is required to be inlined onto the stack of the calling function.
+// #ifndef ROSE_PREVENT_CONSTRUCTION_ON_STACK
+// #define ROSE_PREVENT_CONSTRUCTION_ON_STACK
+// inline void preventConstructionOnStack(SgNode* n)
+void preventConstructionOnStack(SgNode* n)
+   {
+#ifndef NDEBUG
+#ifdef _MSC_VER
+  // DQ (11/28/2009): This was a fix suggested by Robb.
+  // void* frameaddr = 0;
+  // Build an "auto" variable (should be located near the stack frame, I think).
+  // tps (12/4/2009)
+#if _MSC_VER >= 1600  // 1600 == VC++ 10.0
+  // ../Grammar/Cxx_GlobalDeclarations.macro(32): error C3530: 'auto' cannot be combined with any other type-specifier
+     unsigned int nonStackFrameReferenceVariable;
+    #pragma message ( " Cxx_GlobalDeclarations.macro: __builtin_frame_address not known in Windows. Workaround in VS 10.0")
+#else
+     auto unsigned int nonStackFrameReferenceVariable;
+#endif
+     void* frameaddr = &nonStackFrameReferenceVariable;
+
+#else
+  // GNU compiler specific code
+     void* frameaddr = __builtin_frame_address(0);
+#endif // _MSC_VER
+
+     signed long dist = (char*)n - (char*)frameaddr;
+
+  // DQ (12/6/2009): This fails for the 4.0.4 compiler, but only in 64-bit when run with Hudson.
+  // I can't reporduce the problem using the 4.0.4 compiler, but it is uniformally a problem
+  // since it fails on all tests (via hudson) which are using Boost 1.40 and either minimal or
+  // full configurations (and also for the tests of the EDG binary).
+  // assert (dist < -10000 || dist > 10000);
+
+#ifdef __GNUC__
+  // Note that this is a test of the backend compiler, it seems that we don't track
+  // the compiler used to compile ROSE, but this is what we would want.
+
+#if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == 0)
+  // For the GNU 4.0.x make this a warning, since it appears to fail due to a 
+  // poor implementaiton for just this compiler and no other version of GNU.
+  // Just that we are pringing this warning is a problem for many tests (maybe this should be enable within verbose mode).
+     if (dist < -10000 || dist > 10000)
+        {
+#if 0
+          printf ("Warning: preventConstructionOnStack() reporting object on stack, not allowed. dist = %ld \n",dist);
+#endif
+        }
+#else
+  // For all other versions of the GNU compiler make this an error.
+     assert (dist < -10000 || dist > 10000);
+#endif
+#else
+  // For all other compilers make this an error (e.g. on Windows MSVC, Intel icc, etc.).
+     assert (dist < -10000 || dist > 10000);
+#endif // __GNUC__
+
+#endif // NDEBUG
+   }
+// #endif // ROSE_PREVENT_CONSTRUCTION_ON_STACK

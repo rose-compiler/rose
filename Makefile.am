@@ -301,14 +301,14 @@ FindFileRequiringRoseConfigHeaderLong:
 	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
    for f in $$list; do \
         echo "Searching for -->$$f<-- macro"; \
-        grep -r $$f $(top_srcdir)/src/* | grep "\.h:"; \
+        grep -r $$f $(top_srcdir)/* | grep "\.h:"; \
    done
 
 FindFileRequiringRoseConfigSourceLong:
 	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
    for f in $$list; do \
         echo "Searching for -->$$f<-- macro"; \
-        grep -r $$f $(top_srcdir)/src/* | grep "\.C:"; \
+        grep -r $$f $(top_srcdir)/* | grep "\.C:"; \
    done
 
 FindFileRequiringRoseConfigSourceAndHeadersLong:
