@@ -78,6 +78,10 @@ syscall_tst_fail:
 failing_tests: test_file_permission syscall_tst_fail  $(foreach file,$(SYSCALL_FILES_FAIL_CHK), $(addprefix check-,$(basename $(notdir $(file)))))
 
 
+# DQ (10/19/2010): Added example failing test rule.
+example_failing_test:
+	../x86sim ./syscall_sa.114
+
 # check-local: $(foreach file,$(SYSCALL_FILES_CHK), $(addprefix check-,$(basename $(notdir $(file)))))
 check-local: 
 	@echo "I have to temporarily turn this check off since it has been merged into master without passing tests, DQ 10/19/2010"
