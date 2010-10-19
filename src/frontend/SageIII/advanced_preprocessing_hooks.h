@@ -25,6 +25,8 @@
 
 #include "attributeListMap.h"
 
+#define ROSE_WAVE_PSEUDO_FILE "<rose wave fix>"
+
 #if 0
 namespace {
 
@@ -63,6 +65,8 @@ class advanced_preprocessing_hooks
 
 public:
     AttributeListMap* attributeListMap;
+	std::list< token_type > tokens;
+
     token_type lastPreprocDirective;
     int numberOfIfs;
 
@@ -71,11 +75,15 @@ public:
 	bool skipping;
 	bool updatingLastToken;
 	token_type last_token;
-    advanced_preprocessing_hooks() /*: need_comment(true)*/ {
-       numberOfIfs = 0;
-	   skipping = false;
-	   updatingLastToken = false;
-    }
+    advanced_preprocessing_hooks()
+		: attributeListMap(NULL)
+		, tokens()
+		, lastPreprocDirective()
+		, numberOfIfs(0)
+		, includeDirective()
+		, skipping(false)
+		, updatingLastToken(false)
+	{ }
 
     
     
@@ -317,21 +325,71 @@ public:
         DefinitionT const& definition, bool is_predefined)
     {
 #if 0
-       string name(macro_name.get_value().c_str());
-       //add all macros which is not a builtin macro to ROSE attribute
-       if(! (name.substr(0,2)=="__")
-            //&&(name.substr(name.length()-2,name.length())=="__"))
-        ){
-       //AS(041906) Filter out macros defined on the commandline as they are not
-       //part of a file and is therefore not interesting for macro-rewrapping.
+// The "#if 0" was already here, but I also commented these lines out because '{' and '}' do not balance otherwise. The
+// unbalanced braces cause some problems for some tools (indenting, automatic enum detection, etc) [RPM 2010-10-11]
+//       string name(macro_name.get_value().c_str());
+//       //add all macros which is not a builtin macro to ROSE attribute
+//       if(! (name.substr(0,2)=="__")
+//            //&&(name.substr(name.length()-2,name.length())=="__"))
+//        ){
+//       //AS(041906) Filter out macros defined on the commandline as they are not
+//       //part of a file and is therefore not interesting for macro-rewrapping.
 #endif
        //if(is_predefined!=true)
-       if( macro_name.get_position().get_file().size()!=0 ){
-       if( (macro_name.get_position().get_file()!="<built-in>") )  {
-          attributeListMap->defined_macro(macro_name, is_functionlike, parameters, definition, is_predefined);
+       if( macro_name.get_position().get_file().size()!=0 )
+	   {
+		   if( (macro_name.get_position().get_file()!="<built-in>") )
+		   {
+			  attributeListMap->defined_macro(macro_name, is_functionlike, parameters, definition, is_predefined);
 
+		   }
        }
-       }else  attributeListMap->defined_macro(macro_name, is_functionlike, parameters, definition, is_predefined);
+	   else
+	   {
+			attributeListMap->defined_macro(macro_name, is_functionlike, parameters, definition, is_predefined);
+	   }
+
+
+		token_type space = token_type(boost::wave::T_SPACE, " ", boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(ROSE_WAVE_PSEUDO_FILE), 0, 0));
+		tokens.push_back(space);
+		tokens.push_back(macro_name);
+
+		boost::wave::util::file_position_type filepos;
+		if (
+               macro_name.get_position().get_file().find("<default>") == std::string::npos && 
+               macro_name.get_position().get_file().find("<built-in>") == std::string::npos && 
+               macro_name.get_position().get_file().find("<command line>") == std::string::npos && 
+               macro_name.get_position().get_file().find("rose_edg_required_macros_and_functions") == std::string::npos)
+			filepos = boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(ROSE_WAVE_PSEUDO_FILE), 0, 0);
+		else
+			filepos = boost::wave::util::file_position_type(macro_name.get_position().get_file(), 0, 0);
+
+		if (is_functionlike)
+		{
+			token_type left = token_type(boost::wave::T_LEFTPAREN, "(", filepos);
+			tokens.push_back(left);
+			bool first = true;
+			for (typename ParametersT::const_iterator i = parameters.begin(); i != parameters.end(); ++i)
+			{
+				if (!first)
+				{
+					token_type comma = token_type(boost::wave::T_COMMA, ",", filepos);
+					tokens.push_back(comma);
+				}
+				tokens.push_back(*i);
+				first = false;
+			}
+			token_type right = token_type(boost::wave::T_RIGHTPAREN, ")", filepos);
+			tokens.push_back(right);
+		}
+		token_type space2 = token_type(boost::wave::T_SPACE, " ", filepos);
+		tokens.push_back(space2);
+		for (typename DefinitionT::const_iterator i = definition.begin(); i != definition.end(); ++i)
+		{
+			token_type space = token_type(boost::wave::T_SPACE, " ", filepos);
+			tokens.push_back(space);
+			tokens.push_back(*i);
+		}
 
     }
    
@@ -415,6 +473,7 @@ public:
 		}
 
 		last_token = directive;
+		tokens.push_back(directive);
 		return false;
 	}
 
@@ -508,11 +567,25 @@ public:
 //		   std::cout << boost::wave::util::impl::as_string(token).c_str() << std::endl;
 			std::cout << directive.get_value().c_str() << std::endl;
 		}
+		token_type space = token_type(boost::wave::T_SPACE, " ", boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(ROSE_WAVE_PSEUDO_FILE), 0, 0));
 		token_container whitespace;
-		whitespace.push_back(token_type(boost::wave::T_SPACE, " ", boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(), 0, 0)));
+		whitespace.push_back(space);
 		// directive was already given up in found_directive.  here we add to the expression
 		attributeListMap->update_token(lastPreprocDirective, whitespace, expression_value);
 		attributeListMap->update_token(lastPreprocDirective, expression, expression_value);
+
+//		tokens.push_back(space);
+		for (typename ContainerT::const_iterator i = expression.begin(); i != expression.end(); ++i)
+		{
+			token_type space = token_type(boost::wave::T_SPACE, " ", boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(ROSE_WAVE_PSEUDO_FILE), 0, 0));
+			tokens.push_back(space);
+			tokens.push_back(*i);
+		}
+
+		token_type newline = token_type(boost::wave::T_NEWLINE, "\n", boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(ROSE_WAVE_PSEUDO_FILE), 0, 0));
+		token_container whitespace2;
+		whitespace2.push_back(newline);
+		attributeListMap->update_token(lastPreprocDirective, whitespace2, expression_value);
 
 		// King84 (2010.09.09):
 		// Tell later guys to update the previous token as soon as we start skipping
@@ -553,6 +626,8 @@ public:
 		}
 		else if (token != lastPreprocDirective)
 		{
+			tokens.push_back(token);
+
 			if (id == T_NEWLINE) // if it's a newline, it's the end of the previous token not that trailing-slash linesare already taken into account by wave
 				updatingLastToken = false;
 
@@ -638,6 +713,10 @@ public:
                  token_list_container tokListCont;
                  tokListCont.push_back(macro_name);
                  attributeListMap->found_directive(lastPreprocDirective,tokListCont, false);
+
+				token_type space = token_type(boost::wave::T_SPACE, " ", boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(ROSE_WAVE_PSEUDO_FILE), 0, 0));
+				tokens.push_back(space);
+				tokens.push_back(macro_name);
                }
 
 #if 0
@@ -695,24 +774,37 @@ public:
  //  #line directive (if there was one given).
  //
  ///////////////////////////////////////////////////////////////////////////
-    template <typename ContextT, typename ContainerT>
-            void
-            found_line_directive(ContextT const& ctx, ContainerT const& arguments,
-                            unsigned int line, std::string const& filename)
-               {
-                 std::string filenameString(filename.c_str());
-                                             
-                 if(SgProject::get_verbose() >= 1)
-                      std::cout << "On line found" << std::endl;
-              /*
-                 token_list_container toexpand;
-                 std::copy(first, make_ref_transform_iterator(end, boost::wave::util::get_value),
-                 std::inserter(toexpand, toexpand.end()));
-               */
+	template <typename ContextT, typename ContainerT>
+	void
+	found_line_directive(ContextT const& ctx, ContainerT const& arguments, unsigned int line, std::string const& filename)
+	{
+		std::string filenameString(filename.c_str());
 
-                 attributeListMap->found_directive(lastPreprocDirective,arguments, false);
+		if (SgProject::get_verbose() >= 1)
+			std::cout << "On line found" << std::endl;
+		/*
+		token_list_container toexpand;
+		std::copy(first, make_ref_transform_iterator(end, boost::wave::util::get_value),
+		std::inserter(toexpand, toexpand.end()));
+		*/
 
-               }
+		attributeListMap->found_directive(lastPreprocDirective,arguments, false);
+
+		token_type space = token_type(boost::wave::T_SPACE, " ", boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(ROSE_WAVE_PSEUDO_FILE), 0, 0));
+		token_container whitespace;
+		whitespace.push_back(space);
+		// directive was already given up in found_directive.  here we add to it the arguments
+		attributeListMap->update_token(lastPreprocDirective, whitespace, false);
+		attributeListMap->update_token(lastPreprocDirective, arguments, false);
+
+//		tokens.push_back(space);
+		for (typename ContainerT::const_iterator i = arguments.begin(); i != arguments.end(); ++i)
+		{
+			token_type space = token_type(boost::wave::T_SPACE, " ", boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(ROSE_WAVE_PSEUDO_FILE), 0, 0));
+			tokens.push_back(space);
+			tokens.push_back(*i);
+		}
+	}
 
 
 	template <typename ContextT, typename TokenT>
@@ -729,6 +821,8 @@ public:
 
 		using namespace boost::wave;
 		token_id id = token_id(token);
+		if (id != T_EOF && id != T_EOI)
+			tokens.push_back(token);
 		if (id != T_EOF && id != T_EOI && id != T_NEWLINE)
 		{
 			if (SgProject::get_verbose() >= 1)

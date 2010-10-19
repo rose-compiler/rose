@@ -92,7 +92,8 @@ SgTypeShort*    buildShortType();
 
 // DQ (8/21/2010): We want to move to the new buildStringType( SgExpression*,size_t) function over the older buildStringType() function.
 SgTypeString* buildStringType();
-SgTypeString* buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral );
+// SgTypeString* buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral );
+SgTypeString* buildStringType( SgExpression* stringLengthExpression );
 
 SgTypeVoid * buildVoidType();
 SgTypeWchar* buildWcharType();

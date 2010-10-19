@@ -17,7 +17,7 @@ distributedScripts =				\
      nmiBuildAndTestFarm			\
      policies-checker.sh			\
      policies/CaseInsensitiveFileNames.pl	\
-     policies/EightColumnTabstops.pl		\
+     policies/EightColumnTabstops.pl.disabled	\
      policies/FileLister.pm                     \
      policies/NoExceedinglyLongLines.pl		\
      policies/NoRoseIncludes.pl			\
@@ -25,7 +25,8 @@ distributedScripts =				\
      policies/UniqueHeaderNames.pl		\
      policies/UnixLineTermination.pl		\
      runscript					\
-     sample_binary_rules.pl
+     sample_binary_rules.pl			\
+     stringify.pl
 
 # scripts put into the distribution
 EXTRA_DIST = CMakeLists.txt README $(distributedScripts) buildExampleRoseWorkspaceDirectory hudson

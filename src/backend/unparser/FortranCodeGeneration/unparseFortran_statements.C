@@ -7,6 +7,12 @@
 #include "sage3basic.h"
 #include "unparser.h"
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
+
 using namespace std;
 
 
@@ -2307,6 +2313,11 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
         }
         }
 
+  // Liao (10/14/2010): This helps handle cases such as 
+  //    c$OMP END PARALLEL
+  //          END
+     unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::inside);
+
 #if 0
   // DQ (10/6/2008): This does not appear to be required (passes all tests).
      unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
@@ -2684,6 +2695,8 @@ FortranCodeGeneration_locatedNode::unparseDoStmt(SgStatement* stmt, SgUnparse_In
           (doloop->get_body()->get_statements().size() > 1) || 
           (doloop->get_string_label().empty() == false);
 #endif
+
+  // printf ("In unparseDoStmt(): output_enddo = %s \n",output_enddo ? "true" : "false");
      if (output_enddo == true)
         {
           unparseStatementNumbersSupport(doloop->get_end_numeric_label(),info);

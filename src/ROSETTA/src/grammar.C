@@ -2,6 +2,10 @@
 // #                           Header Files                       #
 // ################################################################
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
+
 // DQ (3/22/2009): This is redundant with inclusion in "grammar.h"
 // #include "ROSETTA_macros.h"
 
@@ -2740,12 +2744,19 @@ Grammar::buildCode ()
    //  string includeSage3 ="#include \"Cxx_Grammar.h\"\n\n";
    //  includeHeaderString += includeSage3;
 
-	 string includeHeaderAstFileIO ="#include \"AST_FILE_IO.h\"\n\n";
+     string includeHeaderAstFileIO = "#include \"AST_FILE_IO.h\"\n\n";
      includeHeaderString += includeHeaderAstFileIO;
 
-	 string defines1 ="#if _MSC_VER\n";
-	 string defines2 ="#define USE_CPP_NEW_DELETE_OPERATORS 0\n";
-	 string defines3 ="#endif\n\n";
+  // DQ (10/14/2010):  This should only be included by source files that require it.
+  // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+  // Interestingly it must be at the top of the list of include files.
+     includeHeaderString += "// The header file (\"rose_config.h\") should only be included by source files that require it.\n";
+     string includeHeader_rose_config ="#include \"rose_config.h\"\n\n";
+     includeHeaderString += includeHeader_rose_config;
+
+     string defines1 = "#if _MSC_VER\n";
+     string defines2 = "#define USE_CPP_NEW_DELETE_OPERATORS 0\n";
+     string defines3 = "#endif\n\n";
      includeHeaderString += defines1;
      includeHeaderString += defines2;
      includeHeaderString += defines3;
