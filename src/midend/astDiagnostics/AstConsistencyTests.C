@@ -2142,10 +2142,18 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                break;
              }
 
-       // DQ (9/6/2005): Ignoring this case!
+       //// DQ (9/6/2005): Ignoring this case!
           case V_SgFunctionParameterList:
              {
-            // ignoring this case
+               // Cong (10/20/2010): Here we test if the parent of every child initialized name of this 
+               // function parameter list is the same as itself. This is to detect if several function 
+               // parameter lists own the same initialized name.
+               const SgInitializedNamePtrList& initNameList = isSgFunctionParameterList(node)->get_args();
+               for (SgInitializedNamePtrList::const_iterator it = initNameList.begin();
+                     it != initNameList.end(); ++it)
+                  {
+                    ROSE_ASSERT((*it)->get_parent() == node); 
+                  }
                break;
              }           
 

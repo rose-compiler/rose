@@ -1,9 +1,10 @@
 #include <backstroke.h>
 #include <pluggableReverser/expAndStmtHandlers.h>
+#include <normalizations/expNormalization.h>
 #include <testCodeGeneration/testCodeBuilder.h>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
-//#include <boost/lambda/lambda.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 
 #include <numeric>
@@ -96,8 +97,6 @@ bool isEvent2(SgFunctionDeclaration* func)
 }
 
 
-
-
 int main(int argc, char* argv[])
 {
 	vector<string> args(argv, argv + argc);
@@ -113,19 +112,15 @@ int main(int argc, char* argv[])
 	SgProject* project = frontend(args);
 
 	cout << "1. Generating test code now.\n";
-	
-	ComplexExpressionTest test(project, false);
+
+	vector<SgFunctionDeclaration*> events;
+	//ComplexExpressionTest test(project, false);
+	BasicExpressionTest test(project, false);
 	test.build();
-	vector<SgFunctionDeclaration*> events = test.getAllEvents();
+	events = test.getAllEvents();
 
-	// Output the test code here.
+	// Before we go forward to the next step, check the project here.
 	AstTests::runAllTests(project);
-	backend(project);
-
-	cout << "Test code generted.\n";
-
-	// Reload the project here. For some unknown reason, we can use the project generated above directly.
-	project = frontend(args);
 
 	cout << "2. Reversing events now.\n";
 	
