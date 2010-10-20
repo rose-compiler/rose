@@ -250,7 +250,7 @@ bool VariableRenaming::isFromLibrary(SgNode* node)
 {
   Sg_File_Info* fi = node->get_file_info();
   if (fi->isCompilerGenerated())
-    return true;
+      return true;
   string filename = fi->get_filenameString();
   //cout << "Filename string '" << filename << "' for " << node->class_name() << node << endl;
   if ((filename.find("include") != std::string::npos))
@@ -258,7 +258,6 @@ bool VariableRenaming::isFromLibrary(SgNode* node)
       //cout << "Found 'include' in string." << endl;
       return true;
   }
-
   return false;
 }
 

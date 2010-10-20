@@ -2410,6 +2410,7 @@ projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
 projects/backstroke/pluggableReverser/Makefile
+projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
 projects/backstroke/tests/Makefile
@@ -2419,7 +2420,6 @@ projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
 projects/backstroke/tests/pluggableReverserTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
 projects/backstroke/tests/testCodeBuilderTest/Makefile
-projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/utilities/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
