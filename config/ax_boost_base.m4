@@ -240,7 +240,7 @@ if test "x$want_boost" = "xyes"; then
 	fi
 
  # DQ (2/4/2010): Added to get version information for what we are using.
- # echo "Boost version being used is: $_version"
+   echo "In boost base macro -- Boost version being used is: $_version"
  # rose_boost_version_number=$_version
  # export rose_boost_version_number
 

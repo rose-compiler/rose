@@ -2,9 +2,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-bin_PROGRAMS = read_etrace
+bin_PROGRAMS = read_etrace HIDDEN_read_etrace
 
 read_etrace_SOURCES = dummy_file.c
+HIDDEN_read_etrace_SOURCES = dummy_file.c
+
+# read_etrace_SOURCES = trace.C
+# HIDDEN_read_etrace_SOURCES = HIDDEN_read_etrace.c
 
 if ROSE_USE_TRACE_ANALYSIS
 #  read_etrace_SOURCES += read_etrace.c
@@ -17,6 +21,9 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 test: read_etrace
 	./read_etrace $(srcdir)/vmp-hw-part.trace
+
+test2: HIDDEN_read_etrace
+	./HIDDEN_read_etrace $(srcdir)/vmp-hw-part.trace
 
 check-local:
 
