@@ -22,6 +22,7 @@ F90_TESTCODES_TO_PASS = \
   paralleldo.f90 \
   collapse.f90 \
   critical.f90 \
+  single-copyprivate.f90 \
   continuation.f90
 
 #if !OS_VENDOR_DEBIAN

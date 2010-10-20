@@ -32,6 +32,10 @@ namespace OmpSupport
 
   // a similar list to save encountered Fortran comments which are OpenMP directives
   std::list<OmpAttribute* > omp_comment_list; 
+  // A pragma list to store the dangling pragmas for Fortran end directives. 
+  // There are stored to ensure correct unparsing using -rose:openmp:ast_only
+  // But they should be immediately removed during the OpenMP lowering phase
+  static std::list<SgPragmaDeclaration* > omp_end_pragma_list; 
 
   // find all SgPragmaDeclaration nodes within a file and parse OpenMP pragmas into OmpAttribute info.
   void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
@@ -538,19 +542,24 @@ namespace OmpSupport
 
     SgNode* snode = att-> getNode ();
     ROSE_ASSERT(snode != NULL); //? not sure for Fortran
+    // Liao 10/19/2010 We convert Fortran comments into SgPragmaDeclarations
+    // So we can reuse the same code to generate OpenMP AST from pragmas
+#if 0     
     SgFile * file = getEnclosingFileNode (snode);
     if (file->get_Fortran_only()||file->get_F77_only()||file->get_F90_only()||
         file->get_F95_only() || file->get_F2003_only())
     { //Fortran check setNode()
-      printf("buildOmpParallelStatement() Fortran is not handled yet\n");
-      ROSE_ASSERT(false);
+      //printf("buildOmpParallelStatement() Fortran is not handled yet\n");
+      //ROSE_ASSERT(false);
     }
     else // C/C++ must be pragma declaration statement
     {
       SgPragmaDeclaration* pragmadecl = att->getPragmaDeclaration();
       result = getNextStatement(pragmadecl);
     }
-
+#endif
+    SgPragmaDeclaration* pragmadecl = att->getPragmaDeclaration();
+    result = getNextStatement(pragmadecl);
     //  ROSE_ASSERT(result!=NULL);
     // Not all pragma decl has a structured body!!
     return result;
@@ -911,6 +920,12 @@ This is no perfect solution until we handle preprocessing information as structu
       if (decl->get_file_info()->get_filename()!= sageFilePtr->get_file_info()->get_filename()
           && !(decl->get_file_info()->isTransformation()))
         continue;
+       // Liao 10/19/2010
+       // We now support OpenMP AST construction for both C/C++ and Fortran
+       // But we allow Fortran End directives to exist after -rose:openmp:ast_only
+       // Otherwise the code unparsed will be illegal Fortran code (No {} blocks in Fortran)
+       if (isFortranEndDirective(getOmpAttribute(decl)->getOmpDirectiveType()))
+          continue; 
       //cout<<"debug: convert_OpenMP_pragma_to_AST() handling pragma at "<<decl<<endl;  
       OmpAttributeList* oattlist= getOmpAttributeList(decl);
       ROSE_ASSERT (oattlist != NULL) ;
@@ -972,10 +987,10 @@ This is no perfect solution until we handle preprocessing information as structu
               break;
             }
           default:
-            {
-              cerr<<"Error: convert_OpenMP_pragma_to_AST(): unhandled OpenMP directive type:"<<OmpSupport::toString(omp_type)<<endl;
-              assert (false);
-              break;
+            { 
+               cerr<<"Error: convert_OpenMP_pragma_to_AST(): unhandled OpenMP directive type:"<<OmpSupport::toString(omp_type)<<endl;
+                assert (false);
+               break;
             }
         }
         setOneSourcePositionForTransformation(omp_stmt);
@@ -997,7 +1012,10 @@ This is no perfect solution until we handle preprocessing information as structu
      SgStatement * result = NULL; 
      ROSE_ASSERT (stmt_vec.size() > 0);
      if (stmt_vec.size() ==1)
+     {
        result = stmt_vec[0];
+       ROSE_ASSERT (getNextStatement(begin_decl) == result);
+     }
      else
      {  
        result = buildBasicBlock();
@@ -1037,7 +1055,9 @@ This is no perfect solution until we handle preprocessing information as structu
      case e_end_workshare:
        {
          if (end_att->hasClause(e_nowait))
+         {
            begin_att->addClause(e_nowait);
+         }
          break;
        }
      default:
@@ -1076,7 +1096,7 @@ This is no perfect solution until we handle preprocessing information as structu
     {
       end_decl = isSgPragmaDeclaration (next_stmt);
       if ((end_decl) && (getOmpConstructEnum(end_decl) == end_omp_type))
-           break;
+        break;
       affected_stmts.push_back(next_stmt);
       next_stmt = getNextStatement (next_stmt);
     }  
@@ -1096,11 +1116,21 @@ This is no perfect solution until we handle preprocessing information as structu
         return; // There is nothing further to do if the optional end directives do not exist
     } // end if sanity check
 
-  // at this point, we have found a matching end directive/pragma
-   ROSE_ASSERT (end_decl);
-   ensureSingleStmtOrBasicBlock(decl, affected_stmts);
-   mergeEndClausesToBeginDirective (decl,end_decl);
-   removeStatement(end_decl);
+    // at this point, we have found a matching end directive/pragma
+    ROSE_ASSERT (end_decl);
+    ensureSingleStmtOrBasicBlock(decl, affected_stmts);
+    mergeEndClausesToBeginDirective (decl,end_decl);
+    // SgBasicBlock is not unparsed in Fortran 
+    //
+    // To ensure the unparsed Fortran code is correct for -rose:openmp:ast_only
+    // x.  We should not tweak the original text for the pragmas. 
+    // x.  We should not remove the end pragma declaration since SgBasicBlock is not unparsed.
+    // In the end , the pragmas don't matter too much, the OmpAttributes attached to them 
+    // are used to guide translations. 
+    // removeStatement(end_decl);
+    // we should save those useless end pragmas to a list
+    // and remove them as one of the first steps in OpenMP lowering for Fortran
+    omp_end_pragma_list.push_back(end_decl); 
   } // end merge_Matching_Fortran_Pragma_pairs()
   
   //! This function will 
@@ -1136,10 +1166,12 @@ This is no perfect solution until we handle preprocessing information as structu
           && !(decl->get_file_info()->isTransformation()))
         continue;
       omp_construct_enum omp_type = getOmpConstructEnum(decl);
+#if 0     
       // skip if the construct is Fortran end directive of any kinds
       // since we always start the conversion from a begin directive
       if (isFortranEndDirective(omp_type))
         continue;
+#endif         
       // Now we  
        if (isFortranBeginDirective(omp_type)) 
          merge_Matching_Fortran_Pragma_pairs (decl, omp_type);
@@ -1270,8 +1302,9 @@ This is no perfect solution until we handle preprocessing information as structu
         printf ("Calling convert_OpenMP_pragma_to_AST() \n");
       }
       // TODO move out of this if false body.
-      convert_OpenMP_pragma_to_AST( sageFilePtr);
+      //convert_OpenMP_pragma_to_AST( sageFilePtr);
     }
+    convert_OpenMP_pragma_to_AST( sageFilePtr);
   }
 
   // Liao, 5/31/2009 an entry point for OpenMP related processing

@@ -23,7 +23,7 @@ void visitorTraversal::visit(SgNode* node)
   OmpAttributeList* attributelist = getOmpAttributeList(node);
   if (attributelist)
   {
-    cout<<"Found att attached to "<<node->class_name()<<" at line "
+    cout<<"Found att attached to "<<node<<" "<<node->class_name()<<" at line "
       <<node->get_file_info()->get_line()<<endl;
     attributelist->print();//debug only for now
   }
