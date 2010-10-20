@@ -26,8 +26,14 @@ static std::string unparseArmRegister(SgAsmArmRegisterReferenceExpression *reg) 
 }
 
 static std::string unparseArmCondition(ArmInstructionCondition cond) { // Unparse as used for mnemonics
+#ifndef _MSC_VER
     std::string retval = stringifyArmInstructionCondition(cond, "arm_cond_");
-    ROSE_ASSERT(retval[0]!='(');
+#else
+	ROSE_ASSERT(false);
+	std::string retval ="";
+#endif
+
+	ROSE_ASSERT(retval[0]!='(');
     return retval;
 }
 

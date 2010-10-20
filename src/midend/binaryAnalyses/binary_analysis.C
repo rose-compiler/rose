@@ -162,8 +162,14 @@ void addBlocksFromFunctionToGraph(SgIncidenceDirectedGraph* graph, std::map<rose
 
     if(block->get_statementList().size()>0 )
     {
+#ifndef _MSC_VER
       opCode = stringifyX86InstructionKind(isSgAsmx86Instruction( block->get_statementList().back() )->get_kind());
-      std::cout <<"Statement opcode " << opCode << std::endl;
+#else
+	opCode = "";
+	ROSE_ASSERT(false);
+#endif
+
+	  std::cout <<"Statement opcode " << opCode << std::endl;
     }else
       std::cout <<"No statements " << block->class_name() << std::endl;
 

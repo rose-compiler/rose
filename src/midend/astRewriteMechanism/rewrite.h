@@ -49,7 +49,7 @@ class MidLevelCollectionTypedefs
   // Collection of typedefs to define the Mid Level Interface
 
      public:
-          typedef enum 
+          typedef enum ScopeIdentifier_Enum
              {
                unknownScope           =  0,
 //             LocalScope             =  1 /*!< location of current statement being transformed */,
@@ -63,7 +63,7 @@ class MidLevelCollectionTypedefs
        // position in the AST is at a declaration. This permits replacement 
        // declarations to redefine the variables in the current declaration. 
        // This detail needs to be tested later.
-          typedef enum 
+          typedef enum PlacementPosition_Enum
              {
                unknownPositionInScope  = 0 /*!< unknown used as a default value for error checking */ ,
                PreamblePositionInScope = 1 /*!< Source code to be placed at the top of a specified scope */ ,
@@ -76,7 +76,7 @@ class MidLevelCollectionTypedefs
              } PlacementPositionEnum;
 
        // Enum used to classify different types of transformation strings.
-          typedef enum
+          typedef enum IntermediateFileStringPosition_Enum
              {
                unknownIntermediatePositionInScope  =  0 /*!< Value of undefined location within intermediate file */,
                GlobalScopePreamble                 =  1 /*!< Required declarations (and include files) */,
@@ -138,7 +138,7 @@ class HighLevelCollectionTypedefs
        // before any statement would pass generate bad code even though the transformation would 
        // work properly)).  The argument for the correctness of the generated code is stronger 
        // than the argument for symetry between the mid-level and high-level interfaces.
-          typedef enum 
+          typedef enum ScopeIdentifier_Enum
              {
                unknownScope           =  0,
 //             LocalScope             =  1 /*!< location of current statement being transformed */,
@@ -159,7 +159,7 @@ class HighLevelCollectionTypedefs
        // position in the AST is at a declaration. This permits replacement 
        // declarations to redefine the variables in the current declaration. 
        // This detail needs to be tested later.
-          typedef enum 
+          typedef enum PlacementPosition_Enum
              {
                unknownPositionInScope  = 0 /*!< unknown used as a default value for error checking */ ,
                PreamblePositionInScope = 1 /*!< Source code to be placed at the top of a specified scope */ ,
@@ -173,7 +173,7 @@ class HighLevelCollectionTypedefs
                LAST_PLACEMENT_TAG
              } PlacementPositionEnum;
 
-           typedef enum 
+           typedef enum IntermediateFileStringPosition_Enum
              {
                unknownIntermediatePositionInScope  =  0 /*!< Value of undefined location within intermediate file scope */ ,
                GlobalScopePreamble                 =  1 /*!< Required declarations (and include files) to support transformations (added to top of file) */ ,

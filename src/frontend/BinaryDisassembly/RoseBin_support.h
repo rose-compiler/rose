@@ -27,24 +27,27 @@
 #include "x86InstructionProperties.h"
 
 namespace RoseBin_Def {
- enum RoseLanguage {
+ enum RoseLanguage 
+ {
     none,
     x86,
     arm
- };
+ } RoseLanguage_ENUM;
  extern RoseLanguage RoseAssemblyLanguage;
 }
 
 namespace RoseBin_OS {
- enum OSSYSTEM {
+ enum OSSYSTEM 
+ {
     linux_op,
     windows_op
- };
+ } OSSYSTEM_ENUM;
  extern OSSYSTEM os_sys;
 }
 
 namespace RoseBin_Arch {
- enum Architecture {
+ enum Architecture 
+ {
     bit32,
     bit64
  };
@@ -52,7 +55,8 @@ namespace RoseBin_Arch {
 }
 
 namespace RoseBin_OS_VER {
- enum OS_VERSION {
+ enum OS_VERSION 
+ {
     linux_22,
     linux_24,
     linux_26,
@@ -70,14 +74,15 @@ namespace RoseBin_OS_VER {
     WinXP_SP1,
     WinXP_SP2,
     WinVista_SP0
- };
+ } OS_VERSION_ENUM;
  extern OS_VERSION os_ver;
 }
 
 
 namespace RoseBin_DataTypes {
 
- enum DataTypes {
+ enum DataTypes 
+ {
     unknown,
     d_none,
     d_int,
@@ -90,7 +95,7 @@ namespace RoseBin_DataTypes {
     d_uint_p,
     d_long,
     d_array
- };
+ } DataTypes_ENUM;
 
 
  extern DataTypes Rose_Data;
@@ -165,7 +170,8 @@ class RoseBin_support {
     * since RegisterDictionary generalizes most aspects of register descriptions.
     *
     * [RPM 2010-10-12] */
-   enum X86PositionInRegister {
+   enum X86PositionInRegister 
+   {
      x86_regpos_unknown, /*!< unknown (error or unitialized value) */
      x86_regpos_low_byte, /*!< 1st byte of register (bits 0-7), only for GPRs */
      x86_regpos_high_byte, /*!< 2nd byte of register (bits 8-15), only for ax,bx,cx,dx */

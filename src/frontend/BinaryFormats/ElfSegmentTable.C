@@ -128,7 +128,12 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 std::string
 SgAsmElfSegmentTableEntry::to_string(SegmentType kind) 
 {
+#ifndef _MSC_VER
     return stringifySgAsmElfSegmentTableEntrySegmentType(kind);
+#else
+	ROSE_ASSERT(false);
+	return "";
+#endif
 }
 
 std::string

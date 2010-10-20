@@ -139,11 +139,13 @@ BinaryLoader::find_so_file(const std::string &libname) const
         if (debug) fprintf(debug, "BinaryLoader:   looking in %s...\n", di->c_str());
         std::string libpath = *di + "/" + libname;
         struct stat sb;
+#ifndef _MSC_VER
         if (stat(libpath.c_str(), &sb)>=0 && S_ISREG(sb.st_mode) && access(libpath.c_str(), R_OK)>=0) {
             if (debug) fprintf(debug, "BinaryLoader:   found.\n");
             return libpath;
         }
-    }
+#endif
+	}
     if (debug) {
         if (directories.empty()) fprintf(debug, "BinaryLoader:   no search directories\n");
         fprintf(debug, "BinaryLoader:   not found; throwing exception.\n");

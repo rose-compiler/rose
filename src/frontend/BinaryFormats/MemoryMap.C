@@ -737,7 +737,12 @@ MemoryMap::load(const std::string &basename)
             /* Starting virtual address with optional "va " prefix */
             if (!strncmp(s, "va ", 3)) s += 3;
             errno = 0;
+#ifndef _MSC_VER
             rose_addr_t va = strtoull(s, &rest, 0);
+#else
+            rose_addr_t va = 0;
+			ROSE_ASSERT(false);
+#endif
             if (rest==s || errno)
                 throw Syntax(this, "starting virtual address expected", indexname, nlines, s-line);
             s = rest;
@@ -747,7 +752,12 @@ MemoryMap::load(const std::string &basename)
             if ('+'==*s || ','==*s) s++;
             while (isspace(*s)) s++;
             errno = 0;
-            rose_addr_t sz = strtoull(s, &rest, 0);
+#ifndef _MSC_VER
+			rose_addr_t sz = strtoull(s, &rest, 0);
+#else
+            rose_addr_t sz = 0;
+			ROSE_ASSERT(false);
+#endif
             if (rest==s || errno)
                 throw Syntax(this, "virtual size expected", indexname, nlines, s-line);
             s = rest;
@@ -757,7 +767,11 @@ MemoryMap::load(const std::string &basename)
             if ('='==*s) {
                 s++;
                 errno = 0;
+#ifndef _MSC_VER
                 (void)strtoull(s, &rest, 0);
+#else
+			ROSE_ASSERT(false);
+#endif
                 if (rest==s || errno)
                     throw Syntax(this, "ending virtual address expected after '='", indexname, nlines, s-line);
                 s = rest;
@@ -804,7 +818,12 @@ MemoryMap::load(const std::string &basename)
             if (','==*s || '+'==*s) s++;
             while (isspace(*s)) s++;
             errno = 0;
+#ifndef _MSC_VER
             rose_addr_t offset = strtoull(s, &rest, 0);
+#else
+            rose_addr_t offset = 0;
+			ROSE_ASSERT(false);
+#endif
             if (rest==s || errno)
                 throw Syntax(this, "file offset expected", indexname, nlines, s-line);
             s = rest;
@@ -846,8 +865,14 @@ MemoryMap::load(const std::string &basename)
                 off_t position = lseek(fd, offset, SEEK_SET);
                 ROSE_ASSERT(position!=-1 && position==(off_t)offset);
                 while (nread<sz) {
+#ifndef _MSC_VER
                     ssize_t n = TEMP_FAILURE_RETRY(::read(fd, buf+nread, sz-nread));
-                    if (n<0) {
+#else
+            ssize_t n= 0;
+			ROSE_ASSERT(false);
+#endif
+
+					if (n<0) {
                         close(fd);
                         throw Syntax(this, "read failed from "+filename+": "+strerror(errno), indexname, nlines);
                     }
