@@ -3714,7 +3714,11 @@ FortranCodeGeneration_locatedNode::unparsePragmaDeclStmt (SgStatement* stmt, SgU
   ROSE_ASSERT(pragma != NULL);
   
   string txt = pragma->get_pragma();
-  curprint("!pragma ");
+  AstAttribute* att = stmt->getAttribute("OmpAttributeList");
+  if (att)
+    curprint("!$omp ");
+  else
+    curprint("!pragma ");
   curprint(txt);
   curprint("\n");
 }

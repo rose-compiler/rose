@@ -7363,6 +7363,14 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         }
 #endif
     
+    // Liao 10/19/2010
+    // In rare cases, we are moving the statement from its original scope to another scope
+    // We have to remove it from its original scope before append it to the new scope
+    SgNode* old_parent=  stmt->get_parent();
+    if (old_parent)
+    {
+      removeStatement(stmt);
+    }
     //catch-all for statement fixup 
    // Must fix it before insert it into the scope, 
     fixStatement(stmt,scope);
