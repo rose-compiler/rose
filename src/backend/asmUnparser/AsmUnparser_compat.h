@@ -35,11 +35,12 @@ std::string unparseX86Register(const RegisterDescriptor&);
 /*-------------------------------------------------------------------------------------------------------------------------------
  * ARM
  *-------------------------------------------------------------------------------------------------------------------------------*/
-enum ArmSignForExpressionUnparsing {
+enum ArmSignForExpressionUnparsing 
+{
   arm_sign_none,
   arm_sign_plus,
   arm_sign_minus
-};
+} ArmSignForExpressionUnparsingType;
 
 std::string unparseArmMnemonic(SgAsmArmInstruction*);
 std::string unparseArmExpression(SgAsmExpression*);
