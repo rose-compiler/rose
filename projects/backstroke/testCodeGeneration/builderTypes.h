@@ -1,6 +1,7 @@
 #ifndef BUILDERTYPES_H
 #define	BUILDERTYPES_H
 
+#include <backstroke.h>
 #include <rose.h>
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
@@ -225,6 +226,7 @@ protected:
 	//! All members in the state class.
 	std::vector<std::pair<std::string, SgType*> > state_members_;
 
+protected:
 	//! Set the state class's name.
 	void setStateClassName(const std::string& name)
 	{ state_name_ = name; }
@@ -240,9 +242,12 @@ protected:
 	//! Build the state class.
 	void buildStateClass();
 
+	//! Get all names of state members.
+	std::vector<SgExpression*> getAllStateMemberVars() const;
+
 	//! Given a name, search the state class for its data members. If found, return a VarRefExp or arrow
 	//! expression based on the flag is_cxx_style_.
-	SgExpression* buildStateMemberExpression(const std::string& name);
+	SgExpression* buildStateMemberExpression(const std::string& name) const;
 
 	//! Build the final test source file.
 	void buildTestCode(const std::vector<SgBasicBlock*>& bodies);
@@ -281,11 +286,19 @@ class TestCodeAssembler
 
 	SgClassDeclaration* state_class_;
 
-	std::vector<std::pair<SgFunctionDeclaration*, std::vector<std::pair<SgFunctionDeclaration*, SgFunctionDeclaration*> > > > events_;
+	std::map<SgFunctionDeclaration*, FuncDeclPairs> events_;
+
+	std::string init_func_name_;
+
+	std::string comp_func_name_;
 
 public:
-	TestCodeAssembler(SgClassDeclaration* state_decl)
-	: state_class_(isSgClassDeclaration(state_decl->get_definingDeclaration()))
+	TestCodeAssembler(SgClassDeclaration* state_decl,
+			const std::map<SgFunctionDeclaration*, FuncDeclPairs>& events)
+	: state_class_(isSgClassDeclaration(state_decl->get_definingDeclaration())),
+	events_(events),
+	init_func_name_("initialize"),
+	comp_func_name_("compare")
 	{
 		ROSE_ASSERT(state_class_);
 	}
@@ -296,6 +309,8 @@ public:
 	SgFunctionDeclaration* buildInitializationFunction();
 
 	SgFunctionDeclaration* buildComparisonFunction();
+
+	SgFunctionDeclaration* buildMainFunction();
 
 	SgStatement* initializeMember(SgExpression* exp);
 

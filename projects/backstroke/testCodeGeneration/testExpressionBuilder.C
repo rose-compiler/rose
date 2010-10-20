@@ -29,9 +29,12 @@ void UnaryExpressionBuilder::build()
 		if (operand_->isLValue())
 		{
 			results_.push_back(buildPlusPlusOp(copyExpression(operand_), SgUnaryOp::prefix));
-			results_.push_back(buildMinusMinusOp(copyExpression(operand_), SgUnaryOp::prefix));
 			results_.push_back(buildPlusPlusOp(copyExpression(operand_), SgUnaryOp::postfix));
-			results_.push_back(buildMinusMinusOp(copyExpression(operand_), SgUnaryOp::postfix));
+			if (!isSgTypeBool(type))
+			{
+				results_.push_back(buildMinusMinusOp(copyExpression(operand_), SgUnaryOp::prefix));
+				results_.push_back(buildMinusMinusOp(copyExpression(operand_), SgUnaryOp::postfix));
+			}
 		}
 #if 1
 		results_.push_back(buildUnaryExpression<SgNotOp>(copyExpression(operand_)));
