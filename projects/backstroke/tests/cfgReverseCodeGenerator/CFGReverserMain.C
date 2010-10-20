@@ -16,8 +16,8 @@ struct IsEvent
 
 	bool operator() (SgFunctionDeclaration* decl)
 	{
-		return decl->get_symbol_from_symbol_table() ==
-				globalScope->lookup_function_symbol("reverseMe");
+		return globalScope->lookup_function_symbol("reverseMe") != NULL && 
+				decl->get_symbol_from_symbol_table() == globalScope->lookup_function_symbol("reverseMe");
 	}
 };
 
