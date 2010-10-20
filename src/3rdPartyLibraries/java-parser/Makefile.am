@@ -1,7 +1,8 @@
 javadir=$(libdir)
 
 # Liao 8/4/2010, based on Jean Utke's suggestion on [Rose-public] Fortran built-ins
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 # include_HEADERS = ActionEnums.h token.h FortranParserAction.h
   include_HEADERS = 
 endif
