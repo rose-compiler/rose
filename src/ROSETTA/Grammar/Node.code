@@ -77,7 +77,7 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 	public:
 		typedef std::map<rose_addr_t,rose_addr_t> super;
 
-#ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		ExtentMap() {}
 
 		/* Modifying methods */
@@ -111,7 +111,7 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 
 		/* Class methods */
 		static char category(const ExtentPair &a, const ExtentPair &b);
-#endif
+// #endif
 };
 
 /** Settings that control how the lowest-level SgAsmExecutableFileFormat::hexdump function behaves. */

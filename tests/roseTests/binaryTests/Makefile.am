@@ -549,7 +549,7 @@ MOSTLYCLEANFILES = \
 	test_yicesSemanticsLib.ans
 
 # DQ (10/19/2010): This rule fails when ROSE is configure using --without-java, why is this?
-if ROSE_USE_INTERNAL_JAVA_SUPPORT
+if !ROSE_USE_INTERNAL_JAVA_SUPPORT
 # mostlyclean-binarysamples is defined by scripts/sample_binary_rules.pl invoked from "build"
 mostlyclean-local: mostlyclean-binarysamples
 endif
