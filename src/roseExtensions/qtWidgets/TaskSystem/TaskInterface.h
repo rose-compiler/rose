@@ -22,7 +22,9 @@ class Task : public QObject
 
     public:
 
-        enum State { BEFORE_START,
+        enum State 
+		{ 
+					 BEFORE_START,
                      RUNNING,
                      FINISHED_SUCCESS,
                      FINISHED_ERROR  };
