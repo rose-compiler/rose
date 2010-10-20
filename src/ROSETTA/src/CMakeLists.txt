@@ -79,7 +79,13 @@ add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS} ${rose_util_s
 
 # build ROSETTA code generator
 #target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib ${Boost_LIBRARIES})
-target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS}  ${Boost_LIBRARIES})
+if (NOT WIN32)
+  target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS}  ${Boost_LIBRARIES})
+else (NOT WIN32)
+  target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS}  ${Boost_LIBRARIES} shlwapi.lib)
+endif (NOT WIN32)
+
+
 
 get_target_property (META_EXE_LOC CxxGrammarMetaProgram LOCATION) 
 message(STATUS "META_EXE_LOC = " ${META_EXE_LOC} )

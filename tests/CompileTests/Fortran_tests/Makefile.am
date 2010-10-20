@@ -444,7 +444,8 @@ TEST_F03_Objects = ${ALL_F03_TESTCODES:.f03=.o}
 
 PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
 
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 # Go back and build the translator we are using to test Fortran (in case make check 
 # is run directly in this directory before make has been run from the root of the 
@@ -572,6 +573,12 @@ testSuffixRules:
 
 testOFP:
 	 $(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_01.f
+
+# DQ (10/18/2010): Test suggested from bug reported by Carlo Bertolli at Imperial.
+testCPP_Defines:
+#	Test source code with macro defined from the command line: e.g. "integer*PS  pe"
+	../../testTranslator $(ROSE_FLAGS) -DPS=8 inputUsingDefinesOnCommandline.F90
+
 
 
 tests:

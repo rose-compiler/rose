@@ -33,11 +33,11 @@
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 // FMZ (5/19/2008): 
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
    #include "FortranModuleInfo.h"
    #include "FortranParserState.h"
    #include "unparseFortran_modfile.h"
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
 #ifdef HAVE_DLADDR
@@ -978,7 +978,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // look only for -L directories (directories where -lxxx libraries will be found)
           if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'L') )
              {
-	      //AS Changed source code to support absolute paths
+            // AS Changed source code to support absolute paths
                std::string libraryDirectorySpecifier = argv[i].substr(2);
                libraryDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(libraryDirectorySpecifier);			     
                p_libraryDirectorySpecifierList.push_back(libraryDirectorySpecifier);
@@ -992,6 +992,16 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                std::string includeDirectorySpecifier =  argv[i].substr(2);
                includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
                p_includeDirectorySpecifierList.push_back("-I"+includeDirectorySpecifier);
+             }
+
+       // DQ (10/18/2010): Added support to collect "-D" options (assume no space between the "-D" and the option (e.g. "-DmyMacro=8").
+       // Note that we want to collect these because we have to process "-D" options more explicitly for Fortran (they are not required
+       // for C/C++ because they are processed by the forontend directly.
+          if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'D') )
+             {
+               std::string macroSpecifier = argv[i].substr(2);
+            // librarySpecifier = std::string("lib") + librarySpecifier;
+               p_macroSpecifierList.push_back(macroSpecifier);
              }
         }
 
@@ -2611,6 +2621,19 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
             // Note: This is a little bit inconsistnat with the default set in ROSETTA.
                file->set_requires_C_preprocessor(CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension));
 
+            // DQ (10/18/2010): Test if the command line includes "-D" options. This is tested using the 
+            // "make testCPP_Defines" rule in the Fortran_tests directory.
+               if (getProject()->get_macroSpecifierList().empty() == false)
+                  {
+                 // Check if there are "-D" options on the command line and issue a warning that this case with Fortran is not handled.
+                 // However I can't see that we collect the "-D" options from the commandline, so I can't do this now.
+                    printf ("Warning: \"-D\" options on the command line are not currently processed within the Fortran support. \n");
+                    if (file->get_requires_C_preprocessor() == false)
+                       {
+                         printf ("However, they will also only be processed for files containing a proper file extension to trigger the processing (use: *.F, *.F90, *.F95, *.F03, *.F08). \n");
+                       }
+                  }
+               
             // printf ("Called set_requires_C_preprocessor(%s) \n",file->get_requires_C_preprocessor() ? "true" : "false");
 
             // DQ (12/23/2008): This needs to be called after the set_requires_C_preprocessor() function is called.
@@ -3864,10 +3887,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 //FMZ(5/19/2008):
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 extern void jserver_init();
 extern void jserver_finish();
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
 //! internal function to invoke the EDG frontend and generate the AST
@@ -3959,9 +3982,9 @@ SgProject::parse(const vector<string>& argv)
                          printf ("Calling Open Fortran Parser: jserver_init() \n");
                        }
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                     jserver_init();
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
                     errorCode = parse();
 
@@ -4060,9 +4083,9 @@ int
 SgSourceFile::callFrontEnd()
    {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT     
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      FortranParserState* currStks = new FortranParserState(); 
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
      int frontendErrorLevel = SgFile::callFrontEnd();
@@ -4077,9 +4100,9 @@ SgSourceFile::callFrontEnd()
      ROSE_ASSERT (get_globalScope()->get_endOfConstruct()   != NULL);
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      delete  currStks ;
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
      return frontendErrorLevel;
    }
@@ -4133,12 +4156,12 @@ SgProject::parse()
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ (5/29/2008)
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
      FortranModuleInfo::setCurrentProject(this);
      FortranModuleInfo::set_inputDirs(this );
 
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
   // Simplify multi-file handling so that a single file is just the trivial 
@@ -5092,7 +5115,7 @@ SgFile::callFrontEnd()
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      if (get_Fortran_only() == true && FortranModuleInfo::isRmodFile() == false)
         {
           if (get_verbose() > 1)
@@ -5103,7 +5126,7 @@ SgFile::callFrontEnd()
           if (get_verbose() > 1)
                printf ("DONE: Generating a Fortran 90 module file (*.rmod) \n");
         }
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif 
 #if 0
      printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
@@ -6554,12 +6577,12 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
      if (get_Fortran_only() == true)
         {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
-#else
-          fprintf(stderr, "USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT is not defined. Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) and gfortran \n");
-          ROSE_ASSERT(false);
-#endif
+// #else
+//        fprintf(stderr, "USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT is not defined. Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) and gfortran \n");
+//        ROSE_ASSERT(false);
+// #endif
 #else
           fprintf(stderr, "ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT is not defined. Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
           ROSE_ASSERT(false);
@@ -6576,12 +6599,12 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                if ( get_Java_only() == true )
                   {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                     frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
-#else
-          fprintf(stderr, "USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT is not defined. Trying to parse a Java file when Java is not supported (ROSE must be configured using --with-java (default)) and ??? \n");
-          ROSE_ASSERT(false);
-#endif
+// #else
+//           fprintf(stderr, "USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT is not defined. Trying to parse a Java file when Java is not supported (ROSE must be configured using --with-java (default)) and ??? \n");
+//           ROSE_ASSERT(false);
+// #endif
 #else
           fprintf(stderr, "ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT is not defined. Trying to parse a Java file when Java is not supported (ROSE must be configured using --with-java (default)) \n");
           ROSE_ASSERT(false);

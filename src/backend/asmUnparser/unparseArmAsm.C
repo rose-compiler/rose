@@ -1,6 +1,5 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-
+#include "stringify.h"
 #include "AsmUnparser_compat.h"
 
 static std::string unparseArmRegister(SgAsmArmRegisterReferenceExpression *reg) {
@@ -27,32 +26,9 @@ static std::string unparseArmRegister(SgAsmArmRegisterReferenceExpression *reg) 
 }
 
 static std::string unparseArmCondition(ArmInstructionCondition cond) { // Unparse as used for mnemonics
-  switch (cond) {
-    case arm_cond_unknown: return "***UNKNOWN***";
-    case arm_cond_eq: return "eq";
-    case arm_cond_ne: return "ne";
-    case arm_cond_hs: return "hs";
-    case arm_cond_lo: return "lo";
-    case arm_cond_mi: return "mi";
-    case arm_cond_pl: return "pl";
-    case arm_cond_vs: return "vs";
-    case arm_cond_vc: return "vc";
-    case arm_cond_hi: return "hi";
-    case arm_cond_ls: return "ls";
-    case arm_cond_ge: return "ge";
-    case arm_cond_lt: return "lt";
-    case arm_cond_gt: return "gt";
-    case arm_cond_le: return "le";
-    case arm_cond_al: return "";
-    case arm_cond_nv: return "nv";
-
-    default:
-      {
-        ROSE_ASSERT (false);
-        // DQ (11/28/2009): MSVC warns about a path that does not have a return stmt.
-        return "error in unparseArmCondition";
-      }
-  }
+    std::string retval = stringifyArmInstructionCondition(cond, "arm_cond_");
+    ROSE_ASSERT(retval[0]!='(');
+    return retval;
 }
 
 static std::string unparseArmSign(ArmSignForExpressionUnparsing sign) {

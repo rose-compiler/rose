@@ -1,7 +1,6 @@
 /* ELF Symbol Tables (SgAsmElfSymbolSection and related classes) */
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "stringify.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -110,32 +109,13 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
 std::string
 SgAsmElfSymbol::to_string(ElfSymBinding val)
 {
-  switch (val) {
-    case STB_LOCAL:  return "local";  
-    case STB_GLOBAL: return "global"; 
-    case STB_WEAK:   return "weak";   
-  };
-  char sbuf[256];
-  snprintf(sbuf, sizeof(sbuf),"unknown binding (%zu)", (size_t)val);
-  return sbuf;
+    return stringifySgAsmElfSymbolElfSymBinding(val);
 }
 
 std::string
 SgAsmElfSymbol::to_string(ElfSymType val)
 {
-  switch (val) {
-    case STT_NOTYPE:  return "no-type";   
-    case STT_OBJECT:  return "object";    
-    case STT_FUNC:    return "function";  
-    case STT_SECTION: return "section";   
-    case STT_FILE:    return "file";      
-    case STT_COMMON:  return "common";      
-    case STT_TLS:     return "tls";      
-  };
-
-  char sbuf[256];
-  snprintf(sbuf, sizeof(sbuf),"unknown type (%zu)", (size_t)val);
-  return sbuf;
+    return stringifySgAsmElfSymbolElfSymType(val);
 }  
 
 
