@@ -55,20 +55,20 @@ SgFunctionDeclaration* EventFunctionBuilder::buildEventFunction(const string& ev
 #endif
 
 
-SgExpression* StateClassBuilder::getMemberExpression(const string& name) const
+SgExpression* StateClassBuilder::buildMemberExpression(const string& name) const
 {
 	foreach (const MemberType& member, members_)
 	{
 		if (member.get<0>() == name)
 		{
 			ROSE_ASSERT(member.get<2>());
-			return member.get<2>();
+			return buildVarRefExp(member.get<2>());
 		}
 	}
 	return NULL;
 }
 
-vector<SgExpression*> StateClassBuilder::getMemberExpression(SgType* type) const
+vector<SgExpression*> StateClassBuilder::buildMemberExpression(SgType* type) const
 {
 	vector<SgExpression*> exps;
 	foreach (const MemberType& member, members_)
@@ -77,7 +77,7 @@ vector<SgExpression*> StateClassBuilder::getMemberExpression(SgType* type) const
 		if (member.get<1>() == type)
 		{
 			ROSE_ASSERT(member.get<2>());
-			exps.push_back(member.get<2>());
+			exps.push_back(buildVarRefExp(member.get<2>()));
 		}
 	}
 	return exps;
@@ -96,10 +96,7 @@ void StateClassBuilder::build()
 	{
 		SgVariableDeclaration* var_decl = buildVariableDeclaration(member.get<0>(), member.get<1>());
 		state_def->append_member(var_decl);
-		// Build an expression for each member like m->i.
-		member.get<2>() = buildVarRefExp(var_decl);
-		//member.get<2>() = buildBinaryExpression<SgArrowExp>(
-		//		buildVarRefExp(state_init_name), buildVarRefExp(var_decl));
+		member.get<2>() = var_decl;
 	}
 
 	popScopeStack();
@@ -126,29 +123,19 @@ void TestCodeBuilder::buildStateClass()
 		state_builder_->addMember(state_members_[i].first, state_members_[i].second);
 
 	state_builder_->build();
-
-	// In C style test code, we need the following initialized name to build the paramenter.
-	if (!is_cxx_style_)
-	{
-		// Build the initialized name of the state object parameter in event functions.
-		if (state_init_name_)
-			delete state_init_name_;
-		state_init_name_ =
-			buildInitializedName("state", buildPointerType(state_builder_->getStateClassType()));
-	}
 }
 
 SgExpression* TestCodeBuilder::buildStateMemberExpression(const string& name) const
 {
 	ROSE_ASSERT(state_builder_);
-	if (SgExpression* member_exp = state_builder_->getMemberExpression(name))
+	if (SgExpression* member_exp = state_builder_->buildMemberExpression(name))
 	{
 		if (is_cxx_style_)
 			return member_exp;
 		else
 		{
-			ROSE_ASSERT(state_init_name_);
-			return buildBinaryExpression<SgArrowExp>(buildVarRefExp(state_init_name_), member_exp);
+			return buildBinaryExpression<SgArrowExp>(
+					buildVarRefExp(state_para_name_), member_exp);
 		}
 	}
 	return NULL;
@@ -171,6 +158,7 @@ void TestCodeBuilder::buildTestCode(const vector<SgBasicBlock*>& bodies)
 	ROSE_ASSERT(global_scope);
 
 	int counter = 0;
+	//vector<SgBasicBlock*>b (1, buildBasicBlock());
 	foreach (SgBasicBlock* body, bodies)
 	{
 		string event_name = "event" + lexical_cast<string>(counter++);
@@ -182,8 +170,9 @@ void TestCodeBuilder::buildTestCode(const vector<SgBasicBlock*>& bodies)
 		else
 		{
 			// Note that in C++ style, we don't add the following parameter.
-			ROSE_ASSERT(state_init_name_);
-			event_builder.addParameter(state_init_name_);
+			event_builder.addParameter(
+				buildPointerType(state_builder_->getStateClassType()),
+				state_para_name_);
 			event_builder.setScope(global_scope);
 		}
 
