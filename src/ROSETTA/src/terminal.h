@@ -322,7 +322,8 @@ class Terminal
    to stl vectors or lists. They are marked below, but may cause no trouble if they remain.
 */
 // DQ (4/6/2006): New enum from Jochen's muilt file support.
-  enum TypeEvaluation {
+  enum TypeEvaluation 
+  {
                        CHAR_POINTER,
                        CONST_CHAR_POINTER,
                        ATTACHEDPREPROCESSINGINFOTYPE,
@@ -359,7 +360,7 @@ class Terminal
                        SKIP_TYPE,
                     // should be no longer necessary after the implementation is changed to STL lists instead of pointers to lists
                        SGCLASS_POINTER_LIST_POINTER
-                      };
+                      } ;
 /* JH (21/01/20005): method that evaluates the type string of a data member and returns the corresponding
    TypeEvaluation type
 */

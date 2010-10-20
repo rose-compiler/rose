@@ -457,8 +457,13 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 std::string
 SgAsmElfSectionTableEntry::to_string(SectionType t)
 {
+#ifndef _MSC_VER
     std::string retval = stringifySgAsmElfSectionTableEntrySectionType(t);
-    if ('('!=retval[0])
+#else
+	ROSE_ASSERT(false);
+	std::string retval = "";
+#endif
+	if ('('!=retval[0])
         return retval;
     
     char buf[128];

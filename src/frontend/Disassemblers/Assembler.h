@@ -69,7 +69,8 @@ public:
     /** Assemblers can often assemble a single instruction various ways. For instance, on x86 the immediate value -53 can be
      *  assembled into a single byte, or sign extended into 2, 4, or 8 bytes.  These enumeration constants control how the
      *  assembleOne() method determines which encoding to return. */
-    enum EncodingType {
+    enum EncodingType 
+	{
         ET_SHORTEST,            /**< Returns the shortest possible encoding. This is the default. */
         ET_LONGEST,             /**< Returns the longest encoding. */
         ET_MATCHES,             /**< Returns an encoding that matches the SgAsmInstruction::p_raw_bytes. This is used mainly

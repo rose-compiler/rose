@@ -6,7 +6,8 @@
 #include "AssemblerX86Init.h"   /* A big enum whose members are all possible x86 instructions. */
 
 /** Intel x86 instruction size constants. */
-enum X86InstructionSize {
+enum X86InstructionSize 
+{
   x86_insnsize_none,
   x86_insnsize_16,              /**< Instruction is for a 16-bit architecture. */
   x86_insnsize_32,              /**< Instruction is for a 32-bit architecture. */
@@ -14,7 +15,8 @@ enum X86InstructionSize {
 };
 
 /** Intel x86 major register numbers */
-enum X86RegisterClass {
+enum X86RegisterClass 
+{
   x86_regclass_gpr,             /**< Minors are X86GeneralPurposeRegister (ax,cx,dx,bx,sp,bp,si,di,r8..r15) */
   x86_regclass_segment,         /**< Minors are X86SegmentRegister (es,cs,ss,ds,fs,gs) */
   x86_regclass_cr,              /**< Control registers; Minors are 0-4, 8 */
@@ -27,7 +29,8 @@ enum X86RegisterClass {
 };
 
 /** Intel x86 segment registers. */
-enum X86SegmentRegister {
+enum X86SegmentRegister 
+{
     x86_segreg_es       = 0,    // Numbering is based on Intel documentation
     x86_segreg_cs       = 1,
     x86_segreg_ss       = 2,
@@ -38,7 +41,8 @@ enum X86SegmentRegister {
 };
 
 /** Intel x86 general purpose registers */
-enum X86GeneralPurposeRegister {
+enum X86GeneralPurposeRegister 
+{
     x86_gpr_ax          = 0,    // Numbering is based on Intel documentation
     x86_gpr_cx          = 1,
     x86_gpr_dx          = 2,
@@ -58,7 +62,8 @@ enum X86GeneralPurposeRegister {
 };
 
 /** Intel x86 status flags. These are the bit offsets in the flags register. */
-enum X86Flag {
+enum X86Flag 
+{
     x86_flag_cf         = 0,
     x86_flag_pf         = 2,
     x86_flag_af         = 4,
@@ -79,14 +84,16 @@ enum X86Flag {
 };
 
 /** Intel x86 branch prediction types. */
-enum X86BranchPrediction {
+enum X86BranchPrediction 
+{
     x86_branch_prediction_none,
     x86_branch_prediction_taken,
     x86_branch_prediction_not_taken
 };
 
 /** Intel x86 instruction repeat prefix. */
-enum X86RepeatPrefix {
+enum X86RepeatPrefix 
+{
     x86_repeat_none,            /**< No repeat prefix */
     x86_repeat_repne,           /**< Repeat not equal prefix 0xf2 */
     x86_repeat_repe             /**< Repeat equal prefix 0xf3 */
