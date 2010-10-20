@@ -31,7 +31,7 @@ namespace VirtualBinCFG {
         InstructionToAddressesMap  incomingEdges;
 
     public:
-#ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 
         AuxiliaryInformation() {}
         AuxiliaryInformation(SgNode* top);
@@ -55,14 +55,14 @@ namespace VirtualBinCFG {
                 return predsIter->second;
             }
         }
-#endif
+// #endif
     };
 
     class CFGNode {
         SgAsmInstruction *node;
         const AuxiliaryInformation *info;
     public:
-#ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
         explicit CFGNode(SgAsmInstruction *node, const AuxiliaryInformation *info = NULL)
             : node(node), info(info) {
 #ifdef _MSC_VER
@@ -91,14 +91,14 @@ namespace VirtualBinCFG {
         bool operator<(const CFGNode& o) const {
             return node < o.node;
         }
-#endif
+// #endif
     };
 
     class CFGEdge {
         CFGNode src, tgt;
         const AuxiliaryInformation *info;
     public:
-#ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
         CFGEdge(CFGNode src, CFGNode tgt, const AuxiliaryInformation *info = NULL)
             : src(src), tgt(tgt), info(info)
             {}
@@ -125,13 +125,13 @@ namespace VirtualBinCFG {
         bool operator<(const CFGEdge& o) const {
             return src < o.src || (src == o.src && tgt < o.tgt);
         }
-#endif
+// #endif
     };
 
-#ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
     // Used in inEdges() and outEdges() methods
     void makeEdge(SgAsmInstruction *from, SgAsmInstruction *to, const AuxiliaryInformation *info, std::vector<CFGEdge> &result);
-#endif
+// #endif
 }
 
 #endif /* VIRTUAL_CFG_H */
