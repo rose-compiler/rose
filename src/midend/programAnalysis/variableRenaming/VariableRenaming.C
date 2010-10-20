@@ -2689,6 +2689,11 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalDefsForSubtree
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtScopeEnd(SgScopeStatement* bb)
 {
+	if (isSgFunctionDefinition(bb))
+	{
+		bb = isSgFunctionDefinition(bb)->get_body();
+	}
+
 	ROSE_ASSERT(bb);
     NumNodeRenameTable result;
 
