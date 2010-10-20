@@ -32,7 +32,7 @@ namespace RoseBin_Def {
     none,
     x86,
     arm
- } RoseLanguage_ENUM;
+ } ;
  extern RoseLanguage RoseAssemblyLanguage;
 }
 
@@ -41,7 +41,7 @@ namespace RoseBin_OS {
  {
     linux_op,
     windows_op
- } OSSYSTEM_ENUM;
+ } ;
  extern OSSYSTEM os_sys;
 }
 
@@ -74,7 +74,7 @@ namespace RoseBin_OS_VER {
     WinXP_SP1,
     WinXP_SP2,
     WinVista_SP0
- } OS_VERSION_ENUM;
+ } ;
  extern OS_VERSION os_ver;
 }
 
@@ -95,7 +95,7 @@ namespace RoseBin_DataTypes {
     d_uint_p,
     d_long,
     d_array
- } DataTypes_ENUM;
+ } ;
 
 
  extern DataTypes Rose_Data;

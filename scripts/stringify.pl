@@ -356,7 +356,7 @@ print OUTPUT <<"EOF"
 #ifndef _MSC_VER
         int nprint = snprintf(buf, sizeof buf, \"(${name})\%d\", n);
 #else
-        int nprint = 0; ROSE_ASSERT(false);
+        int nprint = 0; assert(0);
 #endif        
         assert(nprint < (int)sizeof buf);
         retval = buf;
