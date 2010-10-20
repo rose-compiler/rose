@@ -18,7 +18,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    #include "AsmUnparser_compat.h"
 #endif
 
@@ -290,7 +290,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n") + name;
         }
 
-#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
      if (genericInstruction != NULL)

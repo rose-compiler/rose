@@ -6441,7 +6441,7 @@ SgSourceFile::build_PHP_AST()
 void
 SgBinaryComposite::buildAsmAST(string executableFileName)
    {
-#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      if ( get_verbose() > 0 || SgProject::get_verbose() > 0)
           printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
 
@@ -6493,7 +6493,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
 int
 SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
 {
-#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     /* Parse the specified binary file to create the AST. Do not disassemble instructions yet. If the file is dynamically
      * linked then optionally load (i.e., parse the container, map sections into process address space, and perform relocation
      * fixups) all dependencies also.  See the BinaryLoader class for details. */

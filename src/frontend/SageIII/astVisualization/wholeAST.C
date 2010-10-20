@@ -7,7 +7,7 @@
 
 #include "wholeAST.h"
 
-#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    #include "AsmUnparser_compat.h"
 #endif
 
@@ -1545,7 +1545,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
      if (isSgAsmNode(node) != NULL)
         {
-#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
        // Color selection for the binary file format and binary instruction IR nodes.
 
           string additionalNodeOptions;
