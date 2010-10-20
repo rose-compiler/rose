@@ -41,7 +41,8 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
       $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
       $(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la 
 else
-   libroseBinaryLibraries =
+   libroseBinaryLibraries = \
+      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la
 endif
 
 if ROSE_USE_MYSQL

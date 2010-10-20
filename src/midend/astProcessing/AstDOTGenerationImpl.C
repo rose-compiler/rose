@@ -18,7 +18,9 @@
 //#		define PRIx64 "I64x"
 #	endif
 #	include <inttypes.h>
-#	include "AsmUnparser_compat.h"
+#  if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#	   include "AsmUnparser_compat.h"
+#  endif
 #	include "wholeAST_API.h"
 #	include "sageInterface.h"
 #endif
@@ -53,6 +55,7 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
 //	}
 	string nodelabel=string("\\n")+node->class_name();
 
+#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	// DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
 	SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
 	if (genericInstruction != NULL)
@@ -170,6 +173,9 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
 	  if (name.empty() == false)
 		   nodelabel += string("\\n") + name;
 	}
+#else
+     printf ("Warning: In AstDOTGenerationImpl.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
+#endif
 
 	// DQ (11/29/2008): Output the directives in the label of the IR node.
 	SgC_PreprocessorDirectiveStatement* preprocessorDirective = isSgC_PreprocessorDirectiveStatement(node);

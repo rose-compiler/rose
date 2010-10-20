@@ -4005,19 +4005,26 @@ void EasyStorage<ExtentMap>::storeDataInEasyStorageClass(const ExtentMap& emap)
 }
 
 ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
-{
+   {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
-    assert(Base::actualBlock <= 1);
-    assert((0 < Base::getSizeOfData() && Base::actual!= NULL) || (Base::getSizeOfData() == 0));
-    assert(0 == Base::getSizeOfData() % 2); /* vector holds key/value pairs of the ExtentMap */
+     assert(Base::actualBlock <= 1);
+     assert((0 < Base::getSizeOfData() && Base::actual!= NULL) || (Base::getSizeOfData() == 0));
+     assert(0 == Base::getSizeOfData() % 2); /* vector holds key/value pairs of the ExtentMap */
 #endif
 
-    ExtentMap emap;
-    if (Base::actual!=NULL && Base::getSizeOfData()>0) {
-        rose_addr_t *pointer = Base::getBeginningOfDataBlock();
-        for (long i=0; i<Base::getSizeOfData(); i+=2)
-            emap.insert(pointer[i+0], pointer[i+1]);
-    }
-    return emap;
-}
+     ExtentMap emap;
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     if (Base::actual!=NULL && Base::getSizeOfData()>0)
+        {
+          rose_addr_t *pointer = Base::getBeginningOfDataBlock();
+          for (long i=0; i<Base::getSizeOfData(); i+=2)
+               emap.insert(pointer[i+0], pointer[i+1]);
+        }
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return emap;
+   }
 
