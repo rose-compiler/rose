@@ -1325,16 +1325,15 @@ ROSE_SUPPORT_RTED
 AM_CONDITIONAL(ROSE_USE_RTED,test ! "$with_rted" = no)
 
 # TP SUPPORT FOR OPENGL
-AC_DEFINE([openGL],1,[By default OpenGL is disabled.])
-AC_ARG_ENABLE([openGL],
-  [  --enable-openGL  enable openGL],
-  [  openGL = yes], [openGL = no])
+#AC_DEFINE([openGL],1,[By default OpenGL is disabled.])
+AC_ARG_ENABLE([rose-openGL],
+  [  --enable-rose-openGL  enable openGL],
+  [  rose_openGL=${enableval}
 AC_PATH_X dnl We need to do this by hand for some reason
 MDL_HAVE_OPENGL
-echo "have_GL = '$have_GL' and have_glut = '$have_glut' and openGL = '$openGL'"
-AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno -a ! "x$openGL" = xno)
+echo "have_GL = '$have_GL' and have_glut = '$have_glut' and rose_openGL = '$rose_openGL'"
 #AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$openGL" = xno)
-if test ! "x$openGL" = xno; then
+if test ! "x$rose_openGL" = xno; then
    AC_MSG_NOTICE( "Checking OpenGL dependencies..." );
   if test "x$have_GL" = xyes; then
     AC_MSG_NOTICE( "OpenGL enabled. Found OpenGL." );
@@ -1347,9 +1346,11 @@ if test ! "x$openGL" = xno; then
 #    AC_MSG_NOTICE( "OpenGL GLUT not found Msg" );
    AC_MSG_ERROR( "OpenGL GLUT not found" );
  fi
-else
-  AC_MSG_NOTICE( "OpenGL disabled." );
 fi
+], [ rose_openGL=no
+  AC_MSG_NOTICE( "OpenGL disabled." );
+])
+AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno -a ! "x$rose_openGL" = xno)
 
 
 
