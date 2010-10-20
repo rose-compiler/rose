@@ -1925,6 +1925,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
   // RPM (12/29/2009): Disassembler aggressiveness.
      if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "disassembler_search", stringParameter, true)) {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_disassemblerSearchHeuristics();
              heuristics = Disassembler::parse_switches(stringParameter, heuristics);
@@ -1933,10 +1934,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.mesg.c_str());
              ROSE_ASSERT(!"error parsing -rose:disassembler_search");
          }
+#else
+         printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
+         ROSE_ASSERT(false);
+#endif
      }
 
   // RPM (1/4/2010): Partitioner function search methods
      if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_search", stringParameter, true)) {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_partitionerSearchHeuristics();
              heuristics = Partitioner::parse_switches(stringParameter, heuristics);
@@ -1945,6 +1951,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());
              ROSE_ASSERT(!"error parsing -rose:partitioner_search");
          }
+#else
+         printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
+         ROSE_ASSERT(false);
+#endif
      }
 
   // RPM (6/9/2010): Partitioner configuration
@@ -4128,6 +4138,7 @@ SgUnknownFile::callFrontEnd()
 SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* project )
     : p_genericFileList(NULL), p_interpretations(NULL)
 {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     p_interpretations = new SgAsmInterpretationList();
     p_genericFileList = new SgAsmGenericFileList();
     
@@ -4141,6 +4152,10 @@ SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* proje
      doSetupForConstructor(argv,  project);
 
   // printf ("Leaving SgBinaryComposite constructor \n");
+#else
+     printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
+     ROSE_ASSERT(false);
+#endif
 }
 
 
@@ -6426,6 +6441,7 @@ SgSourceFile::build_PHP_AST()
 void
 SgBinaryComposite::buildAsmAST(string executableFileName)
    {
+#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      if ( get_verbose() > 0 || SgProject::get_verbose() > 0)
           printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
 
@@ -6459,6 +6475,10 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
   // Make sure this node is correctly parented
      SgProject* project = isSgProject(this->get_parent());
      ROSE_ASSERT(project != NULL);
+#else
+     printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
+     ROSE_ASSERT(false);
+#endif
 
 #if 0
      printf ("At base of SgBinaryComposite::buildAsmAST(): exiting... \n");
@@ -6473,7 +6493,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
 int
 SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
 {
-
+#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     /* Parse the specified binary file to create the AST. Do not disassemble instructions yet. If the file is dynamically
      * linked then optionally load (i.e., parse the container, map sections into process address space, and perform relocation
      * fixups) all dependencies also.  See the BinaryLoader class for details. */
@@ -6490,7 +6510,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
         }
     } else {
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty());
-	BinaryLoader::load(this, get_read_executable_file_format_only());
+        BinaryLoader::load(this, get_read_executable_file_format_only());
     }
 
     /* Disassemble each interpretation */
@@ -6511,6 +6531,10 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     // This is now done below in the Secondary file processing phase.
     // Generate the ELF executable format structure into the AST
     // generateBinaryExecutableFileInformation(executableFileName,asmFile);
+#else
+     printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
+     ROSE_ASSERT(false);
+#endif
 
     int frontendErrorLevel = 0;
     return frontendErrorLevel;

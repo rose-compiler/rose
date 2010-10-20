@@ -45,6 +45,7 @@ HEADER_BINARY_END
 
 HEADER_INTERPRETATION_START
      public:
+       // DQ (10/20/2010): This section does not have a source code block for ROSETTA to put the function definition.
           SgAsmInterpretation()
              : p_map(NULL), coverageComputed(false), percentageCoverage(0.0), p_dwarf_info(NULL), p_headers(NULL), p_global_block(NULL) 
              {
@@ -98,14 +99,22 @@ HEADER_BINARY_INSTRUCTION_START
 		virtual bool terminatesBasicBlock(); /*subclasses must redefine*/
 		virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target) {return false;}
 		virtual bool is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool has_effect();
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
 					bool relax_stack_semantics=false);
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual std::vector<std::pair<size_t,size_t> >
 		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
 					   bool relax_stack_semantics=false);
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual std::set<rose_addr_t> get_successors(bool* complete); /*subclasses must redefine*/
 		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool *complete);
+// #endif
 HEADER_BINARY_INSTRUCTION_END
 
 
@@ -869,21 +878,24 @@ HEADER_GENERIC_SECTION_START
 			SP_OTHER                	/* File-specified purpose other than any given in this enum */
 		};
 
-		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
-			: local_data_pool(0), p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()),
-			p_file_alignment(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
-			p_mapped_preferred_rva(0), p_mapped_size(0), p_mapped_alignment(0), p_mapped_rperm(false),
-			p_mapped_wperm(false), p_mapped_xperm(false), p_contains_code(false), p_mapped_actual_va(0)
-			{ctor(f, fhdr);}
+   // DQ (10/20/2010): Moved this function's definition to the source file.
+      SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr);
 
 		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
 		virtual ~SgAsmGenericSection();
 
 		static void dump_containing_sections(FILE *f, const std::string &prefix, rose_rva_t rva,
 			const SgAsmGenericSectionPtrList&);
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		void grab_content();
-		virtual SgAsmGenericSection* parse() {grab_content(); return this;}
+// #endif
+
+   // DQ (10/20/2010): Moved this function's definition to the source file.
+      virtual SgAsmGenericSection* parse();
+
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		virtual bool reallocate() {return false;}
 		virtual void unparse(std::ostream&) const;
 		void unparse(std::ostream&, const ExtentMap&) const;
@@ -892,9 +904,13 @@ HEADER_GENERIC_SECTION_START
 
 		/* Functions for section extent within the file */
 		addr_t        get_size() const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void  set_size(addr_t);		/* Resize a section w/o regard to other sections or mapping */
+// #endif
 		addr_t        get_offset() const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void  set_offset(addr_t);		/** Move a section w/o regard to other sections or mapping */
+// #endif
 		addr_t        get_end_offset() const;		/** file offset for end of section */
 		void          extend(addr_t nbytes);         	/** make section larger by extending the end */
 		addr_t        write(std::ostream&, addr_t offset, size_t bufsize, const void *buf) const;
@@ -933,9 +949,13 @@ HEADER_GENERIC_SECTION_START
 		bool   	      is_mapped() const;                /** True iff non-zero mapped address and size */
 		void   	      clear_mapped();                 	/** Set mapped address and size to zero (unmapped)*/
 		addr_t        get_mapped_size() const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void  set_mapped_size(addr_t);	      	/* Set mapped size w/o regard to other section mappings */
+// #endif
 		addr_t	      get_mapped_preferred_rva() const;	/* The virtual address indicated in the binary file */
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void  set_mapped_preferred_rva(addr_t); /* Move a section w/o regard to other section mappings */
+// #endif
 		addr_t 	      get_base_va() const;            	/* Convenience to get header's base VA */
 		addr_t 	      get_mapped_preferred_va() const;	/* Like get_mapped_preferred_rva() except returns absolute VA */
 		addr_t        get_va_offset(addr_t va) const;  	/* Return file offset for specified virtual address */
@@ -974,10 +994,13 @@ HEADER_GENERIC_HEADER_START
 			{ctor();}
 
 		virtual ~SgAsmGenericHeader();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
+// #endif
 		// DQ (8/8/2008): We can't make this pure virtual since then we can't allocate this class.
 		// virtual const char *format_name() = 0;
 		virtual const char *format_name() const;
@@ -1026,16 +1049,20 @@ HEADER_GENERIC_HEADER_END
 
 HEADER_GENERIC_FILE_START
 	public:
+   // DQ (10/20/2010): This section does not have a source code block for ROSETTA to put the function definition.
 		SgAsmGenericFile()
 			: p_unreferenced_cache(NULL), p_data_converter(NULL),p_fd(-1), p_headers(NULL), p_holes(NULL),
 			  p_truncate_zeros(false), p_tracking_references(true)
 			{ctor();}
+
 		virtual ~SgAsmGenericFile();				/* Destructor deletes children and unmaps/closes file */
 		SgAsmGenericFile* parse(std::string file_name);		/* Attach an existing file for parsing */
 		void reallocate();					/* Make consistent before calling unparse */
 		void unparse(std::ostream&) const;			/* Unparse the file -- mirror image of parsing */
 		void extend_to_eof(std::ostream&) const;		/* Write zeros to logical EOF */
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		void dump(FILE*) const;                                 /* Print some top-level debugging info */
+// #endif
 		void dump_all(bool in_cwd=true, const char *ext=NULL);	/* Recursively print all known info about the file */
 		void dump_all(const std::string& dumpname);		/* Recursively print all known info about the file */
 
@@ -1048,7 +1075,9 @@ HEADER_GENERIC_FILE_START
 		DataConverter* get_data_converter() const {return p_data_converter;}
 
 		/* File contents */
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		rose_addr_t get_current_size() const;			/* Current size based on defined sections */
+// #endif
 		rose_addr_t get_orig_size() const;              	/* Original size based on actual file size */
 		size_t read_content(addr_t offset, void *dst_buf, addr_t size, bool strict=true);
 		size_t read_content(const MemoryMap *map, addr_t va, void *dst_buf, addr_t size, bool strict=true);
@@ -1127,7 +1156,9 @@ HEADER_GENERIC_FILE_END
 
 HEADER_GENERIC_FORMAT_START
 	public:
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 HEADER_GENERIC_FORMAT_END
 
 
@@ -1135,7 +1166,9 @@ HEADER_GENERIC_FORMAT_END
 HEADER_GENERIC_DLL_START
 	public:
 		explicit SgAsmGenericDLL(SgAsmGenericString *s);
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		void add_symbol(const std::string &s) 			/* Add a needed symbol to the import list for this DLL */
 			{p_symbols.push_back(s);}
 
@@ -1179,12 +1212,12 @@ HEADER_GENERIC_SYMBOL_START
 		};
 
 
-		SgAsmGenericSymbol()
-			: p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0),
-			p_bound(NULL), p_name(NULL)
-			{ctor();}
+   // DQ (10/20/2010): Moved this function's definition to the source file.
+      SgAsmGenericSymbol();
 
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		std::string stringifyDefState() const;
 		std::string stringifyType() const;
 		std::string stringifyBinding() const;
@@ -1211,10 +1244,14 @@ HEADER_BASIC_STRING_START
 		explicit SgAsmBasicString(const char *s)
 			: p_string(s) {ctor();}
 		// virtual ~SgAsmBasicString() {}
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual std::string get_string() const;
 		virtual void set_string(const std::string&);
 		virtual void set_string(addr_t);
+// #endif
 	private:
 		void ctor();
 HEADER_BASIC_STRING_END
@@ -1227,13 +1264,17 @@ HEADER_GENERIC_STRING_START
 		static const rose_addr_t unallocated = ~(rose_addr_t)0;
 
 		// These aren't the ROSETTA-generated versions because they hook into string table allocation functions
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual std::string get_string() const;
 		virtual void set_string(const std::string &s);
 		virtual void set_string(addr_t);
+// #endif
 		virtual rose_addr_t get_offset() const {return unallocated;}
 		const char *c_str() const;
 
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 HEADER_GENERIC_STRING_END
 
 
@@ -1242,8 +1283,10 @@ HEADER_STRING_STORAGE_START
      public:
           SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, rose_addr_t offset)
              : p_strtab(strtab), p_string(string), p_offset(offset) {}
-          void dump(FILE *s, const char *prefix, ssize_t idx) const;
 
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
+          void dump(FILE *s, const char *prefix, ssize_t idx) const;
+// #endif
        /* Accessors. The set_* accessors are private because we don't want anyone messing with them. These data members are used
         * to control string allocation in ELF string tables and must only be modified by allocators in closely related classes.
         * For instance, to change the value of the string one should call SgAsmGenericString::set_string() instead. */
@@ -1286,7 +1329,9 @@ HEADER_GENERIC_STRTAB_START
 			: p_container(container), p_dont_free(0), p_num_freed(0) {}
 		virtual ~SgAsmGenericStrtab() {}
 		virtual SgAsmGenericStrtab* parse() {return this;}
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		SgAsmStoredString *create_string(addr_t offset, bool shared);
 		void free(SgAsmStringStorage*);
 		void free(addr_t offset, addr_t size); /*mark part of table as free*/
@@ -1405,10 +1450,13 @@ HEADER_ELF_HEADER_START
 		unsigned isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const;
 
 		virtual SgAsmElfFileHeader *parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
+// #endif
 		virtual const char *format_name() const;
 		static bool is_ELF(SgAsmGenericFile*);
 		SgAsmGenericSectionPtrList get_sectab_sections();
@@ -1430,9 +1478,13 @@ HEADER_ELF_SECTION_TABLE_START
 		virtual SgAsmElfSectionTable *parse();
 		SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*);
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor();    
 HEADER_ELF_SECTION_TABLE_END
@@ -1538,7 +1590,9 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 		void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
 			SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
 		void update_from_section(SgAsmElfSection*);
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		static std::string to_string(SgAsmElfSectionTableEntry::SectionType);
 		static std::string to_string(SgAsmElfSectionTableEntry::SectionFlags);
 	private:
@@ -1550,19 +1604,23 @@ HEADER_ELF_SECTION_TABLE_ENTRY_END
 
 HEADER_ELF_SECTION_START
 	public:
-		explicit SgAsmElfSection(SgAsmGenericHeader *fhdr)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr),
-			p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(NULL)
-			{ctor();}
+   // DQ (10/20/2010): Moved this function's definition to the source file.
+      explicit SgAsmElfSection(SgAsmGenericHeader *fhdr);
 
 		SgAsmElfSection *init_from_section_table(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
 		SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false);
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		rose_addr_t calculate_sizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
 					    size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+// #endif
 		virtual void finish_parsing() {}
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		void allocate_name_to_storage(SgAsmElfStringSection*);
 
 		/* Convenience functions */
@@ -1586,14 +1644,18 @@ HEADER_STORED_STRING_START
 		explicit SgAsmStoredString(class SgAsmStringStorage *storage)		/*string shares other storage*/
 			{ctor(storage);}
 		// virtual ~SgAsmStoredString();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		SgAsmGenericStrtab *get_strtab();					/*table holding the string*/
 
 		// These are not access functions -- they do more than just getting or setting the value!
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual std::string get_string() const;
 		virtual void set_string(const std::string&);				/*also deallocates previous value*/
 		virtual void set_string(addr_t);					/*rebinds to a new value*/
 		virtual rose_addr_t get_offset() const;					/*also triggers realloc*/
+// #endif
 	private:
 		// Maybe we need to supressed ROSETTA generated constructor!
 		// SgAsmStoredString() {abort();}
@@ -1614,10 +1676,12 @@ HEADER_ELF_STRING_TABLE_START
 		virtual ~SgAsmElfStrtab();
 		virtual SgAsmElfStrtab *parse();
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
 		virtual addr_t get_storage_size(const SgAsmStringStorage*);
 		virtual void allocate_overlap(SgAsmStringStorage*);
 		virtual void rebind(SgAsmStringStorage*, addr_t);
+// #endif
 	private:
 		void ctor();
 HEADER_ELF_STRING_TABLE_END
@@ -1628,9 +1692,13 @@ HEADER_ELF_STRING_SECTION_START
 	public:
 		explicit SgAsmElfStringSection(SgAsmElfFileHeader *fhdr);
 		virtual SgAsmElfStringSection *parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void set_size(addr_t newsize);
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
 	private:
 		void ctor();
@@ -1641,15 +1709,25 @@ HEADER_ELF_STRING_SECTION_END
 
 HEADER_ELF_RELOC_SECTION_START
 	public:
+
+   // DQ (10/20/2010): This function definition can't be move since there is not SOURCE block for ROSETTA to use.
 		SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr, SgAsmElfSymbolSection *symsec,SgAsmElfSection* targetsec)
 			: SgAsmElfSection(fhdr)
 			{ctor(symsec,targetsec);}
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		using SgAsmElfSection::calculate_sizes;
+// #endif
 		virtual SgAsmElfRelocSection *parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 
 	private:
 		void ctor(SgAsmElfSymbolSection*,SgAsmElfSection*);
@@ -1786,9 +1864,11 @@ HEADER_ELF_RELOC_ENTRY_START
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf32RelEntry_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf64RelEntry_disk*) const;
 
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const
 			{dump(f, prefix, idx, NULL);}
+// #endif
 		std::string reloc_name() const;
 	private:
 		void ctor(SgAsmElfRelocSection*);
@@ -1803,12 +1883,21 @@ HEADER_ELF_DYNAMIC_SECTION_START
 			: SgAsmElfSection(fhdr)
 			{ctor(strsec);}
 		virtual SgAsmElfDynamicSection* parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void finish_parsing();
+// #endif
+
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(SgAsmElfStringSection*);
 HEADER_ELF_DYNAMIC_SECTION_END
@@ -1920,8 +2009,9 @@ HEADER_ELF_DYNAMIC_ENTRY_START
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
+// #endif
 	        static std::string to_string(SgAsmElfDynamicEntry::EntryType);
 		/*Override ROSETTA because set_name() needs to adjust parent pointer*/
 		SgAsmGenericString *get_name() const {return p_name;}
@@ -1938,9 +2028,13 @@ HEADER_ELF_NOTE_SECTION_START
 			: SgAsmElfSection(fhdr)
 			{ctor();}
 		virtual SgAsmElfNoteSection *parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor();
 HEADER_ELF_NOTE_SECTION_END
@@ -1954,7 +2048,9 @@ HEADER_ELF_NOTE_ENTRY_START
 			{ctor(section);}
 		rose_addr_t parse(rose_addr_t starting_offset);
 		rose_addr_t unparse(std::ostream &f, rose_addr_t starting_offset);
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		SgAsmGenericString *get_name() const;
 		void set_name(SgAsmGenericString *name);
 		void set_payload(const void*, size_t nbytes);
@@ -1971,10 +2067,14 @@ HEADER_ELF_EH_FRAME_SECTION_START
 			: SgAsmElfSection(fhdr), p_ci_entries(NULL)
 			{ctor();}
 		virtual SgAsmElfEHFrameSection *parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
+// #endif
 		virtual void unparse(std::ostream&) const;
 		addr_t unparse(std::ostream*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor();
 HEADER_ELF_EH_FRAME_SECTION_END
@@ -1988,7 +2088,11 @@ HEADER_ELF_EH_FRAME_ENTRY_CI_START
 			p_lsda_encoding(-1), p_prh_encoding(-1), p_prh_arg(0), p_prh_addr(0), p_addr_encoding(-1),
 			p_fd_entries(NULL)
 			{ctor(ehframe);}
+
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
+
 		std::string unparse(const SgAsmElfEHFrameSection*) const;
 	private:
 		void ctor(SgAsmElfEHFrameSection*);
@@ -2001,7 +2105,10 @@ HEADER_ELF_EH_FRAME_ENTRY_FD_START
 		explicit SgAsmElfEHFrameEntryFD(SgAsmElfEHFrameEntryCI *cie)
 			: p_size(0)
 			{ctor(cie);}
+
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		std::string unparse(const SgAsmElfEHFrameSection*, SgAsmElfEHFrameEntryCI*) const;
 	private:
 		void ctor(SgAsmElfEHFrameEntryCI*);
@@ -2015,10 +2122,14 @@ HEADER_ELF_SYMVER_SECTION_START
 		        : SgAsmElfSection(fhdr)
 			{ctor();}
 		virtual SgAsmElfSymverSection* parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor();
 HEADER_ELF_SYMVER_SECTION_END
@@ -2029,7 +2140,11 @@ HEADER_ELF_SYMVER_ENTRY_START
 		explicit SgAsmElfSymverEntry(SgAsmElfSymverSection *symver)
 		        : p_value(0)
 			{ctor(symver);}
+
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+// #endif
+
 	private:
 		void ctor(SgAsmElfSymverSection*);
 HEADER_ELF_SYMVER_ENTRY_END
@@ -2041,10 +2156,14 @@ HEADER_ELF_SYMVER_DEFINED_SECTION_START
 			: SgAsmElfSection(fhdr)
 			{ctor(strsec);}
 		virtual SgAsmElfSymverDefinedSection* parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(SgAsmElfStringSection*);
 HEADER_ELF_SYMVER_DEFINED_SECTION_END
@@ -2077,7 +2196,9 @@ HEADER_ELF_SYMVER_DEFINED_ENTRY_START
 		  	{ctor(symver_defined);}
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(SgAsmElfSymverDefinedSection*);
 HEADER_ELF_SYMVER_DEFINED_ENTRY_END
@@ -2108,8 +2229,9 @@ HEADER_ELF_SYMVER_DEFINED_AUX_START
                         {ctor(symver_def_entry,symver_def_sec);}
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
+// #endif
 	private:
 	        void ctor(SgAsmElfSymverDefinedEntry*,SgAsmElfSymverDefinedSection *symver_def_sec);
 HEADER_ELF_SYMVER_DEFINED_AUX_END
@@ -2121,10 +2243,14 @@ HEADER_ELF_SYMVER_NEEDED_SECTION_START
 			: SgAsmElfSection(fhdr)
 			{ctor(strsec);}
 		virtual SgAsmElfSymverNeededSection* parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(SgAsmElfStringSection*);
 HEADER_ELF_SYMVER_NEEDED_SECTION_END
@@ -2157,8 +2283,9 @@ HEADER_ELF_SYMVER_NEEDED_ENTRY_START
 			{ctor(symver_needed);}
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
+// #endif
 	private:
 		void ctor(SgAsmElfSymverNeededSection*);
 HEADER_ELF_SYMVER_NEEDED_ENTRY_END
@@ -2192,8 +2319,9 @@ HEADER_ELF_SYMVER_NEEDED_AUX_START
                         {ctor(symver_needed_entry,symver_needed_sec);}
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
+// #endif
 	private:
 	        void ctor(SgAsmElfSymverNeededEntry*,SgAsmElfSymverNeededSection*);
 HEADER_ELF_SYMVER_NEEDED_AUX_END
@@ -2207,9 +2335,13 @@ HEADER_ELF_SEGMENT_TABLE_START
 		virtual SgAsmElfSegmentTable *parse();
 		SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*);
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor();
 HEADER_ELF_SEGMENT_TABLE_END
@@ -2308,7 +2440,9 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
 		void update_from_section(SgAsmElfSection*);
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		static std::string to_string(SgAsmElfSegmentTableEntry::SegmentType);
 		static std::string to_string(SgAsmElfSegmentTableEntry::SegmentFlags);
 
@@ -2331,13 +2465,21 @@ HEADER_ELF_SYMBOL_SECTION_START
 			: SgAsmElfSection(fhdr), p_is_dynamic(false)
 			{ctor(strsec);}
 		virtual SgAsmElfSymbolSection* parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void finish_parsing();
+// #endif
 		size_t index_of(SgAsmElfSymbol*);
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(SgAsmElfStringSection*);
 HEADER_ELF_SYMBOL_SECTION_END
@@ -2403,8 +2545,10 @@ HEADER_ELF_SYMBOL_START
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
 		void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*) const;
+// #endif
 		SgAsmElfSymbol::ElfSymBinding get_elf_binding() const;
 		SgAsmElfSymbol::ElfSymType get_elf_type() const;
 
@@ -2596,9 +2740,13 @@ HEADER_PE_FILE_HEADER_START
 		void add_rvasize_pairs();
 
 		virtual SgAsmPEFileHeader *parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		void create_table_sections();
 
 		/* Loader memory maps */
@@ -2621,8 +2769,12 @@ HEADER_PE_SECTION_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr), p_section_entry(NULL)
 			{}
 		SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry *entry, int id);
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 HEADER_PE_SECTION_END
 
 
@@ -2651,7 +2803,9 @@ HEADER_PE_IMPORT_DIRECTORY_START
 			{ctor(isec,idx,rva_p);}
 		void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
 		virtual void unparse(std::ostream&, const SgAsmPEImportSection*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(SgAsmPEImportSection*, size_t idx, rose_addr_t *rva_p);
 HEADER_PE_IMPORT_DIRECTORY_END
@@ -2671,7 +2825,9 @@ HEADER_PE_IMPORT_ILT_ENTRY_START
 			{ctor(isec,entry_word);}
 		uint64_t encode(const SgAsmPEFileHeader*) const;
 		void unparse(std::ostream&, const SgAsmPEFileHeader *fhdr, rva_t rva, size_t idx) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(SgAsmPEImportSection*, uint64_t);
 HEADER_PE_IMPORT_ILT_ENTRY_END
@@ -2687,7 +2843,9 @@ HEADER_PE_IMPORT_LOOKUP_TABLE_START
 			{ctor(isec, table_rva, idir_idx, is_iat);}
 		void add_ilt_entry(SgAsmPEImportILTEntry*);
 		virtual void unparse(std::ostream&, const SgAsmPEFileHeader*, rose_rva_t) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(SgAsmPEImportSection*, rose_rva_t table_rva, size_t idir_idx, bool is_iat);
 HEADER_PE_IMPORT_LOOKUP_TABLE_END
@@ -2700,7 +2858,9 @@ HEADER_PE_IMPORT_HNT_ENTRY_START
 		explicit SgAsmPEImportHNTEntry(SgAsmPEImportSection *isec, rose_rva_t offset)
 			{ctor(isec, offset);}
 		void unparse(std::ostream&, rva_t rva) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(SgAsmPEImportSection*, rose_rva_t offset);
 HEADER_PE_IMPORT_HNT_ENTRY_END
@@ -2714,7 +2874,9 @@ HEADER_PE_IMPORT_SECTION_START
 			{ctor();}
 		virtual SgAsmPEImportSection *parse();
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		void add_import_directory(SgAsmPEImportDirectory*);
 	private:
 		void ctor();
@@ -2751,7 +2913,11 @@ HEADER_PE_EXPORT_DIRECTORY_START
 
 		explicit SgAsmPEExportDirectory(SgAsmPEExportSection *s)
 			{ctor(s);}
+
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		void dump(FILE *f, const char *prefix, ssize_t idx) const;
+// #endif
+
 	private:
 		void ctor(SgAsmPEExportSection*);
 HEADER_PE_EXPORT_DIRECTORY_END
@@ -2764,8 +2930,9 @@ HEADER_PE_EXPORT_ENTRY_START
 				   SgAsmGenericString *forwarder)
 			{ctor(name, ordinal, export_rva, forwarder);}
 
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		void dump(FILE *f,const char *prefix,ssize_t idx) const;
-
+// #endif
 		/* Accessors. Override ROSETTA because we adjust parents. */
 		SgAsmGenericString *get_name() const {return p_name;}
 		void set_name(SgAsmGenericString*);
@@ -2799,7 +2966,9 @@ HEADER_PE_EXPORT_SECTION_START
 			: SgAsmPESection(fhdr)
 			{ctor();}
 		virtual SgAsmPEExportSection *parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		void add_entry(SgAsmPEExportEntry*);
 	private:
 		void ctor();
@@ -2814,9 +2983,13 @@ HEADER_PE_SECTION_TABLE_START
 			{ctor();}
 		virtual SgAsmPESectionTable* parse();
 		void add_section(SgAsmPESection *section);
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor();
 HEADER_PE_SECTION_TABLE_END
@@ -2831,7 +3004,9 @@ HEADER_PE_COFF_SYMBOL_TABLE_START
 		size_t get_nslots() const;
 		virtual SgAsmCoffSymbolTable *parse();
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor();
 HEADER_PE_COFF_SYMBOL_TABLE_END
@@ -2903,7 +3078,9 @@ HEADER_PE_SECTION_TABLE_ENTRY_START
 		explicit SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk);
 		void update_from_section(SgAsmPESection *section);
 		void *encode(SgAsmPESectionTableEntry::PESectionTableEntry_disk*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(const SgAsmPESectionTableEntry::PESectionTableEntry_disk*);
 HEADER_PE_SECTION_TABLE_ENTRY_END
@@ -2947,8 +3124,9 @@ HEADER_PE_COFF_SYMBOL_START
           SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
        // virtual ~COFFSymbol() {}
           void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
           virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
+// #endif
        /* Auxilliary data for the symbol */
        // const unsigned char *get_aux_data() {return aux_data;}
        // size_t get_aux_size() {return aux_size;}
@@ -2973,8 +3151,10 @@ HEADER_COFF_STRING_TABLE_START
 			{}
 		virtual ~SgAsmCoffStrtab();
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
 		virtual addr_t get_storage_size(const SgAsmStringStorage*);
+// #endif
 HEADER_COFF_STRING_TABLE_END
 
 
@@ -2986,10 +3166,16 @@ HEADER_PE_STRING_SECTION_START
 			{ctor();}
 		virtual ~SgAsmPEStringSection() {}
 		virtual SgAsmPEStringSection* parse();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void set_size(addr_t newsize);
-	        virtual void unparse(std::ostream&) const;
+// #endif
+	   virtual void unparse(std::ostream&) const;
 	private:
 		void ctor();
 HEADER_PE_STRING_SECTION_END
@@ -3086,8 +3272,9 @@ HEADER_NE_FILE_HEADER_START
           static SgAsmNEFileHeader *parse(SgAsmDOSFileHeader*);
           virtual void unparse(std::ostream&) const;
           virtual const char *format_name() const {return "NE";}
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
+// #endif
      private:
           void ctor(SgAsmGenericFile *f, addr_t offset);
           void *encode(SgAsmNEFileHeader::NEFileHeader_disk*) const;
@@ -3102,8 +3289,9 @@ HEADER_NE_SECTION_START
        // virtual ~NESection() {}
 
           virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
+// #endif
        /* Accessors for protected/private data */
        // NESectionTableEntry *get_st_entry() {return st_entry;}
        // void set_st_entry(NESectionTableEntry *e) {st_entry=e;}
@@ -3123,7 +3311,9 @@ HEADER_NE_SECTION_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor();}
         	virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor();
 HEADER_NE_SECTION_TABLE_END
@@ -3136,7 +3326,9 @@ HEADER_NE_NAME_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset);}
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		std::vector<std::string> get_names_by_ordinal(unsigned ordinal);
 	private:
 		void ctor(addr_t offset);
@@ -3150,7 +3342,9 @@ HEADER_NE_MODULE_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr), p_strtab(strtab)
 			{ctor(offset, size);}
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(addr_t offset, addr_t size);
 HEADER_NE_MODULE_TABLE_END
@@ -3162,7 +3356,9 @@ HEADER_NE_STRING_TABLE_START
 		SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset, size);}
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		std::string get_string(addr_t offset);
 	private:
 		void ctor(addr_t offset, addr_t size);
@@ -3177,7 +3373,9 @@ HEADER_NE_ENTRY_TABLE_START
 			{ctor(offset, size);}
 		void populate_entries();
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(addr_t offset, addr_t size);
 HEADER_NE_ENTRY_TABLE_END
@@ -3190,7 +3388,9 @@ HEADER_NE_RELOC_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(section);}
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(SgAsmNESection*);
 HEADER_NE_RELOC_TABLE_END
@@ -3208,8 +3408,9 @@ HEADER_NE_ENTRY_POINT_START
        // SgAsmNEEntryPoint();
           SgAsmNEEntryPoint(SgAsmNEEntryPoint::NEEntryFlags flags, unsigned int3f, unsigned s_idx, unsigned s_off);
 
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
           void dump(FILE*, const char *prefix, ssize_t idx) const;
-
+// #endif
        // NEEntryFlags flags;         /* bit flags */
        // unsigned int3f;             /* always 0x3fxx */
        // unsigned section_idx;       /* zero indicates unused entry */
@@ -3269,7 +3470,9 @@ HEADER_NE_RELOC_ENTRY_START
             // Added to support RTI support in ROSE
                friend std::ostream & operator<< ( std::ostream & os, const iref_type & x );
 
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
                iref_type();
+// #endif
              };
 
           struct iord_type { /*tgt_type==0x01: imported ordinal*/
@@ -3280,7 +3483,9 @@ HEADER_NE_RELOC_ENTRY_START
             // Added to support RTI support in ROSE
                friend std::ostream & operator<< ( std::ostream & os, const iord_type & x );
 
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
                iord_type();
+// #endif
              };
 
           struct iname_type { /*tgt_type==0x02: imported name*/
@@ -3291,7 +3496,9 @@ HEADER_NE_RELOC_ENTRY_START
             // Added to support RTI support in ROSE
                friend std::ostream & operator<< ( std::ostream & os, const iname_type & x );
 
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
                iname_type();
+// #endif
              };
 
           struct osfixup_type { /*tgt_type==0x03: operating system fixup*/
@@ -3301,15 +3508,18 @@ HEADER_NE_RELOC_ENTRY_START
             // Added to support RTI support in ROSE
                friend std::ostream & operator<< ( std::ostream & os, const osfixup_type & x );
 
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
                osfixup_type();
+// #endif
              };
 
           SgAsmNERelocEntry(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size);
 
           void ctor(SgAsmGenericSection*, addr_t at, addr_t *rec_size);
           addr_t unparse(std::ostream&, const SgAsmGenericSection*, addr_t spos) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
           void dump(FILE*, const char *prefix, ssize_t idx) const;
-
+// #endif
        // NERelocSrcType      src_type;       /* low nibble of first byte of relocation record */
        // NERelocModifiers    modifier;       /* high nibble of first byte */
        // NERelocTgtType      tgt_type;       /* low two bits of second byte */
@@ -3365,9 +3575,10 @@ HEADER_NE_SECTION_TABLE_ENTRY_START
        // virtual ~NESectionTableEntry() {};
 
           void *encode(SgAsmNESectionTableEntry::NESectionTableEntry_disk*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
           virtual void dump(FILE *f, const char *prefix, ssize_t idx) const {dump(f, prefix, idx, NULL);}
           void dump(FILE*, const char *prefix, ssize_t idx, SgAsmNEFileHeader *fhdr) const;
-
+// #endif
        /* These are the native-format versions of the same members described in the NESectionTableEntry_disk struct. */
        // unsigned    flags, sector;
        // addr_t      physical_size, virtual_size;
@@ -3387,7 +3598,9 @@ HEADER_LE_FILE_HEADER_START
 
      public:
        // Overloaded base class virtual function
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
           const char *format_name() const;
+// #endif
 
           static bool is_LE (SgAsmGenericFile*);
           static SgAsmLEFileHeader *parse(SgAsmDOSFileHeader*);
@@ -3480,7 +3693,9 @@ HEADER_LE_FILE_HEADER_START
 
           virtual void unparse(std::ostream&) const;
        // virtual const char *format_name() const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
      private:
           void ctor(SgAsmGenericFile *f, addr_t offset);
           void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
@@ -3493,7 +3708,9 @@ HEADER_LE_SECTION_START
 		explicit SgAsmLESection(SgAsmLEFileHeader *fhdr)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr), p_st_entry(NULL)
 			{}
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 HEADER_LE_SECTION_END
 
 
@@ -3504,7 +3721,9 @@ HEADER_LE_SECTION_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset, size);}
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(addr_t offset, addr_t size);
 HEADER_LE_SECTION_TABLE_END
@@ -3521,7 +3740,9 @@ HEADER_LE_NAME_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset);}
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(addr_t offset);
 HEADER_LE_NAME_TABLE_END
@@ -3534,7 +3755,9 @@ HEADER_LE_PAGE_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset, size);}
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		SgAsmLEPageTableEntry *get_page(size_t idx);
 	private:
 		void ctor(addr_t offset, addr_t size);
@@ -3548,7 +3771,9 @@ HEADER_LE_ENTRY_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset);}
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(addr_t offset);
 HEADER_LE_ENTRY_TABLE_END
@@ -3560,7 +3785,9 @@ HEADER_LE_RELOC_TABLE_START
 		SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, addr_t offset)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset);}
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor(addr_t offset);
 HEADER_LE_RELOC_TABLE_END
@@ -3594,7 +3821,9 @@ HEADER_LE_PAGE_TABLE_ENTRY_START
 
           SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
 
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
           void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
           void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLEPageTableEntry::LEPageTableEntry_disk*) const;
 
        // unsigned get_pageno() {return pageno;}
@@ -3634,8 +3863,9 @@ HEADER_LE_ENTRY_POINT_START
           SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags);
 
           addr_t unparse(std::ostream&, SgAsmExecutableFileFormat::ByteOrder, const SgAsmGenericSection*, addr_t spos) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
           void dump(FILE*, const char *prefix, ssize_t idx) const;
-
+// #endif
      private:
           void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLEEntryPoint::LEEntryPoint_disk*);
 
@@ -3703,8 +3933,9 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
        // virtual ~LESectionTableEntry() {};
 
           void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
           virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-    
+// #endif
        /* These are the native-format versions of the same members described in the NESectionTableEntry_disk struct. */
        // unsigned    flags, pagemap_index, pagemap_nentries, res1;
        // addr_t      mapped_size, base_addr;
@@ -3767,9 +3998,13 @@ HEADER_DOS_HEADER_START
 			{ctor();}
 		virtual SgAsmDOSFileHeader *parse() {return parse(true);}
 		SgAsmDOSFileHeader *parse(bool define_rm_section);
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool reallocate();
+// #endif
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 		virtual const char *format_name() const {return "DOS";}
 		SgAsmGenericSection *add_rm_section(addr_t max_offset=0);
 		static bool is_DOS(SgAsmGenericFile*);
@@ -3809,7 +4044,9 @@ HEADER_DOS_EXTENDED_HEADER_START
 		virtual SgAsmDOSExtendedHeader *parse();
 		void *encode(SgAsmDOSExtendedHeader::DOSExtendedHeader_disk*) const;
 		virtual void unparse(std::ostream&) const;
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+// #endif
 	private:
 		void ctor();
 HEADER_DOS_EXTENDED_HEADER_END
@@ -3860,16 +4097,22 @@ HEADER_BINARY_X86_INSTRUCTION_START
 	public:
 		/* These virtual functions are implemented in DisassemblerX86.C */
 		virtual bool terminatesBasicBlock();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target);
 		virtual bool is_function_return(const std::vector<SgAsmInstruction*>&);
 		virtual bool has_effect();
+// #endif
 		virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
 				        bool relax_stack_semantics=false);
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual std::vector<std::pair<size_t,size_t> >
 		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
 					   bool relax_stack_semantics=false);
+// #endif
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
 		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool* complete);
+// #endif
 HEADER_BINARY_X86_INSTRUCTION_END
 
 
@@ -3878,7 +4121,9 @@ HEADER_BINARY_POWERPC_INSTRUCTION_START
 	public:
 		/* These virtual functions are implemented in DisassemblerPowerpc.C */
 		virtual bool terminatesBasicBlock();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
+// #endif
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
@@ -3887,7 +4132,9 @@ HEADER_BINARY_ARM_INSTRUCTION_START
 	public:
 		/* These virtual functions are implemented in DisassemblerArm.C */
 		virtual bool terminatesBasicBlock();
+// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
+// #endif
 HEADER_BINARY_ARM_INSTRUCTION_END
 
 
@@ -4674,73 +4921,110 @@ SgAsmInstruction::append_sources( SgAsmInstruction* inst )
    }
 
 SgAsmInstruction*
-SgAsmInstruction::cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info) {
-  if (!isAsmUnconditionalBranch(this)) {
-    SgAsmInstruction* next = info->getInstructionAtAddress(this->get_address() + this->get_raw_bytes().size());
-    return next;
-  }
-  return NULL;
-}
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info) {
-  //cerr << "cfgBinOutEdges: " << std::hex << this->get_address() << " " << (isSgAsmx86Instruction(this) ? "x86" : "unknown") << " " << (isSgAsmx86Instruction(this) ? toString(isSgAsmx86Instruction(this)->get_kind()) : "") << endl;
-  std::vector<VirtualBinCFG::CFGEdge> result;
-  uint64_t nextAddr = this->get_address() + this->get_raw_bytes().size();
-
-  if (isAsmBranch(this)) {
-    //cout << "Found branch" << endl;
-    uint64_t addr = 0;
-    bool knownTarget = getAsmKnownBranchTarget(this, addr);
-    if (knownTarget) {
-      //cout << "Has known target " << std::hex << addr << endl;
-      SgAsmInstruction* tgt = info->getInstructionAtAddress(addr);
-      if (tgt) {
-        makeEdge(this, tgt, info, result);
-      }
-    } else { // Unknown target
-      //cout << "Unknown target" << endl;
-      const std::set<uint64_t> successorAddrs = info->getPossibleSuccessors(this);
-      for (std::set<uint64_t>::const_iterator i = successorAddrs.begin(); i != successorAddrs.end(); ++i) {
-        //cout << "Found succ address " << std::hex << *i << endl;
-        SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
-        if (tgt) {
-          makeEdge(this, tgt, info, result);
+SgAsmInstruction::cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info)
+   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     if (!isAsmUnconditionalBranch(this))
+        {
+          SgAsmInstruction* next = info->getInstructionAtAddress(this->get_address() + this->get_raw_bytes().size());
+          return next;
         }
-      }
-#if 0
-      if (successorAddrs.empty()) {
-	// FIXME: For bug-compatibility with old version
-	SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
-	if (next) makeEdge(this, next, info, result);
-      }
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
 #endif
-    } // else
-  } // if
 
-  if ((!isSgAsmx86Instruction(this) || (isSgAsmx86Instruction(this)->get_kind() != x86_ret && isSgAsmx86Instruction(this)->get_kind() != x86_hlt)) /* || !isAsmUnconditionalBranch(this) || (isSgAsmx86Instruction(this) && isSgAsmx86Instruction(this)->get_kind() == x86_call) */ ) {
-    //cout << "Next insn is at " << std::hex << nextAddr << endl;
-    SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
-    //ROSE_ASSERT (next);
-    if (next) makeEdge(this, next, info, result);
-  }
+     return NULL;
+   }
 
-  return result;
-}
+std::vector<VirtualBinCFG::CFGEdge>
+SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info)
+   {
+  // cerr << "cfgBinOutEdges: " << std::hex << this->get_address() << " " << (isSgAsmx86Instruction(this) ? "x86" : "unknown") << " " << (isSgAsmx86Instruction(this) ? toString(isSgAsmx86Instruction(this)->get_kind()) : "") << endl;
+     std::vector<VirtualBinCFG::CFGEdge> result;
+
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     uint64_t nextAddr = this->get_address() + this->get_raw_bytes().size();
+
+     if (isAsmBranch(this))
+        {
+       // cout << "Found branch" << endl;
+          uint64_t addr = 0;
+          bool knownTarget = getAsmKnownBranchTarget(this, addr);
+          if (knownTarget)
+             {
+            // cout << "Has known target " << std::hex << addr << endl;
+               SgAsmInstruction* tgt = info->getInstructionAtAddress(addr);
+               if (tgt)
+                  {
+                    makeEdge(this, tgt, info, result);
+                  }
+             }
+            else
+             {
+            // Unknown target
+            // cout << "Unknown target" << endl;
+               const std::set<uint64_t> successorAddrs = info->getPossibleSuccessors(this);
+               for (std::set<uint64_t>::const_iterator i = successorAddrs.begin(); i != successorAddrs.end(); ++i)
+                  {
+                 // cout << "Found succ address " << std::hex << *i << endl;
+                    SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
+                    if (tgt)
+                       {
+                         makeEdge(this, tgt, info, result);
+                       }
+                  }
+#if 0
+               if (successorAddrs.empty())
+                  {
+                 // FIXME: For bug-compatibility with old version
+                    SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
+                    if (next) 
+                         makeEdge(this, next, info, result);
+                  }
+#endif
+             } // else
+        } // if
+
+     if ((!isSgAsmx86Instruction(this) || (isSgAsmx86Instruction(this)->get_kind() != x86_ret && isSgAsmx86Instruction(this)->get_kind() != x86_hlt)) /* || !isAsmUnconditionalBranch(this) || (isSgAsmx86Instruction(this) && isSgAsmx86Instruction(this)->get_kind() == x86_call) */ )
+        {
+       // cout << "Next insn is at " << std::hex << nextAddr << endl;
+          SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
+       // ROSE_ASSERT (next);
+          if (next)
+               makeEdge(this, next, info, result);
+        }
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return result;
+   }
 
 
 std::vector<VirtualBinCFG::CFGEdge>
-SgAsmInstruction::cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info) {
-  std::vector<VirtualBinCFG::CFGEdge> result;
-  const std::set<uint64_t>& preds = info->getPossiblePredecessors(this);
-  for (std::set<uint64_t>::const_iterator i = preds.begin(); i != preds.end(); ++i) {
-    SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
-    if (tgt) {
-      makeEdge(this, tgt, info, result);
-    }
-  }
-  return result;
-}
+SgAsmInstruction::cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info)
+   {
+     std::vector<VirtualBinCFG::CFGEdge> result;
+
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     const std::set<uint64_t>& preds = info->getPossiblePredecessors(this);
+     for (std::set<uint64_t>::const_iterator i = preds.begin(); i != preds.end(); ++i)
+        {
+          SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
+          if (tgt)
+             {
+               makeEdge(this, tgt, info, result);
+             }
+        }
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return result;
+   }
 
 SOURCE_BINARY_INSTRUCTION_END
 
@@ -4900,20 +5184,32 @@ SOURCE_BINARY_TYPE_128bit_FLOAT_END
 
 SOURCE_BINARY_TYPE_VECTOR_START
 
-$CLASSNAME* $CLASSNAME::createType(int elementCount, SgAsmType* elementType) {
+$CLASSNAME*
+$CLASSNAME::createType(int elementCount, SgAsmType* elementType)
+   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // This does not need to be saved during file I/O, so it doesn't need to be a
   // class member
-  static std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*> cache;
-  std::pair<int, SgAsmType*> vectorInfo(elementCount, elementType);
-  std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*>::const_iterator i = cache.find(vectorInfo);
-  if (i != cache.end()) {
-    return i->second;
-  } else {
-    SgAsmTypeVector* tv = new SgAsmTypeVector(elementCount, elementType);
-    cache.insert(std::make_pair(vectorInfo, tv));
-    return tv;
-  }
-}
+     static std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*> cache;
+     std::pair<int, SgAsmType*> vectorInfo(elementCount, elementType);
+     std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*>::const_iterator i = cache.find(vectorInfo);
+     if (i != cache.end())
+        {
+          return i->second;
+        } 
+       else
+        {
+          SgAsmTypeVector* tv = new SgAsmTypeVector(elementCount, elementType);
+          cache.insert(std::make_pair(vectorInfo, tv));
+          return tv;
+        }
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return NULL;
+   }
 
 SOURCE_BINARY_TYPE_VECTOR_END
 
@@ -5106,6 +5402,38 @@ SOURCE_EXECUTABLE_FILE_FORMAT_END
 
 
 SOURCE_GENERIC_SECTION_START
+// DQ (10/20/2010): Moved this function's definition to the source file.
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
+   : local_data_pool(0), p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()),
+     p_file_alignment(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
+     p_mapped_preferred_rva(0), p_mapped_size(0), p_mapped_alignment(0), p_mapped_rperm(false),
+     p_mapped_wperm(false), p_mapped_xperm(false), p_contains_code(false), p_mapped_actual_va(0)
+   {
+     ctor(f, fhdr);
+   }
+#else
+SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
+   {
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+   }
+#endif
+
+// DQ (10/20/2010): Moved this function's definition to the source file.
+SgAsmGenericSection*
+SgAsmGenericSection::parse()
+   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     grab_content();
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return this;
+   }
+
 SOURCE_GENERIC_SECTION_END
 
 
@@ -5140,6 +5468,17 @@ SOURCE_GENERIC_ARCHITECTURE_START
 SOURCE_GENERIC_ARCHITECTURE_END
 
 SOURCE_GENERIC_SYMBOL_START
+SgAsmGenericSymbol::SgAsmGenericSymbol()
+   : p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0),
+     p_bound(NULL), p_name(NULL)
+   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     ctor();
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 SOURCE_GENERIC_SYMBOL_END
 
 SOURCE_GENERIC_SYMBOL_LIST_START
@@ -5148,10 +5487,10 @@ SOURCE_GENERIC_SYMBOL_LIST_END
 SOURCE_GENERIC_DLL_START
 
 SgAsmGenericDLL::SgAsmGenericDLL(SgAsmGenericString *s)
-    : p_name(s)
-    {
-	s->set_parent(this);
-    }
+   : p_name(s)
+   {
+     s->set_parent(this);
+   }
 
 SOURCE_GENERIC_DLL_END
 
@@ -5187,9 +5526,17 @@ SOURCE_ELF_SECTION_TABLE_END
 
 
 SOURCE_ELF_STRING_SECTION_START
-	SgAsmElfStringSection::SgAsmElfStringSection(SgAsmElfFileHeader *fhdr)
-		: SgAsmElfSection(fhdr), p_strtab(NULL)
-		{ctor();}
+SgAsmElfStringSection::SgAsmElfStringSection(SgAsmElfFileHeader *fhdr)
+   : SgAsmElfSection(fhdr), p_strtab(NULL)
+	{
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     ctor();
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
 SOURCE_ELF_STRING_SECTION_END
 
 
@@ -5197,12 +5544,22 @@ SOURCE_ELF_STRING_SECTION_END
 SOURCE_ELF_SECTION_TABLE_ENTRY_START
 SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_ELF_SECTION_TABLE_ENTRY_END
@@ -5211,6 +5568,18 @@ SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_START
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
 SOURCE_ELF_SECTION_START
+// DQ (10/20/2010): Moved this function's definition to the source file.
+SgAsmElfSection::SgAsmElfSection(SgAsmGenericHeader *fhdr)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr), p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(NULL)
+   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     ctor();
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
 // DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
 SgAsmElfSection* 
 SgAsmElfSection::get_linked_section () const
@@ -5256,12 +5625,22 @@ SOURCE_ELF_SEGMENT_TABLE_END
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_START
 SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_END
@@ -5311,7 +5690,12 @@ SOURCE_PE_IMPORT_DIRECTORY_END
 SOURCE_PE_SECTION_TABLE_ENTRY_START
 SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_PE_SECTION_TABLE_ENTRY_END
@@ -5320,7 +5704,12 @@ SOURCE_PE_COFF_SYMBOL_START
 SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx)
    : p_st_name_offset(0), p_st_section_num(0), p_st_type(0), p_st_storage_class(0), p_st_num_aux_entries(0)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(fhdr, symtab, strtab, idx);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_PE_COFF_SYMBOL_END
@@ -5370,7 +5759,12 @@ SOURCE_NE_ENTRY_POINT_END
 SOURCE_NE_RELOC_ENTRY_START
 SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(relocs, at, rec_size);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_NE_RELOC_ENTRY_END
@@ -5378,7 +5772,12 @@ SOURCE_NE_RELOC_ENTRY_END
 SOURCE_NE_SECTION_TABLE_ENTRY_START
 SgAsmNESectionTableEntry::SgAsmNESectionTableEntry(const SgAsmNESectionTableEntry::NESectionTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_NE_SECTION_TABLE_ENTRY_END
@@ -5410,7 +5809,12 @@ SOURCE_LE_PAGE_TABLE_ENTRY_START
 SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
    : p_pageno(0), p_flags(0)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_LE_PAGE_TABLE_ENTRY_END
@@ -5419,7 +5823,12 @@ SOURCE_LE_ENTRY_POINT_START
 SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
    : p_flags(0), p_objnum(0), p_entry_type(0), p_res1(0), p_entry_offset(0)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags)
@@ -5432,7 +5841,12 @@ SOURCE_LE_ENTRY_POINT_END
 SOURCE_LE_SECTION_TABLE_ENTRY_START
 SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_LE_SECTION_TABLE_ENTRY_END

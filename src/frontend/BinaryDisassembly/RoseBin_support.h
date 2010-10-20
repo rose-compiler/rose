@@ -180,7 +180,9 @@ class RoseBin_support {
 
 
    static bool DEBUG_MODE();
+#ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
    static void setDebugMode(bool mode);
+#endif
    static bool DEBUG_MODE_MIN();
    static void setDebugModeMin(bool mode);
   /****************************************************

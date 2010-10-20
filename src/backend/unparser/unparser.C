@@ -11,7 +11,10 @@
 // include "array_class_interface.h"
 #include "unparser.h"
 
-#include "AsmUnparser_compat.h"
+#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   #include "AsmUnparser_compat.h"
+#endif
+
 #include <string.h>
 #if _MSC_VER
 #include <direct.h>
@@ -345,6 +348,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
 void
 Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
 {
+#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     ROSE_ASSERT(file!=NULL);
 
     /* Generate file name for uparser output */
@@ -365,11 +369,13 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
     // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
     // generated in the unparse phase of processing a binary.
     file->dump_all(true, ".dump");
+#endif
 }
 
 void
 Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
 {
+#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     ROSE_ASSERT(binary != NULL);
     ROSE_ASSERT(binary->get_binary_only()) ;
 
@@ -410,6 +416,7 @@ Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
             fclose(asm_file);
         }
     }
+#endif
 }
 
 

@@ -12,6 +12,7 @@ SB_CallGraph::createCallGraph(SgProject* project) {
   const char* callFileNameDOT = "callgraph.dot";
   bool mergedEdges = false;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
   SgBinaryComposite* binary = isSgBinaryComposite(project->get_fileList()[0]);
   SgAsmGenericFile* file = binary != NULL ? binary->get_binaryFile() : NULL;
@@ -49,6 +50,12 @@ SB_CallGraph::createCallGraph(SgProject* project) {
 
 #endif
   }
+
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+
 
 }
 

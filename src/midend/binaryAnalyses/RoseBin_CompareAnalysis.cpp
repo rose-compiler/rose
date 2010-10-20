@@ -12,6 +12,17 @@
 
 using namespace std;
 
+
+// DQ (10/20/2010): Moved to source file to support compilation of language only mode which excludes binary analysis support.
+RoseBin_CompareAnalysis::RoseBin_CompareAnalysis(SgProject *pr, SgAsmNode* global)
+   {
+     RoseBin_support::setDebugMode(false);    
+     project = pr;
+     globalBin = global;
+     main_prolog_end=false;
+     attributeName = "rosebin_color";
+   }
+
 /****************************************************
  * create a attribute that can be passed to the
  * visualization

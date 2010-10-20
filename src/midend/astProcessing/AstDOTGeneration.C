@@ -18,7 +18,9 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include "AsmUnparser_compat.h"
+#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   #include "AsmUnparser_compat.h"
+#endif
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -288,6 +290,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n") + name;
         }
 
+#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
      if (genericInstruction != NULL)
@@ -405,6 +408,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           if (name.empty() == false)
                nodelabel += string("\\n") + name;
         }
+#else
+     printf ("Warning: In AstDOTGenerationImpl.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
+#endif
 
   // DQ (11/29/2008): Output the directives in the label of the IR node.
      SgC_PreprocessorDirectiveStatement* preprocessorDirective = isSgC_PreprocessorDirectiveStatement(node);
