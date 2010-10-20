@@ -3333,7 +3333,7 @@ EmulationPolicy::emulate_syscall()
 #endif
 #endif
                 T_END };
-#if 0
+
             /* Variable arguments */
             switch (arg(1) & FUTEX_CMD_MASK) {
                 case FUTEX_WAIT:
@@ -3354,6 +3354,7 @@ EmulationPolicy::emulate_syscall()
                                   4, print_int_32);
                     break;
             }
+
             uint32_t futex1_va=arg(0), op=arg(1), val1=arg(2), timeout_va=arg(3), futex2_va=arg(4), val2=arg(5);
             int *futex1 = (int*)my_addr(futex1_va);
             int *futex2 = (int*)my_addr(futex2_va);
@@ -3371,9 +3372,6 @@ EmulationPolicy::emulate_syscall()
             int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val2);
             if (-1==result) result = -errno;
             writeGPR(x86_gpr_ax, result);
-#endif
-            writeGPR(x86_gpr_ax, -ENOSYS);
-
             syscall_leave("d");
             break;
         }
