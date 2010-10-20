@@ -8,6 +8,9 @@ Best regards,
 Lingxiao Jiang
 #endif
 
+// Cong (10/20/2010): OS X does not have this non-standard header file gconv.h
+#ifndef __APPLE__
+
 #include <gconv.h>
 typedef union
 {
@@ -19,3 +22,4 @@ typedef union
   } __combined;
 } _G_iconv_t;
 
+#endif

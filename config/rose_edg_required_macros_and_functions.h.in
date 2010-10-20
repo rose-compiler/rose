@@ -21,6 +21,15 @@
  */
 #ifdef __APPLE__
 #undef __BLOCKS__
+
+/* Cong (10/20/2010): In EDG 3.x, __attribute__, __dead2, __pure2 cannot be parsed, 
+ * so we define them to nothing here.  */
+#ifndef ROSE_USE_EDG_VERSION_4
+#define __attribute__(x)
+#define __dead2
+#define __pure2
+#endif
+
 #endif
 
 /* This does not work since the include path may not be set to include this file. 
