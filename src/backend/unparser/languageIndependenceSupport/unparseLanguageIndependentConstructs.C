@@ -3266,13 +3266,19 @@ void UnparseLanguageIndependentConstructs::unparseOmpPrefix(SgUnparse_Info& info
   cerr<<"Individual languages should have implemented their own OpenMP prefixes."<<endl; 
   ROSE_ASSERT (false);
 }
-// simplest directives: atomic, section, taskwait, barrier
+// simple directives: atomic, section, taskwait, barrier
 void UnparseLanguageIndependentConstructs::unparseOmpSimpleStatement(SgStatement * stmt,  SgUnparse_Info& info)
 {
-  unp->u_sage->curprint_newline();
   ROSE_ASSERT (stmt != NULL);
   unparseOmpDirectivePrefixAndName(stmt, info); 
   unp->u_sage->curprint_newline();
+  SgOmpBodyStatement* b_stmt = isSgOmpBodyStatement(stmt);
+  if (b_stmt)
+  {
+    ROSE_ASSERT (stmt->variantT() == V_SgOmpAtomicStatement || stmt->variantT() == V_SgOmpSectionStatement);
+    SgUnparse_Info ninfo(info);
+    unparseStatement(b_stmt->get_body(), ninfo);
+  }
 }
 
 //----- refactor unparsing for threadprivate and flush ???
@@ -3283,7 +3289,8 @@ void UnparseLanguageIndependentConstructs::unparseOmpFlushStatement(SgStatement*
   ROSE_ASSERT (s!= NULL);
 
   unparseOmpDirectivePrefixAndName(stmt, info); 
-  curprint(string ("("));
+  if (s->get_variables().size()>0)
+    curprint(string ("("));
   //unparse variable list then
   SgVarRefExpPtrList::iterator p = s->get_variables().begin();
   while ( p != s->get_variables().end() )
@@ -3303,7 +3310,8 @@ void UnparseLanguageIndependentConstructs::unparseOmpFlushStatement(SgStatement*
       curprint( ",");
     }
   }
-  curprint (string (")"));
+  if (s->get_variables().size()>0)
+    curprint (string (")"));
   unp->u_sage->curprint_newline();
 }
 
@@ -3345,7 +3353,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpThreadprivateStatement(SgSt
 void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgStatement* stmt,     SgUnparse_Info& info)
 {
   ROSE_ASSERT(stmt != NULL);
-
+  unp->u_sage->curprint_newline();
   switch (stmt->variantT())
   {
       case V_SgOmpAtomicStatement:
@@ -3358,6 +3366,12 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
       {
         unparseOmpPrefix(info);
         curprint(string ("section "));
+        break;
+      }
+      case V_SgOmpTaskStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("task "));
         break;
       }
        case V_SgOmpTaskwaitStatement:
@@ -3481,11 +3495,11 @@ void UnparseLanguageIndependentConstructs::unparseOmpEndDirectiveClauses        
 void UnparseLanguageIndependentConstructs::unparseOmpGenericStatement (SgStatement* stmt,     SgUnparse_Info& info)
 {
   ROSE_ASSERT(stmt != NULL);
-  unp->u_sage->curprint_newline();
   // unparse the begin directive
   unparseOmpDirectivePrefixAndName (stmt, info);
   // unparse the begin directive's clauses
   unparseOmpBeginDirectiveClauses(stmt, info);
+  unp->u_sage->curprint_newline();
 
   // unparse the body, if exists. 
   SgOmpBodyStatement* b_stmt = isSgOmpBodyStatement(stmt);
@@ -3501,7 +3515,6 @@ void UnparseLanguageIndependentConstructs::unparseOmpGenericStatement (SgStateme
 
   // unparse the end directive and name 
   unparseOmpEndDirectivePrefixAndName (stmt, info);
-
   // unparse the end directive's clause
   unparseOmpEndDirectiveClauses(stmt, info);
 
