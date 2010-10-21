@@ -529,6 +529,7 @@ if test "x$support_fortran_only" = "xyes"; then
  # Turn off all the other language support.
    support_c_language=no
    support_cxx_language=no
+   support_java_language=no
    support_php_language=no
    support_binaries=no
    support_cuda_language=no
