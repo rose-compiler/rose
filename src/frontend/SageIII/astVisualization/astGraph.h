@@ -9,13 +9,15 @@
 namespace AST_Graph {
 
 //options for handling null pointers
-enum pointerHandling{
+enum pointerHandling
+{
        graph_NULL,
        do_not_graph_NULL
 };
 
 //options for traversal types
-enum traversalType {
+enum traversalType 
+{
        memory_pool_traversal,
        whole_graph_AST
 };

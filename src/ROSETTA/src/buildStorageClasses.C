@@ -826,8 +826,6 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgTypeComplex::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgTypeImaginary::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgClassDeclaration::class_types" ) ||
-                 ( varTypeString == "SgAsmRegisterReferenceExpression::arm_register_enum" ) ||
-                 ( varTypeString == "SgAsmRegisterReferenceExpression::arm_position_in_register_enum" ) ||
                  ( varTypeString == "SgStopOrPauseStatement::stop_or_pause_enum" ) ||
                  ( varTypeString == "SgIOStatement::io_statement_enum" ) ||
                  ( varTypeString == "SgAttributeSpecificationStatement::attribute_spec_enum" ) ||
@@ -852,7 +850,6 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "X86InstructionSize" ) ||
                  ( varTypeString == "ArmInstructionKind" ) ||
                  ( varTypeString == "ArmInstructionCondition" ) ||
-                 ( varTypeString == "SgAsmArmRegisterReferenceExpression::arm_register_enum" ) ||
                  ( varTypeString == "PowerpcInstructionKind" ) ||
                  ( varTypeString == "PowerpcRegisterClass" ) ||
                  ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) ||
@@ -927,6 +924,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmNERelocEntry::iord_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::iname_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::osfixup_type" ) ||
+                 ( varTypeString == "RegisterDescriptor") ||
               // DQ (8/8/2008): Added typedef for primative types (used in binary format)
                  ( varTypeString == "SgAsmGenericFormat::fileDetails" ) ||
               // DQ (8/8/2008): This is a typedef to a std::vector<ExtentPair>, this should likely be supported elsewhere.

@@ -4,7 +4,8 @@
 #include "AstConsistencyTests.h"
 #include "astPostProcessing.h"
 #include "unparser.h"
-enum defaultEnumFunctionType {
+enum defaultEnumFunctionType 
+{
   e_unknown =0,
   e_constructor=1,
   e_destructor=2,

@@ -24,8 +24,11 @@ distributedScripts =				\
      policies/NoUsingInHeaders.pl		\
      policies/UniqueHeaderNames.pl		\
      policies/UnixLineTermination.pl		\
+     policies/UnusedHeaders.pl                  \
+     policies/UnusedSources.pl                  \
      runscript					\
-     sample_binary_rules.pl
+     sample_binary_rules.pl			\
+     stringify.pl
 
 # scripts put into the distribution
 EXTRA_DIST = CMakeLists.txt README $(distributedScripts) buildExampleRoseWorkspaceDirectory hudson

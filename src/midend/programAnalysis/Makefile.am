@@ -8,7 +8,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis \
           valuePropagation  defUseAnalysis dominanceAnalysis \
           staticInterproceduralSlicing pointerAnal \
-	  annotationLanguageParser sideEffectAnalysis distributedMemoryAnalysis \
+          annotationLanguageParser sideEffectAnalysis distributedMemoryAnalysis \
           graphAnalysis variableRenaming
 
 # DQ (9/6/2005): Commented out these directories since they
@@ -17,7 +17,7 @@ SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis \
 # staticProgramSlicing proceduralSlicing
 
 ## The grammar generator (ROSETTA) should use its own template repository
-CXX_TEMPLATE_REPOSITORY_PATH = .
+# CXX_TEMPLATE_REPOSITORY_PATH = .
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates

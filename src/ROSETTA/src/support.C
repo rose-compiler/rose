@@ -1563,6 +1563,11 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("SgStringList","includeDirectorySpecifierList", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (10/18/2010): Added support to extract "-D" options so that for Fortran we could process them separately
+  // by triggering the use of the C preprocessor and passing them to CPP explicitly.
+     Project.setDataPrototype("SgStringList","macroSpecifierList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (10/26/2009): After discussion with Peter, this data member should be moved to the SgFile (or SgSourceFile) object.
   // DQ (1/13/2009): Added support for GNU -include (for pre inclusion of files) and -isystem
   // (for preinclusion of directories to be searched) options.

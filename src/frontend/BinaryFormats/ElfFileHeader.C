@@ -307,16 +307,6 @@ SgAsmElfFileHeader::parse()
     /* Associate the entry point with a particular section. */
     entry_rva.bind(this);
     add_entry_rva(entry_rva);
-
-    /* Use symbols from either ".symtab" or ".dynsym" */
-    SgAsmElfSymbolSection *symtab = dynamic_cast<SgAsmElfSymbolSection*>(get_section_by_name(".symtab"));
-    if (!symtab)
-        symtab = dynamic_cast<SgAsmElfSymbolSection*>(get_section_by_name(".dynsym"));
-    if (symtab) {
-        std::vector<SgAsmElfSymbol*> & symbols = symtab->get_symbols()->get_symbols();
-        for (size_t i=0; i<symbols.size(); i++)
-            add_symbol(symbols[i]);
-    }
     
     return this;
 }
