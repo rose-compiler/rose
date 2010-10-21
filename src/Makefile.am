@@ -20,9 +20,13 @@ endif
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    libroseOpenFortranParserlibraries = frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la
-   libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
 else
    libroseOpenFortranParserlibraries =
+endif
+
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+   libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
+else
    libroseJavaParserlibraries =
 endif
 
