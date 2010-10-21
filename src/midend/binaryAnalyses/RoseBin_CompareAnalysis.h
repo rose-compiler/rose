@@ -156,13 +156,8 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
 
  public:
 
-  RoseBin_CompareAnalysis(SgProject *pr, SgAsmNode* global) {
-    RoseBin_support::setDebugMode(false);    
-    project = pr;
-    globalBin = global;
-    main_prolog_end=false;
-    attributeName = "rosebin_color";
-  }
+// DQ (10/20/2010): Moved to source file to support compilation of language only mode which excludes binary analysis support.
+  RoseBin_CompareAnalysis(SgProject *pr, SgAsmNode* global);
 
   // visit the binary AST
   void visit(SgNode* node);

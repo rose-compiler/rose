@@ -7,10 +7,12 @@ SUBDIRS = \
         astQuery \
         astRewriteMechanism \
         astUtil \
-        binaryAnalyses \
         programAnalysis \
         programTransformation
 
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   SUBDIRS += binaryAnalyses 
+endif
 
 # DQ (7/25/2008):
 # This file is deliberately excluded from a distribution so that the
