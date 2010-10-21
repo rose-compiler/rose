@@ -742,7 +742,19 @@ namespace OmpSupport
           setOneSourcePositionForTransformation(second_stmt); 
           break;
         }
-        //   case e_parallel_workshare: //TODO fortran
+        // Fortran
+       case e_parallel_do:
+        {
+          second_stmt = new SgOmpDoStatement(NULL, body);
+          setOneSourcePositionForTransformation(second_stmt);
+          break;
+        }
+        case e_parallel_workshare:
+        {
+          second_stmt = new SgOmpWorkshareStatement(NULL, body);
+          setOneSourcePositionForTransformation(second_stmt);
+          break;
+        }
       default:
         {
           cerr<<"error: unacceptable directive type in buildOmpParallelStatementFromCombinedDirectives(): "<<OmpSupport::toString(att->getOmpDirectiveType())<<endl;
@@ -898,6 +910,11 @@ This is no perfect solution until we handle preprocessing information as structu
   {
     list<SgPragmaDeclaration* >::reverse_iterator iter; // bottom up handling for nested cases
     ROSE_ASSERT (sageFilePtr != NULL);
+    // remove the end pragmas within Fortran. They were preserved for debugging (the conversion from comments to pragmas) purpose. 
+    list<SgPragmaDeclaration* >::iterator end_iter;
+    for (end_iter=omp_end_pragma_list.begin(); end_iter!=omp_end_pragma_list.end(); end_iter ++)
+      removeStatement (*end_iter);
+
     for (iter = omp_pragma_list.rbegin(); iter != omp_pragma_list.rend(); iter ++)
     {
       // Liao, 11/18/2009
@@ -981,7 +998,8 @@ This is no perfect solution until we handle preprocessing information as structu
             }
           case e_parallel_for:
           case e_parallel_sections:
-            //case e_parallel_workshare://TODO fortran
+          case e_parallel_workshare://fortran
+          case e_parallel_do:
             {
               omp_stmt = buildOmpParallelStatementFromCombinedDirectives(oa);
               break;
@@ -1122,7 +1140,8 @@ This is no perfect solution until we handle preprocessing information as structu
     mergeEndClausesToBeginDirective (decl,end_decl);
     // SgBasicBlock is not unparsed in Fortran 
     //
-    // To ensure the unparsed Fortran code is correct for -rose:openmp:ast_only
+    // To ensure the unparsed Fortran code is correct for debugging -rose:openmp:ast_only
+    //  after converting Fortran comments to Pragmas. 
     // x.  We should not tweak the original text for the pragmas. 
     // x.  We should not remove the end pragma declaration since SgBasicBlock is not unparsed.
     // In the end , the pragmas don't matter too much, the OmpAttributes attached to them 
