@@ -54,9 +54,9 @@ private:
     static SgAsmArmInstruction *makeInstructionWithoutOperands(uint32_t address, const std::string& mnemonic, int condPos,
                                                                ArmInstructionKind kind, ArmInstructionCondition cond,
                                                                uint32_t insn);
-    static SgAsmArmRegisterReferenceExpression *makeRegister(uint8_t reg);
-    static SgAsmArmRegisterReferenceExpression *makePsrFields(bool useSPSR, uint8_t fields);
-    static SgAsmArmRegisterReferenceExpression *makePsr(bool useSPSR);
+    SgAsmArmRegisterReferenceExpression *makeRegister(uint8_t reg) const;
+    SgAsmArmRegisterReferenceExpression *makePsrFields(bool useSPSR, uint8_t fields) const;
+    SgAsmArmRegisterReferenceExpression *makePsr(bool useSPSR) const;
 
     SgAsmExpression *makeRotatedImmediate() const;
     SgAsmExpression *makeShifterField() const; /**< Decode last 12 bits and bit 25 (I) */

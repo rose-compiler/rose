@@ -6,6 +6,11 @@
 #include "AST_FILE_IO.h"
 #include <string.h>
 
+// DQ (10/21/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 namespace AST_FILE_IO_MARKER
    {
       void writeMarker(std::string marker, std::ostream& outputFileStream)
@@ -4005,19 +4010,26 @@ void EasyStorage<ExtentMap>::storeDataInEasyStorageClass(const ExtentMap& emap)
 }
 
 ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
-{
+   {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
-    assert(Base::actualBlock <= 1);
-    assert((0 < Base::getSizeOfData() && Base::actual!= NULL) || (Base::getSizeOfData() == 0));
-    assert(0 == Base::getSizeOfData() % 2); /* vector holds key/value pairs of the ExtentMap */
+     assert(Base::actualBlock <= 1);
+     assert((0 < Base::getSizeOfData() && Base::actual!= NULL) || (Base::getSizeOfData() == 0));
+     assert(0 == Base::getSizeOfData() % 2); /* vector holds key/value pairs of the ExtentMap */
 #endif
 
-    ExtentMap emap;
-    if (Base::actual!=NULL && Base::getSizeOfData()>0) {
-        rose_addr_t *pointer = Base::getBeginningOfDataBlock();
-        for (long i=0; i<Base::getSizeOfData(); i+=2)
-            emap.insert(pointer[i+0], pointer[i+1]);
-    }
-    return emap;
-}
+     ExtentMap emap;
+
+// DQ (10/21/2010): This macro prevents the ExtentMap::insert() function from being undefined 
+// when binary analysis is not supported (via language only options in configure).
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     if (Base::actual!=NULL && Base::getSizeOfData()>0)
+        {
+          rose_addr_t *pointer = Base::getBeginningOfDataBlock();
+          for (long i=0; i<Base::getSizeOfData(); i+=2)
+               emap.insert(pointer[i+0], pointer[i+1]);
+        }
+#endif
+
+     return emap;
+   }
 

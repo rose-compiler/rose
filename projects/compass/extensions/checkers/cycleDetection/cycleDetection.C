@@ -7,6 +7,7 @@
 
 #include "rose.h"
 #include "compass.h"
+#include "stringify.h"
 
 using namespace std;
 
@@ -239,9 +240,9 @@ CompassAnalyses::CycleDetection::Traversal::run(string& name, SgGraphNode* node,
       SgAsmx86Instruction* nextSg = isSgAsmx86Instruction(next->get_SgNode());
       if (debug) {
         std::string outputText = "Found possible cycle between  ";
-        outputText+=toString(nodeSg->get_kind()) + " (";
+        outputText+=stringifyX86InstructionKind(nodeSg->get_kind()) + " (";
         outputText+=RoseBin_support::HexToString(nodeSg->get_address()) + ") and ";
-        outputText+=toString(nextSg->get_kind()) + " (";
+        outputText+=stringifyX86InstructionKind(nextSg->get_kind()) + " (";
         outputText+=RoseBin_support::HexToString(nextSg->get_address()) + ")";
         std::cerr << outputText << std::endl;
         output->addOutput(new CheckerOutput(nodeSg, outputText));
@@ -249,9 +250,9 @@ CompassAnalyses::CycleDetection::Traversal::run(string& name, SgGraphNode* node,
       bool validCycle = checkIfValidCycle(node,next);
       if (validCycle) {
         std::string outputText = "Found cycle between  ";
-        outputText+=toString(nodeSg->get_kind()) + " (";
+        outputText+=stringifyX86InstructionKind(nodeSg->get_kind()) + " (";
         outputText+=RoseBin_support::HexToString(nodeSg->get_address()) + ") and ";
-        outputText+=toString(nextSg->get_kind()) + " (";
+        outputText+=stringifyX86InstructionKind(nextSg->get_kind()) + " (";
         outputText+=RoseBin_support::HexToString(nextSg->get_address()) + ")";
         std::cerr << outputText << std::endl;
         output->addOutput(new CheckerOutput(nodeSg, outputText));

@@ -26,7 +26,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
 		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble disassembleBuffer testEtherInsns \
 		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics testAssembler testAstIO \
-		symbolicSemantics yicesSemanticsExe yicesSemanticsLib
+		symbolicSemantics yicesSemanticsExe yicesSemanticsLib testRegisters
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -136,6 +136,10 @@ testAssembler_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 testAstIO_SOURCES=testAstIO.C
 testAstIO_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
+# Program to test the RegisterDescriptor and RegisterDictionary classes.
+testRegisters_SOURCES=testRegisters.C
+testRegisters_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 ###############################################################################################################################
 # DEMOS
 #
@@ -232,6 +236,9 @@ demo_rot13: rot13
 	: no demo yet for rot13
 
 demo_testAstIO: testAstIO
+	: no demo yet for $<
+
+demo_testRegisters: testRegisters
 	: no demo yet for $<
 
 
@@ -478,6 +485,11 @@ test_rot13.result: rot13
 	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
+test_testRegisters.result: testRegisters
+	@echo "  TESTING $@"
+	@./testRegisters
+	@touch $@
+
 # Tests for detecting the locations of functions, written this way for parallelism.
 test_functionBoundaries_1.result: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin test_disassemble.result
 	@echo "  TESTING $@"
@@ -536,8 +548,11 @@ MOSTLYCLEANFILES = \
 	test_virtualMachineSemantics.ans test_testAssembler.ans test_symbolicSemantics.ans test_yicesSemanticsExe.ans \
 	test_yicesSemanticsLib.ans
 
+# DQ (10/19/2010): This rule fails when ROSE is configure using --without-java, why is this?
+# if !ROSE_USE_INTERNAL_JAVA_SUPPORT
 # mostlyclean-binarysamples is defined by scripts/sample_binary_rules.pl invoked from "build"
 mostlyclean-local: mostlyclean-binarysamples
+# endif
 
 ###############################################################################################################################
 # The older part of this makefile...

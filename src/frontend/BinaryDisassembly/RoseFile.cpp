@@ -48,6 +48,33 @@ public:
 };
 
 
+// DQ (10/20/2010): Moved to source file to support compilation of language only mode which excludes binary analysis support.
+RoseFile::RoseFile(std::string file) {
+    //RoseBin_support::setDebugMode(true);    
+        RoseBin_support::setDebugMode(false);    
+        RoseBin_support::setDataBaseSupport(true);    
+    idaDB = new RoseBin_FILE(file);
+    //unparser = new RoseBin_unparse();
+    //RoseBin_support::setUnparseVisitor(unparser->getVisitor());
+    //globalNode = 0;
+    //    functionNames.clear();
+    //num_inst=0;
+    //num_func=0;
+    //RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::none;
+  }
+
+// DQ (10/20/2010): Moved to source file to support compilation of language only mode which excludes binary analysis support.
+RoseFile::~RoseFile() {
+    delete idaDB;
+    //delete unparser;
+
+    idaDB = NULL;
+    //unparser = NULL;
+
+    //if (globalNode)
+    //  delete globalNode;
+  }
+
 /* ******************************************************
  * load the AST from file
  * ******************************************************/
@@ -259,13 +286,13 @@ void RoseFile::test() {
   trav_inst=0;
   trav_blocks=0;
   nodes=0;
-  double start = getTime();
-  double memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
+  //double start = getTime();
+  //double memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   //cerr << ">> traversing AST...  " ;
   traverse(globalNode,preorder);
-  double ends = getTime();
+  //double ends = getTime();
   //cerr << " " << (double) (ends - start)   << " sec";
-  double memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
+  //double memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
   
   //cerr << " traversed nodes : " << nodes << endl;

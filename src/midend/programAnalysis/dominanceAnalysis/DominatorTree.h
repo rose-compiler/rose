@@ -10,7 +10,7 @@ namespace DominatorTreesAndDominanceFrontiers
         /* ! \class TemplatedDominatorTree
                  This class constructs either a dominator or a post-dominator tree for a control-flow-graph.  */
 
-        typedef enum
+        typedef enum Dir_ection
         {
                 PRE_DOMINATOR,          /* !< This indicates that we are building a
                                                                                                                          dominator tree */

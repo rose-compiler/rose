@@ -47,14 +47,16 @@ class BinaryLoader {
 public:
 
     /** Describes how a section contributes to the overall memory map. */
-    enum MappingContribution {
+    enum MappingContribution 
+	{
         CONTRIBUTE_NONE,                /**< Section does not contribute to final mapping. */
         CONTRIBUTE_ADD,                 /**< Section is added to the mapping. */
         CONTRIBUTE_SUB                  /**< Section is subtracted from the mapping. */
     };
 
     /** Describes how conflicts are resolved when mapping a section. */
-    enum ConflictResolution {
+    enum ConflictResolution 
+	{
         RESOLVE_THROW,                  /**< Throw an exception such as MemoryMap::Inconsistent. */
         RESOLVE_OVERMAP,                /**< Free the part of the original mapping that is in conflict. */
         RESOLVE_REMAP,                  /**< Move the section to any unused part of the address space. */

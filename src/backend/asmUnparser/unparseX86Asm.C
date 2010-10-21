@@ -1,12 +1,5 @@
-/****************************************************
- * RoseBin :: Binary Analysis for ROSE
- * Author : tps
- * Date : 5Apr07
- * Decription : unparser
- ****************************************************/
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "Registers.h"
 #include <iomanip>
 
 #define __STDC_FORMAT_MACROS
@@ -24,82 +17,20 @@ std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
     }
     return result;
 }
-/****************************************************
- * resolve expression
- ****************************************************/
-std::string unparseX86Register(X86RegisterClass cl, int reg, X86PositionInRegister pos) {
-  switch (cl) {
-    case x86_regclass_gpr: {
-      static const char* regnames8l[16] = {"al", "cl", "dl", "bl", "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
-      static const char* regnames8h[16] = {"ah", "ch", "dh", "bh", "", "", "", "", "", "", "", "", "", "", "", ""};
-      static const char* regnames16[16] = {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w"};
-      static const char* regnames32[16] = {"eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"};
-      static const char* regnames64[16] = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
-      ROSE_ASSERT (reg >= 0 && reg <= 15);
-      switch (pos) {
-        case x86_regpos_low_byte: return regnames8l[reg];
-        case x86_regpos_high_byte: ROSE_ASSERT (reg <= 3); return regnames8h[reg];
-        case x86_regpos_word: return regnames16[reg];
-        case x86_regpos_dword: return regnames32[reg];
-        case x86_regpos_qword: return regnames64[reg];
-        case x86_regpos_unknown: return regnames64[reg];
-        case x86_regpos_all: return regnames64[reg];
-        default: ROSE_ASSERT (!"Bad position in register");
-      }
+
+/** Returns the name of an X86 register.
+ *
+ *  We use the amd64 architecture because, since it's backward compatible with the 8086, it contains definitions for all the
+ *  registers from older architectures. */
+std::string unparseX86Register(const RegisterDescriptor &reg) {
+    const RegisterDictionary *dict = RegisterDictionary::dictionary_amd64();
+    std::string name = dict->lookup(reg);
+    if (name.empty()) {
+        std::cerr <<"unparseX86Register(" <<reg <<"): register descriptor not found in dictionary.\n";
+        //std::cerr <<dict;
+        ROSE_ASSERT(!"register descriptor not found in dictionary");
     }
-    case x86_regclass_segment: {
-      ROSE_ASSERT (reg >= 0 && reg <= 5);
-      static const char* segregnames[6] = {"es", "cs", "ss", "ds", "fs", "gs"};
-      return segregnames[reg];
-    }
-    case x86_regclass_st_top: {
-      return "st";
-    }
-    case x86_regclass_st: {
-      return "st(" + StringUtility::numberToString(reg) + ")";
-    }
-    case x86_regclass_ip: {
-      switch (pos) {
-        case x86_regpos_word: return "ip";
-        case x86_regpos_dword: return "eip";
-        case x86_regpos_qword: return "rip";
-        case x86_regpos_unknown: return "rip";
-        case x86_regpos_all: return "rip";
-        default: ROSE_ASSERT (!"Bad position in register");
-      }
-    } 
-    case x86_regclass_mm: {
-      return "mm" + StringUtility::numberToString(reg);
-    }
-    case x86_regclass_xmm: {
-      return "xmm" + StringUtility::numberToString(reg);
-    }
-    case x86_regclass_cr: {
-      return "cr" + StringUtility::numberToString(reg);
-    }
-    case x86_regclass_dr: {
-      return "dr" + StringUtility::numberToString(reg);
-    }
-    case x86_regclass_flags: {
-      switch (pos) {
-        case x86_regpos_word: return "flags";
-        case x86_regpos_dword: return "eflags";
-        case x86_regpos_qword: return "rflags";
-        case x86_regpos_unknown: return "rflags";
-        case x86_regpos_all: return "rflags";
-        default: ROSE_ASSERT (!"Bad position in register");
-      }
-    }
-    case x86_regclass_unknown: {
-      return "unknown";
-    }
-    default:
-      std::cerr << " Undefined Register - class=" << regclassToString(cl) << " number=" << reg << std::endl;
-      abort();
-      // DQ (11/29/2009): Avoid MSVC warning.
-      return "error in unparseX86Register()";
-      break;
-  }
+    return name;
 }
 
 static std::string x86TypeToPtrName(SgAsmType* ty) {
@@ -155,7 +86,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
         }
         case V_SgAsmx86RegisterReferenceExpression: {
             SgAsmx86RegisterReferenceExpression* rr = isSgAsmx86RegisterReferenceExpression(expr);
-            result = unparseX86Register(rr->get_register_class(), rr->get_register_number(), rr->get_position_in_register());
+            result = unparseX86Register(rr->get_descriptor());
             break;
         }
         case V_SgAsmByteValueExpression: {

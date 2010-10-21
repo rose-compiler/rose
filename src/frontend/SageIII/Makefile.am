@@ -41,7 +41,8 @@ all-local: roseh sage.docs
 INCLUDES = $(ROSE_INCLUDES)
 
 # DQ (3/13/2010): sageSupport.C requires the OFP fortran source files to be made available.
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    INCLUDES += -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
 endif
 
@@ -229,7 +230,8 @@ BUILT_SOURCES = $(GENERATED_SOURCE) ompparser.cc ompparser.h omplexer.cc
 
 
 # DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support (in sageSupport.C).
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 sageSupport.C: extract_rose_required_ofp_source_files
 endif
 
@@ -238,8 +240,8 @@ endif
 extract_rose_required_ofp_source_files:
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) extract_rose_required_ofp_source_files
-#	endif
-#	if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+endif
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
 endif
 

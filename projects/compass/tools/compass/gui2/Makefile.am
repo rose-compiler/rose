@@ -13,8 +13,8 @@ endif
 
 $(compass_build_tooldir)/compass/libCompassCheckers.la:
 	cd .. && $(MAKE) libCompassCheckers.la
-  
-  
+
+
 bin_PROGRAMS = compassMainGui2
 
 roseQtDir = $(top_srcdir)/src/roseExtensions/qtWidgets
@@ -40,6 +40,7 @@ nodist_compassMainGui2_SOURCES =    moc_CompassMainWindow.cxx \
 BUILT_SOURCES = ui_CompassMainWindow.h 
 
 compassMainGui2_LDADD = $(compass_build_tooldir)/compass/libCompassCheckers.la \
+			-L$(compass_support_bdir) -lCompass \
                         $(ROSE_LIBS) \
                         $(QT_LDFLAGS) \
                         -lrt

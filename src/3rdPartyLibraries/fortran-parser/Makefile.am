@@ -3,7 +3,8 @@ javadir=$(libdir)
 OFP_VERSION=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # DQ (4/5/2010): Think about if we need the test using an Automake conditional since the jar file always exists.
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 dist_java_DATA = OpenFortranParser-${OFP_VERSION}.jar
 endif
 
@@ -129,10 +130,22 @@ OFP_SOURCE_FILES_WITHOUT_PATHS = \
 # DQ (10/17/2010): This is the better way to control this.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 # Liao 8/4/2010, based on Jean Utke's suggestion on [Rose-public] Fortran built-ins
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
 # include_HEADERS = ActionEnums.h token.h FortranParserAction.h
-include_HEADERS = token.h ActionEnums.h FortranParserAction.h
+include_HEADERS = ActionEnums.h token.h FortranParserAction.h
+# endif
 endif
+
+OFP_DIR = $(top_builddir)/src/3rdPartyLibraries/fortran-parser
+if !ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+token.h:
+	touch token.h
+
+ActionEnums.h:
+	touch ActionEnums.h
+
+FortranParserAction.h:
+	touch FortranParserAction.h
 endif
 
 # I don't know why this does not seem to work, but that we need three separate rules.
@@ -222,6 +235,44 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
 # EXTRA_DIST = CMakeLists.txt $(OFP_SOURCE_FILES_WITHOUT_PATHS)
 # EXTRA_DIST = CMakeLists.txt
 EXTRA_DIST = CMakeLists.txt OpenFortranParser-${OFP_VERSION}.jar
+
+
+check-local:
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+	@echo "Automake conditional ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT: DEFINED"
+else
+	@echo "Automake conditional ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT: NOT defined"
+endif
+#if ROSE_USE_OPEN_FORTRAN_PARSER
+#	@echo "Automake conditional ROSE_USE_OPEN_FORTRAN_PARSER: DEFINED"
+#else
+#	@echo "Automake conditional ROSE_USE_OPEN_FORTRAN_PARSER: NOT defined"
+#endif
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+	@echo "Automake conditional ROSE_BUILD_JAVA_LANGUAGE_SUPPORT: DEFINED"
+else
+	@echo "Automake conditional ROSE_BUILD_JAVA_LANGUAGE_SUPPORT: NOT defined"
+endif
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+	@echo "Automake conditional ROSE_BUILD_CXX_LANGUAGE_SUPPORT: DEFINED"
+else
+	@echo "Automake conditional ROSE_BUILD_CXX_LANGUAGE_SUPPORT: NOT defined"
+endif
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
+	@echo "Automake conditional ROSE_BUILD_C_LANGUAGE_SUPPORT: DEFINED"
+else
+	@echo "Automake conditional ROSE_BUILD_C_LANGUAGE_SUPPORT: NOT defined"
+endif
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+	@echo "Automake conditional ROSE_BUILD_BINARY_ANALYSIS_SUPPORT: DEFINED"
+else
+	@echo "Automake conditional ROSE_BUILD_BINARY_ANALYSIS_SUPPORT: NOT defined"
+endif
+if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
+	@echo "Automake conditional ROSE_BUILD_PHP_LANGUAGE_SUPPORT: DEFINED"
+else
+	@echo "Automake conditional ROSE_BUILD_PHP_LANGUAGE_SUPPORT: NOT defined"
+endif
 
 # DQ (10/11/2010): Fixing bug in "make distcheck" rule.
 # The files (token.c token.h ActionEnums.h jni_token_funcs.h jni_token_funcs.c) are copied 

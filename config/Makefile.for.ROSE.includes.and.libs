@@ -193,6 +193,7 @@ endif
 # version of Boost (e.g /usr/include/boost) that we don't want to use.
 ROSE_INCLUDES = \
      $(ROSE_BOOST_PREINCLUDE_PATH) \
+     -I$(top_builddir)/src/roseSupport \
      -I$(top_builddir)/src/frontend/SageIII \
      -I$(top_srcdir)/src \
      -I$(top_srcdir)/src/frontend/SageIII \
