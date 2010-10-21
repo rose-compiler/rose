@@ -82,10 +82,13 @@ failing_tests: test_file_permission syscall_tst_fail  $(foreach file,$(SYSCALL_F
 example_failing_test:
 	../x86sim ./syscall_sa.114
 
-# check-local: $(foreach file,$(SYSCALL_FILES_CHK), $(addprefix check-,$(basename $(notdir $(file)))))
-check-local: 
-	@echo "I have to temporarily turn this check off since it has been merged into master without passing tests, DQ 10/19/2010"
-	@echo "Please restore the tests once the bugs are fixed. "
+check-local: $(foreach file,$(SYSCALL_FILES_CHK), $(addprefix check-,$(basename $(notdir $(file)))))
+# check-local: 
+#	@echo "I have to temporarily turn this check off since it has been merged into master without passing tests, DQ 10/19/2010"
+#	@echo "Please restore the tests once the bugs are fixed. "
+	@echo "*******************************************************************************************"
+	@echo "****** ROSE/projects/simulator/tests: make check rule complete (terminated normally) ******"
+	@echo "*******************************************************************************************"
 
 EXTRA_DIST = $(TST_FILES_LINKING) compiler.h  rmobj.h  test.h  usctest.h parse_opts.c tst_res.c tst_sig.c tst_tmpdir.c rmobj.c 
 
