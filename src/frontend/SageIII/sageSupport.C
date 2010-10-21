@@ -3894,14 +3894,20 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
    }
 
+// DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the 
+// current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
+// So use the explicit macros defined in rose_config header file for this level of control.
+#if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
 // DQ (10/20/2010): Internal Java support is used for both Fortran language and Java language support.
 // #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 // #if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
-#ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
+// #ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
 // FMZ(5/19/2008):
 // #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 extern void jserver_init();
-extern void jserver_finish();
+
+// DQ (10/20/2010): Note that this is not called.
+// extern void jserver_finish();
 // #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
@@ -3993,7 +3999,12 @@ SgProject::parse(const vector<string>& argv)
                        {
                          printf ("Calling Open Fortran Parser: jserver_init() \n");
                        }
-#ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
+
+// DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the 
+// current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
+// So use the explicit macros defined in rose_config header file for this level of control.
+#if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
+// #ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
 // #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 // #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                     jserver_init();
@@ -4001,7 +4012,7 @@ SgProject::parse(const vector<string>& argv)
 #endif
                     errorCode = parse();
 
-                    // FMZ deleteComm jserver_finish();
+                 // FMZ deleteComm jserver_finish();
                   }
 
             // DQ (5/26/2007): This is meaningless, so remove it!
