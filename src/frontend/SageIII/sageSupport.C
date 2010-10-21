@@ -701,6 +701,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_wave(true);
         }
 
+#if 0
   // DQ (10/3/2010): Adding support for CPP directives to be optionally a part of the AST as declarations 
   // in global scope instead of handled similar to comments.
      set_addCppDirectivesToAST(false);
@@ -711,8 +712,10 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                printf ("In SgProject: addCppDirectivesToAST mode ON \n");
           set_addCppDirectivesToAST(true);
         }
+#else
+     printf ("Warning: command line CPP directives not processed \n");
+#endif
 
-     
   //
   // prelink option
   //

@@ -582,6 +582,7 @@ if test "x$support_binary_analysis_only" = "xyes"; then
    support_cxx_language=no
    support_fortran_language=no
    support_java_language=no
+   support_php_language=no
  # support_binaries=no
    support_cuda_language=no
    support_opencl_language=no

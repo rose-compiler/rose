@@ -4021,8 +4021,9 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
                emap.insert(pointer[i+0], pointer[i+1]);
         }
 #else
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
+  // DQ (10/21/2010): No need to output a message here, this function will be called but will do nothing (this is OK).
+  // printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+  // ROSE_ASSERT(false);
 #endif
 
      return emap;
