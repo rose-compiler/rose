@@ -824,8 +824,11 @@ endif ( enable-smaller-generated-files )
 #Liao, link static libraries into the shared librose library
 #target_link_libraries(rose ${libastMerge}) # library name are global, should not use ${}
 # we need to double check if this solution will be portable on different platforms
-target_link_libraries(ROSE_DLL ${ROSE_TARGET_LINK}
- )
+if (NOT WIN32)
+target_link_libraries(ROSE_DLL ${ROSE_TARGET_LINK} )
+else (NOT WIN32)
+target_link_libraries(ROSE_DLL ${ROSE_TARGET_LINK} shlwapi.lib )
+endif (NOT WIN32)
 
 set_target_properties(ROSE_DLL PROPERTIES VERSION 1.0.0 SOVERSION 1)
 install(TARGETS ROSE_DLL ${INSTALL_TARGETS_DEFAULT_ARGS})
