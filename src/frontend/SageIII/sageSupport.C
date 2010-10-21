@@ -3894,9 +3894,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
    }
 
-
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-//FMZ(5/19/2008):
+// DQ (10/20/2010): Internal Java support is used for both Fortran language and Java language support.
+// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+// #if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
+#ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
+// FMZ(5/19/2008):
 // #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 extern void jserver_init();
 extern void jserver_finish();
@@ -3991,7 +3993,8 @@ SgProject::parse(const vector<string>& argv)
                        {
                          printf ("Calling Open Fortran Parser: jserver_init() \n");
                        }
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+#ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
+// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 // #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                     jserver_init();
 // #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -4831,7 +4834,9 @@ SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
 // This function calls the Java JVM to load the Java implemented parser (written 
 // using ANTLR, a parser generator).
 int openFortranParser_main(int argc, char **argv );
+#endif
 
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 // DQ (10/11/2010): Added the Java support.
 int openJavaParser_main(int argc, char **argv );
 #endif 
@@ -5329,8 +5334,9 @@ SgSourceFile::build_classpath()
 
      returnClasspath = global_build_classpath();
 
-#ifndef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-     fprintf(stderr, "Fortran and Java parser not supported (lack of access to JVM support)\n");
+// #ifndef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+#ifndef USE_ROSE_INTERNAL_JAVA_SUPPORT
+     fprintf(stderr, "Fortran and Java parser not supported (lack of access to internal Java support (JVM support)\n");
      ROSE_ASSERT(false);
 #endif
 
@@ -5971,7 +5977,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 int
 SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
    {
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
   // This is how we pass the pointer to the SgFile created in ROSE before the Open 
   // Fortran Parser is called to the Open Fortran Parser.  In the case of C/C++ using
   // EDG the SgFile is passed through the edg_main() function, but not so with the 
@@ -6622,7 +6628,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
              {
                if ( get_Java_only() == true )
                   {
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 // #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                     frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
 // #else
@@ -6630,7 +6636,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 //           ROSE_ASSERT(false);
 // #endif
 #else
-          fprintf(stderr, "ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT is not defined. Trying to parse a Java file when Java is not supported (ROSE must be configured using --with-java (default)) \n");
+          fprintf(stderr, "ROSE_BUILD_JAVA_LANGUAGE_SUPPORT is not defined. Trying to parse a Java file when Java is not supported (ROSE must be configured using --with-java (default)) \n");
           ROSE_ASSERT(false);
 #endif
                   }
