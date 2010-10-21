@@ -55,11 +55,11 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
 //	}
 	string nodelabel=string("\\n")+node->class_name();
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	// DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
 	SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
 	if (genericInstruction != NULL)
 	{
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	// At the moment the mnemonic name is stored, but it could be computed in the 
 	// future from the kind and the tostring() function.
 #if 1
@@ -73,14 +73,21 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
 	  ROSE_ASSERT(name.empty() == false);
 
 	  nodelabel += string("\\n") + name;
+#else
+     printf ("Warning: In AstDOTGenerationImpl.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
+#endif
 	}
 
 	SgAsmExpression* genericExpression = isSgAsmExpression(node);
 	if (genericExpression != NULL)
 	{
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	  string name = unparseExpression(genericExpression);
 	  ROSE_ASSERT(name.empty() == false);
 	  nodelabel += string("\\n") + name;
+#else
+     printf ("Warning: In AstDOTGenerationImpl.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
+#endif
 	}
 
 	// DQ (10/29/2008): Added some support for additional output of internal names for specific IR nodes.
@@ -89,6 +96,7 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
 	SgAsmExecutableFileFormat* binaryFileFormatNode = isSgAsmExecutableFileFormat(node);
 	if (binaryFileFormatNode != NULL)
 	{
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	// The case of binary file format IR nodes can be especially confusing so we want the 
 	// default to output some more specific information for some IR nodes (e.g. sections).
 	  string name;
@@ -172,10 +180,10 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
 
 	  if (name.empty() == false)
 		   nodelabel += string("\\n") + name;
-	}
 #else
      printf ("Warning: In AstDOTGenerationImpl.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
 #endif
+	}
 
 	// DQ (11/29/2008): Output the directives in the label of the IR node.
 	SgC_PreprocessorDirectiveStatement* preprocessorDirective = isSgC_PreprocessorDirectiveStatement(node);
