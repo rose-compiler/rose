@@ -5563,7 +5563,7 @@ FortranCodeGeneration_locatedNode::unparseOmpEndDirectiveClauses(SgStatement* st
 void FortranCodeGeneration_locatedNode::unparseOmpEndDirectivePrefixAndName (SgStatement* stmt,     SgUnparse_Info& info)
 {
   ROSE_ASSERT(stmt != NULL);
-
+  unp->u_sage->curprint_newline();
   switch (stmt->variantT())
   {
     case V_SgOmpParallelStatement:
@@ -5634,6 +5634,7 @@ void FortranCodeGeneration_locatedNode::unparseOmpEndDirectivePrefixAndName (SgS
         break;
       }
   } // end switch
+  unp->u_sage->curprint_newline();
 }
 
 void FortranCodeGeneration_locatedNode::unparseOmpDoStatement     (SgStatement* stmt, SgUnparse_Info& info)
