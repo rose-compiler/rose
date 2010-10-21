@@ -724,10 +724,14 @@ MemoryMap::load(const std::string &basename)
     size_t line_nalloc = 0;
     ssize_t nread;
     unsigned nlines=0;
-
     try {
+#ifndef _MSC_VER
         while (0<(nread=rose_getline(&line, &line_nalloc, f))) {
-            char *rest, *s=line;
+#else
+        while (true) { // error LNK2019: unresolved external symbol "long __cdecl rose_getline(char * *,unsigned int *,struct _iobuf *)"
+	ROSE_ASSERT(false);
+#endif
+			char *rest, *s=line;
             nlines++;
 
             /* Check for empty lines and comments */
