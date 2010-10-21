@@ -431,6 +431,16 @@ AC_MSG_CHECKING([for language specific options to generate a minimal ROSE config
 # Specify how to set the ROSE configure options when a minimal configuration of ROSE for only C language support is required
 if test "x$support_c_only" = "xyes"; then
 
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+   enable_binary_analysis_tests=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
    support_fortran_language=no
    support_java_language=no
    support_php_language=no
@@ -439,6 +449,45 @@ if test "x$support_c_only" = "xyes"; then
    support_opencl_language=no
 
    AC_MSG_RESULT(haskell:off fortran:off java:off php:off)
+fi
+
+if test "x$support_java_only" = "xyes"; then
+
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+ # When using fortran only assume that we are not interested in java language support in ROSE.
+ # However, currently the --with-java option controls the use of java support for both Fortran 
+ # and Java language support. Now that we have added Java language support to ROSE this is 
+ # unintentionally confusing. So we can't turn this off since the Fortran support requires 
+ # internal java (JVM) support.
+ # with_java=no
+
+ # So these should be expressed in terms of the "with" and "enable" versions of each option's macro.
+ # without_php=yes
+   with_php=no
+
+ # disable_binary_analysis_tests=yes
+   enable_binary_analysis_tests=no
+
+ # Allow tests directory to be run so that we can run the Fortran tests.
+ # enable_tests_directory=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
+ # Turn off all the other language support.
+   support_c_language=no
+   support_cxx_language=no
+   support_fortran_language=no
+   support_php_language=no
+   support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
+
+   AC_MSG_RESULT(haskell:off php:off binary-analysis-tests:off)
 fi
 
 # Specify how to set the ROSE configure options when a minimal configuration of ROSE for only Fortran language support is required (support requested by Rice and LANL)
@@ -480,6 +529,7 @@ if test "x$support_fortran_only" = "xyes"; then
  # Turn off all the other language support.
    support_c_language=no
    support_cxx_language=no
+   support_java_language=no
    support_php_language=no
    support_binaries=no
    support_cuda_language=no
@@ -492,6 +542,54 @@ if test "x$support_fortran_only" = "xyes"; then
 
    echo "Detected specification of Fortran ONLY request for minimal configuration of ROSE..."
 fi
+
+if test "x$support_php_only" = "xyes"; then
+
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+   enable_binary_analysis_tests=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
+   support_c_language=no
+   support_cxx_language=no
+   support_fortran_language=no
+   support_java_language=no
+   support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
+
+   AC_MSG_RESULT(haskell:off fortran:off java:off php:off)
+fi
+
+if test "x$support_binary_analysis_only" = "xyes"; then
+
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+ # enable_binary_analysis_tests=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
+   support_c_language=no
+   support_cxx_language=no
+   support_fortran_language=no
+   support_java_language=no
+   support_php_language=no
+ # support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
+
+   AC_MSG_RESULT(haskell:off fortran:off java:off php:off)
+fi
+
 
 echo "BEFORE Setting: enableval = $enableval enable_language_only_restriction_test = $enable_language_only_restriction_test"
 # AC_ARG_ENABLE([language-only-restriction-test],AS_HELP_STRING([--enable-language-only-restriction-test],[Support language only restriction test]),[enableval=yes],[enableval=no])

@@ -11,22 +11,28 @@ $(GENERATED_SOURCE):
 noinst_LTLIBRARIES = libvirtualCFG.la
 libvirtualCFG_la_SOURCES      = \
      virtualCFG.C \
-     virtualBinCFG.C \
      cfgToDot.C \
      memberFunctions.C \
      staticCFG.C \
-		 interproceduralCFG.C
+     interproceduralCFG.C
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     libvirtualCFG_la_SOURCES += virtualBinCFG.C
+endif
 
 libvirtualCFG_la_LIBADD       = 
 libvirtualCFG_la_DEPENDENCIES = $(GENERATED_SOURCE)
 
 include_HEADERS = \
      virtualCFG.h \
-     virtualBinCFG.h \
      cfgToDot.h \
      filteredCFG.h \
      filteredCFGImpl.h \
      staticCFG.h \
-		 interproceduralCFG.h
+     interproceduralCFG.h
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   include_HEADERS += virtualBinCFG.h
+endif
 
 EXTRA_DIST = CMakeLists.txt
