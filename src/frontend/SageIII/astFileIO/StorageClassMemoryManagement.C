@@ -6,6 +6,11 @@
 #include "AST_FILE_IO.h"
 #include <string.h>
 
+// DQ (10/21/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 namespace AST_FILE_IO_MARKER
    {
       void writeMarker(std::string marker, std::ostream& outputFileStream)
@@ -4013,6 +4018,9 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
 #endif
 
      ExtentMap emap;
+
+// DQ (10/21/2010): This macro prevents the ExtentMap::insert() function from being undefined 
+// when binary analysis is not supported (via language only options in configure).
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      if (Base::actual!=NULL && Base::getSizeOfData()>0)
         {
@@ -4020,10 +4028,6 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
           for (long i=0; i<Base::getSizeOfData(); i+=2)
                emap.insert(pointer[i+0], pointer[i+1]);
         }
-#else
-  // DQ (10/21/2010): No need to output a message here, this function will be called but will do nothing (this is OK).
-  // printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-  // ROSE_ASSERT(false);
 #endif
 
      return emap;
