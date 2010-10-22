@@ -7363,6 +7363,8 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         }
 #endif
     
+#if 0 // This fix breaks other transformations.
+      // It is better to do this explicitly as needed before calling appendStatement();
     // Liao 10/19/2010
     // In rare cases, we are moving the statement from its original scope to another scope
     // We have to remove it from its original scope before append it to the new scope
@@ -7371,6 +7373,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
     {
       removeStatement(stmt);
     }
+#endif    
     //catch-all for statement fixup 
    // Must fix it before insert it into the scope, 
     fixStatement(stmt,scope);

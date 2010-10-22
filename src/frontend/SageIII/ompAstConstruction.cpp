@@ -1046,6 +1046,11 @@ This is no perfect solution until we handle preprocessing information as structu
      else
      {  
        result = buildBasicBlock();
+       // Have to remove them from their original scope first. 
+       // Otherwise they will show up twice in the unparsed code: original place and under the new block
+       // I tried to merge this into appendStatement() but it broke other transformations I don't want debug
+       for (std::vector <SgStatement*>::const_iterator iter = stmt_vec.begin(); iter != stmt_vec.end(); iter++)
+         removeStatement(*iter);
        appendStatementList (stmt_vec, isSgScopeStatement(result));
        insertStatementAfter (begin_decl, result, false);
      }
