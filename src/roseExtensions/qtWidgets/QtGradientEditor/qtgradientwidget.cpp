@@ -88,7 +88,8 @@ public:
     QPointF m_centralConical;
     qreal m_angleConical;
 
-    enum Handle {
+    enum Handle 
+	{
         NoHandle,
         StartLinearHandle,
         EndLinearHandle,

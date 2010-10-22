@@ -1,4 +1,4 @@
 TITLE="testing default compiler on all linux platforms"
-DESCRIPTION="minimal configuration options, gcc 4.1.2, boost-1.35.0, without java"
-PREREQS="boost-1.35.0"
-CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall --without-java"
+DESCRIPTION="minimal configuration options, gcc 4.1.2, boost-1.36.0, without java"
+PREREQS="boost-1.36.0"
+CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java"

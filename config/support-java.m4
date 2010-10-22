@@ -6,7 +6,7 @@ AC_MSG_CHECKING([for Java (javac first, then java, then jvm)])
 
 AC_ARG_WITH([java],
             AS_HELP_STRING([--with-java],
-                           [use Java for Fortran or Javaport support (default is YES if Java can be found)]),
+                           [use Java for Fortran and Java language support in ROSE and/or Javaport support to build Java wrapers of ROSE functions (default is YES if Java can be found)]),
             [javasetting=$withval],
             [javasetting=try])
 
@@ -92,12 +92,13 @@ if test "x$USE_JAVA" = x1; then
 # AC_MSG_RESULT([$JAVAC])
   AC_MSG_RESULT(yes)
 else
-  AC_MSG_RESULT([not requested])
+  AC_MSG_RESULT([not requested, internal java support disabled])
 fi
 
 # echo "Before checking for Java JVM: JAVA_PATH = ${JAVA_PATH}"
-
 if test "x$USE_JAVA" = x1; then
+
+  echo "Now verifying aspects of the found java software (java, javac, javah, jar)..."
 
   JAVA_BIN="${JAVA_PATH}/bin"
   JAVA="${JAVA_BIN}/java"
@@ -138,6 +139,22 @@ if test "x$USE_JAVA" = x1; then
   else
     AC_MSG_ERROR([jar not found in $JAVA_PATH])
   fi
+
+  JAVAC="${JAVA_BIN}/javac"
+  AC_MSG_CHECKING(for javac)
+  if test -x "${JAVAC}"; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_ERROR([javac not found in $JAVA_PATH])
+  fi
+
+  JAVAH="${JAVA_BIN}/javah"
+  AC_MSG_CHECKING(for javah)
+  if test -x "${JAVAH}"; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_ERROR([javah not found in $JAVA_PATH])
+  fi
 fi
 
 # DQ (10/13/2010): Added checking for jar command (common in Linux, but not on some platforms; e.g NMI machines).
@@ -148,9 +165,19 @@ fi
 #   AC_DEFINE([USE_ROSE_JAR_SUPPORT],[],[Controls use of ROSE support for Java.])
 # fi
 
-if test $USE_JAVA; then
+# DQ (10/18/2010): We would like to have the USE_JAVA macro not appear outside of this file.
+if test "x$USE_JAVA" = x1; then
+# define macros are used for source code and are defined in rose_config.h.
   AC_DEFINE([USE_ROSE_JAVA_SUPPORT],[],[Controls use of ROSE support for Java.])
+# DQ (10/18/2010): Renaming this macro to be uniform in ROSE.
+  AC_DEFINE([USE_ROSE_INTERNAL_JAVA_SUPPORT],[],[Controls use of ROSE support for Java.])
 fi
+
+# DQ (10/18/2010): Renaming this macro to be uniform in ROSE.
+AM_CONDITIONAL(ROSE_USE_INTERNAL_JAVA_SUPPORT_AM_CONDITIONAL, [test "x$USE_JAVA" = x1])
+AM_CONDITIONAL(ROSE_USE_INTERNAL_JAVA_SUPPORT, [test "x$USE_JAVA" = x1])
+
+
 AC_DEFINE_UNQUOTED([JAVA_JVM_PATH],["$JAVA"],[Path to JVM executable])
 
 AC_SUBST(JAVA_PATH)
@@ -158,6 +185,7 @@ AC_SUBST(JAVA_JVM_LINK)
 AC_SUBST(JAVA_JVM_INCLUDE)
 AC_SUBST(JAVA)
 AC_SUBST(JAVAC)
+AC_SUBST(JAVAH)
 AC_SUBST(JAR)
 
 

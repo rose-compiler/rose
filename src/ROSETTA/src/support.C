@@ -1,3 +1,6 @@
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
 
 #include "grammar.h"
 
@@ -1558,6 +1561,11 @@ Grammar::setUpSupport ()
 
   // DQ (10/26/2009): After discussion with Peter, this data member should be moved to the SgFile (or SgSourceFile) object.
      Project.setDataPrototype("SgStringList","includeDirectorySpecifierList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/18/2010): Added support to extract "-D" options so that for Fortran we could process them separately
+  // by triggering the use of the C preprocessor and passing them to CPP explicitly.
+     Project.setDataPrototype("SgStringList","macroSpecifierList", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/26/2009): After discussion with Peter, this data member should be moved to the SgFile (or SgSourceFile) object.

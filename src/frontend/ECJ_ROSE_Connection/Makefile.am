@@ -11,7 +11,8 @@ DISTCLEANFILES =
 # g++ -fPIC -shared $(ROSE_INCLUDES) JavaTraversal.c -o libJavaTraversal.so
 
 # For now use Java whenever we use Fortran (since both require Java support).
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 # To build a similar library using libtool we indicate that we want an installed 
 # library (which will then be made into a dynamic shared library).
 # lib_LTLIBRARIES = libjava_ecj_parser_c_jni_JavaParserActionJNI.la
@@ -28,12 +29,16 @@ JavaTraversal.C: JavaTraversal.h
 JavaTraversal.h:
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
 
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
  # libroseJava_la_SOURCES = JavaTraversal.c
  # libJavaTraversal_la_SOURCES = JavaTraversal.C
  # libJavaTraversal_la_SOURCES = openJavaParser_main.C 
  # libroseJava_la_SOURCES = 
-   libroseJava_la_SOURCES = openJavaParser_main.C ecj.C
+   libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C
+if !ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+   libroseJava_la_SOURCES += $(srcdir)/../OpenFortranParser_SAGE_Connection/jserver.C
+endif
 else
  # Compile using a function that represents the API of the Open Fortran Parser
  # libroseJava_la_SOURCES = dummy_JavaParser_main.C
@@ -41,7 +46,8 @@ else
    libroseJava_la_SOURCES = dummy_openJavaParser_main.C
 endif
 
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 ECJ_DIR = $(top_builddir)/src/3rdPartyLibraries/java-parser
 # libjava_ecj_parser_c_jni_JavaParserActionJNI_la_SOURCES = JavaTraversal.C $(ECJ_DIR)/token.c $(ECJ_DIR)/jni_token_funcs.c $(ECJ_DIR)/c_actions_jni.c
 # libjava_ecj_parser_c_jni_JavaParserActionJNI_la_SOURCES = JavaTraversal.C 

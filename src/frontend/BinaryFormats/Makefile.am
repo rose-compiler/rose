@@ -18,14 +18,20 @@ INCLUDES = $(ROSE_INCLUDES) $(INTEL_PIN_INCLUDE_PATHS)
 noinst_LTLIBRARIES = libroseBinaryFormats.la
 
 libroseBinaryFormats_la_DEPENDENCIES =
-libroseBinaryFormats_la_SOURCES = \
-   $(INTEL_PIN_SUPPORT) \
-   DataConversion.C ExtentMap.C Hexdump.C Interpretation.C MemoryMap.C Rva.C \
-   GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C \
-   PeExport.C PeFileHeader.C PeImport.C PeSection.C PeStringTable.C PeSymbolTable.C \
-   ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C \
-   ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C \
-   ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   libroseBinaryFormats_la_SOURCES = \
+      $(INTEL_PIN_SUPPORT) \
+      DataConversion.C ExtentMap.C Hexdump.C Interpretation.C MemoryMap.C Rva.C \
+      GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C \
+      PeExport.C PeFileHeader.C PeImport.C PeSection.C PeStringTable.C PeSymbolTable.C \
+      ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C \
+      ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C \
+      ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C
+else
+   libroseBinaryFormats_la_SOURCES = dummyFunctions.C
+   libroseBinaryFormats_la_DEPENDENCIES += dummyFunctions.C
+endif
 
 include_HEADERS = DataConversion.h IntelPinSupport.h MemoryMap.h
 
