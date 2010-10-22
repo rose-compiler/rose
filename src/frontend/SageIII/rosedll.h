@@ -53,12 +53,14 @@
   #define ROSE_DLL_LOCAL ROSE_DLL_HELPER_DLL_LOCAL
 
 
+// DQ (10/19/2010): Need to test if we can remove this.
+// We should not reference CXX_IS_ROSE_ANALYSIS except in source code.
 // tps : this is probably not needed anymore
-// undef ROSE_ROSETTA_API if rose analyses itself. 
-#if CXX_IS_ROSE_ANALYSIS
-  #undef ROSE_DLL_API
-  #define ROSE_DLL_API
-#endif 
+// undef ROSE_ROSETTA_API if rose analyses itself.
+// #if CXX_IS_ROSE_ANALYSIS
+//  #undef ROSE_DLL_API
+//  #define ROSE_DLL_API
+//#endif 
 
 
 #endif

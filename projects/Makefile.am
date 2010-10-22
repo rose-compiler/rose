@@ -27,7 +27,6 @@ SUBDIRS = \
      autoParallelization \
      autoTuning\
      backstroke \
-     binCompass \
      binaryVisualization \
      bugSeeding \
      checkPointExample \
@@ -60,7 +59,7 @@ if !ROSE_USING_ROSE_CODE_GENERATION
 
 # DQ (10/17/2010): This seems to be problem for Java, we can fix this later.
 if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-   SUBDIRS += compass
+   SUBDIRS += compass binCompass
 endif
 
 # DQ (10/17/2010): Since we can't process Compass with Java we can't compiler palette (which requires Compass).

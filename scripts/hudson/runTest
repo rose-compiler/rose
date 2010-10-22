@@ -67,7 +67,9 @@ done
 machine_name=`uname -n`
 start_time=`date`
 start_time_seconds="$(date +%s)"
-def_num_procs=16
+
+# DQ (10/19/2010): This is not used (removed) because the syntax where it was used was overly complex.
+# def_num_procs=16
 
 echo ""
 echo "*****************************************************************************"
@@ -141,8 +143,10 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 	rm -rf ROSE-build-cmake
 	mkdir ROSE-build-cmake
 	cd ROSE-build-cmake
-	cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && \
-	make -j${NUM_PROCESS:-$def_num_procs}
+
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS:-$def_num_procs}
+   cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS}
 
    if [ $? -ne 0 ]  ; then
       echo "fatal error in cmake build , aborting..."
@@ -248,8 +252,9 @@ echo "Starting configure step"
 echo "Done with configure step"
 
 if test $ROSE_TEST_BUILD_STYLE = edg ; then
-	make -j${NUM_PROCESS:-$def_num_procs} upload_edg_binary && \
-	make -Csrc/frontend/CxxFrontend deploy_tarballs
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # make -j${NUM_PROCESS:-$def_num_procs} upload_edg_binary && make -Csrc/frontend/CxxFrontend deploy_tarballs
+   make -j${NUM_PROCESS} upload_edg_binary && make -Csrc/frontend/CxxFrontend deploy_tarballs
       if [ $? -ne 0 ]  ; then
         echo "fatal error when build edg binaries , aborting..."
         # tps : call this line before any exit. It resets the Windows test
@@ -279,7 +284,9 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
  #  echo "It should be impossible to reach this branch (exiting in false branch)."
  #  exit 1
 
-   make -j${NUM_PROCESS:-$def_num_procs} 2>&1 | tee make_output.txt
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # make -j${NUM_PROCESS:-$def_num_procs} 2>&1 | tee make_output.txt
+   make -j${NUM_PROCESS} 2>&1 | tee make_output.txt
 
  # the pipestatus variable is an array that holds the exit status of your last foreground pipeline commands.
  # we check to see if make failes through this command
@@ -308,7 +315,9 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
 else
    echo "Test compile step"
 
-   make -j${NUM_PROCESS:-$def_num_procs}
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # make -j${NUM_PROCESS:-$def_num_procs}
+   make -j${NUM_PROCESS}
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
@@ -353,13 +362,15 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 
    start_time_make_check_seconds="$(date +%s)"
 
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
  # DQ (12/9/2009): Save output from "make check" rule and measure the test spew.
- # make -j${NUM_PROCESS:-$def_num_procs} check
    echo "Starting make check step"
 
    if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
 
-     make -j${NUM_PROCESS:-$def_num_procs} check 2>&1 | tee make_check_output.txt;
+   # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+   # make -j${NUM_PROCESS:-$def_num_procs} check 2>&1 | tee make_check_output.txt;
+     make -j${NUM_PROCESS} check 2>&1 | tee make_check_output.txt;
 # the pipestatus variable is an array that holds the exit status of your last foreground pipeline commands.
 # we check to see if make failes through this command
      if [ ${PIPESTATUS[0]} -ne 0 ]  ; then
@@ -370,11 +381,15 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
      grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
 
    else
-     make -j${NUM_PROCESS:-$def_num_procs} check
+   # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+   # make -j${NUM_PROCESS:-$def_num_procs} check
+     make -j${NUM_PROCESS} check
    fi
 
-# Liao, 7/8/2010
-   make -j${NUM_PROCESS:-$def_num_procs} install
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # Liao, 7/8/2010
+ # make -j${NUM_PROCESS:-$def_num_procs} install
+   make -j${NUM_PROCESS} install
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make check'  , aborting..."
@@ -409,7 +424,9 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    start_time_make_distcheck_seconds="$(date +%s)"
 
  # FIXME
-   make -j${NUM_PROCESS:-$def_num_procs} distcheck
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # make -j${NUM_PROCESS:-$def_num_procs} distcheck
+   make -j${NUM_PROCESS} distcheck
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
@@ -427,7 +444,11 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # make distcheck" rule just run (before this step).  This "make install" rule runs in a few seconds and is
  # not a bottleneck to the Hudson tests.
    echo "Starting make install step (so we can save a installed copy for secondary tests)"
-   make -j${NUM_PROCESS:-$def_num_procs} install
+
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # make -j${NUM_PROCESS:-$def_num_procs} install
+   make -j${NUM_PROCESS} install
+
    echo "Done with make install step (so we can save a installed copy for secondary tests)"
 
    end_time_make_distcheck_seconds="$(date +%s)"
@@ -461,8 +482,10 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
 
    start_time_make_docs_seconds="$(date +%s)"
 
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
  # FIXME
-   make -j${NUM_PROCESS:-$def_num_procs} docs
+ # make -j${NUM_PROCESS:-$def_num_procs} docs
+   make -j${NUM_PROCESS} docs
  # sleep 5
 
    if [ $? -ne 0 ]  ; then

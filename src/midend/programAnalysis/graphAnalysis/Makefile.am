@@ -10,11 +10,15 @@ noinst_LTLIBRARIES = libSB_GraphAnalysis.la
 
 sourse_files = \
    $(srcdir)/CallGraphAnalysis.C \
-   $(srcdir)/RoseBin_DotGraph.cpp \
-   $(srcdir)/RoseBin_Graph.cpp \
-   $(srcdir)/RoseBin_GmlGraph.cpp \
    $(srcdir)/SB_Graph.C \
    $(srcdir)/RoseSrc_CallGraphAnalysis.C 
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   sourse_files += \
+      $(srcdir)/RoseBin_DotGraph.cpp \
+      $(srcdir)/RoseBin_Graph.cpp \
+      $(srcdir)/RoseBin_GmlGraph.cpp
+endif
 
 # DQ (5/2/2009): I wonder why we can't form predicates this way (does not work in Automake).
 #if ROSE_USE_NEW_GRAPH_NODES && ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY

@@ -32,6 +32,7 @@ namespace VirtualBinCFG {
         InstructionToAddressesMap  incomingEdges;
 
     public:
+
         AuxiliaryInformation() {}
         AuxiliaryInformation(SgNode* top);
 
@@ -54,7 +55,6 @@ namespace VirtualBinCFG {
                 return predsIter->second;
             }
         }
-
     };
 
     class CFGNode {

@@ -94,6 +94,28 @@ MemoryMap::Syntax::print(std::ostream &o) const
  ************************************************************************************************************************/
 
 
+// DQ (10/21/2010): Moved to source file.  In general we want function definitions 
+// to be in source files to avoid excessive compile times. This also fixes a problem 
+// on the GNU 4.3 and 4.4 compilers for "projects/haskellport".
+void*
+MemoryMap::MapElement::get_base(bool allocate_anonymous) const
+   {
+     if (anonymous)
+        {
+          if (NULL==anonymous->base)
+             {
+               ROSE_ASSERT(NULL==base);
+               base = anonymous->base = new uint8_t[get_size()];
+               memset(anonymous->base, 0, get_size());
+             }
+            else
+             {
+               ROSE_ASSERT(base==anonymous->base);
+             }
+       }
+
+     return base;
+  }
 
 rose_addr_t
 MemoryMap::MapElement::get_va_offset(rose_addr_t va) const
@@ -724,10 +746,14 @@ MemoryMap::load(const std::string &basename)
     size_t line_nalloc = 0;
     ssize_t nread;
     unsigned nlines=0;
-
     try {
+#ifndef _MSC_VER
         while (0<(nread=rose_getline(&line, &line_nalloc, f))) {
-            char *rest, *s=line;
+#else
+        while (true) { // error LNK2019: unresolved external symbol "long __cdecl rose_getline(char * *,unsigned int *,struct _iobuf *)"
+	ROSE_ASSERT(false);
+#endif
+			char *rest, *s=line;
             nlines++;
 
             /* Check for empty lines and comments */

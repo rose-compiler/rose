@@ -2,6 +2,11 @@
 #include "sage3basic.h"
 #include "CallGraphAnalysis.h"
 
+// DQ (10/21/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 using namespace std;
 
 void
@@ -12,6 +17,7 @@ SB_CallGraph::createCallGraph(SgProject* project) {
   const char* callFileNameDOT = "callgraph.dot";
   bool mergedEdges = false;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
   SgBinaryComposite* binary = isSgBinaryComposite(project->get_fileList()[0]);
   SgAsmGenericFile* file = binary != NULL ? binary->get_binaryFile() : NULL;
@@ -49,6 +55,12 @@ SB_CallGraph::createCallGraph(SgProject* project) {
 
 #endif
   }
+
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+
 
 }
 

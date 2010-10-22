@@ -76,6 +76,7 @@ typedef std::pair<rose_addr_t,rose_addr_t> ExtentPair; 		  /* Describes a part o
 class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 	public:
 		typedef std::map<rose_addr_t,rose_addr_t> super;
+
 		ExtentMap() {}
 
 		/* Modifying methods */
