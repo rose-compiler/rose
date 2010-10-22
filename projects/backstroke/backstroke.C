@@ -56,7 +56,7 @@ reverseEvents(EventProcessor* event_processor,
 
 		timer t;
 
-		cout << decl->get_definition()->get_body()->get_statements().size() << endl;
+		//cout << decl->get_definition()->get_body()->get_statements().size() << endl;
 		// Here reverse the event function into several versions.
 		output[decl] = event_processor->processEvent(decl);
 

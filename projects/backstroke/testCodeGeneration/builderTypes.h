@@ -58,7 +58,7 @@ protected:
 	//std::vector<std::pair<std::string, SgType*> > members_;
 	//std::vector<std::pair<std::string, SgExpression*> > members_;
 
-	typedef boost::tuple<std::string, SgType*, SgExpression*> MemberType;
+	typedef boost::tuple<std::string, SgType*, SgVariableDeclaration*> MemberType;
 
 	//! All data members of the state class.
 	std::vector<MemberType> members_;
@@ -75,10 +75,10 @@ public:
 	{ members_.push_back(MemberType(name, type, NULL)); }
 
 	//! Given a name, get the corresponding arrow expression.
-	SgExpression* getMemberExpression(const std::string& name) const;
+	SgExpression* buildMemberExpression(const std::string& name) const;
 
 	//! Given a type, get all corresponding members as expressions.
-	std::vector<SgExpression*> getMemberExpression(SgType* type) const;
+	std::vector<SgExpression*> buildMemberExpression(SgType* type) const;
 
 	//! Get the type of this state structure. Note that the class must be built.
 	SgType* getStateClassType() const
@@ -217,14 +217,14 @@ protected:
 	//! A state class builder to build the state class.
 	StateClassBuilder* state_builder_;
 
-	//! The initialized name of the state object parameter in event functions.
-	SgInitializedName* state_init_name_;
-
 	//! The name of the state class.
 	std::string state_name_;
 
 	//! All members in the state class.
 	std::vector<std::pair<std::string, SgType*> > state_members_;
+
+	//! The name of the state object parameter.
+	std::string state_para_name_;
 
 protected:
 	//! Set the state class's name.
@@ -257,13 +257,12 @@ public:
 	:	is_cxx_style_(is_cxx_style),
 		project_(project),
 		state_builder_(NULL),
-		state_init_name_(NULL)
+		state_para_name_("state")
 	{}
 
 	virtual ~TestCodeBuilder()
 	{
 		delete state_builder_;
-		delete state_init_name_;
 	}
 
 	//! Once all is set, call this funtion to create the test source file.
