@@ -698,7 +698,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 simple_test = test_norm.C
 
-$(simple_test):expNormTest 
+$(simple_test):expNormTest FORCE
 	@cp $(top_srcdir)/projects/backstroke/tests/expNormalizationTest/test_norm.C test_norm.C
 	./expNormTest --edg:no_warnings -c test_norm.C
 
@@ -722,11 +722,13 @@ check-local:
 clean-local:
 	rm -f *.o *.C
 
-mytest:
+mytest: FORCE
 	@$(MAKE) $(TEST_Objects)
 
-test: 
+test: FORCE
 	@$(MAKE) $(simple_test)
 
 debug:
 	libtool gdb --args ./expNormTest test.C
+
+FORCE:

@@ -17,7 +17,8 @@ EXTRA_DIST =
 
 CLEANFILES =
 
-TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test -I/opt/local/include
+TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test -I/opt/local/include \
+	-I$(top_srcdir)/projects/backstroke/testCodeGeneration/include
 
 check-local:
 #@$(MAKE) $(TEST_Objects)

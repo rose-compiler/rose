@@ -15,6 +15,17 @@ enum Color
     yellow
 };
 
+void test_while()
+{
+    while(++i)
+    {
+        if (++j)
+            continue;
+        else
+            break;
+    }
+}
+
 void test_sizeof_cast()
 {
     sizeof(i++, j++);
@@ -52,8 +63,10 @@ void test_and_or()
 {
     i || j;
     i || j++;
+    if (i || j++);
     (i, j) || k;
     i || (j, k);
+    i || (++j, ++k);
     (i ? j : k) || i;
     i || (j ? k : i);
 
@@ -77,6 +90,8 @@ void test_declaration()
     int iii(j++);
     int ii = (j, k);
     int k = j++ ? 1 : 2;
+
+    int a = (i, j), b = (i, j);
 
     if (int i = j++);
     switch(int i = j++);

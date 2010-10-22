@@ -36,11 +36,13 @@ void UnaryExpressionBuilder::build()
 				results_.push_back(buildMinusMinusOp(copyExpression(operand_), SgUnaryOp::postfix));
 			}
 		}
+#if 0
 		results_.push_back(buildUnaryExpression<SgNotOp>(copyExpression(operand_)));
 		results_.push_back(buildUnaryExpression<SgMinusOp>(copyExpression(operand_)));
 		//results_.push_back(buildUnaryExpression<SgUnaryAddOp>(copyExpression(operand_)));
 		if (isStrictIntegerType(type))
 			results_.push_back(buildUnaryExpression<SgBitComplementOp>(copyExpression(operand_)));
+#endif
 	}
 }
 

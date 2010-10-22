@@ -10,24 +10,26 @@
 namespace BackstrokeNorm
 {
 
+namespace BackstrokeNormUtility
+{
+
 using namespace std;
 using namespace boost;
 using namespace SageBuilder;
 using namespace SageInterface;
 using namespace BackstrokeUtility;
-using namespace details;
+using namespace BackstrokeNormUtility;
 
 
-void normalizeEvent(SgFunctionDefinition* func)
+void normalizeExpressions(SgNode* node)
 {
-    preprocess(func);
-
-    //Rose_STL_Container<SgNode*> exp_list = NodeQuery::querySubTree(func->get_body(), V_SgExpression, postorder);
-
     // Note that postorder traversal is required here.
-    vector<SgExpression*> exp_list = BackstrokeUtility::querySubTree<SgExpression>(func->get_body(), postorder);
+    vector<SgExpression*> exp_list = BackstrokeUtility::querySubTree<SgExpression>(node, postorder);
     foreach (SgExpression* exp, exp_list)
     {
+		// If the expression is inside of a sizeof operator, we don't normalize it.
+		if (isInSizeOfOp(exp)) continue;
+
         // First step, transform modifying expressions, like assignment, into comma expressions.
         // a += (b += c);  ==>  a += (b += c, b);
         getAndReplaceModifyingExpression(exp);
@@ -36,27 +38,31 @@ void normalizeEvent(SgFunctionDefinition* func)
         // a += (b += c, b);  ==>  b += c, a += b;
         exp = propagateCommaOpAndConditionalExp(exp);
 
-        // Finally, split those comma expressions.
+        // Split those comma expressions.
         // b += c, a += b;  ==>  b += c; a += b;
-        splitCommaOpExpIntoStmt(exp);
-    }
+		turnCommaOpExpIntoStmt(exp);
 
-    // To improve the readibility of the transformed code.
-    removeUselessBraces(func->get_body());
-    removeUselessParen(func->get_body());
-
-#if 0
-    Rose_STL_Container<SgNode*> body_list = NodeQuery::querySubTree(func->get_body(), V_SgBasicBlock);
-    foreach (SgNode* node, body_list)
-    {
-        SgBasicBlock* body = isSgBasicBlock(node);
-        removeUselessBraces(func->get_body());
+		// Turn conditional expression into if statement like:
+		// a ? b : c;  ==>  if (a) b; else c;
+		turnConditionalExpIntoStmt(exp);
     }
-#endif
 }
 
-namespace details
+
+void normalize(SgNode* node)
 {
+	// To know what thie preprocess does, please see the definition of it.
+    preprocess(node);
+
+    //Rose_STL_Container<SgNode*> exp_list = NodeQuery::querySubTree(func->get_body(), V_SgExpression, postorder);
+
+	// Normalize all expressions inside of this node.
+	normalizeExpressions(node);
+
+    // To improve the readibility of the transformed code.
+    removeUselessBraces(node);
+    removeUselessParen(node);
+}
 
 /** Get the closest basic block which contains the expression passed in. */
 SgBasicBlock* getCurrentBody(SgExpression* e)
@@ -493,12 +499,12 @@ void moveDeclarationsOut(SgNode* node)
     }
 }
 
-void preprocess(SgFunctionDefinition* func)
+void preprocess(SgNode* node)
 {
     /******************************************************************************/
     // To ensure every if, while, etc. has a basic block as its body.
     
-    vector<SgStatement*> stmt_list = BackstrokeUtility::querySubTree<SgStatement>(func->get_body());
+    vector<SgStatement*> stmt_list = BackstrokeUtility::querySubTree<SgStatement>(node);
     foreach (SgStatement* stmt, stmt_list)
     {
         ensureBasicBlockAsParent(stmt);
@@ -519,15 +525,15 @@ void preprocess(SgFunctionDefinition* func)
     // Move all declarations in condition/test/selector part in if/while/for/switch 
     // statements out to a new basic block which also contains that if/while/for/switch statement.
 
-    moveDeclarationsOut(func->get_body());
+    moveDeclarationsOut(node);
 
 
     /******************************************************************************/
-    // Transform logical and & or operators into conditional expression.
+    // Transform logical and & or operators into conditional expression if the rhs operand contains defs.
     // a && b  ==>  a ? b : false
     // a || b  ==>  a ? true : b
 
-    vector<SgAndOp*> and_exps = BackstrokeUtility::querySubTree<SgAndOp>(func->get_body());
+    vector<SgAndOp*> and_exps = BackstrokeUtility::querySubTree<SgAndOp>(node);
     foreach (SgAndOp* and_op, and_exps)
     {
         if (containsModifyingExpression(and_op->get_rhs_operand()))
@@ -540,7 +546,7 @@ void preprocess(SgFunctionDefinition* func)
         }
     }
 
-    vector<SgOrOp*> or_exps = BackstrokeUtility::querySubTree<SgOrOp>(func->get_body());
+    vector<SgOrOp*> or_exps = BackstrokeUtility::querySubTree<SgOrOp>(node);
     foreach (SgOrOp* or_op, or_exps)
     {
         if (containsModifyingExpression(or_op->get_rhs_operand()))
@@ -554,79 +560,232 @@ void preprocess(SgFunctionDefinition* func)
     }
 }
 
-/** Split a comma expression into several statements. */
-void splitCommaOpExpIntoStmt(SgExpression* exp)
+bool isInSizeOfOp(SgNode* node)
 {
-    if (SgCommaOpExp* comma_op = isSgCommaOpExp(exp))
-    {
-        SgExpression* lhs = comma_op->get_lhs_operand();
-        SgExpression* rhs = comma_op->get_rhs_operand();
-
-        //lhs->set_need_paren(false);
-        //rhs->set_need_paren(false);
-
-        SgNode* parent = comma_op->get_parent();
-
-        if (SgStatement* stmt = isSgExprStatement(parent))
-        {
-            // Note that in Rose, the condition part in if statement can be an expression statement.
-            // (a, b);  ==>  a; b;
-            if (isSgBasicBlock(stmt->get_parent()))
-            {
-                SgExprStatement* stmt1 = buildExprStatement(copyExpression(lhs));
-                SgExprStatement* stmt2 = buildExprStatement(copyExpression(rhs));
-                replaceStatement(stmt, buildBasicBlock(stmt1, stmt2), true);
-
-                splitCommaOpExpIntoStmt(stmt1->get_expression());
-                splitCommaOpExpIntoStmt(stmt2->get_expression());
-            }
-
-            // Split comma expression in if, while, switch condition or selection part.
-            // For example, if (a, b);  ==>  a; if (b);
-            
-            if (isSgIfStmt(stmt->get_parent()) ||
-                    isSgWhileStmt(stmt->get_parent()) ||
-                    isSgSwitchStatement(stmt->get_parent()))
-            {
-                SgExprStatement* new_stmt = buildExprStatement(copyExpression(lhs));
-                SgExpression* new_exp = copyExpression(rhs);
-                replaceExpression(comma_op, new_exp);
-                insertStatement(isSgStatement(stmt->get_parent()), new_stmt);
-
-                splitCommaOpExpIntoStmt(new_stmt->get_expression());
-                splitCommaOpExpIntoStmt(new_exp);
-            }
-
-            // FIXME  for???
-        }
-
-        // Split comma expression across declarations.
-        // For example, int a = (b, c);  ==>  b; int a = c;
-        if (SgAssignInitializer* ass_init = isSgAssignInitializer(parent))
-        {
-            if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(ass_init->get_parent()->get_parent()))
-            {
-                // Note that a variable declaration can appear in the condition part of if, for, etc.
-                // Here we only deal with those which are exactly in a basic block.
-                // After preprocessing, all declarations inside of if/for/etc. will be extracted out.
-                if (isSgBasicBlock(var_decl->get_parent()))
-                {
-                    SgExprStatement* exp_stmt = buildExprStatement(copyExpression(lhs));
-                    SgExpression* new_exp = copyExpression(rhs);
-                    replaceExpression(comma_op, new_exp);
-                    insertStatement(var_decl, exp_stmt);
-
-                    splitCommaOpExpIntoStmt(exp_stmt->get_expression());
-                    splitCommaOpExpIntoStmt(new_exp);
-                }
-            }
-            //FIXME other cases
-        }
-
-    }
+	while ((node = node->get_parent()))
+	{
+		if (isSgSizeOfOp(node))
+			return true;
+	}
+	return false;
 }
 
-} // namespace details
+/** Split a comma expression into several statements. */
+void turnCommaOpExpIntoStmt(SgExpression* exp)
+{
+	SgCommaOpExp* comma_op = isSgCommaOpExp(exp);
+	if (!comma_op) return;
 
-} // namespace backstroke_norm
+	SgExpression* lhs = comma_op->get_lhs_operand();
+	SgExpression* rhs = comma_op->get_rhs_operand();
+
+	//lhs->set_need_paren(false);
+	//rhs->set_need_paren(false);
+
+	SgNode* parent = comma_op->get_parent();
+
+	if (SgStatement* stmt = isSgExprStatement(parent))
+	{
+		switch (stmt->get_parent()->variantT())
+		{
+			case V_SgBasicBlock:
+			{
+				// Note that in Rose, the condition part in if statement can be an expression statement.
+				// (a, b);  ==>  a; b;
+				
+				SgExprStatement* lhs_stmt = buildExprStatement(copyExpression(lhs));
+				SgExprStatement* rhs_stmt = buildExprStatement(copyExpression(rhs));
+				SgStatement* new_stmt = buildBasicBlock(lhs_stmt, rhs_stmt);
+				replaceStatement(stmt, new_stmt, true);
+				
+				normalizeExpressions(new_stmt);
+				break;
+			}
+
+			case V_SgIfStmt:
+			case V_SgSwitchStatement:
+			{
+				// Split comma expression in if, while, switch condition or selection part.
+				// For example, if (a, b);  ==>  a; if (b);
+				
+				SgExprStatement* new_stmt = buildExprStatement(copyExpression(lhs));
+				SgExpression* new_exp = copyExpression(rhs);
+				replaceExpression(comma_op, new_exp);
+				insertStatement(isSgStatement(stmt->get_parent()), new_stmt);
+
+				normalizeExpressions(new_stmt);
+				normalizeExpressions(new_exp);
+				break;
+			}
+
+			case V_SgWhileStmt:
+			{
+				SgExprStatement* new_stmt = buildExprStatement(copyExpression(lhs));
+				SgExpression* new_exp = copyExpression(rhs);
+				replaceExpression(comma_op, new_exp);
+				insertStatement(isSgStatement(stmt->get_parent()), new_stmt);
+
+				normalizeExpressions(new_stmt);
+				normalizeExpressions(new_exp);
+
+				// FIXME!: Now it's not clear how to deal with continue in while. If it's transformed into
+				// goto, then we don't have to put the side effect in condition before continue.
+				
+				break;
+			}
+			
+			case V_SgForStatement:
+			case V_SgDoWhileStmt:
+			{
+				// FIXME  while?? do-while?? for???
+				ROSE_ASSERT(false);
+				break;
+			}
+
+			default:
+				break;
+		}
+	}
+
+	// Split comma expression across declarations.
+	// For example, int a = (b, c);  ==>  b; int a = c;
+	else if (SgAssignInitializer* ass_init = isSgAssignInitializer(parent))
+	{
+		if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(ass_init->get_parent()->get_parent()))
+		{
+			// This is very important!
+			ROSE_ASSERT(var_decl->get_variables().size() == 1);
+
+			// Note that a variable declaration can appear in the condition part of if, for, etc.
+			// Here we only deal with those which are exactly in a basic block.
+			// After preprocessing, all declarations inside of if/for/etc. will be extracted out.
+			// int i = (a, b);  ==>  a; int i = b;
+			if (isSgBasicBlock(var_decl->get_parent()))
+			{
+				SgExprStatement* new_stmt = buildExprStatement(copyExpression(lhs));
+				SgExpression* new_exp = copyExpression(rhs);
+				replaceExpression(comma_op, new_exp);
+				insertStatementBefore(var_decl, new_stmt);
+
+				normalizeExpressions(new_stmt);
+				normalizeExpressions(new_exp);
+			}
+		}
+		//FIXME other cases
+		else
+			ROSE_ASSERT(false);
+	}
+
+	else if (SgReturnStmt* return_stmt = isSgReturnStmt(parent))
+	{
+		SgExprStatement* lhs_stmt = buildExprStatement(copyExpression(lhs));
+		SgReturnStmt* rhs_stmt = buildReturnStmt(copyExpression(rhs));
+		SgStatement* new_stmt = buildBasicBlock(lhs_stmt, rhs_stmt);
+		replaceStatement(return_stmt, new_stmt, true);
+		
+		normalizeExpressions(new_stmt);
+	}
+
+	else
+	{
+		cout << parent->class_name() << ':' << get_name(parent) << endl;
+		//ROSE_ASSERT(false);
+	}
+}
+
+
+void turnConditionalExpIntoStmt(SgExpression* exp)
+{
+	SgConditionalExp* conditional_exp = isSgConditionalExp(exp);
+	if (!conditional_exp) return;
+
+	SgExpression* cond = conditional_exp->get_conditional_exp();
+	SgExpression* true_exp = conditional_exp->get_true_exp();
+	SgExpression* false_exp = conditional_exp->get_false_exp();
+
+	SgNode* parent = conditional_exp->get_parent();
+	
+	if (SgExprStatement* stmt = isSgExprStatement(parent))
+	{
+		switch (stmt->get_parent()->variantT())
+		{
+			case V_SgBasicBlock:
+			{
+				// a ? b : c  ==>  if (a) b; else c;
+				
+				SgStatement* cond_stmt = buildExprStatement(copyExpression(cond));
+				SgStatement* true_stmt = buildExprStatement(copyExpression(true_exp));
+				SgStatement* false_stmt = buildExprStatement(copyExpression(false_exp));
+				SgStatement* new_stmt = buildIfStmt(cond_stmt, true_stmt, false_stmt);
+
+				replaceStatement(stmt, new_stmt, true);
+				normalizeExpressions(new_stmt);
+				break;
+			}
+
+			default:
+				break;
+		}
+	}
+	
+	else if (SgReturnStmt* return_stmt = isSgReturnStmt(parent))
+	{
+		SgStatement* cond_stmt = buildExprStatement(copyExpression(cond));
+		SgStatement* true_stmt = buildReturnStmt(copyExpression(true_exp));
+		SgStatement* false_stmt = buildReturnStmt(copyExpression(false_exp));
+		SgStatement* new_stmt = buildIfStmt(cond_stmt, true_stmt, false_stmt);
+
+		replaceStatement(return_stmt, new_stmt, true);
+		normalizeExpressions(new_stmt);
+	}
+
+	// Split conditional expression across declarations.
+	// For example, int i = a ? b : c;  ==>  int i; a ? i = b : i = c;
+	// Note now we can only perform this transformation on scalar types!
+	else if (SgAssignInitializer* ass_init = isSgAssignInitializer(parent))
+	{
+		if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(ass_init->get_parent()->get_parent()))
+		{
+			// This is very important!
+			ROSE_ASSERT(var_decl->get_variables().size() == 1);
+
+			SgType* type = var_decl->get_variables().front()->get_type();
+			ROSE_ASSERT(isScalarType(type));
+			
+			// Note that a variable declaration can appear in the condition part of if, for, etc.
+			// Here we only deal with those which are exactly in a basic block.
+			// After preprocessing, all declarations inside of if/for/etc. will be extracted out.
+			// int i = a ? b : c;  ==>  int i; i = a ? b : c;
+			
+			if (isSgBasicBlock(var_decl->get_parent()))
+			{
+				SgExpression* new_exp =	buildBinaryExpression<SgAssignOp>(
+						buildVarRefExp(var_decl->get_variables().front()),
+						copyExpression(conditional_exp));
+				SgExprStatement* new_stmt = buildExprStatement(new_exp);
+
+				// Remove the previous initializer
+				deepDelete(var_decl->get_variables().front()->get_initializer());
+				var_decl->get_variables().front()->set_initializer(NULL);
+
+				insertStatementAfter(var_decl, new_stmt);
+				normalizeExpressions(new_stmt);
+			}
+		}
+		
+		//FIXME other cases
+		else
+			ROSE_ASSERT(false);
+	}
+
+	else
+	{
+		cout << parent->class_name() << ':' << get_name(parent) << endl;
+		//ROSE_ASSERT(false);
+	}
+}
+
+} // namespace BackstrokeNormUtility
+
+} // namespace BackstrokeNorm
 

@@ -114,13 +114,16 @@ int main(int argc, char* argv[])
 	cout << "1. Generating test code now.\n";
 
 	vector<SgFunctionDeclaration*> events;
-	//ComplexExpressionTest test(project, false);
-	BasicExpressionTest test(project, false);
+	ComplexExpressionTest test(project, false);
+	//BasicExpressionTest test(project, false);
 	test.build();
 	events = test.getAllEvents();
 
 	// Before we go forward to the next step, check the project here.
 	AstTests::runAllTests(project);
+
+	// Unparse the test code to help to find errors.
+	backend(project);
 
 	cout << "2. Reversing events now.\n";
 	

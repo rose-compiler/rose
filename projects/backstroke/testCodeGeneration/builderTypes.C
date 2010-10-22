@@ -534,9 +534,11 @@ SgStatement* TestCodeAssembler::initializeMember(SgExpression* exp)
 	// For a basic type, we initialize it with a random value now.
 	else
 	{
-		SgExpression* rand_exp = buildFunctionCallExp("rand", buildIntType());
-		SgAssignOp* init = buildBinaryExpression<SgAssignOp>(exp, rand_exp);
-		return buildExprStatement(init);
+		//SgExpression* rand_exp = buildFunctionCallExp("rand", buildIntType());
+		//SgAssignOp* init = buildBinaryExpression<SgAssignOp>(exp, rand_exp);
+		SgExpression* init_func_call = buildFunctionCallExp(
+				"initialize", buildVoidType(), buildExprListExp(exp));
+		return buildExprStatement(init_func_call);
 	}
 }
 
@@ -557,4 +559,5 @@ void TestCodeAssembler::assemble()
 	insertHeader("stdlib.h", PreprocessingInfo::after, true, global_scope);
 	insertHeader("assert.h", PreprocessingInfo::after, true, global_scope);
 	insertHeader("stdio.h", PreprocessingInfo::after, true, global_scope);
+	insertHeader("init.h", PreprocessingInfo::after, false, global_scope);
 }
