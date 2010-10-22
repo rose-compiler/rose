@@ -12,6 +12,17 @@
 
 using namespace std;
 
+
+// DQ (10/20/2010): Moved to source file to support compilation of language only mode which excludes binary analysis support.
+RoseBin_CompareAnalysis::RoseBin_CompareAnalysis(SgProject *pr, SgAsmNode* global)
+   {
+     RoseBin_support::setDebugMode(false);    
+     project = pr;
+     globalBin = global;
+     main_prolog_end=false;
+     attributeName = "rosebin_color";
+   }
+
 /****************************************************
  * create a attribute that can be passed to the
  * visualization
@@ -79,8 +90,8 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
     SgAsmExpressionPtrList exprList = opList->get_operands();
     SgAsmExpression* binExp = *(exprList.begin());
     SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp); 
-    X86RegisterClass cl = refExp->get_register_class();
-    int reg = refExp->get_register_number();
+    X86RegisterClass cl = (X86RegisterClass)refExp->get_descriptor().get_major();
+    int reg = refExp->get_descriptor().get_minor();
     if (cl == x86_regclass_gpr && reg==x86_gpr_bp) 
       isValidInstr=false;
     if (cl == x86_regclass_gpr && reg==x86_gpr_cx) 
@@ -93,8 +104,8 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
       SgAsmExpressionPtrList exprList = opList->get_operands();
       SgAsmExpression* binExp = *(exprList.begin());
       SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp); 
-      X86RegisterClass cl = refExp->get_register_class();
-      int reg = refExp->get_register_number();
+      X86RegisterClass cl = (X86RegisterClass)refExp->get_descriptor().get_major();
+      int reg = refExp->get_descriptor().get_minor();
       if (cl == x86_regclass_gpr && reg==x86_gpr_cx) 
 	isValidInstr=false;
       if (cl == x86_regclass_gpr && reg==x86_gpr_bp) {
@@ -121,8 +132,8 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
 	  SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp);
 	  if (refExp) {
 	    //ROSE_ASSERT(refExp);
-            X86RegisterClass cl = refExp->get_register_class();
-            int reg = refExp->get_register_number();
+            X86RegisterClass cl = (X86RegisterClass)refExp->get_descriptor().get_major();
+            int reg = refExp->get_descriptor().get_minor();
 	    if (iteration==0 && cl == x86_regclass_gpr && reg==x86_gpr_bp) 
 	      isMovBp0=true;
 	    if (iteration==1 && cl == x86_regclass_gpr && reg==x86_gpr_sp) 
@@ -154,8 +165,8 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
 	    SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp);
 	    SgAsmValueExpression* valExp = isSgAsmValueExpression(binExp);
 	    if (refExp && iteration==0) {
-              X86RegisterClass cl = refExp->get_register_class();
-              int reg = refExp->get_register_number();
+              X86RegisterClass cl = (X86RegisterClass)refExp->get_descriptor().get_major();
+              int reg = refExp->get_descriptor().get_minor();
 	      if (cl == x86_regclass_gpr && reg==x86_gpr_sp) 
 		isSubSp0=true;
 	    }
@@ -240,35 +251,36 @@ SgAsmValueExpression* RoseBin_CompareAnalysis::getVariableType(string val) {
  * check if binary operands are a vardecl or assignment
  ****************************************************/
 
-string RoseBin_CompareAnalysis::resolveRegister(std::pair<X86RegisterClass, int> reg) {
+string RoseBin_CompareAnalysis::resolveRegister(const RegisterDescriptor &reg) {
   string ret="reg";
-  if (reg.first == x86_regclass_segment && reg.second == x86_segreg_ss) 
+  
+  if (reg.get_major() == x86_regclass_segment && reg.get_minor() == x86_segreg_ss) 
     ret="SS";
-  if (reg.first == x86_regclass_gpr && reg.second==x86_gpr_ax) 
+  if (reg.get_major() == x86_regclass_gpr && reg.get_minor()==x86_gpr_ax) 
     ret="AX";
-  if (reg.first == x86_regclass_gpr && reg.second==x86_gpr_bx) 
+  if (reg.get_major() == x86_regclass_gpr && reg.get_minor()==x86_gpr_bx) 
     ret="BX";
-  if (reg.first == x86_regclass_gpr && reg.second==x86_gpr_cx) 
+  if (reg.get_major() == x86_regclass_gpr && reg.get_minor()==x86_gpr_cx) 
     ret="CX";
-  if (reg.first == x86_regclass_gpr && reg.second==x86_gpr_dx) 
+  if (reg.get_major() == x86_regclass_gpr && reg.get_minor()==x86_gpr_dx) 
     ret="DX";
-  if (reg.first == x86_regclass_gpr && reg.second==x86_gpr_di) 
+  if (reg.get_major() == x86_regclass_gpr && reg.get_minor()==x86_gpr_di) 
     ret="DI";
-  if (reg.first == x86_regclass_gpr && reg.second==x86_gpr_si) 
+  if (reg.get_major() == x86_regclass_gpr && reg.get_minor()==x86_gpr_si) 
     ret="SI";
-  if (reg.first == x86_regclass_gpr && reg.second==x86_gpr_sp) 
+  if (reg.get_major() == x86_regclass_gpr && reg.get_minor()==x86_gpr_sp) 
     ret="SP";
-  if (reg.first == x86_regclass_gpr && reg.second==x86_gpr_bp) 
+  if (reg.get_major() == x86_regclass_gpr && reg.get_minor()==x86_gpr_bp) 
     ret="BP";
-  if (reg.first == x86_regclass_segment && reg.second==x86_segreg_cs) 
+  if (reg.get_major() == x86_regclass_segment && reg.get_minor()==x86_segreg_cs) 
     ret="CS";
-  if (reg.first == x86_regclass_segment && reg.second==x86_segreg_ds) 
+  if (reg.get_major() == x86_regclass_segment && reg.get_minor()==x86_segreg_ds) 
     ret="DS";
-  if (reg.first == x86_regclass_segment && reg.second==x86_segreg_es) 
+  if (reg.get_major() == x86_regclass_segment && reg.get_minor()==x86_segreg_es) 
     ret="ES";
-  if (reg.first == x86_regclass_segment && reg.second==x86_segreg_fs) 
+  if (reg.get_major() == x86_regclass_segment && reg.get_minor()==x86_segreg_fs) 
     ret="FS";
-  if (reg.first == x86_regclass_segment && reg.second==x86_segreg_gs) 
+  if (reg.get_major() == x86_regclass_segment && reg.get_minor()==x86_segreg_gs) 
     ret="GS";
 
   return ret;
@@ -309,7 +321,7 @@ string RoseBin_CompareAnalysis::resolve_binaryInstruction(SgAsmInstruction* mov,
       SgAsmx86RegisterReferenceExpression* myexp = isSgAsmx86RegisterReferenceExpression(memref->get_segment());
       if (myexp) {
 	// register
-	string regName = resolveRegister(myexp->get_identifier());
+	string regName = resolveRegister(myexp->get_descriptor());
 	
 	SgAsmBinaryAdd* binAdd = isSgAsmBinaryAdd(memref->get_address());
 	if (binAdd) {
@@ -549,7 +561,8 @@ void RoseBin_CompareAnalysis::resolve_bin_vardecl_or_assignment(bool &isVarDecl0
       refExp_Left = isSgAsmx86RegisterReferenceExpression(binExp);
       if (refExp_Left ) {
 	// first operand is refExp (variabledecl || assignOp)
-	if (refExp_Left->get_register_class() == x86_regclass_segment && refExp_Left->get_register_number() == x86_segreg_ss) { 
+        if (refExp_Left->get_descriptor().get_major() == x86_regclass_segment &&
+            refExp_Left->get_descriptor().get_minor() == x86_segreg_ss) { 
 	  isVarDecl0=true;
 	  isAssign0=true;
 	}	else

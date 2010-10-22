@@ -486,6 +486,7 @@ bool x86GetKnownBranchTarget(SgAsmx86Instruction* insn, uint64_t& addr) {
   }
 }
 
+// DEPRECATED. Use stringifyX86RegisterClass(n, "x86_regclass_").c_str() instead. [RPM 2010-10-13]
 const char* regclassToString(X86RegisterClass n) {
   static const char* names[] = {"unknown", "gpr", "segment", "cr", "dr", "st", "mm", "xmm", "ip", "st_top", "flags"};
   ROSE_ASSERT ((int)n >= 0 && (int)n <= 10);

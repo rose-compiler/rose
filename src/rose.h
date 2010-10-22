@@ -125,12 +125,9 @@ namespace ELF{
 
 #include "AST_BIN_Traversal.h"
 
-#include "AssemblerX86Init.h"
-#include "x86InstructionEnum.h"
+#include "InstructionEnumsX86.h"
 #include "x86InstructionProperties.h"
-
 #include "armInstructionEnum.h"
-
 #include "powerpcInstructionEnum.h"
 #include "powerpcInstructionProperties.h"
 
@@ -178,9 +175,6 @@ namespace ELF{
 
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
 #define COMPILE_DEBUG_STATEMENTS 1
-
-// Endian access wrappers in src/frontend/SageIII/sageInterface
-//#include "endianWrappers.h"
 
 // ifndef ROSE_H
 #endif

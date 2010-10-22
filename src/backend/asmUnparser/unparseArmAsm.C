@@ -1,68 +1,40 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-
+#include "stringify.h"
 #include "AsmUnparser_compat.h"
 
-static std::string unparseArmRegister(
-         SgAsmArmRegisterReferenceExpression::arm_register_enum code) {
-  int c = (int)code;
-  if (c >= SgAsmArmRegisterReferenceExpression::reg0 && c <= SgAsmArmRegisterReferenceExpression::reg15) {
-    return "r" + StringUtility::numberToString(c - SgAsmArmRegisterReferenceExpression::reg0);
-  } else if (c == SgAsmArmRegisterReferenceExpression::cpsr) {
-    return "cpsr";
-  } else if (c == SgAsmArmRegisterReferenceExpression::spsr) {
-    return "spsr";
-  } else if (c >= SgAsmArmRegisterReferenceExpression::cpsr_fields && c <= SgAsmArmRegisterReferenceExpression::cpsr_fields + 15) {
-    std::string result = "cpsr_";
-    uint8_t fields = c - SgAsmArmRegisterReferenceExpression::cpsr_fields;
-    if (fields & 1) result += 'c';
-    if (fields & 2) result += 'x';
-    if (fields & 4) result += 's';
-    if (fields & 8) result += 'f';
-    return result;
-  } else if (c >= SgAsmArmRegisterReferenceExpression::spsr_fields && c <= SgAsmArmRegisterReferenceExpression::spsr_fields + 15) {
-    std::string result = "spsr_";
-    uint8_t fields = c - SgAsmArmRegisterReferenceExpression::spsr_fields;
-    if (fields & 1) result += 'c';
-    if (fields & 2) result += 'x';
-    if (fields & 4) result += 's';
-    if (fields & 8) result += 'f';
-    return result;
-  } else {
-    ROSE_ASSERT (!"Bad ARM register");
+static std::string unparseArmRegister(SgAsmArmRegisterReferenceExpression *reg) {
+    const RegisterDescriptor &rdesc = reg->get_descriptor();
+    const RegisterDictionary *dict = RegisterDictionary::dictionary_arm7();
+    
+    std::string name = dict->lookup(rdesc);
+    if (name.empty()) {
+        std::cerr <<"unparseArmRegister(" <<rdesc <<"): register descriptor not found in dictionary.\n";
+        // std::cerr <<dict;
+        ROSE_ASSERT(!"register descriptor not found in dictionary");
+    }
 
- // DQ (11/28/2009): MSVC warns about a path that does not have a return stmt.
-    return "error in unparseArmRegister";
-  }
+    /* Add mask letters to program status registers */
+    if (rdesc.get_major()==arm_regclass_psr && reg->get_psr_mask()!=0) {
+        name += "_";
+        if (reg->get_psr_mask() & 1) name += "c";
+        if (reg->get_psr_mask() & 2) name += "x";
+        if (reg->get_psr_mask() & 4) name += "s";
+        if (reg->get_psr_mask() & 8) name += "f";
+    }
+
+    return name;
 }
 
 static std::string unparseArmCondition(ArmInstructionCondition cond) { // Unparse as used for mnemonics
-  switch (cond) {
-    case arm_cond_unknown: return "***UNKNOWN***";
-    case arm_cond_eq: return "eq";
-    case arm_cond_ne: return "ne";
-    case arm_cond_hs: return "hs";
-    case arm_cond_lo: return "lo";
-    case arm_cond_mi: return "mi";
-    case arm_cond_pl: return "pl";
-    case arm_cond_vs: return "vs";
-    case arm_cond_vc: return "vc";
-    case arm_cond_hi: return "hi";
-    case arm_cond_ls: return "ls";
-    case arm_cond_ge: return "ge";
-    case arm_cond_lt: return "lt";
-    case arm_cond_gt: return "gt";
-    case arm_cond_le: return "le";
-    case arm_cond_al: return "";
-    case arm_cond_nv: return "nv";
+#ifndef _MSC_VER
+    std::string retval = stringifyArmInstructionCondition(cond, "arm_cond_");
+#else
+	ROSE_ASSERT(false);
+	std::string retval ="";
+#endif
 
-    default:
-      {
-        ROSE_ASSERT (false);
-        // DQ (11/28/2009): MSVC warns about a path that does not have a return stmt.
-        return "error in unparseArmRegister";
-      }
-  }
+	ROSE_ASSERT(retval[0]!='(');
+    return retval;
 }
 
 static std::string unparseArmSign(ArmSignForExpressionUnparsing sign) {
@@ -75,7 +47,7 @@ static std::string unparseArmSign(ArmSignForExpressionUnparsing sign) {
       {
         ROSE_ASSERT (false);
         // DQ (11/28/2009): MSVC warns about a path that does not have a return stmt.
-        return "error in unparseArmRegister";
+        return "error in unparseArmSign";
       }
   }
 }
@@ -215,7 +187,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
         }
 
         case V_SgAsmArmRegisterReferenceExpression:
-            result += unparseArmRegister(isSgAsmArmRegisterReferenceExpression(expr)->get_arm_register_code());
+            result += unparseArmRegister(isSgAsmArmRegisterReferenceExpression(expr));
             break;
         case V_SgAsmByteValueExpression:
         case V_SgAsmWordValueExpression:

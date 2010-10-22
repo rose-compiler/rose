@@ -13,7 +13,7 @@
 class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
  private:
 
-   rose_hash::unordered_map <uint64_t, uint64_t> memory;
+  rose_hash::unordered_map <uint64_t, uint64_t> memory;
 
   uint64_t  rax;
   uint64_t  rbx;
@@ -35,7 +35,7 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
 
 
   void assignRegister(std::pair<X86RegisterClass, int>  code,
-		      X86PositionInRegister pos,
+		      RoseBin_support::X86PositionInRegister pos,
 		      uint8_t &b_val,
 		      uint16_t &w_val,
 		      uint32_t &dw_val,
@@ -61,14 +61,14 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
 
 
   void getRegister_val(std::pair<X86RegisterClass, int>  code,
-                       X86PositionInRegister pos,
+                       RoseBin_support::X86PositionInRegister pos,
                        uint8_t &b_val,
                        uint16_t &w_val,
                        uint32_t &dw_val,
                        uint64_t &qw_val);
 
   void getRegister_val(std::pair<X86RegisterClass, int>  code,
-                       X86PositionInRegister pos,
+                       RoseBin_support::X86PositionInRegister pos,
                        uint64_t &qw_val);
 
 

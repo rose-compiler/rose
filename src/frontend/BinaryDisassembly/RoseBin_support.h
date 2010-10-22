@@ -27,24 +27,27 @@
 #include "x86InstructionProperties.h"
 
 namespace RoseBin_Def {
- enum RoseLanguage {
+ enum RoseLanguage 
+ {
     none,
     x86,
     arm
- };
+ } ;
  extern RoseLanguage RoseAssemblyLanguage;
 }
 
 namespace RoseBin_OS {
- enum OSSYSTEM {
+ enum OSSYSTEM 
+ {
     linux_op,
     windows_op
- };
+ } ;
  extern OSSYSTEM os_sys;
 }
 
 namespace RoseBin_Arch {
- enum Architecture {
+ enum Architecture 
+ {
     bit32,
     bit64
  };
@@ -52,7 +55,8 @@ namespace RoseBin_Arch {
 }
 
 namespace RoseBin_OS_VER {
- enum OS_VERSION {
+ enum OS_VERSION 
+ {
     linux_22,
     linux_24,
     linux_26,
@@ -70,14 +74,15 @@ namespace RoseBin_OS_VER {
     WinXP_SP1,
     WinXP_SP2,
     WinVista_SP0
- };
+ } ;
  extern OS_VERSION os_ver;
 }
 
 
 namespace RoseBin_DataTypes {
 
- enum DataTypes {
+ enum DataTypes 
+ {
     unknown,
     d_none,
     d_int,
@@ -90,7 +95,7 @@ namespace RoseBin_DataTypes {
     d_uint_p,
     d_long,
     d_array
- };
+ } ;
 
 
  extern DataTypes Rose_Data;
@@ -154,6 +159,29 @@ class RoseBin_support {
    static bool db;
 
  public:
+   /* This enum used to be defined as part of x86InstructionEnum.h, but we don't represent registers this way anymore. The
+    * new representation uses the RegisterDescriptor type, which includes separate offset and size values rather than using a
+    * single enum to represent both.  I've moved the definition here because it seems to be used quite extensively by the
+    * various RoseBin_* classes. This also changes the name from X86PositionInRegister so it's not accidently used elsewhere.
+    *
+    * Also, RoseBin seems to have a large body of code that deals with converting between various enumeration constants (like
+    * X86RegisterClass and X86PositionInRegister) and integers. This is probably no longer necessary. An alternative approach is
+    * to use the RegisterDictionary class lookup methods.  This would also make RoseBin less dependent on actual architectures
+    * since RegisterDictionary generalizes most aspects of register descriptions.
+    *
+    * [RPM 2010-10-12] */
+   enum X86PositionInRegister 
+   {
+     x86_regpos_unknown, /*!< unknown (error or unitialized value) */
+     x86_regpos_low_byte, /*!< 1st byte of register (bits 0-7), only for GPRs */
+     x86_regpos_high_byte, /*!< 2nd byte of register (bits 8-15), only for ax,bx,cx,dx */
+     x86_regpos_word, /*!< 16 bit part of register, only for GPRs, CR0, CR8? */
+     x86_regpos_dword, /*!< lower 32 bit part of register, only for GPRs */
+     x86_regpos_qword, /*!< lower 64 bit part of register, only for GPRs */
+     x86_regpos_all /*!< the full register is used (default value), only value allowed for segregs and st */
+   };
+
+
    static std::string getTypeName(RoseBin_DataTypes::DataTypes t);
 
 

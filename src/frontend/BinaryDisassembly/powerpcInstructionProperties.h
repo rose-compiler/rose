@@ -6,7 +6,6 @@
 
 class SgAsmPowerpcInstruction;
 
-const char* regclassToString(PowerpcRegisterClass n);
 const char* sprToString(PowerpcSpecialPurposeRegister n);
 const char* tbrToString(PowerpcTimeBaseRegister n);
 

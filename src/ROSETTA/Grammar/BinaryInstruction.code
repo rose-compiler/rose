@@ -7,7 +7,7 @@
 
 
 HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_START
-#include "x86InstructionEnum.h"
+#include "InstructionEnumsX86.h" /* register numbers, instruction size, etc. */
 HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_END
 
 HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION_START
@@ -45,6 +45,7 @@ HEADER_BINARY_END
 
 HEADER_INTERPRETATION_START
      public:
+       // DQ (10/20/2010): This section does not have a source code block for ROSETTA to put the function definition.
           SgAsmInterpretation()
              : p_map(NULL), coverageComputed(false), percentageCoverage(0.0), p_dwarf_info(NULL), p_headers(NULL), p_global_block(NULL) 
              {
@@ -869,12 +870,8 @@ HEADER_GENERIC_SECTION_START
 			SP_OTHER                	/* File-specified purpose other than any given in this enum */
 		};
 
-		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
-			: local_data_pool(0), p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()),
-			p_file_alignment(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
-			p_mapped_preferred_rva(0), p_mapped_size(0), p_mapped_alignment(0), p_mapped_rperm(false),
-			p_mapped_wperm(false), p_mapped_xperm(false), p_contains_code(false), p_mapped_actual_va(0)
-			{ctor(f, fhdr);}
+   // DQ (10/20/2010): Moved this function's definition to the source file.
+      SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr);
 
 		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
 		virtual ~SgAsmGenericSection();
@@ -882,7 +879,10 @@ HEADER_GENERIC_SECTION_START
 		static void dump_containing_sections(FILE *f, const std::string &prefix, rose_rva_t rva,
 			const SgAsmGenericSectionPtrList&);
 		void grab_content();
-		virtual SgAsmGenericSection* parse() {grab_content(); return this;}
+
+   // DQ (10/20/2010): Moved this function's definition to the source file.
+      virtual SgAsmGenericSection* parse();
+
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual bool reallocate() {return false;}
 		virtual void unparse(std::ostream&) const;
@@ -970,14 +970,13 @@ HEADER_GENERIC_HEADER_START
 	public:
           	explicit SgAsmGenericHeader(SgAsmGenericFile *ef)
 			: SgAsmGenericSection(ef, NULL),
-			p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_symbols(NULL), p_sections(NULL)
+			p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_sections(NULL)
 			{ctor();}
 
 		virtual ~SgAsmGenericHeader();
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
 		// DQ (8/8/2008): We can't make this pure virtual since then we can't allocate this class.
 		// virtual const char *format_name() = 0;
 		virtual const char *format_name() const;
@@ -988,10 +987,6 @@ HEADER_GENERIC_HEADER_START
 		        ROSE_ASSERT(p_dlls != NULL);
 			return p_dlls->get_dlls();
 		}
-
-		/* Functions for symbols */
-		void add_symbol(SgAsmGenericSymbol*); /* add a new symbol to the symbol table. Duplicates are allowed. */
-		SgAsmGenericSymbolPtrList& get_symbol_list();
 
 		/* Accessors for protected/private members */
 		std::vector<unsigned char>& get_magic() {return p_magic;}
@@ -1030,10 +1025,12 @@ HEADER_GENERIC_HEADER_END
 
 HEADER_GENERIC_FILE_START
 	public:
+   // DQ (10/20/2010): This section does not have a source code block for ROSETTA to put the function definition.
 		SgAsmGenericFile()
 			: p_unreferenced_cache(NULL), p_data_converter(NULL),p_fd(-1), p_headers(NULL), p_holes(NULL),
 			  p_truncate_zeros(false), p_tracking_references(true)
 			{ctor();}
+
 		virtual ~SgAsmGenericFile();				/* Destructor deletes children and unmaps/closes file */
 		SgAsmGenericFile* parse(std::string file_name);		/* Attach an existing file for parsing */
 		void reallocate();					/* Make consistent before calling unparse */
@@ -1183,10 +1180,8 @@ HEADER_GENERIC_SYMBOL_START
 		};
 
 
-		SgAsmGenericSymbol()
-			: p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0),
-			p_bound(NULL), p_name(NULL)
-			{ctor();}
+   // DQ (10/20/2010): Moved this function's definition to the source file.
+      SgAsmGenericSymbol();
 
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		std::string stringifyDefState() const;
@@ -1246,8 +1241,8 @@ HEADER_STRING_STORAGE_START
      public:
           SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, rose_addr_t offset)
              : p_strtab(strtab), p_string(string), p_offset(offset) {}
-          void dump(FILE *s, const char *prefix, ssize_t idx) const;
 
+          void dump(FILE *s, const char *prefix, ssize_t idx) const;
        /* Accessors. The set_* accessors are private because we don't want anyone messing with them. These data members are used
         * to control string allocation in ELF string tables and must only be modified by allocators in closely related classes.
         * For instance, to change the value of the string one should call SgAsmGenericString::set_string() instead. */
@@ -1412,7 +1407,6 @@ HEADER_ELF_HEADER_START
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
 		virtual const char *format_name() const;
 		static bool is_ELF(SgAsmGenericFile*);
 		SgAsmGenericSectionPtrList get_sectab_sections();
@@ -1554,10 +1548,8 @@ HEADER_ELF_SECTION_TABLE_ENTRY_END
 
 HEADER_ELF_SECTION_START
 	public:
-		explicit SgAsmElfSection(SgAsmGenericHeader *fhdr)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr),
-			p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(NULL)
-			{ctor();}
+   // DQ (10/20/2010): Moved this function's definition to the source file.
+      explicit SgAsmElfSection(SgAsmGenericHeader *fhdr);
 
 		SgAsmElfSection *init_from_section_table(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
 		SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false);
@@ -1645,6 +1637,8 @@ HEADER_ELF_STRING_SECTION_END
 
 HEADER_ELF_RELOC_SECTION_START
 	public:
+
+   // DQ (10/20/2010): This function definition can't be move since there is not SOURCE block for ROSETTA to use.
 		SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr, SgAsmElfSymbolSection *symsec,SgAsmElfSection* targetsec)
 			: SgAsmElfSection(fhdr)
 			{ctor(symsec,targetsec);}
@@ -1666,72 +1660,68 @@ HEADER_ELF_RELOC_ENTRY_START
 		/** Relocation Type (host order).  All other values are reserved. */
 		enum RelocType{
 			/** Intel 80386 specific definitions.  */
-			R_386_NONE	   =0,		/**< No reloc */
-			R_386_32	   =1,		/**< Direct 32 bit  */
-			R_386_PC32	   =2,		/**< PC relative 32 bit */
-			R_386_GOT32	   =3,		/**< 32 bit GOT entry */
-			R_386_PLT32	   =4,		/**< 32 bit PLT address */
-			R_386_COPY	   =5,		/**< Copy symbol at runtime */
-			R_386_GLOB_DAT	   =6,		/**< Create GOT entry */
-			R_386_JMP_SLOT	   =7,		/**< Create PLT entry */
-			R_386_RELATIVE	   =8,		/**< Adjust by program base */
-			R_386_GOTOFF	   =9,		/**< 32 bit offset to GOT */
-			R_386_GOTPC	   =10,		/**< 32 bit PC relative offset to GOT */
+			R_386_NONE	   =0,	/**< No reloc */
+			R_386_32	   =1,	/**< Direct 32 bit  */
+			R_386_PC32	   =2,	/**< PC relative 32 bit */
+			R_386_GOT32	   =3,	/**< 32 bit GOT entry */
+			R_386_PLT32	   =4,	/**< 32 bit PLT address */
+			R_386_COPY	   =5,	/**< Copy symbol at runtime */
+			R_386_GLOB_DAT	   =6,	/**< Create GOT entry */
+			R_386_JMP_SLOT	   =7,	/**< Create PLT entry */
+			R_386_RELATIVE	   =8,	/**< Adjust by program base */
+			R_386_GOTOFF	   =9,	/**< 32 bit offset to GOT */
+			R_386_GOTPC	   =10,	/**< 32 bit PC relative offset to GOT */
 			R_386_32PLT	   =11,
-			R_386_TLS_TPOFF    =14,		/**< Offset in static TLS block */
-			R_386_TLS_IE       =15,		/**< Address of GOT entry for static TLS block offset */
-			R_386_TLS_GOTIE    =16,		/**< GOT entry for static TLS block offset */
-			R_386_TLS_LE	   =17,		/**< Offset relative to static TLS block */
-			R_386_TLS_GD	   =18,		/**< Direct 32 bit for GNU version of general dynamic thread local data */
-			R_386_TLS_LDM	   =19,		/**< Direct 32 bit for GNU version of local dynamic thread local data in LE code */
+			R_386_TLS_TPOFF    =14,	/**< Offset in static TLS block */
+			R_386_TLS_IE       =15,	/**< Address of GOT entry for static TLS block offset */
+			R_386_TLS_GOTIE    =16,	/**< GOT entry for static TLS block offset */
+			R_386_TLS_LE	   =17,	/**< Offset relative to static TLS block */
+			R_386_TLS_GD	   =18,	/**< Direct 32 bit for GNU version of general dynamic thread local data */
+			R_386_TLS_LDM	   =19,	/**< Direct 32 bit for GNU version of local dynamic thread local data in LE code */
 			R_386_16	   =20,
 			R_386_PC16	   =21,
 			R_386_8	           =22,
 			R_386_PC8	   =23,
-			R_386_TLS_GD_32    =24,		/**< Direct 32 bit for general dynamic thread local data */
-			R_386_TLS_GD_PUSH  =25,		/**< Tag for pushl in GD TLS code */
-			R_386_TLS_GD_CALL  =26,		/**< Relocation for call to __tls_get_addr() */
-			R_386_TLS_GD_POP   =27,		/**< Tag for popl in GD TLS code */
-			R_386_TLS_LDM_32   =28,		/**< Direct 32 bit for local dynamic thread local data in LE code */
-			R_386_TLS_LDM_PUSH =29,		/**< Tag for pushl in LDM TLS code */
-			R_386_TLS_LDM_CALL =30,		/**< Relocation for call to __tls_get_addr() in LDM code */
-			R_386_TLS_LDM_POP  =31,		/**< Tag for popl in LDM TLS code */
-			R_386_TLS_LDO_32   =32,		/**< Offset relative to TLS block */
-			R_386_TLS_IE_32    =33,		/**< GOT entry for negated static TLS block offset */
-			R_386_TLS_LE_32    =34,		/**< Negated offset relative to static TLS block */
-			R_386_TLS_DTPMOD32 =35,		/**< ID of module containing symbol */
-			R_386_TLS_DTPOFF32 =36,		/**< Offset in TLS block */
-			R_386_TLS_TPOFF32  =37,		/**< Negated offset in static TLS block */
-			/* This the last entry for x86  */
-			R_386_NUM	   =38,
+			R_386_TLS_GD_32    =24,	/**< Direct 32 bit for general dynamic thread local data */
+			R_386_TLS_GD_PUSH  =25,	/**< Tag for pushl in GD TLS code */
+			R_386_TLS_GD_CALL  =26,	/**< Relocation for call to __tls_get_addr() */
+			R_386_TLS_GD_POP   =27,	/**< Tag for popl in GD TLS code */
+			R_386_TLS_LDM_32   =28,	/**< Direct 32 bit for local dynamic thread local data in LE code */
+			R_386_TLS_LDM_PUSH =29,	/**< Tag for pushl in LDM TLS code */
+			R_386_TLS_LDM_CALL =30,	/**< Relocation for call to __tls_get_addr() in LDM code */
+			R_386_TLS_LDM_POP  =31,	/**< Tag for popl in LDM TLS code */
+			R_386_TLS_LDO_32   =32,	/**< Offset relative to TLS block */
+			R_386_TLS_IE_32    =33,	/**< GOT entry for negated static TLS block offset */
+			R_386_TLS_LE_32    =34,	/**< Negated offset relative to static TLS block */
+			R_386_TLS_DTPMOD32 =35,	/**< ID of module containing symbol */
+			R_386_TLS_DTPOFF32 =36,	/**< Offset in TLS block */
+			R_386_TLS_TPOFF32  =37,	/**< Negated offset in static TLS block */
 
 	                /** First Entry for X86-64 */
-			R_X86_64_NONE     =0,		/**<  No reloc */
-			R_X86_64_64       =1,		/**<  Direct 64 bit  */
-			R_X86_64_PC32     =2,		/**<  PC relative 32 bit signed */
-			R_X86_64_GOT32    =3,		/**<  32 bit GOT entry */
-			R_X86_64_PLT32    =4,		/**<  32 bit PLT address */
-			R_X86_64_COPY     =5,		/**<  Copy symbol at runtime */
-			R_X86_64_GLOB_DAT =6,		/**<  Create GOT entry */
-			R_X86_64_JUMP_SLOT=7,		/**<  Create PLT entry */
-			R_X86_64_RELATIVE =8,		/**<  Adjust by program base */
-			R_X86_64_GOTPCREL =9,		/**<  32 bit signed PC relative offset to GOT */
-			R_X86_64_32       =10,		/**<  Direct 32 bit zero extended */
-			R_X86_64_32S      =11,		/**<  Direct 32 bit sign extended */
-			R_X86_64_16       =12,		/**<  Direct 16 bit zero extended */
-			R_X86_64_PC16     =13,		/**<  16 bit sign extended pc relative */
-			R_X86_64_8        =14,		/**<  Direct 8 bit sign extended  */
-			R_X86_64_PC8      =15,		/**<  8 bit sign extended pc relative */
-			R_X86_64_DTPMOD64 =16,		/**<  ID of module containing symbol */
-			R_X86_64_DTPOFF64 =17,		/**<  Offset in module's TLS block */
-			R_X86_64_TPOFF64  =18,		/**<  Offset in initial TLS block */
-			R_X86_64_TLSGD    =19,		/**<  32 bit signed PC relative offset to two GOT entries for GD symbol */
-			R_X86_64_TLSLD    =20,		/**<  32 bit signed PC relative offset to two GOT entries for LD symbol */
-			R_X86_64_DTPOFF32 =21,		/**<  Offset in TLS block */
-			R_X86_64_GOTTPOFF =22,		/**<  32 bit signed PC relative offset to GOT entry for IE symbol */
-			R_X86_64_TPOFF32  =23,		/**<  Offset in initial TLS block */
-
-			R_X86_64_NUM      =24
+			R_X86_64_NONE     =100,	/**<  No reloc */
+			R_X86_64_64       =101,	/**<  Direct 64 bit  */
+			R_X86_64_PC32     =102,	/**<  PC relative 32 bit signed */
+			R_X86_64_GOT32    =103,	/**<  32 bit GOT entry */
+			R_X86_64_PLT32    =104,	/**<  32 bit PLT address */
+			R_X86_64_COPY     =105,	/**<  Copy symbol at runtime */
+			R_X86_64_GLOB_DAT =106,	/**<  Create GOT entry */
+			R_X86_64_JUMP_SLOT=107,	/**<  Create PLT entry */
+			R_X86_64_RELATIVE =108,	/**<  Adjust by program base */
+			R_X86_64_GOTPCREL =109,	/**<  32 bit signed PC relative offset to GOT */
+			R_X86_64_32       =110,	/**<  Direct 32 bit zero extended */
+			R_X86_64_32S      =111,	/**<  Direct 32 bit sign extended */
+			R_X86_64_16       =112,	/**<  Direct 16 bit zero extended */
+			R_X86_64_PC16     =113,	/**<  16 bit sign extended pc relative */
+			R_X86_64_8        =114,	/**<  Direct 8 bit sign extended  */
+			R_X86_64_PC8      =115,	/**<  8 bit sign extended pc relative */
+			R_X86_64_DTPMOD64 =116,	/**<  ID of module containing symbol */
+			R_X86_64_DTPOFF64 =117,	/**<  Offset in module's TLS block */
+			R_X86_64_TPOFF64  =118,	/**<  Offset in initial TLS block */
+			R_X86_64_TLSGD    =119,	/**<  32 bit signed PC relative offset to two GOT entries for GD symbol */
+			R_X86_64_TLSLD    =120,	/**<  32 bit signed PC relative offset to two GOT entries for LD symbol */
+			R_X86_64_DTPOFF32 =121,	/**<  Offset in TLS block */
+			R_X86_64_GOTTPOFF =122,	/**<  32 bit signed PC relative offset to GOT entry for IE symbol */
+			R_X86_64_TPOFF32  =123,	/**<  Offset in initial TLS block */
 		};
 
 #ifdef _MSC_VER
@@ -1793,7 +1783,7 @@ HEADER_ELF_RELOC_ENTRY_START
 		void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const
 			{dump(f, prefix, idx, NULL);}
-		static std::string to_string(RelocType,InsSetArchitecture);
+		std::string reloc_name() const;
 	private:
 		void ctor(SgAsmElfRelocSection*);
 
@@ -1808,6 +1798,7 @@ HEADER_ELF_DYNAMIC_SECTION_START
 			{ctor(strsec);}
 		virtual SgAsmElfDynamicSection* parse();
 		virtual void finish_parsing();
+
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
@@ -1925,7 +1916,6 @@ HEADER_ELF_DYNAMIC_ENTRY_START
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
 	        static std::string to_string(SgAsmElfDynamicEntry::EntryType);
 		/*Override ROSETTA because set_name() needs to adjust parent pointer*/
 		SgAsmGenericString *get_name() const {return p_name;}
@@ -1992,7 +1982,9 @@ HEADER_ELF_EH_FRAME_ENTRY_CI_START
 			p_lsda_encoding(-1), p_prh_encoding(-1), p_prh_arg(0), p_prh_addr(0), p_addr_encoding(-1),
 			p_fd_entries(NULL)
 			{ctor(ehframe);}
+
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
 		std::string unparse(const SgAsmElfEHFrameSection*) const;
 	private:
 		void ctor(SgAsmElfEHFrameSection*);
@@ -2005,6 +1997,7 @@ HEADER_ELF_EH_FRAME_ENTRY_FD_START
 		explicit SgAsmElfEHFrameEntryFD(SgAsmElfEHFrameEntryCI *cie)
 			: p_size(0)
 			{ctor(cie);}
+
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		std::string unparse(const SgAsmElfEHFrameSection*, SgAsmElfEHFrameEntryCI*) const;
 	private:
@@ -2033,7 +2026,9 @@ HEADER_ELF_SYMVER_ENTRY_START
 		explicit SgAsmElfSymverEntry(SgAsmElfSymverSection *symver)
 		        : p_value(0)
 			{ctor(symver);}
+
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+
 	private:
 		void ctor(SgAsmElfSymverSection*);
 HEADER_ELF_SYMVER_ENTRY_END
@@ -2113,7 +2108,6 @@ HEADER_ELF_SYMVER_DEFINED_AUX_START
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
 	private:
 	        void ctor(SgAsmElfSymverDefinedEntry*,SgAsmElfSymverDefinedSection *symver_def_sec);
 HEADER_ELF_SYMVER_DEFINED_AUX_END
@@ -2162,7 +2156,6 @@ HEADER_ELF_SYMVER_NEEDED_ENTRY_START
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
 	private:
 		void ctor(SgAsmElfSymverNeededSection*);
 HEADER_ELF_SYMVER_NEEDED_ENTRY_END
@@ -2197,7 +2190,6 @@ HEADER_ELF_SYMVER_NEEDED_AUX_START
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
 	private:
 	        void ctor(SgAsmElfSymverNeededEntry*,SgAsmElfSymverNeededSection*);
 HEADER_ELF_SYMVER_NEEDED_AUX_END
@@ -2755,7 +2747,9 @@ HEADER_PE_EXPORT_DIRECTORY_START
 
 		explicit SgAsmPEExportDirectory(SgAsmPEExportSection *s)
 			{ctor(s);}
+
 		void dump(FILE *f, const char *prefix, ssize_t idx) const;
+
 	private:
 		void ctor(SgAsmPEExportSection*);
 HEADER_PE_EXPORT_DIRECTORY_END
@@ -2769,7 +2763,6 @@ HEADER_PE_EXPORT_ENTRY_START
 			{ctor(name, ordinal, export_rva, forwarder);}
 
 		void dump(FILE *f,const char *prefix,ssize_t idx) const;
-
 		/* Accessors. Override ROSETTA because we adjust parents. */
 		SgAsmGenericString *get_name() const {return p_name;}
 		void set_name(SgAsmGenericString*);
@@ -2952,7 +2945,6 @@ HEADER_PE_COFF_SYMBOL_START
        // virtual ~COFFSymbol() {}
           void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
           virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
        /* Auxilliary data for the symbol */
        // const unsigned char *get_aux_data() {return aux_data;}
        // size_t get_aux_size() {return aux_size;}
@@ -2993,7 +2985,7 @@ HEADER_PE_STRING_SECTION_START
 		virtual bool reallocate();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual void set_size(addr_t newsize);
-	        virtual void unparse(std::ostream&) const;
+	   virtual void unparse(std::ostream&) const;
 	private:
 		void ctor();
 HEADER_PE_STRING_SECTION_END
@@ -3091,7 +3083,6 @@ HEADER_NE_FILE_HEADER_START
           virtual void unparse(std::ostream&) const;
           virtual const char *format_name() const {return "NE";}
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
      private:
           void ctor(SgAsmGenericFile *f, addr_t offset);
           void *encode(SgAsmNEFileHeader::NEFileHeader_disk*) const;
@@ -3107,7 +3098,6 @@ HEADER_NE_SECTION_START
 
           virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
        /* Accessors for protected/private data */
        // NESectionTableEntry *get_st_entry() {return st_entry;}
        // void set_st_entry(NESectionTableEntry *e) {st_entry=e;}
@@ -3213,7 +3203,6 @@ HEADER_NE_ENTRY_POINT_START
           SgAsmNEEntryPoint(SgAsmNEEntryPoint::NEEntryFlags flags, unsigned int3f, unsigned s_idx, unsigned s_off);
 
           void dump(FILE*, const char *prefix, ssize_t idx) const;
-
        // NEEntryFlags flags;         /* bit flags */
        // unsigned int3f;             /* always 0x3fxx */
        // unsigned section_idx;       /* zero indicates unused entry */
@@ -3313,7 +3302,6 @@ HEADER_NE_RELOC_ENTRY_START
           void ctor(SgAsmGenericSection*, addr_t at, addr_t *rec_size);
           addr_t unparse(std::ostream&, const SgAsmGenericSection*, addr_t spos) const;
           void dump(FILE*, const char *prefix, ssize_t idx) const;
-
        // NERelocSrcType      src_type;       /* low nibble of first byte of relocation record */
        // NERelocModifiers    modifier;       /* high nibble of first byte */
        // NERelocTgtType      tgt_type;       /* low two bits of second byte */
@@ -3371,7 +3359,6 @@ HEADER_NE_SECTION_TABLE_ENTRY_START
           void *encode(SgAsmNESectionTableEntry::NESectionTableEntry_disk*) const;
           virtual void dump(FILE *f, const char *prefix, ssize_t idx) const {dump(f, prefix, idx, NULL);}
           void dump(FILE*, const char *prefix, ssize_t idx, SgAsmNEFileHeader *fhdr) const;
-
        /* These are the native-format versions of the same members described in the NESectionTableEntry_disk struct. */
        // unsigned    flags, sector;
        // addr_t      physical_size, virtual_size;
@@ -3639,7 +3626,6 @@ HEADER_LE_ENTRY_POINT_START
 
           addr_t unparse(std::ostream&, SgAsmExecutableFileFormat::ByteOrder, const SgAsmGenericSection*, addr_t spos) const;
           void dump(FILE*, const char *prefix, ssize_t idx) const;
-
      private:
           void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLEEntryPoint::LEEntryPoint_disk*);
 
@@ -3708,7 +3694,6 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
 
           void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
           virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-    
        /* These are the native-format versions of the same members described in the NESectionTableEntry_disk struct. */
        // unsigned    flags, pagemap_index, pagemap_nentries, res1;
        // addr_t      mapped_size, base_addr;
@@ -4235,45 +4220,13 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
        // Note that the auto-generated version of this is const
           virtual SgAsmType* get_type();
 
-      //! Get a unique identifier for this particular register
-          std::pair<X86RegisterClass, int> get_identifier() const;
+	SgAsmx86RegisterReferenceExpression(const RegisterDescriptor&);
+
 HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
 
 
 
 HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
-	enum arm_register_enum { // The exact numbers here are important
-		undefined_arm_register = 0, /*!< unknown (error or unitialized value) */
-		reg0 = 1,
-		reg1 = 2,
-		reg2 = 3,
-		reg3 = 4,
-		reg4 = 5,
-		reg5 = 6,
-		reg6 = 7,
-		reg7 = 8,
-		reg8 = 9,
-		reg9  = 10,
-		reg10 = 11,
-		reg11 = 12,
-		reg12 = 13,
-		reg13 = 14,
-		reg14 = 15,
-		reg15 = 16,
-		cpsr = 17,
-		spsr = 18,
-		cpsr_fields = 19, /* 16 values -- add arm_suffix_field_enum */
-		spsr_fields = 35, /* 16 values -- add arm_suffix_field_enum */
-		last_arm_register = spsr_fields + 16
-	};
-
-	enum arm_position_in_register_enum {
-		undefined_arm_position_in_register = 0, /*!< unknown (error or unitialized value) */
-		arm_dword = 1, /*!< lower 32 bit part of larger register (typically the first part of a 64 bit register) */
-		arm_qword = 2, /*!< 64 bit part of 128 bit register (not in common use) */
-		last_arm_position_in_register
-	};
-
 	enum arm_suffix_field_enum {
 		undefined_position_in_suffix = 0, /*!< unknown (error or unitialized value) */
 		c = 1, // control field mask bit
@@ -4283,6 +4236,10 @@ HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
 		last_position_in_suffix
 	};
 
+	SgAsmArmRegisterReferenceExpression(const RegisterDescriptor &rdesc) {
+		p_descriptor = rdesc;
+	}
+
 	// Note that the auto-generated version of this is const
 	virtual SgAsmType* get_type();
 HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
@@ -4290,18 +4247,9 @@ HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
 
 
 HEADER_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION_START
-	enum powerpc_register_enum { // The exact numbers here are important
-		undefined_powerpc_register = 0, /*!< unknown (error or unitialized value) */
-		reg0 = 1,
-		reg1 = 2,
-		reg2 = 3,
-		reg3 = 4,
-		reg4 = 5,
-		reg5 = 6,
-		reg6 = 7,
-		reg7 = 8,
-		last_powerpc_register
-	};
+	SgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor &rdesc) {
+		p_descriptor = rdesc;
+	}
 
 	// Note that the auto-generated version of this is const
 	virtual SgAsmType* get_type();
@@ -4715,73 +4663,110 @@ SgAsmInstruction::append_sources( SgAsmInstruction* inst )
    }
 
 SgAsmInstruction*
-SgAsmInstruction::cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info) {
-  if (!isAsmUnconditionalBranch(this)) {
-    SgAsmInstruction* next = info->getInstructionAtAddress(this->get_address() + this->get_raw_bytes().size());
-    return next;
-  }
-  return NULL;
-}
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info) {
-  //cerr << "cfgBinOutEdges: " << std::hex << this->get_address() << " " << (isSgAsmx86Instruction(this) ? "x86" : "unknown") << " " << (isSgAsmx86Instruction(this) ? toString(isSgAsmx86Instruction(this)->get_kind()) : "") << endl;
-  std::vector<VirtualBinCFG::CFGEdge> result;
-  uint64_t nextAddr = this->get_address() + this->get_raw_bytes().size();
-
-  if (isAsmBranch(this)) {
-    //cout << "Found branch" << endl;
-    uint64_t addr = 0;
-    bool knownTarget = getAsmKnownBranchTarget(this, addr);
-    if (knownTarget) {
-      //cout << "Has known target " << std::hex << addr << endl;
-      SgAsmInstruction* tgt = info->getInstructionAtAddress(addr);
-      if (tgt) {
-        makeEdge(this, tgt, info, result);
-      }
-    } else { // Unknown target
-      //cout << "Unknown target" << endl;
-      const std::set<uint64_t> successorAddrs = info->getPossibleSuccessors(this);
-      for (std::set<uint64_t>::const_iterator i = successorAddrs.begin(); i != successorAddrs.end(); ++i) {
-        //cout << "Found succ address " << std::hex << *i << endl;
-        SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
-        if (tgt) {
-          makeEdge(this, tgt, info, result);
+SgAsmInstruction::cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info)
+   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     if (!isAsmUnconditionalBranch(this))
+        {
+          SgAsmInstruction* next = info->getInstructionAtAddress(this->get_address() + this->get_raw_bytes().size());
+          return next;
         }
-      }
-#if 0
-      if (successorAddrs.empty()) {
-	// FIXME: For bug-compatibility with old version
-	SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
-	if (next) makeEdge(this, next, info, result);
-      }
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
 #endif
-    } // else
-  } // if
 
-  if ((!isSgAsmx86Instruction(this) || (isSgAsmx86Instruction(this)->get_kind() != x86_ret && isSgAsmx86Instruction(this)->get_kind() != x86_hlt)) /* || !isAsmUnconditionalBranch(this) || (isSgAsmx86Instruction(this) && isSgAsmx86Instruction(this)->get_kind() == x86_call) */ ) {
-    //cout << "Next insn is at " << std::hex << nextAddr << endl;
-    SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
-    //ROSE_ASSERT (next);
-    if (next) makeEdge(this, next, info, result);
-  }
+     return NULL;
+   }
 
-  return result;
-}
+std::vector<VirtualBinCFG::CFGEdge>
+SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info)
+   {
+  // cerr << "cfgBinOutEdges: " << std::hex << this->get_address() << " " << (isSgAsmx86Instruction(this) ? "x86" : "unknown") << " " << (isSgAsmx86Instruction(this) ? toString(isSgAsmx86Instruction(this)->get_kind()) : "") << endl;
+     std::vector<VirtualBinCFG::CFGEdge> result;
+
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     uint64_t nextAddr = this->get_address() + this->get_raw_bytes().size();
+
+     if (isAsmBranch(this))
+        {
+       // cout << "Found branch" << endl;
+          uint64_t addr = 0;
+          bool knownTarget = getAsmKnownBranchTarget(this, addr);
+          if (knownTarget)
+             {
+            // cout << "Has known target " << std::hex << addr << endl;
+               SgAsmInstruction* tgt = info->getInstructionAtAddress(addr);
+               if (tgt)
+                  {
+                    makeEdge(this, tgt, info, result);
+                  }
+             }
+            else
+             {
+            // Unknown target
+            // cout << "Unknown target" << endl;
+               const std::set<uint64_t> successorAddrs = info->getPossibleSuccessors(this);
+               for (std::set<uint64_t>::const_iterator i = successorAddrs.begin(); i != successorAddrs.end(); ++i)
+                  {
+                 // cout << "Found succ address " << std::hex << *i << endl;
+                    SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
+                    if (tgt)
+                       {
+                         makeEdge(this, tgt, info, result);
+                       }
+                  }
+#if 0
+               if (successorAddrs.empty())
+                  {
+                 // FIXME: For bug-compatibility with old version
+                    SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
+                    if (next) 
+                         makeEdge(this, next, info, result);
+                  }
+#endif
+             } // else
+        } // if
+
+     if ((!isSgAsmx86Instruction(this) || (isSgAsmx86Instruction(this)->get_kind() != x86_ret && isSgAsmx86Instruction(this)->get_kind() != x86_hlt)) /* || !isAsmUnconditionalBranch(this) || (isSgAsmx86Instruction(this) && isSgAsmx86Instruction(this)->get_kind() == x86_call) */ )
+        {
+       // cout << "Next insn is at " << std::hex << nextAddr << endl;
+          SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
+       // ROSE_ASSERT (next);
+          if (next)
+               makeEdge(this, next, info, result);
+        }
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return result;
+   }
 
 
 std::vector<VirtualBinCFG::CFGEdge>
-SgAsmInstruction::cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info) {
-  std::vector<VirtualBinCFG::CFGEdge> result;
-  const std::set<uint64_t>& preds = info->getPossiblePredecessors(this);
-  for (std::set<uint64_t>::const_iterator i = preds.begin(); i != preds.end(); ++i) {
-    SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
-    if (tgt) {
-      makeEdge(this, tgt, info, result);
-    }
-  }
-  return result;
-}
+SgAsmInstruction::cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info)
+   {
+     std::vector<VirtualBinCFG::CFGEdge> result;
+
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     const std::set<uint64_t>& preds = info->getPossiblePredecessors(this);
+     for (std::set<uint64_t>::const_iterator i = preds.begin(); i != preds.end(); ++i)
+        {
+          SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
+          if (tgt)
+             {
+               makeEdge(this, tgt, info, result);
+             }
+        }
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return result;
+   }
 
 SOURCE_BINARY_INSTRUCTION_END
 
@@ -4941,20 +4926,32 @@ SOURCE_BINARY_TYPE_128bit_FLOAT_END
 
 SOURCE_BINARY_TYPE_VECTOR_START
 
-$CLASSNAME* $CLASSNAME::createType(int elementCount, SgAsmType* elementType) {
+$CLASSNAME*
+$CLASSNAME::createType(int elementCount, SgAsmType* elementType)
+   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // This does not need to be saved during file I/O, so it doesn't need to be a
   // class member
-  static std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*> cache;
-  std::pair<int, SgAsmType*> vectorInfo(elementCount, elementType);
-  std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*>::const_iterator i = cache.find(vectorInfo);
-  if (i != cache.end()) {
-    return i->second;
-  } else {
-    SgAsmTypeVector* tv = new SgAsmTypeVector(elementCount, elementType);
-    cache.insert(std::make_pair(vectorInfo, tv));
-    return tv;
-  }
-}
+     static std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*> cache;
+     std::pair<int, SgAsmType*> vectorInfo(elementCount, elementType);
+     std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*>::const_iterator i = cache.find(vectorInfo);
+     if (i != cache.end())
+        {
+          return i->second;
+        } 
+       else
+        {
+          SgAsmTypeVector* tv = new SgAsmTypeVector(elementCount, elementType);
+          cache.insert(std::make_pair(vectorInfo, tv));
+          return tv;
+        }
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return NULL;
+   }
 
 SOURCE_BINARY_TYPE_VECTOR_END
 
@@ -5034,6 +5031,10 @@ SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION_END
 
 SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
 
+SgAsmx86RegisterReferenceExpression::SgAsmx86RegisterReferenceExpression(const RegisterDescriptor &rdesc) {
+	p_descriptor = rdesc;
+}
+
 std::string
 SgAsmx86RegisterReferenceExpression::get_regnames8l(regnames8l_enum n)
    {
@@ -5093,11 +5094,6 @@ SgAsmType* SgAsmx86RegisterReferenceExpression::get_type() {
   return p_type;
 }
 
-std::pair<X86RegisterClass, int>
-SgAsmx86RegisterReferenceExpression::get_identifier() const {
-  return std::make_pair(this->get_register_class(), this->get_register_number());
-}
-
 SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
 
 SOURCE_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
@@ -5148,6 +5144,38 @@ SOURCE_EXECUTABLE_FILE_FORMAT_END
 
 
 SOURCE_GENERIC_SECTION_START
+// DQ (10/20/2010): Moved this function's definition to the source file.
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
+   : local_data_pool(0), p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()),
+     p_file_alignment(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
+     p_mapped_preferred_rva(0), p_mapped_size(0), p_mapped_alignment(0), p_mapped_rperm(false),
+     p_mapped_wperm(false), p_mapped_xperm(false), p_contains_code(false), p_mapped_actual_va(0)
+   {
+     ctor(f, fhdr);
+   }
+#else
+SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
+   {
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+   }
+#endif
+
+// DQ (10/20/2010): Moved this function's definition to the source file.
+SgAsmGenericSection*
+SgAsmGenericSection::parse()
+   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     grab_content();
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return this;
+   }
+
 SOURCE_GENERIC_SECTION_END
 
 
@@ -5157,13 +5185,6 @@ const char *
 SgAsmGenericHeader::format_name() const
    {
      return "ASM_GENERIC_HEADER";
-   }
-
-SgAsmGenericSymbolPtrList & 
-SgAsmGenericHeader::get_symbol_list()
-   {
-     ROSE_ASSERT(p_symbols != NULL);
-     return p_symbols->get_symbols();
    }
 
 SgAsmGenericFormat::ByteOrder
@@ -5189,6 +5210,17 @@ SOURCE_GENERIC_ARCHITECTURE_START
 SOURCE_GENERIC_ARCHITECTURE_END
 
 SOURCE_GENERIC_SYMBOL_START
+SgAsmGenericSymbol::SgAsmGenericSymbol()
+   : p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0),
+     p_bound(NULL), p_name(NULL)
+   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     ctor();
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 SOURCE_GENERIC_SYMBOL_END
 
 SOURCE_GENERIC_SYMBOL_LIST_START
@@ -5197,10 +5229,10 @@ SOURCE_GENERIC_SYMBOL_LIST_END
 SOURCE_GENERIC_DLL_START
 
 SgAsmGenericDLL::SgAsmGenericDLL(SgAsmGenericString *s)
-    : p_name(s)
-    {
-	s->set_parent(this);
-    }
+   : p_name(s)
+   {
+     s->set_parent(this);
+   }
 
 SOURCE_GENERIC_DLL_END
 
@@ -5236,9 +5268,17 @@ SOURCE_ELF_SECTION_TABLE_END
 
 
 SOURCE_ELF_STRING_SECTION_START
-	SgAsmElfStringSection::SgAsmElfStringSection(SgAsmElfFileHeader *fhdr)
-		: SgAsmElfSection(fhdr), p_strtab(NULL)
-		{ctor();}
+SgAsmElfStringSection::SgAsmElfStringSection(SgAsmElfFileHeader *fhdr)
+   : SgAsmElfSection(fhdr), p_strtab(NULL)
+	{
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     ctor();
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
 SOURCE_ELF_STRING_SECTION_END
 
 
@@ -5246,12 +5286,22 @@ SOURCE_ELF_STRING_SECTION_END
 SOURCE_ELF_SECTION_TABLE_ENTRY_START
 SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_ELF_SECTION_TABLE_ENTRY_END
@@ -5260,6 +5310,18 @@ SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_START
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
 SOURCE_ELF_SECTION_START
+// DQ (10/20/2010): Moved this function's definition to the source file.
+SgAsmElfSection::SgAsmElfSection(SgAsmGenericHeader *fhdr)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr), p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(NULL)
+   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     ctor();
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
 // DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
 SgAsmElfSection* 
 SgAsmElfSection::get_linked_section () const
@@ -5305,12 +5367,22 @@ SOURCE_ELF_SEGMENT_TABLE_END
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_START
 SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_END
@@ -5360,7 +5432,12 @@ SOURCE_PE_IMPORT_DIRECTORY_END
 SOURCE_PE_SECTION_TABLE_ENTRY_START
 SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_PE_SECTION_TABLE_ENTRY_END
@@ -5369,7 +5446,12 @@ SOURCE_PE_COFF_SYMBOL_START
 SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx)
    : p_st_name_offset(0), p_st_section_num(0), p_st_type(0), p_st_storage_class(0), p_st_num_aux_entries(0)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(fhdr, symtab, strtab, idx);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_PE_COFF_SYMBOL_END
@@ -5419,7 +5501,12 @@ SOURCE_NE_ENTRY_POINT_END
 SOURCE_NE_RELOC_ENTRY_START
 SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(relocs, at, rec_size);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_NE_RELOC_ENTRY_END
@@ -5427,7 +5514,12 @@ SOURCE_NE_RELOC_ENTRY_END
 SOURCE_NE_SECTION_TABLE_ENTRY_START
 SgAsmNESectionTableEntry::SgAsmNESectionTableEntry(const SgAsmNESectionTableEntry::NESectionTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_NE_SECTION_TABLE_ENTRY_END
@@ -5459,7 +5551,12 @@ SOURCE_LE_PAGE_TABLE_ENTRY_START
 SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
    : p_pageno(0), p_flags(0)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_LE_PAGE_TABLE_ENTRY_END
@@ -5468,7 +5565,12 @@ SOURCE_LE_ENTRY_POINT_START
 SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
    : p_flags(0), p_objnum(0), p_entry_type(0), p_res1(0), p_entry_offset(0)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags)
@@ -5481,7 +5583,12 @@ SOURCE_LE_ENTRY_POINT_END
 SOURCE_LE_SECTION_TABLE_ENTRY_START
 SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
+#else
+     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 SOURCE_LE_SECTION_TABLE_ENTRY_END

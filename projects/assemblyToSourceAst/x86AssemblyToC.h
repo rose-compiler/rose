@@ -370,6 +370,8 @@ struct X86CTranslationPolicy: public CTranslationPolicy {
     appendStatement(buildExprStatement(buildFunctionCallExp(interruptSym, buildExprListExp(buildIntVal(num)))), bb);
   }
 
+  void sysenter() {} // FIXME
+
   WordWithExpression<64> rdtsc() {
     return buildUnsignedLongLongIntValHex(0); // FIXME
   }

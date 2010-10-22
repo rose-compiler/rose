@@ -82,7 +82,10 @@ private:
             SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
             if (operands.size()!=1) continue;
             SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(operands[0]);
-            if (!rre || rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_bp) continue;
+            if (!rre ||
+                rre->get_descriptor().get_major() != x86_regclass_gpr ||
+                rre->get_descriptor().get_minor() != x86_gpr_bp)
+                continue;
             printf("Marking 0x%08"PRIx64" as the start of a function.\n", addr);
             p->add_function(addr, SgAsmFunctionDeclaration::FUNC_USERDEF);
         }

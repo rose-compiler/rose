@@ -43,15 +43,15 @@ struct NetlistTranslationPolicy {
     rm.ip = ipReg;
     LitList(16) flagsReg = problem.newVars<16>();
     problem.addInterface(prefix + "_flags", toVector(flagsReg));
-    problem.identify(flagsReg[x86_flag_1], TRUE);
-    problem.identify(flagsReg[x86_flag_3], FALSE);
-    problem.identify(flagsReg[x86_flag_5], FALSE);
+    problem.identify(flagsReg[1], TRUE);
+    problem.identify(flagsReg[3], FALSE);
+    problem.identify(flagsReg[5], FALSE);
     problem.identify(flagsReg[x86_flag_tf], FALSE);
     problem.identify(flagsReg[x86_flag_if], TRUE);
-    problem.identify(flagsReg[x86_flag_iopl0], FALSE);
-    problem.identify(flagsReg[x86_flag_iopl1], FALSE);
+    problem.identify(flagsReg[x86_flag_iopl+0], FALSE);
+    problem.identify(flagsReg[x86_flag_iopl+1], FALSE);
     problem.identify(flagsReg[x86_flag_nt], FALSE);
-    problem.identify(flagsReg[x86_flag_15], FALSE);
+    problem.identify(flagsReg[15], FALSE);
     rm.flags = flagsReg;
     rm.errorFlag = problem.newVars<numBmcErrors>();
     problem.addInterface(prefix + "_error", toVector(rm.errorFlag));
@@ -312,6 +312,7 @@ struct NetlistTranslationPolicy {
 
   void hlt() {registerMap.errorFlag[bmc_error_program_failure] = TRUE;} // FIXME
   void interrupt(uint8_t num) {} // FIXME
+  void sysenter() {} // FIXME
   LitList(64) rdtsc() {return problem.newVars<64>();}
 
   LitList(32) filterIndirectJumpTarget(const LitList(32)& addr) {return addr;}

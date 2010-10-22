@@ -1,4 +1,10 @@
 #include "rose.h"
+
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 #include "simulate.h"
 
 #ifdef ROSE_ENABLE_SIMULATOR /*protects this whole file */

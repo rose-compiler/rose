@@ -64,6 +64,7 @@ remove_sage3basic_h_pch:
 #    4. header files must not have names that conflict with headers in other directories
 # etc.
 enforce_policies:
+	@echo "The \"make check\" rule has been run in all subdirectories, now enforcing source code policies."
 	(cd $(top_srcdir) && ./scripts/policies-checker.sh)
 
 
@@ -76,6 +77,8 @@ enforce_policies:
 # (because it has the file: config/Makefile.for.ROSE.includes.and.libs)
 # EXTRA_DIST = stamp-h.in stamp-h1.in GNU_HEADERS config
 # EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
+# EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
+#              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 
@@ -105,7 +108,11 @@ uninstall-local:
 distclean-local:
 	-rm -rf $(top_builddir)/include-staging/
 
-nodist_include_HEADERS = rose_config.h
+# DQ (10/14/2010): We want to make sure that this does not go out to the install tree
+# it also should not be in the distribution (since we want rose_config.h.in to be put 
+# into the distribution instead; from which then rose_config.h is generated).
+# nodist_include_HEADERS = rose_config.h
+noinst_HEADERS = rose_config.h
 
 # DQ (4/5/2009): This rule is not called when compiling this directory, it is only
 # called when compiling the /src/util directory (perhaps it should be located in 
@@ -141,31 +148,39 @@ DISTCHECK_CONFIGURE_FLAGS = --with-boost=$(ac_boost_path)
 
 # DQ (7/25/2008): If ROSE was originallly configured with Fortran (by tuning 
 # on the java support) then make sure it is tested as part of the distcheck rule.
-if ROSE_USE_OPEN_FORTRAN_PARSER
-#  DISTCHECK_CONFIGURE_FLAGS += --with-java
-   DISTCHECK_CONFIGURE_FLAGS += --with-java=$(JAVA_PATH)
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_USE_INTERNAL_JAVA_SUPPORT
+# DISTCHECK_CONFIGURE_FLAGS += --with-java
+  DISTCHECK_CONFIGURE_FLAGS += --with-java=$(JAVA_PATH)
+else
+# DQ (10/22/2010): Added specification of --without-java to distcheck rule.
+# If we have first built without java then we have had to build some of the
+# Fortran language supporting files as empty files and thus we don't want to
+# run distcheck in a way that would use those files. However the problem
+# when this is not used has more to do with the Java langauge support.
+# A better reason why this is required might be so that we can run the NMI tests.
+  DISTCHECK_CONFIGURE_FLAGS += --without-java
 endif
 
 # DQ (7/25/2008): If ROSE was originallly configured to use the HPC Toolkit
 # then make sure it is tested as part of the distcheck rule.
 if ROSE_BUILD_ROSEHPCT
-   DISTCHECK_CONFIGURE_FLAGS += --enable-rosehpct
+  DISTCHECK_CONFIGURE_FLAGS += --enable-rosehpct
 endif
 
 # DQ (7/25/2008): If ROSE was originallly configured to use the javaport
 # work (generation of Java interface functions for ROSE using SWIG) then 
 # make sure it is tested as part of the distcheck rule.
 if ENABLE_JAVAPORT
-   DISTCHECK_CONFIGURE_FLAGS += --with-javaport
+  DISTCHECK_CONFIGURE_FLAGS += --with-javaport
 endif
 
 # DQ (4/5/2010): Use the same version of OFP as specified on the original configure command line.
-DISTCHECK_CONFIGURE_FLAGS += \
-   --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # SRIRAM (8/2/2010): changing distcheck configuration for LLVM translator
 if ROSE_USE_LLVM
-DISTCHECK_CONFIGURE_FLAGS += --with-llvm=$(llvm_path)
+   DISTCHECK_CONFIGURE_FLAGS += --with-llvm=$(llvm_path)
 endif
 
 # DQ (4/22/2005): To make clear when binaries are in the distribution as 
@@ -272,6 +287,124 @@ CheckinCounts:
 	@echo "*****************************************************"
 	cd $(top_srcdir); git shortlog -s -n
 	@echo "*****************************************************"
+
+
+# This rule is useful for identifing source files where "rose_config.h" should be included.
+FindFileRequiringRoseConfigHeaderShort:
+#	grep "#define" rose_config.h | cut --delimiter=" " -f 2 
+#	@list=`grep \"\#define\" rose_config.h | cut --delimiter=" " -f 2`; for f in $$list; do 
+#	list=`ls -l | cut --delimiter=" " -f 2`; for f in $$list; do
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/src/* | grep "\.h:" | cut --delimiter=":" -f 1; \
+   done
+
+# This rule is useful for identifing header files where "rose_config.h" is required and 
+# thus should be fixed to not require this file. In the case of #undef it is represented 
+# as "/* #undef" so we have to detect and remove the "/* " using sed.
+# And ignore the macro definitions for "const|error_t|inline|off_t|size_t".
+FindFileRequiringRoseConfigHeaderLong:
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/* | grep "\.h:"; \
+   done
+
+FindFileRequiringRoseConfigSourceLong:
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/* | grep "\.C:"; \
+   done
+
+FindFileRequiringRoseConfigSourceAndHeadersLong:
+	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
+   for f in $$list; do \
+        echo "Searching for -->$$f<-- macro"; \
+        grep -r $$f $(top_srcdir)/src/* | egrep "\.C:|\.h:"; \
+   done
+
+FILTER_MAKEFILES = grep "Makefile\.am" | grep -v "Makefile\.am~"
+NumberOfMakefiles:
+	@echo "Number of Makefile.am files in root directory: "
+	@du -a $(srcdir) | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in src directory: "
+	@du -a $(srcdir)/src | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in projects directory: "
+	@du -a $(srcdir)/projects | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in tests directory: "
+	@du -a $(srcdir)/tests | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in exampleTranslators directory: "
+	@du -a $(srcdir)/exampleTranslators | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in tutorial directory: "
+	@du -a $(srcdir)/tutorial | $(FILTER_MAKEFILES)| wc -l
+	@echo "Number of Makefile.am files in docs directory: "
+	@du -a $(srcdir)/docs | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in demo directory: "
+	@du -a $(srcdir)/demo | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in binaries directory: "
+	@du -a $(srcdir)/binaries | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in tools directory: "
+	@du -a $(srcdir)/tools | $(FILTER_MAKEFILES) | wc -l
+	@echo "Number of Makefile.am files in config directory: "
+	@du -a $(srcdir)/config | $(FILTER_MAKEFILES) | wc -l
+
+# ***********************************************************
+#      Display Which Automake Conditionals Are Defined
+# ***********************************************************
+# DQ (10/18/2010): Added test for names used in automake conditional macros
+# (eventually we want tests for consistancy).  This rule generates a makefile
+# containing a makefile rule. The makefile rule can be run to see what automake
+# conditionals were defined in the last run of configure. It might be that 
+# this mechanism should be in a script generated by the build script, but we 
+# need an initial version of the generated script to be checked into git so that 
+# the build script can find it.  Note that we grep the Makefile.in instead of
+# the Makefile.am (which would be more difficult, I think). So we need the
+# Makefile.in from runing the build script first.  Thus having the generated
+# file checked into git avoids a dependence on a file that we would not have.
+FILTER_AUTOMAKE_CONDITONALS = egrep -v "autom4te" | grep -v "~" | grep AM_CONDITIONAL
+TEST_FILE = $(top_srcdir)/config/automake_conditional_display_makefile
+NameOfAutomakeConditionals:
+#	grep -r "^AM_CONDITIONAL" $(top_srcdir) | $(FILTER_AUTOMAKE_CONDITONALS)
+#	grep "_TRUE@" $(top_srcdir)/Makefile.in | grep "@" | cut --delimiter="@" -f 2 | sed s/_TRUE//g | sort --unique | grep -v "top_srcdir"
+	list=`grep "_TRUE@" $(top_srcdir)/Makefile.in | grep "@" | cut --delimiter="@" -f 2 | sed 's/_TRUE//g' | sort --unique | grep -v "top_srcdir"`; \
+   rm -f $(TEST_FILE); \
+   touch $(TEST_FILE); \
+   echo "automake_conditional_display:" >> $(TEST_FILE); \
+   for f in $$list; do \
+        echo "Processing -->$$f<-- macro"; \
+        echo "if $$f" >> $(TEST_FILE); \
+        echo -e "\t@echo \"Automake conditional $$f: DEFINED\"" >> $(TEST_FILE); \
+        echo "else" >> $(TEST_FILE); \
+        echo -e "\t@echo \"Automake conditional $$f: NOT defined\"" >> $(TEST_FILE); \
+        echo "endif" >> $(TEST_FILE); \
+   done
+#	This can't be run since it can't be processed through automake and autoconf.
+#	$(MAKE) -f $(TEST_FILE) automake_conditional_display
+
+# This is a test of the new make rule added in the file $(TEST_FILE).
+testNameOfAutomakeConditionals:
+	@echo "*************************************************************************"
+	@echo "Testing makefile rule automake_conditional_display in file: $(TEST_FILE)."
+	@echo "*************************************************************************"
+	$(MAKE) automake_conditional_display
+
+# Include this file (generated first by the rule down below and checked into our git repository).
+# This could be generated by our build script.
+include $(top_srcdir)/config/automake_conditional_display_makefile
+# ***********************************************************
+
+
+
+# DQ (10/18/2010): These are used all over within a line (so don't use start of line anchor).
+# (eventually we want tests for consistancy)
+FILTER_AUTOCONF_DEFINE = egrep -v "autom4te" | grep -v "~" | grep -v "configure:" | grep AC_DEFINE
+NameOfAutoconfDefines:
+	grep -r "AC_DEFINE" $(top_srcdir) | $(FILTER_AUTOCONF_DEFINE)
+
+
+
 
 # DQ (2/12/2010): Report the areas of ROSE where we have skipped some tests of ROSE 
 # either doing analysis, code generation, or translation of the ROSE source code.

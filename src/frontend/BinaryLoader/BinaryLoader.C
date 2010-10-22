@@ -1,5 +1,9 @@
 #include "sage3basic.h"
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
+
 #include "BinaryLoader.h"
 #include "BinaryLoaderElf.h"
 #include "BinaryLoaderPe.h"
@@ -8,6 +12,19 @@
 #include <inttypes.h>
 
 std::vector<BinaryLoader*> BinaryLoader::loaders;
+
+std::ostream&
+operator<<(std::ostream &o, const BinaryLoader::Exception &e)
+{
+    e.print(o);
+    return o;
+}
+
+void
+BinaryLoader::Exception::print(std::ostream &o) const
+{
+    o <<mesg;
+}
 
 /* We put some initializations here in a *.C file so we don't need to recompile so much if we need to change how a
  * BinaryLoader is constructed and we're just making the change for debugging purposes. */
@@ -122,11 +139,13 @@ BinaryLoader::find_so_file(const std::string &libname) const
         if (debug) fprintf(debug, "BinaryLoader:   looking in %s...\n", di->c_str());
         std::string libpath = *di + "/" + libname;
         struct stat sb;
+#ifndef _MSC_VER
         if (stat(libpath.c_str(), &sb)>=0 && S_ISREG(sb.st_mode) && access(libpath.c_str(), R_OK)>=0) {
             if (debug) fprintf(debug, "BinaryLoader:   found.\n");
             return libpath;
         }
-    }
+#endif
+	}
     if (debug) {
         if (directories.empty()) fprintf(debug, "BinaryLoader:   no search directories\n");
         fprintf(debug, "BinaryLoader:   not found; throwing exception.\n");

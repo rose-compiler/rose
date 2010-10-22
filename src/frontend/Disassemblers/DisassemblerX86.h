@@ -3,6 +3,8 @@
 #ifndef ROSE_DISASSEMBLER_X86_H
 #define ROSE_DISASSEMBLER_X86_H
 
+#include "InstructionEnumsX86.h"
+
 /** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
  *  really not much reason to use this class directly or to call any of these methods directly. */
 class DisassemblerX86: public Disassembler {
@@ -65,12 +67,16 @@ private:
     };
 
     /** ModR/M settings that create register expressions (or rmReturnNull for no register) */
-    enum RegisterMode {
+    enum RegisterMode 
+	{
         rmLegacyByte, rmRexByte, rmWord, rmDWord, rmQWord, rmSegment, rmST, rmMM, rmXMM, rmControl, rmDebug, rmReturnNull
     };
 
     /* MMX registers? See mmPrefix method */
-    enum MMPrefix {mmNone, mmF3, mm66, mmF2};
+    enum MMPrefix 
+	{
+		mmNone, mmF3, mm66, mmF2
+	};
 
 
 
@@ -149,10 +155,6 @@ private:
     /** Returns the register mode for the specified instruction size. */
     static RegisterMode sizeToMode(X86InstructionSize);
 
-    /** Returns a register position for an instruction size.  For instance, x86_regpos_dword is returned for 32-bit
-     *  instructions. */
-    static X86PositionInRegister sizeToPos(X86InstructionSize s);
-
     /** Returns a data type associated with an instruction size. For instance, a 32-bit instruction returns the type for a
      *  double word. */
     static SgAsmType *sizeToType(X86InstructionSize s);
@@ -187,8 +189,7 @@ private:
 
     /** Constructs a register reference expression. The @p registerType is only used for vector registers that can have more
      *  than one type. */
-    static SgAsmx86RegisterReferenceExpression *makeRegister(uint8_t fullRegisterNumber, RegisterMode,
-                                                             SgAsmType *registerType=NULL);
+    SgAsmx86RegisterReferenceExpression *makeRegister(uint8_t fullRegisterNumber, RegisterMode, SgAsmType *registerType=NULL) const;
 
     /* FIXME: documentation? */
     SgAsmx86RegisterReferenceExpression *makeRegisterEffective(uint8_t fullRegisterNumber) {
@@ -201,7 +202,7 @@ private:
     }
 
     /** Constructs a register reference expression for a segment register. */
-    static SgAsmExpression *makeSegmentRegister(X86SegmentRegister so, bool insn64);
+    SgAsmExpression *makeSegmentRegister(X86SegmentRegister so, bool insn64) const;
 
 
 

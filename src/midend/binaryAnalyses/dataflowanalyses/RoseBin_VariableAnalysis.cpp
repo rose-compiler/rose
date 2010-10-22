@@ -33,16 +33,16 @@ RoseBin_VariableAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
     ROSE_ASSERT(inst);
     positions.push_back(inst->get_address());
     // the right hand side of the instruction is either a use or a value
-    bool memRef = false;
+    bool memRef = false, regRef = false;
     std::pair<X86RegisterClass, int>  regRight =
-      check_isRegister(defNode, inst, true, memRef);
+      check_isRegister(defNode, inst, true, memRef, regRef);
 
     if (RoseBin_support::DEBUG_MODE()) {
-      string regName = unparseX86Register(reg.first, reg.second, x86_regpos_qword);
-      string regNameRight = unparseX86Register(regRight.first, regRight.second, x86_regpos_qword);
+      string regName = unparseX86Register(RegisterDescriptor(reg.first, reg.second, 0, 64));
+      string regNameRight = unparseX86Register(RegisterDescriptor(regRight.first, regRight.second, 0, 64));
       cout << " VarAnalysis: getValueForDef . " << regName << "  right hand : " << regNameRight <<endl;
     }
-    if (regRight.first == x86_regclass_unknown) {
+    if (!regRef) {
       // it is either a memref or a value
       if (!memRef) {
 	// get value of right hand side instruction
@@ -534,10 +534,10 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
 	      foundMov = true;
 	      if (asmPre->get_kind() == x86_mov) {
 		// make sure we are moving to the top of the stack, i.e. esp
-		bool memRef = false;
+		bool memRef = false, regRef;
 		std::pair<X86RegisterClass, int>  code;
-		code = check_isRegister(pre, asmPre, false, memRef);
-		string codeStr = unparseX86Register(code.first, code.second, x86_regpos_qword);
+		code = check_isRegister(pre, asmPre, false, memRef, regRef);
+		string codeStr = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64));
 		if (codeStr=="rsp")
 		  value = getValueOfInstr(asmPre, true);
 		else
@@ -563,10 +563,10 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
 	    if (asmAft->get_kind() == x86_mov) {
 	      foundMov = true;
 	      uint64_t address_of_var=0;
-		bool memRef = false;
+                bool memRef = false, regRef = false;
 		std::pair<X86RegisterClass, int>  code;
-		code = check_isRegister(aft, asmAft, true, memRef);
-		if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
+		code = check_isRegister(aft, asmAft, true, memRef, regRef);
+		if (regRef && code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
 		  if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov)
 		    cerr << "    found mov of eax of malloc call : " << unparseInstruction(asmAft) <<endl;
 		  SgAsmMemoryReferenceExpression* memExpr =
@@ -610,12 +610,12 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
     if ( true /* isSgAsmx86DataTransferInstruction(asmNode) */ ) {
       // USAGE OF BUFFER OVERFLOW
 	if (asmNode->get_kind() == x86_mov) {
-	bool memRef = false;
+        bool memRef = false, regRef = false;
 	uint64_t address_of_var=0;
 	std::pair<X86RegisterClass, int>  code;
 	// check if eax register on the left hand side
-	code = check_isRegister(node, asmNode, false, memRef);
-	if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
+	code = check_isRegister(node, asmNode, false, memRef, regRef);
+	if (regRef && code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
 	  // right hand side is Register Reg / MemoryRef
 	  //	  SgAsmx86RegisterReferenceExpression* refRight = getRegister(asmNode,true);
 	  //if (refRight) {
@@ -649,20 +649,20 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
 		  aft = getSuccessor(aft);
 		  SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
 		  if (asmAft->get_kind() == x86_add) {
-		    bool memRef = false;
+		    bool memRef = false, regRef = false;
 		    std::pair<X86RegisterClass, int>  code;
-		    code = check_isRegister(aft, asmAft, false, memRef);
-		    if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
+		    code = check_isRegister(aft, asmAft, false, memRef, regRef);
+		    if (regRef && code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
 		      uint64_t val = getValueOfInstr(asmAft, true);
 		      arrayLength += val;
 		    }
 		  }
 		  if (asmAft->get_kind() == x86_mov) {
 		    foundMov = true;
-		    bool memRef = false;
+		    bool memRef = false, regRef = false;
 		    std::pair<X86RegisterClass, int>  code;
-		    code = check_isRegister(aft, asmAft, true, memRef);
-		    if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
+		    code = check_isRegister(aft, asmAft, true, memRef, regRef);
+		    if (regRef && code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
 		      if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
 			cout << "   malloc - access to eax : " << unparseInstruction(asmAft)
                              << "   length array (var) " << length << "  access array point: " << arrayLength  <<endl;

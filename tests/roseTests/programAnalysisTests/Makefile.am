@@ -9,7 +9,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_s
 #-I$(top_srcdir)/src/midend/programAnalysis/ptrTrace/GAI/ICFG/
 
 ## The grammar generator (ROSETTA) should use its own template repository
-CXX_TEMPLATE_REPOSITORY_PATH = .
+# CXX_TEMPLATE_REPOSITORY_PATH = .
 
 bin_PROGRAMS = CFGTest DataFlowTest StmtRefTest PtrAnalTest steensgaardTest1 steensgaardTest2
 
@@ -42,6 +42,7 @@ DataFlowTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 StmtRefTest_SOURCES = StmtRefTest.C
 StmtRefTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 
 # Added to support Brian White's work with the parts of the Broadway compiler
 #AnnotationLanguageParserTest_SOURCES = AnnotationLanguageParserTest.C

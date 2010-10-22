@@ -312,14 +312,11 @@ SgAsmPEFileHeader::parse()
     secttab->parse();
     set_section_table(secttab);
 
-    /* Parse the COFF symbol table and add symbols to the PE header */
+    /* Parse the COFF symbol table */
     if (get_e_coff_symtab() && get_e_coff_nsyms()) {
         SgAsmCoffSymbolTable *symtab = new SgAsmCoffSymbolTable(this);
         symtab->set_offset(get_e_coff_symtab());
         symtab->parse();
-        std::vector<SgAsmCoffSymbol*> & symbols = symtab->get_symbols()->get_symbols();
-        for (size_t i = 0; i < symbols.size(); i++)
-            add_symbol(symbols[i]);
         set_coff_symtab(symtab);
     }
 

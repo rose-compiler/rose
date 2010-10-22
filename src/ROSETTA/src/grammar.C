@@ -2,6 +2,10 @@
 // #                           Header Files                       #
 // ################################################################
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
+
 // DQ (3/22/2009): This is redundant with inclusion in "grammar.h"
 // #include "ROSETTA_macros.h"
 
@@ -2372,7 +2376,7 @@ Grammar::buildMiscSupportDeclarations()
 // used in variantT()
 string
 Grammar::buildVariantEnums() {
-  string s=string("enum VariantT {\n");
+  string s=string("enum VariantT \n{\n");
   unsigned int i;
   bool notFirst=false;
   for (i=0; i < terminalList.size(); i++) {
@@ -2659,7 +2663,7 @@ Grammar::buildCode ()
   // GB (7/6/2007): Changed these values so we can build bitmasks. This makes
   // it possible to define somewhat more general traversals that have both pre
   // and post order components. The user doesn't notice this change.
-     ROSE_ArrayGrammarHeaderFile << "typedef enum {preorder = 1, postorder = 2, preandpostorder = preorder | postorder} t_traverseOrder;\n\n";
+     ROSE_ArrayGrammarHeaderFile << "typedef enum \n{preorder = 1, postorder = 2, preandpostorder = preorder | postorder} t_traverseOrder;\n\n";
 
 #if 1
   // DQ (12/28/2009): Make this a configure option to use the separate, dramatically smaller but more numerous header files for each IR node.
@@ -2740,12 +2744,19 @@ Grammar::buildCode ()
    //  string includeSage3 ="#include \"Cxx_Grammar.h\"\n\n";
    //  includeHeaderString += includeSage3;
 
-	 string includeHeaderAstFileIO ="#include \"AST_FILE_IO.h\"\n\n";
+     string includeHeaderAstFileIO = "#include \"AST_FILE_IO.h\"\n\n";
      includeHeaderString += includeHeaderAstFileIO;
 
-	 string defines1 ="#if _MSC_VER\n";
-	 string defines2 ="#define USE_CPP_NEW_DELETE_OPERATORS 0\n";
-	 string defines3 ="#endif\n\n";
+  // DQ (10/14/2010):  This should only be included by source files that require it.
+  // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+  // Interestingly it must be at the top of the list of include files.
+     includeHeaderString += "// The header file (\"rose_config.h\") should only be included by source files that require it.\n";
+     string includeHeader_rose_config ="#include \"rose_config.h\"\n\n";
+     includeHeaderString += includeHeader_rose_config;
+
+     string defines1 = "#if _MSC_VER\n";
+     string defines2 = "#define USE_CPP_NEW_DELETE_OPERATORS 0\n";
+     string defines3 = "#endif\n\n";
      includeHeaderString += defines1;
      includeHeaderString += defines2;
      includeHeaderString += defines3;
@@ -3965,7 +3976,7 @@ Grammar::buildEnumForNode(Terminal& node, string& allEnumsString) {
 	stringListIterator++) {
       if ( (*stringListIterator)->getToBeTraversed() == DEF_TRAVERSAL) {
 	if (isFirst) {
-	  allEnumsString += string("enum E_") + node.getName() + " {";
+	  allEnumsString += string("enum E_") + node.getName() + " \n{\n";
 	} else {
 	  allEnumsString += ", ";
 	}

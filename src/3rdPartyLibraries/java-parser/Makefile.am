@@ -1,8 +1,7 @@
 javadir=$(libdir)
 
 # Liao 8/4/2010, based on Jean Utke's suggestion on [Rose-public] Fortran built-ins
-if ROSE_USE_OPEN_FORTRAN_PARSER
-# include_HEADERS = ActionEnums.h token.h FortranParserAction.h
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
   include_HEADERS = 
 endif
 
@@ -21,15 +20,16 @@ extract_rose_required_ecj_source_files: JavaTraversal.class
 # buildJavaSupport: ${srcdir}/JavaTraversal.java
 # JavaTraversal.class:
 JavaTraversal.class: ${srcdir}/JavaTraversal.java
-#	@echo "After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir"
-	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
 	@echo "copy the JavaTraversal.java from the srcdir to the build directory."
 	cp ${srcdir}/JavaTraversal.java JavaTraversal.java
 	@echo "Using the build directory's copy of ecjROSE.jar."
 #	javac -cp ecjROSE.jar JavaTraversal.java
-	javac -cp ${srcdir}/ecjROSE.jar JavaTraversal.java
-#	$LD_LIBRARY_PATH=${srcdir} && javah -jni -cp JavaTraversal
-	javah -jni -classpath ${srcdir}/ecjROSE.jar JavaTraversal
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar JavaTraversal.java
+	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar JavaTraversal
+#	DQ (10/13/2010): I want to avoid copying ecjROSE.jar into the build tree, but it is required for now.
+#	Only ROSE translators need it, not the javac and javah commands (above).
+	@echo "After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir (only required for ROSE to find ecjROSE.jar (fix later))"
+	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
 
 
 # These are the commands to generate the files we need (in the build tree).

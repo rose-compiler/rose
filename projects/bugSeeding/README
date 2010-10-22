@@ -1,5 +1,17 @@
 README for Bug Seeding Project
 
+   This is an initial start on a project that was taken much 
+further and is not presently distributed in ROSE.  It may be
+distributed as part of ROSE at some point in the future.  The
+goals are of course the same, to support the evaluation of 
+static analysis tools using automatically generated inputs
+carefully, and automatically, crafted from a large scale base 
+application.
+
+
+
+Old notes about this project:
+
 Note that the dot graph layouts can be improved by 
 eliminating the SgFile and __binaryFile__null
 and the associated edges.

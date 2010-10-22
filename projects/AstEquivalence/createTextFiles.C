@@ -204,8 +204,8 @@ void normalizeInstructionInSubTree(SgNode* topNode ){
           newOperand = memRefExp;
         }else if(isSgAsmRegisterReferenceExpression(operand) ){
           SgAsmx86RegisterReferenceExpression* regRef = new SgAsmx86RegisterReferenceExpression;
-          regRef->set_register_class(x86_regclass_mm);
-          regRef->set_register_number(0);
+          regRef->get_descriptor().set_major(x86_regclass_mm);
+          regRef->get_descriptor().set_minor(0);
 
           newOperand = regRef;
 
