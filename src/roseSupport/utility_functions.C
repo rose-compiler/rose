@@ -1117,14 +1117,14 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
      switch (currentStatement->variantT())
         {
           case V_SgForInitStatement:
-          case V_SgBasicBlock:
+          // case V_SgBasicBlock: // Liao 10/20/2010, We should allow users to get a statement immediately AFTER a block.
           case V_SgClassDefinition:
           case V_SgFunctionDefinition:
 	  case V_SgStatement:
           case V_SgFunctionParameterList:
 					
 							 ROSE_ASSERT(0);
-							 // not speciefied
+							 // not specified
 							 break;
           default:
              {
