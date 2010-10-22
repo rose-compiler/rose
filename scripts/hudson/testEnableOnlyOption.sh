@@ -83,9 +83,8 @@ if [ $SKIP_COMPILATION -ne 1 ]; then
 
 # DQ (10/19/2010): Added distcheck rul to match what is in the release scripts...
   make -j${PROCESS_NUM} && \
-  make -j${PROCESS_NUM} check 
-
-# make -j${PROCESS_NUM} distcheck
+  make -j${PROCESS_NUM} check && \
+  make -j${PROCESS_NUM} distcheck
 fi
 
 if [ $? -ne 0 ]; then

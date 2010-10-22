@@ -371,7 +371,6 @@ public:
         user_detectors.push_back(f);
     }
     
-// #ifdef FIND_WHERE_BINARY_ANALYSIS_FUNCTIONS_ARE_USED
     /** Parses a string describing the heuristics and returns the bit vector that can be passed to set_search(). The input
      *  string should be a comma-separated list (without white space) of search specifications. Each specification should be
      *  an optional qualifier character followed by either an integer or a word. The accepted words are the lower-case
@@ -381,7 +380,6 @@ public:
      *  qualifier is "+" except when the word is "default", in which case the specifier is "=". An optional initial bit mask
      *  can be specified (defaults to SgAsmFunctionDeclaration::FUNC_DEFAULT). */
     static unsigned parse_switches(const std::string&, unsigned initial_flags);
-// #endif
 
     /** Top-level function to run the partitioner on some instructions and build an AST. The SgAsmInterpretation is optional.
      *  If it is null then those function seeding operations that depend on having file headers are not run. */

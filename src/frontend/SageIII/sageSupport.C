@@ -1290,10 +1290,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // set_UPCpp_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
   // ROSE_ASSERT (get_UPCxx_only() == false);
      bool hasRoseUpcppEnabled = CommandlineProcessing::isOption(argv,"-rose:","(UPCxx|UPCxx_only)",true) ;
-     bool hasEdgUpcppEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc++)",true) ;
-     bool hasEdgUpcppEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc++)",true) ;
 
-     if (hasRoseUpcppEnabled||hasEdgUpcppEnabled2||hasEdgUpcppEnabled) 
+  // DQ (10/22/2010): Remove specification of edg specific upc++ option (used for testing).
+  // bool hasEdgUpcppEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc++)",true) ;
+  // bool hasEdgUpcppEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc++)",true) ;
+  // bool hasEdgUpcppEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upcxx)",true) ;
+  // bool hasEdgUpcppEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upcxx)",true) ;
+  // if (hasRoseUpcppEnabled||hasEdgUpcppEnabled2||hasEdgUpcppEnabled) 
+
+     set_UPCxx_only(false);
+     if (hasRoseUpcppEnabled == true) 
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("UPC++ mode ON \n");
@@ -7798,6 +7804,10 @@ SgFile::usage ( int status )
 "                             targeting GCC GOMP runtime library\n"
 "     -rose:UPC_only, -rose:UPC\n"   
 "                             follow Unified Parallel C 1.2 specification\n"
+"     -rose:UPCxx_only, -rose:UPCxx\n"
+"                             allows C++ within UPC (follows UPC 1.2 but simpily allows \n"
+"                             using C++ as the base language) (not a legitimate language, \n"
+"                             since there is no backend compiler to support this).\n"
 "     -rose:upc_threads n     Enable UPC static threads compilation with n threads\n"
 "                             n>=1: static threads; dynamic(default) otherwise\n"
 "     -rose:Fortran, -rose:F, -rose:f\n"
@@ -7929,6 +7939,7 @@ SgFile::usage ( int status )
 "Control Fortran frontend processing:\n"
 "     -rose:cray_pointer_support\n"
 "                             turn on internal support for cray pointers\n"
+"                             (Note: not implemented in front-end (OFP) yet.)\n"
 "     -fortran:XXX            pass -XXX to independent semantic analysis\n"
 "                             (useful for turning on specific warnings in front-end)\n"
 "\n"
