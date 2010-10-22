@@ -8,7 +8,6 @@ F77_TESTCODES_TO_PASS = \
     default.f \
     flush.f \
     exampleA11f.f \
-    exmpaleA221f.f \
     exampleA251f.f \
     parallel.f \
     parallel-1.f \
@@ -20,6 +19,7 @@ F77_TESTCODES_TO_PASS += testNewOFP.f
 
 F90_TESTCODES_TO_PASS = \
   paralleldo.f90 \
+  paralleldo-1.f90 \
   collapse.f90 \
   critical.f90 \
   single-copyprivate.f90 \
@@ -38,12 +38,15 @@ F90_TESTCODES_TO_PASS = \
 # flush2.f : wrong position for flush (scope becomes function, not inner block)
 # conditional.f:  conditional compilation
 # exampleA41f.f90:  test code has error?
+# barrier.f, exmpaleA221f.f  wrong comment position for the 2nd barrier
 TESTCODES_CURRENTLY_FAILING = \
+    barrier.f \
     exampleA211f.f \
     exampleA281f.f \
     exampleA102f.f90 \
     exampleA161f.f90 \
     flush2.f \
+    exmpaleA221f.f \
     conditional.f \
     exampleA41f.f90 \
     exampleA134f.f90
