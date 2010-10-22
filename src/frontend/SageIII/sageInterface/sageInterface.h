@@ -339,7 +339,7 @@ struct hash_nodeptr
 
        This is support for the AST merge, but is generally useful as a more general mechanism than 
        name mangling which is more closely ties to the generation of names to support link-time function name 
-       resolution.  This is more general than common name mangling in that it resolves more relavant differences
+       resolution.  This is more general than common name mangling in that it resolves more relevant differences
        between C and C++ declarations. (e.g. the type within the declaration: "struct { int:8; } foo;").
 
       \implementation current work does not support expressions.
@@ -347,7 +347,7 @@ struct hash_nodeptr
    */
     std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
-  // DQ (8/10/2010): Added const to first paramater.
+  // DQ (8/10/2010): Added const to first parameter.
   // DQ (3/10/2007): 
   //! Generate a unique string from the source file position information
     std::string declarationPositionString (const SgDeclarationStatement * declaration);
