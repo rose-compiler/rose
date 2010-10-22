@@ -11,7 +11,7 @@
 
 // $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
-# DQ (10/22/2010): Isolate some of the OSX specific details.
+/* DQ (10/22/2010): Isolate some of the OSX specific details. */
 #ifdef __APPLE__
 /* DQ (10/13/2010): This is a specific fix suggested by Cong Hou for an OSX problem. 
  * The use of __BLOCKS__ (being defined as a macro) controls the code that ROSE will 
@@ -22,7 +22,7 @@
  */
 #undef __BLOCKS__
 
-# DQ (10/22/2010): Make this use of this macro in the OSX header files disappear.
+/* DQ (10/22/2010): Make this use of this macro in the OSX header files disappear. */
 #define __OSX_AVAILABLE_BUT_DEPRECATED(param1,param2,param3,param4)
 #endif
 
