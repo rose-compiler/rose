@@ -171,7 +171,8 @@ public:
     \brief This enum determines which direction to travel during a
     reachability pass.
   */
-  enum TraverseDirection {
+  enum TraverseDirection 
+  {
     FORWARD  = 1,    /*!< Reachability via successor edges*/
     BACKWARD = 2   /*!< Reachability via predecessor edges*/
   };
