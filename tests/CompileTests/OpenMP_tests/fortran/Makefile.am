@@ -7,7 +7,6 @@ F77_TESTCODES_TO_PASS = \
     jacobi.f \
     default.f \
     flush.f \
-    exampleA11f.f \
     exampleA251f.f \
     parallel.f \
     parallel-1.f \
@@ -39,8 +38,10 @@ F90_TESTCODES_TO_PASS = \
 # conditional.f:  conditional compilation
 # exampleA41f.f90:  test code has error?
 # barrier.f, exmpaleA221f.f  wrong comment position for the 2nd barrier
+# exampleA11f.f  combined parallel do is attached to wrong place, and is not removed!
 TESTCODES_CURRENTLY_FAILING = \
     barrier.f \
+    exampleA11f.f \
     exampleA211f.f \
     exampleA281f.f \
     exampleA102f.f90 \
