@@ -17,7 +17,8 @@
 class YicesSolver: public SMTSolver {
 public:
     /** Bit flags to indicate what style of calls are made to Yices. */
-    enum LinkMode {
+    enum LinkMode 
+	{
         LM_NONE=0x0000,                         /**< No available linkage. */
         LM_LIBRARY=0x0001,                      /**< The Yices runtime library is available. */
         LM_EXECUTABLE=0x0002                    /**< The "yices" executable is available. */

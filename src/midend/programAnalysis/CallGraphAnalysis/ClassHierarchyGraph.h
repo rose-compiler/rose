@@ -11,7 +11,8 @@ class ClassHierarchyWrapper
 
   public:
 
-  enum EdgeDirection{
+  enum EdgeDirection
+  {
     EdgeOut,
     EdgeIn
   } ;

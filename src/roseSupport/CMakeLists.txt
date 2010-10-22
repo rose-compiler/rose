@@ -6,7 +6,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 ### (this CMakeList.txt file), but we use these two files when building librose in a higher directory.
 add_custom_command(
      OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/stringify.C ${CMAKE_CURRENT_BINARY_DIR}/stringify.h
-     COMMAND ${CMAKE_SOURCE_DIR}/scripts/stringify.pl --header --generic --output=${CMAKE_CURRENT_BINARY_DIR}/stringify.C ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR}/src/frontend/SageIII
+     COMMAND perl ${CMAKE_SOURCE_DIR}/scripts/stringify.pl --header --generic --output=${CMAKE_CURRENT_BINARY_DIR}/stringify.C ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR}/src/frontend/SageIII
      #FIXME: This should also depend on all the files that contain enums, but I'm not sure how to do that. [RPM 2010-10-15]
      DEPENDS ${CMAKE_SOURCE_DIR}/scripts/stringify.pl
      )

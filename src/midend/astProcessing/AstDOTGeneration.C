@@ -8,6 +8,12 @@
 
 #include "sage3basic.h"
 #include "AstDOTGeneration.h"
+
+// DQ (10/21/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 #define TEMPLATE_IMPLEMENTATIONS
 #include "AstDOTGenerationImpl.C"
 #undef TEMPLATE_IMPLEMENTATIONS
@@ -18,7 +24,9 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include "AsmUnparser_compat.h"
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   #include "AsmUnparser_compat.h"
+#endif
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -292,6 +300,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
      if (genericInstruction != NULL)
         {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
        // At the moment the mnemonic name is stored, but it could be computed in the 
        // future from the kind and the tostring() function.
 #if 1
@@ -305,14 +314,21 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           ROSE_ASSERT(name.empty() == false);
 
           nodelabel += string("\\n") + name;
+#else
+          printf ("Warning: In AstDOTGeneration.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
+#endif
         }
 
      SgAsmExpression* genericExpression = isSgAsmExpression(node);
      if (genericExpression != NULL)
         {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           string name = unparseExpression(genericExpression);
           ROSE_ASSERT(name.empty() == false);
           nodelabel += string("\\n") + name;
+#else
+          printf ("Warning: In AstDOTGeneration.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
+#endif
         }
 
   // DQ (10/29/2008): Added some support for additional output of internal names for specific IR nodes.
@@ -321,6 +337,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      SgAsmExecutableFileFormat* binaryFileFormatNode = isSgAsmExecutableFileFormat(node);
      if (binaryFileFormatNode != NULL)
         {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
        // The case of binary file format IR nodes can be especially confusing so we want the 
        // default to output some more specific information for some IR nodes (e.g. sections).
           string name;
@@ -404,6 +421,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
           if (name.empty() == false)
                nodelabel += string("\\n") + name;
+#else
+          printf ("Warning: In AstDOTGeneration.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
+#endif
         }
 
   // DQ (11/29/2008): Output the directives in the label of the IR node.

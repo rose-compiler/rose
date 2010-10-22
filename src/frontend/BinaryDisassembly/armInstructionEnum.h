@@ -3,17 +3,20 @@
 
 #include <string>
 
-enum ArmRegisterClass {
+enum ArmRegisterClass 
+{
     arm_regclass_gpr,           /* general purpose registers */
     arm_regclass_psr		/* program status registers */
 };
 
-enum ArmProgramStatusRegister {
+enum ArmProgramStatusRegister 
+{
     arm_psr_current,
     arm_psr_saved
 };
 
-enum ArmInstructionKind {
+enum ArmInstructionKind 
+{
   arm_unknown_instruction = 0,
   arm_adc,                              /**< add with carry */
   arm_adcs,                             /**< add with carry and update condition word */
@@ -117,7 +120,8 @@ enum ArmInstructionKind {
 };
 
 // These are one more than the ARM condition codes in the instruction encoding, so the order is important
-enum ArmInstructionCondition {
+enum ArmInstructionCondition 
+{
   arm_cond_unknown = 0,
   arm_cond_eq = 1,                      /**< equal */
   arm_cond_ne = 2,                      /**< not equal */

@@ -11,7 +11,15 @@
 // include "array_class_interface.h"
 #include "unparser.h"
 
-#include "AsmUnparser_compat.h"
+// DQ (10/21/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   #include "AsmUnparser_compat.h"
+#endif
+
 #include <string.h>
 #if _MSC_VER
 #include <direct.h>
@@ -345,6 +353,10 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
 void
 Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
 {
+     if ( SgProject::get_verbose() > 0 )
+          printf ("In Unparser::unparseAsmFile... file = %p = %s \n",file,file->class_name().c_str());
+
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     ROSE_ASSERT(file!=NULL);
 
     /* Generate file name for uparser output */
@@ -365,11 +377,16 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
     // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
     // generated in the unparse phase of processing a binary.
     file->dump_all(true, ".dump");
+#endif
 }
 
 void
 Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
 {
+     if ( SgProject::get_verbose() > 0 )
+          printf ("In Unparser::unparseFile... file = %p = %s \n",binary,binary->class_name().c_str());
+
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     ROSE_ASSERT(binary != NULL);
     ROSE_ASSERT(binary->get_binary_only()) ;
 
@@ -410,6 +427,7 @@ Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
             fclose(asm_file);
         }
     }
+#endif
 }
 
 
@@ -1720,6 +1738,10 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
      for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
         {
           SgFile* file = fileList->get_listOfFiles()[i];
+
+          if ( SgProject::get_verbose() > 0 )
+               printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
+
           unparseFile(file,unparseFormatHelp,unparseDelegate);
         }
    }

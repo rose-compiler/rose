@@ -150,30 +150,37 @@ DISTCHECK_CONFIGURE_FLAGS = --with-boost=$(ac_boost_path)
 # on the java support) then make sure it is tested as part of the distcheck rule.
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_USE_INTERNAL_JAVA_SUPPORT
-#  DISTCHECK_CONFIGURE_FLAGS += --with-java
-   DISTCHECK_CONFIGURE_FLAGS += --with-java=$(JAVA_PATH)
+# DISTCHECK_CONFIGURE_FLAGS += --with-java
+  DISTCHECK_CONFIGURE_FLAGS += --with-java=$(JAVA_PATH)
+else
+# DQ (10/22/2010): Added specification of --without-java to distcheck rule.
+# If we have first built without java then we have had to build some of the
+# Fortran language supporting files as empty files and thus we don't want to
+# run distcheck in a way that would use those files. However the problem
+# when this is not used has more to do with the Java langauge support.
+# A better reason why this is required might be so that we can run the NMI tests.
+  DISTCHECK_CONFIGURE_FLAGS += --without-java
 endif
 
 # DQ (7/25/2008): If ROSE was originallly configured to use the HPC Toolkit
 # then make sure it is tested as part of the distcheck rule.
 if ROSE_BUILD_ROSEHPCT
-   DISTCHECK_CONFIGURE_FLAGS += --enable-rosehpct
+  DISTCHECK_CONFIGURE_FLAGS += --enable-rosehpct
 endif
 
 # DQ (7/25/2008): If ROSE was originallly configured to use the javaport
 # work (generation of Java interface functions for ROSE using SWIG) then 
 # make sure it is tested as part of the distcheck rule.
 if ENABLE_JAVAPORT
-   DISTCHECK_CONFIGURE_FLAGS += --with-javaport
+  DISTCHECK_CONFIGURE_FLAGS += --with-javaport
 endif
 
 # DQ (4/5/2010): Use the same version of OFP as specified on the original configure command line.
-DISTCHECK_CONFIGURE_FLAGS += \
-   --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # SRIRAM (8/2/2010): changing distcheck configuration for LLVM translator
 if ROSE_USE_LLVM
-DISTCHECK_CONFIGURE_FLAGS += --with-llvm=$(llvm_path)
+   DISTCHECK_CONFIGURE_FLAGS += --with-llvm=$(llvm_path)
 endif
 
 # DQ (4/22/2005): To make clear when binaries are in the distribution as 
@@ -301,14 +308,14 @@ FindFileRequiringRoseConfigHeaderLong:
 	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
    for f in $$list; do \
         echo "Searching for -->$$f<-- macro"; \
-        grep -r $$f $(top_srcdir)/src/* | grep "\.h:"; \
+        grep -r $$f $(top_srcdir)/* | grep "\.h:"; \
    done
 
 FindFileRequiringRoseConfigSourceLong:
 	list=`egrep "#define|\/* #undef" rose_config.h | sed 's/\/\* //g' | egrep -v "const|error_t|inline|off_t|size_t" | cut --delimiter=" " -f 2`; \
    for f in $$list; do \
         echo "Searching for -->$$f<-- macro"; \
-        grep -r $$f $(top_srcdir)/src/* | grep "\.C:"; \
+        grep -r $$f $(top_srcdir)/* | grep "\.C:"; \
    done
 
 FindFileRequiringRoseConfigSourceAndHeadersLong:

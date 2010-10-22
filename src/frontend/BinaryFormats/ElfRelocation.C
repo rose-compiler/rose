@@ -94,7 +94,12 @@ SgAsmElfRelocEntry::encode(ByteOrder sex, Elf64RelEntry_disk *disk) const
 std::string
 SgAsmElfRelocEntry::reloc_name() const
 {
-    return stringifySgAsmElfRelocEntryRelocType(get_type());
+#ifndef _MSC_VER
+	return stringifySgAsmElfRelocEntryRelocType(get_type());
+#else
+	ROSE_ASSERT(false);
+	return "";
+#endif
 }
 
 /** Print some debugging info */

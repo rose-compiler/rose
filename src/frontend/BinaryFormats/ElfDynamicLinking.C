@@ -52,7 +52,13 @@ SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk) const
 std::string
 SgAsmElfDynamicEntry::to_string(EntryType t) 
 {
+#ifndef _MSC_VER
     return stringifySgAsmElfDynamicEntryEntryType(t);
+#else
+	ROSE_ASSERT(false);
+	return "";
+#endif
+
 }
 
 /** Set name and adjust parent */

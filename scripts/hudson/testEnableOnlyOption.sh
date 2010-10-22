@@ -80,9 +80,11 @@ if [ $SKIP_COMPILATION -ne 1 ]; then
   # only reconfigure as needed
   ../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=$ROSE_INSTALL_PATH --enable-only-${LANGUAGE_OPTION}
 #../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --with-haskell=/home/liao6/opt/ghc-6.10.4/bin --with-pch --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-svn/lib/ --prefix=$HOME/.hudson/tempInstall
-  
+
+# DQ (10/19/2010): Added distcheck rul to match what is in the release scripts...
   make -j${PROCESS_NUM} && \
-  make -j${PROCESS_NUM} check
+  make -j${PROCESS_NUM} check && \
+  make -j${PROCESS_NUM} distcheck
 fi
 
 if [ $? -ne 0 ]; then
