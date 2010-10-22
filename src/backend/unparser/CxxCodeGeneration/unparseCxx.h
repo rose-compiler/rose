@@ -380,19 +380,21 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        virtual void unparseUpcForAllStatement (SgStatement* stmt, SgUnparse_Info& info);
 //#endif       
        // Liao 5/31/2009, OpenMP nodes
-       virtual void unparseOmpDefaultClause(SgOmpDefaultClause* clause, SgUnparse_Info& info);
-       virtual void unparseOmpScheduleClause(SgOmpScheduleClause* clause, SgUnparse_Info& info);
-       virtual void unparseOmpVariablesClause(SgOmpVariablesClause* clause, SgUnparse_Info& info);
-       virtual void unparseOmpExpressionClause(SgOmpExpressionClause* clause, SgUnparse_Info& info);
-       virtual void unparseOmpClause(SgOmpClause* clause, SgUnparse_Info& info);
+         virtual void unparseOmpPrefix                     (SgUnparse_Info& info); 
+//       virtual void unparseOmpDefaultClause(SgOmpDefaultClause* clause, SgUnparse_Info& info);
+//       virtual void unparseOmpScheduleClause(SgOmpScheduleClause* clause, SgUnparse_Info& info);
+//       virtual void unparseOmpVariablesClause(SgOmpVariablesClause* clause, SgUnparse_Info& info);
+//       virtual void unparseOmpExpressionClause(SgOmpExpressionClause* clause, SgUnparse_Info& info);
+//       virtual void unparseOmpClause(SgOmpClause* clause, SgUnparse_Info& info);
+//       virtual void unparseOmpParallelStatement (SgStatement* stmt, SgUnparse_Info& info);
+//       virtual void unparseOmpBodyStatement(SgOmpBodyStatement* stmt, SgUnparse_Info& info);
+//       virtual void unparseOmpThreadprivateStatement(SgOmpThreadprivateStatement* stmt, SgUnparse_Info& info);
+//       virtual void unparseOmpFlushStatement(SgOmpFlushStatement* stmt, SgUnparse_Info& info);
+//       virtual void unparseOmpBarrierStatement(SgOmpBarrierStatement* stmt, SgUnparse_Info& info);
+//       virtual void unparseOmpTaskwaitStatement(SgOmpTaskwaitStatement* stmt, SgUnparse_Info& info);
 
-       //virtual void unparseOmpParallelStatement (SgStatement* stmt, SgUnparse_Info& info);
-       virtual void unparseOmpBodyStatement(SgOmpBodyStatement* stmt, SgUnparse_Info& info);
-       virtual void unparseOmpThreadprivateStatement(SgOmpThreadprivateStatement* stmt, SgUnparse_Info& info);
-       virtual void unparseOmpFlushStatement(SgOmpFlushStatement* stmt, SgUnparse_Info& info);
-
-       virtual void unparseOmpBarrierStatement(SgOmpBarrierStatement* stmt, SgUnparse_Info& info);
-       virtual void unparseOmpTaskwaitStatement(SgOmpTaskwaitStatement* stmt, SgUnparse_Info& info);
+         virtual void unparseOmpForStatement          (SgStatement* stmt, SgUnparse_Info& info);
+         virtual void unparseOmpBeginDirectiveClauses (SgStatement* stmt, SgUnparse_Info& info);
        // DQ (8/13/2007): This should go into the Unparser class
       //! begin the unparser (unparser.C)
        // void run_unparser();

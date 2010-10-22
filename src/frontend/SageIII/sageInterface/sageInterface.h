@@ -1099,21 +1099,21 @@ void prependStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatemen
 //! for example, SgBasicBlock has a simple statement list while IfStmt does not.
 bool  hasSimpleChildrenList (SgScopeStatement* scope);
 
-//! Insert a statement before or after the target statement within the target's scope
-void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore= true);
+//! Insert a statement before or after the target statement within the target's scope. Move around preprocessing info automatically
+void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore= true, bool autoMovePreprocessingInfo = true);
 
 //! Insert a list of statements before or after the target statement within the
 //target's scope
 void insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore= true);
 
 //! Insert a statement before a target statement
-void insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt);
+void insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo = true);
 
 //! Insert a list of statements before a target statement
 void insertStatementListBefore(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts);
 
-//! Insert a statement after a target statement
-void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt);
+//! Insert a statement after a target statement, Move around preprocessing info automatically by default
+void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo = true);
 
 //! Insert a list of statements after a target statement
 void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmt);
@@ -1320,7 +1320,6 @@ SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStm
   * otherwise generate a SgBasicBlock in between. If s is the body of a loop, catch, or if statement and is already
   * a basic block, s is returned unmodified. Else, the (potentially new) parent of s is returned. */
 SgLocatedNode* ensureBasicBlockAsParent(SgStatement* s);
-//SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
 
 //! Fix up ifs, loops, etc. to have blocks as all components and add dummy else
 //! clauses to if statements that don't have them
