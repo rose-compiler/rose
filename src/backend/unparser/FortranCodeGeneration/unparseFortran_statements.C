@@ -3718,7 +3718,7 @@ FortranCodeGeneration_locatedNode::unparsePragmaDeclStmt (SgStatement* stmt, SgU
   string txt = pragma->get_pragma();
   AstAttribute* att = stmt->getAttribute("OmpAttributeList");
   if (att)
-    curprint("!$omp ");
+    curprint("!$");
   else
     curprint("!pragma ");
   curprint(txt);
@@ -5539,6 +5539,7 @@ FortranCodeGeneration_locatedNode::unparseOmpBeginDirectiveClauses (SgStatement*
       unparseOmpClause(c_clause, info);
     }
   }
+  unp->u_sage->curprint_newline();
 }
 
 // Only unparse nowait or copyprivate clauses here
@@ -5558,6 +5559,7 @@ FortranCodeGeneration_locatedNode::unparseOmpEndDirectiveClauses(SgStatement* st
         unparseOmpClause(c_clause, info);
     }
   }
+  unp->u_sage->curprint_newline();
 }
 
 void FortranCodeGeneration_locatedNode::unparseOmpEndDirectivePrefixAndName (SgStatement* stmt,     SgUnparse_Info& info)
@@ -5634,7 +5636,7 @@ void FortranCodeGeneration_locatedNode::unparseOmpEndDirectivePrefixAndName (SgS
         break;
       }
   } // end switch
-  unp->u_sage->curprint_newline();
+  //  unp->u_sage->curprint_newline(); // prepare end clauses, they have to be on the same line
 }
 
 void FortranCodeGeneration_locatedNode::unparseOmpDoStatement     (SgStatement* stmt, SgUnparse_Info& info)
@@ -5644,7 +5646,7 @@ void FortranCodeGeneration_locatedNode::unparseOmpDoStatement     (SgStatement* 
   ROSE_ASSERT(d_stmt != NULL);
   
   unparseOmpDirectivePrefixAndName(stmt, info);
-    unparseOmpBeginDirectiveClauses(stmt, info);
+  unparseOmpBeginDirectiveClauses(stmt, info);
 
   SgUnparse_Info ninfo(info);
   if (d_stmt->get_body())

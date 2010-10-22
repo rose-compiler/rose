@@ -33,9 +33,9 @@ namespace OmpSupport
   // a similar list to save encountered Fortran comments which are OpenMP directives
   std::list<OmpAttribute* > omp_comment_list; 
   // A pragma list to store the dangling pragmas for Fortran end directives. 
-  // There are stored to ensure correct unparsing using -rose:openmp:ast_only
+  // There are stored to ensure correct unparsing after converting Fortran comments into pragmas
   // But they should be immediately removed during the OpenMP lowering phase
-  static std::list<SgPragmaDeclaration* > omp_end_pragma_list; 
+ //  static std::list<SgPragmaDeclaration* > omp_end_pragma_list; 
 
   // find all SgPragmaDeclaration nodes within a file and parse OpenMP pragmas into OmpAttribute info.
   void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
@@ -655,7 +655,13 @@ namespace OmpSupport
         break;
       case e_task:
         result = new SgOmpTaskStatement(NULL, body); 
-        // cout<<"Debug:sageSupport.C Found an OmpAttribute from a task pragma"<<endl;
+        break;
+       //Fortran  
+      case e_do:
+        result = new SgOmpDoStatement(NULL, body); 
+        break;
+      case e_workshare:
+        result = new SgOmpWorkshareStatement(NULL, body); 
         break;
       default:
         {
@@ -807,9 +813,9 @@ namespace OmpSupport
         case e_collapse:
         case e_ordered_clause:
           {
-            if (!isSgOmpForStatement(second_stmt))
+            if (!isSgOmpForStatement(second_stmt) && !isSgOmpDoStatement(second_stmt))
             {
-              printf("error: unacceptable clauses in parallel for\n");
+              printf("Error: buildOmpParallelStatementFromCombinedDirectives(): unacceptable clauses for parallel for/do\n");
               att->print();
               ROSE_ASSERT(false);
             }
@@ -910,11 +916,12 @@ This is no perfect solution until we handle preprocessing information as structu
   {
     list<SgPragmaDeclaration* >::reverse_iterator iter; // bottom up handling for nested cases
     ROSE_ASSERT (sageFilePtr != NULL);
+#if 0    
     // remove the end pragmas within Fortran. They were preserved for debugging (the conversion from comments to pragmas) purpose. 
-    list<SgPragmaDeclaration* >::iterator end_iter;
-    for (end_iter=omp_end_pragma_list.begin(); end_iter!=omp_end_pragma_list.end(); end_iter ++)
+    list<SgPragmaDeclaration* >::reverse_iterator end_iter;
+    for (end_iter=omp_end_pragma_list.rbegin(); end_iter!=omp_end_pragma_list.rend(); end_iter ++)
       removeStatement (*end_iter);
-
+#endif
     for (iter = omp_pragma_list.rbegin(); iter != omp_pragma_list.rend(); iter ++)
     {
       // Liao, 11/18/2009
@@ -986,12 +993,14 @@ This is no perfect solution until we handle preprocessing information as structu
           case e_section:
           case e_critical:
           case e_ordered_directive:
-            // case e_workshare;// TODO fortran
           case e_parallel:
           case e_for:
           case e_single:
           case e_task:
           case e_sections: 
+            //fortran
+          case e_do:
+          case e_workshare:
             {
               omp_stmt = buildOmpBodyStatement(oa);
               break;
@@ -1146,10 +1155,10 @@ This is no perfect solution until we handle preprocessing information as structu
     // x.  We should not remove the end pragma declaration since SgBasicBlock is not unparsed.
     // In the end , the pragmas don't matter too much, the OmpAttributes attached to them 
     // are used to guide translations. 
-    // removeStatement(end_decl);
+     removeStatement(end_decl);
     // we should save those useless end pragmas to a list
     // and remove them as one of the first steps in OpenMP lowering for Fortran
-    omp_end_pragma_list.push_back(end_decl); 
+    // omp_end_pragma_list.push_back(end_decl); 
   } // end merge_Matching_Fortran_Pragma_pairs()
   
   //! This function will 
@@ -1320,9 +1329,8 @@ This is no perfect solution until we handle preprocessing information as structu
       {
         printf ("Calling convert_OpenMP_pragma_to_AST() \n");
       }
-      // TODO move out of this if false body.
-      //convert_OpenMP_pragma_to_AST( sageFilePtr);
     }
+    // We can turn this off to debug the convert_Fortran_OMP_Comments_to_Pragmas()
     convert_OpenMP_pragma_to_AST( sageFilePtr);
   }
 
