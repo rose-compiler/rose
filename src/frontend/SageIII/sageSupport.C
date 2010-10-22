@@ -1290,8 +1290,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // set_UPCpp_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
   // ROSE_ASSERT (get_UPCxx_only() == false);
      bool hasRoseUpcppEnabled = CommandlineProcessing::isOption(argv,"-rose:","(UPCxx|UPCxx_only)",true) ;
-     bool hasEdgUpcppEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc++)",true) ;
-     bool hasEdgUpcppEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc++)",true) ;
+  // bool hasEdgUpcppEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc++)",true) ;
+  // bool hasEdgUpcppEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc++)",true) ;
+     bool hasEdgUpcppEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upcxx)",true) ;
+     bool hasEdgUpcppEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upcxx)",true) ;
 
      if (hasRoseUpcppEnabled||hasEdgUpcppEnabled2||hasEdgUpcppEnabled) 
         {
@@ -7929,6 +7931,7 @@ SgFile::usage ( int status )
 "Control Fortran frontend processing:\n"
 "     -rose:cray_pointer_support\n"
 "                             turn on internal support for cray pointers\n"
+"                             (Note: not implemented in front-end (OFP) yet.)\n"
 "     -fortran:XXX            pass -XXX to independent semantic analysis\n"
 "                             (useful for turning on specific warnings in front-end)\n"
 "\n"
