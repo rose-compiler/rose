@@ -1,4 +1,4 @@
 TITLE="testing default compiler (4.3.0) without java"
 DESCRIPTION="default configuration options, boost 1.36 without java"
-PREREQS="boost-1.36.0"
+PREREQS="boost-1.36.0, libtool-2.2.6b"
 CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java"

@@ -9,8 +9,8 @@ DESCRIPTION="minimal ROSE configuration options, gcc 4.2.4, boost 1.36, without 
 # of libstdc++.so from older version of GNU being used (wrong -L options being used).
 # PREREQS="gcc-4.2.4, boost-1.36.0, automake-1.10, autoconf-2.63, libxml2-2.7.3 libtool-1.5.26"
 # PREREQS="gcc-4.2.4, boost-1.36.0, automake-1.10, autoconf-2.63, libxml2-2.7.3 libtool-1.5.26"
-# PREREQS="gcc-4.2.4, boost-1.36.0, automake-1.10, autoconf-2.63, libxml2-2.7.3, libtool-1.5.26"
-PREREQS="gcc-4.2.4, boost-1.36.0, automake-1.10, autoconf-2.63, libxml2-2.7.3, libtool-1.5.26, tar-1.14"
+# PREREQS="gcc-4.2.4, boost-1.36.0, automake-1.10, autoconf-2.63, libxml2-2.7.3"
+PREREQS="gcc-4.2.4, boost-1.36.0, libtool-2.2.6b, automake-1.10, autoconf-2.63, libxml2-2.7.3, tar-1.14"
 
 CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java"
 ACLOCAL_INCLUDES="-I /prereq/libxml2-2.7.3/share/aclocal/"
