@@ -32,7 +32,8 @@ str_printf(const char *fmt, ...)
 /** Prints binary data similar to the Unix hexdump command.  The output is configurable via the HexdumpFormat argument.  This
  *  is the most general hexdump function. All others should be implemented in terms of this one. */
 void
-SgAsmExecutableFileFormat::hexdump(std::ostream &f, addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt)
+SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const unsigned char *data,
+                                   size_t n, const HexdumpFormat &fmt)
 {
     /* Provide default formats. This is done here so that the header file doesn't depend on <inttypes.h> */
     const char *addr_fmt = fmt.addr_fmt ? fmt.addr_fmt : "0x%08"PRIx64":";
@@ -92,8 +93,8 @@ SgAsmExecutableFileFormat::hexdump(std::ostream &f, addr_t base_addr, const unsi
 
 /* Stream output for old-style arguments. */
 void
-SgAsmExecutableFileFormat::hexdump(std::ostream &f, addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data,
-                                   bool multiline)
+SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const std::string &prefix,
+                                   const SgUnsignedCharList &data, bool multiline)
 {
     if (!data.empty()) {
         HexdumpFormat fmt;
@@ -105,8 +106,8 @@ SgAsmExecutableFileFormat::hexdump(std::ostream &f, addr_t base_addr, const std:
 
 /* Stream output for SgFileContentList */
 void
-SgAsmExecutableFileFormat::hexdump(std::ostream &f, addr_t base_addr, const std::string &prefix, const SgFileContentList &data, 
-                                   bool multiline)
+SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const std::string &prefix,
+                                   const SgFileContentList &data, bool multiline)
 {
 
     if (!data.empty()) {
@@ -123,7 +124,7 @@ SgAsmExecutableFileFormat::hexdump(std::ostream &f, addr_t base_addr, const std:
 
 /* String output with new-style arguments. */
 std::string
-SgAsmExecutableFileFormat::hexdump(addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt)
+SgAsmExecutableFileFormat::hexdump(rose_addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt)
 {
     std::ostringstream s;
     hexdump(s, base_addr, data, n, fmt);
@@ -132,7 +133,8 @@ SgAsmExecutableFileFormat::hexdump(addr_t base_addr, const unsigned char *data, 
 
 /* String output with old-style arguments. */
 std::string
-SgAsmExecutableFileFormat::hexdump(addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data, bool multiline)
+SgAsmExecutableFileFormat::hexdump(rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data,
+                                   bool multiline)
 {
     if (data.empty()) return "";
     HexdumpFormat fmt;
@@ -143,7 +145,8 @@ SgAsmExecutableFileFormat::hexdump(addr_t base_addr, const std::string &prefix, 
 
 /* String output for SgFileContentList */
 std::string
-SgAsmExecutableFileFormat::hexdump(addr_t base_addr, const std::string &prefix, const SgFileContentList &data, bool multiline)
+SgAsmExecutableFileFormat::hexdump(rose_addr_t base_addr, const std::string &prefix, const SgFileContentList &data,
+                                   bool multiline)
 {
     if (data.empty()) return "";
     HexdumpFormat fmt;
@@ -158,14 +161,14 @@ SgAsmExecutableFileFormat::hexdump(addr_t base_addr, const std::string &prefix, 
 
 /* File output with new-style arguments */
 void
-SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt)
+SgAsmExecutableFileFormat::hexdump(FILE *f, rose_addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt)
 {
     fputs(hexdump(base_addr, data, n, fmt).c_str(), f);
 }
 
 /* File output with old-style arguments */    
 void
-SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data, 
+SgAsmExecutableFileFormat::hexdump(FILE *f, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data, 
                                    bool multiline)
 {
     fputs(hexdump(base_addr, prefix, data, multiline).c_str(), f);
@@ -173,7 +176,7 @@ SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string 
 
 /* File output for SgFileContentList */
 void
-SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgFileContentList &data, 
+SgAsmExecutableFileFormat::hexdump(FILE *f, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList &data, 
                                    bool multiline)
 {
     fputs(hexdump(base_addr, prefix, data, multiline).c_str(), f);

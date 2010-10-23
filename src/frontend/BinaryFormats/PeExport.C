@@ -84,7 +84,7 @@ SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor */
 void
-SgAsmPEExportEntry::ctor(SgAsmGenericString *fname, unsigned ordinal, rva_t expaddr, SgAsmGenericString *forwarder)
+SgAsmPEExportEntry::ctor(SgAsmGenericString *fname, unsigned ordinal, rose_rva_t expaddr, SgAsmGenericString *forwarder)
 {
     set_name(fname);
     set_ordinal(ordinal);
@@ -154,7 +154,7 @@ SgAsmPEExportSection::parse()
     for (size_t i=0; i<p_export_dir->get_nameptr_n(); i++) {
         /* Function name RVA (nameptr)*/
         ExportNamePtr_disk nameptr_disk = 0;
-        addr_t nameptr_rva = p_export_dir->get_nameptr_rva().get_rva() + i*sizeof(nameptr_disk);
+        rose_addr_t nameptr_rva = p_export_dir->get_nameptr_rva().get_rva() + i*sizeof(nameptr_disk);
         try {
             read_content(fhdr->get_loader_map(), nameptr_rva, &nameptr_disk, sizeof nameptr_disk);
         } catch (const MemoryMap::NotMapped &e) {
@@ -166,7 +166,7 @@ SgAsmPEExportSection::parse()
             }
             nameptr_disk = 0;
         }
-        addr_t nameptr = le_to_host(nameptr_disk);
+        rose_addr_t nameptr = le_to_host(nameptr_disk);
 
         /* Function name (fname) */
         std::string s;
@@ -184,7 +184,7 @@ SgAsmPEExportSection::parse()
 
         /* Ordinal (sort of an index into the Export Address Table) */
         ExportOrdinal_disk ordinal_disk = 0;
-        addr_t ordinal_rva = p_export_dir->get_ordinals_rva().get_rva() + i*sizeof(ordinal_disk);
+        rose_addr_t ordinal_rva = p_export_dir->get_ordinals_rva().get_rva() + i*sizeof(ordinal_disk);
         try {
             read_content(fhdr->get_loader_map(), ordinal_rva, &ordinal_disk, sizeof ordinal_disk);
         } catch (const MemoryMap::NotMapped &e) {
@@ -202,12 +202,12 @@ SgAsmPEExportSection::parse()
          * the ord_base from the Ordinal to get the index, but testing has shown this to be off by one (e.g., Windows-XP file
          * /WINDOWS/system32/msacm32.dll's Export Table's first symbol has the name "XRegThunkEntry" with an Ordinal of zero
          * and the ord_base is one. The index according to spec would be -1 rather than the correct value of zero.) */
-        rva_t expaddr = 0;
+        rose_rva_t expaddr = 0;
         if (ordinal >= (p_export_dir->get_ord_base()-1)) {
             unsigned expaddr_idx = ordinal - (p_export_dir->get_ord_base()-1);
             ROSE_ASSERT(expaddr_idx < p_export_dir->get_expaddr_n());
             ExportAddress_disk expaddr_disk = 0;
-            addr_t expaddr_rva = p_export_dir->get_expaddr_rva().get_rva() + expaddr_idx*sizeof(expaddr_disk);
+            rose_addr_t expaddr_rva = p_export_dir->get_expaddr_rva().get_rva() + expaddr_idx*sizeof(expaddr_disk);
             try {
                 read_content(fhdr->get_loader_map(), expaddr_rva, &expaddr_disk, sizeof expaddr_disk);
             } catch (const MemoryMap::NotMapped &e) {
