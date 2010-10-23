@@ -2,16 +2,19 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-bin_PROGRAMS = defaultTranslator preprocessingInfoDumper
+bin_PROGRAMS = defaultTranslator preprocessingInfoDumper mangledNameDumper
 
 defaultTranslator_SOURCES = defaultTranslator.C 
 preprocessingInfoDumper_SOURCES = preprocessingInfoDumper.C
+mangledNameDumper_SOURCES = mangledNameDumper.C
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = CMakeLists.txt 
+EXTRA_DIST = CMakeLists.txt  test_mangeldName.c
 CLEANFILES = 
 
+check-local:mangledNameDumper
+	./mangledNameDumper -c $(srcdir)/test_mangeldName.c
 clean-local:
 	rm -rf Templates.DB ii_files ti_files
 
