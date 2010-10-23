@@ -309,7 +309,7 @@ SgAsmElfDynamicSection::unparse(std::ostream &f) const
             ROSE_ASSERT(!"unsupported word size");
         }
 
-        addr_t spos = i * entry_size;
+        rose_addr_t spos = i * entry_size;
         spos = write(f, spos, struct_size, disk);
         if (entry->get_extra().size()>0) {
             ROSE_ASSERT(entry->get_extra().size()<=extra_size);

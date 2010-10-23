@@ -30,7 +30,7 @@ import_mesg(const char *fmt, ...)
 
 /* Constructor */
 void
-SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *idir_rva_p)
+SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, rose_addr_t *idir_rva_p)
 {
     ROSE_ASSERT(idir_rva_p!=NULL);
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(section->get_header());
@@ -103,7 +103,7 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
     if (p_dll_name_rva>0) {
         SgAsmGenericSection *name_section = p_dll_name_rva.get_section();
         if (name_section!=NULL) {
-            addr_t spos = name_section->write(f, p_dll_name_rva.get_rel(), p_dll_name->get_string());
+            rose_addr_t spos = name_section->write(f, p_dll_name_rva.get_rel(), p_dll_name->get_string());
             name_section->write(f, spos, '\0');
         } else {
             import_mesg("error: unable to locate section to contain Import Directory Name RVA 0x%08"PRIx64"\n", 
@@ -225,7 +225,7 @@ SgAsmPEImportILTEntry::encode(const SgAsmPEFileHeader *fhdr) const
 }
 
 void
-SgAsmPEImportILTEntry::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr, rva_t rva, size_t idx) const
+SgAsmPEImportILTEntry::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr, rose_rva_t rva, size_t idx) const
 {
     ROSE_ASSERT(rva.get_section()!=NULL);
     uint64_t ilt_entry_word = encode(fhdr);
@@ -282,7 +282,7 @@ SgAsmPEImportILTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
  *    true  => PE Import Address Table
  *    false => PE Import Lookup Table */
 void
-SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idir_idx, bool is_iat)
+SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rose_rva_t rva, size_t idir_idx, bool is_iat)
 {
     ROSE_ASSERT(p_entries==NULL);
     p_entries = new SgAsmPEImportILTEntryList();
@@ -356,7 +356,7 @@ SgAsmPEImportLookupTable::add_ilt_entry(SgAsmPEImportILTEntry *ilt_entry)
 }
 
 void
-SgAsmPEImportLookupTable::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr, rva_t rva) const
+SgAsmPEImportLookupTable::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr, rose_rva_t rva) const
 {
     if (rva!=0) {
         //const char *tname = p_is_iat ? "Import Address Table" : "Import Lookup Table";
@@ -372,7 +372,7 @@ SgAsmPEImportLookupTable::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr
         /* Zero terminated */
         uint64_t zero = 0;
         ROSE_ASSERT(fhdr->get_word_size()<=sizeof zero);
-        addr_t spos = rva.get_rel() + p_entries->get_vector().size() * fhdr->get_word_size();
+        rose_addr_t spos = rva.get_rel() + p_entries->get_vector().size() * fhdr->get_word_size();
         rva.get_section()->write(f, spos, fhdr->get_word_size(), &zero);
     }
 }
@@ -401,7 +401,7 @@ SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor */
 void
-SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
+SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rose_rva_t rva)
 {
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(isec->get_header());
     ROSE_ASSERT(fhdr!=NULL);
@@ -453,11 +453,11 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
 }
 
 void
-SgAsmPEImportHNTEntry::unparse(std::ostream &f, rva_t rva) const
+SgAsmPEImportHNTEntry::unparse(std::ostream &f, rose_rva_t rva) const
 {
     uint16_t hint_disk;
     host_to_le(p_hint, &hint_disk);
-    addr_t spos = rva.get_rel();
+    rose_addr_t spos = rva.get_rel();
     spos = rva.get_section()->write(f, spos, 2, &hint_disk);
     spos = rva.get_section()->write(f, spos, p_name->get_string());
     spos = rva.get_section()->write(f, spos, '\0');
@@ -540,7 +540,7 @@ SgAsmPEImportSection::parse()
             break;
         }
 
-        rva_t rva = idir->get_dll_name_rva();
+        rose_rva_t rva = idir->get_dll_name_rva();
         if (rva.get_section()!=this) {
             rose_addr_t start_rva = get_mapped_actual_va() - get_base_va();
             import_mesg("SgAsmPEImportSection::ctor: warning: Name RVA is outside PE Import Table\n"

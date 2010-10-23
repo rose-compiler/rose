@@ -299,7 +299,7 @@ SgAsmElfRelocSection::unparse(std::ostream &f) const
             ROSE_ASSERT(!"unsupported word size");
         }
 
-        addr_t spos = i * entry_size;
+        rose_addr_t spos = i * entry_size;
         spos = write(f, spos, struct_size, disk);
 #if 0 /*FIXME: padding not supported here yet (RPM 2008-10-13)*/
         if (entry->get_extra().size()>0) {
