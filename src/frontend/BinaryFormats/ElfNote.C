@@ -143,7 +143,7 @@ SgAsmElfNoteEntry::unparse(std::ostream &f, rose_addr_t at)
 /** Returns the number of bytes needed to store this note. */
 rose_addr_t
 SgAsmElfNoteEntry::calculate_size() const {
-    addr_t need = 12;                           /*namesize, payloadsize, type*/
+    rose_addr_t need = 12;                           /*namesize, payloadsize, type*/
     need += p_name->get_string().size() + 1;    /*name plus NUL terminator*/
     need = (need+3) & ~0x3;                     /*pad to align payload on a four-byte offset */
     need += p_payload.size();
@@ -199,7 +199,7 @@ SgAsmElfNoteSection::reallocate()
     bool reallocated = SgAsmElfSection::reallocate();
     
     /* How much space is needed by the notes? */
-    addr_t need = 0;
+    rose_addr_t need = 0;
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfNoteEntry *ent = p_entries->get_entries()[i];
         need += ent->calculate_size();
@@ -228,7 +228,7 @@ SgAsmElfNoteSection::unparse(std::ostream &f) const
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
 
-    addr_t at = 0;
+    rose_addr_t at = 0;
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfNoteEntry *ent = p_entries->get_entries()[i];
         at = ent->unparse(f, at);

@@ -101,19 +101,19 @@ SgAsmPEStringSection::unparse(std::ostream &f) const
 
 /* Augments superclass to make sure free list and such are adjusted properly */
 void
-SgAsmPEStringSection::set_size(addr_t newsize)
+SgAsmPEStringSection::set_size(rose_addr_t newsize)
 {
-    addr_t orig_size = get_size();
+    rose_addr_t orig_size = get_size();
     SgAsmPESection::set_size(newsize);
     SgAsmGenericStrtab *strtab = get_strtab();
 
     if (get_size() > orig_size) {
         /* Add new address space to string table free list */
-        addr_t n = get_size() - orig_size;
+        rose_addr_t n = get_size() - orig_size;
         strtab->get_freelist().insert(orig_size, n);
     } else if (get_size() < orig_size) {
         /* Remove deleted address space from string table free list */
-        addr_t n = orig_size - get_size();
+        rose_addr_t n = orig_size - get_size();
         strtab->get_freelist().erase(get_size(), n);
     }
 }
@@ -164,7 +164,7 @@ SgAsmCoffStrtab::~SgAsmCoffStrtab()
  * object, otherwise create a new one. Each storage object is considered to be a separate string, therefore when two strings
  * share the same storage object, changing one string changes the other. */
 SgAsmStringStorage *
-SgAsmCoffStrtab::create_storage(addr_t offset, bool shared)
+SgAsmCoffStrtab::create_storage(rose_addr_t offset, bool shared)
 {
     ROSE_ASSERT(offset!=SgAsmGenericString::unallocated);
     SgAsmGenericSection *container = get_container();
@@ -235,7 +235,7 @@ SgAsmCoffStrtab::unparse(std::ostream &f) const
     for (size_t i=0; i<p_storage_list.size(); i++) {
         SgAsmStringStorage *storage = p_storage_list[i];
         ROSE_ASSERT(storage->get_offset()!=SgAsmGenericString::unallocated);
-        addr_t at = container->write(f, storage->get_offset(), storage->get_string());
+        rose_addr_t at = container->write(f, storage->get_offset(), storage->get_string());
         container->write(f, at, '\0');
     }
     

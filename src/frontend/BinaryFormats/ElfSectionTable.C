@@ -114,7 +114,7 @@ SgAsmElfSectionTable::parse()
 
     /* Read all the section headers. */
     std::vector<SgAsmElfSectionTableEntry*> entries;
-    addr_t offset = 0;
+    rose_addr_t offset = 0;
     for (size_t i=0; i<nentries; i++, offset+=ent_size) {
         SgAsmElfSectionTableEntry *shdr = NULL;
         if (4 == fhdr->get_word_size()) {
@@ -570,7 +570,7 @@ SgAsmElfSectionTable::reallocate()
 
     /* Resize based on word size from ELF File Header */
     size_t opt_size, nentries;
-    addr_t need = calculate_sizes(NULL, NULL, &opt_size, &nentries);
+    rose_addr_t need = calculate_sizes(NULL, NULL, &opt_size, &nentries);
     if (need < get_size()) {
         if (is_mapped()) {
             ROSE_ASSERT(get_mapped_size()==get_size());
@@ -636,7 +636,7 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
         }
 
         /* The disk struct */
-        addr_t spos = write(f, id*ent_size, struct_size, disk);
+        rose_addr_t spos = write(f, id*ent_size, struct_size, disk);
         if (shdr->get_extra().size() > 0) {
             ROSE_ASSERT(shdr->get_extra().size()<=opt_size);
             write(f, spos, shdr->get_extra());
