@@ -2376,7 +2376,7 @@ Grammar::buildMiscSupportDeclarations()
 // used in variantT()
 string
 Grammar::buildVariantEnums() {
-  string s=string("enum VariantT {\n");
+  string s=string("enum VariantT \n{\n");
   unsigned int i;
   bool notFirst=false;
   for (i=0; i < terminalList.size(); i++) {
@@ -2663,7 +2663,7 @@ Grammar::buildCode ()
   // GB (7/6/2007): Changed these values so we can build bitmasks. This makes
   // it possible to define somewhat more general traversals that have both pre
   // and post order components. The user doesn't notice this change.
-     ROSE_ArrayGrammarHeaderFile << "typedef enum {preorder = 1, postorder = 2, preandpostorder = preorder | postorder} t_traverseOrder;\n\n";
+     ROSE_ArrayGrammarHeaderFile << "typedef enum \n{preorder = 1, postorder = 2, preandpostorder = preorder | postorder} t_traverseOrder;\n\n";
 
 #if 1
   // DQ (12/28/2009): Make this a configure option to use the separate, dramatically smaller but more numerous header files for each IR node.
@@ -3976,7 +3976,7 @@ Grammar::buildEnumForNode(Terminal& node, string& allEnumsString) {
 	stringListIterator++) {
       if ( (*stringListIterator)->getToBeTraversed() == DEF_TRAVERSAL) {
 	if (isFirst) {
-	  allEnumsString += string("enum E_") + node.getName() + " {";
+	  allEnumsString += string("enum E_") + node.getName() + " \n{\n";
 	} else {
 	  allEnumsString += ", ";
 	}

@@ -48,7 +48,7 @@ class Unparser;
 // DQ (3/16/2006): Added comments.  
 // These control how indentation and newlines are added in the
 // pre and post processing of each statement.
-typedef enum
+typedef enum Format_Opt
    {
      FORMAT_BEFORE_DIRECTIVE, 
      FORMAT_AFTER_DIRECTIVE,

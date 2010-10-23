@@ -65,7 +65,7 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
        // (rather than generated).
        // virtual void unparseQualifiedNameList(const SgQualifiedNamePtrList & qualifiedNameList);
 
-       // DQ (8/14/2007): This is where all the langauge specific statement unparing is done
+       // DQ (8/14/2007): This is where all the language specific statement unparsing is done
           virtual void unparseLanguageSpecificStatement (SgStatement*  stmt, SgUnparse_Info& info);
           virtual void unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info);
 
@@ -416,7 +416,14 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
 
       //FMZ (2/10/2009): Added support for unparsing SgCoExpresson
           void unparseCoArrayExpression      (SgExpression* expr, SgUnparse_Info& info);
-void curprint(const std::string&) const;
+          void curprint(const std::string&) const;
+       // Liao 10/20/2010 common unparsing support for OpenMP AST 
+          virtual void unparseOmpPrefix          (SgUnparse_Info& info);
+          virtual void unparseOmpDoStatement     (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseOmpBeginDirectiveClauses     (SgStatement* stmt,SgUnparse_Info& info);
+          virtual void unparseOmpEndDirectiveClauses       (SgStatement* stmt,     SgUnparse_Info& info);
+          virtual void unparseOmpEndDirectivePrefixAndName (SgStatement* stmt, SgUnparse_Info& info);
+      
 
 };
 

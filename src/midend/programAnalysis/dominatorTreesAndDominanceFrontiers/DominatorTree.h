@@ -47,7 +47,8 @@ class DominatorTree {
 public:
 
   //! This enum holds values for determining whether the Tree is a dominator or post-dominator
-  enum Direction {
+  enum Direction 
+  {
     PRE,  /*!< This indicates that we are building a dominator tree*/
     POST  /*!< This indicates that we are building a post-dominator tree*/
   };

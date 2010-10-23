@@ -67,11 +67,20 @@ SgAsmDwarfCondition.C                  SgAsmElfSymverDefinedEntryList.C    SgAsm
 SgAsmDwarfConstant.C                   SgAsmElfSymverDefinedSection.C      SgAsmTypeVector.C                          SgElseWhereStatement.C                SgLshiftAssignOp.C                      SgRealPartOp.C                               SgUnsignedShortVal.C 
 SgAsmDwarfConstruct.C                  SgAsmElfSymverEntry.C               SgAsmTypeWord.C                            SgEmptyDirectiveStatement.C           SgLshiftOp.C                            SgReferenceType.C                            SgUPC_AccessModifier.C 
 SgAsmDwarfConstructList.C              SgAsmElfSymverEntryList.C           SgAsmUnaryArmSpecialRegisterList.C         SgEndfileStatement.C                  SgMemberFunctionDeclaration.C           SgRefExp.C                                   SgUpcBarrierStatement.C 
-SgAsmDwarfConstType.C                  SgAsmElfSymverNeededAux.C           SgAsmUnaryExpression.C                     SgEndifDirectiveStatement.C           SgMemberFunctionRefExp.C                SgRenamePair.C                               SgUpcBlocksizeof.C 
-SgAsmDwarfDwarfProcedure.C             SgAsmElfSymverNeededAuxList.C       SgAsmUnaryMinus.C                          SgEntryStatement.C                    SgMemberFunctionSymbol.C                SgRenameSymbol.C                             SgUpcElemsizeof.C 
+SgAsmDwarfConstType.C                  SgAsmElfSymverNeededAux.C
+SgAsmUnaryExpression.C                     SgEndifDirectiveStatement.C
+SgMemberFunctionRefExp.C                SgRenamePair.C
+SgUpcBlocksizeofExpression.C 
+SgAsmDwarfDwarfProcedure.C             SgAsmElfSymverNeededAuxList.C
+SgAsmUnaryMinus.C                          SgEntryStatement.C
+SgMemberFunctionSymbol.C                SgRenameSymbol.C
+SgUpcElemsizeofExpression.C 
 SgAsmDwarfEntryPoint.C                 SgAsmElfSymverNeededEntry.C         SgAsmUnaryPlus.C                           SgEnumDeclaration.C                   SgMemberFunctionType.C                  SgReturnStmt.C                               SgUpcFenceStatement.C 
 SgAsmDwarfEnumerationType.C            SgAsmElfSymverNeededEntryList.C     SgAsmUnaryRrx.C                            SgEnumFieldSymbol.C                   SgMinusAssignOp.C                       SgRewindStatement.C                          SgUpcForAllStatement.C 
-SgAsmDwarfEnumerator.C                 SgAsmElfSymverNeededSection.C       SgAsmValueExpression.C                     SgEnumSymbol.C                        SgMinusMinusOp.C                        SgRshiftAssignOp.C                           SgUpcLocalsizeof.C 
+SgAsmDwarfEnumerator.C                 SgAsmElfSymverNeededSection.C
+SgAsmValueExpression.C                     SgEnumSymbol.C
+SgMinusMinusOp.C                        SgRshiftAssignOp.C
+SgUpcLocalsizeofExpression.C 
 SgAsmDwarfFileType.C                   SgAsmElfSymverSection.C             SgAsmVectorValueExpression.C               SgEnumType.C                          SgMinusOp.C                             SgRshiftOp.C                                 SgUpcMythread.C 
 SgAsmDwarfFormalParameter.C            SgAsmExecutableFileFormat.C         SgAsmWordValueExpression.C                 SgEnumVal.C                           SgModAssignOp.C                         SgScopeOp.C                                  SgUpcNotifyStatement.C 
 SgAsmDwarfFormatLabel.C                SgAsmExpression.C                   SgAsmx86Instruction.C                      SgEqualityOp.C                        SgModifier.C                            SgScopeStatement.C                           SgUpcThreads.C 

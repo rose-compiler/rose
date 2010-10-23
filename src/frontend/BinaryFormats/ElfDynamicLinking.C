@@ -52,7 +52,13 @@ SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk) const
 std::string
 SgAsmElfDynamicEntry::to_string(EntryType t) 
 {
+#ifndef _MSC_VER
     return stringifySgAsmElfDynamicEntryEntryType(t);
+#else
+	ROSE_ASSERT(false);
+	return "";
+#endif
+
 }
 
 /** Set name and adjust parent */
@@ -303,7 +309,7 @@ SgAsmElfDynamicSection::unparse(std::ostream &f) const
             ROSE_ASSERT(!"unsupported word size");
         }
 
-        addr_t spos = i * entry_size;
+        rose_addr_t spos = i * entry_size;
         spos = write(f, spos, struct_size, disk);
         if (entry->get_extra().size()>0) {
             ROSE_ASSERT(entry->get_extra().size()<=extra_size);

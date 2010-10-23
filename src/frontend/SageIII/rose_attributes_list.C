@@ -869,7 +869,12 @@ PreprocessingInfo::display (const string & label) const
 std::string
 PreprocessingInfo::relativePositionName (const RelativePositionType & position)
 {
+#ifndef _MSC_VER
     return stringifyPreprocessingInfoRelativePositionType(position);
+#else
+	ROSE_ASSERT(false);
+	return "";
+#endif
 }
 
 

@@ -30,7 +30,7 @@ SgAsmGenericString::set_string(const std::string &s)
 }
 
 void
-SgAsmGenericString::set_string(addr_t offset)
+SgAsmGenericString::set_string(rose_addr_t offset)
 {
     ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
     abort();
@@ -68,9 +68,9 @@ SgAsmBasicString::set_string(const std::string &s)
     p_string = s;
 }
 void
-SgAsmBasicString::set_string(addr_t offset)
+SgAsmBasicString::set_string(rose_addr_t offset)
 {
-    fprintf(stderr, "SgAsmBasicString::set_string(addr_t offset=%"PRIu64"): not supported\n", offset);
+    fprintf(stderr, "SgAsmBasicString::set_string(rose_addr_t offset=%"PRIu64"): not supported\n", offset);
     abort();
 }
 
@@ -162,7 +162,7 @@ SgAsmStoredString::set_string(const std::string &s)
 
 /** Give the string a new value by specifying the offset of a string already existing in the string table. */
 void
-SgAsmStoredString::set_string(addr_t offset)
+SgAsmStoredString::set_string(rose_addr_t offset)
 {
     set_isModified(true);
     SgAsmStringStorage *storage = get_storage();
@@ -216,7 +216,7 @@ SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /** Constructs an SgAsmStoredString from an offset into this string table. */
 SgAsmStoredString *
-SgAsmGenericStrtab::create_string(addr_t offset, bool shared)
+SgAsmGenericStrtab::create_string(rose_addr_t offset, bool shared)
 {
     SgAsmStringStorage *storage = create_storage(offset, shared);
     return new SgAsmStoredString(storage);
@@ -229,7 +229,7 @@ SgAsmGenericStrtab::free(SgAsmStringStorage *storage)
 {
     ROSE_ASSERT(storage!=NULL);
     ROSE_ASSERT(storage!=p_dont_free);
-    addr_t old_offset = storage->get_offset();
+    rose_addr_t old_offset = storage->get_offset();
     if (old_offset!=SgAsmGenericString::unallocated) {
         set_isModified(true);
         storage->set_offset(SgAsmGenericString::unallocated);
@@ -241,7 +241,7 @@ SgAsmGenericStrtab::free(SgAsmStringStorage *storage)
  *  string table can have "main" and "domain" sharing storage. If we free the "domain" string then only "do" should be added
  *  to the free list. */
 void
-SgAsmGenericStrtab::free(addr_t offset, addr_t size)
+SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
 {
     if (offset==SgAsmGenericString::unallocated || 0==size)
         return;
@@ -309,7 +309,7 @@ SgAsmGenericStrtab::reallocate(bool shrink)
 {
     bool reallocated = false;
     SgAsmGenericSection *container = get_container();
-    addr_t extend_size = 0;                                     /* amount by which to extend string table */
+    rose_addr_t extend_size = 0;                                     /* amount by which to extend string table */
 
     /* Get list of strings that need to be allocated and sort by descending size. */
     std::vector<size_t> map;
@@ -362,7 +362,7 @@ SgAsmGenericStrtab::reallocate(bool shrink)
             ExtentPair e(0, 0);
             try {
                 e = get_freelist().allocate_best_fit(storage->get_string().size()+1);
-                addr_t new_offset = e.first;
+                rose_addr_t new_offset = e.first;
                 storage->set_offset(new_offset);
             } catch(std::bad_alloc &x) {
                 /* nothing large enough on the free list */
