@@ -16,30 +16,101 @@ AC_REQUIRE([BTNG_INFO_CXX_ID])
 dnl *********************************************************************
 dnl * Set up the Preprocessor -D options CXXDEBUG and ARCH_DEFINES
 dnl *********************************************************************
-AC_ARG_WITH(CXX_DEBUG, [  --with-CXX_DEBUG=ARG    manually set the C++ compiler debug flags
-                           to ARG (leave blank to choose automatically)])
-if test "$with_CXX_DEBUG" = yes; then
-  # CXX_DEBUG was activated but not specified, so set it.
-  case $CXX in
-    *) CXX_DEBUG='-g' ;;
-  esac
-elif test "$with_CXX_DEBUG" = no; then
-  CXX_DEBUG=''
+# AC_ARG_WITH(CXX_DEBUG, [  --with-CXX_DEBUG=ARG    manually set the C++ compiler debug flags to ARG (leave blank to choose automatically)])
+AC_ARG_WITH(CXX_DEBUG, AS_HELP_STRING([--with-CXX_DEBUG], [manually set the C++ compiler debug flags to ARG (leave blank to choose automatically)]),[withval=yes],[withval=yes])
+
+# if test "$with_CXX_DEBUG" = yes; then
+#  # CXX_DEBUG was activated but not specified, so set it.
+#  case $CXX in
+#    *) CXX_DEBUG='-g' ;;
+#  esac
+#elif test "$with_CXX_DEBUG" = no; then
+#  CXX_DEBUG=''
+#else
+#  CXX_DEBUG=$with_CXX_DEBUG
+#fi
+
+echo "withval = $withval"
+echo "with_CXX_DEBUG = $with_CXX_DEBUG"
+
+if test "x$with_CXX_DEBUG" = "x"; then
+   if test "x$withval" = "xyes"; then
+      with_CXX_DEBUG=$withval
+   else 
+      if test "x$withval" = "xno"; then
+         with_CXX_DEBUG=$withval
+      fi
+   fi
 else
+   echo "with_CXX_DEBUG is explictly set to: $with_CXX_DEBUG"
+fi
+
+echo "After initialization: with_CXX_DEBUG = $with_CXX_DEBUG"
+
+# echo "Setting with_CXX_DEBUG to withval = $withval"
+# with_CXX_DEBUG=$withval
+
+if test "x$with_CXX_DEBUG" = "xyes"; then
+# CXX_DEBUG was activated but not specified, so set it.
+  echo "Using default options for maximal debug (true case)"
+  case $CXX in
+    g++)
+      CXX_DEBUG="-g"
+      ;;
+    icpc)
+      CXX_DEBUG="-g"
+      ;;
+    KCC | mpKCC)
+      CXX_DEBUG="-g"
+      ;;
+    CC)
+      case $host_os in
+        solaris*| sun4*)
+          CXX_DEBUG="-g"
+    esac
+    ;;
+  esac
+elif test "x$with_CXX_DEBUG" = "xno"; then
+  CXX_DEBUG=''
+# DQ (10/22/2010): turn on debug flags by default.
+  echo "Using at least some default (minimal) options for debug flags (currently the same as above) (false case)"
+  case $CXX in
+    g++)
+      CXX_DEBUG=""
+      ;;
+    icpc)
+      CXX_DEBUG=""
+      ;;
+    "KCC --c" | mpKCC)
+      CXX_DEBUG=""
+      ;;
+    CC)
+      case $host_os in
+        solaris*| sun4*)
+          CXX_DEBUG=""
+    esac
+    ;;
+  esac
+else
+# Settings specified explicitly by the user.
+  echo "Using user provided options for CXX_DEBUG..."
   CXX_DEBUG=$with_CXX_DEBUG
 fi
+
 AC_SUBST(CXX_DEBUG)
 if test -n "$CXX_DEBUG"; then CXXFLAGS="$CXXFLAGS $CXX_DEBUG"; fi
 
 # echo "Am I set: CXX_DEBUG= $CXX_DEBUG"
 # echo "CXXFLAGS currently set to $CXXFLAGS"
 
-echo "Setup CXX_OPTIMIZE"
 
 dnl *********************************************************************
 dnl * Set the C++ compiler optimization flags in CXXOPT
 dnl *********************************************************************
 dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
+
+echo "Setup CXX_OPTIMIZE"
+
 AC_ARG_WITH(CXX_OPTIMIZE, [  --with-CXX_OPTIMIZE=ARG   manually set the C++ compiler optimization
                            to ARG (leave blank to choose automatically)])
 if test "$with_CXX_OPTIMIZE" = yes; then
@@ -55,6 +126,7 @@ else
 fi
 AC_SUBST(CXX_OPTIMIZE)
 if test "$CXX_OPTIMIZE"; then CXXFLAGS="$CXXFLAGS $CXX_OPTIMIZE"; fi
+
 
 dnl *********************************************************************
 dnl * Set the C++ compiler flags in CXX_WARNINGS
@@ -116,7 +188,7 @@ elif test "x$with_CXX_WARNINGS" = "xno"; then
   CXX_WARNINGS=''
 # DQ (1/15/2007): turn on warnings by default.
   echo "Using at least some default (minimal) options for warnings (false case)"
-  case $CC in
+  case $CXX in
     g++)
     # CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
       CXX_WARNINGS="-Wall"
@@ -189,30 +261,100 @@ AC_REQUIRE([AC_PROG_CC])
 dnl *********************************************************************
 dnl * Set up the C compiler options C_DEBUG
 dnl *********************************************************************
-AC_ARG_WITH(C_DEBUG, [  --with-C_DEBUG=ARG    manually set the C compiler debug flags
-                           to ARG (leave blank to choose automatically)])
-if test "$with_C_DEBUG" = yes; then
-  # C_DEBUG was activated but not specified, so set it.
-  case $CC in
-    *) C_DEBUG='-g' ;;
-  esac
-elif test "$with_C_DEBUG" = no; then
-  C_DEBUG=''
+# AC_ARG_WITH(C_DEBUG, [  --with-C_DEBUG=ARG    manually set the C compiler debug flags to ARG (leave blank to choose automatically)])
+AC_ARG_WITH(C_DEBUG, AS_HELP_STRING([--with-C_DEBUG], [manually set the C compiler debug flags to ARG (leave blank to choose automatically)]),[withval=yes],[withval=yes])
+
+# if test "$with_C_DEBUG" = yes; then
+#   # C_DEBUG was activated but not specified, so set it.
+#   case $CC in
+#     *) C_DEBUG='-g' ;;
+#   esac
+# elif test "$with_C_DEBUG" = no; then
+#   C_DEBUG=''
+# else
+#   C_DEBUG=$with_C_DEBUG
+# fi
+
+echo "withval = $withval"
+echo "with_C_DEBUG = $with_C_DEBUG"
+
+if test "x$with_C_DEBUG" = "x"; then
+   if test "x$withval" = "xyes"; then
+      with_C_DEBUG=$withval
+   else 
+      if test "x$withval" = "xno"; then
+         with_C_DEBUG=$withval
+      fi
+   fi
 else
+   echo "with_C_DEBUG is explictly set to: $with_C_DEBUG"
+fi
+
+echo "After initialization: with_C_DEBUG = $with_C_DEBUG"
+
+# echo "Setting with_C_DEBUG to withval = $withval"
+# with_C_DEBUG=$withval
+
+if test "x$with_C_DEBUG" = "xyes"; then
+# C_DEBUG was activated but not specified, so set it.
+  echo "Using default options for maximal debug (true case)"
+  case $CC in
+    gcc)
+      C_DEBUG="-g"
+      ;;
+    icc)
+      C_DEBUG="-g"
+      ;;
+    KCC | mpKCC)
+      C_DEBUG="-g"
+      ;;
+    cc)
+      case $host_os in
+        solaris*| sun4*)
+          C_DEBUG="-g"
+    esac
+    ;;
+  esac
+elif test "x$with_C_DEBUG" = "xno"; then
+  C_DEBUG=''
+# DQ (10/22/2010): turn on debug flags by default.
+  echo "Using at least some default (minimal) options for debug flags (currently the same as above) (false case)"
+  case $CC in
+    gcc)
+      C_DEBUG=""
+      ;;
+    icc)
+      C_DEBUG=""
+      ;;
+    "KCC --c" | mpKCC)
+      C_DEBUG=""
+      ;;
+    cc)
+      case $host_os in
+        solaris*| sun4*)
+          C_DEBUG=""
+    esac
+    ;;
+  esac
+else
+# Settings specified explicitly by the user.
+  echo "Using user provided options for C_DEBUG..."
   C_DEBUG=$with_C_DEBUG
 fi
+
 AC_SUBST(C_DEBUG)
 if test -n "$C_DEBUG"; then CFLAGS="$CFLAGS $C_DEBUG"; fi
 
 # echo "Am I set: C_DEBUG= $C_DEBUG"
 
 
-echo "Setup C_OPTIMIZE"
-
 dnl *********************************************************************
 dnl * Set the C compiler optimization flags in C_OPTIMIZE
 dnl *********************************************************************
 dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
+
+echo "Setup C_OPTIMIZE"
+
 AC_ARG_WITH(C_OPTIMIZE, [  --with-C_OPTIMIZE=ARG   manually set the C compiler optimization
                            to ARG (leave blank to choose automatically)])
 if test "$with_C_OPTIMIZE" = yes; then
