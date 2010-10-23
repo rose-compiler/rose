@@ -353,7 +353,11 @@ print OUTPUT <<"EOF"
     }
     if (retval.empty()) {
         char buf[@{[length($name)+64]}];
+#ifndef _MSC_VER
         int nprint = snprintf(buf, sizeof buf, \"(${name})\%d\", n);
+#else
+        int nprint = 0; assert(0);
+#endif        
         assert(nprint < (int)sizeof buf);
         retval = buf;
     } else {

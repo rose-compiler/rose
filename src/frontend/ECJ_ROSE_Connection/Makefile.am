@@ -35,7 +35,10 @@ if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
  # libJavaTraversal_la_SOURCES = JavaTraversal.C
  # libJavaTraversal_la_SOURCES = openJavaParser_main.C 
  # libroseJava_la_SOURCES = 
-   libroseJava_la_SOURCES = openJavaParser_main.C ecj.C
+   libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C
+if !ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+   libroseJava_la_SOURCES += $(srcdir)/../OpenFortranParser_SAGE_Connection/jserver.C
+endif
 else
  # Compile using a function that represents the API of the Open Fortran Parser
  # libroseJava_la_SOURCES = dummy_JavaParser_main.C

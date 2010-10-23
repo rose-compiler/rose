@@ -2884,7 +2884,7 @@ EmulationPolicy::emulate_syscall()
             //size_t sigsetsize=arg(3);
 
             uint64_t saved=signal_mask, sigset=0;
-            if ( set_va != NULL ) {
+            if ( set_va != 0 ) {
 
                 size_t nread = map->read(&sigset, set_va, sizeof sigset);
                 ROSE_ASSERT(nread==sizeof sigset);
@@ -2971,7 +2971,7 @@ EmulationPolicy::emulate_syscall()
 #endif
               int result;
 #if 1
-              if( arg(1) != NULL )
+              if( arg(1) != 0 )
               {
 
                 ROSE_ASSERT(false == true);
@@ -3333,7 +3333,7 @@ EmulationPolicy::emulate_syscall()
 #endif
 #endif
                 T_END };
-#if 0
+
             /* Variable arguments */
             switch (arg(1) & FUTEX_CMD_MASK) {
                 case FUTEX_WAIT:
@@ -3354,6 +3354,7 @@ EmulationPolicy::emulate_syscall()
                                   4, print_int_32);
                     break;
             }
+
             uint32_t futex1_va=arg(0), op=arg(1), val1=arg(2), timeout_va=arg(3), futex2_va=arg(4), val2=arg(5);
             int *futex1 = (int*)my_addr(futex1_va);
             int *futex2 = (int*)my_addr(futex2_va);
@@ -3371,9 +3372,6 @@ EmulationPolicy::emulate_syscall()
             int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val2);
             if (-1==result) result = -errno;
             writeGPR(x86_gpr_ax, result);
-#endif
-            writeGPR(x86_gpr_ax, -ENOSYS);
-
             syscall_leave("d");
             break;
         }
@@ -3714,6 +3712,7 @@ main(int argc, char *argv[])
     Semantics t(policy);
     uint32_t dump_at = 0;               /* dump core the first time we hit this address, before the instruction is executed */
     std::string dump_name = "dump";
+    FILE *log_file = NULL;
 
     /* Parse command-line */
     int argno = 1;
@@ -3721,6 +3720,14 @@ main(int argc, char *argv[])
         if (!strcmp(argv[argno], "--")) {
             argno++;
             break;
+        } else if (!strncmp(argv[argno], "--log=", 6)) {
+            if (log_file)
+                fclose(log_file);
+            if (NULL==(log_file = fopen(argv[argno]+6, "w"))) {
+                fprintf(stderr, "%s: %s: %s\n", argv[0], strerror(errno), argv[argno+6]);
+                exit(1);
+            }
+            argno++;
         } else if (!strncmp(argv[argno], "--debug=", 8)) {
             policy.debug = stderr;
             char *s = argv[argno]+8;
@@ -3795,6 +3802,8 @@ main(int argc, char *argv[])
     ROSE_ASSERT(argc-argno>=1); /* usage: executable name followed by executable's arguments */
     SgAsmGenericHeader *fhdr = policy.load(argv[argno]); /*header for main executable, not libraries*/
     policy.initialize_stack(fhdr, argc-argno, argv+argno);
+    if (policy.debug && log_file)
+        policy.debug = log_file;
 
     /* Debugging */
     if (policy.debug && policy.trace_mmap) {

@@ -309,7 +309,7 @@ inline SymbolicVal operator - (const SymbolicVal &v1, const SymbolicVal &v2)
 //         { return ApplyBnOp(SYMOP_PLUS ,v1,v2 ); }
 inline SymbolicVal operator - (const SymbolicVal &v) { return -1 * v; }
                                                                                           
-typedef enum 
+typedef enum Compare_Rel
 {
   REL_NONE = 0, 
   REL_EQ = 1,  // ==

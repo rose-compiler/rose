@@ -146,6 +146,9 @@ docs: cabal-configure-stamp
 	$(GHCBIN)/runghc Setup.hs haddock --html-location="http://haskell.org/ghc/docs/latest/html/libraries/\$$pkg/"
 
 check-local: check-identityTranslator check-simplify
+	@echo "***************************************************************************************"
+	@echo "****** ROSE/projects/haskellport: make check rule complete (terminated normally) ******"
+	@echo "***************************************************************************************"
 
 checkHome: cabal-build-stamp
 	mkdir -p checkHome

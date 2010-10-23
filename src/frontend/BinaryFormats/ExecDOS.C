@@ -153,7 +153,7 @@ SgAsmDOSFileHeader::reallocate()
 {
     bool reallocated = SgAsmGenericHeader::reallocate();
     
-    addr_t need = sizeof(DOSFileHeader_disk);
+    rose_addr_t need = sizeof(DOSFileHeader_disk);
     if (need < get_size()) {
         if (is_mapped()) {
             ROSE_ASSERT(get_mapped_size()==get_size());
@@ -191,16 +191,16 @@ SgAsmDOSFileHeader::unparse(std::ostream &f) const
  *  real-mode section. If the DOS header indicates a zero sized section then return NULL. If the section exists or is zero
  *  size due to the max_offset then return the section. */
 SgAsmGenericSection *
-SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
+SgAsmDOSFileHeader::add_rm_section(rose_addr_t max_offset)
 {
     ROSE_ASSERT(NULL == p_rm_section);
     
-    addr_t rm_offset = p_e_header_paragraphs * 16;
-    addr_t rm_end = p_e_total_pages * 512;
+    rose_addr_t rm_offset = p_e_header_paragraphs * 16;
+    rose_addr_t rm_end = p_e_total_pages * 512;
     if (p_e_total_pages>0)
         rm_end -= 512 - (p_e_last_page_size%512);
 
-    addr_t rm_size = rm_end>rm_offset ? rm_end-rm_offset : 0;
+    rose_addr_t rm_size = rm_end>rm_offset ? rm_end-rm_offset : 0;
     if (rm_size == 0)
         return NULL;
 
