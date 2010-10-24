@@ -3469,9 +3469,9 @@ TestLValues::visit ( SgNode* node )
 			case V_SgClassNameRefExp:          
 			case V_SgValueExp:            
 			case V_SgSizeOfOp:                 
-			case V_SgUpcLocalsizeof:
-			case V_SgUpcBlocksizeof:
-			case V_SgUpcElemsizeof:
+			case V_SgUpcLocalsizeofExpression:
+			case V_SgUpcBlocksizeofExpression:
+			case V_SgUpcElemsizeofExpression:
 			case V_SgNewExp:              
 			case V_SgDeleteExp:           
 			case V_SgThisExp:                  

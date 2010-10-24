@@ -220,9 +220,9 @@ V_SgFunctionRefExp
 V_SgMemberFunctionRefExp 	
 V_SgFunctionCallExp 	
 V_SgSizeOfOp 	
-V_SgUpcLocalsizeof
-V_SgUpcBlocksizeof
-V_SgUpcElemsizeof
+V_SgUpcLocalsizeofExpression
+V_SgUpcBlocksizeofExpression
+V_SgUpcElemsizeofExpression
 V_SgVarArgStartOp 	
 V_SgVarArgStartOneOperandOp 	
 V_SgVarArgOp 	
