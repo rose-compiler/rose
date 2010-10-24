@@ -34,7 +34,7 @@ void setup() {
     err(1,"malloc failed");
 
   for( ifile = first; ifile <= nfile; ifile++ ) {
-    sprintf(fname, "tfile_%d", ifile, mypid);
+    sprintf(fname, "tfile_%d_%d", ifile, mypid);
     if( (fd = open(fname, O_RDWR | O_CREAT, 0777)) == -1) {
         if( errno != EMFILE)
           errx(1,"open succeeded unexpectantly");
@@ -47,7 +47,7 @@ void setup() {
 void cleanup() {
   for( ifile = first; ifile <= nfile; ifile++ ) {
     close(ifile);
-    sprintf(fname, "tfile_%d", ifile, mypid);
+    sprintf(fname, "tfile_%d_%d", ifile, mypid);
     unlink(fname);
   }
 }
