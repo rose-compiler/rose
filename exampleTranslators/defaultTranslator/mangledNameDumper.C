@@ -18,6 +18,24 @@ visitorTraversal::visit (SgNode * n)
     cout<<"\tunparsed string is "<< t_node->unparseToString()<<endl;
     cout<<"\tmangled name is "<< t_node->get_mangled().getString()  <<endl;
   }
+
+  SgDeclarationStatement*  d_node = isSgDeclarationStatement(n);
+  if (d_node != NULL)
+  {
+    cout<<"Declaration statement "<< d_node->class_name()<<endl;
+    cout<<"\tunparsed string is "<< d_node->unparseToString()<<endl;
+    cout<<"\tmangled name is "<< d_node->get_mangled_name().getString()  <<endl;
+  }
+
+  SgInitializedName*  i_node = isSgInitializedName(n);
+  if (i_node != NULL)
+  {
+    cout<<"SgInitializedName "<< i_node->class_name()<<endl;
+    cout<<"\tunparsed string is "<< i_node->unparseToString()<<endl;
+    cout<<"\tmangled name is "<< i_node->get_mangled_name().getString()  <<endl;
+  }
+
+
 }
 
 int main ( int argc, char** argv )
