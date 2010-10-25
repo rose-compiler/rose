@@ -6,8 +6,10 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
+#include <boost/filesystem.hpp>
 
 #include <numeric>
+#include <boost/timer.hpp>
 //#include <limits.h>
 
 using namespace std;
@@ -64,7 +66,7 @@ void addHandlers(EventProcessor& event_processor)
 	//event_processor.addExpressionHandler(new NullExpressionHandler);
 	event_processor.addExpressionHandler(new IdentityExpressionHandler);
 	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
-	event_processor.addExpressionHandler(new AkgulStyleExpressionHandler);
+	//event_processor.addExpressionHandler(new AkgulStyleExpressionHandler);
 
 	// Add all statement handlers to the statement pool.
 	event_processor.addStatementHandler(new CombinatorialExprStatementHandler);
@@ -96,37 +98,31 @@ bool isEvent2(SgFunctionDeclaration* func)
 	return false;
 }
 
-
-int main(int argc, char* argv[])
+void test(TestCodeBuilder* builder, const vector<string>& args)
 {
-	vector<string> args(argv, argv + argc);
-
-	// First, build a test code file.
-	string filename = "test.C";
-	
-	// Then we create a new file which will be our output.
-	ofstream ofs(filename.c_str());
-	ofs.close();
-
-	args.push_back(filename);
-	SgProject* project = frontend(args);
-
 	cout << "1. Generating test code now.\n";
 
-	vector<SgFunctionDeclaration*> events;
-	ComplexExpressionTest test(project, false);
-	//BasicExpressionTest test(project, false);
-	test.build();
-	events = test.getAllEvents();
+	string filename = builder->getFileName();
+	bool need_build = !filesystem::exists(filename);
 
-	// Before we go forward to the next step, check the project here.
-	AstTests::runAllTests(project);
+	SgProject* project = NULL;
+	if (need_build)
+	{
+		builder->buildTestCode();
+	}
 
-	// Unparse the test code to help to find errors.
-	backend(project);
+	string processed_filename = "processed_" + builder->getFileName();
+	bool need_reverse = !filesystem::exists(processed_filename);
+	if (!need_reverse)
+		return;
+
+	vector<string> new_args(args);
+	new_args.push_back(filename);
+	project = frontend(new_args);
+
 
 	cout << "2. Reversing events now.\n";
-	
+
 	// Reverse event functions inside.
 	EventProcessor event_processor;
 	addHandlers(event_processor);
@@ -143,5 +139,22 @@ int main(int argc, char* argv[])
 	assembleTestCode(project, results);
 
 	AstTests::runAllTests(project);
-	return backend(project);
+
+	SgSourceFile* source_file = isSgSourceFile((*project)[0]);
+	source_file->set_unparse_output_filename(processed_filename);
+	backend(project);
+}
+
+int main(int argc, char* argv[])
+{
+	timer t;
+
+	vector<string> args(argv, argv + argc);
+
+	//BasicExpressionTest complex_exp_test("BasicExpressionTest2");
+	//ComplexExpressionTest complex_exp_test("ComplexExpressionTest");
+	test(new BasicExpressionTest("BasicExpressionTest"), args);
+	//test(&complex_exp_test, args);
+
+	cout << "Time used: " << t.elapsed() << endl;
 }

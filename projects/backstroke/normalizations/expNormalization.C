@@ -688,7 +688,7 @@ void turnCommaOpExpIntoStmt(SgExpression* exp)
 
 	else
 	{
-		cout << parent->class_name() << ':' << get_name(parent) << endl;
+		//cout << parent->class_name() << ':' << get_name(parent) << endl;
 		//ROSE_ASSERT(false);
 	}
 }
@@ -714,10 +714,10 @@ void turnConditionalExpIntoStmt(SgExpression* exp)
 				// a ? b : c  ==>  if (a) b; else c;
 				
 				SgStatement* cond_stmt = buildExprStatement(copyExpression(cond));
-				SgStatement* true_stmt = buildExprStatement(copyExpression(true_exp));
-				SgStatement* false_stmt = buildExprStatement(copyExpression(false_exp));
+				SgStatement* true_stmt = buildBasicBlock(buildExprStatement(copyExpression(true_exp)));
+				SgStatement* false_stmt = buildBasicBlock(buildExprStatement(copyExpression(false_exp)));
 				SgStatement* new_stmt = buildIfStmt(cond_stmt, true_stmt, false_stmt);
-
+				
 				replaceStatement(stmt, new_stmt, true);
 				normalizeExpressions(new_stmt);
 				break;
@@ -731,10 +731,10 @@ void turnConditionalExpIntoStmt(SgExpression* exp)
 	else if (SgReturnStmt* return_stmt = isSgReturnStmt(parent))
 	{
 		SgStatement* cond_stmt = buildExprStatement(copyExpression(cond));
-		SgStatement* true_stmt = buildReturnStmt(copyExpression(true_exp));
-		SgStatement* false_stmt = buildReturnStmt(copyExpression(false_exp));
+		SgStatement* true_stmt = buildBasicBlock(buildReturnStmt(copyExpression(true_exp)));
+		SgStatement* false_stmt = buildBasicBlock(buildReturnStmt(copyExpression(false_exp)));
 		SgStatement* new_stmt = buildIfStmt(cond_stmt, true_stmt, false_stmt);
-
+		
 		replaceStatement(return_stmt, new_stmt, true);
 		normalizeExpressions(new_stmt);
 	}

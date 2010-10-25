@@ -36,7 +36,7 @@ void UnaryExpressionBuilder::build()
 				results_.push_back(buildMinusMinusOp(copyExpression(operand_), SgUnaryOp::postfix));
 			}
 		}
-#if 0
+#if 1
 		results_.push_back(buildUnaryExpression<SgNotOp>(copyExpression(operand_)));
 		results_.push_back(buildUnaryExpression<SgMinusOp>(copyExpression(operand_)));
 		//results_.push_back(buildUnaryExpression<SgUnaryAddOp>(copyExpression(operand_)));
@@ -57,6 +57,16 @@ void BinaryExpressionBuilder::build()
 		results_.push_back(buildBinaryExpression<SgPlusAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
 		results_.push_back(buildBinaryExpression<SgMinusAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
 		results_.push_back(buildBinaryExpression<SgMultAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
+
+		if (isStrictIntegerType(lhs_type) && isStrictIntegerType(rhs_type))
+		{
+			//results_.push_back(buildBinaryExpression<SgModAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
+			results_.push_back(buildBinaryExpression<SgIorAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
+			results_.push_back(buildBinaryExpression<SgAndAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
+			results_.push_back(buildBinaryExpression<SgXorAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
+			results_.push_back(buildBinaryExpression<SgLshiftAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
+			results_.push_back(buildBinaryExpression<SgRshiftAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
+		}
 	}
 
 	// temporarily remove DivAssign to avoid exceptions
@@ -68,13 +78,5 @@ void BinaryExpressionBuilder::build()
 	results_.push_back(buildBinaryExpression<SgCommaOpExp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
 	results_.push_back(buildBinaryExpression<SgEqualityOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
 
-	if (isStrictIntegerType(lhs_type) && isStrictIntegerType(rhs_type))
-	{
-		results_.push_back(buildBinaryExpression<SgModAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
-		results_.push_back(buildBinaryExpression<SgIorAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
-		results_.push_back(buildBinaryExpression<SgAndAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
-		results_.push_back(buildBinaryExpression<SgXorAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
-		results_.push_back(buildBinaryExpression<SgLshiftAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
-		results_.push_back(buildBinaryExpression<SgRshiftAssignOp>(copyExpression(lhs_operand_), copyExpression(rhs_operand_)));
-	}
+
 }

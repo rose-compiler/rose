@@ -179,10 +179,12 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 
 	vector<VariableRenaming::VarName> modified_vars = getAllDefsAtNode(stmt);
 
+#if 0
 	cout << "Modified vars:\n";
 	foreach (const VariableRenaming::VarName& name, modified_vars)
 		cout << VariableRenaming::keyToString(name) << endl;
 	cout << "^^^\n";
+#endif
 
 	// If there is no variable modified in this statement, just return empty.
 	if (modified_vars.empty())

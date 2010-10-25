@@ -144,14 +144,13 @@ SgExpression* TestCodeBuilder::buildStateMemberExpression(const string& name) co
 void TestCodeBuilder::buildTestCode(const vector<SgBasicBlock*>& bodies)
 {
 	ROSE_ASSERT(state_builder_);
+	ROSE_ASSERT(project_);
 
 	// Push global scope here to make sure every event funciton is built with a valid scope.
 	//SgGlobal* global_scope = source_file_->get_globalScope();
 
 	// Set the file name of the output code the same as input.
-	ROSE_ASSERT(project_->get_fileList().size() == 1);
 	SgSourceFile* source_file = isSgSourceFile((*project_)[0]);
-	ROSE_ASSERT(source_file);
 	source_file->set_unparse_output_filename(source_file->getFileName());
 
 	SgGlobal* global_scope = source_file->get_globalScope();
@@ -203,6 +202,25 @@ void TestCodeBuilder::buildTestCode(const vector<SgBasicBlock*>& bodies)
 
 	// Fix variable references here because of bottom up build.
 	fixVariableReferences(global_scope);
+}
+
+SgProject* TestCodeBuilder::buildTestCode()
+{
+	// First create a ROSE project.
+	vector<string> args(1);
+	string filename = name_ + ".C";
+	ofstream ofs(filename.c_str());
+	ofs.close();
+	args.push_back(filename);
+	project_ = frontend(args);
+
+	// Second, call virtual function "build".
+	build();
+
+	// Finally, run test on the AST then unparse it.
+	AstTests::runAllTests(project_);
+	backend(project_);
+	return project_;
 }
 
 SgFunctionDeclaration* TestCodeAssembler::buildInitializationFunction()

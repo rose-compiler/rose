@@ -27,6 +27,7 @@ check-local:
 	@echo "*********************************************************************************************************"
 
 test: FORCE
+#cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test/rctypes.h rctypes.h
 	./testCodeBuilderTest $(TESTCODE_INCLUDES)
 	g++ test.C -o test $(TESTCODE_INCLUDES)
 	./test

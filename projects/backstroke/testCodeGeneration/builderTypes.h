@@ -199,17 +199,14 @@ public:
 class TestCodeBuilder
 {
 protected:
-	//! Build test code as C++ style. That is, event functions are members of state class.
-	bool is_cxx_style_;
+	//! The name of this test. This name may help to generate the name of the test code.
+	std::string name_;
 
-	//! The file name of test code.
+	//! The name of the file which is the output of this test code builder.
 	std::string file_name_;
 
-	////! A SgSourceFile object which creates the final output.
-	//SgSourceFile* source_file_;
-
-	//! The ROSE project.
-	SgProject* project_;
+	//! Build test code as C++ style. That is, event functions are members of state class.
+	bool is_cxx_style_;
 
 	//! All declarations of events.
 	std::vector<SgFunctionDeclaration*> events_;
@@ -242,6 +239,9 @@ protected:
 	//! Build the state class.
 	void buildStateClass();
 
+	//! The ROSE project to unparse the generated code.
+	SgProject* project_;
+
 	//! Get all names of state members.
 	std::vector<SgExpression*> getAllStateMemberVars() const;
 
@@ -252,12 +252,17 @@ protected:
 	//! Build the final test source file.
 	void buildTestCode(const std::vector<SgBasicBlock*>& bodies);
 
+	//! Once all is set, call this funtion to create the test source file.
+	//! Note this is a pure virtual function which needs to be overridden.
+	virtual void build() = 0;
+	
 public:
-	TestCodeBuilder(SgProject* project, bool is_cxx_style)
-	:	is_cxx_style_(is_cxx_style),
-		project_(project),
-		state_builder_(NULL),
-		state_para_name_("state")
+	TestCodeBuilder(const std::string& name, bool is_cxx_style)
+	: name_(name),
+	file_name_(name + ".C"),
+	is_cxx_style_(is_cxx_style),
+	state_builder_(NULL),
+	state_para_name_("state")
 	{}
 
 	virtual ~TestCodeBuilder()
@@ -265,9 +270,8 @@ public:
 		delete state_builder_;
 	}
 
-	//! Once all is set, call this funtion to create the test source file.
-	//! Note this is a pure virtual function which needs to be overridden.
-	virtual void build() = 0;
+	//! Call this function to build the test code.
+	SgProject* buildTestCode();
 
 	std::vector<SgFunctionDeclaration*> getAllEvents() const
 	{ return events_; }
@@ -275,6 +279,12 @@ public:
 	//! Get the declaration of the state class.
 	SgClassDeclaration* getStateClassDeclaration()
 	{ return state_builder_->getStateClassDeclaration(); }
+
+	std::string getName() const
+	{ return name_; }
+
+	std::string getFileName() const
+	{ return file_name_; }
 };
 
 

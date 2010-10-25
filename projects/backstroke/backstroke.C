@@ -13,18 +13,14 @@ using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-
-map<SgFunctionDeclaration*, FuncDeclPairs>
-reverseEvents(EventProcessor* event_processor,
-		boost::function<bool(SgFunctionDeclaration*)> is_event,
-		SgProject* project)
+vector<SgFunctionDeclaration*> normalizeEvents(
+	boost::function<bool(SgFunctionDeclaration*)> is_event,
+	SgProject* project)
 {
+	vector<SgFunctionDeclaration*> normalized_decls;
 	// Get the global scope.
 	SgGlobal* global = getFirstGlobalScope(project);
-
-	//generateGraphOfAST(project,"graph");
-	//generateWholeGraphOfAST("graph");
-
+	
 	// Get every function declaration and identify if it's an event function.
 	vector<SgFunctionDeclaration*> func_decls = BackstrokeUtility::querySubTree<SgFunctionDeclaration > (global);
 	foreach(SgFunctionDeclaration* decl, func_decls)
@@ -32,11 +28,34 @@ reverseEvents(EventProcessor* event_processor,
 		if (is_event(decl))
 		{
 			//Normalize this event function.
-			BackstrokeNorm::normalizeEvent(decl);
+			SgFunctionDeclaration* decl_normalized = copyStatement(decl);
+			BackstrokeNorm::normalizeEvent(decl_normalized);
+			decl_normalized->set_name(decl->get_name().str() + "_normalized");
+			
+			insertStatementAfter(decl, decl_normalized);
+			normalized_decls.push_back(decl_normalized);
 			cout << "Function " << decl->get_name().str() << " is normalized!\n" << endl;
 		}
 	}
 
+	return normalized_decls;
+}
+
+
+map<SgFunctionDeclaration*, FuncDeclPairs>
+reverseEvents(EventProcessor* event_processor,
+		boost::function<bool(SgFunctionDeclaration*)> is_event,
+		SgProject* project)
+{
+	ROSE_ASSERT(project);
+	// Get the global scope.
+	SgGlobal* global = getFirstGlobalScope(project);
+
+	//generateGraphOfAST(project,"graph");
+	//generateWholeGraphOfAST("graph");
+
+	// Normalize all events then reverse them.
+	vector<SgFunctionDeclaration*> normalized_events = normalizeEvents(is_event, project);
 
 	VariableRenaming var_renaming(project);
 	var_renaming.run();
@@ -49,6 +68,7 @@ reverseEvents(EventProcessor* event_processor,
 	map<SgFunctionDeclaration*, FuncDeclPairs> output;
 
 #if 1
+	vector<SgFunctionDeclaration*> func_decls = BackstrokeUtility::querySubTree<SgFunctionDeclaration > (global);
 	foreach(SgFunctionDeclaration* decl, func_decls)
 	{
 		if (!is_event(decl))
