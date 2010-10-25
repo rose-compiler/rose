@@ -116,7 +116,7 @@ SgAsmDOSFileHeader::parse(bool define_rm_section)
     
     /* DOS real-mode text/data/etc. */
     if (define_rm_section)
-        add_rm_section();
+        parse_rm_section();
 
     /* Entry point */
     p_base_va = 0;
@@ -187,11 +187,11 @@ SgAsmDOSFileHeader::unparse(std::ostream &f) const
 
 }
 
-/** Adds the real-mode section to the DOS file header. If max_offset is non-zero then use that as the maximum offset of the
- *  real-mode section. If the DOS header indicates a zero sized section then return NULL. If the section exists or is zero
- *  size due to the max_offset then return the section. */
+/** Parses the DOS real-mode text+data section and adds it to the AST.  If max_offset is non-zero then use that as the maximum
+ *  offset of the real-mode section. If the DOS header indicates a zero sized section then return NULL. If the section exists
+ *  or is zero size due to the max_offset then return the section. */
 SgAsmGenericSection *
-SgAsmDOSFileHeader::add_rm_section(rose_addr_t max_offset)
+SgAsmDOSFileHeader::parse_rm_section(rose_addr_t max_offset)
 {
     ROSE_ASSERT(NULL == p_rm_section);
     
@@ -235,7 +235,7 @@ SgAsmDOSFileHeader::add_rm_section(rose_addr_t max_offset)
     p_rm_section->set_mapped_xperm(true);
     return p_rm_section;
 }
-    
+
 /* Print some debugging info */
 void
 SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const

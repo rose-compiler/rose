@@ -3752,7 +3752,7 @@ HEADER_DOS_HEADER_START
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual const char *format_name() const {return "DOS";}
-		SgAsmGenericSection *add_rm_section(rose_addr_t max_offset=0);
+		SgAsmGenericSection *parse_rm_section(rose_addr_t max_offset=0);
 		static bool is_DOS(SgAsmGenericFile*);
 	private:
 		void ctor();
