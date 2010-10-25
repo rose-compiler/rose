@@ -22,7 +22,8 @@ noinst_PROGRAMS = \
     buildForStmt canonicalLoop loopNormalization collectReadWriteVariables \
     typeTraits livenessAnalysis buildProcedureHeaderStatement replaceMacroCalls \
     buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
-    deepDelete insertStatementBeforeFunction removeStatementCommentRelocation
+    deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
+    generateUniqueName
 
 # list of test SAGE AST builders 
 deepDelete_SOURCES                       = deepDelete.C 
@@ -67,6 +68,7 @@ loopInterchange_SOURCES                  = loopInterchange.C
 loopTiling_SOURCES                       = loopTiling.C
 insertStatementBeforeFunction_SOURCES    = insertStatementBeforeFunction.C
 removeStatementCommentRelocation_SOURCES = removeStatementCommentRelocation.C
+generateUniqueName_SOURCES               = generateUniqueName.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -120,7 +122,8 @@ generatedCodeExamples = \
   rose_inputloopTiling.C \
   rose_inputdeepDelete.C \
   rose_inputinsertStatementBeforeFunction.C \
-  rose_inputRemoveStatementCommentRelocation.C
+  rose_inputRemoveStatementCommentRelocation.C \
+  rose_inputgenerateUniqueName.C
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -211,6 +214,9 @@ rose_inputtypeTraits.C:typeTraits
 
 rose_inputlivenessAnalysis.C:livenessAnalysis
 	./livenessAnalysis$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputlivenessAnalysis.C
+rose_inputgenerateUniqueName.C:generateUniqueName
+	./generateUniqueName$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputgenerateUniqueName.C 1>rose_inputgenerateUniqueName.out
+
 
 rose_inputbuildProcedureHeaderStatement.f : buildProcedureHeaderStatement
 # DQ (9/13/2010): I think that we need both levels of if tests else --without-java will not work.
@@ -299,7 +305,8 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputRemoveStatementCommentRelocation_withTopandBottomBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutBottomBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutTopBoundingStatement.C \
-       inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C
+       inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C \
+       inputgenerateUniqueName.C
 
 
 check-local:
@@ -311,4 +318,5 @@ check-local:
 
 clean-local:
 	rm -f *.o test*.C rose_*.c rose_*.C rose_*.f rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc abiStuffTestDone *.dot rose_*
+	   
 
