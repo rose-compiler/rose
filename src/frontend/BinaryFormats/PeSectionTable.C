@@ -34,6 +34,14 @@ SgAsmPESectionTableEntry::update_from_section(SgAsmPESection *section)
     p_physical_offset = section->get_offset();
     p_name = section->get_name()->get_string();
 
+    p_flags = 0;
+    if (section->get_mapped_rperm())
+        p_flags |= SgAsmPESectionTableEntry::OF_READABLE;
+    if (section->get_mapped_wperm())
+        p_flags |= SgAsmPESectionTableEntry::OF_WRITABLE;
+    if (section->get_mapped_xperm())
+        p_flags |= SgAsmPESectionTableEntry::OF_EXECUTABLE;
+
 #if 0 /*FIXME*/
     p_coff_line_nums = 0;
     p_n_relocs = 0;
@@ -158,7 +166,7 @@ SgAsmPESectionTable::parse()
 
 /** Attaches a previously unattached PE Section to the PE Section Table. This method complements
  *  SgAsmPESection::init_from_section_table. This method initializes the section table from the section while
- *  ini_from_section_table() initializes the section from the section table. */
+ *  init_from_section_table() initializes the section from the section table. */
 void
 SgAsmPESectionTable::add_section(SgAsmPESection *section)
 {
