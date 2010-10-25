@@ -120,6 +120,8 @@ VariableTraversal::evaluateInheritedAttribute (
    return inheritedAttribute;
 }
 
+
+
 SynthesizedAttribute
 VariableTraversal::evaluateSynthesizedAttribute (
       SgNode* astNode,
@@ -139,19 +141,20 @@ VariableTraversal::evaluateSynthesizedAttribute (
       }
 
 
-
       if (isSgVarRefExp(astNode)) {
          if (!inheritedAttribute.isArrowExp && !inheritedAttribute.isAddressOfOp )  {
             bool stopSearch=false;
 //            bool lval = isLValue(isSgExpression(astNode));
             bool lval = isSgVarRefExp(astNode)->isUsedAsLValue();
             string name = isSgVarRefExp(astNode)->get_symbol()->get_name().getString();
-            printf ("  $$$$$$$$$$ FOUND isSgVarRefExp : %s  LVALUE? %d...    :: %s \n",name.c_str(), lval,astNode->get_parent()->get_parent()->unparseToString().c_str() );
-#if 0
+            printf ("\n  $$$$$$$$$$ FOUND isSgVarRefExp : %s  LVALUE? %d...    :: %s \n",name.c_str(), lval,astNode->get_parent()->get_parent()->unparseToString().c_str() );
+
 //            if (!isSgExpression(astNode)->isLValue())
+#if 0
             if (lval)
                stopSearch=true;
-#else
+#endif
+#if 0
             if (inheritedAttribute.isAssignInitializer)  {
                SgInitializedName* initName = isSgInitializedName( astNode -> get_parent() ->get_parent()-> get_parent());
                if (initName==NULL)
@@ -160,10 +163,18 @@ VariableTraversal::evaluateSynthesizedAttribute (
                         stopSearch=true;
             }
 #endif
+#if 1
             if (stopSearch==false) {
+               cout << " @@@@@@@@@ CALLING ADDING Variable access : " << astNode->unparseToString() << endl;
                transf->visit_isSgVarRefExp(isSgVarRefExp(astNode));
-               cout << " @@@@@@@@@ ADDING Variable access : " << astNode->unparseToString() << "  vec size: "  << endl;
             }
+#else
+            if (stopSearch==false) {
+                 // its a plain variable access
+               transf->variable_access_varref.push_back(isSgVarRefExp(astNode));
+                 cout << " @@@@@@@@@ ADDING Variable access : " << astNode->unparseToString() << "  vec size: " << astNode->get_parent()->unparseToString() << endl;
+            }
+#endif
          }
       }
    }
@@ -174,8 +185,8 @@ VariableTraversal::evaluateSynthesizedAttribute (
 
 
 void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
- //  cerr <<"\n$$$$$ visit_isSgVarRefExp : " << n->unparseToString() <<
-  //       "  in line : " << n->get_file_info()->get_line() << " -------------------------------------" <<endl;
+   cout <<"$$$$$ visit_isSgVarRefExp : " << n->unparseToString() <<
+         "  in line : " << n->get_file_info()->get_line() << " -------------------------------------" <<endl;
 
    SgInitializedName *name = n -> get_symbol() -> get_declaration();
    if( name  && !isInInstrumentedFile( name -> get_declaration() )) {
@@ -192,13 +203,18 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
       last=parent;
       parent=parent->get_parent();
       cerr << "*********************************** DEBUGGING  parent (loop) = " << parent->class_name() << endl;
-      if( isSgProject(parent))
-      { // do nothing
+      if( isSgProject(parent))  {
          stopSearch=true;
-         //cerr << "*********************************** DEBUGGING   parent = (project) " << parent->class_name() << endl;
          break;
       }
       else if (isSgAssignInitializer(parent)) {
+#if 1
+
+         SgInitializedName* grandparent = isSgInitializedName( parent -> get_parent() );
+         bool condition = !(  grandparent   && isSgReferenceType( grandparent -> get_type()));
+         if (!condition)
+            stopSearch=true;
+#endif
          break;
 
       }
@@ -211,19 +227,27 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 
          SgExpression* left = isSgBinaryOp( parent ) -> get_lhs_operand();
          SgExpression* right = isSgBinaryOp(parent)->get_rhs_operand();
-         if (    right == last &&
-               !isSgArrayType( right -> get_type() ) &&
-               !isSgNewExp(right)
+         if (    right == last &&    !isSgArrayType( right -> get_type() ) &&   !isSgNewExp(right)
+               // consider:
+               //      int& s = x;
+               // which is not a read of x
                && !isSgReferenceType( left -> get_type() )) {
-            cerr <<"$$$$$ Adding variable_access_varref (assignOp): " << n->unparseToString() <<
-                  "   right hand side type: " << right->get_type()->class_name() <<
-                  "   right exp: " << right->class_name() << endl;
             stopSearch=false;
          } else
          stopSearch=true;
+         //cerr << "*********************************** DEBUGGING   parent (assign) = " << parent->class_name() << endl;
          break;
       }
-
+/*
+      else if (isSgPointerDerefExp(parent)) {
+      }
+      */
+#if 1
+      else if ( isSgArrowExp( parent )) {
+         stopSearch = true;
+         break;
+      }
+#endif
       else if (isSgExprListExp(parent) && isSgFunctionCallExp(parent->get_parent())) {
          cerr << "$$$$$ Found Function call - lets handle its parameters." << endl;
          SgType* arg_type = isSgExpression(last)->get_type();
@@ -252,12 +276,20 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
          }
 
          if ((   arg_type   && isUsableAsSgArrayType( arg_type ) != NULL )
-               || (param_type
-                     // References do not have to be initialized.  They can be initialized in the function body
-                     && isUsableAsSgReferenceType( param_type ) != NULL ))
+               || (param_type  && isUsableAsSgReferenceType( param_type ) != NULL ))
             stopSearch=true;
          break;
       }
+#if 1
+      else if (isSgAddressOfOp(parent)) {
+         // consider, e.g.
+         // 	int x;
+         // 	int* y = &x;
+         // it is not necessary for x to be initialized
+         stopSearch = true;
+         break;
+      }
+#endif
 
       else if( isSgWhileStmt( parent )
             || isSgDoWhileStmt( parent )
@@ -294,7 +326,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
    if (stopSearch==false) {
       // its a plain variable access
       variable_access_varref.push_back(n);
-      cout << " @@@@@@@@@ ADDING Variable access : " << n->unparseToString() << "  vec size: " << variable_access_varref.size() << endl;
+      cout << " @@@@@@@@@ ADDING Variable access : " << n->unparseToString() << "  parent: " << n->get_parent()->unparseToString() << endl;
    }
 
 #endif

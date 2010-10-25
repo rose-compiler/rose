@@ -43,8 +43,10 @@ private:
    // the following stores all variables that are created (and used e.g. in functions)
    // We need to store the name, type and intialized value
    std::vector<SgInitializedName*> variable_declarations;
+public:
    // We need to store the variables that are being accessed
    std::vector<SgVarRefExp*> variable_access_varref;
+private:
    // map of expr ϵ { SgPointerDerefExp, SgArrowExp }, SgVarRefExp pairs
    // the deref expression must be an ancestor of the varref
    std::map<SgExpression*,SgVarRefExp*> variable_access_pointerderef;
