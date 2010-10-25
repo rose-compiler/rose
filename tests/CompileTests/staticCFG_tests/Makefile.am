@@ -460,40 +460,47 @@ F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-o}
 F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-o}
 F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-o}
 
-$(CXX_FILES): testStaticCFG
+$(CXX_FILES): testStaticCFG testInterproceduralCFG
 	./testStaticCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+	./testInterproceduralCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
 
 # ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C.o}: testStaticCFG
-$(C_FILES): testStaticCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
+$(C_FILES): testStaticCFG testInterproceduralCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
 	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.temp.c)
 	./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
+	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
 
-$(C99_FILES): testStaticCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
+$(C99_FILES): testStaticCFG testInterproceduralCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
 	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.temp.c)
 	./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
+	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
 
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F90_FILES): ./testStaticCFG
+$(F90_FILES): ./testStaticCFG ./testInterproceduralCFG
 #	./testStaticCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
+#	./testInterproceduralCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
 
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F77_FILES): ./testStaticCFG
+$(F77_FILES): ./testStaticCFG ./testInterproceduralCFG
 #	./testStaticCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
+#	./testInterproceduralCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
 
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F03_FILES): ./testStaticCFG
+$(F03_FILES): ./testStaticCFG ./testInterproceduralCFG
 #	./testStaticCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
+#	./testInterproceduralCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
 
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
 # Make rule to build the QMTest database files
 CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): testStaticCFG $(srcdir)/$(@:.qmt=.C)
+$(QMTEST_Objects): testStaticCFG testInterproceduralCFG $(srcdir)/$(@:.qmt=.C)
 	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testStaticCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testInterproceduralCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # Include makefile rules specific to QMTest
-include $(top_srcdir)/config/QMTest_makefile.inc
+#include $(top_srcdir)/config/QMTest_makefile.inc
 
 EXTRA_DIST = 
 
@@ -503,7 +510,9 @@ check-c99: $(C99_FILES)
 check-f90: $(F90_FILES)
 check-f77: $(F77_FILES)
 check-f03: $(F03_FILES)
-if ROSE_USE_OPEN_FORTRAN_PARSER
+
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 check-fortran: check-f90 check-f77 check-f03
 else
 check-fortran:
@@ -518,32 +527,3 @@ check-local: check-cxx check-c check-c99 check-fortran
 clean-local:
 	rm -f *.o *.temp.c *-o *.mod *.dot
 	rm -rf QMTest
-
-# Interprocedural CFG tests:
-$(CXX_FILES): testInterproceduralCFG
-	./testInterproceduralCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
-
-# ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C.o}: testInterproceduralCFG
-$(C_FILES): testInterproceduralCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
-	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.temp.c)
-	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
-
-$(C99_FILES): testInterproceduralCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
-	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.temp.c)
-	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
-
-# DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F90_FILES): ./testInterproceduralCFG
-#	./testInterproceduralCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
-
-# DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F77_FILES): ./testInterproceduralCFG
-#	./testInterproceduralCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
-
-# DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F03_FILES): ./testInterproceduralCFG
-#	./testInterproceduralCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
-
-# Make rule to build the QMTest database files
-$(QMTEST_Objects): testInterproceduralCFG $(srcdir)/$(@:.qmt=.C)
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testInterproceduralCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)

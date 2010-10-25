@@ -1,6 +1,11 @@
 /* Emulates an executable. */
 #include "rose.h"
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 /* Define one CPP symbol to determine whether this simulator can be compiled.  The definition of this one symbol depends on
  * all the header file prerequisites. */
 #if defined(HAVE_ASM_LDT_H) && defined(HAVE_ELF_H) && \
@@ -56,12 +61,22 @@
 #include <sys/ioctl.h>
 #include <asm/ldt.h>
 #include <linux/unistd.h>
+#include <sys/sysinfo.h> 
+#include <sys/sem.h>
+
 
 enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
 
+#define CONV_FIELD(var1, var2, field) var1.field = var2.field
 #ifndef HAVE_USER_DESC
 typedef modify_ldt_ldt_s user_desc;
 #endif
+
+static const int PROGRESS_INTERVAL = 10; /* seconds */
+static int had_alarm = 0;
+static void alarm_handler(int) {
+    had_alarm = 1;
+}
 
 static int
 print_user_desc(FILE *f, const uint8_t *_ud, size_t sz)
@@ -264,12 +279,13 @@ public:
     bool trace_mmap;                            /* Show changes in the memory map */
     bool trace_syscall;                         /* Show each system call */
     bool trace_loader;                          /* Show diagnostics for the program loading */
+    bool trace_progress;			/* Show progress now and then */
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
           vdso_va(0), vdso_entry(0), core_styles(CORE_ELF), core_base_name("x-core.rose"),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
-          trace_loader(false) {
+          trace_loader(false), trace_progress(false) {
 
         vdso_name = "x86vdso";
         vdso_paths.push_back(".");
@@ -286,7 +302,7 @@ public:
         for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
             writeFlag((X86Flag)i, 0);
         writeIP(0);
-        writeFlag(x86_flag_1, true_());
+        writeFlag((X86Flag)1, true_());
         writeGPR(x86_gpr_sp, 0xc0000000ul);
 
         memset(gdt, 0, sizeof gdt);
@@ -393,7 +409,7 @@ public:
     void syscall_result(uint32_t ptr, size_t sz, ArgInfo::StructPrinter);
 
     /* Initializes an ArgInfo object to pass to syscall printing functions. */
-    void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list ap);
+    void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list *ap);
 
     /* Returns the memory address in ROSE where the specified specimen address is located. */
     void *my_addr(uint32_t va);
@@ -518,6 +534,10 @@ public:
             }
         }
     }
+
+    int 
+    ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_t third, uint32_t ptr, uint8_t ptr_addr, uint32_t fifth);
+
 };
 
 /* Using the new interface is still about as complicated as the old interface because we need to perform only a partial link.
@@ -1345,12 +1365,291 @@ EmulationPolicy::read_string_vector(uint32_t va)
     return vec;
 }
 
+#define SEMOP		 1
+#define SEMGET		 2
+#define SEMCTL		 3
+#define SEMTIMEDOP	 4
+#define MSGSND		11
+#define MSGRCV		12
+#define MSGGET		13
+#define MSGCTL		14
+#define SHMAT		21
+#define SHMDT		22
+#define SHMGET		23
+#define SHMCTL		24
+
+
+int 
+EmulationPolicy::ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_t third, uint32_t ptr, uint8_t ptr_addr, uint32_t fifth)
+{
+	int version, ret;
+    size_t size_ptr;
+    int result;
+
+
+
+    /* semop system calls takes an array of these. */
+    struct sembuf {
+      unsigned short  sem_num;    /* semaphore index in array */
+      short       sem_op;     /* semaphore operation */
+      short       sem_flg;    /* operation flags */
+    };
+
+    switch(call)
+    {
+
+      case SEMGET: /* semget */
+        /* Equivalent to 
+             int semget(key_t key, int nsems, int semflg);
+           
+           The types are described as
+              typedef signed int s32;
+              typedef s32 compat_key_t;
+        */
+        return semget(first, second, third);
+        break;
+
+      case SEMCTL: {
+                     /*
+                        union semun {
+                            int val;            
+                            struct semid_ds __user *buf;    
+                            unsigned short __user *array;   
+                            struct seminfo __user *__buf;   
+                            void __user *__pad;
+                        };
+                     */  
+                     /*
+                     union semun fourth;
+                     if (!ptr)
+                       return -EINVAL;
+                     if (get_user(fourth.__pad, (void __user * __user *) ptr))
+                       return -EFAULT;
+                     return sys_semctl(first, second, third, fourth);
+                     */
+        std::cerr << "Error: system call ipc case SEMCTL not implemented" << std::endl;
+        exit(1);
+
+                     break;
+                   }
+
+#if 1
+
+      case SEMOP:
+        //return sys_semtimedop(first, (struct sembuf __user *)ptr,
+        //    second, NULL);
+ 
+        //result = syscall( 117, fi, (long) sys_path.c_str(), mode, flags);
+        std::cerr << "Error: system call ipc case SEMOP not implemented" << std::endl;
+        exit(1);
+
+        size_ptr = sizeof(sembuf);
+
+        break;
+      case SEMTIMEDOP:
+       /* return sys_semtimedop(first, (struct sembuf __user *)ptr,
+            second,
+            (const struct timespec __user *)fifth);
+      */
+        std::cerr << "Error: system call ipc case SEMTIMEDOP not implemented" << std::endl;
+        exit(1);
+
+        size_ptr = sizeof(sembuf);
+
+        break;
+      case MSGSND:
+                   //return sys_msgsnd(first, (struct msgbuf __user *) ptr,
+                    //   second, third);
+
+                   std::cerr << "Error: system call ipc case MSGSND not implemented" << std::endl;
+                   exit(1);
+
+                   break;
+      case MSGRCV:
+                   /*
+                   switch (version) {
+                     case 0: {
+                               struct ipc_kludge tmp;
+                               if (!ptr)
+                                 return -EINVAL;
+
+                               if (copy_from_user(&tmp,
+                                     (struct ipc_kludge __user *) ptr,
+                                     sizeof(tmp)))
+                                 return -EFAULT;
+                               return sys_msgrcv(first, tmp.msgp, second,
+                                   tmp.msgtyp, third);
+                             }
+                     default:
+                             return sys_msgrcv(first,
+                                 (struct msgbuf __user *) ptr,
+                                 second, fifth, third);
+                   }
+                   */
+        std::cerr << "Error: system call ipc case MSGRCV not implemented" << std::endl;
+        exit(1);
+
+                   break;
+      case MSGGET:
+                   //return sys_msgget((key_t) first, second);
+        std::cerr << "Error: system call ipc case MSGGET not implemented" << std::endl;
+        exit(1);
+
+                   break;
+      case MSGCTL:
+                   //return sys_msgctl(first, second, (struct msqid_ds __user *)ptr);
+        std::cerr << "Error: system call ipc case MSGCTL not implemented" << std::endl;
+        exit(1);
+
+                   break;
+
+      case SHMAT:
+                   /*
+                   switch (version) {
+                     default: {
+                                unsigned long raddr;
+                                ret = do_shmat(first, (char __user *)ptr,
+                                    second, &raddr);
+                                if (ret)
+                                  return ret;
+                                return put_user(raddr, (unsigned long __user *) third);
+                              }
+                     case 1:
+                              return -EINVAL;
+                   }
+    */
+        std::cerr << "Error: system call ipc case SHMAT not implemented" << std::endl;
+        exit(1);
+
+                   break;
+      case SHMDT:
+                   //return sys_shmdt((char __user *)ptr);
+        std::cerr << "Error: system call ipc case SHMT not implemented" << std::endl;
+        exit(1);
+
+                   break;
+      case SHMGET:
+                   //return sys_shmget(first, second, third);
+        std::cerr << "Error: system call ipc case SHMGET not implemented" << std::endl;
+        exit(1);
+
+                   break;
+      case SHMCTL:
+                   //return sys_shmctl(first, second,
+                   //    (struct shmid_ds __user *) ptr);
+        std::cerr << "Error: system call ipc case SGMCTL not implemented" << std::endl;
+        exit(1);
+
+                   break;
+
+#endif
+
+      default:
+                   std::cout << "Call is: " << call << std::endl;
+                   //return -ENOSYS;
+    
+                   break;
+    }
+
+
+    //syscall(117,first, second, third, ptr, fifth);
+
+    return result;
+#if 0
+	version = call >> 16; /* hack for backward compatibility */
+	call &= 0xffff;
+
+	switch (call) {
+	case SEMOP:
+		return sys_semtimedop(first, (struct sembuf __user *)ptr,
+				      second, NULL);
+	case SEMTIMEDOP:
+		return sys_semtimedop(first, (struct sembuf __user *)ptr,
+				      second,
+				      (const struct timespec __user *)fifth);
+
+	case SEMGET:
+		return sys_semget(first, second, third);
+	case SEMCTL: {
+		union semun fourth;
+		if (!ptr)
+			return -EINVAL;
+		if (get_user(fourth.__pad, (void __user * __user *) ptr))
+			return -EFAULT;
+		return sys_semctl(first, second, third, fourth);
+	}
+
+	case MSGSND:
+		return sys_msgsnd(first, (struct msgbuf __user *) ptr,
+				  second, third);
+	case MSGRCV:
+		switch (version) {
+		case 0: {
+			struct ipc_kludge tmp;
+			if (!ptr)
+				return -EINVAL;
+
+			if (copy_from_user(&tmp,
+					   (struct ipc_kludge __user *) ptr,
+					   sizeof(tmp)))
+				return -EFAULT;
+			return sys_msgrcv(first, tmp.msgp, second,
+					   tmp.msgtyp, third);
+		}
+		default:
+			return sys_msgrcv(first,
+					   (struct msgbuf __user *) ptr,
+					   second, fifth, third);
+		}
+	case MSGGET:
+		return sys_msgget((key_t) first, second);
+	case MSGCTL:
+		return sys_msgctl(first, second, (struct msqid_ds __user *)ptr);
+
+	case SHMAT:
+		switch (version) {
+		default: {
+			unsigned long raddr;
+			ret = do_shmat(first, (char __user *)ptr,
+				       second, &raddr);
+			if (ret)
+				return ret;
+			return put_user(raddr, (unsigned long __user *) third);
+		}
+		case 1:
+			/*
+			 * This was the entry point for kernel-originating calls
+			 * from iBCS2 in 2.2 days.
+			 */
+			return -EINVAL;
+		}
+	case SHMDT:
+		return sys_shmdt((char __user *)ptr);
+	case SHMGET:
+		return sys_shmget(first, second, third);
+	case SHMCTL:
+		return sys_shmctl(first, second,
+				   (struct shmid_ds __user *) ptr);
+	default:
+		return -ENOSYS;
+	}
+
+#endif
+}
 void
 EmulationPolicy::emulate_syscall()
 {
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
      *          according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers. */
     unsigned callno = readGPR(x86_gpr_ax).known_value();
+
+    struct kernel_timeval {
+        uint32_t tv_sec;        /* seconds */
+        uint32_t tv_usec;       /* microseconds */
+    };
+
+
+
     switch (callno) {
         case 3: { /*read*/
             syscall_enter("read", "dpd");
@@ -1584,7 +1883,7 @@ EmulationPolicy::emulate_syscall()
             ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
 
             int result;
-            if( byte != NULL )
+            if( byte)
             {
               struct kernel_utimebuf {
                 uint32_t actime;
@@ -1758,7 +2057,7 @@ EmulationPolicy::emulate_syscall()
             uint32_t cmd=arg(1), arg2=arg(2);
             int result = -ENOSYS;
             switch (cmd) {
-                case TCGETS: { /*tcgetattr*/
+                case TCGETS: { /* 0x00005401, tcgetattr*/
                     struct termios ti;
                     result = tcgetattr(fd, &ti);
                     if (-1==result) {
@@ -1771,8 +2070,115 @@ EmulationPolicy::emulate_syscall()
                     }
                     break;
                 }
-                    
-                case TIOCGPGRP: { /*tcgetpgrp*/
+
+                case TCSETS:  /* 0x,00005402,  tcsetattr */
+                    /* TCSETS const struct termios *argp
+                       Equivalent to
+                          int tcsetattr(int fd, int optional_actions, const struct termios *termios_p);
+                          tcsetattr(fd, TCSANOW, argp).
+                       Set the current serial port settings. 
+                    */
+                case TCSETSW: { /* 0x00005403, tcsetattr  */
+                    /* Equivalent to 
+                         int tcsetattr(int fd, int optional_actions, const struct termios *termios_p);
+                         tcsetattr(fd, TCSADRAIN, argp).
+                       Allow the output buffer to drain, and set the current serial port settings. 
+
+                       Value of second argument is the only difference between TCSETS and TCSETSW
+
+                       typedef unsigned int     tcflag_t;
+                       typedef unsigned char    cc_t;
+                       typedef unsigned int     speed_t;
+
+                       struct termios {
+                         tcflag_t c_iflag;
+                         tcflag_t c_oflag;
+                         tcflag_t c_cflag;
+                         tcflag_t c_lflag;
+                         cc_t c_cc[NCCS];
+                         speed_t c_ispeed;
+                         speed_t c_ospeed;
+                       };
+
+
+                     */
+                    uint32_t optional_actions = arg(2);
+
+                    //Convert between 32 bit termios and whatever is
+                    //used on this machine
+                    struct termios_kernel {
+                         uint32_t c_iflag;
+                         uint32_t c_oflag;
+                         uint32_t c_cflag;
+                         uint32_t c_lflag;
+                         unsigned char c_cc[NCCS];
+                         uint32_t c_ispeed;
+                         uint32_t c_ospeed;
+                    };
+
+                    termios_kernel tik;
+
+                    size_t nread = map->read(&tik, arg(3), sizeof(termios_kernel));
+                    ROSE_ASSERT(sizeof(termios_kernel) == nread);
+ 
+                    struct termios ti;
+
+                    CONV_FIELD(ti,tik,c_iflag);
+                    CONV_FIELD(ti,tik,c_oflag);
+                    CONV_FIELD(ti,tik,c_cflag);
+                    CONV_FIELD(ti,tik,c_lflag);
+                    CONV_FIELD(ti,tik,c_ispeed);
+
+                    for (int i = 0 ; i < NCCS ; i++ )
+                      ti.c_cc[i] = tik.c_cc[i];
+
+                    CONV_FIELD(ti,tik,c_ospeed);
+
+                    result = tcsetattr(fd, optional_actions, &ti);
+
+                    if (result==-1) {
+                        result = -errno;
+                    } 
+  
+                    break;
+                }
+
+                case TCGETA: { /* 0x,00005405 */
+                    /* gets a data structure of type 
+                           struct termio * 
+
+                       struct termio {
+                         unsigned short c_iflag;     // input mode flags 
+                         unsigned short c_oflag;     // output mode flags 
+                         unsigned short c_cflag;     // control mode flags 
+                         unsigned short c_lflag;     // local mode flags 
+                         unsigned char c_line;       // line discipline 
+                         unsigned char c_cc[NCC];    // control characters 
+                       };
+
+                     */
+
+                    termio to;
+
+                    result = ioctl(fd, TCGETA, &to);
+                    if (-1==result) {
+                        result = -errno;
+                    } else {
+                        size_t nwritten = map->write(&to, arg2, sizeof to);
+                        ROSE_ASSERT(nwritten==sizeof to);
+                    }
+
+                    break;
+                }
+
+                case TIOCGPGRP: { /* 0x0000540F, tcgetpgrp*/
+                    /* equivalent to 
+                        pid_t tcgetpgrp(int fd);
+                       The  function tcgetpgrp() returns the process group ID of the foreground process group 
+                       on the terminal associated to fd, which must be the controlling terminal of the calling 
+                       process.
+                    */
+
                     pid_t pgrp = tcgetpgrp(fd);
                     if (-1==pgrp) {
                         result = -errno;
@@ -1786,7 +2192,7 @@ EmulationPolicy::emulate_syscall()
                     break;
                 }
                     
-                case TIOCSPGRP: { /*tcsetpgrp*/
+                case TIOCSPGRP: { /* 0x5410, tcsetpgrp*/
                     uint32_t pgid_le;
                     size_t nread = map->read(&pgid_le, arg2, 4);
                     ROSE_ASSERT(4==nread);
@@ -1797,7 +2203,26 @@ EmulationPolicy::emulate_syscall()
                     break;
                 }
 
-                case TIOCGWINSZ: {
+                case TIOCSWINSZ: { /* 0x5413, the winsize is const */
+                    /* Set window size.
+                       struct winsize {
+                          unsigned short ws_row;
+                          unsigned short ws_col;
+                          unsigned short ws_xpixel;   // unused 
+                          unsigned short ws_ypixel;   // unused 
+                       };
+                    */
+                    winsize ws;
+                    size_t nread = map->read(&ws, arg(2), sizeof(winsize));
+                    ROSE_ASSERT(sizeof(winsize) == nread);
+
+                    result = ioctl(fd, TIOCSWINSZ, &ws);
+                    if (-1==result)
+                        result = -errno;
+                    break;
+                }
+
+                case TIOCGWINSZ: /* 0x5414, */ {
                     struct winsize ws;
                     result = ioctl(fd, TIOCGWINSZ, &ws);
                     if (-1==result) {
@@ -1808,7 +2233,6 @@ EmulationPolicy::emulate_syscall()
                     }
                     break;
                 }
-                    
                 default:
                     fprintf(stderr, "  unhandled ioctl: %u\n", cmd);
                     abort();
@@ -2018,6 +2442,119 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+#if 1
+        case 116: { /* 0x74, sysinfo*/
+
+            /*
+
+               int sysinfo(struct sysinfo *info);   
+
+               struct sysinfo {
+               long uptime;             // Seconds since boot 
+                    unsigned long loads[3];  // 1, 5, and 15 minute load averages 
+                    unsigned long totalram;  // Total usable main memory size 
+                    unsigned long freeram;   // Available memory size 
+                    unsigned long sharedram; // Amount of shared memory 
+                    unsigned long bufferram; // Memory used by buffers 
+                    unsigned long totalswap; // Total swap space size 
+                    unsigned long freeswap;  // swap space still available 
+                    unsigned short procs;    // Number of current processes 
+                    unsigned long totalhigh; // Total high memory size 
+                    unsigned long freehigh;  // Available high memory size 
+                    unsigned int mem_unit;   // Memory unit size in bytes 
+                    char _f[20-2*sizeof(long)-sizeof(int)]; // Padding for libc5 
+                  };
+
+            */
+            syscall_enter("sysinfo", "p");
+
+
+            struct kernel_sysinfo {
+              int32_t uptime;             /* Seconds since boot */
+              uint32_t loads[3];  /* 1, 5, and 15 minute load averages */
+              uint32_t totalram;  /* Total usable main memory size */
+              uint32_t freeram;   /* Available memory size */
+              uint32_t sharedram; /* Amount of shared memory */
+              uint32_t bufferram; /* Memory used by buffers */
+              uint32_t totalswap; /* Total swap space size */
+              uint32_t freeswap;  /* swap space still available */
+              unsigned short procs;    /* Number of current processes */
+              uint32_t totalhigh; /* Total high memory size */
+              uint32_t freehigh;  /* Available high memory size */
+              uint32_t mem_unit;   /* Memory unit size in bytes */
+              char _f[20-2*sizeof(uint32_t)-sizeof(int32_t)]; /* Padding for libc5 */
+            };
+
+            struct sysinfo {
+              long uptime;             // Seconds since boot 
+              unsigned long loads[3];  // 1, 5, and 15 minute load averages 
+              unsigned long totalram;  // Total usable main memory size 
+              unsigned long freeram;   // Available memory size 
+              unsigned long sharedram; // Amount of shared memory 
+              unsigned long bufferram; // Memory used by buffers 
+              unsigned long totalswap; // Total swap space size 
+              unsigned long freeswap;  // swap space still available 
+              unsigned short procs;    // Number of current processes 
+              unsigned long totalhigh; // Total high memory size 
+              unsigned long freehigh;  // Available high memory size 
+              unsigned int mem_unit;   // Memory unit size in bytes 
+              char _f[20-2*sizeof(long)-sizeof(int)]; // Padding for libc5 
+            };
+
+            sysinfo sys;
+            int result  = syscall( 116, &sys );
+
+            kernel_sysinfo kernel_sys;
+            kernel_sys.uptime = sys.uptime;
+            for(int i = 0 ; i < 3 ; i++)
+               kernel_sys.loads[i] = sys.loads[i];
+            kernel_sys.totalram    = sys.totalram;
+            kernel_sys.freeram     = sys.freeram;
+            kernel_sys.sharedram   = sys.sharedram;
+            kernel_sys.bufferram   = sys.bufferram;
+            kernel_sys.totalswap   = sys.totalswap;
+            kernel_sys.freeswap    = sys.freeswap;
+            kernel_sys.procs       = sys.procs;
+            kernel_sys.totalhigh   = sys.totalhigh;
+            kernel_sys.mem_unit    = sys.mem_unit;
+            for (int i = 0; i < 20-2*sizeof(long)-sizeof(int) ; i++)
+              kernel_sys._f[i] = sys._f[i];
+
+            map->write(&kernel_sys, arg(0), sizeof(kernel_sysinfo));
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+
+            break;
+        };
+
+        case 117: { /* 0x75, ipc */
+            //int ipc(unsigned int call, int first, int second, int third, void *ptr, long fifth)
+            syscall_enter("ipc", "ddddpd");
+ 
+            uint32_t call, fifth, ptr;
+            int32_t  first, second, third;
+            call   = arg(0);
+            first  = arg(1);
+            second = arg(2);
+            third  = arg(3);
+            ptr    = arg(4);
+            fifth  = arg(5);
+
+            uint8_t ptr_addr;
+
+            size_t nread = map->read(&ptr_addr, ptr, 1);
+            ROSE_ASSERT(nread == 1);
+
+            int result = ipc_kernel(call, first, second, third, ptr, ptr_addr, fifth);
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+
+            break;
+        }
+#endif
+
         case 122: { /*0x7a, uname*/
             syscall_enter("uname", "p");
             uint32_t dest_va=arg(0);
@@ -2083,6 +2620,37 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+    case 140: { /* 0x8c, llseek */
+        /*
+           int _llseek(unsigned int fd, unsigned long offset_high,            unsigned
+           long offset_low, loff_t *result,            unsigned int whence);
+
+
+        */
+
+        syscall_enter("llseek","dddpd");
+        uint32_t fd = arg(0);
+        uint32_t offset_high = arg(1);
+        uint32_t offset_low  = arg(2);
+
+        long long whence      = arg(4);
+
+        loff_t llseek_result2; 
+        int result = syscall(140, fd, offset_high, offset_low, llseek_result2, whence );
+
+        //FIXME: Is this the correct way of changing this pointer?
+        //And is it correct that this is a 'long long*'? That is what it seems like to
+        //me by typedef long long        __kernel_loff_t; typedef __kernel_loff_t loff_t
+        map->write(&llseek_result2, arg(3), 8);
+
+
+        writeGPR(x86_gpr_ax, result);
+
+        syscall_leave("d");
+
+        break;
+
+    };
 	case 141: {     /*0x8d, getdents*/
 	    /* 
                int getdents(unsigned int fd, struct linux_dirent *dirp,
@@ -2122,6 +2690,127 @@ EmulationPolicy::emulate_syscall()
 	    break;
         }
 
+        case 142: { /*0x8e , select */
+            /* The select system call
+                  int select(int nfds, fd_set *readfds, fd_set *writefds,
+                                    fd_set *exceptfds, struct timeval *timeout);
+               #undef __NFDBITS
+               #define __NFDBITS       (8 * sizeof(unsigned long))
+
+               #undef __FD_SETSIZE
+               #define __FD_SETSIZE    1024
+
+               #undef __FDSET_LONGS
+               #define __FDSET_LONGS   (__FD_SETSIZE/__NFDBITS)
+
+               //The size of this datastructure should allow for 
+               //1024 file descriptors
+               typedef struct {
+                   unsigned long fds_bits [__FDSET_LONGS];
+               } __kernel_fd_set;
+
+               typedef __kernel_fd_set fd_set;
+
+               select()  and  pselect()  allow  a  program to monitor multiple file 
+               descriptors, waiting until one or more of the file descriptors
+               become "ready" for some class of I/O operation (e.g., input possible).  
+               A file descriptor is considered ready if it is possible  to
+               perform the corresponding I/O operation (e.g., read(2)) without blocking.
+
+
+            */
+            syscall_enter("select", "dpppp");
+
+            struct fd_set32{
+                unsigned long fds_bits[32];
+            };
+
+            uint32_t fd = arg(0);
+
+            //FIXME:
+            //System call is currently only tested on 32 bit, the data structure does
+            //seem to be of the same size for 32 and 64 bit, but for 64 bit the field 
+            //fd_set32.fds_bits is of length 16 instead of 32. I am not quite sure 
+            //how to convert between the two.
+            ROSE_ASSERT(sizeof( fd_set32) == sizeof(fd_set) );
+
+
+            fd_set* readfds   = NULL;
+            fd_set* writefds  = NULL;
+            fd_set* exceptfds = NULL;
+
+            uint8_t byte;
+            size_t nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread);
+
+            if( byte){ 
+                readfds = new fd_set;
+                nread = map->read(readfds, arg(1), sizeof(fd_set) );
+                ROSE_ASSERT( nread == sizeof(fd_set) );
+            }
+
+            nread = map->read(&byte, arg(2), 1);
+
+            ROSE_ASSERT(1==nread);
+
+            if( byte ){
+                writefds = new fd_set;
+                nread = map->read(writefds, arg(2), sizeof(fd_set) );
+                ROSE_ASSERT( nread == sizeof(fd_set) );
+            }
+
+            nread = map->read(&byte, arg(3), 1);
+            ROSE_ASSERT(1==nread);
+
+
+            if( byte){
+                exceptfds = new fd_set;
+                nread = map->read(exceptfds, arg(3), sizeof(fd_set) );
+                ROSE_ASSERT( nread == sizeof(fd_set) );
+            }
+
+            kernel_timeval timeout;
+            nread = map->read(&timeout, arg(4), sizeof(kernel_timeval) );
+            ROSE_ASSERT( nread == sizeof(kernel_timeval) );
+
+            timeval timeout64;
+            timeout64.tv_sec  = timeout.tv_sec;
+            timeout64.tv_usec = timeout.tv_usec;
+
+            select(fd, readfds, writefds, exceptfds, &timeout64);
+
+            nread = map->read(&byte, arg(1), 1);
+            ROSE_ASSERT(1==nread);
+
+
+            if( byte ){
+                size_t nwritten = map->write(readfds, arg(1), sizeof(fd_set) );
+                ROSE_ASSERT(nwritten==sizeof(fd_set) );
+                delete readfds;
+            }
+
+            nread = map->read(&byte, arg(2), 1);
+            ROSE_ASSERT(1==nread);
+
+
+            if( byte ){
+                size_t nwritten = map->write(writefds, arg(2), sizeof(fd_set));
+                ROSE_ASSERT( nwritten==sizeof(fd_set) );
+                delete writefds;
+            }
+
+            nread = map->read(&byte, arg(3), 1);
+            ROSE_ASSERT(1==nread);
+
+
+            if( byte ){
+                size_t nwritten = map->write(exceptfds, arg(3), sizeof(fd_set) );
+                ROSE_ASSERT(nwritten==sizeof(fd_set));
+                delete exceptfds;
+            }
+
+            break;
+        }
         case 146: { /*0x92, writev*/
             syscall_enter("writev", "dpd");
             uint32_t fd=arg(0), iov_va=arg(1);
@@ -2195,21 +2884,24 @@ EmulationPolicy::emulate_syscall()
             //size_t sigsetsize=arg(3);
 
             uint64_t saved=signal_mask, sigset=0;
-            size_t nread = map->read(&sigset, set_va, sizeof sigset);
-            ROSE_ASSERT(nread==sizeof sigset);
+            if ( set_va != 0 ) {
 
-            if (0==how) {
-                /* SIG_BLOCK */
-                signal_mask |= sigset;
-            } else if (1==how) {
-                /* SIG_UNBLOCK */
-                signal_mask &= ~sigset;
-            } else if (2==how) {
-                /* SIG_SETMASK */
-                signal_mask = sigset;
-            } else {
-                writeGPR(x86_gpr_ax, -EINVAL);
-                break;
+                size_t nread = map->read(&sigset, set_va, sizeof sigset);
+                ROSE_ASSERT(nread==sizeof sigset);
+
+                if (0==how) {
+                    /* SIG_BLOCK */
+                    signal_mask |= sigset;
+                } else if (1==how) {
+                    /* SIG_UNBLOCK */
+                    signal_mask &= ~sigset;
+                } else if (2==how) {
+                    /* SIG_SETMASK */
+                    signal_mask = sigset;
+                } else {
+                    writeGPR(x86_gpr_ax, -EINVAL);
+                    break;
+                }
             }
 
             if (get_va) {
@@ -2232,6 +2924,80 @@ EmulationPolicy::emulate_syscall()
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
             break;
+        }
+
+
+        case 186: { /* 0xba, sigaltstack*/
+          /*
+             int sigaltstack(const stack_t *restrict ss, stack_t *restrict oss);
+
+             The sigaltstack() function allows a process to define and examine the state of an alternate stack for signal handlers for the current thread. Signals that have been explicitly declared to execute on the alternate stack shall be delivered on the alternate stack.
+
+             If ss is not a null pointer, it points to a stack_t structure that specifies the alternate signal stack that shall take effect upon return from sigaltstack(). The ss_flags member specifies the new stack state. If it is set to SS_DISABLE, the stack is disabled and ss_sp and ss_size are ignored. Otherwise, the stack shall be enabled, and the ss_sp and ss_size members specify the new address and size of the stack.
+
+             The range of addresses starting at ss_sp up to but not including ss_sp+ ss_size is available to the implementation for use as the stack. This function makes no assumptions regarding which end is the stack base and in which direction the stack grows as items are pushed.
+
+             If oss is not a null pointer, on successful completion it shall point to a stack_t structure that specifies the alternate signal stack that was in effect prior to the call to sigaltstack(). The ss_sp and ss_size members specify the address and size of that stack. The ss_flags member specifies the stack's state, and may contain one of the following values:
+
+             SS_ONSTACK
+             The process is currently executing on the alternate signal stack. Attempts to modify the alternate signal stack while the process is executing on it fail. This flag shall not be modified by processes.
+             SS_DISABLE
+             The alternate signal stack is currently disabled.
+          */
+              syscall_enter("sigaltstack", "pp");
+#if 1
+
+              struct stack_t_kernel{
+                uint8_t  ss_sp;
+                int32_t  ss_flags;
+                uint32_t ss_size;
+
+              };
+
+              stack_t_kernel fakestack_ss;
+              size_t nread = map->read(&fakestack_ss, arg(0), sizeof(stack_t_kernel));
+              ROSE_ASSERT(nread == sizeof(stack_t_kernel));
+
+              //Read in the contents from the fake stack
+
+              void* ss_sp_ss  = malloc(fakestack_ss.ss_size);
+              nread = map->read(ss_sp_ss, fakestack_ss.ss_sp, fakestack_ss.ss_size);
+              stack_t fakestack_ss_arg;
+              fakestack_ss_arg.ss_flags = fakestack_ss.ss_flags;
+              fakestack_ss_arg.ss_size  = fakestack_ss.ss_size;
+              fakestack_ss_arg.ss_sp    = ss_sp_ss;
+
+              //SECOND ARGUMENT OSS CAN BE NULL
+#endif
+              int result;
+#if 1
+              if( arg(1) != 0 )
+              {
+
+                ROSE_ASSERT(false == true);
+                stack_t_kernel fakestack_oss;
+                nread = map->read(&fakestack_oss, arg(1), sizeof(stack_t_kernel));
+                ROSE_ASSERT(nread == sizeof(stack_t_kernel));
+
+
+                void* ss_sp_oss = malloc(fakestack_oss.ss_size);
+
+              }else{
+                std::cout << "Executing syscall" << std::endl;
+                result = sigaltstack(&fakestack_ss_arg,NULL);
+              }
+#endif
+              if (result == -1) result = -errno;
+
+              result = -errno;
+              writeGPR(x86_gpr_ax, result);
+
+              syscall_leave("d");
+
+
+              break;
+
+
         }
 
         case 191: { /*0xbf, ugetrlimit*/
@@ -2588,6 +3354,7 @@ EmulationPolicy::emulate_syscall()
                                   4, print_int_32);
                     break;
             }
+
             uint32_t futex1_va=arg(0), op=arg(1), val1=arg(2), timeout_va=arg(3), futex2_va=arg(4), val2=arg(5);
             int *futex1 = (int*)my_addr(futex1_va);
             int *futex2 = (int*)my_addr(futex2_va);
@@ -2703,7 +3470,7 @@ EmulationPolicy::emulate_syscall()
             ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
 
             int result;
-            if( byte != NULL )
+            if( byte )
             {
 
               struct kernel_timespec {
@@ -2779,13 +3546,8 @@ EmulationPolicy::emulate_syscall()
             ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
 
             int result;
-            if( byte != NULL )
+            if( byte )
             {
-
-              struct kernel_timeval {
-                uint32_t tv_sec;        /* seconds */
-                uint32_t tv_usec;       /* microseconds */
-              };
 
               size_t size_timeval_sample = sizeof(kernel_timeval)*2;
 
@@ -2854,24 +3616,25 @@ EmulationPolicy::emulate_syscall()
             abort();
         }
     }
+    ROSE_ASSERT( this != NULL  );
 }
 
 void
-EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list ap)
+EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *ap)
 {
     ROSE_ASSERT(info!=NULL);
     info->val = val;
     switch (format) {
         case 'f':       /*flags*/
         case 'e':       /*enum*/
-            info->xlate = va_arg(ap, const Translate*);
+            info->xlate = va_arg(*ap, const Translate*);
             break;
         case 's':       /*NUL-terminated string*/
             info->str = read_string(val);
             break;
         case 'P': {       /*ptr to a struct*/
-            info->struct_size = va_arg(ap, size_t);
-            info->struct_printer = va_arg(ap, ArgInfo::StructPrinter);
+            info->struct_size = va_arg(*ap, size_t);
+            info->struct_printer = va_arg(*ap, ArgInfo::StructPrinter);
             info->struct_buf = new uint8_t[info->struct_size];
             info->struct_nread = map->read(info->struct_buf, info->val, info->struct_size);
             break;
@@ -2889,7 +3652,7 @@ EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
         fprintf(debug, "0x%08"PRIx64": ", readIP().known_value());
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
-            syscall_arginfo(format[i], arg(i), args+i, ap);
+            syscall_arginfo(format[i], arg(i), args+i, &ap);
         print_enter(debug, name, format, args);
     }
     
@@ -2906,7 +3669,7 @@ EmulationPolicy::syscall_leave(const char *format, ...)
     if (debug && trace_syscall) {
         ArgInfo info;
         uint32_t value = readGPR(x86_gpr_ax).known_value();
-        syscall_arginfo(format[0], value, &info, ap);
+        syscall_arginfo(format[0], value, &info, &ap);
         print_leave(debug, format[0], &info);
     }
 }
@@ -2949,6 +3712,7 @@ main(int argc, char *argv[])
     Semantics t(policy);
     uint32_t dump_at = 0;               /* dump core the first time we hit this address, before the instruction is executed */
     std::string dump_name = "dump";
+    FILE *log_file = NULL;
 
     /* Parse command-line */
     int argno = 1;
@@ -2956,6 +3720,14 @@ main(int argc, char *argv[])
         if (!strcmp(argv[argno], "--")) {
             argno++;
             break;
+        } else if (!strncmp(argv[argno], "--log=", 6)) {
+            if (log_file)
+                fclose(log_file);
+            if (NULL==(log_file = fopen(argv[argno]+6, "w"))) {
+                fprintf(stderr, "%s: %s: %s\n", argv[0], strerror(errno), argv[argno+6]);
+                exit(1);
+            }
+            argno++;
         } else if (!strncmp(argv[argno], "--debug=", 8)) {
             policy.debug = stderr;
             char *s = argv[argno]+8;
@@ -2970,6 +3742,7 @@ main(int argc, char *argv[])
                     policy.trace_mmap = true;
                     policy.trace_syscall = true;
                     policy.trace_loader = true;
+                    policy.trace_progress = true;
                 } else if (word=="insn") {
                     policy.trace_insn = true;
                 } else if (word=="state") {
@@ -2982,6 +3755,8 @@ main(int argc, char *argv[])
                     policy.trace_syscall = true;
                 } else if (word=="loader") {
                     policy.trace_loader = true;
+                } else if (word=="progress") {
+                    policy.trace_progress = true;
                 } else {
                     fprintf(stderr, "%s: debug words must be from the set: insn, state, mem, mmap, syscall\n", argv[0]);
                     exit(1);
@@ -3027,6 +3802,8 @@ main(int argc, char *argv[])
     ROSE_ASSERT(argc-argno>=1); /* usage: executable name followed by executable's arguments */
     SgAsmGenericHeader *fhdr = policy.load(argv[argno]); /*header for main executable, not libraries*/
     policy.initialize_stack(fhdr, argc-argno, argv+argno);
+    if (policy.debug && log_file)
+        policy.debug = log_file;
 
     /* Debugging */
     if (policy.debug && policy.trace_mmap) {
@@ -3037,10 +3814,32 @@ main(int argc, char *argv[])
         fprintf(policy.debug, "Initial state:\n");
         policy.dump_registers(policy.debug);
     }
+    if (policy.debug && policy.trace_progress) {
+        struct sigaction sa;
+        sa.sa_handler = alarm_handler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = SA_RESTART;
+        sigaction(SIGALRM, &sa, NULL);
+        alarm(PROGRESS_INTERVAL);
+    }
 
     /* Execute the program */
+    struct timeval sim_start_time;
+    gettimeofday(&sim_start_time, NULL);
     bool seen_entry_va = false;
     while (true) {
+        if (had_alarm) {
+            had_alarm = 0;
+            alarm(PROGRESS_INTERVAL);
+            if (policy.debug && policy.trace_progress) {
+                struct timeval cur_time;
+                gettimeofday(&cur_time, NULL);
+                double nsec = cur_time.tv_sec + cur_time.tv_usec/1e6 - (sim_start_time.tv_sec + sim_start_time.tv_usec/1e6);
+                double insn_rate = nsec>0 ? policy.get_ninsns() / nsec : 0;
+                fprintf(policy.debug, "x86sim: processed %zu insns in %d sec (%d insns/sec)\n",
+                        policy.get_ninsns(), (int)(nsec+0.5), (int)(insn_rate+0.5));
+            }
+        }
         try {
             if (dump_at!=0 && dump_at == policy.readIP().known_value()) {
                 fprintf(stderr, "Reached dump point.\n");

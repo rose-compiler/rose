@@ -21,7 +21,28 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += \
-      C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests UPC_tests \
+      C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests UPC_tests
+endif
+
+# DQ (7/25/2010): Put these tests after the most basic tests that users expect ROSE to pass (C,C++,C99, etc.).
+if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+SUBDIRS += OpenMP_tests
+endif
+
+# DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+   SUBDIRS += Fortran_tests
+ # DQ (8/4/2010): This test directory should not be included.
+ # CAF_tests
+endif
+
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+   SUBDIRS += Java_tests 
+endif
+
+# DQ (10/19/2010): Moved basic languge test to the front of the list.
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+   SUBDIRS += \
       copyAST_tests RoseExample_tests PythonExample_tests \
       colorAST_tests mergeAST_tests unparseToString_tests \
       sourcePosition_tests \
@@ -31,18 +52,6 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
       sizeofOperation_tests MicrosoftWindows_tests nameQualificationAndTypeElaboration_tests \
       NewEDGInterface_C_tests
 endif
-
-# DQ (7/25/2010): Put these tests after the most basic tests that users expect ROSE to pass (C,C++,C99, etc.).
-SUBDIRS += OpenMP_tests
-
-# DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-   SUBDIRS += Fortran_tests
-
-# DQ (8/4/2010): This test directory should not be included.
-# CAF_tests
-endif
-
 check-local:
 	@echo "*************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests: make check rule complete (terminated normally) ******"

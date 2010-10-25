@@ -16,7 +16,7 @@ using namespace std;
 
 void
 RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
-                                 X86PositionInRegister pos,
+                                 RoseBin_support::X86PositionInRegister pos,
                                  uint64_t &val) {
   uint8_t b_val=0xF;
   uint16_t w_val=0xFF;
@@ -39,7 +39,7 @@ RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
 
 void
 RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
-                                 X86PositionInRegister pos,
+                                 RoseBin_support::X86PositionInRegister pos,
                                  uint8_t &b_val,
                                  uint16_t &w_val,
                                  uint32_t &dw_val,
@@ -55,35 +55,31 @@ RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
   switch (code.first) {
     case x86_regclass_gpr: {
       switch (code.second) {
-#define DO_ONE_GPR(reg) \
-        case x86_gpr_##reg: { \
-          /* assuming little endian */ \
-          if (!RoseBin_support::bigEndian()) { \
-            b7 = ( r##reg>>8 ) & 255; \
-            b8 = ( r##reg ) & 255; \
-            b78 = ( r##reg ) & 65535; \
-            /* b5678 = ( rax ) & 4294967295; */ \
-            b5678 = ( r##reg ) & 0xffffffff; \
-          } else { \
-            cerr << " We dont handle big endian's " << endl; \
-            exit(0); \
-          } \
-          res="r" #reg ":undefined"; \
-          if (pos==x86_regpos_low_byte) \
-          b_val = b8; \
-          else  \
-          if (pos==x86_regpos_high_byte) \
-          b_val = b7; \
-          else  \
-          if (pos==x86_regpos_word) \
-          w_val = b78; \
-          else  \
-          if (pos==x86_regpos_dword) \
-          dw_val = b5678; \
-          else  \
-          if (pos==x86_regpos_qword) \
-          qw_val = r##reg; \
-          break;  \
+#define DO_ONE_GPR(reg)                                                                                                         \
+        case x86_gpr_##reg: {                                                                                                   \
+          /* assuming little endian */                                                                                          \
+          if (!RoseBin_support::bigEndian()) {                                                                                  \
+            b7 = ( r##reg>>8 ) & 255;                                                                                           \
+            b8 = ( r##reg ) & 255;                                                                                              \
+            b78 = ( r##reg ) & 65535;                                                                                           \
+            /* b5678 = ( rax ) & 4294967295; */                                                                                 \
+            b5678 = ( r##reg ) & 0xffffffff;                                                                                    \
+          } else {                                                                                                              \
+            cerr << " We dont handle big endian's " << endl;                                                                    \
+            exit(0);                                                                                                            \
+          }                                                                                                                     \
+          res="r" #reg ":undefined";                                                                                            \
+          if (pos==RoseBin_support::x86_regpos_low_byte)                                                                        \
+              b_val = b8;                                                                                                       \
+          else if (pos==RoseBin_support::x86_regpos_high_byte)                                                                  \
+              b_val = b7;                                                                                                       \
+          else if (pos==RoseBin_support::x86_regpos_word)                                                                       \
+              w_val = b78;                                                                                                      \
+          else if (pos==RoseBin_support::x86_regpos_dword)                                                                      \
+              dw_val = b5678;                                                                                                   \
+          else if (pos==RoseBin_support::x86_regpos_qword)                                                                      \
+              qw_val = r##reg;                                                                                                  \
+          break;                                                                                                                \
         }
 
         DO_ONE_GPR (ax);
@@ -176,7 +172,22 @@ uint64_t RoseBin_Emulate::getRandomValue(int val) {
 }
 
 
-
+RoseBin_support::X86PositionInRegister
+get_position_in_register(const RegisterDescriptor &rdesc) {
+    if (0==rdesc.get_offset()) {
+        switch (rdesc.get_nbits()) {
+            case 8: return RoseBin_support::x86_regpos_low_byte;
+            case 16: return RoseBin_support::x86_regpos_word;
+            case 32: return RoseBin_support::x86_regpos_dword;
+            case 64: return RoseBin_support::x86_regpos_qword;
+            default: return RoseBin_support::x86_regpos_all;
+        }
+    } else if (8==rdesc.get_offset() && 8==rdesc.get_nbits()) {
+        return RoseBin_support::x86_regpos_high_byte;
+    } else {
+        return RoseBin_support::x86_regpos_unknown;
+    }
+}
 
 bool
 RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& operands) {
@@ -199,7 +210,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
   else if (binInst->get_kind() == x86_int) {
     operands += " :: specialOp Int";
     //clearRegisters();
-    getRegister_val(std::make_pair(x86_regclass_gpr, x86_gpr_ax), x86_regpos_qword, rax);
+    getRegister_val(std::make_pair(x86_regclass_gpr, x86_gpr_ax), RoseBin_support::x86_regpos_qword, rax);
     // should get the values from memory!
     string values = "";
     rose_hash::unordered_map <uint64_t, uint64_t>::iterator it = memory.begin();
@@ -239,7 +250,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
   int counter=0;
   SgAsmx86RegisterReferenceExpression* refExpr =NULL;
   std::pair<X86RegisterClass, int>  code ;
-  X86PositionInRegister pos ;
+  RoseBin_support::X86PositionInRegister pos ;
 
   // iterate through the operands (for x86 = 2 operands)
   SgAsmExpressionPtrList ptrList = opList->get_operands();
@@ -256,8 +267,8 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
       // check what it could be
       // ******** 1. its a RegisterReferenceExpression on the left side
       if (refExpr) {
-	code = refExpr->get_identifier();
-	pos = refExpr->get_position_in_register();
+        code = std::make_pair((X86RegisterClass)refExpr->get_descriptor().get_major(), refExpr->get_descriptor().get_minor());
+	pos = get_position_in_register(refExpr->get_descriptor());
 	operands = "\\nleft :: refExpr ";
 	//SgAsmExpression* expression = refExpr->get_offset();
 	//memRef = isSgAsmMemoryReferenceExpression(expression);
@@ -328,7 +339,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
                              w_val, dw_val,
 			     qw_val);
               uint64_t addr_value=0;
-	      getRegister_val(code, x86_regpos_qword, addr_value);
+	      getRegister_val(code, RoseBin_support::x86_regpos_qword, addr_value);
 	      //string str="";
 	      //string var = createVariable(addr_value, str, type, description, length);
 	      //string varHex = RoseBin_support::HexToString(addr_value) ;
@@ -368,9 +379,9 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
         // ****** 2. referenceExpression
 	// the right hand side is also a register or memory location
 	std::pair<X86RegisterClass, int>  codeR ;
-	X86PositionInRegister posR ;
-	codeR = refExprR->get_identifier();
-	posR = refExprR->get_position_in_register();
+        RoseBin_support::X86PositionInRegister posR ;
+	codeR = std::make_pair((X86RegisterClass)refExprR->get_descriptor().get_major(), refExprR->get_descriptor().get_minor());
+	posR = get_position_in_register(refExprR->get_descriptor());
 
 	operands += "right ::  refExpr ";
 
@@ -494,7 +505,7 @@ RoseBin_Emulate::getMemory(uint64_t position) {
  ****************************************************/
 void
 RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
-                                X86PositionInRegister pos,
+                                RoseBin_support::X86PositionInRegister pos,
                                 uint8_t &b_val,
                                 uint16_t &w_val,
                                 uint32_t &dw_val,
@@ -503,139 +514,139 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
     case x86_regclass_gpr: {
       switch (code.second) {
         case x86_gpr_ax: {
-          if (pos==x86_regpos_low_byte) {
+          if (pos==RoseBin_support::x86_regpos_low_byte) {
             rax &=~0xFFULL;
             rax |= uint64_t(b_val);
           } else
-            if (pos==x86_regpos_high_byte) {
+            if (pos==RoseBin_support::x86_regpos_high_byte) {
               rax &=~0xFF00ULL;
               rax |= uint64_t(b_val)<<8;
             }else
-              if (pos==x86_regpos_word) {
+              if (pos==RoseBin_support::x86_regpos_word) {
                 rax &=~0xFFFFULL;
                 rax |= uint64_t(w_val);
               }else
-                if (pos==x86_regpos_dword) {
+                if (pos==RoseBin_support::x86_regpos_dword) {
                   rax &=~0xFFFFFFFFULL;
                   rax |= uint64_t(dw_val);
                 } else
-                  if (pos==x86_regpos_qword) {
+                  if (pos==RoseBin_support::x86_regpos_qword) {
                     rax = qw_val;
                   }
                 break;
         }
         case x86_gpr_bx: {
-          if (pos==x86_regpos_low_byte) {
+          if (pos==RoseBin_support::x86_regpos_low_byte) {
             rbx &=~0xFFULL;
             rbx |= uint64_t(b_val);
           }else
-            if (pos==x86_regpos_high_byte) {
+            if (pos==RoseBin_support::x86_regpos_high_byte) {
               rbx &=~0xFF00ULL;
               rbx |= uint64_t(b_val)<<8;
             }else
-              if (pos==x86_regpos_word) {
+              if (pos==RoseBin_support::x86_regpos_word) {
                 rbx &=~0xFFFFULL;
                 rbx |= uint64_t(w_val);
               }else
-                if (pos==x86_regpos_dword) {
+                if (pos==RoseBin_support::x86_regpos_dword) {
                   rbx &=~0xFFFFFFFFULL;
                   rbx |= uint64_t(dw_val);
                 }else
-                  if (pos==x86_regpos_qword)
+                  if (pos==RoseBin_support::x86_regpos_qword)
                     rbx = qw_val;
                 break;
         }
         case x86_gpr_cx: {
-          if (pos==x86_regpos_low_byte) {
+          if (pos==RoseBin_support::x86_regpos_low_byte) {
             rcx &=~0xFFULL;
             rcx |= uint64_t(b_val);
           }else
-            if (pos==x86_regpos_high_byte) {
+            if (pos==RoseBin_support::x86_regpos_high_byte) {
               rcx &=~0xFF00ULL;
               rcx |= uint64_t(b_val)<<8;
             }else
-              if (pos==x86_regpos_word) {
+              if (pos==RoseBin_support::x86_regpos_word) {
                 rcx &=~0xFFFFULL;
                 rcx |= uint64_t(w_val);
               }else
-                if (pos==x86_regpos_dword) {
+                if (pos==RoseBin_support::x86_regpos_dword) {
                   rcx &=~0xFFFFFFFFULL;
                   rcx |= uint64_t(dw_val);
                 }else
-                  if (pos==x86_regpos_qword)
+                  if (pos==RoseBin_support::x86_regpos_qword)
                     rcx = qw_val;
                 break;
         }
         case x86_gpr_dx: {
-          if (pos==x86_regpos_low_byte) {
+          if (pos==RoseBin_support::x86_regpos_low_byte) {
             rdx &=~0xFFULL;
             rdx |= uint64_t(b_val);
           }else
-            if (pos==x86_regpos_high_byte) {
+            if (pos==RoseBin_support::x86_regpos_high_byte) {
               rdx &=~0xFF00ULL;
               rdx |= uint64_t(b_val)<<8;
             }else
-              if (pos==x86_regpos_word) {
+              if (pos==RoseBin_support::x86_regpos_word) {
                 rdx &=~0xFFFFULL;
                 rdx |= uint64_t(w_val);
               }else
-                if (pos==x86_regpos_dword) {
+                if (pos==RoseBin_support::x86_regpos_dword) {
                   rdx &=~0xFFFFFFFFULL;
                   rdx |= uint64_t(dw_val);
                 }else
-                  if (pos==x86_regpos_qword)
+                  if (pos==RoseBin_support::x86_regpos_qword)
                     rdx = qw_val;
                 break;
         }
         case x86_gpr_di: {
-          if (pos==x86_regpos_word) {
+          if (pos==RoseBin_support::x86_regpos_word) {
             rdi &=~0xFFFFULL;
             rdi |= uint64_t(w_val);
           } else
-            if (pos==x86_regpos_dword) {
+            if (pos==RoseBin_support::x86_regpos_dword) {
               rdi &=~0xFFFFFFFFULL;
               rdi |= uint64_t(dw_val);
             } else
-              if (pos==x86_regpos_qword)
+              if (pos==RoseBin_support::x86_regpos_qword)
                 rdi = qw_val;
             break;
         }
         case x86_gpr_si: {
-          if (pos==x86_regpos_word) {
+          if (pos==RoseBin_support::x86_regpos_word) {
             rsi &=~0xFFFFULL;
             rsi |= uint64_t(w_val);
           } else
-            if (pos==x86_regpos_dword) {
+            if (pos==RoseBin_support::x86_regpos_dword) {
               rsi &=~0xFFFFFFFFULL;
               rsi |= uint64_t(dw_val);
             } else
-              if (pos==x86_regpos_qword)
+              if (pos==RoseBin_support::x86_regpos_qword)
                 rsi = qw_val;
             break;
         }
         case x86_gpr_sp: {
-          if (pos==x86_regpos_word) {
+          if (pos==RoseBin_support::x86_regpos_word) {
             rsp &=~0xFFFFULL;
             rsp |= uint64_t(w_val);
           } else
-            if (pos==x86_regpos_dword) {
+            if (pos==RoseBin_support::x86_regpos_dword) {
               rsp &=~0xFFFFFFFFULL;
               rsp |= uint64_t(dw_val);
             } else
-              if (pos==x86_regpos_qword)
+              if (pos==RoseBin_support::x86_regpos_qword)
                 rsp = qw_val;
             break;
         }
         case x86_gpr_bp: {
-          if (pos==x86_regpos_word) {
+          if (pos==RoseBin_support::x86_regpos_word) {
             rbp &=~0xFFFFULL;
             rbp |= uint64_t(w_val);
           } else
-            if (pos==x86_regpos_dword) {
+            if (pos==RoseBin_support::x86_regpos_dword) {
               rbp &=~0xFFFFFFFFULL;
               rbp |= uint64_t(dw_val);
             } else
-              if (pos==x86_regpos_qword)
+              if (pos==RoseBin_support::x86_regpos_qword)
                 rbp = qw_val;
             break;
         }
@@ -721,13 +732,13 @@ void RoseBin_Emulate::clearRegisters() {
   uint32_t cv3 = 0xFFFF;
   uint64_t cv4 = 0xFFFFFFFF;
   assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_ax) ,
-                 x86_regpos_qword, cv1, cv2, cv3, cv4);
+                 RoseBin_support::x86_regpos_qword, cv1, cv2, cv3, cv4);
   assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_bx) ,
-                 x86_regpos_qword, cv1, cv2, cv3, cv4);
+                 RoseBin_support::x86_regpos_qword, cv1, cv2, cv3, cv4);
   assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_cx) ,
-                 x86_regpos_qword, cv1, cv2, cv3, cv4);
+                 RoseBin_support::x86_regpos_qword, cv1, cv2, cv3, cv4);
   assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_dx) ,
-                 x86_regpos_qword, cv1, cv2, cv3, cv4);
+                 RoseBin_support::x86_regpos_qword, cv1, cv2, cv3, cv4);
 }
 
 

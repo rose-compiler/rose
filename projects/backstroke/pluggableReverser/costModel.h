@@ -12,7 +12,8 @@ class SimpleCostModel
 
     /*! This map stores the number of stores in true and false bodies for
     each branch. */
-    std::map<SgNode*, std::pair<SimpleCostModel, SimpleCostModel> > branch_cost_;
+	typedef std::map<SgNode*, std::pair<SimpleCostModel, SimpleCostModel> > BranchCostType;
+    BranchCostType branch_cost_;
 
     friend bool operator <(const SimpleCostModel& cost1, const SimpleCostModel& cost2);
     friend bool operator ==(const SimpleCostModel& cost1, const SimpleCostModel& cost2);
@@ -37,6 +38,8 @@ public:
 
     //! Tell if the current cost is zero cost.
     bool isZeroCost() const;
+
+	void print() const;
 };
 
 /** Equality operator. Note that this comparison is very restricted. */

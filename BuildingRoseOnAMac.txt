@@ -22,10 +22,12 @@ The following steps were necessary to get ROSE to build without errors:
 5. Warning during configure from "libltdl/configure" about ROSEy options.
 	=> ignored for now
 
-6. At src/frontend/Disassemblers/AssemblerX86.C:1768, 'tmpnam_r' was not declared.
+6. [FIXED by commit 9194a388defe330d7cec0432800834dfacb0d78d on 2010-08-23]
+   At src/frontend/Disassemblers/AssemblerX86.C:1768, 'tmpnam_r' was not declared.
 	=> replaced with std 'tmpnam'.
 
-7. At src/frontend/Disassemblers/AssemblerX86.C:1777 & 1824, 'TEMP_FAILURE_RETRY'
+7. [FIXED by commit e84734364fcbe8c4e95a054f3986535a0ac9ed81 on 2010-08-23]
+   At src/frontend/Disassemblers/AssemblerX86.C:1777 & 1824, 'TEMP_FAILURE_RETRY'
    was not declared. (Sometimes found in ??). Added the following to that file:
 
 	#ifndef TEMP_FAILURE_RETRY
@@ -37,7 +39,8 @@ The following steps were necessary to get ROSE to build without errors:
 	__result; }))
 	#endif
 
-8. Ditto(8) for src/frontend/BinaryFormats/MemoryMap.C.
+8. [FIXED by commit e84734364fcbe8c4e95a054f3986535a0ac9ed81 on 2010-08-23]
+   Ditto(8) for src/frontend/BinaryFormats/MemoryMap.C.
 
 9. Build ok until late step testing whether can link against ROSE: "dyld: Library not loaded".
 	=> in Mac OS X, set DYLD_LIBRARY_PATH, not LD_LIBRARY_PATH

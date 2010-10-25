@@ -7,6 +7,7 @@
 // tps (1/14/2010) : Switching from rose.h to sage3 changed size from 18,9 MB to 9,4MB
 
 #include "sage3basic.h"
+#include "stringify.h"
 #include "RoseBin_DotGraph.h"
 #include "RoseBin_CallGraphAnalysis.h"
 #include <cctype>
@@ -443,8 +444,12 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
     SgAsmx86Instruction* inst = isSgAsmx86Instruction(internal);
 
     if (inst) {
-      type += " " + toString(inst->get_kind());
-    }
+#ifndef _MSC_VER
+      type += " " + stringifyX86InstructionKind(inst->get_kind(), "x86_");
+#else
+	ROSE_ASSERT(false);
+#endif
+	}
 
     string add = "";
     if (inst->get_kind() == x86_call || inst->get_kind() == x86_ret ) {

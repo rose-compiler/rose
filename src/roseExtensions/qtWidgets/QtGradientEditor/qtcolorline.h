@@ -59,7 +59,8 @@ class QtColorLine : public QWidget
     Q_ENUMS(ColorComponent)
 public:
 
-    enum ColorComponent {
+    enum ColorComponent 
+	{
         Red,
         Green,
         Blue,

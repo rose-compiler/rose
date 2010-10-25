@@ -23,10 +23,6 @@ SgAsmGenericHeader::ctor()
     get_file()->add_header(this);
 
     /* Create child IR nodes and set their parent (initialized to null in real constructor) */
-    ROSE_ASSERT(p_symbols == NULL);
-    p_symbols = new SgAsmGenericSymbolList;
-    p_symbols->set_parent(this);
-
     ROSE_ASSERT(p_dlls == NULL);
     p_dlls    = new SgAsmGenericDLLList;
     p_dlls->set_parent(this);
@@ -59,7 +55,6 @@ SgAsmGenericHeader::~SgAsmGenericHeader()
     //set_file(NULL);   -- the file pointer was moved into the superclass in order to be easily available to all sections
 
     /* Delete children */
-    delete p_symbols;     p_symbols     = NULL;
     delete p_dlls;        p_dlls        = NULL;
     delete p_exec_format; p_exec_format = NULL;
     delete p_sections;    p_sections    = NULL;
@@ -151,33 +146,6 @@ SgAsmGenericHeader::add_dll(SgAsmGenericDLL *dll)
     dll->set_parent(p_dlls);
 }
 
-/** Add a new symbol to the symbol table. The SgAsmGenericHeader has a list of symbol pointers. These pointers point to symbols
- *  that are defined in various sections throughout the executable. It's not absolutely necessary to store them here since the
- *  sections where they're defined also point to them--they're here only for convenience.
- * 
- *  FIXME: If symbols are stored in one central location we should probably use something other than an
- *         unsorted list. (RPM 2008-08-19) */
-void
-SgAsmGenericHeader::add_symbol(SgAsmGenericSymbol *symbol)
-{
-    ROSE_ASSERT(p_symbols);
-    p_symbols->set_isModified(true);
-
-#if 0 /*turned off because too slow!!! (RPM 2008-08-19)*/
-#ifndef NDEBUG
-    for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
-        ROSE_ASSERT(p_symbols->get_symbols()[i] != symbol); /*duplicate*/
-    }
-#endif
-#endif
-    p_symbols->get_symbols().push_back(symbol);
-
-    /* FIXME: symbols have two parents: the header's p_symbols list and the list in the section where the symbol was defined.
-     *        We probably want to keep them only with the section that defines them. For example, SgAsmElfSymbolSection.
-     *        (RPM 2008-08-19) */
-    p_symbols->get_symbols().back()->set_parent(p_symbols);
-}
-
 /** Returns the list of sections that are memory mapped */
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_mapped_sections() const
@@ -249,7 +217,7 @@ SgAsmGenericHeader::get_section_by_name(const std::string &name, char sep/*or NU
 
 /** Returns sectons in this header that contain all of the specified portion of the file. */
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sections_by_offset(addr_t offset, addr_t size) const
+SgAsmGenericHeader::get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const
 {
     SgAsmGenericSectionPtrList retval;
     for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
@@ -264,7 +232,7 @@ SgAsmGenericHeader::get_sections_by_offset(addr_t offset, addr_t size) const
 
 /** Returns single section in this header that contains all of the specified portion of the file. */
 SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_offset(addr_t offset, addr_t size, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_offset(offset, size);
     if (nfound) *nfound = possible.size();
@@ -273,7 +241,7 @@ SgAsmGenericHeader::get_section_by_offset(addr_t offset, addr_t size, size_t *nf
 
 /** Returns sections that have a preferred mapping that includes the specified relative virtual address. */
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sections_by_rva(addr_t rva) const
+SgAsmGenericHeader::get_sections_by_rva(rose_addr_t rva) const
 {
     SgAsmGenericSectionPtrList retval;
     for (SgAsmGenericSectionPtrList::iterator i = p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
@@ -289,7 +257,7 @@ SgAsmGenericHeader::get_sections_by_rva(addr_t rva) const
 /** Returns the single section having a preferred mapping that includes the specified relative virtual address. If there are
  *  no sections or multiple sections satisfying this condition then a null pointer is returned. */
 SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_rva(rva);
     if (nfound) *nfound = possible.size();
@@ -301,12 +269,12 @@ SgAsmGenericHeader::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/) c
  *  If an actual mapping is used, the specified virtual address must be part of the actual mapped section, not merely in the
  *  memory region that was also mapped to satisfy alignment constraints. */
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sections_by_va(addr_t va, bool use_preferred) const
+SgAsmGenericHeader::get_sections_by_va(rose_addr_t va, bool use_preferred) const
 {
     if (use_preferred) {
         if (va < get_base_va())
             return SgAsmGenericSectionPtrList();
-        addr_t rva = va - get_base_va();
+        rose_addr_t rva = va - get_base_va();
         return get_sections_by_rva(rva);
     }
      
@@ -326,7 +294,7 @@ SgAsmGenericHeader::get_sections_by_va(addr_t va, bool use_preferred) const
  *  the memory region that was also mapped to satisfy alignment constraints.  If there are no sections or multiple sections
  *  satisfying this condition then a null pointer is returned. */
 SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_va(addr_t va, bool use_preferred, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_va(va, use_preferred);
     if (nfound) *nfound = possible.size();
@@ -335,7 +303,7 @@ SgAsmGenericHeader::get_section_by_va(addr_t va, bool use_preferred, size_t *nfo
 
 /** Like SgAsmGenericFile::get_best_section_by_va() except considers only sections defined in this header. */
 SgAsmGenericSection *
-SgAsmGenericHeader::get_best_section_by_va(addr_t va, bool use_preferred, size_t *nfound) const
+SgAsmGenericHeader::get_best_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound) const
 {
     const SgAsmGenericSectionPtrList &candidates = get_sections_by_va(va, use_preferred);
     if (nfound) *nfound = candidates.size();
@@ -385,7 +353,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     for (size_t i = 0; i < p_entry_rvas.size(); i++) {
         char label[64];
         sprintf(label, "entry_rva[%zu]", i);
-        addr_t entry_rva = p_entry_rvas[i].get_rva();
+        rose_addr_t entry_rva = p_entry_rvas[i].get_rva();
         fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, label, entry_rva, entry_rva);
         SgAsmGenericSectionPtrList sections = get_file()->get_sections();
         dump_containing_sections(f, std::string(p)+label, entry_rva, sections);
@@ -402,9 +370,5 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %zu entries\n", p, w, "DLL.size", p_dlls->get_dlls().size());
     for (size_t i = 0; i < p_dlls->get_dlls().size(); i++)
         p_dlls->get_dlls()[i]->dump(f, p, i);
-
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "Symbol.size", p_symbols->get_symbols().size());
-    for (size_t i = 0; i < p_symbols->get_symbols().size(); i++)
-        p_symbols->get_symbols()[i]->dump(f, p, i);
 }
 

@@ -110,7 +110,7 @@ SgAsmGenericFile::get_orig_size() const
 rose_addr_t
 SgAsmGenericFile::get_current_size() const
 {
-    addr_t retval=0;
+    rose_addr_t retval=0;
     SgAsmGenericSectionPtrList sections = get_sections();
     for (SgAsmGenericSectionPtrList::iterator i=sections.begin(); i!=sections.end(); ++i) {
         retval = std::max(retval, (*i)->get_end_offset());
@@ -120,7 +120,7 @@ SgAsmGenericFile::get_current_size() const
 
 /** Marks part of a file as having been referenced if we are tracking references. */
 void
-SgAsmGenericFile::mark_referenced_extent(addr_t offset, addr_t size)
+SgAsmGenericFile::mark_referenced_extent(rose_addr_t offset, rose_addr_t size)
 {
     if (get_tracking_references()) {
         p_referenced_extents.insert(offset, size);
@@ -146,7 +146,7 @@ SgAsmGenericFile::get_unreferenced_extents() const
  *  SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise @p dst_buf is zero padded so that exactly @p size
  *  bytes are always initialized. */
 size_t
-SgAsmGenericFile::read_content(addr_t offset, void *dst_buf, addr_t size, bool strict)
+SgAsmGenericFile::read_content(rose_addr_t offset, void *dst_buf, rose_addr_t size, bool strict)
 {
     size_t retval;
     if (offset+size <= p_data.size()) {
@@ -173,7 +173,7 @@ SgAsmGenericFile::read_content(addr_t offset, void *dst_buf, addr_t size, bool s
  *  not mapped we stop reading and do one of two things: if @p strict is set then a MemoryMap::NotMapped exception is thrown;
  *  otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is returned. */
 size_t
-SgAsmGenericFile::read_content(const MemoryMap *map, addr_t va, void *dst_buf, addr_t size, bool strict)
+SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t va, void *dst_buf, rose_addr_t size, bool strict)
 {
     ROSE_ASSERT(map!=NULL);
 
@@ -185,7 +185,7 @@ SgAsmGenericFile::read_content(const MemoryMap *map, addr_t va, void *dst_buf, a
         if (!m) break;                                                  /*we reached a non-mapped virtual address*/
         size_t m_offset = va - m->get_va();                             /*offset relative to start of map element*/
         ROSE_ASSERT(m_offset < m->get_size());                          /*or else map->findRVA() malfunctioned*/
-        size_t nread = std::min(size-ncopied, (addr_t)m->get_size()-m_offset); /*bytes to read in this pass*/
+        size_t nread = std::min(size-ncopied, (rose_addr_t)m->get_size()-m_offset); /*bytes to read in this pass*/
         if (m->is_anonymous()) {
             memset((char*)dst_buf+ncopied, 0, nread);
         } else {
@@ -213,7 +213,7 @@ SgAsmGenericFile::read_content(const MemoryMap *map, addr_t va, void *dst_buf, a
  *  MemoryMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned string does not include
  *  the NUL byte. */
 std::string
-SgAsmGenericFile::read_content_str(const MemoryMap *map, addr_t va, bool strict)
+SgAsmGenericFile::read_content_str(const MemoryMap *map, rose_addr_t va, bool strict)
 {
     static char *buf=NULL;
     static size_t nalloc=0;
@@ -242,7 +242,7 @@ SgAsmGenericFile::read_content_str(const MemoryMap *map, addr_t va, bool strict)
  *  default) then an SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the string is simply terminated. The
  *  returned string does not include the NUL byte. */
 std::string
-SgAsmGenericFile::read_content_str(addr_t offset, bool strict)
+SgAsmGenericFile::read_content_str(rose_addr_t offset, bool strict)
 {
     static char *buf=NULL;
     static size_t nalloc=0;
@@ -270,7 +270,7 @@ SgAsmGenericFile::read_content_str(addr_t offset, bool strict)
  *  of data known to the file then throw an SgAsmExecutableFileFormat::ShortRead exception. This function never updates
  *  reference tracking lists for the file. */
 SgFileContentList
-SgAsmGenericFile::content(addr_t offset, addr_t size)
+SgAsmGenericFile::content(rose_addr_t offset, rose_addr_t size)
 {
     if (offset+size <= p_data.size()) {
         return SgFileContentList(p_data, offset, size);
@@ -460,7 +460,7 @@ SgAsmGenericFile::get_section_by_name(const std::string &name, char sep/*or NUL*
 
 /** Returns all sections that contain all of the specified portion of the file across all headers, including headers and holes. */
 SgAsmGenericSectionPtrList
-SgAsmGenericFile::get_sections_by_offset(addr_t offset, addr_t size) const
+SgAsmGenericFile::get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const
 {
     SgAsmGenericSectionPtrList retval;
 
@@ -487,7 +487,7 @@ SgAsmGenericFile::get_sections_by_offset(addr_t offset, addr_t size) const
 /** Returns single section that contains all of the specified portion of the file across all headers, including headers and
  *  holes. */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_offset(addr_t offset, addr_t size, size_t *nfound) const
+SgAsmGenericFile::get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound) const
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_offset(offset, size);
     if (nfound) *nfound = possible.size();
@@ -497,7 +497,7 @@ SgAsmGenericFile::get_section_by_offset(addr_t offset, addr_t size, size_t *nfou
 /** Returns all sections that are mapped to include the specified relative virtual address across all headers, including
  *  headers and holes. This uses the preferred mapping of the section rather than the actual mapping. */
 SgAsmGenericSectionPtrList
-SgAsmGenericFile::get_sections_by_rva(addr_t rva) const
+SgAsmGenericFile::get_sections_by_rva(rose_addr_t rva) const
 {
     SgAsmGenericSectionPtrList retval;
 
@@ -522,7 +522,7 @@ SgAsmGenericFile::get_sections_by_rva(addr_t rva) const
 /** Returns single section that is mapped to include the specified relative virtual file address across all headers, including
  *  headers and holes. */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/) const
+SgAsmGenericFile::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_rva(rva);
     if (nfound) *nfound = possible.size();
@@ -532,13 +532,13 @@ SgAsmGenericFile::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/) con
 /** Returns all sections that are mapped to include the specified virtual address across all headers, including headers and
  *  holes. This uses the preferred mapping rather than the actual mapping. */
 SgAsmGenericSectionPtrList
-SgAsmGenericFile::get_sections_by_va(addr_t va) const
+SgAsmGenericFile::get_sections_by_va(rose_addr_t va) const
 {
     SgAsmGenericSectionPtrList retval;
 
     /* Holes (probably not mapped anyway) */
     for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
-        addr_t rva = va; /* Holes don't belong to any header and therefore have a zero base_va */
+        rose_addr_t rva = va; /* Holes don't belong to any header and therefore have a zero base_va */
         if ((*i)->is_mapped() &&
             rva >= (*i)->get_mapped_preferred_rva() && rva < (*i)->get_mapped_preferred_rva() + (*i)->get_mapped_size())
             retval.push_back(*i);
@@ -547,7 +547,7 @@ SgAsmGenericFile::get_sections_by_va(addr_t va) const
     /* Headers and their sections */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
         /* Headers probably aren't mapped, but just in case... */
-        addr_t rva = va; /* Headers don't belong to any header and therefore have a zero base_va */
+        rose_addr_t rva = va; /* Headers don't belong to any header and therefore have a zero base_va */
         if ((*i)->is_mapped() &&
             rva >= (*i)->get_mapped_preferred_rva() && rva < (*i)->get_mapped_preferred_rva() + (*i)->get_mapped_size())
             retval.push_back(*i);
@@ -562,7 +562,7 @@ SgAsmGenericFile::get_sections_by_va(addr_t va) const
 /** Returns single section that is mapped to include the specified virtual address across all headers. See also
  *  get_best_section_by_va(). */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_va(addr_t va, size_t *nfound/*optional*/) const
+SgAsmGenericFile::get_section_by_va(rose_addr_t va, size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_va(va);
     if (nfound) *nfound = possible.size();
@@ -573,7 +573,7 @@ SgAsmGenericFile::get_section_by_va(addr_t va, size_t *nfound/*optional*/) const
  *  "best" one. All candidates must map the virtual address to the same file address or else we fail (return null and number of
  *  candidates). See code below for definition of "best". */
 SgAsmGenericSection *
-SgAsmGenericFile::get_best_section_by_va(addr_t va, size_t *nfound/*optional*/) const
+SgAsmGenericFile::get_best_section_by_va(rose_addr_t va, size_t *nfound/*optional*/) const
 {
     const SgAsmGenericSectionPtrList &candidates = get_sections_by_va(va);
     if (nfound)
@@ -585,14 +585,14 @@ SgAsmGenericFile::get_best_section_by_va(addr_t va, size_t *nfound/*optional*/) 
  *  SgAsmGenericFile::get_best_section_by_va() and
  *  SgAsmGenericHeader::get_best_section_by_va() */
 SgAsmGenericSection *
-SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections, addr_t va)
+SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections, rose_addr_t va)
 {
     if (0==sections.size())
         return NULL;
     if (1==sections.size()) 
         return sections[0];
     SgAsmGenericSection *best = sections[0];
-    addr_t fo0 = sections[0]->get_va_offset(va);
+    rose_addr_t fo0 = sections[0]->get_va_offset(va);
     for (size_t i=1; i<sections.size(); i++) {
         if (fo0 != sections[i]->get_va_offset(va))
             return NULL; /* all sections sections must map the VA to the same file offset */
@@ -610,7 +610,7 @@ SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections,
 /** Appears to be the same as SgAsmGenericFile::get_best_section_by_va() except it excludes sections named "ELF Segment Table".
  *  Perhaps it should be rewritten in terms of the other. (RPM 2008-09-02) */
 SgAsmGenericSection *
-SgAsmGenericFile::get_best_possible_section_by_va(addr_t va)
+SgAsmGenericFile::get_best_possible_section_by_va(rose_addr_t va)
 {
   // This function is implemented for use in:
   //      "DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr)"
@@ -647,7 +647,7 @@ SgAsmGenericFile::get_best_possible_section_by_va(addr_t va)
 
   /* Choose the "best" section to return. */
      SgAsmGenericSection *best = possible[0];
-     addr_t fo0 = possible[0]->get_va_offset(va);
+     rose_addr_t fo0 = possible[0]->get_va_offset(va);
      for (size_t i = 1; i < possible.size(); i++)
         {
           if (fo0 != possible[i]->get_va_offset(va))
@@ -688,9 +688,9 @@ SgAsmGenericFile::get_best_possible_section_by_va(addr_t va)
 /** Given a file address, return the file offset of the following section(s). If there is no following section then return an
  *  address of -1 (when signed) */
 rose_addr_t
-SgAsmGenericFile::get_next_section_offset(addr_t offset)
+SgAsmGenericFile::get_next_section_offset(rose_addr_t offset)
 {
-    addr_t found = ~(addr_t)0;
+    rose_addr_t found = ~(rose_addr_t)0;
     const SgAsmGenericSectionPtrList &sections = get_sections();
     for (SgAsmGenericSectionPtrList::const_iterator i=sections.begin(); i!=sections.end(); ++i) {
         if ((*i)->get_offset() >= offset && (*i)->get_offset() < found)
@@ -736,7 +736,7 @@ SgAsmGenericFile::get_next_section_offset(addr_t offset)
  *  (for file address space) or set_mapped_preferred_rva() and set_mapped_size() (for memory address space).
  */
 void
-SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, AddressSpace space, Elasticity elasticity)
+SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn, AddressSpace space, Elasticity elasticity)
 {
     ROSE_ASSERT(s!=NULL);
     ROSE_ASSERT(s->get_file()==this);
@@ -774,7 +774,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
     
     bool filespace = (space & ADDRSP_FILE)!=0;
     bool memspace = (space & ADDRSP_MEMORY)!=0;
-    addr_t align=1, aligned_sa, aligned_sasn;
+    rose_addr_t align=1, aligned_sa, aligned_sasn;
     SgAsmGenericSectionPtrList neighbors, villagers;
     ExtentMap amap; /* address mappings for all extents */
     ExtentPair sp;
@@ -900,7 +900,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             for (size_t i=0; i<neighbors.size(); i++) {
                 SgAsmGenericSection *a = neighbors[i];
                 ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
-                addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
+                rose_addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
                 char cat = ExtentMap::category(ap, sp);
                 fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                         p, cat, 0==ap.first % (align?align:1) ? ' ' : '!', ap.first, ap.second, ap.first+ap.second);
@@ -915,7 +915,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             for (size_t i=0; i<villagers.size(); i++) {
                 SgAsmGenericSection *a = villagers[i];
                 ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
-                addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
+                rose_addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
                 fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                         p, ExtentMap::category(ap, sp), /*cat should always be R*/
                         0==ap.first % (align?align:1) ? ' ' : '!', ap.first, ap.second, ap.first+ap.second);
@@ -930,7 +930,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             SgAsmGenericSection *a = neighbors[i];
             ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
             if (strchr("RICE", ExtentMap::category(ap, sp))) {
-                addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
+                rose_addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
                 align = boost::math::lcm(align, x?x:1);
             }
         }
@@ -957,14 +957,14 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
         }
         ROSE_ASSERT(after_hole);
         ROSE_ASSERT(hp.first > nhs.first+nhs.second);
-        addr_t hole_size = hp.first - (nhs.first+nhs.second);
+        rose_addr_t hole_size = hp.first - (nhs.first+nhs.second);
         if (debug) {
             fprintf(stderr, "%s    hole size = 0x%08"PRIx64" (%"PRIu64"); need 0x%08"PRIx64" (%"PRIu64"); %s\n",
                     p, hole_size, hole_size, aligned_sasn, aligned_sasn,
                     hole_size>=aligned_sasn ? "large enough" : "not large enough");
         }
         if (hole_size >= aligned_sasn) break;
-        addr_t need_more = aligned_sasn - hole_size;
+        rose_addr_t need_more = aligned_sasn - hole_size;
 
         /* Hole is not large enough. We need to recursively move things that are right of our neighborhood, then recompute the
          * all-sections address map and neighborhood(S). */
@@ -1052,7 +1052,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
         }
         if (debug) {
             const char *space_name = filespace ? "file" : "mem";
-            addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
+            rose_addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
             fprintf(stderr, "%s   %4s-%c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                     p, space_name, ExtentMap::category(ap, sp), 
                     0==ap.first%(x?x:1)?' ':'!', ap.first, ap.second, ap.first+ap.second);
@@ -1139,10 +1139,10 @@ SgAsmGenericFile::dump(FILE *f) const
     for (size_t i = 1; i < sections.size(); i++) {
         for (size_t j=0; j<i; j++) {
             if (sections[j]->get_offset() == sections[i]->get_offset()) {
-                addr_t size_i = sections[i]->get_size();
-                if (0==size_i) size_i = ~(addr_t)0;
-                addr_t size_j = sections[j]->get_size();
-                if (0==size_j) size_j = ~(addr_t)0;
+                rose_addr_t size_i = sections[i]->get_size();
+                if (0==size_i) size_i = ~(rose_addr_t)0;
+                rose_addr_t size_j = sections[j]->get_size();
+                if (0==size_j) size_j = ~(rose_addr_t)0;
                 if (size_j < size_i) {
                     SgAsmGenericSection *x = sections[j];
                     sections[j] = sections[i];
@@ -1160,7 +1160,7 @@ SgAsmGenericFile::dump(FILE *f) const
     fprintf(f, "File sections:\n");
     fprintf(f, "  Flg File-Addr  File-Size  File-End    Base-VA    Start-RVA  Virt-Size  End-RVA    Perm  ID Name\n");
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
-    addr_t high_water = 0;
+    rose_addr_t high_water = 0;
     for (size_t i=0; i<sections.size(); i++) {
         SgAsmGenericSection *section = sections[i];
         
@@ -1318,7 +1318,7 @@ SgAsmGenericFile::unparse(std::ostream &f) const
 #if 0
     /* This is only for debugging -- fill the file with something other than zero so we have a better chance of making sure
      * that all data is written back to the file, including things that are zero. */
-    addr_t remaining = get_current_size();
+    rose_addr_t remaining = get_current_size();
     unsigned char buf[4096];
     memset(buf, 0xaa, sizeof buf);
     while (remaining>=sizeof buf) {

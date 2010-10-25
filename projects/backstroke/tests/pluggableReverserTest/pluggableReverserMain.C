@@ -1,8 +1,10 @@
-#include <pluggableReverser/eventProcessor.h>
-#include <pluggableReverser/expressionProcessor.h>
-#include <pluggableReverser/statementProcessor.h>
-#include <pluggableReverser/ifStatementProcessor.h>
-#include <pluggableReverser/akgulStyleExpressionProcessor.h>
+#include <pluggableReverser/eventHandler.h>
+#include <pluggableReverser/expressionHandler.h>
+#include <pluggableReverser/statementHandler.h>
+#include <pluggableReverser/ifStatementHandler.h>
+#include <pluggableReverser/whileStatementHandler.h>
+#include <pluggableReverser/stateSavingStatementHandler.h>
+#include <pluggableReverser/akgulStyleExpressionHandler.h>
 #include "pluggableReverser/variableDeclarationHandler.h"
 #include <utilities/Utilities.h>
 #include <normalizations/expNormalization.h>
@@ -12,7 +14,9 @@
 
 #include "utilities/CPPDefinesAndNamespaces.h"
 #include "pluggableReverser/returnStatementHandler.h"
-#include "pluggableReverser/akgulStyleExpressionProcessor.h"
+#include "pluggableReverser/akgulStyleExpressionHandler.h"
+#include "pluggableReverser/redefineValueRestorer.h"
+#include "pluggableReverser/extractFromUseValueRestorer.h"
 
 
 
@@ -48,33 +52,34 @@ int main(int argc, char * argv[])
 			continue;
 
 		//Normalize this event function.
+		cout << "Function " << decl->get_name().str() << " is normalized!\n" << endl;
 		backstroke_norm::normalizeEvent(decl);
 	}
 
 	VariableRenaming var_renaming(project);
 	var_renaming.run();
 
-	EventProcessor event_processor(NULL, &var_renaming);
+	EventHandler event_handler(NULL, &var_renaming);
 
 	// Add all expression handlers to the expression pool.
-	event_processor.addExpressionHandler(new NullExpressionHandler);
-	event_processor.addExpressionHandler(new IdentityExpressionHandler);
-	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
-	event_processor.addExpressionHandler(new ConstructiveExpressionHandler);
-	//event_processor.addExpressionProcessor(new ConstructiveAssignmentProcessor);
-	event_processor.addExpressionHandler(new AkgulStyleExpressionProcessor);
+	//event_handler.addExpressionHandler(new NullExpressionHandler);
+	event_handler.addExpressionHandler(new IdentityExpressionHandler);
+	event_handler.addExpressionHandler(new StoreAndRestoreExpressionHandler);
+	//event_handler.addExpressionHandler(new AkgulStyleExpressionHandler);
 
 	// Add all statement handlers to the statement pool.
-	event_processor.addStatementHandler(new CombinatorialExprStatementHandler);
-	event_processor.addStatementHandler(new VariableDeclarationHandler);
-	event_processor.addStatementHandler(new CombinatorialBasicBlockHandler);
-	event_processor.addStatementHandler(new IfStatementProcessor);
-	event_processor.addStatementHandler(new ReturnStatementHandler);
-	event_processor.addStatementHandler(new NullStatementHandler);
+	event_handler.addStatementHandler(new CombinatorialExprStatementHandler);
+	event_handler.addStatementHandler(new VariableDeclarationHandler);
+	event_handler.addStatementHandler(new CombinatorialBasicBlockHandler);
+	event_handler.addStatementHandler(new IfStatementHandler);
+	event_handler.addStatementHandler(new WhileStatementHandler);
+	event_handler.addStatementHandler(new ReturnStatementHandler);
+	event_handler.addStatementHandler(new StateSavingStatementHandler);
+	//event_handler.addStatementHandler(new NullStatementHandler);
 
 	//Variable value extraction handlers
-	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
-	event_processor.addVariableValueRestorer(new ExtractFromUseRestorer);
+	event_handler.addVariableValueRestorer(new RedefineValueRestorer);
+	event_handler.addVariableValueRestorer(new ExtractFromUseValueRestorer);
 
 	foreach(SgFunctionDeclaration* decl, func_decls)
 	{
@@ -84,7 +89,7 @@ int main(int argc, char * argv[])
 
 		timer t;
 		// Here reverse the event function into several versions.
-		FuncDeclPairs output = event_processor.processEvent(decl);
+		FuncDeclPairs output = event_handler.processEvent(decl);
 
 		cout << "Time used: " << t.elapsed() << endl;
 		cout << "Event is processed successfully!\n";
@@ -97,7 +102,7 @@ int main(int argc, char * argv[])
 	}
 
 	// Declare all stack variables on top of the generated file.
-	vector<SgVariableDeclaration*> stack_decls = event_processor.getAllStackDeclarations();
+	vector<SgVariableDeclaration*> stack_decls = event_handler.getAllStackDeclarations();
 	foreach(SgVariableDeclaration* decl, stack_decls)
 	{
 		prependStatement(decl);

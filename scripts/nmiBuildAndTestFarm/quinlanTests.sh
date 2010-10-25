@@ -207,11 +207,11 @@ echo "* Failing Mac OSX tests... *"
 echo "****************************"
 # DQ (10/1/2009): Failes to link to boost library in configure
 #    checking whether the Boost::Thread library is available... yes
-#    checking for toupper in -lboost_thread-mt-1_35... yes
+#    checking for toupper in -lboost_thread-mt-1_36... yes
 #    checking whether the Boost::Date_Time library is available... yes
-#    checking for toupper in -lboost_date_time-mt-1_35... yes
+#    checking for toupper in -lboost_date_time-mt-1_36... yes
 #    checking whether the Boost::Regex library is available... yes
-#    configure: error: Could not link against boost_date_time-mt-1_35 !
+#    configure: error: Could not link against boost_date_time-mt-1_36 !
 ./submit.sh build_configs/x86_macos_10.4/minimal_default &
 
 echo "********************************************************"

@@ -40,9 +40,14 @@ Switches are:
 ** "loader" shows a variety of loading, linking, mapping, and
    relocation operations.
 
+** "progress" emits a progress report every 10 seconds.
+
 ** "all" turns on all possible debugging switches.
 
 * "--debug" by itself is the same as "--debug=syscall,insn"
+
+* "--log=FILE" sends diagnostics to the specified file rather than
+  standard error.
 
 * "--core=STYLE" where STYLE is a comma-separated list of core dump
   types. Currently supported are "elf", which produces a standard ELF
@@ -66,6 +71,80 @@ Positional arguments:
   not depend on this feature).
 
 * "SPECIMEN_ARGS" are all the arguments for the specimen.
+
+== Design ==
+
+x86sim uses ROSE's binary support to simulate a process:
+
+* The memory address space of the specimen is represented by an
+  instance of ROSE's MemoryMap class.  Keeping the specimen's address
+  space separated from x86sim's address space allows the specimen to
+  use its entire address space however it chooses, and it prevents the
+  specimen from being able to access x86sim's address space.
+
+  The main drawback of this design is that every specimen memory
+  access must go through the MemoryMap, and x86sim must marshal data
+  between the specimen's and x86sim's address spaces when performing a
+  system call on behalf of the specimen.  This has an impact on
+  performance.
+
+* The specimen's instructions are simulated rather than executed
+  directly by the CPU.  The simulation is performed by the
+  X86InstructionSemantics class defined in ROSE and an EmulationPolicy
+  class defined in x86sim.  The X86InstructionSemantics class defines
+  what basic operations must be performed by each instruction, while
+  the EmulationPolicy class defines the operations themselves.
+
+  Simulating each instruction has a number of advantages:
+
+     * the specimen can be for a different architecture than that on
+       which x86sim is running.
+
+     * x86sim handles priviledged instructions the same way as all
+       other instructions.
+
+     * it's easy to modify x86sim to do something special for
+       certain instructions.
+
+     * it allows x86sim to keep the specimen in a separate address
+       space that doesn't overlap with x86sim's address space.
+
+     * it's a good way to gain confidence that ROSE's instruction
+       semantics are working properly.  A bug in the implementation
+       would likely cause the specimen to fail.
+
+  The main disadvantage of simulating each instruction is that it
+  is much slower than executing instructions directly.
+
+* The ROSE Disassembler is used to build an intermediate
+  representation of each instruction before the instruction can be
+  simulated.  Disassembly at some level is necessary in order to
+  simulate instructions, and the level of disassembly that x86sim uses
+  is the same as that which ROSE uses for all other binary
+  analyses. Besides being necessary for simulation, this also gives us
+  confidence that the disassembler is functioning properly.
+
+* Dynamic linking. x86sim loads the specimen's main executable into an
+  address space (MemoryMap) like the OS would do, and then begins
+  simulation.  If the main executable has an interpreter, then the
+  interpreter is also loaded and simulation starts in the
+  interpreter. In this way, x86sim is able to simulate dynamically
+  linked executables -- it simulates the linker itself (i.e., it
+  simulates the ld-linux.so interpreter).
+
+  ROSE also has it's own dynamic linking capability which is under
+  development. The simulator could use this capability instead, which
+  would give the user more control over the linking process.
+
+* System calls. x86sim supports either the "INT 0x80" interface or
+  they "SYSENTER" interface.  In either case, the instruction is
+  intercepted and x86sim processes the system call. It does one of two
+  things: (1) x86sim may invoke the system call on behalf of the
+  specimen, or (2) x86sim may update the simulated state of the
+  specimen directly.
+
+  Handling of system calls actually makes up the bulk of the
+  EmulationPolicy class in x86sim.
 
 == System calls ==
 
@@ -117,6 +196,85 @@ x86sim big switch statement is like:
     ...
     writeGPR(x86_gpr_ax, retval);
 
+== Purely Abstract Interpretation ==
+
+Instructions are simulated by processing them through the instruction
+semantics layer, X86InstructionSemantics, using the semantic policy
+EmulationPolicy. The EmulationPolicy class is derived from
+VirtualMachineSemantics::Policy and related classes. The
+VirtualMachineSemantics tracks registers and memory, the values of
+which can be:
+  * A known integer
+  * An unknown, named value.
+  * An unknown, named value with a signed offset.
+  * The negation of an unknown, named value with a signed offset.
+
+A concrete interpretation uses only values that are known
+integers. The VirtualMachineSemantics policy was chosen as the base
+class because of its ability to represent known integers and its
+ability to perform constant folding for operations on those integers.
+
+The EmulationPolicy modifies and extends the VirtualMachineSemantics
+policy in three main ways:
+
+  1. Memory access is simplified. The VirtualMachineSemantics accounts
+     for memory I/O operations where the address is not known. The
+     EmulationPolicy does not need this feature, and therefore
+     overrides the memory I/O methods to make them faster.
+
+  2. The EmulationPolicy extends the VirtualMachineSemantics policy by
+     adding methods for loading the executable and its optional
+     interpreter (for dynamically linked executables) into a simulated
+     address space.
+
+  3. The EmulationPolicy adds an emulate_syscall() method. This is
+     actually the real meat of the class in terms of number of lines
+     of code.
+
+Since EmulationPolicy is derived from VirtualMachineSemantics, it
+should be possible, in theory, to perform abstract analysis with
+unknown values.  VirtualMachineSemantics was designed to be a fast
+approximation of fully abstract symbolic semantics, and one could
+replace VirtualMachineSemantics with SymbolicSemantics. One should
+note that SymbolicSemantics doesn't do any kind of constant folding at
+this time, so the symbolic expressions could become very large.
+
+However, there's one important aspect of EmulationPolicy that makes
+abstract interpretation problematic: the system call emulation.
+Syscall emulation depends on having known, concrete values to pass to
+the underlying system call.
+
+== Disassembly Issues ==
+
+Currently, x86sim disassembles machine instructions only when that
+memory is about to be executed.  The disassembly is cached and if that
+address is executed again, x86sim will use the cached instruction if
+the memory contains the same bytes as when the instruction was
+originally disassembled.
+
+It is also possible to disassemble the entire executable at once
+simply by choosing an appropriate disassembler (see
+Disassembler::lookup()), and then calling the disassembler, giving it
+the MemoryMap for the specimen. Alternatively, one can use the
+Partitioner::partition() method, passing a disassembler and memory
+map.
+
+== Concolic Analysis ==
+
+Certain combinations of abstract and concrete analysis are
+possible. For instance, it's possible to obtain, through static
+analysis and disassembly, an AST containing functions of basic blocks
+for all the executable memory.  This AST contains a control flow graph
+and a function call graph that could be compared with the concrete
+interpretation and augmented by the concrete interpretation.
+
+For statically linked executables, one could also obtain an AST for
+the ELF container. But since shared objects for dynamically linked
+executables are resolved by simulating the dynamic loader, ROSE does
+not have any direct knowledge of the shared objects.  It would be
+possible to obtain the list of shared object files by observing the
+system calls related to file I/O since the simulated loader must open,
+and map the shared objects.
 
 == Debugging Tricks and Tips ==
 

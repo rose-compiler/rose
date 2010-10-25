@@ -1,13 +1,12 @@
-// #include "cfgView.h"
-// #include "rose.h"
-// #include "loopHelpers.h"
-// #include <sstream>
-// #include <iomanip>
-// #include <stdint.h>
-
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#ifndef _MSC_VER
 #include <err.h>
+#endif
+
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+#include "rose_config.h"
 
 using namespace std;
 
@@ -28,10 +27,11 @@ namespace VirtualCFG {
   CFGNode::CFGNode(SgNode* node, unsigned int index): node(node), index(index) {
 #ifndef _MSC_VER 
     assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
-#endif
+
     if (!(node && index <= node->cfgIndexForEnd())) {
       warnx ("created CFGNode with illegal index");
     }
+#endif
   }
 
   string CFGNode::toString() const {

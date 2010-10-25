@@ -135,6 +135,8 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_249.f90 \
      test2007_250.f90 \
      test2007_262.f90 \
+     test2010_01.f90 \
+     test2010_02.f90 \
      test2010_15.f90 \
      test2010_16.f90 \
      test2010_18.f90 \
@@ -155,7 +157,14 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_45.f90 \
      test2010_46.f90 \
      test2010_47.f90 \
+     test2010_49.f90 \
      test2010_50.f90 \
+     test2010_59.f90 \
+     test2010_60.f90 \
+     test2010_61.f90 \
+     test2010_62.f90 \
+     test2010_63.f90 \
+     test2010_64.f90 \
      canonicalExample.f90
 
 
@@ -222,6 +231,7 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_223.f \
      test2007_224.f \
      test2007_226.f \
+     test2007_227.f \
      test2007_228.f \
      test2007_229.f \
      test2007_230.f \
@@ -241,10 +251,9 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_260.f \
      test2007_261.f \
      test2010_29.f \
-     test2010_30.f
-
-# DQ (9/28/2010): Failing test.
-#   test2007_227.f
+     test2010_30.f \
+     test2010_63.f \
+     test2010_64.f
 
 F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_30.f03 \
@@ -255,6 +264,7 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_42.f03 \
      test2007_43.f03 \
      test2007_44.f03 \
+     test2007_45.f03 \
      test2007_47.f03 \
      test2007_98.f03 \
      test2007_112.f03 \
@@ -264,14 +274,11 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_116.f03 \
      test2007_120.f03 \
      test2007_123.f03 \
+     test2007_130.f03 \
      test2007_133.f03 \
      test2007_134.f03 \
      test2007_174.f03 \
      test2007_176.f03
-
-# DQ (9/28/2010): Failing test.
-#    test2007_45.f03 
-#    test2007_130.f03 
 
 # DQ (4/3/2010): Added test code used in Fortran OpenMP tests.
 OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS = \
@@ -320,9 +327,8 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2007_257.f90 \
      test2007_LANL.f90 \
      test2007_example.f90 \
+     test2008_30.f90 \
      test2009_1.f90 \
-     test2010_01.f90 \
-     test2010_02.f90 \
      test2010_03.f90 \
      test2010_04.f90 \
      test2010_05.f90 \
@@ -336,11 +342,8 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_36.f90 \
      test2010_43.f90 \
      test2010_48.f90 \
-     test2010_49.f90 \
      test2010_51.f90 \
-     test2010_60.f90 \
-     test2010_61.f90 \
-     test2010_62.f90 \
+     test2010_65.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -441,7 +444,8 @@ TEST_F03_Objects = ${ALL_F03_TESTCODES:.f03=.o}
 
 PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
 
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 # Go back and build the translator we are using to test Fortran (in case make check 
 # is run directly in this directory before make has been run from the root of the 
@@ -451,32 +455,44 @@ if ROSE_USE_OPEN_FORTRAN_PARSER
 
 testTranslator: ../../testTranslator
 
-$(TEST_F90_Objects): ../../testTranslator ${ALL_TESTCODES}
+../../testGraphGeneration:
+	cd ../..; $(MAKE) testGraphGeneration
+
+testGraphGeneration: ../../testGraphGeneration
+
+# DQ (10/4/2010): Added tests to make sure that the AST graphs can be generated for all
+# Fortran input test codes. This tests a problem that was reported previously by Rice.
+$(TEST_F90_Objects): ../../testTranslator ../../testGraphGeneration ${ALL_TESTCODES}
 # $(TEST_F90_Objects): ../../testTranslator
 # Example of how to call the OpenFortranParser
 #	java parser.java.FortranMain --class parser.java.FortranParserActionJNI $(srcdir)/$(@:.o=.f90)
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f90)
 # How to call a ROSE translator with a Fortran source file.
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 
-$(TEST_F77_Objects): ../../testTranslator ${ALL_TESTCODES}
+$(TEST_F77_Objects): ../../testTranslator ../../testGraphGeneration ${ALL_TESTCODES}
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f77)
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 
-$(TEST_F77_FIXED_FORMAT_Objects): ../../testTranslator ${ALL_TESTCODES}
+$(TEST_F77_FIXED_FORMAT_Objects): ../../testTranslator ../../testGraphGeneration ${ALL_TESTCODES}
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f)
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+
 
 # Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
 #       So we use -rose:skip_syntax_check to avoid the frontend syntax checking and -rose:skipfinalCompileStep
 #       to avoid processing the generated code (which would have the same problem).  It is easier to just use
 #       the version 4.1 gfortran which has better Fortran 2003 syntax checking support. This problem is confirmed 
 #       on versions of gfortran 4.2 and 4.3.
-$(TEST_F03_Objects): ../../testTranslator
+$(TEST_F03_Objects): ../../testTranslator ../../testGraphGeneration
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f03)
 #	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
+	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
 #	Since gfortran does not support F03, and thus we skip the compileation using the backend gfortran compiler, we have to force the generation of an object file. 
 #	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
 	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
@@ -529,29 +545,40 @@ current_OFP_error:
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
 PASSING_MODULE_TEST_Objects = module_B_file.o
 
+# DQ (10/4/2010): Test calling OFP directly and ROSE for different filename extensions.
+CALL_OFP = java -Djava.class.path=$(top_srcdir)/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:$(top_builddir)/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.2.jar fortran.ofp.FrontEnd
 testSuffixRules:
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_01.f
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_01.f
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_01.f
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_02.f77
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_02.f77
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_02.f77
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_03.f90
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_03.f90
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_03.f90
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_04.f95
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_04.f95
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_04.f95
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_05.f03
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_05.f03
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_05.f03
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_06.F
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_06.F
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_06.F
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_07.F90
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_07.F90
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_07.F90
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_08.F95
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_08.F95
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_08.F95
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_09.F03
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_09.F03
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_09.F03
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_10.F08
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_10.F08
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_10.F08
-	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_11.f08
+	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_11.f08
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_11.f08
+
+testOFP:
+	 $(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_01.f
+
+# DQ (10/18/2010): Test suggested from bug reported by Carlo Bertolli at Imperial.
+testCPP_Defines:
+#	Test source code with macro defined from the command line: e.g. "integer*PS  pe"
+	../../testTranslator $(ROSE_FLAGS) -DPS=8 inputUsingDefinesOnCommandline.F90
+
 
 
 tests:
@@ -596,13 +623,15 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
    test2007_suffixTest_01.f test2007_suffixTest_02.f77 test2007_suffixTest_03.f90 test2007_suffixTest_04.f95 \
    test2007_suffixTest_05.f03 test2007_suffixTest_06.F test2007_suffixTest_07.F90 test2007_suffixTest_08.F95 \
    test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08 \
-   module_A_file.f90 module_B_file.f90 test2010_31_header.f90 test2010_50.h test2010_54.h test2010_55.h
+   module_A_file.f90 module_B_file.f90 test2010_31_header.f90 test2010_50.h test2010_54.h test2010_55.h \
+   original_mpif.h
 
 # DQ (3/12/2010): Fortran 2008 tests from OFP
 # f08-tests
 
 clean-local:
 	rm -f *.o rose_*.f* *.rmod
-	rm -f *.s *.mod rose_*.f rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
+	rm -f *.s *.mod rose_*.f rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 rose_*.f08 *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
+	rm -f rose_*.F rose_*.F77 rose_*.F90 rose_*.F95 rose_*.F03 rose_*.F08 test2007_suffixTest_0?_postprocessed.*
 	rm -rf QMTest
 

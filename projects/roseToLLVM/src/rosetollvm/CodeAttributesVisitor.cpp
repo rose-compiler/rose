@@ -1339,9 +1339,9 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
              }
          }
      //*                SgSizeOfOp
-     //*                SgUpcLocalsizeof
-     //*                SgUpcBlocksizeof
-     //*                SgUpcElemsizeof
+     //*                SgUpcLocalsizeofExpression
+     //*                SgUpcBlocksizeofExpression
+     //*                SgUpcElemsizeofExpression
      //*            SgTypeIdOp
      //*            SgConditionalExp
          else if (dynamic_cast<SgConditionalExp *>(node)) {
@@ -3290,9 +3290,9 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
           * the AST proved to be too complicated in some cases.
           */
      }
-     //                 SgUpcLocalsizeof
-     //                 SgUpcBlocksizeof
-     //                 SgUpcElemsizeof
+     //                 SgUpcLocalsizeofExpression
+     //                 SgUpcBlocksizeofExpression
+     //                 SgUpcElemsizeofExpression
      //             SgTypeIdOp
      //             SgConditionalExp
      else if (dynamic_cast<SgConditionalExp *>(node)) {

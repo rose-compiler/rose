@@ -3,184 +3,111 @@
 This chapter discusses the capabilities of ROSE to read, analyze and transform 
 (transformations to the binary file format) binary executables.
 
-In the following sections we use a small example that demonstrates various 
-features of Binary-Rose. The source code of our binary example is:
-
-\begin{figure}[!h]
-{\indent
-{\mySmallFontSize
-
-% Do this when processing latex to generate non-html (not using latex2html)
-\begin{latexonly}
-   \lstinputlisting{\TutorialExampleDirectory/bin_example.C}
-\end{latexonly}
-
-% Do this when processing latex to build html (using latex2html)
-\begin{htmlonly}
-   \verbatiminput{\TutorialExampleDirectory/bin_example.C}
-\end{htmlonly}
-
-% end of scope in font size
-}
-% End of scope in indentation
-}
-\caption{Example source code.}
-\label{Tutorial:examplesourcecode}
-\end{figure}
-
-Much larger binaries can be analized, but such larger binary executables are more
-difficult to present (in this tutorial).
-
-
-\section{Loading binaries}
-
-Binary support in ROSE is currently based on two front-ends: 
-% \emph{objdump} and \emph{IdaPro-mysql}.
-\begin{enumerate}
-   \item A custom build \emph{ROSE Disassembler} (for ARM, x86, and PowerPC), and
-   \item \emph{IdaPro-mysql}
-\end{enumerate}
-
-
-% \subsection{objdump}
-\subsection{ROSE Disassembler}
+Binary support in ROSE is currently based on a custom build \emph{ROSE Disassembler} (for ARM, x86, and PowerPC).
 
 The following code reads in a binary and creates a binary ROSE AST:
 
 {\mySmallFontSize
 \begin{verbatim}
      SgProject* project = frontend(argc,argv);
-     ROSE_ASSERT (project != NULL);
 \end{verbatim}
 }
 
-
-\subsection{IdaPro-mysql}
-
-A binary processed by IdaPro needs to be processed into a MySQL database (DB). With that DB,
-the following lines create a binary ROSE AST:
+Similarily, one can unparse the AST to assembly using a call to the backend, cf. Figure ~\ref{Tutorial:examplesourcecode2}.
 
 
-{\mySmallFontSize
-\begin{verbatim}
-  // create RoseBin object with DB specific information 
-  RoseBin* roseBin = new RoseBin(def_host_name,
-                                def_user_name,
-                                def_password,
-                                def_db_name);
+%\subsection{IdaPro-mysql}
 
-  RoseBin_Arch::arch=RoseBin_Arch::bit32;
-  RoseBin_OS::os_sys=RoseBin_OS::linux_op;
-  RoseBin_OS_VER::os_ver=RoseBin_OS_VER::linux_26;
-  RoseBin_Def::RoseAssemblyLanguage=x86;
-  // connect to the DB
-  roseBin->connect_DB(socket);
-  // query the DB to retrieve all data
-  SgAsmNode* globalBlock = roseBin->retrieve_DB_IDAPRO();
-  // close the DB
-  roseBin->close_DB();
-
-  // traverse the AST and test it
-  roseBin->test();
-\end{verbatim}
-}
+%A binary processed by IdaPro needs to be processed into a MySQL database (DB). With that DB,
+%the following lines create a binary ROSE AST:
 
 
+%{\mySmallFontSize
+%\begin{verbatim}
+%  // create RoseBin object with DB specific information 
+%  RoseBin* roseBin = new RoseBin(def_host_name,
+%                                def_user_name,
+%                                def_password,
+%                                def_db_name);
+
+%  RoseBin_Arch::arch=RoseBin_Arch::bit32;
+%  RoseBin_OS::os_sys=RoseBin_OS::linux_op;
+%  RoseBin_OS_VER::os_ver=RoseBin_OS_VER::linux_26;
+%  RoseBin_Def::RoseAssemblyLanguage=x86;
+%  // connect to the DB
+%  roseBin->connect_DB(socket);
+%  // query the DB to retrieve all data
+%  SgAsmNode* globalBlock = roseBin->retrieve_DB_IDAPRO();
+%  // close the DB
+%  roseBin->close_DB();
+
+%  // traverse the AST and test it
+%  roseBin->test();
+%\end{verbatim}
+%}
 
 
-\section{The AST}
-
-The binary AST can now be unparsed to represent assembly instructions, cf. Figure ~\ref{Tutorial:examplesourcecode2}:
-
-{\mySmallFontSize
-\begin{verbatim}
-  SgAsmGenericFile* file = project->get_file(0).get_binaryFile();
-  RoseBin_unparse* unparser = new RoseBin_unparse();
-  unparser->init(file->get_global_block(), fileName);
-  unparser->unparse();
-\end{verbatim}
-}
 
 
-\begin{figure}[!h]
-{\indent
-{\mySmallFontSize
+%\section{The AST}
+
+%The binary AST can now be unparsed to represent assembly instructions, cf. Figure ~\ref{Tutorial:examplesourcecode2}:
+
+%{\mySmallFontSize
+%\begin{verbatim}
+%  SgAsmGenericFile* file = project->get_file(0).get_binaryFile();
+%  RoseBin_unparse* unparser = new RoseBin_unparse();
+%  unparser->init(file->get_global_block(), fileName);
+%  unparser->unparse();
+%\end{verbatim}
+%}
 
 
-% Do this when processing latex to generate non-html (not using latex2html)
-\begin{latexonly}
- % \lstinputlisting{\TutorialExampleBuildDirectory/rose_bin_example.s}
-   \lstinputlisting{\TutorialExampleBuildDirectory/rose_bin_example.s.aa}
-\end{latexonly}
+%To visualize the binary AST, we can use the following lines to
+%write the AST out to a .dot format:
 
-% Do this when processing latex to build html (using latex2html)
-\begin{htmlonly}
- % \verbatiminput{\TutorialExampleBuildDirectory/rose_bin_example.s}
-   \verbatiminput{\TutorialExampleBuildDirectory/rose_bin_example.s.aa}
-\end{htmlonly}
-
-% end of scope in font size
-}
-% End of scope in indentation
-}
-\caption{Assembly code.}
-\label{Tutorial:examplesourcecode2}
-\end{figure}
-
-
-To visualize the binary AST, we can use the following lines to
-write the AST out to a .dot format:
-
-{\mySmallFontSize
-\begin{verbatim}
-  string filename=''_binary_tree.dot'';
-  AST_BIN_Traversal* trav = new AST_BIN_Traversal();
-  trav->run(file->get_global_block(), filename);
-\end{verbatim}
-}
+%{\mySmallFontSize
+%\begin{verbatim}
+%  string filename=''_binary_tree.dot'';
+%  AST_BIN_Traversal* trav = new AST_BIN_Traversal();
+%  trav->run(file->get_global_block(), filename);
+%\end{verbatim}
+%}
 
 
 \section{The ControlFlowGraph}
 
-\begin{figure}
-%\centerline{\epsfig{file=\TutorialExampleBuildDirectory/controlFlowGraph.ps,
-%                    height=1.3\linewidth,width=1.0\linewidth,angle=0}}
-% TH (04/27/2009): This file contains no pages
-%\includegraphics[scale=0.7]{\TutorialExampleBuildDirectory/binaryAnalysis_pic1}
-\caption{Controlflow graph for example program.}
-\label{Tutorial:examplefig1}
-\end{figure}
-
 Based on a control flow traversal of the binary AST, a separate control flow graph
-is created that can be used for further analyses:
+is created that can be used for further analyses.
 
+TODO: Describe recent work on binary CFG.
 
-{\mySmallFontSize
-\begin{verbatim}
-  // forward or backward analysis ?
-  bool forward = true;
-  // when creating a visual representation, visualized edges?
-  bool edges = true;
-  // visualize multiple edges or merge edges between same nodes to one edge?
-  bool mergedEdges = false;
-  // create DotGraph Object or/and GmlGraph Object
-  RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph();
-  RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph();
-  char* cfgFileNameDot = ``cfg.dot'';
-  char* cfgFileNameGml = ``gml.dot'';
-  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(
-                                             file->get_global_block(), forward, NULL, edges);
-  cfganalysis->run(dotGraph, cfgFileNameDot, mergedEdges);
-  cfganalysis->run(gmlGraph, cfgFileNameGml, mergedEdges);
-\end{verbatim}
-}
+%{\mySmallFontSize
+%\begin{verbatim}
+%  // forward or backward analysis ?
+%  bool forward = true;
+%  // when creating a visual representation, visualized edges?
+%  bool edges = true;
+%  // visualize multiple edges or merge edges between same nodes to one edge?
+%  bool mergedEdges = false;
+%  // create DotGraph Object or/and GmlGraph Object
+%  RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph();
+%  RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph();
+%  char* cfgFileNameDot = ``cfg.dot'';
+%  char* cfgFileNameGml = ``gml.dot'';
+%  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(
+%                                             file->get_global_block(), forward, NULL, edges);
+%  cfganalysis->run(dotGraph, cfgFileNameDot, mergedEdges);
+%  cfganalysis->run(gmlGraph, cfgFileNameGml, mergedEdges);
+%\end{verbatim}
+%}
 
-The control flow graph of our example is represented in Figure ~\ref{Tutorial:examplefig1}.
-The graph shows different functions represented purple, containing various instructions.
-Instructions within a function are represented within the same box. Common instructions are
-represented yellow. Green instructions are jumps and pink instructions calls and returns.  
-Respectively, blue edges are call relationships and red edges return relationships.
-Black edges represent plain controlflow from one instruction to the next.
+%The control flow graph of our example is represented in Figure ~\ref{Tutorial:examplefig1}.
+%The graph shows different functions represented purple, containing various instructions.
+%Instructions within a function are represented within the same box. Common instructions are
+%represented yellow. Green instructions are jumps and pink instructions calls and returns.  
+%Respectively, blue edges are call relationships and red edges return relationships.
+%Black edges represent plain controlflow from one instruction to the next.
 
 
 
@@ -195,41 +122,19 @@ Black edges represent plain controlflow from one instruction to the next.
 \end{figure}
 
 Based on the control flow many forms of dataflow analysis may be performed.
-The code to perform the dataflow analysis looks as follows:
-
-{\mySmallFontSize
-\begin{verbatim}
-  string dfgFileName = "dfg.dot";
-  forward = true;
-  bool printEdges = true;
-  // choose between a interprocedural and intraprocedural dataflow analysis
-  bool interprocedural = true;
-  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(
-                                         file->get_global_block(), forward, NULL);
-  dfanalysis->init(interprocedural, printEdges);
-  dfanalysis->run(dotGraph, dfgFileName, mergedEdges);
-\end{verbatim}
-}
-
 Dataflow analyses available are:
  
 \subsection{Def-Use Analysis}
 
 Definition-Usage is one way to compute dataflow information about a binary program.
-Figure ~\ref{Tutorial:examplefig2} shows a typical dataflow graph with additional 
-definition and usage information visualized at the edges.
 
 \subsection{Variable Analysis}
 
 This analysis helps to detect different types within a binary.
 Currently, we use this analysis to detect interrupt calls and their parameters together with the def-use analysis.
-
 This allows us to track back the value of parameters to the calls, such as eax and therefore 
 determine whether a interrupt call is for instance a write or read.
-
 Another feature is the buffer overflow analysis. By traversing the CFG, we can detect buffer overflows.
-The black node in ~\ref{Tutorial:examplefig2} shows such a buffer overlow, cf. source code
-above.
 
 
 \section{Dynamic Analysis}

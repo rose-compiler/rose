@@ -2,24 +2,26 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 F77_TESTCODES_TO_PASS = \
     helloworld.f \
+    helloworld0.f \
     helloworld2.f \
     jacobi.f \
     default.f \
     flush.f \
-    exampleA11f.f \
-    exmpaleA221f.f \
     exampleA251f.f \
-    parallel-1.f \
     parallel.f \
+    parallel-1.f \
+    parallel-2.f \
     schedule.f
 
 # DQ (3/4/2010): Added simple test code to debug fortran OFP usage.
 F77_TESTCODES_TO_PASS += testNewOFP.f
 
 F90_TESTCODES_TO_PASS = \
-  paralledo.f90 \
+  paralleldo.f90 \
+  paralleldo-1.f90 \
   collapse.f90 \
   critical.f90 \
+  single-copyprivate.f90 \
   continuation.f90
 
 #if !OS_VENDOR_DEBIAN
@@ -30,24 +32,28 @@ F90_TESTCODES_TO_PASS = \
 #endif
 #endif
 
-# see bug 350, wrong position for C$OMP END PARALLEL
 # case insensitive in symobl lookup for Fortran
 # exampleA281f.f: case insensitive for included header file's name, also bug 354
 # flush2.f : wrong position for flush (scope becomes function, not inner block)
 # conditional.f:  conditional compilation
 # exampleA41f.f90:  test code has error?
+# barrier.f, exmpaleA221f.f  wrong comment position for the 2nd barrier
+# exampleA11f.f  combined parallel do is attached to wrong place, and is not removed!
 TESTCODES_CURRENTLY_FAILING = \
-    helloworld0.f \
-    parallel-2.f \
+    barrier.f \
+    exampleA11f.f \
     exampleA211f.f \
     exampleA281f.f \
     exampleA102f.f90 \
     exampleA161f.f90 \
     flush2.f \
+    exmpaleA221f.f \
     conditional.f \
-    exampleA41f.f90
+    exampleA41f.f90 \
+    exampleA134f.f90
 
-ROSE_FLAGS = -rose:openmp
+#ROSE_FLAGS = -rose:openmp
+ROSE_FLAGS = -rose:openmp:ast_only
 
 TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
@@ -69,7 +75,8 @@ ALL_TESTCODES =\
 
 # follow the astOutlining test to guide fortran tests  
 # Liao, 5/27/2009
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 if ROSE_USE_SSL_SUPPORT
 	@echo "Fortran tests for ROSE OpenMP parser"

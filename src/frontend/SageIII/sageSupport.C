@@ -1,15 +1,13 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-//#include "astMergeAPI.h"
+
 #include "rose_paths.h"
-//#include "setup.h"
 #include "astPostProcessing.h"
 #include <sys/stat.h>
 
 #include "omp_lowering.h"
 #include "attachPreprocessingInfo.h"
 #include "astMergeAPI.h"
-//#include "sageSupport.h"
 
 #include "BinaryLoader.h"
 #include "Partitioner.h"
@@ -28,29 +26,39 @@
 #include <libgen.h>
 #endif
 
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-//FMZ (5/19/2008): 
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-#include "FortranModuleInfo.h"
-#include "FortranParserState.h"
-#include "unparseFortran_modfile.h"
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// FMZ (5/19/2008): 
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+   #include "FortranModuleInfo.h"
+   #include "FortranParserState.h"
+   #include "unparseFortran_modfile.h"
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
 #ifdef HAVE_DLADDR
-#include <dlfcn.h>
+   #include <dlfcn.h>
 #endif
 
 #if USING_OLD_EXECUTABLE_FORMAT_SUPPORT
 // DQ (8/12/2008): This constructor is implemented in sageSupport.C and 
 // will be removed later once the new IR nodes are integrated into use.
-#include "ExecELF.h"
+   #include "ExecELF.h"
 #endif
 
-//Needed for boost::filesystem::exists(...)
+// Needed for boost::filesystem::exists(...)
 #include "boost/filesystem.hpp"
 #include <stdio.h>
 
+// Liao 10/8/2010, refactored OpenMP related code to ompAstConstruction.C
+#include "ompAstConstruction.h"
+
+
+#if 0
 //Liao, 10/27/2008: parsing OpenMP pragma here
 //Handle OpenMP pragmas. This should be called after preprocessing information is attached since macro calls may exist within pragmas, Liao, 3/31/2009
 #include "OmpAttribute.h"
@@ -60,10 +68,15 @@ extern void omp_parser_init(SgNode* aNode, const char* str);
 void processOpenMP(SgSourceFile* sageFilePtr);
 //Fortran OpenMP parser interface
 void parse_fortran_openmp(SgSourceFile *sageFilePtr);
+
+#endif
+
+
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
+
 
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
@@ -79,7 +92,7 @@ std::string
 SgValueExp::get_constant_folded_value_as_string()
    {
   // DQ (8/18/2009): Added support for generating a string from a SgValueExp.
-  // Note that the point is not not call unparse since that would providethe 
+  // Note that the point is not to call unparse since that would provide the 
   // expression tree and we want the constant folded value.
 
      string s;
@@ -93,6 +106,30 @@ SgValueExp::get_constant_folded_value_as_string()
                ROSE_ASSERT(integerValueExpression != NULL);
                int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %d \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%d",numericValue);
+               s = buffer;
+               break;
+             }
+
+       // DQ (10/4/2010): Added case
+          case V_SgLongIntVal: 
+             {
+               SgLongIntVal* integerValueExpression = isSgLongIntVal(this);
+               ROSE_ASSERT(integerValueExpression != NULL);
+               long int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%ld",numericValue);
+               s = buffer;
+               break;
+             }
+
+       // DQ (10/5/2010): Added case
+          case V_SgShortVal: 
+             {
+               SgShortVal* integerValueExpression = isSgShortVal(this);
+               ROSE_ASSERT(integerValueExpression != NULL);
+               short int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
                snprintf (buffer,max_buffer_size,"%d",numericValue);
                s = buffer;
                break;
@@ -159,6 +196,54 @@ SgValueExp::get_constant_folded_value_as_string()
                SgCharVal* charValueExpression = isSgCharVal(this);
                ROSE_ASSERT(charValueExpression != NULL);
                s = charValueExpression->get_value();
+               break;
+             }
+
+       // DQ (10/4/2010): Added case
+          case V_SgFloatVal:
+             {
+               SgFloatVal* floatValueExpression = isSgFloatVal(this);
+               ROSE_ASSERT(floatValueExpression != NULL);
+               float numericValue = floatValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %f \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%f",numericValue);
+               s = buffer;
+               break;
+             }
+
+       // DQ (10/4/2010): Added case
+          case V_SgDoubleVal:
+             {
+               SgDoubleVal* floatValueExpression = isSgDoubleVal(this);
+               ROSE_ASSERT(floatValueExpression != NULL);
+               double numericValue = floatValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %f \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%lf",numericValue);
+               s = buffer;
+               break;
+             }
+
+       // DQ (10/4/2010): Added case
+          case V_SgLongDoubleVal:
+             {
+               SgLongDoubleVal* floatValueExpression = isSgLongDoubleVal(this);
+               ROSE_ASSERT(floatValueExpression != NULL);
+               long double numericValue = floatValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %f \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%Lf",numericValue);
+               s = buffer;
+               break;
+             }
+
+       // DQ (10/4/2010): Added case
+          case V_SgEnumVal: 
+             {
+               SgEnumVal* enumValueExpression = isSgEnumVal(this);
+               ROSE_ASSERT(enumValueExpression != NULL);
+               int numericValue = enumValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %d \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%d",numericValue);
+               s = string("_enum_") + string(buffer);
                break;
              }
 
@@ -600,12 +685,23 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_Fortran_only(true);
         }
 
+  // DQ (10/11/2010): Adding initial Java support.
+     set_Java_only(false);
+     ROSE_ASSERT (get_Java_only() == false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(j|J|java|Java)",true) == true )
+        {
+          if ( SgProject::get_verbose() > 0 )
+               printf ("In SgProject: Java only mode ON \n");
+          set_Java_only(true);
+        }
+
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","wave",false) == true )
         {
        // printf ("Option -c found (compile only)! \n");
           set_wave(true);
         }
 
+#if 1
   // DQ (10/3/2010): Adding support for CPP directives to be optionally a part of the AST as declarations 
   // in global scope instead of handled similar to comments.
      set_addCppDirectivesToAST(false);
@@ -616,8 +712,10 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                printf ("In SgProject: addCppDirectivesToAST mode ON \n");
           set_addCppDirectivesToAST(true);
         }
+#else
+     printf ("Warning: command line CPP directives not processed \n");
+#endif
 
-     
   //
   // prelink option
   //
@@ -883,7 +981,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // look only for -L directories (directories where -lxxx libraries will be found)
           if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'L') )
              {
-	      //AS Changed source code to support absolute paths
+            // AS Changed source code to support absolute paths
                std::string libraryDirectorySpecifier = argv[i].substr(2);
                libraryDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(libraryDirectorySpecifier);			     
                p_libraryDirectorySpecifierList.push_back(libraryDirectorySpecifier);
@@ -897,6 +995,16 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                std::string includeDirectorySpecifier =  argv[i].substr(2);
                includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
                p_includeDirectorySpecifierList.push_back("-I"+includeDirectorySpecifier);
+             }
+
+       // DQ (10/18/2010): Added support to collect "-D" options (assume no space between the "-D" and the option (e.g. "-DmyMacro=8").
+       // Note that we want to collect these because we have to process "-D" options more explicitly for Fortran (they are not required
+       // for C/C++ because they are processed by the forontend directly.
+          if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'D') )
+             {
+               std::string macroSpecifier = argv[i].substr(2);
+            // librarySpecifier = std::string("lib") + librarySpecifier;
+               p_macroSpecifierList.push_back(macroSpecifier);
              }
         }
 
@@ -1173,7 +1281,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                printf ("UPC mode ON \n");
           set_C_only(true);
           set_UPC_only(true);
-          // remove edg:restrict since we will add it back in SgFile::build_EDG_CommandLine()
+       // remove edg:restrict since we will add it back in SgFile::build_EDG_CommandLine()
           CommandlineProcessing::isOption(argv,"-edg:","(restrict)",true);
           CommandlineProcessing::isOption(argv,"--edg:","(restrict)",true);
         }
@@ -1182,10 +1290,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // set_UPCpp_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
   // ROSE_ASSERT (get_UPCxx_only() == false);
      bool hasRoseUpcppEnabled = CommandlineProcessing::isOption(argv,"-rose:","(UPCxx|UPCxx_only)",true) ;
-     bool hasEdgUpcppEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc++)",true) ;
-     bool hasEdgUpcppEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc++)",true) ;
 
-     if (hasRoseUpcppEnabled||hasEdgUpcppEnabled2||hasEdgUpcppEnabled) 
+  // DQ (10/22/2010): Remove specification of edg specific upc++ option (used for testing).
+  // bool hasEdgUpcppEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc++)",true) ;
+  // bool hasEdgUpcppEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc++)",true) ;
+  // bool hasEdgUpcppEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upcxx)",true) ;
+  // bool hasEdgUpcppEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upcxx)",true) ;
+  // if (hasRoseUpcppEnabled||hasEdgUpcppEnabled2||hasEdgUpcppEnabled) 
+
+     set_UPCxx_only(false);
+     if (hasRoseUpcppEnabled == true) 
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("UPC++ mode ON \n");
@@ -1248,6 +1362,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              {
                printf ("Warning, Non binary file name specificed with explicit -rose:binary option! \n");
                set_binary_only(false);
+             }
+        }
+
+  // DQ (10/11/2010): Adding initial Java support.
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(j|J|Java)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Java only mode ON \n");
+          set_Java_only(true);
+          if (get_sourceFileUsesJavaFileExtension() == false)
+             {
+               printf ("Warning, Non Java source file name specificed with explicit -rose:Java Java language option! \n");
+               set_Java_only(false);
              }
         }
 
@@ -1807,6 +1934,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
   // RPM (12/29/2009): Disassembler aggressiveness.
      if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "disassembler_search", stringParameter, true)) {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_disassemblerSearchHeuristics();
              heuristics = Disassembler::parse_switches(stringParameter, heuristics);
@@ -1815,10 +1943,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.mesg.c_str());
              ROSE_ASSERT(!"error parsing -rose:disassembler_search");
          }
+#else
+         printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
+         ROSE_ASSERT(false);
+#endif
      }
 
   // RPM (1/4/2010): Partitioner function search methods
      if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_search", stringParameter, true)) {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_partitionerSearchHeuristics();
              heuristics = Partitioner::parse_switches(stringParameter, heuristics);
@@ -1827,6 +1960,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());
              ROSE_ASSERT(!"error parsing -rose:partitioner_search");
          }
+#else
+         printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
+         ROSE_ASSERT(false);
+#endif
      }
 
   // RPM (6/9/2010): Partitioner configuration
@@ -2041,6 +2178,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(exit_after_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_syntax_check)",1);
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
+
+  // DQ (10/12/2010): Added support for Java
+     optionCount = sla(argv, "-rose:", "($)", "(j|J|java|Java)",1);
 
   // DQ (8/11/2007): Support for Fortran and its different flavors
      optionCount = sla(argv, "-rose:", "($)", "(f|F|Fortran)",1);
@@ -2410,10 +2550,11 @@ SgSourceFile::initializeGlobalScope()
 
 
 SgFile* 
-#if 0 //FMZ (07/07/2010): "nextErrorCode" should be call by reference argument
+#if 0
+// FMZ (07/07/2010): "nextErrorCode" should be call by reference argument
 determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
 #else 
-determineFileType ( vector<string> argv, int& nextErrorCode, SgProject* project )
+determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project )
 #endif
    {
      SgFile* file = NULL;
@@ -2499,6 +2640,19 @@ determineFileType ( vector<string> argv, int& nextErrorCode, SgProject* project 
             // Note: This is a little bit inconsistnat with the default set in ROSETTA.
                file->set_requires_C_preprocessor(CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension));
 
+            // DQ (10/18/2010): Test if the command line includes "-D" options. This is tested using the 
+            // "make testCPP_Defines" rule in the Fortran_tests directory.
+               if (getProject()->get_macroSpecifierList().empty() == false)
+                  {
+                 // Check if there are "-D" options on the command line and issue a warning that this case with Fortran is not handled.
+                 // However I can't see that we collect the "-D" options from the commandline, so I can't do this now.
+                    printf ("Warning: \"-D\" options on the command line are not currently processed within the Fortran support. \n");
+                    if (file->get_requires_C_preprocessor() == false)
+                       {
+                         printf ("However, they will also only be processed for files containing a proper file extension to trigger the processing (use: *.F, *.F90, *.F95, *.F03, *.F08). \n");
+                       }
+                  }
+               
             // printf ("Called set_requires_C_preprocessor(%s) \n",file->get_requires_C_preprocessor() ? "true" : "false");
 
             // DQ (12/23/2008): This needs to be called after the set_requires_C_preprocessor() function is called.
@@ -2657,134 +2811,160 @@ determineFileType ( vector<string> argv, int& nextErrorCode, SgProject* project 
                               sourceFile->initializeGlobalScope();
                             }
                            else
-                              if ( CommandlineProcessing::isCudaFileNameSuffix(filenameExtension)   == true )
-                                   file->set_Cuda_only(true);
-                              else if ( CommandlineProcessing::isOpenCLFileNameSuffix(filenameExtension)   == true )
-                                   file->set_OpenCL_only(true);
-                              else
                             {
-                           // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
-
-                           // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
-
-                           // Detect if this is a binary (executable) file!
-                              bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
-                              bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
-
-                           // If -rose:binary was specified and the relatively simple-minded checks of isBinaryExecutableFile()
-                           // and isLibararyArchiveFile() both failed to detect anything, then assume this is an executable.
-                              if (!isBinaryExecutable && !isLibraryArchive)
-                                  isBinaryExecutable = true;
-                              
-                           // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
-                              if (isBinaryExecutable == true || isLibraryArchive == true)
+                              if ( CommandlineProcessing::isCudaFileNameSuffix(filenameExtension) == true )
                                  {
-                                // Build a SgBinaryComposite to represent either the binary executable or the library archive.
-                                   SgBinaryComposite* binary = new SgBinaryComposite ( argv,  project );
-                                   file = binary;
+                                   file->set_Cuda_only(true);
+                                 }
+                                else if ( CommandlineProcessing::isOpenCLFileNameSuffix(filenameExtension) == true )
+                                 {
+                                   file->set_OpenCL_only(true);
+                                 }
+                                else if ( CommandlineProcessing::isJavaFileNameSuffix(filenameExtension) == true )
+                                 {
+                                // DQ (10/11/2010): Adding support for Java.
+                                // file = new SgSourceFile ( argv,  project );
+                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   file = sourceFile;
+  
+                                // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
+                                   file->set_sourceFileUsesCppFileExtension(false);
 
-                                // This should have already been setup!
-                                // file->initializeSourcePosition();
+                                // Use the filename suffix as a default means to set this value
+                                   file->set_outputLanguage(SgFile::e_C_output_language);
 
-                                   file->set_sourceFileUsesBinaryFileExtension(true);
+                                   file->set_Java_only(true);
 
-                                // If this is an object file being processed for binary analysis then mark it as an object 
-                                // file so that we can trigger analysis to mar the sections that will be disassembled.
-                                   string binaryFileName = file->get_sourceFileNameWithPath();
-                                   if (CommandlineProcessing::isObjectFilename(binaryFileName) == true)
-                                      {
-                                        file->set_isObjectFile(true);
-                                      }
-
-                                // DQ (2/5/2009): Put this at both the SgProject and SgFile levels.
-                                // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
-                                   file->set_binary_only(true);
-
-                                // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
-                                   file->set_requires_C_preprocessor(false);
-
-                                   ROSE_ASSERT(file->get_file_info() != NULL);
-
-                                   if (isLibraryArchive == true)
-                                      {
-                                     // This is the case of processing a library archive (*.a) file. We want to process these files so that 
-                                     // we can test the library identification mechanism to build databases of the binary functions in 
-                                     // libraries (so that we detect these in staticaly linked binaries).
-                                        ROSE_ASSERT(isBinaryExecutable == false);
-
-                                     // Note that since a archive can contain many *.o files each of these will be a SgAsmGenericFile object and 
-                                     // the SgBinaryComposite will contain a list of SgAsmGenericFile objects to hold them all.
-                                        string archiveName = file->get_sourceFileNameWithPath();
-
-                                        printf ("archiveName = %s \n",archiveName.c_str());
-
-                                     // Mark this as a library archive.
-                                        file->set_isLibraryArchive(true);
-
-                                     // Later we can make the tmp file specific to a given archive if we want to do that.
-                                     // string commandLine = "mkdir -p tmp_objects; cd tmp_objects; ar -vox " + archiveName;
-
-                                     // Put the names of the extracted objects into a file and the extracted object file into the directory: tmp_objects
-                                        string objectNameFile = "object_names.txt";
-                                        string commandLine = "mkdir -p tmp_objects; cd tmp_objects; ar -vox " + archiveName + " > ../object_names.txt";
-                                        printf ("Running System Command: %s \n",commandLine.c_str());
-
-                                     // Run the system command...
-                                        system(commandLine.c_str());
-
-                                        vector<string> wordList = StringUtility::readWordsInFile(objectNameFile);
-                                        vector<string> objectFileList;
-
-                                        for (vector<string>::iterator i = wordList.begin(); i != wordList.end(); i++)
-                                           {
-                                          // Get each word in the file of names (*.o)
-                                             string word = *i;
-                                          // printf ("word = %s \n",word.c_str());
-                                             size_t wordSize = word.length();
-                                             string targetSuffix = ".o";
-                                             size_t targetSuffixSize = targetSuffix.length();
-                                             if (wordSize > targetSuffixSize && word.substr(wordSize-targetSuffixSize) == targetSuffix)
-                                                  objectFileList.push_back(word);
-                                           }
-
-                                        for (vector<string>::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
-                                           {
-                                          // Get each object file name (*.o)
-                                             string objectFileName = *i;
-                                             printf ("objectFileName = %s \n",objectFileName.c_str());
-                                             binary->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
-                                             printf ("binary->get_libraryArchiveObjectFileNameList().size() = %zu \n",binary->get_libraryArchiveObjectFileNameList().size());
-                                           }
-#if 0
-                                        printf ("Exiting in processing a library archive file. \n");
-                                     // ROSE_ASSERT(false);
-#endif
-                                      }
-#if 0
-                                   printf ("Processed as a binary file! \n");
-#endif
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
                                  }
                                 else
                                  {
-                                   file = new SgUnknownFile ( argv,  project );
+                                // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
 
-                                // This should have already been setup!
-                                // file->initializeSourcePosition();
+                                // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
 
-                                   ROSE_ASSERT(file->get_parent() != NULL);
-                                   ROSE_ASSERT(file->get_parent() == project);
+                                // Detect if this is a binary (executable) file!
+                                   bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
+                                   bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
 
-                                // If all else fails, then output the type of file and exit.
-                                   file->set_sourceFileTypeIsUnknown(true);
-                                   file->set_requires_C_preprocessor(false);
+                                // If -rose:binary was specified and the relatively simple-minded checks of isBinaryExecutableFile()
+                                // and isLibararyArchiveFile() both failed to detect anything, then assume this is an executable.
+                                   if (!isBinaryExecutable && !isLibraryArchive)
+                                       isBinaryExecutable = true;
+                              
+                                // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
+                                   if (isBinaryExecutable == true || isLibraryArchive == true)
+                                      {
+                                     // Build a SgBinaryComposite to represent either the binary executable or the library archive.
+                                        SgBinaryComposite* binary = new SgBinaryComposite ( argv,  project );
+                                        file = binary;
 
-                                   ROSE_ASSERT(file->get_file_info() != NULL);
-                                // file->set_parent(project);
+                                     // This should have already been setup!
+                                     // file->initializeSourcePosition();
 
-                                // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
-                                // outputTypeOfFileAndExit(sourceFilename);
-                                   printf ("Warning: This is an unknown file type, not being processed by ROSE \n");
-                                   outputTypeOfFileAndExit(sourceFilename);
+                                        file->set_sourceFileUsesBinaryFileExtension(true);
+
+                                     // If this is an object file being processed for binary analysis then mark it as an object 
+                                     // file so that we can trigger analysis to mar the sections that will be disassembled.
+                                        string binaryFileName = file->get_sourceFileNameWithPath();
+                                        if (CommandlineProcessing::isObjectFilename(binaryFileName) == true)
+                                           {
+                                             file->set_isObjectFile(true);
+                                           }
+
+                                     // DQ (2/5/2009): Put this at both the SgProject and SgFile levels.
+                                     // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
+                                        file->set_binary_only(true);
+
+                                     // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
+                                        file->set_requires_C_preprocessor(false);
+
+                                        ROSE_ASSERT(file->get_file_info() != NULL);
+
+                                        if (isLibraryArchive == true)
+                                           {
+                                          // This is the case of processing a library archive (*.a) file. We want to process these files so that 
+                                          // we can test the library identification mechanism to build databases of the binary functions in 
+                                          // libraries (so that we detect these in staticaly linked binaries).
+                                             ROSE_ASSERT(isBinaryExecutable == false);
+
+                                          // Note that since a archive can contain many *.o files each of these will be a SgAsmGenericFile object and 
+                                          // the SgBinaryComposite will contain a list of SgAsmGenericFile objects to hold them all.
+                                             string archiveName = file->get_sourceFileNameWithPath();
+
+                                             printf ("archiveName = %s \n",archiveName.c_str());
+
+                                          // Mark this as a library archive.
+                                             file->set_isLibraryArchive(true);
+
+                                          // Later we can make the tmp file specific to a given archive if we want to do that.
+                                          // string commandLine = "mkdir -p tmp_objects; cd tmp_objects; ar -vox " + archiveName;
+
+                                          // Put the names of the extracted objects into a file and the extracted object file into the directory: tmp_objects
+                                             string objectNameFile = "object_names.txt";
+                                             string commandLine = "mkdir -p tmp_objects; cd tmp_objects; ar -vox " + archiveName + " > ../object_names.txt";
+                                             printf ("Running System Command: %s \n",commandLine.c_str());
+
+                                          // Run the system command...
+                                             system(commandLine.c_str());
+
+                                             vector<string> wordList = StringUtility::readWordsInFile(objectNameFile);
+                                             vector<string> objectFileList;
+
+                                             for (vector<string>::iterator i = wordList.begin(); i != wordList.end(); i++)
+                                                {
+                                               // Get each word in the file of names (*.o)
+                                                  string word = *i;
+                                               // printf ("word = %s \n",word.c_str());
+                                                  size_t wordSize = word.length();
+                                                  string targetSuffix = ".o";
+                                                  size_t targetSuffixSize = targetSuffix.length();
+                                                  if (wordSize > targetSuffixSize && word.substr(wordSize-targetSuffixSize) == targetSuffix)
+                                                       objectFileList.push_back(word);
+                                                }
+
+                                             for (vector<string>::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
+                                                {
+                                               // Get each object file name (*.o)
+                                                  string objectFileName = *i;
+                                                  printf ("objectFileName = %s \n",objectFileName.c_str());
+                                                  binary->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
+                                                  printf ("binary->get_libraryArchiveObjectFileNameList().size() = %zu \n",binary->get_libraryArchiveObjectFileNameList().size());
+                                                }
+#if 0
+                                             printf ("Exiting in processing a library archive file. \n");
+                                          // ROSE_ASSERT(false);
+#endif
+                                           }
+#if 0
+                                        printf ("Processed as a binary file! \n");
+#endif
+                                      }
+                                     else
+                                      {
+                                        file = new SgUnknownFile ( argv,  project );
+
+                                     // This should have already been setup!
+                                     // file->initializeSourcePosition();
+
+                                        ROSE_ASSERT(file->get_parent() != NULL);
+                                        ROSE_ASSERT(file->get_parent() == project);
+
+                                     // If all else fails, then output the type of file and exit.
+                                        file->set_sourceFileTypeIsUnknown(true);
+                                        file->set_requires_C_preprocessor(false);
+
+                                        ROSE_ASSERT(file->get_file_info() != NULL);
+                                     // file->set_parent(project);
+
+                                     // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
+                                     // outputTypeOfFileAndExit(sourceFilename);
+                                        printf ("Warning: This is an unknown file type, not being processed by ROSE \n");
+                                        outputTypeOfFileAndExit(sourceFilename);
+                                      }
                                  }
                             }
                        }
@@ -3406,7 +3586,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
   // Add filenames (of source files) to so that the EDG front end will know what files to process
-  inputCommandLine.insert(inputCommandLine.end(), macroDefineOptions.begin(), macroDefineOptions.end());
+     inputCommandLine.insert(inputCommandLine.end(), macroDefineOptions.begin(), macroDefineOptions.end());
 
   // DQ (9/24/2006): Add -D option so that we can know when to turn on vendor compiler specific macros for ANSI/ISO compatability.
      if (get_strict_language_handling() == true)
@@ -3715,21 +3895,29 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                printf ("inputCommandLine[%u] = %s \n",i,inputCommandLine[i].c_str());
         }
 
+  // display("at base of build_EDG_CommandLine()");
+
 #if 0
      printf ("Exiting at base of build_EDG_CommandLine() \n");
      ROSE_ABORT();
 #endif
-      // display("at base of build_EDG_CommandLine()");
-
    }
 
-
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-//FMZ(5/19/2008):
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the 
+// current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
+// So use the explicit macros defined in rose_config header file for this level of control.
+#if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
+// DQ (10/20/2010): Internal Java support is used for both Fortran language and Java language support.
+// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+// #if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
+// #ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
+// FMZ(5/19/2008):
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 extern void jserver_init();
-extern void jserver_finish();
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+
+// DQ (10/20/2010): Note that this is not called.
+// extern void jserver_finish();
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
 //! internal function to invoke the EDG frontend and generate the AST
@@ -3820,14 +4008,20 @@ SgProject::parse(const vector<string>& argv)
                        {
                          printf ("Calling Open Fortran Parser: jserver_init() \n");
                        }
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+
+// DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the 
+// current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
+// So use the explicit macros defined in rose_config header file for this level of control.
+#if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
+// #ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
+// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                     jserver_init();
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
                     errorCode = parse();
 
-                    // FMZ deleteComm jserver_finish();
+                 // FMZ deleteComm jserver_finish();
                   }
 
             // DQ (5/26/2007): This is meaningless, so remove it!
@@ -3922,9 +4116,9 @@ int
 SgSourceFile::callFrontEnd()
    {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT     
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      FortranParserState* currStks = new FortranParserState(); 
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
      int frontendErrorLevel = SgFile::callFrontEnd();
@@ -3939,9 +4133,9 @@ SgSourceFile::callFrontEnd()
      ROSE_ASSERT (get_globalScope()->get_endOfConstruct()   != NULL);
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      delete  currStks ;
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
      return frontendErrorLevel;
    }
@@ -3967,6 +4161,7 @@ SgUnknownFile::callFrontEnd()
 SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* project )
     : p_genericFileList(NULL), p_interpretations(NULL)
 {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     p_interpretations = new SgAsmInterpretationList();
     p_genericFileList = new SgAsmGenericFileList();
     
@@ -3980,6 +4175,10 @@ SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* proje
      doSetupForConstructor(argv,  project);
 
   // printf ("Leaving SgBinaryComposite constructor \n");
+#else
+     printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
+     ROSE_ASSERT(false);
+#endif
 }
 
 
@@ -3995,12 +4194,12 @@ SgProject::parse()
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ (5/29/2008)
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
      FortranModuleInfo::setCurrentProject(this);
      FortranModuleInfo::set_inputDirs(this );
 
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
 
   // Simplify multi-file handling so that a single file is just the trivial 
@@ -4447,10 +4646,11 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
        // DQ (9/30/2008): Added support for java class specification required for Fortran use of OFP.
           argument == "--class" ||
-          //AS(02/20/08):  When used with -M or -MM, -MF specifies a file to write 
-          //the dependencies to. Need to tell ROSE to ignore that output paramater
+
+       // AS (02/20/08):  When used with -M or -MM, -MF specifies a file to write 
+       // the dependencies to. Need to tell ROSE to ignore that output paramater
           argument == "-MF" ||
-          argument == "-outputdir" ||  //FMZ (12/22/1009) added for caf compiler
+          argument == "-outputdir" ||  // FMZ (12/22/1009) added for caf compiler
           argument == "-rose:disassembler_search" ||
           argument == "-rose:partitioner_search" ||
           argument == "-rose:partitioner_config" ||
@@ -4654,6 +4854,11 @@ SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
 // This function calls the Java JVM to load the Java implemented parser (written 
 // using ANTLR, a parser generator).
 int openFortranParser_main(int argc, char **argv );
+#endif
+
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+// DQ (10/11/2010): Added the Java support.
+int openJavaParser_main(int argc, char **argv );
 #endif 
 
 int
@@ -4720,7 +4925,9 @@ SgFile::callFrontEnd()
      vector<string> inputCommandLine;
 
   // Build the commandline for EDG
+  // printf ("Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
      build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+  // printf ("DONE: Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
 
   // DQ (10/15/2005): This is now a single C++ string (and not a list)
   // Make sure the list of file names is allocated, even if there are no file names in the list.
@@ -4728,7 +4935,7 @@ SgFile::callFrontEnd()
   // ROSE_ASSERT (get_sourceFileNamesWithoutPath() != NULL);
   // ROSE_ASSERT (get_sourceFileNameWithoutPath().empty() == false);
 
-     // display("AFTER build_EDG_CommandLine in SgFile::callFrontEnd()");
+  // display("AFTER build_EDG_CommandLine in SgFile::callFrontEnd()");
 
   // Exit if we are to ONLY call the vendor's backend compiler
      if (p_useBackendOnly == true)
@@ -4843,8 +5050,9 @@ SgFile::callFrontEnd()
                printf ("get_F2003_only()            = %s \n",(get_F2003_only()   == true) ? "true" : "false");
                printf ("get_CoArrayFortran_only()   = %s \n",(get_CoArrayFortran_only()   == true) ? "true" : "false");
                printf ("get_PHP_only()              = %s \n",(get_PHP_only()     == true) ? "true" : "false");
+               printf ("get_Java_only()             = %s \n",(get_Java_only()    == true) ? "true" : "false");
                printf ("get_binary_only()           = %s \n",(get_binary_only()  == true) ? "true" : "false");
-               printf ("get_addCppDirectivesToAST() = %s \n",(get_addCppDirectivesToAST()  == true) ? "true" : "false");
+            // printf ("get_addCppDirectivesToAST() = %s \n",(get_addCppDirectivesToAST()  == true) ? "true" : "false");
 
             // DQ (18/2008): We now explicit mark files that require C preprocessing...
                printf ("get_requires_C_preprocessor() = %s \n",(get_requires_C_preprocessor() == true) ? "true" : "false");
@@ -4947,7 +5155,7 @@ SgFile::callFrontEnd()
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      if (get_Fortran_only() == true && FortranModuleInfo::isRmodFile() == false)
         {
           if (get_verbose() > 1)
@@ -4958,7 +5166,7 @@ SgFile::callFrontEnd()
           if (get_verbose() > 1)
                printf ("DONE: Generating a Fortran 90 module file (*.rmod) \n");
         }
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif 
 #if 0
      printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
@@ -5096,8 +5304,6 @@ SgFile::secondaryPassOverSourceFile()
    }
 
 
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 // DQ (9/30/2008): Refactored the setup of the class path for Java and OFP.
 string
 global_build_classpath()
@@ -5110,15 +5316,30 @@ global_build_classpath()
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar", "lib/antlr-3.0.1.jar") + ":";
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
-     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
+     classpath += findRoseSupportPathFromSource("src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
 
+  // Open Fortran Parser (OFP) support (this is the jar file)
      string ofp_jar_file_name = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER) + string(".jar");
      string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
      classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
 
+  // Java (ECJ front-end) support (adding specific jar file)
+     string ecj_jar_file_name = string("ecjROSE.jar");
+     string ecj_class_path_jarfile = "src/3rdPartyLibraries/java-parser/" + ecj_jar_file_name;
+     classpath += findRoseSupportPathFromBuild(ecj_class_path_jarfile, string("lib/") + ecj_jar_file_name) + ":";
+
+  // Java (ECJ front-end) support (adding path to source tree for the jar file).
+  // This allows us to avoid copying the jar file to the build tree which is 
+  // write protected in the execution of the "make distcheck" rule.
+     string ecj_class_path = "src/3rdPartyLibraries/java-parser/";
+  // classpath += findRoseSupportPathFromBuild(ecj_class_path, string("lib/") ) + ":";
+     classpath += findRoseSupportPathFromSource(ecj_class_path, string("lib/") ) + ":";
+
+  // Everything else?
      classpath += ".";
 
-     if (SgProject::get_verbose() > 1)
+     if (SgProject::get_verbose() > 0)
         {
           printf ("In global_build_classpath(): classpath = %s \n",classpath.c_str());
         }
@@ -5129,12 +5350,23 @@ global_build_classpath()
 string
 SgSourceFile::build_classpath()
    {
-     return global_build_classpath();
+     string returnClasspath;
+
+     returnClasspath = global_build_classpath();
+
+// #ifndef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+#ifndef USE_ROSE_INTERNAL_JAVA_SUPPORT
+     fprintf(stderr, "Fortran and Java parser not supported (lack of access to internal Java support (JVM support)\n");
+     ROSE_ASSERT(false);
+#endif
+
+     return returnClasspath;
    }
 
 int
 SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine )
    {
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // This is how we pass the pointer to the SgFile created in ROSE before the Open 
   // Fortran Parser is called to the Open Fortran Parser.  In the case of C/C++ using
   // EDG the SgFile is passed through the edg_main() function, but not so with the 
@@ -5750,34 +5982,303 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // printf ("######################### Leaving SgSourceFile::build_Fortran_AST() ############################ \n");
 
      return frontendErrorLevel;
-   }
-#else // for !USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-
-// DQ (11/26/2008): I am unclear why this is required (I think it was added by Rice).
-string
-SgSourceFile::build_classpath()
-   {
+#else
      fprintf(stderr, "Fortran parser not supported \n");
      ROSE_ASSERT(false);
-  // abort();
 
-  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
-	 return "error in SgSourceFile::build_classpath()";
+     return -1;
+#endif
    }
+
+
+
+
 
 int
-SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine )
+SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
    {
-     fprintf(stderr, "Fortran parser not supported \n");
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+  // This is how we pass the pointer to the SgFile created in ROSE before the Open 
+  // Fortran Parser is called to the Open Fortran Parser.  In the case of C/C++ using
+  // EDG the SgFile is passed through the edg_main() function, but not so with the 
+  // Open Fortran Parser's openFortranParser_main() function API.  So we use this
+  // global variable to pass the SgFile (so that the parser c_action functions can
+  // build the Fotran AST using the existing SgFile.
+     extern SgSourceFile* OpenFortranParser_globalFilePointer;
+
+  // printf ("######################### Inside of SgSourceFile::build_Java_AST() ############################ \n");
+
+     bool requires_C_preprocessor = get_requires_C_preprocessor();
+     ROSE_ASSERT(requires_C_preprocessor == false);
+
+  // DQ (10/11/2010): We don't need syntax checking because ECJ will do that.
+  // bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
+  // bool syntaxCheckInputCode = false;
+  // printf ("In build_Java_AST(): syntaxCheckInputCode = %s \n",syntaxCheckInputCode ? "true" : "false");
+
+  // Build the classpath list for Java support.
+     const string classpath = build_classpath();
+
+  // This is part of debugging output to call OFP and output the list of parser actions that WOULD be called.
+  // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
+  // if (get_output_parser_actions() == true)
+     if (false)
+        {
+       // DQ (1/19/2008): New version of OFP requires different calling syntax.
+       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " --dump " + get_sourceFileNameWithPath();
+          vector<string> OFPCommandLine;
+          OFPCommandLine.push_back(JAVA_JVM_PATH);
+          OFPCommandLine.push_back(classpath);
+       // OFPCommandLine.push_back("fortran.ofp.FrontEnd");
+       // OFPCommandLine.push_back("--dump");
+          OFPCommandLine.push_back("JavaTraversal");
+
+       // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
+          const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+          for (size_t i = 0; i < includeList.size(); i++)
+             {
+               OFPCommandLine.push_back(includeList[i]);
+             }
+
+       // DQ (5/19/2008): Support for C preprocessing
+          if (requires_C_preprocessor == true)
+             {
+            // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
+            // Note that OFP has no support for CPP directives and will ignore them all.
+               string sourceFilename              = get_sourceFileNameWithPath();
+               string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+               OFPCommandLine.push_back(sourceFileNameOutputFromCpp);
+             }
+            else
+             {
+            // Build the command line using the original file (to be used by OFP).
+               OFPCommandLine.push_back(get_sourceFileNameWithPath());
+             }
+
+#if 0
+          printf ("output_parser_actions: OFPCommandLine = %s \n",CommandlineProcessing::generateStringFromArgList(OFPCommandLine,false,false).c_str());
+#endif
+
+       // Some security checking here could be helpful!!!
+       // Run OFP with the --dump option so that we can get the parset actions (used only for internal debugging support).
+          int errorCode = systemFromVector(OFPCommandLine);
+
+          if (errorCode != 0)
+             {
+               printf ("Running OFP ONLY causes an error (errorCode = %d) \n",errorCode);
+#if 1
+            // DQ (10/4/2008): Need to work with Liao to see why this passes for me but fails for him (and others).
+            // for now we can comment out the error checking on the running of OFP as part of getting the 
+            // output_parser_actions option (used for debugging).
+               ROSE_ASSERT(false);
+#else
+               printf ("Skipping enforcement of exit after running OFP ONLY as (part of output_parser_actions option) \n");
+#endif
+             }
+       // If this was selected as an option then we can stop here (rather than call OFP again).
+       // printf ("--- get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
+          if (get_exit_after_parser() == true)
+             {
+               printf ("Exiting after parsing... \n");
+               exit(0);
+             }
+
+       // End of option handling to generate list of OPF parser actions.
+        }
+
+  // Option to just run the parser (not constructing the AST) and quit.
+  // printf ("get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
+     if (get_exit_after_parser() == true)
+        {
+       // DQ (1/19/2008): New version of OFP requires different calling syntax.
+       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
+          vector<string> OFPCommandLine;
+          OFPCommandLine.push_back(JAVA_JVM_PATH);
+          OFPCommandLine.push_back(classpath);
+          OFPCommandLine.push_back("fortran.ofp.FrontEnd");
+
+          bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
+
+       // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
+          const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+          for (size_t i = 0; i < includeList.size(); i++)
+             {
+               OFPCommandLine.push_back(includeList[i]);
+
+            // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
+
+            // I think we have to permit an optional space between the "-I" and the path
+               if ("-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
+                  {
+                 // The source file path is already included!
+                    foundSourceDirectoryExplicitlyListedInIncludePaths = true;
+                  }
+             }
+
+       // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+          if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
+             {
+            // Add the source directory to the include list so that we reproduce the semantics of gfortran
+               OFPCommandLine.push_back("-I" + getSourceDirectory() );
+             }
+
+       // DQ (8/24/2010): Detect the use of CPP on the fortran file and use the correct generated file from CPP, if required.
+       // OFPCommandLine.push_back(get_sourceFileNameWithPath());
+          if (requires_C_preprocessor == true)
+             {
+               string sourceFilename = get_sourceFileNameWithoutPath();
+               string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+               OFPCommandLine.push_back(sourceFileNameOutputFromCpp);
+             }
+            else
+             {
+               OFPCommandLine.push_back(get_sourceFileNameWithPath());
+             }
+          
+#if 0
+          printf ("exit_after_parser: OFPCommandLine = %s \n",StringUtility::listToString(OFPCommandLine).c_str());
+#endif
+
+       // Some security checking here could be helpful!!!
+          int errorCode = systemFromVector (OFPCommandLine);
+
+       // DQ (9/30/2008): Added error checking of return value
+          if (errorCode != 0)
+             {
+               printf ("Using option -rose:exit_after_parser (errorCode = %d) \n",errorCode);
+               ROSE_ASSERT(false);
+             }
+          printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) errorCode = %d \n",errorCode);
+       // exit(0);
+
+          ROSE_ASSERT(errorCode == 0);
+          return errorCode;
+       }
+
+  // DQ (1/19/2008): New version of OFP requires different calling syntax; new lib name is: libfortran_ofp_parser_java_FortranParserActionJNI.so old name: libparser_java_FortranParserActionJNI.so
+  // frontEndCommandLineString = std::string(argv[0]) + " --class parser.java.FortranParserActionJNI " + get_sourceFileNameWithPath();
+     vector<string> frontEndCommandLine;
+
+     frontEndCommandLine.push_back(argv[0]);
+  // frontEndCommandLine.push_back(classpath);
+     frontEndCommandLine.push_back("--class");
+
+  // Calling libfortran_ofp_parser_c_jni_FortranParserActionJNI.so
+  // frontEndCommandLine.push_back("fortran.ofp.parser.c.jni.FortranParserActionJNI");
+
+  // Calling libjava_ecj_parser_c_jni_JavaParserActionJNI.so
+  // frontEndCommandLine.push_back("java.ecj.parser.c.jni.JavaParserActionJNI");
+
+  // Calling libjava_ecj_parser_c_jni_JavaParserActionJNI.so
+     frontEndCommandLine.push_back("JavaTraversal");
+
+#if 0
+  // Debugging output
+     get_project()->display("Calling SgProject display");
+     display("Calling SgFile display");
+#endif
+
+     const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+
+     bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
+
+  // printf ("getSourceDirectory() = %s \n",getSourceDirectory().c_str());
+     for (size_t i = 0; i < includeList.size(); i++)
+        {
+          frontEndCommandLine.push_back(includeList[i]);
+
+       // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
+
+       // I think we have to permit an optional space between the "-I" and the path
+          if (	"-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
+             {
+            // The source file path is already included!
+               foundSourceDirectoryExplicitlyListedInIncludePaths = true;
+             }
+        }
+
+  // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+     if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
+        {
+       // Add the source directory to the include list so that we reproduce the semantics of gfortran
+          frontEndCommandLine.push_back("-I" + getSourceDirectory() );
+        }
+
+  // DQ (5/19/2008): Support for C preprocessing
+     if (requires_C_preprocessor == true)
+        {
+       // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
+
+       // Note that the filename referenced in the Sg_File_Info objects will use the original file name and not 
+       // the generated file name of the CPP generated file.  This is because it gets the filename from the 
+       // SgSourceFile IR node and not from the filename provided on the internal command line generated for call OFP.
+
+          string sourceFilename              = get_sourceFileNameWithPath();
+          string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+
+          frontEndCommandLine.push_back(sourceFileNameOutputFromCpp);
+        }
+       else
+        {
+       // If not being preprocessed, the fortran filename is just the original input source file name.
+          frontEndCommandLine.push_back(get_sourceFileNameWithPath());
+        }
+
+#if 1
+     if ( get_verbose() > 0 )
+          printf ("numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
+#endif
+
+     int openJavaParser_argc    = 0;
+     char** openJavaParser_argv = NULL;
+     CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,openJavaParser_argc,openJavaParser_argv);
+
+  // printf ("openFortranParser_argc = %d openFortranParser_argv = %s \n",openFortranParser_argc,CommandlineProcessing::generateStringFromArgList(openFortranParser_argv,false,false).c_str());
+
+  // DQ (8/19/2007): Setup the global pointer used to pass the SgFile to which the Open Fortran Parser 
+  // should attach the AST.  This is a bit ugly, but the parser interface only takes a commandline so it 
+  // would be more ackward to pass a pointer to a C++ object through the commandline or the Java interface.
+     OpenFortranParser_globalFilePointer = const_cast<SgSourceFile*>(this);
+     ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
+
+     if ( get_verbose() > 0 )
+          printf ("Calling openFortranParser_main(): OpenFortranParser_globalFilePointer = %p \n",OpenFortranParser_globalFilePointer);
+
+#if USE_ROSE_SSL_SUPPORT
+  // The use of the JVM required to support Java is a problem when linking to the SSL library (either -lssl or -lcrypto)
+  // this may be fixed in Java version 6, but this is a hope, it has not been tested.  Java version 6 does
+  // appear to fix the problem with zlib (we think) and this appears to be a similar problem).
+     int frontendErrorLevel = 1;
+
+     printf ("********************************************************************************************** \n");
+     printf ("Fortran support using the JVM is incompatable with the use of the SSL library (fails in jvm).  \n");
+     printf ("To enable the use of Fortran support in ROSE don't use --enable-ssl on configure command line. \n");
+     printf ("********************************************************************************************** \n");
+#else
+
+  // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
+  // int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
+     int frontendErrorLevel = openJavaParser_main (openJavaParser_argc, openJavaParser_argv);
+#endif
+
+     if ( get_verbose() > 0 )
+          printf ("DONE: Calling the openFortranParser_main() function (which loads the JVM) \n");
+
+  // Reset this global pointer after we are done (just to be safe and avoid it being used later and causing strange bugs).
+     OpenFortranParser_globalFilePointer = NULL;
+
+  // printf ("######################### Leaving SgSourceFile::build_Java_AST() ############################ \n");
+
+     return frontendErrorLevel;
+#else
+     fprintf(stderr, "Java language parser not supported \n");
      ROSE_ASSERT(false);
-  // abort();
 
-  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
-	 return -1;
+     return -1;
+#endif
    }
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
-#endif // ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT   
+
 
 
 namespace SgSourceFile_processCppLinemarkers
@@ -5966,6 +6467,7 @@ SgSourceFile::build_PHP_AST()
 void
 SgBinaryComposite::buildAsmAST(string executableFileName)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      if ( get_verbose() > 0 || SgProject::get_verbose() > 0)
           printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
 
@@ -5999,6 +6501,10 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
   // Make sure this node is correctly parented
      SgProject* project = isSgProject(this->get_parent());
      ROSE_ASSERT(project != NULL);
+#else
+     printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
+     ROSE_ASSERT(false);
+#endif
 
 #if 0
      printf ("At base of SgBinaryComposite::buildAsmAST(): exiting... \n");
@@ -6013,7 +6519,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
 int
 SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
 {
-
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     /* Parse the specified binary file to create the AST. Do not disassemble instructions yet. If the file is dynamically
      * linked then optionally load (i.e., parse the container, map sections into process address space, and perform relocation
      * fixups) all dependencies also.  See the BinaryLoader class for details. */
@@ -6030,7 +6536,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
         }
     } else {
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty());
-	BinaryLoader::load(this, get_read_executable_file_format_only());
+        BinaryLoader::load(this, get_read_executable_file_format_only());
     }
 
     /* Disassemble each interpretation */
@@ -6051,6 +6557,10 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     // This is now done below in the Secondary file processing phase.
     // Generate the ELF executable format structure into the AST
     // generateBinaryExecutableFileInformation(executableFileName,asmFile);
+#else
+     printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
+     ROSE_ASSERT(false);
+#endif
 
     int frontendErrorLevel = 0;
     return frontendErrorLevel;
@@ -6110,27 +6620,23 @@ SgBinaryFile::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLin
 int
 SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
    {
-  // printf ("######################## Calling SgSourceFile::buildAST() ##########################\n");
-
+  // printf ("######################## Inside of SgSourceFile::buildAST() ##########################\n");
   // ROSE_ASSERT(false);
 
      int frontendErrorLevel = 0;
      if (get_Fortran_only() == true)
         {
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT           
-
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
-#else
-          fprintf(stderr, "USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT is not defined. Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) and gfortran \n");
-          ROSE_ASSERT(false);
-#endif
-
+// #else
+//        fprintf(stderr, "USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT is not defined. Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) and gfortran \n");
+//        ROSE_ASSERT(false);
+// #endif
 #else
           fprintf(stderr, "ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT is not defined. Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
           ROSE_ASSERT(false);
 #endif
-
         }
        else
         {
@@ -6140,7 +6646,24 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
              }
             else
              {
-               frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
+               if ( get_Java_only() == true )
+                  {
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+                    frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
+// #else
+//           fprintf(stderr, "USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT is not defined. Trying to parse a Java file when Java is not supported (ROSE must be configured using --with-java (default)) and ??? \n");
+//           ROSE_ASSERT(false);
+// #endif
+#else
+          fprintf(stderr, "ROSE_BUILD_JAVA_LANGUAGE_SUPPORT is not defined. Trying to parse a Java file when Java is not supported (ROSE must be configured using --with-java (default)) \n");
+          ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                    frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
+                  }
              }
         }
 
@@ -6645,30 +7168,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      ROSE_ASSERT (false);
 #endif
 
-#if 0
-  // moved to the linking phase function of SgProject
-  // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
-     if (get_openmp_lowering())
-     {
-#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
-       // lib path is available if --with-gomp_omp_runtime_library=XXX is used
-       if (USE_ROSE_GOMP_OPENMP_LIBRARY)
-       {
-         // only linking phase needs this
-         if (!get_compileOnly()) 
-         {
-           string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
-           ROSE_ASSERT (gomp_lib_path.size() != 0);
-           //          compilerNameString.push_back("-L"+gomp_lib_path); 
-           compilerNameString.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
-           compilerNameString.push_back("-lpthread"); 
-         }
-       }
-#endif          
-     }
-
-#endif
-
 #if 0     
      cout<<"Debug: SgFile::buildCompilerCommandLineOptions() compilerNameString is "<<endl;
      for (vector<string>::iterator iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++)
@@ -6682,8 +7181,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
    } // end of SgFile::buildCompilerCommandLineOptions()
 
 
+// DQ (10/14/2010): Removing reference to macros defined in rose_config.h (defined in the header file as a default parameter).
+// int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
 int
-SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
+SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
    {
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Object Code Generation (compile output):");
@@ -6723,6 +7224,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
 
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
+
+     const string compilerNameOrig = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
 
   // BP : 11/13/2001, checking to see that the compiler name is set
      string compilerName = compilerNameOrig + " ";
@@ -6861,8 +7364,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
 // three cases: 1. preprocessing only
 //              2. compilation: 
 //              3. linking:
+// int SgProject::compileOutput( const std::string& compilerName )
 int
-SgProject::compileOutput( const std::string& compilerName )
+SgProject::compileOutput()
    {
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Backend Compilation (SgProject):");
@@ -6871,10 +7375,12 @@ SgProject::compileOutput( const std::string& compilerName )
      int linkingReturnVal = 0;
      int i = 0;
 
+     std::string compilerName;
+
      if (numberOfFiles() == 0)
         {
        // printf ("Note in SgProject::compileOutput(%s): numberOfFiles() == 0 \n",compilerName.c_str());
-          printf ("ROSE using %s as backend compiler: no input files \n",compilerName.c_str());
+       // printf ("ROSE using %s as backend compiler: no input files \n",compilerName.c_str());
 
        // DQ (8/24/2008): We can't recreate same behavior on exit as GNU on exit with no
        // files since it causes the test immediately after building librose.so to fail.
@@ -6908,7 +7414,7 @@ SgProject::compileOutput( const std::string& compilerName )
        // DQ (8/6/2006): Test for g++ and use gcc with "-E" option 
        // (makes a different for header file processing in ARES configuration)
        // string compilerNameString = compilerName;
-          string& compilerNameString = originalCommandLine[0];
+          string & compilerNameString = originalCommandLine[0];
           if (get_C_only() == true)
              {
                compilerNameString = BACKEND_C_COMPILER_NAME_WITH_PATH;
@@ -6978,7 +7484,8 @@ SgProject::compileOutput( const std::string& compilerName )
             // DQ (8/13/2006): Only use the first file (I don't think this
             // makes sense with multiple files specified on the commandline)!
             // int localErrorCode = file.compileOutput(i, compilerName);
-               int localErrorCode = file.compileOutput(0, compilerName);
+            // int localErrorCode = file.compileOutput(0, compilerName);
+               int localErrorCode = file.compileOutput(0);
 
                if (localErrorCode > errorCode)
                     errorCode = localErrorCode;
@@ -6999,15 +7506,16 @@ SgProject::compileOutput( const std::string& compilerName )
            // In this case, we cannot have a single one level command line to compile and link those two files
            // We have to compile each of them first and finally link the object files.
 #ifndef _MSC_VER
-		  // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
-		  // todo windows: put this back in.
-		  linkingReturnVal = link (compilerName);
+     // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
+     // todo windows: put this back in.
+     // linkingReturnVal = link (compilerName);
+        linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
 #else
-#pragma message ("sageSupport.C : linkingReturnVal = link (compilerName); not implemented yet.")
+   #pragma message ("sageSupport.C : linkingReturnVal = link (compilerName); not implemented yet.")
 #endif
         } // end if preprocessing-only is false
 
-     //return errorCode;
+  // return errorCode;
      return errorCode + linkingReturnVal;
    }
 
@@ -7045,9 +7553,10 @@ SgFile::isPrelinkPhase() const
   // return (project == NULL) ? false : project->get_prelink();
    }
 
+// DQ (10/14/2010): Removing reference to macros defined in rose_config.h (defined in the header file as a default parameter).
 //! Preprocessing command line and pass it to generate the final linking command line
-int
-SgProject::link ( std::string linkerName )
+// int SgProject::link ()
+int SgProject::link ( std::string linkerName )
    {
   // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
   // or perhaps define a more simple function to use more directly.
@@ -7086,6 +7595,7 @@ SgProject::link ( std::string linkerName )
   // error checking
      if (numberOfFiles()!= 0) 
           ROSE_ASSERT (argcArgvList.size() > 1);
+
      ROSE_ASSERT(linkerName != "");
 
   // strip out any rose options before passing the command line.
@@ -7156,11 +7666,12 @@ SgProject::link ( std::string linkerName )
      return errorCode;
    }
 
-int
-SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
+// DQ (10/14/2010): Removing reference to macros defined in rose_config.h (defined in the header file as a default parameter).
+// int SgProject::link ( const std::vector<std::string>& argv )
+int SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
    {
-       // argv.size could be 0 after strip off compiler name, original source file, etc
-      // ROSE_ASSERT(argv.size() > 0);
+  // argv.size could be 0 after strip off compiler name, original source file, etc
+  // ROSE_ASSERT(argv.size() > 0);
 
   // This link function will be moved into the SgProject IR node when complete
      const std::string whiteSpace = " ";
@@ -7259,8 +7770,9 @@ SgFile::usage ( int status )
        // it would be nice to insert the version of ROSE being used (using the VERSION macro)
           fputs(
 "\n"
-"This ROSE translator provides a means for operating on C, C++, and Fortran\n"
-"source code, as well as on x86, ARM, and PowerPC object code.\n"
+"This ROSE translator provides a means for operating on C, C++, Fortran and Java\n"
+"source code; as well as on x86, ARM, and PowerPC executable code (plus object files \n"
+"and libraries).\n"
 "\n"
 "Usage: rose [OPTION]... FILENAME...\n"
 "\n"
@@ -7279,6 +7791,8 @@ SgFile::usage ( int status )
 "                             follow C99 standard, disable C++\n"
 "     -rose:Cxx_only, -rose:Cxx\n"
 "                             follow C++ 89 standard\n"
+"     -rose:Java, -rose:java, -rose:J, -rose:j\n"
+"                             compile Java code (work in progress)\n"
 "     -rose:OpenMP, -rose:openmp\n"   
 "                             follow OpenMP 3.0 specification for C/C++ and Fortran, perform one of the following actions:\n"
 "     -rose:OpenMP:parse_only, -rose:openmp:parse_only\n"   
@@ -7290,6 +7804,10 @@ SgFile::usage ( int status )
 "                             targeting GCC GOMP runtime library\n"
 "     -rose:UPC_only, -rose:UPC\n"   
 "                             follow Unified Parallel C 1.2 specification\n"
+"     -rose:UPCxx_only, -rose:UPCxx\n"
+"                             allows C++ within UPC (follows UPC 1.2 but simpily allows \n"
+"                             using C++ as the base language) (not a legitimate language, \n"
+"                             since there is no backend compiler to support this).\n"
 "     -rose:upc_threads n     Enable UPC static threads compilation with n threads\n"
 "                             n>=1: static threads; dynamic(default) otherwise\n"
 "     -rose:Fortran, -rose:F, -rose:f\n"
@@ -7421,6 +7939,7 @@ SgFile::usage ( int status )
 "Control Fortran frontend processing:\n"
 "     -rose:cray_pointer_support\n"
 "                             turn on internal support for cray pointers\n"
+"                             (Note: not implemented in front-end (OFP) yet.)\n"
 "     -fortran:XXX            pass -XXX to independent semantic analysis\n"
 "                             (useful for turning on specific warnings in front-end)\n"
 "\n"
@@ -7827,7 +8346,7 @@ SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* current
           case PreprocessingInfo::ClinkageSpecificationStart:
           case PreprocessingInfo::ClinkageSpecificationEnd:
              {
-               printf ("Error: these cases chould not generate a new IR node (directiveTypeName = %s) \n",PreprocessingInfo::directiveTypeName(directive).c_str());
+               printf ("Error: these cases could not generate a new IR node (directiveTypeName = %s) \n",PreprocessingInfo::directiveTypeName(directive).c_str());
                ROSE_ASSERT(false);
                break;
              }
@@ -8110,1037 +8629,67 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 	return returnSymbol;
 }
 #endif
-// TODO move the following OpenMP processing code into a separated source file
-// maybe in src/midend/openmpSupport ?
-// -----------------------------------------------------------------------------
 
-// an internal data structure to avoid redundant AST traversal to find OpenMP pragmas
-static std::list<SgPragmaDeclaration* > omp_pragma_list; 
 
-// find all SgPragmaDeclaration nodes within a file and parse OpenMP pragmas into OmpAttribute info.
-void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
-{
-  ROSE_ASSERT(sageFilePtr != NULL);
-  if (sageFilePtr->get_openmp() == false)
-    return;
-  // For Fortran, search comments for OpenMP directives
-  if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only()||
-      sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
-  {
-    parse_fortran_openmp(sageFilePtr);
-  } //end if (fortran)
-  else
-  {
-    // For C/C++, search pragma declarations for OpenMP directives 
-    std::vector <SgNode*> all_pragmas = NodeQuery::querySubTree (sageFilePtr, V_SgPragmaDeclaration);
-    std::vector<SgNode*>::iterator iter;
-    for(iter=all_pragmas.begin();iter!=all_pragmas.end();iter++)
-    {
-      SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
-      ROSE_ASSERT(pragmaDeclaration != NULL);
-      SageInterface::replaceMacroCallsWithExpandedStrings(pragmaDeclaration);
-      string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
-      istringstream istr(pragmaString);
-      std::string key;
-      istr >> key;
-      if (key == "omp")
-      {
-	// Liao, 3/12/2009
-	// Outliner may move pragma statements to a new file
-	// after the pragma has been attached OmpAttribute.
-	// We have to skip generating the attribute again in the new file
-	OmpAttributeList* previous = getOmpAttributeList(pragmaDeclaration);
-	// store them into a buffer, reused by build_OpenMP_AST()
-        omp_pragma_list.push_back(pragmaDeclaration);
+// DQ (10/19/2010): This is moved from src/ROSETTA/Grammar/Cxx_GlobalDeclarations.macro to here
+// since it is code in the header files that we would like to avoid.  My fear is that because of
+// the way it works it is required to be inlined onto the stack of the calling function.
+// #ifndef ROSE_PREVENT_CONSTRUCTION_ON_STACK
+// #define ROSE_PREVENT_CONSTRUCTION_ON_STACK
+// inline void preventConstructionOnStack(SgNode* n)
+void preventConstructionOnStack(SgNode* n)
+   {
+#ifndef NDEBUG
+#ifdef _MSC_VER
+  // DQ (11/28/2009): This was a fix suggested by Robb.
+  // void* frameaddr = 0;
+  // Build an "auto" variable (should be located near the stack frame, I think).
+  // tps (12/4/2009)
+#if _MSC_VER >= 1600  // 1600 == VC++ 10.0
+  // ../Grammar/Cxx_GlobalDeclarations.macro(32): error C3530: 'auto' cannot be combined with any other type-specifier
+     unsigned int nonStackFrameReferenceVariable;
+    #pragma message ( " Cxx_GlobalDeclarations.macro: __builtin_frame_address not known in Windows. Workaround in VS 10.0")
+#else
+     auto unsigned int nonStackFrameReferenceVariable;
+#endif
+     void* frameaddr = &nonStackFrameReferenceVariable;
 
-	if (previous == NULL )
-	{
-	  // Call parser
-	  omp_parser_init(pragmaDeclaration,pragmaString.c_str());
-	  omp_parse();
-	  OmpAttribute* attribute = getParsedDirective();
-	  //cout<<"sage_gen_be.C:23758 debug:\n"<<pragmaString<<endl;
-	  //attribute->print();//debug only for now
-	  addOmpAttribute(attribute,pragmaDeclaration);
-          //cout<<"debug: attachOmpAttributeInfo() for a pragma:"<<pragmaString<<"at address:"<<pragmaDeclaration<<endl;
-          //cout<<"file info for it is:"<<pragmaDeclaration->get_file_info()->get_filename()<<endl;
-          
-#if 1 // Liao, 2/12/2010, this could be a bad idea. It causes trouble in comparing 
-        //user-defined and compiler-generated OmpAttribute.
-	  // We attach the attribute redundantly on affected loops also
-	  // for easier loop handling later on in autoTuning's outlining step (reproducing lost pragmas)
-	  if (attribute->getOmpDirectiveType() ==e_for ||attribute->getOmpDirectiveType() ==e_parallel_for)
-	  {
-	    SgForStatement* forstmt = isSgForStatement(getNextStatement(pragmaDeclaration));
-	    ROSE_ASSERT(forstmt != NULL);
-	    //forstmt->addNewAttribute("OmpAttribute",attribute);
-	    addOmpAttribute(attribute,forstmt);
-	  }
+#else
+  // GNU compiler specific code
+     void* frameaddr = __builtin_frame_address(0);
+#endif // _MSC_VER
+
+     signed long dist = (char*)n - (char*)frameaddr;
+
+  // DQ (12/6/2009): This fails for the 4.0.4 compiler, but only in 64-bit when run with Hudson.
+  // I can't reporduce the problem using the 4.0.4 compiler, but it is uniformally a problem
+  // since it fails on all tests (via hudson) which are using Boost 1.40 and either minimal or
+  // full configurations (and also for the tests of the EDG binary).
+  // assert (dist < -10000 || dist > 10000);
+
+#ifdef __GNUC__
+  // Note that this is a test of the backend compiler, it seems that we don't track
+  // the compiler used to compile ROSE, but this is what we would want.
+
+#if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == 0)
+  // For the GNU 4.0.x make this a warning, since it appears to fail due to a 
+  // poor implementaiton for just this compiler and no other version of GNU.
+  // Just that we are pringing this warning is a problem for many tests (maybe this should be enable within verbose mode).
+     if (dist < -10000 || dist > 10000)
+        {
+#if 0
+          printf ("Warning: preventConstructionOnStack() reporting object on stack, not allowed. dist = %ld \n",dist);
 #endif
         }
-      }
-    }// end for
-  }
-}
-// Clause node builders
-//----------------------------------------------------------
+#else
+  // For all other versions of the GNU compiler make this an error.
+     assert (dist < -10000 || dist > 10000);
+#endif
+#else
+  // For all other compilers make this an error (e.g. on Windows MSVC, Intel icc, etc.).
+     assert (dist < -10000 || dist > 10000);
+#endif // __GNUC__
 
-//! Build SgOmpDefaultClause from OmpAttribute, if any
-SgOmpDefaultClause * buildOmpDefaultClause(OmpAttribute* att)
-{
-   ROSE_ASSERT(att != NULL);
-   if (!att->hasClause(e_default))
-     return NULL;
-   //grab default option  
-   omp_construct_enum dv = att->getDefaultValue();
-   SgOmpClause::omp_default_option_enum sg_dv;
-   switch (dv)
-   {
-     case e_default_none:
-      sg_dv = SgOmpClause::e_omp_default_none;
-      break;
-     case e_default_shared:
-      sg_dv = SgOmpClause::e_omp_default_shared;
-      break;
-     case e_default_private:
-      sg_dv = SgOmpClause::e_omp_default_private;
-      break;
-     case e_default_firstprivate:
-      sg_dv = SgOmpClause::e_omp_default_firstprivate;
-      break;
-    default:
-      {
-        cerr<<"error: buildOmpDefaultClase() Unacceptable default option from OmpAttribute:"
-          <<OmpSupport::toString(dv)<<endl;
-       ROSE_ASSERT(false) ;  
-      }
-   }//end switch
-   SgOmpDefaultClause* result = new SgOmpDefaultClause(sg_dv);
-   setOneSourcePositionForTransformation(result);
-   ROSE_ASSERT(result);
-   return result;
-}
-
-//Build if clause
-SgOmpExpressionClause* buildOmpExpressionClause(OmpAttribute* att, omp_construct_enum clause_type)
-{
-  ROSE_ASSERT(att != NULL);
-  if (!att->hasClause(clause_type)) 
-    return NULL;
-  SgOmpExpressionClause * result = NULL ;   
-  switch (clause_type)
-  {
-    case e_collapse:
-      {
-        ROSE_ASSERT(att->getExpression(e_collapse).second!=NULL);
-
-        result = new SgOmpCollapseClause(att->getExpression(e_collapse).second);
-        break;
-      }
-    case e_if:
-      {
-        ROSE_ASSERT(att->getExpression(e_if).second!=NULL);
-        result = new SgOmpIfClause(att->getExpression(e_if).second);
-        break;
-      }
-    case e_num_threads:
-      {
-        ROSE_ASSERT(att->getExpression(e_num_threads).second!=NULL);
-        result = new SgOmpNumThreadsClause(att->getExpression(e_num_threads).second);
-        break;
-      }
-    default:
-      {
-        printf("error in buildOmpExpressionClause(): unacceptable clause type:%s\n",
-            OmpSupport::toString(clause_type).c_str());
-        ROSE_ASSERT(false);
-      }
-  }
-
-  ROSE_ASSERT(result != NULL);
-  setOneSourcePositionForTransformation(result);
-  return result;
-}
-
-SgOmpNowaitClause * buildOmpNowaitClause(OmpAttribute* att)
-{
-  ROSE_ASSERT(att != NULL);
-  if (!att->hasClause(e_nowait))
-    return NULL;
-  SgOmpNowaitClause* result = new SgOmpNowaitClause();
-  ROSE_ASSERT(result);
-  setOneSourcePositionForTransformation(result);
-  return result;
-}
-SgOmpOrderedClause * buildOmpOrderedClause(OmpAttribute* att)
-{
-  ROSE_ASSERT(att != NULL);
-  if (!att->hasClause(e_ordered_clause))
-    return NULL;
-  SgOmpOrderedClause* result = new SgOmpOrderedClause();
-  ROSE_ASSERT(result);
-  setOneSourcePositionForTransformation(result);
-  return result;
-}
-
-SgOmpUntiedClause * buildOmpUntiedClause(OmpAttribute* att)
-{
-  ROSE_ASSERT(att != NULL);
-  if (!att->hasClause(e_untied))
-    return NULL;
-  SgOmpUntiedClause* result = new SgOmpUntiedClause();
-  ROSE_ASSERT(result);
-  setOneSourcePositionForTransformation(result);
-  return result;
-}
-
-//Build SgOmpScheduleClause from OmpAttribute, if any
-SgOmpScheduleClause* buildOmpScheduleClause(OmpAttribute* att)
-{
-  ROSE_ASSERT(att != NULL);
-  if (!att->hasClause(e_schedule))
-    return NULL;
-  // convert OmpAttribute schedule kind to SgOmpClause schedule kind
-  omp_construct_enum oa_kind = att->getScheduleKind();
-  SgOmpClause::omp_schedule_kind_enum sg_kind;
-  switch (oa_kind)
-  {
-    case   e_schedule_static:
-      sg_kind = SgOmpClause::e_omp_schedule_static;
-      break;
-    case   e_schedule_dynamic:
-      sg_kind = SgOmpClause::e_omp_schedule_dynamic;
-      break;
-    case   e_schedule_guided:
-      sg_kind = SgOmpClause::e_omp_schedule_guided;
-      break;
-    case   e_schedule_auto:
-      sg_kind = SgOmpClause::e_omp_schedule_auto;
-      break;
-    case   e_schedule_runtime:
-      sg_kind = SgOmpClause::e_omp_schedule_runtime;
-      break;
-    default:
-      {
-        cerr<<"error: buildOmpScheduleClause() Unacceptable schedule kind from OmpAttribute:"
-          <<OmpSupport::toString(oa_kind)<<endl;
-        ROSE_ASSERT(false) ;  
-      }
-  }
-  SgExpression* chunksize_exp = att->getExpression(e_schedule).second;
- // ROSE_ASSERT(chunksize_exp != NULL); // chunk size is optional
-  // finally build the node
-  SgOmpScheduleClause* result = new SgOmpScheduleClause(sg_kind, chunksize_exp);
-//  setOneSourcePositionForTransformation(result);
-  ROSE_ASSERT(result != NULL);
-  return  result;
-}
-
-//! A helper function to convert OmpAttribute reduction operator to SgClause reduction operator
-//TODO move to sageInterface?
-static   SgOmpClause::omp_reduction_operator_enum toSgOmpClauseReductionOperator(omp_construct_enum at_op)
-{
-  SgOmpClause::omp_reduction_operator_enum result = SgOmpClause::e_omp_reduction_unkown;
-  switch (at_op)
-  {
-    case e_reduction_plus: //+
-      {
-        result = SgOmpClause::e_omp_reduction_plus;
-        break;
-      }
-    case e_reduction_mul:  //*
-       {
-        result = SgOmpClause::e_omp_reduction_mul;
-        break;
-      }
-   case e_reduction_minus: // -
-       {
-        result = SgOmpClause::e_omp_reduction_minus;
-        break;
-      }
-     // C/C++ only
-    case e_reduction_bitand: // &
-       {
-        result = SgOmpClause::e_omp_reduction_bitand;
-        break;
-      }
-   case e_reduction_bitor:  // |
-       {
-        result = SgOmpClause::e_omp_reduction_bitor;
-        break;
-      }
-   case e_reduction_bitxor:  // ^
-       {
-        result = SgOmpClause::e_omp_reduction_bitxor;
-        break;
-      }
-   case e_reduction_logand:  // &&
-       {
-        result = SgOmpClause::e_omp_reduction_logand;
-        break;
-      }
-   case e_reduction_logor:   // ||
-      {
-        result = SgOmpClause::e_omp_reduction_logor;
-        break;
-      }
-
-      // fortran operator
-    case e_reduction_and: // .and.
-       {
-        result = SgOmpClause::e_omp_reduction_and;
-        break;
-      }
-   case e_reduction_or: // .or.
-       {
-        result = SgOmpClause::e_omp_reduction_or;
-        break;
-      }
-   case e_reduction_eqv:   // fortran .eqv.
-       {
-        result = SgOmpClause::e_omp_reduction_eqv;
-        break;
-      }
-   case e_reduction_neqv:   // fortran .neqv.
-      // reduction intrinsic procedure name for Fortran
-       {
-        result = SgOmpClause::e_omp_reduction_neqv;
-        break;
-      }
-   case e_reduction_max:
-       {
-        result = SgOmpClause::e_omp_reduction_max;
-        break;
-      }
-   case e_reduction_min:
-       {
-        result = SgOmpClause::e_omp_reduction_min;
-        break;
-      }
-   case e_reduction_iand:
-       {
-        result = SgOmpClause::e_omp_reduction_iand;
-        break;
-      }
-   case e_reduction_ior:
-       {
-        result = SgOmpClause::e_omp_reduction_ior;
-        break;
-      }
-   case e_reduction_ieor:
-      {
-        result = SgOmpClause::e_omp_reduction_ieor;
-        break;
-      }
-    default:
-      {
-        printf("error: unacceptable omp construct enum for reduction operator conversion:%s\n", OmpSupport::toString(at_op).c_str());
-        ROSE_ASSERT(false);
-        break;
-      }
-  }
-  ROSE_ASSERT(result != SgOmpClause::e_omp_reduction_unkown);
-  return result;
-}
-//A helper function to set SgVarRefExpPtrList  from OmpAttribute's construct-varlist map
-static void setClauseVariableList(SgOmpVariablesClause* target, OmpAttribute* att, omp_construct_enum key)
-{
-  ROSE_ASSERT(target&&att);
-  // build variable list
-  std::vector<std::pair<std::string,SgNode* > > varlist = att->getVariableList(key);
-#if 0  
-  // Liao 6/10/2010 we relax this assertion to workaround 
-  //  shared(num_threads),  a clause keyword is used as a variable 
-  //  we skip variable list of shared() for now so shared clause will have empty variable list
-#endif  
-   ROSE_ASSERT(varlist.size()!=0);
-  std::vector<std::pair<std::string,SgNode* > >::iterator iter;
-  for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
-  {
-    SgInitializedName* iname = isSgInitializedName((*iter).second);
-    ROSE_ASSERT(iname !=NULL);
-    //target->get_variables().push_back(iname);
-    target->get_variables().push_back(buildVarRefExp(iname));
-  }
-}
-
-//! Try to build a reduction clause with a given operation type from OmpAttribute
-SgOmpReductionClause* buildOmpReductionClause(OmpAttribute* att, omp_construct_enum reduction_op)
-{
-  ROSE_ASSERT(att !=NULL);
-  if (!att->hasReductionOperator(reduction_op))
-    return NULL;
-  SgOmpClause::omp_reduction_operator_enum  sg_op = toSgOmpClauseReductionOperator(reduction_op); 
-  SgOmpReductionClause* result = new SgOmpReductionClause(sg_op);
-  setOneSourcePositionForTransformation(result);
-  ROSE_ASSERT(result != NULL);
-
-  // build variable list
-  setClauseVariableList(result, att, reduction_op); 
-  return result;
-}
-
-//Build one of the clauses with a variable list
-SgOmpVariablesClause * buildOmpVariableClause(OmpAttribute* att, omp_construct_enum clause_type)
-{
-  ROSE_ASSERT(att != NULL);
-  if (!att->hasClause(clause_type))
-    return NULL;
-  SgOmpVariablesClause* result = NULL;  
-  switch (clause_type) 
-  {
-    case e_copyin:
-      {
-        result = new SgOmpCopyinClause();
-        break;
-      }
-    case e_copyprivate:
-      {
-        result = new SgOmpCopyprivateClause();
-        break;
-      }
-    case e_firstprivate:
-      {
-        result = new SgOmpFirstprivateClause();
-        break;
-      }
-    case e_lastprivate:
-      {
-        result = new SgOmpLastprivateClause();
-        break;
-      }
-    case e_private:
-      {
-        result = new SgOmpPrivateClause();
-        break;
-      }
-    case e_shared:
-      {
-        result = new SgOmpSharedClause();
-        break;
-      }
-    case e_reduction:
-      {
-        printf("error: buildOmpVariableClause() does not handle reduction\n");
-        ROSE_ASSERT(false);
-      }
-    default:
-      {
-        cerr<<"error: buildOmpVariableClause() Unacceptable clause type:"
-          <<OmpSupport::toString(clause_type)<<endl;
-        ROSE_ASSERT(false) ;  
-      }
-  } //end switch
-
-  //build varlist
-  ROSE_ASSERT(result != NULL);
-  setClauseVariableList(result, att, clause_type);
-  return result;
-}
-
-// Build a single SgOmpClause from OmpAttribute for type c_clause_type, excluding reduction clauses
-SgOmpClause* buildOmpNonReductionClause(OmpAttribute* att, omp_construct_enum c_clause_type)
-{
-  SgOmpClause* result = NULL;
-  ROSE_ASSERT(att != NULL);
-  ROSE_ASSERT(isClause(c_clause_type));
-  if (!att->hasClause(c_clause_type))
-    return NULL;
-  switch (c_clause_type) 
-  {
-    case e_default:
-      {
-        result = buildOmpDefaultClause(att); 
-        break;
-      }
-    case e_nowait:
-      {
-        result = buildOmpNowaitClause(att); 
-        break;
-      }
-    case e_ordered_clause:
-      {
-        result = buildOmpOrderedClause(att); 
-        break;
-      }
-   case e_schedule:
-      {
-        result = buildOmpScheduleClause(att);
-        break;
-      }
-   case e_untied:
-      {
-        result = buildOmpUntiedClause(att); 
-        break;
-      }
-    case e_if:
-    case e_collapse:
-    case e_num_threads:
-      {
-        result = buildOmpExpressionClause(att, c_clause_type);
-        break;
-      }
-    case e_copyin:  
-    case e_copyprivate:  
-    case e_firstprivate:  
-    case e_lastprivate:
-    case e_private:
-    case e_shared:
-      {
-        result = buildOmpVariableClause(att, c_clause_type);
-        break;
-      }
-    case e_reduction:
-      {
-        printf("error: buildOmpNonReductionClause() does not handle reduction. Please use buildOmpReductionClause().\n");
-        ROSE_ASSERT(false);
-        break;
-      }
-    default:
-      {
-        printf("Warning: buildOmpNoReductionClause(): unhandled clause type: %s\n", OmpSupport::toString(c_clause_type).c_str());
-        ROSE_ASSERT(false);
-        break;
-      }
-
-  }
-  ROSE_ASSERT(result != NULL);
-  setOneSourcePositionForTransformation(result);
-  return result;
-}
-
-//! Get the affected structured block from an OmpAttribute
-SgStatement* getOpenMPBlockFromOmpAttribte (OmpAttribute* att)
-{
-  SgStatement* result = NULL;
-  ROSE_ASSERT(att != NULL);
-  omp_construct_enum c_clause_type = att->getOmpDirectiveType();
-
-  // Some directives have no followed statements/blocks 
-  if (!isDirectiveWithBody(c_clause_type))
-    return NULL;
-
-  SgNode* snode = att-> getNode ();
-  ROSE_ASSERT(snode != NULL); //? not sure for Fortran
-  SgFile * file = getEnclosingFileNode (snode);
-  if (file->get_Fortran_only()||file->get_F77_only()||file->get_F90_only()||
-      file->get_F95_only() || file->get_F2003_only())
-  { //Fortran check setNode()
-    printf("buildOmpParallelStatement() Fortran is not handled yet\n");
-  }
-  else // C/C++ must be pragma declaration statement
-  {
-    SgPragmaDeclaration* pragmadecl = att->getPragmaDeclaration();
-    result = getNextStatement(pragmadecl);
-  }
-
-//  ROSE_ASSERT(result!=NULL);
-// Not all pragma decl has a structured body!!
-  return result;
-}
-
-//add clauses to target based on OmpAttribute
-static void appendOmpClauses(SgOmpClauseBodyStatement* target, OmpAttribute* att)
-{
-  ROSE_ASSERT(target && att);
-  // for Omp statements with clauses
-  // must copy those clauses here, since they will be deallocated later on
-  vector<omp_construct_enum> clause_vector = att->getClauses();
-  std::vector<omp_construct_enum>::iterator citer;
-  for (citer = clause_vector.begin(); citer != clause_vector.end(); citer++)
-  {
-    omp_construct_enum c_clause = *citer;
-    if (!isClause(c_clause))
-    {
-      //      printf ("Found a construct which is not a clause:%s\n within attr:%p\n", OmpSupport::toString(c_clause).c_str(), att);
-      ROSE_ASSERT(isClause(c_clause));
-      continue;
-    }
-    else
-    {
-      // printf ("Found a clause construct:%s\n", OmpSupport::toString(c_clause).c_str());
-    }
-    // special handling for reduction
-    if (c_clause == e_reduction) 
-    {
-      std::vector<omp_construct_enum> rops  = att->getReductionOperators();
-      ROSE_ASSERT(rops.size()!=0);
-      std::vector<omp_construct_enum>::iterator iter;
-      for (iter=rops.begin(); iter!=rops.end();iter++)
-      {
-        omp_construct_enum rop = *iter;
-        SgOmpClause* sgclause = buildOmpReductionClause(att, rop);
-        target->get_clauses().push_back(sgclause);
-      }
-    }
-    else 
-    {
-      SgOmpClause* sgclause = buildOmpNonReductionClause(att, c_clause);
-      target->get_clauses().push_back(sgclause);
-      sgclause->set_parent(target); // is This right?
-    }
-  }
-}
-
-// Directive statement builders
-//----------------------------------------------------------
-//! Build a SgOmpBodyStatement
-// handle body and optional clauses for it
-SgOmpBodyStatement * buildOmpBodyStatement(OmpAttribute* att)
-{
-  SgStatement* body = getOpenMPBlockFromOmpAttribte(att);
-  //Must remove the body from its previous parent
-  removeStatement(body);
-
-  if (body==NULL)
-  {
-    cerr<<"error: buildOmpBodyStatement() found empty body for "<<att->toOpenMPString()<<endl;
-    ROSE_ASSERT(body != NULL);
-  }
-  SgOmpBodyStatement* result = NULL;
-  switch (att->getOmpDirectiveType())
-  {
-    case e_atomic:
-      result = new SgOmpAtomicStatement(NULL, body); 
-      break;
-    case e_critical:
-      result = new SgOmpCriticalStatement(NULL, body, SgName(att->getCriticalName())); 
-      break;
-    case e_master:
-      result = new SgOmpMasterStatement(NULL, body); 
-      break;
-    case e_ordered_directive:
-      result = new SgOmpOrderedStatement(NULL, body); 
-      break;
-    case e_section:
-      result = new SgOmpSectionStatement(NULL, body); 
-      break;
-    case e_parallel:
-      result = new SgOmpParallelStatement(NULL, body); 
-      break;
-    case e_for:  
-      result = new SgOmpForStatement(NULL, body); 
-      break;
-    case e_single:
-      result = new SgOmpSingleStatement(NULL, body); 
-      break;
-   case e_sections:
-      result = new SgOmpSectionsStatement(NULL, body); 
-      break;
-   case e_task:
-      result = new SgOmpTaskStatement(NULL, body); 
-     // cout<<"Debug:sageSupport.C Found an OmpAttribute from a task pragma"<<endl;
-      break;
-    default:
-      {
-        cerr<<"error: unacceptable omp construct for buildOmpBodyStatement():"<<OmpSupport::toString(att->getOmpDirectiveType())<<endl;
-        ROSE_ASSERT(false);
-      }
-  }
-  ROSE_ASSERT(result != NULL);
-  setOneSourcePositionForTransformation(result);
-  //set the current parent
-  body->set_parent(result);
-  // add clauses for those SgOmpClauseBodyStatement
-  if (isSgOmpClauseBodyStatement(result))
-    appendOmpClauses(isSgOmpClauseBodyStatement(result), att);
-  return result;
-}
-
-SgOmpFlushStatement* buildOmpFlushStatement(OmpAttribute* att)
-{
-  ROSE_ASSERT(att != NULL);
-  SgOmpFlushStatement* result = new SgOmpFlushStatement();
-  ROSE_ASSERT(result !=NULL);
-  setOneSourcePositionForTransformation(result);
-  // build variable list
-  std::vector<std::pair<std::string,SgNode* > > varlist = att->getVariableList(e_flush);
- // ROSE_ASSERT(varlist.size()!=0); // can have empty variable list
-  std::vector<std::pair<std::string,SgNode* > >::iterator iter;
-  for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
-  {
-    SgInitializedName* iname = isSgInitializedName((*iter).second);
-    ROSE_ASSERT(iname !=NULL);
-    result->get_variables().push_back(buildVarRefExp(iname));
-  }
-  return result;
-}
-
-SgOmpThreadprivateStatement* buildOmpThreadprivateStatement(OmpAttribute* att)
-{
-  ROSE_ASSERT(att != NULL);
-  SgOmpThreadprivateStatement* result = new SgOmpThreadprivateStatement();
-  ROSE_ASSERT(result !=NULL);
-  setOneSourcePositionForTransformation(result);
-  // build variable list
-  std::vector<std::pair<std::string,SgNode* > > varlist = att->getVariableList(e_threadprivate);
-  ROSE_ASSERT(varlist.size()!=0);
-  std::vector<std::pair<std::string,SgNode* > >::iterator iter;
-  for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
-  {
-    SgInitializedName* iname = isSgInitializedName((*iter).second);
-    ROSE_ASSERT(iname !=NULL);
-    result->get_variables().push_back(buildVarRefExp(iname));
-  }
-  result->set_definingDeclaration(result);
-  return result;
-}
-//! Build nodes for combined OpenMP directives:
-//    parallel for
-//    parallel sections
-//    parallel workshare //TODO fortran later on
-// We don't provide dedicated Sage node for combined directives, 
-// so we separate them in the AST as 1st and 2nd directive statement
-// the first is always parallel and we return it from the function
-SgOmpParallelStatement* buildOmpParallelStatementFromCombinedDirectives(OmpAttribute* att)
-{
-  ROSE_ASSERT(att != NULL);
-  SgStatement* body = getOpenMPBlockFromOmpAttribte(att);
-  //Must remove the body from its previous parent
-   removeStatement(body);
-  ROSE_ASSERT(body != NULL);
-
-  // build the 2nd directive node first
-  SgStatement * second_stmt = NULL; 
-  switch (att->getOmpDirectiveType())  
-  {
-    case e_parallel_for:
-      {
-        second_stmt = new SgOmpForStatement(NULL, body);
-        setOneSourcePositionForTransformation(second_stmt);
-        break;
-      }
-    case e_parallel_sections:
-      {
-        second_stmt = new SgOmpSectionsStatement(NULL, body);
-        setOneSourcePositionForTransformation(second_stmt); 
-        break;
-      }
-      //   case e_parallel_workshare: //TODO fortran
-     default:
-      {
-        cerr<<"error: unacceptable directive type in buildOmpParallelStatementFromCombinedDirectives(): "<<OmpSupport::toString(att->getOmpDirectiveType())<<endl;
-        ROSE_ASSERT(false);
-      }
-  } //end switch
-
-  ROSE_ASSERT(second_stmt);
-  body->set_parent(second_stmt);
-
-  // build the 1st directive node then
-  SgOmpParallelStatement* first_stmt = new SgOmpParallelStatement(NULL, second_stmt); 
-  setOneSourcePositionForTransformation(first_stmt);
-  second_stmt->set_parent(first_stmt);
-
-  // allocate clauses to them, let the 2nd one have higher priority 
-  // if a clause can be allocated to either of them
-  vector<omp_construct_enum> clause_vector = att->getClauses();
-  std::vector<omp_construct_enum>::iterator citer;
-  for (citer = clause_vector.begin(); citer != clause_vector.end(); citer++)
-  {
-    omp_construct_enum c_clause = *citer;
-    if (!isClause(c_clause))
-    {
-      printf ("Found a construct which is not a clause:%s\n within attr:%p\n", OmpSupport::toString(c_clause).c_str(), att);
-      ROSE_ASSERT(isClause(c_clause));
-      continue;
-    }
-    else
-    {
-      // printf ("Found a clause construct:%s\n", OmpSupport::toString(c_clause).c_str());
-    }
-
-    switch (c_clause)
-    {
-      // clauses allocated to omp parallel
-      case e_if:
-      case e_num_threads:
-      case e_default:
-      case e_shared:
-      case e_copyin:
-        {
-          SgOmpClause* sgclause = buildOmpNonReductionClause(att, c_clause);
-          ROSE_ASSERT(sgclause != NULL);
-          first_stmt->get_clauses().push_back(sgclause);
-          break;
-        }
-      // unique clauses allocated to omp for
-     case e_schedule:
-      case e_collapse:
-      case e_ordered_clause:
-        {
-          if (!isSgOmpForStatement(second_stmt))
-          {
-            printf("error: unacceptable clauses in parallel for\n");
-            att->print();
-            ROSE_ASSERT(false);
-          }
-        }
-     case e_private:
-      case e_firstprivate:
-      case e_lastprivate:
-        // case e_nowait: // nowait should not appear with combined directives
-        {
-          SgOmpClause* sgclause = buildOmpNonReductionClause(att, c_clause);
-          ROSE_ASSERT(sgclause != NULL);
-          // TODO parallel workshare 
-          isSgOmpClauseBodyStatement(second_stmt)->get_clauses().push_back(sgclause);
-          break;
-        }
-      case e_reduction: //special handling for reduction
-        {
-          std::vector<omp_construct_enum> rops  = att->getReductionOperators();
-          ROSE_ASSERT(rops.size()!=0);
-          std::vector<omp_construct_enum>::iterator iter;
-          for (iter=rops.begin(); iter!=rops.end();iter++)
-          {
-            omp_construct_enum rop = *iter;
-            SgOmpClause* sgclause = buildOmpReductionClause(att, rop);
-            ROSE_ASSERT(sgclause != NULL);
-            isSgOmpClauseBodyStatement(second_stmt)->get_clauses().push_back(sgclause);
-          }
-         break;
-        }
-      default:
-      {
-        cerr<<"error: unacceptable clause for combined parallel for directive:"<<OmpSupport::toString(c_clause)<<endl;
-        ROSE_ASSERT(false);
-      }
-    }
-  } // end clause allocations 
-
- /*
-  handle dangling #endif  attached to the loop
-  1. original 
- #ifdef _OPENMP
-  #pragma omp parallel for  private(i,k)
- #endif 
-   for () ...
-
-  2. after splitting
-
- #ifdef _OPENMP
-  #pragma omp parallel 
-  #pragma omp for  private(i,k)
- #endif 
-   for () ...
-  
-  3. We need to move #endif to omp parallel statement 's after position
-   transOmpParallel () will take care of it later on
-
-    #ifdef _OPENMP
-      #pragma omp parallel 
-      #pragma omp for  private(i) reduction(+ : j)
-      for (i = 1; i < 1000; i++)
-        if ((key_array[i - 1]) > (key_array[i]))
-          j++;
-    #endif
-  This is no perfect solution until we handle preprocessing information as structured statements in AST
- */
-   movePreprocessingInfo(body, first_stmt, PreprocessingInfo::before, PreprocessingInfo::after, true);
-  return first_stmt;
-}
-
-//! for C/C++ replace OpenMP pragma declaration with an SgOmpxxStatement
-void replaceOmpPragmaWithOmpStatement(SgPragmaDeclaration* pdecl, SgStatement* ompstmt)
-{
-  ROSE_ASSERT(pdecl != NULL);
-  ROSE_ASSERT(ompstmt!= NULL);
-
-  SgScopeStatement* scope = pdecl ->get_scope();
-  ROSE_ASSERT(scope !=NULL);
-#if 0  
-  SgOmpBodyStatement * omp_cb_stmt = isSgOmpBodyStatement(ompstmt);
- // do it within buildOmpBodyStatement()
- // avoid two parents point to the same structured block
-  // optionally remove the immediate structured block
-  if (omp_cb_stmt!= NULL)
-  {
-    SgStatement* next_stmt = getNextStatement(pdecl);
-    // not true after splitting combined directives, the body becomes the 2nd directive
-   // ROSE_ASSERT(next_stmt == omp_cb_stmt->get_body()); // ompstmt's body is set already
-    removeStatement(next_stmt);
-  }
-#endif  
-  // replace the pragma
-  moveUpPreprocessingInfo(ompstmt, pdecl); // keep #ifdef etc attached to the pragma
-  replaceStatement(pdecl, ompstmt);
-}
-
-//! Convert omp_pragma_list to SgOmpxxx nodes
-void convert_OpenMP_pragma_to_AST (SgSourceFile *sageFilePtr)
-{
-  list<SgPragmaDeclaration* >::reverse_iterator iter; // bottom up handling for nested cases
-  ROSE_ASSERT (sageFilePtr != NULL);
-  for (iter = omp_pragma_list.rbegin(); iter != omp_pragma_list.rend(); iter ++)
-  {
-    // Liao, 11/18/2009
-    // It is possible that several source files showing up in a single compilation line
-    // We have to check if the pragma declaration's file information matches the current file being processed
-    // Otherwise we will process the same pragma declaration multiple times!!
-    SgPragmaDeclaration* decl = *iter; 
-    // Liao, 2/8/2010
-    // Some pragmas are set to "transformation generated" when we fix scopes for some pragma under single statement block
-    // e.g if ()
-    //      #pragma
-    //        do_sth()
-    //  will be changed to
-    //     if ()
-    //     {
-    //       #pragma
-    //        do_sth()
-    //     }
-    // So we process a pragma if it is either within the same file or marked as transformation
-    if (decl->get_file_info()->get_filename()!= sageFilePtr->get_file_info()->get_filename()
-        && !(decl->get_file_info()->isTransformation()))
-      continue;
-    //cout<<"debug: convert_OpenMP_pragma_to_AST() handling pragma at "<<decl<<endl;  
-    OmpAttributeList* oattlist= getOmpAttributeList(decl);
-    ROSE_ASSERT (oattlist != NULL) ;
-    vector <OmpAttribute* > ompattlist = oattlist->ompAttriList;
-    ROSE_ASSERT (ompattlist.size() != 0) ;
-    vector <OmpAttribute* >::iterator i = ompattlist.begin();
-    for (; i!=ompattlist.end(); i++)
-    {
-      OmpAttribute* oa = *i;
-      omp_construct_enum omp_type = oa->getOmpDirectiveType();
-      ROSE_ASSERT(isDirective(omp_type));
-      SgStatement* omp_stmt = NULL;
-      switch (omp_type)
-      {
-        // simplest OMP directives
-        case e_barrier:
-          {
-            omp_stmt = new SgOmpBarrierStatement();
-            break;
-          }
-        case e_taskwait:
-          {
-            omp_stmt = new SgOmpTaskwaitStatement();
-            break;
-          }
-          // with variable list
-        case e_threadprivate:
-          {
-            omp_stmt = buildOmpThreadprivateStatement(oa);
-            break;
-          }
-        case e_flush:
-        {
-          omp_stmt = buildOmpFlushStatement(oa);
-          break;
-        }
-        // with a structured block/statement followed
-        case e_atomic:
-        case e_master:
-        case e_section:
-        case e_critical:
-        case e_ordered_directive:
-          // case e_workshare;// TODO fortran
-        case e_parallel:
-        case e_for:
-        case e_single:
-        case e_task:
-        case e_sections: 
-          {
-            omp_stmt = buildOmpBodyStatement(oa);
-            break;
-          }
-        case e_parallel_for:
-        case e_parallel_sections:
-          //case e_parallel_workshare://TODO fortran
-          {
-            omp_stmt = buildOmpParallelStatementFromCombinedDirectives(oa);
-            break;
-          }
-        default:
-          {
-            cerr<<"Error: convert_OpenMP_pragma_to_AST(): unhandled OpenMP directive type:"<<OmpSupport::toString(omp_type)<<endl;
-            assert (false);
-            break;
-          }
-      }
-      setOneSourcePositionForTransformation(omp_stmt);
-      replaceOmpPragmaWithOmpStatement(decl, omp_stmt);
-
-    } // end for (OmpAttribute)
-  }// end for (omp_pragma_list)
-}
-
-void build_OpenMP_AST(SgSourceFile *sageFilePtr)
-   {
-  // build AST for OpenMP directives and clauses 
-  // by converting OmpAttributeList to SgOmpxxx Nodes 
-     if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only()||
-         sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
-        {
-          printf("AST construction for Fortran OpenMP is not yet implemented. \n");
-          assert(false);
-       // end if (fortran)
-        }
-       else
-        {
-       // for  C/C++ pragma's OmpAttributeList --> SgOmpxxx nodes
-          if (SgProject::get_verbose() > 1)
-             {
-               printf ("Calling convert_OpenMP_pragma_to_AST() \n");
-             }
-     
-          convert_OpenMP_pragma_to_AST( sageFilePtr);
-        }
+#endif // NDEBUG
    }
-
-// Liao, 5/31/2009 an entry point for OpenMP related processing
-// including parsing, AST construction, and later on translation
-void processOpenMP(SgSourceFile *sageFilePtr)
-   {
-  // DQ (4/4/2010): This function processes both C/C++ and Fortran code.
-  // As a result of the Fortran processing some OMP pragmas will cause
-  // transformation (e.g. declaration of private variables will add variables
-  // to the local scope).  So this function has side-effects for all languages.
-
-     if (SgProject::get_verbose() > 1)
-        {
-          printf ("Processing OpenMP directives \n");
-        }
-
-     ROSE_ASSERT(sageFilePtr != NULL);
-     if (sageFilePtr->get_openmp() == false)
-        {
-          if (SgProject::get_verbose() > 1)
-             {
-               printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp() = %s \n",sageFilePtr->get_openmp() ? "true" : "false");
-             }
-          return;
-        }
-     
-  // parse OpenMP directives and attach OmpAttributeList to relevant SgNode
-     attachOmpAttributeInfo(sageFilePtr);
-
-  // stop here if only OpenMP parsing is requested
-     if (sageFilePtr->get_openmp_parse_only())
-        {
-          if (SgProject::get_verbose() > 1)
-             {
-               printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp_parse_only() = %s \n",sageFilePtr->get_openmp_parse_only() ? "true" : "false");
-             }
-          return;
-        }
-
-  // Build OpenMP AST nodes based on parsing results
-     build_OpenMP_AST(sageFilePtr);
-
-  // stop here if only OpenMP AST construction is requested
-     if (sageFilePtr->get_openmp_ast_only())
-        {
-          if (SgProject::get_verbose() > 1)
-             {
-               printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp_ast_only() = %s \n",sageFilePtr->get_openmp_ast_only() ? "true" : "false");
-             }
-          return;
-        }
-
-     lower_omp(sageFilePtr);
-   }
-
-
+// #endif // ROSE_PREVENT_CONSTRUCTION_ON_STACK

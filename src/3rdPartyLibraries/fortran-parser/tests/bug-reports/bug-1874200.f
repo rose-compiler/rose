@@ -1,2 +1,0 @@
-      PAUSE
-      end

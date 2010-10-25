@@ -1,5 +1,11 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
+// DQ (10/14/2010): This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
@@ -549,14 +555,15 @@ void
 DisassemblerX86::init(size_t wordsize)
 {
     switch (wordsize) {
-        case 2: insnSize = x86_insnsize_16; break;
-        case 4: insnSize = x86_insnsize_32; break;
-        case 8: insnSize = x86_insnsize_64; break;
+        case 2: insnSize = x86_insnsize_16; set_registers(RegisterDictionary::dictionary_i286());  break;
+        case 4: insnSize = x86_insnsize_32; set_registers(RegisterDictionary::dictionary_i386());  break;
+        case 8: insnSize = x86_insnsize_64; set_registers(RegisterDictionary::dictionary_amd64()); break;
         default: ROSE_ASSERT(!"unknown x86 instruction size");
     }
     set_wordsize(wordsize);
     set_alignment(1);
     set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
+    ROSE_ASSERT(get_registers()!=NULL);
 
     /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data
      * members to reasonable values for debugging. */
@@ -751,18 +758,6 @@ DisassemblerX86::sizeToMode(X86InstructionSize s)
     }
 }
 
-X86PositionInRegister
-DisassemblerX86::sizeToPos(X86InstructionSize s)
-{
-    switch (s) {
-        case x86_insnsize_none: return x86_regpos_all;
-        case x86_insnsize_16: return x86_regpos_word;
-        case x86_insnsize_32: return x86_regpos_dword;
-        case x86_insnsize_64: return x86_regpos_qword;
-		default: { abort(); /* avoid MSCV warning by adding return stmt */ return x86_regpos_all; }
-    }
-}
-
 SgAsmType *
 DisassemblerX86::sizeToType(X86InstructionSize s)
 {
@@ -846,8 +841,17 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
 SgAsmx86RegisterReferenceExpression *
 DisassemblerX86::makeIP()
 {
-    SgAsmx86RegisterReferenceExpression* r = new SgAsmx86RegisterReferenceExpression(x86_regclass_ip, 0);
-    r->set_position_in_register(sizeToPos(insnSize));
+    const char *name = NULL;
+    switch (insnSize) {
+        case x86_insnsize_16: name="ip"; break;
+        case x86_insnsize_32: name="eip"; break;
+        case x86_insnsize_64: name="rip"; break;
+        case x86_insnsize_none: ROSE_ASSERT(!"unknown instruction size");
+    }
+    ROSE_ASSERT(get_registers()!=NULL);
+    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
+    ROSE_ASSERT(rdesc!=NULL);
+    SgAsmx86RegisterReferenceExpression *r = new SgAsmx86RegisterReferenceExpression(*rdesc);
     r->set_type(sizeToType(insnSize));
     return r;
 }
@@ -866,94 +870,124 @@ DisassemblerX86::makeOperandRegisterFull(bool rexExtension, uint8_t registerNumb
                         sizeToMode(insnSize));
 }
 
+/* At one time this function created x86-specific register reference expressions (RREs) that had hard-coded values for register
+ * class, register number, and register position. These values had the same meanings across all x86 architectures and
+ * corresponded to various enums in ROSE.
+ *
+ * The new approach (added Oct 2010) replaces x86-specific values with a more generic RegisterDescriptor struct, where each
+ * register is described by a major number (formerly the register class), a minor number (formerly the register number), and a
+ * bit offset and size (formerly both represented by the register position).  The idea is that a RegisterDescriptor does not
+ * need to contain machine-specific values. Therefore, we've added a level of indirection:  makeRegister() converts
+ * machine-specific values to a register name, which is then looked up in a RegisterDictionary to return a
+ * RegisterDescriptor.  The entries in the dictionary determine what registers are available to the disassembler.
+ *
+ * Currently (2010-10-05) the old class and numbers are used as the major and minor values but users should not assume that
+ * this is the case. They can assume that unrelated registers (e.g., "eax" vs "ebx") have descriptors that map to
+ * non-overlapping areas of the descriptor address space {major,minor,offset,size} while related registers (e.g., "eax" vs
+ * "ax") map to overlapping areas of the descriptor address space. */
 SgAsmx86RegisterReferenceExpression *
-DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmType *registerType)
+DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmType *registerType) const
 {
-    if (m == rmReturnNull)
-        return NULL;
-    SgAsmx86RegisterReferenceExpression *ref = NULL;
+    /* Register names for various RegisterMode, indexed by the fullRegisterNumber. The names and order of these names come from
+     * Intel documentation. */
+    static const char* regnames8l[16] = {
+        "al",  "cl",  "dl",  "bl",  "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"
+    };
+    static const char* regnames8h[4] = {
+        "ah",  "ch",  "dh",  "bh"
+    };
+    static const char* regnames16[16] = {
+        "ax",  "cx",  "dx",  "bx",  "sp",  "bp",  "si",  "di",  "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w"
+    };
+    static const char* regnames32[16] = {
+        "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"
+    };
+    static const char* regnames64[16] = {
+        "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8",  "r9",  "r10",  "r11",  "r12",  "r13",  "r14",  "r15"
+    };
+    static const char* regnamesSeg[6] = {
+        "es", "cs", "ss", "ds", "fs", "gs"
+    };
+
+    /* Obtain a register name. Also, override the registerType value for certain registers. */
+    std::string name;
     switch (m) {
-        case rmLegacyByte: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber % 4);
-            ref->set_position_in_register((fullRegisterNumber & 4) ? x86_regpos_high_byte : x86_regpos_low_byte);
-            ref->set_type(BYTET);
+        case rmLegacyByte:
+            if (fullRegisterNumber >= 8)
+                throw Exception("register number out of bounds");
+            if (fullRegisterNumber & 4) {
+                name = regnames8h[fullRegisterNumber % 4];
+            } else {
+                name = regnames8l[fullRegisterNumber % 4];
+            }
+            registerType = BYTET;
             break;
-        }
-        case rmRexByte: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_low_byte);
-            ref->set_type(BYTET);
+        case rmRexByte:
+            if (fullRegisterNumber >= 16)
+                throw Exception("register number out of bounds");
+            name = regnames8l[fullRegisterNumber];
+            registerType = BYTET;
             break;
-        }
-        case rmWord: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_word);
-            ref->set_type(WORDT);
+        case rmWord:
+            if (fullRegisterNumber >= 16)
+                throw Exception("register number out of bounds");
+            name = regnames16[fullRegisterNumber];
+            registerType = WORDT;
             break;
-        }
-        case rmDWord: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_dword);
-            ref->set_type(DWORDT);
+        case rmDWord:
+            if (fullRegisterNumber >= 16)
+                throw Exception("register number out of bounds");
+            name = regnames32[fullRegisterNumber];
+            registerType = DWORDT;
             break;
-        }
-        case rmQWord: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_qword);
-            ref->set_type(QWORDT);
+        case rmQWord:
+            if (fullRegisterNumber >= 16)
+                throw Exception("register number out of bounds");
+            name = regnames64[fullRegisterNumber];
+            registerType = QWORDT;
             break;
-        }
-        case rmSegment: {
+        case rmSegment:
             if (fullRegisterNumber >= 6)
                 throw Exception("register number out of bounds");
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_segment, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
-            ref->set_type(WORDT);
+            name = regnamesSeg[fullRegisterNumber];
+            registerType = WORDT;
             break;
-        }
-        case rmST: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_st, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
-            ref->set_type(LDOUBLET);
+        case rmST:
+            name = "st(" + StringUtility::numberToString(fullRegisterNumber) + ")";
+            registerType = LDOUBLET;
             break;
-        }
-        case rmMM: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_mm, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
-            ROSE_ASSERT(registerType);
-            ref->set_type(registerType);
+        case rmMM:
+            name = "mm" + StringUtility::numberToString(fullRegisterNumber);
             break;
-        }
-        case rmXMM: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_xmm, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
-            ROSE_ASSERT(registerType);
-            ref->set_type(registerType);
+        case rmXMM:
+            name = "mmx" + StringUtility::numberToString(fullRegisterNumber);
             break;
-        }
-        case rmControl: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_cr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
-            ROSE_ASSERT(registerType);
-            ref->set_type(registerType);
+        case rmControl:
+            name = "cr" + StringUtility::numberToString(fullRegisterNumber);
             break;
-        }
-        case rmDebug: {
-            ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_dr, fullRegisterNumber);
-            ref->set_position_in_register(x86_regpos_all);
-            ROSE_ASSERT(registerType);
-            ref->set_type(registerType);
+        case rmDebug:
+            name = "dr" + StringUtility::numberToString(fullRegisterNumber);
             break;
-        }
-        default:
-            ROSE_ASSERT(false);
+        case rmReturnNull:
+            return NULL;
     }
-    ROSE_ASSERT(ref);
-    return ref;
+    ROSE_ASSERT(!name.empty());
+
+    /* Now that we have a register name, obtain the register descriptor from the dictionary. */
+    ROSE_ASSERT(get_registers()!=NULL);
+    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
+    if (!rdesc)
+        throw Exception("register \"" + name + "\" is not available for " + get_registers()->get_architecture_name());
+
+    /* Construct the return value. */
+    SgAsmx86RegisterReferenceExpression *rre = new SgAsmx86RegisterReferenceExpression(*rdesc);
+    ROSE_ASSERT(rre);
+    rre->set_type(registerType);
+    return rre;
 }
 
 SgAsmExpression *
-DisassemblerX86::makeSegmentRegister(X86SegmentRegister so, bool insn64)
+DisassemblerX86::makeSegmentRegister(X86SegmentRegister so, bool insn64) const
 {
     switch (so) {
         case x86_segreg_none: ROSE_ASSERT(!"makeSegmentRegister does not support x86_segreg_none");

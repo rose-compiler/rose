@@ -293,21 +293,15 @@ public:
         int bitidx;
         switch (f) {
             case x86_flag_cf:    bitidx =  0; s = "cf"; break;
-            case x86_flag_1:     bitidx =  1; s = "1f"; break;
             case x86_flag_pf:    bitidx =  2; s = "pf"; break;
-            case x86_flag_3:     bitidx =  3; s = "3f"; break;
             case x86_flag_af:    bitidx =  4; s = "af"; break;
-            case x86_flag_5:     bitidx =  5; s = "5f"; break;
             case x86_flag_zf:    bitidx =  6; s = "zf"; break;
             case x86_flag_sf:    bitidx =  7; s = "sf"; break;
             case x86_flag_tf:    bitidx =  8; s = "tf"; break;
             case x86_flag_if:    bitidx =  9; s = "if"; break;
             case x86_flag_df:    bitidx = 10; s = "df"; break;
             case x86_flag_of:    bitidx = 11; s = "of"; break;
-            case x86_flag_iopl0: bitidx = 12; s = "iopl0"; break;
-            case x86_flag_iopl1: bitidx = 13; s = "iopl1"; break;
             case x86_flag_nt:    bitidx = 14; s = "nt"; break;
-            case x86_flag_15:    bitidx = 15; s = "15f"; break;
             case x86_flag_rf:    bitidx = 16; s = "rf"; break;
             case x86_flag_vm:    bitidx = 17; s = "vm"; break;
             case x86_flag_ac:    bitidx = 18; s = "ac"; break;
@@ -335,21 +329,15 @@ public:
         int bitidx;
         switch (f) {
             case x86_flag_cf:    bitidx =  0; s = "cf"; break;
-            case x86_flag_1:     bitidx =  1; s = "1f"; break;
             case x86_flag_pf:    bitidx =  2; s = "pf"; break;
-            case x86_flag_3:     bitidx =  3; s = "3f"; break;
             case x86_flag_af:    bitidx =  4; s = "af"; break;
-            case x86_flag_5:     bitidx =  5; s = "5f"; break;
             case x86_flag_zf:    bitidx =  6; s = "zf"; break;
             case x86_flag_sf:    bitidx =  7; s = "sf"; break;
             case x86_flag_tf:    bitidx =  8; s = "tf"; break;
             case x86_flag_if:    bitidx =  9; s = "if"; break;
             case x86_flag_df:    bitidx = 10; s = "df"; break;
             case x86_flag_of:    bitidx = 11; s = "of"; break;
-            case x86_flag_iopl0: bitidx = 12; s = "iopl0"; break;
-            case x86_flag_iopl1: bitidx = 13; s = "iopl1"; break;
             case x86_flag_nt:    bitidx = 14; s = "nt"; break;
-            case x86_flag_15:    bitidx = 15; s = "15f"; break;
             case x86_flag_rf:    bitidx = 16; s = "rf"; break;
             case x86_flag_vm:    bitidx = 17; s = "vm"; break;
             case x86_flag_ac:    bitidx = 18; s = "ac"; break;

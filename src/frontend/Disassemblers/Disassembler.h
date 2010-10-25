@@ -1,6 +1,8 @@
 #ifndef ROSE_DISASSEMBLER_H
 #define ROSE_DISASSEMBLER_H
 
+#include "Registers.h"
+
 /** Virtual base class for instruction disassemblers.
  *
  *  The Disassembler class is a virtual class providing all non-architecture-specific functionality for the recursive
@@ -145,7 +147,8 @@ public:
      *  set_search() method prior to disassembling. Unless noted otherwise, the bit flags affect the disassembleBuffer methods,
      *  which call the basic block and individual instruction disassembler methods, but which are called by the methods that
      *  disassemble sections, headers, and entire files. */
-    enum SearchHeuristic {
+    enum SearchHeuristic 
+	{
         SEARCH_FOLLOWING = 0x0001,      /**< Disassemble at the address that follows each disassembled instruction, regardless
                                          *   of whether the following address is a successor. */
         SEARCH_IMMEDIATE = 0x0002,      /**< Disassemble at the immediate operands of other instructions.  This is a
@@ -212,15 +215,15 @@ public:
     typedef std::map<rose_addr_t, Exception> BadMap;
 
     Disassembler()
-        : p_partitioner(NULL), p_search(SEARCH_DEFAULT), p_debug(NULL),
+        : p_registers(NULL), p_partitioner(NULL), p_search(SEARCH_DEFAULT), p_debug(NULL),
           p_wordsize(4), p_sex(SgAsmExecutableFileFormat::ORDER_LSB), p_alignment(4), p_ndisassembled(0),
           p_protection(MemoryMap::MM_PROT_EXEC)
         {ctor();}
 
     Disassembler(const Disassembler& other)
-        : p_partitioner(other.p_partitioner), p_search(other.p_search), p_debug(other.p_debug), p_wordsize(other.p_wordsize),
-          p_sex(other.p_sex), p_alignment(other.p_alignment), p_ndisassembled(other.p_ndisassembled),
-          p_protection(other.p_protection)
+        : p_registers(other.p_registers), p_partitioner(other.p_partitioner), p_search(other.p_search),
+          p_debug(other.p_debug), p_wordsize(other.p_wordsize), p_sex(other.p_sex), p_alignment(other.p_alignment),
+          p_ndisassembled(other.p_ndisassembled), p_protection(other.p_protection)
         {}
 
     virtual ~Disassembler() {}
@@ -291,6 +294,18 @@ public:
      * Disassembler properties and settings
      *========================================================================================================================== */
 public:
+    /** Specifies the registers available on this architecture.  Rather than using hard-coded class, number, and position
+     *  constants, the disassembler should perform a name lookup in this supplied register dictionary and use the values found
+     *  therein. There's usually no need for the user to specify a value because the subclass will initialize this. */
+    void set_registers(const RegisterDictionary *rdict) {
+        p_registers = rdict;
+    }
+
+    /** Returns the dictionary used for looking up register names. */
+    const RegisterDictionary *get_registers() const {
+        return p_registers;
+    }
+
     /** Specifies the instruction partitioner to use when partitioning instructions into functions.  If none is specified then
      *  a default partitioner will be constructed when necessary. */
     void set_partitioner(class Partitioner *p) {
@@ -534,7 +549,8 @@ private:
      * Data members
      *========================================================================================================================== */
 protected:
-    class Partitioner *p_partitioner;                   /**< Partitioner used for placing instructions into blocks and functions.*/
+    const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
+    class Partitioner *p_partitioner;                   /**< Used for placing instructions into blocks and functions. */
     unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */
     FILE *p_debug;                                      /**< Set to non-null to get debugging info. */
     size_t p_wordsize;                                  /**< Word size used by SEARCH_WORDS. */

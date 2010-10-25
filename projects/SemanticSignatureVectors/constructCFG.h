@@ -1,3 +1,4 @@
+#include "stringify.h"
 
 /*********************************
 * Find root nodes in the graph. A root node is a node with no in edges.
@@ -153,7 +154,7 @@ void addBlocksFromFunctionToGraph(SgIncidenceDirectedGraph* graph, std::map<rose
 
     if(block->get_statementList().size()>0 )
     {
-      opCode = toString(isSgAsmx86Instruction( block->get_statementList().back() )->get_kind());
+      opCode = stringifyX86InstructionKind(isSgAsmx86Instruction( block->get_statementList().back() )->get_kind());
       std::cout <<"Statement opcode " << opCode << std::endl;
     }else
       std::cout <<"No statements " << block->class_name() << std::endl;

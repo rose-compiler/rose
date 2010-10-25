@@ -483,6 +483,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   bool is_UPC_dynamic_threads();
   bool is_C99_language ();
   bool is_Cxx_language ();
+  bool is_Java_language ();
   bool is_Fortran_language ();
   bool is_CAF_language ();
   bool is_PHP_language();
@@ -529,7 +530,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
                            SgFunctionDeclaration * functionDeclaration,
 			   SgDeclarationStatement * startingAtDeclaration);
 
-  //!check if node1 is an ancestor of node 2, mostly used to compare which scope node is in higher level
+  //!check if node1 is a strict ancestor of node 2. (a node is not considered its own ancestor)
   bool isAncestor(SgNode* node1, SgNode* node2);
 //@}
 //------------------------------------------------------------------------
@@ -832,7 +833,7 @@ bool loopTiling(SgForStatement* loopNest, size_t targetLevel, size_t tileSize);
 
 //! Query a subtree to get all nodes of a given type, with an appropriate downcast.
 template <typename NodeType>
-std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = NodeType::static_variant)
+std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = (VariantT)NodeType::static_variant)
 {
   Rose_STL_Container<SgNode*> nodes = NodeQuery::querySubTree(top,variant);
   std::vector<NodeType*> result(nodes.size(), NULL);
@@ -1098,21 +1099,21 @@ void prependStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatemen
 //! for example, SgBasicBlock has a simple statement list while IfStmt does not.
 bool  hasSimpleChildrenList (SgScopeStatement* scope);
 
-//! Insert a statement before or after the target statement within the target's scope
-void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore= true);
+//! Insert a statement before or after the target statement within the target's scope. Move around preprocessing info automatically
+void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore= true, bool autoMovePreprocessingInfo = true);
 
 //! Insert a list of statements before or after the target statement within the
 //target's scope
 void insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore= true);
 
 //! Insert a statement before a target statement
-void insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt);
+void insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo = true);
 
 //! Insert a list of statements before a target statement
 void insertStatementListBefore(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts);
 
-//! Insert a statement after a target statement
-void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt);
+//! Insert a statement after a target statement, Move around preprocessing info automatically by default
+void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo = true);
 
 //! Insert a list of statements after a target statement
 void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmt);
@@ -1319,7 +1320,6 @@ SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStm
   * otherwise generate a SgBasicBlock in between. If s is the body of a loop, catch, or if statement and is already
   * a basic block, s is returned unmodified. Else, the (potentially new) parent of s is returned. */
 SgLocatedNode* ensureBasicBlockAsParent(SgStatement* s);
-//SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
 
 //! Fix up ifs, loops, etc. to have blocks as all components and add dummy else
 //! clauses to if statements that don't have them

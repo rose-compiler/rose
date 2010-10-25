@@ -20,8 +20,8 @@ endif
 libbinaryFrontend_la_DEPENDENCIES =
 libbinaryFrontend_la_SOURCES = RoseBin_support.cpp \
      instructionDispatch.cpp \
-     x86InstructionEnum.h x86InstructionProperties.h \
-     x86InstructionProperties.C x86InstructionEnumPrinter.C \
+     x86InstructionProperties.h \
+     x86InstructionProperties.C \
      armInstructionEnum.h armInstructionEnumPrinter.C \
      powerpcInstructionEnum.h powerpcInstructionEnumPrinter.C \
      powerpcInstructionProperties.h powerpcInstructionProperties.C \
@@ -30,15 +30,9 @@ libbinaryFrontend_la_SOURCES = RoseBin_support.cpp \
      AST_BIN_Traversal.C
 
 
-BUILT_SOURCES = x86InstructionEnumPrinter.C armInstructionEnumPrinter.C powerpcInstructionEnumPrinter.C
+BUILT_SOURCES = armInstructionEnumPrinter.C powerpcInstructionEnumPrinter.C
 
 CLEANFILES = $(BUILT_SOURCES)
-
-x86InstructionEnumPrinter.C: $(srcdir)/x86InstructionEnum.h
-	echo '#include "x86InstructionEnum.h"' > x86InstructionEnumPrinter.C
-	echo '#include <string>' >> x86InstructionEnumPrinter.C
-	sed -n '/x86_unknown_instruction/,/x86_last_instruction/p' < $(srcdir)/x86InstructionEnum.h | sed 's/ = 0//' | tr -d , | sed 's,^ *,",' | sed 's@$$@",@' | (echo 'static const char* x86InstructionStrings[] = {'; cat; echo '""};') >> x86InstructionEnumPrinter.C
-	echo 'std::string toString(X86InstructionKind k) {static const int s = sizeof(x86InstructionStrings) / sizeof(*x86InstructionStrings); if ((int)k < 0 || (int)k >= s) return ""; else return x86InstructionStrings[(int)k];}' >> x86InstructionEnumPrinter.C
 
 armInstructionEnumPrinter.C: $(srcdir)/armInstructionEnum.h
 	echo '#include "armInstructionEnum.h"' > armInstructionEnumPrinter.C
@@ -62,7 +56,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    AST_BIN_Traversal.h \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseBin_abstract.h \
-   x86InstructionEnum.h x86InstructionProperties.h powerpcInstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
+   x86InstructionProperties.h powerpcInstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
    RoseObj.h
 else
 BINARY_DISASSEMBLY_HEADER_FILES = \
@@ -72,7 +66,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    AST_BIN_Traversal.h \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseBin_abstract.h \
-   x86InstructionEnum.h x86InstructionProperties.h powerpcInstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
+   x86InstructionProperties.h powerpcInstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
    RoseObj.h
 endif
 # DQ (1/19/2008): Removed this file from BINARY_DISASSEMBLY_HEADER_FILES since it is not available

@@ -3,41 +3,47 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # Add Projects that are associated with capabilities that belong to ROSE here
 SUBDIRS = \
      AstEquivalence \
-     autoParallelization \
-     autoTuning\
-     backstroke \
+     BabelPreprocessor \
      BinQ \
-     CertSecureCodeProject \
      BinaryCloneDetection \
-     SemanticSignatureVectors \
-     binCompass \
+     C_to_Promela \
+     CertSecureCodeProject \
      CloneDetection \
      DatalogAnalysis \
      DocumentationGenerator \
+     FiniteStateModelChecker \
+     HeaderFilesInclusion \
+     MPICodeMotion \
+     MacroRewrapper \
      OpenMP_Analysis \
      OpenMP_Translator \
-     BabelPreprocessor \
-     FiniteStateModelChecker \
-     programModeling \
-     arrayOptimization \
-     HeaderFilesInclusion \
-     highLevelGrammars \
-     dataStructureGraphing \
-     checkPointExample \
-     C_to_Promela \
-     MPICodeMotion \
-     javaport \
-     haskellport \
-     assemblyToSourceAst \
-     bugSeeding \
-     binaryVisualization \
-     MacroRewrapper \
-     UpcTranslation \
-     taintcheck \
+     PolyhedralDependenceAnalysis \
      QtDesignerPlugins \
      RoseQt \
+     SemanticSignatureVectors \
+     UpcTranslation \
+     arrayOptimization \
+     assemblyToSourceAst \
+     autoParallelization \
+     autoTuning\
+     backstroke \
+     binaryVisualization \
+     bugSeeding \
+     checkPointExample \
+     dataStructureGraphing \
+     haskellport \
+     highLevelGrammars \
+     javaport \
+     programModeling \
      roseToLLVM \
-     PolyhedralDependenceAnalysis
+     symbolicAnalysisFramework \
+     taintcheck \
+     PowerAwareCompiler
+
+# DQ (10/15/2010): Adding initial trace analysis support.
+if ROSE_USE_TRACE_ANALYSIS
+   SUBDIRS += traceAnalysis
+endif
 
 # DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
 # DQ (7/21/2010): Removed simulator since it is a problem to compile with ROSE (projects/simulator/emulator.C).
@@ -50,13 +56,19 @@ endif
 #    compass
 
 if !ROSE_USING_ROSE_CODE_GENERATION
-   SUBDIRS += compass
 
+# DQ (10/17/2010): This seems to be problem for Java, we can fix this later.
+if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+   SUBDIRS += compass binCompass
+endif
 
+# DQ (10/17/2010): Since we can't process Compass with Java we can't compiler palette (which requires Compass).
+if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
  # DQ (2/13/2010): This appears to have a dependence on compass, but I don't know why.
  # All projects should be independent of each other so that they should be able to be
  # compiled in any order. It was originally listed after "haskellport".
    SUBDIRS += palette
+endif
 endif
 
 if ROSE_MPI

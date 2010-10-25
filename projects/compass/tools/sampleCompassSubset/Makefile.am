@@ -10,7 +10,6 @@ BUILT_SOURCES = buildCheckers.C checkers.h
 
 lib_LTLIBRARIES = libSampleCompassSubsetCheckers.la
 libSampleCompassSubsetCheckers_la_SOURCES = buildCheckers.C checkers.h
-libSampleCompassSubsetCheckers_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la
 
 libSampleCompassSubsetCheckers.la: $(libSampleCompassSubsetCheckers_la_OBJECTS) $(libSampleCompassSubsetCheckers_la_DEPENDENCIES) $(COMPASS_CHECKER_OBJS)
 	$(CXXLINK) -rpath $(libdir) $(libSampleCompassSubsetCheckers_la_LDFLAGS) $(libSampleCompassSubsetCheckers_la_OBJECTS) $(COMPASS_CHECKER_OBJS) $(libSampleCompassSubsetCheckers_la_LIBADD) $(LIBS)
