@@ -150,6 +150,12 @@ void setOperatorSourcePosition  ( SgExpression* expr, Token_t* token );
 void resetSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList );
 void resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sourceLocatedNode );
 
+// DQ (10/10/2010): This function is added to support resetting the end 
+// of the blocks (required to get comments woven into the AST properly).
+void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token );
+void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, SgStatement* sourceStatement );
+void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNumber );
+
 // Function to create SgType IR nodes from an Open Fortran Parser type code.
 SgType* createType(int typeCode);
 SgType* generateImplicitType( std::string name );

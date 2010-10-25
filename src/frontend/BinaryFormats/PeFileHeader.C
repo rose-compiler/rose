@@ -78,7 +78,7 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *file)
         /* Read four-byte offset of potential PE File Header at offset 0x3c */
         uint32_t lfanew_disk;
         file->read_content(0x3c, &lfanew_disk, sizeof lfanew_disk);
-        addr_t pe_offset = le_to_host(lfanew_disk);
+        rose_addr_t pe_offset = le_to_host(lfanew_disk);
         
         /* Look for the PE File Header magic number */
         unsigned char pe_magic[4];
@@ -127,7 +127,7 @@ SgAsmPEFileHeader::parse()
      * smallest possible documented size of the optional header. Also it's possible for the optional header to extend beyond
      * the end of the file, in which case that part should be read as zero. */
     PE32OptHeader_disk oh32;
-	addr_t need32 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
+    rose_addr_t need32 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (rose_addr_t)(sizeof oh32));
     if (need32>get_size())
         extend(need32-get_size());
     if (sizeof(oh32)!=read_content_local(sizeof fh, &oh32, sizeof oh32, false))
@@ -140,7 +140,7 @@ SgAsmPEFileHeader::parse()
     p_exec_format->set_word_size(0x010b==p_e_opt_magic? 4 : 8);
 
     /* Decode the optional header. */
-    addr_t entry_rva;
+    rose_addr_t entry_rva;
     if (4==p_exec_format->get_word_size()) {
         p_e_lmajor             = le_to_host(oh32.e_lmajor);
         p_e_lminor             = le_to_host(oh32.e_lminor);
@@ -174,7 +174,7 @@ SgAsmPEFileHeader::parse()
     } else if (8==p_exec_format->get_word_size()) {
         /* We guessed wrong. This is a 64-bit header, not 32-bit. */
         PE64OptHeader_disk oh64;
-        addr_t need64 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh64));
+        rose_addr_t need64 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (rose_addr_t)(sizeof oh64));
         if (need64>get_size())
             extend(need64-get_size());
         if (sizeof(oh64)!=read_content_local(sizeof fh, &oh64, sizeof oh64))
@@ -304,22 +304,19 @@ SgAsmPEFileHeader::parse()
     /* Construct the section table and its sections (non-synthesized sections). The specification says that the section table
      * comes after the optional (NT) header, which in turn comes after the fixed part of the PE header. The size of the
      * optional header is indicated in the fixed header. */
-    addr_t secttab_offset = get_offset() + sizeof(PEFileHeader_disk) + get_e_nt_hdr_size();
-    addr_t secttab_size = get_e_nsections() * sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
+    rose_addr_t secttab_offset = get_offset() + sizeof(PEFileHeader_disk) + get_e_nt_hdr_size();
+    rose_addr_t secttab_size = get_e_nsections() * sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
     SgAsmPESectionTable *secttab = new SgAsmPESectionTable(this);
     secttab->set_offset(secttab_offset);
     secttab->set_size(secttab_size);
     secttab->parse();
     set_section_table(secttab);
 
-    /* Parse the COFF symbol table and add symbols to the PE header */
+    /* Parse the COFF symbol table */
     if (get_e_coff_symtab() && get_e_coff_nsyms()) {
         SgAsmCoffSymbolTable *symtab = new SgAsmCoffSymbolTable(this);
         symtab->set_offset(get_e_coff_symtab());
         symtab->parse();
-        std::vector<SgAsmCoffSymbol*> & symbols = symtab->get_symbols()->get_symbols();
-        for (size_t i = 0; i < symbols.size(); i++)
-            add_symbol(symbols[i]);
         set_coff_symtab(symtab);
     }
 
@@ -435,8 +432,8 @@ SgAsmPEFileHeader::encode(PE64OptHeader_disk *disk) const
 void
 SgAsmPEFileHeader::add_rvasize_pairs()
 {
-    addr_t pairs_offset = get_size();
-    addr_t pairs_size   = p_e_num_rvasize_pairs * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
+    rose_addr_t pairs_offset = get_size();
+    rose_addr_t pairs_size   = p_e_num_rvasize_pairs * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
     SgAsmPERVASizePair::RVASizePair_disk pairs_disk;
 
     ROSE_ASSERT(p_rvasize_pairs != NULL);
@@ -499,7 +496,7 @@ SgAsmPEFileHeader::create_table_sections()
                     i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname?tabname:"");
             continue;
         }
-        addr_t file_offset = elmt->is_anonymous() ? 0 : elmt->get_va_offset(get_base_va() + pair->get_e_rva());
+        rose_addr_t file_offset = elmt->is_anonymous() ? 0 : elmt->get_va_offset(get_base_va() + pair->get_e_rva());
 
         /* Create the new section */
         SgAsmGenericSection *tabsec = NULL;
@@ -542,7 +539,7 @@ SgAsmPEFileHeader::reallocate()
     bool reallocated = SgAsmGenericHeader::reallocate();
     
     /* Resize if necessary */
-    addr_t need = sizeof(PEFileHeader_disk);
+    rose_addr_t need = sizeof(PEFileHeader_disk);
     if (4==get_word_size()) {
         need += sizeof(PE32OptHeader_disk);
     } else if (8==get_word_size()) {
@@ -575,15 +572,15 @@ SgAsmPEFileHeader::reallocate()
                 p_e_nsections++;
         }
 
-        addr_t header_size = ALIGN_UP(p_section_table->get_offset() + p_section_table->get_size(),
-                                      p_e_file_align>0 ? p_e_file_align : 1);
+        rose_addr_t header_size = ALIGN_UP(p_section_table->get_offset() + p_section_table->get_size(),
+                                           p_e_file_align>0 ? p_e_file_align : 1);
 #if 1
         /* The PE Specification regarding e_header_size (known as "SizeOfHeader" on page 14 of "Microsoft Portable Executable
          * and Common Object File Format Specification: Revision 8.1 February 15, 2008" is not always followed. We recompute
          * it here as being the minimum RVA from all the sections defined in the PE Section Table, but not smaller
          * than the value according to the specification. This alternate value is kept if it's already in the parse tree,
          * otherwise we use the correct value. (RPM 2008-10-21) */
-        addr_t min_offset;
+        rose_addr_t min_offset;
         for (size_t i=0, nfound=0; i<all->get_sections().size(); i++) {
             SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
             if (pesec && pesec->get_section_entry()!=NULL) {
@@ -595,7 +592,7 @@ SgAsmPEFileHeader::reallocate()
             }
         }
 
-        addr_t header_size2 = std::max(header_size, min_offset);
+        rose_addr_t header_size2 = std::max(header_size, min_offset);
         if (p_e_header_size==header_size2)
             header_size = header_size2;
 
@@ -725,7 +722,7 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
     /* Write the fixed-length COFF Header */
     PEFileHeader_disk fh;
     encode(&fh);
-    addr_t spos = write(f, 0, sizeof fh, &fh);
+    rose_addr_t spos = write(f, 0, sizeof fh, &fh);
 
     /* Write the following "NT Optional Header" */
     spos = write(f, spos, oh_size, oh);

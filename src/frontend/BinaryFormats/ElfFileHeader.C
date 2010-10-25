@@ -170,7 +170,7 @@ SgAsmElfFileHeader::parse()
     p_e_ident_data_encoding = disk32.e_ident_data_encoding; /*save original value*/
 
     /* Decode header to native format */
-    rva_t entry_rva, sectab_rva, segtab_rva;
+    rose_rva_t entry_rva, sectab_rva, segtab_rva;
     if (1 == disk32.e_ident_file_class) {
         p_exec_format->set_word_size(4);
 
@@ -307,16 +307,6 @@ SgAsmElfFileHeader::parse()
     /* Associate the entry point with a particular section. */
     entry_rva.bind(this);
     add_entry_rva(entry_rva);
-
-    /* Use symbols from either ".symtab" or ".dynsym" */
-    SgAsmElfSymbolSection *symtab = dynamic_cast<SgAsmElfSymbolSection*>(get_section_by_name(".symtab"));
-    if (!symtab)
-        symtab = dynamic_cast<SgAsmElfSymbolSection*>(get_section_by_name(".dynsym"));
-    if (symtab) {
-        std::vector<SgAsmElfSymbol*> & symbols = symtab->get_symbols()->get_symbols();
-        for (size_t i=0; i<symbols.size(); i++)
-            add_symbol(symbols[i]);
-    }
     
     return this;
 }
@@ -454,7 +444,7 @@ SgAsmElfFileHeader::reallocate()
     bool reallocated = SgAsmGenericHeader::reallocate();
 
     /* Resize header based on current word size */
-    addr_t need;
+    rose_addr_t need;
     if (4==get_word_size()) {
         need = sizeof(Elf32FileHeader_disk);
     } else if (8==get_word_size()) {

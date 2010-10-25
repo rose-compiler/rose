@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = util ROSETTA frontend midend backend roseSupport \
+SUBDIRS = util ROSETTA roseSupport frontend midend backend \
           3rdPartyLibraries roseIndependentSupport roseExtensions
 
 # This lists a large number of directories.  If "make install"
@@ -24,13 +24,19 @@ else
    libroseOpenFortranParserlibraries =
 endif
 
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+   libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
+else
+   libroseJavaParserlibraries =
+endif
+
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    librosePHPlibraries = frontend/PHPFrontend/librosePHPFrontend.la
 else
    librosePHPlibraries =
 endif
 
-# if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseBinaryLibraries = \
       $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
       $(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la \
@@ -38,9 +44,10 @@ endif
       $(top_builddir)/src/backend/asmUnparser/libroseAsmUnparser.la \
       $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
       $(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la 
-# else
-#   libroseBinaryLibraries =
-# endif
+else
+   libroseBinaryLibraries = \
+      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la
+endif
 
 if ROSE_USE_MYSQL
   OPT_MYSQL_LDFLAGS = $(MYSQL_LDFLAGS)
@@ -79,6 +86,7 @@ libroseLibraries = \
    $(top_builddir)/src/backend/unparser/formatSupport/libunparseFormatSupport.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseOpenFortranParserlibraries) \
+   $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
@@ -162,7 +170,8 @@ LINK = $(CXXLINK)
 
 lib_LTLIBRARIES = librose.la
 
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_USE_INTERNAL_JAVA_SUPPORT
    JAVA_JVM_FLAGS = $(JAVA_JVM_LINK)
 
 # OpenFortranParser-${OFP_VERSION}.jar:

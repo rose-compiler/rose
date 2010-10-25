@@ -1,7 +1,6 @@
 /* ELF Symbol Tables (SgAsmElfSymbolSection and related classes) */
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "stringify.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -38,7 +37,7 @@ SgAsmElfSymbol::parse(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
     p_value    = disk_to_host(sex, disk->st_value);
     p_size     = p_st_size;
 
-    addr_t name_offset  = disk_to_host(sex, disk->st_name);
+    rose_addr_t name_offset  = disk_to_host(sex, disk->st_name);
     get_name()->set_string(name_offset);
 
     parse_common();
@@ -56,7 +55,7 @@ SgAsmElfSymbol::parse(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
     p_value    = disk_to_host(sex, disk->st_value);
     p_size     = p_st_size;
 
-    addr_t name_offset  = disk_to_host(sex, disk->st_name);
+    rose_addr_t name_offset  = disk_to_host(sex, disk->st_name);
     get_name()->set_string(name_offset);
 
     parse_common();
@@ -110,32 +109,23 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
 std::string
 SgAsmElfSymbol::to_string(ElfSymBinding val)
 {
-  switch (val) {
-    case STB_LOCAL:  return "local";  
-    case STB_GLOBAL: return "global"; 
-    case STB_WEAK:   return "weak";   
-  };
-  char sbuf[256];
-  snprintf(sbuf, sizeof(sbuf),"unknown binding (%zu)", (size_t)val);
-  return sbuf;
+#ifndef _MSC_VER
+    return stringifySgAsmElfSymbolElfSymBinding(val);
+#else
+	ROSE_ASSERT(false);
+	return "";
+#endif
 }
 
 std::string
 SgAsmElfSymbol::to_string(ElfSymType val)
 {
-  switch (val) {
-    case STT_NOTYPE:  return "no-type";   
-    case STT_OBJECT:  return "object";    
-    case STT_FUNC:    return "function";  
-    case STT_SECTION: return "section";   
-    case STT_FILE:    return "file";      
-    case STT_COMMON:  return "common";      
-    case STT_TLS:     return "tls";      
-  };
-
-  char sbuf[256];
-  snprintf(sbuf, sizeof(sbuf),"unknown type (%zu)", (size_t)val);
-  return sbuf;
+#ifndef _MSC_VER
+    return stringifySgAsmElfSymbolElfSymType(val);
+#else
+	ROSE_ASSERT(false);
+	return "";
+#endif
 }  
 
 
@@ -155,7 +145,7 @@ SgAsmElfSymbol::get_elf_type() const
 void *
 SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk) const
 {
-    addr_t st_name = p_name->get_offset();
+    rose_addr_t st_name = p_name->get_offset();
     ROSE_ASSERT(st_name!=SgAsmGenericString::unallocated);
     host_to_disk(sex, st_name,     &(disk->st_name));
     host_to_disk(sex, p_st_info,   &(disk->st_info));
@@ -168,7 +158,7 @@ SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk) const
 void *
 SgAsmElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk) const
 {
-    addr_t st_name = p_name->get_offset();
+    rose_addr_t st_name = p_name->get_offset();
     ROSE_ASSERT(st_name!=SgAsmGenericString::unallocated);
     host_to_disk(sex, st_name,     &(disk->st_name));
     host_to_disk(sex, p_st_info,   &(disk->st_info));
@@ -352,7 +342,7 @@ SgAsmElfSymbolSection::unparse(std::ostream &f) const
             ROSE_ASSERT(!"unsupported word size");
         }
 
-        addr_t spos = i * entry_size;
+        rose_addr_t spos = i * entry_size;
         spos = write(f, spos, struct_size, disk);
         if (entry->get_extra().size()>0) {
             ROSE_ASSERT(entry->get_extra().size()<=extra_size);

@@ -30,19 +30,20 @@ std::string unparseAsmInterpretation(SgAsmInterpretation*);
 std::string unparseX86Mnemonic(SgAsmx86Instruction*);
 std::string unparseX86Expression(SgAsmExpression*);
 std::string unparseX86Expression(SgAsmExpression*, bool leaMode);
+std::string unparseX86Register(const RegisterDescriptor&);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
  * ARM
  *-------------------------------------------------------------------------------------------------------------------------------*/
-enum ArmSignForExpressionUnparsing {
+enum ArmSignForExpressionUnparsing 
+{
   arm_sign_none,
   arm_sign_plus,
   arm_sign_minus
-};
+} ;
 
 std::string unparseArmMnemonic(SgAsmArmInstruction*);
 std::string unparseArmExpression(SgAsmExpression*);
-std::string unparseX86Register(X86RegisterClass, int reg, X86PositionInRegister);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
  * PowerPC
