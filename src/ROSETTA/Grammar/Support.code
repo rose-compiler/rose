@@ -7212,13 +7212,17 @@ SgSymbolTable::find_function (const SgName &nm, const SgType* t)
                   {
                     p_name    = nm;
                     p_no_name = false;
+
+                    // Cong(10/25/2010): The none-NULL s can only be returned if the condition above is met.
+                    return s;
+
                  // return ((SgFunctionSymbol *)(*i).second);
-                    break;
+                 // break;
                   }
              }
         }
 
-     return s;
+     return NULL;
    }
 
 SgFunctionSymbol*
