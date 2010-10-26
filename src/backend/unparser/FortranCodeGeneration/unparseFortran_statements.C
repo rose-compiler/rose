@@ -2155,6 +2155,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
        // printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 
           unp->u_fortran_type->unparseType(baseType,info);
+
           curprint(" :: ");
           ninfo.set_SkipBaseType();
           while (p != vardecl->get_variables().end())
@@ -3825,9 +3826,9 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
 
   // General format:
   //   <type> <attributes> :: <variable>
-  
-     SgName name = initializedName->get_name();
-     SgType* type = initializedName->get_type();
+
+     SgName name         = initializedName->get_name();
+     SgType* type        = initializedName->get_type();
      SgInitializer* init = initializedName->get_initializer();  
      ROSE_ASSERT(type);
   
@@ -3952,9 +3953,22 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                   }
              }
 
+       // DQ (10/25/2010): The protected semantics can be applied to each variable separately.
+       // This may be true for other declarations which might force them to be handled similarly to this implementation below.
        // Note that in Fortran, PROTECTED is not used as a access modifier in the language (only PUBLIC and PRIVATE exist).
        // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isProtected() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
-          if (variableDeclaration->get_declarationModifier().get_accessModifier().isProtected() == true)
+       // if (variableDeclaration->get_declarationModifier().get_accessModifier().isProtected() == true)
+          bool is_protected = true;
+          SgInitializedNamePtrList & variableList = variableDeclaration->get_variables();
+          ROSE_ASSERT(variableList.empty() == false);
+          SgInitializedNamePtrList::iterator i = variableList.begin();
+          while(i != variableList.end())
+             {
+               if ( (*i)->get_protected_declaration() == false)
+                    is_protected = false;
+               i++;
+             }
+          if (is_protected == true)
              {
                curprint(", PROTECTED");
              }
@@ -3999,10 +4013,13 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
 
        //FMZ (4/14/2009): Cray Pointer
           if (isSgTypeCrayPointer(type) == NULL)
-          curprint(" :: ");
-          else {
-                curprint(" (");
-        }
+             {
+               curprint(" :: ");
+             }
+            else
+             {
+               curprint(" (");
+             }
         }
       // FMZ 
       // FIXME: currenly use "prev_decl_item" to denote the pointee

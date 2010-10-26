@@ -2167,8 +2167,8 @@ buildModuleStatementAndDefinition (string name, SgScopeStatement* scope)
 
  // Liao 10/30/2009. we now ask for explicit creation of SgClassType. The constructor will not create it by default
      if (nondefiningClassDeclaration->get_type () == NULL)
-       nondefiningClassDeclaration->set_type (SgClassType::createType(nondefiningClassDeclaration));
-     classDeclaration->set_type(nondefiningClassDeclaration->get_type ());
+          nondefiningClassDeclaration->set_type (SgClassType::createType(nondefiningClassDeclaration));
+     classDeclaration->set_type(nondefiningClassDeclaration->get_type());
 
   // Set the internal reference to the non-defining declaration
      classDeclaration->set_firstNondefiningDeclaration(nondefiningClassDeclaration);
@@ -2520,18 +2520,19 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
 
        // DQ (12/14/2007): This should not have been specified as built in global scope!
           ROSE_ASSERT(isSgGlobal(initializedName->get_scope()) == NULL);
-
+#if 0
        // Make sure that the variable does not already exist in this current scope!
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("Looking for symbol for initializedName = %s scope = %p = %s \n",initializedName->get_name().str(),initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
-
+#endif
        // Make sure we can find the newly added symbol!
        // ROSE_ASSERT(getTopOfScopeStack()->lookup_variable_symbol(variableName) != NULL);
 
           setSourcePosition(initializedName);
+#if 0
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("In buildVariableDeclaration(): initializedName = %p \n",initializedName);
-
+#endif
           ROSE_ASSERT(astNodeStack.empty() == false);
           astNodeStack.pop_front();
 
@@ -3633,21 +3634,35 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
           case AttrSpec_language_binding:
              {
                variableDeclaration->get_declarationModifier().get_typeModifier().setBind();
-#if 1
-               processBindingAttribute(variableDeclaration);
-#else
-            // There should be a bind language specifier on the astNamestack (so get it and clean up the stack).
-               ROSE_ASSERT(astNamestack.empty() == false);
-               variableDeclaration->set_bind_language(astNamestack.front());
-               astNamestack.pop_front();
+
+#if 0
+            // Output debugging information about saved state (stack) information.
+               outputState("In setDeclarationAttributeSpec()");
 #endif
+
+               processBindingAttribute(variableDeclaration);
+
+            // printf ("Exiting after processing AttrSpec_language_binding = %d \n",(int)AttrSpec_language_binding);
+            // ROSE_ASSERT(false);
                break;
              }
 
        // This maps to a C/C++ modifier setting.
-          case AttrSpec_PUBLIC:       variableDeclaration->get_declarationModifier().get_accessModifier().setPublic();    break;
-          case AttrSpec_PRIVATE:      variableDeclaration->get_declarationModifier().get_accessModifier().setPrivate();   break;
+          case AttrSpec_PUBLIC:
+               variableDeclaration->get_declarationModifier().get_accessModifier().setPublic();
+            // printf ("astNameStack.size() = %zu \n",astNameStack.size());
 
+            // DQ (10/24/2010): Verify that the name on the astNameStack is "PUBLIC" and then pop the token from the stack.
+
+#if 0
+            // Output debugging information about saved state (stack) information.
+               outputState("In setDeclarationAttributeSpec()");
+#endif
+            // printf ("Exiting after processing AttrSpec_PUBLIC = %d \n",(int)AttrSpec_PUBLIC);
+            // ROSE_ASSERT(false);
+               break;
+
+          case AttrSpec_PRIVATE:      variableDeclaration->get_declarationModifier().get_accessModifier().setPrivate();   break;
 
        // DQ (9/11/2010): Fortran protected attribute is not the same a C++ protected attribute, so we use a different mechanism 
        // that can be associated with individual variables if required (as required with the protected statment is used with 
@@ -3658,7 +3673,7 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
             // variableDeclaration->get_declarationModifier().get_accessModifier().setProtected(); break;
             // Using new support for fortran "protected" specification of variables.
                SgVariableDeclaration* local_variableDeclaration = isSgVariableDeclaration(variableDeclaration);
-               printf ("Setting all the variables in a variable declaration as protected \n");
+            // printf ("Setting all the variables in a variable declaration as protected \n");
                SgInitializedNamePtrList::iterator i = local_variableDeclaration->get_variables().begin();
                while (i != local_variableDeclaration->get_variables().end())
                   {
@@ -3846,7 +3861,8 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
         }
    }
 
-
+#if 0
+// DQ (10/25/2010): I just noticed that this function is no longer called.
 void
 processBindingAttributeSupport( string & bind_language, string & binding_label)
    {
@@ -3882,6 +3898,7 @@ processBindingAttributeSupport( string & bind_language, string & binding_label)
        // printf ("Binding label = %s \n",bindingLabel.c_str());
         }
    }
+#endif
 
 void
 processBindingAttribute( SgDeclarationStatement* declaration)
@@ -3937,6 +3954,9 @@ processBindingAttribute( SgDeclarationStatement* declaration)
           declaration->set_binding_label(bindingLabel);
         }
 #endif
+
+  // printf ("EXITING at base of processBindingAttribute() \n");
+  // ROSE_ASSERT(false);
    }
 
 void
@@ -4993,6 +5013,11 @@ buildVariableDeclarationAndCleanupTypeStack( Token_t * label )
   // each new include file needs to be started with an empty stack(s).
      if (astNodeStack.empty() == false && astBaseTypeStack.empty() == false)
         {
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("At TOP of buildVariableDeclarationAndCleanupTypeStack() (before calling buildVariableDeclaration())");
+#endif
+
           SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(label,false);
 
           ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
@@ -5003,7 +5028,7 @@ buildVariableDeclarationAndCleanupTypeStack( Token_t * label )
        // remove the conditionaly handling below.  See the note in R504 c_action_entity_decl()
        // for more details.
        // ROSE_ASSERT(astTypeStack.empty() == true);
-#if 0
+#if 1
           outputState("In buildVariableDeclarationAndCleanupTypeStack() (after buildVariableDeclaration())");
 #endif
        // We should have used all the types stored on the stack at this point!
@@ -5262,5 +5287,204 @@ fixupModuleScope( SgClassDefinition* moduleScope )
 
           i++;
         }
+   }
+
+
+
+SgClassSymbol* 
+buildIntrinsicModule ( const string & name )
+   {
+     SgClassSymbol*  moduleSymbol = NULL;
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of buildIntrinsicModule()");
+#endif
+
+  // DQ (10/23/2010): Intrinsic module must be filtered out since they are special.
+  // These include: ISO_C_BINDING, ISO_FORTRAN_ENV, OMP_LIB, OMP_LIB_KINDS.  There 
+  // are no others that I know of.
+     if (matchingName(name,"ISO_C_BINDING") == true)
+        {
+       // This is the ISO_C_BINDING intrisic module and so there is a list of names and types that need to be inserted into the local scope.
+       // printf ("Insert types and variables from ISO_C_BINDING into the local scope \n");
+
+       // Use the global scope as a location to put the intrinsic modules.
+          ROSE_ASSERT(astScopeStack.empty() == false);
+          SgScopeStatement* topOfStack = astScopeStack.back();
+       // printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
+
+          SgGlobal* globalScope = isSgGlobal(topOfStack);
+          ROSE_ASSERT(globalScope != NULL);
+
+       // Build a module
+          SgModuleStatement* moduleStatement = buildModuleStatementAndDefinition(name,globalScope);
+          SgClassDefinition*  moduleDefinition = moduleStatement->get_definition();
+
+       // Put the module scope onto the stack so that variables and prodecures will be placed into that scope.
+          ROSE_ASSERT(moduleDefinition != NULL);
+          astScopeStack.push_front(moduleDefinition);
+
+          ROSE_ASSERT(moduleStatement->get_endOfConstruct() == NULL);
+          ROSE_ASSERT(moduleStatement->get_startOfConstruct() == NULL);
+
+       // This is a compiler generated (intrinsic) module.
+          setSourcePosition(moduleStatement);
+          setSourcePositionCompilerGenerated(moduleStatement);
+
+          ROSE_ASSERT(moduleStatement->get_startOfConstruct() != NULL);
+          ROSE_ASSERT(moduleStatement->get_endOfConstruct() != NULL);
+#if 0
+          moduleStatement->get_startOfConstruct()->display("moduleStatement: start");
+          moduleStatement->get_endOfConstruct()->display("moduleStatement: end");
+#endif
+       // Then add the members to the module scope (procedures and variables).
+       // Procedures: C_ASSOCIATED, C_F_POINTER, C_F_PROCPOINTER, C_FUNLOC, C_LOC
+       // Integer Variables (INTEGER): C_INT, C_SHORT, C_LONG,C_LONG_LONG, C_SIGNED_CHAR, C_SIZE_T, 
+       //      C_INT8_T, C_INT16_T, C_INT32_T, C_INT64_T, C_INT128_T, 
+       //      C_INT_LEAST8_T,C_INT_LEAST16_T, C_INT_LEAST32_T, C_INT_LEAST64_T,C_INT_LEAST128_T,
+       //      C_INT_FAST8_T, C_INT_FAST16_T, C_INT_FAST32_T, C_INT_FAST64_T, C_INT_FAST128_T,
+       //      C_INTMAX_T, C_INTPTR_T
+       // Floating point variables (REAL): C_FLOAT, C_DOUBLE, C_LONG_DOUBLE
+       // Complex variables (COMPLEX): C_FLOAT_COMPLEX, C_DOUBLE_COMPLEX, C_LONG_DOUBLE_COMPLEX
+       // Boolean variables (LOGICAL): C_BOOL
+       // Character vriables (CHARACTER): C_CHAR
+
+          string arrayofIntegerVariableNames[23] =
+             { "C_INT", "C_SHORT", "C_LONG", "C_LONG_LONG", "C_SIGNED_CHAR", "C_SIZE_T", 
+               "C_INT8_T", "C_INT16_T", "C_INT32_T", "C_INT64_T", "C_INT128_T",
+               "C_INT_LEAST8_T", "C_INT_LEAST16_T", "C_INT_LEAST32_T", "C_INT_LEAST64_T", "C_INT_LEAST128_T",
+               "C_INT_FAST8_T", "C_INT_FAST16_T", "C_INT_FAST32_T", "C_INT_FAST64_T", "C_INT_FAST128_T",
+               "C_INTMAX_T", "C_INTPTR_T" };
+
+          vector<string> stringIntegerList (arrayofIntegerVariableNames,arrayofIntegerVariableNames+23);
+
+       // Push the initialized names onto the stack.
+          for (vector<string>::iterator i = stringIntegerList.begin(); i != stringIntegerList.end(); i++)
+             {
+            // printf ("Building variable %s for intrinsic module = %s \n",(*i).c_str(),name.c_str());
+               SgInitializedName* initializedName = new SgInitializedName(*i,SgTypeInt::createType(),NULL,NULL,NULL);
+               astNodeStack.push_front(initializedName);
+             }
+
+          string arrayofRealVariableNames[3] = { "C_FLOAT", "C_DOUBLE", "C_LONG_DOUBLE" };
+          vector<string> stringRealList (arrayofRealVariableNames,arrayofRealVariableNames+3);
+          for (vector<string>::iterator i = stringRealList.begin(); i != stringRealList.end(); i++)
+             {
+            // printf ("Building variable %s for intrinsic module = %s \n",(*i).c_str(),name.c_str());
+               SgInitializedName* initializedName = new SgInitializedName(*i,SgTypeInt::createType(),NULL,NULL,NULL);
+               astNodeStack.push_front(initializedName);
+             }
+
+          string arrayofComplexVariableNames[3] = { "C_FLOAT", "C_DOUBLE", "C_LONG_DOUBLE" };
+          vector<string> stringComplexList (arrayofComplexVariableNames,arrayofComplexVariableNames+3);
+          for (vector<string>::iterator i = stringComplexList.begin(); i != stringComplexList.end(); i++)
+             {
+            // printf ("Building variable %s for intrinsic module = %s \n",(*i).c_str(),name.c_str());
+               SgInitializedName* initializedName = new SgInitializedName(*i,SgTypeInt::createType(),NULL,NULL,NULL);
+               astNodeStack.push_front(initializedName);
+             }
+
+       // printf ("Building variable %s for intrinsic module = %s \n","C_BOOL",name.c_str());
+          SgInitializedName* initializedName1 = new SgInitializedName("C_BOOL",SgTypeBool::createType(),NULL,NULL,NULL);
+          astNodeStack.push_front(initializedName1);
+
+       // printf ("Building variable %s for intrinsic module = %s \n","C_CHAR",name.c_str());
+          SgInitializedName* initializedName2 = new SgInitializedName("C_CHAR",SgTypeChar::createType(),NULL,NULL,NULL);
+          astNodeStack.push_front(initializedName2);
+
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("In buildIntrinsicModule(): before calling buildVariableDeclaration()");
+#endif
+
+       // Use the initialized names there were pushed onto the stack.
+          SgVariableDeclaration* integerVariableDeclaration = buildVariableDeclaration (NULL /* label */, false /* buildingImplicitVariable */ );
+
+          string arrayofProcedureNames[5] = { "C_ASSOCIATED", "C_F_POINTER", "C_F_PROCPOINTER", "C_FUNLOC", "C_LOC" };
+          vector<string> stringProcedureList (arrayofProcedureNames,arrayofProcedureNames+5);
+          for (vector<string>::iterator i = stringProcedureList.begin(); i != stringProcedureList.end(); i++)
+             {
+            // printf ("Building procedure %s for intrinsic module = %s \n",(*i).c_str(),name.c_str());
+               SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),false);
+               SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(*i,functionType,NULL);
+
+               setSourcePosition(functionDeclaration);
+               setSourcePositionCompilerGenerated(functionDeclaration);
+
+               setSourcePosition(functionDeclaration->get_parameterList());
+               setSourcePositionCompilerGenerated(functionDeclaration->get_parameterList());
+
+            // Mark this as NOT a subroutine, thus it is a function.
+               functionDeclaration->set_subprogram_kind(SgProcedureHeaderStatement::e_function_subprogram_kind);
+
+               functionDeclaration->set_scope(moduleDefinition);
+
+               moduleDefinition->append_statement(functionDeclaration);
+             }
+
+          ROSE_ASSERT(integerVariableDeclaration != NULL);
+          moduleDefinition->append_statement(integerVariableDeclaration);
+
+       // Pop the scope stack
+          astScopeStack.pop_front();
+
+          moduleSymbol = globalScope->lookup_class_symbol(name);
+          ROSE_ASSERT(moduleSymbol != NULL);
+        }
+
+     if (matchingName(name,"ISO_FORTRAN_ENV") == true)
+        {
+       // This is the ISO_C_BINDING intrisic module and so there is a list of names and types that need to be inserted into the local scope.
+          printf ("Insert types and variables from ISO_FORTRAN_ENV into the local scope \n");
+          ROSE_ASSERT(moduleSymbol != NULL);
+        }
+
+     if (matchingName(name,"OMP_LIB") == true)
+        {
+       // This is the ISO_C_BINDING intrisic module and so there is a list of names and types that need to be inserted into the local scope.
+          printf ("Insert types and variables from OMP_LIB into the local scope \n");
+          ROSE_ASSERT(moduleSymbol != NULL);
+        }
+
+     if (matchingName(name,"OMP_LIB_KINDS") == true)
+        {
+       // This is the ISO_C_BINDING intrisic module and so there is a list of names and types that need to be inserted into the local scope.
+          printf ("Insert types and variables from OMP_LIB_KINDS into the local scope \n");
+          ROSE_ASSERT(moduleSymbol != NULL);
+        }
+
+     if (matchingName(name,"IEEE_EXCEPTIONS") == true)
+        {
+       // This is the ISO_C_BINDING intrisic module and so there is a list of names and types that need to be inserted into the local scope.
+          printf ("Insert types and variables from IEEE_EXCEPTIONS into the local scope \n");
+          ROSE_ASSERT(moduleSymbol != NULL);
+        }
+
+     if (matchingName(name,"IEEE_ARITHMETIC") == true)
+        {
+       // This is the ISO_C_BINDING intrisic module and so there is a list of names and types that need to be inserted into the local scope.
+          printf ("Insert types and variables from IEEE_ARITHMETIC into the local scope \n");
+          ROSE_ASSERT(moduleSymbol != NULL);
+        }
+
+     if (matchingName(name,"IEEE_FEATURES") == true)
+        {
+       // This is the ISO_C_BINDING intrisic module and so there is a list of names and types that need to be inserted into the local scope.
+          printf ("Insert types and variables from IEEE_FEATURES into the local scope \n");
+          ROSE_ASSERT(moduleSymbol != NULL);
+        }
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of buildIntrinsicModule()");
+#endif
+
+  // printf ("Leaving buildIntrinsicModule() \n");
+
+  // It is OK to return NULL, few modules are intrinsic.
+  // ROSE_ASSERT(moduleSymbol != NULL);
+
+     return moduleSymbol;
    }
 

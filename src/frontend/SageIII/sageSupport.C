@@ -2644,15 +2644,14 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
             // "make testCPP_Defines" rule in the Fortran_tests directory.
                if (getProject()->get_macroSpecifierList().empty() == false)
                   {
-                 // Check if there are "-D" options on the command line and issue a warning that this case with Fortran is not handled.
-                 // However I can't see that we collect the "-D" options from the commandline, so I can't do this now.
-                    printf ("Warning: \"-D\" options on the command line are not currently processed within the Fortran support. \n");
+                 // Check if there are "-D" options on the command line and issue an error if the file suffix is wrong.
                     if (file->get_requires_C_preprocessor() == false)
                        {
-                         printf ("However, they will also only be processed for files containing a proper file extension to trigger the processing (use: *.F, *.F90, *.F95, *.F03, *.F08). \n");
+                         printf ("Error: \"-D\" options on the command line are processed within the Fortran support only for files with suffix: F, F90, F95, F03, F08. (matching gfortran behavior) \n");
+                         ROSE_ASSERT(false);
                        }
                   }
-               
+
             // printf ("Called set_requires_C_preprocessor(%s) \n",file->get_requires_C_preprocessor() ? "true" : "false");
 
             // DQ (12/23/2008): This needs to be called after the set_requires_C_preprocessor() function is called.
@@ -5156,6 +5155,7 @@ SgFile::callFrontEnd()
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
 // #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+
      if (get_Fortran_only() == true && FortranModuleInfo::isRmodFile() == false)
         {
           if (get_verbose() > 1)
@@ -5168,9 +5168,14 @@ SgFile::callFrontEnd()
         }
 // #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif 
+
 #if 0
      printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
      display("At bottom of SgFile::callFrontEnd()");
+#endif
+#if 0
+     printf ("Exiting as a test of the F03 module support \n");
+     ROSE_ASSERT(false);
 #endif
 
   // return the error code associated with the call to the C++ Front-end
@@ -5391,6 +5396,16 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // to help avoid unpleasant surprises.  So to simplify use of cpp and make it more consistant with gfortran we use 
        // gfortran to call cpp.
           fortran_C_preprocessor_commandLine.push_back(BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+
+       // DQ (10/23/2010): Added support for "-D" options (this will trigger CPP preprocessing, eventually, but this is just to support the syntax checking).
+       // Note that we have to do this before calling the C preprocessor and not with the syntax checking.
+          const SgStringList & macroSpecifierList = get_project()->get_macroSpecifierList();
+          for (size_t i = 0; i < macroSpecifierList.size(); i++)
+             {
+            // Note that gfortran will only do macro substitution of "-D" command line arguments on files with *.F or *.F?? suffix.
+               ROSE_ASSERT(get_requires_C_preprocessor() == true);
+               fortran_C_preprocessor_commandLine.push_back("-D"+macroSpecifierList[i]);
+             }
 
        // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
@@ -5627,6 +5642,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                fortranCommandLine.push_back(get_sourceFileNameWithPath());
              }
 #endif
+
        // At this point we have the full command line with the source file name
           if ( get_verbose() > 0 )
              {

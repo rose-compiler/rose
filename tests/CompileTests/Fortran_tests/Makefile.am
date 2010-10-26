@@ -252,8 +252,8 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_261.f \
      test2010_29.f \
      test2010_30.f \
-     test2010_63.f \
-     test2010_64.f
+     test2010_68.f \
+     test2010_69.f
 
 F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_30.f03 \
@@ -344,6 +344,12 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_48.f90 \
      test2010_51.f90 \
      test2010_65.f90 \
+     test2010_66.f90 \
+     test2010_67.f90 \
+     test2010_71.f90 \
+     test2010_72.f90 \
+     test2010_73.f90 \
+     test2010_70.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -372,7 +378,10 @@ F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2010_54.f \
      test2010_55.f \
      test2010_56.f \
-     test2010_57.f 
+     test2010_57.f \
+     test2010_68.f \
+     test2010_69.f \
+     test2010_70.f 
 
 F03_TESTCODES_CURRENTLY_FAILING = \
      test2007_18.f03 \
@@ -380,7 +389,11 @@ F03_TESTCODES_CURRENTLY_FAILING = \
      test2007_172.f03 \
      test2007_173.f03 \
      test2007_180.f03 \
-     test2010_27.f03
+     test2010_27.f03 \
+     test2010_74.f03 \
+     test2010_75.f03 \
+     test2010_76.f03 \
+     test2010_77.f03
 
 
 noinst_headers =
@@ -577,8 +590,16 @@ testOFP:
 # DQ (10/18/2010): Test suggested from bug reported by Carlo Bertolli at Imperial.
 testCPP_Defines:
 #	Test source code with macro defined from the command line: e.g. "integer*PS  pe"
-	../../testTranslator $(ROSE_FLAGS) -DPS=8 inputUsingDefinesOnCommandline.F90
+	../../testTranslator $(ROSE_FLAGS) -DPS=8 $(srcdir)/inputUsingDefinesOnCommandline.F90
 
+testMPItypes:
+	cp $(srcdir)/mpi_f08_types.f90 mpi_f08_types.f03
+	cp $(srcdir)/mpi_f08_interfaces_test.f90 mpi_f08_interfaces_test.f03
+	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep mpi_f08_types.f03
+#	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check mpi_f08_types.f03
+#	../../testTranslator $(ROSE_FLAGS) $(srcdir)/mpi_f08_types.f90
+#	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_interfaces_test.f90
+	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep mpi_f08_interfaces_test.f03
 
 
 tests:
@@ -633,5 +654,6 @@ clean-local:
 	rm -f *.o rose_*.f* *.rmod
 	rm -f *.s *.mod rose_*.f rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 rose_*.f08 *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
 	rm -f rose_*.F rose_*.F77 rose_*.F90 rose_*.F95 rose_*.F03 rose_*.F08 test2007_suffixTest_0?_postprocessed.*
+	rm -f *_postprocessed.* mpi_f08_types.f03
 	rm -rf QMTest
 
