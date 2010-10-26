@@ -5024,7 +5024,7 @@ SgFile::callFrontEnd()
             // Call the "INTERNAL" EDG Front End used by ROSE (with modified command
             // line input so that ROSE's command line is simplified)!
                if ( get_verbose() > 1 )
-                    printf ("Calling edg_main \n");
+                    printf ("In SgFile::callFrontEnd(): calling edg_main \n");
 #if 0
                frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
 
@@ -5083,6 +5083,7 @@ SgFile::callFrontEnd()
                          frontendErrorLevel = binary->buildAST(argv,inputCommandLine);
                          break;
                        }
+
                     case V_SgUnknownFile:
                        {
                          break;
@@ -5339,7 +5340,8 @@ global_build_classpath()
   // write protected in the execution of the "make distcheck" rule.
      string ecj_class_path = "src/3rdPartyLibraries/java-parser/";
   // classpath += findRoseSupportPathFromBuild(ecj_class_path, string("lib/") ) + ":";
-     classpath += findRoseSupportPathFromSource(ecj_class_path, string("lib/") ) + ":";
+  // classpath += findRoseSupportPathFromSource(ecj_class_path, string("lib/") ) + ":";
+     classpath += findRoseSupportPathFromBuild(ecj_class_path, string("lib/") ) + ":";
 
   // Everything else?
      classpath += ".";
@@ -5899,7 +5901,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
 #if 1
      if ( get_verbose() > 0 )
-          printf ("numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
+          printf ("Fortran numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 #endif
 
      int openFortranParser_argc    = 0;
@@ -6024,8 +6026,13 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
   // printf ("######################### Inside of SgSourceFile::build_Java_AST() ############################ \n");
 
+#if 0
+  // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
      bool requires_C_preprocessor = get_requires_C_preprocessor();
      ROSE_ASSERT(requires_C_preprocessor == false);
+#else
+     ROSE_ASSERT(get_requires_C_preprocessor() == false);
+#endif
 
   // DQ (10/11/2010): We don't need syntax checking because ECJ will do that.
   // bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
@@ -6056,6 +6063,9 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                OFPCommandLine.push_back(includeList[i]);
              }
 
+#if 0
+       // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
+
        // DQ (5/19/2008): Support for C preprocessing
           if (requires_C_preprocessor == true)
              {
@@ -6070,7 +6080,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
             // Build the command line using the original file (to be used by OFP).
                OFPCommandLine.push_back(get_sourceFileNameWithPath());
              }
-
+#endif
 #if 0
           printf ("output_parser_actions: OFPCommandLine = %s \n",CommandlineProcessing::generateStringFromArgList(OFPCommandLine,false,false).c_str());
 #endif
@@ -6138,6 +6148,8 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                OFPCommandLine.push_back("-I" + getSourceDirectory() );
              }
 
+#if 0
+       // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
        // DQ (8/24/2010): Detect the use of CPP on the fortran file and use the correct generated file from CPP, if required.
        // OFPCommandLine.push_back(get_sourceFileNameWithPath());
           if (requires_C_preprocessor == true)
@@ -6150,7 +6162,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
              {
                OFPCommandLine.push_back(get_sourceFileNameWithPath());
              }
-          
+#endif
 #if 0
           printf ("exit_after_parser: OFPCommandLine = %s \n",StringUtility::listToString(OFPCommandLine).c_str());
 #endif
@@ -6176,17 +6188,10 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      vector<string> frontEndCommandLine;
 
      frontEndCommandLine.push_back(argv[0]);
-  // frontEndCommandLine.push_back(classpath);
-     frontEndCommandLine.push_back("--class");
 
-  // Calling libfortran_ofp_parser_c_jni_FortranParserActionJNI.so
-  // frontEndCommandLine.push_back("fortran.ofp.parser.c.jni.FortranParserActionJNI");
-
-  // Calling libjava_ecj_parser_c_jni_JavaParserActionJNI.so
-  // frontEndCommandLine.push_back("java.ecj.parser.c.jni.JavaParserActionJNI");
-
-  // Calling libjava_ecj_parser_c_jni_JavaParserActionJNI.so
-     frontEndCommandLine.push_back("JavaTraversal");
+  // DQ (10/20/2010): This is what we want in the Fortran support, but not for the Java support.
+  // frontEndCommandLine.push_back("--class");
+  // frontEndCommandLine.push_back("JavaTraversal");
 
 #if 0
   // Debugging output
@@ -6194,10 +6199,11 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      display("Calling SgFile display");
 #endif
 
+#if 0
+  // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
+
      const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-
      bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
-
   // printf ("getSourceDirectory() = %s \n",getSourceDirectory().c_str());
      for (size_t i = 0; i < includeList.size(); i++)
         {
@@ -6219,6 +6225,12 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
        // Add the source directory to the include list so that we reproduce the semantics of gfortran
           frontEndCommandLine.push_back("-I" + getSourceDirectory() );
         }
+#else
+     ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
+#endif
+
+#if 0
+  // DQ (10/26/2010): Java does not support CPP (not the Java way of doing things).
 
   // DQ (5/19/2008): Support for C preprocessing
      if (requires_C_preprocessor == true)
@@ -6239,10 +6251,14 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
        // If not being preprocessed, the fortran filename is just the original input source file name.
           frontEndCommandLine.push_back(get_sourceFileNameWithPath());
         }
+#else
+     ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
+     frontEndCommandLine.push_back(get_sourceFileNameWithPath());
+#endif
 
 #if 1
      if ( get_verbose() > 0 )
-          printf ("numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
+          printf ("Java numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 #endif
 
      int openJavaParser_argc    = 0;

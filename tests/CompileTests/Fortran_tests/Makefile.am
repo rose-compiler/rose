@@ -438,8 +438,8 @@ ROSE_FLAGS = -rose:verbose 0
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
-# VALGRIND = valgrind $(VALGRIND_OPTIONS)
-VALGRIND =
+VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
 
 PASSING_TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
 PASSING_TEST_F77_Objects = ${F77_TESTCODES:.f77=.o}
@@ -644,7 +644,7 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
    test2007_suffixTest_05.f03 test2007_suffixTest_06.F test2007_suffixTest_07.F90 test2007_suffixTest_08.F95 \
    test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08 \
    module_A_file.f90 module_B_file.f90 test2010_31_header.f90 test2010_50.h test2010_54.h test2010_55.h \
-   original_mpif.h
+   original_mpif.h inputUsingDefinesOnCommandline.F90
 
 # DQ (3/12/2010): Fortran 2008 tests from OFP
 # f08-tests

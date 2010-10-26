@@ -19,18 +19,23 @@ extract_rose_required_ecj_source_files: JavaTraversal.class
 
 # buildJavaSupport: ${srcdir}/JavaTraversal.java
 # JavaTraversal.class:
-JavaTraversal.class: ${srcdir}/JavaTraversal.java
+JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java
 	@echo "copy the JavaTraversal.java from the srcdir to the build directory."
 	cp ${srcdir}/JavaTraversal.java JavaTraversal.java
+	cp ${srcdir}/JavaParser.java JavaParser.java
 	@echo "Using the build directory's copy of ecjROSE.jar."
 #	javac -cp ecjROSE.jar JavaTraversal.java
-	$(JAVAC) -cp ${srcdir}/ecjROSE.jar JavaTraversal.java
-	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar JavaTraversal
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaTraversal.java JavaParser.java
+	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaTraversal
+	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
 #	DQ (10/13/2010): I want to avoid copying ecjROSE.jar into the build tree, but it is required for now.
 #	Only ROSE translators need it, not the javac and javah commands (above).
 	@echo "After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir (only required for ROSE to find ecjROSE.jar (fix later))"
 	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
 
+JavaParser.class: ${srcdir}/JavaParser.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaParser.java
+	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
 
 # These are the commands to generate the files we need (in the build tree).
 # JavaTraversal.class JavaTraversal.h: ${srcdir}/JavaTraversal.java
