@@ -906,10 +906,6 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "long long int" ) ||
                  ( varTypeString == "unsigned long long int" ) ||
                  ( varTypeString == "int64_t") ||
-              // DQ (8/3/2008): Added typedef for primative types (used in binary format)
-                 ( varTypeString == "Exec::addr_t" ) ||
-              // DQ (8/9/2008): Added typedef to SgAsmExecutableFileFormat so that "Exec::addr_t" can be removed!
-                 ( varTypeString == "SgAsmExecutableFileFormat::addr_t" ) ||
                  ( varTypeString == "rose_addr_t" ) ||
                  ( varTypeString == "rose_rva_t") ||
                  ( varTypeString == "uint64_t" ) ||

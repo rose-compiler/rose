@@ -126,7 +126,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
              * into the string table. Replace the fake ".file" with the real file name. */
             const COFFSymbol_disk *d = (const COFFSymbol_disk*) &(p_aux_data[0]);
             if (0 == d->st_zero) {
-                addr_t fname_offset = le_to_host(d->st_offset);
+                rose_addr_t fname_offset = le_to_host(d->st_offset);
                 if (fname_offset < 4) throw FormatError("name collides with size field");
                 set_name(new SgAsmBasicString(strtab->read_content_local_str(fname_offset)));
                 if (debug)
@@ -166,7 +166,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             /* COMDAT section */
             /*FIXME: not implemented yet*/
             fprintf(stderr, "COFF aux comdat %s: (FIXME) not implemented yet\n", p_st_name.c_str());
-            hexdump(stderr, (addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
+            hexdump(stderr, (rose_addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
 
         } else {
             fprintf(stderr, "COFF aux unknown %s: (FIXME) st_storage_class=%u, st_type=0x%02x, st_section_num=%d\n", 
@@ -329,7 +329,7 @@ SgAsmCoffSymbolTable::parse()
 
     /* The string table immediately follows the symbols. The first four bytes of the string table are the size of the
      * string table in little endian. */
-    addr_t strtab_offset = get_offset() + fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size;
+    rose_addr_t strtab_offset = get_offset() + fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size;
     p_strtab = new SgAsmGenericSection(fhdr->get_file(), fhdr);
     p_strtab->set_offset(strtab_offset);
     p_strtab->set_size(sizeof(uint32_t));
@@ -340,7 +340,7 @@ SgAsmCoffSymbolTable::parse()
 
     uint32_t word;
     p_strtab->read_content(0, &word, sizeof word);
-    addr_t strtab_size = le_to_host(word);
+    rose_addr_t strtab_size = le_to_host(word);
     if (strtab_size < sizeof(uint32_t))
         throw FormatError("COFF symbol table string table size is less than four bytes");
     p_strtab->extend(strtab_size - sizeof(uint32_t));
@@ -371,14 +371,14 @@ SgAsmCoffSymbolTable::get_nslots() const
 void
 SgAsmCoffSymbolTable::unparse(std::ostream &f) const
 {
-    addr_t spos = 0; /*section offset*/
+    rose_addr_t spos = 0; /*section offset*/
     
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmCoffSymbol *symbol = p_symbols->get_symbols()[i];
         SgAsmCoffSymbol::COFFSymbol_disk disk;
         symbol->encode(&disk);
         spos = write(f, spos, SgAsmCoffSymbol::COFFSymbol_disk_size, &disk);
-        spos = write(f, (addr_t) spos, symbol->get_aux_data());
+        spos = write(f, (rose_addr_t) spos, symbol->get_aux_data());
     }
     if (get_strtab())
         get_strtab()->unparse(f);

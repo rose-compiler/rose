@@ -216,7 +216,7 @@ SgAsmElfSegmentTable::parse()
     if (get_size()<=1 && get_size()<nentries*ent_size)
         extend(nentries*ent_size - get_size());
     
-    addr_t offset=0;                                /* w.r.t. the beginning of this section */
+    rose_addr_t offset=0;                                /* w.r.t. the beginning of this section */
     for (size_t i=0; i<nentries; i++, offset+=ent_size) {
         /* Read/decode the segment header */
         SgAsmElfSegmentTableEntry *shdr = NULL;
@@ -375,7 +375,7 @@ SgAsmElfSegmentTable::reallocate()
 
     /* Resize based on word size from ELF File Header */
     size_t opt_size, nentries;
-    addr_t need = calculate_sizes(NULL, NULL, &opt_size, &nentries);
+    rose_addr_t need = calculate_sizes(NULL, NULL, &opt_size, &nentries);
     if (need < get_size()) {
         if (is_mapped()) {
             ROSE_ASSERT(get_mapped_size()==get_size());
@@ -440,7 +440,7 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
         }
         
         /* The disk struct */
-        addr_t spos = write(f, id*ent_size, struct_size, disk);
+        rose_addr_t spos = write(f, id*ent_size, struct_size, disk);
         if (shdr->get_extra().size() > 0)
             write(f, spos, shdr->get_extra());
     }
