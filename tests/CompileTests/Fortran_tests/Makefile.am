@@ -438,8 +438,8 @@ ROSE_FLAGS = -rose:verbose 0
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
-VALGRIND = valgrind $(VALGRIND_OPTIONS)
-# VALGRIND =
+# VALGRIND = valgrind $(VALGRIND_OPTIONS)
+VALGRIND =
 
 PASSING_TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
 PASSING_TEST_F77_Objects = ${F77_TESTCODES:.f77=.o}
