@@ -90,9 +90,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *, job
  * Method:    cactionCompilationUnitDeclaration
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
    {
-     printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration \n");
+  // Example of how to get the string...
+     const char* str = NULL;
+     str = env->GetStringUTFChars(java_string, NULL);
+     ROSE_ASSERT(str != NULL);
+     printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration s = %s \n",str);
+     env->ReleaseStringUTFChars(java_string, str);
 
   // This is already setup by ROSE as part of basic file initialization before calling ECJ.
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
