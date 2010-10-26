@@ -23,9 +23,10 @@ noinst_PROGRAMS = \
     typeTraits livenessAnalysis buildProcedureHeaderStatement replaceMacroCalls \
     buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
     deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
-    generateUniqueName
+    generateUniqueName annotateExpressionsWithUniqueNames
 
 # list of test SAGE AST builders 
+annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
 deepDelete_SOURCES                       = deepDelete.C 
 buildFunctionDeclaration_SOURCES         = buildFunctionDeclaration.C
 buildNondefiningFunction_SOURCES         = buildNondefiningFunction.C
@@ -123,7 +124,8 @@ generatedCodeExamples = \
   rose_inputdeepDelete.C \
   rose_inputinsertStatementBeforeFunction.C \
   rose_inputRemoveStatementCommentRelocation.C \
-  rose_inputgenerateUniqueName.C
+  rose_inputgenerateUniqueName.C \
+  rose_inputannotateExpressionsWithUniqueNames.C
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -217,6 +219,10 @@ rose_inputlivenessAnalysis.C:livenessAnalysis
 rose_inputgenerateUniqueName.C:generateUniqueName
 	./generateUniqueName$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputgenerateUniqueName.C 1>rose_inputgenerateUniqueName.out
 
+rose_inputannotateExpressionsWithUniqueNames.C:annotateExpressionsWithUniqueNames
+	./annotateExpressionsWithUniqueNames$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputannotateExpressionsWithUniqueNames.C 1>rose_inputannotateExpressionsWithUniqueNames.out
+
+
 
 rose_inputbuildProcedureHeaderStatement.f : buildProcedureHeaderStatement
 # DQ (9/13/2010): I think that we need both levels of if tests else --without-java will not work.
@@ -306,7 +312,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputRemoveStatementCommentRelocation_withoutBottomBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutTopBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C \
-       inputgenerateUniqueName.C
+       inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C
 
 
 check-local:
