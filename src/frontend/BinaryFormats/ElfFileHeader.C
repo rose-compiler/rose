@@ -170,7 +170,7 @@ SgAsmElfFileHeader::parse()
     p_e_ident_data_encoding = disk32.e_ident_data_encoding; /*save original value*/
 
     /* Decode header to native format */
-    rva_t entry_rva, sectab_rva, segtab_rva;
+    rose_rva_t entry_rva, sectab_rva, segtab_rva;
     if (1 == disk32.e_ident_file_class) {
         p_exec_format->set_word_size(4);
 
@@ -444,7 +444,7 @@ SgAsmElfFileHeader::reallocate()
     bool reallocated = SgAsmGenericHeader::reallocate();
 
     /* Resize header based on current word size */
-    addr_t need;
+    rose_addr_t need;
     if (4==get_word_size()) {
         need = sizeof(Elf32FileHeader_disk);
     } else if (8==get_word_size()) {

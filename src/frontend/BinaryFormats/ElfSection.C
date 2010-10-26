@@ -243,7 +243,7 @@ SgAsmElfSection::reallocate()
 
     /* Change section size if this section was defined in the ELF Section Table */
     if (sechdr!=NULL) {
-        addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
+        rose_addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
         if (need < get_size()) {
             if (is_mapped()) {
                 ROSE_ASSERT(get_mapped_size()==get_size());

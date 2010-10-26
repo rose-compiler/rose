@@ -300,7 +300,11 @@ test_testElfStrtab.result: testElfStrtab
 	@if $(VALGRIND) ./testElfStrtab $(BINARY_SAMPLES)/arm-poweroff >$@.tmp 2>&1; then mv $@.tmp $@; \
 	else sed 's/^/$@> /' < $@.tmp; exit 1; fi
 
-# cannot run in parallel with testElfStrtab
+# Test that we can change an ELF container from little to big endian, or vice versa.  This test cannot run in parallel with
+# testElfStrtab (both write to arm-poweroff.new and arm-poweroff.dump in the CWD). The test does the following:
+#   1. Read arm-poweroff, byte-swap the ELF container, and write a new executable to arm-poweroff.new, and arm-poweroff.dump
+#   2. Then read arm-poweroff.new and generate arm-poweroff.new.dump (and arm-poweroff.new.new, which we ignore).
+#   3. Then compare the two dump files to make sure they're identical. Dump files are text, so byte order is irrelevant.
 test_testElfByteOrder.result: testElfByteOrder test_testElfStrtab.result
 	@echo "  TESTING $@"
 	@$(VALGRIND) ./testElfByteOrder $(BINARY_SAMPLES)/arm-poweroff >$@.tmp 2>&1; \

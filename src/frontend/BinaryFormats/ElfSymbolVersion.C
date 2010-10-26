@@ -124,7 +124,7 @@ SgAsmElfSymverSection::unparse(std::ostream &f) const
         SgAsmElfSymverEntry *entry = p_entries->get_entries()[i];
         host_to_disk(sex,entry->get_value(),&val);
 
-        addr_t spos = i * entry_size;
+        rose_addr_t spos = i * entry_size;
         spos = write(f, spos, struct_size, &val);
     }
     unparse_holes(f);
@@ -205,7 +205,7 @@ SgAsmElfSymverDefinedAux::parse(ByteOrder sex, const ElfSymverDefinedAux_disk* d
 void *
 SgAsmElfSymverDefinedAux::encode(ByteOrder sex, ElfSymverDefinedAux_disk* disk) const
 {
-    addr_t name_offset = p_name->get_offset();
+    rose_addr_t name_offset = p_name->get_offset();
     ROSE_ASSERT(name_offset!=SgAsmGenericString::unallocated);
     host_to_disk(sex, name_offset, &(disk->vda_name));
     return disk;
@@ -585,7 +585,7 @@ SgAsmElfSymverNeededAux::encode(ByteOrder sex, ElfSymverNeededAux_disk* disk) co
     host_to_disk(sex,p_flags,&disk->vna_flags);
     host_to_disk(sex,p_other,&disk->vna_other);
 
-    addr_t name_offset = p_name->get_offset();
+    rose_addr_t name_offset = p_name->get_offset();
     ROSE_ASSERT(name_offset!=SgAsmGenericString::unallocated);
     host_to_disk(sex, name_offset, &(disk->vna_name));
     return disk;
@@ -626,7 +626,7 @@ SgAsmElfSymverNeededEntry::encode(ByteOrder sex, ElfSymverNeededEntry_disk *disk
 {
     host_to_disk(sex, p_version, &(disk->vn_version));
 
-    addr_t file_offset = p_file_name->get_offset();
+    rose_addr_t file_offset = p_file_name->get_offset();
     ROSE_ASSERT(file_offset!=SgAsmGenericString::unallocated);
     host_to_disk(sex, file_offset, &(disk->vn_file));
 
