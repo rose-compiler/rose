@@ -281,6 +281,9 @@ SgVariableSymbol* add_external_team_decl( std::string );
 //! Fixes up function symbols to be in the correct scope when the function call appears before the function declaration.
 void fixupModuleScope( SgClassDefinition* moduleScope );
 
+//! Build the module symbols required to support intrinsic modules.
+SgClassSymbol* buildIntrinsicModule ( const std::string & name );
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
 
