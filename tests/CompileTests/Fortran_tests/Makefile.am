@@ -349,7 +349,6 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_71.f90 \
      test2010_72.f90 \
      test2010_73.f90 \
-     test2010_70.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -593,6 +592,7 @@ testCPP_Defines:
 	../../testTranslator $(ROSE_FLAGS) -DPS=8 $(srcdir)/inputUsingDefinesOnCommandline.F90
 
 testMPItypes:
+	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/ISO_C_BINDING.f03
 	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_types.f03
 	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_interfaces_test.f03
 
