@@ -512,7 +512,7 @@ $(TEST_F03_Objects): ../../testTranslator ../../testGraphGeneration
 	@touch $@
 
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
-testParser:../../testParser
+testParser: ../../testParser
 	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2007_01.f90
 
 
@@ -593,18 +593,15 @@ testCPP_Defines:
 	../../testTranslator $(ROSE_FLAGS) -DPS=8 $(srcdir)/inputUsingDefinesOnCommandline.F90
 
 testMPItypes:
-	cp $(srcdir)/mpi_f08_types.f90 mpi_f08_types.f03
-	cp $(srcdir)/mpi_f08_interfaces_test.f90 mpi_f08_interfaces_test.f03
-	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep mpi_f08_types.f03
-#	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check mpi_f08_types.f03
-#	../../testTranslator $(ROSE_FLAGS) $(srcdir)/mpi_f08_types.f90
-#	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_interfaces_test.f90
-	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep mpi_f08_interfaces_test.f03
+	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_types.f03
+	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_interfaces_test.f03
 
 
 tests:
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
+	@$(MAKE) testCPP_Defines
+	@$(MAKE) testMPItypes
 	@echo "***************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make tests rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
@@ -616,6 +613,8 @@ check-local:
 if !ROSE_USING_GFORTRAN_VERSION_4_0
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
+	@$(MAKE) testCPP_Defines
+	@$(MAKE) testMPItypes
 #	DQ (4/6/2010): This fails on Hudson, but I don't know why.
 #	@$(MAKE) testParser
 else
@@ -654,6 +653,6 @@ clean-local:
 	rm -f *.o rose_*.f* *.rmod
 	rm -f *.s *.mod rose_*.f rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 rose_*.f08 *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
 	rm -f rose_*.F rose_*.F77 rose_*.F90 rose_*.F95 rose_*.F03 rose_*.F08 test2007_suffixTest_0?_postprocessed.*
-	rm -f *_postprocessed.* mpi_f08_types.f03
+	rm -f *_postprocessed.* 
 	rm -rf QMTest
 
