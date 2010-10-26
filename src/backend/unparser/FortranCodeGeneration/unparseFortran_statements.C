@@ -3968,7 +3968,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                     is_protected = false;
                i++;
              }
-          if (is_protected == true)
+          if (is_protected == true && (variableList.empty() == false))
              {
                curprint(", PROTECTED");
              }
