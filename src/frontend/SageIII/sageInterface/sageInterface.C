@@ -13001,4 +13001,26 @@ void SageInterface::constantFolding(SgNode* r)
   ConstantFolding::constantFoldingOptimization(r,false);
 }
 
+//! Generate unique names for expressions and attach the names as persistent attributes
+void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
+{
+  class visitorTraversal:public AstSimpleProcessing
+  {
+    public:
+      virtual void visit (SgNode * n)
+      {
+        SgExpression* exp = isSgExpression(n);
+        if (exp)
+        {
+          string u_name = generateUniqueName(exp,false);
+          AstAttribute * name_attribute = new UniqueNameAttribute(u_name); 
+          ROSE_ASSERT (name_attribute != NULL);
+          exp->addNewAttribute("UniqueNameAttribute",name_attribute);
+        }
+      }
+  };
+  visitorTraversal exampleTraversal;
+  exampleTraversal.traverseInputFiles(project,preorder);
+}
+
 #endif
