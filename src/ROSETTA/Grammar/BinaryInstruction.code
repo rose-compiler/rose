@@ -2431,18 +2431,29 @@ HEADER_PE_RVA_SIZE_PAIR_START
 # pragma pack ()
 #endif
 
-		explicit SgAsmPERVASizePair(const SgAsmPERVASizePair::RVASizePair_disk *disk)
+		SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, const SgAsmPERVASizePair::RVASizePair_disk *disk)
 			: p_e_rva(0), p_e_size(0), p_section(NULL) {
-			ctor(disk);
+			ctor(parent, disk);
 		}
+
+		SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size)
+			: p_e_rva(0), p_e_size(0), p_section(NULL) {
+			ctor(parent, rva, size);
+		}
+
 		void *encode(SgAsmPERVASizePair::RVASizePair_disk *disk) const;
 	private:
-		void ctor(const SgAsmPERVASizePair::RVASizePair_disk*);
+		void ctor(SgAsmPERVASizePairList *parent, const SgAsmPERVASizePair::RVASizePair_disk*);
+		void ctor(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size);
 HEADER_PE_RVA_SIZE_PAIR_END
 
 
 
 HEADER_PE_RVA_SIZE_PAIR_LIST_START
+	public:
+		explicit SgAsmPERVASizePairList(SgAsmPEFileHeader *parent) {
+			set_parent(parent);
+		}
 HEADER_PE_RVA_SIZE_PAIR_LIST_END
 
 
@@ -2573,6 +2584,25 @@ HEADER_PE_FILE_HEADER_START
 			DLL_RESERVED_MASK   = 0xfff0        /* Reserved bits */
 		};
 
+		/** Reason for each rva/size pair in the PE header. */
+		enum PairPurpose {		// Values are important
+			PAIR_EXPORTS		= 0,
+			PAIR_IMPORTS		= 1,
+			PAIR_RESOURCES		= 2,
+			PAIR_EXCEPTIONS 	= 3,
+			PAIR_CERTIFICATES	= 4,
+			PAIR_BASERELOCS		= 5,
+			PAIR_DEBUG		= 6,
+			PAIR_ARCHITECTURE	= 7,
+			PAIR_GLOBALPTR		= 8,
+			PAIR_TLS		= 9,	// Thread local storage
+			PAIR_LOADCONFIG		= 10,
+			PAIR_BOUNDIMPORT	= 11,
+			PAIR_IAT		= 12,	// Import address table
+			PAIR_DELAYIMPORT	= 13,	// Delay import descriptor
+			PAIR_CLRRUNTIME		= 14,	// CLR(?) runtime header
+			PAIR_RESERVED15		= 15	// Reserved (always zero according to specification)
+		};
 	public:
 		explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
 			: SgAsmGenericHeader(f), p_loader_map(NULL), p_section_table(NULL), p_coff_symtab(NULL)
@@ -2581,6 +2611,9 @@ HEADER_PE_FILE_HEADER_START
 
 		virtual const char *format_name() const {return "PE";}
 		static bool is_PE (SgAsmGenericFile*);
+		std::string rvasize_pair_name(PairPurpose);
+		void set_rvasize_pair(PairPurpose, SgAsmPESection*);
+		void update_rvasize_pairs();
 		void add_rvasize_pairs();
 
 		virtual SgAsmPEFileHeader *parse();
