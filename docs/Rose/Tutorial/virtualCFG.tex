@@ -17,6 +17,27 @@ corresponding to a given AST node, and thus the AST node pointers cannot be
 used to index CFG nodes.  The particular index values for the different AST
 node types are explained in Section~\ref{cfg_index_values}.
 
+\section{CFGNode Index values}
+\label{cfg_index_values}
+To facilitate traversal and represent sufficient details,
+each eligible ROSE AST node (expression, statement and SgInitializedName)
+has several corresponding CFGNodes in virtual CFG. 
+These CFGNodes have indices from 0 to n. CFGNode of index value of 0 is 
+used to represent the beginning CFG node for an AST node, while the CFGNode
+of index n is the end CFGNode for the AST node.
+The
+beginning node represents the point in the control flow immediately before
+the construct starts to execute, and the ending node represents the point
+immediately after the construct has finished executing.  Note that these
+two nodes do not dominate the other CFG nodes in the construct due to
+\lstinline{goto} statements and labels.
+
+Reimplementation of {\textit SgNode::cfgIndexForEnd()} returns the index value for n of each
+eligible SgNode type. See source file
+\textit{src/frontend/SageIII/virtualCFG/memberFunctions.C} for valid index
+values for each type of eligible SgNode. 
+
+
 \section{Important functions}
 
 The main body of the virtual CFG interface is in \lstinline{virtualCFG.h};
@@ -28,20 +49,15 @@ to a graph in Dot format are in \lstinline{cfgToDot.h}.
 Two functions provide the basic way of converting from AST nodes to CFG
 nodes.  Each \lstinline{SgNode} has two methods,
 \lstinline{cfgForBeginning()} and \lstinline{cfgForEnd()}, to generate the
-corresponding CFG nodes.  These functions require that the AST node is
-either an expression, a statement, or a \lstinline{SgInitializedName}.  The
-beginning node represents the point in the control flow immediately before
-the construct starts to execute, and the ending node represents the point
-immediately after the construct has finished executing.  Note that these
-two nodes do not dominate the other CFG nodes in the construct due to
-\lstinline{goto} statements and labels.
-
+corresponding beginning and end CFG nodes, respectively.  
+These functions require that the AST node is
+either an expression, a statement, or a \lstinline{SgInitializedName}.  
 \subsection{Node methods}
 
 \begin{itemize}
 \item \lstinline{CFGNode(SgNode* node, unsigned int index)}: Build a CFG
 node from the given AST node and index.  Valid index values are in
-Section~\ref{cfg_index_values}.
+Section~\ref{cfg_index_values}. 
 \item \lstinline{toString()}: Produce a string representing the information
 in the node.
 \item \lstinline{toStringForDebugging()}: Similar, but with more internal
@@ -52,10 +68,14 @@ debugging information.
 Section~\ref{cfg_index_values}) for this CFG node within its underlying AST
 node.
 \item \lstinline{outEdges()}: Return a vector of outgoing CFG edges from
-this node.
+this node. This function internally calls 
+\lstinline{cfgOutEdges(unsigned int idx)} to
+generate out edges for each CFGNode of a given index value. 
 \item \lstinline{inEdges()}: Return a vector of CFG edges coming into this
 node (note that the sources and targets of the edges are not reversed, and
-so each in edge has its target as the current node).
+so each in edge has its target as the current node). This function
+internally calls \lstinline{cfgInEdges(unsigned int idx) } to generate
+in edges for each CFGNode of a given index value. 
 \item \lstinline{isInteresting()}: See
 Section~\ref{interesting_node_filter}.
 \item Nodes are also comparable using the operators \lstinline{==},
@@ -109,12 +129,12 @@ Section~\ref{interesting_node_filter}.
 \end{itemize}
 
 \section{Drawing a graph of the CFG}
-Figure~\ref{Tutorial:BuildVirtualCFG} shows a translator to dump 
+Fig.~\ref{Tutorial:BuildVirtualCFG1} shows a translator to dump 
 full (debug) virtual control flow graphs for all functions within input
 source files. It also dumps a simplified version (interesting) version of 
 virtual control flow graphs. A standalone tool named \textit{virtualCFG} is
-installed under \textit{ROSE\_INSTALL\_TREE/bin} for users to generate dot
-files of virtual CFGs. 
+installed under \textit{ROSE\_INSTALL\_TREE/bin} for users to generate both
+debug and interesting dot files of virtual CFGs. 
 
 %---------------------------------------------------------------------------
 \begin{figure}[!h]
@@ -132,7 +152,7 @@ files of virtual CFGs.
   }
   % End of scope in indentation
 }
-\label{Tutorial:BuildVirtualCFG}
+\label{Tutorial:BuildVirtualCFG1}
 \caption{Example source code showing visualization of virtual control flow graph.}
 \end{figure}
 
@@ -142,6 +162,18 @@ The example input code is given in
 Fig.~\ref{Tutorial:exampleInputCode_virtualCFG}. Debug and interesting virtualCFG 
 are shown in Fig.~\ref{tutorial:exampleOutputCodeDebugPDF} and
 Fig.~\ref{tutorial:exampleOutputCodeInterestingPDF}, respectively.
+
+As we can see in Fig.~\ref{tutorial:exampleOutputCodeDebugPDF}, the debug
+dot graph has all CFGNodes for each eligible SgNode. 
+For example, there are three CFGNodes for SgIfStmt, with indices from 0 to
+2. The interesting CFGNode of SgIfStmt has solid line oval while
+non-essential CFGNodes have dashed line ovals in the graph. 
+The caption of each node has a format of
+\textit{$<$SgNode-Enum-value$>$@line-number:CFGNode-index-value}. 
+It is obvious from the graph that SgIfStmt's interesting CFGNode has an index value of 1. 
+In comparison, Fig.~\ref{tutorial:exampleOutputCodeInterestingPDF} only
+shows interesting CFGNodes with solid line ovals. Again, the captions tells
+line numbers and CFGNode's index values for each CFGNode. 
 
 %---------------------------------------------------------------------------
 \begin{figure}[!h]
@@ -176,15 +208,11 @@ and edges}
 
 \begin{figure}
 \includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_interesting.pdf}
-\caption{The virtual control flow graph showing only interesting virtual CFG nodes and edges}
+\caption{The virtual control flow graph showing only interesting virtual
+CFG nodes and edges. Each CFGNode's caption tells associated source line
+number and CFGNode index value (@line-num:index-value)  }
 \label{tutorial:exampleOutputCodeInterestingPDF}
 \end{figure}
-
-\section{Index values}
-\label{cfg_index_values}
-
-FIXME
-
 \section{Robustness to AST changes}
 
 Control flow graph nodes and edges can be kept (i.e., are not invalidated)
@@ -233,6 +261,11 @@ FIXME
 
 \subsection{``Interesting'' node filter}
 \label{interesting_node_filter}
+To simplify the virtual CFG, non-essential CFGNodes, such as the beginning
+and the end CFGNodes for each AST node, can be filtered out. 
+Each eligible SgNode type has a most important CFGNode out of its all
+CFGNodes. The interesting CFGNode's index value for each Node type is returned by calling
+the derived implementation of \textit {virtual bool SgNode::cfgIsIndexInteresting(int idx)}. 
 
 \subsection{Arbitrary filtering}
 
