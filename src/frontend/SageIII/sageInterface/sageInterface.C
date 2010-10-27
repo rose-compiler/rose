@@ -4774,18 +4774,18 @@ SgScopeStatement*
 SageInterface::getScope( const SgNode* astNode )
    {
     // Cong (10/27/2010): Try to call the member function get_scope() first. For some AST node, its scope is not its parent.
-    if (SgStatement* stmt = isSgStatement(astNode))
+    if (const SgStatement* stmt = isSgStatement(astNode))
     {
         if (stmt->hasExplicitScope())
             return stmt->get_scope();
     }
-    else if (SgSymbol* symbol = isSgSymbol(astNode))
+    else if (const SgSymbol* symbol = isSgSymbol(astNode))
         return symbol->get_scope();
-    else if (SgInitializedName* initName = isSgInitializedName(astNode))
+    else if (const SgInitializedName* initName = isSgInitializedName(astNode))
         return initName->get_scope();
-    else if (SgTemplateArgument* tempArg = isSgTemplateArgument(astNode))
+    else if (const SgTemplateArgument* tempArg = isSgTemplateArgument(astNode))
         return tempArg->get_scope();
-    else if (SgQualifiedName* qualifiedName = isSgQualifiedName(astNode))
+    else if (const SgQualifiedName* qualifiedName = isSgQualifiedName(astNode))
         return qualifiedName->get_scope();
 
 
