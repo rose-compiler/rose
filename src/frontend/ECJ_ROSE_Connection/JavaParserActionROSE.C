@@ -2,10 +2,11 @@
 
 
 #include <jni.h>
-#include <stdio.h>
 #include "JavaParser.h"
-#include <iostream>
-#include <fstream> 
+
+// #include <stdio.h>
+// #include <iostream>
+// #include <fstream> 
 
 #include "sage3basic.h"
 
@@ -14,52 +15,13 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
+// Support functions so that this file can be restricted to be just parser (AST traversal) rules.
+#include "java_support.h"
 
-extern SgSourceFile* OpenFortranParser_globalFilePointer;
+// #include "fortran_support.h"
 
 
-#if 0
-JNIEXPORT void JNICALL 
-Java_JavaTraversal_invokeINIT(JNIEnv *env, jobject obj)
- {
-   if (myfile.is_open())
-     {
-       myfile << "Digraph G {\n";
-     }
- }
-
- JNIEXPORT void JNICALL 
- Java_JavaTraversal_invokeEND(JNIEnv *env, jobject obj)
- {
-  if (myfile.is_open())
-     {
-       myfile << "}\n";
-       myfile.close();
-     }
-  }
-
- JNIEXPORT void JNICALL 
- Java_JavaTraversal_invokeNODE(JNIEnv *env, jobject obj, jstring str, jint nr)
- {
-   jboolean iscopy;
-   const char *classname = (env)->GetStringUTFChars( str, &iscopy);
-   //printf("     C-SIDE: Found Node %s (%d)\n",classname,(int)nr);
-   myfile << "\"" <<nr << classname << "\" [label=\"" << classname << "\"];\n";
-   return;
- }
-
- JNIEXPORT void JNICALL 
- Java_JavaTraversal_invokeEDGE(JNIEnv *env, jobject obj, jstring str1, jint nr1,jstring str2, jint nr2)
- {
-   jboolean iscopy;
-   const char *classname1 = (env)->GetStringUTFChars( str1, &iscopy);
-   const char *classname2 = (env)->GetStringUTFChars( str2, &iscopy);
-   //printf("     C-SIDE: Found Edge %s(%d)->%s(%d)  \n",classname1,(int)nr1,classname2,(int)nr2);
-   myfile << "\"" << nr1 << classname1 << "\" -> \"" << nr2 << classname2 << "\";\n";
-   return; 
- }
-#endif
-
+// extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
 
 /*
@@ -82,6 +44,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *, job
 
      SgProject* project = sourceFile->get_project();
      ROSE_ASSERT(project != NULL);
+
+     SgGlobal* globalScope = sourceFile->get_globalScope();
+     ROSE_ASSERT(globalScope != NULL);
+
+  // Push the global scope onto the stack (each file has a single global scope).
+     ROSE_ASSERT(astJavaScopeStack.empty() == true);
+     astJavaScopeStack.push_front(globalScope);
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
    }
 
 
@@ -93,14 +63,45 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *, job
 JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
    {
   // Example of how to get the string...
-     const char* str = NULL;
-     str = env->GetStringUTFChars(java_string, NULL);
+     const char* str = env->GetStringUTFChars(java_string, NULL);
      ROSE_ASSERT(str != NULL);
      printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration s = %s \n",str);
      env->ReleaseStringUTFChars(java_string, str);
 
   // This is already setup by ROSE as part of basic file initialization before calling ECJ.
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
    }
 
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
+   {
+     printf ("Build a SgClassDeclaration \n");
+
+     const char* str = env->GetStringUTFChars(java_string, NULL);
+     ROSE_ASSERT(str != NULL);
+     printf ("Inside of Java_JavaParser_cactionTypeDeclaration s = %s \n",str);
+     env->ReleaseStringUTFChars(java_string, str);
+
+     SgName name = str;
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     SgClassDeclaration* declaration = SageBuilder::buildDefiningClassDeclaration ( name, astJavaScopeStack.front() );
+
+  // Set the source code position...
+  // setSourcePosition(declaration);
+  // setSourcePositionCompilerGenerated(declaration);
+
+  // void setSourcePosition  ( SgLocatedNode* locatedNode );
+  // void setSourcePositionCompilerGenerated( SgLocatedNode* locatedNode );
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     SgClassDefinition* definition = SageBuilder::buildClassDefinition(declaration);
+
+  // Set the source code position...
+  // setSourcePosition(definition);
+  // setSourcePositionCompilerGenerated(definition);
+
+     astJavaScopeStack.push_front(definition);
+   }
 

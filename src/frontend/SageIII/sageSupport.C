@@ -4115,9 +4115,7 @@ int
 SgSourceFile::callFrontEnd()
    {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT     
-// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-     FortranParserState* currStks = new FortranParserState(); 
-// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+  // FortranParserState* currStks = new FortranParserState(); 
 #endif
 
      int frontendErrorLevel = SgFile::callFrontEnd();
@@ -4132,10 +4130,9 @@ SgSourceFile::callFrontEnd()
      ROSE_ASSERT (get_globalScope()->get_endOfConstruct()   != NULL);
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 
-// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-     delete  currStks ;
-// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+  // delete  currStks ;
 #endif
+
      return frontendErrorLevel;
    }
 
@@ -5382,6 +5379,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // build the Fotran AST using the existing SgFile.
      extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
+  // DQ (10/26/2010): Moved from SgSourceFile::callFrontEnd() so that the stack will 
+  // be empty when processing Java language support (not Fortran).
+     FortranParserState* currStks = new FortranParserState(); 
+
   // printf ("######################### Inside of SgSourceFile::build_Fortran_AST() ############################ \n");
 
      bool requires_C_preprocessor = get_requires_C_preprocessor();
@@ -5998,6 +5999,12 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
         }
 
   // printf ("######################### Leaving SgSourceFile::build_Fortran_AST() ############################ \n");
+
+
+  // DQ (10/26/2010): Moved from SgSourceFile::callFrontEnd() so that the stack will 
+  // be empty when processing Java language support (not Fortran).
+     delete  currStks;
+     currStks = NULL;
 
      return frontendErrorLevel;
 #else
