@@ -13,3 +13,5 @@ SUBDIRS = \
 
 
 EXTRA_DIST = CMakeLists.txt
+clean-local:
+	rm -f rose_test_*
