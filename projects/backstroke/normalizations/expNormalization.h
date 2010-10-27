@@ -53,20 +53,16 @@ namespace BackstrokeNormUtility
 
 } // namespace BackstrokeNormUtility
 
-
+#if 0
 inline void normalizeEvent(SgFunctionDefinition* func_def)
 {
 	BackstrokeNormUtility::normalize(func_def->get_body());
 }
+#endif
 
-/** A wrapper function which takes a function declaration as parameter. */
-inline void normalizeEvent(SgFunctionDeclaration* func_decl)
-{
-    SgFunctionDeclaration* defining_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
-    ROSE_ASSERT(defining_decl && defining_decl->get_definition());
-	ExtractFunctionArguments::NormalizeTree(defining_decl->get_definition());
-    normalizeEvent(defining_decl->get_definition());
-}
+//! Normalize the given function. The output is the normalized function with a different name
+//! (with "_normalized" as postfix). This function shall not modify the input function declaration.
+SgFunctionDeclaration* normalizeEvent(const SgFunctionDeclaration* func_decl);
 
 
 } // namespace BackstrokeNorm

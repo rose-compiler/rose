@@ -1,8 +1,17 @@
+class AA
+{
+	//friend void foo(float);
+};
+
+
+
 int& foo(int& a)
 {
     return a = 0;
 }
 
+void foo(float);//{}
+void foo(float){}
 
 int i = 0, j = 0, k = 0;
 int a[100];
@@ -32,12 +41,13 @@ void test_sizeof_cast()
     char c = static_cast<char>(i++);
 }
 
+
 void test_if()
 {
     if (int i = 0);
     if (++i > j--);
     if ((i += j) > k);
-    if (foo(i));
+    //if (foo(i));
     if (++i);
     if (i ? j++ : k++);
 }
@@ -235,4 +245,4 @@ void test13()
 }
 
 
-void foo() { int i = 2; int j = i++;}
+//void foo() { int i = 2; int j = i++;}

@@ -9,17 +9,89 @@
 
 namespace BackstrokeNorm
 {
-
-namespace BackstrokeNormUtility
-{
-
+	
 using namespace std;
 using namespace boost;
 using namespace SageBuilder;
 using namespace SageInterface;
 using namespace BackstrokeUtility;
 using namespace BackstrokeNormUtility;
+	
+SgFunctionDeclaration* normalizeEvent(const SgFunctionDeclaration* func_decl)
+{
+	ROSE_ASSERT(func_decl->get_definingDeclaration() == func_decl);
 
+    SgFunctionDeclaration* defining_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
+    ROSE_ASSERT(defining_decl && defining_decl->get_definition());
+	//ROSE_ASSERT(defining_decl->get_symbol_from_symbol_table());
+
+	// Check if the function declaration passed in is not a constructor/destructor or overloaded operator.
+	const SgSpecialFunctionModifier func_modifier = func_decl->get_specialFunctionModifier();
+	if (func_modifier.isConstructor() ||
+			func_modifier.isDestructor() ||
+			func_modifier.isOperator())
+	{
+		cout << "Warning: The function to be normalized is a constructor/destructor/overloaded operator "
+				"which cannot be normalized." << endl;
+		return NULL;
+	}
+	
+	// We cannot copy a defining function declaration using copyStatement function.
+	// So we build a new function below.
+	
+	string func_name = func_decl->get_name() + string("_normalized");
+
+
+	SgFunctionParameterList* para_list = buildFunctionParameterList();
+	foreach (SgInitializedName* init_name, func_decl->get_parameterList()->get_args())
+	{
+		para_list->append_arg(buildInitializedName(init_name->get_name(), init_name->get_type()));
+	}
+
+	SgFunctionDeclaration* decl_normalized =
+			buildDefiningFunctionDeclaration(
+				func_name, func_decl->get_orig_return_type(),
+				para_list, //isSgFunctionParameterList(copyStatement(func_decl->get_parameterList())),
+				getScope(defining_decl));
+	SgFunctionDefinition* def_normalized = decl_normalized->get_definition();
+
+	foreach (SgInitializedName* init_name, decl_normalized->get_parameterList()->get_args())
+	{
+		init_name->set_scope(def_normalized);
+		//ROSE_ASSERT(getScope(init_name) == def_normalized);
+	}
+
+	replaceStatement(def_normalized->get_body(),
+			isSgBasicBlock(copyStatement(defining_decl->get_definition()->get_body())));
+	ROSE_ASSERT(def_normalized->get_body());
+	SgVarRefExp* var;
+
+	//FIXME This part should be refined later!!!
+
+	// One of our test cases shows a bug here. We should remove preprocessing info from copies body.
+	// See test case "rose_test2003_16.C".
+	//if (def_normalized->get_body())
+	AttachedPreprocessingInfoType*& preprocess_info = def_normalized->get_body()->getAttachedPreprocessingInfo();
+	if (preprocess_info)
+	foreach (PreprocessingInfo* info, *preprocess_info)
+	{
+		if (info)
+			;//info->setString("");
+	}
+
+	ROSE_ASSERT(decl_normalized->get_symbol_from_symbol_table());
+
+	//SgFunctionDefinition* def_normalized = decl_normalized->get_definition();
+	ExtractFunctionArguments::NormalizeTree(def_normalized);
+    //normalizeEvent(defining_decl->get_definition());
+	BackstrokeNormUtility::normalize(def_normalized->get_body());
+
+	
+	return decl_normalized;
+}
+
+namespace BackstrokeNormUtility
+{
 
 void normalizeExpressions(SgNode* node)
 {

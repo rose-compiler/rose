@@ -295,17 +295,28 @@ class TestCodeAssembler
 
 	SgClassDeclaration* state_class_;
 
-	std::map<SgFunctionDeclaration*, FuncDeclPairs> events_;
+	std::vector<ProcessedEvent> processed_events_;
 
 	std::string init_func_name_;
 
 	std::string comp_func_name_;
 
+private:
+	//! This function builds a test block, in which the event/normalized event,
+	//! event/forward event, forward/reverse events are tested.
+	SgBasicBlock* buildTestBlock(
+			SgVariableDeclaration* var1,
+			SgVariableDeclaration* var2,
+			SgFunctionDeclaration* func1,
+			SgVariableDeclaration* para1,
+			SgFunctionDeclaration* func2,
+			SgVariableDeclaration* para2);
+
 public:
 	TestCodeAssembler(SgClassDeclaration* state_decl,
-			const std::map<SgFunctionDeclaration*, FuncDeclPairs>& events)
+			const std::vector<ProcessedEvent>& events)
 	: state_class_(isSgClassDeclaration(state_decl->get_definingDeclaration())),
-	events_(events),
+	processed_events_(events),
 	init_func_name_("initialize"),
 	comp_func_name_("compare")
 	{

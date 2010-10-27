@@ -27,6 +27,7 @@ void BasicExpressionTest::build()
 	// First build the state class.
 	setStateClassName("State");
 	addStateMember("b", buildBoolType());
+#if 0
 	addStateMember("c", buildCharType());
 	addStateMember("s", buildShortType());
 	addStateMember("i", buildIntType());
@@ -36,6 +37,7 @@ void BasicExpressionTest::build()
 	addStateMember("d", buildDoubleType());
 	addStateMember("ld", buildLongDoubleType());
 	//addStateMember("p", buildPointerType(buildVoidType()));
+#endif
 	
 	buildStateClass();
 

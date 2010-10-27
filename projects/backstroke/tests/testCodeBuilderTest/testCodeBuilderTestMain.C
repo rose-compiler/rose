@@ -28,7 +28,7 @@ bool isStateClassDeclaration(SgClassDeclaration* class_decl)
 }
 
 
-void assembleTestCode(SgProject* project, const map<SgFunctionDeclaration*, FuncDeclPairs>& results)
+void assembleTestCode(SgProject* project, const vector<ProcessedEvent>& results)
 {
 	cout << "Test code loaded!\n";
 
@@ -103,7 +103,7 @@ void test(TestCodeBuilder* builder, const vector<string>& args)
 	cout << "1. Generating test code now.\n";
 
 	string filename = builder->getFileName();
-	bool need_build = !filesystem::exists(filename);
+	bool need_build = true;//!filesystem::exists(filename);
 
 	SgProject* project = NULL;
 	if (need_build)
@@ -112,11 +112,12 @@ void test(TestCodeBuilder* builder, const vector<string>& args)
 	}
 
 	string processed_filename = "processed_" + builder->getFileName();
-	bool need_reverse = !filesystem::exists(processed_filename);
+	bool need_reverse = true;//!filesystem::exists(processed_filename);
 	if (!need_reverse)
 		return;
 
 	vector<string> new_args(args);
+	new_args.push_back("-c");
 	new_args.push_back(filename);
 	project = frontend(new_args);
 
@@ -126,7 +127,7 @@ void test(TestCodeBuilder* builder, const vector<string>& args)
 	// Reverse event functions inside.
 	EventProcessor event_processor;
 	addHandlers(event_processor);
-	map<SgFunctionDeclaration*, FuncDeclPairs> results =
+	vector<ProcessedEvent> results =
 			Backstroke::reverseEvents(
 				&event_processor,
 				isEvent2,//bind(isEvent, _1, events),
