@@ -2731,6 +2731,9 @@ tests/CompileTests/Cxx_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
 tests/CompileTests/Fortran_tests/Makefile
 tests/CompileTests/Fortran_tests/LANL_POP/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
