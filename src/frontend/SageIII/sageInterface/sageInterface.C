@@ -4773,6 +4773,22 @@ static  void getSwitchCasesHelper(SgStatement* top, vector<SgStatement*>& result
 SgScopeStatement*
 SageInterface::getScope( const SgNode* astNode )
    {
+    // Cong (10/27/2010): Try to call the member function get_scope() first. For some AST node, its scope is not its parent.
+    if (SgStatement* stmt = isSgStatement(astNode))
+    {
+        if (stmt->hasExplicitScope())
+            return stmt->get_scope();
+    }
+    else if (SgSymbol* symbol = isSgSymbol(astNode))
+        return symbol->get_scope();
+    else if (SgInitializedName* initName = isSgInitializedName(astNode))
+        return initName->get_scope();
+    else if (SgTemplateArgument* tempArg = isSgTemplateArgument(astNode))
+        return tempArg->get_scope();
+    else if (SgQualifiedName* qualifiedName = isSgQualifiedName(astNode))
+        return qualifiedName->get_scope();
+
+
   // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
 
   const SgNode* parentNode = astNode;
