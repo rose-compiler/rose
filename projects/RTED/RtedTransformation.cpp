@@ -88,7 +88,6 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
       traverse(*travClassIt,preorder);
    }
 
-
    executeTransformations();
 }
 
@@ -96,9 +95,9 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 void RtedTransformation::performInheritedSynthesizedTraversal(SgProject* project) {
    // Traverse Variables
 // InheritedAttributeBools* bools = new InheritedAttributeBools();
-   InheritedAttribute inheritedAttribute(false,false,false,false,false,false,false,false);
-//   InheritedAttribute inheritedAttribute(bools);
    VariableTraversal varTraversal(this);
+   InheritedAttribute inheritedAttribute(false,false,false,false,false,false,false,false,false,false,false);
+//   InheritedAttribute inheritedAttribute(bools);
    // Call the traversal starting at the project (root) node of the AST
    varTraversal.traverseInputFiles(project,inheritedAttribute);
 }
