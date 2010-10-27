@@ -2847,6 +2847,11 @@ binaries/Makefile
 binaries/samples/Makefile
 ])
 
+# DQ (10/27/2010): New Fortran tests (from gfortan test suite).
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
+
 # DQ (8/12/2010): We want to get permission to distribute these files as test codes.
 # tests/CompileTests/Fortran_tests/LANL_POP/Makefile
 
