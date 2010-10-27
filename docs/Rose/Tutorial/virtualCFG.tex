@@ -129,6 +129,7 @@ Section~\ref{interesting_node_filter}.
 \end{itemize}
 
 \section{Drawing a graph of the CFG}
+
 Fig.~\ref{Tutorial:BuildVirtualCFG1} shows a translator to dump 
 full (debug) virtual control flow graphs for all functions within input
 source files. It also dumps a simplified version (interesting) version of 
@@ -137,7 +138,7 @@ installed under \textit{ROSE\_INSTALL\_TREE/bin} for users to generate both
 debug and interesting dot files of virtual CFGs. 
 
 %---------------------------------------------------------------------------
-\begin{figure}[!h]
+\begin{figure}%[!h]
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
@@ -159,7 +160,11 @@ debug and interesting dot files of virtual CFGs.
 
 
 The example input code is given in
-Fig.~\ref{Tutorial:exampleInputCode_virtualCFG}. Debug and interesting virtualCFG 
+Fig.~\ref{Tutorial:exampleInputCode_virtualCFG}. 
+Debug and interesting virtualCFG of function \lstinline{main()}
+are shown in Fig.~\ref{tutorial:exampleOutputCodeMainDebugPDF} and
+Fig.~\ref{tutorial:exampleOutputCodeMainInterestingPDF}, respectively.
+Debug and interesting virtualCFG of function \lstinline{testIf()}
 are shown in Fig.~\ref{tutorial:exampleOutputCodeDebugPDF} and
 Fig.~\ref{tutorial:exampleOutputCodeInterestingPDF}, respectively.
 
@@ -176,11 +181,9 @@ shows interesting CFGNodes with solid line ovals. Again, the captions tells
 line numbers and CFGNode's index values for each CFGNode. 
 
 %---------------------------------------------------------------------------
-\begin{figure}[!h]
+\begin{figure}%[!h]
 {\indent
   {\mySmallFontSize
-
-
     \begin{latexonly}
     \lstinputlisting{\TutorialExampleDirectory/inputCode_ControlFlowGraphAnalysis.C}
     \end{latexonly}
@@ -199,20 +202,40 @@ line numbers and CFGNode's index values for each CFGNode.
 
 %---------------------------------------------------------------------------
 \begin{figure}
-\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_debug.pdf}
-\caption{The debug virtual control flow graph showing all virtual CFG nodes
+\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_main_debug.pdf}
+\caption{The debug virtual control flow graph for function \textit{main()} shows all virtual CFG nodes
+and edges}
+\label{tutorial:exampleOutputCodeMainDebugPDF}
+\end{figure}
+
+
+\begin{figure}
+\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_main_interesting.pdf}
+\caption{The virtual control flow graph for function \textit{main()} shows only interesting virtual
+CFG nodes and edges. Each CFGNode's caption tells associated source line
+number and CFGNode index value (@line-num:index-value)  }
+\label{tutorial:exampleOutputCodeMainInterestingPDF}
+\end{figure}
+
+
+%---------------------------------------------------------------------------
+\begin{figure}
+\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_testIf_debug.pdf}
+\caption{The debug virtual control flow graph for function \textit{testIf()} shows all virtual CFG nodes
 and edges}
 \label{tutorial:exampleOutputCodeDebugPDF}
 \end{figure}
 
 
 \begin{figure}
-\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_interesting.pdf}
-\caption{The virtual control flow graph showing only interesting virtual
+\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_testIf_interesting.pdf}
+\caption{The virtual control flow graph for function \textit{testIf()} shows only interesting virtual
 CFG nodes and edges. Each CFGNode's caption tells associated source line
 number and CFGNode index value (@line-num:index-value)  }
 \label{tutorial:exampleOutputCodeInterestingPDF}
 \end{figure}
+
+\clearpage
 \section{Robustness to AST changes}
 
 Control flow graph nodes and edges can be kept (i.e., are not invalidated)

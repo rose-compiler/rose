@@ -2,14 +2,12 @@
 #include <string.h>
 #include <assert.h>
 
+size_t i;
+char buffer[10];
 int main(int argc, char *argv[])
 {
-  size_t i;
-  char buffer[10];
   for (i=0; i < strlen(argv[1]); i++)
   {
- // Buffer overflow for strings of over 9 characters
-    assert(i < 10);
     buffer[i] = argv[1][i];
   }
   return 0;
