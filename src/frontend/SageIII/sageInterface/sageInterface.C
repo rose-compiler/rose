@@ -7353,30 +7353,6 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
      ROSE_ASSERT(scope != NULL);
 
 #if 0
-       //  case 3:
-      // stmt may be copied from a variable declaration of another scope, symbol is missing
-      //       after copying, no scope for the intialized name.
-      // maybe a smarter copy mechnism can do this by itself.....
-       // TODO move into a support function, useful for other statement insertion functions
-      if (isSgVariableDeclaration(stmt))
-      {
-        SgInitializedNamePtrList namelist = isSgVariableDeclaration(stmt)->get_variables();
-        SgInitializedNamePtrList::iterator i;
-        for (i=namelist.begin(); i!=namelist.end(); i++)
-        {
-          if ((*i)->get_scope() != scope) // this should indicate it comes right after copying
-         {
-           (*i)->set_scope(scope);
-           ROSE_ASSERT ((*i)->get_symbol_from_symbol_table() ==NULL); // no symbol yet
-         // patch symbol for the declartion copied
-           SgVariableSymbol*  symbol = new SgVariableSymbol(*i);
-            scope->insert_symbol((*i)->get_name(), symbol);
-         } // end if scope
-        }// end for
-      }
-#endif
-
-#if 0
   // DQ (2/2/2010): This fails in the projects/OpenMP_Translator "make check" tests.
   // DQ (1/2/2010): Introducing test that are enforced at lower levels to catch errors as early as possible.
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
@@ -7387,6 +7363,17 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         }
 #endif
     
+#if 0 // This fix breaks other transformations.
+      // It is better to do this explicitly as needed before calling appendStatement();
+    // Liao 10/19/2010
+    // In rare cases, we are moving the statement from its original scope to another scope
+    // We have to remove it from its original scope before append it to the new scope
+    SgNode* old_parent=  stmt->get_parent();
+    if (old_parent)
+    {
+      removeStatement(stmt);
+    }
+#endif    
     //catch-all for statement fixup 
    // Must fix it before insert it into the scope, 
     fixStatement(stmt,scope);
@@ -7475,7 +7462,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
   //TODO handle more side effect like SageBuilder::append_statement() does
   //Merge myStatementInsert()
   // insert  SageInterface::insertStatement()
-void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore)
+void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore, bool autoMovePreprocessingInfo /*= true */)
    {
      ROSE_ASSERT(targetStmt &&newStmt);
      ROSE_ASSERT(targetStmt != newStmt); // should not share statement nodes!
@@ -7507,15 +7494,17 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
      ROSE_ASSERT(isSgStatement(parent) != NULL);
 
   // DQ (9/16/2010): Added support to move comments and CPP directives marked to 
-  // appear before the statment to be attached to the inserted statement (and marked 
+  // appear before the statement to be attached to the inserted statement (and marked 
   // to appear before that statement).
      ROSE_ASSERT(targetStmt != NULL);
      AttachedPreprocessingInfoType* comments = targetStmt->getAttachedPreprocessingInfo();
 
   // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
-  // I thnk that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
+  // I think that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
   // if (comments != NULL && newStmt->getAttachedPreprocessingInfo() == NULL)
   // if (comments != NULL)
+   if (autoMovePreprocessingInfo) // Do this only if automatically handling of preprocessing information is request by users
+    {
      if (comments != NULL && isSgBasicBlock(newStmt) == NULL)
         {
           vector<int> captureList;
@@ -7617,7 +7606,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                printf ("Warning: special rules appear to apply to the insertion of a SgBasicBlock which has attached comments and/or CPP directives (comment relocation disabled). \n");
              }
         }
-
+     } // end if autoMovePreprocessingInfo
      if (isSgIfStmt(parent))
         {
           if (isSgIfStmt(parent)->get_conditional()==targetStmt)
@@ -7693,9 +7682,9 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
     }
   }
 
-  void SageInterface::insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt)
+  void SageInterface::insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo /*= true*/)
   {
-    insertStatement(targetStmt,newStmt,false);
+    insertStatement(targetStmt,newStmt,false, autoMovePreprocessingInfo);
   }
 
   void SageInterface::insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
@@ -7703,9 +7692,9 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
     insertStatementList(targetStmt,newStmts,false);
   }
 
-  void SageInterface::insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt)
+  void SageInterface::insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo /*= true */)
   {
-    insertStatement(targetStmt,newStmt,true);
+    insertStatement(targetStmt,newStmt,true, autoMovePreprocessingInfo);
   }
 
   void SageInterface::insertStatementListBefore(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
@@ -8582,7 +8571,7 @@ StringUtility::numberToString(++breakLabelCounter),
 void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,                         
                             PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
 {
-   ROSE_ASSERT(stmt_src != NULL);
+  ROSE_ASSERT(stmt_src != NULL);
   ROSE_ASSERT(stmt_dst != NULL);
   AttachedPreprocessingInfoType* infoList=stmt_src->getAttachedPreprocessingInfo();
   AttachedPreprocessingInfoType* infoToRemoveList = new AttachedPreprocessingInfoType();
@@ -8629,7 +8618,7 @@ void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement*
         }
         else
           stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
-          
+
         (*infoToRemoveList).push_back(*i);
       } // if src_position
 #endif
@@ -8643,7 +8632,7 @@ void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement*
   AttachedPreprocessingInfoType::iterator j;
   for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
     infoList->erase( find(infoList->begin(),infoList->end(),*j) );
- 
+
 }
 
 //----------------------------

@@ -14,7 +14,8 @@
 class MemoryMap {
 public:
     /** Mapping permissions. */
-    enum Protection {
+    enum Protection 
+	{
         MM_PROT_READ    = 0x1,          /**< Pages can be read. */
         MM_PROT_WRITE   = 0x2,          /**< Pages can be written. */
         MM_PROT_EXEC    = 0x4,          /**< Pages can be executed. */

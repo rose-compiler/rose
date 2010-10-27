@@ -238,7 +238,9 @@ namespace StringUtility
            std::string escapeNewLineCharaters ( const std::string & X );
 
            // RSS 7/1/2008 New functionality to support filename processing
-           enum OSType { OS_TYPE_UNKNOWN,
+           enum OSType 
+		   { 
+			             OS_TYPE_UNKNOWN,
                          OS_TYPE_LINUX,
                          OS_TYPE_OSX,
                          OS_TYPE_WINDOWS,
@@ -254,7 +256,9 @@ namespace StringUtility
             * locations: We don't know if it's user or system It is a
             * user (application) file It is a system library This file
             * does not exist */
-           enum FileNameLocation { FILENAME_LOCATION_UNKNOWN, 
+           enum FileNameLocation 
+		               { 
+						           FILENAME_LOCATION_UNKNOWN, 
                                    FILENAME_LOCATION_USER,    
                                    FILENAME_LOCATION_LIBRARY,
                                    FILENAME_LOCATION_NOT_EXIST };

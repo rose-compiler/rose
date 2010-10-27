@@ -135,7 +135,7 @@ SgAsmExecutableFileFormat::host_to_le(unsigned h, uint32_t *n)
 }
 
 void
-SgAsmExecutableFileFormat::host_to_le(addr_t h, uint64_t *n)
+SgAsmExecutableFileFormat::host_to_le(rose_addr_t h, uint64_t *n)
 {
     assert(0==(h & ~0xffffffffffffffffull));
     uint64_t hh = h;
@@ -143,13 +143,13 @@ SgAsmExecutableFileFormat::host_to_le(addr_t h, uint64_t *n)
 }
 
 void
-SgAsmExecutableFileFormat::host_to_le(rva_t h, uint32_t *n)
+SgAsmExecutableFileFormat::host_to_le(rose_rva_t h, uint32_t *n)
 {
     host_to_le(h.get_rva(), n);
 }
 
 void
-SgAsmExecutableFileFormat::host_to_le(rva_t h, uint64_t *n)
+SgAsmExecutableFileFormat::host_to_le(rose_rva_t h, uint64_t *n)
 {
     host_to_le(h.get_rva(), n);
 }
@@ -258,7 +258,7 @@ SgAsmExecutableFileFormat::host_to_be(unsigned h, uint32_t *n)
 }
 
 void
-SgAsmExecutableFileFormat::host_to_be(addr_t h, uint64_t *n)
+SgAsmExecutableFileFormat::host_to_be(rose_addr_t h, uint64_t *n)
 {
     assert(0==(h & ~0xffffffffffffffffull));
     uint64_t hh = h;
@@ -266,13 +266,13 @@ SgAsmExecutableFileFormat::host_to_be(addr_t h, uint64_t *n)
 }
 
 void
-SgAsmExecutableFileFormat::host_to_be(rva_t h, uint32_t *n)
+SgAsmExecutableFileFormat::host_to_be(rose_rva_t h, uint32_t *n)
 {
     host_to_be(h.get_rva(), n);
 }
 
 void
-SgAsmExecutableFileFormat::host_to_be(rva_t h, uint64_t *n)
+SgAsmExecutableFileFormat::host_to_be(rose_rva_t h, uint64_t *n)
 {
     host_to_be(h.get_rva(), n);
 }
@@ -375,13 +375,13 @@ SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex
 }
 
 void
-SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, addr_t h, uint64_t *np)
+SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rose_addr_t h, uint64_t *np)
 {
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
 
 void
-SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rva_t h, uint64_t *np)
+SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rose_rva_t h, uint64_t *np)
 {
     host_to_disk(sex, h.get_rva(), np);
 }

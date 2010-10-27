@@ -447,14 +447,6 @@ HEADER_BINARY_WORD_VALUE_EXPRESSION_END
 HEADER_EXECUTABLE_FILE_FORMAT_START
 
      public:
-       // DQ (8/21/2008): We need something to be in global scope (or not nested here) so that a few references in Node.code can be made.
-          typedef rose_addr_t addr_t; // address and size (file and memory)
-	  typedef rose_rva_t rva_t;   // relative virtual address
-
-       // DQ (8/21/2008): Moved this from Node.code to make it local since we can't reference the nested addr_t directly from glogal scope.
-       // typedef Rose_STL_Container<addr_t> SgAddressList;
-       // typedef SgAddressList*             SgAddressListPtr;
-
        /* Thrown when an attempt is made to read past the end of a file, section, header, segment, etc. */
           class ShortRead {
                public:
@@ -465,8 +457,8 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
                     ShortRead(const class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
                        : section(section), offset(offset), size(size), mesg(mesg) {}
                     const SgAsmGenericSection *section;   /* Section from which read occurred; null implies file-level write */
-                    addr_t         offset;    /* Byte offset into section (or file) */
-                    addr_t         size;      /* Number of bytes of attempted read */
+                    rose_addr_t          offset;    /* Byte offset into section (or file) */
+                    rose_addr_t          size;      /* Number of bytes of attempted read */
                     std::string          mesg;      /* Optional message */
              };
 
@@ -480,8 +472,8 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
                     ShortWrite(const class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
                        : section(section), offset(offset), size(size), mesg(mesg) {}
                     const SgAsmGenericSection *section;  /* Section to which write occurred; null implies file-level write */
-                    addr_t         offset;   /* Byte offset into section (or file) */
-                    addr_t         size;     /* Number of bytes of attempted write */
+                    rose_addr_t          offset;   /* Byte offset into section (or file) */
+                    rose_addr_t          size;     /* Number of bytes of attempted write */
                     std::string          mesg;     /* Optional message */
              };
 
@@ -784,9 +776,9 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static void host_to_le(unsigned h, uint8_t *n);
           static void host_to_le(unsigned h, uint16_t *n);
           static void host_to_le(unsigned h, uint32_t *n);
-          static void host_to_le(addr_t h, uint64_t *n);
-          static void host_to_le(rva_t h, uint32_t *n);
-          static void host_to_le(rva_t h, uint64_t *n);
+          static void host_to_le(rose_addr_t h, uint64_t *n);
+          static void host_to_le(rose_rva_t h, uint32_t *n);
+          static void host_to_le(rose_rva_t h, uint64_t *n);
           static void host_to_le(int h, int8_t *n);
           static void host_to_le(int h, int16_t *n);
           static void host_to_le(int h, int32_t *n);
@@ -805,9 +797,9 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static void host_to_be(unsigned h, uint8_t *n);
           static void host_to_be(unsigned h, uint16_t *n);
           static void host_to_be(unsigned h, uint32_t *n);
-          static void host_to_be(addr_t h, uint64_t *n);
-          static void host_to_be(rva_t h, uint32_t *n);
-          static void host_to_be(rva_t h, uint64_t *n);
+          static void host_to_be(rose_addr_t h, uint64_t *n);
+          static void host_to_be(rose_rva_t h, uint32_t *n);
+          static void host_to_be(rose_rva_t h, uint64_t *n);
           static void host_to_be(int h, int8_t *n);
           static void host_to_be(int h, int16_t *n);
           static void host_to_be(int h, int32_t *n);
@@ -827,8 +819,8 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint8_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint16_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint32_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, addr_t h, uint64_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rva_t h, uint64_t *np);
+          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rose_addr_t h, uint64_t *np);
+          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rose_rva_t h, uint64_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int8_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int16_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int32_t *np);
@@ -891,34 +883,34 @@ HEADER_GENERIC_SECTION_START
 		SgAsmGenericHeader *is_file_header();	/** true if section represents a top level file header */
 
 		/* Functions for section extent within the file */
-		addr_t        get_size() const;
-		virtual void  set_size(addr_t);		/* Resize a section w/o regard to other sections or mapping */
-		addr_t        get_offset() const;
-		virtual void  set_offset(addr_t);		/** Move a section w/o regard to other sections or mapping */
-		addr_t        get_end_offset() const;		/** file offset for end of section */
-		void          extend(addr_t nbytes);         	/** make section larger by extending the end */
-		addr_t        write(std::ostream&, addr_t offset, size_t bufsize, const void *buf) const;
-		addr_t        write(std::ostream&, addr_t offset, const std::string &str) const;
-		addr_t        write(std::ostream&, addr_t offset, char c) const;
-		addr_t        write(std::ostream&, addr_t offset, const SgFileContentList &buf) const;
-		addr_t	      write(std::ostream&, addr_t offset, const SgUnsignedCharList &buf) const;
-		addr_t        write_uleb128(unsigned char*, addr_t offset, uint64_t) const;
-		addr_t        write_sleb128(unsigned char*, addr_t offset, int64_t) const;
+		rose_addr_t   get_size() const;
+		virtual void  set_size(rose_addr_t);		/* Resize a section w/o regard to other sections or mapping */
+		rose_addr_t   get_offset() const;
+		virtual void  set_offset(rose_addr_t);		/** Move a section w/o regard to other sections or mapping */
+		rose_addr_t   get_end_offset() const;		/** file offset for end of section */
+		void          extend(rose_addr_t nbytes);      	/** make section larger by extending the end */
+		rose_addr_t   write(std::ostream&, rose_addr_t offset, size_t bufsize, const void *buf) const;
+		rose_addr_t   write(std::ostream&, rose_addr_t offset, const std::string &str) const;
+		rose_addr_t   write(std::ostream&, rose_addr_t offset, char c) const;
+		rose_addr_t   write(std::ostream&, rose_addr_t offset, const SgFileContentList &buf) const;
+		rose_addr_t   write(std::ostream&, rose_addr_t offset, const SgUnsignedCharList &buf) const;
+		rose_addr_t   write_uleb128(unsigned char*, rose_addr_t offset, uint64_t) const;
+		rose_addr_t   write_sleb128(unsigned char*, rose_addr_t offset, int64_t) const;
 
 		/* Functions for accessing content */
-		size_t read_content(addr_t abs_offset, void *dst_buf, addr_t size, bool strict=true);
-		size_t read_content(const MemoryMap*, addr_t rva, void *dst_buf, addr_t size, bool strict=true);
-		size_t read_content(const MemoryMap *map, rva_t rva, void *dst_buf, addr_t size, bool strict=true) {
+		size_t read_content(rose_addr_t abs_offset, void *dst_buf, rose_addr_t size, bool strict=true);
+		size_t read_content(const MemoryMap*, rose_addr_t rva, void *dst_buf, rose_addr_t size, bool strict=true);
+		size_t read_content(const MemoryMap *map, rose_rva_t rva, void *dst_buf, rose_addr_t size, bool strict=true) {
 			return read_content(map, rva.get_rva(), dst_buf, size, strict);
 		}
-		size_t read_content_local(addr_t rel_offset, void *dst_buf, addr_t size, bool strict=true);
-		std::string read_content_str(const MemoryMap*, addr_t rva, bool strict=true);
-		std::string read_content_str(const MemoryMap *map, rva_t rva, bool strict=true) {
+		size_t read_content_local(rose_addr_t rel_offset, void *dst_buf, rose_addr_t size, bool strict=true);
+		std::string read_content_str(const MemoryMap*, rose_addr_t rva, bool strict=true);
+		std::string read_content_str(const MemoryMap *map, rose_rva_t rva, bool strict=true) {
 			return read_content_str(map, rva.get_rva(), strict);
 		}
-		std::string read_content_str(addr_t abs_offset, bool strict=true);
-		std::string read_content_local_str(addr_t rel_offset, bool strict=true);
-		SgUnsignedCharList read_content_local_ucl(addr_t rel_offset, addr_t size); //always non-strict
+		std::string read_content_str(rose_addr_t abs_offset, bool strict=true);
+		std::string read_content_local_str(rose_addr_t rel_offset, bool strict=true);
+		SgUnsignedCharList read_content_local_ucl(rose_addr_t rel_offset, rose_addr_t size); //always non-strict
 		int64_t read_content_local_sleb128(rose_addr_t *rel_offset, bool strict=true);
 		uint64_t read_content_local_uleb128(rose_addr_t *rel_offset, bool strict=true);
 		unsigned char *writable_content(size_t nbytes); /* obtain a local, writable pool to hold content */
@@ -932,14 +924,14 @@ HEADER_GENERIC_SECTION_START
 		/* Functions related to mapping of sections into executable memory */
 		bool   	      is_mapped() const;                /** True iff non-zero mapped address and size */
 		void   	      clear_mapped();                 	/** Set mapped address and size to zero (unmapped)*/
-		addr_t        get_mapped_size() const;
-		virtual void  set_mapped_size(addr_t);	      	/* Set mapped size w/o regard to other section mappings */
-		addr_t	      get_mapped_preferred_rva() const;	/* The virtual address indicated in the binary file */
-		virtual void  set_mapped_preferred_rva(addr_t); /* Move a section w/o regard to other section mappings */
-		addr_t 	      get_base_va() const;            	/* Convenience to get header's base VA */
-		addr_t 	      get_mapped_preferred_va() const;	/* Like get_mapped_preferred_rva() except returns absolute VA */
-		addr_t        get_va_offset(addr_t va) const;  	/* Return file offset for specified virtual address */
-		addr_t	      get_rva_offset(addr_t rva) const;	/* Return file offset for specified relative virtual address */
+		rose_addr_t   get_mapped_size() const;
+		virtual void  set_mapped_size(rose_addr_t);	/* Set mapped size w/o regard to other section mappings */
+		rose_addr_t   get_mapped_preferred_rva() const;	/* The virtual address indicated in the binary file */
+		virtual void  set_mapped_preferred_rva(rose_addr_t); /* Move a section w/o regard to other section mappings */
+		rose_addr_t   get_base_va() const;            	/* Convenience to get header's base VA */
+		rose_addr_t   get_mapped_preferred_va() const;	/* Like get_mapped_preferred_rva() except returns absolute VA */
+		rose_addr_t   get_va_offset(rose_addr_t va) const;/* Return file offset for specified virtual address */
+		rose_addr_t   get_rva_offset(rose_addr_t rva) const;/* Return file offset for specified relative virtual address */
 
 		/* Accessors for private members */
 		SgAsmGenericString *get_name() const;		/** Same as standard ROSETTA accessor */
@@ -990,7 +982,7 @@ HEADER_GENERIC_HEADER_START
 
 		/* Accessors for protected/private members */
 		std::vector<unsigned char>& get_magic() {return p_magic;}
-		addr_t get_entry_rva() const;
+		rose_addr_t get_entry_rva() const;
 		void add_entry_rva(const rose_rva_t &rva) { p_entry_rvas.push_back(rva);}
 
 		/* Convenience functions */
@@ -1005,17 +997,17 @@ HEADER_GENERIC_HEADER_START
 		SgAsmGenericSectionPtrList get_mapped_sections() const;
 		SgAsmGenericSectionPtrList get_sections_by_id(int id) const;
 		SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep=0) const;
-		SgAsmGenericSectionPtrList get_sections_by_offset(addr_t offset, addr_t size) const;
-		SgAsmGenericSectionPtrList get_sections_by_rva(addr_t rva) const;
-		SgAsmGenericSectionPtrList get_sections_by_va(addr_t va, bool use_preferred) const;
+		SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const;
+		SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t rva) const;
+		SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t va, bool use_preferred) const;
 
 		/* Section lookup functions (singular) */
 		SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
 		SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
-		SgAsmGenericSection *get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0) const;
-		SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0) const;
-		SgAsmGenericSection *get_section_by_va(addr_t va, bool use_preferred, size_t *nfound=0) const;
-		SgAsmGenericSection *get_best_section_by_va(addr_t va, bool use_preferred, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_rva(rose_addr_t rva, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
+		SgAsmGenericSection *get_best_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
 
 	private:
 		void ctor();
@@ -1042,7 +1034,7 @@ HEADER_GENERIC_FILE_START
 
 		/* Tracking references */
 		const ExtentMap& get_unreferenced_extents() const;	/* Returns parts of file that have not been referenced */
-		void mark_referenced_extent(addr_t start_rva, addr_t size);
+		void mark_referenced_extent(rose_addr_t start_rva, rose_addr_t size);
 
 		/* Converting encoding/decoding data is it's transferred from/to disk. */
 		void set_data_converter(DataConverter* dc) {p_data_converter=dc;}
@@ -1051,33 +1043,33 @@ HEADER_GENERIC_FILE_START
 		/* File contents */
 		rose_addr_t get_current_size() const;			/* Current size based on defined sections */
 		rose_addr_t get_orig_size() const;              	/* Original size based on actual file size */
-		size_t read_content(addr_t offset, void *dst_buf, addr_t size, bool strict=true);
-		size_t read_content(const MemoryMap *map, addr_t va, void *dst_buf, addr_t size, bool strict=true);
-		std::string read_content_str(const MemoryMap *map, addr_t va, bool strict=true);
-		std::string read_content_str(addr_t abs_offset, bool strict=true);
+		size_t read_content(rose_addr_t offset, void *dst_buf, rose_addr_t size, bool strict=true);
+		size_t read_content(const MemoryMap *map, rose_addr_t va, void *dst_buf, rose_addr_t size, bool strict=true);
+		std::string read_content_str(const MemoryMap *map, rose_addr_t va, bool strict=true);
+		std::string read_content_str(rose_addr_t abs_offset, bool strict=true);
 
 		const SgFileContentList& content() {			/* Entire file contents */
 			return p_data;
 		}
-		SgFileContentList content(addr_t offset, addr_t size);	/* Partial file contents; no reference tracking */
+		SgFileContentList content(rose_addr_t offset, rose_addr_t size);	/* Partial file contents; no reference tracking */
 
 		/* Section lookup functions (plural) */
 		SgAsmGenericSectionPtrList get_mapped_sections() const;
 		SgAsmGenericSectionPtrList get_sections(bool include_holes=true) const;
 		SgAsmGenericSectionPtrList get_sections_by_id(int id) const;
 		SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep='\0') const;
-		SgAsmGenericSectionPtrList get_sections_by_offset(addr_t offset, addr_t size) const;
-		SgAsmGenericSectionPtrList get_sections_by_rva(addr_t rva) const;
-		SgAsmGenericSectionPtrList get_sections_by_va(addr_t va) const;
+		SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const;
+		SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t rva) const;
+		SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t va) const;
 
 		/* Section lookup functions (singular) */
 		SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
 		SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
-		SgAsmGenericSection *get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0) const;
-		SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0) const;
-		SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0) const;
-		SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0) const;
-		static SgAsmGenericSection *best_section_by_va(const SgAsmGenericSectionPtrList &sections, addr_t va);
+		SgAsmGenericSection *get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_rva(rose_addr_t rva, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_va(rose_addr_t va, size_t *nfound=0) const;
+		SgAsmGenericSection *get_best_section_by_va(rose_addr_t va, size_t *nfound=0) const;
+		static SgAsmGenericSection *best_section_by_va(const SgAsmGenericSectionPtrList &sections, rose_addr_t va);
 
 		/* Section modification functions */
 		enum AddressSpace {					/* Bit flags for address spaces for shift_extend() */
@@ -1090,12 +1082,12 @@ HEADER_GENERIC_FILE_START
 			ELASTIC_UNREF = 1,				/* Unreferenced address space is elastic */
 			ELASTIC_HOLE  = 2,				/* Unreferenced and "hole" sections are elastic */
 		};
-		void shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn)
+		void shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn)
 			{shift_extend(s, sa, sn, ADDRSP_ALL, ELASTIC_UNREF);}
-		void shift_extend(SgAsmGenericSection*, addr_t sa, addr_t sn, AddressSpace, Elasticity);
+		void shift_extend(SgAsmGenericSection*, rose_addr_t sa, rose_addr_t sn, AddressSpace, Elasticity);
 
 		/* Holes (unreferenced regions in the file) */	
-		addr_t get_next_section_offset(addr_t offset);      	/* Find file offset for next section */
+		rose_addr_t get_next_section_offset(rose_addr_t offset);      	/* Find file offset for next section */
 		void add_hole(SgAsmGenericSection*);		      	/* Add section to list of holes */
 		void remove_hole(SgAsmGenericSection*);             	/* Remove section from list of holes */
 		void fill_holes();                                  	/* Find holes in file and create sections to fill them */
@@ -1116,7 +1108,7 @@ HEADER_GENERIC_FILE_START
 		}
 
 		// DQ (8/26/2008): Added support for alternative section selection for use in disassembler.
-		SgAsmGenericSection* get_best_possible_section_by_va(addr_t va);
+		SgAsmGenericSection* get_best_possible_section_by_va(rose_addr_t va);
 
 	private:
 		void ctor();
@@ -1213,7 +1205,7 @@ HEADER_BASIC_STRING_START
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual std::string get_string() const;
 		virtual void set_string(const std::string&);
-		virtual void set_string(addr_t);
+		virtual void set_string(rose_addr_t);
 	private:
 		void ctor();
 HEADER_BASIC_STRING_END
@@ -1228,7 +1220,7 @@ HEADER_GENERIC_STRING_START
 		// These aren't the ROSETTA-generated versions because they hook into string table allocation functions
 		virtual std::string get_string() const;
 		virtual void set_string(const std::string &s);
-		virtual void set_string(addr_t);
+		virtual void set_string(rose_addr_t);
 		virtual rose_addr_t get_offset() const {return unallocated;}
 		const char *c_str() const;
 
@@ -1286,9 +1278,9 @@ HEADER_GENERIC_STRTAB_START
 		virtual ~SgAsmGenericStrtab() {}
 		virtual SgAsmGenericStrtab* parse() {return this;}
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-		SgAsmStoredString *create_string(addr_t offset, bool shared);
+		SgAsmStoredString *create_string(rose_addr_t offset, bool shared);
 		void free(SgAsmStringStorage*);
-		void free(addr_t offset, addr_t size); /*mark part of table as free*/
+		void free(rose_addr_t offset, rose_addr_t size); /*mark part of table as free*/
 		void free_all_strings(bool blow_away_holes=false);
 		virtual void allocate_overlap(SgAsmStringStorage*) {};
 		bool reallocate(bool shrink); /*allocate storage for all unallocated strings*/
@@ -1298,9 +1290,9 @@ HEADER_GENERIC_STRTAB_START
 		ExtentMap& get_freelist();
 
 		//These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
-		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared) {abort(); return NULL;}
-		virtual addr_t get_storage_size(const SgAsmStringStorage*) {abort(); return 0;}
-		virtual void rebind(SgAsmStringStorage*, addr_t) {abort();}
+		virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) {abort(); return NULL;}
+		virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) {abort(); return 0;}
+		virtual void rebind(SgAsmStringStorage*, rose_addr_t) {abort();}
 		typedef std::vector<class SgAsmStringStorage*> referenced_t;
 	private:
 		void ctor();
@@ -1588,7 +1580,7 @@ HEADER_STORED_STRING_START
 		// These are not access functions -- they do more than just getting or setting the value!
 		virtual std::string get_string() const;
 		virtual void set_string(const std::string&);				/*also deallocates previous value*/
-		virtual void set_string(addr_t);					/*rebinds to a new value*/
+		virtual void set_string(rose_addr_t);					/*rebinds to a new value*/
 		virtual rose_addr_t get_offset() const;					/*also triggers realloc*/
 	private:
 		// Maybe we need to supressed ROSETTA generated constructor!
@@ -1610,10 +1602,10 @@ HEADER_ELF_STRING_TABLE_START
 		virtual ~SgAsmElfStrtab();
 		virtual SgAsmElfStrtab *parse();
 		virtual void unparse(std::ostream&) const;
-		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
-		virtual addr_t get_storage_size(const SgAsmStringStorage*);
+		virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared);
+		virtual rose_addr_t get_storage_size(const SgAsmStringStorage*);
 		virtual void allocate_overlap(SgAsmStringStorage*);
-		virtual void rebind(SgAsmStringStorage*, addr_t);
+		virtual void rebind(SgAsmStringStorage*, rose_addr_t);
 	private:
 		void ctor();
 HEADER_ELF_STRING_TABLE_END
@@ -1625,7 +1617,7 @@ HEADER_ELF_STRING_SECTION_START
 		explicit SgAsmElfStringSection(SgAsmElfFileHeader *fhdr);
 		virtual SgAsmElfStringSection *parse();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-		virtual void set_size(addr_t newsize);
+		virtual void set_size(rose_addr_t newsize);
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 	private:
@@ -1660,72 +1652,68 @@ HEADER_ELF_RELOC_ENTRY_START
 		/** Relocation Type (host order).  All other values are reserved. */
 		enum RelocType{
 			/** Intel 80386 specific definitions.  */
-			R_386_NONE	   =0,		/**< No reloc */
-			R_386_32	   =1,		/**< Direct 32 bit  */
-			R_386_PC32	   =2,		/**< PC relative 32 bit */
-			R_386_GOT32	   =3,		/**< 32 bit GOT entry */
-			R_386_PLT32	   =4,		/**< 32 bit PLT address */
-			R_386_COPY	   =5,		/**< Copy symbol at runtime */
-			R_386_GLOB_DAT	   =6,		/**< Create GOT entry */
-			R_386_JMP_SLOT	   =7,		/**< Create PLT entry */
-			R_386_RELATIVE	   =8,		/**< Adjust by program base */
-			R_386_GOTOFF	   =9,		/**< 32 bit offset to GOT */
-			R_386_GOTPC	   =10,		/**< 32 bit PC relative offset to GOT */
+			R_386_NONE	   =0,	/**< No reloc */
+			R_386_32	   =1,	/**< Direct 32 bit  */
+			R_386_PC32	   =2,	/**< PC relative 32 bit */
+			R_386_GOT32	   =3,	/**< 32 bit GOT entry */
+			R_386_PLT32	   =4,	/**< 32 bit PLT address */
+			R_386_COPY	   =5,	/**< Copy symbol at runtime */
+			R_386_GLOB_DAT	   =6,	/**< Create GOT entry */
+			R_386_JMP_SLOT	   =7,	/**< Create PLT entry */
+			R_386_RELATIVE	   =8,	/**< Adjust by program base */
+			R_386_GOTOFF	   =9,	/**< 32 bit offset to GOT */
+			R_386_GOTPC	   =10,	/**< 32 bit PC relative offset to GOT */
 			R_386_32PLT	   =11,
-			R_386_TLS_TPOFF    =14,		/**< Offset in static TLS block */
-			R_386_TLS_IE       =15,		/**< Address of GOT entry for static TLS block offset */
-			R_386_TLS_GOTIE    =16,		/**< GOT entry for static TLS block offset */
-			R_386_TLS_LE	   =17,		/**< Offset relative to static TLS block */
-			R_386_TLS_GD	   =18,		/**< Direct 32 bit for GNU version of general dynamic thread local data */
-			R_386_TLS_LDM	   =19,		/**< Direct 32 bit for GNU version of local dynamic thread local data in LE code */
+			R_386_TLS_TPOFF    =14,	/**< Offset in static TLS block */
+			R_386_TLS_IE       =15,	/**< Address of GOT entry for static TLS block offset */
+			R_386_TLS_GOTIE    =16,	/**< GOT entry for static TLS block offset */
+			R_386_TLS_LE	   =17,	/**< Offset relative to static TLS block */
+			R_386_TLS_GD	   =18,	/**< Direct 32 bit for GNU version of general dynamic thread local data */
+			R_386_TLS_LDM	   =19,	/**< Direct 32 bit for GNU version of local dynamic thread local data in LE code */
 			R_386_16	   =20,
 			R_386_PC16	   =21,
 			R_386_8	           =22,
 			R_386_PC8	   =23,
-			R_386_TLS_GD_32    =24,		/**< Direct 32 bit for general dynamic thread local data */
-			R_386_TLS_GD_PUSH  =25,		/**< Tag for pushl in GD TLS code */
-			R_386_TLS_GD_CALL  =26,		/**< Relocation for call to __tls_get_addr() */
-			R_386_TLS_GD_POP   =27,		/**< Tag for popl in GD TLS code */
-			R_386_TLS_LDM_32   =28,		/**< Direct 32 bit for local dynamic thread local data in LE code */
-			R_386_TLS_LDM_PUSH =29,		/**< Tag for pushl in LDM TLS code */
-			R_386_TLS_LDM_CALL =30,		/**< Relocation for call to __tls_get_addr() in LDM code */
-			R_386_TLS_LDM_POP  =31,		/**< Tag for popl in LDM TLS code */
-			R_386_TLS_LDO_32   =32,		/**< Offset relative to TLS block */
-			R_386_TLS_IE_32    =33,		/**< GOT entry for negated static TLS block offset */
-			R_386_TLS_LE_32    =34,		/**< Negated offset relative to static TLS block */
-			R_386_TLS_DTPMOD32 =35,		/**< ID of module containing symbol */
-			R_386_TLS_DTPOFF32 =36,		/**< Offset in TLS block */
-			R_386_TLS_TPOFF32  =37,		/**< Negated offset in static TLS block */
-			/* This the last entry for x86  */
-			R_386_NUM	   =38,
+			R_386_TLS_GD_32    =24,	/**< Direct 32 bit for general dynamic thread local data */
+			R_386_TLS_GD_PUSH  =25,	/**< Tag for pushl in GD TLS code */
+			R_386_TLS_GD_CALL  =26,	/**< Relocation for call to __tls_get_addr() */
+			R_386_TLS_GD_POP   =27,	/**< Tag for popl in GD TLS code */
+			R_386_TLS_LDM_32   =28,	/**< Direct 32 bit for local dynamic thread local data in LE code */
+			R_386_TLS_LDM_PUSH =29,	/**< Tag for pushl in LDM TLS code */
+			R_386_TLS_LDM_CALL =30,	/**< Relocation for call to __tls_get_addr() in LDM code */
+			R_386_TLS_LDM_POP  =31,	/**< Tag for popl in LDM TLS code */
+			R_386_TLS_LDO_32   =32,	/**< Offset relative to TLS block */
+			R_386_TLS_IE_32    =33,	/**< GOT entry for negated static TLS block offset */
+			R_386_TLS_LE_32    =34,	/**< Negated offset relative to static TLS block */
+			R_386_TLS_DTPMOD32 =35,	/**< ID of module containing symbol */
+			R_386_TLS_DTPOFF32 =36,	/**< Offset in TLS block */
+			R_386_TLS_TPOFF32  =37,	/**< Negated offset in static TLS block */
 
 	                /** First Entry for X86-64 */
-			R_X86_64_NONE     =0,		/**<  No reloc */
-			R_X86_64_64       =1,		/**<  Direct 64 bit  */
-			R_X86_64_PC32     =2,		/**<  PC relative 32 bit signed */
-			R_X86_64_GOT32    =3,		/**<  32 bit GOT entry */
-			R_X86_64_PLT32    =4,		/**<  32 bit PLT address */
-			R_X86_64_COPY     =5,		/**<  Copy symbol at runtime */
-			R_X86_64_GLOB_DAT =6,		/**<  Create GOT entry */
-			R_X86_64_JUMP_SLOT=7,		/**<  Create PLT entry */
-			R_X86_64_RELATIVE =8,		/**<  Adjust by program base */
-			R_X86_64_GOTPCREL =9,		/**<  32 bit signed PC relative offset to GOT */
-			R_X86_64_32       =10,		/**<  Direct 32 bit zero extended */
-			R_X86_64_32S      =11,		/**<  Direct 32 bit sign extended */
-			R_X86_64_16       =12,		/**<  Direct 16 bit zero extended */
-			R_X86_64_PC16     =13,		/**<  16 bit sign extended pc relative */
-			R_X86_64_8        =14,		/**<  Direct 8 bit sign extended  */
-			R_X86_64_PC8      =15,		/**<  8 bit sign extended pc relative */
-			R_X86_64_DTPMOD64 =16,		/**<  ID of module containing symbol */
-			R_X86_64_DTPOFF64 =17,		/**<  Offset in module's TLS block */
-			R_X86_64_TPOFF64  =18,		/**<  Offset in initial TLS block */
-			R_X86_64_TLSGD    =19,		/**<  32 bit signed PC relative offset to two GOT entries for GD symbol */
-			R_X86_64_TLSLD    =20,		/**<  32 bit signed PC relative offset to two GOT entries for LD symbol */
-			R_X86_64_DTPOFF32 =21,		/**<  Offset in TLS block */
-			R_X86_64_GOTTPOFF =22,		/**<  32 bit signed PC relative offset to GOT entry for IE symbol */
-			R_X86_64_TPOFF32  =23,		/**<  Offset in initial TLS block */
-
-			R_X86_64_NUM      =24
+			R_X86_64_NONE     =100,	/**<  No reloc */
+			R_X86_64_64       =101,	/**<  Direct 64 bit  */
+			R_X86_64_PC32     =102,	/**<  PC relative 32 bit signed */
+			R_X86_64_GOT32    =103,	/**<  32 bit GOT entry */
+			R_X86_64_PLT32    =104,	/**<  32 bit PLT address */
+			R_X86_64_COPY     =105,	/**<  Copy symbol at runtime */
+			R_X86_64_GLOB_DAT =106,	/**<  Create GOT entry */
+			R_X86_64_JUMP_SLOT=107,	/**<  Create PLT entry */
+			R_X86_64_RELATIVE =108,	/**<  Adjust by program base */
+			R_X86_64_GOTPCREL =109,	/**<  32 bit signed PC relative offset to GOT */
+			R_X86_64_32       =110,	/**<  Direct 32 bit zero extended */
+			R_X86_64_32S      =111,	/**<  Direct 32 bit sign extended */
+			R_X86_64_16       =112,	/**<  Direct 16 bit zero extended */
+			R_X86_64_PC16     =113,	/**<  16 bit sign extended pc relative */
+			R_X86_64_8        =114,	/**<  Direct 8 bit sign extended  */
+			R_X86_64_PC8      =115,	/**<  8 bit sign extended pc relative */
+			R_X86_64_DTPMOD64 =116,	/**<  ID of module containing symbol */
+			R_X86_64_DTPOFF64 =117,	/**<  Offset in module's TLS block */
+			R_X86_64_TPOFF64  =118,	/**<  Offset in initial TLS block */
+			R_X86_64_TLSGD    =119,	/**<  32 bit signed PC relative offset to two GOT entries for GD symbol */
+			R_X86_64_TLSLD    =120,	/**<  32 bit signed PC relative offset to two GOT entries for LD symbol */
+			R_X86_64_DTPOFF32 =121,	/**<  Offset in TLS block */
+			R_X86_64_GOTTPOFF =122,	/**<  32 bit signed PC relative offset to GOT entry for IE symbol */
+			R_X86_64_TPOFF32  =123,	/**<  Offset in initial TLS block */
 		};
 
 #ifdef _MSC_VER
@@ -1971,7 +1959,7 @@ HEADER_ELF_EH_FRAME_SECTION_START
 		virtual SgAsmElfEHFrameSection *parse();
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual void unparse(std::ostream&) const;
-		addr_t unparse(std::ostream*) const;
+		rose_addr_t unparse(std::ostream*) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
 		void ctor();
@@ -2670,7 +2658,7 @@ HEADER_PE_IMPORT_ILT_ENTRY_START
 		SgAsmPEImportILTEntry(SgAsmPEImportSection *isec, uint64_t entry_word)
 			{ctor(isec,entry_word);}
 		uint64_t encode(const SgAsmPEFileHeader*) const;
-		void unparse(std::ostream&, const SgAsmPEFileHeader *fhdr, rva_t rva, size_t idx) const;
+		void unparse(std::ostream&, const SgAsmPEFileHeader *fhdr, rose_rva_t rva, size_t idx) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
 	private:
 		void ctor(SgAsmPEImportSection*, uint64_t);
@@ -2699,7 +2687,7 @@ HEADER_PE_IMPORT_HNT_ENTRY_START
 	public:
 		explicit SgAsmPEImportHNTEntry(SgAsmPEImportSection *isec, rose_rva_t offset)
 			{ctor(isec, offset);}
-		void unparse(std::ostream&, rva_t rva) const;
+		void unparse(std::ostream&, rose_rva_t rva) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
 		void ctor(SgAsmPEImportSection*, rose_rva_t offset);
@@ -2955,7 +2943,7 @@ HEADER_PE_COFF_SYMBOL_START
 
        /* Native versions of the COFFSymbol_disk members */
        // std::string         st_name;        /* The original name; super.name might be modified */
-       // addr_t              st_name_offset;
+       // rose_addr_t              st_name_offset;
        // int                 st_section_num;
        // unsigned            st_type, st_storage_class, st_num_aux_entries;
     
@@ -2973,8 +2961,8 @@ HEADER_COFF_STRING_TABLE_START
 			{}
 		virtual ~SgAsmCoffStrtab();
 		virtual void unparse(std::ostream&) const;
-		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
-		virtual addr_t get_storage_size(const SgAsmStringStorage*);
+		virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared);
+		virtual rose_addr_t get_storage_size(const SgAsmStringStorage*);
 HEADER_COFF_STRING_TABLE_END
 
 
@@ -2988,7 +2976,7 @@ HEADER_PE_STRING_SECTION_START
 		virtual SgAsmPEStringSection* parse();
 		virtual bool reallocate();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-		virtual void set_size(addr_t newsize);
+		virtual void set_size(rose_addr_t newsize);
 	   virtual void unparse(std::ostream&) const;
 	private:
 		void ctor();
@@ -3076,7 +3064,7 @@ HEADER_NE_FILE_HEADER_START
                HF2_FASTLOAD         = 0x08         /* Executable contains a fast-load area */
              };
 
-          SgAsmNEFileHeader(SgAsmGenericFile *f, addr_t offset)
+          SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
 		: SgAsmGenericHeader(f), p_dos2_header(NULL), p_section_table(NULL), p_resname_table(NULL),
 		p_nonresname_table(NULL), p_module_table(NULL), p_entry_table(NULL)
 		{ctor(f, offset);}
@@ -3088,7 +3076,7 @@ HEADER_NE_FILE_HEADER_START
           virtual const char *format_name() const {return "NE";}
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
      private:
-          void ctor(SgAsmGenericFile *f, addr_t offset);
+          void ctor(SgAsmGenericFile *f, rose_addr_t offset);
           void *encode(SgAsmNEFileHeader::NEFileHeader_disk*) const;
 HEADER_NE_FILE_HEADER_END
 
@@ -3130,54 +3118,54 @@ HEADER_NE_SECTION_TABLE_END
 
 HEADER_NE_NAME_TABLE_START
 	public:
-		SgAsmNENameTable(SgAsmNEFileHeader *fhdr, addr_t offset)
+		SgAsmNENameTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset);}
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		std::vector<std::string> get_names_by_ordinal(unsigned ordinal);
 	private:
-		void ctor(addr_t offset);
+		void ctor(rose_addr_t offset);
 HEADER_NE_NAME_TABLE_END
 
 
 
 HEADER_NE_MODULE_TABLE_START
 	public:
-		SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, addr_t offset, addr_t size)
+		SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, rose_addr_t offset, rose_addr_t size)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr), p_strtab(strtab)
 			{ctor(offset, size);}
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(addr_t offset, addr_t size);
+		void ctor(rose_addr_t offset, rose_addr_t size);
 HEADER_NE_MODULE_TABLE_END
 
 
 
 HEADER_NE_STRING_TABLE_START
 	public:
-		SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size)
+		SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset, size);}
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-		std::string get_string(addr_t offset);
+		std::string get_string(rose_addr_t offset);
 	private:
-		void ctor(addr_t offset, addr_t size);
+		void ctor(rose_addr_t offset, rose_addr_t size);
 HEADER_NE_STRING_TABLE_END
 
 
 
 HEADER_NE_ENTRY_TABLE_START
 	public:
-		SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size)
+		SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset, size);}
 		void populate_entries();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(addr_t offset, addr_t size);
+		void ctor(rose_addr_t offset, rose_addr_t size);
 HEADER_NE_ENTRY_TABLE_END
 
 
@@ -3255,13 +3243,13 @@ HEADER_NE_RELOC_ENTRY_START
              };
 
        // DQ (8/7/2008): At only (I hope) the risk of using more memory that required, break the union so that we can better support 
-       // this in ROSETTA. One solution might be to implement a common base class of unsigned, unsigned, addr_t; and then use member 
+       // this in ROSETTA. One solution might be to implement a common base class of unsigned, unsigned, rose_addr_t; and then use member 
        // functions to access the data in the base class.
           struct iref_type
              { /*tgt_type==0x00: internal reference*/
                unsigned    sect_idx;       /* section index (1-origin) */
                unsigned    res1;           /* reserved */
-               addr_t      tgt_offset;
+               rose_addr_t      tgt_offset;
      
             // Added to support RTI support in ROSE
                friend std::ostream & operator<< ( std::ostream & os, const iref_type & x );
@@ -3272,7 +3260,7 @@ HEADER_NE_RELOC_ENTRY_START
           struct iord_type { /*tgt_type==0x01: imported ordinal*/
                unsigned    modref;         /* 1-based index into import module table */
                unsigned    ordinal;
-               addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
+               rose_addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
 
             // Added to support RTI support in ROSE
                friend std::ostream & operator<< ( std::ostream & os, const iord_type & x );
@@ -3283,7 +3271,7 @@ HEADER_NE_RELOC_ENTRY_START
           struct iname_type { /*tgt_type==0x02: imported name*/
                unsigned    modref;         /* 1-based index into import module table */
                unsigned    nm_off;         /* offset into import procedure names */
-               addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
+               rose_addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
 
             // Added to support RTI support in ROSE
                friend std::ostream & operator<< ( std::ostream & os, const iname_type & x );
@@ -3301,16 +3289,16 @@ HEADER_NE_RELOC_ENTRY_START
                osfixup_type();
              };
 
-          SgAsmNERelocEntry(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size);
+          SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at, rose_addr_t *rec_size);
 
-          void ctor(SgAsmGenericSection*, addr_t at, addr_t *rec_size);
-          addr_t unparse(std::ostream&, const SgAsmGenericSection*, addr_t spos) const;
+          void ctor(SgAsmGenericSection*, rose_addr_t at, rose_addr_t *rec_size);
+          rose_addr_t unparse(std::ostream&, const SgAsmGenericSection*, rose_addr_t spos) const;
           void dump(FILE*, const char *prefix, ssize_t idx) const;
        // NERelocSrcType      src_type;       /* low nibble of first byte of relocation record */
        // NERelocModifiers    modifier;       /* high nibble of first byte */
        // NERelocTgtType      tgt_type;       /* low two bits of second byte */
        // NERelocFlags        flags;          /* high six bits of second byte */
-       // addr_t              src_offset;
+       // rose_addr_t              src_offset;
 
        // iref_type iref;
        // iord_type iord;
@@ -3365,7 +3353,7 @@ HEADER_NE_SECTION_TABLE_ENTRY_START
           void dump(FILE*, const char *prefix, ssize_t idx, SgAsmNEFileHeader *fhdr) const;
        /* These are the native-format versions of the same members described in the NESectionTableEntry_disk struct. */
        // unsigned    flags, sector;
-       // addr_t      physical_size, virtual_size;
+       // rose_addr_t      physical_size, virtual_size;
 
      private:
           void ctor(const SgAsmNESectionTableEntry::NESectionTableEntry_disk*);
@@ -3466,7 +3454,7 @@ HEADER_LE_FILE_HEADER_START
               HF_MODTYPE_VDEV     = 0x00028000,   /* Virtual device driver module */
           };
 
-          SgAsmLEFileHeader(SgAsmGenericFile *f, addr_t offset)
+          SgAsmLEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
 		: SgAsmGenericHeader(f), p_dos2_header(NULL), p_section_table(NULL), p_page_table(NULL),
 		p_resname_table(NULL), p_nonresname_table(NULL), p_entry_table(NULL), p_reloc_table(NULL)
 		{ctor(f, offset);}
@@ -3477,7 +3465,7 @@ HEADER_LE_FILE_HEADER_START
        // virtual const char *format_name() const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
      private:
-          void ctor(SgAsmGenericFile *f, addr_t offset);
+          void ctor(SgAsmGenericFile *f, rose_addr_t offset);
           void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
 HEADER_LE_FILE_HEADER_END
 
@@ -3495,13 +3483,13 @@ HEADER_LE_SECTION_END
 
 HEADER_LE_SECTION_TABLE_START
 	public:
-		SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size)
+		SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset, size);}
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(addr_t offset, addr_t size);
+		void ctor(rose_addr_t offset, rose_addr_t size);
 HEADER_LE_SECTION_TABLE_END
 
 
@@ -3512,52 +3500,52 @@ HEADER_LE_NAME_TABLE_START
 		 * an "ordinal" which serves as an index into the Entry Table. The ordinal for the first string (module name) is
 		 * meaningless and should be zero. In the non-resident name table the first entry is a module description and the
 		 * functions are not always resident in system memory (they are discardable). */
-		SgAsmLENameTable(SgAsmLEFileHeader *fhdr, addr_t offset)
+		SgAsmLENameTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset);}
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(addr_t offset);
+		void ctor(rose_addr_t offset);
 HEADER_LE_NAME_TABLE_END
 
 
 
 HEADER_LE_PAGE_TABLE_START
 	public:
-		SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size)
+		SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset, size);}
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		SgAsmLEPageTableEntry *get_page(size_t idx);
 	private:
-		void ctor(addr_t offset, addr_t size);
+		void ctor(rose_addr_t offset, rose_addr_t size);
 HEADER_LE_PAGE_TABLE_END
 
 
 
 HEADER_LE_ENTRY_TABLE_START
 	public:
-		SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, addr_t offset)
+		SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset);}
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(addr_t offset);
+		void ctor(rose_addr_t offset);
 HEADER_LE_ENTRY_TABLE_END
 
 
 
 HEADER_LE_RELOC_TABLE_START
 	public:
-		SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, addr_t offset)
+		SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor(offset);}
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(addr_t offset);
+		void ctor(rose_addr_t offset);
 HEADER_LE_RELOC_TABLE_END
 
 
@@ -3628,14 +3616,14 @@ HEADER_LE_ENTRY_POINT_START
           SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
           SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags);
 
-          addr_t unparse(std::ostream&, SgAsmExecutableFileFormat::ByteOrder, const SgAsmGenericSection*, addr_t spos) const;
+          rose_addr_t unparse(std::ostream&, SgAsmExecutableFileFormat::ByteOrder, const SgAsmGenericSection*, rose_addr_t spos) const;
           void dump(FILE*, const char *prefix, ssize_t idx) const;
      private:
           void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLEEntryPoint::LEEntryPoint_disk*);
 
        // std::vector<LEEntryPoint> entries;
        // unsigned flags, objnum, entry_type, res1;
-       // addr_t entry_offset;
+       // rose_addr_t entry_offset;
 
 HEADER_LE_ENTRY_POINT_END
 
@@ -3700,7 +3688,7 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
           virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
        /* These are the native-format versions of the same members described in the NESectionTableEntry_disk struct. */
        // unsigned    flags, pagemap_index, pagemap_nentries, res1;
-       // addr_t      mapped_size, base_addr;
+       // rose_addr_t      mapped_size, base_addr;
 
      private:
           void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLESectionTableEntry::LESectionTableEntry_disk*);
@@ -3764,7 +3752,7 @@ HEADER_DOS_HEADER_START
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual const char *format_name() const {return "DOS";}
-		SgAsmGenericSection *add_rm_section(addr_t max_offset=0);
+		SgAsmGenericSection *add_rm_section(rose_addr_t max_offset=0);
 		static bool is_DOS(SgAsmGenericFile*);
 	private:
 		void ctor();
@@ -5503,7 +5491,7 @@ SgAsmNEEntryPoint::SgAsmNEEntryPoint(SgAsmNEEntryPoint::NEEntryFlags flags, unsi
 SOURCE_NE_ENTRY_POINT_END
 
 SOURCE_NE_RELOC_ENTRY_START
-SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size)
+SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at, rose_addr_t *rec_size)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(relocs, at, rec_size);

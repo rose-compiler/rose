@@ -286,13 +286,13 @@ void RoseFile::test() {
   trav_inst=0;
   trav_blocks=0;
   nodes=0;
-  double start = getTime();
-  double memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
+  //double start = getTime();
+  //double memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   //cerr << ">> traversing AST...  " ;
   traverse(globalNode,preorder);
-  double ends = getTime();
+  //double ends = getTime();
   //cerr << " " << (double) (ends - start)   << " sec";
-  double memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
+  //double memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
   
   //cerr << " traversed nodes : " << nodes << endl;
