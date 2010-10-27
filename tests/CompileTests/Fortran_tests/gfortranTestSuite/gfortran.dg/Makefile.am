@@ -740,6 +740,56 @@ F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING =
 
 F03_TESTCODES_CURRENTLY_FAILING = 
 
+# DQ (10/27/2010): Having this list allows us to pass the test in: ./scripts/policies/UnusedSources.pl
+# I'm not sure that we need this files in our Fortran test suit however, they are from gfortran's test
+# suite so we will leave them in place for now.
+UNTESTS_TESTS = \
+   bind_c_coms_driver.c \
+   bind_c_dts_2_driver.c \
+   bind_c_dts_driver.c \
+   bind_c_usage_10_c.c \
+   bind_c_usage_16_c.c \
+   bind_c_usage_17_c.c \
+   bind_c_vars_driver.c \
+   c_by_val.c \
+   c_char_driver.c \
+   c_f_pointer_complex_driver.c \
+   c_f_pointer_logical_driver.c \
+   c_f_pointer_shape_tests_2_driver.c \
+   c_f_pointer_shape_tests_4_driver.c \
+   c_f_tests_driver.c \
+   c_funloc_tests_3_funcs.c \
+   c_funloc_tests_4_driver.c \
+   c_kinds.c \
+   c_loc_driver.c \
+   c_loc_tests_2_funcs.c \
+   c_ptr_tests_7_driver.c \
+   c_ptr_tests_8_funcs.c \
+   c_ptr_tests_driver.c \
+   c_size_t_driver.c \
+   enum_10.c \
+   f2c_4.c \
+   f2c_5.c \
+   g77/cpp5.h \
+   g77/cpp5inc.h \
+   global_vars_c_init_driver.c \
+   global_vars_f90_init_driver.c \
+   iso_c_binding_rename_1_driver.c \
+   iso_c_binding_rename_2_driver.c \
+   lrshift_1.c \
+   lto/20091028-1_1.c \
+   lto/20091028-2_1.c \
+   lto/20100222-1_1.c \
+   lto/pr40725_1.c \
+   mixed_io_1.c \
+   only_clause_main.c \
+   pr32627_driver.c \
+   proc_ptr_7.c \
+   proc_ptr_8.c \
+   static_linking_1.c \
+   test_c_assoc.c \
+   value_4.c
+
 
 noinst_headers =
 
