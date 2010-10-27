@@ -868,6 +868,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
     //reuse function type, function symbol
 
 //    delete func_type;// bug 189
+
+    // Cong (10/25/2010): Make sure in this situation there is no defining declaration for this symbol.
+    ROSE_ASSERT(func_symbol->get_declaration()->get_definingDeclaration() == NULL);
+
     func_type = func_symbol->get_declaration()->get_type();
     //func = new SgFunctionDeclaration(name,func_type,NULL);
     func = new actualFunction(name,func_type,NULL);
