@@ -1,7 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# DQ (8/22/2010): These files are open source and distributed on the web.
-SUBDIRS = LANL_POP
+SUBDIRS = LANL_POP gfortranTestSuite
 
 ###########################################################################
 # These are Fortran testcodes targeting aspects F66, F77, F90, F95, F2003 #
@@ -456,7 +455,6 @@ TEST_F03_Objects = ${ALL_F03_TESTCODES:.f03=.o}
 
 PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
 
-# if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 # Go back and build the translator we are using to test Fortran (in case make check 
