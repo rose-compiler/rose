@@ -116,7 +116,7 @@ class UnparseLanguageIndependentConstructs
        // (rather than generated).
 //        virtual void unparseQualifiedNameList(const SgQualifiedNamePtrList & qualifiedNameList);
 
-       // DQ (8/14/2007): This is where all the langauge specific statement unparing is done
+       // DQ (8/14/2007): This is where all the language specific statement unparsing is done
           virtual void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) = 0;
           virtual void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info) = 0;
 
@@ -143,7 +143,7 @@ class UnparseLanguageIndependentConstructs
           virtual void unparseMFuncRef                (SgExpression* expr, SgUnparse_Info& info);
 #endif
        // DQ (11/10/2005): Added general support for SgValue (so that we could unparse 
-       // expression trees from contant folding)
+       // expression trees from constant folding)
           virtual void unparseValue                   (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseBoolVal                 (SgExpression* expr, SgUnparse_Info& info);  
@@ -238,7 +238,7 @@ class UnparseLanguageIndependentConstructs
 #endif
           virtual void unparseNullExpression          (SgExpression* expr, SgUnparse_Info& info);
 
-      //! unparse statement functions implememted in unparse_stmt.C
+      //! unparse statement functions implemented in unparse_stmt.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
           virtual void unparseStatement        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseGlobalStmt       (SgStatement* stmt, SgUnparse_Info& info);
@@ -307,6 +307,24 @@ class UnparseLanguageIndependentConstructs
           virtual void unparseIncludeNextDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseLinemarkerDirectiveStatement  (SgStatement* stmt, SgUnparse_Info& info);
 
+         // Liao 10/20/2010 common unparsing support for OpenMP AST 
+          virtual void unparseOmpPrefix                     (SgUnparse_Info& info); // = 0;
+          virtual void unparseOmpDefaultClause              (SgOmpClause* clause, SgUnparse_Info& info); 
+          virtual void unparseOmpScheduleClause             (SgOmpClause* clause, SgUnparse_Info& info);
+          virtual void unparseOmpVariablesClause            (SgOmpClause* clause, SgUnparse_Info& info);
+          virtual void unparseOmpExpressionClause           (SgOmpClause* clause, SgUnparse_Info& info);
+          virtual void unparseOmpClause                     (SgOmpClause* clause, SgUnparse_Info& info);
+
+          virtual void unparseOmpSimpleStatement               (SgStatement* stmt,     SgUnparse_Info& info);
+          virtual void unparseOmpThreadprivateStatement      (SgStatement* stmt,     SgUnparse_Info& info);
+          virtual void unparseOmpFlushStatement              (SgStatement* stmt,     SgUnparse_Info& info);
+        
+          // This is necessary since some clauses should only appear with the begin part of a directive
+          virtual void unparseOmpDirectivePrefixAndName     (SgStatement* stmt,     SgUnparse_Info& info);
+          virtual void unparseOmpEndDirectivePrefixAndName  (SgStatement* stmt,     SgUnparse_Info& info);
+          virtual void unparseOmpBeginDirectiveClauses      (SgStatement* stmt,     SgUnparse_Info& info); 
+          virtual void unparseOmpEndDirectiveClauses        (SgStatement* stmt,     SgUnparse_Info& info); 
+          virtual void unparseOmpGenericStatement           (SgStatement* stmt,     SgUnparse_Info& info);
 #if 0
        // DQ (7/21/2006): Added support for GNU statement expression extension.
           virtual void unparseStatementExpression (SgExpression* expr, SgUnparse_Info& info);

@@ -160,7 +160,8 @@ public:
 
 
 // Procedures are classified into one of the following types:
-enum IRProcType {
+enum IRProcType 
+{
   ProcType_PGM,
   ProcType_SUB,
   ProcType_FUNC,
@@ -169,7 +170,8 @@ enum IRProcType {
 };
 
 // Statements are classified into one of the following types:
-enum IRStmtType {
+enum IRStmtType 
+{
   SIMPLE,                       // Anything not covered below.
   COMPOUND,                     // A block of statements. 
   LOOP,                         // Any type of top-tested, structured loop.

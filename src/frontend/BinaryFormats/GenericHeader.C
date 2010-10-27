@@ -217,7 +217,7 @@ SgAsmGenericHeader::get_section_by_name(const std::string &name, char sep/*or NU
 
 /** Returns sectons in this header that contain all of the specified portion of the file. */
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sections_by_offset(addr_t offset, addr_t size) const
+SgAsmGenericHeader::get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const
 {
     SgAsmGenericSectionPtrList retval;
     for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
@@ -232,7 +232,7 @@ SgAsmGenericHeader::get_sections_by_offset(addr_t offset, addr_t size) const
 
 /** Returns single section in this header that contains all of the specified portion of the file. */
 SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_offset(addr_t offset, addr_t size, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_offset(offset, size);
     if (nfound) *nfound = possible.size();
@@ -241,7 +241,7 @@ SgAsmGenericHeader::get_section_by_offset(addr_t offset, addr_t size, size_t *nf
 
 /** Returns sections that have a preferred mapping that includes the specified relative virtual address. */
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sections_by_rva(addr_t rva) const
+SgAsmGenericHeader::get_sections_by_rva(rose_addr_t rva) const
 {
     SgAsmGenericSectionPtrList retval;
     for (SgAsmGenericSectionPtrList::iterator i = p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
@@ -257,7 +257,7 @@ SgAsmGenericHeader::get_sections_by_rva(addr_t rva) const
 /** Returns the single section having a preferred mapping that includes the specified relative virtual address. If there are
  *  no sections or multiple sections satisfying this condition then a null pointer is returned. */
 SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_rva(rva);
     if (nfound) *nfound = possible.size();
@@ -269,12 +269,12 @@ SgAsmGenericHeader::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/) c
  *  If an actual mapping is used, the specified virtual address must be part of the actual mapped section, not merely in the
  *  memory region that was also mapped to satisfy alignment constraints. */
 SgAsmGenericSectionPtrList
-SgAsmGenericHeader::get_sections_by_va(addr_t va, bool use_preferred) const
+SgAsmGenericHeader::get_sections_by_va(rose_addr_t va, bool use_preferred) const
 {
     if (use_preferred) {
         if (va < get_base_va())
             return SgAsmGenericSectionPtrList();
-        addr_t rva = va - get_base_va();
+        rose_addr_t rva = va - get_base_va();
         return get_sections_by_rva(rva);
     }
      
@@ -294,7 +294,7 @@ SgAsmGenericHeader::get_sections_by_va(addr_t va, bool use_preferred) const
  *  the memory region that was also mapped to satisfy alignment constraints.  If there are no sections or multiple sections
  *  satisfying this condition then a null pointer is returned. */
 SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_va(addr_t va, bool use_preferred, size_t *nfound/*optional*/) const
+SgAsmGenericHeader::get_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_va(va, use_preferred);
     if (nfound) *nfound = possible.size();
@@ -303,7 +303,7 @@ SgAsmGenericHeader::get_section_by_va(addr_t va, bool use_preferred, size_t *nfo
 
 /** Like SgAsmGenericFile::get_best_section_by_va() except considers only sections defined in this header. */
 SgAsmGenericSection *
-SgAsmGenericHeader::get_best_section_by_va(addr_t va, bool use_preferred, size_t *nfound) const
+SgAsmGenericHeader::get_best_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound) const
 {
     const SgAsmGenericSectionPtrList &candidates = get_sections_by_va(va, use_preferred);
     if (nfound) *nfound = candidates.size();
@@ -353,7 +353,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     for (size_t i = 0; i < p_entry_rvas.size(); i++) {
         char label[64];
         sprintf(label, "entry_rva[%zu]", i);
-        addr_t entry_rva = p_entry_rvas[i].get_rva();
+        rose_addr_t entry_rva = p_entry_rvas[i].get_rva();
         fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, label, entry_rva, entry_rva);
         SgAsmGenericSectionPtrList sections = get_file()->get_sections();
         dump_containing_sections(f, std::string(p)+label, entry_rva, sections);
