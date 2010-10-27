@@ -39,7 +39,7 @@ if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
    libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C 
 
  # DQ (10/11/2010): Put any required header files here.
-   include_HEADERS = ecj.h
+   include_HEADERS = ecj.h java_support.h
 
 # JavaParserActionROSE.C: $(ECJ_DIR)/token.h $(ECJ_DIR)/ActionEnums.h $(ECJ_DIR)/jni_token_funcs.h
 # JavaParserActionROSE.C:

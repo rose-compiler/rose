@@ -20,46 +20,519 @@ import org.eclipse.jdt.internal.compiler.util.*;
 // DQ (10/12/2010): Make more like the OFP implementation (using Callable<Boolean> abstract base class). 
 // class JavaTraversal {
 import java.util.concurrent.Callable;
-class JavaParser  implements Callable<Boolean> {
-    static Main main;
-    static BufferedWriter out;
+class JavaParser  implements Callable<Boolean>
+   {
+     static Main main;
+     static BufferedWriter out;
+
+  // -------------------------------------------------------------------------------------------
+     public native void cactionCompilationUnitList(int argc, String[] argv);
+     private native void cactionCompilationUnitDeclaration(String filename);
+     private native void cactionTypeDeclaration(String filename);
+
+  // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
+     private static boolean hasErrorOccurred = false;
+
+     static { System.loadLibrary("JavaTraversal"); }
 
     // -------------------------------------------------------------------------------------------
-    /* tps: Invoke C Code , the int nr represents a unique nr for a node which is used for DOT representation*/
-    public native void cactionCompilationUnitList(int argc, String[] argv);
-    private native void cactionCompilationUnitDeclaration(String filename);
-
- // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
-    private static boolean hasErrorOccurred = false;
-
-    static {
-	System.loadLibrary("JavaTraversal");
-    }
-
-    // -------------------------------------------------------------------------------------------
-    /* tps: Stack that is keeping track of the traversal we perform to connect children with parents in the DOT graph */
-    private Stack<ASTNode> stack = new Stack<ASTNode>();
-    public void pushNode(ASTNode node) {
-       stack.push(node);
-    }
-
-    public ASTNode popNode() {
-	if (!stack.empty())
-	    stack.pop();
-	else {
-          System.err.println("!!!!!!!!!!!! ERROR trying to access empty stack");
-          System.exit(1);
+  /* tps: Stack that is keeping track of the traversal we perform to connect children with parents in the DOT graph */
+     private Stack<ASTNode> stack = new Stack<ASTNode>();
+     public void pushNode(ASTNode node)
+        {
+          stack.push(node);
         }
-	if (!stack.empty())
-	    return (ASTNode)stack.peek();
-	return null;
-    }
+
+     public ASTNode popNode()
+        {
+          if (!stack.empty())
+               stack.pop();
+            else
+             {
+               System.err.println("!!!!!!!!!!!! ERROR trying to access empty stack");
+               System.exit(1);
+             }
+          if (!stack.empty())
+               return (ASTNode)stack.peek();
+          return null;
+        }
+
+     public void traverseAST(CompilationUnitDeclaration unit)
+        {
+          final ASTVisitor visitor = new ASTVisitor()
+             {
+               public boolean visit(AllocationExpression node,BlockScope scope)
+                  {
+                    pushNode(node); return true; // do nothing by  node, keep traversing
+                  }
+
+               public boolean visit(AND_AND_Expression  node, BlockScope scope)
+                  {
+                    pushNode(node);
+                    return true; // do nothing by  node, keep traversing
+                  }
+
+               public boolean visit(AnnotationMethodDeclaration node,ClassScope classScope)
+                  {
+                    pushNode(node);
+                 // node.traverse(this,node.scope);
+                    return true; // do nothing by default, keep traversing
+                  }
+
+               public boolean visit(Argument  node, BlockScope scope)
+                  {
+                    pushNode(node);
+                    return true; // do nothing by  node, keep traversing
+                  }
+
+               public boolean visit(Argument  node, ClassScope scope)
+                  {
+                    pushNode(node);
+                    return true; // do nothing by  node, keep traversing
+                  }
+
+               public boolean visit(ArrayAllocationExpression node,BlockScope scope)
+                  {
+                    pushNode(node);
+                    return true; // do nothing by  node, keep traversing
+		            }
+		public boolean visit(ArrayInitializer  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     ArrayQualifiedTypeReference node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     ArrayQualifiedTypeReference node,
+				     ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ArrayReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ArrayTypeReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ArrayTypeReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(AssertStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(Assignment  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(BinaryExpression  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(Block  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(BreakStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(CaseStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(CastExpression  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(CharLiteral  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ClassLiteralAccess  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(Clinit  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     CompilationUnitDeclaration node,
+				     CompilationUnitScope scope) {
+
+          System.out.println("Inside of visit (CompilationUnitDeclaration,CompilationUnitScope)");
+
+       // Call the Java side of the JNI function.
+          String s = new String(node.getFileName());
+          System.out.println("Test A");
+          cactionCompilationUnitDeclaration(s);
+          System.out.println("Leaving visit (CompilationUnitDeclaration,CompilationUnitScope)");
+
+		    pushNode(node);
+		    return true; // do nothing by default, keep traversing
+		}
+		public boolean visit(CompoundAssignment  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     ConditionalExpression node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     ConstructorDeclaration node,
+				     ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ContinueStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(DoStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(DoubleLiteral  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(EmptyStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(EqualExpression  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     ExplicitConstructorCall node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     ExtendedStringLiteral node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(FalseLiteral  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(FieldDeclaration  node, MethodScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(FieldReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(FieldReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(FloatLiteral  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ForeachStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ForStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(IfStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ImportReference  node, CompilationUnitScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(Initializer  node, MethodScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     InstanceOfExpression node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(IntLiteral  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(Javadoc  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(Javadoc  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocAllocationExpression  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocAllocationExpression  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocArgumentExpression  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocArgumentExpression  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocArrayQualifiedTypeReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocArrayQualifiedTypeReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocArraySingleTypeReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocArraySingleTypeReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocFieldReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocFieldReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocImplicitTypeReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocImplicitTypeReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocMessageSend  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocMessageSend  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocQualifiedTypeReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocQualifiedTypeReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocReturnStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocReturnStatement  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocSingleNameReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocSingleNameReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocSingleTypeReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(JavadocSingleTypeReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(LabeledStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(LocalDeclaration  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(LongLiteral  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		/**
+		 * @param annotation
+		 * @param scope
+		 * @shashcountere 3.1
+		 */
+		public boolean visit(MarkerAnnotation  node, BlockScope scope) {
+		    pushNode(node); return true;
+		}
+		/**
+		 * @param pair
+		 * @param scope
+		 * @shashcountere 3.1
+		 */
+		public boolean visit(MemberValuePair  node, BlockScope scope) {
+		    pushNode(node); return true;
+		}
+		public boolean visit(MessageSend  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(MethodDeclaration  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     StringLiteralConcatenation node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		/**
+		 * @param annotation
+		 * @param scope
+		 * @shashcountere 3.1
+		 */
+		public boolean visit(NormalAnnotation  node, BlockScope scope) {
+		    pushNode(node); return true;
+		}
+		public boolean visit(NullLiteral  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(OR_OR_Expression  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ParameterizedQualifiedTypeReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ParameterizedQualifiedTypeReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ParameterizedSingleTypeReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ParameterizedSingleTypeReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(PostfixExpression  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(PrefixExpression  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     QualifiedAllocationExpression node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     QualifiedNameReference node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     QualifiedNameReference node,
+				     ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     QualifiedSuperReference node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     QualifiedSuperReference node,
+				     ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     QualifiedThisReference node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     QualifiedThisReference node,
+				     ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     QualifiedTypeReference node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     QualifiedTypeReference node,
+				     ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ReturnStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		/**
+		 * @param annotation
+		 * @param scope
+		 * @shashcountere 3.1
+		 */
+		public boolean visit(SingleMemberAnnotation  node, BlockScope scope) {
+		    pushNode(node); return true;
+		}
+		public boolean visit(
+				     SingleNameReference node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     SingleNameReference node,
+				     ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     SingleTypeReference node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     SingleTypeReference node,
+				     ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(StringLiteral  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(SuperReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(SwitchStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(
+				     SynchronizedStatement node,
+				     BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ThisReference  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ThisReference  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(ThrowStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(TrueLiteral  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(TryStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+
+          public boolean visit(TypeDeclaration node,BlockScope scope)
+             {
+               System.out.println("visit TypeDeclaration -- BlockScope");
+               String typename = new String(node.name);
+               cactionTypeDeclaration(typename);
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
+          public boolean visit(TypeDeclaration node,ClassScope scope)
+             {
+               System.out.println("visit TypeDeclaration -- ClassScope");
+               String typename = new String(node.name);
+               cactionTypeDeclaration(typename);
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
+          public boolean visit(TypeDeclaration node,CompilationUnitScope scope)
+             {
+               System.out.println("visit TypeDeclaration -- CompilationUnitScope");
+               String typename = new String(node.name);
+               cactionTypeDeclaration(typename);
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
+		public boolean visit(TypeParameter  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(TypeParameter  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(UnaryExpression  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(WhileStatement  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(Wildcard  node, BlockScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
+		public boolean visit(Wildcard  node, ClassScope scope) {
+		    pushNode(node); return true; // do nothing by  node, keep traversing
+		}
 
 
-    /* tps (10/08/10): AST traversal contains all current nodes of ECJ ---------------------------------------------- */
-    public void traverseAST(CompilationUnitDeclaration unit) {
 
-    final ASTVisitor visitor = new ASTVisitor() {
 		public void endVisit(
 				     AllocationExpression node,
 				     BlockScope scope) {
@@ -496,487 +969,41 @@ class JavaParser  implements Callable<Boolean> {
 
 
 
+             };
+          unit.traverse(visitor,unit.scope);
+        }
 
-
-		public boolean visit(
-				     AllocationExpression node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(AND_AND_Expression  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     AnnotationMethodDeclaration node,
-				     ClassScope classScope) {
-		    pushNode(node);
-		    //		    node.traverse(this,node.scope);
-		    return true; // do nothing by default, keep traversing
-		}
-		public boolean visit(Argument  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(Argument  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     ArrayAllocationExpression node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ArrayInitializer  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     ArrayQualifiedTypeReference node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     ArrayQualifiedTypeReference node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ArrayReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ArrayTypeReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ArrayTypeReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(AssertStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(Assignment  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(BinaryExpression  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(Block  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(BreakStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(CaseStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(CastExpression  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(CharLiteral  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ClassLiteralAccess  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(Clinit  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     CompilationUnitDeclaration node,
-				     CompilationUnitScope scope) {
-
-          System.out.println("Inside of visit (CompilationUnitDeclaration,CompilationUnitScope)");
-
-       // Call the Java side of the JNI function.
-          String s = new String(node.getFileName());
-          System.out.println("Test A");
-          cactionCompilationUnitDeclaration(s);
-          System.out.println("Leaving visit (CompilationUnitDeclaration,CompilationUnitScope)");
-
-		    pushNode(node);
-		    return true; // do nothing by default, keep traversing
-		}
-		public boolean visit(CompoundAssignment  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     ConditionalExpression node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     ConstructorDeclaration node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ContinueStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(DoStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(DoubleLiteral  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(EmptyStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(EqualExpression  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     ExplicitConstructorCall node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     ExtendedStringLiteral node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(FalseLiteral  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(FieldDeclaration  node, MethodScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(FieldReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(FieldReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(FloatLiteral  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ForeachStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ForStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(IfStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ImportReference  node, CompilationUnitScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(Initializer  node, MethodScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     InstanceOfExpression node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(IntLiteral  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(Javadoc  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(Javadoc  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocAllocationExpression  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocAllocationExpression  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocArgumentExpression  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocArgumentExpression  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocArrayQualifiedTypeReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocArrayQualifiedTypeReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocArraySingleTypeReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocArraySingleTypeReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocFieldReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocFieldReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocImplicitTypeReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocImplicitTypeReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocMessageSend  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocMessageSend  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocQualifiedTypeReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocQualifiedTypeReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocReturnStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocReturnStatement  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocSingleNameReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocSingleNameReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocSingleTypeReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(JavadocSingleTypeReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(LabeledStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(LocalDeclaration  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(LongLiteral  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		/**
-		 * @param annotation
-		 * @param scope
-		 * @shashcountere 3.1
-		 */
-		public boolean visit(MarkerAnnotation  node, BlockScope scope) {
-		    pushNode(node); return true;
-		}
-		/**
-		 * @param pair
-		 * @param scope
-		 * @shashcountere 3.1
-		 */
-		public boolean visit(MemberValuePair  node, BlockScope scope) {
-		    pushNode(node); return true;
-		}
-		public boolean visit(MessageSend  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(MethodDeclaration  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     StringLiteralConcatenation node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		/**
-		 * @param annotation
-		 * @param scope
-		 * @shashcountere 3.1
-		 */
-		public boolean visit(NormalAnnotation  node, BlockScope scope) {
-		    pushNode(node); return true;
-		}
-		public boolean visit(NullLiteral  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(OR_OR_Expression  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ParameterizedQualifiedTypeReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ParameterizedQualifiedTypeReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ParameterizedSingleTypeReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ParameterizedSingleTypeReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(PostfixExpression  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(PrefixExpression  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     QualifiedAllocationExpression node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     QualifiedNameReference node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     QualifiedNameReference node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     QualifiedSuperReference node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     QualifiedSuperReference node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     QualifiedThisReference node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     QualifiedThisReference node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     QualifiedTypeReference node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     QualifiedTypeReference node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ReturnStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		/**
-		 * @param annotation
-		 * @param scope
-		 * @shashcountere 3.1
-		 */
-		public boolean visit(SingleMemberAnnotation  node, BlockScope scope) {
-		    pushNode(node); return true;
-		}
-		public boolean visit(
-				     SingleNameReference node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     SingleNameReference node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     SingleTypeReference node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     SingleTypeReference node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(StringLiteral  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(SuperReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(SwitchStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     SynchronizedStatement node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ThisReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ThisReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ThrowStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(TrueLiteral  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(TryStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     TypeDeclaration node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     TypeDeclaration node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     TypeDeclaration node,
-				     CompilationUnitScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(TypeParameter  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(TypeParameter  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(UnaryExpression  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(WhileStatement  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(Wildcard  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(Wildcard  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-
-	    };
-	unit.traverse(visitor,unit.scope);
-    }
-
-    public void startParsingAST(CompilationUnitDeclaration unit)
-         {
-           System.out.println("Start parsing");
-           traverseAST(unit);
-           System.out.println("Done parsing");
-         }
+     public void startParsingAST(CompilationUnitDeclaration unit)
+        {
+          System.out.println("Start parsing");
+          traverseAST(unit);
+          System.out.println("Done parsing");
+        }
 
 
  // DQ (10/12/2010): Implemented abstract baseclass "call()" member function (similar to OFP).
-   public Boolean call() throws Exception {
-   // boolean error = false;
-      boolean error   = true;
-      boolean verbose = true;
+     public Boolean call() throws Exception
+        {
+       // boolean error = false;
+          boolean error   = true;
+          boolean verbose = true;
 
-      if (error != false) {
-           System.out.println("Parser failed");
-         } else {
-           if (verbose)
-                System.out.println("Parser exiting normally");
-         }// end else(parser exited normally)
+          if (error != false)
+             {
+               System.out.println("Parser failed");
+             } 
+            else
+             {
+               if (verbose)
+                    System.out.println("Parser exiting normally");
+             }// end else(parser exited normally)
 
-      return new Boolean(error);
-   }// end call()
+          return new Boolean(error);
+        } // end call()
 
  // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
-   public static boolean getError() {
-      return hasErrorOccurred;
-   }
-
+     public static boolean getError()
+        {
+          return hasErrorOccurred;
+        }
 }
