@@ -91,35 +91,79 @@ SgAsmPEImportLookupTable::parse(rose_rva_t rva, size_t idir_idx)
     return this;
 }
 
-/** Constructs a name/hint Import Lookup Table Entry and adds it to the Import Lookup Table.  Returns the index of the new
- *  entry. */
+/** Adds an Import Lookup Table Entry (or Import Address Table Entry) to the Import Lookup Table (or Import Address Table). If
+ *  an index is specified then the table is extended if necessary and all entries intervening between the old end-of-table
+ *  and the newly added entry are initialized to null pointers. If an index was specified and the element already exists then
+ *  it will be moved. If the destination already points to an entry then that entry will be unlinked from the AST.
+ *
+ *  If an index is not specified and the entry already exists in the table then its position becomes this method's return value
+ *  and no other action is performed.  Otherwise, an unspecified index is the same as choosing an index which is one past the
+ *  end of the table, thus extending the table by exactly one element.
+ *
+ *  An entry can be removed from the table by specifying a null @p ilt_entry along with an index.
+ *
+ *  The return value is the index where the entry was inserted (or already exists if @p idx is unspecified).
+ *  previous location. */
 size_t
-SgAsmPEImportLookupTable::add_entry(const std::string &name, size_t hint) 
+SgAsmPEImportLookupTable::add_entry(SgAsmPEImportILTEntry *ilt_entry, size_t idx/*=-1*/)
 {
-    ROSE_ASSERT(get_entries()!=NULL);
-    SgAsmPEImportILTEntry *ilt_entry = new SgAsmPEImportILTEntry(this);
-    new SgAsmPEImportHNTEntry(ilt_entry, name, hint); /* added to ilt_entry by side effect */
-    return add_entry(ilt_entry); /* only to get the index used by the ILTEntry c'tor */
-}
-    
-/** Adds another Import Lookup Table Entry or Import Address Table Entry to the Import Lookup Table. Returns the index of the
- *  new entry. If the entry is already present then it will not be added again. */
-size_t
-SgAsmPEImportLookupTable::add_entry(SgAsmPEImportILTEntry *ilt_entry)
-{
-    ROSE_ASSERT(ilt_entry);
     ROSE_ASSERT(get_entries()!=NULL);
     SgAsmPEImportILTEntryPtrList &entries = get_entries()->get_vector();
-
-    for (size_t i=0; i<entries.size(); i++) {
-        if (entries[i]==ilt_entry)
-            return i;
-    }
     
-    get_entries()->set_isModified(true);
-    entries.push_back(ilt_entry);
-    ilt_entry->set_parent(this);
-    return entries.size()-1;
+    /* If this entry is already present elsewhere then remove it. However, if the destination index is unspecified then return
+     * the index instead. */
+    if (ilt_entry!=NULL && ilt_entry->get_parent()==this) {
+        for (size_t i=0; i<entries.size(); i++) {
+            if (i!=idx && entries[i]==ilt_entry) {
+                if (idx==(size_t)(-1))
+                    return i;
+                set_isModified(true);
+                entries[i] = NULL;
+            }
+        }
+    }
+
+    /* Extend the table if necessary */
+    if (idx==(size_t)-1)
+        idx = entries.size();
+    if (idx >= entries.size())
+        entries.resize(idx+1, NULL);
+
+    /* If there's already something else stored at the destination then unlink it from the AST. */
+    if (entries[idx] && entries[idx]!=ilt_entry) {
+        set_isModified(true);
+        entries[idx]->set_parent(NULL);
+        entries[idx] = NULL;
+    }
+
+    /* Insert new entry */
+    if (entries[idx]==NULL) {
+        set_isModified(true);
+        entries[idx] = ilt_entry;
+        ilt_entry->set_parent(this);
+    }
+
+    return idx;
+}
+
+/** Constructs an Import Lookup Table Entry (or Import Address Table Entry) that points to a name/hint, and adds it to the
+ *  Import Lookup Table. Returns the table index where the entry was added. */
+size_t
+SgAsmPEImportLookupTable::add_name(const std::string &name, size_t hint, size_t idx/*=-1*/)
+{
+    SgAsmPEImportILTEntry *ilt_entry = new SgAsmPEImportILTEntry(NULL); /* do not add to table yet */
+    new SgAsmPEImportHNTEntry(ilt_entry, name, hint); /* added to ilt_entry by side effect */
+    return add_entry(ilt_entry, idx);
+}
+
+/** Constructs an Import Lookup Table Entry (or Import Address Table Entry) which contains the address of the symbol. */
+size_t
+SgAsmPEImportLookupTable::add_address(rose_rva_t rva, size_t idx/*=-1*/)
+{
+    SgAsmPEImportILTEntry *ilt_entry = new SgAsmPEImportILTEntry(NULL); /* do not add to table yet */
+    ilt_entry->set_entry_type(SgAsmPEImportILTEntry::ILT_BOUND_RVA);
+    ilt_entry->set_bound_rva(rva);
+    return add_entry(ilt_entry, idx);
 }
 
 void

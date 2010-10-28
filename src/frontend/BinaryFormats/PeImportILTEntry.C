@@ -4,11 +4,13 @@
 #include <inttypes.h>
 
 /** Construct an Import Lookup Table Entry (or Import Address Table Entry) and links it into the parent Import Lookup Table (or
- *  Import Address Table). */
+ *  Import Address Table). If the Import Lookup Table, @p ilt, is the null pointer then the entry is not added to the table and
+ *  the user must call SgAsmPEImportLookupTable::add_entry() to add it later. */
 void
 SgAsmPEImportILTEntry::ctor(SgAsmPEImportLookupTable *ilt)
 {
-    ilt->add_entry(this);
+    if (ilt)
+        ilt->add_entry(this);
 }
 
 /** Initialize an Import Lookup Table Entry (or Import Address Table Entry) by parsing a quadword. */

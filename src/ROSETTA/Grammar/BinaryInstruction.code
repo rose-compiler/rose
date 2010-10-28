@@ -2725,9 +2725,11 @@ HEADER_PE_IMPORT_LOOKUP_TABLE_START
 		}
 
 		SgAsmPEImportLookupTable *parse(rose_rva_t table_rva, size_t idir_idx);
-		size_t add_entry(const std::string &name, size_t hint=0);
-		size_t add_entry(SgAsmPEImportILTEntry*);
-		void set_address(size_t index, rose_addr_t addr);
+
+		size_t add_entry(SgAsmPEImportILTEntry*, size_t idx=(size_t)(-1));
+		size_t add_name(const std::string &name, size_t hint=0, size_t idx=(size_t)(-1));
+		size_t add_address(rose_rva_t rva, size_t idx=(size_t)(-1));
+
 		virtual void unparse(std::ostream&, const SgAsmPEFileHeader*, rose_rva_t) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
 	private:
