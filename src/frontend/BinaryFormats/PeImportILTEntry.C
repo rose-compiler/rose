@@ -3,11 +3,19 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-/* Construct an Import Lookup Table Entry or a Lookup Address Table Entry */
+/** Construct an Import Lookup Table Entry (or Import Address Table Entry) and links it into the parent Import Lookup Table (or
+ *  Import Address Table). */
 void
-SgAsmPEImportILTEntry::ctor(SgAsmPEImportSection *isec, uint64_t ilt_word)
+SgAsmPEImportILTEntry::ctor(SgAsmPEImportLookupTable *ilt)
 {
-    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(isec->get_header());
+    ilt->add_entry(this);
+}
+
+/** Initialize an Import Lookup Table Entry (or Import Address Table Entry) by parsing a quadword. */
+SgAsmPEImportILTEntry *
+SgAsmPEImportILTEntry::parse(uint64_t ilt_word)
+{
+    SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
     ROSE_ASSERT(fhdr!=NULL);
     p_hnt_entry = NULL;
 
@@ -46,6 +54,17 @@ SgAsmPEImportILTEntry::ctor(SgAsmPEImportSection *isec, uint64_t ilt_word)
         p_hnt_entry_rva = ilt_word & hnrvamask;
         p_hnt_entry_rva.bind(fhdr);
     }
+    return this;
+}
+
+/** Causes the ILT Entry to point to a name/hint entry. */
+void
+SgAsmPEImportILTEntry::point_to_hnt(SgAsmPEImportHNTEntry *hnt_entry)
+{
+    set_isModified(true);
+    set_entry_type(ILT_HNT_ENTRY_RVA);
+    set_hnt_entry(hnt_entry);
+    hnt_entry->set_parent(this);
 }
 
 /* Encode the PE Import Lookup Table or PE Import Address Table object into a word. */

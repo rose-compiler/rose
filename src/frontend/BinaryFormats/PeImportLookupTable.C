@@ -5,7 +5,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-/* Constructor. */
+/** Constructs a new import lookup table or import address table and adds it as a child of the import directory. */
 void
 SgAsmPEImportLookupTable::ctor(SgAsmPEImportDirectory *idir)
 {
@@ -15,6 +15,17 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportDirectory *idir)
     ROSE_ASSERT(p_entries==NULL);
     p_entries = new SgAsmPEImportILTEntryList();
     p_entries->set_parent(this);
+
+    switch (get_table_kind()) {
+        case ILT_LOOKUP_TABLE:
+            ROSE_ASSERT(idir->get_ilt()==NULL);
+            idir->set_ilt(this);
+            break;
+        case ILT_ADDRESS_TABLE:
+            ROSE_ASSERT(idir->get_iat()==NULL);
+            idir->set_iat(this);
+            break;
+    }
 }
 
 /** Parses a PE Import Lookup Table from the file. The @p rva is the address of the table and should be bound to a section
@@ -69,27 +80,46 @@ SgAsmPEImportLookupTable::parse(rose_rva_t rva, size_t idir_idx)
         if (0==ilt_entry_word)
             break;
 
-        SgAsmPEImportILTEntry *ilt_entry = new SgAsmPEImportILTEntry(isec, ilt_entry_word);
-        add_ilt_entry(ilt_entry);
+        SgAsmPEImportILTEntry *ilt_entry = new SgAsmPEImportILTEntry(this);
+        ilt_entry->parse(ilt_entry_word);
 
         if (SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA==ilt_entry->get_entry_type()) {
-            SgAsmPEImportHNTEntry *hnt_entry = new SgAsmPEImportHNTEntry(isec, ilt_entry->get_hnt_entry_rva());
-            ilt_entry->set_hnt_entry(hnt_entry);
-            hnt_entry->set_parent(ilt_entry);
+            SgAsmPEImportHNTEntry *hnt_entry = new SgAsmPEImportHNTEntry(ilt_entry);
+            hnt_entry->parse(ilt_entry->get_hnt_entry_rva());
         }
     }
+    return this;
 }
 
-/* Adds another Import Lookup Table Entry or Import Address Table Entry to the Import Lookup Table */
-void
-SgAsmPEImportLookupTable::add_ilt_entry(SgAsmPEImportILTEntry *ilt_entry)
+/** Constructs a name/hint Import Lookup Table Entry and adds it to the Import Lookup Table.  Returns the index of the new
+ *  entry. */
+size_t
+SgAsmPEImportLookupTable::add_entry(const std::string &name, size_t hint) 
 {
-    ROSE_ASSERT(p_entries!=NULL);
+    ROSE_ASSERT(get_entries()!=NULL);
+    SgAsmPEImportILTEntry *ilt_entry = new SgAsmPEImportILTEntry(this);
+    new SgAsmPEImportHNTEntry(ilt_entry, name, hint); /* added to ilt_entry by side effect */
+    return add_entry(ilt_entry); /* only to get the index used by the ILTEntry c'tor */
+}
+    
+/** Adds another Import Lookup Table Entry or Import Address Table Entry to the Import Lookup Table. Returns the index of the
+ *  new entry. If the entry is already present then it will not be added again. */
+size_t
+SgAsmPEImportLookupTable::add_entry(SgAsmPEImportILTEntry *ilt_entry)
+{
     ROSE_ASSERT(ilt_entry);
-    p_entries->set_isModified(true);
-    p_entries->get_vector().push_back(ilt_entry);
-    ROSE_ASSERT(p_entries->get_vector().size()>0);
+    ROSE_ASSERT(get_entries()!=NULL);
+    SgAsmPEImportILTEntryPtrList &entries = get_entries()->get_vector();
+
+    for (size_t i=0; i<entries.size(); i++) {
+        if (entries[i]==ilt_entry)
+            return i;
+    }
+    
+    get_entries()->set_isModified(true);
+    entries.push_back(ilt_entry);
     ilt_entry->set_parent(this);
+    return entries.size()-1;
 }
 
 void

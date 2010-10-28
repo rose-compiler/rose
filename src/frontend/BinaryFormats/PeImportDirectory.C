@@ -6,10 +6,12 @@
 /** Constructor. The constructor makes @p section the parent of this new import directory, but does not add this new import
  *  directory to the section yet.  It should be added after we're done parsing it. */
 void
-SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section)
+SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, const std::string &dll_name)
 {
     ROSE_ASSERT(section!=NULL);
     set_parent(section);
+
+    p_dll_name = new SgAsmBasicString(dll_name);
 }
 
 /** Parse an import directory. The import directory is parsed from the specified virtual address via the PE header's loader
@@ -49,9 +51,11 @@ SgAsmPEImportDirectory::parse(rose_addr_t va)
     p_dll_name_rva.bind(fhdr);
     p_iat_rva.bind(fhdr);
 
-    p_dll_name = NULL;
+    /* Library name */
+    ROSE_ASSERT(p_dll_name!=NULL);
+    std::string dll_name;
     try {
-        p_dll_name = new SgAsmBasicString(section->read_content_str(fhdr->get_loader_map(), p_dll_name_rva));
+        dll_name = section->read_content_str(fhdr->get_loader_map(), p_dll_name_rva);
     } catch (const MemoryMap::NotMapped &e) {
         if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory::parse: short read of dll name\n"
                                               "    PE Import Directory at va 0x%08"PRIx64"\n"
@@ -63,8 +67,7 @@ SgAsmPEImportDirectory::parse(rose_addr_t va)
             e.map->dump(stderr, "    ");
         }
     }
-    if (!p_dll_name)
-        p_dll_name = new SgAsmBasicString("");
+    p_dll_name->set_string(dll_name);
 
     return this;
 }

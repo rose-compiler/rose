@@ -5,8 +5,19 @@
 
 /* Constructor */
 void
-SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rose_rva_t rva)
+SgAsmPEImportHNTEntry::ctor(SgAsmPEImportILTEntry *ilt_entry, std::string name)
 {
+    ROSE_ASSERT(get_name()==NULL);
+    set_name(new SgAsmBasicString(name));
+    ilt_entry->point_to_hnt(this);
+}
+
+/** Parses an HNT entry at the specified relative virtual address. */
+SgAsmPEImportHNTEntry *
+SgAsmPEImportHNTEntry::parse(rose_rva_t rva)
+{
+    SgAsmPEImportSection *isec = SageInterface::getEnclosingNode<SgAsmPEImportSection>(this);
+    ROSE_ASSERT(isec!=NULL);
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(isec->get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
@@ -36,7 +47,7 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rose_rva_t rva)
             e.map->dump(stderr, "    ");
         }
     }
-    p_name = new SgAsmBasicString(s);
+    p_name->set_string(s);
 
     /* Padding */
     p_padding = 0;
@@ -54,6 +65,7 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rose_rva_t rva)
             }
         }
     }
+    return this;
 }
 
 void

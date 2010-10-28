@@ -105,12 +105,10 @@ SgAsmPEImportSection::parse()
         /* Import Lookup Table */
         SgAsmPEImportLookupTable *ilt = new SgAsmPEImportLookupTable(idir, SgAsmPEImportLookupTable::ILT_LOOKUP_TABLE);
         ilt->parse(idir->get_ilt_rva(), i);
-        idir->set_ilt(ilt);
 
         /* Import Address Table */
         SgAsmPEImportLookupTable *iat = new SgAsmPEImportLookupTable(idir, SgAsmPEImportLookupTable::ILT_ADDRESS_TABLE);
         iat->parse(idir->get_iat_rva(), i);
-        idir->set_iat(iat);
 
         /* Create the GenericDLL for this library */
         SgAsmGenericDLL *dll = new SgAsmGenericDLL(idir->get_dll_name());
