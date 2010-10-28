@@ -75,16 +75,21 @@ SgAsmPEImportSection::parse()
     ROSE_ASSERT(fhdr!=NULL);
 
     ROSE_ASSERT(is_mapped());
-    rose_addr_t idir_rva = get_mapped_actual_va() - fhdr->get_base_va();
+    rose_addr_t idir_va = get_mapped_actual_va();
 
+    /* Parse each directory entry and its import lookup table and import address table. The list of directories is terminated
+     * with a zero-filled entry, which is not added to this import section. */
     for (size_t i = 0; 1; i++) {
-        /* Read idata directory entries. The list is terminated with a zero-filled entry whose idx will be negative */
-        SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(this, i, &idir_rva);
-        if (idir->get_idx()<0) {
+        /* Import directory entry */
+        SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(this);
+        if (NULL==idir->parse(idir_va)) {
             delete idir;
             break;
         }
+        add_import_directory(idir);
+        idir_va += sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);
 
+        /* DLL name */
         rose_rva_t rva = idir->get_dll_name_rva();
         if (rva.get_section()!=this) {
             rose_addr_t start_rva = get_mapped_actual_va() - get_base_va();
@@ -98,16 +103,14 @@ SgAsmPEImportSection::parse()
         }
 
         /* Import Lookup Table */
-        SgAsmPEImportLookupTable *ilt = new SgAsmPEImportLookupTable(this, idir->get_ilt_rva(), i, false);
+        SgAsmPEImportLookupTable *ilt = new SgAsmPEImportLookupTable(idir, SgAsmPEImportLookupTable::ILT_LOOKUP_TABLE);
+        ilt->parse(idir->get_ilt_rva(), i);
         idir->set_ilt(ilt);
-        ilt->set_parent(idir);
 
-        /* Import Address Table (same class as the Import Lookup Table) */
-        SgAsmPEImportLookupTable *iat = new SgAsmPEImportLookupTable(this, idir->get_iat_rva(), i, true);
+        /* Import Address Table */
+        SgAsmPEImportLookupTable *iat = new SgAsmPEImportLookupTable(idir, SgAsmPEImportLookupTable::ILT_ADDRESS_TABLE);
+        iat->parse(idir->get_iat_rva(), i);
         idir->set_iat(iat);
-        iat->set_parent(idir);
-
-        add_import_directory(idir);
 
         /* Create the GenericDLL for this library */
         SgAsmGenericDLL *dll = new SgAsmGenericDLL(idir->get_dll_name());
@@ -122,13 +125,19 @@ SgAsmPEImportSection::parse()
     return this;
 }
 
+/** Add an import directory to the end of the import directory list. */
 void
 SgAsmPEImportSection::add_import_directory(SgAsmPEImportDirectory *d)
 {
-    ROSE_ASSERT(p_import_directories!=NULL);
-    p_import_directories->set_isModified(true);
-    p_import_directories->get_vector().push_back(d);
-    d->set_parent(this);
+    ROSE_ASSERT(get_import_directories()!=NULL);
+    SgAsmPEImportDirectoryPtrList &dirlist = get_import_directories()->get_vector();
+
+    /* Make sure it's not already on the list */
+    ROSE_ASSERT(dirlist.end()==std::find(dirlist.begin(), dirlist.end(), d));
+
+    dirlist.push_back(d);
+    get_import_directories()->set_isModified(true);
+    d->set_parent(get_import_directories());
 }
 
 /* Write the import section back to disk */
@@ -141,7 +150,7 @@ SgAsmPEImportSection::unparse(std::ostream &f) const
     for (size_t i=0; i<get_import_directories()->get_vector().size(); i++) {
         SgAsmPEImportDirectory *idir = get_import_directories()->get_vector()[i];
         try {
-            idir->unparse(f, this);
+            idir->unparse(f, this, i);
         } catch(const ShortWrite&) {
             import_mesg("SgAsmImportSection::unparse: error: Import Directory #%zu skipped (short write)\n", i);
         }

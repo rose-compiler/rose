@@ -468,12 +468,14 @@ void
 SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
 {
     ROSE_ASSERT(get_rvasize_pairs()!=NULL);
+    ROSE_ASSERT(section->get_parent()!=NULL);
+    ROSE_ASSERT(isSgAsmPEFileHeader(section->get_header())!=NULL);
 
     if (idx>=16)
         fprintf(stderr, "SgAsmPEFileHeader::set_rvasize_pair: warning: index %u exceeds specification limit\n", (unsigned)idx);
 
     /* Extend array of rva/size pairs if necessary */
-    if ((size_t)idx<=get_rvasize_pairs()->get_pairs().size()) {
+    if ((size_t)idx>=get_rvasize_pairs()->get_pairs().size()) {
         get_rvasize_pairs()->get_pairs().resize(idx+1, NULL);
         for (size_t i=0; i<=(size_t)idx; i++) {
             if (NULL==get_rvasize_pairs()->get_pairs()[i]) {
@@ -488,10 +490,6 @@ SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
     pair->set_e_rva(rose_rva_t(section->get_mapped_preferred_rva(), section));
     pair->set_e_size(section->get_mapped_size());
     pair->set_section(section);
-
-    /* Section parent should be the PE File header */
-    ROSE_ASSERT(section->get_parent()!=NULL);
-    ROSE_ASSERT(isSgAsmPEFileHeader(section->get_parent())!=NULL);
 
     /* If the section has no name then give it one based on the RVA/Size index. This is mostly for convenience and debugging
      * since the name is never stored in the file. */
