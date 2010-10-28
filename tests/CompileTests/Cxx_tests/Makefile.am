@@ -141,6 +141,12 @@ testBuildUsingAbsolutePath: ../../testTranslator
 	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
 	../../testTranslator -rose:verbose 0 `pwd`/roseTestProgram.C
 
+# DQ (10/23/2010): Added MPI tests that I can at least run locally to debug when Hudson MPI tests fail.
+MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_64bit
+test_MPI_LAM:
+	../../testTranslator -rose:verbose 0 -I$(MPI_LOCATION)/LAM_MPI/include -c $(MPI_LOCATION)/tests/input.C
+
+
 check-local:
 	@$(MAKE) test2005_56.o
 #	@$(MAKE) testUsingBadCommandline

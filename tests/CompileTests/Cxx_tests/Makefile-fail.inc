@@ -163,6 +163,7 @@ test2010_12.C \
 test2010_15.C \
 test2010_16.C \
 test2010_17.C \
+test2010_22.C \
 longFile.C \
 certSignalExample.C
 
