@@ -615,8 +615,11 @@ namespace OmpSupport
   SgOmpBodyStatement * buildOmpBodyStatement(OmpAttribute* att)
   {
     SgStatement* body = getOpenMPBlockFromOmpAttribte(att);
-    //Must remove the body from its previous parent
-    removeStatement(body);
+    //Must remove the body from its previous parent first before attaching it 
+    //to the new parent statement.
+    // We want to keep its preprocessing information during this relocation
+    // so we don't auto keep preprocessing information in its original places.
+    removeStatement(body,false);
 
     if (body==NULL)
     {
