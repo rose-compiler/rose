@@ -139,12 +139,12 @@ SgAsmDOSFileHeader::update_from_rm_section()
         dos2 = isSgAsmDOSExtendedHeader(*si);
 
     /* Update DOS File Header with info about the real-mode text+data section. */
-    p_e_header_paragraphs = (dos1->get_size() + (dos2?dos2->get_size():0)) / 16;
-    
     if (p_rm_section) {
-        p_e_total_pages = (p_rm_section->get_size()+511) / 512; /* round up */
+        p_e_header_paragraphs = (p_rm_section->get_offset() + 15) / 16;         /* rounded up to next paragraph */
+        p_e_total_pages = (p_rm_section->get_size()+511) / 512;                 /* rounded up to next page */
         p_e_last_page_size = p_rm_section->get_size() % 512;
     } else {
+        p_e_header_paragraphs = (dos1->get_size() + (dos2?dos2->get_size():0) + 15) / 16;
         p_e_total_pages = 0;
         p_e_last_page_size = 0;
     }
@@ -218,7 +218,8 @@ SgAsmDOSFileHeader::unparse(std::ostream &f) const
      *  3. DOS Real-Mode Text/Data section must immediately follow headers */
     ROSE_ASSERT(0==get_offset());
     ROSE_ASSERT(!dos2 || dos2->get_offset()==get_size());
-    ROSE_ASSERT(!p_rm_section || p_rm_section->get_offset()==get_size() + (dos2?dos2->get_size():0));
+//  ROSE_ASSERT(get_size()+(dos2?dos2->get_size():0) < (size_t)p_e_header_paragraphs*16);
+//  ROSE_ASSERT(!p_rm_section || p_rm_section->get_offset()==(size_t)p_e_header_paragraphs*16);
 
     /* Unparse the header itself */
     DOSFileHeader_disk disk;

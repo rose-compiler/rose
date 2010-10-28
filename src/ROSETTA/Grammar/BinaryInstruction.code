@@ -2668,19 +2668,23 @@ HEADER_PE_IMPORT_DIRECTORY_START
 # pragma pack ()
 #endif
 
-		SgAsmPEImportDirectory(SgAsmPEImportSection *isec, size_t idx, rose_addr_t *rva_p)
-			{ctor(isec,idx,rva_p);}
+		explicit SgAsmPEImportDirectory(SgAsmPEImportSection *isec)
+			: p_ilt_rva(0), p_ilt(NULL), p_time(0), p_forwarder_chain(0), p_dll_name_rva(0),
+			p_dll_name(0), p_iat_rva(0), p_iat(NULL) {
+			ctor(isec);
+		}
+		SgAsmPEImportDirectory *parse(rose_addr_t va);
 		void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
-		virtual void unparse(std::ostream&, const SgAsmPEImportSection*) const;
+		virtual void unparse(std::ostream&, const SgAsmPEImportSection*, size_t idx) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmPEImportSection*, size_t idx, rose_addr_t *rva_p);
+		void ctor(SgAsmPEImportSection*);
 HEADER_PE_IMPORT_DIRECTORY_END
 
 
 
 HEADER_PE_IMPORT_ILT_ENTRY_START
-	// PE -> Import Table -> Import Lookup Table -> Entry
+	// PE -> Import Table -> Import Lookup or Address Table -> Entry
 	public:
 		enum ILTEntryType {
 			ILT_ORDINAL,			/* Entry is an ordinal */
@@ -2703,14 +2707,23 @@ HEADER_PE_IMPORT_LOOKUP_TABLE_START
 	// PE -> Import Table -> Import Lookup Table   or
 	// PE -> Import Table -> Import Address Table
 	public:
-		SgAsmPEImportLookupTable(SgAsmPEImportSection *isec, rose_rva_t table_rva, size_t idir_idx, bool is_iat=false)
-			: p_entries(NULL)
-			{ctor(isec, table_rva, idir_idx, is_iat);}
+		/** This class represents import lookup tables or import address tables. */
+		enum TableKind {
+			ILT_LOOKUP_TABLE,
+			ILT_ADDRESS_TABLE
+		};
+
+		explicit SgAsmPEImportLookupTable(SgAsmPEImportDirectory *idir, TableKind tkind)
+			: p_table_kind(tkind), p_entries(NULL) {
+			ctor(idir);
+		}
+
+		SgAsmPEImportLookupTable *parse(rose_rva_t table_rva, size_t idir_idx);
 		void add_ilt_entry(SgAsmPEImportILTEntry*);
 		virtual void unparse(std::ostream&, const SgAsmPEFileHeader*, rose_rva_t) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmPEImportSection*, rose_rva_t table_rva, size_t idir_idx, bool is_iat);
+		void ctor(SgAsmPEImportDirectory*);
 HEADER_PE_IMPORT_LOOKUP_TABLE_END
 
 

@@ -1,32 +1,42 @@
 /* PE Import Lookup Table (also used for the Import Address Table) */
 #include "sage3basic.h"
+#include "stringify.h"
+
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-/* Constructor. rva is the address of the table and should be bound to a section (which may not necessarily be isec). This
- * C object represents one of two PE objects depending on the value of is_iat.
- *    true  => PE Import Address Table
- *    false => PE Import Lookup Table */
+/* Constructor. */
 void
-SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rose_rva_t rva, size_t idir_idx, bool is_iat)
+SgAsmPEImportLookupTable::ctor(SgAsmPEImportDirectory *idir)
 {
+    ROSE_ASSERT(idir!=NULL);
+    set_parent(idir);
+
     ROSE_ASSERT(p_entries==NULL);
     p_entries = new SgAsmPEImportILTEntryList();
     p_entries->set_parent(this);
-    p_is_iat = is_iat;
-    const char *tname = is_iat ? "Import Address Table" : "Import Lookup Table";
+}
 
+/** Parses a PE Import Lookup Table from the file. The @p rva is the address of the table and should be bound to a section
+ * (which may not necessarily be isec). The @p idir_idx argument is only for error messages and should indicate the index of
+ * this table's SgAsmPEImportDirectory object within the SgAsmPEImportSection. */
+SgAsmPEImportLookupTable *
+SgAsmPEImportLookupTable::parse(rose_rva_t rva, size_t idir_idx)
+{
+    std::string tname = stringifySgAsmPEImportLookupTableTableKind(get_table_kind());
+    SgAsmPEImportSection *isec = SageInterface::getEnclosingNode<SgAsmPEImportSection>(this);
+    ROSE_ASSERT(isec!=NULL);
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(isec->get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
     /* Read the Import Lookup (or Address) Table, an array of 32 or 64 bit values, the last of which is zero */
     if (rva.get_section()!=isec) {
         rose_addr_t start_rva = isec->get_mapped_actual_va() - isec->get_base_va();
-        SgAsmPEImportSection::import_mesg("SgAsmPEImportSection::ctor: warning: %s RVA is outside PE Import Table\n"
+        SgAsmPEImportSection::import_mesg("SgAsmPEImportSection::ctor: warning: %s rva is outside PE Import Table\n"
                                           "        Import Directory Entry #%zu\n"
-                                          "        %s RVA is %s\n"
+                                          "        %s rva is %s\n"
                                           "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
-                                          tname, idir_idx, tname, rva.to_string().c_str(),
+                                          tname.c_str(), idir_idx, tname.c_str(), rva.to_string().c_str(),
                                           start_rva, start_rva+isec->get_mapped_size());
     }
 
@@ -40,7 +50,7 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rose_rva_t rva, size_
             if (SgAsmPEImportSection::import_mesg("SgAsmPEImportSection::ctor: error: in PE Import Directory entry %zu: "
                                                   "%s entry %zu starting at RVA 0x%08"PRIx64
                                                   " contains unmapped virtual address 0x%08"PRIx64"\n",
-                                                  idir_idx, tname, i, rva.get_rva(), e.va) &&
+                                                  idir_idx, tname.c_str(), i, rva.get_rva(), e.va) &&
                 e.map) {
                     fprintf(stderr, "Memory map in effect at time of error:\n");
                     e.map->dump(stderr, "    ");
@@ -109,13 +119,21 @@ SgAsmPEImportLookupTable::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr
 void
 SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
-    prefix = "    ...";
-    const char *tabbr = p_is_iat ? "IAT" : "ILT";
+    switch (get_table_kind()) {
+        case ILT_LOOKUP_TABLE:
+            prefix = "    ...ILT";
+            break;
+        case ILT_ADDRESS_TABLE:
+            prefix = "    ...IAT";
+            break;
+        //default: (omitted for compiler warnings)
+    }
+
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%s%s[%zd].", prefix, tabbr, idx);
+        sprintf(p, "%s[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%s%s.", prefix, tabbr);
+        sprintf(p, "%s.", prefix);
     }
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));

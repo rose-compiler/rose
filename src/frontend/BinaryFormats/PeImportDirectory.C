@@ -3,29 +3,41 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-/* Constructor */
+/** Constructor. The constructor makes @p section the parent of this new import directory, but does not add this new import
+ *  directory to the section yet.  It should be added after we're done parsing it. */
 void
-SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, rose_addr_t *idir_rva_p)
+SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section)
 {
-    ROSE_ASSERT(idir_rva_p!=NULL);
+    ROSE_ASSERT(section!=NULL);
+    set_parent(section);
+}
+
+/** Parse an import directory. The import directory is parsed from the specified virtual address via the PE header's loader
+ *  map. Return value is this directory entry on success, or the null pointer if the entry is all zero (which marks the end of
+ *  the directory list). */
+SgAsmPEImportDirectory *
+SgAsmPEImportDirectory::parse(rose_addr_t va)
+{
+    SgAsmPEImportSection *section = isSgAsmPEImportSection(get_parent());
+    ROSE_ASSERT(section!=NULL);
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(section->get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
-    set_parent(section);
-
-    size_t entry_size = sizeof(PEImportDirectory_disk);
+    /* Read the import directory from disk via loader map. */
     PEImportDirectory_disk disk, zero;
     memset(&zero, 0, sizeof zero);
-    section->read_content(fhdr->get_loader_map(), *idir_rva_p, &disk, entry_size); /*may throw MemoryMap::NotMapped*/
-
-    *idir_rva_p += entry_size;
-
-    if (0==memcmp(&disk, &zero, sizeof zero)) {
-        p_idx = -1;
-    } else {
-        p_idx = idx;
+    size_t nread = fhdr->get_loader_map()->read(&disk, va, sizeof disk);
+    if (nread!=sizeof disk) {
+        SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory::parse: short read (%zu byte%s) of directory "
+                                          "at va 0x%08"PRIx64" (needed %zu bytes)\n",
+                                          nread, 1==nread?"":"s", va, sizeof disk);
+        memset(&disk, 0, sizeof disk);
     }
-    
+
+    /* An all-zero entry marks the end of the list. In this case return null. */
+    if (!memcmp(&disk, &zero, sizeof zero))
+        return NULL;
+
     p_ilt_rva         = le_to_host(disk.ilt_rva);
     p_time            = le_to_host(disk.time);
     p_forwarder_chain = le_to_host(disk.forwarder_chain);
@@ -39,21 +51,22 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, rose_add
 
     p_dll_name = NULL;
     try {
-        if (p_idx>=0)
-            p_dll_name = new SgAsmBasicString(section->read_content_str(fhdr->get_loader_map(), p_dll_name_rva));
+        p_dll_name = new SgAsmBasicString(section->read_content_str(fhdr->get_loader_map(), p_dll_name_rva));
     } catch (const MemoryMap::NotMapped &e) {
-        if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory::ctor: error: in PE Import Directory entry %zu: "
-                                              "Name RVA starting at 0x%08"PRIx64
-                                              " contains unmapped virtual address 0x%08"PRIx64"\n", 
-                                              idx, p_dll_name_rva.get_rva(), e.va)) {
-            if (e.map) {
-                fprintf(stderr, "Memory map in effect at time of error is:\n");
-                e.map->dump(stderr, "    ");
-            }
+        if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory::parse: short read of dll name\n"
+                                              "    PE Import Directory at va 0x%08"PRIx64"\n"
+                                              "    Name at %s\n"
+                                              "    Contains unmapped va 0x%08"PRIx64"\n",
+                                              va, p_dll_name_rva.to_string().c_str(), e.va) &&
+            e.map) {
+            fprintf(stderr, "Memory map in effect at time of error is:\n");
+            e.map->dump(stderr, "    ");
         }
     }
     if (!p_dll_name)
         p_dll_name = new SgAsmBasicString("");
+
+    return this;
 }
 
 /* Encode a directory entry back into disk format */
@@ -69,10 +82,8 @@ SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk) const
 }
 
 void
-SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *section) const
+SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *section, size_t idx) const
 {
-    ROSE_ASSERT(get_idx()>=0);
-
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(section->get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
@@ -94,7 +105,7 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
     
     PEImportDirectory_disk disk;
     encode(&disk);
-    section->write(f, get_idx()*sizeof disk, sizeof disk, &disk);
+    section->write(f, idx*sizeof disk, sizeof disk, &disk);
 }
 
 
