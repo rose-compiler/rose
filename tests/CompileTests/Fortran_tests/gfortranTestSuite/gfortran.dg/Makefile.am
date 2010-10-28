@@ -2117,11 +2117,15 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
-ROSE_FLAGS = -rose:verbose 0
 # ROSE_FLAGS = -rose:verbose 0 -rose:output_parser_actions
+# ROSE_FLAGS = -rose:verbose 2
+
+# These options appear to improve the robustness of the tests... still looking at why...
+ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
-VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
+# VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
 VALGRIND =
@@ -2185,7 +2189,10 @@ tests:
 	@echo "*********************************************************************************************************************************"
 
 check-local:
-	@echo "Tests for Fortran."
+	@echo "Tests for Fortran (from the gfortran tests suit)."
+	@echo "Output the version number of the gfrotran being used."
+	@gfortran --version
+	@echo "Run the gfortran testsuit tests...."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
 if !ROSE_USING_GFORTRAN_VERSION_4_0
@@ -2214,7 +2221,9 @@ listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_F
 
 # Make sure that all the test codes end up in the distribution
 # EXTRA_DIST = $(ALL_TESTCODES)
-EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES) 
+EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES) \
+             bom_include.inc  default_format_1.inc  default_format_2.inc  include_1.inc  include_4.inc \
+             literal_character_constant_1.inc  use_only_3.inc
 
 clean-local:
 	rm -f *.o *.rmod *_postprocessed.*
