@@ -5,8 +5,8 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
-// This file does not exist preently, but will in the future...
-// #include "java_support.h"
+// Support functions declaration of function defined in this file.
+#include "java_support.h"
 
 // DQ (10/21/2010): If Fortran is being supported then there will
 // be a definition of this pointer there.  Note that we currently
@@ -15,3 +15,40 @@
 #ifndef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 #endif
+
+
+
+
+// Global stack of scopes
+std::list<SgScopeStatement*> astJavaScopeStack;
+
+// Global stack of expressions 
+std::list<SgExpression*> astJavaExpressionStack;
+
+// Simplifying type for the setSourcePosition() functions
+// typedef std::vector<Token_t*> TokenListType;
+
+// Global stack of IR nodes
+std::list<SgNode*> astJavaNodeStack;
+
+// Attribute spec for holding attributes
+// std::list<int> astAttributeSpecStack;
+
+
+
+
+bool emptyJavaStateStack()
+   {
+  // Use the scope stack to indicate if we have a value scope available as part of Java lanaguage processing.
+     return astJavaScopeStack.empty();
+   }
+
+
+SgScopeStatement* getTopOfJavaScopeStack()
+   {
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     SgScopeStatement* topOfStack = astJavaScopeStack.front();
+
+     return topOfStack;
+   }
+

@@ -1,4 +1,29 @@
+DQ (10/23/2010):
+   Liao has a priority for test2010_51.f90 and test2010_55.f
+also 68, 69, 70, 71, 72,...
 
+
+
+Proposal for case handling in unparsed code:
+   ROSE should have an option to control the use of case in the generated code.
+I suggest that we define some options for controling case, and separate the
+handling of keywords (which are not typically saved in the AST) from identifiers
+that are used defined and thus for which users might be more sensitive.
+   -rose:fortran_unparse_keywords_lower_case
+   -rose:fortran_unparse_keywords_upper_case
+   -rose:fortran_unparse_lower_case
+   -rose:fortran_unparse_upper_case
+This would avoid the desire to fix case in OFP or within ROSE in a way that is
+inconsistant with source-to-source.
+Alternatively (with only a bit more work), we could implement:
+   -rose:fortran_unparse_keywords lowercase
+   -rose:fortran_unparse_keywords uppercase
+   -rose:fortran_unparse lowercase
+   -rose:fortran_unparse uppercase
+Using just two options that take parameters.
+
+
+Older notes:
 Fortran Tests fail with certain libraries enabled.
 Libraries in question are:
     - boost iostream
