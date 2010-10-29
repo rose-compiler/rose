@@ -2,6 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection -I${top_builddir}/src/3rdPartyLibraries/java-parser
 
+ECJ_DIR = $(top_builddir)/src/3rdPartyLibraries/java-parser
+
 EXTRA_DIST = CMakeLists.txt
 DISTCLEANFILES = 
 
@@ -15,6 +17,13 @@ noinst_LTLIBRARIES = libroseJava.la
 
 JavaTraversal.C: JavaTraversal.h
 
+# Make this dependent on files that will be unpacked (untared) 
+# from the src/3rdPartyLibraries/java-parser/ecjROSE.jar file.
+# JavaParserActionROSE.C: JavaTraversal.h $(ECJ_DIR)/JavaParser.h
+JavaParserActionROSE.C: JavaTraversal.h
+
+# This rule will build both: $(ECJ_DIR)/JavaTraversal.h and $(ECJ_DIR)/JavaParser.h
+# in the event that they don't already exist in $(ECJ_DIR).
 JavaTraversal.h:
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
 
@@ -34,7 +43,6 @@ else
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-   ECJ_DIR = $(top_builddir)/src/3rdPartyLibraries/java-parser
  # libJavaTraversal_la_SOURCES = JavaTraversal.C 
    libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C 
 
