@@ -27,7 +27,7 @@ bool isNonMutatingSubTree(SgNode* n);
 
 // if the given SgNode is an SgStatement, returns that SgStatement. Otherwise, if it is an
 //    gExpression or SgInitializedName, wraps it in an SgStatement and returns that.
-static SgStatement* convertToStatement(SgNode* n);
+//static SgStatement* convertToStatement(SgNode* n);
 
 // Replace the expression from with the expression to in the SgNode parent, which
 //    must be from's parent. Function checks to ensure that it is used properly.

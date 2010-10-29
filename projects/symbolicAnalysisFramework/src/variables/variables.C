@@ -64,13 +64,13 @@ bool varID::init(SgExpression *exp)
 		
 		SgVarRefExp* refExp;
 		SgDotExp* dotExp;
-		if(refExp = isSgVarRefExp(exp))
+		if((refExp = isSgVarRefExp(exp)))
 		{
 			components.clear();
 			components.push_back(refExp->get_symbol()->get_declaration());
 			return true;
 		}
-		else if(dotExp = isSgDotExp(exp))
+		else if((dotExp = isSgDotExp(exp)))
 		{
 			components.clear();
 			return collectDotComponents(dotExp);
@@ -592,7 +592,7 @@ string varID::str_ptr() const
 		{
 			// enough space for '0x' + 8 hex digits + NULL terminator 
 			char txt[11];
-			snprintf(txt, 11, "0x%x", *it);
+			snprintf(txt, 11, "%p", *it);
 			out += txt;
 //			printf("(*it)->get_name().str()=%s\n", (*it)->get_name().getString().c_str());
 			
@@ -869,7 +869,7 @@ class arrayVarIDCollector : public AstBottomUpProcessing<varIDSet>
 		//printf("varIDCollector : n = <%s | %s>\n", n->unparseToString().c_str(), n->class_name().c_str());
 		
 		SgExpression* expr;
-		if(expr = getArrayNameExp(n))
+		if((expr = getArrayNameExp(n)))
 		{
 			// add this variable to the list
 			varID newVar(expr);
@@ -1006,7 +1006,7 @@ list<SgExpression*>* arrayElt::getIndexExprs()
 // returns a SgExpression that corresponds to an access of this variable
 SgExpression* arrayElt::toSgExpression() const
 {
-	SgExpression* indexesSubtree;
+	//SgExpression* indexesSubtree;
 	if(indexExprs->size()==0)
 		return arrayVar.toSgExpression();
 	else
