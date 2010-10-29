@@ -6,7 +6,12 @@ INCLUDES = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = libroseAsmUnparser.la
 
 libroseAsmUnparser_la_DEPENDENCIES =
-libroseAsmUnparser_la_SOURCES = AsmUnparser.C AsmUnparser_compat.C unparseX86Asm.C unparseArmAsm.C unparsePowerpcAsm.C
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   libroseAsmUnparser_la_SOURCES = AsmUnparser.C AsmUnparser_compat.C unparseX86Asm.C unparseArmAsm.C unparsePowerpcAsm.C
+else
+   libroseAsmUnparser_la_SOURCES = 
+endif
 
 dist_include_HEADERS = AsmUnparser.h AsmUnparser_compat.h
 
