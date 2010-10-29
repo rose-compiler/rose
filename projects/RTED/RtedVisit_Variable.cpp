@@ -32,6 +32,7 @@ VariableTraversal::VariableTraversal(RtedTransformation* t)  {
 };
 
 bool VariableTraversal::isInterestingAssignNode (SgNode* exp) {
+#if 0
       if (		isSgAssignOp( exp )            || isSgAndAssignOp( exp )
             || isSgDivAssignOp( exp )            || isSgIorAssignOp( exp )
             || isSgLshiftAssignOp( exp )            || isSgMinusAssignOp( exp )
@@ -39,8 +40,12 @@ bool VariableTraversal::isInterestingAssignNode (SgNode* exp) {
             || isSgPlusAssignOp( exp )            || isSgPointerAssignOp( exp )
             || isSgRshiftAssignOp( exp )            || isSgXorAssignOp( exp )
 			|| isSgAssignInitializer(exp)   
-			|| isSgLessThanOp(exp)
+			|| isSgLessThanOp(exp) 
+			//			|| isSgGreaterOrEqualOp (exp)
 ) 
+#else
+	if (!isSgDotExp(exp) && !isSgPointerDerefExp(exp))
+#endif
 	return true;
       else
 	cerr << " ----------------------- NODE is not interesting : " << exp->class_name() << endl;
@@ -281,11 +286,9 @@ VariableTraversal::evaluateSynthesizedAttribute (
 	     //            && !inheritedAttribute.isDotExp && !inheritedAttribute.isPointerDerefExp
          )  {
             bool stopSearch=false;
-            if (binaryOp && binaryOp->back()) {
-		//!binaryOp->empty()) {
+            if (binaryOp && binaryOp->back()) { 
+	      //	      if ( !inheritedAttribute.isDotExp && !inheritedAttribute.isPointerDerefExp) {
 #if 0
-//            if (isSgBinaryOp(astNode)) {
-//               if (isSgDotExp(astNode) || isSgPointerDerefExp(astNode)) continue;
                SgExpression* left = leftOfbinaryOp->back();
                SgExpression* right = rightOfbinaryOp->back();
                if (  //!isSgVarRefExp(astNode)->isUsedAsLValue()
@@ -299,7 +302,7 @@ VariableTraversal::evaluateSynthesizedAttribute (
                cerr << "============================= DEBUGGING   parent (synthesized) = " << astNode->class_name() << endl;
 //               break;
 #endif
-            }
+	   }
                // tps : this fails right now because of testcase : run/C/subprogram_call_errors/c_C_2_b  ... ROSE can not handle isUsedAsLValue right now
 //              bool lval = isSgVarRefExp(astNode)->isUsedAsLValue();
             //         string name = isSgVarRefExp(astNode)->get_symbol()->get_name().getString();
