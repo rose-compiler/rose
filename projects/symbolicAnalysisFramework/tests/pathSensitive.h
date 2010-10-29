@@ -120,8 +120,8 @@ class scalarFWDataflowPart : public virtual IntraPartitionFWDataflow
 	
 	public:
 	scalarFWDataflowPart(DivAnalysis* divAnalysis, SgnAnalysis* sgnAnalysis, scalarFWDataflowPartitionedAnalysis* parent): 
-				IntraPartitionFWDataflow((PartitionedAnalysis*)parent), 
-				IntraPartitionDataflow  ((PartitionedAnalysis*)parent)
+				IntraPartitionDataflow  ((PartitionedAnalysis*)parent),
+				IntraPartitionFWDataflow((PartitionedAnalysis*)parent) 
 	{
 		this->divAnalysis = divAnalysis;
 		this->sgnAnalysis = sgnAnalysis;
@@ -129,8 +129,8 @@ class scalarFWDataflowPart : public virtual IntraPartitionFWDataflow
 	}
 	
 	scalarFWDataflowPart(const scalarFWDataflowPart& that): 
-			IntraPartitionFWDataflow((const IntraPartitionFWDataflow&) that), 
-			IntraPartitionDataflow  ((const IntraPartitionDataflow&) that)
+			IntraPartitionDataflow  ((const IntraPartitionDataflow&) that),
+			IntraPartitionFWDataflow((const IntraPartitionFWDataflow&) that) 
 	{
 		this->divAnalysis = that.divAnalysis;
 		this->sgnAnalysis = that.sgnAnalysis;

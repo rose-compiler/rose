@@ -22,8 +22,8 @@ class FunctionState
 		
 	public:
 	FunctionState(Function &func): 
-		state(/*func.get_declaration()->cfgForBeginning()*/),
-		func(func)
+		func(func),
+		state(/*func.get_declaration()->cfgForBeginning()*/)
 	{}
 	
 	Function& getFunc();

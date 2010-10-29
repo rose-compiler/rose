@@ -81,7 +81,7 @@ class affineInequality: public printable // : public LogicalCond
 	
 	// given a constraint on x, z and a constraint on z, y, infers the corresponding constraint on x, y 
 	// and sets this constraint to it
-	affineInequality(const affineInequality& xz, const affineInequality& zy/*, bool xZero, bool yZero/*, DivLattice* divX, DivLattice* divY, varID z*/);
+	affineInequality(const affineInequality& xz, const affineInequality& zy/*, bool xZero, bool yZero, DivLattice* divX, DivLattice* divY, varID z*/);
 	
 	bool operator=(const affineInequality& that);
 	

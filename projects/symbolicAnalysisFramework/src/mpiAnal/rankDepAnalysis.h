@@ -20,15 +20,15 @@ extern int sgnAnalysisDebugLevel;
 class MPIRankNProcsDepLattice : public FiniteLattice
 {
 	public:
-	
-	//         <true, true>
-	//           /       \
-	// <true, false>    <false, true>
-	//           \       /
-	//        <false, false>
-	//               |
-	//         uninitialized
-	
+/*	
+	         <true, true>
+	           /       \  -- 
+	 <true, false>    <false, true>
+	           \       /
+	        <false, false>
+	               |
+	         uninitialized
+*/	
 	private:
 
 	bool initialized;

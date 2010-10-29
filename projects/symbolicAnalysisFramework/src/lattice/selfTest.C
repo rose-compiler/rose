@@ -52,8 +52,8 @@ int main(int argc, char** argv)
 		// Move the next few used process set ids to the free spots left by merged process sets
 		for(; usedPSet<nextHole; usedPSet++, freePSet++)
 		{
-			/*cg->rename(usedPSet, freePSet);
-			pSetMigrations[usedPSet] = freePSet;* /
+			cg->rename(usedPSet, freePSet);
+			pSetMigrations[usedPSet] = freePSet;
 			cout << "migrating "<<usedPSet<<" to "<<freePSet<<"\n";
 		}
 	}*/
@@ -268,7 +268,7 @@ void intArithLogicalTest()
 	
 //ialXY1A.isImplied(IntArithLogical::le, 5, x, 3, y, 10);
 	
-/*	IntArithLogical ialXY1B(IntArithLogical::le, 5, x, 3, y, 10); // 5x <= 3y + 1
+        IntArithLogical ialXY1B(IntArithLogical::le, 5, x, 3, y, 10); // 5x <= 3y + 1
 	cout << "ialXY1B = "<<ialXY1B.str("") << "\n";
 	IntArithLogical ialXY2(IntArithLogical::le, 6, x, 3, y, 20); // 5x <= 3y + 20
 	cout << "ialXY2 = "<<ialXY2.str("") << "\n";
@@ -321,9 +321,8 @@ void intArithLogicalTest()
 	cout << ialXY1C.str("") << "\n";
 	
 	ialXY1C.isImplied(IntArithLogical::le, 5, x, 3, y, 10);
-/* */
 
-/*	IntArithLogical ialXY(IntArithLogical::le, 1, x, 1, y, 0); // x <= y
+	IntArithLogical ialXY(IntArithLogical::le, 1, x, 1, y, 0); // x <= y
 	IntArithLogical ialYZ(IntArithLogical::le, 1, y, 1, z, 6); // y <= z+6
 	IntArithLogical ialXZ(IntArithLogical::le, 1, x, 1, z, 0); // x <= z+5
 	
