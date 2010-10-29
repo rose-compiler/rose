@@ -1967,7 +1967,16 @@ SgType::handledUsingLocalTable(SgType* t)
      return returnValue;
    }
 
-
+// Liao 10/29/2010
+// My understanding of this code (may not be accurate):
+//  This function was designed to work with C/C++ and Fortran frontends to generate AST.
+//  For C/C++: a global variable curr_sg_scope is used 
+//  For Fortran: a stack is used 
+//  So code has to be conditionized with proper #ifdef ..#endf around the use of the variable or stack.
+//  
+//  Now we allow users to build types during AST transformation. This function will be called and scope can be NULL
+//  Neither the stack or global variable in frontends are used in this situation either.
+//  But this is perfectly legal. 
 SgScopeStatement*
 SgType::getCurrentScope()
    {
@@ -2014,13 +2023,18 @@ SgType::getCurrentScope()
 #endif
              {
             // This is a code generated after the initial C/C++/Fortran AST was built, so we don't know the current scope.
-               printf ("In SgType::getCurrentScope(): Not in either the generation of C/C++ or Fortran AST construction \n");
+              if ( SgProject::get_verbose() > 1 ) 
+                 printf ("In SgType::getCurrentScope(): Not in the generation of Fortran AST construction\n");
                currentScope = NULL;
              }
 #else
+#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
           // This is a code generated after the initial C/C++/Fortran AST was built, so we don't know the current scope.
-            printf ("In SgType::getCurrentScope(): Not in either the generation of C/C++ or Fortran AST construction \n");
+          // Liao 10/29/2010. We allow users to build types during AST transformation, which will trigger this line.
+            if ( SgProject::get_verbose() > 1 ) 
+              printf ("In SgType::getCurrentScope(): Not in the generation of C/C++ AST construction \n");
             currentScope = NULL;
+#endif
 #endif
         }
 
