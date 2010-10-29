@@ -302,7 +302,7 @@ private:
    void insertCheckIfThisNull(SgThisExp* texp);
 
 public:
-   void visit_isSgVarRefExp(SgVarRefExp* n, bool isRightBranchOfBinaryOp);
+   void visit_isSgVarRefExp(SgVarRefExp* n, bool isRightBranchOfBinaryOp, bool thinkItsStopSearch);
 private:
    void visit_isSgPointerDerefExp(SgPointerDerefExp* n);
    void visit_isSgArrowExp(SgArrowExp* n);
