@@ -418,8 +418,8 @@ bool DivAnalysis::constVars_init=false;
 Lattice* DivAnalysis::genInitVarState(const Function& func, const DataflowNode& n, const NodeState& state)
 {
 	DivLattice* newLattice = new DivLattice();
-	/*printf("DivLattice::genInitNonVarState() newLattice=%p\n", newLattice);
-	printf("DivLattice::genInitNonVarState() newLattice=%s\n", newLattice->str().c_str());* /
+	printf("DivLattice::genInitNonVarState() newLattice=%p\n", newLattice);
+	printf("DivLattice::genInitNonVarState() newLattice=%s\n", newLattice->str().c_str());
 	return newLattice;
 }
 
@@ -507,7 +507,7 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 		{
 if(divAnalysisDebugLevel>=1){
 			printf("cfgUtils::parseAssignment(asgn, op, i, j, c) = 1\n");
-			printf("        op=%s i=%s, j=%s%s, k=%s%s, c=%d\n", 
+			printf("        op=%s i=%s, j=%s%s, k=%s%s, c=%ld\n", 
 			       (op==cfgUtils::add? "+": (op==cfgUtils::subtract? "-": (op==cfgUtils::mult? "*": (op==cfgUtils::divide? "/": (op==cfgUtils::none? "~": "???"))))),
 			       i.str().c_str(), negJ?"-":"", j.str().c_str(), negK?"-":"", k.str().c_str(), c);
 }
@@ -570,7 +570,7 @@ if(divAnalysisDebugLevel>=1){
 						else
 						{
 if(divAnalysisDebugLevel>=1){
-							printf("lattices don't match, j.val(%d)/k.div(%d)=%d != k.rem(%d)\n", jLattice->getValue(), kLattice->getDiv(), jLattice->getValue()/kLattice->getDiv(), kLattice->getRem());
+							printf("lattices don't match, j.val(%ld)/k.div(%ld)=%ld != k.rem(%ld)\n", jLattice->getValue(), kLattice->getDiv(), jLattice->getValue()/kLattice->getDiv(), kLattice->getRem());
 }
 							
 							modified = iLattice->setTop() || modified;

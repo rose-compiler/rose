@@ -24,7 +24,7 @@ printf("UnionFind::determineInterestSet\n");
 
 	// set of all index variables used in accesses to variables in varsConsidered
 	varIDSet xvar;
-	bool undefinedRd = false, undefinedWr = false;
+	//bool undefinedRd = false, undefinedWr = false;
 
 	// combine "0" and all the variables in varsConsidered into a single equivalence class
 	{			
@@ -46,11 +46,11 @@ printf("UnionFind::determineInterestSet\n");
 		long c;
 		short op;
 		bool negI, negJ, negK;
-		bool isRead;
+		//bool isRead;
 		map<varID, bool> rdFromExp, wrFromExp;
 		map<varID, m_varID2quad> wrIndex, rdIndex;
 
-		SgNode* fct = 0;
+		//SgNode* fct = 0;
 		AstInterface::AstNodeList args;
 
 		/*printf("      isSgPntrArrRefExp(n)=0x%x\n", isSgPntrArrRefExp(n));
@@ -133,7 +133,7 @@ printf("UnionFind::determineInterestSet\n");
 				curIndexExp = curIndexExp->get_lhs_operand();
 			}*/
 		}
-		else if(expr = isSgExpression(n))
+		else if((expr = isSgExpression(n)))
 		{
 			// if this is an assignment of the form (i=j+c)
 			if(isSgAssignOp(expr) && cfgUtils::parseAssignment(expr, op, i, j, negJ, k, negK, c))
@@ -262,7 +262,7 @@ cout << vars[x] << " and " << vars[y] << " used in same conditional. Merging...\
 							}
 						}
 					}
-					/*
+					
 					Rose_STL_Container<SgNode *> vars = NodeQuery::querySubTree( *(args.begin()), V_SgVarRefExp );
 					Rose_STL_Container<SgNode *> dots = NodeQuery::querySubTree( *(args.begin()), V_SgDotExp );
 					vars.insert( vars.begin(), dots.begin(), dots.end() );
@@ -273,7 +273,7 @@ cout << vars[x] << " and " << vars[y] << " used in same conditional. Merging...\
 						if ( existsVariable( vr ) )
 							unionSets(SP, vr );
 					}
-					* /
+					
 				}
 		}
 	}
@@ -291,7 +291,7 @@ cout << vars[x] << " and " << vars[y] << " used in same conditional. Merging...\
 	// We don't need to yell if we can't process some write indexes since this will
 	// prevent the analysis from killing some arrays but this at least is conservative.
 
-/*	// there are no understandable array accesses to any variables in varsConsidered
+	// there are no understandable array accesses to any variables in varsConsidered
 	if ( xvar.size() == 0 )
 	{
 		cout << "Warning! Program never reads/writes to our arrays from an i + c index!!!\n";

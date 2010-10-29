@@ -79,7 +79,7 @@ for(vector<IntraPartitionDataflowCheckpoint*>::iterator it = partitionChkpts.beg
 	ROSE_ASSERT(partitionChkpts.size()>0);
 	printf("@ SPLIT @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 	if(analysisDebugLevel>=1)
-	{ printf("PartitionedAnalysis::split() before: activeParts.size()=%d\n", activeParts.size()); }
+	{ printf("PartitionedAnalysis::split() before: activeParts.size()=%lu\n", (unsigned long)(activeParts.size())); }
 
 	// Only partitions that are either active or joined may call split. Joined partitions may do so during the joining process,
 	// which can result in the creation of new partitions.
@@ -243,7 +243,7 @@ cout << "Pre-initDFfromPartCond CG="<<cg->str()<<"\n";*/
 		printf("        partition %p, partitionCond=%p\n", *it, parts2chkpts[*it]->partitionCond);*/
 	
 	if(analysisDebugLevel>=1)
-	{ printf("PartitionedAnalysis::split() after: activeParts.size()=%d\n", activeParts.size()); }
+	{ printf("PartitionedAnalysis::split() after: activeParts.size()=%lu\n", (unsigned long)(activeParts.size())); }
 	printf("@ SPLIT @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 	
 	cout << "newParts.size()=="<<newParts.size()<<"\n";
@@ -424,7 +424,7 @@ upia_udfas.runAnalysis();*/
 		else
 		{
 			if(analysisDebugLevel>=1)
-			{ printf("        Releasing all members of split, s->splitSet.size()=%d\n", s->splitSet.size()); }
+			{ printf("        Releasing all members of split, s->splitSet.size()=%lu\n", (unsigned long)(s->splitSet.size())); }
 
 			// Note that this mass-release does not apply to any partitions spawned by the partitions in the split
 			for(set<IntraPartitionDataflow*>::iterator it=s->splitSet.begin(); it!=s->splitSet.end(); it++)
@@ -503,7 +503,7 @@ bool PartitionedAnalysis::runAnalysis(const Function& func, NodeState* fState)
 }*/
 		
 		printf("@ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @\n");
-		printf("PartitionedAnalysis::runAnalysis activeParts.size()=%d, joinParts.size()=%d\n", activeParts.size(), joinParts.size());
+		printf("PartitionedAnalysis::runAnalysis activeParts.size()=%lu, joinParts.size()=%lu\n", (unsigned long)(activeParts.size()), (unsigned long)(joinParts.size()));
 	}
 	
 	ROSE_ASSERT(activeParts.size()==0);
@@ -522,7 +522,7 @@ void unionDFAnalysisStatePartitions::visit(const Function& func, const DataflowN
 {
 	//printf("unionDFAnalysisStatePartitions::visit() function %s() node=<%s | %s>\n", func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
 	
-	const vector<Lattice*>& masterLatBel = state.getLatticeBelow(master);
+	//const vector<Lattice*>& masterLatBel = state.getLatticeBelow(master);
 	//printf("    master=%p, masterLatBel.size()=%d\n", master, masterLatBel.size());
 	
 	state.unionLattices(unionSet, master);
@@ -540,14 +540,14 @@ bool IntraPartitionFWDataflow::runAnalysis(const Function& func, NodeState* fSta
 	ROSE_ASSERT(0);
 	bool joinPart=false, splitPart=false;
 	IntraPartitionDataflowCheckpoint* outChkpt;
-	IntraPartitionDataflowCheckpoint* chkpt = NULL;
+	//IntraPartitionDataflowCheckpoint* chkpt = NULL;
 	return runAnalysisResume(func, fState, NULL, splitPart, joinPart, outChkpt);
 }
 
 bool IntraPartitionFWDataflow::runAnalysis(const Function& func, NodeState* fState, 
                                bool& splitPart, bool &joinPart, IntraPartitionDataflowCheckpoint*& outChkpt)
 {
-	IntraPartitionDataflowCheckpoint* chkpt = NULL;
+	//IntraPartitionDataflowCheckpoint* chkpt = NULL;
 	return runAnalysisResume(func, fState, NULL, splitPart, joinPart, outChkpt);
 }
 
@@ -628,7 +628,7 @@ printf("    dfIt!=VirtualCFG::dataflow::end() = %d\n", dfIt!=VirtualCFG::dataflo
 		// the NodeStates themselves
 		const vector<NodeState*> nodeStates = NodeState::getNodeStates(n);
 		//printf("                               nodeStates.size()=%d\n", nodeStates.size());
-		int i=0;
+		//int i=0;
 		//NodeState* state = NodeState::getNodeState(n, 0);
 		NodeState* state=NULL;
 
@@ -716,9 +716,9 @@ printf("    dfIt!=VirtualCFG::dataflow::end() = %d\n", dfIt!=VirtualCFG::dataflo
 					if(ret == retFalse) return false;
 					else if(ret == cont) continue;
 					/*IntraPartitionFWDataflow::splitType splitAnalysis=IntraPartitionFWDataflow::noSplit;
-					bool /*joinAnalysis=false, * /joinNode=false;
-					vector</*LogicalCond* /printable*> splitConditions;
-					/*modified = * /transfer(func, n, *state, dfInfoBelow, splitAnalysis, splitConditions, /*joinAnalysis, * /joinNode);
+					bool joinAnalysis=false, joinNode=false;
+					vector<LogicalCond printable*> splitConditions;
+					modified = transfer(func, n, *state, dfInfoBelow, splitAnalysis, splitConditions, joinAnalysis, joinNode);
 					if(partitionCond != NULL)
 						cout << "after transfer: partitionCond = "<<partitionCond->str()<<"\n";
 					// If the analysis wants to be split
@@ -729,7 +729,7 @@ printf("    dfIt!=VirtualCFG::dataflow::end() = %d\n", dfIt!=VirtualCFG::dataflo
 						splitPart = true;
 						int i=0;
 						vector<IntraPartitionDataflowCheckpoint*> chkpts;
-						for(vector</*LogicalCond* /printable*>::iterator splitIt=splitConditions.begin();
+						for(vector<LogicalCond printable*>::iterator splitIt=splitConditions.begin();
 						    splitIt!=splitConditions.end(); splitIt++, i++)
 						{
 							dataflow::checkpoint dfChkpt = it.getChkpt();
@@ -762,7 +762,7 @@ printf("    dfIt!=VirtualCFG::dataflow::end() = %d\n", dfIt!=VirtualCFG::dataflo
 						continue;
 					}
 					// If the analysis wants to be joined to the partitions that it was split from
-					/*else if(joinAnalysis)
+					else if(joinAnalysis)
 					{
 						if(analysisDebugLevel>=1)
 						{ printf("    Joining analysis partition %p\n", this); }
@@ -823,7 +823,7 @@ printf("    dfIt!=VirtualCFG::dataflow::end() = %d\n", dfIt!=VirtualCFG::dataflo
 			// iterate over all descendants
 			vector<DataflowEdge> edges = n.outEdges();
 			if(analysisDebugLevel>=1){
-				printf("    Descendants (%d):\n", edges.size());
+				printf("    Descendants (%lu):\n", (unsigned long)(edges.size()));
 				printf("    ~~~~~~~~~~~~\n");
 			}
 			
