@@ -105,3 +105,79 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
      astJavaScopeStack.push_front(definition);
    }
 
+
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build a SgMemberFunctionDeclaration (constructor) \n");
+
+  // SgMemberFunctionDeclaration* buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
+     SgName name = "abc";
+
+     SgFunctionParameterTypeList* typeList = SageBuilder::buildFunctionParameterTypeList();
+     ROSE_ASSERT(typeList != NULL);
+
+     unsigned int mfunc_specifier = 0;
+
+     SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
+     ROSE_ASSERT(classDefinition != NULL);
+
+     SgMemberFunctionType* return_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), typeList, classDefinition, mfunc_specifier);
+     ROSE_ASSERT(return_type != NULL);
+
+     SgFunctionParameterList* parameterlist = SageBuilder::buildFunctionParameterList(typeList);
+     ROSE_ASSERT(parameterlist != NULL);
+
+     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, astJavaScopeStack.front() );
+     ROSE_ASSERT(functionDeclaration != NULL);
+
+     ROSE_ASSERT(functionDeclaration->get_definingDeclaration() != NULL);
+
+  // non-defining declaration not built yet.
+     ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() == NULL);
+
+     SgFunctionDefinition* functionDefinition = functionDeclaration->get_definition();
+     ROSE_ASSERT(functionDefinition != NULL);
+
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build a constructor function call \n");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build a SgMemberFunctionDeclaration \n");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionSingleTypeReference (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build a type \n");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionArgument (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build a function argument \n");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build a array type \n");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build a member function call \n");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build a qualified name reference \n");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build a SgStringVal \n");
+   }
