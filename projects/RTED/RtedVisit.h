@@ -83,6 +83,7 @@ class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,
 							SubTreeSynthesizedAttributes synthesizedAttributeList );
 
      bool isLValue(SgNode* node);
+     bool isInterestingAssignNode(SgNode* node);
    };
 
 #endif

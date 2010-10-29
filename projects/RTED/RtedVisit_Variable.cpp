@@ -31,6 +31,23 @@ VariableTraversal::VariableTraversal(RtedTransformation* t)  {
    ROSE_ASSERT(rightOfbinaryOp);
 };
 
+bool VariableTraversal::isInterestingAssignNode (SgNode* exp) {
+      if (		isSgAssignOp( exp )            || isSgAndAssignOp( exp )
+            || isSgDivAssignOp( exp )            || isSgIorAssignOp( exp )
+            || isSgLshiftAssignOp( exp )            || isSgMinusAssignOp( exp )
+            || isSgModAssignOp( exp )            || isSgMultAssignOp( exp )
+            || isSgPlusAssignOp( exp )            || isSgPointerAssignOp( exp )
+            || isSgRshiftAssignOp( exp )            || isSgXorAssignOp( exp )
+			|| isSgAssignInitializer(exp)   
+			|| isSgLessThanOp(exp)
+) 
+	return true;
+      else
+	cerr << " ----------------------- NODE is not interesting : " << exp->class_name() << endl;
+      return false;
+}
+
+
 InheritedAttribute
 VariableTraversal::evaluateInheritedAttribute (
       SgNode* astNode,
@@ -40,13 +57,15 @@ VariableTraversal::evaluateInheritedAttribute (
    ROSE_ASSERT(leftOfbinaryOp);
    ROSE_ASSERT(rightOfbinaryOp);
 
-   //cerr << "  !!!!!!!!!!!!!!!!!!! >>>> inheriuted node  : " << astNode->class_name() << endl;
+   cerr << "  !!!! >>>> down node  : " << astNode->class_name() << endl;
 
    if (rightOfbinaryOp && !rightOfbinaryOp->empty()) {
-      cerr << " ================================ THe size of rightOfbinaryOp == " << rightOfbinaryOp->size() << endl;
+      cerr << " ====================== THe size of rightOfbinaryOp == " << rightOfbinaryOp->size() << endl;
       SgExpression* exp = rightOfbinaryOp->back();
-      if  (exp ==astNode)
+      if  (exp ==astNode) {
          isRightBranchOfBinaryOp = true;
+	 cerr << " ================================ Found isRightBranchOfBinaryOp == " << exp->class_name() << endl;
+       }
    }
 
 //   printf ("  evaluateInheritedAttr Node...%s  isGlobal %d  isFunction %d  isAssign %d \n",astNode->class_name().c_str(),
@@ -97,7 +116,7 @@ VariableTraversal::evaluateInheritedAttribute (
                              inheritedAttribute.isBinaryOp,
                              inheritedAttribute.isDotExp,
                              inheritedAttribute.isPointerDerefExp);
-       printf ("  >>>>> evaluateInheritedAttr isAssignInit yes...\n");
+       cerr << "  >>>>> evaluateInheritedAttr isAssignInit yes..." << endl;
        return ia;
     }
 
@@ -155,13 +174,14 @@ VariableTraversal::evaluateInheritedAttribute (
                                    inheritedAttribute.isPointerDerefExp);
 
    if (isSgBinaryOp(astNode)) {
+     if (isInterestingAssignNode(astNode)) {
       ROSE_ASSERT(binaryOp);
       binaryOp->push_back(isSgBinaryOp(astNode));
       ROSE_ASSERT(isSgBinaryOp(astNode) -> get_lhs_operand());
       ROSE_ASSERT(isSgBinaryOp(astNode) -> get_rhs_operand());
       leftOfbinaryOp->push_back(isSgBinaryOp(astNode) -> get_lhs_operand());
       rightOfbinaryOp->push_back(isSgBinaryOp(astNode) -> get_rhs_operand());
-//      cerr << "  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! >>>> rightOfbinaryOp push : " << isSgBinaryOp(astNode) -> get_rhs_operand() << endl;
+      cerr << "  --------- !!!! >>>>      push : " << isSgBinaryOp(astNode) -> get_rhs_operand()->class_name() << "    parent == " << astNode->class_name() << endl;
       return InheritedAttribute (inheritedAttribute.global,
                                    inheritedAttribute.function,
                                    inheritedAttribute.isAssignInitializer,
@@ -173,6 +193,7 @@ VariableTraversal::evaluateInheritedAttribute (
                                    true,
                                    inheritedAttribute.isDotExp,
                                    inheritedAttribute.isPointerDerefExp);
+       }
    }
 
    if (isSgDotExp(astNode))
@@ -228,7 +249,7 @@ VariableTraversal::evaluateSynthesizedAttribute (
       InheritedAttribute inheritedAttribute,
       SynthesizedAttributesList childAttributes ) {
 
-   // cerr << "  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! >>>> synthesized node  : " << astNode->class_name() << endl;
+    cerr << "  !!!!!!!! >>>> up node  : " << astNode->class_name() << endl;
  //  printf ("      evaluateSynthesizedAttribute Node...%s  isGlobal %d  isFunction %d  isAssign %d \n",astNode->class_name().c_str(),
  //        inheritedAttribute.global,inheritedAttribute.function,inheritedAttribute.isAssignInitializer);
    SynthesizedAttribute localResult =
@@ -242,27 +263,33 @@ VariableTraversal::evaluateSynthesizedAttribute (
          printf ("  >>>>> evaluateSynthesizedAttribute Found a function containing a varRefExp  ...\n");
       }
 
-      if (isSgBinaryOp(astNode) && binaryOp && leftOfbinaryOp && rightOfbinaryOp) {
-//            cerr <<" ------ popp binaryOp --------- "<< endl;
-            if (!binaryOp->empty())        binaryOp->pop_back();
-            if (!leftOfbinaryOp->empty())  leftOfbinaryOp->pop_back();
-            if (!rightOfbinaryOp->empty()) rightOfbinaryOp->pop_back();
-            isRightBranchOfBinaryOp=false;
+      if (isSgBinaryOp(astNode) ) {
+        cerr <<" ------ popp binaryOp --------- "<< endl;
+	if (isInterestingAssignNode(astNode)) {
+            if (binaryOp && !binaryOp->empty())        binaryOp->pop_back();
+            if (leftOfbinaryOp && !leftOfbinaryOp->empty())  leftOfbinaryOp->pop_back();
+            if (rightOfbinaryOp && !rightOfbinaryOp->empty()) rightOfbinaryOp->pop_back();
+	    
+	    isRightBranchOfBinaryOp=false;
+            cerr <<" ------ popp binaryOp setting isRightBranchOfBinaryOp = false --------- "<< endl;
+	  }
       }
 
 
       if (isSgVarRefExp(astNode)) {
          if (!inheritedAttribute.isArrowExp && !inheritedAttribute.isAddressOfOp
-            && !inheritedAttribute.isDotExp && !inheritedAttribute.isPointerDerefExp
+	     //            && !inheritedAttribute.isDotExp && !inheritedAttribute.isPointerDerefExp
          )  {
             bool stopSearch=false;
             if (binaryOp && binaryOp->back()) {
+		//!binaryOp->empty()) {
 #if 0
 //            if (isSgBinaryOp(astNode)) {
 //               if (isSgDotExp(astNode) || isSgPointerDerefExp(astNode)) continue;
-               SgExpression* left = leftOfbinaryOp.back();
-               SgExpression* right = rightOfbinaryOp.back();
-               if (  !isSgVarRefExp(astNode)->isUsedAsLValue()
+               SgExpression* left = leftOfbinaryOp->back();
+               SgExpression* right = rightOfbinaryOp->back();
+               if (  //!isSgVarRefExp(astNode)->isUsedAsLValue()
+                     isRightBranchOfBinaryOp
                      && !isSgArrayType( right->get_type() )
                      && !isSgNewExp(right)
                      && !isSgReferenceType( left->get_type() )) {
@@ -285,6 +312,7 @@ VariableTraversal::evaluateSynthesizedAttribute (
 #endif
 #if 1
             if (inheritedAttribute.isAssignInitializer)  {
+	      cerr << " =======   inherited attribute :::::::: assignInitializer " << endl;
                SgInitializedName* initName = isSgInitializedName( astNode -> get_parent() ->get_parent()-> get_parent());
                if (initName==NULL)
                   initName = isSgInitializedName( astNode -> get_parent() ->get_parent());
@@ -295,7 +323,7 @@ VariableTraversal::evaluateSynthesizedAttribute (
 #if 1
             if (stopSearch==false) {
                cout << " @@@@@@@@@ CALLING ADDING Variable access : " << astNode->unparseToString() << endl;
-               transf->visit_isSgVarRefExp(isSgVarRefExp(astNode));
+               transf->visit_isSgVarRefExp(isSgVarRefExp(astNode),isRightBranchOfBinaryOp);
             }
 #else
             if (stopSearch==false) {
@@ -313,7 +341,7 @@ VariableTraversal::evaluateSynthesizedAttribute (
 
 
 
-void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
+void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n, bool isRightBranchOfBinaryOp) {
    cout <<"$$$$$ visit_isSgVarRefExp : " << n->unparseToString() <<
          "  in line : " << n->get_file_info()->get_line() << " -------------------------------------" <<endl;
 
@@ -360,8 +388,8 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
          if (isSgDotExp(parent) || isSgPointerDerefExp(parent)) continue;
          SgExpression* left = isSgBinaryOp( parent ) -> get_lhs_operand();
          SgExpression* right = isSgBinaryOp(parent)  ->get_rhs_operand();
-         if (  //isRightBranchOfBinaryOp
-               right == last
+         if ( // right == last
+	       isRightBranchOfBinaryOp
                &&    !isSgArrayType( right -> get_type() ) &&   !isSgNewExp(right)
                && !isSgReferenceType( left -> get_type() )) {
             stopSearch=false;
