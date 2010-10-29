@@ -30,6 +30,17 @@ class JavaParser  implements Callable<Boolean>
      private native void cactionCompilationUnitDeclaration(String filename);
      private native void cactionTypeDeclaration(String filename);
 
+     private native void cactionConstructorDeclaration(String filename);
+     private native void cactionExplicitConstructorCall(String filename);
+     private native void cactionMethodDeclaration(String filename);
+     private native void cactionSingleTypeReference(String filename);
+     private native void cactionArgument(String filename);
+     private native void cactionArrayTypeReference(String filename);
+     private native void cactionMessageSend(String filename);
+     private native void cactionQualifiedNameReference(String filename);
+     private native void cactionStringLiteral(String filename);
+
+
   // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
      private static boolean hasErrorOccurred = false;
 
@@ -81,6 +92,7 @@ class JavaParser  implements Callable<Boolean>
 
                public boolean visit(Argument  node, BlockScope scope)
                   {
+                    cactionArgument("abc");
                     pushNode(node);
                     return true; // do nothing by  node, keep traversing
                   }
@@ -112,12 +124,21 @@ class JavaParser  implements Callable<Boolean>
 		public boolean visit(ArrayReference  node, BlockScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
-		public boolean visit(ArrayTypeReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(ArrayTypeReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
+
+          public boolean visit(ArrayTypeReference  node, BlockScope scope)
+             {
+               cactionArrayTypeReference("abc");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
+          public boolean visit(ArrayTypeReference  node, ClassScope scope)
+             {
+               cactionArrayTypeReference("abc");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
 		public boolean visit(AssertStatement  node, BlockScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
@@ -171,11 +192,14 @@ class JavaParser  implements Callable<Boolean>
 				     BlockScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
-		public boolean visit(
-				     ConstructorDeclaration node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
+
+          public boolean visit(ConstructorDeclaration node, ClassScope scope)
+             {
+               cactionConstructorDeclaration("abc");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
 		public boolean visit(ContinueStatement  node, BlockScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
@@ -191,11 +215,14 @@ class JavaParser  implements Callable<Boolean>
 		public boolean visit(EqualExpression  node, BlockScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
-		public boolean visit(
-				     ExplicitConstructorCall node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
+
+          public boolean visit(ExplicitConstructorCall node, BlockScope scope)
+             {
+               cactionExplicitConstructorCall("abc");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
 		public boolean visit(
 				     ExtendedStringLiteral node,
 				     BlockScope scope) {
@@ -281,9 +308,12 @@ class JavaParser  implements Callable<Boolean>
 		public boolean visit(JavadocImplicitTypeReference  node, ClassScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
-		public boolean visit(JavadocMessageSend  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
+
+          public boolean visit(JavadocMessageSend  node, BlockScope scope)
+             {
+               pushNode(node); return true; // do nothing by  node, keep traversing
+             }
+
 		public boolean visit(JavadocMessageSend  node, ClassScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
@@ -336,12 +366,21 @@ class JavaParser  implements Callable<Boolean>
 		public boolean visit(MemberValuePair  node, BlockScope scope) {
 		    pushNode(node); return true;
 		}
-		public boolean visit(MessageSend  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(MethodDeclaration  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
+
+          public boolean visit(MessageSend  node, BlockScope scope)
+             {
+               cactionMessageSend("abc");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
+          public boolean visit(MethodDeclaration  node, ClassScope scope)
+             {
+               cactionMethodDeclaration("abc");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
 		public boolean visit(
 				     StringLiteralConcatenation node,
 				     BlockScope scope) {
@@ -384,16 +423,21 @@ class JavaParser  implements Callable<Boolean>
 				     BlockScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
-		public boolean visit(
-				     QualifiedNameReference node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     QualifiedNameReference node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
+
+          public boolean visit(QualifiedNameReference node, BlockScope scope)
+             {
+               cactionQualifiedNameReference("abc");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
+          public boolean visit(QualifiedNameReference node, ClassScope scope)
+             {
+               cactionQualifiedNameReference("abc");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
 		public boolean visit(
 				     QualifiedSuperReference node,
 				     BlockScope scope) {
@@ -445,19 +489,28 @@ class JavaParser  implements Callable<Boolean>
 				     ClassScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
-		public boolean visit(
-				     SingleTypeReference node,
-				     BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(
-				     SingleTypeReference node,
-				     ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(StringLiteral  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
+
+          public boolean visit(SingleTypeReference node, BlockScope scope)
+             {
+               cactionSingleTypeReference("abc");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
+          public boolean visit(SingleTypeReference node, ClassScope scope)
+             {
+               cactionSingleTypeReference("abc");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
+          public boolean visit(StringLiteral  node, BlockScope scope)
+             {
+               cactionStringLiteral("abc");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
 		public boolean visit(SuperReference  node, BlockScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
