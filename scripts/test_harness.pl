@@ -185,7 +185,6 @@ variables on the command line.  This can only be done if the configuration file 
 
     $(TESTS): %.passed: % main.conf
             @$(TH) EXE=$< main.conf $@
-=end text
 
 =head1 TIPS AND TRICKS
 
