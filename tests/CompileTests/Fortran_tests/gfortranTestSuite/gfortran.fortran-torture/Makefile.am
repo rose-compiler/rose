@@ -10,6 +10,9 @@ SUBDIRS =
 
 F90_TESTCODES_REQUIRED_TO_PASS = $(OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS)
 
+# Test the previously passing codes using options to ignore gfortran (using both -rose:skip_syntax_check AND -rose:skipfinalCompileStep)
+F90_TESTCODES_REQUIRED_TO_PASS += $(OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS)
+
 OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    actual.f90 \
    allocate.f90 \
@@ -54,26 +57,22 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    write.f90
 
 
+# These tests now pass using options to ignore gfortran (using both -rose:skip_syntax_check AND -rose:skipfinalCompileStep)
+OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
+   20080806-1.f90 \
+   defined_type_1.f90 \
+   defined_type_3.f90 \
+   implicit.f90 \
+   implicit_1.f90 \
+   logical-1.f90 \
+   pr30147.f90 \
+   pr36078.f90
+
 # Oct 1 2010 tests that were supposed to pass (maybe a step backwards in robustness):
 # Failed in OFP
 #  ambig.f90
 #  pr40421.f90 
 
-
-# Oct 1 2010 tests that were supposed to pass (maybe a step backwards in robustness):
-# Failing in gfortran syntax check:
-#  20080806-1.f90 
-
-
-# Oct 1 2010 tests that were supposed to pass (maybe a step backwards in robustness):
-# Failing in ROSE:
-#  defined_type_1.f90
-#  defined_type_3.f90
-#  implicit.f90
-#  implicit_1.f90
-#  logical-1.f90
-#  pr30147.f90
-#  pr36078.f90
 
 
 # These are the passing tests as of Sept 1st 2010.
@@ -132,6 +131,11 @@ OCT_1_2010_F90_TESTCODES_CURRENTLY_FAILING = \
    pr42781.f90 \
    pr45598.f90 \
    vrp_1.f90
+
+# These are the only previously passing tests that currently fail.
+OCT_1_2010_F90_PREVOUSLY_PASSING_TESTCODES_CURRENTLY_FAILING = \
+  ambig.f90 \
+  pr40421.f90 
 
 # This is an incomplete list (just the failing subset of those that were supposed to pass)
 SEPT_1_2010_F90_TESTCODES_CURRENTLY_FAILING = \
@@ -193,8 +197,9 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
-ROSE_FLAGS = -rose:verbose 0
 # ROSE_FLAGS = -rose:verbose 0 -rose:output_parser_actions
+# ROSE_FLAGS = -rose:verbose 0
+ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
@@ -257,9 +262,9 @@ $(TEST_F03_Objects): ../../../../testTranslator
 
 tests:
 	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "***************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make tests rule complete (terminated normally) ******"
-	@echo "***************************************************************************************************"
+	@echo "**********************************************************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture: make tests rule complete (terminated normally) ******"
+	@echo "**********************************************************************************************************************************************"
 
 check-local:
 	@echo "Tests for Fortran."
@@ -272,17 +277,17 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 else
 	@echo "Skipping Fortran code tests when using the gfortran version 4.0.x compiler (fails to support common command line options of later versions)."
 endif
-	@echo "***************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make check rule complete (terminated normally) ******"
-	@echo "***************************************************************************************************"
+	@echo "**********************************************************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture: make tests rule complete (terminated normally) ******"
+	@echo "**********************************************************************************************************************************************"
 
 else
 
 # Fortran support not available in ROSE unless specified on the configure command line.
 check-local:
-	@echo "***********************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Fortran_tests: FORTRAN NOT CONFIGURED IN ROSE ******"
-	@echo "***********************************************************************************"
+	@echo "******************************************************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture: FORTRAN NOT CONFIGURED IN ROSE ******"
+	@echo "******************************************************************************************************************************"
 endif
 
 # This will output the example testcodes that are failing

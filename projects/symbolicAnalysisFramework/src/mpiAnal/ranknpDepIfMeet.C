@@ -412,7 +412,7 @@ bool RankDepIfMeetDetector::transfer(const Function& func, const DataflowNode& n
 	printf("IfMeetDetector::transfer() function %s() node=<%s | %s>\n", func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
 	
 	cout << "dfInfo.front() = "<<dfInfo.front()->str() << "\n";*/
-	bool modified = false;
+	//bool modified = false;
 	RankDepIfMeetLat* ifml = dynamic_cast<RankDepIfMeetLat*>(dfInfo.front());
 	
 	// if this node is a descendant of an if statement

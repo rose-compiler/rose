@@ -8,30 +8,36 @@ INCLUDES = $(ROSE_INCLUDES) @MYSQL_INCLUDE@
 # binarylib_LTLIBRARIES = libbinaryDatabase.la libbinaryFrontend.la libbinarydisassembly.la
 # TPS (03/13/08) added ROSE_USE_BINARY_SQL, so that binary analysis can be compiled without MySQL
 # This will cause the dynamic library to be built (as libbinaryDatabase.so)
-noinst_LTLIBRARIES = libbinaryFrontend.la #libbinarydisassembly.la
+# noinst_LTLIBRARIES = libbinaryFrontend.la #libbinarydisassembly.la
+noinst_LTLIBRARIES = libbinaryFrontend.la
+
 if ROSE_USE_MYSQL
-  lib_LTLIBRARIES = libbinaryDatabase.la 
-# Isolated part of library that depends on the mysql database
-libbinaryDatabase_la_DEPENDENCIES =
-libbinaryDatabase_la_SOURCES = RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp 
+   lib_LTLIBRARIES = libbinaryDatabase.la 
+ # Isolated part of library that depends on the mysql database
+   libbinaryDatabase_la_DEPENDENCIES =
+   libbinaryDatabase_la_SOURCES = RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp 
 endif 
 
 # Isolated part of library that is independent of the mysql database
 libbinaryFrontend_la_DEPENDENCIES =
-libbinaryFrontend_la_SOURCES = RoseBin_support.cpp \
-     instructionDispatch.cpp \
-     x86InstructionProperties.h \
-     x86InstructionProperties.C \
-     armInstructionEnum.h armInstructionEnumPrinter.C \
-     powerpcInstructionEnum.h powerpcInstructionEnumPrinter.C \
-     powerpcInstructionProperties.h powerpcInstructionProperties.C \
-     readTicl.C RoseBin_file.cpp RoseFile.cpp \
-     RoseBin_buildTree.cpp RoseBin_IDAPRO_buildTree.cpp \
-     AST_BIN_Traversal.C
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   libbinaryFrontend_la_SOURCES = RoseBin_support.cpp \
+      instructionDispatch.cpp \
+      x86InstructionProperties.h \
+      x86InstructionProperties.C \
+      armInstructionEnum.h armInstructionEnumPrinter.C \
+      powerpcInstructionEnum.h powerpcInstructionEnumPrinter.C \
+      powerpcInstructionProperties.h powerpcInstructionProperties.C \
+      readTicl.C RoseBin_file.cpp RoseFile.cpp \
+      RoseBin_buildTree.cpp RoseBin_IDAPRO_buildTree.cpp \
+      AST_BIN_Traversal.C
+else
+   libbinaryFrontend_la_SOURCES = 
+endif
 
 
 BUILT_SOURCES = armInstructionEnumPrinter.C powerpcInstructionEnumPrinter.C
-
 CLEANFILES = $(BUILT_SOURCES)
 
 armInstructionEnumPrinter.C: $(srcdir)/armInstructionEnum.h
@@ -69,12 +75,10 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    x86InstructionProperties.h powerpcInstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
    RoseObj.h
 endif
-# DQ (1/19/2008): Removed this file from BINARY_DISASSEMBLY_HEADER_FILES since it is not available
-# colorTraversal.h  
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 
-EXTRA_DIST = CMakeLists.txt make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86 #mysql_include
+EXTRA_DIST = CMakeLists.txt make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86
 
 # DQ (9/30/2009): Added automake conditional to handle machines where we test and "tclsh" is not availble.
 # Rule for maintainers (requires Tcl interpreter)

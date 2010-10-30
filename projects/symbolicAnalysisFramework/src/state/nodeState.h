@@ -47,10 +47,10 @@ class NodeFact: public printable
 		this->fact = fact;
 	}
 	
-	/*NodeFact(factType* fact)
+        NodeFact(factType* fact)
 	{
 		this->fact = *fact;
-	}* /
+	}
 	
 	void* getFact()
 	{

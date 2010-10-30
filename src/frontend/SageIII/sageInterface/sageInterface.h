@@ -1131,8 +1131,8 @@ void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt, bool au
 //! Insert a list of statements after a target statement
 void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmt);
 
-//! Remove a statement
-void removeStatement(SgStatement* stmt);
+//! Remove a statement from its attach point of the AST. Automatically keep its associated preprocessing information at the original place after the removal. The statement is still in memory and it is up to the users to decide if the removed one will be inserted somewhere else or released from memory (deleteAST()).
+void removeStatement(SgStatement* stmt, bool autoRelocatePreprocessingInfo = true);
 
 //! Deep delete a sub AST tree. It uses postorder traversal to delete each child node. Users must take care of any dangling pointers, symbols or types that result. This is identical to deleteAST()
 void deepDelete(SgNode* root);

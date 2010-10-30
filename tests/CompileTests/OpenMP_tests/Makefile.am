@@ -67,6 +67,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor3.c \
 	ompfor4.c \
 	ompfor5.c \
+	ompfor6.c \
 	ompGetNumThreads.c \
 	ordered2.c \
 	ordered.c \

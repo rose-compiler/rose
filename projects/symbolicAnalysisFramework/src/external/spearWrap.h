@@ -167,7 +167,7 @@ class SpearOp
 	public:
 	SpearOp(int op): op(op) {}
 	int getOp() const { return op; }
-	int setOp(int op) { this->op = op; }
+	void setOp(int op) { this->op = op; }
 	bool isOp(int op) const { return this->op == op; }
 	bool operator == (const SpearOp& that) { return op == that.op; }
 	string opStr() const;

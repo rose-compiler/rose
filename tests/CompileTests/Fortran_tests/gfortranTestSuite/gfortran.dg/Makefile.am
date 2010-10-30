@@ -7,11 +7,44 @@ SUBDIRS =
 #      PASSING TESTS
 # #######################
 
-# We can't build a list through intersection...
-# F90_TESTCODES_REQUIRED_TO_PASS = $(OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS) - $(SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS)
+# Configure-time automake conditional
+if ROSE_USE_LONG_MAKE_CHECK_RULE
 
+# This is the long test of ROSE (takes a while!)
 F90_TESTCODES_REQUIRED_TO_PASS = $(OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS)
 
+# Allow retesting of examples that failed when using gfortran (version 4.2.4) for syntax checking.
+F90_TESTCODES_REQUIRED_TO_PASS += $(OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS)
+
+# This is the long test of ROSE (takes a while!)
+F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = $(OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS)
+
+else # !ROSE_USE_LONG_MAKE_CHECK_RULE
+
+# Shorten the list of code to compile to simplify checks using "make distcheck"
+F90_TESTCODES_REQUIRED_TO_PASS = \
+   PR19754_2.f90 \
+   PR40660.f90 \
+   Wall.f90 \
+   Wno-all.f90 \
+   achar_1.f90 \
+   actual_pointer_function_1.f90 \
+   actual_procedure_1.f90 \
+   advance_1.f90 \
+   advance_2.f90 \
+   advance_4.f90 \
+   advance_5.f90
+
+# Shorten the list of code to compile to simplify checks using "make distcheck"
+F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
+   PR19872.f \
+   allocate_zerosize_3.f \
+   array_constructor_type_9.f \
+   backslash_3.f \
+   bounds_check_13.f \
+   bounds_check_2.f
+
+endif # ROSE_USE_LONG_MAKE_CHECK_RULE
 
 
 OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
@@ -747,7 +780,10 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    zero_sized_5.f90
 
 # Oct 1 2010 passing tests that are now failing.
-SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
+# However, these PASS in ROSE when using both -rose:skip_syntax_check AND -rose:skipfinalCompileStep.
+# It is not clear what options should be used to run these and in
+# many cases they will run fine with the syntax checking is turned off.
+OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    access_spec_1.f90 \
    access_spec_3.f90 \
    achar_2.f90 \
@@ -816,7 +852,6 @@ SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    bounds_check_fail_4.f90 \
    bounds_check_strlen_8.f90 \
    char_array_constructor_2.f90 \
-   char_array_structure_constructor.f90 \
    char_associated_1.f90 \
    char_cast_1.f90 \
    char_cast_2.f90 \
@@ -839,38 +874,29 @@ SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    contained_3.f90 \
    contained_module_proc_1.f90 \
    cshift_nan_1.f90 \
-   data_components_1.f90 \
    deallocate_stat.f90 \
    default_format_2.f90 \
    default_format_denormal_2.f90 \
-   default_initialization_3.f90 \
    dependency_22.f90 \
    dependency_24.f90 \
    dependency_26.f90 \
    dependent_decls_1.f90 \
    der_array_1.f90 \
-   derived_comp_array_ref_2.f90 \
-   derived_comp_array_ref_3.f90 \
    derived_comp_array_ref_4.f90 \
-   derived_comp_array_ref_5.f90 \
    derived_comp_array_ref_7.f90 \
-   derived_constructor_comps_1.f90 \
    derived_constructor_comps_3.f90 \
    derived_sub.f90 \
    do_iterator_2.f90 \
    dummy_procedure_3.f90 \
    elemental_dependency_2.f90 \
-   elemental_scalar_args_1.f90 \
    elemental_subroutine_2.f90 \
    elemental_subroutine_3.f90 \
    elemental_subroutine_6.f90 \
-   empty_type.f90 \
    entry_11.f90 \
    entry_12.f90 \
    entry_14.f90 \
    entry_3.f90 \
    entry_array_specs_3.f90 \
-   enum_1.f90 \
    eoshift_large_1.f90 \
    equiv_substr.f90 \
    erf.f90 \
@@ -904,7 +930,6 @@ SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    implicit_6.f90 \
    implicit_derived_type_1.f90 \
    implied_do_1.f90 \
-   index.f90 \
    init_flag_7.f90 \
    initialization_2.f90 \
    initialization_22.f90 \
@@ -931,8 +956,6 @@ SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    intrinsic_unpack_3.f90 \
    intrinsics_kind_argument_1.f90 \
    isnan_1.f90 \
-   iso_fortran_env_1.f90 \
-   iso_fortran_env_2.f90 \
    large_integer_kind_1.f90 \
    large_real_kind_1.f90 \
    mapping_2.f90 \
@@ -1034,7 +1057,6 @@ SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    pr36006-1.f90 \
    pr36006-2.f90 \
    pr38722.f90 \
-   pr41229.f90 \
    pr43866.f90 \
    pr43984.f90 \
    private_type_11.f90 \
@@ -1074,7 +1096,6 @@ SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    recursive_reference_2.f90 \
    reshape-alloc.f90 \
    reshape-complex.f90 \
-   reshape_2.f90 \
    reshape_3.f90 \
    reshape_transpose_1.f90 \
    reshape_zerosize_1.f90 \
@@ -1094,10 +1115,8 @@ SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    spread_shape_1.f90 \
    spread_size_limit.f90 \
    string_ctor_1.f90 \
-   structure_constructor_10.f90 \
    subref_array_pointer_3.f90 \
    substr_5.f90 \
-   transfer_array_intrinsic_2.f90 \
    transfer_array_intrinsic_3.f90 \
    transfer_simplify_6.f90 \
    transfer_simplify_9.f90 \
@@ -1109,7 +1128,6 @@ SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    use_rename_2.f90 \
    use_rename_3.f90 \
    used_before_typed_5.f90 \
-   used_dummy_types_1.f90 \
    used_dummy_types_8.f90 \
    used_interface_ref.f90 \
    used_types_12.f90 \
@@ -1117,8 +1135,6 @@ SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    used_types_16.f90 \
    used_types_18.f90 \
    used_types_21.f90 \
-   used_types_5.f90 \
-   value_1.f90 \
    value_test.f90 \
    vector_subscript_1.f90 \
    vector_subscript_3.f90 \
@@ -1142,7 +1158,32 @@ SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    zero_sized_1.f90 \
    zero_sized_2.f90
 
+# Fails in ROSE (using both -rose:skip_syntax_check AND -rose:skipfinalCompileStep):
+# char_array_structure_constructor.f90
+# data_components_1.f90
+# default_initialization_3.f90
+# derived_comp_array_ref_2.f90
+# derived_comp_array_ref_3.f90
+# derived_comp_array_ref_5.f90
+# derived_constructor_comps_1.f90
+# elemental_scalar_args_1.f90
+# empty_type.f90
+# enum_1.f90
+# index.f90
+# iso_fortran_env_1.f90
+# iso_fortran_env_2.f90
+# pr41229.f90
+# reshape_2.f90
+# transfer_array_intrinsic_2.f90
+# structure_constructor_10.f90
+# used_dummy_types_1.f90
+# used_types_5.f90
+# value_1.f90
 
+
+
+
+# Older list of tests
 SEPT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    PR19754_2.f90 \
    PR40660.f90 \
@@ -1641,10 +1682,6 @@ SEPT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
 #   actual_array_interface_1.f90
 
 
-# F90_TESTCODES_REQUIRED_TO_PASS = $(OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS)
-
-F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = $(OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS)
-
 OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
    PR19872.f \
    allocate_zerosize_3.f \
@@ -1879,6 +1916,8 @@ F90_TESTCODES_CURRENTLY_FAILING += $(SEPT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODE
 
 OCT_1_2010_F90_TESTCODES_CURRENTLY_FAILING =
 
+# The ROSE options used didn't include using both -rose:skip_syntax_check AND -rose:skipfinalCompileStep.
+# If there were used likely most of these would pass.
 SEPT_1_2010_F90_TESTCODES_CURRENTLY_FAILING = \
 allocate_zerosize_1.f90 \
 allocate_zerosize_2.f90 \
@@ -2122,6 +2161,7 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 
 # These options appear to improve the robustness of the tests... still looking at why...
 ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
+# ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
@@ -2156,7 +2196,8 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 testTranslator: ../../testTranslator
 
 $(TEST_F90_Objects): ../../../../testTranslator ${ALL_TESTCODES}
-	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90) && touch $@
+#	$(VALGRIND) ../../../../testCodeGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) ../../../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 
 $(TEST_F77_Objects): ../../../../testTranslator ${ALL_TESTCODES}
