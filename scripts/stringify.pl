@@ -59,7 +59,7 @@ sub debug {
 sub make_lexer {
   my($source_file) = @_;
   open SOURCE, "<", $source_file or die "$source_file: $!\n";
-  my $s = join "\n", map {/(.*?)[\n\r]*/} <SOURCE>; # Standardize line termination
+  my $s = join "", map {tr/\r//;$_} <SOURCE>; # Standardize line termination
   my $linenum = 1;
   my @cpp = (1); # stack of CPP directives; 1=>source code included; 0=>source code excluded; undef=>unknown
   close SOURCE;
