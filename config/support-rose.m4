@@ -153,6 +153,10 @@ support_fortran_only=no
 echo "BEFORE Setting: enableval = $enableval support_fortran_only = $support_fortran_only"
 if test "x$enableval" = "xyes"; then
    if test "x$USE_JAVA" = x1; then
+    # Scott appears to require CPPFLAGS to be set...
+      echo "Before setting CPPFLAGS: CPPFLAGS = $CPPFLAGS"
+      CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
+      echo "Set CPPFLAGS  to include JAVA_JVM_INCLUDE = $JAVA_JVM_INCLUDE"
       echo "Setting: support_fortran_only = $support_fortran_only"
       if test "x$GFORTRAN_PATH" != "x"; then
          echo "Build only: Found a valid gfortran, java is available, OK to support Fortran"
