@@ -345,7 +345,10 @@ for my $cmd (@{$config{cmd}}) {
 # Should we compare the test's standard output with a predetermined answer?
 if (!$status && $config{answer} ne 'no') {
   my($answer) = $config{answer};
-  $answer = "$1.ans" if $answer eq 'yes' && $config_file =~ /(.+?)(\.[^\.]+)/;
+  if ($answer eq 'yes') {
+    ($answer = $config_file) =~ s/(\.[^\.\/]+)$//;
+    $answer .= ".ans";
+  }
   if (! -r $answer) {
     system "echo '$answer: no such file' >>$cmd_stderr";
     $status = 1;
