@@ -81,7 +81,7 @@ test_inputs: $(TEST_INPUTS)
 # Test targets are test names suffixed with ".passed" (but when a test fails it produces ".failed" instead).
 # Each target runs "x86sim" on one of the TEST_INPUT files. Exit status determines success or failure.
 TEST_TARGETS = $(addsuffix .passed, $(TEST_INPUTS))
-MOSTLYCLEANFILES += $(TEST_TARGETS) $(TEST_TARGETS:%.passed:%.failed)
+MOSTLYCLEANFILES += $(TEST_TARGETS) $(patsubst %.passed, %.failed, $(TEST_TARGETS))
 $(TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf
 	@$(TH) INPUT=./$< $(srcdir)/x86sim.conf $@
 
