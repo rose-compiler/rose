@@ -2700,7 +2700,6 @@ projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/simulator/Makefile
-projects/simulator/tests/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/analysis/Makefile
 projects/symbolicAnalysisFramework/src/arrIndexLabeler/Makefile
