@@ -33,6 +33,7 @@ class JavaParser  implements Callable<Boolean>
      private native void cactionCompilationUnitDeclaration(String filename);
      private native void cactionTypeDeclaration(String filename);
 
+  // Need to change the names of the function parameters (should not all be "filename").
      private native void cactionConstructorDeclaration(String filename);
      private native void cactionConstructorDeclarationEnd();
      private native void cactionExplicitConstructorCall(String filename);
@@ -44,6 +45,10 @@ class JavaParser  implements Callable<Boolean>
      private native void cactionQualifiedNameReference(String filename);
      private native void cactionStringLiteral(String filename);
 
+     public native void cactionBuildImplicitClassSupportStart(String className);
+     public native void cactionBuildImplicitClassSupportEnd(String className);
+     public native void cactionBuildImplicitMethodSupport(String methodName);
+     public native void cactionBuildImplicitFieldSupport(String fieldName);
 
   // Save the compilationResult as we process the CompilationUnitDeclaration class.
      public CompilationResult rose_compilationResult;
@@ -115,6 +120,7 @@ class JavaParser  implements Callable<Boolean>
                     pushNode(node);
                     return true; // do nothing by  node, keep traversing
 		            }
+
 		public boolean visit(ArrayInitializer  node, BlockScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
@@ -430,69 +436,19 @@ class JavaParser  implements Callable<Boolean>
           public boolean visit(MessageSend  node, BlockScope scope)
              {
             // cactionMessageSend("abc");
-               int startingSourcePosition = node.sourceStart();
-               int endingSourcePosition   = node.sourceEnd();
-               System.out.println("In visit(MessageSend): start = " + startingSourcePosition + " end = " + endingSourcePosition);
+               sourcePosition(node);
 
-            // Example of how to compute the starting line number and column position of any AST node.
-               int problemStartPosition = startingSourcePosition;
-               int[] lineEnds;
-               int lineNumber   = problemStartPosition >= 0 ? Util.getLineNumber(problemStartPosition, lineEnds = rose_compilationResult.getLineSeparatorPositions(), 0, lineEnds.length-1) : 0;
-               int columnNumber = problemStartPosition >= 0 ? Util.searchColumnNumber(rose_compilationResult.getLineSeparatorPositions(), lineNumber, problemStartPosition) : 0;
-               System.out.println("In visit(MessageSend): lineNumber = " + lineNumber + " columnNumber = " + columnNumber);
-
-            // Example of how to compute the ending line number and column position of any AST node.
-               int problemEndPosition = endingSourcePosition;
-               int lineNumber_end   = problemEndPosition >= 0 ? Util.getLineNumber(problemEndPosition, lineEnds = rose_compilationResult.getLineSeparatorPositions(), 0, lineEnds.length-1) : 0;
-               int columnNumber_end = problemEndPosition >= 0 ? Util.searchColumnNumber(rose_compilationResult.getLineSeparatorPositions(), lineNumber, problemEndPosition) : 0;
-               System.out.println("In visit(MessageSend): lineNumber_end = " + lineNumber_end + " columnNumber_end = " + columnNumber_end);
-
-            // node.receiver.traverse(visitor, blockScope);
-               System.out.println("Sorry, not implemented in support for MessageSend: receiver");
-               String typename = node.receiver.toString();
-               System.out.println("typename = " + typename);
-            // System.out.println("name of type = " + node.receiver.TYPE.toString());
-            // System.out.println("name of type = " + node.receiver.getTypeName());
-
+            /* Debugging code.
                try
                   {
                   // System.out is a QualifiedNameReference
-                     System.out.println("name of type = " + node.receiver.getClass().toString());
+                     System.out.println("node.receiver: name of type = " + node.receiver.getClass().toString());
                   }
                catch (Throwable e)
                   {
                     System.err.println(e);
                   }
-
-            // Class tempClass = Class.forName("java.lang.System");
-            // Field dataMember = Class.forName("java.lang.System");
-
-            // Get the methods used in this class.
-               try
-                  {
-                 // Class cls = Class.forName("java.lang.String");
-                 // Class cls = Class.forName("java.lang."+node.receiver.toString());
-                    Class cls = Class.forName("java.lang.System");
-                    Method methlist[] = cls.getDeclaredMethods();
-                    for (int i = 0; i < methlist.length; i++)
-                       {
-                         Method m = methlist[i];
-                         System.out.println("name = " + m.getName());
-                         System.out.println("decl class = " + m.getDeclaringClass());
-                         Class pvec[] = m.getParameterTypes();
-                         for (int j = 0; j < pvec.length; j++)
-                              System.out.println("param #" + j + " " + pvec[j]);
-                         Class evec[] = m.getExceptionTypes();
-                         for (int j = 0; j < evec.length; j++)
-                              System.out.println("exc #" + j + " " + evec[j]);
-                         System.out.println("return type = " + m.getReturnType());
-                         System.out.println("-----");
-                       }
-                  }
-               catch (Throwable e)
-                  {
-                    System.err.println(e);
-                  }
+             */
 
                if (node.typeArguments != null)
                   {
@@ -639,8 +595,8 @@ class JavaParser  implements Callable<Boolean>
                            // Build support for class (if we have not seen it before then it was implicitly 
                            // included (imported?) which is why this handling is father complex.
                               System.out.println("----- add support for class = " + cls.toString());
-
-
+                              String className = tokenName;
+                              buildImplicitClassSupport("java.lang." + className);
                             }
                        }
                       else
@@ -737,8 +693,12 @@ class JavaParser  implements Callable<Boolean>
                if (node.resolvedType != null)
                   {
                     cactionSingleTypeReference("abc");
-                    char[][] char_string = node.getTypeName();
-                    System.out.println(char_string);
+                 // char[][] char_string = node.getTypeName();
+                 // System.out.println(char_string);
+                 // String typename = new String(node.getTypeName().toString());
+                 // String typename = node.getTypeName().toString();
+                    String typename = node.toString();
+                    System.out.println("Sorry, not implemented SingleTypeReference (node.resolvedType != NULL): typename = " + typename);
                   }
                  else
                   {
@@ -1283,6 +1243,122 @@ class JavaParser  implements Callable<Boolean>
 
           unit.traverse(visitor,unit.scope);
         }
+
+
+
+
+     public void buildImplicitClassSupport( String className)
+        {
+       // There is a lot of information that we need about any implicitly included class.
+       // Information about the introspection support is at: http://download.oracle.com/javase/1.4.2/docs/api/java/lang/Class.html
+       // Additional information required should include:
+       //    1) Class hierarchy.
+       //    2) Interfaces
+       //    3) package information
+       //    4) modifiers (for this class)
+       //    5) ProtectionDomain
+       //    6) Resources (URLs?)
+       //    7) Signers
+       //    8) Superclass (part of the class hiearchy)
+       //    9) Array information (is the class an array of some base type)
+       //   10) See member function of the "Class" class for introspection for more details...
+
+       // Get the fields, constructors, and methods used in this class.
+          try
+             {
+            // Class cls = Class.forName("java.lang.String");
+            // Class cls = Class.forName("java.lang."+node.receiver.toString());
+
+            // Note that "java.lang" does not appear to be a class (so is that root of all implicitly included classes?).
+            // Class cls = Class.forName("java.lang");
+               Class cls = Class.forName(className);
+               Method methlist[] = cls.getDeclaredMethods();
+               cactionBuildImplicitClassSupportStart(className);
+
+
+               Field fieldlist[] = cls.getDeclaredFields();
+               for (int i = 0; i < fieldlist.length; i++)
+                  {
+                    Field fld = fieldlist[i];
+                 /* System.out.println("decl class = " + fld.getDeclaringClass());
+                    System.out.println("type = " + fld.getType());
+                    int mod = fld.getModifiers();
+                    System.out.println("modifiers = " + Modifier.toString(mod));
+                    System.out.println("-----");
+                 */
+                 // Note that I am ignoring the field type at the moment.
+                    System.out.println("data member (field) name = " + fld.getName());
+
+                 // cactionBuildImplicitFieldSupport(fld.getName());
+                  }
+
+               Constructor ctorlist[] = cls.getDeclaredConstructors();
+               for (int i = 0; i < ctorlist.length; i++)
+                  {
+                    Constructor ct = ctorlist[i];
+                 /* System.out.println("decl class = " + ct.getDeclaringClass());
+                    Class pvec[] = ct.getParameterTypes();
+                    for (int j = 0; j < pvec.length; j++)
+                         System.out.println("param #" + j + " " + pvec[j]);
+                    Class evec[] = ct.getExceptionTypes();
+                    for (int j = 0; j < evec.length; j++)
+                         System.out.println("exc #" + j + " " + evec[j]);
+                    System.out.println("-----");
+                  */
+                 // Note that I am ignoring the constructor parameter types at the moment.
+                    System.out.println("constructor name = " + ct.getName());
+                 // cactionBuildImplicitMethodSupport(ct.getName());
+                  }
+
+               for (int i = 0; i < methlist.length; i++)
+                  {
+                    Method m = methlist[i];
+
+                 /* System.out.println("name = " + m.getName());
+                    System.out.println("decl class = " + m.getDeclaringClass());
+                    Class pvec[] = m.getParameterTypes();
+                    for (int j = 0; j < pvec.length; j++)
+                         System.out.println("param #" + j + " " + pvec[j]);
+                    Class evec[] = m.getExceptionTypes();
+                    for (int j = 0; j < evec.length; j++)
+                         System.out.println("exc #" + j + " " + evec[j]);
+                    System.out.println("return type = " + m.getReturnType());
+                    System.out.println("-----");
+                 */
+                 // Note that I am ignoring the function type at the moment.
+                    System.out.println("method name = " + m.getName());
+                 // cactionBuildImplicitMethodSupport(m.getName());
+                  }
+               cactionBuildImplicitClassSupportEnd(className);
+             }
+          catch (Throwable e)
+             {
+               System.err.println(e);
+             }
+        }
+
+
+
+     public void sourcePosition(ASTNode node)
+        {
+          int startingSourcePosition = node.sourceStart();
+          int endingSourcePosition   = node.sourceEnd();
+          System.out.println("In visit(MessageSend): start = " + startingSourcePosition + " end = " + endingSourcePosition);
+
+       // Example of how to compute the starting line number and column position of any AST node.
+          int problemStartPosition = startingSourcePosition;
+          int[] lineEnds;
+          int lineNumber   = problemStartPosition >= 0 ? Util.getLineNumber(problemStartPosition, lineEnds = rose_compilationResult.getLineSeparatorPositions(), 0, lineEnds.length-1) : 0;
+          int columnNumber = problemStartPosition >= 0 ? Util.searchColumnNumber(rose_compilationResult.getLineSeparatorPositions(), lineNumber, problemStartPosition) : 0;
+          System.out.println("In visit(MessageSend): lineNumber = " + lineNumber + " columnNumber = " + columnNumber);
+
+       // Example of how to compute the ending line number and column position of any AST node.
+          int problemEndPosition = endingSourcePosition;
+          int lineNumber_end   = problemEndPosition >= 0 ? Util.getLineNumber(problemEndPosition, lineEnds = rose_compilationResult.getLineSeparatorPositions(), 0, lineEnds.length-1) : 0;
+          int columnNumber_end = problemEndPosition >= 0 ? Util.searchColumnNumber(rose_compilationResult.getLineSeparatorPositions(), lineNumber, problemEndPosition) : 0;
+          System.out.println("In visit(MessageSend): lineNumber_end = " + lineNumber_end + " columnNumber_end = " + columnNumber_end);
+         }
+         
 
      public void startParsingAST(CompilationUnitDeclaration unit)
         {

@@ -241,3 +241,26 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *, jobject, 
    {
      printf ("Build a SgStringVal \n");
    }
+
+
+
+
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build support for implicit class (start) \n");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build support for implicit class (end) \n");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build support for implicit method \n");
+   }
+
