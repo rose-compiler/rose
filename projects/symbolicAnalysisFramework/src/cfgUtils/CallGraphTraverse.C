@@ -258,7 +258,7 @@ Sg_File_Info* Function::get_file_info() const
 	// every function must have at least one declaration
 	ROSE_ASSERT(*(decls.begin()));
 	
-	/*if(def) return def->get_file_info();
+	if(def) return def->get_file_info();
 	else return (*(decls.begin()))->get_file_info();*/
 	if(decl)
 		return decl->get_file_info();

@@ -3,7 +3,7 @@
 
 void ChkptRangeVerifAnalysis::visit(const Function& func, const DataflowNode& n, NodeState& state)
 {
-	bool modified = false;
+	//bool modified = false;
 	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(state.getLatticeBelow(rangeAnalysis, 0));
 	
 	printf("ChkptRangeVerifAnalysis::visit()   n.getNode()=%p<%s | %s>, cg=%p\n", n.getNode(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str(), cg);
@@ -118,7 +118,8 @@ bool ChkptRangeAnalysis::transfer(const Function& func, const DataflowNode& n, N
 			long c;
 			if(cfgUtils::parseAssignment(isSgExpression(n.getNode()), op, i, j, negJ, k, negK, c))
 			{
-				printf("ChkptRangeAnalysis::transfer()   cfgUtils::parseAssignment(%p, %d, %s, %s, %d, %s, %d, %d)\n", isSgExpression(n.getNode()), op, i.str().c_str(), j.str().c_str(), negJ, k.str().c_str(), negK, c);
+				printf("ChkptRangeAnalysis::transfer()   cfgUtils::parseAssignment(%p, %d, %s, %s, %d, %s, %d, %ld)\n", 
+                                 isSgExpression(n.getNode()), op, i.str().c_str(), j.str().c_str(), negJ, k.str().c_str(), negK, c);
 				// i = j or i = c
 				if(op == cfgUtils::none)
 				{
@@ -243,7 +244,7 @@ bool ChkptRangeAnalysis::incorporateDivInfo(const Function& func, const Dataflow
 		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
 		
 		// incorporate this variable's divisibility information (if any)
-		if(varDivL->getLevel() == DivLattice::divKnown/* && !(varDivL->getDiv()==1 && varDivL->getRem()==0)* /)
+		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
 		{
 			modified = cg->addDivVar(var, varDivL->getDiv(), varDivL->getRem()) || modified;
 		}
@@ -274,7 +275,7 @@ bool ChkptRangeAnalysis::removeConstrDivVars(const Function& func, const Dataflo
 		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
 		
 		// incorporate this variable's divisibility information (if any)
-		if(varDivL->getLevel() == DivLattice::divKnown/* && !(varDivL->getDiv()==1 && varDivL->getRem()==0)* /)
+		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
 		{
 			cg->disconnectDivOrigVar(var, varDivL->getDiv(), varDivL->getRem());
 		}
