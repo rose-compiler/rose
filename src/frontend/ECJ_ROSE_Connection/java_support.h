@@ -50,5 +50,10 @@ extern std::list<SgNode*> astJavaNodeStack;
 bool emptyJavaStateStack();
 
 
+std::string convertJavaStringToCxxString(JNIEnv *env, const jstring & java_string);
+
+SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name);
+
+
 // endif for ROSE_JAVA_SUPPORT
 #endif
