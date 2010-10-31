@@ -28,6 +28,7 @@ distributedScripts =				\
      policies/UnusedSources.pl                  \
      runscript					\
      sample_binary_rules.pl			\
+     test_harness.pl				\
      stringify.pl
 
 # scripts put into the distribution
