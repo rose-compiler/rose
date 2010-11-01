@@ -158,8 +158,10 @@ private:
     * type or typedef whose base type is a pointer type, and @c null otherwise.
     */
    SgPointerType* isUsableAsSgPointerType( SgType* type );
+public:
    SgArrayType* isUsableAsSgArrayType( SgType* type );
    SgReferenceType* isUsableAsSgReferenceType( SgType* type );
+private:
 
    SgType* resolveTypedefs( SgType* type );
    SgType* resolveReferencesAndTypedefs( SgType* type );
