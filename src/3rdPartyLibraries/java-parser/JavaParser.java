@@ -16,6 +16,9 @@ import org.eclipse.jdt.internal.compiler.parser.*;
 import org.eclipse.jdt.internal.compiler.problem.*;
 import org.eclipse.jdt.internal.compiler.util.*;
 
+// DQ (10/30/2010): Added support for reflection to get methods in implicitly included objects.
+import java.lang.reflect.*;
+
 
 // DQ (10/12/2010): Make more like the OFP implementation (using Callable<Boolean> abstract base class). 
 // class JavaTraversal {
@@ -30,7 +33,9 @@ class JavaParser  implements Callable<Boolean>
      private native void cactionCompilationUnitDeclaration(String filename);
      private native void cactionTypeDeclaration(String filename);
 
+  // Need to change the names of the function parameters (should not all be "filename").
      private native void cactionConstructorDeclaration(String filename);
+     private native void cactionConstructorDeclarationEnd();
      private native void cactionExplicitConstructorCall(String filename);
      private native void cactionMethodDeclaration(String filename);
      private native void cactionSingleTypeReference(String filename);
@@ -40,6 +45,13 @@ class JavaParser  implements Callable<Boolean>
      private native void cactionQualifiedNameReference(String filename);
      private native void cactionStringLiteral(String filename);
 
+     public native void cactionBuildImplicitClassSupportStart(String className);
+     public native void cactionBuildImplicitClassSupportEnd(String className);
+     public native void cactionBuildImplicitMethodSupport(String methodName);
+     public native void cactionBuildImplicitFieldSupport(String fieldName);
+
+  // Save the compilationResult as we process the CompilationUnitDeclaration class.
+     public CompilationResult rose_compilationResult;
 
   // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
      private static boolean hasErrorOccurred = false;
@@ -108,6 +120,7 @@ class JavaParser  implements Callable<Boolean>
                     pushNode(node);
                     return true; // do nothing by  node, keep traversing
 		            }
+
 		public boolean visit(ArrayInitializer  node, BlockScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
@@ -218,7 +231,51 @@ class JavaParser  implements Callable<Boolean>
 
           public boolean visit(ExplicitConstructorCall node, BlockScope scope)
              {
-               cactionExplicitConstructorCall("abc");
+            // cactionExplicitConstructorCall("abc");
+               if (node.qualification != null)
+                  {
+                 // Name qualification not implemented.
+                 // this.qualification.printExpression(0, output).append('.');
+                    System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: Name qualification");
+                  }
+
+               if (node.typeArguments != null)
+                  {
+                 // output.append('<');
+                    System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: typeArguments");
+                    int max = node.typeArguments.length - 1;
+                    for (int j = 0; j < max; j++)
+                       {
+                      // node.typeArguments[j].print(0, output);
+                      // output.append(", ");//$NON-NLS-1$
+                       }
+                 // node.typeArguments[max].print(0, output);
+                 // output.append('>');
+                  }
+
+               if (node.accessMode == ExplicitConstructorCall.This)
+                  {
+                 // output.append("this("); //$NON-NLS-1$
+                    System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: this");
+                  }
+                 else
+                  {
+                 // output.append("super("); //$NON-NLS-1$
+                 // System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
+                    cactionExplicitConstructorCall("super");
+                  }
+
+               if (node.arguments != null)
+                  {
+                    System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: arguments");
+                    for (int i = 0; i < node.arguments.length; i++)
+                       {
+                      // if (i > 0)
+                      //      output.append(", "); //$NON-NLS-1$
+                      // node.arguments[i].printExpression(0, output);
+                       }
+                  }
+
                pushNode(node);
                return true; // do nothing by  node, keep traversing
              }
@@ -234,12 +291,21 @@ class JavaParser  implements Callable<Boolean>
 		public boolean visit(FieldDeclaration  node, MethodScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
-		public boolean visit(FieldReference  node, BlockScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
-		public boolean visit(FieldReference  node, ClassScope scope) {
-		    pushNode(node); return true; // do nothing by  node, keep traversing
-		}
+
+          public boolean visit(FieldReference  node, BlockScope scope) 
+             {
+               System.out.println("Sorry, not implemented in support for FieldReference(BlockScope): xxx");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
+          public boolean visit(FieldReference  node, ClassScope scope)
+             {
+               System.out.println("Sorry, not implemented in support for FieldReference(ClassScope): xxx");
+               pushNode(node);
+               return true; // do nothing by  node, keep traversing
+             }
+
 		public boolean visit(FloatLiteral  node, BlockScope scope) {
 		    pushNode(node); return true; // do nothing by  node, keep traversing
 		}
@@ -369,7 +435,40 @@ class JavaParser  implements Callable<Boolean>
 
           public boolean visit(MessageSend  node, BlockScope scope)
              {
-               cactionMessageSend("abc");
+            // cactionMessageSend("abc");
+               sourcePosition(node);
+
+            /* Debugging code.
+               try
+                  {
+                  // System.out is a QualifiedNameReference
+                     System.out.println("node.receiver: name of type = " + node.receiver.getClass().toString());
+                  }
+               catch (Throwable e)
+                  {
+                    System.err.println(e);
+                  }
+             */
+
+               if (node.typeArguments != null)
+                  {
+                    System.out.println("Sorry, not implemented in support for MessageSend: typeArguments");
+                    for (int i = 0, typeArgumentsLength = node.typeArguments.length; i < typeArgumentsLength; i++)
+                       {
+                      // node.typeArguments[i].traverse(visitor, blockScope);
+                       }
+                  }
+
+               if (node.arguments != null)
+                  {
+                    System.out.println("Sorry, not implemented in support for MessageSend: arguments");
+                    int argumentsLength = node.arguments.length;
+                    for (int i = 0; i < argumentsLength; i++)
+                       {
+                      // node.arguments[i].traverse(visitor, blockScope);
+                       }
+                  }
+
                pushNode(node);
                return true; // do nothing by  node, keep traversing
              }
@@ -426,14 +525,111 @@ class JavaParser  implements Callable<Boolean>
 
           public boolean visit(QualifiedNameReference node, BlockScope scope)
              {
+            // Note that if we want to traverse this object in more detail then the QualifiedNameReference::traverse() functions can/should be modified.
                cactionQualifiedNameReference("abc");
+
+            // This is a reference to a variable (non data member)...? Is this correct?
+               System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): variable");
+
+            // set the generic cast after the fact, once the type expectation is fully known (no need for strict cast)
+               FieldBinding field = null;
+               int length = node.otherBindings == null ? 0 : node.otherBindings.length;
+               if (length == 0)
+                  {
+                    if ((node.bits & Binding.FIELD) != 0 && node.binding != null && node.binding.isValidBinding())
+                       {
+                         System.out.println("case of length == 0 and (...)");
+                         field = (FieldBinding) node.binding;
+                       }
+                  }
+                 else
+                  {
+                    System.out.println("case of length != 0");
+                    field  = node.otherBindings[length-1];
+                  }
+
+               if (field != null)
+                  {
+                    System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): field = " + field.toString());
+
+                    Class cls = field.getClass();
+                    System.out.println("----- field in class = " + cls.toString());
+                    System.out.println("----- field in class = " + cls.toString());
+                  }
+                 else
+                  {
+                 // I don't know what this is, I have not seen an example of this case.
+                    System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): non-field");
+                  }
+
+            // Output the qualified name using the tokens (awful approach)
+               for (int i = 0; i < node.tokens.length; i++)
+                  {
+                 // Note that the qualified name (parent classes fo the data member) appear to only be 
+                 // available via the tokens (sort fo ugly, I think; but this is the best I can figure out so far).
+
+                    String tokenName = new String(node.tokens[i]);
+                    System.out.println("----- tokens for qualification = " + tokenName);
+
+                 // For the set of classes up to (but not including) the last data member reference we need to build support for the classes.
+                    if (i < node.tokens.length-1)
+                       {
+                      // Finding the class has to be done in "try" ... "catch" blocks.
+                         Class cls = null;
+                         try
+                            {
+                           // Fortunately we can get the class from the introspection...is there a better way?
+                              cls = Class.forName("java.lang."+tokenName);
+                            }
+                         catch (Throwable e)
+                            {
+                              System.err.println(e);
+                            }
+
+                         if (cls != null)
+                            {
+                           // We need to build these inplicitly referenced classes and also all
+                           // of their public interface (member functions and data members).
+                              System.out.println("----- tokens represents a class = " + tokenName);
+
+                           // Build support for class (if we have not seen it before then it was implicitly 
+                           // included (imported?) which is why this handling is father complex.
+                              System.out.println("----- add support for class = " + cls.toString());
+                              String className = tokenName;
+                              buildImplicitClassSupport("java.lang." + className);
+                            }
+                       }
+                      else
+                       {
+                      // This is the last token standing for the data member reference (the "field" defined above).
+                       }
+                  }
+
                pushNode(node);
                return true; // do nothing by  node, keep traversing
              }
 
           public boolean visit(QualifiedNameReference node, ClassScope scope)
              {
+            // This is a reference to a data member.
+               System.out.println("Sorry, not implemented in support for QualifiedNameReference(ClassScope): data member");
+
                cactionQualifiedNameReference("abc");
+
+/*
+	if (runtimeTimeType == null || compileTimeType == null)
+		return;
+	// set the generic cast after the fact, once the type expectation is fully known (no need for strict cast)
+	FieldBinding field = null;
+	int length = this.otherBindings == null ? 0 : this.otherBindings.length;
+	if (length == 0) {
+		if ((this.bits & Binding.FIELD) != 0 && this.binding != null && this.binding.isValidBinding()) {
+			field = (FieldBinding) this.binding;
+		}
+	} else {
+		field  = this.otherBindings[length-1];
+	}
+*/
                pushNode(node);
                return true; // do nothing by  node, keep traversing
              }
@@ -492,7 +688,23 @@ class JavaParser  implements Callable<Boolean>
 
           public boolean visit(SingleTypeReference node, BlockScope scope)
              {
-               cactionSingleTypeReference("abc");
+            // cactionSingleTypeReference("abc");
+
+               if (node.resolvedType != null)
+                  {
+                    cactionSingleTypeReference("abc");
+                 // char[][] char_string = node.getTypeName();
+                 // System.out.println(char_string);
+                 // String typename = new String(node.getTypeName().toString());
+                 // String typename = node.getTypeName().toString();
+                    String typename = node.toString();
+                    System.out.println("Sorry, not implemented SingleTypeReference (node.resolvedType != NULL): typename = " + typename);
+                  }
+                 else
+                  {
+                    System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
+                  }
+
                pushNode(node);
                return true; // do nothing by  node, keep traversing
              }
@@ -676,11 +888,13 @@ class JavaParser  implements Callable<Boolean>
 				     BlockScope scope) {
 		    popNode(); // do nothing  by default
 		}
-		public void endVisit(
-				     ConstructorDeclaration node,
-				     ClassScope scope) {
-		    popNode(); // do nothing  by default
-		}
+
+          public void endVisit(ConstructorDeclaration node, ClassScope scope)
+             {
+               cactionConstructorDeclarationEnd();
+               popNode(); // do nothing  by default
+              }
+
 		public void endVisit(ContinueStatement  node, BlockScope scope) {
 		    popNode(); // do nothing  by default
 		}
@@ -1023,8 +1237,128 @@ class JavaParser  implements Callable<Boolean>
 
 
              };
+
+       // Make a copy of the compiation unit so that we can compute source code positions.
+          rose_compilationResult = unit.compilationResult;
+
           unit.traverse(visitor,unit.scope);
         }
+
+
+
+
+     public void buildImplicitClassSupport( String className)
+        {
+       // There is a lot of information that we need about any implicitly included class.
+       // Information about the introspection support is at: http://download.oracle.com/javase/1.4.2/docs/api/java/lang/Class.html
+       // Additional information required should include:
+       //    1) Class hierarchy.
+       //    2) Interfaces
+       //    3) package information
+       //    4) modifiers (for this class)
+       //    5) ProtectionDomain
+       //    6) Resources (URLs?)
+       //    7) Signers
+       //    8) Superclass (part of the class hiearchy)
+       //    9) Array information (is the class an array of some base type)
+       //   10) See member function of the "Class" class for introspection for more details...
+
+       // Get the fields, constructors, and methods used in this class.
+          try
+             {
+            // Class cls = Class.forName("java.lang.String");
+            // Class cls = Class.forName("java.lang."+node.receiver.toString());
+
+            // Note that "java.lang" does not appear to be a class (so is that root of all implicitly included classes?).
+            // Class cls = Class.forName("java.lang");
+               Class cls = Class.forName(className);
+               Method methlist[] = cls.getDeclaredMethods();
+               cactionBuildImplicitClassSupportStart(className);
+
+
+               Field fieldlist[] = cls.getDeclaredFields();
+               for (int i = 0; i < fieldlist.length; i++)
+                  {
+                    Field fld = fieldlist[i];
+                 /* System.out.println("decl class = " + fld.getDeclaringClass());
+                    System.out.println("type = " + fld.getType());
+                    int mod = fld.getModifiers();
+                    System.out.println("modifiers = " + Modifier.toString(mod));
+                    System.out.println("-----");
+                 */
+                 // Note that I am ignoring the field type at the moment.
+                    System.out.println("data member (field) name = " + fld.getName());
+
+                 // cactionBuildImplicitFieldSupport(fld.getName());
+                  }
+
+               Constructor ctorlist[] = cls.getDeclaredConstructors();
+               for (int i = 0; i < ctorlist.length; i++)
+                  {
+                    Constructor ct = ctorlist[i];
+                 /* System.out.println("decl class = " + ct.getDeclaringClass());
+                    Class pvec[] = ct.getParameterTypes();
+                    for (int j = 0; j < pvec.length; j++)
+                         System.out.println("param #" + j + " " + pvec[j]);
+                    Class evec[] = ct.getExceptionTypes();
+                    for (int j = 0; j < evec.length; j++)
+                         System.out.println("exc #" + j + " " + evec[j]);
+                    System.out.println("-----");
+                  */
+                 // Note that I am ignoring the constructor parameter types at the moment.
+                    System.out.println("constructor name = " + ct.getName());
+                 // cactionBuildImplicitMethodSupport(ct.getName());
+                  }
+
+               for (int i = 0; i < methlist.length; i++)
+                  {
+                    Method m = methlist[i];
+
+                 /* System.out.println("name = " + m.getName());
+                    System.out.println("decl class = " + m.getDeclaringClass());
+                    Class pvec[] = m.getParameterTypes();
+                    for (int j = 0; j < pvec.length; j++)
+                         System.out.println("param #" + j + " " + pvec[j]);
+                    Class evec[] = m.getExceptionTypes();
+                    for (int j = 0; j < evec.length; j++)
+                         System.out.println("exc #" + j + " " + evec[j]);
+                    System.out.println("return type = " + m.getReturnType());
+                    System.out.println("-----");
+                 */
+                 // Note that I am ignoring the function type at the moment.
+                    System.out.println("method name = " + m.getName());
+                 // cactionBuildImplicitMethodSupport(m.getName());
+                  }
+               cactionBuildImplicitClassSupportEnd(className);
+             }
+          catch (Throwable e)
+             {
+               System.err.println(e);
+             }
+        }
+
+
+
+     public void sourcePosition(ASTNode node)
+        {
+          int startingSourcePosition = node.sourceStart();
+          int endingSourcePosition   = node.sourceEnd();
+          System.out.println("In visit(MessageSend): start = " + startingSourcePosition + " end = " + endingSourcePosition);
+
+       // Example of how to compute the starting line number and column position of any AST node.
+          int problemStartPosition = startingSourcePosition;
+          int[] lineEnds;
+          int lineNumber   = problemStartPosition >= 0 ? Util.getLineNumber(problemStartPosition, lineEnds = rose_compilationResult.getLineSeparatorPositions(), 0, lineEnds.length-1) : 0;
+          int columnNumber = problemStartPosition >= 0 ? Util.searchColumnNumber(rose_compilationResult.getLineSeparatorPositions(), lineNumber, problemStartPosition) : 0;
+          System.out.println("In visit(MessageSend): lineNumber = " + lineNumber + " columnNumber = " + columnNumber);
+
+       // Example of how to compute the ending line number and column position of any AST node.
+          int problemEndPosition = endingSourcePosition;
+          int lineNumber_end   = problemEndPosition >= 0 ? Util.getLineNumber(problemEndPosition, lineEnds = rose_compilationResult.getLineSeparatorPositions(), 0, lineEnds.length-1) : 0;
+          int columnNumber_end = problemEndPosition >= 0 ? Util.searchColumnNumber(rose_compilationResult.getLineSeparatorPositions(), lineNumber, problemEndPosition) : 0;
+          System.out.println("In visit(MessageSend): lineNumber_end = " + lineNumber_end + " columnNumber_end = " + columnNumber_end);
+         }
+         
 
      public void startParsingAST(CompilationUnitDeclaration unit)
         {

@@ -5,8 +5,14 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
+#include <jni.h>
+
 // Support functions declaration of function defined in this file.
 #include "java_support.h"
+
+
+using namespace std;
+
 
 // DQ (10/21/2010): If Fortran is being supported then there will
 // be a definition of this pointer there.  Note that we currently
@@ -17,19 +23,17 @@ SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 #endif
 
 
-
-
 // Global stack of scopes
-std::list<SgScopeStatement*> astJavaScopeStack;
+list<SgScopeStatement*> astJavaScopeStack;
 
 // Global stack of expressions 
-std::list<SgExpression*> astJavaExpressionStack;
+list<SgExpression*> astJavaExpressionStack;
 
 // Simplifying type for the setSourcePosition() functions
 // typedef std::vector<Token_t*> TokenListType;
 
 // Global stack of IR nodes
-std::list<SgNode*> astJavaNodeStack;
+list<SgNode*> astJavaNodeStack;
 
 // Attribute spec for holding attributes
 // std::list<int> astAttributeSpecStack;
@@ -37,14 +41,16 @@ std::list<SgNode*> astJavaNodeStack;
 
 
 
-bool emptyJavaStateStack()
+bool
+emptyJavaStateStack()
    {
   // Use the scope stack to indicate if we have a value scope available as part of Java lanaguage processing.
      return astJavaScopeStack.empty();
    }
 
 
-SgScopeStatement* getTopOfJavaScopeStack()
+SgScopeStatement*
+getTopOfJavaScopeStack()
    {
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      SgScopeStatement* topOfStack = astJavaScopeStack.front();
@@ -52,3 +58,57 @@ SgScopeStatement* getTopOfJavaScopeStack()
      return topOfStack;
    }
 
+
+string
+convertJavaStringToCxxString(JNIEnv *env, const jstring & java_string)
+   {
+  // Note that "env" can't be passed into this function as "const".
+     const char* str = env->GetStringUTFChars(java_string, NULL);
+     ROSE_ASSERT(str != NULL);
+
+     string returnString = str;
+
+     printf ("Inside of convertJavaStringToCxxString s = %s \n",str);
+
+  // Note that str is not set to NULL.
+     env->ReleaseStringUTFChars(java_string, str);
+     ROSE_ASSERT(str != NULL);
+
+  // return str;
+  // return string(str);
+     return returnString;
+   }
+
+
+SgMemberFunctionDeclaration*
+buildSimpleMemberFunction(const SgName & name)
+   {
+  // This is abstracted so that we can build member functions as require to define Java specific default functions (e.g. super()).
+
+     SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
+     ROSE_ASSERT(classDefinition != NULL);
+
+     SgFunctionParameterTypeList* typeList = SageBuilder::buildFunctionParameterTypeList();
+     ROSE_ASSERT(typeList != NULL);
+
+  // Specify if this is const, volatile, or restrict (0 implies normal member function).
+     unsigned int mfunc_specifier = 0;
+     SgMemberFunctionType* return_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), typeList, classDefinition, mfunc_specifier);
+     ROSE_ASSERT(return_type != NULL);
+
+     SgFunctionParameterList* parameterlist = SageBuilder::buildFunctionParameterList(typeList);
+     ROSE_ASSERT(parameterlist != NULL);
+
+     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, astJavaScopeStack.front() );
+     ROSE_ASSERT(functionDeclaration != NULL);
+
+     ROSE_ASSERT(functionDeclaration->get_definingDeclaration() != NULL);
+
+  // non-defining declaration not built yet.
+     ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() == NULL);
+
+     SgFunctionDefinition* functionDefinition = functionDeclaration->get_definition();
+     ROSE_ASSERT(functionDefinition != NULL);
+
+     return functionDeclaration;
+   }

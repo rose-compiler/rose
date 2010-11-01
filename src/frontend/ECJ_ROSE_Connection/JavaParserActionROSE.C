@@ -29,7 +29,7 @@
  * Method:    cactionCompilationUnitList
  * Signature: (I[Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *, jobject, jint, jobjectArray)
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, jobject, jint, jobjectArray)
    {
      printf ("Inside of Java_JavaParser_cactionCompilationUnitList \n");
 
@@ -52,6 +52,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *, job
      ROSE_ASSERT(astJavaScopeStack.empty() == true);
      astJavaScopeStack.push_front(globalScope);
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
    }
 
 
@@ -72,6 +73,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
 
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
    }
 
 
@@ -79,14 +81,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
    {
      printf ("Build a SgClassDeclaration \n");
 
-     const char* str = env->GetStringUTFChars(java_string, NULL);
-     ROSE_ASSERT(str != NULL);
-     printf ("Inside of Java_JavaParser_cactionTypeDeclaration s = %s \n",str);
-     env->ReleaseStringUTFChars(java_string, str);
+  // We could provide a constructor for "SgName" that takes a "jstring".  This might help support a simpler interface.
+     SgName name = convertJavaStringToCxxString(env,java_string);
 
-     SgName name = str;
+     printf ("Build class type: name = %s \n",name.str());
+
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      SgClassDeclaration* declaration = SageBuilder::buildDefiningClassDeclaration ( name, astJavaScopeStack.front() );
+
+     ROSE_ASSERT(declaration->get_type() != NULL);
 
   // Set the source code position...
   // setSourcePosition(declaration);
@@ -103,26 +106,34 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
   // setSourcePositionCompilerGenerated(definition);
 
      astJavaScopeStack.push_front(definition);
+     ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+  // Add "super()" member function.
+     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super");
+     ROSE_ASSERT(functionDeclaration != NULL);
    }
 
 
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
    {
      printf ("Build a SgMemberFunctionDeclaration (constructor) \n");
 
   // SgMemberFunctionDeclaration* buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
      SgName name = "abc";
 
-     SgFunctionParameterTypeList* typeList = SageBuilder::buildFunctionParameterTypeList();
-     ROSE_ASSERT(typeList != NULL);
-
-     unsigned int mfunc_specifier = 0;
-
+#if 1
+     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction(name);
+#else
      SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
      ROSE_ASSERT(classDefinition != NULL);
 
+     SgFunctionParameterTypeList* typeList = SageBuilder::buildFunctionParameterTypeList();
+     ROSE_ASSERT(typeList != NULL);
+
+  // Specify if this is const, volatile, or restrict (0 implies normal member function).
+     unsigned int mfunc_specifier = 0;
      SgMemberFunctionType* return_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), typeList, classDefinition, mfunc_specifier);
      ROSE_ASSERT(return_type != NULL);
 
@@ -136,25 +147,74 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *, 
 
   // non-defining declaration not built yet.
      ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() == NULL);
+#endif
 
      SgFunctionDefinition* functionDefinition = functionDeclaration->get_definition();
      ROSE_ASSERT(functionDefinition != NULL);
 
+     astJavaScopeStack.push_front(functionDefinition);
+     ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+     ROSE_ASSERT(functionDefinition->get_body() != NULL);
+     astJavaScopeStack.push_front(functionDefinition->get_body());
+     ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd (JNIEnv *env, jobject xxx)
    {
-     printf ("Build a constructor function call \n");
+     printf ("End of SgMemberFunctionDeclaration (constructor) \n");
+
+  // Pop the constructor body...
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     astJavaScopeStack.pop_front();
+ 
+  // Pop the fuction definition...
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     astJavaScopeStack.pop_front();
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *, jobject, jstring)
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *env, jobject xxx, jstring java_string)
+   {
+  // Build a member function call...
+     printf ("Build a constructor function call \n");
+
+  // Should this be a SgBasicBlock or just a SgScopeStatement?
+     SgBasicBlock* basicBlock = isSgBasicBlock(astJavaScopeStack.front());
+     ROSE_ASSERT(basicBlock != NULL);
+     ROSE_ASSERT(basicBlock->get_parent() != NULL);
+
+     SgName name = convertJavaStringToCxxString(env,java_string);
+
+     printf ("buiding function call: name = %s \n",name.str());
+
+     SgExprListExp* parameters = NULL;
+     SgExprStatement* expressionStatement = SageBuilder::buildFunctionCallStmt(name,SgTypeVoid::createType(),parameters,astJavaScopeStack.front());
+     ROSE_ASSERT(expressionStatement != NULL);
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     astJavaScopeStack.front()->append_statement(expressionStatement);
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject, jstring java_string)
    {
      printf ("Build a SgMemberFunctionDeclaration \n");
+
+     SgName name = convertJavaStringToCxxString(env,java_string);
+     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction(name);
+
+     astJavaScopeStack.front()->append_statement(functionDeclaration);
+
+  // Push the declaration onto the declaration stack.
    }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionSingleTypeReference (JNIEnv *, jobject, jstring)
    {
      printf ("Build a type \n");
+
+  // Build a type and put it onto the type stack.
+  // ...OR...
+  // Build a type and add it to the declaration on the declaration stack.
    }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionArgument (JNIEnv *, jobject, jstring)
@@ -181,3 +241,26 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *, jobject, 
    {
      printf ("Build a SgStringVal \n");
    }
+
+
+
+
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build support for implicit class (start) \n");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build support for implicit class (end) \n");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv *, jobject, jstring)
+   {
+     printf ("Build support for implicit method \n");
+   }
+
