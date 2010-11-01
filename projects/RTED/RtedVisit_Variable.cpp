@@ -365,7 +365,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n,
                << endl;
          SgType* arg_type = isSgExpression(last)->get_type();
          SgType* param_type = NULL;
-#if 1
+#if 0
          // try to determine the parameter type
          SgFunctionDeclaration* fndecl = isSgFunctionCallExp(
                parent -> get_parent())-> getAssociatedFunctionDeclaration();
