@@ -622,11 +622,11 @@ SgUnsignedLongLongIntVal
 SgUnsignedLongVal
 SgUnsignedShortVal
 SgUpcBarrierStatement
-SgUpcBlocksizeof
-SgUpcElemsizeof
+SgUpcBlocksizeofExpression
+SgUpcElemsizeofExpression
 SgUpcFenceStatement
 SgUpcForAllStatement
-SgUpcLocalsizeof
+SgUpcLocalsizeofExpression
 SgUpcMythread
 SgUpcNotifyStatement
 SgUpcThreads

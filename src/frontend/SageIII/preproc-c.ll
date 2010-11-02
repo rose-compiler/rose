@@ -239,7 +239,8 @@ struct file_pos_info curr_beginning;
 namespace ROSE_token_ids
 {
     //whitespace token IDs
-    enum whitespace{ 
+    enum whitespace
+    { 
 	T_NOTKNOWN,
 	//The following are non UNIX whitespace
     };

@@ -20,9 +20,13 @@ endif
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    libroseOpenFortranParserlibraries = frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la
-   libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
 else
    libroseOpenFortranParserlibraries =
+endif
+
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+   libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
+else
    libroseJavaParserlibraries =
 endif
 
@@ -32,7 +36,7 @@ else
    librosePHPlibraries =
 endif
 
-# if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseBinaryLibraries = \
       $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
       $(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la \
@@ -40,9 +44,10 @@ endif
       $(top_builddir)/src/backend/asmUnparser/libroseAsmUnparser.la \
       $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
       $(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la 
-# else
-#   libroseBinaryLibraries =
-# endif
+else
+   libroseBinaryLibraries = \
+      $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la
+endif
 
 if ROSE_USE_MYSQL
   OPT_MYSQL_LDFLAGS = $(MYSQL_LDFLAGS)
@@ -165,7 +170,8 @@ LINK = $(CXXLINK)
 
 lib_LTLIBRARIES = librose.la
 
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_USE_INTERNAL_JAVA_SUPPORT
    JAVA_JVM_FLAGS = $(JAVA_JVM_LINK)
 
 # OpenFortranParser-${OFP_VERSION}.jar:

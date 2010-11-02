@@ -3,6 +3,7 @@
 #include "unparser.h"
 #include <limits>
 
+#include "OmpAttribute.h" // to support unparsing OpenMP constructs
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -598,7 +599,22 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgIdentDirectiveStatement:   unparseIdentDirectiveStatement  (stmt, info); break;
                case V_SgIncludeNextDirectiveStatement: unparseIncludeNextDirectiveStatement  (stmt, info); break;
                case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
-
+            // Liao 10/21/2010. Handle generic OpenMP directive unparsing here.
+               case V_SgOmpAtomicStatement:
+               case V_SgOmpSectionStatement:
+               case V_SgOmpTaskwaitStatement:
+               case V_SgOmpBarrierStatement:           unparseOmpSimpleStatement        (stmt, info);break;
+               case V_SgOmpThreadprivateStatement:     unparseOmpThreadprivateStatement (stmt, info);break;
+               case V_SgOmpFlushStatement:             unparseOmpFlushStatement         (stmt, info);break;
+               // Generic OpenMP directives with a format of : begin-directive, begin-clauses, body, end-directive , end-clauses
+               case V_SgOmpCriticalStatement:
+               case V_SgOmpMasterStatement:
+               case V_SgOmpOrderedStatement:
+               case V_SgOmpSectionsStatement:
+               case V_SgOmpParallelStatement:
+               case V_SgOmpWorkshareStatement:
+               case V_SgOmpSingleStatement:
+               case V_SgOmpTaskStatement:  unparseOmpGenericStatement (stmt, info); break;
                default:
                  // DQ (11/4/2008): This is a bug for the case of a SgFortranDo statement, unclear what to do about this.
                  // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
@@ -2896,5 +2912,612 @@ UnparseLanguageIndependentConstructs::unparseLinemarkerDirectiveStatement (SgSta
      unp->u_sage->curprint_newline();
    }
 
+void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  SgOmpDefaultClause * c = isSgOmpDefaultClause(clause);
+  ROSE_ASSERT(c!= NULL);
+  curprint(string(" default("));
+  SgOmpClause::omp_default_option_enum dv = c->get_data_sharing(); 
+  switch (dv)
+  {
+    case SgOmpClause::e_omp_default_none:
+      {
+        curprint(string("none"));
+        break;
+      }
+    case SgOmpClause::e_omp_default_shared:
+      {   
+        curprint(string("shared"));
+        break;
+      }   
+    case SgOmpClause::e_omp_default_private:
+      {
+        curprint(string("private"));
+        break;
+      }
+    case SgOmpClause::e_omp_default_firstprivate:
+      {
+        curprint(string("firstprivate"));
+        break; 
+      }
+    default:
+      cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpDefaultClause() meets unacceptable default option value:"<<dv<<endl;
+      break;
+  }    
+  curprint(string(")"));
+}
+
+void UnparseLanguageIndependentConstructs::unparseOmpScheduleClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  SgOmpScheduleClause* c = isSgOmpScheduleClause(clause);
+  ROSE_ASSERT(c!= NULL);
+  curprint (string (" schedule("));
+  SgOmpClause::omp_schedule_kind_enum skind = c-> get_kind ();
+  switch (skind)
+  {
+    case SgOmpClause::e_omp_schedule_static:
+      {
+        curprint(string("static"));
+        break;
+      }
+    case SgOmpClause::e_omp_schedule_dynamic:
+      {
+        curprint(string("dynamic"));
+        break;
+      }
+    case SgOmpClause::e_omp_schedule_guided:
+      {
+        curprint(string("guided"));
+        break;
+      }
+    case SgOmpClause::e_omp_schedule_auto :
+      {
+        curprint(string("auto"));
+        break;
+      }
+    case SgOmpClause::e_omp_schedule_runtime :
+      {
+        curprint(string("runtime"));
+        break;
+      }
+    default:
+      cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpScheduleClause() meets unacceptable kind option value:"<<skind<<endl;
+      break;
+  }
+
+  // chunk_size expression
+  SgUnparse_Info ninfo(info);
+  if (c->get_chunk_size())
+  {
+    curprint(string(" , "));
+    unparseExpression(c->get_chunk_size(), ninfo);
+  }
+
+  curprint(string(")"));
+}
+
+#if 1
+//! A helper function to convert reduction operators to strings
+// TODO put into a better place and expose it to users.
+static std::string reductionOperatorToString(SgOmpClause::omp_reduction_operator_enum ro)
+{
+  string result;
+  switch (ro)
+  {
+    case SgOmpClause::e_omp_reduction_plus: 
+      {
+        result = "+";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_mul: 
+      {
+        result = "*";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_minus:   
+      {
+        result = "-";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_bitand:  
+      {
+        result = "&";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_bitor :  
+      {
+        result = "|";
+        break;
+      }
+      //------------
+    case SgOmpClause::e_omp_reduction_bitxor:  
+      {
+        result = "^";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_logand:  
+      {
+        result = "&&";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_logor :  
+      {
+        result = "||";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_and  : 
+      {
+        result = ".and.";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_or : 
+      {
+        result = ".or.";
+        break;
+      }
+     //------------
+    case SgOmpClause::e_omp_reduction_eqv:   
+      {
+        result = ".eqv.";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_neqv : 
+      {
+        result = ".neqv.";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_max  : 
+      {
+        result = "max";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_min  : 
+      {
+        result = "min";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_iand : 
+      {
+        result = "iand";
+        break;
+      }
+
+      //------------
+    case SgOmpClause::e_omp_reduction_ior  : 
+      {
+        result = "ior";
+        break;
+      }
+    case SgOmpClause::e_omp_reduction_ieor : 
+      {
+        result = "ieor";
+        break;
+      }
+    default:
+      {
+        cerr<<"Error: unhandled operator type ReductionOperatorToString():"<< ro <<endl;
+        ROSE_ASSERT(false);
+      }
+  }
+  return result;
+}
+#endif
+
+//! Unparse an OpenMP clause with a variable list
+void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  SgOmpVariablesClause* c= isSgOmpVariablesClause (clause);  
+  ROSE_ASSERT(c!= NULL);
+  // unparse the  clause name first
+  switch (c->variantT())
+  {
+    case V_SgOmpCopyinClause:
+      curprint(string(" copyin("));
+      break;
+    case V_SgOmpCopyprivateClause:
+      curprint(string(" copyprivate("));
+      break;
+    case V_SgOmpFirstprivateClause:
+      curprint(string(" firstprivate("));
+      break;
+    case V_SgOmpLastprivateClause:
+      curprint(string(" lastprivate("));
+      break;
+    case V_SgOmpPrivateClause:
+      curprint(string(" private("));
+      break;
+    case V_SgOmpReductionClause:
+      {
+        curprint(string(" reduction("));
+        //reductionOperatorToString() will handle language specific issues 
+        curprint(reductionOperatorToString(isSgOmpReductionClause(c)->get_operation()));
+        curprint(string(" : "));
+      break;
+      }
+    case V_SgOmpSharedClause:
+      curprint(string(" shared("));
+      break;
+    default:
+      cerr<<"Error: unhandled clause type in UnparseLanguageIndependentConstructs::unparseOmpVariablesClause ():"<< clause->class_name()<<endl;
+      ROSE_ASSERT(false);
+      break;
+  }
+
+  //unparse variable list then
+  SgVarRefExpPtrList::iterator p = c->get_variables().begin();
+  while ( p != c->get_variables().end() )
+  {
+    SgInitializedName* init_name = (*p)->get_symbol()->get_declaration();           
+    SgName tmp_name  = init_name->get_name();
+    curprint( tmp_name.str());
+
+    // Move to the next argument
+    p++;
+
+    // Check if this is the last argument (output a "," separator if not)
+    if (p != c->get_variables().end())
+    {
+      curprint( ",");
+    }
+  }
+
+  curprint(string(")"));
+}
+
+void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  SgOmpExpressionClause * c = isSgOmpExpressionClause (clause);
+  ROSE_ASSERT  (c);
+  SgOmpExpressionClause* exp_clause = isSgOmpExpressionClause(c);
+  ROSE_ASSERT(exp_clause);
+  if (isSgOmpCollapseClause(c))
+    curprint(string(" collapse("));
+  else if (isSgOmpIfClause(c))
+    curprint(string(" if("));
+  else if (isSgOmpNumThreadsClause(c))
+    curprint(string(" num_threads("));
+  else {
+    cerr<<"Error: unacceptable clause type within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
+    ROSE_ASSERT(false);
+  }    
+
+  // unparse the expression
+  SgUnparse_Info ninfo(info);
+  if (exp_clause->get_expression())
+    unparseExpression(exp_clause->get_expression(), ninfo);
+  else
+  {
+    cerr<<"Error: missing expression within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
+    ROSE_ASSERT(false);
+  }
+
+  curprint(string(")"));
+}      
+
+// Entry point for unparsing OpenMP clause
+void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  switch (clause->variantT())
+  {
+    case V_SgOmpDefaultClause:
+      {
+        unparseOmpDefaultClause(isSgOmpDefaultClause(clause),info);
+        break;
+      }
+    case V_SgOmpNowaitClause:
+      {
+        curprint(string(" nowait"));
+        break;
+      }
+    case V_SgOmpOrderedClause:
+      {
+        curprint(string(" ordered"));
+        break;
+      }
+    case V_SgOmpUntiedClause:
+      {
+        curprint(string(" untied"));
+        break;
+      }
+    case V_SgOmpScheduleClause:
+      {
+        unparseOmpScheduleClause(isSgOmpScheduleClause(clause), info);
+        break;
+      }
+    case V_SgOmpCollapseClause:
+    case V_SgOmpIfClause:  
+    case V_SgOmpNumThreadsClause:  
+      //case V_SgOmpExpressionClause: // there should be no instance for this clause
+      {
+        unparseOmpExpressionClause(isSgOmpExpressionClause(clause), info);
+        break; 
+      }                       
+    case V_SgOmpCopyprivateClause:
+    case V_SgOmpCopyinClause:
+    case V_SgOmpFirstprivateClause:
+    case V_SgOmpLastprivateClause:
+    case V_SgOmpPrivateClause:
+    case V_SgOmpReductionClause:
+    case V_SgOmpSharedClause:
+      {     
+        unparseOmpVariablesClause(isSgOmpVariablesClause(clause), info);
+        break;
+      }     
+
+    default:
+      {
+        cerr<<"Unhandled OpenMP clause type in UnparseLanguageIndependentConstructs::unparseOmpClause():"<<clause->class_name()<<endl;
+        ROSE_ASSERT(false);
+        break;  
+      }
+  }    
+}
+
+//! This is not intended to be directly called anytime.
+//  Individual languages should have implemented their own OpenMP prefixes 
+void UnparseLanguageIndependentConstructs::unparseOmpPrefix(SgUnparse_Info& info)
+{
+  cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpPrefix() should not be called directly!"<<endl;
+  cerr<<"Individual languages should have implemented their own OpenMP prefixes."<<endl; 
+  ROSE_ASSERT (false);
+}
+// simple directives: atomic, section, taskwait, barrier
+void UnparseLanguageIndependentConstructs::unparseOmpSimpleStatement(SgStatement * stmt,  SgUnparse_Info& info)
+{
+  ROSE_ASSERT (stmt != NULL);
+  unparseOmpDirectivePrefixAndName(stmt, info); 
+  unp->u_sage->curprint_newline();
+  SgOmpBodyStatement* b_stmt = isSgOmpBodyStatement(stmt);
+  if (b_stmt)
+  {
+    ROSE_ASSERT (stmt->variantT() == V_SgOmpAtomicStatement || stmt->variantT() == V_SgOmpSectionStatement);
+    SgUnparse_Info ninfo(info);
+    unparseStatement(b_stmt->get_body(), ninfo);
+  }
+}
+
+//----- refactor unparsing for threadprivate and flush ???
+void UnparseLanguageIndependentConstructs::unparseOmpFlushStatement(SgStatement* stmt,     SgUnparse_Info& info)
+{
+  ROSE_ASSERT (stmt != NULL);
+  SgOmpFlushStatement * s = isSgOmpFlushStatement(stmt);
+  ROSE_ASSERT (s!= NULL);
+
+  unparseOmpDirectivePrefixAndName(stmt, info); 
+  if (s->get_variables().size()>0)
+    curprint(string ("("));
+  //unparse variable list then
+  SgVarRefExpPtrList::iterator p = s->get_variables().begin();
+  while ( p != s->get_variables().end() )
+  {
+    ROSE_ASSERT ((*p)->get_symbol() != NULL);
+    SgInitializedName* init_name = (*p)->get_symbol()->get_declaration();
+    ROSE_ASSERT (init_name != NULL);
+    SgName tmp_name  = init_name->get_name();
+    curprint( tmp_name.str());
+
+    // Move to the next argument
+    p++;
+
+    // Check if this is the last argument (output a "," separator if not)
+    if (p != s->get_variables().end())
+    {
+      curprint( ",");
+    }
+  }
+  if (s->get_variables().size()>0)
+    curprint (string (")"));
+  unp->u_sage->curprint_newline();
+}
+
+void UnparseLanguageIndependentConstructs::unparseOmpThreadprivateStatement(SgStatement* stmt,     SgUnparse_Info& info)
+{
+  ROSE_ASSERT (stmt != NULL);
+  SgOmpThreadprivateStatement * s = isSgOmpThreadprivateStatement(stmt);
+  ROSE_ASSERT (s!= NULL);
+  unparseOmpDirectivePrefixAndName(stmt, info); 
+  curprint(string ("("));
+  //unparse variable list then
+  SgVarRefExpPtrList::iterator p = s->get_variables().begin();
+  while ( p != s->get_variables().end() )
+  {
+    ROSE_ASSERT ( (*p)->get_symbol() != NULL);
+    SgInitializedName* init_name = (*p)->get_symbol()->get_declaration();
+    ROSE_ASSERT (init_name);
+    SgName tmp_name  = init_name->get_name();
+    curprint( tmp_name.str());
+
+    // Move to the next argument
+    p++;
+
+    // Check if this is the last argument (output a "," separator if not)
+    if (p != s->get_variables().end())
+    {
+      curprint( ",");
+    }
+  } // end while
+
+  curprint (string (")"));
+  unp->u_sage->curprint_newline();
+}
+
+// A helper function to just unparse omp-prefix directive-name, without bothering clauses
+// examples: 
+//  #pragma omp parallel, 
+//  !$omp parallel, 
+void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgStatement* stmt,     SgUnparse_Info& info)
+{
+  ROSE_ASSERT(stmt != NULL);
+  unp->u_sage->curprint_newline();
+  switch (stmt->variantT())
+  {
+      case V_SgOmpAtomicStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("atomic "));
+        break;
+      }
+      case V_SgOmpSectionStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("section "));
+        break;
+      }
+      case V_SgOmpTaskStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("task "));
+        break;
+      }
+       case V_SgOmpTaskwaitStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("taskwait "));
+        break;
+      }
+     case V_SgOmpFlushStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("flush "));
+        break;
+      }
+      case V_SgOmpThreadprivateStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("threadprivate "));
+        break;
+      }
+     case V_SgOmpBarrierStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("barrier "));
+        break;
+      }
+    case V_SgOmpParallelStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("parallel "));
+        break;
+      }
+     case V_SgOmpCriticalStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("critical "));
+        if (isSgOmpCriticalStatement(stmt)->get_name().getString()!="")
+        {
+          curprint (string ("("));
+          curprint (isSgOmpCriticalStatement(stmt)->get_name().getString());
+          curprint (string (")"));
+        }
+        break;
+      }
+         case V_SgOmpForStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("for "));
+        break;
+      }
+        case V_SgOmpDoStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("do "));
+        break;
+      }
+       case V_SgOmpMasterStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("master "));
+        break;
+      }
+      case V_SgOmpOrderedStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("ordered "));
+        break;
+      }
+    case V_SgOmpWorkshareStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("workshare "));
+        break;
+      }
+      case V_SgOmpSingleStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("single "));
+        break;
+      }
+     case V_SgOmpSectionsStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("sections "));
+        break;
+      }
+    default:
+      {
+        cerr<<"error: unacceptable OpenMP directive type within unparseOmpDirectivePrefixAndName(): "<<stmt->class_name()<<endl;
+        ROSE_ASSERT(false);
+        break;
+      }
+  } // end switch
+}
+
+// This is necessary since some clauses should only appear with the begin part of a directive
+// C/C++ derivation: unparse all clauses attached to the directive
+// Fortran derivation: unparse most clauses except a few nowait, copyprivate clauses which should appear with the end directive
+void UnparseLanguageIndependentConstructs::unparseOmpBeginDirectiveClauses      (SgStatement* stmt,     SgUnparse_Info& info)
+{
+  cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpBeginDirectiveClauses() should not be called directly"<<endl;
+  ROSE_ASSERT (false);
+}
+
+// Output the corresponding end directive text for an OpenMP AST nodes for directive
+void UnparseLanguageIndependentConstructs::unparseOmpEndDirectivePrefixAndName (SgStatement* stmt,     SgUnparse_Info& info)
+{
+  ROSE_ASSERT(stmt != NULL);
+  // This one should do nothing by default
+  // Only Fortran derived implementation should output something there
+}
+
+// Default behavior for unparsing clauses appearing with 'end xxx'
+void UnparseLanguageIndependentConstructs::unparseOmpEndDirectiveClauses        (SgStatement* stmt,     SgUnparse_Info& info)
+{
+  // it should not do anything here , and for C/C++ subclass
+  // Derived implementation in Fortran should do something.
+}
+
+// This is a catch-all helper function 
+void UnparseLanguageIndependentConstructs::unparseOmpGenericStatement (SgStatement* stmt,     SgUnparse_Info& info)
+{
+  ROSE_ASSERT(stmt != NULL);
+  // unparse the begin directive
+  unparseOmpDirectivePrefixAndName (stmt, info);
+  // unparse the begin directive's clauses
+  unparseOmpBeginDirectiveClauses(stmt, info);
+  unp->u_sage->curprint_newline();
+
+  // unparse the body, if exists. 
+  SgOmpBodyStatement* b_stmt = isSgOmpBodyStatement(stmt);
+  if (b_stmt)
+  {
+    SgUnparse_Info ninfo(info);
+    unparseStatement(b_stmt->get_body(), ninfo);
+  }
+  else
+ {
+   //TODO assertion for must-have bodies
+  }
+
+  // unparse the end directive and name 
+  unparseOmpEndDirectivePrefixAndName (stmt, info);
+  // unparse the end directive's clause
+  unparseOmpEndDirectiveClauses(stmt, info);
+
+} // end unparseOmpGenericStatement
 
 

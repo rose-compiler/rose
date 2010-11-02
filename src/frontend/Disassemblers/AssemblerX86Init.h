@@ -18,7 +18,8 @@
  *  each instruction mnemonic. The AssemblerX86::to_str(X86InstructionKind) static method can be used convert the
  *  enumeration constant to a string for printing.  Documentation for each instruction can be found on the specified page
  *  of the "Instruction Set Reference" available from the Intel web site, version March 2009. */
-enum X86InstructionKind {
+enum X86InstructionKind 
+{
     x86_unknown_instruction     = 0x0000,
     x86_aaa                     = 0x0001, // x86-InstructionSetReference-AM.pdf, page 3-28
     x86_aad                     = 0x0002, // x86-InstructionSetReference-AM.pdf, page 3-30

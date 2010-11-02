@@ -41,7 +41,7 @@ SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const
                          fhdr->get_word_size());
     unsigned char *buf = new unsigned char[worst_size];
 
-    addr_t at = 0;
+    rose_addr_t at = 0;
     uint32_t u32_disk;
     unsigned char u8_disk;
 
@@ -176,7 +176,7 @@ SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehframe, SgAsmElfE
     unsigned char *buf = new unsigned char[worst_size];
 
     size_t sz;
-    addr_t at = 0;
+    rose_addr_t at = 0;
     uint32_t u32_disk;
 
     /* PC Begin (begin_rva) and size */
@@ -264,19 +264,19 @@ SgAsmElfEHFrameSection::parse()
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL);
 
-    addr_t record_offset=0;
-    std::map<addr_t, SgAsmElfEHFrameEntryCI*> cies;
+    rose_addr_t record_offset=0;
+    std::map<rose_addr_t, SgAsmElfEHFrameEntryCI*> cies;
 
     while (record_offset<get_size()) {
-        addr_t at = record_offset;
+        rose_addr_t at = record_offset;
         unsigned char u8_disk;
         uint32_t u32_disk;
         uint64_t u64_disk;
 
         /* Length or extended length */
-        addr_t length_field_size = 4; /*number of bytes not counted in length*/
+        rose_addr_t length_field_size = 4; /*number of bytes not counted in length*/
         read_content_local(at, &u32_disk, 4); at += 4;
-        addr_t record_size = disk_to_host(fhdr->get_sex(), u32_disk);
+        rose_addr_t record_size = disk_to_host(fhdr->get_sex(), u32_disk);
         if (record_size==0xffffffff) {
             read_content_local(at, &u64_disk, 8); at += 8;
             record_size = disk_to_host(fhdr->get_sex(), u64_disk);
@@ -287,7 +287,7 @@ SgAsmElfEHFrameSection::parse()
 
         /* Backward offset to CIE record, or zero if this is a CIE record. */
         read_content_local(at, &u32_disk, 4); at += 4;
-        addr_t cie_back_offset = disk_to_host(fhdr->get_sex(), u32_disk);
+        rose_addr_t cie_back_offset = disk_to_host(fhdr->get_sex(), u32_disk);
         if (0==cie_back_offset) {
             /* This is a CIE record */
             SgAsmElfEHFrameEntryCI *cie = new SgAsmElfEHFrameEntryCI(this);
@@ -366,13 +366,13 @@ SgAsmElfEHFrameSection::parse()
 
             /* Initial instructions. These are apparently included in the augmentation_data_length. The final instructions can
              * be zero padding (no-op instructions) to bring the record up to a multiple of the word size. */
-            addr_t init_insn_size = (length_field_size + record_size) - (at - record_offset);
+            rose_addr_t init_insn_size = (length_field_size + record_size) - (at - record_offset);
             cie->get_instructions() = read_content_local_ucl(at, init_insn_size);
             ROSE_ASSERT(cie->get_instructions().size()==init_insn_size);
 
         } else {
             /* This is a FDE record */
-            addr_t cie_offset = record_offset + length_field_size - cie_back_offset;
+            rose_addr_t cie_offset = record_offset + length_field_size - cie_back_offset;
             assert(cies.find(cie_offset)!=cies.end());
             SgAsmElfEHFrameEntryCI *cie = cies[cie_offset];
             SgAsmElfEHFrameEntryFD *fde = new SgAsmElfEHFrameEntryFD(cie);
@@ -399,14 +399,14 @@ SgAsmElfEHFrameSection::parse()
             /* Augmentation Data */
             std::string astring = cie->get_augmentation_string();
             if (astring.size()>0 && astring[0]=='z') {
-                addr_t aug_length = read_content_local_uleb128(&at);
+                rose_addr_t aug_length = read_content_local_uleb128(&at);
                 fde->get_augmentation_data() = read_content_local_ucl(at, aug_length);
                 at += aug_length;
                 ROSE_ASSERT(fde->get_augmentation_data().size()==aug_length);
             }
 
             /* Call frame instructions */
-            addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
+            rose_addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
             fde->get_instructions() = read_content_local_ucl(at, cf_insn_size);
             ROSE_ASSERT(fde->get_instructions().size()==cf_insn_size);
         }
@@ -421,7 +421,7 @@ SgAsmElfEHFrameSection::parse()
 rose_addr_t
 SgAsmElfEHFrameSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
-    addr_t whole = unparse(NULL);
+    rose_addr_t whole = unparse(NULL);
     if (entsize)
         *entsize = 0;
     if (required)
@@ -449,12 +449,12 @@ SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL);
 
-    addr_t at=0;
+    rose_addr_t at=0;
     uint32_t u32_disk;
     uint64_t u64_disk;
 
     for (size_t i=0; i<get_ci_entries()->get_entries().size(); i++) {
-        addr_t last_cie_offset = at;
+        rose_addr_t last_cie_offset = at;
         SgAsmElfEHFrameEntryCI *cie = get_ci_entries()->get_entries()[i];
         std::string s = cie->unparse(this);
         if (s.size()<0xffffffff) {
@@ -481,7 +481,7 @@ SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
             std::string s = fde->unparse(this, cie);
 
             /* Record size, not counting run-length coded size field, but counting CIE back offset. */
-            addr_t record_size = 4 + s.size();
+            rose_addr_t record_size = 4 + s.size();
             if (record_size<0xffffffff) {
                 host_to_disk(fhdr->get_sex(), record_size, &u32_disk);
                 if (fp)
@@ -500,7 +500,7 @@ SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
 
             /* CIE back offset. Number of bytes from the beginning of the current CIE record (including the Size fields) to
              * the beginning of the FDE record (excluding the Size fields but including the CIE back offset). */
-            addr_t cie_back_offset = at - last_cie_offset;
+            rose_addr_t cie_back_offset = at - last_cie_offset;
             host_to_disk(fhdr->get_sex(), cie_back_offset, &u32_disk);
             if (fp)
                 write(*fp, at, 4, &u32_disk);

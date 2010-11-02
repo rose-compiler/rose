@@ -35,7 +35,8 @@ namespace VirtualCFG {
   //! particular control structure.  Fortran support for this is underdeveloped;
   //! single AST nodes representing variable-length loops was not part of the
   //! original design of the CFG code.
-  enum EdgeConditionKind {
+  enum EdgeConditionKind 
+  {
     eckUnconditional, //! Normal, unconditional edge
     eckTrue,	      //! True case of a two-way branch
     eckFalse,	      //! False case of a two-way branch
