@@ -1,7 +1,0 @@
-TITLE="testing default on all linux platforms"
-DESCRIPTION="minimal configuration options, gcc 4.2.4, boost 1.36"
-PREREQS="gcc-4.2.4, boost-1.36.0, libtool-2.2.6b, java-1.5.0_08, automake-1.10, autoconf-2.63, libxml2-2.7.3"
-CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall"
-ACLOCAL_INCLUDES="-I /prereq/libxml2-2.7.3/share/aclocal/"
-
-# JAVA_HOME="/prereq/java-1.5.0_08"
