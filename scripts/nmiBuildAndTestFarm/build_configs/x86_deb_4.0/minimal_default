@@ -1,9 +1,0 @@
-TITLE="testing default on all linux platforms"
-DESCRIPTION="minimal configuration options, boost 1.36, without java"
-
-# DQ (9/12/2009): These rereq's are not supported.
-# PREREQS="gcc-4.2.4, boost-1.36.0, automake-1.10, autoconf-2.63, libxml2-2.7.3"
-PREREQS="boost-1.36.0, libtool-2.2.6b, libxml2-2.7.3"
-
-CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java"
-ACLOCAL_INCLUDES="-I /prereq/libxml2-2.7.3/share/aclocal/"
