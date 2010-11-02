@@ -15,40 +15,29 @@ class InheritedAttribute
          bool isAssignInitializer;
          bool isArrowExp;
          bool isAddressOfOp;
-         bool isLValue;
-         bool isReferenceType;
-         bool isInitializedName;
+         bool isForStatement;
          bool isBinaryOp;
-         bool isDotExp;
-         bool isPointerDerefExp;
 
 
  //  InheritedAttributeBools* bools;
        // Specific constructors are required
 
-	 InheritedAttribute (bool f, bool a, bool ae, bool ao, bool l, bool r, bool i, bool bo, bool dot, bool pd) :
-	                                               
+	 InheritedAttribute (bool f, bool a, bool ae, bool ao, bool i, bool bo) :
 	                                               function(f),
 	                                               isAssignInitializer(a),
 	                                               isArrowExp(ae),
 	                                               isAddressOfOp(ao),
-	                                               isLValue(l),
-	                                               isReferenceType(r),
-	                                               isInitializedName(i),
-	                                               isBinaryOp(bo),
-	                                               isDotExp(dot),
-	                                               isPointerDerefExp(pd) {};
+	                                               isForStatement(i),
+	                                               isBinaryOp(bo)
+         {};
 	 InheritedAttribute ( const InheritedAttribute & X ) : 
 	                                                       function(X.function),
 	                                                       isAssignInitializer(X.isAssignInitializer),
 	                                                       isArrowExp(X.isArrowExp),
 	                                                       isAddressOfOp(X.isAddressOfOp),
-	                                                       isLValue(X.isLValue),
-	                                                       isReferenceType(X.isReferenceType),
-	                                                       isInitializedName(X.isInitializedName),
-	                                                       isBinaryOp(X.isBinaryOp),
-	                                                       isDotExp(X.isDotExp),
-	                                                       isPointerDerefExp(X.isPointerDerefExp) {};
+	                                                       isForStatement(X.isForStatement),
+	                                                       isBinaryOp(X.isBinaryOp)
+	 {};
 
  //  InheritedAttribute (InheritedAttributeBools* b) : bools(b){};
  //  InheritedAttribute ( const InheritedAttribute & X ) : bools(X.bools){};
@@ -63,6 +52,7 @@ class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,
 
      RtedTransformation* transf;
      std::vector<SgExpression*>* rightOfbinaryOp;
+     std::vector<SgForStatement*>* for_stmt;
      public:
 
    VariableTraversal(RtedTransformation* t) ;
@@ -78,11 +68,7 @@ class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,
 							InheritedAttribute inheritedAttribute,
 							SubTreeSynthesizedAttributes synthesizedAttributeList );
 
-     bool isLValue(SgNode* node);
-     bool isInterestingAssignNode(SgNode* node);
      bool isRightOfBinaryOp(SgNode* node);
-
-     SgForStatement* isVariableInForStatement(SgNode* astNode);
      bool isInitializedNameInForStatement(SgForStatement* for_stmt,SgInitializedName* name);
    };
 

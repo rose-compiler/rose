@@ -23,243 +23,84 @@ VariableTraversal::VariableTraversal(RtedTransformation* t) {
    transf = t;
    rightOfbinaryOp = new std::vector<SgExpression*>();
    ROSE_ASSERT(rightOfbinaryOp);
-}
-;
-
-bool VariableTraversal::isInterestingAssignNode(SgNode* exp) {
-   if (!isSgDotExp(exp) && !isSgPointerDerefExp(exp))
-      return true;
-   else
-      cerr << " ----------------------- NODE is not interesting : "
-            << exp->class_name() << endl;
-   return false;
+   for_stmt = new std::vector<SgForStatement*>();
 }
 
-SgForStatement*
-VariableTraversal::isVariableInForStatement(SgNode* astNode) {
-   SgNode* temp = astNode;
-   while (!isSgProject(temp)) {
-      SgForStatement* for_stmt = isSgForStatement(temp);
-      if (for_stmt)
-         return for_stmt;
-      temp = temp->get_parent();
-   }
-   return NULL;
-}
-
-bool
-VariableTraversal::isInitializedNameInForStatement(SgForStatement* for_stmt,SgInitializedName* name) {
+bool VariableTraversal::isInitializedNameInForStatement(SgForStatement* for_stmt, SgInitializedName* name) {
    // Capture for( int i = 0;
-   vector<SgNode*> initialized_names = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgInitializedName);
+   vector<SgNode*> initialized_names = NodeQuery::querySubTree(for_stmt -> get_for_init_stmt(), V_SgInitializedName);
    // Capture int i; for( i = 0;
-   vector<SgNode*> init_var_refs = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgVarRefExp);
-   for (vector<SgNode*>::iterator i = init_var_refs.begin(); i != init_var_refs.end(); ++i) {
-      initialized_names.push_back( isSgVarRefExp(*i) -> get_symbol() -> get_declaration());
-   }
+   vector<SgNode*> init_var_refs = NodeQuery::querySubTree(for_stmt -> get_for_init_stmt(), V_SgVarRefExp);
+   for (vector<SgNode*>::iterator i = init_var_refs.begin(); i != init_var_refs.end(); ++i)
+      initialized_names.push_back(isSgVarRefExp(*i) -> get_symbol() -> get_declaration());
 
-   if (find(initialized_names.begin(), initialized_names.end(), name) != initialized_names.end()) {
+   if (find(initialized_names.begin(), initialized_names.end(), name) != initialized_names.end())
       return true;
-   }
    return false;
 }
-
 
 bool VariableTraversal::isRightOfBinaryOp(SgNode* astNode) {
-   bool isRightBranchOfBinary = false;
    SgNode* temp = astNode;
    while (!isSgProject(temp)) {
-      if (temp->get_parent() && isSgBinaryOp(temp->get_parent())) {
-         if (isSgDotExp(temp->get_parent()) || isSgPointerDerefExp(
-               temp->get_parent())) {
-            temp = temp->get_parent();
-            continue;
-         }
+      if (temp->get_parent() && isSgBinaryOp(temp->get_parent()) && !(isSgDotExp(temp->get_parent()) || isSgPointerDerefExp(
+            temp->get_parent())))
          if (isSgBinaryOp(temp->get_parent())->get_rhs_operand() == temp) {
-            isRightBranchOfBinary = true;
-         } else {
+            return true;
+         } else
             break;
-         }
-      }
       temp = temp->get_parent();
    }
-   return isRightBranchOfBinary;
+   return false;
 }
 
-InheritedAttribute VariableTraversal::evaluateInheritedAttribute(
-      SgNode* astNode, InheritedAttribute inheritedAttribute) {
-   cerr << "  !!!! >>>> down node  : " << astNode->class_name() << endl;
-
+InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute) {
    if (isSgFunctionDefinition(astNode)) {
-      // The inherited attribute is true iff we are inside a function.
-      InheritedAttribute ia(true, inheritedAttribute.isAssignInitializer,
-            inheritedAttribute.isArrowExp, inheritedAttribute.isAddressOfOp,
-            inheritedAttribute.isLValue, inheritedAttribute.isReferenceType,
-            inheritedAttribute.isInitializedName,
-            inheritedAttribute.isBinaryOp, inheritedAttribute.isDotExp,
-            inheritedAttribute.isPointerDerefExp);
-      printf("  >>>>> evaluateInheritedAttr isFunctionDefinition yes...\n");
-      return ia;
+      return InheritedAttribute(true, inheritedAttribute.isAssignInitializer, inheritedAttribute.isArrowExp,
+            inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
    }
 
    if (isSgAssignInitializer(astNode)) {
-      // The inherited attribute is true iff we are inside a function.
-      InheritedAttribute ia(inheritedAttribute.function, true,
-            inheritedAttribute.isArrowExp, inheritedAttribute.isAddressOfOp,
-            inheritedAttribute.isLValue, inheritedAttribute.isReferenceType,
-            inheritedAttribute.isInitializedName,
-            inheritedAttribute.isBinaryOp, inheritedAttribute.isDotExp,
-            inheritedAttribute.isPointerDerefExp);
-      cerr << "  >>>>> evaluateInheritedAttr isAssignInit yes..." << endl;
-      return ia;
+      return InheritedAttribute(inheritedAttribute.function, true, inheritedAttribute.isArrowExp,
+            inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
    }
 
    if (isSgArrowExp(astNode))
-      return InheritedAttribute(inheritedAttribute.function,
-            inheritedAttribute.isAssignInitializer, true,
-            inheritedAttribute.isAddressOfOp, inheritedAttribute.isLValue,
-            inheritedAttribute.isReferenceType,
-            inheritedAttribute.isInitializedName,
-            inheritedAttribute.isBinaryOp, inheritedAttribute.isDotExp,
-            inheritedAttribute.isPointerDerefExp);
+      return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer, true,
+            inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
 
    if (isSgAddressOfOp(astNode))
-      return InheritedAttribute(inheritedAttribute.function,
-            inheritedAttribute.isAssignInitializer,
-            inheritedAttribute.isArrowExp, true, inheritedAttribute.isLValue,
-            inheritedAttribute.isReferenceType,
-            inheritedAttribute.isInitializedName,
-            inheritedAttribute.isBinaryOp, inheritedAttribute.isDotExp,
-            inheritedAttribute.isPointerDerefExp);
-   /*
+      return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer,
+            inheritedAttribute.isArrowExp, true, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
 
-    if (isSgReferenceType(astNode))
-    return InheritedAttribute (
-    inheritedAttribute.function,
-    inheritedAttribute.isAssignInitializer,
-    inheritedAttribute.isArrowExp,
-    inheritedAttribute.isAddressOfOp,
-    inheritedAttribute.isLValue,
-    true,
-    inheritedAttribute.isInitializedName,
-    inheritedAttribute.isBinaryOp,
-    inheritedAttribute.isDotExp,
-    inheritedAttribute.isPointerDerefExp);
-
-    if (isSgInitializedName(astNode))
-    return InheritedAttribute (			       
-    inheritedAttribute.function,
-    inheritedAttribute.isAssignInitializer,
-    inheritedAttribute.isArrowExp,
-    inheritedAttribute.isAddressOfOp,
-    inheritedAttribute.isLValue,
-    inheritedAttribute.isReferenceType,
-    true,
-    inheritedAttribute.isBinaryOp,
-    inheritedAttribute.isDotExp,
-    inheritedAttribute.isPointerDerefExp);
-    */
-   if (isSgBinaryOp(astNode)) {
-      if (!inheritedAttribute.isArrowExp && !inheritedAttribute.isAddressOfOp)
-         if (isInterestingAssignNode(astNode)) {
-            ROSE_ASSERT(isSgBinaryOp(astNode) -> get_rhs_operand());
-            rightOfbinaryOp->push_back(
-                  isSgBinaryOp(astNode) -> get_rhs_operand());
-            cerr << "  --------- !!!! >>>>      push : " << isSgBinaryOp(
-                  astNode) -> class_name() << "    right == " << isSgBinaryOp(
-                  astNode)->get_rhs_operand()->class_name()
-                  << "  Elements on stack : " << rightOfbinaryOp->size()
-                  << endl;
-            return InheritedAttribute(inheritedAttribute.function,
-                  inheritedAttribute.isAssignInitializer,
-                  inheritedAttribute.isArrowExp,
-                  inheritedAttribute.isAddressOfOp,
-                  inheritedAttribute.isLValue,
-                  inheritedAttribute.isReferenceType,
-                  inheritedAttribute.isInitializedName, true,
-                  inheritedAttribute.isDotExp,
-                  inheritedAttribute.isPointerDerefExp);
-         }
+   if (isSgForStatement(astNode)) {
+      for_stmt->push_back(isSgForStatement(astNode));
+      return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer,
+            inheritedAttribute.isArrowExp, inheritedAttribute.isAddressOfOp, true, inheritedAttribute.isBinaryOp);
    }
-   /*
-    if (isSgDotExp(astNode))
-    return InheritedAttribute (
-    inheritedAttribute.function,
-    inheritedAttribute.isAssignInitializer,
-    inheritedAttribute.isArrowExp,
-    inheritedAttribute.isAddressOfOp,
-    inheritedAttribute.isLValue,
-    inheritedAttribute.isReferenceType,
-    inheritedAttribute.isInitializedName,
-    inheritedAttribute.isBinaryOp,
-    true,
-    inheritedAttribute.isPointerDerefExp);
 
-    if (isSgPointerDerefExp(astNode))
-    return InheritedAttribute (
-    inheritedAttribute.function,
-    inheritedAttribute.isAssignInitializer,
-    inheritedAttribute.isArrowExp,
-    inheritedAttribute.isAddressOfOp,
-    inheritedAttribute.isLValue,
-    inheritedAttribute.isReferenceType,
-    inheritedAttribute.isInitializedName,
-    inheritedAttribute.isBinaryOp,
-    inheritedAttribute.isDotExp,
-    true);
-
-    if (isSgExpression(astNode))
-    return InheritedAttribute (
-    inheritedAttribute.function,
-    inheritedAttribute.isAssignInitializer,
-    inheritedAttribute.isArrowExp,
-    inheritedAttribute.isAddressOfOp,
-    isSgExpression(astNode)->isLValue(),
-    inheritedAttribute.isReferenceType,
-    inheritedAttribute.isInitializedName,
-    inheritedAttribute.isBinaryOp,
-    inheritedAttribute.isDotExp,
-    inheritedAttribute.isPointerDerefExp);
-
-    */
+   if (isSgBinaryOp(astNode) && !inheritedAttribute.isArrowExp && !inheritedAttribute.isAddressOfOp && !isSgDotExp(astNode)
+         && !isSgPointerDerefExp(astNode)) {
+      ROSE_ASSERT(isSgBinaryOp(astNode) -> get_rhs_operand());
+      rightOfbinaryOp->push_back(isSgBinaryOp(astNode) -> get_rhs_operand());
+      return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer,
+            inheritedAttribute.isArrowExp, inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, true);
+   }
 
    return inheritedAttribute;
 }
 
-SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(
-      SgNode* astNode, InheritedAttribute inheritedAttribute,
+SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute,
       SynthesizedAttributesList childAttributes) {
-
-   cerr << "  !!!!!!!! >>>> up node  : " << astNode->class_name() << endl;
-   //  printf ("      evaluateSynthesizedAttribute Node...%s  isGlobal %d  isFunction %d  isAssign %d \n",astNode->class_name().c_str(),
-   //        inheritedAttribute.global,inheritedAttribute.function,inheritedAttribute.isAssignInitializer);
-   SynthesizedAttribute localResult = std::accumulate(childAttributes.begin(),
-         childAttributes.end(), false, std::logical_or<bool>());
+   SynthesizedAttribute localResult = std::accumulate(childAttributes.begin(), childAttributes.end(), false,
+         std::logical_or<bool>());
    if (inheritedAttribute.function == true) {
-      // Fold up the list of child attributes using logical or, i.e. the local
-      // result will be true iff one of the child attributes is true.
-      if (isSgFunctionDefinition(astNode) && localResult == true) {
-         printf(
-               "  >>>>> evaluateSynthesizedAttribute Found a function containing a varRefExp  ...\n");
-      }
+      if (isSgForStatement(astNode))
+         for_stmt->pop_back();// = NULL;
 
       bool isRightBranchOfBinary = isRightOfBinaryOp(astNode);
-      if (isSgBinaryOp(astNode)) {
-         if (!inheritedAttribute.isArrowExp
-               && !inheritedAttribute.isAddressOfOp)
-            if (isInterestingAssignNode(astNode)) {
-               if (rightOfbinaryOp && !rightOfbinaryOp->empty())
-                  rightOfbinaryOp->pop_back();
-               cerr << " ------ popp --- Elements on stack "
-                     << rightOfbinaryOp->size() << endl;
-            }
-      }
-
-      cerr << " ------ right of binary ? " << isRightBranchOfBinary
-            << "  for current node : " << astNode->class_name() << "   exp: "
-            << astNode->unparseToString() << endl;
-      if (astNode->get_parent())
-         cerr << "                  parent :: "       << astNode->get_parent()->unparseToString() << endl;
-      bool thinkItsStopSearch = false;
+      if (isSgBinaryOp(astNode) && !inheritedAttribute.isArrowExp && !inheritedAttribute.isAddressOfOp && !isSgDotExp(astNode)
+            && !isSgPointerDerefExp(astNode) && rightOfbinaryOp && !rightOfbinaryOp->empty())
+         rightOfbinaryOp->pop_back();
 
       if (isSgVarRefExp(astNode)) {
          SgInitializedName *name = isSgVarRefExp(astNode) -> get_symbol() -> get_declaration();
@@ -267,206 +108,68 @@ SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(
             return localResult;
          }
          bool stopSearch = false;
-#if 1
-            SgForStatement* fstmt = isVariableInForStatement(astNode);
-            if (fstmt) stopSearch= isInitializedNameInForStatement(fstmt,name);
-#endif
-         if (!inheritedAttribute.isArrowExp
-               && !inheritedAttribute.isAddressOfOp) {
+
+         SgForStatement* fstmt = NULL;
+         if (!for_stmt->empty())
+            fstmt = for_stmt->back();
+
+         if (fstmt)
+            stopSearch = isInitializedNameInForStatement(fstmt, name);
+         if (!inheritedAttribute.isArrowExp && !inheritedAttribute.isAddressOfOp) {
             if (rightOfbinaryOp && !rightOfbinaryOp->empty()) {
-#if 1
-               SgExpression* left = isSgBinaryOp(
-                     rightOfbinaryOp->back()->get_parent())->get_lhs_operand();
-               if (isRightBranchOfBinary && !isSgArrayType(
-                     rightOfbinaryOp->back()->get_type()) && !isSgNewExp(
+               if (isRightBranchOfBinary && !isSgArrayType(rightOfbinaryOp->back()->get_type()) && !isSgNewExp(
                      rightOfbinaryOp->back()) && !isSgReferenceType(
-                     left->get_type())) {
+                     isSgBinaryOp(rightOfbinaryOp->back()->get_parent())->get_lhs_operand()->get_type())) {
                   stopSearch = false;
                } else
                   stopSearch = true;
-#endif
             }
 
-#if 1
             if (inheritedAttribute.isAssignInitializer) {
-               cerr
-                     << " =======   inherited attribute :::::::: assignInitializer "
-                     << endl;
-               SgInitializedName* initName = isSgInitializedName(
-                     astNode -> get_parent() ->get_parent()-> get_parent());
+               SgInitializedName* initName = isSgInitializedName(astNode -> get_parent() ->get_parent()-> get_parent());
                if (initName == NULL)
-                  initName = isSgInitializedName(
-                        astNode -> get_parent() ->get_parent());
+                  initName = isSgInitializedName(astNode -> get_parent() ->get_parent());
                if (initName && isSgReferenceType(initName -> get_type()))
                   stopSearch = true;
             }
-#endif
 
-
-#if 1
-         SgExprListExp* exprl =  isSgExprListExp(astNode->get_parent());
-         if (isSgExprListExp(exprl) && isSgFunctionCallExp(exprl->get_parent())) {
-            cerr << "$$$$$ Found Function call - lets handle its parameters." << endl;
-            SgType* arg_type = isSgExpression(astNode)->get_type();
-            SgType* param_type = NULL;
-            // try to determine the parameter type
-            SgFunctionDeclaration* fndecl = isSgFunctionCallExp( exprl->get_parent())-> getAssociatedFunctionDeclaration();
-            if (fndecl) {
-               int param_index = -1;
-               SgExpressionPtrList& args =  exprl->get_expressions();
-               for (unsigned int i = 0; i < args.size(); ++i) {
-                  if (args[i] == astNode) {
-                     param_index = i;
-                     break;
+            SgExprListExp* exprl = isSgExprListExp(astNode->get_parent());
+            if (isSgExprListExp(exprl) && isSgFunctionCallExp(exprl->get_parent())) {
+               SgType* param_type = NULL;
+               // try to determine the parameter type
+               SgFunctionDeclaration* fndecl = isSgFunctionCallExp(exprl->get_parent())-> getAssociatedFunctionDeclaration();
+               if (fndecl) {
+                  int param_index = -1;
+                  SgExpressionPtrList& args = exprl->get_expressions();
+                  for (unsigned int i = 0; i < args.size(); ++i) {
+                     if (args[i] == astNode) {
+                        param_index = i;
+                        break;
+                     }
                   }
-               }
-               ROSE_ASSERT( param_index > -1 );
+                  ROSE_ASSERT( param_index > -1 );
 
-               if ((int) fndecl -> get_parameterList() -> get_args().size()  > param_index) {
-                  SgInitializedName* param = fndecl -> get_parameterList()-> get_args()[param_index];
-                  if (param)
-                     param_type = param -> get_type();
+                  if ((int) fndecl -> get_parameterList() -> get_args().size() > param_index
+                        && fndecl -> get_parameterList()-> get_args()[param_index])
+                     param_type = fndecl -> get_parameterList()-> get_args()[param_index] -> get_type();
                }
+
+               if ((isSgExpression(astNode)->get_type() && transf->isUsableAsSgArrayType(isSgExpression(astNode)->get_type())
+                     != NULL) || (param_type && transf->isUsableAsSgReferenceType(param_type) != NULL))
+                  stopSearch = true;
             }
 
-            if ((arg_type && transf->isUsableAsSgArrayType(arg_type) != NULL)
-                  || (param_type && transf->isUsableAsSgReferenceType(param_type) != NULL))
-               stopSearch = true;
-         }
-#endif
-
-
-#if 1
             if (stopSearch == false) {
-               cout << " @@@@@@@@@ CALLING ADDING Variable access : "
-                     << astNode->unparseToString() << endl;
-               transf->visit_isSgVarRefExp(isSgVarRefExp(astNode),
-                     isRightBranchOfBinary, thinkItsStopSearch);
-            }
-#else
-            if (stopSearch==false) {
                // its a plain variable access
                transf->variable_access_varref.push_back(isSgVarRefExp(astNode));
-               cout << " @@@@@@@@@ ADDING Variable access : " << astNode->unparseToString() << "  vec size: " << astNode->get_parent()->unparseToString() << endl;
+               if (RTEDDEBUG())
+                  cout << " @@@@@@@@@ ADDING Variable access : " << astNode->unparseToString() << "  vec size: "
+                        << astNode->get_parent()->unparseToString() << endl;
             }
-#endif
          }
       }
    }
    return localResult;
-}
-
-void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n,
-      bool isRightBranchOfBinary, bool thinkItsStopSearch) {
-   cout << "$$$$$ visit_isSgVarRefExp : " << n->unparseToString()
-         << "  in line : " << n->get_file_info()->get_line()
-         << " -------------------------------------" << endl;
-
-   SgInitializedName *name = n -> get_symbol() -> get_declaration();
-   /*
-   if (name && !isInInstrumentedFile(name -> get_declaration())) {
-      // we're not instrumenting the file that contains the declaration, so we'll always complain about accesses
-      return;
-   }
-*/
-#if 1
-   SgNode* parent = isSgVarRefExp(n);
-   SgNode* last = parent;
-   bool stopSearch = false;
-   //cerr << "*********************************** DEBUGGING  " << n->unparseToString() << endl;
-   while (!isSgProject(parent)) {
-      last = parent;
-      parent = parent->get_parent();
-      if (isSgProject(parent)) {
-         stopSearch = true;
-         break;
-      } else if (isSgAssignInitializer(parent))
-         break;
-
-      else if (isSgBinaryOp(parent)) {
-         if (isSgDotExp(parent) || isSgPointerDerefExp(parent))
-            continue;
-         break;
-      } else if (isSgExprListExp(parent) && isSgFunctionCallExp(
-            parent->get_parent())) {
-         cerr << "$$$$$ Found Function call - lets handle its parameters."
-               << endl;
-         SgType* arg_type = isSgExpression(last)->get_type();
-         SgType* param_type = NULL;
-#if 0
-         // try to determine the parameter type
-         SgFunctionDeclaration* fndecl = isSgFunctionCallExp(
-               parent -> get_parent())-> getAssociatedFunctionDeclaration();
-         if (fndecl) {
-            int param_index = -1;
-            SgExpressionPtrList& args =
-                  isSgExprListExp(parent) -> get_expressions();
-            for (unsigned int i = 0; i < args.size(); ++i) {
-               if (args[i] == last) {
-                  param_index = i;
-                  break;
-               }
-            }
-            ROSE_ASSERT( param_index > -1 );
-
-            if ((int) fndecl -> get_parameterList() -> get_args().size()
-                  > param_index) {
-               SgInitializedName* param =
-                     fndecl -> get_parameterList()-> get_args()[param_index];
-               if (param)
-                  param_type = param -> get_type();
-            }
-         }
-
-         if ((arg_type && isUsableAsSgArrayType(arg_type) != NULL)
-               || (param_type && isUsableAsSgReferenceType(param_type) != NULL))
-            stopSearch = true;
-#endif
-         break;
-      }
-
-      else if (isSgWhileStmt(parent) || isSgDoWhileStmt(parent) || isSgIfStmt(
-            parent)) {
-
-         break;
-      }
-
-      else if (isSgForStatement(parent)) {
-         SgForStatement* for_stmt = isSgForStatement(parent);
-#if 0
-         // Capture for( int i = 0;
-         vector<SgNode*> initialized_names = NodeQuery::querySubTree(
-               for_stmt -> get_for_init_stmt(), V_SgInitializedName);
-
-         // Capture int i; for( i = 0;
-         vector<SgNode*> init_var_refs = NodeQuery::querySubTree(
-               for_stmt -> get_for_init_stmt(), V_SgVarRefExp);
-         for (vector<SgNode*>::iterator i = init_var_refs.begin(); i
-               != init_var_refs.end(); ++i) {
-            initialized_names.push_back(
-            // map the var refs to their initialized names
-                  isSgVarRefExp(*i) -> get_symbol() -> get_declaration());
-         }
-
-         if (find(initialized_names.begin(), initialized_names.end(), name)
-               != initialized_names.end()) {
-            // no need to check the ref
-            stopSearch = true;
-         }
-         // either way, no need to keep going up the AST
-#endif
-         break;
-      }
-   } //while
-
-   if (stopSearch == false) {
-      // its a plain variable access
-      variable_access_varref.push_back(n);
-      cerr << " @@@@@@@@@ ADDING Variable access : " << n->unparseToString()
-            << "  parent: " << n->get_parent()->unparseToString() << endl;
-   }
-
-#endif
 }
 
 #endif

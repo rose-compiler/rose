@@ -96,7 +96,7 @@ void RtedTransformation::performInheritedSynthesizedTraversal(SgProject* project
    // Traverse Variables
 // InheritedAttributeBools* bools = new InheritedAttributeBools();
    VariableTraversal varTraversal(this);
-   InheritedAttribute inheritedAttribute(false,false,false,false,false,false,false,false,false,false);
+   InheritedAttribute inheritedAttribute(false,false,false,false,false,false);
 //   InheritedAttribute inheritedAttribute(bools);
    // Call the traversal starting at the project (root) node of the AST
    varTraversal.traverseInputFiles(project,inheritedAttribute);
