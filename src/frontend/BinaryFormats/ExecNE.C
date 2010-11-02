@@ -63,7 +63,7 @@ SgAsmNERelocEntry::osfixup_type::osfixup_type()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
 void
-SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
+SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, rose_addr_t offset)
 {
     set_offset(offset);
     set_size(sizeof(NEFileHeader_disk));
@@ -172,7 +172,7 @@ SgAsmNEFileHeader::is_NE(SgAsmGenericFile *file)
         /* Read four-byte offset of potential PE File Header at offset 0x3c */
         uint32_t lfanew_disk;
         file->read_content(0x3c, &lfanew_disk, sizeof lfanew_disk);
-        addr_t ne_offset = le_to_host(lfanew_disk);
+        rose_addr_t ne_offset = le_to_host(lfanew_disk);
         
         /* Look for the NE File Header magic number */
         unsigned char ne_magic[2];
@@ -386,7 +386,7 @@ SgAsmNESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmNE
 
     fprintf(f, "%s%-*s = %u",                      p, w, "sector",          p_sector);
     if (fhdr)
-        fprintf(f, " (%"PRIu64" byte offset)", (addr_t) p_sector << fhdr->get_e_sector_align());
+        fprintf(f, " (%"PRIu64" byte offset)", (rose_addr_t) p_sector << fhdr->get_e_sector_align());
     fputc('\n', f);
     fprintf(f, "%s%-*s = %"PRIu64" bytes\n",       p, w, "physical_size",   p_physical_size);
     fprintf(f, "%s%-*s = %"PRIu64" bytes\n",       p, w, "virtual_size",    p_virtual_size);
@@ -466,7 +466,7 @@ SgAsmNESectionTable::ctor()
         SgAsmNESectionTableEntry *entry = new SgAsmNESectionTableEntry(&disk);
 
         /* The section */
-        addr_t section_offset = entry->get_sector() << fhdr->get_e_sector_align();
+        rose_addr_t section_offset = entry->get_sector() << fhdr->get_e_sector_align();
         SgAsmNESection *section = new SgAsmNESection(fhdr);
         section->set_offset(section_offset);
         section->set_size(0==section_offset ? 0 : entry->get_physical_size());
@@ -477,7 +477,7 @@ SgAsmNESectionTable::ctor()
         section->set_st_entry(entry);
 
         /* All NE sections are mapped. Their desired address is apparently based on their file offset. */
-        addr_t mapped_rva = section_offset - fhdr->get_offset();
+        rose_addr_t mapped_rva = section_offset - fhdr->get_offset();
         section->set_mapped_preferred_rva(mapped_rva);
         section->set_mapped_actual_va(0); /*assigned by Loader*/
         section->set_mapped_size(entry->get_virtual_size());
@@ -555,7 +555,7 @@ SgAsmNESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor assumes SgAsmGenericSection is zero bytes long so far */
 void
-SgAsmNENameTable::ctor(addr_t offset)
+SgAsmNENameTable::ctor(rose_addr_t offset)
 {
     set_offset(offset);
     set_size(0);
@@ -570,7 +570,7 @@ SgAsmNENameTable::ctor(addr_t offset)
     
     /* Resident exported procedure names, until we hit a zero length name. The first name
      * is for the library itself and the corresponding ordinal has no meaning. */
-    addr_t at = 0;
+    rose_addr_t at = 0;
     while (1) {
         extend(1);
         unsigned char byte;
@@ -597,7 +597,7 @@ SgAsmNENameTable::ctor(addr_t offset)
 void
 SgAsmNENameTable::unparse(std::ostream &f) const
 {
-    addr_t spos=0; /*section offset*/
+    rose_addr_t spos=0; /*section offset*/
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
 
     for (size_t i = 0; i < p_names.size(); i++) {
@@ -660,7 +660,7 @@ SgAsmNENameTable::get_names_by_ordinal(unsigned ordinal)
 
 /* Constructor */
 void
-SgAsmNEModuleTable::ctor(addr_t offset, addr_t size)
+SgAsmNEModuleTable::ctor(rose_addr_t offset, rose_addr_t size)
 {
     set_offset(offset);
     set_size(size);
@@ -675,10 +675,10 @@ SgAsmNEModuleTable::ctor(addr_t offset, addr_t size)
 
     ROSE_ASSERT(NULL != p_strtab);
 
-    for (addr_t at = 0; at < get_size(); at += 2) {
+    for (rose_addr_t at = 0; at < get_size(); at += 2) {
         uint16_t u16_disk;
         read_content_local(at, &u16_disk, 2);
-        addr_t name_offset = le_to_host(u16_disk);
+        rose_addr_t name_offset = le_to_host(u16_disk);
         p_name_offsets.push_back(name_offset);
         p_names.push_back(p_strtab->get_string(name_offset));
     }
@@ -693,7 +693,7 @@ SgAsmNEModuleTable::ctor(addr_t offset, addr_t size)
 void
 SgAsmNEModuleTable::unparse(std::ostream &f) const
 {
-    addr_t spos = 0; /*section offset*/
+    rose_addr_t spos = 0; /*section offset*/
     p_strtab->unparse(f);
 
     for (size_t i = 0; i < p_name_offsets.size(); i++) {
@@ -737,7 +737,7 @@ SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 /* Constructor. We don't parse out the strings here because we want to keep track of what strings are actually referenced by
  * other parts of the file. We can get that information with the congeal() method. */
 void
-SgAsmNEStringTable::ctor(addr_t offset, addr_t size)
+SgAsmNEStringTable::ctor(rose_addr_t offset, rose_addr_t size)
 {
     set_offset(offset);
     set_size(size);
@@ -752,7 +752,7 @@ SgAsmNEStringTable::ctor(addr_t offset, addr_t size)
  * from pointing to some random location within the string table (but we will throw an exception if offset or the described
  * following string falls outside the string table). */
 std::string
-SgAsmNEStringTable::get_string(addr_t offset)
+SgAsmNEStringTable::get_string(rose_addr_t offset)
 {
     unsigned char byte;
     read_content_local(offset, &byte, 1);
@@ -782,7 +782,7 @@ SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     bool was_congealed = get_congealed();
     congeal();
-    addr_t at=0;
+    rose_addr_t at=0;
     for (size_t i=0; at<get_size(); i++) {
         std::string s = get_string(at);
         char label[64];
@@ -833,7 +833,7 @@ SgAsmNEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor */
 void
-SgAsmNEEntryTable::ctor(addr_t offset, addr_t size)
+SgAsmNEEntryTable::ctor(rose_addr_t offset, rose_addr_t size)
 {
     set_offset(offset);
     set_size(size);
@@ -846,7 +846,7 @@ SgAsmNEEntryTable::ctor(addr_t offset, addr_t size)
     unsigned char byte;
     uint16_t u16_disk;
 
-    addr_t at = 0;
+    rose_addr_t at = 0;
     read_content_local(at++, &byte, 1);
     size_t bundle_nentries = byte;
     while (bundle_nentries > 0) {
@@ -904,7 +904,7 @@ SgAsmNEEntryTable::populate_entries()
             entry.dump(stderr, "      ", i);
         } else {
             ROSE_ASSERT(section->is_mapped());
-            addr_t entry_rva = section->get_mapped_preferred_rva() + entry.get_section_offset();
+            rose_addr_t entry_rva = section->get_mapped_preferred_rva() + entry.get_section_offset();
             fhdr->add_entry_rva(entry_rva);
 #if 0 /*DEBUGGING*/
             /* Entry points often have names. Here's how to get them. */
@@ -924,7 +924,7 @@ SgAsmNEEntryTable::populate_entries()
 void
 SgAsmNEEntryTable::unparse(std::ostream &f) const
 {
-    addr_t spos=0; /*section offset*/
+    rose_addr_t spos=0; /*section offset*/
 
     for (size_t bi=0, ei=0; bi < p_bundle_sizes.size(); ei += p_bundle_sizes[bi++]) {
         ROSE_ASSERT(p_bundle_sizes[bi] > 0 && p_bundle_sizes[bi] <= 0xff);
@@ -1002,13 +1002,13 @@ SgAsmNEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor. */
 void
-SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size/*out*/)
+SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, rose_addr_t at, rose_addr_t *rec_size/*out*/)
 {
     unsigned char byte;
     uint16_t u16_disk;
     uint32_t u32_disk;
 
-    addr_t orig_at = at;
+    rose_addr_t orig_at = at;
     ROSE_ASSERT(at == relocs->get_size()); /*the section is extended as we parse*/
 
     /* Only the low nibble is used for source type; the high nibble is modifier bits */
@@ -1276,7 +1276,7 @@ SgAsmNERelocTable::ctor(SgAsmNESection *section)
 
     ROSE_ASSERT(0 == get_size());
 
-    addr_t at = 0, reloc_size = 0;
+    rose_addr_t at = 0, reloc_size = 0;
 
     extend(2);
     uint16_t u16_disk;
@@ -1293,7 +1293,7 @@ SgAsmNERelocTable::ctor(SgAsmNESection *section)
 void
 SgAsmNERelocTable::unparse(std::ostream &f) const
 {
-    addr_t spos=0; /*section offset*/
+    rose_addr_t spos=0; /*section offset*/
     uint16_t size_le;
     host_to_le(p_entries.size(), &size_le);
     spos = write(f, spos, sizeof size_le, &size_le);
@@ -1344,7 +1344,7 @@ SgAsmNEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
 
     /* Sections defined by the NE file header */
     if (ne_header->get_e_resnametab_rfo() > 0) {
-        addr_t resnames_offset = ne_header->get_offset() + ne_header->get_e_resnametab_rfo();
+        rose_addr_t resnames_offset = ne_header->get_offset() + ne_header->get_e_resnametab_rfo();
         SgAsmNENameTable *resnames = new SgAsmNENameTable(ne_header, resnames_offset);
         resnames->set_name(new SgAsmBasicString("NE Resident Name Table"));
         ne_header->set_resname_table(resnames);
@@ -1354,19 +1354,19 @@ SgAsmNEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
          * the Imported Name Table comes immediately after the Module Reference Table and before the Entry Table in the file. */
         ROSE_ASSERT(ne_header->get_e_importnametab_rfo() > 0);
         ROSE_ASSERT(ne_header->get_e_entrytab_rfo() > ne_header->get_e_importnametab_rfo());
-        addr_t strtab_offset = ne_header->get_offset() + ne_header->get_e_importnametab_rfo();
-        addr_t strtab_size   = ne_header->get_e_entrytab_rfo() - ne_header->get_e_importnametab_rfo();
+        rose_addr_t strtab_offset = ne_header->get_offset() + ne_header->get_e_importnametab_rfo();
+        rose_addr_t strtab_size   = ne_header->get_e_entrytab_rfo() - ne_header->get_e_importnametab_rfo();
         SgAsmNEStringTable *strtab = new SgAsmNEStringTable(ne_header, strtab_offset, strtab_size);
 
         /* Module reference table */
-        addr_t modref_offset = ne_header->get_offset() + ne_header->get_e_modreftab_rfo();
-        addr_t modref_size   = ne_header->get_e_importnametab_rfo() - ne_header->get_e_modreftab_rfo();
+        rose_addr_t modref_offset = ne_header->get_offset() + ne_header->get_e_modreftab_rfo();
+        rose_addr_t modref_size   = ne_header->get_e_importnametab_rfo() - ne_header->get_e_modreftab_rfo();
         SgAsmNEModuleTable *modtab = new SgAsmNEModuleTable(ne_header, strtab, modref_offset, modref_size);
         ne_header->set_module_table(modtab);
     }
     if (ne_header->get_e_entrytab_rfo() > 0 && ne_header->get_e_entrytab_size() > 0) {
-        addr_t enttab_offset = ne_header->get_offset() + ne_header->get_e_entrytab_rfo();
-        addr_t enttab_size = ne_header->get_e_entrytab_size();
+        rose_addr_t enttab_offset = ne_header->get_offset() + ne_header->get_e_entrytab_rfo();
+        rose_addr_t enttab_size = ne_header->get_e_entrytab_size();
         SgAsmNEEntryTable *enttab = new SgAsmNEEntryTable(ne_header, enttab_offset, enttab_size);
         ne_header->set_entry_table(enttab);
     }

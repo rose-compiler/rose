@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# DQ (10/29/2010): We have to include "binaryAnalyses" directory so that its header files 
+# will be installed by "make install", even with language only options are used.
 SUBDIRS = \
         abstractHandle \
         astDiagnostics \
@@ -8,16 +10,7 @@ SUBDIRS = \
         astRewriteMechanism \
         astUtil \
         programAnalysis \
-        programTransformation
-
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   SUBDIRS += binaryAnalyses 
-endif
-
-# DQ (7/25/2008):
-# This file is deliberately excluded from a distribution so that the
-# "make docs" rule (at the top level directory) can query the file to
-# determin if this is a distribution.
-# EXTRA_DIST = midend.docs
+        programTransformation \
+        binaryAnalyses
 
 EXTRA_DIST = CMakeLists.txt

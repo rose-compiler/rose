@@ -1694,8 +1694,13 @@ void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
 
           ROSE_ASSERT(keyword != NULL);
 
+#if 0
+       // DQ (10/25/2010): We would like to avoid pushing keywords onto the stack since it is for names only. We also don't
+       // want to have logic that depends upon keywords on the stack, since that is why we use the astAttributeSpecStack.
+       // This level of redundancy is not helpful.
        // Not clear if we should bother saving the keyword, it is a bit redundant, but supported uniformally with the ROSE Fortran frontend.
           astNameStack.push_front(keyword);
+#endif
         }
 
 #if 1
@@ -3738,9 +3743,16 @@ void c_action_entity_decl(Token_t * id)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         {
-       // printf ("In R504 c_action_entity_decl(): save variableName = %s \n",id->text);
+       // printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s \n",id->text);
           string current_filename = getCurrentFilename();
-          printf ("In R504 c_action_entity_decl(): save variableName = %s file = %s \n",id->text,current_filename.c_str());
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+          printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s file = %s hasArraySpec = %s hasCoarraySpec = %s hasCharLength = %s unknown_bool = %s \n",
+               id->text,current_filename.c_str(),hasArraySpec ? "true" : "false",
+               hasCoarraySpec ? "true" : "false",hasCharLength ? "true" : "false",
+               unknown_bool ? "true" : "false");
+#else
+          printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s file = %s \n",id->text,current_filename.c_str());
+#endif
         }
 
 #if 0
@@ -3791,6 +3803,11 @@ void c_action_entity_decl(Token_t * id)
              {
             // Use a SgConstructorInitializer or a SgAggregateInitializer
 
+#if 1
+            // Output debugging information about saved state (stack) information.
+               outputState("In case of classType != NULL || arrayType != NULL in R504 c_action_entity_decl()");
+#endif
+
                if (arrayType != NULL)
                   {
                     SgExprListExp* exprList = new SgExprListExp();
@@ -3808,6 +3825,8 @@ void c_action_entity_decl(Token_t * id)
                  // Use a SgAggregateInitializer
                     initializer = new SgAggregateInitializer(exprList, NULL);
                     setSourcePosition(initializer);
+
+                    ROSE_ASSERT(astExpressionStack.empty() == true);
                   }
                  else
                   {
@@ -3816,12 +3835,27 @@ void c_action_entity_decl(Token_t * id)
                  // SgExpression* firstExpression = exprList->get_expressions()[0];
                     ROSE_ASSERT(astExpressionStack.size() == 1);
                     SgExpression* firstExpression = astExpressionStack.front();
-                    astExpressionStack.pop_front();
+
+                 // DQ (10/23/2010): We need to leave this on the stack since it is the name associated with a bind attribute.
+                 // astExpressionStack.pop_front();
 
                     ROSE_ASSERT(firstExpression != NULL);
+                 // printf ("firstExpression = %p = %s \n",firstExpression,firstExpression->class_name().c_str());
                     SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(firstExpression);
                     initializer = constructorInitializer;
-                    ROSE_ASSERT(initializer != NULL);
+                 // ROSE_ASSERT(initializer != NULL);
+                    if (initializer != NULL)
+                       {
+                      // If this is a SgConstructorInitializer then ???
+                         printf ("This is a SgConstructorInitializer, we need an example of code that generates this case. \n");
+                         ROSE_ASSERT(false);
+                       }
+                      else
+                       {
+                      // This is the case of a name in the bind expression.
+                      // printf ("This is the case of a name in the bind expression (leave it on the stack and process it later). \n");
+                      // ROSE_ASSERT(false);
+                       }
                   }
              }
             else
@@ -3832,12 +3866,13 @@ void c_action_entity_decl(Token_t * id)
                initializer = new SgAssignInitializer(astExpressionStack.front(),NULL);
                astExpressionStack.pop_front();
                setSourcePosition(initializer);
-             }
 
+               ROSE_ASSERT(astExpressionStack.empty() == true);
+             }
         }
 
   // ROSE_ASSERT(astInitializerStack.empty() == true);
-     ROSE_ASSERT(astExpressionStack.empty() == true);
+  // ROSE_ASSERT(astExpressionStack.empty() == true);
 
   // DQ (5/15/2008): Added support to make sure that this is not a previously declared name (see test2008_29.f)
      SgVariableSymbol* variableSymbol = NULL;
@@ -3848,6 +3883,8 @@ void c_action_entity_decl(Token_t * id)
      trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(name,currentScope,variableSymbol,functionSymbol,classSymbol);
 
   // ROSE_ASSERT(variableSymbol == NULL);
+
+  // printf ("In R504 R503-F2008: variableSymbol = %p functionSymbol = %p classSymbol = %p \n",variableSymbol,functionSymbol,classSymbol);
 
      if (functionSymbol != NULL)
         {
@@ -3887,10 +3924,10 @@ void c_action_entity_decl(Token_t * id)
 
           initializedName = variableSymbol->get_declaration();
           ROSE_ASSERT(initializedName != NULL);
-
-       // printf ("Found variableSymbol != NULL (check if this is the return value which was set with implicit type rules): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
-       // printf ("initializedName type = %p = %s \n",type,type->class_name().c_str());
-
+#if 0
+          printf ("Found variableSymbol != NULL (check if this is the return value which was set with implicit type rules): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+          printf ("initializedName type = %p = %s \n",type,type->class_name().c_str());
+#endif
        // Reset the type since this is the variable declaration, even if it was previously declared in the common block (where it was not assigned a type)
           initializedName->set_type(type);
           ROSE_ASSERT(initializedName->get_scope() != NULL);
@@ -3942,6 +3979,11 @@ void c_action_entity_decl(Token_t * id)
              }
         }
      ROSE_ASSERT(initializedName != NULL);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("Before cleaning up the stacks in R504 c_action_entity_decl()");
+#endif
 
   // FMZ (2/19/2007): Added for CoArray
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
@@ -4000,7 +4042,7 @@ void c_action_entity_decl(Token_t * id)
      astNameStack.pop_front();
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R504 c_action_entity_decl()");
 #endif
@@ -4050,6 +4092,11 @@ void c_action_entity_decl_list(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R504 c_action_entity_decl_list: (number of variable declarations) count = %d \n",count);
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R504 (list) c_action_entity_decl_list()");
+#endif
+
   // Note that we are not really using the count, but the astNodeStack.size() should match the count.
   // DQ (1/28/2009): Can we assert this!
      ROSE_ASSERT(astNodeStack.size() == (size_t) count);
@@ -4061,7 +4108,7 @@ void c_action_entity_decl_list(int count)
 
      buildVariableDeclarationAndCleanupTypeStack(NULL);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R504 (list) c_action_entity_decl_list()");
 #endif
@@ -4273,11 +4320,18 @@ void c_action_access_spec(Token_t * keyword, int type)
 
      ROSE_ASSERT(keyword != NULL);
 
+#if 0
+  // DQ (10/25/2010): I am trying to clean up how the namestack is used, it should not be used for keywords.
+  // It is supposed to be enough that we use the astAttributeSpecStack withouth trying to put the information 
+  // into two stacks. Also this was causing the stack entries to be in the stack in the wrong order from how 
+  // the rules are called.
+
   // We normally use the front of the list, but push this onto the back so that we can pop it off the back 
   // (independent of the names pushed onto the front of the stack).  This is done because we see the keyword
   // PRIVATE or PUBLIC before we see the list of variables.  In many cases this will be the only entry in 
   // the list at this point.
      astNameStack.push_back(keyword);
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -4582,7 +4636,7 @@ void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_access_stmt(): hasList = %s \n",hasList ? "true" : "false");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R518 c_action_access_stmt()");
 #endif
@@ -4598,7 +4652,8 @@ void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
      int type = astAttributeSpecStack.front();
      astAttributeSpecStack.pop_front();
 
-#if 1
+  // DQ (10/25/2010): Changed this to back again to NOT use keywords.
+#if 0
   // DQ (8/28/2010: later): Changed the behaviour back to use the keywords.
      ROSE_ASSERT(astNameStack.empty() == false);
 
@@ -4606,8 +4661,14 @@ void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
      Token_t* private_public_keyword = astNameStack.back();
      astNameStack.pop_back();
 #else
+  // DQ (10/25/2010): Howver there will be arguments to the "public statement so these will be 
+  // on the name stack. So we can't assert that this is empty.
   // DQ (8/28/2010): changed behavior to never put access spec keywords onto the astNameStack.
-     ROSE_ASSERT(astNameStack.empty() == true);
+  // ROSE_ASSERT(astNameStack.empty() == true);
+
+  // Use the eos as a location...
+     ROSE_ASSERT(eos != NULL);
+     Token_t* private_public_keyword = eos;
 #endif
 
      if (type == AttrSpec_PRIVATE)
@@ -16165,8 +16226,17 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
      SgScopeStatement* currentScope = astScopeStack.front();
 
      SgClassSymbol* moduleSymbol = NULL;
-     trace_back_through_parent_scopes_searching_for_module(name,currentScope,moduleSymbol);
 
+  // DQ (10/23/2010): Added intrinsic module support.
+     moduleSymbol = buildIntrinsicModule(name.str());
+
+  // If moduleSymbol is still null then this was not an intrinsic module and we have to search a bit.
+     if ( moduleSymbol == NULL )
+        {
+          trace_back_through_parent_scopes_searching_for_module(name,currentScope,moduleSymbol);
+        }
+
+  // If moduleSymbol is still null then we have to go and look for the *.rmod file and read in the module directly.
      SgModuleStatement* moduleStatement = NULL;
      if ( moduleSymbol == NULL )
         {
