@@ -1,0 +1,13 @@
+This directory contains fortran test codes from the gfortran test suit.
+
+The test codes are menat to be run with -rose:skip_syntax_check
+since many will fail with first processin in ROSE for syntax checking using
+gfortran (version 4.2.4; but likely each version of gfortran would
+behave differently).  In the Makefile.am are the lists of files
+assigned to the varaibles:
+   F90_TESTCODES_REQUIRED_TO_PASS
+and
+   F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS
+and defined to be a short and long list depending on the automake
+conditional: ROSE_USE_LONG_MAKE_CHECK_RULE.
+

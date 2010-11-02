@@ -92,18 +92,17 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 //! Function to add "C" style comment to statement.
  void addMessageStatement( SgStatement* stmt, std::string message );
 
-// DQ (2/24/2009): Simple function to delete an AST subtree (used in outlining).
-//! Function to delete AST subtree's nodes only, users must take care of any dangling pointers, symbols or types that result.
- void deleteAST(SgNode* node);
-
-// DQ (2/25/2009): Added new function to support outliner.
-//! Move statements in first block to the second block (preserves order and rebuilds the symbol table).
- void moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicBlock* targetBlock );
-
-// DQ (3/1/2009): After rebuilding the copied scope's symbol table 
-// all the symbol table references in the copied AST need to be reset.
- void fixupReferencesToSymbols( const SgScopeStatement* this_scope,  SgScopeStatement* copy_scope, SgCopyHelp & help );
-
+//! A persistent attribute to represent a unique name for an expression
+  class UniqueNameAttribute : public AstAttribute
+  {
+    private:
+     std::string name;
+    public: 
+     UniqueNameAttribute(std::string n="") {name =n; };
+     void set_name (std::string n) {name = n;};
+     std::string get_name () {return name;};
+  };
+  
 // DQ (3/2/2009): Added support for collectiong an merging the referenced symbols in the outlined 
 // function into the list used to edit the outlined code subtree to fixup references (from symbols 
 // in the original file to the symbols in the newer separate file).
@@ -202,7 +201,9 @@ struct hash_nodeptr
     */
    void clearUnusedVariableSymbols ();
 
-   //SgNode::get_globalFunctionTypeTable() ;
+   // DQ (3/1/2009):
+   //! All the symbol table references in the copied AST need to be reset after rebuilding the copied scope's symbol table.
+   void fixupReferencesToSymbols( const SgScopeStatement* this_scope,  SgScopeStatement* copy_scope, SgCopyHelp & help );
 
  //@}
 
@@ -323,7 +324,7 @@ struct hash_nodeptr
 
  //------------------------------------------------------------------------
  //@{
- /*! @name Unsorted
+ /*! @name Misc.
    \brief Not sure the classifications right now
  */
 
@@ -332,6 +333,9 @@ struct hash_nodeptr
    // DQ (8/27/2005):
    bool isOverloaded (SgFunctionDeclaration * functionDeclaration);
 
+  //! Generate unique names for expressions and attach the names as persistent attributes ("UniqueNameAttribute")
+  void annotateExpressionsWithUniqueNames (SgProject* project);
+
    //! Check if a SgNode is a main() function declaration
    bool isMain (const SgNode* node);
    // DQ (6/22/2005):
@@ -339,7 +343,7 @@ struct hash_nodeptr
 
        This is support for the AST merge, but is generally useful as a more general mechanism than 
        name mangling which is more closely ties to the generation of names to support link-time function name 
-       resolution.  This is more general than common name mangling in that it resolves more relavant differences
+       resolution.  This is more general than common name mangling in that it resolves more relevant differences
        between C and C++ declarations. (e.g. the type within the declaration: "struct { int:8; } foo;").
 
       \implementation current work does not support expressions.
@@ -347,7 +351,7 @@ struct hash_nodeptr
    */
     std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
-  // DQ (8/10/2010): Added const to first paramater.
+  // DQ (8/10/2010): Added const to first parameter.
   // DQ (3/10/2007): 
   //! Generate a unique string from the source file position information
     std::string declarationPositionString (const SgDeclarationStatement * declaration);
@@ -395,6 +399,7 @@ struct hash_nodeptr
      This is part of a test done by the copy function to compute those IR nodes in the copy that still reference the original AST.
   */
     std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy, SgCopyHelp * help = NULL);
+
   //! Deep copy an arbitrary subtree
    SgNode* deepCopyNode (const SgNode* subtree); 
 
@@ -450,7 +455,6 @@ class StatementGenerator {
 //!
 //! Return the left hand, right hand expressions and if the left hand variable is also being read
   bool isAssignmentStatement(SgNode* _s, SgExpression** lhs=NULL, SgExpression** rhs=NULL, bool* readlhs=NULL);
-
 
 //! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
 SgInitializedName* convertRefToInitializedName(SgNode* current);
@@ -1076,6 +1080,15 @@ SgScopeStatement* getScope(const SgNode* astNode);
   scope->append_statement(), exprListExp->append_expression() etc. are not enough to handle side effect of parent pointers, symbol tables, preprocessing info, defining/nondefining pointers etc.
 */
 
+// DQ (2/24/2009): Simple function to delete an AST subtree (used in outlining).
+//! Function to delete AST subtree's nodes only, users must take care of any dangling pointers, symbols or types that result.
+ void deleteAST(SgNode* node);
+
+// DQ (2/25/2009): Added new function to support outliner.
+//! Move statements in first block to the second block (preserves order and rebuilds the symbol table).
+ void moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicBlock* targetBlock );
+
+
 //! Append a statement to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
@@ -1118,8 +1131,8 @@ void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt, bool au
 //! Insert a list of statements after a target statement
 void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmt);
 
-//! Remove a statement
-void removeStatement(SgStatement* stmt);
+//! Remove a statement from its attach point of the AST. Automatically keep its associated preprocessing information at the original place after the removal. The statement is still in memory and it is up to the users to decide if the removed one will be inserted somewhere else or released from memory (deleteAST()).
+void removeStatement(SgStatement* stmt, bool autoRelocatePreprocessingInfo = true);
 
 //! Deep delete a sub AST tree. It uses postorder traversal to delete each child node. Users must take care of any dangling pointers, symbols or types that result. This is identical to deleteAST()
 void deepDelete(SgNode* root);

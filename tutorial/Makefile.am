@@ -469,7 +469,7 @@ if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e controlFlowGraph_testfile1.pdf; then exit 1; fi
 endif
 
-testVirtualCFG: vcfg_debug.pdf
+testVirtualCFG: vcfg_testIf_debug.pdf
 
 testBuildCG: callGraph.pdf
 
@@ -780,7 +780,7 @@ generatedCodeExamples = \
    rose_inputCode_LoopOptimization_lufac.C \
    rose_inputCode_LoopOptimization_tridvpk.C \
    controlFlowGraph.pdf \
-   vcfg_debug.pdf \
+   vcfg_testIf_debug.pdf \
    debuggingIRnodeToString.out \
    debuggingSourceCodePositionInformation.out \
    commandlineProcessing.out \
@@ -1104,14 +1104,16 @@ if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e controlFlowGraph.pdf; then exit 1; fi
 endif
 
-vcfg_debug.pdf: virtualCFG
+vcfg_testIf_debug.pdf: virtualCFG
 	@echo "Building an example virtual Control Flow Graph (virtualCFG) ..."
 	./virtualCFG $(ROSE_FLAGS) $(srcdir)/inputCode_ControlFlowGraphAnalysis.C 
-	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ControlFlowGraphAnalysis.C.testIf.debug.dot vcfg_debug.pdf
-	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ControlFlowGraphAnalysis.C.testIf.interesting.dot vcfg_interesting.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ControlFlowGraphAnalysis.C.testIf.debug.dot vcfg_testIf_debug.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ControlFlowGraphAnalysis.C.testIf.interesting.dot vcfg_testIf_interesting.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ControlFlowGraphAnalysis.C.main.debug.dot vcfg_main_debug.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ControlFlowGraphAnalysis.C.main.interesting.dot vcfg_main_interesting.pdf
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
-	if ! test -e vcfg_debug.pdf; then exit 1; fi
+	if ! test -e vcfg_testIf_debug.pdf; then exit 1; fi
 endif
 
 defuseAnalysis_pic1.pdf: defuseAnalysis
@@ -1491,9 +1493,7 @@ cleanDocs:
 clean-local: cleanDocs
 	rm -rf Templates.DB ii_files ti_files *.ti *.svg  *.new rose_bin_example.s rose_bin_example_2.s bin_example_2 *.dump
 	find . -depth -name \*.dSYM -exec rm -rf {} \; # OS X object file debug info
-	rm -rf $(generatedCodeExamples) *.out
-#	rm -f exampleTranslator exampleTranslatorMultiLib
-#	rm -f inputCode_ExampleCodeCoverage
+	rm -rf $(generatedCodeExamples) *.out *.pdf *.dot
 
 # Compile everything with -g (compiler's debug flag)
 # AM_CPPFLAGS = -g

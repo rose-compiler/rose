@@ -5,7 +5,7 @@ systems use the ASCII LF (line feed, '\n') character for line termination. Some 
 operating systems insert a CR (carriage return, '\r') in front of the LF.  Insertion
 of the extra CR causes problems for revision management software and some
 Unix-based text editors which developers then have to work around and/or correct.
-To fix this problem, you can use vim 7.0 and later. 
+To fix this problem, you can use the unix command "dos2unix" or vim 7.0 and later. 
 To convert the current file from any mixture of CRLF/LF-only line endings, so all 
 lines end with LF only: type ':update', ':setlocal ff=unix', ':w' . 
 The following source files have CR+LF line termination:
