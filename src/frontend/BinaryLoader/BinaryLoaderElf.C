@@ -437,6 +437,7 @@ BinaryLoaderElf::SymbolMapEntry::get_vsymbol(const VersionedSymbol &version) con
 void
 BinaryLoaderElf::SymbolMapEntry::addVersion(const VersionedSymbol& vsymbol)
 {
+#ifndef _MSC_VER
     if (vsymbol.is_base_definition()) {
         /* There can be only one "base" version. */
         ROSE_ASSERT(p_versions.empty() || false == get_vsymbol().is_base_definition());
@@ -445,6 +446,7 @@ BinaryLoaderElf::SymbolMapEntry::addVersion(const VersionedSymbol& vsymbol)
     } else {
         p_versions.push_back(vsymbol);
     }
+#endif
 }
 
 void

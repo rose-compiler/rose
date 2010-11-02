@@ -103,6 +103,43 @@ fi
 # echo "Exiting as a test!"
 # exit 1
 
+
+
+# DQ & PC (11/3/2009): Debugging the Java support.
+if false; then
+  if test "x$JAVA_HOME" = "x"; then
+    JAVA="`which javac`"
+    if test -f /usr/bin/javaconfig; then # Mac Java
+      :
+    else
+      while test `readlink "$JAVA"` ; do 
+        JAVA=`readlink "$JAVA"` ; 
+     done
+
+     if test $JAVA = "gcj"; then 
+        AC_MSG_ERROR( "Error: gcj not supported. Please configure sun java as javac" );
+     fi
+
+    fi
+    JAVA_HOME="`dirname $JAVA`/.."
+  fi
+fi
+
+# Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
+# Use our classpath in case the user's is messed up
+AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
+
+# Check for Java support used internally to support both the Fortran language (OFP fortran parser) and Java language (ECJ java parser).
+ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
+
+# DQ (10/18/2010): Check for gfortran (required for syntax checking and semantic analysis of input Fortran codes)
+AX_WITH_PROG(GFORTRAN_PATH, [gfortran], [])
+AC_SUBST(GFORTRAN_PATH)
+
+if test "x$GFORTRAN_PATH" != "x"; then
+   AC_DEFINE([USE_GFORTRAN_IN_ROSE], [1], [Mark that GFORTRAN is available])
+fi
+
 # ***************************************************************
 # Options to enable selection of only a single language
 # Handle these options before the --enable-languages=LIST option.
@@ -115,11 +152,27 @@ support_language_only=no
 support_fortran_only=no
 echo "BEFORE Setting: enableval = $enableval support_fortran_only = $support_fortran_only"
 if test "x$enableval" = "xyes"; then
-   support_fortran_only=yes
-   support_language_only=yes
-   echo "Setting: support_fortran_only = $support_fortran_only"
-#   AC_DEFINE([ROSE_BUILD_FORTRAN_ONLY_LANGUAGE_SUPPORT], [], [Build ROSE to support the C langauge])
-#   AM_CONDITIONAL(ROSE_BUILD_FORTRAN_ONLY_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
+   if test "x$USE_JAVA" = x1; then
+    # Scott appears to require CPPFLAGS to be set...
+      echo "Before setting CPPFLAGS: CPPFLAGS = $CPPFLAGS"
+      CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
+      echo "Set CPPFLAGS  to include JAVA_JVM_INCLUDE = $JAVA_JVM_INCLUDE"
+      echo "Setting: support_fortran_only = $support_fortran_only"
+      if test "x$GFORTRAN_PATH" != "x"; then
+         echo "Build only: Found a valid gfortran, java is available, OK to support Fortran"
+       # support_fortran_language=yes
+         support_fortran_only=yes
+         support_language_only=yes
+      else
+         echo "Error: Build only: gfortran not found and required for syntax checking and semantic analysis, fortran only case is not possible"
+         exit 1
+      fi
+    # AC_DEFINE([ROSE_BUILD_FORTRAN_ONLY_LANGUAGE_SUPPORT], [], [Build ROSE to support the C langauge])
+    # AM_CONDITIONAL(ROSE_BUILD_FORTRAN_ONLY_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
+   else
+      echo "Error: Internal java support unavailable, can't configure Fortran langauge support in ROSE (requires JVM for Open Fortran Parser (OFP))."
+      exit 1
+   fi
 fi
 
 AC_ARG_ENABLE([only-c],AS_HELP_STRING([--enable-only-c],[Only support C using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
@@ -154,9 +207,14 @@ AC_ARG_ENABLE([only-java],AS_HELP_STRING([--enable-only-java],[Only support Java
 support_java_only=no
 echo "BEFORE Setting: enableval = $enableval support_java_only = $support_java_only"
 if test "x$enableval" = "xyes"; then
-   support_java_only=yes
-   support_language_only=yes
-   echo "Setting: support_java_only = $support_java_only"
+   if test "x$USE_JAVA" = x1; then
+      support_java_only=yes
+      support_language_only=yes
+      echo "Setting: support_java_only = $support_java_only"
+   else
+      echo "Error: Internal java support unavailable, can't configure Java langauge support in ROSE (requires JVM for Eclipse Compiler for Java -- parser support in ROSE leverages (ECJ))."
+      exit 1
+   fi
 fi
 
 AC_ARG_ENABLE([only-binary-analysis],AS_HELP_STRING([--enable-only-binary-analysis],[Only support Binary Analysis using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
@@ -277,8 +335,21 @@ case "$enableval" in
   all | yes ) LANGUAGES_TO_BUILD="all" 
       support_c_language=yes
       support_cxx_language=yes
-      support_fortran_language=yes
-      support_java_language=yes
+      if test "x$USE_JAVA" = x1; then
+         support_java_language=yes
+         if test "x$GFORTRAN_PATH" != "x"; then
+            echo "Build all: Found a valid gfortran, java is available, OK to support Fortran"
+            support_fortran_language=yes
+         else
+            echo "Build all: gfortran not found and required for syntax checking and semantic analysis, fortran disabled"
+         fi
+      else
+       # echo "Specified to build all, but internal java support is unavalable so we can't support Fortran or Java languages in ROSE."
+         AC_MSG_RESULT(Specified to build all, but internal java support is unavalable so we can't support Fortran or Java languages in ROSE.)
+         disable_languages=yes
+         support_fortran_language=no
+         support_java_language=no
+      fi
       support_php_language=yes
       support_binaries=yes
       support_cuda_language=yes
@@ -305,10 +376,28 @@ case "$enableval" in
            support_cxx_language=yes
            ;;
         fortran) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD fortran"
-           support_fortran_language=yes
+           if test "x$USE_JAVA" = x1; then
+              if test "x$GFORTRAN_PATH" != "x"; then
+                 echo "Build separate: found a valid gfortran, java is available, OK to support Fortran"
+                 support_fortran_language=yes
+              else
+                 echo "Build separate: gfortran not found and required for syntax checking and semantic analysis, fortran disabled"
+              fi
+           else
+            # echo "Specified to build all, but internal java support is unavalable so we can't support Fortran or Java languages in ROSE."
+              AC_MSG_RESULT(Specified to build fortran, but internal java support is unavalable so we can't support Fortran or Java languages in ROSE.)
+              disable_languages=yes
+              support_fortran_language=no
+           fi
            ;;
         java) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD java"
-           support_java_language=yes
+           if test "x$USE_JAVA" = x1; then
+              support_java_language=yes
+           else
+              AC_MSG_RESULT(Specified to build java, but internal java support is unavalable so we can't support Fortran or Java languages in ROSE.)
+              disable_languages=yes
+              support_java_language=no
+           fi
            ;;
         php) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
            support_php_language=yes
@@ -346,6 +435,16 @@ AC_MSG_CHECKING([for language specific options to generate a minimal ROSE config
 # Specify how to set the ROSE configure options when a minimal configuration of ROSE for only C language support is required
 if test "x$support_c_only" = "xyes"; then
 
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+   enable_binary_analysis_tests=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
    support_fortran_language=no
    support_java_language=no
    support_php_language=no
@@ -354,6 +453,45 @@ if test "x$support_c_only" = "xyes"; then
    support_opencl_language=no
 
    AC_MSG_RESULT(haskell:off fortran:off java:off php:off)
+fi
+
+if test "x$support_java_only" = "xyes"; then
+
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+ # When using fortran only assume that we are not interested in java language support in ROSE.
+ # However, currently the --with-java option controls the use of java support for both Fortran 
+ # and Java language support. Now that we have added Java language support to ROSE this is 
+ # unintentionally confusing. So we can't turn this off since the Fortran support requires 
+ # internal java (JVM) support.
+ # with_java=no
+
+ # So these should be expressed in terms of the "with" and "enable" versions of each option's macro.
+ # without_php=yes
+   with_php=no
+
+ # disable_binary_analysis_tests=yes
+   enable_binary_analysis_tests=no
+
+ # Allow tests directory to be run so that we can run the Fortran tests.
+ # enable_tests_directory=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
+ # Turn off all the other language support.
+   support_c_language=no
+   support_cxx_language=no
+   support_fortran_language=no
+   support_php_language=no
+   support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
+
+   AC_MSG_RESULT(haskell:off php:off binary-analysis-tests:off)
 fi
 
 # Specify how to set the ROSE configure options when a minimal configuration of ROSE for only Fortran language support is required (support requested by Rice and LANL)
@@ -395,6 +533,7 @@ if test "x$support_fortran_only" = "xyes"; then
  # Turn off all the other language support.
    support_c_language=no
    support_cxx_language=no
+   support_java_language=no
    support_php_language=no
    support_binaries=no
    support_cuda_language=no
@@ -407,6 +546,54 @@ if test "x$support_fortran_only" = "xyes"; then
 
    echo "Detected specification of Fortran ONLY request for minimal configuration of ROSE..."
 fi
+
+if test "x$support_php_only" = "xyes"; then
+
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+   enable_binary_analysis_tests=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
+   support_c_language=no
+   support_cxx_language=no
+   support_fortran_language=no
+   support_java_language=no
+   support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
+
+   AC_MSG_RESULT(haskell:off fortran:off java:off php:off)
+fi
+
+if test "x$support_binary_analysis_only" = "xyes"; then
+
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+ # enable_binary_analysis_tests=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
+   support_c_language=no
+   support_cxx_language=no
+   support_fortran_language=no
+   support_java_language=no
+   support_php_language=no
+ # support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
+
+   AC_MSG_RESULT(haskell:off fortran:off java:off php:off)
+fi
+
 
 echo "BEFORE Setting: enableval = $enableval enable_language_only_restriction_test = $enable_language_only_restriction_test"
 # AC_ARG_ENABLE([language-only-restriction-test],AS_HELP_STRING([--enable-language-only-restriction-test],[Support language only restriction test]),[enableval=yes],[enableval=no])
@@ -815,23 +1002,57 @@ echo "Requested minimum boost version: boost_lib_version_req_major     = $boost_
 echo "Requested minimum boost version: boost_lib_version_req_minor     = $boost_lib_version_req_minor"
 echo "Requested minimum boost version: boost_lib_version_req_sub_minor = $boost_lib_version_req_sub_minor"
 
-# Actual boost version
+# Actual boost version (version 1.42 will not set "_version", but version 1.37 will).
 echo "Boost version being used is: $_version"
+
+rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3`
+echo "rose_boost_version = $rose_boost_version"
 
 # Define macros for conditional compilation of parts of ROSE based on version of boost
 # (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
 # we don't want conditional compilation or code in ROSE based on version numbers of Boost.
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$_version" = "x1.35")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$_version" = "x1.36")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37,test "x$_version" = "x1.37")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38,test "x$_version" = "x1.38")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39,test "x$_version" = "x1.39")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40,test "x$_version" = "x1.40")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41,test "x$_version" = "x1.41")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42,test "x$_version" = "x1.42")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43,test "x$_version" = "x1.43")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$_version" = "x1.44")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$_version" = "x1.45")
+# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$_version" = "x1.35")
+# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$_version" = "x1.36")
+# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37,test "x$_version" = "x1.37")
+# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38,test "x$_version" = "x1.38")
+# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39,test "x$_version" = "x1.39")
+# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40,test "x$_version" = "x1.40")
+# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41,test "x$_version" = "x1.41")
+# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42,test "x$_version" = "x1.42")
+# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43,test "x$_version" = "x1.43")
+# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$_version" = "x1.44")
+# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$_version" = "x1.45")
+
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$rose_boost_version" = "x103500" -o "x$_version" = "x1.35")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37,test "x$rose_boost_version" = "x103700" -o "x$_version" = "x1.37")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38,test "x$rose_boost_version" = "x103800" -o "x$_version" = "x1.38")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39,test "x$rose_boost_version" = "x103900" -o "x$_version" = "x1.39")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40,test "x$rose_boost_version" = "x104000" -o "x$_version" = "x1.40")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41,test "x$rose_boost_version" = "x104100" -o "x$_version" = "x1.41")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42,test "x$rose_boost_version" = "x104200" -o "x$_version" = "x1.42")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43,test "x$rose_boost_version" = "x104300" -o "x$_version" = "x1.43")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45")
+
+# DQ (10/18/2010): Error checking for Boost version.
+if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
+   -o "x$rose_boost_version" = "x103700" -o "x$_version" = "x1.37" \
+   -o "x$rose_boost_version" = "x103800" -o "x$_version" = "x1.38" \
+   -o "x$rose_boost_version" = "x103900" -o "x$_version" = "x1.39" \
+   -o "x$rose_boost_version" = "x104000" -o "x$_version" = "x1.40" \
+   -o "x$rose_boost_version" = "x104100" -o "x$_version" = "x1.41" \
+   -o "x$rose_boost_version" = "x104200" -o "x$_version" = "x1.42" \
+   -o "x$rose_boost_version" = "x104300" -o "x$_version" = "x1.43" \
+   -o "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44" \
+   -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
+   -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46"; then
+echo "Reasonable version of Boost found!"
+else
+echo "No identifiable version of boost recognised!"
+exit 1;
+fi
+
 
 # echo "Exiting as a test."
 # exit 1
@@ -1206,10 +1427,34 @@ ROSE_SUPPORT_RTED
 AM_CONDITIONAL(ROSE_USE_RTED,test ! "$with_rted" = no)
 
 # TP SUPPORT FOR OPENGL
+#AC_DEFINE([openGL],1,[By default OpenGL is disabled.])
+AC_ARG_ENABLE([rose-openGL],
+  [  --enable-rose-openGL  enable openGL],
+  [  rose_openGL=${enableval}
 AC_PATH_X dnl We need to do this by hand for some reason
 MDL_HAVE_OPENGL
-echo "have_GL = '$have_GL' and have_glut = '$have_glut'"
-AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno)
+echo "have_GL = '$have_GL' and have_glut = '$have_glut' and rose_openGL = '$rose_openGL'"
+#AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$openGL" = xno)
+if test ! "x$rose_openGL" = xno; then
+   AC_MSG_NOTICE( "Checking OpenGL dependencies..." );
+  if test "x$have_GL" = xyes; then
+    AC_MSG_NOTICE( "OpenGL enabled. Found OpenGL." );
+  else
+    AC_MSG_ERROR( "OpenGL not found!" );
+  fi
+ if test "x$have_glut" = xyes; then
+    AC_MSG_NOTICE( "OpenGL enabled. Found GLUT." );
+ else
+#    AC_MSG_NOTICE( "OpenGL GLUT not found Msg" );
+   AC_MSG_ERROR( "OpenGL GLUT not found" );
+ fi
+fi
+], [ rose_openGL=no
+  AC_MSG_NOTICE( "OpenGL disabled." );
+])
+AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno -a ! "x$rose_openGL" = xno)
+
+
 
 # Call supporting macro for python
 ROSE_SUPPORT_PYTHON
@@ -1228,63 +1473,51 @@ AC_CHECK_PROGS(TCLSH, [tclsh])
 AM_CONDITIONAL(ROSE_USE_TCLSH, [test "x$TCLSH" = "xtclsh"])
 echo "value of TCLSH variable = $TCLSH"
 
-# DQ & PC (11/3/2009): Debugging the Java support.
+
+# DQ (10/18/2010): If fortran is enabled then OFP must be allowed and this was already check previously.
+# This step is taken to simplify how we handle OFP and Fortran.  Of course OFP is enabled if Fortran is
+# a valid langauge option, else we could not process the Fortran code with out OFP.  So we want to move
+# to having only a single option for Fortran as a language. All reference to conditionals based on OFP can
+# be replaced with reference to Fortran being processed.  The following code is dead (but not deleted yet).
 if false; then
-if test "x$JAVA_HOME" = "x"; then
-  JAVA="`which javac`"
-  if test -f /usr/bin/javaconfig; then # Mac Java
-    :
+# DQ (10/18/2010): Only test if we should make OFP active if fortran support is enabled.
+echo "Before testing for gfortran to enable OFP: support_fortran_language = $support_fortran_language"
+ofp_enabled=no
+if test "x$support_fortran_language" = "xyes"; then
+  AC_MSG_CHECKING([for gfortran to test whether Fortran support can be used])
+  if test "x$USE_JAVA" = x1; then
+    CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
+    if test "x$GFORTRAN_PATH" != "x"; then
+    # AC_DEFINE([USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT], [1], [Always enable Fortran support whenever Java and gfortran are present])
+    # AC_DEFINE([USE_ROSE_INTERNAL_JAVA_SUPPORT], [1], [Always enable Fortran support whenever Java and gfortran are present])
+      ofp_enabled=yes
+      AC_MSG_RESULT([yes])
+      AC_DEFINE([USE_GFORTRAN_IN_ROSE], [1], [Mark that GFORTRAN is available])
+
+    # Test that we have correctly evaluated the major and minor versions numbers...
+      if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
+        echo "Error: Could not compute the MAJOR version number of $BACKEND_FORTRAN_COMPILER"
+        exit 1
+      fi
+      if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
+        echo "Error: Could not compute the MINOR version number of $BACKEND_FORTRAN_COMPILER"
+        exit 1
+      fi
+    else
+      AC_MSG_RESULT([no ... gfortran cannot be found (try --with-gfortran=<path>)])
+    fi
   else
-    while test `readlink "$JAVA"` ; do 
-      JAVA=`readlink "$JAVA"` ; 
-   done
-
-   if test $JAVA = "gcj"; then 
-      AC_MSG_ERROR( "Error: gcj not supported. Please configure sun java as javac" );
-   fi
-
+    AC_MSG_RESULT([no ... Java cannot be found (try --with-java=<path>)])
   fi
-  JAVA_HOME="`dirname $JAVA`/.."
+else
+  echo "Fortran is not enabled so OFG is disabled."
 fi
 fi
-# Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
-# Use our classpath in case the user's is messed up
-AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
+# AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER, [test "x$ofp_enabled" = "xyes"])
 
-ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 
 OPEN_FORTRAN_PARSER_PATH="${ac_top_builddir}/src/3rdPartyLibraries/fortran-parser" # For the one rule that uses it
 AC_SUBST(OPEN_FORTRAN_PARSER_PATH)
-
-AX_WITH_PROG(GFORTRAN_PATH, [gfortran], [])
-
-ofp_enabled=no
-AC_MSG_CHECKING([whether Fortran support can be used])
-if test "x$USE_JAVA" = x1; then
-  CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
-  if test "x$GFORTRAN_PATH" != "x"; then
-    AC_DEFINE([USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT], [1], [Always enable Fortran support whenever Java and gfortran are present])
-    ofp_enabled=yes
-    AC_MSG_RESULT([yes])
-    AC_DEFINE([USE_GFORTRAN_IN_ROSE], [1], [Mark that GFORTRAN is available])
-
-  # Test that we have correctly evaluated the major and minor versions numbers...
-    if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
-      echo "Error: Could not compute the MAJOR version number of $BACKEND_FORTRAN_COMPILER"
-      exit 1
-    fi
-    if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
-      echo "Error: Could not compute the MINOR version number of $BACKEND_FORTRAN_COMPILER"
-      exit 1
-    fi
-  else
-    AC_MSG_RESULT([no ... gfortran cannot be found (try --with-gfortran=<path>)])
-  fi
-else
-  AC_MSG_RESULT([no ... Java cannot be found (try --with-java=<path>)])
-fi
-AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER, [test "x$ofp_enabled" = "xyes"])
-AC_SUBST(GFORTRAN_PATH)
 
 
 # DQ (2/2/2010): New code to control use of different versions of OFP within ROSE.
@@ -2468,7 +2701,6 @@ projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/simulator/Makefile
-projects/simulator/tests/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/analysis/Makefile
 projects/symbolicAnalysisFramework/src/arrIndexLabeler/Makefile
@@ -2527,6 +2759,9 @@ tests/CompileTests/Cxx_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
 tests/CompileTests/Fortran_tests/Makefile
 tests/CompileTests/Fortran_tests/LANL_POP/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
@@ -2642,6 +2877,11 @@ demo/qrose/Makefile
 binaries/Makefile
 binaries/samples/Makefile
 ])
+
+# DQ (10/27/2010): New Fortran tests (from gfortan test suite).
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
 
 # DQ (8/12/2010): We want to get permission to distribute these files as test codes.
 # tests/CompileTests/Fortran_tests/LANL_POP/Makefile

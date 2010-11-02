@@ -1,3 +1,8 @@
+OSX note (10/22/2010):
+
+On rose-hudson-osx-2 (use this to get access to wget):
+   export PATH=$PATH:/export/tmp.hudson-rose/opt/wget-1.11.4-inst/bin/
+
 
 **********************************************************************
 

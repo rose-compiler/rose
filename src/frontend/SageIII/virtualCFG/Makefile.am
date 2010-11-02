@@ -11,15 +11,20 @@ $(GENERATED_SOURCE):
 noinst_LTLIBRARIES = libvirtualCFG.la
 libvirtualCFG_la_SOURCES      = \
      virtualCFG.C \
-     virtualBinCFG.C \
      cfgToDot.C \
      memberFunctions.C \
      staticCFG.C \
-		 interproceduralCFG.C
+     interproceduralCFG.C
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     libvirtualCFG_la_SOURCES += virtualBinCFG.C
+endif
 
 libvirtualCFG_la_LIBADD       = 
 libvirtualCFG_la_DEPENDENCIES = $(GENERATED_SOURCE)
 
+# DQ (10/29/2010): virtualBinCFG.h must be released as a header file since the function 
+# declarations in SgAsmStatement require it in the generated Cxx_Grammar.h file.
 include_HEADERS = \
      virtualCFG.h \
      virtualBinCFG.h \
@@ -27,6 +32,6 @@ include_HEADERS = \
      filteredCFG.h \
      filteredCFGImpl.h \
      staticCFG.h \
-		 interproceduralCFG.h
+     interproceduralCFG.h
 
 EXTRA_DIST = CMakeLists.txt

@@ -22,9 +22,11 @@ noinst_PROGRAMS = \
     buildForStmt canonicalLoop loopNormalization collectReadWriteVariables \
     typeTraits livenessAnalysis buildProcedureHeaderStatement replaceMacroCalls \
     buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
-    deepDelete insertStatementBeforeFunction removeStatementCommentRelocation
+    deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
+    generateUniqueName annotateExpressionsWithUniqueNames
 
 # list of test SAGE AST builders 
+annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
 deepDelete_SOURCES                       = deepDelete.C 
 buildFunctionDeclaration_SOURCES         = buildFunctionDeclaration.C
 buildNondefiningFunction_SOURCES         = buildNondefiningFunction.C
@@ -67,6 +69,7 @@ loopInterchange_SOURCES                  = loopInterchange.C
 loopTiling_SOURCES                       = loopTiling.C
 insertStatementBeforeFunction_SOURCES    = insertStatementBeforeFunction.C
 removeStatementCommentRelocation_SOURCES = removeStatementCommentRelocation.C
+generateUniqueName_SOURCES               = generateUniqueName.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -120,11 +123,14 @@ generatedCodeExamples = \
   rose_inputloopTiling.C \
   rose_inputdeepDelete.C \
   rose_inputinsertStatementBeforeFunction.C \
-  rose_inputRemoveStatementCommentRelocation.C
+  rose_inputRemoveStatementCommentRelocation.C \
+  rose_inputgenerateUniqueName.C \
+  rose_inputannotateExpressionsWithUniqueNames.C
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   generatedCodeExamples += \
     rose_inputbuildProcedureHeaderStatement.f 
 endif
@@ -210,19 +216,28 @@ rose_inputtypeTraits.C:typeTraits
 
 rose_inputlivenessAnalysis.C:livenessAnalysis
 	./livenessAnalysis$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputlivenessAnalysis.C
+rose_inputgenerateUniqueName.C:generateUniqueName
+	./generateUniqueName$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputgenerateUniqueName.C 1>rose_inputgenerateUniqueName.out
+
+rose_inputannotateExpressionsWithUniqueNames.C:annotateExpressionsWithUniqueNames
+	./annotateExpressionsWithUniqueNames$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputannotateExpressionsWithUniqueNames.C 1>rose_inputannotateExpressionsWithUniqueNames.out
+
+
 
 rose_inputbuildProcedureHeaderStatement.f : buildProcedureHeaderStatement
 # DQ (9/13/2010): I think that we need both levels of if tests else --without-java will not work.
 # DQ (3/18/2009): Make this dependent upon if ROSE was configured to use Fortran.
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	./buildProcedureHeaderStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildProcedureHeaderStatement.f
-else
-	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests (ROSE_USE_OPEN_FORTRAN_PARSER)."
-endif
 else
 	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests (ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT)."
 endif
+
+# else
+#	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests (ROSE_USE_OPEN_FORTRAN_PARSER)."
+# endif
 
 rose_inputbuildAbstractHandle.C:buildAbstractHandle
 	./buildAbstractHandle$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildAbstractHandle.C
@@ -296,7 +311,8 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputRemoveStatementCommentRelocation_withTopandBottomBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutBottomBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutTopBoundingStatement.C \
-       inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C
+       inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C \
+       inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C
 
 
 check-local:
@@ -308,4 +324,5 @@ check-local:
 
 clean-local:
 	rm -f *.o test*.C rose_*.c rose_*.C rose_*.f rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc abiStuffTestDone *.dot rose_*
+	   
 

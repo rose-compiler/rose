@@ -156,8 +156,8 @@ class MPIRankDepSubtreeTraversal : public AstSimpleProcessing
 	MPIRankDepSubtreeTraversal(FiniteVariablesProductLattice& prodLat, Function& func, 
 	                           MPIRankDepAnalysis* rankDepAnal): prodLat(prodLat), func(func)
 	{
-		/*this->prodLat = prodLat;
-		this->func = func;* /
+		this->prodLat = prodLat;
+		this->func = func;
 		this->rankDepAnal = rankDepAnal;
 		subtreeRankDep = false;
 		subtreeNprocsDep = false;

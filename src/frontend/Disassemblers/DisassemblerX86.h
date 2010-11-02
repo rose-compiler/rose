@@ -67,12 +67,16 @@ private:
     };
 
     /** ModR/M settings that create register expressions (or rmReturnNull for no register) */
-    enum RegisterMode {
+    enum RegisterMode 
+	{
         rmLegacyByte, rmRexByte, rmWord, rmDWord, rmQWord, rmSegment, rmST, rmMM, rmXMM, rmControl, rmDebug, rmReturnNull
     };
 
     /* MMX registers? See mmPrefix method */
-    enum MMPrefix {mmNone, mmF3, mm66, mmF2};
+    enum MMPrefix 
+	{
+		mmNone, mmF3, mm66, mmF2
+	};
 
 
 

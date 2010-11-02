@@ -15,6 +15,45 @@ bool RoseBin_FlowAnalysis::initialized = false;
 
 //#include "AST_BIN_Traversal.h"
 
+
+// DQ (10/20/2010): Moved to source file to support compilation of language only mode which excludes binary analysis support.
+RoseBin_FlowAnalysis::RoseBin_FlowAnalysis(SgAsmNode* global, GraphAlgorithms* algo) {
+    g_algo=algo;
+    nrNodes=0;
+    nrEdges=0;
+    db = RoseBin_support::getDataBaseSupport();
+    RoseBin_support::setDebugMode(false);
+    RoseBin_support::setDebugModeMin(false);
+    func_nr=0;
+    globalBin = global;
+    // todo: optimize later
+    if (initialized==false) {
+#if 0
+      // (tps 2Jun08) : Jeremiah implemented functions in his disassembler,
+      // so we do not need to perform a conversion from block to function anymore.
+      // However, for now we want to pertain the flat hierarchy of function-instruction
+      // instead of function-block-instruction and hence have to convert this.
+      if (!db)
+	flattenBlocks(globalBin);
+#endif
+#if 0
+      if (!db)
+	convertBlocksToFunctions(globalBin);
+#endif
+      initFunctionList(globalBin);
+#if 0
+      if (!db) {
+      	resolveFunctions(globalBin);
+      }
+#endif
+      //      printAST(globalBin);
+      process_jumps();
+      initialized = true;
+    }
+
+  }
+
+
 void
 RoseBin_FlowAnalysis::clearMaps() {
   vizzGraph->get_node_index_to_node_map().clear();

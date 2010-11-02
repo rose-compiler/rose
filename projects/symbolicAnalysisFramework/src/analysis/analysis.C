@@ -138,7 +138,7 @@ if(analysisDebugLevel>=2){
 		//printf("                         state->getLatticeBelow((Analysis*)dfAnalysis).size()=%d\n", state.getLatticeBelow((Analysis*)dfAnalysis).size());
 	}*/
 	
-	const vector<Lattice*>& masterLatBel = state.getLatticeBelow((Analysis*)dfAnalysis);
+	//const vector<Lattice*>& masterLatBel = state.getLatticeBelow((Analysis*)dfAnalysis);
 	//printf("    creator=%p, state=%p, masterLatBel.size()=%d\n", (Analysis*)dfAnalysis, &state, masterLatBel.size());
 }
 
@@ -278,7 +278,7 @@ bool IntraFWDataflow::runAnalysis(const Function& func, NodeState* fState)
 			// iterate over all descendants
 			vector<DataflowEdge> edges = n.outEdges();
 			if(analysisDebugLevel>=1){
-				printf("    Descendants (%d):\n", edges.size());
+				printf("    Descendants (%lu):\n", (unsigned long)(edges.size()));
 				printf("    ~~~~~~~~~~~~\n");
 			}
 
@@ -565,9 +565,9 @@ void UnstructuredPassInterDataflow::runAnalysis()
  *************************************************/
 
 ContextInsensitiveInterProceduralDataflow::ContextInsensitiveInterProceduralDataflow
-	      (IntraProceduralDataflow* intraDataflowAnalysis, SgIncidenceDirectedGraph* graph) 
-	                     : InterProceduralDataflow(intraDataflowAnalysis), 
+	      (IntraProceduralDataflow* intraDataflowAnalysis, SgIncidenceDirectedGraph* graph) :
 	                       InterProceduralAnalysis((IntraProceduralAnalysis*)intraDataflowAnalysis),
+	                       InterProceduralDataflow(intraDataflowAnalysis), 
 	                       TraverseCallGraphDataflow(graph)
 {
 /*	set<FunctionState*> allFuncs = FunctionState::getAllDefinedFuncs();
@@ -582,20 +582,20 @@ ContextInsensitiveInterProceduralDataflow::ContextInsensitiveInterProceduralData
 		                                 func, func.get_definition()->cfgForBeginning(), funcS->state);
 
 printf("ContextInsensitiveInterProceduralDataflow initState %s():\n", (*it)->func.get_name().str());
-/*for(vector<Lattice*>::iterator it = initState.begin(); 
+for(vector<Lattice*>::iterator it = initState.begin(); 
     it!=initState.end(); it++)
 {	
 	cout << *it << ": " << (*it)->str("    ") << "\n";
-}* /
+}
 	
 		funcS->state.setLattices(this, initState);
 		
-		/* // remember the main() function
+		 // remember the main() function
 		if(strcmp(func.get_name().str(), "main")==0)
-			main = func;* /
+			main = func;
 	}
 	
-	/*for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++)	
+	for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++)	
 	{
 		FunctionState* funcS = *it;
 	}*/

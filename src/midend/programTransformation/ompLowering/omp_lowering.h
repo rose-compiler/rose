@@ -14,7 +14,8 @@ namespace OmpSupport
 {
   //! The type of target runtime libraries (not yet in use)
   // We support both Omni and GCC OpenMP runtime libraries
-  enum omp_rtl_enum {
+  enum omp_rtl_enum 
+  {
     e_gomp,
     e_omni,
     e_last_rtl

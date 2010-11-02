@@ -192,11 +192,11 @@ class UnstructuredPassInterDataflow : virtual public InterProceduralDataflow
 	public:
 	
 	UnstructuredPassInterDataflow(IntraProceduralDataflow* intraDataflowAnalysis) 
-	                     : InterProceduralDataflow(intraDataflowAnalysis), InterProceduralAnalysis((IntraProceduralAnalysis*)intraDataflowAnalysis)
+	                     : InterProceduralAnalysis((IntraProceduralAnalysis*)intraDataflowAnalysis), InterProceduralDataflow(intraDataflowAnalysis)
 	{}
 	
 	bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, bool fw)
-	{}
+	{ }
 	
 	void runAnalysis();
 };

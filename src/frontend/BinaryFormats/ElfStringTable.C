@@ -65,20 +65,20 @@ SgAsmElfStringSection::unparse(std::ostream &f) const
 /** Augments superclass to make sure free list and such are adjusted properly. Any time the ELF String Section size is changed
  *  we adjust the free list in the ELF String Table contained in this section. */
 void
-SgAsmElfStringSection::set_size(addr_t newsize)
+SgAsmElfStringSection::set_size(rose_addr_t newsize)
 {
-    addr_t orig_size = get_size();
+    rose_addr_t orig_size = get_size();
     SgAsmElfSection::set_size(newsize);
     SgAsmGenericStrtab *strtab = get_strtab();
 
     if (strtab) {
         if (get_size() > orig_size) {
             /* Add new address space to string table free list */
-            addr_t n = get_size() - orig_size;
+            rose_addr_t n = get_size() - orig_size;
             strtab->get_freelist().insert(orig_size, n);
         } else if (get_size() < orig_size) {
             /* Remove deleted address space from string table free list */
-            addr_t n = orig_size - get_size();
+            rose_addr_t n = orig_size - get_size();
             strtab->get_freelist().erase(get_size(), n);
         }
     }
@@ -157,7 +157,7 @@ SgAsmElfStrtab::~SgAsmElfStrtab()
  *  storage object, otherwise always create a new one. Each storage object is considered a separate string, therefore when two
  *  strings share the same storage object, changing one string changes the other. */
 SgAsmStringStorage *
-SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
+SgAsmElfStrtab::create_storage(rose_addr_t offset, bool shared)
 {
     ROSE_ASSERT(offset!=SgAsmGenericString::unallocated);
 
@@ -205,7 +205,7 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
 
 /** Similar to create_storage() but uses a storage object that's already been allocated. */
 void
-SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, addr_t offset)
+SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, rose_addr_t offset)
 {
     ROSE_ASSERT(p_dont_free && storage!=p_dont_free && storage->get_offset()==p_dont_free->get_offset());
     std::string s = get_container()->read_content_local_str(offset);
@@ -242,7 +242,7 @@ SgAsmElfStrtab::allocate_overlap(SgAsmStringStorage *storage)
             } else if (need>have && existing->get_offset()>=need-have &&
                        0==storage->get_string().compare(need-have, have, existing->get_string())) {
                 /* New string ends with an existing string. Check for, and allocate, free space. */
-                addr_t offset = existing->get_offset() - (need-have); /* positive diffs checked above */
+                rose_addr_t offset = existing->get_offset() - (need-have); /* positive diffs checked above */
                 if (get_freelist().subtract_from(offset, need-have).size()==0) {
                     get_freelist().allocate_at(offset, need-have);
                     storage->set_offset(offset);
@@ -263,7 +263,7 @@ SgAsmElfStrtab::unparse(std::ostream &f) const
     for (size_t i=0; i<p_storage_list.size(); i++) {
         SgAsmStringStorage *storage = p_storage_list[i];
         ROSE_ASSERT(storage->get_offset()!=SgAsmGenericString::unallocated);
-        addr_t at = container->write(f, storage->get_offset(), storage->get_string());
+        rose_addr_t at = container->write(f, storage->get_offset(), storage->get_string());
         container->write(f, at, '\0');
     }
     

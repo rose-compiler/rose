@@ -107,7 +107,8 @@ TEST_F77_Objects = ${F77_TESTCODES:.f=.o}
 TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
 TEST_F03_Objects = ${F03_TESTCODES:.f03=.o}
 
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #test for both selection-based and pragma-based targets
 $(TEST_F77_Objects): ../outlineSelection  ../outline
 	$(VALGRIND) ../outlineSelection $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.f)

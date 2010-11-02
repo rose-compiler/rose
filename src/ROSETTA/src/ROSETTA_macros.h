@@ -19,9 +19,11 @@
 
 //QY 11/9/04 added capabilities for building multiple constructors for statements including
 //ExpressionRoot (and others) as data members
-typedef enum { TAG_NO_CONSTRUCTOR_PARAMETER , 
-               TAG_CONSTRUCTOR_PARAMETER    } 
-ConstructParamEnumX;
+typedef enum ConstructParam_EnumX
+{ 
+	TAG_NO_CONSTRUCTOR_PARAMETER , 
+    TAG_CONSTRUCTOR_PARAMETER    
+} ConstructParamEnumX;
 
 class ConstructParamEnum { // Wrapper for extra argument type checking
   ConstructParamEnumX value;
@@ -32,11 +34,13 @@ class ConstructParamEnum { // Wrapper for extra argument type checking
   bool operator!=(const ConstructParamEnum& o) const {return value != o.value;}
 };
 
-typedef enum { TAG_NO_ACCESS_FUNCTIONS,
+typedef enum BuildAccess_EnumX
+{ 
+	TAG_NO_ACCESS_FUNCTIONS,
                TAG_BUILD_ACCESS_FUNCTIONS,
                TAG_BUILD_FLAG_ACCESS_FUNCTIONS, // Just like TAG_BUILD_ACCESS_FUNCTIONS except doesn't set p_isModified
-               TAG_BUILD_LIST_ACCESS_FUNCTIONS}
- BuildAccessEnumX;
+               TAG_BUILD_LIST_ACCESS_FUNCTIONS
+} BuildAccessEnumX;
 
 class BuildAccessEnum { // Wrapper for extra argument type checking
   BuildAccessEnumX value;
@@ -47,7 +51,7 @@ class BuildAccessEnum { // Wrapper for extra argument type checking
   bool operator!=(const BuildAccessEnum& o) const {return value != o.value;}
 };
 
-typedef enum
+typedef enum CopyConfig_EnumX
    {
   // Note that CLONE_TREE is the default is nothing is specified in the setDataPrototype() member function.
      TAG_NO_COPY_DATA, // This skips the generation of any code to copy the 
