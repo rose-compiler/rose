@@ -3335,7 +3335,11 @@ EmulationPolicy::emulate_syscall()
                 T_END };
 
             /* Variable arguments */
-            switch (arg(1) & FUTEX_CMD_MASK) {
+            unsigned arg1 = arg(1);
+#ifdef FUTEX_CMD_MASK
+            arg1 &= FUTEX_CMD_MASK;
+#endif
+            switch (arg1) {
                 case FUTEX_WAIT:
                     syscall_enter("futex", "PfdP--", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
                     break;

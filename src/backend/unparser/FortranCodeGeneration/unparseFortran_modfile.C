@@ -22,13 +22,23 @@ generateModFile(SgFile *sfile)
    {
      ROSE_ASSERT(sfile != NULL);
 
-//FMZ (10/28/2009): don't generate the .rmod for the readin .rmod file
-if (sfile->get_skipfinalCompileStep() == true)
-       return;
-
-
   // file name, with full path.
      string  originalModuleFilenameWithPath = sfile->get_file_info()->get_filenameString();
+
+#if 0
+  // DQ (10/24/2010): This is overly restrictive...we still want to generate the rmod file.
+  // It does not matter is we compile or not compile any generated file.  This premature
+  // exit will cause F03 code to fail to be processed by ROSE since any mod file required 
+  // will not generated.
+  // FMZ (10/28/2009): don't generate the .rmod for the readin .rmod file
+     if (sfile->get_skipfinalCompileStep() == true)
+        {
+          if (SgProject::get_verbose() > 0)
+               printf ("Skipping generation of rmod file: %s \n",originalModuleFilenameWithPath.c_str());
+
+          return;
+        }
+#endif
 
   // Cause the output of a message with verbose level is turned on.
      if (SgProject::get_verbose() > 0)
@@ -39,10 +49,14 @@ if (sfile->get_skipfinalCompileStep() == true)
   // Get the list of SgModuleStatement objects for the current AST.
      Rose_STL_Container<SgNode*> moduleDeclarationList = NodeQuery::querySubTree (sfile,V_SgModuleStatement);
 
+#if 0
   // DQ: I think this case is not required since the loop (below) would be empty.
-     if (moduleDeclarationList.empty()) { //no module in the file
-         return ;
-     }
+     if (moduleDeclarationList.empty())
+        {
+       // no module in the file
+          return;
+        }
+#endif
 
      for (Rose_STL_Container<SgNode*>::iterator i = moduleDeclarationList.begin(); i != moduleDeclarationList.end(); i++)
         {

@@ -2,143 +2,319 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = SemanticVerification libraryIdentification_tests Dwarf_tests Pin_tests
 
-EXTRA_DIST = runTest.C arm-ctrlaltdel.ans runExecFormatsTest testShiftResizeSection.sh test_findConstants.ans \
-		test_disassemble.ans testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl \
-		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans test_findConstantsABI.ans \
-		test_disassembleBuffer.ans bincfg.h test_virtualMachineSemantics.ans test_testAssembler.ans \
-		test_symbolicSemantics.ans test_yicesSemanticsExe.ans
+EXTRA_DIST = \
+	runExecFormatsTest testShiftResizeSection.sh \
+        testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl \
+	bincfg.h
 
-BINARY_SAMPLES = $(top_srcdir)/binaries/samples
+# Forward declarations
+STATIC_TEST_TARGETS=
+noinst_PROGRAMS=
+MOSTLYCLEANFILES=
 
 if USE_BINARY_ANALYSIS_TESTS
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
 
-
 ###############################################################################################################################
-# The executables...
+# The executables and their test cases...
 ###############################################################################################################################
 
-# Each executable will have a test_*.result target for testing and a demo_* target for interactive demo. The former is the
-# name of a file that is created when the test is successful (unsuccessful results are usually saved in *.result.tmp), the later
-# is a phony target.
-noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
-		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble disassembleBuffer testEtherInsns \
-		expandCoreDump functionBoundaries findConstantsABI rot13 virtualMachineSemantics testAssembler testAstIO \
-		symbolicSemantics yicesSemanticsExe yicesSemanticsLib testRegisters
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
+noinst_PROGRAMS += execFormatsTest
 execFormatsTest_SOURCES = execFormatsTest.C
 execFormatsTest_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += execFormatsTest.passed
+EXTRA_DIST += execFormatsTest.conf
+execFormatsTest.passed: execFormatsTest.conf execFormatsTest
+	@$(TH) $< $@
+
 
 #Test the binary control flow graph that uses the semantic representation to perform an accurate analysis
+noinst_PROGRAMS += testBinCFG
 testBinCFG_SOURCES = testBinCFG.C
 testBinCFG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testBinCFG.passed
+EXTRA_DIST += testBinCFG.conf
+MOSTLYCLEANFILES += cfg_x86.dot
+testBinCFG.passed: testBinCFG.conf testBinCFG
+	@$(TH) INPUT=libm-2.3.6.so $< $@
+
 
 #Test the binary call graph that uses the semantic representation to perform an accurate analysis
+noinst_PROGRAMS += testBinCG
 testBinCG_SOURCES = testBinCG.C
 testBinCG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testBinCG.C
+EXTRA_DIST += testBinCG.conf
+MOSTLYCLEANFILES += cfg_x86.dot
+testBinCG.passed: testBinCG.conf testBinCG testBinCFG.passed
+	@$(TH) INPUT=libm-2.3.6.so $< $@
+
 
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
 # quite easy to do, but it turns out to involve lots of details.
+noinst_PROGRAMS += testElfStrtab
 testElfStrtab_SOURCES = testElfStrtab.C
 testElfStrtab_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testElfStrtab.passed
+EXTRA_DIST += testElfStrtab.conf
+testElfStrtab.passed: testElfStrtab.conf testElfStrtab
+	@$(TH) INPUT=arm-poweroff $< $@
+
 
 # Reads in an ELF executable and changes the byte order from little-endian to big-endian or vice versa and writes out a new
 # file. Note that the byte order change affects the ELF file format but not the executable described by that format.
+noinst_PROGRAMS += testElfByteOrder
 testElfByteOrder_SOURCES = testElfByteOrder.C
 testElfByteOrder_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testElfByteOrder.passed
+EXTRA_DIST += testElfByteOrder.conf
+testElfByteOrder.passed: testElfByteOrder.conf testElfByteOrder testElfStrtab.passed
+	@$(TH) INPUT=arm-poweroff $< $@
+
 
 # Reads in an ELF executable and changes the word size from eight to four bytes or vice versa and writes out a new file. Note
 # that the word size change affects the ELF file format but not the executable described by that format.
+noinst_PROGRAMS += testElfWordSize
 testElfWordSize_SOURCES = testElfWordSize.C
 testElfWordSize_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testElfWordSize.passed
+EXTRA_DIST += testElfWordSize.conf
+testElfWordSize.passed: testElfWordSize.conf testElfWordSize testElfStrtab.passed testElfByteOrder.passed
+	@$(TH) INPUT=arm-poweroff $< $@
+
 
 # Demonstrates how to change names of dynamically-linked functions. This example reads an ELF executable dynamically linked to
 # the MPI library and changes all calls to PMPI_* functions with calls to XMPI_* functions. See the top of the source file
 # for more details.
+noinst_PROGRAMS += testElfSchulz
 testElfSchulz_SOURCES = testElfSchulz.C
 testElfSchulz_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testElfSchulz-1.passed testElfSchulz-2.passed
+EXTRA_DIST += testElfSchulz.conf
+testElfSchulz-1.passed: testElfSchulz.conf testElfSchulz
+	@$(TH) FLAGS='-rose:partitioner_search -leftovers' N=1 $< $@
+testElfSchulz-2.passed: testElfSchulz.conf testElfSchulz
+	@$(TH) FLAGS='-rose:partitioner_search -leftovers' N=2 $< $@
+
 
 # Demonstrates how to build an ELF executable from scratch. Lots of comments in the source code. The resulting file is executable
 # on an x86 Linux using syscall 1 to exit with a particular value.
+noinst_PROGRAMS += testElfConstruct
 testElfConstruct_SOURCES = testElfConstruct.C
 testElfConstruct_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testElfConstruct.passed
+EXTRA_DIST += testElfConstruct.conf
+MOSTLYCLEANFILES += a.out
+testElfConstruct.passed: testElfConstruct.conf testElfConstruct
+	@$(TH) $< $@
+
 
 # Demonstrates how to build a PE executable from scratch. This demo is not as complete at the ELF version, but does show how to
 # create a file that contains multiple format headers (a DOS header and a PE header).
+noinst_PROGRAMS += testPeConstruct
 testPeConstruct_SOURCES = testPeConstruct.C
 testPeConstruct_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testPeConstruct.passed
+EXTRA_DIST += testPeConstruct.conf
+MOSTLYCLEANFILES += a.out
+testPeConstruct.passed: testPeConstruct.conf testPeConstruct
+	@$(TH) $< $@
+
 
 # Changes the size and/or location of a section in an executable file.
+noinst_PROGRAMS += shiftResizeSection
 shiftResizeSection_SOURCES = shiftResizeSection.C
 shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += shiftResizeSection.passed
+EXTRA_DIST += shiftResizeSection.conf shiftResizeSection.ans
+MOSTLYCLEANFILES += arm-ctrlaltdel.dump-1 arm-ctrlaltdel.dump-2 arm-ctrlaltdel.dump-3
+shiftResizeSection.passed: shiftResizeSection.conf shiftResizeSection
+	@$(TH) INPUT=arm-ctrlaltdel $< $@
+
 
 # Finds constant values and propagates them across instructions
+noinst_PROGRAMS += findConstants
 findConstants_SOURCES = semantics.C
 findConstants_CPPFLAGS = -DPOLICY_SELECTOR=1
 findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += findConstants.passed
+EXTRA_DIST += semantics.conf findConstants.ans
+findConstants.passed: semantics.conf findConstants
+	@$(TH) CMD=findConstants INPUT=i686-test1.O3.bin $< $@
+
 
 # Finds constant values and propagates them across instructions using an ABI
+noinst_PROGRAMS += findConstantsABI
 findConstantsABI_SOURCES = semantics.C
 findConstantsABI_CPPFLAGS = -DPOLICY_SELECTOR=2
 findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += findConstantsABI.passed
+EXTRA_DIST += semantics.conf findConstantsABI.ans
+findConstantsABI.passed: semantics.conf findConstantsABI
+	@$(TH) CMD=findConstantsABI INPUT=i686-test1.O3.bin $< $@
+
 
 # Uses VirtualMachineSemantics semantic analysis policy
+noinst_PROGRAMS += virtualMachineSemantics
 virtualMachineSemantics_SOURCES = semantics.C
 virtualMachineSemantics_CPPFLAGS = -DPOLICY_SELECTOR=3
 virtualMachineSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += virtualMachineSemantics.passed
+EXTRA_DIST += semantics.conf virtualMachineSemantics.ans
+virtualMachineSemantics.passed: semantics.conf virtualMachineSemantics
+	@$(TH) CMD=virtualMachineSemantics INPUT=i686-test1.O3.bin $< $@
+
 
 # Use SymbolicSemantics semantic analysis policy
+noinst_PROGRAMS += symbolicSemantics
 symbolicSemantics_SOURCES = semantics.C
 symbolicSemantics_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=0
 symbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += symbolicSemantics.passed
+EXTRA_DIST += semantics.conf symbolicSemantics.ans
+symbolicSemantics.passed: semantics.conf symbolicSemantics
+	@$(TH) CMD=symbolicSemantics INPUT=i686-test1.O3.bin $< $@
 
-# Use SymbolicSemantics with YicesSolver, invoking "yices" executable
+
+# Use SymbolicSemantics with YicesSolver policy, invoking "yices" executable. We should be able
+# to compile this test even when the "yices" command is not available. However, we won't be able
+# to test it if we don't have it.
+noinst_PROGRAMS += yicesSemanticsExe
 yicesSemanticsExe_SOURCES = semantics.C
 yicesSemanticsExe_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=1
 yicesSemanticsExe_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+EXTRA_DIST += semantics.conf yicesSemanticsExe.ans
+if HAVE_YICES
+STATIC_TEST_TARGETS += yicesSemanticsExe.passed
+yicesSemanticsExe.passed: semantics.conf yicesSemanticsExe
+	@$(TH) CMD=yicesSemanticsExe INPUT=i686-test1.O3.bin $< $@
+endif
 
-# Use SymbolicSemantics with YicesSolver, linked to Yikes library
+
+# Use SymbolicSemantics with YicesSolver, linked to Yikes library. We should be able to compile
+# this test even when the "yices" library is not available. However, we won't be able to run the
+# test if we don't have the library.
+noinst_PROGRAMS += yicesSemanticsLib
 yicesSemanticsLib_SOURCES = semantics.C
 yicesSemanticsLib_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=2
 yicesSemanticsLib_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+EXTRA_DIST += semantics.conf yicesSemanticsLib.ans
+if HAVE_LIBYICES
+STATIC_TEST_TARGETS += yicesSemanticsLib.passed
+yicesSemanticsLib.passed: semantics.conf yicesSemanticsLib
+	@$(TH) CMD=yicesSemanticsLib INPUT=i686-test1.O3.bin $< $@
+endif
+
 
 # Disassembles an executable according to various command-line switches.
+noinst_PROGRAMS += disassemble
 disassemble_SOURCES = disassemble.C
 disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += disassemble.passed assembler.passed
+EXTRA_DIST += disassemble.conf disassemble.ans assembler.conf
+disassemble.passed: disassemble.conf disassemble
+	@$(TH) INPUT=i686-test1.O0.bin $< $@
+assembler.passed: assembler.conf disassemble
+	@$(TH) $< $@
+
 
 # Disassemble a file containing bare instructions
+noinst_PROGRAMS += disassembleBuffer
 disassembleBuffer_SOURCES = disassembleBuffer.C
 disassembleBuffer_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += disassembleBuffer.passed
+EXTRA_DIST += disassembleBuffer.conf disassembleBuffer.ans
+disassembleBuffer.passed: disassembleBuffer.conf disassembleBuffer
+	@$(TH) INPUT=buffer2.raw ADDRESS=0x8048310 $< $@
 
+
+noinst_PROGRAMS += testEtherInsns
 testEtherInsns_SOURCES = testEtherInsns.C
 testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testEtherInsns.passed
+EXTRA_DIST += testEtherInsns.conf
+testEtherInsns.passed: testEtherInsns.conf testEtherInsns
+	@$(TH) $< $@
+
 
 # Program to show function boundary information for a binary executable
+noinst_PROGRAMS += functionBoundaries
 functionBoundaries_SOURCES=functionBoundaries.C
 functionBoundaries_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += functionBoundaries_1.passed functionBoundaries_2.passed functionBoundaries_3.passed
+EXTRA_DIST += functionBoundaries.conf functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans
+functionBoundaries_1.passed: functionBoundaries.conf functionBoundaries disassemble.passed
+	@$(TH) INPUT=i686-test1.O0.bin N=1 $< $@
+functionBoundaries_2.passed: functionBoundaries.conf functionBoundaries findConstants.passed findConstantsABI.passed
+	@$(TH) INPUT=i686-test1.O3.bin N=2 $< $@
+functionBoundaries_3.passed: functionBoundaries.conf functionBoundaries
+	@$(TH) INPUT=i686-test1.O3-stripped.bin N=3 $< $@
+
 
 # Program to add read-only data to ELF core dumps.
+noinst_PROGRAMS += expandCoreDump
 expandCoreDump_SOURCES=expandCoreDump.C
 expandCoreDump_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += expandCoreDump.passed
+EXTRA_DIST += expandCoreDump.conf
+expandCoreDump.passed: expandCoreDump.conf expandCoreDump
+	@$(TH) $< $@
+
 
 # Program that encodes/decodes data similar to ROT-13 but acceping binary data
+noinst_PROGRAMS += rot13
 rot13_SOURCES=rot13.C
+STATIC_TEST_TARGETS += rot13.passed
+EXTRA_DIST += rot13.conf
+rot13.passed: rot13.conf rot13
+	@$(TH) INPUT=i686-test1.O0.bin $< $@
+
 
 # Program to test the assembler (see also "disassemble --assemble")
+noinst_PROGRAMS += testAssembler
 testAssembler_SOURCES=testAssembler.C
 testAssembler_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testAssembler.passed
+EXTRA_DIST += testAssembler.conf testAssembler.ans
+testAssembler.passed: testAssembler.conf testAssembler
+	@$(TH) INPUT=buffer2.bin $< $@
+
 
 # Program to test that we can write and then read an AST for a binary executable
+noinst_PROGRAMS += testAstIO
 testAstIO_SOURCES=testAstIO.C
 testAstIO_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testAstIO.passed
+EXTRA_DIST += testAstIO.conf
+testAstIO.passed: testAstIO.conf testAstIO
+	@$(TH) INPUT=i686-test1.O0.bin $< $@
+
 
 # Program to test the RegisterDescriptor and RegisterDictionary classes.
+noinst_PROGRAMS += testRegisters
 testRegisters_SOURCES=testRegisters.C
 testRegisters_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testRegisters.passed
+EXTRA_DIST += testRegisters.conf
+testRegisters.passed: testRegisters.conf testRegisters
+	@$(TH) $< $@
+
+# Not sure what this does.
+if ROSE_USE_SQLITE_DATABASE
+noinst_PROGRAMS += testLibraryDb
+testLibraryDb_SOURCES = testLibraryDb.C
+testLibraryDb_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += testLibraryDb.passed
+EXTRA_DIST += testLibraryDb.conf
+MOSTLYCLEANFILES += test.db
+testLibraryDb.passed: testLibraryDb.conf testLibraryDb
+	@$(TH) $< $@
+endif
 
 ###############################################################################################################################
 # DEMOS
@@ -243,277 +419,15 @@ demo_testRegisters: testRegisters
 
 
 ###############################################################################################################################
-# TESTS
+# DYNAMICALLY-GENERATED TESTS
 #
-# These are pretty much the same as the demos except they compare the new output with expected output and fail if there
-# are any differences.
+# Most testing rules appear next to the rules for generating the test executable.  Dynamically-generated tests appear here.
 #
-# Each passing test creates a *.result file so that a subsequent "make" doesn't need to rerun the test.
-#
-#------------------------------------------------------------------------------------------------------------------------------
-# -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE --
-#
-# SOME OF THE TARGETS DEPEND ON OTHER TESTS BECAUSE ROSE SHOULD NOT EXECUTE CONCURRENTLY IN THE SAME WORKING DIRECTORY FOR
-# SPECIMEN BINARIES HAVING THE SAME NAMES DUE TO ROSE CREATING FILES IN THE CWD BASED ON THE BASE NAME OF THE SPECIMEN.
-# ------------------------------------------------------------------------------------------------------------------------------
-#
-###############################################################################################################################
-
-# Static tests start here and are individually defined below.
-STATIC_TEST_TARGETS = $(patsubst %,test_%.result,$(noinst_PROGRAMS)) test_assembler.result
-test_static.result: $(STATIC_TEST_TARGETS)
-	@touch $@
-
 # Dynamicly-generated tests start here and their definitions are inserted below by the "build" script.  We make the
 # dynamic tests depend on the static test because we're not sure what output files will be generated and we don't want
 # the output of dynamic tests causing havoc for the static tests.  The test_sample_binaries.result (along with a whole
 # slew of other targets) is created by the "build" script and placed in the generated Makefile.in.
-test_dynamic.result: test_static.result
-	@$(MAKE) test_sample_binaries.result
-	@touch $@
-
-# Static tests...
-
-test_testAstIO.result: testAstIO
-	@echo "  TESTING $@"
-	@if $(VALGRIND) ./testAstIO $(BINARY_SAMPLES)/i686-test1.O0.bin >$@.tmp 2>&1; \
-	  then mv $@.tmp $@; \
-	  else sed 's/^/$@> /' <$@.tmp; exit 1; \
-         fi
-
-test_execFormatsTest.result: execFormatsTest
-	@echo "  TESTING $@ (not currently tested)"
-	@touch $@
-
-test_testBinCFG.result: testBinCFG
-	@echo "  TESTING $@"
-	@if $(VALGRIND) ./testBinCFG $(BINARY_SAMPLES)/libm-2.3.6.so >$@.tmp 2>&1; then mv $@.tmp $@; \
-	else sed 's/^/$@> /' < $@.tmp; exit 1; fi
-
-test_testBinCG.result: testBinCG test_testBinCFG.result
-	@echo "  TESTING $@"
-	@if $(VALGRIND) ./testBinCG $(BINARY_SAMPLES)/libm-2.3.6.so >$@.tmp 2>&1; then mv $@.tmp $@; \
-	else sed 's/^/$@> /' < $@.tmp; exit 1; fi
-
-test_testElfStrtab.result: testElfStrtab
-	@echo "  TESTING $@"
-	@if $(VALGRIND) ./testElfStrtab $(BINARY_SAMPLES)/arm-poweroff >$@.tmp 2>&1; then mv $@.tmp $@; \
-	else sed 's/^/$@> /' < $@.tmp; exit 1; fi
-
-# cannot run in parallel with testElfStrtab
-test_testElfByteOrder.result: testElfByteOrder test_testElfStrtab.result
-	@echo "  TESTING $@"
-	@$(VALGRIND) ./testElfByteOrder $(BINARY_SAMPLES)/arm-poweroff >$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest ./arm-poweroff.new >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && diff -u ./arm-poweroff.new{,.new} >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' < $@.tmp; exit 1; fi
-
-# cannot run in parallel with testElfStrtab or testElfByteOrder
-test_testElfWordSize.result: testElfWordSize test_testElfStrtab.result test_testElfByteOrder.result
-	@echo "  TESTING $@"
-	@$(VALGRIND) ./testElfWordSize -rose:read_executable_file_format_only $(BINARY_SAMPLES)/arm-poweroff >$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest -rose:read_executable_file_format_only ./arm-poweroff.new >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && diff -u ./arm-poweroff.new{,.new} >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' < $@.tmp; exit 1; fi
-
-test_testElfSchulz_flags = -rose:partitioner_search -leftovers
-test_testElfSchulz.result: test_testElfSchulz-1.result test_testElfSchulz-2.result
-	@echo "  TESTING $@ (not currently tested)"
-	@touch $@
-
-test_testElfSchulz-1.result: testElfSchulz
-	@echo "  TESTING $@"
-	@$(VALGRIND) ./testElfSchulz $(test_testElfSchulz_flags) \
-                              $(BINARY_SAMPLES)/schulz-sample1.so >$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
-                              ./schulz-sample1.so.new >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
-                              $(BINARY_SAMPLES)/schulz-sample1-p.so >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && diff -u schulz-sample1{-p.so,.so.new}.dump >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && diff $(BINARY_SAMPLES)/schulz-sample1-p.so schulz-sample1.so.new >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_testElfSchulz-2.result: testElfSchulz
-	@echo "  TESTING $@"
-	@$(VALGRIND) ./testElfSchulz $(test_testElfSchulz_flags) \
-                              $(BINARY_SAMPLES)/schulz-sample2.so >$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
-                              ./schulz-sample2.so.new >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && $(VALGRIND) ./execFormatsTest $(test_testElfSchulz_flags) \
-                              $(BINARY_SAMPLES)/schulz-sample2-p.so >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && diff -u schulz-sample2{-p.so,.so.new}.dump >>$@.tmp 2>&1; \
-	 [ $$? -eq 0 ] && diff $(BINARY_SAMPLES)/schulz-sample2-p.so schulz-sample2.so.new >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_so_file: test_testBinCFG.result test_testBinCG.result
-	@echo "  TESTING $@"
-	@if $(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/libm-2.3.6.so >$@.tmp 2>&1; \
-	 then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_testElfConstruct.result: testElfConstruct
-	@echo "  TESTING $@"
-	@if $(VALGRIND) ./testElfConstruct >$@.tmp 2>&1; \
-	 then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_testPeConstruct.result: testPeConstruct
-	@echo "  TESTING $@"
-	@if $(VALGRIND) ./testPeConstruct >$@.tmp 2>&1; \
-	 then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_shiftResizeSection.result: shiftResizeSection
-	@echo "  TESTING $@"
-	@$(srcdir)/testShiftResizeSection.sh $(BINARY_SAMPLES)/arm-ctrlaltdel >arm-ctrlaltdel.ans 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/arm-ctrlaltdel.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-# This test is *very* sensitive to changes to the Disassembler and Partitioner classes because they and this test all use
-# the findConstants instruction semantics. If the Disassembler or Partitioner is even slightly changed, it could make a
-# different number of calls to the instruction semantics, which changes the sequence number used to generate constant
-# names. Therefore, when comparing the test output with the answer, we will renumber all constant names sequentially.
-# The test is still sensitive to minor formatting changes in unparseInstruction().
-FIND_CONSTANTS_FILTER=perl -p -e '/====/ && ($$seq=0); s/\bv(\d+)\b/$$map{$$1} ||= "V" . ++$$seq/ge'
-test_findConstants.result: findConstants
-	@echo "  TESTING $@"
-	@($(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin |\
-	    $(FIND_CONSTANTS_FILTER) >test_findConstants.ans) 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_findConstants.ans >>$@.tmp 2>&1 ;\
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_findConstantsABI.result: findConstantsABI
-	@echo "  TESTING $@"
-	@($(VALGRIND) ./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin |\
-	    $(FIND_CONSTANTS_FILTER) >test_findConstantsABI.ans) 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_findConstantsABI.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_virtualMachineSemantics.result: virtualMachineSemantics
-	@echo "  TESTING $@"
-	@($(VALGRIND) ./virtualMachineSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin |\
-	    $(FIND_CONSTANTS_FILTER) >test_virtualMachineSemantics.ans) 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -uw {$(srcdir),.}/test_virtualMachineSemantics.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_symbolicSemantics.result: symbolicSemantics
-	@echo "  TESTING $@"
-	@($(VALGRIND) ./symbolicSemantics $(BINARY_SAMPLES)/i686-test1.O3.bin |\
-	    $(FIND_CONSTANTS_FILTER) >test_symbolicSemantics.ans) 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_symbolicSemantics.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_yicesSemanticsExe.result: yicesSemanticsExe
-if HAVE_YICES
-	@echo "  TESTING $@"
-	@($(VALGRIND) ./yicesSemanticsExe $(BINARY_SAMPLES)/i686-test1.O3.bin |\
-	    $(FIND_CONSTANTS_FILTER) >test_yicesSemanticsExe.ans) 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_yicesSemanticsExe.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-else
-	@echo "  TESTING $@ (the Yices SMT-solver is not supported for this configuration; test skipped)"
-endif
-
-# The yicesSemanticsLib results should be identical to the yicesSemanticsExe results
-test_yicesSemanticsLib.result: yicesSemanticsLib
-if HAVE_LIBYICES
-	@echo "  TESTING $@"
-	@($(VALGRIND) ./yicesSemanticsLib $(BINARY_SAMPLES)/i686-test1.O3.bin |\
-	    $(FIND_CONSTANTS_FILTER) >test_yicesSemanticsLib.ans) 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u $(srcdir)/test_yicesSemanticsExe.ans ./test_yicesSemanticsLib.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-else
-	@echo "  TESTING $@ (the Yices SMT-solver is not supported for this configuration; test skipped)"
-endif
-
-# Do not use the "--show-functions" switch.  The table that's output is different on systems with libgcrypt vs systems
-# without libgcrypt, and therefore the test can fail.
-test_disassemble.result: disassemble
-	@echo "  TESTING $@"
-	@$(VALGRIND) ./disassemble -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown -rose:partitioner_search -leftovers $(BINARY_SAMPLES)/i686-test1.O0.bin >test_disassemble.ans 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassemble.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_disassembleBuffer.result: disassembleBuffer
-	@echo "  TESTING $@"
-	@$(VALGRIND) ./disassembleBuffer $(BINARY_SAMPLES)/buffer2.raw 0x8048310 >test_disassembleBuffer.ans 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassembleBuffer.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-# disassemble will exit non-zero if the assembly doesn't result in an encoding identical to the original
-# We're using the buffer2.bin from projects/BinQ for now because it's 64-bit; the one in our own srcdir is 32-bit and
-# the assembler isn't completely working yet for 32-bit. [RPM 2009-07-21]
-test_assembler.result: disassemble
-	@echo "  TESTING $@"
-	@$(VALGRIND) ./disassemble --quiet --reassemble --show-bad $(top_srcdir)/projects/BinQ/buffer2.bin >$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-# another assembler test
-test_testAssembler.result: testAssembler
-	@echo "  TESTING $@"
-	@$(VALGRIND) ./testAssembler $(BINARY_SAMPLES)/buffer2.bin >test_testAssembler.ans 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_testAssembler.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_testEtherInsns.result: testEtherInsns
-	@echo "  TESTING $@ (cannot be run automatically; requires human interaction)"
-	@touch $@
-
-test_expandCoreDump.result: expandCoreDump
-	@echo "  TESTING $@ (not currently tested)"
-	@touch $@
-
-test_rot13.result: rot13
-	@echo "  TESTING $@"
-	@./rot13 --encode <$(BINARY_SAMPLES)/i686-test1.O0.bin |./rot13 --decode >test_rot13.ans 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff $(BINARY_SAMPLES)/i686-test1.O0.bin test_rot13.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-
-test_testRegisters.result: testRegisters
-	@echo "  TESTING $@"
-	@./testRegisters
-	@touch $@
-
-# Tests for detecting the locations of functions, written this way for parallelism.
-test_functionBoundaries_1.result: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin test_disassemble.result
-	@echo "  TESTING $@"
-	@./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin >functionBoundaries_1.ans 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/functionBoundaries_1.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-test_functionBoundaries_2.result: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin test_findConstants.result test_findConstantsABI.result
-	@echo "  TESTING $@"
-	@./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin >functionBoundaries_2.ans 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/functionBoundaries_2.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-test_functionBoundaries_3.result: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin
-	@echo "  TESTING $@"
-	@./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin >functionBoundaries_3.ans 2>$@.tmp; \
-	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/functionBoundaries_3.ans >>$@.tmp 2>&1; \
-	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
-	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
-test_functionBoundaries.result: test_functionBoundaries_1.result test_functionBoundaries_2.result test_functionBoundaries_3.result
-	@touch $@
-
-
-
+#
 # The rules in this section of the makefile are generated by the "build" script based on the selection of binary samples
 # (usually from the binaries/samples directory) available at that time.  We do it this way for a number of reasons:
 #
@@ -524,6 +438,12 @@ test_functionBoundaries.result: test_functionBoundaries_1.result test_functionBo
 #     dependencies must be represented in the makefile rules.
 #
 # See scripts/sample_binary_rules.pl for more documentation.
+###############################################################################################################################
+
+# Yes, use recursive make. See comment above.
+dynamic_tests: $(STATIC_TEST_TARGETS)
+	@$(MAKE) test_sample_binaries.result
+
 
 # All sample binary tests have these additional dependencies
 SAMPLE_TEST_DEPS = execFormatsTest disassemble
@@ -537,16 +457,7 @@ INSERT_SAMPLE_RULES_HERE:
 ###############################################################################################################################
 
 # Don't delete things indiscriminately--sometimes developers have other related files that should not be touched!
-MOSTLYCLEANFILES = \
-	$(STATIC_TEST_TARGETS) $(addsuffix .tmp, $(STATIC_TEST_TARGETS)) \
-	test_testElfSchulz-{1,2}.result test_{static,dynamic}.result \
-	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.new.new \
-	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
-	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
-	test_disassemble.ans test_disassembleBuffer.ans test_rot13.ans \
-	test_functionBoundaries_{1,2,3}.result functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans \
-	test_virtualMachineSemantics.ans test_testAssembler.ans test_symbolicSemantics.ans test_yicesSemanticsExe.ans \
-	test_yicesSemanticsLib.ans
+MOSTLYCLEANFILES += $(STATIC_TEST_TARGETS) $(patsubst %.passed, %.failed, $(STATIC_TEST_TARGETS))
 
 # DQ (10/19/2010): This rule fails when ROSE is configure using --without-java, why is this?
 # if !ROSE_USE_INTERNAL_JAVA_SUPPORT
@@ -554,88 +465,14 @@ MOSTLYCLEANFILES = \
 mostlyclean-local: mostlyclean-binarysamples
 # endif
 
-###############################################################################################################################
-# The older part of this makefile...
-###############################################################################################################################
-
-## Don't use the repository in ../src
-#CXX_TEMPLATE_REPOSITORY_PATH = .
-
-if ROSE_USE_SQLITE_DATABASE
-
-# This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = runTest testLibraryDb
-
-testLibraryDb_SOURCES = testLibraryDb.C
-# testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-testLibraryDb_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS) 
-
-test1: testLibraryDb
-	./testLibraryDb
-	rm test.db
-else
-
-bin_PROGRAMS  = runTest
-test1:
-	: $@ is only for ROSE_USE_SQLITE_DATABASE
-
-endif
-runTest_SOURCES = runTest.C
-
-# testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-runTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#TESTCODES = buffer2.bin
-
-# Build the list of object files
-#TEST_Objects = ${TESTCODES:.C=.o}
-
-ROSE_FLAGS = -g -rose:verbose 0
-# ROSE_FLAGS = 
-
-TEST_TRANSLATOR = ./runTest all $(ROSE_FLAGS)
-TESTCODE_INCLUDES =
-
-# DQ (7/12/2004): Modified to run with make -j4 options
-#$(TEST_Objects): runTest $(TESTCODES) 
-#	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
-#	env SRCDIR="$(srcdir)" $(TEST_TRANSLATOR)
-
-CLEANFILES = unparsed.s callgraph.gml output _binary_tree.dot cfg.dot dfg.dot Templates.DB 
-
-# DQ (3/21/2009): These tests don't appear to run under Cygwin.
 if ROSE_BUILD_OS_IS_CYGWIN
+# DQ (3/21/2009): These tests don't appear to run under Cygwin.
 check-local:
-	@echo "*****************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/binaryTests: (commented out for Cygwin) ***"
-	@echo "*****************************************************************************************"
+	@echo "  TESTING (disabled: all tests disabled for Cygwin)"
 else
-
-# DQ (4/8/2009): I have removed the requirement to run rule: test_so_file (added by Thomas)
-# I have left the rule in place so that we can have it availalbe for testing (but it only 
-# works if BinQ is built which is not the default configuration).
-# check-local: runTest test1 $(TEST_RESULT_TARGETS) test_so_file
-# Caution: runTest generates the same output files as some $(TEST_RESULT_TARGETS) [RPM 2009-07-21]
-
-check-local: runTest test1 
-check-local: runTest test1 test_static.result test_dynamic.result
-	@echo "*********************************************************************"
-	@echo "*** ROSE/tests/roseTests/binaryTests: passed ***"
-	@echo "*********************************************************************"
+check-local: $(STATIC_TEST_TARGETS) dynamic_tests
 endif
 
-# Don't delete things indiscriminately!
-clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) ii_files ti_files DATABASE DATABASE.dot cfg_x86.dot  cg_x86.dot
-
-distclean-local:
-	rm -rf Templates.DB 
-
 else
-
 check-local:
-	@echo "**********************************************************************"
-	@echo "*** ROSE/tests/roseTests/binaryTests: skipped ***"
-	@echo "**********************************************************************"
-
 endif

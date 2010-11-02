@@ -54,7 +54,7 @@ int main( int argc, char * argv[] )
 	DivAnalysis da;
 	CallGraphBuilder cgb(project);
 	cgb.buildCallGraph();
-	SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
+	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
 	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
 	UnstructuredPassInterDataflow ciipd_da(&da);
 	ciipd_da.runAnalysis();
@@ -173,7 +173,7 @@ bool ScalarFWDataflow::transfer(const Function& func, const DataflowNode& n, Nod
 		long c;
 		if(cfgUtils::parseAssignment(isSgExpression(n.getNode()), op, i, j, negJ, k, negK, c))
 		{
-			printf("ScalarFWDataflow::transfer()   cfgUtils::parseAssignment(%p, %d, %s, %s, %d, %s, %d, %d)\n", isSgExpression(n.getNode()), op, i.str().c_str(), j.str().c_str(), negJ, k.str().c_str(), negK, c);
+			printf("ScalarFWDataflow::transfer()   cfgUtils::parseAssignment(%p, %d, %s, %s, %d, %s, %d, %ld)\n", isSgExpression(n.getNode()), op, i.str().c_str(), j.str().c_str(), negJ, k.str().c_str(), negK, c);
 			// i = j or i = c
 			if(op == cfgUtils::none)
 			{
@@ -290,7 +290,7 @@ bool ScalarFWDataflow::incorporateDivInfo(const Function& func, const DataflowNo
 		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
 		
 		// incorporate this variable's divisibility information (if any)
-		if(varDivL->getLevel() == DivLattice::divKnown/* && !(varDivL->getDiv()==1 && varDivL->getRem()==0)* /)
+		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
 		{
 			modified = cg->addDivVar(var, varDivL->getDiv(), varDivL->getRem()) || modified;
 		}
@@ -321,7 +321,7 @@ bool ScalarFWDataflow::removeConstrDivVars(const Function& func, const DataflowN
 		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
 		
 		// incorporate this variable's divisibility information (if any)
-		if(varDivL->getLevel() == DivLattice::divKnown/* && !(varDivL->getDiv()==1 && varDivL->getRem()==0)* /)
+		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
 		{
 			cg->disconnectDivOrigVar(var, varDivL->getDiv(), varDivL->getRem());
 		}
