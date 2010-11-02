@@ -161,13 +161,13 @@ private:
 public:
    SgArrayType* isUsableAsSgArrayType( SgType* type );
    SgReferenceType* isUsableAsSgReferenceType( SgType* type );
+   bool isInInstrumentedFile( SgNode* n );
 private:
 
    SgType* resolveTypedefs( SgType* type );
    SgType* resolveReferencesAndTypedefs( SgType* type );
 
    bool isUsedAsLvalue( SgExpression* exp );
-   bool isInInstrumentedFile( SgNode* n );
    /// is n a basic block, if statement, [do]while, or for statement
    bool isNormalScope( SgNode* n );
    SgExpression* getExprBelowAssignment(SgExpression* exp);

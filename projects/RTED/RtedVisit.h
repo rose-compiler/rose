@@ -81,6 +81,9 @@ class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,
      bool isLValue(SgNode* node);
      bool isInterestingAssignNode(SgNode* node);
      bool isRightOfBinaryOp(SgNode* node);
+
+     SgForStatement* isVariableInForStatement(SgNode* astNode);
+     bool isInitializedNameInForStatement(SgForStatement* for_stmt,SgInitializedName* name);
    };
 
 #endif

@@ -35,6 +35,35 @@ bool VariableTraversal::isInterestingAssignNode(SgNode* exp) {
    return false;
 }
 
+SgForStatement*
+VariableTraversal::isVariableInForStatement(SgNode* astNode) {
+   SgNode* temp = astNode;
+   while (!isSgProject(temp)) {
+      SgForStatement* for_stmt = isSgForStatement(temp);
+      if (for_stmt)
+         return for_stmt;
+      temp = temp->get_parent();
+   }
+   return NULL;
+}
+
+bool
+VariableTraversal::isInitializedNameInForStatement(SgForStatement* for_stmt,SgInitializedName* name) {
+   // Capture for( int i = 0;
+   vector<SgNode*> initialized_names = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgInitializedName);
+   // Capture int i; for( i = 0;
+   vector<SgNode*> init_var_refs = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgVarRefExp);
+   for (vector<SgNode*>::iterator i = init_var_refs.begin(); i != init_var_refs.end(); ++i) {
+      initialized_names.push_back( isSgVarRefExp(*i) -> get_symbol() -> get_declaration());
+   }
+
+   if (find(initialized_names.begin(), initialized_names.end(), name) != initialized_names.end()) {
+      return true;
+   }
+   return false;
+}
+
+
 bool VariableTraversal::isRightOfBinaryOp(SgNode* astNode) {
    bool isRightBranchOfBinary = false;
    SgNode* temp = astNode;
@@ -229,13 +258,21 @@ SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(
             << "  for current node : " << astNode->class_name() << "   exp: "
             << astNode->unparseToString() << endl;
       if (astNode->get_parent())
-         cerr << "                  parent :: "
-               << astNode->get_parent()->unparseToString() << endl;
+         cerr << "                  parent :: "       << astNode->get_parent()->unparseToString() << endl;
       bool thinkItsStopSearch = false;
+
       if (isSgVarRefExp(astNode)) {
+         SgInitializedName *name = isSgVarRefExp(astNode) -> get_symbol() -> get_declaration();
+         if (name && !transf->isInInstrumentedFile(name -> get_declaration())) {
+            return localResult;
+         }
+         bool stopSearch = false;
+#if 1
+            SgForStatement* fstmt = isVariableInForStatement(astNode);
+            if (fstmt) stopSearch= isInitializedNameInForStatement(fstmt,name);
+#endif
          if (!inheritedAttribute.isArrowExp
                && !inheritedAttribute.isAddressOfOp) {
-            bool stopSearch = false;
             if (rightOfbinaryOp && !rightOfbinaryOp->empty()) {
 #if 1
                SgExpression* left = isSgBinaryOp(
@@ -249,16 +286,6 @@ SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(
                   stopSearch = true;
 #endif
             }
-            // tps : this fails right now because of testcase : run/C/subprogram_call_errors/c_C_2_b  ... ROSE can not handle isUsedAsLValue right now
-            //              bool lval = isSgVarRefExp(astNode)->isUsedAsLValue();
-            //         string name = isSgVarRefExp(astNode)->get_symbol()->get_name().getString();
-            //        printf ("\n  $$$$$$$$$$ FOUND isSgVarRefExp : %s  LVALUE? %d...    :: %s \n",name.c_str(), lval,astNode->get_parent()->get_parent()->unparseToString().c_str() );
-
-            //            if (!isSgExpression(astNode)->isLValue())
-#if 0
-            if (lval)
-            stopSearch=true;
-#endif
 
 #if 1
             if (inheritedAttribute.isAssignInitializer) {
@@ -336,11 +363,12 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n,
          << " -------------------------------------" << endl;
 
    SgInitializedName *name = n -> get_symbol() -> get_declaration();
+   /*
    if (name && !isInInstrumentedFile(name -> get_declaration())) {
       // we're not instrumenting the file that contains the declaration, so we'll always complain about accesses
       return;
    }
-
+*/
 #if 1
    SgNode* parent = isSgVarRefExp(n);
    SgNode* last = parent;
@@ -405,7 +433,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n,
 
       else if (isSgForStatement(parent)) {
          SgForStatement* for_stmt = isSgForStatement(parent);
-#if 1
+#if 0
          // Capture for( int i = 0;
          vector<SgNode*> initialized_names = NodeQuery::querySubTree(
                for_stmt -> get_for_init_stmt(), V_SgInitializedName);
