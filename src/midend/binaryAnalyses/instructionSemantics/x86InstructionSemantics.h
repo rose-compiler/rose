@@ -53,17 +53,29 @@ struct X86InstructionSemantics {
         {}
     virtual ~X86InstructionSemantics() {}
 
-    /* If the counter (cx register) is non-zero then decrement it. The return value is a flag indicating whether cx was
-     * originally non-zero. */
-    Word(1) stringop_setup_loop() {
-        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
-        policy.writeGPR(x86_gpr_cx,
-                        policy.add(policy.readGPR(x86_gpr_cx),
-                                   policy.ite(ecxNotZero, number<32>(-1), number<32>(0))));
-        return ecxNotZero;
+    /** Beginning of a 'rep', 'repe', or 'repne' loop. The return value is the condition status, and is true if the loop body
+     * should execute, false otherwise. */
+    WordType<1> rep_enter() {
+        return policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
     }
 
-    /* This used to be "#define STRINGOP_LOAD_SI..." */
+    /** Decrement the counter for a 'rep', 'repe', or 'repne' loop and adjust the instruction pointer.  The instruction pointer
+     *  is reset to the beginning of the instruction if the loop counter, cx register, is non-zero after decrementing and @p
+     *  repeat is true. Otherwise the instruction pointer is not adjusted and the loop effectively exits.  If @p cond is false
+     *  then this function has no effect on the state. */
+    void rep_repeat(SgAsmx86Instruction *insn, WordType<1> repeat, WordType<1> cond) {
+        WordType<32> new_cx = policy.add(policy.readGPR(x86_gpr_cx),
+                                         policy.ite(cond,
+                                                    number<32>(-1),
+                                                    number<32>(0)));
+        policy.writeGPR(x86_gpr_cx, new_cx);
+        repeat = policy.and_(repeat, policy.invert(policy.equalToZero(new_cx)));
+        policy.writeIP(policy.ite(policy.and_(cond, repeat),
+                                  number<32>((uint32_t)(insn->get_address())),     /* repeat */
+                                  policy.readIP()));                               /* exit */
+    }
+
+    /** Return the value of the memory pointed to by the SI register. */
     template<size_t N>
     WordType<8*N> stringop_load_si(SgAsmx86Instruction *insn, WordType<1> cond) {
         return readMemory<8*N>((insn->get_segmentOverride() == x86_segreg_none ? x86_segreg_ds : insn->get_segmentOverride()),
@@ -71,45 +83,16 @@ struct X86InstructionSemantics {
                                cond);
     }
 
-    /* This used to be "#define STRINGOP_LOAD_DI..." */
+    /** Return the value of memory pointed to by the DI register. */
     template<size_t N>
     WordType<8*N> stringop_load_di(WordType<1> cond) {
         return readMemory<8*N>(x86_segreg_es, policy.readGPR(x86_gpr_di), cond);
     }
 
-    /* Instruction semantics for rep_stosN where N is 1(b), 2(w), or 4(d).
-     * This method handles semantics for one iteration of stosN.
-     * See https://siyobik.info/index.php?module=x86&id=279 */
+    /** Instruction semantics for stosN where N is 1 (b), 2 (w), or 4 (d). If @p cond is false then this instruction does not
+     *  change any state. */
     template<size_t N>
-    void rep_stos_semantics(SgAsmx86Instruction *insn) {
-        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
-
-        /* Fill memory pointed to by ES:[DI] with contents of AX register if counter was not zero. */
-        policy.writeMemory(x86_segreg_es,
-                           policy.readGPR(x86_gpr_di),
-                           extract<0, 8*N>(policy.readGPR(x86_gpr_ax)),
-                           ecxNotZero);
-
-        /* Update DI by incrementing or decrementing by number of bytes copied (only if counter is nonzero) */
-        policy.writeGPR(x86_gpr_di,
-                        policy.add(policy.readGPR(x86_gpr_di),
-                                   policy.ite(ecxNotZero,
-                                              policy.ite(policy.readFlag(x86_flag_df), number<32>(-N), number<32>(N)),
-                                              number<32>(0))));
-
-        /* Decrement the counter if not already zero. */
-        policy.writeGPR(x86_gpr_cx,
-                        policy.add(policy.readGPR(x86_gpr_cx),
-                                   policy.ite(ecxNotZero, number<32>(-1), number<32>(0))));
-
-        /* If counter is now nonzero then repeat this instruction, otherwise go to the next one. */
-        ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
-        policy.writeIP(policy.ite(ecxNotZero, number<32>((uint32_t)(insn->get_address())), policy.readIP()));
-    }
-
-    /* Instruction semantics for stosN where N is 1(b), 2(w), or 4(d) */
-    template<size_t N>
-    void stos_semantics(SgAsmx86Instruction *insn) {
+    void stos_semantics(SgAsmx86Instruction *insn, WordType<1> cond) {
         const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
         if (operands.size()!=0)
             throw Exception("instruction must have no operands", insn);
@@ -120,61 +103,177 @@ struct X86InstructionSemantics {
         policy.writeMemory(x86_segreg_es,
                            policy.readGPR(x86_gpr_di),
                            extract<0, 8*N>(policy.readGPR(x86_gpr_ax)),
-                           policy.true_());
+                           cond);
 
-        /* Update DI */ /*FIXME: Is this correct? */
+        /* Update DI */
         policy.writeGPR(x86_gpr_di,
-                        policy.add(policy.readGPR(x86_gpr_di),
-                                   policy.ite(policy.readFlag(x86_flag_df), number<32>(-N), number<32>(N))));
+                        policy.ite(cond,
+                                   policy.add(policy.readGPR(x86_gpr_di),
+                                              policy.ite(policy.readFlag(x86_flag_df), number<32>(-N), number<32>(N))),
+                                   policy.readGPR(x86_gpr_di)));
     }
 
-    /* Instruction semantics for rep_movsN where N is 1(b), 2(w), or 4(d) */
+    /** Instruction semantics for rep_stosN where N is 1 (b), 2 (w), or 4 (d). This method handles semantics for one iteration
+     * of stosN. See https://siyobik.info/index.php?module=x86&id=279 */
     template<size_t N>
-    void rep_movs_semantics(SgAsmx86Instruction *insn) {
+    void rep_stos_semantics(SgAsmx86Instruction *insn) {
+        WordType<1> in_loop = rep_enter();
+        stos_semantics<N>(insn, in_loop);
+        rep_repeat(insn, policy.true_(), in_loop);
+    }
+
+    /** Instruction semantics for movsN where N is 1 (b), 2 (w), or 4 (d). If @p cond is false then this instruction does not
+     * change any state. */
+    template<size_t N>
+    void movs_semantics(SgAsmx86Instruction *insn, WordType<1> cond) {
         const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         if (operands.size()!=0)
             throw Exception("instruction must have no operands", insn);
         if (insn->get_addressSize() != x86_insnsize_32)
             throw Exception("size not implemented", insn);
-        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
 
-        /* Conditionally execute the MOVS instruction */
         policy.writeMemory(x86_segreg_es,
                            policy.readGPR(x86_gpr_di),
-                           stringop_load_si<N>(insn, ecxNotZero),
-                           ecxNotZero);
+                           stringop_load_si<N>(insn, cond),
+                           cond);
         policy.writeGPR(x86_gpr_si,
                         policy.add(policy.readGPR(x86_gpr_si),
-                                   policy.ite(ecxNotZero,
+                                   policy.ite(cond,
                                               policy.ite(policy.readFlag(x86_flag_df),
                                                          number<32>(-(N)),
                                                          number<32>(N)),
                                               number<32>(0))));
         policy.writeGPR(x86_gpr_di,
                         policy.add(policy.readGPR(x86_gpr_di),
-                                   policy.ite(ecxNotZero,
+                                   policy.ite(cond,
                                               policy.ite(policy.readFlag(x86_flag_df),
                                                          number<32>(-(N)),
                                                          number<32>(N)),
                                               number<32>(0))));
-
-
-        /* Decrement %ECX if not zero */
-        policy.writeGPR(x86_gpr_cx,
-                        policy.add(policy.readGPR(x86_gpr_cx),
-                                   policy.ite(ecxNotZero, number<32>(-1), number<32>(0))));
-
-        /* Check again for %ECX equal to zero. According to Intel documentation for the REP/REPE/REPNE instructions,
-         * the CPU executes a "while (%ECX!=0)" and then inside that loop it increments or decrements the addresses
-         * only if %ECX is non-zero.  The order has a subtle effect on the number of  times the loop body is executed,
-         * although it doesn't affect the number of times the underlying pointers are incremented or decremented. */
-        ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
-
-        /* Repeat this same instruction? */
-        policy.writeIP(policy.ite(ecxNotZero,
-                                  number<32>((uint32_t)(insn->get_address())),
-                                  policy.readIP()));
     }
+
+    /** Instruction semantics for rep_movsN where N is 1 (b), 2 (w), or 4 (d). This method handles semantics for one iteration
+     *  of the instruction. */
+    template<size_t N>
+    void rep_movs_semantics(SgAsmx86Instruction *insn) {
+        WordType<1> in_loop = rep_enter();
+        movs_semantics<N>(insn, in_loop);
+        rep_repeat(insn, policy.true_(), in_loop);
+    }
+
+    /** Instruction semantics for cmpsN where N is 1 (b), 2 (w), or 4 (d).  If @p cond is false then this instruction does not
+     * change any state. See Intel Instruction Set Reference 3-154 Vol 2a, March 2009 for opcodes 0xa6 and 0xa7 with no prefix. */
+    template<size_t N>
+    void cmps_semantics(SgAsmx86Instruction *insn, WordType<1> cond) {
+        const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+        if (operands.size()!=0)
+            throw Exception("instruction must have no operands", insn);
+        if (insn->get_addressSize() != x86_insnsize_32)
+            throw Exception("size not implemented", insn);
+        doAddOperation<8*N>(stringop_load_si<N>(insn, cond),
+                            policy.invert(stringop_load_di<N>(cond)),
+                            true,
+                            policy.false_(),
+                            cond);
+        policy.writeGPR(x86_gpr_si,
+                        policy.ite(cond,
+                                   policy.add(policy.readGPR(x86_gpr_si),
+                                              policy.ite(policy.readFlag(x86_flag_df), number<32>(-N), number<32>(N))),
+                                   policy.readGPR(x86_gpr_si)));
+        policy.writeGPR(x86_gpr_di,
+                        policy.ite(cond,
+                                   policy.add(policy.readGPR(x86_gpr_di),
+                                              policy.ite(policy.readFlag(x86_flag_df), number<32>(-N), number<32>(N))),
+                                   policy.readGPR(x86_gpr_di)));
+    }
+
+    /** Instruction semantics for one iteration of the repe_cmpsN instruction, where N is 1 (b), 2 (w), or 4 (d). */
+    template<size_t N>
+    void repe_cmps_semantics(SgAsmx86Instruction *insn) {
+        WordType<1> in_loop = rep_enter();
+        cmps_semantics<N>(insn, in_loop);
+        WordType<1> repeat = policy.readFlag(x86_flag_zf);
+        rep_repeat(insn, repeat, in_loop);
+    }
+
+    /** Instruction semantics for one iteration of the repne_cmpsN instruction, where N is 1 (b), 2 (w), or 4 (d). */
+    template<size_t N>
+    void repne_cmps_semantics(SgAsmx86Instruction *insn) {
+        WordType<1> in_loop = rep_enter();
+        cmps_semantics<N>(insn, in_loop);
+        WordType<1> repeat = policy.invert(policy.readFlag(x86_flag_zf));
+        rep_repeat(insn, repeat, in_loop);
+    }
+
+    /** Instruction semantics for scasN where N is 1 (b), 2 (w), or 4 (d). If @p cond is false then this instruction does not
+     * change any state. */
+    template<size_t N>
+    void scas_semantics(SgAsmx86Instruction *insn, WordType<1> cond) {
+        const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+        if (operands.size()!=0)
+            throw Exception("instruction must have no operands", insn);
+        if (insn->get_addressSize() != x86_insnsize_32)
+            throw Exception("size not implemented", insn);
+        doAddOperation<8*N>(extract<0, 8*N>(policy.readGPR(x86_gpr_ax)),
+                            policy.invert(stringop_load_di<N>(cond)),
+                            true,
+                            policy.false_(),
+                            cond);
+        policy.writeGPR(x86_gpr_di,
+                        policy.ite(cond,
+                                   policy.add(policy.readGPR(x86_gpr_di),
+                                              policy.ite(policy.readFlag(x86_flag_df), number<32>(-N), number<32>(N))),
+                                   policy.readGPR(x86_gpr_di)));
+    }
+
+    /** Instruction semantics for one iteration of repe_scasN where N is 1 (b), 2 (w), or 4 (d). */
+    template<size_t N>
+    void repe_scas_semantics(SgAsmx86Instruction *insn) {
+        WordType<1> in_loop = rep_enter();
+        scas_semantics<N>(insn, in_loop);
+        WordType<1> repeat = policy.readFlag(x86_flag_zf);
+        rep_repeat(insn, repeat, in_loop);
+    }
+
+    /** Instruction semantics for one iterator of repne_scasN where N is 1 (b), 2 (w), or 4 (d). */
+    template<size_t N>
+    void repne_scas_semantics(SgAsmx86Instruction *insn) {
+        WordType<1> in_loop = rep_enter();
+        scas_semantics<N>(insn, in_loop);
+        WordType<1> repeat = policy.invert(policy.readFlag(x86_flag_zf));
+        rep_repeat(insn, repeat, in_loop);
+    }
+
+    /** Helper for lods_semantics() to load one byte into the AL register. */
+    void lods_semantics_regupdate(WordType<8> v) {
+        updateGPRLowByte(x86_gpr_ax, v);
+    }
+
+    /** Helper for lods_semantics() to load one word into the AX register. */
+    void lods_semantics_regupdate(WordType<16> v) {
+        updateGPRLowWord(x86_gpr_ax, v);
+    }
+
+    /** Helper for lods_semantics() to load one doubleword into the EAX register. */
+    void lods_semantics_regupdate(WordType<32> v) {
+        policy.writeGPR(x86_gpr_ax, v);
+    }
+        
+    /** Instruction semantics for lodsN where N is 1 (b), 2 (w), or 4 (d). */
+    template<size_t N>
+    void lods_semantics(SgAsmx86Instruction *insn) {
+        const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+        if (operands.size()!=0)
+            throw Exception("instruction must have no operands", insn);
+        if (insn->get_addressSize() != x86_insnsize_32)
+            throw Exception("size not implemented", insn);
+        lods_semantics_regupdate(stringop_load_si<N>(insn, policy.true_()));
+        policy.writeGPR(x86_gpr_si,
+                        policy.add(policy.readGPR(x86_gpr_si),
+                                   policy.ite(policy.readFlag(x86_flag_df), number<32>(-N), number<32>(N))));
+    }
+
+
 
 
     template <size_t Len>
@@ -2311,183 +2410,59 @@ struct X86InstructionSemantics {
             case x86_nop:
                 break;
 
-            /* If true, repeat this instruction, otherwise go to the next one */
-#           define STRINGOP_LOOP_E                                                                                             \
-                policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.readFlag(x86_flag_zf)),                               \
-                                          number<32>((uint32_t)(insn->get_address())),                                         \
-                                          policy.readIP()))
 
-            /* If true, repeat this instruction, otherwise go to the next one */
-#           define STRINGOP_LOOP_NE                                                                                            \
-                policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.invert(policy.readFlag(x86_flag_zf))),                \
-                                          number<32>((uint32_t)(insn->get_address())),                                         \
-                                          policy.readIP()))
+            case x86_repne_scasb: repne_scas_semantics<1>(insn); break;
+            case x86_repne_scasw: repne_scas_semantics<2>(insn); break;
+            case x86_repne_scasd: repne_scas_semantics<4>(insn); break;
+            case x86_repe_scasb:  repe_scas_semantics<1>(insn);  break;
+            case x86_repe_scasw:  repe_scas_semantics<2>(insn);  break;
+            case x86_repe_scasd:  repe_scas_semantics<4>(insn);  break;
 
-#           define REP_SCAS(suffix, len, repsuffix, loopmacro) {                                                               \
-                if (operands.size()!=0)                                                                                        \
-                    throw Exception("instruction must have no operands", insn);                                                \
-                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
-                    throw Exception("size not implemented", insn);                                                             \
-                Word(1) ecxNotZero = stringop_setup_loop();                                                                    \
-                doAddOperation<(len * 8)>(extract<0, (len * 8)>(policy.readGPR(x86_gpr_ax)),                                   \
-                                          policy.invert(stringop_load_di<len>(ecxNotZero)),                                    \
-                                          true,                                                                                \
-                                          policy.false_(),                                                                     \
-                                          ecxNotZero);                                                                         \
-                policy.writeGPR(x86_gpr_di,                                                                                    \
-                                policy.add(policy.readGPR(x86_gpr_di),                                                         \
-                                           policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));    \
-                loopmacro;                                                                                                     \
-            }
-            case x86_repne_scasb: REP_SCAS(b, 1, ne, STRINGOP_LOOP_NE); break;
-            case x86_repne_scasw: REP_SCAS(w, 2, ne, STRINGOP_LOOP_NE); break;
-            case x86_repne_scasd: REP_SCAS(d, 4, ne, STRINGOP_LOOP_NE); break;
-            case x86_repe_scasb:  REP_SCAS(b, 1, e,  STRINGOP_LOOP_E);  break;
-            case x86_repe_scasw:  REP_SCAS(w, 2, e,  STRINGOP_LOOP_E);  break;
-            case x86_repe_scasd:  REP_SCAS(d, 4, e,  STRINGOP_LOOP_E);  break;
-#           undef REP_SCAS
+            case x86_scasb: scas_semantics<1>(insn, policy.true_()); break;
+            case x86_scasw: scas_semantics<2>(insn, policy.true_()); break;
+            case x86_scasd: scas_semantics<4>(insn, policy.true_()); break;
 
-#           define SCAS(suffix, len) {                                                                                         \
-                if (operands.size()!=0)                                                                                        \
-                    throw Exception("instruction must have no operands", insn);                                                \
-                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
-                    throw Exception("size not implemented", insn);                                                             \
-                doAddOperation<(len * 8)>(extract<0, (len * 8)>(policy.readGPR(x86_gpr_ax)),                                   \
-                                          policy.invert(stringop_load_di<len>(policy.true_())),                                \
-                                          true,                                                                                \
-                                          policy.false_(),                                                                     \
-                                          policy.true_());                                                                     \
-                policy.writeGPR(x86_gpr_di,                                                                                    \
-                                policy.add(policy.readGPR(x86_gpr_di),                                                         \
-                                           policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));    \
-            }
-            case x86_scasb: SCAS(b, 1); break;
-            case x86_scasw: SCAS(w, 2); break;
-            case x86_scasd: SCAS(d, 4); break;
-#           undef SCAS
+            case x86_repne_cmpsb: repne_cmps_semantics<1>(insn); break;
+            case x86_repne_cmpsw: repne_cmps_semantics<2>(insn); break;
+            case x86_repne_cmpsd: repne_cmps_semantics<4>(insn); break;
+            case x86_repe_cmpsb:  repe_cmps_semantics<1>(insn);  break;
+            case x86_repe_cmpsw:  repe_cmps_semantics<2>(insn);  break;
+            case x86_repe_cmpsd:  repe_cmps_semantics<4>(insn);  break;
 
-#           define REP_CMPS(suffix, len, repsuffix, loopmacro) {                                                               \
-                if (operands.size()!=0)                                                                                        \
-                    throw Exception("instruction must have no operands", insn);                                                \
-                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
-                    throw Exception("size not implemented", insn);                                                             \
-                Word(1) ecxNotZero = stringop_setup_loop();                                                                    \
-                doAddOperation<(len * 8)>(stringop_load_si<len>(insn, ecxNotZero),                                             \
-                                          policy.invert(stringop_load_di<len>(ecxNotZero)),                                    \
-                                          true,                                                                                \
-                                          policy.false_(),                                                                     \
-                                          ecxNotZero);                                                                         \
-                policy.writeGPR(x86_gpr_si,                                                                                    \
-                                policy.add(policy.readGPR(x86_gpr_si),                                                         \
-                                           policy.ite(ecxNotZero,                                                              \
-                                                      policy.ite(policy.readFlag(x86_flag_df),                                 \
-                                                                 number<32>(-(len)),                                           \
-                                                                 number<32>(len)),                                             \
-                                                      number<32>(0))));                                                        \
-                policy.writeGPR(x86_gpr_di,                                                                                    \
-                                policy.add(policy.readGPR(x86_gpr_di),                                                         \
-                                           policy.ite(ecxNotZero,                                                              \
-                                                      policy.ite(policy.readFlag(x86_flag_df),                                 \
-                                                                 number<32>(-(len)),                                           \
-                                                                 number<32>(len)),                                             \
-                                                      number<32>(0))));                                                        \
-                loopmacro;                                                                                                     \
-            }
-            case x86_repne_cmpsb: REP_CMPS(b, 1, ne, STRINGOP_LOOP_NE); break;
-            case x86_repne_cmpsw: REP_CMPS(w, 2, ne, STRINGOP_LOOP_NE); break;
-            case x86_repne_cmpsd: REP_CMPS(d, 4, ne, STRINGOP_LOOP_NE); break;
-            case x86_repe_cmpsb:  REP_CMPS(b, 1, e,  STRINGOP_LOOP_E);  break;
-            case x86_repe_cmpsw:  REP_CMPS(w, 2, e,  STRINGOP_LOOP_E);  break;
-            case x86_repe_cmpsd:  REP_CMPS(d, 4, e,  STRINGOP_LOOP_E);  break;
-#           undef REP_CMPS
-
-#           define CMPS(suffix, len) do {                                                                                      \
-               /* Compare strings; Intel Instruction Set Reference 3-154 Vol 2a, March 2009 for                                \
-                * opcodes 0xa6 and 0xa7 with no prefix. */                                                                     \
-                if (operands.size()!=0)                                                                                        \
-                    throw Exception("instruction must have no operands", insn);                                                \
-                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
-                    throw Exception("size not implemented", insn);                                                             \
-                doAddOperation<(len * 8)>(stringop_load_si<len>(insn, policy.true_()),                                         \
-                                          policy.invert(stringop_load_di<len>(policy.true_())),                                \
-                                          true,                                                                                \
-                                          policy.false_(),                                                                     \
-                                          policy.true_());                                                                     \
-                policy.writeGPR(x86_gpr_si,                                                                                    \
-                                policy.add(policy.readGPR(x86_gpr_si),                                                         \
-                                           policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));    \
-                policy.writeGPR(x86_gpr_di,                                                                                    \
-                                policy.add(policy.readGPR(x86_gpr_di),                                                         \
-                                           policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));    \
-            } while (0)
-
-            case x86_cmpsb: CMPS(b, 1); break;
-            case x86_cmpsw: CMPS(w, 2); break;
+            case x86_cmpsb: cmps_semantics<1>(insn, policy.true_()); break;
+            case x86_cmpsw: cmps_semantics<2>(insn, policy.true_()); break;
             case x86_cmpsd:
                 /* This mnemonic, CMPSD, refers to two instructions: opcode A7 compares registers SI and DI (16-, 32-, or
                  * 64-bits) and sets the status flags. Opcode "F2 0F C2 /r ib" takes three arguments (an MMX register, an MMX
                  * or 64-bit register, and an 8-bit immediate) and compares floating point values.  The instruction semantics
                  * layer doesn't handle floating point instructions yet and reports them as "Bad instruction". */
                 if (0==operands.size()) {
-                    CMPS(d, 4);
+                    cmps_semantics<4>(insn, policy.true_()); break;
                 } else {
                     /* Floating point instructions are not handled yet. */
                     throw Exception("instruction not implemented", insn);
                 }
                 break;
-#           undef CMPS
 
-#           define MOVS(suffix, len) {                                                                                         \
-                if (operands.size()!=0)                                                                                        \
-                    throw Exception("instruction must have no operands", insn);                                                \
-                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
-                    throw Exception("size not implemented", insn);                                                             \
-                policy.writeMemory(x86_segreg_es,                                                                              \
-                                   policy.readGPR(x86_gpr_di),                                                                 \
-                                   stringop_load_si<len>(insn, policy.true_()),                                                \
-                                   policy.true_());                                                                            \
-                policy.writeGPR(x86_gpr_si,                                                                                    \
-                                policy.add(policy.readGPR(x86_gpr_si),                                                         \
-                                           policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));    \
-                policy.writeGPR(x86_gpr_di,                                                                                    \
-                                policy.add(policy.readGPR(x86_gpr_di),                                                         \
-                                           policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));    \
-            }
-            case x86_movsb: MOVS(b, 1); break;
-            case x86_movsw: MOVS(w, 2); break;
-            case x86_movsd: MOVS(d, 4); break;
-#           undef MOVS
+            case x86_movsb: movs_semantics<1>(insn, policy.true_()); break;
+            case x86_movsw: movs_semantics<2>(insn, policy.true_()); break;
+            case x86_movsd: movs_semantics<4>(insn, policy.true_()); break;
                 
             case x86_rep_movsb: rep_movs_semantics<1>(insn); break;
             case x86_rep_movsw: rep_movs_semantics<2>(insn); break;
             case x86_rep_movsd: rep_movs_semantics<4>(insn); break;
 
-            case x86_stosb:     stos_semantics<1>(insn); break;
-            case x86_stosw:     stos_semantics<2>(insn); break;
-            case x86_stosd:     stos_semantics<4>(insn); break;
+            case x86_stosb: stos_semantics<1>(insn, policy.true_()); break;
+            case x86_stosw: stos_semantics<2>(insn, policy.true_()); break;
+            case x86_stosd: stos_semantics<4>(insn, policy.true_()); break;
 
             case x86_rep_stosb: rep_stos_semantics<1>(insn); break;
             case x86_rep_stosw: rep_stos_semantics<2>(insn); break;
             case x86_rep_stosd: rep_stos_semantics<4>(insn); break;
 
-#           define LODS(suffix, len, regupdate) {                                                                              \
-                if (operands.size()!=0)                                                                                        \
-                    throw Exception("instruction must have no operands", insn);                                                \
-                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
-                    throw Exception("size not implemented", insn);                                                             \
-                regupdate(x86_gpr_ax, stringop_load_si<len>(insn, policy.true_()));                                            \
-                policy.writeGPR(x86_gpr_si,                                                                                    \
-                                policy.add(policy.readGPR(x86_gpr_si),                                                         \
-                                           policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));    \
-            }
-            case x86_lodsb: LODS(b, 1, updateGPRLowByte); break;
-            case x86_lodsw: LODS(w, 2, updateGPRLowWord); break;
-            case x86_lodsd: LODS(d, 4, policy.writeGPR);  break;
-#           undef LODS
-
-#undef STRINGOP_UPDATE_CX
-#undef STRINGOP_LOOP_E
-#undef STRINGOP_LOOP_NE
+            case x86_lodsb: lods_semantics<1>(insn); break;
+            case x86_lodsw: lods_semantics<2>(insn); break;
+            case x86_lodsd: lods_semantics<4>(insn);  break;
 
             case x86_hlt: {
                 if (operands.size()!=0)
