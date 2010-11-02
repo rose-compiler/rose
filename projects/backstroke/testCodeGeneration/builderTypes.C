@@ -144,14 +144,13 @@ SgExpression* TestCodeBuilder::buildStateMemberExpression(const string& name) co
 void TestCodeBuilder::buildTestCode(const vector<SgBasicBlock*>& bodies)
 {
 	ROSE_ASSERT(state_builder_);
+	ROSE_ASSERT(project_);
 
 	// Push global scope here to make sure every event funciton is built with a valid scope.
 	//SgGlobal* global_scope = source_file_->get_globalScope();
 
 	// Set the file name of the output code the same as input.
-	ROSE_ASSERT(project_->get_fileList().size() == 1);
 	SgSourceFile* source_file = isSgSourceFile((*project_)[0]);
-	ROSE_ASSERT(source_file);
 	source_file->set_unparse_output_filename(source_file->getFileName());
 
 	SgGlobal* global_scope = source_file->get_globalScope();
@@ -203,6 +202,26 @@ void TestCodeBuilder::buildTestCode(const vector<SgBasicBlock*>& bodies)
 
 	// Fix variable references here because of bottom up build.
 	fixVariableReferences(global_scope);
+}
+
+SgProject* TestCodeBuilder::buildTestCode()
+{
+	// First create a ROSE project.
+	vector<string> args(1);
+	string filename = name_ + ".C";
+	ofstream ofs(filename.c_str());
+	ofs.close();
+	args.push_back("-c");
+	args.push_back(filename);
+	project_ = frontend(args);
+
+	// Second, call virtual function "build".
+	build();
+
+	// Finally, run test on the AST then unparse it.
+	AstTests::runAllTests(project_);
+	backend(project_);
+	return project_;
 }
 
 SgFunctionDeclaration* TestCodeAssembler::buildInitializationFunction()
@@ -283,6 +302,55 @@ SgFunctionDeclaration* TestCodeAssembler::buildComparisonFunction()
 	return comp_func;
 }
 
+SgBasicBlock* TestCodeAssembler::buildTestBlock(
+		SgVariableDeclaration* var1,
+		SgVariableDeclaration* var2,
+		SgFunctionDeclaration* func1,
+		SgVariableDeclaration* para1,
+		SgFunctionDeclaration* func2,
+		SgVariableDeclaration* para2)
+{
+	SgBasicBlock* test_block = buildBasicBlock();
+	pushScopeStack(test_block);
+	
+	// Initialize a state object.
+	SgExprListExp* init_para = buildExprListExp(
+		buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var1)));
+	SgExprStatement* init_stmt = buildFunctionCallStmt(init_func_name_, buildVoidType(), init_para);
+	SgExprStatement* assign_stmt = buildExprStatement(
+			buildBinaryExpression<SgAssignOp>(buildVarRefExp(var2), buildVarRefExp(var1)));
+
+	// Call original and forward event then check if the model's value changes
+	SgStatement* call_func1 = buildExprStatement(buildFunctionCallExp(
+			isSgFunctionSymbol(func1->get_symbol_from_symbol_table()),
+			buildExprListExp(buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(para1)))));
+	SgStatement* call_func2 = buildExprStatement(buildFunctionCallExp(
+			isSgFunctionSymbol(func2->get_symbol_from_symbol_table()),
+			buildExprListExp(buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(para2)))));
+
+	SgExprListExp* comp_para = buildExprListExp(
+			buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var1)),
+			buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var2)));
+	SgExpression* call_compare_exp = buildFunctionCallExp(comp_func_name_, buildBoolType(), comp_para);
+	SgExprListExp* assert_para = buildExprListExp(call_compare_exp);
+	// Actually, assert is not a function in C++ (just a macro), but here we make it a function.
+	SgStatement* test_compare = buildFunctionCallStmt("assert", buildVoidType(), assert_para);
+
+	string message = "Test " + func1->get_name() + " and " + func2->get_name() + " PASS!\\n";
+	SgExprListExp* para_print = buildExprListExp(buildStringVal(message));
+	SgExprStatement* print_pass = buildFunctionCallStmt("printf", buildVoidType(), para_print);
+
+	appendStatement(init_stmt);
+	appendStatement(assign_stmt);
+	appendStatement(call_func1);
+	appendStatement(call_func2);
+	appendStatement(test_compare);
+	appendStatement(print_pass);
+	popScopeStack();
+
+	return test_block;
+}
+
 SgFunctionDeclaration* TestCodeAssembler::buildMainFunction()
 {
 	// build the main function which performs the test
@@ -333,62 +401,29 @@ SgFunctionDeclaration* TestCodeAssembler::buildMainFunction()
 	appendStatement(var1);
 	appendStatement(var2);
 
-	// We have to know which event has passed the test. So a counter is necessary
-	//SgVariableDeclaration* counter = buildVariableDeclaration("counter", buildIntType(), buildAssignInitializer(buildIntVal(0)));
-	//appendStatement(counter);
+	/********************************************************************************************************
+	* Test Normalized Event.
+	*********************************************************************************************************/
 
-
-	typedef map<SgFunctionDeclaration*, FuncDeclPairs>::value_type value_type;
+	foreach (const ProcessedEvent& event_results, processed_events_)
+	{
+		SgBasicBlock* test_block = buildTestBlock(
+				var1, var2, event_results.event, var1, event_results.normalized_event, var2);
+		appendStatement(test_block);
+	}
 
 	/********************************************************************************************************
 	* Test Forward Event.
 	*********************************************************************************************************/
 
 	// Foreach event.
-	foreach (const value_type& event_results, events_)
+	foreach (const ProcessedEvent& event_results, processed_events_)
 	{
 		// Foreach pair of the result of the event.
-		foreach (const FuncDeclPair& func_pair, event_results.second)
+		foreach (const FuncDeclPair& func_pair, event_results.fwd_rvs_events)
 		{
-			// Initialize a state object.
-			SgExprListExp* init_para = buildExprListExp(
-				buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var1)));
-			SgExprStatement* init_stmt = buildFunctionCallStmt(init_func_name_, buildVoidType(), init_para);
-			SgExprStatement* assign_stmt = buildExprStatement(
-					buildBinaryExpression<SgAssignOp>(buildVarRefExp(var2), buildVarRefExp(var1)));
-
-			// Call original and forward event then check if the model's value changes
-			SgStatement* call_fwd_event = buildExprStatement(buildFunctionCallExp(
-					isSgFunctionSymbol(event_results.first->get_symbol_from_symbol_table()),
-					buildExprListExp(buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var1)))));
-			SgStatement* call_rvs_event = buildExprStatement(buildFunctionCallExp(
-					isSgFunctionSymbol(func_pair.first->get_symbol_from_symbol_table()),
-					buildExprListExp(buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var2)))));
-
-			SgExprListExp* comp_para = buildExprListExp(
-					buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var1)),
-					buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var2)));
-			SgExpression* call_compare_exp = buildFunctionCallExp(comp_func_name_, buildBoolType(), comp_para);
-			SgExprListExp* assert_para = buildExprListExp(call_compare_exp);
-			// Actually, assert is not a function in C++ (just a macro), but here we make it a function.
-			SgStatement* test_compare = buildFunctionCallStmt("assert", buildVoidType(), assert_para);
-
-			string message = "Test " + event_results.first->get_name() + " and " +
-					func_pair.first->get_name() + " PASS!\\n";
-			SgExprListExp* para_print = buildExprListExp(buildStringVal(message));
-			SgExprStatement* print_pass = buildFunctionCallStmt("printf", buildVoidType(), para_print);
-
-			SgBasicBlock* test_block = buildBasicBlock();
-
-			pushScopeStack(test_block);
-			appendStatement(init_stmt);
-			appendStatement(assign_stmt);
-			appendStatement(call_fwd_event);
-			appendStatement(call_rvs_event);
-			appendStatement(test_compare);
-			appendStatement(print_pass);
-			popScopeStack();
-
+			SgBasicBlock* test_block = buildTestBlock(
+					var1, var2, event_results.event, var1, func_pair.first, var2);
 			appendStatement(test_block);
 		}
 	}
@@ -398,50 +433,13 @@ SgFunctionDeclaration* TestCodeAssembler::buildMainFunction()
 	*********************************************************************************************************/
 	
 	// Foreach event.
-	foreach (const value_type& event_results, events_)
+	foreach (const ProcessedEvent& event_results, processed_events_)
 	{
 		// Foreach pair of the result of the event.
-		foreach (const FuncDeclPair& func_pair, event_results.second)
+		foreach (const FuncDeclPair& func_pair, event_results.fwd_rvs_events)
 		{
-			// Initialize a state object.
-			SgExprListExp* init_para = buildExprListExp(
-				buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var1)));
-			SgExprStatement* init_stmt = buildFunctionCallStmt(init_func_name_, buildVoidType(), init_para);
-			SgExprStatement* assign_stmt = buildExprStatement(
-					buildBinaryExpression<SgAssignOp>(buildVarRefExp(var2), buildVarRefExp(var1)));
-
-			// Call forward and reverse event then check if the model's value changes
-			SgStatement* call_fwd_event = buildExprStatement(buildFunctionCallExp(
-					isSgFunctionSymbol(func_pair.first->get_symbol_from_symbol_table()),
-					buildExprListExp(buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var1)))));
-			SgStatement* call_rvs_event = buildExprStatement(buildFunctionCallExp(
-					isSgFunctionSymbol(func_pair.second->get_symbol_from_symbol_table()),
-					buildExprListExp(buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var1)))));
-
-			SgExprListExp* comp_para = buildExprListExp(
-					buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var1)),
-					buildUnaryExpression<SgAddressOfOp > (buildVarRefExp(var2)));
-			SgExpression* call_compare_exp = buildFunctionCallExp(comp_func_name_, buildBoolType(), comp_para);
-			SgExprListExp* assert_para = buildExprListExp(call_compare_exp);
-			// Actually, assert is not a function in C++ (just a macro), but here we make it a function.
-			SgStatement* test_compare = buildFunctionCallStmt("assert", buildVoidType(), assert_para);
-
-			string message = "Test " + func_pair.first->get_name() + " and " +
-					func_pair.second->get_name() + " PASS!\\n";
-			SgExprListExp* para_print = buildExprListExp(buildStringVal(message));
-			SgExprStatement* print_pass = buildFunctionCallStmt("printf", buildVoidType(), para_print);
-
-			SgBasicBlock* test_block = buildBasicBlock();
-
-			pushScopeStack(test_block);
-			appendStatement(init_stmt);
-			appendStatement(assign_stmt);
-			appendStatement(call_fwd_event);
-			appendStatement(call_rvs_event);
-			appendStatement(test_compare);
-			appendStatement(print_pass);
-			popScopeStack();
-
+			SgBasicBlock* test_block = buildTestBlock(
+					var1, var2, func_pair.first, var1, func_pair.second, var1);
 			appendStatement(test_block);
 		}
 	}
@@ -534,9 +532,11 @@ SgStatement* TestCodeAssembler::initializeMember(SgExpression* exp)
 	// For a basic type, we initialize it with a random value now.
 	else
 	{
-		SgExpression* rand_exp = buildFunctionCallExp("rand", buildIntType());
-		SgAssignOp* init = buildBinaryExpression<SgAssignOp>(exp, rand_exp);
-		return buildExprStatement(init);
+		//SgExpression* rand_exp = buildFunctionCallExp("rand", buildIntType());
+		//SgAssignOp* init = buildBinaryExpression<SgAssignOp>(exp, rand_exp);
+		SgExpression* init_func_call = buildFunctionCallExp(
+				"initialize", buildVoidType(), buildExprListExp(exp));
+		return buildExprStatement(init_func_call);
 	}
 }
 
@@ -557,4 +557,5 @@ void TestCodeAssembler::assemble()
 	insertHeader("stdlib.h", PreprocessingInfo::after, true, global_scope);
 	insertHeader("assert.h", PreprocessingInfo::after, true, global_scope);
 	insertHeader("stdio.h", PreprocessingInfo::after, true, global_scope);
+	insertHeader("init.h", PreprocessingInfo::after, false, global_scope);
 }

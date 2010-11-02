@@ -71,16 +71,16 @@ vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
 
 #endif
 
-vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefs(SgStatement* stmt)
+vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefsAtNode(SgNode* node)
 {
 	vector<VariableRenaming::VarName> modified_vars;
 	foreach (const VariableRenaming::NumNodeRenameTable::value_type& num_node,
-			getVariableRenaming()->getOriginalDefsForSubtree(stmt))
+			getVariableRenaming()->getOriginalDefsForSubtree(node))
 	{
 		const VariableRenaming::VarName& var_name = num_node.first;
 		// Get the declaration of this variable to see if it's declared inside of the given statement.
 		// If so, we don't have to store this variable.
-		if (!isAncestor(stmt, var_name[0]->get_declaration()))
+		if (!isAncestor(node, var_name[0]->get_declaration()))
 			modified_vars.push_back(var_name);
 	}
 
@@ -177,12 +177,14 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	cout << "\n\n";
 #endif
 
-	vector<VariableRenaming::VarName> modified_vars = getAllDefs(stmt);
+	vector<VariableRenaming::VarName> modified_vars = getAllDefsAtNode(stmt);
 
+#if 0
 	cout << "Modified vars:\n";
 	foreach (const VariableRenaming::VarName& name, modified_vars)
 		cout << VariableRenaming::keyToString(name) << endl;
 	cout << "^^^\n";
+#endif
 
 	// If there is no variable modified in this statement, just return empty.
 	if (modified_vars.empty())

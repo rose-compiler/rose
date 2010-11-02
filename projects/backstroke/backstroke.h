@@ -12,10 +12,19 @@
 #define reverse_foreach BOOST_REVERSE_FOREACH
 
 
-
 namespace Backstroke
 {
 	
+/**
+* Normalize all expressions in each event in the given project.
+*
+* @param is_event A function or functor telling this function whether a function is an event.
+* @param project A SgProject object which contains events.
+*/
+FuncDeclPairs normalizeEvents(
+	boost::function<bool(SgFunctionDeclaration*)> is_event,
+	SgProject* project);
+
 /**
 * Reverse all events in the given project. The generated forward and reverse functions are
 * inserted after the corresponding event.
@@ -25,7 +34,7 @@ namespace Backstroke
 * @param project A SgProject object which contains events.
 * @return A map from event to its generated forward and reverse events pairs.
 */
-std::map<SgFunctionDeclaration*, FuncDeclPairs>
+std::vector<ProcessedEvent>
 reverseEvents(EventProcessor* event_processor,
 		boost::function<bool(SgFunctionDeclaration*)> is_event,
 		SgProject* project);
