@@ -9,6 +9,19 @@ my @stack = ({dirname=>"", output=>"", error=>undef});
 my $ignore_errors = undef; # used to suppress messsages as we unwind the stack after an error
 my $show_progress = undef; # if true then show certain make output
 
+sub show_errors {
+  my($level) = @_;
+  if ($stack[$level]{error}) {
+    print "===============================================================================\n";
+    print "=== Error detected in this section of the output                            ===\n";
+    print "===============================================================================\n";
+    print $stack[$level]{output};
+    $ignore_errors = $level; # ignore errors below this recursion level
+  } else {
+    $ignore_errors = $level if defined $ignore_errors;
+  }
+}
+
 # Parse command-line switches
 while (@ARGV) {
   local($_) = shift @ARGV;
@@ -40,17 +53,9 @@ while (<STDIN>) {
     }
   } elsif (my($level) = /^make\[(\d+)\]: Leaving directory/) {
     $stack[$level]{output} .= $_ . "\n";
-    if ($stack[$level]{error}) {
-      print "===============================================================================\n";
-      print "=== Error detected in this section of the output                            ===\n";
-      print "===============================================================================\n";
-      print $stack[$level]{output};
-      $ignore_errors = $level; # ignore errors below this recursion level
-    } else {
-      $ignore_errors = $level if defined $ignore_errors;
-    }
+    show_errors($level);
     splice @stack, $level; # rather than pop, in case we missed a "Leaving directory" message
-  } elsif (my($level) = /^make\[(\d+)\]: \*\*\*/) {
+  } elsif (my($level) = /^make(?:\[(\d+)\])?: \*\*\*/) {
     # Error detected, but don't count as an error if we've reported it already at a higher level
     if (!defined($ignore_errors) || $level >= $ignore_errors) {
       $ignore_errors = undef;
@@ -62,3 +67,5 @@ while (<STDIN>) {
     $stack[$level]{output} .= $_;
   }
 }
+
+show_errors(0);
