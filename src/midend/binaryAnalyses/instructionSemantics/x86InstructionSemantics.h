@@ -63,6 +63,20 @@ struct X86InstructionSemantics {
         return ecxNotZero;
     }
 
+    /* This used to be "#define STRINGOP_LOAD_SI..." */
+    template<size_t N>
+    WordType<8*N> stringop_load_si(SgAsmx86Instruction *insn, WordType<1> cond) {
+        return readMemory<8*N>((insn->get_segmentOverride() == x86_segreg_none ? x86_segreg_ds : insn->get_segmentOverride()),
+                               policy.readGPR(x86_gpr_si),
+                               cond);
+    }
+
+    /* This used to be "#define STRINGOP_LOAD_DI..." */
+    template<size_t N>
+    WordType<8*N> stringop_load_di(WordType<1> cond) {
+        return readMemory<8*N>(x86_segreg_es, policy.readGPR(x86_gpr_di), cond);
+    }
+
     /* Instruction semantics for rep_stosN where N is 1(b), 2(w), or 4(d).
      * This method handles semantics for one iteration of stosN.
      * See https://siyobik.info/index.php?module=x86&id=279 */
@@ -113,7 +127,55 @@ struct X86InstructionSemantics {
                         policy.add(policy.readGPR(x86_gpr_di),
                                    policy.ite(policy.readFlag(x86_flag_df), number<32>(-N), number<32>(N))));
     }
-    
+
+    /* Instruction semantics for rep_movsN where N is 1(b), 2(w), or 4(d) */
+    template<size_t N>
+    void rep_movs_semantics(SgAsmx86Instruction *insn) {
+        const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+        if (operands.size()!=0)
+            throw Exception("instruction must have no operands", insn);
+        if (insn->get_addressSize() != x86_insnsize_32)
+            throw Exception("size not implemented", insn);
+        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
+
+        /* Conditionally execute the MOVS instruction */
+        policy.writeMemory(x86_segreg_es,
+                           policy.readGPR(x86_gpr_di),
+                           stringop_load_si<N>(insn, ecxNotZero),
+                           ecxNotZero);
+        policy.writeGPR(x86_gpr_si,
+                        policy.add(policy.readGPR(x86_gpr_si),
+                                   policy.ite(ecxNotZero,
+                                              policy.ite(policy.readFlag(x86_flag_df),
+                                                         number<32>(-(N)),
+                                                         number<32>(N)),
+                                              number<32>(0))));
+        policy.writeGPR(x86_gpr_di,
+                        policy.add(policy.readGPR(x86_gpr_di),
+                                   policy.ite(ecxNotZero,
+                                              policy.ite(policy.readFlag(x86_flag_df),
+                                                         number<32>(-(N)),
+                                                         number<32>(N)),
+                                              number<32>(0))));
+
+
+        /* Decrement %ECX if not zero */
+        policy.writeGPR(x86_gpr_cx,
+                        policy.add(policy.readGPR(x86_gpr_cx),
+                                   policy.ite(ecxNotZero, number<32>(-1), number<32>(0))));
+
+        /* Check again for %ECX equal to zero. According to Intel documentation for the REP/REPE/REPNE instructions,
+         * the CPU executes a "while (%ECX!=0)" and then inside that loop it increments or decrements the addresses
+         * only if %ECX is non-zero.  The order has a subtle effect on the number of  times the loop body is executed,
+         * although it doesn't affect the number of times the underlying pointers are incremented or decremented. */
+        ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
+
+        /* Repeat this same instruction? */
+        policy.writeIP(policy.ite(ecxNotZero,
+                                  number<32>((uint32_t)(insn->get_address())),
+                                  policy.readIP()));
+    }
+
 
     template <size_t Len>
     Word(Len) invertMaybe(const Word(Len)& w, bool inv) {
@@ -2249,16 +2311,6 @@ struct X86InstructionSemantics {
             case x86_nop:
                 break;
 
-#           define STRINGOP_LOAD_SI(len, cond)                                                                                 \
-                readMemory<(8 * (len))>((insn->get_segmentOverride() == x86_segreg_none ?                                      \
-                                         x86_segreg_ds :                                                                       \
-                                         insn->get_segmentOverride()),                                                         \
-                                        policy.readGPR(x86_gpr_si),                                                            \
-                                        (cond))
-            
-#           define STRINGOP_LOAD_DI(len, cond)                                                                                 \
-                readMemory<(8 * (len))>(x86_segreg_es, policy.readGPR(x86_gpr_di), (cond))
-
             /* If true, repeat this instruction, otherwise go to the next one */
 #           define STRINGOP_LOOP_E                                                                                             \
                 policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.readFlag(x86_flag_zf)),                               \
@@ -2278,7 +2330,7 @@ struct X86InstructionSemantics {
                     throw Exception("size not implemented", insn);                                                             \
                 Word(1) ecxNotZero = stringop_setup_loop();                                                                    \
                 doAddOperation<(len * 8)>(extract<0, (len * 8)>(policy.readGPR(x86_gpr_ax)),                                   \
-                                          policy.invert(STRINGOP_LOAD_DI(len, ecxNotZero)),                                    \
+                                          policy.invert(stringop_load_di<len>(ecxNotZero)),                                    \
                                           true,                                                                                \
                                           policy.false_(),                                                                     \
                                           ecxNotZero);                                                                         \
@@ -2301,7 +2353,7 @@ struct X86InstructionSemantics {
                 if (insn->get_addressSize() != x86_insnsize_32)                                                                \
                     throw Exception("size not implemented", insn);                                                             \
                 doAddOperation<(len * 8)>(extract<0, (len * 8)>(policy.readGPR(x86_gpr_ax)),                                   \
-                                          policy.invert(STRINGOP_LOAD_DI(len, policy.true_())),                                \
+                                          policy.invert(stringop_load_di<len>(policy.true_())),                                \
                                           true,                                                                                \
                                           policy.false_(),                                                                     \
                                           policy.true_());                                                                     \
@@ -2320,8 +2372,8 @@ struct X86InstructionSemantics {
                 if (insn->get_addressSize() != x86_insnsize_32)                                                                \
                     throw Exception("size not implemented", insn);                                                             \
                 Word(1) ecxNotZero = stringop_setup_loop();                                                                    \
-                doAddOperation<(len * 8)>(STRINGOP_LOAD_SI(len, ecxNotZero),                                                   \
-                                          policy.invert(STRINGOP_LOAD_DI(len, ecxNotZero)),                                    \
+                doAddOperation<(len * 8)>(stringop_load_si<len>(insn, ecxNotZero),                                             \
+                                          policy.invert(stringop_load_di<len>(ecxNotZero)),                                    \
                                           true,                                                                                \
                                           policy.false_(),                                                                     \
                                           ecxNotZero);                                                                         \
@@ -2356,8 +2408,8 @@ struct X86InstructionSemantics {
                     throw Exception("instruction must have no operands", insn);                                                \
                 if (insn->get_addressSize() != x86_insnsize_32)                                                                \
                     throw Exception("size not implemented", insn);                                                             \
-                doAddOperation<(len * 8)>(STRINGOP_LOAD_SI(len, policy.true_()),                                               \
-                                          policy.invert(STRINGOP_LOAD_DI(len, policy.true_())),                                \
+                doAddOperation<(len * 8)>(stringop_load_si<len>(insn, policy.true_()),                                         \
+                                          policy.invert(stringop_load_di<len>(policy.true_())),                                \
                                           true,                                                                                \
                                           policy.false_(),                                                                     \
                                           policy.true_());                                                                     \
@@ -2392,7 +2444,7 @@ struct X86InstructionSemantics {
                     throw Exception("size not implemented", insn);                                                             \
                 policy.writeMemory(x86_segreg_es,                                                                              \
                                    policy.readGPR(x86_gpr_di),                                                                 \
-                                   STRINGOP_LOAD_SI(len, policy.true_()),                                                      \
+                                   stringop_load_si<len>(insn, policy.true_()),                                                \
                                    policy.true_());                                                                            \
                 policy.writeGPR(x86_gpr_si,                                                                                    \
                                 policy.add(policy.readGPR(x86_gpr_si),                                                         \
@@ -2405,73 +2457,25 @@ struct X86InstructionSemantics {
             case x86_movsw: MOVS(w, 2); break;
             case x86_movsd: MOVS(d, 4); break;
 #           undef MOVS
+                
+            case x86_rep_movsb: rep_movs_semantics<1>(insn); break;
+            case x86_rep_movsw: rep_movs_semantics<2>(insn); break;
+            case x86_rep_movsd: rep_movs_semantics<4>(insn); break;
 
-#           define REP_MOVS(suffix, len) {                                                                                     \
-                if (operands.size()!=0)                                                                                        \
-                    throw Exception("instruction must have no operands", insn);                                                \
-                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
-                    throw Exception("size not implemented", insn);                                                             \
-                Word(1) ecxNotZero = stringop_setup_loop();                                                                    \
-                policy.writeMemory(x86_segreg_es, policy.readGPR(x86_gpr_di), STRINGOP_LOAD_SI(len, ecxNotZero), ecxNotZero);  \
-                policy.writeGPR(x86_gpr_si,                                                                                    \
-                                policy.add(policy.readGPR(x86_gpr_si),                                                         \
-                                           policy.ite(ecxNotZero,                                                              \
-                                                      policy.ite(policy.readFlag(x86_flag_df),                                 \
-                                                                 number<32>(-(len)),                                           \
-                                                                 number<32>(len)),                                             \
-                                                      number<32>(0))));                                                        \
-                policy.writeGPR(x86_gpr_di,                                                                                    \
-                                policy.add(policy.readGPR(x86_gpr_di),                                                         \
-                                           policy.ite(ecxNotZero,                                                              \
-                                                      policy.ite(policy.readFlag(x86_flag_df),                                 \
-                                                                 number<32>(-(len)),                                           \
-                                                                 number<32>(len)),                                             \
-                                                      number<32>(0))));                                                        \
-                policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */     \
-                                          number<32>((uint32_t)(insn->get_address())),                                         \
-                                          policy.readIP()));                                                                   \
-            }
-            case x86_rep_movsb: REP_MOVS(b, 1); break;
-            case x86_rep_movsw: REP_MOVS(w, 2); break;
-            case x86_rep_movsd: REP_MOVS(d, 4); break;
-#           undef MOVS
+            case x86_stosb:     stos_semantics<1>(insn); break;
+            case x86_stosw:     stos_semantics<2>(insn); break;
+            case x86_stosd:     stos_semantics<4>(insn); break;
 
-            case x86_stosb: {
-                stos_semantics<1>(insn);
-                break;
-            }
-
-            case x86_rep_stosb: {
-                rep_stos_semantics<1>(insn);
-                break;
-            }
-
-            case x86_stosw: {
-                stos_semantics<2>(insn);
-                break;
-            }
-
-            case x86_rep_stosw: {
-                rep_stos_semantics<2>(insn);
-                break;
-            }
-
-            case x86_stosd: {
-                stos_semantics<4>(insn);
-                break;
-            }
-
-            case x86_rep_stosd: {
-                rep_stos_semantics<4>(insn);
-                break;
-            }
+            case x86_rep_stosb: rep_stos_semantics<1>(insn); break;
+            case x86_rep_stosw: rep_stos_semantics<2>(insn); break;
+            case x86_rep_stosd: rep_stos_semantics<4>(insn); break;
 
 #           define LODS(suffix, len, regupdate) {                                                                              \
                 if (operands.size()!=0)                                                                                        \
                     throw Exception("instruction must have no operands", insn);                                                \
                 if (insn->get_addressSize() != x86_insnsize_32)                                                                \
                     throw Exception("size not implemented", insn);                                                             \
-                regupdate(x86_gpr_ax, STRINGOP_LOAD_SI(len, policy.true_()));                                                  \
+                regupdate(x86_gpr_ax, stringop_load_si<len>(insn, policy.true_()));                                            \
                 policy.writeGPR(x86_gpr_si,                                                                                    \
                                 policy.add(policy.readGPR(x86_gpr_si),                                                         \
                                            policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));    \
@@ -2481,8 +2485,6 @@ struct X86InstructionSemantics {
             case x86_lodsd: LODS(d, 4, policy.writeGPR);  break;
 #           undef LODS
 
-#undef STRINGOP_LOAD_SI
-#undef STRINGOP_LOAD_DI
 #undef STRINGOP_UPDATE_CX
 #undef STRINGOP_LOOP_E
 #undef STRINGOP_LOOP_NE
