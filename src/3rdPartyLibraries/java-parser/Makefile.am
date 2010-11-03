@@ -5,6 +5,9 @@ if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
   include_HEADERS = 
 endif
 
+# Put in a target so that this can be called by default to build the Java/ROSE AST translation support.
+all: extract_rose_required_ecj_source_files
+
 # This rule is called from the ECJ_ROSE_Connection/Makefile.am
 # extract_rose_required_ecj_source_files: buildJavaSupport
 # extract_rose_required_ecj_source_files: ${srcdir}/JavaTraversal.java
@@ -19,13 +22,9 @@ extract_rose_required_ecj_source_files: JavaTraversal.class
 
 # buildJavaSupport: ${srcdir}/JavaTraversal.java
 # JavaTraversal.class:
-JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java
-	@echo "copy the JavaTraversal.java from the srcdir to the build directory."
-	cp ${srcdir}/JavaTraversal.java JavaTraversal.java
-	cp ${srcdir}/JavaParser.java JavaParser.java
-	@echo "Using the build directory's copy of ecjROSE.jar."
-#	javac -cp ecjROSE.jar JavaTraversal.java
-	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaTraversal.java JavaParser.java
+JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ecjASTVisitor.java
+	$(JAVAC) -d . -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ecjASTVisitor.java
+#	javah only requires the class file which are in the build directory.
 	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaTraversal
 	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
 #	DQ (10/13/2010): I want to avoid copying ecjROSE.jar into the build tree, but it is required for now.
@@ -33,9 +32,15 @@ JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java
 	@echo "After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir (only required for ROSE to find ecjROSE.jar (fix later))"
 	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
 
-JavaParser.class: ${srcdir}/JavaParser.java
-	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaParser.java
-	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
+#JavaParser.class: ${srcdir}/JavaParser.java
+#	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaParser.java
+#	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
+
+#JavaParserSupport.class: ${srcdir}/JavaParserSupport.java
+#	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaParserSupport.java
+
+#ecjASTVisitor.class: ${srcdir}/ecjASTVisitor.java
+#	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ecjASTVisitor.java
 
 # These are the commands to generate the files we need (in the build tree).
 # JavaTraversal.class JavaTraversal.h: ${srcdir}/JavaTraversal.java
@@ -47,7 +52,9 @@ testJavaTraversal: ${srcdir}/JavaTraversal.java
 EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java
 
 clean-local:
-	rm -f *.dot ecjROSE.jar JavaParser* JavaTraversal* 
+	rm -f *.dot ecjROSE.jar *.class *.java *.h
+
+# JavaParser* JavaTraversal* JavaParserSupport* ecjASTVisitor* 
 
 
 
