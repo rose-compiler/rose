@@ -1,7 +1,0 @@
-TITLE="testing default on all linux platforms"
-DESCRIPTION="minimal configuration options, boost 1.36, without java"
-
-# DQ (9/30/2009): Default is g++ 4.3, and there is no other version of the gnu available.
-PREREQS="boost-1.36.0, libtool-2.2.6b"
-
-CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java"
