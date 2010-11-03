@@ -32,15 +32,18 @@ JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${sr
 	@echo "After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir (only required for ROSE to find ecjROSE.jar (fix later))"
 	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
 
-#JavaParser.class: ${srcdir}/JavaParser.java
-#	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaParser.java
-#	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
+# I assume this is need the same as for the JavaParserSupport.class rule
+JavaParser.class: ${srcdir}/JavaParser.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaParser.java
+	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
 
-#JavaParserSupport.class: ${srcdir}/JavaParserSupport.java
-#	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaParserSupport.java
+# This is needed when distcheck compiles the code, I don't know why.
+JavaParserSupport.class: ${srcdir}/JavaParserSupport.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaParserSupport.java
 
-#ecjASTVisitor.class: ${srcdir}/ecjASTVisitor.java
-#	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ecjASTVisitor.java
+# I assume this is need the same as for the JavaParserSupport.class rule
+ecjASTVisitor.class: ${srcdir}/ecjASTVisitor.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ecjASTVisitor.java
 
 # These are the commands to generate the files we need (in the build tree).
 # JavaTraversal.class JavaTraversal.h: ${srcdir}/JavaTraversal.java
