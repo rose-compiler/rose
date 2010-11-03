@@ -498,13 +498,20 @@ class ecjASTVisitor extends ASTVisitor
                             {
                            // Fortunately we can get the class from the introspection...is there a better way?
                               cls = Class.forName("java.lang."+tokenName);
+
+                           // DQ (11/3/2010): This will generate an error which will be caught and force JavaTraversal.hasErrorOccurred 
+                           // to be set and then the C++ side will query the error status and detect the error.  Thanks Thomas!
+                           // cls = Class.forName("java.lang");
                             }
                          catch (Throwable e)
                             {
                               System.err.println(e);
 
                            // Make sure we exit on any error so it is caught quickly.
-                              System.exit(1);
+                           // System.exit(1);
+                              JavaTraversal.hasErrorOccurred = true;
+
+                              return false;
                             }
 
                          if (cls != null)

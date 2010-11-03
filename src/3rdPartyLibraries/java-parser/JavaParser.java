@@ -65,7 +65,7 @@ class JavaParser  implements Callable<Boolean>
   // public CompilationResult rose_compilationResult;
 
   // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
-     private static boolean hasErrorOccurred = false;
+  // public static boolean hasErrorOccurred = false;
 
   // DQ: This is the name of the C++ *.so file which has the implementations of the JNI functions.
   // The library with the C++ implementation of these function must be loaded in order to call the functions.
@@ -101,7 +101,9 @@ class JavaParser  implements Callable<Boolean>
                System.err.println(e);
 
             // Make sure we exit on any error so it is caught quickly.
-               System.exit(1);
+            // System.exit(1);
+            // throw e;
+               return;
              }
 
           System.out.println("Done parsing");
@@ -130,7 +132,7 @@ class JavaParser  implements Callable<Boolean>
   // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
      public static boolean getError()
         {
-          return hasErrorOccurred;
+          return JavaTraversal.hasErrorOccurred;
         }
 
   // End of JavaParser class

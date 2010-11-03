@@ -52,7 +52,7 @@ testJavaTraversal: ${srcdir}/JavaTraversal.java
 	javah -jni JavaTraversal
 
 
-EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java
+EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ecjASTVisitor.java
 
 clean-local:
 	rm -f *.dot ecjROSE.jar *.class *.java *.h

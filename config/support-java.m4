@@ -173,6 +173,18 @@ if test "x$USE_JAVA" = x1; then
   AC_DEFINE([USE_ROSE_INTERNAL_JAVA_SUPPORT],[],[Controls use of ROSE support for Java.])
 fi
 
+# DQ (11/3/2010): added test for if jni is available by default.  If this passes then 
+# it is because it is in the compiler's include directly and so it is most likely the
+# wrong jni.h (e.g. from GNU's Java, instead of the Java in $JAVA_PATH.  So if this
+# is the case then we want to use the 
+AC_CHECK_HEADERS([jni.h], [have_jni=yes], [have_jni=no])
+if test "x$have_jni" = "xyes"; then
+  AC_MSG_WARN([ROSE has determined that there is a default version of jni.h (likely in the compiler's include directory) this may be the wrong version of jni.h (however, this is not known to be a problem).])
+else
+  AC_MSG_RESULT([ROSE can't find the jni.h in a default directory (this is good since it will be included correctly).])
+fi
+# AC_MSG_ERROR([Exiting as a test after checking for jni.h!])
+
 # DQ (10/18/2010): Renaming this macro to be uniform in ROSE.
 AM_CONDITIONAL(ROSE_USE_INTERNAL_JAVA_SUPPORT_AM_CONDITIONAL, [test "x$USE_JAVA" = x1])
 AM_CONDITIONAL(ROSE_USE_INTERNAL_JAVA_SUPPORT, [test "x$USE_JAVA" = x1])
