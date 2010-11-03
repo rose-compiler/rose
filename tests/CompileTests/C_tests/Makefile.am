@@ -142,7 +142,7 @@ test2008_02.o: $(srcdir)/test2008_02.c
 # Include makefile rules specific to QMTest
 #include $(top_srcdir)/config/QMTest_makefile.inc
 
-EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c
+EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
