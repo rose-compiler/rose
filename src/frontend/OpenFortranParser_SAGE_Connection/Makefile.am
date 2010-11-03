@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (3/13/2010): Moved OFP specific source files to src/3rdPartyLibraries/fortran-parser
 # These are automatically extracted from the OFP jar file.
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
+INCLUDES = $(JAVA_JVM_INCLUDE) $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
 
 EXTRA_DIST = CMakeLists.txt preproc-fortran.ll preproc-fortran-fixed.ll
 DISTCLEANFILES = preproc-fortran.cc preproc-fortran-fixed.cc
