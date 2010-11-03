@@ -193,7 +193,7 @@ private:
 
 
 
-
+public:
    void insertMainCloseCall(SgStatement* main);
 
    void visit_isArraySgInitializedName(SgNode* n);
@@ -299,9 +299,9 @@ private:
 
 public:
    void visit_isSgVarRefExp(SgVarRefExp* n, bool isRightBranchOfBinaryOp, bool thinkItsStopSearch);
-private:
-   void visit_isSgPointerDerefExp(SgPointerDerefExp* n);
    void visit_isSgArrowExp(SgArrowExp* n);
+   void visit_isSgPointerDerefExp(SgPointerDerefExp* n);
+private:
 
 
    std::string removeSpecialChar(std::string str);

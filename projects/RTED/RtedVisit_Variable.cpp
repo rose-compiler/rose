@@ -55,66 +55,111 @@ bool VariableTraversal::isRightOfBinaryOp(SgNode* astNode) {
 
 InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute) {
 
-
    if (isSgFunctionDefinition(astNode)) {
       // ------------------------------ visit isSgFunctionDefinition ----------------------------------------------
-      transf->visit_checkIsMain( astNode);
+      transf->visit_checkIsMain(astNode);
       transf->function_definitions.push_back(isSgFunctionDefinition(astNode));
       return InheritedAttribute(true, inheritedAttribute.isAssignInitializer, inheritedAttribute.isArrowExp,
             inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
    }
 
-      if (isSgVariableDeclaration(astNode) && !isSgClassDefinition(isSgVariableDeclaration(astNode) -> get_parent())) {
-         // ------------------------------ visit Variable Declarations ----------------------------------------------
-         Rose_STL_Container<SgInitializedName*> vars = isSgVariableDeclaration(astNode)->get_variables();
-         for (Rose_STL_Container<SgInitializedName*>::const_iterator it = vars.begin();it!=vars.end();++it) {
-            SgInitializedName* initName = *it;
-            ROSE_ASSERT(initName);
-            if( isSgReferenceType( initName -> get_type() ))
-            continue;
-            transf->variable_declarations.push_back(initName);
-         }
+   if (isSgVariableDeclaration(astNode) && !isSgClassDefinition(isSgVariableDeclaration(astNode) -> get_parent())) {
+      // ------------------------------ visit Variable Declarations ----------------------------------------------
+      Rose_STL_Container<SgInitializedName*> vars = isSgVariableDeclaration(astNode)->get_variables();
+      for (Rose_STL_Container<SgInitializedName*>::const_iterator it = vars.begin();it!=vars.end();++it) {
+         SgInitializedName* initName = *it;
+         ROSE_ASSERT(initName);
+         if( isSgReferenceType( initName -> get_type() ))
+         continue;
+         transf->variable_declarations.push_back(initName);
       }
+   }
 
-      if (isSgInitializedName(astNode)) {
-         // ------------------------------ visit isSgInitializedName ----------------------------------------------
-         ROSE_ASSERT(isSgInitializedName(astNode)->get_typeptr());
-         SgArrayType* array = isSgArrayType(isSgInitializedName(astNode)->get_typeptr());
-         SgNode* gp = astNode -> get_parent() -> get_parent();
-         // something like: struct type { int before; char c[ 10 ]; int after; }
-         // does not need a createarray call, as the type is registered and any array
-         // information will be tracked when variables of that type are created.
-         // ignore arrays in parameter lists as they're actually pointers, not stack arrays
-         if ( array  && !( isSgClassDefinition( gp )) && !( isSgFunctionDeclaration( gp ) )) {
-            RTedArray* arrayRted = new RTedArray(true, isSgInitializedName(astNode), NULL, false);
-            transf->populateDimensions( arrayRted, isSgInitializedName(astNode), array );
-            transf->create_array_define_varRef_multiArray_stack[isSgInitializedName(astNode)] = arrayRted;
-         }
+   if (isSgInitializedName(astNode)) {
+      // ------------------------------ visit isSgInitializedName ----------------------------------------------
+      ROSE_ASSERT(isSgInitializedName(astNode)->get_typeptr());
+      SgArrayType* array = isSgArrayType(isSgInitializedName(astNode)->get_typeptr());
+      SgNode* gp = astNode -> get_parent() -> get_parent();
+      // something like: struct type { int before; char c[ 10 ]; int after; }
+      // does not need a createarray call, as the type is registered and any array
+      // information will be tracked when variables of that type are created.
+      // ignore arrays in parameter lists as they're actually pointers, not stack arrays
+      if ( array && !( isSgClassDefinition( gp )) && !( isSgFunctionDeclaration( gp ) )) {
+         RTedArray* arrayRted = new RTedArray(true, isSgInitializedName(astNode), NULL, false);
+         transf->populateDimensions( arrayRted, isSgInitializedName(astNode), array );
+         transf->create_array_define_varRef_multiArray_stack[isSgInitializedName(astNode)] = arrayRted;
       }
+   }
+
+   if (isSgAssignOp(astNode)) {
+      // 1. look for MALLOC
+      // 2. Look for assignments to variables - i.e. a variable is initialized
+      // 3. Assign variables that come from assign initializers (not just assignments
+      transf->visit_isArraySgAssignOp(astNode);
+   }
+
+
+   if (isSgAssignInitializer(astNode)) {
+      // ------------------------------  DETECT ALL array creations  ----------------------------------------------
+      transf->visit_isAssignInitializer(astNode);
+      return InheritedAttribute(inheritedAttribute.function, true, inheritedAttribute.isArrowExp,
+            inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
+   }
 
 #if 1
-      if (isSgAssignOp(astNode)) {
-         // 1. look for MALLOC
-         // 2. Look for assignments to variables - i.e. a variable is initialized
-         // 3. Assign variables that come from assign initializers (not just assignments
-         transf->visit_isArraySgAssignOp(astNode);
-      }
+   if (isSgPntrArrRefExp(astNode)) {
+      // ------------------------------ checks for array access  ----------------------------------------------
+      transf->visit_isArrayPntrArrRefExp(astNode);
+   } // pntrarrrefexp
+
+   if (isSgPointerDerefExp(astNode)) {
+      // if this is a varrefexp and it is not initialized, we flag it.
+      // do only if it is by itself or on right hand side of assignment
+      transf->visit_isSgPointerDerefExp(isSgPointerDerefExp(astNode));
+   }
+
 #endif
 
+#if 1
+   if (isSgArrowExp(astNode)) {
+      // if this is a varrefexp and it is not initialized, we flag it.
+      // do only if it is by itself or on right hand side of assignment
+      transf->visit_isSgArrowExp(isSgArrowExp(astNode));
+   return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer, true,
+         inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
+   }
+#endif
+
+#if 0
+   if (isSgScopeStatement(astNode)) {
+      // if, while, do, etc., where we need to check for locals going out of scope
+      transf->visit_isSgScopeStatement(astNode);
+      // *********************** DETECT structs and class definitions ***************
+      if (isSgClassDefinition(astNode)) {
+         // call to a specific function that needs to be checked
+         transf->visit_isClassDefinition(isSgClassDefinition(astNode));
+      }
+   }
+
+   if (isSgFunctionCallExp(astNode)) {
+      // call to a specific function that needs to be checked
+      transf->visit_isFunctionCall(astNode);
+   }
+#endif
    transf->visit(astNode);
 
-#if 1
-   if(  isSgPlusPlusOp( astNode )  || isSgMinusMinusOp( astNode )
+
+   if( isSgPlusPlusOp( astNode ) || isSgMinusMinusOp( astNode )
          || isSgMinusAssignOp( astNode ) || isSgPlusAssignOp( astNode )) {
       // ------------------------------  Detect pointer movements, e.g ++, --  ----------------------------------------------
       ROSE_ASSERT( isSgUnaryOp( astNode ) || isSgBinaryOp( astNode ) );
       SgExpression* operand = NULL;
       if( isSgUnaryOp( astNode ) )
-          operand = isSgUnaryOp( astNode ) -> get_operand();
+      operand = isSgUnaryOp( astNode ) -> get_operand();
       else if( isSgBinaryOp( astNode ) )
-          operand = isSgBinaryOp( astNode ) -> get_lhs_operand();
+      operand = isSgBinaryOp( astNode ) -> get_lhs_operand();
       if( transf->isUsableAsSgPointerType( operand -> get_type() )) {
-          // we don't care about int++, only pointers, or reference to pointers.
+         // we don't care about int++, only pointers, or reference to pointers.
          transf->pointer_movements.push_back( isSgExpression( astNode ));
       }
    }
@@ -127,22 +172,13 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
    if (isSgReturnStmt(astNode)) {
       // ------------------------------ visit isSgReturnStmt ----------------------------------------------
       if (isSgReturnStmt(astNode)->get_expression())
-         transf->returnstmt.push_back(isSgReturnStmt(astNode));
-   }
-#endif
-
-   if (isSgAssignInitializer(astNode)) {
-      return InheritedAttribute(inheritedAttribute.function, true, inheritedAttribute.isArrowExp,
-            inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
+      transf->returnstmt.push_back(isSgReturnStmt(astNode));
    }
 
-   if (isSgArrowExp(astNode))
-      return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer, true,
-            inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
 
    if (isSgAddressOfOp(astNode))
-      return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer,
-            inheritedAttribute.isArrowExp, true, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
+   return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer,
+         inheritedAttribute.isArrowExp, true, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
 
    if (isSgForStatement(astNode)) {
       for_stmt->push_back(isSgForStatement(astNode));
@@ -165,7 +201,6 @@ SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* ast
       SynthesizedAttributesList childAttributes) {
    SynthesizedAttribute localResult = std::accumulate(childAttributes.begin(), childAttributes.end(), false,
          std::logical_or<bool>());
-
 
    if (inheritedAttribute.function == true) {
       if (isSgForStatement(astNode))
@@ -243,8 +278,6 @@ SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* ast
             }
          }
       }
-
-
 
    }
    return localResult;

@@ -139,7 +139,9 @@ void RtedTransformation::visit(SgNode* n) {
 #endif
    }
    else if (isSgAssignInitializer(n)) {
+#if 0
       visit_isAssignInitializer(n);
+#endif
    }
    // *********************** DETECT ALL array creations ***************
 
@@ -147,7 +149,9 @@ void RtedTransformation::visit(SgNode* n) {
    // *********************** DETECT ALL array accesses ***************
    else if (isSgPntrArrRefExp(n)) {
       // checks for array access
+#if 0
       visit_isArrayPntrArrRefExp(n);
+#endif
    } // pntrarrrefexp
    /*
   else if (isSgVarRefExp(n)) {
@@ -158,22 +162,27 @@ void RtedTransformation::visit(SgNode* n) {
   }
     */
    else if (isSgPointerDerefExp(n)) {
+#if 0
       // if this is a varrefexp and it is not initialized, we flag it.
       // do only if it is by itself or on right hand side of assignment
       if (RTEDDEBUG()) cerr << " @@@@@@@@@ DETECTED PointerDerefExp : " << n->unparseToString() << endl;
       visit_isSgPointerDerefExp(isSgPointerDerefExp(n));
+#endif
    }
    else if (isSgArrowExp(n)) {
+#if 0
       // if this is a varrefexp and it is not initialized, we flag it.
       // do only if it is by itself or on right hand side of assignment
       if (RTEDDEBUG()) cerr << " @@@@@@@@@ DETECTED isSgArrowExp : " << n->unparseToString() << endl;
       visit_isSgArrowExp(isSgArrowExp(n));
+#endif
    }
    // *********************** DETECT ALL array accesses ***************
 
 
    // *********************** DETECT ALL scope statements ***************
    else if (isSgScopeStatement(n)) {
+#if 1
       // if, while, do, etc., where we need to check for locals going out of scope
       visit_isSgScopeStatement(n);
       // *********************** DETECT structs and class definitions ***************
@@ -182,14 +191,15 @@ void RtedTransformation::visit(SgNode* n) {
          //cerr << " +++++++++++++++++++++ FOUND Class Def!! ++++++++++++++++ " << endl;
          visit_isClassDefinition(isSgClassDefinition(n));
       }
-
+#endif
    }
 
    // *********************** DETECT ALL function calls ***************
    else if (isSgFunctionCallExp(n)) {
       // call to a specific function that needs to be checked
-
+#if 1
       visit_isFunctionCall(n);
+#endif
    }
    // *********************** DETECT ALL function calls ***************
 
