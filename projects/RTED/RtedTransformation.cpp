@@ -74,7 +74,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 
    // Find all the places which need to be transformed, i.e. where code needs to be inserted.
    // To do this traverse visit function further below
-   traverseInputFiles(project,preorder);
+ //  traverseInputFiles(project,preorder);
 
 
    // tps: Traverse all classes that appear in header files and create copy in source file within a namespace.
@@ -110,6 +110,7 @@ void RtedTransformation::performInheritedSynthesizedTraversal(SgProject* project
 void RtedTransformation::visit(SgNode* n) {
    if (RTEDDEBUG())  cerr <<"Traversing node : " << n->class_name() << endl;
 
+#if 1
    // find function definitions (incl. main) ******************************************
    if (isSgFunctionDefinition(n)) {
       visit_isFunctionDefinition(n);
@@ -134,6 +135,7 @@ void RtedTransformation::visit(SgNode* n) {
       //cerr <<" >> VISITOR :: Found initName : " << n->unparseToString() << endl;
       visit_isArraySgInitializedName(n);
    }
+#endif
 
    // 1. look for MALLOC
    // 2. Look for assignments to variables - i.e. a variable is initialized

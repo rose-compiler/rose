@@ -54,7 +54,16 @@ bool VariableTraversal::isRightOfBinaryOp(SgNode* astNode) {
 }
 
 InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute) {
+
+   transf->visit(astNode);
    if (isSgFunctionDefinition(astNode)) {
+      // ------------------------------ visit isSgFunctionDefinition ----------------------------------------------
+   #if 0
+         if (isSgFunctionDefinition(astNode)) {
+            transf->visit_checkIsMain( astNode);
+            transf->function_definitions.push_back(isSgFunctionDefinition(astNode));
+         }
+   #endif
       return InheritedAttribute(true, inheritedAttribute.isAssignInitializer, inheritedAttribute.isArrowExp,
             inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
    }
@@ -93,6 +102,8 @@ SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* ast
       SynthesizedAttributesList childAttributes) {
    SynthesizedAttribute localResult = std::accumulate(childAttributes.begin(), childAttributes.end(), false,
          std::logical_or<bool>());
+
+
    if (inheritedAttribute.function == true) {
       if (isSgForStatement(astNode))
          for_stmt->pop_back();// = NULL;
@@ -102,6 +113,7 @@ SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* ast
             && !isSgPointerDerefExp(astNode) && rightOfbinaryOp && !rightOfbinaryOp->empty())
          rightOfbinaryOp->pop_back();
 
+      // ------------------------------ visit isSgVarRefExp ----------------------------------------------
       if (isSgVarRefExp(astNode)) {
          SgInitializedName *name = isSgVarRefExp(astNode) -> get_symbol() -> get_declaration();
          if (name && !transf->isInInstrumentedFile(name -> get_declaration())) {
@@ -168,6 +180,41 @@ SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* ast
             }
          }
       }
+
+#if 0
+      // ------------------------------ visit Variable Declarations ----------------------------------------------
+      if (isSgVariableDeclaration(astNode) && !isSgClassDefinition(isSgVariableDeclaration(astNode) -> get_parent())) {
+         Rose_STL_Container<SgInitializedName*> vars = isSgVariableDeclaration(astNode)->get_variables();
+         for (Rose_STL_Container<SgInitializedName*>::const_iterator it = vars.begin();it!=vars.end();++it) {
+            SgInitializedName* initName = *it;
+            ROSE_ASSERT(initName);
+            if( isSgReferenceType( initName -> get_type() ))
+            continue;
+            transf->variable_declarations.push_back(initName);
+         }
+      }
+
+
+      // ------------------------------ visit isSgInitializedName ----------------------------------------------
+      if (isSgInitializedName(astNode)) {
+         // STACK ARRAY : lets see if we assign an array here
+         ROSE_ASSERT(isSgInitializedName(astNode)->get_typeptr());
+         SgArrayType* array = isSgArrayType(isSgInitializedName(astNode)->get_typeptr());
+         SgNode* gp = astNode -> get_parent() -> get_parent();
+         // something like:
+         //  struct type { int before; char c[ 10 ]; int after; }
+         // does not need a createarray call, as the type is registered and any array
+         // information will be tracked when variables of that type are created
+         //
+         // ignore arrays in parameter lists as they're actually pointers, not stack arrays
+         if ( array  && !( isSgClassDefinition( gp )) && !( isSgFunctionDeclaration( gp ) )) {
+            RTedArray* arrayRted = new RTedArray(true, isSgInitializedName(astNode), NULL, false);
+            transf->populateDimensions( arrayRted, isSgInitializedName(astNode), array );
+            transf->create_array_define_varRef_multiArray_stack[isSgInitializedName(astNode)] = arrayRted;
+         }
+      }
+#endif
+
    }
    return localResult;
 }

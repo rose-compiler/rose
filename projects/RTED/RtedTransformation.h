@@ -29,7 +29,6 @@ private:
    // ------------------------ array ------------------------------------
    // The array of callArray calls that need to be inserted
    std::map<SgVarRefExp*, RTedArray*> create_array_define_varRef_multiArray;
-   std::map<SgInitializedName*, RTedArray*> create_array_define_varRef_multiArray_stack;
    std::map<SgExpression*, RTedArray*> create_array_access_call;
    // remember variables that were used to create an array. These cant be reused for array usage calls
    std::vector<SgVarRefExp*> variablesUsedForArray;
@@ -42,10 +41,12 @@ private:
 
    // the following stores all variables that are created (and used e.g. in functions)
    // We need to store the name, type and intialized value
-   std::vector<SgInitializedName*> variable_declarations;
 public:
    // We need to store the variables that are being accessed
+   std::map<SgInitializedName*, RTedArray*> create_array_define_varRef_multiArray_stack;
    std::vector<SgVarRefExp*> variable_access_varref;
+   std::vector<SgInitializedName*> variable_declarations;
+   std::vector<SgFunctionDefinition*> function_definitions;
 private:
    // map of expr ϵ { SgPointerDerefExp, SgArrowExp }, SgVarRefExp pairs
    // the deref expression must be an ancestor of the varref
@@ -71,7 +72,6 @@ private:
    // function calls to realloc
    std::vector<SgFunctionCallExp*> reallocs;
 
-   std::vector<SgFunctionDefinition*> function_definitions;
 
    // what statements we need to bracket with enter/exit scope calls
    std::map<SgStatement*, SgNode*> scopes;
@@ -192,13 +192,9 @@ private:
 
 
 
-   // Traverse all nodes and check properties
-   virtual void visit(SgNode* n);
 
    void insertMainCloseCall(SgStatement* main);
-   void populateDimensions( RTedArray* array, SgInitializedName* init, SgArrayType* type );
 
-   void visit_checkIsMain(SgNode* n);
    void visit_isArraySgInitializedName(SgNode* n);
    void visit_isArraySgAssignOp(SgNode* n);
    void visit_isAssignInitializer(SgNode* n);
@@ -229,8 +225,6 @@ private:
    std::pair<SgInitializedName*,SgVarRefExp*> getMinusMinusOp(SgMinusMinusOp* minus ,std::string str, SgVarRefExp* varRef);
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfPointerDeref(SgPointerDerefExp* dot, std::string str, SgVarRefExp* varRef);
 
-   int getDimension(SgInitializedName* initName);
-   int getDimension(SgInitializedName* initName,SgVarRefExp* varRef);
    SgVarRefExp* resolveToVarRefRight(SgExpression* expr);
    SgVarRefExp* resolveToVarRefLeft(SgExpression* expr);
    RtedSymbols* symbols;
@@ -392,6 +386,13 @@ public:
    void executeTransformations();
    void insertNamespaceIntoSourceFile(  SgProject* project, std::vector<SgClassDeclaration*> &traverseClasses);
    void performInheritedSynthesizedTraversal(SgProject* project);
+
+   void populateDimensions( RTedArray* array, SgInitializedName* init, SgArrayType* type );
+   int getDimension(SgInitializedName* initName);
+   int getDimension(SgInitializedName* initName,SgVarRefExp* varRef);
+   void visit_checkIsMain(SgNode* n);
+   // Traverse all nodes and check properties
+   virtual void visit(SgNode* n);
 
 };
 
