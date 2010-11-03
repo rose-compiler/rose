@@ -47,6 +47,12 @@ public:
    std::vector<SgVarRefExp*> variable_access_varref;
    std::vector<SgInitializedName*> variable_declarations;
    std::vector<SgFunctionDefinition*> function_definitions;
+   // function calls to free
+   std::vector< SgExpression* > frees;
+   // return statements that need to be changed
+   std::vector< SgReturnStmt*> returnstmt;
+   // Track pointer arithmetic, e.g. ++, --
+   std::vector< SgExpression* > pointer_movements;
 private:
    // map of expr ϵ { SgPointerDerefExp, SgArrowExp }, SgVarRefExp pairs
    // the deref expression must be an ancestor of the varref
@@ -56,10 +62,6 @@ private:
    std::map<SgExpression*,SgVarRefExp*> variable_access_arrowexp;
    std::map<SgExpression*,SgThisExp*> variable_access_arrowthisexp;
 
-   // Track pointer arithmetic, e.g. ++, --
-   std::vector< SgExpression* > pointer_movements;
-   // return statements that need to be changed
-   std::vector< SgReturnStmt*> returnstmt;
 
    // ------------------------ string -----------------------------------
    // handle call to functioncall
@@ -67,8 +69,6 @@ private:
    // calls to functions whose definitions we don't know, and thus, whose
    // signatures we must check at runtime
    std::vector<SgFunctionCallExp*> function_call_missing_def;
-   // function calls to free
-   std::vector< SgExpression* > frees;
    // function calls to realloc
    std::vector<SgFunctionCallExp*> reallocs;
 
@@ -153,15 +153,16 @@ private:
     */
    bool isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* exp );
 
+public:
    /**
     * @return @c SgPointerType if @c type is a pointer type, reference to pointer
     * type or typedef whose base type is a pointer type, and @c null otherwise.
     */
    SgPointerType* isUsableAsSgPointerType( SgType* type );
-public:
    SgArrayType* isUsableAsSgArrayType( SgType* type );
    SgReferenceType* isUsableAsSgReferenceType( SgType* type );
    bool isInInstrumentedFile( SgNode* n );
+   void visit_isArraySgAssignOp(SgNode* n);
 private:
 
    SgType* resolveTypedefs( SgType* type );
@@ -196,7 +197,6 @@ private:
    void insertMainCloseCall(SgStatement* main);
 
    void visit_isArraySgInitializedName(SgNode* n);
-   void visit_isArraySgAssignOp(SgNode* n);
    void visit_isAssignInitializer(SgNode* n);
 
    void visit_isArrayPntrArrRefExp(SgNode* n);
@@ -241,7 +241,7 @@ private:
    SgExpression* getVariableLeftOfAssignmentFromChildOnRight(SgNode* n);
 
 
-
+public:
    /// Visit delete operators, to track memory frees.
    void visit_delete( SgDeleteExp* del );
 
@@ -254,7 +254,7 @@ private:
    /// those should be handled elsewhere (i.e. varref), but after the assignment,
    /// even if the memory was readable, ensure we stayed within array bounds.
    void insert_pointer_change( SgExpression* op );
-
+private:
    // simple scope handling
    std::string scope_name( SgNode* n);
    void bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of_scope );
@@ -385,7 +385,6 @@ public:
 
    void executeTransformations();
    void insertNamespaceIntoSourceFile(  SgProject* project, std::vector<SgClassDeclaration*> &traverseClasses);
-   void performInheritedSynthesizedTraversal(SgProject* project);
 
    void populateDimensions( RTedArray* array, SgInitializedName* init, SgArrayType* type );
    int getDimension(SgInitializedName* initName);

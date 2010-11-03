@@ -69,12 +69,11 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
    this -> rtedfiles = &rtedfiles;
    loadFunctionSymbols(project);
 
-   // Traverse Variables
-   performInheritedSynthesizedTraversal(project);
-
-   // Find all the places which need to be transformed, i.e. where code needs to be inserted.
-   // To do this traverse visit function further below
- //  traverseInputFiles(project,preorder);
+   VariableTraversal varTraversal(this);
+   InheritedAttribute inheritedAttribute(false,false,false,false,false,false);
+   //   InheritedAttribute inheritedAttribute(bools);
+   // Call the traversal starting at the project (root) node of the AST
+   varTraversal.traverseInputFiles(project,inheritedAttribute);
 
 
    // tps: Traverse all classes that appear in header files and create copy in source file within a namespace.
@@ -92,17 +91,6 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 }
 
 
-void RtedTransformation::performInheritedSynthesizedTraversal(SgProject* project) {
-   // Traverse Variables
-// InheritedAttributeBools* bools = new InheritedAttributeBools();
-   VariableTraversal varTraversal(this);
-   InheritedAttribute inheritedAttribute(false,false,false,false,false,false);
-//   InheritedAttribute inheritedAttribute(bools);
-   // Call the traversal starting at the project (root) node of the AST
-   varTraversal.traverseInputFiles(project,inheritedAttribute);
-}
-
-
 /* -----------------------------------------------------------
  * Collects information needed for transformations
  * -----------------------------------------------------------*/
@@ -110,10 +98,11 @@ void RtedTransformation::performInheritedSynthesizedTraversal(SgProject* project
 void RtedTransformation::visit(SgNode* n) {
    if (RTEDDEBUG())  cerr <<"Traversing node : " << n->class_name() << endl;
 
-#if 1
    // find function definitions (incl. main) ******************************************
    if (isSgFunctionDefinition(n)) {
+#if 0
       visit_isFunctionDefinition(n);
+#endif
    }
    // find function definitions (incl. main) ******************************************
 
@@ -122,7 +111,9 @@ void RtedTransformation::visit(SgNode* n) {
 
    // *********************** DETECT variable creations ***************
    if (isSgVariableDeclaration(n)) {
+#if 0
       visit_isSgVariableDeclaration(n);
+#endif
    }
 
    // *********************** DETECT variable creations ***************
@@ -132,17 +123,20 @@ void RtedTransformation::visit(SgNode* n) {
 
    // *********************** DETECT ALL array creations ***************
    else if (isSgInitializedName(n)) {
+#if 0
       //cerr <<" >> VISITOR :: Found initName : " << n->unparseToString() << endl;
       visit_isArraySgInitializedName(n);
-   }
 #endif
+   }
 
    // 1. look for MALLOC
    // 2. Look for assignments to variables - i.e. a variable is initialized
    // 3. Assign variables that come from assign initializers (not just assignments
    else if (isSgAssignOp(n)) {
+#if 0
       //cerr <<" >> VISITOR :: Found AssignOp : " << n->unparseToString() << endl;
       visit_isArraySgAssignOp(n);
+#endif
    }
    else if (isSgAssignInitializer(n)) {
       visit_isAssignInitializer(n);
@@ -181,9 +175,7 @@ void RtedTransformation::visit(SgNode* n) {
    // *********************** DETECT ALL scope statements ***************
    else if (isSgScopeStatement(n)) {
       // if, while, do, etc., where we need to check for locals going out of scope
-
       visit_isSgScopeStatement(n);
-
       // *********************** DETECT structs and class definitions ***************
       if (isSgClassDefinition(n)) {
          // call to a specific function that needs to be checked
@@ -192,9 +184,6 @@ void RtedTransformation::visit(SgNode* n) {
       }
 
    }
-
-
-
 
    // *********************** DETECT ALL function calls ***************
    else if (isSgFunctionCallExp(n)) {
@@ -210,18 +199,22 @@ void RtedTransformation::visit(SgNode* n) {
          || isSgMinusMinusOp( n )
          || isSgMinusAssignOp( n )
          || isSgPlusAssignOp( n )) {
+#if 0
       visit_pointer_movement( n );
+#endif
    }
    // *********************** Detect pointer movements, e.g ++, -- *********
 
    // *********************** Detect delete (c++ free) *********
    else if( isSgDeleteExp( n )) {
+#if 0
       visit_delete( isSgDeleteExp( n ));
+#endif
    }
    // *********************** Detect delete (c++ free) *********
 
    else if (isSgReturnStmt(n)) {
-#if 1
+#if 0
       SgReturnStmt* rstmt = isSgReturnStmt(n);
       SgExpression* right = rstmt->get_expression();
       if (right)  // && !isSgValueExp(right))

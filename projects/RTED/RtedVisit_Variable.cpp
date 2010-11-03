@@ -55,18 +55,81 @@ bool VariableTraversal::isRightOfBinaryOp(SgNode* astNode) {
 
 InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute) {
 
-   transf->visit(astNode);
+
    if (isSgFunctionDefinition(astNode)) {
       // ------------------------------ visit isSgFunctionDefinition ----------------------------------------------
-   #if 0
-         if (isSgFunctionDefinition(astNode)) {
-            transf->visit_checkIsMain( astNode);
-            transf->function_definitions.push_back(isSgFunctionDefinition(astNode));
-         }
-   #endif
+      transf->visit_checkIsMain( astNode);
+      transf->function_definitions.push_back(isSgFunctionDefinition(astNode));
       return InheritedAttribute(true, inheritedAttribute.isAssignInitializer, inheritedAttribute.isArrowExp,
             inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
    }
+
+      if (isSgVariableDeclaration(astNode) && !isSgClassDefinition(isSgVariableDeclaration(astNode) -> get_parent())) {
+         // ------------------------------ visit Variable Declarations ----------------------------------------------
+         Rose_STL_Container<SgInitializedName*> vars = isSgVariableDeclaration(astNode)->get_variables();
+         for (Rose_STL_Container<SgInitializedName*>::const_iterator it = vars.begin();it!=vars.end();++it) {
+            SgInitializedName* initName = *it;
+            ROSE_ASSERT(initName);
+            if( isSgReferenceType( initName -> get_type() ))
+            continue;
+            transf->variable_declarations.push_back(initName);
+         }
+      }
+
+      if (isSgInitializedName(astNode)) {
+         // ------------------------------ visit isSgInitializedName ----------------------------------------------
+         ROSE_ASSERT(isSgInitializedName(astNode)->get_typeptr());
+         SgArrayType* array = isSgArrayType(isSgInitializedName(astNode)->get_typeptr());
+         SgNode* gp = astNode -> get_parent() -> get_parent();
+         // something like: struct type { int before; char c[ 10 ]; int after; }
+         // does not need a createarray call, as the type is registered and any array
+         // information will be tracked when variables of that type are created.
+         // ignore arrays in parameter lists as they're actually pointers, not stack arrays
+         if ( array  && !( isSgClassDefinition( gp )) && !( isSgFunctionDeclaration( gp ) )) {
+            RTedArray* arrayRted = new RTedArray(true, isSgInitializedName(astNode), NULL, false);
+            transf->populateDimensions( arrayRted, isSgInitializedName(astNode), array );
+            transf->create_array_define_varRef_multiArray_stack[isSgInitializedName(astNode)] = arrayRted;
+         }
+      }
+
+#if 1
+      if (isSgAssignOp(astNode)) {
+         // 1. look for MALLOC
+         // 2. Look for assignments to variables - i.e. a variable is initialized
+         // 3. Assign variables that come from assign initializers (not just assignments
+         transf->visit_isArraySgAssignOp(astNode);
+      }
+#endif
+
+   transf->visit(astNode);
+
+#if 1
+   if(  isSgPlusPlusOp( astNode )  || isSgMinusMinusOp( astNode )
+         || isSgMinusAssignOp( astNode ) || isSgPlusAssignOp( astNode )) {
+      // ------------------------------  Detect pointer movements, e.g ++, --  ----------------------------------------------
+      ROSE_ASSERT( isSgUnaryOp( astNode ) || isSgBinaryOp( astNode ) );
+      SgExpression* operand = NULL;
+      if( isSgUnaryOp( astNode ) )
+          operand = isSgUnaryOp( astNode ) -> get_operand();
+      else if( isSgBinaryOp( astNode ) )
+          operand = isSgBinaryOp( astNode ) -> get_lhs_operand();
+      if( transf->isUsableAsSgPointerType( operand -> get_type() )) {
+          // we don't care about int++, only pointers, or reference to pointers.
+         transf->pointer_movements.push_back( isSgExpression( astNode ));
+      }
+   }
+
+   if( isSgDeleteExp( astNode )) {
+      // ------------------------------ Detect delete (c++ free) ----------------------------------------------
+      transf->frees.push_back( isSgDeleteExp( astNode ) );
+   }
+
+   if (isSgReturnStmt(astNode)) {
+      // ------------------------------ visit isSgReturnStmt ----------------------------------------------
+      if (isSgReturnStmt(astNode)->get_expression())
+         transf->returnstmt.push_back(isSgReturnStmt(astNode));
+   }
+#endif
 
    if (isSgAssignInitializer(astNode)) {
       return InheritedAttribute(inheritedAttribute.function, true, inheritedAttribute.isArrowExp,
@@ -181,39 +244,7 @@ SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* ast
          }
       }
 
-#if 0
-      // ------------------------------ visit Variable Declarations ----------------------------------------------
-      if (isSgVariableDeclaration(astNode) && !isSgClassDefinition(isSgVariableDeclaration(astNode) -> get_parent())) {
-         Rose_STL_Container<SgInitializedName*> vars = isSgVariableDeclaration(astNode)->get_variables();
-         for (Rose_STL_Container<SgInitializedName*>::const_iterator it = vars.begin();it!=vars.end();++it) {
-            SgInitializedName* initName = *it;
-            ROSE_ASSERT(initName);
-            if( isSgReferenceType( initName -> get_type() ))
-            continue;
-            transf->variable_declarations.push_back(initName);
-         }
-      }
 
-
-      // ------------------------------ visit isSgInitializedName ----------------------------------------------
-      if (isSgInitializedName(astNode)) {
-         // STACK ARRAY : lets see if we assign an array here
-         ROSE_ASSERT(isSgInitializedName(astNode)->get_typeptr());
-         SgArrayType* array = isSgArrayType(isSgInitializedName(astNode)->get_typeptr());
-         SgNode* gp = astNode -> get_parent() -> get_parent();
-         // something like:
-         //  struct type { int before; char c[ 10 ]; int after; }
-         // does not need a createarray call, as the type is registered and any array
-         // information will be tracked when variables of that type are created
-         //
-         // ignore arrays in parameter lists as they're actually pointers, not stack arrays
-         if ( array  && !( isSgClassDefinition( gp )) && !( isSgFunctionDeclaration( gp ) )) {
-            RTedArray* arrayRted = new RTedArray(true, isSgInitializedName(astNode), NULL, false);
-            transf->populateDimensions( arrayRted, isSgInitializedName(astNode), array );
-            transf->create_array_define_varRef_multiArray_stack[isSgInitializedName(astNode)] = arrayRted;
-         }
-      }
-#endif
 
    }
    return localResult;
