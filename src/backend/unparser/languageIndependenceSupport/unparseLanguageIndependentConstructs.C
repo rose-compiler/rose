@@ -788,6 +788,20 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
         }
 #endif
 
+#if 0
+  // Liao 11/2/2010 Skip the case that an expression is located from another file (included in the current file)
+  // I moved the code to the unparser function for SgAggregatedInitializer to have bigger picture about what to parse or not
+     SgFile* cur_file = SageInterface::getEnclosingFileNode(expr);
+     if (cur_file != NULL)
+     {
+       // normal file info 
+       if (expr->get_file_info()->isTransformation() == false &&  expr->get_file_info()->isCompilerGenerated() ==false)
+       {
+         if (cur_file->get_file_info()->get_filename() != expr->get_file_info()->get_filename())
+           return;
+       }
+     }
+#endif
      if( unparseLineReplacement(expr,info) )
        return;
 
