@@ -6,18 +6,20 @@
 class BasicExpressionTest : public TestCodeBuilder
 {
 public:
-	BasicExpressionTest(SgProject* project, bool is_cxx_style = false)
-	: TestCodeBuilder(project, is_cxx_style) {}
+	BasicExpressionTest(const std::string& name, bool is_cxx_style = false)
+	: TestCodeBuilder(name, is_cxx_style) {}
 
+protected:
 	virtual void build();
 };
 
 class ComplexExpressionTest : public TestCodeBuilder
 {
 	public:
-	ComplexExpressionTest(SgProject* project, bool is_cxx_style = false)
-	: TestCodeBuilder(project, is_cxx_style) {}
+	ComplexExpressionTest(const std::string& name, bool is_cxx_style = false)
+	: TestCodeBuilder(name, is_cxx_style) {}
 
+protected:
 	virtual void build();
 };
 

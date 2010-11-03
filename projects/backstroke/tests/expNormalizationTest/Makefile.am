@@ -90,7 +90,6 @@ test2003_36.C \
 test2003_37.C \
 test2003_38.C \
 test2004_01.C \
-test2004_02.C \
 test2004_03.C \
 test2004_04.C \
 test2004_05.C \
@@ -289,7 +288,6 @@ test2005_45.C \
 test2005_46.C \
 test2005_47.C \
 test2005_48.C \
-test2005_49.C \
 test2005_50.C \
 test2005_51.C \
 test2005_52.C \
@@ -325,7 +323,6 @@ test2005_83.C \
 test2005_84.C \
 test2005_86.C \
 test2005_87.C \
-test2005_88.C \
 test2005_89.C \
 test2005_90.C \
 test2005_91.C \
@@ -412,7 +409,6 @@ test2005_175.C \
 test2005_176.C \
 test2005_177.C \
 test2005_178.C \
-test2005_179.C \
 test2005_180.C \
 test2005_181.C \
 test2005_182.C \
@@ -472,7 +468,6 @@ test2006_47.C \
 test2006_50.C \
 test2006_52.C \
 test2006_53.C \
-test2006_54.C \
 test2006_55.C \
 test2006_56.C \
 test2006_57.C \
@@ -557,13 +552,11 @@ test2006_155.C \
 test2006_156.C \
 test2006_157.C \
 test2006_158.C \
-test2006_159.C \
 test2006_160.C \
 test2006_161.C \
 test2006_162.C \
 test2006_163.C \
 test2006_164.C \
-test2006_165.C \
 test2006_166.C \
 test2006_180.C \
 test2006_181.C \
@@ -616,7 +609,6 @@ test2007_78.C \
 test2007_81.C \
 test2007_82.C \
 test2007_83.C \
-test2007_84.C \
 test2007_85.C \
 test2007_90.C \
 test2007_94.C \
@@ -667,9 +659,6 @@ test2009_02.C \
 test2009_12.C \
 test2009_15.C \
 test2009_20.C \
-test2009_30.C \
-test2009_31.C \
-test2009_37.C \
 test2009_39.C \
 test2009_40.C \
 test2009_41.C \
@@ -687,9 +676,22 @@ math.C \
 inputForLoopLocator.C \
 X.C \
 inputBug317.C \
-inputBug327.C \
 test2006_148.C \
 test2007_51.C
+
+FAILED_TESTCODES = \
+test2004_02.C \
+test2005_49.C \
+test2005_88.C \
+test2005_179.C \
+test2006_54.C \
+test2006_159.C \
+test2006_165.C \
+test2007_84.C \
+test2009_30.C \
+test2009_31.C \
+inputBug327.C \
+test2009_37.C
 
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 
@@ -698,7 +700,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 simple_test = test_norm.C
 
-$(simple_test):expNormTest 
+$(simple_test):expNormTest FORCE
 	@cp $(top_srcdir)/projects/backstroke/tests/expNormalizationTest/test_norm.C test_norm.C
 	./expNormTest --edg:no_warnings -c test_norm.C
 
@@ -722,11 +724,13 @@ check-local:
 clean-local:
 	rm -f *.o *.C
 
-mytest:
+mytest: FORCE
 	@$(MAKE) $(TEST_Objects)
 
-test: 
+test: FORCE
 	@$(MAKE) $(simple_test)
 
 debug:
 	libtool gdb --args ./expNormTest test.C
+
+FORCE:

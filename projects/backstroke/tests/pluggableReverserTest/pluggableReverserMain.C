@@ -55,9 +55,9 @@ void reverseEvents(SgProject* project)
 	addHandlers(event_processor);
 
 	Backstroke::reverseEvents(&event_processor, isEvent, project);
-	return;
+	//return;
 
-
+#if 0
 	SgGlobal* global = getFirstGlobalScope(project);
 	// Prepend includes to test files.
 	string includes = "#include <rctypes.h>\n"
@@ -118,6 +118,7 @@ void reverseEvents(SgProject* project)
 	fixVariableReferences(global);
 	AstTests::runAllTests(project);
 	cout << "Test Done!\n";
+#endif
 }
 
 

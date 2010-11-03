@@ -27,6 +27,7 @@ void BasicExpressionTest::build()
 	// First build the state class.
 	setStateClassName("State");
 	addStateMember("b", buildBoolType());
+#if 0
 	addStateMember("c", buildCharType());
 	addStateMember("s", buildShortType());
 	addStateMember("i", buildIntType());
@@ -36,6 +37,7 @@ void BasicExpressionTest::build()
 	addStateMember("d", buildDoubleType());
 	addStateMember("ld", buildLongDoubleType());
 	//addStateMember("p", buildPointerType(buildVoidType()));
+#endif
 	
 	buildStateClass();
 
@@ -71,8 +73,9 @@ void ComplexExpressionTest::build()
 {
 	// First build the state class.
 	setStateClassName("State");
-	addStateMember("b", buildBoolType());
+	//addStateMember("b", buildBoolType());
 	addStateMember("c", buildCharType());
+#if 0
 	addStateMember("s", buildShortType());
 	addStateMember("i", buildIntType());
 	addStateMember("l", buildLongType());
@@ -81,6 +84,7 @@ void ComplexExpressionTest::build()
 	addStateMember("d", buildDoubleType());
 	addStateMember("ld", buildLongDoubleType());
 	//addStateMember("p", buildPointerType(buildVoidType()));
+#endif
 
 	buildStateClass();
 
@@ -93,7 +97,7 @@ void ComplexExpressionTest::build()
 	{
 		builders.addExpressionBuilder(new UnaryExpressionBuilder(var1));
 		foreach (SgExpression* var2, vars)
-			;//builders.addExpressionBuilder(new BinaryExpressionBuilder(var1, var2));
+			builders.addExpressionBuilder(new BinaryExpressionBuilder(var1, var2));
 	}
 
 	builders.build();
@@ -104,12 +108,12 @@ void ComplexExpressionTest::build()
 	foreach (SgExpression* var1, all_exp)
 	{
 		builders2.addExpressionBuilder(new UnaryExpressionBuilder(var1));
-		//foreach (SgExpression* var2, all_exp)
-			//builders2.addExpressionBuilder(new BinaryExpressionBuilder(var1, var2));
+		foreach (SgExpression* var2, all_exp)
+			builders2.addExpressionBuilder(new BinaryExpressionBuilder(var1, var2));
 	}
 
-	foreach (SgExpression* var, all_exp)
-		deepDelete(var);
+	//foreach (SgExpression* var, all_exp)
+	//	deepDelete(var);
 
 	builders2.build();
 #endif
