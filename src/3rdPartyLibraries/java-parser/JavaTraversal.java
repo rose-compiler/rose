@@ -33,7 +33,8 @@ class JavaTraversal  implements Callable<Boolean> {
     private native void invokeEDGE(String className1, int nr,String className2, int nr2);
 
  // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
-    private static boolean hasErrorOccurred = false;
+ // private static boolean hasErrorOccurred = false;
+    public static boolean hasErrorOccurred = false;
 
     static {
 	System.loadLibrary("JavaTraversal");
@@ -1103,6 +1104,13 @@ class JavaTraversal  implements Callable<Boolean> {
                     java_parser.startParsingAST(unit);
                     System.out.println("test 10 ...");
                   }
+               catch (Exception e)
+                  {
+                    System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
+
+                 // This should output the call stack.
+                    System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
+                  }
                finally
                   {
                 // cleanup compilation unit result
@@ -1117,7 +1125,10 @@ class JavaTraversal  implements Callable<Boolean> {
       {
      // DQ (11/1/2010): Added more aggressive termination of program...
         System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
-        System.exit(1);
+     // System.exit(1);
+
+        hasErrorOccurred = true;
+        return;
       }
 
 	jt.invokeEND();
