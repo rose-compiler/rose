@@ -93,6 +93,7 @@ struct RegisterSet {
     uint64_t reg[REG_NREGISTERS];       /* Indexed by one of the *_REG_* constants above. */
 };
 
+#ifdef __cplusplus
 /** Interface to the debugger implemented in Debugger*.c in this directory. */
 class Debugger {
 public:
@@ -244,5 +245,5 @@ private:
     RegisterSet regs;                           /* Cached values of all registers */
     bool regs_current;                          /* Is the contents of "regs" cache current? */
 };
-
+#endif
 #endif

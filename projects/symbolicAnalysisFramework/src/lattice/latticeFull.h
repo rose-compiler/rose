@@ -44,7 +44,6 @@ class uninitBotLattice : public Lattice
 	// overwrites the state of this Lattice with that of that Lattice
 	void copy(Lattice* that);
 	
-	/*
 	// Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
 	//    information on a per-variable basis, these per-variable mappings must be converted from 
 	//    the current set of variables to another set. This may be needed during function calls, 
@@ -62,7 +61,6 @@ class uninitBotLattice : public Lattice
 	// We do not force child classes to define their own versions of this function since not all
 	//    Lattices have per-variable information.
 	void incorporateVars(Lattice* that);
-	* /
 	
 	// computes the meet of this and that and saves the result in this
 	// returns true if this causes this to change and false otherwise
@@ -285,6 +283,7 @@ class InfiniteProductLattice : public virtual ProductLattice, public virtual Inf
 		    it!=lattices.end() && itThat!=(dynamic_cast<InfiniteProductLattice*>(that))->lattices.end(); 
 		    it++, itThat++)
 			modified = (dynamic_cast<InfiniteProductLattice*>(*it))->widenUpdate(dynamic_cast<InfiniteProductLattice*>(*itThat)) || modified;
+          return modified;
 	}
 };
 

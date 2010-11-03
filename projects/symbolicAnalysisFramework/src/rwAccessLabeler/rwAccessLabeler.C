@@ -126,7 +126,7 @@ class lrRecord
 		SgBinaryOp* binOp;
 		SgUnaryOp* unOp;
 		SgFunctionCallExp* funcCall;
-		SgPntrArrRefExp* arrRef;
+		//SgPntrArrRefExp* arrRef;
 		char typeStr[100];
 		
 		// if this node is on the read, write or read-write side of an assignment operation, set its access appropriately
@@ -139,7 +139,7 @@ class lrRecord
 		else
 			access = parent.access;
 		
-		if(binOp = isSgBinaryOp(n))
+		if((binOp = isSgBinaryOp(n)))
 		{			
 			// writeSubtree = readSubtree
 			if(isSgAssignOp(binOp))
@@ -186,7 +186,7 @@ class lrRecord
 			
 			//printf("SgBinaryNode 0x%x type %s access=%d: %s\n", binOp, typeStr, access, binOp->unparseToString().c_str());	
 		}
-		else if(unOp = isSgUnaryOp(n))
+		else if((unOp = isSgUnaryOp(n)))
 		{
 			// unary update operations have only one operand, which is read-write
 			// writeSubtree
@@ -215,7 +215,7 @@ class lrRecord
 			}
 			//printf("SgUnaryNode 0x%x %s access=%d: %s\n", unOp, typeStr, access, unOp->unparseToString().c_str());
 		}
-		else if(funcCall = isSgFunctionCallExp(n))
+		else if((funcCall = isSgFunctionCallExp(n)))
 		{
 			// all the references involved in a function call, whether they are used to compute the function pointer
 			// or used in the argument, are read-only

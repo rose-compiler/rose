@@ -1,7 +1,9 @@
 #!/usr/bin/perl
 my $desc = <<EOF;
 All source files should be mentioned in makefiles.  A source file that
-is not mentioned in a makefile is probably not used. These source files
+is not mentioned in a makefile is probably not used. As of 2010-10-18 
+there are 1480 violations; we will allow no more! Future work will 
+reduce this number to zero or something reasonable. These source files
 are not mentioned in any makefile:
 EOF
 

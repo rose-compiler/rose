@@ -416,33 +416,39 @@ public:
     template <size_t Len>
     VerifierValue<Len> readMemory(X86SegmentRegister segreg, VerifierValue<32> addrval, VerifierValue<1> cond) {
         assert(0==Len%8);
-        assert(cond.uv()!=0);
-        const size_t nbytes = Len/8;
-        (void)readSegreg(segreg); /*emits segreg value if there's a failure*/
-        uint64_t addr = addrval.uv();
-        unsigned char actual[nbytes];
-        size_t nread = debugger->memory(addr, nbytes, actual);
-        if (nread!=nbytes) {
-            char buf[256];
-            sprintf(buf, "unable to read memory at 0x%016"PRIx64, addr);
-            throw Exception(buf);
-        }
-
-        uint64_t val = 0;
-        for (uint64_t i=0; i<nbytes; i++) {
-            std::map<uint64_t, unsigned char>::iterator mi = memory.find(addr+i);
-            if (mi!=memory.end()) {
-                val |= mi->second << (8*i);
-            } else {
-                val |= actual[i] << (8*i);
+        if (cond.uv()) {
+            const size_t nbytes = Len/8;
+            (void)readSegreg(segreg); /*emits segreg value if there's a failure*/
+            uint64_t addr = addrval.uv();
+            unsigned char actual[nbytes];
+            size_t nread = debugger->memory(addr, nbytes, actual);
+            if (nread!=nbytes) {
+                char buf[256];
+                sprintf(buf, "unable to read memory at 0x%016"PRIx64, addr);
+                throw Exception(buf);
             }
-        }
 
-        VerifierValue<Len> retval(val);
-        if (trace_file)
-            (*trace_file) <<trace_prefix <<"mem[0x" <<std::hex <<std::setw(32/4) <<std::setfill('0') <<addr <<"]"
-                          <<" -> 0x" <<std::hex <<std::setw(Len/4) <<std::setfill('0') <<retval.uv() <<"\n";
-        return retval;
+            uint64_t val = 0;
+            for (uint64_t i=0; i<nbytes; i++) {
+                std::map<uint64_t, unsigned char>::iterator mi = memory.find(addr+i);
+                if (mi!=memory.end()) {
+                    val |= mi->second << (8*i);
+                } else {
+                    val |= actual[i] << (8*i);
+                }
+            }
+
+            VerifierValue<Len> retval(val);
+            if (trace_file)
+                (*trace_file) <<trace_prefix <<"mem[0x" <<std::hex <<std::setw(32/4) <<std::setfill('0') <<addr <<"]"
+                              <<" -> 0x" <<std::hex <<std::setw(Len/4) <<std::setfill('0') <<retval.uv() <<"\n";
+            return retval;
+        } else {
+            /* Semantics layer will ultimately discard this value, so it's arbitrary. However, the semantics layer might
+             * perform a few operations with it first, so we'll return a non-zero value in case one of those operations happens
+             * to be a divide. */
+            return VerifierValue<Len>(1);
+        }
     }
     
     /* Conditionally write a value to memory */

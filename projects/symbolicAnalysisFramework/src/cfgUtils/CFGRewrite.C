@@ -139,7 +139,7 @@ void replaceExpressionChecked(SgNode* parent, SgExpression* from, SgExpression* 
 	vector<SgNode*> children = parent->get_traversalSuccessorContainer();
 	bool foundFrom = false;
 	// verify that from is indeed one of parent's children
-	for (int i = 0; i < children.size(); ++i) {
+	for (size_t i = 0; i < children.size(); ++i) {
 		if (children[i] == from) {foundFrom = true; break;}
 	}
 	// if this is not the case, yell
@@ -164,7 +164,7 @@ void replaceExpressionChecked(SgNode* parent, SgExpression* from, SgExpression* 
 		to->set_parent(parent);
 		// verify that to is now a sub-expression of parent
 		vector<SgNode*> children = parent->get_traversalSuccessorContainer();
-		for (int i = 0; i < children.size(); ++i) {
+		for (size_t i = 0; i < children.size(); ++i) {
 			if (children[i] == to) return;
 		}
 		ROSE_ASSERT (!"replace_expression didn't work");
@@ -776,8 +776,8 @@ void cfgRWTransaction::do_insertBefore(DataflowNode n, SgExpression* newNode)
 void cfgRWTransaction::do_insertBefore(SgNode* n, SgExpression* newNode)
 {
 	ROSE_ASSERT(isSgExpression(n) || isSgInitializedName(n) || isSgStatement(n));
-	printf("cfgRWTransaction::do_insertBefore(0x%x, <%s | %s>)\n", n, n->unparseToString().c_str(), n->class_name().c_str());
-	printf("                                 (0x%x, <%s | %s>)\n", newNode, newNode->unparseToString().c_str(), newNode->class_name().c_str());
+	printf("cfgRWTransaction::do_insertBefore(%p, <%s | %s>)\n", n, n->unparseToString().c_str(), n->class_name().c_str());
+	printf("                                 (%p, <%s | %s>)\n", newNode, newNode->unparseToString().c_str(), newNode->class_name().c_str());
 
 	SgNode* parent = n->get_parent();
 	if(isSgExpression(n))
@@ -793,7 +793,7 @@ void cfgRWTransaction::do_insertBefore(SgNode* n, SgExpression* newNode)
 		}
 		else
 		{
-			SgStatement* parentStmt=getStatementOfExpression(n);
+			//SgStatement* parentStmt=getStatementOfExpression(n);
 			//printf("insertBefore Node: (default) <%s | %s>\n", n->unparseToString().c_str(), n->class_name().c_str());
 			
 			// insert the new SgNode immediately before this SgExpression
@@ -845,7 +845,7 @@ void cfgRWTransaction::do_insertBefore(SgNode* n, SgExpression* newNode)
 	{
 		// split out the target expression using the comma operator
 		SgVarRefExp* replacement;
-		SgAssignInitializer* init = splitExpression_GB(isSgReturnStmt(n)->get_expression(), replacement, "", getAccessType(n)!=readAccess);
+		//SgAssignInitializer* init = splitExpression_GB(isSgReturnStmt(n)->get_expression(), replacement, "", getAccessType(n)!=readAccess);
 		insertBeforeExpression(replacement, newNode);
 	}
 	else if(isSgStatement(n))
@@ -972,12 +972,12 @@ void cfgRWTransaction::do_insertAfter(SgNode* n, SgExpression* newNode)
 			}
 			else
 			{
-				SgStatement* parentStmt=getStatementOfExpression(n);
+				//SgStatement* parentStmt=getStatementOfExpression(n);
 				//printf("insertAfter Node: (other) <%s | %s>\n", n->unparseToString().c_str(), n->class_name().c_str());
 				
 				// split out the target expression using the comma operator
 				SgVarRefExp* replacement;
-				SgAssignInitializer* init = splitExpression_GB(isSgExpression(n), replacement, "", getAccessType(n)!=readAccess);
+				//SgAssignInitializer* init = splitExpression_GB(isSgExpression(n), replacement, "", getAccessType(n)!=readAccess);
 				insertBeforeExpression(replacement, newNode);
 			}
 		}
@@ -1078,6 +1078,7 @@ void replaceStatementByBlockAfter(SgStatement* stmt, SgStatement* newNode) {
 	}
 }*/
 
+#if 0 // Liao 10/28/2010, not used
 static void appendToBasicBlock(SgNode *target, SgNode *newNode, void* data)
 {
 	ROSE_ASSERT(target && newNode);
@@ -1086,7 +1087,7 @@ static void appendToBasicBlock(SgNode *target, SgNode *newNode, void* data)
 	
 	isSgBasicBlock(target)->append_statement(isSgStatement(newNode));
 }
-
+#endif 
 /*************************************************************
  *** CALL-BACK FUNCTIONS FOR cfgRWTransaction::transform() ***
  *************************************************************/

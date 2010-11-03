@@ -485,7 +485,7 @@ return (arraysLhs.size() + arraysRhs.size() > 0);*/
       // side of this assignment and NULL otherwise
       SgNode* getAssignmentLHS(SgNode* n)
       {
-      SgExpression* asgn;
+      //SgExpression* asgn;
 
       if(isAssignment(n))
       {
@@ -510,7 +510,7 @@ return (arraysLhs.size() + arraysRhs.size() > 0);*/
         else
           return NULL;
       }
-      printf("getAssignmentLHS: asgn=<%s | %s>\n", asgn->class_name().c_str(), asgn->unparseToString().c_str());
+      printf("getAssignmentLHS: asgn=<%s | %s>\n", n->class_name().c_str(), n->unparseToString().c_str());
       ROSE_ASSERT(0);
       }
       else
@@ -521,7 +521,7 @@ return (arraysLhs.size() + arraysRhs.size() > 0);*/
 // side of this assignment
 void getAssignmentRHS(SgNode* n, set<SgNode*>& rhs)
 {
-  SgExpression* asgn;
+  //SgExpression* asgn;
 
   if(isAssignment(n))
   {
@@ -574,7 +574,7 @@ bool parseAssignment(/*SgExpression*/SgNode* expr, short& op, varID &i, varID &j
 
   //printf("parseAssignment(<%s | %s>)\n", expr->class_name().c_str(), expr->unparseToString().c_str());
 
-  if(binOp = isSgBinaryOp(expr))
+  if((binOp = isSgBinaryOp(expr)))
   {
     //printf("parseAssignment binOp\n");
     SgExpression* lhs = binOp->get_lhs_operand();
@@ -696,7 +696,7 @@ bool parseAssignment(/*SgExpression*/SgNode* expr, short& op, varID &i, varID &j
     }
     else return false;
   }
-  else if (upOp = isSgUnaryOp(expr))
+  else if ((upOp = isSgUnaryOp(expr)))
   {
     SgExpression* lhs = upOp->get_operand();
 
@@ -735,7 +735,7 @@ bool parseAssignment(/*SgExpression*/SgNode* expr, short& op, varID &i, varID &j
   else if(isSgVariableDeclaration(expr))
   {
     SgAssignInitializer* asgnInit;
-    if(asgnInit = isSgAssignInitializer(isSgVariableDeclaration(expr)->get_definition()->get_vardefn()->get_initializer()))
+    if((asgnInit = isSgAssignInitializer(isSgVariableDeclaration(expr)->get_definition()->get_vardefn()->get_initializer())))
     {
       if(IsConstInt(asgnInit->get_operand(), c))
       {
@@ -1058,11 +1058,11 @@ bool parseDivision(SgExpression* expr, varID &j, varID& k, long &c)
   {
   switch(exp->variantT)
   {
-  case V_SgBoolVal: case V_SgCharVal: case V_SgDoubleVal: /*case V_SgEnumVal: * /
+  case V_SgBoolVal: case V_SgCharVal: case V_SgDoubleVal: case V_SgEnumVal:
   case V_SgFloatVal: case V_SgIntVal: case V_SgLogDoubleVal: case V_SgLongIntVal: 
-  case V_SgLongLongIntVal: case V_SgShortVal: /*case V_SgStringVal: * /case V_SgUnsignedCharVal: 
+  case V_SgLongLongIntVal: case V_SgShortVal: case V_SgStringVal: case V_SgUnsignedCharVal: 
   case V_SgUnsignedIntVal: case V_SgUnsignedLongLongVal: case V_SgUnsignedLongVal: case V_SgUnsignedShortVal: 
-/*case V_SgWcharVal:* /
+  case V_SgWcharVal:
 return true;
 
 default:
@@ -1076,11 +1076,11 @@ int getIntegralVal(SgValueExp* exp)
 {
 switch(exp->variantT)
 {
-case V_SgBoolVal: case V_SgCharVal: case V_SgDoubleVal: /*case V_SgEnumVal: * /
+case V_SgBoolVal: case V_SgCharVal: case V_SgDoubleVal: case V_SgEnumVal: 
 case V_SgFloatVal: case V_SgIntVal: case V_SgLogDoubleVal: case V_SgLongIntVal: 
-case V_SgLongLongIntVal: case V_SgShortVal: /*case V_SgStringVal: * /case V_SgUnsignedCharVal: 
+case V_SgLongLongIntVal: case V_SgShortVal: case V_SgStringVal: case V_SgUnsignedCharVal: 
 case V_SgUnsignedIntVal: case V_SgUnsignedLongLongVal: case V_SgUnsignedLongVal: case V_SgUnsignedShortVal: 
-/*case V_SgWcharVal:* /
+case V_SgWcharVal:
 return (int)exp->get_value();
 
 default:
@@ -1225,7 +1225,7 @@ string cfgUtils::genUniqueName()
     while(name == curDecl->get_name().getString())
     {
       char num[2];
-      snprintf(num, 2, "%s", rand()%10);
+      snprintf(num, 2, "%s", (char*)(rand()%10));
       name = name + num;
     }
   }
