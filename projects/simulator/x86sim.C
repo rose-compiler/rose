@@ -3905,7 +3905,9 @@ main(int argc, char *argv[])
                 } else if (word=="progress") {
                     policy.trace_progress = true;
                 } else {
-                    fprintf(stderr, "%s: debug words must be from the set: insn, state, mem, mmap, syscall\n", argv[0]);
+                    fprintf(stderr, "%s: debug words must be from the set: "
+                            "all, insn, state, mem, mmap, syscall, loader, progress\n",
+                            argv[0]);
                     exit(1);
                 }
             }
