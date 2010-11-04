@@ -549,8 +549,8 @@ struct SimLoader: public BinaryLoaderElf {
 public:
     SgAsmGenericHeader *interpreter;                    /* header linked into AST for .interp section */
 
-    SimLoader(SgAsmInterpretation *interp, bool trace): interpreter(NULL) {
-        if (trace) set_debug(stderr);
+    SimLoader(SgAsmInterpretation *interp, FILE *debug): interpreter(NULL) {
+        set_debug(debug);
         set_perform_dynamic_linking(false);             /* we explicitly link in the interpreter and nothing else */
         set_perform_remap(true);                        /* map interpreter and main binary into specimen memory */
         set_perform_relocations(false);                 /* allow simulated interpreter to perform relocation fixups */
@@ -659,7 +659,7 @@ EmulationPolicy::load(const char *name)
     }
        
     /* Link the main binary into the AST without further linking, mapping, or relocating. */
-    if (debug)
+    if (debug && trace_loader)
         fprintf(debug, "loading %s...\n", exeargs[0].c_str());
     char *frontend_args[4];
     frontend_args[0] = strdup("-");
@@ -675,7 +675,7 @@ EmulationPolicy::load(const char *name)
     writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
 
     /* Link the interpreter into the AST */
-    SimLoader *loader = new SimLoader(interp, trace_loader);
+    SimLoader *loader = new SimLoader(interp, trace_loader ? debug : NULL);
 
     /* If we found an interpreter then use its entry address as the start of simulation.  When running the specimen directly
      * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 even though the libs preferred
@@ -770,8 +770,8 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         sp -= len;
         map->write(arg.c_str(), sp, len);
         pointers.push_back(sp);
-        if (trace_loader)
-            fprintf(stderr, "argv[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, arg.c_str());
+        if (debug && trace_loader)
+            fprintf(debug, "argv[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, arg.c_str());
     }
     pointers.push_back(0); /*the argv NULL terminator*/
 
@@ -828,14 +828,14 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
             /* AT_SYSINFO_ENTRY */
             auxv.push_back(0x20);
             auxv.push_back(vdso_entry);
-            if (trace_loader)
-                fprintf(stderr, "AT_SYSINFO_ENTRY: 0x%08"PRIx32"\n", auxv.back());
+            if (debug && trace_loader)
+                fprintf(debug, "AT_SYSINFO_ENTRY: 0x%08"PRIx32"\n", auxv.back());
 
             /* AT_SYSINFO */
             auxv.push_back(0x21);
             auxv.push_back(vdso_va);
-            if (trace_loader)
-                fprintf(stderr, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
+            if (debug && trace_loader)
+                fprintf(debug, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
         }
 
 #if 0 /*Disabled because it causes ld.so to execute MXX instructions [RPM 2010-09-21]*/
@@ -861,87 +861,87 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
                        //(1u<<29) |       /*acc           "tm" automatic clock control*/
                        //(1u<<31) |       /*pbe           pending break enable*/
                        0);
-        if (trace_loader)
-            fprintf(stderr, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
 #endif
 
         /* AT_PAGESZ */
         auxv.push_back(6);
         auxv.push_back(PAGE_SIZE);
-        if (trace_loader)
-            fprintf(stderr, "AT_PAGESZ:        %"PRId32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_PAGESZ:        %"PRId32"\n", auxv.back());
 
         /* AT_CLKTCK */
         auxv.push_back(17);
         auxv.push_back(100);
-        if (trace_loader)
-            fprintf(stderr, "AT_CLKTCK:        %"PRId32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_CLKTCK:        %"PRId32"\n", auxv.back());
 
         /* AT_PHDR */
         auxv.push_back(3); /*AT_PHDR*/
         auxv.push_back(t1.phdr_rva + fhdr->get_base_va());
-        if (trace_loader)
-            fprintf(stderr, "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
 
         /*AT_PHENT*/
         auxv.push_back(4);
         auxv.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
-        if (trace_loader)
-            fprintf(stderr, "AT_PHENT:         %"PRId32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_PHENT:         %"PRId32"\n", auxv.back());
 
         /* AT_PHNUM */
         auxv.push_back(5);
         auxv.push_back(fhdr->get_e_phnum());
-        if (trace_loader)
-            fprintf(stderr, "AT_PHNUM:         %"PRId32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_PHNUM:         %"PRId32"\n", auxv.back());
 
         /* AT_BASE */
         auxv.push_back(7);
         auxv.push_back(ld_linux_base_va);
-        if (trace_loader)
-            fprintf(stderr, "AT_BASE:          0x%08"PRIx32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_BASE:          0x%08"PRIx32"\n", auxv.back());
 
         /* AT_FLAGS */
         auxv.push_back(8);
         auxv.push_back(0);
-        if (trace_loader)
-            fprintf(stderr, "AT_FLAGS:         0x%08"PRIx32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_FLAGS:         0x%08"PRIx32"\n", auxv.back());
 
         /* AT_ENTRY */
         auxv.push_back(9);
         auxv.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
-        if (trace_loader)
-            fprintf(stderr, "AT_ENTRY:         0x%08"PRIx32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_ENTRY:         0x%08"PRIx32"\n", auxv.back());
 
         /* AT_UID */
         auxv.push_back(11);
         auxv.push_back(getuid());
-        if (trace_loader)
-            fprintf(stderr, "AT_UID:           %"PRId32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_UID:           %"PRId32"\n", auxv.back());
 
         /* AT_EUID */
         auxv.push_back(12);
         auxv.push_back(geteuid());
-        if (trace_loader)
-            fprintf(stderr, "AT_EUID:          %"PRId32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_EUID:          %"PRId32"\n", auxv.back());
 
         /* AT_GID */
         auxv.push_back(13);
         auxv.push_back(getgid());
-        if (trace_loader)
-            fprintf(stderr, "AT_GID:           %"PRId32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_GID:           %"PRId32"\n", auxv.back());
 
         /* AT_EGID */
         auxv.push_back(14);
         auxv.push_back(getegid());
-        if (trace_loader)
-            fprintf(stderr, "AT_EGID:          %"PRId32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_EGID:          %"PRId32"\n", auxv.back());
 
         /* AT_SECURE */
         auxv.push_back(23);
         auxv.push_back(false);
-        if (trace_loader)
-            fprintf(stderr, "AT_SECURE:        %"PRId32"\n", auxv.back());
+        if (debug && trace_loader)
+            fprintf(debug, "AT_SECURE:        %"PRId32"\n", auxv.back());
 
 #if 0 /*Disabled because it causes ld.so to execute MXX instructions [RPM 2010-09-21]*/
         /* AT_PLATFORM */
@@ -952,8 +952,8 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
             map->write(platform, sp, len);
             auxv.push_back(16);
             auxv.push_back(sp);
-            if (trace_loader)
-                fprintf(stderr, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
+            if (debug && trace_loader)
+                fprintf(debug, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
         }
 #endif
     }
@@ -3800,10 +3800,10 @@ main(int argc, char *argv[])
         }
     }
     ROSE_ASSERT(argc-argno>=1); /* usage: executable name followed by executable's arguments */
-    SgAsmGenericHeader *fhdr = policy.load(argv[argno]); /*header for main executable, not libraries*/
-    policy.initialize_stack(fhdr, argc-argno, argv+argno);
     if (policy.debug && log_file)
         policy.debug = log_file;
+    SgAsmGenericHeader *fhdr = policy.load(argv[argno]); /*header for main executable, not libraries*/
+    policy.initialize_stack(fhdr, argc-argno, argv+argno);
 
     /* Debugging */
     if (policy.debug && policy.trace_mmap) {
