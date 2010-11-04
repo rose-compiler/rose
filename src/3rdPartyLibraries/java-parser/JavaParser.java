@@ -130,10 +130,10 @@ class JavaParser  implements Callable<Boolean>
         } // end call()
 
   // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
-     public static boolean getError()
+  /*  public static boolean getError()
         {
           return JavaTraversal.hasErrorOccurred;
         }
-
+  */
   // End of JavaParser class
    }
