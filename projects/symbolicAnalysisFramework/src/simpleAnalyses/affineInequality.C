@@ -180,7 +180,7 @@ static void annotateSubTreeIneq(SgNode* tree, affineInequalityAttr* ineqAttr)
 			affineInequalityAttr* curIneqAttr = (affineInequalityAttr*)curAttr;
 			set<varAffineInequality> newIneqs;
 			
-/*cout << "Merging at node <"<<n->class_name()<<" | "<<n->unparseToString()<<">\n";
+cout << "Merging at node <"<<n->class_name()<<" | "<<n->unparseToString()<<">\n";
 cout << "    Current inequalities:\n";
 for(set<varAffineInequality>::iterator it = curIneqAttr->ineqs.begin(); it!=curIneqAttr->ineqs.end(); it++)
 {
@@ -192,7 +192,7 @@ for(set<varAffineInequality>::iterator it = ineqAttr->ineqs.begin(); it!=ineqAtt
 {
 	varAffineInequality varIneq = *it;
 	cout << varIneq.getIneq().str(varIneq.getX(), varIneq.getY(), "        ") << "\n";
-}* /
+}
 			
 			// initialize newIneqs with all the inequalities in curIneqAttr
 			
@@ -227,8 +227,8 @@ for(set<varAffineInequality>::iterator it = ineqAttr->ineqs.begin(); it!=ineqAtt
 				if(itNew == ineqAttr->ineqs.end())
 					// add curIneq with no modifications to newIneqs
 					newIneqs.insert(curIneq);
-				/*cout << "    current inequality "<<curIneq.str("")<<", found match in new="<<(itNew == ineqAttr->ineqs.end())<<"\n";
-				cout << "    newIneqs.size()="<<newIneqs.size()<<"\n";* /
+				cout << "    current inequality "<<curIneq.str("")<<", found match in new="<<(itNew == ineqAttr->ineqs.end())<<"\n";
+				cout << "    newIneqs.size()="<<newIneqs.size()<<"\n";
 			}
 			
 			// now add to newIneqs any varAffineInequalities in ineqAttr for variable pairs that do not 
@@ -259,12 +259,12 @@ for(set<varAffineInequality>::iterator it = ineqAttr->ineqs.begin(); it!=ineqAtt
 			// replace this attribute's current inequalities with the new set
 			curIneqAttr->ineqs = newIneqs;
 			
-/*cout << "    Merged inequalities:\n";
+cout << "    Merged inequalities:\n";
 for(set<varAffineInequality>::iterator it = curIneqAttr->ineqs.begin(); it!=curIneqAttr->ineqs.end(); it++)
 {
 	varAffineInequality varIneq = *it;
 	cout << varIneq.getIneq().str(varIneq.getX(), varIneq.getY(), "        ") << "\n";
-}* /
+}
 		}
 		else
 		{
@@ -678,7 +678,7 @@ string varAffineInequality::str(string indent) const
 	//ineq.notUpd();
 	// The negation of [x*a <= y*b + c] is [x*a > y*b + c] == [y*b + c < x*a] == [y*b <= x*a - c - 1]
 
-/*	// x<=y-infinity => x>y-infinity == y<=x+infinity
+	// x<=y-infinity => x>y-infinity == y<=x+infinity
 	if(level == falseConstr)
 		setToTop();
 	else * /if(ineq.level == affineInequality::constrKnown)
@@ -812,7 +812,7 @@ affineInequality::affineInequality(int a, int b, int c, bool xZero, bool yZero, 
 
 // given a constraint on x, z and a constraint on z, y, infers the corresponding constraint on x, y 
 // and sets this constraint to it
-affineInequality::affineInequality(const affineInequality& xz, const affineInequality& zy/*, bool xZero, bool yZero/*, DivLattice* divX, DivLattice* divY, varID z*/)
+affineInequality::affineInequality(const affineInequality& xz, const affineInequality& zy/*, bool xZero, bool yZero, DivLattice* divX, DivLattice* divY, varID z*/)
 {
 	this->xZero = xz.xZero;
 	this->yZero = zy.yZero;
@@ -923,11 +923,11 @@ bool affineInequality::semLessThan(const affineInequality& that, bool xEqZero, b
 		// The constraint that has multiplier information is considered to be tighter.
 		// Technically, either constraint is equivalent, since 0*a=0*b=0. However, it is
 		// important to explicitly maintain a and b for the future
-		/*if(a==1 && b==1) return false;
+		if(a==1 && b==1) return false;
 		if(that.a==1 && that.b==1) return true;
 		
 		// if both constraints have multiplier information pick the current constraint as the more informative one
-		return true;* /
+		return true;
 		
 		if(a==1 && b==1) return true;
 		if(that.a==1 && that.b==1) return false;

@@ -117,7 +117,7 @@ SgAsmGenericSection::get_size() const
 /** Adjust the current size of a section. This is virtual because some sections may need to do something special. This function
  * should not adjust the size of other sections, or the mapping of any section (see SgAsmGenericFile::resize() for that). */
 void
-SgAsmGenericSection::set_size(addr_t size)
+SgAsmGenericSection::set_size(rose_addr_t size)
 {
     if (p_size!=size)
         set_isModified(true);
@@ -134,7 +134,7 @@ SgAsmGenericSection::get_offset() const
 /** Adjust the current offset of a section. This is virtual because some sections may need to do something special. This
  * function should not adjust the offset of other sections, or the mapping of any section. */
 void
-SgAsmGenericSection::set_offset(addr_t offset)
+SgAsmGenericSection::set_offset(rose_addr_t offset)
 {
     if (p_offset!=offset)
         set_isModified(true);
@@ -186,7 +186,7 @@ SgAsmGenericSection::get_mapped_size() const
 /** Resizes a mapped section without consideration of other sections that might be mapped. See also
  *  SgAsmGenericFile::mapped_resize(). */
 void
-SgAsmGenericSection::set_mapped_size(addr_t size)
+SgAsmGenericSection::set_mapped_size(rose_addr_t size)
 {
     ROSE_ASSERT(this != NULL);
     if (p_mapped_size!=size)
@@ -204,7 +204,7 @@ SgAsmGenericSection::get_mapped_preferred_rva() const
 
 /** Moves a mapped section without consideration of other sections that might be mapped. */
 void
-SgAsmGenericSection::set_mapped_preferred_rva(addr_t a)
+SgAsmGenericSection::set_mapped_preferred_rva(rose_addr_t a)
 {
     ROSE_ASSERT(this != NULL);
     if (p_mapped_preferred_rva!=a)
@@ -245,7 +245,7 @@ SgAsmGenericSection::get_mapped_preferred_extent() const
  *  set (the default) then an SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the @p dst_buf will be
  *  padded with zero bytes so that exactly @p size bytes of @p dst_buf are always initialized. */
 size_t
-SgAsmGenericSection::read_content(addr_t start_offset, void *dst_buf, addr_t size, bool strict)
+SgAsmGenericSection::read_content(rose_addr_t start_offset, void *dst_buf, rose_addr_t size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
@@ -260,13 +260,13 @@ SgAsmGenericSection::read_content(addr_t start_offset, void *dst_buf, addr_t siz
  *  size bytes are initialized. The @p map is used to map virtual addresses to file offsets; if @p map is NULL then the map
  *  defined in the underlying file is used. */
 size_t
-SgAsmGenericSection::read_content(const MemoryMap *map, addr_t start_rva, void *dst_buf, addr_t size, bool strict)
+SgAsmGenericSection::read_content(const MemoryMap *map, rose_addr_t start_rva, void *dst_buf, rose_addr_t size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
     SgAsmGenericHeader *hdr = get_header();
     ROSE_ASSERT(hdr!=NULL);
-    addr_t va = hdr->get_base_va() + start_rva;
+    rose_addr_t va = hdr->get_base_va() + start_rva;
     return file->read_content(map, va, dst_buf, size, strict);
 }
 
@@ -275,7 +275,7 @@ SgAsmGenericSection::read_content(const MemoryMap *map, addr_t start_rva, void *
  *  happen: if @p strict is set (the default) then an SgAsmExecutableFileFormat::ShortRead exception is thrown, otherwise the
  *  result is zero padded so as to contain exactly @p size bytes. */
 size_t
-SgAsmGenericSection::read_content_local(addr_t start_offset, void *dst_buf, addr_t size, bool strict)
+SgAsmGenericSection::read_content_local(rose_addr_t start_offset, void *dst_buf, rose_addr_t size, bool strict)
 {
     size_t retval;
     SgAsmGenericFile *file = get_file();
@@ -300,7 +300,7 @@ SgAsmGenericSection::read_content_local(addr_t start_offset, void *dst_buf, addr
 /** Reads content of a section and returns it as a container.  The returned container will always have exactly @p size byte.
  *  If @p size bytes are not available in this section at the specified offset then the container will be zero padded. */
 SgUnsignedCharList
-SgAsmGenericSection::read_content_local_ucl(addr_t rel_offset, addr_t size)
+SgAsmGenericSection::read_content_local_ucl(rose_addr_t rel_offset, rose_addr_t size)
 {
     SgUnsignedCharList retval;
     unsigned char *buf = new unsigned char[size];
@@ -316,13 +316,13 @@ SgAsmGenericSection::read_content_local_ucl(addr_t rel_offset, addr_t size)
  *  then an MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to file offsets;
  *  if @p map is NULL then the map defined in the underlying file is used. */
 std::string
-SgAsmGenericSection::read_content_str(const MemoryMap *map, addr_t start_rva, bool strict)
+SgAsmGenericSection::read_content_str(const MemoryMap *map, rose_addr_t start_rva, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
     SgAsmGenericHeader *hdr = get_header();
     ROSE_ASSERT(hdr!=NULL);
-    addr_t va = hdr->get_base_va() + start_rva;
+    rose_addr_t va = hdr->get_base_va() + start_rva;
     return file->read_content_str(map, va, strict);
 }
 
@@ -330,7 +330,7 @@ SgAsmGenericSection::read_content_str(const MemoryMap *map, addr_t start_rva, bo
  *  byte or end of file is reached. However, if @p strict is set (the default) and we reach the end-of-file then an
  *  SgAsmExecutableFileFormat::ShortRead exception is thrown. */
 std::string
-SgAsmGenericSection::read_content_str(addr_t abs_offset, bool strict)
+SgAsmGenericSection::read_content_str(rose_addr_t abs_offset, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
@@ -341,7 +341,7 @@ SgAsmGenericSection::read_content_str(addr_t abs_offset, bool strict)
  *  continues until the first NUL byte or the end of section is reached. However, if @p strict is set (the default) and we
  *  reach the end-of-section then an SgAsmExecutableFileFormat::ShortRead exception is thrown. */
 std::string
-SgAsmGenericSection::read_content_local_str(addr_t rel_offset, bool strict)
+SgAsmGenericSection::read_content_local_str(rose_addr_t rel_offset, bool strict)
 {
     static char *buf=NULL;
     static size_t nalloc=0;
@@ -366,7 +366,7 @@ SgAsmGenericSection::read_content_local_str(addr_t rel_offset, bool strict)
  *  (the default) and the end of the section is reached then throw an SgAsmExecutableFileFormat::ShortRead exception. Upon
  *  return, the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
 uint64_t
-SgAsmGenericSection::read_content_local_uleb128(addr_t *rel_offset, bool strict)
+SgAsmGenericSection::read_content_local_uleb128(rose_addr_t *rel_offset, bool strict)
 {
     int shift=0;
     uint64_t retval=0;
@@ -387,7 +387,7 @@ SgAsmGenericSection::read_content_local_uleb128(addr_t *rel_offset, bool strict)
  *  default) and the end of the section is reached then throw an SgAsmExecutableFileFormat::ShortRead exception. Upon return,
  *  the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
 int64_t
-SgAsmGenericSection::read_content_local_sleb128(addr_t *rel_offset, bool strict)
+SgAsmGenericSection::read_content_local_sleb128(rose_addr_t *rel_offset, bool strict)
 {
     int shift=0;
     int64_t retval=0;
@@ -419,7 +419,7 @@ SgAsmGenericSection::read_content_local_sleb128(addr_t *rel_offset, bool strict)
  *  zeros will not be written to the output file.  Furthermore, any trailing zeros that extend beyond the end of the file will
  *  not be written (end-of-file is determined by SgAsmGenericFile::get_orig_size()) */
 rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const void *buf) const
+SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, const void *buf) const
 {
     size_t nwrite, nzero;
 
@@ -439,7 +439,7 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const
 
     /* Don't write past end of current EOF if we can help it. */
     f.seekp(0, std::ios::end);
-    addr_t filesize = f.tellp();
+    rose_addr_t filesize = f.tellp();
 
 #if 0
  // DQ (2/3/2009): Added to help debug problem that I was unable to figure out (handling *.o files).
@@ -486,7 +486,7 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const
 
 /* See related method above */
 rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgFileContentList &buf) const
+SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, const SgFileContentList &buf) const
 {
     if (0==buf.size())
         return 0;
@@ -495,7 +495,7 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgFileContentLi
 
 /* See related method above */
 rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgUnsignedCharList &buf) const
+SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, const SgUnsignedCharList &buf) const
 {
     if (0==buf.size())
         return 0;
@@ -504,21 +504,21 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgUnsignedCharL
 
 /* See related method above. */
 rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, addr_t offset, const std::string &str) const
+SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, const std::string &str) const
 {
     return write(f, offset, str.size(), &(str[0]));
 }
 
 /* See related method above. */
 rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, addr_t offset, char c) const
+SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, char c) const
 {
     return write(f, offset, 1, &c);
 }
 
 /** Encode an unsigned value as LEB128 and return the next offset. */
 rose_addr_t
-SgAsmGenericSection::write_uleb128(unsigned char *buf, addr_t offset, uint64_t val) const
+SgAsmGenericSection::write_uleb128(unsigned char *buf, rose_addr_t offset, uint64_t val) const
 {
     if (val==0) {
         buf[offset++] = 0;
@@ -536,7 +536,7 @@ SgAsmGenericSection::write_uleb128(unsigned char *buf, addr_t offset, uint64_t v
 
 /** Encode a signed value as LEB128 and return the next offset. */
 rose_addr_t
-SgAsmGenericSection::write_sleb128(unsigned char *buf, addr_t offset, int64_t val) const
+SgAsmGenericSection::write_sleb128(unsigned char *buf, rose_addr_t offset, int64_t val) const
 {
     if (val==0) {
         buf[offset++] = 0;
@@ -599,14 +599,14 @@ SgAsmGenericSection::get_unreferenced_extents() const
  *  Sections are allowed to extend beyond the end of the file and the original data (p_data) is extended only up to the end
  *  of the file. */
 void
-SgAsmGenericSection::extend(addr_t size)
+SgAsmGenericSection::extend(rose_addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
     ROSE_ASSERT(get_file()->get_tracking_references()); /*can only be called during the parsing phase*/
-    addr_t new_size = get_size() + size;
+    rose_addr_t new_size = get_size() + size;
 
     /* Ending file address for section using new size, limited by total file size */
-    addr_t new_end = std::min(get_file()->get_orig_size(), get_offset()+new_size);
+    rose_addr_t new_end = std::min(get_file()->get_orig_size(), get_offset()+new_size);
     if (get_offset()<=new_end) {
         p_data.resize(new_end-get_offset());
     } else {
@@ -683,7 +683,7 @@ SgAsmGenericSection::unparse_holes(std::ostream &f) const
  *
  *  NOTE: The MemoryMap class is a better interface to this same information. [RPM 2009-09-09] */
 rose_addr_t
-SgAsmGenericSection::get_rva_offset(addr_t rva) const
+SgAsmGenericSection::get_rva_offset(rose_addr_t rva) const
 {
     return get_va_offset(rva + get_base_va());
 }
@@ -692,11 +692,11 @@ SgAsmGenericSection::get_rva_offset(addr_t rva) const
  *
  *  NOTE: The MemoryMap class is a better interface to this same information. [RPM 2009-09-09] */
 rose_addr_t
-SgAsmGenericSection::get_va_offset(addr_t va) const
+SgAsmGenericSection::get_va_offset(rose_addr_t va) const
 {
     ROSE_ASSERT(is_mapped());
     ROSE_ASSERT(va >= get_base_va());
-    addr_t rva = va - get_base_va();
+    rose_addr_t rva = va - get_base_va();
     ROSE_ASSERT(rva >= get_mapped_preferred_rva());
     return get_offset() + (rva - get_mapped_preferred_rva());
 }
@@ -709,7 +709,7 @@ SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix
     for (size_t i=0; i<slist.size(); i++) {
         SgAsmGenericSection *s = slist[i];
         if (s->is_mapped() && rva>=s->get_mapped_preferred_rva() && rva<s->get_mapped_preferred_rva()+s->get_mapped_size()) {
-            addr_t offset = rva - s->get_mapped_preferred_rva();
+            rose_addr_t offset = rva - s->get_mapped_preferred_rva();
             fprintf(f, "%-*s   is 0x%08"PRIx64" (%"PRIu64") bytes into section [%d] \"%s\"\n",
                     DUMP_FIELD_WIDTH, prefix.c_str(), offset, offset, s->get_id(), s->get_name()->c_str());
         }

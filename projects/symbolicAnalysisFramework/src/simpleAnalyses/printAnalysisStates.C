@@ -13,7 +13,7 @@ void printAnalysisStates::visit(const Function& func, const DataflowNode& n, Nod
 {
 	printf("%sfunction %s() node=<%s | %s | %d> state=%p\n", indent.c_str(), func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str(), n.getIndex(), &state);
 	const vector<Lattice*>& masterLatBel = state.getLatticeBelow(creator);
-	printf("    creator=%p, state=%p, masterLatBel.size()=%d\n", creator, &state, masterLatBel.size());
+	printf("    creator=%p, state=%p, masterLatBel.size()=%lu\n", creator, &state, (unsigned long)(masterLatBel.size()));
 	for(vector<int>::iterator it = factNames.begin(); it!=factNames.end(); it++)
 	{
 		NodeFact* fact = state.getFact(creator, *it);
@@ -31,5 +31,5 @@ void printAnalysisStates::visit(const Function& func, const DataflowNode& n, Nod
 		else
 			printf("%s    lattice%d = None\n", indent.c_str(), *it);
 	}
-	printf("    creator=%p, masterLatBel.size()=%d\n", creator, masterLatBel.size());
+	printf("    creator=%p, masterLatBel.size()=%lu\n", creator, (unsigned long)(masterLatBel.size()));
 }

@@ -59,7 +59,7 @@ sub debug {
 sub make_lexer {
   my($source_file) = @_;
   open SOURCE, "<", $source_file or die "$source_file: $!\n";
-  my $s = join "", <SOURCE>;
+  my $s = join "", map {tr/\r//;$_} <SOURCE>; # Standardize line termination
   my $linenum = 1;
   my @cpp = (1); # stack of CPP directives; 1=>source code included; 0=>source code excluded; undef=>unknown
   close SOURCE;
@@ -200,6 +200,7 @@ sub parse_namespace {
 sub parse_class {
   my($lexer) = @_;
   my($token) = &$lexer();
+  $token = &$lexer() if $token eq "ROSE_DLL_API"; # e.g., "class ROSE_DLL_API SgAsmElfRelocEntry : public ..."
   if ($token eq '{') {
     push @name_stack, undef;
   } elsif ($token =~ /^[a-z_A-Z]\w*$/) {
@@ -260,9 +261,10 @@ sub parse_enum {
       if (exists $enum{$enum_name}{$member_value}) {
 	&$lexer("warning", "enum member \"$member_name\" duplicates \"".
 		$enum{$enum_name}{$member_value} . "\" and will be ignored for stringification");
+      } else {
+	$enum{$enum_name}{$member_value} = $member_name;
+	$forward{$member_name} = $member_value;
       }
-      $enum{$enum_name}{$member_value} = $member_name;
-      $forward{$member_name} = $member_value;
     }
     last if $token eq '}';
     &$lexer("expected ',' but got '$token'") unless $token eq ',';
@@ -351,7 +353,11 @@ print OUTPUT <<"EOF"
     }
     if (retval.empty()) {
         char buf[@{[length($name)+64]}];
+#ifndef _MSC_VER
         int nprint = snprintf(buf, sizeof buf, \"(${name})\%d\", n);
+#else
+        int nprint = 0; assert(0);
+#endif
         assert(nprint < (int)sizeof buf);
         retval = buf;
     } else {

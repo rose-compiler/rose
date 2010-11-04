@@ -80,7 +80,9 @@ public:
   friend class DefBlocksIterator;
 
   // Changes here must be also reflected in CFG.C:edgeTypeToString.
-  enum EdgeType { TRUE_EDGE = 0, FALLTHROUGH_EDGE, FALSE_EDGE,
+  enum EdgeType 
+  { 
+		  TRUE_EDGE = 0, FALLTHROUGH_EDGE, FALSE_EDGE,
 		  BACK_EDGE, MULTIWAY_EDGE, BREAK_EDGE,
 		  CONTINUE_EDGE, RETURN_EDGE };
 

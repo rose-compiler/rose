@@ -5317,7 +5317,7 @@ SOURCE_DESIGNATED_INITIALIZER_END
 
 SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION_START
 void
-SgUpcLocalsizeof::post_construction_initialization()
+SgUpcLocalsizeofExpression::post_construction_initialization()
    {
    }
 
@@ -5334,7 +5334,7 @@ SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION_END
 
 SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION_START
 void
-SgUpcBlocksizeof::post_construction_initialization()
+SgUpcBlocksizeofExpression::post_construction_initialization()
    {
    }
 
@@ -5350,7 +5350,7 @@ SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION_END
 
 SOURCE_UPC_ELEM_SIZEOF_EXPRESSION_START
 void
-SgUpcElemsizeof::post_construction_initialization()
+SgUpcElemsizeofExpression::post_construction_initialization()
    {
    }
 

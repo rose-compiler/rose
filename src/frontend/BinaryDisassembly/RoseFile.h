@@ -29,31 +29,11 @@ class RoseFile : public RoseBin_abstract {
 
  public:
 
-  RoseFile(std::string file) {
-    //RoseBin_support::setDebugMode(true);    
-        RoseBin_support::setDebugMode(false);    
-        RoseBin_support::setDataBaseSupport(true);    
-    idaDB = new RoseBin_FILE(file);
-    //unparser = new RoseBin_unparse();
-    //RoseBin_support::setUnparseVisitor(unparser->getVisitor());
-    //globalNode = 0;
-    //    functionNames.clear();
-    //num_inst=0;
-    //num_func=0;
-    //RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::none;
-  }
+// DQ (10/20/2010): Moved to source file to support compilation of language only mode which excludes binary analysis support.
+   RoseFile(std::string file);
   
-  ~RoseFile() {
-    delete idaDB;
-    //delete unparser;
-
-    idaDB = NULL;
-    //unparser = NULL;
-
-    //if (globalNode)
-    //  delete globalNode;
-  }
-
+// DQ (10/20/2010): Moved to source file to support compilation of language only mode which excludes binary analysis support.
+  ~RoseFile();
 
   // allow filtering of functions
   void setFunctionFilter(std::list<std::string> functionName);

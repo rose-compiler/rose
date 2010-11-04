@@ -14,7 +14,8 @@
 class MemoryMap {
 public:
     /** Mapping permissions. */
-    enum Protection {
+    enum Protection 
+	{
         MM_PROT_READ    = 0x1,          /**< Pages can be read. */
         MM_PROT_WRITE   = 0x2,          /**< Pages can be written. */
         MM_PROT_EXEC    = 0x4,          /**< Pages can be executed. */
@@ -118,9 +119,12 @@ public:
             mapperms = new_perms;
         }
 
+        // DQ (10/21/2010): Moved to source file.  In general we want function definitions to be in source files to avoid excessive compile times.
         /** Returns the buffer to which the offset applies.  Invoking this method on an anonymouse map element will cause
          *  memory to be allocated if it hasen't been already (unless allocate_anonymous is false). */
-        void *get_base(bool allocate_anonymous=true) const {
+        void *get_base(bool allocate_anonymous=true) const;
+#if 0
+        void * MemoryMap::MapElement::get_base(bool allocate_anonymous=true) const {
             if (anonymous) {
                 if (NULL==anonymous->base) {
                     ROSE_ASSERT(NULL==base);
@@ -133,6 +137,7 @@ public:
 
             return base;
         }
+#endif
 
         /** Returns the starting offset for this map element. The offset is measured with respect to the value returned by
          *  get_base(). The offset is probably not of interest when the element describes an anonymous mapping. */

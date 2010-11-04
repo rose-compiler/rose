@@ -156,7 +156,8 @@ ALL_F03_TESTCODES = \
 $(F03_TESTCODES_REQUIRED_TO_PASS) \
 $(F03_TESTCODES_CURRENTLY_FAILING)
 
-if ROSE_USE_OPEN_FORTRAN_PARSER
+# if ROSE_USE_OPEN_FORTRAN_PARSER
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 # DQ (8/23/2010): This tests only the ability to read the Fortran code and generate the AST.
 TRANSLATOR_EXECUTABLE=testAnalysis
@@ -481,9 +482,9 @@ endif
 else
 check-local:
 	@echo "\nROSE Fortran development tests using the LANL POP code NOT run.  To run these reconfigure with:"
-	@echo "******************************************************************************************"
-	@echo "******************* make check not run here: configure --with-java ***********************"
-	@echo "******************************************************************************************"
+	@echo "*********************************************************************************************"
+	@echo "******************* make check not run here: configure --with-fortran ***********************"
+	@echo "*********************************************************************************************"
 endif
 
 copyFiles:

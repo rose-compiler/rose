@@ -1,4 +1,12 @@
-/* Tests unparsing by changing the byte order of an ELF file */
+/* Tests unparsing by changing the byte order of an ELF file.
+ *
+ * ELF containers can be big-endian or little-endian. This test changes the ELF container from big to little or vice versa. The
+ * program contained in the container (instructions, read-only data, initialized rw data, etc) are not byte swapped--only the
+ * ELF container is byte swapped.
+ *
+ * Running the program produces a *.new file in the current working directory (produced by backend()). The *.new file is
+ * identical to the input file except the ELF container is byte swapped.  The makefile test reads and parses the *.new file and
+ * compares it to the original file. */
 
 #include "rose.h"
 

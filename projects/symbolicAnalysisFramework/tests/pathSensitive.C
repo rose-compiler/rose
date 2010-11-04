@@ -290,7 +290,7 @@ bool IfMeetDetector::transfer(const Function& func, const DataflowNode& n, NodeS
 	/*printf("-----------------------------------\n");
 	printf("IfMeetDetector::transfer() function %s() node=<%s | %s>\n", func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());*/
 	
-	bool modified = false;
+	//bool modified = false;
 	IfMeetLat* ifml = dynamic_cast<IfMeetLat*>(dfInfo.front());
 	
 	// if this node is a descendant of an if statement
@@ -420,7 +420,7 @@ bool scalarFWDataflowPart::transfer(const Function& func, const DataflowNode& n,
 {
 	printf("    -----------------------------------\n");
 	printf("    scalarFWDataflowPart::transfer() function %s() node=<%s | %s>\n", func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
-	printf("    isIfMeetNode(n)=%p\n", isIfMeetNode(n));
+	printf("    isIfMeetNode(n)=%d\n", isIfMeetNode(n));
 	
 	bool modified = false;
 	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo.front());
@@ -474,7 +474,7 @@ bool scalarFWDataflowPart::transfer(const Function& func, const DataflowNode& n,
 			
 			if(cfgUtils::parseAssignment(n.getNode(), op, i, j, negJ, k, negK, c))
 			{
-				printf("    scalarFWDataflowPart::transfer()   cfgUtils::parseAssignment(%p, %d, %s, %s, %d, %s, %d, %d)\n", isSgExpression(n.getNode()), op, i.str().c_str(), j.str().c_str(), negJ, k.str().c_str(), negK, c);
+				printf("    scalarFWDataflowPart::transfer()   cfgUtils::parseAssignment(%p, %d, %s, %s, %d, %s, %d, %ld)\n", isSgExpression(n.getNode()), op, i.str().c_str(), j.str().c_str(), negJ, k.str().c_str(), negK, c);
 				// i = j or i = c
 				if(op == cfgUtils::none)
 				{
@@ -567,7 +567,7 @@ bool scalarFWDataflowPart::transfer(const Function& func, const DataflowNode& n,
 			IntArithLogical* expr = new IntArithLogical(getIntArithLogical((*ei).target()));
 
 			//cout << "expr = "<<expr->str("")<<"\n";
-			splitConditions.push_back((/*LogicalCond** /printable*)expr);
+			splitConditions.push_back((LogicalCond* printable*)expr);
 		}
 	}
 	// if this is a meet node for an if statement, join the split created at the if statement
@@ -680,7 +680,7 @@ bool scalarFWDataflowPart::incorporateConditionalsInfo(const Function& func, con
 	printf("    incorporateConditionalsInfo()\n");
 	const set<varAffineInequality>& ineqs = getAffineIneq(n);
 	cout << "Node <"<<n.getNode()->class_name()<<" | "<<n.getNode()->unparseToString()<<">\n";
-	printf("       ineqs.size()=%d\n", ineqs.size());
+	printf("       ineqs.size()=%lu\n", (unsigned long) (ineqs.size()));
 	for(set<varAffineInequality>::const_iterator it = ineqs.begin(); it!=ineqs.end(); it++)
 	{
 		varAffineInequality varIneq = *it;
@@ -717,7 +717,7 @@ bool scalarFWDataflowPart::incorporateDivInfo(const Function& func, const Datafl
 		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
 		
 		// incorporate this variable's divisibility information (if any)
-		if(varDivL->getLevel() == DivLattice::divKnown/* && !(varDivL->getDiv()==1 && varDivL->getRem()==0)* /)
+		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
 		{
 			modified = cg->addDivVar(var, varDivL->getDiv(), varDivL->getRem()) || modified;
 		}
@@ -748,7 +748,7 @@ bool scalarFWDataflowPart::removeConstrDivVars(const Function& func, const Dataf
 		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
 		
 		// incorporate this variable's divisibility information (if any)
-		if(varDivL->getLevel() == DivLattice::divKnown/* && !(varDivL->getDiv()==1 && varDivL->getRem()==0)* /)
+		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
 		{
 			cg->disconnectDivOrigVar(var, varDivL->getDiv(), varDivL->getRem());
 		}

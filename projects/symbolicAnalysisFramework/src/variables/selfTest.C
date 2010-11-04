@@ -252,7 +252,7 @@ int main(int argc, char** argv)
 		list<string>& funcArr = localArraysStr[(string)func.get_name().str()];
 		list<string>& funcScal = localScalarsStr[(string)func.get_name().str()];
 			
-		if(localVars.size() != funcVars.size()) { printf("ERROR in %s(): expecting %d local vars but got %d\n", func.get_name().str(), funcVars.size(), localVars.size()); numFails++; }
+		if(localVars.size() != funcVars.size()) { printf("ERROR in %s(): expecting %lu local vars but got %lu\n", func.get_name().str(), (unsigned long)(funcVars.size()), (unsigned long) (localVars.size())); numFails++; }
 		//printf("   localVars.size() = %d\n", localVars.size());
 		list<string>::iterator localStrIt;
 		for(it = localVars.begin(), localStrIt=funcVars.begin(); 
@@ -263,7 +263,7 @@ int main(int argc, char** argv)
 		}
 	
 		varIDSet localArrays = varSets::getLocalArrays(func);
-		if(localArrays.size() != funcArr.size()) { printf("ERROR in %s(): expecting %d local arrays but got %d\n", func.get_name().str(), funcArr.size(), localArrays.size()); numFails++; }
+		if(localArrays.size() != funcArr.size()) { printf("ERROR in %s(): expecting %lu local arrays but got %lu\n", func.get_name().str(), (unsigned long)(funcArr.size()), (unsigned long) (localArrays.size())); numFails++; }
 		//printf("local arrays, function %s():\n", func.get_name().str());
 		for(it = localArrays.begin(), localStrIt=funcArr.begin();
 		    it!=localArrays.end(); it++, localStrIt++)
@@ -273,7 +273,7 @@ int main(int argc, char** argv)
 		}
 		
 		varIDSet localScalars = varSets::getLocalScalars(func);
-		if(localScalars.size() != funcScal.size()) { printf("ERROR in %s(): expecting %d local scalars but got %d\n", func.get_name().str(), funcScal.size(), localScalars.size()); numFails++; }
+		if(localScalars.size() != funcScal.size()) { printf("ERROR in %s(): expecting %lu local scalars but got %lu\n", func.get_name().str(), (unsigned long)(funcScal.size()), (unsigned long)(localScalars.size())); numFails++; }
 		//printf("local scalars, function %s():\n", func.get_name().str());
 		for(it = localScalars.begin(), localStrIt=funcScal.begin();
 		    it!=localScalars.end(); it++, localStrIt++)
@@ -328,7 +328,7 @@ int main(int argc, char** argv)
 		list<string>& funcArr = funcRefArraysStr[(string)func.get_name().str()];
 		list<string>& funcScal = funcRefScalarsStr[(string)func.get_name().str()];
 			
-		if(funcRefVars.size() != funcVars.size()) { printf("ERROR in %s(): expecting %d referenced vars but got %d\n", func.get_name().str(), funcVars.size(), funcRefVars.size()); numFails++; }
+		if(funcRefVars.size() != funcVars.size()) { printf("ERROR in %s(): expecting %lu referenced vars but got %lu\n", func.get_name().str(), (unsigned long)(funcVars.size()), (unsigned long)(funcRefVars.size())); numFails++; }
 		//printf("   funcRefVars.size() = %d\n", funcRefVars.size());
 		list<string>::iterator refStrIt;
 		for(it = funcRefVars.begin(), refStrIt=funcVars.begin(); 
@@ -339,7 +339,7 @@ int main(int argc, char** argv)
 		}
 	
 		varIDSet funcRefArrays = varSets::getFuncRefArrays(func);
-		if(funcRefArrays.size() != funcArr.size()) { printf("ERROR in %s(): expecting %d referenced arrays but got %d\n", func.get_name().str(), funcArr.size(), funcRefArrays.size()); numFails++; }
+		if(funcRefArrays.size() != funcArr.size()) { printf("ERROR in %s(): expecting %lu referenced arrays but got %lu\n", func.get_name().str(), (unsigned long)(funcArr.size()), (unsigned long)(funcRefArrays.size())); numFails++; }
 		//printf("funcRef arrays, function %s():\n", func.get_name().str());
 		for(it = funcRefArrays.begin(), refStrIt=funcArr.begin();
 		    it!=funcRefArrays.end(); it++, refStrIt++)
@@ -349,7 +349,7 @@ int main(int argc, char** argv)
 		}
 		
 		varIDSet funcRefScalars = varSets::getFuncRefScalars(func);
-		if(funcRefScalars.size() != funcScal.size()) { printf("ERROR in %s(): expecting %d referenced scalars but got %d\n", func.get_name().str(), funcScal.size(), funcRefScalars.size()); numFails++; }
+		if(funcRefScalars.size() != funcScal.size()) { printf("ERROR in %s(): expecting %lu referenced scalars but got %lu\n", func.get_name().str(), (unsigned long)(funcScal.size()), (unsigned long)(funcRefScalars.size())); numFails++; }
 		//printf("funcRef scalars, function %s():\n", func.get_name().str());
 		for(it = funcRefScalars.begin(), refStrIt=funcScal.begin();
 		    it!=funcRefScalars.end(); it++, refStrIt++)

@@ -17,7 +17,6 @@ libBackstroke_a_includedir = $(includedir)/backstroke
 # Link all sublibs
 libBackstroke_a_LIBADD = utilities/libBackstrokeUtilities.a \
 			normalizations/libBackstrokeNormalizations.a \
-			slicing/libBackstrokeSlicing.a \
 			reverseComputation/libBackstrokeReverser.a \
 			restrictedLanguage/libBackstrokeRestrictedLanguage.a \
 			pluggableReverser/libBackstrokePluggableReverser.a \

@@ -28,7 +28,7 @@ program dt_init01
    ! This should fail (and does in ROSE) if the declaration used the "protected" attribute (but we don't have the semantic analysis in place).
      value = val
 
-   ! This should fail if the "protected" statement if modified but not if the variable is read only.
+   ! This should fail if the "protected" statement is modified but not if the variable is read only.
      his_age = age
 
      print *, value, his_age

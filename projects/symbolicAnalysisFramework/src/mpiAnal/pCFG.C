@@ -471,11 +471,11 @@ bool pCFG_FWDataflow::runAnalysis(const Function& func, NodeState* fState)
 		// original values in the function state.
 		bool modified = !NodeState::eqLattices(
 			                      (*(NodeState::getNodeStates(funcCFGEnd).begin()))->getLatticeAbove(this),
-			                      fState->getLatticeBelow(/*interAnalysis* /this));
+			                      fState->getLatticeBelow(interAnalysis this));
 			
 		// Update the the function's exit NodeState with the final state of this function's dataflow analysis.
 		NodeState* exitState = *(NodeState::getNodeStates(funcCFGEnd).begin());
-		NodeState::copyLattices_bEQa(/*interAnalysis* /this, *fState, this, *exitState);
+		NodeState::copyLattices_bEQa(interAnalysis this, *fState, this, *exitState);
 
 		return modified;
 	*/
@@ -533,7 +533,7 @@ bool pCFG_FWDataflow::runAnalysis_pCFG(const Function& func, NodeState* fState, 
 		// initialize the function's entry NodeState 
 		NodeState* entryState = *(NodeState::getNodeStates(funcCFGStart).begin());
 		//printf("before copyLattices on <%s | %s>\n", funcCFGStart.getNode()->class_name().c_str(), funcCFGStart.getNode()->unparseToString().c_str());
-		NodeState::copyLattices_aEQa(this, *entryState, /*interAnalysis* /this, *fState);
+		NodeState::copyLattices_aEQa(this, *entryState, interAnalysis* this, *fState);
 	}*/
 	
 	if(analysisDebugLevel>=1)
@@ -1263,7 +1263,7 @@ bool pCFG_FWDataflow::partitionTranfer(
 	{
 		if(analysisDebugLevel>=1)
 		{ printf("    Splitting analysis process set %d\n", curPSet); }
-		int i=0;
+		//int i=0;
 		set<pCFG_Checkpoint*> splitChkpts;
 		
 		// The descendant DataflowNodes of curPSet
@@ -1588,7 +1588,7 @@ cout << "Propagated: itN="<<(*itN)->str()<<"\n";*/
 		else
 		{
 			//InfiniteLattice* meetResult = (InfiniteLattice*)itN->second->meet(itC->second);
-			/*InfiniteLattice* meetResult = dynamic_cast<InfiniteLattice*>((*itN)->copy());
+			InfiniteLattice* meetResult = dynamic_cast<InfiniteLattice*>((*itN)->copy());
 			meetResult->meetUpdate(*itC);
 			
 			cout << "        Infinite Lattices\n";

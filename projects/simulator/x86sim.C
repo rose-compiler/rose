@@ -63,6 +63,8 @@
 #include <linux/unistd.h>
 #include <sys/sysinfo.h> 
 #include <sys/sem.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
 
 
 enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
@@ -1386,6 +1388,11 @@ EmulationPolicy::ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_
     size_t size_ptr;
     int result;
 
+    if(ptr)
+    {
+        size_t nread = map->read(&ptr_addr, ptr, 1);
+        ROSE_ASSERT(nread == 1);
+    }
 
 
     /* semop system calls takes an array of these. */
@@ -1406,28 +1413,165 @@ EmulationPolicy::ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_
               typedef signed int s32;
               typedef s32 compat_key_t;
         */
-        return semget(first, second, third);
+        return syscall(117, first, second, third, NULL, fifth);
+        //return semget(first, second, third);
         break;
 
       case SEMCTL: {
                      /*
+
+                        This function has three or four arguments, depending on cmd.  When there are four, the fourth has the 
+                        type union semun.  The  calling program must define this union as follows:
+
                         union semun {
-                            int val;            
-                            struct semid_ds __user *buf;    
-                            unsigned short __user *array;   
-                            struct seminfo __user *__buf;   
-                            void __user *__pad;
+                        int              val;    // Value for SETVAL 
+                        struct semid_ds *buf;    // Buffer for IPC_STAT, IPC_SET 
+                        unsigned short  *array;  // Array for GETALL, SETALL 
+                        struct seminfo  *__buf;  // Buffer for IPC_INFO
+                        (Linux specific) 
                         };
-                     */  
-                     /*
-                     union semun fourth;
-                     if (!ptr)
-                       return -EINVAL;
-                     if (get_user(fourth.__pad, (void __user * __user *) ptr))
-                       return -EFAULT;
-                     return sys_semctl(first, second, third, fourth);
-                     */
+
+                        The semid_ds data structure is defined in <sys/sem.h> as follows:
+
+                        struct semid_ds {
+                        struct ipc_perm sem_perm;  // Ownership and permissions
+                        time_t          sem_otime; // Last semop time 
+                        time_t          sem_ctime; // Last change time 
+                        unsigned short  sem_nsems; // No. of semaphores in set 
+                        };
+
+                        The ipc_perm structure is defined in <sys/ipc.h> as follows (the highlighted fields are settable using IPC_SET):
+
+                        struct ipc_perm {
+                        key_t key;            // Key supplied to semget() 
+                        uid_t uid;            // Effective UID of owner 
+                        gid_t gid;            // Effective GID of owner 
+                        uid_t cuid;           // Effective UID of creator 
+                        gid_t cgid;           // Effective GID of creator 
+                        unsigned short mode;  // Permissions 
+                        unsigned short seq;   // Sequence number 
+                        };
+
+                        cmd values that ignore semun:
+                        IPC_STAT
+                        IPC_SET
+                        IPC_RMID
+
+                        cmd values where semun is used:
+                        IPC_INFO
+                        SEM_INFO
+                        SEM_STAT
+                        GETALL
+                        GETNCNT
+                        GETPID
+                        GETVAL
+                        GETZCNT7
+                        SETALL
+                        SETVAL
+
+                      */  
+                       /*
+                          union semun fourth;
+                          if (!ptr)
+                          return -EINVAL;
+                          if (get_user(fourth.__pad, (void __user * __user *) ptr))
+                          return -EFAULT;
+                          return sys_semctl(first, second, third, fourth);
+                        */
+
+                       //union semun fourth;
+
+                       if (!ptr)
+                           return -EINVAL;
+                       //if (get_user(fourth.__pad, (void __user * __user *) ptr))
+                       //    return -EFAULT;
+
+                       switch(third)
+                       {
+                           case IPC_STAT:
+                           case IPC_SET:
+                           case IPC_RMID:
+
+
+                           std::cout << "Error: semun not required in SEMCTL. Not implemented." << std::endl;
+                           exit(1);
+
+                               break;
+                           case IPC_INFO:
+                               std::cout <<"IPC_INFO" << std::endl;
+
+                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
+                               exit(1);
+                               break;
+                           case SEM_INFO:
+ 
+                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
+                               exit(1);
+                               break;                              std::cout <<"SEM_INFO" << std::endl;
+
+                           case SEM_STAT:
+                               std::cout <<"SEM_STAT" << std::endl;
+
+                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
+                               exit(1);
+                               break;
+                           case GETALL:
+                               std::cout <<"GETALL" << std::endl;
+
+                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
+                               exit(1);
+                               break;
+                           case GETNCNT:
+                               std::cout <<"GETNCNT" << std::endl;
+
+                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
+                               exit(1);
+                               break;
+                           case GETPID:
+                               std::cout <<"GETPID" << std::endl;
+
+                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
+                               exit(1);
+                               break;
+                           case GETVAL:
+                               std::cout <<"GETVAL" << std::endl;
+
+                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
+                               exit(1);
+                               break;
+                           case GETZCNT:
+                               std::cout <<"GETZCNT7" << std::endl;
+
+                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
+                               exit(1);
+                               break;
+                           case SETALL:
+                               std::cout <<"SETALL" << std::endl;
+
+                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
+                               exit(1);
+                               break;
+                           case SETVAL:
+
+                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
+                               exit(1);
+                               break;
+
+                           default:
+                           std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
+                           ROSE_ASSERT(false == true);
+
+                           exit(1);
+                           break;
+
+                       };
+
+                       //return semctl(first, second, third, fourth);
+
         std::cerr << "Error: system call ipc case SEMCTL not implemented" << std::endl;
+
+        ROSE_ASSERT(false == true);
+
         exit(1);
 
                      break;
@@ -1547,7 +1691,8 @@ EmulationPolicy::ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_
       default:
                    std::cout << "Call is: " << call << std::endl;
                    //return -ENOSYS;
-    
+   
+                   exit(1);
                    break;
     }
 
@@ -2543,8 +2688,6 @@ EmulationPolicy::emulate_syscall()
 
             uint8_t ptr_addr;
 
-            size_t nread = map->read(&ptr_addr, ptr, 1);
-            ROSE_ASSERT(nread == 1);
 
             int result = ipc_kernel(call, first, second, third, ptr, ptr_addr, fifth);
 
@@ -2740,30 +2883,30 @@ EmulationPolicy::emulate_syscall()
             fd_set* exceptfds = NULL;
 
             uint8_t byte;
-            size_t nread = map->read(&byte, arg(1), 1);
-            ROSE_ASSERT(1==nread);
+            size_t nread;
+            // = map->read(&byte, arg(1), 1);
+            //ROSE_ASSERT(1==nread);
 
-            if( byte){ 
+            if( arg(1) ){ 
                 readfds = new fd_set;
                 nread = map->read(readfds, arg(1), sizeof(fd_set) );
                 ROSE_ASSERT( nread == sizeof(fd_set) );
             }
 
-            nread = map->read(&byte, arg(2), 1);
+            //nread = map->read(&byte, arg(2), 1);
+            //ROSE_ASSERT(1==nread);
 
-            ROSE_ASSERT(1==nread);
-
-            if( byte ){
+            if( arg(2) ){
                 writefds = new fd_set;
                 nread = map->read(writefds, arg(2), sizeof(fd_set) );
                 ROSE_ASSERT( nread == sizeof(fd_set) );
             }
 
-            nread = map->read(&byte, arg(3), 1);
-            ROSE_ASSERT(1==nread);
+            //nread = map->read(&byte, arg(3), 1);
+            //ROSE_ASSERT(1==nread);
 
 
-            if( byte){
+            if( arg(3) ){
                 exceptfds = new fd_set;
                 nread = map->read(exceptfds, arg(3), sizeof(fd_set) );
                 ROSE_ASSERT( nread == sizeof(fd_set) );
@@ -2779,31 +2922,31 @@ EmulationPolicy::emulate_syscall()
 
             select(fd, readfds, writefds, exceptfds, &timeout64);
 
-            nread = map->read(&byte, arg(1), 1);
-            ROSE_ASSERT(1==nread);
+            //nread = map->read(&byte, arg(1), 1);
+            //ROSE_ASSERT(1==nread);
 
 
-            if( byte ){
+            if( arg(1) ){
                 size_t nwritten = map->write(readfds, arg(1), sizeof(fd_set) );
                 ROSE_ASSERT(nwritten==sizeof(fd_set) );
                 delete readfds;
             }
 
-            nread = map->read(&byte, arg(2), 1);
-            ROSE_ASSERT(1==nread);
+            //nread = map->read(&byte, arg(2), 1);
+            //ROSE_ASSERT(1==nread);
 
 
-            if( byte ){
+            if( arg(2) ){
                 size_t nwritten = map->write(writefds, arg(2), sizeof(fd_set));
                 ROSE_ASSERT( nwritten==sizeof(fd_set) );
                 delete writefds;
             }
 
-            nread = map->read(&byte, arg(3), 1);
-            ROSE_ASSERT(1==nread);
+            // nread = map->read(&byte, arg(3), 1);
+            // ROSE_ASSERT(1==nread);
 
 
-            if( byte ){
+            if( arg(3) ){
                 size_t nwritten = map->write(exceptfds, arg(3), sizeof(fd_set) );
                 ROSE_ASSERT(nwritten==sizeof(fd_set));
                 delete exceptfds;
@@ -2884,7 +3027,7 @@ EmulationPolicy::emulate_syscall()
             //size_t sigsetsize=arg(3);
 
             uint64_t saved=signal_mask, sigset=0;
-            if ( set_va != NULL ) {
+            if ( set_va != 0 ) {
 
                 size_t nread = map->read(&sigset, set_va, sizeof sigset);
                 ROSE_ASSERT(nread==sizeof sigset);
@@ -2971,7 +3114,7 @@ EmulationPolicy::emulate_syscall()
 #endif
               int result;
 #if 1
-              if( arg(1) != NULL )
+              if( arg(1) != 0 )
               {
 
                 ROSE_ASSERT(false == true);
@@ -3333,9 +3476,13 @@ EmulationPolicy::emulate_syscall()
 #endif
 #endif
                 T_END };
-#if 0
+
             /* Variable arguments */
-            switch (arg(1) & FUTEX_CMD_MASK) {
+            unsigned arg1 = arg(1);
+#ifdef FUTEX_CMD_MASK
+            arg1 &= FUTEX_CMD_MASK;
+#endif
+            switch (arg1) {
                 case FUTEX_WAIT:
                     syscall_enter("futex", "PfdP--", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
                     break;
@@ -3354,6 +3501,7 @@ EmulationPolicy::emulate_syscall()
                                   4, print_int_32);
                     break;
             }
+
             uint32_t futex1_va=arg(0), op=arg(1), val1=arg(2), timeout_va=arg(3), futex2_va=arg(4), val2=arg(5);
             int *futex1 = (int*)my_addr(futex1_va);
             int *futex2 = (int*)my_addr(futex2_va);
@@ -3371,9 +3519,6 @@ EmulationPolicy::emulate_syscall()
             int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val2);
             if (-1==result) result = -errno;
             writeGPR(x86_gpr_ax, result);
-#endif
-            writeGPR(x86_gpr_ax, -ENOSYS);
-
             syscall_leave("d");
             break;
         }
@@ -3714,6 +3859,7 @@ main(int argc, char *argv[])
     Semantics t(policy);
     uint32_t dump_at = 0;               /* dump core the first time we hit this address, before the instruction is executed */
     std::string dump_name = "dump";
+    FILE *log_file = NULL;
 
     /* Parse command-line */
     int argno = 1;
@@ -3721,6 +3867,14 @@ main(int argc, char *argv[])
         if (!strcmp(argv[argno], "--")) {
             argno++;
             break;
+        } else if (!strncmp(argv[argno], "--log=", 6)) {
+            if (log_file)
+                fclose(log_file);
+            if (NULL==(log_file = fopen(argv[argno]+6, "w"))) {
+                fprintf(stderr, "%s: %s: %s\n", argv[0], strerror(errno), argv[argno+6]);
+                exit(1);
+            }
+            argno++;
         } else if (!strncmp(argv[argno], "--debug=", 8)) {
             policy.debug = stderr;
             char *s = argv[argno]+8;
@@ -3751,7 +3905,9 @@ main(int argc, char *argv[])
                 } else if (word=="progress") {
                     policy.trace_progress = true;
                 } else {
-                    fprintf(stderr, "%s: debug words must be from the set: insn, state, mem, mmap, syscall\n", argv[0]);
+                    fprintf(stderr, "%s: debug words must be from the set: "
+                            "all, insn, state, mem, mmap, syscall, loader, progress\n",
+                            argv[0]);
                     exit(1);
                 }
             }
@@ -3795,6 +3951,8 @@ main(int argc, char *argv[])
     ROSE_ASSERT(argc-argno>=1); /* usage: executable name followed by executable's arguments */
     SgAsmGenericHeader *fhdr = policy.load(argv[argno]); /*header for main executable, not libraries*/
     policy.initialize_stack(fhdr, argc-argno, argv+argno);
+    if (policy.debug && log_file)
+        policy.debug = log_file;
 
     /* Debugging */
     if (policy.debug && policy.trace_mmap) {
