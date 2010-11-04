@@ -257,11 +257,15 @@ public:
     unsigned core_styles;                       /* What kind of core dump(s) to make for dump_core() */
     std::string core_base_name;                 /* Name to use for core files ("core") */
 
+#if 0
     /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
      * behavior here. If the value is less than the highest address mapped by the main executable, then the latter is used
      * instead (see BinaryLoaderElf::rebase()) */
     static const rose_addr_t ld_linux_base_va = 0x40000000;
-
+#else
+    /* apparently not true on hudson-rose-07.llnl.gov [RPM 2010-11-04] */
+    static const rose_addr_t ld_linux_base_va = 0;
+#endif
 
 #if 0
     uint32_t gsOffset;
@@ -683,6 +687,17 @@ EmulationPolicy::load(const char *name)
     if (loader->interpreter) {
         loader->interpreter->set_base_va(ld_linux_base_va);
         writeIP(loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va());
+    }
+
+    /* Sort the headers so they're in order by entry address. In other words, if the interpreter's entry address is below the
+     * entry address of the main executable, then make sure the interpretter gets mapped first. */
+    SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    if (2==headers.size()) {
+        if (headers[0]->get_base_va() + headers[0]->get_entry_rva() >
+            headers[1]->get_base_va() + headers[1]->get_entry_rva())
+            std::swap(headers[0], headers[1]);
+    } else {
+        ROSE_ASSERT(1==headers.size());
     }
 
     /* Map all segments into simulated memory */
