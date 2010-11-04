@@ -1,5 +1,8 @@
 #include <rose.h>
 #include <boost/foreach.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graphviz.hpp>
+#include <boost/tuple/tuple.hpp>
 
 using namespace std;
 using namespace boost;
@@ -31,9 +34,67 @@ getPredecessors(SgIncidenceDirectedGraph* graph, SgGraphNode* node, std::vector 
   }
 }
 
-map<SgGraphNode*, SgGraphNode*>
-buildDominitorTree(const StaticCFG::CFG& cfg)
+
+
+class DominatorTreeBuilder
 {
+public:
+    //typedef std::map<SgGraphNode*, set<SgGraphNode*> > NodeNodesMap;
+    //typedef std::map<SgGraphNode*, SgGraphNode*> NodeNodeMap;
+    
+    typedef adjacency_list<vecS, vecS, bidirectionalS, 
+            property<vertex_name_t, SgGraphNode*> > DominatorTree;
+
+private:
+    //! A map from each CFG node to its all dominators.
+    std::map<SgGraphNode*, set<SgGraphNode*> > node_to_dominators_;
+
+    //! A map from each CFG node to its immediate dominator.
+    std::map<SgGraphNode*, SgGraphNode*> node_to_immediate_dominator_;
+
+    //! The dominator tree represented by a boost::graph
+    DominatorTree dominator_tree_;
+
+    typedef graph_traits<DominatorTree>::vertex_descriptor Node;
+    typedef property_map<DominatorTree, vertex_name_t>::type NodeSgNodeMap;
+
+    //! A functor class helping write dot file.
+    class NodeWriter 
+    {
+        const NodeSgNodeMap& node_sgnode_map_;
+        public:
+        NodeWriter(const NodeSgNodeMap& node_sgnode_map) : node_sgnode_map_(node_sgnode_map) {}
+
+        void operator()(std::ostream& out, const Node& node) const 
+        {
+            VirtualCFG::CFGNode cfgnode(node_sgnode_map_[node]->get_SgNode(), StaticCFG::CFG::getIndex(node_sgnode_map_[node]));
+            out << "[label=\"" << escapeString(cfgnode.toString()) << "\"]";
+        }
+    };
+
+
+public:
+    void build(const StaticCFG::CFG& cfg);
+
+    std::map<SgGraphNode*, set<SgGraphNode*> >
+    getNodeToDominatorsMap() const { return node_to_dominators_; }    
+
+    std::map<SgGraphNode*, SgGraphNode*>
+    getNodeToImmediateDominatorMap() const { return node_to_immediate_dominator_; }    
+
+    const DominatorTree& getDominatorTree() const { return dominator_tree_; }
+
+    void toDot(const std::string& filename) const;
+
+};
+
+void DominatorTreeBuilder::build(const StaticCFG::CFG& cfg)
+{
+    // Clear everything which will be built.
+    node_to_dominators_.clear();
+    node_to_immediate_dominator_.clear();
+    dominator_tree_.clear();
+
 	SgIncidenceDirectedGraph* graph = cfg.getGraph();
 
 	// Get the entry node En.
@@ -41,20 +102,16 @@ buildDominitorTree(const StaticCFG::CFG& cfg)
 
 	// Get all nodes N in the CFG.
 	set<SgGraphNode*> all_nodes = graph->computeNodeSet();
-
 	ROSE_ASSERT(all_nodes.count(entry) > 0);
 
-	// This variable maps every node to its dominators.
-	map<SgGraphNode*, set<SgGraphNode*> > dominators;
-
 	// First, initialize dominator(En) to {En}.
-	dominators[entry].insert(entry);
+	node_to_dominators_[entry].insert(entry);
 
 	// Initialize the dominator of other nodes to N.
 	foreach (SgGraphNode* n, all_nodes)
 	{
 		if (n != entry)
-			dominators[n] = all_nodes;
+			node_to_dominators_[n] = all_nodes;
 	}
 
 	bool change = true;
@@ -73,11 +130,11 @@ buildDominitorTree(const StaticCFG::CFG& cfg)
 
 				// Here we get new dominators of n by intersecting all dominators of its predecessors,
 				// plus itself.
-				set<SgGraphNode*> new_dominators = dominators[predecessors[0]];
+				set<SgGraphNode*> new_dominators = node_to_dominators_[predecessors[0]];
 				for (size_t i = 1; i < predecessors.size(); ++i)
 				{
 					set<SgGraphNode*> temp_dom;
-					const set<SgGraphNode*>& p_dom = dominators[predecessors[i]];
+					const set<SgGraphNode*>& p_dom = node_to_dominators_[predecessors[i]];
 					set_intersection(new_dominators.begin(), new_dominators.end(),
 							p_dom.begin(), p_dom.end(), inserter(temp_dom, temp_dom.begin()));
 					new_dominators.swap(temp_dom);
@@ -85,7 +142,7 @@ buildDominitorTree(const StaticCFG::CFG& cfg)
 				new_dominators.insert(n);
 
 				// If the old and new dominators are different, set the 'change' flag to true.
-				set<SgGraphNode*>& old_dominators = dominators[n];
+				set<SgGraphNode*>& old_dominators = node_to_dominators_[n];
 				if (old_dominators != new_dominators)
 				{
 					old_dominators.swap(new_dominators);
@@ -97,28 +154,67 @@ buildDominitorTree(const StaticCFG::CFG& cfg)
 
 	// For each node, find its immediate dominator.
 	map<SgGraphNode*, SgGraphNode*> immediate_dominator;
-	typedef map<SgGraphNode*, set<SgGraphNode*> >::value_type T;
-	foreach (const T& nodes, dominators)
+	typedef map<SgGraphNode*, set<SgGraphNode*> >::value_type NodeToNodes;
+	foreach (const NodeToNodes& nodes, node_to_dominators_)
 	{
-		cout << nodes.first->get_SgNode()->class_name() << "\n\t";
 		foreach (SgGraphNode* n, nodes.second)
 		{
 			// If the size of dominator(d) for one dominator d of the node n equals to the
 			// size of dominator(n) - 1, then d is the immediate dominator of n.
-			if (dominators[n].size() == nodes.second.size() - 1)
+			if (node_to_dominators_[n].size() == nodes.second.size() - 1)
 			{
-				immediate_dominator[nodes.first] = n;
-				cout << n->get_SgNode()->class_name() << endl;
+				node_to_immediate_dominator_[nodes.first] = n;
 				break;
 			}
 		}
 	}
-	cout << immediate_dominator.size() << endl;
-	cout << dominators.size() << endl;
-	ROSE_ASSERT(immediate_dominator.size() == dominators.size() - 1);
+	ROSE_ASSERT(node_to_immediate_dominator_.size() == node_to_dominators_.size() - 1);
 
-	return immediate_dominator;
+    // Start to build the dominator tree.
+    NodeSgNodeMap node_to_sgnode = get(vertex_name, dominator_tree_);
+    map<SgGraphNode*, Node> nodes_added;
+
+    typedef map<SgGraphNode*, SgGraphNode*>::value_type NodeToNode;
+    foreach (const NodeToNode& nodes, node_to_immediate_dominator_)
+    {
+        SgGraphNode *from, *to;
+        Node src, tar;
+        map<SgGraphNode*, Node>::iterator it;
+        bool inserted;
+
+        tie(from, to) = nodes;
+
+        // Add the first node.
+        tie(it, inserted) = nodes_added.insert(make_pair(from, tar));
+        if (inserted)
+        {
+            tar = add_vertex(dominator_tree_);
+            node_to_sgnode[tar] = from;
+            it->second = tar;
+        }
+        else
+            tar = it->second;
+
+
+        // Add the second node.
+        tie(it, inserted) = nodes_added.insert(make_pair(to, src));
+        if (inserted)
+        {
+            src = add_vertex(dominator_tree_);
+            node_to_sgnode[src] = to;
+            it->second = src;
+        }
+        else
+            src = it->second;
+
+        // Add the edge.
+        add_edge(src, tar, dominator_tree_);
+    }
+
+    ofstream out("dominatorTree.dot");
+    write_graphviz(out, dominator_tree_, NodeWriter(node_to_sgnode));
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -145,7 +241,9 @@ int main(int argc, char *argv[])
     cfg.buildFilteredCFG();
     cfg.cfgToDot(proc, dotFileName2);
 
-	buildDominitorTree(cfg);
+	//buildDominitorTree(cfg);
+    DominatorTreeBuilder dom_tree_builder;
+    dom_tree_builder.build(cfg);
   }
 
   return 0;
