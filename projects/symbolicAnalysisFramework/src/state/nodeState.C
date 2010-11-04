@@ -346,8 +346,8 @@ bool NodeState::eqLattices(const vector<Lattice*>& latticesA,
 	    itA != latticesA.end(), itB != latticesB.end();
 	    itA++, itB++)
 	{
-		Lattice *lA = *itA;
-		Lattice *lB = *itB;
+		//Lattice *lA = *itA;
+		//Lattice *lB = *itB;
 /*		cout << "lA = "<<lA->str("    ")<<"\n";
 		cout << "lB = "<<lB->str("    ")<<"\n";*/
 		if(*itA != *itB) return false;
@@ -781,7 +781,7 @@ void NodeState::initNodeStateMap()
 		for(VirtualCFG::iterator it(funcCFGStart); it!=VirtualCFG::dataflow::end(); it++)
 		{
 			DataflowNode n = *it;
-			SgNode* sgn = n.getNode();
+			//SgNode* sgn = n.getNode();
 			//printf("NodeState::initNodeStateMap() sgn=<%s | %s>\n", sgn->unparseToString().c_str(), sgn->class_name().c_str());
 	
 			// the number of NodeStates associated with the given dataflow node

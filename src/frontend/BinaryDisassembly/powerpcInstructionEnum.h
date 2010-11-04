@@ -451,7 +451,8 @@ enum PowerpcInstructionKind
      powerpc_last_instruction
    };
 
-enum PowerpcRegisterClass {
+enum PowerpcRegisterClass 
+{
     powerpc_regclass_unknown,
     powerpc_regclass_gpr,       // General Purpose Register (0..31)
     powerpc_regclass_fpr,       // Floating-Point Register (0..31; 64 bits each)
@@ -466,13 +467,15 @@ enum PowerpcRegisterClass {
     powerpc_last_register_class // last enum value
 };
 
-enum PowerpcConditionRegisterAccessGranularity {
+enum PowerpcConditionRegisterAccessGranularity 
+{
   powerpc_condreggranularity_whole, // Whole CR (or unknown or not using a CR)
   powerpc_condreggranularity_field, // Four-bit field
   powerpc_condreggranularity_bit // Single bit
 };
 
-enum PowerpcSpecialPurposeRegister { // These must match the processor's numbers
+enum PowerpcSpecialPurposeRegister 
+{ // These must match the processor's numbers
     powerpc_spr_xer = 1,        // fixed-point exception register
     powerpc_spr_lr = 8,         // link register
     powerpc_spr_ctr = 9,        // count register
@@ -481,7 +484,8 @@ enum PowerpcSpecialPurposeRegister { // These must match the processor's numbers
     powerpc_spr_dec = 22        // FIXME: fill in the rest of these
 };
 
-enum PowerpcTimeBaseRegister { // These must match the processor's numbers
+enum PowerpcTimeBaseRegister 
+{ // These must match the processor's numbers
   powerpc_tbr_tbl = 268,
   powerpc_tbr_tbu = 269
 };

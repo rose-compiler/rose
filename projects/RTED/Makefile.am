@@ -11,7 +11,8 @@ EXTRA_DIST = index_array.txt \
 if !OS_MACOSX
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch -pthreads
+# tps removed -pthreads from INCLUDES
+INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch 
 INCLUDES2 = $(ROSE_INCLUDES) -I../../
 UPC_INCLUDES =  -I$(srcdir)/required/
 

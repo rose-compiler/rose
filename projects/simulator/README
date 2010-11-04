@@ -40,9 +40,14 @@ Switches are:
 ** "loader" shows a variety of loading, linking, mapping, and
    relocation operations.
 
+** "progress" emits a progress report every 10 seconds.
+
 ** "all" turns on all possible debugging switches.
 
 * "--debug" by itself is the same as "--debug=syscall,insn"
+
+* "--log=FILE" sends diagnostics to the specified file rather than
+  standard error.
 
 * "--core=STYLE" where STYLE is a comma-separated list of core dump
   types. Currently supported are "elf", which produces a standard ELF
@@ -191,6 +196,85 @@ x86sim big switch statement is like:
     ...
     writeGPR(x86_gpr_ax, retval);
 
+== Purely Abstract Interpretation ==
+
+Instructions are simulated by processing them through the instruction
+semantics layer, X86InstructionSemantics, using the semantic policy
+EmulationPolicy. The EmulationPolicy class is derived from
+VirtualMachineSemantics::Policy and related classes. The
+VirtualMachineSemantics tracks registers and memory, the values of
+which can be:
+  * A known integer
+  * An unknown, named value.
+  * An unknown, named value with a signed offset.
+  * The negation of an unknown, named value with a signed offset.
+
+A concrete interpretation uses only values that are known
+integers. The VirtualMachineSemantics policy was chosen as the base
+class because of its ability to represent known integers and its
+ability to perform constant folding for operations on those integers.
+
+The EmulationPolicy modifies and extends the VirtualMachineSemantics
+policy in three main ways:
+
+  1. Memory access is simplified. The VirtualMachineSemantics accounts
+     for memory I/O operations where the address is not known. The
+     EmulationPolicy does not need this feature, and therefore
+     overrides the memory I/O methods to make them faster.
+
+  2. The EmulationPolicy extends the VirtualMachineSemantics policy by
+     adding methods for loading the executable and its optional
+     interpreter (for dynamically linked executables) into a simulated
+     address space.
+
+  3. The EmulationPolicy adds an emulate_syscall() method. This is
+     actually the real meat of the class in terms of number of lines
+     of code.
+
+Since EmulationPolicy is derived from VirtualMachineSemantics, it
+should be possible, in theory, to perform abstract analysis with
+unknown values.  VirtualMachineSemantics was designed to be a fast
+approximation of fully abstract symbolic semantics, and one could
+replace VirtualMachineSemantics with SymbolicSemantics. One should
+note that SymbolicSemantics doesn't do any kind of constant folding at
+this time, so the symbolic expressions could become very large.
+
+However, there's one important aspect of EmulationPolicy that makes
+abstract interpretation problematic: the system call emulation.
+Syscall emulation depends on having known, concrete values to pass to
+the underlying system call.
+
+== Disassembly Issues ==
+
+Currently, x86sim disassembles machine instructions only when that
+memory is about to be executed.  The disassembly is cached and if that
+address is executed again, x86sim will use the cached instruction if
+the memory contains the same bytes as when the instruction was
+originally disassembled.
+
+It is also possible to disassemble the entire executable at once
+simply by choosing an appropriate disassembler (see
+Disassembler::lookup()), and then calling the disassembler, giving it
+the MemoryMap for the specimen. Alternatively, one can use the
+Partitioner::partition() method, passing a disassembler and memory
+map.
+
+== Concolic Analysis ==
+
+Certain combinations of abstract and concrete analysis are
+possible. For instance, it's possible to obtain, through static
+analysis and disassembly, an AST containing functions of basic blocks
+for all the executable memory.  This AST contains a control flow graph
+and a function call graph that could be compared with the concrete
+interpretation and augmented by the concrete interpretation.
+
+For statically linked executables, one could also obtain an AST for
+the ELF container. But since shared objects for dynamically linked
+executables are resolved by simulating the dynamic loader, ROSE does
+not have any direct knowledge of the shared objects.  It would be
+possible to obtain the list of shared object files by observing the
+system calls related to file I/O since the simulated loader must open,
+and map the shared objects.
 
 == Debugging Tricks and Tips ==
 

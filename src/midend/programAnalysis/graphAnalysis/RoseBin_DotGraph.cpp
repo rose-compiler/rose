@@ -444,8 +444,12 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
     SgAsmx86Instruction* inst = isSgAsmx86Instruction(internal);
 
     if (inst) {
+#ifndef _MSC_VER
       type += " " + stringifyX86InstructionKind(inst->get_kind(), "x86_");
-    }
+#else
+	ROSE_ASSERT(false);
+#endif
+	}
 
     string add = "";
     if (inst->get_kind() == x86_call || inst->get_kind() == x86_ret ) {

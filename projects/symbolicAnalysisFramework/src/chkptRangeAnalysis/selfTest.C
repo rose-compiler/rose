@@ -56,7 +56,7 @@ int main( int argc, char * argv[] )
 	DivAnalysis da;
 	CallGraphBuilder cgb(project);
 	cgb.buildCallGraph();
-	SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
+	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
 	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
 	UnstructuredPassInterDataflow ciipd_da(&da);
 	ciipd_da.runAnalysis();

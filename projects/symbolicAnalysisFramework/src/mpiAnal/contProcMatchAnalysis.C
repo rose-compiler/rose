@@ -272,7 +272,7 @@ string pCFG_contProcMatchAnalysis::getVarAnn(int pSet)
 	return outs.str();
 }
 
-// Asserts within this constraint graph the standard invariants on process sets:\
+// Asserts within this constraint graph the standard invariants on process sets:
 // [0<= lb <= ub < nprocsVar] and [lb <= rankVar <= ub]
 // Returns true if this causes the constraint graph to change, false otherwise
 bool pCFG_contProcMatchAnalysis::assertProcSetInvariants(
@@ -475,7 +475,7 @@ if(MPIAnalysisDebugLevel>0)
 				else             j.addAnnotation(getVarAnn(pSet), (void*)1);
 				//k.addAnnotation(getVarAnn(pSet), (void*)1);
 				if(MPIAnalysisDebugLevel>0)
-					printf("    pCFG_contProcMatchAnalysis::transfer()   cfgUtils::parseAssignment(%p, %d, %s, %s, %d, %s, %d, %d)\n", isSgExpression(dfNode.getNode()), op, i.str().c_str(), j.str().c_str(), negJ, k.str().c_str(), negK, c);
+					printf("    pCFG_contProcMatchAnalysis::transfer()   cfgUtils::parseAssignment(%p, %d, %s, %s, %d, %s, %d, %ld)\n", isSgExpression(dfNode.getNode()), op, i.str().c_str(), j.str().c_str(), negJ, k.str().c_str(), negK, c);
 				// i = j or i = c
 				if(op == cfgUtils::none)
 				{
@@ -658,7 +658,7 @@ void pCFG_contProcMatchAnalysis::fillEdgeSplits(const Function& func, const pCFG
 	// Iterate over both the descendants, adding their logical conditions to splitConditions
 	vector<DataflowEdge> edges = dfNode.outEdges();
 	if(MPIAnalysisDebugLevel>0)
-		printf("pCFG_contProcMatchAnalysis::fillEdgeSplits(): n.outEdges().size()=%d\n", dfNode.outEdges().size());
+		printf("pCFG_contProcMatchAnalysis::fillEdgeSplits(): n.outEdges().size()=%lu\n", (unsigned long) (dfNode.outEdges().size()));
 	int i=0;
 	for(vector<DataflowEdge>::iterator ei = edges.begin(); ei!=edges.end(); ei++, i++)
 	{
@@ -914,7 +914,7 @@ bool pCFG_contProcMatchAnalysis::initPSetDFfromPartCond_ex(
 	if(MPIAnalysisDebugLevel>0)
 	{
 		printf("      => %s\n", cg->str("").c_str());
-		printf("      Updated rankSet:\n", cg->str("").c_str());
+		printf("      Updated rankSet:%s\n", cg->str("").c_str());
 		printf("      ~~~~~~\n");
 	}
 	
@@ -1287,7 +1287,7 @@ bool pCFG_contProcMatchAnalysis::incorporateConditionalsInfo(const pCFGNode& n, 
 	
 	const set<varAffineInequality>& ineqs = getAffineIneq(dfNode);
 	if(MPIAnalysisDebugLevel>0)
-		printf("    incorporateConditionalsInfo(), ineqs.size()=%d\n", ineqs.size());
+		printf("    incorporateConditionalsInfo(), ineqs.size()=%lu\n", (unsigned long) (ineqs.size()));
 	//cout << "Node <"<<n.getNode()->class_name()<<" | "<<dfNode.getNode()->unparseToString()<<">\n";
 	for(set<varAffineInequality>::const_iterator it = ineqs.begin(); it!=ineqs.end(); it++)
 	{
@@ -1334,7 +1334,7 @@ bool pCFG_contProcMatchAnalysis::incorporateDivInfo(const Function& func, const 
 		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
 		
 		// incorporate this variable's divisibility information (if any)
-		if(varDivL->getLevel() == DivLattice::divKnown/* && !(varDivL->getDiv()==1 && varDivL->getRem()==0)* /)
+		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
 		{
 			modified = cg->addDivVar(var, varDivL->getDiv(), varDivL->getRem()) || modified;
 		}
@@ -1365,7 +1365,7 @@ bool pCFG_contProcMatchAnalysis::removeConstrDivVars(const Function& func, const
 		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
 		
 		// incorporate this variable's divisibility information (if any)
-		if(varDivL->getLevel() == DivLattice::divKnown/* && !(varDivL->getDiv()==1 && varDivL->getRem()==0)* /)
+		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
 		{
 			cg->disconnectDivOrigVar(var, varDivL->getDiv(), varDivL->getRem());
 		}
@@ -1447,7 +1447,7 @@ void pCFG_contProcMatchAnalysis::matchSendsRecvs(
 		
 		// Records whether all the DataflowNodes on which the current partition is blocked are all sends, all receives 
 		// or some mixture, in which case we have a conflict
-		bool allSends=false, allRecvs=false;
+		//bool allSends=false, allRecvs=false;
 		
 		if(MPIAnalysisDebugLevel>0)
 			cout << "    matchSendsRecvs() n = "<<dfNode.str()<<"\n";

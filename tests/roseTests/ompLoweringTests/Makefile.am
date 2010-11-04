@@ -24,6 +24,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         master.c \
         nowait.c \
         ompfor5.c \
+        ompfor6.c \
 	single2.c \
 	sizeof.c \
         staticChunk.c \

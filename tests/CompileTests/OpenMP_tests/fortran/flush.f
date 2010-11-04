@@ -17,7 +17,7 @@
       integer q
 !$OMP BARRIER
       q = 2
-!$OMP BARRIER
+!   !$OMP BARRIER, there is a bug , as demonstrated in barrier.f, 10/21/2010
       ! a barrier implies a flush
       ! X, P and Q are flushed
       ! because they are shared and accessible

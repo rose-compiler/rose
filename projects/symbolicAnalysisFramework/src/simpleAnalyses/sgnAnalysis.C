@@ -246,8 +246,10 @@ bool SgnLattice::mult(long multiplier)
 	{
 		// if the multiplier is negative, flip the sign
 		if(multiplier < 0)
+                {
 			if(sgnState==posZero) return setSgnKnown(negZero);
 			else if(sgnState==negZero) return setSgnKnown(posZero);
+                }
 	}
 	
 	return false;
@@ -265,8 +267,10 @@ bool SgnLattice::mult(const SgnLattice& that)
 	{
 		// if the multiplier is negative, flip the sign
 		if(that.level==sgnKnown && that.sgnState==negZero)
+                {
 			if(sgnState==posZero) return setSgnKnown(negZero);
 			else if(sgnState==negZero) return setSgnKnown(posZero);
+                }
 	}
 	return false;
 }

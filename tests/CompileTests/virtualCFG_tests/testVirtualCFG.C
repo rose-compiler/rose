@@ -23,7 +23,10 @@ void testCFG(SgFunctionDefinition* stmt) {
 
   // Dump graph of CFG
   {
-     std::ofstream graph("graph.dot");
+    string file_name = StringUtility::stripPathFromFileName(stmt->get_file_info()->get_filename());
+    string file_func_name= file_name+ "_"+stmt->get_mangled_name().getString();
+    string graph_file_name = file_func_name+ "_graph.dot";
+     std::ofstream graph(graph_file_name.c_str());
      cfgToDotForDebugging(graph, "dotGraph", stmt->cfgForBeginning());
   }
   

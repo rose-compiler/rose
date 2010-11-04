@@ -56,7 +56,8 @@ endif
 # and let them run during make check
 TESTCODES_REQUIRED_TO_RUN = \
      test2009_17.c \
-     test2009_18.c
+     test2009_18.c \
+     test2009_20.c
 
 # test2009_20.c  (array -1) becomes (array) bug 368
 TESTCODE_CURRENTLY_FAILING = \
@@ -66,7 +67,6 @@ TESTCODE_CURRENTLY_FAILING = \
      test2006_134.c \
      test2006_136.c \
      test2009_06.c \
-     test2009_20.c \
      test2010_02.c \
      test2010_03.c \
      test2010_05.c \
@@ -84,9 +84,6 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-# DQ (2/1/2010): Temporarily removed for testing.
-# $(TESTCODES_REQUIRED_TO_RUN) 
-
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
 
@@ -96,9 +93,11 @@ PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
-# PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
-# check_PROGRAMS = $(PASSING_TEST_Executables)
-# TESTS= $(check_PROGRAMS) caller.out 
+PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
+# any programs needed by your tests that does not need to be built by make all.
+check_PROGRAMS = $(PASSING_TEST_Executables)
+# a list of programs or scripts to run in order to do the testing 
+TESTS= $(check_PROGRAMS) caller.out 
 
 testTranslator=../../testTranslator
 
@@ -110,6 +109,9 @@ $(TEST_Objects): ../../testTranslator
 # This is a redundant test with it also being in the list TESTCODES_REQUIRED_TO_PASS (above).
 test2005_168.o: $(srcdir)/test2005_168.c
 	$(testTranslator) $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
+
+$(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
+	$(testTranslator) $(ROSE_FLAGS) -c $<
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files

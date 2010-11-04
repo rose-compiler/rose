@@ -9,7 +9,7 @@
  * pointer points outside of underlying object
  * 
  * But it actually changes the original semantics of correct code. 
- * This bug causes the NPB 2.3 OpenMP C version benchmark to fail.
+ * This bug causes EP of the NPB 2.3 OpenMP C version benchmark to fail.
  *
  * Liao, 9/22/2009
  * */

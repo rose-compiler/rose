@@ -1490,6 +1490,9 @@ void parse_fortran_openmp(SgSourceFile *sageFilePtr)
             {
               att->setPreprocessingInfo(pinfo);
               addOmpAttribute(att, locNode);
+              ROSE_ASSERT (locNode->getAttachedPreprocessingInfo ()->size() != 0);
+             // cout<<"debug at ompFortranParser.C:"<<locNode<<" "<< locNode->getAttachedPreprocessingInfo ()->size() <<endl;
+              omp_comment_list.push_back(att);
             }
           }
         }

@@ -11,7 +11,8 @@ namespace InsnSemanticsExpr {
     /** Operators for internal nodes of the expression tree. Commutative operators generally take one or more operands.
      *  Operators such as shifting, extending, and truncating have the size operand appearing before the bit vector on which
      *  to operate (this makes the output more human-readable since the size operand is often a constant). */
-    enum Operator {
+    enum Operator 
+	{
         OP_ADD,                 /**< Addition. One or more operands, all the same width. */
         OP_AND,                 /**< Boolean AND. Operands are all Boolean (1-bit) values. See also OP_BV_AND. */
         OP_ASR,                 /**< Arithmetic shift right. Operand B shifted by A bits; 0 <= A < width(B). */

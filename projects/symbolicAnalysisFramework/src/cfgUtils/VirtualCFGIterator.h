@@ -129,7 +129,7 @@ class back_dataflow: /*public virtual BaseCFG::back_dataflow,*/ public virtual d
 	//back_dataflow(): back_iterator() {}
 	
 	back_dataflow(const DataflowNode &end, const DataflowNode &terminator_arg): 
-		dataflow(end, terminator_arg)/*, back_iterator(end)*/, iterator(end) {}
+		iterator(end), dataflow(end, terminator_arg)/*, back_iterator(end)*/ {}
 		
 	void operator ++ (int);
 };

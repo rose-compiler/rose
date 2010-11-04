@@ -3,9 +3,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_PROGRAMS = parseOmp
 parseOmp_SOURCES = parseOmp.C
 
-SUBDIRS= 
+SUBDIRS=
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-  SUBDIRS += cvalidation
+  SUBDIRS += . cvalidation
 endif
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   SUBDIRS += fortran 
@@ -67,6 +67,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor3.c \
 	ompfor4.c \
 	ompfor5.c \
+	ompfor6.c \
 	ompGetNumThreads.c \
 	ordered2.c \
 	ordered.c \

@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 		SgFunctionDefinition* curFunc = isSgFunctionDefinition(*f);
 		ROSE_ASSERT(curFunc);
 				
-		SgBasicBlock *funcBody = curFunc->get_body();
+		//SgBasicBlock *funcBody = curFunc->get_body();
 		varIDSet allVars = getVarRefsInSubtree(curFunc);
 			
 		{
@@ -85,16 +85,16 @@ int main(int argc, char** argv)
 			
 			// setToTop and setTopBot modification functionality
 			modified = bot.setToBot();
-			if(modified) {printf("ERROR: changing bottom to bottom modifies it!\n", i); ret++;}
+			if(modified) {printf("ERROR: changing bottom to bottom modifies it !\n"); ret++;}
 			modified = vbvAll1.setToTop();
-			if(modified) {printf("ERROR: changing top to top modifies it!\n", i); ret++;}
+			if(modified) {printf("ERROR: changing top to top modifies it!\n"); ret++;}
 			modified = bot.setToTop();
-			if(!modified) {printf("ERROR: changing bottom to top does not modify it!\n", i); ret++;}
+			if(!modified) {printf("ERROR: changing bottom to top does not modify it!\n"); ret++;}
 			modified = bot.setToBot();
-			if(!modified) {printf("ERROR: changing top to bottom does not modify it!\n", i); ret++;}
+			if(!modified) {printf("ERROR: changing top to bottom does not modify it!\n"); ret++;}
 			VarBitVector tmp(vbvEven);
 			modified = tmp.setToBot();
-			if(!modified) {printf("ERROR: changing vbvEven to bottom does not modify it!\n", i); ret++;}
+			if(!modified) {printf("ERROR: changing vbvEven to bottom does not modify it!\n"); ret++;}
 			
 			
 			VarBitVector topA(top), topB(top);
@@ -116,19 +116,19 @@ int main(int argc, char** argv)
 					if(botB.setVar(*it, false)) {printf("ERROR: setting index %d of botB to false changes it!\n", i); ret++;}	
 				}
 			}
-			if(botA != vbvEven) {printf("ERROR: botA != vbvEven!\n", i); ret++;}
-			if(botB != vbvEven) {printf("ERROR: botB != vbvEven!\n", i); ret++;}
-			if(topA != vbvOdd) {printf("ERROR: topA != vbvOdd!\n", i); ret++;}
-			if(topB != vbvOdd) {printf("ERROR: topB != vbvOdd!\n", i); ret++;}
+			if(botA != vbvEven) {printf("ERROR: botA != vbvEven!\n"); ret++;}
+			if(botB != vbvEven) {printf("ERROR: botB != vbvEven!\n"); ret++;}
+			if(topA != vbvOdd) {printf("ERROR: topA != vbvOdd!\n"); ret++;}
+			if(topB != vbvOdd) {printf("ERROR: topB != vbvOdd!\n"); ret++;}
 
 			VarBitVector* topUbotA = topA.unionVec(botB);
 			VarBitVector* topUbotB = topB.unionVec(botA);
-			if((*topUbotA) != top) {printf("ERROR: (*topUbotA) != top!\n", i); ret++;}
-			if((*topUbotB) != top) {printf("ERROR: (*topUbotB) != top!\n", i); ret++;}
+			if((*topUbotA) != top) {printf("ERROR: (*topUbotA) != top!\n"); ret++;}
+			if((*topUbotB) != top) {printf("ERROR: (*topUbotB) != top!\n"); ret++;}
 			VarBitVector* topIbotA = topA.intersectVec(botB);
 			VarBitVector* topIbotB = topB.intersectVec(botA);
-			if((*topIbotA) != bot) {printf("ERROR: (*topIbotA) != bot!\n", i); ret++;}
-			if((*topIbotB) != bot) {printf("ERROR: (*topIbotB) != bot!\n", i); ret++;}
+			if((*topIbotA) != bot) {printf("ERROR: (*topIbotA) != bot!\n"); ret++;}
+			if((*topIbotB) != bot) {printf("ERROR: (*topIbotB) != bot!\n"); ret++;}
 					
 			if(bot == top) {printf("ERROR: bot==top!\n"); ret++;}
 			if(vbv0_mod3 == vbv1_mod3) {printf("ERROR: vbv0_mod3==vbv1_mod3!\n"); ret++;}

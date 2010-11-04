@@ -32,17 +32,20 @@ ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
 PASSING_TEST_Objects = ${TESTCODES:.java=.o}
 TEST_Objects = ${ALL_TESTCODES:.java=.o}
 
-# if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
-testTranslator=../../testTranslator
+# testTranslator=../../testTranslator
+testTranslator=../../testGraphGeneration
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
+../../testGraphGeneration:
+	cd ../..; $(MAKE) testGraphGeneration
+
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.java)
-$(TEST_Objects): ../../testTranslator
+$(TEST_Objects): $(testTranslator) ../../testTranslator
 	$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.java)
 
 testJavaTraversal:
@@ -67,8 +70,6 @@ testECJ:
 
 # Execute the java file using: java -Djava.library.path=. HelloWorld
 
-EXTRA_DIST = $(ALL_TESTCODES)
-
 check-local:
 	@echo "Tests for Java."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
@@ -80,10 +81,12 @@ check-local:
 else
 check-local:
 	@echo "Tests for Java."
-	@echo "************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/Java_tests: JAVA NOT CONFIGURED IN ROSE ******"
-	@echo "************************************************************************************************"
+	@echo "**********************************************************************************************"
+	@echo "****** ROSE/tests/CompileTests/Java_tests: JAVA LANGUAGE SUPPORT NOT CONFIGURED IN ROSE ******"
+	@echo "**********************************************************************************************"
 endif
+
+EXTRA_DIST = $(ALL_TESTCODES)
 
 clean-local:
 	rm -f *.dot *.class rose_*.java rose_performance_report_lockfile.lock *.out
