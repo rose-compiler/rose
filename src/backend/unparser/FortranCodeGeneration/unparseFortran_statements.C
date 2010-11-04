@@ -297,8 +297,13 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
        // case V_SgGotoStatement:              unparseGotoStmt(stmt, info); break;
        // executable statements, other
        // case V_SgExprStatement:              unparseExprStmt(stmt, info); break;
+       //  Liao 10/18/2010, I turn on the pragma unparsing here to help debugging OpenMP programs
+       //  , where OpenMP directive comments are used to generate C/C++-like pragmas internally.
+       //  Those pragmas later are used to reuse large portion of OpenMP AST construction of C/C++
        // pragmas
-       // case V_SgPragmaDeclaration:          unparsePragmaDeclStmt(stmt, info); break;
+        case V_SgPragmaDeclaration:          unparsePragmaDeclStmt(stmt, info); break;
+        // Liao 10/21/2010, Fortran-only OpenMP handling
+        case V_SgOmpDoStatement:             unparseOmpDoStatement(stmt, info); break;
 
 #if 0
        // Optional support for unparsing Fortran from C
@@ -2155,6 +2160,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
        // printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 
           unp->u_fortran_type->unparseType(baseType,info);
+
           curprint(" :: ");
           ninfo.set_SkipBaseType();
           while (p != vardecl->get_variables().end())
@@ -3711,8 +3717,13 @@ FortranCodeGeneration_locatedNode::unparsePragmaDeclStmt (SgStatement* stmt, SgU
   ROSE_ASSERT(pragma != NULL);
   
   string txt = pragma->get_pragma();
-  curprint("!pragma ");
+  AstAttribute* att = stmt->getAttribute("OmpAttributeList");
+  if (att)
+    curprint("!$");
+  else
+    curprint("!pragma ");
   curprint(txt);
+  curprint("\n");
 }
 
 
@@ -3825,9 +3836,9 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
 
   // General format:
   //   <type> <attributes> :: <variable>
-  
-     SgName name = initializedName->get_name();
-     SgType* type = initializedName->get_type();
+
+     SgName name         = initializedName->get_name();
+     SgType* type        = initializedName->get_type();
      SgInitializer* init = initializedName->get_initializer();  
      ROSE_ASSERT(type);
   
@@ -3952,9 +3963,22 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                   }
              }
 
+       // DQ (10/25/2010): The protected semantics can be applied to each variable separately.
+       // This may be true for other declarations which might force them to be handled similarly to this implementation below.
        // Note that in Fortran, PROTECTED is not used as a access modifier in the language (only PUBLIC and PRIVATE exist).
        // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isProtected() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
-          if (variableDeclaration->get_declarationModifier().get_accessModifier().isProtected() == true)
+       // if (variableDeclaration->get_declarationModifier().get_accessModifier().isProtected() == true)
+          bool is_protected = true;
+          SgInitializedNamePtrList & variableList = variableDeclaration->get_variables();
+          ROSE_ASSERT(variableList.empty() == false);
+          SgInitializedNamePtrList::iterator i = variableList.begin();
+          while(i != variableList.end())
+             {
+               if ( (*i)->get_protected_declaration() == false)
+                    is_protected = false;
+               i++;
+             }
+          if (is_protected == true && (variableList.empty() == false))
              {
                curprint(", PROTECTED");
              }
@@ -3999,10 +4023,13 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
 
        //FMZ (4/14/2009): Cray Pointer
           if (isSgTypeCrayPointer(type) == NULL)
-          curprint(" :: ");
-          else {
-                curprint(" (");
-        }
+             {
+               curprint(" :: ");
+             }
+            else
+             {
+               curprint(" (");
+             }
         }
       // FMZ 
       // FIXME: currenly use "prev_decl_item" to denote the pointee
@@ -5506,6 +5533,153 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
 
 }
 
+void FortranCodeGeneration_locatedNode::unparseOmpPrefix     (SgUnparse_Info& info)
+{
+  curprint(string ("!$omp "));
+}
 
+// Just skip nowait and copyprivate clauses for Fortran 
+void
+FortranCodeGeneration_locatedNode::unparseOmpBeginDirectiveClauses (SgStatement* stmt,     SgUnparse_Info& info)
+{
+  ROSE_ASSERT (stmt != NULL);
+  // optional clauses
+  if (isSgOmpClauseBodyStatement(stmt))
+  {
+    const SgOmpClausePtrList& clause_ptr_list = isSgOmpClauseBodyStatement(stmt)->get_clauses();
+    SgOmpClausePtrList::const_iterator i;
+    for (i= clause_ptr_list.begin(); i!= clause_ptr_list.end(); i++)
+    {
+      SgOmpClause* c_clause = *i;
+      if (isSgOmpNowaitClause(c_clause) || isSgOmpCopyprivateClause(c_clause) )
+         continue;
+      unparseOmpClause(c_clause, info);
+    }
+  }
+  unp->u_sage->curprint_newline();
+}
 
+// Only unparse nowait or copyprivate clauses here
+void
+FortranCodeGeneration_locatedNode::unparseOmpEndDirectiveClauses(SgStatement* stmt,     SgUnparse_Info& info)
+{
+  ROSE_ASSERT (stmt != NULL);
+  // optional clauses
+  if (isSgOmpClauseBodyStatement(stmt))
+  {
+    const SgOmpClausePtrList& clause_ptr_list = isSgOmpClauseBodyStatement(stmt)->get_clauses();
+    SgOmpClausePtrList::const_iterator i;
+    for (i= clause_ptr_list.begin(); i!= clause_ptr_list.end(); i++)
+    {
+      SgOmpClause* c_clause = *i;
+      if (isSgOmpNowaitClause(c_clause) || isSgOmpCopyprivateClause(c_clause) )
+        unparseOmpClause(c_clause, info);
+    }
+  }
+  unp->u_sage->curprint_newline();
+}
 
+void FortranCodeGeneration_locatedNode::unparseOmpEndDirectivePrefixAndName (SgStatement* stmt,     SgUnparse_Info& info)
+{
+  ROSE_ASSERT(stmt != NULL);
+  unp->u_sage->curprint_newline();
+  switch (stmt->variantT())
+  {
+    case V_SgOmpParallelStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("end parallel "));
+        break;
+      }
+     case V_SgOmpCriticalStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("end critical "));
+        if (isSgOmpCriticalStatement(stmt)->get_name().getString()!="")
+        {
+
+          curprint (string ("("));
+          curprint (isSgOmpCriticalStatement(stmt)->get_name().getString());
+          curprint (string (")"));
+        }
+        break;
+      }
+        case V_SgOmpSectionsStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("end sections"));
+        break;
+      }
+       case V_SgOmpMasterStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("end master "));
+        break;
+      }
+      case V_SgOmpOrderedStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("end ordered "));
+        break;
+      }
+    case V_SgOmpWorkshareStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("end workshare "));
+        break;
+      }
+      case V_SgOmpSingleStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("end single "));
+        break;
+      }
+     case V_SgOmpTaskStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("end task "));
+        break;
+      }
+     case V_SgOmpDoStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("end do "));
+        break;
+      }
+    default:
+      {
+        cerr<<"error: unacceptable OpenMP directive type within unparseOmpDirectivePrefixAndName(): "<<stmt->class_name()<<endl;
+        ROSE_ASSERT(false);
+        break;
+      }
+  } // end switch
+  //  unp->u_sage->curprint_newline(); // prepare end clauses, they have to be on the same line
+}
+
+void FortranCodeGeneration_locatedNode::unparseOmpDoStatement     (SgStatement* stmt, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(stmt != NULL);
+  SgOmpDoStatement * d_stmt = isSgOmpDoStatement (stmt);
+  ROSE_ASSERT(d_stmt != NULL);
+  
+  unparseOmpDirectivePrefixAndName(stmt, info);
+  unparseOmpBeginDirectiveClauses(stmt, info);
+
+  SgUnparse_Info ninfo(info);
+  if (d_stmt->get_body())
+  {
+    unparseStatement(d_stmt->get_body(), ninfo);
+  }
+  else
+  {
+    cerr<<"Error: empty body for:"<<stmt->class_name()<<" is not allowed!"<<endl;
+    ROSE_ASSERT(false);
+  }
+
+    // unparse the end directive and name 
+  unparseOmpEndDirectivePrefixAndName (stmt, info);
+
+  // unparse the end directive's clause
+  unparseOmpEndDirectiveClauses(stmt, info);
+
+}

@@ -11,7 +11,8 @@
 
 // $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
-
+/* DQ (10/22/2010): Isolate some of the OSX specific details. */
+#ifdef __APPLE__
 /* DQ (10/13/2010): This is a specific fix suggested by Cong Hou for an OSX problem. 
  * The use of __BLOCKS__ (being defined as a macro) controls the code that ROSE will 
  * see in the Mac OSX header files.  If it is defined then ROSE will try to parse 
@@ -19,18 +20,17 @@
  * So in this fix we detect if we are on an OSX OS (thus using OSX header files)
  * and we undefine the __BLOCKS__ macro.
  */
-#ifdef __APPLE__
 #undef __BLOCKS__
 
 /* Cong (10/20/2010): In EDG 3.x, __attribute__, __dead2, __pure2 cannot be parsed, 
  * so we define them to nothing here.  */
 #ifndef ROSE_USE_EDG_VERSION_4
-#define __attribute__(x)
-#define __dead2
-#define __pure2
+	#define __attribute__(x)
+	#define __dead2
+	#define __pure2
 #endif
 
-#endif
+#endif //#ifdef __APPLE__
 
 /* This does not work since the include path may not be set to include this file. 
    Also including this is problematic since it would be used in both the compilation 

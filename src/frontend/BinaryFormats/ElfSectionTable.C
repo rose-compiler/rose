@@ -1,7 +1,6 @@
 /* ELF Section Tables (SgAsmElfSectionTable and related classes) */
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "stringify.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -115,7 +114,7 @@ SgAsmElfSectionTable::parse()
 
     /* Read all the section headers. */
     std::vector<SgAsmElfSectionTableEntry*> entries;
-    addr_t offset = 0;
+    rose_addr_t offset = 0;
     for (size_t i=0; i<nentries; i++, offset+=ent_size) {
         SgAsmElfSectionTableEntry *shdr = NULL;
         if (4 == fhdr->get_word_size()) {
@@ -458,41 +457,30 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 std::string
 SgAsmElfSectionTableEntry::to_string(SectionType t)
 {
-    switch (t) {
-      case SHT_NULL:     return "SHT_NULL";
-      case SHT_PROGBITS: return "SHT_PROGBITS";
-      case SHT_SYMTAB:   return "SHT_SYMTAB";
-      case SHT_STRTAB:   return "SHT_STRTAB";
-      case SHT_RELA:     return "SHT_RELA";
-      case SHT_HASH:     return "SHT_HASH";
-      case SHT_DYNAMIC:  return "SHT_DYNAMIC";
-      case SHT_NOTE:     return "SHT_NOTE";
-      case SHT_NOBITS:   return "SHT_NOBITS";
-      case SHT_REL:      return "SHT_REL";
-      case SHT_SHLIB:    return "SHT_SHLIB";
-      case SHT_DYNSYM:   return "SHT_DYNSYM";
-
-	// extensions
-      case SHT_GNU_verdef: return "SHT_GNU_verdef";
-      case SHT_GNU_verneed: return "SHT_GNU_verneed";
-      case SHT_GNU_versym: return "SHT_GNU_versym";
-      default:{
-        char buf[128];
-	if(t>=SHT_LOOS && t <= SHT_HIOS) {
-            snprintf(buf,sizeof(buf),"os-specific (%zu)",size_t(t)) ;
-            return buf;
-	} else if (t>=SHT_LOPROC && t<=SHT_HIPROC) {
-            snprintf(buf,sizeof(buf),"processor-specific (%zu)",size_t(t)) ;
-            return buf;
-	} else if (t>=SHT_LOUSER && t<=SHT_HIUSER) {
-            snprintf(buf,sizeof(buf),"application-specific (%zu)",size_t(t)) ;
-            return buf;
-	} else {
-            snprintf(buf,sizeof(buf),"unknown section type (%zu)",size_t(t)) ;
-            return buf;
-        }
-      }
-    };
+#ifndef _MSC_VER
+    std::string retval = stringifySgAsmElfSectionTableEntrySectionType(t);
+#else
+	ROSE_ASSERT(false);
+	std::string retval = "";
+#endif
+	if ('('!=retval[0])
+        return retval;
+    
+    char buf[128];
+    if(t>=SHT_LOOS && t <= SHT_HIOS) {
+        snprintf(buf,sizeof(buf),"os-specific (%zu)",size_t(t)) ;
+        return buf;
+    }
+    if (t>=SHT_LOPROC && t<=SHT_HIPROC) {
+        snprintf(buf,sizeof(buf),"processor-specific (%zu)",size_t(t)) ;
+        return buf;
+    }
+    if (t>=SHT_LOUSER && t<=SHT_HIUSER) {
+        snprintf(buf,sizeof(buf),"application-specific (%zu)",size_t(t)) ;
+        return buf;
+    }
+    snprintf(buf,sizeof(buf),"unknown section type (%zu)",size_t(t)) ;
+    return buf;
 }
 
 std::string
@@ -582,7 +570,7 @@ SgAsmElfSectionTable::reallocate()
 
     /* Resize based on word size from ELF File Header */
     size_t opt_size, nentries;
-    addr_t need = calculate_sizes(NULL, NULL, &opt_size, &nentries);
+    rose_addr_t need = calculate_sizes(NULL, NULL, &opt_size, &nentries);
     if (need < get_size()) {
         if (is_mapped()) {
             ROSE_ASSERT(get_mapped_size()==get_size());
@@ -648,7 +636,7 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
         }
 
         /* The disk struct */
-        addr_t spos = write(f, id*ent_size, struct_size, disk);
+        rose_addr_t spos = write(f, id*ent_size, struct_size, disk);
         if (shdr->get_extra().size() > 0) {
             ROSE_ASSERT(shdr->get_extra().size()<=opt_size);
             write(f, spos, shdr->get_extra());

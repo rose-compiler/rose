@@ -1,6 +1,6 @@
 /* ELF Dynamic Linking (SgAsmElfDynamicSection and related classes) */
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "stringify.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -52,79 +52,13 @@ SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk) const
 std::string
 SgAsmElfDynamicEntry::to_string(EntryType t) 
 {
-    switch (t) {
-      case DT_NULL:             return "DT_NULL";
-      case DT_NEEDED:           return "DT_NEEDED";
-      case DT_PLTRELSZ:         return "DT_PLTRELSZ";
-      case DT_PLTGOT:           return "DT_PLTGOT";
-      case DT_HASH:             return "DT_HASH";
-      case DT_STRTAB:           return "DT_STRTAB";
-      case DT_SYMTAB:           return "DT_SYMTAB";
-      case DT_RELA:             return "DT_RELA";
-      case DT_RELASZ:           return "DT_RELASZ";
-      case DT_RELAENT:          return "DT_RELAENT";
-      case DT_STRSZ:            return "DT_STRSZ";
-      case DT_SYMENT:           return "DT_SYMENT";
-      case DT_INIT:             return "DT_INIT";
-      case DT_FINI:             return "DT_FINI";
-      case DT_SONAME:           return "DT_SONAME";
-      case DT_RPATH:            return "DT_RPATH";
-      case DT_SYMBOLIC:         return "DT_SYMBOLIC";
-      case DT_REL:              return "DT_REL";
-      case DT_RELSZ:            return "DT_RELSZ";
-      case DT_RELENT:           return "DT_RELENT";
-      case DT_PLTREL:           return "DT_PLTREL";
-      case DT_DEBUG:            return "DT_DEBUG";
-      case DT_TEXTREL:          return "DT_TEXTREL";
-      case DT_JMPREL:           return "DT_JMPREL";
-      case DT_BIND_NOW:         return "DT_BIND_NOW";
-      case DT_INIT_ARRAY:       return "DT_INIT_ARRAY";
-      case DT_FINI_ARRAY:       return "DT_FINI_ARRAY";
-      case DT_INIT_ARRAYSZ:     return "DT_INIT_ARRAYSZ";
-      case DT_FINI_ARRAYSZ:     return "DT_FINI_ARRAYSZ";
-      case DT_RUNPATH:          return "DT_RUNPATH";
-      case DT_FLAGS:            return "DT_FLAGS";
-      case DT_PREINIT_ARRAY:    return "DT_PREINIT_ARRAY";
-      case DT_PREINIT_ARRAYSZ:  return "DT_PREINIT_ARRAYSZ";
-      case DT_NUM:              return "DT_NUM";
-      case DT_GNU_PRELINKED:    return "DT_GNU_PRELINKED";
-      case DT_GNU_CONFLICTSZ:   return "DT_GNU_CONFLICTSZ";
-      case DT_GNU_LIBLISTSZ:    return "DT_GNU_LIBLISTSZ";
-      case DT_CHECKSUM:         return "DT_CHECKSUM";
-      case DT_PLTPADSZ:         return "DT_PLTPADSZ";
-      case DT_MOVEENT:          return "DT_MOVEENT";
-      case DT_MOVESZ:           return "DT_MOVESZ";
-      case DT_FEATURE_1:        return "DT_FEATURE_1";
-      case DT_POSFLAG_1:        return "DT_POSFLAG_1";
-      case DT_SYMINSZ:          return "DT_SYMINSZ";
-      case DT_SYMINENT:         return "DT_SYMINENT";
-      case DT_GNU_HASH:         return "DT_GNU_HASH";
-      case DT_TLSDESC_PLT:      return "DT_TLSDESC_PLT";
-      case DT_TLSDESC_GOT:      return "DT_TLSDESC_GOT";
-      case DT_GNU_CONFLICT:     return "DT_GNU_CONFLICT";
-      case DT_GNU_LIBLIST:      return "DT_GNU_LIBLIST";
-      case DT_CONFIG:           return "DT_CONFIG";
-      case DT_DEPAUDIT:         return "DT_DEPAUDIT";
-      case DT_AUDIT:            return "DT_AUDIT";
-      case DT_PLTPAD:           return "DT_PLTPAD";
-      case DT_MOVETAB:          return "DT_MOVETAB";
-      case DT_SYMINFO:          return "DT_SYMINFO";
-      case DT_VERSYM:           return "DT_VERSYM";
-      case DT_RELACOUNT:        return "DT_RELACOUNT";
-      case DT_RELCOUNT:         return "DT_RELCOUNT";
-      case DT_FLAGS_1:          return "DT_FLAGS_1";
-      case DT_VERDEF:           return "DT_VERDEF";
-      case DT_VERDEFNUM:        return "DT_VERDEFNUM";
-      case DT_VERNEED:          return "DT_VERNEED";
-      case DT_VERNEEDNUM:       return "DT_VERNEEDNUM";
-      case DT_AUXILIARY:        return "DT_AUXILIARY";
-      case DT_FILTER:           return "DT_FILTER";
+#ifndef _MSC_VER
+    return stringifySgAsmElfDynamicEntryEntryType(t);
+#else
+	ROSE_ASSERT(false);
+	return "";
+#endif
 
-      default:
-        static char s[64];
-        sprintf(s, "0x%08lx", (unsigned long)t);
-        return s;
-    }
 }
 
 /** Set name and adjust parent */
@@ -375,7 +309,7 @@ SgAsmElfDynamicSection::unparse(std::ostream &f) const
             ROSE_ASSERT(!"unsupported word size");
         }
 
-        addr_t spos = i * entry_size;
+        rose_addr_t spos = i * entry_size;
         spos = write(f, spos, struct_size, disk);
         if (entry->get_extra().size()>0) {
             ROSE_ASSERT(entry->get_extra().size()<=extra_size);

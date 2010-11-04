@@ -22,3 +22,13 @@ CMakeLists.txt:
    This is the required CMake file to support the CMake build process.
 
 
+An undistributed directory is ECJ
+   This contains the directory: org.eclipse.jdt.core
+In org.eclipse.jdt.core building the ecj.jar file is
+done using "ant".
+
+Note that the build.xml file was changed to uses javac 1.5, specifically:
+				source="1.5"
+				target="1.5"
+
+

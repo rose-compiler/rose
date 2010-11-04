@@ -11,7 +11,8 @@ namespace VirtualBinCFG {
 
     class CFGEdge;
 
-    enum EdgeConditionKind {
+    enum EdgeConditionKind 
+	{
         eckUnconditional,       // Normal, unconditional edge
         eckTrue,                // True case of a two-way branch
         eckFalse,               // False case of a two-way branch
@@ -31,6 +32,7 @@ namespace VirtualBinCFG {
         InstructionToAddressesMap  incomingEdges;
 
     public:
+
         AuxiliaryInformation() {}
         AuxiliaryInformation(SgNode* top);
 
@@ -53,7 +55,6 @@ namespace VirtualBinCFG {
                 return predsIter->second;
             }
         }
-
     };
 
     class CFGNode {

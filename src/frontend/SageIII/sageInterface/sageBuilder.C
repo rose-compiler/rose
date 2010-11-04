@@ -3858,6 +3858,9 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
 
           ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
           ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != defdecl);
+
+       // DQ (10/30/2010): There shuld be a properly defined type at this point!
+          ROSE_ASSERT(nondefdecl->get_type() != NULL);
         }
        else // build a nondefnining declaration if it does not exist
         {
@@ -3897,6 +3900,9 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
             // break the existing interface. Need to discuss this with Liao.
             //   printf ("Warning: no scope provided to support symbol table entry! \n");
              }
+
+       // DQ (10/30/2010): There shuld be a properly defined type at this point!
+          ROSE_ASSERT(nondefdecl->get_type() != NULL);
         }
 
      ROSE_ASSERT(nondefdecl != NULL);
@@ -3914,11 +3920,18 @@ SageBuilder::buildDefiningClassDeclaration ( SgName name, SgScopeStatement* scop
      SgClassDefinition* definingClassDefinition = buildClassDefinition();
      ROSE_ASSERT(definingClassDefinition != NULL);
 
+  // DQ (10/30/2010): There should be a properly defined type at this point!
+     SgClassType* classType = nondefiningClassDeclaration->get_type();
+     ROSE_ASSERT(classType != NULL);
+
      SgClassDeclaration::class_types kind = SgClassDeclaration::e_class;
-     SgClassDeclaration* definingClassDeclaration = new SgClassDeclaration (name,kind,NULL,definingClassDefinition);
+
+  // DQ (10/30/2010): We need to make sure that there is a type defined.
+  // SgClassDeclaration* definingClassDeclaration = new SgClassDeclaration (name,kind,NULL,definingClassDefinition);
+     SgClassDeclaration* definingClassDeclaration = new SgClassDeclaration (name,kind,classType,definingClassDefinition);
      ROSE_ASSERT(definingClassDeclaration != NULL);
 
-     printf ("SageBuilder::buildDefiningClassDeclaration(): definingClassDeclaration = %p \n",definingClassDeclaration);
+  // printf ("SageBuilder::buildDefiningClassDeclaration(): definingClassDeclaration = %p \n",definingClassDeclaration);
 
      setOneSourcePositionForTransformation(definingClassDeclaration);
 
@@ -3936,6 +3949,9 @@ SageBuilder::buildDefiningClassDeclaration ( SgName name, SgScopeStatement* scop
      ROSE_ASSERT(definingClassDeclaration->get_definition() != NULL);
 
      ROSE_ASSERT(definingClassDeclaration->get_definition()->get_parent() != NULL);
+
+  // DQ (10/30/2010): There should be a properly defined type at this point!
+     ROSE_ASSERT(definingClassDeclaration->get_type() != NULL);
 
      return definingClassDeclaration;
    }

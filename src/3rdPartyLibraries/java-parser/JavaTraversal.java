@@ -16,6 +16,7 @@ import org.eclipse.jdt.internal.compiler.parser.*;
 import org.eclipse.jdt.internal.compiler.problem.*;
 import org.eclipse.jdt.internal.compiler.util.*;
 
+// import JavaParser.*;
 
 // DQ (10/12/2010): Make more like the OFP implementation (using Callable<Boolean> abstract base class). 
 // class JavaTraversal {
@@ -1080,11 +1081,21 @@ class JavaTraversal  implements Callable<Boolean> {
 
 	/* tps : compile the files and produce class files --------------------------- */
 	ProcessTaskManager processingTask = null;
+   System.out.println("test 6 ...");
+   JavaParser java_parser = new JavaParser();
+
+   System.out.println("test 7 ...");
+   java_parser.cactionCompilationUnitList(main.batchCompiler.totalUnits,args);
+
+   System.out.println("test 8 ...");
 	for (int i = 0; i < main.batchCompiler.totalUnits; i++) {
 	    unit = main.batchCompiler.unitsToProcess[i];
 	    try {
 		main.batchCompiler.process(unit, i);
 		jt.traverseAST(unit); /*tps this is a better place for the traversal */
+      System.out.println("test 9 ...");
+      java_parser.startParsingAST(unit);
+      System.out.println("test 10 ...");
 	    } finally {
 		// cleanup compilation unit result
 		unit.cleanUp();

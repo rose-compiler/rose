@@ -1,10 +1,3 @@
-// #include "cfgView.h"
-// #include "rose.h"
-// #include "loopHelpers.h"
-// #include <sstream>
-// #include <iomanip>
-// #include <stdint.h>
-
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "virtualBinCFG.h"

@@ -8466,6 +8466,10 @@ SgInitializedName::post_construction_initialization()
   // FMZ added for coarray
      p_isCoArray = false;
 
+  // DQ (10/26/2010): These were not properly initialized.
+     p_shapeDeferred          = false;
+     p_initializationDeferred = false;
+     p_protected_declaration = false;
    }
 
 // This constructor is specific to the creation of SgInitializedName objects used as initializers
@@ -8599,6 +8603,11 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
      p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
      p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
      p_isCoArray                             = ptr.p_isCoArray;
+
+  // DQ (10/26/2010): Previously uninitialized data members.
+     p_shapeDeferred          = ptr.p_shapeDeferred;
+     p_initializationDeferred = ptr.p_initializationDeferred;
+     p_protected_declaration  = ptr.p_protected_declaration;
    }
 
 SgInitializedName&
