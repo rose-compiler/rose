@@ -48,9 +48,6 @@ MOSTLYCLEANFILES += \
 	*.dump *.new *.dot rose_*.s \
 	object_names.txt testLibraryIdentification.db
 
-mostlyclean-local:
-	rm -rf tmp_objects
-
 check-local: $(TEST_TARGETS)
 
 
