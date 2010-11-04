@@ -63,7 +63,7 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
             inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
    }
 
-   if (isSgVariableDeclaration(astNode) && !isSgClassDefinition(isSgVariableDeclaration(astNode) -> get_parent())) {
+    if (isSgVariableDeclaration(astNode) && !isSgClassDefinition(isSgVariableDeclaration(astNode) -> get_parent())) {
       // ------------------------------ visit Variable Declarations ----------------------------------------------
       Rose_STL_Container<SgInitializedName*> vars = isSgVariableDeclaration(astNode)->get_variables();
       for (Rose_STL_Container<SgInitializedName*>::const_iterator it = vars.begin();it!=vars.end();++it) {
@@ -75,7 +75,7 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
       }
    }
 
-   if (isSgInitializedName(astNode)) {
+    if (isSgInitializedName(astNode)) {
       // ------------------------------ visit isSgInitializedName ----------------------------------------------
       ROSE_ASSERT(isSgInitializedName(astNode)->get_typeptr());
       SgArrayType* array = isSgArrayType(isSgInitializedName(astNode)->get_typeptr());
@@ -91,46 +91,43 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
       }
    }
 
-   if (isSgAssignOp(astNode)) {
+    if (isSgAssignOp(astNode)) {
       // 1. look for MALLOC
       // 2. Look for assignments to variables - i.e. a variable is initialized
       // 3. Assign variables that come from assign initializers (not just assignments
       transf->visit_isArraySgAssignOp(astNode);
    }
 
-
-   if (isSgAssignInitializer(astNode)) {
+    if (isSgAssignInitializer(astNode)) {
       // ------------------------------  DETECT ALL array creations  ----------------------------------------------
       transf->visit_isAssignInitializer(astNode);
       return InheritedAttribute(inheritedAttribute.function, true, inheritedAttribute.isArrowExp,
             inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
    }
 
-#if 1
    if (isSgPntrArrRefExp(astNode)) {
       // ------------------------------ checks for array access  ----------------------------------------------
       transf->visit_isArrayPntrArrRefExp(astNode);
    } // pntrarrrefexp
 
-   if (isSgPointerDerefExp(astNode)) {
+   else if (isSgPointerDerefExp(astNode)) {
       // if this is a varrefexp and it is not initialized, we flag it.
       // do only if it is by itself or on right hand side of assignment
       transf->visit_isSgPointerDerefExp(isSgPointerDerefExp(astNode));
    }
 
-#endif
-
-#if 1
-   if (isSgArrowExp(astNode)) {
+   else if (isSgArrowExp(astNode)) {
       // if this is a varrefexp and it is not initialized, we flag it.
       // do only if it is by itself or on right hand side of assignment
       transf->visit_isSgArrowExp(isSgArrowExp(astNode));
    return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer, true,
          inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
    }
-#endif
 
-#if 0
+   if (isSgFunctionCallExp(astNode)) {
+      // call to a specific function that needs to be checked
+      transf->visit_isFunctionCall(astNode);
+   }
    if (isSgScopeStatement(astNode)) {
       // if, while, do, etc., where we need to check for locals going out of scope
       transf->visit_isSgScopeStatement(astNode);
@@ -140,13 +137,6 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
          transf->visit_isClassDefinition(isSgClassDefinition(astNode));
       }
    }
-
-   if (isSgFunctionCallExp(astNode)) {
-      // call to a specific function that needs to be checked
-      transf->visit_isFunctionCall(astNode);
-   }
-#endif
-   transf->visit(astNode);
 
 
    if( isSgPlusPlusOp( astNode ) || isSgMinusMinusOp( astNode )

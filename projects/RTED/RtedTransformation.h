@@ -390,8 +390,6 @@ public:
    int getDimension(SgInitializedName* initName);
    int getDimension(SgInitializedName* initName,SgVarRefExp* varRef);
    void visit_checkIsMain(SgNode* n);
-   // Traverse all nodes and check properties
-   virtual void visit(SgNode* n);
 
 };
 
