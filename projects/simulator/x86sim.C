@@ -2062,7 +2062,11 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 54: { /*0x36, ioctl*/
-            syscall_enter("ioctl", "ddd");
+            static const Translate ioctl_cmd[] = {
+                TE(TCGETS), TE(TCSETS), TE(TCSETSW), TE(TCGETA), TE(TIOCGPGRP), TE(TIOCSPGRP), TE(TIOCSWINSZ), TE(TIOCGWINSZ),
+                T_END};
+            syscall_enter("ioctl", "dfd", ioctl_cmd);
+            
             int fd=arg(0);
             uint32_t cmd=arg(1), arg2=arg(2);
             int result = -ENOSYS;
