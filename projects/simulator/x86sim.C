@@ -776,35 +776,45 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     pointers.push_back(0); /*the argv NULL terminator*/
 
     /* Create new environment variables by stripping "X86SIM_" off the front of any environment variable and using that
-     * value to override the non-X86SIM_ value, if any. New variables are in the same order as originally (aside from the
-     * X86SIM_ variables being removed. */
-    std::map<std::string, std::string> env_overrides;
+     * value to override the non-X86SIM_ value, if any.  We try to make sure the variables are in the same order as if the
+     * X86SIM_ overrides were not present. In other words, if X86SIM_FOO and FOO are both present, then X86SIM_FOO is deleted
+     * from the list and its value used for FOO; but if X86SIM_FOO is present without FOO, then we just change the name to FOO
+     * and leave it at that location. We do all this so that variables are in the same order whether run natively or under the
+     * simulator. */
+    std::map<std::string, std::string> envvars;
+    std::map<std::string, std::string>::iterator found;
     for (int i=0; environ[i]; i++) {
-        if (!strncmp(environ[i], "X86SIM_", 7)) {
-            char *eq = strchr(environ[i], '=');
-            ROSE_ASSERT(eq!=NULL);
-            std::string name(environ[i]+7, eq-(environ[i]+7));
-            env_overrides.insert(std::make_pair(name, std::string(eq+1)));
-        }
+        char *eq = strchr(environ[i], '=');
+        ROSE_ASSERT(eq!=NULL);
+        std::string var(environ[i], eq-environ[i]);
+        std::string val(eq+1);
+        envvars.insert(std::make_pair(var, val));
     }
-    for (int i=0; environ[i]; i++) {
-        if (strncmp(environ[i], "X86SIM_", 7)) {
-            char *eq = strchr(environ[i], '=');
-            ROSE_ASSERT(eq!=NULL);
-            std::string name(environ[i], eq-environ[i]);
-            std::map<std::string, std::string>::iterator oi=env_overrides.find(name);
-            std::string env;
-            if (oi!=env_overrides.end()) {
-                env = name + "=" + oi->second;
+    for (int i=0, j=0; environ[i]; i++) {
+        char *eq = strchr(environ[i], '=');
+        ROSE_ASSERT(eq!=NULL);
+        std::string var(environ[i], eq-environ[i]);
+        std::string val(eq+1);
+        if (!strncmp(var.c_str(), "X86SIM_", 7) && environ[i]+7!=eq) {
+            std::string var_short = var.substr(7);
+            if ((found=envvars.find(var_short))==envvars.end()) {
+                var = var_short;
+                val = eq+1;
             } else {
-                env = environ[i];
+                continue;
             }
-            sp -= env.size()+1;
-            map->write(env.c_str(), sp, env.size()+1);
-            pointers.push_back(sp);
-            if (trace_loader)
-                fprintf(stderr, "environ[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, env.size(), sp, env.c_str());
+        } else {
+            std::string var_long = "X86SIM_" + var;
+            if ((found=envvars.find(var_long))!=envvars.end()) {
+                val = found->second;
+            }
         }
+        std::string env = var + "=" + val;
+        sp -= env.size() + 1;
+        map->write(env.c_str(), sp, env.size()+1);
+        pointers.push_back(sp);
+        if (debug && trace_loader)
+            fprintf(debug, "environ[%d] %zu bytes at 0x%08zu = \"%s\"\n", j++, env.size(), sp, env.c_str());
     }
     pointers.push_back(0); /*environment NULL terminator*/
 
