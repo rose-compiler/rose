@@ -38,7 +38,7 @@ class QDomDocument;
 class QNFAAction
 {
         public:
-                enum
+                enum QNFAAction_
                 {
                         NoAction        = 0,
                         

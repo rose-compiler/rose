@@ -509,7 +509,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                  // returnListOfAttributes       = getPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
                  // getFortranFixedFormatPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
                  // LexTokenStreamTypePointer lex_token_stream = getFortranFixedFormatPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
-                    LexTokenStreamTypePointer lex_token_stream = getFortranFixedFormatPreprocessorDirectives( fileNameForTokenStream );
+                    LexTokenStreamTypePointer lex_token_stream = NULL;
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+                    lex_token_stream = getFortranFixedFormatPreprocessorDirectives( fileNameForTokenStream );
+#endif
                     ROSE_ASSERT(lex_token_stream != NULL);
 
                  // Attach the token stream to the AST
@@ -535,7 +538,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                  // getFortranFreeFormatPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
                  // string fileNameForTokenStream = Sg_File_Info::getFilenameFromID(currentFileNameId);
 
-                    LexTokenStreamTypePointer lex_token_stream = getFortranFreeFormatPreprocessorDirectives( fileNameForTokenStream );
+                    LexTokenStreamTypePointer lex_token_stream = NULL;
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+                    lex_token_stream = getFortranFreeFormatPreprocessorDirectives( fileNameForTokenStream );
+#endif
                     ROSE_ASSERT(lex_token_stream != NULL);
 
                  // Attach the token stream to the AST

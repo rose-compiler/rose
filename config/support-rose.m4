@@ -153,6 +153,10 @@ support_fortran_only=no
 echo "BEFORE Setting: enableval = $enableval support_fortran_only = $support_fortran_only"
 if test "x$enableval" = "xyes"; then
    if test "x$USE_JAVA" = x1; then
+    # Scott appears to require CPPFLAGS to be set...
+      echo "Before setting CPPFLAGS: CPPFLAGS = $CPPFLAGS"
+      CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
+      echo "Set CPPFLAGS  to include JAVA_JVM_INCLUDE = $JAVA_JVM_INCLUDE"
       echo "Setting: support_fortran_only = $support_fortran_only"
       if test "x$GFORTRAN_PATH" != "x"; then
          echo "Build only: Found a valid gfortran, java is available, OK to support Fortran"
@@ -431,6 +435,16 @@ AC_MSG_CHECKING([for language specific options to generate a minimal ROSE config
 # Specify how to set the ROSE configure options when a minimal configuration of ROSE for only C language support is required
 if test "x$support_c_only" = "xyes"; then
 
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+   enable_binary_analysis_tests=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
    support_fortran_language=no
    support_java_language=no
    support_php_language=no
@@ -439,6 +453,45 @@ if test "x$support_c_only" = "xyes"; then
    support_opencl_language=no
 
    AC_MSG_RESULT(haskell:off fortran:off java:off php:off)
+fi
+
+if test "x$support_java_only" = "xyes"; then
+
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+ # When using fortran only assume that we are not interested in java language support in ROSE.
+ # However, currently the --with-java option controls the use of java support for both Fortran 
+ # and Java language support. Now that we have added Java language support to ROSE this is 
+ # unintentionally confusing. So we can't turn this off since the Fortran support requires 
+ # internal java (JVM) support.
+ # with_java=no
+
+ # So these should be expressed in terms of the "with" and "enable" versions of each option's macro.
+ # without_php=yes
+   with_php=no
+
+ # disable_binary_analysis_tests=yes
+   enable_binary_analysis_tests=no
+
+ # Allow tests directory to be run so that we can run the Fortran tests.
+ # enable_tests_directory=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
+ # Turn off all the other language support.
+   support_c_language=no
+   support_cxx_language=no
+   support_fortran_language=no
+   support_php_language=no
+   support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
+
+   AC_MSG_RESULT(haskell:off php:off binary-analysis-tests:off)
 fi
 
 # Specify how to set the ROSE configure options when a minimal configuration of ROSE for only Fortran language support is required (support requested by Rice and LANL)
@@ -480,6 +533,7 @@ if test "x$support_fortran_only" = "xyes"; then
  # Turn off all the other language support.
    support_c_language=no
    support_cxx_language=no
+   support_java_language=no
    support_php_language=no
    support_binaries=no
    support_cuda_language=no
@@ -492,6 +546,54 @@ if test "x$support_fortran_only" = "xyes"; then
 
    echo "Detected specification of Fortran ONLY request for minimal configuration of ROSE..."
 fi
+
+if test "x$support_php_only" = "xyes"; then
+
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+   enable_binary_analysis_tests=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
+   support_c_language=no
+   support_cxx_language=no
+   support_fortran_language=no
+   support_java_language=no
+   support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
+
+   AC_MSG_RESULT(haskell:off fortran:off java:off php:off)
+fi
+
+if test "x$support_binary_analysis_only" = "xyes"; then
+
+ # DQ: I think that we have to express this option in terms of the "with_" 
+ # version of the macro instead of the "without_" version of the macro.
+ # without_haskell=yes
+   with_haskell=no
+
+ # enable_binary_analysis_tests=no
+
+   enable_projects_directory=no
+   enable_tutorial_directory=no
+
+   support_c_language=no
+   support_cxx_language=no
+   support_fortran_language=no
+   support_java_language=no
+   support_php_language=no
+ # support_binaries=no
+   support_cuda_language=no
+   support_opencl_language=no
+
+   AC_MSG_RESULT(haskell:off fortran:off java:off php:off)
+fi
+
 
 echo "BEFORE Setting: enableval = $enableval enable_language_only_restriction_test = $enable_language_only_restriction_test"
 # AC_ARG_ENABLE([language-only-restriction-test],AS_HELP_STRING([--enable-language-only-restriction-test],[Support language only restriction test]),[enableval=yes],[enableval=no])
@@ -1325,10 +1427,34 @@ ROSE_SUPPORT_RTED
 AM_CONDITIONAL(ROSE_USE_RTED,test ! "$with_rted" = no)
 
 # TP SUPPORT FOR OPENGL
+#AC_DEFINE([openGL],1,[By default OpenGL is disabled.])
+AC_ARG_ENABLE([rose-openGL],
+  [  --enable-rose-openGL  enable openGL],
+  [  rose_openGL=${enableval}
 AC_PATH_X dnl We need to do this by hand for some reason
 MDL_HAVE_OPENGL
-echo "have_GL = '$have_GL' and have_glut = '$have_glut'"
-AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno)
+echo "have_GL = '$have_GL' and have_glut = '$have_glut' and rose_openGL = '$rose_openGL'"
+#AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$openGL" = xno)
+if test ! "x$rose_openGL" = xno; then
+   AC_MSG_NOTICE( "Checking OpenGL dependencies..." );
+  if test "x$have_GL" = xyes; then
+    AC_MSG_NOTICE( "OpenGL enabled. Found OpenGL." );
+  else
+    AC_MSG_ERROR( "OpenGL not found!" );
+  fi
+ if test "x$have_glut" = xyes; then
+    AC_MSG_NOTICE( "OpenGL enabled. Found GLUT." );
+ else
+#    AC_MSG_NOTICE( "OpenGL GLUT not found Msg" );
+   AC_MSG_ERROR( "OpenGL GLUT not found" );
+ fi
+fi
+], [ rose_openGL=no
+  AC_MSG_NOTICE( "OpenGL disabled." );
+])
+AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno -a ! "x$rose_openGL" = xno)
+
+
 
 # Call supporting macro for python
 ROSE_SUPPORT_PYTHON
@@ -2574,7 +2700,6 @@ projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/simulator/Makefile
-projects/simulator/tests/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/analysis/Makefile
 projects/symbolicAnalysisFramework/src/arrIndexLabeler/Makefile
@@ -2633,6 +2758,9 @@ tests/CompileTests/Cxx_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
 tests/CompileTests/Fortran_tests/Makefile
 tests/CompileTests/Fortran_tests/LANL_POP/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
@@ -2748,6 +2876,11 @@ demo/qrose/Makefile
 binaries/Makefile
 binaries/samples/Makefile
 ])
+
+# DQ (10/27/2010): New Fortran tests (from gfortan test suite).
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
 
 # DQ (8/12/2010): We want to get permission to distribute these files as test codes.
 # tests/CompileTests/Fortran_tests/LANL_POP/Makefile
