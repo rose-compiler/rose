@@ -238,6 +238,7 @@ public:
 
 public:
     std::string exename;                        /* Name of executable without any path components */
+    std::string interpname;                     /* Name of interpreter from ".interp" section or "--interp=" switch */
     std::vector<std::string> exeargs;           /* Specimen argv with PATH-resolved argv[0] */
     MemoryMap *map;                             /* Describes how specimen's memory is mapped to simulator memory */
     Disassembler *disassembler;                 /* Disassembler to use for obtaining instructions */
@@ -258,16 +259,8 @@ public:
     rose_addr_t vdso_entry;                     /* Entry address for vdso, or zero */
     unsigned core_styles;                       /* What kind of core dump(s) to make for dump_core() */
     std::string core_base_name;                 /* Name to use for core files ("core") */
+    rose_addr_t ld_linux_base_va;               /* Base address for ld-linux.so; see c'tor */
 
-#if 0
-    /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
-     * behavior here. If the value is less than the highest address mapped by the main executable, then the latter is used
-     * instead (see BinaryLoaderElf::rebase()) */
-    static const rose_addr_t ld_linux_base_va = 0x40000000;
-#else
-    /* apparently not true on hudson-rose-07.llnl.gov [RPM 2010-11-04] */
-    static const rose_addr_t ld_linux_base_va = 0;
-#endif
 
 #if 0
     uint32_t gsOffset;
@@ -289,9 +282,18 @@ public:
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
-          vdso_va(0), vdso_entry(0), core_styles(CORE_ELF), core_base_name("x-core.rose"),
+          vdso_va(0), vdso_entry(0), core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false), trace_progress(false) {
+
+#if 0
+        /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
+         * behavior here. */
+        ld_linux_base_va = 0x40000000;
+#else
+        /* apparently not true on hudson-rose-07.llnl.gov [RPM 2010-11-04] */
+        ld_linux_base_va = 0;
+#endif
 
         vdso_name = "x86vdso";
         vdso_paths.push_back(".");
@@ -555,7 +557,8 @@ struct SimLoader: public BinaryLoaderElf {
 public:
     SgAsmGenericHeader *interpreter;                    /* header linked into AST for .interp section */
 
-    SimLoader(SgAsmInterpretation *interp, FILE *debug): interpreter(NULL) {
+    SimLoader(SgAsmInterpretation *interp, FILE *debug, std::string default_interpname)
+        : interpreter(NULL) {
         set_debug(debug);
         set_perform_dynamic_linking(false);             /* we explicitly link in the interpreter and nothing else */
         set_perform_remap(true);                        /* map interpreter and main binary into specimen memory */
@@ -563,7 +566,7 @@ public:
 
         /* Link the interpreter into the AST */
         SgAsmGenericHeader *header = interp->get_headers()->get_headers().front();
-        std::string interpreter_name = find_interpreter(header);
+        std::string interpreter_name = find_interpreter(header, default_interpname);
         if (!interpreter_name.empty()) {
             SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
             ROSE_ASSERT(composite!=NULL);
@@ -572,8 +575,10 @@ public:
         }
     }
 
-    /* Finds the name of the interpreter (usually "/lib/ld-linux.so") if any */
-    std::string find_interpreter(SgAsmGenericHeader *header) {
+    /* Finds the name of the interpreter (usually "/lib/ld-linux.so") if any. The name comes from the PT_INTERP section,
+     * usually named ".interp".  If an interpreter name is supplied as an argument, then it will be used instead, but only
+     * if a PT_INTERP section is present. */
+    std::string find_interpreter(SgAsmGenericHeader *header, std::string default_interpname="") {
         struct: public SgSimpleProcessing {
             std::string interp_name;
             void visit(SgNode *node) {
@@ -587,7 +592,7 @@ public:
             }
         } t1;
         t1.traverse(header, preorder);
-        return t1.interp_name;
+        return t1.interp_name.empty() || default_interpname.empty() ? t1.interp_name : default_interpname;
     }
 
     /* Returns ELF PT_LOAD Segments in order by virtual address. */
@@ -681,7 +686,7 @@ EmulationPolicy::load(const char *name)
     writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
 
     /* Link the interpreter into the AST */
-    SimLoader *loader = new SimLoader(interp, trace_loader ? debug : NULL);
+    SimLoader *loader = new SimLoader(interp, trace_loader ? debug : NULL, interpname);
 
     /* If we found an interpreter then use its entry address as the start of simulation.  When running the specimen directly
      * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 even though the libs preferred
@@ -749,8 +754,9 @@ EmulationPolicy::load(const char *name)
         disassembler = Disassembler::lookup(interp)->clone();
 
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
-     * below where ld-linux.so.2 was loaded, the stack, etc. */
-    rose_addr_t free_area = std::max(map->find_last_free(ld_linux_base_va), (rose_addr_t)brk_base);
+     * below 0x40000000 (the stack, and where ld-linux.so.2 might be loaded when loaded high). */
+    rose_addr_t free_area = std::max(map->find_last_free(std::max(ld_linux_base_va, (rose_addr_t)0x40000000)),
+                                     (rose_addr_t)brk_base);
     brk_va = ALIGN_UP(free_area, PAGE_SIZE);
 
     delete loader;
@@ -3972,6 +3978,8 @@ main(int argc, char *argv[])
             if (','==rest[0] && rest[1])
                 dump_name = rest+1;
             argno++;
+        } else if (!strncmp(argv[argno], "--interp=", 9)) {
+            policy.interpname = argv[argno]+9;
         } else {
             fprintf(stderr, "usage: %s [--debug] PROGRAM ARGUMENTS...\n", argv[0]);
             exit(1);

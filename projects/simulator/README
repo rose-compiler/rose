@@ -61,6 +61,10 @@ Switches are:
   from overwriting this one.  Once the core dump(s) is produced x86sim
   will continue to execute the specimen.
 
+* "--interp=NAME" overrides the interpreter name from the PT_INTERP
+  section (normally named ".interp"). The interpreter is usually
+  the linux dynamic linker, ld-linux.so.
+
 Positional arguments:
 
 * "SPECIMEN" is the name of the program to simulate.  x86sim will
