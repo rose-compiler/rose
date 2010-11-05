@@ -358,11 +358,153 @@ echo "**************************************************************************
 # Known unresolved issues:
 #  - RTED test failures due to obsolete STL headers used in test suite
 #  - Unparser generates (C++ and Fortran) code that is incompatible with these compilers
+#if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
+
+   start_time_make_check_seconds="$(date +%s)"
+
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # DQ (12/9/2009): Save output from "make check" rule and measure the test spew.
+   echo "Starting make check step"
+
+   if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
+
+   # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+   # make -j${NUM_PROCESS:-$def_num_procs} check 2>&1 | tee make_check_output.txt;
+     make -j${NUM_PROCESS} check 2>&1 | tee make_check_output.txt;
+# the pipestatus variable is an array that holds the exit status of your last foreground pipeline commands.
+# we check to see if make failes through this command
+     if [ ${PIPESTATUS[0]} -ne 0 ]  ; then
+       echo "fatal error during 'make check'  , aborting..."
+       exit 3
+     fi
+
+     grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
+
+   else
+   # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+   # make -j${NUM_PROCESS:-$def_num_procs} check
+     make -j${NUM_PROCESS} check
+   fi
+
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # Liao, 7/8/2010
+ # make -j${NUM_PROCESS:-$def_num_procs} install
+   make -j${NUM_PROCESS} install
+
+   if [ $? -ne 0 ]  ; then
+        echo "fatal error during 'make check'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
+        exit 3
+   fi
+
+
+ # sleep 5
+
+
+   end_time_make_check_seconds="$(date +%s)"
+   elapsed_make_check_time_seconds="$(expr $end_time_make_check_seconds - $start_time_make_check_seconds)"
+ # elapsed_make_check_time_minutes="$(expr $elapsed_make_check_time_seconds / 60)"
+ # if test $elapsed_make_check_time_seconds > 60; then
+ #    elapsed_make_check_time_minutes="$(expr ($elapsed_make_check_time_seconds) / 60)"
+ # else
+ #    elapsed_make_check_time_minutes="$elapsed_make_check_time_seconds"
+ # fi
+ # elapsed_make_check_time_minutes="0"
+   echo "***********************************************************************************************************"
+ # echo "Elapsed time for make check test: $elapsed_make_check_time_minutes min $elapsed_make_check_time_seconds sec"
+   echo "Elapsed time for make check test: $elapsed_make_check_time_seconds sec"
+   echo "***********************************************************************************************************"
+
+   echo "Done with make check step"
+
+ # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, installcheck
+   echo "Starting make distcheck step"
+
+   start_time_make_distcheck_seconds="$(date +%s)"
+
+ # FIXME
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # make -j${NUM_PROCESS:-$def_num_procs} distcheck
+   make -j${NUM_PROCESS} distcheck
+ # sleep 5
+
+   if [ $? -ne 0 ]  ; then
+        echo "fatal error during 'make distcheck'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
+        exit 3
+   fi
+
+   echo "Done with make distcheck step"
+
+ # DQ (1/17/2010): Added install so we can have a frequently updated install tree upon which to base secondary 
+ # tests (e.g. internal software developed but not distributed with ROSE because it is not mature enough).
+ # This also test the install rull, but it is alos run and tested using "make installcheck" as part of the 
+ # make distcheck" rule just run (before this step).  This "make install" rule runs in a few seconds and is
+ # not a bottleneck to the Hudson tests.
+   echo "Starting make install step (so we can save a installed copy for secondary tests)"
+
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # make -j${NUM_PROCESS:-$def_num_procs} install
+   make -j${NUM_PROCESS} install
+
+   echo "Done with make install step (so we can save a installed copy for secondary tests)"
+
+   end_time_make_distcheck_seconds="$(date +%s)"
+   elapsed_make_distcheck_time_seconds="$(expr $end_time_make_distcheck_seconds - $start_time_make_distcheck_seconds)"
+ # if test $elapsed_make_distcheck_time_seconds > 60; then
+ #    elapsed_make_distcheck_time_minutes="$(expr ($elapsed_make_distcheck_time_seconds) / 60)"
+ # else
+ #    elapsed_make_distcheck_time_minutes="$elapsed_make_distcheck_time_seconds"
+ # fi
+ # elapsed_make_distcheck_time_minutes="0"
+   echo "***********************************************************************************************************************"
+ # echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_minutes min $elapsed_make_distcheck_time_seconds sec"
+   echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_seconds sec"
+   echo "***********************************************************************************************************************"
+#fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 # echo "Disk usage report #5 (to support debugging when Hudson has a problem):"
 # df /export
 
+# DQ (12/16/2009): This appears to work everywhere byt on the 4.3.2 systems, verify this.
+# Finally run the "make docs" test (on just the 4.2.4 version of gcc).
+#if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
+   echo "Starting make docs step (exit normally even if it fails so that we can debug the docs rule)"
+ # Exit normally even if it fails so that we can debug the docs rule.
+ # make -j${NUM_PROCESS:-$def_num_procs} docs || exit 0
+ # make docs || exit 0
+
+ # Running with parallelism here does not tend to be very helpful since 
+ # doxygen is what has to run and it does not run in parallel.
+
+   start_time_make_docs_seconds="$(date +%s)"
+
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # FIXME
+ # make -j${NUM_PROCESS:-$def_num_procs} docs
+   make -j${NUM_PROCESS} docs
+ # sleep 5
+
+   if [ $? -ne 0 ]  ; then
+        echo "fatal error during 'make docs'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
+        exit 3
+   fi
+   echo "Done with make docs step"
+
+   end_time_make_docs_seconds="$(date +%s)"
+   elapsed_make_docs_time_seconds="$(expr $end_time_make_docs_seconds - $start_time_make_docs_seconds)"
+ # elapsed_make_docs_time_minutes="$(expr $elapsed_make_docs_time_seconds / 60)"
+ # elapsed_make_docs_time_minutes="0"
+   echo "********************************************************************************************************"
+ # echo "Elapsed time for make docs test: $elapsed_make_docs_time_minutes min $elapsed_make_docs_time_seconds sec"
+   echo "Elapsed time for make docs test: $elapsed_make_docs_time_seconds sec"
+   echo "********************************************************************************************************"
+#fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 # echo "Disk usage report #6 (to support debugging when Hudson has a problem):"
