@@ -595,7 +595,7 @@ public:
             }
         } t1;
         t1.traverse(header, preorder);
-        return t1.interp_name.empty() || default_interpname.empty() ? t1.interp_name : default_interpname;
+        return (t1.interp_name.empty() || default_interpname.empty()) ? t1.interp_name : default_interpname;
     }
 
     /* Returns ELF PT_LOAD Segments in order by virtual address. */
@@ -640,6 +640,7 @@ public:
         close(fd); fd=-1;
 
         vdso_mapped_va = ALIGN_UP(map->find_last_free(), PAGE_SIZE);
+        vdso_mapped_va = std::max(vdso_mapped_va, (rose_addr_t)0x40000000); /* value used on hudson-rose-07 */
         MemoryMap::MapElement me(vdso_mapped_va, sb.st_size, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
         me.set_name("[vdso]");
         map->insert(me);
