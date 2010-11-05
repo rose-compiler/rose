@@ -137,7 +137,8 @@ void DominatorTreeBuilder::build(const Backstroke::CFG& cfg)
 	ROSE_ASSERT(immediateDominators_.size() == node_to_dominators_.size() - 1);
 #endif
 
-	map<CFGVertex, CFGVertex> immediateDominators_ = cfg.buildDominatorTree();
+	//map<CFGVertex, CFGVertex> immediateDominators_ = cfg.buildDominatorTree();
+	map<CFGVertex, CFGVertex> immediateDominators_ = cfg.buildPostdominatorTree();
 
 	cout << num_vertices(cfg) << endl;
 	cout << immediateDominators_.size() << endl;

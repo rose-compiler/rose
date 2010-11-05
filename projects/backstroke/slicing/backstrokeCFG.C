@@ -4,6 +4,7 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/graph/dominator_tree.hpp>
+#include <boost/graph/reverse_graph.hpp>
 
 namespace Backstroke
 {
@@ -13,7 +14,7 @@ using namespace boost;
 #define foreach BOOST_FOREACH
 
 
-void CFG::toDot(const std::string& filename)
+void CFG::toDot(const std::string& filename) const
 {
     std::ofstream ofile(filename.c_str(), std::ios::out);
     write_graphviz(ofile, *this,
@@ -104,22 +105,32 @@ void CFG::buildCFG(const CFGNode& node, map<CFGNode, Vertex>& nodesAdded, set<CF
     }
 }
 
-CFG::DomTreePredMap CFG::buildDominatorTree() const
+CFG::VertexToVertexMap CFG::buildDominatorTree() const
 {
-	DomTreePredMap immediateDominators;
-	associative_property_map<DomTreePredMap> domTreePredMap(immediateDominators);
+	VertexToVertexMap immediateDominators;
+	associative_property_map<VertexToVertexMap> domTreePredMap(immediateDominators);
 
 	// Here we use the algorithm in boost::graph to build an map from each node to its immediate dominator.
 	lengauer_tarjan_dominator_tree(*this, entry_, domTreePredMap);
 	return immediateDominators;
 }
 
-void CFG::writeGraphNode(std::ostream& out, const Vertex& node)
+CFG::VertexToVertexMap CFG::buildPostdominatorTree() const
+{
+	VertexToVertexMap immediatePostdominators;
+	associative_property_map<VertexToVertexMap> postdomTreePredMap(immediatePostdominators);
+
+	// Here we use the algorithm in boost::graph to build an map from each node to its immediate dominator.
+	lengauer_tarjan_dominator_tree(make_reverse_graph(*this), exit_, postdomTreePredMap);
+	return immediatePostdominators;
+}
+
+void CFG::writeGraphNode(std::ostream& out, const Vertex& node) const
 {
 	writeCFGNode(out, (*this)[node]);
 }
 
-void CFG::writeGraphEdge(std::ostream& out, const Edge& edge)
+void CFG::writeGraphEdge(std::ostream& out, const Edge& edge) const
 {
 	CFGEdge e((*this)[source(edge, *this)], (*this)[target(edge, *this)]);
 	writeCFGEdge(out, e);

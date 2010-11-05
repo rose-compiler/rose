@@ -27,7 +27,7 @@ public:
 	typedef boost::graph_traits<CFG>::vertex_descriptor Vertex;
 	typedef boost::graph_traits<CFG>::edge_descriptor Edge;
 
-	typedef std::map<Vertex, Vertex> DomTreePredMap;
+	typedef std::map<Vertex, Vertex> VertexToVertexMap;
 
 
 protected:
@@ -89,23 +89,19 @@ public:
 	void build(SgFunctionDefinition* funcDef);
 
 	//! Get the entry node of the CFG
-
 	const Vertex& getEntry() const
-	{
-		return entry_;
-	}
+	{ return entry_; }
 
 	//! Get the exit node of the CFG
-
 	const Vertex& getExit() const
-	{
-		return exit_;
-	}
+	{ return exit_; }
 
-	DomTreePredMap buildDominatorTree() const;
+	VertexToVertexMap buildDominatorTree() const;
+
+	VertexToVertexMap buildPostdominatorTree() const;
 	
 	//! Output the graph to a DOT file.
-	void toDot(const std::string& filename);
+	void toDot(const std::string& filename) const;
 
 protected:
 
@@ -115,9 +111,9 @@ protected:
 
 	void setEntryAndExit();
 
-	void writeGraphNode(std::ostream& out, const Vertex& node);
+	void writeGraphNode(std::ostream& out, const Vertex& node) const;
 
-	void writeGraphEdge(std::ostream& out, const Edge& edge);
+	void writeGraphEdge(std::ostream& out, const Edge& edge) const;
 
 };
 
