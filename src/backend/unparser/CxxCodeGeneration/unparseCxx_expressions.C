@@ -3257,6 +3257,8 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
             // Don't continue processing this as a cast!
                return;
              }
+           else 
+             cast_op = isSgCastExp(expr); // restore to the original non-null value otherwise
         }
 
      bool addParens = false;

@@ -166,6 +166,8 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgName        tmp_name  = initializedName->get_name();
      SgInitializer *tmp_init = initializedName->get_initializer();
      SgType        *tmp_type = initializedName->get_type();
+     ROSE_ASSERT (initializedName!= NULL);
+     unp->u_exprStmt->unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
 
   // printf ("In unparseFunctionParameterDeclaration(): Argument name = %s \n",
   //      (tmp_name.str() != NULL) ? tmp_name.str() : "NULL NAME");
@@ -952,9 +954,10 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(declarationStatement);
                     ROSE_ASSERT(variableDeclaration != NULL);
                     SgInitializedNamePtrList & variableList = variableDeclaration->get_variables();
-                 // using directives must be issued sepearately for each variable!
+                 // using directives must be issued separately for each variable!
                     ROSE_ASSERT(variableList.size() == 1);
                     SgInitializedName* initializedName = *(variableList.begin());
+                    unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
                     ROSE_ASSERT(initializedName != NULL);
                     SgName variableName = initializedName->get_name();
                     curprint ( variableName.str());
@@ -3329,6 +3332,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( string(", "));
         }
         ROSE_ASSERT ((*p) != NULL);
+        unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
         curprint (  (*p)->get_name().str());
 
         // DQ (8/4/2005): Removed the use of "()" here since it breaks test2005_123.C
@@ -3557,6 +3561,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                decl_item = *p;
                ROSE_ASSERT(decl_item != NULL);
+               unp->u_exprStmt->unparseAttachedPreprocessingInfo(decl_item, info, PreprocessingInfo::before);
 
             // printf ("In unparseVarDeclStmt(): cname = decl_item->get_name() = %s \n",decl_item->get_name().str());
 

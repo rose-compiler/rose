@@ -4280,23 +4280,21 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
                expression->set_operatorPosition(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
                expression->get_operatorPosition()->set_parent(expression);
              }
+
+          if ( (initName != NULL) && (initName->get_endOfConstruct() == NULL) )
+             {
+               initName->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());   
+               initName->get_endOfConstruct()->set_parent(initName);
+             }
+ 
         }
        else
         {
-          if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
-             {
-           //  no endOfConstruct for SgInitializedName
-               initName->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());   
-               initName->get_startOfConstruct()->set_parent(initName);
-             }
-            else 
-             {
-               if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
-                  {
-                    pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-                    pragma->get_startOfConstruct()->set_parent(pragma);
-                  }
-             }
+           if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
+              {
+                pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+                pragma->get_startOfConstruct()->set_parent(pragma);
+              }
         }
    }
 
@@ -4340,20 +4338,15 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
              {
                expression->set_operatorPosition(NULL);
              }
+          if ( (initName != NULL) && (initName->get_endOfConstruct() == NULL) )
+               initName->set_endOfConstruct(NULL);   
         }
        else
         {
-          if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
-             { //  no endOfConstruct for SgInitializedName
-               initName->set_startOfConstruct(NULL);   
-             }
-            else
-             {
-               if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
-                  {
-                    pragma->set_startOfConstruct(NULL);
-                  }
-             }
+           if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
+              {
+                pragma->set_startOfConstruct(NULL);
+              }
         }
    }
 
