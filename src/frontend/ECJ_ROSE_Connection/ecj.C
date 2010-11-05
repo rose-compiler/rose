@@ -75,7 +75,27 @@ jofp_invoke(int argc, char **argv)
 
      if (fileName == NULL || args == NULL || type == NULL) jserver_handleException(); 
 
-     jserver_callMethod(jofp_get_class(), jofp_get_main(), args);
+#if 0
+          jserver_callMethod(jofp_get_class(), jofp_get_main(), args);
+#else
+     // tps : this code is more transparent and easier to read
+     jclass cls = jserver_FindClass("JavaTraversal");
+     jmethodID  mainMethod = jserver_GetMethodID(STATIC_METHOD, cls, "main",  "([Ljava/lang/String;)V");
+     JNIEnv* env = getEnv();
+     (*env).CallStaticVoidMethod(cls, mainMethod,args);
+#endif
+
+#if 1
+
+     jmethodID errorMethod = jofp_get_method(STATIC_METHOD, "getError", "()Z");
+     retval = (*env).CallBooleanMethod(cls, errorMethod);
+     if (retval != 0)  {
+         fprintf(stderr, "C++ side : Error detected ---------------------------------.\n");
+	 abort();
+     }      
+#endif
+
+     printf("We are done -----------------------------------------\n");
 
   // DQ (10/12/2010): This function is not implemented in the ECJ parser (only in OFP).
      jobject new_ofp_class = jofp_get_new_object(jofp_get_cons_method(),args, fileName, type);
