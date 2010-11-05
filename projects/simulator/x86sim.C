@@ -1452,22 +1452,22 @@ EmulationPolicy::ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_
                         unsigned short seq;   // Sequence number 
                         };
 
-                        cmd values that ignore semun:
-                        IPC_STAT
-                        IPC_SET
-                        IPC_RMID
+                        cmd values that ignore semun (include/linux/ipc.h in linux kernel):
+                        IPC_STAT 2
+                        IPC_SET  1
+                        IPC_RMID 0
 
-                        cmd values where semun is used:
-                        IPC_INFO
-                        SEM_INFO
-                        SEM_STAT
-                        GETALL
-                        GETNCNT
-                        GETPID
-                        GETVAL
-                        GETZCNT7
-                        SETALL
-                        SETVAL
+                        cmd values where semun is used (include/linux/sem.h in linux kernel):
+                        IPC_INFO 3
+                        SEM_INFO 19
+                        SEM_STAT 18
+                        GETALL   13
+                        GETNCNT  14
+                        GETPID   11
+                        GETVAL   12
+                        GETZCNT7 15
+                        SETALL   17
+                        SETVAL   16
 
                       */  
                        /*
