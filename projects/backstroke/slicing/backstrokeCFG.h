@@ -8,39 +8,35 @@
 namespace Backstroke
 {
 
-using VirtualCFG::CFGNode;
-using VirtualCFG::CFGEdge;
 
+typedef VirtualCFG::CFGNode CFGNode;
+typedef VirtualCFG::CFGEdge CFGEdge;
 
-	//enum GraphNodeSgNodePropertyT { GraphNodeSgNodeProperty };
-	//template <> struct property_kind<GraphNodeSgNodePropertyT> { typedef boost::vertex_property_tag type; }
-	
-class CFG
+class CFG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, CFGNode>
 {
-protected:
-
-	//enum CFGEdgeAttributeT { CFGEdgeAttribute };
-	//enum InterestingEdgeAttributeT { InterestingEdgeAttribute };
-
-	typedef VirtualCFG::CFGNode CFGNode;
-	typedef VirtualCFG::CFGEdge CFGEdge;
-	typedef VirtualCFG::InterestingEdge InterestingEdge;
+public:
+	//typedef VirtualCFG::CFGEdge CFGEdge;
+	//typedef VirtualCFG::InterestingEdge InterestingEdge;
 
 	//typedef boost::property<vertex_all_t, CFGNode> CFGNodeProperty;
 	//typedef boost::property<CFGNodeAttributeT, CFGEdge*,
 	//        boost::property<InterestingEdgeAttributeT, InterestingEdge*> > CFGEdgeProperty;
 
-	typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, CFGNode > Graph;
+	//typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, CFGNode > Graph;
 
-	typedef boost::graph_traits<Graph>::vertex_descriptor GraphNode;
-	typedef boost::graph_traits<Graph>::edge_descriptor GraphEdge;
+	typedef boost::graph_traits<CFG>::vertex_descriptor Vertex;
+	typedef boost::graph_traits<CFG>::edge_descriptor Edge;
 
+	typedef std::map<Vertex, Vertex> DomTreePredMap;
+
+
+protected:
 	//typedef boost::property_map<Graph, GraphNodeSgNodePropertyT>::type NodePropertyMap;
 	//typedef boost::property_map<Graph, CFGEdgeAttributeT>::type CFGEdgeAttributeMap;
 	//typedef boost::property_map<Graph, InterestingEdgeAttributeT>::type InterestingEdgeAttributeMap;
 
 	//! The graph data structure holding the CFG.
-	Graph graph_;
+	//Graph graph_;
 
 	//NodePropertyMap node_property_map_;
 
@@ -49,10 +45,10 @@ protected:
 	//std::map<CFGNode, SgGraphNode*> all_nodes_;
 
 	//! The entry node.
-	GraphNode entry_;
+	Vertex entry_;
 
 	//! The exit node.
-	GraphNode exit_;
+	Vertex exit_;
 
 	////! A flag shows whether this CFG is filtered or not.
 	//bool is_filtered_;
@@ -60,47 +56,53 @@ protected:
 public:
 
 	CFG()
+	:	entry_(boost::graph_traits<CFG>::null_vertex()),
+		exit_(boost::graph_traits<CFG>::null_vertex())
 	{
 	}
 
 	//! The constructor building the CFG.
 
 	/*! The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName. */
-	CFG(SgFunctionDefinition* func_def)
+	CFG(SgFunctionDefinition* funcDef)
+	:	entry_(boost::graph_traits<CFG>::null_vertex()),
+		exit_(boost::graph_traits<CFG>::null_vertex())
 	{
 		//node_property_map_ = boost::get(GraphNodeSgNodePropertyT, graph_);
 		//edge_property_map_ = boost::get(CFGEdgeAttribute, graph_);
 		//interesting_edge_property_map_ = boost::get(InterestingEdgeAttribute, graph_);
 
-		build(func_def);
+		build(funcDef);
 	}
 
 	//! Get the pointer pointing to the graph used by static CFG.
 
-	const Graph& getGraph() const
-	{
-		return graph_;
-	}
+	//const Graph& getGraph() const
+	//{
+	//	return graph_;
+	//}
 
 	virtual ~CFG()
 	{
 	}
 
-	void build(SgFunctionDefinition* func_def);
+	void build(SgFunctionDefinition* funcDef);
 
 	//! Get the entry node of the CFG
 
-	const GraphNode& getEntry() const
+	const Vertex& getEntry() const
 	{
 		return entry_;
 	}
 
 	//! Get the exit node of the CFG
 
-	const GraphNode& getExit() const
+	const Vertex& getExit() const
 	{
 		return exit_;
 	}
+
+	DomTreePredMap buildDominatorTree() const;
 	
 	//! Output the graph to a DOT file.
 	void toDot(const std::string& filename);
@@ -108,14 +110,20 @@ public:
 protected:
 
 	void buildCFG(const CFGNode& node, 
-			std::map<CFGNode, GraphNode>& nodes_added,
-			std::set<CFGNode>& nodes_processed);
+			std::map<CFGNode, Vertex>& nodesAdded,
+			std::set<CFGNode>& nodesProcessed);
 
-	void writeGraphNode(std::ostream& out, const GraphNode& node);
+	void setEntryAndExit();
 
-	void writeGraphEdge(std::ostream& out, const GraphEdge& edge);
+	void writeGraphNode(std::ostream& out, const Vertex& node);
+
+	void writeGraphEdge(std::ostream& out, const Edge& edge);
 
 };
+
+void writeCFGNode(std::ostream& out, const CFGNode& n);
+
+void writeCFGEdge(std::ostream& out, const CFGEdge& e);
 
 } // End of namespace Backstroke
 

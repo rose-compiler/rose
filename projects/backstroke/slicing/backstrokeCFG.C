@@ -2,6 +2,8 @@
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/tuple/tuple.hpp>
+#include <boost/graph/dominator_tree.hpp>
 
 namespace Backstroke
 {
@@ -14,41 +16,63 @@ using namespace boost;
 void CFG::toDot(const std::string& filename)
 {
     std::ofstream ofile(filename.c_str(), std::ios::out);
-    write_graphviz(ofile, graph_, 
+    write_graphviz(ofile, *this,
 			bind(&CFG::writeGraphNode, this, _1, _2),
 			bind(&CFG::writeGraphEdge, this, _1, _2));
 }
 
-void CFG::build(SgFunctionDefinition* func_def)
+void CFG::build(SgFunctionDefinition* funcDef)
 {
-	ROSE_ASSERT(func_def);
-	map<CFGNode, GraphNode> nodes_added;
-	set<CFGNode> nodes_processed;
-	buildCFG(func_def->cfgForBeginning(), nodes_added, nodes_processed);
+	ROSE_ASSERT(funcDef);
+	
+	clear();
+	map<CFGNode, Vertex> nodesAdded;
+	set<CFGNode> nodesProcessed;
+	buildCFG(funcDef->cfgForBeginning(), nodesAdded, nodesProcessed);
+	setEntryAndExit();
+
+	ROSE_ASSERT(isSgFunctionDefinition((*this)[entry_].getNode()));
+	ROSE_ASSERT(isSgFunctionDefinition((*this)[exit_].getNode()));
 }
 
-void CFG::buildCFG(const CFGNode& node, map<CFGNode, GraphNode>& nodes_added, set<CFGNode>& nodes_processed)
+void CFG::setEntryAndExit()
+{
+	vertex_iterator i, j;
+	for (tie(i, j) = vertices(*this); i != j; ++i)
+	{
+		CFGNode node = (*this)[*i];
+		if (isSgFunctionDefinition(node.getNode()))
+		{
+			if (node.getIndex() == 0)
+				entry_ = *i;
+			else if (node.getIndex() == 3)
+				exit_ = *i;
+		}
+	}
+}
+
+void CFG::buildCFG(const CFGNode& node, map<CFGNode, Vertex>& nodesAdded, set<CFGNode>& nodesProcessed)
 {
     ROSE_ASSERT(node.getNode());
 
-    if (nodes_processed.count(node) > 0)
+    if (nodesProcessed.count(node) > 0)
         return;
-	nodes_processed.insert(node);
+	nodesProcessed.insert(node);
 
-    map<CFGNode, GraphNode>::iterator iter;
+    map<CFGNode, Vertex>::iterator iter;
     bool inserted;
-    GraphNode from, to;
+    Vertex from, to;
 
     // Add the source node.
     const CFGNode& src = node;
 	ROSE_ASSERT(src.getNode());
 
-    tie(iter, inserted) = nodes_added.insert(make_pair(src, GraphNode()));
+    tie(iter, inserted) = nodesAdded.insert(make_pair(src, Vertex()));
 
     if (inserted)
     {
-        from = add_vertex(graph_);
-        graph_[from] = src;
+        from = add_vertex(*this);
+        (*this)[from] = src;
         iter->second = from;
     }
     else
@@ -61,28 +85,48 @@ void CFG::buildCFG(const CFGNode& node, map<CFGNode, GraphNode>& nodes_added, se
         CFGNode tar = edge.target();
 		ROSE_ASSERT(tar.getNode());
 
-        tie(iter, inserted) = nodes_added.insert(make_pair(tar, GraphNode()));
+        tie(iter, inserted) = nodesAdded.insert(make_pair(tar, Vertex()));
 
         if (inserted)
         {
-            to = add_vertex(graph_);
-            graph_[to] = tar;
+            to = add_vertex(*this);
+            (*this)[to] = tar;
             iter->second = to;
         }
         else
             to = iter->second;
 
         // Add the edge.
-        add_edge(from, to, graph_);
+        add_edge(from, to, *this);
 
         // Build the CFG recursively.
-        buildCFG(tar, nodes_added, nodes_processed);
+        buildCFG(tar, nodesAdded, nodesProcessed);
     }
 }
 
-void CFG::writeGraphNode(std::ostream& out, const GraphNode& node)
+CFG::DomTreePredMap CFG::buildDominatorTree() const
 {
-	CFGNode n = graph_[node];
+	DomTreePredMap immediateDominators;
+	associative_property_map<DomTreePredMap> domTreePredMap(immediateDominators);
+
+	// Here we use the algorithm in boost::graph to build an map from each node to its immediate dominator.
+	lengauer_tarjan_dominator_tree(*this, entry_, domTreePredMap);
+	return immediateDominators;
+}
+
+void CFG::writeGraphNode(std::ostream& out, const Vertex& node)
+{
+	writeCFGNode(out, (*this)[node]);
+}
+
+void CFG::writeGraphEdge(std::ostream& out, const Edge& edge)
+{
+	CFGEdge e((*this)[source(edge, *this)], (*this)[target(edge, *this)]);
+	writeCFGEdge(out, e);
+}
+
+void writeCFGNode(std::ostream& out, const CFGNode& n)
+{
 	ROSE_ASSERT(n.getNode());
 
 	std::string nodeColor = "black";
@@ -97,9 +141,8 @@ void CFG::writeGraphNode(std::ostream& out, const GraphNode& node)
 		"\", style=\"" << (n.isInteresting()? "solid" : "dotted") << "\"]";
 }
 
-void CFG::writeGraphEdge(std::ostream& out, const GraphEdge& edge)
+void writeCFGEdge(std::ostream& out, const CFGEdge& e)
 {
-	CFGEdge e(graph_[source(edge, graph_)], graph_[target(edge, graph_)]);
 	out << "[label=\"" << escapeString(e.toString()) <<
 		"\", style=\"" << "solid" << "\"]";
 }
