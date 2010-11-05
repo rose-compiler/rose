@@ -99,6 +99,8 @@ namespace VirtualCFG {
   class CFGEdge {
     CFGNode src, tgt;
     public:
+    //! Default Constructor
+    CFGEdge() {}
     //! Constructor
     CFGEdge(CFGNode src, CFGNode tgt): src(src), tgt(tgt) {}
     //! Pretty string for Dot node labels, etc.
@@ -141,6 +143,7 @@ namespace VirtualCFG {
   class CFGPath {
     std::vector<CFGEdge> edges;
     public:
+    CFGPath() {}
  // DQ (8/28/2006): This constructor causes a bug to be brought out in ROSE 
  // (in compiling this file using ROSE) see test2006_124.C for a smaller example.
     CFGPath(CFGEdge e): edges(1, e) {}
@@ -255,6 +258,7 @@ namespace VirtualCFG {
     CFGNode n;
 
     public:
+    InterestingNode() {}
     InterestingNode(CFGNode n): n(n) {}
     std::string toString() const {return n.toString();}
     std::string toStringForDebugging() const {return n.toStringForDebugging();}
@@ -273,6 +277,7 @@ namespace VirtualCFG {
     CFGPath p;
 
     public:
+    InterestingEdge() {}
     InterestingEdge(CFGPath p): p(p) {}
     std::string toString() const {return p.toString();}
     std::string toStringForDebugging() const {return p.toStringForDebugging();}
