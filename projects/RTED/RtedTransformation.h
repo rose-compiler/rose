@@ -292,7 +292,7 @@ public:
    // PUBLIC FUNCTIONS ------------------------------------------------------------
    // Insert Header Files
    void insertProlog(SgProject* proj);
-   void visit (SgNode* node) {};
+   void visit(SgNode* node) {};
 
    // analyse file and apply necessary (call) transformations
    void transform(SgProject* project, std::set<std::string> &rtedfiles);
