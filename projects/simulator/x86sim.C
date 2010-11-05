@@ -1449,7 +1449,7 @@ EmulationPolicy::read_string_vector(uint32_t va)
 int 
 EmulationPolicy::ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_t third, uint32_t ptr, uint8_t ptr_addr, uint32_t fifth)
 {
-	int version, ret;
+	//int version, ret;
     size_t size_ptr;
     int result;
 
@@ -2731,7 +2731,7 @@ EmulationPolicy::emulate_syscall()
             kernel_sys.procs       = sys.procs;
             kernel_sys.totalhigh   = sys.totalhigh;
             kernel_sys.mem_unit    = sys.mem_unit;
-            for (int i = 0; i < 20-2*sizeof(long)-sizeof(int) ; i++)
+            for (size_t i = 0; i < 20-2*sizeof(long)-sizeof(int) ; i++)
               kernel_sys._f[i] = sys._f[i];
 
             map->write(&kernel_sys, arg(0), sizeof(kernel_sysinfo));
@@ -2951,7 +2951,7 @@ EmulationPolicy::emulate_syscall()
             fd_set* writefds  = NULL;
             fd_set* exceptfds = NULL;
 
-            uint8_t byte;
+            //uint8_t byte;
             size_t nread;
             // = map->read(&byte, arg(1), 1);
             //ROSE_ASSERT(1==nread);
@@ -3192,7 +3192,7 @@ EmulationPolicy::emulate_syscall()
                 ROSE_ASSERT(nread == sizeof(stack_t_kernel));
 
 
-                void* ss_sp_oss = malloc(fakestack_oss.ss_size);
+                //void* ss_sp_oss = malloc(fakestack_oss.ss_size);
 
               }else{
                 std::cout << "Executing syscall" << std::endl;
