@@ -784,7 +784,7 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     size_t sp = readGPR(x86_gpr_sp).known_value();
     size_t stack_addr = sp - stack_size;
     MemoryMap::MapElement melmt(stack_addr, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
-    melmt.set_name("stack");
+    melmt.set_name("[stack]");
     map->insert(melmt);
 
     /* Initialize the stack with specimen's argc and argv. Also save the arguments in the class. */
@@ -3221,7 +3221,8 @@ EmulationPolicy::emulate_syscall()
 #endif
                                                 TF(MAP_POPULATE), T_END };
             syscall_enter("mmap2", "pdffdd", pflags, mflags);
-            uint32_t start=arg(0), size=arg(1), prot=arg(2), flags=arg(3), fd=arg(4), offset=arg(5)*PAGE_SIZE;
+            uint32_t start=arg(0), size=arg(1), prot=arg(2), flags=arg(3), offset=arg(5)*PAGE_SIZE;
+            int fd=arg(4);
             size_t aligned_size = ALIGN_UP(size, PAGE_SIZE);
             void *buf = NULL;
             unsigned rose_perms = ((prot & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
@@ -3248,8 +3249,27 @@ EmulationPolicy::emulate_syscall()
             if (MAP_FAILED==buf) {
                 writeGPR(x86_gpr_ax, -errno);
             } else {
+                /* Try to figure out a reasonable name for the map element. If we're mapping a file, we can get the file name
+                 * from the proc filesystem. The name is only used to aid debugging. */
+                std::string melmt_name = "anonymous";
+                if (fd>=0) {
+                    char fd_namebuf[4096];
+                    ssize_t nread = readlink(("/proc/self/fd/"+StringUtility::numberToString(fd)).c_str(),
+                                             fd_namebuf, sizeof(fd_namebuf)-1);
+                    if (nread>45) {
+                        fd_namebuf[nread] = '\0';
+                        char *slash = strrchr(fd_namebuf, '/');
+                        melmt_name = slash ? slash+1 : fd_namebuf;
+                    } else if (nread>0) {
+                        fd_namebuf[nread] = '\0';
+                        melmt_name = fd_namebuf;
+                    } else {
+                        melmt_name = "fd=" + StringUtility::numberToString(fd);
+                    }
+                }
+
                 MemoryMap::MapElement melmt(start, aligned_size, buf, 0, rose_perms);
-                melmt.set_name("mmap2 syscall");
+                melmt.set_name("mmap2("+melmt_name+")");
                 map->erase(melmt); /*clear space space first to avoid MemoryMap::Inconsistent exception*/
                 map->insert(melmt);
                 writeGPR(x86_gpr_ax, start);
@@ -3989,7 +4009,7 @@ main(int argc, char *argv[])
                 dump_name = rest+1;
             argno++;
         } else if (!strncmp(argv[argno], "--interp=", 9)) {
-            policy.interpname = argv[argno]+9;
+            policy.interpname = argv[argno++]+9;
         } else if (!strncmp(argv[argno], "--vdso=", 7)) {
             policy.vdso_paths.clear();
             for (char *s=argv[argno]+7; s && *s; /*void*/) {
