@@ -689,15 +689,7 @@ EmulationPolicy::load(const char *name)
     }
     if (exeargs.empty()) {
         fprintf(stderr, "%s: not found\n", name);
-#if 1 /* Waiting for makefiles to be fixed [RPM 2010-09-21] */
-        if (access(name, R_OK)<0)
-            exit(1);
-        fprintf(stderr, "(found in CWD, but CWD is not in $PATH; please use \"./%s\")\n", name);
-        exename = name;
-        exeargs.push_back(std::string("./")+name);
-#else
         exit(1);
-#endif
     }
        
     /* Link the main binary into the AST without further linking, mapping, or relocating. */
