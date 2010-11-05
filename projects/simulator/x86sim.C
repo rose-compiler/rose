@@ -654,22 +654,6 @@ public:
         vdso_entry_va = vdso_mapped_va + entry_rva;
         return true;
     }
-
-#if 0 /*DEBUGGING [RPM 2010-09-22]*/
-    virtual MappingContribution align_values(SgAsmGenericSection *section, MemoryMap *map,
-                                             rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
-                                             rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                                             rose_addr_t *offset_p, rose_addr_t *file_size_p,
-                                             rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
-                                             ConflictResolution *resolve_p) {
-        MappingContribution retval = BinaryLoaderElf::align_values(section, map, malign_lo_p, malign_hi_p, va_p,
-                                                                   mem_size_p, offset_p, file_size_p, va_offset_p,
-                                                                   anon_lo_p, anon_hi_p, resolve_p);
-        if (section->get_mapped_preferred_va() % *malign_lo_p)
-            fprintf(stderr, "ROBB: alignment\n");
-        return retval;
-    }
-#endif
 };
 
 SgAsmGenericHeader*
