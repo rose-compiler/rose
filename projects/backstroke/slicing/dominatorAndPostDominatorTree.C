@@ -1,11 +1,14 @@
 #include <rose.h>
+#include "backstrokeCFG.h"
 #include <boost/foreach.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/graph/filtered_graph.hpp>
 #include <boost/tuple/tuple.hpp>
 
 using namespace std;
 using namespace boost;
+
 
 #define foreach BOOST_FOREACH
 
@@ -215,7 +218,7 @@ void DominatorTreeBuilder::build(const StaticCFG::CFG& cfg)
     write_graphviz(out, dominator_tree_, NodeWriter(node_to_sgnode));
 }
 
-
+#if 0
 int main(int argc, char *argv[])
 {
   // Build the AST used by ROSE
@@ -248,4 +251,23 @@ int main(int argc, char *argv[])
 
   return 0;
 }
+#endif
 
+int main(int argc, char *argv[])
+{
+  // Build the AST used by ROSE
+  SgProject* sageProject = frontend(argc,argv);
+
+  // Process all function definition bodies for static control flow graph generation
+  Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(sageProject, V_SgFunctionDefinition);
+  for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i)
+  {
+    SgFunctionDefinition* proc = isSgFunctionDefinition(*i);
+    ROSE_ASSERT (proc != NULL);
+
+	Backstroke::CFG cfg(proc);
+	cfg.toDot("temp.dot");
+  }
+
+  return 0;
+}
