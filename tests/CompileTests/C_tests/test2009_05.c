@@ -17,6 +17,8 @@ enum builtin_type {
 /* Tree code classes.  */
 #define DEFTREECODE(SYM, NAME, TYPE, LENGTH) TYPE,
 static const char c_tree_code_type[] = {
+  'z',
+// test this  
   'x',
 #include "c-common.def"
 };

@@ -1087,17 +1087,17 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
               SgEnumDeclaration *enum_stmt = isSgEnumDeclaration(enum_type->get_declaration());
               ROSE_ASSERT(enum_stmt != NULL);
 
-              SgInitializedNamePtrList::iterator p = enum_stmt->get_enumerators().begin();
-
            // DQ (6/26/2005): Output the opend and closing braces even if there are no enumerators! 
            // This permits support of the empty enum case! "enum x{};"
               curprint ( "{"); 
 
+              SgInitializedNamePtrList::iterator p = enum_stmt->get_enumerators().begin();
               if (p != enum_stmt->get_enumerators().end())
                  {
                 // curprint ( "{"; 
                    while (1)
                       {
+                        unp->u_exprStmt->unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
                         tmp_name=(*p)->get_name();
                         tmp_init=(*p)->get_initializer();
                         curprint ( tmp_name.str());
