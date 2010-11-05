@@ -17,9 +17,6 @@ namespace Backstroke
 {
 
 
-//typedef VirtualCFG::CFGNode CFGNode;
-//typedef VirtualCFG::CFGEdge CFGEdge;
-
 struct FullCFGType
 {
 	typedef VirtualCFG::CFGNode CFGNodeType;
@@ -32,6 +29,31 @@ struct FilteredCFGType
 	typedef VirtualCFG::InterestingEdge CFGEdgeType;
 };
 
+/********************************************************************/
+//	The concept required to be fulfilled by CFGNodeType is
+//
+//	struct CFGNodeType
+//	{
+//		CFGNodeType();
+//		std::vector<CFGEdgeType> outEdges() const;
+//		SgNode* getNode() const;
+//		bool isInteresting() const;
+//		std::string toString() const;
+//	};
+//
+/********************************************************************/
+//	The concept required to be fulfilled by CFGEdgeType is
+//
+//	struct CFGEdgeType
+//	{
+//		CFGEdgeType();
+//		CFGNodeType target();
+//		std::string toString() const;
+//	};
+//
+/********************************************************************/
+
+
 template <class CFGType>
 class CFG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, 
 		typename CFGType::CFGNodeType, typename CFGType::CFGEdgeType>
@@ -39,45 +61,22 @@ class CFG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidire
 public:
 	typedef typename CFGType::CFGNodeType CFGNode;
 	typedef typename CFGType::CFGEdgeType CFGEdge;
-	//typedef VirtualCFG::InterestingEdge InterestingEdge;
-
-	//typedef boost::property<vertex_all_t, CFGNode> CFGNodeProperty;
-	//typedef boost::property<CFGNodeAttributeT, CFGEdge*,
-	//        boost::property<InterestingEdgeAttributeT, InterestingEdge*> > CFGEdgeProperty;
-
-	//typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, CFGNode > Graph;
 
 	typedef typename boost::graph_traits<CFG>::vertex_descriptor Vertex;
 	typedef typename boost::graph_traits<CFG>::edge_descriptor Edge;
 
 	typedef std::map<Vertex, Vertex> VertexToVertexMap;
 
-
 protected:
-	//typedef boost::property_map<Graph, GraphNodeSgNodePropertyT>::type NodePropertyMap;
-	//typedef boost::property_map<Graph, CFGEdgeAttributeT>::type CFGEdgeAttributeMap;
-	//typedef boost::property_map<Graph, InterestingEdgeAttributeT>::type InterestingEdgeAttributeMap;
-
-	//! The graph data structure holding the CFG.
-	//Graph graph_;
-
-	//NodePropertyMap node_property_map_;
-
-
-	////! A map from CFGNode in virtualCFG to node from staticCFG.
-	//std::map<CFGNode, SgGraphNode*> all_nodes_;
-
 	//! The entry node.
 	Vertex entry_;
 
 	//! The exit node.
 	Vertex exit_;
 
-	////! A flag shows whether this CFG is filtered or not.
-	//bool is_filtered_;
-
 public:
 
+	//! The default constructor.
 	CFG()
 	:	entry_(boost::graph_traits<CFG>::null_vertex()),
 		exit_(boost::graph_traits<CFG>::null_vertex())
@@ -85,8 +84,6 @@ public:
 	}
 
 	//! The constructor building the CFG.
-
-	/*! The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName. */
 	CFG(SgFunctionDefinition* funcDef)
 	:	entry_(boost::graph_traits<CFG>::null_vertex()),
 		exit_(boost::graph_traits<CFG>::null_vertex())
@@ -98,17 +95,9 @@ public:
 		build(funcDef);
 	}
 
-	//! Get the pointer pointing to the graph used by static CFG.
+	virtual ~CFG() {}
 
-	//const Graph& getGraph() const
-	//{
-	//	return graph_;
-	//}
-
-	virtual ~CFG()
-	{
-	}
-
+	//! Build the actual CFG for the given function.
 	void build(SgFunctionDefinition* funcDef);
 
 	//! Get the entry node of the CFG
@@ -119,8 +108,10 @@ public:
 	const Vertex& getExit() const
 	{ return exit_; }
 
+	//! Build the dominator tree of this CFG.
 	VertexToVertexMap buildDominatorTree() const;
 
+	//! Build the postdominator tree of this CFG.
 	VertexToVertexMap buildPostdominatorTree() const;
 	
 	//! Output the graph to a DOT file.
@@ -128,18 +119,25 @@ public:
 
 protected:
 
+	//! A internal funtion which builds the actual CFG (boost::graph).
 	void buildCFG(const CFGNode& node, 
 			std::map<CFGNode, Vertex>& nodesAdded,
 			std::set<CFGNode>& nodesProcessed);
 
+	//! Find the entry and exit of this CFG and set the corresponding members.
 	void setEntryAndExit();
 
+	//! This function helps to write the DOT file for vertices.
 	void writeGraphNode(std::ostream& out, const Vertex& node) const;
 
+	//! This function helps to write the DOT file for edges.
 	void writeGraphEdge(std::ostream& out, const Edge& edge) const;
 };
 
+//! A full CFG without any filtered nodes.
 typedef CFG<FullCFGType> FullCFG;
+
+//! A filtered CFG which only contains interesting nodes and edges.
 typedef CFG<FilteredCFGType> FilteredCFG;
 
 
@@ -147,7 +145,7 @@ template <class CFGType>
 void CFG<CFGType>::toDot(const std::string& filename) const
 {
     std::ofstream ofile(filename.c_str(), std::ios::out);
-    write_graphviz(ofile, *this,
+    boost::write_graphviz(ofile, *this,
 			boost::bind(&CFG<CFGType>::writeGraphNode, this, ::_1, ::_2),
 			boost::bind(&CFG<CFGType>::writeGraphEdge, this, ::_1, ::_2));
 }
@@ -275,6 +273,8 @@ void CFG<CFGType>::writeGraphEdge(std::ostream& out, const Edge& edge) const
 	writeCFGEdge(out, (*this)[edge]);
 }
 
+
+//! This function helps to write the DOT file for vertices.
 template <class CFGNodeType>
 void writeCFGNode(std::ostream& out, const CFGNodeType& n)
 {
@@ -292,6 +292,8 @@ void writeCFGNode(std::ostream& out, const CFGNodeType& n)
 		"\", style=\"" << (n.isInteresting()? "solid" : "dotted") << "\"]";
 }
 
+
+//! This function helps to write the DOT file for edges.
 template <class CFGEdgeType>
 void writeCFGEdge(std::ostream& out, const CFGEdgeType& e)
 {
