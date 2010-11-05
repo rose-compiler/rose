@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = utilities eventDetection reverseComputation restrictedLanguage \
-	normalizations slicing pluggableReverser testCodeGeneration . tests
+	normalizations slicing ssa pluggableReverser testCodeGeneration . tests
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
