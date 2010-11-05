@@ -350,3 +350,53 @@ with "X86SIM_". For example, to adjust the library load path
 do this:
     
     $ X86SIM_LD_LIBRARY_PATH=somedir ./x86sim a.out
+
+== CROSS PLATFORM ==
+
+Here's how to run a 32-bit specimen on a 64-bit machine that doesn't
+have 32-bit compatibility. The goal is to get the specimen to follow
+the same code path in the 64-bit x86sim as it would when run natively
+on the 32-bit platform.
+
+(1) On the 32-bit machine, run "ldd $SPECIMEN" to get a list of
+    libraries, including the dynamic linker itself. Copy all of these
+    files to a directory, $LIBDIR, on the 64-bit machine.  The library
+    with no file name (if any, often called "linux-gate") is a virtual
+    dynamic shared object provided by the kernel--don't worry about
+    copying it.  The "ld-linux" shared object is the dynamic linker
+    itself, which we'll refer to as $LDLINUX.
+
+(2) Copy the virtual dynamic shared object ($VDSO) to the test
+    directory and determine its entry address ($VDSO_ENTRY)
+    relative to its base address ($VDSO_BASE).
+
+
+      $ VDSO_BASE=$(setarch i386 -LRB3 dd if=/proc/self/maps |\
+	            grep vdso |\
+                    cut -d- -f1)
+ 
+    Run a couple of times to make sure the $VDSO_BASE is consistent.
+
+      $ setarch i386 -LRB3 dd bs=1024 skip=$[VDSO_BASE/1024] count=4 \
+          if=/proc/self/mem of=$VDSO
+
+    Find the entry address and call it $VDSO_ENTRY
+
+      $ $ROSE/tests/roseTests/binaryTests/execFormatsTest \
+	    -rose:read_executable_file_format_only $VDSO
+      $ grep entry_rva $VDSO.dump  |grep '= 0x'
+
+
+(3) Copy the specimen to the 64-bit machine. This is $SPECIMEN.
+
+(4) Run the simulator as:
+
+      setarch i386 -LRB3 \
+          env \
+	      X86SIM_LD_PRELOAD= \
+              X86SIM_LD_LIBRARY_PATH=$LIBDIR \
+          x86sim \
+              --interp=$LDLINUX \
+	      --vdso=$VDSO --vdso-entry=$VDSO_ENTRY \
+              $SPECIMEN
+
