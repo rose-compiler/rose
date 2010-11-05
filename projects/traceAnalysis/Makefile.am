@@ -5,7 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 bin_PROGRAMS = trace
 
 # Comment out to test withouth committting to ROSE yet.
-trace_SOURCES = trace.C
+trace_SOURCES = trace.C generateExecutable.C
 
 TRACE_FILES = vmp-hw-part.trace
 
@@ -25,6 +25,6 @@ check-local:
 	$(MAKE) test > trace.out
 
 clean-local:
-	rm -f *.o rose_*.c trace.out
+	rm -f *.o rose_*.c trace.out a.out
 
 EXTRA_DIST = $(TRACE_FILES)

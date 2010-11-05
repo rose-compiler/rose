@@ -4,19 +4,18 @@
    This test program takes an input example code (trivial) and
    an instruction trace.
 
-   1) Read the instruction trace into a data strucutre.
+   1) Reads the instruction trace (trace file) into a data structure.
 
-   2) Extends the main function with a block of nop's equal to the size
-   required to insert the trace into the block.
+   2) Generates a SgAsmBlock of instructions.
 
-   3) Compile the transformed source code to build an executable.
-
-   4) Reads the generated executable and does analysis.  This could be
-      a separate step since after step #3 the binary has been generated.
-
-   5) Do transformations on the AST of the generated binary executable.
+   3) Builds an Elf executable from scratch (as a.out).
 
 
+      *****  Steps beyond this point are not finished  *****
+
+   4) Inserts the instruction block into the Elf executable.
+
+   5) Generate the Elf binary with the generated instruction block.
 
  */
 
@@ -32,7 +31,6 @@
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
-
 
 #if 0
 // This code does not compile (documentation only).
@@ -84,11 +82,9 @@ struct trace_file
 #endif
 
 
-// Read the trace file (using example).
-// void readTraceFile ( const string & traceFileName );
-// read_file(const string & traceFileName, size_t *file_sz)
-vector<unsigned char>
-read_file(const string & traceFileName)
+// Read the trace file (using the example code for reading a trace).
+Disassembler::InstructionMap
+read_trace_file(const string & traceFileName, uint64_t & entry_va )
    {
      const size_t MAX_INST_SIZE = 10;
      uint64_t instructionAddress = 0;
@@ -98,7 +94,10 @@ read_file(const string & traceFileName)
      Disassembler *disassembler = Disassembler::lookup(pe)->clone();
      ROSE_ASSERT(disassembler!=NULL);
 
-     vector<unsigned char> opCodeBuffer;
+  // typedef std::map<rose_addr_t, SgAsmInstruction*> InstructionMap;
+     Disassembler::InstructionMap instructionMapOfTrace;
+
+  // vector<unsigned char> opCodeBuffer;
 
      printf ("Opening trace file = %s \n",traceFileName.c_str());
      FILE * tf = fopen(traceFileName.c_str(), "rb");
@@ -107,14 +106,7 @@ read_file(const string & traceFileName)
           fprintf(stderr, "Error opening trace file: %s\n",traceFileName.c_str());
           ROSE_ASSERT(false);
         }
-#if 0
-     FILE * tf = fopen(argv[1], "rb");
-     if (!tf)
-        {
-          fprintf(stderr, "Error opening trace file: %s\n", argv[1]);
-          return -1;
-        }
-#endif
+
      unsigned short magic=0;
      fread(&magic, 2, 1, tf);
 
@@ -124,14 +116,7 @@ read_file(const string & traceFileName)
           fclose(tf);
           ROSE_ASSERT(false);
         }
-#if 0
-     if (magic != 0x5445)
-        {
-          fprintf(stderr, "Trace magic value not recognized\n");
-          fclose(tf);
-          return -1;
-        }
-#endif
+
      unsigned short version=0;
      unsigned long num_proc=0;
      fread(&version, 2, 1, tf);
@@ -140,6 +125,9 @@ read_file(const string & traceFileName)
      printf("header magic: %x\n", magic);
      printf("version: %d\n", version);
      printf("number of processes: %ld\n", num_proc);
+
+  // This allows us to debug on a small ssubset of the trace.
+     int counter = 0;
 
      unsigned int i=0;
      for (i=0; i<num_proc; i++)
@@ -193,15 +181,33 @@ read_file(const string & traceFileName)
 
             // insnData.second = isSgAsmx86Instruction(disassembler->disassembleOne(&insnBuf[0], addr, insnBuf.size(), addr, NULL));
             // SgAsmx86Instruction* instruction = disassembler->disassembleOne(&insnBuf[0], addr, insnBuf.size(), addr, NULL);
+
+            // Set the entry point with the first instruction (note instructionAddress is initialized to 0 at start of function).
+               if (instructionAddress == 0)
+                  {
+                    entry_va = exec;
+                  }
+
+               instructionAddress = exec;
+
                SgAsmx86Instruction* instruction = isSgAsmx86Instruction(disassembler->disassembleOne(inst_bytes, instructionAddress, inst_size, instructionAddress, NULL));
                ROSE_ASSERT(instruction != NULL);
 
+               if (instructionMapOfTrace.find(instructionAddress) == instructionMapOfTrace.end())
+                  {
+                    printf ("New instruction at this address instructionAddress = %p \n",(void*) instructionAddress);
+                    instructionMapOfTrace.insert(pair<rose_addr_t,SgAsmInstruction*>(instructionAddress,instruction));
+                  }
+                 else
+                  {
+                    printf ("An instruction at this address has been seen instructionAddress = %p \n",(void*) instructionAddress);
+                  }
+
             // Increment the instruction address as though it were a linear stream of unique instructions (likely it is not but handle that detail later).
-               instructionAddress += inst_size;
+            // instructionAddress += inst_size;
 
             // string stringifiedInstruction = instruction->unparseToString();
                string stringifiedInstruction = instruction->get_mnemonic();
-
                printf ("\tstringifiedInstruction = %s \n",stringifiedInstruction.c_str());
 
                fread(&eflags, 4, 1, tf);
@@ -223,44 +229,24 @@ read_file(const string & traceFileName)
 
                printf("\tCPU: eflags:%lx eax:%lx ebx:%lx ecx:%lx edx:%lx esi:%lx edi:%lx ebp:%lx esp:%lx\t cs:%x ss:%x es:%x ds:%x fs:%x gs:%x\n",
                     eflags, eax, ebx, ecx, edx, esi, edi, ebp, esp, cs, ss, es, ds, fs, gs);
+
+               counter++;
+               if (counter > 10)
+                  {
+                    printf ("Exiting eary as a test: closing file: %s \n",traceFileName.c_str());
+                    fclose(tf);
+                    return instructionMapOfTrace;
+                  }
              }
         }//end for all processes
 
      printf ("Closing file: %s \n",traceFileName.c_str());
      fclose(tf);
 
-     return opCodeBuffer;
+  // return opCodeBuffer;
+     return instructionMapOfTrace;
    }
 
-#if 0
-/* Read our example file into a memory buffer.  The file contains only the instructions and no PE file header or other
- * container information. */
-static const unsigned char*
-OLD_read_file(const char* filename, size_t *file_sz)
-{
-    int fd = open(filename, O_RDONLY);
-    if (fd<0) {
-        perror(filename);
-        exit(1);
-    }
-
-    struct stat sb;
-    if (fstat(fd, &sb)<0) {
-        perror("fstat");
-        exit(1);
-    }
-
-    const unsigned char* buf = (const unsigned char*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (!buf) {
-        perror("mmap");
-        exit(1);
-    }
-
-    close(fd);
-    *file_sz = sb.st_size;
-    return buf;
-}
-#endif
 
 /* Define our own partitioner that doesn't do any real function detection analysis. It just takes all the instructions and
  * stuffs them into a single function. */
@@ -278,6 +264,10 @@ class MyPartitioner: public Partitioner
              }
    };
 
+
+// Function prototype...
+SgAsmGenericFile* generateExecutable(SgAsmBlock *block);
+
 int
 main(int argc, char* argv[])
    {
@@ -292,70 +282,9 @@ main(int argc, char* argv[])
 
   // Read the trace file...
   // readTraceFile(traceFileName);
-     vector<unsigned char> opCodeBuffer = read_file(traceFileName);
-
-  // Code modified from disassembleBuffer.C
-#if 0
-     if (argc<3) {
-        fprintf(stderr, "usage: %s FILENAME START_ADDR [ENTRY_ADDR]\n", argv[0]);
-        exit(1);
-     }
-#endif
-
-#if 0
-  // This is a demonstration of how to build the build the trace into an executable (ELF first an then later a PE executable).
-
-     const char* filename = argv[1];
-     uint64_t start_va = strtoll(argv[2], NULL, 0);
-     uint64_t entry_va = argc>3 ? strtol(argv[3], NULL, 0) : start_va;
-
-  /* Read the supplied file into our memory, and then tell ROSE how that memory would have been mapped into
-   * the process' memory by the loader. In this case, we just map the entire buffer to a contiguous region
-   * of the process starting at the address specified on the command line. */
-     size_t buf_sz;
-  // const unsigned char *buf = read_file(filename, &buf_sz);
-     vector<unsigned char> opCodeBuffer = read_file(filename);
-     const unsigned char *buf = &(opCodeBuffer[0]);
-
-     MemoryMap::MapElement melmt(start_va, buf_sz, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
-     melmt.set_name(filename);
-     MemoryMap mm;
-     mm.insert(melmt);
-
-  /* Create the SgAsmGenericFile object that will be needed later. We could have used its parse() method to read the
-   * contents of our file, but this example's purpose is to clearly demonstrate how to disassemble a buffer that might not
-   * have even come from a file. */
-     SgAsmGenericFile *file = new SgAsmGenericFile();
-
-  /* In order to disassemble, we need a Disassembler object.  The most convenient way to get one is to ask the Disassembler
-   * class to look up a suitable disassembler from those which have been registered.  We then clone that disassembler so
-   * that any changes we make (like changing its search heuristics) are local.  We need to provide information about
-   * what kind of instructions will be disassembled, which is done through the instruction set architecutre (InsSetArchecture)
-   * data member of an SgAsmGenericHeader object. Fortunately, the SgAsmPEFileHeader subclass' constructor fills in
-   * reasonable values for the instruction set (i.e., 32-bit x86). */
-     SgAsmPEFileHeader *pe = new SgAsmPEFileHeader(file);
-     Disassembler *d = Disassembler::lookup(pe)->clone();
-     d->set_search(Disassembler::SEARCH_FOLLOWING | Disassembler::SEARCH_DEADEND);
-    
-  /* Disassemble the mapped buffer. The last two arguments are optional, but we show how to use them here. */
-     Disassembler::BadMap errors;
-     Disassembler::AddressSet successors;
-     Disassembler::InstructionMap insns = d->disassembleBuffer(&mm, entry_va, &successors, &errors);
-     printf("Disassembled %zu instruction%s\n", insns.size(), 1==insns.size()?"":"s");
-
-  /* Report about any disassembly errors. */
-     for (Disassembler::BadMap::iterator ei=errors.begin(); ei!=errors.end(); ++ei)
-          printf("Error at 0x%08"PRIx64": %s\n", ei->second.ip, ei->second.mesg.c_str());
-
-  /* Report which additional addresses the disassembler would like to have seen. */
-     fputs("Successors:", stdout);
-     if (!successors.empty()) {
-         for (Disassembler::AddressSet::iterator si=successors.begin(); si!=successors.end(); ++si)
-             printf(" 0x%08"PRIx64, *si);
-         fputs("\n\n", stdout);
-     } else {
-         fputs(" buffer is self contained.\n\n", stdout);
-     }
+  // vector<unsigned char> opCodeBuffer = read_trace_file(traceFileName);
+     uint64_t entry_va = 0;
+     Disassembler::InstructionMap insns = read_trace_file(traceFileName,entry_va);
 
   /* A partitioner can reorganize the instructions into an AST if you desire.  This is necessary if you plan to use any
    * ROSE's analysis or output functions since they operate exclusively on the tree representation. */
@@ -365,6 +294,26 @@ main(int argc, char* argv[])
    * example). This method of output is also more efficient than calling the old unparseAsmStatement() since there's no need
    * to buffer the string representation in memory first. */
      AsmUnparser().unparse(std::cout, block);
+
+  // This work is incomplete, the block is not yet assembled into a function in the file.
+     SgAsmGenericFile* file = generateExecutable(block);
+     ROSE_ASSERT(file != NULL);
+
+#if 0
+  // This code does not yet work...
+
+  // Now generate the executable...
+     SgProject* project = new SgProject();
+     SgBinaryFile* binaryFile = new SgBinaryFile(file);
+
+  // Old deprecated interface...
+  // project->set_file(*binaryFile);
+     project->get_fileList().push_back(binaryFile);
+
+  // Call the backend to generate an executable.
+     backend(project); 
 #endif
+
+     return 0;
    }
 
