@@ -2885,6 +2885,14 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                         if (isLibraryArchive == true)
                                            {
+#ifdef _MSC_VER
+                                               /* The following block of code deals with *.a library archives files found on
+                                                * Unix systems. I added better temporary file and directory names, but this
+                                                * block of code also has commands that likely won't run on Windows
+                                                * systems, so I'm commenting out the whole block. [RPM 2010-11-03] */
+                                               ROSE_ASSERT(!"Windows not supported");
+#else
+
                                           // This is the case of processing a library archive (*.a) file. We want to process these files so that 
                                           // we can test the library identification mechanism to build databases of the binary functions in 
                                           // libraries (so that we detect these in staticaly linked binaries).
@@ -2944,6 +2952,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                              printf ("Exiting in processing a library archive file. \n");
                                           // ROSE_ASSERT(false);
 #endif
+#endif /* _MSC_VER */
                                            }
 #if 0
                                         printf ("Processed as a binary file! \n");
