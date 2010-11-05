@@ -65,6 +65,12 @@ Switches are:
   section (normally named ".interp"). The interpreter is usually
   the linux dynamic linker, ld-linux.so.
 
+* "--vdso=PATHS" overrides the compiled in names for finding the
+  virtual dynamic shared object normally provided by the kernel. The
+  PATHS are a colon-separate list of directories and/or files. When
+  directories are specified the simulator looks for files called
+  "x86vdso" in those directories.
+
 Positional arguments:
 
 * "SPECIMEN" is the name of the program to simulate.  x86sim will

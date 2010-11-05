@@ -253,10 +253,10 @@ public:
     uint64_t signal_mask;                       /* Set by sigsetmask() */
     std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
     static const uint32_t brk_base=0x08000000;  /* Lowest possible brk() value */
-    std::string vdso_name;                      /* Optional name of virtual dynamic shared object from kernel */
-    std::vector<std::string> vdso_paths;        /* Directories to search for vdso_name */
-    rose_addr_t vdso_va;                        /* Address where vdso is mapped into specimen, or zero */
-    rose_addr_t vdso_entry;                     /* Entry address for vdso, or zero */
+    std::string vdso_name;                      /* Optional base name of virtual dynamic shared object from kernel */
+    std::vector<std::string> vdso_paths;        /* Directories and/or filenames to search for vdso */
+    rose_addr_t vdso_mapped_va;                 /* Address where vdso is mapped into specimen, or zero */
+    rose_addr_t vdso_entry_va;                  /* Entry address for vdso, or zero */
     unsigned core_styles;                       /* What kind of core dump(s) to make for dump_core() */
     std::string core_base_name;                 /* Name to use for core files ("core") */
     rose_addr_t ld_linux_base_va;               /* Base address for ld-linux.so; see c'tor */
@@ -282,7 +282,7 @@ public:
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
-          vdso_va(0), vdso_entry(0), core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0),
+          vdso_mapped_va(0), vdso_entry_va(0), core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false), trace_progress(false) {
 
@@ -556,19 +556,22 @@ public:
 struct SimLoader: public BinaryLoaderElf {
 public:
     SgAsmGenericHeader *interpreter;                    /* header linked into AST for .interp section */
+    SgAsmGenericHeader *vdso;                           /* header for the vdso file, if any */
+    rose_addr_t vdso_mapped_va;                         /* base address where vdso is mapped, or zero */
+    rose_addr_t vdso_entry_va;                          /* entry address for the vdso, or zero */
 
-    SimLoader(SgAsmInterpretation *interp, FILE *debug, std::string default_interpname)
-        : interpreter(NULL) {
+    SimLoader(SgAsmInterpretation *interpretation, FILE *debug, std::string default_interpname)
+        : interpreter(NULL), vdso(NULL), vdso_mapped_va(0), vdso_entry_va(0) {
         set_debug(debug);
         set_perform_dynamic_linking(false);             /* we explicitly link in the interpreter and nothing else */
         set_perform_remap(true);                        /* map interpreter and main binary into specimen memory */
         set_perform_relocations(false);                 /* allow simulated interpreter to perform relocation fixups */
 
         /* Link the interpreter into the AST */
-        SgAsmGenericHeader *header = interp->get_headers()->get_headers().front();
+        SgAsmGenericHeader *header = interpretation->get_headers()->get_headers().front();
         std::string interpreter_name = find_interpreter(header, default_interpname);
         if (!interpreter_name.empty()) {
-            SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
+            SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interpretation);
             ROSE_ASSERT(composite!=NULL);
             SgAsmGenericFile *ifile = createAsmAST(composite, interpreter_name);
             interpreter = ifile->get_headers()->get_headers().front();
@@ -606,6 +609,50 @@ public:
                 retval.push_back(section);
         }
         return retval;
+    }
+
+    /* Load the specified file as a virtual dynamic shared object. Returns true if the vdso was found and mapped. The side
+     * effect is that the "vdso", "vdso_mapped_va", and "vdso_entry_va" data members are initialized when the vdso is found and
+     * mapped into memory. */
+    bool map_vdso(const std::string &vdso_name, SgAsmInterpretation *interpretation, MemoryMap *map) {
+        ROSE_ASSERT(vdso==NULL);
+        ROSE_ASSERT(vdso_mapped_va==0);
+        ROSE_ASSERT(vdso_entry_va==0);
+
+        struct stat sb;
+        if (stat(vdso_name.c_str(), &sb)<0 || !S_ISREG(sb.st_mode))
+            return false;
+        int fd = open(vdso_name.c_str(), O_RDONLY);
+        if (fd<0)
+            return false;
+        
+        SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interpretation);
+        ROSE_ASSERT(composite!=NULL);
+        SgAsmGenericFile *file = createAsmAST(composite, vdso_name);
+        ROSE_ASSERT(file!=NULL);
+        SgAsmGenericHeader *fhdr = file->get_headers()->get_headers()[0];
+        ROSE_ASSERT(isSgAsmElfFileHeader(fhdr)!=NULL);
+        rose_addr_t entry_rva = fhdr->get_entry_rva();
+
+        uint8_t *buf = new uint8_t[sb.st_size];
+        ssize_t nread = read(fd, buf, sb.st_size);
+        ROSE_ASSERT(nread==sb.st_size);
+        close(fd); fd=-1;
+
+        vdso_mapped_va = ALIGN_UP(map->find_last_free(), PAGE_SIZE);
+        MemoryMap::MapElement me(vdso_mapped_va, sb.st_size, buf, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+        me.set_name("[vdso]");
+        map->insert(me);
+
+        if (sb.st_size!=ALIGN_UP(sb.st_size, PAGE_SIZE)) {
+            MemoryMap::MapElement me2(vdso_mapped_va+sb.st_size, ALIGN_UP(sb.st_size, PAGE_SIZE)-sb.st_size,
+                                      MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
+            me2.set_name(me.get_name());
+            map->insert(me2);
+        }
+
+        vdso_entry_va = vdso_mapped_va + entry_rva;
+        return true;
     }
 
 #if 0 /*DEBUGGING [RPM 2010-09-22]*/
@@ -681,12 +728,12 @@ EmulationPolicy::load(const char *name)
 
     /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
      * (we'll use the PE interpretation). */
-    SgAsmInterpretation *interp = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
-    SgAsmGenericHeader *fhdr = interp->get_headers()->get_headers().front();
+    SgAsmInterpretation *interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
+    SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
     writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
 
     /* Link the interpreter into the AST */
-    SimLoader *loader = new SimLoader(interp, trace_loader ? debug : NULL, interpname);
+    SimLoader *loader = new SimLoader(interpretation, trace_loader ? debug : NULL, interpname);
 
     /* If we found an interpreter then use its entry address as the start of simulation.  When running the specimen directly
      * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 even though the libs preferred
@@ -698,7 +745,7 @@ EmulationPolicy::load(const char *name)
 
     /* Sort the headers so they're in order by entry address. In other words, if the interpreter's entry address is below the
      * entry address of the main executable, then make sure the interpretter gets mapped first. */
-    SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    SgAsmGenericHeaderPtrList &headers = interpretation->get_headers()->get_headers();
     if (2==headers.size()) {
         if (headers[0]->get_base_va() + headers[0]->get_entry_rva() >
             headers[1]->get_base_va() + headers[1]->get_entry_rva())
@@ -708,50 +755,37 @@ EmulationPolicy::load(const char *name)
     }
 
     /* Map all segments into simulated memory */
-    loader->load(interp);
-    map = interp->get_map();
+    loader->load(interpretation);
+    map = interpretation->get_map();
 
-    /* Map the virtual dynamic shared object.  We'll load a version from a file if possible, none otherwise. */
+    /* Load and map the virtual dynamic shared library. */
     if (!loader->interpreter) {
-        fprintf(stderr, "warning: static executable; no vdso necessary\n");
-    } else if (vdso_name.empty()) {
-        fprintf(stderr, "warning: no virtual dynamic shared object (vdso)\n");
+        if (debug && trace_loader)
+            fprintf(stderr, "warning: static executable; no vdso necessary\n");
     } else {
-        for (size_t i=0; i<vdso_paths.size() && 0==vdso_va; i++) {
-            std::string vdso_name = vdso_paths[i] + "/" + this->vdso_name;
-            if (debug && trace_loader) fprintf(debug, "looking for vdso: %s\n", vdso_name.c_str());
-            int vdso_fd = open(vdso_name.c_str(), O_RDONLY);
-            if (vdso_fd>=0) {
-                struct stat sb;
-                fstat(vdso_fd, &sb);
-                uint8_t *vdso = new uint8_t[sb.st_size];
-                ssize_t nread = read(vdso_fd, vdso, sb.st_size);
-                ROSE_ASSERT(nread==sb.st_size);
-                close(vdso_fd); vdso_fd=-1;
-
-                vdso_va = ALIGN_UP(map->find_last_free(), PAGE_SIZE);
-                vdso_entry = vdso_va + 0x420; /* determined by parsing x86vdso */
-                MemoryMap::MapElement me(vdso_va, sb.st_size, vdso, 0, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
-                me.set_name("[vdso]");
-                map->insert(me);
-
-                if (sb.st_size!=ALIGN_UP(sb.st_size, PAGE_SIZE)) {
-                    MemoryMap::MapElement me2(vdso_va+sb.st_size, ALIGN_UP(sb.st_size, PAGE_SIZE)-sb.st_size,
-                                              MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
-                    me2.set_name(me.get_name());
-                    map->insert(me2);
+        bool vdso_loaded = false;
+        for (size_t i=0; i<vdso_paths.size() && !vdso_loaded; i++) {
+            for (int j=0; j<2 && !vdso_loaded; j++) {
+                std::string vdso_name = vdso_paths[i] + (j ? "" : "/" + this->vdso_name);
+                if (debug && trace_loader)
+                    fprintf(debug, "looking for vdso: %s\n", vdso_name.c_str());
+                if ((vdso_loaded = loader->map_vdso(vdso_name, interpretation, map))) {
+                    vdso_mapped_va = loader->vdso_mapped_va;
+                    vdso_entry_va = loader->vdso_entry_va;
+                    if (debug && trace_loader) {
+                        fprintf(debug, "mapped %s at 0x%08"PRIx64" with entry va 0x%08"PRIx64"\n",
+                                vdso_name.c_str(), vdso_mapped_va, vdso_entry_va);
+                    }
                 }
-
-                if (debug && trace_loader) fprintf(debug, "loaded %s at 0x%08"PRIx64"\n", vdso_name.c_str(), vdso_va);
             }
         }
-        if (0==vdso_va)
-            fprintf(stderr, "warning: cannot find virtual dynamic shared object: %s\n", vdso_name.c_str());
+        if (!vdso_loaded && debug && trace_loader)
+            fprintf(stderr, "warning: cannot find a virtual dynamic shared object\n");
     }
 
     /* Find a disassembler. */
     if (!disassembler)
-        disassembler = Disassembler::lookup(interp)->clone();
+        disassembler = Disassembler::lookup(interpretation)->clone();
 
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
      * below 0x40000000 (the stack, and where ld-linux.so.2 might be loaded when loaded high). */
@@ -857,16 +891,16 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         t1.traverse(fhdr, preorder);
         auxv.clear();
 
-        if (vdso_va!=0) {
+        if (vdso_mapped_va!=0) {
             /* AT_SYSINFO_ENTRY */
             auxv.push_back(0x20);
-            auxv.push_back(vdso_entry);
+            auxv.push_back(vdso_entry_va);
             if (debug && trace_loader)
                 fprintf(debug, "AT_SYSINFO_ENTRY: 0x%08"PRIx32"\n", auxv.back());
 
             /* AT_SYSINFO */
             auxv.push_back(0x21);
-            auxv.push_back(vdso_va);
+            auxv.push_back(vdso_mapped_va);
             if (debug && trace_loader)
                 fprintf(debug, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
         }
@@ -3980,6 +4014,14 @@ main(int argc, char *argv[])
             argno++;
         } else if (!strncmp(argv[argno], "--interp=", 9)) {
             policy.interpname = argv[argno]+9;
+        } else if (!strncmp(argv[argno], "--vdso=", 7)) {
+            policy.vdso_paths.clear();
+            for (char *s=argv[argno]+7; s && *s; /*void*/) {
+                char *colon = strchr(s, ':');
+                policy.vdso_paths.push_back(std::string(s, colon?colon-s:strlen(s)));
+                s = colon ? colon+1 : NULL;
+            }
+            argno++;
         } else {
             fprintf(stderr, "usage: %s [--debug] PROGRAM ARGUMENTS...\n", argv[0]);
             exit(1);
