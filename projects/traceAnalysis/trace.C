@@ -229,7 +229,7 @@ read_trace_file(const string & traceFileName, uint64_t & entry_va )
 
                printf("\tCPU: eflags:%lx eax:%lx ebx:%lx ecx:%lx edx:%lx esi:%lx edi:%lx ebp:%lx esp:%lx\t cs:%x ss:%x es:%x ds:%x fs:%x gs:%x\n",
                     eflags, eax, ebx, ecx, edx, esi, edi, ebp, esp, cs, ss, es, ds, fs, gs);
-
+#if 0
                counter++;
                if (counter > 10)
                   {
@@ -237,6 +237,7 @@ read_trace_file(const string & traceFileName, uint64_t & entry_va )
                     fclose(tf);
                     return instructionMapOfTrace;
                   }
+#endif
              }
         }//end for all processes
 
