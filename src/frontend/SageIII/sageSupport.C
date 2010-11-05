@@ -2885,6 +2885,14 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                         if (isLibraryArchive == true)
                                            {
+#ifdef _MSC_VER
+                                               /* The following block of code deals with *.a library archives files found on
+                                                * Unix systems. I added better temporary file and directory names, but this
+                                                * block of code also has commands that likely won't run on Windows
+                                                * systems, so I'm commenting out the whole block. [RPM 2010-11-03] */
+                                               ROSE_ASSERT(!"Windows not supported");
+#else
+
                                           // This is the case of processing a library archive (*.a) file. We want to process these files so that 
                                           // we can test the library identification mechanism to build databases of the binary functions in 
                                           // libraries (so that we detect these in staticaly linked binaries).
@@ -2899,12 +2907,18 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                           // Mark this as a library archive.
                                              file->set_isLibraryArchive(true);
 
-                                          // Later we can make the tmp file specific to a given archive if we want to do that.
-                                          // string commandLine = "mkdir -p tmp_objects; cd tmp_objects; ar -vox " + archiveName;
-
-                                          // Put the names of the extracted objects into a file and the extracted object file into the directory: tmp_objects
-                                             string objectNameFile = "object_names.txt";
-                                             string commandLine = "mkdir -p tmp_objects; cd tmp_objects; ar -vox " + archiveName + " > ../object_names.txt";
+                                          // Extract the archive into a temporary directory and create a file in that
+                                          // directory that will have the names of objects stored in the archive.  We have
+                                          // to be careful about name choices since this function could be called multiple
+                                          // times from one process, and by multiple processes.
+                                             static int tmpDirectorySequence = 0;
+                                             string tmpDirectory = "/tmp/ROSE-" + StringUtility::numberToString(getpid()) +
+                                                                   "-" + StringUtility::numberToString(tmpDirectorySequence++);
+                                             string objectNameFile = tmpDirectory + "/object_names.txt";
+                                             string commandLine = "mkdir -p " + tmpDirectory +
+                                                                  "&& cd " + tmpDirectory +
+                                                                  "&& ar -vox " + archiveName +
+                                                                  ">" + objectNameFile;
                                              printf ("Running System Command: %s \n",commandLine.c_str());
 
                                           // Run the system command...
@@ -2921,8 +2935,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                                   size_t wordSize = word.length();
                                                   string targetSuffix = ".o";
                                                   size_t targetSuffixSize = targetSuffix.length();
-                                                  if (wordSize > targetSuffixSize && word.substr(wordSize-targetSuffixSize) == targetSuffix)
-                                                       objectFileList.push_back(word);
+                                                  if (wordSize > targetSuffixSize &&
+                                                      word.substr(wordSize-targetSuffixSize) == targetSuffix)
+                                                       objectFileList.push_back(tmpDirectory + "/" + word);
                                                 }
 
                                              for (vector<string>::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
@@ -2937,6 +2952,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                              printf ("Exiting in processing a library archive file. \n");
                                           // ROSE_ASSERT(false);
 #endif
+#endif /* _MSC_VER */
                                            }
 #if 0
                                         printf ("Processed as a binary file! \n");
@@ -6569,7 +6585,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
         for (size_t i = 0; i < get_libraryArchiveObjectFileNameList().size(); i++) {
             printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%zu] = %s \n",
                     i, get_libraryArchiveObjectFileNameList()[i].c_str());
-            string filename = "tmp_objects/" + get_libraryArchiveObjectFileNameList()[i];
+            string filename = get_libraryArchiveObjectFileNameList()[i];
             printf("Build SgAsmGenericFile from: %s \n", filename.c_str());
             buildAsmAST(filename);
         }
