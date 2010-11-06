@@ -869,17 +869,17 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         auxv.clear();
 
         if (vdso_mapped_va!=0) {
-            /* AT_SYSINFO_ENTRY */
-            auxv.push_back(0x20);
+            /* AT_SYSINFO */
+            auxv.push_back(32);
             auxv.push_back(vdso_entry_va);
             if (debug && trace_loader)
-                fprintf(debug, "AT_SYSINFO_ENTRY: 0x%08"PRIx32"\n", auxv.back());
+                fprintf(debug, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
 
-            /* AT_SYSINFO */
-            auxv.push_back(0x21);
+            /* AT_SYSINFO_PHDR */
+            auxv.push_back(33);
             auxv.push_back(vdso_mapped_va);
             if (debug && trace_loader)
-                fprintf(debug, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
+                fprintf(debug, "AT_SYSINFO_PHDR:  0x%08"PRIx32"\n", auxv.back());
         }
 
 #if 0 /*Disabled because it causes ld.so to execute MXX instructions [RPM 2010-09-21]*/
@@ -987,19 +987,17 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
         if (debug && trace_loader)
             fprintf(debug, "AT_SECURE:        %"PRId32"\n", auxv.back());
 
-#if 0 /*Disabled because it causes ld.so to execute MXX instructions [RPM 2010-09-21]*/
         /* AT_PLATFORM */
         {
             const char *platform = "i386";
             size_t len = strlen(platform)+1;
             sp -= len;
             map->write(platform, sp, len);
-            auxv.push_back(16);
+            auxv.push_back(15);
             auxv.push_back(sp);
             if (debug && trace_loader)
                 fprintf(debug, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
         }
-#endif
     }
 
     /* AT_NULL */
