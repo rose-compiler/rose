@@ -2189,7 +2189,7 @@ EmulationPolicy::emulate_syscall()
             } else {
                 if (newbrk > brk_va) {
                     MemoryMap::MapElement melmt(brk_va, newbrk-brk_va, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
-                    melmt.set_name("brk syscall");
+                    melmt.set_name("[heap]");
                     map->insert(melmt);
                     brk_va = newbrk;
                 } else if (newbrk>0 && newbrk<brk_va) {
