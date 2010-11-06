@@ -30,1715 +30,1772 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::emptyRenameTa
 StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::emptyRenameEntry;
 
 //Printing functions
+
 std::string StaticSingleAssignment::keyToString(const VarName& vec)
 {
-    std::string name = "";
-    foreach(const VarName::value_type& iter, vec)
-    {
-        if(iter != vec.front())
-        {
-            name += ":";
-        }
-        name += iter->get_name().getString();
-    }
+	std::string name = "";
 
-    return name;
+	foreach(const VarName::value_type& iter, vec)
+	{
+		if (iter != vec.front())
+		{
+			name += ":";
+		}
+		name += iter->get_name().getString();
+	}
+
+	return name;
 }
 
 void StaticSingleAssignment::printDefs(SgNode* node)
 {
-    std::cout << "Def Table for [" << node->class_name() << ":" << node <<"]:" << std::endl;
+	std::cout << "Def Table for [" << node->class_name() << ":" << node << "]:" << std::endl;
 
-    foreach(TableEntry::value_type& entry, defTable[node])
-    {
-        std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
-        foreach(NodeVec::value_type& iter, entry.second)
-        {
-            std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
-        }
-    }
+	foreach(TableEntry::value_type& entry, defTable[node])
+	{
+		std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+
+		foreach(NodeVec::value_type& iter, entry.second)
+		{
+			std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+		}
+	}
 }
 
 void StaticSingleAssignment::printDefs(std::map< std::vector<SgInitializedName*>, std::vector<SgNode*> >& table)
 {
-    std::cout << "Def Table:" << std::endl;
+	std::cout << "Def Table:" << std::endl;
 
-    foreach(TableEntry::value_type& entry,table)
-    {
-        std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
-        foreach(NodeVec::value_type& iter, entry.second)
-        {
-            std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
-        }
-    }
+	foreach(TableEntry::value_type& entry, table)
+	{
+		std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+
+		foreach(NodeVec::value_type& iter, entry.second)
+		{
+			std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+		}
+	}
 }
 
 void StaticSingleAssignment::printOriginalDefs(SgNode* node)
 {
-    std::cout << "Original Def Table for [" << node->class_name() << ":" << node <<"]:" << std::endl;
+	std::cout << "Original Def Table for [" << node->class_name() << ":" << node << "]:" << std::endl;
 
-    foreach(TableEntry::value_type& entry, originalDefTable[node])
-    {
-        std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
-        foreach(NodeVec::value_type& iter, entry.second)
-        {
-            std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
-        }
-    }
+	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	{
+		std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+
+		foreach(NodeVec::value_type& iter, entry.second)
+		{
+			std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+		}
+	}
 }
 
 void StaticSingleAssignment::printOriginalDefTable()
 {
-    std::cout << "Original Def Table:" << endl;
+	std::cout << "Original Def Table:" << endl;
 
-    foreach(DefUseTable::value_type& node, originalDefTable)
-    {
-        std::cout << "  Original Def Table for [" << node.first->class_name() << ":" << node.first <<"]:" << std::endl;
+	foreach(DefUseTable::value_type& node, originalDefTable)
+	{
+		std::cout << "  Original Def Table for [" << node.first->class_name() << ":" << node.first << "]:" << std::endl;
 
-        foreach(TableEntry::value_type& entry, originalDefTable[node.first])
-        {
-            std::cout << "    Defs for [" << keyToString(entry.first) << "]:" << std::endl;
-            foreach(NodeVec::value_type& iter, entry.second)
-            {
-                std::cout << "      -[" << iter->class_name() << ":" << iter << "]" << std::endl;
-            }
-        }
-    }
+		foreach(TableEntry::value_type& entry, originalDefTable[node.first])
+		{
+			std::cout << "    Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+
+			foreach(NodeVec::value_type& iter, entry.second)
+			{
+				std::cout << "      -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+			}
+		}
+	}
 }
 
 void StaticSingleAssignment::printUses(SgNode* node)
 {
-    std::cout << "Use Table for [" << node->class_name() << ":" << node <<"]:" << std::endl;
+	std::cout << "Use Table for [" << node->class_name() << ":" << node << "]:" << std::endl;
 
-    foreach(TableEntry::value_type& entry,useTable[node])
-    {
-        std::cout << "  Uses for [" << keyToString(entry.first) << "]:" << std::endl;
-        foreach(NodeVec::value_type& iter, entry.second)
-        {
-            std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
-        }
-    }
+	foreach(TableEntry::value_type& entry, useTable[node])
+	{
+		std::cout << "  Uses for [" << keyToString(entry.first) << "]:" << std::endl;
+
+		foreach(NodeVec::value_type& iter, entry.second)
+		{
+			std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+		}
+	}
 }
 
 void StaticSingleAssignment::printUses(std::map< std::vector<SgInitializedName*>, std::vector<SgNode*> >& table)
 {
-    std::cout << "Use Table:" << std::endl;
+	std::cout << "Use Table:" << std::endl;
 
-    foreach(TableEntry::value_type& entry,table)
-    {
-        std::cout << "  Uses for [" << keyToString(entry.first) << "]:" << std::endl;
-        foreach(NodeVec::value_type& iter, entry.second)
-        {
-            std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
-        }
-    }
+	foreach(TableEntry::value_type& entry, table)
+	{
+		std::cout << "  Uses for [" << keyToString(entry.first) << "]:" << std::endl;
+
+		foreach(NodeVec::value_type& iter, entry.second)
+		{
+			std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+		}
+	}
 }
 
 void StaticSingleAssignment::printRenameTable()
 {
-    printRenameTable(numRenameTable);
+	printRenameTable(numRenameTable);
 }
 
 void StaticSingleAssignment::printRenameTable(const VarName& var)
 {
-    cout << "Names for [" << keyToString(var) << "]:" << endl;
+	cout << "Names for [" << keyToString(var) << "]:" << endl;
 
-    printRenameEntry(numRenameTable[var]);
+	printRenameEntry(numRenameTable[var]);
 }
 
 void StaticSingleAssignment::printRenameTable(const NodeNumRenameTable& table)
 {
-    cout << "Rename Table:" << endl;
+	cout << "Rename Table:" << endl;
 
-    //Iterate the table
-    foreach(const NodeNumRenameTable::value_type& entry, table)
-    {
-        cout << "  Names for [" << keyToString(entry.first) << "]:" << endl;
+	//Iterate the table
 
-        //Print out the renamings in order
-        printRenameEntry(entry.second);
-    }
+	foreach(const NodeNumRenameTable::value_type& entry, table)
+	{
+		cout << "  Names for [" << keyToString(entry.first) << "]:" << endl;
+
+		//Print out the renamings in order
+		printRenameEntry(entry.second);
+	}
 }
 
 void StaticSingleAssignment::printRenameTable(const NumNodeRenameTable& table)
 {
-    cout << "Rename Table:" << endl;
+	cout << "Rename Table:" << endl;
 
-    //Iterate the table
-    foreach(const NumNodeRenameTable::value_type& entry, table)
-    {
-        std::cout << "  Names for [" << keyToString(entry.first) << "]:" << std::endl;
+	//Iterate the table
 
-        //Print out the renamings in order.
-        printRenameEntry(entry.second);
-    }
+	foreach(const NumNodeRenameTable::value_type& entry, table)
+	{
+		std::cout << "  Names for [" << keyToString(entry.first) << "]:" << std::endl;
+
+		//Print out the renamings in order.
+		printRenameEntry(entry.second);
+	}
 }
 
 void StaticSingleAssignment::printRenameEntry(const NodeNumRenameEntry& entry)
 {
-    int start = 0;
-    int end = 0;
-    
-    //Iterate the entry
-    foreach(const NodeNumRenameEntry::value_type& iter, entry)
-    {
-        if(start == 0 && end == 0)
-        {
-            start = iter.second;
-            end = iter.second;
-            continue;
-        }
+	int start = 0;
+	int end = 0;
 
-        if(start > iter.second)
-        {
-            start = iter.second;
-        }
+	//Iterate the entry
 
-        if(end < iter.second)
-        {
-            end = iter.second;
-        }
-    }
+	foreach(const NodeNumRenameEntry::value_type& iter, entry)
+	{
+		if (start == 0 && end == 0)
+		{
+			start = iter.second;
+			end = iter.second;
+			continue;
+		}
 
-    while(start <= end)
-    {
-        SgNode* current = NULL;
-        //Find the entry for start if it exists
-        foreach(const NodeNumRenameEntry::value_type& iter, entry)
-        {
-            if(iter.second == start)
-            {
-                current = iter.first;
-                break;
-            }
-        }
+		if (start > iter.second)
+		{
+			start = iter.second;
+		}
 
-        if(current != NULL)
-        {
-            cout << "      " << start << ": " << current << endl;
-        }
+		if (end < iter.second)
+		{
+			end = iter.second;
+		}
+	}
 
-        start++;
-    }
+	while (start <= end)
+	{
+		SgNode* current = NULL;
+		//Find the entry for start if it exists
+
+		foreach(const NodeNumRenameEntry::value_type& iter, entry)
+		{
+			if (iter.second == start)
+			{
+				current = iter.first;
+				break;
+			}
+		}
+
+		if (current != NULL)
+		{
+			cout << "      " << start << ": " << current << endl;
+		}
+
+		start++;
+	}
 }
 
 void StaticSingleAssignment::printRenameEntry(const NumNodeRenameEntry& entry)
 {
-    //Iterate the entry
-    foreach(const NumNodeRenameEntry::value_type& iter, entry)
-    {
-        cout << "      " << iter.first << ": " << iter.second << endl;
-    }
+	//Iterate the entry
+
+	foreach(const NumNodeRenameEntry::value_type& iter, entry)
+	{
+		cout << "      " << iter.first << ": " << iter.second << endl;
+	}
 }
 
 VarUniqueName* StaticSingleAssignment::getUniqueName(SgNode* node)
 {
-    if(!node->attributeExists(StaticSingleAssignment::varKeyTag))
-    {
-        return NULL;
-    }
-    VarUniqueName* uName = dynamic_cast<VarUniqueName*>(node->getAttribute(StaticSingleAssignment::varKeyTag));
-    return uName;
+	if (!node->attributeExists(StaticSingleAssignment::varKeyTag))
+	{
+		return NULL;
+	}
+	VarUniqueName* uName = dynamic_cast<VarUniqueName*> (node->getAttribute(StaticSingleAssignment::varKeyTag));
+	return uName;
 }
 
 StaticSingleAssignment::VarName StaticSingleAssignment::getVarName(SgNode* node)
 {
-    if(node == NULL || getUniqueName(node) == NULL)
-    {
-        return StaticSingleAssignment::VarName();
-    }
-    return getUniqueName(node)->getKey();
+	if (node == NULL || getUniqueName(node) == NULL)
+	{
+		return StaticSingleAssignment::VarName();
+	}
+	return getUniqueName(node)->getKey();
 }
-
 
 bool StaticSingleAssignment::isFromLibrary(SgNode* node)
 {
-  Sg_File_Info* fi = node->get_file_info();
-  if (fi->isCompilerGenerated())
-      return true;
-  string filename = fi->get_filenameString();
-  //cout << "Filename string '" << filename << "' for " << node->class_name() << node << endl;
-  if ((filename.find("include") != std::string::npos))
-  {
-      //cout << "Found 'include' in string." << endl;
-      return true;
-  }
-  return false;
+	Sg_File_Info* fi = node->get_file_info();
+	if (fi->isCompilerGenerated())
+		return true;
+	string filename = fi->get_filenameString();
+	//cout << "Filename string '" << filename << "' for " << node->class_name() << node << endl;
+	if ((filename.find("include") != std::string::npos))
+	{
+		//cout << "Found 'include' in string." << endl;
+		return true;
+	}
+	return false;
 }
 
 bool StaticSingleAssignment::isBuiltinVar(const VarName& var)
 {
-    //Test if the variable is compiler generated.
-    if(var[0]->get_name().getString().find("__") == 0)
-    {
-        //We are compiler generated, return true.
-        return true;
-    }
-    return false;
+	//Test if the variable is compiler generated.
+	if (var[0]->get_name().getString().find("__") == 0)
+	{
+		//We are compiler generated, return true.
+		return true;
+	}
+	return false;
 }
 
 bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 {
-    VarName::iterator iter;
-    // Search for the first occurance of prefix in name
-    iter = std::search(name.begin(), name.end(), prefix.begin(), prefix.end());
+	VarName::iterator iter;
+	// Search for the first occurance of prefix in name
+	iter = std::search(name.begin(), name.end(), prefix.begin(), prefix.end());
 
-    //If the prefix is at the beginning of the name
-    if(iter == name.begin())
-    {
-        return true;
-    }
-    //If the prefix is not in the name
-    else if(iter == name.end())
-    {
-        return false;
-    }
-    //Found the prefix, but inside the name instead of at beginning
-    else
-    {
-        //We don't want to assert, just return false.
-        return false;
-    }
+	//If the prefix is at the beginning of the name
+	if (iter == name.begin())
+	{
+		return true;
+	}
+		//If the prefix is not in the name
+	else if (iter == name.end())
+	{
+		return false;
+	}
+		//Found the prefix, but inside the name instead of at beginning
+	else
+	{
+		//We don't want to assert, just return false.
+		return false;
+	}
 }
 
 //Function to perform the StaticSingleAssignment and annotate the AST
+
 void StaticSingleAssignment::run()
 {
-    originalDefTable.clear();
-    expandedDefTable.clear();
-    defTable.clear();
-    useTable.clear();
-    firstDefList.clear();
-    nodeRenameTable.clear();
-    numRenameTable.clear();
-    globalVarList.clear();
+	originalDefTable.clear();
+	expandedDefTable.clear();
+	defTable.clear();
+	useTable.clear();
+	firstDefList.clear();
+	nodeRenameTable.clear();
+	numRenameTable.clear();
+	globalVarList.clear();
 
-    if(getDebug())
-        cout << "Locating global variables." << endl;
+	if (getDebug())
+		cout << "Locating global variables." << endl;
 
-    findGlobalVars();
+	findGlobalVars();
 
-    if(getDebug())
-        cout << "Performing UniqueNameTraversal..." << endl;
+	if (getDebug())
+		cout << "Performing UniqueNameTraversal..." << endl;
 
-    UniqueNameTraversal uniqueTrav;
-    std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
-    std::vector<SgFunctionDefinition*>::iterator iter = funcs.begin();
-    for(;iter != funcs.end(); ++iter)
-    {
-        SgFunctionDeclaration* func = (*iter)->get_declaration();
-        ROSE_ASSERT(func);
-        if(!isFromLibrary(func))
-        {
-            if(getDebug())
-                cout << "Running UniqueNameTrav on " << func->get_name().getString() << func << endl;
-            uniqueTrav.traverse(func);
-        }
-    }
+	UniqueNameTraversal uniqueTrav;
+	std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition > (project, V_SgFunctionDefinition);
+	std::vector<SgFunctionDefinition*>::iterator iter = funcs.begin();
+	for (; iter != funcs.end(); ++iter)
+	{
+		SgFunctionDeclaration* func = (*iter)->get_declaration();
+		ROSE_ASSERT(func);
+		if (!isFromLibrary(func))
+		{
+			if (getDebug())
+				cout << "Running UniqueNameTrav on " << func->get_name().getString() << func << endl;
+			uniqueTrav.traverse(func);
+		}
+	}
 
-    if(getDebug())
-        cout << "Finished UniqueNameTrav..." << endl;
+	if (getDebug())
+		cout << "Finished UniqueNameTrav..." << endl;
 
-    DefsAndUsesTraversal defUseTrav(this);
-    for(iter = funcs.begin();iter != funcs.end(); ++iter)
-    {
-        SgFunctionDeclaration* func = (*iter)->get_declaration();
-        ROSE_ASSERT(func);
-        if(!isFromLibrary(func))
-        {
-            if(getDebug())
-                cout << "Running defUseTrav on function: " << func->get_name().getString() << func << endl;
-            defUseTrav.traverse(func);
-        }
-    }
+	DefsAndUsesTraversal defUseTrav(this);
+	for (iter = funcs.begin(); iter != funcs.end(); ++iter)
+	{
+		SgFunctionDeclaration* func = (*iter)->get_declaration();
+		ROSE_ASSERT(func);
+		if (!isFromLibrary(func))
+		{
+			if (getDebug())
+				cout << "Running defUseTrav on function: " << func->get_name().getString() << func << endl;
+			defUseTrav.traverse(func);
+		}
+	}
 
-    if(getDebug())
-        cout << "Finished DefUseTraversal." << endl;
+	if (getDebug())
+		cout << "Finished DefUseTraversal." << endl;
 
-    if(getDebug())
-        cout << "Inserting global variable definitions." << endl;
+	if (getDebug())
+		cout << "Inserting global variable definitions." << endl;
 
-    //Insert the global variables as being defined at every function entry and
-    //at every function call
-    insertGlobalVarDefinitions();
+	//Insert the global variables as being defined at every function entry and
+	//at every function call
+	insertGlobalVarDefinitions();
 
-    if(getDebug())
-    {
-        printOriginalDefTable();
-    }
-    
-    if(getDebug())
-        cout << "Performing DefUse." << endl;
+	if (getDebug())
+	{
+		printOriginalDefTable();
+	}
 
-    for(iter = funcs.begin();iter != funcs.end(); ++iter)
-    {
-        SgFunctionDefinition* func = (*iter);
-        ROSE_ASSERT(func);
-        if(!isFromLibrary(func))
-        {
-            if(getDebug())
-                cout << "Running DefUse on function: " << func->get_declaration()->get_name().getString() << func << endl;
-            runDefUse(func);
-        }
-    }
+	if (getDebug())
+		cout << "Performing DefUse." << endl;
 
-    return;
+	for (iter = funcs.begin(); iter != funcs.end(); ++iter)
+	{
+		SgFunctionDefinition* func = (*iter);
+		ROSE_ASSERT(func);
+		if (!isFromLibrary(func))
+		{
+			if (getDebug())
+				cout << "Running DefUse on function: " << func->get_declaration()->get_name().getString() << func << endl;
+			runDefUse(func);
+		}
+	}
+
+	return;
 }
 
 void StaticSingleAssignment::findGlobalVars()
 {
-    InitNameVec vars = SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName);
-    foreach(InitNameVec::value_type& iter, vars)
-    {
-        //Ignore library/compiler generated variables.
-        if(isFromLibrary(iter))
-            continue;
+	InitNameVec vars = SageInterface::querySubTree<SgInitializedName > (project, V_SgInitializedName);
 
-        //Check if we are in global scope.
-        SgNode* scope = iter->get_scope();
-        if(isSgGlobal(scope))
-        {
-            //Since forward declaration parameters are inserted in global scope,
-            //Check if we are in a forward declaration
-            if(SageInterface::getEnclosingFunctionDeclaration(iter))
-            {
-                //We are in a declaration, so not a global var.
-                continue;
-            }
-            //Add the variable to the global scope and name it.
-            VarUniqueName *uName = new VarUniqueName(iter);
-            iter->setAttribute(StaticSingleAssignment::varKeyTag, uName);
-            //Add to the global var list
-            globalVarList.push_back(uName->getKey());
-            if(getDebug())
-                cout << "Added global variable [" << iter->get_name().getString() << "] - " << iter << endl;
-        }
-    }
+	foreach(InitNameVec::value_type& iter, vars)
+	{
+		//Ignore library/compiler generated variables.
+		if (isFromLibrary(iter))
+			continue;
+
+		//Check if we are in global scope.
+		SgNode* scope = iter->get_scope();
+		if (isSgGlobal(scope))
+		{
+			//Since forward declaration parameters are inserted in global scope,
+			//Check if we are in a forward declaration
+			if (SageInterface::getEnclosingFunctionDeclaration(iter))
+			{
+				//We are in a declaration, so not a global var.
+				continue;
+			}
+			//Add the variable to the global scope and name it.
+			VarUniqueName *uName = new VarUniqueName(iter);
+			iter->setAttribute(StaticSingleAssignment::varKeyTag, uName);
+			//Add to the global var list
+			globalVarList.push_back(uName->getKey());
+			if (getDebug())
+				cout << "Added global variable [" << iter->get_name().getString() << "] - " << iter << endl;
+		}
+	}
 }
 
 void StaticSingleAssignment::insertGlobalVarDefinitions()
 {
-    if(getDebug())
-        cout << "Global Var List size: " << globalVarList.size() << endl;
+	if (getDebug())
+		cout << "Global Var List size: " << globalVarList.size() << endl;
 
-    //Iterate the function definitions and insert definitions for all global variables
-    std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
-    foreach(std::vector<SgFunctionDefinition*>::value_type& iter, funcs)
-    {
-        SgFunctionDefinition* func = iter;
-        ROSE_ASSERT(func);
+	//Iterate the function definitions and insert definitions for all global variables
+	std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition > (project, V_SgFunctionDefinition);
 
-        //Iterate the global table insert a def for each name at the function definition
-        foreach(GlobalTable::value_type& entry, globalVarList)
-        {
-            //Add this function definition as a definition point of this variable
-            originalDefTable[func][entry].push_back(func);
-        }
-    }
+	foreach(std::vector<SgFunctionDefinition*>::value_type& iter, funcs)
+	{
+		SgFunctionDefinition* func = iter;
+		ROSE_ASSERT(func);
+
+		//Iterate the global table insert a def for each name at the function definition
+
+		foreach(GlobalTable::value_type& entry, globalVarList)
+		{
+			//Add this function definition as a definition point of this variable
+			originalDefTable[func][entry].push_back(func);
+		}
+	}
 
 
-    //Iterate the function calls and insert definitions for all global variables
-    std::vector<SgFunctionCallExp*> calls = SageInterface::querySubTree<SgFunctionCallExp>(project, V_SgFunctionCallExp);
-    foreach(std::vector<SgFunctionCallExp*>::value_type& iter, calls)
-    {
-        SgFunctionCallExp* call = iter;
-        ROSE_ASSERT(call);
+	//Iterate the function calls and insert definitions for all global variables
+	std::vector<SgFunctionCallExp*> calls = SageInterface::querySubTree<SgFunctionCallExp > (project, V_SgFunctionCallExp);
 
-        //Iterate the global table insert a def for each name at the function call
-        foreach(GlobalTable::value_type& entry, globalVarList)
-        {
-            //Add this function call as a definition point of this variable
-            originalDefTable[call][entry].push_back(call);
-        }
-    }
+	foreach(std::vector<SgFunctionCallExp*>::value_type& iter, calls)
+	{
+		SgFunctionCallExp* call = iter;
+		ROSE_ASSERT(call);
+
+		//Iterate the global table insert a def for each name at the function call
+
+		foreach(GlobalTable::value_type& entry, globalVarList)
+		{
+			//Add this function call as a definition point of this variable
+			originalDefTable[call][entry].push_back(call);
+		}
+	}
 }
 
 void StaticSingleAssignment::toDOT(const std::string fileName)
 {
-    ROSE_ASSERT(fileName != "");
+	ROSE_ASSERT(fileName != "");
 
-    typedef std::vector<SgSourceFile*> fileVec;
-    fileVec files = SageInterface::querySubTree<SgSourceFile>(project, V_SgSourceFile);
+	typedef std::vector<SgSourceFile*> fileVec;
+	fileVec files = SageInterface::querySubTree<SgSourceFile > (project, V_SgSourceFile);
 
-    //print all the functions in each file
-    foreach(fileVec::value_type& file, files)
-    {
-        ofstream outFile((StringUtility::stripPathFromFileName(file->getFileName())
-                            + "_" + fileName).c_str());
+	//print all the functions in each file
 
-        if(!outFile.good())
-        {
-            if(getDebug())
-                cout << "Error printing DOT." << endl;
+	foreach(fileVec::value_type& file, files)
+	{
+		ofstream outFile((StringUtility::stripPathFromFileName(file->getFileName())
+				+ "_" + fileName).c_str());
 
-            return;
-        }
+		if (!outFile.good())
+		{
+			if (getDebug())
+				cout << "Error printing DOT." << endl;
 
-        //Print the CFG of the function
-        printToDOT(file, outFile);
-    }
+			return;
+		}
+
+		//Print the CFG of the function
+		printToDOT(file, outFile);
+	}
 }
 
 void StaticSingleAssignment::toFilteredDOT(const std::string fileName)
 {
-    ROSE_ASSERT(fileName != "");
+	ROSE_ASSERT(fileName != "");
 
-    typedef std::vector<SgSourceFile*> fileVec;
-    fileVec files = SageInterface::querySubTree<SgSourceFile>(project, V_SgSourceFile);
+	typedef std::vector<SgSourceFile*> fileVec;
+	fileVec files = SageInterface::querySubTree<SgSourceFile > (project, V_SgSourceFile);
 
-    //print all the functions in each file
-    foreach(fileVec::value_type& file, files)
-    {
-        ofstream outFile((StringUtility::stripPathFromFileName(file->getFileName())
-                            + "_filtered_" + fileName).c_str());
+	//print all the functions in each file
 
-        if(!outFile.good())
-        {
-            if(getDebug())
-                cout << "Error printing DOT." << endl;
+	foreach(fileVec::value_type& file, files)
+	{
+		ofstream outFile((StringUtility::stripPathFromFileName(file->getFileName())
+				+ "_filtered_" + fileName).c_str());
 
-            return;
-        }
+		if (!outFile.good())
+		{
+			if (getDebug())
+				cout << "Error printing DOT." << endl;
 
-        //Print the CFG of the function
-        printToFilteredDOT(file, outFile);
-    }
+			return;
+		}
+
+		//Print the CFG of the function
+		printToFilteredDOT(file, outFile);
+	}
 }
 
 void StaticSingleAssignment::printToDOT(SgSourceFile* source, std::ofstream &outFile)
 {
-    if(!outFile.good())
-    {
-        if(getDebug())
-            cout << "Error: Bad ofstream in printToDOT()" << endl;
-        return;
-    }
+	if (!outFile.good())
+	{
+		if (getDebug())
+			cout << "Error: Bad ofstream in printToDOT()" << endl;
+		return;
+	}
 
-    typedef CFGNode cfgNode;
-    typedef CFGEdge cfgEdge;
+	typedef CFGNode cfgNode;
+	typedef CFGEdge cfgEdge;
 
-    typedef std::vector<SgFunctionDefinition*> funcDefVec;
-    funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition>(source, V_SgFunctionDefinition);
+	typedef std::vector<SgFunctionDefinition*> funcDefVec;
+	funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
 
-    //Start the graph
-    outFile << "digraph SSAGraph {\n";
+	//Start the graph
+	outFile << "digraph SSAGraph {\n";
 
-    //Iterate all the functions and print them in the same file.
-    foreach(funcDefVec::value_type& func, funcs)
-    {
-        vector<cfgNode> visited;
-        stack<cfgNode> traverse;
-        cfgNode current = cfgNode(func->cfgForBeginning());
+	//Iterate all the functions and print them in the same file.
 
-        traverse.push(current);
+	foreach(funcDefVec::value_type& func, funcs)
+	{
+		vector<cfgNode> visited;
+		stack<cfgNode> traverse;
+		cfgNode current = cfgNode(func->cfgForBeginning());
 
-        while(!traverse.empty())
-        {
-            current = traverse.top();
+		traverse.push(current);
 
-            //If not visited
-            if(std::count(visited.begin(),visited.end(),current) == 0)
-            {
-                //Visit the node and print it
-                std::string id = current.id();
-                std::string nodeColor = "black";
+		while (!traverse.empty())
+		{
+			current = traverse.top();
 
-                bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
+			//If not visited
+			if (std::count(visited.begin(), visited.end(), current) == 0)
+			{
+				//Visit the node and print it
+				std::string id = current.id();
+				std::string nodeColor = "black";
 
-                if (isSgStatement(current.getNode()))
-                    nodeColor = "blue";
-                else if (isSgExpression(current.getNode()))
-                    nodeColor = "green";
-                else if (isSgInitializedName(current.getNode()))
-                    nodeColor = "red";
+				bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
 
-                std::string name = "";
-                if(uniqueName)
-                {
-                    if(getDebug())
-                        cout << "Getting Unique Name attribute." << endl;
-                    VarUniqueName *attr = getUniqueName(current.getNode());
-                    ROSE_ASSERT(attr);
+				if (isSgStatement(current.getNode()))
+					nodeColor = "blue";
+				else if (isSgExpression(current.getNode()))
+					nodeColor = "green";
+				else if (isSgInitializedName(current.getNode()))
+					nodeColor = "red";
 
-                    name = attr->getNameString();
-                }
+				std::string name = "";
+				if (uniqueName)
+				{
+					if (getDebug())
+						cout << "Getting Unique Name attribute." << endl;
+					VarUniqueName *attr = getUniqueName(current.getNode());
+					ROSE_ASSERT(attr);
 
-                //Print the defs to a string
-                std::stringstream defUse;
-                foreach(TableEntry::value_type& entry, defTable[current.getNode()])
-                {
-                    defUse << "Def [" << keyToString(entry.first) << "]: ";
-                    foreach(NodeVec::value_type& val, entry.second)
-                    {
-                        defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
-                    }
-                    defUse << "\\n";
-                }
-                //Print the uses to a string
-                foreach(TableEntry::value_type& entry, useTable[current.getNode()])
-                {
-                    defUse << "Use [" << keyToString(entry.first) << "]: ";
-                    foreach(NodeVec::value_type& val, entry.second)
-                    {
-                        defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
-                    }
-                    defUse << "\\n";
-                }
+					name = attr->getNameString();
+				}
 
-                //Copy out the string and trim off the last '\n'
-                std::string defUseStr = defUse.str().substr(0,defUse.str().size()-2);
+				//Print the defs to a string
+				std::stringstream defUse;
+
+				foreach(TableEntry::value_type& entry, defTable[current.getNode()])
+				{
+					defUse << "Def [" << keyToString(entry.first) << "]: ";
+
+					foreach(NodeVec::value_type& val, entry.second)
+					{
+						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
+					}
+					defUse << "\\n";
+				}
+				//Print the uses to a string
+
+				foreach(TableEntry::value_type& entry, useTable[current.getNode()])
+				{
+					defUse << "Use [" << keyToString(entry.first) << "]: ";
+
+					foreach(NodeVec::value_type& val, entry.second)
+					{
+						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
+					}
+					defUse << "\\n";
+				}
+
+				//Copy out the string and trim off the last '\n'
+				std::string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
 
 
-                //Print this node
-                outFile << id << " [label=\"<"  << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
-                        //Now we add the unique name information
-                        << ((name != "")? "\\n" : "") << name
-                        << ((defUseStr != "")? "\\n" : "") << defUseStr
-                        << "\", color=\"" << nodeColor << "\", style=\""
-                        << (current.isInteresting()? "solid" : "dotted") << "\"];\n";
+				//Print this node
+				outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
+						//Now we add the unique name information
+						<< ((name != "") ? "\\n" : "") << name
+						<< ((defUseStr != "") ? "\\n" : "") << defUseStr
+						<< "\", color=\"" << nodeColor << "\", style=\""
+						<< (current.isInteresting() ? "solid" : "dotted") << "\"];\n";
 
-                //Now print the out edges
-                std::vector<cfgEdge> outEdges = current.outEdges();
+				//Now print the out edges
+				std::vector<cfgEdge> outEdges = current.outEdges();
 
-                foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
-                {
-                    outFile << edge.source().id() << " -> " << edge.target().id()
-                            << " [label=\"" << escapeString(edge.toString())
-                            << "\"];\n";
-                }
-            }
+				foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
+				{
+					outFile << edge.source().id() << " -> " << edge.target().id()
+							<< " [label=\"" << escapeString(edge.toString())
+							<< "\"];\n";
+				}
+			}
 
-            visited.push_back(current);
+			visited.push_back(current);
 
-            std::vector<cfgEdge> outEdges = current.outEdges();
-            foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
-            {
-                //If we haven't seen the target of this node yet, process the node
-                if(std::count(visited.begin(),visited.end(),edge.target()) == 0)
-                {
-                    traverse.push(edge.target());
-                    break;
-                }
-            }
+			std::vector<cfgEdge> outEdges = current.outEdges();
 
-            //If there are no new out edges to explore
-            if(traverse.top() == current)
-            {
-                std::vector<cfgEdge> inEdges = current.inEdges();
-                foreach(std::vector<cfgEdge>::value_type& edge, inEdges)
-                {
-                    //If we haven't seen the target of this node yet, process the node
-                    if(std::count(visited.begin(),visited.end(),edge.target()) == 0)
-                    {
-                        traverse.push(edge.source());
-                        break;
-                    }
-                }
-            }
+			foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
+			{
+				//If we haven't seen the target of this node yet, process the node
+				if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
+				{
+					traverse.push(edge.target());
+					break;
+				}
+			}
 
-            //No out or in edges left to print, pop this node
-            if(traverse.top() == current)
-            {
-                traverse.pop();
-            }
-        }
-    }
+			//If there are no new out edges to explore
+			if (traverse.top() == current)
+			{
+				std::vector<cfgEdge> inEdges = current.inEdges();
 
-    //End the graph
-    outFile << "}\n";
+				foreach(std::vector<cfgEdge>::value_type& edge, inEdges)
+				{
+					//If we haven't seen the target of this node yet, process the node
+					if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
+					{
+						traverse.push(edge.source());
+						break;
+					}
+				}
+			}
+
+			//No out or in edges left to print, pop this node
+			if (traverse.top() == current)
+			{
+				traverse.pop();
+			}
+		}
+	}
+
+	//End the graph
+	outFile << "}\n";
 }
 
 void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, std::ofstream& outFile)
 {
-    if(!outFile.good())
-    {
-        if(getDebug())
-            cout << "Error: Bad ofstream in printToDOT()" << endl;
-        return;
-    }
+	if (!outFile.good())
+	{
+		if (getDebug())
+			cout << "Error: Bad ofstream in printToDOT()" << endl;
+		return;
+	}
 
-    typedef FilteredCFGNode<IsDefUseFilter> cfgNode;
-    typedef FilteredCFGEdge<IsDefUseFilter> cfgEdge;
+	typedef FilteredCFGNode<IsDefUseFilter> cfgNode;
+	typedef FilteredCFGEdge<IsDefUseFilter> cfgEdge;
 
-    typedef std::vector<SgFunctionDefinition*> funcDefVec;
-    funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition>(source, V_SgFunctionDefinition);
+	typedef std::vector<SgFunctionDefinition*> funcDefVec;
+	funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
 
-    //Start the graph
-    outFile << "digraph SSAGraph {\n";
+	//Start the graph
+	outFile << "digraph SSAGraph {\n";
 
-    //Iterate all the functions and print them in the same file.
-    foreach(funcDefVec::value_type& func, funcs)
-    {
-        vector<cfgNode> visited;
-        stack<cfgNode> traverse;
-        cfgNode current = cfgNode(func->cfgForBeginning());
+	//Iterate all the functions and print them in the same file.
 
-        traverse.push(current);
+	foreach(funcDefVec::value_type& func, funcs)
+	{
+		vector<cfgNode> visited;
+		stack<cfgNode> traverse;
+		cfgNode current = cfgNode(func->cfgForBeginning());
 
-        while(!traverse.empty())
-        {
-            current = traverse.top();
+		traverse.push(current);
 
-            //If not visited
-            if(std::count(visited.begin(),visited.end(),current) == 0)
-            {
-                //Visit the node and print it
-                std::string id = current.id();
-                std::string nodeColor = "black";
+		while (!traverse.empty())
+		{
+			current = traverse.top();
 
-                bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
+			//If not visited
+			if (std::count(visited.begin(), visited.end(), current) == 0)
+			{
+				//Visit the node and print it
+				std::string id = current.id();
+				std::string nodeColor = "black";
 
-                if (isSgStatement(current.getNode()))
-                    nodeColor = "blue";
-                else if (isSgExpression(current.getNode()))
-                    nodeColor = "green";
-                else if (isSgInitializedName(current.getNode()))
-                    nodeColor = "red";
+				bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
 
-                std::string name = "";
-                if(uniqueName)
-                {
-                    if(getDebug())
-                        cout << "Getting Unique Name attribute." << endl;
-                    VarUniqueName *attr = getUniqueName(current.getNode());
-                    ROSE_ASSERT(attr);
+				if (isSgStatement(current.getNode()))
+					nodeColor = "blue";
+				else if (isSgExpression(current.getNode()))
+					nodeColor = "green";
+				else if (isSgInitializedName(current.getNode()))
+					nodeColor = "red";
 
-                    name = attr->getNameString();
-                }
+				std::string name = "";
+				if (uniqueName)
+				{
+					if (getDebug())
+						cout << "Getting Unique Name attribute." << endl;
+					VarUniqueName *attr = getUniqueName(current.getNode());
+					ROSE_ASSERT(attr);
 
-                //Print the defs to a string
-                std::stringstream defUse;
-                foreach(TableEntry::value_type& entry, defTable[current.getNode()])
-                {
-                    defUse << "Def [" << keyToString(entry.first) << "]: ";
-                    foreach(NodeVec::value_type& val, entry.second)
-                    {
-                        defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
-                    }
-                    defUse << "\\n";
-                }
-                //Print the uses to a string
-                foreach(TableEntry::value_type& entry, useTable[current.getNode()])
-                {
-                    defUse << "Use [" << keyToString(entry.first) << "]: ";
-                    foreach(NodeVec::value_type& val, entry.second)
-                    {
-                        defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
-                    }
-                    defUse << "\\n";
-                }
+					name = attr->getNameString();
+				}
 
-                //Copy out the string and trim off the last '\n'
-                std::string defUseStr = defUse.str().substr(0,defUse.str().size()-2);
+				//Print the defs to a string
+				std::stringstream defUse;
+
+				foreach(TableEntry::value_type& entry, defTable[current.getNode()])
+				{
+					defUse << "Def [" << keyToString(entry.first) << "]: ";
+
+					foreach(NodeVec::value_type& val, entry.second)
+					{
+						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
+					}
+					defUse << "\\n";
+				}
+				//Print the uses to a string
+
+				foreach(TableEntry::value_type& entry, useTable[current.getNode()])
+				{
+					defUse << "Use [" << keyToString(entry.first) << "]: ";
+
+					foreach(NodeVec::value_type& val, entry.second)
+					{
+						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
+					}
+					defUse << "\\n";
+				}
+
+				//Copy out the string and trim off the last '\n'
+				std::string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
 
 
-                //Print this node
-                outFile << id << " [label=\"<"  << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
-                        //Now we add the unique name information
-                        << ((name != "")? "\\n" : "") << name
-                        << ((defUseStr != "")? "\\n" : "") << defUseStr
-                        << "\", color=\"" << nodeColor << "\", style=\""
-                        << (current.isInteresting()? "solid" : "dotted") << "\"];\n";
+				//Print this node
+				outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
+						//Now we add the unique name information
+						<< ((name != "") ? "\\n" : "") << name
+						<< ((defUseStr != "") ? "\\n" : "") << defUseStr
+						<< "\", color=\"" << nodeColor << "\", style=\""
+						<< (current.isInteresting() ? "solid" : "dotted") << "\"];\n";
 
-                //Now print the out edges
-                std::vector<cfgEdge> outEdges = current.outEdges();
+				//Now print the out edges
+				std::vector<cfgEdge> outEdges = current.outEdges();
 
-                foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
-                {
-                    outFile << edge.source().id() << " -> " << edge.target().id()
-                            << " [label=\"" << escapeString(edge.toString())
-                            << "\"];\n";
-                }
-            }
+				foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
+				{
+					outFile << edge.source().id() << " -> " << edge.target().id()
+							<< " [label=\"" << escapeString(edge.toString())
+							<< "\"];\n";
+				}
+			}
 
-            visited.push_back(current);
+			visited.push_back(current);
 
-            std::vector<cfgEdge> outEdges = current.outEdges();
-            foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
-            {
-                //If we haven't seen the target of this node yet, process the node
-                if(std::count(visited.begin(),visited.end(),edge.target()) == 0)
-                {
-                    traverse.push(edge.target());
-                    break;
-                }
-            }
+			std::vector<cfgEdge> outEdges = current.outEdges();
 
-            //If there are no new out edges to explore
-            if(traverse.top() == current)
-            {
-                std::vector<cfgEdge> inEdges = current.inEdges();
-                foreach(std::vector<cfgEdge>::value_type& edge, inEdges)
-                {
-                    //If we haven't seen the target of this node yet, process the node
-                    if(std::count(visited.begin(),visited.end(),edge.target()) == 0)
-                    {
-                        traverse.push(edge.source());
-                        break;
-                    }
-                }
-            }
+			foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
+			{
+				//If we haven't seen the target of this node yet, process the node
+				if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
+				{
+					traverse.push(edge.target());
+					break;
+				}
+			}
 
-            //No out or in edges left to print, pop this node
-            if(traverse.top() == current)
-            {
-                traverse.pop();
-            }
-        }
-    }
-   
-    //End the graph
-    outFile << "}\n";
+			//If there are no new out edges to explore
+			if (traverse.top() == current)
+			{
+				std::vector<cfgEdge> inEdges = current.inEdges();
+
+				foreach(std::vector<cfgEdge>::value_type& edge, inEdges)
+				{
+					//If we haven't seen the target of this node yet, process the node
+					if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
+					{
+						traverse.push(edge.source());
+						break;
+					}
+				}
+			}
+
+			//No out or in edges left to print, pop this node
+			if (traverse.top() == current)
+			{
+				traverse.pop();
+			}
+		}
+	}
+
+	//End the graph
+	outFile << "}\n";
 }
 
 void StaticSingleAssignment::runDefUse(SgFunctionDefinition* func)
 {
-    //Keep track of visited nodes
-    boost::unordered_set<SgNode*> visited;
+	//Keep track of visited nodes
+	boost::unordered_set<SgNode*> visited;
 
-    //Reset the first def list to prevent errors with global vars.
-    firstDefList.clear();
-    
-    cfgNodeVec worklist;
+	//Reset the first def list to prevent errors with global vars.
+	firstDefList.clear();
 
-    cfgNode current = cfgNode(func->cfgForBeginning());
-    worklist.push_back(current);
+	cfgNodeVec worklist;
 
-    while(!worklist.empty())
-    {
-        if(getDebug())
-            cout << "-------------------------------------------------------------------------" << endl;
-        //Get the node to work on
-        current = worklist.front();
-        worklist.erase(worklist.begin());
+	cfgNode current = cfgNode(func->cfgForBeginning());
+	worklist.push_back(current);
 
-        //We don't want to do def_use on the ending CFGNode of the function definition
-        //so if we see it, continue.
-        //If we do this, then incorrect information will be propogated to the beginning of the function
-        if(current == cfgNode(func->cfgForEnd()))
-        {
-            if(getDebug())
-                cout << "Skipped defUse on End of function definition." << endl;
-            continue;
-        }
+	while (!worklist.empty())
+	{
+		if (getDebug())
+			cout << "-------------------------------------------------------------------------" << endl;
+		//Get the node to work on
+		current = worklist.front();
+		worklist.erase(worklist.begin());
 
-        bool memberRefInserted = false;
-        NodeVec changedNodes;
-        bool changed = defUse(current, &memberRefInserted, changedNodes);
-        
-        //If memberRefs were inserted, then there are nodes previous to this one that are different.
-        //Thus, we need to add those nodes to the working list
-        if(memberRefInserted)
-        {
-            //Clear the worklist and visited list
-            worklist.clear();
-            visited.clear();
+		//We don't want to do def_use on the ending CFGNode of the function definition
+		//so if we see it, continue.
+		//If we do this, then incorrect information will be propogated to the beginning of the function
+		if (current == cfgNode(func->cfgForEnd()))
+		{
+			if (getDebug())
+				cout << "Skipped defUse on End of function definition." << endl;
+			continue;
+		}
 
-            //Insert each changed node into the list
-            foreach(SgNode* chNode, changedNodes)
-            {
-                //Get the cfg node for this node
-                cfgNode nextNode = cfgNode(chNode->cfgForBeginning());
-                //Only insert the node in the worklist if it isn't there already.
-                if(std::find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
-                {
-                    worklist.push_back(nextNode);
-                    if(getDebug())
-                        cout << "Member Ref Inserted: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
-                }
-            }
+		bool memberRefInserted = false;
+		NodeVec changedNodes;
+		bool changed = defUse(current, &memberRefInserted, changedNodes);
 
-            //Restart work from where the new def was inserted.
-            continue;
-        }
+		//If memberRefs were inserted, then there are nodes previous to this one that are different.
+		//Thus, we need to add those nodes to the working list
+		if (memberRefInserted)
+		{
+			//Clear the worklist and visited list
+			worklist.clear();
+			visited.clear();
 
-        //Get the outgoing edges
-        cfgEdgeVec outEdges = current.outEdges();
+			//Insert each changed node into the list
 
-        //For every edge, add it to the worklist if it is not seen or something has changed
-        foreach(cfgEdgeVec::value_type& edge, outEdges)
-        {
-            cfgNode nextNode = edge.target();
+			foreach(SgNode* chNode, changedNodes)
+			{
+				//Get the cfg node for this node
+				cfgNode nextNode = cfgNode(chNode->cfgForBeginning());
+				//Only insert the node in the worklist if it isn't there already.
+				if (std::find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
+				{
+					worklist.push_back(nextNode);
+					if (getDebug())
+						cout << "Member Ref Inserted: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
+				}
+			}
 
-            //Only insert the node in the worklist if it isn't there already.
-            if(std::find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
-            {
-                if(changed)
-                {
-                    //Add the node to the worklist
-                    worklist.push_back(nextNode);
-                    if(getDebug())
-                        cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
-                }
-                //If the next node has not yet been visited
+			//Restart work from where the new def was inserted.
+			continue;
+		}
+
+		//Get the outgoing edges
+		cfgEdgeVec outEdges = current.outEdges();
+
+		//For every edge, add it to the worklist if it is not seen or something has changed
+
+		foreach(cfgEdgeVec::value_type& edge, outEdges)
+		{
+			cfgNode nextNode = edge.target();
+
+			//Only insert the node in the worklist if it isn't there already.
+			if (std::find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
+			{
+				if (changed)
+				{
+					//Add the node to the worklist
+					worklist.push_back(nextNode);
+					if (getDebug())
+						cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
+				}
+					//If the next node has not yet been visited
 				else if (visited.count(nextNode.getNode()) == 0)
-                {
-                    //Add it to the worklist
-                    worklist.push_back(nextNode);
-                    if(getDebug())
-                        cout << "Next unvisited: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
-                }
-            }
-            
-        }
+				{
+					//Add it to the worklist
+					worklist.push_back(nextNode);
+					if (getDebug())
+						cout << "Next unvisited: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
+				}
+			}
 
-        //Mark the current node as seen
-        visited.insert(current.getNode());
-    }
+		}
+
+		//Mark the current node as seen
+		visited.insert(current.getNode());
+	}
 }
 
 bool StaticSingleAssignment::defUse(FilteredCFGNode<IsDefUseFilter> node, bool *memberRefInserted, NodeVec &changedNodes)
 {
-    SgNode* current = node.getNode();
+	SgNode* current = node.getNode();
 
-    //Handle each type of node
-    if(getDebug())
-        cout << "Performing DefUse on " << current->class_name() << ":" << current << endl;
+	//Handle each type of node
+	if (getDebug())
+		cout << "Performing DefUse on " << current->class_name() << ":" << current << endl;
 
-    bool defChanged = false;
-    bool defRefInserted = false;
-    bool useChanged = false;
-    bool useRefInserted = false;
-    defChanged = mergeDefs(node, &defRefInserted);
-    useChanged = resolveUses(node, &useRefInserted, changedNodes);
+	bool defChanged = false;
+	bool defRefInserted = false;
+	bool useChanged = false;
+	bool useRefInserted = false;
+	defChanged = mergeDefs(node, &defRefInserted);
+	useChanged = resolveUses(node, &useRefInserted, changedNodes);
 
-    *memberRefInserted = useRefInserted;
-    
+	*memberRefInserted = useRefInserted;
 
-    if(getDebug())
-        cout << "Defs were " << ((defChanged)?"changed.":"same.") << endl;
-    
-    return defChanged;
+
+	if (getDebug())
+		cout << "Defs were " << ((defChanged) ? "changed." : "same.") << endl;
+
+	return defChanged;
 }
 
 bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 {
-    SgNode* node = curNode.getNode();
+	SgNode* node = curNode.getNode();
 
-    bool changed = false;
+	bool changed = false;
 
-    if(getDebug())
-    {
-        cout << "merging defs..." << endl;
-        printDefs(node);
-    }
+	if (getDebug())
+	{
+		cout << "merging defs..." << endl;
+		printDefs(node);
+	}
 
-    //We have the definitions stored as follows:
-    //defTable contans the definitions as propogated by the CFG analysis
-    //originalDefTable contains the original definitions that are part of the
-    //given statement.
+	//We have the definitions stored as follows:
+	//defTable contans the definitions as propogated by the CFG analysis
+	//originalDefTable contains the original definitions that are part of the
+	//given statement.
 
-    //When we want to propogate the defs from the previous node(s) to this one,
-    //We perform a few steps. This is dependent on the number of incoming edges.
+	//When we want to propogate the defs from the previous node(s) to this one,
+	//We perform a few steps. This is dependent on the number of incoming edges.
 
-    /*1 Edge: When we have linear control flow, we do the following:
-    *        1. Copy the definitions from the previous node wholesale to a staging table.
-    *        2. Copy in the original definitions from the current node, overwriting those
-    *           from the previous node.
-    *        3. Compare the staging and current tables, and only overwrite if needed.
-    */
+	/*1 Edge: When we have linear control flow, we do the following:
+	 *        1. Copy the definitions from the previous node wholesale to a staging table.
+	 *        2. Copy in the original definitions from the current node, overwriting those
+	 *           from the previous node.
+	 *        3. Compare the staging and current tables, and only overwrite if needed.
+	 */
 
-    /*2+ Edges: When we have branched control flow, we do the following:
-     *       1. Copy the definitions from the previous node(s) wholesale to a staging table.
-     *          Be careful to not insert duplicates.
-     *       2. Copy in the original definitions from the current node, overwriting those
-     *          from the previous node(s).
-     *       3. Compare the staging and current tables, and only overwrite if needed.
-     */
+	/*2+ Edges: When we have branched control flow, we do the following:
+	 *       1. Copy the definitions from the previous node(s) wholesale to a staging table.
+	 *          Be careful to not insert duplicates.
+	 *       2. Copy in the original definitions from the current node, overwriting those
+	 *          from the previous node(s).
+	 *       3. Compare the staging and current tables, and only overwrite if needed.
+	 */
 
-    //Expand any member variable references at the current node.
-    *memberRefInserted = expandMemberDefinitions(curNode);
-    
-    TableEntry propDefs;
-    //Retrieve the defs coming from previous cfgNodes
-    aggregatePreviousDefs(curNode, propDefs);
+	//Expand any member variable references at the current node.
+	*memberRefInserted = expandMemberDefinitions(curNode);
 
-    //Replace every entry in staging table that has definition in original defs
-    //Also assign renaming numbers to any new definitions
-    foreach(TableEntry::value_type& entry, originalDefTable[node])
-    {
-        //Replace the entry for this variable with the definitions at this node.
-        propDefs[entry.first] = entry.second;
+	TableEntry propDefs;
+	//Retrieve the defs coming from previous cfgNodes
+	aggregatePreviousDefs(curNode, propDefs);
 
-        //Now, iterate the definition vector for this node
-        foreach(NodeVec::value_type& defNode, entry.second)
-        {
-            //Assign a number to each new definition. The function will prevent duplicates
-            addRenameNumberForNode(entry.first, defNode);
-        }
-    }
+	//Replace every entry in staging table that has definition in original defs
+	//Also assign renaming numbers to any new definitions
 
-    //For every originalDef, insert expanded defs for any propagated defs
-    //that have an originalDef as a prefix
-    VarName expVar;
-    foreach(TableEntry::value_type& entry, originalDefTable[node])
-    {
-        foreach(TableEntry::value_type& propEntry, propDefs)
-        {
-            //Don't insert a def if it is already originally defined.
-            if(originalDefTable[node].count(propEntry.first) != 0)
-            {
-                continue;
-            }
-            //If the original def is a prefix of the propogated def, add a def at this node
-            //Compare sizes to guard against inserting original def in expanded table
-            if(isPrefixOfName(propEntry.first, entry.first) && (propEntry.first.size() > entry.first.size()))
-            {
-                //Set this node as a definition point of the variable.
-                expandedDefTable[node][propEntry.first].assign(1,node);
-                *memberRefInserted = true;
-                if(getDebugExtra())
-                {
-                    cout << "Inserted expandedDef for [" << keyToString(propEntry.first) << "] with originalDef prefix [" << keyToString(entry.first) << "]" << endl;
-                }
-            }
-        }
-    }
+	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	{
+		//Replace the entry for this variable with the definitions at this node.
+		propDefs[entry.first] = entry.second;
 
-    //Replace every entry in staging table that has definition in expandedDefs
-    //Also assign renaming numbers to any new definitions
-    foreach(TableEntry::value_type& entry, expandedDefTable[node])
-    {
-        propDefs[entry.first] = entry.second;
+		//Now, iterate the definition vector for this node
 
-        //Now, iterate the definition vector for this node
-        foreach(NodeVec::value_type& defNode, entry.second)
-        {
-            //Assign a number to each new definition. The function will prevent duplicates
-            addRenameNumberForNode(entry.first, defNode);
-        }
-    }
+		foreach(NodeVec::value_type& defNode, entry.second)
+		{
+			//Assign a number to each new definition. The function will prevent duplicates
+			addRenameNumberForNode(entry.first, defNode);
+		}
+	}
 
-    //If there is an initial definition of a name at this node, we should insert it in the table
-    foreach(TableEntry::value_type& entry, originalDefTable[node])
-    {
-        //If the given variable name is not present in the first def table
-        if(firstDefList.count(entry.first) == 0)
-        {
-            //Set this node as the first definition point of this variable.
-            firstDefList[entry.first] = node;
-        }
-    }
+	//For every originalDef, insert expanded defs for any propagated defs
+	//that have an originalDef as a prefix
+	VarName expVar;
 
-    if(getDebugExtra())
-    {
-        cout << "Local Defs replaced in propDefs ";
-        printDefs(propDefs);
-    }
+	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	{
 
-    //Now do a comparison to see if we should copy
-    if(propDefs != defTable[node])
-    {
-        defTable[node] = propDefs;
-        changed = true;
-    }
-    else
-    {
-        changed = false;
-    }
+		foreach(TableEntry::value_type& propEntry, propDefs)
+		{
+			//Don't insert a def if it is already originally defined.
+			if (originalDefTable[node].count(propEntry.first) != 0)
+			{
+				continue;
+			}
+			//If the original def is a prefix of the propogated def, add a def at this node
+			//Compare sizes to guard against inserting original def in expanded table
+			if (isPrefixOfName(propEntry.first, entry.first) && (propEntry.first.size() > entry.first.size()))
+			{
+				//Set this node as a definition point of the variable.
+				expandedDefTable[node][propEntry.first].assign(1, node);
+				*memberRefInserted = true;
+				if (getDebugExtra())
+				{
+					cout << "Inserted expandedDef for [" << keyToString(propEntry.first) << "] with originalDef prefix [" << keyToString(entry.first) << "]" << endl;
+				}
+			}
+		}
+	}
 
-    if(getDebug())
-    {
-        cout << "Defs after Merge..." << endl;
-        printDefs(node);
-    }
+	//Replace every entry in staging table that has definition in expandedDefs
+	//Also assign renaming numbers to any new definitions
 
-    if(getDebug())
-    {
-        printRenameTable();
-    }
+	foreach(TableEntry::value_type& entry, expandedDefTable[node])
+	{
+		propDefs[entry.first] = entry.second;
 
-    return changed;
+		//Now, iterate the definition vector for this node
+
+		foreach(NodeVec::value_type& defNode, entry.second)
+		{
+			//Assign a number to each new definition. The function will prevent duplicates
+			addRenameNumberForNode(entry.first, defNode);
+		}
+	}
+
+	//If there is an initial definition of a name at this node, we should insert it in the table
+
+	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	{
+		//If the given variable name is not present in the first def table
+		if (firstDefList.count(entry.first) == 0)
+		{
+			//Set this node as the first definition point of this variable.
+			firstDefList[entry.first] = node;
+		}
+	}
+
+	if (getDebugExtra())
+	{
+		cout << "Local Defs replaced in propDefs ";
+		printDefs(propDefs);
+	}
+
+	//Now do a comparison to see if we should copy
+	if (propDefs != defTable[node])
+	{
+		defTable[node] = propDefs;
+		changed = true;
+	}
+	else
+	{
+		changed = false;
+	}
+
+	if (getDebug())
+	{
+		cout << "Defs after Merge..." << endl;
+		printDefs(node);
+	}
+
+	if (getDebug())
+	{
+		printRenameTable();
+	}
+
+	return changed;
 }
 
 void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& results)
 {
-    //SgNode* node = curNode.getNode();
-    
-    //Get the previous edges in the CFG for this node
-    cfgEdgeVec inEdges = curNode.inEdges();
+	//SgNode* node = curNode.getNode();
 
-    if(inEdges.size() == 1)
-    {
-        SgNode* prev = inEdges[0].source().getNode();
+	//Get the previous edges in the CFG for this node
+	cfgEdgeVec inEdges = curNode.inEdges();
 
-        /*
-        if(getDebug())
-        {
-            cout << "Merging defs from " << prev->class_name() << prev << " to " << node->class_name() << node << endl;
-            printDefs(prev);
-        }*/
+	if (inEdges.size() == 1)
+	{
+		SgNode* prev = inEdges[0].source().getNode();
 
-        //Copy the previous node defs to the staging table
-        results = defTable[prev];
-    }
-    else if(inEdges.size() > 1)
-    {
-        //Iterate all of the incoming edges
-        for(unsigned int i = 0; i < inEdges.size(); i++)
-        {
-            SgNode* prev = inEdges[i].source().getNode();
+		/*
+		if(getDebug())
+		{
+			cout << "Merging defs from " << prev->class_name() << prev << " to " << node->class_name() << node << endl;
+			printDefs(prev);
+		}*/
 
-            /*
-            if(getDebug())
-            {
-                cout << "Merging defs from " << prev->class_name() << prev << endl;
-                printDefs(prev);
-            }*/
+		//Copy the previous node defs to the staging table
+		results = defTable[prev];
+	}
+	else if (inEdges.size() > 1)
+	{
+		//Iterate all of the incoming edges
+		for (unsigned int i = 0; i < inEdges.size(); i++)
+		{
+			SgNode* prev = inEdges[i].source().getNode();
 
-            //Perform the union of all the infoming definitions.
-            foreach(TableEntry::value_type& entry, defTable[prev])
-            {
-                //Insert the definitions for this node at the end of the list
-                results[entry.first].insert(results[entry.first].end(), entry.second.begin(), entry.second.end());
-            }
-        }
-    }
-    
-    //Sort every vector in propDefs and remove duplicates
-    foreach(TableEntry::value_type& entry, results)
-    {
-        std::sort(entry.second.begin(), entry.second.end());
-        //Create new sequence of unique elements and remove duplicate ones
-        entry.second.resize(std::unique(entry.second.begin(), entry.second.end()) - entry.second.begin());
-    }
+			/*
+			if(getDebug())
+			{
+				cout << "Merging defs from " << prev->class_name() << prev << endl;
+				printDefs(prev);
+			}*/
 
-    /*
-    if(getDebugExtra())
-    {
-        cout << "Merged propDefs ";
-        printDefs(results);
-    }*/
+			//Perform the union of all the infoming definitions.
 
-    return;
+			foreach(TableEntry::value_type& entry, defTable[prev])
+			{
+				//Insert the definitions for this node at the end of the list
+				results[entry.first].insert(results[entry.first].end(), entry.second.begin(), entry.second.end());
+			}
+		}
+	}
+
+	//Sort every vector in propDefs and remove duplicates
+
+	foreach(TableEntry::value_type& entry, results)
+	{
+		std::sort(entry.second.begin(), entry.second.end());
+		//Create new sequence of unique elements and remove duplicate ones
+		entry.second.resize(std::unique(entry.second.begin(), entry.second.end()) - entry.second.begin());
+	}
+
+	/*
+	if(getDebugExtra())
+	{
+		cout << "Merged propDefs ";
+		printDefs(results);
+	}*/
+
+	return;
 }
-
 
 bool StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
 {
-    SgNode* node = curNode.getNode();
+	SgNode* node = curNode.getNode();
 
-    bool changed = false;
+	bool changed = false;
 
-    if(getDebugExtra())
-    {
-        cout << "Expanding member defs at " << node->class_name() << node << endl;
-        cout << "Original Node ";
-        printDefs(originalDefTable[node]);
-    }
+	if (getDebugExtra())
+	{
+		cout << "Expanding member defs at " << node->class_name() << node << endl;
+		cout << "Original Node ";
+		printDefs(originalDefTable[node]);
+	}
 
-    //We want to iterate the vars defined on this node, and expand them
-    foreach(TableEntry::value_type& entry, originalDefTable[node])
-    {
-        if(getDebugExtra())
-        {
-            cout << "Checking [" << keyToString(entry.first) << "]" << endl;
-        }
+	//We want to iterate the vars defined on this node, and expand them
 
-        //Check if the variableName has multiple parts
-        if(entry.first.size() == 1)
-        {
-            continue;
-        }
+	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	{
+		if (getDebugExtra())
+		{
+			cout << "Checking [" << keyToString(entry.first) << "]" << endl;
+		}
 
-        //We are dealing with a multi-part variable, loop the entry and expand it
-        //Start at one so we don't get the same defs in the original and expanded defs
-        for(unsigned int i = 1; i < entry.first.size(); i++)
-        {
-            //Create a new varName vector that goes from beginning to end - i
-            VarName newName;
-            newName.assign(entry.first.begin(), entry.first.end() - i);
+		//Check if the variableName has multiple parts
+		if (entry.first.size() == 1)
+		{
+			continue;
+		}
 
-            if(getDebugExtra())
-            {
-                cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
-            }
+		//We are dealing with a multi-part variable, loop the entry and expand it
+		//Start at one so we don't get the same defs in the original and expanded defs
+		for (unsigned int i = 1; i < entry.first.size(); i++)
+		{
+			//Create a new varName vector that goes from beginning to end - i
+			VarName newName;
+			newName.assign(entry.first.begin(), entry.first.end() - i);
 
-            //Only insert the new definition if it does not already exist
-            if(originalDefTable[node].count(newName) == 0 && expandedDefTable[node].count(newName) == 0)
-            {
-                //Insert the new name as being defined here.
-                expandedDefTable[node][newName] = NodeVec(1, node);
-                changed = true;
+			if (getDebugExtra())
+			{
+				cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+			}
 
-                if(getDebugExtra())
-                {
-                    cout << "Inserted new name [" << keyToString(newName) << "] into defs." << endl;
-                }
-            }
-        }
-    }
+			//Only insert the new definition if it does not already exist
+			if (originalDefTable[node].count(newName) == 0 && expandedDefTable[node].count(newName) == 0)
+			{
+				//Insert the new name as being defined here.
+				expandedDefTable[node][newName] = NodeVec(1, node);
+				changed = true;
 
-    if(getDebugExtra())
-    {
-        cout << "Expanded Node";
-        printDefs(expandedDefTable[node]);
-    }
+				if (getDebugExtra())
+				{
+					cout << "Inserted new name [" << keyToString(newName) << "] into defs." << endl;
+				}
+			}
+		}
+	}
 
-    return changed;
+	if (getDebugExtra())
+	{
+		cout << "Expanded Node";
+		printDefs(expandedDefTable[node]);
+	}
+
+	return changed;
 }
 
 bool StaticSingleAssignment::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode, bool *memberRefInserted, NodeVec &changedNodes)
 {
-    SgNode* node = curNode.getNode();
-    
-    bool changed = false;
+	SgNode* node = curNode.getNode();
 
-    //We want to resolve the uses at the current node
-    //We need to look to the defs at the current node, and match them
-    //with the uses
+	bool changed = false;
+
+	//We want to resolve the uses at the current node
+	//We need to look to the defs at the current node, and match them
+	//with the uses
 
 
-    if(getDebug())
-        cout << "Resolving uses at " << node->class_name() << node << endl;
+	if (getDebug())
+		cout << "Resolving uses at " << node->class_name() << node << endl;
 
-    changed = expandMemberUses(curNode);
+	changed = expandMemberUses(curNode);
 
-    //Iterate every use at the current node
-    foreach(TableEntry::value_type& entry, useTable[node])
-    {
-        //Check the defs that are active at the current node to find the reaching definition
-        //We want to check if there is a definition entry for this use at the current node
-        if(defTable[node].find(entry.first) != defTable[node].end())
-        {
-            //There is a definition entry. Now we want to see if the use is already up to date
-            if(useTable[node][entry.first] != defTable[node][entry.first])
-            {
-                //The use was not up to date, so we update it
-                changed = true;
-                //Overwrite the use with this definition location(s).
-                useTable[node][entry.first] = defTable[node][entry.first];
-            }            
-        }
-        else
-        {
-            //If there are no defs for this use at this node, then we have a multi-part name
-            //that has not been expanded. Thus, we want to expand it.
-            *memberRefInserted = insertExpandedDefsForUse(curNode, entry.first, changedNodes);
-        }
-    }
+	//Iterate every use at the current node
 
-    TableEntry results;
-    //Get the previous defs
-    aggregatePreviousDefs(curNode, results);
+	foreach(TableEntry::value_type& entry, useTable[node])
+	{
+		//Check the defs that are active at the current node to find the reaching definition
+		//We want to check if there is a definition entry for this use at the current node
+		if (defTable[node].find(entry.first) != defTable[node].end())
+		{
+			//There is a definition entry. Now we want to see if the use is already up to date
+			if (useTable[node][entry.first] != defTable[node][entry.first])
+			{
+				//The use was not up to date, so we update it
+				changed = true;
+				//Overwrite the use with this definition location(s).
+				useTable[node][entry.first] = defTable[node][entry.first];
+			}
+		}
+		else
+		{
+			//If there are no defs for this use at this node, then we have a multi-part name
+			//that has not been expanded. Thus, we want to expand it.
+			*memberRefInserted = insertExpandedDefsForUse(curNode, entry.first, changedNodes);
+		}
+	}
 
-    //However, if there is a def at the current node, we want to use the previous
-    //def as the use for this node.
+	TableEntry results;
+	//Get the previous defs
+	aggregatePreviousDefs(curNode, results);
 
-    //Iterate every use at the current node
-    foreach(TableEntry::value_type& entry, useTable[node])
-    {
-        //If any of these uses are for a variable defined at this node, we will
-        //set the flag and correct it later.
-        if(originalDefTable[node].count(entry.first) != 0)
-        {
-            useTable[node][entry.first] = results[entry.first];
+	//However, if there is a def at the current node, we want to use the previous
+	//def as the use for this node.
 
-            if(getDebug())
-                cout << "Fixed use of local def." << endl;
-        }
-    }
+	//Iterate every use at the current node
 
-    return changed;
+	foreach(TableEntry::value_type& entry, useTable[node])
+	{
+		//If any of these uses are for a variable defined at this node, we will
+		//set the flag and correct it later.
+		if (originalDefTable[node].count(entry.first) != 0)
+		{
+			useTable[node][entry.first] = results[entry.first];
+
+			if (getDebug())
+				cout << "Fixed use of local def." << endl;
+		}
+	}
+
+	return changed;
 }
 
 bool StaticSingleAssignment::expandMemberUses(cfgNode curNode)
 {
-    SgNode* node = curNode.getNode();
+	SgNode* node = curNode.getNode();
 
-    bool changed = false;
+	bool changed = false;
 
-    if(getDebugExtra())
-    {
-        cout << "Expanding member uses at " << node->class_name() << node << endl;
-        cout << "Original Node ";
-        printUses(useTable[node]);
-    }
+	if (getDebugExtra())
+	{
+		cout << "Expanding member uses at " << node->class_name() << node << endl;
+		cout << "Original Node ";
+		printUses(useTable[node]);
+	}
 
-    //We want to iterate the vars used on this node, and expand them
-    foreach(TableEntry::value_type& entry, useTable[node])
-    {
-        if(getDebugExtra())
-        {
-            cout << "Checking [" << keyToString(entry.first) << "]" << endl;
-        }
+	//We want to iterate the vars used on this node, and expand them
 
-        //Check if the variableName has multiple parts
-        if(entry.first.size() == 1)
-        {
-            continue;
-        }
+	foreach(TableEntry::value_type& entry, useTable[node])
+	{
+		if (getDebugExtra())
+		{
+			cout << "Checking [" << keyToString(entry.first) << "]" << endl;
+		}
 
-        //We are dealing with a multi-part variable, loop the entry and expand it
-        //Start at one so we don't reinsert same use
-        for(unsigned int i = 1; i < entry.first.size(); i++)
-        {
-            //Create a new varName vector that goes from beginning to end - i
-            VarName newName;
-            newName.assign(entry.first.begin(), entry.first.end() - i);
+		//Check if the variableName has multiple parts
+		if (entry.first.size() == 1)
+		{
+			continue;
+		}
 
-            if(getDebugExtra())
-            {
-                cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
-            }
+		//We are dealing with a multi-part variable, loop the entry and expand it
+		//Start at one so we don't reinsert same use
+		for (unsigned int i = 1; i < entry.first.size(); i++)
+		{
+			//Create a new varName vector that goes from beginning to end - i
+			VarName newName;
+			newName.assign(entry.first.begin(), entry.first.end() - i);
 
-            //Only insert the new definition if it does not already exist
-            if(useTable[node].count(newName) == 0)
-            {
-                //Insert the new name as being used here.
-                useTable[node][newName] = NodeVec(1, node);
-                changed = true;
+			if (getDebugExtra())
+			{
+				cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+			}
 
-                if(getDebugExtra())
-                {
-                    cout << "Inserted new name [" << keyToString(newName) << "] into uses." << endl;
-                }
-            }
-        }
-    }
+			//Only insert the new definition if it does not already exist
+			if (useTable[node].count(newName) == 0)
+			{
+				//Insert the new name as being used here.
+				useTable[node][newName] = NodeVec(1, node);
+				changed = true;
 
-    if(getDebugExtra())
-    {
-        cout << "Expanded Node ";
-        printUses(useTable[node]);
-    }
+				if (getDebugExtra())
+				{
+					cout << "Inserted new name [" << keyToString(newName) << "] into uses." << endl;
+				}
+			}
+		}
+	}
 
-    return changed;
+	if (getDebugExtra())
+	{
+		cout << "Expanded Node ";
+		printUses(useTable[node]);
+	}
+
+	return changed;
 }
 
 bool StaticSingleAssignment::insertExpandedDefsForUse(cfgNode curNode, VarName name, NodeVec &changedNodes)
 {
-    SgNode* node = curNode.getNode();
+	SgNode* node = curNode.getNode();
 
-    bool changed = false;
+	bool changed = false;
 
-    if(getDebugExtra())
-    {
-        cout << "Checking for needed extra defs for uses at " << node->class_name() << node << endl;
-        cout << "Checking for [" << keyToString(name) << "]" << endl;
-    }
+	if (getDebugExtra())
+	{
+		cout << "Checking for needed extra defs for uses at " << node->class_name() << node << endl;
+		cout << "Checking for [" << keyToString(name) << "]" << endl;
+	}
 
-    //Check if the given name has a def at this node
-    if(defTable[node].count(name) != 0)
-    {
-        if(getDebugExtra())
-            cout << "Already have def." << endl;
-        
-        //If there is already a def, then nothing changes
-        return false;
-    }
+	//Check if the given name has a def at this node
+	if (defTable[node].count(name) != 0)
+	{
+		if (getDebugExtra())
+			cout << "Already have def." << endl;
 
-    //No def for this name at this node, so we need to insert a def at the location
-    //where the first part of this name was defined.
-    //eg. s.a.b = x; (insert definition of s.a & s.a.b where s is first defined.)
+		//If there is already a def, then nothing changes
+		return false;
+	}
 
-    //Get the root of this name
-    VarName rootName;
-    rootName.assign(1,name[0]);
+	//No def for this name at this node, so we need to insert a def at the location
+	//where the first part of this name was defined.
+	//eg. s.a.b = x; (insert definition of s.a & s.a.b where s is first defined.)
 
-    //We want to see if the name is a class member (no def so far)
-    if(firstDefList.count(rootName) == 0)
-    {
-        //Check if the variable is a compiler builtin
-        if(isBuiltinVar(rootName))
-        {
-            //Add a definition at the start of the function
-            SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
-            ROSE_ASSERT(func);
+	//Get the root of this name
+	VarName rootName;
+	rootName.assign(1, name[0]);
 
-            firstDefList[rootName] = func;
-        }
-        //Check if the variable is declared in a class scope 
-        else if(isSgClassDefinition(SageInterface::getScope(rootName[0])) != NULL)
-        {
-            //It is declared in class scope.
-            //Get our enclosing function definition to insert the first definition into.
+	//We want to see if the name is a class member (no def so far)
+	if (firstDefList.count(rootName) == 0)
+	{
+		//Check if the variable is a compiler builtin
+		if (isBuiltinVar(rootName))
+		{
+			//Add a definition at the start of the function
+			SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
+			ROSE_ASSERT(func);
 
-            SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
-            ROSE_ASSERT(func);
+			firstDefList[rootName] = func;
+		}
+			//Check if the variable is declared in a class scope
+		else if (isSgClassDefinition(SageInterface::getScope(rootName[0])) != NULL)
+		{
+			//It is declared in class scope.
+			//Get our enclosing function definition to insert the first definition into.
 
-            firstDefList[rootName] = func;
-        }
-        //Otherwise, see if it is in namespace scope
-        else if(isSgNamespaceDefinitionStatement(SageInterface::getScope(rootName[0])) != NULL)
-        {
-            //It is declared in namespace scope.
-            //Get our enclosing function definition to insert the first definition into.
+			SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
+			ROSE_ASSERT(func);
 
-            SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
-            ROSE_ASSERT(func);
+			firstDefList[rootName] = func;
+		}
+			//Otherwise, see if it is in namespace scope
+		else if (isSgNamespaceDefinitionStatement(SageInterface::getScope(rootName[0])) != NULL)
+		{
+			//It is declared in namespace scope.
+			//Get our enclosing function definition to insert the first definition into.
 
-            firstDefList[rootName] = func;
-        }
-        else
-        {
-            cout << "Error: Found variable with no firstDef point that is not a class or namespace member." << endl;
-            cout << "Variable Scope: " << SageInterface::getScope(rootName[0])->class_name() << SageInterface::getScope(rootName[0]) << endl;
-            cout << rootName[0]->class_name() << rootName[0] << "@" << rootName[0]->get_file_info()->get_line() << ":" << rootName[0]->get_file_info()->get_col() << endl;
-            ROSE_ASSERT(false);
-        }
-    }
+			SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
+			ROSE_ASSERT(func);
 
-    //Start from the end of the name and insert definitions of every part
-    //at the first definition point
-    for(int i = 0; i < (signed int)name.size(); i++)
-    {
-        //Create a new varName vector that goes from beginning to end - i
-        VarName newName;
-        newName.assign(name.begin(), name.end() - i);
+			firstDefList[rootName] = func;
+		}
+		else
+		{
+			cout << "Error: Found variable with no firstDef point that is not a class or namespace member." << endl;
+			cout << "Variable Scope: " << SageInterface::getScope(rootName[0])->class_name() << SageInterface::getScope(rootName[0]) << endl;
+			cout << rootName[0]->class_name() << rootName[0] << "@" << rootName[0]->get_file_info()->get_line() << ":" << rootName[0]->get_file_info()->get_col() << endl;
+			ROSE_ASSERT(false);
+		}
+	}
 
-        if(getDebugExtra())
-        {
-            cout << "Testing for def of [" << keyToString(newName) << "] at var initial def." << endl;
-        }
+	//Start from the end of the name and insert definitions of every part
+	//at the first definition point
+	for (int i = 0; i < (signed int) name.size(); i++)
+	{
+		//Create a new varName vector that goes from beginning to end - i
+		VarName newName;
+		newName.assign(name.begin(), name.end() - i);
 
-        if(originalDefTable[firstDefList[rootName]].count(newName) == 0)
-        {
-            originalDefTable[firstDefList[rootName]][newName].push_back(firstDefList[rootName]);
-            changed = true;
-            changedNodes.push_back(firstDefList[rootName]);
-            if(getDebugExtra())
-            {
-                cout << "Inserted def for [" << keyToString(newName) << "] (root) [" << keyToString(rootName) << "] at node " << firstDefList[rootName] << endl;
-            }
-        }
-    }
+		if (getDebugExtra())
+		{
+			cout << "Testing for def of [" << keyToString(newName) << "] at var initial def." << endl;
+		}
 
-    if(getDebugExtra())
-        cout << "Finished inserting references. Changed: " << ((changed)?"true":"false") << endl;
+		if (originalDefTable[firstDefList[rootName]].count(newName) == 0)
+		{
+			originalDefTable[firstDefList[rootName]][newName].push_back(firstDefList[rootName]);
+			changed = true;
+			changedNodes.push_back(firstDefList[rootName]);
+			if (getDebugExtra())
+			{
+				cout << "Inserted def for [" << keyToString(newName) << "] (root) [" << keyToString(rootName) << "] at node " << firstDefList[rootName] << endl;
+			}
+		}
+	}
 
-    return changed;
+	if (getDebugExtra())
+		cout << "Finished inserting references. Changed: " << ((changed) ? "true" : "false") << endl;
+
+	return changed;
 }
 
 int StaticSingleAssignment::getRenameNumberForNode(const VarName& var, SgNode* node) const
 {
-    ROSE_ASSERT(node);
+	ROSE_ASSERT(node);
 
-    NodeNumRenameTable::const_iterator iter;
-    iter = nodeRenameTable.find(var);
+	NodeNumRenameTable::const_iterator iter;
+	iter = nodeRenameTable.find(var);
 
-    if(iter == nodeRenameTable.end())
-    {
-        return -1;
-    }
-    else
-    {
-        //Try and get the number for the node
-        NodeNumRenameEntry::const_iterator iter2;
-        iter2 = (*iter).second.find(node);
-        if(iter2 != (*iter).second.end())
-        {
-            return (*iter2).second;
-        }
-        //Node not in table
-        else
-        {
-            return -1;
-        }
-    }
+	if (iter == nodeRenameTable.end())
+	{
+		return -1;
+	}
+	else
+	{
+		//Try and get the number for the node
+		NodeNumRenameEntry::const_iterator iter2;
+		iter2 = (*iter).second.find(node);
+		if (iter2 != (*iter).second.end())
+		{
+			return (*iter2).second;
+		}
+			//Node not in table
+		else
+		{
+			return -1;
+		}
+	}
 }
 
 SgNode* StaticSingleAssignment::getNodeForRenameNumber(const VarName& var, int num) const
 {
-    ROSE_ASSERT(num > 0);
+	ROSE_ASSERT(num > 0);
 
-    NumNodeRenameTable::const_iterator iter;
-    iter = numRenameTable.find(var);
-    if(iter == numRenameTable.end())
-    {
-        return NULL;
-    }
-    else
-    {
-        //Try and get the node for the number
-        NumNodeRenameEntry::const_iterator iter2;
-        iter2 = (*iter).second.find(num);
-        if(iter2 != (*iter).second.end())
-        {
-            return (*iter2).second;
-        }
-        //Number not in table
-        else
-        {
-            return NULL;
-        }
-    }
+	NumNodeRenameTable::const_iterator iter;
+	iter = numRenameTable.find(var);
+	if (iter == numRenameTable.end())
+	{
+		return NULL;
+	}
+	else
+	{
+		//Try and get the node for the number
+		NumNodeRenameEntry::const_iterator iter2;
+		iter2 = (*iter).second.find(num);
+		if (iter2 != (*iter).second.end())
+		{
+			return (*iter2).second;
+		}
+			//Number not in table
+		else
+		{
+			return NULL;
+		}
+	}
 }
 
 int StaticSingleAssignment::getMaxRenameNumberForName(const VarName& var) const
 {
-    int res = -1;
+	int res = -1;
 
-    NumNodeRenameTable::const_iterator iter;
-    iter = numRenameTable.find(var);
-    if(iter == numRenameTable.end())
-    {
-        return res;
-    }
+	NumNodeRenameTable::const_iterator iter;
+	iter = numRenameTable.find(var);
+	if (iter == numRenameTable.end())
+	{
+		return res;
+	}
 
-    NumNodeRenameEntry::const_iterator iter2;
-    for(iter2 = (*iter).second.begin(); iter2 != (*iter).second.end(); ++iter2)
-    {
-        if((*iter2).first > res)
-        {
-            res = (*iter2).first;
-        }
-    }
+	NumNodeRenameEntry::const_iterator iter2;
+	for (iter2 = (*iter).second.begin(); iter2 != (*iter).second.end(); ++iter2)
+	{
+		if ((*iter2).first > res)
+		{
+			res = (*iter2).first;
+		}
+	}
 
-    return res;
+	return res;
 }
 
 int StaticSingleAssignment::addRenameNumberForNode(const VarName& var, SgNode* node)
 {
-    ROSE_ASSERT(node);
+	ROSE_ASSERT(node);
 
-    //Check if the var/node combination is already in the table.
-    if(nodeRenameTable[var].count(node) == 1)
-    {
-        return nodeRenameTable[var][node];
-    }
+	//Check if the var/node combination is already in the table.
+	if (nodeRenameTable[var].count(node) == 1)
+	{
+		return nodeRenameTable[var][node];
+	}
 
-    //Not in the table, so we now need to add it.
-    int nextNum = nodeRenameTable[var].size() + 1;
+	//Not in the table, so we now need to add it.
+	int nextNum = nodeRenameTable[var].size() + 1;
 
-    nodeRenameTable[var][node] = nextNum;
-    numRenameTable[var][nextNum] = node;
+	nodeRenameTable[var][node] = nextNum;
+	numRenameTable[var][nextNum] = node;
 
-    if(getDebug())
-        cout << "Renaming Added:[" << keyToString(var) << "]:" << nextNum << " - " << node << endl;
+	if (getDebug())
+		cout << "Renaming Added:[" << keyToString(var) << "]:" << nextNum << " - " << node << endl;
 
-    return nextNum;
+	return nextNum;
 }
 
 StaticSingleAssignment::NodeVec StaticSingleAssignment::getAllUsesForDef(const VarName& var, int num)
 {
-    NodeVec res;
-    SgNode* defNode = getNodeForRenameNumber(var, num);
+	NodeVec res;
+	SgNode* defNode = getNodeForRenameNumber(var, num);
 
-    if(defNode == NULL)
-    {
-        res.clear();
-        return res;
-    }
+	if (defNode == NULL)
+	{
+		res.clear();
+		return res;
+	}
 
-    //Traverse the use Table looking for locations where the def is used
-    foreach(DefUseTable::value_type& entry, useTable)
-    {
-        //If this entry contains the variable that we want
-        if(entry.second.count(var) != 0)
-        {
-            //See if the use vector contains the defining node we want
-            if(std::find(entry.second[var].begin(), entry.second[var].end(), defNode) != entry.second[var].end())
-            {
-                //Add the current node to list of those using the variable
-                res.push_back(entry.first);
-            }
-        }
-    }
+	//Traverse the use Table looking for locations where the def is used
 
-    return res;
+	foreach(DefUseTable::value_type& entry, useTable)
+	{
+		//If this entry contains the variable that we want
+		if (entry.second.count(var) != 0)
+		{
+			//See if the use vector contains the defining node we want
+			if (std::find(entry.second[var].begin(), entry.second[var].end(), defNode) != entry.second[var].end())
+			{
+				//Add the current node to list of those using the variable
+				res.push_back(entry.first);
+			}
+		}
+	}
+
+	return res;
 }
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDefsAtNode(SgNode* node)
 {
-    //We want to get all the reaching defs at this node and insert them into the result table
+	//We want to get all the reaching defs at this node and insert them into the result table
 
-    NumNodeRenameTable res;
+	NumNodeRenameTable res;
 
-    //Iterate every variable definition reaching this node
-    foreach(TableEntry::value_type& entry, defTable[node])
-    {
-        //Iterate every definition site for this variable
-        foreach(NodeVec::value_type& defEntry, entry.second)
-        {
-            //Get the rename number for the current variable at the current def site
-            int renameNum = getRenameNumberForNode(entry.first, defEntry);
+	//Iterate every variable definition reaching this node
 
-            //If the name is defined at this node
-            if(renameNum > 0)
-            {
-                //If the renumbering is not already in the result
-                if(res[entry.first].count(renameNum) == 0)
-                {
-                    //Add the renumbering to the result
-                    res[entry.first][renameNum] = defEntry;
-                }
-                else
-                {
-                    cout << "Error: Same def propogated twice to same node." << endl;
-                    ROSE_ASSERT(false);
-                }
-            }
-            else
-            {
-                cout << "Error: Found propogated def with no entry in rename table." << endl;
-                ROSE_ASSERT(false);
-            }
-        }
-    }
+	foreach(TableEntry::value_type& entry, defTable[node])
+	{
+		//Iterate every definition site for this variable
 
-    return res;
+		foreach(NodeVec::value_type& defEntry, entry.second)
+		{
+			//Get the rename number for the current variable at the current def site
+			int renameNum = getRenameNumberForNode(entry.first, defEntry);
+
+			//If the name is defined at this node
+			if (renameNum > 0)
+			{
+				//If the renumbering is not already in the result
+				if (res[entry.first].count(renameNum) == 0)
+				{
+					//Add the renumbering to the result
+					res[entry.first][renameNum] = defEntry;
+				}
+				else
+				{
+					cout << "Error: Same def propogated twice to same node." << endl;
+					ROSE_ASSERT(false);
+				}
+			}
+			else
+			{
+				cout << "Error: Found propogated def with no entry in rename table." << endl;
+				ROSE_ASSERT(false);
+			}
+		}
+	}
+
+	return res;
 }
 
 StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getReachingDefsAtNodeForName(SgNode* node, const VarName& var)
 {
-    //We want to get all the reaching defs at this node and insert them into the result table
+	//We want to get all the reaching defs at this node and insert them into the result table
 
-    NumNodeRenameEntry res;
+	NumNodeRenameEntry res;
 
-    //Iterate every variable definition reaching this node
-    foreach(TableEntry::value_type& entry, defTable[node])
-    {
-        //Check that the current var is the one we want.
-        if(entry.first != var)
-        {
-            continue;
-        }
-        
-        //Iterate every definition site for this variable
-        foreach(NodeVec::value_type& defEntry, entry.second)
-        {
-            //Get the rename number for the current variable at the current def site
-            int renameNum = getRenameNumberForNode(entry.first, defEntry);
+	//Iterate every variable definition reaching this node
 
-            //If the name is defined at this node
-            if(renameNum > 0)
-            {
-                //If the renumbering is not already in the result
-                if(res.count(renameNum) == 0)
-                {
-                    //Add the renumbering to the result
-                    res[renameNum] = defEntry;
-                }
-                else
-                {
-                    cout << "Error: Same def propogated twice to same node." << endl;
-                    ROSE_ASSERT(false);
-                }
-            }
-            else
-            {
-                cout << "Error: Found propogated def with no entry in rename table." << endl;
-                ROSE_ASSERT(false);
-            }
-        }
-    }
+	foreach(TableEntry::value_type& entry, defTable[node])
+	{
+		//Check that the current var is the one we want.
+		if (entry.first != var)
+		{
+			continue;
+		}
 
-    return res;
+		//Iterate every definition site for this variable
+
+		foreach(NodeVec::value_type& defEntry, entry.second)
+		{
+			//Get the rename number for the current variable at the current def site
+			int renameNum = getRenameNumberForNode(entry.first, defEntry);
+
+			//If the name is defined at this node
+			if (renameNum > 0)
+			{
+				//If the renumbering is not already in the result
+				if (res.count(renameNum) == 0)
+				{
+					//Add the renumbering to the result
+					res[renameNum] = defEntry;
+				}
+				else
+				{
+					cout << "Error: Same def propogated twice to same node." << endl;
+					ROSE_ASSERT(false);
+				}
+			}
+			else
+			{
+				cout << "Error: Found propogated def with no entry in rename table." << endl;
+				ROSE_ASSERT(false);
+			}
+		}
+	}
+
+	return res;
 }
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getUsesAtNode(SgNode* node)
 {
-    //We want to get all the uses at this node and insert them into the result table
+	//We want to get all the uses at this node and insert them into the result table
 
-    NumNodeRenameTable res;
+	NumNodeRenameTable res;
 
-    //Iterate every variable definition used at this node
-    foreach(TableEntry::value_type& entry, useTable[node])
-    {
-        //Iterate every definition site for this variable
-        foreach(NodeVec::value_type& defEntry, entry.second)
-        {
-            //Get the rename number for the current variable at the current def site
-            int renameNum = getRenameNumberForNode(entry.first, defEntry);
+	//Iterate every variable definition used at this node
 
-            //If the name is defined at this node
-            if(renameNum > 0)
-            {
-                //If the renumbering is not already in the result
-                if(res[entry.first].count(renameNum) == 0)
-                {
-                    //Add the renumbering to the result
-                    res[entry.first][renameNum] = defEntry;
-                }
-                else
-                {
-                    cout << "Error: Same use propogated twice to same node." << endl;
-                    ROSE_ASSERT(false);
-                }
-            }
-            else
-            {
-                /* This situation can happen in certain cases, so we don;t want to assert.
-                 *
-                 * ex. for(int i = 0; i < 10; i++)
-                 *     {
-                 *        return i;
-                 *     }
-                 *
-                 * The varRef for i++ will not have its uses corrected, and so will
-                 * be using itself. This is not technically wrong, since control will
-                 * never reach that varRef.
-                 */
-                if(getDebug())
-                {
-                    cout << "Warning: Found use with no entry in rename table." << endl;
-                }
-            }
-        }
-    }
+	foreach(TableEntry::value_type& entry, useTable[node])
+	{
+		//Iterate every definition site for this variable
 
-    return res;
+		foreach(NodeVec::value_type& defEntry, entry.second)
+		{
+			//Get the rename number for the current variable at the current def site
+			int renameNum = getRenameNumberForNode(entry.first, defEntry);
+
+			//If the name is defined at this node
+			if (renameNum > 0)
+			{
+				//If the renumbering is not already in the result
+				if (res[entry.first].count(renameNum) == 0)
+				{
+					//Add the renumbering to the result
+					res[entry.first][renameNum] = defEntry;
+				}
+				else
+				{
+					cout << "Error: Same use propogated twice to same node." << endl;
+					ROSE_ASSERT(false);
+				}
+			}
+			else
+			{
+				/* This situation can happen in certain cases, so we don;t want to assert.
+				 *
+				 * ex. for(int i = 0; i < 10; i++)
+				 *     {
+				 *        return i;
+				 *     }
+				 *
+				 * The varRef for i++ will not have its uses corrected, and so will
+				 * be using itself. This is not technically wrong, since control will
+				 * never reach that varRef.
+				 */
+				if (getDebug())
+				{
+					cout << "Warning: Found use with no entry in rename table." << endl;
+				}
+			}
+		}
+	}
+
+	return res;
 }
 
 StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getUsesAtNodeForName(SgNode* node, const VarName& var)
 {
-    //We want to get all the uses at this node and insert them into the result table
+	//We want to get all the uses at this node and insert them into the result table
 
-    NumNodeRenameEntry res;
+	NumNodeRenameEntry res;
 
-    //Iterate every variable use at this node
-    foreach(TableEntry::value_type& entry, useTable[node])
-    {
-        //Check that the current var is the one we want.
-        if(entry.first != var)
-        {
-            continue;
-        }
-        
-        //Iterate every definition site for this variable
-        foreach(NodeVec::value_type& defEntry, entry.second)
-        {
-            //Get the rename number for the current variable at the current def site
-            int renameNum = getRenameNumberForNode(entry.first, defEntry);
+	//Iterate every variable use at this node
 
-            //If the name is defined at this node
-            if(renameNum > 0)
-            {
-                //If the renumbering is not already in the result
-                if(res.count(renameNum) == 0)
-                {
-                    //Add the renumbering to the result
-                    res[renameNum] = defEntry;
-                }
-                else
-                {
-                    cout << "Error: Same use propogated twice to same node." << endl;
-                    ROSE_ASSERT(false);
-                }
-            }
-            else
-            {
-                /* This situation can happen in certain cases, so we don't want to assert.
-                 *
-                 * ex. for(int i = 0; i < 10; i++)
-                 *     {
-                 *        return i;
-                 *     }
-                 *
-                 * The varRef for i++ will not have its uses corrected, and so will
-                 * be using itself. This is not technically wrong, since control will
-                 * never reach that varRef.
-                 */
-                if(getDebug())
-                {
-                    cout << "Warning: Found use with no entry in rename table." << endl;
-                }
-            }
-        }
-    }
+	foreach(TableEntry::value_type& entry, useTable[node])
+	{
+		//Check that the current var is the one we want.
+		if (entry.first != var)
+		{
+			continue;
+		}
 
-    return res;
+		//Iterate every definition site for this variable
+
+		foreach(NodeVec::value_type& defEntry, entry.second)
+		{
+			//Get the rename number for the current variable at the current def site
+			int renameNum = getRenameNumberForNode(entry.first, defEntry);
+
+			//If the name is defined at this node
+			if (renameNum > 0)
+			{
+				//If the renumbering is not already in the result
+				if (res.count(renameNum) == 0)
+				{
+					//Add the renumbering to the result
+					res[renameNum] = defEntry;
+				}
+				else
+				{
+					cout << "Error: Same use propogated twice to same node." << endl;
+					ROSE_ASSERT(false);
+				}
+			}
+			else
+			{
+				/* This situation can happen in certain cases, so we don't want to assert.
+				 *
+				 * ex. for(int i = 0; i < 10; i++)
+				 *     {
+				 *        return i;
+				 *     }
+				 *
+				 * The varRef for i++ will not have its uses corrected, and so will
+				 * be using itself. This is not technically wrong, since control will
+				 * never reach that varRef.
+				 */
+				if (getDebug())
+				{
+					cout << "Warning: Found use with no entry in rename table." << endl;
+				}
+			}
+		}
+	}
+
+	return res;
 }
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getOriginalUsesAtNode(SgNode* node)
@@ -1747,6 +1804,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getOriginalUs
 	//if we have p.x, the dot expression has the varname p.x attached to it, while its left
 	//child has the varname p. Hence, if we get the top nodes in the AST that are variables, we'll have all the
 	//original (not exanded) variables used in the AST.
+
 	class FindOriginalVariables : public AstTopDownProcessing<bool>
 	{
 	public:
@@ -1774,6 +1832,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getOriginalUs
 	originalVariableUsesTraversal.traverse(node, false);
 
 	StaticSingleAssignment::NumNodeRenameTable result;
+
 	foreach(StaticSingleAssignment::VarName varName, originalVariableUsesTraversal.originalVariablesUsed)
 	{
 		ROSE_ASSERT(result.count(varName) == 0);
@@ -1786,360 +1845,376 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getOriginalUs
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getDefsAtNode(SgNode* node)
 {
-    NumNodeRenameTable original = getOriginalDefsAtNode(node);
-    NumNodeRenameTable expanded = getExpandedDefsAtNode(node);
+	NumNodeRenameTable original = getOriginalDefsAtNode(node);
+	NumNodeRenameTable expanded = getExpandedDefsAtNode(node);
 
-    //Loop the expanded table and insert it into the original table
-    foreach(NumNodeRenameTable::value_type& entry, expanded)
-    {
-        //Insert the entry wholesale
-        if(original.count(entry.first) == 0)
-        {
-            original[entry.first] = entry.second;
-        }
-        //Or merge it with an existing one
-        else
-        {
-            foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
-            {
-                //Insert the entry wholesale
-                if(original[entry.first].count(tableEntry.first) == 0)
-                {
-                    original[entry.first][tableEntry.first] = tableEntry.second;
-                }
-                else
-                {
-                    cout << "Error: Same renaming present in original and expanded defs." << endl;
-                    cout << "At node " << node << endl;
-                    cout << "Original ";
-                    printRenameTable(original);
-                    cout << "Expanded ";
-                    printRenameTable(expanded);
-                    ROSE_ASSERT(false);
-                }
-            }
-        }
-    }
+	//Loop the expanded table and insert it into the original table
 
-    return original;
+	foreach(NumNodeRenameTable::value_type& entry, expanded)
+	{
+		//Insert the entry wholesale
+		if (original.count(entry.first) == 0)
+		{
+			original[entry.first] = entry.second;
+		}
+			//Or merge it with an existing one
+		else
+		{
+
+			foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
+			{
+				//Insert the entry wholesale
+				if (original[entry.first].count(tableEntry.first) == 0)
+				{
+					original[entry.first][tableEntry.first] = tableEntry.second;
+				}
+				else
+				{
+					cout << "Error: Same renaming present in original and expanded defs." << endl;
+					cout << "At node " << node << endl;
+					cout << "Original ";
+					printRenameTable(original);
+					cout << "Expanded ";
+					printRenameTable(expanded);
+					ROSE_ASSERT(false);
+				}
+			}
+		}
+	}
+
+	return original;
 }
 
 StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getDefsAtNodeForName(SgNode* node, const VarName& var)
 {
-    NumNodeRenameEntry original = getOriginalDefsAtNodeForName(node, var);
-    NumNodeRenameEntry expanded = getExpandedDefsAtNodeForName(node, var);
+	NumNodeRenameEntry original = getOriginalDefsAtNodeForName(node, var);
+	NumNodeRenameEntry expanded = getExpandedDefsAtNodeForName(node, var);
 
-    //Loop the expanded table and insert it into the original table
-    foreach(NumNodeRenameEntry::value_type& tableEntry, expanded)
-    {
-        //Insert the entry wholesale
-        if(original.count(tableEntry.first) == 0)
-        {
-            original[tableEntry.first] = tableEntry.second;
-        }
-        else
-        {
-            cout << "Error: Same renaming present in original and expanded defs." << endl;
-            ROSE_ASSERT(false);
-        }
-    }
+	//Loop the expanded table and insert it into the original table
 
-    return original;
+	foreach(NumNodeRenameEntry::value_type& tableEntry, expanded)
+	{
+		//Insert the entry wholesale
+		if (original.count(tableEntry.first) == 0)
+		{
+			original[tableEntry.first] = tableEntry.second;
+		}
+		else
+		{
+			cout << "Error: Same renaming present in original and expanded defs." << endl;
+			ROSE_ASSERT(false);
+		}
+	}
+
+	return original;
 }
-
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getOriginalDefsAtNode(SgNode* node)
 {
-    //We want to get all the original defs at this node and insert them into the result table
+	//We want to get all the original defs at this node and insert them into the result table
 
-    NumNodeRenameTable res;
+	NumNodeRenameTable res;
 
-    //Iterate every variable definition reaching this node
-    foreach(TableEntry::value_type& entry, originalDefTable[node])
-    {
-        //Iterate every definition site for this variable
-        foreach(NodeVec::value_type& defEntry, entry.second)
-        {
-            //Get the rename number for the current variable at the current def site
-            int renameNum = getRenameNumberForNode(entry.first, defEntry);
+	//Iterate every variable definition reaching this node
 
-            //If the name is defined at this node
-            if(renameNum > 0)
-            {
-                //If the renumbering is not already in the result
-                if(res[entry.first].count(renameNum) == 0)
-                {
-                    //Add the renumbering to the result
-                    res[entry.first][renameNum] = defEntry;
-                }
-                else
-                {
-                    cout << "Error: Same def originally defined twice on same node." << endl;
-                    ROSE_ASSERT(false);
-                }
-            }
-            else
-            {
-                /* This situation can happen in certain cases, so we don't want to assert.
-                 *
-                 * ex. for(int i = 0; i < 10; i++)
-                 *     {
-                 *        return i;
-                 *     }
-                 *
-                 * The i++ will have an original def for i. However, it will not be in the rename
-                 * table for i. This is not technically wrong, since control will never
-                 * reach that i++, so it will not have an ordering wrt. the other definitions.
-                 */
-                if(getDebug())
-                {
-                    cout << "Warning: Found original def with no entry in rename table." << endl;
-                }
-            }
-        }
-    }
+	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	{
+		//Iterate every definition site for this variable
 
-    return res;
+		foreach(NodeVec::value_type& defEntry, entry.second)
+		{
+			//Get the rename number for the current variable at the current def site
+			int renameNum = getRenameNumberForNode(entry.first, defEntry);
+
+			//If the name is defined at this node
+			if (renameNum > 0)
+			{
+				//If the renumbering is not already in the result
+				if (res[entry.first].count(renameNum) == 0)
+				{
+					//Add the renumbering to the result
+					res[entry.first][renameNum] = defEntry;
+				}
+				else
+				{
+					cout << "Error: Same def originally defined twice on same node." << endl;
+					ROSE_ASSERT(false);
+				}
+			}
+			else
+			{
+				/* This situation can happen in certain cases, so we don't want to assert.
+				 *
+				 * ex. for(int i = 0; i < 10; i++)
+				 *     {
+				 *        return i;
+				 *     }
+				 *
+				 * The i++ will have an original def for i. However, it will not be in the rename
+				 * table for i. This is not technically wrong, since control will never
+				 * reach that i++, so it will not have an ordering wrt. the other definitions.
+				 */
+				if (getDebug())
+				{
+					cout << "Warning: Found original def with no entry in rename table." << endl;
+				}
+			}
+		}
+	}
+
+	return res;
 }
 
 StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getOriginalDefsAtNodeForName(SgNode* node, const VarName& var)
 {
-    //We want to get all the original defs at this node and insert them into the result table
+	//We want to get all the original defs at this node and insert them into the result table
 
-    NumNodeRenameEntry res;
+	NumNodeRenameEntry res;
 
-    //Iterate every variable use at this node
-    foreach(TableEntry::value_type& entry, originalDefTable[node])
-    {
-        //Check that the current var is the one we want.
-        if(entry.first != var)
-        {
-            continue;
-        }
-        
-        //Iterate every definition site for this variable
-        foreach(NodeVec::value_type& defEntry, entry.second)
-        {
-            //Get the rename number for the current variable at the current def site
-            int renameNum = getRenameNumberForNode(entry.first, defEntry);
+	//Iterate every variable use at this node
 
-            //If the name is defined at this node
-            if(renameNum > 0)
-            {
-                //If the renumbering is not already in the result
-                if(res.count(renameNum) == 0)
-                {
-                    //Add the renumbering to the result
-                    res[renameNum] = defEntry;
-                }
-                else
-                {
-                    cout << "Error: Same original Def twice to same node." << endl;
-                    ROSE_ASSERT(false);
-                }
-            }
-            else
-            {
-                /* This situation can happen in certain cases, so we don't want to assert.
-                 *
-                 * ex. for(int i = 0; i < 10; i++)
-                 *     {
-                 *        return i;
-                 *     }
-                 *
-                 * The i++ will have an original def for i. However, it will not be in the rename
-                 * table for i. This is not technically wrong, since control will never
-                 * reach that i++, so it will not have an ordering wrt. the other definitions.
-                 */
-                if(getDebug())
-                {
-                    cout << "Warning: Found original def with no entry in rename table." << endl;
-                }
-            }
-        }
-    }
+	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	{
+		//Check that the current var is the one we want.
+		if (entry.first != var)
+		{
+			continue;
+		}
 
-    return res;
+		//Iterate every definition site for this variable
+
+		foreach(NodeVec::value_type& defEntry, entry.second)
+		{
+			//Get the rename number for the current variable at the current def site
+			int renameNum = getRenameNumberForNode(entry.first, defEntry);
+
+			//If the name is defined at this node
+			if (renameNum > 0)
+			{
+				//If the renumbering is not already in the result
+				if (res.count(renameNum) == 0)
+				{
+					//Add the renumbering to the result
+					res[renameNum] = defEntry;
+				}
+				else
+				{
+					cout << "Error: Same original Def twice to same node." << endl;
+					ROSE_ASSERT(false);
+				}
+			}
+			else
+			{
+				/* This situation can happen in certain cases, so we don't want to assert.
+				 *
+				 * ex. for(int i = 0; i < 10; i++)
+				 *     {
+				 *        return i;
+				 *     }
+				 *
+				 * The i++ will have an original def for i. However, it will not be in the rename
+				 * table for i. This is not technically wrong, since control will never
+				 * reach that i++, so it will not have an ordering wrt. the other definitions.
+				 */
+				if (getDebug())
+				{
+					cout << "Warning: Found original def with no entry in rename table." << endl;
+				}
+			}
+		}
+	}
+
+	return res;
 }
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getExpandedDefsAtNode(SgNode* node)
 {
-    //We want to get all the expanded defs at this node and insert them into the result table
+	//We want to get all the expanded defs at this node and insert them into the result table
 
-    NumNodeRenameTable res;
+	NumNodeRenameTable res;
 
-    //Iterate every variable definition expanded on this node
-    foreach(TableEntry::value_type& entry, expandedDefTable[node])
-    {
-        //Iterate every definition site for this variable
-        foreach(NodeVec::value_type& defEntry, entry.second)
-        {
-            //Get the rename number for the current variable at the current def site
-            int renameNum = getRenameNumberForNode(entry.first, defEntry);
+	//Iterate every variable definition expanded on this node
 
-            //If the name is defined at this node
-            if(renameNum > 0)
-            {
-                //If the renumbering is not already in the result
-                if(res[entry.first].count(renameNum) == 0)
-                {
-                    //Add the renumbering to the result
-                    res[entry.first][renameNum] = defEntry;
-                }
-                else
-                {
-                    cout << "Error: Same def expanded twice on same node." << endl;
-                    ROSE_ASSERT(false);
-                }
-            }
-            else
-            {
-                cout << "Error: Found expanded def with no entry in rename table." << endl;
-                ROSE_ASSERT(false);
-            }
-        }
-    }
+	foreach(TableEntry::value_type& entry, expandedDefTable[node])
+	{
+		//Iterate every definition site for this variable
 
-    return res;
+		foreach(NodeVec::value_type& defEntry, entry.second)
+		{
+			//Get the rename number for the current variable at the current def site
+			int renameNum = getRenameNumberForNode(entry.first, defEntry);
+
+			//If the name is defined at this node
+			if (renameNum > 0)
+			{
+				//If the renumbering is not already in the result
+				if (res[entry.first].count(renameNum) == 0)
+				{
+					//Add the renumbering to the result
+					res[entry.first][renameNum] = defEntry;
+				}
+				else
+				{
+					cout << "Error: Same def expanded twice on same node." << endl;
+					ROSE_ASSERT(false);
+				}
+			}
+			else
+			{
+				cout << "Error: Found expanded def with no entry in rename table." << endl;
+				ROSE_ASSERT(false);
+			}
+		}
+	}
+
+	return res;
 }
 
 StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getExpandedDefsAtNodeForName(SgNode* node, const VarName& var)
 {
-    //We want to get all the uses at this node and insert them into the result table
+	//We want to get all the uses at this node and insert them into the result table
 
-    NumNodeRenameEntry res;
+	NumNodeRenameEntry res;
 
-    //Iterate every variable use at this node
-    foreach(TableEntry::value_type& entry, expandedDefTable[node])
-    {
-        //Check that the current var is the one we want.
-        if(entry.first != var)
-        {
-            continue;
-        }
+	//Iterate every variable use at this node
 
-        //Iterate every definition site for this variable
-        foreach(NodeVec::value_type& defEntry, entry.second)
-        {
-            //Get the rename number for the current variable at the current def site
-            int renameNum = getRenameNumberForNode(entry.first, defEntry);
+	foreach(TableEntry::value_type& entry, expandedDefTable[node])
+	{
+		//Check that the current var is the one we want.
+		if (entry.first != var)
+		{
+			continue;
+		}
 
-            //If the name is defined at this node
-            if(renameNum > 0)
-            {
-                //If the renumbering is not already in the result
-                if(res.count(renameNum) == 0)
-                {
-                    //Add the renumbering to the result
-                    res[renameNum] = defEntry;
-                }
-                else
-                {
-                    cout << "Error: Same expanded def twice to same node." << endl;
-                    ROSE_ASSERT(false);
-                }
-            }
-            else
-            {
-                cout << "Error: Found expanded def with no entry in rename table." << endl;
-                ROSE_ASSERT(false);
-            }
-        }
-    }
+		//Iterate every definition site for this variable
 
-    return res;
+		foreach(NodeVec::value_type& defEntry, entry.second)
+		{
+			//Get the rename number for the current variable at the current def site
+			int renameNum = getRenameNumberForNode(entry.first, defEntry);
+
+			//If the name is defined at this node
+			if (renameNum > 0)
+			{
+				//If the renumbering is not already in the result
+				if (res.count(renameNum) == 0)
+				{
+					//Add the renumbering to the result
+					res[renameNum] = defEntry;
+				}
+				else
+				{
+					cout << "Error: Same expanded def twice to same node." << endl;
+					ROSE_ASSERT(false);
+				}
+			}
+			else
+			{
+				cout << "Error: Found expanded def with no entry in rename table." << endl;
+				ROSE_ASSERT(false);
+			}
+		}
+	}
+
+	return res;
 }
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getDefsForSubtree(SgNode* node)
 {
-    class DefSearchTraversal : public AstSimpleProcessing
-     {
-     public:
-         StaticSingleAssignment::NumNodeRenameTable result;
-         StaticSingleAssignment* varRenamingAnalysis;
 
-         virtual void visit(SgNode* node)
-         {
-             //Look up defs at this particular node
-             StaticSingleAssignment::NumNodeRenameTable defsAtNode = varRenamingAnalysis->getDefsAtNode(node);
+	class DefSearchTraversal : public AstSimpleProcessing
+	{
+	public:
+		StaticSingleAssignment::NumNodeRenameTable result;
+		StaticSingleAssignment* varRenamingAnalysis;
 
-             //Traverse the defs
-             foreach(StaticSingleAssignment::NumNodeRenameTable::value_type& entry, defsAtNode)
-             {
-                 //If this is the first time the var has been seen, add it wholesale
-                 if(result.count(entry.first) == 0)
-                 {
-                     result[entry.first] = entry.second;
-                     continue;
-                 }
-                 //Traverse each definition of the variable
-                 foreach(StaticSingleAssignment::NumNodeRenameEntry::value_type& tableEntry, entry.second)
-                 {
-                     if(result[entry.first].count(tableEntry.first) == 0)
-                     {
-                         result[entry.first][tableEntry.first] = tableEntry.second;
-                     }
-                     else
-                     {
-                         cout << "Error: Same rename number defined on multiple nodes." << endl;
-                         ROSE_ASSERT(false);
-                     }
-                 }
-             }
-         }
-     };
+		virtual void visit(SgNode* node)
+		{
+			//Look up defs at this particular node
+			StaticSingleAssignment::NumNodeRenameTable defsAtNode = varRenamingAnalysis->getDefsAtNode(node);
 
-     DefSearchTraversal traversal;
-     traversal.varRenamingAnalysis = this;
-     traversal.traverse(node, preorder);
+			//Traverse the defs
 
-     return traversal.result;
+			foreach(StaticSingleAssignment::NumNodeRenameTable::value_type& entry, defsAtNode)
+			{
+				//If this is the first time the var has been seen, add it wholesale
+				if (result.count(entry.first) == 0)
+				{
+					result[entry.first] = entry.second;
+					continue;
+				}
+				//Traverse each definition of the variable
+
+				foreach(StaticSingleAssignment::NumNodeRenameEntry::value_type& tableEntry, entry.second)
+				{
+					if (result[entry.first].count(tableEntry.first) == 0)
+					{
+						result[entry.first][tableEntry.first] = tableEntry.second;
+					}
+					else
+					{
+						cout << "Error: Same rename number defined on multiple nodes." << endl;
+						ROSE_ASSERT(false);
+					}
+				}
+			}
+		}
+	};
+
+	DefSearchTraversal traversal;
+	traversal.varRenamingAnalysis = this;
+	traversal.traverse(node, preorder);
+
+	return traversal.result;
 }
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getOriginalDefsForSubtree(SgNode* node)
 {
-    class DefSearchTraversal : public AstSimpleProcessing
-     {
-     public:
-         StaticSingleAssignment::NumNodeRenameTable result;
-         StaticSingleAssignment* varRenamingAnalysis;
 
-         virtual void visit(SgNode* node)
-         {
-             //Look up defs at this particular node
-             StaticSingleAssignment::NumNodeRenameTable defsAtNode = varRenamingAnalysis->getOriginalDefsAtNode(node);
+	class DefSearchTraversal : public AstSimpleProcessing
+	{
+	public:
+		StaticSingleAssignment::NumNodeRenameTable result;
+		StaticSingleAssignment* varRenamingAnalysis;
 
-             //Traverse the defs
-             foreach(StaticSingleAssignment::NumNodeRenameTable::value_type& entry, defsAtNode)
-             {
-                 //If this is the first time the var has been seen, add it wholesale
-                 if(result.count(entry.first) == 0)
-                 {
-                     result[entry.first] = entry.second;
-                     continue;
-                 }
-                 //Traverse each definition of the variable
-                 foreach(StaticSingleAssignment::NumNodeRenameEntry::value_type& tableEntry, entry.second)
-                 {
-                     if(result[entry.first].count(tableEntry.first) == 0)
-                     {
-                         result[entry.first][tableEntry.first] = tableEntry.second;
-                     }
-                     else
-                     {
-                         cout << "Error: Same rename number defined on multiple nodes." << endl;
-                         ROSE_ASSERT(false);
-                     }
-                 }
-             }
-         }
-     };
+		virtual void visit(SgNode* node)
+		{
+			//Look up defs at this particular node
+			StaticSingleAssignment::NumNodeRenameTable defsAtNode = varRenamingAnalysis->getOriginalDefsAtNode(node);
 
-     DefSearchTraversal traversal;
-     traversal.varRenamingAnalysis = this;
-     traversal.traverse(node, preorder);
+			//Traverse the defs
 
-     return traversal.result;
+			foreach(StaticSingleAssignment::NumNodeRenameTable::value_type& entry, defsAtNode)
+			{
+				//If this is the first time the var has been seen, add it wholesale
+				if (result.count(entry.first) == 0)
+				{
+					result[entry.first] = entry.second;
+					continue;
+				}
+				//Traverse each definition of the variable
+
+				foreach(StaticSingleAssignment::NumNodeRenameEntry::value_type& tableEntry, entry.second)
+				{
+					if (result[entry.first].count(tableEntry.first) == 0)
+					{
+						result[entry.first][tableEntry.first] = tableEntry.second;
+					}
+					else
+					{
+						cout << "Error: Same rename number defined on multiple nodes." << endl;
+						ROSE_ASSERT(false);
+					}
+				}
+			}
+		}
+	};
+
+	DefSearchTraversal traversal;
+	traversal.varRenamingAnalysis = this;
+	traversal.traverse(node, preorder);
+
+	return traversal.result;
 }
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDefsAtScopeEnd(SgScopeStatement* bb)
@@ -2150,27 +2225,28 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 	}
 
 	ROSE_ASSERT(bb);
-    NumNodeRenameTable result;
+	NumNodeRenameTable result;
 
-    //Keep track of visited nodes
-    set<SgNode*> visited;
-    
-    queue<cfgNode> worklist;
+	//Keep track of visited nodes
+	set<SgNode*> visited;
 
-    cfgNode current = cfgNode(bb->cfgForBeginning());
-    worklist.push(current);
+	queue<cfgNode> worklist;
 
-    while(!worklist.empty())
-    {
-        //Get the node to work on
-        current = worklist.front();
+	cfgNode current = cfgNode(bb->cfgForBeginning());
+	worklist.push(current);
+
+	while (!worklist.empty())
+	{
+		//Get the node to work on
+		current = worklist.front();
 		worklist.pop();
 
 		SgNode* currentNode = current.getNode();
 		visited.insert(currentNode);
-		
+
 		//Find if any of the children exit the basic block.
 		cfgEdgeVec outEdges = current.outEdges();
+
 		foreach(cfgEdge edge, outEdges)
 		{
 			SgNode* targetNode = edge.target().getNode();
@@ -2187,6 +2263,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 				NumNodeRenameTable temp = getReachingDefsAtNode(currentNode);
 
 				//Merge the tables
+
 				foreach(NumNodeRenameTable::value_type& entry, temp)
 				{
 					//Insert the entry wholesale
@@ -2194,9 +2271,10 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 					{
 						result[entry.first] = entry.second;
 					}
-					//Or merge it with an existing one
+						//Or merge it with an existing one
 					else
 					{
+
 						foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
 						{
 							//Insert the entry wholesale
@@ -2223,120 +2301,124 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 				worklist.push(edge.target());
 			}
 		}
-    }
+	}
 
 	return result;
 }
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDefsAtFunctionEnd(SgFunctionDefinition* node)
 {
-    ROSE_ASSERT(node);
-    NumNodeRenameTable result;
+	ROSE_ASSERT(node);
+	NumNodeRenameTable result;
 
-    cfgNode lastNode = cfgNode(node->cfgForEnd());
-    cfgEdgeVec lastEdges = lastNode.inEdges();
-    if(lastEdges.size() == 0)
-    {
-        cout << "Error: No incoming edges to end of function definition." << endl;
-        ROSE_ASSERT(false);
-    }
-    else if(lastEdges.size() == 1)
-    {
-        return getReachingDefsAtNode(lastEdges[0].source().getNode());
-    }
-    else
-    {
-        //Iterate and merge each edge
-        foreach(cfgEdgeVec::value_type& edge, lastEdges)
-        {
-            NumNodeRenameTable temp = getReachingDefsAtNode(edge.source().getNode());
+	cfgNode lastNode = cfgNode(node->cfgForEnd());
+	cfgEdgeVec lastEdges = lastNode.inEdges();
+	if (lastEdges.size() == 0)
+	{
+		cout << "Error: No incoming edges to end of function definition." << endl;
+		ROSE_ASSERT(false);
+	}
+	else if (lastEdges.size() == 1)
+	{
+		return getReachingDefsAtNode(lastEdges[0].source().getNode());
+	}
+	else
+	{
+		//Iterate and merge each edge
 
-            //Merge the tables
-            foreach(NumNodeRenameTable::value_type& entry, temp)
-            {
-                //Insert the entry wholesale
-                if(result.count(entry.first) == 0)
-                {
-                    result[entry.first] = entry.second;
-                }
-                //Or merge it with an existing one
-                else
-                {
-                    foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
-                    {
-                        //Insert the entry wholesale
-                        if(result[entry.first].count(tableEntry.first) == 0)
-                        {
-                            result[entry.first][tableEntry.first] = tableEntry.second;
-                        }
-                        else
-                        {
-                            //Check for equivalence
-                            if(result[entry.first][tableEntry.first] != tableEntry.second)
-                            {
-                                cout << "Error: Same Renaming number has two different definition points." << endl;
-                                ROSE_ASSERT(false);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+		foreach(cfgEdgeVec::value_type& edge, lastEdges)
+		{
+			NumNodeRenameTable temp = getReachingDefsAtNode(edge.source().getNode());
 
-        return result;
-    }
+			//Merge the tables
+
+			foreach(NumNodeRenameTable::value_type& entry, temp)
+			{
+				//Insert the entry wholesale
+				if (result.count(entry.first) == 0)
+				{
+					result[entry.first] = entry.second;
+				}
+					//Or merge it with an existing one
+				else
+				{
+
+					foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
+					{
+						//Insert the entry wholesale
+						if (result[entry.first].count(tableEntry.first) == 0)
+						{
+							result[entry.first][tableEntry.first] = tableEntry.second;
+						}
+						else
+						{
+							//Check for equivalence
+							if (result[entry.first][tableEntry.first] != tableEntry.second)
+							{
+								cout << "Error: Same Renaming number has two different definition points." << endl;
+								ROSE_ASSERT(false);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return result;
+	}
 }
 
 StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getReachingDefsAtFunctionEndForName(SgFunctionDefinition* node, const VarName& var)
 {
-    ROSE_ASSERT(node);
-    NumNodeRenameEntry result;
+	ROSE_ASSERT(node);
+	NumNodeRenameEntry result;
 
-    cfgNode lastNode = cfgNode(node->cfgForEnd());
-    cfgEdgeVec lastEdges = lastNode.inEdges();
-    if(lastEdges.size() == 0)
-    {
-        cout << "Error: No incoming edges to end of function definition." << endl;
-        ROSE_ASSERT(false);
-    }
-    else if(lastEdges.size() == 1)
-    {
-        return getReachingDefsAtNodeForName(lastEdges[0].source().getNode(), var);
-    }
-    else
-    {
-        //Iterate and merge each edge
-        foreach(cfgEdgeVec::value_type& edge, lastEdges)
-        {
-            NumNodeRenameEntry temp = getReachingDefsAtNodeForName(edge.source().getNode(), var);
+	cfgNode lastNode = cfgNode(node->cfgForEnd());
+	cfgEdgeVec lastEdges = lastNode.inEdges();
+	if (lastEdges.size() == 0)
+	{
+		cout << "Error: No incoming edges to end of function definition." << endl;
+		ROSE_ASSERT(false);
+	}
+	else if (lastEdges.size() == 1)
+	{
+		return getReachingDefsAtNodeForName(lastEdges[0].source().getNode(), var);
+	}
+	else
+	{
+		//Iterate and merge each edge
 
-            foreach(NumNodeRenameEntry::value_type& tableEntry, temp)
-            {
-                //Insert the entry wholesale
-                if(result.count(tableEntry.first) == 0)
-                {
-                    result[tableEntry.first] = tableEntry.second;
-                }
-                else
-                {
-                    //Check for equivalence
-                    if(result[tableEntry.first] != tableEntry.second)
-                    {
-                        cout << "Error: Same Renaming number has two different definition points." << endl;
-                        ROSE_ASSERT(false);
-                    }
-                }
-            }
-        }
+		foreach(cfgEdgeVec::value_type& edge, lastEdges)
+		{
+			NumNodeRenameEntry temp = getReachingDefsAtNodeForName(edge.source().getNode(), var);
 
-        return result;
-    }
+			foreach(NumNodeRenameEntry::value_type& tableEntry, temp)
+			{
+				//Insert the entry wholesale
+				if (result.count(tableEntry.first) == 0)
+				{
+					result[tableEntry.first] = tableEntry.second;
+				}
+				else
+				{
+					//Check for equivalence
+					if (result[tableEntry.first] != tableEntry.second)
+					{
+						cout << "Error: Same Renaming number has two different definition points." << endl;
+						ROSE_ASSERT(false);
+					}
+				}
+			}
+		}
+
+		return result;
+	}
 }
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDefsAtStatementStart(SgStatement* statement)
 {
 	ROSE_ASSERT(statement);
-    NumNodeRenameTable result;
+	NumNodeRenameTable result;
 
 	//Get all the incoming edges for the statement. These are UNFILTERED nodes, so we get the true beginning of the statement
 	vector<CFGEdge> inEdges = statement->cfgForBeginning().inEdges();
@@ -2347,7 +2429,8 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 	vector<CFGNode> filteredNodes;
 
 	//Add all the unfiltered inEdges to the initial worklist
-	foreach (CFGEdge inEdge, inEdges)
+
+	foreach(CFGEdge inEdge, inEdges)
 	{
 		unfilteredNodes.push(inEdge.source());
 	}
@@ -2364,10 +2447,11 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 		{
 			filteredNodes.push_back(node);
 		}
-		//This node is unfiltered, explore its parents
+			//This node is unfiltered, explore its parents
 		else
 		{
-			foreach (CFGEdge inEdge, node.inEdges())
+
+			foreach(CFGEdge inEdge, node.inEdges())
 			{
 				CFGNode parentNode = inEdge.source();
 				if (visited.count(parentNode) == 0)
@@ -2379,7 +2463,8 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 	}
 
 	//Merge in the defs from the reaching CFG nodes that are not children of the current statement
-	foreach (CFGNode cfgNode, filteredNodes)
+
+	foreach(CFGNode cfgNode, filteredNodes)
 	{
 		SgNode* sourceNode = cfgNode.getNode();
 		if (statement == sourceNode || SageInterface::isAncestor(statement, sourceNode))
@@ -2391,6 +2476,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 
 		//Merge the tables
 		//TODO: Factor this out into a function
+
 		foreach(NumNodeRenameTable::value_type& entry, temp)
 		{
 			//Insert the entry wholesale
@@ -2398,9 +2484,10 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 			{
 				result[entry.first] = entry.second;
 			}
-			//Or merge it with an existing one
+				//Or merge it with an existing one
 			else
 			{
+
 				foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
 				{
 					//Insert the entry wholesale
@@ -2427,39 +2514,39 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDefsAtFunctionStart(SgFunctionDefinition* node)
 {
-    return getReachingDefsAtNode(node);
+	return getReachingDefsAtNode(node);
 }
 
 StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getReachingDefsAtFunctionStartForName(SgFunctionDefinition* node, const VarName& var)
 {
-    return getReachingDefsAtNodeForName(node, var);
+	return getReachingDefsAtNodeForName(node, var);
 }
 
 SgExpression* StaticSingleAssignment::buildVariableReference(const VarName& var, SgScopeStatement* scope)
 {
-     ROSE_ASSERT(var.size() > 0);
+	ROSE_ASSERT(var.size() > 0);
 
-     SgExpression* varsSoFar = SageBuilder::buildVarRefExp(var.front(), scope);
+	SgExpression* varsSoFar = SageBuilder::buildVarRefExp(var.front(), scope);
 
-     for (size_t i = 0; i < var.size(); i++)
-     {
-         SgInitializedName* initName = var[i];
-         if (initName == var.back())
-         {
-             break;
-         }
+	for (size_t i = 0; i < var.size(); i++)
+	{
+		SgInitializedName* initName = var[i];
+		if (initName == var.back())
+		{
+			break;
+		}
 
-         SgVarRefExp* nextVar = SageBuilder::buildVarRefExp(var[i+1], scope);
+		SgVarRefExp* nextVar = SageBuilder::buildVarRefExp(var[i + 1], scope);
 
-         if (isSgPointerType(initName->get_type()))
-         {
-             varsSoFar = SageBuilder::buildArrowExp(varsSoFar, nextVar);
-         }
-         else
-         {
-             varsSoFar = SageBuilder::buildDotExp(varsSoFar, nextVar);
-         }
-     }
+		if (isSgPointerType(initName->get_type()))
+		{
+			varsSoFar = SageBuilder::buildArrowExp(varsSoFar, nextVar);
+		}
+		else
+		{
+			varsSoFar = SageBuilder::buildDotExp(varsSoFar, nextVar);
+		}
+	}
 
-     return varsSoFar;
+	return varsSoFar;
 }

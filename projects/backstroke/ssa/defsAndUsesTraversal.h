@@ -10,18 +10,16 @@ namespace ssa_private
 class ChildDefsAndUses
 {
 private:
-	/** Stores all of the varRefs that are defined in the current subtree.
-	 */
+	/** Stores all of the varRefs that are defined in the current subtree.  */
 	std::vector<SgNode*> defs;
 
-	/** Stores all the varRefs that are used in the current subTree.
-	 */
+	/** Stores all the varRefs that are used in the current subTree. */
 	std::vector<SgNode*> uses;
 
 public:
-	/** Create the attribute with no refs.
-	 */
-	ChildDefsAndUses():defs(), uses(){}
+
+	/** Create the attribute with no refs. 	 */
+	ChildDefsAndUses() : defs(), uses() { }
 
 	/** Create the attribute with specified def/use.
 	 *
@@ -30,10 +28,10 @@ public:
 	 */
 	ChildDefsAndUses(SgNode* defNode, SgNode* useNode)
 	{
-		if(defNode)
+		if (defNode)
 			defs.push_back(defNode);
 
-		if(useNode)
+		if (useNode)
 			uses.push_back(useNode);
 	}
 
@@ -44,10 +42,10 @@ public:
 	 */
 	ChildDefsAndUses(const std::vector<SgNode*>& defTree, SgNode* useNode)
 	{
-		if(defTree.size() > 0)
+		if (defTree.size() > 0)
 			defs.assign(defTree.begin(), defTree.end());
 
-		if(useNode)
+		if (useNode)
 			uses.push_back(useNode);
 	}
 
@@ -58,10 +56,10 @@ public:
 	 */
 	ChildDefsAndUses(SgNode* defNode, const std::vector<SgNode*>& useTree)
 	{
-		if(useTree.size() > 0)
+		if (useTree.size() > 0)
 			uses.assign(useTree.begin(), useTree.end());
 
-		if(defNode)
+		if (defNode)
 			defs.push_back(defNode);
 	}
 
@@ -73,10 +71,10 @@ public:
 	ChildDefsAndUses(const std::vector<SgNode*>& defTree, const std::vector<SgNode*>& useTree)
 	{
 
-		if(defTree.size() > 0)
+		if (defTree.size() > 0)
 			defs.assign(defTree.begin(), defTree.end());
 
-		if(useTree.size() > 0)
+		if (useTree.size() > 0)
 			uses.assign(useTree.begin(), useTree.end());
 	}
 
@@ -84,25 +82,37 @@ public:
 	 *
 	 * @return A constant reference to the ref list.
 	 */
-	std::vector<SgNode*>& getDefs() { return defs; }
+	std::vector<SgNode*>& getDefs()
+	{
+		return defs;
+	}
 
 	/** Set the defs for this node and below.
-	*
-	* @param newDefs A constant reference to the defs to copy to this node.
-	*/
-	void setDefs(const std::vector<SgNode*>& newDefs) { defs.assign(newDefs.begin(), newDefs.end()); }
+	 *
+	 * @param newDefs A constant reference to the defs to copy to this node.
+	 */
+	void setDefs(const std::vector<SgNode*>& newDefs)
+	{
+		defs.assign(newDefs.begin(), newDefs.end());
+	}
 
-	 /** Get the uses for this node and below.
+	/** Get the uses for this node and below.
 	 *
 	 * @return A constant reference to the use list.
 	 */
-	std::vector<SgNode*>& getUses() { return uses; }
+	std::vector<SgNode*>& getUses()
+	{
+		return uses;
+	}
 
 	/** Set the uses for this node and below.
-	*
-	* @param newUses A constant reference to the uses to copy to this node.
-	*/
-	void setUses(const std::vector<SgNode*>& newUses) { uses.assign(newUses.begin(), newUses.end()); }
+	 *
+	 * @param newUses A constant reference to the uses to copy to this node.
+	 */
+	void setUses(const std::vector<SgNode*>& newUses)
+	{
+		uses.assign(newUses.begin(), newUses.end());
+	}
 };
 
 /** This class collects all the defs and uses associated with each node in the traversed CFG.
@@ -113,9 +123,8 @@ class DefsAndUsesTraversal : public AstBottomUpProcessing<ChildDefsAndUses>
 	StaticSingleAssignment* ssa;
 
 public:
-	DefsAndUsesTraversal(StaticSingleAssignment* ssa) : ssa(ssa)
-	{
-	}
+
+	DefsAndUsesTraversal(StaticSingleAssignment* ssa) : ssa(ssa) { }
 
 	/** Called to evaluate the synthesized attribute on every node.
 	 *
