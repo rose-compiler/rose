@@ -8,7 +8,7 @@ using namespace ssa_private;
 #define foreach BOOST_FOREACH
 
 
-VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
+ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
 {
 	if (StaticSingleAssignment::getDebug())
 	{
@@ -32,7 +32,7 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 		}
 
 		//An SgInitializedName should count as a def, since it is the initial definition.
-		return VarDefUseSynthAttr(name, NULL);
+		return ChildDefsAndUses(name, NULL);
 	}
 	//Catch all variable references
 	else if (isSgVarRefExp(node))
@@ -53,7 +53,7 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 		}
 
 		//A VarRef is always a use, it only becomes defined by the parent assignment.
-		return VarDefUseSynthAttr(NULL, varRef);
+		return ChildDefsAndUses(NULL, varRef);
 	}
 	//Catch all types of Binary Operations
 	else if (isSgBinaryOp(node))
@@ -116,7 +116,7 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 					addUsesToNode(op, uses);
 
 					//Cut off the uses here. We will only pass up the defs.
-					return VarDefUseSynthAttr(def, NULL);
+					return ChildDefsAndUses(def, NULL);
 				}
 				//Otherwise cover all the non-defining Ops
 				default:
@@ -132,7 +132,7 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 					addUsesToNode(op, uses);
 
 					//Return all the uses.
-					return VarDefUseSynthAttr(NULL, uses);
+					return ChildDefsAndUses(NULL, uses);
 				}
 			}
 		}
@@ -187,12 +187,12 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 		addUsesToNode(op, uses);
 
 		//Return the combined defs and uses.
-		return VarDefUseSynthAttr(defs, uses);
+		return ChildDefsAndUses(defs, uses);
 	}
 	else if (isSgStatement(node))
 	{
 		//Don't propogate uses and defs up to the statement level
-		return VarDefUseSynthAttr();
+		return ChildDefsAndUses();
 	}
 
 	//For the default case, we merge the defs and uses of every attribute and pass them upwards
@@ -217,13 +217,12 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 	//Set all the uses as being used here.
 	addUsesToNode(node, uses);
 
-	return VarDefUseSynthAttr(defs, uses);
+	return ChildDefsAndUses(defs, uses);
 }
 
 /** Mark all the uses as occurring at the specified node. */
-void VarDefUseTraversal::addUsesToNode(SgNode* node, std::vector<SgNode*> uses)
+void DefsAndUsesTraversal::addUsesToNode(SgNode* node, std::vector<SgNode*> uses)
 {
-	//Set all the uses as being used here.
 	foreach(SgNode* useNode, uses)
 	{
 		//Get the unique name of the def.

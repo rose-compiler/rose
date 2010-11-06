@@ -7,7 +7,7 @@ namespace ssa_private
 {
 
 /** Attribute that describes the variables modified by a given expression. */
-class VarDefUseSynthAttr
+class ChildDefsAndUses
 {
 private:
 	/** Stores all of the varRefs that are defined in the current subtree.
@@ -21,14 +21,14 @@ private:
 public:
 	/** Create the attribute with no refs.
 	 */
-	VarDefUseSynthAttr():defs(), uses(){}
+	ChildDefsAndUses():defs(), uses(){}
 
 	/** Create the attribute with specified def/use.
 	 *
 	 * @param defNode The node to add to the list of defs, or NULL
 	 * @param useNode The node to add to the list of uses, or NULL
 	 */
-	VarDefUseSynthAttr(SgNode* defNode, SgNode* useNode)
+	ChildDefsAndUses(SgNode* defNode, SgNode* useNode)
 	{
 		if(defNode)
 			defs.push_back(defNode);
@@ -42,7 +42,7 @@ public:
 	 * @param defTree The vector of defs to add, or an empty vector.
 	 * @param useNode The node to add to the list of uses, or NULL.
 	 */
-	VarDefUseSynthAttr(const std::vector<SgNode*>& defTree, SgNode* useNode)
+	ChildDefsAndUses(const std::vector<SgNode*>& defTree, SgNode* useNode)
 	{
 		if(defTree.size() > 0)
 			defs.assign(defTree.begin(), defTree.end());
@@ -56,7 +56,7 @@ public:
 	 * @param defNode The node to add to the list of defs, or NULL.
 	 * @param useTree The vector of uses to add, or an empty vector.
 	 */
-	VarDefUseSynthAttr(SgNode* defNode, const std::vector<SgNode*>& useTree)
+	ChildDefsAndUses(SgNode* defNode, const std::vector<SgNode*>& useTree)
 	{
 		if(useTree.size() > 0)
 			uses.assign(useTree.begin(), useTree.end());
@@ -70,7 +70,7 @@ public:
 	 * @param defTree The defs to use in this node, or empty vector.
 	 * @param useTree The uses to use in this node, or empty vector.
 	 */
-	VarDefUseSynthAttr(const std::vector<SgNode*>& defTree, const std::vector<SgNode*>& useTree)
+	ChildDefsAndUses(const std::vector<SgNode*>& defTree, const std::vector<SgNode*>& useTree)
 	{
 
 		if(defTree.size() > 0)
@@ -105,13 +105,15 @@ public:
 	void setUses(const std::vector<SgNode*>& newUses) { uses.assign(newUses.begin(), newUses.end()); }
 };
 
-
-class VarDefUseTraversal : public AstBottomUpProcessing<VarDefUseSynthAttr>
+/** This class collects all the defs and uses associated with each node in the traversed CFG.
+ * Note that this does not compute reachability information; it just records each instance of
+ * a variable used or defined. */
+class DefsAndUsesTraversal : public AstBottomUpProcessing<ChildDefsAndUses>
 {
 	StaticSingleAssignment* ssa;
 
 public:
-	VarDefUseTraversal(StaticSingleAssignment* ssa) : ssa(ssa)
+	DefsAndUsesTraversal(StaticSingleAssignment* ssa) : ssa(ssa)
 	{
 	}
 
@@ -123,7 +125,7 @@ public:
 	 * @param attr The attributes from the child nodes.
 	 * @return The attribute at this node.
 	 */
-	virtual VarDefUseSynthAttr evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs);
+	virtual ChildDefsAndUses evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs);
 
 private:
 

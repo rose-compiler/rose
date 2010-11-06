@@ -339,7 +339,7 @@ void StaticSingleAssignment::run()
     if(getDebug())
         cout << "Finished UniqueNameTrav..." << endl;
 
-    VarDefUseTraversal defUseTrav(this);
+    DefsAndUsesTraversal defUseTrav(this);
     for(iter = funcs.begin();iter != funcs.end(); ++iter)
     {
         SgFunctionDeclaration* func = (*iter)->get_declaration();
