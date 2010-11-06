@@ -3916,7 +3916,7 @@ EmulationPolicy::arg(int idx)
 }
 
 int
-main(int argc, char *argv[])
+main(int argc, char *argv[], char *envp[])
 {
     typedef X86InstructionSemantics<EmulationPolicy, VirtualMachineSemantics::ValueType> Semantics;
     EmulationPolicy policy;
@@ -3924,6 +3924,52 @@ main(int argc, char *argv[])
     uint32_t dump_at = 0;               /* dump core the first time we hit this address, before the instruction is executed */
     std::string dump_name = "dump";
     FILE *log_file = NULL;
+
+#if 1 /* Show AUXV */
+    struct auxv_t {
+        unsigned long type;
+        unsigned long val;
+    };
+    while (*envp++);
+    for (auxv_t *auxvp=(auxv_t*)envp; auxvp->type; auxvp++) {
+        switch (auxvp->type) {
+            case 0:  fprintf(stderr, "0  AT_NULL         %lu\n", auxvp->val); break;
+            case 1:  fprintf(stderr, "1  AT_IGNORE       %lu\n", auxvp->val); break;
+            case 2:  fprintf(stderr, "2  AT_EXECFD       %lu\n", auxvp->val); break;
+            case 3:  fprintf(stderr, "3  AT_PHDR         0x%lx\n", auxvp->val); break;
+            case 4:  fprintf(stderr, "4  AT_PHENT        0x%lx\n", auxvp->val); break;
+            case 5:  fprintf(stderr, "5  AT_PHNUM        %lu\n", auxvp->val); break;
+            case 6:  fprintf(stderr, "6  AT_PAGESZ       %lu\n", auxvp->val); break;
+            case 7:  fprintf(stderr, "7  AT_BASE         0x%lx\n", auxvp->val); break;
+            case 8:  fprintf(stderr, "8  AT_FLAGS        0x%lx\n", auxvp->val); break;
+            case 9:  fprintf(stderr, "9  AT_ENTRY        0x%lx\n", auxvp->val); break;
+            case 10: fprintf(stderr, "10 AT_NOTELF       %lu\n", auxvp->val); break;
+            case 11: fprintf(stderr, "11 AT_UID          %ld\n", auxvp->val); break;
+            case 12: fprintf(stderr, "12 AT_EUID         %ld\n", auxvp->val); break;
+            case 13: fprintf(stderr, "13 AT_GID          %ld\n", auxvp->val); break;
+            case 14: fprintf(stderr, "14 AT_EGID         %ld\n", auxvp->val); break;
+            case 15: fprintf(stderr, "15 AT_PLATFORM     0x%lx\n", auxvp->val); break;
+            case 16: fprintf(stderr, "16 AT_HWCAP        0x%lx\n", auxvp->val); break;
+            case 17: fprintf(stderr, "17 AT_CLKTCK       %lu\n", auxvp->val); break;
+            case 18: fprintf(stderr, "18 AT_FPUCW        %lu\n", auxvp->val); break;
+            case 19: fprintf(stderr, "19 AT_DCACHEBSIZE  %lu\n", auxvp->val); break;
+            case 20: fprintf(stderr, "20 AT_ICACHEBSIZE  %lu\n", auxvp->val); break;
+            case 21: fprintf(stderr, "21 AT_UCACHEBSIZE  %lu\n", auxvp->val); break;
+            case 22: fprintf(stderr, "22 AT_IGNOREPPC    %lu\n", auxvp->val); break;
+            case 23: fprintf(stderr, "23 AT_SECURE       %ld\n", auxvp->val); break;
+                
+            case 32: fprintf(stderr, "32 AT_SYSINFO      0x%lx\n", auxvp->val); break;
+            case 33: fprintf(stderr, "33 AT_SYSINFO_PHDR 0x%lx\n", auxvp->val); break;
+            case 34: fprintf(stderr, "34 AT_L1I_CACHESHAPE 0x%lx\n", auxvp->val); break;
+            case 35: fprintf(stderr, "35 AT_L1D_CACHESHAPE 0x%lx\n", auxvp->val); break;
+            case 36: fprintf(stderr, "36 AT_L2_CACHESHAPE  0x%lx\n", auxvp->val); break;
+            case 37: fprintf(stderr, "37 AT_L3_CACHESHAPE  0x%lx\n", auxvp->val); break;
+
+            default:
+                fprintf(stderr, "%lu %lu\n", auxvp->type, auxvp->val);
+        }
+    }
+#endif
 
     /* Parse command-line */
     int argno = 1;
