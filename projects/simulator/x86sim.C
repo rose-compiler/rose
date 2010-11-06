@@ -311,7 +311,7 @@ public:
             writeFlag((X86Flag)i, 0);
         writeIP(0);
         writeFlag((X86Flag)1, true_());
-        writeGPR(x86_gpr_sp, 0xc0000000ul);
+        writeGPR(x86_gpr_sp, 0xbffff000ul);     /* high end of stack, exclusive */
 
         memset(gdt, 0, sizeof gdt);
         gdt[0x23>>3].entry_number = 0x23>>3;
@@ -781,7 +781,7 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     ROSE_ASSERT(fhdr!=NULL);
 
     /* Allocate the stack */
-    static const size_t stack_size = 0x01000000;
+    static const size_t stack_size = 0x00015000;
     size_t sp = readGPR(x86_gpr_sp).known_value();
     size_t stack_addr = sp - stack_size;
     MemoryMap::MapElement melmt(stack_addr, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
