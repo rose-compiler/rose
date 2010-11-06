@@ -853,7 +853,8 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
     pointers.push_back(0); /*environment NULL terminator*/
 
     /* Initialize stack with auxv, where each entry is two words in the pointers vector. This information is only present for
-     * dynamically linked executables. */
+     * dynamically linked executables. The order and values were determined by running the simulator with the "--showauxv"
+     * switch on hudson-rose-07. */
     if (fhdr->get_section_by_name(".interp")) {
         struct T1: public SgSimpleProcessing {
             rose_addr_t phdr_rva;
@@ -882,29 +883,30 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
                 fprintf(debug, "AT_SYSINFO_PHDR:  0x%08"PRIx32"\n", auxv.back());
         }
 
-#if 0 /*Disabled because it causes ld.so to execute MXX instructions [RPM 2010-09-21]*/
+#if 1 /*Disabled because it causes ld.so to execute MXX instructions [RPM 2010-09-21]*/
         /* AT_HWCAP (see linux <include/asm/cpufeature.h>) */
         auxv.push_back(16);
-        auxv.push_back(
-                       //(1u<<3)  |       /*pse           page size extensions*/
-                       //(1u<<4)  |       /*tsc           time stamp counter*/
-                       //(1u<<5)  |       /*msr           model-specific registers*/
-                       //(1u<<6)  |       /*pae           physical address extensions*/
-                       //(1u<<7)  |       /*mce           machine check exception*/
-                       //(1u<<8)  |       /*cx8           CMPXCHG8 instruction*/
-                       //(1u<<9)  |       /*apic          onboard APIC*/
-                       (1u<<11) |       /*sep           SYSENTER/SYSEXIT instructions*/
-                       //(1u<<12) |       /*mtrr          memory type range registers*/
-                       //(1u<<13) |       /*pge           page global enable*/
-                       //(1u<<14) |       /*mca           machine check architecture */
-                       (1u<<15) |       /*cmov          CMOV instructions (and floating point varieties with FPU)*/
-                       //(1u<<16) |       /*pat           page attribute table*/
-                       //(1u<<17) |       /*pse36         36-bit PSEs*/
-                       //(1u<<18) |       /*clflush       CLFLUSH instruction*/
-                       //(1u<<22) |       /*acpi          ACPI via MSR*/
-                       //(1u<<29) |       /*acc           "tm" automatic clock control*/
-                       //(1u<<31) |       /*pbe           pending break enable*/
-                       0);
+        auxv.push_back(0xbfebfbfful);   /* value used by hudson-rose-07 */
+//        auxv.push_back(
+//                       //(1u<<3)  |       /*pse           page size extensions*/
+//                       //(1u<<4)  |       /*tsc           time stamp counter*/
+//                       //(1u<<5)  |       /*msr           model-specific registers*/
+//                       //(1u<<6)  |       /*pae           physical address extensions*/
+//                       //(1u<<7)  |       /*mce           machine check exception*/
+//                       //(1u<<8)  |       /*cx8           CMPXCHG8 instruction*/
+//                       //(1u<<9)  |       /*apic          onboard APIC*/
+//                       (1u<<11) |       /*sep           SYSENTER/SYSEXIT instructions*/
+//                       //(1u<<12) |       /*mtrr          memory type range registers*/
+//                       //(1u<<13) |       /*pge           page global enable*/
+//                       //(1u<<14) |       /*mca           machine check architecture */
+//                       (1u<<15) |       /*cmov          CMOV instructions (and floating point varieties with FPU)*/
+//                       //(1u<<16) |       /*pat           page attribute table*/
+//                       //(1u<<17) |       /*pse36         36-bit PSEs*/
+//                       //(1u<<18) |       /*clflush       CLFLUSH instruction*/
+//                       //(1u<<22) |       /*acpi          ACPI via MSR*/
+//                       //(1u<<29) |       /*acc           "tm" automatic clock control*/
+//                       //(1u<<31) |       /*pbe           pending break enable*/
+//                       0);
         if (debug && trace_loader)
             fprintf(debug, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
 #endif
@@ -3925,52 +3927,6 @@ main(int argc, char *argv[], char *envp[])
     std::string dump_name = "dump";
     FILE *log_file = NULL;
 
-#if 1 /* Show AUXV */
-    struct auxv_t {
-        unsigned long type;
-        unsigned long val;
-    };
-    while (*envp++);
-    for (auxv_t *auxvp=(auxv_t*)envp; auxvp->type; auxvp++) {
-        switch (auxvp->type) {
-            case 0:  fprintf(stderr, "0  AT_NULL         %lu\n", auxvp->val); break;
-            case 1:  fprintf(stderr, "1  AT_IGNORE       %lu\n", auxvp->val); break;
-            case 2:  fprintf(stderr, "2  AT_EXECFD       %lu\n", auxvp->val); break;
-            case 3:  fprintf(stderr, "3  AT_PHDR         0x%lx\n", auxvp->val); break;
-            case 4:  fprintf(stderr, "4  AT_PHENT        0x%lx\n", auxvp->val); break;
-            case 5:  fprintf(stderr, "5  AT_PHNUM        %lu\n", auxvp->val); break;
-            case 6:  fprintf(stderr, "6  AT_PAGESZ       %lu\n", auxvp->val); break;
-            case 7:  fprintf(stderr, "7  AT_BASE         0x%lx\n", auxvp->val); break;
-            case 8:  fprintf(stderr, "8  AT_FLAGS        0x%lx\n", auxvp->val); break;
-            case 9:  fprintf(stderr, "9  AT_ENTRY        0x%lx\n", auxvp->val); break;
-            case 10: fprintf(stderr, "10 AT_NOTELF       %lu\n", auxvp->val); break;
-            case 11: fprintf(stderr, "11 AT_UID          %ld\n", auxvp->val); break;
-            case 12: fprintf(stderr, "12 AT_EUID         %ld\n", auxvp->val); break;
-            case 13: fprintf(stderr, "13 AT_GID          %ld\n", auxvp->val); break;
-            case 14: fprintf(stderr, "14 AT_EGID         %ld\n", auxvp->val); break;
-            case 15: fprintf(stderr, "15 AT_PLATFORM     0x%lx\n", auxvp->val); break;
-            case 16: fprintf(stderr, "16 AT_HWCAP        0x%lx\n", auxvp->val); break;
-            case 17: fprintf(stderr, "17 AT_CLKTCK       %lu\n", auxvp->val); break;
-            case 18: fprintf(stderr, "18 AT_FPUCW        %lu\n", auxvp->val); break;
-            case 19: fprintf(stderr, "19 AT_DCACHEBSIZE  %lu\n", auxvp->val); break;
-            case 20: fprintf(stderr, "20 AT_ICACHEBSIZE  %lu\n", auxvp->val); break;
-            case 21: fprintf(stderr, "21 AT_UCACHEBSIZE  %lu\n", auxvp->val); break;
-            case 22: fprintf(stderr, "22 AT_IGNOREPPC    %lu\n", auxvp->val); break;
-            case 23: fprintf(stderr, "23 AT_SECURE       %ld\n", auxvp->val); break;
-                
-            case 32: fprintf(stderr, "32 AT_SYSINFO      0x%lx\n", auxvp->val); break;
-            case 33: fprintf(stderr, "33 AT_SYSINFO_PHDR 0x%lx\n", auxvp->val); break;
-            case 34: fprintf(stderr, "34 AT_L1I_CACHESHAPE 0x%lx\n", auxvp->val); break;
-            case 35: fprintf(stderr, "35 AT_L1D_CACHESHAPE 0x%lx\n", auxvp->val); break;
-            case 36: fprintf(stderr, "36 AT_L2_CACHESHAPE  0x%lx\n", auxvp->val); break;
-            case 37: fprintf(stderr, "37 AT_L3_CACHESHAPE  0x%lx\n", auxvp->val); break;
-
-            default:
-                fprintf(stderr, "%lu %lu\n", auxvp->type, auxvp->val);
-        }
-    }
-#endif
-
     /* Parse command-line */
     int argno = 1;
     while (argno<argc && '-'==argv[argno][0]) {
@@ -4063,6 +4019,55 @@ main(int argc, char *argv[], char *envp[])
                 s = colon ? colon+1 : NULL;
             }
             argno++;
+        } else if (!strcmp(argv[argno], "--showauxv")) {
+            fprintf(stderr, "showing the auxiliary vector for x86sim:\n");
+            argno++;
+            struct auxv_t {
+                unsigned long type;
+                unsigned long val;
+            };
+            char **p = envp;
+            while (*p++);
+            for (auxv_t *auxvp=(auxv_t*)p; 1; auxvp++) {
+                switch (auxvp->type) {
+                    case 0:  fprintf(stderr, "    0  AT_NULL         %lu\n", auxvp->val); break;
+                    case 1:  fprintf(stderr, "    1  AT_IGNORE       %lu\n", auxvp->val); break;
+                    case 2:  fprintf(stderr, "    2  AT_EXECFD       %lu\n", auxvp->val); break;
+                    case 3:  fprintf(stderr, "    3  AT_PHDR         0x%lx\n", auxvp->val); break;
+                    case 4:  fprintf(stderr, "    4  AT_PHENT        0x%lx\n", auxvp->val); break;
+                    case 5:  fprintf(stderr, "    5  AT_PHNUM        %lu\n", auxvp->val); break;
+                    case 6:  fprintf(stderr, "    6  AT_PAGESZ       %lu\n", auxvp->val); break;
+                    case 7:  fprintf(stderr, "    7  AT_BASE         0x%lx\n", auxvp->val); break;
+                    case 8:  fprintf(stderr, "    8  AT_FLAGS        0x%lx\n", auxvp->val); break;
+                    case 9:  fprintf(stderr, "    9  AT_ENTRY        0x%lx\n", auxvp->val); break;
+                    case 10: fprintf(stderr, "    10 AT_NOTELF       %lu\n", auxvp->val); break;
+                    case 11: fprintf(stderr, "    11 AT_UID          %ld\n", auxvp->val); break;
+                    case 12: fprintf(stderr, "    12 AT_EUID         %ld\n", auxvp->val); break;
+                    case 13: fprintf(stderr, "    13 AT_GID          %ld\n", auxvp->val); break;
+                    case 14: fprintf(stderr, "    14 AT_EGID         %ld\n", auxvp->val); break;
+                    case 15: fprintf(stderr, "    15 AT_PLATFORM     0x%lx\n", auxvp->val); break;
+                    case 16: fprintf(stderr, "    16 AT_HWCAP        0x%lx\n", auxvp->val); break;
+                    case 17: fprintf(stderr, "    17 AT_CLKTCK       %lu\n", auxvp->val); break;
+                    case 18: fprintf(stderr, "    18 AT_FPUCW        %lu\n", auxvp->val); break;
+                    case 19: fprintf(stderr, "    19 AT_DCACHEBSIZE  %lu\n", auxvp->val); break;
+                    case 20: fprintf(stderr, "    20 AT_ICACHEBSIZE  %lu\n", auxvp->val); break;
+                    case 21: fprintf(stderr, "    21 AT_UCACHEBSIZE  %lu\n", auxvp->val); break;
+                    case 22: fprintf(stderr, "    22 AT_IGNOREPPC    %lu\n", auxvp->val); break;
+                    case 23: fprintf(stderr, "    23 AT_SECURE       %ld\n", auxvp->val); break;
+
+                    case 32: fprintf(stderr, "    32 AT_SYSINFO      0x%lx\n", auxvp->val); break;
+                    case 33: fprintf(stderr, "    33 AT_SYSINFO_PHDR 0x%lx\n", auxvp->val); break;
+                    case 34: fprintf(stderr, "    34 AT_L1I_CACHESHAPE 0x%lx\n", auxvp->val); break;
+                    case 35: fprintf(stderr, "    35 AT_L1D_CACHESHAPE 0x%lx\n", auxvp->val); break;
+                    case 36: fprintf(stderr, "    36 AT_L2_CACHESHAPE  0x%lx\n", auxvp->val); break;
+                    case 37: fprintf(stderr, "    37 AT_L3_CACHESHAPE  0x%lx\n", auxvp->val); break;
+
+                    default: fprintf(stderr, "    %lu AT_(unknown)   0x%lx\n", auxvp->type, auxvp->val); break;
+                }
+                if (!auxvp->type)
+                    break;
+            }
+
         } else {
             fprintf(stderr, "usage: %s [--debug] PROGRAM ARGUMENTS...\n", argv[0]);
             exit(1);

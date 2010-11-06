@@ -71,6 +71,10 @@ Switches are:
   directories are specified the simulator looks for files called
   "x86vdso" in those directories.
 
+* "--showauxv" causes the simulator to print its own ELF auxiliary
+  vector.  (The auxiliary vector for the specimen is printed by
+  "--debug=loader".)
+
 Positional arguments:
 
 * "SPECIMEN" is the name of the program to simulate.  x86sim will
