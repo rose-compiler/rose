@@ -308,19 +308,21 @@ while (@ARGV) {
     next;
   }
   unless ($target) {
-    $target = $variables{TARGET} = $_;
+    $target = $_;
     next;
   }
   die $usage;
 }
 die $usage if @ARGV || !$config_file;
-my %config = load_config $config_file, %variables;
 if ($target =~ /(.+)\.\w+$/) {
   ($target, $target_pass, $target_fail) = ($1, $target, "$1.failed");
 } else {
   ($target) = $target || ($config_file =~ /([^\/]+?)(.\w+)?$/);
   ($target_pass,$target_fail) = ("$target.passed","$target.failed");
 }
+$variables{TARGET} = $target;
+my %config = load_config $config_file, %variables;
+
 
 # Print output to indicate test is starting. Do nothing if the test
 # is disabled.
