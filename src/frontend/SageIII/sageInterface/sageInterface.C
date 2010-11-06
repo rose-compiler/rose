@@ -1051,6 +1051,7 @@ SageInterface::get_name ( const SgSupport* node )
 
      switch (node->variantT())
         {
+#if 0  // Liao 11/5/2010, moved to SgLocatedNodeSupport         
           case V_SgInitializedName:
              {
                const SgInitializedName* initializedName = isSgInitializedName(node);
@@ -1060,6 +1061,7 @@ SageInterface::get_name ( const SgSupport* node )
                   }
                break;
              }
+#endif
 #if 1
        // DQ (3/17/2006): Implemented case for pragma declaration (forgot this case)
           case V_SgPragma:
@@ -1453,6 +1455,15 @@ SageInterface::get_name ( const SgLocatedNodeSupport* node )
                break;
              }
 #endif
+          case V_SgInitializedName:
+             {
+               const SgInitializedName* initializedName = isSgInitializedName(node);
+               if (initializedName != NULL)
+                  {
+                    returnName= initializedName->get_name().str();
+                  }
+               break;
+             }
           default:
              {
                returnName = node->class_name();
@@ -12300,12 +12311,26 @@ void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
   cout<<"///////////// begin of SageInterface::dumpInfo() ///////////////"<<endl;
   cout<<"--------------base info. for SgNode---------------"<<endl;
   cout<<node<<" "<<node->class_name()<<endl;
+
+  cout<<"--------------name info. for SgNode---------------"<<endl;
+  // print out namea for named nodes
+  SgFunctionDeclaration * decl = isSgFunctionDeclaration(node);
+  if (decl)
+    cout<<"\tqualified name="<<decl->get_qualified_name().getString()<<endl;
+  SgVarRefExp * varRef =  isSgVarRefExp(node);
+  if (varRef) 
+    cout<<"\treferenced variable name= "<<varRef->get_symbol()->get_name().getString()<<endl;
+  SgInitializedName * iname = isSgInitializedName(node);  
+  if (iname)
+    cout<<"\tvariable name= "<<iname->get_qualified_name().getString()<<endl;
+
   SgLocatedNode* snode = isSgLocatedNode(node);
   if (snode)
   {
     // source file info. dump
     cout<<"--------------source location info. for SgNode---------------"<<endl;
-    cout<<snode->get_file_info()->get_filename()
+    if (snode->get_file_info())
+      cout<<snode->get_file_info()->get_filename()
       << ":"<<snode->get_file_info()->get_line()<<"-"
       << snode->get_file_info()->get_col()<<endl;
     // preprocessing info dump
@@ -12321,19 +12346,7 @@ void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
         pinfo->display("");
       }
     }
-    cout<<"--------------name info. for SgNode---------------"<<endl;
-    // print out namea for named nodes
-    SgFunctionDeclaration * decl = isSgFunctionDeclaration(snode);
-    if (decl)
-      cout<<"\tqualified name="<<decl->get_qualified_name().getString()<<endl;
-    SgVarRefExp * varRef =  isSgVarRefExp(snode);
-    if (varRef) 
-      cout<<"\treferenced variable name= "<<varRef->get_symbol()->get_name().getString()<<endl;
   }
-  SgInitializedName * iname = isSgInitializedName(snode);  
-  if (iname)
-    cout<<"\tvariable name= "<<iname->get_qualified_name().getString()<<endl;
-
   cout<<endl;
   cout<<"///////////// end of SageInterface::dumpInfo() ///////////////"<<endl;
 }
