@@ -54,6 +54,11 @@ std::string convertJavaStringToCxxString(JNIEnv *env, const jstring & java_strin
 
 SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name);
 
+// Build a simple class in the current scope and set the scope to be the class definition.
+void buildClass (const SgName & className);
+
+SgVariableDeclaration* buildSimpleVariableDeclaration(const SgName & name);
+
 
 // endif for ROSE_JAVA_SUPPORT
 #endif
