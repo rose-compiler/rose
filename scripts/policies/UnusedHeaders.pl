@@ -1,4 +1,8 @@
 #!/usr/bin/perl
+
+#Note: This script fails to account for header files included from a specific directory.
+# E.g. foo.h doesn't match #include <bar/foo.h>
+
 my $desc = <<EOF;
 All header files found in a source tree should be used somewhere in that
 source tree. Unused header files are characteristic of deleted code that
@@ -30,7 +34,7 @@ while (my $file = $files->next_file) {
 
 # Report failures
 my @remaining = map {@$_} values %index;
-$warning = "" if @remaining > 346; # as of 2010-10-18 there are 346 violations; do not allow more!
+$warning = "" if @remaining > 348; # as of 2010-11-06 there are 348 violations; do not allow more!
 print $desc if @remaining;
 print "  $_$warning\n" for sort @remaining;
 
