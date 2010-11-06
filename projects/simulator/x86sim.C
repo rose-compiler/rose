@@ -66,6 +66,11 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 
+/* Define this if you want strict emulation. When defined, every attempt is made for x86sim to provide an environment as close
+ * as possible to running natively on hudson-rose-07.  Note that defining this might cause the simulator to malfunction since
+ * some specimens will attempt to execute instructions that are not implemented in the x86 instruction semantics yet. */
+// #define X86SIM_STRICT_EMULATION
+
 
 enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
 
@@ -883,33 +888,19 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
                 fprintf(debug, "AT_SYSINFO_PHDR:  0x%08"PRIx32"\n", auxv.back());
         }
 
-#if 1 /*Disabled because it causes ld.so to execute MXX instructions [RPM 2010-09-21]*/
-        /* AT_HWCAP (see linux <include/asm/cpufeature.h>) */
+        /* AT_HWCAP (see linux <include/asm/cpufeature.h>). We start with the value obtained by experimentation (see the
+         * --showauxv switch) and then turn off things we can't handle.  For strict emulation don't turn these off. */
         auxv.push_back(16);
-        auxv.push_back(0xbfebfbfful);   /* value used by hudson-rose-07 */
-//        auxv.push_back(
-//                       //(1u<<3)  |       /*pse           page size extensions*/
-//                       //(1u<<4)  |       /*tsc           time stamp counter*/
-//                       //(1u<<5)  |       /*msr           model-specific registers*/
-//                       //(1u<<6)  |       /*pae           physical address extensions*/
-//                       //(1u<<7)  |       /*mce           machine check exception*/
-//                       //(1u<<8)  |       /*cx8           CMPXCHG8 instruction*/
-//                       //(1u<<9)  |       /*apic          onboard APIC*/
-//                       (1u<<11) |       /*sep           SYSENTER/SYSEXIT instructions*/
-//                       //(1u<<12) |       /*mtrr          memory type range registers*/
-//                       //(1u<<13) |       /*pge           page global enable*/
-//                       //(1u<<14) |       /*mca           machine check architecture */
-//                       (1u<<15) |       /*cmov          CMOV instructions (and floating point varieties with FPU)*/
-//                       //(1u<<16) |       /*pat           page attribute table*/
-//                       //(1u<<17) |       /*pse36         36-bit PSEs*/
-//                       //(1u<<18) |       /*clflush       CLFLUSH instruction*/
-//                       //(1u<<22) |       /*acpi          ACPI via MSR*/
-//                       //(1u<<29) |       /*acc           "tm" automatic clock control*/
-//                       //(1u<<31) |       /*pbe           pending break enable*/
-//                       0);
+        uint32_t hwcap = 0xbfebfbfful; /* value used by hudson-rose-07 */
+#ifndef X86SIM_STRICT_EMULATION
+        hwcap &= ~(1u << 23); /* X86_FEATURE_MMX  - Multimedia Extensions */
+        hwcap &= ~(1u << 25); /* X86_FEATURE_XMM  - Streaming SIMD Extensions */
+        hwcap &= ~(1u << 26); /* X86_FEATURE_XMM2 - Streaming SIMD Extensions-2 */
+#endif
+        auxv.push_back(hwcap);
+
         if (debug && trace_loader)
             fprintf(debug, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
-#endif
 
         /* AT_PAGESZ */
         auxv.push_back(6);
@@ -991,7 +982,7 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
 
         /* AT_PLATFORM */
         {
-            const char *platform = "i386";
+            const char *platform = "i686";
             size_t len = strlen(platform)+1;
             sp -= len;
             map->write(platform, sp, len);
