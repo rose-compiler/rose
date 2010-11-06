@@ -358,7 +358,10 @@ echo "**************************************************************************
 # Known unresolved issues:
 #  - RTED test failures due to obsolete STL headers used in test suite
 #  - Unparser generates (C++ and Fortran) code that is incompatible with these compilers
-if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
+# Liao 11/4/2010, we allow minimal configuration to test all GCC versions
+#  if (minimal or (full && !(4.3.2 or 4.4.1)) )
+if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" -o \( "x$ROSE_TEST_BUILD_STYLE" = "xfull" -a \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \)  \) \) ; then
+#if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
 
    start_time_make_check_seconds="$(date +%s)"
 
@@ -471,7 +474,9 @@ fi
 
 # DQ (12/16/2009): This appears to work everywhere byt on the 4.3.2 systems, verify this.
 # Finally run the "make docs" test (on just the 4.2.4 version of gcc).
-if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
+#if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
+# Liao 11/4/2010, minimal tests should all pass make docs
+if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" -o \( "x$ROSE_TEST_BUILD_STYLE" = "xfull" -a \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \)  \) \) ; then
    echo "Starting make docs step (exit normally even if it fails so that we can debug the docs rule)"
  # Exit normally even if it fails so that we can debug the docs rule.
  # make -j${NUM_PROCESS:-$def_num_procs} docs || exit 0
