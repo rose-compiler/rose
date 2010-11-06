@@ -888,15 +888,9 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
                 fprintf(debug, "AT_SYSINFO_PHDR:  0x%08"PRIx32"\n", auxv.back());
         }
 
-        /* AT_HWCAP (see linux <include/asm/cpufeature.h>). We start with the value obtained by experimentation (see the
-         * --showauxv switch) and then turn off things we can't handle.  For strict emulation don't turn these off. */
+        /* AT_HWCAP (see linux <include/asm/cpufeature.h>). */
         auxv.push_back(16);
         uint32_t hwcap = 0xbfebfbfful; /* value used by hudson-rose-07 */
-#ifndef X86SIM_STRICT_EMULATION
-        hwcap &= ~(1u << 23); /* X86_FEATURE_MMX  - Multimedia Extensions */
-        hwcap &= ~(1u << 25); /* X86_FEATURE_XMM  - Streaming SIMD Extensions */
-        hwcap &= ~(1u << 26); /* X86_FEATURE_XMM2 - Streaming SIMD Extensions-2 */
-#endif
         auxv.push_back(hwcap);
 
         if (debug && trace_loader)
@@ -4123,7 +4117,7 @@ main(int argc, char *argv[], char *envp[])
                 policy.dump_registers(policy.debug);
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
-#if 0
+#ifdef X86SIM_STRICT_EMULATION
             policy.dump_core(SIGILL);
             abort();
 #else
