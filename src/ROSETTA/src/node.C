@@ -90,7 +90,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (InterfaceBody,  "InterfaceBody",  "TEMP_Interface_Body" );
 
 
-  // DQ (10/6/2008): Migrate some of the SgSupport derived IR nodes, that truely have a position in the 
+  // DQ (10/6/2008): Migrate some of the SgSupport derived IR nodes, that truly have a position in the 
   // source code, to SgLocatedNode.  Start with some of the newer IR nodes which are traversed and thus 
   // are forced to have an interface for the source position interface information (already present in 
   // the SgLocatedNode base class).  Eventually a number of the IR nodes currently derived from SgSupport

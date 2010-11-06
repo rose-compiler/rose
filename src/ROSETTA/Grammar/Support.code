@@ -8424,6 +8424,9 @@ SgInitializedName::get_qualified_name() const
 void
 SgInitializedName::post_construction_initialization()
    {
+     // Liao 11/5/2010, for debugging purpose
+    // if (p_name.getString() == string("a0")) 
+    //   abort();
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
@@ -8529,6 +8532,7 @@ SgInitializedName::SgInitializedName
   // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
      p_requiresGlobalNameQualificationOnType(false)
    {
+     p_startOfConstruct = fileInfo; 
      post_construction_initialization();
    }
 
