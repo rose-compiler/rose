@@ -26,7 +26,7 @@ demangle () {
     s="${s%%.*}" # strip of extensions
     s="$(echo "$s" |sed 's/\([A-Z]\)/ \1/g')" # de-CamelCase
     s="${s# }" # remove leading space from de-CamelCase if necessary
-    s="$(echo "$s" |tr [A-Z] [a-z])" # convert to all lower-case
+    s="$(echo "$s" |tr A-Z a-z)" # convert to all lower-case
     echo "$s"
 }
 

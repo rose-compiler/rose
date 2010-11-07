@@ -18,12 +18,12 @@ my $warning = " (warning)";	# non-empty means issue warnings rather than errors,
 # Each key is the base name of the header file;
 # Each value is an array of header filenames that map to this key.
 my %index;
-push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh)$/} FileLister->new(@ARGV)->all_files;
+push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|hpp)$/} FileLister->new(@ARGV)->all_files;
 
 # Look for #include statements in all source files and delete the matching entry from %index.
 my $files = FileLister->new(@ARGV);
 while (my $file = $files->next_file) {
-  next unless $file =~ /\.(h|hh|c|C|cpp)$/; # look only at C/C++ source code
+  next unless $file =~ /\.(h|hh|hpp|c|C|cpp)$/; # look only at C/C++ source code
   if (open FILE, "<", $file) {
     while (<FILE>) {
       if (my($path,$name) = /^\s*#\s*include\s*["<](.*?)([^\/]*?)[>"]/) {
@@ -60,7 +60,7 @@ while (my $file = $files->next_file) {
 
 # Report failures
 my @remaining = map {@$_} values %index;
-$warning = "" if @remaining > 345; # as of 2010-11-06 there are 345 violations; do not allow more!
+$warning = "" if @remaining > 347; # as of 2010-11-06 there are 347 violations; do not allow more!
 print $desc if @remaining;
 print "  $_$warning\n" for sort @remaining;
 
