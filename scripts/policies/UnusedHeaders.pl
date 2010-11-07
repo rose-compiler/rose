@@ -49,7 +49,7 @@ while (my $file = $files->next_file) {
 	  if (@non_matching_headers) {
 	    $index{lc $name} = \@non_matching_headers;
 	  } else {
-	    delete $index{lc $1};
+	    delete $index{lc $name};
 	  }
 	}
       }
