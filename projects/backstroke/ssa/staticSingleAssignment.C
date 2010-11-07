@@ -23,7 +23,7 @@ using namespace std;
 using namespace ssa_private;
 
 //Initializations of the static attribute tags
-std::string StaticSingleAssignment::varKeyTag = "rename_KeyTag";
+string StaticSingleAssignment::varKeyTag = "rename_KeyTag";
 SgInitializedName* StaticSingleAssignment::thisDecl = NULL;
 StaticSingleAssignment::VarName StaticSingleAssignment::emptyName;
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::emptyRenameTable;
@@ -31,9 +31,9 @@ StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::emptyRenameEn
 
 //Printing functions
 
-std::string StaticSingleAssignment::keyToString(const VarName& vec)
+string StaticSingleAssignment::keyToString(const VarName& vec)
 {
-	std::string name = "";
+	string name = "";
 
 	foreach(const VarName::value_type& iter, vec)
 	{
@@ -49,64 +49,64 @@ std::string StaticSingleAssignment::keyToString(const VarName& vec)
 
 void StaticSingleAssignment::printDefs(SgNode* node)
 {
-	std::cout << "Def Table for [" << node->class_name() << ":" << node << "]:" << std::endl;
+	cout << "Def Table for [" << node->class_name() << ":" << node << "]:" << endl;
 
 	foreach(TableEntry::value_type& entry, defTable[node])
 	{
-		std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+		cout << "  Defs for [" << keyToString(entry.first) << "]:" << endl;
 
 		foreach(NodeVec::value_type& iter, entry.second)
 		{
-			std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+			cout << "    -[" << iter->class_name() << ":" << iter << "]" << endl;
 		}
 	}
 }
 
-void StaticSingleAssignment::printDefs(std::map< std::vector<SgInitializedName*>, std::vector<SgNode*> >& table)
+void StaticSingleAssignment::printDefs(map< vector<SgInitializedName*>, vector<SgNode*> >& table)
 {
-	std::cout << "Def Table:" << std::endl;
+	cout << "Def Table:" << endl;
 
 	foreach(TableEntry::value_type& entry, table)
 	{
-		std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+		cout << "  Defs for [" << keyToString(entry.first) << "]:" << endl;
 
 		foreach(NodeVec::value_type& iter, entry.second)
 		{
-			std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+			cout << "    -[" << iter->class_name() << ":" << iter << "]" << endl;
 		}
 	}
 }
 
 void StaticSingleAssignment::printOriginalDefs(SgNode* node)
 {
-	std::cout << "Original Def Table for [" << node->class_name() << ":" << node << "]:" << std::endl;
+	cout << "Original Def Table for [" << node->class_name() << ":" << node << "]:" << endl;
 
 	foreach(TableEntry::value_type& entry, originalDefTable[node])
 	{
-		std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+		cout << "  Defs for [" << keyToString(entry.first) << "]:" << endl;
 
 		foreach(NodeVec::value_type& iter, entry.second)
 		{
-			std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+			cout << "    -[" << iter->class_name() << ":" << iter << "]" << endl;
 		}
 	}
 }
 
 void StaticSingleAssignment::printOriginalDefTable()
 {
-	std::cout << "Original Def Table:" << endl;
+	cout << "Original Def Table:" << endl;
 
 	foreach(DefUseTable::value_type& node, originalDefTable)
 	{
-		std::cout << "  Original Def Table for [" << node.first->class_name() << ":" << node.first << "]:" << std::endl;
+		cout << "  Original Def Table for [" << node.first->class_name() << ":" << node.first << "]:" << endl;
 
 		foreach(TableEntry::value_type& entry, originalDefTable[node.first])
 		{
-			std::cout << "    Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+			cout << "    Defs for [" << keyToString(entry.first) << "]:" << endl;
 
 			foreach(NodeVec::value_type& iter, entry.second)
 			{
-				std::cout << "      -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+				cout << "      -[" << iter->class_name() << ":" << iter << "]" << endl;
 			}
 		}
 	}
@@ -114,30 +114,30 @@ void StaticSingleAssignment::printOriginalDefTable()
 
 void StaticSingleAssignment::printUses(SgNode* node)
 {
-	std::cout << "Use Table for [" << node->class_name() << ":" << node << "]:" << std::endl;
+	cout << "Use Table for [" << node->class_name() << ":" << node << "]:" << endl;
 
 	foreach(TableEntry::value_type& entry, useTable[node])
 	{
-		std::cout << "  Uses for [" << keyToString(entry.first) << "]:" << std::endl;
+		cout << "  Uses for [" << keyToString(entry.first) << "]:" << endl;
 
 		foreach(NodeVec::value_type& iter, entry.second)
 		{
-			std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+			cout << "    -[" << iter->class_name() << ":" << iter << "]" << endl;
 		}
 	}
 }
 
-void StaticSingleAssignment::printUses(std::map< std::vector<SgInitializedName*>, std::vector<SgNode*> >& table)
+void StaticSingleAssignment::printUses(map< vector<SgInitializedName*>, vector<SgNode*> >& table)
 {
-	std::cout << "Use Table:" << std::endl;
+	cout << "Use Table:" << endl;
 
 	foreach(TableEntry::value_type& entry, table)
 	{
-		std::cout << "  Uses for [" << keyToString(entry.first) << "]:" << std::endl;
+		cout << "  Uses for [" << keyToString(entry.first) << "]:" << endl;
 
 		foreach(NodeVec::value_type& iter, entry.second)
 		{
-			std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
+			cout << "    -[" << iter->class_name() << ":" << iter << "]" << endl;
 		}
 	}
 }
@@ -177,7 +177,7 @@ void StaticSingleAssignment::printRenameTable(const NumNodeRenameTable& table)
 
 	foreach(const NumNodeRenameTable::value_type& entry, table)
 	{
-		std::cout << "  Names for [" << keyToString(entry.first) << "]:" << std::endl;
+		cout << "  Names for [" << keyToString(entry.first) << "]:" << endl;
 
 		//Print out the renamings in order.
 		printRenameEntry(entry.second);
@@ -244,6 +244,360 @@ void StaticSingleAssignment::printRenameEntry(const NumNodeRenameEntry& entry)
 	}
 }
 
+void StaticSingleAssignment::toDOT(const string fileName)
+{
+	ROSE_ASSERT(fileName != "");
+
+	typedef vector<SgSourceFile*> fileVec;
+	fileVec files = SageInterface::querySubTree<SgSourceFile > (project, V_SgSourceFile);
+
+	//print all the functions in each file
+
+	foreach(fileVec::value_type& file, files)
+	{
+		ofstream outFile((StringUtility::stripPathFromFileName(file->getFileName())
+				+ "_" + fileName).c_str());
+
+		if (!outFile.good())
+		{
+			if (getDebug())
+				cout << "Error printing DOT." << endl;
+
+			return;
+		}
+
+		//Print the CFG of the function
+		printToDOT(file, outFile);
+	}
+}
+
+void StaticSingleAssignment::toFilteredDOT(const string fileName)
+{
+	ROSE_ASSERT(fileName != "");
+
+	typedef vector<SgSourceFile*> fileVec;
+	fileVec files = SageInterface::querySubTree<SgSourceFile > (project, V_SgSourceFile);
+
+	//print all the functions in each file
+
+	foreach(fileVec::value_type& file, files)
+	{
+		ofstream outFile((StringUtility::stripPathFromFileName(file->getFileName())
+				+ "_filtered_" + fileName).c_str());
+
+		if (!outFile.good())
+		{
+			if (getDebug())
+				cout << "Error printing DOT." << endl;
+
+			return;
+		}
+
+		//Print the CFG of the function
+		printToFilteredDOT(file, outFile);
+	}
+}
+
+void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
+{
+	if (!outFile.good())
+	{
+		if (getDebug())
+			cout << "Error: Bad ofstream in printToDOT()" << endl;
+		return;
+	}
+
+	typedef CFGNode cfgNode;
+	typedef CFGEdge cfgEdge;
+
+	typedef vector<SgFunctionDefinition*> funcDefVec;
+	funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
+
+	//Start the graph
+	outFile << "digraph SSAGraph {\n";
+
+	//Iterate all the functions and print them in the same file.
+
+	foreach(funcDefVec::value_type& func, funcs)
+	{
+		vector<cfgNode> visited;
+		stack<cfgNode> traverse;
+		cfgNode current = cfgNode(func->cfgForBeginning());
+
+		traverse.push(current);
+
+		while (!traverse.empty())
+		{
+			current = traverse.top();
+
+			//If not visited
+			if (count(visited.begin(), visited.end(), current) == 0)
+			{
+				//Visit the node and print it
+				string id = current.id();
+				string nodeColor = "black";
+
+				bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
+
+				if (isSgStatement(current.getNode()))
+					nodeColor = "blue";
+				else if (isSgExpression(current.getNode()))
+					nodeColor = "green";
+				else if (isSgInitializedName(current.getNode()))
+					nodeColor = "red";
+
+				string name = "";
+				if (uniqueName)
+				{
+					if (getDebug())
+						cout << "Getting Unique Name attribute." << endl;
+					VarUniqueName *attr = getUniqueName(current.getNode());
+					ROSE_ASSERT(attr);
+
+					name = attr->getNameString();
+				}
+
+				//Print the defs to a string
+				stringstream defUse;
+
+				foreach(TableEntry::value_type& entry, defTable[current.getNode()])
+				{
+					defUse << "Def [" << keyToString(entry.first) << "]: ";
+
+					foreach(NodeVec::value_type& val, entry.second)
+					{
+						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
+					}
+					defUse << "\\n";
+				}
+				//Print the uses to a string
+
+				foreach(TableEntry::value_type& entry, useTable[current.getNode()])
+				{
+					defUse << "Use [" << keyToString(entry.first) << "]: ";
+
+					foreach(NodeVec::value_type& val, entry.second)
+					{
+						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
+					}
+					defUse << "\\n";
+				}
+
+				//Copy out the string and trim off the last '\n'
+				string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
+
+
+				//Print this node
+				outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
+						//Now we add the unique name information
+						<< ((name != "") ? "\\n" : "") << name
+						<< ((defUseStr != "") ? "\\n" : "") << defUseStr
+						<< "\", color=\"" << nodeColor << "\", style=\""
+						<< (current.isInteresting() ? "solid" : "dotted") << "\"];\n";
+
+				//Now print the out edges
+				vector<cfgEdge> outEdges = current.outEdges();
+
+				foreach(vector<cfgEdge>::value_type& edge, outEdges)
+				{
+					outFile << edge.source().id() << " -> " << edge.target().id()
+							<< " [label=\"" << escapeString(edge.toString())
+							<< "\"];\n";
+				}
+			}
+
+			visited.push_back(current);
+
+			vector<cfgEdge> outEdges = current.outEdges();
+
+			foreach(vector<cfgEdge>::value_type& edge, outEdges)
+			{
+				//If we haven't seen the target of this node yet, process the node
+				if (count(visited.begin(), visited.end(), edge.target()) == 0)
+				{
+					traverse.push(edge.target());
+					break;
+				}
+			}
+
+			//If there are no new out edges to explore
+			if (traverse.top() == current)
+			{
+				vector<cfgEdge> inEdges = current.inEdges();
+
+				foreach(vector<cfgEdge>::value_type& edge, inEdges)
+				{
+					//If we haven't seen the target of this node yet, process the node
+					if (count(visited.begin(), visited.end(), edge.target()) == 0)
+					{
+						traverse.push(edge.source());
+						break;
+					}
+				}
+			}
+
+			//No out or in edges left to print, pop this node
+			if (traverse.top() == current)
+			{
+				traverse.pop();
+			}
+		}
+	}
+
+	//End the graph
+	outFile << "}\n";
+}
+
+void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& outFile)
+{
+	if (!outFile.good())
+	{
+		if (getDebug())
+			cout << "Error: Bad ofstream in printToDOT()" << endl;
+		return;
+	}
+
+	typedef FilteredCFGNode<IsDefUseFilter> cfgNode;
+	typedef FilteredCFGEdge<IsDefUseFilter> cfgEdge;
+
+	typedef vector<SgFunctionDefinition*> funcDefVec;
+	funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
+
+	//Start the graph
+	outFile << "digraph SSAGraph {\n";
+
+	//Iterate all the functions and print them in the same file.
+
+	foreach(funcDefVec::value_type& func, funcs)
+	{
+		vector<cfgNode> visited;
+		stack<cfgNode> traverse;
+		cfgNode current = cfgNode(func->cfgForBeginning());
+
+		traverse.push(current);
+
+		while (!traverse.empty())
+		{
+			current = traverse.top();
+
+			//If not visited
+			if (count(visited.begin(), visited.end(), current) == 0)
+			{
+				//Visit the node and print it
+				string id = current.id();
+				string nodeColor = "black";
+
+				bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
+
+				if (isSgStatement(current.getNode()))
+					nodeColor = "blue";
+				else if (isSgExpression(current.getNode()))
+					nodeColor = "green";
+				else if (isSgInitializedName(current.getNode()))
+					nodeColor = "red";
+
+				string name = "";
+				if (uniqueName)
+				{
+					if (getDebug())
+						cout << "Getting Unique Name attribute." << endl;
+					VarUniqueName *attr = getUniqueName(current.getNode());
+					ROSE_ASSERT(attr);
+
+					name = attr->getNameString();
+				}
+
+				//Print the defs to a string
+				stringstream defUse;
+
+				foreach(TableEntry::value_type& entry, defTable[current.getNode()])
+				{
+					defUse << "Def [" << keyToString(entry.first) << "]: ";
+
+					foreach(NodeVec::value_type& val, entry.second)
+					{
+						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
+					}
+					defUse << "\\n";
+				}
+				//Print the uses to a string
+
+				foreach(TableEntry::value_type& entry, useTable[current.getNode()])
+				{
+					defUse << "Use [" << keyToString(entry.first) << "]: ";
+
+					foreach(NodeVec::value_type& val, entry.second)
+					{
+						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
+					}
+					defUse << "\\n";
+				}
+
+				//Copy out the string and trim off the last '\n'
+				string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
+
+
+				//Print this node
+				outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
+						//Now we add the unique name information
+						<< ((name != "") ? "\\n" : "") << name
+						<< ((defUseStr != "") ? "\\n" : "") << defUseStr
+						<< "\", color=\"" << nodeColor << "\", style=\""
+						<< (current.isInteresting() ? "solid" : "dotted") << "\"];\n";
+
+				//Now print the out edges
+				vector<cfgEdge> outEdges = current.outEdges();
+
+				foreach(vector<cfgEdge>::value_type& edge, outEdges)
+				{
+					outFile << edge.source().id() << " -> " << edge.target().id()
+							<< " [label=\"" << escapeString(edge.toString())
+							<< "\"];\n";
+				}
+			}
+
+			visited.push_back(current);
+
+			vector<cfgEdge> outEdges = current.outEdges();
+
+			foreach(vector<cfgEdge>::value_type& edge, outEdges)
+			{
+				//If we haven't seen the target of this node yet, process the node
+				if (count(visited.begin(), visited.end(), edge.target()) == 0)
+				{
+					traverse.push(edge.target());
+					break;
+				}
+			}
+
+			//If there are no new out edges to explore
+			if (traverse.top() == current)
+			{
+				vector<cfgEdge> inEdges = current.inEdges();
+
+				foreach(vector<cfgEdge>::value_type& edge, inEdges)
+				{
+					//If we haven't seen the target of this node yet, process the node
+					if (count(visited.begin(), visited.end(), edge.target()) == 0)
+					{
+						traverse.push(edge.source());
+						break;
+					}
+				}
+			}
+
+			//No out or in edges left to print, pop this node
+			if (traverse.top() == current)
+			{
+				traverse.pop();
+			}
+		}
+	}
+
+	//End the graph
+	outFile << "}\n";
+}
+
 VarUniqueName* StaticSingleAssignment::getUniqueName(SgNode* node)
 {
 	if (!node->attributeExists(StaticSingleAssignment::varKeyTag))
@@ -270,7 +624,7 @@ bool StaticSingleAssignment::isFromLibrary(SgNode* node)
 		return true;
 	string filename = fi->get_filenameString();
 	//cout << "Filename string '" << filename << "' for " << node->class_name() << node << endl;
-	if ((filename.find("include") != std::string::npos))
+	if ((filename.find("include") != string::npos))
 	{
 		//cout << "Found 'include' in string." << endl;
 		return true;
@@ -293,7 +647,7 @@ bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 {
 	VarName::iterator iter;
 	// Search for the first occurance of prefix in name
-	iter = std::search(name.begin(), name.end(), prefix.begin(), prefix.end());
+	iter = search(name.begin(), name.end(), prefix.begin(), prefix.end());
 
 	//If the prefix is at the beginning of the name
 	if (iter == name.begin())
@@ -314,7 +668,6 @@ bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 }
 
 //Function to perform the StaticSingleAssignment and annotate the AST
-
 void StaticSingleAssignment::run()
 {
 	originalDefTable.clear();
@@ -330,72 +683,46 @@ void StaticSingleAssignment::run()
 		cout << "Locating global variables." << endl;
 
 	findGlobalVars();
-
-	if (getDebug())
-		cout << "Performing UniqueNameTraversal..." << endl;
-
-	UniqueNameTraversal uniqueTrav;
-	std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition > (project, V_SgFunctionDefinition);
-	std::vector<SgFunctionDefinition*>::iterator iter = funcs.begin();
-	for (; iter != funcs.end(); ++iter)
-	{
-		SgFunctionDeclaration* func = (*iter)->get_declaration();
-		ROSE_ASSERT(func);
-		if (!isFromLibrary(func))
-		{
-			if (getDebug())
-				cout << "Running UniqueNameTrav on " << func->get_name().getString() << func << endl;
-			uniqueTrav.traverse(func);
-		}
-	}
-
-	if (getDebug())
-		cout << "Finished UniqueNameTrav..." << endl;
-
-	DefsAndUsesTraversal defUseTrav(this);
-	for (iter = funcs.begin(); iter != funcs.end(); ++iter)
-	{
-		SgFunctionDeclaration* func = (*iter)->get_declaration();
-		ROSE_ASSERT(func);
-		if (!isFromLibrary(func))
-		{
-			if (getDebug())
-				cout << "Running defUseTrav on function: " << func->get_name().getString() << func << endl;
-			defUseTrav.traverse(func);
-		}
-	}
-
-	if (getDebug())
-		cout << "Finished DefUseTraversal." << endl;
-
-	if (getDebug())
-		cout << "Inserting global variable definitions." << endl;
-
-	//Insert the global variables as being defined at every function entry and
-	//at every function call
+	//Insert the global variables as being defined at every function call
 	insertGlobalVarDefinitions();
 
-	if (getDebug())
-	{
-		printOriginalDefTable();
-	}
+	UniqueNameTraversal uniqueTrav;
+	DefsAndUsesTraversal defUseTrav(this);
 
-	if (getDebug())
-		cout << "Performing DefUse." << endl;
-
-	for (iter = funcs.begin(); iter != funcs.end(); ++iter)
+	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition > (project, V_SgFunctionDefinition);
+	foreach (SgFunctionDefinition* func, funcs)
 	{
-		SgFunctionDefinition* func = (*iter);
 		ROSE_ASSERT(func);
 		if (!isFromLibrary(func))
 		{
 			if (getDebug())
-				cout << "Running DefUse on function: " << func->get_declaration()->get_name().getString() << func << endl;
+				cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
+
+			uniqueTrav.traverse(func);
+
+			if (getDebug())
+				cout << "Finished UniqueNameTraversal..." << endl;
+
+			if (getDebug())
+				cout << "Running DefsAndUsesTraversal on function: " << SageInterface::get_name(func) << func << endl;
+
+			defUseTrav.traverse(func);
+
+			if (getDebug())
+				cout << "Finished DefsAndUsesTraversal..." << endl;
+
+			//Iterate the global table insert a def for each name at the function definition
+			foreach(VarName globalVar, globalVarList)
+			{
+				//Add this function definition as a definition point of this variable
+				originalDefTable[func][globalVar].push_back(func);
+			}
+
+			if (getDebug())
+				cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
 			runDefUse(func);
 		}
 	}
-
-	return;
 }
 
 void StaticSingleAssignment::findGlobalVars()
@@ -435,394 +762,21 @@ void StaticSingleAssignment::insertGlobalVarDefinitions()
 	if (getDebug())
 		cout << "Global Var List size: " << globalVarList.size() << endl;
 
-	//Iterate the function definitions and insert definitions for all global variables
-	std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition > (project, V_SgFunctionDefinition);
-
-	foreach(std::vector<SgFunctionDefinition*>::value_type& iter, funcs)
-	{
-		SgFunctionDefinition* func = iter;
-		ROSE_ASSERT(func);
-
-		//Iterate the global table insert a def for each name at the function definition
-
-		foreach(GlobalTable::value_type& entry, globalVarList)
-		{
-			//Add this function definition as a definition point of this variable
-			originalDefTable[func][entry].push_back(func);
-		}
-	}
-
-
 	//Iterate the function calls and insert definitions for all global variables
-	std::vector<SgFunctionCallExp*> calls = SageInterface::querySubTree<SgFunctionCallExp > (project, V_SgFunctionCallExp);
+	vector<SgFunctionCallExp*> calls = SageInterface::querySubTree<SgFunctionCallExp > (project, V_SgFunctionCallExp);
 
-	foreach(std::vector<SgFunctionCallExp*>::value_type& iter, calls)
+	foreach(vector<SgFunctionCallExp*>::value_type& iter, calls)
 	{
 		SgFunctionCallExp* call = iter;
 		ROSE_ASSERT(call);
 
 		//Iterate the global table insert a def for each name at the function call
-
 		foreach(GlobalTable::value_type& entry, globalVarList)
 		{
 			//Add this function call as a definition point of this variable
 			originalDefTable[call][entry].push_back(call);
 		}
 	}
-}
-
-void StaticSingleAssignment::toDOT(const std::string fileName)
-{
-	ROSE_ASSERT(fileName != "");
-
-	typedef std::vector<SgSourceFile*> fileVec;
-	fileVec files = SageInterface::querySubTree<SgSourceFile > (project, V_SgSourceFile);
-
-	//print all the functions in each file
-
-	foreach(fileVec::value_type& file, files)
-	{
-		ofstream outFile((StringUtility::stripPathFromFileName(file->getFileName())
-				+ "_" + fileName).c_str());
-
-		if (!outFile.good())
-		{
-			if (getDebug())
-				cout << "Error printing DOT." << endl;
-
-			return;
-		}
-
-		//Print the CFG of the function
-		printToDOT(file, outFile);
-	}
-}
-
-void StaticSingleAssignment::toFilteredDOT(const std::string fileName)
-{
-	ROSE_ASSERT(fileName != "");
-
-	typedef std::vector<SgSourceFile*> fileVec;
-	fileVec files = SageInterface::querySubTree<SgSourceFile > (project, V_SgSourceFile);
-
-	//print all the functions in each file
-
-	foreach(fileVec::value_type& file, files)
-	{
-		ofstream outFile((StringUtility::stripPathFromFileName(file->getFileName())
-				+ "_filtered_" + fileName).c_str());
-
-		if (!outFile.good())
-		{
-			if (getDebug())
-				cout << "Error printing DOT." << endl;
-
-			return;
-		}
-
-		//Print the CFG of the function
-		printToFilteredDOT(file, outFile);
-	}
-}
-
-void StaticSingleAssignment::printToDOT(SgSourceFile* source, std::ofstream &outFile)
-{
-	if (!outFile.good())
-	{
-		if (getDebug())
-			cout << "Error: Bad ofstream in printToDOT()" << endl;
-		return;
-	}
-
-	typedef CFGNode cfgNode;
-	typedef CFGEdge cfgEdge;
-
-	typedef std::vector<SgFunctionDefinition*> funcDefVec;
-	funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
-
-	//Start the graph
-	outFile << "digraph SSAGraph {\n";
-
-	//Iterate all the functions and print them in the same file.
-
-	foreach(funcDefVec::value_type& func, funcs)
-	{
-		vector<cfgNode> visited;
-		stack<cfgNode> traverse;
-		cfgNode current = cfgNode(func->cfgForBeginning());
-
-		traverse.push(current);
-
-		while (!traverse.empty())
-		{
-			current = traverse.top();
-
-			//If not visited
-			if (std::count(visited.begin(), visited.end(), current) == 0)
-			{
-				//Visit the node and print it
-				std::string id = current.id();
-				std::string nodeColor = "black";
-
-				bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
-
-				if (isSgStatement(current.getNode()))
-					nodeColor = "blue";
-				else if (isSgExpression(current.getNode()))
-					nodeColor = "green";
-				else if (isSgInitializedName(current.getNode()))
-					nodeColor = "red";
-
-				std::string name = "";
-				if (uniqueName)
-				{
-					if (getDebug())
-						cout << "Getting Unique Name attribute." << endl;
-					VarUniqueName *attr = getUniqueName(current.getNode());
-					ROSE_ASSERT(attr);
-
-					name = attr->getNameString();
-				}
-
-				//Print the defs to a string
-				std::stringstream defUse;
-
-				foreach(TableEntry::value_type& entry, defTable[current.getNode()])
-				{
-					defUse << "Def [" << keyToString(entry.first) << "]: ";
-
-					foreach(NodeVec::value_type& val, entry.second)
-					{
-						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
-					}
-					defUse << "\\n";
-				}
-				//Print the uses to a string
-
-				foreach(TableEntry::value_type& entry, useTable[current.getNode()])
-				{
-					defUse << "Use [" << keyToString(entry.first) << "]: ";
-
-					foreach(NodeVec::value_type& val, entry.second)
-					{
-						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
-					}
-					defUse << "\\n";
-				}
-
-				//Copy out the string and trim off the last '\n'
-				std::string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
-
-
-				//Print this node
-				outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
-						//Now we add the unique name information
-						<< ((name != "") ? "\\n" : "") << name
-						<< ((defUseStr != "") ? "\\n" : "") << defUseStr
-						<< "\", color=\"" << nodeColor << "\", style=\""
-						<< (current.isInteresting() ? "solid" : "dotted") << "\"];\n";
-
-				//Now print the out edges
-				std::vector<cfgEdge> outEdges = current.outEdges();
-
-				foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
-				{
-					outFile << edge.source().id() << " -> " << edge.target().id()
-							<< " [label=\"" << escapeString(edge.toString())
-							<< "\"];\n";
-				}
-			}
-
-			visited.push_back(current);
-
-			std::vector<cfgEdge> outEdges = current.outEdges();
-
-			foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
-			{
-				//If we haven't seen the target of this node yet, process the node
-				if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
-				{
-					traverse.push(edge.target());
-					break;
-				}
-			}
-
-			//If there are no new out edges to explore
-			if (traverse.top() == current)
-			{
-				std::vector<cfgEdge> inEdges = current.inEdges();
-
-				foreach(std::vector<cfgEdge>::value_type& edge, inEdges)
-				{
-					//If we haven't seen the target of this node yet, process the node
-					if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
-					{
-						traverse.push(edge.source());
-						break;
-					}
-				}
-			}
-
-			//No out or in edges left to print, pop this node
-			if (traverse.top() == current)
-			{
-				traverse.pop();
-			}
-		}
-	}
-
-	//End the graph
-	outFile << "}\n";
-}
-
-void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, std::ofstream& outFile)
-{
-	if (!outFile.good())
-	{
-		if (getDebug())
-			cout << "Error: Bad ofstream in printToDOT()" << endl;
-		return;
-	}
-
-	typedef FilteredCFGNode<IsDefUseFilter> cfgNode;
-	typedef FilteredCFGEdge<IsDefUseFilter> cfgEdge;
-
-	typedef std::vector<SgFunctionDefinition*> funcDefVec;
-	funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
-
-	//Start the graph
-	outFile << "digraph SSAGraph {\n";
-
-	//Iterate all the functions and print them in the same file.
-
-	foreach(funcDefVec::value_type& func, funcs)
-	{
-		vector<cfgNode> visited;
-		stack<cfgNode> traverse;
-		cfgNode current = cfgNode(func->cfgForBeginning());
-
-		traverse.push(current);
-
-		while (!traverse.empty())
-		{
-			current = traverse.top();
-
-			//If not visited
-			if (std::count(visited.begin(), visited.end(), current) == 0)
-			{
-				//Visit the node and print it
-				std::string id = current.id();
-				std::string nodeColor = "black";
-
-				bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
-
-				if (isSgStatement(current.getNode()))
-					nodeColor = "blue";
-				else if (isSgExpression(current.getNode()))
-					nodeColor = "green";
-				else if (isSgInitializedName(current.getNode()))
-					nodeColor = "red";
-
-				std::string name = "";
-				if (uniqueName)
-				{
-					if (getDebug())
-						cout << "Getting Unique Name attribute." << endl;
-					VarUniqueName *attr = getUniqueName(current.getNode());
-					ROSE_ASSERT(attr);
-
-					name = attr->getNameString();
-				}
-
-				//Print the defs to a string
-				std::stringstream defUse;
-
-				foreach(TableEntry::value_type& entry, defTable[current.getNode()])
-				{
-					defUse << "Def [" << keyToString(entry.first) << "]: ";
-
-					foreach(NodeVec::value_type& val, entry.second)
-					{
-						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
-					}
-					defUse << "\\n";
-				}
-				//Print the uses to a string
-
-				foreach(TableEntry::value_type& entry, useTable[current.getNode()])
-				{
-					defUse << "Use [" << keyToString(entry.first) << "]: ";
-
-					foreach(NodeVec::value_type& val, entry.second)
-					{
-						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
-					}
-					defUse << "\\n";
-				}
-
-				//Copy out the string and trim off the last '\n'
-				std::string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
-
-
-				//Print this node
-				outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
-						//Now we add the unique name information
-						<< ((name != "") ? "\\n" : "") << name
-						<< ((defUseStr != "") ? "\\n" : "") << defUseStr
-						<< "\", color=\"" << nodeColor << "\", style=\""
-						<< (current.isInteresting() ? "solid" : "dotted") << "\"];\n";
-
-				//Now print the out edges
-				std::vector<cfgEdge> outEdges = current.outEdges();
-
-				foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
-				{
-					outFile << edge.source().id() << " -> " << edge.target().id()
-							<< " [label=\"" << escapeString(edge.toString())
-							<< "\"];\n";
-				}
-			}
-
-			visited.push_back(current);
-
-			std::vector<cfgEdge> outEdges = current.outEdges();
-
-			foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
-			{
-				//If we haven't seen the target of this node yet, process the node
-				if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
-				{
-					traverse.push(edge.target());
-					break;
-				}
-			}
-
-			//If there are no new out edges to explore
-			if (traverse.top() == current)
-			{
-				std::vector<cfgEdge> inEdges = current.inEdges();
-
-				foreach(std::vector<cfgEdge>::value_type& edge, inEdges)
-				{
-					//If we haven't seen the target of this node yet, process the node
-					if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
-					{
-						traverse.push(edge.source());
-						break;
-					}
-				}
-			}
-
-			//No out or in edges left to print, pop this node
-			if (traverse.top() == current)
-			{
-				traverse.pop();
-			}
-		}
-	}
-
-	//End the graph
-	outFile << "}\n";
 }
 
 void StaticSingleAssignment::runDefUse(SgFunctionDefinition* func)
@@ -875,7 +829,7 @@ void StaticSingleAssignment::runDefUse(SgFunctionDefinition* func)
 				//Get the cfg node for this node
 				cfgNode nextNode = cfgNode(chNode->cfgForBeginning());
 				//Only insert the node in the worklist if it isn't there already.
-				if (std::find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
+				if (find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
 				{
 					worklist.push_back(nextNode);
 					if (getDebug())
@@ -897,7 +851,7 @@ void StaticSingleAssignment::runDefUse(SgFunctionDefinition* func)
 			cfgNode nextNode = edge.target();
 
 			//Only insert the node in the worklist if it isn't there already.
-			if (std::find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
+			if (find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
 			{
 				if (changed)
 				{
@@ -1143,9 +1097,9 @@ void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& 
 
 	foreach(TableEntry::value_type& entry, results)
 	{
-		std::sort(entry.second.begin(), entry.second.end());
+		sort(entry.second.begin(), entry.second.end());
 		//Create new sequence of unique elements and remove duplicate ones
-		entry.second.resize(std::unique(entry.second.begin(), entry.second.end()) - entry.second.begin());
+		entry.second.resize(unique(entry.second.begin(), entry.second.end()) - entry.second.begin());
 	}
 
 	/*
@@ -1577,7 +1531,7 @@ StaticSingleAssignment::NodeVec StaticSingleAssignment::getAllUsesForDef(const V
 		if (entry.second.count(var) != 0)
 		{
 			//See if the use vector contains the defining node we want
-			if (std::find(entry.second[var].begin(), entry.second[var].end(), defNode) != entry.second[var].end())
+			if (find(entry.second[var].begin(), entry.second[var].end(), defNode) != entry.second[var].end())
 			{
 				//Add the current node to list of those using the variable
 				res.push_back(entry.first);

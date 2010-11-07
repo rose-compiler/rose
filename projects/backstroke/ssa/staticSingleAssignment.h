@@ -350,9 +350,6 @@ private:
 	void aggregatePreviousDefs(cfgNode curNode, TableEntry& results);
 
 	/** Inserts definition points for all global variables.
-	 *
-	 * This will insert definitions for all global variables at 2 places.
-	 * 1. At the entry points of all functionDefinitions.
 	 * 2. At every function call expression.
 	 */
 	void insertGlobalVarDefinitions();
