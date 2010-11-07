@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
 	//Backstroke::FullCFG cfg(proc);
 	Backstroke::FilteredCFG cfg(proc);
 
-	Backstroke::FilteredCFG rvsCfg = cfg;//.makeReverseCopy();
+	Backstroke::FilteredCFG rvsCfg = cfg.makeReverseCopy();
 	rvsCfg.toDot("temp.dot");
 
 	cout << "CFG is built." << endl;

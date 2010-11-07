@@ -10,8 +10,7 @@
 #include <boost/graph/dominator_tree.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/tuple/tuple.hpp>
-#include <boost/graph/graph_utility.hpp>
-#include <boost/graph/copy.hpp>
+#include <boost/graph/transpose_graph.hpp>
 
 #define foreach BOOST_FOREACH
 
@@ -144,6 +143,32 @@ protected:
 	{
 		writeCFGEdge(out, (*this)[edge]);
 	}
+
+	//! This class is used to copy vertices when calling copy_graph().
+	struct VertexCopier
+	{
+		VertexCopier(const CFG<CFGType>& g1, CFG<CFGType>& g2)
+		: cfg1(g1), cfg2(g2) {}
+
+		void operator()(const Vertex& v1, Vertex& v2) const
+		{ cfg2[v2] = cfg1[v1]; }
+		
+		const CFG<CFGType>& cfg1;
+		CFG<CFGType>& cfg2;
+	};
+
+	//! This class is used to copy edges when calling copy_graph().
+	struct EdgeCopier
+	{
+		EdgeCopier(const CFG<CFGType>& g1, CFG<CFGType>& g2)
+		: cfg1(g1), cfg2(g2) {}
+
+		void operator()(const Edge& e1, Edge& e2) const
+		{ cfg2[e2] = cfg1[e1]; }
+
+		const CFG<CFGType>& cfg1;
+		CFG<CFGType>& cfg2;
+	};
 };
 
 //! A full CFG without any filtered nodes.
@@ -277,9 +302,11 @@ typename CFG<CFGType>::VertexToVertexMap CFG<CFGType>::buildPostdominatorTree() 
 template <class CFGType>
 CFG<CFGType> CFG<CFGType>::makeReverseCopy()
 {
-#if 0
+#if 1
 	CFG<CFGType> reverseCFG;
-	boost::transpose_graph(*this, reverseCFG);
+	boost::transpose_graph(*this, reverseCFG, 
+		boost::vertex_copy(VertexCopier(*this, reverseCFG)).
+		edge_copy(EdgeCopier(*this, reverseCFG)));
 	reverseCFG.entry_ = this->exit_;
 	reverseCFG.exit_ = this->entry_;
 	return reverseCFG;
@@ -301,7 +328,7 @@ CFG<CFGType> CFG<CFGType>::makeReverseCopy()
 		boost::remove_edge(e, *this);
 	std::swap(entry_, exit_);
 #endif
-	CFG<CFGType> reverseCFG;
+	//CFG<CFGType> reverseCFG;
 	//boost::copy_graph(*this, reverseCFG);
 
 #if 0
