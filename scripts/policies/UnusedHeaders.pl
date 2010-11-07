@@ -60,7 +60,7 @@ while (my $file = $files->next_file) {
 
 # Report failures
 my @remaining = map {@$_} values %index;
-$warning = "" if @remaining > 347; # as of 2010-11-06 there are 347 violations; do not allow more!
+$warning = "" if @remaining > 281; # as of 2010-11-06 there are 281 violations; do not allow more!
 print $desc if @remaining;
 print "  $_$warning\n" for sort @remaining;
 
