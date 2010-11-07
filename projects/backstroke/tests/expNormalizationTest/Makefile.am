@@ -710,10 +710,9 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
-$(TEST_Objects):expNormTest 
-	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./expNormTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
-
+#$(TEST_Objects):expNormTest 
+#	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
+#	./expNormTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
 	@echo TESTING HERE IS TEMPORARILY DISABLED. RE-ENABLE!
@@ -726,13 +725,13 @@ check-local:
 clean-local:
 	rm -f *.o *.C
 
-mytest: FORCE
-	@$(MAKE) $(TEST_Objects)
+#mytest: FORCE
+#	@$(MAKE) $(TEST_Objects)
 
-test: FORCE
-	@$(MAKE) $(simple_test)
+#test: FORCE
+#	@$(MAKE) $(simple_test)
 
-debug:
-	libtool gdb --args ./expNormTest test.C
+#debug:
+#	libtool gdb --args ./expNormTest test.C
 
 FORCE:
