@@ -82,7 +82,7 @@ test_inputs: $(TEST_INPUTS)
 # Each target runs "x86sim" on one of the TEST_INPUT files. Exit status determines success or failure.
 TEST_TARGETS = $(addsuffix .passed, $(TEST_INPUTS))
 MOSTLYCLEANFILES += $(TEST_TARGETS) $(patsubst %.passed, %.failed, $(TEST_TARGETS))
-$(TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf
+$(TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 	@$(TH) INPUT=./$< $(srcdir)/x86sim.conf $@
 
 check-local: $(TEST_TARGETS)
