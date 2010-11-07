@@ -3,7 +3,6 @@
 
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
-// Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
 /* Define one CPP symbol to determine whether this simulator can be compiled.  The definition of this one symbol depends on
@@ -4153,7 +4152,7 @@ main(int argc, char *argv[], char *envp[])
 int main(int, char *argv[])
 {
     std::cerr <<argv[0] <<": not supported on this platform" <<std::endl;
-    return 1;
+    return 0;
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */
