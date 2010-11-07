@@ -1,8 +1,12 @@
 #!/usr/bin/perl
 my $desc = <<EOF;
-All header files found in a source tree should be used somewhere in that
-source tree. Unused header files are characteristic of deleted code that
-should be removed.  The following header files exist but are unused:
+All header files found in a source tree should be used somewhere in that source
+tree. Unused header files are characteristic of deleted code that should be
+removed.  This policy only considers #include directives that don't specify a
+directory since all ROSE include directories are specified with the "-I" switch
+of the compiler.  A separate policy checks that header file names are unique so
+that the "-I" switch behaves reasonably.  The following header files exist
+but are unused:
 EOF
 
 BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
@@ -22,6 +26,7 @@ while (my $file = $files->next_file) {
   next unless $file =~ /\.(h|hh|c|C|cpp)$/; # look only at C/C++ source code
   if (open FILE, "<", $file) {
     while (<FILE>) {
+      # Consider only #includes that do NOT have a directory component
       delete $index{lc $1} if /^\s*#\s*include\s*["<]([^\/]*?)[>"]/;
     }
     close FILE;
