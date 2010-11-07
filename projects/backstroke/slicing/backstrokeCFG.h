@@ -10,6 +10,8 @@
 #include <boost/graph/dominator_tree.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/graph/graph_utility.hpp>
+#include <boost/graph/copy.hpp>
 
 #define foreach BOOST_FOREACH
 
@@ -37,6 +39,7 @@ struct FilteredCFGType
 //		CFGNodeType();
 //		std::vector<CFGEdgeType> outEdges() const;
 //		SgNode* getNode() const;
+//		int getIndex() const;
 //		bool isInteresting() const;
 //		std::string toString() const;
 //	};
@@ -113,7 +116,10 @@ public:
 
 	//! Build the postdominator tree of this CFG.
 	VertexToVertexMap buildPostdominatorTree() const;
-	
+
+	//! Build a reverse CFG.
+	CFG<CFGType> makeReverseCopy();
+
 	//! Output the graph to a DOT file.
 	void toDot(const std::string& filename) const;
 
@@ -128,10 +134,16 @@ protected:
 	void setEntryAndExit();
 
 	//! This function helps to write the DOT file for vertices.
-	void writeGraphNode(std::ostream& out, const Vertex& node) const;
+	void writeGraphNode(std::ostream& out, const Vertex& node) const
+	{
+		writeCFGNode(out, (*this)[node]);
+	}
 
 	//! This function helps to write the DOT file for edges.
-	void writeGraphEdge(std::ostream& out, const Edge& edge) const;
+	void writeGraphEdge(std::ostream& out, const Edge& edge) const
+	{
+		writeCFGEdge(out, (*this)[edge]);
+	}
 };
 
 //! A full CFG without any filtered nodes.
@@ -214,10 +226,10 @@ void CFG<CFGType>::buildCFG(
         from = iter->second;
 
     std::vector<CFGEdge> outEdges = node.outEdges();
-    foreach (const CFGEdge& edge, outEdges)
+    foreach (const CFGEdge& cfgEdge, outEdges)
     {
         // For each out edge, add the target node.
-        CFGNode tar = edge.target();
+        CFGNode tar = cfgEdge.target();
 		ROSE_ASSERT(tar.getNode());
 
         boost::tie(iter, inserted) = nodesAdded.insert(make_pair(tar, Vertex()));
@@ -232,7 +244,8 @@ void CFG<CFGType>::buildCFG(
             to = iter->second;
 
         // Add the edge.
-        (*this)[add_edge(from, to, *this).first] = edge;
+		Edge edge = add_edge(from, to, *this).first;
+        (*this)[edge] = cfgEdge;
 
         // Build the CFG recursively.
         buildCFG(tar, nodesAdded, nodesProcessed);
@@ -262,17 +275,58 @@ typename CFG<CFGType>::VertexToVertexMap CFG<CFGType>::buildPostdominatorTree() 
 }
 
 template <class CFGType>
-void CFG<CFGType>::writeGraphNode(std::ostream& out, const Vertex& node) const
+CFG<CFGType> CFG<CFGType>::makeReverseCopy()
 {
-	writeCFGNode(out, (*this)[node]);
-}
+#if 0
+	CFG<CFGType> reverseCFG;
+	boost::transpose_graph(*this, reverseCFG);
+	reverseCFG.entry_ = this->exit_;
+	reverseCFG.exit_ = this->entry_;
+	return reverseCFG;
+#endif
 
-template <class CFGType>
-void CFG<CFGType>::writeGraphEdge(std::ostream& out, const Edge& edge) const
-{
-	writeCFGEdge(out, (*this)[edge]);
-}
+#if 0
+	typename boost::graph_traits<CFG<CFGType> >::edge_iterator i, j;
+	std::vector<Edge> allEdges;
+	for (tie(i, j) = edges(*this); i != j; ++i)
+	{
+		Vertex src, tar;
+		tie(src, tar) = boost::incident(*i, *this);
+		//*i = Edge(tar, src);
+		boost::add_edge(tar, src, *this);
+		allEdges.push_back(*i);
+		//boost::remove_edge(*i, *this);
+	}
+	foreach (const Edge& e, allEdges)
+		boost::remove_edge(e, *this);
+	std::swap(entry_, exit_);
+#endif
+	CFG<CFGType> reverseCFG;
+	//boost::copy_graph(*this, reverseCFG);
 
+#if 0
+	typename boost::graph_traits<CFG<CFGType> >::vertex_iterator u, v;
+	for (tie(u, v) = vertices(*this); u != v; ++u)
+	{
+		boost::add_vertex(*u, reverseCFG);
+		reverseCFG[*u] = (*this)[*u];
+	}
+
+	typename boost::graph_traits<CFG<CFGType> >::edge_iterator i, j;
+	for (tie(i, j) = edges(*this); i != j; ++i)
+	{
+		Vertex src, tar;
+		tie(src, tar) = boost::incident(*i, *this);
+		boost::add_edge(tar, src, reverseCFG);
+		reverseCFG[*i] = (*this)[*i];
+	}
+
+	reverseCFG.entry_ = this->exit_;
+	reverseCFG.exit_ = this->entry_;
+
+#endif
+	return reverseCFG;
+}
 
 //! This function helps to write the DOT file for vertices.
 template <class CFGNodeType>
