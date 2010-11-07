@@ -4152,7 +4152,7 @@ main(int argc, char *argv[], char *envp[])
 int main(int, char *argv[])
 {
     std::cerr <<argv[0] <<": not supported on this platform" <<std::endl;
-    return 1;
+    return 0;
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */
