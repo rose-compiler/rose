@@ -26,8 +26,33 @@ while (my $file = $files->next_file) {
   next unless $file =~ /\.(h|hh|c|C|cpp)$/; # look only at C/C++ source code
   if (open FILE, "<", $file) {
     while (<FILE>) {
-      # Consider only #includes that do NOT have a directory component
-      delete $index{lc $1} if /^\s*#\s*include\s*["<]([^\/]*?)[>"]/;
+      if (my($path,$name) = /^\s*#\s*include\s*["<](.*?)([^\/]*?)[>"]/) {
+	next unless exists $index{lc $name};
+
+	if ($path eq "") {
+	  delete $index{lc $name}; # just an optimized version of what would happen for the else case.
+	} else {
+	  # Remove header files from the index if the header file base name matches (which it will since
+	  # that's how the index is organized) and any directories specified in the #include directive
+	  # also match.
+	  my @non_matching_headers;
+	  my @include_parts = reverse split "/", lc($path.$name);
+	  for my $header (@{$index{lc $name}}) {
+	    my @header_parts = reverse split "/", lc $header;
+	    my $does_match = 1;
+	    for (my $i=0; $does_match && $i<@include_parts && $i<@header_parts; $i++) {
+	      $does_match = $include_parts[$i] eq $header_parts[$i];
+	    }
+	    push @non_matching_headers, $header unless $does_match;
+	    #printf STDERR "%-32s %2s %-32s\n", $path.$name, ($does_match?"==":"!="), $header;
+	  }
+	  if (@non_matching_headers) {
+	    $index{lc $name} = \@non_matching_headers;
+	  } else {
+	    delete $index{lc $1};
+	  }
+	}
+      }
     }
     close FILE;
   }
@@ -35,7 +60,7 @@ while (my $file = $files->next_file) {
 
 # Report failures
 my @remaining = map {@$_} values %index;
-$warning = "" if @remaining > 346; # as of 2010-10-18 there are 346 violations; do not allow more!
+$warning = "" if @remaining > 345; # as of 2010-11-06 there are 345 violations; do not allow more!
 print $desc if @remaining;
 print "  $_$warning\n" for sort @remaining;
 
