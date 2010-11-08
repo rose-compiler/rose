@@ -2,8 +2,5 @@
 
 #include <boost/foreach.hpp>
 
-using namespace boost;
-using namespace std;
-
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH

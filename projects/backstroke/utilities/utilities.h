@@ -5,7 +5,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <VariableRenaming.h>
 
-namespace backstroke_util
+namespace BackstrokeUtility
 {
 	/** Generate a name that is unique in the current scope and any parent and children scopes.
 	* @param baseName the word to be included in the variable names. */
@@ -126,6 +126,8 @@ namespace backstroke_util
 	a switch statement don't count. */
 	bool hasContinueOrBreak(SgStatement* loop_stmt);
 
+	//! Returns if the first given var is a member of the second one. For example, a.i is a member of a.
+	bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::VarName& var2);
 
 }
 

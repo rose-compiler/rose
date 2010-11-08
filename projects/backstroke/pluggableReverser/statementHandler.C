@@ -1,8 +1,9 @@
 #include "statementHandler.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/lexical_cast.hpp>
-#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/cppDefinesAndNamespaces.h"
 
+using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
@@ -158,7 +159,7 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 					//First, check if we can restore the variable without savings its value.
 					VariableRenaming::VarName var_name;
 					var_name.push_back(init_name);
-					SgExpression* restored_value = restoreVariable(var_name, res.getVarTable(), getLastVersion(init_name));
+					SgExpression* restored_value = restoreVariable(var_name, res.getVarTable(), getFinalVersion(init_name));
 		
 					if (restored_value != NULL)
 					{
@@ -242,7 +243,7 @@ vector<EvaluationResult> CombinatorialBasicBlockHandler::evaluate(SgStatement* s
 }
 
 
-VariableRenaming::NumNodeRenameEntry CombinatorialBasicBlockHandler::getLastVersion(SgInitializedName* init_name)
+VariableRenaming::NumNodeRenameEntry CombinatorialBasicBlockHandler::getFinalVersion(SgInitializedName* init_name)
 {
 	VariableRenaming::VarName var_name;
 	var_name.push_back(init_name);
