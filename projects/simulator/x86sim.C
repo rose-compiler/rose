@@ -8,8 +8,9 @@
 
 /* Define one CPP symbol to determine whether this simulator can be compiled.  The definition of this one symbol depends on
  * all the header file prerequisites. */
-#if defined(HAVE_ASM_LDT_H) && defined(HAVE_ELF_H) && \
-    defined(HAVE_LINUX_TYPES_H) && defined(HAVE_LINUX_DIRENT_H) && defined(HAVE_LINUX_UNISTD_H)
+#if defined(HAVE_ASM_LDT_H) && defined(HAVE_ELF_H) &&                                                                          \
+    defined(HAVE_LINUX_TYPES_H) && defined(HAVE_LINUX_DIRENT_H) && defined(HAVE_LINUX_UNISTD_H) &&                             \
+    defined(HAVE_LINUX_FUTEX_H)
 #  define ROSE_ENABLE_SIMULATOR
 #else
 #  undef ROSE_ENABLE_SIMULATOR
@@ -3508,23 +3509,41 @@ EmulationPolicy::emulate_syscall()
 
         case 240: { /*0xf0, futex*/
             static const Translate opflags[] = {
-#ifdef FUTEX_CMD_MASK
+#ifdef FUTEX_PRIVATE_FLAG
                 TF(FUTEX_PRIVATE_FLAG),
+#endif
+#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAIT)
                 TF2(FUTEX_CMD_MASK, FUTEX_WAIT),
+#endif
+#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAKE)
                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE),
+#endif
+#if defined(FUTEX_CMD_MASK) && defined(FUTEX_FD)
                 TF2(FUTEX_CMD_MASK, FUTEX_FD),
+#endif
+#if defined(FUTEX_CMD_MASK) && defined(FUTEX_REQUEUE)
                 TF2(FUTEX_CMD_MASK, FUTEX_REQUEUE),
+#endif
+#if defined(FUTEX_CMD_MASK) && defined(FUTEX_CMP_REQUEUE)
                 TF2(FUTEX_CMD_MASK, FUTEX_CMP_REQUEUE),
+#endif
+#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAKE_OP)
                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE_OP),
+#endif
+#if defined(FUTEX_CMD_MASK) && defined(FUTEX_LOCK_PI)
                 TF2(FUTEX_CMD_MASK, FUTEX_LOCK_PI),
+#endif
+#if defined(FUTEX_CMD_MASK) && defined(FUTEX_UNLOCK_PI)
                 TF2(FUTEX_CMD_MASK, FUTEX_UNLOCK_PI),
+#endif
+#if defined(FUTEX_CMD_MASK) && defined(FUTEX_TRYLOCK_PI)
                 TF2(FUTEX_CMD_MASK, FUTEX_TRYLOCK_PI),
-#ifdef FUTEX_WAIT_BITSET
+#endif
+#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAIT_BITSET)
                 TF2(FUTEX_CMD_MASK, FUTEX_WAIT_BITSET),
 #endif
-#ifdef FUTEX_WAKE_BITSET
+#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAKE_BITSET)
                 TF2(FUTEX_CMD_MASK, FUTEX_WAKE_BITSET),
-#endif
 #endif
                 T_END };
 
@@ -3534,19 +3553,31 @@ EmulationPolicy::emulate_syscall()
             arg1 &= FUTEX_CMD_MASK;
 #endif
             switch (arg1) {
+#ifdef FUTEX_WAIT
                 case FUTEX_WAIT:
                     syscall_enter("futex", "PfdP--", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
                     break;
+#endif
+#ifdef FUTEX_WAKE
                 case FUTEX_WAKE:
+                    syscall_enter("futex", "Pfd---", 4, print_int_32, opflags);
+                    break;
+#endif
+#ifdef FUTEX_FD
                 case FUTEX_FD:
                     syscall_enter("futex", "Pfd---", 4, print_int_32, opflags);
                     break;
+#endif
+#ifdef FUTEX_REQUEUE
                 case FUTEX_REQUEUE:
                     syscall_enter("futex", "Pfd-P-", 4, print_int_32, opflags, 4, print_int_32);
                     break;
+#endif
+#ifdef FUTEX_CMP_REQUEUE
                 case FUTEX_CMP_REQUEUE:
                     syscall_enter("futex", "Pfd-Pd", 4, print_int_32, opflags, 4, print_int_32);
                     break;
+#endif
                 default:
                     syscall_enter("futex", "PfdPPd", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
                                   4, print_int_32);
