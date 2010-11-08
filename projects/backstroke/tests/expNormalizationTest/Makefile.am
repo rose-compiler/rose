@@ -20,9 +20,6 @@ CLEANFILES =
 
 include_HEADERS =
 
-
-#TEST_Objects=test_norm.C 
-
 TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
@@ -697,9 +694,7 @@ ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
 
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
-simple_test = test_norm.C
-
-$(simple_test):expNormTest FORCE
+simple_test:expNormTest FORCE
 	@cp $(top_srcdir)/projects/backstroke/tests/expNormalizationTest/test_norm.C test_norm.C
 	./expNormTest --edg:no_warnings -c test_norm.C
 
@@ -718,7 +713,7 @@ $(TEST_Objects):expNormTest
 check-local:
 	@echo TESTING HERE IS TEMPORARILY DISABLED. RE-ENABLE!
 	@echo @$(MAKE) $(TEST_Objects)
-	@echo @$(MAKE) $(simple_test)
+	@echo @$(MAKE) simple_test
 	@echo "*********************************************************************************************************"
 	@echo "*** ROSE/projects/backstroke/tests/expNormalizationTest: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
