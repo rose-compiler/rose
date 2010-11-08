@@ -1,44 +1,47 @@
-#include "eventHandler.h"
+#include "eventProcessor.h"
 #include <boost/lexical_cast.hpp>
-#include <utilities/Utilities.h>
+#include <utilities/utilities.h>
 
 #include <VariableRenaming.h>
 
-#include <utilities/CPPDefinesAndNamespaces.h>
+#include <utilities/cppDefinesAndNamespaces.h>
 
 
+using namespace std;
+using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-void EventHandler::addExpressionHandler(ExpressionReversalHandler* exp_handler)
+void EventProcessor::addExpressionHandler(ExpressionReversalHandler* exp_handler)
 {
 	exp_handler->setEventHandler(this);
 	exp_handlers_.push_back(exp_handler);
 }
 
-void EventHandler::addStatementHandler(StatementReversalHandler* stmt_handler)
+void EventProcessor::addStatementHandler(StatementReversalHandler* stmt_handler)
 {
 	stmt_handler->setEventHandler(this);
 	stmt_handlers_.push_back(stmt_handler);
 }
 
-void EventHandler::addVariableValueRestorer(VariableValueRestorer* restorer)
+void EventProcessor::addVariableValueRestorer(VariableValueRestorer* restorer)
 {
 	restorer->setEventHandler(this);
 	variableValueRestorers.push_back(restorer);
 }
 
-FuncDeclPairs EventHandler::processEvent(SgFunctionDeclaration* event)
+FuncDeclPairs EventProcessor::processEvent(SgFunctionDeclaration* event)
 {
 	event_ = event;
-	FuncDeclPairs result = processEvent();
-	event_ = NULL;
-	return result;
+	return processEvent();
 }
 
 
-vector<EvaluationResult> EventHandler::filterResults(const vector<EvaluationResult>& results)
+vector<EvaluationResult> EventProcessor::filterResults(const vector<EvaluationResult>& results)
 {
+	//// Temporarily do not filter results here.
+	//return results;
+	
 	set<size_t> discarded_idx;
 	for (size_t i = 0; i < results.size(); ++i)
 	{
@@ -63,7 +66,7 @@ vector<EvaluationResult> EventHandler::filterResults(const vector<EvaluationResu
 	return new_results;
 }
 
-vector<EvaluationResult> EventHandler::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
+vector<EvaluationResult> EventProcessor::evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
 {
 	vector<EvaluationResult> results;
 
@@ -82,7 +85,7 @@ vector<EvaluationResult> EventHandler::evaluateExpression(SgExpression* exp, con
 	return filterResults(results);
 }
 
-vector<EvaluationResult> EventHandler::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	vector<EvaluationResult> results;
 
@@ -95,7 +98,7 @@ vector<EvaluationResult> EventHandler::evaluateStatement(SgStatement* stmt, cons
 	// after processing statement 3, we can remove t from the variable version table because it's not
 	// useful for our transformation anymore.
 
-	vector<SgExpression*> vars = backstroke_util::getAllVariables(stmt);
+	vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(stmt);
 	vector<SgExpression*> vars_to_remove;
 #if 0
 
@@ -128,7 +131,7 @@ vector<EvaluationResult> EventHandler::evaluateStatement(SgStatement* stmt, cons
 }
 
 
-SgExpression* EventHandler::restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
+SgExpression* EventProcessor::restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 				VariableRenaming::NumNodeRenameEntry definitions)
 {
 	vector<SgExpression*> results;
@@ -178,7 +181,7 @@ SgExpression* EventHandler::restoreVariable(VariableRenaming::VarName variable, 
 	return results.empty() ? NULL : results.front();
 }
 
-SgExpression* EventHandler::getStackVar(SgType* type)
+SgExpression* EventProcessor::getStackVar(SgType* type)
 {
 	string type_name;
 
@@ -202,7 +205,7 @@ SgExpression* EventHandler::getStackVar(SgType* type)
 	return buildVarRefExp(stack_decls_[stack_name]->get_variables()[0]);
 }
 
-bool EventHandler::isStateVariable(SgExpression* exp)
+bool EventProcessor::isStateVariable(SgExpression* exp)
 {
 	VariableRenaming::VarName var_name = VariableRenaming::getVarName(exp);
 	if (var_name.empty())
@@ -210,12 +213,12 @@ bool EventHandler::isStateVariable(SgExpression* exp)
 	return isStateVariable(var_name);
 }
 
-bool EventHandler::isStateVariable(const VariableRenaming::VarName& var)
+bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
 {
 	// Currently we assume all variables except those defined inside the event function
 	// are state varibles.
 	return !SageInterface::isAncestor(
-			backstroke_util::getFunctionBody(event_),
+			BackstrokeUtility::getFunctionBody(event_),
 			var[0]->get_declaration());
 
 #if 0
@@ -230,7 +233,7 @@ bool EventHandler::isStateVariable(const VariableRenaming::VarName& var)
 #endif
 }
 
-std::vector<SgVariableDeclaration*> EventHandler::getAllStackDeclarations() const
+std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() const
 {
 	vector<SgVariableDeclaration*> output;
 	typedef std::pair<std::string, SgVariableDeclaration*> pair_t;
@@ -239,19 +242,19 @@ std::vector<SgVariableDeclaration*> EventHandler::getAllStackDeclarations() cons
 	return output;
 }
 
-SgExpression* EventHandler::pushVal(SgExpression* exp, SgType* type)
+SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* type)
 {
 	return buildFunctionCallExp("push", type, buildExprListExp(
 					getStackVar(type), exp));
 }
 
-SgExpression* EventHandler::popVal(SgType* type)
+SgExpression* EventProcessor::popVal(SgType* type)
 {
 	return buildFunctionCallExp("pop< " + get_type_name(type) + " >", type,
 					buildExprListExp(getStackVar(type)));
 }
 
-bool EventHandler::checkForInitialVersions(const VariableVersionTable& var_table)
+bool EventProcessor::checkForInitialVersions(const VariableVersionTable& var_table)
 {
 	typedef std::map<VariableRenaming::VarName, std::set<int> > TableType;
 
@@ -268,10 +271,13 @@ bool EventHandler::checkForInitialVersions(const VariableVersionTable& var_table
 	return true;
 }
 
-FuncDeclPairs EventHandler::processEvent()
+FuncDeclPairs EventProcessor::processEvent()
 {
 	// Before processing, build a variable version table for the event function.
 	VariableVersionTable var_table(event_, var_renaming_);
+
+	//cout << "VVT:\n";
+	//var_table.print();
 
 	SgBasicBlock* body = isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
 	FuncDeclPairs outputs;
@@ -280,10 +286,10 @@ FuncDeclPairs EventHandler::processEvent()
 	vector<EvaluationResult> results = evaluateStatement(body, var_table);
 
 
-	int ctr = 0;
-	// Sort the generated bodies so that those with the least cost appears first.
+	// Sort the generated bodies so that those with the least cost appear first.
 	sort(results.begin(), results.end());
 
+	int ctr = 0;
 	foreach(EvaluationResult& res, results)
 	{
 		// Here we check the validity for each result above. We have to make sure
@@ -299,10 +305,10 @@ FuncDeclPairs EventHandler::processEvent()
 		StatementReversal stmt = res.generateReverseStatement();
 
 		// Normalize the result.
-		backstroke_util::removeUselessBraces(stmt.fwd_stmt);
-		backstroke_util::removeUselessBraces(stmt.rvs_stmt);
-		backstroke_util::removeUselessParen(stmt.fwd_stmt);
-		backstroke_util::removeUselessParen(stmt.rvs_stmt);
+		BackstrokeUtility::removeUselessBraces(stmt.fwd_stmt);
+		BackstrokeUtility::removeUselessBraces(stmt.rvs_stmt);
+		BackstrokeUtility::removeUselessParen(stmt.fwd_stmt);
+		BackstrokeUtility::removeUselessParen(stmt.rvs_stmt);
 
 		fixVariableReferences(stmt.fwd_stmt);
 		fixVariableReferences(stmt.rvs_stmt);
@@ -338,11 +344,11 @@ FuncDeclPairs EventHandler::processEvent()
 }
 
 
-SgExpression* EventHandler::restoreExpressionValue(SgExpression* expression, const VariableVersionTable& availableVariables)
+SgExpression* EventProcessor::restoreExpressionValue(SgExpression* expression, const VariableVersionTable& availableVariables)
 {
 	ROSE_ASSERT(expression != NULL);
 	//Right now, if the expression has side effects we just assume we can't reevaluate it
-	if (backstroke_util::containsModifyingExpression(expression))
+	if (BackstrokeUtility::containsModifyingExpression(expression))
 	{
 		return NULL;
 	}
@@ -369,7 +375,7 @@ SgExpression* EventHandler::restoreExpressionValue(SgExpression* expression, con
 			SgExpression* restoredOldValue = restoreVariable(nameDefinitionPair.first, availableVariables, originalVarVersion);
 			if (restoredOldValue != NULL)
 			{
-				vector<SgExpression*> restoredVarReferences = backstroke_util::findVarReferences(nameDefinitionPair.first, expressionCopy);
+				vector<SgExpression*> restoredVarReferences = BackstrokeUtility::findVarReferences(nameDefinitionPair.first, expressionCopy);
 
 				foreach (SgExpression* restoredVarReference, restoredVarReferences)
 				{

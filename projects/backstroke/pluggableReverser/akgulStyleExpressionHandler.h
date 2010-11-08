@@ -6,7 +6,7 @@
 #include "VariableRenaming.h"
 #include <map>
 #include <set>
-#include <pluggableReverser/eventHandler.h>
+#include <pluggableReverser/eventProcessor.h>
 
 class AkgulStyleExpressionHandler : public ExpressionReversalHandler
 {
