@@ -556,7 +556,7 @@ DisassemblerX86::init(size_t wordsize)
 {
     switch (wordsize) {
         case 2: insnSize = x86_insnsize_16; set_registers(RegisterDictionary::dictionary_i286());  break;
-        case 4: insnSize = x86_insnsize_32; set_registers(RegisterDictionary::dictionary_i386());  break;
+        case 4: insnSize = x86_insnsize_32; set_registers(RegisterDictionary::dictionary_pentium4());  break;
         case 8: insnSize = x86_insnsize_64; set_registers(RegisterDictionary::dictionary_amd64()); break;
         default: ROSE_ASSERT(!"unknown x86 instruction size");
     }

@@ -1,5 +1,5 @@
 #include "restrictedLanguage/LanguageRestrictions.h"
-#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/cppDefinesAndNamespaces.h"
 
 #include "rose.h"
 #include <vector>

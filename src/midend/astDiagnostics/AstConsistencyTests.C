@@ -1111,6 +1111,15 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        {
                          ROSE_ASSERT(initializedName->get_scope() != NULL);
                        }
+
+                 // Cong (10/20/2010): Here we test if the parent of this initialized name does have it as
+                 // an argument. This is to detect if several function parameter lists own the same 
+                 // initialized name.
+
+                    const SgInitializedNamePtrList& initNameList = parentParameterList->get_args();
+                    SgInitializedNamePtrList::const_iterator result = 
+                        std::find(initNameList.begin(), initNameList.end(), initializedName);
+                    ROSE_ASSERT(result != initNameList.end());
                   }
                  else
                   {
@@ -2145,7 +2154,6 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
        // DQ (9/6/2005): Ignoring this case!
           case V_SgFunctionParameterList:
              {
-            // ignoring this case
                break;
              }           
 
@@ -5044,5 +5052,4 @@ MemoryCheckingTraversalForAstFileIO::visit ( SgNode* node )
      ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
      node->checkDataMemberPointersIfInMemoryPool();
    }
-
 

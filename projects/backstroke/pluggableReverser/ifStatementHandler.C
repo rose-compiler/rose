@@ -2,8 +2,10 @@
 #include "pluggableReverser/variableVersionTable.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
-#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/cppDefinesAndNamespaces.h"
 
+using namespace std;
+using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
 

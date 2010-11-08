@@ -348,6 +348,9 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_71.f90 \
      test2010_72.f90 \
      test2010_73.f90 \
+     test2010_78.f90 \
+     test2010_79.f90 \
+     test2010_80.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -594,6 +597,19 @@ testMPItypes:
 	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_types.f03
 	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_interfaces_test.f03
 
+# DQ (11/5/2010): This bug causes the unparsed second file to include a Fortran "include" statement (magically).
+# Note that the compilation will generate an error not caught by make since the use of "cat" will succeed.
+riceBug1: $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90
+	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90 || cat $(srcdir)/test2010_79.f90 rose_test2010_79.f90
+
+# DQ (11/5/2010): When unparsed, this file is missing the statement "i1 = 1" in the generated code.
+riceBug2:$(srcdir)/test2010_78.f90 $(srcdir)/test2010_80.f90
+	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90
+	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_80.f90
+	@echo "Source code to test2010_80.f90"
+	@cat $(srcdir)/test2010_80.f90
+	@echo "Generated code for rose_test2010_80.f90 (missing \"i1 = 1\""
+	@cat rose_test2010_80.f90
 
 tests:
 	@$(MAKE) $(PASSING_TEST_Objects)

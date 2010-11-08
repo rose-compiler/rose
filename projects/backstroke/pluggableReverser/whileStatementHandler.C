@@ -1,7 +1,7 @@
 #include "whileStatementHandler.h"
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <utilities/Utilities.h>
+#include <utilities/utilities.h>
 
 using namespace std;
 using namespace boost;
@@ -13,7 +13,7 @@ SgStatement* WhileStatementHandler::assembleLoopCounter(SgStatement* loop_stmt)
 {
 	static int counter = 0;
 	string counter_name = "loop_counter_" + lexical_cast<string > (counter++);
-	backstroke_util::validateName(counter_name, loop_stmt);
+	BackstrokeUtility::validateName(counter_name, loop_stmt);
 
 	SgVariableDeclaration* counter_decl = buildVariableDeclaration(
 			counter_name,
@@ -71,7 +71,7 @@ SgStatement* WhileStatementHandler::buildForLoop(SgStatement* loop_body)
 	// build a simple for loop like: for (int i = N; i > 0; --i)
 
 	string counter_name = "i";
-	backstroke_util::validateName(counter_name, loop_body);
+	BackstrokeUtility::validateName(counter_name, loop_body);
 
 	SgType* counter_type = buildIntType();
 	SgStatement* init = buildVariableDeclaration(
@@ -109,7 +109,7 @@ vector<EvaluationResult> WhileStatementHandler::evaluate(SgStatement* stmt, cons
     SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
 	
 	// If this while statement has any break or continue inside, we cannot handle it.
-    if (while_stmt == NULL || backstroke_util::hasContinueOrBreak(while_stmt))
+    if (while_stmt == NULL || BackstrokeUtility::hasContinueOrBreak(while_stmt))
         return results;
 
 	SgBasicBlock* body = isSgBasicBlock(while_stmt->get_body());
