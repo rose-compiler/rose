@@ -1,5 +1,6 @@
 #include <rose.h>
 #include "backstrokeCFG.h"
+#include "backstrokeCDG.h"
 #include <boost/foreach.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
@@ -60,7 +61,7 @@ void buildTree(const std::map<VertexT, ContainerT>& vertexMap, const CFGType& cf
 {
 #ifdef BACKSTROKE_DEBUG
 
-	typedef adjacency_list<vecS, vecS, directedS, typename CFGType::CFGNode> Tree;
+	typedef adjacency_list<vecS, vecS, directedS, typename CFGType::CFGNodeType> Tree;
 	//typedef typename boost::graph_traits<Tree>::vertex_descriptor VertexT;
     Tree tree;
 
@@ -139,8 +140,8 @@ void buildDominatorTree(const CFGType& cfg, bool postDom = false)
 	cout << "Draw the graph." << endl;
 	buildTree(iDom, cfg, "dominatorTree.dot");
 
-	cout << "Draw the graph." << endl;
-	buildDominanceFrontiers(iDom, cfg);
+	//cout << "Draw the graph." << endl;
+	//buildDominanceFrontiers(iDom, cfg);
     // Start to build the dominator tree.
     //NodeSgNodeMap node_to_sgnode = get(vertex_name, dominatorTree_);
 }
@@ -251,13 +252,21 @@ int main(int argc, char *argv[])
 
 	//Backstroke::FullCFG cfg(proc);
 	Backstroke::FilteredCFG cfg(proc);
-
 	Backstroke::FilteredCFG rvsCfg = cfg.makeReverseCopy();
-	rvsCfg.toDot("temp.dot");
+	rvsCfg.toDot("CFG.dot");
+	buildDominatorTree(rvsCfg);
 
-	cout << "CFG is built." << endl;
+	Backstroke::CDG<Backstroke::FilteredCFG> cdg(cfg);
+	cdg.toDot("CDG.dot");
 
-    buildDominatorTree(rvsCfg);
+	//Backstroke::FilteredCFG rvsCfg = cfg.makeReverseCopy();
+	//rvsCfg.toDot("temp.dot");
+
+	//cout << "CFG is built." << endl;
+
+    //buildDominatorTree(rvsCfg);
+
+	return 0;
   }
 
   return 0;

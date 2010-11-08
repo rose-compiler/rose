@@ -6,29 +6,17 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/dominator_tree.hpp>
 #include <boost/graph/reverse_graph.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/graph/transpose_graph.hpp>
 
-#define foreach BOOST_FOREACH
 
 namespace Backstroke
 {
 
-
-struct FullCFGType
-{
-	typedef VirtualCFG::CFGNode CFGNodeType;
-	typedef VirtualCFG::CFGEdge CFGEdgeType;
-};
-
-struct FilteredCFGType
-{
-	typedef VirtualCFG::InterestingNode CFGNodeType;
-	typedef VirtualCFG::InterestingEdge CFGEdgeType;
-};
+#define foreach BOOST_FOREACH
 
 /********************************************************************/
 //	The concept required to be fulfilled by CFGNodeType is
@@ -55,19 +43,23 @@ struct FilteredCFGType
 //
 /********************************************************************/
 
+// TODO: We have to check if a CFG contains a cycle withou exit (infinite cycle), in which case
+// we cannot build a CDG for it.
 
-template <class CFGType>
+//! A class holding a Control Flow Graph.
+	
+template <class CFGNodeAndEdgeType>
 class CFG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, 
-		typename CFGType::CFGNodeType, typename CFGType::CFGEdgeType>
+		typename CFGNodeAndEdgeType::CFGNodeType, typename CFGNodeAndEdgeType::CFGEdgeType>
 {
 public:
-	typedef typename CFGType::CFGNodeType CFGNode;
-	typedef typename CFGType::CFGEdgeType CFGEdge;
+	typedef typename CFGNodeAndEdgeType::CFGNodeType CFGNodeType;
+	typedef typename CFGNodeAndEdgeType::CFGEdgeType CFGEdgeType;
 
 	typedef typename boost::graph_traits<CFG>::vertex_descriptor Vertex;
 	typedef typename boost::graph_traits<CFG>::edge_descriptor Edge;
 
-	typedef std::map<Vertex, Vertex> VertexToVertexMap;
+	typedef std::map<Vertex, Vertex> VertexVertexMap;
 
 protected:
 	//! The entry node.
@@ -90,10 +82,6 @@ public:
 	:	entry_(boost::graph_traits<CFG>::null_vertex()),
 		exit_(boost::graph_traits<CFG>::null_vertex())
 	{
-		//node_property_map_ = boost::get(GraphNodeSgNodePropertyT, graph_);
-		//edge_property_map_ = boost::get(CFGEdgeAttribute, graph_);
-		//interesting_edge_property_map_ = boost::get(InterestingEdgeAttribute, graph_);
-
 		build(funcDef);
 	}
 
@@ -111,13 +99,13 @@ public:
 	{ return exit_; }
 
 	//! Build the dominator tree of this CFG.
-	VertexToVertexMap buildDominatorTree() const;
+	VertexVertexMap buildDominatorTree() const;
 
 	//! Build the postdominator tree of this CFG.
-	VertexToVertexMap buildPostdominatorTree() const;
+	VertexVertexMap buildPostdominatorTree() const;
 
 	//! Build a reverse CFG.
-	CFG<CFGType> makeReverseCopy();
+	CFG<CFGNodeAndEdgeType> makeReverseCopy() const;
 
 	//! Output the graph to a DOT file.
 	void toDot(const std::string& filename) const;
@@ -125,9 +113,9 @@ public:
 protected:
 
 	//! A internal funtion which builds the actual CFG (boost::graph).
-	void buildCFG(const CFGNode& node, 
-			std::map<CFGNode, Vertex>& nodesAdded,
-			std::set<CFGNode>& nodesProcessed);
+	void buildCFG(const CFGNodeType& node,
+			std::map<CFGNodeType, Vertex>& nodesAdded,
+			std::set<CFGNodeType>& nodesProcessed);
 
 	//! Find the entry and exit of this CFG and set the corresponding members.
 	void setEntryAndExit();
@@ -147,68 +135,86 @@ protected:
 	//! This class is used to copy vertices when calling copy_graph().
 	struct VertexCopier
 	{
-		VertexCopier(const CFG<CFGType>& g1, CFG<CFGType>& g2)
+		VertexCopier(const CFG<CFGNodeAndEdgeType>& g1, CFG<CFGNodeAndEdgeType>& g2)
 		: cfg1(g1), cfg2(g2) {}
 
 		void operator()(const Vertex& v1, Vertex& v2) const
 		{ cfg2[v2] = cfg1[v1]; }
 		
-		const CFG<CFGType>& cfg1;
-		CFG<CFGType>& cfg2;
+		const CFG<CFGNodeAndEdgeType>& cfg1;
+		CFG<CFGNodeAndEdgeType>& cfg2;
 	};
 
 	//! This class is used to copy edges when calling copy_graph().
 	struct EdgeCopier
 	{
-		EdgeCopier(const CFG<CFGType>& g1, CFG<CFGType>& g2)
+		EdgeCopier(const CFG<CFGNodeAndEdgeType>& g1, CFG<CFGNodeAndEdgeType>& g2)
 		: cfg1(g1), cfg2(g2) {}
 
 		void operator()(const Edge& e1, Edge& e2) const
 		{ cfg2[e2] = cfg1[e1]; }
 
-		const CFG<CFGType>& cfg1;
-		CFG<CFGType>& cfg2;
+		const CFG<CFGNodeAndEdgeType>& cfg1;
+		CFG<CFGNodeAndEdgeType>& cfg2;
 	};
+};
+
+
+struct FullCFGType
+{
+	typedef VirtualCFG::CFGNode CFGNodeType;
+	typedef VirtualCFG::CFGEdge CFGEdgeType;
 };
 
 //! A full CFG without any filtered nodes.
 typedef CFG<FullCFGType> FullCFG;
 
+struct FilteredCFGType
+{
+	typedef VirtualCFG::InterestingNode CFGNodeType;
+	typedef VirtualCFG::InterestingEdge CFGEdgeType;
+};
+
 //! A filtered CFG which only contains interesting nodes and edges.
 typedef CFG<FilteredCFGType> FilteredCFG;
 
 
-template <class CFGType>
-void CFG<CFGType>::toDot(const std::string& filename) const
+template <class CFGNodeAndEdgeType>
+void CFG<CFGNodeAndEdgeType>::toDot(const std::string& filename) const
 {
-    std::ofstream ofile(filename.c_str(), std::ios::out);
-    boost::write_graphviz(ofile, *this,
-			boost::bind(&CFG<CFGType>::writeGraphNode, this, ::_1, ::_2),
-			boost::bind(&CFG<CFGType>::writeGraphEdge, this, ::_1, ::_2));
+	std::ofstream ofile(filename.c_str(), std::ios::out);
+	boost::write_graphviz(ofile, *this,
+			boost::bind(&CFG<CFGNodeAndEdgeType>::writeGraphNode, this, ::_1, ::_2),
+			boost::bind(&CFG<CFGNodeAndEdgeType>::writeGraphEdge, this, ::_1, ::_2));
 }
 
-template <class CFGType>
-void CFG<CFGType>::build(SgFunctionDefinition* funcDef)
+template <class CFGNodeAndEdgeType>
+void CFG<CFGNodeAndEdgeType>::build(SgFunctionDefinition* funcDef)
 {
 	ROSE_ASSERT(funcDef);
 
 	this->clear();
-	std::map<CFGNode, Vertex> nodesAdded;
-	std::set<CFGNode> nodesProcessed;
+
+	// The following two variables are used to record the nodes traversed.
+	std::map<CFGNodeType, Vertex> nodesAdded;
+	std::set<CFGNodeType> nodesProcessed;
+	
 	buildCFG(funcDef->cfgForBeginning(), nodesAdded, nodesProcessed);
+
+	// Find the entry and exit of this CFG.
 	setEntryAndExit();
 
 	ROSE_ASSERT(isSgFunctionDefinition((*this)[entry_].getNode()));
 	ROSE_ASSERT(isSgFunctionDefinition((*this)[exit_].getNode()));
 }
 
-template <class CFGType>
-void CFG<CFGType>::setEntryAndExit()
+template <class CFGNodeAndEdgeType>
+void CFG<CFGNodeAndEdgeType>::setEntryAndExit()
 {
-	typename boost::graph_traits<CFG<CFGType> >::vertex_iterator i, j;
+	typename boost::graph_traits<CFG<CFGNodeAndEdgeType> >::vertex_iterator i, j;
 	for (tie(i, j) = boost::vertices(*this); i != j; ++i)
 	{
-		CFGNode node = (*this)[*i];
+		CFGNodeType node = (*this)[*i];
 		if (isSgFunctionDefinition(node.getNode()))
 		{
 			if (node.getIndex() == 0)
@@ -219,139 +225,99 @@ void CFG<CFGType>::setEntryAndExit()
 	}
 }
 
-template <class CFGType>
-void CFG<CFGType>::buildCFG(
-		const CFGNode& node,
-		std::map<CFGNode, Vertex>& nodesAdded,
-		std::set<CFGNode>& nodesProcessed)
+template <class CFGNodeAndEdgeType>
+void CFG<CFGNodeAndEdgeType>::buildCFG(
+		const CFGNodeType& node,
+		std::map<CFGNodeType, Vertex>& nodesAdded,
+		std::set<CFGNodeType>& nodesProcessed)
 {
-    ROSE_ASSERT(node.getNode());
+	ROSE_ASSERT(node.getNode());
 
-    if (nodesProcessed.count(node) > 0)
-        return;
+	if (nodesProcessed.count(node) > 0)
+		return;
 	nodesProcessed.insert(node);
 
-    typename std::map<CFGNode, Vertex>::iterator iter;
-    bool inserted;
-    Vertex from, to;
+	typename std::map<CFGNodeType, Vertex>::iterator iter;
+	bool inserted;
+	Vertex from, to;
 
-    // Add the source node.
-    const CFGNode& src = node;
+	// Add the source node.
+	const CFGNodeType& src = node;
 	ROSE_ASSERT(src.getNode());
 
-    boost::tie(iter, inserted) = nodesAdded.insert(make_pair(src, Vertex()));
+	boost::tie(iter, inserted) = nodesAdded.insert(make_pair(src, Vertex()));
 
-    if (inserted)
-    {
-        from = add_vertex(*this);
-        (*this)[from] = src;
-        iter->second = from;
-    }
-    else
-        from = iter->second;
+	if (inserted)
+	{
+		from = add_vertex(*this);
+		(*this)[from] = src;
+		iter->second = from;
+	}
+		else
+			from = iter->second;
 
-    std::vector<CFGEdge> outEdges = node.outEdges();
-    foreach (const CFGEdge& cfgEdge, outEdges)
-    {
-        // For each out edge, add the target node.
-        CFGNode tar = cfgEdge.target();
+	std::vector<CFGEdgeType> outEdges = node.outEdges();
+
+	foreach(const CFGEdgeType& cfgEdge, outEdges)
+	{
+		// For each out edge, add the target node.
+		CFGNodeType tar = cfgEdge.target();
 		ROSE_ASSERT(tar.getNode());
 
-        boost::tie(iter, inserted) = nodesAdded.insert(make_pair(tar, Vertex()));
+		boost::tie(iter, inserted) = nodesAdded.insert(make_pair(tar, Vertex()));
 
-        if (inserted)
-        {
-            to = add_vertex(*this);
-            (*this)[to] = tar;
-            iter->second = to;
-        }
-        else
-            to = iter->second;
+		if (inserted)
+		{
+			to = add_vertex(*this);
+			(*this)[to] = tar;
+			iter->second = to;
+		}
+		else
+			to = iter->second;
 
-        // Add the edge.
+		// Add the edge.
 		Edge edge = add_edge(from, to, *this).first;
-        (*this)[edge] = cfgEdge;
+		(*this)[edge] = cfgEdge;
 
-        // Build the CFG recursively.
-        buildCFG(tar, nodesAdded, nodesProcessed);
-    }
+		// Build the CFG recursively.
+		buildCFG(tar, nodesAdded, nodesProcessed);
+	}
 }
 
-template <class CFGType>
-typename CFG<CFGType>::VertexToVertexMap CFG<CFGType>::buildDominatorTree() const
+template <class CFGNodeAndEdgeType>
+typename CFG<CFGNodeAndEdgeType>::VertexVertexMap CFG<CFGNodeAndEdgeType>::buildDominatorTree() const
 {
-	VertexToVertexMap immediateDominators;
-	boost::associative_property_map<VertexToVertexMap> domTreePredMap(immediateDominators);
+	VertexVertexMap immediateDominators;
+	boost::associative_property_map<VertexVertexMap> domTreePredMap(immediateDominators);
 
 	// Here we use the algorithm in boost::graph to build an map from each node to its immediate dominator.
 	boost::lengauer_tarjan_dominator_tree(*this, entry_, domTreePredMap);
 	return immediateDominators;
 }
 
-template <class CFGType>
-typename CFG<CFGType>::VertexToVertexMap CFG<CFGType>::buildPostdominatorTree() const
+template <class CFGNodeAndEdgeType>
+typename CFG<CFGNodeAndEdgeType>::VertexVertexMap CFG<CFGNodeAndEdgeType>::buildPostdominatorTree() const
 {
-	VertexToVertexMap immediatePostdominators;
-	boost::associative_property_map<VertexToVertexMap> postdomTreePredMap(immediatePostdominators);
+	VertexVertexMap immediatePostdominators;
+	boost::associative_property_map<VertexVertexMap> postdomTreePredMap(immediatePostdominators);
 
 	// Here we use the algorithm in boost::graph to build an map from each node to its immediate dominator.
 	boost::lengauer_tarjan_dominator_tree(boost::make_reverse_graph(*this), exit_, postdomTreePredMap);
 	return immediatePostdominators;
 }
 
-template <class CFGType>
-CFG<CFGType> CFG<CFGType>::makeReverseCopy()
+template <class CFGNodeAndEdgeType>
+CFG<CFGNodeAndEdgeType> CFG<CFGNodeAndEdgeType>::makeReverseCopy() const
 {
-#if 1
-	CFG<CFGType> reverseCFG;
+	CFG<CFGNodeAndEdgeType> reverseCFG;
+	// The following function makes a reverse CFG copy.
 	boost::transpose_graph(*this, reverseCFG, 
 		boost::vertex_copy(VertexCopier(*this, reverseCFG)).
 		edge_copy(EdgeCopier(*this, reverseCFG)));
+
+	// Swap entry and exit.
 	reverseCFG.entry_ = this->exit_;
 	reverseCFG.exit_ = this->entry_;
-	return reverseCFG;
-#endif
-
-#if 0
-	typename boost::graph_traits<CFG<CFGType> >::edge_iterator i, j;
-	std::vector<Edge> allEdges;
-	for (tie(i, j) = edges(*this); i != j; ++i)
-	{
-		Vertex src, tar;
-		tie(src, tar) = boost::incident(*i, *this);
-		//*i = Edge(tar, src);
-		boost::add_edge(tar, src, *this);
-		allEdges.push_back(*i);
-		//boost::remove_edge(*i, *this);
-	}
-	foreach (const Edge& e, allEdges)
-		boost::remove_edge(e, *this);
-	std::swap(entry_, exit_);
-#endif
-	//CFG<CFGType> reverseCFG;
-	//boost::copy_graph(*this, reverseCFG);
-
-#if 0
-	typename boost::graph_traits<CFG<CFGType> >::vertex_iterator u, v;
-	for (tie(u, v) = vertices(*this); u != v; ++u)
-	{
-		boost::add_vertex(*u, reverseCFG);
-		reverseCFG[*u] = (*this)[*u];
-	}
-
-	typename boost::graph_traits<CFG<CFGType> >::edge_iterator i, j;
-	for (tie(i, j) = edges(*this); i != j; ++i)
-	{
-		Vertex src, tar;
-		tie(src, tar) = boost::incident(*i, *this);
-		boost::add_edge(tar, src, reverseCFG);
-		reverseCFG[*i] = (*this)[*i];
-	}
-
-	reverseCFG.entry_ = this->exit_;
-	reverseCFG.exit_ = this->entry_;
-
-#endif
 	return reverseCFG;
 }
 
@@ -382,10 +348,10 @@ void writeCFGEdge(std::ostream& out, const CFGEdgeType& e)
 		"\", style=\"" << "solid" << "\"]";
 }
 
+#undef foreach
+
 } // End of namespace Backstroke
 
-
-#undef foreach
 
 #endif	/* BACKSTROKE_CFG_H */
 

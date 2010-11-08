@@ -10,7 +10,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS = slicing
 
 slicing_SOURCES = dominatorAndPostDominatorTree.C
-slicing_include_HEADERS = backstrokeCFG.h
+slicing_include_HEADERS = backstrokeCFG.h backstrokeCDG.h
 slicing_includedir = $(includedir)/backstroke
 
 
