@@ -350,7 +350,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
         }
    }
 
-
+//! Use parent as the previous node to attach preprocessing info since a current node is not unparsed.
 void
 AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* currentLocNodePtr )
    {
@@ -861,7 +861,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                   // save the previous node (in an accumulator attribute), but handle some nodes differently
                   // to avoid having comments attached to them since they are not unparsed directly.
                   // printf ("currentLocNodePtr = %p = %s \n",currentLocNodePtr,currentLocNodePtr->class_name().c_str());
-                     setupPointerToPreviousNode(currentLocNodePtr);
+                    setupPointerToPreviousNode(currentLocNodePtr);
                    }
 #if 0
              // Debugging output
@@ -1332,6 +1332,13 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     // DQ (4/21/2005): this can be the last statement and if it is we have to 
                     // record it as such so that directives/comments can be attached after it.
                     case V_SgTemplateInstantiationDirectiveStatement:
+//                    case V_SgFunctionParameterList:
+                    case V_SgFunctionDeclaration:   // Liao 11/8/2010, this is necessary since SgInitializedName might be a previous located node.
+                                  //  we don't want to attach anything after an ending initialized name,
+                                  //  So we give a chance to the init name's ancestor a chance. 
+                                 // For preprocessing info appearing after a last init name, we attach it inside the ancestor.
+                    case V_SgMemberFunctionDeclaration:
+                    case V_SgTemplateInstantiationFunctionDecl:
                           {
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
                          // previousLocNodePtr = locatedNode;
@@ -1346,7 +1353,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #endif
                           }
                   }
-             }
+             } // if compiler generated or match current file
 
 #if 0
           if (locatedNode != NULL)
@@ -1355,7 +1362,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                printOutComments(locatedNode);
              }
 #endif
-        }
+        } // end if (locatedNode) || (fileNode != NULL)
 
      return returnSynthesizeAttribute;
    }
