@@ -358,7 +358,7 @@ echo "**************************************************************************
 # Known unresolved issues:
 #  - RTED test failures due to obsolete STL headers used in test suite
 #  - Unparser generates (C++ and Fortran) code that is incompatible with these compilers
-if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
+#if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
 
    start_time_make_check_seconds="$(date +%s)"
 
@@ -463,7 +463,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_minutes min $elapsed_make_distcheck_time_seconds sec"
    echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_seconds sec"
    echo "***********************************************************************************************************************"
-fi
+#fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 # echo "Disk usage report #5 (to support debugging when Hudson has a problem):"
@@ -471,7 +471,7 @@ fi
 
 # DQ (12/16/2009): This appears to work everywhere byt on the 4.3.2 systems, verify this.
 # Finally run the "make docs" test (on just the 4.2.4 version of gcc).
-if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
+#if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
    echo "Starting make docs step (exit normally even if it fails so that we can debug the docs rule)"
  # Exit normally even if it fails so that we can debug the docs rule.
  # make -j${NUM_PROCESS:-$def_num_procs} docs || exit 0
@@ -504,7 +504,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
  # echo "Elapsed time for make docs test: $elapsed_make_docs_time_minutes min $elapsed_make_docs_time_seconds sec"
    echo "Elapsed time for make docs test: $elapsed_make_docs_time_seconds sec"
    echo "********************************************************************************************************"
-fi
+#fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 # echo "Disk usage report #6 (to support debugging when Hudson has a problem):"
