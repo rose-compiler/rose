@@ -14,9 +14,10 @@ private:
 	std::vector<SgNode*> refs;
 
 public:
+
 	/** Create the attribute with no refs.
 	 */
-	VariableReferenceSet():refs(){}
+	VariableReferenceSet() : refs() { }
 
 	/** Create the attribute with thisNode.
 	 *
@@ -51,13 +52,19 @@ public:
 	 *
 	 * @return A constant reference to the ref list.
 	 */
-	const std::vector<SgNode*>& getRefs() { return refs; }
+	const std::vector<SgNode*>& getRefs()
+	{
+		return refs;
+	}
 
 	/** Set the references for this node and below.
-	*
-	* @param newRefs A constant reference to the refs to copy to this node.
-	*/
-	void setRefs(const std::vector<SgNode*>& newRefs) { refs.assign(newRefs.begin(), newRefs.end()); }
+	 *
+	 * @param newRefs A constant reference to the refs to copy to this node.
+	 */
+	void setRefs(const std::vector<SgNode*>& newRefs)
+	{
+		refs.assign(newRefs.begin(), newRefs.end());
+	}
 };
 
 /** Class to traverse the AST and assign unique names to every varRef. */

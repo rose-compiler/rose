@@ -107,7 +107,6 @@ SgFunctionDeclaration* normalizeEvent(const SgFunctionDeclaration* func_decl)
 	replaceStatement(def_normalized->get_body(),
 			isSgBasicBlock(copyStatement(func_decl->get_definition()->get_body())));
 	ROSE_ASSERT(def_normalized->get_body());
-	SgVarRefExp* var;
 
 	//FIXME This part should be refined later!!!
 

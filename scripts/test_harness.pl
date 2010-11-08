@@ -240,7 +240,6 @@ Licensed under Revised BSD License (see COPYRIGHT file at top of ROSE source cod
 
 =cut
 
-use Time::HiRes 'usleep';
 use strict;
 
 my $usage = <<EOF;
@@ -308,19 +307,21 @@ while (@ARGV) {
     next;
   }
   unless ($target) {
-    $target = $variables{TARGET} = $_;
+    $target = $_;
     next;
   }
   die $usage;
 }
 die $usage if @ARGV || !$config_file;
-my %config = load_config $config_file, %variables;
 if ($target =~ /(.+)\.\w+$/) {
   ($target, $target_pass, $target_fail) = ($1, $target, "$1.failed");
 } else {
   ($target) = $target || ($config_file =~ /([^\/]+?)(.\w+)?$/);
   ($target_pass,$target_fail) = ("$target.passed","$target.failed");
 }
+$variables{TARGET} = $target;
+my %config = load_config $config_file, %variables;
+
 
 # Print output to indicate test is starting. Do nothing if the test
 # is disabled.
@@ -395,7 +396,7 @@ if ($config{may_fail} eq 'yes') {
 
   # Obtain the lock if necessary.
   if ($lock) {
-    my($prelock,$ntries) = ("$lock.$$", 60);
+    my($prelock,$ntries) = ("$lock.$$", 120);
     open LOCK, ">", $prelock or die "$0: $prelock: $!\n";
     print LOCK "$$\n"; # only for debugging
     close LOCK;
@@ -404,7 +405,7 @@ if ($config{may_fail} eq 'yes') {
 	unlink $prelock;
 	die "$0: cannot obtain lock: $lock\n";
       }
-      usleep 500000;
+      select(undef, undef, undef, 0.25); # NMI machines don't have Time::HiRes
     }
     unlink $prelock;
   }

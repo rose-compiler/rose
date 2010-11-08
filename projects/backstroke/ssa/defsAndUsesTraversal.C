@@ -7,8 +7,7 @@ using namespace ssa_private;
 
 #define foreach BOOST_FOREACH
 
-
-VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
+ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
 {
 	if (StaticSingleAssignment::getDebug())
 	{
@@ -32,9 +31,9 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 		}
 
 		//An SgInitializedName should count as a def, since it is the initial definition.
-		return VarDefUseSynthAttr(name, NULL);
+		return ChildDefsAndUses(name, NULL);
 	}
-	//Catch all variable references
+		//Catch all variable references
 	else if (isSgVarRefExp(node))
 	{
 		SgVarRefExp* varRef = isSgVarRefExp(node);
@@ -53,9 +52,9 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 		}
 
 		//A VarRef is always a use, it only becomes defined by the parent assignment.
-		return VarDefUseSynthAttr(NULL, varRef);
+		return ChildDefsAndUses(NULL, varRef);
 	}
-	//Catch all types of Binary Operations
+		//Catch all types of Binary Operations
 	else if (isSgBinaryOp(node))
 	{
 		SgBinaryOp* op = isSgBinaryOp(node);
@@ -68,7 +67,7 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 			std::vector<SgNode*> uses;
 			switch (type)
 			{
-				//All the following ops both use and define the lhs
+					//All the following ops both use and define the lhs
 				case V_SgAndAssignOp:
 				case V_SgDivAssignOp:
 				case V_SgIorAssignOp:
@@ -85,8 +84,8 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 					uses.insert(uses.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
 					uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
 				}
-				//The assign op defines, but does not use the LHS. Notice that the other assignments also fall through,
-				//as they also define the LHS
+					//The assign op defines, but does not use the LHS. Notice that the other assignments also fall through,
+					//as they also define the LHS
 				case V_SgAssignOp:
 				{
 					//We want to set all the right-most varRef from LHS as being defined
@@ -116,9 +115,9 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 					addUsesToNode(op, uses);
 
 					//Cut off the uses here. We will only pass up the defs.
-					return VarDefUseSynthAttr(def, NULL);
+					return ChildDefsAndUses(def, NULL);
 				}
-				//Otherwise cover all the non-defining Ops
+					//Otherwise cover all the non-defining Ops
 				default:
 				{
 					//We want to set all the varRefs as being used here
@@ -132,7 +131,7 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 					addUsesToNode(op, uses);
 
 					//Return all the uses.
-					return VarDefUseSynthAttr(NULL, uses);
+					return ChildDefsAndUses(NULL, uses);
 				}
 			}
 		}
@@ -143,7 +142,7 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 		}
 
 	}
-	//Catch all unary operations here.
+		//Catch all unary operations here.
 	else if (isSgUnaryOp(node))
 	{
 		SgUnaryOp* op = isSgUnaryOp(node);
@@ -187,12 +186,12 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 		addUsesToNode(op, uses);
 
 		//Return the combined defs and uses.
-		return VarDefUseSynthAttr(defs, uses);
+		return ChildDefsAndUses(defs, uses);
 	}
 	else if (isSgStatement(node))
 	{
 		//Don't propogate uses and defs up to the statement level
-		return VarDefUseSynthAttr();
+		return ChildDefsAndUses();
 	}
 
 	//For the default case, we merge the defs and uses of every attribute and pass them upwards
@@ -217,13 +216,13 @@ VarDefUseSynthAttr VarDefUseTraversal::evaluateSynthesizedAttribute(SgNode* node
 	//Set all the uses as being used here.
 	addUsesToNode(node, uses);
 
-	return VarDefUseSynthAttr(defs, uses);
+	return ChildDefsAndUses(defs, uses);
 }
 
 /** Mark all the uses as occurring at the specified node. */
-void VarDefUseTraversal::addUsesToNode(SgNode* node, std::vector<SgNode*> uses)
+void DefsAndUsesTraversal::addUsesToNode(SgNode* node, std::vector<SgNode*> uses)
 {
-	//Set all the uses as being used here.
+
 	foreach(SgNode* useNode, uses)
 	{
 		//Get the unique name of the def.
