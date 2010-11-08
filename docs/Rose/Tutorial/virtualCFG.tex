@@ -355,46 +355,9 @@ static control flow graphs.
 \end{figure}
 
 The example input code is given in
-Fig.~\ref{Tutorial:exampleInputCode_staticCFG}. Debug and interesting static CFG 
-are shown in Fig.~\ref{tutorial:exampleOutputCodeDebugPDFForStaticCFG} and
-Fig.~\ref{tutorial:exampleOutputCodeInterestingPDFForStaticCFG}, respectively.
-
-%---------------------------------------------------------------------------
-\begin{figure}[!h]
-{\indent
-  {\mySmallFontSize
-
-
-    \begin{latexonly}
-    \lstinputlisting{\TutorialExampleDirectory/inputCode_ControlFlowGraphAnalysis.C}
-    \end{latexonly}
-
-    \begin{htmlonly}
-    \verbatiminput{\TutorialExampleDirectory/inputCode_ControlFlowGraphAnalysis.C}
-    \end{htmlonly}
-
-    % end of scope in font size
-  }
-  % End of scope in indentation
-}
-\label{Tutorial:exampleInputCode_staticCFG}
-\caption{Example source code used as input to build static control flow graphs.}
-\end{figure}
-
-%---------------------------------------------------------------------------
-\begin{figure}
-\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_debug.pdf}
-\caption{The debug static control flow graph showing all static CFG nodes
-and edges}
-\label{tutorial:exampleOutputCodeDebugPDFForStaticCFG}
-\end{figure}
-
-
-\begin{figure}
-\includegraphics[height=0.9\textheight]{\TutorialExampleBuildDirectory/vcfg_interesting.pdf}
-\caption{The static control flow graph showing only interesting static CFG nodes and edges}
-\label{tutorial:exampleOutputCodeInterestingPDFForStaticCFG}
-\end{figure}
+Fig.~\ref{Tutorial:exampleInputCode_virtualCFG}. Debug and interesting static CFG 
+are shown in Fig.~\ref{tutorial:exampleOutputCodeDebugPDF} and
+Fig.~\ref{tutorial:exampleOutputCodeInterestingPDF}, respectively.
 
 \section{Static, Interprocedural CFGs}
 
