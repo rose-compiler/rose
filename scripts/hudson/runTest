@@ -467,7 +467,7 @@ if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" -o \( "x$ROSE_TEST_BUILD_STYLE
  # echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_minutes min $elapsed_make_distcheck_time_seconds sec"
    echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_seconds sec"
    echo "***********************************************************************************************************************"
-#fi
+fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 # echo "Disk usage report #5 (to support debugging when Hudson has a problem):"
@@ -511,7 +511,7 @@ if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" -o \( "x$ROSE_TEST_BUILD_STYLE
  # echo "Elapsed time for make docs test: $elapsed_make_docs_time_minutes min $elapsed_make_docs_time_seconds sec"
    echo "Elapsed time for make docs test: $elapsed_make_docs_time_seconds sec"
    echo "********************************************************************************************************"
-#fi
+fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 # echo "Disk usage report #6 (to support debugging when Hudson has a problem):"
