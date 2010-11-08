@@ -2952,8 +2952,8 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                              printf ("Exiting in processing a library archive file. \n");
                                           // ROSE_ASSERT(false);
 #endif
-                                           }
 #endif /* _MSC_VER */
+                                           }
 #if 0
                                         printf ("Processed as a binary file! \n");
 #endif

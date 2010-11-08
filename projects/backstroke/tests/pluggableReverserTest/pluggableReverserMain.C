@@ -9,6 +9,10 @@
 
 #include "utilities/cppDefinesAndNamespaces.h"
 
+//The files are included from the generated code. We do this so they are used by some source file
+#if 0
+#include "test/rctypes.h"
+#endif
 
 using namespace std;
 using namespace boost;
