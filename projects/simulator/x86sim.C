@@ -2794,36 +2794,34 @@ EmulationPolicy::emulate_syscall()
         }
 
     case 140: { /* 0x8c, llseek */
-        /*
-           int _llseek(unsigned int fd, unsigned long offset_high,            unsigned
-           long offset_low, loff_t *result,            unsigned int whence);
-
-
-        */
-
+        /* From the linux kernel, arguments are:
+         *      unsigned int fd,                // file descriptor
+         *      unsigned long offset_high,      // high 32 bits of 64-bit offset
+         *      unsigned long offset_low,       // low 32 bits of 64-bit offset
+         *      loff_t __user *result,          // 64-bit user area to write resulting position
+         *      unsigned int origin             // whence specified offset is measured
+         */
         syscall_enter("llseek","dddpd");
-        uint32_t fd = arg(0);
+        uint32_t fd          = arg(0);
         uint32_t offset_high = arg(1);
         uint32_t offset_low  = arg(2);
+        uint32_t result_va   = arg(3);
+        uint32_t whence      = arg(4);
 
-        long long whence      = arg(4);
+        ROSE_ASSERT(sizeof(loff_t)==8);
+        static loff_t llseek_result2;
+        ROSE_ASSERT((uint64_t)&llseek_result2 < (1ull<<32)); /* address must be 32 bits */
+        int result = syscall(140, fd, offset_high, offset_low, (uint32_t)&llseek_result2, whence );
 
-        loff_t llseek_result2; 
-        int result = syscall(140, fd, offset_high, offset_low, llseek_result2, whence );
+        size_t nwritten = map->write(&llseek_result2, result_va, sizeof llseek_result2);
+        ROSE_ASSERT(nwritten==sizeof llseek_result2);
 
-        //FIXME: Is this the correct way of changing this pointer?
-        //And is it correct that this is a 'long long*'? That is what it seems like to
-        //me by typedef long long        __kernel_loff_t; typedef __kernel_loff_t loff_t
-        map->write(&llseek_result2, arg(3), 8);
-
-
-        writeGPR(x86_gpr_ax, result);
-
+        writeGPR(x86_gpr_ax, -1==result ? -errno : result);
         syscall_leave("d");
-
         break;
 
     };
+        
 	case 141: {     /*0x8d, getdents*/
 	    /* 
                int getdents(unsigned int fd, struct linux_dirent *dirp,
