@@ -2764,9 +2764,11 @@ HEADER_PE_IMPORT_SECTION_START
 			: SgAsmPESection(fhdr)
 			{ctor();}
 		virtual SgAsmPEImportSection *parse();
+		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		void add_import_directory(SgAsmPEImportDirectory*);
+		void remove_import_directory(SgAsmPEImportDirectory*);
 		static bool import_mesg(const char *fmt, ...);
 	private:
 		void ctor();

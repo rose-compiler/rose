@@ -3,13 +3,14 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-/** Constructor. The constructor makes @p section the parent of this new import directory, but does not add this new import
- *  directory to the section yet.  It should be added after we're done parsing it. */
+/** Constructor. The constructor makes @p section the parent of this new import directory, and adds this new import
+ *  directory to the import section. */
 void
 SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, const std::string &dll_name)
 {
-    ROSE_ASSERT(section!=NULL);
-    set_parent(section);
+    ROSE_ASSERT(section!=NULL); /* needed for parsing */
+    section->add_import_directory(this);
+    p_time = time(NULL);
 
     p_dll_name = new SgAsmBasicString(dll_name);
 }
@@ -20,7 +21,7 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, const std::string &d
 SgAsmPEImportDirectory *
 SgAsmPEImportDirectory::parse(rose_addr_t va)
 {
-    SgAsmPEImportSection *section = isSgAsmPEImportSection(get_parent());
+    SgAsmPEImportSection *section = SageInterface::getEnclosingNode<SgAsmPEImportSection>(this);
     ROSE_ASSERT(section!=NULL);
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(section->get_header());
     ROSE_ASSERT(fhdr!=NULL);

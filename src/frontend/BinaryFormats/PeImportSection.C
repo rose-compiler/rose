@@ -83,10 +83,11 @@ SgAsmPEImportSection::parse()
         /* Import directory entry */
         SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(this);
         if (NULL==idir->parse(idir_va)) {
+            /* We've reached the zero entry. Remove this directory from the section and delete it. */
+            remove_import_directory(idir);
             delete idir;
             break;
         }
-        add_import_directory(idir);
         idir_va += sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);
 
         /* DLL name */
@@ -136,6 +137,45 @@ SgAsmPEImportSection::add_import_directory(SgAsmPEImportDirectory *d)
     dirlist.push_back(d);
     get_import_directories()->set_isModified(true);
     d->set_parent(get_import_directories());
+}
+
+/** Remove an import directory from the import directory list. Does not delete it. */
+void
+SgAsmPEImportSection::remove_import_directory(SgAsmPEImportDirectory *d) 
+{
+    SgAsmPEImportDirectoryPtrList &dirlist = get_import_directories()->get_vector();
+    SgAsmPEImportDirectoryPtrList::iterator found = std::find(dirlist.begin(), dirlist.end(), d);
+    if (found!=dirlist.end()) {
+        dirlist.erase(found);
+        d->set_parent(NULL);
+    }
+}
+
+/** Reallocate space for the import section if necessary. */
+bool
+SgAsmPEImportSection::reallocate()
+{
+    bool reallocated = SgAsmPESection::reallocate();
+    rose_addr_t need = 0;
+
+    /* Space needed for the import directories. The list is terminated with a zero entry. */
+    size_t nimports = get_import_directories()->get_vector().size();
+    need += (1 + nimports) * sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);
+
+    /* Adjust the section size */
+    if (need < get_size()) {
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(need);
+        }
+        set_size(need);
+        reallocated = true;
+    } else if (need > get_size()) {
+        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        reallocated = true;
+    }
+
+    return reallocated;
 }
 
 /* Write the import section back to disk */
