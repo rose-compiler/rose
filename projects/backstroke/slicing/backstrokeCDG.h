@@ -1,0 +1,173 @@
+#ifndef BACKSTROKECDG_H
+#define	BACKSTROKECDG_H
+
+#include "backstrokeCFG.h"
+
+namespace Backstroke
+{
+
+#define foreach BOOST_FOREACH
+
+template <class VertexT, class CFGType>
+std::map<VertexT, std::set<VertexT> >
+buildDominanceFrontiers(const std::map<VertexT, VertexT>& iDom, const CFGType& cfg)
+{
+	typedef typename std::map<VertexT, VertexT>::value_type VV;
+
+	// Find immediate children in the dominator tree for each node.
+	std::map<VertexT, std::set<VertexT> > children;
+	foreach (const VV& vv, iDom)
+		children[vv.second].insert(vv.first);
+
+	VertexT entry = cfg.getEntry();
+	ROSE_ASSERT(children.find(entry) != children.end());
+
+	// Use a stack to make a bottom-up traversal of the dominator tree.
+	std::vector<VertexT> vertices;
+	appendSuccessors(entry, vertices, children);
+
+	buildTree(children, cfg, "immediateChildren.dot");
+
+	std::map<VertexT, std::set<VertexT> > domFrontiers;
+
+	// Start to build the dominance frontiers.
+	while (!vertices.empty())
+	{
+		VertexT v = vertices.back();
+		vertices.pop_back();
+
+		typename boost::graph_traits<CFGType>::adjacency_iterator i, j;
+		for (tie(i, j) = boost::adjacent_vertices(v, cfg); i != j; ++i)
+		{
+			if (iDom.count(*i) == 0) std::cout << cfg[*i].getNode()->class_name() << std::endl;
+			ROSE_ASSERT(iDom.count(*i) > 0);
+
+			if (iDom.find(*i)->second != v)
+				domFrontiers[v].insert(*i);
+		}
+
+		foreach (VertexT child, children[v])
+		{
+			foreach (VertexT u, domFrontiers[child])
+			{
+				ROSE_ASSERT(iDom.count(u) > 0);
+
+				if (iDom.find(u)->second != v)
+					domFrontiers[v].insert(u);
+			}
+		}
+	}
+	// End build.
+
+	//cout << "Build complete!" << endl;
+
+	//buildTree(domFrontiers, cfg, "dominanceFrontiers.dot");
+	return domFrontiers;
+}
+
+template <class CFGType>
+class CDG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
+		typename CFGType::CFGNodeType, bool>
+{
+public:
+	typedef typename CFGType::CFGNodeType CFGNodeType;
+
+	typedef typename boost::graph_traits<CDG>::vertex_descriptor Vertex;
+	typedef typename boost::graph_traits<CDG>::edge_descriptor Edge;
+
+	//! The default constructor.
+	CDG() {}
+
+	CDG(const CFGType& cfg)
+	{
+		buildCDG(cfg);
+	}
+
+	void buildCDG(const CFGType& cfg)
+	{
+		typedef typename CFGType::Vertex CFGVertexT;
+
+		// First, build a reverse CFG.
+		CFGType rvsCfg = cfg.makeReverseCopy();
+		
+		// Build the dominator tree of the reverse CFG.
+		std::map<CFGVertexT, CFGVertexT> iDom = rvsCfg.buildDominatorTree();
+
+		// Build the dominance frontiers of the reverse CFG, which represents the CDG
+		// of the original CFG.
+		std::map<CFGVertexT, std::set<CFGVertexT> > domFrontiers = 
+				buildDominanceFrontiers(iDom, rvsCfg);
+
+		// Start to build the CDG.
+		std::map<CFGVertexT, CFGVertexT> verticesAdded;
+
+		typedef typename std::map<CFGVertexT, std::set<CFGVertexT> >::value_type VVS;
+		foreach (const VVS& vertices, domFrontiers)
+		{
+			CFGVertexT from = vertices.first;
+
+			Vertex src, tar;
+			typename std::map<CFGVertexT, CFGVertexT>::iterator it;
+			bool inserted;
+
+			// Add the first node.
+			tie(it, inserted) = verticesAdded.insert(std::make_pair(from, Vertex()));
+			if (inserted)
+			{
+				src = boost::add_vertex(*this);
+				(*this)[src] = cfg[from];
+				it->second = src;
+			}
+			else
+				src = it->second;
+
+
+			foreach (CFGVertexT to, vertices.second)
+			{
+				// Add the second node.
+				tie(it, inserted) = verticesAdded.insert(std::make_pair(to, Vertex()));
+				if (inserted)
+				{
+					tar = boost::add_vertex(*this);
+					(*this)[tar] = cfg[to];
+					it->second = tar;
+				}
+				else
+					tar = it->second;
+
+				// Add the edge.
+				Edge edge = add_edge(src, tar, *this).first;
+				(*this)[edge] = true;
+			}
+		}
+	}
+
+	//! This function helps to write the DOT file for vertices.
+	void writeGraphNode(std::ostream& out, const Vertex& node) const
+	{
+		writeCFGNode(out, (*this)[node]);
+	}
+
+	//! This function helps to write the DOT file for edges.
+	void writeGraphEdge(std::ostream& out, const Edge& edge) const
+	{
+		out << "[label=\"" << ((*this)[edge] ? "T" : "F") <<
+		"\", style=\"" << "solid" << "\"]";
+	}
+
+	void toDot(const std::string& filename)
+	{
+		std::ofstream ofile(filename.c_str(), std::ios::out);
+		boost::write_graphviz(ofile, *this,
+			boost::bind(&CDG<CFGType>::writeGraphNode, this, ::_1, ::_2),
+			boost::bind(&CDG<CFGType>::writeGraphEdge, this, ::_1, ::_2));
+	}
+
+};
+
+#undef foreach
+
+} // End of namespace Backstroke 
+
+#endif	/* BACKSTROKECDG_H */
+
