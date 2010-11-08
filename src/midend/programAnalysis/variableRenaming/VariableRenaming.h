@@ -442,7 +442,7 @@ public:
      * @param vec varName to get string for.
      * @return String for given varName.
      */
-    static std::string keyToString(VarName vec);
+    static std::string keyToString(const VarName& vec);
     
     void printDefs(SgNode* node);
 

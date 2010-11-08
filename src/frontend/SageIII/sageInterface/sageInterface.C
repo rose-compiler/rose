@@ -6954,6 +6954,8 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
       case V_SgDivAssignOp:
       case V_SgModAssignOp:
       case V_SgXorAssignOp:
+      case V_SgLshiftAssignOp:
+      case V_SgRshiftAssignOp:
       case V_SgAssignOp:
         {
           SgBinaryOp* s2 = isSgBinaryOp(exp);

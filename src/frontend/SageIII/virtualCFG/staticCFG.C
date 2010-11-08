@@ -25,6 +25,8 @@ void CFG::clearNodesAndEdges()
         delete graph_;
     }
     graph_ = NULL;
+    entry_ = NULL;
+    exit_ = NULL;
 }
 
 int CFG::getIndex(SgGraphNode* node)
@@ -34,8 +36,18 @@ int CFG::getIndex(SgGraphNode* node)
     return info->getIndex();
 }
 
+void CFG::cfgToDot(SgNode* node, const std::string& file_name)
+{
+    std::ofstream ofile(file_name.c_str(), std::ios::out);
+    ofile << "digraph defaultName {\n";
+    std::set<SgGraphNode*> explored;
+    processNodes(ofile, cfgForBeginning(node), explored);
+    ofile << "}\n";
+}
+
 void CFG::buildFullCFG()
 {
+    // Before building a new CFG, make sure to clear all nodes built before.
     all_nodes_.clear();
     clearNodesAndEdges();
 
@@ -171,9 +183,19 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
     {
         from = new SgGraphNode;
         from->set_SgNode(n.getNode());
-        from->addNewAttribute("info", new CFGNodeAttribute(n.getIndex(), graph_));
+        unsigned int index = n.getIndex();
+        from->addNewAttribute("info", new CFGNodeAttribute(index, graph_));
         all_nodes[n] = from;
         graph_->addNode(from);
+
+        // Here we check if the new node is the entry or exit.
+        if (isSgFunctionDefinition(n.getNode()))
+        {
+            if (index == 0)
+                entry_ = from;
+            else if (index == 3)
+                exit_ = from;
+        }
     }
 
     std::vector<EdgeT> outEdges = n.outEdges();
@@ -188,9 +210,19 @@ void CFG::buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<N
         {
             to = new SgGraphNode;
             to->set_SgNode(tar.getNode());
-            to->addNewAttribute("info", new CFGNodeAttribute(tar.getIndex(), graph_));
+            unsigned int index = tar.getIndex();
+            to->addNewAttribute("info", new CFGNodeAttribute(index, graph_));
             all_nodes[tar] = to;
             graph_->addNode(to);
+
+            // Here we check if the new node is the entry or exit.
+            if (isSgFunctionDefinition(tar.getNode()))
+            {
+                if (index == 0)
+                    entry_ = to;
+                else if (index == 3)
+                    exit_ = to;
+            }
         }
 
         SgDirectedGraphEdge* new_edge = new SgDirectedGraphEdge(from, to);
