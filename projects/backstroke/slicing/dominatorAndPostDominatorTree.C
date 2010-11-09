@@ -1,6 +1,7 @@
 #include <rose.h>
 #include "backstrokeCFG.h"
 #include "backstrokeCDG.h"
+#include "backstrokeDDG.h"
 #include <boost/foreach.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
@@ -241,10 +242,10 @@ buildDominanceFrontiers(const std::map<VertexT, VertexT>& iDom, const CFGType& c
 int main(int argc, char *argv[])
 {
   // Build the AST used by ROSE
-  SgProject* sageProject = frontend(argc,argv);
+  SgProject* project = frontend(argc,argv);
 
   // Process all function definition bodies for static control flow graph generation
-  Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(sageProject, V_SgFunctionDefinition);
+  Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
   for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i)
   {
     SgFunctionDefinition* proc = isSgFunctionDefinition(*i);
@@ -252,12 +253,19 @@ int main(int argc, char *argv[])
 
 	//Backstroke::FullCFG cfg(proc);
 	Backstroke::FilteredCFG cfg(proc);
-	Backstroke::FilteredCFG rvsCfg = cfg.makeReverseCopy();
+	Backstroke::FilteredCFG rvsCfg = cfg;//.makeReverseCopy();
 	rvsCfg.toDot("CFG.dot");
 	buildDominatorTree(rvsCfg);
 
 	Backstroke::CDG<Backstroke::FilteredCFG> cdg(cfg);
 	cdg.toDot("CDG.dot");
+
+	VariableRenaming varRenaming(project);
+	varRenaming.run();
+	Backstroke::DDG<Backstroke::FilteredCFG> ddg(cfg, varRenaming);
+	ddg.toDot("DDG.dot");
+
+	varRenaming.toFilteredDOT("VariableRenaming.dot");
 
 	//Backstroke::FilteredCFG rvsCfg = cfg.makeReverseCopy();
 	//rvsCfg.toDot("temp.dot");
