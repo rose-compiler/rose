@@ -16,6 +16,11 @@ int main(int argc, char** argv)
 	VariableRenaming varRenaming(project);
 	varRenaming.run();
 
+	if (SgProject::get_verbose() > 0)
+	{
+		printf("\n\n ***** VariableRenaming Complete ***** \n\n");
+	}
+
 	//Run the SSA analysis
 	StaticSingleAssignment ssa(project);
 	ssa.run();

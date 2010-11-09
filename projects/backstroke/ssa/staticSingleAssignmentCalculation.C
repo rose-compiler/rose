@@ -86,7 +86,7 @@ void StaticSingleAssignment::run()
 			if (getDebug())
 				cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
 
-			uniqueTrav.traverse(func);
+			uniqueTrav.traverse(func->get_declaration());
 
 			if (getDebug())
 				cout << "Finished UniqueNameTraversal..." << endl;
@@ -94,7 +94,7 @@ void StaticSingleAssignment::run()
 			if (getDebug())
 				cout << "Running DefsAndUsesTraversal on function: " << SageInterface::get_name(func) << func << endl;
 
-			defUseTrav.traverse(func);
+			defUseTrav.traverse(func->get_declaration());
 
 			if (getDebug())
 				cout << "Finished DefsAndUsesTraversal..." << endl;
@@ -169,6 +169,8 @@ void StaticSingleAssignment::insertGlobalVarDefinitions()
 
 void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 {
+	if (getDebug())
+		printOriginalDefTable();
 	//Keep track of visited nodes
 	boost::unordered_set<SgNode*> visited;
 
@@ -269,7 +271,8 @@ bool StaticSingleAssignment::defUse(cfgNode node, bool *memberRefInserted, NodeV
 
 	//Handle each type of node
 	if (getDebug())
-		cout << "Performing DefUse on " << current->class_name() << ":" << current << endl;
+		cout << "Performing DefUse on " << 
+				current->class_name() << ", line " << current->get_file_info()->get_line() << ":" << current << endl;
 
 	bool defChanged = false;
 	bool defRefInserted = false;
@@ -698,8 +701,9 @@ bool StaticSingleAssignment::insertExpandedDefsForUse(cfgNode curNode, VarName n
 		{
 			//It is declared in class scope.
 			//Get our enclosing function definition to insert the first definition into.
-
-			SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
+			SgFunctionDeclaration* declaration = SageInterface::getEnclosingNode<SgFunctionDeclaration>(node);
+			ROSE_ASSERT(declaration != NULL);
+			SgFunctionDefinition* func = declaration->get_definition();
 			ROSE_ASSERT(func);
 
 			firstDefList[rootName] = func;

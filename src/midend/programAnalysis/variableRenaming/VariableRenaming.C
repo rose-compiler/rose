@@ -1054,7 +1054,7 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 {
 	if (varRename->getDebug())
 	{
-		cout << "---------<" << node->class_name() << node << ">-------" << node << endl;
+		cout << "---------<" << node->class_name() << ", line" << node->get_file_info()->get_line() << ":" << node << ">-------" << node << endl;
 	}
 	//We want to propogate the def/use information up from the varRefs to the higher expressions.
 	if (isSgInitializedName(node))
