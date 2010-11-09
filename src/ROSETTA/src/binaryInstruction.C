@@ -1057,7 +1057,7 @@ Grammar::setUpBinaryInstructions ()
      AsmPERVASizePair.setDataPrototype("rose_addr_t","e_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPERVASizePair.setDataPrototype("SgAsmGenericSection*", "section", "= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
