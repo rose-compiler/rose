@@ -52,6 +52,7 @@ class rose_rva_t {
 		rose_rva_t& set_section(SgAsmGenericSection *section);
 		rose_rva_t& bind(SgAsmGenericHeader*);
 		std::string to_string() const;
+		void increment(rose_addr_t amount);
 	private:
 		rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
 		SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
