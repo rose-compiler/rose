@@ -3247,6 +3247,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
        // expression as well). Note that we still have to deal with where this is a cast 
        // to an un-named type (e.g. un-named enum: test2006_75.C).
           cast_op = isSgCastExp(expressionTree);
+#if 0
        // ROSE_ASSERT(cast_op != NULL);
           //if (cast_op == NULL)
           if (cast_op != NULL) // Liao, 11/2/2010, we should use the original expression tree here!!
@@ -3259,6 +3260,12 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
              }
            else 
              cast_op = isSgCastExp(expr); // restore to the original non-null value otherwise
+#else
+             // Liao, 11/8/2010, we should now always unparse the original expression tree, regardless its Variant_T value
+               unparseExpression(expressionTree,info);
+               return;
+
+#endif             
         }
 
      bool addParens = false;

@@ -41,6 +41,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_04.c \
      test2010_06.c \
      test2010_07.c \
+     test2010_08.c \
      math.c \
      complex_01.c \
      constants.c
@@ -73,7 +74,7 @@ TESTCODE_CURRENTLY_FAILING = \
      test2010_05.c \
      Yarden_client.c
 
-noinst_headers = test2006_134.h
+noinst_headers = test2006_134.h test2010_08.h
 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
