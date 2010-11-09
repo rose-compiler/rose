@@ -5150,7 +5150,7 @@ SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
 #define REMOVE_STATEMENT_DEBUG 0
 
 //! Remove a statement: TODO consider side effects for symbol tables
-void SageInterface::removeStatement(SgStatement* targetStmt)
+void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePreprocessingInfo /*= true*/)
    {
   // This function removes the input statement.
   // If there are comments and/or CPP directives then those comments and/or CPP directives will
@@ -5188,6 +5188,9 @@ void SageInterface::removeStatement(SgStatement* targetStmt)
        // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
        // I think that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
        // if (comments != NULL && isRemovable == true && isSgBasicBlock(targetStmt) == NULL )
+       // Liao 10/28/2010. Sometimes we want remove the statement with all its preprocessing information 
+         if (autoRelocatePreprocessingInfo) 
+         {
           if (comments != NULL && isSgBasicBlock(targetStmt) == NULL )
              {
                vector<int> captureList;
@@ -5195,7 +5198,9 @@ void SageInterface::removeStatement(SgStatement* targetStmt)
                printf ("Found attached comments (removing %p = %s): comments->size() = %zu \n",targetStmt,targetStmt->class_name().c_str(),comments->size());
 #endif
 
-            // Since this statement will be removed we have to relocate all the associated comments and CPP directives.
+             // Liao 10/28/2010. relinking AST statements may be achieved by remove it and attach it to somewhere else.
+             // In this case, preprocessing information sometimes should go with the statements and not be relocated to the original places. 
+            // Dan: Since this statement will be removed we have to relocate all the associated comments and CPP directives.
                int commentIndex = 0;
                AttachedPreprocessingInfoType::iterator i;
                for (i = comments->begin(); i != comments->end(); i++)
@@ -5234,8 +5239,9 @@ void SageInterface::removeStatement(SgStatement* targetStmt)
                          moveCommentsToNewStatement(targetStmt,captureList,surroundingStatement,surroundingStatementPreceedsTargetStatement);
                        }
                   }
-             }
-#endif
+             } // end if (comments)
+        }// end if (autoRelocatePreprocessingInfo)
+#endif  // end #if 1
 
           parentStatement->remove_statement(targetStmt);
         }
@@ -6948,6 +6954,8 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
       case V_SgDivAssignOp:
       case V_SgModAssignOp:
       case V_SgXorAssignOp:
+      case V_SgLshiftAssignOp:
+      case V_SgRshiftAssignOp:
       case V_SgAssignOp:
         {
           SgBinaryOp* s2 = isSgBinaryOp(exp);
