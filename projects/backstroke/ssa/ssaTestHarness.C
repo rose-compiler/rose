@@ -2,6 +2,20 @@
 #include "rose.h"
 #include "VariableRenaming.h"
 
+class ComparisonTraversal : public AstSimpleProcessing
+{
+public:
+	
+	StaticSingleAssignment* ssa;
+	VariableRenaming* varRenaming;
+	
+	virtual void visit(SgNode* node)
+	{
+		ROSE_ASSERT(ssa->getOriginalDefsAtNode(node) == varRenaming->getOriginalDefsAtNode(node));
+		ROSE_ASSERT(ssa->getExpandedDefsAtNode(node) == varRenaming->getExpandedDefsAtNode(node));
+	}
+};
+
 int main(int argc, char** argv)
 {
 	SgProject* project = frontend(argc, argv);
@@ -27,5 +41,11 @@ int main(int argc, char** argv)
 
 	ROSE_ASSERT(ssa.getUseTable() == varRenaming.getUseTable());
 	ROSE_ASSERT(ssa.getPropDefTable() == varRenaming.getPropDefTable());
+
+	ComparisonTraversal t;
+	t.varRenaming = &varRenaming;
+	t.ssa = &ssa;
+	t.traverse(project, preorder);
+
 	return 0;
 }

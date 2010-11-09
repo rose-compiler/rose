@@ -23,7 +23,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 		ROSE_ASSERT(uName);
 
 		//Add this as a def. [node][uniqueName]
-		ssa->getOriginalDefTable()[name].push_back(uName->getKey());
+		ssa->getOriginalDefTable()[name].insert(uName->getKey());
 
 		if (StaticSingleAssignment::getDebug())
 		{
@@ -104,7 +104,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 					ROSE_ASSERT(uName);
 
 					//Add the varRef as a definition at the current node of the ref's uniqueName
-					ssa->getOriginalDefTable()[op].push_back(uName->getKey());
+					ssa->getOriginalDefTable()[op].insert(uName->getKey());
 
 					if (StaticSingleAssignment::getDebug())
 					{
@@ -164,7 +164,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 			ROSE_ASSERT(uName);
 
 			//Add the varRef as a definition at the current node of the ref's uniqueName
-			ssa->getOriginalDefTable()[op].push_back(uName->getKey());
+			ssa->getOriginalDefTable()[op].insert(uName->getKey());
 
 			if (StaticSingleAssignment::getDebug())
 			{
@@ -222,7 +222,6 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 /** Mark all the uses as occurring at the specified node. */
 void DefsAndUsesTraversal::addUsesToNode(SgNode* node, std::vector<SgNode*> uses)
 {
-
 	foreach(SgNode* useNode, uses)
 	{
 		//Get the unique name of the def.

@@ -433,7 +433,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getOriginalDe
 	NumNodeRenameTable res;
 
 	//Iterate every variable definition reaching this node
-	foreach(VarName& definedVar, originalDefTable[node])
+	foreach(const VarName& definedVar, originalDefTable[node])
 	{
 		//Get the rename number for the current variable at the current def site
 		int renameNum = getRenameNumberForNode(definedVar, node);
@@ -483,7 +483,7 @@ StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getOriginalDe
 	NumNodeRenameEntry res;
 
 	//Iterate every variable use at this node
-	foreach(VarName& definedVar, originalDefTable[node])
+	foreach(const VarName& definedVar, originalDefTable[node])
 	{
 		//Check that the current var is the one we want.
 		if (definedVar != var)
@@ -539,34 +539,30 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getExpandedDe
 	NumNodeRenameTable res;
 
 	//Iterate every variable definition expanded on this node
-	foreach(TableEntry::value_type& entry, expandedDefTable[node])
+	foreach(const VarName& definedVar, expandedDefTable[node])
 	{
-		//Iterate every definition site for this variable
-		foreach(NodeVec::value_type& defEntry, entry.second)
-		{
-			//Get the rename number for the current variable at the current def site
-			int renameNum = getRenameNumberForNode(entry.first, defEntry);
+		//Get the rename number for the current variable at the current def site
+		int renameNum = getRenameNumberForNode(definedVar, node);
 
-			//If the name is defined at this node
-			if (renameNum > 0)
+		//If the name is defined at this node
+		if (renameNum > 0)
+		{
+			//If the renumbering is not already in the result
+			if (res[definedVar].count(renameNum) == 0)
 			{
-				//If the renumbering is not already in the result
-				if (res[entry.first].count(renameNum) == 0)
-				{
-					//Add the renumbering to the result
-					res[entry.first][renameNum] = defEntry;
-				}
-				else
-				{
-					cout << "Error: Same def expanded twice on same node." << endl;
-					ROSE_ASSERT(false);
-				}
+				//Add the renumbering to the result
+				res[definedVar][renameNum] = node;
 			}
 			else
 			{
-				cout << "Error: Found expanded def with no entry in rename table." << endl;
+				cout << "Error: Same def expanded twice on same node." << endl;
 				ROSE_ASSERT(false);
 			}
+		}
+		else
+		{
+			cout << "Error: Found expanded def with no entry in rename table." << endl;
+			ROSE_ASSERT(false);
 		}
 	}
 
@@ -580,40 +576,36 @@ StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getExpandedDe
 	NumNodeRenameEntry res;
 
 	//Iterate every variable use at this node
-	foreach(TableEntry::value_type& entry, expandedDefTable[node])
+	foreach(const VarName& definedVar, expandedDefTable[node])
 	{
 		//Check that the current var is the one we want.
-		if (entry.first != var)
+		if (definedVar != var)
 		{
 			continue;
 		}
 
-		//Iterate every definition site for this variable
-		foreach(NodeVec::value_type& defEntry, entry.second)
-		{
-			//Get the rename number for the current variable at the current def site
-			int renameNum = getRenameNumberForNode(entry.first, defEntry);
+		//Get the rename number for the current variable at the current def site
+		int renameNum = getRenameNumberForNode(definedVar, node);
 
-			//If the name is defined at this node
-			if (renameNum > 0)
+		//If the name is defined at this node
+		if (renameNum > 0)
+		{
+			//If the renumbering is not already in the result
+			if (res.count(renameNum) == 0)
 			{
-				//If the renumbering is not already in the result
-				if (res.count(renameNum) == 0)
-				{
-					//Add the renumbering to the result
-					res[renameNum] = defEntry;
-				}
-				else
-				{
-					cout << "Error: Same expanded def twice to same node." << endl;
-					ROSE_ASSERT(false);
-				}
+				//Add the renumbering to the result
+				res[renameNum] = node;
 			}
 			else
 			{
-				cout << "Error: Found expanded def with no entry in rename table." << endl;
+				cout << "Error: Same expanded def twice to same node." << endl;
 				ROSE_ASSERT(false);
 			}
+		}
+		else
+		{
+			cout << "Error: Found expanded def with no entry in rename table." << endl;
+			ROSE_ASSERT(false);
 		}
 	}
 
@@ -1099,7 +1091,7 @@ void StaticSingleAssignment::printOriginalDefs(SgNode* node)
 {
 	cout << "Original Def Table for [" << node->class_name() << ":" << node << "]:" << endl;
 
-	foreach(VarName& definedVar, originalDefTable[node])
+	foreach(const VarName& definedVar, originalDefTable[node])
 	{
 		cout << "  Defs for [" << keyToString(definedVar) << "]:";
 		cout << "    -[" << node->class_name() << ":" << node << "]" << endl;
@@ -1110,7 +1102,7 @@ void StaticSingleAssignment::printOriginalDefTable()
 {
 	cout << "Original Def Table:" << endl;
 
-	pair<SgNode*, std::vector<VarName> > node;
+	pair<SgNode*, std::set<VarName> > node;
 	foreach(node, originalDefTable)
 	{
 		cout << "  Original Def Table for [" << node.first->class_name() << ":" << node.first << "]:" << endl;

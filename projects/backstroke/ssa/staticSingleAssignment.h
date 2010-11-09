@@ -238,12 +238,13 @@ private:
 	 * the VarDefUseTraversal. It is later used to populate the actual def/use table.
 	 * It maps each node to the variable names that are defined inside that node.
 	 */
-	boost::unordered_map<SgNode*, std::vector<VarName> >  originalDefTable;
+	boost::unordered_map<SgNode*, std::set<VarName> >  originalDefTable;
 
 	/** This is the table of definitions that is expanded from the original table.
 	 * It is used to populate the actual def/use table.
+	 * It maps each node to the variable names that are defined inside that node.
 	 */
-	DefUseTable expandedDefTable;
+	boost::unordered_map<SgNode*, std::set<VarName> > expandedDefTable;
 
 	/** This is the table that is populated with all the def information for all the variables
 	 * at all the nodes. It is populated during the runDefUse function, and is done
@@ -501,7 +502,7 @@ public:
 	 *
 	 * @return Definition table.
 	 */
-	boost::unordered_map<SgNode*, std::vector<VarName> >& getOriginalDefTable()
+	boost::unordered_map<SgNode*, std::set<VarName> >& getOriginalDefTable()
 	{
 		return originalDefTable;
 	}
