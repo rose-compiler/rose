@@ -1,8 +1,8 @@
 #include "ExtractFunctionArguments.h"
-#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/cppDefinesAndNamespaces.h"
 #include <sstream>
 #include <stdio.h>
-#include "utilities/Utilities.h"
+#include "utilities/utilities.h"
 
 using namespace std;
 using namespace boost;
@@ -74,7 +74,7 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 
 		//Build a declaration for the temporary variable
 		SgScopeStatement* scope = functionCallInfo.tempVarDeclarationLocation->get_scope();
-		tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> tempVarInfo = backstroke_util::CreateTempVariableForExpression(arg, scope, false);
+		tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> tempVarInfo = BackstrokeUtility::CreateTempVariableForExpression(arg, scope, false);
 		SgVariableDeclaration* tempVarDeclaration = tempVarInfo.get<0>();
 		SgAssignOp* tempVarAssignment = tempVarInfo.get<1>();
 		SgExpression* tempVarReference = tempVarInfo.get<2>();
@@ -103,7 +103,7 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression* argument)
 {
 	//For right now, move everything but a constant value or an explicit variable access
-	if (backstroke_util::IsVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument))
+	if (BackstrokeUtility::IsVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument))
 		return false;
 
 	return true;

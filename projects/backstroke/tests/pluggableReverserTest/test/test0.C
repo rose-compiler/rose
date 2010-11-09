@@ -7,6 +7,11 @@ struct model
     //static int k;
 };
 
+struct A
+{
+    int i;
+};
+
 #if 0
 namespace my
 {
@@ -111,7 +116,6 @@ void event4(model* m)
 }
 #endif
 
-struct A {int i;};
 
 void event5(model* m)
 {
@@ -164,8 +168,22 @@ void event6()
 #endif
                int y = 47;
                y++; 
+               ++x;
 #if NEW_BLOCK
              }
 #endif
         }
+}
+
+void event7(model* m)
+{
+   A a, b;
+   if (1)
+   {
+     a.i = 0;
+     a = b;
+   }
+   //A b = a;
+   //a = b;
+   //a.i = b.i;
 }

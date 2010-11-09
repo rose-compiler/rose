@@ -1,12 +1,6 @@
 #ifndef STATIC_CFG_H 
 #define STATIC_CFG_H 
 
-#if 0
-#include <AstInterface.h>
-#include <GraphDotOutput.h>
-#include <VirtualGraphCreate.h>
-#endif
-//#include <rose.h>
 #include <sage3basic.h>
 #include "AstAttributeMechanism.h"
 #include "virtualCFG.h"
@@ -30,44 +24,67 @@ using VirtualCFG::CFGEdge;
 class CFG
 {
 protected:
+    //! The graph data structure holding the CFG.
     SgIncidenceDirectedGraph* graph_;
+
+    //! A map from CFGNode in virtualCFG to node from staticCFG.
     std::map<CFGNode, SgGraphNode*> all_nodes_;
+
+    //! The start node to begin CFG build.
     SgNode* start_;
+
+    //! The entry node.
+    SgGraphNode* entry_;
+
+    //! The exit node.
+    SgGraphNode* exit_;
+
+    //! A flag shows whether this CFG is filtered or not.
     bool is_filtered_;
 
 public:
-    CFG() : graph_(NULL), start_(NULL) {}
+    CFG() : graph_(NULL), start_(NULL), entry_(NULL), exit_(NULL) {}
 
-    // The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName
+    //! The constructor building the CFG.
+    /*! The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName. */
     CFG(SgNode* node, bool is_filtered = false)
-        : graph_(NULL), start_(node), is_filtered_(is_filtered)
-    {
-        buildCFG();
-    }
-    SgIncidenceDirectedGraph* getGraph() {
-        return graph_;
-    }
+        : graph_(NULL), start_(node), entry_(NULL), exit_(NULL), is_filtered_(is_filtered)
+    { buildCFG(); }
+
+    //! Get the pointer pointing to the graph used by static CFG.
+    SgIncidenceDirectedGraph* getGraph() const
+    { return graph_; }
+
     virtual ~CFG()
     { clearNodesAndEdges(); }
 
-    // Set the start node for graph building. 
-    // The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName
+    //! Set the start node for graph building. 
+    /*! The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName. */
     void setStart(SgNode* node) { start_ = node; }
+
+    //! Get the entry node of the CFG
+    SgGraphNode* getEntry() const
+    { return entry_; }
+
+    //! Get the exit node of the CFG
+    SgGraphNode* getExit() const
+    { return exit_; }
 
     bool isFilteredCFG() const { return is_filtered_; }
     void setFiltered(bool flag) { is_filtered_ = flag; }
 
 
-    // Build CFG according to the 'is_filtered_' flag.
+    //! Build CFG according to the 'is_filtered_' flag.
     virtual void buildCFG()
     {
         if (is_filtered_) buildFilteredCFG();
         else buildFullCFG();
     }
 
-    // Build CFG for debugging.
+    //! Build CFG for debugging.
     virtual void buildFullCFG();
-    // Build filtered CFG which only contains interesting nodes.
+
+    //! Build filtered CFG which only contains interesting nodes.
     virtual void buildFilteredCFG();
     
 
@@ -84,26 +101,21 @@ public:
     SgGraphNode* cfgForBeginning(SgNode* node);
     SgGraphNode* cfgForEnd(SgNode* node);
 
-    // Get the index of a CFG node.
+    //! Get the index of a CFG node.
     int getIndex(SgGraphNode* node);
 
-    // Output the graph to a DOT file.
-    void cfgToDot(SgNode* node, const std::string& file_name)
-    {
-        std::ofstream ofile(file_name.c_str(), std::ios::out);
-        ofile << "digraph defaultName {\n";
-        std::set<SgGraphNode*> explored;
-        processNodes(ofile, cfgForBeginning(node), explored);
-        ofile << "}\n";
-    }
+    //! Output the graph to a DOT file.
+    void cfgToDot(SgNode* node, const std::string& file_name);
 
 protected:
     //void buildCFG(CFGNode n);
     template <class NodeT, class EdgeT>
     void buildCFG(NodeT n, std::map<NodeT, SgGraphNode*>& all_nodes, std::set<NodeT>& explored);
+
+    //! Delete all nodes and edges in the graph and release memories.
     void clearNodesAndEdges();
 
-    // Turn a graph node into a CFGNode which is defined in VirtualCFG namespace.
+    //! Turn a graph node into a CFGNode which is defined in VirtualCFG namespace.
     CFGNode toCFGNode(SgGraphNode* node);
 
     // The following methods are used to build a DOT file.
@@ -114,7 +126,7 @@ protected:
 };
 
 
-// This class is to store index of each node as an attribuite of SgGraphNode.
+//! This class stores index of each node as an attribuite of SgGraphNode.
 class CFGNodeAttribute : public AstAttribute
 {
     int index_;
@@ -125,6 +137,7 @@ public:
         : index_(idx), graph_(graph) {}
 
     int getIndex() const { return index_; }
+
     void setIndex(int idx) { index_ = idx; }
 
     const SgIncidenceDirectedGraph* getGraph() const { return graph_; }
@@ -140,8 +153,10 @@ class CFGEdgeAttribute : public AstAttribute
     EdgeT edge_;
 public:
     CFGEdgeAttribute(const EdgeT& e) : edge_(e) {}
+
     void setEdge(const EdgeT& e)
     { edge_ = e; }
+    
     EdgeT getEdge() const
     { return edge_; }
 };

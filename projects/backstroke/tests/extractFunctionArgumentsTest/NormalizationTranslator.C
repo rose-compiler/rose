@@ -1,7 +1,7 @@
 #include "rose.h"
 #include "normalizations/ExtractFunctionArguments.h"
 #include "restrictedLanguage/LanguageRestrictions.h"
-#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/cppDefinesAndNamespaces.h"
 
 int main(int argc, char** argv)
 {

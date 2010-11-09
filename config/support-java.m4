@@ -114,6 +114,7 @@ if test "x$USE_JAVA" = x1; then
 # This is a hack, but it seems to work to find the JVM library
   if test -x /usr/bin/javaconfig; then # We are on a Mac
     JAVA_JVM_LINK="-framework JavaVM"
+    JAVA_JVM_INCLUDE="-I`/usr/bin/javaconfig Headers`"
   else
     JAVA_JVM_FULL_PATH="`env _JAVA_LAUNCHER_DEBUG=x ${JAVA} 2>/dev/null | grep '^JVM path is' | cut -c 13-`" ; # Sun JVM
     JAVA_JVM_PATH=`dirname "${JAVA_JVM_FULL_PATH}"`
@@ -124,10 +125,8 @@ if test "x$USE_JAVA" = x1; then
       fi
     fi
     JAVA_JVM_LINK="-L${JAVA_JVM_PATH} -ljvm"
+    JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"
   fi
-  
-  JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"
-  
   AC_MSG_RESULT([$JAVA_JVM_INCLUDE and $JAVA_JVM_LINK])
 
 # JAR="${JAVA_PATH}/bin/jar"
@@ -172,6 +171,18 @@ if test "x$USE_JAVA" = x1; then
 # DQ (10/18/2010): Renaming this macro to be uniform in ROSE.
   AC_DEFINE([USE_ROSE_INTERNAL_JAVA_SUPPORT],[],[Controls use of ROSE support for Java.])
 fi
+
+# DQ (11/3/2010): added test for if jni is available by default.  If this passes then 
+# it is because it is in the compiler's include directly and so it is most likely the
+# wrong jni.h (e.g. from GNU's Java, instead of the Java in $JAVA_PATH.  So if this
+# is the case then we want to use the 
+AC_CHECK_HEADERS([jni.h], [have_jni=yes], [have_jni=no])
+if test "x$have_jni" = "xyes"; then
+  AC_MSG_WARN([ROSE has determined that there is a default version of jni.h (likely in the compiler's include directory) this may be the wrong version of jni.h (however, this is not known to be a problem).])
+else
+  AC_MSG_RESULT([ROSE can't find the jni.h in a default directory (this is good since it will be included correctly).])
+fi
+# AC_MSG_ERROR([Exiting as a test after checking for jni.h!])
 
 # DQ (10/18/2010): Renaming this macro to be uniform in ROSE.
 AM_CONDITIONAL(ROSE_USE_INTERNAL_JAVA_SUPPORT_AM_CONDITIONAL, [test "x$USE_JAVA" = x1])
