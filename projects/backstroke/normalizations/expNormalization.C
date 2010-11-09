@@ -17,8 +17,11 @@ using namespace SageInterface;
 using namespace BackstrokeUtility;
 using namespace BackstrokeNormUtility;
 	
-SgFunctionDeclaration* normalizeEvent(const SgFunctionDeclaration* func_decl)
+SgFunctionDeclaration* normalizeEvent(SgFunctionDeclaration* func_decl)
 {
+#if 0
+
+
 #if 0
 	ROSE_ASSERT(func_decl->get_definingDeclaration() == func_decl);
 
@@ -76,6 +79,7 @@ SgFunctionDeclaration* normalizeEvent(const SgFunctionDeclaration* func_decl)
 		para_list->append_arg(buildInitializedName(init_name->get_name(), init_name->get_type()));
 	}
 
+#if 0
 	// For a non-defining declaration, we also build a non-defining normalized declaration.
 	if (func_decl->isForward())
 	{
@@ -86,6 +90,7 @@ SgFunctionDeclaration* normalizeEvent(const SgFunctionDeclaration* func_decl)
 					getScope(func_decl));
 		return decl_normalized;
 	}
+#endif
 
 	ROSE_ASSERT(func_decl->get_definition());
 
@@ -96,7 +101,7 @@ SgFunctionDeclaration* normalizeEvent(const SgFunctionDeclaration* func_decl)
 				getScope(func_decl));
 	SgFunctionDefinition* def_normalized = decl_normalized->get_definition();
 
-#if 0
+#if 1
 	foreach (SgInitializedName* init_name, decl_normalized->get_parameterList()->get_args())
 	{
 		init_name->set_scope(def_normalized);
@@ -148,13 +153,27 @@ SgFunctionDeclaration* normalizeEvent(const SgFunctionDeclaration* func_decl)
 
 	ROSE_ASSERT(decl_normalized->get_symbol_from_symbol_table());
 
+
+	//SgFunctionDefinition* def_normalized = decl_normalized->get_definition();
+	ExtractFunctionArguments::NormalizeTree(def_normalized);
+    //normalizeEvent(defining_decl->get_definition());
+	BackstrokeNormUtility::normalize(def_normalized->get_body());
+
+
+	return decl_normalized;
+#endif
+
+	SgFunctionDefinition* def_normalized = isSgFunctionDeclaration(func_decl->get_definingDeclaration())->get_definition();
+	
+
 	//SgFunctionDefinition* def_normalized = decl_normalized->get_definition();
 	ExtractFunctionArguments::NormalizeTree(def_normalized);
     //normalizeEvent(defining_decl->get_definition());
 	BackstrokeNormUtility::normalize(def_normalized->get_body());
 
 	
-	return decl_normalized;
+	//return decl_normalized;
+	return func_decl;
 }
 
 namespace BackstrokeNormUtility
