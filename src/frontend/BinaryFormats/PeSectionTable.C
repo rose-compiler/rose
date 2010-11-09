@@ -59,15 +59,13 @@ SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
         fprintf(stderr, "warning: section name too long to store in PE file: \"%s\" (truncated)\n", p_name.c_str());
     memset(disk->name, 0, sizeof(disk->name));
 
-
 #ifdef USE_ROSE
- // DQ (1/27/2010): std::min() does not appear to be handle different type of arguments for ROSE. Need to look into this later.
- // memcpy(disk->name, p_name.c_str(), std::min(sizeof(disk->name), (size_t)p_name.size()));
+    // DQ (1/27/2010): std::min() does not appear to be handle different type of arguments for ROSE. Need to look into this later.
+    // memcpy(disk->name, p_name.c_str(), std::min(sizeof(disk->name), (size_t)p_name.size()));
     memcpy(disk->name, p_name.c_str(), std::min( (size_t)(sizeof(disk->name)), (size_t)(p_name.size()) ));
 #else
     memcpy(disk->name, p_name.c_str(), std::min(sizeof(disk->name), p_name.size()));
 #endif
-
 
     host_to_le(p_virtual_size,     &(disk->virtual_size));
     host_to_le(p_rva,              &(disk->rva));
@@ -231,7 +229,7 @@ SgAsmPESectionTable::reallocate()
     return reallocated;
 }
 
-/* Writes the section table back to disk along with each of the sections. */
+/* Writes the section table back to disk. */
 void
 SgAsmPESectionTable::unparse(std::ostream &f) const
 {
@@ -241,7 +239,8 @@ SgAsmPESectionTable::unparse(std::ostream &f) const
 
     for (size_t i = 0; i < sections.size(); i++) {
         if (sections[i]->get_id()>=0) {
-            SgAsmPESection *section = dynamic_cast<SgAsmPESection*>(sections[i]);
+            SgAsmPESection *section = isSgAsmPESection(sections[i]);
+            ROSE_ASSERT(section!=NULL);
 
             /* Write the table entry */
             ROSE_ASSERT(section->get_id() > 0); /*ID's are 1-origin in PE*/
@@ -250,9 +249,6 @@ SgAsmPESectionTable::unparse(std::ostream &f) const
             SgAsmPESectionTableEntry::PESectionTableEntry_disk disk;
             shdr->encode(&disk);
             write(f, slot*sizeof(disk), sizeof disk, &disk);
-
-            /* Write the section */
-            section->unparse(f);
         }
     }
 }

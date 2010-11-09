@@ -85,6 +85,38 @@ SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk) const
     return disk;
 }
 
+/** Allocates space for this import directory's name, import lookup table, and import address table.  The items are allocated
+ *  beginning at the specified relative virtual address. Items are reallocated if they are not allocated or if they are
+ *  allocated in the same section to which start_rva points (the import section). The return value is the number of bytes
+ *  allocated in the import section.  Upon return, this directory's address data members are initialized with possibly new
+ *  values. */
+size_t
+SgAsmPEImportDirectory::reallocate(rose_rva_t start_rva)
+{
+    rose_rva_t end_rva = start_rva;
+
+    /* Allocate space for the name if it hasn't been allocated already. */
+    if (!get_dll_name()->get_string().empty() &&
+        (0==p_dll_name_rva.get_rva() || p_dll_name_rva.get_section()==end_rva.get_section())) {
+        p_dll_name_rva = end_rva;
+        end_rva.increment(get_dll_name()->get_string().size() + 1);
+    }
+
+    /* Allocate space for the import lookup table if it hasn't been allocated yet. */
+    if (0==p_ilt_rva.get_rva() || p_ilt_rva.get_section()==end_rva.get_section()) {
+        p_ilt_rva = end_rva;
+        end_rva.increment(get_ilt()->reallocate(end_rva));
+    }
+
+    /* Allocate space for the import address table if it hasn't been allocated yet. */
+    if (0==p_iat_rva.get_rva() || p_iat_rva.get_section()==end_rva.get_section()) {
+        p_iat_rva = end_rva;
+        end_rva.increment(get_iat()->reallocate(end_rva));
+    }
+
+    return end_rva.get_rva() - start_rva.get_rva();
+}
+
 void
 SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *section, size_t idx) const
 {
@@ -102,6 +134,7 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
                                               p_dll_name_rva.get_rva());
         }
     }
+
     if (p_ilt)
         p_ilt->unparse(f, fhdr, p_ilt_rva);
     if (p_iat)
