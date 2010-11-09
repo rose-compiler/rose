@@ -432,47 +432,42 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getOriginalDe
 	NumNodeRenameTable res;
 
 	//Iterate every variable definition reaching this node
-	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	foreach(VarName& definedVar, originalDefTable[node])
 	{
-		//Iterate every definition site for this variable
+		//Get the rename number for the current variable at the current def site
+		int renameNum = getRenameNumberForNode(definedVar, node);
 
-		foreach(NodeVec::value_type& defEntry, entry.second)
+		//If the name is defined at this node
+		if (renameNum > 0)
 		{
-			//Get the rename number for the current variable at the current def site
-			int renameNum = getRenameNumberForNode(entry.first, defEntry);
-
-			//If the name is defined at this node
-			if (renameNum > 0)
+			//If the renumbering is not already in the result
+			if (res[definedVar].count(renameNum) == 0)
 			{
-				//If the renumbering is not already in the result
-				if (res[entry.first].count(renameNum) == 0)
-				{
-					//Add the renumbering to the result
-					res[entry.first][renameNum] = defEntry;
-				}
-				else
-				{
-					cout << "Error: Same def originally defined twice on same node." << endl;
-					ROSE_ASSERT(false);
-				}
+				//Add the renumbering to the result
+				res[definedVar][renameNum] = node;
 			}
 			else
 			{
-				/* This situation can happen in certain cases, so we don't want to assert.
-				 *
-				 * ex. for(int i = 0; i < 10; i++)
-				 *     {
-				 *        return i;
-				 *     }
-				 *
-				 * The i++ will have an original def for i. However, it will not be in the rename
-				 * table for i. This is not technically wrong, since control will never
-				 * reach that i++, so it will not have an ordering wrt. the other definitions.
-				 */
-				if (getDebug())
-				{
-					cout << "Warning: Found original def with no entry in rename table." << endl;
-				}
+				cout << "Error: Same def originally defined twice on same node." << endl;
+				ROSE_ASSERT(false);
+			}
+		}
+		else
+		{
+			/* This situation can happen in certain cases, so we don't want to assert.
+			 *
+			 * ex. for(int i = 0; i < 10; i++)
+			 *     {
+			 *        return i;
+			 *     }
+			 *
+			 * The i++ will have an original def for i. However, it will not be in the rename
+			 * table for i. This is not technically wrong, since control will never
+			 * reach that i++, so it will not have an ordering wrt. the other definitions.
+			 */
+			if (getDebug())
+			{
+				cout << "Warning: Found original def with no entry in rename table." << endl;
 			}
 		}
 	}
@@ -487,53 +482,48 @@ StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getOriginalDe
 	NumNodeRenameEntry res;
 
 	//Iterate every variable use at this node
-	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	foreach(VarName& definedVar, originalDefTable[node])
 	{
 		//Check that the current var is the one we want.
-		if (entry.first != var)
+		if (definedVar != var)
 		{
 			continue;
 		}
 
-		//Iterate every definition site for this variable
+		//Get the rename number for the current variable at the current def site
+		int renameNum = getRenameNumberForNode(definedVar, node);
 
-		foreach(NodeVec::value_type& defEntry, entry.second)
+		//If the name is defined at this node
+		if (renameNum > 0)
 		{
-			//Get the rename number for the current variable at the current def site
-			int renameNum = getRenameNumberForNode(entry.first, defEntry);
-
-			//If the name is defined at this node
-			if (renameNum > 0)
+			//If the renumbering is not already in the result
+			if (res.count(renameNum) == 0)
 			{
-				//If the renumbering is not already in the result
-				if (res.count(renameNum) == 0)
-				{
-					//Add the renumbering to the result
-					res[renameNum] = defEntry;
-				}
-				else
-				{
-					cout << "Error: Same original Def twice to same node." << endl;
-					ROSE_ASSERT(false);
-				}
+				//Add the renumbering to the result
+				res[renameNum] = node;
 			}
 			else
 			{
-				/* This situation can happen in certain cases, so we don't want to assert.
-				 *
-				 * ex. for(int i = 0; i < 10; i++)
-				 *     {
-				 *        return i;
-				 *     }
-				 *
-				 * The i++ will have an original def for i. However, it will not be in the rename
-				 * table for i. This is not technically wrong, since control will never
-				 * reach that i++, so it will not have an ordering wrt. the other definitions.
-				 */
-				if (getDebug())
-				{
-					cout << "Warning: Found original def with no entry in rename table." << endl;
-				}
+				cout << "Error: Same original Def twice to same node." << endl;
+				ROSE_ASSERT(false);
+			}
+		}
+		else
+		{
+			/* This situation can happen in certain cases, so we don't want to assert.
+			 *
+			 * ex. for(int i = 0; i < 10; i++)
+			 *     {
+			 *        return i;
+			 *     }
+			 *
+			 * The i++ will have an original def for i. However, it will not be in the rename
+			 * table for i. This is not technically wrong, since control will never
+			 * reach that i++, so it will not have an ordering wrt. the other definitions.
+			 */
+			if (getDebug())
+			{
+				cout << "Warning: Found original def with no entry in rename table." << endl;
 			}
 		}
 	}
@@ -1108,14 +1098,10 @@ void StaticSingleAssignment::printOriginalDefs(SgNode* node)
 {
 	cout << "Original Def Table for [" << node->class_name() << ":" << node << "]:" << endl;
 
-	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	foreach(VarName& definedVar, originalDefTable[node])
 	{
-		cout << "  Defs for [" << keyToString(entry.first) << "]:" << endl;
-
-		foreach(NodeVec::value_type& iter, entry.second)
-		{
-			cout << "    -[" << iter->class_name() << ":" << iter << "]" << endl;
-		}
+		cout << "  Defs for [" << keyToString(definedVar) << "]:";
+		cout << "    -[" << node->class_name() << ":" << node << "]" << endl;
 	}
 }
 
@@ -1123,19 +1109,11 @@ void StaticSingleAssignment::printOriginalDefTable()
 {
 	cout << "Original Def Table:" << endl;
 
-	foreach(DefUseTable::value_type& node, originalDefTable)
+	pair<SgNode*, std::vector<VarName> > node;
+	foreach(node, originalDefTable)
 	{
 		cout << "  Original Def Table for [" << node.first->class_name() << ":" << node.first << "]:" << endl;
-
-		foreach(TableEntry::value_type& entry, originalDefTable[node.first])
-		{
-			cout << "    Defs for [" << keyToString(entry.first) << "]:" << endl;
-
-			foreach(NodeVec::value_type& iter, entry.second)
-			{
-				cout << "      -[" << iter->class_name() << ":" << iter << "]" << endl;
-			}
-		}
+		printOriginalDefs(node.first);
 	}
 }
 

@@ -23,7 +23,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 		ROSE_ASSERT(uName);
 
 		//Add this as a def. [node][uniqueName]
-		ssa->getOriginalDefTable()[name][uName->getKey()].push_back(name);
+		ssa->getOriginalDefTable()[name].push_back(uName->getKey());
 
 		if (StaticSingleAssignment::getDebug())
 		{
@@ -104,7 +104,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 					ROSE_ASSERT(uName);
 
 					//Add the varRef as a definition at the current node of the ref's uniqueName
-					ssa->getOriginalDefTable()[op][uName->getKey()].push_back(node);
+					ssa->getOriginalDefTable()[op].push_back(uName->getKey());
 
 					if (StaticSingleAssignment::getDebug())
 					{
@@ -164,7 +164,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 			ROSE_ASSERT(uName);
 
 			//Add the varRef as a definition at the current node of the ref's uniqueName
-			ssa->getOriginalDefTable()[op][uName->getKey()].push_back(node);
+			ssa->getOriginalDefTable()[op].push_back(uName->getKey());
 
 			if (StaticSingleAssignment::getDebug())
 			{
