@@ -1902,7 +1902,16 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
             //Get our enclosing function definition to insert the first definition into.
 
             SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
-            ROSE_ASSERT(func);
+
+			if (func == NULL)
+			{
+				//In this case, we're not inside the function defintion; we're inside the parameter list
+				SgFunctionDeclaration* declaration = SageInterface::getEnclosingNode<SgFunctionDeclaration>(node);
+				ROSE_ASSERT(declaration != NULL);
+				func = declaration->get_definition();
+			}
+
+			ROSE_ASSERT(func != NULL);
 
             firstDefList[rootName] = func;
         }
