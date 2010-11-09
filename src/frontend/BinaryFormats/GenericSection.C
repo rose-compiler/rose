@@ -440,16 +440,6 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
     /* Don't write past end of current EOF if we can help it. */
     f.seekp(0, std::ios::end);
     rose_addr_t filesize = f.tellp();
-
-#if 0
- // DQ (2/3/2009): Added to help debug problem that I was unable to figure out (handling *.o files).
-    if (filesize == 0)
-       {
-         printf ("In SgAsmGenericSection::write(): filesize = %zu offset = %zu bufsize = %zu \n",filesize,offset,bufsize);
-      // return offset+bufsize;
-       }
-#endif
-
     while (nwrite>0 && 0==((const char*)buf)[nwrite-1] && get_offset()+offset+nwrite>filesize)
         --nwrite;
 
