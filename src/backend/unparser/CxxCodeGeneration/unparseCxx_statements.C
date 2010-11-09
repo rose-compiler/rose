@@ -167,8 +167,8 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgInitializer *tmp_init = initializedName->get_initializer();
      SgType        *tmp_type = initializedName->get_type();
      ROSE_ASSERT (initializedName!= NULL);
-     unp->u_exprStmt->unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
 
+     unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
   // printf ("In unparseFunctionParameterDeclaration(): Argument name = %s \n",
   //      (tmp_name.str() != NULL) ? tmp_name.str() : "NULL NAME");
 
