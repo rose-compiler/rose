@@ -266,7 +266,7 @@ information is actually collected by the runtime system and is simply not
 output.
 
 
-\subsection{Running a specific RTED test}
+\section{Running a specific RTED test}
 
  
 To run one specific test run:
@@ -288,132 +288,26 @@ The different steps involved in running the test are:
 6. Execute instrumented code
 
 
-Example for step 3:
 
-  0 : /home/panas2/rose/build/projects/RTED/.libs/lt-runtimeCheck
-  1 : rted\_source/tests/C/memoryleaks/assignment\_scope\_while.c
-  2 : -rose:C\_Only
-  3 : -c
-  4 : -isystem
-  5 : /home/panas2/programs/boost/install//include
-  6 : -I../../src/frontend/SageIII
-  7 : -I../../../ROSE-git/src
-  8 : -I../../../ROSE-git/src/frontend/SageIII
-  9 : -I../../../ROSE-git/src/frontend/SageIII/astFixup
-  10 : -I../../../ROSE-git/src/frontend/SageIII/astPostProcessing
-  11 : -I../../../ROSE-git/src/frontend/SageIII/astMerge
-  12 : -I../../../ROSE-git/src/frontend/SageIII/astVisualization
-  13 : -I../../../ROSE-git/src/frontend/SageIII/astFileIO
-  14 : -I../../../ROSE-git/src/frontend/SageIII/sageInterface
-  15 : -I../../../ROSE-git/src/frontend/SageIII/virtualCFG
-  16 : -I../../../ROSE-git/src/frontend/SageIII/astTokenStream
-  17 : -I../../../ROSE-git/src/frontend/SageIII/astHiddenTypeAndDeclarationLists
-  18 : -I../../src/frontend/SageIII/astFileIO
-  19 : -I../../../ROSE-git/src/frontend/OpenFortranParser\_SAGE\_Connection
-  20 : -I../../../ROSE-git/src/frontend/PHPFrontend
-  21 : -I../../../ROSE-git/src/frontend/BinaryDisassembly
-  22 : -I../../../ROSE-git/src/frontend/BinaryFormats
-  23 : -I../../../ROSE-git/src/frontend/BinaryLoader
-  24 : -I../../../ROSE-git/src/frontend/Disassemblers
-  25 : -I../../../ROSE-git/src/backend/unparser
-  26 : -I../../../ROSE-git/src/backend/unparser/formatSupport
-  27 : -I../../../ROSE-git/src/backend/unparser/languageIndependenceSupport
-  28 : -I../../../ROSE-git/src/backend/unparser/CxxCodeGeneration
-  29 : -I../../../ROSE-git/src/backend/unparser/FortranCodeGeneration
-  30 : -I../../../ROSE-git/src/backend/unparser/PHPCodeGeneration
-  31 : -I../../../ROSE-git/src/backend/asmUnparser
-  32 : -I../../../ROSE-git/src/util
-  33 : -I../../../ROSE-git/src/util/support
-  34 : -I../../../ROSE-git/src/util/graphs
-  35 : -I../../../ROSE-git/src/util/stringSupport
-  36 : -I../../../ROSE-git/src/util/commandlineProcessing
-  37 : -I../../../ROSE-git/src/midend/abstractHandle
-  38 : -I../../../ROSE-git/src/midend/astDiagnostics
-  39 : -I../../../ROSE-git/src/midend/programTransformation/astInlining
-  40 : -I../../../ROSE-git/src/midend/programTransformation/astOutlining
-  41 : -I../../../ROSE-git/src/midend/astProcessing
-  42 : -I../../../ROSE-git/src/midend/astQuery
-  43 : -I../../../ROSE-git/src/midend/astRewriteMechanism
-  44 : -I../../../ROSE-git/src/midend/astUtil/annotation
-  45 : -I../../../ROSE-git/src/midend/astUtil/astInterface
-  46 : -I../../../ROSE-git/src/midend/astUtil/astSupport
-  47 : -I../../../ROSE-git/src/midend/astUtil/symbolicVal
-  48 : -I../../../ROSE-git/src/midend/binaryAnalyses
-  49 : -I../../../ROSE-git/src/midend/binaryAnalyses/dataflowanalyses
-  50 : -I../../../ROSE-git/src/midend/binaryAnalyses/instructionSemantics
-  51 : -I../../../ROSE-git/src/midend/programTransformation/loopProcessing/computation
-  52 : -I../../../ROSE-git/src/midend/programTransformation/loopProcessing/depGraph
-  53 : -I../../../ROSE-git/src/midend/programTransformation/loopProcessing/depInfo
-  54 : -I../../../ROSE-git/src/midend/programTransformation/loopProcessing/driver
-  55 : -I../../../ROSE-git/src/midend/programTransformation/loopProcessing/outsideInterface
-  56 : -I../../../ROSE-git/src/midend/programTransformation/loopProcessing/prepostTransformation
-  57 : -I../../../ROSE-git/src/midend/programTransformation/ompLowering
-  58 : -I../../../ROSE-git/src/midend/programAnalysis
-  59 : -I../../../ROSE-git/src/midend/programAnalysis/CFG
-  60 : -I../../../ROSE-git/src/midend/programAnalysis/CallGraphAnalysis
-  61 : -I../../../ROSE-git/src/midend/programAnalysis/OAWrap
-  62 : -I../../../ROSE-git/src/midend/programAnalysis/dataflowAnalysis
-  63 : -I../../../ROSE-git/src/midend/programAnalysis/defUseAnalysis
-  64 : -I../../../ROSE-git/src/midend/programAnalysis/distributedMemoryAnalysis
-  65 : -I../../../ROSE-git/src/midend/programAnalysis/dominanceAnalysis
-  66 : -I../../../ROSE-git/src/midend/programAnalysis/graphAnalysis
-  67 : -I../../../ROSE-git/src/midend/programAnalysis/pointerAnal
-  68 : -I../../../ROSE-git/src/midend/programAnalysis/staticInterproceduralSlicing
-  69 : -I../../../ROSE-git/src/midend/programAnalysis/valuePropagation
-  70 : -I../../../ROSE-git/src/midend/programAnalysis/variableRenaming
-  71 : -I../../../ROSE-git/src/3rdPartyLibraries/qrose/Framework
-  72 : -I../../../ROSE-git/src/3rdPartyLibraries/qrose/Widgets
-  73 : -I../../../ROSE-git/src/3rdPartyLibraries/qrose/Components/Common
-  74 : -I../../../ROSE-git/src/3rdPartyLibraries/qrose/Components/QueryBox
-  75 : -I../../../ROSE-git/src/3rdPartyLibraries/qrose/Components/TreeBox
-  76 : -I../../../ROSE-git/src/3rdPartyLibraries/qrose/Components/QueryBox
-  77 : -I../../../ROSE-git/src/3rdPartyLibraries/qrose/Components/SourceBox
-  78 : -DQT3\_SUPPORT
-  79 : -I/home/panas2/programs/qt/install/qt//include/QtCore
-  80 : -I/home/panas2/programs/qt/install/qt//include/QtGui
-  81 : -I/home/panas2/programs/qt/install/qt//include/Qt3Support
-  82 : -I/home/panas2/programs/qt/install/qt//include/QtXml
-  83 : -I/home/panas2/programs/qt/install/qt//include
-  84 : -I../../../ROSE-git/src/midend/programTransformation/partialRedundancyElimination
-  85 : -I../../../ROSE-git/src/midend/programTransformation/finiteDifferencing
-  86 : -I../../../ROSE-git/src/midend/programTransformation/functionCallNormalization
-  87 : -I../../../ROSE-git/src/midend/programTransformation/constantFolding
-  88 : -I../../../ROSE-git/src/midend/programTransformation/implicitCodeGeneration
-  89 : -I../../../ROSE-git/src/roseSupport
-  90 : -I../../../ROSE-git/src/3rdPartyLibraries/MSTL
-  91 : -I../../../ROSE-git/src/3rdPartyLibraries/libharu-2.1.0/include
-  92 : -I../../src/3rdPartyLibraries/libharu-2.1.0/include
-  93 : -I../../../ROSE-git/src/3rdPartyLibraries/qrose/Framework
-  94 : -I../../../ROSE-git/src/3rdPartyLibraries/qrose/Widgets
-  95 : -I../../../ROSE-git/src/util/graphs
-  96 : -I../../../ROSE-git/src/midend/astUtil/astInterface
-  97 : -I../../../ROSE-git/libltdl
-  98 : -DBOOST\_REGEX\_MATCH\_EXTRA
-  99 : -pthread
-  100 : -I/home/panas2/programs/boost/install//include
-  101 : -I.
-  102 : -Winvalid-pch
-  103 : -pthreads
-  104 : -I../..
-  105 : -I../../../ROSE-git/projects/RTED
-  106 : -I/home/panas2/programs/rted/RTED//tests/C/memoryleaks/
-  107 : -I../../../ROSE-git/projects/RTED/tests/C/memoryleaks/
-
-\subsection{Handling warnings}
+\section{Handling warnings}
 
 It is wise to enforce all warnings to be handled as errors. This will ensure a clean implementation. We enforced this using Eclipse.
 In addition we added the following flags to the compilation to skip certain warnings:
 
+\begin{verbatim}
   -Wno-non-virtual-dtor -Wno-invalid-offsetof 
+\end{verbatim}
 
-\subsection{Using Eclipse for RTED development}
+\section{Using Eclipse for RTED development}
 
 It is possible to use Eclipse just for RTED and link against librose.so.
 
 To use Eclipse, download the C++ Eclipse version and create new project RTED.
 Then include the original RTED directory. The following are the additional includes necessary in C/C++ Build Settings for the GNU C++ Compiler:
 
+\begin{verbatim}
 -I/home/panas2/programs/qt/install/qt/include/QtGui -I/home/panas2/rose/ROSE-git/projects/RTED/CppRuntimeSystem/DebuggerQt -I/home/panas2/rose/ROSE-git/projects/RTED/CppRuntimeSystem/ -I/home/panas2/rose/ROSE-git/projects/RTED/ -I/home/panas2/rose/ROSE-git/src/roseExtensions/qtWidgets/QCodeEditWidget -I/home/panas2/programs/qt/install/qt/include/QtCore -I/home/panas2/rose/build/projects/RTED/CppRuntimeSystem/DebuggerQt -I/home/panas2/programs/qt/install/qt/include -I/home/panas2/programs/qt/install/qt/include/Qt -I/home/panas2/rose/ROSE-git/src/roseSupport -I/home/panas2/rose/ROSE-git/src/midend/astProcessing/ -I/home/panas2/rose/ROSE\_includes -I/home/panas2/programs/boost/install/include/ -I/home/panas2/rose/build/src/frontend/SageIII -I/home/panas2/rose/build 
+\end{verbatim}
 
 A simpler way to handle all required .h files in ROSE is to copy all includes from ROSE into a separate ROSE\_includes directory or just to install ROSE.
 Thereafter add the rose library to the shared libararies using the path: build/src/.libs/ and the file: rose.
@@ -421,35 +315,47 @@ For this to work ROSE must be compiled into the build directory as files from th
 
 To run RTED, you can type the command (in bash or Eclipse):
 
+\begin{verbatim}
   /home/panas2/rose/ROSE-git/projects/RTED/Debug/RTED 1  /home/panas2/rose/ROSE-git/projects/RTED/Debug/tests2/C/memoryleaks/assignment\_scope\_while.c  -I/home/panas2/rose/ROSE-git/projects/RTED/ -c
+\end{verbatim}
 
 This should run this example. If you use the default tests, you will get the following error message: 
 
+\begin{verbatim}
   RTED: ../RtedTransformation.cpp:67: void RtedTransformation::transform(SgProject*,
   std::set<std::basic\_string<char, std::char\_traits<char>, std::allocator<char> >, 
   std::less<std::basic\_string<char, std::char\_traits<char>, std::allocator<char> > >, 
   std::allocator<std::basic\_string<char, std::char\_traits<char>, std::allocator<char> > 
   > > ): Assertion roseCreateHeap failed.
+\end{verbatim}
 
 The problem is that the test file needs to include RuntimeSystem.h
 
 After that we compile the transformed file:
 
+\begin{verbatim}
   gcc -g -Wall -o assignment\_scope\_while.bin rose\_assignment\_scope\_while.c ../RuntimeSystem.cpp -isystem /home/panas2/programs/boost/install//include -I/home/panas2/rose/ROSE\_includes/ -I../ /home/panas2/rose/build/projects/RTED/CppRuntimeSystem/.libs/libCppRuntimeSystem.so.0 -L/home/panas2/programs/qt/install/qt//lib -L/home/panas2/programs/qt/install/qt/lib -L/usr/X11R6/lib /home/panas2/programs/qt/install/qt/lib/libQt3Support.so /home/panas2/programs/qt/install/qt/lib/libQtSql.so /home/panas2/programs/qt/install/qt/lib/libQtGui.so /home/panas2/programs/qt/install/qt/lib/libQtNetwork.so /home/panas2/programs/qt/install/qt/lib/libQtXml.so /home/panas2/programs/qt/install/qt/lib/libQtCore.so -lpthread -lQtUiTools -lgcrypt  -Wl,--rpath -Wl,/home/panas2/rose/install/lib -Wl,--rpath -Wl,/home/panas2/programs/qt/install/qt/lib -Wl,--rpath -Wl,/home/panas2/rose/build/projects/RTED/CppRuntimeSystem/.libs/ -lCppRuntimeSystem -L/home/panas2/rose/build/projects/RTED/CppRuntimeSystem/.libs/
+\end{verbatim}
 
 OR when creating a static library under ROSE for CppRuntimeSystem, we can do
 
+\begin{verbatim}
   gcc -g -Wall -o assignment\_scope\_while.bin rose\_assignment\_scope\_while.c ../RuntimeSystem.cpp -isystem /home/panas2/programs/boost/install//include -I/home/panas2/rose/ROSE\_includes/ -I../ -L/home/panas2/programs/qt/install/qt//lib -L/home/panas2/programs/qt/install/qt/lib -L/usr/X11R6/lib /home/panas2/programs/qt/install/qt/lib/libQt3Support.so /home/panas2/programs/qt/install/qt/lib/libQtSql.so /home/panas2/programs/qt/install/qt/lib/libQtGui.so /home/panas2/programs/qt/install/qt/lib/libQtNetwork.so /home/panas2/programs/qt/install/qt/lib/libQtXml.so /home/panas2/programs/qt/install/qt/lib/libQtCore.so -lpthread -lQtUiTools -lgcrypt  -Wl,--rpath -Wl,/home/panas2/rose/install/lib -Wl,--rpath -Wl,/home/panas2/programs/qt/install/qt/lib -Wl,--rpath -Wl,/home/panas2/workspace/CppRuntimeSystemLibarary/Debug -lCppRuntimeSystemLibarary -L/home/panas2/workspace/CppRuntimeSystemLibarary/Debug
+\end{verbatim}
 
 To create a static library: Create new project in Eclipse. Select Shared Library. Thereafter import the source files, add the includes and the necessary libraries.
 
 Includes:
 
+\begin{verbatim}
   -I/home/panas2/programs/qt/install/qt/include/QtGui -I/home/panas2/rose/ROSE-git/projects/RTED/CppRuntimeSystem/DebuggerQt -I/home/panas2/rose/ROSE-git/projects/RTED/CppRuntimeSystem/ -I/home/panas2/rose/ROSE-git/projects/RTED/ -I/home/panas2/rose/ROSE-git/src/roseExtensions/qtWidgets/QCodeEditWidget -I/home/panas2/programs/qt/install/qt/include/QtCore -I/home/panas2/rose/build/projects/RTED/CppRuntimeSystem/DebuggerQt -I/home/panas2/programs/qt/install/qt/include -I/home/panas2/programs/qt/install/qt/include/Qt -I/home/panas2/rose/ROSE-git/src/roseSupport -I/home/panas2/rose/ROSE-git/src/midend/astProcessing/ -I/home/panas2/rose/ROSE\_includes -I/home/panas2/programs/boost/install/include/ -I/home/panas2/rose/build/src/frontend/SageIII -I/home/panas2/rose/build
+\end{verbatim}
 
 Libraries:
 
+\begin{verbatim}
  -L/home/panas2/rose/build/src/.libs/ -lrose
+\end{verbatim}
 
 Optionally create the CppRuntimeSystem as a separate Library. It is easy to set up as a new project and then include the .so into the RuntimeSystem project. One thing to remember is to add the CppRuntimeSystem.so into the LD\_LIBRARY\_PATH so that it is found when the project is run.
 
