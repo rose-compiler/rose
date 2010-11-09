@@ -8,6 +8,7 @@
 #define foreach BOOST_FOREACH
 
 using namespace std;
+using namespace ssa_private;
 
 int StaticSingleAssignment::getRenameNumberForNode(const VarName& var, SgNode* node) const
 {

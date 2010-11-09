@@ -23,7 +23,7 @@ using namespace std;
 using namespace ssa_private;
 
 //Initializations of the static attribute tags
-string StaticSingleAssignment::varKeyTag = "rename_KeyTag";
+string StaticSingleAssignment::varKeyTag = "ssa_varname_KeyTag";
 SgInitializedName* StaticSingleAssignment::thisDecl = NULL;
 StaticSingleAssignment::VarName StaticSingleAssignment::emptyName;
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::emptyRenameTable;

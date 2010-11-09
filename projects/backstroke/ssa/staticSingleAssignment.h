@@ -16,6 +16,9 @@
 #include "filteredCFG.h"
 #include <boost/unordered_map.hpp>
 
+namespace ssa_private
+{
+
 /** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
  * This is used to assign absolute names to VarRefExp nodes during VariableRenaming.
  */
@@ -163,6 +166,8 @@ struct IsDefUseFilter
 	}
 };
 
+} //namespace ssa_private
+
 /** Class that defines an VariableRenaming of a program
  *
  * Contains all the functionality to implement variable renaming on a given program.
@@ -202,10 +207,10 @@ public:
 	typedef std::vector<SgInitializedName*> InitNameVec;
 	
 	/** A filtered CFGNode that is used for DefUse traversal.  */
-	typedef FilteredCFGNode<IsDefUseFilter> cfgNode;
+	typedef FilteredCFGNode<ssa_private::IsDefUseFilter> cfgNode;
 	
 	/** A filtered CFGEdge that is used for DefUse traversal.  */
-	typedef FilteredCFGEdge<IsDefUseFilter> cfgEdge;
+	typedef FilteredCFGEdge<ssa_private::IsDefUseFilter> cfgEdge;
 
 	/** A vector of cfgNodes. */
 	typedef std::vector<cfgNode> cfgNodeVec;
@@ -809,7 +814,7 @@ public:
 	 * @param node Node to get the attribute from.
 	 * @return The attribute, or NULL.
 	 */
-	static VarUniqueName* getUniqueName(SgNode* node);
+	static ssa_private::VarUniqueName* getUniqueName(SgNode* node);
 
 	/** Get the variable name of the given node.
 	 *
