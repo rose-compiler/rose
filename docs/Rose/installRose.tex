@@ -970,7 +970,7 @@ In order to have Hudson test ROSE under Windows, we have additional tools set up
 \item Hudson client : The client can be started through the web page. All that is required is Java to be installed.
 \end{itemize}
 
-Currently under tux270-0 Flex, cmake, boost and Bison are installed under c:/ROSE. In addition, a ROSE test branch for ROSE-tps is installed in order to test ROSE under Windows locally without Hudson. The directory c:/tools contains pegeant.exe and other useful tools like plink.exe and puttygen.exe. See further notes below. Finally required ssh keys are located in c:/putty_keys. 
+Currently under tux270-0 Flex, cmake, boost and Bison are installed under c:/ROSE. In addition, a ROSE test branch for ROSE-tps is installed in order to test ROSE under Windows locally without Hudson. The directory c:/tools contains pegeant.exe and other useful tools like plink.exe and puttygen.exe. See further notes below. Finally required ssh keys are located in c:/putty\_keys. 
 
 \subsubsection{Debugging in VS 8}
 
@@ -1009,18 +1009,17 @@ Setting up SSH keys on Windows Server (logged in as hudson-rose):
 
 \item Copy the keys onto tux270-0:
 \begin{itemize}
-   \item Double Click on ``My_Computer'' icon
+   \item Double Click on ``My\_Computer'' icon
    \item Goto C:, tools, pageant.exe
    \item Double click on pageant.exe
    \item Should display a computer with a hat on it in the bottom right 
 corner of the screen.
    \item Right click on icon (of computer with a hat on it)
    \item click on ``Add Key'' (this will cause a window to put up called ``Select Private Key File''
-   \item Goto ``My Computer TUX270-0'', ``Local Disk(C:)'', ``putty_keys''
-   \item Click on file ``id_rsa.ppk''  (this will load the private  key for 
+   \item Goto ``My Computer TUX270-0'', ``Local Disk(C:)'', ``putty\_keys''
+   \item Click on file ``id\_rsa.ppk''  (this will load the private  key for 
 use by ssh).
-   \item Now try to run the git command:
-         git clone ssh://hudson-rose@tux269/usr/casc/overture/ROSE/git/ROSE.git c:\ROSE\hudson\workspace\test-windows\label\windows-server
+   \item Now try to run the git command: git clone ssh://hudson-rose@tux269/usr/casc/overture/ROSE/git/ROSE.git c:/ROSE/hudson/workspace/test-windows/label/windows-server
 \end{itemize}
 \end{itemize}
 
@@ -1033,7 +1032,7 @@ Currently Hudson is configured in a way that when a00-ROSE-from-scratch passes, 
 
 \subsubsection{Extending ROSE with the Windows SDK}
 
-Some functions used in Linux are not available under Windows - but they are available through the Windows SDK. For instance, realpath() in linux is available as PathCanonicalize() under Windows using the Windows SDK. You need to include : #include ``Shlwapi.h'' and the following library into the project : shlwapi.lib (part of SDK). More information can be found at: http://msdn.microsoft.com/en-us/windows/bb980924.aspx http://en.wikipedia.org/wiki/Microsoft_Windows_SDK
+Some functions used in Linux are not available under Windows - but they are available through the Windows SDK. For instance, realpath() in linux is available as PathCanonicalize() under Windows using the Windows SDK. You need to include : \#include ``Shlwapi.h'' and the following library into the project : shlwapi.lib (part of SDK). More information can be found at: http://msdn.microsoft.com/en-us/windows/bb980924.aspx http://en.wikipedia.org/wiki/Microsoft\_Windows\_SDK
 
 
 
