@@ -65,6 +65,8 @@ buildDominanceFrontiers(const std::map<VertexT, VertexT>& iDom, const CFGType& c
 	return domFrontiers;
 }
 
+//! A class holding a Control Dependence Graph.
+
 template <class CFGType>
 class CDG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
 		typename CFGType::CFGNodeType, bool>
@@ -78,70 +80,20 @@ public:
 	//! The default constructor.
 	CDG() {}
 
+	//! The constructor building the CDG from a CFG.
 	CDG(const CFGType& cfg)
 	{
 		buildCDG(cfg);
 	}
 
-	void buildCDG(const CFGType& cfg)
-	{
-		typedef typename CFGType::Vertex CFGVertexT;
+	//! Build the CDG from the given CFG.
+	void buildCDG(const CFGType& cfg);
 
-		// First, build a reverse CFG.
-		CFGType rvsCfg = cfg.makeReverseCopy();
-		
-		// Build the dominator tree of the reverse CFG.
-		std::map<CFGVertexT, CFGVertexT> iDom = rvsCfg.buildDominatorTree();
+	//! Write the CDG to a dot file.
+	void toDot(const std::string& filename) const;
 
-		// Build the dominance frontiers of the reverse CFG, which represents the CDG
-		// of the original CFG.
-		std::map<CFGVertexT, std::set<CFGVertexT> > domFrontiers = 
-				buildDominanceFrontiers(iDom, rvsCfg);
-
-		// Start to build the CDG.
-		std::map<CFGVertexT, CFGVertexT> verticesAdded;
-
-		typedef typename std::map<CFGVertexT, std::set<CFGVertexT> >::value_type VVS;
-		foreach (const VVS& vertices, domFrontiers)
-		{
-			CFGVertexT from = vertices.first;
-
-			Vertex src, tar;
-			typename std::map<CFGVertexT, CFGVertexT>::iterator it;
-			bool inserted;
-
-			// Add the first node.
-			tie(it, inserted) = verticesAdded.insert(std::make_pair(from, Vertex()));
-			if (inserted)
-			{
-				src = boost::add_vertex(*this);
-				(*this)[src] = cfg[from];
-				it->second = src;
-			}
-			else
-				src = it->second;
-
-
-			foreach (CFGVertexT to, vertices.second)
-			{
-				// Add the second node.
-				tie(it, inserted) = verticesAdded.insert(std::make_pair(to, Vertex()));
-				if (inserted)
-				{
-					tar = boost::add_vertex(*this);
-					(*this)[tar] = cfg[to];
-					it->second = tar;
-				}
-				else
-					tar = it->second;
-
-				// Add the edge.
-				Edge edge = add_edge(src, tar, *this).first;
-				(*this)[edge] = true;
-			}
-		}
-	}
-
+protected:
+	
 	//! This function helps to write the DOT file for vertices.
 	void writeGraphNode(std::ostream& out, const Vertex& node) const
 	{
@@ -155,15 +107,76 @@ public:
 		"\", style=\"" << "solid" << "\"]";
 	}
 
-	void toDot(const std::string& filename)
-	{
-		std::ofstream ofile(filename.c_str(), std::ios::out);
-		boost::write_graphviz(ofile, *this,
-			boost::bind(&CDG<CFGType>::writeGraphNode, this, ::_1, ::_2),
-			boost::bind(&CDG<CFGType>::writeGraphEdge, this, ::_1, ::_2));
-	}
-
 };
+
+template <class CFGType>
+void CDG<CFGType>::buildCDG(const CFGType& cfg)
+{
+	typedef typename CFGType::Vertex CFGVertexT;
+
+	// First, build a reverse CFG.
+	CFGType rvsCfg = cfg.makeReverseCopy();
+
+	// Build the dominator tree of the reverse CFG.
+	std::map<CFGVertexT, CFGVertexT> iDom = rvsCfg.buildDominatorTree();
+
+	// Build the dominance frontiers of the reverse CFG, which represents the CDG
+	// of the original CFG.
+	std::map<CFGVertexT, std::set<CFGVertexT> > domFrontiers =
+			buildDominanceFrontiers(iDom, rvsCfg);
+
+	// Start to build the CDG.
+	std::map<CFGVertexT, Vertex> verticesAdded;
+
+	typedef typename std::map<CFGVertexT, std::set<CFGVertexT> >::value_type VVS;
+	foreach (const VVS& vertices, domFrontiers)
+	{
+		CFGVertexT from = vertices.first;
+
+		Vertex src, tar;
+		typename std::map<CFGVertexT, Vertex>::iterator it;
+		bool inserted;
+
+		// Add the first node.
+		tie(it, inserted) = verticesAdded.insert(std::make_pair(from, Vertex()));
+		if (inserted)
+		{
+			src = boost::add_vertex(*this);
+			(*this)[src] = cfg[from];
+			it->second = src;
+		}
+		else
+			src = it->second;
+
+
+		foreach (CFGVertexT to, vertices.second)
+		{
+			// Add the second node.
+			tie(it, inserted) = verticesAdded.insert(std::make_pair(to, Vertex()));
+			if (inserted)
+			{
+				tar = boost::add_vertex(*this);
+				(*this)[tar] = cfg[to];
+				it->second = tar;
+			}
+			else
+				tar = it->second;
+
+			// Add the edge.
+			Edge edge = add_edge(src, tar, *this).first;
+			(*this)[edge] = true;
+		}
+	}
+}
+
+template <class CFGType>
+void CDG<CFGType>::toDot(const std::string& filename) const
+{
+	std::ofstream ofile(filename.c_str(), std::ios::out);
+	boost::write_graphviz(ofile, *this,
+		boost::bind(&CDG<CFGType>::writeGraphNode, this, ::_1, ::_2),
+		boost::bind(&CDG<CFGType>::writeGraphEdge, this, ::_1, ::_2));
+}
 
 #undef foreach
 

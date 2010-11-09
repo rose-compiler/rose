@@ -476,11 +476,23 @@ public:
      */
     DefUseTable& getDefTable(){ return originalDefTable; }
 
+    /** Get the table of definitions for every node.
+     *
+     * @return Definition table.
+     */
+    const DefUseTable& getDefTable() const { return originalDefTable; }
+
     /** Get the defTable containing the propogated definition information.
      *
      * @return Def table.
      */
     DefUseTable& getPropDefTable(){ return defTable; }
+
+    /** Get the defTable containing the propogated definition information.
+     *
+     * @return Def table.
+     */
+    const DefUseTable& getPropDefTable() const { return defTable; }
 
     /** Get the table of uses for every node.
      *
@@ -488,11 +500,24 @@ public:
      */
     DefUseTable& getUseTable(){ return useTable; }
 
+     /** Get the table of uses for every node.
+     *
+     * @return Use Table.
+     */
+    const DefUseTable& getUseTable() const { return useTable; }
+
+
     /** Get the listing of global variables.
      *
      * @return Global Var List.
      */
     GlobalTable& getGlobalVarList(){ return globalVarList; }
+
+    /** Get the listing of global variables.
+     *
+     * @return Global Var List.
+     */
+    const GlobalTable& getGlobalVarList() const { return globalVarList; }
 
 
 
