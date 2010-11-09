@@ -25,7 +25,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
       DataConversion.C ExtentMap.C Hexdump.C Interpretation.C MemoryMap.C Rva.C \
       GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C \
       PeExport.C PeFileHeader.C PeImportDirectory.C PeImportHNTEntry.C PeImportILTEntry.C PeImportLookupTable.C \
-      PeImportSection.C PeSection.C PeStringTable.C PeSymbolTable.C \
+      PeImportSection.C PeRvaSizePair.C PeSection.C PeStringTable.C PeSymbolTable.C \
       ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C \
       ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C \
       ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C

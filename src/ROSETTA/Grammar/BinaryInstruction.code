@@ -2441,6 +2441,9 @@ HEADER_PE_RVA_SIZE_PAIR_START
 			ctor(parent, rva, size);
 		}
 
+		void set_section(SgAsmGenericSection *section);
+		SgAsmGenericSection *get_section() const;
+
 		void *encode(SgAsmPERVASizePair::RVASizePair_disk *disk) const;
 	private:
 		void ctor(SgAsmPERVASizePairList *parent, const SgAsmPERVASizePair::RVASizePair_disk*);

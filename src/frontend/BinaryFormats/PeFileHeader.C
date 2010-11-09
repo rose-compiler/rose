@@ -4,28 +4,6 @@
 #include <inttypes.h>
 
 
-void
-SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, const RVASizePair_disk *disk) {
-    p_e_rva  = le_to_host(disk->e_rva);
-    p_e_size = le_to_host(disk->e_size);
-    set_parent(parent);
-}
-
-void
-SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size)
-{
-    p_e_rva = rva;
-    p_e_size = size;
-    set_parent(parent);
-}
-
-void*
-SgAsmPERVASizePair::encode(RVASizePair_disk *disk) const {
-    host_to_le(p_e_rva,  &(disk->e_rva));
-    host_to_le(p_e_size, &(disk->e_size));
-    return disk;
-}
-
 /** Convert an RVA/Size Pair index number into a section name. This is different than stringifySgAsmPEFileHeaderPairPurpose()
  * because it returns a section name rather than an enum name. */
 std::string
@@ -507,9 +485,6 @@ SgAsmPEFileHeader::update_rvasize_pairs()
         if (section) {
             pair->set_e_rva(rose_rva_t(section->get_mapped_preferred_rva(), section));
             pair->set_e_size(section->get_mapped_size());
-        } else {
-            pair->set_e_rva(0);
-            pair->set_e_size(0);
         }
     }
 }
