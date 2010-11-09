@@ -179,50 +179,50 @@ private:
 	SgProject* project;
 
 public:
-	/** Vector of SgNode*
-	 */
+	
+	/** Vector of SgNode*  */
 	typedef std::vector<SgNode*> NodeVec;
-	/** A compound variable name as used by the variable renaming.
-	 */
+	
+	/** A compound variable name as used by the variable renaming.  */
 	typedef std::vector<SgInitializedName*> VarName;
-	/** An entry in the rename table mapping a name to a nodeVec.
-	 */
+	
+	/** An entry in the rename table mapping a name to a nodeVec.  */
 	typedef std::map<VarName, NodeVec> TableEntry;
-	/** A table storing the name->node mappings for every node in the program.
-	 */
+	
+	/** A table storing the name->node mappings for every node in the program. */
 	typedef boost::unordered_map<SgNode*, TableEntry> DefUseTable;
-	/** A table mapping a name to a single node.
-	 */
+	
+	/** A table mapping a name to a single node. */
 	typedef boost::unordered_map<VarName, SgNode*> FirstDefTable;
-	/** A list of names.
-	 */
+	
+	/** A list of names. */
 	typedef std::vector<VarName> GlobalTable;
-	/** A vector of SgInitializedName*
-	 */
+	
+	/** A vector of SgInitializedName* */
 	typedef std::vector<SgInitializedName*> InitNameVec;
-	/** A filtered CFGNode that is used for DefUse traversal.
-	 */
+	
+	/** A filtered CFGNode that is used for DefUse traversal.  */
 	typedef FilteredCFGNode<IsDefUseFilter> cfgNode;
-	/** A filtered CFGEdge that is used for DefUse traversal.
-	 */
+	
+	/** A filtered CFGEdge that is used for DefUse traversal.  */
 	typedef FilteredCFGEdge<IsDefUseFilter> cfgEdge;
-	/** A vector of cfgNodes.
-	 */
+
+	/** A vector of cfgNodes. */
 	typedef std::vector<cfgNode> cfgNodeVec;
-	/** A vector of cfgEdges.
-	 */
+
+	/** A vector of cfgEdges. */
 	typedef std::vector<cfgEdge> cfgEdgeVec;
-	/** An entry in the rename table that maps a node to a number.
-	 */
+	
+	/** An entry in the rename table that maps a node to a number.  */
 	typedef std::map<SgNode*, int> NodeNumRenameEntry;
-	/** A table that maps a name to it's node->number renamings.
-	 */
+
+	/** A table that maps a name to it's node->number renamings. */
 	typedef boost::unordered_map<VarName, NodeNumRenameEntry> NodeNumRenameTable;
-	/** An entry in the rename table that maps a number to a node.
-	 */
+	
+	/** An entry in the rename table that maps a number to a node.  */
 	typedef std::map<int, SgNode*> NumNodeRenameEntry;
-	/** A table that maps a name to it's number->node renamings.
-	 */
+	
+	/** A table that maps a name to it's number->node renamings.  */
 	typedef boost::unordered_map<VarName, NumNodeRenameEntry> NumNodeRenameTable;
 
 
@@ -294,7 +294,7 @@ public:
 	}
 
 private:
-	void runDefUse(SgFunctionDefinition* func);
+	void runDefUseDataFlow(SgFunctionDefinition* func);
 	bool defUse(cfgNode node, bool *memberRefInserted, NodeVec &changedNodes);
 
 	/** Add an entry to the renumbering table for the given var and node.
@@ -494,7 +494,7 @@ public:
 	 *
 	 * @return Definition table.
 	 */
-	DefUseTable& getDefTable()
+	DefUseTable& getOriginalDefTable()
 	{
 		return originalDefTable;
 	}

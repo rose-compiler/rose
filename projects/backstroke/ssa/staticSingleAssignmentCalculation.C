@@ -108,7 +108,7 @@ void StaticSingleAssignment::run()
 
 			if (getDebug())
 				cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
-			runDefUse(func);
+			runDefUseDataFlow(func);
 		}
 	}
 }
@@ -167,7 +167,7 @@ void StaticSingleAssignment::insertGlobalVarDefinitions()
 	}
 }
 
-void StaticSingleAssignment::runDefUse(SgFunctionDefinition* func)
+void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 {
 	//Keep track of visited nodes
 	boost::unordered_set<SgNode*> visited;
@@ -263,7 +263,7 @@ void StaticSingleAssignment::runDefUse(SgFunctionDefinition* func)
 	}
 }
 
-bool StaticSingleAssignment::defUse(FilteredCFGNode<IsDefUseFilter> node, bool *memberRefInserted, NodeVec &changedNodes)
+bool StaticSingleAssignment::defUse(cfgNode node, bool *memberRefInserted, NodeVec &changedNodes)
 {
 	SgNode* current = node.getNode();
 
@@ -279,7 +279,6 @@ bool StaticSingleAssignment::defUse(FilteredCFGNode<IsDefUseFilter> node, bool *
 	useChanged = resolveUses(node, &useRefInserted, changedNodes);
 
 	*memberRefInserted = useRefInserted;
-
 
 	if (getDebug())
 		cout << "Defs were " << ((defChanged) ? "changed." : "same.") << endl;
@@ -325,21 +324,19 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 	//Expand any member variable references at the current node.
 	*memberRefInserted = expandMemberDefinitions(curNode);
 
-	TableEntry propDefs;
+	TableEntry stagingPropagatedDefs;
 	//Retrieve the defs coming from previous cfgNodes
-	aggregatePreviousDefs(curNode, propDefs);
+	aggregatePreviousDefs(curNode, stagingPropagatedDefs);
 
 	//Replace every entry in staging table that has definition in original defs
 	//Also assign renaming numbers to any new definitions
-
 	foreach(TableEntry::value_type& entry, originalDefTable[node])
 	{
 		//Replace the entry for this variable with the definitions at this node.
-		propDefs[entry.first] = entry.second;
+		stagingPropagatedDefs[entry.first] = entry.second;
 
 		//Now, iterate the definition vector for this node
-
-		foreach(NodeVec::value_type& defNode, entry.second)
+		foreach(SgNode* defNode, entry.second)
 		{
 			//Assign a number to each new definition. The function will prevent duplicates
 			addRenameNumberForNode(entry.first, defNode);
@@ -353,7 +350,7 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 	foreach(TableEntry::value_type& entry, originalDefTable[node])
 	{
 
-		foreach(TableEntry::value_type& propEntry, propDefs)
+		foreach(TableEntry::value_type& propEntry, stagingPropagatedDefs)
 		{
 			//Don't insert a def if it is already originally defined.
 			if (originalDefTable[node].count(propEntry.first) != 0)
@@ -380,7 +377,7 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 
 	foreach(TableEntry::value_type& entry, expandedDefTable[node])
 	{
-		propDefs[entry.first] = entry.second;
+		stagingPropagatedDefs[entry.first] = entry.second;
 
 		//Now, iterate the definition vector for this node
 
@@ -406,13 +403,13 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 	if (getDebugExtra())
 	{
 		cout << "Local Defs replaced in propDefs ";
-		printDefs(propDefs);
+		printDefs(stagingPropagatedDefs);
 	}
 
 	//Now do a comparison to see if we should copy
-	if (propDefs != defTable[node])
+	if (stagingPropagatedDefs != defTable[node])
 	{
-		defTable[node] = propDefs;
+		defTable[node] = stagingPropagatedDefs;
 		changed = true;
 	}
 	else
@@ -436,21 +433,12 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 
 void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& results)
 {
-	//SgNode* node = curNode.getNode();
-
 	//Get the previous edges in the CFG for this node
 	cfgEdgeVec inEdges = curNode.inEdges();
 
 	if (inEdges.size() == 1)
 	{
 		SgNode* prev = inEdges[0].source().getNode();
-
-		/*
-		if(getDebug())
-		{
-			cout << "Merging defs from " << prev->class_name() << prev << " to " << node->class_name() << node << endl;
-			printDefs(prev);
-		}*/
 
 		//Copy the previous node defs to the staging table
 		results = defTable[prev];
@@ -461,13 +449,6 @@ void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& 
 		for (unsigned int i = 0; i < inEdges.size(); i++)
 		{
 			SgNode* prev = inEdges[i].source().getNode();
-
-			/*
-			if(getDebug())
-			{
-				cout << "Merging defs from " << prev->class_name() << prev << endl;
-				printDefs(prev);
-			}*/
 
 			//Perform the union of all the infoming definitions.
 			foreach(TableEntry::value_type& entry, defTable[prev])
@@ -485,15 +466,6 @@ void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& 
 		//Create new sequence of unique elements and remove duplicate ones
 		entry.second.resize(unique(entry.second.begin(), entry.second.end()) - entry.second.begin());
 	}
-
-	/*
-	if(getDebugExtra())
-	{
-		cout << "Merged propDefs ";
-		printDefs(results);
-	}*/
-
-	return;
 }
 
 bool StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
@@ -510,7 +482,6 @@ bool StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
 	}
 
 	//We want to iterate the vars defined on this node, and expand them
-
 	foreach(TableEntry::value_type& entry, originalDefTable[node])
 	{
 		if (getDebugExtra())
