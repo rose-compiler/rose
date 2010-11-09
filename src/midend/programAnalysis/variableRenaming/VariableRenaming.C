@@ -1506,6 +1506,7 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted)
         propDefs[entry.first] = entry.second;
 
         //Now, iterate the definition vector for this node
+		ROSE_ASSERT(entry.second.size() == 1);
         foreach(NodeVec::value_type& defNode, entry.second)
         {
             //Assign a number to each new definition. The function will prevent duplicates
@@ -1531,6 +1532,7 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted)
             {
                 //Set this node as a definition point of the variable.
                 expandedDefTable[node][propEntry.first].assign(1,node);
+				ROSE_ASSERT(expandedDefTable[node][propEntry.first].size() == 1);
                 *memberRefInserted = true;
                 if(DEBUG_MODE_EXTRA)
                 {
