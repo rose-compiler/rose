@@ -28,25 +28,101 @@ SgAsmPESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)
 void
 SgAsmPESectionTableEntry::update_from_section(SgAsmPESection *section)
 {
+    SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
+    ROSE_ASSERT(fhdr!=NULL);
+
     p_virtual_size = section->get_mapped_size();
     p_rva = section->get_mapped_preferred_rva();
     p_physical_size = section->get_size();
     p_physical_offset = section->get_offset();
     p_name = section->get_name()->get_string();
 
-    p_flags = 0;
-    if (section->get_mapped_rperm())
+    /* Mapping permissions */
+    if (section->get_mapped_rperm()) {
         p_flags |= SgAsmPESectionTableEntry::OF_READABLE;
-    if (section->get_mapped_wperm())
+    } else {
+        p_flags &= ~SgAsmPESectionTableEntry::OF_READABLE;
+    }
+    if (section->get_mapped_wperm()) {
         p_flags |= SgAsmPESectionTableEntry::OF_WRITABLE;
-    if (section->get_mapped_xperm())
+    } else {
+        p_flags &= ~SgAsmPESectionTableEntry::OF_WRITABLE;
+    }
+    if (section->get_mapped_xperm()) {
         p_flags |= SgAsmPESectionTableEntry::OF_EXECUTABLE;
+    } else {
+        p_flags &= ~SgAsmPESectionTableEntry::OF_EXECUTABLE;
+    }
+
+    /* Mapping alignment */
+    if (section->is_mapped() && section->get_mapped_alignment()!=fhdr->get_e_section_align()) {
+        switch (section->get_mapped_alignment()) {
+            case 0:
+            case 1:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_1;
+                break;
+            case 2:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_2;
+                break;
+            case 4:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_4;
+                break;
+            case 8:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_8;
+                break;
+            case 16:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_16;
+                break;
+            case 32:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_32;
+                break;
+            case 64:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_64;
+                break;
+            case 128:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_128;
+                break;
+            case 256:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_256;
+                break;
+            case 512:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_512;
+                break;
+            case 1024:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_1k;
+                break;
+            case 2048:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_2k;
+                break;
+            case 4096:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_4k;
+                break;
+            case 8192:
+                p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
+                p_flags |=  SgAsmPESectionTableEntry::OF_ALIGN_8k;
+                break;
+            default:
+                break; /* leave as is */
+        }
+    }
 
 #if 0 /*FIXME*/
     p_coff_line_nums = 0;
     p_n_relocs = 0;
     p_n_coff_line_nums = 0;
-    p_flags = 0;
 #endif
 }
 
