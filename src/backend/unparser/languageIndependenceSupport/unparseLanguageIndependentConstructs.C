@@ -1287,7 +1287,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                  !info.SkipFunctionDefinition();
 
        // DQ (7/19/2008): Allow expressions to have there associated comments unparsed.
-          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL);
+       // Liao 11/9/2010: allow SgInitializedName also
+          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) ;
 
 #if 0
           printf ("infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
