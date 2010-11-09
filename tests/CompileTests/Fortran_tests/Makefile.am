@@ -1,7 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# DQ (8/22/2010): These files are open source and distributed on the web.
-SUBDIRS = LANL_POP
+SUBDIRS = LANL_POP gfortranTestSuite
 
 ###########################################################################
 # These are Fortran testcodes targeting aspects F66, F77, F90, F95, F2003 #
@@ -252,8 +251,8 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_261.f \
      test2010_29.f \
      test2010_30.f \
-     test2010_63.f \
-     test2010_64.f
+     test2010_68.f \
+     test2010_69.f
 
 F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_30.f03 \
@@ -344,6 +343,14 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_48.f90 \
      test2010_51.f90 \
      test2010_65.f90 \
+     test2010_66.f90 \
+     test2010_67.f90 \
+     test2010_71.f90 \
+     test2010_72.f90 \
+     test2010_73.f90 \
+     test2010_78.f90 \
+     test2010_79.f90 \
+     test2010_80.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -372,7 +379,10 @@ F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2010_54.f \
      test2010_55.f \
      test2010_56.f \
-     test2010_57.f 
+     test2010_57.f \
+     test2010_68.f \
+     test2010_69.f \
+     test2010_70.f 
 
 F03_TESTCODES_CURRENTLY_FAILING = \
      test2007_18.f03 \
@@ -380,7 +390,11 @@ F03_TESTCODES_CURRENTLY_FAILING = \
      test2007_172.f03 \
      test2007_173.f03 \
      test2007_180.f03 \
-     test2010_27.f03
+     test2010_27.f03 \
+     test2010_74.f03 \
+     test2010_75.f03 \
+     test2010_76.f03 \
+     test2010_77.f03
 
 
 noinst_headers =
@@ -444,7 +458,6 @@ TEST_F03_Objects = ${ALL_F03_TESTCODES:.f03=.o}
 
 PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
 
-# if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 # Go back and build the translator we are using to test Fortran (in case make check 
@@ -499,7 +512,7 @@ $(TEST_F03_Objects): ../../testTranslator ../../testGraphGeneration
 	@touch $@
 
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
-testParser:../../testParser
+testParser: ../../testParser
 	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2007_01.f90
 
 
@@ -577,13 +590,32 @@ testOFP:
 # DQ (10/18/2010): Test suggested from bug reported by Carlo Bertolli at Imperial.
 testCPP_Defines:
 #	Test source code with macro defined from the command line: e.g. "integer*PS  pe"
-	../../testTranslator $(ROSE_FLAGS) -DPS=8 inputUsingDefinesOnCommandline.F90
+	../../testTranslator $(ROSE_FLAGS) -DPS=8 $(srcdir)/inputUsingDefinesOnCommandline.F90
 
+testMPItypes:
+	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/ISO_C_BINDING.f03
+	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_types.f03
+	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_interfaces_test.f03
 
+# DQ (11/5/2010): This bug causes the unparsed second file to include a Fortran "include" statement (magically).
+# Note that the compilation will generate an error not caught by make since the use of "cat" will succeed.
+riceBug1: $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90
+	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90 || cat $(srcdir)/test2010_79.f90 rose_test2010_79.f90
+
+# DQ (11/5/2010): When unparsed, this file is missing the statement "i1 = 1" in the generated code.
+riceBug2:$(srcdir)/test2010_78.f90 $(srcdir)/test2010_80.f90
+	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90
+	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_80.f90
+	@echo "Source code to test2010_80.f90"
+	@cat $(srcdir)/test2010_80.f90
+	@echo "Generated code for rose_test2010_80.f90 (missing \"i1 = 1\""
+	@cat rose_test2010_80.f90
 
 tests:
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
+	@$(MAKE) testCPP_Defines
+	@$(MAKE) testMPItypes
 	@echo "***************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make tests rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
@@ -595,6 +627,8 @@ check-local:
 if !ROSE_USING_GFORTRAN_VERSION_4_0
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
+	@$(MAKE) testCPP_Defines
+	@$(MAKE) testMPItypes
 #	DQ (4/6/2010): This fails on Hudson, but I don't know why.
 #	@$(MAKE) testParser
 else
@@ -624,7 +658,7 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
    test2007_suffixTest_05.f03 test2007_suffixTest_06.F test2007_suffixTest_07.F90 test2007_suffixTest_08.F95 \
    test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08 \
    module_A_file.f90 module_B_file.f90 test2010_31_header.f90 test2010_50.h test2010_54.h test2010_55.h \
-   original_mpif.h
+   original_mpif.h inputUsingDefinesOnCommandline.F90
 
 # DQ (3/12/2010): Fortran 2008 tests from OFP
 # f08-tests
@@ -633,5 +667,6 @@ clean-local:
 	rm -f *.o rose_*.f* *.rmod
 	rm -f *.s *.mod rose_*.f rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 rose_*.f08 *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
 	rm -f rose_*.F rose_*.F77 rose_*.F90 rose_*.F95 rose_*.F03 rose_*.F08 test2007_suffixTest_0?_postprocessed.*
+	rm -f *_postprocessed.* 
 	rm -rf QMTest
 

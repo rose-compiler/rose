@@ -29,7 +29,6 @@ private:
    // ------------------------ array ------------------------------------
    // The array of callArray calls that need to be inserted
    std::map<SgVarRefExp*, RTedArray*> create_array_define_varRef_multiArray;
-   std::map<SgInitializedName*, RTedArray*> create_array_define_varRef_multiArray_stack;
    std::map<SgExpression*, RTedArray*> create_array_access_call;
    // remember variables that were used to create an array. These cant be reused for array usage calls
    std::vector<SgVarRefExp*> variablesUsedForArray;
@@ -42,11 +41,6 @@ private:
 
    // the following stores all variables that are created (and used e.g. in functions)
    // We need to store the name, type and intialized value
-   std::vector<SgInitializedName*> variable_declarations;
-public:
-   // We need to store the variables that are being accessed
-   std::vector<SgVarRefExp*> variable_access_varref;
-private:
    // map of expr ϵ { SgPointerDerefExp, SgArrowExp }, SgVarRefExp pairs
    // the deref expression must be an ancestor of the varref
    std::map<SgExpression*,SgVarRefExp*> variable_access_pointerderef;
@@ -55,10 +49,6 @@ private:
    std::map<SgExpression*,SgVarRefExp*> variable_access_arrowexp;
    std::map<SgExpression*,SgThisExp*> variable_access_arrowthisexp;
 
-   // Track pointer arithmetic, e.g. ++, --
-   std::vector< SgExpression* > pointer_movements;
-   // return statements that need to be changed
-   std::vector< SgReturnStmt*> returnstmt;
 
    // ------------------------ string -----------------------------------
    // handle call to functioncall
@@ -66,12 +56,9 @@ private:
    // calls to functions whose definitions we don't know, and thus, whose
    // signatures we must check at runtime
    std::vector<SgFunctionCallExp*> function_call_missing_def;
-   // function calls to free
-   std::vector< SgExpression* > frees;
    // function calls to realloc
    std::vector<SgFunctionCallExp*> reallocs;
 
-   std::vector<SgFunctionDefinition*> function_definitions;
 
    // what statements we need to bracket with enter/exit scope calls
    std::map<SgStatement*, SgNode*> scopes;
@@ -153,19 +140,11 @@ private:
     */
    bool isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* exp );
 
-   /**
-    * @return @c SgPointerType if @c type is a pointer type, reference to pointer
-    * type or typedef whose base type is a pointer type, and @c null otherwise.
-    */
-   SgPointerType* isUsableAsSgPointerType( SgType* type );
-   SgArrayType* isUsableAsSgArrayType( SgType* type );
-   SgReferenceType* isUsableAsSgReferenceType( SgType* type );
 
    SgType* resolveTypedefs( SgType* type );
    SgType* resolveReferencesAndTypedefs( SgType* type );
 
    bool isUsedAsLvalue( SgExpression* exp );
-   bool isInInstrumentedFile( SgNode* n );
    /// is n a basic block, if statement, [do]while, or for statement
    bool isNormalScope( SgNode* n );
    SgExpression* getExprBelowAssignment(SgExpression* exp);
@@ -190,15 +169,10 @@ private:
 
 
 
-   // Traverse all nodes and check properties
-   virtual void visit(SgNode* n);
-
+public:
    void insertMainCloseCall(SgStatement* main);
-   void populateDimensions( RTedArray* array, SgInitializedName* init, SgArrayType* type );
 
-   void visit_checkIsMain(SgNode* n);
    void visit_isArraySgInitializedName(SgNode* n);
-   void visit_isArraySgAssignOp(SgNode* n);
    void visit_isAssignInitializer(SgNode* n);
 
    void visit_isArrayPntrArrRefExp(SgNode* n);
@@ -227,8 +201,6 @@ private:
    std::pair<SgInitializedName*,SgVarRefExp*> getMinusMinusOp(SgMinusMinusOp* minus ,std::string str, SgVarRefExp* varRef);
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfPointerDeref(SgPointerDerefExp* dot, std::string str, SgVarRefExp* varRef);
 
-   int getDimension(SgInitializedName* initName);
-   int getDimension(SgInitializedName* initName,SgVarRefExp* varRef);
    SgVarRefExp* resolveToVarRefRight(SgExpression* expr);
    SgVarRefExp* resolveToVarRefLeft(SgExpression* expr);
    RtedSymbols* symbols;
@@ -243,21 +215,6 @@ private:
    bool isFunctionCallOnIgnoreList(std::string name);
    bool isFileIOFunctionCall(std::string name) ;
    SgExpression* getVariableLeftOfAssignmentFromChildOnRight(SgNode* n);
-
-
-
-   /// Visit delete operators, to track memory frees.
-   void visit_delete( SgDeleteExp* del );
-
-   /// Visit pointer assignments whose lhs is computed from the original value of
-   /// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
-   /// we say that such operations should not change the @e "Memory Chunk", i.e.
-   /// the array the pointer refers to.
-   void visit_pointer_movement( SgNode* node );
-   /// Insert calls to registerPointerChange.  Don't worry about checkMemReads,
-   /// those should be handled elsewhere (i.e. varref), but after the assignment,
-   /// even if the memory was readable, ensure we stayed within array bounds.
-   void insert_pointer_change( SgExpression* op );
 
    // simple scope handling
    std::string scope_name( SgNode* n);
@@ -301,12 +258,6 @@ private:
    void addFileIOFunctionCall(SgVarRefExp* n, bool read);
    void insertCheckIfThisNull(SgThisExp* texp);
 
-public:
-   void visit_isSgVarRefExp(SgVarRefExp* n);
-private:
-   void visit_isSgPointerDerefExp(SgPointerDerefExp* n);
-   void visit_isSgArrowExp(SgArrowExp* n);
-
 
    std::string removeSpecialChar(std::string str);
    bool traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt);
@@ -341,6 +292,7 @@ public:
    // PUBLIC FUNCTIONS ------------------------------------------------------------
    // Insert Header Files
    void insertProlog(SgProject* proj);
+   void visit(SgNode* node) {};
 
    // analyse file and apply necessary (call) transformations
    void transform(SgProject* project, std::set<std::string> &rtedfiles);
@@ -389,8 +341,49 @@ public:
 
    void executeTransformations();
    void insertNamespaceIntoSourceFile(  SgProject* project, std::vector<SgClassDeclaration*> &traverseClasses);
-   void performInheritedSynthesizedTraversal(SgProject* project);
 
+   void populateDimensions( RTedArray* array, SgInitializedName* init, SgArrayType* type );
+   int getDimension(SgInitializedName* initName);
+   int getDimension(SgInitializedName* initName,SgVarRefExp* varRef);
+   void visit_checkIsMain(SgNode* n);
+
+   void visit_isSgVarRefExp(SgVarRefExp* n, bool isRightBranchOfBinaryOp, bool thinkItsStopSearch);
+   void visit_isSgArrowExp(SgArrowExp* n);
+   void visit_isSgPointerDerefExp(SgPointerDerefExp* n);
+   /// Visit delete operators, to track memory frees.
+   void visit_delete( SgDeleteExp* del );
+
+   /// Visit pointer assignments whose lhs is computed from the original value of
+   /// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
+   /// we say that such operations should not change the @e "Memory Chunk", i.e.
+   /// the array the pointer refers to.
+   void visit_pointer_movement( SgNode* node );
+   /// Insert calls to registerPointerChange.  Don't worry about checkMemReads,
+   /// those should be handled elsewhere (i.e. varref), but after the assignment,
+   /// even if the memory was readable, ensure we stayed within array bounds.
+   void insert_pointer_change( SgExpression* op );
+
+   // We need to store the variables that are being accessed
+   std::map<SgInitializedName*, RTedArray*> create_array_define_varRef_multiArray_stack;
+   std::vector<SgVarRefExp*> variable_access_varref;
+   std::vector<SgInitializedName*> variable_declarations;
+   std::vector<SgFunctionDefinition*> function_definitions;
+   // function calls to free
+   std::vector< SgExpression* > frees;
+   // return statements that need to be changed
+   std::vector< SgReturnStmt*> returnstmt;
+   // Track pointer arithmetic, e.g. ++, --
+   std::vector< SgExpression* > pointer_movements;
+
+   /**
+    * @return @c SgPointerType if @c type is a pointer type, reference to pointer
+    * type or typedef whose base type is a pointer type, and @c null otherwise.
+    */
+   SgPointerType* isUsableAsSgPointerType( SgType* type );
+   SgArrayType* isUsableAsSgArrayType( SgType* type );
+   SgReferenceType* isUsableAsSgReferenceType( SgType* type );
+   bool isInInstrumentedFile( SgNode* n );
+   void visit_isArraySgAssignOp(SgNode* n);
 };
 
 

@@ -12,7 +12,7 @@ static int profileLevel=1;
 
 /**** Constructors & Destructors ****/
 ConstrGraph::ConstrGraph(bool initialized) : 
-	scalars(*(new varIDSet())), arrays(*(new varIDSet())), func()
+	arrays(*(new varIDSet())), scalars(*(new varIDSet())), func()
 {
 	constrChanged=false;
 	
@@ -110,7 +110,7 @@ ConstrGraph::ConstrGraph(Function func, const map<pair<string, void*>, FiniteVar
 }
 
 ConstrGraph::ConstrGraph(const varIDSet& scalars, const varIDSet& arrays, bool initialized) : 
-	scalars(*(new varIDSet(scalars))), arrays(*(new varIDSet(arrays))), func()
+	arrays(*(new varIDSet(arrays))), scalars(*(new varIDSet(scalars))), func()
 {
 	constrChanged=false;
 	
@@ -498,7 +498,7 @@ bool ConstrGraph::updateFromScalarExternals(ConstrGraph* tgtCG, string annotName
 		
 		// If the current scalar does have an associated external 
 		affineInequality* ineqThis;
-		if(ineqThis = getVal(extVarThis, origVar))
+		if((ineqThis = getVal(extVarThis, origVar)))
 		{
 			// Iterate through constraints in tgtCG and update extVar's constraints in tgtCG
 			for(map<varID, map<varID, affineInequality> >::iterator itX = tgtCG->vars2Value.begin();
@@ -558,6 +558,7 @@ bool ConstrGraph::updateFromScalarExternals(ConstrGraph* tgtCG, string annotName
 			}
 		}
 	}
+  return modified;
 }
 
 // Returns a reference to the constraint graph's set of scalars
@@ -2265,7 +2266,7 @@ bool ConstrGraph::assign(varID x, varID y, int a, int b, int c)
 		for(map<varID, map<varID, affineInequality> >::iterator iterI = vars2Value.begin(); 
 		    iterI != vars2Value.end(); iterI++)
 		{
-			const varID& i = iterI->first;
+			//const varID& i = iterI->first;
 			/* // don't update the connection between x and its divisibility variable
 			if(i == divX) continue;*/
 				
@@ -2305,7 +2306,7 @@ bool ConstrGraph::assign(varID x, varID y, int a, int b, int c)
 		map<varID, affineInequality>& xMap = vars2Value[x];
 		for(map<varID, affineInequality>::iterator iterZ = xMap.begin(); iterZ != xMap.end(); iterZ++)
 		{
-			const varID& z = iterZ->first;
+			//const varID& z = iterZ->first;
 			/* // don't update the connection between x and its divisibility variable
 			if(z == divX) continue;*/
 				
@@ -2495,7 +2496,7 @@ bool ConstrGraph::assertCond(const varID& x, const varID& y, int a, int b, int c
 	{
 		modified = setVal(x, y, a, b, c) || modified;
 		
-		affineInequality* constrV1V2 = getVal(x, y);
+		//affineInequality* constrV1V2 = getVal(x, y);
 		//printf("x=%s, y=%s, constrXY=%p\n", x.str().c_str(), y.str().c_str(), constrV1V2);
 	}
 	
@@ -2816,7 +2817,7 @@ ConstrGraph::geIterator::geIterator(const ConstrGraph* parent, const varID& y): 
 
 ConstrGraph::geIterator::geIterator(const ConstrGraph* parent, const varID& y,
            const map<varID, map<varID, affineInequality> >::iterator& curX,
-           const map<varID, affineInequality>::iterator& curY): parent(parent), y(y), curX(curX), curY(curY)
+           const map<varID, affineInequality>::iterator& curY): parent(parent), curX(curX), curY(curY), y(y)
 {
 	isEnd = false;
 }
@@ -3498,7 +3499,7 @@ cout << "    Pre-closure: \n" << str("    ") << "\n";
 									constrZY && constrZY->getLevel()==affineInequality::constrKnown)
 								{
 									numInfers++;
-									affineInequality inferredXY(*constrXZ, *constrZY/*, x==zeroVar, y==zeroVar/*, 
+									affineInequality inferredXY(*constrXZ, *constrZY/*, x==zeroVar, y==zeroVar, 
 									                            dynamic_cast<DivLattice*>(divL->getVarLattice(func, x)), 
 									                            dynamic_cast<DivLattice*>(divL->getVarLattice(func, y)), z*/);
 									//affineInequality *constrXY = getVal(x, y);
@@ -3545,7 +3546,7 @@ cout << "    Pre-closure: \n" << str("    ") << "\n";
 	}
 	numFeasibleChecks++;
 	// look for cycles
-	quad r = isFeasible();
+	//quad r = isFeasible();
 	
 	// Reset the variable modification state
 	modifiedVars.clear();
@@ -3843,7 +3844,7 @@ cout << str("    ") << "\n";
 							
 							if(constrTgtX && constrTgtX->getLevel()==affineInequality::constrKnown)
 							{
-								affineInequality inferredTgtY(*constrTgtX, *constrXY/*, tgtVar==zeroVar, y==zeroVar, affineInequality::posZero, getVarSign(y)/*,
+								affineInequality inferredTgtY(*constrTgtX, *constrXY/*, tgtVar==zeroVar, y==zeroVar, affineInequality::posZero, getVarSign(y),
 								                              dynamic_cast<DivLattice*>(divL->getVarLattice(func, tgtVar)), 
 									                           dynamic_cast<DivLattice*>(divL->getVarLattice(func, y)), x*/);
 								affineInequality* constrTgtY = getVal(tgtVar, y);
@@ -3902,7 +3903,7 @@ cout << str("    ") << "\n";
 	
 							if(constrYTgt && constrYTgt->getLevel()==affineInequality::constrKnown)
 							{
-								affineInequality inferredXTgt(*constrXY, *constrYTgt/*, x==zeroVar, tgtVar==zeroVar, getVarSign(x), affineInequality::posZero/*,
+								affineInequality inferredXTgt(*constrXY, *constrYTgt/*, x==zeroVar, tgtVar==zeroVar, getVarSign(x), affineInequality::posZero,
 								                              dynamic_cast<DivLattice*>(divL->getVarLattice(func, x)), 
 									                           dynamic_cast<DivLattice*>(divL->getVarLattice(func, tgtVar)), y*/);
 								affineInequality* constrXTgt = getVal(x, tgtVar);
@@ -3967,7 +3968,7 @@ cout << str("    ") << "\n";
 	numFeasibleChecks++;
 	
 	// look for any cycles that go through arrays
-	quad r = isFeasible();
+	//quad r = isFeasible();
 	//if(r!=1) break;
 		
 	if(profileLevel>=1)

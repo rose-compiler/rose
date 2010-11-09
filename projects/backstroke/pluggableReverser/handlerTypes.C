@@ -1,7 +1,9 @@
 #include "handlerTypes.h"
-#include "eventHandler.h"
+#include "eventProcessor.h"
 #include <boost/foreach.hpp>
-#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/cppDefinesAndNamespaces.h"
+
+using namespace std;
 
 const std::vector<EvaluationResult>& EvaluationResult::getChildResults() const
 {

@@ -11,8 +11,9 @@ class StateSavingStatementHandler : public StatementReversalHandler
 	//! Check if this handler can handle the given statement.
 	bool checkStatement(SgStatement* stmt) const;
 
-	//! Get all modified variables from the given statement.
-	std::vector<VariableRenaming::VarName> getAllModifiedVariables(SgStatement* stmt);
+	//! Get all modified variables from the given statement. Note the returned defs don't contain variables
+	//! declared inside of this statement, and if one variable is a member of another one, we just include the latter one.
+	std::vector<VariableRenaming::VarName> getAllDefsAtNode(SgNode* node);
 public:
     StateSavingStatementHandler() { name_ = "State Saving Statement Handler"; }
 
