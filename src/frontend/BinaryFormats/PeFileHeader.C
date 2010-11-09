@@ -567,15 +567,40 @@ SgAsmPEFileHeader::create_table_sections()
         /* Create the new section */
         SgAsmGenericSection *tabsec = NULL;
         switch (i) {
-            case 0:
-                tabsec = new SgAsmPEExportSection(this);
+            case 0: {
+                /* Sometimes export sections are represented by a ".edata" section, and sometimes they're represented by an
+                 * RVA/Size pair, and sometimes both point to the same part of the file. We don't want the exports duplicated
+                 * in the AST, so we only parse this table as exports if we haven't already seen some other export section. */
+                SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
+                bool seen_exports = false;
+                for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); !seen_exports && si!=sections.end(); ++si)
+                    seen_exports = isSgAsmPEExportSection(*si);
+                if (seen_exports) {
+                    tabsec = new SgAsmGenericSection(get_file(), this);
+                } else {
+                    tabsec = new SgAsmPEExportSection(this);
+                }
                 break;
-            case 1:
-                tabsec = new SgAsmPEImportSection(this);
+            }
+            case 1: {
+                /* Sometimes import sections are represented by a ".idata" section, and sometimes they're represented by an
+                 * RVA/Size pair, and sometimes both point to the same part of the file.  We don't want the imports duplicated
+                 * in the AST, so we only parse this table as imports if we haven't already seen some other import section. */
+                SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
+                bool seen_imports = false;
+                for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); !seen_imports && si!=sections.end(); ++si)
+                    seen_imports = isSgAsmPEImportSection(*si);
+                if (seen_imports) {
+                    tabsec = new SgAsmGenericSection(get_file(), this);
+                } else {
+                    tabsec = new SgAsmPEImportSection(this);
+                }
                 break;
-            default:
+            }
+            default: {
                 tabsec = new SgAsmGenericSection(get_file(), this);
                 break;
+            }
         }
         tabsec->set_name(new SgAsmBasicString(tabname));
         tabsec->set_synthesized(true);
@@ -738,22 +763,20 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
     /* Write unreferenced areas back to the file before anything else. */
     unparse_holes(f);
     
-    /* Write the PE section table and, indirectly, the sections themselves. */
-    if (p_section_table)
-        p_section_table->unparse(f);
-
-    /* Write sections that are pointed to by the file header */
-    if (p_coff_symtab) {
-        ROSE_ASSERT(p_e_coff_symtab == p_coff_symtab->get_offset());
-        ROSE_ASSERT(p_e_coff_nsyms == p_coff_symtab->get_nslots());
-        p_coff_symtab->unparse(f);
+    /* Write sections in the order of specialization, from least specialized to most specialized. This gives more specialized
+     * sections a chance to overwrite the less specialized sections. */
+    const SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
+    for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
+        if (V_SgAsmGenericSection==(*si)->variantT())
+            (*si)->unparse(f);
     }
-    
-    /* Write the sections from the header RVA/size pair table. */
-    for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
-        SgAsmGenericSection *sizepair_section = p_rvasize_pairs->get_pairs()[i]->get_section();
-        if (sizepair_section)
-            sizepair_section->unparse(f);
+    for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
+        if (V_SgAsmPESection==(*si)->variantT())
+            (*si)->unparse(f);
+    }
+    for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
+        if (V_SgAsmGenericSection!=(*si)->variantT() && V_SgAsmPESection!=(*si)->variantT())
+            (*si)->unparse(f);
     }
 
     /* Encode the "NT Optional Header" before the COFF Header since the latter depends on the former. Adjust the COFF Header's

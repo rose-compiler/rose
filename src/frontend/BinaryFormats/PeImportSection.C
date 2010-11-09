@@ -156,18 +156,22 @@ bool
 SgAsmPEImportSection::reallocate()
 {
     bool reallocated = SgAsmPESection::reallocate();
-    rose_addr_t need = 0;
+    rose_rva_t end_rva(this->get_mapped_preferred_rva(), this);
+    SgAsmPEImportDirectoryPtrList &dirlist = get_import_directories()->get_vector();
 
     /* Space needed for the import directories. The list is terminated with a zero entry. */
-    size_t nimports = get_import_directories()->get_vector().size();
-    need += (1 + nimports) * sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);
+    size_t nimports = dirlist.size();
+    end_rva.increment((1 + nimports) * sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk));
+
+    /* Space needed for the data of each import directory. */
+    for (size_t i=0; i<nimports; i++)
+        end_rva.increment(dirlist[i]->reallocate(end_rva));
 
     /* Adjust the section size */
+    rose_addr_t need = end_rva.get_rel();
     if (need < get_size()) {
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
+        if (is_mapped())
             set_mapped_size(need);
-        }
         set_size(need);
         reallocated = true;
     } else if (need > get_size()) {
@@ -182,6 +186,14 @@ SgAsmPEImportSection::reallocate()
 void
 SgAsmPEImportSection::unparse(std::ostream &f) const
 {
+#if 1 /* DEBUGGING [RPM 2010-11-09] */
+    {
+        uint8_t byte = 0;
+        for (size_t i=0; i<get_size(); i++)
+            write(f, i, 1, &byte);
+    }
+#endif
+
     unparse_holes(f);
 
     /* Import Directory Entries and all they point to (even in other sections) */

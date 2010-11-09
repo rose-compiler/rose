@@ -2674,6 +2674,7 @@ HEADER_PE_IMPORT_DIRECTORY_START
 			ctor(isec, dll_name);
 		}
 		SgAsmPEImportDirectory *parse(rose_addr_t va);
+		size_t reallocate(rose_rva_t starting_rva);
 		void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
 		virtual void unparse(std::ostream&, const SgAsmPEImportSection*, size_t idx) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
@@ -2730,6 +2731,7 @@ HEADER_PE_IMPORT_LOOKUP_TABLE_START
 		size_t add_name(const std::string &name, size_t hint=0, size_t idx=(size_t)(-1));
 		size_t add_address(rose_rva_t rva, size_t idx=(size_t)(-1));
 
+		size_t reallocate(rose_rva_t start_rva);
 		virtual void unparse(std::ostream&, const SgAsmPEFileHeader*, rose_rva_t) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
 	private:
@@ -2750,6 +2752,7 @@ HEADER_PE_IMPORT_HNT_ENTRY_START
 			ctor(ilt_entry, name);
 		}
 		SgAsmPEImportHNTEntry *parse(rose_rva_t);
+		size_t encoded_size();
 		void unparse(std::ostream&, rose_rva_t rva) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:

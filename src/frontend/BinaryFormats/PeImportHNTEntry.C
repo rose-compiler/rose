@@ -68,6 +68,15 @@ SgAsmPEImportHNTEntry::parse(rose_rva_t rva)
     return this;
 }
 
+/** Returns the number of bytes needed to encode this Hint/Name table entry. */
+size_t
+SgAsmPEImportHNTEntry::encoded_size()
+{
+    return (2 +                                                 // 16-bit hint
+            ALIGN_UP(get_name()->get_string().size()+1, 2)      // NUL terminated and padded name
+            );
+}
+
 void
 SgAsmPEImportHNTEntry::unparse(std::ostream &f, rose_rva_t rva) const
 {

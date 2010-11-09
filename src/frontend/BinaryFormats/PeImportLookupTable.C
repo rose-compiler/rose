@@ -166,6 +166,36 @@ SgAsmPEImportLookupTable::add_address(rose_rva_t rva, size_t idx/*=-1*/)
     return add_entry(ilt_entry, idx);
 }
 
+/** Allocates space for this import lookup table.  Space is allocated beginning at the specified @p start_rva. Space is
+ *  (re)allocated for Hint/Name table entries if the entry is not allocated or if its rose_rva_t points to the same section as
+ *  start_rva points to.  Returns the number of bytes allocated. */
+size_t
+SgAsmPEImportLookupTable::reallocate(rose_rva_t start_rva)
+{
+    rose_rva_t end_rva = start_rva;
+    SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
+    ROSE_ASSERT(fhdr);
+    
+    SgAsmPEImportILTEntryPtrList &entries = get_entries()->get_vector();
+    end_rva.increment(fhdr->get_word_size() + (entries.size() + 1)); /* zero terminated */
+
+    /* Some ILT entries might point to Hint/Name pairs in the Hint/Name Table. The Hint/Name Table will be allocated
+     * immediately after the ILT entries, if necessary. */
+    for (size_t i=0; i<entries.size(); i++) {
+        SgAsmPEImportILTEntry *ilt_entry = entries[i];
+        if (SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA==ilt_entry->get_entry_type()) {
+            SgAsmPEImportHNTEntry *hnt_entry = ilt_entry->get_hnt_entry();
+            if (0==ilt_entry->get_hnt_entry_rva().get_rva() ||
+                ilt_entry->get_hnt_entry_rva().get_section()==end_rva.get_section()) {
+                ilt_entry->set_hnt_entry_rva(end_rva);
+                end_rva.increment(hnt_entry->encoded_size());
+            }
+        }
+    }
+
+    return end_rva.get_rva() - start_rva.get_rva();
+}
+
 void
 SgAsmPEImportLookupTable::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr, rose_rva_t rva) const
 {
