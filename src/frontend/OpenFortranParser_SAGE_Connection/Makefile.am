@@ -1,8 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# DQ (3/13/2010): Moved OFP specific source files to src/3rdPartyLibraries/fortran-parser
-# These are automatically extracted from the OFP jar file.
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
+# DQ (11/3/2010): Include the jni.h file by specifying the location explicitly. Note that
+# on systems where the "jni.h" file is installed in the gcc includes
+# (e.g. at LLNL in: /nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/include/jni.h)
+# this will not prevent the wrong jni.h from being included.
+# INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection -I${top_builddir}/src/3rdPartyLibraries/fortran-parser $(JAVA_JVM_INCLUDE)
 
 EXTRA_DIST = CMakeLists.txt preproc-fortran.ll preproc-fortran-fixed.ll
 DISTCLEANFILES = preproc-fortran.cc preproc-fortran-fixed.cc

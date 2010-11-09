@@ -25,10 +25,10 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::emptyRenameTable;
 VariableRenaming::NumNodeRenameEntry VariableRenaming::emptyRenameEntry;
 
 //Printing functions
-std::string VariableRenaming::keyToString(VarName vec)
+std::string VariableRenaming::keyToString(const VarName& vec)
 {
     std::string name = "";
-    foreach(VarName::value_type& iter, vec)
+    foreach(const VarName::value_type& iter, vec)
     {
         if(iter != vec.front())
         {
@@ -250,7 +250,7 @@ bool VariableRenaming::isFromLibrary(SgNode* node)
 {
   Sg_File_Info* fi = node->get_file_info();
   if (fi->isCompilerGenerated())
-    return true;
+      return true;
   string filename = fi->get_filenameString();
   //cout << "Filename string '" << filename << "' for " << node->class_name() << node << endl;
   if ((filename.find("include") != std::string::npos))
@@ -258,7 +258,6 @@ bool VariableRenaming::isFromLibrary(SgNode* node)
       //cout << "Found 'include' in string." << endl;
       return true;
   }
-
   return false;
 }
 
@@ -2690,6 +2689,11 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalDefsForSubtree
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtScopeEnd(SgScopeStatement* bb)
 {
+	if (isSgFunctionDefinition(bb))
+	{
+		bb = isSgFunctionDefinition(bb)->get_body();
+	}
+
 	ROSE_ASSERT(bb);
     NumNodeRenameTable result;
 
