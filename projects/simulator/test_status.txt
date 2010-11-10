@@ -36,7 +36,7 @@ syscall_tst.133 no
 syscall_tst.140.1 yes
 syscall_tst.140.2 yes
 syscall_tst.265 yes
-syscall_tst.271 no
+syscall_tst.271 yes
 syscall_tst.30 no
 syscall_tst.33.1 yes
 syscall_tst.33.2 yes
