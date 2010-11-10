@@ -27,9 +27,14 @@ namespace VirtualCFG {
   CFGNode::CFGNode(SgNode* node, unsigned int index): node(node), index(index) {
 #ifndef _MSC_VER 
     assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
-
-    if (!(node && index <= node->cfgIndexForEnd())) {
-      warnx ("created CFGNode with illegal index");
+   
+    // Liao 11/8/2010, defUseAnalysis/DefUseAnalysis_perFunction.cpp calls CFGNode(NULL, 0), which triggers the warning unnecessarily
+    //if (!(node && index <= node->cfgIndexForEnd())) {
+    if (node && (index > node->cfgIndexForEnd())) {
+      warnx ("created CFGNode with illegal index:");
+      cout<<"index = " << index <<" while max index is:"<< node->cfgIndexForEnd() <<endl;
+      SageInterface::dumpInfo(node);
+      assert (false);
     }
 #endif
   }
