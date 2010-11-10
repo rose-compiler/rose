@@ -23,6 +23,45 @@ echo "ROSE_TEST_RTED_PATH               = ${ROSE_TEST_RTED_PATH}"
 echo "ROSE_TEST_OPENGL_PATH             = ${ROSE_TEST_OPENGL_PATH}"
 echo "*******************************************************************"
 
+# *********************************************************************
+# WINDOWS SPECIFIC CODE: tps 07/14/2010. Second part at end of file
+# Before we start k hudson jobs, we check for a file in nfs/casc/..../ROSE/git
+# if the file does not exist we create it with a value > 0
+# If the file contains any value > 0 we start the Windows test and set the value to 0
+# Otherwise we do not start the Windows test. In this way the Windows test is started once.
+# 
+# At the end of the file we check the return value from Windows.
+# Only if the return value is 1 then Windows has passed with success.
+# To make sure that only the job starting WINDOWS is checkinng for the return value
+# we use the variable jobstartingwin to check.
+# 
+export win_file=/nfs/casc/overture/ROSE/git/rose_win_test.rose
+echo "Testing weather Windows test has started. Start only once!"
+jobstartingwin=0
+if [ -e $win_file ]
+then
+    echo "Found file $win_file"
+else
+    echo "Creating $win_file"
+    echo 5 > $win_file
+fi
+
+cat ${win_file} | \
+while read -a num 
+do
+if [ "${num[0]}" == "0" ]; then
+    echo "Windows test has already started."
+else
+    echo 0 > $win_file
+    jobstartingwin=1
+    echo "Starting Windows test."
+#starting Windows process
+    curl http://hudson-rose.llnl.gov:8080/job/ROSE-Windows-from-scratch/build?token=WIN
+fi
+done
+#
+# *********************************************************************
+
 
 # Output the name of the machine where the build is being run (helpful for debugging).
 machine_name=`uname -n`
@@ -157,9 +196,9 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
 	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-qt=${ROSE_TEST_QT_PATH} --with-roseQt --with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
 # tps (10/19/10) : opengl has not been tested for a year and the binary tests in place are failing because the infrastructure has changed.
 #       for now I have disabled openGL testing but the way to turn it on is to specify --enable-openGL
-#	if test "x$ROSE_TEST_GCC_VERSION" = "x4.1.2" ; then
+	if test "x$ROSE_TEST_GCC_VERSION" = "x4.1.2" ; then
 		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch"
-#	fi
+	fi
 fi
 
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
@@ -319,10 +358,6 @@ echo "**************************************************************************
 # Known unresolved issues:
 #  - RTED test failures due to obsolete STL headers used in test suite
 #  - Unparser generates (C++ and Fortran) code that is incompatible with these compilers
-# Liao 11/4/2010, we allow minimal configuration to test all GCC versions
-#  if (minimal or (full && !(4.3.2 or 4.4.1)) )
-#if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" -o \( "x$ROSE_TEST_BUILD_STYLE" = "xfull" -a \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \)  \) \) ; then
-if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" -o \( "x$ROSE_TEST_BUILD_STYLE" = "xfull"   \) \) ; then
 #if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
 
    start_time_make_check_seconds="$(date +%s)"
@@ -428,7 +463,7 @@ if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" -o \( "x$ROSE_TEST_BUILD_STYLE
  # echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_minutes min $elapsed_make_distcheck_time_seconds sec"
    echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_seconds sec"
    echo "***********************************************************************************************************************"
-fi
+#fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 # echo "Disk usage report #5 (to support debugging when Hudson has a problem):"
@@ -437,9 +472,6 @@ fi
 # DQ (12/16/2009): This appears to work everywhere byt on the 4.3.2 systems, verify this.
 # Finally run the "make docs" test (on just the 4.2.4 version of gcc).
 #if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
-# Liao 11/4/2010, minimal tests should all pass make docs
-#if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" -o \( "x$ROSE_TEST_BUILD_STYLE" = "xfull" -a \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \)  \) \) ; then
-if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" -o \( "x$ROSE_TEST_BUILD_STYLE" = "xfull"  \) \) ; then
    echo "Starting make docs step (exit normally even if it fails so that we can debug the docs rule)"
  # Exit normally even if it fails so that we can debug the docs rule.
  # make -j${NUM_PROCESS:-$def_num_procs} docs || exit 0
@@ -472,7 +504,7 @@ if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" -o \( "x$ROSE_TEST_BUILD_STYLE
  # echo "Elapsed time for make docs test: $elapsed_make_docs_time_minutes min $elapsed_make_docs_time_seconds sec"
    echo "Elapsed time for make docs test: $elapsed_make_docs_time_seconds sec"
    echo "********************************************************************************************************"
-fi
+#fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 # echo "Disk usage report #6 (to support debugging when Hudson has a problem):"
@@ -500,6 +532,39 @@ echo "**************************************************************************
 #echo "**************************************************************************************************"
 #echo "Executing runTest for ROSE Project on: $machine_name start_time = $start_time end_time = $end_time"
 #echo "**************************************************************************************************"
+
+# **************************************************************
+# WINDOWS PART2: THIS SHOULD BE AT THE END OF THE FILE
+# Check Windows return value. See more explanation in top of file
+if [ $jobstartingwin -eq 1 ] 
+then
+echo "Testing result of Windows Hudson Test..."
+if [ -e $win_file ]
+then
+    echo "Found file $win_file"
+else
+    echo "File not found $win_file"
+    exit 3
+fi
+
+cat ${win_file} | \
+while read -a num 
+do
+if [ "${num[0]}" == "1" ]; then
+echo "Windows has passed the recent Hudson test"
+else
+echo "Windows has failed the recent Hudson test."
+echo "Please check the Windows Hudson test for its output to"
+echo "determine the exact error"
+#exit 3
+fi
+done
+
+# reset the windows test file to any value but 0 so that the next test will start
+echo 3 > $win_file
+echo "Done testing."
+fi 
+# **************************************************************
 
 
 
