@@ -862,8 +862,8 @@ HEADER_GENERIC_SECTION_START
 			SP_OTHER                	/* File-specified purpose other than any given in this enum */
 		};
 
-   // DQ (10/20/2010): Moved this function's definition to the source file.
-      SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr);
+		// DQ (10/20/2010): Moved this function's definition to the source file.
+		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr);
 
 		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
 		virtual ~SgAsmGenericSection();
@@ -872,8 +872,8 @@ HEADER_GENERIC_SECTION_START
 			const SgAsmGenericSectionPtrList&);
 		void grab_content();
 
-   // DQ (10/20/2010): Moved this function's definition to the source file.
-      virtual SgAsmGenericSection* parse();
+		// DQ (10/20/2010): Moved this function's definition to the source file.
+		virtual SgAsmGenericSection* parse();
 
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual bool reallocate() {return false;}
@@ -940,10 +940,8 @@ HEADER_GENERIC_SECTION_START
 		/* Convenience functions */
 		ExtentPair get_file_extent() const;		/* Returns get_offset() and get_size() */
 		ExtentPair get_mapped_preferred_extent() const; /* Returns get_mapped_preferred_rva() and get_mapped_size() */
+		bool align();					/* Increase file offset and mapping rva to satisfy constraints */
 
-		// PC (05/16/2010): Commented out as no definition exists
-		// bool is_content_writable() const;               /** Returns true if a contents are writable. i.e. local_data_pool!=NULL */
-		static std::string to_string(SgAsmGenericSection::SectionPurpose);
 	protected:
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
 
