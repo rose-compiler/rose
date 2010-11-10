@@ -139,15 +139,11 @@ SgAsmDOSFileHeader::update_from_rm_section()
         dos2 = isSgAsmDOSExtendedHeader(*si);
 
     /* Update DOS File Header with info about the real-mode text+data section. */
-    if (p_rm_section) {
-        p_e_header_paragraphs = (p_rm_section->get_offset() + 15) / 16;         /* rounded up to next paragraph */
-        p_e_total_pages = (p_rm_section->get_size()+511) / 512;                 /* rounded up to next page */
-        p_e_last_page_size = p_rm_section->get_size() % 512;
-    } else {
-        p_e_header_paragraphs = (dos1->get_size() + (dos2?dos2->get_size():0) + 15) / 16;
-        p_e_total_pages = 0;
-        p_e_last_page_size = 0;
-    }
+    size_t header_size = dos1->get_size() + (dos2 ? dos2->get_size() : 0);
+    size_t total_size =  header_size + (p_rm_section ? p_rm_section->get_size() : 0);
+    p_e_header_paragraphs = (header_size + 15) / 16;            /* rounded up to next paragraph */
+    p_e_total_pages = (total_size + 511) / 512;                 /* rounded up to next page */
+    p_e_last_page_size = total_size % 512;
 }
 
 /* Encode the DOS file header into disk format */
