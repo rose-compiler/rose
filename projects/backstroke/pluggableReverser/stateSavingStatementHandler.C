@@ -11,66 +11,6 @@ using namespace SageBuilder;
 using namespace SageInterface;
 using namespace std;
 
-
-#if 0
-
-/** Get the left most variable. For example, a.b returns a, a->b returns a. */
-SgVarRefExp* getMostLeftVariable(SgExpression* exp)
-{
-	if (SgVarRefExp* var_ref = isSgVarRefExp(exp))
-		return var_ref;
-	if (SgDotExp* dot_exp = isSgDotExp(exp))
-		return getMostLeftVariable(dot_exp->get_lhs_operand());
-	if (SgArrowExp* arrow_exp = isSgArrowExp(exp))
-		return getMostLeftVariable(arrow_exp->get_lhs_operand());
-	return NULL;
-}
-
-vector<SgExpression*> getAllModifiedVariables(SgStatement* stmt)
-{
-	vector<SgExpression*> modified_vars;
-
-	vector<SgExpression*> exps = BackstrokeUtility::querySubTree<SgExpression>(stmt);
-	foreach (SgExpression* exp, exps)
-	{
-		SgExpression* var = NULL;
-
-		if (SageInterface::isAssignmentStatement(exp))
-		{
-			var = isSgBinaryOp(exp)->get_lhs_operand();
-		}
-		else if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
-		{
-			var = isSgUnaryOp(exp)->get_operand();
-		}
-		else if (isSgFunctionCallExp(exp))
-		{
-			// This part should be refined.
-			ROSE_ASSERT(false);
-		}
-
-		if (var)
-		{
-			if (SgVarRefExp* var_ref = getMostLeftVariable(var))
-			{
-				// Get the declaration of this variable to see if it's declared inside of the given statement.
-				// In this case, we don't have to store this variable.
-				SgDeclarationStatement* decl = var_ref->get_symbol()->get_declaration()->get_declaration();
-				if (!isAncestor(stmt, decl))
-				{
-					// We store each variable once.
-					if (boost::find_if(modified_vars, bind(BackstrokeUtility::areSameVariable, _1, var)) == modified_vars.end())
-						modified_vars.push_back(var);
-				}
-			}
-		}
-	}
-
-	return modified_vars;
-}
-
-#endif
-
 vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefsAtNode(SgNode* node)
 {
 	vector<VariableRenaming::VarName> modified_vars;
