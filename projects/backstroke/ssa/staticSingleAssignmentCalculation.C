@@ -23,7 +23,7 @@ using namespace std;
 using namespace ssa_private;
 
 //Initializations of the static attribute tags
-string StaticSingleAssignment::varKeyTag = "rename_KeyTag";
+string StaticSingleAssignment::varKeyTag = "ssa_varname_KeyTag";
 SgInitializedName* StaticSingleAssignment::thisDecl = NULL;
 StaticSingleAssignment::VarName StaticSingleAssignment::emptyName;
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::emptyRenameTable;
@@ -86,7 +86,7 @@ void StaticSingleAssignment::run()
 			if (getDebug())
 				cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
 
-			uniqueTrav.traverse(func);
+			uniqueTrav.traverse(func->get_declaration());
 
 			if (getDebug())
 				cout << "Finished UniqueNameTraversal..." << endl;
@@ -94,7 +94,7 @@ void StaticSingleAssignment::run()
 			if (getDebug())
 				cout << "Running DefsAndUsesTraversal on function: " << SageInterface::get_name(func) << func << endl;
 
-			defUseTrav.traverse(func);
+			defUseTrav.traverse(func->get_declaration());
 
 			if (getDebug())
 				cout << "Finished DefsAndUsesTraversal..." << endl;
@@ -103,12 +103,12 @@ void StaticSingleAssignment::run()
 			foreach(VarName globalVar, globalVarList)
 			{
 				//Add this function definition as a definition point of this variable
-				originalDefTable[func][globalVar].push_back(func);
+				originalDefTable[func].insert(globalVar);
 			}
 
 			if (getDebug())
 				cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
-			runDefUse(func);
+			runDefUseDataFlow(func);
 		}
 	}
 }
@@ -162,13 +162,15 @@ void StaticSingleAssignment::insertGlobalVarDefinitions()
 		foreach(GlobalTable::value_type& entry, globalVarList)
 		{
 			//Add this function call as a definition point of this variable
-			originalDefTable[call][entry].push_back(call);
+			originalDefTable[call].insert(entry);
 		}
 	}
 }
 
-void StaticSingleAssignment::runDefUse(SgFunctionDefinition* func)
+void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 {
+	if (getDebug())
+		printOriginalDefTable();
 	//Keep track of visited nodes
 	boost::unordered_set<SgNode*> visited;
 
@@ -263,13 +265,14 @@ void StaticSingleAssignment::runDefUse(SgFunctionDefinition* func)
 	}
 }
 
-bool StaticSingleAssignment::defUse(FilteredCFGNode<IsDefUseFilter> node, bool *memberRefInserted, NodeVec &changedNodes)
+bool StaticSingleAssignment::defUse(cfgNode node, bool *memberRefInserted, NodeVec &changedNodes)
 {
 	SgNode* current = node.getNode();
 
 	//Handle each type of node
 	if (getDebug())
-		cout << "Performing DefUse on " << current->class_name() << ":" << current << endl;
+		cout << "Performing DefUse on " << 
+				current->class_name() << ", line " << current->get_file_info()->get_line() << ":" << current << endl;
 
 	bool defChanged = false;
 	bool defRefInserted = false;
@@ -279,7 +282,6 @@ bool StaticSingleAssignment::defUse(FilteredCFGNode<IsDefUseFilter> node, bool *
 	useChanged = resolveUses(node, &useRefInserted, changedNodes);
 
 	*memberRefInserted = useRefInserted;
-
 
 	if (getDebug())
 		cout << "Defs were " << ((defChanged) ? "changed." : "same.") << endl;
@@ -325,35 +327,23 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 	//Expand any member variable references at the current node.
 	*memberRefInserted = expandMemberDefinitions(curNode);
 
-	TableEntry propDefs;
+	TableEntry stagingPropagatedDefs;
 	//Retrieve the defs coming from previous cfgNodes
-	aggregatePreviousDefs(curNode, propDefs);
+	aggregatePreviousDefs(curNode, stagingPropagatedDefs);
 
 	//Replace every entry in staging table that has definition in original defs
 	//Also assign renaming numbers to any new definitions
-
-	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	foreach(const VarName& definedVar, originalDefTable[node])
 	{
 		//Replace the entry for this variable with the definitions at this node.
-		propDefs[entry.first] = entry.second;
+		stagingPropagatedDefs[definedVar].clear();
+		stagingPropagatedDefs[definedVar].push_back(node);
 
-		//Now, iterate the definition vector for this node
+		addRenameNumberForNode(definedVar, node);
 
-		foreach(NodeVec::value_type& defNode, entry.second)
-		{
-			//Assign a number to each new definition. The function will prevent duplicates
-			addRenameNumberForNode(entry.first, defNode);
-		}
-	}
-
-	//For every originalDef, insert expanded defs for any propagated defs
-	//that have an originalDef as a prefix
-	VarName expVar;
-
-	foreach(TableEntry::value_type& entry, originalDefTable[node])
-	{
-
-		foreach(TableEntry::value_type& propEntry, propDefs)
+		//Insert expanded defs for the original def, if any such expanded defs are in the staging set.
+		//Note that we only expand defs when actually needed.
+		foreach(TableEntry::value_type& propEntry, stagingPropagatedDefs)
 		{
 			//Don't insert a def if it is already originally defined.
 			if (originalDefTable[node].count(propEntry.first) != 0)
@@ -362,14 +352,14 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 			}
 			//If the original def is a prefix of the propogated def, add a def at this node
 			//Compare sizes to guard against inserting original def in expanded table
-			if (isPrefixOfName(propEntry.first, entry.first) && (propEntry.first.size() > entry.first.size()))
+			if (isPrefixOfName(propEntry.first, definedVar) && (propEntry.first.size() > definedVar.size()))
 			{
 				//Set this node as a definition point of the variable.
-				expandedDefTable[node][propEntry.first].assign(1, node);
+				expandedDefTable[node].insert(propEntry.first);
 				*memberRefInserted = true;
 				if (getDebugExtra())
 				{
-					cout << "Inserted expandedDef for [" << keyToString(propEntry.first) << "] with originalDef prefix [" << keyToString(entry.first) << "]" << endl;
+					cout << "Inserted expandedDef for [" << keyToString(propEntry.first) << "] with originalDef prefix [" << keyToString(definedVar) << "]" << endl;
 				}
 			}
 		}
@@ -377,42 +367,35 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 
 	//Replace every entry in staging table that has definition in expandedDefs
 	//Also assign renaming numbers to any new definitions
-
-	foreach(TableEntry::value_type& entry, expandedDefTable[node])
+	foreach(const VarName& definedVar, expandedDefTable[node])
 	{
-		propDefs[entry.first] = entry.second;
-
-		//Now, iterate the definition vector for this node
-
-		foreach(NodeVec::value_type& defNode, entry.second)
-		{
-			//Assign a number to each new definition. The function will prevent duplicates
-			addRenameNumberForNode(entry.first, defNode);
-		}
+		stagingPropagatedDefs[definedVar].clear();
+		stagingPropagatedDefs[definedVar].push_back(node);
+		
+		addRenameNumberForNode(definedVar, node);
 	}
 
 	//If there is an initial definition of a name at this node, we should insert it in the table
-
-	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	foreach(const VarName& definedVar, originalDefTable[node])
 	{
 		//If the given variable name is not present in the first def table
-		if (firstDefList.count(entry.first) == 0)
+		if (firstDefList.count(definedVar) == 0)
 		{
 			//Set this node as the first definition point of this variable.
-			firstDefList[entry.first] = node;
+			firstDefList[definedVar] = node;
 		}
 	}
 
 	if (getDebugExtra())
 	{
 		cout << "Local Defs replaced in propDefs ";
-		printDefs(propDefs);
+		printDefs(stagingPropagatedDefs);
 	}
 
 	//Now do a comparison to see if we should copy
-	if (propDefs != defTable[node])
+	if (stagingPropagatedDefs != defTable[node])
 	{
-		defTable[node] = propDefs;
+		defTable[node] = stagingPropagatedDefs;
 		changed = true;
 	}
 	else
@@ -436,21 +419,12 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 
 void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& results)
 {
-	//SgNode* node = curNode.getNode();
-
 	//Get the previous edges in the CFG for this node
 	cfgEdgeVec inEdges = curNode.inEdges();
 
 	if (inEdges.size() == 1)
 	{
 		SgNode* prev = inEdges[0].source().getNode();
-
-		/*
-		if(getDebug())
-		{
-			cout << "Merging defs from " << prev->class_name() << prev << " to " << node->class_name() << node << endl;
-			printDefs(prev);
-		}*/
 
 		//Copy the previous node defs to the staging table
 		results = defTable[prev];
@@ -461,13 +435,6 @@ void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& 
 		for (unsigned int i = 0; i < inEdges.size(); i++)
 		{
 			SgNode* prev = inEdges[i].source().getNode();
-
-			/*
-			if(getDebug())
-			{
-				cout << "Merging defs from " << prev->class_name() << prev << endl;
-				printDefs(prev);
-			}*/
 
 			//Perform the union of all the infoming definitions.
 			foreach(TableEntry::value_type& entry, defTable[prev])
@@ -485,15 +452,6 @@ void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& 
 		//Create new sequence of unique elements and remove duplicate ones
 		entry.second.resize(unique(entry.second.begin(), entry.second.end()) - entry.second.begin());
 	}
-
-	/*
-	if(getDebugExtra())
-	{
-		cout << "Merged propDefs ";
-		printDefs(results);
-	}*/
-
-	return;
 }
 
 bool StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
@@ -506,31 +464,30 @@ bool StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
 	{
 		cout << "Expanding member defs at " << node->class_name() << node << endl;
 		cout << "Original Node ";
-		printDefs(originalDefTable[node]);
+		printOriginalDefs(node);
 	}
 
 	//We want to iterate the vars defined on this node, and expand them
-
-	foreach(TableEntry::value_type& entry, originalDefTable[node])
+	foreach(const VarName& definedVar, originalDefTable[node])
 	{
 		if (getDebugExtra())
 		{
-			cout << "Checking [" << keyToString(entry.first) << "]" << endl;
+			cout << "Checking [" << keyToString(definedVar) << "]" << endl;
 		}
 
 		//Check if the variableName has multiple parts
-		if (entry.first.size() == 1)
+		if (definedVar.size() == 1)
 		{
 			continue;
 		}
 
 		//We are dealing with a multi-part variable, loop the entry and expand it
 		//Start at one so we don't get the same defs in the original and expanded defs
-		for (unsigned int i = 1; i < entry.first.size(); i++)
+		for (unsigned int i = 1; i < definedVar.size(); i++)
 		{
 			//Create a new varName vector that goes from beginning to end - i
 			VarName newName;
-			newName.assign(entry.first.begin(), entry.first.end() - i);
+			newName.assign(definedVar.begin(), definedVar.end() - i);
 
 			if (getDebugExtra())
 			{
@@ -541,7 +498,7 @@ bool StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
 			if (originalDefTable[node].count(newName) == 0 && expandedDefTable[node].count(newName) == 0)
 			{
 				//Insert the new name as being defined here.
-				expandedDefTable[node][newName] = NodeVec(1, node);
+				expandedDefTable[node].insert(newName);
 				changed = true;
 
 				if (getDebugExtra())
@@ -550,12 +507,6 @@ bool StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
 				}
 			}
 		}
-	}
-
-	if (getDebugExtra())
-	{
-		cout << "Expanded Node";
-		printDefs(expandedDefTable[node]);
 	}
 
 	return changed;
@@ -609,7 +560,6 @@ bool StaticSingleAssignment::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode
 	//def as the use for this node.
 
 	//Iterate every use at the current node
-
 	foreach(TableEntry::value_type& entry, useTable[node])
 	{
 		//If any of these uses are for a variable defined at this node, we will
@@ -737,8 +687,9 @@ bool StaticSingleAssignment::insertExpandedDefsForUse(cfgNode curNode, VarName n
 		{
 			//It is declared in class scope.
 			//Get our enclosing function definition to insert the first definition into.
-
-			SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
+			SgFunctionDeclaration* declaration = SageInterface::getEnclosingNode<SgFunctionDeclaration>(node);
+			ROSE_ASSERT(declaration != NULL);
+			SgFunctionDefinition* func = declaration->get_definition();
 			ROSE_ASSERT(func);
 
 			firstDefList[rootName] = func;
@@ -778,7 +729,7 @@ bool StaticSingleAssignment::insertExpandedDefsForUse(cfgNode curNode, VarName n
 
 		if (originalDefTable[firstDefList[rootName]].count(newName) == 0)
 		{
-			originalDefTable[firstDefList[rootName]][newName].push_back(firstDefList[rootName]);
+			originalDefTable[firstDefList[rootName]].insert(newName);
 			changed = true;
 			changedNodes.push_back(firstDefList[rootName]);
 			if (getDebugExtra())

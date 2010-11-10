@@ -1054,7 +1054,7 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 {
 	if (varRename->getDebug())
 	{
-		cout << "---------<" << node->class_name() << node << ">-------" << node << endl;
+		cout << "---------<" << node->class_name() << ", line" << node->get_file_info()->get_line() << ":" << node << ">-------" << node << endl;
 	}
 	//We want to propogate the def/use information up from the varRefs to the higher expressions.
 	if (isSgInitializedName(node))
@@ -1506,6 +1506,7 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted)
         propDefs[entry.first] = entry.second;
 
         //Now, iterate the definition vector for this node
+		ROSE_ASSERT(entry.second.size() == 1);
         foreach(NodeVec::value_type& defNode, entry.second)
         {
             //Assign a number to each new definition. The function will prevent duplicates
@@ -1531,6 +1532,7 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted)
             {
                 //Set this node as a definition point of the variable.
                 expandedDefTable[node][propEntry.first].assign(1,node);
+				ROSE_ASSERT(expandedDefTable[node][propEntry.first].size() == 1);
                 *memberRefInserted = true;
                 if(DEBUG_MODE_EXTRA)
                 {
@@ -1900,7 +1902,16 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
             //Get our enclosing function definition to insert the first definition into.
 
             SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
-            ROSE_ASSERT(func);
+
+			if (func == NULL)
+			{
+				//In this case, we're not inside the function defintion; we're inside the parameter list
+				SgFunctionDeclaration* declaration = SageInterface::getEnclosingNode<SgFunctionDeclaration>(node);
+				ROSE_ASSERT(declaration != NULL);
+				func = declaration->get_definition();
+			}
+
+			ROSE_ASSERT(func != NULL);
 
             firstDefList[rootName] = func;
         }
