@@ -33,7 +33,12 @@ syscall_sa.83 no
 syscall_sa.85 no
 syscall_tst.117 no
 syscall_tst.133 no
+syscall_tst.140.1 no
 syscall_tst.140.2 no
+syscall_tst.33.1 no
+syscall_tst.33.2 no
+syscall_tst.76.1 no
+syscall_tst.76.2 no
 syscall_tst.94.1 no
 syscall_tst.94.2 no
 syscall_tst_18 no

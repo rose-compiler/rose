@@ -2428,6 +2428,24 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 60: { /* 0x3C, umask */
+            /* mode_t umask(mode_t mask);
+
+               umask() sets the calling process’s file mode creation mask (umask) to mask & 0777.
+ 
+               This system call always succeeds and the previous value of the mask is returned.
+            */
+            syscall_enter("umask", "d");
+	    mode_t mode = arg(0);
+
+	    int result = syscall(60, mode); 
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	    }  
+
         case 64: { /*0x40, getppid*/
             syscall_enter("getppid", "");
             writeGPR(x86_gpr_ax, getppid());

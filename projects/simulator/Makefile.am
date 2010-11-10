@@ -43,6 +43,7 @@ TEST_SUPPORT_SRC = $(srcdir)/tests/parse_opts.c \
                    $(srcdir)/tests/rmobj.c \
                    $(srcdir)/tests/simple_test_looping.c \
                    $(srcdir)/tests/audit_parse_verify.c \
+                   $(srcdir)/tests/get_high_address.c \
                    $(srcdir)/tests/audit_parse_verify_utils.c \
                    $(srcdir)/tests/audit_utils.c
 
