@@ -74,8 +74,8 @@ class CDG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidire
 public:
 	typedef typename CFGType::CFGNodeType CFGNodeType;
 
-	typedef typename boost::graph_traits<CDG>::vertex_descriptor Vertex;
-	typedef typename boost::graph_traits<CDG>::edge_descriptor Edge;
+	typedef typename boost::graph_traits<CDG<CFGType> >::vertex_descriptor Vertex;
+	typedef typename boost::graph_traits<CDG<CFGType> >::edge_descriptor Edge;
 
 	//! The default constructor.
 	CDG() {}
@@ -113,6 +113,9 @@ template <class CFGType>
 void CDG<CFGType>::buildCDG(const CFGType& cfg)
 {
 	typedef typename CFGType::Vertex CFGVertexT;
+	
+	// Remove all nodes and edges first.
+	this->clear();
 
 	// First, build a reverse CFG.
 	CFGType rvsCfg = cfg.makeReverseCopy();
@@ -127,6 +130,12 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 
 	// Start to build the CDG.
 	std::map<CFGVertexT, Vertex> verticesAdded;
+
+	// Add the exit node into CDG since the dominance frontiers may not contain this node.
+
+	Vertex exit = boost::add_vertex(*this);
+	(*this)[exit] = cfg[cfg.getExit()];
+	verticesAdded.insert(std::make_pair(cfg.getExit(), exit));
 
 	typedef typename std::map<CFGVertexT, std::set<CFGVertexT> >::value_type VVS;
 	foreach (const VVS& vertices, domFrontiers)

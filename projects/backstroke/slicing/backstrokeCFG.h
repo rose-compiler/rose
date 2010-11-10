@@ -70,6 +70,7 @@ typedef CFG<VirtualCFG::InterestingNode,
 //		int getIndex() const;
 //		bool isInteresting() const;
 //		std::string toString() const;
+//		bool operator<(const CFGNodeType&);
 //	};
 //
 /********************************************************************/
@@ -97,8 +98,9 @@ public:
 	typedef CFGNodeT CFGNodeType;
 	typedef CFGEdgeT CFGEdgeType;
 
-	typedef typename boost::graph_traits<CFG>::vertex_descriptor Vertex;
-	typedef typename boost::graph_traits<CFG>::edge_descriptor Edge;
+	typedef typename boost::graph_traits<CFG<CFGNodeT, CFGEdgeT> > GraphTraits;
+	typedef typename GraphTraits::vertex_descriptor Vertex;
+	typedef typename GraphTraits::edge_descriptor Edge;
 
 	typedef std::map<Vertex, Vertex> VertexVertexMap;
 
@@ -118,16 +120,16 @@ public:
 	//! The default constructor.
 	CFG()
 	:	funcDef_(NULL),
-		entry_(boost::graph_traits<CFG>::null_vertex()),
-		exit_(boost::graph_traits<CFG>::null_vertex())
+		entry_(GraphTraits::null_vertex()),
+		exit_(GraphTraits::null_vertex())
 	{
 	}
 
 	//! The constructor building the CFG.
-	CFG(SgFunctionDefinition* funcDef)
+	explicit CFG(SgFunctionDefinition* funcDef)
 	:	funcDef_(funcDef),
-		entry_(boost::graph_traits<CFG>::null_vertex()),
-		exit_(boost::graph_traits<CFG>::null_vertex())
+		entry_(GraphTraits::null_vertex()),
+		exit_(GraphTraits::null_vertex())
 	{
 		build(funcDef);
 	}
@@ -231,14 +233,15 @@ template <class CFGNodeType, class CFGEdgeType>
 void CFG<CFGNodeType, CFGEdgeType>::build(SgFunctionDefinition* funcDef)
 {
 	ROSE_ASSERT(funcDef);
-
 	funcDef_ = funcDef;
-	this->clear();
 
 	// The following two variables are used to record the nodes traversed.
 	std::map<CFGNodeType, Vertex> nodesAdded;
 	std::set<CFGNodeType> nodesProcessed;
-	
+
+	// Remove all nodes and edges first.
+	this->clear();
+
 	buildCFG(funcDef->cfgForBeginning(), nodesAdded, nodesProcessed);
 
 	// Find the entry and exit of this CFG.
