@@ -365,6 +365,9 @@ void tst_res(int ttype, char *fname, char *arg_fmt, ...)
 
   Tst_range = 1;
   Expand_varargs = TRUE;
+ 
+  if(ttype == TFAIL ) exit(1);
+
 }
 
 

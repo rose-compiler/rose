@@ -37,10 +37,13 @@ x86sim_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #    TEST_INPUTS_RT  -- require linking with librt
 #    TEST_INPUTS_TS  -- use the TEST_SUPPORT library
 TEST_SUPPORT_SRC = $(srcdir)/tests/parse_opts.c \
+                   $(srcdir)/tests/tst_is_cwd.c \
+                   $(srcdir)/tests/tst_kvercmp.c \
                    $(srcdir)/tests/tst_res.c \
                    $(srcdir)/tests/tst_sig.c \
                    $(srcdir)/tests/tst_tmpdir.c \
                    $(srcdir)/tests/rmobj.c \
+                   $(srcdir)/tests/search_path.c \
                    $(srcdir)/tests/simple_test_looping.c \
                    $(srcdir)/tests/audit_parse_verify.c \
                    $(srcdir)/tests/get_high_address.c \
