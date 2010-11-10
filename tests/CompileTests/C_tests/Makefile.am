@@ -76,7 +76,7 @@ TESTCODE_CURRENTLY_FAILING = \
      test2010_05.c \
      Yarden_client.c
 
-noinst_headers = test2006_134.h test2010_08.h
+EXTRA_DIDST = test2006_134.h test2010_08.h
 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
