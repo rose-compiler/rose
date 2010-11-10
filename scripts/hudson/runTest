@@ -502,10 +502,6 @@ echo "**************************************************************************
 #echo "**************************************************************************************************"
 
 
-
-
-
-
 # DQ (2/12/2010): Added the ROSE version number to the base of the output
 echo "Version numbers of ROSE and the different parts of ROSE."
 make PrintRoseTranslatorVersion
