@@ -122,6 +122,7 @@ void syscall_success()
 
 	if ((fd = creat(filename, 0777)) == -1) {
 		tst_resm(TFAIL, "SOURCE FILE CREATION ERROR - %i", errno);
+                exit(1);
 	}
 
 	TEST(syscall(__NR_utimes, filename, &tvp));
@@ -157,6 +158,7 @@ void syscall_fail()
 	/* Check if syscall got expected return code. */
 	if (errno != EPERM) {
 		tst_resm(TFAIL, "Expected EPERM got %d", TEST_ERRNO);
+                exit(1);
 	} else {
 		tst_resm(TINFO, "utimes returned expected EPERM error");
 	}

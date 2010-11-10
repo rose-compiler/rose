@@ -125,6 +125,7 @@ void syscall_success()
 
 	if(( fd = open( dev,O_RDWR,0777 )) == -1 ){ 
 		tst_resm(TFAIL, "ERROR: Cannot open tty device  %s\n",dev);
+                exit(1);
 	}
 
 	TEST(syscall( __NR_ioctl, fd, TCGETA, &tio ));
@@ -147,6 +148,7 @@ void syscall_fail()
 
 	if ((fd = open(notty, O_CREAT, 0777)) == -1){
 		tst_resm(TFAIL, "ERROR: Cannot create file %s\n",notty);
+                exit(1);
 	}
 
 	TEST(syscall( __NR_ioctl, fd, TCGETA, &tio ));

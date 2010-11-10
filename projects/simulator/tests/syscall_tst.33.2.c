@@ -176,10 +176,12 @@ int main(int ac, char **av)
 						 "access((char *)-1,R_OK) failed with errno %d : %s but expected %d (EFAULT)",
 						 TEST_ERRNO,
 						 strerror(TEST_ERRNO), EFAULT);
+                                        exit(1);
 				}
 			} else {
 				tst_resm(TFAIL,
 					 "access((char *)-1,R_OK) succeeded unexpectedly.");
+                                exit(1);
 
 			}
 		}
@@ -212,10 +214,12 @@ int main(int ac, char **av)
 						 "access((char *)-1,W_OK) failed with errno %d : %s but expected %d (EFAULT)",
 						 TEST_ERRNO,
 						 strerror(TEST_ERRNO), EFAULT);
+                                        exit(1);
 				}
 			} else {
 				tst_resm(TFAIL,
-					 "access((char *)-1,W_OK) succeeded unexpectedly.");
+					 "access((char *)-1,W_OK) succeeded unexpectedly."); 
+                                exit(1);
 
 			}
 		}
@@ -248,10 +252,12 @@ int main(int ac, char **av)
 						 "access((char*)-1,X_OK) failed with errno %d : %s but expected %d (EFAULT)",
 						 TEST_ERRNO,
 						 strerror(TEST_ERRNO), EFAULT);
+                                        exit(1);
 				}
 			} else {
 				tst_resm(TFAIL,
 					 "access((char*)-1,X_OK) succeeded unexpectedly.");
+                                exit(1);
 
 			}
 		}
@@ -283,11 +289,13 @@ int main(int ac, char **av)
 					tst_resm(TFAIL,
 						 "access((char*)-1,F_OK) failed with errno %d : %s but expected %d (EFAULT)",
 						 TEST_ERRNO,
-						 strerror(TEST_ERRNO), EFAULT);
+						 strerror(TEST_ERRNO), EFAULT); 
+                                        exit(1);
 				}
 			} else {
 				tst_resm(TFAIL,
 					 "access((char*)-1,F_OK) succeeded unexpectedly.");
+                                exit(1);
 
 			}
 		}
@@ -319,11 +327,13 @@ int main(int ac, char **av)
 					tst_resm(TFAIL,
 						 "access((char*)sbrk(0)+1,R_OK) failed with errno %d : %s but expected %d (EFAULT)",
 						 TEST_ERRNO,
-						 strerror(TEST_ERRNO), EFAULT);
+						 strerror(TEST_ERRNO), EFAULT); 
+                                        exit(1);
 				}
 			} else {
 				tst_resm(TFAIL,
 					 "access((char*)sbrk(0)+1,R_OK) succeeded unexpectedly.");
+                                exit(1);
 
 			}
 		}

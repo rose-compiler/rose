@@ -129,6 +129,7 @@ int main(int ac, char **av)
 		if (TEST_RETURN == (loff_t) - 1) {
 			tst_resm(TFAIL, "llseek on (%s) Failed, errno=%d : %s",
 				 TEMP_FILE, TEST_ERRNO, strerror(TEST_ERRNO));
+                        exit(1);
 			continue;
 		}
 
@@ -145,6 +146,7 @@ int main(int ac, char **av)
 				tst_resm(TFAIL, "llseek() returned incorrect "
 					 "value %"PRId64", expected %d",
 					 (int64_t)offset, BUFSIZ);
+                                exit(1);
 				continue;
 			}
 
@@ -155,6 +157,7 @@ int main(int ac, char **av)
 			if (write(fildes, write_buff, BUFSIZ) != -1) {
 				tst_brkm(TFAIL, cleanup, "write successful "
 					 "after file size limit");
+                                exit(1);
 			}
 
 			/* Seeking to end of last valid write */
@@ -162,6 +165,7 @@ int main(int ac, char **av)
 			if (offset != (loff_t) BUFSIZ) {
 				tst_brkm(TFAIL, cleanup,
 					 "llseek under file size limit");
+                                exit(1);
 			}
 
 			/*
@@ -171,6 +175,7 @@ int main(int ac, char **av)
 			if (write(fildes, write_buff, BUFSIZ) != BUFSIZ) {
 				tst_brkm(TFAIL, cleanup, "write failed to "
 					 "write to file size limit");
+                           exit(1);
 			}
 
 			/*
@@ -179,6 +184,7 @@ int main(int ac, char **av)
 			if (write(fildes, write_buff, BUFSIZ) != -1) {
 				tst_brkm(TFAIL, cleanup, "write past file "
 					 "size limit successful");
+                                exit(1);
 			}
 
 			tst_resm(TPASS, "Functionality of llseek() on %s "
@@ -216,6 +222,8 @@ void setup()
 	act.sa_handler = SIG_IGN;
 	if (sigaction(SIGXFSZ, &act, NULL) == -1) {
 		tst_brkm(TFAIL, NULL, "sigaction() Failed to ignore SIGXFSZ");
+                exit(1);
+
 		tst_exit();
 	}
 
@@ -226,6 +234,8 @@ void setup()
 	if (getrlimit(RLIMIT_FSIZE, &rlp_orig) == -1) {
 		tst_brkm(TBROK, cleanup,
 			 "Cannot get max. file size using getrlimit");
+                exit(1);
+
 	}
 
 	/* Set limit low, argument is # bytes */
@@ -234,6 +244,8 @@ void setup()
 	if (setrlimit(RLIMIT_FSIZE, &rlp) == -1) {
 		tst_brkm(TBROK, cleanup,
 			 "Cannot set max. file size using setrlimit");
+                exit(1);
+
 	}
 
 	/* Creat/open a temporary file under above directory */
@@ -241,12 +253,16 @@ void setup()
 		tst_brkm(TBROK, cleanup,
 			 "open(%s, O_RDWR|O_CREAT, 0644) Failed, errno=%d :%s",
 			 TEMP_FILE, errno, strerror(errno));
+                exit(1);
+
 	}
 
 	/* Write data into temporary file */
 	if (write(fildes, write_buff, BUFSIZ) != BUFSIZ) {
 		tst_brkm(TBROK, cleanup, "write(2) on %s Failed, errno=%d : %s",
 			 TEMP_FILE, errno, strerror(errno));
+                exit(1);
+
 	}
 }
 

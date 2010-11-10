@@ -194,6 +194,7 @@ int main(int ac, char **av)
 					 "access(%s, %s) failed",
 					 Test_cases[tc].file,
 					 Test_cases[tc].string);
+                                exit(1);
 
 			} else if (TEST_RETURN != -1
 				   && Test_cases[tc].experrno != 0) {
@@ -202,6 +203,7 @@ int main(int ac, char **av)
 					 Test_cases[tc].file,
 					 Test_cases[tc].string, TEST_RETURN,
 					 Test_cases[tc].experrno);
+                                exit(1);
 			} else {
 
 		/***************************************************************

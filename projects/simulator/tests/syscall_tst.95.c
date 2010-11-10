@@ -94,6 +94,7 @@ void syscall_success()
   char pfilname[40] = "test-file-fchown32";
   if ( ( fd =creat(pfilname,0777)) == -1) {
 		tst_resm(TFAIL, "SOURCE FILE CREATION ERROR - %i",errno);
+                exit(1);
   }	
   /* open a file for read/write */
   if ( (fd = open(pfilname, O_RDWR|O_CREAT)) == -1 ){

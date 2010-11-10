@@ -19,13 +19,13 @@
 
 /****************************************************************************
  *
- *    TEST IDENTIFIER	: getrlimit02
+ *    TEST IDENTIFIER	: getrlimit01
  *
+ *    TEST TITLE	: test for checking functionality of getrlimit(2)
+ *  $
  *    EXECUTED BY	: anyone
  *
- *    TEST TITLE	: test for checking error conditions for getrlimit(2)
- *
- *    TEST CASE TOTAL	: 2
+ *    TEST CASE TOTAL	: 11
  *
  *    AUTHOR		: Suresh Babu V. <suresh.babu@wipro.com>
  *
@@ -35,11 +35,7 @@
  *
  * DESCRIPTION
  *      Verify that,
- *   1) getrlimit(2) returns -1 and sets errno to EFAULT if an invalid
- *	address is given for address parameter.
- *   2) getrlimit(2) returns -1 and sets errno to EINVAL if an invalid
- *	resource type (RLIM_NLIMITS is a out of range resource type) is
- *	passed.
+ *	getrlimit(2) call will be successful for all possible resource types.
  *
  * Setup:
  *   Setup signal handling.
@@ -48,59 +44,58 @@
  *  Test:
  *   Loop if the proper options are given.
  *   Execute system call
- *   Check return code, if system call failed and errno set == expected errno
- *		Issue sys call fails with expected return value and errno.
+ *   Check return code, if system call failed
+ *		Issue sys call failed to get resource limits.
  *      Otherwise,
- *		Issue sys call failed to produce expected error.
+ *		Issue sys call is successful and got resource limits.
  *
  *   Cleanup:
  *	Print errno log and/or timing stats if options given
  *
  * USAGE:  <for command-line>
- *  getrlimit02 [-c n] [-e] [-i n] [-I x] [-P x] [-p] [-t] [-h]
+ *  getrlimit01 [-c n] [-e] [-i n] [-I x] [-P x] [-p] [-t] [-h]
  *     where,  -c n  : Run n copies concurrently.
  *		-e   : Turn on errno logging.
  *		-i n : Execute test n times.
  *		-I x : Execute test for x seconds.
  *		-P x : Pause for x seconds between iterations.
- *		-p   : Pause for SIGUSR1 before startingt
+ *		-p   : Pause for SIGUSR1 before starting.
  *		-t   : Turn on syscall timing.
  *		-h   : Display usage information.
  *
  ***************************************************************************/
 #include <stdio.h>
 #include <errno.h>
+#include <sys/time.h>
 #include <sys/resource.h>
 #include "test.h"
 #include "usctest.h"
 
-#define RLIMIT_TOO_HIGH 1000
-
 extern int Tst_count;
-
-char *TCID = "getrlimit02";
 
 static void cleanup(void);
 static void setup(void);
 
+char *TCID = "getrlimit01";
+
 static struct rlimit rlim;
-static struct test_case_t {
-	int exp_errno;		/* Expected error no            */
-	char *exp_errval;	/* Expected error value string  */
-	struct rlimit *rlim;	/* rlimit structure             */
-	int res_type;		/* resource type                */
-
+static struct test_t {
+	int res;
+	char *res_str;
 } testcases[] = {
-#ifndef UCLINUX
-	/* Skip since uClinux does not implement memory protection */
 	{
-	EFAULT, "EFAULT", (void *)-1, RLIMIT_NOFILE},
-#endif
-	{
-	EINVAL, "EINVAL", &rlim, RLIMIT_TOO_HIGH}
+	RLIMIT_CPU, "RLIMIT_CPU"}, {
+	RLIMIT_FSIZE, "RLIMIT_FSIZE"}, {
+	RLIMIT_DATA, "RLIMIT_DATA"}, {
+	RLIMIT_STACK, "RLIMIT_STACK"}, {
+	RLIMIT_CORE, "RLIMIT_CORE"}, {
+	RLIMIT_RSS, "RLIMIT_RSS"}, {
+	RLIMIT_NPROC, "RLIMIT_NPROC"}, {
+	RLIMIT_NOFILE, "RLIMIT_NOFILE"}, {
+	RLIMIT_MEMLOCK, "RLIMIT_MEMLOCK"}, {
+	RLIMIT_AS, "RLIMIT_AS"}, {
+	RLIMIT_LOCKS, "RLIMIT_LOCKS"}
 };
-
-static int exp_enos[] = { EFAULT, EINVAL, 0 };
 
 int TST_TOTAL = sizeof(testcases) / sizeof(*testcases);
 
@@ -126,21 +121,21 @@ int main(int ac, char **av)
 		for (i = 0; i < TST_TOTAL; ++i) {
 
 			/*
-			 * Test the system call.
+			 * Test the system call with different resoruce types
+			 * with codes 0 to 10
 			 */
-			TEST(getrlimit(testcases[i].res_type,
-				       testcases[i].rlim));
+			TEST(getrlimit(testcases[i].res, &rlim));
 
-			if ((TEST_RETURN == -1) &&
-			    (TEST_ERRNO == testcases[i].exp_errno)) {
-				tst_resm(TPASS, "expected failure; got %s",
-					 testcases[i].exp_errval);
+			if (TEST_RETURN == -1) {
+				tst_resm(TFAIL, "getrlimit() failed to get %s "
+					 "values. errno is %d",
+					 testcases[i].res_str, TEST_ERRNO);
+                                exit(1);
 			} else {
-				tst_resm(TFAIL, "call failed to produce "
-					 "expected error;  errno: %d : %s",
-					 TEST_ERRNO, strerror(TEST_ERRNO));
+				tst_resm(TPASS, "getrlimit() returned %d; "
+					 "got %s values ",
+					 TEST_ERRNO, testcases[i].res_str);
 			}
-			TEST_ERROR_LOG(TEST_ERRNO);
 		}
 	}
 	/* do cleanup and exit */
@@ -154,9 +149,6 @@ int main(int ac, char **av)
  */
 void setup()
 {
-	/* set up expected error numbers */
-	TEST_EXP_ENOS(exp_enos);
-
 	/* capture the signals */
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
