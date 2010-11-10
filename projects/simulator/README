@@ -373,7 +373,7 @@ on the 32-bit platform.
 (2) Copy the virtual dynamic shared object file to the test
     directory.  Name of file is $VDSO.
 
-      $ VDSO_BASE=$(setarch i386 -LRB3 dd if=/proc/self/maps |\
+      $ VDSO_BASE=0x$(setarch i386 -LRB3 dd if=/proc/self/maps |\
 	            grep vdso |\
                     cut -d- -f1)
  
