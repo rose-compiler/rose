@@ -1,8 +1,9 @@
 #include "expressionHandler.h"
-#include "utilities/Utilities.h"
-#include "utilities/CPPDefinesAndNamespaces.h"
-#include "pluggableReverser/eventHandler.h"
+#include "utilities/utilities.h"
+#include "utilities/cppDefinesAndNamespaces.h"
+#include "pluggableReverser/eventProcessor.h"
 
+using namespace std;
 using namespace SageBuilder;
 
 /******************************************************************************
@@ -20,7 +21,7 @@ vector<EvaluationResult> NullExpressionHandler::evaluate(SgExpression* exp, cons
 	// Now NullExpressionHander only handles expressions with side effects. Those without side effects are
 	// handled by IdentityExpressionHandler.
 	// If the value of the expression is used, we cannot return NULL.
-	if (!backstroke_util::containsModifyingExpression(exp) || reverseValueUsed)
+	if (!BackstrokeUtility::containsModifyingExpression(exp) || reverseValueUsed)
 		return results;
 
 	//We can't ignore reversing functions
@@ -60,7 +61,7 @@ vector<EvaluationResult> IdentityExpressionHandler::evaluate(SgExpression* exp, 
 	vector<EvaluationResult> results;
 
 	// If an expression does not modify any value and its value is used, the reverse is the same as itself
-	if (!backstroke_util::containsModifyingExpression(exp))
+	if (!BackstrokeUtility::containsModifyingExpression(exp))
 	{
 		EvaluationResult result(this, exp, var_table);
 		result.setAttribute(!reverseValueUsed);
@@ -90,6 +91,7 @@ ExpressionReversal StoreAndRestoreExpressionHandler::generateReverseAST(SgExpres
 
 vector<EvaluationResult> StoreAndRestoreExpressionHandler::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
 {
+	vector<EvaluationResult> results;
 	SgExpression* var_to_save = NULL;
 
 	if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
@@ -97,7 +99,9 @@ vector<EvaluationResult> StoreAndRestoreExpressionHandler::evaluate(SgExpression
 	else if (SageInterface::isAssignmentStatement(exp))
 		var_to_save = isSgBinaryOp(exp)->get_lhs_operand();
 
-	vector<EvaluationResult> results;
+	if (var_to_save == NULL)
+		return results;
+
 	if (VariableRenaming::getVarName(var_to_save) != VariableRenaming::emptyName)
 	{
 		// Update the variable version table.

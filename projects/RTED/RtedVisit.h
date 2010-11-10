@@ -5,72 +5,39 @@
 
 
 // Build an inherited attribute for the tree traversal to test the rewrite mechanism
-/*
-class InheritedAttributeBools {
-public:
-   bool global;
-   bool function;
-   bool isAssignInitializer;
-   bool isArrowExp;
-   bool isAddressOfOp;
-   bool isLValue;
-   bool isReferenceType;
-   bool isInitializedName;
 
-   InheritedAttributeBools() {
-
-      global=false;
-       function=false;
-       isAssignInitializer=false;
-       isArrowExp=false;
-       isAddressOfOp=false;
-       isLValue=false;
-       isReferenceType=false;
-       isInitializedName=false;
-   }
-   InheritedAttributeBools(bool g, bool f, bool a, bool ae, bool ao, bool l, bool r, bool i) : global(g),
-                                                  function(f),
-                                                  isAssignInitializer(a),
-                                                  isArrowExp(ae),
-                                                  isAddressOfOp(ao),
-                                                  isLValue(l),
-                                                  isReferenceType(r),
-                                                  isInitializedName(i) {};
-};
-*/
 class InheritedAttribute
    {
      public:
       // Depth in AST
 
-         bool global;
          bool function;
          bool isAssignInitializer;
          bool isArrowExp;
          bool isAddressOfOp;
-         bool isLValue;
-         bool isReferenceType;
-         bool isInitializedName;
+         bool isForStatement;
+         bool isBinaryOp;
+
 
  //  InheritedAttributeBools* bools;
        // Specific constructors are required
 
-	 InheritedAttribute (bool g, bool f, bool a, bool ae, bool ao, bool l, bool r, bool i) : global(g),
+	 InheritedAttribute (bool f, bool a, bool ae, bool ao, bool i, bool bo) :
 	                                               function(f),
 	                                               isAssignInitializer(a),
 	                                               isArrowExp(ae),
 	                                               isAddressOfOp(ao),
-	                                               isLValue(l),
-	                                               isReferenceType(r),
-	                                               isInitializedName(i) {};
-	 InheritedAttribute ( const InheritedAttribute & X ) : global(X.global),
+	                                               isForStatement(i),
+	                                               isBinaryOp(bo)
+         {};
+	 InheritedAttribute ( const InheritedAttribute & X ) : 
 	                                                       function(X.function),
 	                                                       isAssignInitializer(X.isAssignInitializer),
 	                                                       isArrowExp(X.isArrowExp),
 	                                                       isAddressOfOp(X.isAddressOfOp),
-	                                                       isLValue(X.isLValue),
-	                                                       isReferenceType(X.isReferenceType),
-	                                                       isInitializedName(X.isInitializedName){};
+	                                                       isForStatement(X.isForStatement),
+	                                                       isBinaryOp(X.isBinaryOp)
+	 {};
 
  //  InheritedAttribute (InheritedAttributeBools* b) : bools(b){};
  //  InheritedAttribute ( const InheritedAttribute & X ) : bools(X.bools){};
@@ -82,10 +49,13 @@ typedef bool SynthesizedAttribute;
 
 class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute>
    {
+
      RtedTransformation* transf;
+     std::vector<SgExpression*>* rightOfbinaryOp;
+     std::vector<SgForStatement*>* for_stmt;
      public:
 
-   VariableTraversal(RtedTransformation* t) : transf(t) {};
+   VariableTraversal(RtedTransformation* t) ;
      ~VariableTraversal() {};
 
      // Functions required
@@ -98,7 +68,8 @@ class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,
 							InheritedAttribute inheritedAttribute,
 							SubTreeSynthesizedAttributes synthesizedAttributeList );
 
-     bool isLValue(SgNode* node);
+     bool isRightOfBinaryOp(SgNode* node);
+     bool isInitializedNameInForStatement(SgForStatement* for_stmt,SgInitializedName* name);
    };
 
 #endif

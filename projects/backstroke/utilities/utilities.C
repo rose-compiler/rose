@@ -1,16 +1,21 @@
-#include "Utilities.h"
-#include "CPPDefinesAndNamespaces.h"
+#include "utilities.h"
+#include "cppDefinesAndNamespaces.h"
 
 #include "rose.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 
+namespace BackstrokeUtility
+{
+
+using namespace std;
+using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
 
 /** Generate a name that is unique in the current scope and any parent and children scopes.
  * @param baseName the word to be included in the variable names. */
-string backstroke_util::GenerateUniqueVariableName(SgScopeStatement* scope, std::string baseName)
+string GenerateUniqueVariableName(SgScopeStatement* scope, std::string baseName)
 {
 	//This implementation tends to generate numbers that are unnecessarily high.
 	static int counter = 0;
@@ -44,7 +49,7 @@ string backstroke_util::GenerateUniqueVariableName(SgScopeStatement* scope, std:
 /** Returns true if the given expression refers to a variable. This could include using the
  * dot and arrow operator to access member variables. A comma op conunts as a variable references
  * if all its members are variable references (not just the last expression in the list). */
-bool backstroke_util::IsVariableReference(SgExpression* expression)
+bool IsVariableReference(SgExpression* expression)
 {
 	if (isSgVarRefExp(expression))
 	{
@@ -87,7 +92,7 @@ bool backstroke_util::IsVariableReference(SgExpression* expression)
  * @return declaration of the temporary variable, an assignment op to
  *			reevaluate the expression, and a a variable reference expression to use instead of
  *         the original expression. Delete the results that you don't need! */
-tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> backstroke_util::CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
+tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
 {
 	SgTreeCopy copyHelp;
 	SgType* expressionType = expression->get_type();
@@ -103,7 +108,7 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> backstroke_util::Creat
 	}
 
 	//Generate a unique variable name
-	string name = backstroke_util::GenerateUniqueVariableName(scope);
+	string name = BackstrokeUtility::GenerateUniqueVariableName(scope);
 
 	//Initialize the temporary variable to an evaluation of the expression
 	SgAssignInitializer* initializer = NULL;
@@ -143,7 +148,7 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> backstroke_util::Creat
 }
 
 
-vector<SgExpression*> backstroke_util::findVarReferences(VariableRenaming::VarName var, SgNode* root)
+vector<SgExpression*> findVarReferences(VariableRenaming::VarName var, SgNode* root)
 {
 	class SearchTraversal : public AstTopDownProcessing<bool>
 	{
@@ -182,7 +187,7 @@ vector<SgExpression*> backstroke_util::findVarReferences(VariableRenaming::VarNa
 return val->get_value() == 0;
 
 // Return if the value in a SgValueExp object is zero.
-bool backstroke_util::isZero(SgValueExp* value)
+bool isZero(SgValueExp* value)
 {
 	if (!value)
 		return true;
@@ -209,7 +214,7 @@ bool backstroke_util::isZero(SgValueExp* value)
 }
 
 // Reverse the Sgop_mode from prefix to postfix, or vice versa.
-SgUnaryOp::Sgop_mode backstroke_util::reverseOpMode(SgUnaryOp::Sgop_mode mode)
+SgUnaryOp::Sgop_mode reverseOpMode(SgUnaryOp::Sgop_mode mode)
 {
 	if (mode == SgUnaryOp::prefix)
 		return SgUnaryOp::postfix;
@@ -221,7 +226,7 @@ SgUnaryOp::Sgop_mode backstroke_util::reverseOpMode(SgUnaryOp::Sgop_mode mode)
 // If yes, alter the name until it does not conflict with any other variable name.
 
 
-void backstroke_util::validateName(string& name, SgNode* root)
+void validateName(string& name, SgNode* root)
 {
 	Rose_STL_Container<SgNode*> ref_list = NodeQuery::querySubTree(root, V_SgVarRefExp);
 
@@ -241,7 +246,7 @@ void backstroke_util::validateName(string& name, SgNode* root)
 
 // If two variables are the same. A variable may be a SgVarRefExp object
 // or a SgArrowExp object.
-bool backstroke_util::areSameVariable(SgExpression* exp1, SgExpression* exp2)
+bool areSameVariable(SgExpression* exp1, SgExpression* exp2)
 {
 	SgVarRefExp* var_ref1 = isSgVarRefExp(exp1);
 	SgVarRefExp* var_ref2 = isSgVarRefExp(exp2);
@@ -264,7 +269,7 @@ bool backstroke_util::areSameVariable(SgExpression* exp1, SgExpression* exp2)
 }
 
 // If the expression contains the given variable
-bool backstroke_util::containsVariable(SgExpression* exp, SgExpression* var)
+bool containsVariable(SgExpression* exp, SgExpression* var)
 {
 	Rose_STL_Container<SgNode*> exp_list = NodeQuery::querySubTree(exp, V_SgExpression);
 	foreach(SgNode* node, exp_list)
@@ -275,7 +280,7 @@ bool backstroke_util::containsVariable(SgExpression* exp, SgExpression* var)
 
 
 // Return whether a basic block contains a break statement.
-bool backstroke_util::hasBreakStmt(SgBasicBlock* body)
+bool hasBreakStmt(SgBasicBlock* body)
 {
 	ROSE_ASSERT(body);
 
@@ -294,13 +299,13 @@ bool backstroke_util::hasBreakStmt(SgBasicBlock* body)
 }
 
 // If two expressions can be reorderd (in other word, reordering does not change the result).
-bool backstroke_util::canBeReordered(SgExpression* exp1, SgExpression* exp2)
+bool canBeReordered(SgExpression* exp1, SgExpression* exp2)
 {
 	return false;
 }
 
 // If a type is a STL container type.
-bool backstroke_util::isSTLContainer(SgType* type)
+bool isSTLContainer(SgType* type)
 {
 	SgType* real_type = type->stripTypedefsAndModifiers();
 	SgClassType* class_t = isSgClassType(real_type);
@@ -338,7 +343,7 @@ bool backstroke_util::isSTLContainer(SgType* type)
 }
 
 // Get the defined copy constructor in a given class. Returns NULL if the copy constructor is implicit.
-std::vector<SgMemberFunctionDeclaration*> backstroke_util::getCopyConstructors(SgClassDeclaration* class_decl)
+std::vector<SgMemberFunctionDeclaration*> getCopyConstructors(SgClassDeclaration* class_decl)
 {
 #if 0
 	SgClassDeclaration* class_decl =
@@ -400,7 +405,7 @@ std::vector<SgMemberFunctionDeclaration*> backstroke_util::getCopyConstructors(S
 }
 
 /** Returns a boolean value to indicate whether the return value (rvalue) of the given expression is used. */
-bool backstroke_util::isReturnValueUsed(SgExpression* exp)
+bool isReturnValueUsed(SgExpression* exp)
 {
     SgNode* parent_node = exp->get_parent();
 
@@ -462,7 +467,7 @@ bool backstroke_util::isReturnValueUsed(SgExpression* exp)
 
 /** Prints an error message associated with a certain node. Also outputs the file and location
   * of the node. */
-void backstroke_util::printCompilerError(SgNode* badNode, const char * message)
+void printCompilerError(SgNode* badNode, const char * message)
 {
 	ROSE_ASSERT(badNode->get_file_info() != NULL && "Can't display line number for node without file info.");
 
@@ -471,7 +476,7 @@ void backstroke_util::printCompilerError(SgNode* badNode, const char * message)
 }
 
 // Returns if an expression modifies any value.
-bool backstroke_util::isModifyingExpression(SgExpression* exp)
+bool isModifyingExpression(SgExpression* exp)
 {
     if (SageInterface::isAssignmentStatement(exp))
         return true;
@@ -487,7 +492,7 @@ bool backstroke_util::isModifyingExpression(SgExpression* exp)
 }
 
 // Returns if an expression contains any subexpression which modifies any value.
-bool backstroke_util::containsModifyingExpression(SgExpression* exp)
+bool containsModifyingExpression(SgExpression* exp)
 {
     Rose_STL_Container<SgNode*> exp_list = NodeQuery::querySubTree(exp, V_SgExpression);
     foreach (SgNode* node, exp_list)
@@ -500,7 +505,7 @@ bool backstroke_util::containsModifyingExpression(SgExpression* exp)
     return false;
 }
 
-void backstroke_util::removeUselessBraces(SgNode* root)
+void removeUselessBraces(SgNode* root)
 {
     vector<SgBasicBlock*> block_list = querySubTree<SgBasicBlock>(root, postorder);
 
@@ -538,7 +543,7 @@ void backstroke_util::removeUselessBraces(SgNode* root)
     }
 }
 
-void backstroke_util::removeUselessParen(SgNode* root)
+void removeUselessParen(SgNode* root)
 {
     vector<SgExpression*> exps = querySubTree<SgExpression>(root, postorder);
 
@@ -554,7 +559,7 @@ void backstroke_util::removeUselessParen(SgNode* root)
     }
 }
 
-SgBasicBlock* backstroke_util::getFunctionBody(SgFunctionDeclaration* func_decl)
+SgBasicBlock* getFunctionBody(SgFunctionDeclaration* func_decl)
 {
 	SgFunctionDeclaration* func_defining_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
 	if (func_defining_decl)
@@ -563,7 +568,7 @@ SgBasicBlock* backstroke_util::getFunctionBody(SgFunctionDeclaration* func_decl)
 		return NULL;
 }
 
-SgStatement* backstroke_util::getEnclosingIfBody(SgNode* node)
+SgStatement* getEnclosingIfBody(SgNode* node)
 {
 	while (node)
 	{
@@ -575,7 +580,7 @@ SgStatement* backstroke_util::getEnclosingIfBody(SgNode* node)
 	return NULL;
 }
 
-SgStatement* backstroke_util::getEnclosingLoopBody(SgNode* node)
+SgStatement* getEnclosingLoopBody(SgNode* node)
 {
 	while (node)
 	{
@@ -600,7 +605,7 @@ SgStatement* backstroke_util::getEnclosingLoopBody(SgNode* node)
 	return NULL;
 }
 
-vector<SgExpression*> backstroke_util::getAllVariables(SgNode* node)
+vector<SgExpression*> getAllVariables(SgNode* node)
 {
 	vector<SgExpression*> vars;
 
@@ -629,7 +634,7 @@ vector<SgExpression*> backstroke_util::getAllVariables(SgNode* node)
 	return vars;
 }
 
-bool backstroke_util::hasContinueOrBreak(SgStatement* loop_stmt)
+bool hasContinueOrBreak(SgStatement* loop_stmt)
 {
 	ROSE_ASSERT(isSgForStatement(loop_stmt) || 
 			isSgWhileStmt(loop_stmt) || 
@@ -663,3 +668,15 @@ bool backstroke_util::hasContinueOrBreak(SgStatement* loop_stmt)
 
 	return false;
 }
+
+bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::VarName& var2)
+{
+	if (var1.size() <= var2.size())
+		return false;
+	if (std::search(var1.begin(), var1.end(), var2.begin(), var2.end()) == var1.begin())
+		return true;
+	return false;
+}
+
+
+} // namespace backstroke_util

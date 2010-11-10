@@ -2,16 +2,16 @@
 #define	BACKSTROKE_EVENTPROCESSOR_H
 
 #include <rose.h>
-#include <utilities/types.h>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include "variableVersionTable.h"
 #include "handlerTypes.h"
+#include "utilities/types.h"
 
 
 class VariableRenaming;
 
-class EventHandler
+class EventProcessor
 {
 	//! This is the current event function to handle.
 	SgFunctionDeclaration* event_;
@@ -57,7 +57,7 @@ private:
 
 public:
 
-	EventHandler(SgFunctionDeclaration* func_decl = NULL, VariableRenaming* var_renaming = NULL)
+	EventProcessor(SgFunctionDeclaration* func_decl = NULL, VariableRenaming* var_renaming = NULL)
 	: event_(func_decl), var_renaming_(var_renaming) { }
 
 	//! Add an expression handler to the pool of expression handlers.
@@ -85,10 +85,11 @@ public:
 	//! Get all declarations of stacks which store values of different types.
 	std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;
 
+	void setVariableRenaming(VariableRenaming* var_renaming)
+	{ var_renaming_ = var_renaming; }
+
 	VariableRenaming* getVariableRenaming() const
-	{
-		return var_renaming_;
-	}
+	{ return var_renaming_;	}
 
 	/**
 	* Given a variable and a version, returns an expression evaluating to the value of the variable
