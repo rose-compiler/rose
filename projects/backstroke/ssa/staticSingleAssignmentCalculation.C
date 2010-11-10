@@ -60,7 +60,7 @@ void StaticSingleAssignment::run()
 {
 	originalDefTable.clear();
 	expandedDefTable.clear();
-	defTable.clear();
+	reachingDefsTable.clear();
 	useTable.clear();
 	firstDefList.clear();
 	nodeRenameTable.clear();
@@ -275,11 +275,9 @@ bool StaticSingleAssignment::defUse(cfgNode node, bool *memberRefInserted, NodeV
 				current->class_name() << ", line " << current->get_file_info()->get_line() << ":" << current << endl;
 
 	bool defChanged = false;
-	bool defRefInserted = false;
-	bool useChanged = false;
 	bool useRefInserted = false;
-	defChanged = mergeDefs(node, &defRefInserted);
-	useChanged = resolveUses(node, &useRefInserted, changedNodes);
+	defChanged = mergeDefs(node);
+	resolveUses(node, &useRefInserted, changedNodes);
 
 	*memberRefInserted = useRefInserted;
 
@@ -289,7 +287,7 @@ bool StaticSingleAssignment::defUse(cfgNode node, bool *memberRefInserted, NodeV
 	return defChanged;
 }
 
-bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
+bool StaticSingleAssignment::mergeDefs(cfgNode curNode)
 {
 	SgNode* node = curNode.getNode();
 
@@ -325,7 +323,7 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 	 */
 
 	//Expand any member variable references at the current node.
-	*memberRefInserted = expandMemberDefinitions(curNode);
+	expandMemberDefinitions(curNode);
 
 	TableEntry stagingPropagatedDefs;
 	//Retrieve the defs coming from previous cfgNodes
@@ -356,7 +354,6 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 			{
 				//Set this node as a definition point of the variable.
 				expandedDefTable[node].insert(propEntry.first);
-				*memberRefInserted = true;
 				if (getDebugExtra())
 				{
 					cout << "Inserted expandedDef for [" << keyToString(propEntry.first) << "] with originalDef prefix [" << keyToString(definedVar) << "]" << endl;
@@ -393,9 +390,9 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode, bool *memberRefInserted)
 	}
 
 	//Now do a comparison to see if we should copy
-	if (stagingPropagatedDefs != defTable[node])
+	if (stagingPropagatedDefs != reachingDefsTable[node])
 	{
-		defTable[node] = stagingPropagatedDefs;
+		reachingDefsTable[node] = stagingPropagatedDefs;
 		changed = true;
 	}
 	else
@@ -427,7 +424,7 @@ void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& 
 		SgNode* prev = inEdges[0].source().getNode();
 
 		//Copy the previous node defs to the staging table
-		results = defTable[prev];
+		results = reachingDefsTable[prev];
 	}
 	else if (inEdges.size() > 1)
 	{
@@ -437,7 +434,7 @@ void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& 
 			SgNode* prev = inEdges[i].source().getNode();
 
 			//Perform the union of all the infoming definitions.
-			foreach(TableEntry::value_type& entry, defTable[prev])
+			foreach(TableEntry::value_type& entry, reachingDefsTable[prev])
 			{
 				//Insert the definitions for this node at the end of the list
 				results[entry.first].insert(results[entry.first].end(), entry.second.begin(), entry.second.end());
@@ -454,11 +451,9 @@ void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& 
 	}
 }
 
-bool StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
+void StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
 {
 	SgNode* node = curNode.getNode();
-
-	bool changed = false;
 
 	if (getDebugExtra())
 	{
@@ -499,7 +494,6 @@ bool StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
 			{
 				//Insert the new name as being defined here.
 				expandedDefTable[node].insert(newName);
-				changed = true;
 
 				if (getDebugExtra())
 				{
@@ -508,40 +502,34 @@ bool StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
 			}
 		}
 	}
-
-	return changed;
 }
 
-bool StaticSingleAssignment::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode, bool *memberRefInserted, NodeVec &changedNodes)
+void StaticSingleAssignment::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode, bool *memberRefInserted, NodeVec &changedNodes)
 {
 	SgNode* node = curNode.getNode();
-
-	bool changed = false;
 
 	//We want to resolve the uses at the current node
 	//We need to look to the defs at the current node, and match them
 	//with the uses
 
-
 	if (getDebug())
 		cout << "Resolving uses at " << node->class_name() << node << endl;
 
-	changed = expandMemberUses(curNode);
+	expandMemberUses(curNode);
 
 	//Iterate every use at the current node
 	foreach(TableEntry::value_type& entry, useTable[node])
 	{
 		//Check the defs that are active at the current node to find the reaching definition
 		//We want to check if there is a definition entry for this use at the current node
-		if (defTable[node].find(entry.first) != defTable[node].end())
+		if (reachingDefsTable[node].find(entry.first) != reachingDefsTable[node].end())
 		{
 			//There is a definition entry. Now we want to see if the use is already up to date
-			if (useTable[node][entry.first] != defTable[node][entry.first])
+			if (useTable[node][entry.first] != reachingDefsTable[node][entry.first])
 			{
 				//The use was not up to date, so we update it
-				changed = true;
 				//Overwrite the use with this definition location(s).
-				useTable[node][entry.first] = defTable[node][entry.first];
+				useTable[node][entry.first] = reachingDefsTable[node][entry.first];
 			}
 		}
 		else
@@ -572,15 +560,11 @@ bool StaticSingleAssignment::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode
 				cout << "Fixed use of local def." << endl;
 		}
 	}
-
-	return changed;
 }
 
-bool StaticSingleAssignment::expandMemberUses(cfgNode curNode)
+void StaticSingleAssignment::expandMemberUses(cfgNode curNode)
 {
 	SgNode* node = curNode.getNode();
-
-	bool changed = false;
 
 	if (getDebugExtra())
 	{
@@ -621,7 +605,6 @@ bool StaticSingleAssignment::expandMemberUses(cfgNode curNode)
 			{
 				//Insert the new name as being used here.
 				useTable[node][newName] = NodeVec(1, node);
-				changed = true;
 
 				if (getDebugExtra())
 				{
@@ -636,8 +619,6 @@ bool StaticSingleAssignment::expandMemberUses(cfgNode curNode)
 		cout << "Expanded Node ";
 		printUses(useTable[node]);
 	}
-
-	return changed;
 }
 
 bool StaticSingleAssignment::insertExpandedDefsForUse(cfgNode curNode, VarName name, NodeVec &changedNodes)
@@ -653,7 +634,7 @@ bool StaticSingleAssignment::insertExpandedDefsForUse(cfgNode curNode, VarName n
 	}
 
 	//Check if the given name has a def at this node
-	if (defTable[node].count(name) != 0)
+	if (reachingDefsTable[node].count(name) != 0)
 	{
 		if (getDebugExtra())
 			cout << "Already have def." << endl;

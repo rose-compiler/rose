@@ -123,7 +123,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 	NumNodeRenameTable res;
 
 	//Iterate every variable definition reaching this node
-	foreach(TableEntry::value_type& entry, defTable[node])
+	foreach(TableEntry::value_type& entry, reachingDefsTable[node])
 	{
 		//Iterate every definition site for this variable
 		foreach(NodeVec::value_type& defEntry, entry.second)
@@ -164,7 +164,7 @@ StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getReachingDe
 	NumNodeRenameEntry res;
 
 	//Iterate every variable definition reaching this node
-	foreach(TableEntry::value_type& entry, defTable[node])
+	foreach(TableEntry::value_type& entry, reachingDefsTable[node])
 	{
 		//Check that the current var is the one we want.
 		if (entry.first != var)
@@ -1061,7 +1061,7 @@ void StaticSingleAssignment::printDefs(SgNode* node)
 {
 	cout << "Def Table for [" << node->class_name() << ":" << node << "]:" << endl;
 
-	foreach(TableEntry::value_type& entry, defTable[node])
+	foreach(TableEntry::value_type& entry, reachingDefsTable[node])
 	{
 		cout << "  Defs for [" << keyToString(entry.first) << "]:" << endl;
 
@@ -1358,7 +1358,7 @@ void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
 				//Print the defs to a string
 				stringstream defUse;
 
-				foreach(TableEntry::value_type& entry, defTable[current.getNode()])
+				foreach(TableEntry::value_type& entry, reachingDefsTable[current.getNode()])
 				{
 					defUse << "Def [" << keyToString(entry.first) << "]: ";
 
@@ -1508,7 +1508,7 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 				//Print the defs to a string
 				stringstream defUse;
 
-				foreach(TableEntry::value_type& entry, defTable[current.getNode()])
+				foreach(TableEntry::value_type& entry, reachingDefsTable[current.getNode()])
 				{
 					defUse << "Def [" << keyToString(entry.first) << "]: ";
 

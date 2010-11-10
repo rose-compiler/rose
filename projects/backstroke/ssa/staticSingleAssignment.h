@@ -249,8 +249,9 @@ private:
 	/** This is the table that is populated with all the def information for all the variables
 	 * at all the nodes. It is populated during the runDefUse function, and is done
 	 * with the steady-state dataflow algorithm.
+	 * For each node, the table contains all the reaching definitions at that node.
 	 */
-	DefUseTable defTable;
+	DefUseTable reachingDefsTable;
 
 	/** This is the table that is populated with all the use information for all the variables
 	 * at all the nodes. It is populated during the runDefUse function, and is done
@@ -332,10 +333,9 @@ private:
 	 * to indicate that it back-inserted a def.
 	 *
 	 * @param curNode The node to merge defs onto.
-	 * @param memberRefInserted Reference that indicates whether the function back-inserted a definition.
 	 * @return Whether the defs were different from those already on the node.
 	 */
-	bool mergeDefs(cfgNode curNode, bool *memberRefInserted);
+	bool mergeDefs(cfgNode curNode);
 
 	/** Called to update the uses on the current node.
 	 *
@@ -346,9 +346,8 @@ private:
 	 *
 	 * @param curNode The node to resolve uses on.
 	 * @param memberRefInserted Reference that indicates whether the function back-inserted a definition.
-	 * @return Whether the uses were different from those already on the node.
 	 */
-	bool resolveUses(cfgNode curNode, bool *memberRefInserted, NodeVec &changedNodes);
+	void resolveUses(cfgNode curNode, bool *memberRefInserted, NodeVec &changedNodes);
 
 	/** Trace backwards in the cfg one step and return an aggregate of all previous defs.
 	 *
@@ -375,9 +374,8 @@ private:
 	 *       o.a.b = 5;     //Def for o.a.b, o.a, o
 	 *
 	 * @param curNode The node to expand the definitions on.
-	 * @return Whether or not any new defs were inserted.
 	 */
-	bool expandMemberDefinitions(cfgNode curNode);
+	void expandMemberDefinitions(cfgNode curNode);
 
 	/** Insert defs for member uses (chained names) that do not have an explicit def.
 	 *
@@ -416,9 +414,8 @@ private:
 	 *       i = o.a.b;     //Def for i, use for o.a.b, o.a, o
 	 *
 	 * @param curNode
-	 * @return Whether any new uses were inserted.
 	 */
-	bool expandMemberUses(cfgNode curNode);
+	void expandMemberUses(cfgNode curNode);
 
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
@@ -513,7 +510,7 @@ public:
 	 */
 	DefUseTable& getPropDefTable()
 	{
-		return defTable;
+		return reachingDefsTable;
 	}
 
 	/** Get the table of uses for every node.
