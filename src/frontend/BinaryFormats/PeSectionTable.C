@@ -28,7 +28,7 @@ SgAsmPESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)
 void
 SgAsmPESectionTableEntry::update_from_section(SgAsmPESection *section)
 {
-    SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
+    SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(section);
     ROSE_ASSERT(fhdr!=NULL);
 
     p_virtual_size = section->get_mapped_size();
