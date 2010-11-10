@@ -113,6 +113,24 @@ print_int_32(FILE *f, const uint8_t *ptr, size_t sz)
     return fprintf(f, "%"PRId32, *(const int32_t*)ptr);
 }
 
+static int
+print_rlimit(FILE *f, const uint8_t *ptr, size_t sz)
+{
+    assert(8==sz); /* two 32-bit unsigned integers */
+    int retval = 0;
+    if (0==~((const uint32_t*)ptr)[0]) {
+        retval += fprintf(f, "rlim_cur=unlimited");
+    } else {
+        retval += fprintf(f, "rlim_cur=%"PRIu32, ((const uint32_t*)ptr)[0]);
+    }
+    if (0==~((const uint32_t*)ptr)[1]) {
+        retval += fprintf(f, ", rlim_max=unlimited");
+    } else {
+        retval += fprintf(f, ", rlim_max=%"PRIu32, ((const uint32_t*)ptr)[1]);
+    }
+    return retval;
+}
+
 /* Kernel stat data structure on 32-bit platforms; the data written back to the specimen's memory */
 struct kernel_stat_32 {
     uint64_t        dev;                    /* see 64.dev */
@@ -2793,34 +2811,31 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-    case 140: { /* 0x8c, llseek */
-        /* From the linux kernel, arguments are:
-         *      unsigned int fd,                // file descriptor
-         *      unsigned long offset_high,      // high 32 bits of 64-bit offset
-         *      unsigned long offset_low,       // low 32 bits of 64-bit offset
-         *      loff_t __user *result,          // 64-bit user area to write resulting position
-         *      unsigned int origin             // whence specified offset is measured
-         */
-        syscall_enter("llseek","dddpd");
-        uint32_t fd          = arg(0);
-        uint32_t offset_high = arg(1);
-        uint32_t offset_low  = arg(2);
-        uint32_t result_va   = arg(3);
-        uint32_t whence      = arg(4);
+        case 140: { /* 0x8c, llseek */
+            /* From the linux kernel, arguments are:
+             *      unsigned int fd,                // file descriptor
+             *      unsigned long offset_high,      // high 32 bits of 64-bit offset
+             *      unsigned long offset_low,       // low 32 bits of 64-bit offset
+             *      loff_t __user *result,          // 64-bit user area to write resulting position
+             *      unsigned int origin             // whence specified offset is measured
+             */
+            syscall_enter("llseek","dddpd");
+            int fd = arg(0);
+            off64_t offset = ((off64_t)arg(1) << 32) | arg(2);
+            uint32_t result_va = arg(3);
+            int whence = arg(4);
 
-        ROSE_ASSERT(sizeof(loff_t)==8);
-        static loff_t llseek_result2;
-        ROSE_ASSERT((uint64_t)&llseek_result2 < (1ull<<32)); /* address must be 32 bits */
-        int result = syscall(140, fd, offset_high, offset_low, (uint32_t)&llseek_result2, whence );
-
-        size_t nwritten = map->write(&llseek_result2, result_va, sizeof llseek_result2);
-        ROSE_ASSERT(nwritten==sizeof llseek_result2);
-
-        writeGPR(x86_gpr_ax, -1==result ? -errno : result);
-        syscall_leave("d");
-        break;
-
-    };
+            off64_t result = lseek64(fd, offset, whence);
+            if (-1==result) {
+                writeGPR(x86_gpr_ax, -errno);
+            } else {
+                writeGPR(x86_gpr_ax, 0);
+                size_t nwritten = map->write(&result, result_va, sizeof result);
+                ROSE_ASSERT(nwritten==sizeof result);
+            }
+            syscall_leave("d");
+            break;
+        };
         
 	case 141: {     /*0x8d, getdents*/
 	    /* 
@@ -3172,25 +3187,34 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 191: { /*0xbf, ugetrlimit*/
-            syscall_enter("ugetrlimit", "dp");
-#if 1 /*FIXME: We need to translate between 64-bit host and 32-bit guest. [RPM 2010-09-28] */
-            writeGPR(x86_gpr_ax, -ENOSYS);
-#else
-            int resource=arg(0);
-            uint32_t rl_va=arg(1);
-            struct rlimit rl;
-            int status = getrlimit(resource, &rl);
-            if (status<=0) {
+            static const Translate resources[] = {TE(RLIMIT_CPU), TE(RLIMIT_FSIZE), TE(RLIMIT_DATA), TE(RLIMIT_STACK),
+                                                  TE(RLIMIT_CORE), TE(RLIMIT_RSS), TE(RLIMIT_MEMLOCK), TE(RLIMIT_NPROC),
+                                                  TE(RLIMIT_NOFILE), TE(RLIMIT_OFILE), TE(RLIMIT_AS),
+                                                  TE(RLIMIT_LOCKS), TE(RLIMIT_SIGPENDING), TE(RLIMIT_MSGQUEUE),
+                                                  TE(RLIMIT_NICE), TE(RLIMIT_RTPRIO),
+#ifdef RLIMIT_RTTIME
+                                                  TE(RLIMIT_RTTIME),
+#endif
+                                                  T_END};
+
+            syscall_enter("ugetrlimit", "fp", resources);
+            int resource = arg(0);
+            uint32_t rlimit_va = arg(1);
+            struct rlimit rlimit_native;
+            int result = getrlimit(resource, &rlimit_native);
+            if (-1==result) {
                 writeGPR(x86_gpr_ax, -errno);
             } else {
-                if (rl_va) {
-                    size_t nwritten = map->write(&rl, rl_va, sizeof rl);
-                    ROSE_ASSERT(nwritten==sizeof rl);
-                }
-                writeGPR(x86_gpr_ax, 0);
+                uint32_t rlimit_guest[2];
+                rlimit_guest[0] = rlimit_native.rlim_cur;
+                rlimit_guest[1] = rlimit_native.rlim_max;
+                size_t nwritten = map->write(rlimit_guest, rlimit_va, sizeof rlimit_guest);
+                ROSE_ASSERT(nwritten==sizeof rlimit_guest);
+                writeGPR(x86_gpr_ax, result);
             }
-#endif
             syscall_leave("d");
+            if (result!=-1)
+                syscall_result(rlimit_va, 8, print_rlimit);
             break;
         }
 
