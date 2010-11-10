@@ -63,7 +63,8 @@ TESTCODES_REQUIRED_TO_RUN = \
      test2009_18.c \
      test2009_20.c
 
-# test2009_20.c  (array -1) becomes (array) bug 368
+# test2010_11.c, file info is wrong for SgInitializedName
+# compare test2009_05.c, where file info is correct
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \
      test2006_14.c  \
@@ -74,6 +75,7 @@ TESTCODE_CURRENTLY_FAILING = \
      test2010_02.c \
      test2010_03.c \
      test2010_05.c \
+     test2010_11.c \
      Yarden_client.c
 
 
