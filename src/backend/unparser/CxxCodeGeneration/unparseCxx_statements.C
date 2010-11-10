@@ -167,8 +167,14 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgInitializer *tmp_init = initializedName->get_initializer();
      SgType        *tmp_type = initializedName->get_type();
      ROSE_ASSERT (initializedName!= NULL);
-
-     unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
+#if 0
+   // Liao 11/9/2010, moved to upper callers since this is called when unparsing both old-style and new-style function parameter lists
+   // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
+   // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
+   // See example code: tests/CompileTests/C_tests/test2010_10.c
+    if (funcdecl_stmt->get_oldStyleDefinition() == false )
+       unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
+#endif
   // printf ("In unparseFunctionParameterDeclaration(): Argument name = %s \n",
   //      (tmp_name.str() != NULL) ? tmp_name.str() : "NULL NAME");
 
@@ -355,6 +361,13 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      SgInitializedNamePtrList::iterator p = funcdecl_stmt->get_args().begin();
      while ( p != funcdecl_stmt->get_args().end() )
         {
+          // Liao 11/9/2010, 
+         // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
+         // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
+         //  are outside of the parameter list
+         // See example code: tests/CompileTests/C_tests/test2010_10.c
+          if (funcdecl_stmt->get_oldStyleDefinition() == false)
+             unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
           unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
 
        // Move to the next argument
@@ -474,6 +487,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
                unp->u_sage->curprint_newline();
           while ( p != funcdecl_stmt->get_args().end() )
              {
+               unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
             // Output declarations for function parameters (using old-style K&R syntax)
             // printf ("Output declarations for function parameters (using old-style K&R syntax) \n");
                unparseFunctionParameterDeclaration(funcdecl_stmt,*p,true,ninfo2);
