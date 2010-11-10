@@ -2013,6 +2013,27 @@ EmulationPolicy::emulate_syscall()
             break;
 	}
 
+        case 19: { /* 0x13, lseek */
+          /* 
+
+            off_t lseek(int fildes, off_t offset, int whence);
+
+            arch/mips/include/asm/compat.h:typedef s32              compat_off_t; 
+ 
+          */
+          syscall_enter("lseek","ddd");
+          int32_t fd          = arg(0);
+          int32_t offset      = arg(1);
+          int32_t whence      = arg(2);
+
+          int result = lseek( fd, offset, whence);
+
+          writeGPR(x86_gpr_ax, -1==result ? -errno : result);
+          syscall_leave("d");
+          break;
+
+        }
+
         case 20: { /*0x14, getpid*/
             syscall_enter("getpid", "");
             writeGPR(x86_gpr_ax, getpid());
