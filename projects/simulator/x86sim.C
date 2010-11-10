@@ -2938,7 +2938,7 @@ EmulationPolicy::emulate_syscall()
         ROSE_ASSERT(sizeof(loff_t)==8);
         static loff_t llseek_result2;
         ROSE_ASSERT((uint64_t)&llseek_result2 < (1ull<<32)); /* address must be 32 bits */
-        int result = syscall(140, fd, offset_high, offset_low, (uint32_t)&llseek_result2, whence );
+        int result = syscall(140, fd, offset_high, offset_low, &llseek_result2, whence );
 
         size_t nwritten = map->write(&llseek_result2, result_va, sizeof llseek_result2);
         ROSE_ASSERT(nwritten==sizeof llseek_result2);
