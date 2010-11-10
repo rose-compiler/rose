@@ -1,8 +1,8 @@
 /* Generic Sections. SgAsmGenericSection serves as a base class for all binary file formats that divide a file into contiguous
  * parts.  The SgAsmGenericSection class describes such a part. Most binary formats will subclass this. */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "stringify.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -737,7 +737,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = not associated\n",          p, w, "header");
     }
     
-    std::string purpose = to_string(p_purpose);
+    std::string purpose = stringifySgAsmGenericSectionSectionPurpose(p_purpose);
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", purpose.c_str());
 
     if (is_mapped()) {
@@ -763,19 +763,4 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (variantT() == V_SgAsmGenericSection) {
         hexdump(f, 0, std::string(p)+"data at ", p_data);
     }
-}
-
-
-std::string SgAsmGenericSection::to_string(SectionPurpose val)
-{
-  static char buf[64];
-  switch (val) {
-    case SP_UNSPECIFIED: return "not specified"; 
-    case SP_PROGRAM:     return "program-supplied data/code/etc"; 
-    case SP_HEADER:      return "executable format header";       
-    case SP_SYMTAB:      return "symbol table";                   
-    case SP_OTHER:       return "other";                          
-  };
-  snprintf(buf, sizeof(buf), "unknown section purpose (%zu)", (size_t)val);
-  return buf;
 }
