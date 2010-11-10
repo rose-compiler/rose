@@ -2440,7 +2440,94 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+ 
+        case 75: { /*0x4B, setrlimit */ 
 
+            /*
+
+              int setrlimit(int resource, const struct rlimit *rlim);
+
+              struct rlimit {
+                rlim_t rlim_cur;  // Soft limit 
+                rlim_t rlim_max;  // Hard limit (ceiling for rlim_cur) 
+              };
+
+
+            */
+            syscall_enter("set_rlimit", "dp");
+
+            uint32_t resource = arg(0);
+
+            struct kernel_rlimit {
+              uint32_t rlim_cur;
+              uint32_t rlim_max;
+            };
+
+            kernel_rlimit rlim;
+            size_t nread = map->read(&rlim, arg(1), sizeof(kernel_rlimit));
+            ROSE_ASSERT(nread == sizeof(kernel_rlimit));
+
+            rlimit rlim64;
+ 
+            rlim64.rlim_cur = rlim.rlim_cur;
+            rlim64.rlim_max = rlim.rlim_max;
+ 
+            
+            int result = syscall(75, resource, &rlim64);                        
+
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+
+            break;
+
+        }
+
+        case 76: { /*0x4B, getrlimit */ 
+
+            /*
+
+              int getrlimit(int resource, struct rlimit *rlim);
+
+              struct rlimit {	
+                rlim_t rlim_cur;  // Soft limit 
+                rlim_t rlim_max;  // Hard limit (ceiling for rlim_cur) 
+              };
+
+
+            */
+            syscall_enter("get_rlimit", "dp");
+
+            uint32_t resource = arg(0);
+
+            rlimit rlim64;
+ 
+
+            
+            int result = syscall(76, resource, &rlim64);                        
+
+            struct kernel_rlimit {
+              uint32_t rlim_cur;
+              uint32_t rlim_max;
+            };
+
+            kernel_rlimit rlim;
+            size_t nread = map->read(&rlim, arg(1), sizeof(kernel_rlimit));
+            ROSE_ASSERT(nread == sizeof(kernel_rlimit));
+
+            rlim.rlim_cur = rlim64.rlim_cur;
+            rlim.rlim_max = rlim64.rlim_max;
+
+            size_t nwritten = map->write(&rlim, arg(1), sizeof(kernel_rlimit));
+            ROSE_ASSERT(nwritten == sizeof(kernel_rlimit));
+ 
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+
+            break;
+
+        }
         case 78: { /*0x4e, gettimeofday*/       
             syscall_enter("gettimeofday", "p");
             uint32_t tp = arg(0);
