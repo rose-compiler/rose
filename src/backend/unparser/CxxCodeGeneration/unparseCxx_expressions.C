@@ -3663,22 +3663,38 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
       curprint ( "{");
 
      SgExpressionPtrList& list = aggr_init->get_initializers()->get_expressions();
+     size_t last_index = list.size() -1;
+#if 0     
      SgExpressionPtrList::iterator p = list.begin();
-     size_t index = 0;
      if (p != list.end())
         {
           while (1)
              {
-               if (!isFromAnotherFile(aggr_init,index))
+               bool skipUnparsing = isFromAnotherFile(aggr_init,index);
+               if (!skipUnparsing)
                  unparseExpression((*p), newinfo);
                p++;
                index ++;
                if (p != list.end())
-                  {  curprint ( ", ");  }
+                  { 
+                    if (!skipUnparsing)
+                       curprint ( ", ");  
+                  }
                else
                   break;
              }
         }
+#endif
+     for (size_t index =0; index < list.size(); index ++)
+     {
+       bool skipUnparsing = isFromAnotherFile(aggr_init,index);
+       if (!skipUnparsing)
+       {
+         unparseExpression(list[index], newinfo);
+         if (index!= last_index)
+           curprint ( ", ");
+       }
+     }
      unparseAttachedPreprocessingInfo(aggr_init, info, PreprocessingInfo::inside);
      if (aggr_init->get_need_explicit_braces())
       curprint ( "}");

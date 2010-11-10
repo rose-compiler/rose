@@ -24,3 +24,4 @@ static const char c_tree_code_type[] = {
 };
 #undef DEFTREECODE
 
+static const char c_tree_code_type2[] = {  'z',  'x'};

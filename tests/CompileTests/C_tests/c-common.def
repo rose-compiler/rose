@@ -1,3 +1,5 @@
 /* A node to remember a source position.  */
 DEFTREECODE (SRCLOC, "srcloc", 'y', 2)
+DEFTREECODE (SIZEOF_EXPR, "sizeof_expr", '1', 1)
+
 

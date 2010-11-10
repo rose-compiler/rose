@@ -76,7 +76,6 @@ TESTCODE_CURRENTLY_FAILING = \
      test2010_05.c \
      Yarden_client.c
 
-EXTRA_DIDST = test2006_134.h test2010_08.h
 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
@@ -146,7 +145,8 @@ test2008_02.o: $(srcdir)/test2008_02.c
 # Include makefile rules specific to QMTest
 #include $(top_srcdir)/config/QMTest_makefile.inc
 
-EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def
+EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
+             test2006_134.h test2010_08.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
