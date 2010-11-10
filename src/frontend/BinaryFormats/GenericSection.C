@@ -52,6 +52,39 @@ SgAsmGenericSection::~SgAsmGenericSection()
     }
 }
 
+/** Increase file offset and mapping address to satisfy alignment constraints. This is typically done when initializing a new
+ *  section. The constructor places the new section at the end of the file before it knows what the alignment constraints will
+ *  be. The user should then set the alignment constraints (see set_file_alignment() and set_mapped_alignment()) and call this
+ *  method.  This method must be called before any additional sections are appended to the file.
+ *
+ *  The file offset and memory mapping address are adjusted independently.
+ *
+ *  On the other hand, if additional sections are in the way, they must first be moved out of the way with the
+ *  SgAsmGenericFile::shift_extend() method.
+ *
+ *  Returns true if the file offset and/or mapping address changed as a result of this call. */
+bool
+SgAsmGenericSection::align()
+{
+    bool changed = false;
+
+    if (get_file_alignment()>0) {
+        rose_addr_t old_offset = get_offset();
+        rose_addr_t new_offset = ALIGN_UP(old_offset, get_file_alignment());
+        set_offset(new_offset);
+        changed = changed ? true : (old_offset!=new_offset);
+    }
+
+    if (is_mapped() && get_mapped_alignment()>0) {
+        rose_addr_t old_rva = get_mapped_preferred_rva();
+        rose_addr_t new_rva = ALIGN_UP(old_rva, get_mapped_alignment());
+        set_mapped_preferred_rva(new_rva);
+        changed = changed ? true : (old_rva!=new_rva);
+    }
+
+    return changed;
+}
+
 /** Saves a reference to the original file data for a section based on the sections current offset and size. Once we do this,
  *  changing the offset or size of the file will not affect the original data. The original data can be extended, however, by
  *  calling SgAsmGenericSection::extend(), which is typically done during parsing. */
