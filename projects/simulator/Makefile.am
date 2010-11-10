@@ -7,7 +7,6 @@ EXTRA_DIST = README
 MOSTLYCLEANFILES=
 include_HEADERS=
 noinst_PROGRAMS=
-
 ###############################################################################################################################
 #  PROGRAMS
 ###############################################################################################################################
@@ -20,12 +19,19 @@ sandbox_SOURCES = emulator.C simulate.C linuxcalls.C elfload.C
 sandbox_CPPFLAGS = $(ROSE_INCLUDES) -UDEBUG
 sandbox_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+lib_LIBRARIES = libipc.a
+libipc_a_SOURCES = $(srcdir)/tests/libipc.c
+libipc_a_CFLAGS = -m32
+libipc_a_LDFLAGS = 
+
+include_HEADERS += $(srcdir)/tests/ipcmsg.h  $(srcdir)/tests/ipcsem.h  $(srcdir)/tests/ipcshm.h
+
 # The new simulator, which uses ROSE interfaces where possible.  The rest of this makefile deals only with this new simulator.
 noinst_PROGRAMS += x86sim
 include_HEADERS += x86print.h
 x86sim_SOURCES = x86sim.C x86print.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'
-x86sim_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+x86sim_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 ###############################################################################################################################
 #  TEST INPUTS
@@ -37,6 +43,8 @@ x86sim_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #    TEST_INPUTS_RT  -- require linking with librt
 #    TEST_INPUTS_TS  -- use the TEST_SUPPORT library
 TEST_SUPPORT_SRC = $(srcdir)/tests/parse_opts.c \
+                   $(srcdir)/tests/cleanup.c \
+                   $(srcdir)/tests/libtestsuite.c \
                    $(srcdir)/tests/tst_is_cwd.c \
                    $(srcdir)/tests/tst_kvercmp.c \
                    $(srcdir)/tests/tst_res.c \
@@ -45,6 +53,7 @@ TEST_SUPPORT_SRC = $(srcdir)/tests/parse_opts.c \
                    $(srcdir)/tests/rmobj.c \
                    $(srcdir)/tests/search_path.c \
                    $(srcdir)/tests/simple_test_looping.c \
+                   $(srcdir)/tests/system_specific_process_info.c \
                    $(srcdir)/tests/audit_parse_verify.c \
                    $(srcdir)/tests/get_high_address.c \
                    $(srcdir)/tests/audit_parse_verify_utils.c \
@@ -69,9 +78,9 @@ $(TEST_INPUTS_SA): %: $(srcdir)/tests/%.c
 $(TEST_INPUTS_RT): %: $(srcdir)/tests/%.c
 	@echo "  CC32    $@"
 	@$(CC) -m32 -I$(srcdir)/tests -o $@ $^ -lrt
-$(TEST_INPUTS_TS): %: $(srcdir)/tests/%.c $(TEST_SUPPORT_SRC)
+$(TEST_INPUTS_TS): %: $(srcdir)/tests/%.c $(TEST_SUPPORT_SRC) libipc.a
 	@echo "  CC32    $@"
-	@$(CC) -m32 -I$(srcdir)/tests -o $@ $^ -lrt
+	@$(CC) -m32 -I$(srcdir)/tests -o $@ $^ libipc.a -lrt 
 
 # Target to manually build the test inputs. (Not used internally)
 .PHONY: test_inputs
