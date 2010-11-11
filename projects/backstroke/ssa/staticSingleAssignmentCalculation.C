@@ -18,6 +18,7 @@
 #include "defsAndUsesTraversal.h"
 
 #define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 using namespace ssa_private;
@@ -35,10 +36,9 @@ bool StaticSingleAssignment::isFromLibrary(SgNode* node)
 	if (fi->isCompilerGenerated())
 		return true;
 	string filename = fi->get_filenameString();
-	//cout << "Filename string '" << filename << "' for " << node->class_name() << node << endl;
+
 	if ((filename.find("include") != string::npos))
 	{
-		//cout << "Found 'include' in string." << endl;
 		return true;
 	}
 	return false;
@@ -100,7 +100,7 @@ void StaticSingleAssignment::run()
 				cout << "Finished DefsAndUsesTraversal..." << endl;
 
 			//Iterate the global table insert a def for each name at the function definition
-			foreach(VarName globalVar, globalVarList)
+			foreach(const VarName& globalVar, globalVarList)
 			{
 				//Add this function definition as a definition point of this variable
 				originalDefTable[func].insert(globalVar);
@@ -115,9 +115,9 @@ void StaticSingleAssignment::run()
 
 void StaticSingleAssignment::findGlobalVars()
 {
-	InitNameVec vars = SageInterface::querySubTree<SgInitializedName > (project, V_SgInitializedName);
+	InitNameVec vars = SageInterface::querySubTree<SgInitializedName> (project, V_SgInitializedName);
 
-	foreach(InitNameVec::value_type& iter, vars)
+	foreach(SgInitializedName* iter, vars)
 	{
 		//Ignore library/compiler generated variables.
 		if (isFromLibrary(iter))
@@ -151,15 +151,12 @@ void StaticSingleAssignment::insertGlobalVarDefinitions()
 		cout << "Global Var List size: " << globalVarList.size() << endl;
 
 	//Iterate the function calls and insert definitions for all global variables
-	vector<SgFunctionCallExp*> calls = SageInterface::querySubTree<SgFunctionCallExp > (project, V_SgFunctionCallExp);
+	vector<SgFunctionCallExp*> calls = SageInterface::querySubTree<SgFunctionCallExp>(project, V_SgFunctionCallExp);
 
-	foreach(vector<SgFunctionCallExp*>::value_type& iter, calls)
+	foreach(SgFunctionCallExp* call, calls)
 	{
-		SgFunctionCallExp* call = iter;
-		ROSE_ASSERT(call);
-
 		//Iterate the global table insert a def for each name at the function call
-		foreach(GlobalTable::value_type& entry, globalVarList)
+		foreach(VarName& entry, globalVarList)
 		{
 			//Add this function call as a definition point of this variable
 			originalDefTable[call].insert(entry);
@@ -177,9 +174,9 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 	//Reset the first def list to prevent errors with global vars.
 	firstDefList.clear();
 
-	cfgNodeVec worklist;
+	vector<FilteredCfgNode> worklist;
 
-	cfgNode current = cfgNode(func->cfgForBeginning());
+	FilteredCfgNode current = FilteredCfgNode(func->cfgForBeginning());
 	worklist.push_back(current);
 
 	while (!worklist.empty())
@@ -187,13 +184,13 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		if (getDebug())
 			cout << "-------------------------------------------------------------------------" << endl;
 		//Get the node to work on
-		current = worklist.front();
-		worklist.erase(worklist.begin());
+		current = worklist.back();
+		worklist.pop_back();
 
 		//We don't want to do def_use on the ending CFGNode of the function definition
 		//so if we see it, continue.
 		//If we do this, then incorrect information will be propogated to the beginning of the function
-		if (current == cfgNode(func->cfgForEnd()))
+		if (current == FilteredCfgNode(func->cfgForEnd()))
 		{
 			if (getDebug())
 				cout << "Skipped defUse on End of function definition." << endl;
@@ -201,8 +198,9 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		}
 
 		bool memberRefInserted = false;
-		NodeVec changedNodes;
-		bool changed = defUse(current, &memberRefInserted, changedNodes);
+		NodeVec memberRefInsertedNodes;
+		bool changed = defUse(current, &memberRefInserted, memberRefInsertedNodes);
+		ROSE_ASSERT((memberRefInsertedNodes.size() > 0) == memberRefInserted);
 
 		//If memberRefs were inserted, then there are nodes previous to this one that are different.
 		//Thus, we need to add those nodes to the working list
@@ -213,17 +211,13 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 			visited.clear();
 
 			//Insert each changed node into the list
-			foreach(SgNode* chNode, changedNodes)
+			foreach(SgNode* chNode, memberRefInsertedNodes)
 			{
 				//Get the cfg node for this node
-				cfgNode nextNode = cfgNode(chNode->cfgForBeginning());
-				//Only insert the node in the worklist if it isn't there already.
-				if (find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
-				{
-					worklist.push_back(nextNode);
-					if (getDebug())
-						cout << "Member Ref Inserted: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
-				}
+				FilteredCfgNode nextNode = FilteredCfgNode(chNode->cfgForBeginning());
+				worklist.push_back(nextNode);
+				if (getDebug())
+					cout << "Member Ref Inserted: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
 			}
 
 			//Restart work from where the new def was inserted.
@@ -234,30 +228,26 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		cfgEdgeVec outEdges = current.outEdges();
 
 		//For every edge, add it to the worklist if it is not seen or something has changed
-		foreach(cfgEdgeVec::value_type& edge, outEdges)
+		reverse_foreach(FilteredCfgEdge& edge, outEdges)
 		{
-			cfgNode nextNode = edge.target();
+			FilteredCfgNode nextNode = edge.target();
 
-			//Only insert the node in the worklist if it isn't there already.
-			if (find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
+			//Insert the child in the worklist if the parent is changed or it hasn't been visited yet
+			if (changed || visited.count(nextNode.getNode()) == 0)
 			{
-				if (changed)
+				//Add the node to the worklist
+				if (find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
 				{
-					//Add the node to the worklist
 					worklist.push_back(nextNode);
 					if (getDebug())
-						cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
-				}
-					//If the next node has not yet been visited
-				else if (visited.count(nextNode.getNode()) == 0)
-				{
-					//Add it to the worklist
-					worklist.push_back(nextNode);
-					if (getDebug())
-						cout << "Next unvisited: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
+					{
+						if (changed)
+							cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
+						else
+							cout << "Next unvisited: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
+					}
 				}
 			}
-
 		}
 
 		//Mark the current node as seen
@@ -265,7 +255,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 	}
 }
 
-bool StaticSingleAssignment::defUse(cfgNode node, bool *memberRefInserted, NodeVec &changedNodes)
+bool StaticSingleAssignment::defUse(FilteredCfgNode node, bool *memberRefInserted, NodeVec &changedNodes)
 {
 	SgNode* current = node.getNode();
 
@@ -287,7 +277,7 @@ bool StaticSingleAssignment::defUse(cfgNode node, bool *memberRefInserted, NodeV
 	return defChanged;
 }
 
-bool StaticSingleAssignment::mergeDefs(cfgNode curNode)
+bool StaticSingleAssignment::mergeDefs(FilteredCfgNode curNode)
 {
 	SgNode* node = curNode.getNode();
 
@@ -414,7 +404,7 @@ bool StaticSingleAssignment::mergeDefs(cfgNode curNode)
 	return changed;
 }
 
-void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& results)
+void StaticSingleAssignment::aggregatePreviousDefs(FilteredCfgNode curNode, TableEntry& results)
 {
 	//Get the previous edges in the CFG for this node
 	cfgEdgeVec inEdges = curNode.inEdges();
@@ -451,7 +441,7 @@ void StaticSingleAssignment::aggregatePreviousDefs(cfgNode curNode, TableEntry& 
 	}
 }
 
-void StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
+void StaticSingleAssignment::expandMemberDefinitions(FilteredCfgNode curNode)
 {
 	SgNode* node = curNode.getNode();
 
@@ -504,7 +494,7 @@ void StaticSingleAssignment::expandMemberDefinitions(cfgNode curNode)
 	}
 }
 
-void StaticSingleAssignment::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode, bool *memberRefInserted, NodeVec &changedNodes)
+void StaticSingleAssignment::resolveUses(FilteredCfgNode curNode, bool *memberRefInserted, NodeVec &changedNodes)
 {
 	SgNode* node = curNode.getNode();
 
@@ -518,7 +508,7 @@ void StaticSingleAssignment::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode
 	expandMemberUses(curNode);
 
 	//Iterate every use at the current node
-	foreach(TableEntry::value_type& entry, useTable[node])
+	foreach(const TableEntry::value_type& entry, useTable[node])
 	{
 		//Check the defs that are active at the current node to find the reaching definition
 		//We want to check if there is a definition entry for this use at the current node
@@ -548,7 +538,7 @@ void StaticSingleAssignment::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode
 	//def as the use for this node.
 
 	//Iterate every use at the current node
-	foreach(TableEntry::value_type& entry, useTable[node])
+	foreach(const TableEntry::value_type& entry, useTable[node])
 	{
 		//If any of these uses are for a variable defined at this node, we will
 		//set the flag and correct it later.
@@ -562,7 +552,7 @@ void StaticSingleAssignment::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode
 	}
 }
 
-void StaticSingleAssignment::expandMemberUses(cfgNode curNode)
+void StaticSingleAssignment::expandMemberUses(FilteredCfgNode curNode)
 {
 	SgNode* node = curNode.getNode();
 
@@ -571,6 +561,11 @@ void StaticSingleAssignment::expandMemberUses(cfgNode curNode)
 		cout << "Expanding member uses at " << node->class_name() << node << endl;
 		cout << "Original Node ";
 		printUses(useTable[node]);
+	}
+
+	if (useTable.count(node) == 0)
+	{
+		return;
 	}
 
 	//We want to iterate the vars used on this node, and expand them
@@ -621,7 +616,7 @@ void StaticSingleAssignment::expandMemberUses(cfgNode curNode)
 	}
 }
 
-bool StaticSingleAssignment::insertExpandedDefsForUse(cfgNode curNode, VarName name, NodeVec &changedNodes)
+bool StaticSingleAssignment::insertExpandedDefsForUse(FilteredCfgNode curNode, VarName name, NodeVec &changedNodes)
 {
 	SgNode* node = curNode.getNode();
 
@@ -634,7 +629,7 @@ bool StaticSingleAssignment::insertExpandedDefsForUse(cfgNode curNode, VarName n
 	}
 
 	//Check if the given name has a def at this node
-	if (reachingDefsTable[node].count(name) != 0)
+	if (reachingDefsTable.count(node) == 0 || reachingDefsTable[node].count(name) != 0)
 	{
 		if (getDebugExtra())
 			cout << "Already have def." << endl;
@@ -663,7 +658,7 @@ bool StaticSingleAssignment::insertExpandedDefsForUse(cfgNode curNode, VarName n
 
 			firstDefList[rootName] = func;
 		}
-			//Check if the variable is declared in a class scope
+		//Check if the variable is declared in a class scope
 		else if (isSgClassDefinition(SageInterface::getScope(rootName[0])) != NULL)
 		{
 			//It is declared in class scope.
@@ -675,15 +670,16 @@ bool StaticSingleAssignment::insertExpandedDefsForUse(cfgNode curNode, VarName n
 
 			firstDefList[rootName] = func;
 		}
-			//Otherwise, see if it is in namespace scope
+		//Otherwise, see if it is in namespace scope
 		else if (isSgNamespaceDefinitionStatement(SageInterface::getScope(rootName[0])) != NULL)
 		{
 			//It is declared in namespace scope.
 			//Get our enclosing function definition to insert the first definition into.
-
-			SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
+			SgFunctionDeclaration* declaration = SageInterface::getEnclosingNode<SgFunctionDeclaration>(node);
+			ROSE_ASSERT(declaration != NULL);
+			SgFunctionDefinition* func = declaration->get_definition();
 			ROSE_ASSERT(func);
-
+			
 			firstDefList[rootName] = func;
 		}
 		else

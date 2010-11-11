@@ -1,6 +1,11 @@
 #include "staticSingleAssignment.h"
 #include "rose.h"
 #include "VariableRenaming.h"
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+using namespace std;
+using namespace boost;
 
 class ComparisonTraversal : public AstSimpleProcessing
 {
@@ -11,7 +16,18 @@ public:
 	
 	virtual void visit(SgNode* node)
 	{
-		ROSE_ASSERT(ssa->getOriginalDefsAtNode(node) == varRenaming->getOriginalDefsAtNode(node));
+		if (ssa->getOriginalDefsAtNode(node) != varRenaming->getOriginalDefsAtNode(node))
+		{
+			printf("Found difference between original defs at node %s, line %d: %s\n", node->class_name().c_str(),
+					node->get_file_info()->get_line(), node->unparseToString().c_str());
+			
+			printf("VariableRenaming Result:");
+			StaticSingleAssignment::printRenameTable(varRenaming->getOriginalDefsAtNode(node));
+			printf("SSA Result:");
+			StaticSingleAssignment::printRenameTable(ssa->getOriginalDefsAtNode(node));
+			ROSE_ASSERT(false);
+		}
+
 		ROSE_ASSERT(ssa->getExpandedDefsAtNode(node) == varRenaming->getExpandedDefsAtNode(node));
 	}
 };
@@ -35,12 +51,100 @@ int main(int argc, char** argv)
 		printf("\n\n ***** VariableRenaming Complete ***** \n\n");
 	}
 
+
+	//generateDOT(*project);
+	//varRenaming.toFilteredDOT("filteredCFG.dot");
+
 	//Run the SSA analysis
 	StaticSingleAssignment ssa(project);
 	ssa.run();
 
-	ROSE_ASSERT(ssa.getUseTable() == varRenaming.getUseTable());
-	ROSE_ASSERT(ssa.getPropDefTable() == varRenaming.getPropDefTable());
+	//Compare the sizes of the use tables
+	pair<SgNode*, StaticSingleAssignment::TableEntry> entry;
+	if (ssa.getUseTable().size() != varRenaming.getUseTable().size())
+	{
+		foreach (entry, ssa.getUseTable())
+		{
+			if (varRenaming.getUseTable().count(entry.first) == 0 && entry.second.size() > 0)
+			{
+				printf("Node %s, %d: %s --- in SSA but not varRenaming use Table\n", entry.first->class_name().c_str(),
+						entry.first->get_file_info()->get_line(), entry.first->unparseToString().c_str());
+				ssa.printUses(entry.first);
+				ROSE_ASSERT(false);
+			}
+		}
+		
+		foreach (entry, varRenaming.getUseTable())
+		{
+			if (ssa.getUseTable().count(entry.first) == 0 && entry.second.size() > 0)
+			{
+				printf("Node %s, %d: %s --- in varRenaming but not SSA use Table\n", entry.first->class_name().c_str(),
+						entry.first->get_file_info()->get_line(), entry.first->unparseToString().c_str());
+				varRenaming.printUses(entry.first);
+				ROSE_ASSERT(false);
+			}
+		}
+	}
+
+	foreach(entry, ssa.getUseTable())
+	{
+		SgNode* node = entry.first;
+		const StaticSingleAssignment::TableEntry& usedVarsSSA = entry.second;
+
+		const StaticSingleAssignment::TableEntry& usedVarsRenaming = varRenaming.getUseTable()[node];
+
+		if (usedVarsSSA.size() == 0)
+			continue;
+
+		if (usedVarsSSA != usedVarsRenaming)
+		{
+			printf("The different node is %s, line %d: %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
+					node->unparseToString().c_str());
+			printf("---VarRenaming--- Result\n");
+			StaticSingleAssignment::printUses(usedVarsRenaming);
+			printf("---SSA--- Result\n");
+			StaticSingleAssignment::printUses(usedVarsSSA);
+
+
+			ROSE_ASSERT(false);
+		}
+	}
+
+	//Compare the sizes of the reaching def tables
+	if (ssa.getPropDefTable().size() != varRenaming.getPropDefTable().size())
+	{
+		foreach (entry, ssa.getPropDefTable())
+		{
+			if (varRenaming.getPropDefTable().count(entry.first) == 0 && entry.second.size() > 0)
+			{
+				printf("Node %s, %d: %s --- in SSA but not varRenaming reaching def Table\n", entry.first->class_name().c_str(),
+						entry.first->get_file_info()->get_line(), entry.first->unparseToString().c_str());
+				ssa.printUses(entry.first);
+				return 1;
+			}
+		}
+
+		foreach (entry, varRenaming.getPropDefTable())
+		{
+			if (ssa.getPropDefTable().count(entry.first) == 0 && entry.second.size() > 0)
+			{
+				printf("Node %s, %d: %s --- in varRenaming but not SSA reaching def Table\n", entry.first->class_name().c_str(),
+						entry.first->get_file_info()->get_line(), entry.first->unparseToString().c_str());
+				varRenaming.printUses(entry.first);
+				return 1;
+			}
+		}
+	}
+
+	foreach(entry, ssa.getPropDefTable())
+	{
+		SgNode* node = entry.first;
+		const StaticSingleAssignment::TableEntry& reachingVarsSSA = entry.second;
+
+		const StaticSingleAssignment::TableEntry& reachingVarsRenaming = varRenaming.getPropDefTable()[node];
+
+		ROSE_ASSERT(reachingVarsSSA == reachingVarsRenaming);
+	}
 
 	ComparisonTraversal t;
 	t.varRenaming = &varRenaming;

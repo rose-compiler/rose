@@ -721,9 +721,9 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 	//Keep track of visited nodes
 	set<SgNode*> visited;
 
-	queue<cfgNode> worklist;
+	queue<FilteredCfgNode> worklist;
 
-	cfgNode current = cfgNode(bb->cfgForBeginning());
+	FilteredCfgNode current = FilteredCfgNode(bb->cfgForBeginning());
 	worklist.push(current);
 
 	while (!worklist.empty())
@@ -738,7 +738,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 		//Find if any of the children exit the basic block.
 		cfgEdgeVec outEdges = current.outEdges();
 
-		foreach(cfgEdge edge, outEdges)
+		foreach(FilteredCfgEdge edge, outEdges)
 		{
 			SgNode* targetNode = edge.target().getNode();
 
@@ -802,7 +802,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 	ROSE_ASSERT(node);
 	NumNodeRenameTable result;
 
-	cfgNode lastNode = cfgNode(node->cfgForEnd());
+	FilteredCfgNode lastNode = FilteredCfgNode(node->cfgForEnd());
 	cfgEdgeVec lastEdges = lastNode.inEdges();
 	if (lastEdges.size() == 0)
 	{
@@ -864,7 +864,7 @@ StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getReachingDe
 	ROSE_ASSERT(node);
 	NumNodeRenameEntry result;
 
-	cfgNode lastNode = cfgNode(node->cfgForEnd());
+	FilteredCfgNode lastNode = FilteredCfgNode(node->cfgForEnd());
 	cfgEdgeVec lastEdges = lastNode.inEdges();
 	if (lastEdges.size() == 0)
 	{
@@ -920,7 +920,6 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 	vector<CFGNode> filteredNodes;
 
 	//Add all the unfiltered inEdges to the initial worklist
-
 	foreach(CFGEdge inEdge, inEdges)
 	{
 		unfilteredNodes.push(inEdge.source());
@@ -938,7 +937,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 		{
 			filteredNodes.push_back(node);
 		}
-			//This node is unfiltered, explore its parents
+		//This node is unfiltered, explore its parents
 		else
 		{
 
@@ -1072,15 +1071,15 @@ void StaticSingleAssignment::printDefs(SgNode* node)
 	}
 }
 
-void StaticSingleAssignment::printDefs(map< vector<SgInitializedName*>, vector<SgNode*> >& table)
+void StaticSingleAssignment::printDefs(const map< vector<SgInitializedName*>, vector<SgNode*> >& table)
 {
 	cout << "Def Table:" << endl;
 
-	foreach(TableEntry::value_type& entry, table)
+	foreach(const TableEntry::value_type& entry, table)
 	{
 		cout << "  Defs for [" << keyToString(entry.first) << "]:" << endl;
 
-		foreach(NodeVec::value_type& iter, entry.second)
+		foreach(const NodeVec::value_type& iter, entry.second)
 		{
 			cout << "    -[" << iter->class_name() << ":" << iter << "]" << endl;
 		}
@@ -1113,11 +1112,9 @@ void StaticSingleAssignment::printOriginalDefTable()
 void StaticSingleAssignment::printUses(SgNode* node)
 {
 	cout << "Use Table for [" << node->class_name() << ":" << node << "]:" << endl;
-
 	foreach(TableEntry::value_type& entry, useTable[node])
 	{
 		cout << "  Uses for [" << keyToString(entry.first) << "]:" << endl;
-
 		foreach(NodeVec::value_type& iter, entry.second)
 		{
 			cout << "    -[" << iter->class_name() << ":" << iter << "]" << endl;
@@ -1125,17 +1122,15 @@ void StaticSingleAssignment::printUses(SgNode* node)
 	}
 }
 
-void StaticSingleAssignment::printUses(map< vector<SgInitializedName*>, vector<SgNode*> >& table)
+void StaticSingleAssignment::printUses(const TableEntry& table) 
 {
 	cout << "Use Table:" << endl;
-
-	foreach(TableEntry::value_type& entry, table)
+	foreach(const TableEntry::value_type& entry, table)
 	{
 		cout << "  Uses for [" << keyToString(entry.first) << "]:" << endl;
-
-		foreach(NodeVec::value_type& iter, entry.second)
+		foreach(const NodeVec::value_type& iter, entry.second)
 		{
-			cout << "    -[" << iter->class_name() << ":" << iter << "]" << endl;
+			cout << "    -[" << iter->class_name() << "," << iter << " \"" << iter->unparseToString() << "\"]" << endl;
 		}
 	}
 }
@@ -1238,7 +1233,7 @@ void StaticSingleAssignment::printRenameEntry(const NumNodeRenameEntry& entry)
 
 	foreach(const NumNodeRenameEntry::value_type& iter, entry)
 	{
-		cout << "      " << iter.first << ": " << iter.second << endl;
+		cout << "      " << iter.first << ": line " << iter.second->get_file_info()->get_line() << ", " << iter.second << endl;
 	}
 }
 

@@ -207,16 +207,16 @@ public:
 	typedef std::vector<SgInitializedName*> InitNameVec;
 	
 	/** A filtered CFGNode that is used for DefUse traversal.  */
-	typedef FilteredCFGNode<ssa_private::IsDefUseFilter> cfgNode;
+	typedef FilteredCFGNode<ssa_private::IsDefUseFilter> FilteredCfgNode;
 	
 	/** A filtered CFGEdge that is used for DefUse traversal.  */
-	typedef FilteredCFGEdge<ssa_private::IsDefUseFilter> cfgEdge;
+	typedef FilteredCFGEdge<ssa_private::IsDefUseFilter> FilteredCfgEdge;
 
 	/** A vector of cfgNodes. */
-	typedef std::vector<cfgNode> cfgNodeVec;
+	typedef std::vector<FilteredCfgNode> cfgNodeVec;
 
 	/** A vector of cfgEdges. */
-	typedef std::vector<cfgEdge> cfgEdgeVec;
+	typedef std::vector<FilteredCfgEdge> cfgEdgeVec;
 	
 	/** An entry in the rename table that maps a node to a number.  */
 	typedef std::map<SgNode*, int> NodeNumRenameEntry;
@@ -303,7 +303,7 @@ public:
 
 private:
 	void runDefUseDataFlow(SgFunctionDefinition* func);
-	bool defUse(cfgNode node, bool *memberRefInserted, NodeVec &changedNodes);
+	bool defUse(FilteredCfgNode node, bool *memberRefInserted, NodeVec &changedNodes);
 
 	/** Add an entry to the renumbering table for the given var and node.
 	 *
@@ -335,7 +335,7 @@ private:
 	 * @param curNode The node to merge defs onto.
 	 * @return Whether the defs were different from those already on the node.
 	 */
-	bool mergeDefs(cfgNode curNode);
+	bool mergeDefs(FilteredCfgNode curNode);
 
 	/** Called to update the uses on the current node.
 	 *
@@ -347,14 +347,14 @@ private:
 	 * @param curNode The node to resolve uses on.
 	 * @param memberRefInserted Reference that indicates whether the function back-inserted a definition.
 	 */
-	void resolveUses(cfgNode curNode, bool *memberRefInserted, NodeVec &changedNodes);
+	void resolveUses(FilteredCfgNode curNode, bool *memberRefInserted, NodeVec &changedNodes);
 
 	/** Trace backwards in the cfg one step and return an aggregate of all previous defs.
 	 *
 	 * @param curNode Node to traverse backwards from.
 	 * @param results TableEntry reference where results are stored.
 	 */
-	void aggregatePreviousDefs(cfgNode curNode, TableEntry& results);
+	void aggregatePreviousDefs(FilteredCfgNode curNode, TableEntry& results);
 
 	/** Inserts definition points for all global variables.
 	 * 2. At every function call expression.
@@ -375,7 +375,7 @@ private:
 	 *
 	 * @param curNode The node to expand the definitions on.
 	 */
-	void expandMemberDefinitions(cfgNode curNode);
+	void expandMemberDefinitions(FilteredCfgNode curNode);
 
 	/** Insert defs for member uses (chained names) that do not have an explicit def.
 	 *
@@ -398,7 +398,7 @@ private:
 	 * @param name The variableName to expand the uses for.
 	 * @return Whether any new defs were inserted.
 	 */
-	bool insertExpandedDefsForUse(cfgNode curNode, VarName name, NodeVec &changedNodes);
+	bool insertExpandedDefsForUse(FilteredCfgNode curNode, VarName name, NodeVec &changedNodes);
 
 	/** Expand all member uses (chained names) to explicitly use every name in the chain.
 	 *
@@ -415,13 +415,10 @@ private:
 	 *
 	 * @param curNode
 	 */
-	void expandMemberUses(cfgNode curNode);
+	void expandMemberUses(FilteredCfgNode curNode);
 
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
-
-	void printUses(TableEntry& table);
-	void printDefs(TableEntry& table);
 
 public:
 	//External static helper functions/variables
@@ -488,6 +485,8 @@ public:
 
 	static void printRenameEntry(const NumNodeRenameEntry& entry);
 
+	static void printUses(const TableEntry& table);
+	static void printDefs(const TableEntry& table);
 
 
 	/*
