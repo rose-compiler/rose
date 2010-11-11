@@ -3235,6 +3235,8 @@ EmulationPolicy::emulate_syscall()
 
 
             char buf[arg(1)];
+            int result = syscall(183,buf, arg(1));
+
 
 #if 0
             //The Buf pointer may be NULL
