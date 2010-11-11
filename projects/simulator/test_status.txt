@@ -86,5 +86,5 @@ syscall_tst.91.1 yes
 syscall_tst.91.2 yes
 syscall_tst.94.1 yes
 syscall_tst.94.2 yes
-syscall_tst.95 no
+syscall_tst.95 yes
 syscall_tst_18 yes

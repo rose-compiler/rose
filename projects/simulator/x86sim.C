@@ -2996,6 +2996,8 @@ EmulationPolicy::emulate_syscall()
 
 	    //Call the system call and write result to the buffer in the specimen
 	    int result = 0xdeadbeef;
+
+
 	    result = syscall(141, fd, dirent, dirent_size);
 
             map->write(dirent, arg(1), dirent_size);
@@ -3230,9 +3232,33 @@ EmulationPolicy::emulate_syscall()
 
 	case 183: { /* 0xb7, getcwd */
             syscall_enter("getcwd", "pd");
+
+
             char buf[arg(1)];
-            int result = getcwd(buf, arg(1)) ? 0 : -errno;
-            if (result>=0) {
+
+#if 0
+            //The Buf pointer may be NULL
+            uint8_t byte;
+	    size_t nread = map->read(&byte, arg(0), 1);
+	    ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+            int result = byte ? syscall(183,buf, arg(1)) : syscall(183, NULL, arg(1));
+
+            switch (result)
+	    {
+              case ENOMEM:
+                std::cout << "ENOMEM" << std::endl;
+                break;
+              case ENOENT:
+                std::cout << "ENOENT" << std::endl;
+                break;
+
+              case ERANGE:
+                std::cout << "ERANGE" << std::endl;
+                break;
+
+	    } 
+#endif
+            if (result>=0 && result != EFAULT ) {
                 size_t nwritten = map->write(buf, arg(0), arg(1));
                 ROSE_ASSERT(nwritten==arg(1));
             }
