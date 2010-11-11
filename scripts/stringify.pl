@@ -436,7 +436,7 @@ if ($defn_output) {
 my $files = FileLister->new(@ARGV);
 $files->{build} = 1; # include machine generated files
 while (my $filename = $files->next_file) {
-  next unless $filename =~ /\.(h|hh|c|cpp|C)$/;
+  next unless $filename =~ /\.(h|hh|hpp|c|cpp|C)$/;
   my($lexer) = make_lexer $filename;
   my($token);
   while (defined($token=&$lexer())) {
