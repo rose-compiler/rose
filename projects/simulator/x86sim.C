@@ -8,8 +8,7 @@
 /* Define one CPP symbol to determine whether this simulator can be compiled.  The definition of this one symbol depends on
  * all the header file prerequisites. */
 #if defined(HAVE_ASM_LDT_H) && defined(HAVE_ELF_H) &&                                                                          \
-    defined(HAVE_LINUX_TYPES_H) && defined(HAVE_LINUX_DIRENT_H) && defined(HAVE_LINUX_UNISTD_H) &&                             \
-    defined(HAVE_LINUX_FUTEX_H)
+    defined(HAVE_LINUX_TYPES_H) && defined(HAVE_LINUX_DIRENT_H) && defined(HAVE_LINUX_UNISTD_H)
 #  define ROSE_ENABLE_SIMULATOR
 #else
 #  undef ROSE_ENABLE_SIMULATOR
@@ -28,7 +27,6 @@
 #include <asm/ldt.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/futex.h>
 #include <syscall.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -3507,76 +3505,42 @@ EmulationPolicy::emulate_syscall()
        }
 
         case 240: { /*0xf0, futex*/
+            /* We cannot include <linux/futex.h> portably across a variety of Linux machines. */
             static const Translate opflags[] = {
-#ifdef FUTEX_PRIVATE_FLAG
-                TF(FUTEX_PRIVATE_FLAG),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAIT)
-                TF2(FUTEX_CMD_MASK, FUTEX_WAIT),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAKE)
-                TF2(FUTEX_CMD_MASK, FUTEX_WAKE),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_FD)
-                TF2(FUTEX_CMD_MASK, FUTEX_FD),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_REQUEUE)
-                TF2(FUTEX_CMD_MASK, FUTEX_REQUEUE),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_CMP_REQUEUE)
-                TF2(FUTEX_CMD_MASK, FUTEX_CMP_REQUEUE),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAKE_OP)
-                TF2(FUTEX_CMD_MASK, FUTEX_WAKE_OP),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_LOCK_PI)
-                TF2(FUTEX_CMD_MASK, FUTEX_LOCK_PI),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_UNLOCK_PI)
-                TF2(FUTEX_CMD_MASK, FUTEX_UNLOCK_PI),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_TRYLOCK_PI)
-                TF2(FUTEX_CMD_MASK, FUTEX_TRYLOCK_PI),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAIT_BITSET)
-                TF2(FUTEX_CMD_MASK, FUTEX_WAIT_BITSET),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAKE_BITSET)
-                TF2(FUTEX_CMD_MASK, FUTEX_WAKE_BITSET),
-#endif
-                T_END };
+                TF3(0x80, 0x80, FUTEX_PRIVATE_FLAG),
+                TF3(0x7f, 0, FUTEX_PRIVATE_FLAG),
+                TF3(0x7f, 1, FUTEX_WAKE),
+                TF3(0x7f, 2, FUTEX_FD),
+                TF3(0x7f, 3, FUTEX_REQUEUE),
+                TF3(0x7f, 4, FUTEX_CMP_REQUEUE),
+                TF3(0x7f, 5, FUTEX_WAKE_OP),
+                TF3(0x7f, 6, FUTEX_LOCK_PI),
+                TF3(0x7f, 7, FUTEX_UNLOCK_PI),
+                TF3(0x7f, 8, FUTEX_TRYLOCK_PI),
+                TF3(0x7f, 9, FUTEX_WAIT_BITSET),
+                TF3(0x7f, 10, FUTEX_WAKE_BITSET),
+                T_END
+            };
 
             /* Variable arguments */
             unsigned arg1 = arg(1);
-#ifdef FUTEX_CMD_MASK
-            arg1 &= FUTEX_CMD_MASK;
-#endif
+            arg1 &= 0x7f;
             switch (arg1) {
-#ifdef FUTEX_WAIT
-                case FUTEX_WAIT:
+                case 0: /*FUTEX_WAIT*/
                     syscall_enter("futex", "PfdP--", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
                     break;
-#endif
-#ifdef FUTEX_WAKE
-                case FUTEX_WAKE:
+                case 1: /*FUTEX_WAKE*/
                     syscall_enter("futex", "Pfd---", 4, print_int_32, opflags);
                     break;
-#endif
-#ifdef FUTEX_FD
-                case FUTEX_FD:
+                case 2: /*FUTEX_FD*/
                     syscall_enter("futex", "Pfd---", 4, print_int_32, opflags);
                     break;
-#endif
-#ifdef FUTEX_REQUEUE
-                case FUTEX_REQUEUE:
+                case 3: /*FUTEX_REQUEUE*/
                     syscall_enter("futex", "Pfd-P-", 4, print_int_32, opflags, 4, print_int_32);
                     break;
-#endif
-#ifdef FUTEX_CMP_REQUEUE
-                case FUTEX_CMP_REQUEUE:
+                case 4: /*FUTEX_CMP_REQUEUE*/
                     syscall_enter("futex", "Pfd-Pd", 4, print_int_32, opflags, 4, print_int_32);
                     break;
-#endif
                 default:
                     syscall_enter("futex", "PfdPPd", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
                                   4, print_int_32);
