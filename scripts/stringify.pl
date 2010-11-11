@@ -221,6 +221,7 @@ sub parse_class {
 sub parse_enum {
   my($lexer) = @_;
   my($token,$enum_name) = &$lexer();
+  return if &$lexer('skip');
 
   # Check for anonymous enumeration types
   if ($token eq '{') {
