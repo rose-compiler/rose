@@ -1,37 +1,84 @@
 #!/usr/bin/perl
-my $help = <<EOF;
-Scans C++ source file(s) for "enum" definitions and generates
-functions that convert enums to strings.
+=pod
 
-The input arguments are either C/C++ source file names (with an
-appropriate file name extension) or directories. A directory causes a
-recursive search for C/C++ source files under that directory.  If no
-source arguments are specified then the current working directory
-is assumed.
+=head1 NAME
 
-When invoked with "--output=FILE" the generated definitions will be
-sent to FILE along with all necessary boilerplate. Without this
-switch, declarations or definitions (depending on whether the --header
-switch was specified) will be sent to standard output without
-boilerplate.
+stringify.pl - generates stringification functions for C/C++ enums
 
-When invoked with "--header" then function prototypes are output. If
-"--output=FILE" is also specified then definitions are sent to FILE,
-and forward declarations are sent to FILE with a ".h" extension
-replacing the extension already present in FILE.
+=head1 SYNOPSIS
 
-When invoked with "--generic" then these functions take an "int"
-argument rather than an enum argument.  This is useful when you don't
-want to have to include lots of header files.
+stringify.pl [--output=FILE] [--header] [--generic] FILES_OR_DIRECTORIES...
 
-The name of the stringification function is created by concatenting
-"stringify" and all the parts of the canonic enumeration type name
-(the stuff separated by '::' operators).  If the boundary between
-parts is not a lower-case to upper-case transition then an underscore
-is inserted to improve readability. For instance, the stringifier for
-"foo::bar" is "stringify_foo_bar" while the stringifier for
-"Disassembler::Heuristic" is "stringifyDisassemblerHeuristic".
-EOF
+=head1 DESCRIPTION
+
+This perl script scans the C++ source files mentioned on the command line (or found by recursively scanning the mentioned
+directories) and generates C++ code to convert enum member values to strings. The input arguments are either C/C++ source file
+names (with an appropriate file name extension) or directories. A directory causes a recursive search for C/C++ source files
+under that directory.  If no source arguments are specified then the current working directory is assumed.
+
+This script is not a full C++ parser--it only recognizes enough of the C++ language to detect an parse enum definitions and
+detect the classes and namespaces the contain the enum.  In particular, stringify.pl does not invoke the C preprocessor
+although it does make some rudimentary attempt to process certain conditional compilation directives such as "#if 0". Certain
+symbols used as syntactic sugar in ROSE and Qt are recognized even when stringify.pl does not see their CPP definitions.
+
+The value of an enumeration member can be an integer, a symbol which is one of the enum's previous members, or certain constant
+expressions. Constant expressions are evaluated by the perl interpreter and may differ from what is evaluated by the C++
+compiler.  A warning will be emitted if perl cannot evaluate the expression.
+
+This script will emit warnings about enumerations with multiple members having the same value, since a reverse lookup from
+value to member name would be ambiguous.  A member can be omitted from the generated stringify function by placing the word
+"NO_STRINGIFY" anywhere on the same line after the member name (inside a comment so as not to confuse parsing). When
+NO_STRINGIFY appears on a line, it pertains to all the previous enum members on that same line.  When NO_STRINGIFY appears on
+the same line as the enum name (as in "enum foo { /*NO_STRINGIFY*/") then the entire enum definition is skipped an no
+stringify function will be produced for it.
+
+=head1 OUTPUT
+
+The name of the stringification function is created by concatenting "stringify" and all the parts of the canonic enumeration
+type name (the stuff separated by '::' operators).  If the boundary between parts is not a lower-case to upper-case transition
+then an underscore is inserted to improve readability. For instance, the stringifier for "foo::bar" is "stringify_foo_bar"
+while the stringifier for "Disassembler::Heuristic" is "stringifyDisassemblerHeuristic".
+
+=head1 SWITCHES
+
+=over
+
+=item --output=FILE
+
+When invoked with "--output=FILE" the generated definitions will be sent to FILE along with all necessary boilerplate. Without
+this switch, declarations or definitions (depending on whether the --header switch was specified) will be sent to standard
+output without boilerplate.
+
+=item --header
+
+When invoked with "--header" then function prototypes are output. If "--output=FILE" is also specified then definitions are
+sent to FILE, and forward declarations are sent to FILE with a ".h" extension replacing the extension already present in FILE.
+
+=item --generic
+
+When invoked with "--generic" then these functions take an "int" argument rather than an enum argument.  This is useful when
+you don't want to have to include lots of header files.
+
+=back
+
+=head1 BUGS
+
+This script is not intended to be a full C++ parser.  Every attempt has been made to detect and parse enum definitions as they
+commonly occur in source code, but it's easy to enums in such a way that they won't be detected.
+
+Enum member value expressions are parsed and evaluated by the perl interpreter, which might produce a different result than the
+C++ compiler itself.
+
+=head1 AUTHOR
+
+Robb Matzke.
+
+Copyright Lawrence Livermore National Security.
+
+Licensed under a revised BSD License. See the COPYRIGHT file at the top of the ROSE source tree.
+
+=cut
+
 
 BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 use strict;
@@ -43,10 +90,17 @@ my @name_stack;
 
 sub usage {
   my($arg0) = $0 =~ /([^\/]+)$/;
-  return "usage: $arg0 \\
-    [--generic] [--header] [--output=FILE] \\
-    [--] SOURCES...\n";
+  return ("usage: ${arg0} [--generic] [--header] [--output=FILE] [--] SOURCES...\n" .
+	  "       ${arg0} --help\n");
 }
+
+sub help {
+  local $_ = `(pod2man $0 |nroff -man) 2>/dev/null` ||
+	     `pod2text $0 2>/dev/null` ||
+	     `sed -ne '/^=pod/,/^=cut/p' $0 2>/dev/null`;
+  print $_;
+  die "$0: see source file for documentation" unless $_;
+};
 
 # Useful function for printing debugging info.
 sub debug {
@@ -414,7 +468,7 @@ while ($ARGV[0] =~ /^-/) {
     shift;
     last;
   } elsif ($ARGV[0] =~ /^(-h|-\?|--help)$/) {
-    print usage, "\n", $help;
+    help;
     exit 0;
   } elsif ($ARGV[0] =~ /^--header$/) {
     $do_decls = shift @ARGV;
