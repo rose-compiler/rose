@@ -6,13 +6,17 @@ if ROSE_USE_OPENGL
 # INCLUDES = $(ROSE_INCLUDES) -I$(builddir) $(GL_CFLAGS)
 INCLUDES = $(ROSE_INCLUDES) $(GL_CFLAGS)
 
-bin_PROGRAMS = vizzBinary 
+bin_PROGRAMS = vizzBinary test
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(GL_LIBS)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(GL_LIBS) -L$(GLUT_LIBS) 
+#-L/home/panas2/programs/freeglut/lib -lglut
 
 vizzBinary_SOURCES = vizzBinary.C
 
-check-local: vizzBinary 
+test_SOURCES = test.C
+
+check-local: vizzBinary test
+	./test $(srcdir)/lsdiff
 
 include_HEADERS = helper.h
 
