@@ -74,13 +74,13 @@ MOSTLYCLEANFILES += $(TEST_INPUTS) $(addsuffix .o, $(TEST_INPUTS)) \
 
 $(TEST_INPUTS_SA): %: $(srcdir)/tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -I$(srcdir)/tests -o $@ $^
+	@$(CC) -m32 -g -I$(srcdir)/tests -o $@ $^
 $(TEST_INPUTS_RT): %: $(srcdir)/tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -I$(srcdir)/tests -o $@ $^ -lrt
+	@$(CC) -m32 -g -I$(srcdir)/tests -o $@ $^ -lrt
 $(TEST_INPUTS_TS): %: $(srcdir)/tests/%.c $(TEST_SUPPORT_SRC) libipc.a
 	@echo "  CC32    $@"
-	@$(CC) -m32 -I$(srcdir)/tests -o $@ $^ libipc.a -lrt 
+	@$(CC) -m32 -g -I$(srcdir)/tests -o $@ $^ libipc.a -lrt 
 
 # Target to manually build the test inputs. (Not used internally)
 .PHONY: test_inputs
