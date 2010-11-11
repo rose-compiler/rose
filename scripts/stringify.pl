@@ -240,27 +240,51 @@ sub parse_enum {
   }
   $enum{$enum_name} = {};
   $enum_loc{$enum_name} = &$lexer("location");
-  my($next_value,%forward) = 0;
+  my($next_value,$delayed_warning,%forward) = 0;
   while (1) {
     my $member_name = &$lexer();
     my $skip = &$lexer('skip'); # will be true if line contains NO_STRINGIFY
     last if $member_name eq '}'; # ignore ",}" sequence since trailing commas are optional
     &$lexer("expected enum member name") unless $member_name =~ /^[a-z_A-Z]\w*$/;
     $token = &$lexer();
+
     my $member_value;
     if ($token eq '=') {
+      # Enum member has an explicit value. Gather up the tokens of the value, replace symbols with values of previous members
+      # if possible, and then evaluate the whole expression in perl.  If we are skipping this member (NO_STRINGIFY) then we may
+      # still need to evaluate the expression if the next member has no expression.  We don't know about the next member yet,
+      # so we'll go ahead and evaluate but save the error message for when we actually attempt to use the value from the failed
+      # expression.
       my(@tokens);
       while (($token=&$lexer()) ne ',' && $token ne '}') {
 	$token = $forward{$token} if $token=~/^[a-z_A-Z]\w*$/ && exists $forward{$token};
 	push @tokens, $token;
       }
       $member_value = eval join "", "no warnings 'all';", @tokens;
-      # We need this warning even if we are skipping stringification, because $next_value depends on it.
-      &$lexer("warning", "enum member value must be an integer constant for stringification",
-	      join "", @tokens) unless defined $member_value;
-    } else {
+      unless (defined $member_value) {
+	if ($skip) {
+	  $delayed_warning = join(": ", &$lexer("location"), "warning",
+				  "enum member value must be an integer constant for stringification",
+				  join "", @tokens) . "\n";
+	} else {
+	  $delayed_warning = undef;
+	  &$lexer("warning", "enum member value must be an integer constant for stringification", join "", @tokens);
+	}
+      }
+
+    } elsif (defined $next_value) {
+      # Enum member has no explicit value, so we use the previous value plus one.
+      $delayed_warning = undef;
       $member_value = $next_value;
+
+    } elsif (!$skip) {
+      # Enum member has no explicit value and the previous enum member's value is an expression that we could not
+      # evaluate. Print the warning for the previous member, and the warning for this member.
+      print STDERR $delayed_warning if $delayed_warning;
+      $delayed_warning = undef;
+      &$lexer("warning", "enum member \"$member_name\" implicit value cannot be determined");
     }
+
     if (!$skip && defined $member_value) {
       if (exists $enum{$enum_name}{$member_value}) {
 	&$lexer("warning", "enum member \"$member_name\" duplicates \"".
@@ -272,7 +296,7 @@ sub parse_enum {
     }
     last if $token eq '}';
     &$lexer("expected ',' but got '$token'") unless $token eq ',';
-    $next_value = $member_value+1;
+    $next_value = defined $member_value ? $member_value+1 : undef;
   }
 }
 
