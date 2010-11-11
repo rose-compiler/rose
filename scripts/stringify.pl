@@ -66,6 +66,7 @@ sub make_lexer {
   return sub {
     if (@_) {
       return "$source_file:$linenum" if $_[0] eq 'location';
+      return 1 if $_[0] eq 'skip' && $s =~ /\G(?=.*?\bNO_STRINGIFY\b)/;
       print STDERR "$source_file:$linenum: ", join(": ", @_), "\n";
       exit 1 if $_[0] eq 'fatal';
       return;
@@ -241,10 +242,12 @@ sub parse_enum {
   $enum_loc{$enum_name} = &$lexer("location");
   my($next_value,%forward) = 0;
   while (1) {
-    my($member_name,$member_value) = &$lexer();
+    my $member_name = &$lexer();
+    my $skip = &$lexer('skip'); # will be true if line contains NO_STRINGIFY
     last if $member_name eq '}'; # ignore ",}" sequence since trailing commas are optional
     &$lexer("expected enum member name") unless $member_name =~ /^[a-z_A-Z]\w*$/;
     $token = &$lexer();
+    my $member_value;
     if ($token eq '=') {
       my(@tokens);
       while (($token=&$lexer()) ne ',' && $token ne '}') {
@@ -252,12 +255,13 @@ sub parse_enum {
 	push @tokens, $token;
       }
       $member_value = eval join "", "no warnings 'all';", @tokens;
+      # We need this warning even if we are skipping stringification, because $next_value depends on it.
       &$lexer("warning", "enum member value must be an integer constant for stringification",
 	      join "", @tokens) unless defined $member_value;
     } else {
       $member_value = $next_value;
     }
-    if (defined $member_value) {
+    if (!$skip && defined $member_value) {
       if (exists $enum{$enum_name}{$member_value}) {
 	&$lexer("warning", "enum member \"$member_name\" duplicates \"".
 		$enum{$enum_name}{$member_value} . "\" and will be ignored for stringification");
