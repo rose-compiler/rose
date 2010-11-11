@@ -2693,6 +2693,8 @@ EmulationPolicy::emulate_syscall()
             syscall_enter("socketcall", "dp");
             //uint32_t call=arg(0), args=arg(1);
             writeGPR(x86_gpr_ax, -ENOSYS);
+            std::cerr << "Error: socketcall system call not implemented" << std::endl;
+            ROSE_ASSERT(true==false); // NOT IMPLEMENTED
             syscall_leave("d");
             break;
         }
@@ -2983,23 +2985,23 @@ EmulationPolicy::emulate_syscall()
           to by dirp.  The argument count specifies the size of that buffer.
         */
 
-        syscall_enter("getdents", "dpd");
+            syscall_enter("getdents", "dpd");
 	    unsigned int fd = arg(0);
 
 	    // Create a buffer of the same length as the buffer in the specimen
-        const size_t dirent_size = arg(2);
+            const size_t dirent_size = arg(2);
 
-        uint8_t dirent[dirent_size];
-        memset(dirent, 0xff, sizeof dirent);
+            uint8_t dirent[dirent_size];
+            memset(dirent, 0xff, sizeof dirent);
 
 	    //Call the system call and write result to the buffer in the specimen
 	    int result = 0xdeadbeef;
 	    result = syscall(141, fd, dirent, dirent_size);
 
-        map->write(dirent, arg(1), dirent_size);
-        writeGPR(x86_gpr_ax, result);
+            map->write(dirent, arg(1), dirent_size);
+            writeGPR(x86_gpr_ax, result);
 
-        syscall_leave("d");
+            syscall_leave("d");
 	    break;
         }
 
