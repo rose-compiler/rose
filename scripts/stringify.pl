@@ -119,11 +119,15 @@ sub make_lexer {
   close SOURCE;
   return sub {
     if (@_) {
-      return "$source_file:$linenum" if $_[0] eq 'location';
-      return 1 if $_[0] eq 'skip' && $s =~ /\G(?=.*?\bNO_STRINGIFY\b)/;
-      print STDERR "$source_file:$linenum: ", join(": ", @_), "\n";
-      exit 1 if $_[0] eq 'fatal';
-      return;
+      if ($_[0] eq 'location') {
+	return "$source_file:$linenum";
+      } elsif ($_[0] eq 'skip') {
+	return $s =~ /\G(?=.*?\bNO_STRINGIFY\b)/;
+      } else {
+	print STDERR "$source_file:$linenum: ", join(": ", @_), "\n";
+	exit 1 if $_[0] eq 'fatal';
+	return;
+      }
     }
 
     while (1) {
@@ -290,7 +294,7 @@ sub parse_enum {
 
   $enum_name = canonic_name $enum_name;
   if ($enum{$enum_name}) {
-    &$lexer("error", "enum is multiply defined, this one ignored for stringification", $enum_name);
+    &$lexer("warning", "enum is multiply defined, this one ignored for stringification", $enum_name);
     print STDERR $enum_loc{$enum_name}, ": previous definition is here\n";
   }
   $enum{$enum_name} = {};
@@ -318,12 +322,12 @@ sub parse_enum {
       $member_value = eval join "", "no warnings 'all';", @tokens;
       unless (defined $member_value) {
 	if ($skip) {
-	  $delayed_warning = join(": ", &$lexer("location"), "warning",
+	  $delayed_warning = join(": ", &$lexer("location"), "error",
 				  "enum member value must be an integer constant for stringification",
 				  join "", @tokens) . "\n";
 	} else {
 	  $delayed_warning = undef;
-	  &$lexer("warning", "enum member value must be an integer constant for stringification", join "", @tokens);
+	  &$lexer("error", "enum member value must be an integer constant for stringification", join "", @tokens);
 	}
       }
 
@@ -337,7 +341,7 @@ sub parse_enum {
       # evaluate. Print the warning for the previous member, and the warning for this member.
       print STDERR $delayed_warning if $delayed_warning;
       $delayed_warning = undef;
-      &$lexer("warning", "enum member \"$member_name\" implicit value cannot be determined");
+      &$lexer("error", "enum member \"$member_name\" implicit value cannot be determined");
     }
 
     if (!$skip && defined $member_value) {
