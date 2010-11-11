@@ -14,6 +14,7 @@
 #include <boost/foreach.hpp>
 #include <boost/unordered_set.hpp>
 #define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 
@@ -1354,8 +1355,8 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
         if(DEBUG_MODE)
             cout << "-------------------------------------------------------------------------" << endl;
         //Get the node to work on
-        current = worklist.front();
-        worklist.erase(worklist.begin());
+        current = worklist.back();
+		worklist.pop_back();
 
         //We don't want to do def_use on the ending CFGNode of the function definition
         //so if we see it, continue.
@@ -1401,7 +1402,7 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
         cfgEdgeVec outEdges = current.outEdges();
 
         //For every edge, add it to the worklist if it is not seen or something has changed
-        foreach(cfgEdgeVec::value_type& edge, outEdges)
+        reverse_foreach(cfgEdgeVec::value_type& edge, outEdges)
         {
             cfgNode nextNode = edge.target();
 
@@ -1413,7 +1414,9 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
                     //Add the node to the worklist
                     worklist.push_back(nextNode);
                     if(DEBUG_MODE)
-                        cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
+                        cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << ": Line "
+								<< nextNode.getNode()->get_file_info()->get_line() << ", " << nextNode.getNode() <<
+								" to the worklist." << endl;
                 }
                 //If the next node has not yet been visited
 				else if (visited.count(nextNode.getNode()) == 0)
@@ -1421,7 +1424,9 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
                     //Add it to the worklist
                     worklist.push_back(nextNode);
                     if(DEBUG_MODE)
-                        cout << "Next unvisited: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
+                        cout << "Next unvisited: Added " << nextNode.getNode()->class_name() << ": Line "
+								<< nextNode.getNode()->get_file_info()->get_line() << ", " << nextNode.getNode() <<
+								" to the worklist." << endl;
                 }
             }
             
@@ -1438,7 +1443,8 @@ bool VariableRenaming::defUse(FilteredCFGNode<IsDefUseFilter> node, bool *member
 
     //Handle each type of node
     if(DEBUG_MODE)
-        cout << "Performing DefUse on " << current->class_name() << ":" << current << endl;
+        cout << "Performing DefUse on " << current->class_name() << 
+				": Line " << current->get_file_info()->get_line() << ", " << current << endl;
 
     bool defChanged = false;
     bool defRefInserted = false;
