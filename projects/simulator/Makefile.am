@@ -328,5 +328,4 @@ $(srcdir)/tests/syscall_tst.221.06.c \
 $(srcdir)/tests/syscall_tst.117.semop.04.c \
 $(srcdir)/tests/syscall.57.c \
 $(srcdir)/tests/syscall_tst.117.msgsnd.02.c \
-$(srcdir)/tests/syscall_tst.220.3.c \
-$(srcdir)/syscalls.h  
+$(srcdir)/tests/syscall_tst.220.3.c 
