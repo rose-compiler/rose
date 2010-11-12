@@ -1471,7 +1471,7 @@ if test ! "x$rose_openGL" = xno; then
     AC_MSG_NOTICE( "OpenGL enabled. Found GLUT." );
  else
 #    AC_MSG_NOTICE( "OpenGL GLUT not found Msg" );
-   AC_MSG_ERROR( "OpenGL GLUT not found. Please use --with-glut" );
+   AC_MSG_NOTICE( "OpenGL GLUT not found. Please use --with-glut" );
  fi
 fi
 ], [ rose_openGL=no
