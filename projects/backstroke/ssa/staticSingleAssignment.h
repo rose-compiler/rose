@@ -256,6 +256,8 @@ private:
 	/** This is the table that is populated with all the use information for all the variables
 	 * at all the nodes. It is populated during the runDefUse function, and is done
 	 * with the steady-state dataflow algorithm.
+	 * For each node, the table contains all the variables that were used at that node, and maps them
+	 * to the reaching definitions for each use.
 	 */
 	DefUseTable useTable;
 
@@ -303,7 +305,7 @@ public:
 
 private:
 	void runDefUseDataFlow(SgFunctionDefinition* func);
-	bool defUse(FilteredCfgNode node, bool *memberRefInserted, NodeVec &changedNodes);
+	bool defUse(FilteredCfgNode node, NodeVec &memberRefInsertedNodes);
 
 	/** Add an entry to the renumbering table for the given var and node.
 	 *
@@ -345,9 +347,9 @@ private:
 	 * there. It will then set the outParameter to indicate that it back-inserted a def.
 	 *
 	 * @param curNode The node to resolve uses on.
-	 * @param memberRefInserted Reference that indicates whether the function back-inserted a definition.
+	 * @param memberRefInsertedNodes The nodes at which the function back-inserted a definition.
 	 */
-	void resolveUses(FilteredCfgNode curNode, bool *memberRefInserted, NodeVec &changedNodes);
+	void resolveUses(FilteredCfgNode curNode, NodeVec &memberRefInsertedNodes);
 
 	/** Trace backwards in the cfg one step and return an aggregate of all previous defs.
 	 *
@@ -396,9 +398,9 @@ private:
 	 *
 	 * @param curNode The node to expand the uses on.
 	 * @param name The variableName to expand the uses for.
-	 * @return Whether any new defs were inserted.
+	 * @param memberRefInsertedNodes Nodes where any new defs were inserted.
 	 */
-	bool insertExpandedDefsForUse(FilteredCfgNode curNode, VarName name, NodeVec &changedNodes);
+	void insertExpandedDefsForUse(FilteredCfgNode curNode, VarName name, NodeVec &memberRefInsertedNodes);
 
 	/** Expand all member uses (chained names) to explicitly use every name in the chain.
 	 *
