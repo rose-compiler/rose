@@ -3613,6 +3613,24 @@ void Unparse_ExprStmt::unparseExprInit(SgExpression* expr, SgUnparse_Info& info)
 //  SgAssignInitializer -> SgCastExp ->SgCastExp ->SgIntVal
 // We should not unparse them
 // This function will check if the nth initializer is from a different file from the aggregate initializer
+static bool isFromAnotherFile (SgLocatedNode* lnode)
+{
+  bool result = false;
+  ROSE_ASSERT (lnode != NULL);
+   SgFile* cur_file = SageInterface::getEnclosingFileNode(lnode);
+    if (cur_file != NULL)
+     {
+       // normal file info 
+       if (lnode->get_file_info()->isTransformation() == false &&  lnode->get_file_info()->isCompilerGenerated() ==false)
+       {
+         if (cur_file->get_file_info()->get_filename() != lnode->get_file_info()->get_filename())
+           result = true;
+       }
+     } //
+  return result;
+}
+
+#if 0
 static bool isFromAnotherFile(SgAggregateInitializer * aggr_init, size_t n)
 {
   bool result = false; 
@@ -3636,7 +3654,6 @@ static bool isFromAnotherFile(SgAggregateInitializer * aggr_init, size_t n)
       else
         leaf_child = cast_op->get_operand_i();
     }
-
     // compare file names
      SgFile* cur_file = SageInterface::getEnclosingFileNode(aggr_init);
      if (cur_file != NULL)
@@ -3651,9 +3668,13 @@ static bool isFromAnotherFile(SgAggregateInitializer * aggr_init, size_t n)
   } // end if assign initializer 
   return result; 
 }
+#endif
 void
 Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
    {
+    // Skip the entire thing if the initializer is from an included file
+     if (isFromAnotherFile (expr))
+       return;
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
      ROSE_ASSERT(aggr_init != NULL);
   /* code inserted from specification */
@@ -3687,7 +3708,8 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
      for (size_t index =0; index < list.size(); index ++)
      {
-       bool skipUnparsing = isFromAnotherFile(aggr_init,index);
+       //bool skipUnparsing = isFromAnotherFile(aggr_init,index);
+       bool skipUnparsing = isFromAnotherFile(list[index]);
        if (!skipUnparsing)
        {
          unparseExpression(list[index], newinfo);

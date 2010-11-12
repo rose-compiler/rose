@@ -770,7 +770,8 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
        // Liao 11/2/2010, Ideally we should put all SgLocatedNode here,
        // But we start with statements and initialized names first
           SgInitializedName * i_name = isSgInitializedName (n); 
-       if (statement != NULL || i_name != NULL)
+          SgAggregateInitializer * a_initor = isSgAggregateInitializer (n);
+       if (statement != NULL || i_name != NULL || a_initor != NULL)
        {
 
           SgLocatedNode* currentLocNodePtr = NULL;
