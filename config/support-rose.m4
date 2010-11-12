@@ -1475,8 +1475,9 @@ else
    glut_path=$with_glut
    echo "Setup GLUT support in ROSE! path = $glut_path"
    AC_DEFINE([USE_ROSE_GLUT_SUPPORT],1,[Controls use of ROSE support for GLUT library.])
-   AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno)
 fi
+
+AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno -a ! "x$have_GLUT" = xno)
 
 AC_SUBST(glut_path)
 
