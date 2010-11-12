@@ -1477,7 +1477,7 @@ fi
 ], [ rose_openGL=no
   AC_MSG_NOTICE( "OpenGL disabled." );
 ])
-AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno -a ! "x$rose_openGL" = xno)
+AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno)
 
 
 
