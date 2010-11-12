@@ -31,7 +31,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2009_02.c \
      test2009_03.c \
      test2009_04.c \
-     test2009_05.c \
      test2009_07.c \
      test2009_08.c \
      test2009_16.c \
@@ -63,6 +62,7 @@ endif
 #Liao, 5/16/2009 add a set of self-verifiable test code with main() 
 # and let them run during make check
 TESTCODES_REQUIRED_TO_RUN = \
+     test2009_05.c \
      test2009_17.c \
      test2009_18.c \
      test2009_20.c
