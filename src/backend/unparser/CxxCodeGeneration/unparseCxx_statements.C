@@ -3983,6 +3983,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ninfo.set_SkipBaseType();
                curprint ( string(","));
              }
+         unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);    
         }
 
   // curprint ( string("\n/* Handle bit fields specifiers (if any) */ \n";
