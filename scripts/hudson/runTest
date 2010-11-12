@@ -158,7 +158,11 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
 # tps (10/19/10) : opengl has not been tested for a year and the binary tests in place are failing because the infrastructure has changed.
 #       for now I have disabled openGL testing but the way to turn it on is to specify --enable-openGL
 #	if test "x$ROSE_TEST_GCC_VERSION" = "x4.1.2" ; then
-		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch --enable-rose-openGL"
+
+# tps : 11/12/10 - I just noticed that someone removed the rted test out of runTest!!! RTED was not tested in hudson!! For how long? Adding it back.
+#		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch --enable-rose-openGL --with-rted=${ROSE_TEST_RTED_PATH}"
+# tps : 11/12/10 - OpenGL is not installed on all nodes yet
+		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  --with-rted=${ROSE_TEST_RTED_PATH}"
 #	fi
 fi
 
