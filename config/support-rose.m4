@@ -1445,7 +1445,6 @@ fi
 AC_SUBST(glut_path)
 
 
-
 # TP (2-27-2009) -- support for RTED
 ROSE_SUPPORT_RTED
 
