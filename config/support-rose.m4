@@ -1422,27 +1422,6 @@ fi
 
 
 
-AC_ARG_WITH(glut,
-[  --with-glut=PATH     Configure option to have GLUT enabled.],
-,
-if test ! "$with_glut" ; then
-   with_glut=no
-fi
-)
-
-echo "In ROSE SUPPORT MACRO: with_glut $with_glut"
-
-if test "$with_glut" = no; then
-   # If dwarf is not specified, then don't use it.
-   echo "Skipping use of GLUT support!"
-else
-   glut_path=$with_glut
-   echo "Setup GLUT support in ROSE! path = $glut_path"
-   AC_DEFINE([USE_ROSE_GLUT_SUPPORT],1,[Controls use of ROSE support for GLUT library.])
-fi
-
-AC_SUBST(glut_path)
-
 
 # TP (2-27-2009) -- support for RTED
 ROSE_SUPPORT_RTED
@@ -1476,6 +1455,30 @@ fi
   AC_MSG_NOTICE( "OpenGL disabled." );
 ])
 AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno)
+
+
+
+AC_ARG_WITH(glut,
+[  --with-glut=PATH     Configure option to have GLUT enabled.],
+,
+if test ! "$with_glut" ; then
+   with_glut=no
+fi
+)
+
+echo "In ROSE SUPPORT MACRO: with_glut $with_glut"
+
+if test "$with_glut" = no; then
+   # If dwarf is not specified, then don't use it.
+   echo "Skipping use of GLUT support!"
+else
+   glut_path=$with_glut
+   echo "Setup GLUT support in ROSE! path = $glut_path"
+   AC_DEFINE([USE_ROSE_GLUT_SUPPORT],1,[Controls use of ROSE support for GLUT library.])
+   AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno)
+fi
+
+AC_SUBST(glut_path)
 
 
 
