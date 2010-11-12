@@ -99,7 +99,7 @@ $(TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 
 check-local: $(TEST_TARGETS)
 
-EXTRA_DIST = README \
+EXTRA_DIST = README x86sim.conf test_status.txt  \
 $(srcdir)/tests/compiler.h \
 $(srcdir)/tests/tst_kvercmp.c \
 $(srcdir)/tests/audit_parse_verify_utils.c \
