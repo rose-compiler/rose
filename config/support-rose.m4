@@ -1464,6 +1464,7 @@ AC_ARG_WITH(glut,
 if test ! "$with_glut" ; then
    with_glut=no
 fi
+AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno -a ! "x$have_GLUT" = xno)
 )
 
 echo "In ROSE SUPPORT MACRO: with_glut $with_glut"
@@ -1477,7 +1478,6 @@ else
    AC_DEFINE([USE_ROSE_GLUT_SUPPORT],1,[Controls use of ROSE support for GLUT library.])
 fi
 
-AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno -a ! "x$have_GLUT" = xno)
 
 AC_SUBST(glut_path)
 
