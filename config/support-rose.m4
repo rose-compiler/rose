@@ -1465,7 +1465,6 @@ AC_ARG_WITH(glut,
 if test ! "$with_glut" ; then
    with_glut=no
 fi
-AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, true)
 )
 
 echo "In ROSE SUPPORT MACRO: with_glut $with_glut"
@@ -1474,6 +1473,7 @@ if test "$with_glut" = no; then
    # If dwarf is not specified, then don't use it.
    echo "Skipping use of GLUT support!"
 else
+   AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, true)
    glut_path=$with_glut
    echo "Setup GLUT support in ROSE! path = $glut_path"
    AC_DEFINE([USE_ROSE_GLUT_SUPPORT],1,[Controls use of ROSE support for GLUT library.])
