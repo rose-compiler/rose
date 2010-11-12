@@ -7,8 +7,13 @@
 
 #define debug 1
 
+#include <GL/gl.h>
+#include <GL/glu.h>
+
+#if 0
 #include <GL/glut.h>
 #include <GL/freeglut.h> 
+#endif
 
 #include <math.h>
 #include "helper.h"
@@ -104,6 +109,7 @@ void key(unsigned char k, int x, int y)
 
 void specialkey(int k, int x, int y)
 {
+#if 0
   if (k == GLUT_KEY_LEFT)
     ;
   else if (k == GLUT_KEY_RIGHT) {
@@ -122,6 +128,7 @@ void specialkey(int k, int x, int y)
     ;
   else if (k == GLUT_KEY_PAGE_DOWN)
     ;
+#endif
 }
 
 
