@@ -1457,6 +1457,7 @@ fi
 AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno)
 
 
+AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, false)
 
 AC_ARG_WITH(glut,
 [  --with-glut=PATH     Configure option to have GLUT enabled.],
@@ -1464,7 +1465,7 @@ AC_ARG_WITH(glut,
 if test ! "$with_glut" ; then
    with_glut=no
 fi
-AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno -a ! "x$have_GLUT" = xno)
+AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, true)
 )
 
 echo "In ROSE SUPPORT MACRO: with_glut $with_glut"
