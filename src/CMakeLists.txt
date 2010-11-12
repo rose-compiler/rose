@@ -283,7 +283,6 @@ set(roseBinaryFormats_fileList_part0
    ### Microsoft Windows PE Format */
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeExport.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeFileHeader.C
-   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeImport.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeImportDirectory.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeImportHNTEntry.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeImportILTEntry.C
