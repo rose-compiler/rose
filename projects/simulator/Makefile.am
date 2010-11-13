@@ -104,6 +104,8 @@ $(srcdir)/tests/syscall_tst.102.1.c \
 $(srcdir)/tests/syscall_tst.102.2.c \
 $(srcdir)/tests/syscall_tst.102.3.c \
 $(srcdir)/tests/syscall_tst.102.4.c \
+$(srcdir)/tests/syscall_tst.114.1.c \
+$(srcdir)/tests/syscall_tst.114.2.c \
 $(srcdir)/tests/syscall_tst.116.1.c \
 $(srcdir)/tests/syscall_tst.116.2.c \
 $(srcdir)/tests/syscall_tst.117.c \
@@ -160,6 +162,7 @@ $(srcdir)/tests/syscall_tst.117.shmget.02.c \
 $(srcdir)/tests/syscall_tst.117.shmget.03.c \
 $(srcdir)/tests/syscall_tst.117.shmget.04.c \
 $(srcdir)/tests/syscall_tst.117.shmget.05.c \
+$(srcdir)/tests/syscall_tst.122.c \
 $(srcdir)/tests/syscall_tst.125.1.c \
 $(srcdir)/tests/syscall_tst.125.2.c \
 $(srcdir)/tests/syscall_tst.125.3.c \
@@ -207,6 +210,14 @@ $(srcdir)/tests/syscall_tst.195.6.c \
 $(srcdir)/tests/syscall_tst.196.1.c \
 $(srcdir)/tests/syscall_tst.196.2.c \
 $(srcdir)/tests/syscall_tst.196.3.c \
+$(srcdir)/tests/syscall_tst.197.1.c \
+$(srcdir)/tests/syscall_tst.197.2.c \
+$(srcdir)/tests/syscall_tst.199.1.c \
+$(srcdir)/tests/syscall_tst.199.2.c \
+$(srcdir)/tests/syscall_tst.199.3.c \
+$(srcdir)/tests/syscall_tst.200.1.c \
+$(srcdir)/tests/syscall_tst.200.3.c \
+$(srcdir)/tests/syscall_tst.201.1.c \
 $(srcdir)/tests/syscall_tst.207.c \
 $(srcdir)/tests/syscall_tst.212.c \
 $(srcdir)/tests/syscall_tst.220.1.c \
@@ -241,6 +252,7 @@ $(srcdir)/tests/syscall_tst.221.25.c \
 $(srcdir)/tests/syscall_tst.221.26.c \
 $(srcdir)/tests/syscall_tst.221.27.c \
 $(srcdir)/tests/syscall_tst.221.28.c \
+$(srcdir)/tests/syscall_tst.224.c \
 $(srcdir)/tests/syscall_tst.243.1.c \
 $(srcdir)/tests/syscall_tst.243.2.c \
 $(srcdir)/tests/syscall_tst.252.c \
@@ -248,16 +260,44 @@ $(srcdir)/tests/syscall_tst.258.c \
 $(srcdir)/tests/syscall_tst.265.c \
 $(srcdir)/tests/syscall_tst.266.c \
 $(srcdir)/tests/syscall_tst.306.c \
+$(srcdir)/tests/syscall_tst.3.1.c \
+$(srcdir)/tests/syscall_tst.3.2.c \
+$(srcdir)/tests/syscall_tst.3.3.c \
+$(srcdir)/tests/syscall_tst.3.4.c \
+$(srcdir)/tests/syscall_tst.4.1.c \
+$(srcdir)/tests/syscall_tst.4.2.c \
+$(srcdir)/tests/syscall_tst.4.3.c \
+$(srcdir)/tests/syscall_tst.4.4.c \
+$(srcdir)/tests/syscall_tst.4.5.c \
+$(srcdir)/tests/syscall_tst.13.1.c \
+$(srcdir)/tests/syscall_tst.13.2.c \
+$(srcdir)/tests/syscall_tst.20.1.c \
+$(srcdir)/tests/syscall_tst.20.2.c \
 $(srcdir)/tests/syscall_tst.30.c \
 $(srcdir)/tests/syscall_tst.311.c \
 $(srcdir)/tests/syscall_tst.33.1.c \
 $(srcdir)/tests/syscall_tst.33.2.c \
 $(srcdir)/tests/syscall_tst.54.c \
+$(srcdir)/tests/syscall_tst.24.1.c \
+$(srcdir)/tests/syscall_tst.24.2.c \
+$(srcdir)/tests/syscall_tst.24.3.c \
+$(srcdir)/tests/syscall_tst.57.1.c \
+$(srcdir)/tests/syscall_tst.57.2.c \
+$(srcdir)/tests/syscall_tst.57.3.c \
 $(srcdir)/tests/syscall_tst.60.1.c \
 $(srcdir)/tests/syscall_tst.60.2.c \
 $(srcdir)/tests/syscall_tst.60.3.c \
+$(srcdir)/tests/syscall_tst.64.1.c \
+$(srcdir)/tests/syscall_tst.64.2.c \
 $(srcdir)/tests/syscall_tst.76.1.c \
 $(srcdir)/tests/syscall_tst.76.2.c \
+$(srcdir)/tests/syscall_tst.78.1.c \
+$(srcdir)/tests/syscall_tst.78.2.c \
+$(srcdir)/tests/syscall_tst.83.1.c \
+$(srcdir)/tests/syscall_tst.83.2.c \
+$(srcdir)/tests/syscall_tst.83.3.c \
+$(srcdir)/tests/syscall_tst.83.4.c \
+$(srcdir)/tests/syscall_tst.83.5.c \
 $(srcdir)/tests/syscall_tst.91.1.c \
 $(srcdir)/tests/syscall_tst.91.2.c \
 $(srcdir)/tests/syscall_tst.91.3.c \
@@ -279,7 +319,6 @@ $(srcdir)/tests/syscall.201.c \
 $(srcdir)/tests/syscall.202.c \
 $(srcdir)/tests/syscall.20.c \
 $(srcdir)/tests/syscall.224.c \
-$(srcdir)/tests/syscall.24.c \
 $(srcdir)/tests/syscall.3.c \
 $(srcdir)/tests/syscall.4.1.c \
 $(srcdir)/tests/syscall.41.c \
@@ -344,6 +383,8 @@ clean-local:
 	rm -rf tmp-sim
 
 EXTRA_DIST = README x86sim.conf test_status.txt  \
+$(srcdir)/tests/compat_16.h \
+$(srcdir)/tests/compat_uid.h \
 $(srcdir)/tests/compiler.h \
 $(srcdir)/tests/bintest_config.h \
 $(srcdir)/tests/ipcshm.h \
