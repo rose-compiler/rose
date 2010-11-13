@@ -2062,8 +2062,8 @@ class MyTraversal
 	    for (name_iter n = nameList.begin(); n != nameList.end(); ++n) {
 	      
 	      assert(*n != NULL);
-	      SgInitializedName initName = **n;
-	      SgName sageName = initName.get_name();
+	      SgInitializedName* initName = *n;
+	      SgName sageName = initName->get_name();
 	      string varName = sageName.str();
 	      
 #ifdef DEBUG_OUTPUT

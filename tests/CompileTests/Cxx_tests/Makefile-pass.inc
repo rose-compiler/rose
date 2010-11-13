@@ -711,7 +711,8 @@ test2006_155.C \
 test2006_156.C \
 test2006_157.C \
 test2006_158.C \
-test2007_15.C 
+test2007_15.C \
+test2010_24.C
 
 # DQ (6/25/2010): Removed as part of testing!
 # test2003_01.C 
