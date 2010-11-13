@@ -285,6 +285,8 @@ public:
     bool mmap_recycle;                          /* If false, then never reuse mmap addresses */
     sigaction_32 signal_action[_NSIG+1];        /* Simulated actions for signal handling */
     uint64_t signal_mask;                       /* Set by sigsetmask() */
+    std::queue<int> signal_queue;               /* List of pending signals in the order they arrived provided not masked */
+    uint32_t signal_return;                     /* Return address for currently executing signal handler, or zero */
     std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
     static const uint32_t brk_base=0x08000000;  /* Lowest possible brk() value */
     std::string vdso_name;                      /* Optional base name of virtual dynamic shared object from kernel */
@@ -295,6 +297,7 @@ public:
     std::string core_base_name;                 /* Name to use for core files ("core") */
     rose_addr_t ld_linux_base_va;               /* Base address for ld-linux.so; see c'tor */
 
+    static const uint32_t SIGHANDLER_RETURN = 0xdeceaced;
 
 #if 0
     uint32_t gsOffset;
@@ -313,12 +316,14 @@ public:
     bool trace_syscall;                         /* Show each system call */
     bool trace_loader;                          /* Show diagnostics for the program loading */
     bool trace_progress;			/* Show progress now and then */
+    bool trace_signal;                          /* Show reception and delivery of signals */
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
-          vdso_mapped_va(0), vdso_entry_va(0), core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0),
+          signal_return(0), vdso_mapped_va(0), vdso_entry_va(0), core_styles(CORE_ELF), core_base_name("x-core.rose"),
+          ld_linux_base_va(0),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
-          trace_loader(false), trace_progress(false) {
+          trace_loader(false), trace_progress(false), trace_signal(false) {
 
 #if 0
         /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
@@ -462,6 +467,30 @@ public:
     /* Reads a vector of NUL-terminated strings from specimen memory. */
     std::vector<std::string> read_string_vector(uint32_t va);
 
+    /* Conditionally adds a signal to the queue of pending signals */
+    void signal_arrival(int signo);
+
+    /* Dispatch a signal. That is, emulation the specimen's signal handler or default action. */
+    void signal_dispatch(int signo);
+
+    /* Handles return from a signal handler. */
+    void signal_cleanup();
+
+    /* Same as the x86_push instruction */
+    void push(VirtualMachineSemantics::ValueType<32> n) {
+        VirtualMachineSemantics::ValueType<32> new_sp = add(readGPR(x86_gpr_sp), number<32>(-4));
+        writeMemory(x86_segreg_ss, new_sp, n, true_());
+        writeGPR(x86_gpr_sp, new_sp);
+    }
+
+    /* Same as the x86_pop instruction */
+    VirtualMachineSemantics::ValueType<32> pop() {
+        VirtualMachineSemantics::ValueType<32> old_sp = readGPR(x86_gpr_sp);
+        VirtualMachineSemantics::ValueType<32> retval = readMemory<32>(x86_segreg_ss, old_sp, true_());
+        writeGPR(x86_gpr_sp, add(old_sp, number<32>(4)));
+        return retval;
+    }
+
     /* Called by X86InstructionSemantics. Used by x86_and instruction to set AF flag */
     VirtualMachineSemantics::ValueType<1> undefined_() {
         return 1;
@@ -502,11 +531,6 @@ public:
             }
         }
         VirtualMachineSemantics::Policy::startInstruction(insn);
-#if 0
-        if (ms.signalQueue.anySignalsWaiting()) {
-            simulate_signal_check(ms, insn->get_address());
-        }
-#endif
     }
 
     /* Write value to a segment register and its shadow. */
@@ -3978,6 +4002,137 @@ EmulationPolicy::arg(int idx)
     }
 }
 
+void
+EmulationPolicy::signal_arrival(int signo)
+{
+    ROSE_ASSERT(signo>0 && signo<_NSIG);
+    if (debug && trace_signal) {
+        fprintf(debug, " [signal ");
+        print_enum(debug, signal_names, signo);
+        fprintf(debug, " (%s) arrived] ", strsignal(signo));
+    }
+    signal_queue.push(signo);
+}
+
+void
+EmulationPolicy::signal_dispatch(int signo)
+{
+    if (debug && trace_signal) {
+        fprintf(debug, "0x%08"PRIx64": dispatching signal ", readIP().known_value());
+        print_enum(debug, signal_names, signo);
+        fprintf(debug, " (%s)\n", strsignal(signo));
+    }
+
+    if (signal_action[signo].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
+        if (debug && trace_signal)
+            fprintf(debug, "    signal is ignored\n");
+    } else if (signal_action[signo].handler_va==(uint32_t)(uint64_t)SIG_DFL) {
+        if (debug && trace_signal)
+            fprintf(debug, "    signal causes default action\n");
+        switch (signo) {
+            case SIGFPE:
+            case SIGILL:
+            case SIGSEGV:
+            case SIGBUS:
+            case SIGABRT:
+            case SIGTRAP:
+            case SIGSYS:
+                /* Exit with core dump */
+                dump_core(signo);
+                throw Exit((signo & 0x7f) | __WCOREFLAG);
+            case SIGTERM:
+            case SIGINT:
+            case SIGQUIT:
+            case SIGKILL:
+            case SIGHUP:
+            case SIGALRM:
+            case SIGVTALRM:
+            case SIGPROF:
+            case SIGPIPE:
+            case SIGXCPU:
+            case SIGXFSZ:
+            case SIGUSR1:
+            case SIGUSR2:
+                /* Exit without core dump */
+                throw Exit(signo & 0x7f);
+            case SIGIO:
+            case SIGURG:
+            case SIGCHLD:
+            case SIGCONT:
+            case SIGSTOP:
+            case SIGTTIN:
+            case SIGTTOU:
+            case SIGWINCH:
+                /* Signal is ignored by default */
+                return;
+            default:
+                ROSE_ASSERT(!"don't know what to do with this signal");
+                abort();
+        }
+
+    } else if (signal_mask & ((uint64_t)1 << signo)) {
+        if (debug && trace_signal)
+            fprintf(debug, "    signal is currently masked (procmask)\n");
+    } else {
+        ROSE_ASSERT(0==signal_return);
+        signal_return = readIP().known_value();
+        push(readGPR(x86_gpr_ax));
+        push(readGPR(x86_gpr_bx));
+        push(readGPR(x86_gpr_cx));
+        push(readGPR(x86_gpr_dx));
+        push(readGPR(x86_gpr_si));
+        push(readGPR(x86_gpr_di));
+        push(readGPR(x86_gpr_bp));
+        push(readIP());
+        push(number<32>(signo));
+        push(number<32>(SIGHANDLER_RETURN));
+        writeIP(number<32>(signal_action[signo].handler_va));
+    }
+}
+
+void
+EmulationPolicy::signal_cleanup()
+{
+    if (debug && trace_signal)
+        fprintf(debug, "0x%08"PRIx32": returning from signal handler\n", signal_return);
+    
+    ROSE_ASSERT(signal_return!=0);
+    pop(); /* discard signal number */
+    writeGPR(x86_gpr_bp, pop());
+    writeGPR(x86_gpr_di, pop());
+    writeGPR(x86_gpr_si, pop());
+    writeGPR(x86_gpr_dx, pop());
+    writeGPR(x86_gpr_cx, pop());
+    writeGPR(x86_gpr_bx, pop());
+    writeGPR(x86_gpr_ax, pop());
+    writeIP(number<32>(signal_return));
+    signal_return = 0;
+}
+
+static EmulationPolicy *signal_deliver_to;
+static void
+signal_handler(int signo)
+{
+    if (signal_deliver_to) {
+        signal_deliver_to->signal_arrival(signo);
+    } else {
+        fprintf(stderr, "received signal %d (%s); this signal cannot be delivered so we're taking it ourselves\n",
+                signo, strsignal(signo));
+        struct sigaction sa, old_sa;
+        sa.sa_handler = SIG_DFL;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = SA_RESTART;
+        sigaction(signo, &sa, &old_sa);
+        sigset_t ss, old_ss;
+        sigemptyset(&ss);
+        sigaddset(&ss, signo);
+        sigprocmask(SIG_UNBLOCK, &ss, &old_ss);
+        raise(signo);
+        sigprocmask(SIG_SETMASK, &old_ss, NULL);
+        sigaction(signo, &old_sa, NULL);
+    }
+}
+
 int
 main(int argc, char *argv[], char *envp[])
 {
@@ -3987,6 +4142,40 @@ main(int argc, char *argv[], char *envp[])
     uint32_t dump_at = 0;               /* dump core the first time we hit this address, before the instruction is executed */
     std::string dump_name = "dump";
     FILE *log_file = NULL;
+
+    struct sigaction sa;
+    sa.sa_handler = signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sigaction(SIGHUP,   &sa, NULL);
+    sigaction(SIGINT,   &sa, NULL);
+    sigaction(SIGQUIT,  &sa, NULL);
+    sigaction(SIGILL,   &sa, NULL);
+    sigaction(SIGTRAP,  &sa, NULL);
+    sigaction(SIGABRT,  &sa, NULL);
+    sigaction(SIGBUS,   &sa, NULL);
+    sigaction(SIGFPE,   &sa, NULL);
+    sigaction(SIGUSR1,  &sa, NULL);
+    sigaction(SIGSEGV,  &sa, NULL);
+    sigaction(SIGUSR2,  &sa, NULL);
+    sigaction(SIGPIPE,  &sa, NULL);
+    sigaction(SIGALRM,  &sa, NULL);
+    sigaction(SIGTERM,  &sa, NULL);
+    sigaction(SIGSTKFLT,&sa, NULL);
+    sigaction(SIGCHLD,  &sa, NULL);
+    sigaction(SIGTSTP,  &sa, NULL);
+    sigaction(SIGTTIN,  &sa, NULL);
+    sigaction(SIGTTOU,  &sa, NULL);
+    sigaction(SIGURG,   &sa, NULL);
+    sigaction(SIGXCPU,  &sa, NULL);
+    sigaction(SIGXFSZ,  &sa, NULL);
+    sigaction(SIGVTALRM,&sa, NULL);
+    sigaction(SIGPROF,  &sa, NULL);
+    sigaction(SIGWINCH, &sa, NULL);
+    sigaction(SIGIO,    &sa, NULL);
+    sigaction(SIGPWR,   &sa, NULL);
+    sigaction(SIGSYS,   &sa, NULL);
+    sigaction(SIGXFSZ,  &sa, NULL);
 
     /* Parse command-line */
     int argno = 1;
@@ -4017,6 +4206,7 @@ main(int argc, char *argv[], char *envp[])
                     policy.trace_syscall = true;
                     policy.trace_loader = true;
                     policy.trace_progress = true;
+                    policy.trace_signal = true;
                 } else if (word=="insn") {
                     policy.trace_insn = true;
                 } else if (word=="state") {
@@ -4025,6 +4215,8 @@ main(int argc, char *argv[], char *envp[])
                     policy.trace_mem = true;
                 } else if (word=="mmap") {
                     policy.trace_mmap = true;
+                } else if (word=="signal") {
+                    policy.trace_signal = true;
                 } else if (word=="syscall") {
                     policy.trace_syscall = true;
                 } else if (word=="loader") {
@@ -4033,7 +4225,7 @@ main(int argc, char *argv[], char *envp[])
                     policy.trace_progress = true;
                 } else {
                     fprintf(stderr, "%s: debug words must be from the set: "
-                            "all, insn, state, mem, mmap, syscall, loader, progress\n",
+                            "all, insn, state, mem, mmap, syscall, signal, loader, progress\n",
                             argv[0]);
                     exit(1);
                 }
@@ -4159,6 +4351,7 @@ main(int argc, char *argv[], char *envp[])
     }
 
     /* Execute the program */
+    signal_deliver_to = &policy;
     struct timeval sim_start_time;
     gettimeofday(&sim_start_time, NULL);
     bool seen_entry_va = false;
@@ -4176,11 +4369,22 @@ main(int argc, char *argv[], char *envp[])
             }
         }
         try {
+            if (policy.readIP().known_value()==policy.SIGHANDLER_RETURN) {
+                policy.signal_cleanup();
+                if (dump_at!=0 && dump_at==policy.SIGHANDLER_RETURN) {
+                    fprintf(stderr, "Reached dump point.\n");
+                    policy.dump_core(SIGABRT, dump_name);
+                    dump_at = 0;
+                }
+                continue;
+            }
+
             if (dump_at!=0 && dump_at == policy.readIP().known_value()) {
                 fprintf(stderr, "Reached dump point.\n");
                 policy.dump_core(SIGABRT, dump_name);
                 dump_at = 0;
             }
+
             SgAsmx86Instruction *insn = policy.current_insn();
             if (policy.debug && policy.trace_mmap &&
                 !seen_entry_va && insn->get_address()==fhdr->get_base_va()+fhdr->get_entry_rva()) {
@@ -4191,6 +4395,12 @@ main(int argc, char *argv[], char *envp[])
             t.processInstruction(insn);
             if (policy.debug && policy.trace_state)
                 policy.dump_registers(policy.debug);
+
+            while (!policy.signal_queue.empty()) {
+                int signo = policy.signal_queue.front();
+                policy.signal_queue.pop();
+                policy.signal_dispatch(signo);
+            }
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
 #ifdef X86SIM_STRICT_EMULATION
