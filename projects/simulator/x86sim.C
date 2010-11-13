@@ -114,6 +114,16 @@ print_int_32(FILE *f, const uint8_t *ptr, size_t sz)
     return fprintf(f, "%"PRId32, *(const int32_t*)ptr);
 }
 
+static const Translate rlimit_resources[] = {TE(RLIMIT_CPU), TE(RLIMIT_FSIZE), TE(RLIMIT_DATA), TE(RLIMIT_STACK),
+                                             TE(RLIMIT_CORE), TE(RLIMIT_RSS), TE(RLIMIT_MEMLOCK), TE(RLIMIT_NPROC),
+                                             TE(RLIMIT_NOFILE), TE(RLIMIT_OFILE), TE(RLIMIT_AS),
+                                             TE(RLIMIT_LOCKS), TE(RLIMIT_SIGPENDING), TE(RLIMIT_MSGQUEUE),
+                                             TE(RLIMIT_NICE), TE(RLIMIT_RTPRIO),
+#ifdef RLIMIT_RTTIME
+                                             TE(RLIMIT_RTTIME),
+#endif
+                                             T_END};
+
 static int
 print_rlimit(FILE *f, const uint8_t *ptr, size_t sz)
 {
@@ -2459,6 +2469,49 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+        case 75: { /*0x4B, setrlimit */
+            syscall_enter("setrlimit", "fP", rlimit_resources, 8, print_rlimit);
+            int resource = arg(0);
+            uint32_t rlimit_va = arg(1);
+            uint32_t rlimit_guest[2];
+            size_t nread = map->read(rlimit_guest, rlimit_va, sizeof rlimit_guest);
+            ROSE_ASSERT(nread==sizeof rlimit_guest);
+            struct rlimit rlimit_native;
+            rlimit_native.rlim_cur = rlimit_guest[0];
+            rlimit_native.rlim_max = rlimit_guest[1];
+            int result = setrlimit(resource, &rlimit_native);
+            writeGPR(x86_gpr_ax, -1==result ? -errno : result);
+            syscall_leave("d");
+            break;
+        }
+
+        case 191:
+            syscall_enter("ugetrlimit", "fp", rlimit_resources);
+            if (debug && trace_syscall)
+                fputs("delegated to getrlimit (syscall 76); see next line\n", debug);
+            /* fall through to 76 */
+            
+        case 76: {  /*0x4c, getrlimit*/
+            syscall_enter("getrlimit", "fp", rlimit_resources);
+            int resource = arg(0);
+            uint32_t rlimit_va = arg(1);
+            struct rlimit rlimit_native;
+            int result = getrlimit(resource, &rlimit_native);
+            if (-1==result) {
+                writeGPR(x86_gpr_ax, -errno);
+            } else {
+                uint32_t rlimit_guest[2];
+                rlimit_guest[0] = rlimit_native.rlim_cur;
+                rlimit_guest[1] = rlimit_native.rlim_max;
+                size_t nwritten = map->write(rlimit_guest, rlimit_va, sizeof rlimit_guest);
+                ROSE_ASSERT(nwritten==sizeof rlimit_guest);
+                writeGPR(x86_gpr_ax, result);
+            }
+            syscall_leave("d");
+            if (result!=-1)
+                syscall_result(rlimit_va, 8, print_rlimit);
+            break;
+        }
 
         case 78: { /*0x4e, gettimeofday*/       
             syscall_enter("gettimeofday", "p");
@@ -3187,37 +3240,7 @@ EmulationPolicy::emulate_syscall()
 
         }
 
-        case 191: { /*0xbf, ugetrlimit*/
-            static const Translate resources[] = {TE(RLIMIT_CPU), TE(RLIMIT_FSIZE), TE(RLIMIT_DATA), TE(RLIMIT_STACK),
-                                                  TE(RLIMIT_CORE), TE(RLIMIT_RSS), TE(RLIMIT_MEMLOCK), TE(RLIMIT_NPROC),
-                                                  TE(RLIMIT_NOFILE), TE(RLIMIT_OFILE), TE(RLIMIT_AS),
-                                                  TE(RLIMIT_LOCKS), TE(RLIMIT_SIGPENDING), TE(RLIMIT_MSGQUEUE),
-                                                  TE(RLIMIT_NICE), TE(RLIMIT_RTPRIO),
-#ifdef RLIMIT_RTTIME
-                                                  TE(RLIMIT_RTTIME),
-#endif
-                                                  T_END};
-
-            syscall_enter("ugetrlimit", "fp", resources);
-            int resource = arg(0);
-            uint32_t rlimit_va = arg(1);
-            struct rlimit rlimit_native;
-            int result = getrlimit(resource, &rlimit_native);
-            if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
-            } else {
-                uint32_t rlimit_guest[2];
-                rlimit_guest[0] = rlimit_native.rlim_cur;
-                rlimit_guest[1] = rlimit_native.rlim_max;
-                size_t nwritten = map->write(rlimit_guest, rlimit_va, sizeof rlimit_guest);
-                ROSE_ASSERT(nwritten==sizeof rlimit_guest);
-                writeGPR(x86_gpr_ax, result);
-            }
-            syscall_leave("d");
-            if (result!=-1)
-                syscall_result(rlimit_va, 8, print_rlimit);
-            break;
-        }
+        // case 191 (0xbf, ugetrlimit). See case 76. I think they're the same. [RPM 2010-11-12]
 
         case 192: { /*0xc0, mmap2*/
             static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
