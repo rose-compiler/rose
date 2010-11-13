@@ -217,12 +217,13 @@ static const Translate signal_names[] = {
     TE(SIGHUP), TE(SIGINT), TE(SIGQUIT), TE(SIGILL), TE(SIGTRAP), TE(SIGABRT), TE(SIGBUS), TE(SIGFPE), TE(SIGKILL),
     TE(SIGUSR1), TE(SIGSEGV), TE(SIGUSR2), TE(SIGPIPE), TE(SIGALRM), TE(SIGTERM), TE(SIGSTKFLT), TE(SIGCHLD), TE(SIGCONT),
     TE(SIGSTOP), TE(SIGTSTP), TE(SIGTTIN), TE(SIGTTOU), TE(SIGURG), TE(SIGXCPU), TE(SIGXFSZ), TE(SIGVTALRM), TE(SIGPROF),
-    TE(SIGWINCH), TE(SIGIO), TE(SIGPWR), TE(SIGSYS), TE2(32, SIGRT32), TE2(33, SIGRT33), TE2(34, SIGRT34), TE2(35, SIGRT35),
-    TE2(36, SIGRT36), TE2(37, SIGRT37), TE2(38, SIGRT38), TE2(39, SIGRT39), TE2(40, SIGRT40), TE2(41, SIGRT41),
-    TE2(42, SIGRT42), TE2(43, SIGRT43), TE2(44, SIGRT44), TE2(45, SIGRT45), TE2(46, SIGRT46), TE2(47, SIGRT47),
-    TE2(48, SIGRT48), TE2(49, SIGRT49), TE2(50, SIGRT50), TE2(51, SIGRT51), TE2(52, SIGRT52), TE2(53, SIGRT53),
-    TE2(54, SIGRT54), TE2(55, SIGRT55), TE2(56, SIGRT56), TE2(57, SIGRT57), TE2(58, SIGRT58), TE2(59, SIGRT59),
-    TE2(60, SIGRT60), TE2(61, SIGRT61), TE2(62, SIGRT62), TE2(63, SIGRT63),
+    TE(SIGWINCH), TE(SIGIO), TE(SIGPWR), TE(SIGSYS), TE(SIGXFSZ),
+    TE2(32, SIGRT32), TE2(33, SIGRT33), TE2(34, SIGRT34), TE2(35, SIGRT35), TE2(36, SIGRT36), TE2(37, SIGRT37),
+    TE2(38, SIGRT38), TE2(39, SIGRT39), TE2(40, SIGRT40), TE2(41, SIGRT41), TE2(42, SIGRT42), TE2(43, SIGRT43),
+    TE2(44, SIGRT44), TE2(45, SIGRT45), TE2(46, SIGRT46), TE2(47, SIGRT47), TE2(48, SIGRT48), TE2(49, SIGRT49),
+    TE2(50, SIGRT50), TE2(51, SIGRT51), TE2(52, SIGRT52), TE2(53, SIGRT53), TE2(54, SIGRT54), TE2(55, SIGRT55),
+    TE2(56, SIGRT56), TE2(57, SIGRT57), TE2(58, SIGRT58), TE2(59, SIGRT59), TE2(60, SIGRT60), TE2(61, SIGRT61),
+    TE2(62, SIGRT62), TE2(63, SIGRT63),
     T_END};
 
 static const Translate signal_flags[] = {
@@ -4206,17 +4207,18 @@ main(int argc, char *argv[], char *envp[])
             /* specimen has exited */
             if (WIFEXITED(e.status)) {
                 fprintf(stderr, "specimen exited with status %d\n", WEXITSTATUS(e.status));
-		if( WEXITSTATUS(e.status) )
-                   exit( WEXITSTATUS(e.status) );
+		if (WEXITSTATUS(e.status))
+                    exit(WEXITSTATUS(e.status));
             } else if (WIFSIGNALED(e.status)) {
-                fprintf(stderr, "specimen exited due to signal %d (%s)%s\n",
-                        WTERMSIG(e.status), strsignal(WTERMSIG(e.status)), 
-                        WCOREDUMP(e.status)?" core dumped":"");
-                /* Eventually we'll put this where the signal is thrown. [RPM 2010-09-18] */
-                policy.dump_core(WTERMSIG(e.status));
+                fprintf(stderr, "specimen exited due to signal ");
+                print_enum(stderr, signal_names, WTERMSIG(e.status));
+                fprintf(stderr, " (%s)%s\n", strsignal(WTERMSIG(e.status)), WCOREDUMP(e.status)?" core dumped":"");
+                exit(1);
             } else if (WIFSTOPPED(e.status)) {
-                fprintf(stderr, "specimen is stopped due to signal %d (%s)\n", 
-                        WSTOPSIG(e.status), strsignal(WSTOPSIG(e.status)));
+                fprintf(stderr, "specimen is stopped due to signal ");
+                print_enum(stderr, signal_names, WSTOPSIG(e.status));
+                fprintf(stderr, " (%s)\n", strsignal(WSTOPSIG(e.status)));
+                exit(1);
             }
             break;
         }
