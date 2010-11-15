@@ -84,11 +84,12 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 		void insert(const ExtentMap&);
 		void insert(const ExtentPair &extent)
 			{insert(extent.first, extent.second);}
-		void insert(rose_addr_t offset, rose_addr_t size);
+		void insert(rose_addr_t offset, rose_addr_t size, rose_addr_t align_lo=1, rose_addr_t align_hi=1);
 		void erase(const ExtentPair &extent)
 			{erase(extent.first, extent.second);}
 		void erase(rose_addr_t offset, rose_addr_t size);
 		void erase(const ExtentMap&);
+		void precipitate(rose_addr_t reagent);
 
 		/* Operator-like non-modifying methods */
 		ExtentMap subtract_from(const ExtentPair &extent) const
@@ -98,6 +99,9 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 			{return overlap_with(extent.first, extent.second);}
 		ExtentMap overlap_with(rose_addr_t offset, rose_addr_t size) const;
 		size_t size() const; /**< Number of bytes in extent map (not the number extents). */
+
+		/* Non-modifiying search methods */
+		ExtentPair find_address(rose_addr_t address) const;
 
 		/* Allocation-like methods */
 		std::map<rose_addr_t,rose_addr_t>::iterator best_fit(rose_addr_t size);
