@@ -83,6 +83,7 @@ createInitName (const string& name, SgType* type,
 // DQ (2/24/2009): Added assertion.
   ROSE_ASSERT(name.empty() == false);
   SgInitializedName* new_name = new SgInitializedName (ASTtools::newFileInfo (), sg_name, type, init,decl, scope, 0);
+  setOneSourcePositionForTransformation (new_name);
   ROSE_ASSERT (new_name);
   // Insert symbol
   if (scope)
