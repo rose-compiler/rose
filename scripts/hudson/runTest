@@ -162,8 +162,8 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
 # tps : 11/12/10 - I just noticed that someone removed the rted test out of runTest!!! RTED was not tested in hudson!! For how long? Adding it back.
 #		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch --enable-rose-openGL --with-rted=${ROSE_TEST_RTED_PATH}"
 # tps : 11/12/10 - OpenGL is not installed on all nodes yet. RTED is failing because it was accidently disabled from hudson tests.
-#		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  --with-rted=${ROSE_TEST_RTED_PATH}"
-		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
+		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  --with-rted=${ROSE_TEST_RTED_PATH}"
+#		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
 #	fi
 fi
 
