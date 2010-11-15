@@ -21,7 +21,6 @@ sandbox_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 lib_LIBRARIES = libipc.a
 libipc_a_SOURCES = $(srcdir)/tests/libipc.c
 libipc_a_CFLAGS = -m32
-libipc_a_LDFLAGS = 
 
 include_HEADERS += $(srcdir)/tests/ipcmsg.h  $(srcdir)/tests/ipcsem.h  $(srcdir)/tests/ipcshm.h
 
