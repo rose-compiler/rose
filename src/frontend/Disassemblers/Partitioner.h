@@ -479,6 +479,7 @@ protected:
     virtual rose_addr_t canonic_block(rose_addr_t);             /**< Follow alias links in basic blocks. */
     virtual bool is_function_call(BasicBlock*, rose_addr_t*);   /* True if basic block appears to call a function. */
 
+    virtual void mark_call_insns();                             /**< Naive marking of CALL instruction targets as functions */
     virtual void mark_ipd_configuration();                      /**< Seeds partitioner with IPD configuration information */
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */

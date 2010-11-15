@@ -3985,23 +3985,46 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 	 *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
 	 *  instructions into functions. */
         enum FunctionReason {
-                FUNC_NONE        = 0x000,               /**< Used for initialization; not a bit flag */
-                FUNC_ENTRY_POINT = 0x001,               /**< An entry point specified in the file header */
-                FUNC_CALL_TARGET = 0x002,               /**< Target of a CALL-like instruction */
-                FUNC_EH_FRAME    = 0x004,               /**< Address mentioned in the ELF .eh_frame section */
-                FUNC_SYMBOL      = 0x008,               /**< Address of a function symbol in a symbol table */
-                FUNC_PATTERN     = 0x010,               /**< Appears to be a function based on pattern of instructions */
-                FUNC_GRAPH       = 0x020,               /**< Implied by inter-basicblock branching */
-                FUNC_USERDEF     = 0x040,               /**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
-		FUNC_INTERPAD    = 0x080,		/**< Created to represent NOP padding between other functions. */
-		FUNC_DISCONT     = 0x100,		/**< Blocks of function are not contiguous in memory. */
-		FUNC_INSNHEAD    = 0x200,		/**< For initial instructions not in any other function (is always run) */
-		FUNC_IMPORT      = 0x400,		/**< Functions dynamically linked */
-		FUNC_LEFTOVERS   = 0x800,		/**< Generated function to hold blocks that are otherwise not part of
-							 *   any function.  If this bit is turned off then the instruction
-							 *   Partitioner will delete instructions that it couldn't assign to
-							 *   a function. */
-                FUNC_DEFAULT     = 0xfff                /**< Default value for Partitioner class */
+                FUNC_NONE        = 0x0000,	/**< Used for initialization; not a bit flag. */
+                FUNC_ENTRY_POINT = 0x0001,      /**< An entry point specified in the file header. */
+                FUNC_CALL_TARGET = 0x0002,	/**< Target of a function call instruction sequence in the CFG. When used as
+						 *   a partitioning heuristic, the partitioner will create new functions when
+						 *   it discovers a call-like sequence while traversing the CFG. */
+		FUNC_CALL_INSN   = 0x0004,	/**< Target of call, possibly not in the CFG (see Partitioner::mark_call_insns).
+						 *   When used as a partitioning heuristic, the partitioner will search all
+						 *   available instructions for instances of call-like instructions and define
+						 *   a function for each target. The function entry points added in this way
+						 *   become initial nodes of the CFG which is used by some of
+						 *   the other function discovery methods, including FUNC_CALL_TARGET. */
+                FUNC_EH_FRAME    = 0x0008,	/**< Address mentioned in the ELF .eh_frame section. */
+                FUNC_SYMBOL      = 0x0010,	/**< Address of a function symbol in a symbol table. */
+                FUNC_PATTERN     = 0x0020,	/**< Appears to be a function based on pattern of instructions. When used as
+						 *   a partitioning heuristic, the partitioner will search through all available
+						 *   instructions and create function entry points. The function entry points are
+						 *   added to the CFG which is used by some of the other function discovery
+						 *   methods. */
+                FUNC_GRAPH       = 0x0040,	/**< Implied by inter-basicblock branching. When used as a partitioning
+						 *   heuristic, the partitioner creates a new function when it discovers, by
+						 *   CFG traversal, that two different functions branch to a common basic block.
+						 *   The block in common becomes a new function under this rule. */
+                FUNC_USERDEF     = 0x0080,	/**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
+		FUNC_INTERPAD    = 0x0100,	/**< Created to represent NOP padding between other functions. When used as a
+						 *   partitioning heuristic, the partitioner searches for padding after all
+						 *   CFG-based analysis has completed.  Padding can consist of either NOP
+						 *   instructions or zero bytes. The former requires that instructions at the
+						 *   interfunction addresses have been disassembled. */
+		FUNC_DISCONT     = 0x0200,	/**< Blocks of function are not contiguous in memory. This is not a partitioner
+						 *   heuristic, but rather only an indication of whether the function's basic
+						 *   blocks occupy contiguous memory locations. */
+		FUNC_INSNHEAD    = 0x0400,	/**< Initial instructions not in any other function. (UNUSED?) */
+		FUNC_IMPORT      = 0x0800,	/**< Functions dynamically linked. For ELF containers, these are the entries
+						 *   in the procedure lookup table (PLT). When used as a partitioning heuristic,
+						 *   the partitioner will scan the PLT and define a function for each entry. */
+		FUNC_LEFTOVERS   = 0x1000,	/**< Generated function to hold blocks that are otherwise not part of
+						 *   any function.  If this bit is turned off then the instruction
+						 *   Partitioner will delete instructions that it couldn't assign to
+						 *   a function. */
+                FUNC_DEFAULT     = 0x1fff       /**< Default value for Partitioner class. */
         };
 
       /** Returns a very short string describing the reason mask. */

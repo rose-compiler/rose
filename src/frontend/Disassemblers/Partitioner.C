@@ -63,8 +63,21 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
     } else {
         add_to_reason_string(result, (r & FUNC_INSNHEAD), do_pad, "H", "insn head");
     }
-    
-    add_to_reason_string(result, (r & FUNC_CALL_TARGET), do_pad, "C", "call target");
+
+    /* Function call:
+     *   "C" means the function was detected because we saw a call-like instructon (such as x86 CALL or FARCALL) or instruction
+     *       sequence (such as pushing the return value and then branching) in code that was determined to be reachable by
+     *       analyzing the control flow graph.
+     *
+     *   "c" means this function is the target of some call-like instruction (such as x86 CALL or FARCALL) but could not
+     *       determine whether the instruction is actually executed.
+     */
+    if (r & FUNC_CALL_TARGET) {
+        add_to_reason_string(result, true, do_pad, "C", "function call");
+    } else {
+        add_to_reason_string(result, (r & FUNC_CALL_INSN), do_pad, "c", "call instruction");
+    }
+
     add_to_reason_string(result, (r & FUNC_EH_FRAME),    do_pad, "X", "exception frame");
     add_to_reason_string(result, (r & FUNC_IMPORT),      do_pad, "I", "import");
     add_to_reason_string(result, (r & FUNC_SYMBOL),      do_pad, "S", "symbol");
@@ -1115,6 +1128,20 @@ Partitioner::mark_func_patterns()
     }
 }
 
+/* Make all CALL/FARCALL targets functions.  This is a naive approach that won't work for some obfuscated software. A more
+ * thorough approach considers only those calls that are reachable. */
+void
+Partitioner::mark_call_insns()
+{
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        std::vector<SgAsmInstruction*> iv;
+        iv.push_back(ii->second);
+        rose_addr_t target_va=NO_TARGET;
+        if (ii->second->is_function_call(iv, &target_va) && target_va!=NO_TARGET)
+            add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET, "");
+    }
+}
+
 /* Look for NOP padding between functions */
 void
 Partitioner::create_nop_padding()
@@ -1352,6 +1379,8 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
     }
     if (func_heuristics & SgAsmFunctionDeclaration::FUNC_PATTERN)
         mark_func_patterns();
+    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_INSN)
+        mark_call_insns();
 
     /* Run user-defined function detectors, making sure that the basic block starts are up-to-date for each call. */
     if (func_heuristics & SgAsmFunctionDeclaration::FUNC_USERDEF) {
