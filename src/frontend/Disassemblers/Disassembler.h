@@ -388,6 +388,11 @@ public:
         return p_protection;
     }
 
+    /** Set progress reporting properties.  A progress report is produced not more than once every @p min_interval seconds
+     * (default is 10) by sending a single line of ouput to the specified file.  Progress reporting can be disabled by supplying
+     * a null pointer for the file.  Progress report properties are class variables. */
+    void set_progress_reporting(FILE*, unsigned min_interval);
+
 
 
     /*==========================================================================================================================
@@ -520,6 +525,11 @@ public:
      *  instruction. */
     void update_progress(SgAsmInstruction*);
 
+    /** Conditionally prints a progress report. If progress reporting is enabled and the required amount of time has elapsed
+     *  since the previous report, then the supplied report is emited. Also, if debugging is enabled the report is emitted to
+     *  the debugging file regardless of the elapsed time. The arguments are the same as fprintf(). */
+    void progress(FILE*, const char *fmt, ...) const;
+
     /** Makes an unknown instruction from an exception. */
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&) = 0;
 
@@ -559,6 +569,11 @@ protected:
     static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
     size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */
     unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
+
+    static time_t progress_interval;                    /**< Minimum interval between progress reports. */
+    static time_t progress_time;                        /**< Time of last report, or zero if no report has been generated. */
+    static FILE *progress_file;                         /**< File to which reports are made. Null disables reporting. */
+
 };
 
 #endif

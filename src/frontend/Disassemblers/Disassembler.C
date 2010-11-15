@@ -12,6 +12,7 @@
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include <stdarg.h>
 
 /* See header file for full documentation of all methods in this file. */
 
@@ -313,23 +314,41 @@ Disassembler::set_alignment(size_t n)
     p_alignment = n;
 }
 
+/* Progress report class variables. */
+time_t Disassembler::progress_interval = 10;
+time_t Disassembler::progress_time = 0;
+FILE *Disassembler::progress_file = stderr;
+
+/* Produce a progress report if enabled. */
+void
+Disassembler::progress(FILE *debug, const char *fmt, ...) const
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    time_t now = time(NULL);
+    
+    if (0==progress_time)
+        progress_time = now;
+    
+    if (progress_file!=NULL && now-progress_time >= progress_interval) {
+        progress_time = now;
+        vfprintf(progress_file, fmt, ap);
+    }
+
+    if (debug!=NULL)
+        vfprintf(debug, fmt, ap);
+}
+
 /* Update progress, keeping track of the number of instructions disassembled. */
 void
 Disassembler::update_progress(SgAsmInstruction *insn)
 {
-    static const time_t progress_interval = 10;
-    static time_t progress_time = 0;
-    if (!progress_time)
-        progress_time = time(NULL);
-
     if (insn)
         p_ndisassembled++;
-    
-    if (0==p_ndisassembled % 2500 && (p_debug || time(NULL)-progress_time > progress_interval)) {
-        progress_time = time(NULL);
-        fprintf(p_debug?p_debug:stderr, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n",
-                insn->get_address(), p_ndisassembled);
-    }
+
+    progress(p_debug, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n",
+             insn->get_address(), p_ndisassembled);
 }
 
 /* Disassemble one instruction. */

@@ -13,6 +13,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 
 /* See header file for full documentation. */
 
@@ -79,11 +80,31 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
  *
  *******************************************************************************************************************************/
 
+/* Progress report class variables. */
+time_t Partitioner::progress_interval = 10;
+time_t Partitioner::progress_time = 0;
+FILE *Partitioner::progress_file = stderr;
 
+/* Produce a progress report if enabled. */
+void
+Partitioner::progress(FILE *debug, const char *fmt, ...) const
+{
+    va_list ap;
+    va_start(ap, fmt);
 
+    time_t now = time(NULL);
+    
+    if (0==progress_time)
+        progress_time = now;
+    
+    if (progress_file!=NULL && now-progress_time >= progress_interval) {
+        progress_time = now;
+        vfprintf(progress_file, fmt, ap);
+    }
 
-
-
+    if (debug!=NULL)
+        vfprintf(debug, fmt, ap);
+}
 
 /* Parse argument for "-rose:partitioner_search" command-line swich. */
 unsigned
@@ -1527,24 +1548,12 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
 void
 Partitioner::analyze_cfg()
 {
-    static const time_t progress_interval = 10;
-    time_t progress_time = time(NULL);
-    bool progress_emitted = false;
-    size_t pass = 0; /*only used for progress and debugging*/
-
-    while (true) {
-        pass++;
-
+    for (size_t pass=1; true; pass++) {
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
-        if (debug || time(NULL)-progress_time > progress_interval) {
-            progress_time = time(NULL);
-            progress_emitted = true;
-            fprintf(debug?debug:stderr,
-                    "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-                    pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-                    blocks.size(), 1==blocks.size()?"":"s",
-                    blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
-        }
+        progress(debug, "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+                 pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+                 blocks.size(), 1==blocks.size()?"":"s",
+                 blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
 
         /* If function A makes a call to function B and we know that function B could return but the return address is not
          * part of any function, then mark function A as pending so that we rediscover its blocks. */   
@@ -1662,13 +1671,11 @@ Partitioner::analyze_cfg()
         }
     }
         
-    if (debug || progress_emitted) {
-        fprintf(debug?debug:stderr,
-                "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-                functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-                blocks.size(), 1==blocks.size()?"":"s",
-                blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
-    }
+    progress(debug,
+             "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+             functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+             blocks.size(), 1==blocks.size()?"":"s",
+             blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
 }
 
 void

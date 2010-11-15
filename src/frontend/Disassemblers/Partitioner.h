@@ -356,6 +356,11 @@ public:
         return map;
     }
 
+    /** Set progress reporting properties.  A progress report is produced not more than once every @p min_interval seconds
+     * (default is 10) by sending a single line of ouput to the specified file.  Progress reporting can be disabled by supplying
+     * a null pointer for the file.  Progress report properties are class variables. */
+    void set_progress_reporting(FILE*, unsigned min_interval);
+
     /*************************************************************************************************************************
      *                                                High-level Functions
      *************************************************************************************************************************/
@@ -497,6 +502,11 @@ protected:
 
     /** Returns the integer value of a value expression since there's no virtual method for doing this. (FIXME) */
     static rose_addr_t value_of(SgAsmValueExpression*);
+
+    /** Conditionally prints a progress report. If progress reporting is enabled and the required amount of time has elapsed
+     *  since the previous report, then the supplied report is emited. Also, if debugging is enabled the report is emitted to
+     *  the debugging file regardless of the elapsed time. The arguments are the same as fprintf(). */
+    void progress(FILE*, const char *fmt, ...) const;
 
     /*************************************************************************************************************************
      *                                   IPD Parser for initializing the Partitioner
@@ -760,6 +770,10 @@ protected:
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null). */
     bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory. */
     BlockConfigMap block_config;                        /**< IPD configuration info for basic blocks. */
+
+    static time_t progress_interval;                    /**< Minimum interval between progress reports. */
+    static time_t progress_time;                        /**< Time of last report, or zero if no report has been generated. */
+    static FILE *progress_file;                         /**< File to which reports are made. Null disables reporting. */
 
 private:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
