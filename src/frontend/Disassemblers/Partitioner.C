@@ -1129,7 +1129,8 @@ Partitioner::mark_func_patterns()
 }
 
 /* Make all CALL/FARCALL targets functions.  This is a naive approach that won't work for some obfuscated software. A more
- * thorough approach considers only those calls that are reachable. */
+ * thorough approach considers only those calls that are reachable.  A CALL whose target is the address following the CALL
+ * instruction is not counted as a function call. */
 void
 Partitioner::mark_call_insns()
 {
@@ -1137,8 +1138,10 @@ Partitioner::mark_call_insns()
         std::vector<SgAsmInstruction*> iv;
         iv.push_back(ii->second);
         rose_addr_t target_va=NO_TARGET;
-        if (ii->second->is_function_call(iv, &target_va) && target_va!=NO_TARGET)
+        if (ii->second->is_function_call(iv, &target_va) && target_va!=NO_TARGET &&
+            target_va!=ii->first + ii->second->get_raw_bytes().size()) {
             add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET, "");
+        }
     }
 }
 
