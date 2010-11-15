@@ -149,7 +149,6 @@ CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYL
 echo "ROSE install tree will be: $CONFIGURE_PREFIX_DIR"
 
 if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
-
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
  # echo "This test is forced to exit with an error as part of debugging a subset of the Hudson tests."
  # exit 1
@@ -159,12 +158,20 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
 #       for now I have disabled openGL testing but the way to turn it on is to specify --enable-openGL
 #	if test "x$ROSE_TEST_GCC_VERSION" = "x4.1.2" ; then
 
-# tps : 11/12/10 - I just noticed that someone removed the rted test out of runTest!!! RTED was not tested in hudson!! For how long? Adding it back.
-#		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch --enable-rose-openGL --with-rted=${ROSE_TEST_RTED_PATH}"
-# tps : 11/12/10 - OpenGL is not installed on all nodes yet. RTED is failing because it was accidently disabled from hudson tests.
-		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  --with-rted=${ROSE_TEST_RTED_PATH}"
-#		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
-#	fi
+# tps : 11/12/10 : Admins are installing openGL on hudson machines. Enabled openGL thereafter. Should pass.
+#		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+# tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
+# tps : 11/15/10 - RTED does not work for gcc 4.3.2 and 4.4.1 . This is not a problem of our implementation but rather a problem with the test suite.
+#                  For instance we get the following error: C_G_4_3_a_d.cpp:48: error: 'cout' was not declared in this scope
+if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
+fi
+fi
+
+if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" \) ; then
+# test 32bit version of RTED as well
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
 fi
 
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
