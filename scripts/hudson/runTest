@@ -171,7 +171,9 @@ fi
 
 if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" \) ; then
 # test 32bit version of RTED as well
+if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
 	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
+fi
 fi
 
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
