@@ -381,7 +381,7 @@ check-local: $(TEST_TARGETS)
 clean-local:
 	rm -rf tmp-sim
 
-EXTRA_DIST = README x86sim.conf test_status.txt  \
+EXTRA_DIST = $(TEST_INPUTS_SRC) $(TEST_SUPPORT_SRC)  README x86sim.conf test_status.txt  \
 $(srcdir)/tests/compat_16.h \
 $(srcdir)/tests/compat_uid.h \
 $(srcdir)/tests/compiler.h \
