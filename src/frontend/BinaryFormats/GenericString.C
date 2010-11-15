@@ -384,8 +384,6 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         /* The string table isn't large enough, so make it larger by extending the section that contains the table. The
          * containing section's "set_size" method should add the new space to the string table's free list. If our recursion
          * level is more than two calls deep then something went horribly wrong! */
-        fprintf(stderr, "SgAsmElfStrtab::reallocate(): need to extend [%d] \"%s\" by %"PRIu64" byte%s\n", 
-                container->get_id(), container->get_name()->c_str(), extend_size, 1==extend_size?"":"s");
         static bool recursive=false;
         ROSE_ASSERT(!recursive);
         recursive = reallocated = true;
