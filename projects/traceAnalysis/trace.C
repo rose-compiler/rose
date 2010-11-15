@@ -242,25 +242,8 @@ read_trace_file(const string & traceFileName, uint64_t & entry_va )
    }
 
 
-/* Define our own partitioner that doesn't do any real function detection analysis. It just takes all the instructions and
- * stuffs them into a single function. */
-class MyPartitioner: public Partitioner
-   {
-     public:
-          SgAsmBlock* partition(const Disassembler::InstructionMap& insns, rose_addr_t entry_va, const std::string& name)
-             {
-               clear();
-               set_search(SgAsmFunctionDeclaration::FUNC_DEFAULT & ~SgAsmFunctionDeclaration::FUNC_LEFTOVERS);
-               add_instructions(insns);
-               add_function(entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, name);
-               analyze_cfg();
-               return build_ast();
-             }
-   };
-
-
 // Function prototype...
-SgAsmGenericFile* generateExecutable(SgAsmBlock *block);
+SgAsmGenericFile* generateExecutable(const std::string &name, const Disassembler::InstructionMap&, rose_addr_t entry_va);
 
 int
 main(int argc, char* argv[])
@@ -275,38 +258,14 @@ main(int argc, char* argv[])
      string traceFileName = argv[1];
 
   // Read the trace file...
-  // readTraceFile(traceFileName);
-  // vector<unsigned char> opCodeBuffer = read_trace_file(traceFileName);
+     std::cerr <<"Reading and disassembling trace file...\n";
      uint64_t entry_va = 0;
      Disassembler::InstructionMap insns = read_trace_file(traceFileName,entry_va);
-
-  /* A partitioner can reorganize the instructions into an AST if you desire.  This is necessary if you plan to use any
-   * ROSE's analysis or output functions since they operate exclusively on the tree representation. */
-     SgAsmBlock *block = MyPartitioner().partition(insns, entry_va, "entry_function");
-
-  /* Produce human-readable output.  The output can be customized by subclassing AsmUnparser (see disassemble.C for an
-   * example). This method of output is also more efficient than calling the old unparseAsmStatement() since there's no need
-   * to buffer the string representation in memory first. */
-     AsmUnparser().unparse(std::cout, block);
-
-  // This work is incomplete, the block is not yet assembled into a function in the file.
-     SgAsmGenericFile* file = generateExecutable(block);
-     ROSE_ASSERT(file != NULL);
-
-#if 0
-  // This code does not yet work...
+     printf("found %zu instruction%s\n", insns.size(), 1==insns.size()?"":"s");
 
   // Now generate the executable...
-     SgProject* project = new SgProject();
-     SgBinaryFile* binaryFile = new SgBinaryFile(file);
-
-  // Old deprecated interface...
-  // project->set_file(*binaryFile);
-     project->get_fileList().push_back(binaryFile);
-
-  // Call the backend to generate an executable.
-     backend(project); 
-#endif
+     std::cerr <<"Generating executable file...\n";
+     generateExecutable("a.out", insns, entry_va);
 
      return 0;
    }
