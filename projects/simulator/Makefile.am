@@ -382,6 +382,7 @@ clean-local:
 	rm -rf tmp-sim
 
 EXTRA_DIST = $(TEST_INPUTS_SRC) $(TEST_SUPPORT_SRC)  README x86sim.conf test_status.txt  \
+$(srcdir)/tests/linux_syscall_numbers.h \
 $(srcdir)/tests/compat_16.h \
 $(srcdir)/tests/compat_uid.h \
 $(srcdir)/tests/compiler.h \
