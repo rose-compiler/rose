@@ -106,7 +106,7 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
             inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
    }
 
-#if 1
+
    if (isSgPntrArrRefExp(astNode)) {
       // ------------------------------ checks for array access  ----------------------------------------------
       transf->visit_isArrayPntrArrRefExp(astNode);
@@ -118,9 +118,8 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
       transf->visit_isSgPointerDerefExp(isSgPointerDerefExp(astNode));
    }
 
-#endif
 
-#if 1
+
    if (isSgArrowExp(astNode)) {
       // if this is a varrefexp and it is not initialized, we flag it.
       // do only if it is by itself or on right hand side of assignment
@@ -128,8 +127,8 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
    return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer, true,
          inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
    }
-#endif
 
+   transf->visit(astNode);
 #if 0
    if (isSgScopeStatement(astNode)) {
       // if, while, do, etc., where we need to check for locals going out of scope
@@ -140,14 +139,13 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
          transf->visit_isClassDefinition(isSgClassDefinition(astNode));
       }
    }
+#endif
+
 
    if (isSgFunctionCallExp(astNode)) {
       // call to a specific function that needs to be checked
       transf->visit_isFunctionCall(astNode);
    }
-#endif
-   transf->visit(astNode);
-
 
    if( isSgPlusPlusOp( astNode ) || isSgMinusMinusOp( astNode )
          || isSgMinusAssignOp( astNode ) || isSgPlusAssignOp( astNode )) {
