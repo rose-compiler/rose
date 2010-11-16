@@ -379,7 +379,7 @@ $(TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 check-local: $(TEST_TARGETS)
 
 clean-local:
-	rm -rf tmp-sim
+	rm -rf tmp-sim x-core.rose test-file-fchown32
 
 EXTRA_DIST = $(TEST_INPUTS_SRC) $(TEST_SUPPORT_SRC)  README x86sim.conf test_status.txt  \
 $(srcdir)/tests/linux_syscall_numbers.h \
