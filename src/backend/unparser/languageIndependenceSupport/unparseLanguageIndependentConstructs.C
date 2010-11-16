@@ -788,6 +788,20 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
         }
 #endif
 
+#if 0
+  // Liao 11/2/2010 Skip the case that an expression is located from another file (included in the current file)
+  // I moved the code to the unparser function for SgAggregatedInitializer to have bigger picture about what to parse or not
+     SgFile* cur_file = SageInterface::getEnclosingFileNode(expr);
+     if (cur_file != NULL)
+     {
+       // normal file info 
+       if (expr->get_file_info()->isTransformation() == false &&  expr->get_file_info()->isCompilerGenerated() ==false)
+       {
+         if (cur_file->get_file_info()->get_filename() != expr->get_file_info()->get_filename())
+           return;
+       }
+     }
+#endif
      if( unparseLineReplacement(expr,info) )
        return;
 
@@ -1273,7 +1287,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                  !info.SkipFunctionDefinition();
 
        // DQ (7/19/2008): Allow expressions to have there associated comments unparsed.
-          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL);
+       // Liao 11/9/2010: allow SgInitializedName also
+          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) ;
 
 #if 0
           printf ("infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
