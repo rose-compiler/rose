@@ -159,7 +159,7 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
 #	if test "x$ROSE_TEST_GCC_VERSION" = "x4.1.2" ; then
 
 # tps : 11/12/10 : Admins are installing openGL on hudson machines. Enabled openGL thereafter. Should pass.
-#		CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
 # tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
 	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
 # tps : 11/15/10 - RTED does not work for gcc 4.3.2 and 4.4.1 . This is not a problem of our implementation but rather a problem with the test suite.
