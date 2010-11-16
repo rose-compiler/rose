@@ -496,7 +496,7 @@ SgAsmPEFileHeader::create_table_sections()
                     i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname?tabname:"");
             continue;
         }
-        rose_addr_t file_offset = elmt->is_anonymous() ? 0 : elmt->get_va_offset(get_base_va() + pair->get_e_rva());
+        rose_addr_t file_offset = elmt->is_anonymous() ? 0 : elmt->get_va_offset(get_base_va() + pair->get_e_rva(), 1);
 
         /* Create the new section */
         SgAsmGenericSection *tabsec = NULL;
