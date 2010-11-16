@@ -3071,6 +3071,25 @@ EmulationPolicy::emulate_syscall()
 
             break;
         }
+
+        case 144: { /* 0x90, int msync(void *addr, size_t length, int flags) */
+            static const Translate msync_flags[] = { TF(MS_ASYNC), TF(MS_SYNC), TF(MS_INVALIDATE), T_END };
+            syscall_enter("msync", "pdf", msync_flags);
+            void *addr = my_addr(arg(0), arg(1));
+            if (!addr) {
+                writeGPR(x86_gpr_ax, -ENOMEM);
+            } else {
+                int result = msync(addr, arg(1), arg(2));
+                if (-1==result) {
+                    writeGPR(x86_gpr_ax, -errno);
+                } else {
+                    writeGPR(x86_gpr_ax, result);
+                }
+            }
+            syscall_leave("d");
+            break;
+        }
+
         case 146: { /*0x92, writev*/
             syscall_enter("writev", "dpd");
             uint32_t fd=arg(0), iov_va=arg(1);
