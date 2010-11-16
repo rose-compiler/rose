@@ -3194,17 +3194,16 @@ EmulationPolicy::emulate_syscall()
 
 	case 183: { /* 0xb7, getcwd */
             syscall_enter("getcwd", "pd");
-            char buf[arg(1)];
-            int result = getcwd(buf, arg(1)) ? 0 : -errno;
-            if (result>=0) {
-                size_t nwritten = map->write(buf, arg(0), arg(1));
-                ROSE_ASSERT(nwritten==arg(1));
+            void *buf = my_addr(arg(0), arg(1));
+            int result = syscall(SYS_getcwd, buf, arg(1));
+            if (-1==result) {
+                writeGPR(x86_gpr_ax, -errno);
+            } else {
+                writeGPR(x86_gpr_ax, result);
             }
-            writeGPR(x86_gpr_ax, result);
-            syscall_leave("d");
+            syscall_leave("ds");
             break;
         }
-
 
         case 186: { /* 0xba, sigaltstack*/
           /*
