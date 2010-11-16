@@ -458,9 +458,6 @@ public:
     /* Print the return value of a system call in a manner like strace */
     void syscall_leave(const char *format, ...);
 
-    /* Print the contents of a struct filled in by a system call. */
-    void syscall_result(uint32_t ptr, size_t sz, ArgInfo::StructPrinter);
-
     /* Initializes an ArgInfo object to pass to syscall printing functions. */
     void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list *ap);
 
@@ -2532,9 +2529,7 @@ EmulationPolicy::emulate_syscall()
                 ROSE_ASSERT(nwritten==sizeof rlimit_guest);
                 writeGPR(x86_gpr_ax, result);
             }
-            syscall_leave("d");
-            if (result!=-1)
-                syscall_result(rlimit_va, 8, print_rlimit);
+            syscall_leave("d-P", 8, print_rlimit);
             break;
         }
 
@@ -3432,9 +3427,7 @@ EmulationPolicy::emulate_syscall()
             }
 
             writeGPR(x86_gpr_ax, result);
-            syscall_leave("d");
-            if (result>=0)
-                syscall_result(arg(1), sizeof(kernel_stat_32), print_kernel_stat_32);
+            syscall_leave("d-P", sizeof(kernel_stat_32), print_kernel_stat_32);
             break;
         }
 
@@ -3965,28 +3958,25 @@ EmulationPolicy::syscall_leave(const char *format, ...)
     va_list ap;
     va_start(ap, format);
 
-    ROSE_ASSERT(1==strlen(format));
+    ROSE_ASSERT(strlen(format)>=1);
     if (debug && trace_syscall) {
+        /* System calls return an integer (negative error numbers, non-negative success) */
         ArgInfo info;
         uint32_t value = readGPR(x86_gpr_ax).known_value();
         syscall_arginfo(format[0], value, &info, &ap);
         print_leave(debug, format[0], &info);
-    }
-}
 
-void
-EmulationPolicy::syscall_result(uint32_t va, size_t sz, ArgInfo::StructPrinter printer)
-{
-    if (debug && trace_syscall) {
-        ArgInfo info;
-        info.val = va;
-        info.struct_printer = printer;
-        info.struct_buf = new uint8_t[sz];
-        info.struct_size = sz;
-        info.struct_nread = map->read(info.struct_buf, va, sz);
-        fprintf(debug, "    ");
-        print_single(debug, 'P',  &info);
-        fprintf(debug, "\n");
+        /* Additionally, output any other buffer values that were filled in by a successful system call. */
+        if (format[0]=='d' && arg(0)>=0) {
+            for (size_t i=1; format[i]; i++) {
+                if ('-'!=format[i]) {
+                    syscall_arginfo(format[i], arg(i-1), &info, &ap);
+                    fprintf(debug, "    arg%zu = ", i-1);
+                    print_single(debug, format[i], &info);
+                    fprintf(debug, "\n");
+                }
+            }
+        }
     }
 }
 
