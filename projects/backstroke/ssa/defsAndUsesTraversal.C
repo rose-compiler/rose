@@ -228,7 +228,7 @@ void DefsAndUsesTraversal::addUsesToNode(SgNode* node, std::vector<SgNode*> uses
 		VarUniqueName * uName = StaticSingleAssignment::getUniqueName(useNode);
 		ROSE_ASSERT(uName);
 
-		//Add the varRef as a use at the current node of the ref's uniqueName
+		//Add the varRef as a def at the current node of the ref's uniqueName
 		//We will correct the reference later.
 		ssa->getUseTable()[node][uName->getKey()].push_back(useNode);
 
