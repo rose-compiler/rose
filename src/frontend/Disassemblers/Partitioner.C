@@ -98,6 +98,14 @@ time_t Partitioner::progress_interval = 10;
 time_t Partitioner::progress_time = 0;
 FILE *Partitioner::progress_file = stderr;
 
+/* Set progress reporting values. */
+void
+Partitioner::set_progress_reporting(FILE *output, unsigned min_interval)
+{
+    progress_file = output;
+    progress_interval = min_interval;
+}
+
 /* Produce a progress report if enabled. */
 void
 Partitioner::progress(FILE *debug, const char *fmt, ...) const

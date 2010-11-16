@@ -319,6 +319,14 @@ time_t Disassembler::progress_interval = 10;
 time_t Disassembler::progress_time = 0;
 FILE *Disassembler::progress_file = stderr;
 
+/* Set progress reporting values. */
+void
+Disassembler::set_progress_reporting(FILE *output, unsigned min_interval)
+{
+    progress_file = output;
+    progress_interval = min_interval;
+}
+
 /* Produce a progress report if enabled. */
 void
 Disassembler::progress(FILE *debug, const char *fmt, ...) const
