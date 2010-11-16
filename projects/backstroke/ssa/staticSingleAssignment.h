@@ -403,7 +403,8 @@ private:
 	 */
 	void insertExpandedDefsForUse(FilteredCfgNode curNode, VarName name, NodeVec &memberRefInsertedNodes);
 
-	/** Expand all member uses (chained names) to explicitly use every name in the chain.
+	/** Expand all member uses (chained names) to explicitly use every name in the chain that is a
+	 * parent of the original use.
 	 *
 	 * When a member of a struct/class is used, this will insert uses for every
 	 * member referenced to access the currently used one.
@@ -418,7 +419,7 @@ private:
 	 *
 	 * @param curNode
 	 */
-	void expandMemberUses(FilteredCfgNode curNode);
+	void expandParentMemberUses();
 
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);

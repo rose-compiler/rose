@@ -535,7 +535,6 @@ StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getOriginalDe
 StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getExpandedDefsAtNode(SgNode* node)
 {
 	//We want to get all the expanded defs at this node and insert them into the result table
-
 	NumNodeRenameTable res;
 
 	//Iterate every variable definition expanded on this node

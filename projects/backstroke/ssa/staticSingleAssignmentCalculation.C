@@ -102,6 +102,9 @@ void StaticSingleAssignment::run()
 			//Expand any member variable definition to also define its parents at the same node
 			expandParentMemberDefinitions();
 
+			//Expand any member variable uses to also use the parent variables (e.g. a.x also uses a)
+			expandParentMemberUses();
+
 			//Iterate the global table insert a def for each name at the function definition
 			foreach(const VarName& globalVar, globalVarList)
 			{
@@ -325,7 +328,7 @@ bool StaticSingleAssignment::mergeDefs(FilteredCfgNode curNode)
 		addRenameNumberForNode(definedVar, node);
 
 		//Insert expanded defs for the original def, if any such expanded defs are in the staging set.
-		//Note that we only expand defs when actually needed.
+		//Note that we only expand child defs as needed, even though we expanded all the parent defs up front.
 		foreach(TableEntry::value_type& propEntry, stagingPropagatedDefs)
 		{
 			//Don't insert a def if it is already originally defined.
@@ -469,8 +472,8 @@ void StaticSingleAssignment::expandParentMemberDefinitions()
 					cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
 				}
 
-				//Only insert the new definition if it does not already exist
-				if (originalDefTable[node].count(newName) == 0 && expandedDefTable[node].count(newName) == 0)
+				//Only insert the new definition if it does not already exist in the original def table
+				if (originalDefTable[node].count(newName) == 0)
 				{
 					//Insert the new name as being defined here.
 					expandedDefTable[node].insert(newName);
@@ -495,8 +498,6 @@ void StaticSingleAssignment::resolveUses(FilteredCfgNode curNode, NodeVec &membe
 
 	if (getDebug())
 		cout << "Resolving uses at " << node->class_name() << node << endl;
-
-	expandMemberUses(curNode);
 
 	//Iterate every use at the current node
 	foreach(const TableEntry::value_type& entry, useTable[node])
@@ -542,67 +543,52 @@ void StaticSingleAssignment::resolveUses(FilteredCfgNode curNode, NodeVec &membe
 	}
 }
 
-void StaticSingleAssignment::expandMemberUses(FilteredCfgNode curNode)
+void StaticSingleAssignment::expandParentMemberUses()
 {
-	SgNode* node = curNode.getNode();
-
-	if (getDebugExtra())
+	foreach(DefUseTable::value_type& nodeTablePair, useTable)
 	{
-		cout << "Expanding member uses at " << node->class_name() << node << endl;
-		cout << "Original Node ";
-		printUses(useTable[node]);
-	}
-
-	if (useTable.count(node) == 0)
-	{
-		return;
-	}
-
-	//We want to iterate the vars used on this node, and expand them
-	foreach(TableEntry::value_type& entry, useTable[node])
-	{
-		if (getDebugExtra())
+		SgNode* node = nodeTablePair.first;
+		//We want to iterate the vars used on this node, and expand them
+		foreach(TableEntry::value_type& entry, nodeTablePair.second)
 		{
-			cout << "Checking [" << keyToString(entry.first) << "]" << endl;
-		}
-
-		//Check if the variableName has multiple parts
-		if (entry.first.size() == 1)
-		{
-			continue;
-		}
-
-		//We are dealing with a multi-part variable, loop the entry and expand it
-		//Start at one so we don't reinsert same use
-		for (unsigned int i = 1; i < entry.first.size(); i++)
-		{
-			//Create a new varName vector that goes from beginning to end - i
-			VarName newName;
-			newName.assign(entry.first.begin(), entry.first.end() - i);
-
+			const VarName& usedVar = entry.first;
 			if (getDebugExtra())
 			{
-				cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+				cout << "Checking [" << keyToString(usedVar) << "]" << endl;
 			}
 
-			//Only insert the new definition if it does not already exist
-			if (useTable[node].count(newName) == 0)
+			//Check if the variableName has multiple parts
+			if (usedVar.size() == 1)
 			{
-				//Insert the new name as being used here.
-				useTable[node][newName] = NodeVec(1, node);
+				continue;
+			}
+
+			//We are dealing with a multi-part variable, loop the entry and expand it
+			//Start at one so we don't reinsert same use
+			for (unsigned int i = 1; i < usedVar.size(); i++)
+			{
+				//Create a new varName vector that goes from beginning to end - i
+				VarName newName;
+				newName.assign(usedVar.begin(), usedVar.end() - i);
 
 				if (getDebugExtra())
 				{
-					cout << "Inserted new name [" << keyToString(newName) << "] into uses." << endl;
+					cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+				}
+
+				//Only insert the new definition if it does not already exist
+				if (useTable[node].count(newName) == 0)
+				{
+					//Insert the new name as being used here.
+					useTable[node][newName] = NodeVec(1, node);
+
+					if (getDebugExtra())
+					{
+						cout << "Inserted new name [" << keyToString(newName) << "] into uses." << endl;
+					}
 				}
 			}
 		}
-	}
-
-	if (getDebugExtra())
-	{
-		cout << "Expanded Node ";
-		printUses(useTable[node]);
 	}
 }
 
