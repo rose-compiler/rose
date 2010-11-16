@@ -270,6 +270,12 @@ public:
         int status;                             /* same value as returned by waitpid() */
     };
 
+    /* Thrown for signals. */
+    struct Signal {
+        explicit Signal(int signo): signo(signo) {}
+        int signo;
+    };
+
 public:
     std::string exename;                        /* Name of executable without any path components */
     std::string interpname;                     /* Name of interpreter from ".interp" section or "--interp=" switch */
@@ -459,7 +465,7 @@ public:
     void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list *ap);
 
     /* Returns the memory address in ROSE where the specified specimen address is located. */
-    void *my_addr(uint32_t va);
+    void *my_addr(uint32_t va, size_t size);
 
     /* Reads a NUL-terminated string from specimen memory. The NUL is not included in the string. */
     std::string read_string(uint32_t va);
@@ -555,11 +561,8 @@ public:
         if (cond.known_value()) {
             uint8_t buf[Len/8];
             size_t nread = map->read(buf, base+offset, Len/8);
-            if (nread!=Len/8) {
-                fprintf(stderr, "read %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
-                dump_core(SIGSEGV);
-                abort();
-            }
+            if (nread!=Len/8)
+                throw Signal(SIGBUS);
             uint64_t result = 0;
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 result |= buf[j] << i;
@@ -593,11 +596,8 @@ public:
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 buf[j] = (data.known_value() >> i) & 0xff;
             size_t nwritten = map->write(buf, base+offset, Len/8);
-            if (nwritten!=Len/8) {
-                fprintf(stderr, "write %zu byte%s failed at 0x%08"PRIx32"\n\n", Len/8, 1==Len/8?"":"s", base+offset);
-                dump_core(SIGSEGV);
-                abort();
-            }
+            if (nwritten!=Len/8)
+                throw Signal(SIGBUS);
         }
     }
 
@@ -1392,20 +1392,20 @@ EmulationPolicy::dump_core(int signo, std::string base_name)
 }
 
 void *
-EmulationPolicy::my_addr(uint32_t va)
+EmulationPolicy::my_addr(uint32_t va, size_t nbytes)
 {
-    /* Read from specimen in order to make sure that the memory is allocated and mapped into ROSE. */
-    uint32_t word;
-    size_t nread = map->read(&word, va, sizeof word);
-    if (nread!=sizeof word)
-        return NULL;
-
-    /* Obtain mapping information */
+    /* Obtain mapping information and check that the specified number of bytes are mapped. */
     const MemoryMap::MapElement *me = map->find(va);
-    ROSE_ASSERT(me!=NULL); /*because the map->read() was successful above*/
-    uint8_t *base = (uint8_t*)me->get_base();
-    size_t offset = me->get_va_offset(va);
-    return base+offset;
+    if (!me)
+        return NULL;
+    size_t offset = 0;
+    try {
+        offset = me->get_va_offset(va, nbytes);
+    } catch (const MemoryMap::NotMapped) {
+        return NULL;
+    }
+
+    return (uint8_t*)me->get_base() + offset;
 }
 
 std::string
@@ -3654,8 +3654,8 @@ EmulationPolicy::emulate_syscall()
             }
 
             uint32_t futex1_va=arg(0), op=arg(1), val1=arg(2), timeout_va=arg(3), futex2_va=arg(4), val2=arg(5);
-            int *futex1 = (int*)my_addr(futex1_va);
-            int *futex2 = (int*)my_addr(futex2_va);
+            int *futex1 = (int*)my_addr(futex1_va, sizeof(int));
+            int *futex2 = (int*)my_addr(futex2_va, sizeof(int));
 
             struct timespec timespec_buf, *timespec=NULL;
             if (timeout_va) {
@@ -3714,16 +3714,18 @@ EmulationPolicy::emulate_syscall()
              * Linux to update and map the low-order 32-bits into the specimen. */
             int *tidptr = NULL;
             if (sizeof(int)>4) {
-                tidptr = new int;
-                *tidptr = 0;
-                size_t nread = map->read(tidptr, tid_va, 4); /*only low-order bytes*/
-                ROSE_ASSERT(4==nread);
                 const MemoryMap::MapElement *orig = map->find(tid_va);
-                MemoryMap::MapElement submap(tid_va, 4, tidptr, 0, orig->get_mapperms());
-                submap.set_name("set_tid_address");
-                map->insert(submap);
+                if (orig->get_va()!=tid_va || orig->get_size()!=sizeof(int)) {
+                    tidptr = new int;
+                    *tidptr = 0;
+                    size_t nread = map->read(tidptr, tid_va, 4); /*only low-order bytes*/
+                    ROSE_ASSERT(4==nread);
+                    MemoryMap::MapElement submap(tid_va, 4, tidptr, 0, orig->get_mapperms());
+                    submap.set_name("set_tid_address");
+                    map->insert(submap);
+                }
             } else {
-                tidptr = (int*)my_addr(tid_va);
+                tidptr = (int*)my_addr(tid_va, 4);
             }
 
             syscall(SYS_set_tid_address, tidptr);
@@ -3892,7 +3894,7 @@ EmulationPolicy::emulate_syscall()
         case 311: { /*0x137, set_robust_list*/
             syscall_enter("set_robust_list", "pd");
             uint32_t head_va=arg(0), len=arg(1);
-            void *head = my_addr(head_va);
+            void *head = my_addr(head_va, 1); /* FIXME [RPM 2010-11-16] */
             
             /* Allow Linux to update the specimen's memory directly. */
             int status = syscall(SYS_set_robust_list, head, len);
@@ -4431,6 +4433,8 @@ main(int argc, char *argv[], char *envp[])
                 exit(1);
             }
             break;
+        } catch (const EmulationPolicy::Signal &e) {
+            policy.signal_arrival(e.signo);
         }
     }
     return 0;
