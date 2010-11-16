@@ -230,6 +230,8 @@ public:
 	/** A table that maps a name to it's number->node renamings.  */
 	typedef boost::unordered_map<VarName, NumNodeRenameEntry> NumNodeRenameTable;
 
+	typedef boost::unordered_map<SgNode*, std::set<VarName> > LocalDefTable;
+
 
 private:
 	//Private member variables
@@ -238,13 +240,13 @@ private:
 	 * the VarDefUseTraversal. It is later used to populate the actual def/use table.
 	 * It maps each node to the variable names that are defined inside that node.
 	 */
-	boost::unordered_map<SgNode*, std::set<VarName> >  originalDefTable;
+	 LocalDefTable originalDefTable;
 
 	/** This is the table of definitions that is expanded from the original table.
 	 * It is used to populate the actual def/use table.
 	 * It maps each node to the variable names that are defined inside that node.
 	 */
-	boost::unordered_map<SgNode*, std::set<VarName> > expandedDefTable;
+	LocalDefTable expandedDefTable;
 
 	/** This is the table that is populated with all the def information for all the variables
 	 * at all the nodes. It is populated during the runDefUse function, and is done
@@ -363,7 +365,8 @@ private:
 	 */
 	void insertGlobalVarDefinitions();
 
-	/** Expand all member definitions (chained names) to define every name in the chain.
+	/** Expand all member definitions (chained names) to define every name in the chain
+	 * that is shorter than the originally defined name.
 	 *
 	 * When a member of a struct/class is referenced, this will insert definitions
 	 * for every member referenced to access the currently referenced one.
@@ -374,10 +377,8 @@ private:
 	 * In the second line, this function will insert the following:
 	 *
 	 *       o.a.b = 5;     //Def for o.a.b, o.a, o
-	 *
-	 * @param curNode The node to expand the definitions on.
 	 */
-	void expandMemberDefinitions(FilteredCfgNode curNode);
+	void expandParentMemberDefinitions();
 
 	/** Insert defs for member uses (chained names) that do not have an explicit def.
 	 *
@@ -500,7 +501,7 @@ public:
 	 *
 	 * @return Definition table.
 	 */
-	boost::unordered_map<SgNode*, std::set<VarName> >& getOriginalDefTable()
+	LocalDefTable& getOriginalDefTable()
 	{
 		return originalDefTable;
 	}

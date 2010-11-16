@@ -99,6 +99,9 @@ void StaticSingleAssignment::run()
 			if (getDebug())
 				cout << "Finished DefsAndUsesTraversal..." << endl;
 
+			//Expand any member variable definition to also define its parents at the same node
+			expandParentMemberDefinitions();
+
 			//Iterate the global table insert a def for each name at the function definition
 			foreach(const VarName& globalVar, globalVarList)
 			{
@@ -307,9 +310,6 @@ bool StaticSingleAssignment::mergeDefs(FilteredCfgNode curNode)
 	 *       3. Compare the staging and current tables, and only overwrite if needed.
 	 */
 
-	//Expand any member variable references at the current node.
-	expandMemberDefinitions(curNode);
-
 	TableEntry stagingPropagatedDefs;
 	//Retrieve the defs coming from previous cfgNodes
 	aggregatePreviousDefs(curNode, stagingPropagatedDefs);
@@ -436,53 +436,49 @@ void StaticSingleAssignment::aggregatePreviousDefs(FilteredCfgNode curNode, Tabl
 	}
 }
 
-void StaticSingleAssignment::expandMemberDefinitions(FilteredCfgNode curNode)
+void StaticSingleAssignment::expandParentMemberDefinitions()
 {
-	SgNode* node = curNode.getNode();
-
-	if (getDebugExtra())
+	foreach(const LocalDefTable::value_type& nodeVarsPair, originalDefTable)
 	{
-		cout << "Expanding member defs at " << node->class_name() << node << endl;
-		cout << "Original Node ";
-		printOriginalDefs(node);
-	}
+		SgNode* node = nodeVarsPair.first;
 
-	//We want to iterate the vars defined on this node, and expand them
-	foreach(const VarName& definedVar, originalDefTable[node])
-	{
-		if (getDebugExtra())
+		//We want to iterate the vars defined on this node, and expand them
+		foreach(const VarName& definedVar, nodeVarsPair.second)
 		{
-			cout << "Checking [" << keyToString(definedVar) << "]" << endl;
-		}
-
-		//Check if the variableName has multiple parts
-		if (definedVar.size() == 1)
-		{
-			continue;
-		}
-
-		//We are dealing with a multi-part variable, loop the entry and expand it
-		//Start at one so we don't get the same defs in the original and expanded defs
-		for (unsigned int i = 1; i < definedVar.size(); i++)
-		{
-			//Create a new varName vector that goes from beginning to end - i
-			VarName newName;
-			newName.assign(definedVar.begin(), definedVar.end() - i);
-
 			if (getDebugExtra())
 			{
-				cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+				cout << "Checking [" << keyToString(definedVar) << "]" << endl;
 			}
 
-			//Only insert the new definition if it does not already exist
-			if (originalDefTable[node].count(newName) == 0 && expandedDefTable[node].count(newName) == 0)
+			//Check if the variableName has multiple parts
+			if (definedVar.size() == 1)
 			{
-				//Insert the new name as being defined here.
-				expandedDefTable[node].insert(newName);
+				continue;
+			}
+
+			//We are dealing with a multi-part variable, loop the entry and expand it
+			//Start at one so we don't get the same defs in the original and expanded defs
+			for (unsigned int i = 1; i < definedVar.size(); i++)
+			{
+				//Create a new varName vector that goes from beginning to end - i
+				VarName newName;
+				newName.assign(definedVar.begin(), definedVar.end() - i);
 
 				if (getDebugExtra())
 				{
-					cout << "Inserted new name [" << keyToString(newName) << "] into defs." << endl;
+					cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+				}
+
+				//Only insert the new definition if it does not already exist
+				if (originalDefTable[node].count(newName) == 0 && expandedDefTable[node].count(newName) == 0)
+				{
+					//Insert the new name as being defined here.
+					expandedDefTable[node].insert(newName);
+
+					if (getDebugExtra())
+					{
+						cout << "Inserted new name [" << keyToString(newName) << "] into defs." << endl;
+					}
 				}
 			}
 		}
