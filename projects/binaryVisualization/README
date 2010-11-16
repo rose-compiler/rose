@@ -1,0 +1,8 @@
+To run an example you need to configure ROSE with opengl and glut
+
+I recommend to use openglut
+What you need to do is configure ROSE with:
+--enable-rose-openGL --with-glut=/home/panas2/programs/freeglut/lib/
+
+Once compiled one can run a visualization with:
+./vizzBinary [binary program]
