@@ -136,7 +136,7 @@ syscall_tst.76.1 yes
 syscall_tst.76.2 yes
 syscall_tst.83.1 yes
 syscall_tst.83.2 no
-syscall_tst.83.4 no
+syscall_tst.83.4 yes
 syscall_tst.83.5 yes
 syscall_tst.91.1 yes
 syscall_tst.91.2 yes
