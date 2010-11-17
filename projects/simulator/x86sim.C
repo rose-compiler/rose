@@ -252,6 +252,72 @@ static const Translate open_flags[] = { TF(O_RDWR), TF(O_RDONLY), TF(O_WRONLY),
                                         TF(O_APPEND), TF(O_NDELAY), TF(O_ASYNC), TF(O_FSYNC), TF(O_SYNC), TF(O_NOATIME),
                                         T_END };
 
+/* Types for getdents syscalls */
+struct dirent32_t {
+    uint32_t d_ino;
+    uint32_t d_off;
+    uint16_t d_reclen;
+} __attribute__((__packed__));
+
+struct dirent64_t {
+    uint64_t d_ino;
+    uint64_t d_off;
+    uint16_t d_reclen;
+    uint8_t d_type;
+} __attribute__((__packed__));
+
+static int
+print_dentries_helper(FILE *f, const uint8_t *_sa, size_t sz, size_t wordsize)
+{
+    if (0==sz)
+        return fprintf(f, "empty");
+
+    int retval = fprintf(f, "\n");
+    size_t offset = 0;
+    for (size_t i=0; offset<sz; i++) {
+        uint64_t d_ino, d_off;
+        int d_reclen, d_type;
+        const char *d_name;
+        if (4==wordsize) {
+            const dirent32_t *sa = (const dirent32_t*)(_sa+offset);
+            d_ino = sa->d_ino;
+            d_off = sa->d_off;
+            d_reclen = sa->d_reclen;
+            d_type = _sa[offset+sa->d_reclen-1];
+            d_name = (const char*)_sa + offset + sizeof(*sa);
+        } else {
+            ROSE_ASSERT(8==wordsize);
+            const dirent64_t *sa = (const dirent64_t*)(_sa+offset);
+            d_ino = sa->d_ino;
+            d_off = sa->d_off;
+            d_reclen = sa->d_reclen;
+            d_type = sa->d_type;
+            d_name = (const char*)_sa + offset + sizeof(*sa);
+        }
+        retval += fprintf(f,
+                          "        dentry[%3zu]: ino=%-8"PRIu64" next_offset=%-8"PRIu64" reclen=%-3d"
+                          " type=%-3d name=\"%s\"\n", i, d_ino, d_off, d_reclen, d_type, d_name);
+        offset = d_off;
+        if (0==offset) break;
+    }
+    return retval + fprintf(f, "    ");
+}
+
+
+        
+
+static int
+print_dentries_32(FILE *f, const uint8_t *sa, size_t sz)
+{
+    return print_dentries_helper(f, sa, sz, 4);
+}
+
+static int
+print_dentries_64(FILE *f, const uint8_t *sa, size_t sz)
+{
+    return print_dentries_helper(f, sa, sz, 8);
+}
+
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
@@ -606,6 +672,7 @@ public:
     int 
     ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_t third, uint32_t ptr, uint8_t ptr_addr, uint32_t fifth);
 
+    template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, long sz);
 };
 
 /* Using the new interface is still about as complicated as the old interface because we need to perform only a partial link.
@@ -1863,6 +1930,77 @@ EmulationPolicy::ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_
 
 #endif
 }
+
+template<class guest_dirent_t> /* either dirent32_t or dirent64_t */
+int EmulationPolicy::getdents_syscall(int fd, uint32_t dirent_va, long sz)
+{
+    ROSE_ASSERT(sizeof(dirent64_t)>=sizeof(guest_dirent_t));
+
+    /* Obtain guest's buffer and make sure we can write to it. The write check is necessary because we'll be accessing
+     * the buffer directly below rather than going through the MemoryMap object. */
+    long at = 0; /* position when filling specimen's buffer */
+    uint8_t *guest_buf = (uint8_t*)my_addr(dirent_va, sz);
+    char junk;
+    if (NULL==guest_buf || 1!=map->read(&junk, dirent_va, 1))
+        return -EFAULT;
+
+    /* Read dentries from host kernel and copy to specimen's buffer. We must do this one dentry at a time because we don't want
+     * to over read (there's no easy way to back up).  In other words, we read a dentry (but not more than what would fit in
+     * the specimen) and if successful we copy to the specimen, translating from 64- to 32-bit.  The one-at-a-time requirement
+     * is due to the return value being run-length encoded. */
+    long status = -EINVAL; /* buffer too small */
+    while (at+(long)sizeof(guest_dirent_t)<sz) {
+        /* Read one dentry if possible */
+        uint8_t host_buf[sz];
+        dirent64_t *host_dirent = (dirent64_t*)host_buf;
+        int limit = sizeof(*host_dirent);
+        status = -EINVAL; /* buffer too small */
+        while (limit<=sz-at && -EINVAL==status) {
+            status = syscall(SYS_getdents64, fd, host_buf, limit++);
+            if (-1==status) status = -errno;
+        }
+
+        /* Convert and copy the host dentry into the specimen memory. */
+        if (status>0) {
+            ROSE_ASSERT(status>(long)sizeof(*host_dirent));
+            guest_dirent_t *guest_dirent = (guest_dirent_t*)(guest_buf+at);
+
+            /* name */
+            ROSE_ASSERT(host_dirent->d_reclen > sizeof(*host_dirent));
+            char *name_src = (char*)host_dirent + sizeof(*host_dirent);
+            char *name_dst = (char*)guest_dirent + sizeof(*guest_dirent);
+            size_t name_sz = host_dirent->d_reclen - sizeof(*host_dirent);
+            memcpy(name_dst, name_src, name_sz);
+            
+            /* inode */
+            ROSE_ASSERT(host_dirent->d_ino == (host_dirent->d_ino & 0xffffffff));
+            guest_dirent->d_ino = host_dirent->d_ino;
+
+            /* record length */
+            guest_dirent->d_reclen = host_dirent->d_reclen - sizeof(*host_dirent)
+                                     + sizeof(*guest_dirent) + 2/*padding and d_type*/;
+
+            /* type */
+            if (sizeof(guest_dirent_t)==sizeof(dirent32_t)) {
+                ROSE_ASSERT(host_dirent->d_type == (host_dirent->d_type & 0xff));
+                ((uint8_t*)guest_dirent)[guest_dirent->d_reclen-1] = host_dirent->d_type;
+            } else {
+                ROSE_ASSERT(sizeof(guest_dirent_t)==sizeof(dirent64_t));
+                ((uint8_t*)guest_dirent)[sizeof(*guest_dirent)-1] = host_dirent->d_type;
+            }
+
+            /* offset to next dentry */
+            at += guest_dirent->d_reclen;
+            guest_dirent->d_off = at;
+        }
+                
+        /* Termination conditions */
+        if (status<=0) break;
+    }
+
+    return at>0 ? at : status;
+}
+
 void
 EmulationPolicy::emulate_syscall()
 {
@@ -2911,44 +3049,15 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         };
-        
-	case 141: {     /*0x8d, getdents*/
-	    /* 
-               int getdents(unsigned int fd, struct linux_dirent *dirp,
-                           unsigned int count);
 
-          struct linux_dirent {
-              unsigned long  d_ino;     // Inode number 
-              unsigned long  d_off;     // Offset to next linux_dirent 
-              unsigned short d_reclen;  // Length of this linux_dirent 
-              char           d_name[];  // Filename (null-terminated) 
-                                 // length is actually (d_reclen - 2 -
-              		         //          offsetof(struct linux_dirent, d_name) 
-          }
-
-          The system call getdents() reads several linux_dirent structures from the
-          directory referred to by the open file descriptor fd into the buffer pointed
-          to by dirp.  The argument count specifies the size of that buffer.
-        */
-
-        syscall_enter("getdents", "dpd");
-	    unsigned int fd = arg(0);
-
-	    // Create a buffer of the same length as the buffer in the specimen
-        const size_t dirent_size = arg(2);
-
-        uint8_t dirent[dirent_size];
-        memset(dirent, 0xff, sizeof dirent);
-
-	    //Call the system call and write result to the buffer in the specimen
-	    int result = 0xdeadbeef;
-	    result = syscall(141, fd, dirent, dirent_size);
-
-        map->write(dirent, arg(1), dirent_size);
-        writeGPR(x86_gpr_ax, result);
-
-        syscall_leave("d");
-	    break;
+ 	case 141: {     /* 0xdc, getdents(int fd, struct linux_dirent*, unsigned int count) */
+            syscall_enter("getdents", "dpd");
+            int fd = arg(0), sz = arg(2);
+            uint32_t dirent_va = arg(1);
+            int status = getdents_syscall<dirent32_t>(fd, dirent_va, sz);
+            writeGPR(x86_gpr_ax, status);
+            syscall_leave("d-P", status>0?status:0, print_dentries_32);
+            break;
         }
 
         case 142: { /*0x8e , select */
@@ -3514,46 +3623,15 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
- 	case 220: {     /*0xdc, getdents64*/
-	    /* 
-
-          long sys_getdents64(unsigned int fd, struct linux_dirent64 __user * dirent, unsigned int count) 
-
-          struct linux_dirent {
-              unsigned long  d_ino;     // Inode number 
-              unsigned long  d_off;     // Offset to next linux_dirent 
-              unsigned short d_reclen;  // Length of this linux_dirent 
-              char           d_name[];  // Filename (null-terminated) 
-                                 // length is actually (d_reclen - 2 -
-              		         //          offsetof(struct linux_dirent, d_name) 
-          }
-
-          The system call getdents() reads several linux_dirent structures from the
-          directory referred to by the open file descriptor fd into the buffer pointed
-          to by dirp.  The argument count specifies the size of that buffer.
-        */
-
-        syscall_enter("getdents64", "dpd");
-	    unsigned int fd = arg(0);
-
-	    // Create a buffer of the same length as the buffer in the specimen
-        const size_t dirent_size = arg(2);
-
-        uint8_t dirent[dirent_size];
-        memset(dirent, 0xff, sizeof dirent);
-
-	    //Call the system call and write result to the buffer in the specimen
-	    int result = 0xdeadbeef;
-	    result = syscall(220, fd, dirent, dirent_size);
-
-        map->write(dirent, arg(1), dirent_size);
-        writeGPR(x86_gpr_ax, result);
-
-        syscall_leave("d");
-	    break;
+ 	case 220: {     /* 0xdc, getdents64(int fd, struct linux_dirent*, unsigned int count) */
+            syscall_enter("getdents64", "dpd");
+            int fd = arg(0), sz = arg(2);
+            uint32_t dirent_va = arg(1);
+            int status = getdents_syscall<dirent64_t>(fd, dirent_va, sz);
+            writeGPR(x86_gpr_ax, status);
+            syscall_leave("d-P", status>0?status:0, print_dentries_64);
+            break;
         }
-
-
 
         case 221: { // 0xdd fcntl(int fd, int cmd, [long arg | struct flock*])
             static const Translate fcntl_cmds[] = { TE(F_DUPFD),
