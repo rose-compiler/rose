@@ -247,6 +247,11 @@ print_sigaction_32(FILE *f, const uint8_t *_sa, size_t sz)
             fprintf(f, ", restorer=0x%08"PRIx32", mask=0x%016"PRIx64, sa->restorer_va, sa->mask));
 }
 
+static const Translate open_flags[] = { TF(O_RDWR), TF(O_RDONLY), TF(O_WRONLY),
+                                        TF(O_CREAT), TF(O_EXCL), TF(O_NONBLOCK), TF(O_NOCTTY), TF(O_TRUNC),
+                                        TF(O_APPEND), TF(O_NDELAY), TF(O_ASYNC), TF(O_FSYNC), TF(O_SYNC), TF(O_NOATIME),
+                                        T_END };
+
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
@@ -1908,11 +1913,7 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 5: { /*open*/
-            static const Translate oflags[] = { TF(O_RDWR), TF(O_RDONLY), TF(O_WRONLY),
-                                                TF(O_CREAT), TF(O_EXCL), TF(O_NONBLOCK), TF(O_NOCTTY), TF(O_TRUNC),
-                                                TF(O_APPEND), TF(O_NDELAY), TF(O_ASYNC), TF(O_FSYNC), TF(O_SYNC), TF(O_NOATIME),
-                                                T_END };
-            syscall_enter("open", "sf", oflags);
+            syscall_enter("open", "sf", open_flags);
             uint32_t filename_va=arg(0);
             std::string filename = read_string(filename_va);
             uint32_t flags=arg(1), mode=(flags & O_CREAT)?arg(2):0;
@@ -3554,27 +3555,49 @@ EmulationPolicy::emulate_syscall()
 
 
 
-        case 221: { // fcntl
-            syscall_enter("fcntl64", "ddp");
-            uint32_t fd=arg(0), cmd=arg(1), other_arg=arg(2);
-            int result = -EINVAL;
+        case 221: { // 0xdd fcntl(int fd, int cmd, [long arg | struct flock*])
+            static const Translate fcntl_cmds[] = { TE(F_DUPFD),
+                                                    TE(F_GETFD), TE(F_SETFD),
+                                                    TE(F_GETFL), TE(F_SETFL),
+                                                    TE(F_GETLK), TE(F_GETLK64),
+                                                    TE(F_SETLK), TE(F_SETLK64),
+                                                    TE(F_SETLKW), TE(F_SETLKW64),
+                                                    TE(F_SETOWN), TE(F_GETOWN),
+                                                    TE(F_SETSIG), TE(F_GETSIG),
+                                                    TE(F_SETLEASE), TE(F_GETLEASE),
+                                                    TE(F_NOTIFY),
+                                                    TE(F_DUPFD_CLOEXEC),
+                                                    T_END};
+            int fd=arg(0), cmd=arg(1), other=arg(2), result=-EINVAL;
             switch (cmd) {
-                case F_DUPFD: {
-                    result = fcntl(fd, cmd, (long)other_arg);
-                    if (result == -1) result = -errno;
+                case F_DUPFD:
+                case F_DUPFD_CLOEXEC:
+                case F_GETFD:
+                case F_GETFL:
+                case F_GETOWN:
+                case F_GETSIG:
+                    syscall_enter("fcntl64", "df", fcntl_cmds);
+                    result = fcntl(fd, cmd, other);
                     break;
-                }
-                case F_SETFD: {
-                    result = fcntl(fd, cmd, (long)other_arg);
-                    if (result == -1) result = -errno;
+                case F_SETFD:
+                case F_SETOWN:
+                    syscall_enter("fcntl64", "dfd", fcntl_cmds);
+                    result = fcntl(fd, cmd, other);
                     break;
-                }
-                default: {
-                    result = -EINVAL;
+                case F_SETFL:
+                    syscall_enter("fcntl64", "dff", fcntl_cmds, open_flags);
+                    result = fcntl(fd, cmd, other);
                     break;
-                }
+                case F_SETSIG:
+                    syscall_enter("fcntl64", "dff", fcntl_cmds, signal_names);
+                    result = fcntl(fd, cmd, other);
+                    break;
+                default:
+                    syscall_enter("fcntl64", "dfd", fcntl_cmds);
+                    break;
             }
-            writeGPR(x86_gpr_ax, result);
+
+            writeGPR(x86_gpr_ax, -1==result ? -errno : result);
             syscall_leave("d");
             break;
         }
