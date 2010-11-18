@@ -2625,6 +2625,24 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 60: { /* 0x3C, umask */
+            /* mode_t umask(mode_t mask);
+
+               umask() sets the calling process’s file mode creation mask (umask) to mask & 0777.
+ 
+               This system call always succeeds and the previous value of the mask is returned.
+            */
+            syscall_enter("umask", "d");
+	    mode_t mode = arg(0);
+
+	    int result = syscall(60, mode); 
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	    }  
+
         case 64: { /*0x40, getppid*/
             syscall_enter("getppid", "");
             writeGPR(x86_gpr_ax, getppid());
@@ -2787,6 +2805,8 @@ EmulationPolicy::emulate_syscall()
             syscall_enter("socketcall", "dp");
             //uint32_t call=arg(0), args=arg(1);
             writeGPR(x86_gpr_ax, -ENOSYS);
+            std::cerr << "Error: socketcall system call not implemented" << std::endl;
+            ROSE_ASSERT(true==false); // NOT IMPLEMENTED
             syscall_leave("d");
             break;
         }
@@ -3032,7 +3052,7 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 140: { /* 0x8c, llseek */
+       case 140: { /* 0x8c, llseek */
             /* From the linux kernel, arguments are:
              *      unsigned int fd,                // file descriptor
              *      unsigned long offset_high,      // high 32 bits of 64-bit offset
@@ -3057,7 +3077,6 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         };
-
  	case 141: {     /* 0xdc, getdents(int fd, struct linux_dirent*, unsigned int count) */
             syscall_enter("getdents", "dpd");
             int fd = arg(0), sz = arg(2);
