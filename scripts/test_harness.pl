@@ -199,11 +199,11 @@ supplying a file name for the "may_fail" property. See above.
 When using the "may_fail=promote" property, one can determine which tests have been promoted from "may fail" to "must pass"
 status by asking git about which configuration files have changed.
 
-Sometimes the category of test ("may-fail" or "must-pass") depends on configuration information, such as which version of a
-library is used.  There are two ways to handle this: place the configuration files in a directory whose name depends on the
-configuration information, or have one set of configuration files whose may_fail properties point to a file whose name depends
-on the configuration information.  The latter approach reduces cut-n-paste in the configuration files, but can result in more
-contention for the may_fail properties file in parallel runs.
+Sometimes the category of test ("may-fail" or "must-pass") depends on project configuration information, such as which version
+of a library is used.  There are two ways to handle this: place the test harness configuration files in a directory whose name
+depends on the project configuration information, or have one set of test harness configuration files whose may_fail properties
+point to files whose names depend on the configuration information.  The latter approach reduces the number of cut-n-pasted
+test harness configuration files.
 
 Normally, the test harness will abort the test if one of the commands in the configuration file exits with a non-zero
 status.  To avoid this, append "; true" to the end of the command.  It's also possible to invert the sense of the failure
@@ -218,17 +218,19 @@ links, which "make" will treat as being out of date.
 =head1 BUGS
 
 No attempt is made to discover whether multiple concurrent tests try to update a single config file at the same time (when a
-test is promoted from "may-fail" to "must-pass").  When concurrent tests share a single config file and use this auto-promotion
-feature, they must specify a separate file to contain the state of each target. See the "may_fail" property above.
+test is promoted from the "may-fail" to "must-pass" state).  When concurrent tests share a single config file and use this
+auto-promotion feature, they must specify a separate file(s) to contain the may-fail state of the targets.  See the "may_fail"
+property above.
 
-File locking depends on being able to created multiple hard links to a file. If this is not possible then the locking mechanism
-might fail to behave properly.
+File locking depends on being able to create multiple hard links to a file. If this is not possible then the locking mechanism
+might fail to behave properly and the may_fail file could become corrupted.
 
 Output from the test is organized in such a way that the standard output all appears before the standard error. It would be
 more intuitive if the file contained output in more or less the order it was generated.
 
 Output is left in a *.passed or *.failed file. This makes it difficult to write makefile rules for tests that don't depend on
-each other's success or failure, but must depend on each other in order to achieve serial execution.
+each other's success or failure, but must depend on each other in order to achieve serial execution in an otherwise parallel
+make.
 
 =head1 AUTHOR
 
@@ -457,6 +459,7 @@ for my $output ($cmd_stdout, $cmd_stderr) {
     }
     close OUTPUT;
     unlink $output;
+    print TARGET "======== CUT ========\n";
   }
 }
 close TARGET;
