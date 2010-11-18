@@ -1,6 +1,5 @@
 #!/bin/sh -ex
 
-
 # We need to be using compiler specific versions of Boost.
 # Set the path to the compiler specific version of Boost.
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
