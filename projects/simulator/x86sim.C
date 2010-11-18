@@ -771,7 +771,7 @@ public:
         me.set_name("[vdso]");
         map->insert(me);
 
-        if (sb.st_size!=ALIGN_UP(sb.st_size, PAGE_SIZE)) {
+        if ((size_t)sb.st_size!=ALIGN_UP((size_t)sb.st_size, PAGE_SIZE)) {
             MemoryMap::MapElement me2(vdso_mapped_va+sb.st_size, ALIGN_UP(sb.st_size, PAGE_SIZE)-sb.st_size,
                                       MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
             me2.set_name(me.get_name());
@@ -1930,6 +1930,7 @@ EmulationPolicy::ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_
 #endif
 }
 
+/* NOTE: not yet tested for guest_dirent_t == dirent64_t; i.e., the getdents64() syscall. [RPM 2010-11-17] */
 template<class guest_dirent_t> /* either dirent32_t or dirent64_t */
 int EmulationPolicy::getdents_syscall(int fd, uint32_t dirent_va, long sz)
 {
@@ -3232,7 +3233,7 @@ EmulationPolicy::emulate_syscall()
                 if (-1==nwritten) {
                     retval = -errno;
                     break;
-                } else if (nwritten<buf_sz) {
+                } else if ((uint32_t)nwritten<buf_sz) {
                     retval += nwritten;
                     break;
                 } else {
@@ -3651,12 +3652,16 @@ EmulationPolicy::emulate_syscall()
                                                     TE(F_SETSIG), TE(F_GETSIG),
                                                     TE(F_SETLEASE), TE(F_GETLEASE),
                                                     TE(F_NOTIFY),
+#ifdef F_DUPFD_CLOEXEC
                                                     TE(F_DUPFD_CLOEXEC),
+#endif
                                                     T_END};
             int fd=arg(0), cmd=arg(1), other=arg(2), result=-EINVAL;
             switch (cmd) {
                 case F_DUPFD:
+#ifdef F_DUPFD_CLOEXEC
                 case F_DUPFD_CLOEXEC:
+#endif
                 case F_GETFD:
                 case F_GETFL:
                 case F_GETOWN:
