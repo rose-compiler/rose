@@ -2635,7 +2635,7 @@ EmulationPolicy::emulate_syscall()
             syscall_enter("umask", "d");
 	    mode_t mode = arg(0);
 
-	    int result = syscall(60, mode); 
+	    int result = syscall(SYS_umask, mode); 
             if (result == -1) result = -errno;
             writeGPR(x86_gpr_ax, result);
 
