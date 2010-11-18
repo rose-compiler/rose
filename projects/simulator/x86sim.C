@@ -39,7 +39,7 @@
 #include <utime.h>
 
 
-/* AS extra required headrs for system call simulation */
+/* AS extra required headers for system call simulation */
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
