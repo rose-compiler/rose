@@ -2022,11 +2022,12 @@ EmulationPolicy::emulate_syscall()
             uint32_t buf_va=arg(1), size=arg(2);
             char buf[size];
             ssize_t nread = read(fd, buf, size);
-            if (nread<0) {
+            if (-1==nread) {
                 writeGPR(x86_gpr_ax, -errno);
+            } else if (map->write(buf, buf_va, (size_t)nread)!=(size_t)nread) {
+                writeGPR(x86_gpr_ax, -EFAULT);
             } else {
                 writeGPR(x86_gpr_ax, nread);
-                map->write(buf, buf_va, nread);
             }
             syscall_leave("d");
             break;
@@ -2039,12 +2040,15 @@ EmulationPolicy::emulate_syscall()
             size_t size=arg(2);
             uint8_t buf[size];
             size_t nread = map->read(buf, buf_va, size);
-            ROSE_ASSERT(nread==size);
-            ssize_t nwritten = write(fd, buf, size);
-            if (-1==nwritten) {
-                writeGPR(x86_gpr_ax, -errno);
+            if (nread!=size) {
+                writeGPR(x86_gpr_ax, -EFAULT);
             } else {
-                writeGPR(x86_gpr_ax, nwritten);
+                ssize_t nwritten = write(fd, buf, size);
+                if (-1==nwritten) {
+                    writeGPR(x86_gpr_ax, -errno);
+                } else {
+                    writeGPR(x86_gpr_ax, nwritten);
+                }
             }
             syscall_leave("d");
             break;
@@ -2628,7 +2632,7 @@ EmulationPolicy::emulate_syscall()
         case 60: { /* 0x3C, umask */
             /* mode_t umask(mode_t mask);
 
-               umask() sets the calling process’s file mode creation mask (umask) to mask & 0777.
+               umask() sets the calling process' file mode creation mask (umask) to mask & 0777.
  
                This system call always succeeds and the previous value of the mask is returned.
             */
