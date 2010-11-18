@@ -1578,7 +1578,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
                     ROSE_ASSERT(support->get_file_info()->get_parent() != NULL);
                     break;
                   }
-
+#if 0 // Liao 11/5/2010, this should be handled by SgLocatedNode now
                case V_SgInitializedName:
                   {
                     SgInitializedName* initializedName = isSgInitializedName(support);
@@ -1593,7 +1593,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
                     ROSE_ASSERT(support->get_file_info()->get_parent() != NULL);
                     break;
                   }
-
+#endif
             // case V_SgFile:
                case V_SgSourceFile:
                case V_SgBinaryComposite:
@@ -1968,6 +1968,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 #endif
+               case V_SgInitializedName:
                default:
                   {
 #if 0
@@ -2034,7 +2035,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                   }
 
                case V_SgStorageModifier:
-               case V_SgInitializedName:
+            //   case V_SgInitializedName:
                case V_SgSymbolTable:
             // case V_SgFile:
                case V_SgSourceFile:

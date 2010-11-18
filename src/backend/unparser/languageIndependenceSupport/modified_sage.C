@@ -907,6 +907,12 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
          return false;
      }
 #endif
+     // Liao 11/5/2010,another tricky case: the current expression is the original expression tree of its parent
+     // we should not introduce additional ( ) when switching from current SgCastExp to its original SgCastExp
+     // This is true at least for SgCastExp
+     if (SgCastExp * cast_p = isSgCastExp(parentExpr)) 
+       if (cast_p->get_originalExpressionTree() == expr ) 
+         return false;
 #if 0
   // DQ (8/8/2006): Changed as a temporary test!
   // This will need to be fixed for test2006_115.C (when run with the inliner) and needs 

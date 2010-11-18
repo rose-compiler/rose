@@ -91,6 +91,26 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 }
 
 
+/* -----------------------------------------------------------
+ * Collects information needed for transformations
+ * -----------------------------------------------------------*/
+
+void RtedTransformation::visit(SgNode* n) {
+   if (isSgScopeStatement(n)) {
+#if 1
+      // if, while, do, etc., where we need to check for locals going out of scope
+      visit_isSgScopeStatement(n);
+      // *********************** DETECT structs and class definitions ***************
+      if (isSgClassDefinition(n)) {
+         // call to a specific function that needs to be checked
+         //cerr << " +++++++++++++++++++++ FOUND Class Def!! ++++++++++++++++ " << endl;
+         visit_isClassDefinition(isSgClassDefinition(n));
+      }
+#endif
+   }
+
+}
+
 #endif
 
 // vim:et sta ts=2 sw=2:

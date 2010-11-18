@@ -112,6 +112,24 @@ print_int_32(FILE *f, const uint8_t *ptr, size_t sz)
     return fprintf(f, "%"PRId32, *(const int32_t*)ptr);
 }
 
+static int
+print_rlimit(FILE *f, const uint8_t *ptr, size_t sz)
+{
+    assert(8==sz); /* two 32-bit unsigned integers */
+    int retval = 0;
+    if (0==~((const uint32_t*)ptr)[0]) {
+        retval += fprintf(f, "rlim_cur=unlimited");
+    } else {
+        retval += fprintf(f, "rlim_cur=%"PRIu32, ((const uint32_t*)ptr)[0]);
+    }
+    if (0==~((const uint32_t*)ptr)[1]) {
+        retval += fprintf(f, ", rlim_max=unlimited");
+    } else {
+        retval += fprintf(f, ", rlim_max=%"PRIu32, ((const uint32_t*)ptr)[1]);
+    }
+    return retval;
+}
+
 /* Kernel stat data structure on 32-bit platforms; the data written back to the specimen's memory */
 struct kernel_stat_32 {
     uint64_t        dev;                    /* see 64.dev */
@@ -2011,6 +2029,27 @@ EmulationPolicy::emulate_syscall()
             break;
 	}
 
+        case 19: { /* 0x13, lseek */
+          /* 
+
+            off_t lseek(int fildes, off_t offset, int whence);
+
+            arch/mips/include/asm/compat.h:typedef s32              compat_off_t; 
+ 
+          */
+          syscall_enter("lseek","ddd");
+          int32_t fd          = arg(0);
+          int32_t offset      = arg(1);
+          int32_t whence      = arg(2);
+
+          int result = lseek( fd, offset, whence);
+
+          writeGPR(x86_gpr_ax, -1==result ? -errno : result);
+          syscall_leave("d");
+          break;
+
+        }
+
         case 20: { /*0x14, getpid*/
             syscall_enter("getpid", "");
             writeGPR(x86_gpr_ax, getpid());
@@ -2426,6 +2465,24 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 60: { /* 0x3C, umask */
+            /* mode_t umask(mode_t mask);
+
+               umask() sets the calling process’s file mode creation mask (umask) to mask & 0777.
+ 
+               This system call always succeeds and the previous value of the mask is returned.
+            */
+            syscall_enter("umask", "d");
+	    mode_t mode = arg(0);
+
+	    int result = syscall(60, mode); 
+            if (result == -1) result = -errno;
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+            break;
+	    }  
+
         case 64: { /*0x40, getppid*/
             syscall_enter("getppid", "");
             writeGPR(x86_gpr_ax, getppid());
@@ -2439,7 +2496,94 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+ 
+        case 75: { /*0x4B, setrlimit */ 
 
+            /*
+
+              int setrlimit(int resource, const struct rlimit *rlim);
+
+              struct rlimit {
+                rlim_t rlim_cur;  // Soft limit 
+                rlim_t rlim_max;  // Hard limit (ceiling for rlim_cur) 
+              };
+
+
+            */
+            syscall_enter("set_rlimit", "dp");
+
+            uint32_t resource = arg(0);
+
+            struct kernel_rlimit {
+              uint32_t rlim_cur;
+              uint32_t rlim_max;
+            };
+
+            kernel_rlimit rlim;
+            size_t nread = map->read(&rlim, arg(1), sizeof(kernel_rlimit));
+            ROSE_ASSERT(nread == sizeof(kernel_rlimit));
+
+            rlimit rlim64;
+ 
+            rlim64.rlim_cur = rlim.rlim_cur;
+            rlim64.rlim_max = rlim.rlim_max;
+ 
+            
+            int result = syscall(75, resource, &rlim64);                        
+
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+
+            break;
+
+        }
+
+        case 76: { /*0x4B, getrlimit */ 
+
+            /*
+
+              int getrlimit(int resource, struct rlimit *rlim);
+
+              struct rlimit {	
+                rlim_t rlim_cur;  // Soft limit 
+                rlim_t rlim_max;  // Hard limit (ceiling for rlim_cur) 
+              };
+
+
+            */
+            syscall_enter("get_rlimit", "dp");
+
+            uint32_t resource = arg(0);
+
+            rlimit rlim64;
+ 
+
+            
+            int result = syscall(76, resource, &rlim64);                        
+
+            struct kernel_rlimit {
+              uint32_t rlim_cur;
+              uint32_t rlim_max;
+            };
+
+            kernel_rlimit rlim;
+            size_t nread = map->read(&rlim, arg(1), sizeof(kernel_rlimit));
+            ROSE_ASSERT(nread == sizeof(kernel_rlimit));
+
+            rlim.rlim_cur = rlim64.rlim_cur;
+            rlim.rlim_max = rlim64.rlim_max;
+
+            size_t nwritten = map->write(&rlim, arg(1), sizeof(kernel_rlimit));
+            ROSE_ASSERT(nwritten == sizeof(kernel_rlimit));
+ 
+            writeGPR(x86_gpr_ax, result);
+
+            syscall_leave("d");
+
+            break;
+
+        }
         case 78: { /*0x4e, gettimeofday*/       
             syscall_enter("gettimeofday", "p");
             uint32_t tp = arg(0);
@@ -2547,6 +2691,8 @@ EmulationPolicy::emulate_syscall()
             syscall_enter("socketcall", "dp");
             //uint32_t call=arg(0), args=arg(1);
             writeGPR(x86_gpr_ax, -ENOSYS);
+            std::cerr << "Error: socketcall system call not implemented" << std::endl;
+            ROSE_ASSERT(true==false); // NOT IMPLEMENTED
             syscall_leave("d");
             break;
         }
@@ -2792,37 +2938,32 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-    case 140: { /* 0x8c, llseek */
-        /*
-           int _llseek(unsigned int fd, unsigned long offset_high,            unsigned
-           long offset_low, loff_t *result,            unsigned int whence);
+       case 140: { /* 0x8c, llseek */
+            /* From the linux kernel, arguments are:
+             *      unsigned int fd,                // file descriptor
+             *      unsigned long offset_high,      // high 32 bits of 64-bit offset
+             *      unsigned long offset_low,       // low 32 bits of 64-bit offset
+             *      loff_t __user *result,          // 64-bit user area to write resulting position
+             *      unsigned int origin             // whence specified offset is measured
+             */
+            syscall_enter("llseek","dddpd");
+            int fd = arg(0);
+            off64_t offset = ((off64_t)arg(1) << 32) | arg(2);
+            uint32_t result_va = arg(3);
+            int whence = arg(4);
 
-
-        */
-
-        syscall_enter("llseek","dddpd");
-        uint32_t fd = arg(0);
-        uint32_t offset_high = arg(1);
-        uint32_t offset_low  = arg(2);
-
-        long long whence      = arg(4);
-
-        loff_t llseek_result2; 
-        int result = syscall(140, fd, offset_high, offset_low, llseek_result2, whence );
-
-        //FIXME: Is this the correct way of changing this pointer?
-        //And is it correct that this is a 'long long*'? That is what it seems like to
-        //me by typedef long long        __kernel_loff_t; typedef __kernel_loff_t loff_t
-        map->write(&llseek_result2, arg(3), 8);
-
-
-        writeGPR(x86_gpr_ax, result);
-
-        syscall_leave("d");
-
-        break;
-
-    };
+            off64_t result = lseek64(fd, offset, whence);
+            if (-1==result) {
+                writeGPR(x86_gpr_ax, -errno);
+            } else {
+                writeGPR(x86_gpr_ax, 0);
+                size_t nwritten = map->write(&result, result_va, sizeof result);
+                ROSE_ASSERT(nwritten==sizeof result);
+            }
+            syscall_leave("d");
+            break;
+        };
+        
 	case 141: {     /*0x8d, getdents*/
 	    /* 
                int getdents(unsigned int fd, struct linux_dirent *dirp,
@@ -2842,23 +2983,25 @@ EmulationPolicy::emulate_syscall()
           to by dirp.  The argument count specifies the size of that buffer.
         */
 
-        syscall_enter("getdents", "dpd");
+            syscall_enter("getdents", "dpd");
 	    unsigned int fd = arg(0);
 
 	    // Create a buffer of the same length as the buffer in the specimen
-        const size_t dirent_size = arg(2);
+            const size_t dirent_size = arg(2);
 
-        uint8_t dirent[dirent_size];
-        memset(dirent, 0xff, sizeof dirent);
+            uint8_t dirent[dirent_size];
+            memset(dirent, 0xff, sizeof dirent);
 
 	    //Call the system call and write result to the buffer in the specimen
 	    int result = 0xdeadbeef;
+
+
 	    result = syscall(141, fd, dirent, dirent_size);
 
-        map->write(dirent, arg(1), dirent_size);
-        writeGPR(x86_gpr_ax, result);
+            map->write(dirent, arg(1), dirent_size);
+            writeGPR(x86_gpr_ax, result);
 
-        syscall_leave("d");
+            syscall_leave("d");
 	    break;
         }
 
@@ -3087,9 +3230,35 @@ EmulationPolicy::emulate_syscall()
 
 	case 183: { /* 0xb7, getcwd */
             syscall_enter("getcwd", "pd");
+
+
             char buf[arg(1)];
-            int result = getcwd(buf, arg(1)) ? 0 : -errno;
-            if (result>=0) {
+            int result = syscall(183,buf, arg(1));
+
+
+#if 0
+            //The Buf pointer may be NULL
+            uint8_t byte;
+	    size_t nread = map->read(&byte, arg(0), 1);
+	    ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+            int result = byte ? syscall(183,buf, arg(1)) : syscall(183, NULL, arg(1));
+
+            switch (result)
+	    {
+              case ENOMEM:
+                std::cout << "ENOMEM" << std::endl;
+                break;
+              case ENOENT:
+                std::cout << "ENOENT" << std::endl;
+                break;
+
+              case ERANGE:
+                std::cout << "ERANGE" << std::endl;
+                break;
+
+	    } 
+#endif
+            if (result>=0 && result != EFAULT ) {
                 size_t nwritten = map->write(buf, arg(0), arg(1));
                 ROSE_ASSERT(nwritten==arg(1));
             }
@@ -3173,25 +3342,34 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 191: { /*0xbf, ugetrlimit*/
-            syscall_enter("ugetrlimit", "dp");
-#if 1 /*FIXME: We need to translate between 64-bit host and 32-bit guest. [RPM 2010-09-28] */
-            writeGPR(x86_gpr_ax, -ENOSYS);
-#else
-            int resource=arg(0);
-            uint32_t rl_va=arg(1);
-            struct rlimit rl;
-            int status = getrlimit(resource, &rl);
-            if (status<=0) {
+            static const Translate resources[] = {TE(RLIMIT_CPU), TE(RLIMIT_FSIZE), TE(RLIMIT_DATA), TE(RLIMIT_STACK),
+                                                  TE(RLIMIT_CORE), TE(RLIMIT_RSS), TE(RLIMIT_MEMLOCK), TE(RLIMIT_NPROC),
+                                                  TE(RLIMIT_NOFILE), TE(RLIMIT_OFILE), TE(RLIMIT_AS),
+                                                  TE(RLIMIT_LOCKS), TE(RLIMIT_SIGPENDING), TE(RLIMIT_MSGQUEUE),
+                                                  TE(RLIMIT_NICE), TE(RLIMIT_RTPRIO),
+#ifdef RLIMIT_RTTIME
+                                                  TE(RLIMIT_RTTIME),
+#endif
+                                                  T_END};
+
+            syscall_enter("ugetrlimit", "fp", resources);
+            int resource = arg(0);
+            uint32_t rlimit_va = arg(1);
+            struct rlimit rlimit_native;
+            int result = getrlimit(resource, &rlimit_native);
+            if (-1==result) {
                 writeGPR(x86_gpr_ax, -errno);
             } else {
-                if (rl_va) {
-                    size_t nwritten = map->write(&rl, rl_va, sizeof rl);
-                    ROSE_ASSERT(nwritten==sizeof rl);
-                }
-                writeGPR(x86_gpr_ax, 0);
+                uint32_t rlimit_guest[2];
+                rlimit_guest[0] = rlimit_native.rlim_cur;
+                rlimit_guest[1] = rlimit_native.rlim_max;
+                size_t nwritten = map->write(rlimit_guest, rlimit_va, sizeof rlimit_guest);
+                ROSE_ASSERT(nwritten==sizeof rlimit_guest);
+                writeGPR(x86_gpr_ax, result);
             }
-#endif
             syscall_leave("d");
+            if (result!=-1)
+                syscall_result(rlimit_va, 8, print_rlimit);
             break;
         }
 
