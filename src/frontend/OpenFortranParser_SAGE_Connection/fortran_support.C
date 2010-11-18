@@ -137,12 +137,34 @@ setSourcePosition( SgInitializedName* initializedName )
           initializedName->set_startOfConstruct(fileInfo);
 
           initializedName->get_startOfConstruct()->set_parent(initializedName);
+       
         }
        else
         {
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("Unnecessary call to setSourcePosition(SgInitializedName = %p = %s ) \n",initializedName,SageInterface::get_name(initializedName).c_str());
+               printf ("Unnecessary call to setSourcePosition(SgInitializedName = %p = %s ) for start info. \n",initializedName,SageInterface::get_name(initializedName).c_str());
         }
+
+       // Liao 11/5/2010, add end file info
+     if (initializedName->get_endOfConstruct() == NULL)
+        {
+          Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfo();
+          fileInfo->setSourcePositionUnavailableInFrontend();
+
+       // This is required for the unparser to output the code from the AST.
+          fileInfo->setOutputInCodeGeneration();
+
+          initializedName->set_endOfConstruct(fileInfo);
+
+          initializedName->get_endOfConstruct()->set_parent(initializedName);
+        }
+       else
+        {
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("Unnecessary call to setSourcePosition(SgInitializedName = %p = %s ) for end info. \n",initializedName,SageInterface::get_name(initializedName).c_str());
+        }
+
+
    }
 
 void
@@ -238,6 +260,12 @@ setSourcePosition  ( SgInitializedName* initializedName, Token_t* token )
      initializedName->set_startOfConstruct (new Sg_File_Info(filename,token->line,token->col));
 
      initializedName->get_startOfConstruct()->set_parent(initializedName);
+
+   // Liao 11/5/2010, assuming the end info should be the same for now
+     initializedName->set_endOfConstruct (new Sg_File_Info(filename,token->line,token->col));
+
+     initializedName->get_endOfConstruct()->set_parent(initializedName);
+   
    }
 
 void

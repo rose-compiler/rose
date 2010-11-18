@@ -1,6 +1,6 @@
 // Example ROSE Preprocessor
 // used for testing ROSE infrastructure
-#include "sage3basic.h"
+//#include "sage3basic.h"
 #include "rose.h"
 
 // This trivial example ROSE translator can be considered to 
