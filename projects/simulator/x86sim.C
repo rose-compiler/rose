@@ -2936,7 +2936,7 @@ EmulationPolicy::emulate_syscall()
             };
 
             sysinfo sys;
-            int result  = syscall( 116, &sys );
+            int result  = syscall(SYS_sysinfo, &sys);
 
             kernel_sysinfo kernel_sys;
             kernel_sys.uptime = sys.uptime;
@@ -3243,8 +3243,12 @@ EmulationPolicy::emulate_syscall()
                 ROSE_ASSERT(4==nread);
                 uint32_t buf_sz = SgAsmExecutableFileFormat::le_to_host(buf_sz_le);
 
-                if (debug)
+                if (debug && trace_syscall) {
+                    if (0==i) fprintf(debug, "<see below>\n"); /* return value is delayed */
                     fprintf(debug, "    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32"\n", i, buf_va, buf_sz);
+                    if (i+1==niov) fprintf(debug, "%*s = ", 51, ""); /* align for return value */
+                }
+
                 uint8_t buf[buf_sz];
                 nread = map->read(buf, buf_va, buf_sz);
                 ROSE_ASSERT(nread==buf_sz);

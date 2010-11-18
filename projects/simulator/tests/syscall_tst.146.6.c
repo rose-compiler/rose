@@ -180,7 +180,14 @@ void setup(void)
 	tst_tmpdir();
 
 	strcpy(name, DATA_FILE);
+#if 0
+        /* This doesn't work in the simulator due to floating point instructions */
 	sprintf(f_name, "%s.%d", name, getpid());
+#else
+        /* This works fine -- no floating point instructions executed */
+        strcpy(f_name, name);
+        sprintf(f_name+strlen(f_name), "%d", getpid());
+#endif
 
 	page_size = getpagesize();
 
