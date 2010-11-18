@@ -1954,14 +1954,16 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
             cout << "Testing for def of [" << keyToString(newName) << "] at var initial def." << endl;
         }
 
-        if(originalDefTable[firstDefList[rootName]].count(newName) == 0)
+		SgNode* firstDef = firstDefList[rootName];
+        if(originalDefTable[firstDef].count(newName) == 0 && expandedDefTable[firstDef].count(newName) == 0)
         {
-            originalDefTable[firstDefList[rootName]][newName].push_back(firstDefList[rootName]);
+            expandedDefTable[firstDef][newName].push_back(firstDef);
             changed = true;
-            changedNodes.push_back(firstDefList[rootName]);
+            changedNodes.push_back(firstDef);
             if(DEBUG_MODE_EXTRA)
             {
-                cout << "Inserted def for [" << keyToString(newName) << "] (root) [" << keyToString(rootName) << "] at node " << firstDefList[rootName] << endl;
+                cout << "Inserted def for [" << keyToString(newName) << "] (root) [" << 
+						keyToString(rootName) << "] at node " << firstDef << endl;
             }
         }
     }
