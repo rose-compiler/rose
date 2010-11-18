@@ -303,9 +303,6 @@ print_dentries_helper(FILE *f, const uint8_t *_sa, size_t sz, size_t wordsize)
     return retval + fprintf(f, "    ");
 }
 
-
-        
-
 static int
 print_dentries_32(FILE *f, const uint8_t *sa, size_t sz)
 {
@@ -317,6 +314,8 @@ print_dentries_64(FILE *f, const uint8_t *sa, size_t sz)
 {
     return print_dentries_helper(f, sa, sz, 8);
 }
+
+static const Translate seek_whence[] = {TE(SEEK_SET), TE(SEEK_CUR), TE(SEEK_END), T_END};
 
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
@@ -2202,6 +2201,14 @@ EmulationPolicy::emulate_syscall()
             break;
 	}
 
+        case 19: { /* 0x13, lseek(int fd, off_t offset, int whence) */
+            syscall_enter("lseek", "ddf", seek_whence);
+            off_t result = lseek(arg(0), arg(1), arg(2));
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            syscall_leave("d");
+            break;
+        }
+
         case 20: { /*0x14, getpid*/
             syscall_enter("getpid", "");
             writeGPR(x86_gpr_ax, getpid());
@@ -3032,7 +3039,7 @@ EmulationPolicy::emulate_syscall()
              *      loff_t __user *result,          // 64-bit user area to write resulting position
              *      unsigned int origin             // whence specified offset is measured
              */
-            syscall_enter("llseek","dddpd");
+            syscall_enter("llseek","dddpf", seek_whence);
             int fd = arg(0);
             off64_t offset = ((off64_t)arg(1) << 32) | arg(2);
             uint32_t result_va = arg(3);
