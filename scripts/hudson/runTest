@@ -156,6 +156,7 @@ fi
 CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 echo "ROSE install tree will be: $CONFIGURE_PREFIX_DIR"
 
+
 if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
  # echo "This test is forced to exit with an error as part of debugging a subset of the Hudson tests."
