@@ -182,7 +182,6 @@ fi
 fi
 
 
-
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
 
 # DQ (1/14/2010): Support for dumping the enviroment so that it 
