@@ -43,6 +43,14 @@ echo "**************************************************************************
 # echo "Disk usage report #1 (to support debugging when Hudson has a problem):"
 # df /export
 
+# tps : 11/17/2010 Hudson support for UPC - order matters!
+export PATH=${PATH}:/nfs/apps/upc/4.5.1.2/bin
+if test "$MACHINE" = "i686" ; then
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/nfs/apps/upc/4.5.1.2/lib
+else
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/nfs/apps/upc/4.5.1.2/lib64
+fi
+
 if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
 	GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
 	if test -e $GCCROOT/setup.sh ; then
@@ -148,6 +156,7 @@ fi
 CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 echo "ROSE install tree will be: $CONFIGURE_PREFIX_DIR"
 
+
 if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
  # echo "This test is forced to exit with an error as part of debugging a subset of the Hudson tests."
@@ -157,9 +166,10 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
 # tps (10/19/10) : opengl has not been tested for a year and the binary tests in place are failing because the infrastructure has changed.
 #       for now I have disabled openGL testing but the way to turn it on is to specify --enable-openGL
 #	if test "x$ROSE_TEST_GCC_VERSION" = "x4.1.2" ; then
-
+NODE_NAME=`uname -n`
 # tps : 11/12/10 : Admins are installing openGL on hudson machines. Enabled openGL thereafter. Should pass.
-if test \! \( "$MACHINE" = "i686" \) ; then
+# tps : It seems opengl is not properly installed on the hudson-rose node. Skip the test on this node for now.
+if test \! \( "$MACHINE" = "i686" -o "$NODE_NAME" = "hudson-rose.llnl.gov"  -o "$NODE_NAME" = "hudson-rose-07.llnl.gov" -o "$NODE_NAME" = "hudson-rose-08.llnl.gov" \) ; then
 	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
 fi
 # tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
