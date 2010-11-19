@@ -784,6 +784,7 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/Cxx/pointer/dot_star \
 					  run/tests/Cxx/pointer/nulltest \
 					  run/tests/UPC/simple/test \
+					  run/tests/UPC/simple/simple \
 					  run/tests/Cxx/pointer/arrow_varref2 \
 					  run/C/uninitialized_variables/c_A_6_a_in \
 					  run/C/uninitialized_variables/c_A_6_b_in \
