@@ -629,7 +629,7 @@ public:
             uint8_t buf[Len/8];
             size_t nread = map->read(buf, base+offset, Len/8);
             if (nread!=Len/8)
-                throw Signal(SIGBUS);
+                throw Signal(SIGSEGV);
             uint64_t result = 0;
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 result |= buf[j] << i;
@@ -663,8 +663,15 @@ public:
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 buf[j] = (data.known_value() >> i) & 0xff;
             size_t nwritten = map->write(buf, base+offset, Len/8);
-            if (nwritten!=Len/8)
-                throw Signal(SIGBUS);
+            if (nwritten!=Len/8) {
+                /* Writing to mem that's not mapped results in SIGSEGV; writing to mem that's mapped without write permission
+                 * results in SIGBUS. */
+                if (map->find(base+offset)) {
+                    throw Signal(SIGBUS);
+                } else {
+                    throw Signal(SIGSEGV);
+                }
+            }
         }
     }
 
@@ -2022,11 +2029,12 @@ EmulationPolicy::emulate_syscall()
             uint32_t buf_va=arg(1), size=arg(2);
             char buf[size];
             ssize_t nread = read(fd, buf, size);
-            if (nread<0) {
+            if (-1==nread) {
                 writeGPR(x86_gpr_ax, -errno);
+            } else if (map->write(buf, buf_va, (size_t)nread)!=(size_t)nread) {
+                writeGPR(x86_gpr_ax, -EFAULT);
             } else {
                 writeGPR(x86_gpr_ax, nread);
-                map->write(buf, buf_va, nread);
             }
             syscall_leave("d");
             break;
@@ -2039,12 +2047,15 @@ EmulationPolicy::emulate_syscall()
             size_t size=arg(2);
             uint8_t buf[size];
             size_t nread = map->read(buf, buf_va, size);
-            ROSE_ASSERT(nread==size);
-            ssize_t nwritten = write(fd, buf, size);
-            if (-1==nwritten) {
-                writeGPR(x86_gpr_ax, -errno);
+            if (nread!=size) {
+                writeGPR(x86_gpr_ax, -EFAULT);
             } else {
-                writeGPR(x86_gpr_ax, nwritten);
+                ssize_t nwritten = write(fd, buf, size);
+                if (-1==nwritten) {
+                    writeGPR(x86_gpr_ax, -errno);
+                } else {
+                    writeGPR(x86_gpr_ax, nwritten);
+                }
             }
             syscall_leave("d");
             break;
@@ -2628,7 +2639,7 @@ EmulationPolicy::emulate_syscall()
         case 60: { /* 0x3C, umask */
             /* mode_t umask(mode_t mask);
 
-               umask() sets the calling process’s file mode creation mask (umask) to mask & 0777.
+               umask() sets the calling process' file mode creation mask (umask) to mask & 0777.
  
                This system call always succeeds and the previous value of the mask is returned.
             */
@@ -2755,6 +2766,16 @@ EmulationPolicy::emulate_syscall()
                 map->dump(debug, "    ");
             }
             writeGPR(x86_gpr_ax, 0);
+            syscall_leave("d");
+            break;
+        }
+
+        case 93: { /* 0x5c, ftruncate */
+            syscall_enter("ftruncate", "dd");
+            int fd = arg(0);
+            off_t len = arg(1);
+            int result = ftruncate(fd, len);
+            writeGPR(x86_gpr_ax, -1==result ? -errno : result);
             syscall_leave("d");
             break;
         }
@@ -3438,7 +3459,7 @@ EmulationPolicy::emulate_syscall()
             unsigned rose_perms = ((prot & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
                                   ((prot & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
                                   ((prot & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
-            prot |= PROT_READ | PROT_WRITE | PROT_EXEC; /* ROSE takes care of permissions checking */
+            //prot |= PROT_READ | PROT_WRITE | PROT_EXEC; /* ROSE takes care of permissions checking */
 
             if (!start) {
                 try {

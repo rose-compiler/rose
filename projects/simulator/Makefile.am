@@ -410,6 +410,7 @@ $(TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 
 check-local: $(TEST_TARGETS)
 
+# "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
 clean-local:
 	rm -rf tmp-sim x-core.rose test-file-fchown32
 
