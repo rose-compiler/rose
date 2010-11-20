@@ -396,7 +396,8 @@ if ($config{may_fail} eq 'yes') {
   die "$0: $file: not readable\n" unless -r $file;
   my $lock = -w $file ? "$file.lck" : "";
 
-  # Obtain the lock if necessary.
+  # Obtain the lock if necessary.  If we can't write to the file then assume that nobody else is changing it either,
+  # in which case we don't need exclusive access to read it.
   if ($lock) {
     my($prelock,$ntries) = ("$lock.$$", 120);
     open LOCK, ">", $prelock or die "$0: $prelock: $!\n";
@@ -412,7 +413,7 @@ if ($config{may_fail} eq 'yes') {
     unlink $prelock;
   }
 
-  # Read the file
+  # Read the file or die trying.
   my %may_fail = ($target => $default);
   open MAY_FAIL, "<", $file or do {
     unlink $lock;
@@ -424,7 +425,7 @@ if ($config{may_fail} eq 'yes') {
   }
   close MAY_FAIL;
 
-  # Modify the file if necesssary (keeping it sorted is optional, but nice)
+  # Modify the file if necessary (keeping it sorted is optional, but nice)
   if ($may_fail{$target} eq 'yes') {
     $ignored_failure = 1 if $status;
     $status = 0;
@@ -432,7 +433,7 @@ if ($config{may_fail} eq 'yes') {
     if ($status) {
       $ignored_failure = 1 if $status;
       $status = 0;
-    } else {
+    } elsif ($lock) {
       $may_fail{$target} = 'no';
       open MAY_FAIL, ">", $file or do {
 	unlink $lock;
@@ -440,11 +441,15 @@ if ($config{may_fail} eq 'yes') {
       };
       print MAY_FAIL $_, " ", $may_fail{$_}, "\n" for sort keys %may_fail;
       close MAY_FAIL;
+    } else {
+      # Test may-fail value is "promote" and the test passed. We'd like to promote the test to "must-pass", but we can't
+      # write to the file containing the may-fail properties ($file).  Therefore, don't promote, just complain.
+      print STDERR "$target: $file: read-only file, not promoting test to must-pass status.\n";
     }
   }
 
   # Release the lock
-  unlink $lock;
+  unlink $lock if $lock;
 }
 print "$target: ignoring failure\n" if $ignored_failure;
 
