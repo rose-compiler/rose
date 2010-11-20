@@ -629,7 +629,7 @@ public:
             uint8_t buf[Len/8];
             size_t nread = map->read(buf, base+offset, Len/8);
             if (nread!=Len/8)
-                throw Signal(SIGBUS);
+                throw Signal(SIGSEGV);
             uint64_t result = 0;
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 result |= buf[j] << i;
@@ -663,8 +663,15 @@ public:
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 buf[j] = (data.known_value() >> i) & 0xff;
             size_t nwritten = map->write(buf, base+offset, Len/8);
-            if (nwritten!=Len/8)
-                throw Signal(SIGBUS);
+            if (nwritten!=Len/8) {
+                /* Writing to mem that's not mapped results in SIGSEGV; writing to mem that's mapped without write permission
+                 * results in SIGBUS. */
+                if (map->find(base+offset)) {
+                    throw Signal(SIGBUS);
+                } else {
+                    throw Signal(SIGSEGV);
+                }
+            }
         }
     }
 
@@ -3442,7 +3449,7 @@ EmulationPolicy::emulate_syscall()
             unsigned rose_perms = ((prot & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
                                   ((prot & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
                                   ((prot & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
-            prot |= PROT_READ | PROT_WRITE | PROT_EXEC; /* ROSE takes care of permissions checking */
+            //prot |= PROT_READ | PROT_WRITE | PROT_EXEC; /* ROSE takes care of permissions checking */
 
             if (!start) {
                 try {
