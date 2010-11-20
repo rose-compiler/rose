@@ -2770,6 +2770,16 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 93: { /* 0x5c, ftruncate */
+            syscall_enter("ftruncate", "dd");
+            int fd = arg(0);
+            off_t len = arg(1);
+            int result = ftruncate(fd, len);
+            writeGPR(x86_gpr_ax, -1==result ? -errno : result);
+            syscall_leave("d");
+            break;
+        }
+
         case 94: { /* 0x5d, fchmod */
 
             /*
