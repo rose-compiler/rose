@@ -1421,6 +1421,9 @@ else
 fi
 
 
+
+
+
 # TP (2-27-2009) -- support for RTED
 ROSE_SUPPORT_RTED
 
@@ -1446,13 +1449,39 @@ if test ! "x$rose_openGL" = xno; then
     AC_MSG_NOTICE( "OpenGL enabled. Found GLUT." );
  else
 #    AC_MSG_NOTICE( "OpenGL GLUT not found Msg" );
-   AC_MSG_ERROR( "OpenGL GLUT not found" );
+   AC_MSG_NOTICE( "OpenGL GLUT not found. Please use --with-glut" );
  fi
 fi
 ], [ rose_openGL=no
   AC_MSG_NOTICE( "OpenGL disabled." );
 ])
-AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno -a ! "x$rose_openGL" = xno)
+AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno)
+
+
+AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, false)
+
+AC_ARG_WITH(glut,
+[  --with-glut=PATH     Configure option to have GLUT enabled.],
+,
+if test ! "$with_glut" ; then
+   with_glut=no
+fi
+)
+
+echo "In ROSE SUPPORT MACRO: with_glut $with_glut"
+
+if test "$with_glut" = no; then
+   # If dwarf is not specified, then don't use it.
+   echo "Skipping use of GLUT support!"
+else
+   AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, true)
+   glut_path=$with_glut
+   echo "Setup GLUT support in ROSE! path = $glut_path"
+   AC_DEFINE([USE_ROSE_GLUT_SUPPORT],1,[Controls use of ROSE support for GLUT library.])
+fi
+
+
+AC_SUBST(glut_path)
 
 
 
@@ -2334,7 +2363,7 @@ AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
 # These headers and types are needed by projects/simulator [matzke 2009-07-02]
-AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
+AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h linux/futex.h])
 AC_CHECK_TYPE(user_desc,
               AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
               [],
@@ -2642,7 +2671,9 @@ projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
+projects/backstroke/slicing/Makefile
 projects/backstroke/pluggableReverser/Makefile
+projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
 projects/backstroke/tests/Makefile
@@ -2651,6 +2682,7 @@ projects/backstroke/tests/expNormalizationTest/Makefile
 projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
 projects/backstroke/tests/pluggableReverserTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
+projects/backstroke/tests/testCodeBuilderTest/Makefile
 projects/backstroke/utilities/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile

@@ -94,6 +94,8 @@ if HAVE_LIBYICES
   ROSE_YICES_LIBS_WITH_PATH = @YICES_PREFIX@/lib/libyices.a
 endif
 
+GLUT_LIBS = ${glut_path}
+
 # ROSE-DWARF libdwarf support
 if ROSE_USE_DWARF
   ROSE_DWARF_INCLUDES = -I$(dwarf_path)
