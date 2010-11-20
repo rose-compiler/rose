@@ -1,4 +1,4 @@
-// Example code from Jeremiah of probles that now appear to be fixed!
+// Example code from Jeremiah of problems that now appear to be fixed!
 // Works fine in my version of ROSE.
 
 int x[2];

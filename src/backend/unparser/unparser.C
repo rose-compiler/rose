@@ -1012,7 +1012,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
 #endif
                   }
              }
-        }
+        }  // end if locatedNode
 
      ROSE_ASSERT (fileNameOfStatementsToUnparse.size() > 0);
 
@@ -1290,20 +1290,6 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          break;
                        }
 
-                    case V_SgInitializedName:
-                       {
-                      // DQ (8/6/2007): This should just unparse the name (fully qualified if required).
-                      // QY: not sure how to implement this
-                      // DQ (7/23/2004): This should unparse as a declaration (type and name with initializer).
-                         const SgInitializedName* initializedName = isSgInitializedName(astNode);
-                      // roseUnparser.get_output_stream() << initializedName->get_qualified_name().str();
-                         SgScopeStatement* scope = initializedName->get_scope();
-                         if (isSgGlobal(scope) == NULL && scope->containsOnlyDeclarations() == true)
-                              roseUnparser.get_output_stream() << roseUnparser.u_exprStmt->trimGlobalScopeQualifier ( scope->get_qualified_name().getString() ) << "::";
-                         roseUnparser.get_output_stream() << initializedName->get_name().str();
-                         break;
-                       }
-
                     case V_Sg_File_Info:
                        {
                       // DQ (8/5/2007): This is implemented above as a special case!
@@ -1347,6 +1333,21 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          ROSE_ABORT();
                 }
              }
+             // Liao 11/5/2010 move out of SgSupport
+             if (isSgInitializedName(astNode)) //       case V_SgInitializedName:
+              {
+             // DQ (8/6/2007): This should just unparse the name (fully qualified if required).
+             // QY: not sure how to implement this
+             // DQ (7/23/2004): This should unparse as a declaration (type and name with initializer).
+                const SgInitializedName* initializedName = isSgInitializedName(astNode);
+             // roseUnparser.get_output_stream() << initializedName->get_qualified_name().str();
+                SgScopeStatement* scope = initializedName->get_scope();
+                if (isSgGlobal(scope) == NULL && scope->containsOnlyDeclarations() == true)
+                     roseUnparser.get_output_stream() << roseUnparser.u_exprStmt->trimGlobalScopeQualifier ( scope->get_qualified_name().getString() ) << "::";
+                roseUnparser.get_output_stream() << initializedName->get_name().str();
+                //break;
+              }
+
 
        // Liao, 8/28/2009, support for SgLocatedNodeSupport
           if (isSgLocatedNodeSupport(astNode) !=  NULL) 

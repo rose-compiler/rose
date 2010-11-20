@@ -118,9 +118,9 @@ MemoryMap::MapElement::get_base(bool allocate_anonymous) const
   }
 
 rose_addr_t
-MemoryMap::MapElement::get_va_offset(rose_addr_t va) const
+MemoryMap::MapElement::get_va_offset(rose_addr_t va, size_t nbytes) const
 {
-    if (va<get_va() || va>=get_va()+get_size())
+    if (va<get_va() || va+nbytes>get_va()+get_size())
         throw NotMapped(NULL, va);
     return get_offset() + (va - get_va());
 }

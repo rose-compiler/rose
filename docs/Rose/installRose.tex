@@ -944,3 +944,96 @@ The problem that this appears to fix is that on some machines the ROSE
 file AST\_FILE\_IO.C will fail with the error {\em memory limit error},
 this flag to the Intel compiler will fix this (the mcpcom process goes above 
 2.5g memory for this file).
+
+
+\subsection{Installing ROSE under Windows}
+% Notes by tps 11/9/2010
+Under Windows ROSE uses cmake. This is a project that is currently under development. As of November 2010 we are able to compile and link the src directory. We are also able to run example programs that link against librose and execute the frontend and backend.
+
+\subsubsection{Setup}
+
+Under Windows we use the following tools for compilation and development:
+
+\begin{itemize}
+\item Microsoft Visual Studio (9.0) : We currently use the Debug mode
+\item CMake 2.8.0 : One only needs to specify the source and build directory. All configuration options should be chosen correctly during makefile generation.
+\item Bison 2.4.1 : Used by ROSE
+\item Flex 2.5.4 : Used by ROSE
+\item Git 1.6.5 : We utilize the git shell for debugging and command line operations
+\item Boost 1.37 : Boost is required by ROSE
+\end{itemize}
+
+In order to have Hudson test ROSE under Windows, we have additional tools set up:
+
+\begin{itemize}
+\item pegeant.exe : Allows to avoid entering ssh keys when connecting to git repository
+\item Hudson client : The client can be started through the web page. All that is required is Java to be installed.
+\end{itemize}
+
+Currently under tux270-0 Flex, cmake, boost and Bison are installed under c:/ROSE. In addition, a ROSE test branch for ROSE-tps is installed in order to test ROSE under Windows locally without Hudson. The directory c:/tools contains pegeant.exe and other useful tools like plink.exe and puttygen.exe. See further notes below. Finally required ssh keys are located in c:/putty\_keys. 
+
+\subsubsection{Debugging in VS 8}
+
+ROSE compiles now in release mode and debug mode. Debug mode was a challenge before because adding type-information (RTTI) caused the ROSE dll to be too large. 
+
+To use VS with debugging information right click on the ROSE.dll project and chose PROPERTIES/C-C++ INFO:
+
+\begin{itemize}
+    \item GENERAL: turn on Debugging Information Format (/Z7) - do not use DB
+    \item Language: Enable Runtime type information
+    \item Linker: Turn off incremental linking (slightly slower but takes too much memory) 
+\end{itemize}
+
+
+To test whether ROSE (src) compiles, links and a test program can run, modify the qualifiedName project in VS:
+\begin{itemize}
+    \item General and Language options as above
+    \item Debugging: enter the following under arguments ``--help'' 
+\end{itemize}
+
+This should allow you to run ``qualifiedName --help'' in debug mode and all options of rose are print out. 
+
+
+
+
+\subsubsection{Hudson specific}
+
+Setting up SSH keys on Windows Server (logged in as hudson-rose):
+
+\begin{itemize}
+\item Generate the keys:
+\begin{itemize}
+   \item Generate the keys, run ``plink -agent tux269'' and enter your
+      own login and then password. to login to tux269 and then exit.
+\end{itemize}
+
+\item Copy the keys onto tux270-0:
+\begin{itemize}
+   \item Double Click on ``My\_Computer'' icon
+   \item Goto C:, tools, pageant.exe
+   \item Double click on pageant.exe
+   \item Should display a computer with a hat on it in the bottom right 
+corner of the screen.
+   \item Right click on icon (of computer with a hat on it)
+   \item click on ``Add Key'' (this will cause a window to put up called ``Select Private Key File''
+   \item Goto ``My Computer TUX270-0'', ``Local Disk(C:)'', ``putty\_keys''
+   \item Click on file ``id\_rsa.ppk''  (this will load the private  key for 
+use by ssh).
+   \item Now try to run the git command: git clone ssh://hudson-rose@tux269/usr/casc/overture/ROSE/git/ROSE.git c:/ROSE/hudson/workspace/test-windows/label/windows-server
+\end{itemize}
+\end{itemize}
+
+Now in order to run a job from Hudson under Windows we need to start the client on the Windows side.
+Go to the hudson webpage and chose ``Manage Hudson''/''Manage Nodes''/''tux270'' and the start the JNLP agent.
+On the Windows side a client job is active now and whenever the Windows job on Hudson runs the client is activated.
+
+Currently Hudson is configured in a way that when a00-ROSE-from-scratch passes, a downstream is started and a01-ROSE-WINDOWS is started. The a01-ROSE-WINDOWS job will activate the client on tux270-0 and run the Windows test. In addition rose-hdsn-win-1 has been configured as a second Windows test node for Hudson.
+
+\subsubsection{Extending ROSE with the Windows SDK}
+
+Some functions used in Linux are not available under Windows - but they are available through the Windows SDK. For instance, realpath() in linux is available as PathCanonicalize() under Windows using the Windows SDK. You need to include : \#include ``Shlwapi.h'' and the following library into the project : shlwapi.lib (part of SDK). More information can be found at: http://msdn.microsoft.com/en-us/windows/bb980924.aspx http://en.wikipedia.org/wiki/Microsoft\_Windows\_SDK
+
+
+
+
+

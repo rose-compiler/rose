@@ -710,7 +710,7 @@ NewVar ( SgType* type, const string& _name, bool makeunique, SgScopeStatement* l
      assert(t != 0);
      SgInitializedName *d = new SgInitializedName( name,  t);
      d->set_file_info(GetFileInfo());
-
+     assert (d->get_file_info() != NULL);
      v = AddVar(d, loc);
      if (DebugNewVar())
         cerr << "creating new variable : " << varname << endl;
@@ -2703,6 +2703,9 @@ CreateMinMaxFunction(AstInterfaceImpl* impl, const std::string& name, int numOfP
       parname.push_back(i + '0');
       SgName curname(parname.c_str());
       SgInitializedName* curVar = new SgInitializedName(GetFileInfo(), curname, typeint, 0, 0, 0, 0); 
+      curVar->set_endOfConstruct(GetFileInfo());
+      curVar->get_endOfConstruct()->set_parent(curVar);
+      assert (curVar->get_file_info() != NULL);
       pars.push_back(curVar);
    }
    SgFunctionSymbol* funcSymbol = impl->NewFunc(name, typeint, pars); 
@@ -2739,6 +2742,9 @@ CreateMinMaxFunction(AstInterfaceImpl* impl, const std::string& name, int numOfP
   else {
       SgName  resName("res");
       SgInitializedName* resVar = new SgInitializedName(GetFileInfo(), resName,typeint, 0, 0, 0, 0); 
+      resVar->set_endOfConstruct(GetFileInfo());
+      resVar->get_endOfConstruct()->set_parent(resVar);
+      assert (resVar->get_file_info() != NULL);
       SgVariableSymbol * NEW_SYMBOL(resSymbol,SgVariableSymbol, funcBody,resVar);
       std::list<SgVariableSymbol*>::const_iterator iterParSymbols = parSymbols.begin();
       SgVarRefExp* parRef = new SgVarRefExp(GetFileInfo(), *iterParSymbols); 
