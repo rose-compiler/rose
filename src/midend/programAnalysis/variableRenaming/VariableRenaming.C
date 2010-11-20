@@ -1768,6 +1768,8 @@ bool VariableRenaming::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode, bool
             //If there are no defs for this use at this node, then we have a multi-part name
             //that has not been expanded. Thus, we want to expand it.
             *memberRefInserted = insertExpandedDefsForUse(curNode, entry.first, changedNodes);
+			if (*memberRefInserted)
+				break;
         }
     }
 
