@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-test_harness - harness for running ROSE tests from a makefile
+rth_run - runs a test using the ROSE test harness
 
 =head1 SYNOPSIS
 
-test_harness [SWITCHES...] [VAR=VALUE...] CONFIG_FILE MAKE_TARGET
+rth_run [SWITCHES...] [VAR=VALUE...] CONFIG_FILE MAKE_TARGET
 
 =head1 FEATURES
 
@@ -160,7 +160,7 @@ The name of the target without directory components and without the ".passed" or
 =item srcdir, top_srcdir, VALGRIND, BINARY_SAMPLES, ...
 
 These variables, and perhaps others, are passed to all invocations of the test harness when run from ROSE makefiles with the
-$(TH) variable.
+$(RTH_RUN) variable.
 
 =back
 
@@ -168,14 +168,14 @@ $(TH) variable.
 
 Each test has a makefile target. If the test is named "foo" then the target is "foo.passed" and this file is created when the
 test passes.  A number of configuration variables are passed to the test harness and the harness script and standard variables
-together are stored in the $(TH) makefile variable.
+together are stored in the $(RTH_RUN) makefile variable.
 
 A simple makefile rule for a single test, depending on the configuration file stored in the source tree ("foo.conf"), and an
 executable stored in the build tree ("foo"). When the base name of the target is the same as the base name of the configuration
 file, the $@ argument is not necessary.
 
     foo.passed: foo.conf foo
-            @$(TH) $< $@
+            @$(RTH_RUN) $< $@
 
 A more complex example uses a single configuration file for multiple tests and distinguishes between the tests by setting
 variables on the command line.  This can only be done if the configuration file doesn't use the "may_fail=promote" property.
@@ -184,7 +184,7 @@ variables on the command line.  This can only be done if the configuration file 
     TESTS=$(addsuffix .passed, $(EXECUTABLES))
 
     $(TESTS): %.passed: % main.conf
-            @$(TH) EXE=$< main.conf $@
+            @$(RTH_RUN) EXE=$< main.conf $@
 
 =head1 TIPS AND TRICKS
 
@@ -470,6 +470,17 @@ if ($status) {
 } else {
   rename $target_fail, $target_pass or die "$0: $target_pass: $!\n";
 }
+
+## # Produce JUnit XML file for the target
+## open XML, ">", $target_xml or die "$0: $target_xml: $!\n";
+## print XML "<testsuite", ($status?" failures=1":""), " name=\"$target\" tests=1 time=0>\n";
+## print XML "  <testcase classname=\"$target\" name=\"$text\" time=\"unknown\">\n";
+## print XML "    <failure message=\"test failed\"/>\n" if $status;
+## print XML "  </testcase>\n";
+## print XML "  <system-out>Not implmeneted yet.</system-out>\n";
+## print XML "  <system-err>Not implemented yet.</system-err>\n";
+## print XML "</testsuite>\n";
+## close XML;
 
 # Clean up. These names might actually be directories, otherwise we could have just unlinked.
 system "rm", "-rf", $variables{"TEMP_FILE_$_"} for 0 .. 9;

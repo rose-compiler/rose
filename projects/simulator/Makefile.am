@@ -374,9 +374,10 @@ test_inputs: $(TEST_INPUTS)
 TEST_TARGETS = $(addsuffix .passed, $(TEST_INPUTS))
 MOSTLYCLEANFILES += $(TEST_TARGETS) $(patsubst %.passed, %.failed, $(TEST_TARGETS))
 $(TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
-	@$(TH) INPUT=./$< $(srcdir)/x86sim.conf $@
+	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
 
 check-local: $(TEST_TARGETS)
+	@$(RTH_STATS)
 
 clean-local:
 	rm -rf tmp-sim x-core.rose test-file-fchown32
