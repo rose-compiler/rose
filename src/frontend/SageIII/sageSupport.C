@@ -5707,6 +5707,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           OFPCommandLine.push_back(classpath);
           OFPCommandLine.push_back("fortran.ofp.FrontEnd");
           OFPCommandLine.push_back("--dump");
+       // OFPCommandLine.push_back("--tokens");
 
        // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
@@ -5921,6 +5922,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           printf ("Fortran numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 #endif
 
+#if 1
+     frontEndCommandLine.push_back("--tokens");
+#endif
+
      int openFortranParser_argc    = 0;
      char** openFortranParser_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,openFortranParser_argc,openFortranParser_argv);
@@ -5948,8 +5953,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      printf ("********************************************************************************************** \n");
 #else
 
+  // DQ (11/11/2010): There should be no include files on the stack from previous files, see test2010_78.C and test2010_79.C when
+  // compiled together on the same command line.
+     ROSE_ASSERT(astIncludeStack.size() == 0);
+
   // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
      int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
+
+  // DQ (11/11/2010): There should be no include files left in the stack, see test2010_78.C and test2010_79.C when
+  // compiled together on the same command line.
+  // ROSE_ASSERT(astIncludeStack.size() == 0);
+     if (astIncludeStack.size() != 0)
+        {
+          printf ("Warning: astIncludeStack not cleaned up after openFortranParser_main(): astIncludeStack.size() = %zu \n",astIncludeStack.size());
+        }
 #endif
 
      if ( get_verbose() > 1 )

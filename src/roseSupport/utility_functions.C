@@ -649,6 +649,11 @@ generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSu
         {
           generateWholeGraphOfAST(filename);
         }
+       else
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In generateAstGraph(): WHOLE AST greaph too large to generate. \n");
+        }
    }
 
 

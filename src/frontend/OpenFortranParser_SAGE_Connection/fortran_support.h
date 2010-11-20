@@ -153,6 +153,7 @@ void resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode*
 // DQ (10/10/2010): This function is added to support resetting the end 
 // of the blocks (required to get comments woven into the AST properly).
 void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token );
+// void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token, const std::string & filename );
 void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, SgStatement* sourceStatement );
 void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNumber );
 

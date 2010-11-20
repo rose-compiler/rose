@@ -351,6 +351,7 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_78.f90 \
      test2010_79.f90 \
      test2010_80.f90 \
+     test2010_81.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -434,8 +435,8 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
-ROSE_FLAGS = -rose:verbose 0
-# ROSE_FLAGS = -rose:verbose 0 -rose:output_parser_actions
+# ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
+ROSE_FLAGS = -rose:verbose 3 -rose:output_parser_actions -I$(srcdir)
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
@@ -604,12 +605,17 @@ riceBug1: $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90
 
 # DQ (11/5/2010): When unparsed, this file is missing the statement "i1 = 1" in the generated code.
 riceBug2:$(srcdir)/test2010_78.f90 $(srcdir)/test2010_80.f90
-	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90
-	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_80.f90
+#	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90
+#	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_80.f90
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_80.f90
 	@echo "Source code to test2010_80.f90"
 	@cat $(srcdir)/test2010_80.f90
 	@echo "Generated code for rose_test2010_80.f90 (missing \"i1 = 1\""
 	@cat rose_test2010_80.f90
+
+bug3:
+	../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:output_parser_actions -I$(srcdir) -c $(srcdir)/test2010_81.f90
 
 tests:
 	@$(MAKE) $(PASSING_TEST_Objects)
