@@ -472,6 +472,7 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
      targetLocatedNode->get_endOfConstruct  ()->set_parent(targetLocatedNode);
    }
 
+// void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token )
 void
 resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token )
    {
@@ -496,6 +497,7 @@ resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token )
 #else
      ROSE_ASSERT(token != NULL);
      int newLineNumber = token->line;
+  // printf ("Resetting the end of the target statement = %s to line = %d \n",targetLocatedNode->class_name().c_str(),newLineNumber);
      resetEndingSourcePosition(targetLocatedNode,newLineNumber);
 
      SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(targetLocatedNode);
@@ -514,6 +516,9 @@ resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token )
           ROSE_ASSERT(targetLocatedNode == *i);
           while (i != astScopeStack.end())
              {
+#if 0
+               printf ("In resetEndingSourcePosition(): Resetting the end of the block = %s to line = %d and file = %s \n",(*i)->class_name().c_str(),newLineNumber,getCurrentFilename().c_str());
+#endif
                resetEndingSourcePosition(*i,newLineNumber);
                i++;
              }
@@ -547,7 +552,9 @@ void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, SgStatement* s
        else
         {
        // Increment the position by "1" since we have at least processed a Fortran include file on it's one line.
-       // printf ("Processing special case of source statement not in same file as the start of the scope. \n");
+#if 0
+          printf ("Processing special case of source statement not in same file as the start of the scope. \n");
+#endif
           resetEndingSourcePosition(astScopeStack.front(),astScopeStack.front()->get_endOfConstruct()->get_line()+1);
         }
 #endif
@@ -555,6 +562,8 @@ void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, SgStatement* s
 
 void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNumber )
    {
+  // This function is called by the other "resetEndingSourcePosition()" functions.
+
 #if 0
      printf ("targetLocatedNode = %s get_startOfConstruct()->get_line() = %d \n",targetLocatedNode->class_name().c_str(),targetLocatedNode->get_startOfConstruct()->get_line());
      printf ("targetLocatedNode = %s get_endOfConstruct()->get_line()   = %d \n",targetLocatedNode->class_name().c_str(),targetLocatedNode->get_endOfConstruct()->get_line());
@@ -565,6 +574,18 @@ void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNum
         {
        // printf ("Resetting the ending line number from %d to %d \n",oldLineNumber,newLineNumber);
           targetLocatedNode->get_endOfConstruct()->set_line(newLineNumber);
+
+       // If this is a different filename then change the filename as well.
+          string currentFilename = getCurrentFilename();
+          if (targetLocatedNode->get_endOfConstruct()->get_filenameString() != currentFilename)
+             {
+#if 0
+               printf ("##### currentFilename = %s \n",currentFilename.c_str());
+               printf ("##### targetLocatedNode->get_endOfConstruct()->get_filenameString() = %s \n",targetLocatedNode->get_endOfConstruct()->get_filenameString().c_str());
+#endif
+               targetLocatedNode->get_startOfConstruct()->set_filenameString(currentFilename);
+               targetLocatedNode->get_endOfConstruct()->set_filenameString(currentFilename);
+             }
         }
 
   // DQ (10/10/2010): See example test2007_17.f90 of if statment on a single line for were we can't enforce this.

@@ -40,6 +40,9 @@ build_implicit_program_statement_if_required()
 
        // Reset the currentScope (should be a SgBasicBlock)
           currentScope = getTopOfScopeStack();
+#if 0
+          printf ("In build_implicit_program_statement_if_required(): currentScope is %s in file = %s \n",currentScope->class_name().c_str(),currentScope->get_startOfConstruct()->get_filename());
+#endif
         }
    }
 
@@ -15457,7 +15460,7 @@ void c_action_main_program__begin()
 
 void c_action_main_program(ofp_bool hasProgramStmt, ofp_bool hasExecutionPart, ofp_bool hasInternalSubprogramPart)
    {
-  // Now we can setup the endOfConstruct in the global scope! But we have no token to use to do this!
+  // Now can we setup the endOfConstruct in the global scope! But we have no token to use to do this!
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_main_program() \n");
@@ -15650,7 +15653,9 @@ void c_action_program_stmt(Token_t *label, Token_t *programKeyword, Token_t *id,
   // Unclear if we should use the same token list for resetting the source position in all three IR nodes.
      setSourcePosition(programDefinition,tokenList);
      setSourcePosition(programBody,tokenList);
-
+#if 0
+     programBody->get_startOfConstruct()->display("In c_action_program_stmt(): programBody");
+#endif
 
 #if 0
      if (programName == ROSE_IMPLICIT_FORTRAN_PROGRAM_NAME)
@@ -15755,6 +15760,7 @@ void c_action_end_program_stmt(Token_t *label, Token_t *endKeyword, Token_t *pro
 
      ROSE_ASSERT(astScopeStack.empty() == false);
 #if 1
+  // resetEndingSourcePosition(astScopeStack.front(),endKeyword,getCurrentFilename());
      resetEndingSourcePosition(astScopeStack.front(),endKeyword);
 #else
   // DQ (10/10/2010): Test ending position
@@ -15771,6 +15777,25 @@ void c_action_end_program_stmt(Token_t *label, Token_t *endKeyword, Token_t *pro
 
      ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 #endif
+
+     if (programDeclaration->get_program_statement_explicit() == false)
+        {
+       // The function declaration should be forced to match the "end" keyword.
+#if 0
+          printf ("This was an implicit main function declaration. \n");
+          printf ("   programDeclaration->get_startOfConstruct()->get_filename()    = %s \n",programDeclaration->get_startOfConstruct()->get_filenameString().c_str());
+          printf ("   programDeclaration->get_endOfConstruct()->get_filename()      = %s \n",programDeclaration->get_endOfConstruct()->get_filenameString().c_str());
+          printf ("   astScopeStack.front()->get_startOfConstruct()->get_filename() = %s \n",astScopeStack.front()->get_startOfConstruct()->get_filenameString().c_str());
+          printf ("   astScopeStack.front()->get_endOfConstruct()->get_filename()   = %s \n",astScopeStack.front()->get_endOfConstruct()->get_filenameString().c_str());
+#endif
+       // Reset the declaration to the current filename.
+          programDeclaration->get_startOfConstruct()->set_filenameString(getCurrentFilename());
+          programDeclaration->get_endOfConstruct()->set_filenameString(getCurrentFilename());
+        }
+#if 0
+     printf ("In c_action_end_program_stmt(): astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
+#endif
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 #endif
    }
 
@@ -18679,8 +18704,15 @@ void c_action_start_of_file(const char *filename)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_start_of_file(%s) \n",filename);
 #if 0
-     printf ("astIncludeStack.size() = %zu \n",astIncludeStack.size());
+     printf ("In c_action_start_of_file(%s) astIncludeStack.size() = %zu \n",filename,astIncludeStack.size());
      printf ("##### Swiching from %s to %s \n",(astIncludeStack.size() == 0) ? "FIRST FILE" : getCurrentFilename().c_str(),filename);
+#endif
+
+  // This is a better way to compute if this is the first time through 
+  // (see test2010_78.f90 and test2010_79.f90 when compiled on the same command line).
+     bool firstTime = (astScopeStack.empty() == true);
+#if 0
+     printf ("In c_action_start_of_file(): astScopeStack.size() = %zu \n",astScopeStack.size());
 #endif
 
   // This is the earliest location to setup the global scope (I think).
@@ -18692,13 +18724,13 @@ void c_action_start_of_file(const char *filename)
 #endif
 
   // DQ (1/27/2009): This should be clear before going onto a new include file.
-//   ROSE_ASSERT(astNodeStack.empty() == true);
+  // ROSE_ASSERT(astNodeStack.empty() == true);
 
      string filenameString = filename;
 
-     static bool firstTime = true;
+  // static bool firstTime = true;
 
-  // DQ (1/28/2009): there are two cases wehre we don't want to generate an include IR node:
+  // DQ (1/28/2009): there are two cases where we don't want to generate an include IR node:
   //    1) When this is the first time were are reading a fortran source file.
   //    2) When we have switch file streams to read an *.rmod file as part of
   //       processing a "use" statement referencing a module.
@@ -18743,9 +18775,9 @@ void c_action_start_of_file(const char *filename)
        // setSourcePositionCompilerGenerated(includeLine);
        // setSourcePosition(includeLine);
           includeLine->set_file_info(fileInfo);
-
+#if 0
           includeLine->get_file_info()->display("c_action_start_of_file()");
-
+#endif
        // DQ (1/27/2009): Make sure that the filenames match (make sure this is a STL string equality test!).
        // This is a test for a recursive file inclusion.
        // This fails for: module_A_file.f90 or module_B_file.f90.  Also for these
@@ -18778,6 +18810,9 @@ void c_action_start_of_file(const char *filename)
 #endif
         }
 
+#if 0
+     printf ("In c_action_start_of_file(): filenameString = %s astIncludeStack.size() = %zu \n",filenameString.c_str(),astIncludeStack.size());
+#endif
      astIncludeStack.push_back(filenameString);
    }
 
@@ -18798,6 +18833,9 @@ void c_action_end_of_file(const char * filename)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_of_file(): filenameString = %s \n",filenameString.c_str());
 
+#if 0
+     printf ("In c_action_end_of_file(): filenameString = %s astIncludeStack.size() = %zu \n",filenameString.c_str(),astIncludeStack.size());
+#endif
      astIncludeStack.pop_back();
 
 #if 0
@@ -18813,13 +18851,18 @@ void c_action_end_of_file(const char * filename)
 
   // DQ (10/10/2010): Set the end position to a better value.
      SgStatement* lastStatement = astScopeStack.front()->lastStatement();
-  // printf ("In c_action_end_of_file(): lastStatement = %p \n",lastStatement);
+#if 0
+     printf ("In c_action_end_of_file(): lastStatement = %p \n",lastStatement);
+#endif
      if (lastStatement != NULL)
         {
 #if 0
           printf ("In c_action_end_of_file(): lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
           printf ("In c_action_end_of_file(): lastStatement->get_startOfConstruct()->get_line() = %d \n",lastStatement->get_startOfConstruct()->get_line());
           printf ("In c_action_end_of_file(): lastStatement->get_endOfConstruct()->get_line()   = %d \n",lastStatement->get_endOfConstruct()->get_line());
+
+          printf ("In c_action_end_of_file(): lastStatement->get_endOfConstruct()->get_filename()   = %s \n",lastStatement->get_endOfConstruct()->get_filenameString().c_str());
+          printf ("In c_action_end_of_file(): lastStatement->get_startOfConstruct()->get_filename() = %s \n",lastStatement->get_startOfConstruct()->get_filenameString().c_str());
 #endif
           resetEndingSourcePosition(astScopeStack.front(),lastStatement);
         }
@@ -18832,9 +18875,15 @@ void c_action_end_of_file(const char * filename)
 #if 0
      astScopeStack.front()->get_startOfConstruct()->display("In c_action_end_of_file(): start");
      astScopeStack.front()->get_endOfConstruct  ()->display("In c_action_end_of_file(): end");
+
+     printf ("astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
 #endif
 
-     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+  // DQ (11/11/2010): The header file can have only a single statement and if the original code 
+  // has only an include then the starting line number is equal to the ending line number.
+  // See test2010_81.f90 and test2010_81.h for an example of this.
+  // ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() >= astScopeStack.front()->get_startOfConstruct()->get_line());
 
 #if 0
      printf ("In c_action_end_of_file(): astScopeStack.front() = %s get_startOfConstruct()->get_line() = %d \n",astScopeStack.front()->class_name().c_str(),astScopeStack.front()->get_startOfConstruct()->get_line());
