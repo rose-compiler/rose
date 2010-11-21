@@ -197,9 +197,6 @@ public:
 	/** A table storing the name->node mappings for every node in the program. */
 	typedef boost::unordered_map<SgNode*, TableEntry> DefUseTable;
 	
-	/** A table mapping a name to a single node. */
-	typedef boost::unordered_map<VarName, SgNode*> FirstDefTable;
-	
 	/** A list of names. */
 	typedef std::vector<VarName> GlobalTable;
 	
@@ -263,14 +260,6 @@ private:
 	 */
 	DefUseTable useTable;
 
-	/** Holds a list of the locations that a particular name is first
-	 * defined.
-	 *
-	 * This helps when backwards-inserting definitions of member variables,
-	 * so that we can simply insert the definition at the first definition.
-	 */
-	FirstDefTable firstDefList;
-
 	/** This holds the mapping between variables and the nodes where they are renumbered.
 	 * Given a name and a node, we can get the number of the name that is defined at that node.
 	 * Nodes which do not define a name are not in the table.
@@ -307,7 +296,7 @@ public:
 
 private:
 	void runDefUseDataFlow(SgFunctionDefinition* func);
-	bool defUse(FilteredCfgNode node, NodeVec &memberRefInsertedNodes);
+	bool defUse(FilteredCfgNode node);
 
 	/** Add an entry to the renumbering table for the given var and node.
 	 *
@@ -349,9 +338,8 @@ private:
 	 * there. It will then set the outParameter to indicate that it back-inserted a def.
 	 *
 	 * @param curNode The node to resolve uses on.
-	 * @param memberRefInsertedNodes The nodes at which the function back-inserted a definition.
 	 */
-	void resolveUses(FilteredCfgNode curNode, NodeVec &memberRefInsertedNodes);
+	void resolveUses(FilteredCfgNode curNode);
 
 	/** Trace backwards in the cfg one step and return an aggregate of all previous defs.
 	 *
@@ -378,30 +366,19 @@ private:
 	 *
 	 *       o.a.b = 5;     //Def for o.a.b, o.a, o
 	 */
-	void expandParentMemberDefinitions();
+	void expandParentMemberDefinitions(SgFunctionDeclaration* function);
 
-	/** Insert defs for member uses (chained names) that do not have an explicit def.
-	 *
-	 * When a member of a struct/class is used and that member does not have a propogated
-	 * def on the current node, this will find the closest definition of a member
-	 * in the ref chain and insert a definition for this use at that member's def.
-	 *
-	 * ex. Obj o;         //Declare o of type o
-	 *     o.a = 5;       //Def for o.a
-	 *     int i = o.b.x; //Def for i, use for o.b.x
-	 *     int j = o.a.x; //Def for j, use for o.a.x
-	 *
-	 * This function will insert the following:
-	 *     Obj o;         //Declare o of type o, Def for o.a, def for o.b, def for o.b.x
-	 *     o.a = 5;       //Def for o.a, use for o, use for o.a, def for o.a.x
-	 *     int i = o.b.x; //Def for i, use for o.b.x
-	 *     int j = o.a.x; //Def for j, use for o.a.x
-	 *
-	 * @param curNode The node to expand the uses on.
-	 * @param name The variableName to expand the uses for.
-	 * @param memberRefInsertedNodes Nodes where any new defs were inserted.
-	 */
-	void insertExpandedDefsForUse(FilteredCfgNode curNode, VarName name, NodeVec &memberRefInsertedNodes);
+	/** Find all uses of compound variable names and insert expanded defs for them when their
+	 * parents are defined. E.g. for a.x, all defs of a will have a def of a.x inserted.
+	 * Note that there might be other child expansions of a, such as a.y, that we do not insert since
+	 * they have no uses. */
+	void insertDefsForChildMemberUses(SgFunctionDeclaration* function);
+
+	/** Insert defs for functions that are declared outside the function scope. */
+	void insertDefsForExternalVariables(SgFunctionDeclaration* function);
+
+	/** Returns a set of all the variables names that have uses in the subtree. */
+	std::set<VarName> getVarsUsedInSubtree(SgNode* root);
 
 	/** Expand all member uses (chained names) to explicitly use every name in the chain that is a
 	 * parent of the original use.
@@ -419,7 +396,7 @@ private:
 	 *
 	 * @param curNode
 	 */
-	void expandParentMemberUses();
+	void expandParentMemberUses(SgFunctionDeclaration* function);
 
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
@@ -437,11 +414,6 @@ public:
 	static SgInitializedName* thisDecl;
 
 	static VarName emptyName;
-
-	static NumNodeRenameTable emptyRenameTable;
-
-	static NumNodeRenameEntry emptyRenameEntry;
-
 
 	/*
 	 *  Printing functions.

@@ -21,14 +21,18 @@ public:
 			printf("Found difference between original defs at node %s, line %d: %s\n", node->class_name().c_str(),
 					node->get_file_info()->get_line(), node->unparseToString().c_str());
 			
-			printf("VariableRenaming Result:");
+			printf("VariableRenaming Original Defs:");
 			StaticSingleAssignment::printRenameTable(varRenaming->getOriginalDefsAtNode(node));
-			printf("SSA Result:");
+			printf("SSA Original Defs:");
 			StaticSingleAssignment::printRenameTable(ssa->getOriginalDefsAtNode(node));
+			printf("VariableRenaming Expanded Defs:");
+			StaticSingleAssignment::printRenameTable(varRenaming->getExpandedDefsAtNode(node));
+			printf("SSA Expanded Defs:");
+			StaticSingleAssignment::printRenameTable(ssa->getExpandedDefsAtNode(node));
 			ROSE_ASSERT(false);
 		}
 
-		ROSE_ASSERT(ssa->getExpandedDefsAtNode(node) == varRenaming->getExpandedDefsAtNode(node));
+		ROSE_ASSERT(varRenaming->getExpandedDefsAtNode(node) == ssa->getExpandedDefsAtNode(node));
 	}
 };
 
@@ -58,6 +62,12 @@ int main(int argc, char** argv)
 	//Run the SSA analysis
 	StaticSingleAssignment ssa(project);
 	ssa.run();
+
+	//Compare original defs and uses
+	ComparisonTraversal t;
+	t.varRenaming = &varRenaming;
+	t.ssa = &ssa;
+	t.traverse(project, preorder);
 
 	//Compare the sizes of the use tables
 	pair<SgNode*, StaticSingleAssignment::TableEntry> entry;
@@ -143,13 +153,15 @@ int main(int argc, char** argv)
 
 		const StaticSingleAssignment::TableEntry& reachingVarsRenaming = varRenaming.getPropDefTable()[node];
 
-		ROSE_ASSERT(reachingVarsSSA == reachingVarsRenaming);
+		if (reachingVarsSSA != reachingVarsRenaming)
+		{
+			printf("Node has different reaching defs: %s, line %d : %s\n", node->class_name().c_str(),
+					node->get_file_info()->get_line(), node->unparseToString().c_str());
+			StaticSingleAssignment::printDefs(reachingVarsRenaming);
+			StaticSingleAssignment::printDefs(reachingVarsSSA);
+			ROSE_ASSERT(false);
+		}
 	}
-
-	ComparisonTraversal t;
-	t.varRenaming = &varRenaming;
-	t.ssa = &ssa;
-	t.traverse(project, preorder);
 
 	return 0;
 }

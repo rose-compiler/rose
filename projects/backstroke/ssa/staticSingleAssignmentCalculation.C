@@ -27,8 +27,6 @@ using namespace ssa_private;
 string StaticSingleAssignment::varKeyTag = "ssa_varname_KeyTag";
 SgInitializedName* StaticSingleAssignment::thisDecl = NULL;
 StaticSingleAssignment::VarName StaticSingleAssignment::emptyName;
-StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::emptyRenameTable;
-StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::emptyRenameEntry;
 
 bool StaticSingleAssignment::isFromLibrary(SgNode* node)
 {
@@ -46,12 +44,12 @@ bool StaticSingleAssignment::isFromLibrary(SgNode* node)
 
 bool StaticSingleAssignment::isBuiltinVar(const VarName& var)
 {
-	//Test if the variable is compiler generated.
-	if (var[0]->get_name().getString().find("__") == 0)
-	{
-		//We are compiler generated, return true.
+	string name = var[0]->get_name().getString();
+	if (name == "__func__" ||
+			name == "__FUNCTION__" ||
+			name == "__PRETTY_FUNCTION__")
 		return true;
-	}
+
 	return false;
 }
 
@@ -62,7 +60,6 @@ void StaticSingleAssignment::run()
 	expandedDefTable.clear();
 	reachingDefsTable.clear();
 	useTable.clear();
-	firstDefList.clear();
 	nodeRenameTable.clear();
 	numRenameTable.clear();
 	globalVarList.clear();
@@ -99,11 +96,13 @@ void StaticSingleAssignment::run()
 			if (getDebug())
 				cout << "Finished DefsAndUsesTraversal..." << endl;
 
+			insertDefsForExternalVariables(func->get_declaration());
+
 			//Expand any member variable definition to also define its parents at the same node
-			expandParentMemberDefinitions();
+			expandParentMemberDefinitions(func->get_declaration());
 
 			//Expand any member variable uses to also use the parent variables (e.g. a.x also uses a)
-			expandParentMemberUses();
+			expandParentMemberUses(func->get_declaration());
 
 			//Iterate the global table insert a def for each name at the function definition
 			foreach(const VarName& globalVar, globalVarList)
@@ -111,6 +110,8 @@ void StaticSingleAssignment::run()
 				//Add this function definition as a definition point of this variable
 				originalDefTable[func].insert(globalVar);
 			}
+
+			insertDefsForChildMemberUses(func->get_declaration());
 
 			if (getDebug())
 				cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
@@ -170,102 +171,125 @@ void StaticSingleAssignment::insertGlobalVarDefinitions()
 	}
 }
 
-void StaticSingleAssignment::expandParentMemberDefinitions()
+void StaticSingleAssignment::expandParentMemberDefinitions(SgFunctionDeclaration* function)
 {
-	foreach(const LocalDefTable::value_type& nodeVarsPair, originalDefTable)
+	class ExpandDefsTraversal : public AstSimpleProcessing
 	{
-		SgNode* node = nodeVarsPair.first;
+	public:
+		StaticSingleAssignment* ssa;
 
-		//We want to iterate the vars defined on this node, and expand them
-		foreach(const VarName& definedVar, nodeVarsPair.second)
+		void visit(SgNode* node)
 		{
-			if (getDebugExtra())
-			{
-				cout << "Checking [" << keyToString(definedVar) << "]" << endl;
-			}
+			if (ssa->originalDefTable.count(node) == 0)
+				return;
 
-			//Check if the variableName has multiple parts
-			if (definedVar.size() == 1)
+			//We want to iterate the vars defined on this node, and expand them
+			foreach(const VarName& definedVar, ssa->originalDefTable[node])
 			{
-				continue;
-			}
-
-			//We are dealing with a multi-part variable, loop the entry and expand it
-			//Start at one so we don't get the same defs in the original and expanded defs
-			for (unsigned int i = 1; i < definedVar.size(); i++)
-			{
-				//Create a new varName vector that goes from beginning to end - i
-				VarName newName;
-				newName.assign(definedVar.begin(), definedVar.end() - i);
-
 				if (getDebugExtra())
 				{
-					cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+					cout << "Checking [" << keyToString(definedVar) << "]" << endl;
 				}
 
-				//Only insert the new definition if it does not already exist in the original def table
-				if (originalDefTable[node].count(newName) == 0)
+				//Check if the variableName has multiple parts
+				if (definedVar.size() == 1)
 				{
-					//Insert the new name as being defined here.
-					expandedDefTable[node].insert(newName);
+					continue;
+				}
+
+				//We are dealing with a multi-part variable, loop the entry and expand it
+				//Start at one so we don't get the same defs in the original and expanded defs
+				for (unsigned int i = 1; i < definedVar.size(); i++)
+				{
+					//Create a new varName vector that goes from beginning to end - i
+					VarName newName;
+					newName.assign(definedVar.begin(), definedVar.end() - i);
 
 					if (getDebugExtra())
 					{
-						cout << "Inserted new name [" << keyToString(newName) << "] into defs." << endl;
+						cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+					}
+
+					//Only insert the new definition if it does not already exist in the original def table
+					if (ssa->originalDefTable[node].count(newName) == 0)
+					{
+						//Insert the new name as being defined here.
+						ssa->expandedDefTable[node].insert(newName);
+
+						if (getDebugExtra())
+						{
+							cout << "Inserted new name [" << keyToString(newName) << "] into defs." << endl;
+						}
 					}
 				}
 			}
 		}
-	}
+	};
+
+	ExpandDefsTraversal trav;
+	trav.ssa = this;
+	trav.traverse(function, preorder);
 }
 
-void StaticSingleAssignment::expandParentMemberUses()
+void StaticSingleAssignment::expandParentMemberUses(SgFunctionDeclaration* function)
 {
-	foreach(DefUseTable::value_type& nodeTablePair, useTable)
+	class ExpandUsesTraversal : public AstSimpleProcessing
 	{
-		SgNode* node = nodeTablePair.first;
-		//We want to iterate the vars used on this node, and expand them
-		foreach(TableEntry::value_type& entry, nodeTablePair.second)
+	public:
+		StaticSingleAssignment* ssa;
+
+		void visit(SgNode* node)
 		{
-			const VarName& usedVar = entry.first;
-			if (getDebugExtra())
-			{
-				cout << "Checking [" << keyToString(usedVar) << "]" << endl;
-			}
+			if (ssa->useTable.count(node) == 0)
+				return;
 
-			//Check if the variableName has multiple parts
-			if (usedVar.size() == 1)
+			//We want to iterate the vars used on this node, and expand them
+			foreach(TableEntry::value_type& entry, ssa->useTable[node])
 			{
-				continue;
-			}
-
-			//We are dealing with a multi-part variable, loop the entry and expand it
-			//Start at one so we don't reinsert same use
-			for (unsigned int i = 1; i < usedVar.size(); i++)
-			{
-				//Create a new varName vector that goes from beginning to end - i
-				VarName newName;
-				newName.assign(usedVar.begin(), usedVar.end() - i);
-
+				const VarName& usedVar = entry.first;
 				if (getDebugExtra())
 				{
-					cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+					cout << "Checking [" << keyToString(usedVar) << "]" << endl;
 				}
 
-				//Only insert the new definition if it does not already exist
-				if (useTable[node].count(newName) == 0)
+				//Check if the variableName has multiple parts
+				if (usedVar.size() == 1)
 				{
-					//Insert the new name as being used here.
-					useTable[node][newName] = NodeVec(1, node);
+					continue;
+				}
+
+				//We are dealing with a multi-part variable, loop the entry and expand it
+				//Start at one so we don't reinsert same use
+				for (unsigned int i = 1; i < usedVar.size(); i++)
+				{
+					//Create a new varName vector that goes from beginning to end - i
+					VarName newName;
+					newName.assign(usedVar.begin(), usedVar.end() - i);
 
 					if (getDebugExtra())
 					{
-						cout << "Inserted new name [" << keyToString(newName) << "] into uses." << endl;
+						cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+					}
+
+					//Only insert the new definition if it does not already exist
+					if (ssa->useTable[node].count(newName) == 0)
+					{
+						//Insert the new name as being used here.
+						ssa->useTable[node][newName] = NodeVec(1, node);
+
+						if (getDebugExtra())
+						{
+							cout << "Inserted new name [" << keyToString(newName) << "] into uses." << endl;
+						}
 					}
 				}
 			}
 		}
-	}
+	};
+
+	ExpandUsesTraversal trav;
+	trav.ssa = this;
+	trav.traverse(function, preorder);
 }
 
 void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
@@ -274,9 +298,6 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		printOriginalDefTable();
 	//Keep track of visited nodes
 	boost::unordered_set<SgNode*> visited;
-
-	//Reset the first def list to prevent errors with global vars.
-	firstDefList.clear();
 
 	vector<FilteredCfgNode> worklist;
 
@@ -301,30 +322,8 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 			continue;
 		}
 
-		NodeVec memberRefInsertedNodes;
-		bool changed = defUse(current, memberRefInsertedNodes);
-
-		//If memberRefs were inserted, then there are nodes previous to this one that are different.
-		//Thus, we need to add those nodes to the working list
-		if (!memberRefInsertedNodes.empty())
-		{
-			//Clear the worklist and visited list
-			worklist.clear();
-			visited.clear();
-
-			//Insert each changed node into the list
-			foreach(SgNode* chNode, memberRefInsertedNodes)
-			{
-				//Get the cfg node for this node
-				FilteredCfgNode nextNode = FilteredCfgNode(chNode->cfgForBeginning());
-				worklist.push_back(nextNode);
-				if (getDebug())
-					cout << "Member Ref Inserted: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
-			}
-
-			//Restart work from where the new def was inserted.
-			continue;
-		}
+		//Propagate defs to the current node
+		bool changed = defUse(current);
 
 		//Get the outgoing edges
 		cfgEdgeVec outEdges = current.outEdges();
@@ -357,7 +356,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 	}
 }
 
-bool StaticSingleAssignment::defUse(FilteredCfgNode node, NodeVec &memberRefInsertedNodes)
+bool StaticSingleAssignment::defUse(FilteredCfgNode node)
 {
 	SgNode* current = node.getNode();
 
@@ -366,9 +365,8 @@ bool StaticSingleAssignment::defUse(FilteredCfgNode node, NodeVec &memberRefInse
 		cout << "Performing DefUse on " << 
 				current->class_name() << ", line " << current->get_file_info()->get_line() << ":" << current << endl;
 
-	bool defChanged = false;
-	defChanged = mergeDefs(node);
-	resolveUses(node, memberRefInsertedNodes);
+	bool defChanged = mergeDefs(node);
+	resolveUses(node);
 
 	if (getDebug())
 		cout << "Defs were " << ((defChanged) ? "changed." : "same.") << endl;
@@ -424,28 +422,6 @@ bool StaticSingleAssignment::mergeDefs(FilteredCfgNode curNode)
 		stagingPropagatedDefs[definedVar].push_back(node);
 
 		addRenameNumberForNode(definedVar, node);
-
-		//Insert expanded defs for the original def, if any such expanded defs are in the staging set.
-		//Note that we only expand child defs as needed, even though we expanded all the parent defs up front.
-		foreach(TableEntry::value_type& propEntry, stagingPropagatedDefs)
-		{
-			//Don't insert a def if it is already originally defined.
-			if (originalDefTable[node].count(propEntry.first) != 0)
-			{
-				continue;
-			}
-			//If the original def is a prefix of the propogated def, add a def at this node
-			//Compare sizes to guard against inserting original def in expanded table
-			if (isPrefixOfName(propEntry.first, definedVar) && (propEntry.first.size() > definedVar.size()))
-			{
-				//Set this node as a definition point of the variable.
-				expandedDefTable[node].insert(propEntry.first);
-				if (getDebugExtra())
-				{
-					cout << "Inserted expandedDef for [" << keyToString(propEntry.first) << "] with originalDef prefix [" << keyToString(definedVar) << "]" << endl;
-				}
-			}
-		}
 	}
 
 	//Replace every entry in staging table that has definition in expandedDefs
@@ -456,17 +432,6 @@ bool StaticSingleAssignment::mergeDefs(FilteredCfgNode curNode)
 		stagingPropagatedDefs[definedVar].push_back(node);
 		
 		addRenameNumberForNode(definedVar, node);
-	}
-
-	//If there is an initial definition of a name at this node, we should insert it in the table
-	foreach(const VarName& definedVar, originalDefTable[node])
-	{
-		//If the given variable name is not present in the first def table
-		if (firstDefList.count(definedVar) == 0)
-		{
-			//Set this node as the first definition point of this variable.
-			firstDefList[definedVar] = node;
-		}
 	}
 
 	if (getDebugExtra())
@@ -537,7 +502,7 @@ void StaticSingleAssignment::aggregatePreviousDefs(FilteredCfgNode curNode, Tabl
 	}
 }
 
-void StaticSingleAssignment::resolveUses(FilteredCfgNode curNode, NodeVec &memberRefInsertedNodes)
+void StaticSingleAssignment::resolveUses(FilteredCfgNode curNode)
 {
 	SgNode* node = curNode.getNode();
 
@@ -566,9 +531,9 @@ void StaticSingleAssignment::resolveUses(FilteredCfgNode curNode, NodeVec &membe
 		}
 		else
 		{
-			//If there are no defs for this use at this node, then we have a multi-part name
-			//that has not been expanded. Thus, we want to expand it.
-			insertExpandedDefsForUse(curNode, entry.first, memberRefInsertedNodes);
+			// There are no defs for this use at this node, this shouldn't happen
+			printf("Error: Found use for the name '%s', but no reaching defs!\n", keyToString(usedVar).c_str());
+			ROSE_ASSERT(false);
 		}
 	}
 
@@ -592,108 +557,6 @@ void StaticSingleAssignment::resolveUses(FilteredCfgNode curNode, NodeVec &membe
 	}
 }
 
-
-void StaticSingleAssignment::insertExpandedDefsForUse(FilteredCfgNode curNode, VarName name, NodeVec &changedNodes)
-{
-	SgNode* node = curNode.getNode();
-
-	if (getDebugExtra())
-	{
-		cout << "Checking for needed extra defs for uses at " << node->class_name() << node << endl;
-		cout << "Checking for [" << keyToString(name) << "]" << endl;
-	}
-
-	//Check if the given name has a def at this node
-	if (reachingDefsTable.count(node) == 0 || reachingDefsTable[node].count(name) != 0)
-	{
-		if (getDebugExtra())
-			cout << "Already have def." << endl;
-
-		//If there is already a def, then nothing changes
-		return;
-	}
-
-	//No def for this name at this node, so we need to insert a def at the location
-	//where the first part of this name was defined.
-	//eg. s.a.b = x; (insert definition of s.a & s.a.b where s is first defined.)
-
-	//Get the root of this name
-	VarName rootName;
-	rootName.assign(1, name[0]);
-
-	//We want to see if the name is a class member (no def so far)
-	if (firstDefList.count(rootName) == 0)
-	{
-		//Check if the variable is a compiler builtin
-		if (isBuiltinVar(rootName))
-		{
-			//Add a definition at the start of the function
-			SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
-			ROSE_ASSERT(func);
-
-			firstDefList[rootName] = func;
-		}
-		//Check if the variable is declared in a class scope
-		else if (isSgClassDefinition(SageInterface::getScope(rootName[0])) != NULL)
-		{
-			//It is declared in class scope.
-			//Get our enclosing function definition to insert the first definition into.
-			SgFunctionDeclaration* declaration = SageInterface::getEnclosingNode<SgFunctionDeclaration>(node);
-			ROSE_ASSERT(declaration != NULL);
-			SgFunctionDefinition* func = declaration->get_definition();
-			ROSE_ASSERT(func);
-
-			firstDefList[rootName] = func;
-		}
-		//Otherwise, see if it is in namespace scope
-		else if (isSgNamespaceDefinitionStatement(SageInterface::getScope(rootName[0])) != NULL)
-		{
-			//It is declared in namespace scope.
-			//Get our enclosing function definition to insert the first definition into.
-			SgFunctionDeclaration* declaration = SageInterface::getEnclosingNode<SgFunctionDeclaration>(node);
-			ROSE_ASSERT(declaration != NULL);
-			SgFunctionDefinition* func = declaration->get_definition();
-			ROSE_ASSERT(func);
-			
-			firstDefList[rootName] = func;
-		}
-		else
-		{
-			cout << "Error: Found variable with no firstDef point that is not a class or namespace member." << endl;
-			cout << "Variable Scope: " << SageInterface::getScope(rootName[0])->class_name() << SageInterface::getScope(rootName[0]) << endl;
-			cout << rootName[0]->class_name() << rootName[0] << "@" << rootName[0]->get_file_info()->get_line() << ":" << rootName[0]->get_file_info()->get_col() << endl;
-			ROSE_ASSERT(false);
-		}
-	}
-
-	//Start from the end of the name and insert definitions of every part
-	//at the first definition point
-	for (int i = 0; i < (signed int) name.size(); i++)
-	{
-		//Create a new varName vector that goes from beginning to end - i
-		VarName newName;
-		newName.assign(name.begin(), name.end() - i);
-
-		if (getDebugExtra())
-		{
-			cout << "Testing for def of [" << keyToString(newName) << "] at var initial def." << endl;
-		}
-
-		if (originalDefTable[firstDefList[rootName]].count(newName) == 0)
-		{
-			originalDefTable[firstDefList[rootName]].insert(newName);
-			changedNodes.push_back(firstDefList[rootName]);
-			if (getDebugExtra())
-			{
-				cout << "Inserted def for [" << keyToString(newName) << "] (root) [" << keyToString(rootName) << "] at node " << firstDefList[rootName] << endl;
-			}
-		}
-	}
-
-	if (getDebugExtra())
-		cout << "Finished inserting references. Changed: " << ((!changedNodes.empty()) ? "true" : "false") << endl;
-}
-
 int StaticSingleAssignment::addRenameNumberForNode(const VarName& var, SgNode* node)
 {
 	ROSE_ASSERT(node);
@@ -714,4 +577,148 @@ int StaticSingleAssignment::addRenameNumberForNode(const VarName& var, SgNode* n
 		cout << "Renaming Added:[" << keyToString(var) << "]:" << nextNum << " - " << node << endl;
 
 	return nextNum;
+}
+
+/** Returns a set of all the variables names that have uses in the subtree. */
+set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsUsedInSubtree(SgNode* root)
+{
+	class CollectUsesVarsTraversal : public AstSimpleProcessing
+	{
+	public:
+		StaticSingleAssignment* ssa;
+
+		//All the varNames that have uses in the function
+		set<VarName> usedNames;
+
+		void visit(SgNode* node)
+		{
+			DefUseTable::const_iterator useEntry = ssa->useTable.find(node);
+			if (useEntry == ssa->useTable.end())
+				return;
+
+			foreach (const TableEntry::value_type& varNodesPair, useEntry->second)
+			{
+				const VarName& usedVar = varNodesPair.first;
+				usedNames.insert(usedVar);
+			}
+		}
+	};
+
+	CollectUsesVarsTraversal usesTrav;
+	usesTrav.ssa = this;
+	usesTrav.traverse(root, preorder);
+	return usesTrav.usedNames;
+}
+
+void StaticSingleAssignment::insertDefsForChildMemberUses(SgFunctionDeclaration* function)
+{
+	ROSE_ASSERT(function->get_definition() != NULL);
+
+	set<VarName> usedNames = getVarsUsedInSubtree(function);
+
+	//Map each varName to all used names for which it is a prefix
+	map<VarName, set<VarName> > nameToChildNames;
+	foreach(const VarName& rootName, usedNames)
+	{
+		foreach(const VarName& childName, usedNames)
+		{
+			if (childName.size() <= rootName.size())
+				continue;
+
+			if (isPrefixOfName(childName, rootName))
+			{
+				nameToChildNames[rootName].insert(childName);
+			}
+		}
+	}
+
+	//Now that we have all the used names, we iterate the definitions.
+	//If there is a definition and a child of it is used, we have to insert a definition for the child also
+	class InsertExpandedDefsTraversal : public AstSimpleProcessing
+	{
+	public:
+		StaticSingleAssignment* ssa;
+		map<VarName, set<VarName> >* nameToChildNames;
+
+		void visit(SgNode* node)
+		{
+			LocalDefTable::const_iterator childDefs = ssa->originalDefTable.find(node);
+
+			if (childDefs == ssa->originalDefTable.end())
+				return;
+
+			foreach(const VarName& definedVar, childDefs->second)
+			{
+				map<VarName, set<VarName> >::iterator childVars = nameToChildNames->find(definedVar);
+				if (childVars == nameToChildNames->end())
+					continue;
+
+				//Go over all the child names and define them here also
+				foreach (const VarName& childName, childVars->second)
+				{
+					ROSE_ASSERT(childName.size() > definedVar.size());
+					for (size_t i = 0; i < (childName.size() - definedVar.size()); i++)
+					{
+						//Create a new varName vector that goes from beginning to end - i
+						VarName newName;
+						newName.assign(childName.begin(), childName.end() - i);
+
+						if (ssa->expandedDefTable[node].count(newName) == 0 && ssa->originalDefTable[node].count(newName) == 0)
+						{
+							ssa->expandedDefTable[node].insert(newName);
+						}
+					}
+				}
+			}
+		}
+	};
+
+	InsertExpandedDefsTraversal trav;
+	trav.ssa = this;
+	trav.nameToChildNames = &nameToChildNames;
+	trav.traverse(function, preorder);
+}
+
+
+/** Insert defs for functions that are declared outside the function scope. */
+void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaration* function)
+{
+	ROSE_ASSERT(function->get_definition() != NULL);
+
+	set<VarName> usedNames = getVarsUsedInSubtree(function);
+
+	set<VarName>& originalVarsAtFunctionEntry = originalDefTable[function->get_definition()];
+	set<VarName>& expandedVarsAtFunctionEntry = expandedDefTable[function->get_definition()];
+
+	//Iterate over each used variable and check it it is declared outside of the function scope
+	foreach(const VarName& usedVar, usedNames)
+	{
+		VarName rootName;
+		rootName.assign(1, usedVar[0]);
+
+		SgScopeStatement* varScope = SageInterface::getScope(rootName[0]);
+		SgScopeStatement* functionScope = function->get_definition();
+
+		//If it is a local variable, there should be a def somewhere inside the functio
+		if (varScope == functionScope || SageInterface::isAncestor(functionScope, varScope))
+		{
+			//We still need to insert defs for compiler-generated variables (e.g. __func__), since they don't have defs in the AST
+			if (!isBuiltinVar(rootName))
+				continue;
+		}
+
+		//Are there any other types of external vars?
+		ROSE_ASSERT(isBuiltinVar(rootName) || isSgClassDefinition(varScope) || isSgNamespaceDefinitionStatement(varScope)
+				|| isSgGlobal(varScope));
+
+		//The variable is not in local scope; we need to insert a def for it at the function definition
+		for (size_t i = 0; i < usedVar.size(); i++)
+		{
+			//Create a new varName vector that goes from beginning to end - i
+			VarName newName;
+			newName.assign(usedVar.begin(), usedVar.end() - i);
+			originalVarsAtFunctionEntry.insert(newName);
+			ROSE_ASSERT(expandedVarsAtFunctionEntry.count(newName) == 0);
+		}
+	}
 }

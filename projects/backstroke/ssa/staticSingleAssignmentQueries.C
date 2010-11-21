@@ -547,7 +547,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getExpandedDe
 		if (renameNum > 0)
 		{
 			//If the renumbering is not already in the result
-			if (res[definedVar].count(renameNum) == 0)
+		 	if (res[definedVar].count(renameNum) == 0)
 			{
 				//Add the renumbering to the result
 				res[definedVar][renameNum] = node;
@@ -560,7 +560,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getExpandedDe
 		}
 		else
 		{
-			cout << "Error: Found expanded def with no entry in rename table." << endl;
+			cout << "Error: Found expanded def for " << keyToString(definedVar) << " with no entry in rename table." << endl;
 			ROSE_ASSERT(false);
 		}
 	}
@@ -1611,24 +1611,14 @@ StaticSingleAssignment::VarName StaticSingleAssignment::getVarName(SgNode* node)
 
 bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 {
-	VarName::iterator iter;
-	// Search for the first occurance of prefix in name
-	iter = search(name.begin(), name.end(), prefix.begin(), prefix.end());
+	if (name.size() < prefix.size())
+		return false;
 
-	//If the prefix is at the beginning of the name
-	if (iter == name.begin())
+	for (size_t i = 0; i < prefix.size(); i++)
 	{
-		return true;
+		if (name[i] != prefix[i])
+			return false;
 	}
-		//If the prefix is not in the name
-	else if (iter == name.end())
-	{
-		return false;
-	}
-		//Found the prefix, but inside the name instead of at beginning
-	else
-	{
-		//We don't want to assert, just return false.
-		return false;
-	}
+
+	return true;
 }
