@@ -572,6 +572,8 @@ void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, SgStatement* s
 #else
 
   // If this is not the same file then the line numbers will not make any sense.
+     ROSE_ASSERT(targetLocatedNode->get_endOfConstruct() != NULL);
+     ROSE_ASSERT(sourceStatement->get_endOfConstruct()   != NULL);
      if (targetLocatedNode->get_endOfConstruct()->isSameFile(sourceStatement->get_endOfConstruct()) == true)
         {
           int newLineNumber = sourceStatement->get_endOfConstruct()->get_line();

@@ -123,7 +123,6 @@ extern std::list<SgInterfaceStatement*> astInterfaceStack;
 extern std::vector<std::string> astIncludeStack;
 
 
-
 // ***********************************************
 //              Function Prototypes
 // ***********************************************

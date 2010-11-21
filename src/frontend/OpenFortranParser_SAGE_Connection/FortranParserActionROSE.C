@@ -18775,6 +18775,12 @@ void c_action_start_of_file(const char *filename)
        // setSourcePositionCompilerGenerated(includeLine);
        // setSourcePosition(includeLine);
           includeLine->set_file_info(fileInfo);
+
+       // DQ (11/20/2010): Also set the end of the construct for this statement (end of column position is not correct).
+          Sg_File_Info* ending_fileInfo = new Sg_File_Info(filenameOfIncludeLocation,lineNumberOfLastStatement,columnNumber);
+          includeLine->set_endOfConstruct(ending_fileInfo);
+
+          ROSE_ASSERT(includeLine->get_endOfConstruct() != NULL);
 #if 0
           includeLine->get_file_info()->display("c_action_start_of_file()");
 #endif
@@ -18859,11 +18865,14 @@ void c_action_end_of_file(const char * filename)
 #if 0
           printf ("In c_action_end_of_file(): lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
           printf ("In c_action_end_of_file(): lastStatement->get_startOfConstruct()->get_line() = %d \n",lastStatement->get_startOfConstruct()->get_line());
+
+          ROSE_ASSERT(lastStatement->get_endOfConstruct() != NULL);
           printf ("In c_action_end_of_file(): lastStatement->get_endOfConstruct()->get_line()   = %d \n",lastStatement->get_endOfConstruct()->get_line());
 
           printf ("In c_action_end_of_file(): lastStatement->get_endOfConstruct()->get_filename()   = %s \n",lastStatement->get_endOfConstruct()->get_filenameString().c_str());
           printf ("In c_action_end_of_file(): lastStatement->get_startOfConstruct()->get_filename() = %s \n",lastStatement->get_startOfConstruct()->get_filenameString().c_str());
 #endif
+          ROSE_ASSERT(lastStatement->get_endOfConstruct() != NULL);
           resetEndingSourcePosition(astScopeStack.front(),lastStatement);
         }
        else
@@ -19165,6 +19174,55 @@ void c_action_structure_constructor(Token_t *carg_0){}
 void c_action_type_param_attr_spec(Token_t *carg_0){}
 void c_action_type_spec(){}
 void c_action_vector_subscript(){}
+
+// DQ (11/20/2010): Added Token support using newest version of OFP 0.8.2.
+void c_action_next_token(Token_t *token)
+   {
+  // This parser action is used in a separate mode to read the tokens from 
+  // the file as part of a separate pass over the AST.
+  // if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+     if ( SgProject::get_verbose() > -1 )
+        {
+#if 0
+          string text = token->text;
+          if (text == " ")
+               text = "<space>";
+          else if (text == "\n")
+               text = "<eol>";
+#else
+       // string text = SageInterface::get_name(token);
+          string text = token->text;
+#endif
+          string currentFilename = getCurrentFilename();
+          int line_number   = token->line;
+          int column_number = token->col;
+
+          Sg_File_Info* starting_fileInfo = new Sg_File_Info(currentFilename,line_number,column_number);
+
+       // Building the token as unclassified tokens (tokens can be classified by language, language construct, etc.)
+          SgToken* roseToken = new SgToken(starting_fileInfo,text,0);
+
+       // Currently all SgLocatedNode objects are required to have a valid source code position for the start and end.
+       // However this might be a bit redundant for the case of SgToken objects.  So we might want to handle this
+       // differently in the future.
+          Sg_File_Info* ending_fileInfo   = new Sg_File_Info(currentFilename,line_number,column_number+text.length());
+          roseToken->set_endOfConstruct(ending_fileInfo);
+
+       // printf ("In c_action_next_token = %s file = %s line = %d column = %d \n",text.c_str(),currentFilename.c_str(),line_number,column_number);
+          printf ("In c_action_next_token = %s file = %s line = %d column = %d \n",SageInterface::get_name(roseToken).c_str(),currentFilename.c_str(),line_number,column_number);
+
+       // Verify that we have a propoer start and end source code position for the token.
+          ROSE_ASSERT(roseToken->get_startOfConstruct() != NULL);
+          ROSE_ASSERT(roseToken->get_endOfConstruct()   != NULL);
+
+       // Get the current file.
+          SgSourceFile* currentFile = OpenFortranParser_globalFilePointer;
+          ROSE_ASSERT(currentFile != NULL);
+
+       // Add to the token list kept in the SgSourceFile object.
+          currentFile->get_token_list().push_back(roseToken);
+        }
+   }
 
 // FMZ (5/4/2010)
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0

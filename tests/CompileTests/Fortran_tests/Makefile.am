@@ -173,6 +173,9 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 endif
 
 
+F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS = 
+
+
 F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_124.f \
      test2007_125.f \
@@ -352,11 +355,16 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_79.f90 \
      test2010_80.f90 \
      test2010_81.f90 \
+     test2010_82.f90 \
      fCaller.f90 \
      triangle.f90
 
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
 #    test2008_02.f
+
+F90_TESTCODES_REQUIRING_PREPROCESSOR_CURRENTLY_FAILING = \
+     test2008_01.F90 
+
 
 F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2007_85.f \
@@ -413,6 +421,10 @@ $(F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS)
 F03_TESTCODES = \
 $(F03_TESTCODES_REQUIRED_TO_PASS)
 
+# DQ (11/20/2010): Added test codes requiring preprocessing
+F90_TESTCODES_REQUIRING_PREPROCESSOR = \
+$(F90_TESTCODES_REQUIRING_PREPROCESSOR_CURRENTLY_FAILING)
+
 # QMTest allows both passing and failing tests.
 ALL_F90_TESTCODES = \
 $(F90_TESTCODES_REQUIRED_TO_PASS) \
@@ -430,13 +442,19 @@ ALL_F03_TESTCODES = \
 $(F03_TESTCODES_REQUIRED_TO_PASS) \
 $(F03_TESTCODES_CURRENTLY_FAILING)
 
+ALL_F90_TESTCODES_REQUIRING_PREPROCESSOR = \
+$(F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS) \
+$(F90_TESTCODES_REQUIRING_PREPROCESSOR_CURRENTLY_FAILING)
+
 # File option to accumulate performance information about the compilation
 PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FORTRAN_ROSE_PERFORMANCE_DATA.csv
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
-# ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
-ROSE_FLAGS = -rose:verbose 3 -rose:output_parser_actions -I$(srcdir)
+ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
+# ROSE_FLAGS = -rose:verbose 3 -rose:output_parser_actions -I$(srcdir)
+# ROSE_FLAGS = -rose:verbose 0 -rose:output_tokens -rose:output_parser_actions -I$(srcdir)
+# ROSE_FLAGS = -rose:verbose 0 -rose:output_tokens -I$(srcdir)
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
@@ -445,6 +463,7 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 VALGRIND =
 
 PASSING_TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
+PASSING_TEST_REQUIRING_PREPROCESSOR_F90_Objects = ${F90_TESTCODES_REQUIRING_PREPROCESSOR:.F90=.o}
 PASSING_TEST_F77_Objects = ${F77_TESTCODES:.f77=.o}
 
 # DQ (3/11/2010): F77 tests were not being run, this fixes this.
@@ -453,11 +472,13 @@ PASSING_TEST_F77_FIXED_FORMAT_Objects = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO
 
 PASSING_TEST_F03_Objects = ${F03_TESTCODES:.f03=.o}
 TEST_F90_Objects = ${ALL_F90_TESTCODES:.f90=.o}
+TEST_REQUIRING_PREPROCESSOR_F90_Objects = ${ALL_F90_TESTCODES_REQUIRING_PREPROCESSOR:.F90=.o}
 TEST_F77_Objects = ${ALL_F77_TESTCODES:.f77=.o}
 TEST_F77_FIXED_FORMAT_Objects = ${ALL_F77_FIXED_FORMAT_TESTCODES:.f=.o}
 TEST_F03_Objects = ${ALL_F03_TESTCODES:.f03=.o}
 
-PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
+# PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
+PASSING_TEST_Objects = $(PASSING_TEST_REQUIRING_PREPROCESSOR_F90_Objects) $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
@@ -485,6 +506,10 @@ $(TEST_F90_Objects): ../../testTranslator ../../testGraphGeneration ${ALL_TESTCO
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+
+$(TEST_REQUIRING_PREPROCESSOR_F90_Objects): ../../testTranslator ../../testGraphGeneration ${ALL_TESTCODES}
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
+	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
 
 $(TEST_F77_Objects): ../../testTranslator ../../testGraphGeneration ${ALL_TESTCODES}
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f77)

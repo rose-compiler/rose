@@ -814,6 +814,13 @@ typedef SgAsmElfSymverNeededAuxPtrList*              SgAsmElfSymverNeededAuxPtrL
 typedef Rose_STL_Container<SgAsmPERVASizePair*> SgAsmPERVASizePairPtrList;
 typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
 
+
+// DQ (11/20/2010): Added type for SgToken list
+// Build a type for the SgToken list.
+typedef Rose_STL_Container<SgToken*> SgTokenPtrList;
+typedef SgTokenPtrList* SgTokenPtrListPtr;
+
+
 #if 1
 // DQ (11/4/2009): Trying to use the boost hash_map support
 
