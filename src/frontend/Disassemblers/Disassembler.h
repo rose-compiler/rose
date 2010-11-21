@@ -28,7 +28,7 @@
  *
  *  When ROSE needs to disassemble something, it calls Disassembler::lookup(), which in turn calls the can_disassemble()
  *  method for all registered disassemblers.  The first disassembler whose can_disassemble() returns true is used for the
- *  disassemby.
+ *  disassembly.
  *
  *  If an error occurs during the disassembly of a single instruction, the disassembler will throw an exception. When
  *  disassembling multiple instructions the exceptions are saved in a map, by virtual address, and the map is returned to the
