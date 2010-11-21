@@ -1569,9 +1569,9 @@ SageInterface::get_name ( const SgToken* token )
   // Handle special cases
      if (name == " ")
         name = "<space>";
-     else if (name == "\\n")
+     else if (name == "\n")
         name = "<eol>";
-     else if (name == "\\t")
+     else if (name == "\t")
         name = "<tab>";
 
      return name;
