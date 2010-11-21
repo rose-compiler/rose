@@ -18,6 +18,7 @@ main( int argc, char * argv[] )
 
      AstTests::runAllTests(project);
 
+  // Evaluate the number of tokens generated for each file on the command line.
      SgFilePtrList & fileList = project->get_fileList();
      for (size_t i=0; i < fileList.size(); i++)
         {
@@ -35,7 +36,7 @@ main( int argc, char * argv[] )
                        }
                       else
                        {
-                         printf ("Warning: this test is only valid for Fortran files at present. \n");
+                         printf ("Warning: token evaluation only valid for Fortran files at present. \n");
                        }
                   }
              }
