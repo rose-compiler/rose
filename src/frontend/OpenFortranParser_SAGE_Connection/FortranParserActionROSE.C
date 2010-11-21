@@ -19180,48 +19180,38 @@ void c_action_next_token(Token_t *token)
    {
   // This parser action is used in a separate mode to read the tokens from 
   // the file as part of a separate pass over the AST.
-  // if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-     if ( SgProject::get_verbose() > -1 )
+
+     string text            = token->text;
+     string currentFilename = getCurrentFilename();
+     int line_number        = token->line;
+     int column_number      = token->col;
+
+     Sg_File_Info* starting_fileInfo = new Sg_File_Info(currentFilename,line_number,column_number);
+
+  // Building the token as unclassified tokens (tokens can be classified by language, language construct, etc.)
+     SgToken* roseToken = new SgToken(starting_fileInfo,text,0);
+
+  // Currently all SgLocatedNode objects are required to have a valid source code position for the start and end.
+  // However this might be a bit redundant for the case of SgToken objects.  So we might want to handle this
+  // differently in the future.
+     Sg_File_Info* ending_fileInfo   = new Sg_File_Info(currentFilename,line_number,column_number+text.length());
+     roseToken->set_endOfConstruct(ending_fileInfo);
+
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         {
-#if 0
-          string text = token->text;
-          if (text == " ")
-               text = "<space>";
-          else if (text == "\n")
-               text = "<eol>";
-#else
-       // string text = SageInterface::get_name(token);
-          string text = token->text;
-#endif
-          string currentFilename = getCurrentFilename();
-          int line_number   = token->line;
-          int column_number = token->col;
-
-          Sg_File_Info* starting_fileInfo = new Sg_File_Info(currentFilename,line_number,column_number);
-
-       // Building the token as unclassified tokens (tokens can be classified by language, language construct, etc.)
-          SgToken* roseToken = new SgToken(starting_fileInfo,text,0);
-
-       // Currently all SgLocatedNode objects are required to have a valid source code position for the start and end.
-       // However this might be a bit redundant for the case of SgToken objects.  So we might want to handle this
-       // differently in the future.
-          Sg_File_Info* ending_fileInfo   = new Sg_File_Info(currentFilename,line_number,column_number+text.length());
-          roseToken->set_endOfConstruct(ending_fileInfo);
-
-       // printf ("In c_action_next_token = %s file = %s line = %d column = %d \n",text.c_str(),currentFilename.c_str(),line_number,column_number);
           printf ("In c_action_next_token = %s file = %s line = %d column = %d \n",SageInterface::get_name(roseToken).c_str(),currentFilename.c_str(),line_number,column_number);
-
-       // Verify that we have a propoer start and end source code position for the token.
-          ROSE_ASSERT(roseToken->get_startOfConstruct() != NULL);
-          ROSE_ASSERT(roseToken->get_endOfConstruct()   != NULL);
-
-       // Get the current file.
-          SgSourceFile* currentFile = OpenFortranParser_globalFilePointer;
-          ROSE_ASSERT(currentFile != NULL);
-
-       // Add to the token list kept in the SgSourceFile object.
-          currentFile->get_token_list().push_back(roseToken);
         }
+
+  // Verify that we have a propoer start and end source code position for the token.
+     ROSE_ASSERT(roseToken->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(roseToken->get_endOfConstruct()   != NULL);
+
+  // Get the current file.
+     SgSourceFile* currentFile = OpenFortranParser_globalFilePointer;
+     ROSE_ASSERT(currentFile != NULL);
+
+  // Add to the token list kept in the SgSourceFile object.
+     currentFile->get_token_list().push_back(roseToken);
    }
 
 // FMZ (5/4/2010)
