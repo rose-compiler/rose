@@ -1891,9 +1891,13 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
     VarName rootName;
     rootName.assign(1,name[0]);
 
+	DefUseTable* defInsertionTable = &expandedDefTable;
+
     //We want to see if the name is a class member (no def so far)
     if(firstDefList.count(rootName) == 0)
     {
+		defInsertionTable = &originalDefTable;
+
         //Check if the variable is a compiler builtin
         if(isBuiltinVar(rootName))
         {
@@ -1943,6 +1947,12 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
         }
     }
 
+	SgNode* firstDef = firstDefList[rootName];
+	if (isSgFunctionDefinition(firstDef))
+	{
+		defInsertionTable = &originalDefTable;
+	}
+
     //Start from the end of the name and insert definitions of every part
     //at the first definition point
     for(int i = 0; i < (signed int)name.size(); i++)
@@ -1956,10 +1966,10 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
             cout << "Testing for def of [" << keyToString(newName) << "] at var initial def." << endl;
         }
 
-		SgNode* firstDef = firstDefList[rootName];
+		
         if(originalDefTable[firstDef].count(newName) == 0 && expandedDefTable[firstDef].count(newName) == 0)
         {
-            expandedDefTable[firstDef][newName].push_back(firstDef);
+            (*defInsertionTable)[firstDef][newName].push_back(firstDef);
             changed = true;
             changedNodes.push_back(firstDef);
             if(DEBUG_MODE_EXTRA)
