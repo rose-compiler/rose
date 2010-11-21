@@ -52,6 +52,10 @@ parallelASTMerge_SOURCES = parallelASTMerge.C
 # This tests the ability to generate dot file (AST and WholeGraph) for the input application.
 testGraphGeneration_SOURCES = testGraphGeneration.C
 
+# This tests the token generation capabilities which are an option in ROSE used to support the 
+# generation of patches to define transformations of large scale applications.
+testTokenGeneration_SOURCES = testTokenGeneration.C
+
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
