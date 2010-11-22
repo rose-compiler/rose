@@ -27,17 +27,19 @@ using namespace DUVariableAnalysisExt;
 */
 
 
+DataDependenceGraph::DataDependenceGraph(SgNode * head,
 #ifdef NEWDU
-DataDependenceGraph::DataDependenceGraph(SgNode * head,EDefUse * du, InterproceduralInfo * ii):_head(isSgFunctionDefinition
-                                                                                                     (head))
+                                         EDefUse * du,
+#endif
+                                         InterproceduralInfo * ii)
+      : _head(isSgFunctionDefinition(head))
 {
-  defuse=du;
+#ifdef NEWDU
+      defuse=du;
 #else
-  DataDependenceGraph::DataDependenceGraph(SgNode * head, InterproceduralInfo * ii):_head(isSgFunctionDefinition
-                                                                                          (head))
-    {
       _buildDefUseChains(_head);
 #endif
+
       //  _interprocedural = ii;
       functionDef=isSgFunctionDefinition(head);
       functionDecl=functionDef->get_declaration();
@@ -417,5 +419,4 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,EDefUse * du, Interproced
           return funcCall;
 
         }
-
 
