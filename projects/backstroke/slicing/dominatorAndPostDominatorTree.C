@@ -2,6 +2,7 @@
 #include "backstrokeCFG.h"
 #include "backstrokeCDG.h"
 #include "backstrokeDDG.h"
+#include "backstrokePDG.h"
 #include <boost/foreach.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
@@ -253,19 +254,22 @@ int main(int argc, char *argv[])
 
 	//Backstroke::FullCFG cfg(proc);
 	Backstroke::FilteredCFG cfg(proc);
-	Backstroke::FilteredCFG rvsCfg = cfg;//.makeReverseCopy();
-	rvsCfg.toDot("CFG.dot");
-	buildDominatorTree(rvsCfg);
+	cfg.toDot("CFG.dot");
+	cout << num_vertices(cfg) << endl;
+	//Backstroke::FilteredCFG rvsCfg = cfg;//.makeReverseCopy();
+	//rvsCfg.toDot("CFG.dot");
+	//buildDominatorTree(rvsCfg);
 
 	Backstroke::CDG<Backstroke::FilteredCFG> cdg(cfg);
 	cdg.toDot("CDG.dot");
 
-	VariableRenaming varRenaming(project);
-	varRenaming.run();
-	Backstroke::DDG<Backstroke::FilteredCFG> ddg(cfg, varRenaming);
+	Backstroke::DDG<Backstroke::FilteredCFG> ddg(cfg);
 	ddg.toDot("DDG.dot");
 
-	varRenaming.toFilteredDOT("VariableRenaming.dot");
+	Backstroke::PDG<Backstroke::FilteredCFG> pdg(cfg);
+	pdg.toDot("PDG.dot");
+
+	//varRenaming.toFilteredDOT("VariableRenaming.dot");
 
 	//Backstroke::FilteredCFG rvsCfg = cfg.makeReverseCopy();
 	//rvsCfg.toDot("temp.dot");

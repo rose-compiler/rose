@@ -16,19 +16,11 @@ struct DDGEdge
 {
 	typedef std::vector<SgInitializedName*> VarName;
 
-	// All variable names in data dependence of this edge.
+	//! All variable names in data dependence of this edge.
 	std::vector<VarName> varNames;
 
 	void addVarName(const VarName& varName)
 	{ varNames.push_back(varName); }
-
-	std::string toString() const
-	{
-		std::string str;
-		foreach (const VarName& varName, varNames)
-			str += VariableRenaming::keyToString(varName) + " ";
-		return str;
-	}
 };
 
 
@@ -43,20 +35,20 @@ class DDG : public boost::adjacency_list<boost::setS, boost::vecS, boost::bidire
 public:
 	typedef typename CFGType::CFGNodeType CFGNodeType;
 
-	typedef typename boost::graph_traits<DDG>::vertex_descriptor Vertex;
-	typedef typename boost::graph_traits<DDG>::edge_descriptor Edge;
+	typedef typename boost::graph_traits<DDG<CFGType> >::vertex_descriptor Vertex;
+	typedef typename boost::graph_traits<DDG<CFGType> >::edge_descriptor Edge;
 
 	//! The default constructor.
 	DDG() {}
 
-	//! The constructor building the DDG from a CFG and variable renaming.
-	DDG(const CFGType& cfg, const VariableRenaming& varRenaming)
+	//! The constructor building the DDG from a CFG.
+	DDG(const CFGType& cfg)
 	{
-		buildDDG(cfg, varRenaming);
+		buildDDG(cfg);
 	}
 
-	//! Build the DDG from the given CFG and variable renaming.
-	void buildDDG(const CFGType& cfg, const VariableRenaming& varRenaming);
+	//! Build the DDG from the given CFG.
+	void buildDDG(const CFGType& cfg);
 
 	//! Write the DDG to a dot file.
 	void toDot(const std::string& filename) const;
@@ -72,13 +64,24 @@ protected:
 	//! This function helps to write the DOT file for edges.
 	void writeGraphEdge(std::ostream& out, const Edge& edge) const
 	{
-		out << "[label=\"" << (*this)[edge].toString() << "\"]";
+		std::string str;
+		foreach (const DDGEdge::VarName& varName, (*this)[edge].varNames)
+			str += VariableRenaming::keyToString(varName) + " ";
+		out << "[label=\"" << str << "\"]";
 	}
 };
 
 template <class CFGType>
-void DDG<CFGType>::buildDDG(const CFGType& cfg, const VariableRenaming& varRenaming)
+void DDG<CFGType>::buildDDG(const CFGType& cfg)
 {
+	// Remove all nodes and edges first.
+	this->clear();
+	
+	SgProject* project = SageInterface::getProject();
+	ROSE_ASSERT(project);
+	VariableRenaming varRenaming(project);
+	varRenaming.run();
+
 	std::vector<CFGNodeType> allNodes = cfg.getAllNodes();
 	std::sort(allNodes.begin(), allNodes.end(), 
 		boost::bind(&CFGNodeType::getNode, _1) < boost::bind(&CFGNodeType::getNode, _2));
@@ -92,10 +95,19 @@ void DDG<CFGType>::buildDDG(const CFGType& cfg, const VariableRenaming& varRenam
 	{
 		Vertex src, tar;
 
+		typename std::map<CFGNodeType, Vertex>::iterator iter;
+		bool inserted;
+
 		// Add this node into the DDG.
-		src = boost::add_vertex(*this);
-		verticesAdded.insert(std::make_pair(node, src));
-		(*this)[src] = node;
+		tie(iter, inserted) = verticesAdded.insert(std::make_pair(node, Vertex()));
+		if (inserted)
+		{
+			src = boost::add_vertex(*this);
+			(*this)[src] = node;
+			iter->second = src;
+		}
+		else
+			src = iter->second;
 
 		// Find all defs of this node, and connect them in DDG.
 		VariableRenaming::DefUseTable::const_iterator entry = useTable.find(node.getNode());
@@ -121,9 +133,6 @@ void DDG<CFGType>::buildDDG(const CFGType& cfg, const VariableRenaming& varRenam
 					// For every target node, add it into the DDG.
 					for (;i != j; ++i)
 					{
-						typename std::map<CFGNodeType, Vertex>::iterator iter;
-						bool inserted;
-						
 						tie(iter, inserted) = verticesAdded.insert(std::make_pair(*i, Vertex()));
 						if (inserted)
 						{
