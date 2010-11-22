@@ -275,7 +275,7 @@ public:
      *  Addresses containing instructions that could not be disassembled are added to the optional @p bad map.  Successor
      *  addresses where no disassembly was attempted are added to the optional successors set.
      *
-     *  In essence, this method replaces the old disassembleInterpreation function in the old Disassembler name space, and
+     *  In essence, this method replaces the old disassembleInterpretation function in the old Disassembler name space, and
      *  will probably be the method most often called by other parts of ROSE.  All of its functionality is based on the other
      *  lower-level methods of this class. */
     void disassemble(SgAsmInterpretation*, AddressSet *successors=NULL, BadMap *bad=NULL);
