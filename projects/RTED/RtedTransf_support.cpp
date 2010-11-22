@@ -13,7 +13,6 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-
 // This really belongs in the non-existent DataStructures.cpp
 const std::string &RtedForStmtProcessed::Key = std::string( "Rted::ForStmtProcessed" );
 
