@@ -4,7 +4,7 @@
 #include <errno.h>
 
 static inline void exit(int x) {
-  // asm volatile ("int $0x80; hlt" : : "a" (1), "b" (x));
+  // asm volatile ("int $0x80; hlt" : : "a" (1), "b" (x)); 
   // asm volatile ("jmp 1f; 1: hlt" : : "b" (x));
   asm volatile ("pushl %%ebx\n\t"
                 "movl %1, %%ebx\n\t"
