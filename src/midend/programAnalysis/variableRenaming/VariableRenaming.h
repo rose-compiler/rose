@@ -142,6 +142,23 @@ struct IsDefUseFilter
 		if (isSgInitializedName(node) && cfgn != node->cfgForBeginning())
 			return false;
 
+		//Remove the midde node for logical operators with short circuiting.
+		//E.g. && appears in the CFG between its LHS and RHS operands. We remove it
+		//FIXME: This removes some branches in the CFG. There should be a better way to address this
+		if (isSgAndOp(node) || isSgOrOp(node))
+		{
+			if (cfgn != node->cfgForEnd())
+				return false;
+		}
+
+		//We only want the middle appearance of the teritatry operator - after its conditional expression
+		//and before the true and false bodies. This makes it behave as an if statement for data flow
+		//purposes
+		if (isSgConditionalExp(node))
+		{
+			return cfgn.getIndex() == 1;
+		}
+
 		return true;
 	}
 };
