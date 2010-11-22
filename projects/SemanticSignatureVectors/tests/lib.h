@@ -6,17 +6,23 @@
 static inline void exit(int x) {
   // asm volatile ("int $0x80; hlt" : : "a" (1), "b" (x));
   // asm volatile ("jmp 1f; 1: hlt" : : "b" (x));
-  asm volatile ("int $0x80; hlt"
+  asm volatile ("pushl %%ebx\n\t"
+                "movl %1, %%ebx\n\t"
+                "int $0x80\n\t"
+                "hlt\n\t"
                 :
-                : "a" (1), "b" ((long)x)
+                : "a" (1), "r" ((long)x)
                 );
 }
 
 static inline int raw_write(int fd, const char* buf, unsigned int count) {
   long retval;
-  asm volatile ("int $0x80"
+  asm volatile ("pushl %%ebx\n\t"
+                "movl %1, %%ebx\n\t"
+                "int $0x80\n\t"
+                "popl %%ebx\n\t"
                 : "=a" (retval)
-                : "0" (4), "b" ((long)fd), "c" ((long)buf), "d" ((long)count)
+                : "0" (4), "r" ((long)fd), "c" ((long)buf), "d" ((long)count)
                 );
   return retval;
 }
