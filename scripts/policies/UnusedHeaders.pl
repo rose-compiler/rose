@@ -24,10 +24,13 @@ push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|hpp)$/} FileLis
 # Look for #include statements in all source files and delete the matching entry from %index.
 my $files = FileLister->new(@ARGV);
 while (my $file = $files->next_file) {
-  next unless $file =~ /\.(h|hh|hpp|c|C|cpp)$/; # look only at C/C++ source code
+  next unless $file =~ /\.(h|hh|hpp|c|C|cpp|[fF]\w*)$/; # look only at C/C++/Fortran source code
   if (open FILE, "<", $file) {
     while (<FILE>) {
-      if (my($path,$name) = /^\s*#\s*include\s*["<](.*?)([^\/]*?)[>"]/) {
+      my($path,$name);
+      if ((($path,$name) = /^\s*#\s*include\s*["<](.*?)([^\/]*?)[>"]/) || # C/C++
+	  (($path,$name) = /^\s*include\s*["'](.*?)([^\/]*?)['"]/)) {     # Fortran
+
 	next unless exists $index{lc $name};
 
 	if ($path eq "") {
