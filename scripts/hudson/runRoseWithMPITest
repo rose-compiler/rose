@@ -5,13 +5,13 @@
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
 
 # enable MPI
-MYVER=mpich2/1.1.1p1
-MYBIN=/nfs/apps/${MYVER}/bin
-MYLIB=/nfs/apps/${MYVER}/lib
-PATH=${MYBIN}:${PATH}
-LD_LIBRARY_PATH=${MYLIB}:${LD_LIBRARY_PATH}
-export PATH
-export LD_LIBRARY_PATH
+#MYVER=mpich2/1.1.1p1
+#MYBIN=/nfs/apps/${MYVER}/bin
+#MYLIB=/nfs/apps/${MYVER}/lib
+#PATH=${MYBIN}:${PATH}
+#LD_LIBRARY_PATH=${MYLIB}:${LD_LIBRARY_PATH}
+#export PATH
+#export LD_LIBRARY_PATH
 
 export OMP_NUM_THREADS=1
 

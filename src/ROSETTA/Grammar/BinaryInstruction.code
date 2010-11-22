@@ -1313,7 +1313,7 @@ HEADER_ELF_HEADER_START
 			,ET_LOOS         = 0xfe00	/** OS-specific range start */
 			,ET_HIOS         = 0xfeff	/** OS-specific range end */
 			,ET_LOPROC       = 0xff00	/** Processor-specific range start */
-			,ET_HIPROC       = 0xff00	/** Processor-specific range end */
+			,ET_HIPROC       = 0xffff	/** Processor-specific range end */
 		};
 
 
@@ -1448,7 +1448,7 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 			SHT_GNU_verdef  = 0x6ffffffd,   /**< Symbol Version Definitions [gnu extension] .gnu.version_d */
 			SHT_GNU_verneed = 0x6ffffffe,   /**< Symbol Version Requirements [gnu extension] .gnu.version_r */
 			SHT_GNU_versym  = 0x6fffffff,   /**< Symbol Version Table [gnu extension] .gnu.version */
-			SHT_HIOS        = 0x6fffffff,   /**< End OS specific semantics */
+			SHT_HIOS        = 0x6fffffff,   /**< End OS specific semantics */ 	/*NO_STRINGIFY*/
 
 			SHT_LOPROC      = 0x70000000,	/* Processor specific semantics */
 			SHT_HIPROC      = 0x7fffffff,
@@ -3728,27 +3728,27 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
           enum LESectionFlags {
                SF_RESERVED         = 0xffff0800,   /* Reserved bits (FIXME) */
     
-               SF_READABLE         = 0x00000001,   /* Read permission granted when mapped */
-               SF_WRITABLE         = 0x00000002,   /* Write permission granted when mapped */
-               SF_EXECUTABLE       = 0x00000004,   /* Execute permission granted when mapped */
+               SF_READABLE         = 0x00000001,   /**< Read permission granted when mapped */
+               SF_WRITABLE         = 0x00000002,   /**< Write permission granted when mapped */
+               SF_EXECUTABLE       = 0x00000004,   /**< Execute permission granted when mapped */
     
-               SF_RESOURCE         = 0x00000008,   /* Section contains resource objects */
-               SF_DISCARDABLE      = 0x00000010,   /* Discardable section */
-               SF_SHARED           = 0x00000020,   /* Section is shared */
-               SF_PRELOAD_PAGES    = 0x00000040,   /* Section has preload pages */
-               SF_INVALID_PAGES    = 0x00000080,   /* Section has invalid pages */
+               SF_RESOURCE         = 0x00000008,   /**< Section contains resource objects */
+               SF_DISCARDABLE      = 0x00000010,   /**< Discardable section */
+               SF_SHARED           = 0x00000020,   /**< Section is shared */
+               SF_PRELOAD_PAGES    = 0x00000040,   /**< Section has preload pages */
+               SF_INVALID_PAGES    = 0x00000080,   /**< Section has invalid pages */
 
-               SF_TYPE_MASK        = 0x00000300,
+               SF_TYPE_MASK        = 0x00000300,	/*NO_STRINGIFY*/
                SF_TYPE_NORMAL      = 0x00000000,
-               SF_TYPE_ZERO        = 0x00000100,   /* Section has zero-filled pages */
-               SF_TYPE_RESIDENT    = 0x00000200,   /* Section is resident (valid for VDDs and PDDs only) */
-               SF_TYPE_RESCONT     = 0x00000300,   /* Section is resident and contiguous */
+               SF_TYPE_ZERO        = 0x00000100,   /**< Section has zero-filled pages */
+               SF_TYPE_RESIDENT    = 0x00000200,   /**< Section is resident (valid for VDDs and PDDs only) */
+               SF_TYPE_RESCONT     = 0x00000300,   /**< Section is resident and contiguous */
     
-               SF_RES_LONG_LOCK    = 0x00000400,   /* Section is resident and "long-lockable" (VDDs and PDDs only) */
-               SF_1616_ALIAS       = 0x00001000,   /* 16:16 alias required (80x86 specific) */
-               SF_BIG_BIT          = 0x00002000,   /* Big/default bit setting (80x86 specific); see note above */
-               SF_CODE_CONFORM     = 0x00004000,   /* Section is conforming for code (80x86 specific) */
-               SF_IO_PRIV          = 0x00008000,   /* Section I/O privilege level (80x86 specific; used only for 16:16 alias objects) */
+               SF_RES_LONG_LOCK    = 0x00000400,   /**< Section is resident and "long-lockable" (VDDs and PDDs only) */
+               SF_1616_ALIAS       = 0x00001000,   /**< 16:16 alias required (80x86 specific) */
+               SF_BIG_BIT          = 0x00002000,   /**< Big/default bit setting (80x86 specific); see note above */
+               SF_CODE_CONFORM     = 0x00004000,   /**< Section is conforming for code (80x86 specific) */
+               SF_IO_PRIV          = 0x00008000,   /**< Section I/O privilege level (80x86 specific; used only for 16:16 alias objects) */
              };
 
           SgAsmLESectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);

@@ -26,9 +26,10 @@ distributedScripts =				\
      policies/UnixLineTermination.pl		\
      policies/UnusedHeaders.pl                  \
      policies/UnusedSources.pl                  \
+     rth_run.pl                                 \
+     rth_stats.pl                               \
      runscript					\
      sample_binary_rules.pl			\
-     test_harness.pl				\
      stringify.pl
 
 # scripts put into the distribution

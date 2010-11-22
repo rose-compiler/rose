@@ -99,28 +99,23 @@ MemoryMap::Syntax::print(std::ostream &o) const
 // on the GNU 4.3 and 4.4 compilers for "projects/haskellport".
 void*
 MemoryMap::MapElement::get_base(bool allocate_anonymous) const
-   {
-     if (anonymous)
-        {
-          if (NULL==anonymous->base)
-             {
-               ROSE_ASSERT(NULL==base);
-               base = anonymous->base = new uint8_t[get_size()];
-               memset(anonymous->base, 0, get_size());
-             }
-            else
-             {
-               ROSE_ASSERT(base==anonymous->base);
-             }
-       }
-
-     return base;
-  }
+{
+    if (anonymous) {
+        if (NULL==anonymous->base) {
+            ROSE_ASSERT(NULL==base);
+            base = anonymous->base = new uint8_t[get_size()];
+            memset(anonymous->base, 0, get_size());
+        } else {
+            ROSE_ASSERT(base==anonymous->base);
+        }
+    }
+    return base;
+}
 
 rose_addr_t
-MemoryMap::MapElement::get_va_offset(rose_addr_t va) const
+MemoryMap::MapElement::get_va_offset(rose_addr_t va, size_t nbytes) const
 {
-    if (va<get_va() || va>=get_va()+get_size())
+    if (va<get_va() || va+nbytes>get_va()+get_size())
         throw NotMapped(NULL, va);
     return get_offset() + (va - get_va());
 }
@@ -321,7 +316,6 @@ MemoryMap::insert(MapElement add)
     }
 }
     
-
 void
 MemoryMap::erase(MapElement me)
 {
@@ -716,8 +710,8 @@ MemoryMap::dump(const std::string &basename) const
             while (nremain>0) {
 #ifdef _MSC_VER
                 ssize_t n = 0; 
-				// todo
-				ROSE_ASSERT(false);
+                // todo
+                ROSE_ASSERT(false);
 #else
                 ssize_t n = TEMP_FAILURE_RETRY(::write(fd, ptr, nremain));
 #endif
@@ -747,13 +741,15 @@ MemoryMap::load(const std::string &basename)
     ssize_t nread;
     unsigned nlines=0;
     try {
+        while (
 #ifndef _MSC_VER
-        while (0<(nread=rose_getline(&line, &line_nalloc, f))) {
+               0<(nread=rose_getline(&line, &line_nalloc, f))
 #else
-        while (true) { // error LNK2019: unresolved external symbol "long __cdecl rose_getline(char * *,unsigned int *,struct _iobuf *)"
-	ROSE_ASSERT(false);
+               // error LNK2019: unresolved external symbol "long __cdecl rose_getline(char * *,unsigned int *,struct _iobuf *)"
+               ROSE_ASSERT(false), true
 #endif
-			char *rest, *s=line;
+               ) {
+            char *rest, *s=line;
             nlines++;
 
             /* Check for empty lines and comments */
@@ -767,7 +763,7 @@ MemoryMap::load(const std::string &basename)
             rose_addr_t va = strtoull(s, &rest, 0);
 #else
             rose_addr_t va = 0;
-			ROSE_ASSERT(false);
+            ROSE_ASSERT(false);
 #endif
             if (rest==s || errno)
                 throw Syntax(this, "starting virtual address expected", indexname, nlines, s-line);
@@ -779,10 +775,10 @@ MemoryMap::load(const std::string &basename)
             while (isspace(*s)) s++;
             errno = 0;
 #ifndef _MSC_VER
-			rose_addr_t sz = strtoull(s, &rest, 0);
+            rose_addr_t sz = strtoull(s, &rest, 0);
 #else
             rose_addr_t sz = 0;
-			ROSE_ASSERT(false);
+            ROSE_ASSERT(false);
 #endif
             if (rest==s || errno)
                 throw Syntax(this, "virtual size expected", indexname, nlines, s-line);
@@ -796,7 +792,7 @@ MemoryMap::load(const std::string &basename)
 #ifndef _MSC_VER
                 (void)strtoull(s, &rest, 0);
 #else
-			ROSE_ASSERT(false);
+                ROSE_ASSERT(false);
 #endif
                 if (rest==s || errno)
                     throw Syntax(this, "ending virtual address expected after '='", indexname, nlines, s-line);
@@ -848,7 +844,7 @@ MemoryMap::load(const std::string &basename)
             rose_addr_t offset = strtoull(s, &rest, 0);
 #else
             rose_addr_t offset = 0;
-			ROSE_ASSERT(false);
+            ROSE_ASSERT(false);
 #endif
             if (rest==s || errno)
                 throw Syntax(this, "file offset expected", indexname, nlines, s-line);
@@ -894,11 +890,11 @@ MemoryMap::load(const std::string &basename)
 #ifndef _MSC_VER
                     ssize_t n = TEMP_FAILURE_RETRY(::read(fd, buf+nread, sz-nread));
 #else
-            ssize_t n= 0;
-			ROSE_ASSERT(false);
+                    ssize_t n= 0;
+                    ROSE_ASSERT(false);
 #endif
 
-					if (n<0) {
+                    if (n<0) {
                         close(fd);
                         throw Syntax(this, "read failed from "+filename+": "+strerror(errno), indexname, nlines);
                     }

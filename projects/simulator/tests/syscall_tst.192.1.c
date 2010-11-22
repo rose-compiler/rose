@@ -151,9 +151,14 @@ int main(int argc, char *argv[])
 		if (STD_FUNCTIONAL_TEST) {
 			tst_resm(TINFO, "touching mmaped memory");
 
+#if 1
+                        /* This is faster and also writes to all addresses [RPM 2010-11-16] */
+                        memset(array, 0x96, memsize);
+#else
 			for (i = 0; i < memsize; i++) {
 				array[i] = (char)i;
 			}
+#endif
 
 			/*
 			 * seems that if the map area was bad, we'd get SEGV, hence we can

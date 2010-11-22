@@ -54,7 +54,8 @@
 
 #define MAXNREPS	1000
 #ifndef CONFIG_COLDFIRE
-#define MAXNPROCS	 1000000	/* This value is set to an arbitrary high limit. */
+//#define MAXNPROCS	 1000000	/* This value is set to an arbitrary high limit. */
+#define MAXNPROCS       100             /* ROSE: be nice to users */
 #else
 #define MAXNPROCS	 100000	/* Coldfire can't deal with 1000000 */
 #endif

@@ -42,6 +42,8 @@ Switches are:
 
 ** "progress" emits a progress report every 10 seconds.
 
+** "signal" shows information about signal handling.
+
 ** "all" turns on all possible debugging switches.
 
 * "--debug" by itself is the same as "--debug=syscall,insn"
@@ -355,6 +357,11 @@ do this:
     
     $ X86SIM_LD_LIBRARY_PATH=somedir ./x86sim a.out
 
+
+To get a specimen core dump upon return from any signal handler, use
+the "--dump=0xdeceaced" switch (as in a deceaced (sic) signal handler).
+
+
 == CROSS PLATFORM ==
 
 Here's how to run a 32-bit specimen on a 64-bit machine that doesn't
@@ -394,3 +401,26 @@ on the 32-bit platform.
               --interp=$LDLINUX --vdso=$VDSO \
               $SPECIMEN
 
+== SIGNAL HANDLING ==
+
+Signals delivered to x86sim will be treated as if they were intended
+for the specimen (x86sim never gets a SIGSEGV anyway ;-).  After the
+OS kernel delivers the signal to x86sim, x86sim will deliver it to the
+specimen. This final delivery always happens between instructions.
+
+We don't yet handle signal stacks, although adding one wouldn't be
+that hard.
+
+Pressing Control-C won't do what usually happens--it won't immediately
+kill x86sim.  Instead, the SIGINT is handled just like the other
+signals in that x86sim will deliver it to the specimen.  Usually the
+specimen will not have a handler registered for SIGINT and x86sim will
+cause the specimen to exit, thus exiting x86sim as well.  If you're
+unable to kill x86sim with a Control-C, try Control-\ or, from another
+terminal, run "kill -SIGKILL PID" where PID is the process ID of
+x86sim (and the specimen).
+
+If x86sim fails an assertion (assert() or ROSE_ASSERT()) it will look
+like the specimen failed the assertion since x86sim traps the signal
+and delivers it to the specimen. This is true of all signals produced
+by x86sim for x86sim.

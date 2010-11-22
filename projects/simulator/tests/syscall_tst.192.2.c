@@ -97,6 +97,7 @@ size_t page_sz;			/* system page size */
 size_t file_sz;			/* mapped file size */
 int fildes;			/* file descriptor for tempfile */
 char Cmd_buffer[BUFSIZ];	/* command buffer to hold test command */
+char Path_name[PATH_MAX];	/* pathname of temporary file */
 
 void setup();			/* Main setup function of test */
 void cleanup();			/* cleanup function for the test */
@@ -173,6 +174,7 @@ int main(int ac, char **av)
 			 * temporary file.  The pattern should not be
 			 * found and the return value should be 1.
 			 */
+#if 0
 			if (system(Cmd_buffer) != 0) {
 				tst_resm(TPASS,
 					 "Functionality of mmap() successful");
@@ -180,6 +182,30 @@ int main(int ac, char **av)
 				tst_resm(TFAIL,
 					 "Specified pattern found in file");
 			}
+#else
+                        /* x86sim doesn't handle clone() yet, so use a more basic method */
+                        int failed = 1;
+                        do {
+                            char buf[4096];
+                            strcpy(buf, Path_name);
+                            strcat(buf, "/");
+                            strcat(buf, TEMPFILE);
+                            int fd = open(buf, O_RDONLY);
+                            if (fd<0) break;
+                            ssize_t nread = read(fd, buf, sizeof buf);
+                            if (12!=nread) break;
+                            close(fd);
+                            buf[nread] = '\0';
+                            failed = NULL!=strstr(buf, "ABC"); /* file contains only ASCII characters */
+                        } while (0);
+                        if (failed) {
+                            tst_resm(TFAIL,
+                                     "Specified pattern found in file");
+                        } else {
+                            tst_resm(TPASS,
+                                     "Functionality of mmap() successful");
+                        }
+#endif
 		} else {
 			tst_resm(TPASS, "call succeeded");
 		}
@@ -211,7 +237,6 @@ int main(int ac, char **av)
 void setup()
 {
 	struct stat stat_buf;
-	char Path_name[PATH_MAX];	/* pathname of temporary file */
 	char write_buf[] = "hello world\n";
 
 	/* capture signals */

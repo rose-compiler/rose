@@ -34,8 +34,10 @@ enum omp_rtl_enum rtl_type;
 #if 0
 #ifdef __cplusplus
 extern "C" {
+/* There appears to be no closing brace for the extern "C". I'm not sure where it was intended to go, so I'm adding it here so
+ * that curly braces balance out. [RPM 2010-11-11] */
+}
 #endif
-
 #endif 
 
 //! return the current runtime library (RTL) type 
