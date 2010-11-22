@@ -282,7 +282,7 @@ public:
 
     /** This class method is for backward compatibility with the disassembleInterpretation() function in the old Disassembler
      *  namespace. It just creates a default Disassembler object, sets its search heuristics to the value specified in the
-     *  SgFile node above the interpretataion (presumably the value set with ROSE's "-rose:disassembler_search" switch),
+     *  SgFile node above the interpretation (presumably the value set with ROSE's "-rose:disassembler_search" switch),
      *  and invokes the disassemble() method. */
     static void disassembleInterpretation(SgAsmInterpretation*);
 
