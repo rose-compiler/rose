@@ -5,12 +5,19 @@
 
 static inline void exit(int x) {
   // asm volatile ("int $0x80; hlt" : : "a" (1), "b" (x));
-  asm volatile ("jmp 1f; 1: hlt" : : "b" (x));
+  // asm volatile ("jmp 1f; 1: hlt" : : "b" (x));
+  asm volatile ("int $0x80; hlt"
+                :
+                : "a" (1), "b" ((long)x)
+                );
 }
 
 static inline int raw_write(int fd, const char* buf, unsigned int count) {
-  int retval;
-  asm volatile ("int $0x80" : "=a" (retval) : "a" (4), "b" (fd), "c" (buf), "d" (count));
+  long retval;
+  asm volatile ("int $0x80"
+                : "=a" (retval)
+                : "0" (4), "b" ((long)fd), "c" ((long)buf), "d" ((long)count)
+                );
   return retval;
 }
 
@@ -29,16 +36,24 @@ static inline void print(const char* buf) {
 }
 
 static inline int strlen(const char* c) {
-  unsigned int count = 0xFFFFFFFFU;
-  asm volatile ("repne scasb" : "+S" (c), "+c" (count) : "a" (0));
+  unsigned long count = 0xFFFFFFFFU;
+  asm volatile ("repne scasb"
+                : "+S" ((long)c), "+c" ((long)count)
+                : "a" (0)
+                );
   return -count;
 }
 
 static inline char* strcpy(char* dest, const char* src) {
-  char* oldDest = dest;
-  int len = strlen(src) + 1;
-  asm volatile ("rep movsb" : "+S" (src), "+D" (dest), "+c" (len));
-  return oldDest;
+    long d0, d1, d2;
+    asm volatile("1: lodsb\n\t"
+                 "stosb\n\t"
+                 "testb %%al,%%al\n\t"
+                 "jne 1b"
+                 : "=&S" (d0), "=&D" (d1), "=&a" (d2)
+                 : "0" (src), "1" (dest)
+                 : "memory");
+    return dest;
 }
 
 int main(int argc, char** argv);

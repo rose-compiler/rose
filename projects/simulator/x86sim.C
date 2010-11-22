@@ -8,8 +8,7 @@
 /* Define one CPP symbol to determine whether this simulator can be compiled.  The definition of this one symbol depends on
  * all the header file prerequisites. */
 #if defined(HAVE_ASM_LDT_H) && defined(HAVE_ELF_H) &&                                                                          \
-    defined(HAVE_LINUX_TYPES_H) && defined(HAVE_LINUX_DIRENT_H) && defined(HAVE_LINUX_UNISTD_H) &&                             \
-    defined(HAVE_LINUX_FUTEX_H)
+    defined(HAVE_LINUX_TYPES_H) && defined(HAVE_LINUX_DIRENT_H) && defined(HAVE_LINUX_UNISTD_H)
 #  define ROSE_ENABLE_SIMULATOR
 #else
 #  undef ROSE_ENABLE_SIMULATOR
@@ -28,7 +27,6 @@
 #include <asm/ldt.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/futex.h>
 #include <syscall.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -629,7 +627,7 @@ public:
             uint8_t buf[Len/8];
             size_t nread = map->read(buf, base+offset, Len/8);
             if (nread!=Len/8)
-                throw Signal(SIGBUS);
+                throw Signal(SIGSEGV);
             uint64_t result = 0;
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 result |= buf[j] << i;
@@ -663,8 +661,15 @@ public:
             for (size_t i=0, j=0; i<Len; i+=8, j++)
                 buf[j] = (data.known_value() >> i) & 0xff;
             size_t nwritten = map->write(buf, base+offset, Len/8);
-            if (nwritten!=Len/8)
-                throw Signal(SIGBUS);
+            if (nwritten!=Len/8) {
+                /* Writing to mem that's not mapped results in SIGSEGV; writing to mem that's mapped without write permission
+                 * results in SIGBUS. */
+                if (map->find(base+offset)) {
+                    throw Signal(SIGBUS);
+                } else {
+                    throw Signal(SIGSEGV);
+                }
+            }
         }
     }
 
@@ -2022,11 +2027,12 @@ EmulationPolicy::emulate_syscall()
             uint32_t buf_va=arg(1), size=arg(2);
             char buf[size];
             ssize_t nread = read(fd, buf, size);
-            if (nread<0) {
+            if (-1==nread) {
                 writeGPR(x86_gpr_ax, -errno);
+            } else if (map->write(buf, buf_va, (size_t)nread)!=(size_t)nread) {
+                writeGPR(x86_gpr_ax, -EFAULT);
             } else {
                 writeGPR(x86_gpr_ax, nread);
-                map->write(buf, buf_va, nread);
             }
             syscall_leave("d");
             break;
@@ -2039,12 +2045,15 @@ EmulationPolicy::emulate_syscall()
             size_t size=arg(2);
             uint8_t buf[size];
             size_t nread = map->read(buf, buf_va, size);
-            ROSE_ASSERT(nread==size);
-            ssize_t nwritten = write(fd, buf, size);
-            if (-1==nwritten) {
-                writeGPR(x86_gpr_ax, -errno);
+            if (nread!=size) {
+                writeGPR(x86_gpr_ax, -EFAULT);
             } else {
-                writeGPR(x86_gpr_ax, nwritten);
+                ssize_t nwritten = write(fd, buf, size);
+                if (-1==nwritten) {
+                    writeGPR(x86_gpr_ax, -errno);
+                } else {
+                    writeGPR(x86_gpr_ax, nwritten);
+                }
             }
             syscall_leave("d");
             break;
@@ -2628,7 +2637,7 @@ EmulationPolicy::emulate_syscall()
         case 60: { /* 0x3C, umask */
             /* mode_t umask(mode_t mask);
 
-               umask() sets the calling process’s file mode creation mask (umask) to mask & 0777.
+               umask() sets the calling process' file mode creation mask (umask) to mask & 0777.
  
                This system call always succeeds and the previous value of the mask is returned.
             */
@@ -2755,6 +2764,16 @@ EmulationPolicy::emulate_syscall()
                 map->dump(debug, "    ");
             }
             writeGPR(x86_gpr_ax, 0);
+            syscall_leave("d");
+            break;
+        }
+
+        case 93: { /* 0x5c, ftruncate */
+            syscall_enter("ftruncate", "dd");
+            int fd = arg(0);
+            off_t len = arg(1);
+            int result = ftruncate(fd, len);
+            writeGPR(x86_gpr_ax, -1==result ? -errno : result);
             syscall_leave("d");
             break;
         }
@@ -3438,7 +3457,7 @@ EmulationPolicy::emulate_syscall()
             unsigned rose_perms = ((prot & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
                                   ((prot & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
                                   ((prot & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
-            prot |= PROT_READ | PROT_WRITE | PROT_EXEC; /* ROSE takes care of permissions checking */
+            //prot |= PROT_READ | PROT_WRITE | PROT_EXEC; /* ROSE takes care of permissions checking */
 
             if (!start) {
                 try {
@@ -3724,76 +3743,42 @@ EmulationPolicy::emulate_syscall()
        }
 
         case 240: { /*0xf0, futex*/
+            /* We cannot include <linux/futex.h> portably across a variety of Linux machines. */
             static const Translate opflags[] = {
-#ifdef FUTEX_PRIVATE_FLAG
-                TF(FUTEX_PRIVATE_FLAG),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAIT)
-                TF2(FUTEX_CMD_MASK, FUTEX_WAIT),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAKE)
-                TF2(FUTEX_CMD_MASK, FUTEX_WAKE),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_FD)
-                TF2(FUTEX_CMD_MASK, FUTEX_FD),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_REQUEUE)
-                TF2(FUTEX_CMD_MASK, FUTEX_REQUEUE),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_CMP_REQUEUE)
-                TF2(FUTEX_CMD_MASK, FUTEX_CMP_REQUEUE),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAKE_OP)
-                TF2(FUTEX_CMD_MASK, FUTEX_WAKE_OP),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_LOCK_PI)
-                TF2(FUTEX_CMD_MASK, FUTEX_LOCK_PI),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_UNLOCK_PI)
-                TF2(FUTEX_CMD_MASK, FUTEX_UNLOCK_PI),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_TRYLOCK_PI)
-                TF2(FUTEX_CMD_MASK, FUTEX_TRYLOCK_PI),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAIT_BITSET)
-                TF2(FUTEX_CMD_MASK, FUTEX_WAIT_BITSET),
-#endif
-#if defined(FUTEX_CMD_MASK) && defined(FUTEX_WAKE_BITSET)
-                TF2(FUTEX_CMD_MASK, FUTEX_WAKE_BITSET),
-#endif
-                T_END };
+                TF3(0x80, 0x80, FUTEX_PRIVATE_FLAG),
+                TF3(0x7f, 0, FUTEX_PRIVATE_FLAG),
+                TF3(0x7f, 1, FUTEX_WAKE),
+                TF3(0x7f, 2, FUTEX_FD),
+                TF3(0x7f, 3, FUTEX_REQUEUE),
+                TF3(0x7f, 4, FUTEX_CMP_REQUEUE),
+                TF3(0x7f, 5, FUTEX_WAKE_OP),
+                TF3(0x7f, 6, FUTEX_LOCK_PI),
+                TF3(0x7f, 7, FUTEX_UNLOCK_PI),
+                TF3(0x7f, 8, FUTEX_TRYLOCK_PI),
+                TF3(0x7f, 9, FUTEX_WAIT_BITSET),
+                TF3(0x7f, 10, FUTEX_WAKE_BITSET),
+                T_END
+            };
 
             /* Variable arguments */
             unsigned arg1 = arg(1);
-#ifdef FUTEX_CMD_MASK
-            arg1 &= FUTEX_CMD_MASK;
-#endif
+            arg1 &= 0x7f;
             switch (arg1) {
-#ifdef FUTEX_WAIT
-                case FUTEX_WAIT:
+                case 0: /*FUTEX_WAIT*/
                     syscall_enter("futex", "PfdP--", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
                     break;
-#endif
-#ifdef FUTEX_WAKE
-                case FUTEX_WAKE:
+                case 1: /*FUTEX_WAKE*/
                     syscall_enter("futex", "Pfd---", 4, print_int_32, opflags);
                     break;
-#endif
-#ifdef FUTEX_FD
-                case FUTEX_FD:
+                case 2: /*FUTEX_FD*/
                     syscall_enter("futex", "Pfd---", 4, print_int_32, opflags);
                     break;
-#endif
-#ifdef FUTEX_REQUEUE
-                case FUTEX_REQUEUE:
+                case 3: /*FUTEX_REQUEUE*/
                     syscall_enter("futex", "Pfd-P-", 4, print_int_32, opflags, 4, print_int_32);
                     break;
-#endif
-#ifdef FUTEX_CMP_REQUEUE
-                case FUTEX_CMP_REQUEUE:
+                case 4: /*FUTEX_CMP_REQUEUE*/
                     syscall_enter("futex", "Pfd-Pd", 4, print_int_32, opflags, 4, print_int_32);
                     break;
-#endif
                 default:
                     syscall_enter("futex", "PfdPPd", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
                                   4, print_int_32);
