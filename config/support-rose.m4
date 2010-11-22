@@ -2363,7 +2363,7 @@ AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
 # These headers and types are needed by projects/simulator [matzke 2009-07-02]
-AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h linux/futex.h])
+AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_TYPE(user_desc,
               AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
               [],
