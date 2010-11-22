@@ -13,7 +13,6 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-
 // This really belongs in the non-existent DataStructures.cpp
 const std::string &RtedForStmtProcessed::Key = std::string( "Rted::ForStmtProcessed" );
 
@@ -870,8 +869,8 @@ SgExpression* rted_AddrOf(SgExpression* const exp)
                                                      buildPointerType(buildVoidType())
                                                    );
 
-  // \note I believe that the type of the following cast expression should be
-  //       size_t instead of unsigned long (PP).
+  // \note I believe that the type of the following cast expression should
+  //       be size_t instead of unsigned long (PP).
   return buildCastExp(cast_void_star, buildUnsignedLongType());
 }
 

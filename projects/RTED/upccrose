@@ -44,7 +44,7 @@ if [ "$runtimesystem" != "" ]; then
   g++ -c $runtimesystem
 
   # find the libstdc++ that the C++ compiler would use
-  stdlibfile=`g++ -print-file-name=libstdc++.a`
+  stdlibfile=`g++ --print-file-name=libstdc++.so`
   stdlibdir=`dirname $stdlibfile`
 
   stdlib="-L$stdlibdir -lstdc++"
@@ -56,3 +56,6 @@ upc $newOption -c $inpfiles
 
 echo "upc -o $executable $objfiles $rtedlib $stdlib"
 exec upc -o $executable $objfiles $rtedlib $stdlib
+
+echo "$objfiles"
+rm $objfiles
