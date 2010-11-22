@@ -463,7 +463,12 @@ INPUT                  = \
 			 @top_srcdir@/src/frontend/BinaryFormats/MemoryMap.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeExport.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeFileHeader.C \
-			 @top_srcdir@/src/frontend/BinaryFormats/PeImport.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeImportDirectory.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeImportHNTEntry.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeImportILTEntry.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeImportLookupTable.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeImportSection.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeRvaSizePair.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeSection.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeSectionTable.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/PeStringTable.C \
