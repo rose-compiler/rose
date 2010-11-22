@@ -639,7 +639,7 @@ HEADER_ACCESS_MODIFIER_START
                e_private   = 1,        /*!< private access (local to class members) */
                e_protected = 2,        /*!< protected access (local to class members and membrs of derived classes) */
                e_public    = 3,        /*!< public access (access within enclosing namespace) */
-               e_default   = e_public, /*!< default value (public access) */
+               e_default   = e_public, /*!< default value (public access) */  /*NO_STRINGIFY*/
                e_undefined = 4,        /*!< fortran default value */
                e_last_modifier         /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -969,7 +969,7 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
              {
                e_unknown     = 0,         /*!< error value */
                e_default     = 1,         /*!< Not a special function (default) */
-               e_none        = e_default, /*!< Not a special function (default) */
+               e_none        = e_default, /*!< Not a special function (default) */	/*NO_STRINGIFY*/
                e_constructor = 2,         /*!< A constructor */
                e_destructor  = 3,         /*!< A destructor */
                e_conversion  = 4,         /*!< A conversion operator function */
