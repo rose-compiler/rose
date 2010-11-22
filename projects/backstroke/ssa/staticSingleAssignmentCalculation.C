@@ -22,6 +22,7 @@
 
 using namespace std;
 using namespace ssa_private;
+using namespace boost;
 
 //Initializations of the static attribute tags
 string StaticSingleAssignment::varKeyTag = "ssa_varname_KeyTag";
@@ -116,8 +117,13 @@ void StaticSingleAssignment::run()
 			if (getDebug())
 				cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
 			runDefUseDataFlow(func);
+
+			//We have all the propagated defs, now update the use table
+			buildUseTable(func);
 		}
 	}
+
+
 }
 
 void StaticSingleAssignment::findGlobalVars()
@@ -323,7 +329,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		}
 
 		//Propagate defs to the current node
-		bool changed = defUse(current);
+		bool changed = mergeDefs(current);
 
 		//Get the outgoing edges
 		cfgEdgeVec outEdges = current.outEdges();
@@ -354,24 +360,6 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		//Mark the current node as seen
 		visited.insert(current.getNode());
 	}
-}
-
-bool StaticSingleAssignment::defUse(FilteredCfgNode node)
-{
-	SgNode* current = node.getNode();
-
-	//Handle each type of node
-	if (getDebug())
-		cout << "Performing DefUse on " << 
-				current->class_name() << ", line " << current->get_file_info()->get_line() << ":" << current << endl;
-
-	bool defChanged = mergeDefs(node);
-	resolveUses(node);
-
-	if (getDebug())
-		cout << "Defs were " << ((defChanged) ? "changed." : "same.") << endl;
-
-	return defChanged;
 }
 
 bool StaticSingleAssignment::mergeDefs(FilteredCfgNode curNode)
@@ -455,10 +443,6 @@ bool StaticSingleAssignment::mergeDefs(FilteredCfgNode curNode)
 	{
 		cout << "Defs after Merge..." << endl;
 		printDefs(node);
-	}
-
-	if (getDebug())
-	{
 		printRenameTable();
 	}
 
@@ -502,57 +486,70 @@ void StaticSingleAssignment::aggregatePreviousDefs(FilteredCfgNode curNode, Tabl
 	}
 }
 
-void StaticSingleAssignment::resolveUses(FilteredCfgNode curNode)
+void StaticSingleAssignment::buildUseTable(SgFunctionDefinition* function)
 {
-	SgNode* node = curNode.getNode();
+	set<FilteredCfgNode> worklist;
+	unordered_set<SgNode*> visited;
+	worklist.insert(FilteredCfgNode(function->cfgForBeginning()));
 
-	//We want to resolve the uses at the current node
-	//We need to look to the defs at the current node, and match them
-	//with the uses
-
-	if (getDebug())
-		cout << "Resolving uses at " << node->class_name() << node << endl;
-
-	//Iterate every use at the current node
-	foreach(const TableEntry::value_type& entry, useTable[node])
+	while (!worklist.empty())
 	{
-		const VarName& usedVar = entry.first;
-		//Check the defs that are active at the current node to find the reaching definition
-		//We want to check if there is a definition entry for this use at the current node
-		if (reachingDefsTable[node].find(usedVar) != reachingDefsTable[node].end())
+		FilteredCfgNode cfgNode = *worklist.begin();
+		worklist.erase(worklist.begin());
+		
+		SgNode* node = cfgNode.getNode();
+		visited.insert(node);
+
+		//For every edge, add it to the worklist if it is not seen
+		foreach(const FilteredCfgEdge& edge, cfgNode.outEdges())
 		{
-			//There is a definition entry. Now we want to see if the use is already up to date
-			if (useTable[node][usedVar] != reachingDefsTable[node][usedVar])
+			FilteredCfgNode nextNode = edge.target();
+
+			//Insert the child in the worklist if it hasn't been visited yet
+			if (visited.count(nextNode.getNode()) == 0)
 			{
-				//The use was not up to date, so we update it
-				//Overwrite the use with this definition location(s).
-				useTable[node][usedVar] = reachingDefsTable[node][usedVar];
+				worklist.insert(nextNode);
 			}
 		}
-		else
+
+		//We want to resolve the uses at the current node
+		//We need to look to the defs at the current node, and match them
+		//with the uses
+
+		//Iterate every use at the current node
+		foreach(const TableEntry::value_type& entry, useTable[node])
 		{
-			// There are no defs for this use at this node, this shouldn't happen
-			printf("Error: Found use for the name '%s', but no reaching defs!\n", keyToString(usedVar).c_str());
-			ROSE_ASSERT(false);
+			const VarName& usedVar = entry.first;
+
+			//Check the defs that are active at the current node to find the reaching definition
+			//We want to check if there is a definition entry for this use at the current node
+			if (reachingDefsTable[node].find(usedVar) != reachingDefsTable[node].end())
+			{
+				useTable[node][usedVar] = reachingDefsTable[node][usedVar];
+			}
+			else
+			{
+				// There are no defs for this use at this node, this shouldn't happen
+				printf("Error: Found use for the name '%s', but no reaching defs!\n", keyToString(usedVar).c_str());
+				ROSE_ASSERT(false);
+			}
 		}
-	}
 
-	TableEntry results;
-	//Get the previous defs
-	aggregatePreviousDefs(curNode, results);
+		TableEntry results;
+		//Get the previous defs
+		aggregatePreviousDefs(cfgNode, results);
 
-	//However, if there is a def at the current node, we want to use the previous
-	//def as the use for this node.
-
-	//Iterate every use at the current node
-	foreach(const TableEntry::value_type& entry, useTable[node])
-	{
-		if (originalDefTable[node].count(entry.first) != 0)
+		//If there is a def at the current node, we want to use the previous
+		//def as the use for this node.
+		foreach(const TableEntry::value_type& entry, useTable[node])
 		{
-			useTable[node][entry.first] = results[entry.first];
+			if (originalDefTable[node].count(entry.first) != 0)
+			{
+				useTable[node][entry.first] = results[entry.first];
 
-			if (getDebug())
-				cout << "Fixed use of local def." << endl;
+				if (getDebug())
+					cout << "Fixed use of local def." << endl;
+			}
 		}
 	}
 }
