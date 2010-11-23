@@ -179,6 +179,12 @@ struct IsDefUseFilter
 			return cfgn.getIndex() == 1;
 		}
 
+		//We only want the beginning of a function definition (else we propagate defs from the end of the function)
+		if (isSgFunctionDefinition(node) && cfgn == node->cfgForEnd())
+		{
+			return false;
+		}
+
 		return true;
 	}
 };
