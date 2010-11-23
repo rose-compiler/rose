@@ -773,6 +773,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
   /*tps 11/23/2010 : temp fix for stringifySgAsmGenericSectionSectionPurpose not defined under windows */
 #ifdef _MSC_VER
     std::string purpose = "";
+    ROSE_ASSERT(false);
 #else
     std::string purpose = stringifySgAsmGenericSectionSectionPurpose(p_purpose);
 #endif
