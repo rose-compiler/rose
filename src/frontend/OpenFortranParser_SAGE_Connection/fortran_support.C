@@ -1426,8 +1426,14 @@ buildNumericLabelSymbol(Token_t* label)
   // preivously seen statement or a statement we will see in the future.
 
      ROSE_ASSERT(label != NULL);
-     ROSE_ASSERT(label->line > 0);
      ROSE_ASSERT(label->text != NULL);
+
+  // DQ (11/22/2010): This is a bug in OFP, but I have to work around it for now.
+     if (label->line == 0)
+        {
+          printf ("Error (OFP bug): label->line == 0 for label->text = %s \n",label->text);
+        }
+  // ROSE_ASSERT(label->line > 0);
 
      SgLabelSymbol* returnSymbol = NULL;
 
