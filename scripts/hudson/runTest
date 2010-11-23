@@ -169,7 +169,7 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
 NODE_NAME=`uname -n`
 # tps : 11/12/10 : Admins are installing openGL on hudson machines. Enabled openGL thereafter. Should pass.
 # tps : It seems opengl is not properly installed on the hudson-rose node. Skip the test on this node for now.
-if test \! \( "$MACHINE" = "i686" -o "$NODE_NAME" = "hudson-rose.llnl.gov"  -o "$NODE_NAME" = "hudson-rose-07.llnl.gov" -o "$NODE_NAME" = "hudson-rose-08.llnl.gov" \) ; then
+if test \! \( "$MACHINE" = "i686" -o "$NODE_NAME" = "hudson-rose.llnl.gov"  -o "$NODE_NAME" = "hudson-rose-07.llnl.gov" -o "$NODE_NAME" = "hudson-rose-08.llnl.gov"  -o "$NODE_NAME" = "hudson-rose-13.llnl.gov" -o "$NODE_NAME" = "hudson-rose-14.llnl.gov" -o "$NODE_NAME" = "hudson-rose-15.llnl.gov" -o "$NODE_NAME" = "hudson-rose-16.llnl.gov"\) ; then
 	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
 fi
 # tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
@@ -181,13 +181,6 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 fi
 fi
 
-
-if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" \) ; then
-# test 32bit version of RTED as well
-if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
-	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
-fi
-fi
 
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
 

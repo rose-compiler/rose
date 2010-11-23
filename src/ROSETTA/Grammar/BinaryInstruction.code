@@ -862,8 +862,8 @@ HEADER_GENERIC_SECTION_START
 			SP_OTHER                	/* File-specified purpose other than any given in this enum */
 		};
 
-   // DQ (10/20/2010): Moved this function's definition to the source file.
-      SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr);
+		// DQ (10/20/2010): Moved this function's definition to the source file.
+		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr);
 
 		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
 		virtual ~SgAsmGenericSection();
@@ -872,8 +872,8 @@ HEADER_GENERIC_SECTION_START
 			const SgAsmGenericSectionPtrList&);
 		void grab_content();
 
-   // DQ (10/20/2010): Moved this function's definition to the source file.
-      virtual SgAsmGenericSection* parse();
+		// DQ (10/20/2010): Moved this function's definition to the source file.
+		virtual SgAsmGenericSection* parse();
 
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual bool reallocate() {return false;}
@@ -940,10 +940,8 @@ HEADER_GENERIC_SECTION_START
 		/* Convenience functions */
 		ExtentPair get_file_extent() const;		/* Returns get_offset() and get_size() */
 		ExtentPair get_mapped_preferred_extent() const; /* Returns get_mapped_preferred_rva() and get_mapped_size() */
+		bool align();					/* Increase file offset and mapping rva to satisfy constraints */
 
-		// PC (05/16/2010): Commented out as no definition exists
-		// bool is_content_writable() const;               /** Returns true if a contents are writable. i.e. local_data_pool!=NULL */
-		static std::string to_string(SgAsmGenericSection::SectionPurpose);
 	protected:
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
 
@@ -1315,7 +1313,7 @@ HEADER_ELF_HEADER_START
 			,ET_LOOS         = 0xfe00	/** OS-specific range start */
 			,ET_HIOS         = 0xfeff	/** OS-specific range end */
 			,ET_LOPROC       = 0xff00	/** Processor-specific range start */
-			,ET_HIPROC       = 0xff00	/** Processor-specific range end */
+			,ET_HIPROC       = 0xffff	/** Processor-specific range end */
 		};
 
 
@@ -1450,7 +1448,7 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 			SHT_GNU_verdef  = 0x6ffffffd,   /**< Symbol Version Definitions [gnu extension] .gnu.version_d */
 			SHT_GNU_verneed = 0x6ffffffe,   /**< Symbol Version Requirements [gnu extension] .gnu.version_r */
 			SHT_GNU_versym  = 0x6fffffff,   /**< Symbol Version Table [gnu extension] .gnu.version */
-			SHT_HIOS        = 0x6fffffff,   /**< End OS specific semantics */
+			SHT_HIOS        = 0x6fffffff,   /**< End OS specific semantics */ 	/*NO_STRINGIFY*/
 
 			SHT_LOPROC      = 0x70000000,	/* Processor specific semantics */
 			SHT_HIPROC      = 0x7fffffff,
@@ -2431,18 +2429,32 @@ HEADER_PE_RVA_SIZE_PAIR_START
 # pragma pack ()
 #endif
 
-		explicit SgAsmPERVASizePair(const SgAsmPERVASizePair::RVASizePair_disk *disk)
+		SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, const SgAsmPERVASizePair::RVASizePair_disk *disk)
 			: p_e_rva(0), p_e_size(0), p_section(NULL) {
-			ctor(disk);
+			ctor(parent, disk);
 		}
+
+		SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size)
+			: p_e_rva(0), p_e_size(0), p_section(NULL) {
+			ctor(parent, rva, size);
+		}
+
+		void set_section(SgAsmGenericSection *section);
+		SgAsmGenericSection *get_section() const;
+
 		void *encode(SgAsmPERVASizePair::RVASizePair_disk *disk) const;
 	private:
-		void ctor(const SgAsmPERVASizePair::RVASizePair_disk*);
+		void ctor(SgAsmPERVASizePairList *parent, const SgAsmPERVASizePair::RVASizePair_disk*);
+		void ctor(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size);
 HEADER_PE_RVA_SIZE_PAIR_END
 
 
 
 HEADER_PE_RVA_SIZE_PAIR_LIST_START
+	public:
+		explicit SgAsmPERVASizePairList(SgAsmPEFileHeader *parent) {
+			set_parent(parent);
+		}
 HEADER_PE_RVA_SIZE_PAIR_LIST_END
 
 
@@ -2573,6 +2585,25 @@ HEADER_PE_FILE_HEADER_START
 			DLL_RESERVED_MASK   = 0xfff0        /* Reserved bits */
 		};
 
+		/** Reason for each rva/size pair in the PE header. */
+		enum PairPurpose {		// Values are important
+			PAIR_EXPORTS		= 0,
+			PAIR_IMPORTS		= 1,
+			PAIR_RESOURCES		= 2,
+			PAIR_EXCEPTIONS 	= 3,
+			PAIR_CERTIFICATES	= 4,
+			PAIR_BASERELOCS		= 5,
+			PAIR_DEBUG		= 6,
+			PAIR_ARCHITECTURE	= 7,
+			PAIR_GLOBALPTR		= 8,
+			PAIR_TLS		= 9,	// Thread local storage
+			PAIR_LOADCONFIG		= 10,
+			PAIR_BOUNDIMPORT	= 11,
+			PAIR_IAT		= 12,	// Import address table
+			PAIR_DELAYIMPORT	= 13,	// Delay import descriptor
+			PAIR_CLRRUNTIME		= 14,	// CLR(?) runtime header
+			PAIR_RESERVED15		= 15	// Reserved (always zero according to specification)
+		};
 	public:
 		explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
 			: SgAsmGenericHeader(f), p_loader_map(NULL), p_section_table(NULL), p_coff_symtab(NULL)
@@ -2581,6 +2612,9 @@ HEADER_PE_FILE_HEADER_START
 
 		virtual const char *format_name() const {return "PE";}
 		static bool is_PE (SgAsmGenericFile*);
+		std::string rvasize_pair_name(PairPurpose);
+		void set_rvasize_pair(PairPurpose, SgAsmPESection*);
+		void update_rvasize_pairs();
 		void add_rvasize_pairs();
 
 		virtual SgAsmPEFileHeader *parse();
@@ -2635,19 +2669,24 @@ HEADER_PE_IMPORT_DIRECTORY_START
 # pragma pack ()
 #endif
 
-		SgAsmPEImportDirectory(SgAsmPEImportSection *isec, size_t idx, rose_addr_t *rva_p)
-			{ctor(isec,idx,rva_p);}
+		explicit SgAsmPEImportDirectory(SgAsmPEImportSection *isec, std::string dll_name="")
+			: p_ilt_rva(0), p_ilt(NULL), p_time(0), p_forwarder_chain(0), p_dll_name_rva(0),
+			p_dll_name(0), p_iat_rva(0), p_iat(NULL) {
+			ctor(isec, dll_name);
+		}
+		SgAsmPEImportDirectory *parse(rose_addr_t va);
+		size_t reallocate(rose_rva_t starting_rva);
 		void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
-		virtual void unparse(std::ostream&, const SgAsmPEImportSection*) const;
+		virtual void unparse(std::ostream&, const SgAsmPEImportSection*, size_t idx) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmPEImportSection*, size_t idx, rose_addr_t *rva_p);
+		void ctor(SgAsmPEImportSection*, const std::string &dll_name);
 HEADER_PE_IMPORT_DIRECTORY_END
 
 
 
 HEADER_PE_IMPORT_ILT_ENTRY_START
-	// PE -> Import Table -> Import Lookup Table -> Entry
+	// PE -> Import Table -> Import Lookup or Address Table -> Entry
 	public:
 		enum ILTEntryType {
 			ILT_ORDINAL,			/* Entry is an ordinal */
@@ -2655,13 +2694,19 @@ HEADER_PE_IMPORT_ILT_ENTRY_START
 			ILT_BOUND_RVA,			/* Entry is the actual memory address of the symbol */
 		};
 
-		SgAsmPEImportILTEntry(SgAsmPEImportSection *isec, uint64_t entry_word)
-			{ctor(isec,entry_word);}
+		explicit SgAsmPEImportILTEntry(SgAsmPEImportLookupTable *ilt)
+			: p_entry_type(ILT_ORDINAL), p_ordinal(0), p_hnt_entry_rva(0), p_hnt_entry(NULL),
+			  p_bound_rva(0), p_extra_bits(0) {
+			ctor(ilt);
+		}
+
+		SgAsmPEImportILTEntry *parse(uint64_t entry_word);
+		void point_to_hnt(SgAsmPEImportHNTEntry*);
 		uint64_t encode(const SgAsmPEFileHeader*) const;
 		void unparse(std::ostream&, const SgAsmPEFileHeader *fhdr, rose_rva_t rva, size_t idx) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmPEImportSection*, uint64_t);
+		void ctor(SgAsmPEImportLookupTable*);
 HEADER_PE_IMPORT_ILT_ENTRY_END
 
 
@@ -2670,14 +2715,28 @@ HEADER_PE_IMPORT_LOOKUP_TABLE_START
 	// PE -> Import Table -> Import Lookup Table   or
 	// PE -> Import Table -> Import Address Table
 	public:
-		SgAsmPEImportLookupTable(SgAsmPEImportSection *isec, rose_rva_t table_rva, size_t idir_idx, bool is_iat=false)
-			: p_entries(NULL)
-			{ctor(isec, table_rva, idir_idx, is_iat);}
-		void add_ilt_entry(SgAsmPEImportILTEntry*);
+		/** This class represents import lookup tables or import address tables. */
+		enum TableKind {
+			ILT_LOOKUP_TABLE,
+			ILT_ADDRESS_TABLE
+		};
+
+		explicit SgAsmPEImportLookupTable(SgAsmPEImportDirectory *idir, TableKind tkind)
+			: p_table_kind(tkind), p_entries(NULL) {
+			ctor(idir);
+		}
+
+		SgAsmPEImportLookupTable *parse(rose_rva_t table_rva, size_t idir_idx);
+
+		size_t add_entry(SgAsmPEImportILTEntry*, size_t idx=(size_t)(-1));
+		size_t add_name(const std::string &name, size_t hint=0, size_t idx=(size_t)(-1));
+		size_t add_address(rose_rva_t rva, size_t idx=(size_t)(-1));
+
+		size_t reallocate(rose_rva_t start_rva);
 		virtual void unparse(std::ostream&, const SgAsmPEFileHeader*, rose_rva_t) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmPEImportSection*, rose_rva_t table_rva, size_t idir_idx, bool is_iat);
+		void ctor(SgAsmPEImportDirectory*);
 HEADER_PE_IMPORT_LOOKUP_TABLE_END
 
 
@@ -2685,12 +2744,20 @@ HEADER_PE_IMPORT_LOOKUP_TABLE_END
 HEADER_PE_IMPORT_HNT_ENTRY_START
 	// PE -> Import Table -> Hint/Name Table -> Entry
 	public:
-		explicit SgAsmPEImportHNTEntry(SgAsmPEImportSection *isec, rose_rva_t offset)
-			{ctor(isec, offset);}
+		explicit SgAsmPEImportHNTEntry(SgAsmPEImportILTEntry *ilt_entry)
+			: p_hint(0), p_name(NULL), p_padding(0) {
+			ctor(ilt_entry, "");
+		}
+		SgAsmPEImportHNTEntry(SgAsmPEImportILTEntry *ilt_entry, const std::string &name, unsigned hint)
+			: p_hint(hint), p_name(NULL), p_padding(0) {
+			ctor(ilt_entry, name);
+		}
+		SgAsmPEImportHNTEntry *parse(rose_rva_t);
+		size_t encoded_size();
 		void unparse(std::ostream&, rose_rva_t rva) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmPEImportSection*, rose_rva_t offset);
+		void ctor(SgAsmPEImportILTEntry*, std::string name="");
 HEADER_PE_IMPORT_HNT_ENTRY_END
 
 
@@ -2701,9 +2768,12 @@ HEADER_PE_IMPORT_SECTION_START
 			: SgAsmPESection(fhdr)
 			{ctor();}
 		virtual SgAsmPEImportSection *parse();
+		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		void add_import_directory(SgAsmPEImportDirectory*);
+		void remove_import_directory(SgAsmPEImportDirectory*);
+		static bool import_mesg(const char *fmt, ...);
 	private:
 		void ctor();
 HEADER_PE_IMPORT_SECTION_END
@@ -3658,27 +3728,27 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
           enum LESectionFlags {
                SF_RESERVED         = 0xffff0800,   /* Reserved bits (FIXME) */
     
-               SF_READABLE         = 0x00000001,   /* Read permission granted when mapped */
-               SF_WRITABLE         = 0x00000002,   /* Write permission granted when mapped */
-               SF_EXECUTABLE       = 0x00000004,   /* Execute permission granted when mapped */
+               SF_READABLE         = 0x00000001,   /**< Read permission granted when mapped */
+               SF_WRITABLE         = 0x00000002,   /**< Write permission granted when mapped */
+               SF_EXECUTABLE       = 0x00000004,   /**< Execute permission granted when mapped */
     
-               SF_RESOURCE         = 0x00000008,   /* Section contains resource objects */
-               SF_DISCARDABLE      = 0x00000010,   /* Discardable section */
-               SF_SHARED           = 0x00000020,   /* Section is shared */
-               SF_PRELOAD_PAGES    = 0x00000040,   /* Section has preload pages */
-               SF_INVALID_PAGES    = 0x00000080,   /* Section has invalid pages */
+               SF_RESOURCE         = 0x00000008,   /**< Section contains resource objects */
+               SF_DISCARDABLE      = 0x00000010,   /**< Discardable section */
+               SF_SHARED           = 0x00000020,   /**< Section is shared */
+               SF_PRELOAD_PAGES    = 0x00000040,   /**< Section has preload pages */
+               SF_INVALID_PAGES    = 0x00000080,   /**< Section has invalid pages */
 
-               SF_TYPE_MASK        = 0x00000300,
+               SF_TYPE_MASK        = 0x00000300,	/*NO_STRINGIFY*/
                SF_TYPE_NORMAL      = 0x00000000,
-               SF_TYPE_ZERO        = 0x00000100,   /* Section has zero-filled pages */
-               SF_TYPE_RESIDENT    = 0x00000200,   /* Section is resident (valid for VDDs and PDDs only) */
-               SF_TYPE_RESCONT     = 0x00000300,   /* Section is resident and contiguous */
+               SF_TYPE_ZERO        = 0x00000100,   /**< Section has zero-filled pages */
+               SF_TYPE_RESIDENT    = 0x00000200,   /**< Section is resident (valid for VDDs and PDDs only) */
+               SF_TYPE_RESCONT     = 0x00000300,   /**< Section is resident and contiguous */
     
-               SF_RES_LONG_LOCK    = 0x00000400,   /* Section is resident and "long-lockable" (VDDs and PDDs only) */
-               SF_1616_ALIAS       = 0x00001000,   /* 16:16 alias required (80x86 specific) */
-               SF_BIG_BIT          = 0x00002000,   /* Big/default bit setting (80x86 specific); see note above */
-               SF_CODE_CONFORM     = 0x00004000,   /* Section is conforming for code (80x86 specific) */
-               SF_IO_PRIV          = 0x00008000,   /* Section I/O privilege level (80x86 specific; used only for 16:16 alias objects) */
+               SF_RES_LONG_LOCK    = 0x00000400,   /**< Section is resident and "long-lockable" (VDDs and PDDs only) */
+               SF_1616_ALIAS       = 0x00001000,   /**< 16:16 alias required (80x86 specific) */
+               SF_BIG_BIT          = 0x00002000,   /**< Big/default bit setting (80x86 specific); see note above */
+               SF_CODE_CONFORM     = 0x00004000,   /**< Section is conforming for code (80x86 specific) */
+               SF_IO_PRIV          = 0x00008000,   /**< Section I/O privilege level (80x86 specific; used only for 16:16 alias objects) */
              };
 
           SgAsmLESectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
@@ -3752,7 +3822,8 @@ HEADER_DOS_HEADER_START
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual const char *format_name() const {return "DOS";}
-		SgAsmGenericSection *add_rm_section(rose_addr_t max_offset=0);
+		SgAsmGenericSection *parse_rm_section(rose_addr_t max_offset=0);
+		void update_from_rm_section();
 		static bool is_DOS(SgAsmGenericFile*);
 	private:
 		void ctor();
@@ -3914,23 +3985,46 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 	 *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
 	 *  instructions into functions. */
         enum FunctionReason {
-                FUNC_NONE        = 0x000,               /**< Used for initialization; not a bit flag */
-                FUNC_ENTRY_POINT = 0x001,               /**< An entry point specified in the file header */
-                FUNC_CALL_TARGET = 0x002,               /**< Target of a CALL-like instruction */
-                FUNC_EH_FRAME    = 0x004,               /**< Address mentioned in the ELF .eh_frame section */
-                FUNC_SYMBOL      = 0x008,               /**< Address of a function symbol in a symbol table */
-                FUNC_PATTERN     = 0x010,               /**< Appears to be a function based on pattern of instructions */
-                FUNC_GRAPH       = 0x020,               /**< Implied by inter-basicblock branching */
-                FUNC_USERDEF     = 0x040,               /**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
-		FUNC_INTERPAD    = 0x080,		/**< Created to represent NOP padding between other functions. */
-		FUNC_DISCONT     = 0x100,		/**< Blocks of function are not contiguous in memory. */
-		FUNC_INSNHEAD    = 0x200,		/**< For initial instructions not in any other function (is always run) */
-		FUNC_IMPORT      = 0x400,		/**< Functions dynamically linked */
-		FUNC_LEFTOVERS   = 0x800,		/**< Generated function to hold blocks that are otherwise not part of
-							 *   any function.  If this bit is turned off then the instruction
-							 *   Partitioner will delete instructions that it couldn't assign to
-							 *   a function. */
-                FUNC_DEFAULT     = 0xfff                /**< Default value for Partitioner class */
+                FUNC_NONE        = 0x0000,	/**< Used for initialization; not a bit flag. */
+                FUNC_ENTRY_POINT = 0x0001,      /**< An entry point specified in the file header. */
+                FUNC_CALL_TARGET = 0x0002,	/**< Target of a function call instruction sequence in the CFG. When used as
+						 *   a partitioning heuristic, the partitioner will create new functions when
+						 *   it discovers a call-like sequence while traversing the CFG. */
+		FUNC_CALL_INSN   = 0x0004,	/**< Target of call, possibly not in the CFG (see Partitioner::mark_call_insns).
+						 *   When used as a partitioning heuristic, the partitioner will search all
+						 *   available instructions for instances of call-like instructions and define
+						 *   a function for each target. The function entry points added in this way
+						 *   become initial nodes of the CFG which is used by some of
+						 *   the other function discovery methods, including FUNC_CALL_TARGET. */
+                FUNC_EH_FRAME    = 0x0008,	/**< Address mentioned in the ELF .eh_frame section. */
+                FUNC_SYMBOL      = 0x0010,	/**< Address of a function symbol in a symbol table. */
+                FUNC_PATTERN     = 0x0020,	/**< Appears to be a function based on pattern of instructions. When used as
+						 *   a partitioning heuristic, the partitioner will search through all available
+						 *   instructions and create function entry points. The function entry points are
+						 *   added to the CFG which is used by some of the other function discovery
+						 *   methods. */
+                FUNC_GRAPH       = 0x0040,	/**< Implied by inter-basicblock branching. When used as a partitioning
+						 *   heuristic, the partitioner creates a new function when it discovers, by
+						 *   CFG traversal, that two different functions branch to a common basic block.
+						 *   The block in common becomes a new function under this rule. */
+                FUNC_USERDEF     = 0x0080,	/**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
+		FUNC_INTERPAD    = 0x0100,	/**< Created to represent NOP padding between other functions. When used as a
+						 *   partitioning heuristic, the partitioner searches for padding after all
+						 *   CFG-based analysis has completed.  Padding can consist of either NOP
+						 *   instructions or zero bytes. The former requires that instructions at the
+						 *   interfunction addresses have been disassembled. */
+		FUNC_DISCONT     = 0x0200,	/**< Blocks of function are not contiguous in memory. This is not a partitioner
+						 *   heuristic, but rather only an indication of whether the function's basic
+						 *   blocks occupy contiguous memory locations. */
+		FUNC_INSNHEAD    = 0x0400,	/**< Initial instructions not in any other function. (UNUSED?) */
+		FUNC_IMPORT      = 0x0800,	/**< Functions dynamically linked. For ELF containers, these are the entries
+						 *   in the procedure lookup table (PLT). When used as a partitioning heuristic,
+						 *   the partitioner will scan the PLT and define a function for each entry. */
+		FUNC_LEFTOVERS   = 0x1000,	/**< Generated function to hold blocks that are otherwise not part of
+						 *   any function.  If this bit is turned off then the instruction
+						 *   Partitioner will delete instructions that it couldn't assign to
+						 *   a function. */
+                FUNC_DEFAULT     = 0x1fff       /**< Default value for Partitioner class. */
         };
 
       /** Returns a very short string describing the reason mask. */

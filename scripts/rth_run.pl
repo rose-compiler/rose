@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-test_harness - harness for running ROSE tests from a makefile
+rth_run - runs a test using the ROSE test harness
 
 =head1 SYNOPSIS
 
-test_harness [SWITCHES...] [VAR=VALUE...] CONFIG_FILE MAKE_TARGET
+rth_run [SWITCHES...] [VAR=VALUE...] CONFIG_FILE MAKE_TARGET
 
 =head1 FEATURES
 
@@ -160,7 +160,7 @@ The name of the target without directory components and without the ".passed" or
 =item srcdir, top_srcdir, VALGRIND, BINARY_SAMPLES, ...
 
 These variables, and perhaps others, are passed to all invocations of the test harness when run from ROSE makefiles with the
-$(TH) variable.
+$(RTH_RUN) variable.
 
 =back
 
@@ -168,14 +168,14 @@ $(TH) variable.
 
 Each test has a makefile target. If the test is named "foo" then the target is "foo.passed" and this file is created when the
 test passes.  A number of configuration variables are passed to the test harness and the harness script and standard variables
-together are stored in the $(TH) makefile variable.
+together are stored in the $(RTH_RUN) makefile variable.
 
 A simple makefile rule for a single test, depending on the configuration file stored in the source tree ("foo.conf"), and an
 executable stored in the build tree ("foo"). When the base name of the target is the same as the base name of the configuration
 file, the $@ argument is not necessary.
 
     foo.passed: foo.conf foo
-            @$(TH) $< $@
+            @$(RTH_RUN) $< $@
 
 A more complex example uses a single configuration file for multiple tests and distinguishes between the tests by setting
 variables on the command line.  This can only be done if the configuration file doesn't use the "may_fail=promote" property.
@@ -184,7 +184,7 @@ variables on the command line.  This can only be done if the configuration file 
     TESTS=$(addsuffix .passed, $(EXECUTABLES))
 
     $(TESTS): %.passed: % main.conf
-            @$(TH) EXE=$< main.conf $@
+            @$(RTH_RUN) EXE=$< main.conf $@
 
 =head1 TIPS AND TRICKS
 
@@ -199,11 +199,11 @@ supplying a file name for the "may_fail" property. See above.
 When using the "may_fail=promote" property, one can determine which tests have been promoted from "may fail" to "must pass"
 status by asking git about which configuration files have changed.
 
-Sometimes the category of test ("may-fail" or "must-pass") depends on configuration information, such as which version of a
-library is used.  There are two ways to handle this: place the configuration files in a directory whose name depends on the
-configuration information, or have one set of configuration files whose may_fail properties point to a file whose name depends
-on the configuration information.  The latter approach reduces cut-n-paste in the configuration files, but can result in more
-contention for the may_fail properties file in parallel runs.
+Sometimes the category of test ("may-fail" or "must-pass") depends on project configuration information, such as which version
+of a library is used.  There are two ways to handle this: place the test harness configuration files in a directory whose name
+depends on the project configuration information, or have one set of test harness configuration files whose may_fail properties
+point to files whose names depend on the configuration information.  The latter approach reduces the number of cut-n-pasted
+test harness configuration files.
 
 Normally, the test harness will abort the test if one of the commands in the configuration file exits with a non-zero
 status.  To avoid this, append "; true" to the end of the command.  It's also possible to invert the sense of the failure
@@ -218,17 +218,19 @@ links, which "make" will treat as being out of date.
 =head1 BUGS
 
 No attempt is made to discover whether multiple concurrent tests try to update a single config file at the same time (when a
-test is promoted from "may-fail" to "must-pass").  When concurrent tests share a single config file and use this auto-promotion
-feature, they must specify a separate file to contain the state of each target. See the "may_fail" property above.
+test is promoted from the "may-fail" to "must-pass" state).  When concurrent tests share a single config file and use this
+auto-promotion feature, they must specify a separate file(s) to contain the may-fail state of the targets.  See the "may_fail"
+property above.
 
-File locking depends on being able to created multiple hard links to a file. If this is not possible then the locking mechanism
-might fail to behave properly.
+File locking depends on being able to create multiple hard links to a file. If this is not possible then the locking mechanism
+might fail to behave properly and the may_fail file could become corrupted.
 
 Output from the test is organized in such a way that the standard output all appears before the standard error. It would be
 more intuitive if the file contained output in more or less the order it was generated.
 
 Output is left in a *.passed or *.failed file. This makes it difficult to write makefile rules for tests that don't depend on
-each other's success or failure, but must depend on each other in order to achieve serial execution.
+each other's success or failure, but must depend on each other in order to achieve serial execution in an otherwise parallel
+make.
 
 =head1 AUTHOR
 
@@ -394,7 +396,8 @@ if ($config{may_fail} eq 'yes') {
   die "$0: $file: not readable\n" unless -r $file;
   my $lock = -w $file ? "$file.lck" : "";
 
-  # Obtain the lock if necessary.
+  # Obtain the lock if necessary.  If we can't write to the file then assume that nobody else is changing it either,
+  # in which case we don't need exclusive access to read it.
   if ($lock) {
     my($prelock,$ntries) = ("$lock.$$", 120);
     open LOCK, ">", $prelock or die "$0: $prelock: $!\n";
@@ -410,7 +413,7 @@ if ($config{may_fail} eq 'yes') {
     unlink $prelock;
   }
 
-  # Read the file
+  # Read the file or die trying.
   my %may_fail = ($target => $default);
   open MAY_FAIL, "<", $file or do {
     unlink $lock;
@@ -422,7 +425,7 @@ if ($config{may_fail} eq 'yes') {
   }
   close MAY_FAIL;
 
-  # Modify the file if necesssary (keeping it sorted is optional, but nice)
+  # Modify the file if necessary (keeping it sorted is optional, but nice)
   if ($may_fail{$target} eq 'yes') {
     $ignored_failure = 1 if $status;
     $status = 0;
@@ -430,7 +433,7 @@ if ($config{may_fail} eq 'yes') {
     if ($status) {
       $ignored_failure = 1 if $status;
       $status = 0;
-    } else {
+    } elsif ($lock) {
       $may_fail{$target} = 'no';
       open MAY_FAIL, ">", $file or do {
 	unlink $lock;
@@ -438,11 +441,15 @@ if ($config{may_fail} eq 'yes') {
       };
       print MAY_FAIL $_, " ", $may_fail{$_}, "\n" for sort keys %may_fail;
       close MAY_FAIL;
+    } else {
+      # Test may-fail value is "promote" and the test passed. We'd like to promote the test to "must-pass", but we can't
+      # write to the file containing the may-fail properties ($file).  Therefore, don't promote, just complain.
+      print STDERR "$target: $file: read-only file, not promoting test to must-pass status.\n";
     }
   }
 
   # Release the lock
-  unlink $lock;
+  unlink $lock if $lock;
 }
 print "$target: ignoring failure\n" if $ignored_failure;
 
@@ -457,6 +464,7 @@ for my $output ($cmd_stdout, $cmd_stderr) {
     }
     close OUTPUT;
     unlink $output;
+    print TARGET "======== CUT ========\n";
   }
 }
 close TARGET;
@@ -467,6 +475,17 @@ if ($status) {
 } else {
   rename $target_fail, $target_pass or die "$0: $target_pass: $!\n";
 }
+
+## # Produce JUnit XML file for the target
+## open XML, ">", $target_xml or die "$0: $target_xml: $!\n";
+## print XML "<testsuite", ($status?" failures=1":""), " name=\"$target\" tests=1 time=0>\n";
+## print XML "  <testcase classname=\"$target\" name=\"$text\" time=\"unknown\">\n";
+## print XML "    <failure message=\"test failed\"/>\n" if $status;
+## print XML "  </testcase>\n";
+## print XML "  <system-out>Not implmeneted yet.</system-out>\n";
+## print XML "  <system-err>Not implemented yet.</system-err>\n";
+## print XML "</testsuite>\n";
+## close XML;
 
 # Clean up. These names might actually be directories, otherwise we could have just unlinked.
 system "rm", "-rf", $variables{"TEMP_FILE_$_"} for 0 .. 9;

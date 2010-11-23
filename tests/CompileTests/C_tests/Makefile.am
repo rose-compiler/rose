@@ -47,6 +47,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_12.c \
      test2010_13.c \
      test2010_14.c \
+     test2010_15.c \
      math.c \
      complex_01.c \
      constants.c
@@ -149,7 +150,7 @@ test2008_02.o: $(srcdir)/test2008_02.c
 #include $(top_srcdir)/config/QMTest_makefile.inc
 
 EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
-             test2006_134.h test2010_08.h predict.def
+             test2006_134.h test2010_08.h predict.def test2010_15.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
