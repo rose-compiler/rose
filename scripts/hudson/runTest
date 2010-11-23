@@ -133,8 +133,9 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 
    if [ $? -ne 0 ]  ; then
       echo "fatal error in cmake build , aborting..."
-   # tps : call this line before any exit. It resets the Windows test
-   echo 3 > $win_file
+    # DQ (11/23/2010): Removed as suggested by Thomas.
+    # tps : call this line before any exit. It resets the Windows test
+    # echo 3 > $win_file
       exit 3
    fi
 
