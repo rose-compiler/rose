@@ -3617,16 +3617,39 @@ static bool isFromAnotherFile (SgLocatedNode* lnode)
 {
   bool result = false;
   ROSE_ASSERT (lnode != NULL);
-   SgFile* cur_file = SageInterface::getEnclosingFileNode(lnode);
-    if (cur_file != NULL)
-     {
-       // normal file info 
-       if (lnode->get_file_info()->isTransformation() == false &&  lnode->get_file_info()->isCompilerGenerated() ==false)
-       {
-         if (cur_file->get_file_info()->get_filename() != lnode->get_file_info()->get_filename())
-           result = true;
-       }
-     } //
+  // Liao 11/22/2010, a workaround for enum value constant assign initializer
+  // EDG passes the source location information of the original declaration of the enum value, not the location for the value's reference
+  // So SgAssignInitializer has wrong file info.
+  // In this case, we look down to the actual SgEnumVal for the file info instead of looking at its ancestor SgAssignInitializer  
+  SgAssignInitializer *a_initor = isSgAssignInitializer (lnode);
+  if (a_initor)
+  {
+    result = false;
+    SgExpression * leaf_child = a_initor->get_operand_i();
+    while (SgCastExp * cast_op = isSgCastExp(leaf_child))
+    { 
+      // redirect to original expression tree if possible
+      if (cast_op->get_originalExpressionTree() != NULL)
+        leaf_child = cast_op->get_originalExpressionTree();
+      else
+        leaf_child = cast_op->get_operand_i();
+    }
+    //if (isSgEnumVal(leaf_child))
+    lnode = leaf_child;
+  }
+
+  SgFile* cur_file = SageInterface::getEnclosingFileNode(lnode);
+  if (cur_file != NULL)
+  {
+    // normal file info 
+    if (lnode->get_file_info()->isTransformation() == false &&  lnode->get_file_info()->isCompilerGenerated() ==false)
+    {
+      if (cur_file->get_file_info()->get_filename() != lnode->get_file_info()->get_filename())
+        result = true;
+    }
+  } //
+
+
   return result;
 }
 
