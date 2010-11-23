@@ -468,9 +468,16 @@ void c_action_label(Token_t * lbl)
      outputState("At TOP of R313 c_action_label()");
 #endif
 
-  // This can return a NULL symbol if the label is attached to statement which can not be associated witha function scope.
+  // This can return a NULL symbol if the label is attached to statement which can not be associated with a function scope.
      if (lbl->text != NULL)
         {
+       // This is an advanced warning of a bug caught in buildNumericLabelSymbol().
+          if (lbl->line == 0)
+             {
+               printf ("Warning (OFP bug): lbl->line == 0 for lbl->text = %s \n",lbl->text);
+             }
+       // ROSE_ASSERT(lbl->line > 0);
+
           SgLabelSymbol* labelSymbol = buildNumericLabelSymbol(lbl);
 
           if (labelSymbol != NULL)
@@ -14256,7 +14263,7 @@ void c_action_io_implied_do_control()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
-        printf ("In c_action_io_implied_do_control() xxx = %s \n",xxx ? "true" : "false");
+          printf ("In c_action_io_implied_do_control() xxx = %s \n",xxx ? "true" : "false");
 #else
           printf ("In c_action_io_implied_do_control() \n");
 #endif
