@@ -28,7 +28,7 @@
  *
  *  When ROSE needs to disassemble something, it calls Disassembler::lookup(), which in turn calls the can_disassemble()
  *  method for all registered disassemblers.  The first disassembler whose can_disassemble() returns true is used for the
- *  disassemby.
+ *  disassembly.
  *
  *  If an error occurs during the disassembly of a single instruction, the disassembler will throw an exception. When
  *  disassembling multiple instructions the exceptions are saved in a map, by virtual address, and the map is returned to the
@@ -275,14 +275,14 @@ public:
      *  Addresses containing instructions that could not be disassembled are added to the optional @p bad map.  Successor
      *  addresses where no disassembly was attempted are added to the optional successors set.
      *
-     *  In essence, this method replaces the old disassembleInterpreation function in the old Disassembler name space, and
+     *  In essence, this method replaces the old disassembleInterpretation function in the old Disassembler name space, and
      *  will probably be the method most often called by other parts of ROSE.  All of its functionality is based on the other
      *  lower-level methods of this class. */
     void disassemble(SgAsmInterpretation*, AddressSet *successors=NULL, BadMap *bad=NULL);
 
     /** This class method is for backward compatibility with the disassembleInterpretation() function in the old Disassembler
      *  namespace. It just creates a default Disassembler object, sets its search heuristics to the value specified in the
-     *  SgFile node above the interpretataion (presumably the value set with ROSE's "-rose:disassembler_search" switch),
+     *  SgFile node above the interpretation (presumably the value set with ROSE's "-rose:disassembler_search" switch),
      *  and invokes the disassemble() method. */
     static void disassembleInterpretation(SgAsmInterpretation*);
 
@@ -387,6 +387,11 @@ public:
     unsigned get_protection() const {
         return p_protection;
     }
+
+    /** Set progress reporting properties.  A progress report is produced not more than once every @p min_interval seconds
+     * (default is 10) by sending a single line of ouput to the specified file.  Progress reporting can be disabled by supplying
+     * a null pointer for the file.  Progress report properties are class variables. */
+    void set_progress_reporting(FILE*, unsigned min_interval);
 
 
 
@@ -520,6 +525,11 @@ public:
      *  instruction. */
     void update_progress(SgAsmInstruction*);
 
+    /** Conditionally prints a progress report. If progress reporting is enabled and the required amount of time has elapsed
+     *  since the previous report, then the supplied report is emited. Also, if debugging is enabled the report is emitted to
+     *  the debugging file regardless of the elapsed time. The arguments are the same as fprintf(). */
+    void progress(FILE*, const char *fmt, ...) const;
+
     /** Makes an unknown instruction from an exception. */
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&) = 0;
 
@@ -559,6 +569,11 @@ protected:
     static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
     size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */
     unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
+
+    static time_t progress_interval;                    /**< Minimum interval between progress reports. */
+    static time_t progress_time;                        /**< Time of last report, or zero if no report has been generated. */
+    static FILE *progress_file;                         /**< File to which reports are made. Null disables reporting. */
+
 };
 
 #endif
