@@ -796,7 +796,6 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
 
                default:
                   {
-                 // I think that only the COMPLEX type might be left.
                     printf ("Error: unimplemented type = %s \n",intrinsicType->class_name().c_str());
                     ROSE_ASSERT(false);
                     break;
@@ -7042,6 +7041,9 @@ void c_action_substring_range(ofp_bool hasLowerBound, ofp_bool hasUpperBound)
  *
  * @param numPartRef The number of optional part_refs
  */
+
+SgCAFCoExpression *rice_dataref_coexpr;		// for 'c_action_rice_spawn_stmt'
+
 void c_action_data_ref(int numPartRef)
    {
   // This is a part of a variable reference (and likely used many other places as well)
@@ -7152,6 +7154,11 @@ void c_action_data_ref(int numPartRef)
 
      if (variableSymbol == NULL)
         {
+    	 // This is a function call and the 'coExpr' detected above, if any, will be ignored in this routine.
+    	 // Preserve it for future use in 'c_action_rice_spawn_stmt'.
+    	 // TODO: check that coExpr is present here only if in the context of a Rice CAF2 'spawn' statement.
+         rice_dataref_coexpr = (processCoarray ? coExpr : NULL);
+
        // This is a variable that has not been previously declared (Fortran allows this), 
        // but first check to make sure it is not an implicit function.
 
@@ -10837,7 +10844,7 @@ void c_action_end_if_stmt(Token_t *label, Token_t *endKeyword, Token_t *ifKeywor
      ROSE_ASSERT(endKeyword != NULL);
      resetEndingSourcePosition(astScopeStack.front(),endKeyword);
 
-     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+     // ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
   // Pop off the if scope (it is a scope in C/C++, even if not in Fortran)
   // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
@@ -18678,42 +18685,17 @@ void c_action_start_of_file(const char *filename)
   // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_start_of_file(%s) \n",filename);
-#if 0
-     printf ("astIncludeStack.size() = %zu \n",astIncludeStack.size());
-     printf ("##### Swiching from %s to %s \n",(astIncludeStack.size() == 0) ? "FIRST FILE" : getCurrentFilename().c_str(),filename);
-#endif
 
-  // This is the earliest location to setup the global scope (I think).
+  // DQ: This is the earliest location to setup the global scope (I think).
      initialize_global_scope_if_required();
 
-#if 0
-  // Output debugging information about saved state (stack) information.
-     outputState("At TOP of c_action_start_of_file()");
-#endif
-
-  // DQ (1/27/2009): This should be clear before going onto a new include file.
-//   ROSE_ASSERT(astNodeStack.empty() == true);
-
-     string filenameString = filename;
-
-     static bool firstTime = true;
-
-  // DQ (1/28/2009): there are two cases wehre we don't want to generate an include IR node:
-  //    1) When this is the first time were are reading a fortran source file.
-  //    2) When we have switch file streams to read an *.rmod file as part of
-  //       processing a "use" statement referencing a module.
-  // if (firstTime == true)
-     if ( (firstTime == true) || (isARoseModuleFile(filename) == true) )
-        {
-       // Ignore the first time this function is called...
-          firstTime = false;
-        }
-       else
-        {
+     // DXN: We create a SgFortranIncludeLine node only when the current file is not a top level file
+     // and is not an rmod file.  When parsing a top level file, the astIncludeStack should be empty.
+     if (!astIncludeStack.empty() && !isARoseModuleFile(filename))  {
        // After the first time, ever call to this function is significant (represents use of the
        // Fortran include mechanism; not formally a part of the language grammar).
 
-          SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filenameString);
+           SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filename);
 
           if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                printf ("Note: Need a token to represent the the filename so that we can get the position of the include statment \n");
@@ -18755,30 +18737,13 @@ void c_action_start_of_file(const char *filename)
        // ROSE_ASSERT(includeLine->get_file_info()->get_filenameString() != string(filename));
 
           ROSE_ASSERT(astScopeStack.empty() == false);
-#if 0
-          printf ("Inserting includeLine into astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
-
-          printf ("BEFORE include: statementList.size() = %zu \n",statementList.size());
-          for (SgStatementPtrList::iterator i = statementList.begin(); i != statementList.end(); i++)
-             {
-               printf ("   statement in scope = %p = %s = %s line = %d file = %s \n",(*i),(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(*i)->get_file_info()->get_line(),(*i)->get_file_info()->get_filenameString().c_str());
-             }
-#endif
 
        // This does not always appear to be appending to the scope
           astScopeStack.front()->append_statement(includeLine);
-#if 0
-       // Reset the statementList after the append_statment() call.
-          statementList = scope->generateStatementList();
-          printf ("AFTER include: statementList.size() = %zu \n",statementList.size());
-          for (SgStatementPtrList::iterator i = statementList.begin(); i != statementList.end(); i++)
-             {
-               printf ("   statement in scope = %p = %s = %s line = %d file = %s \n",(*i),(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(*i)->get_file_info()->get_line(),(*i)->get_file_info()->get_filenameString().c_str());
-             }
-#endif
         }
 
-     astIncludeStack.push_back(filenameString);
+     astIncludeStack.push_back(filename);
+
    }
 
 /*
@@ -19074,13 +19039,209 @@ void c_action_rice_co_with_team_stmt(Token_t *label, Token_t *team_id) {
  */
 void c_action_rice_end_with_team_stmt(Token_t *label, Token_t *team_id, Token_t *eos) {
 
-  // DQ (10/10/2010): Test ending position
      ROSE_ASSERT(astScopeStack.empty() == false);
-     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
-     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
-
+    setSourceEndPosition(getTopOfScopeStack(), eos);
      astScopeStack.pop_front();
 
+}
+
+
+/**
+ * Rice's finish statement:
+ * @param label Optional statement label.
+ * @param idTeam Optional team identifier.
+ */
+
+static std::stack<Token *> finish_stack;
+static const char * FINISH_SUBR_NAME = "CAF_FINISH";
+static const char * ENDFINISH_SUBR_NAME = "CAF_END_FINISH";
+
+void c_action_rice_finish_stmt(Token_t *label, Token_t *teamToken, Token_t *eos)
+{
+#if 1
+	const char * s_label = (label     ? label->text     : "<no label>");
+	const char * s_team  = (teamToken ? teamToken->text : "<no team>" );
+	const char * s_eos   = eos->text;
+	printf("In c_action_rice_finish_stmt(%s, %s, %s)", s_label, s_team, s_eos);
+	outputState("At TOP of c_action_rice_finish_stmt()");
+#endif
+
+	finish_stack.push(teamToken);
+
+	// add translation to current scope
+    Token * caf_finish = create_token(eos->line, eos->col, 0, FINISH_SUBR_NAME);
+	c_action_section_subscript_list__begin();					// R619
+	if( teamToken != NULL)
+	{
+		c_action_part_ref(teamToken, false, false);				// R613
+		c_action_data_ref(1);									// R612
+		c_action_designator_or_func_ref();						// R1217
+		c_action_primary();										// R701
+	}
+	else
+	{
+		SgExpression * nullExpr = new SgNullExpression();
+		setSourcePosition(nullExpr, eos);
+		astExpressionStack.push_front(nullExpr);
+	}
+	c_action_section_subscript(true, false, false, true);	// R619
+	c_action_section_subscript_list(1);						// R619
+	c_action_part_ref(caf_finish, true, false);				// R613
+	c_action_data_ref(1);									// R612
+	c_action_procedure_designator();						// R1219
+	c_action_call_stmt(NULL, caf_finish, NULL, false);		// R1218
+
+    // start a new block scope for body of finish construct
+    SgScopeStatement * currentScope = getTopOfScopeStack();
+    SgBasicBlock * body = new SgBasicBlock(Sg_File_Info::generateDefaultFileInfo());
+    setSourcePosition(body, eos);
+    body->set_parent(currentScope);
+    currentScope->append_statement(body);
+    astScopeStack.push_front(body);
+
+#if 1
+	outputState("At BOTTOM of c_action_rice_finish_stmt()");
+#endif
+}
+
+
+/**
+ * Rice's end finish statement:
+ * @param label Optional statement label.
+ * @param eoms T_EOS token.
+ */
+
+static const char * SPAWN_SUBR_NAME = "CAF_SPAWN";
+static const char * TEAM_DEFAULT_NAME = "TEAM_DEFAULT";
+
+void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
+{
+#if 1
+	const char * s_label    = (label      ? label->text  : "<no label>");
+	const char * s_eos      = (eos        ? eos->text    : "no eos"    );
+	printf("In c_action_rice_end_finish_stmt(%s, %s)", s_label, s_eos);
+	outputState("At TOP of c_action_rice_end_finish_stmt()");
+#endif
+
+	// scope for enclosed statements has already been removed by 'c_action_block'
+
+    // pop finish construct off our stack
+    if( ! finish_stack.empty() )
+    	finish_stack.pop();
+    else
+	{
+		printf("ERROR(CAF): 'end finish' without matching 'finish'\n");
+		ROSE_ASSERT(false);
+	}
+
+	// add translation to current scope
+	Token * caf_end_finish = create_token(eos->line, eos->col, 0, ENDFINISH_SUBR_NAME);
+	c_action_section_subscript_list__begin();				// R619
+	c_action_section_subscript_list(0);						// R619
+	c_action_part_ref(caf_end_finish, true, false);			// R613
+	c_action_data_ref(1);									// R612
+	c_action_procedure_designator();						// R1219
+	c_action_call_stmt(NULL, caf_end_finish, NULL, false);	// R1218
+
+#if 1
+	outputState("At BOTTOM of c_action_rice_end_finish_stmt()");
+#endif
+}
+
+/**
+ * Rice's spawn statement:
+ * @param label Optional statement label.
+ * @param callKeyword T_CALL token.
+ * @param processor Optional processor number.
+ * @param team Optional team identifier.
+ * @param eos T_EOS token.
+ * @param hasArgs True if an actual-arg-spec-list is present.
+ * @param hasWhere True if a 'processor@team' is present; if so, a processor number is on expr stack.
+ */
+void c_action_rice_spawn_stmt(Token_t * label, Token_t * spawn, Token_t * eos, ofp_bool hasEvent)
+{
+#if 1
+	outputState("At TOP of c_action_rice_spawn_stmt()");
+#endif
+
+	// get the function reference and its arg list
+    ROSE_ASSERT(astExpressionStack.empty() == false);
+    SgFunctionCallExp * originalCallExpr = isSgFunctionCallExp(astExpressionStack.front());
+    ROSE_ASSERT(originalCallExpr != NULL);	// TODO: can we get a SgFunctionRefExp instead, if no actual param list given?
+    astExpressionStack.pop_front();
+
+    SgFunctionRefExp * functionRef = isSgFunctionRefExp(originalCallExpr->get_function());
+    ROSE_ASSERT(functionRef != NULL);
+    SgExprListExp * argumentList   = originalCallExpr->get_args();
+
+	// get the notification event if any
+	SgExpression * eventExpr;
+	if( hasEvent )
+	{
+	    ROSE_ASSERT(astExpressionStack.empty() == false);
+		eventExpr = astExpressionStack.front();
+		astExpressionStack.pop_front();
+	}
+	else
+		eventExpr = NULL;
+
+    // get processor # and team id
+    ROSE_ASSERT(rice_dataref_coexpr != NULL);
+    SgExpression * pnumExpr	= rice_dataref_coexpr->get_teamRank();
+    SgVarRefExp * teamExpr = rice_dataref_coexpr->get_teamId();
+    delete rice_dataref_coexpr; rice_dataref_coexpr = NULL;
+
+    // argument list
+		c_action_section_subscript_list__begin();					// R619
+
+		// function to be spawned
+		astExpressionStack.push_front(functionRef);
+		c_action_section_subscript(true, false, false, true);		// R619
+
+		// original function arguments from source
+		SgExpressionPtrList & argPtrs = argumentList->get_expressions();
+		int num = argPtrs.size();
+		for( int k = 0; k < num; k++)
+		{
+			astExpressionStack.push_front(argPtrs[k]);
+			c_action_section_subscript(true, false, false, true);	// R619
+		}
+
+		// processor number
+		astExpressionStack.push_front(pnumExpr);
+		c_action_section_subscript(true, false, false, true);		// R619
+
+		// team id
+		if( teamExpr != NULL )										// R619
+			astExpressionStack.push_front(teamExpr);
+		else
+		{
+			SgExpression * nullExpr = new SgNullExpression();
+			setSourcePosition(nullExpr, spawn);
+			astExpressionStack.push_front(nullExpr);
+		}
+		c_action_section_subscript(true, false, false, true);
+
+		// notification event
+		if( hasEvent )												// R619
+			astExpressionStack.push_front(eventExpr);
+		else
+		{
+			SgExpression * nullExpr = new SgNullExpression();
+			setSourcePosition(nullExpr, spawn);
+			astExpressionStack.push_front(nullExpr);
+		}
+		c_action_section_subscript(true, false, false, true);
+
+		// number of args = original number + 4 (f, p, t, e)
+		c_action_section_subscript_list(num + 4);					// R619
+
+	// function call
+	Token * caf_spawn_subr = create_token(spawn->line, spawn->col, 0, SPAWN_SUBR_NAME);
+	c_action_part_ref(caf_spawn_subr, true, false);					// R613
+	c_action_data_ref(1);											// R612
+	c_action_procedure_designator();								// R1219
+	c_action_call_stmt(NULL, caf_spawn_subr, NULL, false);			// R1218
 }
 
 
