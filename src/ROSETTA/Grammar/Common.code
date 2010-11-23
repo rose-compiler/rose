@@ -133,6 +133,10 @@ HEADER_START
        */
           void executeVisitorMemberFunction (ROSE_VisitorPattern & visitor);
 
+		/** DXN (08/09/2010): support for the classic visitor pattern done in GoF
+		*/
+		virtual void accept (ROSE_VisitorPattern & visitor);
+
        // DQ (12/26/2005): Support for traversal based on the memory pool
       /*! \brief \b FOR \b INTERNAL \b USE Support for visitor pattern.
        */
@@ -367,6 +371,12 @@ $CLASSNAME::class_name() const
 void
 $CLASSNAME::executeVisitorMemberFunction (ROSE_VisitorPattern & visitor)
    {
+     ROSE_ASSERT(this != NULL);
+     visitor.visit(this);
+   }
+
+// DXN (08/09/2010): the classic, i.e. Gof, visitor pattern:
+void $CLASSNAME::accept (ROSE_VisitorPattern & visitor) {
      ROSE_ASSERT(this != NULL);
      visitor.visit(this);
    }
