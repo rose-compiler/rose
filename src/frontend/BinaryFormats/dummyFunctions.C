@@ -68,6 +68,7 @@ void SgAsmPEImportILTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 void SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmPEImportHNTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
+bool SgAsmPEImportSection::reallocate(){}
 void SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
@@ -184,7 +185,7 @@ void SgAsmElfSymverDefinedSection::unparse(std::ostream &f) const {}
 void SgAsmLEEntryTable::unparse(std::ostream &f) const {}
 void SgAsmNENameTable::unparse(std::ostream &f) const {}
 void SgAsmPEFileHeader::unparse(std::ostream &f) const {}
-void SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *section) const {}
+void SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *section, size_t idx) const {}
 void SgAsmElfNoteSection::unparse(std::ostream &f) const {}
 void SgAsmElfSymverNeededSection::unparse(std::ostream &f) const {}
 void SgAsmElfStringSection::unparse(std::ostream &f) const {}
