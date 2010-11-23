@@ -2579,7 +2579,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
      if (fileList.empty() == false)
         {
-       // Note that we always process one file at a time using EDG or the Fortran frontend.
           ROSE_ASSERT(fileList.size() == 1);
 
        // DQ (8/31/2006): Convert the source file to have a path if it does not already
@@ -5393,6 +5392,25 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // Open Fortran Parser's openFortranParser_main() function API.  So we use this
   // global variable to pass the SgFile (so that the parser c_action functions can
   // build the Fotran AST using the existing SgFile.
+
+     // FMZ(7/27/2010): check command line options for Rice CAF syntax
+     //  -rose:CoArrayFortran, -rose:CAF, -rose:caf
+
+     bool using_rice_caf = false;
+     vector<string> ArgTmp = get_project()->get_originalCommandLineArgumentList();
+     int sizeArgs = ArgTmp.size();
+
+     for (int i = 0; i< sizeArgs; i++)  {
+       if (ArgTmp[i].find("-rose:caf",0)==0     || 
+           ArgTmp[i].find("-rose:CAF2.0",0)==0  ||
+           ArgTmp[i].find("-rose:CAF2.0",0)==0  ) {
+
+         using_rice_caf=true;
+         break;
+       }
+     }
+
+   
      extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
   // DQ (10/26/2010): Moved from SgSourceFile::callFrontEnd() so that the stack will 
@@ -5863,6 +5881,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // frontEndCommandLine.push_back(classpath);
      frontEndCommandLine.push_back("--class");
      frontEndCommandLine.push_back("fortran.ofp.parser.c.jni.FortranParserActionJNI");
+
+     //FMZ (7/26/2010)  added an option for using rice CAF. 
+     if (using_rice_caf==true) 
+          frontEndCommandLine.push_back("--RiceCAF");
 
 #if 0
   // Debugging output
@@ -7870,6 +7892,8 @@ SgFile::usage ( int status )
 "                             Fortran from file suffix)\n"
 "     -rose:CoArrayFortran, -rose:CAF, -rose:caf\n"
 "                             compile Co-Array Fortran code (extension of Fortran 2003)\n"
+"     -rose:CAF2.0, -rose:caf2.0\n"
+"                             compile Co-Array Fortran 2.0 code (Rice CAF extension)\n"
 "     -rose:Fortran2003, -rose:F2003, -rose:f2003\n"
 "                             compile Fortran 2003 code\n"
 "     -rose:Fortran95, -rose:F95, -rose:f95\n"
