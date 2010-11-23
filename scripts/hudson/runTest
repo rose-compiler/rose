@@ -56,11 +56,18 @@ echo "**************************************************************************
 #tps : 11/22/2010 : The setup.sh has been updated by admin
 UPC_TEST_MACHINE=`uname -m`
 if test "$UPC_TEST_MACHINE" = "i686" ; then
-  echo "UPC not tested on 32bit for now."
+  echo "UPC not tested on 32bit machines for now."
 else
 # Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
   set +e
-  source /nfs/apps/upc/4.5.1.2/setup.sh
+  # This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
+  # on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
+  # This UPC support must be thought out more carefully.
+  if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+    source /nfs/apps/upc/4.5.1.2/setup.sh
+  else
+    echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
+  fi
   set -e
 fi
 
