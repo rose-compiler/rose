@@ -58,7 +58,10 @@ UPC_TEST_MACHINE=`uname -m`
 if test "$UPC_TEST_MACHINE" = "i686" ; then
   echo "UPC not tested on 32bit for now."
 else
+# Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
+  set +e
   source /nfs/apps/upc/4.5.1.2/setup.sh
+  set -e
 fi
 
 
