@@ -8,8 +8,12 @@ inputs = test0 test1 test2
 
 all: $(inputs)
 
+if ROSE_USE_GCC_OMP
+	$(CC) -nostdlib -static -s -o $@ $<
+else
 $(inputs): %: $(srcdir)/%.c
 	$(CC) -nostdlib -static -m32 -O3 -s -o $@ $<
+endif
 
 clean-local:
 	rm -f $(inputs)
