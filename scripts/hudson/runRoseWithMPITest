@@ -131,7 +131,7 @@ fi
 # Note that Boost 1.39 and greater require using "--with-boost-libdir"
 # CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-dq-developer-tests"
 # CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes"
-CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
 
 # Setup the prefix directory so that an install tree can be generated 
 # for use with secondary testing of other projects using ROSE.
@@ -159,7 +159,6 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
  # echo "This test is forced to exit with an error as part of debugging a subset of the Hudson tests."
  # exit 1
 
-	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-qt=${ROSE_TEST_QT_PATH} --with-roseQt --with-sqlite3=${ROSE_TEST_SQLITE_PATH} --with-rted=${ROSE_TEST_RTED_PATH}"
 	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-mpi --with-gcc-omp CC=mpicc CXX=mpicxx"
 fi
 
