@@ -244,6 +244,7 @@ int main(int argc, char *argv[])
 {
   // Build the AST used by ROSE
   SgProject* project = frontend(argc,argv);
+  SgSourceFile* sourceFile = isSgSourceFile((*project)[0]);
 
   // Process all function definition bodies for static control flow graph generation
   Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
@@ -252,22 +253,28 @@ int main(int argc, char *argv[])
     SgFunctionDefinition* proc = isSgFunctionDefinition(*i);
     ROSE_ASSERT (proc != NULL);
 
+	if (!proc->get_file_info()->isSameFile(sourceFile))
+		continue;
+
 	//Backstroke::FullCFG cfg(proc);
-	Backstroke::FilteredCFG cfg(proc);
+	typedef Backstroke::CFGForSSA CFG;
+	CFG cfg(proc);
 	cfg.toDot("CFG.dot");
 	cout << num_vertices(cfg) << endl;
 	//Backstroke::FilteredCFG rvsCfg = cfg;//.makeReverseCopy();
 	//rvsCfg.toDot("CFG.dot");
 	//buildDominatorTree(rvsCfg);
 
-	Backstroke::CDG<Backstroke::FilteredCFG> cdg(cfg);
+#if 1
+	Backstroke::CDG<CFG> cdg(cfg);
 	cdg.toDot("CDG.dot");
 
-	Backstroke::DDG<Backstroke::FilteredCFG> ddg(cfg);
+	Backstroke::DDG<CFG> ddg(cfg);
 	ddg.toDot("DDG.dot");
 
-	Backstroke::PDG<Backstroke::FilteredCFG> pdg(cfg);
+	Backstroke::PDG<CFG> pdg(cfg);
 	pdg.toDot("PDG.dot");
+#endif
 
 	//varRenaming.toFilteredDOT("VariableRenaming.dot");
 

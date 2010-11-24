@@ -11,6 +11,7 @@
 #include <boost/graph/dominator_tree.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/graph/transpose_graph.hpp>
+#include <boost/algorithm/string.hpp>
 
 
 namespace Backstroke
@@ -21,20 +22,38 @@ namespace Backstroke
 
 //! This function helps to write the DOT file for vertices.
 template <class CFGNodeType>
-void writeCFGNode(std::ostream& out, const CFGNodeType& n)
+void writeCFGNode(std::ostream& out, const CFGNodeType& cfgNode)
 {
-	ROSE_ASSERT(n.getNode());
+	SgNode* node = cfgNode.getNode();
+	ROSE_ASSERT(node);
 
 	std::string nodeColor = "black";
-	if (isSgStatement(n.getNode()))
+	if (isSgStatement(node))
 		nodeColor = "blue";
-	else if (isSgExpression(n.getNode()))
+	else if (isSgExpression(node))
 		nodeColor = "green";
-	else if (isSgInitializedName(n.getNode()))
+	else if (isSgInitializedName(node))
 		nodeColor = "red";
 
-	out << "[label=\""  << escapeString(n.toString()) << "\", color=\"" << nodeColor <<
-		"\", style=\"" << (n.isInteresting()? "solid" : "dotted") << "\"]";
+	std::string label;// = escapeString(cfgNode.toString()) + "\\n";
+	if (isSgFunctionDefinition(node))
+	{
+		if (cfgNode.getIndex() == 0)
+			label = "Entry\\n";
+		else if (cfgNode.getIndex() == 3)
+			label = "Exit\\n";
+	}
+	
+	if (!isSgScopeStatement(node))
+	{
+		std::string content = node->unparseToString();
+		boost::replace_all(content, "\"", "\\\"");
+		boost::replace_all(content, "\\n", "\\\\n");
+		label += content;
+	}
+	
+	out << "[label=\""  << label << "\", color=\"" << nodeColor <<
+		"\", style=\"" << (cfgNode.isInteresting()? "solid" : "dotted") << "\"]";
 }
 
 
@@ -45,6 +64,7 @@ void writeCFGEdge(std::ostream& out, const CFGEdgeType& e)
 	out << "[label=\"" << escapeString(e.toString()) <<
 		"\", style=\"" << "solid" << "\"]";
 }
+
 
 // Predeclaration of class CFG.
 template <class CFGNodeType, class CFGEdgeType> class CFG;
@@ -57,6 +77,49 @@ typedef CFG<VirtualCFG::CFGNode,
 //! A filtered CFG which only contains interesting nodes and edges.
 typedef CFG<VirtualCFG::InterestingNode,
 			VirtualCFG::InterestingEdge> FilteredCFG;
+
+
+struct CFGNodeFilter
+{
+	bool operator()(const VirtualCFG::CFGNode& cfgNode) const
+	{
+		if (!cfgNode.isInteresting())
+			return false;
+
+		SgNode* node = cfgNode.getNode();
+
+		if (isSgValueExp(node))
+			return false;
+		//if (isSgExpression(node) && isSgExprStatement(node->get_parent()))
+		if (isSgExprStatement(node))
+			return false;
+		if (isSgScopeStatement(node) && !isSgFunctionDefinition(node))
+			return false;
+
+		switch (node->variantT())
+		{
+			case V_SgVarRefExp:
+			case V_SgInitializedName:
+			case V_SgFunctionParameterList:
+			case V_SgAssignInitializer:
+			case V_SgFunctionRefExp:
+			case V_SgPntrArrRefExp:
+			case V_SgExprListExp:
+			case V_SgCastExp:
+			case V_SgForInitStatement:
+			case V_SgCommaOpExp:
+				return false;
+			default:
+				break;
+		}
+		
+		return true;
+	}
+};
+
+typedef CFG<VirtualCFG::FilteredCFGNode<CFGNodeFilter>,
+			VirtualCFG::FilteredCFGEdge<CFGNodeFilter> > CFGForSSA;
+
 
 
 /********************************************************************/
@@ -92,11 +155,14 @@ typedef CFG<VirtualCFG::InterestingNode,
 	
 template <class CFGNodeT, class CFGEdgeT>
 class CFG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, 
-		CFGNodeT, CFGEdgeT>
+		boost::shared_ptr<CFGNodeT>, boost::shared_ptr<CFGEdgeT> >
 {
 public:
 	typedef CFGNodeT CFGNodeType;
 	typedef CFGEdgeT CFGEdgeType;
+
+	typedef boost::shared_ptr<CFGNodeT> CFGNodePtr;
+	typedef boost::shared_ptr<CFGEdgeT> CFGEdgePtr;
 
 	typedef typename boost::graph_traits<CFG<CFGNodeT, CFGEdgeT> > GraphTraits;
 	typedef typename GraphTraits::vertex_descriptor Vertex;
@@ -162,10 +228,10 @@ public:
 	void toDot(const std::string& filename) const;
 
 	//! Get all CFG nodes in this graph.
-	std::vector<CFGNodeType> getAllNodes() const;
+	std::vector<CFGNodePtr> getAllNodes() const;
 
 	//! Get all CFG edges in this graph.
-	std::vector<CFGEdgeType> getAllEdges() const;
+	std::vector<CFGEdgePtr> getAllEdges() const;
 
 protected:
 
@@ -180,14 +246,14 @@ protected:
 	//! This function helps to write the DOT file for vertices.
 	void writeGraphNode(std::ostream& out, const Vertex& node) const
 	{
-		writeCFGNode(out, (*this)[node]);
+		writeCFGNode(out, *(*this)[node]);
 		//VirtualCFG::printNode(out, (*this)[node]);
 	}
 
 	//! This function helps to write the DOT file for edges.
 	void writeGraphEdge(std::ostream& out, const Edge& edge) const
 	{
-		writeCFGEdge(out, (*this)[edge]);
+		writeCFGEdge(out, *(*this)[edge]);
 		//VirtualCFG::printEdge(out, (*this)[edge], true);
 	}
 
@@ -242,13 +308,13 @@ void CFG<CFGNodeType, CFGEdgeType>::build(SgFunctionDefinition* funcDef)
 	// Remove all nodes and edges first.
 	this->clear();
 
-	buildCFG(funcDef->cfgForBeginning(), nodesAdded, nodesProcessed);
+	buildCFG(CFGNodeType(funcDef->cfgForBeginning()), nodesAdded, nodesProcessed);
 
 	// Find the entry and exit of this CFG.
 	setEntryAndExit();
 
-	ROSE_ASSERT(isSgFunctionDefinition((*this)[entry_].getNode()));
-	ROSE_ASSERT(isSgFunctionDefinition((*this)[exit_].getNode()));
+	ROSE_ASSERT(isSgFunctionDefinition((*this)[entry_]->getNode()));
+	ROSE_ASSERT(isSgFunctionDefinition((*this)[exit_]->getNode()));
 }
 
 template <class CFGNodeType, class CFGEdgeType>
@@ -257,12 +323,12 @@ void CFG<CFGNodeType, CFGEdgeType>::setEntryAndExit()
 	typename boost::graph_traits<CFG<CFGNodeType, CFGEdgeType> >::vertex_iterator i, j;
 	for (tie(i, j) = boost::vertices(*this); i != j; ++i)
 	{
-		CFGNodeType node = (*this)[*i];
-		if (isSgFunctionDefinition(node.getNode()))
+		CFGNodePtr node = (*this)[*i];
+		if (isSgFunctionDefinition(node->getNode()))
 		{
-			if (node.getIndex() == 0)
+			if (node->getIndex() == 0)
 				entry_ = *i;
-			else if (node.getIndex() == 3)
+			else if (node->getIndex() == 3)
 				exit_ = *i;
 		}
 	}
@@ -293,7 +359,7 @@ void CFG<CFGNodeType, CFGEdgeType>::buildCFG(
 	if (inserted)
 	{
 		from = add_vertex(*this);
-		(*this)[from] = src;
+		(*this)[from] = CFGNodePtr(new CFGNodeType(src));
 		iter->second = from;
 	}
 		else
@@ -312,7 +378,7 @@ void CFG<CFGNodeType, CFGEdgeType>::buildCFG(
 		if (inserted)
 		{
 			to = add_vertex(*this);
-			(*this)[to] = tar;
+			(*this)[to] = CFGNodePtr(new CFGNodeType(tar));
 			iter->second = to;
 		}
 		else
@@ -320,7 +386,7 @@ void CFG<CFGNodeType, CFGEdgeType>::buildCFG(
 
 		// Add the edge.
 		Edge edge = add_edge(from, to, *this).first;
-		(*this)[edge] = cfgEdge;
+		(*this)[edge] = CFGEdgePtr(new CFGEdgeType(cfgEdge));
 
 		// Build the CFG recursively.
 		buildCFG(tar, nodesAdded, nodesProcessed);
@@ -365,9 +431,10 @@ CFG<CFGNodeType, CFGEdgeType> CFG<CFGNodeType, CFGEdgeType>::makeReverseCopy() c
 }
 
 template <class CFGNodeType, class CFGEdgeType>
-std::vector<CFGNodeType> CFG<CFGNodeType, CFGEdgeType>::getAllNodes() const
+std::vector<typename CFG<CFGNodeType, CFGEdgeType>::CFGNodePtr>
+CFG<CFGNodeType, CFGEdgeType>::getAllNodes() const
 {
-	std::vector<CFGNodeType> allNodes;
+	std::vector<CFGNodePtr> allNodes;
 	typename boost::graph_traits<CFG<CFGNodeType, CFGEdgeType> >::vertex_iterator i, j;
 	for (boost::tie(i, j) = boost::vertices(*this); i != j; ++i)
 		allNodes.push_back((*this)[*i]);
@@ -375,9 +442,10 @@ std::vector<CFGNodeType> CFG<CFGNodeType, CFGEdgeType>::getAllNodes() const
 }
 
 template <class CFGNodeType, class CFGEdgeType>
-std::vector<CFGEdgeType> CFG<CFGNodeType, CFGEdgeType>::getAllEdges() const
+std::vector<typename CFG<CFGNodeType, CFGEdgeType>::CFGEdgePtr>
+CFG<CFGNodeType, CFGEdgeType>::getAllEdges() const
 {
-	std::vector<CFGEdgeType> allEdges;
+	std::vector<CFGEdgePtr> allEdges;
 	typename boost::graph_traits<CFG<CFGNodeType, CFGEdgeType> >::edge_iterator i, j;
 	for (boost::tie(i, j) = boost::edges(*this); i != j; ++i)
 		allEdges.push_back((*this)[*i]);

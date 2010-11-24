@@ -27,17 +27,21 @@ struct PDGEdge
 	bool key;
 
 	//! All variable names in data dependence of this edge.
-	std::vector<VarName> varNames;
+	std::set<VarName> varNames;
 };
 
 //! A class holding a Program Dependence Graph.
 
+//! In the PDG, if node a is control dependent on node b, there is an control dependence edge a->b,
+//! if node c is data dependent on node d, there is an data dependence edge c->d.
+
 template <class CFGType>
 class PDG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-		typename CFGType::CFGNodeType, PDGEdge>
+		typename CFGType::CFGNodePtr, PDGEdge>
 {
 public:
 	typedef typename CFGType::CFGNodeType CFGNodeType;
+	typedef typename CFGType::CFGNodePtr CFGNodePtr;
 
 	typedef typename boost::graph_traits<PDG<CFGType> >::vertex_descriptor Vertex;
 	typedef typename boost::graph_traits<PDG<CFGType> >::edge_descriptor Edge;
@@ -62,7 +66,7 @@ protected:
 	//! This function helps to write the DOT file for vertices.
 	void writeGraphNode(std::ostream& out, const Vertex& node) const
 	{
-		writeCFGNode(out, (*this)[node]);
+		writeCFGNode(out, *(*this)[node]);
 	}
 
 	//! This function helps to write the DOT file for edges.
@@ -79,15 +83,14 @@ void PDG<CFGType>::buildPDG(const CFGType& cfg)
 	CDG<CFGType> cdg(cfg);
 	DDG<CFGType> ddg(cfg);
 
-	std::cout << num_vertices(cdg) << ' ' << num_vertices(ddg) << std::endl;
+	ROSE_ASSERT(boost::num_vertices(cfg) == boost::num_vertices(ddg));
 
-	
 	// Build a map from CFGNode to vertices from CDG, DDG and PDG separately.
 	typedef boost::tuple<
 		typename CDG<CFGType>::Vertex,
 		typename DDG<CFGType>::Vertex,
 		Vertex> VerticesT;
-	std::map<CFGNodeType, VerticesT> cfgNodesToVertices;
+	std::map<CFGNodePtr, VerticesT> cfgNodesToVertices;
 
 	// Add all CDG nodes in the map.
 	typename boost::graph_traits<CDG<CFGType> >::vertex_iterator cvIter, cvEnd;
@@ -98,13 +101,13 @@ void PDG<CFGType>::buildPDG(const CFGType& cfg)
 	typename boost::graph_traits<DDG<CFGType> >::vertex_iterator dvIter, dvEnd;
 	for (boost::tie(dvIter, dvEnd) = vertices(ddg); dvIter != dvEnd; ++dvIter)
 	{
-		typename std::map<CFGNodeType, VerticesT>::iterator iter = cfgNodesToVertices.find(ddg[*dvIter]);
+		typename std::map<CFGNodePtr, VerticesT>::iterator iter = cfgNodesToVertices.find(ddg[*dvIter]);
 		ROSE_ASSERT(iter != cfgNodesToVertices.end());
 
 		// Add a vertex to PDG.
 		Vertex v = boost::add_vertex(*this);
 		(*this)[v] = ddg[*dvIter];
-		ROSE_ASSERT(ddg[*dvIter].getNode());
+		ROSE_ASSERT(ddg[*dvIter]->getNode());
 		
 		iter->second.get<1>() = *dvIter;
 		iter->second.get<2>() = v;
@@ -141,9 +144,6 @@ void PDG<CFGType>::buildPDG(const CFGType& cfg)
 #endif
 
 	// PDG build complete.
-	
-
-	//ROSE_ASSERT(num_vertices(cfg) == num_vertices(ddg));
 }
 
 template <class CFGType>
