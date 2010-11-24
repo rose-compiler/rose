@@ -61,8 +61,17 @@ while (my $file = $files->next_file) {
 
 # Report failures
 my @remaining = map {@$_} values %index;
-$warning = "" if @remaining > 281; # as of 2010-11-06 there are 281 violations; do not allow more!
+
+# Lowered the number of unused headers by removing unused headers from: ./tests/CompileTests/OvertureCode
+# $warning = "" if @remaining > 281; # as of 2010-11-06 there are 281 violations; do not allow more!
+$warning = "" if @remaining > 195; # as of 2010-11-06 there are 281 violations; do not allow more!
+
 print $desc if @remaining;
 print "  $_$warning\n" for sort @remaining;
+
+# DQ (11/20/2010): Added the total file could so we can measure progress/failure.
+#$size = @remaining;
+#print "Remaining file count: $size.\n";
+print "Number of remaining unused header files: " . @remaining . ".\n";
 
 exit(@remaining ? ($warning?128:1) : 0);

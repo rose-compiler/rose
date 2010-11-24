@@ -1476,7 +1476,7 @@ SageInterface::get_name ( const SgLocatedNodeSupport* node )
 string
 SageInterface::get_name ( const SgNode* node )
    {
-  // This function is useful fro debugging
+  // This function is useful for debugging
   // This is the most general case of a function to return a name for an IR node.
   // Later this function will handle expressions, etc.
 
@@ -1555,6 +1555,28 @@ SageInterface::get_name ( const SgNode* node )
 
      return name;
    }
+
+
+string
+SageInterface::get_name ( const SgToken* token )
+   {
+  // This function is useful for debugging
+     string name = "undefined_name";
+
+     ROSE_ASSERT(token != NULL);
+     name = token->get_lexeme_string();
+
+  // Handle special cases
+     if (name == " ")
+        name = "<space>";
+     else if (name == "\n")
+        name = "<eol>";
+     else if (name == "\t")
+        name = "<tab>";
+
+     return name;
+   }
+
 
 SgMemberFunctionDeclaration*
 SageInterface::getDefaultConstructor( SgClassDeclaration* classDeclaration )
