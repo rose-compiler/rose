@@ -1891,6 +1891,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (11/20/2010): We don't share token IR nodes, I think this is not required.
+          case V_SgToken:
+
        // DQ (1/23/2010): These are relatively new IR nodes that are finally being used and tested.
           case V_SgFileList:
           case V_SgDirectory:

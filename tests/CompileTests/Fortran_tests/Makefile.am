@@ -173,6 +173,9 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 endif
 
 
+F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS = 
+
+
 F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_124.f \
      test2007_125.f \
@@ -351,11 +354,19 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_78.f90 \
      test2010_79.f90 \
      test2010_80.f90 \
+     test2010_81.f90 \
+     test2010_82.f90 \
+     test2010_83.f90 \
+     test2010_84.f90 \
      fCaller.f90 \
      triangle.f90
 
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
 #    test2008_02.f
+
+F90_TESTCODES_REQUIRING_PREPROCESSOR_CURRENTLY_FAILING = \
+     test2008_01.F90 
+
 
 F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2007_85.f \
@@ -412,6 +423,10 @@ $(F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS)
 F03_TESTCODES = \
 $(F03_TESTCODES_REQUIRED_TO_PASS)
 
+# DQ (11/20/2010): Added test codes requiring preprocessing
+F90_TESTCODES_REQUIRING_PREPROCESSOR = \
+$(F90_TESTCODES_REQUIRING_PREPROCESSOR_CURRENTLY_FAILING)
+
 # QMTest allows both passing and failing tests.
 ALL_F90_TESTCODES = \
 $(F90_TESTCODES_REQUIRED_TO_PASS) \
@@ -429,13 +444,19 @@ ALL_F03_TESTCODES = \
 $(F03_TESTCODES_REQUIRED_TO_PASS) \
 $(F03_TESTCODES_CURRENTLY_FAILING)
 
+ALL_F90_TESTCODES_REQUIRING_PREPROCESSOR = \
+$(F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS) \
+$(F90_TESTCODES_REQUIRING_PREPROCESSOR_CURRENTLY_FAILING)
+
 # File option to accumulate performance information about the compilation
 PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FORTRAN_ROSE_PERFORMANCE_DATA.csv
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
-ROSE_FLAGS = -rose:verbose 0
-# ROSE_FLAGS = -rose:verbose 0 -rose:output_parser_actions
+ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
+# ROSE_FLAGS = -rose:verbose 3 -rose:output_parser_actions -I$(srcdir)
+# ROSE_FLAGS = -rose:verbose 0 -rose:output_tokens -rose:output_parser_actions -I$(srcdir)
+# ROSE_FLAGS = -rose:verbose 0 -rose:output_tokens -I$(srcdir)
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
@@ -444,6 +465,7 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 VALGRIND =
 
 PASSING_TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
+PASSING_TEST_REQUIRING_PREPROCESSOR_F90_Objects = ${F90_TESTCODES_REQUIRING_PREPROCESSOR:.F90=.o}
 PASSING_TEST_F77_Objects = ${F77_TESTCODES:.f77=.o}
 
 # DQ (3/11/2010): F77 tests were not being run, this fixes this.
@@ -452,11 +474,13 @@ PASSING_TEST_F77_FIXED_FORMAT_Objects = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO
 
 PASSING_TEST_F03_Objects = ${F03_TESTCODES:.f03=.o}
 TEST_F90_Objects = ${ALL_F90_TESTCODES:.f90=.o}
+TEST_REQUIRING_PREPROCESSOR_F90_Objects = ${ALL_F90_TESTCODES_REQUIRING_PREPROCESSOR:.F90=.o}
 TEST_F77_Objects = ${ALL_F77_TESTCODES:.f77=.o}
 TEST_F77_FIXED_FORMAT_Objects = ${ALL_F77_FIXED_FORMAT_TESTCODES:.f=.o}
 TEST_F03_Objects = ${ALL_F03_TESTCODES:.f03=.o}
 
-PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
+# PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
+PASSING_TEST_Objects = $(PASSING_TEST_REQUIRING_PREPROCESSOR_F90_Objects) $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
@@ -473,9 +497,14 @@ testTranslator: ../../testTranslator
 
 testGraphGeneration: ../../testGraphGeneration
 
+../../testTokenGeneration:
+	cd ../..; $(MAKE) testTokenGeneration
+
+testTokenGeneration: ../../testTokenGeneration
+
 # DQ (10/4/2010): Added tests to make sure that the AST graphs can be generated for all
 # Fortran input test codes. This tests a problem that was reported previously by Rice.
-$(TEST_F90_Objects): ../../testTranslator ../../testGraphGeneration ${ALL_TESTCODES}
+$(TEST_F90_Objects): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration ${ALL_TESTCODES}
 # $(TEST_F90_Objects): ../../testTranslator
 # Example of how to call the OpenFortranParser
 #	java parser.java.FortranMain --class parser.java.FortranParserActionJNI $(srcdir)/$(@:.o=.f90)
@@ -483,17 +512,25 @@ $(TEST_F90_Objects): ../../testTranslator ../../testGraphGeneration ${ALL_TESTCO
 # How to call a ROSE translator with a Fortran source file.
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 
-$(TEST_F77_Objects): ../../testTranslator ../../testGraphGeneration ${ALL_TESTCODES}
+$(TEST_REQUIRING_PREPROCESSOR_F90_Objects): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration ${ALL_TESTCODES}
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
+	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
+	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
+
+$(TEST_F77_Objects): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration ${ALL_TESTCODES}
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f77)
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 
-$(TEST_F77_FIXED_FORMAT_Objects): ../../testTranslator ../../testGraphGeneration ${ALL_TESTCODES}
+$(TEST_F77_FIXED_FORMAT_Objects): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration ${ALL_TESTCODES}
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f)
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 
 
 # Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
@@ -501,11 +538,12 @@ $(TEST_F77_FIXED_FORMAT_Objects): ../../testTranslator ../../testGraphGeneration
 #       to avoid processing the generated code (which would have the same problem).  It is easier to just use
 #       the version 4.1 gfortran which has better Fortran 2003 syntax checking support. This problem is confirmed 
 #       on versions of gfortran 4.2 and 4.3.
-$(TEST_F03_Objects): ../../testTranslator ../../testGraphGeneration
+$(TEST_F03_Objects): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration 
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f03)
 #	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
+	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
 #	Since gfortran does not support F03, and thus we skip the compileation using the backend gfortran compiler, we have to force the generation of an object file. 
 #	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
 	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
@@ -604,12 +642,17 @@ riceBug1: $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90
 
 # DQ (11/5/2010): When unparsed, this file is missing the statement "i1 = 1" in the generated code.
 riceBug2:$(srcdir)/test2010_78.f90 $(srcdir)/test2010_80.f90
-	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90
-	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_80.f90
+#	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90
+#	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_80.f90
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_80.f90
 	@echo "Source code to test2010_80.f90"
 	@cat $(srcdir)/test2010_80.f90
 	@echo "Generated code for rose_test2010_80.f90 (missing \"i1 = 1\""
 	@cat rose_test2010_80.f90
+
+bug3:
+	../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:output_parser_actions -I$(srcdir) -c $(srcdir)/test2010_81.f90
 
 tests:
 	@$(MAKE) $(PASSING_TEST_Objects)
@@ -651,14 +694,17 @@ endif
 listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_FAILING) $(F03_TESTCODES_CURRENTLY_FAILING) $(F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING)
 	egrep -n "*"  $(srcdir)/$(?)
 
+
 # Make sure that all the test codes end up in the distribution
 # EXTRA_DIST = $(ALL_TESTCODES)
 EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES) \
+   $(ALL_F90_TESTCODES_REQUIRING_PREPROCESSOR) \
    test2007_suffixTest_01.f test2007_suffixTest_02.f77 test2007_suffixTest_03.f90 test2007_suffixTest_04.f95 \
    test2007_suffixTest_05.f03 test2007_suffixTest_06.F test2007_suffixTest_07.F90 test2007_suffixTest_08.F95 \
    test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08 \
    module_A_file.f90 module_B_file.f90 test2010_31_header.f90 test2010_50.h test2010_54.h test2010_55.h \
-   original_mpif.h inputUsingDefinesOnCommandline.F90
+   original_mpif.h inputUsingDefinesOnCommandline.F90 fortran_foo_single_quote.h fortran_foo_double_quote.h \
+   cpp_foo.h cpp_foobar.h
 
 # DQ (3/12/2010): Fortran 2008 tests from OFP
 # f08-tests

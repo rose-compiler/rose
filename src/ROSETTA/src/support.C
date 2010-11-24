@@ -632,6 +632,11 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype   ( "SgModuleStatementPtrList", "module_list", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/20/2010): Added SgTokenPtrList to support a token list at the SourceFile level.
+  // In the future we may have more than one to support pre and post processing using CPP or Fortran equivalent).
+     SourceFile.setDataPrototype   ( "SgTokenPtrList", "token_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 0
   // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
   // DQ (9/11/2009): Added support for mapping id numbers to statement pointers.
@@ -1050,9 +1055,14 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // RPM (6/9/2010): Switch to specify the IPD file for the Partitioner.
+  // DQ (11/20/2010): This should maybe have an initializer of "= \"\"" instead of just "" so that 
+  // it will be properly reset to an empty string in the generated destructor.
      File.setDataPrototype("std::string", "partitionerConfigurationFileName", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/20/2010): Process only tokens.
+     File.setDataPrototype ("bool", "output_tokens", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // ******************************************************************************
