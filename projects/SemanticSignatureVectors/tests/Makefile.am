@@ -6,11 +6,11 @@ EXTRA_DIST=test0.c test1.c test2.c lib.h
 
 inputs = test0 test1 test2
 
+if ROSE_MPI
+
+else
 all: $(inputs)
 
-if ROSE_USE_GCC_OMP
-	$(CC) -nostdlib -static -s -o $@ $<
-else
 $(inputs): %: $(srcdir)/%.c
 	$(CC) -nostdlib -static -m32 -O3 -s -o $@ $<
 endif
