@@ -13,6 +13,7 @@
 #export PATH
 #export LD_LIBRARY_PATH
 
+source /nfs/apps/mpich2/1.1.1p1/setup.sh
 echo "Checking if MPI is installed!"
 mpicc --version
 
