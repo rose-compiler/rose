@@ -185,7 +185,8 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
  # echo "This test is forced to exit with an error as part of debugging a subset of the Hudson tests."
  # exit 1
 
-	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-parallel_ast_traversal_mpi --with-parallel_ast_traversal_omp CC=mpicc CXX=mpicxx"
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-parallel_ast_traversal_mpi  CC=mpicc CXX=mpicxx"
+#--with-parallel_ast_traversal_omp
 fi
 
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
