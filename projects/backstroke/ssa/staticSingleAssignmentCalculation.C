@@ -318,6 +318,16 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		current = worklist.back();
 		worklist.pop_back();
 
+		//We don't want to do def_use on the ending CFGNode of the function definition
+		//so if we see it, continue.
+		//If we do this, then incorrect information will be propogated to the beginning of the function
+		if (current == FilteredCfgNode(func->cfgForEnd()))
+		{
+			if (getDebug())
+				cout << "Skipped defUse on End of function definition." << endl;
+			continue;
+		}
+
 		//Propagate defs to the current node
 		bool changed = mergeDefs(current);
 
