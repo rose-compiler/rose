@@ -8,6 +8,33 @@ namespace Backstroke
 
 #define foreach BOOST_FOREACH
 
+
+namespace Details
+{
+
+template <class VertexT>
+void appendSuccessors(
+		VertexT v,
+		std::vector<VertexT>& vertices,
+		const std::map<VertexT, std::set<VertexT> >& iSucc)
+{
+	vertices.push_back(v);
+
+	typename std::map<VertexT, std::set<VertexT> >::const_iterator
+		iter = iSucc.find(v);
+	if (iter != iSucc.end())
+	{
+		ROSE_ASSERT(!iter->second.empty());
+
+		foreach (VertexT succ, iter->second)
+			appendSuccessors(succ, vertices, iSucc);
+	}
+}
+
+} // End of namespace Details.
+
+
+//! Build dominance frontiers for all nodes in the given CFG.
 template <class VertexT, class CFGType>
 std::map<VertexT, std::set<VertexT> >
 buildDominanceFrontiers(const std::map<VertexT, VertexT>& iDom, const CFGType& cfg)
@@ -24,9 +51,9 @@ buildDominanceFrontiers(const std::map<VertexT, VertexT>& iDom, const CFGType& c
 
 	// Use a stack to make a bottom-up traversal of the dominator tree.
 	std::vector<VertexT> vertices;
-	appendSuccessors(entry, vertices, children);
+	Details::appendSuccessors(entry, vertices, children);
 
-	buildTree(children, cfg, "immediateChildren.dot");
+	//buildTree(children, cfg, "immediateChildren.dot");
 
 	std::map<VertexT, std::set<VertexT> > domFrontiers;
 
@@ -39,7 +66,7 @@ buildDominanceFrontiers(const std::map<VertexT, VertexT>& iDom, const CFGType& c
 		typename boost::graph_traits<CFGType>::adjacency_iterator i, j;
 		for (tie(i, j) = boost::adjacent_vertices(v, cfg); i != j; ++i)
 		{
-			if (iDom.count(*i) == 0) std::cout << cfg[*i].getNode()->class_name() << std::endl;
+			//if (iDom.count(*i) == 0) std::cout << cfg[*i].getNode()->class_name() << std::endl;
 			ROSE_ASSERT(iDom.count(*i) > 0);
 
 			if (iDom.find(*i)->second != v)
@@ -67,12 +94,14 @@ buildDominanceFrontiers(const std::map<VertexT, VertexT>& iDom, const CFGType& c
 
 //! A class holding a Control Dependence Graph.
 
+//! In the CDG, if node a is control dependent on node b, there is an edge a->b.
+
 template <class CFGType>
 class CDG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-		typename CFGType::CFGNodeType, bool>
+		typename CFGType::CFGNodePtr, bool>
 {
 public:
-	typedef typename CFGType::CFGNodeType CFGNodeType;
+	typedef typename CFGType::CFGNodePtr CFGNodePtr;
 
 	typedef typename boost::graph_traits<CDG<CFGType> >::vertex_descriptor Vertex;
 	typedef typename boost::graph_traits<CDG<CFGType> >::edge_descriptor Edge;
@@ -94,10 +123,13 @@ public:
 
 protected:
 	
+	//! Check if the CFG contains any cycle without exit. If there is such a cycle, return false.
+	bool checkCycle(const CFGType& cfg);
+
 	//! This function helps to write the DOT file for vertices.
 	void writeGraphNode(std::ostream& out, const Vertex& node) const
 	{
-		writeCFGNode(out, (*this)[node]);
+		writeCFGNode(out, *(*this)[node]);
 	}
 
 	//! This function helps to write the DOT file for edges.
@@ -113,8 +145,17 @@ template <class CFGType>
 void CDG<CFGType>::buildCDG(const CFGType& cfg)
 {
 	typedef typename CFGType::Vertex CFGVertexT;
+
+	// Before the build of CDG, check if the CFG contains any cycle without exit, in which case
+	// a CDG cannot be built since not all nodes are in the donimator tree of the reverse CFG.
 	
-	// Remove all nodes and edges first.
+	if (!checkCycle(cfg))
+	{
+		// Throws an exception if the check fails.
+		throw;
+	}
+	
+	// Remove all nodes and edges.
 	this->clear();
 
 	// First, build a reverse CFG.
@@ -185,6 +226,14 @@ void CDG<CFGType>::toDot(const std::string& filename) const
 	boost::write_graphviz(ofile, *this,
 		boost::bind(&CDG<CFGType>::writeGraphNode, this, ::_1, ::_2),
 		boost::bind(&CDG<CFGType>::writeGraphEdge, this, ::_1, ::_2));
+}
+
+template <class CFGType>
+bool CDG<CFGType>::checkCycle(const CFGType& cfg)
+{
+
+	// TODO: this function is not complete.
+	return true;
 }
 
 #undef foreach
