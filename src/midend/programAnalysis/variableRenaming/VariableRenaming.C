@@ -1085,7 +1085,11 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 
 		//Get the unique name of the def.
 		VarUniqueName * uName = varRename->getUniqueName(varRef);
-		ROSE_ASSERT(uName);
+		if (uName == NULL)
+		{
+			//We don't have a name for this varRef. It might be called on a temporary object, e.g. foo().x
+			return VariableRenaming::VarDefUseSynthAttr(NULL, NULL);
+		}
 
 		//Add this as a use. We will correct the reference later.
 		varRename->getUseTable()[varRef][uName->getKey()].push_back(varRef);
