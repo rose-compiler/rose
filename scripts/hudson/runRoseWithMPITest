@@ -13,7 +13,9 @@
 #export PATH
 #export LD_LIBRARY_PATH
 
+set +e
 source /nfs/apps/mpich2/1.1.1p1/setup.sh
+set -e
 echo "Checking if MPI is installed!"
 mpicc --version
 
@@ -26,7 +28,7 @@ if (($mpdvar >= 2)); then
 #   echo "MPD RUNNING"
  elif (($mpdvar < 2)); then
 #   echo "Starting MPD"
-   mpd &
+    /nfs/apps/mpich2/1.1.1p1/bin/mpd &
 #   echo "MPD started."
 fi
 
