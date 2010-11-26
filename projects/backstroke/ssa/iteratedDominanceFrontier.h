@@ -10,23 +10,22 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/topological_sort.hpp>
 
-#define foreach BOOST_FOREACH
-#define reverse_foreach BOOST_REVERSE_FOREACH
-
 namespace ssa_private
 {
 	using namespace Backstroke;
 	using namespace std;
 	using namespace boost;
 
+	/** Calculates the dominance frontier for each node in the control flow graph of the given function.
+	 @returns a map from each node to the set of nodes in its dominance frontier.*/
 	template<class CfgNodeT, class CfgEdgeT>
-	void iteratedDominanceFrontier(SgFunctionDefinition* func, const vector<CfgNodeT> startNodes )
+	map<CfgNodeT, set<CfgNodeT> > calculateDominanceFrontiers(SgFunctionDefinition* func)
 	{
 		typedef CFG<CfgNodeT, CfgEdgeT> ControlFlowGraph;
 		//Build a CFG first
 		ControlFlowGraph functionCfg(func);
 
-		functionCfg.toDot("boost_filtered_cfg.dot");
+		//functionCfg.toDot("boost_filtered_cfg.dot");
 
 		//Build the dominator tree
 		typename ControlFlowGraph::VertexVertexMap dominatorTreeMap = functionCfg.buildDominatorTree();
@@ -39,12 +38,10 @@ namespace ssa_private
 		set<CfgNodeT> addedNodes;
 		map<CfgNodeT, TreeVertex> cfgNodeToVertex;
 
-		foreach(typename ControlFlowGraph::VertexVertexMap::value_type& nodeDominatorPair, dominatorTreeMap)
+		BOOST_FOREACH(typename ControlFlowGraph::VertexVertexMap::value_type& nodeDominatorPair, dominatorTreeMap)
 		{
 			CfgNodeT node = *functionCfg[nodeDominatorPair.first];
 			CfgNodeT dominator = *functionCfg[nodeDominatorPair.second];
-			printf("%s is immediately dominated by %s.\n", node.toStringForDebugging().c_str(),
-				dominator.toStringForDebugging().c_str());
 
 			if (addedNodes.count(dominator) == 0)
 			{
@@ -70,11 +67,58 @@ namespace ssa_private
 		vector<TreeVertex> reverseTopological;
 		topological_sort(domTree, back_inserter(reverseTopological));
 
-		printf("Nodes in topological order:\n");
-		reverse_foreach(TreeVertex v, reverseTopological)
+		//Calculate all the dominance frontiers. This algorithm is from figure 10, Cytron et. al 1991
+		map<CfgNodeT, set<CfgNodeT> > dominanceFrontiers;
+
+		BOOST_FOREACH(TreeVertex v, reverseTopological)
 		{
-			printf("%s\n", domTree[v].toStringForDebugging().c_str());
+			CfgNodeT currentNode = domTree[v];
+			set<CfgNodeT>& currentDominanceFrontier = dominanceFrontiers[currentNode];
+
+			//Local contribution: Iterate over all the successors of v in the control flow graph
+			BOOST_FOREACH(CfgEdgeT outEdge, currentNode.outEdges())
+			{
+				CfgNodeT successor = outEdge.target();
+
+				//Get the immediate dominator of the successor
+				typename ControlFlowGraph::Vertex successorVertex = functionCfg.getVertexForNode(successor);
+				ROSE_ASSERT(successorVertex != ControlFlowGraph::GraphTraits::null_vertex());
+				ROSE_ASSERT(dominatorTreeMap.count(successorVertex) == 1);
+				typename ControlFlowGraph::Vertex iDominatorVertex = dominatorTreeMap[successorVertex];
+				CfgNodeT iDominator = *functionCfg[iDominatorVertex];
+
+				//If we have a successor that we don't dominate, that successor is in our dominance frontier
+				if (iDominator != currentNode)
+				{
+					currentDominanceFrontier.insert(successor);
+				}
+			}
+
+			//"Up" contribuition. Iterate over all children in the dominator tree
+			typename graph_traits<TreeType>::adjacency_iterator currentIter, lastIter;
+			for (tie(currentIter, lastIter) = adjacent_vertices(v, domTree); currentIter != lastIter; currentIter++)
+			{
+				CfgNodeT childNode = domTree[*currentIter];
+				const set<CfgNodeT>& childDominanceFrontier = dominanceFrontiers[childNode];
+
+				BOOST_FOREACH(CfgNodeT childDFNode, childDominanceFrontier)
+				{
+					//Get the immediate dominator of the child DF node
+					typename ControlFlowGraph::Vertex childDFVertex = functionCfg.getVertexForNode(childDFNode);
+					ROSE_ASSERT(childDFVertex != ControlFlowGraph::GraphTraits::null_vertex());
+					ROSE_ASSERT(dominatorTreeMap.count(childDFVertex) == 1);
+					typename ControlFlowGraph::Vertex iDominatorVertex = dominatorTreeMap[childDFVertex];
+					CfgNodeT iDominator = *functionCfg[iDominatorVertex];
+
+					if (iDominator != currentNode)
+					{
+						currentDominanceFrontier.insert(childDFNode);
+					}
+				}
+			}
 		}
+
+		return dominanceFrontiers;
 	}
 
 }

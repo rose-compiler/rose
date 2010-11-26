@@ -469,10 +469,10 @@ typename CFG<CFGNodeType, CFGEdgeType>::Vertex CFG<CFGNodeType, CFGEdgeType>::ge
 {
 	typename std::map<CFGNodeType, Vertex>::iterator vertexIter = nodesToVertices_.find(node);
 	if (vertexIter == nodesToVertices_.end())
-		return Vertex::null_iterator();
+		return GraphTraits::null_vertex();
 	else
 	{
-		ROSE_ASSERT(get(*vertexIter->second, *this) == node);
+		ROSE_ASSERT(*(*this)[vertexIter->second] == node);
 		return vertexIter->second;
 	}
 }

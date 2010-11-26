@@ -14,6 +14,7 @@
 #include <stack>
 #include <boost/foreach.hpp>
 #include <boost/unordered_set.hpp>
+#include <boost/tuple/tuple.hpp>
 #include "uniqueNameTraversal.h"
 #include "defsAndUsesTraversal.h"
 #include "iteratedDominanceFrontier.h"
@@ -84,7 +85,17 @@ void StaticSingleAssignment::run()
 		{
 			//Build an iterate dominance frontier for this function
 			vector<FilteredCfgNode> startNodes;
-			iteratedDominanceFrontier<FilteredCfgNode, FilteredCfgEdge>(func, startNodes);
+			map<FilteredCfgNode, set<FilteredCfgNode> > domFrontiers = calculateDominanceFrontiers<FilteredCfgNode, FilteredCfgEdge>(func);
+			/*FilteredCfgNode currentNode;
+			set<FilteredCfgNode> dominanceFrontier;
+			foreach(tie(currentNode, dominanceFrontier), domFrontiers)
+			{
+				printf("The dominance frontier of %s is\n", currentNode.toStringForDebugging().c_str());
+				foreach (FilteredCfgNode dfNode, dominanceFrontier)
+				{
+					printf("\t\t%s\n", dfNode.toStringForDebugging().c_str());
+				}
+			}*/
 
 			if (getDebug())
 				cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
