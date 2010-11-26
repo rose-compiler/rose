@@ -16,6 +16,41 @@ namespace ssa_private
 	using namespace std;
 	using namespace boost;
 
+	/** Given the dominance frontiers of each node and a set of start nodes, calculate the iterated dominance frontier
+	 * of the start nodes.          */
+	template<class CfgNodeT>
+	set<CfgNodeT> calculateIteratedDominanceFrontier(map<CfgNodeT, set<CfgNodeT> > dominanceFrontiers, vector<CfgNodeT> startNodes)
+	{
+		set<CfgNodeT> result;
+		set<CfgNodeT> visitedNodes;
+		set<CfgNodeT> worklist;
+
+		worklist.insert(startNodes.begin(), startNodes.end());
+
+		while (!worklist.empty())
+		{
+			CfgNodeT currentNode = *worklist.begin();
+			worklist.erase(worklist.begin());
+			visitedNodes.insert(currentNode);
+
+			//Get the dominance frontier of the node and add it to the results
+			ROSE_ASSERT(dominanceFrontiers.count(currentNode) != 0);
+			set<CfgNodeT> dominanceFrontier = dominanceFrontiers[currentNode];
+
+			//Add all the children to the result and to the worklist
+			BOOST_FOREACH(CfgNodeT dfNode, dominanceFrontier)
+			{
+				if (visitedNodes.count(dfNode) > 0)
+					continue;
+
+				result.insert(dfNode);
+				worklist.insert(dfNode);
+			}
+		}
+
+		return result;
+	}
+
 	/** Calculates the dominance frontier for each node in the control flow graph of the given function.
 	 @returns a map from each node to the set of nodes in its dominance frontier.*/
 	template<class CfgNodeT, class CfgEdgeT>

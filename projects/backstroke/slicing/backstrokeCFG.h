@@ -340,6 +340,14 @@ void CFG<CFGNodeType, CFGEdgeType>::setEntryAndExit()
 				exit_ = *i;
 		}
 	}
+
+	//In graphs with an infinite loop, we might never get to the end vertex
+	//In those cases, we need to add it explicitly
+	if (exit_ == GraphTraits::null_vertex())
+	{
+		exit_ = add_vertex(*this);
+		(*this)[exit_] = CFGNodePtr(new CFGNodeType(funcDef_->cfgForEnd()));
+	}
 }
 
 template <class CFGNodeType, class CFGEdgeType>

@@ -83,20 +83,6 @@ void StaticSingleAssignment::run()
 		ROSE_ASSERT(func);
 		if (!isFromLibrary(func))
 		{
-			//Build an iterate dominance frontier for this function
-			vector<FilteredCfgNode> startNodes;
-			map<FilteredCfgNode, set<FilteredCfgNode> > domFrontiers = calculateDominanceFrontiers<FilteredCfgNode, FilteredCfgEdge>(func);
-			/*FilteredCfgNode currentNode;
-			set<FilteredCfgNode> dominanceFrontier;
-			foreach(tie(currentNode, dominanceFrontier), domFrontiers)
-			{
-				printf("The dominance frontier of %s is\n", currentNode.toStringForDebugging().c_str());
-				foreach (FilteredCfgNode dfNode, dominanceFrontier)
-				{
-					printf("\t\t%s\n", dfNode.toStringForDebugging().c_str());
-				}
-			}*/
-
 			if (getDebug())
 				cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
 
@@ -129,6 +115,8 @@ void StaticSingleAssignment::run()
 			}
 
 			insertDefsForChildMemberUses(func->get_declaration());
+
+			insertPhiFunctions(func);
 
 			if (getDebug())
 				cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
@@ -734,4 +722,79 @@ void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaratio
 			ROSE_ASSERT(expandedVarsAtFunctionEntry.count(newName) == 0);
 		}
 	}
+}
+
+
+void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
+{
+	ROSE_ASSERT(function != NULL);
+
+	//First, find all the places where each name is defined
+	map<VarName, vector<FilteredCfgNode> > nameToDefNodesMap;
+
+	set<FilteredCfgNode> worklist;
+	unordered_set<SgNode*> visited;
+	worklist.insert(FilteredCfgNode(function->cfgForBeginning()));
+
+	while (!worklist.empty())
+	{
+		FilteredCfgNode cfgNode = *worklist.begin();
+		worklist.erase(worklist.begin());
+
+		SgNode* node = cfgNode.getNode();
+		visited.insert(node);
+
+		//For every edge, add it to the worklist if it is not seen
+		foreach(const FilteredCfgEdge& edge, cfgNode.outEdges())
+		{
+			FilteredCfgNode nextNode = edge.target();
+
+			//Insert the child in the worklist if it hasn't been visited yet
+			if (visited.count(nextNode.getNode()) == 0)
+			{
+				worklist.insert(nextNode);
+			}
+		}
+
+		//Check the definitions at this node and add them to the map
+		LocalDefTable::const_iterator defEntry = originalDefTable.find(node);
+		if (defEntry != originalDefTable.end())
+		{
+			foreach (const VarName& definedVar, defEntry->second)
+			{
+				nameToDefNodesMap[definedVar].push_back(cfgNode);
+			}
+		}
+
+		defEntry = expandedDefTable.find(node);
+		if (defEntry != expandedDefTable.end())
+		{
+			foreach (const VarName& definedVar, defEntry->second)
+			{
+				nameToDefNodesMap[definedVar].push_back(cfgNode);
+			}
+		}
+	}
+
+	//Build an iterated dominance frontier for this function
+	map<FilteredCfgNode, set<FilteredCfgNode> > domFrontiers =
+			calculateDominanceFrontiers<FilteredCfgNode, FilteredCfgEdge>(function);
+
+	//Find the phi function locations for each variable
+	VarName var;
+	vector<FilteredCfgNode> definitionPoints;
+	foreach (tie(var, definitionPoints), nameToDefNodesMap)
+	{
+		ROSE_ASSERT(!definitionPoints.empty() && "We have a variable that is not defined anywhere!");
+	}
+	/*FilteredCfgNode currentNode;
+	set<FilteredCfgNode> dominanceFrontier;
+	foreach(tie(currentNode, dominanceFrontier), domFrontiers)
+	{
+		printf("The dominance frontier of %s is\n", currentNode.toStringForDebugging().c_str());
+		foreach (FilteredCfgNode dfNode, dominanceFrontier)
+		{
+			printf("\t\t%s\n", dfNode.toStringForDebugging().c_str());
+		}
+	}*/
 }

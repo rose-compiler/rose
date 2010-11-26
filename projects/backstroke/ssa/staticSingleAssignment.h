@@ -410,6 +410,9 @@ private:
 	 */
 	void expandParentMemberUses(SgFunctionDeclaration* function);
 
+	/** Find where phi functions need to be inserted and insert empty phi functions at those nodes. */
+	void insertPhiFunctions(SgFunctionDefinition* function);
+
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
 
