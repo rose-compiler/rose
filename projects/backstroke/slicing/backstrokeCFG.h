@@ -181,6 +181,9 @@ protected:
 	//! The exit node.
 	Vertex exit_;
 
+	//! A map from a CFG node to the corresponding vertex
+	std::map<CFGNodeType, Vertex> nodesToVertices_;
+
 public:
 
 	//! The default constructor.
@@ -216,6 +219,7 @@ public:
 	{ return exit_; }
 
 	//! Build the dominator tree of this CFG.
+	//! @returns A map from each node to its immediate dominator.
 	VertexVertexMap buildDominatorTree() const;
 
 	//! Build the postdominator tree of this CFG.
@@ -232,6 +236,10 @@ public:
 
 	//! Get all CFG edges in this graph.
 	std::vector<CFGEdgePtr> getAllEdges() const;
+
+	//! Given a CFG node, returns the corresponding vertex in the graph.
+	//! Returns Vertex::null_vertex() if the given node is not in the graph
+	Vertex getVertexForNode(const CFGNodeT &node);
 
 protected:
 
@@ -302,13 +310,13 @@ void CFG<CFGNodeType, CFGEdgeType>::build(SgFunctionDefinition* funcDef)
 	funcDef_ = funcDef;
 
 	// The following two variables are used to record the nodes traversed.
-	std::map<CFGNodeType, Vertex> nodesAdded;
+	nodesToVertices_.clear();
 	std::set<CFGNodeType> nodesProcessed;
 
 	// Remove all nodes and edges first.
 	this->clear();
 
-	buildCFG(CFGNodeType(funcDef->cfgForBeginning()), nodesAdded, nodesProcessed);
+	buildCFG(CFGNodeType(funcDef->cfgForBeginning()), nodesToVertices_, nodesProcessed);
 
 	// Find the entry and exit of this CFG.
 	setEntryAndExit();
@@ -362,8 +370,10 @@ void CFG<CFGNodeType, CFGEdgeType>::buildCFG(
 		(*this)[from] = CFGNodePtr(new CFGNodeType(src));
 		iter->second = from;
 	}
-		else
-			from = iter->second;
+	else
+	{
+		from = iter->second;
+	}
 
 	std::vector<CFGEdgeType> outEdges = node.outEdges();
 
@@ -382,7 +392,9 @@ void CFG<CFGNodeType, CFGEdgeType>::buildCFG(
 			iter->second = to;
 		}
 		else
+		{
 			to = iter->second;
+		}
 
 		// Add the edge.
 		Edge edge = add_edge(from, to, *this).first;
@@ -399,7 +411,7 @@ typename CFG<CFGNodeType, CFGEdgeType>::VertexVertexMap CFG<CFGNodeType, CFGEdge
 	VertexVertexMap immediateDominators;
 	boost::associative_property_map<VertexVertexMap> domTreePredMap(immediateDominators);
 
-	// Here we use the algorithm in boost::graph to build an map from each node to its immediate dominator.
+	// Here we use the algorithm in boost::graph to build a map from each node to its immediate dominator.
 	boost::lengauer_tarjan_dominator_tree(*this, entry_, domTreePredMap);
 	return immediateDominators;
 }
@@ -450,6 +462,19 @@ CFG<CFGNodeType, CFGEdgeType>::getAllEdges() const
 	for (boost::tie(i, j) = boost::edges(*this); i != j; ++i)
 		allEdges.push_back((*this)[*i]);
 	return allEdges;
+}
+
+template <class CFGNodeType, class CFGEdgeType>
+typename CFG<CFGNodeType, CFGEdgeType>::Vertex CFG<CFGNodeType, CFGEdgeType>::getVertexForNode(const CFGNodeType &node)
+{
+	typename std::map<CFGNodeType, Vertex>::iterator vertexIter = nodesToVertices_.find(node);
+	if (vertexIter == nodesToVertices_.end())
+		return Vertex::null_iterator();
+	else
+	{
+		ROSE_ASSERT(get(*vertexIter->second, *this) == node);
+		return vertexIter->second;
+	}
 }
 
 #undef foreach
