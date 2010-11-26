@@ -16,6 +16,7 @@
 #include <boost/unordered_set.hpp>
 #include "uniqueNameTraversal.h"
 #include "defsAndUsesTraversal.h"
+#include "iteratedDominanceFrontier.h"
 
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
@@ -81,6 +82,10 @@ void StaticSingleAssignment::run()
 		ROSE_ASSERT(func);
 		if (!isFromLibrary(func))
 		{
+			//Build an iterate dominance frontier for this function
+			vector<FilteredCfgNode> startNodes;
+			iteratedDominanceFrontier<FilteredCfgNode, FilteredCfgEdge>(func, startNodes);
+
 			if (getDebug())
 				cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
 
