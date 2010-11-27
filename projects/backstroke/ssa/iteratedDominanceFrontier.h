@@ -19,7 +19,8 @@ namespace ssa_private
 	/** Given the dominance frontiers of each node and a set of start nodes, calculate the iterated dominance frontier
 	 * of the start nodes.          */
 	template<class CfgNodeT>
-	set<CfgNodeT> calculateIteratedDominanceFrontier(map<CfgNodeT, set<CfgNodeT> > dominanceFrontiers, vector<CfgNodeT> startNodes)
+	set<CfgNodeT> calculateIteratedDominanceFrontier(const map<CfgNodeT, set<CfgNodeT> >& dominanceFrontiers,
+			const vector<CfgNodeT>& startNodes)
 	{
 		set<CfgNodeT> result;
 		set<CfgNodeT> visitedNodes;
@@ -35,7 +36,7 @@ namespace ssa_private
 
 			//Get the dominance frontier of the node and add it to the results
 			ROSE_ASSERT(dominanceFrontiers.count(currentNode) != 0);
-			set<CfgNodeT> dominanceFrontier = dominanceFrontiers[currentNode];
+			const set<CfgNodeT>& dominanceFrontier = dominanceFrontiers.find(currentNode)->second;
 
 			//Add all the children to the result and to the worklist
 			BOOST_FOREACH(CfgNodeT dfNode, dominanceFrontier)

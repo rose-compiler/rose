@@ -786,15 +786,14 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
 	foreach (tie(var, definitionPoints), nameToDefNodesMap)
 	{
 		ROSE_ASSERT(!definitionPoints.empty() && "We have a variable that is not defined anywhere!");
-	}
-	/*FilteredCfgNode currentNode;
-	set<FilteredCfgNode> dominanceFrontier;
-	foreach(tie(currentNode, dominanceFrontier), domFrontiers)
-	{
-		printf("The dominance frontier of %s is\n", currentNode.toStringForDebugging().c_str());
-		foreach (FilteredCfgNode dfNode, dominanceFrontier)
+
+		//Calculate the iterated dominance frontier
+		set<FilteredCfgNode> phiNodes = calculateIteratedDominanceFrontier(domFrontiers, definitionPoints);
+
+		printf("Variable %s should have phi nodes inserted at\n", keyToString(var).c_str());
+		foreach (FilteredCfgNode phiNode, phiNodes)
 		{
-			printf("\t\t%s\n", dfNode.toStringForDebugging().c_str());
+			printf("\t\t%s\n", phiNode.toStringForDebugging().c_str());
 		}
-	}*/
+	}
 }
