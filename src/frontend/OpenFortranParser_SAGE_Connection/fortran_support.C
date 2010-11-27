@@ -78,7 +78,7 @@ void
 setSourcePosition( SgLocatedNode* locatedNode )
    {
   // This function sets the source position to be marked as not available (since we often don't have token information)
-  // These nodes WILL be unparsed in the conde generation phase.
+  // These nodes WILL be unparsed in the code generation phase.
 
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);
@@ -474,7 +474,7 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
           printf ("resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
           sourceLocatedNode->get_startOfConstruct()->display("get_filenameString() == NULL_FILE");
         }
-     ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
+  // ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
 
   // Remove the existing Sg_File_Info objects, they will be reset below
      delete targetLocatedNode->get_startOfConstruct();
@@ -1876,6 +1876,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
   // while (variableSymbol == NULL && tempScope != NULL)
      while (variableSymbol == NULL && functionSymbol == NULL && classSymbol == NULL && tempScope != NULL)
         {
+       // DQ (11/26/2010): The variable name that we will search for needs to be case normalized (see test2010_112.f90).
           variableSymbol = tempScope->lookup_variable_symbol(variableName);
           functionSymbol = tempScope->lookup_function_symbol(variableName);
           classSymbol    = tempScope->lookup_class_symbol(variableName);
@@ -1884,7 +1885,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
                tempScope,tempScope->class_name().c_str(),variableSymbol,functionSymbol,classSymbol);
 #endif
        // If we have processed the global scope then we can stop (if we have not found the symbol at this
-       // point then it is not available (or it is only availalbe through a USE statment and we have not 
+       // point then it is not available (or it is only available through a USE statment and we have not 
        // implemented that support yet.
           tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
         }
@@ -1907,9 +1908,17 @@ SgVariableSymbol*
 trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableName, SgScopeStatement* currentScope )
    {
   // This function traces back through the parent scopes to search for the named symbol in an outer scope
-  // It returns NULL if it is not found in any scope.  Is does not look in any scopes specified using a 
+  // Semantics of this function:
+  //    It returns NULL if the named variable is not found in any scope.
+  //    If the variable should be implicitly defined then it is built, but the function still returns NULL.
+  // Note that this means that using it to get the symbol for an implicitly defined variable that has not 
+  // been used required calling the function twice.
+
+  // Whe looking at scopes this function does not look in any scopes specified using a 
   // C++ using declaration (SgUsingDeclarationStatement), using directives (SgUsingDirectiveStatement), a
-  // Fortran use statement (SgUseStatement).  This will be done in another function, not yet implemented.
+  // Fortran use statement (SgUseStatement).  This is handled by having SgAliasSymbol to represent such 
+  // symbols that have been imported into the associated scope of the using declarations (or use statement 
+  // in fortran).
 
 #if 1
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
@@ -1971,11 +1980,15 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
                     printf ("astNameStack.front() = %p = %s \n",astNameStack.front(),astNameStack.front()->text);
              }
 
+#if 0
+       // Refactored code into function buildImplicitVariableDeclaration() that 
+       // can be called from both this function and in R612 c_action_data_ref()
           Token_t token;
           token.line = 1;
           token.col  = 1;
           token.type = 0;
           token.text = strdup(variableName.str());
+#endif
 
        // Check if this is a scope using implicit none rules, however for now even if we know it is function we 
        // first build it as a variable and later convert it to either an array or a function (or a derived type).
@@ -1987,12 +2000,12 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
             // where the initializer to "y" is not built as a symbol yet as part of the construction of the variable declaration.
 #if 1
                outputState("scope marked as implicit none, so we must construct function in trace_back_through_parent_scopes_lookup_variable_symbol()");
-
+#endif
             // DQ (9/11/2010): Since this must be a function, we can build a function reference expression and a function declaration, but in what scope.
             // Or we could define a list of unresolved functions and fix them up at the end of the module or global scope.  This is a general problem
             // and demonstrated by test2010_46.f90 
                if (astNameStack.empty() != false)
-                    cerr<<"Error: name stack is empty when handling variable:"<<variableName.str()<<endl;
+                    cerr << "Error: name stack is empty when handling variable:"<<variableName.str() << endl;
                ROSE_ASSERT(astNameStack.empty() == false);
                ROSE_ASSERT(astNameStack.front()->text != NULL);
 
@@ -2056,7 +2069,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
              }
             else
              {
-#else
+#if 0
             // This has to be a function call since we can't be building a variable to represent an implicitly type variable.
             // DQ (9/11/2010): This can alternatively be something like "integer x = 42, y = x" where the initializer to "y" is not  
             // built as a symbol yet as part of the construction of the variable declaration. See test2010_45.f90 for an example.
@@ -2067,6 +2080,10 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
 #endif
             // Since "implicit none" has not been specified we have to build an implicitly typed variable
 
+#if 1
+            // DQ (11/26/2010): Refactored code into function that can be called from both here and in R612 c_action_data_ref()
+               buildImplicitVariableDeclaration(variableName);
+#else
             // Push the name onto the stack
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("Push the name onto the astNameStack \n");
@@ -2111,10 +2128,41 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
 
             // ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == true);
 
+            // Set this implicitly defined variable declaration to be compiler generated.
+            // setSourcePositionCompilerGenerated(variableDeclaration);
+
+               ROSE_ASSERT(variableDeclaration->get_startOfConstruct() != NULL);
+               ROSE_ASSERT(variableDeclaration->get_endOfConstruct() != NULL);
+
+               if (variableDeclaration->get_startOfConstruct()->get_filenameString() == "NULL_FILE")
+                  {
+                    variableDeclaration->get_startOfConstruct()->display("Implicit variable declaration within trace_back_through_parent_scopes_lookup_variable_symbol()");
+                  }
+            // ROSE_ASSERT(variableDeclaration->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
+
             // DQ (12/17/2007): Make sure the scope was set!
                ROSE_ASSERT(initializedName->get_scope() != NULL);
 
-               ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
+            // Set the variableSymbol we want to return...
+            // ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
+               SgSymbol* tempSymbol = initializedName->get_symbol_from_symbol_table();
+               ROSE_ASSERT(tempSymbol != NULL);
+#if 0
+            // DQ (11/26/2010): This violates the semantics of the function (see top).
+            // variableSymbol = isSgVariableSymbol(tempSymbol);
+            // ROSE_ASSERT(variableSymbol != NULL);
+#endif
+#if 1
+            // Output debugging information about saved state (stack) information.
+               outputState("At BOTTOM of building an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
+#endif
+            // DQ (11/23/2010): I am not clear where this comes from!!!
+               printf ("Remove SgExprListExp pushed onto stack as a result of the building an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol() \n");
+               if (astExpressionStack.empty() == false)
+                  {
+                 // astExpressionStack.pop_front();
+                  }
+#endif
              }
         }
 
@@ -2131,6 +2179,86 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
 
      return variableSymbol;
    }
+
+void
+buildImplicitVariableDeclaration( const SgName & variableName )
+   {
+     Token_t token;
+     token.line = 1;
+     token.col  = 1;
+     token.type = 0;
+     token.text = strdup(variableName.str());
+
+  // Push the name onto the stack
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+          printf ("Push the name onto the astNameStack \n");
+
+     astNameStack.push_front(&token);
+     ROSE_ASSERT(astNameStack.empty() == false);
+
+  // DQ (12/20/2007): The type here must be determined using implicit type rules.
+     SgType* intrinsicType = generateImplicitType(variableName.str());
+     ROSE_ASSERT(intrinsicType != NULL);
+
+     astTypeStack.push_front(intrinsicType);
+
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+          printf ("Calling buildVariableDeclaration to build an implicitly defined variable: name = %s type = %s astNameStack.size() = %zu \n",variableName.str(),intrinsicType->class_name().c_str(),astNameStack.size());
+
+     ROSE_ASSERT(astTypeStack.empty() == false);
+     SgType* type = astTypeStack.front();
+     astTypeStack.pop_front();
+
+     SgInitializedName* initializedName = new SgInitializedName(variableName,type,NULL,NULL,NULL);
+     setSourcePosition(initializedName);
+
+  // printf ("Built a new SgInitializedName = %p = %s \n",initializedName,variableName.str());
+  // DQ (12/14/2007): This will be set in buildVariableDeclaration()
+  // initializedName->set_scope(currentScope);
+
+     astNameStack.pop_front();
+     astNodeStack.push_front(initializedName);
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("Calling buildVariableDeclaration to build an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
+#endif
+
+  // We need to explicitly specify that the variable is to be implicitly declarated (so that we will know to process only one variable at a time).
+     bool buildingImplicitVariable = true;
+     SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,buildingImplicitVariable);
+     ROSE_ASSERT(variableDeclaration != NULL);
+
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+          printf ("DONE: Calling buildVariableDeclaration to build an implicitly defined variable \n");
+
+  // ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == true);
+
+  // Set this implicitly defined variable declaration to be compiler generated.
+  // setSourcePositionCompilerGenerated(variableDeclaration);
+
+     ROSE_ASSERT(variableDeclaration->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(variableDeclaration->get_endOfConstruct() != NULL);
+
+     if (variableDeclaration->get_startOfConstruct()->get_filenameString() == "NULL_FILE")
+        {
+          variableDeclaration->get_startOfConstruct()->display("Implicit variable declaration within trace_back_through_parent_scopes_lookup_variable_symbol()");
+        }
+  // ROSE_ASSERT(variableDeclaration->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
+
+  // DQ (12/17/2007): Make sure the scope was set!
+     ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+  // Set the variableSymbol we want to return...
+  // ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
+     SgSymbol* tempSymbol = initializedName->get_symbol_from_symbol_table();
+     ROSE_ASSERT(tempSymbol != NULL);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of building an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
+#endif
+   }
+
 
 
 SgClassSymbol*
@@ -5136,6 +5264,11 @@ generateAssignmentStatement(Token_t* label, bool isPointerAssignment )
   // This function builds the SgAssignOp and the SgExprStatement and 
   // inserts it into the current scope.
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of generateAssignmentStatement()");
+#endif
+
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExpression* rhs = astExpressionStack.front();
      astExpressionStack.pop_front();
@@ -5208,7 +5341,7 @@ generateAssignmentStatement(Token_t* label, bool isPointerAssignment )
 
 #if 1
   // Output debugging information about saved state (stack) information.
-     outputState("At BOTTOM of R734 c_action_assignment_stmt()");
+     outputState("At BOTTOM of generateAssignmentStatement()");
 #endif
 
   // Error checking for astExpressionStack

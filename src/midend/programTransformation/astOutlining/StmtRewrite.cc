@@ -158,8 +158,11 @@ ASTtools::moveStatements (SgBasicBlock* src, SgBasicBlock* dest)
   // Copy the symbol table entries.
   SgSymbolTable* src_syms = src->get_symbol_table ();
   ROSE_ASSERT (src_syms);
-  for (SgSymbol* i = src_syms->findfirstany (); i; i = src_syms->nextany ())
-    dest->insert_symbol (i->get_name (), i);
+
+// DQ (11/27/2010): findfirstany() and nextany() are both deprecated (for 4 years) use find_any() and next_any() instead.
+// for (SgSymbol* i = src_syms->findfirstany(); i; i = src_syms->nextany())
+   for (SgSymbol* i = src_syms->find_any(); i; i = src_syms->next_any())
+      dest->insert_symbol (i->get_name (), i);
 
   // Clear the source symbol table.
   delete src_syms;

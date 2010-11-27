@@ -358,6 +358,30 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_82.f90 \
      test2010_83.f90 \
      test2010_84.f90 \
+     test2010_85.f90 \
+     test2010_86.f90 \
+     test2010_87.f90 \
+     test2010_88.f90 \
+     test2010_89.f90 \
+     test2010_90.f90 \
+     test2010_91.f90 \
+     test2010_92.f90 \
+     test2010_93.f90 \
+     test2010_94.f90 \
+     test2010_95.f90 \
+     test2010_96.f90 \
+     test2010_97.f90 \
+     test2010_99.f90 \
+     test2010_100.f90 \
+     test2010_101.f90 \
+     test2010_102.f90 \
+     test2010_103.f90 \
+     test2010_107.f90 \
+     test2010_108.f90 \
+     test2010_109.f90 \
+     test2010_110.f90 \
+     test2010_111.f90 \
+     test2010_112.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -393,7 +417,8 @@ F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2010_57.f \
      test2010_68.f \
      test2010_69.f \
-     test2010_70.f 
+     test2010_70.f \
+     test2010_105.f
 
 F03_TESTCODES_CURRENTLY_FAILING = \
      test2007_18.f03 \
@@ -405,8 +430,12 @@ F03_TESTCODES_CURRENTLY_FAILING = \
      test2010_74.f03 \
      test2010_75.f03 \
      test2010_76.f03 \
-     test2010_77.f03
+     test2010_77.f03 \
+     test2010_104.f03 \
+     test2010_106.f03
 
+F08_TESTCODES_CURRENTLY_FAILING = \
+     test2010_98.f08
 
 noinst_headers =
 
