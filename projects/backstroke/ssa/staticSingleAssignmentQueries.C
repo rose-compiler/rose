@@ -1621,3 +1621,17 @@ bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 
 	return true;
 }
+
+StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::ssa_getReachingDefsAtNode(SgNode* node) const
+{
+	GlobalReachingDefTable::const_iterator reachingDefsIter = ssaReachingDefsTable.find(node);
+	if (reachingDefsIter == ssaReachingDefsTable.end())
+	{
+		NodeReachingDefTable result;
+		return result;
+	}
+	else
+	{
+		return reachingDefsIter->second.second;
+	}
+}

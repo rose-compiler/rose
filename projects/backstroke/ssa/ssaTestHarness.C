@@ -2,6 +2,7 @@
 #include "rose.h"
 #include "VariableRenaming.h"
 #include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #define foreach BOOST_FOREACH
 using namespace std;
@@ -30,6 +31,42 @@ public:
 			printf("SSA Expanded Defs:");
 			StaticSingleAssignment::printRenameTable(ssa->getExpandedDefsAtNode(node));
 			ROSE_ASSERT(false);
+		}
+
+		StaticSingleAssignment::NodeReachingDefTable newReachingDefs = ssa->ssa_getReachingDefsAtNode(node);
+		StaticSingleAssignment::NumNodeRenameTable oldReachingDefs = ssa->getReachingDefsAtNode(node);
+
+		if (newReachingDefs.size() != oldReachingDefs.size())
+		{
+			printf("SSA Reaching defs at node %s:%d\n", node->class_name().c_str(), node->get_file_info()->get_line());
+			foreach(const StaticSingleAssignment::NodeReachingDefTable::value_type& varDefPair, newReachingDefs)
+			{
+				printf("%s, ", StaticSingleAssignment::varnameToString(varDefPair.first).c_str());
+			}
+			printf("\nVarRenaming reaching defs at node:\n");
+			foreach(const StaticSingleAssignment::NumNodeRenameTable::value_type& varDefsPair, oldReachingDefs)
+			{
+				printf("%s, ", StaticSingleAssignment::varnameToString(varDefsPair.first).c_str());
+			}
+			printf("\n");
+
+			ROSE_ASSERT(false);
+		}
+
+
+		StaticSingleAssignment::ReachingDefPtr reachingDef;
+		StaticSingleAssignment::VarName var;
+		foreach (tie(var, reachingDef), newReachingDefs)
+		{
+			set<SgNode*> newReachingDefNodes = reachingDef->getActualDefinitions();
+
+			set<SgNode*> oldReachingDefNodes;
+			foreach(StaticSingleAssignment::NumNodeRenameEntry::value_type& numNodePair, oldReachingDefs[var])
+			{
+				oldReachingDefNodes.insert(numNodePair.second);
+			}
+
+			ROSE_ASSERT(newReachingDefNodes == oldReachingDefNodes);
 		}
 
 		ROSE_ASSERT(varRenaming->getExpandedDefsAtNode(node) == ssa->getExpandedDefsAtNode(node));

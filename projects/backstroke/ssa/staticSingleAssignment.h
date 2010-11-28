@@ -421,7 +421,7 @@ private:
 	void insertPhiFunctions(SgFunctionDefinition* function);
 
 	/** Create ReachingDef objects for each local def and insert them in the local def table. */
-	void insertLocalDefs(SgFunctionDefinition* function);
+	void insertLocalDefs(SgFunctionDeclaration* function);
 
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
@@ -622,6 +622,8 @@ public:
 
 		return res;
 	}
+
+	NodeReachingDefTable ssa_getReachingDefsAtNode(SgNode* node) const;
 
 	/** Get name:num mappings for all reaching definitions of all variables at the node.
 	 *

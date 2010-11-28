@@ -117,7 +117,7 @@ void StaticSingleAssignment::run()
 			insertDefsForChildMemberUses(func->get_declaration());
 
 			insertPhiFunctions(func);
-			insertLocalDefs(func);
+			insertLocalDefs(func->get_declaration());
 
 			if (getDebug())
 				cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
@@ -376,6 +376,14 @@ bool StaticSingleAssignment::ssaMergeDefs(FilteredCfgNode cfgNode)
 	//Was the same as the currently available one, to decide if any changes have occurred
 	//We initialize the OUT tabel to the IN table
 	NodeReachingDefTable outDefsTable = ssaReachingDefsTable[node].first;
+
+	//Special case: the IN table of the function definition can have phi nodes inserted for the
+	//definitions reaching the END of the function. So, start with an empty table to prevent definitions
+	//from the bottom of the function from propagating to the top.
+	if (isSgFunctionDefinition(node))
+	{
+		outDefsTable.clear();
+	}
 
 	//Now overwrite any local definitions:
 	if (ssaLocalDefTable.count(node) > 0)
@@ -899,8 +907,9 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
 	}
 }
 
-void StaticSingleAssignment::insertLocalDefs(SgFunctionDefinition* function)
+void StaticSingleAssignment::insertLocalDefs(SgFunctionDeclaration* function)
 {
+	ROSE_ASSERT(function->get_definition() != NULL);
 	struct InsertDefs : public AstSimpleProcessing
 	{
 		StaticSingleAssignment* ssa;
