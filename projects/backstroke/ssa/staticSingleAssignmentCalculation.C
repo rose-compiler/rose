@@ -117,6 +117,7 @@ void StaticSingleAssignment::run()
 			insertDefsForChildMemberUses(func->get_declaration());
 
 			insertPhiFunctions(func);
+			insertLocalDefs(func);
 
 			if (getDebug())
 				cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
@@ -198,7 +199,7 @@ void StaticSingleAssignment::expandParentMemberDefinitions(SgFunctionDeclaration
 			{
 				if (getDebugExtra())
 				{
-					cout << "Checking [" << keyToString(definedVar) << "]" << endl;
+					cout << "Checking [" << varnameToString(definedVar) << "]" << endl;
 				}
 
 				//Check if the variableName has multiple parts
@@ -217,7 +218,7 @@ void StaticSingleAssignment::expandParentMemberDefinitions(SgFunctionDeclaration
 
 					if (getDebugExtra())
 					{
-						cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+						cout << "Testing for presence of [" << varnameToString(newName) << "]" << endl;
 					}
 
 					//Only insert the new definition if it does not already exist in the original def table
@@ -228,7 +229,7 @@ void StaticSingleAssignment::expandParentMemberDefinitions(SgFunctionDeclaration
 
 						if (getDebugExtra())
 						{
-							cout << "Inserted new name [" << keyToString(newName) << "] into defs." << endl;
+							cout << "Inserted new name [" << varnameToString(newName) << "] into defs." << endl;
 						}
 					}
 				}
@@ -259,7 +260,7 @@ void StaticSingleAssignment::expandParentMemberUses(SgFunctionDeclaration* funct
 				const VarName& usedVar = entry.first;
 				if (getDebugExtra())
 				{
-					cout << "Checking [" << keyToString(usedVar) << "]" << endl;
+					cout << "Checking [" << varnameToString(usedVar) << "]" << endl;
 				}
 
 				//Check if the variableName has multiple parts
@@ -278,7 +279,7 @@ void StaticSingleAssignment::expandParentMemberUses(SgFunctionDeclaration* funct
 
 					if (getDebugExtra())
 					{
-						cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
+						cout << "Testing for presence of [" << varnameToString(newName) << "]" << endl;
 					}
 
 					//Only insert the new definition if it does not already exist
@@ -289,7 +290,7 @@ void StaticSingleAssignment::expandParentMemberUses(SgFunctionDeclaration* funct
 
 						if (getDebugExtra())
 						{
-							cout << "Inserted new name [" << keyToString(newName) << "] into uses." << endl;
+							cout << "Inserted new name [" << varnameToString(newName) << "] into uses." << endl;
 						}
 					}
 				}
@@ -334,12 +335,10 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 
 		//Propagate defs to the current node
 		bool changed = mergeDefs(current);
-
-		//Get the outgoing edges
-		cfgEdgeVec outEdges = current.outEdges();
+		bool ssaChanged = ssaMergeDefs(current);
 
 		//For every edge, add it to the worklist if it is not seen or something has changed
-		reverse_foreach(FilteredCfgEdge& edge, outEdges)
+		reverse_foreach(const FilteredCfgEdge& edge, current.outEdges())
 		{
 			FilteredCfgNode nextNode = edge.target();
 
@@ -366,11 +365,43 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 	}
 }
 
+bool StaticSingleAssignment::ssaMergeDefs(FilteredCfgNode cfgNode)
+{
+	SgNode* node = cfgNode.getNode();
+
+	//This updates the IN table with the reaching defs from previous nodes
+	updateIncomingDefs(cfgNode);
+
+	//Create a staging OUT table. At the end, we will check if this table
+	//Was the same as the currently available one, to decide if any changes have occurred
+	//We initialize the OUT tabel to the IN table
+	NodeReachingDefTable outDefsTable = ssaReachingDefsTable[node].first;
+
+	//Now overwrite any local definitions:
+	if (ssaLocalDefTable.count(node) > 0)
+	{
+		foreach(const NodeReachingDefTable::value_type& varDefPair, ssaLocalDefTable[node])
+		{
+			const VarName& definedVar = varDefPair.first;
+			ReachingDefPtr localDef = varDefPair.second;
+
+			outDefsTable[definedVar] = localDef;
+		}
+	}
+
+	//Compare old to new OUT tables
+	bool changed = (ssaReachingDefsTable[node].second != outDefsTable);
+	if (changed)
+	{
+		ssaReachingDefsTable[node].second = outDefsTable;
+	}
+
+	return changed;
+}
+
 bool StaticSingleAssignment::mergeDefs(FilteredCfgNode curNode)
 {
 	SgNode* node = curNode.getNode();
-
-	bool changed = false;
 
 	if (getDebug())
 	{
@@ -378,30 +409,7 @@ bool StaticSingleAssignment::mergeDefs(FilteredCfgNode curNode)
 		printDefs(node);
 	}
 
-	//We have the definitions stored as follows:
-	//defTable contans the definitions as propogated by the CFG analysis
-	//originalDefTable contains the original definitions that are part of the
-	//given statement.
-
-	//When we want to propogate the defs from the previous node(s) to this one,
-	//We perform a few steps. This is dependent on the number of incoming edges.
-
-	/*1 Edge: When we have linear control flow, we do the following:
-	 *        1. Copy the definitions from the previous node wholesale to a staging table.
-	 *        2. Copy in the original definitions from the current node, overwriting those
-	 *           from the previous node.
-	 *        3. Compare the staging and current tables, and only overwrite if needed.
-	 */
-
-	/*2+ Edges: When we have branched control flow, we do the following:
-	 *       1. Copy the definitions from the previous node(s) wholesale to a staging table.
-	 *          Be careful to not insert duplicates.
-	 *       2. Copy in the original definitions from the current node, overwriting those
-	 *          from the previous node(s).
-	 *       3. Compare the staging and current tables, and only overwrite if needed.
-	 */
-
-	TableEntry stagingPropagatedDefs;
+	TableEntry stagingPropagatedDefs;;
 	//Retrieve the defs coming from previous cfgNodes
 	aggregatePreviousDefs(curNode, stagingPropagatedDefs);
 
@@ -433,14 +441,11 @@ bool StaticSingleAssignment::mergeDefs(FilteredCfgNode curNode)
 	}
 
 	//Now do a comparison to see if we should copy
+	bool changed = false;
 	if (stagingPropagatedDefs != reachingDefsTable[node])
 	{
 		reachingDefsTable[node] = stagingPropagatedDefs;
 		changed = true;
-	}
-	else
-	{
-		changed = false;
 	}
 
 	if (getDebug())
@@ -453,10 +458,98 @@ bool StaticSingleAssignment::mergeDefs(FilteredCfgNode curNode)
 	return changed;
 }
 
+void StaticSingleAssignment::updateIncomingDefs(FilteredCfgNode cfgNode)
+{
+	//When we want to propogate the defs from the previous node(s) to this one,
+	//We perform a few steps. This is dependent on the number of incoming edges.
+
+	/*1 Edge: When we have linear control flow, we do the following:
+	 *        1. Copy the definitions from the previous node wholesale to a staging table.
+	 *        2. Copy in the original definitions from the current node, overwriting those
+	 *           from the previous node.
+	 *        3. Compare the staging and current tables, and only overwrite if needed.
+	 */
+
+	/*2+ Edges: When we have branched control flow, we do the following:
+	 *       1. Copy the definitions from the previous node(s) wholesale to a staging table.
+	 *          Be careful to not insert duplicates.
+	 *       2. Copy in the original definitions from the current node, overwriting those
+	 *          from the previous node(s).
+	 *       3. Compare the staging and current tables, and only overwrite if needed.
+	 */
+
+	//Get the previous edges in the CFG for this node
+	vector<FilteredCfgEdge> inEdges = cfgNode.inEdges();
+	SgNode* node = cfgNode.getNode();
+
+	NodeReachingDefTable& incomingDefTable = ssaReachingDefsTable[node].first;
+
+	if (inEdges.size() == 1)
+	{
+		SgNode* prev = inEdges.front().source().getNode();
+		incomingDefTable = ssaReachingDefsTable[prev].second;
+	}
+	else if (inEdges.size() > 1)
+	{
+		//Iterate all of the incoming edges
+		for (unsigned int i = 0; i < inEdges.size(); i++)
+		{
+			SgNode* prev = inEdges[i].source().getNode();
+
+			const NodeReachingDefTable& previousDefs = ssaReachingDefsTable[prev].second;
+			foreach(const NodeReachingDefTable::value_type& varDefPair, previousDefs)
+			{
+				const VarName& var = varDefPair.first;
+				const ReachingDefPtr previousDef = varDefPair.second;
+
+				//If this is the first time this def has propagated to this node, just copy it over
+				if (incomingDefTable.count(var) == 0)
+				{
+					incomingDefTable[var] = previousDef;
+				}
+				else
+				{
+					ReachingDefPtr existingDef = incomingDefTable[var];
+
+					if (existingDef->isPhiFunction() && existingDef->getDefinitionNode() == node)
+					{
+						//There is a phi node here. We update the phi function to point to the previous reaching definition
+						existingDef->addJoinedDef(previousDef);
+					}
+					else
+					{
+						//If there is no phi node, and we get a new definition, it better be the same as the one previously
+						//propagated.
+						ROSE_ASSERT(*previousDef == *existingDef);
+					}
+				}
+			}
+		}
+	}
+}
+
 void StaticSingleAssignment::aggregatePreviousDefs(FilteredCfgNode curNode, TableEntry& results)
 {
+	//When we want to propogate the defs from the previous node(s) to this one,
+	//We perform a few steps. This is dependent on the number of incoming edges.
+
+	/*1 Edge: When we have linear control flow, we do the following:
+	 *        1. Copy the definitions from the previous node wholesale to a staging table.
+	 *        2. Copy in the original definitions from the current node, overwriting those
+	 *           from the previous node.
+	 *        3. Compare the staging and current tables, and only overwrite if needed.
+	 */
+
+	/*2+ Edges: When we have branched control flow, we do the following:
+	 *       1. Copy the definitions from the previous node(s) wholesale to a staging table.
+	 *          Be careful to not insert duplicates.
+	 *       2. Copy in the original definitions from the current node, overwriting those
+	 *          from the previous node(s).
+	 *       3. Compare the staging and current tables, and only overwrite if needed.
+	 */
+
 	//Get the previous edges in the CFG for this node
-	cfgEdgeVec inEdges = curNode.inEdges();
+	vector<FilteredCfgEdge> inEdges = curNode.inEdges();
 
 	if (inEdges.size() == 1)
 	{
@@ -534,7 +627,7 @@ void StaticSingleAssignment::buildUseTable(SgFunctionDefinition* function)
 			else
 			{
 				// There are no defs for this use at this node, this shouldn't happen
-				printf("Error: Found use for the name '%s', but no reaching defs!\n", keyToString(usedVar).c_str());
+				printf("Error: Found use for the name '%s', but no reaching defs!\n", varnameToString(usedVar).c_str());
 				ROSE_ASSERT(false);
 			}
 		}
@@ -575,7 +668,7 @@ int StaticSingleAssignment::addRenameNumberForNode(const VarName& var, SgNode* n
 	numRenameTable[var][nextNum] = node;
 
 	if (getDebug())
-		cout << "Renaming Added:[" << keyToString(var) << "]:" << nextNum << " - " << node << endl;
+		cout << "Renaming Added:[" << varnameToString(var) << "]:" << nextNum << " - " << node << endl;
 
 	return nextNum;
 }
@@ -790,10 +883,59 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
 		//Calculate the iterated dominance frontier
 		set<FilteredCfgNode> phiNodes = calculateIteratedDominanceFrontier(domFrontiers, definitionPoints);
 
-		printf("Variable %s should have phi nodes inserted at\n", keyToString(var).c_str());
+		if (getDebug())
+			printf("Variable %s has phi nodes inserted at\n", varnameToString(var).c_str());
+
 		foreach (FilteredCfgNode phiNode, phiNodes)
 		{
-			printf("\t\t%s\n", phiNode.toStringForDebugging().c_str());
+			SgNode* node = phiNode.getNode();
+			ROSE_ASSERT(ssaReachingDefsTable[node].first.count(var) == 0);
+			
+			ssaReachingDefsTable[node].first[var] = ReachingDefPtr(new ReachingDef(node, ReachingDef::PHI_FUNCTION));
+
+			if (getDebug())
+				printf("\t\t%s\n", phiNode.toStringForDebugging().c_str());
 		}
 	}
+}
+
+void StaticSingleAssignment::insertLocalDefs(SgFunctionDefinition* function)
+{
+	struct InsertDefs : public AstSimpleProcessing
+	{
+		StaticSingleAssignment* ssa;
+
+		void visit(SgNode* node)
+		{
+			//Short circuit to prevent creating empty entries in the local def table when we don't need them
+			if ((ssa->originalDefTable.count(node) == 0 || ssa->originalDefTable[node].empty()) &&
+				(ssa->expandedDefTable.count(node) == 0 || ssa->expandedDefTable[node].empty()))
+			{
+				return;
+			}
+
+			//This is the table of local definitions at the current node
+			NodeReachingDefTable& localDefs = ssa->ssaLocalDefTable[node];
+
+			if (ssa->originalDefTable.count(node) > 0)
+			{
+				foreach(const VarName& definedVar, ssa->originalDefTable[node])
+				{
+					localDefs[definedVar] = ReachingDefPtr(new ReachingDef(node, ReachingDef::ORIGINAL_DEF));
+				}
+			}
+
+			if (ssa->expandedDefTable.count(node) > 0)
+			{
+				foreach(const VarName& definedVar, ssa->expandedDefTable[node])
+				{
+					localDefs[definedVar] = ReachingDefPtr(new ReachingDef(node, ReachingDef::EXPANDED_DEF));
+				}
+			}
+		}
+	};
+
+	InsertDefs trav;
+	trav.ssa = this;
+	trav.traverse(function, preorder);
 }

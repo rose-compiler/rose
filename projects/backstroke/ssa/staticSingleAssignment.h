@@ -15,6 +15,7 @@
 #include <boost/foreach.hpp>
 #include "filteredCFG.h"
 #include <boost/unordered_map.hpp>
+#include "ReachingDef.h"
 
 namespace ssa_private
 {
@@ -196,8 +197,7 @@ struct IsDefUseFilter
 class StaticSingleAssignment
 {
 private:
-	/** The project to perform SSA Analysis on.
-	 */
+	/** The project to perform SSA Analysis on. */
 	SgProject* project;
 
 public:
@@ -225,12 +225,6 @@ public:
 	
 	/** A filtered CFGEdge that is used for DefUse traversal.  */
 	typedef FilteredCFGEdge<ssa_private::IsDefUseFilter> FilteredCfgEdge;
-
-	/** A vector of cfgNodes. */
-	typedef std::vector<FilteredCfgNode> cfgNodeVec;
-
-	/** A vector of cfgEdges. */
-	typedef std::vector<FilteredCfgEdge> cfgEdgeVec;
 	
 	/** An entry in the rename table that maps a node to a number.  */
 	typedef std::map<SgNode*, int> NodeNumRenameEntry;
@@ -246,6 +240,13 @@ public:
 
 	typedef boost::unordered_map<SgNode*, std::set<VarName> > LocalDefTable;
 
+	typedef boost::shared_ptr<ReachingDef> ReachingDefPtr;
+
+	/** A map from each variable to its reaching definitions at the current node. */
+	typedef std::map<VarName, ReachingDefPtr> NodeReachingDefTable;
+
+	/** The first table is the IN table. The second table is the OUT table. */
+	typedef boost::unordered_map<SgNode*, std::pair<NodeReachingDefTable, NodeReachingDefTable> > GlobalReachingDefTable;
 
 private:
 	//Private member variables
@@ -261,6 +262,11 @@ private:
 	 * It maps each node to the variable names that are defined inside that node.
 	 */
 	LocalDefTable expandedDefTable;
+
+	/** Maps each node to the reaching definitions at that node.
+	 * The table is populated with phi functions using iterated dominance frontiers, and then
+	 * is filled through dataflow. */
+	GlobalReachingDefTable ssaReachingDefsTable;
 
 	/** This is the table that is populated with all the def information for all the variables
 	 * at all the nodes. It is populated during the runDefUse function, and is done
@@ -289,10 +295,10 @@ private:
 	 */
 	NumNodeRenameTable numRenameTable;
 
-	/** A list of all the global varibales in the program.
-	 */
+	/** A list of all the global varibales in the program.  */
 	GlobalTable globalVarList;
 
+	boost::unordered_map<SgNode*, NodeReachingDefTable> ssaLocalDefTable;
 public:
 
 	StaticSingleAssignment(SgProject* proj) : project(proj) { }
@@ -410,11 +416,21 @@ private:
 	 */
 	void expandParentMemberUses(SgFunctionDeclaration* function);
 
-	/** Find where phi functions need to be inserted and insert empty phi functions at those nodes. */
+	/** Find where phi functions need to be inserted and insert empty phi functions at those nodes.
+	 * This updates the IN part of the reaching def table with Phi functions. */
 	void insertPhiFunctions(SgFunctionDefinition* function);
+
+	/** Create ReachingDef objects for each local def and insert them in the local def table. */
+	void insertLocalDefs(SgFunctionDefinition* function);
 
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
+
+	/** Take all the outgoing defs from previous nodes and merge them as the incoming defs
+	 * of the current node. */
+	void updateIncomingDefs(FilteredCfgNode cfgNode);
+
+	bool ssaMergeDefs(FilteredCfgNode cfgNode);
 
 public:
 	//External static helper functions/variables
@@ -454,7 +470,7 @@ public:
 	 * @param vec varName to get string for.
 	 * @return String for given varName.
 	 */
-	static std::string keyToString(const VarName& vec);
+	static std::string varnameToString(const VarName& vec);
 
 	void printDefs(SgNode* node);
 

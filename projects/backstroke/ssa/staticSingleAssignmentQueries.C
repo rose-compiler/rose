@@ -560,7 +560,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getExpandedDe
 		}
 		else
 		{
-			cout << "Error: Found expanded def for " << keyToString(definedVar) << " with no entry in rename table." << endl;
+			cout << "Error: Found expanded def for " << varnameToString(definedVar) << " with no entry in rename table." << endl;
 			ROSE_ASSERT(false);
 		}
 	}
@@ -735,7 +735,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 		visited.insert(currentNode);
 
 		//Find if any of the children exit the basic block.
-		cfgEdgeVec outEdges = current.outEdges();
+		vector<FilteredCfgEdge> outEdges = current.outEdges();
 
 		foreach(FilteredCfgEdge edge, outEdges)
 		{
@@ -802,7 +802,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 	NumNodeRenameTable result;
 
 	FilteredCfgNode lastNode = FilteredCfgNode(node->cfgForEnd());
-	cfgEdgeVec lastEdges = lastNode.inEdges();
+	vector<FilteredCfgEdge> lastEdges = lastNode.inEdges();
 	if (lastEdges.size() == 0)
 	{
 		cout << "Error: No incoming edges to end of function definition." << endl;
@@ -815,8 +815,7 @@ StaticSingleAssignment::NumNodeRenameTable StaticSingleAssignment::getReachingDe
 	else
 	{
 		//Iterate and merge each edge
-
-		foreach(cfgEdgeVec::value_type& edge, lastEdges)
+		foreach(FilteredCfgEdge& edge, lastEdges)
 		{
 			NumNodeRenameTable temp = getReachingDefsAtNode(edge.source().getNode());
 
@@ -864,7 +863,7 @@ StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getReachingDe
 	NumNodeRenameEntry result;
 
 	FilteredCfgNode lastNode = FilteredCfgNode(node->cfgForEnd());
-	cfgEdgeVec lastEdges = lastNode.inEdges();
+	vector<FilteredCfgEdge> lastEdges = lastNode.inEdges();
 	if (lastEdges.size() == 0)
 	{
 		cout << "Error: No incoming edges to end of function definition." << endl;
@@ -878,7 +877,7 @@ StaticSingleAssignment::NumNodeRenameEntry StaticSingleAssignment::getReachingDe
 	{
 		//Iterate and merge each edge
 
-		foreach(cfgEdgeVec::value_type& edge, lastEdges)
+		foreach(FilteredCfgEdge& edge, lastEdges)
 		{
 			NumNodeRenameEntry temp = getReachingDefsAtNodeForName(edge.source().getNode(), var);
 
@@ -1039,7 +1038,7 @@ SgExpression* StaticSingleAssignment::buildVariableReference(const VarName& var,
 }
 
 //Printing functions
-string StaticSingleAssignment::keyToString(const VarName& vec)
+string StaticSingleAssignment::varnameToString(const VarName& vec)
 {
 	string name = "";
 
@@ -1061,7 +1060,7 @@ void StaticSingleAssignment::printDefs(SgNode* node)
 
 	foreach(TableEntry::value_type& entry, reachingDefsTable[node])
 	{
-		cout << "  Defs for [" << keyToString(entry.first) << "]:" << endl;
+		cout << "  Defs for [" << varnameToString(entry.first) << "]:" << endl;
 
 		foreach(NodeVec::value_type& iter, entry.second)
 		{
@@ -1076,7 +1075,7 @@ void StaticSingleAssignment::printDefs(const map< vector<SgInitializedName*>, ve
 
 	foreach(const TableEntry::value_type& entry, table)
 	{
-		cout << "  Defs for [" << keyToString(entry.first) << "]:" << endl;
+		cout << "  Defs for [" << varnameToString(entry.first) << "]:" << endl;
 
 		foreach(const NodeVec::value_type& iter, entry.second)
 		{
@@ -1091,7 +1090,7 @@ void StaticSingleAssignment::printOriginalDefs(SgNode* node)
 
 	foreach(const VarName& definedVar, originalDefTable[node])
 	{
-		cout << "  Defs for [" << keyToString(definedVar) << "]:";
+		cout << "  Defs for [" << varnameToString(definedVar) << "]:";
 		cout << "    -[" << node->class_name() << ":" << node << "]" << endl;
 	}
 }
@@ -1113,7 +1112,7 @@ void StaticSingleAssignment::printUses(SgNode* node)
 	cout << "Use Table for [" << node->class_name() << ":" << node << "]:" << endl;
 	foreach(TableEntry::value_type& entry, useTable[node])
 	{
-		cout << "  Uses for [" << keyToString(entry.first) << "]:" << endl;
+		cout << "  Uses for [" << varnameToString(entry.first) << "]:" << endl;
 		foreach(NodeVec::value_type& iter, entry.second)
 		{
 			cout << "    -[" << iter->class_name() << ":" << iter << "]" << endl;
@@ -1126,7 +1125,7 @@ void StaticSingleAssignment::printUses(const TableEntry& table)
 	cout << "Use Table:" << endl;
 	foreach(const TableEntry::value_type& entry, table)
 	{
-		cout << "  Uses for [" << keyToString(entry.first) << "]:" << endl;
+		cout << "  Uses for [" << varnameToString(entry.first) << "]:" << endl;
 		foreach(const NodeVec::value_type& iter, entry.second)
 		{
 			cout << "    -[" << iter->class_name() << "," << iter << " \"" << iter->unparseToString() << "\"]" << endl;
@@ -1141,7 +1140,7 @@ void StaticSingleAssignment::printRenameTable()
 
 void StaticSingleAssignment::printRenameTable(const VarName& var)
 {
-	cout << "Names for [" << keyToString(var) << "]:" << endl;
+	cout << "Names for [" << varnameToString(var) << "]:" << endl;
 
 	printRenameEntry(numRenameTable[var]);
 }
@@ -1154,7 +1153,7 @@ void StaticSingleAssignment::printRenameTable(const NodeNumRenameTable& table)
 
 	foreach(const NodeNumRenameTable::value_type& entry, table)
 	{
-		cout << "  Names for [" << keyToString(entry.first) << "]:" << endl;
+		cout << "  Names for [" << varnameToString(entry.first) << "]:" << endl;
 
 		//Print out the renamings in order
 		printRenameEntry(entry.second);
@@ -1169,7 +1168,7 @@ void StaticSingleAssignment::printRenameTable(const NumNodeRenameTable& table)
 
 	foreach(const NumNodeRenameTable::value_type& entry, table)
 	{
-		cout << "  Names for [" << keyToString(entry.first) << "]:" << endl;
+		cout << "  Names for [" << varnameToString(entry.first) << "]:" << endl;
 
 		//Print out the renamings in order.
 		printRenameEntry(entry.second);
@@ -1354,7 +1353,7 @@ void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
 
 				foreach(TableEntry::value_type& entry, reachingDefsTable[current.getNode()])
 				{
-					defUse << "Def [" << keyToString(entry.first) << "]: ";
+					defUse << "Def [" << varnameToString(entry.first) << "]: ";
 
 					foreach(NodeVec::value_type& val, entry.second)
 					{
@@ -1366,7 +1365,7 @@ void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
 
 				foreach(TableEntry::value_type& entry, useTable[current.getNode()])
 				{
-					defUse << "Use [" << keyToString(entry.first) << "]: ";
+					defUse << "Use [" << varnameToString(entry.first) << "]: ";
 
 					foreach(NodeVec::value_type& val, entry.second)
 					{
@@ -1504,7 +1503,7 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 
 				foreach(TableEntry::value_type& entry, reachingDefsTable[current.getNode()])
 				{
-					defUse << "Def [" << keyToString(entry.first) << "]: ";
+					defUse << "Def [" << varnameToString(entry.first) << "]: ";
 
 					foreach(NodeVec::value_type& val, entry.second)
 					{
@@ -1516,7 +1515,7 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 
 				foreach(TableEntry::value_type& entry, useTable[current.getNode()])
 				{
-					defUse << "Use [" << keyToString(entry.first) << "]: ";
+					defUse << "Use [" << varnameToString(entry.first) << "]: ";
 
 					foreach(NodeVec::value_type& val, entry.second)
 					{
