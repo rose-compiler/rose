@@ -52,6 +52,9 @@ public:
 			set<SgNode*> newReachingDefNodes = reachingDef->getActualDefinitions();
 			set<SgNode*> oldReachingDefNodes = renameTableToDefNodes(oldReachingDefs[var]);
 
+			//If the reaching def is a phi node, it should have at least two parents
+			ROSE_ASSERT(!reachingDef->isPhiFunction() || !reachingDef->getJoinedDefs().empty());
+
 			ROSE_ASSERT(newReachingDefNodes == oldReachingDefNodes);
 		}
 
