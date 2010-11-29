@@ -44,7 +44,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 		ROSE_ASSERT(uName);
 
 		//Add this as a use. We will correct the reference later.
-		ssa->getUseTable()[varRef][uName->getKey()].push_back(varRef);
+		ssa->getUseTable()[varRef].insert(uName->getKey());
 
 		if (StaticSingleAssignment::getDebug())
 		{
@@ -54,7 +54,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 		//A VarRef is always a use, it only becomes defined by the parent assignment.
 		return ChildDefsAndUses(NULL, varRef);
 	}
-		//Catch all types of Binary Operations
+	//Catch all types of Binary Operations
 	else if (isSgBinaryOp(node))
 	{
 		SgBinaryOp* op = isSgBinaryOp(node);
@@ -67,7 +67,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 			std::vector<SgNode*> uses;
 			switch (type)
 			{
-					//All the following ops both use and define the lhs
+				//All the following ops both use and define the lhs
 				case V_SgAndAssignOp:
 				case V_SgDivAssignOp:
 				case V_SgIorAssignOp:
@@ -230,7 +230,7 @@ void DefsAndUsesTraversal::addUsesToNode(SgNode* node, std::vector<SgNode*> uses
 
 		//Add the varRef as a def at the current node of the ref's uniqueName
 		//We will correct the reference later.
-		ssa->getUseTable()[node][uName->getKey()].push_back(useNode);
+		ssa->getUseTable()[node].insert(uName->getKey());
 
 		if (StaticSingleAssignment::getDebug())
 		{

@@ -124,7 +124,6 @@ test2004_39.C \
 test2004_40.C \
 test2004_42.C \
 test2004_43.C \
-test2004_44.C \
 test2004_45.C \
 test2004_47.C \
 test2004_48.C \
@@ -682,7 +681,9 @@ test2006_80.C \
 -->Catch statements don't appear in the virtual CFG: (Not SSA BUG) \
 test2006_66.C \
 --> No defs propagated to unreachable code (Have to detect unreachable code) \
-test2007_159.C 
+test2007_159.C \
+--> The virtual CFG doesn't contain the "original expression tree" for casts, but the traversals visit it: \
+test2004_44.C
 
 TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
