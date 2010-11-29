@@ -1789,7 +1789,7 @@ bool VariableRenaming::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode, bool
     {
         //If any of these uses are for a variable defined at this node, we will
         //set the flag and correct it later.
-        if(originalDefTable[node].count(entry.first) != 0)
+        if(originalDefTable[node].count(entry.first) != 0 || expandedDefTable[node].count(entry.first) != 0)
         {
             useTable[node][entry.first] = results[entry.first];
 
