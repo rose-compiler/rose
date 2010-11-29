@@ -11202,6 +11202,8 @@ X aggressive
 
      p_disassemblerSearchHeuristics = Disassembler::SEARCH_DEFAULT;
 
+  // DQ (11/20/2010): Support for token handling.
+     p_output_tokens = false;
    }
 
 #if 0
@@ -11722,6 +11724,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_read_executable_file_format_only     = %s \n",(p_read_executable_file_format_only == true) ? "true" : "false");
      printf ("     p_read_instructions_only               = %s \n",(p_read_instructions_only == true) ? "true" : "false");
 
+     printf ("     p_output_tokens                        = %s \n",(p_output_tokens == true) ? "true" : "false");
 
 #if 0
 // Order of data member entries in support.C, matched against the 

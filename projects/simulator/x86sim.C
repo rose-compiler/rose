@@ -892,8 +892,10 @@ EmulationPolicy::load(const char *name)
     }
 
     /* Find a disassembler. */
-    if (!disassembler)
+    if (!disassembler) {
         disassembler = Disassembler::lookup(interpretation)->clone();
+        disassembler->set_progress_reporting(NULL, 0); /* turn off progress reporting */
+    }
 
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
      * below 0x40000000 (the stack, and where ld-linux.so.2 might be loaded when loaded high). */

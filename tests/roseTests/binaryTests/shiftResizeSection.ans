@@ -1,15 +1,64 @@
-@@ -27,29 +27,28 @@
-   <   0x00008820 0x0000000c 0x0000882c  0x00000000 0x00010820 0x0000000c 0x0001082c rw-   16 .data
-   <   0x0000882c 0x000000c8 0x000088f4  0x00000000 0x0001082c 0x000000c8 0x000108f4 rw-   17 .dynamic
-   <   0x000088f4 0x00000008 0x000088fc  0x00000000 0x000108f4 0x00000008 0x000108fc rw-   18 .ctors
-   <   0x000088fc 0x00000008 0x00008904  0x00000000 0x000108fc 0x00000008 0x00010904 rw-   19 .dtors
-   <   0x00008904 0x00000004 0x00008908  0x00000000 0x00010904 0x00000004 0x00010908 rw-   20 .jcr
-   <   0x00008908 0x00000040 0x00008948  0x00000000 0x00010908 0x00000040 0x00010948 rw-   21 .got
-       0x00008948 0x00000000 0x00008948  0x00000000 0x00010948 0x00000008 0x00010950 rw-   22 .bss
-       0x00008948 0x00000018 0x00008960                                                    23 .gnu_debuglink
-       0x00008960 0x000000c4 0x00008a24                                                    24 .shstrtab
-       0x00008a24 0x000003e8 0x00008e0c                                                       ELF Section Table
--      0x00008e0c                                                                             EOF (original EOF was 0x00000e0c)
+@@ -1,54 +1,54 @@
+ ELF
+ Encoding: none
+ File sections:
+   Flg File-Addr  File-Size  File-End    Base-VA    Start-RVA  Virt-Size  End-RVA    Perm  ID Name
+   --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------
+       0x00000000 0x00000000 0x00000000                                                     0 
+-   >  0x00000000 0x00000820 0x00000820  0x00000000 0x00008000 0x00000820 0x00008820 r-x      LOAD#2
++   >  0x00000000 0x00008820 0x00008820  0x00000000 0x00008000 0x00000824 0x00008824 r-x      LOAD#2
+   <   0x00000000 0x00000034 0x00000034                                                       ELF File Header
+   <>  0x00000034 0x000000c0 0x000000f4  0x00000000 0x00008034 0x000000c0 0x000080f4 r-x      PHDR#0
+   <   0x00000034 0x000000c0 0x000000f4                                                       ELF Segment Table
+   <   0x000000f4 0x00000013 0x00000107  0x00000000 0x000080f4 0x00000013 0x00008107 r--    1 .interp
+   < h 0x00000108 0x00000020 0x00000128  0x00000000 0x00008108 0x00000020 0x00008128 r--    2 .note.ABI-tag
+   <   0x00000128 0x00000054 0x0000017c  0x00000000 0x00008128 0x00000054 0x0000817c r--    3 .hash
+   <   0x0000017c 0x00000100 0x0000027c  0x00000000 0x0000817c 0x00000100 0x0000827c r--    4 .dynsym
+-  <   0x0000027c 0x0000009f 0x0000031b  0x00000000 0x0000827c 0x0000009f 0x0000831b r--    5 .dynstr
+-  < h 0x0000031c 0x00000020 0x0000033c  0x00000000 0x0000831c 0x00000020 0x0000833c r--    6 .gnu.version
+-  <   0x0000033c 0x00000020 0x0000035c  0x00000000 0x0000833c 0x00000020 0x0000835c r--    7 .gnu.version_r
+-  <   0x0000035c 0x00000010 0x0000036c  0x00000000 0x0000835c 0x00000010 0x0000836c r--    8 .rel.dyn
+-  <   0x0000036c 0x00000060 0x000003cc  0x00000000 0x0000836c 0x00000060 0x000083cc r--    9 .rel.plt
+-  <   0x000003cc 0x00000014 0x000003e0  0x00000000 0x000083cc 0x00000014 0x000083e0 r-x   10 .init
+-  <   0x000003e0 0x000000d0 0x000004b0  0x00000000 0x000083e0 0x000000d0 0x000084b0 r-x   11 .plt
+-  <   0x000004b0 0x000002bc 0x0000076c  0x00000000 0x000084b0 0x000002bc 0x0000876c r-x   12 .text
+-  <   0x0000076c 0x0000000c 0x00000778  0x00000000 0x0000876c 0x0000000c 0x00008778 r-x   13 .fini
+-  <   0x00000778 0x000000a3 0x0000081b  0x00000000 0x00008778 0x000000a3 0x0000881b r--   14 .rodata
+-  < h 0x0000081c 0x00000004 0x00000820  0x00000000 0x0000881c 0x00000004 0x00008820 r--   15 .eh_frame
+-   > !0x00000820 0x00000128 0x00000948 !0x00000000 0x00010820 0x00000130 0x00010950 rw-      LOAD#3
+-  <   0x00000820 0x0000000c 0x0000082c  0x00000000 0x00010820 0x0000000c 0x0001082c rw-   16 .data
+-  <   0x0000082c 0x000000c8 0x000008f4  0x00000000 0x0001082c 0x000000c8 0x000108f4 rw-   17 .dynamic
+-  <   0x000008f4 0x00000008 0x000008fc  0x00000000 0x000108f4 0x00000008 0x000108fc rw-   18 .ctors
+-  <   0x000008fc 0x00000008 0x00000904  0x00000000 0x000108fc 0x00000008 0x00010904 rw-   19 .dtors
+-  <   0x00000904 0x00000004 0x00000908  0x00000000 0x00010904 0x00000004 0x00010908 rw-   20 .jcr
+-  <   0x00000908 0x00000040 0x00000948  0x00000000 0x00010908 0x00000040 0x00010948 rw-   21 .got
+-      0x00000948 0x00000000 0x00000948  0x00000000 0x00010948 0x00000008 0x00010950 rw-   22 .bss
+-      0x00000948 0x00000018 0x00000960                                                    23 .gnu_debuglink
+-      0x00000960 0x000000c4 0x00000a24                                                    24 .shstrtab
+-      0x00000a24 0x000003e8 0x00000e0c                                                       ELF Section Table
+-      0x00000e0c                                                                             EOF
++  <   0x0000027c 0x000000a0 0x0000031c  0x00000000 0x0000827c 0x000000a0 0x0000831c r--    5 .dynstr
++  < h 0x0000831c 0x00000020 0x0000833c  0x00000000 0x00008320 0x00000020 0x00008340 r--    6 .gnu.version
++  <   0x0000833c 0x00000020 0x0000835c  0x00000000 0x00008340 0x00000020 0x00008360 r--    7 .gnu.version_r
++  <   0x0000835c 0x00000010 0x0000836c  0x00000000 0x00008360 0x00000010 0x00008370 r--    8 .rel.dyn
++  <   0x0000836c 0x00000060 0x000083cc  0x00000000 0x00008370 0x00000060 0x000083d0 r--    9 .rel.plt
++  <   0x000083cc 0x00000014 0x000083e0  0x00000000 0x000083d0 0x00000014 0x000083e4 r-x   10 .init
++  <   0x000083e0 0x000000d0 0x000084b0  0x00000000 0x000083e4 0x000000d0 0x000084b4 r-x   11 .plt
++  <   0x000084b0 0x000002bc 0x0000876c  0x00000000 0x000084b4 0x000002bc 0x00008770 r-x   12 .text
++  <   0x0000876c 0x0000000c 0x00008778  0x00000000 0x00008770 0x0000000c 0x0000877c r-x   13 .fini
++  <   0x00008778 0x000000a3 0x0000881b  0x00000000 0x0000877c 0x000000a3 0x0000881f r--   14 .rodata
++  < h 0x0000881c 0x00000004 0x00008820  0x00000000 0x00008820 0x00000004 0x00008824 r--   15 .eh_frame
++   > !0x00008820 0x00000128 0x00008948 !0x00000000 0x00010820 0x00000130 0x00010950 rw-      LOAD#3
++  <   0x00008820 0x0000000c 0x0000882c  0x00000000 0x00010820 0x0000000c 0x0001082c rw-   16 .data
++  <   0x0000882c 0x000000c8 0x000088f4  0x00000000 0x0001082c 0x000000c8 0x000108f4 rw-   17 .dynamic
++  <   0x000088f4 0x00000008 0x000088fc  0x00000000 0x000108f4 0x00000008 0x000108fc rw-   18 .ctors
++  <   0x000088fc 0x00000008 0x00008904  0x00000000 0x000108fc 0x00000008 0x00010904 rw-   19 .dtors
++  <   0x00008904 0x00000004 0x00008908  0x00000000 0x00010904 0x00000004 0x00010908 rw-   20 .jcr
++  <   0x00008908 0x00000040 0x00008948  0x00000000 0x00010908 0x00000040 0x00010948 rw-   21 .got
++      0x00008948 0x00000000 0x00008948  0x00000000 0x00010948 0x00000008 0x00010950 rw-   22 .bss
++      0x00008948 0x00000018 0x00008960                                                    23 .gnu_debuglink
++      0x00008960 0x000000c4 0x00008a24                                                    24 .shstrtab
++      0x00008a24 0x000003e8 0x00008e0c                                                       ELF Section Table
 +      0x00008e0c                                                                             EOF
    --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------
  These parts of the file have not been referenced during parsing:
@@ -18,7 +67,6 @@
 -    [2]  = offset 0x000003cc (972), for 0x00000450 (1104) bytes, ending at 0x0000081c (2076)
 -    [3]  = offset 0x00000820 (2080), for 0x0000000c (12) bytes, ending at 0x0000082c (2092)
 -    [4]  = offset 0x000008f4 (2292), for 0x0000006c (108) bytes, ending at 0x00000960 (2400)
--    [5]  = offset 0x00000e0c (3596), for 0x00008000 (32768) bytes, ending at 0x00008e0c (36364)
 +    [1]  = offset 0x0000031b (795), for 0x00008001 (32769) bytes, ending at 0x0000831c (33564)
 +    [2]  = offset 0x000083cc (33740), for 0x00000450 (1104) bytes, ending at 0x0000881c (34844)
 +    [3]  = offset 0x00008820 (34848), for 0x0000000c (12) bytes, ending at 0x0000882c (34860)
@@ -31,29 +79,810 @@
    ElfFileHeader.Header.Section.file_alignment                    = not specified
    ElfFileHeader.Header.Section.synthesized                       = yes
    ElfFileHeader.Header.Section.header                            = not associated
-   ElfFileHeader.Header.Section.purpose                           = executable format header
+   ElfFileHeader.Header.Section.purpose                           = SP_HEADER
    ElfFileHeader.Header.Section.mapped                            = <not mapped>
-@@ -322,22 +321,21 @@
-   ElfStringSection.Strtab.StringStorage[11].sec,offset,val       = section [5] ".dynstr", offset 0x00000059 (89), "stderr"
-   ElfStringSection.Strtab.StringStorage[12].sec,offset,val       = section [5] ".dynstr", offset 0x00000029 (41), "abort"
-   ElfStringSection.Strtab.StringStorage[13].sec,offset,val       = section [5] ".dynstr", offset 0x00000065 (101), "bindtextdomain"
-   ElfStringSection.Strtab.StringStorage[14].sec,offset,val       = section [5] ".dynstr", offset 0x00000048 (72), "memcmp"
+@@ -58,23 +58,23 @@
+   ElfFileHeader.Header.Format.purpose                            = executable program
+   ElfFileHeader.Header.Format.sex                                = little-endian
+   ElfFileHeader.Header.Format.version                            = 1 (current)
+   ElfFileHeader.Header.Format.ABI                                = unspecified
+   ElfFileHeader.Header.Format.ABIvers                            = 0
+   ElfFileHeader.Header.Format.wordsize                           = 4
+   ElfFileHeader.Header.ins_arch                                  = 0x900
+   ElfFileHeader.Header.magic                                     = "\177ELF"
+   ElfFileHeader.Header.base_va                                   = 0x00000000 (0)
+   ElfFileHeader.Header.entry_rva.size                            = 1 entry points
+-  ElfFileHeader.Header.entry_rva[0]                              = 0x000084b0 (33968)
++  ElfFileHeader.Header.entry_rva[0]                              = 0x000084b4 (33972)
+   ElfFileHeader.Header.entry_rva[0]                                is 0x00000000 (0) bytes into section [12] ".text"
+-  ElfFileHeader.Header.entry_rva[0]                                is 0x000004b0 (1200) bytes into section [-1] "LOAD#2"
++  ElfFileHeader.Header.entry_rva[0]                                is 0x000004b4 (1204) bytes into section [-1] "LOAD#2"
+   ElfFileHeader.Header.section                                   = 30 sections
+   ElfFileHeader.Header.section[0]                                = [-1] "ELF Section Table"
+   ElfFileHeader.Header.section[1]                                = [24] ".shstrtab"
+   ElfFileHeader.Header.section[2]                                = [0] ""
+   ElfFileHeader.Header.section[3]                                = [1] ".interp"
+   ElfFileHeader.Header.section[4]                                = [2] ".note.ABI-tag"
+   ElfFileHeader.Header.section[5]                                = [5] ".dynstr"
+   ElfFileHeader.Header.section[6]                                = [7] ".gnu.version_r"
+   ElfFileHeader.Header.section[7]                                = [10] ".init"
+   ElfFileHeader.Header.section[8]                                = [11] ".plt"
+@@ -119,48 +119,48 @@
+   ElfFileHeader.phextrasz                                        = 0x00000000 (0) bytes
+   ElfFileHeader.e_phnum                                          = 6
+   ElfFileHeader.shextrasz                                        = 0x00000000 (0) bytes
+   ElfFileHeader.e_shnum                                          = 25
+   ElfFileHeader.e_shstrndx                                       = 24
+   ElfFileHeader.section_table                                    = [-1] "ELF Section Table"
+   ElfFileHeader.segment_table                                    = [-1] "ELF Segment Table"
+ Section [1]:
+   SectionTable.Section.name                                      = "ELF Section Table"
+   SectionTable.Section.id                                        = -1
+-  SectionTable.Section.offset                                    = 0x00000a24 (2596) bytes into file
++  SectionTable.Section.offset                                    = 0x00008a24 (35364) bytes into file
+   SectionTable.Section.size                                      = 0x000003e8 (1000) bytes
+   SectionTable.Section.file_alignment                            = not specified
+   SectionTable.Section.synthesized                               = yes
+   SectionTable.Section.header                                    = "ELF File Header"
+   SectionTable.Section.purpose                                   = SP_HEADER
+   SectionTable.Section.mapped                                    = <not mapped>
+   SectionTable.Section.contains_code                             = false
+   SectionTable.Section.mapped_actual_va                          = 0x00000000 (0) 
+ Section [2]:
+   ElfStringSection.ElfSection.Section.name                       = ".shstrtab"
+   ElfStringSection.ElfSection.Section.id                         = 24
+-  ElfStringSection.ElfSection.Section.offset                     = 0x00000960 (2400) bytes into file
++  ElfStringSection.ElfSection.Section.offset                     = 0x00008960 (35168) bytes into file
+   ElfStringSection.ElfSection.Section.size                       = 0x000000c4 (196) bytes
+   ElfStringSection.ElfSection.Section.file_alignment             = 0x00000001 (1) satisfied
+   ElfStringSection.ElfSection.Section.synthesized                = no
+   ElfStringSection.ElfSection.Section.header                     = "ELF File Header"
+   ElfStringSection.ElfSection.Section.purpose                    = SP_HEADER
+   ElfStringSection.ElfSection.Section.mapped                     = <not mapped>
+   ElfStringSection.ElfSection.Section.contains_code              = false
+   ElfStringSection.ElfSection.Section.mapped_actual_va           = 0x00000000 (0) 
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_name       = 1 bytes into strtab
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x3 (3) SHT_STRTAB
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_link       = 0
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_info       = 0
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_flags      = 0x00000000
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_addr       = 0x00000000 (0)
+-  ElfStringSection.ElfSection.ElfSectionTableEntry.sh_offset     = 0x00000960 (2400) bytes into file
++  ElfStringSection.ElfSection.ElfSectionTableEntry.sh_offset     = 0x00008960 (35168) bytes into file
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_size       = 0x000000c4 (196) bytes
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_addralign  = 0x00000001 (1) bytes
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_entsize    = 0x00000000 (0) bytes
+   ElfStringSection.ElfSection.linked_to                          = NULL
+   ElfStringSection.Strtab.container                              = [24] ".shstrtab"
+   ElfStringSection.Strtab.dont_free                              = p_storage_list[0]
+   ElfStringSection.Strtab.referenced                             = 26 strings
+   ElfStringSection.Strtab.StringStorage[0].sec,offset,val        = section [24] ".shstrtab", offset 0x00000000 (0), ""
+   ElfStringSection.Strtab.StringStorage[1].sec,offset,val        = section [24] ".shstrtab", offset 0x00000001 (1), ".shstrtab"
+   ElfStringSection.Strtab.StringStorage[2].sec,offset,val        = section [24] ".shstrtab", offset 0x00000000 (0), ""
+@@ -276,38 +276,38 @@
+   ElfSection.ElfSegmentTableEntry.vaddr                          = 0x00008108 (33032)
+   ElfSection.ElfSegmentTableEntry.paddr                          = 0x00008108 (33032)
+   ElfSection.ElfSegmentTableEntry.filesz                         = 0x00000020 (32) bytes
+   ElfSection.ElfSegmentTableEntry.memsz                          = 0x00000020 (32) bytes
+   ElfSection.ElfSegmentTableEntry.align                          = 0x00000004 (4) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [6]:
+   ElfStringSection.ElfSection.Section.name                       = ".dynstr"
+   ElfStringSection.ElfSection.Section.id                         = 5
+   ElfStringSection.ElfSection.Section.offset                     = 0x0000027c (636) bytes into file
+-  ElfStringSection.ElfSection.Section.size                       = 0x0000009f (159) bytes
++  ElfStringSection.ElfSection.Section.size                       = 0x000000a0 (160) bytes
+   ElfStringSection.ElfSection.Section.file_alignment             = 0x00000001 (1) satisfied
+   ElfStringSection.ElfSection.Section.synthesized                = no
+   ElfStringSection.ElfSection.Section.header                     = "ELF File Header"
+   ElfStringSection.ElfSection.Section.purpose                    = SP_HEADER
+-  ElfStringSection.ElfSection.Section.mapped                     = rva=0x0000827c, size=159 bytes
++  ElfStringSection.ElfSection.Section.mapped                     = rva=0x0000827c, size=160 bytes
+   ElfStringSection.ElfSection.Section.mapped_alignment           = 0x00000001 (1) satisfied
+   ElfStringSection.ElfSection.Section.permissions                = r--
+   ElfStringSection.ElfSection.Section.contains_code              = false
+   ElfStringSection.ElfSection.Section.mapped_actual_va           = 0x00000000 (0) 
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_name       = 47 bytes into strtab
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x3 (3) SHT_STRTAB
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_link       = 0
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_info       = 0
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_flags      = 0x00000002
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_addr       = 0x0000827c (33404)
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_offset     = 0x0000027c (636) bytes into file
+-  ElfStringSection.ElfSection.ElfSectionTableEntry.sh_size       = 0x0000009f (159) bytes
++  ElfStringSection.ElfSection.ElfSectionTableEntry.sh_size       = 0x000000a0 (160) bytes
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_addralign  = 0x00000001 (1) bytes
+   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_entsize    = 0x00000000 (0) bytes
+   ElfStringSection.ElfSection.linked_to                          = NULL
+   ElfStringSection.Strtab.container                              = [5] ".dynstr"
+   ElfStringSection.Strtab.dont_free                              = p_storage_list[0]
+   ElfStringSection.Strtab.referenced                             = 21 strings
+   ElfStringSection.Strtab.StringStorage[0].sec,offset,val        = section [5] ".dynstr", offset 0x00000000 (0), ""
+   ElfStringSection.Strtab.StringStorage[1].sec,offset,val        = section [5] ".dynstr", offset 0x00000010 (16), "libc.so.6"
+   ElfStringSection.Strtab.StringStorage[2].sec,offset,val        = section [5] ".dynstr", offset 0x00000095 (149), "GLIBC_2.0"
+   ElfStringSection.Strtab.StringStorage[3].sec,offset,val        = section [5] ".dynstr", offset 0x00000010 (16), "libc.so.6"
+@@ -325,445 +325,445 @@
    ElfStringSection.Strtab.StringStorage[15].sec,offset,val       = section [5] ".dynstr", offset 0x00000083 (131), "__libc_start_main"
    ElfStringSection.Strtab.StringStorage[16].sec,offset,val       = section [5] ".dynstr", offset 0x00000069 (105), "textdomain"
    ElfStringSection.Strtab.StringStorage[17].sec,offset,val       = section [5] ".dynstr", offset 0x00000060 (96), "exit"
    ElfStringSection.Strtab.StringStorage[18].sec,offset,val       = section [5] ".dynstr", offset 0x00000074 (116), "_IO_stdin_used"
    ElfStringSection.Strtab.StringStorage[19].sec,offset,val       = section [5] ".dynstr", offset 0x0000001a (26), "geteuid"
    ElfStringSection.Strtab.StringStorage[20].sec,offset,val       = section [5] ".dynstr", offset 0x00000001 (1), "__gmon_start__"
--  ElfStringSection.Strtab.freelist                               = 1 free regions
--  ElfStringSection.Strtab.freelist[0]                            = offset 0x0000009f (159), for 0x00000001 (1) byte, ending at 0x000000a0 (160)
-+  ElfStringSection.Strtab.freelist                               = 0 free regions
+   ElfStringSection.Strtab.freelist                               = 0 free regions
  Section [7]:
    ElfSymverNeededSection.ElfSection.Section.name                 = ".gnu.version_r"
    ElfSymverNeededSection.ElfSection.Section.id                   = 7
-   ElfSymverNeededSection.ElfSection.Section.offset               = 0x0000833c (33596) bytes into file
+-  ElfSymverNeededSection.ElfSection.Section.offset               = 0x0000033c (828) bytes into file
++  ElfSymverNeededSection.ElfSection.Section.offset               = 0x0000833c (33596) bytes into file
    ElfSymverNeededSection.ElfSection.Section.size                 = 0x00000020 (32) bytes
    ElfSymverNeededSection.ElfSection.Section.file_alignment       = 0x00000004 (4) satisfied
    ElfSymverNeededSection.ElfSection.Section.synthesized          = no
    ElfSymverNeededSection.ElfSection.Section.header               = "ELF File Header"
-   ElfSymverNeededSection.ElfSection.Section.purpose              = other
-   ElfSymverNeededSection.ElfSection.Section.mapped               = rva=0x00008340, size=32 bytes
+   ElfSymverNeededSection.ElfSection.Section.purpose              = SP_OTHER
+-  ElfSymverNeededSection.ElfSection.Section.mapped               = rva=0x0000833c, size=32 bytes
++  ElfSymverNeededSection.ElfSection.Section.mapped               = rva=0x00008340, size=32 bytes
+   ElfSymverNeededSection.ElfSection.Section.mapped_alignment     = 0x00000004 (4) satisfied
+   ElfSymverNeededSection.ElfSection.Section.permissions          = r--
+   ElfSymverNeededSection.ElfSection.Section.contains_code        = false
+   ElfSymverNeededSection.ElfSection.Section.mapped_actual_va     = 0x00000000 (0) 
+   ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_name = 68 bytes into strtab
+   ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_type = 0x6ffffffe (1879048190) SHT_GNU_verneed
+   ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_link = 5
+   ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_info = 1
+   ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_flags = 0x00000002
+-  ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_addr = 0x0000833c (33596)
+-  ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_offset = 0x0000033c (828) bytes into file
++  ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_addr = 0x00008340 (33600)
++  ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_offset = 0x0000833c (33596) bytes into file
+   ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_size = 0x00000020 (32) bytes
+   ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_addralign = 0x00000004 (4) bytes
+   ElfSymverNeededSection.ElfSection.ElfSectionTableEntry.sh_entsize = 0x00000000 (0) bytes
+   ElfSymverNeededSection.ElfSection.linked_to                    = [5] ".dynstr"
+   ElfSymverNeededSection.ElfSymverNeeded.size                    = 1 entries
+   ElfSymverNeededSection.ElfSymverNeededEntry[0].                  Version  File                    Other       Hash  Flags Name
+   ElfSymverNeededSection.ElfSymverNeededEntry[0].                =   0x0001 libc.so.6
+   ElfSymverNeededSection.ElfSymverNeededEntry[0].aux[0]          =                                 0x0002 0x0d696910 0x0000 GLIBC_2.0
+ 
+ Section [8]:
+   ElfSection.Section.name                                        = ".init"
+   ElfSection.Section.id                                          = 10
+-  ElfSection.Section.offset                                      = 0x000003cc (972) bytes into file
++  ElfSection.Section.offset                                      = 0x000083cc (33740) bytes into file
+   ElfSection.Section.size                                        = 0x00000014 (20) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_PROGRAM
+-  ElfSection.Section.mapped                                      = rva=0x000083cc, size=20 bytes
++  ElfSection.Section.mapped                                      = rva=0x000083d0, size=20 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
+   ElfSection.Section.permissions                                 = r-x
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 101 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000006
+-  ElfSection.ElfSectionTableEntry.sh_addr                        = 0x000083cc (33740)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x000003cc (972) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_addr                        = 0x000083d0 (33744)
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x000083cc (33740) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x00000014 (20) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [9]:
+   ElfSection.Section.name                                        = ".plt"
+   ElfSection.Section.id                                          = 11
+-  ElfSection.Section.offset                                      = 0x000003e0 (992) bytes into file
++  ElfSection.Section.offset                                      = 0x000083e0 (33760) bytes into file
+   ElfSection.Section.size                                        = 0x000000d0 (208) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_PROGRAM
+-  ElfSection.Section.mapped                                      = rva=0x000083e0, size=208 bytes
++  ElfSection.Section.mapped                                      = rva=0x000083e4, size=208 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
+   ElfSection.Section.permissions                                 = r-x
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 96 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000006
+-  ElfSection.ElfSectionTableEntry.sh_addr                        = 0x000083e0 (33760)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x000003e0 (992) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_addr                        = 0x000083e4 (33764)
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x000083e0 (33760) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x000000d0 (208) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000004 (4) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [10]:
+   ElfSection.Section.name                                        = ".text"
+   ElfSection.Section.id                                          = 12
+-  ElfSection.Section.offset                                      = 0x000004b0 (1200) bytes into file
++  ElfSection.Section.offset                                      = 0x000084b0 (33968) bytes into file
+   ElfSection.Section.size                                        = 0x000002bc (700) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_PROGRAM
+-  ElfSection.Section.mapped                                      = rva=0x000084b0, size=700 bytes
++  ElfSection.Section.mapped                                      = rva=0x000084b4, size=700 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
+   ElfSection.Section.permissions                                 = r-x
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 107 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000006
+-  ElfSection.ElfSectionTableEntry.sh_addr                        = 0x000084b0 (33968)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x000004b0 (1200) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_addr                        = 0x000084b4 (33972)
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x000084b0 (33968) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x000002bc (700) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [11]:
+   ElfSection.Section.name                                        = ".fini"
+   ElfSection.Section.id                                          = 13
+-  ElfSection.Section.offset                                      = 0x0000076c (1900) bytes into file
++  ElfSection.Section.offset                                      = 0x0000876c (34668) bytes into file
+   ElfSection.Section.size                                        = 0x0000000c (12) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_PROGRAM
+-  ElfSection.Section.mapped                                      = rva=0x0000876c, size=12 bytes
++  ElfSection.Section.mapped                                      = rva=0x00008770, size=12 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
+   ElfSection.Section.permissions                                 = r-x
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 113 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000006
+-  ElfSection.ElfSectionTableEntry.sh_addr                        = 0x0000876c (34668)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x0000076c (1900) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_addr                        = 0x00008770 (34672)
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x0000876c (34668) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x0000000c (12) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [12]:
+   ElfSection.Section.name                                        = ".rodata"
+   ElfSection.Section.id                                          = 14
+-  ElfSection.Section.offset                                      = 0x00000778 (1912) bytes into file
++  ElfSection.Section.offset                                      = 0x00008778 (34680) bytes into file
+   ElfSection.Section.size                                        = 0x000000a3 (163) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_PROGRAM
+-  ElfSection.Section.mapped                                      = rva=0x00008778, size=163 bytes
++  ElfSection.Section.mapped                                      = rva=0x0000877c, size=163 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
+   ElfSection.Section.permissions                                 = r--
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 119 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000002
+-  ElfSection.ElfSectionTableEntry.sh_addr                        = 0x00008778 (34680)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00000778 (1912) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_addr                        = 0x0000877c (34684)
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00008778 (34680) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x000000a3 (163) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [13]:
+   ElfEHFrameSection.ElfSection.Section.name                      = ".eh_frame"
+   ElfEHFrameSection.ElfSection.Section.id                        = 15
+-  ElfEHFrameSection.ElfSection.Section.offset                    = 0x0000081c (2076) bytes into file
++  ElfEHFrameSection.ElfSection.Section.offset                    = 0x0000881c (34844) bytes into file
+   ElfEHFrameSection.ElfSection.Section.size                      = 0x00000004 (4) bytes
+   ElfEHFrameSection.ElfSection.Section.file_alignment            = 0x00000004 (4) satisfied
+   ElfEHFrameSection.ElfSection.Section.synthesized               = no
+   ElfEHFrameSection.ElfSection.Section.header                    = "ELF File Header"
+   ElfEHFrameSection.ElfSection.Section.purpose                   = SP_PROGRAM
+-  ElfEHFrameSection.ElfSection.Section.mapped                    = rva=0x0000881c, size=4 bytes
++  ElfEHFrameSection.ElfSection.Section.mapped                    = rva=0x00008820, size=4 bytes
+   ElfEHFrameSection.ElfSection.Section.mapped_alignment          = 0x00000004 (4) satisfied
+   ElfEHFrameSection.ElfSection.Section.permissions               = r--
+   ElfEHFrameSection.ElfSection.Section.contains_code             = false
+   ElfEHFrameSection.ElfSection.Section.mapped_actual_va          = 0x00000000 (0) 
+   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_name      = 127 bytes into strtab
+   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_type      = 0x1 (1) SHT_PROGBITS
+   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_link      = 0
+   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_info      = 0
+   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_flags     = 0x00000002
+-  ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_addr      = 0x0000881c (34844)
+-  ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_offset    = 0x0000081c (2076) bytes into file
++  ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_addr      = 0x00008820 (34848)
++  ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_offset    = 0x0000881c (34844) bytes into file
+   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_size      = 0x00000004 (4) bytes
+   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_addralign = 0x00000004 (4) bytes
+   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_entsize   = 0x00000000 (0) bytes
+   ElfEHFrameSection.ElfSection.linked_to                         = NULL
+ Section [14]:
+   ElfSection.Section.name                                        = ".data"
+   ElfSection.Section.id                                          = 16
+-  ElfSection.Section.offset                                      = 0x00000820 (2080) bytes into file
++  ElfSection.Section.offset                                      = 0x00008820 (34848) bytes into file
+   ElfSection.Section.size                                        = 0x0000000c (12) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_PROGRAM
+   ElfSection.Section.mapped                                      = rva=0x00010820, size=12 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
+   ElfSection.Section.permissions                                 = rw-
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 137 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000003
+   ElfSection.ElfSectionTableEntry.sh_addr                        = 0x00010820 (67616)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00000820 (2080) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00008820 (34848) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x0000000c (12) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [15]:
+   DynamicSection.ElfSection.Section.name                         = ".dynamic"
+   DynamicSection.ElfSection.Section.id                           = 17
+-  DynamicSection.ElfSection.Section.offset                       = 0x0000082c (2092) bytes into file
++  DynamicSection.ElfSection.Section.offset                       = 0x0000882c (34860) bytes into file
+   DynamicSection.ElfSection.Section.size                         = 0x000000c8 (200) bytes
+   DynamicSection.ElfSection.Section.file_alignment               = 0x00000004 (4) satisfied
+   DynamicSection.ElfSection.Section.synthesized                  = no
+   DynamicSection.ElfSection.Section.header                       = "ELF File Header"
+   DynamicSection.ElfSection.Section.purpose                      = SP_OTHER
+   DynamicSection.ElfSection.Section.mapped                       = rva=0x0001082c, size=200 bytes
+   DynamicSection.ElfSection.Section.mapped_alignment             = 0x00000004 (4) satisfied
+   DynamicSection.ElfSection.Section.permissions                  = rw-
+   DynamicSection.ElfSection.Section.contains_code                = false
+   DynamicSection.ElfSection.Section.mapped_actual_va             = 0x00000000 (0) 
+   DynamicSection.ElfSection.ElfSectionTableEntry.sh_name         = 143 bytes into strtab
+   DynamicSection.ElfSection.ElfSectionTableEntry.sh_type         = 0x6 (6) SHT_DYNAMIC
+   DynamicSection.ElfSection.ElfSectionTableEntry.sh_link         = 5
+   DynamicSection.ElfSection.ElfSectionTableEntry.sh_info         = 0
+   DynamicSection.ElfSection.ElfSectionTableEntry.sh_flags        = 0x00000003
+   DynamicSection.ElfSection.ElfSectionTableEntry.sh_addr         = 0x0001082c (67628)
+-  DynamicSection.ElfSection.ElfSectionTableEntry.sh_offset       = 0x0000082c (2092) bytes into file
++  DynamicSection.ElfSection.ElfSectionTableEntry.sh_offset       = 0x0000882c (34860) bytes into file
+   DynamicSection.ElfSection.ElfSectionTableEntry.sh_size         = 0x000000c8 (200) bytes
+   DynamicSection.ElfSection.ElfSectionTableEntry.sh_addralign    = 0x00000004 (4) bytes
+   DynamicSection.ElfSection.ElfSectionTableEntry.sh_entsize      = 0x00000008 (8) bytes
+   DynamicSection.ElfSection.ElfSegmentTableEntry.index           = 4
+   DynamicSection.ElfSection.ElfSegmentTableEntry.type            = 0x00000002 = PT_DYNAMIC
+   DynamicSection.ElfSection.ElfSegmentTableEntry.flags           = 0x00000006 rw-
+-  DynamicSection.ElfSection.ElfSegmentTableEntry.offset          = 0x0000082c (2092) bytes into file
++  DynamicSection.ElfSection.ElfSegmentTableEntry.offset          = 0x0000882c (34860) bytes into file
+   DynamicSection.ElfSection.ElfSegmentTableEntry.vaddr           = 0x0001082c (67628)
+   DynamicSection.ElfSection.ElfSegmentTableEntry.paddr           = 0x0001082c (67628)
+   DynamicSection.ElfSection.ElfSegmentTableEntry.filesz          = 0x000000c8 (200) bytes
+   DynamicSection.ElfSection.ElfSegmentTableEntry.memsz           = 0x000000c8 (200) bytes
+   DynamicSection.ElfSection.ElfSegmentTableEntry.align           = 0x00000004 (4) bytes
+   DynamicSection.ElfSection.linked_to                            = [5] ".dynstr"
+   DynamicSection.ElfDynamicEntry[0].dt_needed                    = 0x00000010 (16) "libc.so.6"
+-  DynamicSection.ElfDynamicEntry[1].dt_init                      = 0x000083cc (33740) <.init + 0x00000000 (0)>
++  DynamicSection.ElfDynamicEntry[1].dt_init                      = 0x000083d0 (33744) <.init + 0x00000000 (0)>
+   DynamicSection....                                               is 0x00000000 (0) bytes into section [10] ".init"
+-  DynamicSection....                                               is 0x000003cc (972) bytes into section [-1] "LOAD#2"
+-  DynamicSection.ElfDynamicEntry[2].dt_fini                      = 0x0000876c (34668) <.fini + 0x00000000 (0)>
++  DynamicSection....                                               is 0x000003d0 (976) bytes into section [-1] "LOAD#2"
++  DynamicSection.ElfDynamicEntry[2].dt_fini                      = 0x00008770 (34672) <.fini + 0x00000000 (0)>
+   DynamicSection....                                               is 0x00000000 (0) bytes into section [13] ".fini"
+-  DynamicSection....                                               is 0x0000076c (1900) bytes into section [-1] "LOAD#2"
++  DynamicSection....                                               is 0x00000770 (1904) bytes into section [-1] "LOAD#2"
+   DynamicSection.ElfDynamicEntry[3].dt_hash                      = 0x00008128 (33064) <.hash + 0x00000000 (0)>
+   DynamicSection....                                               is 0x00000000 (0) bytes into section [3] ".hash"
+   DynamicSection....                                               is 0x00000128 (296) bytes into section [-1] "LOAD#2"
+   DynamicSection.ElfDynamicEntry[4].dt_strtab                    = 0x0000827c (33404) <.dynstr + 0x00000000 (0)>
+   DynamicSection....                                               is 0x00000000 (0) bytes into section [5] ".dynstr"
+   DynamicSection....                                               is 0x0000027c (636) bytes into section [-1] "LOAD#2"
+   DynamicSection.ElfDynamicEntry[5].dt_symtab                    = 0x0000817c (33148) <.dynsym + 0x00000000 (0)>
+   DynamicSection....                                               is 0x00000000 (0) bytes into section [4] ".dynsym"
+   DynamicSection....                                               is 0x0000017c (380) bytes into section [-1] "LOAD#2"
+   DynamicSection.ElfDynamicEntry[6].dt_strsz                     = 0x0000009f (159)
+   DynamicSection.ElfDynamicEntry[7].dt_syment                    = 0x00000010 (16)
+   DynamicSection.ElfDynamicEntry[8].dt_debug                     = 0x00000000 (0)
+   DynamicSection.ElfDynamicEntry[9].dt_pltgot                    = 0x00010908 (67848) <.got + 0x00000000 (0)>
+   DynamicSection....                                               is 0x00000000 (0) bytes into section [21] ".got"
+   DynamicSection....                                               is 0x000000e8 (232) bytes into section [-1] "LOAD#3"
+   DynamicSection.ElfDynamicEntry[10].dt_pltrelsz                 = 0x00000060 (96)
+   DynamicSection.ElfDynamicEntry[11].dt_pltrel                   = 0x00000011 (17)
+-  DynamicSection.ElfDynamicEntry[12].dt_jmprel                   = 0x0000836c (33644) <.rel.plt + 0x00000000 (0)>
++  DynamicSection.ElfDynamicEntry[12].dt_jmprel                   = 0x00008370 (33648) <.rel.plt + 0x00000000 (0)>
+   DynamicSection....                                               is 0x00000000 (0) bytes into section [9] ".rel.plt"
+-  DynamicSection....                                               is 0x0000036c (876) bytes into section [-1] "LOAD#2"
+-  DynamicSection.ElfDynamicEntry[13].dt_rel                      = 0x0000835c (33628) <.rel.dyn + 0x00000000 (0)>
++  DynamicSection....                                               is 0x00000370 (880) bytes into section [-1] "LOAD#2"
++  DynamicSection.ElfDynamicEntry[13].dt_rel                      = 0x00008360 (33632) <.rel.dyn + 0x00000000 (0)>
+   DynamicSection....                                               is 0x00000000 (0) bytes into section [8] ".rel.dyn"
+-  DynamicSection....                                               is 0x0000035c (860) bytes into section [-1] "LOAD#2"
++  DynamicSection....                                               is 0x00000360 (864) bytes into section [-1] "LOAD#2"
+   DynamicSection.ElfDynamicEntry[14].dt_relsz                    = 0x00000010 (16)
+   DynamicSection.ElfDynamicEntry[15].dt_relent                   = 0x00000008 (8)
+-  DynamicSection.ElfDynamicEntry[16].dt_verneed                  = 0x0000833c (33596) <.gnu.version_r + 0x00000000 (0)>
++  DynamicSection.ElfDynamicEntry[16].dt_verneed                  = 0x00008340 (33600) <.gnu.version_r + 0x00000000 (0)>
+   DynamicSection....                                               is 0x00000000 (0) bytes into section [7] ".gnu.version_r"
+-  DynamicSection....                                               is 0x0000033c (828) bytes into section [-1] "LOAD#2"
++  DynamicSection....                                               is 0x00000340 (832) bytes into section [-1] "LOAD#2"
+   DynamicSection.ElfDynamicEntry[17].dt_verneednum               = 0x00000001 (1)
+-  DynamicSection.ElfDynamicEntry[18].dt_versym                   = 0x0000831c (33564) <.gnu.version + 0x00000000 (0)>
++  DynamicSection.ElfDynamicEntry[18].dt_versym                   = 0x00008320 (33568) <.gnu.version + 0x00000000 (0)>
+   DynamicSection....                                               is 0x00000000 (0) bytes into section [6] ".gnu.version"
+-  DynamicSection....                                               is 0x0000031c (796) bytes into section [-1] "LOAD#2"
++  DynamicSection....                                               is 0x00000320 (800) bytes into section [-1] "LOAD#2"
+   DynamicSection.ElfDynamicEntry[19].dt_null                     = 0x00000000 (0)
+   DynamicSection.ElfDynamicEntry[20].dt_null                     = 0x00000000 (0)
+   DynamicSection.ElfDynamicEntry[21].dt_null                     = 0x00000000 (0)
+   DynamicSection.ElfDynamicEntry[22].dt_null                     = 0x00000000 (0)
+   DynamicSection.ElfDynamicEntry[23].dt_null                     = 0x00000000 (0)
+   DynamicSection.ElfDynamicEntry[24].dt_null                     = 0x00000000 (0)
+ Section [16]:
+   ElfSection.Section.name                                        = ".ctors"
+   ElfSection.Section.id                                          = 18
+-  ElfSection.Section.offset                                      = 0x000008f4 (2292) bytes into file
++  ElfSection.Section.offset                                      = 0x000088f4 (35060) bytes into file
+   ElfSection.Section.size                                        = 0x00000008 (8) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_PROGRAM
+   ElfSection.Section.mapped                                      = rva=0x000108f4, size=8 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
+   ElfSection.Section.permissions                                 = rw-
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 152 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000003
+   ElfSection.ElfSectionTableEntry.sh_addr                        = 0x000108f4 (67828)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x000008f4 (2292) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x000088f4 (35060) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x00000008 (8) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [17]:
+   ElfSection.Section.name                                        = ".dtors"
+   ElfSection.Section.id                                          = 19
+-  ElfSection.Section.offset                                      = 0x000008fc (2300) bytes into file
++  ElfSection.Section.offset                                      = 0x000088fc (35068) bytes into file
+   ElfSection.Section.size                                        = 0x00000008 (8) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_PROGRAM
+   ElfSection.Section.mapped                                      = rva=0x000108fc, size=8 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
+   ElfSection.Section.permissions                                 = rw-
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 159 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000003
+   ElfSection.ElfSectionTableEntry.sh_addr                        = 0x000108fc (67836)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x000008fc (2300) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x000088fc (35068) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x00000008 (8) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [18]:
+   ElfSection.Section.name                                        = ".jcr"
+   ElfSection.Section.id                                          = 20
+-  ElfSection.Section.offset                                      = 0x00000904 (2308) bytes into file
++  ElfSection.Section.offset                                      = 0x00008904 (35076) bytes into file
+   ElfSection.Section.size                                        = 0x00000004 (4) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_PROGRAM
+   ElfSection.Section.mapped                                      = rva=0x00010904, size=4 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
+   ElfSection.Section.permissions                                 = rw-
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 166 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000003
+   ElfSection.ElfSectionTableEntry.sh_addr                        = 0x00010904 (67844)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00000904 (2308) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00008904 (35076) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [19]:
+   ElfSection.Section.name                                        = ".got"
+   ElfSection.Section.id                                          = 21
+-  ElfSection.Section.offset                                      = 0x00000908 (2312) bytes into file
++  ElfSection.Section.offset                                      = 0x00008908 (35080) bytes into file
+   ElfSection.Section.size                                        = 0x00000040 (64) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_PROGRAM
+   ElfSection.Section.mapped                                      = rva=0x00010908, size=64 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
+   ElfSection.Section.permissions                                 = rw-
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 171 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000003
+   ElfSection.ElfSectionTableEntry.sh_addr                        = 0x00010908 (67848)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00000908 (2312) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00008908 (35080) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x00000040 (64) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000004 (4) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [20]:
+   ElfSection.Section.name                                        = ".bss"
+   ElfSection.Section.id                                          = 22
+-  ElfSection.Section.offset                                      = 0x00000948 (2376) bytes into file
++  ElfSection.Section.offset                                      = 0x00008948 (35144) bytes into file
+   ElfSection.Section.size                                        = 0x00000000 (0) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_OTHER
+   ElfSection.Section.mapped                                      = rva=0x00010948, size=8 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
+   ElfSection.Section.permissions                                 = rw-
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 176 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x8 (8) SHT_NOBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000003
+   ElfSection.ElfSectionTableEntry.sh_addr                        = 0x00010948 (67912)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00000948 (2376) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00008948 (35144) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x00000008 (8) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [21]:
+   ElfSection.Section.name                                        = ".gnu_debuglink"
+   ElfSection.Section.id                                          = 23
+-  ElfSection.Section.offset                                      = 0x00000948 (2376) bytes into file
++  ElfSection.Section.offset                                      = 0x00008948 (35144) bytes into file
+   ElfSection.Section.size                                        = 0x00000018 (24) bytes
+   ElfSection.Section.file_alignment                              = 0x00000004 (4) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_PROGRAM
+   ElfSection.Section.mapped                                      = <not mapped>
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSectionTableEntry.sh_name                        = 181 bytes into strtab
+   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
+   ElfSection.ElfSectionTableEntry.sh_link                        = 0
+   ElfSection.ElfSectionTableEntry.sh_info                        = 0
+   ElfSection.ElfSectionTableEntry.sh_flags                       = 0x00000000
+   ElfSection.ElfSectionTableEntry.sh_addr                        = 0x00000000 (0)
+-  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00000948 (2376) bytes into file
++  ElfSection.ElfSectionTableEntry.sh_offset                      = 0x00008948 (35144) bytes into file
+   ElfSection.ElfSectionTableEntry.sh_size                        = 0x00000018 (24) bytes
+   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
+   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [22]:
+   ElfSymbolSection.ElfSection.Section.name                       = ".dynsym"
+   ElfSymbolSection.ElfSection.Section.id                         = 4
+   ElfSymbolSection.ElfSection.Section.offset                     = 0x0000017c (380) bytes into file
+   ElfSymbolSection.ElfSection.Section.size                       = 0x00000100 (256) bytes
+   ElfSymbolSection.ElfSection.Section.file_alignment             = 0x00000004 (4) satisfied
+@@ -960,38 +960,38 @@
+   ElfSymbolSection.ElfSymbol[15].Symbol.bound                    = none
+   ElfSymbolSection.ElfSymbol[15].Symbol.value                    = 0x00000000
+   ElfSymbolSection.ElfSymbol[15].Symbol.size                     = 0 bytes
+   ElfSymbolSection.ElfSymbol[15].st_info                         = 32 (STB_WEAK STT_NOTYPE)
+   ElfSymbolSection.ElfSymbol[15].st_res1                         = 0
+   ElfSymbolSection.ElfSymbol[15].st_size                         = 0
+   ElfSymbolSection.ElfSymbol[15].st_shndx                        = [0] ""
+ Section [23]:
+   ElfSymverSection.ElfSection.Section.name                       = ".gnu.version"
+   ElfSymverSection.ElfSection.Section.id                         = 6
+-  ElfSymverSection.ElfSection.Section.offset                     = 0x0000031c (796) bytes into file
++  ElfSymverSection.ElfSection.Section.offset                     = 0x0000831c (33564) bytes into file
+   ElfSymverSection.ElfSection.Section.size                       = 0x00000020 (32) bytes
+   ElfSymverSection.ElfSection.Section.file_alignment             = 0x00000002 (2) satisfied
+   ElfSymverSection.ElfSection.Section.synthesized                = no
+   ElfSymverSection.ElfSection.Section.header                     = "ELF File Header"
+   ElfSymverSection.ElfSection.Section.purpose                    = SP_OTHER
+-  ElfSymverSection.ElfSection.Section.mapped                     = rva=0x0000831c, size=32 bytes
++  ElfSymverSection.ElfSection.Section.mapped                     = rva=0x00008320, size=32 bytes
+   ElfSymverSection.ElfSection.Section.mapped_alignment           = 0x00000002 (2) satisfied
+   ElfSymverSection.ElfSection.Section.permissions                = r--
+   ElfSymverSection.ElfSection.Section.contains_code              = false
+   ElfSymverSection.ElfSection.Section.mapped_actual_va           = 0x00000000 (0) 
+   ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_name       = 55 bytes into strtab
+   ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x6fffffff (1879048191) SHT_GNU_versym
+   ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_link       = 4
+   ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_info       = 0
+   ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_flags      = 0x00000002
+-  ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_addr       = 0x0000831c (33564)
+-  ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_offset     = 0x0000031c (796) bytes into file
++  ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_addr       = 0x00008320 (33568)
++  ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_offset     = 0x0000831c (33564) bytes into file
+   ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_size       = 0x00000020 (32) bytes
+   ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_addralign  = 0x00000002 (2) bytes
+   ElfSymverSection.ElfSection.ElfSectionTableEntry.sh_entsize    = 0x00000002 (2) bytes
+   ElfSymverSection.ElfSection.linked_to                          = [4] ".dynsym"
+   ElfSymverSection.entries.size                                  = 16 entries
+   ElfSymverSection.ElfSymverEntry[0].                            = 0 (local)
+   ElfSymverSection.ElfSymverEntry[1].                            = 2
+   ElfSymverSection.ElfSymverEntry[2].                            = 2
+   ElfSymverSection.ElfSymverEntry[3].                            = 2
+   ElfSymverSection.ElfSymverEntry[4].                            = 2
+@@ -1002,68 +1002,68 @@
+   ElfSymverSection.ElfSymverEntry[9].                            = 2
+   ElfSymverSection.ElfSymverEntry[10].                           = 2
+   ElfSymverSection.ElfSymverEntry[11].                           = 2
+   ElfSymverSection.ElfSymverEntry[12].                           = 2
+   ElfSymverSection.ElfSymverEntry[13].                           = 1 (global)
+   ElfSymverSection.ElfSymverEntry[14].                           = 2
+   ElfSymverSection.ElfSymverEntry[15].                           = 0 (local)
+ Section [24]:
+   RelocSection.ElfSection.Section.name                           = ".rel.dyn"
+   RelocSection.ElfSection.Section.id                             = 8
+-  RelocSection.ElfSection.Section.offset                         = 0x0000035c (860) bytes into file
++  RelocSection.ElfSection.Section.offset                         = 0x0000835c (33628) bytes into file
+   RelocSection.ElfSection.Section.size                           = 0x00000010 (16) bytes
+   RelocSection.ElfSection.Section.file_alignment                 = 0x00000004 (4) satisfied
+   RelocSection.ElfSection.Section.synthesized                    = no
+   RelocSection.ElfSection.Section.header                         = "ELF File Header"
+   RelocSection.ElfSection.Section.purpose                        = SP_OTHER
+-  RelocSection.ElfSection.Section.mapped                         = rva=0x0000835c, size=16 bytes
++  RelocSection.ElfSection.Section.mapped                         = rva=0x00008360, size=16 bytes
+   RelocSection.ElfSection.Section.mapped_alignment               = 0x00000004 (4) satisfied
+   RelocSection.ElfSection.Section.permissions                    = r--
+   RelocSection.ElfSection.Section.contains_code                  = false
+   RelocSection.ElfSection.Section.mapped_actual_va               = 0x00000000 (0) 
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_name           = 83 bytes into strtab
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_type           = 0x9 (9) SHT_REL
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_link           = 4
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_info           = 0
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_flags          = 0x00000002
+-  RelocSection.ElfSection.ElfSectionTableEntry.sh_addr           = 0x0000835c (33628)
+-  RelocSection.ElfSection.ElfSectionTableEntry.sh_offset         = 0x0000035c (860) bytes into file
++  RelocSection.ElfSection.ElfSectionTableEntry.sh_addr           = 0x00008360 (33632)
++  RelocSection.ElfSection.ElfSectionTableEntry.sh_offset         = 0x0000835c (33628) bytes into file
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_size           = 0x00000010 (16) bytes
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_addralign      = 0x00000004 (4) bytes
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_entsize        = 0x00000008 (8) bytes
+   RelocSection.ElfSection.linked_to                              = [4] ".dynsym"
+   RelocSection.uses_addend                                       = no
+   RelocSection.target_section                                    = NULL
+   RelocSection.ElfRelocEntry[0]                                    Offset     Type                 Addend      Sym Value      Name + Addend
+   RelocSection.ElfRelocEntry[0]                                  = 0x00010944 R_386_PC16                        15 0x00000000 __gmon_start__
+   RelocSection.ElfRelocEntry[1]                                  = 0x00010948 R_386_16                           6 0x00010948 stderr
+ Section [25]:
+   RelocSection.ElfSection.Section.name                           = ".rel.plt"
+   RelocSection.ElfSection.Section.id                             = 9
+-  RelocSection.ElfSection.Section.offset                         = 0x0000036c (876) bytes into file
++  RelocSection.ElfSection.Section.offset                         = 0x0000836c (33644) bytes into file
+   RelocSection.ElfSection.Section.size                           = 0x00000060 (96) bytes
+   RelocSection.ElfSection.Section.file_alignment                 = 0x00000004 (4) satisfied
+   RelocSection.ElfSection.Section.synthesized                    = no
+   RelocSection.ElfSection.Section.header                         = "ELF File Header"
+   RelocSection.ElfSection.Section.purpose                        = SP_OTHER
+-  RelocSection.ElfSection.Section.mapped                         = rva=0x0000836c, size=96 bytes
++  RelocSection.ElfSection.Section.mapped                         = rva=0x00008370, size=96 bytes
+   RelocSection.ElfSection.Section.mapped_alignment               = 0x00000004 (4) satisfied
+   RelocSection.ElfSection.Section.permissions                    = r--
+   RelocSection.ElfSection.Section.contains_code                  = false
+   RelocSection.ElfSection.Section.mapped_actual_va               = 0x00000000 (0) 
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_name           = 92 bytes into strtab
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_type           = 0x9 (9) SHT_REL
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_link           = 4
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_info           = 11
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_flags          = 0x00000002
+-  RelocSection.ElfSection.ElfSectionTableEntry.sh_addr           = 0x0000836c (33644)
+-  RelocSection.ElfSection.ElfSectionTableEntry.sh_offset         = 0x0000036c (876) bytes into file
++  RelocSection.ElfSection.ElfSectionTableEntry.sh_addr           = 0x00008370 (33648)
++  RelocSection.ElfSection.ElfSectionTableEntry.sh_offset         = 0x0000836c (33644) bytes into file
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_size           = 0x00000060 (96) bytes
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_addralign      = 0x00000004 (4) bytes
+   RelocSection.ElfSection.ElfSectionTableEntry.sh_entsize        = 0x00000008 (8) bytes
+   RelocSection.ElfSection.linked_to                              = [4] ".dynsym"
+   RelocSection.uses_addend                                       = no
+   RelocSection.target_section                                    = [11] ".plt"
+   RelocSection.ElfRelocEntry[0]                                    Offset     Type                 Addend      Sym Value      Name + Addend
+   RelocSection.ElfRelocEntry[0]                                  = 0x00010914 R_386_8                            1 0x000083f0 perror
+   RelocSection.ElfRelocEntry[1]                                  = 0x00010918 R_386_8                            2 0x00008400 fprintf
+   RelocSection.ElfRelocEntry[2]                                  = 0x0001091c R_386_8                            3 0x00008410 dcgettext
+@@ -1134,55 +1134,55 @@
+   ElfSection.ElfSegmentTableEntry.vaddr                          = 0x00008034 (32820)
+   ElfSection.ElfSegmentTableEntry.paddr                          = 0x00008034 (32820)
+   ElfSection.ElfSegmentTableEntry.filesz                         = 0x000000c0 (192) bytes
+   ElfSection.ElfSegmentTableEntry.memsz                          = 0x000000c0 (192) bytes
+   ElfSection.ElfSegmentTableEntry.align                          = 0x00000004 (4) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [29]:
+   ElfSection.Section.name                                        = "LOAD#2"
+   ElfSection.Section.id                                          = -1
+   ElfSection.Section.offset                                      = 0x00000000 (0) bytes into file
+-  ElfSection.Section.size                                        = 0x00000820 (2080) bytes
++  ElfSection.Section.size                                        = 0x00008820 (34848) bytes
+   ElfSection.Section.file_alignment                              = 0x00008000 (32768) satisfied
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_HEADER
+-  ElfSection.Section.mapped                                      = rva=0x00008000, size=2080 bytes
++  ElfSection.Section.mapped                                      = rva=0x00008000, size=2084 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00008000 (32768) satisfied
+   ElfSection.Section.permissions                                 = r-x
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSegmentTableEntry.index                          = 2
+   ElfSection.ElfSegmentTableEntry.type                           = 0x00000001 = PT_LOAD
+   ElfSection.ElfSegmentTableEntry.flags                          = 0x00000005 r-x
+   ElfSection.ElfSegmentTableEntry.offset                         = 0x00000000 (0) bytes into file
+   ElfSection.ElfSegmentTableEntry.vaddr                          = 0x00008000 (32768)
+   ElfSection.ElfSegmentTableEntry.paddr                          = 0x00008000 (32768)
+-  ElfSection.ElfSegmentTableEntry.filesz                         = 0x00000820 (2080) bytes
+-  ElfSection.ElfSegmentTableEntry.memsz                          = 0x00000820 (2080) bytes
++  ElfSection.ElfSegmentTableEntry.filesz                         = 0x00008820 (34848) bytes
++  ElfSection.ElfSegmentTableEntry.memsz                          = 0x00000824 (2084) bytes
+   ElfSection.ElfSegmentTableEntry.align                          = 0x00008000 (32768) bytes
+   ElfSection.linked_to                                           = NULL
+ Section [30]:
+   ElfSection.Section.name                                        = "LOAD#3"
+   ElfSection.Section.id                                          = -1
+-  ElfSection.Section.offset                                      = 0x00000820 (2080) bytes into file
++  ElfSection.Section.offset                                      = 0x00008820 (34848) bytes into file
+   ElfSection.Section.size                                        = 0x00000128 (296) bytes
+   ElfSection.Section.file_alignment                              = 0x00008000 (32768) NOT SATISFIED
+   ElfSection.Section.synthesized                                 = no
+   ElfSection.Section.header                                      = "ELF File Header"
+   ElfSection.Section.purpose                                     = SP_HEADER
+   ElfSection.Section.mapped                                      = rva=0x00010820, size=304 bytes
+   ElfSection.Section.mapped_alignment                            = 0x00008000 (32768) NOT SATISFIED
+   ElfSection.Section.permissions                                 = rw-
+   ElfSection.Section.contains_code                               = false
+   ElfSection.Section.mapped_actual_va                            = 0x00000000 (0) 
+   ElfSection.ElfSegmentTableEntry.index                          = 3
+   ElfSection.ElfSegmentTableEntry.type                           = 0x00000001 = PT_LOAD
+   ElfSection.ElfSegmentTableEntry.flags                          = 0x00000006 rw-
+-  ElfSection.ElfSegmentTableEntry.offset                         = 0x00000820 (2080) bytes into file
++  ElfSection.ElfSegmentTableEntry.offset                         = 0x00008820 (34848) bytes into file
+   ElfSection.ElfSegmentTableEntry.vaddr                          = 0x00010820 (67616)
+   ElfSection.ElfSegmentTableEntry.paddr                          = 0x00010820 (67616)
+   ElfSection.ElfSegmentTableEntry.filesz                         = 0x00000128 (296) bytes
+   ElfSection.ElfSegmentTableEntry.memsz                          = 0x00000130 (304) bytes
+   ElfSection.ElfSegmentTableEntry.align                          = 0x00008000 (32768) bytes
+   ElfSection.linked_to                                           = NULL
+ /* Interpretation ELF */

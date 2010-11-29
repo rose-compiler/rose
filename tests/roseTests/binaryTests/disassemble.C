@@ -252,10 +252,12 @@ public:
     void show(SgNode *node) {
         printf("Functions detected in this interpretation:\n");
         printf("    Key for reason(s) address is a suspected function:\n");
-        printf("      E = entry address         C = call target           X = exception frame\n");
+        printf("      E = entry address         C = function call(*)      X = exception frame\n");
         printf("      S = function symbol       P = instruction pattern   G = interblock branch graph\n");
         printf("      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n");
         printf("      H = insn sequence head    I = imported/dyn-linked   L = leftover blocks\n");
+        printf("Note: \"c\" means this is the target of a call-like instruction or instruction sequence but\n");
+        printf("      the sequence is not present in the set of nodes of the control flow graph.\n");
         printf("\n");
         printf("    Num  Low-Addr   End-Addr  Insns/Bytes  Reason      Kind     Hash             Name\n");
         printf("    --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------\n");

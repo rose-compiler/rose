@@ -178,6 +178,7 @@ if ROSE_USE_INTERNAL_JAVA_SUPPORT
 #	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) get_jar_file
 endif
 
+
 librose_la_SOURCES = dummyCppFileForLibrose.C
 librose_la_LIBADD = $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
                     $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
@@ -187,11 +188,15 @@ librose_la_LIBADD = $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIB
 		    $(BOOST_WAVE_LIB) \
 		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
 		    $(OPT_SQLITE3_LDFLAGS) \
-        $(OPT_MYSQL_LDFLAGS)
+        $(OPT_MYSQL_LDFLAGS) 
 
 # DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell
 if ROSE_USE_DWARF
    librose_la_LIBADD += $(ROSE_DWARF_LIBS_WITH_PATH)
+endif
+
+if ROSE_USE_GCC_OMP
+   librose_la_LIBADD += lgomp
 endif
 
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext

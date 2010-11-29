@@ -1206,6 +1206,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
+  // DQ (11/20/2010): Added token handling support.
+  // Turn on the output of the tokens from the parser (only applies to Fortran support).
+  //
+     set_output_tokens(false);
+     ROSE_ASSERT (get_output_tokens() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(output_tokens)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("output tokens mode ON \n");
+          set_output_tokens(true);
+        }
+
+  //
   // Turn on the output of the parser actions for the parser (only applies to Fortran support).
   //
      set_skip_syntax_check(false);
@@ -2175,6 +2188,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(cray_pointer_support)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(output_parser_actions)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(output_tokens)",1);
      optionCount = sla(argv, "-rose:", "($)", "(exit_after_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_syntax_check)",1);
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
@@ -5707,6 +5721,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           OFPCommandLine.push_back(classpath);
           OFPCommandLine.push_back("fortran.ofp.FrontEnd");
           OFPCommandLine.push_back("--dump");
+       // OFPCommandLine.push_back("--tokens");
 
        // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
@@ -5921,6 +5936,18 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           printf ("Fortran numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 #endif
 
+#if 0
+     frontEndCommandLine.push_back("--tokens");
+#endif
+
+     if (get_output_tokens() == true)
+        {
+       // Note that this will cause all other c_actions to not be executed (resulting in an empty file).
+       // So this makes since to run in an analysis mode only, not for generation of code or compiling 
+       // of the generated code.
+          frontEndCommandLine.push_back("--tokens");
+        }
+
      int openFortranParser_argc    = 0;
      char** openFortranParser_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,openFortranParser_argc,openFortranParser_argv);
@@ -5948,8 +5975,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      printf ("********************************************************************************************** \n");
 #else
 
+  // DQ (11/11/2010): There should be no include files on the stack from previous files, see test2010_78.C and test2010_79.C when
+  // compiled together on the same command line.
+     ROSE_ASSERT(astIncludeStack.size() == 0);
+
   // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
      int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
+
+  // DQ (11/11/2010): There should be no include files left in the stack, see test2010_78.C and test2010_79.C when
+  // compiled together on the same command line.
+  // ROSE_ASSERT(astIncludeStack.size() == 0);
+     if (astIncludeStack.size() != 0)
+        {
+          printf ("Warning: astIncludeStack not cleaned up after openFortranParser_main(): astIncludeStack.size() = %zu \n",astIncludeStack.size());
+        }
 #endif
 
      if ( get_verbose() > 1 )
@@ -7963,6 +8002,8 @@ SgFile::usage ( int status )
 "                               separately).\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
+"     -rose:output_tokens     call parser with --tokens option (fortran only)\n"
+"                             (not yet supported for C/C++)\n"
 "     -rose:embedColorCodesInGeneratedCode LEVEL\n"
 "                             embed color codes into generated output for\n"
 "                               visualization of highlighted text using tview\n"

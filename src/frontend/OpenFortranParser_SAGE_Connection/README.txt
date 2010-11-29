@@ -15,3 +15,10 @@
 We now use a jar file distributed by OFP, so we no longer need the
 OFP source code in src/3rdPartyLibraries/fortran-parser directory.
 
+Needed from OFP:
+  1) Source code filename and line number of include statement.
+     See test2010_81.f90 and test2010_81.h for an example.
+     Not clear what file to put the include directive, could
+     also be deeply nested.  Need to get the main function into 
+     the correct file.
+
