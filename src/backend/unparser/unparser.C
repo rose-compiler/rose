@@ -359,6 +359,12 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     ROSE_ASSERT(file!=NULL);
 
+    /* Genenerate an ASCII dump of the entire file contents.  Generate the dump before unparsing because unparsing may perform
+     * certain relocations and normalization to the AST. */
+    // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
+    // generated in the unparse phase of processing a binary.
+    file->dump_all(true, ".dump");
+
     /* Generate file name for uparser output */
     // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
     // generated in the unparse phase of processing a binary.
@@ -371,12 +377,6 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
 
     /* Unparse the file to create a new executable */
     SgAsmExecutableFileFormat::unparseBinaryFormat(output_name, file);
-
-    /* Genenerate an ASCII dump of the entire file contents. This dump reflects the state of the AST after any modifications.
-     * Note that certain normalizations (such as section reallocation) might affect what is dumped. */
-    // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
-    // generated in the unparse phase of processing a binary.
-    file->dump_all(true, ".dump");
 #endif
 }
 

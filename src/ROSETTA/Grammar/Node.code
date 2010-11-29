@@ -52,6 +52,7 @@ class rose_rva_t {
 		rose_rva_t& set_section(SgAsmGenericSection *section);
 		rose_rva_t& bind(SgAsmGenericHeader*);
 		std::string to_string() const;
+		void increment(rose_addr_t amount);
 	private:
 		rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
 		SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
@@ -83,11 +84,12 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 		void insert(const ExtentMap&);
 		void insert(const ExtentPair &extent)
 			{insert(extent.first, extent.second);}
-		void insert(rose_addr_t offset, rose_addr_t size);
+		void insert(rose_addr_t offset, rose_addr_t size, rose_addr_t align_lo=1, rose_addr_t align_hi=1);
 		void erase(const ExtentPair &extent)
 			{erase(extent.first, extent.second);}
 		void erase(rose_addr_t offset, rose_addr_t size);
 		void erase(const ExtentMap&);
+		void precipitate(rose_addr_t reagent);
 
 		/* Operator-like non-modifying methods */
 		ExtentMap subtract_from(const ExtentPair &extent) const
@@ -97,6 +99,9 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 			{return overlap_with(extent.first, extent.second);}
 		ExtentMap overlap_with(rose_addr_t offset, rose_addr_t size) const;
 		size_t size() const; /**< Number of bytes in extent map (not the number extents). */
+
+		/* Non-modifiying search methods */
+		ExtentPair find_address(rose_addr_t address) const;
 
 		/* Allocation-like methods */
 		std::map<rose_addr_t,rose_addr_t>::iterator best_fit(rose_addr_t size);
@@ -813,6 +818,13 @@ typedef SgAsmElfSymverNeededAuxPtrList*              SgAsmElfSymverNeededAuxPtrL
 
 typedef Rose_STL_Container<SgAsmPERVASizePair*> SgAsmPERVASizePairPtrList;
 typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
+
+
+// DQ (11/20/2010): Added type for SgToken list
+// Build a type for the SgToken list.
+typedef Rose_STL_Container<SgToken*> SgTokenPtrList;
+typedef SgTokenPtrList* SgTokenPtrListPtr;
+
 
 #if 1
 // DQ (11/4/2009): Trying to use the boost hash_map support
