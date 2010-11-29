@@ -770,13 +770,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = not associated\n",          p, w, "header");
     }
     
-  /*tps 11/23/2010 : temp fix for stringifySgAsmGenericSectionSectionPurpose not defined under windows */
-#ifdef _MSC_VER
-    std::string purpose = "";
-    ROSE_ASSERT(false);
-#else
     std::string purpose = stringifySgAsmGenericSectionSectionPurpose(p_purpose);
-#endif
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", purpose.c_str());
 
     if (is_mapped()) {
