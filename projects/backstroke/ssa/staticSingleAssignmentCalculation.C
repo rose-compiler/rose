@@ -125,6 +125,7 @@ void StaticSingleAssignment::run()
 
 			//We have all the propagated defs, now update the use table
 			buildUseTable(func);
+			ssaBuildUseTable(func);
 		}
 	}
 
@@ -657,6 +658,43 @@ void StaticSingleAssignment::buildUseTable(SgFunctionDefinition* function)
 			}
 		}
 	}
+}
+
+void StaticSingleAssignment::ssaBuildUseTable(SgFunctionDefinition* func)
+{
+	struct UpdateUsesTrav : public AstSimpleProcessing
+	{
+		StaticSingleAssignment* ssa;
+
+		void visit(SgNode* node)
+		{
+			if (ssa->useTable.count(node) == 0)
+				return;
+
+			foreach(const TableEntry::value_type& entry, ssa->useTable[node])
+			{
+				const VarName& usedVar = entry.first;
+
+				//Check the defs that are active at the current node to find the reaching definition
+				//We want to check if there is a definition entry for this use at the current node
+				if (ssa->ssaReachingDefsTable[node].first.count(usedVar) > 0)
+				{
+					ssa->ssaUseTable[node][usedVar] = ssa->ssaReachingDefsTable[node].first[usedVar];
+				}
+				else
+				{
+					// There are no defs for this use at this node, this shouldn't happen
+					printf("Error: Found use for the name '%s', but no reaching defs!\n", varnameToString(usedVar).c_str());
+					printf("Node is %s:%d\n", node->class_name().c_str(), node->get_file_info()->get_line());
+					ROSE_ASSERT(false);
+				}
+			}
+		}
+	};
+
+	UpdateUsesTrav trav;
+	trav.ssa = this;
+	trav.traverse(func, preorder);
 }
 
 int StaticSingleAssignment::addRenameNumberForNode(const VarName& var, SgNode* node)

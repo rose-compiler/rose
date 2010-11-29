@@ -215,7 +215,6 @@ test2004_137.C \
 test2004_138.C \
 test2004_139.C \
 test2004_140.C \
-test2004_141.C \
 test2004_142.C \
 test2004_143.C \
 test2004_144.C \
@@ -268,7 +267,6 @@ test2005_28.C \
 test2005_29.C \
 test2005_30.C \
 test2005_31.C \
-test2005_32.C \
 test2005_33.C \
 test2005_34.C \
 test2005_35.C \
@@ -389,7 +387,6 @@ test2005_157.C \
 test2005_158.C \
 test2005_159.C \
 test2005_160.C \
-test2005_161.C \
 test2005_162.C \
 test2005_163.C \
 test2005_164.C \
@@ -414,7 +411,6 @@ test2005_185.C \
 test2005_189.C \
 test2005_190.C \
 test2005_191.C \
-test2005_192.C \
 test2005_193.C \
 test2005_194.C \
 test2005_195.C \
@@ -470,7 +466,6 @@ test2006_59.C \
 test2006_61.C \
 test2006_62.C \
 test2006_63.C \
-test2006_66.C \
 test2006_67.C \
 test2006_68.C \
 test2006_69.C \
@@ -484,7 +479,6 @@ test2006_76.C \
 test2006_77.C \
 test2006_78.C \
 test2006_79.C \
-test2006_80.C \
 test2006_81.C \
 test2006_82.C \
 test2006_83.C \
@@ -624,7 +618,6 @@ test2007_152.C \
 test2007_154.C \
 test2007_155.C \
 test2007_157.C \
-test2007_159.C \
 test2007_160.C \
 test2007_161.C \
 test2007_162.C \
@@ -679,7 +672,17 @@ FAILURE_TESTCODES = \
 test2004_159.C \
 test2005_114.C \
 test2005_187.C \
-test2006_47.C
+test2006_47.C \ 
+-->virtualCFG bug with visiting VarRef's of const values: (Not SSA Bu) \
+test2005_32.C \
+test2004_141.C \
+test2005_161.C \
+test2005_192.C \
+test2006_80.C \
+-->Catch statements don't appear in the virtual CFG: (Not SSA BUG) \
+test2006_66.C \
+--> No defs propagated to unreachable code (Have to detect unreachable code) \
+test2007_159.C 
 
 TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
 

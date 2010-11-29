@@ -92,9 +92,12 @@ int main(int argc, char** argv)
 		printf("\n\n ***** VariableRenaming Complete ***** \n\n");
 	}
 
-
-	//generateDOT(*project);
-	//varRenaming.toFilteredDOT("filteredCFG.dot");
+	if (SgProject::get_verbose() > 0)
+	{
+		generateDOT(*project);
+		varRenaming.toFilteredDOT("filteredCFG.dot");
+		varRenaming.toDOT("UNfiltered.dot");
+	}
 
 	//Run the SSA analysis
 	StaticSingleAssignment ssa(project);

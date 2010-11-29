@@ -248,6 +248,9 @@ public:
 	/** The first table is the IN table. The second table is the OUT table. */
 	typedef boost::unordered_map<SgNode*, std::pair<NodeReachingDefTable, NodeReachingDefTable> > GlobalReachingDefTable;
 
+	/** Map from each node to the variables used at that node and their reaching definitions. */
+	typedef boost::unordered_map<SgNode*, NodeReachingDefTable> UseTable;
+
 private:
 	//Private member variables
 
@@ -282,6 +285,9 @@ private:
 	 * to the reaching definitions for each use.
 	 */
 	DefUseTable useTable;
+
+	/** Map from each node to the variables used at that node and their reaching definitions. */
+	UseTable ssaUseTable;
 
 	/** This holds the mapping between variables and the nodes where they are renumbered.
 	 * Given a name and a node, we can get the number of the name that is defined at that node.
@@ -431,6 +437,8 @@ private:
 	void updateIncomingDefs(FilteredCfgNode cfgNode);
 
 	bool ssaMergeDefs(FilteredCfgNode cfgNode);
+
+	void ssaBuildUseTable(SgFunctionDefinition* func);
 
 public:
 	//External static helper functions/variables
