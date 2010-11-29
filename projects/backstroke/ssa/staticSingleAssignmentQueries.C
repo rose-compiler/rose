@@ -209,19 +209,17 @@ void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
 				//Print the defs to a string
 				stringstream defUse;
 
-				//TODO:
-				/*foreach(TableEntry::value_type& entry, reachingDefsTable[current.getNode()])
+				//Print defs to a string
+				foreach(NodeReachingDefTable::value_type& varDefPair, reachingDefsTable[current.getNode()].second)
 				{
-					defUse << "Def [" << varnameToString(entry.first) << "]: ";
-
-					foreach(NodeVec::value_type& val, entry.second)
-					{
-						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
-					}
-					defUse << "\\n";
+					defUse << "Def [" << varnameToString(varDefPair.first) << "]: ";
+					defUse << varDefPair.second->getRenamingNumber() << " - "
+							<< (varDefPair.second->isPhiFunction() ? "Phi" : "Concrete") << "\\n";
 				}
+
+				//TODO
 				//Print the uses to a string
-				foreach(TableEntry::value_type& entry, useTable[current.getNode()])
+				/*foreach(TableEntry::value_type& entry, useTable[current.getNode()])
 				{
 					defUse << "Use [" << varnameToString(entry.first) << "]: ";
 
@@ -359,20 +357,16 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 				//Print the defs to a string
 				stringstream defUse;
 
-				//TODO: Update dot file generation
-				/*
-				foreach(TableEntry::value_type& entry, reachingDefsTable[current.getNode()])
+				//Print defs to a string
+				foreach(NodeReachingDefTable::value_type& varDefPair, reachingDefsTable[current.getNode()].second)
 				{
-					defUse << "Def [" << varnameToString(entry.first) << "]: ";
-
-					foreach(NodeVec::value_type& val, entry.second)
-					{
-						defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
-					}
-					defUse << "\\n";
+					defUse << "Def [" << varnameToString(varDefPair.first) << "]: ";
+					defUse << varDefPair.second->getRenamingNumber() << " - "
+							<< (varDefPair.second->isPhiFunction() ? "Phi" : "Concrete") << "\\n";
 				}
-				//Print the uses to a string
 
+				//TODO: Update dot file generation
+				/*//Print the uses to a string
 				foreach(TableEntry::value_type& entry, useTable[current.getNode()])
 				{
 					defUse << "Use [" << varnameToString(entry.first) << "]: ";
@@ -483,7 +477,7 @@ bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 	return true;
 }
 
-StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getReachingDefsAtNode(SgNode* node) const
+const StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getReachingDefsAtNode(SgNode* node) const
 {
 	GlobalReachingDefTable::const_iterator reachingDefsIter = reachingDefsTable.find(node);
 	if (reachingDefsIter == reachingDefsTable.end())
@@ -497,7 +491,7 @@ StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getReaching
 	}
 }
 
-StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getUsesAtNode(SgNode* node) const
+const StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getUsesAtNode(SgNode* node) const
 {
 	UseTable::const_iterator usesIter = useTable.find(node);
 	if (usesIter == useTable.end())

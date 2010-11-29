@@ -132,6 +132,10 @@ int main(int argc, char** argv)
 	VariableRenaming varRenaming(project);
 	varRenaming.run();
 
+	//Run the SSA analysis
+	StaticSingleAssignment ssa(project);
+	ssa.run();
+
 	if (SgProject::get_verbose() > 0)
 	{
 		printf("\n\n ***** VariableRenaming Complete ***** \n\n");
@@ -140,13 +144,9 @@ int main(int argc, char** argv)
 	if (SgProject::get_verbose() > 0)
 	{
 		generateDOT(*project);
-		varRenaming.toFilteredDOT("filteredCFG.dot");
-		varRenaming.toDOT("UNfiltered.dot");
+		ssa.toFilteredDOT("filteredCFG.dot");
+		ssa.toDOT("UNfiltered.dot");
 	}
-
-	//Run the SSA analysis
-	StaticSingleAssignment ssa(project);
-	ssa.run();
 
 	//Compare original defs and uses
 	ComparisonTraversal t;

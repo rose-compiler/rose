@@ -9,7 +9,7 @@
 using namespace std;
 using namespace boost;
 
-ReachingDef::ReachingDef(SgNode* defNode, Type type) : defType(type), thisNode(defNode)
+ReachingDef::ReachingDef(SgNode* defNode, Type type) : defType(type), thisNode(defNode), renamingNumer(-1)
 {
 }
 
@@ -67,10 +67,15 @@ set<SgNode*> ReachingDef::getActualDefinitions() const
 	return result;
 }
 
+int ReachingDef::getRenamingNumber() const
+{
+	return renamingNumer;
+}
+
 bool ReachingDef::operator==(const ReachingDef& other) const
 {
 	return (defType == other.defType) && (thisNode == other.thisNode) &&
-			(parentDefs == other.parentDefs);
+			(parentDefs == other.parentDefs) && (renamingNumer == other.renamingNumer);
 }
 
 void ReachingDef::setDefinitionNode(SgNode* defNode)
@@ -90,4 +95,9 @@ bool ReachingDef::addJoinedDef(shared_ptr<ReachingDef> newDef)
 	{
 		return false;
 	}
+}
+
+void ReachingDef::setRenamingNumber(int n)
+{
+	renamingNumer = n;
 }

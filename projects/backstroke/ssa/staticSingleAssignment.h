@@ -348,6 +348,10 @@ private:
 	/** Create ReachingDef objects for each local def and insert them in the local def table. */
 	void populateLocalDefsTable(SgFunctionDeclaration* function);
 
+	/** Give numbers to all the reachingDef objects. Should be called after phi functions are inserted
+	 * and the local def table is populated, but before dataflowp propagates the definitions. */
+	void renumberAllDefinitions(SgFunctionDefinition* function);
+
 	/** Take all the outgoing defs from previous nodes and merge them as the incoming defs
 	 * of the current node. */
 	void updateIncomingPropagatedDefs(FilteredCfgNode cfgNode);
@@ -432,11 +436,11 @@ public:
 
 	/** Returns the reaching definitions at the given node. If there is a definition at the node itself,
 	  * e.g. SgAssignOp, it is considered to reach the node. */
-	NodeReachingDefTable getReachingDefsAtNode(SgNode* node) const;
+	const NodeReachingDefTable getReachingDefsAtNode(SgNode* node) const;
 
 	/** Returns a list of all the variables used at this node. Note that uses don't propagate past an SgStatement.
 	  * Each use is mapped to the reaching definition to which the use corresponds. */
-	NodeReachingDefTable getUsesAtNode(SgNode* node) const;
+	const NodeReachingDefTable getUsesAtNode(SgNode* node) const;
 	
 	/*
 	 *   Static Utility Functions

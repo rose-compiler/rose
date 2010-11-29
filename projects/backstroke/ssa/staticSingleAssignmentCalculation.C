@@ -114,10 +114,14 @@ void StaticSingleAssignment::run()
 
 			insertDefsForChildMemberUses(func->get_declaration());
 
-			//Create all ReachingDef objects. First, insert phi functions at join points
-			insertPhiFunctions(func);
-			//Now create ReachingDef objects for all original definitions
+			//Create all ReachingDef objects:
+			//Create ReachingDef objects for all original definitions
 			populateLocalDefsTable(func->get_declaration());
+			//Insert phi functions at join points
+			insertPhiFunctions(func);
+
+			//Renumber all instantiated ReachingDef objects
+			renumberAllDefinitions(func);
 
 			if (getDebug())
 				cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
@@ -307,18 +311,18 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 	//Keep track of visited nodes
 	boost::unordered_set<SgNode*> visited;
 
-	vector<FilteredCfgNode> worklist;
+	set<FilteredCfgNode> worklist;
 
 	FilteredCfgNode current = FilteredCfgNode(func->cfgForBeginning());
-	worklist.push_back(current);
+	worklist.insert(current);
 
 	while (!worklist.empty())
 	{
 		if (getDebug())
 			cout << "-------------------------------------------------------------------------" << endl;
 		//Get the node to work on
-		current = worklist.back();
-		worklist.pop_back();
+		current = *worklist.begin();
+		worklist.erase(worklist.begin());
 
 		//We don't want to do def_use on the ending CFGNode of the function definition
 		//so if we see it, continue.
@@ -342,16 +346,13 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 			if (changed || visited.count(nextNode.getNode()) == 0)
 			{
 				//Add the node to the worklist
-				if (find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
+				bool insertedNew = worklist.insert(nextNode).second;
+				if (insertedNew && getDebug())
 				{
-					worklist.push_back(nextNode);
-					if (getDebug())
-					{
-						if (changed)
-							cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
-						else
-							cout << "Next unvisited: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
-					}
+					if (changed)
+						cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
+					else
+						cout << "Next unvisited: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
 				}
 			}
 		}
@@ -708,7 +709,7 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
 
 	//Build an iterated dominance frontier for this function
 	map<FilteredCfgNode, set<FilteredCfgNode> > domFrontiers =
-			calculateDominanceFrontiers<FilteredCfgNode, FilteredCfgEdge>(function);
+			calculateDominanceFrontiers<FilteredCfgNode, FilteredCfgEdge>(function, NULL);
 
 	//Find the phi function locations for each variable
 	VarName var;
@@ -776,4 +777,70 @@ void StaticSingleAssignment::populateLocalDefsTable(SgFunctionDeclaration* funct
 	InsertDefs trav;
 	trav.ssa = this;
 	trav.traverse(function, preorder);
+}
+
+void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* function)
+{
+	ROSE_ASSERT(function != NULL);
+	//Renumber all definitions. We do a depth-first traversal of the control flow graph
+	unordered_set<SgNode*> visited;
+	vector<FilteredCfgNode> worklist;
+	FilteredCfgNode entry = function->cfgForBeginning();
+	worklist.push_back(entry);
+
+	//Map from each name to the next index. Not in map means 0
+	map<VarName, int> nameToNextIndexMap;
+
+	while (!worklist.empty())
+	{
+		FilteredCfgNode cfgNode = worklist.back();
+		worklist.pop_back();
+		SgNode* astNode = cfgNode.getNode();
+		visited.insert(astNode);
+
+		//Add all the children to the worklist. The reverse order here is important so we visit if statement bodies first
+		reverse_foreach(const FilteredCfgEdge outEdge, cfgNode.outEdges())
+		{
+			FilteredCfgNode target = outEdge.target();
+			if (visited.count(target.getNode()) == 0 &&
+					find(worklist.begin(), worklist.end(), target) == worklist.end())
+			{
+				worklist.push_back(target);
+			}
+		}
+
+		//Iterate over all the phi functions inserted at this node
+		foreach (NodeReachingDefTable::value_type& varDefPair, reachingDefsTable[astNode].first)
+		{
+			const VarName& definedVar = varDefPair.first;
+			ReachingDefPtr reachingDef = varDefPair.second;
+
+			//Give an index to the variable
+			int index = 0;
+			if (nameToNextIndexMap.count(definedVar) > 0)
+			{
+				index = nameToNextIndexMap[definedVar];
+			}
+			nameToNextIndexMap[definedVar] = index + 1;
+
+			reachingDef->setRenamingNumber(index);
+		}
+
+		//Iterate over all the local definitions at the node
+		foreach (NodeReachingDefTable::value_type& varDefPair, ssaLocalDefTable[astNode])
+		{
+			const VarName& definedVar = varDefPair.first;
+			ReachingDefPtr reachingDef = varDefPair.second;
+
+			//Give an index to the variable
+			int index = 0;
+			if (nameToNextIndexMap.count(definedVar) > 0)
+			{
+				index = nameToNextIndexMap[definedVar];
+			}
+			nameToNextIndexMap[definedVar] = index + 1;
+
+			reachingDef->setRenamingNumber(index);
+		}
+	}
 }

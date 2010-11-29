@@ -53,15 +53,15 @@ namespace ssa_private
 	}
 
 	/** Calculates the dominance frontier for each node in the control flow graph of the given function.
-	 @returns a map from each node to the set of nodes in its dominance frontier.*/
+	 * @param dominatorTree if this is not NULL, the dominator tree is returned here. Each cfg node is mapped to its
+	 *			children in the dominator tree.
+	 * @returns a map from each node to the set of nodes in its dominance frontier.*/
 	template<class CfgNodeT, class CfgEdgeT>
-	map<CfgNodeT, set<CfgNodeT> > calculateDominanceFrontiers(SgFunctionDefinition* func)
+	map<CfgNodeT, set<CfgNodeT> > calculateDominanceFrontiers(SgFunctionDefinition* func, multimap<CfgNodeT, CfgNodeT>* dominatorTree)
 	{
 		typedef CFG<CfgNodeT, CfgEdgeT> ControlFlowGraph;
 		//Build a CFG first
 		ControlFlowGraph functionCfg(func);
-
-		//functionCfg.toDot("boost_filtered_cfg.dot");
 
 		//Build the dominator tree
 		typename ControlFlowGraph::VertexVertexMap dominatorTreeMap = functionCfg.buildDominatorTree();
@@ -97,6 +97,11 @@ namespace ssa_private
 
 			//Add the edge from dominator to node
 			add_edge(cfgNodeToVertex[dominator], cfgNodeToVertex[node], domTree);
+
+			if (dominatorTree != NULL)
+			{
+				dominatorTree->insert(make_pair(dominator, node));
+			}
 		}
 
 		//Get a topological ordering of the vertices

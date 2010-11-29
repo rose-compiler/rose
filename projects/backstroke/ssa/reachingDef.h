@@ -33,6 +33,9 @@ private:
 	 * this is the defining node of the variable. */
 	SgNode* thisNode;
 
+	/** The values are renamed so that they increase monotonically with program flow. 0 is the first value. */
+	int renamingNumer;
+
 public:
 
 	//---------CONSTRUCTORS---------
@@ -54,6 +57,10 @@ public:
 	/** Returns the actual reaching definitions at the current node, expanding all phi functions. */
 	std::set<SgNode*> getActualDefinitions() const;
 
+	/** Get the renaming (SSA index) associated with this definition. 0 is the first value,
+	 * and numbers increase monotonically with program flow. */
+	int getRenamingNumber() const;
+
 	bool operator==(const ReachingDef& other) const;
 
 	//---------MODIFIERS---------
@@ -64,4 +71,7 @@ public:
 	/** Add a new join definition (only valid for phi functions).
 	  * Returns true if the function was added, false if it was already present. */
 	bool addJoinedDef(boost::shared_ptr<ReachingDef> newDef);
+
+	/** Set the renaming number (SSA index) of this def. */
+	void setRenamingNumber(int n);
 };
