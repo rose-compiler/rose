@@ -15,7 +15,7 @@
 #include <boost/foreach.hpp>
 #include "filteredCFG.h"
 #include <boost/unordered_map.hpp>
-#include "ReachingDef.h"
+#include "reachingDef.h"
 
 namespace ssa_private
 {
