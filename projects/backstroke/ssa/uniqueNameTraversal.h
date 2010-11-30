@@ -1,6 +1,7 @@
 //Author: Justin Frye <jafrye@tamu.edu>
 #pragma once
 #include "sage3basic.h"
+#include <vector>
 
 namespace ssa_private
 {
@@ -9,15 +10,15 @@ namespace ssa_private
 class VariableReferenceSet
 {
 private:
-	/** Stores all of the varRefs from the subtree.
-	 */
+	/** Stores all of the varRefs from the subtree. */
 	std::vector<SgNode*> refs;
 
 public:
 
-	/** Create the attribute with no refs.
-	 */
-	VariableReferenceSet() : refs() { }
+	/** Create the attribute with no refs. */
+	VariableReferenceSet() : refs()
+	{
+	}
 
 	/** Create the attribute with thisNode.
 	 *
@@ -70,7 +71,19 @@ public:
 /** Class to traverse the AST and assign unique names to every varRef. */
 class UniqueNameTraversal : public AstBottomUpProcessing<VariableReferenceSet>
 {
+	/** All the initialized names in the project. */
+	std::vector<SgInitializedName*> allInitNames;
+
+	/** Finds initialized names that are "fake" (refer to p_prev_decl_item in the SgInitializedName docs)
+	 * and replaces them with the true declaration. */
+	SgInitializedName* resolveTemporaryInitNames(SgInitializedName* name);
+
 public:
+
+	UniqueNameTraversal(const std::vector<SgInitializedName*>& allNames) : allInitNames(allNames)
+	{
+	}
+
 	/** Called to evaluate the synthesized attribute on every node.
 	 *
 	 * This function will handle passing all variables that are referenced by a given expression.
