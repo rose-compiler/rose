@@ -55,14 +55,14 @@ void VariableRenaming::printDefs(SgNode* node)
     }
 }
 
-void VariableRenaming::printDefs(std::map< std::vector<SgInitializedName*>, std::vector<SgNode*> >& table)
+void VariableRenaming::printDefs(const std::map< std::vector<SgInitializedName*>, std::vector<SgNode*> >& table)
 {
     std::cout << "Def Table:" << std::endl;
 
-    foreach(TableEntry::value_type& entry,table)
+    foreach(const TableEntry::value_type& entry,table)
     {
         std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
-        foreach(NodeVec::value_type& iter, entry.second)
+        foreach(const NodeVec::value_type& iter, entry.second)
         {
             std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
         }
@@ -116,14 +116,14 @@ void VariableRenaming::printUses(SgNode* node)
     }
 }
 
-void VariableRenaming::printUses(std::map< std::vector<SgInitializedName*>, std::vector<SgNode*> >& table)
+void VariableRenaming::printUses(const std::map< std::vector<SgInitializedName*>, std::vector<SgNode*> >& table)
 {
     std::cout << "Use Table:" << std::endl;
 
-    foreach(TableEntry::value_type& entry,table)
+    foreach(const TableEntry::value_type& entry,table)
     {
         std::cout << "  Uses for [" << keyToString(entry.first) << "]:" << std::endl;
-        foreach(NodeVec::value_type& iter, entry.second)
+        foreach(const NodeVec::value_type& iter, entry.second)
         {
             std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
         }
@@ -1987,7 +1987,7 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
         {
             cout << "Error: Found variable with no firstDef point that is not a class or namespace member." << endl;
             cout << "Variable Scope: " << SageInterface::getScope(rootName[0])->class_name() << SageInterface::getScope(rootName[0]) << endl;
-            cout << rootName[0]->class_name() << rootName[0] << "@" << rootName[0]->get_file_info()->get_line() << ":" << rootName[0]->get_file_info()->get_col() << endl;
+            cout << rootName[0]->get_name().str() << rootName[0] << "@" << rootName[0]->get_file_info()->get_line() << ":" << rootName[0]->get_file_info()->get_col() << endl;
             ROSE_ASSERT(false);
         }
     }

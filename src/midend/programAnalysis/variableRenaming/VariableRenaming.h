@@ -417,8 +417,8 @@ private:
     void printToDOT(SgSourceFile* file, std::ofstream &outFile);
     void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
 
-    void printUses(TableEntry& table);
-    void printDefs(TableEntry& table);
+    void printUses(const TableEntry& table);
+    void printDefs(const TableEntry& table);
     
 public:
     //External static helper functions/variables
