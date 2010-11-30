@@ -453,7 +453,7 @@ SgExpression* Slicer::copySlicedExpression(SgExpression* expr) const
 	if (expr == NULL)
 		return NULL;
 
-	if (possibleSlice_.find(stmt) == possibleSlice_.end())
+	if (possibleSlice_.find(expr) == possibleSlice_.end())
 		return NULL;
 
 	//bool isInSlice = slice_.find(expr) != slice_.end();
@@ -481,7 +481,7 @@ SgExpression* Slicer::copySlicedExpression(SgExpression* expr) const
 		}
 
 		default:
-			if (isInSlice)
+			//if (isInSlice)
 				return SageInterface::copyExpression(expr);
 			break;
 	}
