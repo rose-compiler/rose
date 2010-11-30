@@ -168,7 +168,7 @@ procSet& OneDmesgExpr::getImage(const procSet& domain_arg) const
 // heap-allocated range process set 
 contRangeProcSet& OneDmesgExpr::getImage(const contRangeProcSet& domain_arg) const
 {
-	const contRangeProcSet& domain = dynamic_cast<const contRangeProcSet&>(domain_arg);
+	//const contRangeProcSet& domain = dynamic_cast<const contRangeProcSet&>(domain_arg);
 	contRangeProcSet* procs = new contRangeProcSet(mRange, true);
 	//cout << "OneDmesgExpr::getImage: procs="<<procs->str()<<"\n";
 	//cout << "OneDmesgExpr::getImage: mRange="<<mRange.str()<<"\n";

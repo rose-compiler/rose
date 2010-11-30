@@ -5,15 +5,17 @@ using namespace std;
 
 namespace arrIndexLabeler {
 
-// SgPntrArrRefExp are stored as follows: 
-//                     node (SgPntrArrRefExp)
-//                    /                      \
-//       name subtree (SgPntrArrRefExp)      index subtree (SgExpression)
-//               /                  \
-// name subtree (SgPntrArrRefExp)   index subtree (SgExpression)
-//            ...
-// until we get to something 
-// other than SgPntrArrRefExp
+/*
+ SgPntrArrRefExp are stored as follows: 
+                     node (SgPntrArrRefExp)
+                    /                      \ 
+       name subtree (SgPntrArrRefExp)      index subtree (SgExpression)
+               /                  \ 
+ name subtree (SgPntrArrRefExp)   index subtree (SgExpression)
+            ...
+ until we get to something 
+ other than SgPntrArrRefExp
+*/
 
 // the traversal's inherited attribute that determines whether a given SgNode is part of an array index expression
 class aiRecord
@@ -162,7 +164,7 @@ class arrayIndexLabeler : public SgTopDownBottomUpProcessing<aiRecord, adRecord>
 		aiRecord ir;
 		SgPntrArrRefExp* arrRef;
 		
-		if(arrRef = isSgPntrArrRefExp(n))
+		if((arrRef = isSgPntrArrRefExp(n)))
 		{
 			ir.arrayNameSubtree = arrRef->get_lhs_operand();
 			ir.indexSubtree = arrRef->get_rhs_operand();
@@ -197,7 +199,7 @@ class arrayIndexLabeler : public SgTopDownBottomUpProcessing<aiRecord, adRecord>
 		adRecord dr(n);
 		SgPntrArrRefExp* arrRef;
 		
-		if(arrRef = isSgPntrArrRefExp(n))
+		if((arrRef = isSgPntrArrRefExp(n)))
 		{
 			//printf("evaluateSynthesizedAttribute() arrRef->lhs=%p, arrRef->rhs=%p\n", arrRef->get_lhs_operand(), );
 			bool found=false;

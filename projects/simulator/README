@@ -42,6 +42,8 @@ Switches are:
 
 ** "progress" emits a progress report every 10 seconds.
 
+** "signal" shows information about signal handling.
+
 ** "all" turns on all possible debugging switches.
 
 * "--debug" by itself is the same as "--debug=syscall,insn"
@@ -60,6 +62,20 @@ Switches are:
   name is optional, but it's often useful to avoid a subsequent dump
   from overwriting this one.  Once the core dump(s) is produced x86sim
   will continue to execute the specimen.
+
+* "--interp=NAME" overrides the interpreter name from the PT_INTERP
+  section (normally named ".interp"). The interpreter is usually
+  the linux dynamic linker, ld-linux.so.
+
+* "--vdso=PATHS" overrides the compiled in names for finding the
+  virtual dynamic shared object normally provided by the kernel. The
+  PATHS are a colon-separate list of directories and/or files. When
+  directories are specified the simulator looks for files called
+  "x86vdso" in those directories.
+
+* "--showauxv" causes the simulator to print its own ELF auxiliary
+  vector.  (The auxiliary vector for the specimen is printed by
+  "--debug=loader".)
 
 Positional arguments:
 
@@ -340,3 +356,71 @@ with "X86SIM_". For example, to adjust the library load path
 do this:
     
     $ X86SIM_LD_LIBRARY_PATH=somedir ./x86sim a.out
+
+
+To get a specimen core dump upon return from any signal handler, use
+the "--dump=0xdeceaced" switch (as in a deceaced (sic) signal handler).
+
+
+== CROSS PLATFORM ==
+
+Here's how to run a 32-bit specimen on a 64-bit machine that doesn't
+have 32-bit compatibility. The goal is to get the specimen to follow
+the same code path in the 64-bit x86sim as it would when run natively
+on the 32-bit platform.
+
+(1) On the 32-bit machine, run "ldd $SPECIMEN" to get a list of
+    libraries, including the dynamic linker itself. Copy all of these
+    files to a directory, $LIBDIR, on the 64-bit machine.  The library
+    with no file name (if any, often called "linux-gate") is a virtual
+    dynamic shared object provided by the kernel--don't worry about
+    copying it.  The "ld-linux" shared object is the dynamic linker
+    itself, which we'll refer to as $LDLINUX.
+
+(2) Copy the virtual dynamic shared object file to the test
+    directory.  Name of file is $VDSO.
+
+      $ VDSO_BASE=0x$(setarch i386 -LRB3 dd if=/proc/self/maps |\
+	            grep vdso |\
+                    cut -d- -f1)
+ 
+    Run a couple of times to make sure the $VDSO_BASE is consistent.
+
+      $ setarch i386 -LRB3 dd bs=1024 skip=$[VDSO_BASE/1024] count=4 \
+          if=/proc/self/mem of=$VDSO
+
+(3) Copy the specimen to the 64-bit machine. This is $SPECIMEN.
+
+(4) Run the simulator as:
+
+      setarch i386 -LRB3 \
+          env \
+	      X86SIM_LD_PRELOAD= \
+              X86SIM_LD_LIBRARY_PATH=$LIBDIR \
+          x86sim \
+              --interp=$LDLINUX --vdso=$VDSO \
+              $SPECIMEN
+
+== SIGNAL HANDLING ==
+
+Signals delivered to x86sim will be treated as if they were intended
+for the specimen (x86sim never gets a SIGSEGV anyway ;-).  After the
+OS kernel delivers the signal to x86sim, x86sim will deliver it to the
+specimen. This final delivery always happens between instructions.
+
+We don't yet handle signal stacks, although adding one wouldn't be
+that hard.
+
+Pressing Control-C won't do what usually happens--it won't immediately
+kill x86sim.  Instead, the SIGINT is handled just like the other
+signals in that x86sim will deliver it to the specimen.  Usually the
+specimen will not have a handler registered for SIGINT and x86sim will
+cause the specimen to exit, thus exiting x86sim as well.  If you're
+unable to kill x86sim with a Control-C, try Control-\ or, from another
+terminal, run "kill -SIGKILL PID" where PID is the process ID of
+x86sim (and the specimen).
+
+If x86sim fails an assertion (assert() or ROSE_ASSERT()) it will look
+like the specimen failed the assertion since x86sim traps the signal
+and delivers it to the specimen. This is true of all signals produced
+by x86sim for x86sim.

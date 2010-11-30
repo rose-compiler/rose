@@ -119,25 +119,9 @@ public:
             mapperms = new_perms;
         }
 
-        // DQ (10/21/2010): Moved to source file.  In general we want function definitions to be in source files to avoid excessive compile times.
         /** Returns the buffer to which the offset applies.  Invoking this method on an anonymouse map element will cause
          *  memory to be allocated if it hasen't been already (unless allocate_anonymous is false). */
         void *get_base(bool allocate_anonymous=true) const;
-#if 0
-        void * MemoryMap::MapElement::get_base(bool allocate_anonymous=true) const {
-            if (anonymous) {
-                if (NULL==anonymous->base) {
-                    ROSE_ASSERT(NULL==base);
-                    base = anonymous->base = new uint8_t[get_size()];
-                    memset(anonymous->base, 0, get_size());
-                } else {
-                    ROSE_ASSERT(base==anonymous->base);
-                }
-            }
-
-            return base;
-        }
-#endif
 
         /** Returns the starting offset for this map element. The offset is measured with respect to the value returned by
          *  get_base(). The offset is probably not of interest when the element describes an anonymous mapping. */
@@ -145,9 +129,10 @@ public:
             return offset;
         }
 
-        /** Returns the starting offset of the specified virtual address or throws a MemoryMap::NotMapped exception if the
-         *  virtual address is not represented by this map element. */
-        rose_addr_t get_va_offset(rose_addr_t va) const;
+        /** Returns the starting offset of the specified virtual address and verifies that the mapped region contains at least
+         *  @p nbytes bytes beyond the specified address. Throws a MemoryMap::NotMapped exception if specified number of bytes
+         *  after the virtual address are not represented by this map element. */
+        rose_addr_t get_va_offset(rose_addr_t va, size_t nbytes=1) const;
 
         /** Returns true if this element is consistent with the @p other element. Consistent map elements can be merged when
          *  they are adjacent or overlapping with one another. Elements are not consistent if they have different base

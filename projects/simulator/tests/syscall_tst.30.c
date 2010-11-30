@@ -125,6 +125,7 @@ void syscall_success()
 	acc_time.tv_nsec = 0;
 	if ( ( fd =creat(filename,0777)) == -1) {
 		tst_resm(TFAIL, "SOURCE FILE CREATION ERROR - %i",errno);
+                exit(1);
 	}
 
 	TEST(syscall( __NR_utime, filename, &utbuf ));

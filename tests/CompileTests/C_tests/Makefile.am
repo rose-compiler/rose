@@ -31,7 +31,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2009_02.c \
      test2009_03.c \
      test2009_04.c \
-     test2009_05.c \
      test2009_07.c \
      test2009_08.c \
      test2009_16.c \
@@ -40,6 +39,15 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_01.c \
      test2010_04.c \
      test2010_06.c \
+     test2010_07.c \
+     test2010_08.c \
+     test2010_09.c \
+     test2010_10.c \
+     test2010_11.c \
+     test2010_12.c \
+     test2010_13.c \
+     test2010_14.c \
+     test2010_15.c \
      math.c \
      complex_01.c \
      constants.c
@@ -55,10 +63,11 @@ endif
 #Liao, 5/16/2009 add a set of self-verifiable test code with main() 
 # and let them run during make check
 TESTCODES_REQUIRED_TO_RUN = \
+     test2009_05.c \
      test2009_17.c \
-     test2009_18.c
+     test2009_18.c \
+     test2009_20.c
 
-# test2009_20.c  (array -1) becomes (array) bug 368
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \
      test2006_14.c  \
@@ -66,13 +75,11 @@ TESTCODE_CURRENTLY_FAILING = \
      test2006_134.c \
      test2006_136.c \
      test2009_06.c \
-     test2009_20.c \
      test2010_02.c \
      test2010_03.c \
      test2010_05.c \
      Yarden_client.c
 
-noinst_headers = test2006_134.h
 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
@@ -84,9 +91,6 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-# DQ (2/1/2010): Temporarily removed for testing.
-# $(TESTCODES_REQUIRED_TO_RUN) 
-
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
 
@@ -96,9 +100,11 @@ PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
-# PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
-# check_PROGRAMS = $(PASSING_TEST_Executables)
-# TESTS= $(check_PROGRAMS) caller.out 
+PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
+# any programs needed by your tests that does not need to be built by make all.
+check_PROGRAMS = $(PASSING_TEST_Executables)
+# a list of programs or scripts to run in order to do the testing 
+TESTS= $(check_PROGRAMS) caller.out 
 
 testTranslator=../../testTranslator
 
@@ -110,6 +116,9 @@ $(TEST_Objects): ../../testTranslator
 # This is a redundant test with it also being in the list TESTCODES_REQUIRED_TO_PASS (above).
 test2005_168.o: $(srcdir)/test2005_168.c
 	$(testTranslator) $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
+
+$(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
+	$(testTranslator) $(ROSE_FLAGS) -c $<
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
@@ -140,7 +149,8 @@ test2008_02.o: $(srcdir)/test2008_02.c
 # Include makefile rules specific to QMTest
 #include $(top_srcdir)/config/QMTest_makefile.inc
 
-EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c
+EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
+             test2006_134.h test2010_08.h predict.def test2010_15.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests

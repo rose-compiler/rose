@@ -876,6 +876,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmNERelocEntry::NERelocFlags" ) ||
                  ( varTypeString == "SgInterfaceStatement::generic_spec_enum" ) ||
                  ( varTypeString == "SgAsmPEImportILTEntry::ILTEntryType" ) ||
+                 ( varTypeString == "SgAsmPEImportLookupTable::TableKind" ) ||
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionType") ||
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionFlags") ||
                  ( varTypeString == "SgOpenclAccessModeModifier::access_mode_modifier_enum") ||

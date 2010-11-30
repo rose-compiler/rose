@@ -10,7 +10,7 @@
 class ExpressionReversalHandler;
 class StatementReversalHandler;
 class ReversalHandlerBase;
-class EventHandler;
+class EventProcessor;
 
 //TODO: Just use std::pair here
 struct ExpressionReversal
@@ -116,7 +116,7 @@ inline bool operator<(const EvaluationResult& r1, const EvaluationResult& r2)
 
 class ReversalHandlerBase
 {
-	EventHandler* event_handler_;
+	EventProcessor* event_handler_;
 
 protected:
 	std::string name_;
@@ -165,7 +165,7 @@ public:
 		return name_;
 	}
 
-	void setEventHandler(EventHandler* handler)
+	void setEventHandler(EventProcessor* handler)
 	{
 		event_handler_ = handler;
 	}
@@ -212,19 +212,19 @@ public:
 
 	VariableValueRestorer() : eventHandler(NULL) { }
 
-	void setEventHandler(EventHandler* eventHandler)
+	void setEventHandler(EventProcessor* eventHandler)
 	{
 		this->eventHandler = eventHandler;
 	}
 
-	EventHandler* getEventHandler()
+	EventProcessor* getEventHandler()
 	{
 		return eventHandler;
 	}
 
 private:
 
-	EventHandler* eventHandler;
+	EventProcessor* eventHandler;
 };
 
 

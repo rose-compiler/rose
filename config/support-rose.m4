@@ -153,6 +153,10 @@ support_fortran_only=no
 echo "BEFORE Setting: enableval = $enableval support_fortran_only = $support_fortran_only"
 if test "x$enableval" = "xyes"; then
    if test "x$USE_JAVA" = x1; then
+    # Scott appears to require CPPFLAGS to be set...
+      echo "Before setting CPPFLAGS: CPPFLAGS = $CPPFLAGS"
+      CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
+      echo "Set CPPFLAGS  to include JAVA_JVM_INCLUDE = $JAVA_JVM_INCLUDE"
       echo "Setting: support_fortran_only = $support_fortran_only"
       if test "x$GFORTRAN_PATH" != "x"; then
          echo "Build only: Found a valid gfortran, java is available, OK to support Fortran"
@@ -1417,6 +1421,9 @@ else
 fi
 
 
+
+
+
 # TP (2-27-2009) -- support for RTED
 ROSE_SUPPORT_RTED
 
@@ -1442,13 +1449,39 @@ if test ! "x$rose_openGL" = xno; then
     AC_MSG_NOTICE( "OpenGL enabled. Found GLUT." );
  else
 #    AC_MSG_NOTICE( "OpenGL GLUT not found Msg" );
-   AC_MSG_ERROR( "OpenGL GLUT not found" );
+   AC_MSG_NOTICE( "OpenGL GLUT not found. Please use --with-glut" );
  fi
 fi
 ], [ rose_openGL=no
   AC_MSG_NOTICE( "OpenGL disabled." );
 ])
-AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno -a ! "x$rose_openGL" = xno)
+AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno)
+
+
+AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, false)
+
+AC_ARG_WITH(glut,
+[  --with-glut=PATH     Configure option to have GLUT enabled.],
+,
+if test ! "$with_glut" ; then
+   with_glut=no
+fi
+)
+
+echo "In ROSE SUPPORT MACRO: with_glut $with_glut"
+
+if test "$with_glut" = no; then
+   # If dwarf is not specified, then don't use it.
+   echo "Skipping use of GLUT support!"
+else
+   AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, true)
+   glut_path=$with_glut
+   echo "Setup GLUT support in ROSE! path = $glut_path"
+   AC_DEFINE([USE_ROSE_GLUT_SUPPORT],1,[Controls use of ROSE support for GLUT library.])
+fi
+
+
+AC_SUBST(glut_path)
 
 
 
@@ -2638,7 +2671,9 @@ projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
+projects/backstroke/slicing/Makefile
 projects/backstroke/pluggableReverser/Makefile
+projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
 projects/backstroke/tests/Makefile
@@ -2647,6 +2682,7 @@ projects/backstroke/tests/expNormalizationTest/Makefile
 projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
 projects/backstroke/tests/pluggableReverserTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
+projects/backstroke/tests/testCodeBuilderTest/Makefile
 projects/backstroke/utilities/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
@@ -2696,7 +2732,6 @@ projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/simulator/Makefile
-projects/simulator/tests/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/analysis/Makefile
 projects/symbolicAnalysisFramework/src/arrIndexLabeler/Makefile
@@ -2755,6 +2790,9 @@ tests/CompileTests/Cxx_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
 tests/CompileTests/Fortran_tests/Makefile
 tests/CompileTests/Fortran_tests/LANL_POP/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
+tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
@@ -2870,6 +2908,11 @@ demo/qrose/Makefile
 binaries/Makefile
 binaries/samples/Makefile
 ])
+
+# DQ (10/27/2010): New Fortran tests (from gfortan test suite).
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
+# tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
 
 # DQ (8/12/2010): We want to get permission to distribute these files as test codes.
 # tests/CompileTests/Fortran_tests/LANL_POP/Makefile

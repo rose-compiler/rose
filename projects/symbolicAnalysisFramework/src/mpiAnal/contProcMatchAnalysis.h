@@ -108,7 +108,7 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
    // Returns the name of the variable annotation to be used when talking about process set pSet
    static string getVarAnn(int pSet);
    
-	// Asserts within this constraint graph the standard invariants on process sets:\
+	// Asserts within this constraint graph the standard invariants on process sets:
 	// [0<= lb <= ub < nprocsVar] and [lb <= rankVar <= ub]
 	// Returns true if this causes the constraint graph to change, false otherwise
 	static bool assertProcSetInvariants(ConstrGraph* cg, const contRangeProcSet& rankSetPSet,

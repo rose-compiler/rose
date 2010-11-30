@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 		SgFunctionDefinition* curFunc = isSgFunctionDefinition(*i);
 		ROSE_ASSERT(curFunc);
 				
-		SgBasicBlock *funcBody = curFunc->get_body();
+		//SgBasicBlock *funcBody = curFunc->get_body();
 		//InterestingNode funcCFG = VirtualCFG::makeInterestingCfg(funcBody);
 		DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(curFunc);
 		

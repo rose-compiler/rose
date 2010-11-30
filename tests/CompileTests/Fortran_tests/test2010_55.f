@@ -1,3 +1,4 @@
+C The bug is that the function type is not unparsed...
        logical function ifcor(n1)
        include 'test2010_55.h'
 

@@ -23,11 +23,13 @@ if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
    SUBDIRS += ECJ_ROSE_Connection
 endif
 
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader
-else
-   SUBDIRS += BinaryFormats
-endif
+SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader
+
+#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#   SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader
+#else
+#  SUBDIRS += BinaryFormats
+#endif
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    SUBDIRS += PHPFrontend

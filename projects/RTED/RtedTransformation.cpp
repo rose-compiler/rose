@@ -69,12 +69,11 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
    this -> rtedfiles = &rtedfiles;
    loadFunctionSymbols(project);
 
-   // Traverse Variables
-   performInheritedSynthesizedTraversal(project);
-
-   // Find all the places which need to be transformed, i.e. where code needs to be inserted.
-   // To do this traverse visit function further below
-   traverseInputFiles(project,preorder);
+   VariableTraversal varTraversal(this);
+   InheritedAttribute inheritedAttribute(false,false,false,false,false,false);
+   //   InheritedAttribute inheritedAttribute(bools);
+   // Call the traversal starting at the project (root) node of the AST
+   varTraversal.traverseInputFiles(project,inheritedAttribute);
 
 
    // tps: Traverse all classes that appear in header files and create copy in source file within a namespace.
@@ -88,19 +87,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
       traverse(*travClassIt,preorder);
    }
 
-
    executeTransformations();
-}
-
-
-void RtedTransformation::performInheritedSynthesizedTraversal(SgProject* project) {
-   // Traverse Variables
-// InheritedAttributeBools* bools = new InheritedAttributeBools();
-   InheritedAttribute inheritedAttribute(false,false,false,false,false,false,false,false);
-//   InheritedAttribute inheritedAttribute(bools);
-   VariableTraversal varTraversal(this);
-   // Call the traversal starting at the project (root) node of the AST
-   varTraversal.traverseInputFiles(project,inheritedAttribute);
 }
 
 
@@ -109,132 +96,18 @@ void RtedTransformation::performInheritedSynthesizedTraversal(SgProject* project
  * -----------------------------------------------------------*/
 
 void RtedTransformation::visit(SgNode* n) {
-   if (RTEDDEBUG())  cerr <<"Traversing node : " << n->class_name() << endl;
-
-   // find function definitions (incl. main) ******************************************
-   if (isSgFunctionDefinition(n)) {
-      visit_isFunctionDefinition(n);
-   }
-   // find function definitions (incl. main) ******************************************
-
-
-   // ******************** DETECT functions in input program  *********************************************************************
-
-   // *********************** DETECT variable creations ***************
-   if (isSgVariableDeclaration(n)) {
-      visit_isSgVariableDeclaration(n);
-   }
-
-   // *********************** DETECT variable creations ***************
-
-
-
-
-   // *********************** DETECT ALL array creations ***************
-   else if (isSgInitializedName(n)) {
-      //cerr <<" >> VISITOR :: Found initName : " << n->unparseToString() << endl;
-      visit_isArraySgInitializedName(n);
-   }
-
-   // 1. look for MALLOC
-   // 2. Look for assignments to variables - i.e. a variable is initialized
-   // 3. Assign variables that come from assign initializers (not just assignments
-   else if (isSgAssignOp(n)) {
-      //cerr <<" >> VISITOR :: Found AssignOp : " << n->unparseToString() << endl;
-      visit_isArraySgAssignOp(n);
-   }
-   else if (isSgAssignInitializer(n)) {
-      visit_isAssignInitializer(n);
-   }
-   // *********************** DETECT ALL array creations ***************
-
-
-   // *********************** DETECT ALL array accesses ***************
-   else if (isSgPntrArrRefExp(n)) {
-      // checks for array access
-      visit_isArrayPntrArrRefExp(n);
-   } // pntrarrrefexp
-   /*
-  else if (isSgVarRefExp(n)) {
-    // if this is a varrefexp and it is not initialized, we flag it.
-    // do only if it is by itself or on right hand side of assignment
-    cerr << " @@@@@@@@@ DETECTED Variable access : " << n->unparseToString() << endl;
-    visit_isSgVarRefExp(isSgVarRefExp(n));
-  }
-    */
-   else if (isSgPointerDerefExp(n)) {
-      // if this is a varrefexp and it is not initialized, we flag it.
-      // do only if it is by itself or on right hand side of assignment
-      if (RTEDDEBUG()) cerr << " @@@@@@@@@ DETECTED PointerDerefExp : " << n->unparseToString() << endl;
-      visit_isSgPointerDerefExp(isSgPointerDerefExp(n));
-   }
-   else if (isSgArrowExp(n)) {
-      // if this is a varrefexp and it is not initialized, we flag it.
-      // do only if it is by itself or on right hand side of assignment
-      if (RTEDDEBUG()) cerr << " @@@@@@@@@ DETECTED isSgArrowExp : " << n->unparseToString() << endl;
-      visit_isSgArrowExp(isSgArrowExp(n));
-   }
-   // *********************** DETECT ALL array accesses ***************
-
-
-   // *********************** DETECT ALL scope statements ***************
-   else if (isSgScopeStatement(n)) {
+   if (isSgScopeStatement(n)) {
+#if 1
       // if, while, do, etc., where we need to check for locals going out of scope
-
       visit_isSgScopeStatement(n);
-
       // *********************** DETECT structs and class definitions ***************
       if (isSgClassDefinition(n)) {
          // call to a specific function that needs to be checked
          //cerr << " +++++++++++++++++++++ FOUND Class Def!! ++++++++++++++++ " << endl;
          visit_isClassDefinition(isSgClassDefinition(n));
       }
-
-   }
-
-
-
-
-   // *********************** DETECT ALL function calls ***************
-   else if (isSgFunctionCallExp(n)) {
-      // call to a specific function that needs to be checked
-
-      visit_isFunctionCall(n);
-   }
-   // *********************** DETECT ALL function calls ***************
-
-
-   // *********************** Detect pointer movements, e.g ++, -- *********
-   else if(  isSgPlusPlusOp( n )
-         || isSgMinusMinusOp( n )
-         || isSgMinusAssignOp( n )
-         || isSgPlusAssignOp( n )) {
-      visit_pointer_movement( n );
-   }
-   // *********************** Detect pointer movements, e.g ++, -- *********
-
-   // *********************** Detect delete (c++ free) *********
-   else if( isSgDeleteExp( n )) {
-      visit_delete( isSgDeleteExp( n ));
-   }
-   // *********************** Detect delete (c++ free) *********
-
-   else if (isSgReturnStmt(n)) {
-#if 1
-      SgReturnStmt* rstmt = isSgReturnStmt(n);
-      SgExpression* right = rstmt->get_expression();
-      if (right)  // && !isSgValueExp(right))
-         returnstmt.push_back(rstmt);
 #endif
    }
-
-   else {
-      // cerr << " @@ Skipping : " << n->unparseToString() << "   " << n->class_name() << endl;
-
-   }
-
-
-   // ******************** DETECT functions in input program  *********************************************************************
 
 }
 
