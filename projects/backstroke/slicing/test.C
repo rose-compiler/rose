@@ -281,7 +281,12 @@ int main(int argc, char *argv[])
 
 	boost::timer t;
 	Backstroke::Slicer slicer(proc);
-	slicer.addCriterion(proc->get_body()->get_statements().back());
+
+	std::vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(
+			proc->get_body()->get_statements().back());
+	slicer.addCriterion(vars[0]);
+
+
 	SgFunctionDeclaration* decl = slicer.slice();
 	SageInterface::insertStatementAfter(proc->get_declaration(), decl);
 	std::cout << t.elapsed() << std::endl;

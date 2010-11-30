@@ -6,7 +6,162 @@
 
 namespace Backstroke
 {
-	
+
+bool CFGNodeFilterForSlicing::filterExpression(SgExpression* expr) const
+{
+	// If this expression has no side effect, and is not used as the condition of if,
+	// selector of switch, etc., filter it off.
+
+	// The comma expression will be broken then filtered.
+	if (isSgCommaOpExp(expr))
+		return false;
+
+	// Find the right most expression in nested comma expressions.
+	SgExpression* expr2 = expr;
+	while (SgCommaOpExp* commaExpr = isSgCommaOpExp(expr2->get_parent()))
+	{
+		if (commaExpr->get_rhs_operand() == expr2)
+			expr2 = commaExpr;
+		else
+			break;
+	}
+
+	SgNode* parent = expr2->get_parent()->get_parent();
+	if (SgIfStmt* ifStmt = isSgIfStmt(parent))
+	{
+		if (expr2->get_parent() == ifStmt->get_conditional())
+			return true;
+	}
+	else if(SgWhileStmt* whileStmt = isSgWhileStmt(parent))
+	{
+		if (expr2->get_parent() == whileStmt->get_condition())
+			return true;
+	}
+	else if (SgDoWhileStmt* doWhileStmt = isSgDoWhileStmt(parent))
+	{
+		if (expr2->get_parent() == doWhileStmt->get_condition())
+			return true;
+	}
+	else if (SgForStatement* forStmt = isSgForStatement(parent))
+	{
+		if (expr2->get_parent() == forStmt->get_test())
+			return true;
+	}
+	else if (SgSwitchStatement* switchStmt = isSgSwitchStatement(parent))
+	{
+		if (expr2->get_parent() == switchStmt->get_item_selector())
+			return true;
+	}
+
+	if (SageInterface::isAssignmentStatement(expr) ||
+			isSgPlusPlusOp(expr) ||
+			isSgMinusMinusOp(expr) ||
+			isSgFunctionCallExp(expr))
+		return true;
+
+	return false;
+}
+
+bool CFGNodeFilterForSlicing::operator()(const VirtualCFG::CFGNode& cfgNode) const
+{
+	if (!cfgNode.isInteresting())
+		return false;
+
+	SgNode* node = cfgNode.getNode();
+
+	if (SgExpression* expr = isSgExpression(node))
+		return filterExpression(expr);
+
+	if (isSgScopeStatement(node) && !isSgFunctionDefinition(node))
+		return false;
+	//if (isSgCommaOpExp(node->get_parent()) && !isSgCommaOpExp(node))
+	//	return true;
+
+	switch (node->variantT())
+	{
+		case V_SgInitializedName:
+		case V_SgFunctionParameterList:
+		case V_SgAssignInitializer:
+		case V_SgCaseOptionStmt:
+		case V_SgDefaultOptionStmt:
+		//case V_SgFunctionRefExp:
+		//case V_SgPntrArrRefExp:
+		//case V_SgExprListExp:
+		//case V_SgCastExp:
+		//case V_SgForInitStatement:
+		//case V_SgCommaOpExp:
+		case V_SgExprStatement:
+		case V_SgForInitStatement:
+			return false;
+		default:
+			break;
+	}
+
+	return true;
+}
+
+bool Slicer::isVariable(SgNode* node) const
+{
+	if (isSgVarRefExp(node))
+		return true;
+	if (isSgDotExp(node) || isSgArrowExp(node))
+	{
+		SgBinaryOp* binOp = isSgBinaryOp(node);
+		if (isVariable(binOp->get_lhs_operand()) &&
+			isVariable(binOp->get_rhs_operand()))
+			return true;
+	}
+	return false;
+}
+
+std::set<Slicer::VarName> Slicer::getDef(SgNode* node) const
+{
+	std::set<VarName> defs;
+
+	if (SgVariableDeclaration* varDecl = isSgVariableDeclaration(node))
+	{
+		const SgInitializedNamePtrList& initNames = varDecl->get_variables();
+		foreach (SgInitializedName* initName, initNames)
+			defs.insert(getVarName(initName));
+		return defs;
+	}
+
+	if (SageInterface::isAssignmentStatement(node))
+	{
+		SgExpression* lhs = isSgBinaryOp(node)->get_lhs_operand();
+		if (isVariable(lhs))
+		{
+			defs.insert(getVarName(lhs));
+			return defs;
+		}
+		else
+			return getDef(lhs);
+	}
+
+	if (isSgPlusPlusOp(node) || isSgMinusMinusOp(node))
+	{
+		SgExpression* operand = isSgUnaryOp(node)->get_operand();
+		if (isVariable(operand))
+		{
+			defs.insert(getVarName(operand));
+			return defs;
+		}
+		else
+			return getDef(operand);
+	}
+
+	if (isSgFunctionCallExp(node))
+	{
+		// TODO  This part should be refined later.
+		std::vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(node);
+		foreach (SgExpression* var, vars)
+			defs.insert(getVarName(var));
+		return defs;
+	}
+
+	return defs;
+}
+
 SgFunctionDeclaration* Slicer::slice()
 {
 	// First, build a PDG for the given function.
@@ -14,17 +169,20 @@ SgFunctionDeclaration* Slicer::slice()
 
 	// Second, find the corresponding nodes of criteria in the PDG.
 
-	std::stack<PDGForSlicing::Vertex> workList;
+	// A work list holds PDG node and the corresponding variable name pairs in the slice.
+	std::stack<std::pair<PDGForSlicing::Vertex, VarName> > workList;
 
 	boost::graph_traits<PDGForSlicing>::vertex_iterator first, last;
 
 	for (boost::tie(first, last) = boost::vertices(pdg); first != last; ++first)
 	{
-		foreach(SgNode* node, criterion_)
+		foreach(SgNode* node, criteria_)
 		{
-			if (pdg[*first]->getNode() == node)
+			// If this PDG node contains the criterion variable, add it to the worklist.
+			if (pdg[*first]->getNode() == node ||
+					SageInterface::isAncestor(pdg[*first]->getNode(), node))
 			{
-				workList.push(*first);
+				workList.push(std::make_pair(*first, getVarName(node)));
 				break;
 			}
 		}
@@ -35,7 +193,9 @@ SgFunctionDeclaration* Slicer::slice()
 	// Then start the backward slicing algorithm.
 	while(!workList.empty())
 	{
-		PDGForSlicing::Vertex v = workList.top();
+		PDGForSlicing::Vertex v;
+		VarName varName;
+		boost::tie(v, varName) = workList.top();
 		workList.pop();
 
 		verticesSlice.insert(v);
@@ -44,13 +204,60 @@ SgFunctionDeclaration* Slicer::slice()
 		for (boost::tie(i, j) = boost::out_edges(v, pdg); i != j; ++i)
 		{
 			PDGForSlicing::Vertex tar = boost::target(*i, pdg);
-			if (verticesSlice.find(tar) == verticesSlice.end())
-				workList.push(tar);
+			SgNode* node = pdg[tar]->getNode();
+
+			// If the target of the edge is already in the slice, continue.
+			if (verticesSlice.find(tar) != verticesSlice.end())
+				continue;
+
+			// The data dependence should have the same variable.
+			if (pdg[*i].type == PDGEdge::DataDependence)
+			{
+				if (pdg[*i].ddEdge.varNames.count(varName) == 0)
+					continue;
+
+				// If the target node does not define varName directly, we won't add it to the worklist.
+				// For example, a = ++b + c defines a directly, but not b. If b is data dependent on this
+				// expression, we won't add c to the worklist.
+				if (getDef(node).count(varName) ==0)
+					continue;
+
+				// Find all variables used in the target node.
+				std::vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(node);
+				foreach (SgExpression* var, vars)
+					workList.push(std::make_pair(tar, getVarName(var)));
+				// In case the target node is a declaration.
+				workList.push(std::make_pair(tar, varName));
+			}			
+			else
+			{
+				// Control dependence case.
+				
+				// Find all variables used in the target node.
+				std::vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(node);
+				foreach (SgExpression* var, vars)
+					workList.push(std::make_pair(tar, getVarName(var)));
+			}
 		}
 	}
 
+	std::cout << "Slice number:" << verticesSlice.size() << std::endl;
+
 	foreach (PDGForSlicing::Vertex v, verticesSlice)
-		slices_.insert(pdg[v]->getNode());
+	{
+		SgNode* node = pdg[v]->getNode();
+
+		slice_.insert(node);
+
+		// Add all parents to possible slice to make it easy to check if a statement should be in the slice or not.
+		while (node && !isSgFunctionDefinition(node))
+		{
+			possibleSlice_.insert(node);
+			node = node->get_parent();
+		}
+	}
+
+	std::cout << "Slice number:" << slice_.size() << std::endl;
 
 	// The last step is building a function with only slice.
 	return buildSlicedFunction();
@@ -87,12 +294,13 @@ SgFunctionDeclaration* Slicer::buildSlicedFunction()
 	return declSliced;
 }
 
-SgStatement* Slicer::copySlicedStatement(SgStatement* stmt, SgScopeStatement* scope)
+SgStatement* Slicer::copySlicedStatement(SgStatement* stmt) const
 {
 	if (stmt == NULL)
 		return NULL;
 	
-	bool isInSlice = slices_.find(stmt) != slices_.end();
+	if (possibleSlice_.find(stmt) == possibleSlice_.end())
+		return NULL;
 	
 	switch (stmt->variantT())
 	{
@@ -111,19 +319,21 @@ SgStatement* Slicer::copySlicedStatement(SgStatement* stmt, SgScopeStatement* sc
 		}
 			
 		case V_SgExprStatement:
-			if (isInSlice)
-				return SageInterface::copyStatement(stmt);
-			break;
+		{
+			SgExprStatement* exprStmt = isSgExprStatement(stmt);
+			SgExpression* newExpr = copySlicedExpression(exprStmt->get_expression());
+			return SageBuilder::buildExprStatement(newExpr);
+		}
 
 		case V_SgVariableDeclaration:
-			if (isInSlice)
-				return SageInterface::copyStatement(stmt);
-			break;
+		{
+			return SageInterface::copyStatement(stmt);
+		}
 
 		case V_SgIfStmt:
 		{
 			SgIfStmt* ifStmt = isSgIfStmt(stmt);
-			if (slices_.find(ifStmt->get_conditional()) != slices_.end())
+			//if (slice_.find(ifStmt->get_conditional()) != slice_.end())
 			{
 				SgIfStmt* newIfStmt = SageBuilder::buildIfStmt(
 						copySlicedStatement(ifStmt->get_conditional()),
@@ -137,18 +347,28 @@ SgStatement* Slicer::copySlicedStatement(SgStatement* stmt, SgScopeStatement* sc
 		case V_SgForStatement:
 		{
 			SgForStatement* forStmt = isSgForStatement(stmt);
-			if (slices_.find(forStmt->get_test()) != slices_.end() ||
-					slices_.find(forStmt->get_for_init_stmt()) != slices_.end())
+			//if (slice_.find(forStmt->get_test()) != slice_.end() ||
+			//		slice_.find(forStmt->get_for_init_stmt()) != slice_.end())
 			{
 				SgStatement* newInitStmt = copySlicedStatement(forStmt->get_for_init_stmt());
 				SgStatement* newTestStmt = copySlicedStatement(forStmt->get_test());
-				SgExpression* incrExpr = copySlicedExpression(forStmt->get_increment());
 
-				if (incrExpr == NULL)
-					incrExpr = SageBuilder::buildNullExpression();
+				// If newTestStmt is NULL, we will not copy the whole for statement, but only the initializing
+				// statement. A case is like for(int i = ++a; i < N; ++i){}, in which we only add ++a to the slice.
+				if (newTestStmt == NULL)
+					return newInitStmt;
+
+				SgExpression* newIncrExpr = copySlicedExpression(forStmt->get_increment());
+
+				if (newIncrExpr == NULL)
+					newIncrExpr = SageBuilder::buildNullExpression();
 				
+				ROSE_ASSERT(newInitStmt);
+				ROSE_ASSERT(newTestStmt);
+				ROSE_ASSERT(newIncrExpr);
+
 				SgForStatement* newForStmt = SageBuilder::buildForStatement(
-						newInitStmt, newTestStmt, incrExpr,
+						newInitStmt, newTestStmt, newIncrExpr,
 						copySlicedStatement(forStmt->get_loop_body()));
 				return newForStmt;
 			}
@@ -157,38 +377,34 @@ SgStatement* Slicer::copySlicedStatement(SgStatement* stmt, SgScopeStatement* sc
 
 		case V_SgForInitStatement:
 		{
-			if (isInSlice)
-			{
-				SgForInitStatement* forInitStmt = isSgForInitStatement(stmt);
-				const SgStatementPtrList& stmts = forInitStmt->get_init_stmt();
-				if (stmts.size() == 1 && isSgExprStatement(stmts[0]))
-					return copySlicedStatement(stmts[0]);
+			SgForInitStatement* forInitStmt = isSgForInitStatement(stmt);
+			const SgStatementPtrList& stmts = forInitStmt->get_init_stmt();
+			if (stmts.size() == 1 && isSgExprStatement(stmts[0]))
+				return copySlicedStatement(stmts[0]);
 
-				// Since there is no buildForInitStatement function in SageBuilder, we first copy the statement
-				// then remove and delete all nodes inside, then add sliced statements inside.
-				SgForInitStatement* newForInitStmt = isSgForInitStatement(SageInterface::copyStatement(stmt));
-				foreach (SgStatement* s, newForInitStmt->get_init_stmt())
-					SageInterface::deepDelete(s);
-				newForInitStmt->get_init_stmt().clear();
-				
-				foreach (SgStatement* s, stmts)
-				{
-					SgStatement* newStmt = copySlicedStatement(s);
-					if (newStmt)
-						newForInitStmt->append_init_stmt(newStmt);
-				}
-				return newForInitStmt;
-				
-				//SgStatement* newTestStmt = copySlicedStatement(forStmt->get_test());
-				//return SageInterface::copyStatement(stmt);
+			// Since there is no buildForInitStatement function in SageBuilder, we first copy the statement
+			// then remove and delete all nodes inside, then add sliced statements inside.
+			SgForInitStatement* newForInitStmt = isSgForInitStatement(SageInterface::copyStatement(stmt));
+			foreach (SgStatement* s, newForInitStmt->get_init_stmt())
+				SageInterface::deepDelete(s);
+			newForInitStmt->get_init_stmt().clear();
+
+			foreach (SgStatement* s, stmts)
+			{
+				SgStatement* newStmt = copySlicedStatement(s);
+				if (newStmt)
+					newForInitStmt->append_init_stmt(newStmt);
 			}
-			break;
+			return newForInitStmt;
+
+			//SgStatement* newTestStmt = copySlicedStatement(forStmt->get_test());
+			//return SageInterface::copyStatement(stmt);
 		}
 
 		case V_SgWhileStmt:
 		{
 			SgWhileStmt* whileStmt = isSgWhileStmt(stmt);
-			if (slices_.find(whileStmt->get_condition()) != slices_.end())
+			//if (slice_.find(whileStmt->get_condition()) != slice_.end())
 			{
 				SgWhileStmt* newWhileStmt = SageBuilder::buildWhileStmt(
 						copySlicedStatement(whileStmt->get_condition()),
@@ -201,7 +417,7 @@ SgStatement* Slicer::copySlicedStatement(SgStatement* stmt, SgScopeStatement* sc
 		case V_SgSwitchStatement:
 		{
 			SgSwitchStatement* switchStmt = isSgSwitchStatement(stmt);
-			if (slices_.find(switchStmt->get_item_selector()) != slices_.end())
+			//if (slice_.find(switchStmt->get_item_selector()) != slice_.end())
 			{
 				return SageBuilder::buildSwitchStatement(
 						copySlicedStatement(switchStmt->get_item_selector()),
@@ -232,20 +448,26 @@ SgStatement* Slicer::copySlicedStatement(SgStatement* stmt, SgScopeStatement* sc
 	return NULL;
 }
 
-SgExpression* Slicer::copySlicedExpression(SgExpression* expr)
+SgExpression* Slicer::copySlicedExpression(SgExpression* expr) const
 {
 	if (expr == NULL)
 		return NULL;
 
-	bool isInSlice = slices_.find(expr) != slices_.end();
+	if (possibleSlice_.find(stmt) == possibleSlice_.end())
+		return NULL;
+
+	//bool isInSlice = slice_.find(expr) != slice_.end();
+
+	// TODO
+	//ROSE_ASSERT(!"This part should be modified");
 
 	switch (expr->variantT())
 	{
 		case V_SgCommaOpExp:
 		{
 			SgCommaOpExp* commaExp = isSgCommaOpExp(expr);
-			if (slices_.find(commaExp->get_lhs_operand()) != slices_.end() ||
-					slices_.find(commaExp->get_rhs_operand()) != slices_.end())
+			if (slice_.find(commaExp->get_lhs_operand()) != slice_.end() ||
+					slice_.find(commaExp->get_rhs_operand()) != slice_.end())
 			{
 				SgExpression* lhsExpr = copySlicedExpression(commaExp->get_lhs_operand());
 				SgExpression* rhsExpr = copySlicedExpression(commaExp->get_rhs_operand());

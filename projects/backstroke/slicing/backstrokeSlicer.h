@@ -10,59 +10,11 @@ namespace Backstroke
 
 struct CFGNodeFilterForSlicing
 {
-	// This function will be moved to a source file.
-	bool operator()(const VirtualCFG::CFGNode& cfgNode) const
-	{
-		if (!cfgNode.isInteresting())
-			return false;
+	//! Returns if an expression should be filtered off.
+	bool filterExpression(SgExpression* expr) const;
 
-		SgNode* node = cfgNode.getNode();
-
-		if (isSgValueExp(node))
-			return false;
-		if (isSgExpression(node))
-		{
-			if (isSgExprStatement(node->get_parent()))
-				return false;
-			// If this expression has no side effect, filter it off.
-			if (!SageInterface::isAssignmentStatement(node) && !isSgFunctionCallExp(node))
-				return false;
-		}
-		if (isSgScopeStatement(node) && !isSgFunctionDefinition(node))
-			return false;
-		if (isSgCommaOpExp(node->get_parent()) && !isSgCommaOpExp(node))
-			return true;
-
-		switch (node->variantT())
-		{
-			case V_SgVarRefExp:
-			{
-				SgNode* parent = node->get_parent()->get_parent();
-				if (isSgWhileStmt(parent) || 
-						isSgForStatement(parent) ||
-						isSgIfStmt(parent) ||
-						isSgSwitchStatement(parent) ||
-						isSgDoWhileStmt(parent))
-					return true;
-				else
-					return false;
-			}
-			case V_SgInitializedName:
-			case V_SgFunctionParameterList:
-			case V_SgAssignInitializer:
-			case V_SgFunctionRefExp:
-			//case V_SgPntrArrRefExp:
-			case V_SgExprListExp:
-			case V_SgCastExp:
-			//case V_SgForInitStatement:
-			case V_SgCommaOpExp:
-				return false;
-			default:
-				break;
-		}
-
-		return true;
-	}
+	//! Returns if a CFG node should be filtered off.
+	bool operator()(const VirtualCFG::CFGNode& cfgNode) const;
 };
 
 typedef CFG<VirtualCFG::FilteredCFGNode<CFGNodeFilterForSlicing>,
@@ -73,15 +25,20 @@ class Slicer
 	//! The target function definition.
 	SgFunctionDefinition* funcDef_;
 	
-	//! All criterion.
-	std::set<SgNode*> criterion_;
+	//! All criteria.
+	std::set<SgNode*> criteria_;
 
-	//! All slices.
-	std::set<SgNode*> slices_;
+	//! The slice contains AST nodes inside.
+	std::set<SgNode*> slice_;
+
+	//! The possible slice contains AST nodes inside. "Possible" means this node contains a node in the slice.
+	std::set<SgNode*> possibleSlice_;
 
 	//typedef Backstroke::FilteredCFG CFGForSlicing;
 
 	typedef PDG<CFGForSlicing> PDGForSlicing;
+
+	typedef std::vector<SgInitializedName*> VarName;
 
 public:
 	Slicer(SgFunctionDefinition* funcDef)
@@ -89,17 +46,37 @@ public:
 
 	void addCriterion(SgNode* node)
 	{
+		if (isVariable(node))
+			criteria_.insert(node);
+		/*
+		//if (!isSgVarRefExp(node) && !isSgArrow)
 		std::vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(node);
 		criterion_.insert(vars.begin(), vars.end());
 		criterion_.insert(node);
+		*/
 	}
 
 	SgFunctionDeclaration* slice();
 
 private:
+	//! Build the function only containing the slice.
 	SgFunctionDeclaration* buildSlicedFunction();
-	SgStatement* copySlicedStatement(SgStatement* stmt, SgScopeStatement* scope = NULL);
-	SgExpression* copySlicedExpression(SgExpression* expr);
+
+	//! Copy a statement according to the slice.
+	SgStatement* copySlicedStatement(SgStatement* stmt) const;
+
+	//! Copy an expression according to the slice.
+	SgExpression* copySlicedExpression(SgExpression* expr) const;
+
+	//! Returns if a AST node is a variable.
+	bool isVariable(SgNode* node) const;
+
+	//! Returns the variable name for the given node.
+	VarName getVarName(SgNode* node) const
+	{ return VariableRenaming::getVarName(node); }
+
+	//! Get all direct defs in the given node. Note that for the expression a = ++b, only a is returned.
+	std::set<VarName> getDef(SgNode* node) const;
 
 };
 
