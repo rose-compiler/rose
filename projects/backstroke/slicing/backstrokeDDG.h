@@ -136,7 +136,10 @@ void DDG<CFGType>::buildDDG(const CFGType& cfg)
 						{
 							// If a non-scope node contains the target node, make this node the target.
 							// Note that SageInterface::isAncestor() returns true only on strict ancestor.
-							if (isSgScopeStatement(n->getNode()) == NULL && 
+
+							// If the target node is a function definition, no edge is added.
+							if (//isSgScopeStatement(n->getNode()) == NULL &&
+									isSgFunctionDefinition(n->getNode()) == NULL &&
 									(n->getNode() == targetNode ||
 									SageInterface::isAncestor(n->getNode(), targetNode)))
 							{
