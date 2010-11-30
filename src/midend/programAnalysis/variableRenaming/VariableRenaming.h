@@ -142,6 +142,10 @@ struct IsDefUseFilter
 		if (isSgInitializedName(node) && cfgn != node->cfgForBeginning())
 			return false;
 
+		//Remove non-beginning nodes for try statements
+		if (isSgTryStmt(node) && cfgn != node->cfgForBeginning())
+			return false;
+
 		//Remove the midde node for logical operators with short circuiting.
 		//E.g. && appears in the CFG between its LHS and RHS operands. We remove it
 		//FIXME: This removes some branches in the CFG. There should be a better way to address this
@@ -1025,8 +1029,19 @@ private:
     class UniqueNameTraversal : public AstBottomUpProcessing<VariableRenaming::VarRefSynthAttr>
     {
         VariableRenaming* varRename;
+		
+		/** All the initialized names in the project. */
+		std::vector<SgInitializedName*> allInitNames;
+
+		/** Finds initialized names that are "fake" (refer to p_prev_decl_item in the SgInitializedName docs)
+		 * and replaces them with the true declaration. */
+		SgInitializedName* resolveTemporaryInitNames(SgInitializedName* name);
+
     public:
-        UniqueNameTraversal(VariableRenaming* varRenaming):varRename(varRenaming){}
+        UniqueNameTraversal(VariableRenaming* varRenaming, const std::vector<SgInitializedName*>& allNames):
+			varRename(varRenaming), allInitNames(allNames)
+		{
+		}
 
         /** Called to evaluate the synthesized attribute on every node.
          *
