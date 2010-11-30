@@ -4772,13 +4772,7 @@ static  void getSwitchCasesHelper(SgStatement* top, vector<SgStatement*>& result
 SgScopeStatement*
 SageInterface::getScope( const SgNode* astNode )
    {
-    // Cong (10/27/2010): Try to call the member function get_scope() first. For some AST node, its scope is not its parent.
-    if (const SgStatement* stmt = isSgStatement(astNode))
-    {
-        //if (!stmt->hasExplicitScope())
-        return stmt->get_scope();
-    }
-    else if (const SgSymbol* symbol = isSgSymbol(astNode))
+    if (const SgSymbol* symbol = isSgSymbol(astNode))
         return symbol->get_scope();
     else if (const SgInitializedName* initName = isSgInitializedName(astNode))
         return initName->get_scope();
@@ -4788,12 +4782,29 @@ SageInterface::getScope( const SgNode* astNode )
         return qualifiedName->get_scope();
 
   // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
+  const SgNode* parentNode = astNode;
+  while (!isSgScopeStatement(parentNode))
+  {
+      //George Vulov (11/29/2010)
+      //Function parameter lists are siblings of SgFunctionDefinition, so just going up to parents
+      //produces SgGlobal.
+      if (isSgFunctionParameterList(parentNode) || isSgCtorInitializerList(parentNode))
+      {
+          const SgFunctionDeclaration* funcDeclaration = isSgFunctionDeclaration(parentNode->get_parent());
+          ROSE_ASSERT(funcDeclaration != NULL);
+          funcDeclaration = isSgFunctionDeclaration(funcDeclaration->get_definingDeclaration());
+          if (funcDeclaration != NULL)
+          {
+              return funcDeclaration->get_definition();
+          }
+      }
 
-  const SgNode* parentNode = astNode->get_parent();
-  while ( (isSgScopeStatement(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
-        {
-          parentNode = parentNode->get_parent();
-        }
+      parentNode = parentNode->get_parent();
+      if (parentNode == NULL)
+      {
+          break;
+      }
+  }
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
