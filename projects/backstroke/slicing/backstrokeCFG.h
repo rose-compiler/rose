@@ -306,25 +306,18 @@ void CFG<CFGNodeType, CFGEdgeType>::setEntryAndExit()
 		}
 	}
 
-<<<<<<< Updated upstream
 	//In graphs with an infinite loop, we might never get to the end vertex
 	//In those cases, we need to add it explicitly
 	if (exit_ == GraphTraits::null_vertex())
 	{
-		exit_ = add_vertex(*this);
-		(*this)[exit_] = CFGNodePtr(new CFGNodeType(funcDef_->cfgForEnd()));
-	}
-=======
-	if (exit_ == GraphTraits::null_vertex())
-	{
 		std::cerr << "This function may contain an infinite loop "
 				"inside so that its CFG cannot be built" << std::endl;
-		throw;
+		exit_ = add_vertex(*this);
+		(*this)[exit_] = CFGNodePtr(new CFGNodeType(funcDef_->cfgForEnd()));
 	}
 
 	ROSE_ASSERT(entry_ != GraphTraits::null_vertex());
 	ROSE_ASSERT(exit_ != GraphTraits::null_vertex());
->>>>>>> Stashed changes
 }
 
 template <class CFGNodeType, class CFGEdgeType>
