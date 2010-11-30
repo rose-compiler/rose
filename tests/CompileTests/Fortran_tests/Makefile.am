@@ -359,7 +359,14 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_83.f90 \
      test2010_84.f90 \
      fCaller.f90 \
-     triangle.f90
+     triangle.f90 \
+     X-caseSensitive.f90 \
+     X-derivedTypeArray.f90 \
+     X-enddo-plus-label.f90  \
+     X-ifConstruct.f90 \
+     X-ifStmt.f90 \
+     X-pointerAttr.f90 \
+     X-return-with-expr.f90
 
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
 #    test2008_02.f

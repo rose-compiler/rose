@@ -30,4 +30,3 @@ int main()
   printmatrix(c);
   return 0;
 }
-
