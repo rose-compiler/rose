@@ -317,7 +317,7 @@ void VariableRenaming::run()
     if(DEBUG_MODE)
         cout << "Performing UniqueNameTraversal..." << endl;
 
-    UniqueNameTraversal uniqueTrav(this);
+    UniqueNameTraversal uniqueTrav(this, SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
     std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
     std::vector<SgFunctionDefinition*>::iterator iter = funcs.begin();
     for(;iter != funcs.end(); ++iter)
@@ -787,6 +787,20 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
     outFile << "}\n";
 }
 
+SgInitializedName* VariableRenaming::UniqueNameTraversal::resolveTemporaryInitNames(SgInitializedName* name)
+{
+	if (!isSgVarRefExp(name->get_parent()))
+		return name;
+
+	foreach(SgInitializedName* otherName, allInitNames)
+	{
+		if (otherName->get_prev_decl_item() == name)
+			return otherName;
+	}
+
+	return name;
+}
+
 VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
 {
     if(varRename->getDebugExtra())
@@ -796,7 +810,7 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
     //First we check if this is an initName
     if(isSgInitializedName(node))
     {
-        SgInitializedName* name = isSgInitializedName(node);
+        SgInitializedName* name = resolveTemporaryInitNames(isSgInitializedName(node));
 
         //We want to assign this node its unique name, as well as adding it to the defs.
         VarUniqueName* uName = new VarUniqueName(name);
@@ -816,7 +830,7 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
         }
 
         //We want to assign this node its unique name, as well as adding it to the defs.
-        VarUniqueName* uName = new VarUniqueName(var->get_symbol()->get_declaration());
+        VarUniqueName* uName = new VarUniqueName(resolveTemporaryInitNames(var->get_symbol()->get_declaration()));
         var->setAttribute(VariableRenaming::varKeyTag, uName);
 
         return VariableRenaming::VarRefSynthAttr(var);
@@ -874,7 +888,8 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                     if(!thisExp)
                     {
                         //Create the uniqueName from the uniqueName of the lhs prepended to the rhs uniqueName
-                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), varRef->get_symbol()->get_declaration());
+                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), 
+								resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(lhsName->getUsesThis());
                         varRef->setAttribute(VariableRenaming::varKeyTag,uName);
 
@@ -884,7 +899,8 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                     else
                     {
                         //Create the UniqueName from the current varRef, and stores that it uses 'this'
-                        VarUniqueName* uName = new VarUniqueName(varRef->get_symbol()->get_declaration());
+                        VarUniqueName* uName = new VarUniqueName(
+								resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(true);
                         varRef->setAttribute(VariableRenaming::varKeyTag,uName);
 
@@ -976,7 +992,8 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                     if(!thisExp)
                     {
                         //Create the uniqueName from the uniqueName of the lhs prepended to the rhs uniqueName
-                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), varRef->get_symbol()->get_declaration());
+                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), 
+								resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(lhsName->getUsesThis());
                         varRef->setAttribute(VariableRenaming::varKeyTag,uName);
 
@@ -986,7 +1003,8 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                     else
                     {
                         //Create the UniqueName from the current varRef, and stores that it uses 'this'
-                        VarUniqueName* uName = new VarUniqueName(varRef->get_symbol()->get_declaration());
+                        VarUniqueName* uName = new VarUniqueName(
+								resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(true);
                         varRef->setAttribute(VariableRenaming::varKeyTag,uName);
 
@@ -1248,30 +1266,53 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 			}
 		}
 
-		//For all non-defining Unary Ops, add all of them as uses
-		//We want to set all the varRefs as being used here
-		
-		//Guard agains unary ops that have no children (exception rethrow statement)
-		if (attrs.size() > 0)
+		//Now handle the uses. Note that the defining ops fall through
+		if (type == V_SgAddressOfOp && isSgPointerMemberType(op->get_type()))
 		{
-			uses.insert(uses.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
-			uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
-		}
-
-		//Set all the uses as being used here.
-		foreach(SgNode* iter, uses)
-		{
-			//Get the unique name of the def.
-			VarUniqueName * uName = varRename->getUniqueName(iter);
-			ROSE_ASSERT(uName);
-
-			//Add the varRef as a use at the current node of the ref's uniqueName
-			//We will correct the reference later.
-			varRename->getUseTable()[op][uName->getKey()].push_back(iter);
-
-			if (varRename->getDebug())
+			//SgAddressOfOp is special; it's not always a use of its operand. When creating a reference to a member variable,
+			//we create reference without providing a variable instance. For example,
+			//		struct foo { int bar; };
+			//
+			//		void test()
+			//		{
+			//			int foo::*v = &foo::bar;  <---- There is no use of foo.bar on this line
+			//			foo b;
+			//			b.*v = 3;
+			//		}
+			//In this case, there are no uses in the operand. We also want to delete any uses for the children
+			vector<SgNode*> successors = SageInterface::querySubTree<SgNode>(op);
+			foreach(SgNode* successor, successors)
 			{
-				cout << "Found use for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+				varRename->getUseTable()[successor].clear();
+			}
+		}
+		else
+		{
+			//For all non-defining Unary Ops, add all of them as uses
+			//We want to set all the varRefs as being used here
+
+			//Guard agains unary ops that have no children (exception rethrow statement)
+			if (attrs.size() > 0)
+			{
+				uses.insert(uses.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
+				uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
+			}
+
+			//Set all the uses as being used here.
+			foreach(SgNode* iter, uses)
+			{
+				//Get the unique name of the def.
+				VarUniqueName * uName = varRename->getUniqueName(iter);
+				ROSE_ASSERT(uName);
+
+				//Add the varRef as a use at the current node of the ref's uniqueName
+				//We will correct the reference later.
+				varRename->getUseTable()[op][uName->getKey()].push_back(iter);
+
+				if (varRename->getDebug())
+				{
+					cout << "Found use for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+				}
 			}
 		}
 

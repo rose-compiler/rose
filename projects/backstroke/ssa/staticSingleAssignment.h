@@ -163,6 +163,10 @@ struct IsDefUseFilter
 		if (isSgInitializedName(node) && cfgn != node->cfgForBeginning())
 			return false;
 
+		//Remove non-beginning nodes for try statements
+		if (isSgTryStmt(node) && cfgn != node->cfgForBeginning())
+			return false;
+
 		//Remove the midde node for logical operators with short circuiting.
 		//E.g. && appears in the CFG between its LHS and RHS operands. We remove it
 		//FIXME: This removes some branches in the CFG. There should be a better way to address this
@@ -289,6 +293,7 @@ private:
 	/** Locate all global varibales and add them to the table. */
 	void findGlobalVars();
 
+	/** Returns true if the variable is implicitly defined at the function entry by the compiler. */
 	bool isBuiltinVar(const VarName& var);
 
 	/** Inserts definition points for all global variables.
@@ -491,6 +496,9 @@ public:
 	 */
 	static SgExpression* buildVariableReference(const VarName& var, SgScopeStatement* scope = NULL);
 
+	/** Finds the scope of the given node, and returns true if the given
+	 * variable is accessible there. False if the variable is not accessible. */
+	static bool isVarInScope(const VarName& var, SgNode* scope);
 };
 
 

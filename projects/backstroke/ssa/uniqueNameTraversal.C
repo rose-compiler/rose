@@ -1,5 +1,8 @@
 #include "uniqueNameTraversal.h"
 #include "staticSingleAssignment.h"
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
 
 using namespace std;
 using namespace ssa_private;
@@ -13,7 +16,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 	//First we check if this is an initName
 	if (isSgInitializedName(node))
 	{
-		SgInitializedName* name = isSgInitializedName(node);
+		SgInitializedName* name = resolveTemporaryInitNames(isSgInitializedName(node));
 
 		//We want to assign this node its unique name, as well as adding it to the defs.
 		VarUniqueName* uName = new VarUniqueName(name);
@@ -21,7 +24,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 
 		return VariableReferenceSet(name);
 	}
-		//Next, see if it is a varRef
+	//Next, see if it is a varRef
 	else if (isSgVarRefExp(node))
 	{
 		SgVarRefExp* var = isSgVarRefExp(node);
@@ -33,13 +36,13 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 		}
 
 		//We want to assign this node its unique name, as well as adding it to the defs.
-		VarUniqueName* uName = new VarUniqueName(var->get_symbol()->get_declaration());
+		VarUniqueName* uName = new VarUniqueName(resolveTemporaryInitNames(var->get_symbol()->get_declaration()));
 		var->setAttribute(StaticSingleAssignment::varKeyTag, uName);
 
 		return VariableReferenceSet(var);
 	}
-		//We check if it is a 'this' expression, since we want to be able to version 'this' as well.
-		//We don't have an SgInitializedName for 'this', so we use a flag in the unique names
+	//We check if it is a 'this' expression, since we want to be able to version 'this' as well.
+	//We don't have an SgInitializedName for 'this', so we use a flag in the unique names
 	else if (isSgThisExp(node))
 	{
 		SgThisExp* thisExp = isSgThisExp(node);
@@ -52,7 +55,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 
 		return VariableReferenceSet(thisExp);
 	}
-		//Now we check if we have reached a Dot Expression, where we have to merge names.
+	//Now we check if we have reached a Dot Expression, where we have to merge names.
 	else if (isSgDotExp(node))
 	{
 		if (attrs.size() != 2)
@@ -91,7 +94,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 					if (!thisExp)
 					{
 						//Create the uniqueName from the uniqueName of the lhs prepended to the rhs uniqueName
-						VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), varRef->get_symbol()->get_declaration());
+						VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
 						uName->setUsesThis(lhsName->getUsesThis());
 						varRef->setAttribute(StaticSingleAssignment::varKeyTag, uName);
 
@@ -101,7 +104,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 					else
 					{
 						//Create the UniqueName from the current varRef, and stores that it uses 'this'
-						VarUniqueName* uName = new VarUniqueName(varRef->get_symbol()->get_declaration());
+						VarUniqueName* uName = new VarUniqueName(resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
 						uName->setUsesThis(true);
 						varRef->setAttribute(StaticSingleAssignment::varKeyTag, uName);
 
@@ -154,7 +157,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 			return VariableReferenceSet();
 		}
 	}
-		//Now we check if we have reached an ArrowExpression, we have to merge names.
+	//Now we check if we have reached an ArrowExpression, we have to merge names.
 	else if (isSgArrowExp(node))
 	{
 		if (attrs.size() != 2)
@@ -193,7 +196,8 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 					if (!thisExp)
 					{
 						//Create the uniqueName from the uniqueName of the lhs prepended to the rhs uniqueName
-						VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), varRef->get_symbol()->get_declaration());
+						VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), 
+								resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
 						uName->setUsesThis(lhsName->getUsesThis());
 						varRef->setAttribute(StaticSingleAssignment::varKeyTag, uName);
 
@@ -203,7 +207,8 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 					else
 					{
 						//Create the UniqueName from the current varRef, and stores that it uses 'this'
-						VarUniqueName* uName = new VarUniqueName(varRef->get_symbol()->get_declaration());
+						VarUniqueName* uName = new VarUniqueName(
+								resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
 						uName->setUsesThis(true);
 						varRef->setAttribute(StaticSingleAssignment::varKeyTag, uName);
 
@@ -255,7 +260,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 			return VariableReferenceSet();
 		}
 	}
-		//Now we hit the default case. We should return a merged list.
+	//Now we hit the default case. We should return a merged list.
 	else
 	{
 		std::vector<SgNode*> names;
@@ -266,4 +271,18 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 
 		return VariableReferenceSet(names);
 	}
+}
+
+SgInitializedName* UniqueNameTraversal::resolveTemporaryInitNames(SgInitializedName* name)
+{
+	if (!isSgVarRefExp(name->get_parent()))
+		return name;
+
+	foreach(SgInitializedName* otherName, allInitNames)
+	{
+		if (otherName->get_prev_decl_item() == name)
+			return otherName;
+	}
+
+	return name;
 }

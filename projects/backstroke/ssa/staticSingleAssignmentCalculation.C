@@ -55,6 +55,123 @@ bool StaticSingleAssignment::isBuiltinVar(const VarName& var)
 	return false;
 }
 
+bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
+{
+	SgScopeStatement* scope = SageInterface::getScope(astNode);
+	ROSE_ASSERT(var.size() > 0 && scope != NULL);
+	SgScopeStatement* varScope = SageInterface::getScope(var[0]);
+
+	if (varScope == scope || SageInterface::isAncestor(varScope, scope))
+	{
+		//FIXME: In a basic block, the definition of the variable might come AFTER the node in question
+		//We should return false in this case.
+		return true;
+	}
+	else if (isSgNamespaceDefinitionStatement(varScope) || isSgGlobal(varScope))
+	{
+		//Variables defined in a namespace or in global scope are always accessible if they're fully qualified
+		return true;
+	}
+	else if (isSgInitializedName(astNode) && isSgCtorInitializerList(astNode->get_parent()))
+	{
+		//Work around a SageInterface::getScope peculiarity
+		//SageInterface::getScope returns class scope for the initialized names in the constructor initializer list,
+		//because these are class-scoped variables. However, those initializers can actually access function parameters
+		SgFunctionDeclaration* funcDeclaration = isSgFunctionDeclaration(astNode->get_parent()->get_parent());
+		ROSE_ASSERT(funcDeclaration != NULL);
+		SgFunctionParameterList* parameters = funcDeclaration->get_parameterList();
+		const SgInitializedNamePtrList& paramList = parameters->get_args();
+		//If the variable in question in the parameter list, it can be reached by the constructor initializers
+		if (find(paramList.begin(), paramList.end(), var[0]) != paramList.end())
+		{
+			return true;
+		}
+	}
+	else if (SgClassDefinition* varClassScope = isSgClassDefinition(varScope))
+	{
+		//If the variable is static & public, it's accessible
+		SgVariableDeclaration* varDeclaration = isSgVariableDeclaration(var[0]->get_parent());
+		if (varDeclaration != NULL) //variable declaration is null inside constructor initializer list
+		{
+			if (varDeclaration->get_declarationModifier().get_storageModifier().isStatic() &&
+					varDeclaration->get_declarationModifier().get_accessModifier().isPublic())
+			{
+				return true;
+			}
+		}
+
+		//If the variable is a class member, see if the scope is a member function
+		SgNode* curr = scope;
+		while (curr != NULL && !isSgMemberFunctionDeclaration(curr))
+		{
+			curr = curr->get_parent();
+		}
+
+		if (curr == NULL)
+			return false;
+
+		SgMemberFunctionDeclaration* memFunction = isSgMemberFunctionDeclaration(curr);
+		ROSE_ASSERT(memFunction != NULL);
+		SgClassDefinition* funcClassScope = memFunction->get_class_scope();
+		ROSE_ASSERT(funcClassScope != NULL);
+
+		//If they are members of the same class, we're done
+		if (funcClassScope == varClassScope)
+		{
+			return true;
+		}
+
+		//The two are not from the same class. Let's see if there is a friend class declaration
+		vector<SgClassDeclaration*> nestedDeclarations =
+				SageInterface::querySubTree<SgClassDeclaration>(varClassScope, V_SgClassDeclaration);
+		foreach (SgClassDeclaration* nestedDeclaration, nestedDeclarations)
+		{
+			if (nestedDeclaration->get_declarationModifier().isFriend())
+			{
+				//The variable's class has friend class. Check if the member function in question is in that friend
+				if (nestedDeclaration->get_firstNondefiningDeclaration() ==
+						funcClassScope->get_declaration()->get_firstNondefiningDeclaration())
+				{
+					return true;
+				}
+			}
+		}
+
+		//The variable is not in the same class and there is no friend class declaration, but we need to check the inheritance tree
+		//We do a search of the inheritance tree; this will terminate because it's a DAG
+		set<SgBaseClass*> worklist;
+		worklist.insert(funcClassScope->get_inheritances().begin(), funcClassScope->get_inheritances().end());
+
+		while (!worklist.empty())
+		{
+			SgBaseClass* baseClass = *worklist.begin();
+			worklist.erase(worklist.begin());
+
+			//Get the class definition so we can get its base classes
+			SgClassDeclaration* definingDeclaration = isSgClassDeclaration(baseClass->get_base_class()->get_definingDeclaration());
+			if (definingDeclaration == NULL)
+				continue;
+
+			SgClassDefinition* baseClassDefinition = isSgClassDefinition(definingDeclaration->get_definition());
+			ROSE_ASSERT(baseClassDefinition != NULL);
+			foreach (SgBaseClass* grandparentClass, baseClassDefinition->get_inheritances())
+			{
+				worklist.insert(grandparentClass);
+			}
+
+			//Check if this base class matches the var scope
+			if (baseClassDefinition == varClassScope)
+			{
+				//Check that the variable is public or protected
+				const SgAccessModifier& access = varDeclaration->get_declarationModifier().get_accessModifier();
+				return (access.isPublic() || access.isProtected());
+			}
+		}
+	}
+
+	return false;
+}
+
 //Function to perform the StaticSingleAssignment and annotate the AST
 void StaticSingleAssignment::run()
 {
@@ -72,7 +189,7 @@ void StaticSingleAssignment::run()
 	//Insert the global variables as being defined at every function call
 	insertGlobalVarDefinitions();
 
-	UniqueNameTraversal uniqueTrav;
+	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
 	DefsAndUsesTraversal defUseTrav(this);
 
 	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition > (project, V_SgFunctionDefinition);
@@ -104,13 +221,6 @@ void StaticSingleAssignment::run()
 
 			//Expand any member variable uses to also use the parent variables (e.g. a.x also uses a)
 			expandParentMemberUses(func->get_declaration());
-
-			//Iterate the global table insert a def for each name at the function definition
-			foreach(const VarName& globalVar, globalVarList)
-			{
-				//Add this function definition as a definition point of this variable
-				originalDefTable[func].insert(globalVar);
-			}
 
 			insertDefsForChildMemberUses(func->get_declaration());
 
@@ -406,67 +516,53 @@ bool StaticSingleAssignment::propagateDefs(FilteredCfgNode cfgNode)
 
 void StaticSingleAssignment::updateIncomingPropagatedDefs(FilteredCfgNode cfgNode)
 {
-	//When we want to propogate the defs from the previous node(s) to this one,
-	//We perform a few steps. This is dependent on the number of incoming edges.
-
-	/*1 Edge: When we have linear control flow, we do the following:
-	 *        1. Copy the definitions from the previous node wholesale to a staging table.
-	 *        2. Copy in the original definitions from the current node, overwriting those
-	 *           from the previous node.
-	 *        3. Compare the staging and current tables, and only overwrite if needed.
-	 */
-
-	/*2+ Edges: When we have branched control flow, we do the following:
-	 *       1. Copy the definitions from the previous node(s) wholesale to a staging table.
-	 *          Be careful to not insert duplicates.
-	 *       2. Copy in the original definitions from the current node, overwriting those
-	 *          from the previous node(s).
-	 *       3. Compare the staging and current tables, and only overwrite if needed.
-	 */
-
 	//Get the previous edges in the CFG for this node
 	vector<FilteredCfgEdge> inEdges = cfgNode.inEdges();
-	SgNode* node = cfgNode.getNode();
+	SgNode* astNode = cfgNode.getNode();
 
-	NodeReachingDefTable& incomingDefTable = reachingDefsTable[node].first;
+	NodeReachingDefTable& incomingDefTable = reachingDefsTable[astNode].first;
 
-	if (inEdges.size() == 1)
+	//Iterate all of the incoming edges
+	for (unsigned int i = 0; i < inEdges.size(); i++)
 	{
-		SgNode* prev = inEdges.front().source().getNode();
-		incomingDefTable = reachingDefsTable[prev].second;
-	}
-	else if (inEdges.size() > 1)
-	{
-		//Iterate all of the incoming edges
-		for (unsigned int i = 0; i < inEdges.size(); i++)
+		SgNode* prev = inEdges[i].source().getNode();
+
+		const NodeReachingDefTable& previousDefs = reachingDefsTable[prev].second;
+
+		//Merge all the previous defs into the IN table of the current node
+		foreach(const NodeReachingDefTable::value_type& varDefPair, previousDefs)
 		{
-			SgNode* prev = inEdges[i].source().getNode();
+			const VarName& var = varDefPair.first;
+			const ReachingDefPtr previousDef = varDefPair.second;
 
-			const NodeReachingDefTable& previousDefs = reachingDefsTable[prev].second;
-			foreach(const NodeReachingDefTable::value_type& varDefPair, previousDefs)
+			//Here we don't propagate defs for variables that went out of scope
+			//(built-in vars are body-scoped but we inserted the def at the SgFunctionDefinition node, so we make an exception)
+			if (!isVarInScope(var, astNode) && !isBuiltinVar(var))
+				continue;
+
+			//If this is the first time this def has propagated to this node, just copy it over
+			if (incomingDefTable.count(var) == 0)
 			{
-				const VarName& var = varDefPair.first;
-				const ReachingDefPtr previousDef = varDefPair.second;
+				incomingDefTable[var] = previousDef;
+			}
+			else
+			{
+				ReachingDefPtr existingDef = incomingDefTable[var];
 
-				//If this is the first time this def has propagated to this node, just copy it over
-				if (incomingDefTable.count(var) == 0)
+				if (existingDef->isPhiFunction() && existingDef->getDefinitionNode() == astNode)
 				{
-					incomingDefTable[var] = previousDef;
+					//There is a phi node here. We update the phi function to point to the previous reaching definition
+					existingDef->addJoinedDef(previousDef);
 				}
 				else
 				{
-					ReachingDefPtr existingDef = incomingDefTable[var];
-
-					if (existingDef->isPhiFunction() && existingDef->getDefinitionNode() == node)
+					//If there is no phi node, and we get a new definition, it better be the same as the one previously
+					//propagated.
+					if (!(*previousDef == *existingDef))
 					{
-						//There is a phi node here. We update the phi function to point to the previous reaching definition
-						existingDef->addJoinedDef(previousDef);
-					}
-					else
-					{
-						//If there is no phi node, and we get a new definition, it better be the same as the one previously
-						//propagated.
-						ROSE_ASSERT(*previousDef == *existingDef);
+						printf("ERROR: At node %s@%d, two different definitions reach for variable %s\n",
+								astNode->class_name().c_str(), astNode->get_file_info()->get_line(), varnameToString(var).c_str());
+						ROSE_ASSERT(false);
 					}
 				}
 			}
@@ -631,7 +727,7 @@ void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaratio
 		SgScopeStatement* varScope = SageInterface::getScope(rootName[0]);
 		SgScopeStatement* functionScope = function->get_definition();
 
-		//If it is a local variable, there should be a def somewhere inside the functio
+		//If it is a local variable, there should be a def somewhere inside the function
 		if (varScope == functionScope || SageInterface::isAncestor(functionScope, varScope))
 		{
 			//We still need to insert defs for compiler-generated variables (e.g. __func__), since they don't have defs in the AST
@@ -658,6 +754,8 @@ void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaratio
 
 void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
 {
+	if (getDebug())
+		printf("Inserting phi nodes in function %s...\n", function->get_declaration()->get_name().str());
 	ROSE_ASSERT(function != NULL);
 
 	//First, find all the places where each name is defined
@@ -728,6 +826,10 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
 		{
 			SgNode* node = phiNode.getNode();
 			ROSE_ASSERT(reachingDefsTable[node].first.count(var) == 0);
+
+			//We don't want to insert phi defs for functions that have gone out of scope
+			if (!isVarInScope(var, node))
+				continue;
 			
 			reachingDefsTable[node].first[var] = ReachingDefPtr(new ReachingDef(node, ReachingDef::PHI_FUNCTION));
 

@@ -4,6 +4,7 @@
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/operators.hpp>
+#include <new>
 
 #define foreach BOOST_FOREACH
 using namespace std;
@@ -28,23 +29,6 @@ public:
 		StaticSingleAssignment::NodeReachingDefTable newReachingDefs = ssa->getReachingDefsAtNode(node);
 		VariableRenaming::NumNodeRenameTable oldReachingDefs = varRenaming->getReachingDefsAtNode(node);
 
-		if (newReachingDefs.size() != oldReachingDefs.size())
-		{
-			printf("SSA Reaching defs at node %s:%d\n", node->class_name().c_str(), node->get_file_info()->get_line());
-			foreach(const StaticSingleAssignment::NodeReachingDefTable::value_type& varDefPair, newReachingDefs)
-			{
-				printf("%s, ", StaticSingleAssignment::varnameToString(varDefPair.first).c_str());
-			}
-			printf("\nVarRenaming reaching defs at node:\n");
-			foreach(const VariableRenaming::NumNodeRenameTable::value_type& varDefsPair, oldReachingDefs)
-			{
-				printf("%s, ", VariableRenaming::keyToString(varDefsPair.first).c_str());
-			}
-			printf("\n");
-
-			ROSE_ASSERT(false);
-		}
-
 		StaticSingleAssignment::ReachingDefPtr reachingDef;
 		StaticSingleAssignment::VarName var;
 		foreach (tie(var, reachingDef), newReachingDefs)
@@ -52,10 +36,28 @@ public:
 			set<SgNode*> newReachingDefNodes = reachingDef->getActualDefinitions();
 			set<SgNode*> oldReachingDefNodes = renameTableToDefNodes(oldReachingDefs[var]);
 
-			//If the reaching def is a phi node, it should have at least two parents
-			ROSE_ASSERT(!reachingDef->isPhiFunction() || !reachingDef->getJoinedDefs().empty());
+			//The set of definition nodes should be the same
+			if (newReachingDefNodes != oldReachingDefNodes)
+			{
+				printf("ERROR: Reaching defs don't match for variable %s\n", StaticSingleAssignment::varnameToString(var).c_str());
+				printf("SSA Defs:\n");
+				printNodeSet(newReachingDefNodes);
+				printf("\nVarRenaming Defs:\n");
+				printNodeSet(oldReachingDefNodes);
+				printf("\nNode is %s@%d: %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
+						node->unparseToString().c_str());
+				ROSE_ASSERT(false);
+			}
 
-			ROSE_ASSERT(newReachingDefNodes == oldReachingDefNodes);
+			//If the reaching def is a phi node, it should have at least two parents
+			if (reachingDef->isPhiFunction() && reachingDef->getJoinedDefs().size() < 2)
+			{
+				printf("Found a phi definition with less than two reaching definitions\n");
+				printf("Node is %s@%d: %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
+						node->unparseToString().c_str());
+				printf("Variable is %s\n", StaticSingleAssignment::varnameToString(var).c_str());
+				ROSE_ASSERT(false);
+			}
 		}
 
 		/** Compare uses at node */
@@ -86,7 +88,6 @@ public:
 				printf("%s: ", StaticSingleAssignment::varnameToString(x.first).c_str());
 				printNodeSet(x.second->getActualDefinitions());
 			}
-
 
 			ROSE_ASSERT(false);
 		}
@@ -135,10 +136,6 @@ int main(int argc, char** argv)
 	VariableRenaming varRenaming(project);
 	varRenaming.run();
 
-	//Run the SSA analysis
-	StaticSingleAssignment ssa(project);
-	ssa.run();
-
 	if (SgProject::get_verbose() > 0)
 	{
 		printf("\n\n ***** VariableRenaming Complete ***** \n\n");
@@ -147,6 +144,17 @@ int main(int argc, char** argv)
 	if (SgProject::get_verbose() > 0)
 	{
 		generateDOT(*project);
+		generateWholeGraphOfAST("wholeAST");
+		varRenaming.toFilteredDOT("varRenaming_filtered.dot");
+		varRenaming.toDOT("varRenaming_uniltered.dot");
+	}
+
+	//Run the SSA analysis
+	StaticSingleAssignment ssa(project);
+	ssa.run();
+
+	if (SgProject::get_verbose() > 0)
+	{
 		ssa.toFilteredDOT("filteredCFG.dot");
 		ssa.toDOT("UNfiltered.dot");
 	}
