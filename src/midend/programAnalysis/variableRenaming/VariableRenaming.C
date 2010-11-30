@@ -1266,30 +1266,53 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 			}
 		}
 
-		//For all non-defining Unary Ops, add all of them as uses
-		//We want to set all the varRefs as being used here
-		
-		//Guard agains unary ops that have no children (exception rethrow statement)
-		if (attrs.size() > 0)
+		//Now handle the uses. Note that the defining ops fall through
+		if (type == V_SgAddressOfOp && isSgPointerMemberType(op->get_type()))
 		{
-			uses.insert(uses.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
-			uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
-		}
-
-		//Set all the uses as being used here.
-		foreach(SgNode* iter, uses)
-		{
-			//Get the unique name of the def.
-			VarUniqueName * uName = varRename->getUniqueName(iter);
-			ROSE_ASSERT(uName);
-
-			//Add the varRef as a use at the current node of the ref's uniqueName
-			//We will correct the reference later.
-			varRename->getUseTable()[op][uName->getKey()].push_back(iter);
-
-			if (varRename->getDebug())
+			//SgAddressOfOp is special; it's not always a use of its operand. When creating a reference to a member variable,
+			//we create reference without providing a variable instance. For example,
+			//		struct foo { int bar; };
+			//
+			//		void test()
+			//		{
+			//			int foo::*v = &foo::bar;  <---- There is no use of foo.bar on this line
+			//			foo b;
+			//			b.*v = 3;
+			//		}
+			//In this case, there are no uses in the operand. We also want to delete any uses for the children
+			vector<SgNode*> successors = SageInterface::querySubTree<SgNode>(op);
+			foreach(SgNode* successor, successors)
 			{
-				cout << "Found use for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+				varRename->getUseTable()[successor].clear();
+			}
+		}
+		else
+		{
+			//For all non-defining Unary Ops, add all of them as uses
+			//We want to set all the varRefs as being used here
+
+			//Guard agains unary ops that have no children (exception rethrow statement)
+			if (attrs.size() > 0)
+			{
+				uses.insert(uses.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
+				uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
+			}
+
+			//Set all the uses as being used here.
+			foreach(SgNode* iter, uses)
+			{
+				//Get the unique name of the def.
+				VarUniqueName * uName = varRename->getUniqueName(iter);
+				ROSE_ASSERT(uName);
+
+				//Add the varRef as a use at the current node of the ref's uniqueName
+				//We will correct the reference later.
+				varRename->getUseTable()[op][uName->getKey()].push_back(iter);
+
+				if (varRename->getDebug())
+				{
+					cout << "Found use for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+				}
 			}
 		}
 
