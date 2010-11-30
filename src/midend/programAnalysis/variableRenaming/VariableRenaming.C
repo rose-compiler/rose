@@ -317,7 +317,7 @@ void VariableRenaming::run()
     if(DEBUG_MODE)
         cout << "Performing UniqueNameTraversal..." << endl;
 
-    UniqueNameTraversal uniqueTrav(this);
+    UniqueNameTraversal uniqueTrav(this, SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
     std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
     std::vector<SgFunctionDefinition*>::iterator iter = funcs.begin();
     for(;iter != funcs.end(); ++iter)
@@ -787,6 +787,20 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
     outFile << "}\n";
 }
 
+SgInitializedName* VariableRenaming::UniqueNameTraversal::resolveTemporaryInitNames(SgInitializedName* name)
+{
+	if (!isSgVarRefExp(name->get_parent()))
+		return name;
+
+	foreach(SgInitializedName* otherName, allInitNames)
+	{
+		if (otherName->get_prev_decl_item() == name)
+			return otherName;
+	}
+
+	return name;
+}
+
 VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
 {
     if(varRename->getDebugExtra())
@@ -796,7 +810,7 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
     //First we check if this is an initName
     if(isSgInitializedName(node))
     {
-        SgInitializedName* name = isSgInitializedName(node);
+        SgInitializedName* name = resolveTemporaryInitNames(isSgInitializedName(node));
 
         //We want to assign this node its unique name, as well as adding it to the defs.
         VarUniqueName* uName = new VarUniqueName(name);
@@ -816,7 +830,7 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
         }
 
         //We want to assign this node its unique name, as well as adding it to the defs.
-        VarUniqueName* uName = new VarUniqueName(var->get_symbol()->get_declaration());
+        VarUniqueName* uName = new VarUniqueName(resolveTemporaryInitNames(var->get_symbol()->get_declaration()));
         var->setAttribute(VariableRenaming::varKeyTag, uName);
 
         return VariableRenaming::VarRefSynthAttr(var);
@@ -874,7 +888,8 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                     if(!thisExp)
                     {
                         //Create the uniqueName from the uniqueName of the lhs prepended to the rhs uniqueName
-                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), varRef->get_symbol()->get_declaration());
+                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), 
+								resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(lhsName->getUsesThis());
                         varRef->setAttribute(VariableRenaming::varKeyTag,uName);
 
@@ -884,7 +899,8 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                     else
                     {
                         //Create the UniqueName from the current varRef, and stores that it uses 'this'
-                        VarUniqueName* uName = new VarUniqueName(varRef->get_symbol()->get_declaration());
+                        VarUniqueName* uName = new VarUniqueName(
+								resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(true);
                         varRef->setAttribute(VariableRenaming::varKeyTag,uName);
 
@@ -976,7 +992,8 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                     if(!thisExp)
                     {
                         //Create the uniqueName from the uniqueName of the lhs prepended to the rhs uniqueName
-                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), varRef->get_symbol()->get_declaration());
+                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), 
+								resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(lhsName->getUsesThis());
                         varRef->setAttribute(VariableRenaming::varKeyTag,uName);
 
@@ -986,7 +1003,8 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
                     else
                     {
                         //Create the UniqueName from the current varRef, and stores that it uses 'this'
-                        VarUniqueName* uName = new VarUniqueName(varRef->get_symbol()->get_declaration());
+                        VarUniqueName* uName = new VarUniqueName(
+								resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(true);
                         varRef->setAttribute(VariableRenaming::varKeyTag,uName);
 
