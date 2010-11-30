@@ -26,6 +26,8 @@ distributedScripts =				\
      policies/UnixLineTermination.pl		\
      policies/UnusedHeaders.pl                  \
      policies/UnusedSources.pl                  \
+     rth_run.pl                                 \
+     rth_stats.pl                               \
      runscript					\
      sample_binary_rules.pl			\
      stringify.pl

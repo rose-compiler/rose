@@ -27,7 +27,7 @@ for my $dir (qw(/usr/include /usr/local/include)) {
 }
 
 # Headers in ROSE
-push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh)/} FileLister->new()->all_files;
+push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|hpp)/} FileLister->new()->all_files;
 
 
 # Report failures

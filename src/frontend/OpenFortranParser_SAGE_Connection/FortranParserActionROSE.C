@@ -40,6 +40,9 @@ build_implicit_program_statement_if_required()
 
        // Reset the currentScope (should be a SgBasicBlock)
           currentScope = getTopOfScopeStack();
+#if 0
+          printf ("In build_implicit_program_statement_if_required(): currentScope is %s in file = %s \n",currentScope->class_name().c_str(),currentScope->get_startOfConstruct()->get_filename());
+#endif
         }
    }
 
@@ -465,9 +468,16 @@ void c_action_label(Token_t * lbl)
      outputState("At TOP of R313 c_action_label()");
 #endif
 
-  // This can return a NULL symbol if the label is attached to statement which can not be associated witha function scope.
+  // This can return a NULL symbol if the label is attached to statement which can not be associated with a function scope.
      if (lbl->text != NULL)
         {
+       // This is an advanced warning of a bug caught in buildNumericLabelSymbol().
+          if (lbl->line == 0)
+             {
+               printf ("Warning (OFP bug): lbl->line == 0 for lbl->text = %s \n",lbl->text);
+             }
+       // ROSE_ASSERT(lbl->line > 0);
+
           SgLabelSymbol* labelSymbol = buildNumericLabelSymbol(lbl);
 
           if (labelSymbol != NULL)
@@ -796,7 +806,6 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
 
                default:
                   {
-                 // I think that only the COMPLEX type might be left.
                     printf ("Error: unimplemented type = %s \n",intrinsicType->class_name().c_str());
                     ROSE_ASSERT(false);
                     break;
@@ -1694,8 +1703,13 @@ void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
 
           ROSE_ASSERT(keyword != NULL);
 
+#if 0
+       // DQ (10/25/2010): We would like to avoid pushing keywords onto the stack since it is for names only. We also don't
+       // want to have logic that depends upon keywords on the stack, since that is why we use the astAttributeSpecStack.
+       // This level of redundancy is not helpful.
        // Not clear if we should bother saving the keyword, it is a bit redundant, but supported uniformally with the ROSE Fortran frontend.
           astNameStack.push_front(keyword);
+#endif
         }
 
 #if 1
@@ -3738,9 +3752,16 @@ void c_action_entity_decl(Token_t * id)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         {
-       // printf ("In R504 c_action_entity_decl(): save variableName = %s \n",id->text);
+       // printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s \n",id->text);
           string current_filename = getCurrentFilename();
-          printf ("In R504 c_action_entity_decl(): save variableName = %s file = %s \n",id->text,current_filename.c_str());
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+          printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s file = %s hasArraySpec = %s hasCoarraySpec = %s hasCharLength = %s unknown_bool = %s \n",
+               id->text,current_filename.c_str(),hasArraySpec ? "true" : "false",
+               hasCoarraySpec ? "true" : "false",hasCharLength ? "true" : "false",
+               unknown_bool ? "true" : "false");
+#else
+          printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s file = %s \n",id->text,current_filename.c_str());
+#endif
         }
 
 #if 0
@@ -3791,6 +3812,11 @@ void c_action_entity_decl(Token_t * id)
              {
             // Use a SgConstructorInitializer or a SgAggregateInitializer
 
+#if 1
+            // Output debugging information about saved state (stack) information.
+               outputState("In case of classType != NULL || arrayType != NULL in R504 c_action_entity_decl()");
+#endif
+
                if (arrayType != NULL)
                   {
                     SgExprListExp* exprList = new SgExprListExp();
@@ -3808,6 +3834,8 @@ void c_action_entity_decl(Token_t * id)
                  // Use a SgAggregateInitializer
                     initializer = new SgAggregateInitializer(exprList, NULL);
                     setSourcePosition(initializer);
+
+                    ROSE_ASSERT(astExpressionStack.empty() == true);
                   }
                  else
                   {
@@ -3816,12 +3844,27 @@ void c_action_entity_decl(Token_t * id)
                  // SgExpression* firstExpression = exprList->get_expressions()[0];
                     ROSE_ASSERT(astExpressionStack.size() == 1);
                     SgExpression* firstExpression = astExpressionStack.front();
-                    astExpressionStack.pop_front();
+
+                 // DQ (10/23/2010): We need to leave this on the stack since it is the name associated with a bind attribute.
+                 // astExpressionStack.pop_front();
 
                     ROSE_ASSERT(firstExpression != NULL);
+                 // printf ("firstExpression = %p = %s \n",firstExpression,firstExpression->class_name().c_str());
                     SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(firstExpression);
                     initializer = constructorInitializer;
-                    ROSE_ASSERT(initializer != NULL);
+                 // ROSE_ASSERT(initializer != NULL);
+                    if (initializer != NULL)
+                       {
+                      // If this is a SgConstructorInitializer then ???
+                         printf ("This is a SgConstructorInitializer, we need an example of code that generates this case. \n");
+                         ROSE_ASSERT(false);
+                       }
+                      else
+                       {
+                      // This is the case of a name in the bind expression.
+                      // printf ("This is the case of a name in the bind expression (leave it on the stack and process it later). \n");
+                      // ROSE_ASSERT(false);
+                       }
                   }
              }
             else
@@ -3832,12 +3875,13 @@ void c_action_entity_decl(Token_t * id)
                initializer = new SgAssignInitializer(astExpressionStack.front(),NULL);
                astExpressionStack.pop_front();
                setSourcePosition(initializer);
-             }
 
+               ROSE_ASSERT(astExpressionStack.empty() == true);
+             }
         }
 
   // ROSE_ASSERT(astInitializerStack.empty() == true);
-     ROSE_ASSERT(astExpressionStack.empty() == true);
+  // ROSE_ASSERT(astExpressionStack.empty() == true);
 
   // DQ (5/15/2008): Added support to make sure that this is not a previously declared name (see test2008_29.f)
      SgVariableSymbol* variableSymbol = NULL;
@@ -3848,6 +3892,8 @@ void c_action_entity_decl(Token_t * id)
      trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(name,currentScope,variableSymbol,functionSymbol,classSymbol);
 
   // ROSE_ASSERT(variableSymbol == NULL);
+
+  // printf ("In R504 R503-F2008: variableSymbol = %p functionSymbol = %p classSymbol = %p \n",variableSymbol,functionSymbol,classSymbol);
 
      if (functionSymbol != NULL)
         {
@@ -3887,10 +3933,10 @@ void c_action_entity_decl(Token_t * id)
 
           initializedName = variableSymbol->get_declaration();
           ROSE_ASSERT(initializedName != NULL);
-
-       // printf ("Found variableSymbol != NULL (check if this is the return value which was set with implicit type rules): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
-       // printf ("initializedName type = %p = %s \n",type,type->class_name().c_str());
-
+#if 0
+          printf ("Found variableSymbol != NULL (check if this is the return value which was set with implicit type rules): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+          printf ("initializedName type = %p = %s \n",type,type->class_name().c_str());
+#endif
        // Reset the type since this is the variable declaration, even if it was previously declared in the common block (where it was not assigned a type)
           initializedName->set_type(type);
           ROSE_ASSERT(initializedName->get_scope() != NULL);
@@ -3942,6 +3988,11 @@ void c_action_entity_decl(Token_t * id)
              }
         }
      ROSE_ASSERT(initializedName != NULL);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("Before cleaning up the stacks in R504 c_action_entity_decl()");
+#endif
 
   // FMZ (2/19/2007): Added for CoArray
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
@@ -4000,7 +4051,7 @@ void c_action_entity_decl(Token_t * id)
      astNameStack.pop_front();
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R504 c_action_entity_decl()");
 #endif
@@ -4050,6 +4101,11 @@ void c_action_entity_decl_list(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R504 c_action_entity_decl_list: (number of variable declarations) count = %d \n",count);
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R504 (list) c_action_entity_decl_list()");
+#endif
+
   // Note that we are not really using the count, but the astNodeStack.size() should match the count.
   // DQ (1/28/2009): Can we assert this!
      ROSE_ASSERT(astNodeStack.size() == (size_t) count);
@@ -4061,7 +4117,7 @@ void c_action_entity_decl_list(int count)
 
      buildVariableDeclarationAndCleanupTypeStack(NULL);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R504 (list) c_action_entity_decl_list()");
 #endif
@@ -4273,11 +4329,18 @@ void c_action_access_spec(Token_t * keyword, int type)
 
      ROSE_ASSERT(keyword != NULL);
 
+#if 0
+  // DQ (10/25/2010): I am trying to clean up how the namestack is used, it should not be used for keywords.
+  // It is supposed to be enough that we use the astAttributeSpecStack withouth trying to put the information 
+  // into two stacks. Also this was causing the stack entries to be in the stack in the wrong order from how 
+  // the rules are called.
+
   // We normally use the front of the list, but push this onto the back so that we can pop it off the back 
   // (independent of the names pushed onto the front of the stack).  This is done because we see the keyword
   // PRIVATE or PUBLIC before we see the list of variables.  In many cases this will be the only entry in 
   // the list at this point.
      astNameStack.push_back(keyword);
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -4582,7 +4645,7 @@ void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_access_stmt(): hasList = %s \n",hasList ? "true" : "false");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R518 c_action_access_stmt()");
 #endif
@@ -4598,7 +4661,8 @@ void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
      int type = astAttributeSpecStack.front();
      astAttributeSpecStack.pop_front();
 
-#if 1
+  // DQ (10/25/2010): Changed this to back again to NOT use keywords.
+#if 0
   // DQ (8/28/2010: later): Changed the behaviour back to use the keywords.
      ROSE_ASSERT(astNameStack.empty() == false);
 
@@ -4606,8 +4670,14 @@ void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
      Token_t* private_public_keyword = astNameStack.back();
      astNameStack.pop_back();
 #else
+  // DQ (10/25/2010): Howver there will be arguments to the "public statement so these will be 
+  // on the name stack. So we can't assert that this is empty.
   // DQ (8/28/2010): changed behavior to never put access spec keywords onto the astNameStack.
-     ROSE_ASSERT(astNameStack.empty() == true);
+  // ROSE_ASSERT(astNameStack.empty() == true);
+
+  // Use the eos as a location...
+     ROSE_ASSERT(eos != NULL);
+     Token_t* private_public_keyword = eos;
 #endif
 
      if (type == AttrSpec_PRIVATE)
@@ -6981,6 +7051,9 @@ void c_action_substring_range(ofp_bool hasLowerBound, ofp_bool hasUpperBound)
  *
  * @param numPartRef The number of optional part_refs
  */
+
+SgCAFCoExpression *rice_dataref_coexpr;		// for 'c_action_rice_spawn_stmt'
+
 void c_action_data_ref(int numPartRef)
    {
   // This is a part of a variable reference (and likely used many other places as well)
@@ -7091,6 +7164,11 @@ void c_action_data_ref(int numPartRef)
 
      if (variableSymbol == NULL)
         {
+    	 // This is a function call and the 'coExpr' detected above, if any, will be ignored in this routine.
+    	 // Preserve it for future use in 'c_action_rice_spawn_stmt'.
+    	 // TODO: check that coExpr is present here only if in the context of a Rice CAF2 'spawn' statement.
+         rice_dataref_coexpr = (processCoarray ? coExpr : NULL);
+
        // This is a variable that has not been previously declared (Fortran allows this), 
        // but first check to make sure it is not an implicit function.
 
@@ -10776,7 +10854,7 @@ void c_action_end_if_stmt(Token_t *label, Token_t *endKeyword, Token_t *ifKeywor
      ROSE_ASSERT(endKeyword != NULL);
      resetEndingSourcePosition(astScopeStack.front(),endKeyword);
 
-     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+     // ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
   // Pop off the if scope (it is a scope in C/C++, even if not in Fortran)
   // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
@@ -14192,7 +14270,7 @@ void c_action_io_implied_do_control()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
-        printf ("In c_action_io_implied_do_control() xxx = %s \n",xxx ? "true" : "false");
+          printf ("In c_action_io_implied_do_control() xxx = %s \n",xxx ? "true" : "false");
 #else
           printf ("In c_action_io_implied_do_control() \n");
 #endif
@@ -15396,7 +15474,7 @@ void c_action_main_program__begin()
 
 void c_action_main_program(ofp_bool hasProgramStmt, ofp_bool hasExecutionPart, ofp_bool hasInternalSubprogramPart)
    {
-  // Now we can setup the endOfConstruct in the global scope! But we have no token to use to do this!
+  // Now can we setup the endOfConstruct in the global scope! But we have no token to use to do this!
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_main_program() \n");
@@ -15589,7 +15667,9 @@ void c_action_program_stmt(Token_t *label, Token_t *programKeyword, Token_t *id,
   // Unclear if we should use the same token list for resetting the source position in all three IR nodes.
      setSourcePosition(programDefinition,tokenList);
      setSourcePosition(programBody,tokenList);
-
+#if 0
+     programBody->get_startOfConstruct()->display("In c_action_program_stmt(): programBody");
+#endif
 
 #if 0
      if (programName == ROSE_IMPLICIT_FORTRAN_PROGRAM_NAME)
@@ -15694,6 +15774,7 @@ void c_action_end_program_stmt(Token_t *label, Token_t *endKeyword, Token_t *pro
 
      ROSE_ASSERT(astScopeStack.empty() == false);
 #if 1
+  // resetEndingSourcePosition(astScopeStack.front(),endKeyword,getCurrentFilename());
      resetEndingSourcePosition(astScopeStack.front(),endKeyword);
 #else
   // DQ (10/10/2010): Test ending position
@@ -15710,6 +15791,25 @@ void c_action_end_program_stmt(Token_t *label, Token_t *endKeyword, Token_t *pro
 
      ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 #endif
+
+     if (programDeclaration->get_program_statement_explicit() == false)
+        {
+       // The function declaration should be forced to match the "end" keyword.
+#if 0
+          printf ("This was an implicit main function declaration. \n");
+          printf ("   programDeclaration->get_startOfConstruct()->get_filename()    = %s \n",programDeclaration->get_startOfConstruct()->get_filenameString().c_str());
+          printf ("   programDeclaration->get_endOfConstruct()->get_filename()      = %s \n",programDeclaration->get_endOfConstruct()->get_filenameString().c_str());
+          printf ("   astScopeStack.front()->get_startOfConstruct()->get_filename() = %s \n",astScopeStack.front()->get_startOfConstruct()->get_filenameString().c_str());
+          printf ("   astScopeStack.front()->get_endOfConstruct()->get_filename()   = %s \n",astScopeStack.front()->get_endOfConstruct()->get_filenameString().c_str());
+#endif
+       // Reset the declaration to the current filename.
+          programDeclaration->get_startOfConstruct()->set_filenameString(getCurrentFilename());
+          programDeclaration->get_endOfConstruct()->set_filenameString(getCurrentFilename());
+        }
+#if 0
+     printf ("In c_action_end_program_stmt(): astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
+#endif
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 #endif
    }
 
@@ -16165,8 +16265,17 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
      SgScopeStatement* currentScope = astScopeStack.front();
 
      SgClassSymbol* moduleSymbol = NULL;
-     trace_back_through_parent_scopes_searching_for_module(name,currentScope,moduleSymbol);
 
+  // DQ (10/23/2010): Added intrinsic module support.
+     moduleSymbol = buildIntrinsicModule(name.str());
+
+  // If moduleSymbol is still null then this was not an intrinsic module and we have to search a bit.
+     if ( moduleSymbol == NULL )
+        {
+          trace_back_through_parent_scopes_searching_for_module(name,currentScope,moduleSymbol);
+        }
+
+  // If moduleSymbol is still null then we have to go and look for the *.rmod file and read in the module directly.
      SgModuleStatement* moduleStatement = NULL;
      if ( moduleSymbol == NULL )
         {
@@ -18608,9 +18717,27 @@ void c_action_start_of_file(const char *filename)
   // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_start_of_file(%s) \n",filename);
+#if 1
+//<<<<<<< HEAD
+
+  // DQ: This is the earliest location to setup the global scope (I think).
+     initialize_global_scope_if_required();
+
+     // DXN: We create a SgFortranIncludeLine node only when the current file is not a top level file
+     // and is not an rmod file.  When parsing a top level file, the astIncludeStack should be empty.
+     if (!astIncludeStack.empty() && !isARoseModuleFile(filename))  {
+#else       
+//=======
 #if 0
-     printf ("astIncludeStack.size() = %zu \n",astIncludeStack.size());
+     printf ("In c_action_start_of_file(%s) astIncludeStack.size() = %zu \n",filename,astIncludeStack.size());
      printf ("##### Swiching from %s to %s \n",(astIncludeStack.size() == 0) ? "FIRST FILE" : getCurrentFilename().c_str(),filename);
+#endif
+
+  // This is a better way to compute if this is the first time through 
+  // (see test2010_78.f90 and test2010_79.f90 when compiled on the same command line).
+     bool firstTime = (astScopeStack.empty() == true);
+#if 0
+     printf ("In c_action_start_of_file(): astScopeStack.size() = %zu \n",astScopeStack.size());
 #endif
 
   // This is the earliest location to setup the global scope (I think).
@@ -18622,13 +18749,13 @@ void c_action_start_of_file(const char *filename)
 #endif
 
   // DQ (1/27/2009): This should be clear before going onto a new include file.
-//   ROSE_ASSERT(astNodeStack.empty() == true);
+  // ROSE_ASSERT(astNodeStack.empty() == true);
 
      string filenameString = filename;
 
-     static bool firstTime = true;
+  // static bool firstTime = true;
 
-  // DQ (1/28/2009): there are two cases wehre we don't want to generate an include IR node:
+  // DQ (1/28/2009): there are two cases where we don't want to generate an include IR node:
   //    1) When this is the first time were are reading a fortran source file.
   //    2) When we have switch file streams to read an *.rmod file as part of
   //       processing a "use" statement referencing a module.
@@ -18640,10 +18767,12 @@ void c_action_start_of_file(const char *filename)
         }
        else
         {
+#endif          
+//>>>>>>> f11faee3e9590235079a36f80c61a428afa7d3f9
        // After the first time, ever call to this function is significant (represents use of the
        // Fortran include mechanism; not formally a part of the language grammar).
 
-          SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filenameString);
+           SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filename);
 
           if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                printf ("Note: Need a token to represent the the filename so that we can get the position of the include statment \n");
@@ -18674,8 +18803,14 @@ void c_action_start_of_file(const char *filename)
        // setSourcePosition(includeLine);
           includeLine->set_file_info(fileInfo);
 
-          includeLine->get_file_info()->display("c_action_start_of_file()");
+       // DQ (11/20/2010): Also set the end of the construct for this statement (end of column position is not correct).
+          Sg_File_Info* ending_fileInfo = new Sg_File_Info(filenameOfIncludeLocation,lineNumberOfLastStatement,columnNumber);
+          includeLine->set_endOfConstruct(ending_fileInfo);
 
+          ROSE_ASSERT(includeLine->get_endOfConstruct() != NULL);
+#if 0
+          includeLine->get_file_info()->display("c_action_start_of_file()");
+#endif
        // DQ (1/27/2009): Make sure that the filenames match (make sure this is a STL string equality test!).
        // This is a test for a recursive file inclusion.
        // This fails for: module_A_file.f90 or module_B_file.f90.  Also for these
@@ -18685,30 +18820,22 @@ void c_action_start_of_file(const char *filename)
        // ROSE_ASSERT(includeLine->get_file_info()->get_filenameString() != string(filename));
 
           ROSE_ASSERT(astScopeStack.empty() == false);
-#if 0
-          printf ("Inserting includeLine into astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
-
-          printf ("BEFORE include: statementList.size() = %zu \n",statementList.size());
-          for (SgStatementPtrList::iterator i = statementList.begin(); i != statementList.end(); i++)
-             {
-               printf ("   statement in scope = %p = %s = %s line = %d file = %s \n",(*i),(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(*i)->get_file_info()->get_line(),(*i)->get_file_info()->get_filenameString().c_str());
-             }
-#endif
 
        // This does not always appear to be appending to the scope
           astScopeStack.front()->append_statement(includeLine);
-#if 0
-       // Reset the statementList after the append_statment() call.
-          statementList = scope->generateStatementList();
-          printf ("AFTER include: statementList.size() = %zu \n",statementList.size());
-          for (SgStatementPtrList::iterator i = statementList.begin(); i != statementList.end(); i++)
-             {
-               printf ("   statement in scope = %p = %s = %s line = %d file = %s \n",(*i),(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(*i)->get_file_info()->get_line(),(*i)->get_file_info()->get_filenameString().c_str());
-             }
-#endif
         }
 
+#if 1
+//<<<<<<< HEAD
+     astIncludeStack.push_back(filename);
+#else
+//=======
+#if 0
+     printf ("In c_action_start_of_file(): filenameString = %s astIncludeStack.size() = %zu \n",filenameString.c_str(),astIncludeStack.size());
+#endif
      astIncludeStack.push_back(filenameString);
+#endif     
+//>>>>>>> f11faee3e9590235079a36f80c61a428afa7d3f9
    }
 
 /*
@@ -18728,6 +18855,9 @@ void c_action_end_of_file(const char * filename)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_of_file(): filenameString = %s \n",filenameString.c_str());
 
+#if 0
+     printf ("In c_action_end_of_file(): filenameString = %s astIncludeStack.size() = %zu \n",filenameString.c_str(),astIncludeStack.size());
+#endif
      astIncludeStack.pop_back();
 
 #if 0
@@ -18743,14 +18873,22 @@ void c_action_end_of_file(const char * filename)
 
   // DQ (10/10/2010): Set the end position to a better value.
      SgStatement* lastStatement = astScopeStack.front()->lastStatement();
-  // printf ("In c_action_end_of_file(): lastStatement = %p \n",lastStatement);
+#if 0
+     printf ("In c_action_end_of_file(): lastStatement = %p \n",lastStatement);
+#endif
      if (lastStatement != NULL)
         {
 #if 0
           printf ("In c_action_end_of_file(): lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
           printf ("In c_action_end_of_file(): lastStatement->get_startOfConstruct()->get_line() = %d \n",lastStatement->get_startOfConstruct()->get_line());
+
+          ROSE_ASSERT(lastStatement->get_endOfConstruct() != NULL);
           printf ("In c_action_end_of_file(): lastStatement->get_endOfConstruct()->get_line()   = %d \n",lastStatement->get_endOfConstruct()->get_line());
+
+          printf ("In c_action_end_of_file(): lastStatement->get_endOfConstruct()->get_filename()   = %s \n",lastStatement->get_endOfConstruct()->get_filenameString().c_str());
+          printf ("In c_action_end_of_file(): lastStatement->get_startOfConstruct()->get_filename() = %s \n",lastStatement->get_startOfConstruct()->get_filenameString().c_str());
 #endif
+          ROSE_ASSERT(lastStatement->get_endOfConstruct() != NULL);
           resetEndingSourcePosition(astScopeStack.front(),lastStatement);
         }
        else
@@ -18762,9 +18900,15 @@ void c_action_end_of_file(const char * filename)
 #if 0
      astScopeStack.front()->get_startOfConstruct()->display("In c_action_end_of_file(): start");
      astScopeStack.front()->get_endOfConstruct  ()->display("In c_action_end_of_file(): end");
+
+     printf ("astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
 #endif
 
-     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+  // DQ (11/11/2010): The header file can have only a single statement and if the original code 
+  // has only an include then the starting line number is equal to the ending line number.
+  // See test2010_81.f90 and test2010_81.h for an example of this.
+  // ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() >= astScopeStack.front()->get_startOfConstruct()->get_line());
 
 #if 0
      printf ("In c_action_end_of_file(): astScopeStack.front() = %s get_startOfConstruct()->get_line() = %d \n",astScopeStack.front()->class_name().c_str(),astScopeStack.front()->get_startOfConstruct()->get_line());
@@ -19004,13 +19148,209 @@ void c_action_rice_co_with_team_stmt(Token_t *label, Token_t *team_id) {
  */
 void c_action_rice_end_with_team_stmt(Token_t *label, Token_t *team_id, Token_t *eos) {
 
-  // DQ (10/10/2010): Test ending position
      ROSE_ASSERT(astScopeStack.empty() == false);
-     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
-     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
-
+    setSourceEndPosition(getTopOfScopeStack(), eos);
      astScopeStack.pop_front();
 
+}
+
+
+/**
+ * Rice's finish statement:
+ * @param label Optional statement label.
+ * @param idTeam Optional team identifier.
+ */
+
+static std::stack<Token *> finish_stack;
+static const char * FINISH_SUBR_NAME = "CAF_FINISH";
+static const char * ENDFINISH_SUBR_NAME = "CAF_END_FINISH";
+
+void c_action_rice_finish_stmt(Token_t *label, Token_t *teamToken, Token_t *eos)
+{
+#if 1
+	const char * s_label = (label     ? label->text     : "<no label>");
+	const char * s_team  = (teamToken ? teamToken->text : "<no team>" );
+	const char * s_eos   = eos->text;
+	printf("In c_action_rice_finish_stmt(%s, %s, %s)", s_label, s_team, s_eos);
+	outputState("At TOP of c_action_rice_finish_stmt()");
+#endif
+
+	finish_stack.push(teamToken);
+
+	// add translation to current scope
+    Token * caf_finish = create_token(eos->line, eos->col, 0, FINISH_SUBR_NAME);
+	c_action_section_subscript_list__begin();					// R619
+	if( teamToken != NULL)
+	{
+		c_action_part_ref(teamToken, false, false);				// R613
+		c_action_data_ref(1);									// R612
+		c_action_designator_or_func_ref();						// R1217
+		c_action_primary();										// R701
+	}
+	else
+	{
+		SgExpression * nullExpr = new SgNullExpression();
+		setSourcePosition(nullExpr, eos);
+		astExpressionStack.push_front(nullExpr);
+	}
+	c_action_section_subscript(true, false, false, true);	// R619
+	c_action_section_subscript_list(1);						// R619
+	c_action_part_ref(caf_finish, true, false);				// R613
+	c_action_data_ref(1);									// R612
+	c_action_procedure_designator();						// R1219
+	c_action_call_stmt(NULL, caf_finish, NULL, false);		// R1218
+
+    // start a new block scope for body of finish construct
+    SgScopeStatement * currentScope = getTopOfScopeStack();
+    SgBasicBlock * body = new SgBasicBlock(Sg_File_Info::generateDefaultFileInfo());
+    setSourcePosition(body, eos);
+    body->set_parent(currentScope);
+    currentScope->append_statement(body);
+    astScopeStack.push_front(body);
+
+#if 1
+	outputState("At BOTTOM of c_action_rice_finish_stmt()");
+#endif
+}
+
+
+/**
+ * Rice's end finish statement:
+ * @param label Optional statement label.
+ * @param eoms T_EOS token.
+ */
+
+static const char * SPAWN_SUBR_NAME = "CAF_SPAWN";
+static const char * TEAM_DEFAULT_NAME = "TEAM_DEFAULT";
+
+void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
+{
+#if 1
+	const char * s_label    = (label      ? label->text  : "<no label>");
+	const char * s_eos      = (eos        ? eos->text    : "no eos"    );
+	printf("In c_action_rice_end_finish_stmt(%s, %s)", s_label, s_eos);
+	outputState("At TOP of c_action_rice_end_finish_stmt()");
+#endif
+
+	// scope for enclosed statements has already been removed by 'c_action_block'
+
+    // pop finish construct off our stack
+    if( ! finish_stack.empty() )
+    	finish_stack.pop();
+    else
+	{
+		printf("ERROR(CAF): 'end finish' without matching 'finish'\n");
+		ROSE_ASSERT(false);
+	}
+
+	// add translation to current scope
+	Token * caf_end_finish = create_token(eos->line, eos->col, 0, ENDFINISH_SUBR_NAME);
+	c_action_section_subscript_list__begin();				// R619
+	c_action_section_subscript_list(0);						// R619
+	c_action_part_ref(caf_end_finish, true, false);			// R613
+	c_action_data_ref(1);									// R612
+	c_action_procedure_designator();						// R1219
+	c_action_call_stmt(NULL, caf_end_finish, NULL, false);	// R1218
+
+#if 1
+	outputState("At BOTTOM of c_action_rice_end_finish_stmt()");
+#endif
+}
+
+/**
+ * Rice's spawn statement:
+ * @param label Optional statement label.
+ * @param callKeyword T_CALL token.
+ * @param processor Optional processor number.
+ * @param team Optional team identifier.
+ * @param eos T_EOS token.
+ * @param hasArgs True if an actual-arg-spec-list is present.
+ * @param hasWhere True if a 'processor@team' is present; if so, a processor number is on expr stack.
+ */
+void c_action_rice_spawn_stmt(Token_t * label, Token_t * spawn, Token_t * eos, ofp_bool hasEvent)
+{
+#if 1
+	outputState("At TOP of c_action_rice_spawn_stmt()");
+#endif
+
+	// get the function reference and its arg list
+    ROSE_ASSERT(astExpressionStack.empty() == false);
+    SgFunctionCallExp * originalCallExpr = isSgFunctionCallExp(astExpressionStack.front());
+    ROSE_ASSERT(originalCallExpr != NULL);	// TODO: can we get a SgFunctionRefExp instead, if no actual param list given?
+    astExpressionStack.pop_front();
+
+    SgFunctionRefExp * functionRef = isSgFunctionRefExp(originalCallExpr->get_function());
+    ROSE_ASSERT(functionRef != NULL);
+    SgExprListExp * argumentList   = originalCallExpr->get_args();
+
+	// get the notification event if any
+	SgExpression * eventExpr;
+	if( hasEvent )
+	{
+	    ROSE_ASSERT(astExpressionStack.empty() == false);
+		eventExpr = astExpressionStack.front();
+		astExpressionStack.pop_front();
+	}
+	else
+		eventExpr = NULL;
+
+    // get processor # and team id
+    ROSE_ASSERT(rice_dataref_coexpr != NULL);
+    SgExpression * pnumExpr	= rice_dataref_coexpr->get_teamRank();
+    SgVarRefExp * teamExpr = rice_dataref_coexpr->get_teamId();
+    delete rice_dataref_coexpr; rice_dataref_coexpr = NULL;
+
+    // argument list
+		c_action_section_subscript_list__begin();					// R619
+
+		// function to be spawned
+		astExpressionStack.push_front(functionRef);
+		c_action_section_subscript(true, false, false, true);		// R619
+
+		// original function arguments from source
+		SgExpressionPtrList & argPtrs = argumentList->get_expressions();
+		int num = argPtrs.size();
+		for( int k = 0; k < num; k++)
+		{
+			astExpressionStack.push_front(argPtrs[k]);
+			c_action_section_subscript(true, false, false, true);	// R619
+		}
+
+		// processor number
+		astExpressionStack.push_front(pnumExpr);
+		c_action_section_subscript(true, false, false, true);		// R619
+
+		// team id
+		if( teamExpr != NULL )										// R619
+			astExpressionStack.push_front(teamExpr);
+		else
+		{
+			SgExpression * nullExpr = new SgNullExpression();
+			setSourcePosition(nullExpr, spawn);
+			astExpressionStack.push_front(nullExpr);
+		}
+		c_action_section_subscript(true, false, false, true);
+
+		// notification event
+		if( hasEvent )												// R619
+			astExpressionStack.push_front(eventExpr);
+		else
+		{
+			SgExpression * nullExpr = new SgNullExpression();
+			setSourcePosition(nullExpr, spawn);
+			astExpressionStack.push_front(nullExpr);
+		}
+		c_action_section_subscript(true, false, false, true);
+
+		// number of args = original number + 4 (f, p, t, e)
+		c_action_section_subscript_list(num + 4);					// R619
+
+	// function call
+	Token * caf_spawn_subr = create_token(spawn->line, spawn->col, 0, SPAWN_SUBR_NAME);
+	c_action_part_ref(caf_spawn_subr, true, false);					// R613
+	c_action_data_ref(1);											// R612
+	c_action_procedure_designator();								// R1219
+	c_action_call_stmt(NULL, caf_spawn_subr, NULL, false);			// R1218
 }
 
 
@@ -19046,6 +19386,45 @@ void c_action_structure_constructor(Token_t *carg_0){}
 void c_action_type_param_attr_spec(Token_t *carg_0){}
 void c_action_type_spec(){}
 void c_action_vector_subscript(){}
+
+// DQ (11/20/2010): Added Token support using newest version of OFP 0.8.2.
+void c_action_next_token(Token_t *token)
+   {
+  // This parser action is used in a separate mode to read the tokens from 
+  // the file as part of a separate pass over the AST.
+
+     string text            = token->text;
+     string currentFilename = getCurrentFilename();
+     int line_number        = token->line;
+     int column_number      = token->col;
+
+     Sg_File_Info* starting_fileInfo = new Sg_File_Info(currentFilename,line_number,column_number);
+
+  // Building the token as unclassified tokens (tokens can be classified by language, language construct, etc.)
+     SgToken* roseToken = new SgToken(starting_fileInfo,text,0);
+
+  // Currently all SgLocatedNode objects are required to have a valid source code position for the start and end.
+  // However this might be a bit redundant for the case of SgToken objects.  So we might want to handle this
+  // differently in the future.
+     Sg_File_Info* ending_fileInfo   = new Sg_File_Info(currentFilename,line_number,column_number+text.length());
+     roseToken->set_endOfConstruct(ending_fileInfo);
+
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        {
+          printf ("In c_action_next_token = %s file = %s line = %d column = %d \n",SageInterface::get_name(roseToken).c_str(),currentFilename.c_str(),line_number,column_number);
+        }
+
+  // Verify that we have a propoer start and end source code position for the token.
+     ROSE_ASSERT(roseToken->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(roseToken->get_endOfConstruct()   != NULL);
+
+  // Get the current file.
+     SgSourceFile* currentFile = OpenFortranParser_globalFilePointer;
+     ROSE_ASSERT(currentFile != NULL);
+
+  // Add to the token list kept in the SgSourceFile object.
+     currentFile->get_token_list().push_back(roseToken);
+   }
 
 // FMZ (5/4/2010)
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0

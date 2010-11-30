@@ -3247,8 +3247,10 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
        // expression as well). Note that we still have to deal with where this is a cast 
        // to an un-named type (e.g. un-named enum: test2006_75.C).
           cast_op = isSgCastExp(expressionTree);
+#if 0
        // ROSE_ASSERT(cast_op != NULL);
-          if (cast_op == NULL)
+          //if (cast_op == NULL)
+          if (cast_op != NULL) // Liao, 11/2/2010, we should use the original expression tree here!!
              {
             // Jeremiah has submitted the following example: int x[2]; char* y = (char*)x + 1; and the expressionTree is just "x+1".
                unparseExpression(expressionTree,info);
@@ -3256,6 +3258,14 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
             // Don't continue processing this as a cast!
                return;
              }
+           else 
+             cast_op = isSgCastExp(expr); // restore to the original non-null value otherwise
+#else
+             // Liao, 11/8/2010, we should now always unparse the original expression tree, regardless its Variant_T value
+               unparseExpression(expressionTree,info);
+               return;
+
+#endif             
         }
 
      bool addParens = false;
@@ -3358,7 +3368,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                   }
 #endif
             // DQ (2/28/2005): Only output the cast if it is NOT compiler generated (implicit in the source code)
-            // this avoids redundent casts in the output code and avoid errors in the generated code caused by an 
+            // this avoids redundant casts in the output code and avoid errors in the generated code caused by an 
             // implicit cast to a private type (see test2005_12.C).
             // if (cast_op->get_file_info()->isCompilerGenerated() == false)
                if (cast_op->get_startOfConstruct()->isCompilerGenerated() == false)
@@ -3419,7 +3429,6 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
   // DQ (6/15/2005): reinterpret_cast always needs parens
      if (addParens == true)
           curprint ( "/* part of cast */ (");
-
      unparseExpression(cast_op->get_operand(), info); 
 
      if (addParens == true)
@@ -3599,9 +3608,96 @@ Unparse_ExprStmt::unparseTypeRef(SgExpression* expr, SgUnparse_Info& info)
 void Unparse_ExprStmt::unparseVConst(SgExpression* expr, SgUnparse_Info& info) {}
 void Unparse_ExprStmt::unparseExprInit(SgExpression* expr, SgUnparse_Info& info) {}
 
+// Liao 11/3/2010
+// Sometimes initializers can from an included file
+//  SgAssignInitializer -> SgCastExp ->SgCastExp ->SgIntVal
+// We should not unparse them
+// This function will check if the nth initializer is from a different file from the aggregate initializer
+static bool isFromAnotherFile (SgLocatedNode* lnode)
+{
+  bool result = false;
+  ROSE_ASSERT (lnode != NULL);
+  // Liao 11/22/2010, a workaround for enum value constant assign initializer
+  // EDG passes the source location information of the original declaration of the enum value, not the location for the value's reference
+  // So SgAssignInitializer has wrong file info.
+  // In this case, we look down to the actual SgEnumVal for the file info instead of looking at its ancestor SgAssignInitializer  
+  SgAssignInitializer *a_initor = isSgAssignInitializer (lnode);
+  if (a_initor)
+  {
+    result = false;
+    SgExpression * leaf_child = a_initor->get_operand_i();
+    while (SgCastExp * cast_op = isSgCastExp(leaf_child))
+    { 
+      // redirect to original expression tree if possible
+      if (cast_op->get_originalExpressionTree() != NULL)
+        leaf_child = cast_op->get_originalExpressionTree();
+      else
+        leaf_child = cast_op->get_operand_i();
+    }
+    //if (isSgEnumVal(leaf_child))
+    lnode = leaf_child;
+  }
+
+  SgFile* cur_file = SageInterface::getEnclosingFileNode(lnode);
+  if (cur_file != NULL)
+  {
+    // normal file info 
+    if (lnode->get_file_info()->isTransformation() == false &&  lnode->get_file_info()->isCompilerGenerated() ==false)
+    {
+      if (cur_file->get_file_info()->get_filename() != lnode->get_file_info()->get_filename())
+        result = true;
+    }
+  } //
+
+
+  return result;
+}
+
+#if 0
+static bool isFromAnotherFile(SgAggregateInitializer * aggr_init, size_t n)
+{
+  bool result = false; 
+  ROSE_ASSERT (aggr_init != NULL);
+  size_t m_size = (aggr_init->get_initializers()->get_expressions()).size();
+  ROSE_ASSERT (n <= m_size);
+
+  SgExpression* initializer = (aggr_init->get_initializers()->get_expressions())[n];
+  ROSE_ASSERT (initializer != NULL);
+
+   // Try to get the bottom leaf child
+  SgAssignInitializer * a_initor = isSgAssignInitializer (initializer);
+  if (a_initor)
+  {
+    SgExpression * leaf_child = a_initor->get_operand_i();
+    while (SgCastExp * cast_op = isSgCastExp(leaf_child))
+    { 
+      // redirect to original expression tree if possible
+      if (cast_op->get_originalExpressionTree() != NULL)
+      leaf_child = cast_op->get_originalExpressionTree();
+      else
+        leaf_child = cast_op->get_operand_i();
+    }
+    // compare file names
+     SgFile* cur_file = SageInterface::getEnclosingFileNode(aggr_init);
+     if (cur_file != NULL)
+     {
+       // normal file info 
+       if (leaf_child->get_file_info()->isTransformation() == false &&  leaf_child->get_file_info()->isCompilerGenerated() ==false)
+       {
+         if (cur_file->get_file_info()->get_filename() != leaf_child->get_file_info()->get_filename())
+           result = true;
+       }
+     } //
+  } // end if assign initializer 
+  return result; 
+}
+#endif
 void
 Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
    {
+    // Skip the entire thing if the initializer is from an included file
+     if (isFromAnotherFile (expr))
+       return;
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
      ROSE_ASSERT(aggr_init != NULL);
   /* code inserted from specification */
@@ -3611,20 +3707,40 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
       curprint ( "{");
 
      SgExpressionPtrList& list = aggr_init->get_initializers()->get_expressions();
+     size_t last_index = list.size() -1;
+#if 0     
      SgExpressionPtrList::iterator p = list.begin();
      if (p != list.end())
         {
           while (1)
              {
-               unparseExpression((*p), newinfo);
+               bool skipUnparsing = isFromAnotherFile(aggr_init,index);
+               if (!skipUnparsing)
+                 unparseExpression((*p), newinfo);
                p++;
+               index ++;
                if (p != list.end())
-                  {  curprint ( ", ");  }
+                  { 
+                    if (!skipUnparsing)
+                       curprint ( ", ");  
+                  }
                else
                   break;
              }
         }
-
+#endif
+     for (size_t index =0; index < list.size(); index ++)
+     {
+       //bool skipUnparsing = isFromAnotherFile(aggr_init,index);
+       bool skipUnparsing = isFromAnotherFile(list[index]);
+       if (!skipUnparsing)
+       {
+         unparseExpression(list[index], newinfo);
+         if (index!= last_index)
+           curprint ( ", ");
+       }
+     }
+     unparseAttachedPreprocessingInfo(aggr_init, info, PreprocessingInfo::inside);
      if (aggr_init->get_need_explicit_braces())
       curprint ( "}");
    }

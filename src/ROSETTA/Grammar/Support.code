@@ -639,7 +639,7 @@ HEADER_ACCESS_MODIFIER_START
                e_private   = 1,        /*!< private access (local to class members) */
                e_protected = 2,        /*!< protected access (local to class members and membrs of derived classes) */
                e_public    = 3,        /*!< public access (access within enclosing namespace) */
-               e_default   = e_public, /*!< default value (public access) */
+               e_default   = e_public, /*!< default value (public access) */  /*NO_STRINGIFY*/
                e_undefined = 4,        /*!< fortran default value */
                e_last_modifier         /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -969,7 +969,7 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
              {
                e_unknown     = 0,         /*!< error value */
                e_default     = 1,         /*!< Not a special function (default) */
-               e_none        = e_default, /*!< Not a special function (default) */
+               e_none        = e_default, /*!< Not a special function (default) */	/*NO_STRINGIFY*/
                e_constructor = 2,         /*!< A constructor */
                e_destructor  = 3,         /*!< A destructor */
                e_conversion  = 4,         /*!< A conversion operator function */
@@ -4118,8 +4118,8 @@ HEADER_INITIALIZED_NAME_START
           virtual SgName get_mangled_name(void) const;
 
        // DQ (11/6/2006): use this to return the startOfConstruct source position.
-          virtual Sg_File_Info* get_file_info(void) const;
-          virtual void set_file_info(Sg_File_Info* X);
+       //   virtual Sg_File_Info* get_file_info(void) const;
+       //   virtual void set_file_info(Sg_File_Info* X);
 
        // DQ (2/6/2007): Added support to get the symbol from the declaration (via the symbol table in the scope)
       //! Get the associated SgSymbol from the symbol table located in the scope
@@ -8363,7 +8363,6 @@ SgInitializedName::SgInitializedName()
      p_is_initializer(1)
    {
    }
-#endif
 
 
 Sg_File_Info*
@@ -8382,6 +8381,7 @@ SgInitializedName::set_file_info(Sg_File_Info* X)
      return set_startOfConstruct(X);
    }
 
+#endif
 SgStorageModifier &
 SgInitializedName::get_storageModifier()
    {
@@ -8424,6 +8424,9 @@ SgInitializedName::get_qualified_name() const
 void
 SgInitializedName::post_construction_initialization()
    {
+     // Liao 11/5/2010, for debugging purpose
+    // if (p_name.getString() == string("a0")) 
+    //   abort();
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
@@ -8462,6 +8465,10 @@ SgInitializedName::post_construction_initialization()
   // FMZ added for coarray
      p_isCoArray = false;
 
+  // DQ (10/26/2010): These were not properly initialized.
+     p_shapeDeferred          = false;
+     p_initializationDeferred = false;
+     p_protected_declaration = false;
    }
 
 // This constructor is specific to the creation of SgInitializedName objects used as initializers
@@ -8474,7 +8481,7 @@ SgInitializedName::SgInitializedName
   // DQ (1/18/2006): name change to make consistant with virtual SgNode::get_file_info() 
   // DQ (11/20/2004): Reodered elements of pre-initialization list to avoid compiler warnings
   // : p_file_info(NULL), // Note that file_info is a new data member and is set explicitly after construction
-   : p_startOfConstruct(NULL), // Note that file_info is a new data member and is set explicitly after construction
+   : // p_startOfConstruct(NULL), // Note that file_info is a new data member and is set explicitly after construction
      p_name(name), 
      p_typeptr(typeptr),
   // p_itemptr(itemptr), Removed constructor parameter list
@@ -8492,7 +8499,7 @@ SgInitializedName::SgInitializedName
   // DQ (4/10/2006): Removed in favor of implementation at SgNode using
   // a pointer and the interface represented directly at the SgNode
   // DQ (1/17/2006): Moved attribute mechanism to specific IR nodes (Added initialization to prevent valgrind warning)
-     p_attributeMechanism(NULL),
+    // p_attributeMechanism(NULL),
   // DQ (7/31/2006): Added support for asm declarations on variables (using GNU register codes)
      p_register_name_code(SgInitializedName::e_invalid_register),
   // DQ (8/9/2006): Added support for asm declarations on variables (using strings)
@@ -8509,7 +8516,7 @@ SgInitializedName::SgInitializedName
    ( Sg_File_Info* fileInfo, const SgName& name, SgType *typeptr, SgInitializer* iptr, 
      SgDeclarationStatement *declptr, SgScopeStatement* scope, SgInitializedName *prev_itemptr )
    // : p_file_info(fileInfo), // Note that file_info is a new data member and is set explicitly after construction
-   : p_startOfConstruct(fileInfo), // Note that file_info is a new data member and is set explicitly after construction
+   :// p_startOfConstruct(fileInfo), // Note that file_info is a new data member and is set explicitly after construction
      p_name(name), 
      p_typeptr(typeptr),
      p_initptr(iptr),
@@ -8519,12 +8526,13 @@ SgInitializedName::SgInitializedName
      p_storageModifier(NULL),
      p_scope(NULL),
      p_preinitialization(e_unknown_preinitialization),
-     p_attributeMechanism(NULL),
+     //p_attributeMechanism(NULL),
      p_register_name_code(SgInitializedName::e_invalid_register),
      p_register_name_string(""),
   // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
      p_requiresGlobalNameQualificationOnType(false)
    {
+     p_startOfConstruct = fileInfo; 
      post_construction_initialization();
    }
 
@@ -8595,6 +8603,11 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
      p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
      p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
      p_isCoArray                             = ptr.p_isCoArray;
+
+  // DQ (10/26/2010): Previously uninitialized data members.
+     p_shapeDeferred          = ptr.p_shapeDeferred;
+     p_initializationDeferred = ptr.p_initializationDeferred;
+     p_protected_declaration  = ptr.p_protected_declaration;
    }
 
 SgInitializedName&
@@ -11189,6 +11202,8 @@ X aggressive
 
      p_disassemblerSearchHeuristics = Disassembler::SEARCH_DEFAULT;
 
+  // DQ (11/20/2010): Support for token handling.
+     p_output_tokens = false;
    }
 
 #if 0
@@ -11709,6 +11724,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_read_executable_file_format_only     = %s \n",(p_read_executable_file_format_only == true) ? "true" : "false");
      printf ("     p_read_instructions_only               = %s \n",(p_read_instructions_only == true) ? "true" : "false");
 
+     printf ("     p_output_tokens                        = %s \n",(p_output_tokens == true) ? "true" : "false");
 
 #if 0
 // Order of data member entries in support.C, matched against the 

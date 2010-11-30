@@ -1986,14 +1986,21 @@ SgType::getCurrentScope()
      extern SgScopeStatement* curr_sg_scope;
 #endif     
 
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 8/4/2010, support enable-only-c
+// Liao 8/4/2010, support enable-only-c
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // This is what is used in the Open Fortran Parser connection.
      extern SgScopeStatement* getTopOfScopeStack();
 
   // This is what is used to test when we can use the fortran specific function (above).
      extern bool emptyFortranStateStack();
 #endif
+
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+  // This is what is used in the Open Fortran Parser connection.
+     extern SgScopeStatement* getTopOfJavaScopeStack();
+
+  // This is what is used to test when we can use the fortran specific function (above).
+     extern bool emptyJavaStateStack();
 #endif
 
   // If we are processing a C++ code then curr_sg_scope is a valid pointer, else we are processing a fortran code.
@@ -2008,9 +2015,7 @@ SgType::getCurrentScope()
         }
        else
 #endif
-
         {
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 8/4/2010, support enable-only-c
        // DQ (7/31/2010): If Fortran is not enabled then these functions will not be available.
           if (emptyFortranStateStack() == false)
@@ -2022,20 +2027,24 @@ SgType::getCurrentScope()
             else
 #endif
              {
-            // This is a code generated after the initial C/C++/Fortran AST was built, so we don't know the current scope.
-              if ( SgProject::get_verbose() > 1 ) 
-                 printf ("In SgType::getCurrentScope(): Not in the generation of Fortran AST construction\n");
-               currentScope = NULL;
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+            // DQ (10/26/2010): If Java is not enabled then these functions will not be available.
+               if (emptyJavaStateStack() == false)
+                  {
+                 // Fortran AST being generated
+                    currentScope = getTopOfJavaScopeStack();
+                    ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
+                  }
+                 else
+#endif
+                  {
+                 // This is a code generated after the initial C/C++/Fortran AST was built, so we don't know the current scope.
+                // Liao 10/29/2010. We allow users to build types during AST transformation, which will trigger this line.
+                    if ( SgProject::get_verbose() > 1 ) 
+                      printf ("In SgType::getCurrentScope(): Not in either the generation of C/C++ or Fortran AST construction \n");
+                    currentScope = NULL;
+                  }
              }
-#else
-#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-          // This is a code generated after the initial C/C++/Fortran AST was built, so we don't know the current scope.
-          // Liao 10/29/2010. We allow users to build types during AST transformation, which will trigger this line.
-            if ( SgProject::get_verbose() > 1 ) 
-              printf ("In SgType::getCurrentScope(): Not in the generation of C/C++ AST construction \n");
-            currentScope = NULL;
-#endif
-#endif
         }
 
   // DQ (7/23/2010): Add this as another test...
