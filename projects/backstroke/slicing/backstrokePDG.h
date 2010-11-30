@@ -10,9 +10,13 @@ namespace Backstroke
 
 #define foreach BOOST_FOREACH
 
+//! Define the edge type of PDG.
+
+//! Note that in this structure, if its type is "ControlDependence", only the member
+//! "key" is used, else only the member "varNames" is used.
 struct PDGEdge
 {
-	typedef std::vector<SgInitializedName*> VarName;
+	//typedef std::vector<SgInitializedName*> VarName;
 	
 	enum PDGEdgeType
 	{
@@ -23,11 +27,14 @@ struct PDGEdge
 	//! Indicate the type of this edge, whether control or data dependence.
 	PDGEdgeType type;
 
-	//! Indicate the trueth value of the control dependence.
-	bool key;
+	//! A control dependence edge.
+	CDGEdge cdEdge;
 
-	//! All variable names in data dependence of this edge.
-	std::set<VarName> varNames;
+	//! A data dependence edge.
+	DDGEdge ddEdge;
+
+	////! All variable names in data dependence of this edge.
+	//std::set<VarName> varNames;
 };
 
 //! A class holding a Program Dependence Graph.
@@ -52,6 +59,13 @@ public:
 	//! The constructor building the PDG from a CFG.
 	PDG(const CFGType& cfg)
 	{
+		buildPDG(cfg);
+	}
+
+	//! The constructor building the PDG from a function definition.
+	PDG(SgFunctionDefinition* funcDef)
+	{
+		CFGType cfg(funcDef);
 		buildPDG(cfg);
 	}
 
@@ -126,7 +140,7 @@ void PDG<CFGType>::buildPDG(const CFGType& cfg)
 
 		PDGEdge& pdgEdge = (*this)[edge];
 		pdgEdge.type = PDGEdge::ControlDependence;
-		pdgEdge.key = cdg[*ceIter];
+		pdgEdge.cdEdge = cdg[*ceIter];
 	}
 
 	// Add data dependence edges.
@@ -139,7 +153,7 @@ void PDG<CFGType>::buildPDG(const CFGType& cfg)
 
 		PDGEdge& pdgEdge = (*this)[edge];
 		pdgEdge.type = PDGEdge::DataDependence;
-		pdgEdge.varNames = ddg[*deIter].varNames;
+		pdgEdge.ddEdge = ddg[*deIter];
 	}
 #endif
 
@@ -162,12 +176,12 @@ void PDG<CFGType>::writeGraphEdge(std::ostream& out, const Edge& edge) const
 	const PDGEdge& pdgEdge = (*this)[edge];
 	if (pdgEdge.type == PDGEdge::ControlDependence)
 	{
-		str = pdgEdge.key ? "T" : "F";
+		//str = pdgEdge.key ? "T" : "F";
 		style = "solid";
 	}
 	else
 	{
-		foreach (const PDGEdge::VarName& varName, (*this)[edge].varNames)
+		foreach (const DDGEdge::VarName& varName, (*this)[edge].ddEdge.varNames)
 			str += VariableRenaming::keyToString(varName) + " ";
 		style = "dotted";
 	}

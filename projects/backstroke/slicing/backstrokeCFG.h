@@ -36,12 +36,13 @@ void writeCFGNode(std::ostream& out, const CFGNodeType& cfgNode)
 		nodeColor = "red";
 
 	std::string label;// = escapeString(cfgNode.toString()) + "\\n";
-	if (isSgFunctionDefinition(node))
+	if (SgFunctionDefinition* funcDef = isSgFunctionDefinition(node))
 	{
+		std::string funcName = funcDef->get_declaration()->get_name().str();
 		if (cfgNode.getIndex() == 0)
-			label = "Entry\\n";
+			label = "Entry\\n" + funcName;
 		else if (cfgNode.getIndex() == 3)
-			label = "Exit\\n";
+			label = "Exit\\n" + funcName;
 	}
 	
 	if (!isSgScopeStatement(node))
@@ -51,6 +52,8 @@ void writeCFGNode(std::ostream& out, const CFGNodeType& cfgNode)
 		boost::replace_all(content, "\\n", "\\\\n");
 		label += content;
 	}
+	if (isSgScopeStatement(node) || label == "")
+		label += "<" + node->class_name() + ">";
 	
 	out << "[label=\""  << label << "\", color=\"" << nodeColor <<
 		"\", style=\"" << (cfgNode.isInteresting()? "solid" : "dotted") << "\"]";
@@ -79,46 +82,6 @@ typedef CFG<VirtualCFG::InterestingNode,
 			VirtualCFG::InterestingEdge> FilteredCFG;
 
 
-struct CFGNodeFilter
-{
-	bool operator()(const VirtualCFG::CFGNode& cfgNode) const
-	{
-		if (!cfgNode.isInteresting())
-			return false;
-
-		SgNode* node = cfgNode.getNode();
-
-		if (isSgValueExp(node))
-			return false;
-		//if (isSgExpression(node) && isSgExprStatement(node->get_parent()))
-		if (isSgExprStatement(node))
-			return false;
-		if (isSgScopeStatement(node) && !isSgFunctionDefinition(node))
-			return false;
-
-		switch (node->variantT())
-		{
-			case V_SgVarRefExp:
-			case V_SgInitializedName:
-			case V_SgFunctionParameterList:
-			case V_SgAssignInitializer:
-			case V_SgFunctionRefExp:
-			case V_SgPntrArrRefExp:
-			case V_SgExprListExp:
-			case V_SgCastExp:
-			case V_SgForInitStatement:
-			case V_SgCommaOpExp:
-				return false;
-			default:
-				break;
-		}
-		
-		return true;
-	}
-};
-
-typedef CFG<VirtualCFG::FilteredCFGNode<CFGNodeFilter>,
-			VirtualCFG::FilteredCFGEdge<CFGNodeFilter> > CFGForSSA;
 
 
 
@@ -315,6 +278,8 @@ void CFG<CFGNodeType, CFGEdgeType>::build(SgFunctionDefinition* funcDef)
 
 	// Remove all nodes and edges first.
 	this->clear();
+	entry_ = GraphTraits::null_vertex();
+	exit_ = GraphTraits::null_vertex();
 
 	buildCFG(CFGNodeType(funcDef->cfgForBeginning()), nodesToVertices_, nodesProcessed);
 
@@ -345,9 +310,14 @@ void CFG<CFGNodeType, CFGEdgeType>::setEntryAndExit()
 	//In those cases, we need to add it explicitly
 	if (exit_ == GraphTraits::null_vertex())
 	{
+		std::cerr << "This function may contain an infinite loop "
+				"inside so that its CFG cannot be built" << std::endl;
 		exit_ = add_vertex(*this);
 		(*this)[exit_] = CFGNodePtr(new CFGNodeType(funcDef_->cfgForEnd()));
 	}
+
+	ROSE_ASSERT(entry_ != GraphTraits::null_vertex());
+	ROSE_ASSERT(exit_ != GraphTraits::null_vertex());
 }
 
 template <class CFGNodeType, class CFGEdgeType>
@@ -370,7 +340,7 @@ void CFG<CFGNodeType, CFGEdgeType>::buildCFG(
 	const CFGNodeType& src = node;
 	ROSE_ASSERT(src.getNode());
 
-	boost::tie(iter, inserted) = nodesAdded.insert(make_pair(src, Vertex()));
+	boost::tie(iter, inserted) = nodesAdded.insert(std::make_pair(src, Vertex()));
 
 	if (inserted)
 	{
@@ -391,7 +361,7 @@ void CFG<CFGNodeType, CFGEdgeType>::buildCFG(
 		CFGNodeType tar = cfgEdge.target();
 		ROSE_ASSERT(tar.getNode());
 
-		boost::tie(iter, inserted) = nodesAdded.insert(make_pair(tar, Vertex()));
+		boost::tie(iter, inserted) = nodesAdded.insert(std::make_pair(tar, Vertex()));
 
 		if (inserted)
 		{

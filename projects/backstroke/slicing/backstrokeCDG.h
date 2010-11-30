@@ -2,6 +2,8 @@
 #define	BACKSTROKECDG_H
 
 #include "backstrokeCFG.h"
+#include <boost/graph/strong_components.hpp>
+#include <boost/graph/graph_utility.hpp>
 
 namespace Backstroke
 {
@@ -92,13 +94,27 @@ buildDominanceFrontiers(const std::map<VertexT, VertexT>& iDom, const CFGType& c
 	return domFrontiers;
 }
 
+//! Define the edge type of CDG.
+struct CDGEdge
+{
+	//! Defines the edge kind in a CDG. There are four kinds of control dependences in a CDG:
+	//! true, false, case and default. The latter two are for switch statement.
+	enum CDGEdgeType
+	{
+		cdTrue,
+		cdFalse,
+		cdCase,
+		cdDefault
+	} type;
+};
+
 //! A class holding a Control Dependence Graph.
 
 //! In the CDG, if node a is control dependent on node b, there is an edge a->b.
 
 template <class CFGType>
 class CDG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-		typename CFGType::CFGNodePtr, bool>
+		typename CFGType::CFGNodePtr, CDGEdge>
 {
 public:
 	typedef typename CFGType::CFGNodePtr CFGNodePtr;
@@ -135,8 +151,8 @@ protected:
 	//! This function helps to write the DOT file for edges.
 	void writeGraphEdge(std::ostream& out, const Edge& edge) const
 	{
-		out << "[label=\"" << ((*this)[edge] ? "T" : "F") <<
-		"\", style=\"" << "solid" << "\"]";
+		//out << "[label=\"" << ((*this)[edge] ? "T" : "F") <<
+		//"\", style=\"" << "solid" << "\"]";
 	}
 
 };
@@ -151,7 +167,8 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 	
 	if (!checkCycle(cfg))
 	{
-		// Throws an exception if the check fails.
+		std::cerr << "This function may contain an infinite loop "
+				"inside so that its CDG cannot be built" << std::endl;
 		throw;
 	}
 	
@@ -188,7 +205,7 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 		bool inserted;
 
 		// Add the first node.
-		tie(it, inserted) = verticesAdded.insert(std::make_pair(from, Vertex()));
+		boost::tie(it, inserted) = verticesAdded.insert(std::make_pair(from, Vertex()));
 		if (inserted)
 		{
 			src = boost::add_vertex(*this);
@@ -202,7 +219,7 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 		foreach (CFGVertexT to, vertices.second)
 		{
 			// Add the second node.
-			tie(it, inserted) = verticesAdded.insert(std::make_pair(to, Vertex()));
+			boost::tie(it, inserted) = verticesAdded.insert(std::make_pair(to, Vertex()));
 			if (inserted)
 			{
 				tar = boost::add_vertex(*this);
@@ -214,7 +231,7 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 
 			// Add the edge.
 			Edge edge = add_edge(src, tar, *this).first;
-			(*this)[edge] = true;
+			//(*this)[edge] = true;
 		}
 	}
 }
@@ -231,9 +248,16 @@ void CDG<CFGType>::toDot(const std::string& filename) const
 template <class CFGType>
 bool CDG<CFGType>::checkCycle(const CFGType& cfg)
 {
+	// Add an edge from the exit to entry in the CFG, then count the number of
+	// strongly connected components. If the number is greater than 1, there is
+	// a cycle in the CFG which has no exit.
+	CFGType cfgCopy = cfg;
+	boost::add_edge(cfgCopy.getExit(), cfgCopy.getEntry(), cfgCopy);
 
-	// TODO: this function is not complete.
-	return true;
+	std::vector<int> component(num_vertices(cfgCopy));
+	int num = boost::strong_components(cfgCopy, &component[0]);
+
+	return num == 1;
 }
 
 #undef foreach

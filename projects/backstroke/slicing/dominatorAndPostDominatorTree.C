@@ -1,14 +1,17 @@
 #include <rose.h>
 #include "backstrokeCFG.h"
+#include "backstrokeCFGNode.h"
 #include "backstrokeCDG.h"
 #include "backstrokeDDG.h"
 #include "backstrokePDG.h"
+#include "backstrokeSlicer.h"
 #include <boost/foreach.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/bind.hpp>
+#include <boost/timer.hpp>
 
 using namespace std;
 using namespace boost;
@@ -257,7 +260,8 @@ int main(int argc, char *argv[])
 		continue;
 
 	//Backstroke::FullCFG cfg(proc);
-	typedef Backstroke::CFGForSSA CFG;
+	typedef Backstroke::CFGForSlicing CFG;
+	//typedef Backstroke::CFGForSSA CFG;
 	CFG cfg(proc);
 	cfg.toDot("CFG.dot");
 	cout << num_vertices(cfg) << endl;
@@ -274,6 +278,13 @@ int main(int argc, char *argv[])
 
 	Backstroke::PDG<CFG> pdg(cfg);
 	pdg.toDot("PDG.dot");
+
+	boost::timer t;
+	Backstroke::Slicer slicer(proc);
+	slicer.addCriterion(proc->get_body()->get_statements().back());
+	SgFunctionDeclaration* decl = slicer.slice();
+	SageInterface::insertStatementAfter(proc->get_declaration(), decl);
+	std::cout << t.elapsed() << std::endl;
 #endif
 
 	//varRenaming.toFilteredDOT("VariableRenaming.dot");
@@ -285,8 +296,8 @@ int main(int argc, char *argv[])
 
     //buildDominatorTree(rvsCfg);
 
-	return 0;
+	break;
   }
 
-  return 0;
+  return backend(project);
 }
