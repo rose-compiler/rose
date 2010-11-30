@@ -95,6 +95,14 @@ setSourcePosition( SgLocatedNode* locatedNode )
    }
 
 void
+setSourceEndPosition  ( SgLocatedNode* locatedNode, Token_t* token )
+   {
+     string filename = getCurrentFilename();
+     locatedNode->set_endOfConstruct(new Sg_File_Info(filename,token->line, token->col));
+     locatedNode->get_endOfConstruct()->set_parent(locatedNode);
+   }
+
+void
 setSourcePositionCompilerGenerated( SgLocatedNode* locatedNode )
    {
   // This function sets the source position to be marked as compiler generated.
