@@ -3580,7 +3580,8 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
 #else
        // DQ (11/27/2010): Newer version of code after adding support for case insensitive behavior.
           rose_hash_multimap()
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(boost::unordered_detail::default_bucket_count,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(boost::unordered_detail::default_bucket_count,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(17,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
              {}
 
          rose_hash_multimap(int sz)
