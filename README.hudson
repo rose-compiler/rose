@@ -1,6 +1,6 @@
 README for the new Hudson support in ROSE (Continuous Integeration)
 
-##########  WHAT WE HAVE LEARDED ABOUT WORKING WITH HUDSON #############
+##########  WHAT WE HAVE LEARNED ABOUT WORKING WITH HUDSON #############
 
 1. If Hudson fails right away (like the "too many open files" error)
 then it won't show a name for the branch.
