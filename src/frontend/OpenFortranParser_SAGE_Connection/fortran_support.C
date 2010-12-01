@@ -548,6 +548,9 @@ resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token )
                printf ("In resetEndingSourcePosition(): Resetting the end of the block = %s to line = %d and file = %s \n",(*i)->class_name().c_str(),newLineNumber,getCurrentFilename().c_str());
 #endif
                resetEndingSourcePosition(*i,newLineNumber);
+
+               ROSE_ASSERT((*i)->isCaseInsensitive() == true);
+
                i++;
              }
         }
@@ -1312,6 +1315,20 @@ SgScopeStatement* getTopOfScopeStack()
   // printf ("In getTopOfScopeStack() topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
      SgScopeStatement* topOfStack = astScopeStack.front();
 
+  // Testing the scope stack...
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     std::list<SgScopeStatement*>::iterator scopeInterator = astScopeStack.begin();
+     while (scopeInterator != astScopeStack.end())
+        {
+          if ((*scopeInterator)->isCaseInsensitive() == false)
+             {
+               printf ("##### Error: the scope handling is set to case sensitive scopeInterator = %p = %s \n",*scopeInterator,(*scopeInterator)->class_name().c_str());
+            // (*scopeInterator)->setCaseInsensitive(true);
+             }
+          ROSE_ASSERT((*scopeInterator)->isCaseInsensitive() == true);
+          scopeInterator++;
+        }
+
      return topOfStack;
    }
 
@@ -1829,6 +1846,22 @@ trace_back_through_parent_scopes_searching_for_module (const SgName & moduleName
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In trace_back_through_parent_scopes_searching_for_module(): moduleName = %s currentScope = %p \n",moduleName.str(),currentScope);
 
+#if 1
+  // Testing the scope stack...
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     std::list<SgScopeStatement*>::iterator scopeInterator = astScopeStack.begin();
+     while (scopeInterator != astScopeStack.end())
+        {
+          if ((*scopeInterator)->isCaseInsensitive() == false)
+             {
+               printf ("##### Error (in initialize_global_scope_if_required): the scope handling is set to case sensitive scopeInterator = %p = %s \n",*scopeInterator,(*scopeInterator)->class_name().c_str());
+            // (*scopeInterator)->setCaseInsensitive(true);
+             }
+          ROSE_ASSERT((*scopeInterator)->isCaseInsensitive() == true);
+          scopeInterator++;
+        }
+#endif
+
      SgScopeStatement* tempScope = currentScope;
 
   // DQ (12/12/2007): Added test for if this is a function!
@@ -1868,6 +1901,22 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
      outputState("In trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable()");
 #endif
 
+#if 1
+  // Testing the scope stack...
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     std::list<SgScopeStatement*>::iterator scopeInterator = astScopeStack.begin();
+     while (scopeInterator != astScopeStack.end())
+        {
+          if ((*scopeInterator)->isCaseInsensitive() == false)
+             {
+               printf ("##### Error (in initialize_global_scope_if_required): the scope handling is set to case sensitive scopeInterator = %p = %s \n",*scopeInterator,(*scopeInterator)->class_name().c_str());
+            // (*scopeInterator)->setCaseInsensitive(true);
+             }
+          ROSE_ASSERT((*scopeInterator)->isCaseInsensitive() == true);
+          scopeInterator++;
+        }
+#endif
+
   // SgVariableSymbol* variableSymbol = NULL;
   // SgFunctionSymbol* functionSymbol = NULL;
      SgScopeStatement* tempScope = currentScope;
@@ -1876,6 +1925,10 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
   // while (variableSymbol == NULL && tempScope != NULL)
      while (variableSymbol == NULL && functionSymbol == NULL && classSymbol == NULL && tempScope != NULL)
         {
+#if 0
+          printf ("Searching in scope = %p = %s \n",tempScope,tempScope->class_name().c_str());
+          tempScope->get_startOfConstruct()->display("Searching in scope");
+#endif
        // DQ (11/26/2010): The variable name that we will search for needs to be case normalized (see test2010_112.f90).
           variableSymbol = tempScope->lookup_variable_symbol(variableName);
           functionSymbol = tempScope->lookup_function_symbol(variableName);
@@ -1884,6 +1937,11 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
           printf ("In trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(): tempScope = %p = %s variableSymbol = %p functionSymbol = %p classSymbol = %p \n",
                tempScope,tempScope->class_name().c_str(),variableSymbol,functionSymbol,classSymbol);
 #endif
+
+#if 0
+          tempScope->print_symboltable("In trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable()");
+#endif
+
        // If we have processed the global scope then we can stop (if we have not found the symbol at this
        // point then it is not available (or it is only available through a USE statment and we have not 
        // implemented that support yet.
@@ -1920,7 +1978,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
   // symbols that have been imported into the associated scope of the using declarations (or use statement 
   // in fortran).
 
-#if 1
+#if 0
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): variableName = %s currentScope = %p \n",variableName.str(),currentScope);
 #endif
@@ -1971,7 +2029,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
           }
 
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("Warning: trace_back_through_parent_scopes_lookup_variable_symbol(): could not locate the specified type %s in any outer symbol table: astNameStack.size() = %zu \n",variableName.str(),astNameStack.size());
+               printf ("Warning: trace_back_through_parent_scopes_lookup_variable_symbol(): could not locate the specified variable (for %s) in any outer symbol table: astNameStack.size() = %zu \n",variableName.str(),astNameStack.size());
        // printf ("astNameStack.front() = %p = %s = %s \n",astNameStack.front(),astNameStack.front()->class_name().c_str(),SageInterface::get_name(astNameStack.front()).c_str());
 
           if (astNameStack.empty() == false)
@@ -2057,7 +2115,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
                functionDeclaration->set_parent(globalScope);
                ROSE_ASSERT(functionDeclaration->get_parent() != NULL);
 
-               printf ("Adding function name = %s to the global scope (even though we have not seen the definition yet) \n",name.str());
+            // printf ("Adding function name = %s to the global scope (even though we have not seen the definition yet) \n",name.str());
                globalScope->insert_symbol(name,functionSymbol);
 
             // Add this function to the list of unresolved functions so that we can fixup the AST afterward (close of module scope or close of global scope).
@@ -2134,11 +2192,13 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
                ROSE_ASSERT(variableDeclaration->get_startOfConstruct() != NULL);
                ROSE_ASSERT(variableDeclaration->get_endOfConstruct() != NULL);
 
+#if 0
                if (variableDeclaration->get_startOfConstruct()->get_filenameString() == "NULL_FILE")
                   {
                     variableDeclaration->get_startOfConstruct()->display("Implicit variable declaration within trace_back_through_parent_scopes_lookup_variable_symbol()");
                   }
             // ROSE_ASSERT(variableDeclaration->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
+#endif
 
             // DQ (12/17/2007): Make sure the scope was set!
                ROSE_ASSERT(initializedName->get_scope() != NULL);
@@ -2239,11 +2299,13 @@ buildImplicitVariableDeclaration( const SgName & variableName )
      ROSE_ASSERT(variableDeclaration->get_startOfConstruct() != NULL);
      ROSE_ASSERT(variableDeclaration->get_endOfConstruct() != NULL);
 
+#if 0
      if (variableDeclaration->get_startOfConstruct()->get_filenameString() == "NULL_FILE")
         {
           variableDeclaration->get_startOfConstruct()->display("Implicit variable declaration within trace_back_through_parent_scopes_lookup_variable_symbol()");
         }
   // ROSE_ASSERT(variableDeclaration->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
+#endif
 
   // DQ (12/17/2007): Make sure the scope was set!
      ROSE_ASSERT(initializedName->get_scope() != NULL);
@@ -2291,7 +2353,7 @@ trace_back_through_parent_scopes_lookup_derived_type_symbol(const SgName & deriv
      if (derivedTypeSymbol == NULL)
         {
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("Warning: trace_back_through_parent_scopes_lookup_derived_type_symbol(): could not locate the specified type %s in any outer symbol table \n",derivedTypeName.str());
+               printf ("Warning: trace_back_through_parent_scopes_lookup_derived_type_symbol(): could not locate the specified derived type %s in any outer symbol table \n",derivedTypeName.str());
        // ROSE_ASSERT(false);
         }
 
@@ -2327,6 +2389,10 @@ buildModuleStatementAndDefinition (string name, SgScopeStatement* scope)
   // This is the class definition (the fileInfo is the position of the opening brace)
      SgClassDefinition* classDefinition   = new SgClassDefinition();
      assert(classDefinition != NULL);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     classDefinition->setCaseInsensitive(true);
+
   // classDefinition->set_endOfConstruct(SOURCE_POSITION);
      setSourcePosition(classDefinition);
 
@@ -2409,6 +2475,10 @@ buildDerivedTypeStatementAndDefinition (string name, SgScopeStatement* scope)
   // This is the class definition (the fileInfo is the position of the opening brace)
      SgClassDefinition* classDefinition   = new SgClassDefinition();
      assert(classDefinition != NULL);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     classDefinition->setCaseInsensitive(true);
+
   // classDefinition->set_endOfConstruct(SOURCE_POSITION);
      setSourcePosition(classDefinition);
 
@@ -2813,6 +2883,9 @@ initialize_global_scope_if_required()
           ROSE_ASSERT(globalScope != NULL);
           ROSE_ASSERT(globalScope->get_parent() != NULL);
 
+       // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+          globalScope->setCaseInsensitive(true);
+
        // DQ (8/21/2008): endOfConstruct is not set to be consistant with startOfConstruct.
           ROSE_ASSERT(globalScope->get_endOfConstruct()   != NULL);
           ROSE_ASSERT(globalScope->get_startOfConstruct() != NULL);
@@ -2832,6 +2905,20 @@ initialize_global_scope_if_required()
           astScopeStack.front()->get_startOfConstruct()->display("In initialize_global_scope_if_required(): start");
           astScopeStack.front()->get_endOfConstruct  ()->display("In initialize_global_scope_if_required(): end");
 #endif
+        }
+
+  // Testing the scope stack...
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     std::list<SgScopeStatement*>::iterator scopeInterator = astScopeStack.begin();
+     while (scopeInterator != astScopeStack.end())
+        {
+          if ((*scopeInterator)->isCaseInsensitive() == false)
+             {
+               printf ("##### Error (in initialize_global_scope_if_required): the scope handling is set to case sensitive scopeInterator = %p = %s \n",*scopeInterator,(*scopeInterator)->class_name().c_str());
+            // (*scopeInterator)->setCaseInsensitive(true);
+             }
+          ROSE_ASSERT((*scopeInterator)->isCaseInsensitive() == true);
+          scopeInterator++;
         }
    }
 
@@ -4704,6 +4791,10 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
      SgFunctionDefinition* procedureDefinition = new SgFunctionDefinition(procedureDeclaration,procedureBody);
 
      ROSE_ASSERT(procedureDeclaration->get_definition() != NULL);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     procedureBody->setCaseInsensitive(true);
+     procedureDefinition->setCaseInsensitive(true);
 
   // Set the scope
      procedureDeclaration->set_scope(currentScopeOfFunctionDeclaration);

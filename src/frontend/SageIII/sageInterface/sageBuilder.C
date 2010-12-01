@@ -20,6 +20,11 @@ using namespace SageInterface;
 std::list<SgScopeStatement*> SageBuilder::ScopeStack(0);
 
 
+// DQ (11/30/2010): Added support for building Fortran case insensitive symbol table handling.
+//! Support for construction of case sensitive/insensitive symbol table handling in scopes.
+bool SageBuilder::symbol_table_case_insensitive_semantics = false;
+
+
 void SageBuilder::pushScopeStack (SgScopeStatement* stmt)
 {
   ROSE_ASSERT(stmt);
@@ -889,6 +894,14 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
   ROSE_ASSERT(func_body);
   SgFunctionDefinition * func_def = new SgFunctionDefinition(func,func_body);
   ROSE_ASSERT(func_def);
+
+  // DQ (11/28/2010): Added specification of case insensitivity (e.g. Fortran).
+  if (symbol_table_case_insensitive_semantics == true)
+     {
+       func_def->setCaseInsensitive(true);
+       func_body->setCaseInsensitive(true);
+     }
+
   func_def->set_parent(func);
   func_def->set_body(func_body);
   func_body->set_parent(func_def);
@@ -2482,6 +2495,11 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true
   // ROSE_ASSERT(false_body); -- this is not required anymore
   SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
   ROSE_ASSERT(ifstmt);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       ifstmt->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(ifstmt);
   conditional->set_parent(ifstmt);
   true_body->set_parent(ifstmt);
@@ -2493,6 +2511,11 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
 {
   SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
   ROSE_ASSERT(ifstmt);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       ifstmt->setCaseInsensitive(true);
+
   setOneSourcePositionNull(ifstmt);
   if (conditional) conditional->set_parent(ifstmt);
   if (true_body) true_body->set_parent(ifstmt);
@@ -2506,6 +2529,11 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
 {
   SgForStatement * result = new SgForStatement(test,increment, loop_body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   if (test) 
     test->set_parent(result);
@@ -2551,6 +2579,11 @@ SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt
 {
   SgForStatement * result = new SgForStatement(test,increment, loop_body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   if (test) test->set_parent(result);
   if (loop_body) loop_body->set_parent(result);
@@ -2596,6 +2629,11 @@ SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement 
   ROSE_ASSERT(body);
   SgWhileStmt * result = new SgWhileStmt(condition,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   condition->set_parent(result);
   body->set_parent(result);
@@ -2606,6 +2644,11 @@ SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatem
 {
   SgWhileStmt * result = new SgWhileStmt(condition,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   if (condition) condition->set_parent(result);
   if (body) body->set_parent(result);
@@ -2697,6 +2740,11 @@ SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt1, SgStatement* st
 {
   SgBasicBlock* result = new SgBasicBlock();
   ROSE_ASSERT(result);
+
+// DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   if (stmt1) SageInterface::appendStatement(stmt1, result);
   if (stmt2) SageInterface::appendStatement(stmt2, result);
@@ -2715,6 +2763,11 @@ SgBasicBlock * SageBuilder::buildBasicBlock_nfi()
 {
   SgBasicBlock* result = new SgBasicBlock();
   ROSE_ASSERT(result);
+
+// DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   return result;
 }
@@ -2805,6 +2858,11 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
 {
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   if (item_selector) item_selector->set_parent(result);
   if (body) body->set_parent(result);
@@ -2815,6 +2873,11 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement_nfi(SgStatement *item_selec
 {
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   if (item_selector) item_selector->set_parent(result);
   if (body) body->set_parent(result);
@@ -3407,6 +3470,7 @@ SgNamespaceDefinitionStatement* SageBuilder::buildNamespaceDefinition(SgNamespac
       result = new SgNamespaceDefinitionStatement(d);
     
     ROSE_ASSERT(result);
+
     setOneSourcePositionForTransformation(result);
     return result;
   }
@@ -3425,6 +3489,11 @@ SgClassDefinition* SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NU
       result = new SgClassDefinition();
     
     ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+    if (symbol_table_case_insensitive_semantics == true)
+         result->setCaseInsensitive(true);
+
     setOneSourcePositionForTransformation(result);
     return result;
   }
@@ -3441,6 +3510,11 @@ SgClassDefinition* SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*
       result = new SgClassDefinition();
     
     ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+    if (symbol_table_case_insensitive_semantics == true)
+         result->setCaseInsensitive(true);
+
     setOneSourcePositionNull(result);
     return result;
   }

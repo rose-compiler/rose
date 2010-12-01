@@ -3984,8 +3984,22 @@ void c_action_entity_decl(Token_t * id)
             // DQ (9/11/2010): There is not associated SgVariableSymbol associated with this, so we need to build one.
             // This fixes test2010_45.f90 which references a variable declared in the same variable declaration.
                SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+
+            // DQ (11/29/2010): Set the scope for the SgInitializedName IR node (caught when trying to output (print) the symbol table).
+               initializedName->set_scope(getTopOfScopeStack());
+
                ROSE_ASSERT(astScopeStack.empty() == false);
                astScopeStack.front()->insert_symbol(name,variableSymbol);
+
+            // Test the symbol tables and the new support for case insensitive symbol tables.
+               ROSE_ASSERT(astScopeStack.front()->symbol_exists(name) == true);
+               ROSE_ASSERT(astScopeStack.front()->isCaseInsensitive() == true);
+               SgName invertedCaseName = name.invertCase();
+               ROSE_ASSERT(astScopeStack.front()->symbol_exists(invertedCaseName) == true);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
              }
         }
      ROSE_ASSERT(initializedName != NULL);
@@ -7169,7 +7183,7 @@ void c_action_data_ref(int numPartRef)
           SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(variableName,getTopOfScopeStack());
        // DQ (5/15/2008): Introduced as a temporary test!
        // ROSE_ASSERT(functionSymbol == NULL);
-          printf ("result of call to trace_back_through_parent_scopes_lookup_function_symbol() = %p \n",functionSymbol);
+       // printf ("result of call to trace_back_through_parent_scopes_lookup_function_symbol() = %p \n",functionSymbol);
 
        // DQ (4/29/2008): Added support for detecting derived types
           SgClassSymbol* classSymbol       = trace_back_through_parent_scopes_lookup_derived_type_symbol(variableName,getTopOfScopeStack());
@@ -9794,6 +9808,9 @@ void c_action_where_stmt__begin()
      SgBasicBlock* body  = new SgBasicBlock();
      ROSE_ASSERT(body != NULL);
 
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     body->setCaseInsensitive(true);
+
      SgWhereStatement* whereStatement = new SgWhereStatement(NULL,body,NULL);
 
   // DQ (1/23/2008): This will be set later when we have more information about its source position.
@@ -9988,6 +10005,9 @@ void c_action_where_construct_stmt(Token_t *id, Token_t *whereKeyword, Token_t *
      SgBasicBlock* body = new SgBasicBlock();
   // SgBasicBlock* falseBlock = new SgBasicBlock();
 
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     body->setCaseInsensitive(true);
+
      SgWhereStatement* whereStatement = new SgWhereStatement(condition,body,NULL);
 
   // setSourcePosition(whereStatement);
@@ -10068,6 +10088,9 @@ void c_action_masked_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_
      astExpressionStack.pop_front();
 
      SgBasicBlock* body = new SgBasicBlock();
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     body->setCaseInsensitive(true);
 
      SgElseWhereStatement* elseWhereStatement = new SgElseWhereStatement(condition,body,NULL);
 
@@ -10163,6 +10186,9 @@ void c_action_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_t *wher
 
      SgExpression* condition  = new SgNullExpression();
      SgBasicBlock* body = new SgBasicBlock();
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     body->setCaseInsensitive(true);
 
      SgElseWhereStatement* elseWhereStatement = new SgElseWhereStatement(condition,body,NULL);
 
@@ -10451,7 +10477,14 @@ void c_action_forall_stmt__begin()
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
      SgBasicBlock* body  = new SgBasicBlock();
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     body->setCaseInsensitive(true);
+
      SgForAllStatement* forAllStatement = new SgForAllStatement(NULL,body);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     forAllStatement->setCaseInsensitive(true);
 
      setSourcePosition(body);
      body->set_parent(forAllStatement);
@@ -10614,6 +10647,11 @@ void c_action_if_then_stmt( Token_t *label, Token_t *id, Token_t *ifKeyword, Tok
      SgBasicBlock* true_block  = new SgBasicBlock();
      SgBasicBlock* false_block = new SgBasicBlock();
      SgIfStmt* ifStatement     = new SgIfStmt(conditionalStatement,true_block,false_block);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     true_block->setCaseInsensitive(true);
+     false_block->setCaseInsensitive(true);
+     ifStatement->setCaseInsensitive(true);
 
   // Save the if-stmt that might be the start the a chain of if-then-else-if-else-endif
      astIfStatementStack.push_front(ifStatement);
@@ -10926,6 +10964,11 @@ void c_action_if_stmt__begin()
      SgBasicBlock* false_block = new SgBasicBlock();
      SgIfStmt* ifStatement     = new SgIfStmt((SgStatement*)NULL,true_block,false_block);
 
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     true_block->setCaseInsensitive(true);
+     false_block->setCaseInsensitive(true);
+     ifStatement->setCaseInsensitive(true);
+
   // astIfStatementStack.push_front(ifStatement);
 
      setSourcePosition(true_block);
@@ -11076,8 +11119,15 @@ void c_action_select_case_stmt(Token_t *label, Token_t *id, Token_t *selectKeywo
      SgBasicBlock* body  = new SgBasicBlock();
      ROSE_ASSERT(body != NULL);
 
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     body->setCaseInsensitive(true);
+
      SgSwitchStatement* switchStatement = new SgSwitchStatement(itemSelectorStatement,body);
      ROSE_ASSERT(selectKeyword != NULL);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     switchStatement->setCaseInsensitive(true);
+
      setSourcePosition(switchStatement,selectKeyword);
 
   // A valid id is will be a named label
@@ -11126,6 +11176,9 @@ void c_action_case_stmt(Token_t *label, Token_t *caseKeyword, Token_t *id, Token
 
      SgBasicBlock* body  = new SgBasicBlock();
      ROSE_ASSERT(body != NULL);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     body->setCaseInsensitive(true);
 
      SgStatement* caseOrDefaultStatement = NULL;
 
@@ -11392,8 +11445,14 @@ void c_action_association_list__begin()
      SgBasicBlock* body  = new SgBasicBlock();
      ROSE_ASSERT(body != NULL);
 
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     body->setCaseInsensitive(true);
+
      SgAssociateStatement* associateStatement = new SgAssociateStatement();
      associateStatement->set_body(body);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     associateStatement->setCaseInsensitive(true);
 
      setSourcePosition(associateStatement);
 
@@ -11797,6 +11856,10 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
 
      SgBasicBlock* body = new SgBasicBlock();
      ROSE_ASSERT(body != NULL);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     body->setCaseInsensitive(true);
+
      setSourcePosition(body);
 
   // SgStatement* loopStatement = NULL;
@@ -11817,6 +11880,9 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
           resetSourcePosition(expressionStatement,predicate);
 
           SgWhileStmt* whileStatement = new SgWhileStmt(expressionStatement,body);
+
+       // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+          whileStatement->setCaseInsensitive(true);
 
        // ROSE_ASSERT(body->get_parent() == whileStatement);
           body->set_parent(whileStatement);
@@ -11852,6 +11918,9 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
 
        // SgFortranDo* fortranDo = new SgFortranDo(index,startingIndex,endingIndex,stride,body);
           SgFortranDo* fortranDo = new SgFortranDo(indexExpression,endingIndex,stride,body);
+
+       // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+          fortranDo->setCaseInsensitive(true);
 
        // ROSE_ASSERT(body->get_parent() == fortranDo);
           body->set_parent(fortranDo);
@@ -15679,6 +15748,10 @@ void c_action_program_stmt(Token_t *label, Token_t *programKeyword, Token_t *id,
      SgBasicBlock* programBody               = new SgBasicBlock();
      SgFunctionDefinition* programDefinition = new SgFunctionDefinition(programDeclaration,programBody);
 
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     programBody->setCaseInsensitive(true);
+     programDefinition->setCaseInsensitive(true);
+
      astScopeStack.push_front(programDefinition);
      astScopeStack.push_front(programBody);
 
@@ -19156,8 +19229,10 @@ void c_action_rice_co_with_team_stmt(Token_t *label, Token_t *team_id) {
         printf("ERROR: Rice 'with team' statement without identifier\n");
 
      SgBasicBlock * body = new SgBasicBlock(Sg_File_Info::generateDefaultFileInfo());
-
      ROSE_ASSERT(body != NULL);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     body->setCaseInsensitive(true);
 
      setSourcePosition(body,team_id);
 
@@ -19176,6 +19251,9 @@ void c_action_rice_co_with_team_stmt(Token_t *label, Token_t *team_id) {
 
      SgCAFWithTeamStatement *withTeam = new SgCAFWithTeamStatement(teamIdReference, body);
    
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     withTeam->setCaseInsensitive(true);
+
      setSourcePosition(withTeam,team_id);
 
      SgScopeStatement* currentScope = getTopOfScopeStack();

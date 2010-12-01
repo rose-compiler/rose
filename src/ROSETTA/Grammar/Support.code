@@ -3499,33 +3499,45 @@ HEADER_SYMBOL_TABLE_PREDECLARATION_START
 
 std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv );
 
+// forward class declaration to support case sensitive/insensitive symbol tables.
+class rose_hash_multimap;
+
 /*! \brief Name equality operator support for symbol tables within ROSE.
  */
 struct eqstr
    {
-     bool operator()(const SgName  & s1, const SgName & s2) const
-        {
-       // DQ (11/27/2010): This is where we can implement the case insensitive support in ROSE.
-       // return s1.getString() == s2.getString();
-          return s1 == s2;
-        }
+  // DQ (12/22/2005): Added constructor to support case insensitive name semantics
+     const rose_hash_multimap* hash_multimap;
+
+  // DQ (12/22/2005): Added constructor to support case insensitive name semantics
+     eqstr(const rose_hash_multimap* p) : hash_multimap(p) {}
+
+  // The definition of this function requires the reference to the member function 
+  // rose_hash_multimap::get_case_insensitive_semantics() so it must be seen after 
+  // the rose_hash_multimap class definition.
+     bool operator()(const SgName & s1, const SgName & s2) const;
    };
 
 /*! \brief Hash name support for symbol tables within ROSE.
  */
 struct hash_Name
    {
+  // DQ (12/22/2005): Added constructor to support case insensitive name semantics
+     const rose_hash_multimap* hash_multimap;
+
   // CH (4/8/2010): Use boost::unordered instead     
   // CH (4/13/2010): Use boost::hash<string> instead  
   // rose_hash::hash<const char*> hasher;
      rose_hash::hash<std::string> hasher;
 
      public:
-          size_t operator()(const SgName & name) const
-             {
-            // CH (4/8/2010): Use boost::unordered instead     
-               return hasher(name.str());
-             }
+       // DQ (12/22/2005): Added constructor to support case insensitive name semantics
+          hash_Name(const rose_hash_multimap* p) : hash_multimap(p) {}
+
+       // The definition of this function requires the reference to the member function 
+       // rose_hash_multimap::get_case_insensitive_semantics() so it must be seen after 
+       // the rose_hash_multimap class definition.
+          size_t operator()(const SgName & name) const;
    };
 
 /*! \brief Hash table support for symbol tables within ROSE.
@@ -3546,29 +3558,59 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
    {
      protected:
           SgNode * parent;
+          bool case_insensitive_semantics;
 
      public:
        // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
-          rose_hash_multimap()
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
+#if 0
+       // DQ (11/27/2010): Older version of code before adding support for case insensitive behavior.
+          rose_hash_multimap(bool case_insensitive_semantics = false)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(boost::unordered_detail::default_bucket_count,hash_Name(),eqstr(case_insensitive_semantics)), parent(NULL)
              {}
 
-          rose_hash_multimap(int sz) 
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
+         rose_hash_multimap(int sz, bool case_insensitive_semantics = false)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz,hash_Name(),eqstr(case_insensitive_semantics)), parent(NULL)
              {}
 
-          rose_hash_multimap(const rose_hash_multimap& rhs) 
+          rose_hash_multimap(const rose_hash_multimap & rhs)
              : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs), parent(rhs.parent)
              {}
+#else
+       // DQ (11/27/2010): Newer version of code after adding support for case insensitive behavior.
+          rose_hash_multimap()
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(boost::unordered_detail::default_bucket_count,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
+             {}
 
+         rose_hash_multimap(int sz)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
+             {}
+
+          rose_hash_multimap(const rose_hash_multimap & rhs)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs), parent(rhs.parent), case_insensitive_semantics(rhs.case_insensitive_semantics)
+             {}
+#endif
           void set_parent(SgNode * new_parent) 
              {
                parent = new_parent;
              }
 
-          SgNode * get_parent()
+          SgNode* get_parent() const
              {
                return parent;
+             }
+
+       // DQ (11/28/2010): Added support to set/unset case sensitivity in symbol table handling.
+          void set_case_insensitive_semantics(bool b) 
+             {
+               case_insensitive_semantics = b;
+             }
+
+       // DQ (11/28/2010): Added support to set/unset case sensitivity in symbol table handling.
+          bool get_case_insensitive_semantics() const
+             {
+               return case_insensitive_semantics;
              }
 
           void delete_elements()
@@ -3637,22 +3679,21 @@ HEADER_SYMBOL_TABLE_START
        // ~SgSymbolTable();
 
        // General function used to build AST
-       // void insert ( const SgName & name, SgSymbol *sp, bool case_insensitive = false );
           void insert ( const SgName & name, SgSymbol *sp );
 
 #if 1
        // DQ (11/27/2010): Changing the return type to "bool"
        // DQ (1/31/2007): Depricated (is not well named and should return bool)
        // int  find   ( const SgName & name, SgSymbol *sp, bool case_insensitive = false ) ROSE_DEPRECATED_FUNCTION;
-          bool find   ( const SgName & name, SgSymbol *sp, bool case_insensitive = false ) ROSE_DEPRECATED_FUNCTION;
+          bool find   ( const SgName & name, SgSymbol *sp ) ROSE_DEPRECATED_FUNCTION;
 #endif
 
        // DQ (1/31/2007): New functions that will replace the depricated find() member function
        // Note that this is log n in complexity
-          bool exists ( const SgName &, SgSymbol *sp, bool case_insensitive = false ) const; //! Complexity O(log n), checks for existence of symbol before matching against names.
+          bool exists ( const SgName &, SgSymbol *sp ) const; //! Complexity O(log n), checks for existence of symbol before matching against names.
 
        // DQ (1/31/2007): This is log n in complexity
-          bool exists ( const SgName & name, bool case_insensitive = false) const;               //! Complexity O(log n)
+          bool exists ( const SgName & name) const;               //! Complexity O(log n)
 
        // DQ (1/31/2007): This is linear in complexity (expensive)
           bool exists ( const SgSymbol *sp ) const;           //! Complexity O(log n)
@@ -3672,7 +3713,7 @@ HEADER_SYMBOL_TABLE_START
        // function type table are the names unique.  For non-function type symbol 
        // tables classes and typedefs can have the same name (e.g. "typedef struct X {} X;")
        // so removing the name might have unexpected results!
-          void remove_function_type ( const SgName & name, bool case_insensitive = false); //! Complexity O(log n)
+          void remove_function_type ( const SgName & name); //! Complexity O(log n)
 
 #if 0
        // DQ (1/30/2007): Added remove functions for each sort of SgSymbol IR node
@@ -3711,20 +3752,20 @@ HEADER_SYMBOL_TABLE_START
        // These function search first against the name and then iteratively continue through 
        // the internal STL container to look for an entry that match the name and the type of
        // the SgSymbol.  This is optimially fast only for the case where there are unique names.
-          SgSymbol*          find_any(const SgName & name, bool case_insensitive = false );                    //! Complexity O(log n) for first match against name, then O(n)
-          SgVariableSymbol*  find_variable(const SgName & name, bool case_insensitive = false );               //! Complexity O(log n) for first match against name, then O(n)
-          SgClassSymbol*     find_class(const SgName & name, bool case_insensitive = false );                  //! Complexity O(log n) for first match against name, then O(n)
-          SgFunctionSymbol*  find_function(const SgName& name, bool case_insensitive = false );                //! Complexity O(log n) for first match against name, then O(n)
-          SgFunctionSymbol*  find_function(const SgName&, const SgType* name, bool case_insensitive = false ); //! Complexity O(log n) for first match against name, then O(n)
-          SgFunctionTypeSymbol* find_function_type(const SgName& name, bool case_insensitive = false );        //! Complexity O(log n) for first match against name, then O(n)
+          SgSymbol*          find_any(const SgName & name);                    //! Complexity O(log n) for first match against name, then O(n)
+          SgVariableSymbol*  find_variable(const SgName & name);               //! Complexity O(log n) for first match against name, then O(n)
+          SgClassSymbol*     find_class(const SgName & name);                  //! Complexity O(log n) for first match against name, then O(n)
+          SgFunctionSymbol*  find_function(const SgName& name);                //! Complexity O(log n) for first match against name, then O(n)
+          SgFunctionSymbol*  find_function(const SgName&, const SgType* name); //! Complexity O(log n) for first match against name, then O(n)
+          SgFunctionTypeSymbol* find_function_type(const SgName& name);        //! Complexity O(log n) for first match against name, then O(n)
 
        // Additional find functions (using name)
-          SgTypedefSymbol*   find_typedef(const SgName & name, bool case_insensitive = false );    //! Complexity O(log n) for first match against name, then O(n)
-          SgEnumSymbol*      find_enum(const SgName & name, bool case_insensitive = false );       //! Complexity O(log n) for first match against name, then O(n)
-          SgEnumFieldSymbol* find_enum_field(const SgName & name, bool case_insensitive = false ); //! Complexity O(log n) for first match against name, then O(n)
-          SgLabelSymbol*     find_label(const SgName & name, bool case_insensitive = false );      //! Complexity O(log n) for first match against name, then O(n)
-          SgNamespaceSymbol* find_namespace(const SgName & name, bool case_insensitive = false );  //! Complexity O(log n) for first match against name, then O(n)
-          SgTemplateSymbol*  find_template(const SgName & name, bool case_insensitive = false );   //! Complexity O(log n) for first match against name, then O(n)
+          SgTypedefSymbol*   find_typedef(const SgName & name);    //! Complexity O(log n) for first match against name, then O(n)
+          SgEnumSymbol*      find_enum(const SgName & name);       //! Complexity O(log n) for first match against name, then O(n)
+          SgEnumFieldSymbol* find_enum_field(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
+          SgLabelSymbol*     find_label(const SgName & name);      //! Complexity O(log n) for first match against name, then O(n)
+          SgNamespaceSymbol* find_namespace(const SgName & name);  //! Complexity O(log n) for first match against name, then O(n)
+          SgTemplateSymbol*  find_template(const SgName & name);   //! Complexity O(log n) for first match against name, then O(n)
 
 #if 0
        // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
@@ -3809,6 +3850,16 @@ HEADER_SYMBOL_TABLE_START
 
       //! Generates name from any IR node used to generate symbols (only works on specific IR nodes)
           SgName get_name( const SgNode* node) const;
+
+       // DQ (11/28/2010): Added case sensitive/insensitive option to symbol table behavior.
+      /*! \brief Query of scope symbol table behavior (is symbol table behavior case sensitive (C/C++) or case insensitive (Fortran).
+
+          Note that a case insensitive symbol table can only be built that way from the SgSymbolTable constructor 
+          and not be toggled back and forth at will.
+       */
+          bool isCaseInsensitive() const;
+          void setCaseInsensitive(bool b);
+
 
 HEADER_SYMBOL_TABLE_END
 
@@ -4112,7 +4163,10 @@ HEADER_NAME_START
 
           int operator!=(const SgName& n1) const;
           int operator==(const SgName& n1) const;
-          int operator<(const SgName& n1) const;
+          int operator< (const SgName& n1) const;
+
+       // DQ (11/27/2010): Added to support case sensitive and case insensitive semantics.
+          static bool caseInsensitiveEquality ( const SgName & x, const SgName & y );
 
        // Added to support assignments to string variables.
           operator std::string () const;
@@ -4165,6 +4219,8 @@ HEADER_NAME_START
 
        // DQ (11/15/2004): Added to support general string operations (first used in the unparser)
           SgName & operator+= (const SgName & n1);
+
+          SgName invertCase() const;
 
 HEADER_NAME_END
 
@@ -5750,21 +5806,76 @@ SOURCE_END
 
 SOURCE_SYMBOL_TABLE_START
 
+// This function was moved to be defined outside of eqstr so that we could 
+// reference the data member rose_hash_multimap::case_insensitive_semantics.
+bool
+eqstr::operator()(const SgName & s1, const SgName & s2) const
+   {
+  // DQ (11/27/2010): This is where we can implement the case insensitive support in ROSE.
+  // return s1.getString() == s2.getString();
+  // return s1 == s2;
+
+     ROSE_ASSERT(hash_multimap != NULL);
+  // printf ("@@@@@ hash_multimap->get_case_insensitive_semantics() = %s s1 = %s s2 = %s \n",(hash_multimap->get_case_insensitive_semantics() == true) ? "true" : "false",s1.str(),s2.str());
+  // ROSE_ASSERT(hash_multimap->get_case_insensitive_semantics() == true);
+
+     if (hash_multimap->get_case_insensitive_semantics() == true)
+        {
+          return SgName::caseInsensitiveEquality(s1,s2);
+        }
+       else
+        {
+       // This is the SgName::operator==(const SgName & s1, const SgName & s2) member function
+          return s1 == s2;
+        }
+   }
+
+size_t
+hash_Name::operator()(const SgName & name) const
+   {
+  // CH (4/8/2010): Use boost::unordered instead
+  // return hasher(name.str());
+
+     ROSE_ASSERT(hash_multimap != NULL);
+  // printf ("In hash_Name::operator(): hash_multimap->get_case_insensitive_semantics() = %s name = %s \n",hash_multimap->get_case_insensitive_semantics() ? "true" : "false",name.str());
+
+  // ROSE_ASSERT(hash_multimap->get_case_insensitive_semantics() == true);
+
+     if (hash_multimap->get_case_insensitive_semantics() == true)
+        {
+       // We need to compute the hash on the normalized form of the name (pick lower case).
+          std::string s = name;
+
+       // Convert string to lower case.
+          std::transform(s.begin(), s.end(),s.begin(),::tolower);
+       // printf ("In hash_Name::operator(): transformed name = %s to lower case s = %s \n",name.str(),s.c_str());
+
+       // Return hashed value on the normalized (lower case) string.
+          return hasher(s.c_str());
+        }
+       else
+        {
+          return hasher(name.str());
+        }
+   }
+
 // DQ (2/19/2007): Added mechanism to turn off expensive error checking!
 #define SYMBOL_TABLE_ERROR_CHECKING 1
 
 // DQ (7/24/2005): Make this a constant in the function if it is not used elsewhere!
 // #define SYMTBL_INIT_SZ 16
 
+// DQ (11/27/2010): Added support for case sensitive and case insensitive symbol table (internal name matching).
+// SgSymbolTable::SgSymbolTable(bool case_insensitive)
 SgSymbolTable::SgSymbolTable()
    : p_no_name(true)
    {
   // This should always be a non-null pointer (and never shared)!
      int symbolTableSize = 17;
-// CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSCx_VER
+
+  // CH (4/8/2010): Use boost::unordered instead
 #if 0
-	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(). \n");
+     printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(). \n");
      p_table = new BaseHashType();
 #else
      p_table = new BaseHashType(symbolTableSize);
@@ -5777,7 +5888,10 @@ SgSymbolTable::SgSymbolTable()
 // larger for certain scopes (e.g global scope usually has a 
 // lot more symbols.
 
+// DQ (11/27/2010): Added support for case sensitive and case insensitive symbol table (internal name matching).
 // DQ (1/31/2007): This function is not used!
+// SgSymbolTable::SgSymbolTable(int symbolTableSize)
+// SgSymbolTable::SgSymbolTable(int symbolTableSize, bool case_insensitive)
 SgSymbolTable::SgSymbolTable(int symbolTableSize)
    : p_no_name(true)
    {
@@ -5786,15 +5900,50 @@ SgSymbolTable::SgSymbolTable(int symbolTableSize)
   // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
   // p_table = new SgSymbolHashMultiMap(sz);
 
-// CH (4/8/2010): Use boost::unordered instead     
+// CH (4/8/2010): Use boost::unordered instead
 //#ifdef _MSCx_VER
 #if 0
-	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(int symbolTableSize). \n");
+     printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(int symbolTableSize). \n");
      p_table = new BaseHashType();
 #else
      p_table = new BaseHashType(symbolTableSize);
 #endif
      assert (p_table != NULL);
+   }
+
+bool
+SgSymbolTable::isCaseInsensitive() const
+   {
+  // Case sensitive symbol tables are used for C/C++ and case insensitive scopes are for Fortran.
+  // Note that a case insensitive symbol table can only be built that way from the constructor 
+  // and not be toggled back and forth at will.
+
+     ROSE_ASSERT(p_table != NULL);
+     return p_table->get_case_insensitive_semantics();
+   }
+
+void
+SgSymbolTable::setCaseInsensitive(bool b)
+   {
+  // Case sensitive symbol tables are used for C/C++ and case insensitive scopes are for Fortran.
+  // Note that a case insensitive symbol table can only be built that way from the constructor 
+  // and not be toggled back and forth at will.
+
+     ROSE_ASSERT(p_table != NULL);
+
+  // Make it NOT an error to redundantly set the case sensitivity/insensitivity.
+     bool changingCaseSensitivity = b != p_table->get_case_insensitive_semantics();
+     if (changingCaseSensitivity == true)
+        {
+          if (p_table->empty() == false)
+             {
+               printf ("Error: Can't change case sensitivity of non-empty symbol table.\n");
+               printf ("   Solution: set the case sensitivity/insensitivity earlier in processing (immediately after the call to build the scope) \n");
+             }
+          ROSE_ASSERT(p_table->empty() == true);
+
+          p_table->set_case_insensitive_semantics(b);
+        }
    }
 
 std::ostream & operator<< ( std::ostream & os, const rose_hash_multimap::iterator & rhm_it )
@@ -6163,7 +6312,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 // symbol table editing is required.  Since SgFunctionTypeSymbols are
 // shared removing such symbols is a rather dangerous actvity!
 void
-SgSymbolTable::remove_function_type( const SgName & name, bool case_insensitive )
+SgSymbolTable::remove_function_type( const SgName & name )
    {
   // This is non-destructive (does not delete the symbol, only removes it from the symbol table).
 
@@ -6491,7 +6640,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
 // DQ (2/10/2007): This is a depricated function
 // int (changed the return type)
 bool
-SgSymbolTable::find(const SgName & nm, SgSymbol *sp, bool case_insensitive)
+SgSymbolTable::find(const SgName & nm, SgSymbol *sp)
    {
      assert(p_table != NULL);
 
@@ -6519,7 +6668,7 @@ SgSymbolTable::find(const SgName & nm, SgSymbol *sp, bool case_insensitive)
 
 // DQ (1/31/2007): New functions that will replace the depricated find() member function
 bool
-SgSymbolTable::exists ( const SgName & nm, bool case_insensitive ) const
+SgSymbolTable::exists ( const SgName & nm ) const
    {
      assert(p_table != NULL);
      return p_table->find(nm) != p_table->end();
@@ -6536,7 +6685,7 @@ SgSymbolTable::exists ( const SgSymbol *sp ) const
 
 // DQ (1/31/2007): New functions that will replace the depricated find() member function
 bool
-SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp, bool case_insensitive ) const
+SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp ) const
    {
   // DQ (3/10/2007): We can now use the stored p_symbolSet (STL set of SgNode*) to do this test more efficiently.
   // Since we if we find the symbol it exists, we can test the name separately
@@ -6588,7 +6737,7 @@ SgSymbolTable::findany(const SgName &nm)
 #endif
 
 SgSymbol*
-SgSymbolTable::find_any(const SgName & nm, bool case_insensitive)
+SgSymbolTable::find_any(const SgName & nm)
    {
      assert(p_table != NULL);
      if(p_table)
@@ -6610,7 +6759,7 @@ SgSymbolTable::find_any(const SgName & nm, bool case_insensitive)
 
 // DQ (1/30/2007): Added these back into ROSE.
 SgTypedefSymbol*
-SgSymbolTable::find_typedef(const SgName &nm, bool case_insensitive)
+SgSymbolTable::find_typedef(const SgName & nm)
    {
      assert(p_table != NULL);
      if(p_table)
@@ -6635,7 +6784,7 @@ SgSymbolTable::find_typedef(const SgName &nm, bool case_insensitive)
 
 // DQ (1/30/2007): Added these back into ROSE.
 SgEnumSymbol*
-SgSymbolTable::find_enum(const SgName &nm, bool case_insensitive)
+SgSymbolTable::find_enum(const SgName & nm)
    {
      assert(p_table != NULL);
      if(p_table != NULL)
@@ -6660,7 +6809,7 @@ SgSymbolTable::find_enum(const SgName &nm, bool case_insensitive)
 
 // DQ (1/30/2007): Added these back into ROSE.
 SgEnumFieldSymbol*
-SgSymbolTable::find_enum_field(const SgName &nm, bool case_insensitive)
+SgSymbolTable::find_enum_field(const SgName & nm)
    {
      assert(p_table != NULL);
      if(p_table)
@@ -6693,7 +6842,7 @@ SgSymbolTable::findvar(const SgName & nm)
 #endif
 
 SgVariableSymbol*
-SgSymbolTable::find_variable(const SgName & nm, bool case_insensitive)
+SgSymbolTable::find_variable(const SgName & nm)
    {
      assert(this != NULL);
      assert(p_table != NULL);
@@ -6755,7 +6904,7 @@ SgSymbolTable::findclass(const SgName &nm)
 #endif
 
 SgClassSymbol*
-SgSymbolTable::find_class(const SgName &nm, bool case_insensitive)
+SgSymbolTable::find_class(const SgName & nm)
    {
      assert(p_table != NULL);
 
@@ -6815,7 +6964,7 @@ SgSymbolTable::findfunctype(const SgName &nm)
 #endif
 
 SgFunctionTypeSymbol*
-SgSymbolTable::find_function_type(const SgName &nm, bool case_insensitive)
+SgSymbolTable::find_function_type(const SgName & nm)
    {
      assert(p_table != NULL);
      SgFunctionTypeSymbol* returnFunctionType = NULL;
@@ -6833,7 +6982,7 @@ SgSymbolTable::find_function_type(const SgName &nm, bool case_insensitive)
    }
 
 SgLabelSymbol*
-SgSymbolTable::find_label(const SgName &nm, bool case_insensitive)
+SgSymbolTable::find_label(const SgName & nm)
    {
      assert(p_table != NULL);
      if (p_table)
@@ -6857,7 +7006,7 @@ SgSymbolTable::find_label(const SgName &nm, bool case_insensitive)
 
 // DQ (1/30/2007): Added these back into ROSE.
 SgNamespaceSymbol* 
-SgSymbolTable::find_namespace ( const SgName & nm, bool case_insensitive )
+SgSymbolTable::find_namespace ( const SgName & nm )
    {
      assert(p_table != NULL);
      if (p_table)
@@ -6882,14 +7031,14 @@ SgSymbolTable::find_namespace ( const SgName & nm, bool case_insensitive )
 #if 0
 // DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 SgFunctionSymbol*
-SgSymbolTable::findfunc(const SgName &nm, const SgType* t)
+SgSymbolTable::findfunc(const SgName & nm, const SgType* t)
    {
      return find_function(nm,t);
    }
 #endif
 
 SgFunctionSymbol*
-SgSymbolTable::find_function (const SgName &nm, const SgType* t, bool case_insensitive)
+SgSymbolTable::find_function (const SgName & nm, const SgType* t)
    {
   // AS (083006): cleaned up logic so that the function only have one return statement.
 
@@ -6929,14 +7078,14 @@ SgSymbolTable::find_function (const SgName &nm, const SgType* t, bool case_insen
 #if 0
 // DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 SgFunctionSymbol*
-SgSymbolTable::findfunc(const SgName &nm)
+SgSymbolTable::findfunc(const SgName & nm)
    {
      return find_function(nm);
    }
 #endif
 
 SgFunctionSymbol*
-SgSymbolTable::find_function(const SgName &nm, bool case_insensitive)
+SgSymbolTable::find_function(const SgName & nm)
    {
      assert(p_table != NULL);
 
@@ -7017,12 +7166,9 @@ SgSymbolTable::find_function(const SgName &nm, bool case_insensitive)
    }
 
 SgTemplateSymbol*
-SgSymbolTable::find_template(const SgName &nm, bool case_insensitive)
+SgSymbolTable::find_template(const SgName & nm)
    {
      assert(p_table != NULL);
-
-  // This is only used for C++ and so we can expect case_insensitive to always be false.
-     ROSE_ASSERT(case_insensitive == false);
 
      if(p_table)
         {
@@ -7952,7 +8098,6 @@ SgSymbolTable::get_symbols() const
 
      return returnSet;
    }
-
 
 SOURCE_SYMBOL_TABLE_END
 
@@ -8899,6 +9044,20 @@ SgName::operator==(const SgName& n1) const
      return p_char == n1.p_char;
    }
 
+// DQ (11/27/2010): Added support for case insensitive name matching.
+bool
+SgName::caseInsensitiveEquality ( const SgName & x, const SgName & y )
+   {
+  // This function checks a case insensitive match of x against y.
+  // This is required because Fortran is case insensitive.
+
+     size_t x_length = x.p_char.length();
+     size_t y_length = y.p_char.length();
+
+     return (x_length == y_length) ? strncasecmp(x.p_char.c_str(),y.p_char.c_str(),x_length) == 0 : false;
+   }
+
+
 int
 SgName::operator<(const SgName& n1) const
    {
@@ -9072,6 +9231,28 @@ SgName::assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & 
       
      return returnName;
    }
+
+SgName
+SgName::invertCase() const
+   {
+     string s = p_char;
+
+     char* str = &(s[0]);
+     while(*str)
+        {
+          if(isupper(*str)) 
+               *str = tolower(*str);  
+            else
+               if(islower(*str)) 
+                    *str = toupper(*str); 
+          str++; 
+        }
+
+  // printf ("In SgName::invertCase() s = %s return_name = %s \n",this->str(),s.c_str());
+
+     return s;
+   }
+
 
 
 SOURCE_NAME_END
