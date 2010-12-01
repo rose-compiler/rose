@@ -431,22 +431,6 @@ void VariableRenaming::insertGlobalVarDefinitions()
             originalDefTable[func][entry].push_back(func);
         }
     }
-
-
-    //Iterate the function calls and insert definitions for all global variables
-    std::vector<SgFunctionCallExp*> calls = SageInterface::querySubTree<SgFunctionCallExp>(project, V_SgFunctionCallExp);
-    foreach(std::vector<SgFunctionCallExp*>::value_type& iter, calls)
-    {
-        SgFunctionCallExp* call = iter;
-        ROSE_ASSERT(call);
-
-        //Iterate the global table insert a def for each name at the function call
-        foreach(GlobalTable::value_type& entry, globalVarList)
-        {
-            //Add this function call as a definition point of this variable
-            originalDefTable[call][entry].push_back(call);
-        }
-    }
 }
 
 void VariableRenaming::toDOT(const std::string fileName)
