@@ -2251,6 +2251,14 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 27: { /* 0x1b, alarm */
+            syscall_enter("alarm", "d");
+            int result = alarm(arg(0));
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
         case 30: { /* 0x1e, utime */
 
             /*
