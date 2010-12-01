@@ -181,14 +181,6 @@ void StaticSingleAssignment::run()
 	reachingDefsTable.clear();
 	localUsesTable.clear();
 	useTable.clear();
-	globalVarList.clear();
-
-	if (getDebug())
-		cout << "Locating global variables." << endl;
-
-	findGlobalVars();
-	//Insert the global variables as being defined at every function call
-	insertGlobalVarDefinitions();
 
 	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
 	DefsAndUsesTraversal defUseTrav(this);
@@ -243,57 +235,6 @@ void StaticSingleAssignment::run()
 
 			//Annotate phi functions with dependencies
 			annotatePhiNodeWithConditions(func, controlDependencies);
-		}
-	}
-}
-
-void StaticSingleAssignment::findGlobalVars()
-{
-	vector<SgInitializedName*> vars = SageInterface::querySubTree<SgInitializedName> (project, V_SgInitializedName);
-
-	foreach(SgInitializedName* iter, vars)
-	{
-		//Ignore library/compiler generated variables.
-		if (isFromLibrary(iter))
-			continue;
-
-		//Check if we are in global scope.
-		SgNode* scope = iter->get_scope();
-		if (isSgGlobal(scope))
-		{
-			//Since forward declaration parameters are inserted in global scope,
-			//Check if we are in a forward declaration
-			if (SageInterface::getEnclosingFunctionDeclaration(iter))
-			{
-				//We are in a declaration, so not a global var.
-				continue;
-			}
-			//Add the variable to the global scope and name it.
-			VarUniqueName *uName = new VarUniqueName(iter);
-			iter->setAttribute(StaticSingleAssignment::varKeyTag, uName);
-			//Add to the global var list
-			globalVarList.push_back(uName->getKey());
-			if (getDebug())
-				cout << "Added global variable [" << iter->get_name().getString() << "] - " << iter << endl;
-		}
-	}
-}
-
-void StaticSingleAssignment::insertGlobalVarDefinitions()
-{
-	if (getDebug())
-		cout << "Global Var List size: " << globalVarList.size() << endl;
-
-	//Iterate the function calls and insert definitions for all global variables
-	vector<SgFunctionCallExp*> calls = SageInterface::querySubTree<SgFunctionCallExp>(project, V_SgFunctionCallExp);
-
-	foreach(SgFunctionCallExp* call, calls)
-	{
-		//Iterate the global table insert a def for each name at the function call
-		foreach(VarName& entry, globalVarList)
-		{
-			//Add this function call as a definition point of this variable
-			originalDefTable[call].insert(entry);
 		}
 	}
 }

@@ -211,10 +211,7 @@ public:
 
 	/** Describes the defs or uses at each node. This is for local, rather than propagated, information. */
 	typedef boost::unordered_map<SgNode*, std::set<VarName> > LocalDefUseTable;
-	
-	/** A list of names. */
-	typedef std::vector<VarName> GlobalTable;
-	
+
 	/** A filtered CFGNode that is used for DefUse traversal.  */
 	typedef FilteredCFGNode<ssa_private::IsDefUseFilter> FilteredCfgNode;
 	
@@ -263,9 +260,6 @@ private:
 	/** Map from each node to the variables used at that node and their reaching definitions. */
 	UseTable useTable;
 
-	/** A list of all the global varibales in the program.  */
-	GlobalTable globalVarList;
-
 	/** Local definitions (actual definitions, not phi definitions). */
 	boost::unordered_map<SgNode*, NodeReachingDefTable> ssaLocalDefTable;
 
@@ -290,16 +284,8 @@ public:
 private:
 	void runDefUseDataFlow(SgFunctionDefinition* func);
 
-	/** Locate all global varibales and add them to the table. */
-	void findGlobalVars();
-
 	/** Returns true if the variable is implicitly defined at the function entry by the compiler. */
 	bool isBuiltinVar(const VarName& var);
-
-	/** Inserts definition points for all global variables.
-	 * 2. At every function call expression.
-	 */
-	void insertGlobalVarDefinitions();
 
 	/** Expand all member definitions (chained names) to define every name in the chain
 	 * that is shorter than the originally defined name.
@@ -432,15 +418,6 @@ public:
 	LocalDefUseTable& getUseTable()
 	{
 		return localUsesTable;
-	}
-
-	/** Get the listing of global variables.
-	 *
-	 * @return Global Var List.
-	 */
-	GlobalTable& getGlobalVarList()
-	{
-		return globalVarList;
 	}
 
 	/** Returns the reaching definitions at the given node. If there is a definition at the node itself,
