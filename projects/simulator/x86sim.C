@@ -326,6 +326,20 @@ print_dentries_64(FILE *f, const uint8_t *sa, size_t sz)
     return print_dentries_helper(f, sa, sz, 8);
 }
 
+static int
+print_bitvec(FILE *f, const uint8_t *vec, size_t sz)
+{
+    int result=0;
+    for (size_t i=0; i<sz; i++) {
+        for (size_t j=0; j<8; j++) {
+            if (vec[i] & (1<<j)) {
+                result += fprintf(f, "%s%zu", result?",":"", i*8+j);
+            }
+        }
+    }
+    return result;
+}
+
 static const Translate seek_whence[] = {TE(SEEK_SET), TE(SEEK_CUR), TE(SEEK_END), T_END};
 
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
