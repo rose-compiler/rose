@@ -1,4 +1,4 @@
-README for the new Hudson support in ROSE (Continuous Integeration)
+README for the new Hudson support in ROSE (Continuous Integration)
 
 ##########  WHAT WE HAVE LEARDED ABOUT WORKING WITH HUDSON #############
 
@@ -13,13 +13,13 @@ it will retest that branch if you click "Build Now" or restart Hudson.
 because the "master" branch has advanced to the point that there are
 merge conflicts.
 
-4. How to cancle a hudson job: 
+4. How to cancel a hudson job: 
    First, the "x" next to the job in the "Build History" list does not work.  However,
 if you go to the "Hudson" web page (http://tux269.llnl.gov:8080) instead of the
 ROSE-matrix web page (http://tux269.llnl.gov:8080/job/ROSE-matrix/); then
 you can click on the link (something line "Building ROSE-matrix #xxx)
 and if you click on the "x" there is will quickly cancel the job (first it
-cancles the pending builds in the "Build Queue" and then it will
+cancels the pending builds in the "Build Queue" and then it will
 (after a few seconds) cancel the currently running jobs.
 
 #################  How to restart Hudson  ################
