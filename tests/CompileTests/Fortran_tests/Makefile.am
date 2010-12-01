@@ -164,6 +164,8 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_62.f90 \
      test2010_63.f90 \
      test2010_64.f90 \
+     test2010_111.f90 \
+     test2010_112.f90 \
      canonicalExample.f90
 
 
@@ -380,8 +382,6 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_108.f90 \
      test2010_109.f90 \
      test2010_110.f90 \
-     test2010_111.f90 \
-     test2010_112.f90 \
      fCaller.f90 \
      triangle.f90
 
@@ -664,12 +664,16 @@ testMPItypes:
 	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_types.f03
 	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_interfaces_test.f03
 
+testMultipleFortranFiles: $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90
+	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90 || cat $(srcdir)/test2010_79.f90 rose_test2010_79.f90
+
 # DQ (11/5/2010): This bug causes the unparsed second file to include a Fortran "include" statement (magically).
 # Note that the compilation will generate an error not caught by make since the use of "cat" will succeed.
 riceBug1: $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90
 	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90 || cat $(srcdir)/test2010_79.f90 rose_test2010_79.f90
 
 # DQ (11/5/2010): When unparsed, this file is missing the statement "i1 = 1" in the generated code.
+# DQ (11/30/2010): Rice has a fix for this in their merge that should be checked in shortly.
 riceBug2:$(srcdir)/test2010_78.f90 $(srcdir)/test2010_80.f90
 #	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90
 #	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_80.f90
@@ -688,6 +692,7 @@ tests:
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
 	@$(MAKE) testCPP_Defines
 	@$(MAKE) testMPItypes
+	@$(MAKE) testMultipleFortranFiles
 	@echo "***************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make tests rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
@@ -701,6 +706,7 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
 	@$(MAKE) testCPP_Defines
 	@$(MAKE) testMPItypes
+	@$(MAKE) testMultipleFortranFiles
 #	DQ (4/6/2010): This fails on Hudson, but I don't know why.
 #	@$(MAKE) testParser
 else
@@ -733,7 +739,7 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
    test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08 \
    module_A_file.f90 module_B_file.f90 test2010_31_header.f90 test2010_50.h test2010_54.h test2010_55.h \
    original_mpif.h inputUsingDefinesOnCommandline.F90 fortran_foo_single_quote.h fortran_foo_double_quote.h \
-   cpp_foo.h cpp_foobar.h
+   cpp_foo.h cpp_foobar.h ISO_C_BINDING.f03 mpi_f08_types.f03 mpi_f08_interfaces_test.f03
 
 # DQ (3/12/2010): Fortran 2008 tests from OFP
 # f08-tests

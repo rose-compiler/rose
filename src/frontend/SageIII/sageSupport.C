@@ -2505,6 +2505,11 @@ SgSourceFile::initializeGlobalScope()
      set_globalScope( new SgGlobal( globalScopeFileInfo ) );
      ROSE_ASSERT (get_globalScope() != NULL);
 
+     if (SageBuilder::symbol_table_case_insensitive_semantics == true)
+        {
+          get_globalScope()->setCaseInsensitive(true);
+        }
+
   // DQ (2/15/2006): Set the parent of the SgGlobal IR node
      get_globalScope()->set_parent(this);
 
@@ -2648,6 +2653,10 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                file->set_outputLanguage(SgFile::e_Fortran_output_language);
 
                file->set_Fortran_only(true);
+
+            // DQ (11/30/2010): This variable activates scopes built within the SageBuilder
+            // interface to be built to use case insensitive symbol table handling.
+               SageBuilder::symbol_table_case_insensitive_semantics = true;
 
             // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true).
             // DQ (12/23/2008): Actually this is not redundant since the SgFile::initialization sets it to "false".
