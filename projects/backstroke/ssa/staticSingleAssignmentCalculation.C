@@ -229,7 +229,7 @@ void StaticSingleAssignment::run()
 			//Create ReachingDef objects for all original definitions
 			populateLocalDefsTable(func->get_declaration());
 			//Insert phi functions at join points
-			insertPhiFunctions(func);
+			multimap< FilteredCfgNode, pair<FilteredCfgNode, FilteredCfgEdge> > controlDependencies = insertPhiFunctions(func);
 
 			//Renumber all instantiated ReachingDef objects
 			renumberAllDefinitions(func);
@@ -240,6 +240,9 @@ void StaticSingleAssignment::run()
 
 			//We have all the propagated defs, now update the use table
 			buildUseTable(func);
+
+			//Annotate phi functions with dependencies
+			annotatePhiNodeWithConditions(func, controlDependencies);
 		}
 	}
 }
@@ -753,7 +756,8 @@ void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaratio
 }
 
 
-void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
+multimap< StaticSingleAssignment::FilteredCfgNode, pair<StaticSingleAssignment::FilteredCfgNode, StaticSingleAssignment::FilteredCfgEdge> > 
+StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
 {
 	if (getDebug())
 		printf("Inserting phi nodes in function %s...\n", function->get_declaration()->get_name().str());
@@ -811,6 +815,10 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
 	map<FilteredCfgNode, set<FilteredCfgNode> > domFrontiers =
 			calculateDominanceFrontiers<FilteredCfgNode, FilteredCfgEdge>(function, NULL, &iPostDominatorMap);
 
+	//Calculate control dependencies (for annotating the phi functions)
+	multimap< FilteredCfgNode, pair<FilteredCfgNode, FilteredCfgEdge> > controlDependencies =
+			calculateControlDependence<FilteredCfgNode, FilteredCfgEdge>(function, iPostDominatorMap);
+
 	//Find the phi function locations for each variable
 	VarName var;
 	vector<FilteredCfgNode> definitionPoints;
@@ -840,8 +848,7 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
 		}
 	}
 
-	//For shizzle, calculate those control dependencies
-	calculateControlDependence<FilteredCfgNode, FilteredCfgEdge>(function, iPostDominatorMap);
+	return controlDependencies;
 }
 
 void StaticSingleAssignment::populateLocalDefsTable(SgFunctionDeclaration* function)
@@ -949,5 +956,37 @@ void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* functi
 
 			reachingDef->setRenamingNumber(index);
 		}
+	}
+}
+
+void StaticSingleAssignment::annotatePhiNodeWithConditions(SgFunctionDefinition* function,
+			const std::multimap< FilteredCfgNode, std::pair<FilteredCfgNode, FilteredCfgEdge> > & controlDependencies)
+{
+	//Find all the phi functions
+	struct FindPhiNodes : public AstSimpleProcessing
+	{
+		StaticSingleAssignment* ssa;
+		unordered_set<ReachingDefPtr> phiNodes;
+
+		void visit(SgNode* astNode)
+		{
+			foreach(NodeReachingDefTable::value_type& varDefPair, ssa->reachingDefsTable[astNode].first)
+			{
+				if (varDefPair.second->isPhiFunction())
+				{
+					phiNodes.insert(varDefPair.second);
+				}
+			}
+		}
+	};
+
+	FindPhiNodes trav;
+	trav.ssa = this;
+	trav.traverse(function, preorder);
+
+	foreach(ReachingDefPtr phiDef, trav.phiNodes)
+	{
+		FilteredCfgNode phiNode = phiDef->getDefinitionNode()->cfgForBeginning();
+		
 	}
 }

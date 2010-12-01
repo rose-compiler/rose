@@ -3,6 +3,7 @@
 #include <map>
 #include <utility>
 #include "sage3basic.h"
+#include "staticSingleAssignment.h"
 #include <boost/foreach.hpp>
 
 namespace ssa_private
@@ -68,6 +69,12 @@ namespace ssa_private
 
 					//Add a control dependence from the source to the new node
 					controlDepdendences.insert(make_pair(currNode, make_pair(sourceNode, edge)));
+
+					if (StaticSingleAssignment::getDebug())
+					{
+						printf("%s is control-dependent on %s - %s \n", currNode.toStringForDebugging().c_str(),
+							sourceNode.toStringForDebugging().c_str(), edge.condition() == VirtualCFG::eckTrue ? "true" : "false");
+					}
 
 					//Move to the parent of the current node
 					parentIter = iPostDominatorMap.find(currNode);

@@ -347,8 +347,9 @@ private:
 	std::set<VarName> getVarsUsedInSubtree(SgNode* root);
 
 	/** Find where phi functions need to be inserted and insert empty phi functions at those nodes.
-	 * This updates the IN part of the reaching def table with Phi functions. */
-	void insertPhiFunctions(SgFunctionDefinition* function);
+	 * This updates the IN part of the reaching def table with Phi functions.
+	 * @returns the control dependencies. */
+	std::multimap< FilteredCfgNode, std::pair<FilteredCfgNode, FilteredCfgEdge> > insertPhiFunctions(SgFunctionDefinition* function);
 
 	/** Create ReachingDef objects for each local def and insert them in the local def table. */
 	void populateLocalDefsTable(SgFunctionDeclaration* function);
@@ -368,6 +369,9 @@ private:
 	/** Once all the reaching def information has been propagated, uses the reaching def information and the local
 	 * use information to match uses to their reaching defs. */
 	void buildUseTable(SgFunctionDefinition* func);
+
+	void annotatePhiNodeWithConditions(SgFunctionDefinition* function,
+			const std::multimap< FilteredCfgNode, std::pair<FilteredCfgNode, FilteredCfgEdge> > & controlDependencies);
 
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
