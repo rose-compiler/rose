@@ -3123,124 +3123,72 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 142: { /*0x8e , select */
-            /* The select system call
-                  int select(int nfds, fd_set *readfds, fd_set *writefds,
-                                    fd_set *exceptfds, struct timeval *timeout);
-               #undef __NFDBITS
-               #define __NFDBITS       (8 * sizeof(unsigned long))
+            /* From the Linux kernel (fs/select.c):
+             *    SYSCALL_DEFINE5(select, int, n, fd_set __user *, inp, fd_set __user *, outp,
+             *                    fd_set __user *, exp, struct timeval __user *, tvp)
+             * where:
+             *    fd_set is enough "unsigned long" data to contain 1024 bits. Regardless of the size of "unsigned long",
+             *    the file bits will be in the same order (we are the host is little endian), and the fd_set is the same size. */
+            syscall_enter("select", "dPPPP",
+                          sizeof(fd_set), print_bitvec,
+                          sizeof(fd_set), print_bitvec,
+                          sizeof(fd_set), print_bitvec,
+                          sizeof(timeval_32), print_timeval_32);
+            do {
+                int fd = arg(0);
+                uint32_t in_va=arg(1), out_va=arg(2), ex_va=arg(3), tv_va=arg(4);
 
-               #undef __FD_SETSIZE
-               #define __FD_SETSIZE    1024
+                fd_set in, out, ex;
+                fd_set *inp=NULL, *outp=NULL, *exp=NULL;
 
-               #undef __FDSET_LONGS
-               #define __FDSET_LONGS   (__FD_SETSIZE/__NFDBITS)
+                ROSE_ASSERT(128==sizeof(fd_set)); /* 128 bytes = 1024 file descriptor bits */
+                if (in_va && sizeof(in)==map->read(&in, in_va, sizeof in))
+                    inp = &in;
+                if (out_va && sizeof(out)==map->read(&out, out_va, sizeof out))
+                    outp = &out;
+                if (ex_va && sizeof(ex)==map->read(&ex, ex_va, sizeof ex))
+                    exp = &ex;
 
-               //The size of this datastructure should allow for 
-               //1024 file descriptors
-               typedef struct {
-                   unsigned long fds_bits [__FDSET_LONGS];
-               } __kernel_fd_set;
+                timeval_32 guest_timeout;
+                timeval host_timeout, *tvp=NULL;
+                if (tv_va) {
+                    if (sizeof(guest_timeout)!=map->read(&guest_timeout, tv_va, sizeof guest_timeout)) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                        break;
+                    } else {
+                        host_timeout.tv_sec = guest_timeout.tv_sec;
+                        host_timeout.tv_usec = guest_timeout.tv_usec;
+                        tvp = &host_timeout;
+                    }
+                }
 
-               typedef __kernel_fd_set fd_set;
+                int result = select(fd, inp, outp, exp, tvp);
+                if (-1==result) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
 
-               select()  and  pselect()  allow  a  program to monitor multiple file 
-               descriptors, waiting until one or more of the file descriptors
-               become "ready" for some class of I/O operation (e.g., input possible).  
-               A file descriptor is considered ready if it is possible  to
-               perform the corresponding I/O operation (e.g., read(2)) without blocking.
+                if ((in_va  && sizeof(in) !=map->write(inp,  in_va,  sizeof in))  ||
+                    (out_va && sizeof(out)!=map->write(outp, out_va, sizeof out)) ||
+                    (ex_va  && sizeof(ex) !=map->write(exp,  ex_va,  sizeof ex))) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
 
-
-            */
-            syscall_enter("select", "dpppp");
-
-            struct fd_set32{
-                unsigned long fds_bits[32];
-            };
-
-            uint32_t fd = arg(0);
-
-            //FIXME:
-            //System call is currently only tested on 32 bit, the data structure does
-            //seem to be of the same size for 32 and 64 bit, but for 64 bit the field 
-            //fd_set32.fds_bits is of length 16 instead of 32. I am not quite sure 
-            //how to convert between the two.
-            ROSE_ASSERT(sizeof( fd_set32) == sizeof(fd_set) );
-
-
-            fd_set* readfds   = NULL;
-            fd_set* writefds  = NULL;
-            fd_set* exceptfds = NULL;
-
-            //uint8_t byte;
-            size_t nread;
-            // = map->read(&byte, arg(1), 1);
-            //ROSE_ASSERT(1==nread);
-
-            if( arg(1) ){ 
-                readfds = new fd_set;
-                nread = map->read(readfds, arg(1), sizeof(fd_set) );
-                ROSE_ASSERT( nread == sizeof(fd_set) );
-            }
-
-            //nread = map->read(&byte, arg(2), 1);
-            //ROSE_ASSERT(1==nread);
-
-            if( arg(2) ){
-                writefds = new fd_set;
-                nread = map->read(writefds, arg(2), sizeof(fd_set) );
-                ROSE_ASSERT( nread == sizeof(fd_set) );
-            }
-
-            //nread = map->read(&byte, arg(3), 1);
-            //ROSE_ASSERT(1==nread);
-
-
-            if( arg(3) ){
-                exceptfds = new fd_set;
-                nread = map->read(exceptfds, arg(3), sizeof(fd_set) );
-                ROSE_ASSERT( nread == sizeof(fd_set) );
-            }
-
-            kernel_timeval timeout;
-            nread = map->read(&timeout, arg(4), sizeof(kernel_timeval) );
-            ROSE_ASSERT( nread == sizeof(kernel_timeval) );
-
-            timeval timeout64;
-            timeout64.tv_sec  = timeout.tv_sec;
-            timeout64.tv_usec = timeout.tv_usec;
-
-            select(fd, readfds, writefds, exceptfds, &timeout64);
-
-            //nread = map->read(&byte, arg(1), 1);
-            //ROSE_ASSERT(1==nread);
-
-
-            if( arg(1) ){
-                size_t nwritten = map->write(readfds, arg(1), sizeof(fd_set) );
-                ROSE_ASSERT(nwritten==sizeof(fd_set) );
-                delete readfds;
-            }
-
-            //nread = map->read(&byte, arg(2), 1);
-            //ROSE_ASSERT(1==nread);
-
-
-            if( arg(2) ){
-                size_t nwritten = map->write(writefds, arg(2), sizeof(fd_set));
-                ROSE_ASSERT( nwritten==sizeof(fd_set) );
-                delete writefds;
-            }
-
-            // nread = map->read(&byte, arg(3), 1);
-            // ROSE_ASSERT(1==nread);
-
-
-            if( arg(3) ){
-                size_t nwritten = map->write(exceptfds, arg(3), sizeof(fd_set) );
-                ROSE_ASSERT(nwritten==sizeof(fd_set));
-                delete exceptfds;
-            }
-
+                if (tvp) {
+                    guest_timeout.tv_sec = tvp->tv_sec;
+                    guest_timeout.tv_usec = tvp->tv_usec;
+                    if (sizeof(guest_timeout)!=map->write(&guest_timeout, tv_va, sizeof guest_timeout)) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                        break;
+                    }
+                }
+            } while (0);
+            syscall_leave("d-PPPP",
+                          sizeof(fd_set), print_bitvec,
+                          sizeof(fd_set), print_bitvec,
+                          sizeof(fd_set), print_bitvec,
+                          sizeof(timeval_32), print_timeval_32);
             break;
         }
 
