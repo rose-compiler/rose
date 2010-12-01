@@ -3033,18 +3033,23 @@ EmulationPolicy::emulate_syscall()
                                   ((perms & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
             if (va % PAGE_SIZE) {
                 writeGPR(x86_gpr_ax, -EINVAL);
-                break;
-            }
-            uint32_t aligned_sz = ALIGN_UP(size, PAGE_SIZE);
+            } else {
+                uint32_t aligned_sz = ALIGN_UP(size, PAGE_SIZE);
 
-            try {
-                map->mprotect(MemoryMap::MapElement(va, aligned_sz, rose_perms));
-            } catch (const MemoryMap::NotMapped &e) {
-                writeGPR(x86_gpr_ax, -EFAULT);
-                break;
+                /* Set protection in the underlying real memory (to catch things like trying to add write permission to memory
+                 * that's mapped from a read-only file), then also set the protection in the simulated memory map so the simulator
+                 * can make queries about memory access. */
+                if (-1==mprotect(my_addr(va, size), size, perms)) {
+                    writeGPR(x86_gpr_ax, -errno);
+                } else {
+                    try {
+                        map->mprotect(MemoryMap::MapElement(va, aligned_sz, rose_perms));
+                        writeGPR(x86_gpr_ax, 0);
+                    } catch (const MemoryMap::NotMapped &e) {
+                        writeGPR(x86_gpr_ax, -ENOMEM);
+                    }
+                }
             }
-
-            writeGPR(x86_gpr_ax, 0);
 
             syscall_leave("d");
             if (debug && trace_mmap) {
