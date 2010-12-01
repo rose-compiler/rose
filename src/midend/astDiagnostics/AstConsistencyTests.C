@@ -498,6 +498,8 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (2/23/2009): Test the declarations to make sure that defining and non-defining appear in the same file (for outlining consistency).
      TestMultiFileConsistancy::test();
 
+  // DQ (11/28/2010): Test to make sure that Fortran is using case insensitive symbol tables and that C/C++ is using case sensitive symbol tables.
+     TestForProperLanguageAndSymbolTableCaseSensitivity::test(sageProject);
 
 #if 1
   // Comment out to see if we can checkin what we have fixed recently!
@@ -5051,5 +5053,90 @@ MemoryCheckingTraversalForAstFileIO::visit ( SgNode* node )
   // printf ("MemoryCheckingTraversalForAstFileIO::visit: node = %s \n",node->class_name().c_str());
      ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
      node->checkDataMemberPointersIfInMemoryPool();
+   }
+
+
+
+
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute::
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute(bool b)
+   : sourceFile(NULL), 
+     caseInsensitive(b)
+   {
+   }
+
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute::
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute(const TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute & X)
+   {
+     sourceFile      = X.sourceFile;
+     caseInsensitive = X.caseInsensitive; 
+   }
+
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute
+TestForProperLanguageAndSymbolTableCaseSensitivity::evaluateInheritedAttribute(SgNode* node, TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute inheritedAttribute)
+   {
+  // The default is to make all symbol tables (scopes) case sensitive, and then detect use of Fortran 
+  // files (SgSourceFile IR nodes) and make all of their symbol tables (scopes) case insensitive.
+     TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute return_inheritedAttribute(inheritedAttribute);
+
+     SgSourceFile* sourceFile = isSgSourceFile(node);
+     if (sourceFile != NULL)
+        {
+       // printf ("Found SgSourceFile for %s get_Fortran_only() = %s \n",sourceFile->getFileName().c_str(),sourceFile->get_Fortran_only() ? "true" : "false");
+
+          return_inheritedAttribute.sourceFile = sourceFile;
+          if (sourceFile->get_Fortran_only() == true)
+             {
+               return_inheritedAttribute.caseInsensitive = true;
+             }
+        }
+
+     SgScopeStatement* scope = isSgScopeStatement(node);
+     if (scope != NULL)
+        {
+       // This is a scope, now check if it matches the case sensitivity from the file (stored in the inherited attribute).
+       // printf ("Note: scope = %p = %s scope->isCaseInsensitive() = %s inheritedAttribute.caseInsensitive = %s \n",scope,scope->class_name().c_str(),scope->isCaseInsensitive() ? "true" : "false",return_inheritedAttribute.caseInsensitive ? "true" : "false");
+
+          if (scope->isCaseInsensitive() != return_inheritedAttribute.caseInsensitive)
+             {
+               printf ("Error: scope->isCaseInsensitive() = %s inheritedAttribute.caseInsensitive = %s \n",scope->isCaseInsensitive() ? "true" : "false",return_inheritedAttribute.caseInsensitive ? "true" : "false");
+               scope->get_startOfConstruct()->display("scope->isCaseInsensitive() incorrectly set");
+               ROSE_ASSERT(return_inheritedAttribute.sourceFile != NULL);
+               SgSourceFile* sourceFile = inheritedAttribute.sourceFile;
+               if (sourceFile->get_Fortran_only() == true)
+                  {
+                    printf ("Fortran file %s should have an AST with scopes marked as case insensitive \n",sourceFile->getFileName().c_str());
+                  }
+                 else
+                  {
+                    printf ("Non-fortran file %s should have an AST with scopes marked as case sensitive \n",sourceFile->getFileName().c_str());
+                  }
+             }
+          ROSE_ASSERT(scope->isCaseInsensitive() == return_inheritedAttribute.caseInsensitive);
+        }
+
+  // Return the inherited attribue (will call the implemented copy constructor).
+     return return_inheritedAttribute;
+   }
+
+
+void
+TestForProperLanguageAndSymbolTableCaseSensitivity::test(SgNode* node)
+   {
+  // Inherited attribute with caseInsensitive marked as false.
+     bool caseInsensitive = false;
+     TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute IH(caseInsensitive);
+
+     TestForProperLanguageAndSymbolTableCaseSensitivity traversal; // (node,IH);
+
+  // printf ("Traversing AST to support TestForProperLanguageAndSymbolTableCaseSensitivity::test() \n");
+  // ROSE_ASSERT(false);
+
+  // This should be a SgProject or SgFile so that we can evaluate the language type (obtained from the SgFile).
+     ROSE_ASSERT(isSgProject(node) != NULL || isSgFile(node) != NULL);
+
+     traversal.traverse(node,IH);
+
+  // printf ("DONE: Traversing AST to support TestForProperLanguageAndSymbolTableCaseSensitivity::test() \n");
    }
 
