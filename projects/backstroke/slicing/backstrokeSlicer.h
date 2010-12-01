@@ -46,8 +46,11 @@ public:
 
 	void addCriterion(SgNode* node)
 	{
-		if (isVariable(node))
-			criteria_.insert(node);
+		if (SgExpression* expr = isSgExpression(node))
+		{
+			if (isVariable(expr))
+				criteria_.insert(expr);
+		}
 		/*
 		//if (!isSgVarRefExp(node) && !isSgArrow)
 		std::vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(node);
@@ -58,6 +61,27 @@ public:
 
 	SgFunctionDeclaration* slice();
 
+
+	//! Returns if a AST node is a variable.
+	static bool isVariable(SgExpression* expr);
+
+	//! Returns the variable name for the given node.
+	static VarName getVarName(SgNode* node)
+	{ return VariableRenaming::getVarName(node); }
+
+	//! Get all direct defs in the given node. Note that for the expression "a = ++b", only a is returned.
+	static std::set<SgNode*> getDirectDefs(SgNode* node);
+
+	//! Get all direct uses in the given node. Note that for the expression "a = (b += c)", only b is returned.
+	//! The second parameter indicates if a direct def is considered as a use. It's used for recursively finding
+	//! uses. For example, "a = (b = c)" has a direct use of "b". In the first call of this function, "useDef" should be
+	//! set to false, so "a" is not a direct use. When this function is called recursively on the expression "b = c",
+	//! "useDef" is set to true, then "b" is a direct use and "c" is not.
+	static std::set<SgExpression*> getDirectUses(SgNode* node, bool useDef = false);
+
+	//! Get the lvalue expression in the given node. For example, the lvalue for the expression (a, ++b) is b.
+	static SgExpression* getLValue(SgExpression* expr);
+
 private:
 	//! Build the function only containing the slice.
 	SgFunctionDeclaration* buildSlicedFunction();
@@ -67,16 +91,6 @@ private:
 
 	//! Copy an expression according to the slice.
 	SgExpression* copySlicedExpression(SgExpression* expr) const;
-
-	//! Returns if a AST node is a variable.
-	bool isVariable(SgNode* node) const;
-
-	//! Returns the variable name for the given node.
-	VarName getVarName(SgNode* node) const
-	{ return VariableRenaming::getVarName(node); }
-
-	//! Get all direct defs in the given node. Note that for the expression a = ++b, only a is returned.
-	std::set<VarName> getDef(SgNode* node) const;
 
 };
 
