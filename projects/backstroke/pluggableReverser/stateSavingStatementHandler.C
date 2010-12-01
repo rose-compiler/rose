@@ -111,7 +111,7 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 
 	vector<VariableRenaming::VarName> modified_vars = getAllDefsAtNode(stmt);
 
-#if 1
+#if 0
 	cout << "Modified vars:\n";
 	foreach (const VariableRenaming::VarName& name, modified_vars)
 		cout << VariableRenaming::keyToString(name) << endl;
@@ -131,6 +131,7 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	cout << "\n\n";
 #endif
 
+#if USE_OTHER_HANDLERS
 	// Reverse the target statement using other handlers.
 	evaluating_stmts_.insert(stmt);
 	vector<EvaluationResult> eval_results = evaluateStatement(stmt, var_table);
@@ -146,6 +147,7 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 		result.setAttribute(modified_vars);
 		results.push_back(result);
 	}
+#endif
 
 	// Here we just use state saving.
 	EvaluationResult result(this, stmt, new_table);
