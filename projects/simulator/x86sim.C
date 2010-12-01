@@ -369,7 +369,7 @@ public:
     rose_addr_t vdso_entry_va;                  /* Entry address for vdso, or zero */
     unsigned core_styles;                       /* What kind of core dump(s) to make for dump_core() */
     std::string core_base_name;                 /* Name to use for core files ("core") */
-    rose_addr_t ld_linux_base_va;               /* Base address for ld-linux.so; see c'tor */
+    rose_addr_t ld_linux_base_va;               /* Base address for ld-linux.so if no preferred addresss for "LOAD#0" */
 
     static const uint32_t SIGHANDLER_RETURN = 0xdeceaced;
 
@@ -395,18 +395,9 @@ public:
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
           signal_return(0), vdso_mapped_va(0), vdso_entry_va(0), core_styles(CORE_ELF), core_base_name("x-core.rose"),
-          ld_linux_base_va(0),
+          ld_linux_base_va(0x40000000),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false), trace_progress(false), trace_signal(false) {
-
-#if 0
-        /* When run under "setarch i386 -LRB3", the ld-linux.so.2 object is mapped at base address 0x40000000. We emulate that
-         * behavior here. */
-        ld_linux_base_va = 0x40000000;
-#else
-        /* apparently not true on hudson-rose-07.llnl.gov [RPM 2010-11-04] */
-        ld_linux_base_va = 0;
-#endif
 
         vdso_name = "x86vdso";
         vdso_paths.push_back(".");
@@ -844,10 +835,12 @@ EmulationPolicy::load(const char *name)
     SimLoader *loader = new SimLoader(interpretation, trace_loader ? debug : NULL, interpname);
 
     /* If we found an interpreter then use its entry address as the start of simulation.  When running the specimen directly
-     * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 even though the libs preferred
-     * addresses start at zero.  We can accomplish the same thing simply by rebasing the library. */
+     * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 if it has no preferred address.  We can
+     * accomplish the same thing simply by rebasing the library. */
     if (loader->interpreter) {
-        loader->interpreter->set_base_va(ld_linux_base_va);
+        SgAsmGenericSection *load0 = loader->interpreter->get_section_by_name("LOAD#0");
+        if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
+            loader->interpreter->set_base_va(ld_linux_base_va);
         writeIP(loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va());
     }
 
