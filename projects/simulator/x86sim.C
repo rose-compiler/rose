@@ -2897,87 +2897,76 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-#if 1
         case 116: { /* 0x74, sysinfo*/
-
-            /*
-
-               int sysinfo(struct sysinfo *info);   
-
-               struct sysinfo {
-               long uptime;             // Seconds since boot 
-                    unsigned long loads[3];  // 1, 5, and 15 minute load averages 
-                    unsigned long totalram;  // Total usable main memory size 
-                    unsigned long freeram;   // Available memory size 
-                    unsigned long sharedram; // Amount of shared memory 
-                    unsigned long bufferram; // Memory used by buffers 
-                    unsigned long totalswap; // Total swap space size 
-                    unsigned long freeswap;  // swap space still available 
-                    unsigned short procs;    // Number of current processes 
-                    unsigned long totalhigh; // Total high memory size 
-                    unsigned long freehigh;  // Available high memory size 
-                    unsigned int mem_unit;   // Memory unit size in bytes 
-                    char _f[20-2*sizeof(long)-sizeof(int)]; // Padding for libc5 
-                  };
-
-            */
             syscall_enter("sysinfo", "p");
 
+            static const size_t guest_extra = 20 - 2*sizeof(uint32_t) - sizeof(int32_t);
+            static const size_t host_extra  = 20 - 2*sizeof(long)     - sizeof(int);
 
-            struct kernel_sysinfo {
-              int32_t uptime;             /* Seconds since boot */
-              uint32_t loads[3];  /* 1, 5, and 15 minute load averages */
-              uint32_t totalram;  /* Total usable main memory size */
-              uint32_t freeram;   /* Available memory size */
-              uint32_t sharedram; /* Amount of shared memory */
-              uint32_t bufferram; /* Memory used by buffers */
-              uint32_t totalswap; /* Total swap space size */
-              uint32_t freeswap;  /* swap space still available */
-              unsigned short procs;    /* Number of current processes */
-              uint32_t totalhigh; /* Total high memory size */
-              uint32_t freehigh;  /* Available high memory size */
-              uint32_t mem_unit;   /* Memory unit size in bytes */
-              char _f[20-2*sizeof(uint32_t)-sizeof(int32_t)]; /* Padding for libc5 */
+            struct guest_sysinfo {      /* Sysinfo to be written into the specimen's memory */
+                int32_t uptime;         /* Seconds since boot */
+                uint32_t loads[3];      /* 1, 5, and 15 minute load averages */
+                uint32_t totalram;      /* Total usable main memory size */
+                uint32_t freeram;       /* Available memory size */
+                uint32_t sharedram;     /* Amount of shared memory */
+                uint32_t bufferram;     /* Memory used by buffers */
+                uint32_t totalswap;     /* Total swap space size */
+                uint32_t freeswap;      /* swap space still available */
+                uint16_t procs;         /* Number of current processes */
+                uint16_t pad;           /* explicit padding for m68k */
+                uint32_t totalhigh;     /* Total high memory size */
+                uint32_t freehigh;      /* Available high memory size */
+                uint32_t mem_unit;      /* Memory unit size in bytes */
+                char _f[guest_extra];   /* Padding for libc5 */
+            } __attribute__((__packed__));
+
+            struct host_sysinfo {
+                long uptime;
+                unsigned long loads[3];
+                unsigned long totalram;
+                unsigned long freeram;
+                unsigned long sharedram;
+                unsigned long bufferram;
+                unsigned long totalswap;
+                unsigned long freeswap;
+                unsigned short procs;
+                unsigned short pad;      
+                unsigned long totalhigh;
+                unsigned long freehigh;
+                unsigned int mem_unit;
+                char _f[host_extra];
             };
 
-            struct sysinfo {
-              long uptime;             // Seconds since boot 
-              unsigned long loads[3];  // 1, 5, and 15 minute load averages 
-              unsigned long totalram;  // Total usable main memory size 
-              unsigned long freeram;   // Available memory size 
-              unsigned long sharedram; // Amount of shared memory 
-              unsigned long bufferram; // Memory used by buffers 
-              unsigned long totalswap; // Total swap space size 
-              unsigned long freeswap;  // swap space still available 
-              unsigned short procs;    // Number of current processes 
-              unsigned long totalhigh; // Total high memory size 
-              unsigned long freehigh;  // Available high memory size 
-              unsigned int mem_unit;   // Memory unit size in bytes 
-              char _f[20-2*sizeof(long)-sizeof(int)]; // Padding for libc5 
-            };
+            host_sysinfo host_sys;
+            int result  = syscall(SYS_sysinfo, &host_sys);
 
-            sysinfo sys;
-            int result  = syscall(SYS_sysinfo, &sys);
+            if (-1==result) {
+                writeGPR(x86_gpr_ax, -errno);
+            } else {
+                guest_sysinfo guest_sys;
+                guest_sys.uptime = host_sys.uptime;
+                for(int i = 0 ; i < 3 ; i++)
+                    guest_sys.loads[i] = host_sys.loads[i];
+                guest_sys.totalram      = host_sys.totalram;
+                guest_sys.freeram       = host_sys.freeram;
+                guest_sys.sharedram     = host_sys.sharedram;
+                guest_sys.bufferram     = host_sys.bufferram;
+                guest_sys.totalswap     = host_sys.totalswap;
+                guest_sys.freeswap      = host_sys.freeswap;
+                guest_sys.procs         = host_sys.procs;
+                guest_sys.pad           = host_sys.pad;
+                guest_sys.totalhigh     = host_sys.totalhigh;
+                guest_sys.mem_unit      = host_sys.mem_unit;
+                memset(guest_sys._f, 0, sizeof(guest_sys._f));
+                memcpy(guest_sys._f, host_sys._f, std::min(guest_extra, host_extra));
 
-            kernel_sysinfo kernel_sys;
-            kernel_sys.uptime = sys.uptime;
-            for(int i = 0 ; i < 3 ; i++)
-               kernel_sys.loads[i] = sys.loads[i];
-            kernel_sys.totalram    = sys.totalram;
-            kernel_sys.freeram     = sys.freeram;
-            kernel_sys.sharedram   = sys.sharedram;
-            kernel_sys.bufferram   = sys.bufferram;
-            kernel_sys.totalswap   = sys.totalswap;
-            kernel_sys.freeswap    = sys.freeswap;
-            kernel_sys.procs       = sys.procs;
-            kernel_sys.totalhigh   = sys.totalhigh;
-            kernel_sys.mem_unit    = sys.mem_unit;
-            for (size_t i = 0; i < 20-2*sizeof(long)-sizeof(int) ; i++)
-              kernel_sys._f[i] = sys._f[i];
-
-            map->write(&kernel_sys, arg(0), sizeof(kernel_sysinfo));
-
-            writeGPR(x86_gpr_ax, result);
+                size_t nwritten = map->write(&guest_sys, arg(0), sizeof(guest_sys));
+                if (nwritten!=sizeof(guest_sys)) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                } else {
+                    writeGPR(x86_gpr_ax, result);
+                }
+            }
             syscall_leave("d");
 
             break;
@@ -3006,7 +2995,6 @@ EmulationPolicy::emulate_syscall()
 
             break;
         }
-#endif
 
         case 122: { /*0x7a, uname*/
             syscall_enter("uname", "p");
