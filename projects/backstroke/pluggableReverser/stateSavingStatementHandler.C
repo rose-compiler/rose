@@ -109,17 +109,9 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	if (evaluating_stmts_.count(stmt) > 0)
 		return results;
 
-	//vector<SgExpression*> modified_vars = getAllModifiedVariables(stmt);
-
-#if 0
-	cout << "\n\n";
-	var_table.print();
-	cout << "\n\n";
-#endif
-
 	vector<VariableRenaming::VarName> modified_vars = getAllDefsAtNode(stmt);
 
-#if 0
+#if 1
 	cout << "Modified vars:\n";
 	foreach (const VariableRenaming::VarName& name, modified_vars)
 		cout << VariableRenaming::keyToString(name) << endl;
@@ -156,7 +148,6 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	}
 
 	// Here we just use state saving.
-	
 	EvaluationResult result(this, stmt, new_table);
 	// Add the attribute to the result.
 	result.setAttribute(modified_vars);
