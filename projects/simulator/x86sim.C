@@ -4193,6 +4193,7 @@ EmulationPolicy::signal_cleanup()
     
     ROSE_ASSERT(signal_return!=0);
     pop(); /* discard signal number */
+    pop(); /* discard signal address */
     writeGPR(x86_gpr_bp, pop());
     writeGPR(x86_gpr_di, pop());
     writeGPR(x86_gpr_si, pop());
