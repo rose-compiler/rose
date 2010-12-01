@@ -53,11 +53,11 @@ namespace ssa_private
 	}
 
 	/** Calculates the dominance frontier for each node in the control flow graph of the given function.
-	 * @param dominatorTree if this is not NULL, the dominator tree is returned here. Each cfg node is mapped to its
-	 *			children in the dominator tree.
-	 * @returns a map from each node to the set of nodes in its dominance frontier.*/
+	 * @param iDominatorMap map from each node to its immediate dominator
+	 * @param iPostDominatorMap map from each node to its immediate postdominator */
 	template<class CfgNodeT, class CfgEdgeT>
-	map<CfgNodeT, set<CfgNodeT> > calculateDominanceFrontiers(SgFunctionDefinition* func, multimap<CfgNodeT, CfgNodeT>* dominatorTree)
+	map<CfgNodeT, set<CfgNodeT> > calculateDominanceFrontiers(SgFunctionDefinition* func, map<CfgNodeT, CfgNodeT>* iDominatorMap,
+		map<CfgNodeT, CfgNodeT>* iPostDominatorMap)
 	{
 		typedef CFG<CfgNodeT, CfgEdgeT> ControlFlowGraph;
 		//Build a CFG first
@@ -98,9 +98,10 @@ namespace ssa_private
 			//Add the edge from dominator to node
 			add_edge(cfgNodeToVertex[dominator], cfgNodeToVertex[node], domTree);
 
-			if (dominatorTree != NULL)
+			if (iDominatorMap != NULL)
 			{
-				dominatorTree->insert(make_pair(dominator, node));
+				ROSE_ASSERT(iDominatorMap->count(node) == 0);
+				iDominatorMap->insert(make_pair(node, dominator));
 			}
 		}
 
@@ -156,6 +157,21 @@ namespace ssa_private
 						currentDominanceFrontier.insert(childDFNode);
 					}
 				}
+			}
+		}
+
+		//While we're at it, calcualte the postdominator tree
+		if (iPostDominatorMap != NULL)
+		{
+			typename ControlFlowGraph::VertexVertexMap postDominatorTreeMap = functionCfg.buildPostdominatorTree();
+
+			BOOST_FOREACH(typename ControlFlowGraph::VertexVertexMap::value_type& nodePostDominatorPair, postDominatorTreeMap)
+			{
+				CfgNodeT node = *functionCfg[nodePostDominatorPair.first];
+				CfgNodeT postDominator = *functionCfg[nodePostDominatorPair.second];
+
+				ROSE_ASSERT(iPostDominatorMap->count(node) == 0);
+				iPostDominatorMap->insert(make_pair(node, postDominator));
 			}
 		}
 

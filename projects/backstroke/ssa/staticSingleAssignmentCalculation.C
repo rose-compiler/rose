@@ -18,6 +18,7 @@
 #include "uniqueNameTraversal.h"
 #include "defsAndUsesTraversal.h"
 #include "iteratedDominanceFrontier.h"
+#include "controlDependence.h"
 
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
@@ -419,7 +420,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 	if (getDebug())
 		printOriginalDefTable();
 	//Keep track of visited nodes
-	boost::unordered_set<SgNode*> visited;
+	unordered_set<SgNode*> visited;
 
 	set<FilteredCfgNode> worklist;
 
@@ -806,8 +807,9 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
 	}
 
 	//Build an iterated dominance frontier for this function
+	map<FilteredCfgNode, FilteredCfgNode> iPostDominatorMap;
 	map<FilteredCfgNode, set<FilteredCfgNode> > domFrontiers =
-			calculateDominanceFrontiers<FilteredCfgNode, FilteredCfgEdge>(function, NULL);
+			calculateDominanceFrontiers<FilteredCfgNode, FilteredCfgEdge>(function, NULL, &iPostDominatorMap);
 
 	//Find the phi function locations for each variable
 	VarName var;
@@ -837,6 +839,9 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function)
 				printf("\t\t%s\n", phiNode.toStringForDebugging().c_str());
 		}
 	}
+
+	//For shizzle, calculate those control dependencies
+	calculateControlDependence<FilteredCfgNode, FilteredCfgEdge>(function, iPostDominatorMap);
 }
 
 void StaticSingleAssignment::populateLocalDefsTable(SgFunctionDeclaration* function)
