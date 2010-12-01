@@ -7,6 +7,8 @@
 namespace Backstroke
 {
 
+using namespace std;
+
 bool CFGNodeFilterForSlicing::filterExpression(SgExpression* expr) const
 {
 	// If this expression has no side effect, and is not used as the condition of if,
@@ -100,66 +102,189 @@ bool CFGNodeFilterForSlicing::operator()(const VirtualCFG::CFGNode& cfgNode) con
 	return true;
 }
 
-bool Slicer::isVariable(SgNode* node) const
+bool Slicer::isVariable(SgExpression* expr)
 {
-	if (isSgVarRefExp(node))
+	if (isSgVarRefExp(expr))
 		return true;
-	if (isSgDotExp(node) || isSgArrowExp(node))
+	if (isSgDotExp(expr) || isSgArrowExp(expr))
 	{
-		SgBinaryOp* binOp = isSgBinaryOp(node);
-		if (isVariable(binOp->get_lhs_operand()) &&
+		SgBinaryOp* binOp = isSgBinaryOp(expr);
+		if (//isVariable(binOp->get_lhs_operand()) &&
 			isVariable(binOp->get_rhs_operand()))
 			return true;
 	}
+	if (isSgPntrArrRefExp(expr))
+		return true;
+	
 	return false;
 }
 
-std::set<Slicer::VarName> Slicer::getDef(SgNode* node) const
+set<SgNode*> Slicer::getDirectDefs(SgNode* node)
 {
-	std::set<VarName> defs;
+	set<SgNode*> defs;
 
 	if (SgVariableDeclaration* varDecl = isSgVariableDeclaration(node))
 	{
 		const SgInitializedNamePtrList& initNames = varDecl->get_variables();
 		foreach (SgInitializedName* initName, initNames)
-			defs.insert(getVarName(initName));
+			defs.insert(initName);
 		return defs;
 	}
 
 	if (SageInterface::isAssignmentStatement(node))
 	{
 		SgExpression* lhs = isSgBinaryOp(node)->get_lhs_operand();
-		if (isVariable(lhs))
-		{
-			defs.insert(getVarName(lhs));
-			return defs;
-		}
-		else
-			return getDef(lhs);
+		SgExpression* def = getLValue(lhs);
+		defs.insert(def);
+		return defs;
 	}
 
 	if (isSgPlusPlusOp(node) || isSgMinusMinusOp(node))
 	{
 		SgExpression* operand = isSgUnaryOp(node)->get_operand();
-		if (isVariable(operand))
-		{
-			defs.insert(getVarName(operand));
-			return defs;
-		}
-		else
-			return getDef(operand);
+		SgExpression* def = getLValue(operand);
+		defs.insert(def);
+		return defs;
 	}
 
-	if (isSgFunctionCallExp(node))
+	if (SgFunctionCallExp* funcCall = isSgFunctionCallExp(node))
 	{
 		// TODO  This part should be refined later.
-		std::vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(node);
-		foreach (SgExpression* var, vars)
-			defs.insert(getVarName(var));
+		foreach (SgExpression* expr, funcCall->get_args()->get_expressions())
+		{
+			if (expr->isLValue())
+			{
+				SgExpression* def = getLValue(expr);
+				defs.insert(def);
+			}
+		}
 		return defs;
 	}
 
 	return defs;
+}
+
+set<SgExpression*> Slicer::getDirectUses(SgNode* node, bool useDef)
+{
+	set<SgExpression*> uses;
+
+	SgExpression* expr = isSgExpression(node);
+	if (expr == NULL)
+	{
+		// Variable declaration case.
+		return uses;
+	}
+
+	ROSE_ASSERT(expr);
+	
+	// Put this check ahead of others.
+	if (isVariable(expr))
+	{
+		uses.insert(expr);
+		return uses;
+	}
+
+	if (SgVariableDeclaration* varDecl = isSgVariableDeclaration(node))
+	{
+		return uses;
+	}
+
+	if (SgBinaryOp* binOp = isSgBinaryOp(node))
+	{
+		SgExpression* lhs = binOp->get_lhs_operand();
+		SgExpression* rhs = binOp->get_rhs_operand();
+
+		if (SageInterface::isAssignmentStatement(node))
+		{
+			// TODO
+			// FIXME Currently we don't consider the array case!!!
+			// So there is no use on the lhs of assignment.
+			if (isSgPntrArrRefExp(lhs))
+				ROSE_ASSERT(!"Currently we don't consider the array case!!!");
+
+			if (!useDef)
+			{
+				if (isSgAssignStatement(node))
+				{
+					return getDirectUses(rhs, true);
+				}
+				else
+				{
+					set<SgExpression*> lhsUses = getDirectUses(lhs, true);
+					set<SgExpression*> rhsUses = getDirectUses(rhs, true);
+					lhsUses.insert(rhsUses.begin(), rhsUses.end());
+					return lhsUses;
+				}
+			}
+			else
+			{
+				set<SgNode*> defs = getDirectDefs(binOp);
+				foreach (SgNode* n, defs)
+				{
+					ROSE_ASSERT(isSgExpression(n));
+					uses.insert(isSgExpression(n));
+				}
+				return uses;
+			}
+		}
+		else
+		{
+			set<SgExpression*> lhsUses = getDirectUses(lhs, true);
+			set<SgExpression*> rhsUses = getDirectUses(rhs, true);
+			lhsUses.insert(rhsUses.begin(), rhsUses.end());
+			return lhsUses;
+		}
+	}
+
+	if (isSgPlusPlusOp(node) || isSgMinusMinusOp(node))
+	{
+		set<SgNode*> defs = getDirectDefs(node);
+		foreach (SgNode* n, defs)
+		{
+			ROSE_ASSERT(isSgExpression(n));
+			uses.insert(isSgExpression(n));
+		}
+		return uses;
+	}
+
+#if 0
+	if (SgFunctionCallExp* funcCall = isSgFunctionCallExp(node))
+	{
+		// TODO  This part should be refined later.
+		foreach (SgExpression* expr, funcCall->get_args()->get_expressions())
+		{
+			if (expr->isLValue())
+			{
+				SgExpression* def = getLValue(expr);
+				uses.insert(getVarName(def));
+			}
+		}
+		return uses;
+	}
+#endif
+
+	return uses;
+}
+
+SgExpression* Slicer::getLValue(SgExpression* expr)
+{
+	if (isVariable(expr))
+		return expr;
+	
+	// A function call may be a lvalue.
+	if (isSgFunctionCallExp(expr) && expr->isLValue())
+		return expr;
+
+	if (SgCommaOpExp* commaExp = isSgCommaOpExp(expr))
+		return getLValue(commaExp->get_rhs_operand());
+
+	if (SageInterface::isAssignmentStatement(expr))
+		return getLValue(isSgBinaryOp(expr)->get_lhs_operand());
+
+	if (isSgPlusPlusOp(expr) || isSgMinusMinusOp(expr))
+		return getLValue(isSgUnaryOp(expr)->get_operand());
+
+	return NULL;
 }
 
 SgFunctionDeclaration* Slicer::slice()
@@ -170,7 +295,7 @@ SgFunctionDeclaration* Slicer::slice()
 	// Second, find the corresponding nodes of criteria in the PDG.
 
 	// A work list holds PDG node and the corresponding variable name pairs in the slice.
-	std::stack<std::pair<PDGForSlicing::Vertex, VarName> > workList;
+	stack<pair<PDGForSlicing::Vertex, VarName> > workList;
 
 	boost::graph_traits<PDGForSlicing>::vertex_iterator first, last;
 
@@ -182,13 +307,13 @@ SgFunctionDeclaration* Slicer::slice()
 			if (pdg[*first]->getNode() == node ||
 					SageInterface::isAncestor(pdg[*first]->getNode(), node))
 			{
-				workList.push(std::make_pair(*first, getVarName(node)));
+				workList.push(make_pair(*first, getVarName(node)));
 				break;
 			}
 		}
 	}
 
-	std::set<PDGForSlicing::Vertex> verticesSlice;
+	set<PDGForSlicing::Vertex> verticesSlice;
 
 	// Then start the backward slicing algorithm.
 	while(!workList.empty())
@@ -219,29 +344,49 @@ SgFunctionDeclaration* Slicer::slice()
 				// If the target node does not define varName directly, we won't add it to the worklist.
 				// For example, a = ++b + c defines a directly, but not b. If b is data dependent on this
 				// expression, we won't add c to the worklist.
-				if (getDef(node).count(varName) ==0)
+				set<SgNode*> defs = getDirectDefs(node);
+				bool flag = false;
+				foreach (SgNode* def, defs)
+				{
+					if (getVarName(def) == varName)
+					{
+						flag = true;
+						break;
+					}
+				}
+				if (!flag)
 					continue;
 
+				// Note at this point, the node is a defining node.
+
 				// Find all variables used in the target node.
-				std::vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(node);
+				set<SgExpression*> vars = getDirectUses(node);
 				foreach (SgExpression* var, vars)
-					workList.push(std::make_pair(tar, getVarName(var)));
+				{
+					// Add this variable into slice.
+					slice_.insert(var);
+					workList.push(make_pair(tar, getVarName(var)));
+				}
 				// In case the target node is a declaration.
-				workList.push(std::make_pair(tar, varName));
+				workList.push(make_pair(tar, varName));
 			}			
 			else
 			{
 				// Control dependence case.
 				
 				// Find all variables used in the target node.
-				std::vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(node);
+				set<SgExpression*> vars = getDirectUses(node);
 				foreach (SgExpression* var, vars)
-					workList.push(std::make_pair(tar, getVarName(var)));
+				{
+					// Add this variable into slice.
+					slice_.insert(var);
+					workList.push(make_pair(tar, getVarName(var)));
+				}
 			}
 		}
 	}
 
-	std::cout << "Slice number:" << verticesSlice.size() << std::endl;
+	cout << "Slice number:" << verticesSlice.size() << endl;
 
 	foreach (PDGForSlicing::Vertex v, verticesSlice)
 	{
@@ -249,15 +394,20 @@ SgFunctionDeclaration* Slicer::slice()
 
 		slice_.insert(node);
 
-		// Add all parents to possible slice to make it easy to check if a statement should be in the slice or not.
+		// Add all parents and children to possible slice to make it easy to
+		// check if a statement should be in the slice or not.
 		while (node && !isSgFunctionDefinition(node))
 		{
 			possibleSlice_.insert(node);
 			node = node->get_parent();
 		}
+
+		//vector<SgNode*> nodes = SageInterface::querySubTree<SgNode>(node, V_SgNode);
+		//foreach (SgNode* n, nodes)
+		//	possibleSlice_.insert(n);
 	}
 
-	std::cout << "Slice number:" << slice_.size() << std::endl;
+	cout << "Slice number:" << slice_.size() << endl;
 
 	// The last step is building a function with only slice.
 	return buildSlicedFunction();
@@ -274,7 +424,7 @@ SgFunctionDeclaration* Slicer::buildSlicedFunction()
 		paraList->append_arg(SageBuilder::buildInitializedName(initName->get_name(), initName->get_type()));
 	}
 
-	std::string funcName = funcDecl->get_name().str() + std::string("_sliced");
+	string funcName = funcDecl->get_name().str() + string("_sliced");
 	SgFunctionDeclaration* declSliced =
 			SageBuilder::buildDefiningFunctionDeclaration(
 				funcName, funcDecl->get_orig_return_type(),
@@ -452,15 +602,89 @@ SgExpression* Slicer::copySlicedExpression(SgExpression* expr) const
 {
 	if (expr == NULL)
 		return NULL;
+#if 0
+
+#if 0
+	if (expr->isLValue())
+	{
+		if (slice_.find(expr) != slice_.end())
+			return SageInterface::copyExpression(expr);
+		else
+			return NULL;
+	}
+	return SageInterface::copyExpression(expr);
+#endif
+
+	bool isInSlice = slice_.find(expr) != slice_.end();
+
+	if (SageInterface::isAssignmentStatement(expr))
+	{
+		if (!isInSlice)
+			return copySlicedExpression(isSgBinaryOp(expr)->get_lhs_operand());
+	}
+
+	if (isSgPlusPlusOp(node) || isSgMinusMinusOp(node))
+	{
+		SgUnaryOp* unaryExpr = isSgUnaryOp(expr);
+		if (isInSlice)
+		{
+			SgUnaryOp* newExpr = isSgUnaryOp(SageInterface::copyExpression(expr));
+			SageInterface::replaceExpression(newExpr->get_operand(), newOperand);
+			return newExpr;
+		}
+	}
+
+	if (SgFunctionCallExp* funcCall = isSgFunctionCallExp(node))
+	{
+		// TODO  This part should be refined later.
+		foreach (SgExpression* expr, funcCall->get_args()->get_expressions())
+		{
+			if (expr->isLValue())
+			{
+				SgExpression* def = getLValue(expr);
+				defs.insert(def);
+			}
+		}
+		return defs;
+	}
+
+	
+
+	if (isVariable(expr))
+		return SageInterface::copyExpression(expr);
 
 	if (possibleSlice_.find(expr) == possibleSlice_.end())
 		return NULL;
 
-	//bool isInSlice = slice_.find(expr) != slice_.end();
 
 	// TODO
 	//ROSE_ASSERT(!"This part should be modified");
-
+	if (SgUnaryOp* unaryExpr = isSgUnaryOp(expr))
+	{
+		SgExpression* newOperand = copySlicedExpression(unaryExpr->get_operand());
+		if (isInSlice)
+		{
+			SgUnaryOp* newExpr = isSgUnaryOp(SageInterface::copyExpression(expr));
+			SageInterface::replaceExpression(newExpr->get_operand(), newOperand);
+			return newExpr;
+		}
+		else
+			return newOperand;
+	}
+	else if (SgBinaryOp* binExpr = isSgBinaryOp(expr))
+	{
+		SgExpression* lhsExpr = copySlicedExpression(binExpr->get_lhs_operand());
+		SgExpression* rhsExpr = copySlicedExpression(binExpr->get_rhs_operand());
+		if (lhsExpr == NULL)
+			return rhsExpr;
+		if (rhsExpr == NULL)
+			return lhsExpr;
+		SgBinaryOp* newExpr = isSgBinaryOp(SageInterface::copyExpression(expr));
+		SageInterface::replaceExpression(newExpr->get_lhs_operand(), lhsExpr);
+		SageInterface::replaceExpression(newExpr->get_rhs_operand(), rhsExpr);
+		return newExpr;
+	}
+#endif
 	switch (expr->variantT())
 	{
 		case V_SgCommaOpExp:

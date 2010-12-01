@@ -101,7 +101,7 @@ void DDG<CFGType>::buildDDG(const CFGType& cfg)
 		typename std::map<CFGNodePtr, Vertex>::iterator iter;
 		bool inserted;
 
-		// Add this node into the DDG.
+		// Add the source node into the DDG.
 		tie(iter, inserted) = verticesAdded.insert(std::make_pair(node, Vertex()));
 		if (inserted)
 		{
@@ -117,7 +117,7 @@ void DDG<CFGType>::buildDDG(const CFGType& cfg)
 			continue;
 
 		// Find all defs of this node, and connect them in DDG.
-		// A sage node may contain sevaral subnodes which have defs, and we will find all those defs.
+		// A SgNode may contain sevaral subnodes which have defs, and we will find all those defs.
 		std::vector<SgNode*> nodes = SageInterface::querySubTree<SgNode>(node->getNode(), V_SgNode);
 		foreach (SgNode* subnode, nodes)
 		{

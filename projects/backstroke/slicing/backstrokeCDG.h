@@ -106,6 +106,9 @@ struct CDGEdge
 		cdCase,
 		cdDefault
 	} type;
+
+	//! If the control dependence edge is a case edge, this is the corresponding case value.
+	int caseValue;
 };
 
 //! A class holding a Control Dependence Graph.
