@@ -502,7 +502,7 @@ Grammar::setUpStatements ()
 
      Global.setFunctionPrototype( "HEADER_GLOBAL", "../Grammar/Statement.code" );
      Global.editSubstitute      ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     // Global.setFunctionPrototype( "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+  // Global.setFunctionPrototype( "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      Global.editSubstitute      ( "LIST_DATA_TYPE", "SgDeclarationStatementPtrList" );
      Global.editSubstitute      ( "LIST_NAME", "declarations" );
      Global.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
