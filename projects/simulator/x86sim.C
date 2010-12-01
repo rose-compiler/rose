@@ -211,6 +211,19 @@ print_timespec_32(FILE *f, const uint8_t *_ts, size_t sz)
     return fprintf(f, "sec=%"PRIu32", nsec=%"PRIu32, ts->sec, ts->nsec);
 }
 
+struct timeval_32 {
+    uint32_t tv_sec;        /* seconds */
+    uint32_t tv_usec;       /* microseconds */
+} __attribute__((packed));
+
+static int
+print_timeval_32(FILE *f, const uint8_t *_tv, size_t sz)
+{
+    assert(sz==sizeof(timeval_32));
+    const timeval_32 *tv = (const timeval_32*)_tv;
+    return fprintf(f, "sec=%"PRIu32", usec=%"PRIu32, tv->tv_sec, tv->tv_usec);
+}
+
 static const Translate signal_names[] = {
     TE(SIGHUP), TE(SIGINT), TE(SIGQUIT), TE(SIGILL), TE(SIGTRAP), TE(SIGABRT), TE(SIGBUS), TE(SIGFPE), TE(SIGKILL),
     TE(SIGUSR1), TE(SIGSEGV), TE(SIGUSR2), TE(SIGPIPE), TE(SIGALRM), TE(SIGTERM), TE(SIGSTKFLT), TE(SIGCHLD), TE(SIGCONT),
@@ -2008,10 +2021,6 @@ EmulationPolicy::emulate_syscall()
      *          according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers. */
     unsigned callno = readGPR(x86_gpr_ax).known_value();
 
-    struct kernel_timeval {
-        uint32_t tv_sec;        /* seconds */
-        uint32_t tv_usec;       /* microseconds */
-    };
 
 
 
@@ -2705,16 +2714,21 @@ EmulationPolicy::emulate_syscall()
         case 78: { /*0x4e, gettimeofday*/       
             syscall_enter("gettimeofday", "p");
             uint32_t tp = arg(0);
-            struct timeval sys_t;
-            int result = gettimeofday(&sys_t, NULL);
+            struct timeval host_time;
+            struct timeval_32 guest_time;
+
+            int result = gettimeofday(&host_time, NULL);
             if (result == -1) {
                 result = -errno;
             } else {
-                writeMemory<32>(x86_segreg_ds, tp, sys_t.tv_sec, true_() );
-                writeMemory<32>(x86_segreg_ds, tp + 4, sys_t.tv_usec, true_() );
+                guest_time.tv_sec = host_time.tv_sec;
+                guest_time.tv_usec = host_time.tv_usec;
+                if (sizeof(guest_time) != map->write(&guest_time, tp, sizeof guest_time))
+                    result = -EFAULT;
             }
+
             writeGPR(x86_gpr_ax, result);
-            syscall_leave("d");
+            syscall_leave("dP", sizeof guest_time, print_timeval_32);
             break;
         }
 
@@ -3969,9 +3983,9 @@ EmulationPolicy::emulate_syscall()
             if( byte )
             {
 
-              size_t size_timeval_sample = sizeof(kernel_timeval)*2;
+              size_t size_timeval_sample = sizeof(timeval_32)*2;
 
-              kernel_timeval ubuf[1];
+              timeval_32 ubuf[1];
 
               size_t nread = map->read(&ubuf, arg(1), size_timeval_sample);
 
