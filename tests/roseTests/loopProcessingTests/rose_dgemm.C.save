@@ -4,7 +4,6 @@ int min2(int a0,int a1)
   return a0 < a1?a0 : a1;
 }
 
-
 void dgemm(double *a,double *b,double *c,int n)
 {
   int i;
@@ -58,4 +57,3 @@ void dgemm(double *a,double *b,double *c,int n)
     }
   }
 }
-
