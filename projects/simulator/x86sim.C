@@ -3299,27 +3299,29 @@ EmulationPolicy::emulate_syscall()
 
         case 174: { /*0xae, rt_sigaction*/
             syscall_enter("rt_sigaction", "fPpd", signal_names, sizeof(sigaction_32), print_sigaction_32);
-            int signum=arg(0);
-            uint32_t action_va=arg(1), oldact_va=arg(2);
-            size_t sigsetsize=arg(3);
-            ROSE_ASSERT(sigsetsize==8);
+            do {
+                int signum=arg(0);
+                uint32_t action_va=arg(1), oldact_va=arg(2);
+                size_t sigsetsize=arg(3);
 
-            if (signum<1 || signum>_NSIG) {
-                writeGPR(x86_gpr_ax, -EINVAL);
-                break;
-            }
+                if (sigsetsize!=8 || signum<1 || signum>_NSIG) {
+                    writeGPR(x86_gpr_ax, -EINVAL);
+                    break;
+                }
 
-            sigaction_32 saved = signal_action[signum];
-            if (action_va) {
-                size_t nread = map->read(signal_action+signum, action_va, sizeof saved);
-                ROSE_ASSERT(nread==sizeof saved);
-            }
-            if (oldact_va) {
-                size_t nwritten = map->write(&saved, oldact_va, sizeof saved);
-                ROSE_ASSERT(nwritten==sizeof saved);
-            }
 
-            writeGPR(x86_gpr_ax, 0);
+                sigaction_32 tmp;
+                if (action_va && sizeof(tmp) != map->read(&tmp, action_va, sizeof tmp)) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                if (oldact_va && sizeof(tmp) != map->write(signal_action+signum, oldact_va, sizeof tmp)) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                signal_action[signum] = tmp;
+                writeGPR(x86_gpr_ax, 0);
+            } while (0);
             syscall_leave("d");
             break;
         }
@@ -4207,8 +4209,8 @@ EmulationPolicy::signal_dispatch(int signo)
                 /* Signal is ignored by default */
                 return;
             default:
-                ROSE_ASSERT(!"don't know what to do with this signal");
-                abort();
+                /* Exit without a core dump */
+                throw Exit(signo & 0x7f);
         }
 
     } else if (signal_mask & ((uint64_t)1 << signo)) {
@@ -4318,6 +4320,8 @@ main(int argc, char *argv[], char *envp[])
     sigaction(SIGPWR,   &sa, NULL);
     sigaction(SIGSYS,   &sa, NULL);
     sigaction(SIGXFSZ,  &sa, NULL);
+    for (int i=SIGRTMIN; i<=SIGRTMAX; i++)
+        sigaction(i, &sa, NULL);
 
     /* Parse command-line */
     int argno = 1;
