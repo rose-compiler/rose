@@ -4349,7 +4349,7 @@ EmulationPolicy::syscall_leave(const char *format, ...)
         print_leave(debug, format[0], &info);
 
         /* Additionally, output any other buffer values that were filled in by a successful system call. */
-        if (format[0]=='d' && arg(0)>=0) {
+        if (format[0]!='d' || 0==(arg(-1) & 0x80000000)) {
             for (size_t i=1; format[i]; i++) {
                 if ('-'!=format[i]) {
                     syscall_arginfo(format[i], arg(i-1), &info, &ap);
@@ -4366,6 +4366,7 @@ uint32_t
 EmulationPolicy::arg(int idx)
 {
     switch (idx) {
+        case -1: return readGPR(x86_gpr_ax).known_value();      /* syscall return value */
         case 0: return readGPR(x86_gpr_bx).known_value();
         case 1: return readGPR(x86_gpr_cx).known_value();
         case 2: return readGPR(x86_gpr_dx).known_value();
