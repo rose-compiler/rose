@@ -3386,6 +3386,27 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 176: { /* 0xb0, rt_sigpending */
+            syscall_enter("rt_sigpending", "p");
+            uint32_t sigset_va=arg(0);
+            uint64_t pending=0;
+            std::queue<int> tmp;
+            while (!signal_queue.empty()) {
+                int signo = signal_queue.front();
+                signal_queue.pop();
+                tmp.push(signo);
+                pending |= (1 << (signo - 1));
+            }
+            signal_queue = tmp;
+            if (8!=map->write(&pending, sigset_va, 8)) {
+                writeGPR(x86_gpr_ax, -EFAULT);
+            } else {
+                writeGPR(x86_gpr_ax, 0);
+            }
+            syscall_leave("dP", sizeof(uint64_t), print_sigmask);
+            break;
+        }
+
 	case 183: { /* 0xb7, getcwd */
             syscall_enter("getcwd", "pd");
             void *buf = my_addr(arg(0), arg(1));
