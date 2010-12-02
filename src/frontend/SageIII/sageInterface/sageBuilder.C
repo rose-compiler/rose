@@ -751,7 +751,13 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
 SgFunctionDeclaration*
 SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
 {
-  SgFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
+  SgFunctionDeclaration * result = NULL;
+  if (SageInterface::is_Fortran_language())
+  {
+      result = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
+  }
+  else
+    result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
   return result;
 }
 
@@ -2193,8 +2199,23 @@ SageBuilder::buildFunctionRefExp(const SgFunctionDeclaration* func_decl)
 {
   ROSE_ASSERT(func_decl != NULL);
   SgDeclarationStatement* nondef_func = func_decl->get_firstNondefiningDeclaration ();
-  ROSE_ASSERT(nondef_func!= NULL);
-  SgSymbol* symbol = nondef_func->get_symbol_from_symbol_table();
+  SgDeclarationStatement* def_func = func_decl->get_definingDeclaration ();
+  SgSymbol* symbol = NULL; 
+  if (nondef_func != NULL)
+  {
+    ROSE_ASSERT(nondef_func!= NULL);
+    symbol = nondef_func->get_symbol_from_symbol_table();
+  }
+  // Liao 12/1/2010. It is possible that there is no prototype declarations at all
+  else if (def_func != NULL)
+  {
+    symbol = def_func->get_symbol_from_symbol_table();
+  }
+  else
+  {
+    cerr<<"Fatal error: SageBuilder::buildFunctionRefExp():defining and nondefining declarations for a function cannot be both NULL"<<endl;
+    ROSE_ASSERT (false);
+  }
   ROSE_ASSERT( symbol != NULL);
   return buildFunctionRefExp( isSgFunctionSymbol (symbol));
 }
