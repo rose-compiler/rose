@@ -3221,40 +3221,78 @@ EmulationPolicy::emulate_syscall()
         case 146: { /*0x92, writev*/
             syscall_enter("writev", "dpd");
             uint32_t fd=arg(0), iov_va=arg(1);
-            int niov=arg(2);
+            int niov=arg(2), idx=0;
             uint32_t retval = 0;
-            for (int i=0; i<niov; i++) {
-                uint32_t buf_va_le;
-                size_t nread = map->read(&buf_va_le, iov_va+i*8+0, 4);
-                ROSE_ASSERT(4==nread);
-                uint32_t buf_va = SgAsmExecutableFileFormat::le_to_host(buf_va_le);
-                
-                uint32_t buf_sz_le;
-                nread = map->read(&buf_sz_le, iov_va+i*8+4, 4);
-                ROSE_ASSERT(4==nread);
-                uint32_t buf_sz = SgAsmExecutableFileFormat::le_to_host(buf_sz_le);
+            if (niov<0 || niov>1024) {
+                retval = -EINVAL;
+            } else {
+                for (idx=0; idx<niov; idx++) {
+                    /* Obtain buffer address and size */
+                    uint32_t buf_va;
+                    if (4 != map->read(&buf_va, iov_va+idx*8+0, 4)) {
+                        if (0==idx)
+                            retval = -EFAULT;
+                        if (debug && trace_syscall)
+                            fprintf(debug, "    #%d: segmentation fault reading address\n", idx);
+                        break;
+                    }
 
-                if (debug && trace_syscall) {
-                    if (0==i) fprintf(debug, "<see below>\n"); /* return value is delayed */
-                    fprintf(debug, "    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32"\n", i, buf_va, buf_sz);
-                    if (i+1==niov) fprintf(debug, "%*s = ", 51, ""); /* align for return value */
-                }
+                    uint32_t buf_sz;
+                    if (4 != map->read(&buf_sz, iov_va+idx*8+4, 4)) {
+                        if (0==idx)
+                            retval = -EFAULT;
+                        if (debug && trace_syscall)
+                            fprintf(debug, "    #%d: segmentation fault reading size\n", idx);
+                        break;
+                    }
 
-                uint8_t buf[buf_sz];
-                nread = map->read(buf, buf_va, buf_sz);
-                ROSE_ASSERT(nread==buf_sz);
-                ssize_t nwritten = write(fd, buf, buf_sz);
-                if (-1==nwritten) {
-                    retval = -errno;
-                    break;
-                } else if ((uint32_t)nwritten<buf_sz) {
+                    if (debug && trace_syscall) {
+                        if (0==idx) fprintf(debug, "<see below>\n"); /* return value is delayed */
+                        fprintf(debug, "    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32, idx, buf_va, buf_sz);
+                    }
+
+                    /* Make sure total size doesn't overflow a ssize_t */
+                    if ((buf_sz & 0x80000000) || (retval+buf_sz) & 0x80000000) {
+                        if (0==idx)
+                            retval = -EINVAL;
+                        if (debug && trace_syscall)
+                            fprintf(debug, " size overflow\n");
+                        break;
+                    }
+
+                    /* Copy data from guest to host because guest memory might not be contiguous in the host. Perhaps a more
+                     * efficient way to do this would be to copy chunks of host-contiguous data in a loop instead. */
+                    uint8_t buf[buf_sz];
+                    if (buf_sz != map->read(buf, buf_va, buf_sz)) {
+                        if (0==idx)
+                            retval = -EFAULT;
+                        if (debug && trace_syscall)
+                            fprintf(debug, " segmentation fault\n");
+                        break;
+                    }
+
+                    /* Write data to the file */
+                    ssize_t nwritten = write(fd, buf, buf_sz);
+                    if (-1==nwritten) {
+                        if (0==idx)
+                            retval = -errno;
+                        if (debug && trace_syscall)
+                            fprintf(debug, " write failed (%s)\n", strerror(errno));
+                        break;
+                    }
                     retval += nwritten;
-                    break;
-                } else {
-                    retval += nwritten;
+                    if ((uint32_t)nwritten<buf_sz) {
+                        if (debug && trace_syscall)
+                            fprintf(debug, " short write (%zd bytes)\n", nwritten);
+                        break;
+                    }
+                    if (debug && trace_syscall)
+                        fputc('\n', debug);
                 }
             }
             writeGPR(x86_gpr_ax, retval);
+            if (debug && trace_syscall && niov>0 && niov<=1024)
+                fprintf(debug, "%*s = ", 51, ""); /* align for return value */
             syscall_leave("d");
             break;
         }
