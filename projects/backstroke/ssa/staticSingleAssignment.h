@@ -16,6 +16,7 @@
 #include "filteredCFG.h"
 #include <boost/unordered_map.hpp>
 #include "reachingDef.h"
+#include "controlPredicate.h"
 
 namespace ssa_private
 {
@@ -229,6 +230,8 @@ public:
 	/** Map from each node to the variables used at that node and their reaching definitions. */
 	typedef boost::unordered_map<SgNode*, NodeReachingDefTable> UseTable;
 
+	typedef ssa_private::ControlPredicate<FilteredCfgEdge> CfgPredicate;
+
 private:
 	//Private member variables
 
@@ -359,6 +362,9 @@ private:
 	void annotatePhiNodeWithConditions(SgFunctionDefinition* function,
 			const std::multimap< FilteredCfgNode, std::pair<FilteredCfgNode, FilteredCfgEdge> > & controlDependencies);
 
+	CfgPredicate getConditionsForNodeExecution(SgNode* node, const std::vector<FilteredCfgEdge>& stopEdges,
+		const std::multimap<SgNode*, FilteredCfgEdge> & controlDependencies, std::set<SgNode*>& visited);
+
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
 
@@ -387,15 +393,6 @@ public:
 	 * @param fileName The filename to save graph as. Filenames will be prepended.
 	 */
 	void toFilteredDOT(const std::string fileName);
-
-	/** Get a string representation of a varName.
-	 *
-	 * @param vec varName to get string for.
-	 * @return String for given varName.
-	 */
-	static std::string varnameToString(const VarName& vec);
-
-	static void printLocalDefUseTable(const LocalDefUseTable& table);
 
 	void printOriginalDefs(SgNode* node);
 	void printOriginalDefTable();
@@ -480,6 +477,15 @@ public:
 	/** Finds the scope of the given node, and returns true if the given
 	 * variable is accessible there. False if the variable is not accessible. */
 	static bool isVarInScope(const VarName& var, SgNode* scope);
+
+	/** Get a string representation of a varName.
+	 *
+	 * @param vec varName to get string for.
+	 * @return String for given varName.
+	 */
+	static std::string varnameToString(const VarName& vec);
+
+	static void printLocalDefUseTable(const LocalDefUseTable& table);
 };
 
 

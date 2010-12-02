@@ -925,9 +925,115 @@ void StaticSingleAssignment::annotatePhiNodeWithConditions(SgFunctionDefinition*
 	trav.ssa = this;
 	trav.traverse(function, preorder);
 
+	//Use a control dependence map based on ast nodes rather than cfg nodes
+	typedef multimap< SgNode*, FilteredCfgEdge > DependenceMap;
+	DependenceMap astControlDependence;
+
+	typedef multimap< FilteredCfgNode, pair<FilteredCfgNode, FilteredCfgEdge> > CFGControlDependence;
+	foreach(const CFGControlDependence::value_type & nodeControlNodePair, controlDependencies)
+	{
+		SgNode* dependentNode = nodeControlNodePair.first.getNode();
+		FilteredCfgEdge controllingEdge = nodeControlNodePair.second.second;
+		astControlDependence.insert(make_pair(dependentNode, controllingEdge));
+	}
+
+	//For each phi function found, calculate the conditions on its incoming defs
 	foreach(ReachingDefPtr phiDef, trav.phiNodes)
 	{
-		FilteredCfgNode phiNode = phiDef->getDefinitionNode()->cfgForBeginning();
-		
+		//First, get the control dependencies of the phi node
+		vector<FilteredCfgEdge> phiControlDependencies;
+		DependenceMap::const_iterator currentIter, lastIter;
+		tie(currentIter, lastIter) = astControlDependence.equal_range(phiDef->getDefinitionNode());
+		for (; currentIter != lastIter; currentIter++)
+		{
+			//We exclude a node's control dependence on itself. This occurs at phi
+			//functions inserted at loop entry
+			//if (currentIter->second.source().getNode() == phiDef->getDefinitionNode())
+			//	continue;
+
+			phiControlDependencies.push_back(currentIter->second);
+		}
+
+		if (getDebug())
+		{
+			FilteredCfgNode phiNode = phiDef->getDefinitionNode()->cfgForBeginning();
+			printf("Phi node at %s:\n", phiNode.toStringForDebugging().c_str());
+		}
+
+		//Iterate all the incoming nodes
+		foreach (ReachingDefPtr joinedDef, phiDef->getJoinedDefs())
+		{
+			set<SgNode*> visitedNodes;
+			CfgPredicate conditions =
+					getConditionsForNodeExecution(joinedDef->getDefinitionNode(), phiControlDependencies, astControlDependence, visitedNodes);
+
+			//Attach the conditions to the reaching def
+			if (getDebug())
+			{
+				printf("\tReaching def %s has conditions %s\n", joinedDef->getDefinitionNode()->class_name().c_str(),
+					conditions.toString().c_str());
+			}
+		}
+	}
+}
+
+StaticSingleAssignment::CfgPredicate
+StaticSingleAssignment::getConditionsForNodeExecution(SgNode* node, const vector<FilteredCfgEdge>& stopEdges,
+		const multimap<SgNode*, FilteredCfgEdge> & controlDependencies, set<SgNode*>& visited)
+{
+	//Get the control dependencies of the node in question. They guarantee its execution
+	typedef multimap<SgNode*, FilteredCfgEdge> DependenceMap;
+	DependenceMap::const_iterator currentIter, lastIter;
+
+	CfgPredicate result(CfgPredicate::OR);
+
+	for (tie(currentIter, lastIter) = controlDependencies.equal_range(node); currentIter != lastIter; currentIter++)
+	{
+		FilteredCfgEdge dependenceEdge = currentIter->second;
+
+		//If this edge is one of our stop edges, don't include it in the predicate
+		if (find(stopEdges.begin(), stopEdges.end(), dependenceEdge) != stopEdges.end())
+			continue;
+
+		//Prevent infinite when there is a loop in the control dependence graph
+		if (visited.count(dependenceEdge.source().getNode()) != 0)
+		{
+			continue;
+		}
+		else
+		{
+			visited.insert(dependenceEdge.source().getNode());
+		}
+
+		//This edge is one of the ones sufficient for execution of the node in question
+		CfgPredicate currEdgeCondition(dependenceEdge);
+
+		//See what this edge is dependent on on
+		CfgPredicate nestedConditions =
+				getConditionsForNodeExecution(dependenceEdge.source().getNode(), stopEdges, controlDependencies, visited);
+
+		//If this condition has some additional requirements for execution, add them to the result
+		if (nestedConditions.getPredicateType() != CfgPredicate::NONE)
+		{
+			//Both the nested condition and the original condition must be true
+			CfgPredicate newCondition(CfgPredicate::AND);
+			newCondition.addChildPredicate(currEdgeCondition);
+			newCondition.addChildPredicate(nestedConditions);
+
+			//Overwrite the previous condition for this edge
+			currEdgeCondition = newCondition;
+		}
+
+		//Add the requirement for this edge to the list of all requirements
+		result.addChildPredicate(currEdgeCondition);
+	}
+
+	if (result.getChildren().empty())
+	{
+		return CfgPredicate(CfgPredicate::NONE);
+	}
+	else
+	{
+		return result;
 	}
 }
