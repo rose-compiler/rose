@@ -4416,11 +4416,19 @@ EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_li
 void
 EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
 {
+    static timeval first_call;
+
     va_list ap;
     va_start(ap, format);
 
     if (debug && trace_syscall) {
-        fprintf(debug, "0x%08"PRIx64": ", readIP().known_value());
+        timeval this_call;
+        gettimeofday(&this_call, NULL);
+        if (0==first_call.tv_sec)
+            first_call = this_call;
+        double elapsed = (this_call.tv_sec - first_call.tv_sec) + (this_call.tv_usec - first_call.tv_usec)/1e6;
+
+        fprintf(debug, "0x%08"PRIx64" %8.4f: ", readIP().known_value(), elapsed);
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], arg(i), args+i, &ap);
