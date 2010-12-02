@@ -3006,7 +3006,15 @@ EmulationPolicy::emulate_syscall()
             uint32_t sz=arg(1);
             uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
             uint32_t aligned_sz = ALIGN_UP(sz+va-aligned_va, PAGE_SIZE);
+            void *rose_addr = my_addr(aligned_va, aligned_sz);
+
             map->erase(MemoryMap::MapElement(aligned_va, aligned_sz));
+
+            /* Also unmap for real, because if we don't, and the mapping was not anonymous, and the file that was mapped is
+             * unlinked, and we're on NFS, an NFS temp file is created in place of the unlinked file. */
+            if (rose_addr && ALIGN_UP((uint64_t)rose_addr, (uint64_t)PAGE_SIZE)==(uint64_t)rose_addr)
+                (void)munmap(rose_addr, aligned_sz);
+
             if (debug && trace_mmap) {
                 fprintf(debug, " memory map after munmap syscall:\n");
                 map->dump(debug, "    ");
