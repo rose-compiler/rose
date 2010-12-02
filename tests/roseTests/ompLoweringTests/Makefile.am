@@ -1,5 +1,10 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS=
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+SUBDIRS += fortran
+endif
+
 # Default header file search path
 INCLUDES = $(ROSE_INCLUDES)
 roseomp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)

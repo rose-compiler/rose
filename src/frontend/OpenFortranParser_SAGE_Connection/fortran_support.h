@@ -289,6 +289,10 @@ SgClassSymbol* buildIntrinsicModule_ISO_C_BINDING();
 //! Build the module symbols required to support intrinsic modules.
 SgClassSymbol* buildIntrinsicModule ( const std::string & name );
 
+// DQ (11/26/2010): Added support for building implicit variables.
+//! Support for building implicit variables (works even when the name matches an inplicit function).
+void buildImplicitVariableDeclaration( const SgName & variableName );
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
 

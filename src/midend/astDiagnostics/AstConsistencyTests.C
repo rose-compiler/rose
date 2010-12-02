@@ -498,6 +498,8 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (2/23/2009): Test the declarations to make sure that defining and non-defining appear in the same file (for outlining consistency).
      TestMultiFileConsistancy::test();
 
+  // DQ (11/28/2010): Test to make sure that Fortran is using case insensitive symbol tables and that C/C++ is using case sensitive symbol tables.
+     TestForProperLanguageAndSymbolTableCaseSensitivity::test(sageProject);
 
 #if 1
   // Comment out to see if we can checkin what we have fixed recently!
@@ -1958,29 +1960,29 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
 
     We separate defining and non-defining declarations so that many aspects of analysis and transformation are 
 simplified, along with code generation. For example, if from any function declaration the function definition is sought,
-it is available from the defining declaration (this applied uniformally to all declarations). These tests
+it is available from the defining declaration (this applied uniformly to all declarations). These tests
 verify that the handling of defining and non-defining declaration follow specific rules (with a goal toward uniformity
 and intuitive behavior).
 
     Nondefining declarations appear as forward declarations and references to declarations within types.  These many
-appear many times within the source code and as a result are non unique withn the AST.  For example, each forward 
+appear many times within the source code and as a result are non unique within the AST.  For example, each forward 
 declaration of a function or class within a source code becomes a non-defining declaration.
 
     Defining declarations contain their definition, and function appearing with its body (implementation) is 
-a definind declaration containing a function definition (the scope of the function).  The defining declaration
+a defined declaration containing a function definition (the scope of the function).  The defining declaration
 should appear only once within the source code, by the One Time Definition rule, (OTD).  Each forward declaration, 
-clearly becomes a separate declaration byt it may be shared as needed to reduce the total number of non-defining 
+clearly becomes a separate declaration but it may be shared as needed to reduce the total number of non-defining 
 declarations, which are also referenced in types.
 
-   Within SAGE III, every declaration has a reference to its first non-defining declaration and its definind declaration
-if it exists (is defined within the current translation unit).  If in processing a defining declaration an refernece is
-required, get_declaration() always returns the non-definind declaration.  The definind declaration is only available
-explicitly (via a function call) and is never returned though any other mechansim.  Thus non-defining declarations
-are shared and nondefining declaration are never shared within the AST.
+   Within SAGE III, every declaration has a reference to its first non-defining declaration and its defined declaration
+if it exists (is defined within the current translation unit).  If in processing a defining declaration an reference is
+required, get_declaration() always returns the non-defined declaration.  The defined declaration is only available
+explicitly (via a function call) and is never returned through any other mechanism.  Thus non-defining declarations
+are shared and defining declaration are never shared within the AST.
 
 \subsection subsection3a When defining and non-defining declarations are the same
     SgEnumDeclaration declarations are not allowed to forward reference their definitions, this they are the same
-and the defining and nondefining declaration for a SgEnumDeclaration are pointer values which are the same.
+and the defining and non-defining declaration for a SgEnumDeclaration are pointer values which are the same.
 
 \example The following assertion is true for all SgEnumDeclaration objects: \n
      assert (declaration->get_definingDeclaration() == declaration->get_firstNondefiningDeclaration());
@@ -1989,7 +1991,7 @@ and the defining and nondefining declaration for a SgEnumDeclaration are pointer
    For all defining and nondefining declarations the scopes are the same, however for those that are 
 in namespaces the actual SgNamespaceDefinition of a defining and non-defining declaration could be 
 different.  To simplify analysis, the namespaces of defining and non-defining declarations are set 
-to the SgNamespaceDefinition of the definind declaration.  These test verify the equality of the 
+to the SgNamespaceDefinition of the defined declaration.  These test verify the equality of the 
 pointers for all scopes of defining and non-defining declarations.
 
 \example The following assertion is always true: \n
@@ -2220,6 +2222,9 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
           case V_SgTemplateInstantiationFunctionDecl:
           case V_SgTemplateInstantiationDecl:
           case V_SgTemplateInstantiationMemberFunctionDecl:
+          // Liao 12/2/2010, add new Fortran function nodes
+          case V_SgProcedureHeaderStatement: 
+          case V_SgProgramHeaderStatement: 
              {
             // For some declarations, the only declaration is a defining declaration, in which case the 
             // non-defining declaration is NULL (except in the case of SgClassDeclarations, where a 
@@ -2308,13 +2313,23 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                     SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(declaration);
                     if (typedefDeclaration == NULL || (SgProject::get_verbose() > 0) )
                        {
-                         printf ("Warning AST Consistancy Test: declaration %p = %s = %s has equal firstNondefiningDeclaration and definingDeclaration = %p \n",
+                         printf ("Warning AST Consistency Test: declaration %p = %s = %s has equal firstNondefiningDeclaration and definingDeclaration = %p \n",
                               declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str(),firstNondefiningDeclaration);
                          printf ("declaration->get_definingDeclaration() = %p declaration->get_firstNondefiningDeclaration() = %p \n",
                               declaration->get_definingDeclaration(),declaration->get_firstNondefiningDeclaration());
                          declaration->get_file_info()->display("firstNondefiningDeclaration == definingDeclaration: debug");
+
+                         // Liao 12/2/2010
+                         //  A test to see if the first nondefining declaration is set to self for a defining function declaration
+                         SgFunctionDeclaration * func = isSgFunctionDeclaration(declaration);
+                         if(func != NULL)
+                         {
+                           printf ("Error: found a defining function declaration with its first nondefining declaration set to itself/(or a defining declaration).\n");
+                           //ROSE_ASSERT (false);
+                         }
+ 
                        }
-                  }
+                  } // end if nondefining == defining
 
             // DQ (8/6/2007): Comment this out, at least for SgTypedefDeclaration it should be OK, MAYBE.
             // DQ (3/4/2007): Temporarily commented out (now uncommented)
@@ -5051,5 +5066,90 @@ MemoryCheckingTraversalForAstFileIO::visit ( SgNode* node )
   // printf ("MemoryCheckingTraversalForAstFileIO::visit: node = %s \n",node->class_name().c_str());
      ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
      node->checkDataMemberPointersIfInMemoryPool();
+   }
+
+
+
+
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute::
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute(bool b)
+   : sourceFile(NULL), 
+     caseInsensitive(b)
+   {
+   }
+
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute::
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute(const TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute & X)
+   {
+     sourceFile      = X.sourceFile;
+     caseInsensitive = X.caseInsensitive; 
+   }
+
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute
+TestForProperLanguageAndSymbolTableCaseSensitivity::evaluateInheritedAttribute(SgNode* node, TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute inheritedAttribute)
+   {
+  // The default is to make all symbol tables (scopes) case sensitive, and then detect use of Fortran 
+  // files (SgSourceFile IR nodes) and make all of their symbol tables (scopes) case insensitive.
+     TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute return_inheritedAttribute(inheritedAttribute);
+
+     SgSourceFile* sourceFile = isSgSourceFile(node);
+     if (sourceFile != NULL)
+        {
+       // printf ("Found SgSourceFile for %s get_Fortran_only() = %s \n",sourceFile->getFileName().c_str(),sourceFile->get_Fortran_only() ? "true" : "false");
+
+          return_inheritedAttribute.sourceFile = sourceFile;
+          if (sourceFile->get_Fortran_only() == true)
+             {
+               return_inheritedAttribute.caseInsensitive = true;
+             }
+        }
+
+     SgScopeStatement* scope = isSgScopeStatement(node);
+     if (scope != NULL)
+        {
+       // This is a scope, now check if it matches the case sensitivity from the file (stored in the inherited attribute).
+       // printf ("Note: scope = %p = %s scope->isCaseInsensitive() = %s inheritedAttribute.caseInsensitive = %s \n",scope,scope->class_name().c_str(),scope->isCaseInsensitive() ? "true" : "false",return_inheritedAttribute.caseInsensitive ? "true" : "false");
+
+          if (scope->isCaseInsensitive() != return_inheritedAttribute.caseInsensitive)
+             {
+               printf ("Error: scope->isCaseInsensitive() = %s inheritedAttribute.caseInsensitive = %s \n",scope->isCaseInsensitive() ? "true" : "false",return_inheritedAttribute.caseInsensitive ? "true" : "false");
+               scope->get_startOfConstruct()->display("scope->isCaseInsensitive() incorrectly set");
+               ROSE_ASSERT(return_inheritedAttribute.sourceFile != NULL);
+               SgSourceFile* sourceFile = inheritedAttribute.sourceFile;
+               if (sourceFile->get_Fortran_only() == true)
+                  {
+                    printf ("Fortran file %s should have an AST with scopes marked as case insensitive \n",sourceFile->getFileName().c_str());
+                  }
+                 else
+                  {
+                    printf ("Non-fortran file %s should have an AST with scopes marked as case sensitive \n",sourceFile->getFileName().c_str());
+                  }
+             }
+          ROSE_ASSERT(scope->isCaseInsensitive() == return_inheritedAttribute.caseInsensitive);
+        }
+
+  // Return the inherited attribue (will call the implemented copy constructor).
+     return return_inheritedAttribute;
+   }
+
+
+void
+TestForProperLanguageAndSymbolTableCaseSensitivity::test(SgNode* node)
+   {
+  // Inherited attribute with caseInsensitive marked as false.
+     bool caseInsensitive = false;
+     TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute IH(caseInsensitive);
+
+     TestForProperLanguageAndSymbolTableCaseSensitivity traversal; // (node,IH);
+
+  // printf ("Traversing AST to support TestForProperLanguageAndSymbolTableCaseSensitivity::test() \n");
+  // ROSE_ASSERT(false);
+
+  // This should be a SgProject or SgFile so that we can evaluate the language type (obtained from the SgFile).
+     ROSE_ASSERT(isSgProject(node) != NULL || isSgFile(node) != NULL);
+
+     traversal.traverse(node,IH);
+
+  // printf ("DONE: Traversing AST to support TestForProperLanguageAndSymbolTableCaseSensitivity::test() \n");
    }
 

@@ -2839,6 +2839,7 @@ tests/roseTests/binaryTests/Pin_tests/Makefile
 tests/roseTests/binaryTests/Dwarf_tests/Makefile
 tests/roseTests/loopProcessingTests/Makefile
 tests/roseTests/ompLoweringTests/Makefile
+tests/roseTests/ompLoweringTests/fortran/Makefile
 tests/roseTests/programAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile

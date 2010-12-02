@@ -61,6 +61,10 @@ Scope stack is provided as an alternative to manually passing scope parameters t
 */
 extern std::list<SgScopeStatement*> ScopeStack;
 
+// DQ (11/30/2010): Added support for building Fortran case insensitive symbol table handling.
+//! Support for construction of case sensitive/insensitive symbol table handling in scopes.
+extern bool symbol_table_case_insensitive_semantics;
+
 //! Public interfaces of the scope stack, should be stable
 void pushScopeStack (SgScopeStatement* stmt);
 void pushScopeStack (SgNode* node);
