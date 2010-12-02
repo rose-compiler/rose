@@ -3518,6 +3518,36 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 162: { /* 0xa2, nanosleep */
+            syscall_enter("nanosleep", "Pp", sizeof(timespec_32), print_timespec_32);
+            do {
+                timespec_32 guest_ts;
+                timespec host_ts_in, host_ts_out;
+                if (sizeof(guest_ts)!=map->read(&guest_ts, arg(0), sizeof guest_ts)) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                host_ts_in.tv_sec = guest_ts.sec;
+                host_ts_in.tv_nsec = guest_ts.nsec;
+                int result = nanosleep(&host_ts_in, &host_ts_out);
+                if (-1==result) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
+                if (arg(1)) {
+                    guest_ts.sec = host_ts_out.tv_sec;
+                    guest_ts.nsec = host_ts_out.tv_nsec;
+                    if (sizeof(guest_ts)!=map->write(&guest_ts, arg(1), sizeof guest_ts)) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                        break;
+                    }
+                }
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
+            syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
+            break;
+        }
+
         case 174: { /*0xae, rt_sigaction*/
             syscall_enter("rt_sigaction", "fPpd", signal_names, sizeof(sigaction_32), print_sigaction_32);
             do {
