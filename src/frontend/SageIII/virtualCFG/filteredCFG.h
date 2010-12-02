@@ -125,15 +125,15 @@ namespace VirtualCFG
         {
             return p.scopesBeingEntered();
         }
-        bool operator==(const FilteredCFGNode < FilterFunction > &o)const
+        bool operator==(const FilteredCFGEdge < FilterFunction > &o)const
         {
             return p == o.p;
         }
-        bool operator!=(const FilteredCFGNode < FilterFunction > &o)const
+        bool operator!=(const FilteredCFGEdge < FilterFunction > &o)const
         {
             return p != o.p;
         }
-        bool operator<(const FilteredCFGNode < FilterFunction > &o)const
+        bool operator<(const FilteredCFGEdge < FilterFunction > &o)const
         {
             return p < o.p;
         }
