@@ -34,13 +34,7 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportDirectory *idir)
 SgAsmPEImportLookupTable *
 SgAsmPEImportLookupTable::parse(rose_rva_t rva, size_t idir_idx)
 {
-  /*tps 11/23/2010 : temp fix for stringifySgAsmPEImportLookupTableTableKind not defined under windows */
-#ifdef _MSC_VER
-  std::string tname = "";
-  ROSE_ASSERT(false);
-#else
     std::string tname = stringifySgAsmPEImportLookupTableTableKind(get_table_kind());
-#endif
     SgAsmPEImportSection *isec = SageInterface::getEnclosingNode<SgAsmPEImportSection>(this);
     ROSE_ASSERT(isec!=NULL);
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(isec->get_header());

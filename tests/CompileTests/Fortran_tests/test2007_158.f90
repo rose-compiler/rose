@@ -1,5 +1,5 @@
 Program main
- ! Declare "foo" as a function (it't return type is not interpreted to be integer)
+ ! Declare "foo" as a function (it's return type is not interpreted to be integer)
  ! external foo
  ! dimension foo(5)
  ! Declare the integer type variables
