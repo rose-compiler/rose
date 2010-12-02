@@ -242,8 +242,9 @@ read_trace_file(const string & traceFileName, uint64_t & entry_va )
    }
 
 
-// Function prototype...
-SgAsmGenericFile* generateExecutable(const std::string &name, const Disassembler::InstructionMap&, rose_addr_t entry_va);
+// Function prototypes...
+SgAsmGenericFile* generateElfExecutable(const std::string &name, const Disassembler::InstructionMap&, rose_addr_t entry_va);
+SgAsmGenericFile* generatePeExecutable(const std::string &name, const Disassembler::InstructionMap&, rose_addr_t entry_va);
 
 int
 main(int argc, char* argv[])
@@ -264,8 +265,10 @@ main(int argc, char* argv[])
      printf("found %zu instruction%s\n", insns.size(), 1==insns.size()?"":"s");
 
   // Now generate the executable...
-     std::cerr <<"Generating executable file...\n";
-     generateExecutable("a.out", insns, entry_va);
+     std::cerr <<"Generating ELF file: a.out\n";
+     generateElfExecutable("a.out", insns, entry_va);
+     std::cerr <<"Generating PE file:  a.exe\n";
+     generatePeExecutable("a.exe", insns, entry_va);
 
      return 0;
    }

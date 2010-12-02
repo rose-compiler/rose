@@ -15,7 +15,7 @@ main()
 
     /* The DOS File Header is the first thing in the file, always at offset zero. The constructors generally take arguments to
      * describe the new object's relationship with existing objects. In this case, the SgAsmDOSFileHeader is a child of the
-     * SgAsmGenericFile in the AST. If we were parsing an existing binary file then you would construct the SgAsmDOSFileHeader
+     * SgAsmGenericFile in the AST. If we were parsing an existing binary file then we would construct the SgAsmDOSFileHeader
      * and then invoke parse(), which recursively constructs and parses everything reachable from the DOS File Header.
      *
      * A freshly constructed DOS File Header isn't too useful since nearly all its data members are initialized to zeros. But
