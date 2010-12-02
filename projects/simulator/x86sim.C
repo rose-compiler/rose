@@ -3225,8 +3225,10 @@ EmulationPolicy::emulate_syscall()
 
                 /* Set protection in the underlying real memory (to catch things like trying to add write permission to memory
                  * that's mapped from a read-only file), then also set the protection in the simulated memory map so the simulator
-                 * can make queries about memory access. */
-                if (-1==mprotect(my_addr(va, size), size, perms)) {
+                 * can make queries about memory access.  Some of the underlying memory points to parts of an ELF file that was
+                 * read into ROSE's memory in such a way that segments are not aligned on page boundaries. We cannot change
+                 * protections on these non-aligned sections. */
+                if (-1==mprotect(my_addr(va, size), size, perms) && EINVAL!=errno) {
                     writeGPR(x86_gpr_ax, -errno);
                 } else {
                     try {
