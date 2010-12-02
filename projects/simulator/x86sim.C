@@ -340,6 +340,22 @@ print_bitvec(FILE *f, const uint8_t *vec, size_t sz)
     return result;
 }
 
+static int
+print_sigmask(FILE *f, const uint8_t *vec, size_t sz)
+{
+    int result=0, nsigs=0;
+    for (size_t i=0; i<sz; i++) {
+        for (size_t j=0; j<8; j++) {
+            if (vec[i] & (1<<j)) {
+                uint32_t signo = i*8+j + 1;
+                if (nsigs++) result += fprintf(f, ",");
+                result += print_enum(f, signal_names, signo);
+            }
+        }
+    }
+    return result;
+}
+
 static const Translate seek_whence[] = {TE(SEEK_SET), TE(SEEK_CUR), TE(SEEK_END), T_END};
 
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
@@ -385,8 +401,9 @@ public:
     uint32_t mmap_start;                        /* Minimum address to use when looking for mmap free space */
     bool mmap_recycle;                          /* If false, then never reuse mmap addresses */
     sigaction_32 signal_action[_NSIG+1];        /* Simulated actions for signal handling */
-    uint64_t signal_mask;                       /* Set by sigsetmask() */
+    uint64_t signal_mask;                       /* Set by sigsetmask(), specifies signals that are not delivered */
     std::queue<int> signal_queue;               /* List of pending signals in the order they arrived provided not masked */
+    bool signal_reprocess;                      /* Set to true if we might need to reprocess the signal_queue */
     uint32_t signal_return;                     /* Return address for currently executing signal handler, or zero */
     std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
     static const uint32_t brk_base=0x08000000;  /* Lowest possible brk() value */
@@ -421,8 +438,8 @@ public:
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
-          signal_return(0), vdso_mapped_va(0), vdso_entry_va(0), core_styles(CORE_ELF), core_base_name("x-core.rose"),
-          ld_linux_base_va(0x40000000),
+          signal_reprocess(true), signal_return(0), vdso_mapped_va(0), vdso_entry_va(0), core_styles(CORE_ELF),
+          core_base_name("x-core.rose"), ld_linux_base_va(0x40000000),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false), trace_progress(false), trace_signal(false) {
 
@@ -558,6 +575,9 @@ public:
 
     /* Conditionally adds a signal to the queue of pending signals */
     void signal_arrival(int signo);
+
+    /* Dispatch all unmasked pending signals */
+    void signal_dispatch();
 
     /* Dispatch a signal. That is, emulation the specimen's signal handler or default action. */
     void signal_dispatch(int signo);
@@ -3328,7 +3348,7 @@ EmulationPolicy::emulate_syscall()
 
         case 175: { /*0xaf, rt_sigprocmask*/
             static const Translate flags[] = { TF(SIG_BLOCK), TF(SIG_UNBLOCK), TF(SIG_SETMASK), T_END };
-            syscall_enter("rt_sigprocmask", "fpp", flags);
+            syscall_enter("rt_sigprocmask", "fPp", flags, (size_t)8, print_sigmask);
 
             int how=arg(0);
             uint32_t set_va=arg(1), get_va=arg(2);
@@ -3353,6 +3373,8 @@ EmulationPolicy::emulate_syscall()
                     writeGPR(x86_gpr_ax, -EINVAL);
                     break;
                 }
+                if (signal_mask!=saved)
+                    signal_reprocess = true;
             }
 
             if (get_va) {
@@ -3360,7 +3382,7 @@ EmulationPolicy::emulate_syscall()
                 ROSE_ASSERT(nwritten==sizeof saved);
             }
             writeGPR(x86_gpr_ax, 0);
-            syscall_leave("d");
+            syscall_leave("d--P", (size_t)8, print_sigmask);
             break;
         }
 
@@ -4145,18 +4167,45 @@ EmulationPolicy::arg(int idx)
     }
 }
 
+/* Place signal on queue of pending signals. */
 void
 EmulationPolicy::signal_arrival(int signo)
 {
     ROSE_ASSERT(signo>0 && signo<_NSIG);
+    bool is_masked = (0 != (signal_mask & (1<<(signo-1))));
+
     if (debug && trace_signal) {
         fprintf(debug, " [signal ");
         print_enum(debug, signal_names, signo);
-        fprintf(debug, " (%s) arrived] ", strsignal(signo));
+        fprintf(debug, " (%s) %s]", strsignal(signo), is_masked?"is masked":"arrived");
     }
     signal_queue.push(signo);
+    if (!is_masked)
+        signal_reprocess = true;
 }
 
+/* Dispatch signals on the queue if they are not masked. */
+void
+EmulationPolicy::signal_dispatch()
+{
+    std::queue<int> pending;
+    if (signal_reprocess) {
+        signal_reprocess = false;
+        while (!signal_queue.empty()) {
+            int signo = signal_queue.front();
+            signal_queue.pop();
+            bool is_pending = (0 != (signal_mask & (1 << (signo-1))));
+            if (is_pending) {
+                pending.push(signo);
+            } else {
+                signal_dispatch(signo);
+            }
+        }
+        signal_queue = pending;
+    }
+}
+
+/* Dispatch the specified signal */
 void
 EmulationPolicy::signal_dispatch(int signo)
 {
@@ -4542,11 +4591,7 @@ main(int argc, char *argv[], char *envp[])
             if (policy.debug && policy.trace_state)
                 policy.dump_registers(policy.debug);
 
-            while (!policy.signal_queue.empty()) {
-                int signo = policy.signal_queue.front();
-                policy.signal_queue.pop();
-                policy.signal_dispatch(signo);
-            }
+            policy.signal_dispatch();
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
 #ifdef X86SIM_STRICT_EMULATION
