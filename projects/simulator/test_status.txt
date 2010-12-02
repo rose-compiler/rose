@@ -103,6 +103,7 @@ syscall_tst.192.7 yes
 syscall_tst.192.8 yes
 syscall_tst.192.9 no
 syscall_tst.195.5 yes
+syscall_tst.195.6 no
 syscall_tst.196.1 yes
 syscall_tst.197.1 no
 syscall_tst.197.2 no

@@ -591,8 +591,11 @@ public:
     /* Returns the memory address in ROSE where the specified specimen address is located. */
     void *my_addr(uint32_t va, size_t size);
 
-    /* Reads a NUL-terminated string from specimen memory. The NUL is not included in the string. */
-    std::string read_string(uint32_t va);
+    /* Reads a NUL-terminated string from specimen memory. The NUL is not included in the string.  If a limit is specified then
+     * the returned string will contain at most this many characters (a value of zero implies no limit).  If the string cannot
+     * be read, then "error" (if non-null) will point to a true value and the returned string will include the characters up to
+     * the error. */
+    std::string read_string(uint32_t va, size_t limit=0, bool *error=NULL);
 
     /* Reads a vector of NUL-terminated strings from specimen memory. */
     std::vector<std::string> read_string_vector(uint32_t va);
@@ -1548,17 +1551,27 @@ EmulationPolicy::my_addr(uint32_t va, size_t nbytes)
 }
 
 std::string
-EmulationPolicy::read_string(uint32_t va)
+EmulationPolicy::read_string(uint32_t va, size_t limit/*=0*/, bool *error/*=NULL*/)
 {
     std::string retval;
     while (1) {
         uint8_t byte;
         size_t nread = map->read(&byte, va++, 1);
-        ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
-        if (!byte)
+        if (1!=nread) {
+            if (error)
+                *error = true;
             return retval;
+        }
+        if (!byte)
+            break;
         retval += byte;
+
+        if (limit>0 && retval.size()>=limit)
+            break;
     }
+    if (error)
+        *error = false;
+    return retval;
 }
 
 std::vector<std::string>
@@ -2123,17 +2136,23 @@ EmulationPolicy::emulate_syscall()
 
         case 5: { /*open*/
             syscall_enter("open", "sf", open_flags);
-            uint32_t filename_va=arg(0);
-            std::string filename = read_string(filename_va);
-            uint32_t flags=arg(1), mode=(flags & O_CREAT)?arg(2):0;
-            int fd = open(filename.c_str(), flags, mode);
+            do {
+                uint32_t filename_va=arg(0);
+                bool error;
+                std::string filename = read_string(filename_va, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                uint32_t flags=arg(1), mode=(flags & O_CREAT)?arg(2):0;
+                int fd = open(filename.c_str(), flags, mode);
+                if (-1==fd) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
 
-            if( fd <= 256 ) // 256 is getdtablesize() in the simulator
-                writeGPR(x86_gpr_ax, fd<0 ? -errno : fd);
-            else {
-                writeGPR(x86_gpr_ax, -EMFILE);
-                close(fd);
-            }
+                writeGPR(x86_gpr_ax, fd);
+            } while (0);
             syscall_leave("d");
             break;
         }
@@ -2172,65 +2191,104 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
-             
+
         case 8: { /* 0x8, creat */
             syscall_enter("creat", "sd");
-     	    uint32_t filename = arg(0);
-            std::string sys_filename = read_string(filename);
+            do {
+                uint32_t filename = arg(0);
+                bool error;
+                std::string sys_filename = read_string(filename, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
 	        mode_t mode = arg(1);
 
 	        int result = creat(sys_filename.c_str(), mode);
-            if (result == -1) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+                if (result == -1) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
 
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
-	    }  
-   
+        }
+
         case 10: { /*0xa, unlink*/
             syscall_enter("unlink", "s");
-            uint32_t filename_va = arg(0);
-            std::string filename = read_string(filename_va);
-            int result = unlink(filename.c_str());
-            if (result == -1) 
-                result = -errno;
-            writeGPR(x86_gpr_ax, result);
+            do {
+                uint32_t filename_va = arg(0);
+                bool error;
+                std::string filename = read_string(filename_va, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+
+                int result = unlink(filename.c_str());
+                if (result == -1) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
+                
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
         }
 
 	case 11: { /* 0xb, execve */
             syscall_enter("execve", "spp");
-            std::string filename = read_string(arg(0));
-            std::vector<std::string > argv = read_string_vector(arg(1));
-            std::vector<std::string > envp = read_string_vector(arg(2));
-            std::vector<char*> sys_argv;
-            for (unsigned int i = 0; i < argv.size(); ++i) sys_argv.push_back(&argv[i][0]);
-            sys_argv.push_back(NULL);
-            std::vector<char*> sys_envp;
-            for (unsigned int i = 0; i < envp.size(); ++i) sys_envp.push_back(&envp[i][0]);
-            sys_envp.push_back(NULL);
-            int result;
-            if (std::string(&filename[0]) == "/usr/bin/man") {
-                result = -EPERM;
-            } else {
-                result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
-                if (result == -1) result = -errno;
-            }
-            writeGPR(x86_gpr_ax, result);
+            do {
+                bool error;
+                std::string filename = read_string(arg(0), 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                
+                std::vector<std::string > argv = read_string_vector(arg(1));
+                std::vector<std::string > envp = read_string_vector(arg(2));
+
+                std::vector<char*> sys_argv;
+                for (unsigned int i = 0; i < argv.size(); ++i)
+                    sys_argv.push_back(&argv[i][0]);
+                sys_argv.push_back(NULL);
+
+                std::vector<char*> sys_envp;
+                for (unsigned int i = 0; i < envp.size(); ++i)
+                    sys_envp.push_back(&envp[i][0]);
+                sys_envp.push_back(NULL);
+                
+                int result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
+                ROSE_ASSERT(-1==result);
+                writeGPR(x86_gpr_ax, -errno);
+            } while (0);
             syscall_leave("d");
             break;
         }
 
 	case 12: { /* 0xc, chdir */
             syscall_enter("chdir", "s");
-	    uint32_t path = arg(0);
-            std::string sys_path = read_string(path);
+            do {
+                uint32_t path = arg(0);
+                bool error;
+                std::string sys_path = read_string(path, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
 
-	    int result = chdir(sys_path.c_str());
-            if (result == -1) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+                int result = chdir(sys_path.c_str());
+                if (result == -1) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
 
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
 	}
@@ -2251,24 +2309,38 @@ EmulationPolicy::emulate_syscall()
 
         case 14: { /*0xe, mknod*/
             syscall_enter("mknod", "sdd");
-            uint32_t path_va = arg(0);
-            int mode = arg(1);
-            unsigned dev = arg(2);
-            std::string path = read_string(path_va);
-            int result = mknod(path.c_str(), mode, dev);
-            writeGPR(x86_gpr_ax, -1==result ? -errno : result);
+            do {
+                uint32_t path_va = arg(0);
+                int mode = arg(1);
+                unsigned dev = arg(2);
+                bool error;
+                std::string path = read_string(path_va, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                int result = mknod(path.c_str(), mode, dev);
+                writeGPR(x86_gpr_ax, -1==result ? -errno : result);
+            } while (0);
             syscall_leave("d");
             break;
         }
 
 	case 15: { /* 0xf, chmod */
             syscall_enter("chmod", "sd");
-	    uint32_t filename = arg(0);
-            std::string sys_filename = read_string(filename);
-	    mode_t mode = arg(1);
-	    int result = chmod(sys_filename.c_str(), mode);
-            if (result == -1) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+            do {
+                uint32_t filename = arg(0);
+                bool error;
+                std::string sys_filename = read_string(filename, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                mode_t mode = arg(1);
+                int result = chmod(sys_filename.c_str(), mode);
+                if (result == -1) result = -errno;
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
 	}
@@ -2322,50 +2394,61 @@ EmulationPolicy::emulate_syscall()
                to the current time.
             */
             syscall_enter("utime", "sp");
+            do {
+                bool error;
+                std::string filename = read_string(arg(0), 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
 
-            std::string filename = read_string(arg(0));
+                //Check to see if times is NULL
+                uint8_t byte;
+                size_t nread = map->read(&byte, arg(1), 1);
+                ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
 
-            //Check to see if times is NULL
-            uint8_t byte;
-            size_t nread = map->read(&byte, arg(1), 1);
-            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+                int result;
+                if( byte) {
+                    struct kernel_utimebuf {
+                        uint32_t actime;
+                        uint32_t modtime;
+                    };
 
-            int result;
-            if( byte)
-            {
-              struct kernel_utimebuf {
-                uint32_t actime;
-                uint32_t modtime;
-              };
+                    kernel_utimebuf ubuf;
+                    size_t nread = map->read(&ubuf, arg(1), sizeof(kernel_utimebuf));
+                    ROSE_ASSERT(nread == sizeof(kernel_utimebuf));
 
-              kernel_utimebuf ubuf;
-              size_t nread = map->read(&ubuf, arg(1), sizeof(kernel_utimebuf));
-              ROSE_ASSERT(nread == sizeof(kernel_utimebuf));
+                    utimbuf ubuf64;
+                    ubuf64.actime  = ubuf.actime;
+                    ubuf64.modtime = ubuf.modtime;
 
-              utimbuf ubuf64;
-              ubuf64.actime  = ubuf.actime;
-              ubuf64.modtime = ubuf.modtime;
+                    result = utime(filename.c_str(), &ubuf64);
 
-              result = utime(filename.c_str(), &ubuf64);
-
-            }else
-              result = utime(filename.c_str(), NULL);
-
-            writeGPR(x86_gpr_ax, result);
+                } else {
+                    result = utime(filename.c_str(), NULL);
+                }
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
-
             break;
         };
 
         case 33: { /*0x21, access*/
             static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
             syscall_enter("access", "sf", flags);
-            uint32_t name_va=arg(0);
-            std::string name = read_string(name_va);
-            int mode=arg(1);
-            int result = access(name.c_str(), mode);
-            if (-1==result) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+            do {
+                uint32_t name_va=arg(0);
+                bool error;
+                std::string name = read_string(name_va, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                int mode=arg(1);
+                int result = access(name.c_str(), mode);
+                if (-1==result) result = -errno;
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
         }
@@ -2383,27 +2466,39 @@ EmulationPolicy::emulate_syscall()
 
 	case 39: { /* 0x27, mkdir */
             syscall_enter("mkdir", "sd");
-	    uint32_t pathname = arg(0);
-            std::string sys_pathname = read_string(pathname);
-	    mode_t mode = arg(1);
+            do {
+                uint32_t pathname = arg(0);
+                bool error;
+                std::string sys_pathname = read_string(pathname, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                mode_t mode = arg(1);
 
-	    int result = mkdir(sys_pathname.c_str(), mode);
-            if (result == -1) result = -errno;
-            writeGPR(x86_gpr_ax, result);
-
+                int result = mkdir(sys_pathname.c_str(), mode);
+                if (result == -1) result = -errno;
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
 	}
 
 	case 40: { /* 0x28, rmdir */
             syscall_enter("rmdir", "s");
-	    uint32_t pathname = arg(0);
-            std::string sys_pathname = read_string(pathname);
+            do {
+                uint32_t pathname = arg(0);
+                bool error;
+                std::string sys_pathname = read_string(pathname, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
 
-	    int result = rmdir(sys_pathname.c_str());
-            if (result == -1) result = -errno;
-            writeGPR(x86_gpr_ax, result);
-
+                int result = rmdir(sys_pathname.c_str());
+                if (result == -1) result = -errno;
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
 	}
@@ -2800,29 +2895,47 @@ EmulationPolicy::emulate_syscall()
 
         case 83: { /*0x53, symlink*/
             syscall_enter("symlink", "ss");
-            uint32_t oldpath=arg(0), newpath=arg(1);
-            std::string sys_oldpath = read_string(oldpath);
-            std::string sys_newpath = read_string(newpath);
-            int result = symlink(sys_oldpath.c_str(),sys_newpath.c_str());
-            if (result == -1) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+            do {
+                uint32_t oldpath=arg(0), newpath=arg(1);
+                bool error;
+                std::string sys_oldpath = read_string(oldpath, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                std::string sys_newpath = read_string(newpath, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                int result = symlink(sys_oldpath.c_str(),sys_newpath.c_str());
+                if (result == -1) result = -errno;
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
         }
 
         case 85: { /*0x55, readlink*/
             syscall_enter("readlink", "spd");
-            uint32_t path=arg(0), buf_va=arg(1), bufsize=arg(2);
-            char sys_buf[bufsize];
-            std::string sys_path = read_string(path);
-            int result = readlink(sys_path.c_str(), sys_buf, bufsize);
-            if (result == -1) {
-                result = -errno;
-            } else {
-                size_t nwritten = map->write(sys_buf, buf_va, result);
-                ROSE_ASSERT(nwritten == (size_t)result);
-            }
-            writeGPR(x86_gpr_ax, result);
+            do {
+                uint32_t path=arg(0), buf_va=arg(1), bufsize=arg(2);
+                char sys_buf[bufsize];
+                bool error;
+                std::string sys_path = read_string(path, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                int result = readlink(sys_path.c_str(), sys_buf, bufsize);
+                if (result == -1) {
+                    result = -errno;
+                } else {
+                    size_t nwritten = map->write(sys_buf, buf_va, result);
+                    ROSE_ASSERT(nwritten == (size_t)result);
+                }
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
         }
@@ -3587,38 +3700,44 @@ EmulationPolicy::emulate_syscall()
                 syscall_enter("fstat64", "dp");
             }
 
-            ROSE_ASSERT(96==sizeof(kernel_stat_32));
-            ROSE_ASSERT(144==sizeof(kernel_stat_64));
+            do {
+                ROSE_ASSERT(96==sizeof(kernel_stat_32));
+                ROSE_ASSERT(144==sizeof(kernel_stat_64));
 #ifdef SYS_stat64       /* x86sim must be running on i386 */
-            ROSE_ASSERT(4==sizeof(long));
-            int host_callno = 195==callno ? SYS_stat64 : (196==callno ? SYS_lstat64 : SYS_fstat64);
-            static const size_t kernel_stat_size = sizeof(kernel_stat_32);
+                ROSE_ASSERT(4==sizeof(long));
+                int host_callno = 195==callno ? SYS_stat64 : (196==callno ? SYS_lstat64 : SYS_fstat64);
+                static const size_t kernel_stat_size = sizeof(kernel_stat_32);
 #else                   /* x86sim must be running on amd64 */
-            ROSE_ASSERT(8==sizeof(long));
-            int host_callno = 195==callno ? SYS_stat : (196==callno ? SYS_lstat : SYS_fstat);
-            static const size_t kernel_stat_size = sizeof(kernel_stat_64);
+                ROSE_ASSERT(8==sizeof(long));
+                int host_callno = 195==callno ? SYS_stat : (196==callno ? SYS_lstat : SYS_fstat);
+                static const size_t kernel_stat_size = sizeof(kernel_stat_64);
 #endif
 
-            static uint8_t kernel_stat[kernel_stat_size+100];
-            memset(kernel_stat, 0xff, sizeof kernel_stat);
-            int result = 0xdeadbeef;
+                static uint8_t kernel_stat[kernel_stat_size+100];
+                memset(kernel_stat, 0xff, sizeof kernel_stat);
+                int result = 0xdeadbeef;
 
             /* Make the system call without going through the C library. Well, we go through syscall(), but nothing else. */
-            if (195==callno || 196==callno) {
-                std::string name = read_string(arg(0));
-                result = syscall(host_callno, (unsigned long)name.c_str(), (unsigned long)kernel_stat);
-            } else {
-                result = syscall(host_callno, (unsigned long)arg(0), (unsigned long)kernel_stat);
-            }
-            if (-1==result)
-                result = -errno;
+                if (195==callno || 196==callno) {
+                    bool error;
+                    std::string name = read_string(arg(0), 0, &error);
+                    if (error) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                        break;
+                    }
+                    result = syscall(host_callno, (unsigned long)name.c_str(), (unsigned long)kernel_stat);
+                } else {
+                    result = syscall(host_callno, (unsigned long)arg(0), (unsigned long)kernel_stat);
+                }
+                if (-1==result) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
 
-            /* Check for overflow */
-            for (size_t i=kernel_stat_size; i<sizeof kernel_stat; i++)
-                ROSE_ASSERT(0xff==kernel_stat[i]);
+                /* Check for overflow */
+                for (size_t i=kernel_stat_size; i<sizeof kernel_stat; i++)
+                    ROSE_ASSERT(0xff==kernel_stat[i]);
 
-
-            if (result>=0) {
                 /* Check for underflow.  Check that the kernel initialized as much data as we thought it should.  We
                  * initialized the kernel_stat to all 0xff bytes before making the system call.  The last data member of
                  * kernel_stat is either an 8-byte inode (i386) or zero (amd64), which in either case the high order byte is
@@ -3655,9 +3774,9 @@ EmulationPolicy::emulate_syscall()
                 } else {
                     map->write(kernel_stat, arg(1), kernel_stat_size);
                 }
-            }
 
-            writeGPR(x86_gpr_ax, result);
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d-P", sizeof(kernel_stat_32), print_kernel_stat_32);
             break;
         }
@@ -3717,11 +3836,18 @@ EmulationPolicy::emulate_syscall()
                  }
         case 212: { /*0xd4, chown */
             syscall_enter("chown", "sdd");
-	    std::string filename = read_string(arg(0));
-            uid_t user = arg(1);
-	    gid_t group = arg(2);
-	    int result = chown(filename.c_str(),user,group);
-            writeGPR(x86_gpr_ax, result);
+            do {
+                bool error;
+                std::string filename = read_string(arg(0), 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                uid_t user = arg(1);
+                gid_t group = arg(2);
+                int result = chown(filename.c_str(),user,group);
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
         }
@@ -4021,40 +4147,45 @@ EmulationPolicy::emulate_syscall()
 
             */
             syscall_enter("utimes", "s");
+            do {
+                bool error;
+                std::string filename = read_string(arg(0), 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+
+                //Check to see if times is NULL
+                uint8_t byte;
+                size_t nread = map->read(&byte, arg(1), 1);
+                ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+
+                int result;
+                if( byte ) {
+
+                    size_t size_timeval_sample = sizeof(timeval_32)*2;
+
+                    timeval_32 ubuf[1];
+
+                    size_t nread = map->read(&ubuf, arg(1), size_timeval_sample);
 
 
-            std::string filename = read_string(arg(0));
+                    timeval timeval64[1];
+                    timeval64[0].tv_sec  = ubuf[0].tv_sec;
+                    timeval64[0].tv_usec = ubuf[0].tv_usec;
+                    timeval64[1].tv_sec  = ubuf[1].tv_sec;
+                    timeval64[1].tv_usec = ubuf[1].tv_usec;
 
-            //Check to see if times is NULL
-            uint8_t byte;
-            size_t nread = map->read(&byte, arg(1), 1);
-            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+                    ROSE_ASSERT(nread == size_timeval_sample);
 
-            int result;
-            if( byte )
-            {
+                    result = utimes(filename.c_str(), timeval64);
 
-              size_t size_timeval_sample = sizeof(timeval_32)*2;
+                } else {
+                    result = utimes(filename.c_str(), NULL);
+                }
 
-              timeval_32 ubuf[1];
-
-              size_t nread = map->read(&ubuf, arg(1), size_timeval_sample);
-
-
-              timeval timeval64[1];
-              timeval64[0].tv_sec  = ubuf[0].tv_sec;
-              timeval64[0].tv_usec = ubuf[0].tv_usec;
-              timeval64[1].tv_sec  = ubuf[1].tv_sec;
-              timeval64[1].tv_usec = ubuf[1].tv_usec;
-
-              ROSE_ASSERT(nread == size_timeval_sample);
-
-              result = utimes(filename.c_str(), timeval64);
-
-            }else
-              result = utimes(filename.c_str(), NULL);
-
-            writeGPR(x86_gpr_ax, result);
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
 
@@ -4062,16 +4193,22 @@ EmulationPolicy::emulate_syscall()
 
 	case 306: { /* 0x132, fchmodat */
             syscall_enter("fchmodat", "dsdd");
-	    int dirfd = arg(0);
-	    uint32_t path = arg(1);
-            std::string sys_path = read_string(path);
-	    mode_t mode = arg(2);
-	    int flags = arg(3);
+            do {
+                int dirfd = arg(0);
+                uint32_t path = arg(1);
+                bool error;
+                std::string sys_path = read_string(path, 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                mode_t mode = arg(2);
+                int flags = arg(3);
 
-	    int result = syscall( 306, dirfd, (long) sys_path.c_str(), mode, flags);
-            if (result == -1) result = -errno;
-            writeGPR(x86_gpr_ax, result);
-
+                int result = syscall( 306, dirfd, (long) sys_path.c_str(), mode, flags);
+                if (result == -1) result = -errno;
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
             syscall_leave("d");
             break;
 	}
@@ -4114,9 +4251,11 @@ EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_li
         case 'e':       /*enum*/
             info->xlate = va_arg(*ap, const Translate*);
             break;
-        case 's':       /*NUL-terminated string*/
-            info->str = read_string(val);
+        case 's': {     /*NUL-terminated string*/
+            info->str = read_string(val, 4096, &(info->str_fault));
+            info->str_trunc = (info->str.size() >= 4096);
             break;
+        }
         case 'P': {       /*ptr to a struct*/
             info->struct_size = va_arg(*ap, size_t);
             info->struct_printer = va_arg(*ap, ArgInfo::StructPrinter);
