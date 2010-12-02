@@ -3491,7 +3491,7 @@ EmulationPolicy::emulate_syscall()
                 /* Try to figure out a reasonable name for the map element. If we're mapping a file, we can get the file name
                  * from the proc filesystem. The name is only used to aid debugging. */
                 std::string melmt_name = "anonymous";
-                if (fd>=0) {
+                if (fd>=0 && 0==(flags & MAP_ANONYMOUS)) {
                     char fd_namebuf[4096];
                     ssize_t nread = readlink(("/proc/self/fd/"+StringUtility::numberToString(fd)).c_str(),
                                              fd_namebuf, sizeof(fd_namebuf)-1);
