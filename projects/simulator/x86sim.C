@@ -2987,23 +2987,17 @@ EmulationPolicy::emulate_syscall()
 	    }
 
      	case 95: { /*0x5f, fchown */
-            /*
-                   int fchown(int fd, uid_t owner, gid_t group);
-
-                   typedef unsigned short  __kernel_old_uid_t;
-                   typedef unsigned short  __kernel_old_gid_t;
-
-                   fchown() changes the ownership of the file referred to by the open file
-                            descriptor fd.
-
-               */
-
-            syscall_enter("fchown16", "ddd");
-	        uint32_t fd = arg(0);
-            unsigned short  user = arg(1);
-	        unsigned short  group = arg(2);
-	        int result = syscall(95,fd,user,group);
-            writeGPR(x86_gpr_ax, result);
+            /* int fchown(int fd, uid_t owner, gid_t group);
+             * typedef unsigned short  __kernel_old_uid_t;
+             * typedef unsigned short  __kernel_old_gid_t;
+             *
+             * fchown() changes the ownership of the file referred to by the open file descriptor fd. */
+            syscall_enter("fchown", "ddd");
+            uint32_t fd = arg(0);
+            int user = arg(1);
+            int group = arg(2);
+            int result = syscall(SYS_fchown, fd, user, group);
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
             syscall_leave("d");
             break;
         }
@@ -3813,27 +3807,22 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 207: { /*0xcf, fchown */
-                   /*
-                      int fchown(int fd, uid_t owner, gid_t group);
+        case 207: { /*0xcf, fchown32 */
+            /* int fchown(int fd, uid_t owner, gid_t group);
+             * typedef unsigned short  __kernel_old_uid_t;
+             * typedef unsigned short  __kernel_old_gid_t;
+             *
+             * fchown() changes the ownership of the file referred to by the open file descriptor fd. */
+            syscall_enter("fchown32", "ddd");
+            uint32_t fd = arg(0);
+            uid_t  user = arg(1);
+            gid_t group = arg(2);
+            int result = syscall(SYS_fchown, fd, user, group);
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            syscall_leave("d");
+            break;
+        }
 
-                      typedef unsigned short  __kernel_old_uid_t;
-                      typedef unsigned short  __kernel_old_gid_t;
-
-                      fchown() changes the ownership of the file referred to by the open file
-                      descriptor fd.
-
-                    */
-
-                   syscall_enter("fchown16", "ddd");
-                   uint32_t fd = arg(0);
-                   uid_t  user = arg(1);
-                   gid_t group = arg(2);
-                   int result = syscall(207,fd,user,group);
-                   writeGPR(x86_gpr_ax, result);
-                   syscall_leave("d");
-                   break;
-                 }
         case 212: { /*0xd4, chown */
             syscall_enter("chown", "sdd");
             do {
