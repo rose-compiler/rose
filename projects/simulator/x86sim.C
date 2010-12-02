@@ -377,6 +377,66 @@ print_stack_32(FILE *f, const uint8_t *_v, size_t sz)
 
 static const Translate seek_whence[] = {TE(SEEK_SET), TE(SEEK_CUR), TE(SEEK_END), T_END};
 
+static const Translate flock_types[] = {TE(F_RDLCK), TE(F_WRLCK), TE(F_UNLCK), T_END};
+
+/* The kernel struct flock for a 32-bit guest on a 32- or 64-bit host */
+struct flock_32 {
+    uint16_t l_type;
+    uint16_t l_whence;
+    int32_t l_start;
+    int32_t l_len;
+    int32_t l_pid;
+} __attribute__((packed));
+
+/* The kernel struct flock for a 32-bit guest using 64-bit files on a 32- or 64-bit host */
+struct flock_64 {
+    uint16_t l_type;
+    uint16_t l_whence;
+    int64_t l_start;
+    int64_t l_len;
+    int32_t l_pid;
+} __attribute__((packed));
+
+/* The kernel struct flock on the host */
+struct flock_64_native {
+    short l_type;
+    short l_whence;
+    long long l_start;
+    long long l_len;
+    int l_pid;
+};
+
+static int
+print_flock_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(flock_32)==sz);
+    const flock_32 *v = (const flock_32*)_v;
+    int retval = fprintf(f, "type=");
+    retval += print_enum(f, flock_types, v->l_type);
+    retval += fprintf(f, ", whence=");
+    retval += print_enum(f, seek_whence, v->l_whence);
+    retval += fprintf(f, ", start=%"PRId32", len=%"PRId32", pid=%"PRId32, v->l_start, v->l_len, v->l_pid);
+    return retval;
+}
+
+static int
+print_flock_64(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(flock_64)==sz);
+    const flock_64 *v = (const flock_64*)_v;
+    int retval = fprintf(f, "type=");
+    retval += print_enum(f, flock_types, v->l_type);
+    retval += fprintf(f, ", whence=");
+    retval += print_enum(f, seek_whence, v->l_whence);
+    retval += fprintf(f, ", start=%"PRId64", len=%"PRId64", pid=%"PRId32, v->l_start, v->l_len, v->l_pid);
+    return retval;
+}
+
+
+
+
+
+
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
