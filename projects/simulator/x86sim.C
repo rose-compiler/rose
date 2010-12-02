@@ -3937,30 +3937,88 @@ EmulationPolicy::emulate_syscall()
                 case F_GETFD:
                 case F_GETFL:
                 case F_GETOWN:
-                case F_GETSIG:
+                case F_GETSIG: {
                     syscall_enter("fcntl64", "df", fcntl_cmds);
                     result = fcntl(fd, cmd, other);
+                    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                    syscall_leave("d");
                     break;
+                }
                 case F_SETFD:
-                case F_SETOWN:
+                case F_SETOWN: {
                     syscall_enter("fcntl64", "dfd", fcntl_cmds);
                     result = fcntl(fd, cmd, other);
+                    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                    syscall_leave("d");
                     break;
-                case F_SETFL:
+                }
+                case F_SETFL: {
                     syscall_enter("fcntl64", "dff", fcntl_cmds, open_flags);
                     result = fcntl(fd, cmd, other);
+                    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                    syscall_leave("d");
                     break;
-                case F_SETSIG:
+                }
+                case F_SETSIG: {
                     syscall_enter("fcntl64", "dff", fcntl_cmds, signal_names);
                     result = fcntl(fd, cmd, other);
+                    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                    syscall_leave("d");
                     break;
+                }
+                case F_GETLK: {
+                    syscall_enter("fcntl64", "dfp", fcntl_cmds);
+                    flock_64 guest_fl;
+                    static flock_64_native host_fl;
+#ifdef SYS_fcntl64  /* host is 32-bit */
+                    result = syscall(SYS_fcntl64, fd, cmd, &host_fl);
+#else               /* host is 64-bit */
+                    result = syscall(SYS_fcntl, fd, cmd, &host_fl);
+#endif
+                    if (-1==result) {
+                        result = -errno;
+                    } else {
+                        guest_fl.l_type = host_fl.l_type;
+                        guest_fl.l_whence = host_fl.l_whence;
+                        guest_fl.l_start = host_fl.l_start;
+                        guest_fl.l_len = host_fl.l_len;
+                        guest_fl.l_pid = host_fl.l_pid;
+                        if (sizeof(guest_fl)!=map->write(&guest_fl, arg(2), sizeof guest_fl))
+                            result = -EFAULT;
+                    }
+                    writeGPR(x86_gpr_ax, result);
+                    syscall_leave("d--P", sizeof(flock_64), print_flock_64);
+                    break;
+                }
+                case F_SETLK:
+                case F_SETLKW: {
+                    syscall_enter("fcntl64", "dfP", fcntl_cmds, sizeof(flock_64), print_flock_64);
+                    flock_64 guest_fl;
+                    static flock_64_native host_fl;
+                    if (sizeof(guest_fl)!=map->read(&guest_fl, arg(2), sizeof guest_fl)) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                    } else {
+                        host_fl.l_type = guest_fl.l_type;
+                        host_fl.l_whence = guest_fl.l_whence;
+                        host_fl.l_start = guest_fl.l_start;
+                        host_fl.l_len = guest_fl.l_len;
+                        host_fl.l_pid = guest_fl.l_pid;
+#ifdef SYS_fcntl64      /* host is 32-bit */
+                        result = syscall(SYS_fcntl64, fd, cmd, &host_fl);
+#else                   /* host is 64-bit */
+                        result = syscall(SYS_fcntl, fd, cmd, &host_fl);
+#endif
+                        writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                    }
+                    syscall_leave("d");
+                    break;
+                }
                 default:
                     syscall_enter("fcntl64", "dfd", fcntl_cmds);
+                    writeGPR(x86_gpr_ax, -EINVAL);
+                    syscall_leave("d");
                     break;
             }
-
-            writeGPR(x86_gpr_ax, -1==result ? -errno : result);
-            syscall_leave("d");
             break;
         }
 
