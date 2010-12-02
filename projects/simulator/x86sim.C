@@ -356,6 +356,25 @@ print_sigmask(FILE *f, const uint8_t *vec, size_t sz)
     return result;
 }
 
+static const Translate stack_flags[] = {TF(SS_DISABLE), TF(SS_ONSTACK), T_END};
+
+struct stack_32 {
+    uint32_t ss_sp;
+    uint32_t ss_flags;
+    uint32_t ss_size;
+} __attribute__((packed));
+
+static int
+print_stack_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(stack_32)==sz);
+    const stack_32 *v = (const stack_32*)_v;
+    int result = fprintf(f, "sp=0x%08"PRIx32", flags=", v->ss_sp);
+    result += print_flags(f, stack_flags, v->ss_flags);
+    result += fprintf(f, ", sz=%"PRIu32, v->ss_size);
+    return result;
+}
+
 static const Translate seek_whence[] = {TE(SEEK_SET), TE(SEEK_CUR), TE(SEEK_END), T_END};
 
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
@@ -404,6 +423,8 @@ public:
     uint64_t signal_mask;                       /* Set by sigsetmask(), specifies signals that are not delivered */
     std::queue<int> signal_queue;               /* List of pending signals in the order they arrived provided not masked */
     bool signal_reprocess;                      /* Set to true if we might need to reprocess the signal_queue */
+    stack_32 signal_stack;                      /* Stack to use for signal handlers specifying SA_ONSTACK flag */
+    uint32_t signal_oldstack;                   /* Stack pointer before currently executing signal handler, or zero */
     uint32_t signal_return;                     /* Return address for currently executing signal handler, or zero */
     std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
     static const uint32_t brk_base=0x08000000;  /* Lowest possible brk() value */
@@ -438,8 +459,8 @@ public:
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
-          signal_reprocess(true), signal_return(0), vdso_mapped_va(0), vdso_entry_va(0), core_styles(CORE_ELF),
-          core_base_name("x-core.rose"), ld_linux_base_va(0x40000000),
+          signal_reprocess(true), signal_oldstack(0), signal_return(0), vdso_mapped_va(0), vdso_entry_va(0),
+          core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false), trace_progress(false), trace_signal(false) {
 
@@ -482,6 +503,9 @@ public:
         writeSegreg(x86_segreg_gs, 0x2b);
 
         memset(signal_action, 0, sizeof signal_action);
+        signal_stack.ss_sp = 0;
+        signal_stack.ss_size = 0;
+        signal_stack.ss_flags = SS_DISABLE;
     }
 
     /* Print machine register state for debugging */
@@ -3421,76 +3445,50 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 186: { /* 0xba, sigaltstack*/
-          /*
-             int sigaltstack(const stack_t *restrict ss, stack_t *restrict oss);
+            syscall_enter("sigaltstack", "Pp", sizeof(stack_32), print_stack_32);
+            do {
+                uint32_t new_stack_va=arg(0), old_stack_va=arg(1);
 
-             The sigaltstack() function allows a process to define and examine the state of an alternate stack for signal handlers for the current thread. Signals that have been explicitly declared to execute on the alternate stack shall be delivered on the alternate stack.
+                /* Are we currently executing on the alternate stack? */
+                uint32_t sp = readGPR(x86_gpr_sp).known_value();
+                bool on_stack = (0==(signal_stack.ss_flags & SS_DISABLE) &&
+                                 sp >= signal_stack.ss_sp &&
+                                 sp < signal_stack.ss_sp + signal_stack.ss_size);
 
-             If ss is not a null pointer, it points to a stack_t structure that specifies the alternate signal stack that shall take effect upon return from sigaltstack(). The ss_flags member specifies the new stack state. If it is set to SS_DISABLE, the stack is disabled and ss_sp and ss_size are ignored. Otherwise, the stack shall be enabled, and the ss_sp and ss_size members specify the new address and size of the stack.
+                if (old_stack_va) {
+                    stack_32 tmp = signal_stack;
+                    tmp.ss_flags &= ~SS_ONSTACK;
+                    if (on_stack) tmp.ss_flags |= SS_ONSTACK;
+                    if (sizeof(tmp)!=map->write(&tmp, old_stack_va, sizeof tmp)) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                        break;
+                    }
+                }
 
-             The range of addresses starting at ss_sp up to but not including ss_sp+ ss_size is available to the implementation for use as the stack. This function makes no assumptions regarding which end is the stack base and in which direction the stack grows as items are pushed.
+                if (new_stack_va) {
+                    stack_32 tmp;
+                    tmp.ss_flags &= ~SS_ONSTACK;
+                    if (sizeof(tmp)!=map->read(&tmp, new_stack_va, sizeof tmp)) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                        break;
+                    }
+                    if (on_stack) {
+                        writeGPR(x86_gpr_ax, -EINVAL);  /* can't set alt stack while we're using it */
+                        break;
+                    } else if ((tmp.ss_flags & ~(SS_DISABLE|SS_ONSTACK))) {
+                        writeGPR(x86_gpr_ax, -EINVAL);  /* invalid flags */
+                        break;
+                    } else if (0==(tmp.ss_flags & SS_DISABLE) && tmp.ss_size < 4096) {
+                        writeGPR(x86_gpr_ax, -ENOMEM);  /* stack must be at least one page large */
+                        break;
+                    }
+                    signal_stack = tmp;
+                }
 
-             If oss is not a null pointer, on successful completion it shall point to a stack_t structure that specifies the alternate signal stack that was in effect prior to the call to sigaltstack(). The ss_sp and ss_size members specify the address and size of that stack. The ss_flags member specifies the stack's state, and may contain one of the following values:
-
-             SS_ONSTACK
-             The process is currently executing on the alternate signal stack. Attempts to modify the alternate signal stack while the process is executing on it fail. This flag shall not be modified by processes.
-             SS_DISABLE
-             The alternate signal stack is currently disabled.
-          */
-              syscall_enter("sigaltstack", "pp");
-#if 1
-
-              struct stack_t_kernel{
-                uint8_t  ss_sp;
-                int32_t  ss_flags;
-                uint32_t ss_size;
-
-              };
-
-              stack_t_kernel fakestack_ss;
-              size_t nread = map->read(&fakestack_ss, arg(0), sizeof(stack_t_kernel));
-              ROSE_ASSERT(nread == sizeof(stack_t_kernel));
-
-              //Read in the contents from the fake stack
-
-              void* ss_sp_ss  = malloc(fakestack_ss.ss_size);
-              nread = map->read(ss_sp_ss, fakestack_ss.ss_sp, fakestack_ss.ss_size);
-              stack_t fakestack_ss_arg;
-              fakestack_ss_arg.ss_flags = fakestack_ss.ss_flags;
-              fakestack_ss_arg.ss_size  = fakestack_ss.ss_size;
-              fakestack_ss_arg.ss_sp    = ss_sp_ss;
-
-              //SECOND ARGUMENT OSS CAN BE NULL
-#endif
-              int result;
-#if 1
-              if( arg(1) != 0 )
-              {
-
-                ROSE_ASSERT(false == true);
-                stack_t_kernel fakestack_oss;
-                nread = map->read(&fakestack_oss, arg(1), sizeof(stack_t_kernel));
-                ROSE_ASSERT(nread == sizeof(stack_t_kernel));
-
-
-                //void* ss_sp_oss = malloc(fakestack_oss.ss_size);
-
-              }else{
-                std::cout << "Executing syscall" << std::endl;
-                result = sigaltstack(&fakestack_ss_arg,NULL);
-              }
-#endif
-              if (result == -1) result = -errno;
-
-              result = -errno;
-              writeGPR(x86_gpr_ax, result);
-
-              syscall_leave("d");
-
-
-              break;
-
-
+                writeGPR(x86_gpr_ax, 0);
+            } while (0);
+            syscall_leave("d-P", sizeof(stack_32), print_stack_32);
+            break;
         }
 
         // case 191 (0xbf, ugetrlimit). See case 76. I think they're the same. [RPM 2010-11-12]
@@ -4198,11 +4196,23 @@ EmulationPolicy::signal_arrival(int signo)
     if (debug && trace_signal) {
         fprintf(debug, " [signal ");
         print_enum(debug, signal_names, signo);
-        fprintf(debug, " (%s) %s]", strsignal(signo), is_masked?"is masked":"arrived");
+        fprintf(debug, " (%s)", strsignal(signo));
     }
-    signal_queue.push(signo);
-    if (!is_masked)
+
+    
+    if (signal_action[signo].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
+        if (debug && trace_signal)
+            fputs(" ignored]", debug);
+    } else if (is_masked) {
+        if (debug && trace_signal)
+            fputs(" masked]", debug);
+        signal_queue.push(signo);
+    } else {
+        if (debug && trace_signal)
+            fputs(" arrived]", debug);
+        signal_queue.push(signo);
         signal_reprocess = true;
+    }
 }
 
 /* Dispatch signals on the queue if they are not masked. */
@@ -4287,8 +4297,16 @@ EmulationPolicy::signal_dispatch(int signo)
         if (debug && trace_signal)
             fprintf(debug, "    signal is currently masked (procmask)\n");
     } else {
-        ROSE_ASSERT(0==signal_return);
+        ROSE_ASSERT(0==signal_return); /* possible violation if specimen exits previous handler with longjmp */
+        ROSE_ASSERT(0==signal_oldstack); /* ditto */
         signal_return = readIP().known_value();
+
+        /* Switch to the alternate stack? */
+        signal_oldstack = readGPR(x86_gpr_sp).known_value();
+        if (0==(signal_stack.ss_flags & SS_ONSTACK) && 0!=(signal_action[signo].flags & SA_ONSTACK))
+            writeGPR(x86_gpr_sp, number<32>(signal_stack.ss_sp + signal_stack.ss_size));
+
+        /* Caller-saved registers */
         push(readGPR(x86_gpr_ax));
         push(readGPR(x86_gpr_bx));
         push(readGPR(x86_gpr_cx));
@@ -4296,13 +4314,17 @@ EmulationPolicy::signal_dispatch(int signo)
         push(readGPR(x86_gpr_si));
         push(readGPR(x86_gpr_di));
         push(readGPR(x86_gpr_bp));
+
+        /* Signal handler arguments */
         push(readIP());
         push(number<32>(signo));
-        push(number<32>(SIGHANDLER_RETURN));
+        push(number<32>(SIGHANDLER_RETURN)); /* fake return address to trigger signal_cleanup() call */
         writeIP(number<32>(signal_action[signo].handler_va));
     }
 }
 
+/* Warning: if the specimen calls longjmp() or siglongjmp() from inside the signal handler in order to exit the handler, this
+ * signal_cleanup() function will never be executed. */
 void
 EmulationPolicy::signal_cleanup()
 {
@@ -4310,8 +4332,13 @@ EmulationPolicy::signal_cleanup()
         fprintf(debug, "0x%08"PRIx32": returning from signal handler\n", signal_return);
     
     ROSE_ASSERT(signal_return!=0);
-    pop(); /* discard signal number */
-    pop(); /* discard signal address */
+    ROSE_ASSERT(signal_oldstack!=0);
+
+    /* Discard handler arguments */
+    pop(); /* signal number */
+    pop(); /* signal address */
+
+    /* Restore caller-saved registers */
     writeGPR(x86_gpr_bp, pop());
     writeGPR(x86_gpr_di, pop());
     writeGPR(x86_gpr_si, pop());
@@ -4319,6 +4346,12 @@ EmulationPolicy::signal_cleanup()
     writeGPR(x86_gpr_cx, pop());
     writeGPR(x86_gpr_bx, pop());
     writeGPR(x86_gpr_ax, pop());
+
+    /* Restore normal stack */
+    writeGPR(x86_gpr_sp, number<32>(signal_oldstack));
+    signal_oldstack = 0;
+
+    /* Resume execution at address where signal occurred */
     writeIP(number<32>(signal_return));
     signal_return = 0;
 }
