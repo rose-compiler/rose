@@ -104,6 +104,8 @@ bool CFGNodeFilterForSlicing::operator()(const VirtualCFG::CFGNode& cfgNode) con
 
 bool Slicer::isVariable(SgExpression* expr)
 {
+	return BackstrokeUtility::isVariableReference(expr);
+#if 0
 	if (isSgVarRefExp(expr))
 		return true;
 	if (isSgDotExp(expr) || isSgArrowExp(expr))
@@ -117,6 +119,7 @@ bool Slicer::isVariable(SgExpression* expr)
 		return true;
 	
 	return false;
+#endif
 }
 
 set<SgNode*> Slicer::getDirectDefs(SgNode* node)
