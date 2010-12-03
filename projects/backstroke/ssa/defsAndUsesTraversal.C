@@ -44,7 +44,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 		ROSE_ASSERT(uName);
 
 		//Add this as a use. We will correct the reference later.
-		ssa->getUseTable()[varRef].insert(uName->getKey());
+		ssa->getLocalUsesTable()[varRef].insert(uName->getKey());
 
 		if (StaticSingleAssignment::getDebug())
 		{
@@ -189,7 +189,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 			vector<SgNode*> successors = SageInterface::querySubTree<SgNode>(op);
 			foreach(SgNode* successor, successors)
 			{
-				ssa->getUseTable()[successor].clear();
+				ssa->getLocalUsesTable()[successor].clear();
 			}
 		}
 		else
@@ -253,7 +253,7 @@ void DefsAndUsesTraversal::addUsesToNode(SgNode* node, std::vector<SgNode*> uses
 
 		//Add the varRef as a def at the current node of the ref's uniqueName
 		//We will correct the reference later.
-		ssa->getUseTable()[node].insert(uName->getKey());
+		ssa->getLocalUsesTable()[node].insert(uName->getKey());
 
 		if (StaticSingleAssignment::getDebug())
 		{

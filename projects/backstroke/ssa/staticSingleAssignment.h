@@ -412,18 +412,18 @@ public:
 		return originalDefTable;
 	}
 
-	LocalDefUseTable& getUseTable()
+	LocalDefUseTable& getLocalUsesTable()
 	{
 		return localUsesTable;
 	}
 
 	/** Returns the reaching definitions at the given node. If there is a definition at the node itself,
 	  * e.g. SgAssignOp, it is considered to reach the node. */
-	const NodeReachingDefTable getReachingDefsAtNode(SgNode* node) const;
+	const NodeReachingDefTable& getReachingDefsAtNode(SgNode* node) const;
 
 	/** Returns a list of all the variables used at this node. Note that uses don't propagate past an SgStatement.
 	  * Each use is mapped to the reaching definition to which the use corresponds. */
-	const NodeReachingDefTable getUsesAtNode(SgNode* node) const;
+	const NodeReachingDefTable& getUsesAtNode(SgNode* node) const;
 	
 	/*
 	 *   Static Utility Functions

@@ -475,13 +475,13 @@ bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 	return true;
 }
 
-const StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getReachingDefsAtNode(SgNode* node) const
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAtNode(SgNode* node) const
 {
+	const static NodeReachingDefTable emptyTable;
 	GlobalReachingDefTable::const_iterator reachingDefsIter = reachingDefsTable.find(node);
 	if (reachingDefsIter == reachingDefsTable.end())
 	{
-		NodeReachingDefTable result;
-		return result;
+		return emptyTable;
 	}
 	else
 	{
@@ -489,13 +489,13 @@ const StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getRe
 	}
 }
 
-const StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getUsesAtNode(SgNode* node) const
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getUsesAtNode(SgNode* node) const
 {
+	const static NodeReachingDefTable emptyTable;
 	UseTable::const_iterator usesIter = useTable.find(node);
 	if (usesIter == useTable.end())
 	{
-		NodeReachingDefTable result;
-		return result;
+		return emptyTable;
 	}
 	else
 	{
