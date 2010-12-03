@@ -406,6 +406,7 @@ struct flock_64_native {
     int l_pid;
 };
 
+#if 0 /* not used currently, but will be for syscall 143 when implemented */
 static int
 print_flock_32(FILE *f, const uint8_t *_v, size_t sz)
 {
@@ -418,6 +419,7 @@ print_flock_32(FILE *f, const uint8_t *_v, size_t sz)
     retval += fprintf(f, ", start=%"PRId32", len=%"PRId32", pid=%"PRId32, v->l_start, v->l_len, v->l_pid);
     return retval;
 }
+#endif
 
 static int
 print_flock_64(FILE *f, const uint8_t *_v, size_t sz)
