@@ -2956,7 +2956,7 @@ EmulationPolicy::emulate_syscall()
             syscall_enter("ugetrlimit", "fp", rlimit_resources);
             if (debug && trace_syscall)
                 fputs("delegated to getrlimit (syscall 76); see next line\n", debug);
-            /* fall through to 76 */
+            /* fall through to 76; note that syscall trace will still show syscall 191 */
             
         case 76: {  /*0x4c, getrlimit*/
             syscall_enter("getrlimit", "fp", rlimit_resources);
