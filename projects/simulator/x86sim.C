@@ -198,6 +198,11 @@ print_kernel_stat_32(FILE *f, const uint8_t *_sb, size_t sz)
                    sb->rdev, sb->size, sb->blksize, sb->nblocks);
 }
 
+static const Translate clock_names[] = {
+    TE(CLOCK_REALTIME), TE(CLOCK_MONOTONIC), TE(CLOCK_PROCESS_CPUTIME_ID), TE(CLOCK_THREAD_CPUTIME_ID),
+    T_END
+};
+
 struct timespec_32 {
     uint32_t tv_sec;
     uint32_t tv_nsec;
@@ -4287,70 +4292,73 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 264:    /* 0x108, clock_settime */
-        case 265:    /* 0x109, clock_gettime */
-        case 266: {  /* 0x1a, clock_getres */
-                /*
-                  int clock_getres(clockid_t clk_id, struct timespec *res);
-                  int clock_gettime(clockid_t clk_id, struct timespec *tp);
-                  int clock_settime(clockid_t clk_id, const struct timespec *tp); 
+        case 264: { /* 0x108, clock_settime */
+            syscall_enter("clock_settime", "eP", clock_names, sizeof(timespec_32), print_timespec_32);
+            do {
+                timespec_32 guest_ts;
+                if (sizeof(guest_ts)!=map->read(&guest_ts, arg(1), sizeof guest_ts)) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
 
-                  struct timespec {
-                      time_t   tv_sec;        // seconds 
-                      long     tv_nsec;       // nanoseconds 
-                  };
-
-                  The function clock_getres() finds the resolution (precision) of the 
-                  specified clock clk_id, and, if res is non-NULL, stores it in the 
-                  struct timespec pointed to by res. The resolution of clocks depends 
-                  on the implementation and cannot be configured by a particular process. 
-                  If the time value pointed to by the argument tp of clock_settime() is
-                  not a multiple of res, then it is truncated to a multiple of res. 
-            */
-
-            syscall_enter("clock_gettime", "dp");
- 
-            int32_t which_clock = arg(0);
-            
-            //Check to see if times is NULL
-            uint8_t byte;
-            size_t nread = map->read(&byte, arg(1), 1);
-            ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
-
-            int result;
-            if( byte )
-            {
-
-              struct kernel_timespec {
-                uint32_t   tv_sec;        // seconds 
-                uint32_t   tv_nsec;       // nanoseconds 
-              };
-
-
-
-              size_t size_timespec_sample = sizeof(kernel_timespec);
-
-              kernel_timespec ubuf;
-
-              size_t nread = map->read(&ubuf, arg(1), size_timespec_sample);
-
-              ROSE_ASSERT(nread == size_timespec_sample);
-
-              timespec timespec64;
-              timespec64.tv_sec  = ubuf.tv_sec;
-              timespec64.tv_nsec = ubuf.tv_nsec;
-              result = syscall(callno, which_clock, (unsigned long) &timespec64 );
-
-              ubuf.tv_sec = timespec64.tv_sec;
-              ubuf.tv_nsec = timespec64.tv_nsec;
-              map->write(&ubuf, arg(1), size_timespec_sample);
-    
-            }else
-              result = syscall(callno, which_clock, (unsigned long) NULL );
-
-            writeGPR(x86_gpr_ax, result);
-
+                static timespec host_ts;
+                host_ts.tv_sec = guest_ts.tv_sec;
+                host_ts.tv_nsec = guest_ts.tv_nsec;
+                int result = syscall(SYS_clock_settime, arg(0), &host_ts);
+                writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            } while (0);
             syscall_leave("d");
+            break;
+        }
+
+        case 265: { /* 0x109, clock_gettime */
+            syscall_enter("clock_gettime", "ep", clock_names);
+            do {
+                static timespec host_ts;
+                int result = syscall(SYS_clock_gettime, arg(0), &host_ts);
+                if (-1==result) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
+
+                timespec_32 guest_ts;
+                guest_ts.tv_sec = host_ts.tv_sec;
+                guest_ts.tv_nsec = host_ts.tv_nsec;
+                if (sizeof(guest_ts)!=map->write(&guest_ts, arg(1), sizeof guest_ts)) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
+            syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
+            break;
+        }
+
+        case 266: { /* 0x10a, clock_getres */
+            syscall_enter("clock_getres", "ep", clock_names);
+            do {
+                static timespec host_ts;
+                timespec *host_tsp = arg(1) ? &host_ts : NULL;
+                int result = syscall(SYS_clock_getres, arg(0), host_tsp);
+                if (-1==result) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
+
+                if (arg(1)) {
+                    timespec_32 guest_ts;
+                    guest_ts.tv_sec = host_ts.tv_sec;
+                    guest_ts.tv_nsec = host_ts.tv_nsec;
+                    if (sizeof(guest_ts)!=map->write(&guest_ts, arg(1), sizeof guest_ts)) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                        break;
+                    }
+                }
+
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
+            syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
             break;
         }
 
