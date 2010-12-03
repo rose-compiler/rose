@@ -148,6 +148,7 @@ syscall_tst.3.3 no
 syscall_tst.3.4 no
 syscall_tst.30 no
 syscall_tst.306 no
+syscall_tst.311 no
 syscall_tst.33.1 no
 syscall_tst.33.2 no
 syscall_tst.4.1 no

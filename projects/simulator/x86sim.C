@@ -482,6 +482,21 @@ print_statfs_32(FILE *f, const uint8_t *_v, size_t sz)
                    v->f_spare[0], v->f_spare[1], v->f_spare[2], v->f_spare[3]);
 }
 
+struct robust_list_head_32 {
+    uint32_t next;              /* virtual address of next entry in list; points to self if list is empty */
+    uint32_t futex_va;          /* address of futex in user space */
+    uint32_t pending_va;        /* address of list element being added while it is being added */
+} __attribute__((packed));
+
+static int
+print_robust_list_head_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(robust_list_head_32)==sz);
+    const robust_list_head_32 *v = (const robust_list_head_32*)_v;
+    return fprintf(f, "next=0x%08"PRIx32", futex=0x%08"PRIx32", pending=0x%08"PRIx32,
+                   v->next, v->futex_va, v->pending_va);
+}
+
 
 
 
@@ -546,6 +561,7 @@ public:
     unsigned core_styles;                       /* What kind of core dump(s) to make for dump_core() */
     std::string core_base_name;                 /* Name to use for core files ("core") */
     rose_addr_t ld_linux_base_va;               /* Base address for ld-linux.so if no preferred addresss for "LOAD#0" */
+    uint32_t robust_list_head_va;               /* Address of robust futex list head. See set_robust_list() syscall */
 
     static const uint32_t SIGHANDLER_RETURN = 0xdeceaced;
 
@@ -571,7 +587,7 @@ public:
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
           signal_reprocess(true), signal_oldstack(0), signal_return(0), vdso_mapped_va(0), vdso_entry_va(0),
-          core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000),
+          core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000), robust_list_head_va(0),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false), trace_progress(false), trace_signal(false) {
 
@@ -4473,17 +4489,27 @@ EmulationPolicy::emulate_syscall()
 	}
 
         case 311: { /*0x137, set_robust_list*/
-            syscall_enter("set_robust_list", "pd");
-            uint32_t head_va=arg(0), len=arg(1);
-            void *head = my_addr(head_va, 1); /* FIXME [RPM 2010-11-16] */
-            
-            /* Allow Linux to update the specimen's memory directly. */
-            int status = syscall(SYS_set_robust_list, head, len);
-            if (status<0) {
-                writeGPR(x86_gpr_ax, -errno);
-            } else {
+            syscall_enter("set_robust_list", "Pd", sizeof(robust_list_head_32), print_robust_list_head_32);
+            do {
+                uint32_t head_va=arg(0), len=arg(1);
+                if (len!=sizeof(robust_list_head_32)) {
+                    writeGPR(x86_gpr_ax, -EINVAL);
+                    break;
+                }
+
+                robust_list_head_32 guest_head;
+                if (sizeof(guest_head)!=map->read(&guest_head, head_va, sizeof(guest_head))) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+
+                /* The robust list is maintained in user space and accessed by the kernel only when we a thread dies. Since the
+                 * simulator handles thread death, we don't need to tell the kernel about the specimen's list until later. In
+                 * fact, we can't tell the kernel because that would cause our own list (set by libc) to be removed from the
+                 * kernel. */
+                robust_list_head_va = head_va;
                 writeGPR(x86_gpr_ax, 0);
-            }
+            } while (0);
             syscall_leave("d");
             break;
         }
@@ -5069,6 +5095,8 @@ main(int argc, char *argv[], char *envp[])
             abort();
         } catch (const EmulationPolicy::Exit &e) {
             /* specimen has exited */
+            if (policy.robust_list_head_va)
+                fprintf(stderr, "warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
             if (WIFEXITED(e.status)) {
                 fprintf(stderr, "specimen exited with status %d\n", WEXITSTATUS(e.status));
 		if (WEXITSTATUS(e.status))
