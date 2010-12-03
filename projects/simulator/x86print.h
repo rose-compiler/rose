@@ -59,7 +59,7 @@ int print_string(FILE*, const std::string &value, bool str_fault=false, bool str
 int print_time(FILE*, uint32_t value);
 int print_single(FILE*, char fmt, const ArgInfo *info);
 int print_struct(FILE *f, uint32_t value, ArgInfo::StructPrinter printer, const uint8_t *buf, size_t need, size_t have);
-int print_enter(FILE*, const char *name, const char *format, const ArgInfo *info);
+int print_enter(FILE*, const char *name, int syscallnum, const char *format, const ArgInfo *info);
 int print_leave(FILE*, char fmt, const ArgInfo *info);
 
 #endif

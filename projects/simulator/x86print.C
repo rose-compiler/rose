@@ -169,9 +169,12 @@ print_single(FILE *f, char fmt, const ArgInfo *info)
 }
 
 int
-print_enter(FILE *f, const char *name, const char *format, const ArgInfo *info)
+print_enter(FILE *f, const char *name, int syscallnum, const char *format, const ArgInfo *info)
 {
-    int retval = fprintf(f, "%s(", name);
+    int retval = fprintf(f, "%s", name);
+    if (syscallnum>0)
+        retval += fprintf(f, "[%d]", syscallnum);
+    retval += fprintf(f, "(");
     for (size_t i=0; format && format[i]; i++) {
         if (i>0)
             retval += fprintf(f, ", ");

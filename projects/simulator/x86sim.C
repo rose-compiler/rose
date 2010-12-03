@@ -4520,7 +4520,7 @@ EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], arg(i), args+i, &ap);
-        print_enter(debug, name, format, args);
+        print_enter(debug, name, arg(-1), format, args);
     }
     
     va_end(ap);
