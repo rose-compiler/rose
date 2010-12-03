@@ -3075,24 +3075,42 @@ EmulationPolicy::emulate_syscall()
             
         case 91: { /*0x5b, munmap*/
             syscall_enter("munmap", "pd");
-            uint32_t va=arg(0);
-            uint32_t sz=arg(1);
-            uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
-            uint32_t aligned_sz = ALIGN_UP(sz+va-aligned_va, PAGE_SIZE);
-            void *rose_addr = my_addr(aligned_va, aligned_sz);
+            do {
+                uint32_t va=arg(0);
+                uint32_t sz=arg(1);
+                uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
+                uint32_t aligned_sz = ALIGN_UP(sz+va-aligned_va, PAGE_SIZE);
+                void *rose_addr = my_addr(aligned_va, aligned_sz);
 
-            map->erase(MemoryMap::MapElement(aligned_va, aligned_sz));
+                /* Check ranges */
+                if (aligned_va+aligned_sz <= aligned_va) { /* FIXME: not sure if sz==0 is an error */
+                    writeGPR(x86_gpr_ax, -EINVAL);
+                    break;
+                }
 
-            /* Also unmap for real, because if we don't, and the mapping was not anonymous, and the file that was mapped is
-             * unlinked, and we're on NFS, an NFS temp file is created in place of the unlinked file. */
-            if (rose_addr && ALIGN_UP((uint64_t)rose_addr, (uint64_t)PAGE_SIZE)==(uint64_t)rose_addr)
-                (void)munmap(rose_addr, aligned_sz);
+                /* Make sure that the specified memory range is actually mapped, or return -ENOMEM. */
+                ExtentMap extents;
+                extents.insert(ExtentPair(aligned_va, aligned_sz));
+                extents.erase(map->va_extents());
+                if (!extents.empty()) {
+                    writeGPR(x86_gpr_ax, -ENOMEM);
+                    break;
+                }
 
+                /* Erase the mapping from the simulation */
+                map->erase(MemoryMap::MapElement(aligned_va, aligned_sz));
+
+                /* Also unmap for real, because if we don't, and the mapping was not anonymous, and the file that was mapped is
+                 * unlinked, and we're on NFS, an NFS temp file is created in place of the unlinked file. */
+                if (rose_addr && ALIGN_UP((uint64_t)rose_addr, (uint64_t)PAGE_SIZE)==(uint64_t)rose_addr)
+                    (void)munmap(rose_addr, aligned_sz);
+
+                writeGPR(x86_gpr_ax, 0);
+            } while (0);
             if (debug && trace_mmap) {
                 fprintf(debug, " memory map after munmap syscall:\n");
                 map->dump(debug, "    ");
             }
-            writeGPR(x86_gpr_ax, 0);
             syscall_leave("d");
             break;
         }

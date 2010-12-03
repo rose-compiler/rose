@@ -172,6 +172,7 @@ syscall_tst.83.4 no
 syscall_tst.83.5 no
 syscall_tst.91.1 no
 syscall_tst.91.2 no
+syscall_tst.91.3 no
 syscall_tst.94.1 no
 syscall_tst.94.2 no
 syscall_tst.95 no
