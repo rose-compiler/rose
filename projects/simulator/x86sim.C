@@ -199,8 +199,8 @@ print_kernel_stat_32(FILE *f, const uint8_t *_sb, size_t sz)
 }
 
 struct timespec_32 {
-    uint32_t sec;
-    uint32_t nsec;
+    uint32_t tv_sec;
+    uint32_t tv_nsec;
 } __attribute__((packed));
 
 static int
@@ -208,7 +208,7 @@ print_timespec_32(FILE *f, const uint8_t *_ts, size_t sz)
 {
     assert(sz==sizeof(timespec_32));
     const timespec_32 *ts = (const timespec_32*)_ts;
-    return fprintf(f, "sec=%"PRIu32", nsec=%"PRIu32, ts->sec, ts->nsec);
+    return fprintf(f, "sec=%"PRIu32", nsec=%"PRIu32, ts->tv_sec, ts->tv_nsec);
 }
 
 struct timeval_32 {
@@ -3615,16 +3615,16 @@ EmulationPolicy::emulate_syscall()
                     writeGPR(x86_gpr_ax, -EFAULT);
                     break;
                 }
-                host_ts_in.tv_sec = guest_ts.sec;
-                host_ts_in.tv_nsec = guest_ts.nsec;
+                host_ts_in.tv_sec = guest_ts.tv_sec;
+                host_ts_in.tv_nsec = guest_ts.tv_nsec;
                 int result = nanosleep(&host_ts_in, &host_ts_out);
                 if (-1==result) {
                     writeGPR(x86_gpr_ax, -errno);
                     break;
                 }
                 if (arg(1)) {
-                    guest_ts.sec = host_ts_out.tv_sec;
-                    guest_ts.nsec = host_ts_out.tv_nsec;
+                    guest_ts.tv_sec = host_ts_out.tv_sec;
+                    guest_ts.tv_nsec = host_ts_out.tv_nsec;
                     if (sizeof(guest_ts)!=map->write(&guest_ts, arg(1), sizeof guest_ts)) {
                         writeGPR(x86_gpr_ax, -EFAULT);
                         break;
@@ -4208,8 +4208,8 @@ EmulationPolicy::emulate_syscall()
                 timespec_32 ts;
                 size_t nread = map->read(&ts, timeout_va, sizeof ts);
                 ROSE_ASSERT(nread==sizeof ts);
-                timespec_buf.tv_sec = ts.sec;
-                timespec_buf.tv_nsec = ts.nsec;
+                timespec_buf.tv_sec = ts.tv_sec;
+                timespec_buf.tv_nsec = ts.tv_nsec;
                 timespec = &timespec_buf;
             }
 
