@@ -4547,9 +4547,11 @@ EmulationPolicy::syscall_leave(const char *format, ...)
             for (size_t i=1; format[i]; i++) {
                 if ('-'!=format[i]) {
                     syscall_arginfo(format[i], arg(i-1), &info, &ap);
-                    fprintf(debug, "    arg%zu = ", i-1);
-                    print_single(debug, format[i], &info);
-                    fprintf(debug, "\n");
+                    if ('P'!=format[i] || 0!=arg(i-1)) { /* no need to show null pointers */
+                        fprintf(debug, "    arg%zu = ", i-1);
+                        print_single(debug, format[i], &info);
+                        fprintf(debug, "\n");
+                    }
                 }
             }
         }
