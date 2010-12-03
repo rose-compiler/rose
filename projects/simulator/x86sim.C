@@ -2981,20 +2981,26 @@ EmulationPolicy::emulate_syscall()
             
         case 76: {  /*0x4c, getrlimit*/
             syscall_enter("getrlimit", "fp", rlimit_resources);
-            int resource = arg(0);
-            uint32_t rlimit_va = arg(1);
-            struct rlimit rlimit_native;
-            int result = getrlimit(resource, &rlimit_native);
-            if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
-            } else {
+            do {
+                int resource = arg(0);
+                uint32_t rlimit_va = arg(1);
+                struct rlimit rlimit_native;
+                int result = getrlimit(resource, &rlimit_native);
+                if (-1==result) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
+
                 uint32_t rlimit_guest[2];
                 rlimit_guest[0] = rlimit_native.rlim_cur;
                 rlimit_guest[1] = rlimit_native.rlim_max;
-                size_t nwritten = map->write(rlimit_guest, rlimit_va, sizeof rlimit_guest);
-                ROSE_ASSERT(nwritten==sizeof rlimit_guest);
+                if (8!=map->write(rlimit_guest, rlimit_va, 8)) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+
                 writeGPR(x86_gpr_ax, result);
-            }
+            } while (0);
             syscall_leave("d-P", 8, print_rlimit);
             break;
         }

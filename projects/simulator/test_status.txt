@@ -163,6 +163,7 @@ syscall_tst.60.2 no
 syscall_tst.60.3 no
 syscall_tst.64.1 no
 syscall_tst.76.1 no
+syscall_tst.76.2 no
 syscall_tst.78.1 no
 syscall_tst.78.2 no
 syscall_tst.83.1 no
