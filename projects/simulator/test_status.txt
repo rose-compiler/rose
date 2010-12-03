@@ -90,6 +90,7 @@ syscall_tst.174.1 no
 syscall_tst.174.2 no
 syscall_tst.174.3 no
 syscall_tst.175 no
+syscall_tst.183.1 no
 syscall_tst.186.1 no
 syscall_tst.186.2 no
 syscall_tst.192.1 no
@@ -140,6 +141,7 @@ syscall_tst.243.1 no
 syscall_tst.243.2 no
 syscall_tst.258 no
 syscall_tst.265 no
+syscall_tst.266 no
 syscall_tst.3.1 no
 syscall_tst.3.2 no
 syscall_tst.3.3 no

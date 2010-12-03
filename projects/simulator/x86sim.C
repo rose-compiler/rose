@@ -3735,13 +3735,27 @@ EmulationPolicy::emulate_syscall()
 
 	case 183: { /* 0xb7, getcwd */
             syscall_enter("getcwd", "pd");
-            void *buf = my_addr(arg(0), arg(1));
-            int result = syscall(SYS_getcwd, buf, arg(1));
-            if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
-            } else {
+            do {
+                static char buf[4096]; /* page size in kernel */
+                int result = syscall(SYS_getcwd, buf, sizeof buf);
+                if (-1==result) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
+
+                size_t len = strlen(buf) + 1;
+                if (len > arg(1)) {
+                    writeGPR(x86_gpr_ax, -ERANGE);
+                    break;
+                }
+
+                if (len!=map->write(buf, arg(0), len)) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+
                 writeGPR(x86_gpr_ax, result);
-            }
+            } while (0);
             syscall_leave("ds");
             break;
         }
