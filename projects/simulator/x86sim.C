@@ -432,6 +432,50 @@ print_flock_64(FILE *f, const uint8_t *_v, size_t sz)
     return retval;
 }
 
+struct statfs_32 {
+    uint32_t f_type;
+    uint32_t f_bsize;
+    uint32_t f_blocks;
+    uint32_t f_bfree;
+    uint32_t f_bavail;
+    uint32_t f_files;
+    uint32_t f_ffree;
+    uint32_t f_fsid[2];
+    uint32_t f_namelen;
+    uint32_t f_frsize;
+    uint32_t f_flags;
+    uint32_t f_spare[4];
+} __attribute__((packed));
+
+struct statfs_64_native {
+    unsigned f_type;
+    unsigned f_bsize;
+    uint64_t f_blocks;
+    uint64_t f_bfree;
+    uint64_t f_bavail;
+    uint64_t f_files;
+    uint64_t f_ffree;
+    unsigned f_fsid[2];
+    unsigned f_namelen;
+    unsigned f_frsize;
+    unsigned f_flags;
+    unsigned f_spare[4];
+};
+
+static int
+print_statfs_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(statfs_32)==sz);
+    const statfs_32 *v = (const statfs_32*)_v;
+    return fprintf(f, "type=%"PRIu32", bsize=%"PRIu32", blocks=%"PRIu32", bfree=%"PRIu32", bavail=%"PRIu32", files=%"PRIu32
+                   ", ffree=%"PRIu32", fsid=[%"PRIu32",%"PRIu32"], namelen=%"PRIu32", frsize=%"PRIu32", flags=%"PRIu32
+                   ", spare=[%"PRIu32",%"PRIu32",%"PRIu32",%"PRIu32"]",
+                   v->f_type, v->f_bsize, v->f_blocks, v->f_bfree, v->f_bavail, v->f_files,
+                   v->f_ffree, v->f_fsid[0], v->f_fsid[1], v->f_namelen, v->f_frsize, v->f_flags,
+                   v->f_spare[0], v->f_spare[1], v->f_spare[2], v->f_spare[3]);
+}
+
+
 
 
 
@@ -3067,6 +3111,50 @@ EmulationPolicy::emulate_syscall()
             int result = syscall(SYS_fchown, fd, user, group);
             writeGPR(x86_gpr_ax, -1==result?-errno:result);
             syscall_leave("d");
+            break;
+        }
+
+        case 99: { /* 0x63, statfs */
+            syscall_enter("statfs", "sp");
+            do {
+                bool error;
+                std::string path = read_string(arg(0), 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+
+                statfs_32 guest_statfs;
+                if (sizeof(guest_statfs)!=map->read(&guest_statfs, arg(1), sizeof guest_statfs)) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+
+                static statfs_64_native host_statfs;
+                host_statfs.f_type = guest_statfs.f_type;
+                host_statfs.f_bsize = guest_statfs.f_bsize;
+                host_statfs.f_blocks = guest_statfs.f_blocks;
+                host_statfs.f_bfree = guest_statfs.f_bfree;
+                host_statfs.f_bavail = guest_statfs.f_bavail;
+                host_statfs.f_files = guest_statfs.f_files;
+                host_statfs.f_ffree = guest_statfs.f_ffree;
+                host_statfs.f_fsid[0] = guest_statfs.f_fsid[0];
+                host_statfs.f_fsid[1] = guest_statfs.f_fsid[1];
+                host_statfs.f_namelen = guest_statfs.f_namelen;
+                host_statfs.f_frsize = guest_statfs.f_frsize;
+                host_statfs.f_flags = guest_statfs.f_flags;
+                host_statfs.f_spare[0] = guest_statfs.f_spare[0];
+                host_statfs.f_spare[1] = guest_statfs.f_spare[1];
+                host_statfs.f_spare[2] = guest_statfs.f_spare[2];
+                host_statfs.f_spare[3] = guest_statfs.f_spare[3];
+#ifdef SYS_statfs64 /* host is 32-bit machine */
+                int result = syscall(SYS_statfs64, path.c_str(), &host_statfs);
+#else           /* host is 64-bit machine */
+                int result = syscall(SYS_statfs, path.c_str(), &host_statfs);
+#endif
+                writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            } while (0);
+            syscall_leave("d-P", sizeof(statfs_32), print_statfs_32);
             break;
         }
 

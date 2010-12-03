@@ -134,6 +134,10 @@ syscall_tst.221.17 yes
 syscall_tst.221.19 yes
 syscall_tst.221.20 yes
 syscall_tst.221.21 yes
+syscall_tst.221.23 no
+syscall_tst.221.24 no
+syscall_tst.221.25 no
+syscall_tst.221.26 no
 syscall_tst.221.27 yes
 syscall_tst.221.28 yes
 syscall_tst.224 no
