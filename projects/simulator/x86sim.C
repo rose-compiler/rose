@@ -2027,6 +2027,7 @@ EmulationPolicy::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
         }
 
         case IPC_RMID: {
+            /* NOTE: syscall tracing will not show "IPC_RMID" if the IPC_64 flag is also present */
             int result = msgctl(msqid, cmd, NULL);
             writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
@@ -2040,34 +2041,23 @@ EmulationPolicy::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
             }
 
             static msqid_ds host_ds;
-#if 0
-            host_ds.msg_perm.key = guest_ds.msg_perm.key;
+            host_ds.msg_perm.__key = guest_ds.msg_perm.key;
             host_ds.msg_perm.uid = guest_ds.msg_perm.uid;
             host_ds.msg_perm.gid = guest_ds.msg_perm.gid;
             host_ds.msg_perm.cuid = guest_ds.msg_perm.cuid;
             host_ds.msg_perm.cgid = guest_ds.msg_perm.cgid;
             host_ds.msg_perm.mode = guest_ds.msg_perm.mode;
-            host_ds.msg_perm.seq = guest_ds.msg_perm.seq;
-            host_ds.msg_first = my_addr(guest_ds.msg_first_va, 1);
-            host_ds.msg_last = my_addr(guest_ds.msg_last_va, 1);
+            host_ds.msg_perm.__seq = guest_ds.msg_perm.seq;
             host_ds.msg_stime = guest_ds.msg_stime;
             host_ds.msg_rtime = guest_ds.msg_rtime;
             host_ds.msg_ctime = guest_ds.msg_ctime;
-            host_ds.msg_lcbytes = guest_ds.msg_lcbytes;
-            host_ds.msg_lqbytes = guest_ds.msg_lqbytes;
-            host_ds.msg_cbytes = guest_ds.msg_cbytes;
+            host_ds.__msg_cbytes = guest_ds.msg_cbytes;
             host_ds.msg_qnum = guest_ds.msg_qnum;
             host_ds.msg_qbytes = guest_ds.msg_qbytes;
             host_ds.msg_lspid = guest_ds.msg_lspid;
             host_ds.msg_lrpid = guest_ds.msg_lrpid;
-#else
-            memset(&host_ds, 0, sizeof host_ds);
-#endif
-#ifdef SYS_ipc /* i686 */
-            int result = syscall(SYS_ipc, 14, msqid, cmd, 0/*unused*/, &host_ds);
-#else
-            int result = syscall(SYS_msgctl, msqid, cmd, &host_ds);
-#endif
+
+            int result = msgctl(msqid, cmd, &host_ds);
             writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
         }
