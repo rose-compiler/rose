@@ -63,6 +63,7 @@
 #include <sys/sem.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
+#include <sys/msg.h>
 
 /* Define this if you want strict emulation. When defined, every attempt is made for x86sim to provide an environment as close
  * as possible to running natively on hudson-rose-07.  Note that defining this might cause the simulator to malfunction since
@@ -497,6 +498,108 @@ print_robust_list_head_32(FILE *f, const uint8_t *_v, size_t sz)
                    v->next, v->futex_va, v->pending_va);
 }
 
+static const Translate ipc_commands[] = {
+    TF3(0x0000ffff, 1, SEMOP),
+    TF3(0x0000ffff, 2, SEMGET),
+    TF3(0x0000ffff, 3, SEMCTL),
+    TF3(0x0000ffff, 4, SEMTIMEDOP),
+    TF3(0x0000ffff, 11, MSGSND),
+    TF3(0x0000ffff, 12, MSGRCV),
+    TF3(0x0000ffff, 13, MSGGET),
+    TF3(0x0000ffff, 14, MSGCTL),
+    TF3(0x0000ffff, 21, SHMAT),
+    TF3(0x0000ffff, 22, SHMDT),
+    TF3(0x0000ffff, 23, SHMGET),
+    TF3(0x0000ffff, 24, SHMCTL),
+    TF3(0xffff0000, 0x0001000, VERSION_1),
+    TF3(0xffff0000, 0x0002000, VERSION_2),
+    TF3(0xffff0000, 0x0003000, VERSION_3),
+    /* etc. */
+    T_END
+};
+
+static const Translate ipc_flags[] = {
+    TF(IPC_CREAT), TF(IPC_EXCL), TF(IPC_NOWAIT), TF(IPC_PRIVATE), TF(IPC_RMID), TF(IPC_SET), TF(IPC_STAT),
+    TF_FMT(0777, "0%03o"),
+    T_END
+};
+
+static const Translate ipc_control[] = {
+    TF3(0x00ff, IPC_RMID, IPC_RMID),
+    TF3(0x00ff, IPC_SET,  IPC_SET),
+    TF3(0x00ff, IPC_STAT, IPC_STAT),
+    TF3(0x00ff, IPC_INFO, IPC_INFO),
+    TF3(0x00ff, MSG_STAT, MSG_STAT),
+    TF3(0x00ff, MSG_INFO, MSG_INFO),
+    TF3(0xff00, 0x0100, IPC_64),
+    T_END
+};
+
+/* The ipc64_perm struct as layed out in the 32-bit specimen */
+struct ipc64_perm_32 {
+    int32_t key;
+    int32_t uid;
+    int32_t gid;
+    int32_t cuid;
+    int32_t cgid;
+    uint16_t mode;
+    uint16_t pad1;
+    uint16_t seq;
+    uint16_t pad2;
+    uint32_t unused1;
+    uint32_t unused2;
+} __attribute__((packed));
+
+static int
+print_ipc64_perm_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(ipc64_perm_32)==sz);
+    const ipc64_perm_32 *v = (const ipc64_perm_32*)_v;
+    return fprintf(f,
+                   "key=%"PRId32", uid=%"PRId32", gid=%"PRId32", cuid=%"PRId32", cgid=%"PRId32
+                   ", mode=0%03"PRIo16", seq=%"PRIu16,
+                   v->key, v->uid, v->gid, v->cuid, v->cgid, v->mode, v->seq);
+}
+
+/* The msqid64_ds struct as layed out in the 32-bit specimen */
+struct msqid64_ds_32 {
+    ipc64_perm_32 msg_perm;
+    int32_t msg_stime;
+    int32_t unused1;
+    int32_t msg_rtime;
+    int32_t unused2;
+    int32_t msg_ctime;
+    int32_t unused3;
+    uint32_t msg_cbytes;
+    uint32_t msg_qnum;
+    uint32_t msg_qbytes;
+    int32_t msg_lspid;
+    int32_t msg_lrpid;
+    uint32_t unused4;
+    uint32_t unused5;
+};
+
+
+static int
+print_msqid64_ds_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(msqid64_ds_32)==sz);
+    const msqid64_ds_32 *v = (const msqid64_ds_32*)_v;
+    
+    int retval = fprintf(f, "msg_perm={");
+    retval += print_ipc64_perm_32(f, _v, sizeof(v->msg_perm));
+    retval += fprintf(f, "}");
+
+    retval += fprintf(f,
+                      ", stime=%"PRId32", rtime=%"PRId32", ctime=%"PRId32
+                      ", cbytes=%"PRIu32", qnum=%"PRIu32", qbytes=%"PRIu32
+                      ", lspid=%"PRId32", lrpid=%"PRId32,
+                      v->msg_stime, v->msg_rtime, v->msg_ctime,
+                      v->msg_cbytes, v->msg_qnum, v->msg_qbytes,
+                      v->msg_lspid, v->msg_lrpid);
+    return retval;
+}
+
 
 
 
@@ -869,8 +972,17 @@ public:
         }
     }
 
-    int 
-    ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_t third, uint32_t ptr, uint8_t ptr_addr, uint32_t fifth);
+    /* Helper functions for syscall 117, ipc() and related syscalls */
+    void sys_semtimedop(uint32_t semid, uint32_t tsops_va, uint32_t nsops, uint32_t timeout_va);
+    void sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg);
+    void sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgflg);
+    void sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgtyp, uint32_t msgflg);
+    void sys_msgget(uint32_t key, uint32_t msgflg);
+    void sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va);
+    void sys_shmdt(uint32_t shmaddr_va);
+    void sys_shmget(uint32_t key, uint32_t size, uint32_t shmflg);
+    void sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va);
+
 
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, long sz);
 };
@@ -1744,421 +1856,6 @@ EmulationPolicy::read_string_vector(uint32_t va)
     return vec;
 }
 
-#define SEMOP		 1
-#define SEMGET		 2
-#define SEMCTL		 3
-#define SEMTIMEDOP	 4
-#define MSGSND		11
-#define MSGRCV		12
-#define MSGGET		13
-#define MSGCTL		14
-#define SHMAT		21
-#define SHMDT		22
-#define SHMGET		23
-#define SHMCTL		24
-
-
-int 
-EmulationPolicy::ipc_kernel(uint32_t call, int32_t first, int32_t second, int32_t third, uint32_t ptr, uint8_t ptr_addr, uint32_t fifth)
-{
-	//int version, ret;
-    size_t size_ptr;
-    int result;
-
-    if(ptr)
-    {
-        size_t nread = map->read(&ptr_addr, ptr, 1);
-        ROSE_ASSERT(nread == 1);
-    }
-
-
-    /* semop system calls takes an array of these. */
-    struct sembuf {
-      unsigned short  sem_num;    /* semaphore index in array */
-      short       sem_op;     /* semaphore operation */
-      short       sem_flg;    /* operation flags */
-    };
-
-    switch(call)
-    {
-
-      case SEMGET: /* semget */
-        /* Equivalent to 
-             int semget(key_t key, int nsems, int semflg);
-           
-           The types are described as
-              typedef signed int s32;
-              typedef s32 compat_key_t;
-        */
-        return syscall(117, first, second, third, NULL, fifth);
-        //return semget(first, second, third);
-        break;
-
-      case SEMCTL: {
-                     /*
-
-                        This function has three or four arguments, depending on cmd.  When there are four, the fourth has the 
-                        type union semun.  The  calling program must define this union as follows:
-
-                        union semun {
-                        int              val;    // Value for SETVAL 
-                        struct semid_ds *buf;    // Buffer for IPC_STAT, IPC_SET 
-                        unsigned short  *array;  // Array for GETALL, SETALL 
-                        struct seminfo  *__buf;  // Buffer for IPC_INFO
-                        (Linux specific) 
-                        };
-
-                        The semid_ds data structure is defined in <sys/sem.h> as follows:
-
-                        struct semid_ds {
-                        struct ipc_perm sem_perm;  // Ownership and permissions
-                        time_t          sem_otime; // Last semop time 
-                        time_t          sem_ctime; // Last change time 
-                        unsigned short  sem_nsems; // No. of semaphores in set 
-                        };
-
-                        The ipc_perm structure is defined in <sys/ipc.h> as follows (the highlighted fields are settable using IPC_SET):
-
-                        struct ipc_perm {
-                        key_t key;            // Key supplied to semget() 
-                        uid_t uid;            // Effective UID of owner 
-                        gid_t gid;            // Effective GID of owner 
-                        uid_t cuid;           // Effective UID of creator 
-                        gid_t cgid;           // Effective GID of creator 
-                        unsigned short mode;  // Permissions 
-                        unsigned short seq;   // Sequence number 
-                        };
-
-                        cmd values that ignore semun (include/linux/ipc.h in linux kernel):
-                        IPC_STAT 2
-                        IPC_SET  1
-                        IPC_RMID 0
-
-                        cmd values where semun is used (include/linux/sem.h in linux kernel):
-                        IPC_INFO 3
-                        SEM_INFO 19
-                        SEM_STAT 18
-                        GETALL   13
-                        GETNCNT  14
-                        GETPID   11
-                        GETVAL   12
-                        GETZCNT7 15
-                        SETALL   17
-                        SETVAL   16
-
-                      */  
-                       /*
-                          union semun fourth;
-                          if (!ptr)
-                          return -EINVAL;
-                          if (get_user(fourth.__pad, (void __user * __user *) ptr))
-                          return -EFAULT;
-                          return sys_semctl(first, second, third, fourth);
-                        */
-
-                       //union semun fourth;
-
-                       if (!ptr)
-                           return -EINVAL;
-                       //if (get_user(fourth.__pad, (void __user * __user *) ptr))
-                       //    return -EFAULT;
-
-                       switch(third)
-                       {
-                           case IPC_STAT:
-                           case IPC_SET:
-                           case IPC_RMID:
-
-
-                           std::cout << "Error: semun not required in SEMCTL. Not implemented." << std::endl;
-                           exit(1);
-
-                               break;
-                           case IPC_INFO:
-                               std::cout <<"IPC_INFO" << std::endl;
-
-                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
-                               exit(1);
-                               break;
-                           case SEM_INFO:
- 
-                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
-                               exit(1);
-                               break;                              std::cout <<"SEM_INFO" << std::endl;
-
-                           case SEM_STAT:
-                               std::cout <<"SEM_STAT" << std::endl;
-
-                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
-                               exit(1);
-                               break;
-                           case GETALL:
-                               std::cout <<"GETALL" << std::endl;
-
-                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
-                               exit(1);
-                               break;
-                           case GETNCNT:
-                               std::cout <<"GETNCNT" << std::endl;
-
-                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
-                               exit(1);
-                               break;
-                           case GETPID:
-                               std::cout <<"GETPID" << std::endl;
-
-                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
-                               exit(1);
-                               break;
-                           case GETVAL:
-                               std::cout <<"GETVAL" << std::endl;
-
-                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
-                               exit(1);
-                               break;
-                           case GETZCNT:
-                               std::cout <<"GETZCNT7" << std::endl;
-
-                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
-                               exit(1);
-                               break;
-                           case SETALL:
-                               std::cout <<"SETALL" << std::endl;
-
-                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
-                               exit(1);
-                               break;
-                           case SETVAL:
-
-                               std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
-                               exit(1);
-                               break;
-
-                           default:
-                           std::cout << "Error: semun required in SEMCTL. Not implemented." << std::endl;
-                           ROSE_ASSERT(false == true);
-
-                           exit(1);
-                           break;
-
-                       };
-
-                       //return semctl(first, second, third, fourth);
-
-        std::cerr << "Error: system call ipc case SEMCTL not implemented" << std::endl;
-
-        ROSE_ASSERT(false == true);
-
-        exit(1);
-
-                     break;
-                   }
-
-#if 1
-
-      case SEMOP:
-        //return sys_semtimedop(first, (struct sembuf __user *)ptr,
-        //    second, NULL);
- 
-        //result = syscall( 117, fi, (long) sys_path.c_str(), mode, flags);
-        std::cerr << "Error: system call ipc case SEMOP not implemented" << std::endl;
-        exit(1);
-
-        size_ptr = sizeof(sembuf);
-
-        break;
-      case SEMTIMEDOP:
-       /* return sys_semtimedop(first, (struct sembuf __user *)ptr,
-            second,
-            (const struct timespec __user *)fifth);
-      */
-        std::cerr << "Error: system call ipc case SEMTIMEDOP not implemented" << std::endl;
-        exit(1);
-
-        size_ptr = sizeof(sembuf);
-
-        break;
-      case MSGSND:
-                   //return sys_msgsnd(first, (struct msgbuf __user *) ptr,
-                    //   second, third);
-
-                   std::cerr << "Error: system call ipc case MSGSND not implemented" << std::endl;
-                   exit(1);
-
-                   break;
-      case MSGRCV:
-                   /*
-                   switch (version) {
-                     case 0: {
-                               struct ipc_kludge tmp;
-                               if (!ptr)
-                                 return -EINVAL;
-
-                               if (copy_from_user(&tmp,
-                                     (struct ipc_kludge __user *) ptr,
-                                     sizeof(tmp)))
-                                 return -EFAULT;
-                               return sys_msgrcv(first, tmp.msgp, second,
-                                   tmp.msgtyp, third);
-                             }
-                     default:
-                             return sys_msgrcv(first,
-                                 (struct msgbuf __user *) ptr,
-                                 second, fifth, third);
-                   }
-                   */
-        std::cerr << "Error: system call ipc case MSGRCV not implemented" << std::endl;
-        exit(1);
-
-                   break;
-      case MSGGET:
-                   //return sys_msgget((key_t) first, second);
-        std::cerr << "Error: system call ipc case MSGGET not implemented" << std::endl;
-        exit(1);
-
-                   break;
-      case MSGCTL:
-                   //return sys_msgctl(first, second, (struct msqid_ds __user *)ptr);
-        std::cerr << "Error: system call ipc case MSGCTL not implemented" << std::endl;
-        exit(1);
-
-                   break;
-
-      case SHMAT:
-                   /*
-                   switch (version) {
-                     default: {
-                                unsigned long raddr;
-                                ret = do_shmat(first, (char __user *)ptr,
-                                    second, &raddr);
-                                if (ret)
-                                  return ret;
-                                return put_user(raddr, (unsigned long __user *) third);
-                              }
-                     case 1:
-                              return -EINVAL;
-                   }
-    */
-        std::cerr << "Error: system call ipc case SHMAT not implemented" << std::endl;
-        exit(1);
-
-                   break;
-      case SHMDT:
-                   //return sys_shmdt((char __user *)ptr);
-        std::cerr << "Error: system call ipc case SHMT not implemented" << std::endl;
-        exit(1);
-
-                   break;
-      case SHMGET:
-                   //return sys_shmget(first, second, third);
-        std::cerr << "Error: system call ipc case SHMGET not implemented" << std::endl;
-        exit(1);
-
-                   break;
-      case SHMCTL:
-                   //return sys_shmctl(first, second,
-                   //    (struct shmid_ds __user *) ptr);
-        std::cerr << "Error: system call ipc case SGMCTL not implemented" << std::endl;
-        exit(1);
-
-                   break;
-
-#endif
-
-      default:
-                   std::cout << "Call is: " << call << std::endl;
-                   //return -ENOSYS;
-   
-                   exit(1);
-                   break;
-    }
-
-
-    //syscall(117,first, second, third, ptr, fifth);
-
-    return result;
-#if 0
-	version = call >> 16; /* hack for backward compatibility */
-	call &= 0xffff;
-
-	switch (call) {
-	case SEMOP:
-		return sys_semtimedop(first, (struct sembuf __user *)ptr,
-				      second, NULL);
-	case SEMTIMEDOP:
-		return sys_semtimedop(first, (struct sembuf __user *)ptr,
-				      second,
-				      (const struct timespec __user *)fifth);
-
-	case SEMGET:
-		return sys_semget(first, second, third);
-	case SEMCTL: {
-		union semun fourth;
-		if (!ptr)
-			return -EINVAL;
-		if (get_user(fourth.__pad, (void __user * __user *) ptr))
-			return -EFAULT;
-		return sys_semctl(first, second, third, fourth);
-	}
-
-	case MSGSND:
-		return sys_msgsnd(first, (struct msgbuf __user *) ptr,
-				  second, third);
-	case MSGRCV:
-		switch (version) {
-		case 0: {
-			struct ipc_kludge tmp;
-			if (!ptr)
-				return -EINVAL;
-
-			if (copy_from_user(&tmp,
-					   (struct ipc_kludge __user *) ptr,
-					   sizeof(tmp)))
-				return -EFAULT;
-			return sys_msgrcv(first, tmp.msgp, second,
-					   tmp.msgtyp, third);
-		}
-		default:
-			return sys_msgrcv(first,
-					   (struct msgbuf __user *) ptr,
-					   second, fifth, third);
-		}
-	case MSGGET:
-		return sys_msgget((key_t) first, second);
-	case MSGCTL:
-		return sys_msgctl(first, second, (struct msqid_ds __user *)ptr);
-
-	case SHMAT:
-		switch (version) {
-		default: {
-			unsigned long raddr;
-			ret = do_shmat(first, (char __user *)ptr,
-				       second, &raddr);
-			if (ret)
-				return ret;
-			return put_user(raddr, (unsigned long __user *) third);
-		}
-		case 1:
-			/*
-			 * This was the entry point for kernel-originating calls
-			 * from iBCS2 in 2.2 days.
-			 */
-			return -EINVAL;
-		}
-	case SHMDT:
-		return sys_shmdt((char __user *)ptr);
-	case SHMGET:
-		return sys_shmget(first, second, third);
-	case SHMCTL:
-		return sys_shmctl(first, second,
-				   (struct shmid_ds __user *) ptr);
-	default:
-		return -ENOSYS;
-	}
-
-#endif
-}
-
 /* NOTE: not yet tested for guest_dirent_t == dirent64_t; i.e., the getdents64() syscall. [RPM 2010-11-17] */
 template<class guest_dirent_t> /* either dirent32_t or dirent64_t */
 int EmulationPolicy::getdents_syscall(int fd, uint32_t dirent_va, long sz)
@@ -2229,6 +1926,177 @@ int EmulationPolicy::getdents_syscall(int fd, uint32_t dirent_va, long sz)
 
     return at>0 ? at : status;
 }
+
+void
+EmulationPolicy::sys_semtimedop(uint32_t semid, uint32_t tsops_va, uint32_t nsops, uint32_t timeout_va)
+{
+    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+}
+
+void
+EmulationPolicy::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
+{
+#ifdef SYS_ipc /* i686 */
+    int result = syscall(SYS_ipc, 2, key, nsems, semflg);
+#else
+    int result = syscall(SYS_semget, key, nsems, semflg);
+#endif
+    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+}
+
+void
+EmulationPolicy::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgflg)
+{
+    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+}
+
+void
+EmulationPolicy::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgtyp, uint32_t msgflg)
+{
+    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+}
+
+void
+EmulationPolicy::sys_msgget(uint32_t key, uint32_t msgflg)
+{
+    int result = msgget(key, msgflg);
+    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+}
+
+void
+EmulationPolicy::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
+{
+    int version = cmd & 0x0100/*IPC_64*/;
+    cmd &= ~0x0100;
+
+    switch (cmd) {
+        case IPC_INFO:
+        case MSG_INFO:
+            writeGPR(x86_gpr_ax, -ENOSYS);              /* FIXME */
+            break;
+
+        case IPC_STAT:
+        case MSG_STAT: {
+            ROSE_ASSERT(0x0100==version); /* we're assuming ipc64_perm and msqid_ds from the kernel */
+            static msqid_ds host_ds;
+            int result = msgctl(msqid, cmd, &host_ds);
+            if (-1==result) {
+                writeGPR(x86_gpr_ax, -errno);
+                break;
+            }
+
+            msqid64_ds_32 guest_ds;
+            guest_ds.msg_perm.key = host_ds.msg_perm.__key;
+            guest_ds.msg_perm.uid = host_ds.msg_perm.uid;
+            guest_ds.msg_perm.gid = host_ds.msg_perm.gid;
+            guest_ds.msg_perm.cuid = host_ds.msg_perm.cuid;
+            guest_ds.msg_perm.cgid = host_ds.msg_perm.cgid;
+            guest_ds.msg_perm.mode = host_ds.msg_perm.mode;
+            guest_ds.msg_perm.pad1 = host_ds.msg_perm.__pad1;
+            guest_ds.msg_perm.seq = host_ds.msg_perm.__seq;
+            guest_ds.msg_perm.pad2 = host_ds.msg_perm.__pad2;
+            guest_ds.msg_perm.unused1 = host_ds.msg_perm.__unused1;
+            guest_ds.msg_perm.unused2 = host_ds.msg_perm.__unused2;
+            guest_ds.msg_stime = host_ds.msg_stime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused1 = host_ds.__unused1;
+#endif
+            guest_ds.msg_rtime = host_ds.msg_rtime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused2 = host_ds.__unused2;
+#endif
+            guest_ds.msg_ctime = host_ds.msg_ctime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused3 = host_ds.__unused3;
+#endif
+            guest_ds.msg_cbytes = host_ds.__msg_cbytes;
+            guest_ds.msg_qnum = host_ds.msg_qnum;
+            guest_ds.msg_qbytes = host_ds.msg_qbytes;
+            guest_ds.msg_lspid = host_ds.msg_lspid;
+            guest_ds.msg_lrpid = host_ds.msg_lrpid;
+            guest_ds.unused4 = host_ds.__unused4;
+            guest_ds.unused5 = host_ds.__unused5;
+
+            if (sizeof(guest_ds)!=map->write(&guest_ds, buf_va, sizeof guest_ds)) {
+                writeGPR(x86_gpr_ax, -EFAULT);
+                break;
+            }
+
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
+        case IPC_RMID: {
+            int result = msgctl(msqid, cmd, NULL);
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            break;
+        }
+
+        case IPC_SET: {
+            msqid64_ds_32 guest_ds;
+            if (sizeof(guest_ds)!=map->read(&guest_ds, buf_va, sizeof guest_ds)) {
+                writeGPR(x86_gpr_ax, -EFAULT);
+                break;
+            }
+
+            static msqid_ds host_ds;
+#if 0
+            host_ds.msg_perm.key = guest_ds.msg_perm.key;
+            host_ds.msg_perm.uid = guest_ds.msg_perm.uid;
+            host_ds.msg_perm.gid = guest_ds.msg_perm.gid;
+            host_ds.msg_perm.cuid = guest_ds.msg_perm.cuid;
+            host_ds.msg_perm.cgid = guest_ds.msg_perm.cgid;
+            host_ds.msg_perm.mode = guest_ds.msg_perm.mode;
+            host_ds.msg_perm.seq = guest_ds.msg_perm.seq;
+            host_ds.msg_first = my_addr(guest_ds.msg_first_va, 1);
+            host_ds.msg_last = my_addr(guest_ds.msg_last_va, 1);
+            host_ds.msg_stime = guest_ds.msg_stime;
+            host_ds.msg_rtime = guest_ds.msg_rtime;
+            host_ds.msg_ctime = guest_ds.msg_ctime;
+            host_ds.msg_lcbytes = guest_ds.msg_lcbytes;
+            host_ds.msg_lqbytes = guest_ds.msg_lqbytes;
+            host_ds.msg_cbytes = guest_ds.msg_cbytes;
+            host_ds.msg_qnum = guest_ds.msg_qnum;
+            host_ds.msg_qbytes = guest_ds.msg_qbytes;
+            host_ds.msg_lspid = guest_ds.msg_lspid;
+            host_ds.msg_lrpid = guest_ds.msg_lrpid;
+#else
+            memset(&host_ds, 0, sizeof host_ds);
+#endif
+#ifdef SYS_ipc /* i686 */
+            int result = syscall(SYS_ipc, 14, msqid, cmd, 0/*unused*/, &host_ds);
+#else
+            int result = syscall(SYS_msgctl, msqid, cmd, &host_ds);
+#endif
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            break;
+        }
+
+        default: {
+            writeGPR(x86_gpr_ax, -EINVAL);
+            break;
+        }
+    }
+}
+
+void
+EmulationPolicy::sys_shmdt(uint32_t shmaddr_va)
+{
+    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+}
+
+void
+EmulationPolicy::sys_shmget(uint32_t key, uint32_t size, uint32_t shmflg)
+{
+    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+}
+
+void
+EmulationPolicy::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
+{
+    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+}
+
 
 void
 EmulationPolicy::emulate_syscall()
@@ -3374,26 +3242,102 @@ EmulationPolicy::emulate_syscall()
         };
 
         case 117: { /* 0x75, ipc */
-            //int ipc(unsigned int call, int first, int second, int third, void *ptr, long fifth)
-            syscall_enter("ipc", "ddddpd");
- 
-            uint32_t call, fifth, ptr;
-            int32_t  first, second, third;
-            call   = arg(0);
-            first  = arg(1);
-            second = arg(2);
-            third  = arg(3);
-            ptr    = arg(4);
-            fifth  = arg(5);
-
-            uint8_t ptr_addr;
-
-
-            int result = ipc_kernel(call, first, second, third, ptr, ptr_addr, fifth);
-
-            writeGPR(x86_gpr_ax, result);
-            syscall_leave("d");
-
+            /* Return value is written to eax by these helper functions. The structure of this code closely follows that in the
+             * Linux kernel. */
+            unsigned call = arg(0) & 0xffff;
+            int version = arg(0) >> 16;
+            uint32_t first=arg(1), second=arg(2), third=arg(3), ptr=arg(4), fifth=arg(5);
+            switch (call) {
+                case 1: /* SEMOP */
+                    syscall_enter("ipc", "fdd-p", ipc_commands);
+                    sys_semtimedop(first, ptr, second, 0);
+                    syscall_leave("d");
+                    break;
+                case 2: /* SEMGET */
+                    syscall_enter("ipc", "fddf", ipc_commands, ipc_flags);
+                    sys_semget(first, second, third);
+                    syscall_leave("d");
+                    break;
+                case 3: /* SEMCTL */
+                    syscall_enter("ipc", "fdddpd", ipc_commands);
+                    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+                    syscall_leave("d");
+                    break;
+                case 4: /* SEMTIMEDOP */
+                    syscall_enter("ipc", "fdd-pP", ipc_commands, sizeof(timespec_32), print_timespec_32);
+                    sys_semtimedop(first, ptr, second, fifth);
+                    syscall_leave("d");
+                    break;
+                case 11: /* MSGSND */
+                    syscall_enter("ipc", "fddfp", ipc_commands, ipc_flags);
+                    sys_msgsnd(first, ptr, second, third);
+                    syscall_leave("d");
+                    break;
+                case 12: /* MSGRCV */
+                    if (0==version) {
+                        syscall_enter("ipc", "fdddpd", ipc_commands);
+                        writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+                        syscall_leave("d");
+                    } else {
+                        syscall_enter("ipc", "fddfpd", ipc_commands, ipc_flags);
+                        sys_msgrcv(first, ptr, second, fifth, third);
+                        syscall_leave("d");
+                    }
+                    break;
+                case 13: /* MSGGET */ {
+                    syscall_enter("ipc", "fpf", ipc_commands, ipc_flags); /* arg-1 "p" for consistency with strace */
+                    sys_msgget(first, second);
+                    syscall_leave("d");
+                    break;
+                }
+                case 14: /* MSGCTL */ {
+                    bool set = (IPC_RMID==(second & ~0x0100) || IPC_SET==(second & ~0x0100));
+                    if (set) {
+                        syscall_enter("ipc", "fdf-P", ipc_commands, ipc_control, sizeof(msqid64_ds_32), print_msqid64_ds_32);
+                    } else {
+                        syscall_enter("ipc", "fdf-p", ipc_commands, ipc_control);
+                    }
+                    sys_msgctl(first, second, ptr);
+                    if (set) {
+                        syscall_leave("d");
+                    } else {
+                        syscall_leave("d----P", sizeof(msqid64_ds_32), print_msqid64_ds_32);
+                    }
+                    break;
+                }
+                case 21: /* SHMAT */
+                    if (1==version) {
+                        /* This was the entry point for kernel-originating calls from iBCS2 in 2.2 days */
+                        syscall_enter("ipc", "fdddpd", ipc_commands);
+                        writeGPR(x86_gpr_ax, -EINVAL);
+                        syscall_leave("d");
+                    } else {
+                        syscall_enter("ipc", "fdddpd", ipc_commands);
+                        writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+                        syscall_leave("d");
+                    }
+                    break;
+                case 22: /* SHMDT */
+                    syscall_enter("ipc", "f---p", ipc_commands);
+                    sys_shmdt(ptr);
+                    syscall_leave("d");
+                    break;
+                case 23: /* SHMGET */
+                    syscall_enter("ipc", "fddf", ipc_commands, ipc_flags);
+                    sys_shmget(first, second, third);
+                    syscall_leave("d");
+                    break;
+                case 24: /* SHMCTL */
+                    syscall_enter("ipc", "fdf-p", ipc_commands, ipc_control);
+                    sys_shmctl(first, second, ptr);
+                    syscall_leave("d");
+                    break;
+                default:
+                    syscall_enter("ipc", "fdddpd", ipc_commands);
+                    writeGPR(x86_gpr_ax, -ENOSYS);
+                    syscall_leave("d");
+                    break;
+            }
             break;
         }
 

@@ -66,6 +66,10 @@ syscall_sa.85 no
 syscall_tst.116.1 no
 syscall_tst.116.2 no
 syscall_tst.117 no
+syscall_tst.117.msgctl.01 no
+syscall_tst.117.msgctl.03 no
+syscall_tst.117.msgget.02 no
+syscall_tst.117.msgget.03 no
 syscall_tst.122 no
 syscall_tst.125.1 no
 syscall_tst.13.1 no
