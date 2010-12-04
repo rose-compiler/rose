@@ -718,6 +718,10 @@ public:
     /* Returns the memory address in ROSE where the specified specimen address is located. */
     void *my_addr(uint32_t va, size_t size);
 
+    /* Does the opposite, more or less, of my_addr(). Return a specimen virtual address that maps to the specified address in
+     * the simulator.  There may be more than one, in which case we return the lowest. */
+    uint32_t guest_va(void *addr, size_t nbytes);
+
     /* Reads a NUL-terminated string from specimen memory. The NUL is not included in the string.  If a limit is specified then
      * the returned string will contain at most this many characters (a value of zero implies no limit).  If the string cannot
      * be read, then "error" (if non-null) will point to a true value and the returned string will include the characters up to
@@ -1675,6 +1679,20 @@ EmulationPolicy::my_addr(uint32_t va, size_t nbytes)
     }
 
     return (uint8_t*)me->get_base() + offset;
+}
+
+uint32_t
+EmulationPolicy::guest_va(void *addr, size_t nbytes)
+{
+    const std::vector<MemoryMap::MapElement> elmts = map->get_elements();
+    for (std::vector<MemoryMap::MapElement>::const_iterator ei=elmts.begin(); ei!=elmts.end(); ++ei) {
+        uint8_t *base = (uint8_t*)ei->get_base(false);
+        rose_addr_t offset = ei->get_offset();
+        size_t size = ei->get_size();
+        if (base && addr>=base+offset && (uint8_t*)addr+nbytes<=base+offset+size)
+            return ei->get_va() + ((uint8_t*)addr - (base+offset));
+    }
+    return 0;
 }
 
 std::string
