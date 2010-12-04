@@ -885,8 +885,10 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   Outliner::insert(result, g_scope, body_block);
 
   // A fix from Tristan Ravitch travitch@cs.wisc.edu to make outlined functions static to avoid name conflicts
-  SageInterface::setStatic(result->get_definingDeclaration());
-  SageInterface::setStatic(result->get_firstNondefiningDeclaration());
+  if (result->get_definingDeclaration() != NULL)
+    SageInterface::setStatic(result->get_definingDeclaration());
+  if (result->get_firstNondefiningDeclaration() != NULL)
+    SageInterface::setStatic(result->get_firstNondefiningDeclaration());
 
   // Generate a call to the outlined function
   // Generate packing statements
