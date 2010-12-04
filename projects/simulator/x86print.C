@@ -29,10 +29,19 @@ print_flags(FILE *f, const Translate *tlist, uint32_t value)
     /* Look for a flag(s) corresponding to a zero value if we haven't printed anything yet */
     if (!nelmts && !value) {
         for (const Translate *t=tlist; t->str; t++) {
-            if ((value & t->mask)==t->val) {
+            if (0!=t->mask && (value & t->mask)==t->val) {
                 retval += fprintf(f, "%s%s", nelmts++?"|":"", t->str);
                 value &= ~(t->val);
             }
+        }
+    }
+
+    /* Print stuff with TF_FMT elements (t->mask is zero; t->val is the mask; t->str is the format) */
+    for (const Translate *t=tlist; t->str; t++) {
+        if (0==t->mask && 0!=t->val) {
+            retval += fprintf(f, "%s", nelmts++?"|":"");
+            retval += fprintf(f, t->str, value & t->val);
+            value &= ~(t->val);
         }
     }
 
