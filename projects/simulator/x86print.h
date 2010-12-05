@@ -30,10 +30,17 @@ struct Translate {
 
 /** Holds information needed for printing */
 struct ArgInfo {
-    ArgInfo(): val(0), xlate(NULL), struct_printer(NULL), struct_buf(NULL), struct_size(0), struct_nread(0) {}
+    ArgInfo()
+        : val(0),
+          str_fault(false), str_trunc(false),
+          xlate(NULL),
+          struct_printer(NULL), struct_buf(NULL), struct_size(0), struct_nread(0)
+        {}
     ~ArgInfo() { delete[] struct_buf; }
     uint32_t    val;            /**< Integer value of the argument, straight from a machine register. */
     std::string str;            /**< String when val is the virtual address of a string, buffer, etc. */
+    bool str_fault;             /**< True if a segmentation fault occurred while reading the string. */
+    bool str_trunc;             /**< True if the string is truncated. */
     const Translate *xlate;     /**< Pointer to a translation table. */
     typedef int (*StructPrinter)(FILE*, const uint8_t*, size_t);
     StructPrinter struct_printer;/**< Prints a pointer to something, usually a struct. */
@@ -48,7 +55,7 @@ int print_enum(FILE*, const Translate*, uint32_t value);
 int print_signed(FILE*, uint32_t value);
 int print_pointer(FILE*, uint32_t value);
 int print_hex(FILE*, uint32_t value);
-int print_string(FILE*, const std::string &value);
+int print_string(FILE*, const std::string &value, bool str_fault=false, bool str_trunc=false);
 int print_time(FILE*, uint32_t value);
 int print_single(FILE*, char fmt, const ArgInfo *info);
 int print_struct(FILE *f, uint32_t value, ArgInfo::StructPrinter printer, const uint8_t *buf, size_t need, size_t have);
