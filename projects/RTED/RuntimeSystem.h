@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 #ifndef  _WIN64
-#define unsigned_long_long unsigned long 
+#define unsigned_long_long unsigned long
 #define signed_long_long long
 #else
 #define unsigned_long_long unsigned long long
@@ -33,14 +33,14 @@ void RuntimeSystem_roseCheckpoint( const char* filename, const char* line, const
 
 /***************************** ARRAY FUNCTIONS *************************************/
 void RuntimeSystem_roseCreateHeap(
-        const char* name, 
+        const char* name,
         const char* mangl_name,
-        const char* type, 
-        const char* basetype, 
+        const char* type,
+        const char* basetype,
         size_t indirection_level,       // how many dereferences to get to a non-pointer type
                                         // e.g. int*** has indirection level 3
-        addr_type address, 
-        long int size, 
+        addr_type address,
+        long int size,
         long int mallocSize,
         int fromMalloc,                 // 1 if from call to malloc
                                         // 0 otherwise, if e.g. from new
@@ -127,6 +127,24 @@ int RuntimeSystem_roseCreateVariable(const char* name,
 		int init, const char* className, const char* filename,
 		const char* line, const char* lineTransformed);
 
+
+#if NOT_YET_IMPLEMENTED
+// for upc
+int RuntimeSystem_roseCreateSharedVariable( const char* name,
+																						const char* mangled_name,
+																						const char* type,
+																						const char* basetype,
+																						size_t indirection_level,
+																						shared void* address,
+																						unsigned int size,
+																						int init,
+																						const char* className,
+																						const char* filename,
+																						const char* line,
+																						const char* lineTransformed
+																					);
+#endif /* NOT_YET_IMPLEMENTED */
+
 /**
  * Register the creation of a C++ object.  This function should only be called
  * at the start of an object's constructor.  It is safe to call this function
@@ -180,8 +198,8 @@ void RuntimeSystem_roseMovePointer(
 
 void RuntimeSystem_roseAccessVariable(
         addr_type address,
-        unsigned int size, 
-        addr_type write_address, 
+        unsigned int size,
+        addr_type write_address,
         unsigned int write_size,
         int read_write_mask, //1 = read, 2 = write
         const char* filename, const char* line,
@@ -211,4 +229,3 @@ void RuntimeSystem_roseRegisterTypeCall(int count, ...);
 #endif
 
 #endif
-
