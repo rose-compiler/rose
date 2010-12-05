@@ -1241,6 +1241,15 @@ SageInterface::get_name ( const SgSupport* node )
                break;
              }
 
+       // DQ (12/2/2010): Implemented case for SgName
+          case V_SgName:
+             {
+               const SgName* name_node = isSgName(node);
+               ROSE_ASSERT(name_node != NULL);
+               name = "_name_" + name_node->getString();
+               break;
+             }
+
           default:
              {
                printf ("Default reached in switch for SgSupport IR node = %s \n",node->class_name().c_str());
