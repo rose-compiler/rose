@@ -32,14 +32,14 @@ std::string getVariantName (VariantT v);
 // functions easily.
 
 // Constructor handling: (We have sageBuilder.h now for this purpose, Liao 2/1/2008)
-//     We could add simpler layers of support for construction of IR nodes by 
+//     We could add simpler layers of support for construction of IR nodes by
 // hiding many details in "makeSg***()" functions. Such functions would
 // return pointers to the associated Sg*** objects and would be able to hide
 // many IR specific details, including:
 //      memory handling
 //      optional parameter settings not often required
 //      use of Sg_File_Info objects (and setting them as transformations)
-//      
+//
 // namespace AST_Interface  (this name is taken already by some of Qing's work :-)
 
 //! An alias for Sg_File_Info::generateDefaultFileInfoForTransformationNode()
@@ -56,22 +56,22 @@ intended to be presented using separate higher level interfaces which work with 
 The namespace, SageInterface, collects functions that operate on the IR and are supportive of numerous types of routine operations required to support general analysis and transformation of the AST.
 
     \internal Further organization of the functions in this namespace is required.
-Major AST manipulation functions are scattered in the following directories 
+Major AST manipulation functions are scattered in the following directories
    - src/midend/astUtil/astInterface
-   - src/roseSupport/utility_function.h,  namespace ROSE 
+   - src/roseSupport/utility_function.h,  namespace ROSE
    - src/roseSupport/TransformationSupport.h, class TransformationSupport
    - src/midend/astInlining/inlinerSupport.C
    - src/frontend/SageIII/sageInterface
    - projects: such as outliner, OpenMP_Translator
-Some other utility functions not related AST can be found in 
+Some other utility functions not related AST can be found in
    - src/util/stringSupport/string_functions.h, namespace StringUtility
    - src/roseExtensions/dataStructureTraversal/helpFunctions.C
    - projects/dataStructureGraphing/helpFunctions.C
 
 
     \todo A number of additional things to do:
-         - Pull scope handling out of EDG/Sage III translation so that is is made 
-           available to anyone else building the Sage III IR from scratch (which 
+         - Pull scope handling out of EDG/Sage III translation so that is is made
+           available to anyone else building the Sage III IR from scratch (which
            when it gets non-trivial, involves the manipulation of scopes).
          - Other stuff ...
  */
@@ -97,27 +97,27 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
   {
     private:
      std::string name;
-    public: 
+    public:
      UniqueNameAttribute(std::string n="") {name =n; };
      void set_name (std::string n) {name = n;};
      std::string get_name () {return name;};
   };
-  
-// DQ (3/2/2009): Added support for collectiong an merging the referenced symbols in the outlined 
-// function into the list used to edit the outlined code subtree to fixup references (from symbols 
+
+// DQ (3/2/2009): Added support for collectiong an merging the referenced symbols in the outlined
+// function into the list used to edit the outlined code subtree to fixup references (from symbols
 // in the original file to the symbols in the newer separate file).
 // typedef rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
 // void supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap );
 
-// CH (4/9/2010): Use boost::hash instead 
+// CH (4/9/2010): Use boost::hash instead
 //#ifdef _MSC_VER
-#if 0 
+#if 0
 inline size_t hash_value(SgNode* t) {return (size_t)t;}
 #endif
 
 struct hash_nodeptr
    {
-// CH (4/9/2010): Use boost::hash instead 
+// CH (4/9/2010): Use boost::hash instead
 //#ifndef _MSC_VER
 #if 0
            //rose_hash::hash<char*> hasher;
@@ -125,7 +125,7 @@ struct hash_nodeptr
      public:
           size_t operator()(SgNode* node) const
              {
-// CH (4/9/2010): Use boost::hash instead 
+// CH (4/9/2010): Use boost::hash instead
 //#ifdef _MSC_VER
  #if 0
                                   return (size_t) hash_value(node);
@@ -157,14 +157,14 @@ struct hash_nodeptr
 
    // Liao, 1/24/2008, find exact match for a function
    //!look up function symbol in parent scopes given both name and function type, starting from top of ScopeStack if currentscope is not given or NULL
-   SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &  functionName, 
+   SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &  functionName,
                                                          const SgType* t,
                                                          SgScopeStatement *currentScope=NULL);
 
    /*! \brief set_name of symbol in symbol table.
 
-       This function extracts the symbol from the relavant symbol table, 
-       changes the name (at the declaration) and reinserts it into the 
+       This function extracts the symbol from the relavant symbol table,
+       changes the name (at the declaration) and reinserts it into the
        symbol table.
 
        \internal  I think this is what this function does, I need to double check.
@@ -191,7 +191,7 @@ struct hash_nodeptr
          };
    /*! \brief Regenerate the symbol table.
 
-      \implementation current symbol table must be NULL pointer before calling this 
+      \implementation current symbol table must be NULL pointer before calling this
       function (for safety, but is this a good idea?)
     */
    // DQ (9/28/2005):
@@ -209,7 +209,7 @@ struct hash_nodeptr
 
  //------------------------------------------------------------------------
  //@{
- /*! @name Stringify 
+ /*! @name Stringify
    \brief Generate a useful string (name) to describe a SgNode
  */
    /*! \brief Generate a useful name to describe the SgNode
@@ -297,7 +297,7 @@ struct hash_nodeptr
                                                        classDeclaration);
    /*! \brief Return true if template definition is in the class, false if outside of class.
     */
-   // DQ (8/27/2005): 
+   // DQ (8/27/2005):
    bool templateDefinitionIsInClass (SgTemplateInstantiationMemberFunctionDecl
                                      * memberFunctionDeclaration);
 
@@ -313,7 +313,7 @@ struct hash_nodeptr
    //! Check if a SgNode is a declaration for a structure
    bool isStructDeclaration(SgNode * node);
  #if 0
- // DQ (8/28/2005): This is already a member function of the SgFunctionDeclaration 
+ // DQ (8/28/2005): This is already a member function of the SgFunctionDeclaration
  // (so that it can handle template functions and member functions)
 
    /*! \brief Return true if member function of a template member function,
@@ -343,10 +343,10 @@ struct hash_nodeptr
    //! Check if a SgNode is a main() function declaration
    bool isMain (const SgNode* node);
    // DQ (6/22/2005):
-   /*! \brief Generate unique name from C and C++ constructs. The name may contain space. 
+   /*! \brief Generate unique name from C and C++ constructs. The name may contain space.
 
-       This is support for the AST merge, but is generally useful as a more general mechanism than 
-       name mangling which is more closely ties to the generation of names to support link-time function name 
+       This is support for the AST merge, but is generally useful as a more general mechanism than
+       name mangling which is more closely ties to the generation of names to support link-time function name
        resolution.  This is more general than common name mangling in that it resolves more relevant differences
        between C and C++ declarations. (e.g. the type within the declaration: "struct { int:8; } foo;").
 
@@ -356,11 +356,11 @@ struct hash_nodeptr
     std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
   // DQ (8/10/2010): Added const to first parameter.
-  // DQ (3/10/2007): 
+  // DQ (3/10/2007):
   //! Generate a unique string from the source file position information
     std::string declarationPositionString (const SgDeclarationStatement * declaration);
 
-  // DQ (1/20/2007): 
+  // DQ (1/20/2007):
   //! Added mechanism to generate project name from list of file names
     std::string generateProjectName (const SgProject * project, bool supressSuffix = false );
 
@@ -386,13 +386,13 @@ struct hash_nodeptr
   //! Used to have a struct declaration embedded into a variable declaration
   void setBaseTypeDefiningDeclaration(SgVariableDeclaration* var_decl, SgDeclarationStatement *base_decl);
 
-  // DQ (10/14/2006): This function tests the AST to see if for a non-defining declaration, the 
+  // DQ (10/14/2006): This function tests the AST to see if for a non-defining declaration, the
   // bool declarationPreceedsDefinition ( SgClassDeclaration* classNonDefiningDeclaration, SgClassDeclaration* classDefiningDeclaration );
   //! Check if a defining declaration comes before of after the non-defining declaration.
   bool declarationPreceedsDefinition (SgDeclarationStatement *nonDefiningDeclaration, SgDeclarationStatement *definingDeclaration);
 
-  // DQ (10/19/2006): Function calls have interesting context dependent rules to determine if 
-  // they are output with a global qualifier or not.  Were this is true we have to avoid global 
+  // DQ (10/19/2006): Function calls have interesting context dependent rules to determine if
+  // they are output with a global qualifier or not.  Were this is true we have to avoid global
   // qualifiers, since the function's scope has not been defined.  This is an example of where
   // qualification of function names in function calls are context dependent; an interesting
   // example of where the C++ language is not friendly to source-to-source processing :-).
@@ -405,7 +405,7 @@ struct hash_nodeptr
     std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy, SgCopyHelp * help = NULL);
 
   //! Deep copy an arbitrary subtree
-   SgNode* deepCopyNode (const SgNode* subtree); 
+   SgNode* deepCopyNode (const SgNode* subtree);
 
 //! A template function for deep copying a subtree. It is also  used to create deepcopy functions with specialized parameter and return types. e.g SgExpression* copyExpression(SgExpression* e);
    template <typename NodeType>
@@ -478,7 +478,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
 //------------------------------------------------------------------------
 //@{
 /*! @name AST properties
-  \brief version, language properties of current AST.  
+  \brief version, language properties of current AST.
 */
 
 //  std::string version();  // utility_functions.h, version number
@@ -505,31 +505,31 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
 //------------------------------------------------------------------------
 //@{
 /*! @name Scope
-  \brief 
+  \brief
 */
 
-  // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique 
+  // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique
   // labels for scopes in a function (as required for name mangling).
-  /*! \brief Assigns unique numbers to each SgScopeStatement of a function. 
+  /*! \brief Assigns unique numbers to each SgScopeStatement of a function.
 
-      This is used to provide unique names for variables and types defined is 
+      This is used to provide unique names for variables and types defined is
       different nested scopes of a function (used in mangled name generation).
    */
   void resetScopeNumbers (SgFunctionDefinition * functionDeclaration);
 
-  // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique 
+  // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique
   // labels for scopes in a function (as required for name mangling).
   /*! \brief Clears the cache of scope,integer pairs for the input function.
 
       This is used to clear the cache of computed unique lables for scopes in a function.
       This function should be called after any transformation on a function that might effect
       the allocation of scopes and cause the existing unique numbrs to be incorrect.
-      This is part of support to provide unique names for variables and types defined is 
+      This is part of support to provide unique names for variables and types defined is
       different nested scopes of a function (used in mangled name generation).
    */
   void clearScopeNumbers (SgFunctionDefinition * functionDefinition);
 
-  
+
   //!Find the enclosing namespace of a declaration
   SgNamespaceDefinitionStatement * enclosingNamespaceScope (SgDeclarationStatement * declaration);
 //  SgNamespaceDefinitionStatement * getEnclosingNamespaceScope (SgNode * node);
@@ -550,14 +550,14 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   //! Dumps a located node's preprocessing information.
   void dumpPreprocInfo (SgLocatedNode* locatedNode);
 
-//! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX. 
+//! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX.
 PreprocessingInfo* insertHeader(const std::string& filename, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::after, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
 
 //! Identical to movePreprocessingInfo(), except for the stale name and confusing order of parameters. It will be deprecated soon.
 void moveUpPreprocessingInfo (SgStatement* stmt_dst, SgStatement* stmt_src, PreprocessingInfo::RelativePositionType src_position=PreprocessingInfo::undef,  PreprocessingInfo::RelativePositionType dst_position=PreprocessingInfo::undef, bool usePrepend= false);
 
 //! Move preprocessing information of stmt_src to stmt_dst, Only move preprocessing information from the specified source-relative position to a specified target position, otherwise move all preprocessing information with position information intact. The preprocessing information is appended to the existing preprocessing information list of the target node by default. Prepending is used if usePreprend is set to true. Optionally, the relative position can be adjust after the moving using dst_position.
-void movePreprocessingInfo (SgStatement* stmt_src, SgStatement* stmt_dst,  PreprocessingInfo::RelativePositionType src_position=PreprocessingInfo::undef, 
+void movePreprocessingInfo (SgStatement* stmt_src, SgStatement* stmt_dst,  PreprocessingInfo::RelativePositionType src_position=PreprocessingInfo::undef,
                              PreprocessingInfo::RelativePositionType dst_position=PreprocessingInfo::undef, bool usePrepend= false);
 
 
@@ -568,11 +568,11 @@ void cutPreprocessingInfo (SgLocatedNode* src_node, PreprocessingInfo::RelativeP
 void pastePreprocessingInfo (SgLocatedNode* dst_node, PreprocessingInfo::RelativePositionType pos, AttachedPreprocessingInfoType& saved_buf);
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes.
-PreprocessingInfo* attachArbitraryText(SgLocatedNode* target, 
+PreprocessingInfo* attachArbitraryText(SgLocatedNode* target,
                 const std::string & text,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
 
-//!Check if a pragma declaration node has macro calls attached, if yes, replace macro calls within the pragma string with expanded strings. This only works if -rose:wave is turned on. 
+//!Check if a pragma declaration node has macro calls attached, if yes, replace macro calls within the pragma string with expanded strings. This only works if -rose:wave is turned on.
 void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* target);
 //@}
 
@@ -657,7 +657,7 @@ bool isReferenceType(SgType* t);
 /* const char* p = "aa"; is not treated as having a const type. It is a pointer to const char.
  * Similarly, neither for const int b[10]; or const int & c =10;
  * The standard says, "A compound type is not cv-qualified by the cv-qualifiers (if any) of
-the types from which it is compounded. Any cv-qualifiers applied to an array type affect the array element type, not the array type". 
+the types from which it is compounded. Any cv-qualifiers applied to an array type affect the array element type, not the array type".
  */
 bool isConstType(SgType* t);
 
@@ -675,12 +675,12 @@ bool isRestrictType(SgType* t);
  */
 bool isScalarType(SgType* t);
 
-//! Check if a type is an integral type, only allowing signed/unsigned short, int, long, long long. 
+//! Check if a type is an integral type, only allowing signed/unsigned short, int, long, long long.
 //!
 //! There is another similar function named SgType::isIntegerType(), which allows additional types char, wchar, and bool.
 bool isStrictIntegerType(SgType* t);
 
-//! Check if a type is a struct type (a special SgClassType in ROSE) 
+//! Check if a type is a struct type (a special SgClassType in ROSE)
 bool isStructType(SgType* t);
 
 //! Generate a mangled string for a given type based on Itanium C++ ABI
@@ -689,10 +689,10 @@ std::string mangleType(SgType* type);
 //! Generate mangled scalar type names according to Itanium C++ ABI, the input type should pass isScalarType() in ROSE
   std::string mangleScalarType(SgType* type);
 
-//! Generated mangled modifier types, include const, volatile,according to Itanium C++ ABI, with extension to handle UPC shared types.  
+//! Generated mangled modifier types, include const, volatile,according to Itanium C++ ABI, with extension to handle UPC shared types.
   std::string mangleModifierType(SgModifierType* type);
 
-//! Calculate the number of elements of an array type: dim1* dim2*... , assume element count is 1 for int a[]; Strip off THREADS if it is a UPC array. 
+//! Calculate the number of elements of an array type: dim1* dim2*... , assume element count is 1 for int a[]; Strip off THREADS if it is a UPC array.
 size_t getArrayElementCount(SgArrayType* t);
 
 //! Get the number of dimensions of an array type
@@ -710,7 +710,7 @@ bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::
 
 //! Has a UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
 /*!
- * Note: we classify private-to-shared as 'has shared' type for convenience here. It is indeed a private type in strict sense. 
+ * Note: we classify private-to-shared as 'has shared' type for convenience here. It is indeed a private type in strict sense.
   AST graph for some examples:
     - shared scalar: SgModifierType -->base type
     - shared array: SgArrayType --> SgModiferType --> base type
@@ -720,7 +720,7 @@ bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::
  */
 bool hasUpcSharedType(SgType* t, SgModifierType ** mod_type_out = NULL  );
 
-//! Check if a type is a UPC shared type, including shared array, shared pointers etc. Exclude private pointers to shared types. Optionally return the modifier type with the UPC shared property. 
+//! Check if a type is a UPC shared type, including shared array, shared pointers etc. Exclude private pointers to shared types. Optionally return the modifier type with the UPC shared property.
 /*!
  * ROSE uses SgArrayType of SgModifierType to represent shared arrays, not SgModifierType points to SgArrayType. Also typedef may cause a chain of nodes before reach the actual SgModifierType with UPC shared property.
  */
@@ -777,7 +777,7 @@ void convertForToWhile(SgForStatement* f);
 void convertAllForsToWhiles(SgNode* top);
 //! Change continue statements in a given block of code to gotos to a label
 void changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* label);
- 
+
 //!Return the loop index variable for a for loop
 SgInitializedName* getLoopIndexVariable(SgNode* loop);
 
@@ -786,15 +786,15 @@ SgStatement* getLoopBody(SgScopeStatement* loop);
 
 void setLoopBody(SgScopeStatement* loop, SgStatement* body);
 
-//! Routines to get the condition of a loop. It recognize While-loop, For-loop, and Do-While-loop 
+//! Routines to get the condition of a loop. It recognize While-loop, For-loop, and Do-While-loop
 SgStatement* getLoopCondition(SgScopeStatement* loop);
 
-//! Set the condition statement of a loop, including While-loop, For-loop, and Do-While-loop. 
+//! Set the condition statement of a loop, including While-loop, For-loop, and Do-While-loop.
 void setLoopCondition(SgScopeStatement* loop, SgStatement* cond);
 
 //! Check if a for-loop has a canonical form, return loop index, bounds, step, and body if requested
 //!
-//! A canonical form is defined as : one initialization statement, a test expression, and an increment expression , loop index variable should be of an integer type.  IsInclusiveUpperBound is true when <= or >= is used for loop condition 
+//! A canonical form is defined as : one initialization statement, a test expression, and an increment expression , loop index variable should be of an integer type.  IsInclusiveUpperBound is true when <= or >= is used for loop condition
 bool isCanonicalForLoop(SgNode* loop, SgInitializedName** ivar=NULL, SgExpression** lb=NULL, SgExpression** ub=NULL, SgExpression** step=NULL, SgStatement** body=NULL, bool *hasIncrementalIterationSpace = NULL, bool* isInclusiveUpperBound = NULL);
 
 //! Set the lower bound of a loop header for (i=lb; ...)
@@ -812,20 +812,20 @@ bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 
 //! Normalize a for loop, return true if successful
 //!
-//! Translations are : 
+//! Translations are :
 //!    For test expression:
 //!           i<x is normalized to i<= (x-1) and
 //!           i>x is normalized to i>= (x+1)
 //!    For increment expression:
-//!           i++ is normalized to i+=1 and 
-//!           i-- is normalized to i+=-1 
+//!           i++ is normalized to i+=1 and
+//!           i-- is normalized to i+=-1
 //!           i-=s is normalized to i+= -s
 bool forLoopNormalization(SgForStatement* loop);
 
 //!  Unroll a target loop with a specified unrolling factor. It handles steps larger than 1 and adds a fringe loop if the iteration count is not evenly divisible by the unrolling factor.
 bool loopUnrolling(SgForStatement* loop, size_t unrolling_factor);
 
-//! Interchange/permutate a n-level perfectly-nested loop rooted at 'loop' using a lexicographical order number within (0,depth!). 
+//! Interchange/permutate a n-level perfectly-nested loop rooted at 'loop' using a lexicographical order number within (0,depth!).
 bool loopInterchange(SgForStatement* loop, size_t depth, size_t lexicoOrder);
 
 //! Tile the n-level (starting from 1) loop of a perfectly nested loop nest using tiling size s
@@ -854,7 +854,7 @@ std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = (VariantT)No
   }
   return result;
 }
-  /*! \brief Returns STL vector of SgFile IR node pointers. 
+  /*! \brief Returns STL vector of SgFile IR node pointers.
 
       Demonstrates use of restricted traversal over just SgFile IR nodes.
    */
@@ -892,7 +892,7 @@ static std::vector<NodeType*> getSgNodeListFromMemoryPool()
 
 /*! \brief top-down traversal from current node to find the main() function declaration
 */
-SgFunctionDeclaration* findMain(SgNode* currentNode);  
+SgFunctionDeclaration* findMain(SgNode* currentNode);
 
 	  //midend/programTransformation/partialRedundancyElimination/pre.h
 //! find referenced symbols within an expression
@@ -904,7 +904,7 @@ std::vector<SgVariableSymbol*> getSymbolsUsedInExpression(SgExpression* expr);
  statement.  If fortranLabel is non-empty, breaks (EXITs) to that label within
  nested loops are included in the returned list.
 */
-std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& fortranLabel = ""); 
+std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& fortranLabel = "");
 
 //! Find all continue statements inside a particular statement, stopping at nested loops
 /*! Nested loops define their own contexts for continue statements.  The
@@ -914,9 +914,9 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
 */
   std::vector<SgContinueStmt*> findContinueStmts(SgStatement* code, const std::string& fortranLabel = "");
   std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
-  std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw); 
-  
-  //! Find a declaration given its name, scope, and defining or nondefining flag. 
+  std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
+
+  //! Find a declaration given its name, scope, and defining or nondefining flag.
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
   {
@@ -930,11 +930,11 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
     }
 
     std::vector<SgNode*> children = root->get_traversalSuccessorContainer();
-    for (std::vector<SgNode*>::const_iterator i = children.begin(); 
-            i != children.end(); ++i) 
+    for (std::vector<SgNode*>::const_iterator i = children.begin();
+            i != children.end(); ++i)
     {
      T* target= findDeclarationStatement<T> (*i,name, scope, isDefining);
-     if (target) 
+     if (target)
        return target;
     }
     return 0;
@@ -954,7 +954,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
 
 //------------------------------------------------------------------------
 //@{
-/*! @name Bottom up search 
+/*! @name Bottom up search
   \brief Backwards traverse through the AST to find a node, findEnclosingXXX()
 */
 // remember to put const to all arguments.
@@ -973,8 +973,8 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf=false
   return const_cast<NodeType*>(dynamic_cast<const NodeType*> (parent));
 }
 
-//! Get the closest scope 
-SgScopeStatement* getScope(const SgNode* astNode); 
+//! Get the closest scope
+SgScopeStatement* getScope(const SgNode* astNode);
 
   //! Traverse back through a node's parents to find the enclosing global scope
   SgGlobal* getGlobalScope( const SgNode* astNode);
@@ -994,7 +994,7 @@ SgScopeStatement* getScope(const SgNode* astNode);
   //! Find the closest loop outside the given statement; if fortranLabel is not empty, the Fortran label of the loop must be equal to it
   SgScopeStatement* findEnclosingLoop(SgStatement* s, const std::string& fortranLabel = "", bool stopOnSwitches = false);
 
-  //! Find the enclosing function declaration, including its derived instances like isSgProcedureHeaderStatement, isSgProgramHeaderStatement, and isSgMemberFunctionDeclaration. 
+  //! Find the enclosing function declaration, including its derived instances like isSgProcedureHeaderStatement, isSgProgramHeaderStatement, and isSgMemberFunctionDeclaration.
   SgFunctionDeclaration * getEnclosingFunctionDeclaration (SgNode * astNode, const bool includingSelf=false);
    //roseSupport/utility_functions.h
   //! get the SgFile node from current node
@@ -1003,8 +1003,8 @@ SgScopeStatement* getScope(const SgNode* astNode);
   //! Get the initializer containing an expression if it is within an initializer.
   SgInitializer* getInitializerOfExpression(SgExpression* n);
 
-  //! Get the closest class definition enclosing the specified AST node, 
-  SgClassDefinition* getEnclosingClassDefinition(SgNode* astnode, const bool includingSelf=false); 
+  //! Get the closest class definition enclosing the specified AST node,
+  SgClassDefinition* getEnclosingClassDefinition(SgNode* astnode, const bool includingSelf=false);
 
 // TODO
 #if 0
@@ -1017,9 +1017,9 @@ SgScopeStatement* getScope(const SgNode* astNode);
    // e.g. for some expression, find its parent statement
    SgStatement* getEnclosingStatement(const SgNode* astNode);
 
-   SgSwitchStatement* getEnclosingSwitch(SgStatement* s); 
+   SgSwitchStatement* getEnclosingSwitch(SgStatement* s);
    SgModuleStatement* getEnclosingModuleStatement( const SgNode* astNode);
-  
+
   // used to build a variable reference for compiler generated code in current scope
    SgSymbol * findReachingDefinition (SgScopeStatement* startScope, SgName &name);
 #endif
@@ -1028,10 +1028,10 @@ SgScopeStatement* getScope(const SgNode* astNode);
 //------------------------------------------------------------------------
 //@{
 /*! @name AST Walk and Traversal
-  \brief 
+  \brief
 */
   // Liao, 1/9/2008
-  /*! 
+  /*!
   	\brief return the first global scope under current project
   */
   SgGlobal * getFirstGlobalScope(SgProject *project);
@@ -1041,20 +1041,20 @@ SgScopeStatement* getScope(const SgNode* astNode);
   */
   SgStatement* getLastStatement(SgScopeStatement *scope);
 
-  //! Get the first statement within a scope, return NULL if it does not exist. Skip compiler-generated statement by default. Count transformation-generated ones, but excluding those which are not to be outputted in unparsers. 
+  //! Get the first statement within a scope, return NULL if it does not exist. Skip compiler-generated statement by default. Count transformation-generated ones, but excluding those which are not to be outputted in unparsers.
   SgStatement* getFirstStatement(SgScopeStatement *scope,bool includingCompilerGenerated=false);
-    //!Find the first defining function declaration statement in a scope 
+    //!Find the first defining function declaration statement in a scope
   SgFunctionDeclaration* findFirstDefiningFunctionDecl(SgScopeStatement* scope);
 
-//! Get next statement within the same scope of current statement 
+//! Get next statement within the same scope of current statement
   SgStatement* getNextStatement(SgStatement * currentStmt);
 
-//! Get previous statement within the same scope of current statement 
+//! Get previous statement within the same scope of current statement
   SgStatement* getPreviousStatement(SgStatement * currentStmt);
 #if 0 //TODO
   // preorder traversal from current SgNode till find next SgNode of type V_SgXXX
   SgNode* getNextSgNode( const SgNode* currentNode, VariantT=V_SgNode);
-#endif 
+#endif
 //@}
 
 //------------------------------------------------------------------------
@@ -1062,10 +1062,10 @@ SgScopeStatement* getScope(const SgNode* astNode);
 /*! @name AST Comparison
   \brief Compare AST nodes, subtree, etc
 */
-  //! Check if a SgIntVal node has a given value 
- bool isEqualToIntConst(SgExpression* e, int value); 
+  //! Check if a SgIntVal node has a given value
+ bool isEqualToIntConst(SgExpression* e, int value);
 
- //! Check if two function declarations refer to the same one. Two function declarations are the same when they are a) identical, b) same name in C c) same qualified named and mangled name in C++. A nondefining (prototype) declaration and a defining declaration of a same function are treated as the same. 
+ //! Check if two function declarations refer to the same one. Two function declarations are the same when they are a) identical, b) same name in C c) same qualified named and mangled name in C++. A nondefining (prototype) declaration and a defining declaration of a same function are treated as the same.
  /*!
   * There is a similar function bool compareFunctionDeclarations(SgFunctionDeclaration *f1, SgFunctionDeclaration *f2) from Classhierarchy.C
   */
@@ -1080,7 +1080,7 @@ SgScopeStatement* getScope(const SgNode* astNode);
 //@{
 /*! @name AST insert, removal, and replacement
   \brief Add, remove,and replace AST
- 
+
   scope->append_statement(), exprListExp->append_expression() etc. are not enough to handle side effect of parent pointers, symbol tables, preprocessing info, defining/nondefining pointers etc.
 */
 
@@ -1100,7 +1100,7 @@ void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 void appendStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
 
 // DQ (2/6/2009): Added function to support outlining into separate file.
-//! Append a copy ('decl') of a function ('original_statement') into a 'scope', include any referenced declarations required if the scope is within a compiler generated file. All referenced declarations, including those from headers, are inserted if excludeHeaderFiles is set to true (the new file will not have any headers). 
+//! Append a copy ('decl') of a function ('original_statement') into a 'scope', include any referenced declarations required if the scope is within a compiler generated file. All referenced declarations, including those from headers, are inserted if excludeHeaderFiles is set to true (the new file will not have any headers).
 void appendStatementWithDependentDeclaration( SgDeclarationStatement* decl, SgGlobal* scope, SgStatement* original_statement, bool excludeHeaderFiles );
 
 //! Prepend a statement to the beginning of the current scope, handling side
@@ -1112,7 +1112,7 @@ void prependStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 void prependStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
 
 //! Check if a scope statement has a simple children statement list
-//! so insert additional statements under the scope is straightforward and unambiguous . 
+//! so insert additional statements under the scope is straightforward and unambiguous .
 //! for example, SgBasicBlock has a simple statement list while IfStmt does not.
 bool  hasSimpleChildrenList (SgScopeStatement* scope);
 
@@ -1202,9 +1202,9 @@ SgStatement* findSurroundingStatementFromSameFile(SgStatement* targetStmt, bool 
 //------------------------------------------------------------------------
 //@{
 /*! @name AST repair, fix, and postprocessing.
-  \brief Mostly used internally when some AST pieces are built without knowing their target 
-  scope/parent, especially during bottom-up construction of AST. The associated symbols, 
-   parent and scope  pointers cannot be set on construction then. 
+  \brief Mostly used internally when some AST pieces are built without knowing their target
+  scope/parent, especially during bottom-up construction of AST. The associated symbols,
+   parent and scope  pointers cannot be set on construction then.
    A set of utility functions are provided to
    patch up scope, parent, symbol for them when the target scope/parent become know.
 */
@@ -1218,7 +1218,7 @@ int fixVariableReferences(SgNode* root);
 
 //!Patch up symbol, scope, and parent information when a SgVariableDeclaration's scope is known.
 /*!
-It is possible to build a variable declaration without knowing its scope information during bottom-up construction of AST, though top-down construction is recommended in general. 
+It is possible to build a variable declaration without knowing its scope information during bottom-up construction of AST, though top-down construction is recommended in general.
 In this case, we have to patch up symbol table, scope and parent information when the scope is known. This function is usually used internally within appendStatment(), insertStatement().
 */
 void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope);
@@ -1232,7 +1232,7 @@ void fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope)
 void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope);
 
 
-//! Fix symbol table for SgLabelStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL. 
+//! Fix symbol table for SgLabelStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL.
 void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements. Should be used before attaching the statement into AST.
@@ -1240,17 +1240,17 @@ void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
 //@}
 
 //! Update defining and nondefining links due to a newly introduced function declaration. Should be used after inserting the function into a scope.
-/*! This function not only set the defining and nondefining links of the newly introduced 
+/*! This function not only set the defining and nondefining links of the newly introduced
  *  function declaration inside a scope, but also update other same function declarations' links
- *  accordingly if there are any. 
- *  Assumption: The function has already inserted/appended/prepended into the scope before calling this function. 
+ *  accordingly if there are any.
+ *  Assumption: The function has already inserted/appended/prepended into the scope before calling this function.
  */
 void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope);
 
 //------------------------------------------------------------------------
 //@{
 /*! @name Advanced AST transformations, analyses, and optimizations
-  \brief Some complex but commonly used AST transformations. 
+  \brief Some complex but commonly used AST transformations.
   */
 
 //! Collect all read and write references within stmt, which can be a function, a scope statement, or a single statement. Note that a reference can be both read and written, like i++
@@ -1281,12 +1281,12 @@ void getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop, std::set<SgI
 //!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
 void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results);
 
-//! Constant folding an AST subtree rooted at 'r' (replacing its children with their constant values, if applicable). Please be advised that constant folding on floating point computation may decrease the accuracy of floating point computations! 
+//! Constant folding an AST subtree rooted at 'r' (replacing its children with their constant values, if applicable). Please be advised that constant folding on floating point computation may decrease the accuracy of floating point computations!
 /*! It is a wrapper function for ConstantFolding::constantFoldingOptimization(). Note that only r's children are replaced with their corresponding constant values, not the input SgNode r itself. You have to call this upon an expression's parent node if you want to fold the expression. */
 void constantFolding(SgNode* r);
 
-//!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted. 
-/*! Useful when adding a runtime library call to terminate the runtime system right before the end of a program, especially for OpenMP and UPC runtime systems. Return with complex expressions with side effects are rewritten using an additional assignment statement. 
+//!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted.
+/*! Useful when adding a runtime library call to terminate the runtime system right before the end of a program, especially for OpenMP and UPC runtime systems. Return with complex expressions with side effects are rewritten using an additional assignment statement.
  */
 int instrumentEndOfFunction(SgFunctionDeclaration * func, SgStatement* s);
 
@@ -1318,17 +1318,21 @@ void removeLabeledGotos(SgNode* top);
 //! If the given statement contains any break statements in its body, add a new label below the statement and change the breaks into gotos to that new label.
 void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
 
-//! Check if the body of a 'for' statement is a SgBasicBlock, create one if not. 
+//! Check if the body of a 'for' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfFor(SgForStatement* fs);
-//! Check if the body of a 'while' statement is a SgBasicBlock, create one if not. 
+
+//! Check if the body of a 'for' statement is a SgBasicBlock, create one if not. (10nov17: PP for RTED/upc)
+SgBasicBlock* ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatement* fs);
+
+//! Check if the body of a 'while' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfWhile(SgWhileStmt* ws);
-//! Check if the body of a 'do .. while' statement is a SgBasicBlock, create one if not. 
+//! Check if the body of a 'do .. while' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfDoWhile(SgDoWhileStmt* ws);
-//! Check if the body of a 'switch' statement is a SgBasicBlock, create one if not. 
+//! Check if the body of a 'switch' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfSwitch(SgSwitchStatement* ws);
-//! Check if the true body of a 'if' statement is a SgBasicBlock, create one if not. 
+//! Check if the true body of a 'if' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
-//! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not. 
+//! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
 SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
 //! Check if the body of a SgOmpBodyStatement is a SgBasicBlock, create one if not
@@ -1367,7 +1371,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
 
 //----------------------------AST comparison------------------------------
 //------------------------------------------------------------------------
-// How to get generic functions for comparison? 
+// How to get generic functions for comparison?
   bool isNodeEqual(SgNode* node1, SgNode* node2); //?
   bool isTreeEqual(SgNode* tree1, SgNode* tree2);
 
@@ -1386,7 +1390,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
   // AstTests::runAllTests(SgProject * )
 
   //src/midend/astUtil/astInterface/AstInterface.h.C
-  //FixSgProject(SgProject &project) 
+  //FixSgProject(SgProject &project)
   //FixSgTree(SgNode* r)
 
   //src/frontend/SageIII/astPostProcessing
@@ -1405,7 +1409,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
   // void AstInterfaceBase::InsertStmt(AstNodePtr const & orig, AstNodePtr const &n, bool insertbefore, bool extractfromBasicBlock)
 
   // copy
-  // copy children of one basic block to another basic block 
+  // copy children of one basic block to another basic block
   //void appendStatementCopy (const SgBasicBlock* a, SgBasicBlock* b);
   void copyStatements (const SgBasicBlock* src, SgBasicBlock* dst);
 
@@ -1417,7 +1421,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
 
   //Move = delete + insert
   void moveAst (SgNode* src, SgNode* target); // need this?
-      // similar to  
+      // similar to
   void moveStatements (SgBasicBlock* src, SgBasicBlock* target);
 
   // replace= delete old + insert new (via building or copying)
@@ -1513,7 +1517,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
 
 //------------------------ loop handling ---------------------------------
 //------------------------------------------------------------------------
-  //get and set loop control expressions 
+  //get and set loop control expressions
   // 0: init expr, 1: condition expr, 2: stride expr
 
   SgExpression* getForLoopTripleValues(int valuetype,SgForStatement* forstmt );
@@ -1552,7 +1556,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
    *  Moves all preprocessing information attached 'before' the source
    *  statement to the front of the destination statement.
    */
-  // a generic one for all  
+  // a generic one for all
   /// void movePreprocessingInfo(src, dest, RelativePositionType);
   void moveBeforePreprocInfo (SgStatement* src, SgStatement* dest);
   void moveInsidePreprocInfo (SgBasicBlock* src, SgBasicBlock* dest);
@@ -1577,8 +1581,8 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
 
 //--------------------------------access functions---------------------------
 //----------------------------------get/set sth.-----------------------------
-// several categories: 
-* get/set a direct child/grandchild node or fields 
+// several categories:
+* get/set a direct child/grandchild node or fields
 * get/set a property flag value
 * get a descendent child node using preorder searching
 * get an ancestor node using bottomup/reverse searching
@@ -1603,7 +1607,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
   void setPrivate()
 
 
-#endif 
+#endif
 }// end of namespace
 
 #endif
