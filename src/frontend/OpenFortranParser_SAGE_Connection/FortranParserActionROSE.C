@@ -13179,7 +13179,7 @@ void c_action_file_unit_number()
 
      if (astExpressionStack.empty() == true)
         {
-          printf ("In c_action_file_unit_number(): Unclear what to do in this case! \n");
+          printf ("In c_action_file_unit_number(): Unclear what to do in this case (empty astExpressionStack)! \n");
           ROSE_ASSERT(false);
 
        // If there was nothing pushed to the stack, then push the SgAsteriskShapeExp ???
@@ -13199,20 +13199,20 @@ void c_action_file_unit_number()
           printf ("expressionOnStack = %p = %s \n",expressionOnStack,expressionOnStack->class_name().c_str());
           switch(expressionOnStack->variantT())
              {
-#if 0
             // Handle case of format label (integer): print 1, N
                case V_SgIntVal:
 
+#if 0
             // Handle case of format string: print "(a, i8)", "a = ", N (see test2010_123.f90).
                case V_SgStringVal:
 
             // Handle case of format string (formed from string concatination): print "(a, "||" i8)", "a = ", N (see test2010_124.f90).
                case V_SgConcatenationOp:
+#endif
                   {
                     push_token("unit");
                     break;
                   }
-#endif
             // Handle case of format string (passed as a variable):  CHARACTER(len=*) :: fmtstr;  PRINT fmtstr, str (see test2010_125.f90).
                case V_SgVarRefExp:
                   {
@@ -13236,7 +13236,7 @@ void c_action_file_unit_number()
                  // Add not "fmt" token.
                     printf ("Non integer scalars can NOT be used in format statements so ignore this (no fmt pushed onto astNameStack). \n");
 
-                    printf ("In c_action_file_unit_number(): Unclear what to do in this case! \n");
+                    printf ("In c_action_file_unit_number(): Unclear what to do in this case (default)! \n");
                     ROSE_ASSERT(false);
                   }
              }
@@ -16315,6 +16315,10 @@ void c_action_program_stmt(Token_t *label, Token_t *programKeyword, Token_t *id,
   // Set the program name
   // functionDeclaration->set_name(id->get_lexeme_string());
      programDeclaration->set_name(id->text);
+
+  // DQ (12/5/2010): This is related to a new test in the AST consistancy tests.
+     ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() != programDeclaration);
+     ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() == NULL);
 
 #if 0
   // Set the label if it is defined

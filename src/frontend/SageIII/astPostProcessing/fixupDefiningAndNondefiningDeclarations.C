@@ -536,6 +536,12 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
        // so a declaration may be either a defining or non-defining declaration.
           case V_SgTemplateDeclaration:
           case V_SgFunctionDeclaration:
+
+       // DQ (12/5/2010): Added Fortran specific function like IR nodes.
+          case V_SgEntryStatement:
+          case V_SgProcedureHeaderStatement:
+          case V_SgProgramHeaderStatement:
+
           case V_SgClassDeclaration:
           case V_SgTypedefDeclaration:
           case V_SgMemberFunctionDeclaration:
