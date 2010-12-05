@@ -166,6 +166,20 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_64.f90 \
      test2010_111.f90 \
      test2010_112.f90 \
+     test2010_113.f90 \
+     test2010_114.f90 \
+     test2010_115.f90 \
+     test2010_118.f90 \
+     test2010_119.f90 \
+     test2010_120.f90 \
+     test2010_121.f90 \
+     test2010_122.f90 \
+     test2010_123.f90 \
+     test2010_124.f90 \
+     test2010_125.f90 \
+     test2010_127.f90 \
+     test2010_128.f90 \
+     test2010_129.f90 \
      canonicalExample.f90
 
 
@@ -382,6 +396,8 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_108.f90 \
      test2010_109.f90 \
      test2010_110.f90 \
+     test2010_116.f90 \
+     test2010_117.f90 \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
@@ -439,7 +455,8 @@ F03_TESTCODES_CURRENTLY_FAILING = \
      test2010_76.f03 \
      test2010_77.f03 \
      test2010_104.f03 \
-     test2010_106.f03
+     test2010_106.f03 \
+     test2010_126.f03
 
 F08_TESTCODES_CURRENTLY_FAILING = \
      test2010_98.f08
