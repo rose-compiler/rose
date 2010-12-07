@@ -128,6 +128,7 @@ public:
 	typedef boost::shared_ptr<CFGEdgeT> CFGEdgePtr;
 
 	typedef typename boost::graph_traits<CFG<CFGNodeT, CFGEdgeT> > GraphTraits;
+	
 	typedef typename GraphTraits::vertex_descriptor Vertex;
 	typedef typename GraphTraits::edge_descriptor Edge;
 

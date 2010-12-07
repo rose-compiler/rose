@@ -177,15 +177,15 @@ void PDG<CFGType>::writeGraphEdge(std::ostream& out, const Edge& edge) const
 	if (pdgEdge.type == PDGEdge::ControlDependence)
 	{
 		//str = pdgEdge.key ? "T" : "F";
-		style = "solid";
+		CDG<CFGType>::writeGraphEdge(out, pdgEdge.cdEdge);
 	}
 	else
 	{
 		foreach (const DDGEdge::VarName& varName, (*this)[edge].ddEdge.varNames)
 			str += VariableRenaming::keyToString(varName) + " ";
 		style = "dotted";
+		out << "[label=\"" << str << "\", style=\"" << style << "\"]";
 	}
-	out << "[label=\"" << str << "\", style=\"" << style << "\"]";
 }
 
 

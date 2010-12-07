@@ -17,6 +17,72 @@ using namespace std;
 using namespace boost;
 
 
+int main(int argc, char *argv[])
+{
+  // Build the AST used by ROSE
+  SgProject* project = frontend(argc,argv);
+  SgSourceFile* sourceFile = isSgSourceFile((*project)[0]);
+
+  // Process all function definition bodies for static control flow graph generation
+  Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
+  for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i)
+  {
+    SgFunctionDefinition* proc = isSgFunctionDefinition(*i);
+    ROSE_ASSERT (proc != NULL);
+
+	if (!proc->get_file_info()->isSameFile(sourceFile))
+		continue;
+
+	//Backstroke::FullCFG cfg(proc);
+	typedef Backstroke::CFGForSlicing CFG;
+	//typedef Backstroke::CFGForSSA CFG;
+	CFG cfg(proc);
+	cfg.toDot("CFG.dot");
+	cout << num_vertices(cfg) << endl;
+	//Backstroke::FilteredCFG rvsCfg = cfg;//.makeReverseCopy();
+	//rvsCfg.toDot("CFG.dot");
+	//buildDominatorTree(rvsCfg);
+
+#if 1
+	Backstroke::CDG<CFG> cdg(cfg);
+	cdg.toDot("CDG.dot");
+
+	Backstroke::DDG<CFG> ddg(cfg);
+	ddg.toDot("DDG.dot");
+
+	Backstroke::PDG<CFG> pdg(cfg);
+	pdg.toDot("PDG.dot");
+
+	boost::timer t;
+	Backstroke::Slicer slicer(proc);
+
+	std::vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(
+			proc->get_body()->get_statements().back());
+	slicer.addCriterion(vars[0]);
+
+
+	SgFunctionDeclaration* decl = slicer.slice();
+	SageInterface::insertStatementAfter(proc->get_declaration(), decl);
+	std::cout << t.elapsed() << std::endl;
+#endif
+
+	//varRenaming.toFilteredDOT("VariableRenaming.dot");
+
+	//Backstroke::FilteredCFG rvsCfg = cfg.makeReverseCopy();
+	//rvsCfg.toDot("temp.dot");
+
+	//cout << "CFG is built." << endl;
+
+    //buildDominatorTree(rvsCfg);
+
+	break;
+  }
+
+  return backend(project);
+}
+
+#if 0
+
 #define foreach BOOST_FOREACH
 
 #define BACKSTROKE_DEBUG
@@ -243,66 +309,4 @@ buildDominanceFrontiers(const std::map<VertexT, VertexT>& iDom, const CFGType& c
 	return domFrontiers;
 }
 
-int main(int argc, char *argv[])
-{
-  // Build the AST used by ROSE
-  SgProject* project = frontend(argc,argv);
-  SgSourceFile* sourceFile = isSgSourceFile((*project)[0]);
-
-  // Process all function definition bodies for static control flow graph generation
-  Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
-  for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i)
-  {
-    SgFunctionDefinition* proc = isSgFunctionDefinition(*i);
-    ROSE_ASSERT (proc != NULL);
-
-	if (!proc->get_file_info()->isSameFile(sourceFile))
-		continue;
-
-	//Backstroke::FullCFG cfg(proc);
-	typedef Backstroke::CFGForSlicing CFG;
-	//typedef Backstroke::CFGForSSA CFG;
-	CFG cfg(proc);
-	cfg.toDot("CFG.dot");
-	cout << num_vertices(cfg) << endl;
-	//Backstroke::FilteredCFG rvsCfg = cfg;//.makeReverseCopy();
-	//rvsCfg.toDot("CFG.dot");
-	//buildDominatorTree(rvsCfg);
-
-#if 1
-	Backstroke::CDG<CFG> cdg(cfg);
-	cdg.toDot("CDG.dot");
-
-	Backstroke::DDG<CFG> ddg(cfg);
-	ddg.toDot("DDG.dot");
-
-	Backstroke::PDG<CFG> pdg(cfg);
-	pdg.toDot("PDG.dot");
-
-	boost::timer t;
-	Backstroke::Slicer slicer(proc);
-
-	std::vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(
-			proc->get_body()->get_statements().back());
-	slicer.addCriterion(vars[0]);
-
-
-	SgFunctionDeclaration* decl = slicer.slice();
-	SageInterface::insertStatementAfter(proc->get_declaration(), decl);
-	std::cout << t.elapsed() << std::endl;
 #endif
-
-	//varRenaming.toFilteredDOT("VariableRenaming.dot");
-
-	//Backstroke::FilteredCFG rvsCfg = cfg.makeReverseCopy();
-	//rvsCfg.toDot("temp.dot");
-
-	//cout << "CFG is built." << endl;
-
-    //buildDominatorTree(rvsCfg);
-
-	break;
-  }
-
-  return backend(project);
-}
