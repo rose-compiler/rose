@@ -580,7 +580,6 @@ struct msqid64_ds_32 {
     uint32_t unused5;
 };
 
-
 static int
 print_msqid64_ds_32(FILE *f, const uint8_t *_v, size_t sz)
 {
@@ -599,6 +598,20 @@ print_msqid64_ds_32(FILE *f, const uint8_t *_v, size_t sz)
                       v->msg_cbytes, v->msg_qnum, v->msg_qbytes,
                       v->msg_lspid, v->msg_lrpid);
     return retval;
+}
+
+/* See <linux/ipc.h>; used by old version of msgrcv variety of syscall 117, ipc() */
+struct ipc_kludge_32 {
+    uint32_t msgp;
+    uint32_t msgtyp;
+} __attribute__((packed));
+
+static int
+print_ipc_kludge_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(ipc_kludge_32)==sz);
+    const ipc_kludge_32 *v = (const ipc_kludge_32*)_v;
+    return fprintf(f, "msgp=0x%08"PRIx32", msgtype=%"PRId32, v->msgp, v->msgtyp);
 }
 
 
@@ -1994,7 +2007,7 @@ EmulationPolicy::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, ui
     int result = msgrcv(msqid, buf, msgsz, msgtyp, msgflg);
     if (-1==result) {
         delete[] buf;
-        writeGPR(x86_gpr_ax, -EINVAL);
+        writeGPR(x86_gpr_ax, -errno);
         return;
     }
 
@@ -3324,12 +3337,12 @@ EmulationPolicy::emulate_syscall()
                     break;
                 case 12: /* MSGRCV */
                     if (0==version) {
-                        syscall_enter("ipc", "fddfp", ipc_commands, ipc_flags);
-                        uint32_t kludge[2];
+                        syscall_enter("ipc", "fddfP", ipc_commands, ipc_flags, sizeof(ipc_kludge_32), print_ipc_kludge_32);
+                        ipc_kludge_32 kludge;
                         if (8!=map->read(&kludge, arg(4), 8)) {
                             writeGPR(x86_gpr_ax, -ENOSYS);
                         } else {
-                            sys_msgrcv(first, kludge[0], second, kludge[1], third);
+                            sys_msgrcv(first, kludge.msgp, second, kludge.msgtyp, third);
                         }
                     } else {
                         syscall_enter("ipc", "fddfpd", ipc_commands, ipc_flags);
