@@ -75,6 +75,7 @@ syscall_tst.117.msgget.03 no
 syscall_tst.117.msgrcv.03 no
 syscall_tst.117.msgrcv.04 no
 syscall_tst.117.msgsnd.01 no
+syscall_tst.117.msgsnd.03 no
 syscall_tst.117.msgsnd.04 no
 syscall_tst.117.semget.03 no
 syscall_tst.122 no

@@ -178,7 +178,7 @@ print_single(FILE *f, char fmt, const ArgInfo *info)
             retval += fprintf(f, "<unused>");
             break;
         case 'b':
-            retval += print_buffer(f, info->val, info->struct_buf, info->struct_size, info->struct_nread);
+            retval += print_buffer(f, info->val, info->struct_buf, info->struct_nread, info->struct_size);
             break;
         case 'd':
             retval += print_signed(f, info->val);

@@ -620,6 +620,10 @@ print_ipc_kludge_32(FILE *f, const uint8_t *_v, size_t sz)
 
 
 
+
+
+
+
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
  * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
@@ -1966,24 +1970,33 @@ EmulationPolicy::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, ui
         return;
     }
 
+    /* Read the message buffer from the specimen. */
     uint8_t *buf = new uint8_t[msgsz+8]; /* msgsz does not include "long mtype", only "char mtext[]" */
     if (!buf) {
         writeGPR(x86_gpr_ax, -ENOMEM);
         return;
     }
-
     if (4+msgsz!=map->read(buf, msgp_va, 4+msgsz)) {
         delete[] buf;
         writeGPR(x86_gpr_ax, -EFAULT);
         return;
     }
 
+    /* Message type must be positive */
+    if (*(int32_t*)buf <= 0) {
+        delete[] buf;
+        writeGPR(x86_gpr_ax, -EINVAL);
+        return;
+    }
+
+    /* Convert message type from four to eight bytes if necessary */
     if (4!=sizeof(long)) {
         ROSE_ASSERT(8==sizeof(long));
         memmove(buf+8, buf+4, msgsz);
         memset(buf+4, 0, 4);
     }
 
+    /* Try to send the message */
     int result = msgsnd(msqid, buf, msgsz, msgflg);
     if (-1==result) {
         delete[] buf;
@@ -3331,7 +3344,7 @@ EmulationPolicy::emulate_syscall()
                     syscall_leave("d");
                     break;
                 case 11: /* MSGSND */
-                    syscall_enter("ipc", "fddfp", ipc_commands, ipc_flags);
+                    syscall_enter("ipc", "fddfb", ipc_commands, ipc_flags, (size_t)(4+arg(2)));
                     sys_msgsnd(first, ptr, second, third);
                     syscall_leave("d");
                     break;
@@ -4594,10 +4607,10 @@ EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_li
             break;
         }
         case 'b': {     /* buffer */
-            info->struct_size = va_arg(*ap, size_t);
-            info->struct_buf = new uint8_t[info->struct_size];
-            info->struct_nread = map->read(info->struct_buf, info->val, info->struct_size);
-            info->struct_nread = std::min(info->struct_nread, (size_t)64);
+            size_t advertised_size = va_arg(*ap, size_t);
+            info->struct_buf = new uint8_t[advertised_size];
+            info->struct_nread = map->read(info->struct_buf, info->val, advertised_size);
+            info->struct_size = 64; /* max print width, measured in columns of output */
             break;
         }
         case 'P': {     /*ptr to a struct*/
