@@ -520,6 +520,7 @@ static const Translate ipc_commands[] = {
 
 static const Translate ipc_flags[] = {
     TF(IPC_CREAT), TF(IPC_EXCL), TF(IPC_NOWAIT), TF(IPC_PRIVATE), TF(IPC_RMID), TF(IPC_SET), TF(IPC_STAT),
+    TF(MSG_EXCEPT), TF(MSG_NOERROR),
     TF_FMT(0777, "0%03o"),
     T_END
 };
@@ -1947,13 +1948,71 @@ EmulationPolicy::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
 void
 EmulationPolicy::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgflg)
 {
-    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+    if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
+        writeGPR(x86_gpr_ax, -EINVAL);
+        return;
+    }
+
+    uint8_t *buf = new uint8_t[msgsz+8]; /* msgsz does not include "long mtype", only "char mtext[]" */
+    if (!buf) {
+        writeGPR(x86_gpr_ax, -ENOMEM);
+        return;
+    }
+
+    if (4+msgsz!=map->read(buf, msgp_va, 4+msgsz)) {
+        delete[] buf;
+        writeGPR(x86_gpr_ax, -EFAULT);
+        return;
+    }
+
+    if (4!=sizeof(long)) {
+        ROSE_ASSERT(8==sizeof(long));
+        memmove(buf+8, buf+4, msgsz);
+        memset(buf+4, 0, 4);
+    }
+
+    int result = msgsnd(msqid, buf, msgsz, msgflg);
+    if (-1==result) {
+        delete[] buf;
+        writeGPR(x86_gpr_ax, -errno);
+        return;
+    }
+
+    delete[] buf;
+    writeGPR(x86_gpr_ax, result);
 }
 
 void
 EmulationPolicy::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgtyp, uint32_t msgflg)
 {
-    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+    if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
+        writeGPR(x86_gpr_ax, -EINVAL);
+        return;
+    }
+
+    uint8_t *buf = new uint8_t[msgsz+8]; /* msgsz does not include "long mtype", only "char mtext[]" */
+    int result = msgrcv(msqid, buf, msgsz, msgtyp, msgflg);
+    if (-1==result) {
+        delete[] buf;
+        writeGPR(x86_gpr_ax, -EINVAL);
+        return;
+    }
+
+    if (4!=sizeof(long)) {
+        ROSE_ASSERT(8==sizeof(long));
+        uint64_t type = *(uint64_t*)buf;
+        ROSE_ASSERT(0 == (type >> 32));
+        memmove(buf+4, buf+8, msgsz);
+    }
+
+    if (4+msgsz!=map->write(buf, msgp_va, 4+msgsz)) {
+        delete[] buf;
+        writeGPR(x86_gpr_ax, -EFAULT);
+        return;
+    }
+
+    delete[] buf;
+    writeGPR(x86_gpr_ax, result);
 }
 
 void
@@ -3265,14 +3324,18 @@ EmulationPolicy::emulate_syscall()
                     break;
                 case 12: /* MSGRCV */
                     if (0==version) {
-                        syscall_enter("ipc", "fdddpd", ipc_commands);
-                        writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
-                        syscall_leave("d");
+                        syscall_enter("ipc", "fddfp", ipc_commands, ipc_flags);
+                        uint32_t kludge[2];
+                        if (8!=map->read(&kludge, arg(4), 8)) {
+                            writeGPR(x86_gpr_ax, -ENOSYS);
+                        } else {
+                            sys_msgrcv(first, kludge[0], second, kludge[1], third);
+                        }
                     } else {
                         syscall_enter("ipc", "fddfpd", ipc_commands, ipc_flags);
                         sys_msgrcv(first, ptr, second, fifth, third);
-                        syscall_leave("d");
                     }
+                    syscall_leave("d");
                     break;
                 case 13: /* MSGGET */ {
                     syscall_enter("ipc", "fpf", ipc_commands, ipc_flags); /* arg-1 "p" for consistency with strace */
