@@ -615,6 +615,7 @@ set( libsageInterface_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/sageInterface_type.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/generateUniqueName.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/sageBuilder.C 
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/sageBuilder_fortran.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/sageBuilderAsm.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/abiStuff.C
    )
