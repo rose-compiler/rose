@@ -16,7 +16,8 @@ int main(int argc, char *argv[])
 	if (!funcDef->get_file_info()->isSameFile(sourceFile))
 		continue;
 
-	valueGraph vg(funcDef);
+	Backstroke::ValueGraph vg;
+	vg.build(funcDef);
 	vg.toDot("VG.dot");
 
 	break;

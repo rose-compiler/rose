@@ -11,6 +11,7 @@ noinst_PROGRAMS = valueGraph
 
 valueGraph_SOURCES = valueGraph.C test.C
 valueGraph_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
+		$(top_builddir)/projects/backstroke/ssa/libSSA.a \
 		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 valueGraph_include_HEADERS = valueGraph.h
 valueGraph_includedir = $(includedir)/backstroke
