@@ -2171,12 +2171,12 @@ EmulationPolicy::emulate_syscall()
             } else {
                 writeGPR(x86_gpr_ax, nread);
             }
-            syscall_leave("d");
+            syscall_leave("d-b", nread>0?nread:0);
             break;
         }
 
         case 4: { /*write*/
-            syscall_enter("write", "dpd");
+            syscall_enter("write", "dbd", arg(2));
             int fd=arg(0);
             uint32_t buf_va=arg(1);
             size_t size=arg(2);
@@ -4580,7 +4580,14 @@ EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_li
             info->str_trunc = (info->str.size() >= 4096);
             break;
         }
-        case 'P': {       /*ptr to a struct*/
+        case 'b': {     /* buffer */
+            info->struct_size = va_arg(*ap, size_t);
+            info->struct_buf = new uint8_t[info->struct_size];
+            info->struct_nread = map->read(info->struct_buf, info->val, info->struct_size);
+            info->struct_nread = std::min(info->struct_nread, (size_t)64);
+            break;
+        }
+        case 'P': {     /*ptr to a struct*/
             info->struct_size = va_arg(*ap, size_t);
             info->struct_printer = va_arg(*ap, ArgInfo::StructPrinter);
             info->struct_buf = new uint8_t[info->struct_size];

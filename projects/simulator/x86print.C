@@ -130,6 +130,35 @@ print_string(FILE *f, const std::string &value, bool str_fault, bool str_trunc)
 }
 
 int
+print_buffer(FILE *f, uint32_t va, const uint8_t *buf, size_t actual_sz, size_t print_sz)
+{
+    int retval = fprintf(f, "0x%08"PRIx32" [", va);
+    for (size_t i=0; i<actual_sz && (size_t)retval<print_sz; i++) {
+        switch (buf[i]) {
+            case '"': retval += fprintf(f, "\\\""); break;
+            case '\a': retval += fprintf(f, "\\a"); break;
+            case '\b': retval += fprintf(f, "\\b"); break;
+            case '\f': retval += fprintf(f, "\\f"); break;
+            case '\n': retval += fprintf(f, "\\n"); break;
+            case '\r': retval += fprintf(f, "\\r"); break;
+            case '\t': retval += fprintf(f, "\\t"); break;
+            case '\v': retval += fprintf(f, "\\v"); break;
+            default:
+                if (isprint(buf[i])) {
+                    retval += fprintf(f, "%c", buf[i]);
+                } else {
+                    retval += fprintf(f, "\\%03o", (unsigned)buf[i]);
+                }
+                break;
+        }
+    }
+    retval += fprintf(f, "]");
+    if (print_sz<actual_sz)
+        retval += fprintf(f, "...");
+    return retval;
+}
+
+int
 print_time(FILE *f, uint32_t value)
 {
     time_t ts = value;
@@ -147,6 +176,9 @@ print_single(FILE *f, char fmt, const ArgInfo *info)
     switch (fmt) {
         case '-':
             retval += fprintf(f, "<unused>");
+            break;
+        case 'b':
+            retval += print_buffer(f, info->val, info->struct_buf, info->struct_size, info->struct_nread);
             break;
         case 'd':
             retval += print_signed(f, info->val);

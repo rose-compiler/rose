@@ -57,6 +57,7 @@ int print_signed(FILE*, uint32_t value);
 int print_pointer(FILE*, uint32_t value);
 int print_hex(FILE*, uint32_t value);
 int print_string(FILE*, const std::string &value, bool str_fault=false, bool str_trunc=false);
+int print_buffer(FILE*, uint32_t addr, const uint8_t *buffer, size_t sz, size_t print_sz);
 int print_time(FILE*, uint32_t value);
 int print_single(FILE*, char fmt, const ArgInfo *info);
 int print_struct(FILE *f, uint32_t value, ArgInfo::StructPrinter printer, const uint8_t *buf, size_t need, size_t have);
