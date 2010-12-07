@@ -67,6 +67,7 @@ syscall_tst.116.1 no
 syscall_tst.116.2 yes
 syscall_tst.117 no
 syscall_tst.122 no
+syscall_tst.125.1 no
 syscall_tst.13.1 no
 syscall_tst.13.2 no
 syscall_tst.133 yes
@@ -79,7 +80,17 @@ syscall_tst.141.4 yes
 syscall_tst.142.1 yes
 syscall_tst.142.2 yes
 syscall_tst.142.3 yes
+syscall_tst.146.1 no
+syscall_tst.146.2 no
+syscall_tst.146.3 no
+syscall_tst.146.4 no
+syscall_tst.146.5 no
 syscall_tst.146.6 no
+syscall_tst.174.1 no
+syscall_tst.174.2 no
+syscall_tst.174.3 no
+syscall_tst.175 no
+syscall_tst.186.1 no
 syscall_tst.186.2 no
 syscall_tst.192.1 no
 syscall_tst.192.10 no
@@ -92,6 +103,7 @@ syscall_tst.192.7 yes
 syscall_tst.192.8 yes
 syscall_tst.192.9 no
 syscall_tst.195.5 yes
+syscall_tst.195.6 no
 syscall_tst.196.1 yes
 syscall_tst.197.1 no
 syscall_tst.197.2 no
@@ -109,9 +121,13 @@ syscall_tst.221.01 yes
 syscall_tst.221.02 yes
 syscall_tst.221.03 no
 syscall_tst.221.04 no
+syscall_tst.221.05 no
 syscall_tst.221.06 no
 syscall_tst.221.08 no
+syscall_tst.221.09 no
+syscall_tst.221.10 no
 syscall_tst.221.11 yes
+syscall_tst.221.13 no
 syscall_tst.221.14 yes
 syscall_tst.221.16 yes
 syscall_tst.221.17 yes
@@ -139,6 +155,7 @@ syscall_tst.33.2 yes
 syscall_tst.4.1 no
 syscall_tst.4.2 no
 syscall_tst.4.3 no
+syscall_tst.4.4 no
 syscall_tst.54 yes
 syscall_tst.57.1 no
 syscall_tst.57.2 no
@@ -149,6 +166,8 @@ syscall_tst.60.3 yes
 syscall_tst.64.1 no
 syscall_tst.76.1 yes
 syscall_tst.76.2 yes
+syscall_tst.78.1 no
+syscall_tst.78.2 no
 syscall_tst.83.1 yes
 syscall_tst.83.2 no
 syscall_tst.83.4 yes

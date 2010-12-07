@@ -1480,8 +1480,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_F2003_only(true);
           set_Fortran_only(true);
 
+       // DQ (12/2/2010): I agree with setting this to true.
        // It is requested (by Laksono at Rice) that CoArray Fortran defaults be to skip the syntax checking
-	// Laksono 2009.01.27: I think we should put the boolean to 'true' instead of 'false'
+       // Laksono 2009.01.27: I think we should put the boolean to 'true' instead of 'false'
           set_skip_syntax_check(true);
 
           if (get_sourceFileUsesCoArrayFortranFileExtension() == false)
