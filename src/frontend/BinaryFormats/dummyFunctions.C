@@ -366,14 +366,21 @@ std::set<rose_addr_t> SgAsmArmInstruction::get_successors(bool*) { return std::s
 rose_addr_t SgAsmElfStrtab::get_storage_size(SgAsmStringStorage const*) { return 0;}
 void SgAsmElfStrtab::allocate_overlap(SgAsmStringStorage*) {}
 bool SgAsmElfSegmentTable::reallocate() { return false; }
-rose_addr_t SgAsmElfSymverDefinedSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
-rose_addr_t SgAsmElfSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+
+// rose_addr_t SgAsmElfSymverDefinedSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+// rose_addr_t SgAsmElfSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+rose_addr_t SgAsmElfSymverDefinedSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return NULL;}
+rose_addr_t SgAsmElfSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return NULL;}
+
 bool SgAsmPEFileHeader::reallocate() { return false; }
 SgAsmStringStorage* SgAsmElfStrtab::create_storage(rose_addr_t, bool) { return NULL;}
 void SgAsmElfDynamicSection::finish_parsing() {}
 std::set<rose_addr_t> SgAsmx86Instruction::get_successors(bool*) { return std::set<rose_addr_t>();}
 SgAsmNERelocEntry::osfixup_type::osfixup_type() {}
-rose_addr_t SgAsmElfRelocSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+
+// rose_addr_t SgAsmElfRelocSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+rose_addr_t SgAsmElfRelocSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return NULL;}
+
 std::string SgAsmStoredString::get_string() const { return ""; }
 rose_addr_t SgAsmStoredString::get_offset() const { return NULL;}
 bool SgAsmPESectionTable::reallocate() { return false; }
@@ -382,12 +389,21 @@ std::set<rose_addr_t> SgAsmx86Instruction::get_successors(std::vector<SgAsmInstr
 bool SgAsmPEStringSection::reallocate() { return false; }
 SgAsmStringStorage* SgAsmCoffStrtab::create_storage(rose_addr_t, bool) { return NULL;}
 SgAsmNERelocEntry::iname_type::iname_type() {}
-rose_addr_t SgAsmElfSymbolSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+
+// rose_addr_t SgAsmElfSymbolSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+rose_addr_t SgAsmElfSymbolSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return NULL;}
+
 rose_addr_t SgAsmCoffStrtab::get_storage_size(SgAsmStringStorage const*) { return 0;}
 bool SgAsmElfDynamicSection::reallocate() { return false; }
-rose_addr_t SgAsmElfEHFrameSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+
+// rose_addr_t SgAsmElfEHFrameSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+rose_addr_t SgAsmElfEHFrameSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return NULL;}
+
 const char* SgAsmLEFileHeader::format_name() const { return NULL;}
-rose_addr_t SgAsmElfDynamicSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+
+// rose_addr_t SgAsmElfDynamicSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+rose_addr_t SgAsmElfDynamicSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return NULL;}
+
 void SgAsmBasicString::set_string(rose_addr_t) {}
 void SgAsmElfStringSection::set_size(rose_addr_t) {}
 SgAsmNERelocEntry::iord_type::iord_type() {}
@@ -411,9 +427,15 @@ void SgAsmGenericString::set_string(std::basic_string<char, std::char_traits<cha
 void SgAsmStoredString::set_string(rose_addr_t) {}
 bool SgAsmGenericHeader::reallocate() { return false; }
 bool SgAsmElfSectionTable::reallocate() { return false; }
-rose_addr_t SgAsmElfSymverNeededSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+
+// rose_addr_t SgAsmElfSymverNeededSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+rose_addr_t SgAsmElfSymverNeededSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return NULL;}
+
 bool SgAsmx86Instruction::is_function_return(std::vector<SgAsmInstruction*, std::allocator<SgAsmInstruction*> > const&) { return false; }
 bool SgAsmElfSymbolSection::reallocate() { return false; }
-rose_addr_t SgAsmElfSymverSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+
+// rose_addr_t SgAsmElfSymverSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
+rose_addr_t SgAsmElfSymverSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return NULL;}
+
 void SgAsmGenericSection::set_size(rose_addr_t) {}
 
