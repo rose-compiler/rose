@@ -6,13 +6,13 @@
 ! Renaming either one of the variable hides the symptom.
 
 module scopeBug2
- 
-   real  ::  zw = 0.001
-   
+
+   real  ::  zw = sqrt(0.001)
+
 contains
 
 subroutine calc_tpoints()
-  integer,parameter :: zw = 5
+   integer,parameter :: zw = 5
 end subroutine calc_tpoints
 
  end module
