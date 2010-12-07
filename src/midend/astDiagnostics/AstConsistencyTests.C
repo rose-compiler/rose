@@ -2257,6 +2257,8 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                          case V_SgMemberFunctionDeclaration:
                          case V_SgTemplateInstantiationFunctionDecl:
                          case V_SgTemplateInstantiationMemberFunctionDecl:
+                         case V_SgProcedureHeaderStatement: 
+                         case V_SgProgramHeaderStatement: 
                             {
                            // This is the reasonable case, where a function or template or typedef is 
                            // declared once (and only once and contains its definition).  Verify that 

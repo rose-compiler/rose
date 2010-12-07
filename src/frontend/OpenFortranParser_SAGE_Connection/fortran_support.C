@@ -3612,7 +3612,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
      SgAttributeSpecificationStatement *attributeSpecificationStatement = new SgAttributeSpecificationStatement();
 
-  // DQ (10/6/2008): It seems that we all of a sudden need thes to be set!
+  // DQ (10/6/2008): It seems that we all of a sudden need this to be set!
      attributeSpecificationStatement->set_definingDeclaration(attributeSpecificationStatement);
      attributeSpecificationStatement->set_firstNondefiningDeclaration(attributeSpecificationStatement);
 
