@@ -345,7 +345,6 @@ void BinaryLoaderElf::SymverResolver::ctor(SgAsmGenericHeader* header)
 
 
 
-
 // These are not required, except that they are defined as virtual functions and so
 // we need to have definitions available so that the class can be used (even though
 // these functions are not called.
