@@ -277,6 +277,20 @@ void c_action_specification_stmt()
  */
 void c_action_executable_construct()
    {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_executable_construct(): astExpressionStack = %zu astNodeStack = %zu \n",astExpressionStack.size(),astNodeStack.size());
+
+  // DQ (12/4/2010): Not sure if we can do this
+     if (astExpressionStack.empty() == false)
+        {
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("Should we be clearing the astExpressionStack of IR nodes that were pushed so that a possible where statement could use them \n");
+
+          printf ("Error: There appear to be unused expressions on the expression stack \n");
+          ROSE_ASSERT(false);
+
+       // astExpressionStack.clear();
+        }
    }
 
 /**
@@ -694,7 +708,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                   }
              }
 #if 0
-          printf ("intrinsicType = %p = %s \n",intrinsicType,intrinsicType->class_name().c_str());
+          printf ("In c_action_intrinsic_type_spec(): intrinsicType = %p = %s \n",intrinsicType,intrinsicType->class_name().c_str());
 #endif
        // Base on the base type, we want to inteprete the type parameters, kind parameters, etc. 
        // and generate the correct mapping to the type IR node in the ROSE and use that in the AST.
@@ -702,7 +716,9 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
              {
                case V_SgTypeChar:
                   {
+                 // DQ (12/3/2010): Commented out due to test2010_119.f90
                     ROSE_ASSERT(rank == 1);
+
                     ROSE_ASSERT(lengthExpression != NULL);
                  // printf ("In c_action_intrinsic_type_spec(): lengthExpression = %s \n",lengthExpression->class_name().c_str());
 
@@ -817,7 +833,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
           ROSE_ASSERT(astTypeParameterStack.empty() == true);
           ROSE_ASSERT(astExpressionStack.empty() == true);
 
-#if 0
+#if 1
        // Output debugging information about saved state (stack) information.
           outputState("hasKindSelector == true (BOTTOM) in R403 c_action_intrinsic_type_spec()");
 #endif
@@ -832,7 +848,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R403 c_action_intrinsic_type_spec()");
 #endif
@@ -1474,7 +1490,10 @@ void c_action_char_length(ofp_bool hasTypeParamValue)
        // Output debugging information about saved state (stack) information.
           outputState("Before convertTypeOnStackToArrayType() in R426 c_action_char_length()");
 #endif
-       // A string is a rank one array of CHARACTER
+
+#if 0
+       // OLD CODE from when strings were arrays of characters and most children were above average...
+       // A string is a rank one array of CHARACTER (WRONG, WRONG, WRONG!!!)
           int rank = 1;
           SgArrayType* arrayType = convertTypeOnStackToArrayType(rank);
 
@@ -1485,6 +1504,28 @@ void c_action_char_length(ofp_bool hasTypeParamValue)
        // DQ (12/8/2007): Put this onto the astTypeStack, since variables types are taken first from this stack.
        // push the array type
           astTypeStack.push_front(arrayType);
+#else
+       // DQ (12/5/2010): New code for handling "character name*30" as a string.
+       // This action is part of handling: "character name*30" which is a specification of a string and NOT an array of characters.
+
+       // This type transformation of length to string only applies to characters.
+          ROSE_ASSERT(astBaseTypeStack.empty() == false);
+          ROSE_ASSERT(isSgTypeChar(astBaseTypeStack.front()) != NULL);
+
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* stringLength = astExpressionStack.front();
+          astExpressionStack.pop_front();
+
+       // printf ("stringLength = %p = %s \n",stringLength,stringLength->class_name().c_str());
+
+       // Note: Must call the SgTypeString::createType() to support the global type tables.
+       // SgTypeString* stringType = new SgTypeString(stringLength);
+          SgTypeString* stringType = SgTypeString::createType(stringLength);
+       // stringLength->set_parent(stringType);
+
+       // Leave the correct type on the astTypeStack
+          astTypeStack.push_front(stringType);
+#endif
         }
 
   // Output debugging information about saved state (stack) information.
@@ -3764,9 +3805,9 @@ void c_action_entity_decl(Token_t * id)
 #endif
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
-     outputState("At TOP of R504 c_action_entity_decl()");
+     outputState("At TOP of R504 R503-F2008 c_action_entity_decl()");
 #endif
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
@@ -3789,7 +3830,7 @@ void c_action_entity_decl(Token_t * id)
        // printf ("astTypeStack is empty, so get the base type from the astBaseTypeStack \n");
           astTypeStack.push_front(astBaseTypeStack.front());
         }
-     
+
      ROSE_ASSERT(astTypeStack.empty() == false);
 
      SgType* type = astTypeStack.front();
@@ -6267,6 +6308,15 @@ void c_action_implicit_stmt(Token_t * label, Token_t * implicitKeyword, Token_t 
      getTopOfScopeStack()->append_statement(implicitStatement);
 #endif
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("Before clearing stack for unimplemented implicit statement in R549 c_action_implicit_stmt()");
+#endif
+
+#if 1
+  // DQ (12/2/2010): Now that we have cleaned up the stack we can proceed (but check the stack).
+     ROSE_ASSERT (astBaseTypeStack.empty() == true);
+#else
   // Since we have not finished the implementation of the implicit statement (for cases other than 
   // "implicit none") drain the stack to avoid leaving trach on the stack.
      if (astBaseTypeStack.empty() == false)
@@ -6278,10 +6328,38 @@ void c_action_implicit_stmt(Token_t * label, Token_t * implicitKeyword, Token_t 
                astBaseTypeStack.pop_front();
              }
         }
+#endif
 
-#if 0
+     if (astNodeStack.empty() == false)
+        {
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("WARNING: unfinished implicit statement (for not implicit none case) base types being cleared from stack! (implicit) \n");
+          SgInitializedNamePtrList tempStack;
+          while (astNodeStack.empty() == false)
+             {
+               SgInitializedName* implicitTypeName = isSgInitializedName(astNodeStack.front());
+               ROSE_ASSERT(implicitTypeName != NULL);
+               tempStack.push_back(implicitTypeName);
+               astNodeStack.pop_front();
+             }
+
+       // SgInitializedNamePtrList::iterator i = tempStack.begin();
+          while (tempStack.empty() == false)
+             {
+               SgInitializedName* implicitTypeName = isSgInitializedName(tempStack.back());
+               ROSE_ASSERT(implicitTypeName != NULL);
+               implicitStatement->get_variables().push_back(implicitTypeName);
+               tempStack.pop_back();
+             }
+        }
+
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R549 c_action_implicit_stmt()");
+#endif
+#if 0
+     printf ("Exiting after clearing the stack as a move to skip the implementation of more complex implicit statements. \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -6296,7 +6374,7 @@ void c_action_implicit_stmt(Token_t * label, Token_t * implicitKeyword, Token_t 
 void c_action_implicit_spec()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_implicit_spec() \n");
+          printf ("In R550 c_action_implicit_spec() \n");
    }
 
 /** R550 list
@@ -6306,11 +6384,15 @@ void c_action_implicit_spec()
  * @param count The number of items in the list.
  */
 void c_action_implicit_spec_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R550 c_action_implicit_spec_list__begin() \n");
+   }
 void c_action_implicit_spec_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R550 c_action_implicit_spec_list(): count = %d \n",count);
+   }
 
 /**
  * R551
@@ -6325,7 +6407,50 @@ void c_action_implicit_spec_list(int count)
 void c_action_letter_spec(Token_t * id1, Token_t * id2)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_letter_spec(): id1 = %p = %s id2 = %p = %s \n",id1,id1 != NULL ? id1->text : "NULL",id2,id2 != NULL ? id2->text : "NULL");
+          printf ("In c_action_letter_spec(): id1 = %p = %s id2 = %p = %s \n",id1, id1 != NULL ? id1->text : "NULL",id2, id2 != NULL ? id2->text : "NULL");
+#if 0
+     if (id1 != NULL)
+          astNameStack.push_front(id1);
+
+     if (id2 != NULL)
+          astNameStack.push_front(id2);
+#endif
+
+  // There should be at least one character in the range.
+     ROSE_ASSERT(id1 != NULL);
+     ROSE_ASSERT(id1->text != NULL);
+     SgName implicitCharacerRange = id1->text;
+
+     if (id2 != NULL)
+        {
+          implicitCharacerRange += "-";
+          implicitCharacerRange += id2->text;
+        }
+
+  // printf ("implicitCharacerRange = %s \n",implicitCharacerRange.str());
+
+     SgType* implicitType = NULL;
+     ROSE_ASSERT(astBaseTypeStack.empty() == false);
+     if (astBaseTypeStack.empty() == false)
+        {
+          implicitType = astBaseTypeStack.front();
+       // astBaseTypeStack.pop_front();
+        }
+     ROSE_ASSERT(implicitType != NULL);
+
+  // We will use a SgInitializedName to bind a type with a name (using implicitCharacerRangePtr as the name).
+     SgInitializedName* implicitTypeName = SageBuilder::buildInitializedName (implicitCharacerRange,implicitType);
+     ROSE_ASSERT(implicitTypeName != NULL);
+
+  // SgInitializedName IR nodes carry a scope which should always be initialized.
+     implicitTypeName->set_scope(getTopOfScopeStack());
+
+     astNodeStack.push_front(implicitTypeName);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R552 c_action_letter_spec()");
+#endif
    }
 
 /** R551 list
@@ -6335,11 +6460,32 @@ void c_action_letter_spec(Token_t * id1, Token_t * id2)
  * @param count The number of items in the list.
  */
 void c_action_letter_spec_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_letter_spec_list__begin() \n");
+   }
 void c_action_letter_spec_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_letter_spec_list(): count = %d \n",count);
+
+#if 1
+  // The base type can be used across multiple implicitCharacerRange, so we need only clean it up once.
+     ROSE_ASSERT(astBaseTypeStack.empty() == false);
+     astBaseTypeStack.pop_front();
+#else
+     for (int i=0; i < count; i++)
+        {
+       // Clean up the astBaseTypeStack
+          astBaseTypeStack.pop_front();
+        }
+#endif
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R551 c_action_letter_spec_list()");
+#endif
+   }
 
 /** R552
  * namelist_stmt
@@ -6930,8 +7076,49 @@ void c_action_designator(ofp_bool hasSubstringRange)
 
      if (hasSubstringRange == true)
         {
-          printf ("Sorry, case hasSubstringRange == true not implemented \n");
+       // printf ("Sorry, case hasSubstringRange == true not implemented \n");
+
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgSubscriptExpression* subscriptRange = isSgSubscriptExpression(astExpressionStack.front());
+          ROSE_ASSERT(subscriptRange != NULL);
+          astExpressionStack.pop_front();
+
+       // setSourcePosition(subscriptRange);
+
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* simpleExpression = astExpressionStack.front();
+          ROSE_ASSERT(simpleExpression != NULL);
+          astExpressionStack.pop_front();
+
+          SgPntrArrRefExp* arrayReference = isSgPntrArrRefExp(simpleExpression);
+          ROSE_ASSERT(arrayReference != NULL);
+#if 0
+          printf ("arrayReference lhs  = %p = %s \n",arrayReference->get_lhs_operand(),arrayReference->get_lhs_operand()->class_name().c_str());
+          printf ("arrayReference rhs  = %p = %s \n",arrayReference->get_rhs_operand(),arrayReference->get_rhs_operand()->class_name().c_str());
+          printf ("arrayReference type = %p = %s \n",arrayReference->get_type(),arrayReference->get_type()->class_name().c_str());
+#endif
+#if 0
+          SgExprListExp* indexList = isSgExprListExp(arrayReference->get_rhs_operand());
+          ROSE_ASSERT(indexList != NULL);
+          indexList->append_expression(subscriptRange);
+#else
+       // DQ (12/3/2010): This should maybe have a type that is array of strings.
+       // SgPntrArrRefExp* arrayOfStringsArrayRef = new SgPntrArrRefExp (arrayReference,subscriptRange,arrayReference->get_type());
+          SgPntrArrRefExp* arrayOfStringsArrayRef = new SgPntrArrRefExp (arrayReference,subscriptRange,/* type should not be specified */ NULL);
+          ROSE_ASSERT(arrayOfStringsArrayRef != NULL);
+
+       // arrayReference->set_parent(arrayOfStringsArrayRef);
+       // subscriptRange->set_parent(arrayOfStringsArrayRef);
+
+          setSourcePosition(arrayOfStringsArrayRef);
+
+          astExpressionStack.push_front(arrayOfStringsArrayRef);
+#endif
         }
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R602 c_action_designator()");
+#endif
    }
 
 
@@ -6954,6 +7141,8 @@ void c_action_designator_or_func_ref()
  */
 void c_action_substring_range_or_arg_list()
    {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_substring_range_or_arg_list() \n");
    }
 
 /**
@@ -6963,6 +7152,8 @@ void c_action_substring_range_or_arg_list()
  */
 void c_action_substr_range_or_arg_list_suffix()
    {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_substring_range_or_arg_list_suffix() \n");
    }
 
 
@@ -6973,6 +7164,8 @@ void c_action_substr_range_or_arg_list_suffix()
  */
 void c_action_logical_variable()
    {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_logical_variable() \n");
    }
 
 /**
@@ -6982,6 +7175,8 @@ void c_action_logical_variable()
  */
 void c_action_default_logical_variable()
    {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_default_logical_variable() \n");
    }
 
 /**
@@ -6991,6 +7186,8 @@ void c_action_default_logical_variable()
  */
 void c_action_scalar_default_logical_variable()
    {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_scalar_default_logical_variable() \n");
    }
 
 /**
@@ -7000,6 +7197,8 @@ void c_action_scalar_default_logical_variable()
  */
 void c_action_char_variable()
    {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_char_variable() \n");
    }
 
 /**
@@ -7009,6 +7208,8 @@ void c_action_char_variable()
  */
 void c_action_default_char_variable()
    {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_default_char_variable() \n");
    }
 
 /**
@@ -7018,6 +7219,8 @@ void c_action_default_char_variable()
  */
 void c_action_scalar_default_char_variable()
    {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_scalar_default_char_variable() \n");
    }
 
 /**
@@ -7027,6 +7230,8 @@ void c_action_scalar_default_char_variable()
  */
 void c_action_int_variable()
    {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_int_variable() \n");
    }
 
 /** R609
@@ -7043,8 +7248,10 @@ void c_action_int_variable()
  * the data-ref.
  */
 void c_action_substring(ofp_bool hasSubstringRange)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_substring() hasSubstringRange = %s \n",hasSubstringRange ? "true" : "false");
+   }
  
 /** R611
  * substring_range
@@ -7056,8 +7263,40 @@ void c_action_substring(ofp_bool hasSubstringRange)
  * @param hasUpperBound True if upper bound is present in a substring-range (lower_bound:upper_bound).
  */
 void c_action_substring_range(ofp_bool hasLowerBound, ofp_bool hasUpperBound)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R611 c_action_substring_range() hasLowerBound = %s hasUpperBound = %s \n",hasLowerBound ? "true" : "false",hasUpperBound ? "true" : "false");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R611 c_action_substring_range()");
+#endif
+
+#if 0
+     SgExpression* lowerBound = NULL;
+     if (hasLowerBound == true)
+        {
+          lowerBound = astExpressionStack.front();
+          astExpressionStack.pop_front();
+        }
+
+     SgExpression* upperBound = NULL;
+     if (hasUpperBound == true)
+        {
+          upperBound = astExpressionStack.front();
+          astExpressionStack.pop_front();
+        }
+#endif
+
+     SgExpression* subscriptRange = buildSubscriptExpression(hasLowerBound,hasUpperBound, /* hasStride = */ false, /* isAmbiguous = */ false);
+     ROSE_ASSERT(subscriptRange != NULL);
+     astExpressionStack.push_front(subscriptRange);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R611 c_action_substring_range()");
+#endif
+   }
 
 /** R612
  *	data_ref
@@ -8043,7 +8282,7 @@ void c_action_section_subscript_list(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R619 c_action_section_subscript_list(): count = %d \n",count);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R619 c_action_section_subscript_list()");
 #endif
@@ -8106,7 +8345,7 @@ void c_action_section_subscript_list(int count)
           astExpressionStack.push_front(expressionList);
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R619 c_action_section_subscript_list()");
 #endif
@@ -12932,6 +13171,81 @@ void c_action_file_unit_number()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_file_unit_number() \n");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R902 c_action_file_unit_number()");
+#endif
+
+     if (astExpressionStack.empty() == true)
+        {
+          printf ("In c_action_file_unit_number(): Unclear what to do in this case (empty astExpressionStack)! \n");
+          ROSE_ASSERT(false);
+
+       // If there was nothing pushed to the stack, then push the SgAsteriskShapeExp ???
+       // I think we are just borrowing the fact that this expression will output a "*" and 
+       // perhaps we should have a specialized expression more specific to format semantics.
+          SgExpression* asteriskExpression = new SgAsteriskShapeExp();
+          setSourcePosition(asteriskExpression);
+          astExpressionStack.push_front(asteriskExpression);
+
+          push_token("unit");
+        }
+       else
+        {
+       // Note that if this is a scalar-logical-expression, then the expression is likely from a if-stmt and not a part of a format statement.
+          SgExpression* expressionOnStack = astExpressionStack.front();
+       // Using a switch statement allows us to more cleanly handle a growing number of special cases.
+          printf ("expressionOnStack = %p = %s \n",expressionOnStack,expressionOnStack->class_name().c_str());
+          switch(expressionOnStack->variantT())
+             {
+            // Handle case of format label (integer): print 1, N
+               case V_SgIntVal:
+
+#if 0
+            // Handle case of format string: print "(a, i8)", "a = ", N (see test2010_123.f90).
+               case V_SgStringVal:
+
+            // Handle case of format string (formed from string concatination): print "(a, "||" i8)", "a = ", N (see test2010_124.f90).
+               case V_SgConcatenationOp:
+#endif
+                  {
+                    push_token("unit");
+                    break;
+                  }
+            // Handle case of format string (passed as a variable):  CHARACTER(len=*) :: fmtstr;  PRINT fmtstr, str (see test2010_125.f90).
+               case V_SgVarRefExp:
+                  {
+                    printf ("expressionOnStack->get_type() = %p = %s \n",expressionOnStack->get_type(),expressionOnStack->get_type()->class_name().c_str());
+                    SgTypeInt* intType = isSgTypeInt(expressionOnStack->get_type());
+                    if (intType != NULL)
+                       {
+                         push_token("unit");
+                       }
+                      else
+                       {
+                         printf ("In c_action_file_unit_number(): Unclear what to do in this case! \n");
+                         ROSE_ASSERT(false);
+                       }
+                    
+                    break;
+                  }
+
+               default:
+                  {
+                 // Add not "fmt" token.
+                    printf ("Non integer scalars can NOT be used in format statements so ignore this (no fmt pushed onto astNameStack). \n");
+
+                    printf ("In c_action_file_unit_number(): Unclear what to do in this case (default)! \n");
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R902 c_action_file_unit_number()");
+#endif
    }
 
 /** R904
@@ -13360,6 +13674,8 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
   // If there is only one entry then it is the unit, not the format.
      int initalStackDepth = astExpressionStack.size();
 
+     printf ("In R910 c_action_read_stmt(): initalStackDepth = %d \n",initalStackDepth);
+
   // If this list is empty then there was nothing specified, as reported by OFP, but this is the case of "read *, ..." so we will interpret this as the case of "read fmt=*. ..." or "read *, ..."
      bool availableFormatSpecifier = astNameStack.empty();
      if (availableFormatSpecifier == true)
@@ -13399,7 +13715,12 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
             // This is required for cases such as: "read (1,asynchronous='YES') array", see test2007_123.f03.
                lookAheadName = astNameStack.front();
              }
-       // printf ("In c_action_read_stmt(): processing token = %s with expression = %p = %s \n",name->text,expression,expression->class_name().c_str());
+       // printf ("In c_action_read_stmt(): processing token = %s with expression = %p = %s lookAheadName = %p \n",name->text,expression,expression->class_name().c_str(),lookAheadName);
+
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("In loop over io-control-list in R910 c_action_read_stmt()");
+#endif
 
        // We don't need the current_IO_Control_Spec data structure in the code below.
 
@@ -13408,14 +13729,19 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
        // if ( (strncasecmp(name->text,"fmt",3) == 0) || ( (strncmp(name->text,"defaultString",13) == 0) && (readStatement->get_format() == NULL) && (initalStackDepth >= 2) ) )
           if ( (strncasecmp(name->text,"fmt",3) == 0) || ( (strncmp(name->text,"defaultString",13) == 0) && (readStatement->get_format() == NULL) && (initalStackDepth >= 2) && (lookAheadName != NULL && strncmp(lookAheadName->text,"defaultString",13) == 0)) )
              {
-            // printf ("Processing token = %s as format spec \n",name->text);
+               printf ("Processing token = %s as format spec \n",name->text);
 #if 1
+            // DQ (12/3/2010): This code fails for test2007_211.f.
                ROSE_ASSERT(expression != NULL);
                SgExpression* labelRefExp = buildLabelRefExp(expression);
                ROSE_ASSERT(labelRefExp != NULL);
+               printf ("In c_action_read_stmt(): readStatement->set_format(%p = %s) \n",labelRefExp,labelRefExp->class_name().c_str());
                readStatement->set_format(labelRefExp);
                labelRefExp->set_parent(readStatement);
+
+               ROSE_ASSERT(expression->get_parent() != NULL);
 #else
+            // DQ (12/3/2010): This code fails for test2007_211.f.
                SgIntVal* integerValue = isSgIntVal(expression);
                if (integerValue != NULL)
                   {
@@ -13447,11 +13773,12 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
        // Process this second because the unit expression is deeper on the stack!
           else if ( (strncasecmp(name->text,"unit",4) == 0) || (strncmp(name->text,"defaultString",13) == 0) && (readStatement->get_unit() == NULL) )
              {
-            // printf ("Processing token = %s as unit spec \n",name->text);
+               printf ("Processing token = %s as unit spec expression = %s \n",name->text,expression->class_name().c_str());
                readStatement->set_unit(expression);
              }
           else if ( strncasecmp(name->text,"iostat",6) == 0 )
              {
+               printf ("Processing token = %s as iostat spec expression = %s \n",name->text,expression->class_name().c_str());
                readStatement->set_iostat(expression);
              }
           else if ( strncasecmp(name->text,"err",3) == 0 )
@@ -13518,15 +13845,33 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
              }
 
           expression->set_parent(readStatement);
+
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("BOTTOM of loop over io-control-list in R910 c_action_read_stmt()");
+#endif
         }
 
+     ROSE_ASSERT(readStatement != NULL);
+
+  // DQ (12/3/2010): However, this breaks test2007_211.f
+  // DQ (12/2/2010): Only handle this way if the readStatement->get_format() was not already set above.
   // If this was "print *,i" then we would now have a "*" on the stack, but if
   // there was a format label then we will have a integer literal on the stack.
+#if 0
      if (astExpressionStack.empty() == false)
+#else
+     if (astExpressionStack.empty() == false && readStatement->get_format() == NULL)
+#endif
         {
           SgExpression* formatLabel = astExpressionStack.front();
+          printf ("In R910 c_action_read_stmt(): formatLabel = %s \n",formatLabel->class_name().c_str());
 #if 1
           SgExpression* labelRefExp = buildLabelRefExp(formatLabel);
+          ROSE_ASSERT(labelRefExp != NULL);
+
+          formatLabel->set_parent(labelRefExp);
+
           readStatement->set_format(labelRefExp);
           labelRefExp->set_parent(readStatement);
 #else
@@ -13542,9 +13887,12 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
 #endif
         }
 
+  // ROSE_ASSERT(readStatement->get_format() != NULL);
+  // printf ("At BOTTOM of R910 c_action_read_stmt(): FMT = %p = %s \n",readStatement->get_format(),readStatement->get_format()->class_name().c_str());
+
      astScopeStack.front()->append_statement(readStatement);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R910 c_action_read_stmt()");
 #endif
@@ -13555,6 +13903,12 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
      ROSE_ASSERT(current_IO_Control_Spec == NULL);
 #endif
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("Before cleanup of astExpressionStack in R910 c_action_read_stmt()");
+#endif
+
+#if 0
   // Error checking: there may still be something on the stack from an  unhandled implied do loop
   // when we have a correctly handled implied do loop (there are three flavors) this should not be required.
      if (astExpressionStack.empty() == false)
@@ -13568,6 +13922,12 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
                astExpressionStack.pop_front();
              }
         }
+#endif
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R910 c_action_read_stmt()");
+#endif
    }
 
 /** R911
@@ -13832,7 +14192,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_print_stmt(): label = %p = %s printKeyword = %p = %s hasOutputItemList = %s \n",
                label,label != NULL ? label->text : "NULL",printKeyword,printKeyword != NULL ? printKeyword->text : "NULL",hasOutputItemList ? "true" : "false");
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R912 c_action_print_stmt()");
 #endif
@@ -13851,7 +14211,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 
   // ioStatement->set_io_statement(SgIOStatement::e_print);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R912 c_action_print_stmt()");
 #endif
@@ -13873,7 +14233,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 
           resetSourcePosition(exprListExp,printStatement);
         }
-     
+
      ROSE_ASSERT(exprListExp != NULL);
  	  printStatement->set_io_stmt_list(exprListExp);
 
@@ -13890,13 +14250,39 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 
   // DQ (1/26/2009): Avoid getting things from the stack that are at least wrong to be used in a print format.
   // if (astExpressionStack.empty() == false)
-     if (astExpressionStack.empty() == false && isSgBinaryOp(astExpressionStack.front()) == NULL)
+  // if (astExpressionStack.empty() == false && isSgBinaryOp(astExpressionStack.front()) == NULL)
+     if (astExpressionStack.empty() == false)
         {
           SgExpression* formatLabel = astExpressionStack.front();
 
        // DQ (1/26/2009): This should not be a binary operator (else it is likely an error).
-          ROSE_ASSERT(isSgBinaryOp(formatLabel) == NULL);
+       // Can be a string concatination operator which is a binary op (see test2010_124.f90).
+       // ROSE_ASSERT(isSgBinaryOp(formatLabel) == NULL);
 
+       // R914 should have pushed a "fmt" token onto the astNameStack
+       // ROSE_ASSERT(astNameStack.empty() == false);
+          if (astNameStack.empty() == false)
+             {
+               Token_t* name = astNameStack.front();
+
+               printf ("In c_action_print_stmt(): processing token = %s with expression = %p = %s \n",name->text,formatLabel,formatLabel->class_name().c_str());
+
+               ROSE_ASSERT (strncasecmp(name->text,"fmt",3) == 0);
+
+            // The "unit=" string is optional, if it was not present then a toekn was pushed onto the stack with the text value "defaultString"
+            // if ( (strncasecmp(name->text,"fmt",3) == 0) || (strncmp(name->text,"defaultString",13) == 0) && (writeStatement->get_format() == NULL) && numberOfDefaultOptions == 2)
+            // if (strncasecmp(name->text,"fmt",3) == 0)
+               printf ("Processing token = %s as format spec \n",name->text);
+
+               SgExpression* labelRefExp = buildLabelRefExp(formatLabel);
+               printStatement->set_format(labelRefExp);
+               labelRefExp->set_parent(printStatement);
+
+               astExpressionStack.pop_front();
+               astNameStack.pop_front();
+             }
+
+#if 0
 #if 1
           SgExpression* labelRefExp = buildLabelRefExp(formatLabel);
           printStatement->set_format(labelRefExp);
@@ -13911,6 +14297,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 
                astExpressionStack.pop_front();
              }
+#endif
 #endif
         }
 
@@ -13959,7 +14346,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         }
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R912 c_action_print_stmt()");
 #endif
@@ -13989,7 +14376,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 void c_action_io_control_spec(ofp_bool hasExpression, Token_t * keyword, ofp_bool hasAsterisk)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_io_control_spec(): hasExpression = %s keyword = %p = %s hasAsterisk = %s \n",
+          printf ("In R913 c_action_io_control_spec(): hasExpression = %s keyword = %p = %s hasAsterisk = %s \n",
                hasExpression ? "true" : "false",keyword,keyword != NULL ? keyword->text : "NULL",hasAsterisk ? "true" : "false");
 
 #if 0
@@ -14113,6 +14500,98 @@ void c_action_format()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_format() \n");
+
+     printf ("WARNING: NOT IMPLEMENTED!!! \n");
+     
+  // DQ (12/3/2010): I think this is the problem with test2007_211.f.  Namely we have to push a name ("fmt") on the the astNamestack!
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R914 c_action_format()");
+#endif
+#if 1
+     if (astExpressionStack.empty() == true)
+        {
+       // If there was nothing pushed to the stack, then push the SgAsteriskShapeExp ???
+       // I think we are just borrowing the fact that this expression will output a "*" and 
+       // perhaps we should have a specialized expression more specific to format semantics.
+          SgExpression* asteriskExpression = new SgAsteriskShapeExp();
+          setSourcePosition(asteriskExpression);
+          astExpressionStack.push_front(asteriskExpression);
+
+          push_token("fmt");
+        }
+       else
+        {
+       // Note that if this is a scalar-logical-expression, then the expression is likely from a if-stmt and not a part of a format statement.
+          SgExpression* expressionOnStack = astExpressionStack.front();
+#if 0
+          SgIntVal* integerValue = isSgIntVal(expressionOnStack);
+          if (integerValue != NULL)
+             {
+               printf ("integer scalars can be used in format statements so push fmt onto astNameStack. \n");
+
+               push_token("fmt");
+             }
+            else
+             {
+               printf ("Non integer scalars can NOT be used in format statements testing for a string... \n");
+               SgStringVal* stringValue = isSgStringVal(expressionOnStack);
+               if (stringValue != NULL)
+                  {
+                    printf ("string values can be used in format statements so push fmt onto astNameStack. \n");
+
+                    push_token("fmt");
+                  }
+                 else
+                  {
+                    printf ("Non integer scalars can NOT be used in format statements so ignore this (no fmt pushed onto astNameStack). \n");
+                  }
+             }
+#else
+       // Using a switch statement allows us to more cleanly handle a growing number of special cases.
+          printf ("expressionOnStack = %p = %s \n",expressionOnStack,expressionOnStack->class_name().c_str());
+          switch(expressionOnStack->variantT())
+             {
+            // Handle case of format label (integer): print 1, N
+               case V_SgIntVal:
+
+            // Handle case of format string: print "(a, i8)", "a = ", N (see test2010_123.f90).
+               case V_SgStringVal:
+
+            // Handle case of format string (formed from string concatination): print "(a, "||" i8)", "a = ", N (see test2010_124.f90).
+               case V_SgConcatenationOp:
+                  {
+                    push_token("fmt");
+                    break;
+                  }
+
+            // Handle case of format string (passed as a variable):  CHARACTER(len=*) :: fmtstr;  PRINT fmtstr, str (see test2010_125.f90).
+               case V_SgVarRefExp:
+                  {
+                    printf ("expressionOnStack->get_type() = %p = %s \n",expressionOnStack->get_type(),expressionOnStack->get_type()->class_name().c_str());
+                    SgTypeString* stringType = isSgTypeString(expressionOnStack->get_type());
+                 // ROSE_ASSERT(stringType != NULL);
+                    if (stringType != NULL)
+                       {
+                         push_token("fmt");
+                       }
+                    break;
+                  }
+
+               default:
+                  {
+                 // Add no "fmt" token.
+                    printf ("Non integer scalars can NOT be used in format statements so ignore this (no fmt pushed onto astNameStack). \n");
+                  }
+             }
+#endif
+        }
+#endif
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R914 c_action_format()");
+#endif
    }
 
 /**
@@ -14645,6 +15124,7 @@ void c_action_backspace_stmt(Token_t *label, Token_t *backspaceKeyword, Token_t 
   // printf ("Warning: Ignoring all but the 'unit' in the OpenStatement \n");
      while (astExpressionStack.empty() == false)
         {
+       // DQ (12/5/2010): This fails for test2010_129.f90.
           ROSE_ASSERT(astNameStack.empty() == false);
 
           SgExpression* expression = astExpressionStack.front();
@@ -15377,10 +15857,17 @@ void c_action_format_item(Token_t * descOrDigit, ofp_bool hasFormatItemList)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_format_item(): descOrDigit = %s hasFormatItemList = %s \n",descOrDigit ? descOrDigit->text : "NULL",hasFormatItemList ? "true" : "false");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1003 c_action_format_item()");
 #endif
+
+  // DQ (12/2/2010): I think this is the case of an inner list as an entry in the outer list (see test2010_115.f90).
+     if (descOrDigit == NULL && hasFormatItemList == false)
+        {
+          printf ("Exiting from In c_action_format_item(): already processed list! \n");
+          return;
+        }
 
      ROSE_ASSERT(descOrDigit != NULL);
 
@@ -15496,7 +15983,7 @@ void c_action_format_item_list(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_format_item_list(): count = %d \n",count);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1003 c_action_format_item_list()");
 #endif
@@ -15506,20 +15993,29 @@ void c_action_format_item_list(int count)
         {
           ROSE_ASSERT(astNodeStack.empty() == false);
           SgFormatItem* formatItem = isSgFormatItem(astNodeStack.front());
-          ROSE_ASSERT(formatItem != NULL);
 
-          astNodeStack.pop_front();
+          if (formatItem == NULL)
+             {
+               SgFormatItemList* nestedFormatItemList = isSgFormatItemList(astNodeStack.front());
+               ROSE_ASSERT(nestedFormatItemList != NULL);
+               formatItem = new SgFormatItem();
+               formatItem->set_format_item_list(nestedFormatItemList);
+            // formatItemList->get_format_item_list().insert(formatItemList->get_format_item_list().begin(),nestedFormatItemList);
+               nestedFormatItemList->set_parent(formatItem);
+             }
 
        // formatItemList->get_format_item_list().push_back(formatItem);
           formatItemList->get_format_item_list().insert(formatItemList->get_format_item_list().begin(),formatItem);
 
        // printf ("Set the parent of SgFormatItem = %p to SgFormatItemList = %p \n",formatItem,formatItemList);
           formatItem->set_parent(formatItemList);
+
+          astNodeStack.pop_front();
         }
 
      astNodeStack.push_front(formatItemList);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1003 c_action_format_item_list()");
 #endif
@@ -15819,6 +16315,10 @@ void c_action_program_stmt(Token_t *label, Token_t *programKeyword, Token_t *id,
   // Set the program name
   // functionDeclaration->set_name(id->get_lexeme_string());
      programDeclaration->set_name(id->text);
+
+  // DQ (12/5/2010): This is related to a new test in the AST consistancy tests.
+     ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() != programDeclaration);
+     ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() == NULL);
 
 #if 0
   // Set the label if it is defined
@@ -17890,9 +18390,9 @@ void c_action_actual_arg_spec_list__begin()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_actual_arg_spec_list__begin() \n");
 
-
-     printf ("I don't think that this is ever called! c_action_actual_arg_spec_list__begin() \n");
-     //FMZ ROSE_ASSERT(false);
+  // DQ (12/3/2010): This is called by test2010_119.f90.
+  // printf ("I don't think that this is ever called! c_action_actual_arg_spec_list__begin() \n");
+  // FMZ ROSE_ASSERT(false);
    }
 
 void c_action_actual_arg_spec_list(int count)
@@ -17900,8 +18400,9 @@ void c_action_actual_arg_spec_list(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_actual_arg_spec_list() count = %d \n",count);
 
-     printf ("I don't think that this is ever called! c_action_actual_arg_spec_list() \n");
-     // FMZ ROSE_ASSERT(false);
+  // DQ (12/3/2010): This is called by test2010_119.f90.
+  // printf ("I don't think that this is ever called! c_action_actual_arg_spec_list() \n");
+  // FMZ ROSE_ASSERT(false);
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -19052,6 +19553,14 @@ void c_action_end_of_file(const char * filename)
      astScopeStack.front()->get_endOfConstruct()->display("In c_action_end_of_file(): endOfConstruct");
 #endif
 
+  // DQ (12/3/2010): I think that the astExpressionStack should be empty at the end of a file.
+  // If this is not true then maybe it should at least be true for the last file processed.
+  // For now this is just a status warning.
+     if (astExpressionStack.empty() == false)
+        {
+          printf ("WARNING: astExpressionStack non-empty at c_action_end_of_file(filenameString = %s) \n",filenameString.c_str());
+        }
+
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of c_action_end_of_file()");
@@ -19361,7 +19870,9 @@ void c_action_rice_finish_stmt(Token_t *label, Token_t *teamToken, Token_t *eos)
  */
 
 static const char * SPAWN_SUBR_NAME = "CAF_SPAWN";
-static const char * TEAM_DEFAULT_NAME = "TEAM_DEFAULT";
+
+// DQ (12/2/2010): This is not used and so causes a warning.
+// static const char * TEAM_DEFAULT_NAME = "TEAM_DEFAULT";
 
 void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
 {
