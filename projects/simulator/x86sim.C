@@ -64,6 +64,8 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <sys/shm.h>
+
 
 /* Define this if you want strict emulation. When defined, every attempt is made for x86sim to provide an environment as close
  * as possible to running natively on hudson-rose-07.  Note that defining this might cause the simulator to malfunction since
@@ -521,6 +523,7 @@ static const Translate ipc_commands[] = {
 static const Translate ipc_flags[] = {
     TF(IPC_CREAT), TF(IPC_EXCL), TF(IPC_NOWAIT), TF(IPC_PRIVATE), TF(IPC_RMID), TF(IPC_SET), TF(IPC_STAT),
     TF(MSG_EXCEPT), TF(MSG_NOERROR),
+    TF(SHM_HUGETLB), TF(SHM_NORESERVE), TF(SHM_RND), TF(SHM_RDONLY),
     TF_FMT(0777, "0%03o"),
     T_END
 };
@@ -614,6 +617,44 @@ print_ipc_kludge_32(FILE *f, const uint8_t *_v, size_t sz)
     return fprintf(f, "msgp=0x%08"PRIx32", msgtype=%"PRId32, v->msgp, v->msgtyp);
 }
 
+/* The shmid64_ds struct as layed out in the 32-bit specimen */
+struct shmid64_ds_32 {
+    ipc64_perm_32 shm_perm;             /* operation perms */
+    uint32_t shm_segsz;                 /* size of segment (bytes) */
+    int32_t shm_atime;                  /* last attach time */
+    int32_t unused1;
+    int32_t shm_dtime;                  /* last detach time */
+    int32_t unused2;
+    int32_t shm_ctime;                  /* last change time */
+    int32_t unused3;
+    int32_t shm_cpid;                   /* pid of creator */
+    int32_t shm_lpid;                   /* pid of last operator */
+    uint32_t shm_nattch;                /* number of current attaches */
+    int32_t unused4;
+    int32_t unused5;
+} __attribute__((packed));
+
+static int
+print_shmid64_ds_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(shmid64_ds_32)==sz);
+    const shmid64_ds_32 *v = (const shmid64_ds_32*)_v;
+
+    int retval = fprintf(f, "shm_perm={");
+    retval += print_ipc64_perm_32(f, _v, sizeof(v->shm_perm));
+    retval += fprintf(f, "}");
+
+    retval += fprintf(f,
+                      ", segsz=%"PRIu32
+                      ", atime=%"PRId32", dtime=%"PRId32", ctime=%"PRId32
+                      ", cpid=%"PRId32", lpid=%"PRId32,
+                      v->shm_segsz,
+                      v->shm_atime, v->shm_dtime, v->shm_ctime,
+                      v->shm_cpid, v->shm_lpid);
+    return retval;
+}
+
+    
 
 
 
@@ -1000,6 +1041,7 @@ public:
     void sys_shmdt(uint32_t shmaddr_va);
     void sys_shmget(uint32_t key, uint32_t size, uint32_t shmflg);
     void sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va);
+    void sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, uint32_t ptr);
 
 
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, long sz);
@@ -2157,21 +2199,141 @@ EmulationPolicy::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
 void
 EmulationPolicy::sys_shmdt(uint32_t shmaddr_va)
 {
-    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+    const MemoryMap::MapElement *me = map->find(shmaddr_va);
+    if (!me || me->get_va()!=shmaddr_va || me->get_offset()!=0 || me->is_anonymous()) {
+        writeGPR(x86_gpr_ax, -EINVAL);
+        return;
+    }
+
+    int result = shmdt(me->get_base());
+    if (-1==result) {
+        writeGPR(x86_gpr_ax, -errno);
+        return;
+    }
+
+    map->erase(*me);
+    writeGPR(x86_gpr_ax, result);
 }
 
 void
 EmulationPolicy::sys_shmget(uint32_t key, uint32_t size, uint32_t shmflg)
 {
-    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+    int result = shmget(key, size, shmflg);
+    writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
 
 void
 EmulationPolicy::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
 {
-    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+    int version = cmd & 0x0100/*IPC_64*/;
+    cmd &= ~0x0100;
+
+    switch (cmd) {
+        case SHM_STAT:
+        case IPC_STAT: {
+            ROSE_ASSERT(0x0100==version); /* we're assuming ipc64_perm and shmid_ds from the kernel */
+            static shmid_ds host_ds;
+            int result = shmctl(shmid, cmd, &host_ds);
+            if (-1==result) {
+                writeGPR(x86_gpr_ax, -errno);
+                break;
+            }
+
+            shmid64_ds_32 guest_ds;
+            guest_ds.shm_perm.key = host_ds.shm_perm.__key;
+            guest_ds.shm_perm.uid = host_ds.shm_perm.uid;
+            guest_ds.shm_perm.gid = host_ds.shm_perm.gid;
+            guest_ds.shm_perm.cuid = host_ds.shm_perm.cuid;
+            guest_ds.shm_perm.cgid = host_ds.shm_perm.cgid;
+            guest_ds.shm_perm.mode = host_ds.shm_perm.mode;
+            guest_ds.shm_perm.pad1 = host_ds.shm_perm.__pad1;
+            guest_ds.shm_perm.seq = host_ds.shm_perm.__seq;
+            guest_ds.shm_perm.pad2 = host_ds.shm_perm.__pad2;
+            guest_ds.shm_perm.unused1 = host_ds.shm_perm.__unused1;
+            guest_ds.shm_perm.unused2 = host_ds.shm_perm.__unused2;
+            guest_ds.shm_segsz = host_ds.shm_segsz;
+            guest_ds.shm_atime = host_ds.shm_atime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused1 = host_ds.__unused1;
+#endif
+            guest_ds.shm_dtime = host_ds.shm_dtime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused2 = host_ds.__unused2;
+#endif
+            guest_ds.shm_ctime = host_ds.shm_ctime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused3 = host_ds.__unused3;
+#endif
+            guest_ds.shm_cpid = host_ds.shm_cpid;
+            guest_ds.shm_lpid = host_ds.shm_lpid;
+            guest_ds.shm_nattch = host_ds.shm_nattch;
+            guest_ds.unused4 = host_ds.__unused4;
+            guest_ds.unused5 = host_ds.__unused5;
+
+            if (sizeof(guest_ds)!=map->write(&guest_ds, buf_va, sizeof guest_ds)) {
+                writeGPR(x86_gpr_ax, -EFAULT);
+                break;
+            }
+
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
+        case IPC_RMID: {
+            int result = shmctl(shmid, cmd, NULL);
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            break;
+        }
+
+        default: {
+            writeGPR(x86_gpr_ax, -EINVAL);
+            break;
+        }
+    }
 }
 
+void
+EmulationPolicy::sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, uint32_t shmaddr)
+{
+    if (0==shmaddr) {
+        shmaddr = map->find_last_free();
+    } else if (shmflg & SHM_RND) {
+        shmaddr = ALIGN_DN(shmaddr, SHMLBA);
+    } else if (ALIGN_DN(shmaddr, 4096)!=shmaddr) {
+        writeGPR(x86_gpr_ax, -EINVAL);
+        return;
+    }
+
+    /* We don't handle SHM_REMAP */
+    if (shmflg & SHM_REMAP) {
+        writeGPR(x86_gpr_ax, -EINVAL);
+        return;
+    }
+
+    /* Map shared memory into the simulator */
+    void *buf = shmat(shmid, NULL, shmflg);
+    if (!buf) {
+        writeGPR(x86_gpr_ax, -errno);
+        return;
+    }
+
+    /* Map simulator's shared memory into the specimen */
+    shmid_ds ds;
+    int status = shmctl(shmid, IPC_STAT, &ds);
+    ROSE_ASSERT(status>=0);
+    ROSE_ASSERT(ds.shm_segsz>0);
+    unsigned perms = MemoryMap::MM_PROT_READ | ((shmflg & SHM_RDONLY) ? 0 : MemoryMap::MM_PROT_WRITE);
+    MemoryMap::MapElement shm(shmaddr, ds.shm_segsz, buf, 0, perms);
+    shm.set_name("shmat("+StringUtility::numberToString(shmid)+")");
+    map->insert(shm);
+
+    /* Return values */
+    if (4!=map->write(&shmaddr, result_va, 4)) {
+        writeGPR(x86_gpr_ax, -EFAULT);
+        return;
+    }
+    writeGPR(x86_gpr_ax, shmaddr);
+}
 
 void
 EmulationPolicy::emulate_syscall()
@@ -3364,7 +3526,7 @@ EmulationPolicy::emulate_syscall()
                     syscall_leave("d");
                     break;
                 case 13: /* MSGGET */ {
-                    syscall_enter("ipc", "fpf", ipc_commands, ipc_flags); /* arg-1 "p" for consistency with strace */
+                    syscall_enter("ipc", "fpf", ipc_commands, ipc_flags); /* arg1 "p" for consistency with strace and ipcs */
                     sys_msgget(first, second);
                     syscall_leave("d");
                     break;
@@ -3391,26 +3553,44 @@ EmulationPolicy::emulate_syscall()
                         writeGPR(x86_gpr_ax, -EINVAL);
                         syscall_leave("d");
                     } else {
-                        syscall_enter("ipc", "fdddpd", ipc_commands);
-                        writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
-                        syscall_leave("d");
+                        syscall_enter("ipc", "fdfpp", ipc_commands, ipc_flags);
+                        sys_shmat(first, second, third, ptr);
+                        syscall_leave("p");
+                        if (debug && trace_mmap) {
+                            fprintf(debug, "  memory map after shmat:\n");
+                            map->dump(debug, "    ");
+                        }
                     }
                     break;
                 case 22: /* SHMDT */
                     syscall_enter("ipc", "f---p", ipc_commands);
                     sys_shmdt(ptr);
                     syscall_leave("d");
+                    if (debug && trace_mmap) {
+                        fprintf(debug, "  memory map after shmdt:\n");
+                        map->dump(debug, "    ");
+                    }
                     break;
                 case 23: /* SHMGET */
-                    syscall_enter("ipc", "fddf", ipc_commands, ipc_flags);
+                    syscall_enter("ipc", "fpdf", ipc_commands, ipc_flags); /* arg1 "p" for consistency with strace and ipcs */
                     sys_shmget(first, second, third);
                     syscall_leave("d");
                     break;
-                case 24: /* SHMCTL */
-                    syscall_enter("ipc", "fdf-p", ipc_commands, ipc_control);
+                case 24: { /* SHMCTL */
+                    bool set = (IPC_RMID==(second & ~0x0100) || IPC_SET==(second & ~0x0100));
+                    if (set) {
+                        syscall_enter("ipc", "fdf-P", ipc_commands, ipc_control, sizeof(shmid64_ds_32), print_shmid64_ds_32);
+                    } else {
+                        syscall_enter("ipc", "fdf-p", ipc_commands, ipc_control);
+                    }
                     sys_shmctl(first, second, ptr);
-                    syscall_leave("d");
+                    if (set) {
+                        syscall_leave("d");
+                    } else {
+                        syscall_leave("d----P", sizeof(shmid64_ds_32), print_shmid64_ds_32);
+                    }
                     break;
+                }
                 default:
                     syscall_enter("ipc", "fdddpd", ipc_commands);
                     writeGPR(x86_gpr_ax, -ENOSYS);
