@@ -1045,10 +1045,14 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
     }
     counter ++;
   } //end for
+
+  SgBasicBlock* func_body = func->get_definition()->get_body();
+
   //For OpenMP lowering, we have to have a void * parameter even if there is no need to pass any parameters 
   //in order to match the gomp runtime lib 's function prototype for function pointers
   SgFile* cur_file = getEnclosingFileNode(func);
   ROSE_ASSERT (cur_file != NULL);
+  //if (cur_file->get_openmp_lowering () && ! SageInterface::is_Fortran_language())
   if (cur_file->get_openmp_lowering ())
   {
     if (syms.size() ==0)
@@ -1056,14 +1060,25 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
       SgName var1_name = "__out_argv";
       ROSE_ASSERT (Outliner::useStructureWrapper);
       SgType* ptype= NULL; 
-      ptype = buildPointerType (buildVoidType());
+#if 1      
+      // A dummy integer parameter for Fortran outlined function
+      if (SageInterface::is_Fortran_language() )
+      {
+        var1_name = "out_argv";
+        ptype = buildIntType();
+        SgVariableDeclaration *var_decl = buildVariableDeclaration(var1_name,ptype, NULL, func_body);
+        prependStatement(var_decl, func_body);
+
+      }
+      else
+#endif        
+        ptype = buildPointerType (buildVoidType());
       parameter1 = buildInitializedName(var1_name,ptype);
       appendArg(params,parameter1);
     }
   }
 
   // variable substitution 
-  SgBasicBlock* func_body = func->get_definition()->get_body();
   remapVarSyms (sym_remap, pdSyms, private_remap , func_body);
 }
 

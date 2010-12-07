@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS=
+SUBDIRS= .
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 SUBDIRS += fortran
 endif

@@ -10,11 +10,11 @@ F77_TESTCODES_REQUIRED_TO_COMPILE =
 
 F90_TESTCODES_REQUIRED_TO_COMPILE = 
 
-F77_TESTCODES_REQUIRED_TO_RUN = 
+F77_TESTCODES_REQUIRED_TO_RUN = \
+  helloworld.f
 F90_TESTCODES_REQUIRED_TO_RUN = 
 
-TESTCODE_CURRENTLY_FAILING = \
-  helloworld.f
+TESTCODE_CURRENTLY_FAILING = 
 
 ALL_TESTCODES = \
   $(F77_TESTCODES_REQUIRED_TO_COMPILE) \
@@ -43,20 +43,20 @@ TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/
 ../roseomp:
 	make -C ../. roseomp
 # this flag is used for the long list of CXX test files
-TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
+TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering --edg:no_warnings #-fno-underscoring #-rose:verbose 2 #--edg:restrict #-rose:wave 
 
 
 # rules to build .o from .f for OpenMP test codes
 $(PASSING_F77_TEST_Objects): %.o: $(TEST_DIR)/%.f ../roseomp
 	../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
 
-$(F77_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.f roseomp
+$(F77_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.f ../roseomp
 	../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
 
-$(PASSING_F90_TEST_Objects): %.o: $(TEST_DIR)/%.f90 roseomp
+$(PASSING_F90_TEST_Objects): %.o: $(TEST_DIR)/%.f90 ../roseomp
 	../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
 
-$(F90_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.f90 roseomp
+$(F90_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.f90 ../roseomp
 	../roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
 
 
@@ -66,10 +66,13 @@ PASSING_F77_TEST_Executables = ${F77_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 PASSING_F90_TEST_Executables = ${F90_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 MY_FINAL_LINK = $(top_builddir)/src/midend/programTransformation/ompLowering/libxomp.a $(GOMP_PATH)/libgomp.a -lpthread -lm
 
+F_LINK_FLAGS= -fno-underscoring
+# $(F77) will be expanded to g77, which has different libfortran expectation
+# $(F90) is not defined?
 $(PASSING_F77_TEST_Executables): %.out: %.o
-	$(F77) $< -o $@ $(MY_FINAL_LINK)
+	$(GFORTRAN_PATH) $(F_LINK_FLAGS) $< -o $@ $(MY_FINAL_LINK)
 $(PASSING_F90_TEST_Executables): %.out: %.o
-	$(F90) $< -o $@ $(MY_FINAL_LINK)
+	$(GFORTRAN_PATH) $(F_LINK_FLAGS) $< -o $@ $(MY_FINAL_LINK)
 check_PROGRAM = $(PASSING_F77_TEST_Executables) $(PASSING_F90_TEST_Executables)
 # Executables depend on objects
 # check-TESTS happens before check-local
@@ -115,7 +118,7 @@ endif # ROSE_USE_OMNI_OPENMP
 endif  
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out 
+	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out  rose_*.f rose_*.f90 rose_*.f95
 
 EXTRA_DIST =
 

@@ -23,7 +23,7 @@ noinst_PROGRAMS = \
     typeTraits livenessAnalysis buildProcedureHeaderStatement replaceMacroCalls \
     buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
     deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
-    generateUniqueName annotateExpressionsWithUniqueNames
+    generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement
 
 # list of test SAGE AST builders 
 annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
@@ -70,6 +70,7 @@ loopTiling_SOURCES                       = loopTiling.C
 insertStatementBeforeFunction_SOURCES    = insertStatementBeforeFunction.C
 removeStatementCommentRelocation_SOURCES = removeStatementCommentRelocation.C
 generateUniqueName_SOURCES               = generateUniqueName.C
+buildExternalStatement_SOURCES           = buildExternalStatement.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -132,7 +133,8 @@ generatedCodeExamples = \
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   generatedCodeExamples += \
-    rose_inputbuildProcedureHeaderStatement.f 
+    rose_inputbuildProcedureHeaderStatement.f \
+    rose_inputbuildExternalStatement.f
 endif
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
@@ -223,21 +225,20 @@ rose_inputannotateExpressionsWithUniqueNames.C:annotateExpressionsWithUniqueName
 	./annotateExpressionsWithUniqueNames$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputannotateExpressionsWithUniqueNames.C 1>rose_inputannotateExpressionsWithUniqueNames.out
 
 
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 rose_inputbuildProcedureHeaderStatement.f : buildProcedureHeaderStatement
 # DQ (9/13/2010): I think that we need both levels of if tests else --without-java will not work.
 # DQ (3/18/2009): Make this dependent upon if ROSE was configured to use Fortran.
 # if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 
 # if ROSE_USE_OPEN_FORTRAN_PARSER
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	./buildProcedureHeaderStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildProcedureHeaderStatement.f
-else
-	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests (ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT)."
+
+rose_inputbuildExternalStatement.f:buildExternalStatement.C 
+	./buildExternalStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildExternalStatement.f
+
 endif
 
-# else
-#	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests (ROSE_USE_OPEN_FORTRAN_PARSER)."
-# endif
 
 rose_inputbuildAbstractHandle.C:buildAbstractHandle
 	./buildAbstractHandle$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildAbstractHandle.C
@@ -312,7 +313,8 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputRemoveStatementCommentRelocation_withoutBottomBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutTopBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C \
-       inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C
+       inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C \
+       inputbuildExternalStatement.f
 
 
 check-local:

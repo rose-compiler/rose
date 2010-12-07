@@ -712,6 +712,22 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
   // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): generated function func = %p \n",func);
 
+  // Liao 12/2/2010, special handling for Fortran functions and subroutines
+     if (SageInterface::is_Fortran_language() )
+     {
+       SgProcedureHeaderStatement * f_func = isSgProcedureHeaderStatement(func);
+       ROSE_ASSERT (f_func != NULL);
+       if (return_type == buildVoidType())
+         f_func->set_subprogram_kind(SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
+       else
+         f_func->set_subprogram_kind(SgProcedureHeaderStatement::e_function_subprogram_kind);
+       
+       // hide it from the unparser since fortran prototype func declaration is internally used by ROSE AST 
+       f_func->get_startOfConstruct()->unsetOutputInCodeGeneration();
+       f_func->get_endOfConstruct()->unsetOutputInCodeGeneration();
+       ROSE_ASSERT(f_func->get_startOfConstruct()->isOutputInCodeGeneration() == false);
+       ROSE_ASSERT(f_func->get_endOfConstruct()->isOutputInCodeGeneration() == false);
+     }
      return func;  
    }
 
