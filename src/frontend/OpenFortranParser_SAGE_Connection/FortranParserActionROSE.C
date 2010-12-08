@@ -19459,6 +19459,9 @@ void c_action_start_of_file(const char *filename)
 
        // This does not always appear to be appending to the scope
           astScopeStack.front()->append_statement(includeLine);
+          // patch up defining and non-defining pointers, Liao 12/7/2010
+          includeLine->set_definingDeclaration(includeLine); 
+          includeLine->set_firstNondefiningDeclaration(includeLine); 
         }
 
 #if 1

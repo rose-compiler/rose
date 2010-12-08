@@ -48,3 +48,16 @@ SageBuilder::buildAttributeSpecificationStatement(SgAttributeSpecificationStatem
   setSourcePositionForTransformation(attributeSpecificationStatement); 
   return attributeSpecificationStatement;
 }
+
+//! Build Fortran include line
+SgFortranIncludeLine* 
+SageBuilder::buildFortranIncludeLine(std::string filename)
+{
+  SgFortranIncludeLine* result = new SgFortranIncludeLine(filename);;
+  ROSE_ASSERT (result != NULL);
+  result->set_definingDeclaration(result);
+  result->set_firstNondefiningDeclaration(result);
+  setSourcePositionForTransformation (result);
+  return result;
+}
+
