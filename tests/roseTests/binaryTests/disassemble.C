@@ -849,7 +849,7 @@ main(int argc, char *argv[])
             new_argv[new_argc++] = argv[i];
         }
     }
-    if (0==nposargs) {
+    if (0==nposargs && !do_rose_help) {
         fprintf(stderr, "%s: incorrect usage; see --help for details.\n", arg0);
         exit(1);
     }
