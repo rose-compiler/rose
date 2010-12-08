@@ -895,6 +895,17 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   // must pass target , not body_block to get the right scope in which the declarations are inserted
   wrapper_name= Outliner::generatePackingStatements(target,syms,pdSyms3, struct_decl);
   ROSE_ASSERT (result != NULL);
+
+  // 12/7/2010
+  // For Fortran outlined subroutines, 
+  // add INCLUDE 'omp_lib.h' in case OpenMP runtime routines are called within the outlined subroutines
+  if (SageInterface::is_Fortran_language() )
+  {
+    SgBasicBlock * body =  result->get_definition()->get_body();
+    ROSE_ASSERT (body != NULL);
+    SgFortranIncludeLine * inc_line = buildFortranIncludeLine("omp_lib.h");
+    prependStatement(inc_line, body);
+  }
   return result;
 }
   /* GCC's libomp uses the following translation method: 
@@ -1794,7 +1805,12 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
         {
           init = buildAssignInitializer(buildVarRefExp(orig_var, bb1));
         }
-        local_decl = buildVariableDeclaration("_p_"+orig_name, orig_type, init, bb1);
+        string private_name = "_p_"+orig_name;
+        if (SageInterface::is_Fortran_language()) // leading _ is not allowed in Fortran
+          private_name = "p_"+orig_name;
+        else
+          private_name = "_p_"+orig_name;
+        local_decl = buildVariableDeclaration(private_name, orig_type, init, bb1);
        //   prependStatement(local_decl, bb1);
        front_stmt_list.push_back(local_decl);   
         // record the map from old to new symbol

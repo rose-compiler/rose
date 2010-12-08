@@ -775,6 +775,9 @@ SgNullStatement* buildNullStatement_nfi();
 //! Build Fortran attribute specification statement
 SgAttributeSpecificationStatement * buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::attribute_spec_enum kind);
 
+//! Build Fortran include line
+SgFortranIncludeLine* buildFortranIncludeLine(std::string filename);
+
 // DQ (4/30/2010): Added support for building asm statements.
 //! Build a NULL statement
 SgAsmStmt* buildAsmStatement(std::string s);

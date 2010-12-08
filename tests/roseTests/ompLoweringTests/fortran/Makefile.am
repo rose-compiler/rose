@@ -11,7 +11,9 @@ F77_TESTCODES_REQUIRED_TO_COMPILE =
 F90_TESTCODES_REQUIRED_TO_COMPILE = 
 
 F77_TESTCODES_REQUIRED_TO_RUN = \
-  helloworld.f
+  helloworld.f \
+  private.f
+
 F90_TESTCODES_REQUIRED_TO_RUN = 
 
 TESTCODE_CURRENTLY_FAILING = 
@@ -64,9 +66,9 @@ if WITH_GOMP_OPENMP_LIB
 #-------------compile and run using GCC's runtime library--------------------------------       
 PASSING_F77_TEST_Executables = ${F77_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 PASSING_F90_TEST_Executables = ${F90_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
-MY_FINAL_LINK = $(top_builddir)/src/midend/programTransformation/ompLowering/libxomp.a $(GOMP_PATH)/libgomp.a -lpthread -lm
+MY_FINAL_LINK = $(top_builddir)/src/midend/programTransformation/ompLowering/libxomp.a $(GOMP_PATH)/libgomp.a -lpthread -lm -lrt
 
-F_LINK_FLAGS= -fno-underscoring
+F_LINK_FLAGS= #-fno-underscoring
 # $(F77) will be expanded to g77, which has different libfortran expectation
 # $(F90) is not defined?
 $(PASSING_F77_TEST_Executables): %.out: %.o
