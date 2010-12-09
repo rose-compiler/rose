@@ -535,6 +535,7 @@ static const Translate ipc_control[] = {
     TF3(0x00ff, IPC_INFO, IPC_INFO),
     TF3(0x00ff, MSG_STAT, MSG_STAT),
     TF3(0x00ff, MSG_INFO, MSG_INFO),
+    TF3(0x00ff, SHM_INFO, SHM_INFO),
     TF3(0xff00, 0x0100, IPC_64),
     T_END
 };
@@ -654,7 +655,28 @@ print_shmid64_ds_32(FILE *f, const uint8_t *_v, size_t sz)
     return retval;
 }
 
-    
+/* The shm_info struct as layed out in the 32-bit specimen */
+struct shm_info_32 {
+    int32_t used_ids;
+    uint32_t shm_tot;  /* total allocated shm */
+    uint32_t shm_rss;  /* total resident shm */
+    uint32_t shm_swp;  /* total swapped shm */
+    uint32_t swap_attempts;
+    uint32_t swap_successes;
+} __attribute__((packed));
+
+static int
+print_shm_info_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(shm_info_32)==sz);
+    const shm_info_32 *v = (const shm_info_32*)_v;
+
+    return fprintf(f, "used_ids=%"PRId32", shm_tot=%"PRIu32", shm_rss=%"PRIu32", shm_swp=%"PRIu32
+                   ", swap_attempts=%"PRIu32", swap_successes=%"PRIu32,
+                   v->used_ids, v->shm_tot, v->shm_rss, v->shm_swp,
+                   v->swap_attempts, v->swap_successes);
+}
+
 
 
 
@@ -2279,6 +2301,31 @@ EmulationPolicy::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             break;
         }
 
+        case SHM_INFO: {
+            shm_info host_info;
+            int result = shmctl(shmid, cmd, (shmid_ds*)&host_info);
+            if (-1==result) {
+                writeGPR(x86_gpr_ax, -errno);
+                break;
+            }
+
+            shm_info_32 guest_info;
+            guest_info.used_ids = host_info.used_ids;
+            guest_info.shm_tot = host_info.shm_tot;
+            guest_info.shm_rss = host_info.shm_rss;
+            guest_info.shm_swp = host_info.shm_swp;
+            guest_info.swap_attempts = host_info.swap_attempts;
+            guest_info.swap_successes = host_info.swap_successes;
+
+            if (sizeof(guest_info)!=map->write(&guest_info, buf_va, sizeof guest_info)) {
+                writeGPR(x86_gpr_ax, -EFAULT);
+                break;
+            }
+
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
         case IPC_RMID: {
             int result = shmctl(shmid, cmd, NULL);
             writeGPR(x86_gpr_ax, -1==result?-errno:result);
@@ -3586,6 +3633,8 @@ EmulationPolicy::emulate_syscall()
                     sys_shmctl(first, second, ptr);
                     if (set) {
                         syscall_leave("d");
+                    } else if (SHM_INFO==(second & ~0x0100)) {
+                        syscall_leave("d----P", sizeof(shm_info_32), print_shm_info_32);
                     } else {
                         syscall_leave("d----P", sizeof(shmid64_ds_32), print_shmid64_ds_32);
                     }
