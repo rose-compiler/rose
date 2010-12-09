@@ -9,6 +9,10 @@
 #   --The Rose Project Management.                                            #
 ###############################################################################
 
+# Directory containing this script, absolute name
+srcdir="${0%/*}"
+srcdir="$(cd $srcdir && pwd)"
+
 # This is the default location for build to use as a reference
 # to its macro definitions used by Autoconf and Automake.
 ROSE_DISTRIBUTION=${ROSE_DISTRIBUTION:-.}
@@ -43,6 +47,16 @@ while [[ "$#" -gt 0 ]]; do
             ;;
     esac
 done
+
+# If there's no autoconf-filter.pl script in this source tree, then we're building in some project external to ROSE, and
+# the "--srcpath" must be specified (or obtained from a config file).
+if [ ! -x $srcdir/scripts/autoconf-filter.pl -a "$ROSE_DISTRIBUTION" = "." ]; then
+    [ -r $srcdir/config/ROSE_SOURCES ] && ROSE_DISTRIBUTION="$(head -n1 $srcdir/config/ROSE_SOURCES)"
+fi
+if [ ! -x "$ROSE_DISTRIBUTION/scripts/autoconf-filter.pl" ]; then
+    echo "$0: use '--srcpath=DIR' to point to the ROSE source tree" >&2
+    exit 1
+fi
 
 # Extracts dotted version number from a tool's "--version" message. Assigns result to $VERSION.
 get_version () {
@@ -169,7 +183,7 @@ fi
     autoconf
     automake -a -c -i
 ) 2>&1 |$ROSE_DISTRIBUTION/scripts/autoconf-filter.pl |sed '/^[^+]/s/^/    /'
-if [[ ${PIPESTATUS[0]} != 0 ]]; then
+if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
     echo "$0: unable to initialize your build environment!" 2>&1
     exit 1
 fi
@@ -210,3 +224,6 @@ fi
 if [[ -n "$do_quiet" ]]; then
     (set -ex; $ROSE_DISTRIBUTION/scripts/quiet-mode) || true;
 fi
+
+# Save "--srcpath" value so rosegit-env can pick it up.
+echo $ROSE_DISTRIBUTION >$srcdir/config/ROSE_SOURCES 2>/dev/null
