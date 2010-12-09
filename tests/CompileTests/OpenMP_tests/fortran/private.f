@@ -5,8 +5,7 @@ C***************************************************
       PROGRAM HELLO
       include 'omp_lib.h'
 
-      INTEGER NTHREADS, TID, OMP_GET_NUM_THREADS,
-     +        OMP_GET_THREAD_NUM 
+      INTEGER NTHREADS, TID
 !$OMP PARALLEL PRIVATE(NTHREADS, TID)
       TID = OMP_GET_THREAD_NUM()
       PRINT *, 'Hello World by thread ', TID
