@@ -8059,6 +8059,14 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
 	initName->set_prev_decl_item(prev_decl);
       } //end if
     } //end for
+    // Liao 12/8/2010
+    // For Fortran, a common statement may refer to a variable which is declared later.
+    // In this case, a fake symbol is used for that variable reference.
+    // But we have to replace the fake one with the real one once the variable declaration is inserted into AST
+    if (SageInterface::is_Fortran_language() )
+    {
+      fixVariableReferences (scope);
+    }
   }
 
 int SageInterface::fixVariableReferences(SgNode* root)

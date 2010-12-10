@@ -778,6 +778,12 @@ SgAttributeSpecificationStatement * buildAttributeSpecificationStatement(SgAttri
 //! Build Fortran include line
 SgFortranIncludeLine* buildFortranIncludeLine(std::string filename);
 
+//! Build a Fortran common block, possibly with a name
+SgCommonBlockObject* buildCommonBlockObject(std::string name="", SgExprListExp* exp_list=NULL);
+
+//! Build a Fortran Common statement
+SgCommonBlock* buildCommonBlock(SgCommonBlockObject* first_block=NULL);
+
 // DQ (4/30/2010): Added support for building asm statements.
 //! Build a NULL statement
 SgAsmStmt* buildAsmStatement(std::string s);

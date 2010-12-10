@@ -6936,13 +6936,17 @@ void c_action_common_block_object_list(int count)
         }
 
      SgCommonBlockObject* commonBlockObject = new SgCommonBlockObject();
-  // setSourcePosition(commonBlockObject);
+     // Liao 12/9/2010
+     // We have to do this after moving SgCommonBlockObject to be under SgLocatedNodeSupport
+     // TODO: ask Dan to fill in real file info for both SgCommonBlockObject and the contained varRefList.
+     setSourcePosition(commonBlockObject);
 
      commonBlockObject->set_block_name(commonBlockName);
 
      SgExprListExp* varRefList = new SgExprListExp();
      commonBlockObject->set_variable_reference_list(varRefList);
 
+     // TODO: ask Dan to fill in real file info for varRefList.
      setSourcePosition(varRefList);
      varRefList->set_parent(commonBlockObject);
 
