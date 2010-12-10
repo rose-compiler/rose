@@ -667,6 +667,14 @@ Grammar::setUpStatements ()
      IfStmt.setDataPrototype     ( "bool", "has_end_statement", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (12/7/2010): Fortran specific, has associated then keyword.
+     IfStmt.setDataPrototype     ( "bool", "use_then_keyword", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (12/7/2010): Fortran specific, has associated else keyword before if (is an else-if statement).
+     IfStmt.setDataPrototype     ( "bool", "is_else_if_statement", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      ForStatement.setFunctionPrototype ( "HEADER_FOR_STATEMENT", "../Grammar/Statement.code" );
      ForStatement.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      ForStatement.editSubstitute      ( "LIST_DATA_TYPE", "SgStatementPtrList" );
