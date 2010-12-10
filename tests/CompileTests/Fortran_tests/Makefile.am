@@ -179,6 +179,12 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_127.f90 \
      test2010_128.f90 \
      test2010_129.f90 \
+     test2010_132.f90 \
+     test2010_133.f90 \
+     test2010_134.f90 \
+     test2010_135.f90 \
+     test2010_136.f90 \
+     test2010_137.f90 \
      canonicalExample.f90
 
 # DQ (12/5/2010): This generates an internal gfortran compiler error.
