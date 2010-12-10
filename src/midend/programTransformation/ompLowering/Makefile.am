@@ -4,7 +4,7 @@ INCLUDES = $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = libompLowering.la
 libompLowering_la_SOURCES = omp_lowering.cpp
-
+# avoid using libtool for libxomp.a since it will be directly linked to executable
 lib_LIBRARIES = libxomp.a
 libxomp_a_SOURCES = xomp.c
 

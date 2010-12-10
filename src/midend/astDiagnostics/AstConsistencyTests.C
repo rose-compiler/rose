@@ -1960,29 +1960,29 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
 
     We separate defining and non-defining declarations so that many aspects of analysis and transformation are 
 simplified, along with code generation. For example, if from any function declaration the function definition is sought,
-it is available from the defining declaration (this applied uniformally to all declarations). These tests
+it is available from the defining declaration (this applied uniformly to all declarations). These tests
 verify that the handling of defining and non-defining declaration follow specific rules (with a goal toward uniformity
 and intuitive behavior).
 
     Nondefining declarations appear as forward declarations and references to declarations within types.  These many
-appear many times within the source code and as a result are non unique withn the AST.  For example, each forward 
+appear many times within the source code and as a result are non unique within the AST.  For example, each forward 
 declaration of a function or class within a source code becomes a non-defining declaration.
 
     Defining declarations contain their definition, and function appearing with its body (implementation) is 
-a definind declaration containing a function definition (the scope of the function).  The defining declaration
+a defined declaration containing a function definition (the scope of the function).  The defining declaration
 should appear only once within the source code, by the One Time Definition rule, (OTD).  Each forward declaration, 
-clearly becomes a separate declaration byt it may be shared as needed to reduce the total number of non-defining 
+clearly becomes a separate declaration but it may be shared as needed to reduce the total number of non-defining 
 declarations, which are also referenced in types.
 
-   Within SAGE III, every declaration has a reference to its first non-defining declaration and its definind declaration
-if it exists (is defined within the current translation unit).  If in processing a defining declaration an refernece is
-required, get_declaration() always returns the non-definind declaration.  The definind declaration is only available
-explicitly (via a function call) and is never returned though any other mechansim.  Thus non-defining declarations
-are shared and nondefining declaration are never shared within the AST.
+   Within SAGE III, every declaration has a reference to its first non-defining declaration and its defined declaration
+if it exists (is defined within the current translation unit).  If in processing a defining declaration an reference is
+required, get_declaration() always returns the non-defined declaration.  The defined declaration is only available
+explicitly (via a function call) and is never returned through any other mechanism.  Thus non-defining declarations
+are shared and defining declaration are never shared within the AST.
 
 \subsection subsection3a When defining and non-defining declarations are the same
     SgEnumDeclaration declarations are not allowed to forward reference their definitions, this they are the same
-and the defining and nondefining declaration for a SgEnumDeclaration are pointer values which are the same.
+and the defining and non-defining declaration for a SgEnumDeclaration are pointer values which are the same.
 
 \example The following assertion is true for all SgEnumDeclaration objects: \n
      assert (declaration->get_definingDeclaration() == declaration->get_firstNondefiningDeclaration());
@@ -1991,7 +1991,7 @@ and the defining and nondefining declaration for a SgEnumDeclaration are pointer
    For all defining and nondefining declarations the scopes are the same, however for those that are 
 in namespaces the actual SgNamespaceDefinition of a defining and non-defining declaration could be 
 different.  To simplify analysis, the namespaces of defining and non-defining declarations are set 
-to the SgNamespaceDefinition of the definind declaration.  These test verify the equality of the 
+to the SgNamespaceDefinition of the defined declaration.  These test verify the equality of the 
 pointers for all scopes of defining and non-defining declarations.
 
 \example The following assertion is always true: \n
@@ -2167,6 +2167,7 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
        // These are special case declarations
        // case V_SgFunctionParameterList:
           case V_SgCtorInitializerList:
+          case V_SgFortranIncludeLine:
 
        // A variable definition appears with a variable declaration, but a variable declaration can be a 
        // forward reference to the variable declaration containing the variable definitions (e.g. "extern int x;", 
@@ -2177,7 +2178,7 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
           case V_SgPragmaDeclaration:
 
        // These can appear multiple times and are not really associated with definitions 
-       // (but for consistancy they are consired to be their own defining declaration).
+       // (but for consistency they are considered to be their own defining declaration).
           case V_SgUsingDirectiveStatement:
           case V_SgUsingDeclarationStatement:
           case V_SgNamespaceAliasDeclarationStatement:
@@ -2222,6 +2223,9 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
           case V_SgTemplateInstantiationFunctionDecl:
           case V_SgTemplateInstantiationDecl:
           case V_SgTemplateInstantiationMemberFunctionDecl:
+          // Liao 12/2/2010, add new Fortran function nodes
+          case V_SgProcedureHeaderStatement: 
+          case V_SgProgramHeaderStatement: 
              {
             // For some declarations, the only declaration is a defining declaration, in which case the 
             // non-defining declaration is NULL (except in the case of SgClassDeclarations, where a 
@@ -2254,6 +2258,8 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                          case V_SgMemberFunctionDeclaration:
                          case V_SgTemplateInstantiationFunctionDecl:
                          case V_SgTemplateInstantiationMemberFunctionDecl:
+                         case V_SgProcedureHeaderStatement: 
+                         case V_SgProgramHeaderStatement: 
                             {
                            // This is the reasonable case, where a function or template or typedef is 
                            // declared once (and only once and contains its definition).  Verify that 
@@ -2310,13 +2316,23 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                     SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(declaration);
                     if (typedefDeclaration == NULL || (SgProject::get_verbose() > 0) )
                        {
-                         printf ("Warning AST Consistancy Test: declaration %p = %s = %s has equal firstNondefiningDeclaration and definingDeclaration = %p \n",
+                         printf ("Warning AST Consistency Test: declaration %p = %s = %s has equal firstNondefiningDeclaration and definingDeclaration = %p \n",
                               declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str(),firstNondefiningDeclaration);
                          printf ("declaration->get_definingDeclaration() = %p declaration->get_firstNondefiningDeclaration() = %p \n",
                               declaration->get_definingDeclaration(),declaration->get_firstNondefiningDeclaration());
                          declaration->get_file_info()->display("firstNondefiningDeclaration == definingDeclaration: debug");
+
+                         // Liao 12/2/2010
+                         //  A test to see if the first nondefining declaration is set to self for a defining function declaration
+                         SgFunctionDeclaration * func = isSgFunctionDeclaration(declaration);
+                         if(func != NULL)
+                         {
+                           printf ("Error: found a defining function declaration with its first nondefining declaration set to itself/(or a defining declaration).\n");
+                           //ROSE_ASSERT (false);
+                         }
+ 
                        }
-                  }
+                  } // end if nondefining == defining
 
             // DQ (8/6/2007): Comment this out, at least for SgTypedefDeclaration it should be OK, MAYBE.
             // DQ (3/4/2007): Temporarily commented out (now uncommented)

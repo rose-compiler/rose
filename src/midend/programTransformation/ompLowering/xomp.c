@@ -82,6 +82,15 @@ void XOMP_terminate (int exitcode)
 #endif    
 }
 
+//Wrapper functions to support linking with Fortran programs
+// OFP does not support extensions like %VAL, so we use XOMP to compensate the difference
+// between pass-by-reference vs. pass-by-value.
+//void xomp_parallel_start (void (*func) (void *), void *data, unsigned numThread)
+#pragma weak xomp_parallel_start_=xomp_parallel_start
+void xomp_parallel_start (void (*func) (void *), void *data, unsigned* numThread)
+{
+   XOMP_parallel_start (func, data, *numThread);
+}
 void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread)
 {
 
@@ -93,6 +102,11 @@ void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread)
 #endif    
 }
 
+#pragma weak xomp_parallel_end_=xomp_parallel_end
+void xomp_parallel_end (void)
+{
+  XOMP_parallel_end ();
+}
 void XOMP_parallel_end (void)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  

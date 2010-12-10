@@ -3612,7 +3612,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
      SgAttributeSpecificationStatement *attributeSpecificationStatement = new SgAttributeSpecificationStatement();
 
-  // DQ (10/6/2008): It seems that we all of a sudden need thes to be set!
+  // DQ (10/6/2008): It seems that we all of a sudden need this to be set!
      attributeSpecificationStatement->set_definingDeclaration(attributeSpecificationStatement);
      attributeSpecificationStatement->set_firstNondefiningDeclaration(attributeSpecificationStatement);
 
@@ -5820,5 +5820,16 @@ buildIntrinsicModule ( const string & name )
   // ROSE_ASSERT(moduleSymbol != NULL);
 
      return moduleSymbol;
+   }
+
+void
+push_token(string s)
+   {
+  // This is the case of an option not being specified, as in "read(1)" instead of "read(UNIT=1)"
+  // To make the astExpressionStack match the astNameStack we have to push a default token onto the astNameStack.
+  // Token_t* defaultToken = create_token(0,0,0,"fmt");
+     Token_t* defaultToken = create_token(0,0,0,s.c_str());
+     ROSE_ASSERT(defaultToken != NULL);
+     astNameStack.push_front(defaultToken);
    }
 

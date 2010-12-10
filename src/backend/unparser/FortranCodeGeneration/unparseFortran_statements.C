@@ -1277,8 +1277,10 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
              {
                ROSE_ASSERT(nameList.empty() == false);
 
-               SgInitializedNamePtrList::iterator i = nameList.begin();
+               curprint("IMPLICIT ");
 
+               SgInitializedNamePtrList::iterator i = nameList.begin();
+#if 0
                SgInitializedName* firstName = *i;
                SgInitializedName* secondName = NULL;
                i++;
@@ -1297,12 +1299,30 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
                curprint(firstName->get_name().str());
                if (secondName != NULL)
                   {
+                 // DQ (12/2/2010): These need not match.
                  // Make sure that the types match for consistancy (error checking)
-                    ROSE_ASSERT(firstName->get_type() == secondName->get_type());
+                 // ROSE_ASSERT(firstName->get_type() == secondName->get_type());
                     curprint(" - ");
                     curprint(secondName->get_name().str());
                   }
                curprint(")");
+#else
+            // DQ (12/2/2010): New code to handle implicit statements.
+               while (i != nameList.end())
+                  {
+                    SgInitializedName* implicitTypeName = *i;
+
+                    unp->u_fortran_type->unparseType(implicitTypeName->get_type(),info);
+                    curprint("(");
+                    curprint(implicitTypeName->get_name().str());
+                    curprint(")");
+
+                    i++;
+
+                    if (i != nameList.end())
+                         curprint(",");
+               }
+#endif
              }
         }
 
@@ -3352,7 +3372,7 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
 
      SgExprListExp* iolist = readStatement->get_io_stmt_list();
 
-  // If only "READ 1,A" then this is using the format label "1" which is an alternative form or read statement.
+  // If only "READ 1,A" then this is using the format label "1" which is an alternative form of the read statement.
   // In this case the unit is not specified.
      if (readStatement->get_format() != NULL && readStatement->get_unit() == NULL)
         {
@@ -3366,6 +3386,8 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
         {
           curprint("(");
           unparse_IO_Support(readStatement,info);
+
+       // printf ("In unparseReadStatement(): FMT = %p = %s \n",readStatement->get_format(),readStatement->get_format()->class_name().c_str());
 
           unparse_IO_Control_Support("FMT",readStatement->get_format(),info);
           unparse_IO_Control_Support("REC",readStatement->get_rec(),info);

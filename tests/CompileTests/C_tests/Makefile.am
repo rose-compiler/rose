@@ -48,6 +48,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_13.c \
      test2010_14.c \
      test2010_15.c \
+     test2010_17.c \
      math.c \
      complex_01.c \
      constants.c
@@ -78,6 +79,7 @@ TESTCODE_CURRENTLY_FAILING = \
      test2010_02.c \
      test2010_03.c \
      test2010_05.c \
+     test2010_16.c \
      Yarden_client.c
 
 

@@ -885,14 +885,27 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   Outliner::insert(result, g_scope, body_block);
 
   // A fix from Tristan Ravitch travitch@cs.wisc.edu to make outlined functions static to avoid name conflicts
-  SageInterface::setStatic(result->get_definingDeclaration());
-  SageInterface::setStatic(result->get_firstNondefiningDeclaration());
+  if (result->get_definingDeclaration() != NULL)
+    SageInterface::setStatic(result->get_definingDeclaration());
+  if (result->get_firstNondefiningDeclaration() != NULL)
+    SageInterface::setStatic(result->get_firstNondefiningDeclaration());
 
   // Generate a call to the outlined function
   // Generate packing statements
   // must pass target , not body_block to get the right scope in which the declarations are inserted
   wrapper_name= Outliner::generatePackingStatements(target,syms,pdSyms3, struct_decl);
   ROSE_ASSERT (result != NULL);
+
+  // 12/7/2010
+  // For Fortran outlined subroutines, 
+  // add INCLUDE 'omp_lib.h' in case OpenMP runtime routines are called within the outlined subroutines
+  if (SageInterface::is_Fortran_language() )
+  {
+    SgBasicBlock * body =  result->get_definition()->get_body();
+    ROSE_ASSERT (body != NULL);
+    SgFortranIncludeLine * inc_line = buildFortranIncludeLine("omp_lib.h");
+    prependStatement(inc_line, body);
+  }
   return result;
 }
   /* GCC's libomp uses the following translation method: 
@@ -943,7 +956,16 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     ROSE_ASSERT(node != NULL);
     SgOmpParallelStatement* target = isSgOmpParallelStatement(node);
     ROSE_ASSERT (target != NULL);
-
+     
+    // Liao 12/7/2010
+    // For Fortran code, we have to insert EXTERNAL OUTLINED_FUNC into 
+    // the function body containing the parallel region
+    SgFunctionDefinition * func_def = NULL;
+    if (SageInterface::is_Fortran_language() )
+    {
+      func_def = getEnclosingFunctionDefinition(target);
+      ROSE_ASSERT (func_def != NULL);
+    }
     SgStatement * body =  target->get_body();
     ROSE_ASSERT(body != NULL);
     // Save preprocessing info as early as possible, avoiding mess up from the outliner
@@ -962,6 +984,18 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     ASTtools::VarSymSet_t syms;
     std::set<SgInitializedName*> readOnlyVars;
     SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, readOnlyVars);
+
+    if (SageInterface::is_Fortran_language() )
+    { // EXTERNAL outlined_function
+      ROSE_ASSERT (func_def != NULL);
+      SgBasicBlock * func_body = func_def->get_body();
+      ROSE_ASSERT (func_body != NULL);
+      SgAttributeSpecificationStatement* external_stmt1 = buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_externalStatement); 
+      SgFunctionRefExp *func_ref1 = buildFunctionRefExp (outlined_func); 
+      external_stmt1->get_parameter_list()->prepend_expression(func_ref1);
+      func_ref1->set_parent(external_stmt1->get_parameter_list());
+      prependStatement(external_stmt1, func_body);
+    }
 
     SgScopeStatement * p_scope = target->get_scope();
     ROSE_ASSERT(p_scope != NULL);
@@ -1771,7 +1805,12 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
         {
           init = buildAssignInitializer(buildVarRefExp(orig_var, bb1));
         }
-        local_decl = buildVariableDeclaration("_p_"+orig_name, orig_type, init, bb1);
+        string private_name = "_p_"+orig_name;
+        if (SageInterface::is_Fortran_language()) // leading _ is not allowed in Fortran
+          private_name = "p_"+orig_name;
+        else
+          private_name = "_p_"+orig_name;
+        local_decl = buildVariableDeclaration(private_name, orig_type, init, bb1);
        //   prependStatement(local_decl, bb1);
        front_stmt_list.push_back(local_decl);   
         // record the map from old to new symbol
@@ -2331,8 +2370,9 @@ If not, wrong code will be generated later on. The reason follows:
 
     patchUpPrivateVariables(file);
     patchUpFirstprivateVariables(file);
-
-    insertRTLHeaders(file);
+    // Liao 12/2/2010, Fortran does not require function prototypes
+    if (!SageInterface::is_Fortran_language() )
+      insertRTLHeaders(file);
     insertRTLinitAndCleanCode(file);
     //    translationDriver driver;
     // SgOmpXXXStatment is compiler-generated and has no file info

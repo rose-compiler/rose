@@ -293,6 +293,9 @@ SgClassSymbol* buildIntrinsicModule ( const std::string & name );
 //! Support for building implicit variables (works even when the name matches an inplicit function).
 void buildImplicitVariableDeclaration( const SgName & variableName );
 
+//! Support to push tokens onto the astNameStack.
+void push_token(std::string s);
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
 

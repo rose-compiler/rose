@@ -8,6 +8,7 @@ libsageInterface_la_SOURCES      = \
      sageInterface_type.C \
      generateUniqueName.C \
      sageBuilder.C \
+     sageBuilder_fortran.C \
      abiStuff.C
 #     highLevelInterface.C
 
