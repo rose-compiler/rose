@@ -1285,6 +1285,7 @@ FortranCodeGeneration_locatedNode::unparseVarRef(SgExpression* expr, SgUnparse_I
      ROSE_ASSERT(var_ref->get_symbol() != NULL);
   
      SgInitializedName* decl = var_ref->get_symbol()->get_declaration();
+     ROSE_ASSERT (decl != NULL);
      SgVariableDeclaration* vd = isSgVariableDeclaration(decl->get_declaration());
 
      if (false /*vd != NULL*/)

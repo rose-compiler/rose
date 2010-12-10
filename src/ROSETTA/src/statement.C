@@ -2090,7 +2090,9 @@ Grammar::setUpStatements ()
   // CommonBlock.setDataPrototype ("SgName", "name", "= \"\"",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      CommonBlock.setDataPrototype ( "SgCommonBlockObjectPtrList", "block_list", "",
-                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Liao 12/8/2010, This must be traversable to reach variable references underneath it.   
+                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  //                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // CommonBlock.setDataPrototype("SgInitializedNamePtrList", "variables", "",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      CommonBlock.setAutomaticGenerationOfDestructor(false);

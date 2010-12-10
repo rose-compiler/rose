@@ -60,4 +60,41 @@ SageBuilder::buildFortranIncludeLine(std::string filename)
   setSourcePositionForTransformation (result);
   return result;
 }
+//! Build a Fortran common block, possibly with a name
+SgCommonBlockObject* 
+SageBuilder::buildCommonBlockObject(std::string name/*="" */, SgExprListExp* exp_list/*=NULL*/)
+{
+  SgCommonBlockObject* result = new SgCommonBlockObject();
+  ROSE_ASSERT (result != NULL);
+  
+  result->set_block_name(name);
+
+  if (exp_list != NULL)
+  {
+    result->set_variable_reference_list(exp_list);
+    exp_list->set_parent(result);
+  }
+  setSourcePositionForTransformation (result);
+  return result;
+}
+
+//! Build a Fortran Common statement
+SgCommonBlock* 
+SageBuilder::buildCommonBlock(SgCommonBlockObject* first_block/*=NULL*/)
+{
+  SgCommonBlock* result = new SgCommonBlock();
+  ROSE_ASSERT (result != NULL);
+
+  if (first_block != NULL)
+  {
+    result->get_block_list().push_back(first_block);
+    first_block->set_parent(result);
+  }
+  
+  result->set_definingDeclaration(result);
+  result->set_firstNondefiningDeclaration(result);
+
+  setSourcePositionForTransformation(result);
+  return result;
+}
 
