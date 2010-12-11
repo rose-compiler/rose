@@ -1630,9 +1630,76 @@ buildNumericLabelSymbolAndAssociateWithStatement(SgStatement* stmt, Token_t* lab
      return label_symbol;
    }
 
+
+// DQ (12/8/2010): This is a new function that should likely not be implemented!
+void
+processLabelOnStack( SgStatement* statement )
+   {
+  // The label functionality should be handled via the label toke passed as a function parameter and
+  // we should disable the generation of SgLabelSymbol and pushing them onto the stack via R313
+  // (a reference for this handling is the email with Scott 12/8/2010).
+
+     ROSE_ASSERT(statement != NULL);
+
+     if (astLabelSymbolStack.empty() == false)
+        {
+          SgLabelSymbol* labelSymbol = astLabelSymbolStack.front();
+          ROSE_ASSERT(labelSymbol != NULL);
+
+          astLabelSymbolStack.pop_front();
+
+#if 0
+       // DQ (12/9/2010): We only want to pop the stack, the label is processed using
+       // only the token from the c_action function parameter as suggested by Scott.
+
+       // SgVarRefExp* labelVarRef = SageBuilder::buildVarRefExp(labelSymbol);
+          SgLabelRefExp* labelRefExp = new SgLabelRefExp(labelSymbol);
+          setSourcePosition(labelRefExp);
+
+          statement->set_numeric_label(labelRefExp);
+#endif
+        }
+   }
+
+
+// DQ (12/8/2010): This is a new function that should likely not be implemented!
+void
+specialFixupForLabelOnStackAndNotPassedAsParameter( SgStatement* statement )
+   {
+// This is to make up for a bug in OFP where the label is pushed onto the stack
+// but not also passed as a c_action function function argument.  So this is
+// the only way to detect and process the label.
+
+     ROSE_ASSERT(statement != NULL);
+
+     if (astLabelSymbolStack.empty() == false)
+        {
+          SgLabelSymbol* labelSymbol = astLabelSymbolStack.front();
+          ROSE_ASSERT(labelSymbol != NULL);
+
+          astLabelSymbolStack.pop_front();
+
+#if 1
+       // DQ (12/9/2010): We only want to pop the stack, the label is processed using
+       // only the token from the c_action function parameter as suggested by Scott.
+
+       // SgVarRefExp* labelVarRef = SageBuilder::buildVarRefExp(labelSymbol);
+          SgLabelRefExp* labelRefExp = new SgLabelRefExp(labelSymbol);
+          setSourcePosition(labelRefExp);
+
+          statement->set_numeric_label(labelRefExp);
+#endif
+        }
+   }
+
+
 void
 setStatementNumericLabelUsingStack(SgStatement* statement)
    {
+  // DQ (12/9/2010): To provide consistant handling of labels we want to only process 
+  // labels passed as arguments to the appropriate c_action function.  So this processing
+  // should be redundant with that and disallowed.
+
   // Set the label using the stack 
      if (astLabelSymbolStack.empty() == false)
         {
