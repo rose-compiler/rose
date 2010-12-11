@@ -2428,7 +2428,19 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
 
      SgIfStmt* elseIfStatement = getElseIfStatement ( if_stmt );
 
+#if 0
+     printf ("\nIn unparseIfStmt(): line = %d \n",if_stmt->get_file_info()->get_line());
+     printf ("In unparseIfStmt(): if_stmt->get_use_then_keyword()     = %s \n",if_stmt->get_use_then_keyword() ? "true" : "false");
+     printf ("In unparseIfStmt(): if_stmt->get_is_else_if_statement() = %s \n",if_stmt->get_is_else_if_statement() ? "true" : "false");
+     printf ("In unparseIfStmt(): if_stmt->get_has_end_statement()    = %s \n",if_stmt->get_has_end_statement() ? "true" : "false");
+     printf ("In unparseIfStmt(): elseIfStatement = %p \n",elseIfStatement);
+#endif
+
+#if 0
      bool ifStatementInFalseBody = false;
+
+#if 1
+  // This code detects if this is an else-if statement.
      SgBasicBlock* parentBlock   = isSgBasicBlock(if_stmt->get_parent());
   // printf ("parentBlock = %p \n",parentBlock);
      if (parentBlock != NULL)
@@ -2439,19 +2451,48 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
              {
                ROSE_ASSERT (isSgBasicBlock(parentIfStatement->get_false_body()));
                SgStatementPtrList & statementList = isSgBasicBlock(parentIfStatement->get_false_body())->get_statements();
-               ifStatementInFalseBody = (find(statementList.begin(),statementList.end(),if_stmt) != statementList.end());
+
+            // Added code to make sure that the if is a part of an else and is the only statement inside the false block.
+            // if (statementList.size() > 1)
+                  {
+                    ifStatementInFalseBody = (find(statementList.begin(),statementList.end(),if_stmt) != statementList.end());
+                  }
              }
         }
+#endif
+
+     printf ("In unparseIfStmt(): ifStatementInFalseBody = %s \n",ifStatementInFalseBody ? "true" : "false");
+
+#if 0
+     SgBasicBlock* trueBlock  = isSgBasicBlock(if_stmt->get_true_body());
+     SgBasicBlock* falseBlock = isSgBasicBlock(if_stmt->get_false_body());
+
+     int numberOfStatementsInIfStatementTrueBody  = (trueBlock  == NULL) ? 0 : trueBlock->get_statements().size();
+     int numberOfStatementsInIfStatementFalseBody = (falseBlock == NULL) ? 0 : falseBlock->get_statements().size();
+  // int numberOfStatementsInIfStatement          = numberOfStatementsInIfStatementTrueBody + numberOfStatementsInIfStatementFalseBody;
+
+     printf ("In unparseIfStmt(): numberOfStatementsInIfStatementTrueBody  = %d \n",numberOfStatementsInIfStatementTrueBody);
+     printf ("In unparseIfStmt(): numberOfStatementsInIfStatementFalseBody = %d \n",numberOfStatementsInIfStatementFalseBody);
+
+     bool tooManyStatementsForIfWithoutThen = (numberOfStatementsInIfStatementTrueBody > 1);
+#endif
 
   // printf ("(if then case) ifStatementInFalseBody = %s \n",ifStatementInFalseBody ? "true" : "false");
-     bool output_as_elseif = ifStatementInFalseBody;
+  // bool output_as_elseif = ifStatementInFalseBody;
+  // bool output_as_elseif = ifStatementInFalseBody && !tooManyStatementsForIfWithoutThen;
+  // bool output_as_elseif = ifStatementInFalseBody && output_endif;
+  // bool output_as_elseif = ifStatementInFalseBody;
+#endif
 
   // printf ("Handling THEN case for if_stmt = %p \n",if_stmt);
   // DQ (12/26/2007): If this is an elseif statement then output the "THEN" even though we will not output an "ENDIF"
   // if (output_endif == true || output_as_elseif == true)
      if (output_endif == true)
         {
+          ROSE_ASSERT(if_stmt->get_use_then_keyword() == true);
+
           curprint("THEN");
+       // curprint("THEN ! Output as endif");
        // if (output_as_elseif == true) info.set_SkipFormatting();// curprint("\n      ");
           unparseStatement(if_stmt->get_true_body(), info);
        // if (output_as_elseif == true) info.unset_SkipFormatting();// curprint("\n      ");
@@ -2460,9 +2501,11 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
        else
         {
        // curprint("!output on same line!");
-          if (output_as_elseif == true)
+       // if (output_as_elseif == true)
+          if (if_stmt->get_use_then_keyword() == true)
              {
                curprint("THEN");
+            // curprint("THEN ! Output as elseif");
                unparseStatement(if_stmt->get_true_body(),info);
              }
             else
@@ -4095,6 +4138,8 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
         {
           curprint(" = ");
 
+       // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): init = %s \n",init,init->class_name().c_str());
+
        // I think the initializer for Fortran is always a SgExprListExp, but it need not be.
 #if 0
           SgAssignInitializer* assignInitializer = isSgAssignInitializer(init);
@@ -4135,7 +4180,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                   }
              }
 #else
-       // DQ (4/28/2008): Make this code simpler, by using differen initializer IR nodes.
+       // DQ (4/28/2008): Make this code simpler, by using different initializer IR nodes.
           SgInitializer* initializer = isSgInitializer(init);
           ROSE_ASSERT(initializer != NULL);
           unparseExpression(initializer, info);

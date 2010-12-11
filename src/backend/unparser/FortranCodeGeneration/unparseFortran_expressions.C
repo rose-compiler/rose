@@ -978,16 +978,23 @@ FortranCodeGeneration_locatedNode::unparseInitializerList(SgExpression* expr, Sg
 
      info.set_nested_expression();
 
-     bool paren = false;
+  // bool paren = false;
+     bool paren = true;
      if (paren)
         {
-          curprint("(");
+       // DQ (12/9/2010): This is a bug in test2010_136.f90.
+       // curprint("(");
+          curprint("(/");
         }
 
-     curprint("/");
+  // DQ (12/9/2010): This is a bug in test2010_136.f90.
+  // curprint("/");
+
      SgExpressionPtrList::iterator it = expr_list->get_expressions().begin();
      while (it != expr_list->get_expressions().end())
         {
+       // printf ("In unparseInitializerList(): *it = %p = %s \n",*it,(*it)->class_name().c_str());
+
           unparseExpression(*it, info);
           it++;
           if (it != expr_list->get_expressions().end())
@@ -995,11 +1002,15 @@ FortranCodeGeneration_locatedNode::unparseInitializerList(SgExpression* expr, Sg
                curprint(","); 
              }
         }
-     curprint("/");
+
+  // DQ (12/9/2010): This is a bug in test2010_136.f90.
+  // curprint("/");
 
      if (paren)
         {
-          curprint(")");
+       // DQ (12/9/2010): This is a bug in test2010_136.f90.
+       // curprint(")");
+          curprint("/)");
         }
 
      info.unset_nested_expression();
@@ -1035,12 +1046,17 @@ FortranCodeGeneration_locatedNode::unparseAggrInit(SgExpression* expr, SgUnparse
 
      curprint("}");
 #else
-     curprint("(");
+
+  // DQ (12/9/2010): This is a bug in test2010_136.f90.
+  // curprint("(");
+
   // info.set_nested_expression();
   // unparseExpression(aggr_init->get_initializers(), info);
      unparseInitializerList(aggr_init->get_initializers(), info);
   // info.unset_nested_expression();
-     curprint(")");
+
+  // DQ (12/9/2010): This is a bug in test2010_136.f90.
+  // curprint(")");
 #endif
    }
 
@@ -1062,9 +1078,11 @@ FortranCodeGeneration_locatedNode::unparseConInit(SgExpression* expr, SgUnparse_
      curprint(className);
 
      curprint("(");
+
      ROSE_ASSERT(constructorInitializer->get_args() != NULL);
   // unparseInitializerList(constructorInitializer->get_args(), info);
      unparseExpression(constructorInitializer->get_args(), info);
+
      curprint(")");
 
    }
