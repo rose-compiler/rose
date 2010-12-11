@@ -2241,7 +2241,6 @@ parse_syscall (char *type)
 {
   rec_part *rec = NULL;
   char *token;
-  long long temp_arg;
 
   if ((rec = (rec_part *) malloc (sizeof (rec_part))) == NULL)
     {
@@ -2281,8 +2280,11 @@ parse_syscall (char *type)
 
   token = strtok (NULL, delim);
 #if defined(__MODE_32) && defined(__S390X)
-  sscanf (extract_value (token), "%Lx", &temp_arg);
-  rec->data.syscall.argv[3] = 0x00000000FFFFFFFF & temp_arg;
+  {
+      long long temp_arg;
+      sscanf (extract_value (token), "%Lx", &temp_arg);
+      rec->data.syscall.argv[3] = 0x00000000FFFFFFFF & temp_arg;
+  }
 #else
   sscanf (extract_value (token), "%lx", &rec->data.syscall.argv[3]);
 #endif

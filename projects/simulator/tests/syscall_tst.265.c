@@ -80,7 +80,6 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <selinux/selinux.h>
 
 #include "audit_utils.h"
 #include "test.h"
@@ -118,7 +117,7 @@ void syscall_success()
 
 void syscall_fail()
 {
-  int err, errnum, rc;
+  int errnum, rc;
   struct timespec tspec;
   clockid_t clock = CLOCK_REALTIME;
   rc = clock_gettime(clock, &tspec);
@@ -132,7 +131,7 @@ void syscall_fail()
   /* Check if syscall got expected return code. */
   if ((rc) && (errnum != EPERM)) {
     tst_resm(TFAIL, "Expected EPERM, got rc=[%d] errno=[%d], %s",
-        rc, errnum), strerror(errnum);
+             rc, errnum, strerror(errnum));
     exit(1);
   } else {
     tst_resm(TINFO, "clock_settime returned expected EPERM error");

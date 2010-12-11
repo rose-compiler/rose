@@ -86,7 +86,6 @@ make[4]: *** Waiting for unfinished jobs....
 #include <sys/types.h>
 #include <sys/unistd.h>
 #include <sys/ioctl.h>
-#include <selinux/selinux.h>
 
 #include "test.h"
 #include "usctest.h"
@@ -101,7 +100,6 @@ int fd;
 
 struct audit_record *success_audit_record = NULL;
 struct audit_record *fail_audit_record = NULL;
-security_context_t subj;
 
 void test_setup();
 void test_cleanup();
@@ -118,7 +116,6 @@ int main(int ac, char **av)
 
 void syscall_success()
 {
-	char log_header[LOG_HEADER_SIZE] = "";
 	TEST_RETURN = -1;       /* reset verify value */
 	char* dev = "/dev/tty";
 	struct termio tio;
@@ -141,7 +138,6 @@ void syscall_success()
 
 void syscall_fail()
 {
-	char log_header[LOG_HEADER_SIZE] = "";
 	TEST_RETURN = -1;       /* reset verify value */
 	char* notty = "/tmp/notty";
 	struct termio tio;

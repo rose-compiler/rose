@@ -8,6 +8,7 @@ MOSTLYCLEANFILES=
 EXTRA_DIST=
 include_HEADERS=
 noinst_PROGRAMS=
+lib_LIBRARIES=
 
 ###############################################################################################################################
 #  DOCUMENTATION
@@ -26,12 +27,6 @@ include_HEADERS += mymemory.h simulate.h
 sandbox_SOURCES = emulator.C simulate.C linuxcalls.C elfload.C
 sandbox_CPPFLAGS = $(ROSE_INCLUDES) -UDEBUG
 sandbox_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
-lib_LIBRARIES = libipc.a
-libipc_a_SOURCES = $(srcdir)/tests/libipc.c
-libipc_a_CFLAGS = -m32
-
-include_HEADERS += $(srcdir)/tests/ipcmsg.h  $(srcdir)/tests/ipcsem.h  $(srcdir)/tests/ipcshm.h
 
 # The new simulator, which uses ROSE interfaces where possible.  The rest of this makefile deals only with this new simulator.
 noinst_PROGRAMS += x86sim
@@ -380,21 +375,45 @@ TEST_INPUTS    = $(TEST_INPUTS_SA) $(TEST_INPUTS_RT) $(TEST_INPUTS_TS) $(TEST_IN
 MOSTLYCLEANFILES += $(TEST_INPUTS) $(addsuffix .o, $(TEST_INPUTS)) \
                     $(addsuffix .o, $(basename $(notdir $(TEST_SUPPORT_SRC))))
 
+# The test inputs
 $(TEST_INPUTS_SA): %: $(srcdir)/tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/tests -o $@ $^
+	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ $^
 $(TEST_INPUTS_RT): %: $(srcdir)/tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/tests -o $@ $^ -lrt
-$(TEST_INPUTS_TS): %: $(srcdir)/tests/%.c $(TEST_SUPPORT_SRC) libipc.a
+	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ $^ -lrt
+$(TEST_INPUTS_TS): %: $(srcdir)/tests/%.c libtestsupport.a libipc.a
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/tests -o $@ $^ libipc.a -lrt 
+	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ $^ -lrt 
 $(TEST_INPUTS_NM): %: $(srcdir)/tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/tests -o $@ $^ 
+	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ $^ 
 # Target to manually build the test inputs. (Not used internally)
 .PHONY: test_inputs
 test_inputs: $(TEST_INPUTS)
+
+
+# The test support library
+TEST_SUPPORT_OBJ = $(patsubst %.c, %.o, $(notdir $(TEST_SUPPORT_SRC)))
+libtestsupport.a: $(TEST_SUPPORT_OBJ)
+	@echo "  AR      $@"
+	@ar -rc $@ $(TEST_SUPPORT_OBJ)
+$(TEST_SUPPORT_OBJ): %.o: $(srcdir)/tests/%.c
+	@echo "  CC32    $@"
+	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ -c $^
+MOSTLYCLEANFILES += libtestsupport.a
+
+# The ipc support library
+include_HEADERS += $(srcdir)/tests/ipcmsg.h  $(srcdir)/tests/ipcsem.h  $(srcdir)/tests/ipcshm.h
+IPC_SUPPORT_SRC = $(srcdir)/tests/libipc.c
+IPC_SUPPORT_OBJ = $(patsubst %.c, %.o, $(notdir $(IPC_SUPPORT_SRC)))
+libipc.a: $(IPC_SUPPORT_OBJ)
+	@echo "  AR      $@"
+	@ar -rc $@ $(IPC_SUPPORT_OBJ)
+$(IPC_SUPPORT_OBJ): %.o: $(srcdir)/tests/%.c
+	@echo "  CC32    $@"
+	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ -c $^
+MOSTLYCLEANFILES += libipc.a
 
 
 ###############################################################################################################################
