@@ -21,8 +21,12 @@ check-local:
 	@echo "#################################################"
 	@echo "Test compilation for any output (should be zero!)"
 	@echo "#################################################"
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	@$(MAKE) $(CXX_TEST_Objects)
+endif
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	@$(MAKE) $(F90_TEST_Objects)
+endif
 	@echo "******************************************************************************************************************"
 	@echo "****** ROSE/tests/CompilerOptionTests/testForSpuriousOutput: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************************"
@@ -41,6 +45,9 @@ $(CXX_TEST_Objects): $(CXX_TESTCODES)
       echo "####################################################################################################"; \
       echo "FAILED: Output from C++ compilation detected (clean up translator to eliminate output when verbose == 0)"; \
       echo "####################################################################################################"; \
+      echo "*** Output detected ***"; \
+      cat outputFile; \
+      echo "####################################################################################################"; \
       exit 1; \
    fi;
 
@@ -56,6 +63,9 @@ $(F90_TEST_Objects): $(F90_TESTCODES)
    else \
       echo "####################################################################################################"; \
       echo "FAILED: Output from F90 compilation detected (clean up translator to eliminate output when verbose == 0)"; \
+      echo "####################################################################################################"; \
+      echo "*** Output detected ***"; \
+      cat outputFile; \
       echo "####################################################################################################"; \
       exit 1; \
    fi;

@@ -695,6 +695,10 @@ testCPP_Defines:
 #	Test source code with macro defined from the command line: e.g. "integer*PS  pe"
 	../../testTranslator $(ROSE_FLAGS) -DPS=8 $(srcdir)/inputUsingDefinesOnCommandline.F90
 
+testMPI:
+	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/mpi.f90
+	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/mpi_test_01.f90
+
 testMPItypes:
 	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/ISO_C_BINDING.f03
 	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_types.f03
@@ -775,7 +779,7 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
    test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08 \
    module_A_file.f90 module_B_file.f90 test2010_31_header.f90 test2010_50.h test2010_54.h test2010_55.h \
    original_mpif.h inputUsingDefinesOnCommandline.F90 fortran_foo_single_quote.h fortran_foo_double_quote.h \
-   cpp_foo.h cpp_foobar.h ISO_C_BINDING.f03 mpi_f08_types.f03 mpi_f08_interfaces_test.f03
+   cpp_foo.h cpp_foobar.h ISO_C_BINDING.f03 mpi_f08_types.f03 mpi_f08_interfaces_test.f03 mpif.h mpiof.h
 
 # DQ (3/12/2010): Fortran 2008 tests from OFP
 # f08-tests

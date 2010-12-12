@@ -2493,8 +2493,14 @@ TransformationSupport::getClassDefinition( const SgNode* astNode)
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
+#if 0
           printf ("Error: could not trace back to SgClassDefinition node \n");
           ROSE_ABORT();
+#else
+       // DQ (12/11/2010): It is OK to return NULL from this function (used fortran_support.C
+       // SgFunctionRefExp* generateFunctionRefExp(Token_t* nameToken) for fortran support).
+          return NULL;
+#endif
         }
        else
         {

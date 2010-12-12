@@ -623,7 +623,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
           printf ("In c_action_intrinsic_type_spec(): keyword1 = %p = %s keyword2 = %p = %s type = %d, hasKindSelector = %s \n",
                keyword1,keyword1 != NULL ? keyword1->text : "NULL",keyword2,keyword2 != NULL ? keyword2->text : "NULL",type,hasKindSelector ? "true" : "false");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R403 c_action_intrinsic_type_spec()");
 #endif
@@ -640,7 +640,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
   // printf ("hasKindSelector = %s \n",hasKindSelector ? "true" : "false");
      if (hasKindSelector == true)
         {
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("hasKindSelector == true in R403 c_action_intrinsic_type_spec()");
 #endif
@@ -838,7 +838,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
           ROSE_ASSERT(astTypeParameterStack.empty() == true);
           ROSE_ASSERT(astExpressionStack.empty() == true);
 
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("hasKindSelector == true (BOTTOM) in R403 c_action_intrinsic_type_spec()");
 #endif
@@ -853,7 +853,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
 #endif
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R403 c_action_intrinsic_type_spec()");
 #endif
@@ -3995,7 +3995,7 @@ void c_action_entity_decl(Token_t * id)
        // printf ("Before resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
           functionType->set_return_type(astTypeStack.front());
           functionType->set_orig_return_type(type);
-       // printf ("After resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
+       // printf ("After resetting case 1: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
 
        // printf ("Exiting at base of case to reset the function type! \n");
        // ROSE_ASSERT(false);
@@ -4037,19 +4037,29 @@ void c_action_entity_decl(Token_t * id)
                  // printf ("Before resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
                     functionType->set_return_type(type);
                     functionType->set_orig_return_type(type);
-                 // printf ("After resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
+                 // printf ("After resetting case 2: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
                   }
              }
+
+          ROSE_ASSERT(initializedName != NULL);
         }
        else
         {
        // initializedName = new SgInitializedName(name,type,initializer,NULL,NULL);
           if (functionSymbol != NULL)
              {
-            // Unclear what to do here!
+            // This is the case of where an external function has been declared and it's type is being specified.  It should not generate a variable declaration.
+            // printf ("This is the case of where an external function has been declared and it's type is being specified. \n");
+
+            // DQ (12/11/2010): This is not unclear, we don't want a variable declaration built where the purpose was to define the named function's return type.
+            // Also, we might want to verify the scope of the function (parent of declaration) is consistant with where its return type is being defined (current scope).
+            // However, if we don't build a variable declaration then we have nothing that will be output by the unparser that will define the return type of the 
+            // function, unless we force such a statement to be generated when we unparse the external statement.  But then we would loose the order of the statements.
+            // Old comment... Unclear what to do here!
+               ROSE_ASSERT(initializedName == NULL);
                initializedName = new SgInitializedName(name,type,initializer,NULL,NULL);
+
             // FMZ 6/8/2010: set the it as a result of the function, avoid unparser duplicate the type decl
-            // SgFunctionSymbol=>SgFunctionDeclaration=>
                SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionSymbol->get_declaration());
                functionDeclaration->set_result_name(initializedName);
              }
@@ -4077,10 +4087,13 @@ void c_action_entity_decl(Token_t * id)
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
+               ROSE_ASSERT(initializedName != NULL);
              }
         }
-     ROSE_ASSERT(initializedName != NULL);
 
+     ROSE_ASSERT(initializedName != NULL);
+  // if (initializedName != NULL)
+        {
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("Before cleaning up the stacks in R504 c_action_entity_decl()");
@@ -4098,8 +4111,6 @@ void c_action_entity_decl(Token_t * id)
           initializedName->set_isCoArray(false);
         }
 #endif
- 
-
 
   // printf ("In c_action_entity_decl(): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
 
@@ -4138,6 +4149,9 @@ void c_action_entity_decl(Token_t * id)
   // astTypeStack.pop_front();
      if (dimensionAttributeSpecFound == false)
           astTypeStack.pop_front();
+
+  // Is this the correct location for this end of block?
+        }
 
      ROSE_ASSERT(astNameStack.empty() == false);
      astNameStack.pop_front();
@@ -16650,7 +16664,7 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 
-#if 1
+#if 0
      printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 #endif
 
@@ -18202,10 +18216,13 @@ void c_action_external_stmt(Token_t *label, Token_t *externalKeyword, Token_t *e
   // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
      build_implicit_program_statement_if_required();
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1210 c_action_external_stmt()");
 #endif
+
+  // DQ (12/11/2010): I think this is always NULL, since labels can't be used with the external statement.
+     ROSE_ASSERT(label == NULL);
 
   // Take the name on the astNameStack and convert it to a SgFunctionCallExp
 
@@ -18249,7 +18266,7 @@ void c_action_external_stmt(Token_t *label, Token_t *externalKeyword, Token_t *e
                currentScope->remove_symbol(variableSymbol);
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("Before buildAttributeSpecificationStatement() in R1210 c_action_external_stmt()");
 #endif
@@ -18257,8 +18274,17 @@ void c_action_external_stmt(Token_t *label, Token_t *externalKeyword, Token_t *e
      buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_externalStatement,label,externalKeyword);
 
 #if 0
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     astScopeStack.front()->print_symboltable("In c_action_external_stmt()");
+#endif
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1210 c_action_external_stmt()");
+#endif
+
+#if 0
+     printf ("Exiting at end of R1210 c_action_external_stmt() \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -19435,6 +19461,10 @@ void c_action_end_of_stmt(Token_t * eos)
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1238 c_action_end_of_stmt()");
+#endif
+
+#if 0
+     astScopeStack.front()->print_symboltable("In c_action_end_of_stmt()");
 #endif
 
 #if 0
