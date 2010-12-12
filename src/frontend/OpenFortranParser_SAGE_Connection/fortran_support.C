@@ -707,7 +707,7 @@ createUnaryOperator ( SgExpression* exp, string name, bool is_user_defined_opera
           printf ("name = %s \n",name.c_str());
           printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 
-          currentScope->print_symboltable ("In createBinaryOperator()");
+       // currentScope->print_symboltable ("In createBinaryOperator()");
 
           SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(name,currentScope);
           ROSE_ASSERT(functionSymbol != NULL);
@@ -802,7 +802,7 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
           printf ("name = %s \n",name.c_str());
           printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 
-          currentScope->print_symboltable ("In createBinaryOperator()");
+       // currentScope->print_symboltable ("In createBinaryOperator()");
 
           SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(name,currentScope);
           ROSE_ASSERT(functionSymbol != NULL);
@@ -3672,7 +3672,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
   // printf ("In buildAttributeSpecificationStatement(): kind = %d label = %s \n",kind,label != NULL ? label->text : "NULL");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of buildAttributeSpecificationStatement()");
 #endif
@@ -3835,6 +3835,10 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
                astExpressionStack.pop_front();
              }
+#if 0
+          ROSE_ASSERT(astScopeStack.empty() == false);
+          astScopeStack.front()->print_symboltable("In buildAttributeSpecificationStatement()");
+#endif
 #if 0
        // Output debugging information about saved state (stack) information.
           outputState("At BASE of buildAttributeSpecificationStatement() for (parameter || external || allocatable || dimension) statement");
@@ -4605,7 +4609,7 @@ generateFunctionRefExp( Token_t* nameToken )
         }
        else
         {
-       // If the function has not been seen yet, it does not mean that this is an array.  It could be a function 
+       // If the function has not been seen yet, it does not mean that it is an array.  It could be a function 
        // to be declared later or an intrinsic function.  But the point is that it is a function!
 
        // For implicit function we build non-defining declarations
@@ -4625,6 +4629,9 @@ generateFunctionRefExp( Token_t* nameToken )
        // Set the parent to the global scope, mostly just to have it be non-NULL (checked by internal error checking).
           ROSE_ASSERT(astScopeStack.empty() == false);
 
+#if 0
+       // DQ (12/11/2010): I think this should not be treated as a global scope function. See test2010_140.f90.
+
        // The global scope is ALWAYS on the bottom of the stack.
           SgGlobal* globalScope = isSgGlobal(astScopeStack.back());
           ROSE_ASSERT(globalScope != NULL);
@@ -4641,7 +4648,35 @@ generateFunctionRefExp( Token_t* nameToken )
 
        // Insert the function into the global scope so that we can find it later.
           globalScope->insert_symbol(functionName,functionSymbol);
+#else
+       // We really want the nearest module scope or global scope is there is no module scope.
+       // See test2010_140.f90
+       // SgScopeStatement* currentScope = astScopeStack.front();
+          SgScopeStatement* currentScope = isSgClassDefinition(astScopeStack.front());
+          if (currentScope == NULL)
+             {
+               currentScope = TransformationSupport::getClassDefinition(astScopeStack.front());
+               if (currentScope == NULL)
+                  {
+                    currentScope = TransformationSupport::getGlobalScope(astScopeStack.front());
+                    ROSE_ASSERT(currentScope != NULL);
+                  }
+             }
+          ROSE_ASSERT(currentScope != NULL);
 
+          functionDeclaration->set_parent(currentScope);
+          functionDeclaration->set_scope(currentScope);
+
+          setSourcePosition(functionDeclaration,nameToken);
+       // We should not have to set this explicitly!
+          setSourcePosition(functionDeclaration->get_parameterList(),nameToken);
+
+       // Now build the function call and use the arguments from the ExprList on the top of the astExpressionStack!
+          SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(functionDeclaration);
+
+       // Insert the function into the global scope so that we can find it later.
+          currentScope->insert_symbol(functionName,functionSymbol);
+#endif
           functionRefExp = new SgFunctionRefExp(functionSymbol,NULL);
           setSourcePosition(functionRefExp);
         }
@@ -4666,6 +4701,8 @@ generateFunctionCall( Token_t* nameToken )
      SgExprListExp* functionArguments = isSgExprListExp(astExpressionStack.front());
      astExpressionStack.pop_front();
 
+  // DQ (12/11/2010): If the name of this function is not found a function of this 
+  // name will be added to the current scope (see details in generateFunctionRefExp()).
      SgFunctionRefExp* functionRefExp = generateFunctionRefExp(nameToken);
 
      SgFunctionCallExp* functionCallExp  = new SgFunctionCallExp(functionRefExp,functionArguments,NULL);
