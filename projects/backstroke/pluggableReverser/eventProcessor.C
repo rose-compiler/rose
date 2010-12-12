@@ -181,7 +181,7 @@ SgExpression* EventProcessor::restoreVariable(VariableRenaming::VarName variable
 	return results.empty() ? NULL : results.front();
 }
 
-SgExpression* EventProcessor::getStackVar(SgType* type)
+SgVarRefExp* EventProcessor::getStackVar(SgType* type)
 {
 	string type_name;
 
