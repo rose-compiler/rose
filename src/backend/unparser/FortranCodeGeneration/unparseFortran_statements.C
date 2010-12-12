@@ -3380,7 +3380,14 @@ FortranCodeGeneration_locatedNode::unparse_IO_Support(SgStatement* stmt, bool sk
         {
        // We need to generate code without the leading ","
        // unparse_IO_Control_Support("UNIT",io_stmt->get_unit(),info);
-          curprint("UNIT=");
+
+       // DQ (12/12/2010): Also for at least the gnu gfortran version 4.2.4, we can't output the "UNIT=" 
+       // string for the write statement. See test2010_144.f90 for an example of this.
+          bool skipOutputOfUnitString = (isSgWriteStatement(stmt) != NULL);
+          if (skipOutputOfUnitString == false)
+             {
+               curprint("UNIT=");
+             }
 
           if (io_stmt->get_unit() != NULL)
              {

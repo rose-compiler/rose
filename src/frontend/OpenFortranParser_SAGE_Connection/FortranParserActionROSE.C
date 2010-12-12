@@ -14313,7 +14313,9 @@ void c_action_write_stmt(Token_t *label, Token_t *writeKeyword, Token_t *eos, of
                astExpressionStack.pop_front();
              }
 #else
-          printf ("WARNING: unfinished implied do loop expressions may be left on stack (or it may be from a c_action_if_stmt()) (write) \n");
+       // DQ (12/12/2010): Make this a warning only output within verbose mode.
+          if ( SgProject::get_verbose() > 0 )
+               printf ("WARNING: unfinished implied do loop expressions may be left on stack (or it may be from a c_action_if_stmt()) (write) \n");
 #endif
         }
    }
