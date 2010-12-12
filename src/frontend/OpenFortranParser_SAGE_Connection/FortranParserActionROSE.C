@@ -14915,7 +14915,7 @@ void c_action_io_implied_do()
      setSourcePosition(increment);
 
      ROSE_ASSERT(astExpressionStack.empty() == false);
-     printf ("In R917 c_action_io_implied_do(): astExpressionStack.front() = %s \n",astExpressionStack.front()->class_name().c_str());
+  // printf ("In R917 c_action_io_implied_do(): astExpressionStack.front() = %s \n",astExpressionStack.front()->class_name().c_str());
      SgExprListExp* objectList = isSgExprListExp(astExpressionStack.front());
      astExpressionStack.pop_front();
 
@@ -15724,7 +15724,7 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id,
 
             // We don't need the current_IO_Control_Spec data structure in the code below.
 
-            // The "unit=" string is optional, if it was not present then a toekn was pushed onto the stack with the text value "defaultString"
+            // The "unit=" string is optional, if it was not present then a token was pushed onto the stack with the text value "defaultString"
                if ( strncasecmp(name->text,"unit",4) == 0 || strncmp(name->text,"defaultString",13) == 0)
                   {
                     inquireStatement->set_unit(expression);
@@ -15887,11 +15887,43 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id,
  * @param count The number of items in the list.
  */
 void c_action_inquire_spec_list__begin()
-{
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_inquire_spec_list__begin() \n");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R930 c_action_inquire_spec_list__begin()");
+#endif
+   }
+
+void c_action_inquire_spec(Token_t *specName)
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_inquire_spec(): specName = %p = %s \n",specName,specName ? specName->text : "NULL");
+
+     ROSE_ASSERT(specName != NULL);
+     astNameStack.push_front(specName);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R930 c_action_inquire_spec()");
+#endif
 }
+
 void c_action_inquire_spec_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_inquire_spec_list(): count = %d \n",count);
+
+     ROSE_ASSERT(astNameStack.size() == (size_t)count);
+     ROSE_ASSERT(astExpressionStack.size() == (size_t)count);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R930 c_action_inquire_spec_list()");
+#endif
+   }
 
 /** R1001
  * format_stmt
@@ -20184,7 +20216,6 @@ void c_action_image_selector(Token_t *leftBracket,Token_t *rightBracket){}
 void c_action_image_selector(int carg_0){}
 #endif
 
-void c_action_inquire_spec(Token_t *carg_0){}
 void c_action_pointer_object(){}
 void c_action_proc_interface(Token_t *carg_0){}
 void c_action_proc_pointer_object(){}
