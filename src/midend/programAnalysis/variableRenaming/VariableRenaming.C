@@ -1147,18 +1147,23 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 					uses.insert(uses.end(), attrs[1].getDefs().begin(), attrs[1].getDefs().end());
 					uses.insert(uses.end(), attrs[1].getUses().begin(), attrs[1].getUses().end());
 
-					//Set only the last def as being defined here.
-					SgNode* def = defs.back();
-					//Get the unique name of the def.
-					VarUniqueName * uName = varRename->getUniqueName(def);
-					ROSE_ASSERT(uName);
-
-					//Add the varRef as a definition at the current node of the ref's uniqueName
-					varRename->getDefTable()[op][uName->getKey()].push_back(node);
-
-					if (varRename->getDebug())
+					//Defs can be empty in a situation such as foo() = 3 where foo returns a reference.
+					SgNode* def = NULL;
+					if (!defs.empty())
 					{
-						cout << "Found def for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+						//Set only the last def as being defined here.
+						def = defs.back();
+						//Get the unique name of the def.
+						VarUniqueName * uName = varRename->getUniqueName(def);
+						ROSE_ASSERT(uName);
+
+						//Add the varRef as a definition at the current node of the ref's uniqueName
+						varRename->getDefTable()[op][uName->getKey()].push_back(node);
+
+						if (varRename->getDebug())
+						{
+							cout << "Found def for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+						}
 					}
 
 					//Set all the uses as being used here.
@@ -1235,18 +1240,22 @@ VariableRenaming::VarDefUseSynthAttr VariableRenaming::VarDefUseTraversal::evalu
 			defs.insert(defs.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
 			defs.insert(defs.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
 
-			//Set only the last def as being defined here.
-			SgNode* def = defs.back();
-			//Get the unique name of the def.
-			VarUniqueName * uName = varRename->getUniqueName(def);
-			ROSE_ASSERT(uName);
-
-			//Add the varRef as a definition at the current node of the ref's uniqueName
-			varRename->getDefTable()[op][uName->getKey()].push_back(node);
-
-			if (varRename->getDebug())
+			//The defs can be empty, for example foo()++ where foo() returns a reference
+			if (!defs.empty())
 			{
-				cout << "Found def for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+				//Set only the last def as being defined here.
+				SgNode* def = defs.back();
+				//Get the unique name of the def.
+				VarUniqueName * uName = varRename->getUniqueName(def);
+				ROSE_ASSERT(uName);
+
+				//Add the varRef as a definition at the current node of the ref's uniqueName
+				varRename->getDefTable()[op][uName->getKey()].push_back(node);
+
+				if (varRename->getDebug())
+				{
+					cout << "Found def for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+				}
 			}
 		}
 
