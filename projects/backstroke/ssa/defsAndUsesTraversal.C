@@ -33,7 +33,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 		//An SgInitializedName should count as a def, since it is the initial definition.
 		return ChildDefsAndUses(name, NULL);
 	}
-		//Catch all variable references
+	//Catch all variable references
 	else if (isSgVarRefExp(node))
 	{
 		SgVarRefExp* varRef = isSgVarRefExp(node);
@@ -43,7 +43,7 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 		VarUniqueName * uName = StaticSingleAssignment::getUniqueName(varRef);
 		ROSE_ASSERT(uName);
 
-		//Add this as a use. We will correct the reference later.
+		//Add this as a use.
 		ssa->getLocalUsesTable()[varRef].insert(uName->getKey());
 
 		if (StaticSingleAssignment::getDebug())
@@ -57,92 +57,92 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 	//Catch all types of Binary Operations
 	else if (isSgBinaryOp(node))
 	{
-		SgBinaryOp* op = isSgBinaryOp(node);
+		SgBinaryOp* binaryOp = isSgBinaryOp(node);
+		ROSE_ASSERT(attrs.size() == 2 && "Error: BinaryOp without exactly 2 children.");
+		ChildDefsAndUses& lhs = attrs[0];
+		ChildDefsAndUses& rhs = attrs[1];
 
-		if (attrs.size() == 2)
+		//If we have an assigning operation, we want to list everything on the LHS as being defined
+		//Otherwise, everything is being used.
+		std::vector<SgNode*> uses;
+		switch (binaryOp->variantT())
 		{
-			//If we have an assigning operation, we want to list everything on the LHS as being defined
-			//Otherwise, everything is being used.
-			VariantT type = op->variantT();
-			std::vector<SgNode*> uses;
-			switch (type)
+			//All the following ops both use and define the left-hand side
+			case V_SgAndAssignOp:
+			case V_SgDivAssignOp:
+			case V_SgIorAssignOp:
+			case V_SgLshiftAssignOp:
+			case V_SgMinusAssignOp:
+			case V_SgModAssignOp:
+			case V_SgMultAssignOp:
+			case V_SgPlusAssignOp:
+			case V_SgPointerAssignOp:
+			case V_SgRshiftAssignOp:
+			case V_SgXorAssignOp:
 			{
-				//All the following ops both use and define the lhs
-				case V_SgAndAssignOp:
-				case V_SgDivAssignOp:
-				case V_SgIorAssignOp:
-				case V_SgLshiftAssignOp:
-				case V_SgMinusAssignOp:
-				case V_SgModAssignOp:
-				case V_SgMultAssignOp:
-				case V_SgPlusAssignOp:
-				case V_SgPointerAssignOp:
-				case V_SgRshiftAssignOp:
-				case V_SgXorAssignOp:
-				{
-					//All the uses from the LHS are propagated
-					uses.insert(uses.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
-					uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
-				}
-					//The assign op defines, but does not use the LHS. Notice that the other assignments also fall through,
-					//as they also define the LHS
-				case V_SgAssignOp:
-				{
-					//We want to set all the right-most varRef from LHS as being defined
-					std::vector<SgNode*> defs;
-					defs.insert(defs.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
-					defs.insert(defs.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
+				//All the uses from the LHS are propagated
+				uses.insert(uses.end(), lhs.getDefs().begin(), lhs.getDefs().end());
+				uses.insert(uses.end(), lhs.getUses().begin(), lhs.getUses().end());
+			}
 
-					//We want to set all the varRefs from the RHS as being used here
-					uses.insert(uses.end(), attrs[1].getDefs().begin(), attrs[1].getDefs().end());
-					uses.insert(uses.end(), attrs[1].getUses().begin(), attrs[1].getUses().end());
+			//The assign op defines, but does not use the LHS. Notice that the other assignments also fall through,
+			//as they also define the LHS
+			case V_SgAssignOp:
+			{
+				//All the uses from the RHS are propagated
+				uses.insert(uses.end(), rhs.getDefs().begin(), rhs.getDefs().end());
+				uses.insert(uses.end(), rhs.getUses().begin(), rhs.getUses().end());
 
+				//Set all the rhs uses as being used at this node
+				addUsesToNode(binaryOp, uses);
+
+				//We want to set all the right-most varRef from LHS as being defined
+				std::vector<SgNode*> defs;
+				defs.insert(defs.end(), lhs.getDefs().begin(), lhs.getDefs().end());
+				defs.insert(defs.end(), lhs.getUses().begin(), lhs.getUses().end());
+
+				//It's possible that the LHS has no variable references. For example,
+				//foo() = 3, where foo() returns a reference
+				SgNode* def = NULL;
+				if (!defs.empty())
+				{
 					//Set only the last def as being defined here.
-					SgNode* def = defs.back();
+					def = defs.back();
 					//Get the unique name of the def.
 					VarUniqueName * uName = StaticSingleAssignment::getUniqueName(def);
 					ROSE_ASSERT(uName);
 
 					//Add the varRef as a definition at the current node of the ref's uniqueName
-					ssa->getOriginalDefTable()[op].insert(uName->getKey());
+					ssa->getOriginalDefTable()[binaryOp].insert(uName->getKey());
 
 					if (StaticSingleAssignment::getDebug())
 					{
-						cout << "Found def for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+						cout << "Found def for " << uName->getNameString() << " at " << binaryOp->cfgForBeginning().toStringForDebugging() << endl;
 					}
-
-					//Set all the uses as being used here.
-					addUsesToNode(op, uses);
-
-					//Cut off the uses here. We will only pass up the defs.
-					return ChildDefsAndUses(def, NULL);
 				}
-					//Otherwise cover all the non-defining Ops
-				default:
-				{
-					//We want to set all the varRefs as being used here
-					std::vector<SgNode*> uses;
-					uses.insert(uses.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
-					uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
-					uses.insert(uses.end(), attrs[1].getDefs().begin(), attrs[1].getDefs().end());
-					uses.insert(uses.end(), attrs[1].getUses().begin(), attrs[1].getUses().end());
 
-					//Set all the uses as being used here.
-					addUsesToNode(op, uses);
+				//Cut off the uses here. We will only pass up the defs.
+				return ChildDefsAndUses(def, NULL);
+			}
+			//Otherwise cover all the non-defining Ops
+			default:
+			{
+				//We want to set all the varRefs as being used here
+				std::vector<SgNode*> uses;
+				uses.insert(uses.end(), lhs.getDefs().begin(), lhs.getDefs().end());
+				uses.insert(uses.end(), lhs.getUses().begin(), lhs.getUses().end());
+				uses.insert(uses.end(), rhs.getDefs().begin(), rhs.getDefs().end());
+				uses.insert(uses.end(), rhs.getUses().begin(), rhs.getUses().end());
 
-					//Return all the uses.
-					return ChildDefsAndUses(NULL, uses);
-				}
+				//Set all the uses as being used here.
+				addUsesToNode(binaryOp, uses);
+
+				//Return all the uses.
+				return ChildDefsAndUses(NULL, uses);
 			}
 		}
-		else
-		{
-			cout << "Error: BinaryOp without exactly 2 children." << endl;
-			ROSE_ASSERT(false);
-		}
-
 	}
-		//Catch all unary operations here.
+	//Catch all unary operations here.
 	else if (isSgUnaryOp(node))
 	{
 		SgUnaryOp* op = isSgUnaryOp(node);
@@ -157,18 +157,22 @@ ChildDefsAndUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node
 			defs.insert(defs.end(), attrs[0].getDefs().begin(), attrs[0].getDefs().end());
 			defs.insert(defs.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
 
-			//Set only the last def as being defined here.
-			SgNode* def = defs.back();
-			//Get the unique name of the def.
-			VarUniqueName * uName = StaticSingleAssignment::getUniqueName(def);
-			ROSE_ASSERT(uName);
-
-			//Add the varRef as a definition at the current node of the ref's uniqueName
-			ssa->getOriginalDefTable()[op].insert(uName->getKey());
-
-			if (StaticSingleAssignment::getDebug())
+			//The defs can be empty. For example, foo()++ where foo returns a reference
+			if (!defs.empty())
 			{
-				cout << "Found def for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+				//Set only the last def as being defined here.
+				SgNode* def = defs.back();
+				//Get the unique name of the def.
+				VarUniqueName * uName = StaticSingleAssignment::getUniqueName(def);
+				ROSE_ASSERT(uName);
+
+				//Add the varRef as a definition at the current node of the ref's uniqueName
+				ssa->getOriginalDefTable()[op].insert(uName->getKey());
+
+				if (StaticSingleAssignment::getDebug())
+				{
+					cout << "Found def for " << uName->getNameString() << " at " << op->cfgForBeginning().toStringForDebugging() << endl;
+				}
 			}
 		}
 

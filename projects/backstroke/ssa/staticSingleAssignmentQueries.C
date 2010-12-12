@@ -344,8 +344,6 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 				string name = "";
 				if (uniqueName)
 				{
-					if (getDebug())
-						cout << "Getting Unique Name attribute." << endl;
 					VarUniqueName *attr = getUniqueName(current.getNode());
 					ROSE_ASSERT(attr);
 
