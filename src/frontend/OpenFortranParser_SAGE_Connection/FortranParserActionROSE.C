@@ -13396,7 +13396,11 @@ void c_action_open_stmt(Token_t *label, Token_t *openKeyword, Token_t *eos)
 #endif
 
   // printf ("Warning: Ignoring all but the 'unit' in the OpenStatement \n");
-     while (astExpressionStack.empty() == false)
+
+  // DQ (12/11/2010): There can be more expressions on the astExpressionStack than names on the astNameStack,
+  // but only the number of names on the astNameStack count.  See test2010_143.f90.
+  // while (astExpressionStack.empty() == false)
+     while (astNameStack.empty() == false)
         {
           ROSE_ASSERT(astNameStack.empty() == false);
 
