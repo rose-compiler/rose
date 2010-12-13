@@ -570,10 +570,16 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsUsedInSubtre
 		void visit(SgNode* node)
 		{
 			LocalDefUseTable::const_iterator useEntry = ssa->localUsesTable.find(node);
-			if (useEntry == ssa->localUsesTable.end())
-				return;
+			if (useEntry != ssa->localUsesTable.end())
+			{
+				usedNames.insert(useEntry->second.begin(), useEntry->second.end());
+			}
 
-			usedNames.insert(useEntry->second.begin(), useEntry->second.end());
+			LocalDefUseTable::const_iterator defEntry = ssa->originalDefTable.find(node);
+			if (defEntry != ssa->originalDefTable.end())
+			{
+				usedNames.insert(defEntry->second.begin(), defEntry->second.end());
+			}
 		}
 	};
 
@@ -678,6 +684,18 @@ void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaratio
 			//We still need to insert defs for compiler-generated variables (e.g. __func__), since they don't have defs in the AST
 			if (!isBuiltinVar(rootName))
 				continue;
+		}
+		else if (isSgGlobal(varScope))
+		{
+			//Handle the case of declaring "extern int x" inside the function
+			//Then, x has global scope but it actually has a definition inside the function so we don't need to insert one
+			if (SageInterface::isAncestor(function->get_definition(), rootName[0]))
+			{
+				//We can't assert here due to a ROSE bug which returns isExtern() == false even when the variable is declared extern
+				//ROSE_ASSERT(rootName[0]->get_storageModifier().isExtern() && "When else could a var be declared inside a function"
+				//		" and be global?");
+				continue;
+			}
 		}
 
 		//Are there any other types of external vars?
