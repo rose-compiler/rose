@@ -99,25 +99,31 @@ public:
 
 			if (newUseNodes != oldUseNodes)
 			{
-				printf("SSA uses at node %s:%d\n", node->class_name().c_str(), node->get_file_info()->get_line());
+				printf("\n---------Reaching defs for use mismatch at node %s:%d for variable %s\n", node->class_name().c_str(),
+						node->get_file_info()->get_line(), StaticSingleAssignment::varnameToString(var).c_str());
+				printf("SSA Reaching defs for %s:\n", StaticSingleAssignment::varnameToString(var).c_str());
+				printNodeSet(newUseNodes);
+				printf("VariableRenaming Reaching defs for %s:\n", StaticSingleAssignment::varnameToString(var).c_str());
+				printNodeSet(oldUseNodes);
+
+				printf("\n---------SSA uses at node %s:%d \n", node->class_name().c_str(),
+						node->get_file_info()->get_line());
 				foreach(const StaticSingleAssignment::NodeReachingDefTable::value_type& varDefPair, newUses)
 				{
 					printf("%s, ", StaticSingleAssignment::varnameToString(varDefPair.first).c_str());
 				}
-				printf("\nVarRenaming uses at node:\n");
+				printf("\nVarRenaming uses:\n");
 				foreach(const VariableRenaming::NumNodeRenameTable::value_type& varDefsPair, oldUses)
 				{
 					printf("%s, ", VariableRenaming::keyToString(varDefsPair.first).c_str());
 				}
 				printf("\n");
 
-				printf("SSA Reaching defs for %s:\n", StaticSingleAssignment::varnameToString(var).c_str());
-				printNodeSet(newUseNodes);
-				printf("VariableRenaming Reaching defs for %s:\n", StaticSingleAssignment::varnameToString(var).c_str());
-				printNodeSet(oldUseNodes);
-
 				ROSE_ASSERT(false);
 			}
+
+			//Shouldn't have use with no reaching defs
+			ROSE_ASSERT(!newUseNodes.empty());
 		}
 	}
 };
