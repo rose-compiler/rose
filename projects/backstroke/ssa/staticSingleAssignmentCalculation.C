@@ -691,9 +691,10 @@ void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaratio
 			//Then, x has global scope but it actually has a definition inside the function so we don't need to insert one
 			if (SageInterface::isAncestor(function->get_definition(), rootName[0]))
 			{
-				//We can't assert here due to a ROSE bug which returns isExtern() == false even when the variable is declared extern
-				//ROSE_ASSERT(rootName[0]->get_storageModifier().isExtern() && "When else could a var be declared inside a function"
-				//		" and be global?");
+				//When else could a var be declared inside a function and be global?
+				SgVariableDeclaration* varDecl = isSgVariableDeclaration(rootName[0]->get_parent());
+				ROSE_ASSERT(varDecl != NULL);
+				ROSE_ASSERT(varDecl->get_declarationModifier().get_storageModifier().isExtern());
 				continue;
 			}
 		}
