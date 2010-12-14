@@ -7350,9 +7350,13 @@ static SgVariableSymbol * addArg(SgFunctionParameterList *paraList, SgInitialize
   initName->set_scope(scope);
   if (scope)
   {
-    SgVariableSymbol* sym = new SgVariableSymbol(initName);
-    scope->insert_symbol(initName->get_name(), sym);
-    sym->set_parent(scope->get_symbol_table());
+    SgVariableSymbol* sym = isSgVariableSymbol(initName->get_symbol_from_symbol_table());
+    if (sym == NULL)
+    {
+      sym = new SgVariableSymbol(initName);
+      scope->insert_symbol(initName->get_name(), sym);
+      sym->set_parent(scope->get_symbol_table());
+    }
     return sym;
   }
   else
@@ -8047,9 +8051,9 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
       SgVariableSymbol* varSymbol = scope->lookup_variable_symbol(name);
       if (varSymbol==NULL)
       {
-	varSymbol = new SgVariableSymbol(initName);
-	ROSE_ASSERT(varSymbol);
-	scope->insert_symbol(name, varSymbol);
+        varSymbol = new SgVariableSymbol(initName);
+        ROSE_ASSERT(varSymbol);
+        scope->insert_symbol(name, varSymbol);
       }
       else
       { // TODO consider prepend() and insert(), prev_decl_time is position dependent.

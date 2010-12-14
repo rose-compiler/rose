@@ -12,7 +12,8 @@ F90_TESTCODES_REQUIRED_TO_COMPILE =
 
 F77_TESTCODES_REQUIRED_TO_RUN = \
   helloworld.f \
-  private.f
+  private.f \
+  shared.f
 
 F90_TESTCODES_REQUIRED_TO_RUN = 
 
