@@ -296,6 +296,12 @@ void buildImplicitVariableDeclaration( const SgName & variableName );
 //! Support to push tokens onto the astNameStack.
 void push_token(std::string s);
 
+//! Support to setting on statement (labels are found on the astLabelSymbolStack).
+void processLabelOnStack( SgStatement* statement );
+
+//! This support is required to work around a bug in OFP (label == NULL in R807).
+void specialFixupForLabelOnStackAndNotPassedAsParameter( SgStatement* statement );
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
 

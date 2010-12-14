@@ -179,6 +179,19 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_127.f90 \
      test2010_128.f90 \
      test2010_129.f90 \
+     test2010_132.f90 \
+     test2010_133.f90 \
+     test2010_134.f90 \
+     test2010_135.f90 \
+     test2010_136.f90 \
+     test2010_137.f90 \
+     test2010_138.f90 \
+     test2010_139.f90 \
+     test2010_140.f90 \
+     test2010_141.f90 \
+     test2010_142.f90 \
+     test2010_143.f90 \
+     test2010_144.f90 \
      canonicalExample.f90
 
 # DQ (12/5/2010): This generates an internal gfortran compiler error.
@@ -404,6 +417,24 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_117.f90 \
      test2010_130.f90 \
      test2010_131.f90 \
+     test2010_150.f90 \
+     test2010_151.f90 \
+     test2010_152.f90 \
+     test2010_153.f90 \
+     test2010_154.f90 \
+     test2010_155.f90 \
+     test2010_156.f90 \
+     test2010_158.f90 \
+     test2010_159.f90 \
+     test2010_160.f90 \
+     test2010_161.f90 \
+     test2010_162.f90 \
+     test2010_163.f90 \
+     test2010_164.f90 \
+     test2010_165.f90 \
+     test2010_166.f90 \
+     test2010_167.f90 \
+     test2010_168.f90 \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
@@ -447,7 +478,8 @@ F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2010_68.f \
      test2010_69.f \
      test2010_70.f \
-     test2010_105.f
+     test2010_105.f \
+     test2010_157.f
 
 F03_TESTCODES_CURRENTLY_FAILING = \
      test2007_18.f03 \
@@ -689,6 +721,10 @@ testCPP_Defines:
 #	Test source code with macro defined from the command line: e.g. "integer*PS  pe"
 	../../testTranslator $(ROSE_FLAGS) -DPS=8 $(srcdir)/inputUsingDefinesOnCommandline.F90
 
+testMPI:
+	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/mpi.f90
+	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/mpi_test_01.f90
+
 testMPItypes:
 	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/ISO_C_BINDING.f03
 	../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep $(srcdir)/mpi_f08_types.f03
@@ -769,7 +805,7 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
    test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08 \
    module_A_file.f90 module_B_file.f90 test2010_31_header.f90 test2010_50.h test2010_54.h test2010_55.h \
    original_mpif.h inputUsingDefinesOnCommandline.F90 fortran_foo_single_quote.h fortran_foo_double_quote.h \
-   cpp_foo.h cpp_foobar.h ISO_C_BINDING.f03 mpi_f08_types.f03 mpi_f08_interfaces_test.f03
+   cpp_foo.h cpp_foobar.h ISO_C_BINDING.f03 mpi_f08_types.f03 mpi_f08_interfaces_test.f03 mpif.h mpiof.h
 
 # DQ (3/12/2010): Fortran 2008 tests from OFP
 # f08-tests
