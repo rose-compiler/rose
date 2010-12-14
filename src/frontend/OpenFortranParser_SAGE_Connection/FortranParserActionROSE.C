@@ -4687,6 +4687,19 @@ void c_action_explicit_shape_spec(ofp_bool hasUpperBound)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_explicit_shape_spec(): hasUpperBound = %s \n",hasUpperBound ? "true" : "false");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R511 c_action_explicit_shape_spec()");
+#endif
+
+     int type = (hasUpperBound == true) ? ArraySpecElement_expr_colon_expr : ArraySpecElement_expr_colon;
+     c_action_array_spec_element(type);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R511 c_action_explicit_shape_spec()");
+#endif
    }
 
 /** R511 list
@@ -4706,12 +4719,21 @@ void c_action_explicit_shape_spec_list(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_explicit_shape_spec_list(): count = %d \n",count);
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R511 c_action_explicit_shape_spec_list()");
+#endif
+
   // DQ (2/20/2008): Call the mechanism used to build an array type
      c_action_array_spec(count);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R511 c_action_explicit_shape_spec_list()");
+#endif
+#if 0
+     printf ("Exiting at base of R511 c_action_explicit_shape_spec_list() \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -7526,15 +7548,15 @@ void c_action_data_ref(int numPartRef)
                  //astExpressionStack.  What other information could be used to trigger this?  We would like to not have behavior
                  // within the ROFP/ROE translation that would be dependent on our parser state (stack sizes).
 #if 0
-                 // Older code (works for all byt test2010_111.f90).
+                 // Older code (works for all but test2010_111.f90).
                     generateFunctionCall(nameToken);
 #else
                  // Using "isANonIntrinsicFunction == false" instead of the size of the astExpressionStack fails for test2007_57.f90.
                  // if (isANonIntrinsicFunction == false)
                     if (astExpressionStack.empty() == true)
                        {
-                         printf ("This is NOT and implicit function call (likely a data variable reference matching the name of a implicit function): variableName = %s \n",variableName.str());
-                         printf ("isANonIntrinsicFunction = %s \n",isANonIntrinsicFunction ? "true" : "false");
+                      // printf ("This is NOT an implicit function call (likely a data variable reference matching the name of a implicit function): variableName = %s \n",variableName.str());
+                      // printf ("isANonIntrinsicFunction = %s \n",isANonIntrinsicFunction ? "true" : "false");
 
                       // SgVariableSymbol* variableSymbolMatchingImplicitFunctionName = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,getTopOfScopeStack());
                       // ROSE_ASSERT(variableSymbolMatchingImplicitFunctionName != NULL);
@@ -7551,14 +7573,19 @@ void c_action_data_ref(int numPartRef)
                               SgScopeStatement* currentScope = astScopeStack.front();
 
                            // This does not build a variable, but it does build a SgVariableSymbol.
-                              printf ("Building a SgVariableSymbol, though not building a SgVarRefExp \n");
+                           // printf ("Building a SgVariableSymbol, though not building a SgVarRefExp \n");
                               trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol,classSymbol);
                               ROSE_ASSERT(variableSymbol != NULL);
                             }
                            else
                             {
-                              printf ("Error: This is an implicit variable that has a name matching an implicit function, but isImplicitNoneScope() == true (so this is an inconsistancy).\n");
-                              ROSE_ASSERT(false);
+                           // This the case of calling the implicit function without the "()" as in "call random_seed" instead 
+                           // of "call random_seed()" (See test2010_169.f90).
+                           // printf ("Note: This the case of calling the implicit function without the \"()\" as in \"call random_seed\" instead of \"call random_seed()\"\n");
+                              generateFunctionCall(nameToken);
+
+                           // printf ("Error: This is an implicit variable that has a name matching an implicit function, but isImplicitNoneScope() == true (so this is an inconsistancy).\n");
+                           // ROSE_ASSERT(false);
                             }
                       // ROSE_ASSERT(false);
                        }
@@ -13986,6 +14013,9 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
 
      ROSE_ASSERT(readStatement != NULL);
 
+#if 0
+  // DQ (12/12/2010): This does not appear to be required now. and was a problem fo test2010_145.f90.
+
   // DQ (12/3/2010): However, this breaks test2007_211.f
   // DQ (12/2/2010): Only handle this way if the readStatement->get_format() was not already set above.
   // If this was "print *,i" then we would now have a "*" on the stack, but if
@@ -14002,9 +14032,18 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
           SgExpression* labelRefExp = buildLabelRefExp(formatLabel);
           ROSE_ASSERT(labelRefExp != NULL);
 
-          formatLabel->set_parent(labelRefExp);
+          printf ("Set parent of formatLabel \n");
+          ROSE_ASSERT(formatLabel != NULL);
+
+       // DQ (12/12/2010): This is demonstrated in the test2010_145.f90
+          ROSE_ASSERT(formatLabel != labelRefExp);
+          if (formatLabel != labelRefExp)
+               formatLabel->set_parent(labelRefExp);
 
           readStatement->set_format(labelRefExp);
+
+          printf ("Set parent of labelRefExp \n");
+          ROSE_ASSERT(labelRefExp != NULL);
           labelRefExp->set_parent(readStatement);
 #else
           SgIntVal* integerValueLabel = isSgIntVal(formatLabel);
@@ -14018,6 +14057,7 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
              }
 #endif
         }
+#endif
 
      setStatementNumericLabel(readStatement,label);
 
@@ -19149,11 +19189,25 @@ void c_action_dummy_arg(Token_t * dummy)
  * @param count The number of items in the list.
  */
 void c_action_dummy_arg_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_dummy_arg_list__begin() \n");
+   }
+
 void c_action_dummy_arg_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_dummy_arg_list(): count = %d \n",count);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R1233 c_action_dummy_arg_list()");
+#endif
+#if 0
+     printf ("Exiting at the base of R1233 c_action_dummy_arg_list()");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 /** R1234
  * end_subroutine_stmt
@@ -19293,9 +19347,12 @@ void c_action_end_subroutine_stmt(Token_t * label, Token_t * keyword1, Token_t *
 // void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp_bool hasDummyArgList, ofp_bool hasSuffix)
 void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token_t * eos, ofp_bool hasDummyArgList, ofp_bool hasSuffix)
    {
-     printf ("In c_action_entry_stmt(): label = %p = %s keyword = %p = %s id = %p = %s hasDummyArgList = %s hasSuffix = %s \n",
-          label,label != NULL ? label->text : "NULL",keyword,keyword != NULL ? keyword->text : "NULL",
-          id,id != NULL ? id->text : "NULL",hasDummyArgList ? "true" : "false",hasSuffix ? "true" : "false");
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        {
+          printf ("In c_action_entry_stmt(): label = %p = %s keyword = %p = %s id = %p = %s hasDummyArgList = %s hasSuffix = %s \n",
+               label,label != NULL ? label->text : "NULL",keyword,keyword != NULL ? keyword->text : "NULL",
+               id,id != NULL ? id->text : "NULL",hasDummyArgList ? "true" : "false",hasSuffix ? "true" : "false");
+        }
 
   // This bug appears to be fixed in OFP as of Feb 18th 2008.
   // SgName entryFunctionName = "entry_function_name_unavailable_from_OFP";
@@ -19339,6 +19396,45 @@ void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token
      ROSE_ASSERT(entryStatement->get_parameterList() != NULL);
      setSourcePosition(entryStatement->get_parameterList());
 
+     if (hasDummyArgList == true)
+        {
+       // DQ (12/12/2010): This code is copied from buildProcedureSupport in fortran_support.C
+
+       // Take the arguments off of the token stack (astNameStack).
+          while (astNameStack.empty() == false)
+             {
+            // Capture the procedure parameters.
+               SgName arg_name = astNameStack.front()->text;
+
+            // printf ("arg_name = %s \n",arg_name.str());
+
+            // Build a SgInitializedName with a SgTypeDefault and fixup the type later when we see the declaration inside the procedure.
+               SgInitializedName* initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,entryStatement,NULL);
+
+               entryStatement->append_arg(initializedName);
+
+               initializedName->set_parent(entryStatement->get_parameterList());
+               ROSE_ASSERT(initializedName->get_parent() != NULL);
+
+            // DQ (12/17/2007): set the scope
+               initializedName->set_scope(astScopeStack.front());
+
+               setSourcePosition(initializedName,astNameStack.front());
+
+               ROSE_ASSERT(astNameStack.empty() == false);
+               astNameStack.pop_front();
+
+            // Now build associated SgVariableSymbol and put it into the current scope (function definition scope)
+            // SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+            // entryStatement->insert_symbol(arg_name,variableSymbol);
+
+            // DQ (12/17/2007): Make sure the scope was set!
+               ROSE_ASSERT(initializedName->get_scope() != NULL);
+             }
+
+          ROSE_ASSERT(entryStatement->get_args().empty() == false);
+        }
+
      if (hasSuffix == true)
         {
           printf ("Need to set the return type for the SgEntryStatement in R1235 \n");
@@ -19377,7 +19473,7 @@ void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token
 
      astScopeStack.front()->append_statement(entryStatement);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1235 c_action_entry_stmt()");
 #endif
