@@ -90,6 +90,7 @@ createInitName (const string& name, SgType* type,
     {
       SgVariableSymbol* new_sym = new SgVariableSymbol (new_name);
       scope->insert_symbol (sg_name, new_sym);
+      ROSE_ASSERT (new_sym->get_parent() != NULL);
     }
 
   return new_name;
@@ -247,12 +248,15 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
   }
   else // very conservative one, assume the worst side effects (all are written) 
   {
-    new_param_name+= "p__";
     if (!SageInterface::is_Fortran_language())
     {
       new_param_type = SgPointerType::createType (param_base_type);
       ROSE_ASSERT (new_param_type);
+      new_param_name+= "p__";
     }
+    else
+      new_param_name= "s_"+new_param_name; //s_ means shared variables
+
   }
 
   // Fortran parameters are passed by reference by default,
@@ -955,8 +959,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
       }
     } else 
     { // create unwrapping statements from parameters/ or the array parameter for pointers
-      if (SageInterface::is_Fortran_language())
-        args_scope = NULL; // not sure about Fortran scope
+      //if (SageInterface::is_Fortran_language())
+      //  args_scope = NULL; // not sure about Fortran scope
 
       local_var_decl  = 
         createUnpackDecl (p_init_name, counter, isPointerDeref, i_name , struct_decl, body);
@@ -1058,9 +1062,7 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
     if (syms.size() ==0)
     {
       SgName var1_name = "__out_argv";
-      ROSE_ASSERT (Outliner::useStructureWrapper);
       SgType* ptype= NULL; 
-#if 1      
       // A dummy integer parameter for Fortran outlined function
       if (SageInterface::is_Fortran_language() )
       {
@@ -1071,8 +1073,10 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
 
       }
       else
-#endif        
+      {
         ptype = buildPointerType (buildVoidType());
+        ROSE_ASSERT (Outliner::useStructureWrapper);
+      }
       parameter1 = buildInitializedName(var1_name,ptype);
       appendArg(params,parameter1);
     }
