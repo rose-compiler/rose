@@ -4697,9 +4697,25 @@ generateFunctionCall( Token_t* nameToken )
           printf ("Inside of generateFunctionCall(): nameToken = %s \n",nameToken->text);
 
   // The next element on the stack is the expression list of function arguments
-     ROSE_ASSERT(astExpressionStack.empty() == false);
-     SgExprListExp* functionArguments = isSgExprListExp(astExpressionStack.front());
-     astExpressionStack.pop_front();
+  // However, test2010_169.f90 demonstrates that an implicit function can be called 
+  // without "()", so it should not be an error to not have a SgExprListExp IR node
+  // on the stack.
+
+  // ROSE_ASSERT(astExpressionStack.empty() == false);
+  // SgExprListExp* functionArguments = isSgExprListExp(astExpressionStack.front());
+  // astExpressionStack.pop_front();
+     SgExprListExp* functionArguments = NULL;
+     if (astExpressionStack.empty() == false)
+        {
+          functionArguments = isSgExprListExp(astExpressionStack.front());
+          astExpressionStack.pop_front();
+        }
+       else
+        {
+       // printf ("Special case of function not called with () \n");
+          functionArguments = new SgExprListExp();
+          setSourcePosition(functionArguments);
+        }
 
   // DQ (12/11/2010): If the name of this function is not found a function of this 
   // name will be added to the current scope (see details in generateFunctionRefExp()).

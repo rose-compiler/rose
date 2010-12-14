@@ -417,6 +417,24 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_117.f90 \
      test2010_130.f90 \
      test2010_131.f90 \
+     test2010_150.f90 \
+     test2010_151.f90 \
+     test2010_152.f90 \
+     test2010_153.f90 \
+     test2010_154.f90 \
+     test2010_155.f90 \
+     test2010_156.f90 \
+     test2010_158.f90 \
+     test2010_159.f90 \
+     test2010_160.f90 \
+     test2010_161.f90 \
+     test2010_162.f90 \
+     test2010_163.f90 \
+     test2010_164.f90 \
+     test2010_165.f90 \
+     test2010_166.f90 \
+     test2010_167.f90 \
+     test2010_168.f90 \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
@@ -460,7 +478,8 @@ F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2010_68.f \
      test2010_69.f \
      test2010_70.f \
-     test2010_105.f
+     test2010_105.f \
+     test2010_157.f
 
 F03_TESTCODES_CURRENTLY_FAILING = \
      test2007_18.f03 \
