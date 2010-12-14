@@ -277,20 +277,25 @@ void c_action_specification_stmt()
  */
 void c_action_executable_construct()
    {
+  // This function enforces new rules about internal stack handling.  A number of stacks 
+  // should be empty at this point where a statement should have been completely processed.
+
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_executable_construct(): astExpressionStack = %zu astNodeStack = %zu \n",astExpressionStack.size(),astNodeStack.size());
 
-  // DQ (12/4/2010): Not sure if we can do this
+  // DQ (12/4/2010): This works well as a test (after fixing a lot of bugs where it failed).
      if (astExpressionStack.empty() == false)
         {
-          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("Should we be clearing the astExpressionStack of IR nodes that were pushed so that a possible where statement could use them \n");
-
           printf ("Error: There appear to be unused expressions on the expression stack \n");
-          ROSE_ASSERT(false);
-
-       // astExpressionStack.clear();
         }
+     ROSE_ASSERT(astExpressionStack.empty() == true);
+
+  // DQ (12/7/2010): Not sure if we can do this
+     if (astLabelSymbolStack.empty() == false)
+        {
+          printf ("Error: There appear to be unused SgLabelSymbol IR nodes on the astLabelSymbolStack \n");
+        }
+     ROSE_ASSERT(astLabelSymbolStack.empty() == true);
    }
 
 /**
@@ -618,7 +623,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
           printf ("In c_action_intrinsic_type_spec(): keyword1 = %p = %s keyword2 = %p = %s type = %d, hasKindSelector = %s \n",
                keyword1,keyword1 != NULL ? keyword1->text : "NULL",keyword2,keyword2 != NULL ? keyword2->text : "NULL",type,hasKindSelector ? "true" : "false");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R403 c_action_intrinsic_type_spec()");
 #endif
@@ -635,7 +640,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
   // printf ("hasKindSelector = %s \n",hasKindSelector ? "true" : "false");
      if (hasKindSelector == true)
         {
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("hasKindSelector == true in R403 c_action_intrinsic_type_spec()");
 #endif
@@ -833,7 +838,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
           ROSE_ASSERT(astTypeParameterStack.empty() == true);
           ROSE_ASSERT(astExpressionStack.empty() == true);
 
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("hasKindSelector == true (BOTTOM) in R403 c_action_intrinsic_type_spec()");
 #endif
@@ -848,7 +853,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
 #endif
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R403 c_action_intrinsic_type_spec()");
 #endif
@@ -2766,7 +2771,7 @@ void c_action_array_constructor()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_array_constructor() \n");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R465 c_action_array_constructor()");
 #endif
@@ -2810,6 +2815,8 @@ void c_action_array_constructor()
           SgAggregateInitializer* initializer = new SgAggregateInitializer(expressionList, NULL);
           setSourcePosition(initializer);
 
+       // printf ("In R465 c_action_array_constructor(): ################# Built a SgAggregateInitializer (%p) \n",initializer);
+
        // astInitializerStack.push_front(expressionList);
           astExpressionStack.push_front(initializer);
         }
@@ -2819,7 +2826,7 @@ void c_action_array_constructor()
                printf ("Need to cleanup construction of unused expressionList \n");
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R465 c_action_array_constructor()");
 #endif
@@ -3860,21 +3867,51 @@ void c_action_entity_decl(Token_t * id)
 
                if (arrayType != NULL)
                   {
-                    SgExprListExp* exprList = new SgExprListExp();
-                    setSourcePosition(exprList);
+                 // DQ (12/10/2010): It might be that this should not be based on the astExpressionStack 
+                 // size, but also on if the type of the expression is SgArrayType. See test2010_136.f90
+                 // for an example, however the type of the intrisic function is not correctly generated 
+                 // to be an SgArrayType. See test2010_137.f90 for where this special handling must be 
+                 // restricted to function calls uses as initializers.
 
-                    std::list<SgExpression*>::iterator i = astExpressionStack.begin();
-                    while (i != astExpressionStack.end())
+                    size_t astExpressionStackSize = astExpressionStack.size();
+                    bool useAggregateInitializer = true;
+                    if (astExpressionStackSize == 1)
                        {
-                         exprList->prepend_expression(*i);
-                         i++;
+                      // If the initializer is a function call, then use an SgAssignInitializer (see test2010_136.f90).
+                         SgFunctionCallExp* functionCall = isSgFunctionCallExp(astExpressionStack.front());
+                         if (functionCall != NULL)
+                            {
+                              useAggregateInitializer = false;
+                            }
+                       }
+
+                 // printf ("In R504 R503-F2008 c_action_entity_decl(): useAggregateInitializer = %s \n",useAggregateInitializer ? "true" : "false");
+                    if (useAggregateInitializer == true)
+                       {
+                         SgExprListExp* exprList = new SgExprListExp();
+                         setSourcePosition(exprList);
+
+                         std::list<SgExpression*>::iterator i = astExpressionStack.begin();
+                         while (i != astExpressionStack.end())
+                            {
+                              exprList->prepend_expression(*i);
+                              i++;
+                            }
+
+                      // Use a SgAggregateInitializer
+                         initializer = new SgAggregateInitializer(exprList, NULL);
+                         setSourcePosition(initializer);
+                       }
+                      else
+                       {
+                         ROSE_ASSERT(astExpressionStackSize == 1);
+                         initializer = new SgAssignInitializer(astExpressionStack.front(),NULL);
+                         setSourcePosition(initializer);
                        }
 
                     astExpressionStack.clear();
 
-                 // Use a SgAggregateInitializer
-                    initializer = new SgAggregateInitializer(exprList, NULL);
-                    setSourcePosition(initializer);
+                 // printf ("In R504 R503-F2008 c_action_entity_decl(): ################# Built a SgAggregateInitializer (%p) \n",initializer);
 
                     ROSE_ASSERT(astExpressionStack.empty() == true);
                   }
@@ -3958,7 +3995,7 @@ void c_action_entity_decl(Token_t * id)
        // printf ("Before resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
           functionType->set_return_type(astTypeStack.front());
           functionType->set_orig_return_type(type);
-       // printf ("After resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
+       // printf ("After resetting case 1: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
 
        // printf ("Exiting at base of case to reset the function type! \n");
        // ROSE_ASSERT(false);
@@ -4000,19 +4037,29 @@ void c_action_entity_decl(Token_t * id)
                  // printf ("Before resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
                     functionType->set_return_type(type);
                     functionType->set_orig_return_type(type);
-                 // printf ("After resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
+                 // printf ("After resetting case 2: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
                   }
              }
+
+          ROSE_ASSERT(initializedName != NULL);
         }
        else
         {
        // initializedName = new SgInitializedName(name,type,initializer,NULL,NULL);
           if (functionSymbol != NULL)
              {
-            // Unclear what to do here!
+            // This is the case of where an external function has been declared and it's type is being specified.  It should not generate a variable declaration.
+            // printf ("This is the case of where an external function has been declared and it's type is being specified. \n");
+
+            // DQ (12/11/2010): This is not unclear, we don't want a variable declaration built where the purpose was to define the named function's return type.
+            // Also, we might want to verify the scope of the function (parent of declaration) is consistant with where its return type is being defined (current scope).
+            // However, if we don't build a variable declaration then we have nothing that will be output by the unparser that will define the return type of the 
+            // function, unless we force such a statement to be generated when we unparse the external statement.  But then we would loose the order of the statements.
+            // Old comment... Unclear what to do here!
+               ROSE_ASSERT(initializedName == NULL);
                initializedName = new SgInitializedName(name,type,initializer,NULL,NULL);
+
             // FMZ 6/8/2010: set the it as a result of the function, avoid unparser duplicate the type decl
-            // SgFunctionSymbol=>SgFunctionDeclaration=>
                SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionSymbol->get_declaration());
                functionDeclaration->set_result_name(initializedName);
              }
@@ -4040,10 +4087,13 @@ void c_action_entity_decl(Token_t * id)
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
+               ROSE_ASSERT(initializedName != NULL);
              }
         }
-     ROSE_ASSERT(initializedName != NULL);
 
+     ROSE_ASSERT(initializedName != NULL);
+  // if (initializedName != NULL)
+        {
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("Before cleaning up the stacks in R504 c_action_entity_decl()");
@@ -4061,8 +4111,6 @@ void c_action_entity_decl(Token_t * id)
           initializedName->set_isCoArray(false);
         }
 #endif
- 
-
 
   // printf ("In c_action_entity_decl(): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
 
@@ -4101,6 +4149,9 @@ void c_action_entity_decl(Token_t * id)
   // astTypeStack.pop_front();
      if (dimensionAttributeSpecFound == false)
           astTypeStack.pop_front();
+
+  // Is this the correct location for this end of block?
+        }
 
      ROSE_ASSERT(astNameStack.empty() == false);
      astNameStack.pop_front();
@@ -4636,6 +4687,19 @@ void c_action_explicit_shape_spec(ofp_bool hasUpperBound)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_explicit_shape_spec(): hasUpperBound = %s \n",hasUpperBound ? "true" : "false");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R511 c_action_explicit_shape_spec()");
+#endif
+
+     int type = (hasUpperBound == true) ? ArraySpecElement_expr_colon_expr : ArraySpecElement_expr_colon;
+     c_action_array_spec_element(type);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R511 c_action_explicit_shape_spec()");
+#endif
    }
 
 /** R511 list
@@ -4655,12 +4719,21 @@ void c_action_explicit_shape_spec_list(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_explicit_shape_spec_list(): count = %d \n",count);
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R511 c_action_explicit_shape_spec_list()");
+#endif
+
   // DQ (2/20/2008): Call the mechanism used to build an array type
      c_action_array_spec(count);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R511 c_action_explicit_shape_spec_list()");
+#endif
+#if 0
+     printf ("Exiting at base of R511 c_action_explicit_shape_spec_list() \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -7479,15 +7552,15 @@ void c_action_data_ref(int numPartRef)
                  //astExpressionStack.  What other information could be used to trigger this?  We would like to not have behavior
                  // within the ROFP/ROE translation that would be dependent on our parser state (stack sizes).
 #if 0
-                 // Older code (works for all byt test2010_111.f90).
+                 // Older code (works for all but test2010_111.f90).
                     generateFunctionCall(nameToken);
 #else
                  // Using "isANonIntrinsicFunction == false" instead of the size of the astExpressionStack fails for test2007_57.f90.
                  // if (isANonIntrinsicFunction == false)
                     if (astExpressionStack.empty() == true)
                        {
-                         printf ("This is NOT and implicit function call (likely a data variable reference matching the name of a implicit function): variableName = %s \n",variableName.str());
-                         printf ("isANonIntrinsicFunction = %s \n",isANonIntrinsicFunction ? "true" : "false");
+                      // printf ("This is NOT an implicit function call (likely a data variable reference matching the name of a implicit function): variableName = %s \n",variableName.str());
+                      // printf ("isANonIntrinsicFunction = %s \n",isANonIntrinsicFunction ? "true" : "false");
 
                       // SgVariableSymbol* variableSymbolMatchingImplicitFunctionName = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,getTopOfScopeStack());
                       // ROSE_ASSERT(variableSymbolMatchingImplicitFunctionName != NULL);
@@ -7504,14 +7577,19 @@ void c_action_data_ref(int numPartRef)
                               SgScopeStatement* currentScope = astScopeStack.front();
 
                            // This does not build a variable, but it does build a SgVariableSymbol.
-                              printf ("Building a SgVariableSymbol, though not building a SgVarRefExp \n");
+                           // printf ("Building a SgVariableSymbol, though not building a SgVarRefExp \n");
                               trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol,classSymbol);
                               ROSE_ASSERT(variableSymbol != NULL);
                             }
                            else
                             {
-                              printf ("Error: This is an implicit variable that has a name matching an implicit function, but isImplicitNoneScope() == true (so this is an inconsistancy).\n");
-                              ROSE_ASSERT(false);
+                           // This the case of calling the implicit function without the "()" as in "call random_seed" instead 
+                           // of "call random_seed()" (See test2010_169.f90).
+                           // printf ("Note: This the case of calling the implicit function without the \"()\" as in \"call random_seed\" instead of \"call random_seed()\"\n");
+                              generateFunctionCall(nameToken);
+
+                           // printf ("Error: This is an implicit variable that has a name matching an implicit function, but isImplicitNoneScope() == true (so this is an inconsistancy).\n");
+                           // ROSE_ASSERT(false);
                             }
                       // ROSE_ASSERT(false);
                        }
@@ -10866,6 +10944,11 @@ void c_action_if_construct()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_if_construct() \n");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R802 c_action_if_construct()");
+#endif
    }
 
 /** R803
@@ -10902,6 +10985,9 @@ void c_action_if_then_stmt( Token_t *label, Token_t *id, Token_t *ifKeyword, Tok
      true_block->setCaseInsensitive(true);
      false_block->setCaseInsensitive(true);
      ifStatement->setCaseInsensitive(true);
+
+  // DQ (12/7/2010): Let the unparser know that this came from R803 sio that we know to output the "then" keyword.
+     ifStatement->set_use_then_keyword(true);
 
   // Save the if-stmt that might be the start the a chain of if-then-else-if-else-endif
      astIfStatementStack.push_front(ifStatement);
@@ -11004,6 +11090,11 @@ void c_action_else_if_stmt(Token_t *label, Token_t *elseKeyword, Token_t *ifKeyw
      SgIfStmt* ifStatement = isSgIfStmt(currentScope);
      ROSE_ASSERT(ifStatement != NULL);
 
+  // DQ (12/6/2010): I think that this can be set explicitly.
+  // ifStatement->set_has_end_statement(true);
+     ifStatement->set_use_then_keyword(true);
+     ifStatement->set_is_else_if_statement(true);
+
   // Find the previously built false body in the SgIfStmt
      SgBasicBlock* false_body = isSgBasicBlock(ifStatement->get_false_body());
      ROSE_ASSERT(false_body != NULL);
@@ -11082,6 +11173,9 @@ void c_action_else_stmt(Token_t *label, Token_t *elseKeyword, Token_t *id, Token
      SgIfStmt* ifStatement = isSgIfStmt(currentScope);
      ROSE_ASSERT(ifStatement != NULL);
 
+  // DQ (12/7/2010): Mark this explicitly as being associated with an else (might not be required).
+  // ifStatement->set_is_else_if_statement(true);
+
   // Find the previously built false body in the SgIfStmt
      SgBasicBlock* false_body = isSgBasicBlock(ifStatement->get_false_body());
      ROSE_ASSERT(false_body != NULL);
@@ -11118,7 +11212,7 @@ void c_action_end_if_stmt(Token_t *label, Token_t *endKeyword, Token_t *ifKeywor
                id,id != NULL ? id->text : "NULL");
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R806 c_action_end_if_stmt()");
 #endif
@@ -11160,7 +11254,7 @@ void c_action_end_if_stmt(Token_t *label, Token_t *endKeyword, Token_t *ifKeywor
   // printf ("END: astScopeStack.front() = %p \n",astScopeStack.front());
      astIfStatementStack.pop_front();
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("After cleaning up stack of if-stmt and block pairs in R806 c_action_end_if_stmt()");
 #endif
@@ -11191,7 +11285,7 @@ void c_action_end_if_stmt(Token_t *label, Token_t *endKeyword, Token_t *ifKeywor
   // printf ("CLEAR THE astLabelSymbolStack (c_action_end_if_stmt) \n");
      astLabelSymbolStack.clear();
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R806 c_action_end_if_stmt()");
 #endif
@@ -11207,7 +11301,12 @@ void c_action_end_if_stmt(Token_t *label, Token_t *endKeyword, Token_t *ifKeywor
 void c_action_if_stmt__begin()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_if_stmt__begin() \n");
+          printf ("In R807 c_action_if_stmt__begin() \n");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R807 c_action_if_stmt__begin()");
+#endif
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
      SgBasicBlock* true_block  = new SgBasicBlock();
@@ -11228,6 +11327,13 @@ void c_action_if_stmt__begin()
      currentScope->append_statement(ifStatement);
      ifStatement->set_parent(currentScope);
 
+  // DQ (12/7/2010): Need to handle the label, see test2010_133.f90.
+  // processLabelOnStack(ifStatement);
+     specialFixupForLabelOnStackAndNotPassedAsParameter(ifStatement);
+
+  // DQ (12/9/2010): For test2010_135.f90 this should be valid.
+  // ROSE_ASSERT(ifStatement->get_numeric_label() != NULL);
+
   // Push the if scope (it is a scope in C/C++, even if not in Fortran)
   // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
      astScopeStack.push_front(ifStatement);
@@ -11241,7 +11347,7 @@ void c_action_if_stmt__begin()
 void c_action_if_stmt(Token_t *label, Token_t *ifKeyword)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_if_stmt() label = %p = %s \n",label,label ? label->text : "NULL"); 
+          printf ("In R807 c_action_if_stmt() label = %p = %s \n",label,label ? label->text : "NULL"); 
 
   // This rule is for statements of the sort: "if (a) b = 0" withouth an associated endif statement.
 
@@ -11266,8 +11372,16 @@ void c_action_if_stmt(Token_t *label, Token_t *ifKeyword)
      ROSE_ASSERT(ifStatement != NULL);
      ifStatement->set_conditional(conditionalStatement);
 
+  // DQ (12/7/2010): Mark to not use the "then" keyword (this is the default).
+     ifStatement->set_use_then_keyword(false);
+
   // DQ (11/17/2007): Added support for numeric labels
      setStatementNumericLabel(ifStatement,label);
+
+     if (label != NULL)
+        {
+          ROSE_ASSERT(ifStatement->get_numeric_label() != NULL);
+        }
 
   // DQ (11/17/2007): Get the source position from the "if" keyword.
      setSourcePosition(ifStatement,ifKeyword);
@@ -11310,6 +11424,13 @@ void c_action_if_stmt(Token_t *label, Token_t *ifKeyword)
   // DQ (10/10/2010): See example test2007_17.f90 of if statment on a single line for were we can't enforce this.
   // ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
+     SgIfStmt* topOfStack_ifStatement = isSgIfStmt(astScopeStack.front());
+     ROSE_ASSERT(topOfStack_ifStatement != NULL);
+     ROSE_ASSERT(ifStatement == topOfStack_ifStatement);
+
+  // This should be a simple if-stmt without and endif statement.
+     ROSE_ASSERT(ifStatement->get_has_end_statement() == false);
+
   // Pop the if scope (it is a scope in C/C++, even if not in Fortran)
   // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
      astScopeStack.pop_front();
@@ -11321,7 +11442,7 @@ void c_action_if_stmt(Token_t *label, Token_t *ifKeyword)
   // DQ (11/26/2007): This should be empty now. Check to make sure that we have not left trash on the stack.
      ROSE_ASSERT(astExpressionStack.empty() == true);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R807 c_action_if_stmt()");
 #endif
@@ -12409,7 +12530,13 @@ void c_action_end_do_stmt(Token_t *label, Token_t *endKeyword, Token_t *doKeywor
      
      ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
+     setStatementNumericLabel(astScopeStack.front(),label);
+
+  // DQ (12/7/2010): We left a lable on the astLabelSymbolStack, see test2007_76.f90 (with R213 stack empty rule enforced).
+     processLabelOnStack(astScopeStack.front());
+
      astScopeStack.pop_front();
+
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R834 c_action_end_do_stmt()");
@@ -12484,13 +12611,21 @@ void c_action_do_term_action_stmt(Token_t *label, Token_t *endKeyword, Token_t *
 
      ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
+  // Note that it CORRECT to set the label after the scope is popped.
      astScopeStack.pop_front();
+
+     setStatementNumericLabel(astScopeStack.front(),label);
+
+  // DQ (12/7/2010): We left a lable on the astLabelSymbolStack, see test2007_76.f90 (with R213 stack empty rule enforced).
+     processLabelOnStack(astScopeStack.front());
 
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R838 c_action_do_term_action_stmt()");
 #endif
 
+  // printf ("Should this label be set before or after astScopeStack.pop_front() \n");
+  // ROSE_ASSERT(false);
    }
 
 /** R843
@@ -12769,9 +12904,23 @@ void c_action_pause_stmt(Token_t* label, Token_t* pauseKeyword, Token_t* constan
 
      pauseStatement->set_stop_or_pause(SgStopOrPauseStatement::e_pause);
 
+     if (constant != NULL)
+        {
+       // Note that this constant is also mistakenly interpreted as a label by OFP and so 
+       // we end up with a label matching the constant.  This should be fixed in OFP.
+       // See test2010_134.f90 (with error: Duplicate statement label 10 at (1) and (2)).
+          long  value = atol(constant->text);
+       // SgLongIntVal* constantValue = new SgLongIntVal(value,constant->text);
+          SgLongIntVal* constantValue = SageBuilder::buildLongIntVal(value);
+          pauseStatement->set_code(constantValue);
+          constantValue->set_parent(pauseStatement);
+        }
+
      setSourcePosition(pauseStatement,pauseKeyword);
 
      setStatementNumericLabel(pauseStatement,label);
+
+     processLabelOnStack(pauseStatement);
 
      ROSE_ASSERT(astScopeStack.empty() == false);
      astScopeStack.front()->append_statement(pauseStatement);
@@ -12911,7 +13060,7 @@ void c_action_continue_stmt(Token_t *label, Token_t *continueKeyword, Token_t *e
                   }
 #endif
 
-            // Mark this as a regular numerical label (in columns 2-6) and not associated with a else statement or an end statement.
+            // Mark this as a regular numerical label (in columns 2-6) and not associated with an else statement or an end statement.
                labelSymbolFromStack->set_label_type(SgLabelSymbol::e_start_label_type);
 
 #if 0
@@ -13076,9 +13225,9 @@ void c_action_stop_code(Token_t * digitString)
  */
 void c_action_allstop_stmt(Token_t * label, Token_t * allKeyword,
                            Token_t * stopKeyword, Token_t * eos, ofp_bool hasStopCode)
-{
-   printf ("In c_action_allstop_stmt() - this function needs to be implemented.\n");
-}
+   {
+     printf ("In c_action_allstop_stmt() - this function needs to be implemented.\n");
+   }
 
 /*
  * R858-F08 sync-all-stmt
@@ -13278,7 +13427,11 @@ void c_action_open_stmt(Token_t *label, Token_t *openKeyword, Token_t *eos)
 #endif
 
   // printf ("Warning: Ignoring all but the 'unit' in the OpenStatement \n");
-     while (astExpressionStack.empty() == false)
+
+  // DQ (12/11/2010): There can be more expressions on the astExpressionStack than names on the astNameStack,
+  // but only the number of names on the astNameStack count.  See test2010_143.f90.
+  // while (astExpressionStack.empty() == false)
+     while (astNameStack.empty() == false)
         {
           ROSE_ASSERT(astNameStack.empty() == false);
 
@@ -13438,6 +13591,7 @@ void c_action_connect_spec_list__begin()
      ROSE_ASSERT(current_IO_Control_Spec != NULL);
 #endif
    }
+
 void c_action_connect_spec_list(int count)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -13521,6 +13675,11 @@ void c_action_close_stmt(Token_t *label, Token_t *closeKeyword, Token_t *eos)
 
           expression->set_parent(closeStatement);
         }
+
+     setStatementNumericLabel(closeStatement,label);
+
+  // DQ (12/8/2010): Added label handling support for the redundant label stack.
+     processLabelOnStack(closeStatement);
 
      astScopeStack.front()->append_statement(closeStatement);
 #if 0
@@ -13678,7 +13837,7 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
   // If there is only one entry then it is the unit, not the format.
      int initalStackDepth = astExpressionStack.size();
 
-     printf ("In R910 c_action_read_stmt(): initalStackDepth = %d \n",initalStackDepth);
+  // printf ("In R910 c_action_read_stmt(): initalStackDepth = %d \n",initalStackDepth);
 
   // If this list is empty then there was nothing specified, as reported by OFP, but this is the case of "read *, ..." so we will interpret this as the case of "read fmt=*. ..." or "read *, ..."
      bool availableFormatSpecifier = astNameStack.empty();
@@ -13733,13 +13892,13 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
        // if ( (strncasecmp(name->text,"fmt",3) == 0) || ( (strncmp(name->text,"defaultString",13) == 0) && (readStatement->get_format() == NULL) && (initalStackDepth >= 2) ) )
           if ( (strncasecmp(name->text,"fmt",3) == 0) || ( (strncmp(name->text,"defaultString",13) == 0) && (readStatement->get_format() == NULL) && (initalStackDepth >= 2) && (lookAheadName != NULL && strncmp(lookAheadName->text,"defaultString",13) == 0)) )
              {
-               printf ("Processing token = %s as format spec \n",name->text);
+            // printf ("Processing token = %s as format spec \n",name->text);
 #if 1
             // DQ (12/3/2010): This code fails for test2007_211.f.
                ROSE_ASSERT(expression != NULL);
                SgExpression* labelRefExp = buildLabelRefExp(expression);
                ROSE_ASSERT(labelRefExp != NULL);
-               printf ("In c_action_read_stmt(): readStatement->set_format(%p = %s) \n",labelRefExp,labelRefExp->class_name().c_str());
+            // printf ("In c_action_read_stmt(): readStatement->set_format(%p = %s) \n",labelRefExp,labelRefExp->class_name().c_str());
                readStatement->set_format(labelRefExp);
                labelRefExp->set_parent(readStatement);
 
@@ -13777,12 +13936,12 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
        // Process this second because the unit expression is deeper on the stack!
           else if ( (strncasecmp(name->text,"unit",4) == 0) || (strncmp(name->text,"defaultString",13) == 0) && (readStatement->get_unit() == NULL) )
              {
-               printf ("Processing token = %s as unit spec expression = %s \n",name->text,expression->class_name().c_str());
+            // printf ("Processing token = %s as unit spec expression = %s \n",name->text,expression->class_name().c_str());
                readStatement->set_unit(expression);
              }
           else if ( strncasecmp(name->text,"iostat",6) == 0 )
              {
-               printf ("Processing token = %s as iostat spec expression = %s \n",name->text,expression->class_name().c_str());
+            // printf ("Processing token = %s as iostat spec expression = %s \n",name->text,expression->class_name().c_str());
                readStatement->set_iostat(expression);
              }
           else if ( strncasecmp(name->text,"err",3) == 0 )
@@ -13858,6 +14017,9 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
 
      ROSE_ASSERT(readStatement != NULL);
 
+#if 0
+  // DQ (12/12/2010): This does not appear to be required now. and was a problem fo test2010_145.f90.
+
   // DQ (12/3/2010): However, this breaks test2007_211.f
   // DQ (12/2/2010): Only handle this way if the readStatement->get_format() was not already set above.
   // If this was "print *,i" then we would now have a "*" on the stack, but if
@@ -13869,14 +14031,23 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
 #endif
         {
           SgExpression* formatLabel = astExpressionStack.front();
-          printf ("In R910 c_action_read_stmt(): formatLabel = %s \n",formatLabel->class_name().c_str());
+       // printf ("In R910 c_action_read_stmt(): formatLabel = %s \n",formatLabel->class_name().c_str());
 #if 1
           SgExpression* labelRefExp = buildLabelRefExp(formatLabel);
           ROSE_ASSERT(labelRefExp != NULL);
 
-          formatLabel->set_parent(labelRefExp);
+          printf ("Set parent of formatLabel \n");
+          ROSE_ASSERT(formatLabel != NULL);
+
+       // DQ (12/12/2010): This is demonstrated in the test2010_145.f90
+          ROSE_ASSERT(formatLabel != labelRefExp);
+          if (formatLabel != labelRefExp)
+               formatLabel->set_parent(labelRefExp);
 
           readStatement->set_format(labelRefExp);
+
+          printf ("Set parent of labelRefExp \n");
+          ROSE_ASSERT(labelRefExp != NULL);
           labelRefExp->set_parent(readStatement);
 #else
           SgIntVal* integerValueLabel = isSgIntVal(formatLabel);
@@ -13890,6 +14061,11 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
              }
 #endif
         }
+#endif
+
+     setStatementNumericLabel(readStatement,label);
+
+     processLabelOnStack(readStatement);
 
   // ROSE_ASSERT(readStatement->get_format() != NULL);
   // printf ("At BOTTOM of R910 c_action_read_stmt(): FMT = %p = %s \n",readStatement->get_format(),readStatement->get_format()->class_name().c_str());
@@ -14147,6 +14323,10 @@ void c_action_write_stmt(Token_t *label, Token_t *writeKeyword, Token_t *eos, of
      astExpressionStack.pop_front();
 #endif
 
+     setStatementNumericLabel(writeStatement,label);
+
+     processLabelOnStack(writeStatement);
+
      astScopeStack.front()->append_statement(writeStatement);
 
   // Set or clear the astLabelSymbolStack (since it is redundant with the label being passed in)
@@ -14177,7 +14357,9 @@ void c_action_write_stmt(Token_t *label, Token_t *writeKeyword, Token_t *eos, of
                astExpressionStack.pop_front();
              }
 #else
-          printf ("WARNING: unfinished implied do loop expressions may be left on stack (or it may be from a c_action_if_stmt()) (write) \n");
+       // DQ (12/12/2010): Make this a warning only output within verbose mode.
+          if ( SgProject::get_verbose() > 0 )
+               printf ("WARNING: unfinished implied do loop expressions may be left on stack (or it may be from a c_action_if_stmt()) (write) \n");
 #endif
         }
    }
@@ -14211,7 +14393,8 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      setSourcePosition(printStatement,printKeyword);
   // setSourcePosition(printStatement);
 
-     setStatementNumericLabel(printStatement,label);
+  // Set below in this function...
+  // setStatementNumericLabel(printStatement,label);
 
   // ioStatement->set_io_statement(SgIOStatement::e_print);
 
@@ -14269,14 +14452,14 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
              {
                Token_t* name = astNameStack.front();
 
-               printf ("In c_action_print_stmt(): processing token = %s with expression = %p = %s \n",name->text,formatLabel,formatLabel->class_name().c_str());
+            // printf ("In c_action_print_stmt(): processing token = %s with expression = %p = %s \n",name->text,formatLabel,formatLabel->class_name().c_str());
 
                ROSE_ASSERT (strncasecmp(name->text,"fmt",3) == 0);
 
             // The "unit=" string is optional, if it was not present then a toekn was pushed onto the stack with the text value "defaultString"
             // if ( (strncasecmp(name->text,"fmt",3) == 0) || (strncmp(name->text,"defaultString",13) == 0) && (writeStatement->get_format() == NULL) && numberOfDefaultOptions == 2)
             // if (strncasecmp(name->text,"fmt",3) == 0)
-               printf ("Processing token = %s as format spec \n",name->text);
+            // printf ("Processing token = %s as format spec \n",name->text);
 
                SgExpression* labelRefExp = buildLabelRefExp(formatLabel);
                printStatement->set_format(labelRefExp);
@@ -14304,6 +14487,10 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 #endif
 #endif
         }
+
+     setStatementNumericLabel(printStatement,label);
+
+     processLabelOnStack(printStatement);
 
   // Attach the variableDeclaration to the current scope
      SgScopeStatement* currentScope = getTopOfScopeStack();
@@ -14505,8 +14692,6 @@ void c_action_format()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_format() \n");
 
-     printf ("WARNING: NOT IMPLEMENTED!!! \n");
-     
   // DQ (12/3/2010): I think this is the problem with test2007_211.f.  Namely we have to push a name ("fmt") on the the astNamestack!
 
 #if 1
@@ -14780,7 +14965,7 @@ void c_action_io_implied_do()
      setSourcePosition(increment);
 
      ROSE_ASSERT(astExpressionStack.empty() == false);
-     printf ("In R917 c_action_io_implied_do(): astExpressionStack.front() = %s \n",astExpressionStack.front()->class_name().c_str());
+  // printf ("In R917 c_action_io_implied_do(): astExpressionStack.front() = %s \n",astExpressionStack.front()->class_name().c_str());
      SgExprListExp* objectList = isSgExprListExp(astExpressionStack.front());
      astExpressionStack.pop_front();
 
@@ -15589,7 +15774,7 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id,
 
             // We don't need the current_IO_Control_Spec data structure in the code below.
 
-            // The "unit=" string is optional, if it was not present then a toekn was pushed onto the stack with the text value "defaultString"
+            // The "unit=" string is optional, if it was not present then a token was pushed onto the stack with the text value "defaultString"
                if ( strncasecmp(name->text,"unit",4) == 0 || strncmp(name->text,"defaultString",13) == 0)
                   {
                     inquireStatement->set_unit(expression);
@@ -15752,11 +15937,43 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id,
  * @param count The number of items in the list.
  */
 void c_action_inquire_spec_list__begin()
-{
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_inquire_spec_list__begin() \n");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R930 c_action_inquire_spec_list__begin()");
+#endif
+   }
+
+void c_action_inquire_spec(Token_t *specName)
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_inquire_spec(): specName = %p = %s \n",specName,specName ? specName->text : "NULL");
+
+     ROSE_ASSERT(specName != NULL);
+     astNameStack.push_front(specName);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R930 c_action_inquire_spec()");
+#endif
 }
+
 void c_action_inquire_spec_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_inquire_spec_list(): count = %d \n",count);
+
+     ROSE_ASSERT(astNameStack.size() == (size_t)count);
+     ROSE_ASSERT(astExpressionStack.size() == (size_t)count);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R930 c_action_inquire_spec_list()");
+#endif
+   }
 
 /** R1001
  * format_stmt
@@ -16525,7 +16742,7 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 
-#if 1
+#if 0
      printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 #endif
 
@@ -18077,10 +18294,13 @@ void c_action_external_stmt(Token_t *label, Token_t *externalKeyword, Token_t *e
   // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
      build_implicit_program_statement_if_required();
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1210 c_action_external_stmt()");
 #endif
+
+  // DQ (12/11/2010): I think this is always NULL, since labels can't be used with the external statement.
+     ROSE_ASSERT(label == NULL);
 
   // Take the name on the astNameStack and convert it to a SgFunctionCallExp
 
@@ -18124,7 +18344,7 @@ void c_action_external_stmt(Token_t *label, Token_t *externalKeyword, Token_t *e
                currentScope->remove_symbol(variableSymbol);
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("Before buildAttributeSpecificationStatement() in R1210 c_action_external_stmt()");
 #endif
@@ -18132,8 +18352,17 @@ void c_action_external_stmt(Token_t *label, Token_t *externalKeyword, Token_t *e
      buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_externalStatement,label,externalKeyword);
 
 #if 0
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     astScopeStack.front()->print_symboltable("In c_action_external_stmt()");
+#endif
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1210 c_action_external_stmt()");
+#endif
+
+#if 0
+     printf ("Exiting at end of R1210 c_action_external_stmt() \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -18964,11 +19193,25 @@ void c_action_dummy_arg(Token_t * dummy)
  * @param count The number of items in the list.
  */
 void c_action_dummy_arg_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_dummy_arg_list__begin() \n");
+   }
+
 void c_action_dummy_arg_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_dummy_arg_list(): count = %d \n",count);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R1233 c_action_dummy_arg_list()");
+#endif
+#if 0
+     printf ("Exiting at the base of R1233 c_action_dummy_arg_list()");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 /** R1234
  * end_subroutine_stmt
@@ -19108,9 +19351,12 @@ void c_action_end_subroutine_stmt(Token_t * label, Token_t * keyword1, Token_t *
 // void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp_bool hasDummyArgList, ofp_bool hasSuffix)
 void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token_t * eos, ofp_bool hasDummyArgList, ofp_bool hasSuffix)
    {
-     printf ("In c_action_entry_stmt(): label = %p = %s keyword = %p = %s id = %p = %s hasDummyArgList = %s hasSuffix = %s \n",
-          label,label != NULL ? label->text : "NULL",keyword,keyword != NULL ? keyword->text : "NULL",
-          id,id != NULL ? id->text : "NULL",hasDummyArgList ? "true" : "false",hasSuffix ? "true" : "false");
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        {
+          printf ("In c_action_entry_stmt(): label = %p = %s keyword = %p = %s id = %p = %s hasDummyArgList = %s hasSuffix = %s \n",
+               label,label != NULL ? label->text : "NULL",keyword,keyword != NULL ? keyword->text : "NULL",
+               id,id != NULL ? id->text : "NULL",hasDummyArgList ? "true" : "false",hasSuffix ? "true" : "false");
+        }
 
   // This bug appears to be fixed in OFP as of Feb 18th 2008.
   // SgName entryFunctionName = "entry_function_name_unavailable_from_OFP";
@@ -19154,6 +19400,45 @@ void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token
      ROSE_ASSERT(entryStatement->get_parameterList() != NULL);
      setSourcePosition(entryStatement->get_parameterList());
 
+     if (hasDummyArgList == true)
+        {
+       // DQ (12/12/2010): This code is copied from buildProcedureSupport in fortran_support.C
+
+       // Take the arguments off of the token stack (astNameStack).
+          while (astNameStack.empty() == false)
+             {
+            // Capture the procedure parameters.
+               SgName arg_name = astNameStack.front()->text;
+
+            // printf ("arg_name = %s \n",arg_name.str());
+
+            // Build a SgInitializedName with a SgTypeDefault and fixup the type later when we see the declaration inside the procedure.
+               SgInitializedName* initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,entryStatement,NULL);
+
+               entryStatement->append_arg(initializedName);
+
+               initializedName->set_parent(entryStatement->get_parameterList());
+               ROSE_ASSERT(initializedName->get_parent() != NULL);
+
+            // DQ (12/17/2007): set the scope
+               initializedName->set_scope(astScopeStack.front());
+
+               setSourcePosition(initializedName,astNameStack.front());
+
+               ROSE_ASSERT(astNameStack.empty() == false);
+               astNameStack.pop_front();
+
+            // Now build associated SgVariableSymbol and put it into the current scope (function definition scope)
+            // SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+            // entryStatement->insert_symbol(arg_name,variableSymbol);
+
+            // DQ (12/17/2007): Make sure the scope was set!
+               ROSE_ASSERT(initializedName->get_scope() != NULL);
+             }
+
+          ROSE_ASSERT(entryStatement->get_args().empty() == false);
+        }
+
      if (hasSuffix == true)
         {
           printf ("Need to set the return type for the SgEntryStatement in R1235 \n");
@@ -19192,7 +19477,7 @@ void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token
 
      astScopeStack.front()->append_statement(entryStatement);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1235 c_action_entry_stmt()");
 #endif
@@ -19212,7 +19497,7 @@ void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token
 void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp_bool hasScalarIntExpr)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_return_stmt(): hasScalarIntExpr = %s \n",hasScalarIntExpr ? "true" : "false");
+          printf ("In c_action_return_stmt(): label = %s hasScalarIntExpr = %s \n",(label != NULL) ? label->text : "NULL", hasScalarIntExpr ? "true" : "false");
 
      SgExpression* returnValue = NULL;
      if (hasScalarIntExpr == true)
@@ -19232,6 +19517,9 @@ void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp
 
      ROSE_ASSERT(keyword != NULL);
      setSourcePosition(returnStatement,keyword);
+
+  // DQ (12/8/2010): Added label handling support for the redundant label stack.
+     processLabelOnStack(returnStatement);
 
      setStatementNumericLabel(returnStatement,label);
 
@@ -19307,6 +19595,10 @@ void c_action_end_of_stmt(Token_t * eos)
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1238 c_action_end_of_stmt()");
+#endif
+
+#if 0
+     astScopeStack.front()->print_symboltable("In c_action_end_of_stmt()");
 #endif
 
 #if 0
@@ -20033,7 +20325,6 @@ void c_action_image_selector(Token_t *leftBracket,Token_t *rightBracket){}
 void c_action_image_selector(int carg_0){}
 #endif
 
-void c_action_inquire_spec(Token_t *carg_0){}
 void c_action_pointer_object(){}
 void c_action_proc_interface(Token_t *carg_0){}
 void c_action_proc_pointer_object(){}
