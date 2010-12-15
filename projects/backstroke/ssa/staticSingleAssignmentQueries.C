@@ -302,8 +302,8 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 		return;
 	}
 
-	typedef FilteredCFGNode<IsDefUseFilter> cfgNode;
-	typedef FilteredCFGEdge<IsDefUseFilter> cfgEdge;
+	typedef FilteredCFGNode<DataflowCfgFilter> cfgNode;
+	typedef FilteredCFGEdge<DataflowCfgFilter> cfgEdge;
 
 	typedef vector<SgFunctionDefinition*> funcDefVec;
 	funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
