@@ -45,24 +45,14 @@ struct DataflowCfgFilter
 			case V_SgConditionalExp:
 				return (cfgn.getIndex() == 1);
 
+			//Make these binary operators appear after their operands, because they are evaluated after their operands
+			case V_SgAndOp:
+			case V_SgOrOp:
+				return (cfgn == node->cfgForEnd());
+
 			default:
-				break;
+				return cfgn.isInteresting();
 		}
-
-		//Remove all non-interesting nodes
-		if (!cfgn.isInteresting())
-			return false;
-
-		//Remove the midde node for logical operators with short circuiting.
-		//E.g. && appears in the CFG between its LHS and RHS operands. We remove it
-		//FIXME: This removes some branches in the CFG. There should be a better way to address this
-		if (isSgAndOp(node) || isSgOrOp(node))
-		{
-			if (cfgn != node->cfgForEnd())
-				return false;
-		}
-
-		return true;
 	}
 };
 }
