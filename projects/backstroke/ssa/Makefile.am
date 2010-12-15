@@ -493,7 +493,6 @@ test2006_94.C \
 test2006_95.C \
 test2006_96.C \
 test2006_98.C \
-test2006_99.C \
 test2006_101.C \
 test2006_102.C \
 test2006_103.C \
@@ -684,7 +683,8 @@ test2007_159.C \
 --> The virtual CFG doesn't contain the "original expression tree" for casts, but the traversals visit it: \
 test2004_44.C \
 --> VirtualCfg doesn't visit the parameters of SgAsmOp, so defs can't propagate to those uses: \
-test2006_40.C
+test2006_40.C \
+test2006_99.C
 
 TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
