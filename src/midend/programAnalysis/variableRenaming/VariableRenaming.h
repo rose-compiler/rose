@@ -134,12 +134,18 @@ struct IsDefUseFilter
 		if (isSgBasicBlock(node) && cfgn == node->cfgForBeginning())
 			return true;
 
+		if (isSgExprStatement(node))
+			return (cfgn == node->cfgForBeginning());
+
+		if (isSgCommaOpExp(node))
+			return (cfgn == node->cfgForBeginning());
+
 		//Remove all non-interesting nodes
 		if (!cfgn.isInteresting())
 			return false;
 
-		//Remove all non-beginning nodes for initNames
-		if (isSgInitializedName(node) && cfgn != node->cfgForBeginning())
+		//Remove all non-end nodes for initNames
+		if (isSgInitializedName(node) && cfgn != node->cfgForEnd())
 			return false;
 
 		//Remove non-beginning nodes for try statements
