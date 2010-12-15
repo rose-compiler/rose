@@ -20,18 +20,21 @@ struct DataflowCfgFilter
 
 		switch (node->variantT())
 		{
-			//For function calls, we only keep the last node
+			//For function calls, we only keep the last node. The function is actually called after all its parameters
+			//are evaluated.
 			case V_SgFunctionCallExp:
 				return (cfgn == node->cfgForEnd());
 
-			//For basic blocks and other  keep the node that appears before all the contents of the basic block
+			//For basic blocks and other "container" nodes, keep the node that appears before the contents are executed
 			case V_SgBasicBlock:
+			case V_SgExprStatement:
+			case V_SgCommaOpExp:
 				return (cfgn == node->cfgForBeginning());
 
-			//Keep the first index for initialized names.
-			//FIXME: Should we keep the second index instead? What about assign initializers?
+			//Keep the last index for initialized names. This way the def of the variable doesn't propagate to its assign
+			//initializer.
 			case V_SgInitializedName:
-				return (cfgn == node->cfgForBeginning());
+				return (cfgn == node->cfgForEnd());
 
 			case V_SgTryStmt:
 				return (cfgn == node->cfgForBeginning());
