@@ -152,9 +152,7 @@ struct IsDefUseFilter
 		if (isSgTryStmt(node) && cfgn != node->cfgForBeginning())
 			return false;
 
-		//Remove the midde node for logical operators with short circuiting.
-		//E.g. && appears in the CFG between its LHS and RHS operands. We remove it
-		//FIXME: This removes some branches in the CFG. There should be a better way to address this
+		//Use the last node of binary operators
 		if (isSgAndOp(node) || isSgOrOp(node))
 		{
 			if (cfgn != node->cfgForEnd())
