@@ -1100,8 +1100,18 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
             //Insert each changed node into the list
             foreach(SgNode* chNode, changedNodes)
             {
-                //Get the cfg node for this node
-                cfgNode nextNode = cfgNode(chNode->cfgForBeginning());
+                //Get the cfg node for this AST node
+				cfgNode nextNode;
+				IsDefUseFilter filter;
+				for (int i = 0; ; i++)
+				{
+					CFGNode unfiltered(chNode, i);
+					if (filter(unfiltered))
+					{
+						nextNode = unfiltered;
+						break;
+					}
+				}
                 //Only insert the node in the worklist if it isn't there already.
                 worklist.push_back(nextNode);
                 if(DEBUG_MODE)
