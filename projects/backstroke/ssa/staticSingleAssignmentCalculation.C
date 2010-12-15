@@ -66,6 +66,13 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 	{
 		//FIXME: In a basic block, the definition of the variable might come AFTER the node in question
 		//We should return false in this case.
+
+		//Special case: a variable cannot be accessed in its own assign initializer
+		//This is important for loops where a variable is redefined on every iteration
+		//E.g. while (int a = 3) {}
+		if (SageInterface::isAncestor(var[0], astNode))
+			return false;
+
 		return true;
 	}
 	else if (isSgNamespaceDefinitionStatement(varScope) || isSgGlobal(varScope))
