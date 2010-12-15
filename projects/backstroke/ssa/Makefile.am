@@ -660,7 +660,6 @@ math.C \
 inputForLoopLocator.C \
 X.C \
 inputBug317.C \
-test2006_148.C \
 test2007_51.C
 
 # These are currently failing testcodes that should be fixed
@@ -684,7 +683,8 @@ test2007_159.C \
 test2004_44.C \
 --> VirtualCfg doesn't visit the parameters of SgAsmOp, so defs can't propagate to those uses: \
 test2006_40.C \
-test2006_99.C
+test2006_99.C \
+test2006_148.C 
 
 TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
