@@ -449,7 +449,6 @@ test2006_34.C \
 test2006_37.C \
 test2006_38.C \
 test2006_39.C \
-test2006_40.C \
 test2006_41.C \
 test2006_42.C \
 test2006_44.C \
@@ -672,7 +671,7 @@ test2004_159.C \
 test2005_114.C \
 test2005_187.C \
 test2006_47.C \ 
--->virtualCFG bug with visiting VarRef's of const values: (Not SSA Bu) \
+-->virtualCFG bug with visiting VarRef's of const values: (Not SSA Bug) \
 test2005_32.C \
 test2004_141.C \
 test2005_161.C \
@@ -683,7 +682,9 @@ test2006_66.C \
 --> No defs propagated to unreachable code (Have to detect unreachable code) \
 test2007_159.C \
 --> The virtual CFG doesn't contain the "original expression tree" for casts, but the traversals visit it: \
-test2004_44.C
+test2004_44.C \
+--> VirtualCfg doesn't visit the parameters of SgAsmOp, so defs can't propagate to those uses: \
+test2006_40.C
 
 TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
