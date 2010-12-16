@@ -289,6 +289,19 @@ SgClassSymbol* buildIntrinsicModule_ISO_C_BINDING();
 //! Build the module symbols required to support intrinsic modules.
 SgClassSymbol* buildIntrinsicModule ( const std::string & name );
 
+// DQ (11/26/2010): Added support for building implicit variables.
+//! Support for building implicit variables (works even when the name matches an inplicit function).
+void buildImplicitVariableDeclaration( const SgName & variableName );
+
+//! Support to push tokens onto the astNameStack.
+void push_token(std::string s);
+
+//! Support to setting on statement (labels are found on the astLabelSymbolStack).
+void processLabelOnStack( SgStatement* statement );
+
+//! This support is required to work around a bug in OFP (label == NULL in R807).
+void specialFixupForLabelOnStackAndNotPassedAsParameter( SgStatement* statement );
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
 

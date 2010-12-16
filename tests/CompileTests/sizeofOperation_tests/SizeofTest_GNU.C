@@ -20,6 +20,23 @@ visitorTraversal::visitorTraversal()
 
 }
 
+//computedSize is the value in the generated IR node.
+//directSize is the actual value from the program execution.
+template<class ValueType> void
+checkEqual(ValueType const &computedSize, ValueType const &directSize)
+{
+	if(directSize == computedSize)
+	{
+		cout << " EQUAL: " << directSize << " and " << computedSize << endl;
+	}
+	else
+	{
+		cout << "\n DIFFERENT! Compile time size is " << directSize
+	                 << " and Computed size is " << computedSize << "\n" << endl;
+	        flag = false;
+	}
+}
+
 void visitorTraversal::visit(SgNode* currentNode)
 {
 	//Only checks sizeof node preceded by an extra integer value node
@@ -28,23 +45,25 @@ void visitorTraversal::visit(SgNode* currentNode)
 		SgNode* parent = currentNode -> get_parent();
 		ROSE_ASSERT(parent != NULL);
 		//sizeof operation with an extra IR node (SgUnsignedIntVal type node)
-		if(isSgUnsignedIntVal(parent) != NULL)
-		{
+		if (isSgValueExp(parent) != NULL) {
 			cout << "Testing sizeof operation on " << currentNode -> unparseToString() << ": ";
-			//computedSize is the value in the generated IR node.
-			unsigned int computedSize = ((SgUnsignedIntVal*)parent) -> get_value();
-			//directSize is the actual value from the program execution.
-			unsigned int directSize;
-			fscanf(fp, "%d", &directSize);
-			if(directSize == computedSize)
+			if(isSgUnsignedIntVal(parent) != NULL)
 			{
-				cout << " EQUAL: " << directSize << " and " << computedSize << endl;
+				unsigned int computedSize = ((SgUnsignedIntVal*)parent) -> get_value();
+		                unsigned int directSize;
+				fscanf(fp, "%u", &directSize);
+				checkEqual(computedSize, directSize);
+			}
+			else if(isSgUnsignedLongLongIntVal(parent) != NULL)
+			{
+				unsigned long long computedSize = ((SgUnsignedLongLongIntVal*)parent) -> get_value();
+		                unsigned long long directSize;
+				fscanf(fp, "%llu", &directSize);
+				checkEqual(computedSize, directSize);
 			}
 			else
 			{
-				cout << "\n DIFFERENT! Compile time size is " << directSize 
-                                         << " and Computed size is " << computedSize << "\n" << endl;
-                                flag = false;
+				ROSE_ASSERT(false && "SgSizeOfOp is folded into an unhandled value type");
 			}
 		}
 	}

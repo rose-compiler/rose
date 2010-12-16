@@ -826,81 +826,14 @@ typedef Rose_STL_Container<SgToken*> SgTokenPtrList;
 typedef SgTokenPtrList* SgTokenPtrListPtr;
 
 
-#if 1
 // DQ (11/4/2009): Trying to use the boost hash_map support
-
-
-
-
-// DQ (4/23/2009): See comments in sage3.h about the <ext/hash_map> section.
-// using namespace __gnu_cxx;
-
 namespace rose_hash 
    {
   // The condition here is not needed for GCC 4.2, but is needed (and does not completely work) for earlier versions
-  // #ifdef _GLIBCXX_DEBUG
-  // using namespace __gnu_debug;
-  // using __gnu_cxx::hash;
-  // #else
-
-#if ROSE_MICROSOFT_OS
-  // DQ (11/4/2009): MS Visual Studio version of hash_multimap
-//     using namespace cliext;
-   //using namespace stdext;
-#else
-  // DQ (11/4/2009): Use the depricated GNU stuff (what works in ROSE currently)
-     //using namespace __gnu_cxx;
-#endif
-
-       using boost::unordered_map;
-       using boost::unordered_multimap;
-       using boost::unordered_set;
-       using boost::hash;
-
-#if 0       
-   // CH (4/8/2010): Typedef wrappers of hash_map types
-
-   template <class Key, class Mapped,
-        class Hash = boost::hash<Key>,
-        class Pred = std::equal_to<Key>,
-	class Alloc = std::allocator<std::pair<const Key, Mapped> > >
-   struct hash_map
-   {
-       //typedef __gnu_cxx::hash_map<Key, Mapped, Hash, Pred, Alloc> Type;
-       typedef boost::unordered_map<Key, Mapped, Hash, Pred, Alloc> Type;
-       virtual void foo()=0;
-   };
-
-   template <class Value, 
-        class Hash = boost::hash<Value>,
-        class Pred = std::equal_to<Value>,
-	class Alloc = std::allocator<Value> >
-   struct hash_set
-   {
-       //typedef __gnu_cxx::hash_map<Value, Hash, Pred, Alloc> Type;
-       typedef boost::unordered_set<Value, Hash, Pred, Alloc> Type;
-       virtual void foo()=0;
-   };
-
-   template <class Key, class Mapped,
-        class Hash = boost::hash<Key>,
-        class Pred = std::equal_to<Key>,
-	class Alloc = std::allocator<std::pair<const Key, Mapped> > >
-   struct hash_multimap
-   {
-       //typedef __gnu_cxx::hash_multimap<Key, Mapped, Hash, Pred, Alloc> Type;
-       typedef boost::unordered_multimap<Key, Mapped, Hash, Pred, Alloc> Type;
-       virtual void foo()=0;
-   };
-
-   template <class T> struct hash
-   {
-       //typedef __gnu_cxx::hash<T> Type;
-       typedef boost::hash<T> Type;
-       virtual void foo()=0;
-   };
-#endif   
-       
+     using boost::unordered_map;
+     using boost::unordered_multimap;
+     using boost::unordered_set;
+     using boost::hash;
 
   // DQ (4/23/2009): These should be put into this namespace so that we don't contaminate the global scope.
   // DQ (8/19/2008): This is already defined in src/frontend/SageIII/astMerge/buildMangledNameMap.h
@@ -914,83 +847,20 @@ namespace rose_hash
 
 /*! \brief Hash name support for symbol tables within ROSE.
  */
-
-// CH (4/13/2010): Use boost::hash<string> instead     
-#if 0
-     struct hash_string
-        {
-// tps (11/17/2009) : Changed this so that it works under Windows.
-// CH (4/9/2010): Use boost::hash instead	    
-//#ifndef _MSCx_VER 
-#if 1	    
-          rose_hash::hash<const char*> hasher;
-#else
-   public:
-      static const size_t bucket_size = 4;
-      static const size_t min_buckets = 8;
-#endif
-          size_t operator()(const std::string & name) const
-             {
-// CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSCx_VER 
-#if 0		 
-               return stdext::hash_compare<const char*>()(name.c_str()); 
-#else
-               return hasher(name.c_str());
-#endif
-             }
-        };
-#endif
-
-// hashing function for s_s
-// CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSCx_VER 
-#if 0     
-inline size_t hash_value(const int & s)
-{
-  return s;
-}
-#endif
-
-
-
      struct hash_integer
         {
-// tps (11/17/2009) : Changed this so that it works under Windows.
-// CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSCx_VER 
-#if 0	    
-   public:
-      static const size_t bucket_size = 4;
-      static const size_t min_buckets = 8;
-#endif
+       // tps (11/17/2009) : Changed this so that it works under Windows.
+       // CH (4/9/2010): Use boost::hash instead	    
           size_t operator()(const int n) const
              {
-// CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSCx_VER 
-#if 0		 
-//		return (size_t) stdext::hash_compare<int, std::less<int> > >()(n);
-        return (size_t) hash_value(n);
-//               return stdext::hash_compare<int>()(n); 
-#else
                return n;
-#endif
              }
         };
-
-
-
 
      struct hash_integer_pair
         {
-// tps (11/17/2009) : Changed this so that it works under Windows.
-// CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSCx_VER 
-#if 0	    
-   public:
-      static const size_t bucket_size = 4;
-      static const size_t min_buckets = 8;
-#endif
+       // tps (11/17/2009) : Changed this so that it works under Windows.
+       // CH (4/9/2010): Use boost::hash instead	    
           size_t operator()(const std::pair<int,int> & p) const
              {
             // DQ (4/30/2009): This subject should be reviewed!
@@ -1027,23 +897,14 @@ inline size_t hash_value(const int & s)
 
      struct hash_graph_node
         {
-       // rose_hash::hash<const SgGraphNode*> hasher;
-	   // tps (11/17/2009) : Changed this so that it works under Windows.
-// CH (4/9/2010): Use boost::hash instead	    
-//#ifdef _MSCx_VER 
-#if 0	    
-   public:
-      static const size_t bucket_size = 4;
-      static const size_t min_buckets = 8;
-#endif
+       // tps (11/17/2009) : Changed this so that it works under Windows.
+       // CH (4/9/2010): Use boost::hash instead	    
           size_t operator()(const SgGraphNode* ptr) const
              {
                return (size_t) ptr;
              }
         };
    }
-#endif
-
 
 
 /*! \brief Hash table support for graph IR nodes within ROSE (uses strings to lookup nodes).
@@ -1053,13 +914,7 @@ inline size_t hash_value(const int & s)
 // class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 // CH (4/9/2010): Use boost::unordered instead	    
-//#ifdef _MSCx_VER 
-#if 0
-typedef rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string> rose_graph_string_node_hash_multimap_base_type;
-#else
-//typedef rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_node_hash_multimap_base_type;
 typedef rose_hash::unordered_multimap<std::string, SgGraphNode*> rose_graph_string_node_hash_multimap_base_type;
-#endif
 
 class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_multimap_base_type
    {
@@ -1085,8 +940,6 @@ class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_
              {}
 #endif
           rose_graph_string_node_hash_multimap(const rose_graph_string_node_hash_multimap & rhs)
-          // DQ (4/30/2009): This fixed a problem reported by Thomas Panas relative to seg-faults when using the copy constructor (forced his code to use references).
-          // : rose_hash::unordered_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_graph_string_node_hash_multimap)rhs),parent(rhs.parent)
              : rose_graph_string_node_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}
        // See note (above) about name change to the associated data member for these access functions.
@@ -1131,12 +984,7 @@ typedef rose_graph_string_node_hash_multimap rose_graph_hash_multimap;
 // DQ (4/29/2009): Added to support ROSE Graph IR nodes
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 // CH (4/9/2010): Use boost::unordered instead	    
-//#ifdef _MSCx_VER 
-#if 0
-typedef rose_hash::unordered_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node> rose_graph_node_edge_hash_multimap_base_type;
-#else
 typedef rose_hash::unordered_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> rose_graph_node_edge_hash_multimap_base_type;
-#endif
 class rose_graph_node_edge_hash_multimap : public rose_graph_node_edge_hash_multimap_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
@@ -1373,32 +1221,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_edge_has
 
 /*! \brief Hash table support for graph IR nodes within ROSE (used to lookup edges using node index pairs).
  */
-
-// DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
-// typedef rose_hash::unordered_multimap<std::pair<int,int>,SgGraphEdge*, rose_hash::hash_integer_pair, rose_hash::eqstr_integer_pair> rose_graph_integerpair_edge_hash_multimap_base_type;
-
-// CH (4/9/2010): Use boost::unordered instead	    
-//#ifdef _MSCx_VER
-#if 0
-// DQ (12/1/2009): MSVC appears to require an explicit hash_value function to avoid error:
-//    error C2440: 'type cast' : cannot convert from 'const std::pair<_Ty1,_Ty2>' to 'size_t'
-#if 0
-inline size_t hash_value(const std::pair<int,int> & p)
-   {
-     printf ("Warning: This may not be a good hash function specialized fro MSVC. \n");
-     return ((size_t)(p.first + p.second));
-   }
-
-typedef rose_hash::unordered_multimap<std::pair<int,int>,SgGraphEdge*> rose_graph_integerpair_edge_hash_multimap_base_type;
-#else
-// DQ (12/1/2009): I can't get this to work under MCVC (so comment it out for now).
-#pragma message ("Grammer/Node.code: I can't get this to work under MCVC (so comment it out for now).")
-// Use size_t to get this to compile for now.
-typedef rose_hash::unordered_multimap<size_t,SgGraphEdge*> rose_graph_integerpair_edge_hash_multimap_base_type;
-#endif
-#else
 typedef rose_hash::unordered_multimap<std::pair<int,int>,SgGraphEdge*, rose_hash::hash_integer_pair> rose_graph_integerpair_edge_hash_multimap_base_type;
-#endif
 class rose_graph_integerpair_edge_hash_multimap : public rose_graph_integerpair_edge_hash_multimap_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
@@ -1457,15 +1280,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integerpair_edge
 // DQ (5/1/2009): This is added to support lookup of indexes based on labels (can be used for nodes or edges).
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 // CH (4/9/2010): Use boost::unordered instead	    
-//#ifdef _MSCx_VER 
-#if 0
-// DQ (11/29/2009): fix for: MSVC error C2064: term does not evaluate to a function taking 2 arguments
-// typedef rose_hash::unordered_multimap<std::string, int,rose_hash::hash_string> rose_graph_string_integer_hash_multimap_base_type;
 typedef rose_hash::unordered_multimap<std::string, int> rose_graph_string_integer_hash_multimap_base_type;
-#else
-//typedef rose_hash::unordered_multimap<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_integer_hash_multimap_base_type;
-typedef rose_hash::unordered_multimap<std::string, int> rose_graph_string_integer_hash_multimap_base_type;
-#endif
 class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer_hash_multimap_base_type
    {
      protected:

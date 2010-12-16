@@ -74,9 +74,9 @@ getVarSymFromName_const (const SgInitializedName* name)
             v_sym = decl_scope->lookup_var_symbol (name->get_name ());
 
           if (!v_sym)
-            cerr << "\t\t*** WARNING: Can't seem to find a symbol for '"
+            cerr << "Warning: getVarSymFromName_const (): Can't seem to find a symbol for '"
                  << name->get_name ().str ()
-                 << "' ***" << endl;
+                 << "' " << endl;
         }
     }
   return v_sym;
@@ -122,7 +122,7 @@ getVarSym_const (const SgNode* n)
       //v_sym = getVarSymFromName_const (isSgInitializedName (n));
       SgSymbol* symbol = isSgInitializedName(n)->get_symbol_from_symbol_table();
       v_sym = isSgVariableSymbol(symbol);
-      if (v_sym == NULL)
+      if (v_sym == NULL) 
       {
         cerr<<"Warning: astOutlining/VarSym.cc getVarSym_const() did not find symbol for:"<<
         n->unparseToString()<<endl;

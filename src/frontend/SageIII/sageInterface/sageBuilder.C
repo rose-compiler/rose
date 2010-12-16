@@ -20,6 +20,11 @@ using namespace SageInterface;
 std::list<SgScopeStatement*> SageBuilder::ScopeStack(0);
 
 
+// DQ (11/30/2010): Added support for building Fortran case insensitive symbol table handling.
+//! Support for construction of case sensitive/insensitive symbol table handling in scopes.
+bool SageBuilder::symbol_table_case_insensitive_semantics = false;
+
+
 void SageBuilder::pushScopeStack (SgScopeStatement* stmt)
 {
   ROSE_ASSERT(stmt);
@@ -156,7 +161,37 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 
   if (scope!=NULL) 
   {
-    fixVariableDeclaration(varDecl,scope);
+    // Liao 12/13/2010
+    // Fortran subroutine/function parameters have corresponding variable declarations in the body
+    // we need to share the initialized names of the parameters instead of creating new ones
+    bool isFortranParameter = false; 
+    if (SageInterface::is_Fortran_language())
+    {
+      SgFunctionDefinition * f_def = getEnclosingProcedure (scope);
+      if (f_def != NULL)
+      {
+        SgSymbolTable * st = f_def->get_symbol_table();
+        ROSE_ASSERT (st != NULL);
+        SgVariableSymbol * v_symbol = st->find_variable(name); 
+        if (v_symbol != NULL)
+        {
+          // replace the default one with the one from parameter
+          SgInitializedName *old_initName = varDecl->get_decl_item (name);
+          ROSE_ASSERT (old_initName != NULL);
+          SgInitializedName * new_initName = v_symbol->get_declaration();
+          ROSE_ASSERT (new_initName != NULL);
+          SgInitializedNamePtrList  n_list= varDecl->get_variables();
+          std::replace (n_list.begin(), n_list.end(),old_initName, new_initName );
+          SgNode * old_parent = new_initName->get_parent();
+          ROSE_ASSERT  (old_parent != NULL);
+          ROSE_ASSERT  (isSgFunctionParameterList(old_parent) != NULL);
+          new_initName->set_parent(varDecl); // adjust parent from SgFunctionParameterList to SgVariableDeclaration
+          isFortranParameter = true;
+        }
+      }
+    }
+    if (! isFortranParameter)
+      fixVariableDeclaration(varDecl,scope);
   }
 #if 0
   // SgVariableDefinition should be created internally
@@ -220,6 +255,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
        varDecl->set_definingDeclaration(varDecl);
 #endif
 
+  ROSE_ASSERT (varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
   return varDecl;
 }
 
@@ -707,6 +743,22 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
   // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): generated function func = %p \n",func);
 
+  // Liao 12/2/2010, special handling for Fortran functions and subroutines
+     if (SageInterface::is_Fortran_language() )
+     {
+       SgProcedureHeaderStatement * f_func = isSgProcedureHeaderStatement(func);
+       ROSE_ASSERT (f_func != NULL);
+       if (return_type == buildVoidType())
+         f_func->set_subprogram_kind(SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
+       else
+         f_func->set_subprogram_kind(SgProcedureHeaderStatement::e_function_subprogram_kind);
+       
+       // hide it from the unparser since fortran prototype func declaration is internally used by ROSE AST 
+       f_func->get_startOfConstruct()->unsetOutputInCodeGeneration();
+       f_func->get_endOfConstruct()->unsetOutputInCodeGeneration();
+       ROSE_ASSERT(f_func->get_startOfConstruct()->isOutputInCodeGeneration() == false);
+       ROSE_ASSERT(f_func->get_endOfConstruct()->isOutputInCodeGeneration() == false);
+     }
      return func;  
    }
 
@@ -751,7 +803,13 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
 SgFunctionDeclaration*
 SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
 {
-  SgFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
+  SgFunctionDeclaration * result = NULL;
+  if (SageInterface::is_Fortran_language())
+  {
+      result = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
+  }
+  else
+    result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
   return result;
 }
 
@@ -889,6 +947,14 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
   ROSE_ASSERT(func_body);
   SgFunctionDefinition * func_def = new SgFunctionDefinition(func,func_body);
   ROSE_ASSERT(func_def);
+
+  // DQ (11/28/2010): Added specification of case insensitivity (e.g. Fortran).
+  if (symbol_table_case_insensitive_semantics == true)
+     {
+       func_def->setCaseInsensitive(true);
+       func_body->setCaseInsensitive(true);
+     }
+
   func_def->set_parent(func);
   func_def->set_body(func_body);
   func_body->set_parent(func_def);
@@ -2193,8 +2259,23 @@ SageBuilder::buildFunctionRefExp(const SgFunctionDeclaration* func_decl)
 {
   ROSE_ASSERT(func_decl != NULL);
   SgDeclarationStatement* nondef_func = func_decl->get_firstNondefiningDeclaration ();
-  ROSE_ASSERT(nondef_func!= NULL);
-  SgSymbol* symbol = nondef_func->get_symbol_from_symbol_table();
+  SgDeclarationStatement* def_func = func_decl->get_definingDeclaration ();
+  SgSymbol* symbol = NULL; 
+  if (nondef_func != NULL)
+  {
+    ROSE_ASSERT(nondef_func!= NULL);
+    symbol = nondef_func->get_symbol_from_symbol_table();
+  }
+  // Liao 12/1/2010. It is possible that there is no prototype declarations at all
+  else if (def_func != NULL)
+  {
+    symbol = def_func->get_symbol_from_symbol_table();
+  }
+  else
+  {
+    cerr<<"Fatal error: SageBuilder::buildFunctionRefExp():defining and nondefining declarations for a function cannot be both NULL"<<endl;
+    ROSE_ASSERT (false);
+  }
   ROSE_ASSERT( symbol != NULL);
   return buildFunctionRefExp( isSgFunctionSymbol (symbol));
 }
@@ -2482,6 +2563,11 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true
   // ROSE_ASSERT(false_body); -- this is not required anymore
   SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
   ROSE_ASSERT(ifstmt);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       ifstmt->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(ifstmt);
   conditional->set_parent(ifstmt);
   true_body->set_parent(ifstmt);
@@ -2493,6 +2579,11 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
 {
   SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
   ROSE_ASSERT(ifstmt);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       ifstmt->setCaseInsensitive(true);
+
   setOneSourcePositionNull(ifstmt);
   if (conditional) conditional->set_parent(ifstmt);
   if (true_body) true_body->set_parent(ifstmt);
@@ -2506,6 +2597,11 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
 {
   SgForStatement * result = new SgForStatement(test,increment, loop_body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   if (test) 
     test->set_parent(result);
@@ -2551,6 +2647,11 @@ SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt
 {
   SgForStatement * result = new SgForStatement(test,increment, loop_body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   if (test) test->set_parent(result);
   if (loop_body) loop_body->set_parent(result);
@@ -2596,6 +2697,11 @@ SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement 
   ROSE_ASSERT(body);
   SgWhileStmt * result = new SgWhileStmt(condition,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   condition->set_parent(result);
   body->set_parent(result);
@@ -2606,6 +2712,11 @@ SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatem
 {
   SgWhileStmt * result = new SgWhileStmt(condition,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   if (condition) condition->set_parent(result);
   if (body) body->set_parent(result);
@@ -2697,6 +2808,11 @@ SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt1, SgStatement* st
 {
   SgBasicBlock* result = new SgBasicBlock();
   ROSE_ASSERT(result);
+
+// DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   if (stmt1) SageInterface::appendStatement(stmt1, result);
   if (stmt2) SageInterface::appendStatement(stmt2, result);
@@ -2715,6 +2831,11 @@ SgBasicBlock * SageBuilder::buildBasicBlock_nfi()
 {
   SgBasicBlock* result = new SgBasicBlock();
   ROSE_ASSERT(result);
+
+// DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   return result;
 }
@@ -2805,6 +2926,11 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
 {
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   if (item_selector) item_selector->set_parent(result);
   if (body) body->set_parent(result);
@@ -2815,6 +2941,11 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement_nfi(SgStatement *item_selec
 {
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   if (item_selector) item_selector->set_parent(result);
   if (body) body->set_parent(result);
@@ -3407,6 +3538,7 @@ SgNamespaceDefinitionStatement* SageBuilder::buildNamespaceDefinition(SgNamespac
       result = new SgNamespaceDefinitionStatement(d);
     
     ROSE_ASSERT(result);
+
     setOneSourcePositionForTransformation(result);
     return result;
   }
@@ -3425,6 +3557,11 @@ SgClassDefinition* SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NU
       result = new SgClassDefinition();
     
     ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+    if (symbol_table_case_insensitive_semantics == true)
+         result->setCaseInsensitive(true);
+
     setOneSourcePositionForTransformation(result);
     return result;
   }
@@ -3441,6 +3578,11 @@ SgClassDefinition* SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*
       result = new SgClassDefinition();
     
     ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+    if (symbol_table_case_insensitive_semantics == true)
+         result->setCaseInsensitive(true);
+
     setOneSourcePositionNull(result);
     return result;
   }

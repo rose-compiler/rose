@@ -3499,45 +3499,45 @@ HEADER_SYMBOL_TABLE_PREDECLARATION_START
 
 std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv );
 
+// forward class declaration to support case sensitive/insensitive symbol tables.
+class rose_hash_multimap;
+
 /*! \brief Name equality operator support for symbol tables within ROSE.
  */
-#if 0
-// DQ (11/29/2009): attempting to fix: error C2903: 'rebind' : symbol is neither a class template nor a function template
-// #pragma message ("WARNING: struct eqstr skipped for MSVC.")
-#else
 struct eqstr
    {
-     bool operator()(const SgName& s1, const SgName& s2) const
-        {
-          return s1.getString() == s2.getString();
-        }
+  // DQ (12/22/2005): Added constructor to support case insensitive name semantics
+     const rose_hash_multimap* hash_multimap;
+
+  // DQ (12/22/2005): Added constructor to support case insensitive name semantics
+     eqstr(const rose_hash_multimap* p) : hash_multimap(p) {}
+
+  // The definition of this function requires the reference to the member function 
+  // rose_hash_multimap::get_case_insensitive_semantics() so it must be seen after 
+  // the rose_hash_multimap class definition.
+     bool operator()(const SgName & s1, const SgName & s2) const;
    };
-#endif
 
 /*! \brief Hash name support for symbol tables within ROSE.
  */
 struct hash_Name
    {
-// CH (4/8/2010): Use boost::unordered instead     
-     // CH (4/13/2010): Use boost::hash<string> instead  
-     //rose_hash::hash<const char*> hasher;
+  // DQ (12/22/2005): Added constructor to support case insensitive name semantics
+     const rose_hash_multimap* hash_multimap;
+
+  // CH (4/8/2010): Use boost::unordered instead     
+  // CH (4/13/2010): Use boost::hash<string> instead  
+  // rose_hash::hash<const char*> hasher;
      rose_hash::hash<std::string> hasher;
-//#else
-//   public:
-//      static const size_t bucket_size = 4;
-//      static const size_t min_buckets = 8;
-//#endif
 
      public:
-          size_t operator()(const SgName & name) const
-             {
-// CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSCx_VER 
-//               return stdext::hash_compare<const char*>()(name.str()); 
-//#else
-               return hasher(name.str());
-//#endif
-             }
+       // DQ (12/22/2005): Added constructor to support case insensitive name semantics
+          hash_Name(const rose_hash_multimap* p) : hash_multimap(p) {}
+
+       // The definition of this function requires the reference to the member function 
+       // rose_hash_multimap::get_case_insensitive_semantics() so it must be seen after 
+       // the rose_hash_multimap class definition.
+          size_t operator()(const SgName & name) const;
    };
 
 /*! \brief Hash table support for symbol tables within ROSE.
@@ -3546,87 +3546,72 @@ struct hash_Name
     symbol table for all function symbols and then there symbol tables for each scope 
     (implemented in the SgScopeDeclaration).
 
-    \internal Trivia: This was developed by Alin Jula, and as payment I bought him dinner 
-    when Ken Kennedy visited LLNL.
+    \internal Trivia: The first version was developed by Alin Jula, and as payment I bought him dinner 
+                      when Ken Kennedy visited LLNL (summer of 2005).
 
  */
- // tps (11/19/2009) : Constructor of hash_multimap in MSVS is different
 
-// CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSCx_VER
-#if 0
-// DQ (11/27/2009): Trying to fix MSVC compiler warning: 
-//    warning C4717: 'rose_hash_multimap::rose_hash_multimap' : recursive on all control paths, function will cause runtime stack overflow.
-
-#if 0
-template<class _Kty> inline size_t hash_value(const _Kty& _Keyval);
-	{	// hash _Keyval to size_t value one-to-one
-	return ((size_t)_Keyval ^ _HASH_SEED);
-	}
-#else
-inline size_t hash_value(const SgName & _Keyval)
-   {
-     printf ("In custom hash_value function \n");
-     assert(false);
-
-     return 0;
-   }
-#endif
-
-// class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>
-class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*>
-   {
-     protected:
-          SgNode * parent;
-
-     public:
-       // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
-          rose_hash_multimap()
-          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
-          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
-             {}
-// tps (11/18/2009) : this constructor is not valid, see Node.code
-#if 0
-          rose_hash_multimap(int sz) 
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(sz), parent(NULL)
-             {}
-#endif
-#if 0
-          rose_hash_multimap(const rose_hash_multimap& rhs) 
-          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>((rose_hash_multimap)rhs),parent(rhs.parent)
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>(const_cast<rose_hash_multimap>(rhs)),parent(rhs.parent)
-             {}
-#endif
-#else  // ifdef _MSCx_VER
+// tps (11/19/2009) : Constructor of hash_multimap in MSVS is different
+// CH (4/8/2010): Use boost::unordered instead
 
 class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-//class rose_hash_multimap : public __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
    {
      protected:
           SgNode * parent;
+          bool case_insensitive_semantics;
 
      public:
        // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
+#if 0
+       // DQ (11/27/2010): Older version of code before adding support for case insensitive behavior.
+          rose_hash_multimap(bool case_insensitive_semantics = false)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(boost::unordered_detail::default_bucket_count,hash_Name(),eqstr(case_insensitive_semantics)), parent(NULL)
+             {}
+
+         rose_hash_multimap(int sz, bool case_insensitive_semantics = false)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz,hash_Name(),eqstr(case_insensitive_semantics)), parent(NULL)
+             {}
+
+          rose_hash_multimap(const rose_hash_multimap & rhs)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs), parent(rhs.parent)
+             {}
+#else
+       // DQ (11/27/2010): Newer version of code after adding support for case insensitive behavior.
           rose_hash_multimap()
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
-             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
+          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(boost::unordered_detail::default_bucket_count,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(17,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
              {}
-          rose_hash_multimap(int sz) 
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
-             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
+
+         rose_hash_multimap(int sz)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
              {}
-          rose_hash_multimap(const rose_hash_multimap& rhs) 
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs),parent(rhs.parent)
-             //: __gnu_cxx::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>((rose_hash_multimap)rhs),parent(rhs.parent)
+
+          rose_hash_multimap(const rose_hash_multimap & rhs)
+             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs), parent(rhs.parent), case_insensitive_semantics(rhs.case_insensitive_semantics)
              {}
 #endif
           void set_parent(SgNode * new_parent) 
              {
                parent = new_parent;
              }
-          SgNode * get_parent()
+
+          SgNode* get_parent() const
              {
                return parent;
+             }
+
+       // DQ (11/28/2010): Added support to set/unset case sensitivity in symbol table handling.
+          void set_case_insensitive_semantics(bool b) 
+             {
+               case_insensitive_semantics = b;
+             }
+
+       // DQ (11/28/2010): Added support to set/unset case sensitivity in symbol table handling.
+          bool get_case_insensitive_semantics() const
+             {
+               return case_insensitive_semantics;
              }
 
           void delete_elements()
@@ -3655,6 +3640,7 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
         friend class SgSymbolTableStorageClass;
         friend class EasyStorage<rose_hash_multimap*>;
    };
+
 
 std::ostream & operator<< ( std::ostream & os, const rose_hash_multimap::iterator & rhm_it );
 
@@ -3694,17 +3680,21 @@ HEADER_SYMBOL_TABLE_START
        // ~SgSymbolTable();
 
        // General function used to build AST
-          void insert ( const SgName &, SgSymbol *sp );
+          void insert ( const SgName & name, SgSymbol *sp );
 
+#if 1
+       // DQ (11/27/2010): Changing the return type to "bool"
        // DQ (1/31/2007): Depricated (is not well named and should return bool)
-          int  find   ( const SgName &, SgSymbol *sp ) ROSE_DEPRECATED_FUNCTION;
+       // int  find   ( const SgName & name, SgSymbol *sp, bool case_insensitive = false ) ROSE_DEPRECATED_FUNCTION;
+          bool find   ( const SgName & name, SgSymbol *sp ) ROSE_DEPRECATED_FUNCTION;
+#endif
 
        // DQ (1/31/2007): New functions that will replace the depricated find() member function
        // Note that this is log n in complexity
           bool exists ( const SgName &, SgSymbol *sp ) const; //! Complexity O(log n), checks for existence of symbol before matching against names.
 
        // DQ (1/31/2007): This is log n in complexity
-          bool exists ( const SgName & ) const;               //! Complexity O(log n)
+          bool exists ( const SgName & name) const;               //! Complexity O(log n)
 
        // DQ (1/31/2007): This is linear in complexity (expensive)
           bool exists ( const SgSymbol *sp ) const;           //! Complexity O(log n)
@@ -3719,12 +3709,12 @@ HEADER_SYMBOL_TABLE_START
 
        // DQ (1/30/2007): Added general remove functions for all SgSymbol IR nodes.
        // This function will remove all symbols with the specified name (even ones of
-       // different typese, see rest of comment).
-       // This function is a bit dangerous except for function types since the only for the 
+       // different types, see rest of comment).
+       // This function is a bit dangerous except for function types since only for the 
        // function type table are the names unique.  For non-function type symbol 
        // tables classes and typedefs can have the same name (e.g. "typedef struct X {} X;")
-       // so removing the name might have unexpected results! 
-          void remove_function_type ( const SgName & ); //! Complexity O(log n)
+       // so removing the name might have unexpected results!
+          void remove_function_type ( const SgName & name); //! Complexity O(log n)
 
 #if 0
        // DQ (1/30/2007): Added remove functions for each sort of SgSymbol IR node
@@ -3743,6 +3733,9 @@ HEADER_SYMBOL_TABLE_START
           void remove_namespace     ( const SgName & );
 #endif
 
+#if 0
+       // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
+
        // Used by SgScopeStatement::lookup_symbol(const SgName& n)
           SgSymbol* findany(const SgName &) ROSE_DEPRECATED_FUNCTION;
 
@@ -3754,31 +3747,34 @@ HEADER_SYMBOL_TABLE_START
           SgClassSymbol*     findclass(const SgName &) ROSE_DEPRECATED_FUNCTION;
           SgFunctionSymbol*  findfunc(const SgName&) ROSE_DEPRECATED_FUNCTION;
           SgFunctionSymbol*  findfunc(const SgName&, const SgType*) ROSE_DEPRECATED_FUNCTION;
+#endif
 
        // DQ (1/30/2007): New interface member functions using name.
        // These function search first against the name and then iteratively continue through 
        // the internal STL container to look for an entry that match the name and the type of
        // the SgSymbol.  This is optimially fast only for the case where there are unique names.
-          SgSymbol*          find_any(const SgName &);                    //! Complexity O(log n) for first match against name, then O(n)
-          SgVariableSymbol*  find_variable(const SgName &);               //! Complexity O(log n) for first match against name, then O(n)
-          SgClassSymbol*     find_class(const SgName &);                  //! Complexity O(log n) for first match against name, then O(n)
-          SgFunctionSymbol*  find_function(const SgName&);                //! Complexity O(log n) for first match against name, then O(n)
-          SgFunctionSymbol*  find_function(const SgName&, const SgType*); //! Complexity O(log n) for first match against name, then O(n)
-          SgFunctionTypeSymbol* find_function_type(const SgName&);        //! Complexity O(log n) for first match against name, then O(n)
+          SgSymbol*          find_any(const SgName & name);                    //! Complexity O(log n) for first match against name, then O(n)
+          SgVariableSymbol*  find_variable(const SgName & name);               //! Complexity O(log n) for first match against name, then O(n)
+          SgClassSymbol*     find_class(const SgName & name);                  //! Complexity O(log n) for first match against name, then O(n)
+          SgFunctionSymbol*  find_function(const SgName& name);                //! Complexity O(log n) for first match against name, then O(n)
+          SgFunctionSymbol*  find_function(const SgName&, const SgType* name); //! Complexity O(log n) for first match against name, then O(n)
+          SgFunctionTypeSymbol* find_function_type(const SgName& name);        //! Complexity O(log n) for first match against name, then O(n)
 
        // Additional find functions (using name)
-          SgTypedefSymbol*   find_typedef(const SgName &);    //! Complexity O(log n) for first match against name, then O(n)
-          SgEnumSymbol*      find_enum(const SgName &);       //! Complexity O(log n) for first match against name, then O(n)
-          SgEnumFieldSymbol* find_enum_field(const SgName &); //! Complexity O(log n) for first match against name, then O(n)
-          SgLabelSymbol*     find_label(const SgName &);      //! Complexity O(log n) for first match against name, then O(n)
-          SgNamespaceSymbol* find_namespace(const SgName &);  //! Complexity O(log n) for first match against name, then O(n)
-          SgTemplateSymbol*  find_template(const SgName &);   //! Complexity O(log n) for first match against name, then O(n)
+          SgTypedefSymbol*   find_typedef(const SgName & name);    //! Complexity O(log n) for first match against name, then O(n)
+          SgEnumSymbol*      find_enum(const SgName & name);       //! Complexity O(log n) for first match against name, then O(n)
+          SgEnumFieldSymbol* find_enum_field(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
+          SgLabelSymbol*     find_label(const SgName & name);      //! Complexity O(log n) for first match against name, then O(n)
+          SgNamespaceSymbol* find_namespace(const SgName & name);  //! Complexity O(log n) for first match against name, then O(n)
+          SgTemplateSymbol*  find_template(const SgName & name);   //! Complexity O(log n) for first match against name, then O(n)
 
+#if 0
+       // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
           SgSymbol*          findfirstany() ROSE_DEPRECATED_FUNCTION;
           SgVariableSymbol*  findfirstvar() ROSE_DEPRECATED_FUNCTION;
           SgClassSymbol*     findfirstclass() ROSE_DEPRECATED_FUNCTION;
           SgFunctionSymbol*  findfirstfunction() ROSE_DEPRECATED_FUNCTION;
-
+#endif
        // DQ (1/30/2007): New interface member functions: get the first symbol using type of SgSymbol
           SgSymbol*          find_any();      //! Complexity O(log n) for first match against name, then O(n)
           SgVariableSymbol*  find_variable(); //! Complexity O(log n) for first match against name, then O(n)
@@ -3794,10 +3790,12 @@ HEADER_SYMBOL_TABLE_START
           SgNamespaceSymbol* find_namespace();  //! Complexity O(log n) for first match against name, then O(n)
           SgTemplateSymbol*  find_template();   //! Complexity O(log n) for first match against name, then O(n)
 
+#if 0
+       // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
           SgSymbol*          nextany() ROSE_DEPRECATED_FUNCTION;
           SgVariableSymbol*  nextvar() ROSE_DEPRECATED_FUNCTION;
           SgClassSymbol*     nextclass() ROSE_DEPRECATED_FUNCTION;
-
+#endif
        // Get the next symbol of a specific type, return NULL if not available.
        // These functions use state information set by the find functions (either
        // the versions using the name or not using a name as a parameter).
@@ -3811,10 +3809,11 @@ HEADER_SYMBOL_TABLE_START
           SgLabelSymbol*     next_label();      //! Complexity O(n)
           SgNamespaceSymbol* next_namespace();  //! Complexity O(n)
           SgTemplateSymbol*  next_template();   //! Complexity O(n)
-
+#if 0
+       // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
        // for both global function and member functions
           SgFunctionSymbol*  nextfunc() ROSE_DEPRECATED_FUNCTION;
-
+#endif
 #if 0
        // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
        // The next for functions have been placed back into the Sage III interface.
@@ -3823,9 +3822,11 @@ HEADER_SYMBOL_TABLE_START
           SgSymbol*          nextany();
           SgSymbol*          findfirstany();
 #endif
+#if 0
+       // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
        // This is a cute operator to use, but since it can't specify a type of SgSymbol it is not so useful in practice.
           SgSymbol* operator[](const SgName &) ROSE_DEPRECATED_FUNCTION;
-
+#endif
       //! Computes the number of symbols of a specific name
           int count(const SgName &) const;
 
@@ -3850,6 +3851,16 @@ HEADER_SYMBOL_TABLE_START
 
       //! Generates name from any IR node used to generate symbols (only works on specific IR nodes)
           SgName get_name( const SgNode* node) const;
+
+       // DQ (11/28/2010): Added case sensitive/insensitive option to symbol table behavior.
+      /*! \brief Query of scope symbol table behavior (is symbol table behavior case sensitive (C/C++) or case insensitive (Fortran).
+
+          Note that a case insensitive symbol table can only be built that way from the SgSymbolTable constructor 
+          and not be toggled back and forth at will.
+       */
+          bool isCaseInsensitive() const;
+          void setCaseInsensitive(bool b);
+
 
 HEADER_SYMBOL_TABLE_END
 
@@ -4153,7 +4164,10 @@ HEADER_NAME_START
 
           int operator!=(const SgName& n1) const;
           int operator==(const SgName& n1) const;
-          int operator<(const SgName& n1) const;
+          int operator< (const SgName& n1) const;
+
+       // DQ (11/27/2010): Added to support case sensitive and case insensitive semantics.
+          static bool caseInsensitiveEquality ( const SgName & x, const SgName & y );
 
        // Added to support assignments to string variables.
           operator std::string () const;
@@ -4206,6 +4220,8 @@ HEADER_NAME_START
 
        // DQ (11/15/2004): Added to support general string operations (first used in the unparser)
           SgName & operator+= (const SgName & n1);
+
+          SgName invertCase() const;
 
 HEADER_NAME_END
 
@@ -5791,21 +5807,76 @@ SOURCE_END
 
 SOURCE_SYMBOL_TABLE_START
 
+// This function was moved to be defined outside of eqstr so that we could 
+// reference the data member rose_hash_multimap::case_insensitive_semantics.
+bool
+eqstr::operator()(const SgName & s1, const SgName & s2) const
+   {
+  // DQ (11/27/2010): This is where we can implement the case insensitive support in ROSE.
+  // return s1.getString() == s2.getString();
+  // return s1 == s2;
+
+     ROSE_ASSERT(hash_multimap != NULL);
+  // printf ("@@@@@ hash_multimap->get_case_insensitive_semantics() = %s s1 = %s s2 = %s \n",(hash_multimap->get_case_insensitive_semantics() == true) ? "true" : "false",s1.str(),s2.str());
+  // ROSE_ASSERT(hash_multimap->get_case_insensitive_semantics() == true);
+
+     if (hash_multimap->get_case_insensitive_semantics() == true)
+        {
+          return SgName::caseInsensitiveEquality(s1,s2);
+        }
+       else
+        {
+       // This is the SgName::operator==(const SgName & s1, const SgName & s2) member function
+          return s1 == s2;
+        }
+   }
+
+size_t
+hash_Name::operator()(const SgName & name) const
+   {
+  // CH (4/8/2010): Use boost::unordered instead
+  // return hasher(name.str());
+
+     ROSE_ASSERT(hash_multimap != NULL);
+  // printf ("In hash_Name::operator(): hash_multimap->get_case_insensitive_semantics() = %s name = %s \n",hash_multimap->get_case_insensitive_semantics() ? "true" : "false",name.str());
+
+  // ROSE_ASSERT(hash_multimap->get_case_insensitive_semantics() == true);
+
+     if (hash_multimap->get_case_insensitive_semantics() == true)
+        {
+       // We need to compute the hash on the normalized form of the name (pick lower case).
+          std::string s = name;
+
+       // Convert string to lower case.
+          std::transform(s.begin(), s.end(),s.begin(),::tolower);
+       // printf ("In hash_Name::operator(): transformed name = %s to lower case s = %s \n",name.str(),s.c_str());
+
+       // Return hashed value on the normalized (lower case) string.
+          return hasher(s.c_str());
+        }
+       else
+        {
+          return hasher(name.str());
+        }
+   }
+
 // DQ (2/19/2007): Added mechanism to turn off expensive error checking!
 #define SYMBOL_TABLE_ERROR_CHECKING 1
 
 // DQ (7/24/2005): Make this a constant in the function if it is not used elsewhere!
 // #define SYMTBL_INIT_SZ 16
 
+// DQ (11/27/2010): Added support for case sensitive and case insensitive symbol table (internal name matching).
+// SgSymbolTable::SgSymbolTable(bool case_insensitive)
 SgSymbolTable::SgSymbolTable()
    : p_no_name(true)
    {
   // This should always be a non-null pointer (and never shared)!
      int symbolTableSize = 17;
-// CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSCx_VER
+
+  // CH (4/8/2010): Use boost::unordered instead
 #if 0
-	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(). \n");
+     printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(). \n");
      p_table = new BaseHashType();
 #else
      p_table = new BaseHashType(symbolTableSize);
@@ -5818,7 +5889,10 @@ SgSymbolTable::SgSymbolTable()
 // larger for certain scopes (e.g global scope usually has a 
 // lot more symbols.
 
+// DQ (11/27/2010): Added support for case sensitive and case insensitive symbol table (internal name matching).
 // DQ (1/31/2007): This function is not used!
+// SgSymbolTable::SgSymbolTable(int symbolTableSize)
+// SgSymbolTable::SgSymbolTable(int symbolTableSize, bool case_insensitive)
 SgSymbolTable::SgSymbolTable(int symbolTableSize)
    : p_no_name(true)
    {
@@ -5827,15 +5901,50 @@ SgSymbolTable::SgSymbolTable(int symbolTableSize)
   // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
   // p_table = new SgSymbolHashMultiMap(sz);
 
-// CH (4/8/2010): Use boost::unordered instead     
+// CH (4/8/2010): Use boost::unordered instead
 //#ifdef _MSCx_VER
 #if 0
-	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(int symbolTableSize). \n");
+     printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(int symbolTableSize). \n");
      p_table = new BaseHashType();
 #else
      p_table = new BaseHashType(symbolTableSize);
 #endif
      assert (p_table != NULL);
+   }
+
+bool
+SgSymbolTable::isCaseInsensitive() const
+   {
+  // Case sensitive symbol tables are used for C/C++ and case insensitive scopes are for Fortran.
+  // Note that a case insensitive symbol table can only be built that way from the constructor 
+  // and not be toggled back and forth at will.
+
+     ROSE_ASSERT(p_table != NULL);
+     return p_table->get_case_insensitive_semantics();
+   }
+
+void
+SgSymbolTable::setCaseInsensitive(bool b)
+   {
+  // Case sensitive symbol tables are used for C/C++ and case insensitive scopes are for Fortran.
+  // Note that a case insensitive symbol table can only be built that way from the constructor 
+  // and not be toggled back and forth at will.
+
+     ROSE_ASSERT(p_table != NULL);
+
+  // Make it NOT an error to redundantly set the case sensitivity/insensitivity.
+     bool changingCaseSensitivity = b != p_table->get_case_insensitive_semantics();
+     if (changingCaseSensitivity == true)
+        {
+          if (p_table->empty() == false)
+             {
+               printf ("Error: Can't change case sensitivity of non-empty symbol table.\n");
+               printf ("   Solution: set the case sensitivity/insensitivity earlier in processing (immediately after the call to build the scope) \n");
+             }
+          ROSE_ASSERT(p_table->empty() == true);
+
+          p_table->set_case_insensitive_semantics(b);
+        }
    }
 
 std::ostream & operator<< ( std::ostream & os, const rose_hash_multimap::iterator & rhm_it )
@@ -6206,21 +6315,17 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 void
 SgSymbolTable::remove_function_type( const SgName & name )
    {
-
   // This is non-destructive (does not delete the symbol, only removes it from the symbol table).
 
      assert (p_table != NULL);
 
-// CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSCx_VER
-//  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
-//     list<rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator> deleteList;
-//     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
-//#else
+  // CH (4/8/2010): Use boost::unordered instead     
      list<rose_hash_multimap::iterator> deleteList;
      rose_hash_multimap::iterator it = get_table()->find(name);
-//#endif
-     while (it != get_table()->end() && (*it).first == name)
+
+  // DQ (11/27/2010): Adding support for case insensitive name lookup (using the rose_hash_multimap's key equality function).
+  // while (it != get_table()->end() && (*it).first == name)
+     while (it != get_table()->end() && get_table()->key_eq()((*it).first,name))
         {
           assert(it->second->variantT() == V_SgFunctionTypeSymbol);
 
@@ -6232,13 +6337,9 @@ SgSymbolTable::remove_function_type( const SgName & name )
 #endif
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-// CH (4/8/2010): Use boost::unordered instead     
-//#ifdef _MSCx_VER
-//  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
-//     list<rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator>::iterator i = deleteList.begin();
-//#else
+  // CH (4/8/2010): Use boost::unordered instead
      list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
-//#endif
+
      while (i != deleteList.end())
         {
        // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase((*i)->second);"
@@ -6277,7 +6378,8 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
      p_iterator = p_table->find(name);
 
   // Iterate through the matching symbols in the multimap
-     while (p_iterator != p_table->end() && (*p_iterator).first == name)
+  // while (p_iterator != p_table->end() && (*p_iterator).first == name)
+     while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
         {
           assert(p_iterator->second != NULL);
           SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
@@ -6325,7 +6427,8 @@ SgSymbolTable::find( const SgFunctionType* functionType)
      SgName name = functionType->get_mangled();
 
      p_iterator = p_table->find(name);
-     while (p_iterator != p_table->end() && (*p_iterator).first == name)
+  // while (p_iterator != p_table->end() && (*p_iterator).first == name)
+     while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
         {
           if (isSgSymbol((*p_iterator).second)->variantT() == functionType->variantT())
              {
@@ -6364,7 +6467,8 @@ SgSymbolTable::find( const SgStatement* statement)
      p_iterator = p_table->find(name);
 
   // Once we have p_iterator set via the name we don't typically have more than one iteration
-     while (p_iterator != p_table->end() && (*p_iterator).first == name)
+  // while (p_iterator != p_table->end() && (*p_iterator).first == name)
+     while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
         {
           assert(p_iterator->second != NULL);
 #if 0
@@ -6455,7 +6559,8 @@ SgSymbolTable::remove( const SgSymbol* symbol )
      rose_hash_multimap::iterator elementToDelete = get_table()->end();
      rose_hash_multimap::iterator it = get_table()->find(name);
 //#endif
-     while ( (it != get_table()->end()) && (elementToDelete == get_table()->end()) && ((*it).first == name) )
+  // while ( (it != get_table()->end()) && (elementToDelete == get_table()->end()) && ((*it).first == name) )
+     while ( (it != get_table()->end()) && (elementToDelete == get_table()->end()) && get_table()->key_eq()((*it).first,name) )
         {
        // printf ("Looking for symbol to remove (Make sure that we find the correct element) \n");
        // Make sure that we find the correct element
@@ -6527,269 +6632,15 @@ SgSymbolTable::remove( const SgSymbol* symbol )
    }
 
 
-
-#if 0
-// *****************************************************************
-// DQ (2/6/2007): These are just too dangerous to use directly.
-// Use the versions which take a declaration or a symbol explicitly.
-// *****************************************************************
-
-/* ************************************************************************
-   DQ (1/30/2007): Added remove functions for each sort of SgSymbol IR node
-   ************************************************************************
-      void remove_function      ( const SgName & );
-      void remove_class         ( const SgName & );
-      void remove_enum          ( const SgName & );
-      void remove_typedef       ( const SgName & );
-      void remove_label         ( const SgName & );
-      void remove_var           ( const SgName & );
-      void remove_enum_field    ( const SgName & );
-      void remove_function_type ( const SgName & );
-      void remove_namespace     ( const SgName & );
-*/
-
-#error "DEAD CODE!"
-
-void
-SgSymbolTable::remove_function( const SgName & name )
-   {
-     assert(p_table != NULL);
-
-     list<rose_hash_multimap::iterator> deleteList;
-     p_iterator = p_table->find(name);
-     while (p_iterator != p_table->end() && (*p_iterator).first == name)
-        {
-          if (isSgFunctionSymbol((*p_iterator).second))
-             {
-               deleteList.push_back(p_iterator);
-             }
-          p_iterator++;
-        }
-
-  // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
-     while (i != deleteList.end())
-        {
-          get_table()->erase(*i);
-
-       // DQ (3/10/2007): Remove the symbol from the symbol set used to test for if the symbol exists
-          p_symbolSet.erase(i->second);
-
-          i++;
-        }
-   }
-
-#error "DEAD CODE!"
-
-void
-SgSymbolTable::remove_class( const SgName & name )
-   {
-     assert(p_table != NULL);
-
-     list<rose_hash_multimap::iterator> deleteList;
-     p_iterator = p_table->find(name);
-     while (p_iterator != p_table->end() && (*p_iterator).first == name)
-        {
-          if (isSgClassSymbol((*p_iterator).second))
-             {
-               deleteList.push_back(p_iterator);
-             }
-          p_iterator++;
-        }
-
-  // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
-     while (i != deleteList.end())
-        {
-       // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase(i->second);"
-       // get_table()->erase(*i);
-
-       // DQ (3/10/2007): Remove the symbol from the symbol set used to test for if the symbol exists
-          p_symbolSet.erase(i->second);
-
-          get_table()->erase(*i);
-
-          i++;
-        }
-   }
-
-#error "DEAD CODE!"
-
-void
-SgSymbolTable::remove_enum( const SgName & name )
-   {
-     assert(p_table != NULL);
-
-     list<rose_hash_multimap::iterator> deleteList;
-     p_iterator = p_table->find(name);
-     while (p_iterator != p_table->end() && (*p_iterator).first == name)
-        {
-          if (isSgEnumSymbol((*p_iterator).second))
-             {
-               deleteList.push_back(p_iterator);
-             }
-          p_iterator++;
-        }
-
-  // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
-     while (i != deleteList.end())
-        {
-          get_table()->erase(*i);
-
-       // DQ (3/10/2007): Remove the symbol from the symbol set used to test for if the symbol exists
-          p_symbolSet.erase(i->second);
-
-          i++;
-        }
-   }
-
-#error "DEAD CODE!"
-
-void
-SgSymbolTable::remove_label( const SgName & name )
-   {
-     printf ("Error: not implemented yet! \n");
-     assert(false);
-
-     assert(p_table != NULL);
-
-     list<rose_hash_multimap::iterator> deleteList;
-     p_iterator = p_table->find(name);
-     while (p_iterator != p_table->end() && (*p_iterator).first == name)
-        {
-          if (isSgEnumSymbol((*p_iterator).second))
-             {
-               deleteList.push_back(p_iterator);
-             }
-          p_iterator++;
-        }
-
-  // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
-     while (i != deleteList.end())
-        {
-          get_table()->erase(*i);
-
-       // DQ (3/10/2007): Remove the symbol from the symbol set used to test for if the symbol exists
-          p_symbolSet.erase(i->second);
-
-          i++;
-        }
-   }
-
-#error "DEAD CODE!"
-
-void
-SgSymbolTable::remove_var( const SgName & name )
-   {
-     printf ("Error: not implemented yet! \n");
-     assert(false);
-
-     assert(p_table != NULL);
-
-     list<rose_hash_multimap::iterator> deleteList;
-     p_iterator = p_table->find(name);
-     while (p_iterator != p_table->end() && (*p_iterator).first == name)
-        {
-          if (isSgEnumSymbol((*p_iterator).second))
-             {
-               deleteList.push_back(p_iterator);
-             }
-          p_iterator++;
-        }
-
-  // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
-     while (i != deleteList.end())
-        {
-          get_table()->erase(*i);
-
-       // DQ (3/10/2007): Remove the symbol from the symbol set used to test for if the symbol exists
-          p_symbolSet.erase(i->second);
-
-          i++;
-        }
-   }
-
-#error "DEAD CODE!"
-
-void
-SgSymbolTable::remove_function_type( const SgName & name )
-   {
-     printf ("Error: not implemented yet! \n");
-     assert(false);
-
-     assert(p_table != NULL);
-
-     list<rose_hash_multimap::iterator> deleteList;
-     p_iterator = p_table->find(name);
-     while (p_iterator != p_table->end() && (*p_iterator).first == name)
-        {
-          if (isSgEnumSymbol((*p_iterator).second))
-             {
-               deleteList.push_back(p_iterator);
-             }
-          p_iterator++;
-        }
-
-  // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
-     while (i != deleteList.end())
-        {
-          get_table()->erase(*i);
-
-       // DQ (3/10/2007): Remove the symbol from the symbol set used to test for if the symbol exists
-          p_symbolSet.erase(i->second);
-
-          i++;
-        }
-   }
-
-#error "DEAD CODE!"
-
-void
-SgSymbolTable::remove_namespace( const SgName & name )
-   {
-     printf ("Error: not implemented yet! \n");
-     assert(false);
-
-     assert(p_table != NULL);
-
-     list<rose_hash_multimap::iterator> deleteList;
-     p_iterator = p_table->find(name);
-     while (p_iterator != p_table->end() && (*p_iterator).first == name)
-        {
-          if (isSgEnumSymbol((*p_iterator).second))
-             {
-               deleteList.push_back(p_iterator);
-             }
-          p_iterator++;
-        }
-
-  // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<rose_hash_multimap::iterator>::iterator i = deleteList.begin();
-     while (i != deleteList.end())
-        {
-          get_table()->erase(*i);
-
-       // DQ (3/10/2007): Remove the symbol from the symbol set used to test for if the symbol exists
-          p_symbolSet.erase(i->second);
-
-          i++;
-        }
-   }
-
-#error "DEAD CODE!"
-
-#endif
-
 /* ************************************************************************
                                FIND FUNCTIONS
    ************************************************************************/
 
+#if 1
+// DQ (11/27/2010): Change return type to "bool".
 // DQ (2/10/2007): This is a depricated function
-int
+// int (changed the return type)
+bool
 SgSymbolTable::find(const SgName & nm, SgSymbol *sp)
    {
      assert(p_table != NULL);
@@ -6801,7 +6652,8 @@ SgSymbolTable::find(const SgName & nm, SgSymbol *sp)
   // hash_iterator p_iterator = p_table->find(nm);
      p_iterator = p_table->find(nm);
   // while (p_iterator != p_table->end() && (*p_iterator).first == nm)
-     while (p_iterator != p_table->end() && p_iterator->first == nm)
+  // while (p_iterator != p_table->end() && p_iterator->first == nm)
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
           p_name    = nm;
           p_no_name = false;
@@ -6813,6 +6665,7 @@ SgSymbolTable::find(const SgName & nm, SgSymbol *sp)
 
      return false;
    }
+#endif
 
 // DQ (1/31/2007): New functions that will replace the depricated find() member function
 bool
@@ -6826,32 +6679,9 @@ SgSymbolTable::exists ( const SgName & nm ) const
 bool
 SgSymbolTable::exists ( const SgSymbol *sp ) const
    {
-#if 0
-// DQ (2/19/2007): Make sure that this sort of expensive symbol table is not called if SYMBOL_TABLE_ERROR_CHECKING  is not active
-#if SYMBOL_TABLE_ERROR_CHECKING == 0
-     printf ("Error: Expensive symbol table tests being called while SYMBOL_TABLE_ERROR_CHECKING == 0 \n");
-     assert(false);
-#endif
-
-
-  // This is the more expensive implementation but more useful for error checking!
-     bool returnValue = false;
-
-     assert(p_table != NULL);
-     hash_iterator i = p_table->begin();
-     while ( returnValue == false && i != p_table->end() )
-        {
-       // if ((SgSymbol *)(i->second) == sp )
-          if ( i->second == sp )
-               returnValue = true;
-          i++;
-        }
-     return returnValue;
-#else
   // DQ (3/10/2007): We can now use the stored p_symbolSet (STL set of SgNode*) to do this test more efficiently.
   // return p_symbolSet.find(sp) != p_symbolSet.end();
      return p_symbolSet.find(const_cast<SgSymbol*>(sp)) != p_symbolSet.end();
-#endif
    }
 
 // DQ (1/31/2007): New functions that will replace the depricated find() member function
@@ -6867,7 +6697,8 @@ SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp ) const
         {
        // Now look to make sure that we have an entry with the correct name (and pointer value)
           hash_iterator p_iterator = p_table->find(nm);
-          while (p_iterator != p_table->end() && p_iterator->first == nm)
+       // while (p_iterator != p_table->end() && p_iterator->first == nm)
+          while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
              {
                if ( p_iterator->second == sp )
                   {
@@ -6897,14 +6728,17 @@ SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp ) const
       SgNamespaceSymbol* find_namespace(const SgName &);
 */
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 SgSymbol*
 SgSymbolTable::findany(const SgName &nm)
    {
      return find_any(nm);
    }
+#endif
 
 SgSymbol*
-SgSymbolTable::find_any(const SgName &nm)
+SgSymbolTable::find_any(const SgName & nm)
    {
      assert(p_table != NULL);
      if(p_table)
@@ -6912,7 +6746,8 @@ SgSymbolTable::find_any(const SgName &nm)
        // DQ (5/22/2006): Made this a local variable
        // hash_iterator p_iterator = p_table->find(nm);
           p_iterator = p_table->find(nm);
-          if (p_iterator != p_table->end() && p_iterator->first == nm)
+       // if (p_iterator != p_table->end() && p_iterator->first == nm)
+          if (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
              {
                p_name    = nm; 
                p_no_name = false;
@@ -6925,13 +6760,14 @@ SgSymbolTable::find_any(const SgName &nm)
 
 // DQ (1/30/2007): Added these back into ROSE.
 SgTypedefSymbol*
-SgSymbolTable::find_typedef(const SgName &nm)
+SgSymbolTable::find_typedef(const SgName & nm)
    {
      assert(p_table != NULL);
      if(p_table)
         {
-          p_iterator=p_table->find(nm);
-          while(p_iterator != p_table->end() && p_iterator->first == nm)
+          p_iterator = p_table->find(nm);
+       // while (p_iterator != p_table->end() && p_iterator->first == nm)
+          while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
              {
             // if(isSgTypedefSymbol((*p_iterator).second))
                if ( p_iterator->second->variantT() == V_SgTypedefSymbol)
@@ -6949,13 +6785,14 @@ SgSymbolTable::find_typedef(const SgName &nm)
 
 // DQ (1/30/2007): Added these back into ROSE.
 SgEnumSymbol*
-SgSymbolTable::find_enum(const SgName &nm)
+SgSymbolTable::find_enum(const SgName & nm)
    {
      assert(p_table != NULL);
      if(p_table != NULL)
         {
           p_iterator=p_table->find(nm);
-          while(p_iterator != p_table->end() && (*p_iterator).first == nm)
+       // while(p_iterator != p_table->end() && (*p_iterator).first == nm)
+          while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
              {
             // if (isSgEnumSymbol((*p_iterator).second))
                if ( p_iterator->second->variantT() == V_SgEnumSymbol)
@@ -6973,13 +6810,14 @@ SgSymbolTable::find_enum(const SgName &nm)
 
 // DQ (1/30/2007): Added these back into ROSE.
 SgEnumFieldSymbol*
-SgSymbolTable::find_enum_field(const SgName &nm)
+SgSymbolTable::find_enum_field(const SgName & nm)
    {
      assert(p_table != NULL);
      if(p_table)
         {
           p_iterator=p_table->find(nm);
-          while(p_iterator != p_table->end() && p_iterator->first == nm)
+       // while(p_iterator != p_table->end() && p_iterator->first == nm)
+          while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
              {
             // if (isSgEnumFieldSymbol((*p_iterator).second))
                if ( p_iterator->second->variantT() == V_SgEnumFieldSymbol)
@@ -6995,14 +6833,17 @@ SgSymbolTable::find_enum_field(const SgName &nm)
      return NULL;
    }
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 SgVariableSymbol*
-SgSymbolTable::findvar(const SgName &nm)
+SgSymbolTable::findvar(const SgName & nm)
    {
      return find_variable(nm);
    }
+#endif
 
 SgVariableSymbol*
-SgSymbolTable::find_variable(const SgName &nm)
+SgSymbolTable::find_variable(const SgName & nm)
    {
      assert(this != NULL);
      assert(p_table != NULL);
@@ -7012,7 +6853,8 @@ SgSymbolTable::find_variable(const SgName &nm)
      hash_iterator save_original_iterator = p_iterator;
 
   // First look through only the local (non-aliased) symbols.
-     while(p_iterator != p_table->end() && (*p_iterator).first==nm)
+  // while (p_iterator != p_table->end() && (*p_iterator).first == nm)
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
        // printf ("Looking for non-aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
           if (p_iterator->second->variantT() == V_SgVariableSymbol)
@@ -7029,7 +6871,8 @@ SgSymbolTable::find_variable(const SgName &nm)
   // injected from other scopes using the Fortran "use" statment (or in a future implementation 
   // the C++ "using" directive or "using" declaration).
      p_iterator = save_original_iterator;
-     while(p_iterator != p_table->end() && (*p_iterator).first==nm)
+  // while (p_iterator != p_table->end() && (*p_iterator).first == nm)
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
        // printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
           SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
@@ -7052,14 +6895,17 @@ SgSymbolTable::find_variable(const SgName &nm)
      return NULL;
    }
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 SgClassSymbol*
 SgSymbolTable::findclass(const SgName &nm)
    {
      return find_class(nm);
    }
+#endif
 
 SgClassSymbol*
-SgSymbolTable::find_class(const SgName &nm)
+SgSymbolTable::find_class(const SgName & nm)
    {
      assert(p_table != NULL);
 
@@ -7069,7 +6915,8 @@ SgSymbolTable::find_class(const SgName &nm)
 
   // First look through only the local (non-aliased) symbols.
 
-     while (p_iterator != p_table->end() && (*p_iterator).first==nm)
+  // while (p_iterator != p_table->end() && (*p_iterator).first==nm)
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         { 
           if ( p_iterator->second->variantT() == V_SgClassSymbol)
              {
@@ -7084,7 +6931,8 @@ SgSymbolTable::find_class(const SgName &nm)
   // injected from other scopes using the Fortran "use" statment (or in a future implementation 
   // the C++ "using" directive or "using" declaration).
      p_iterator = save_original_iterator;
-     while(p_iterator != p_table->end() && (*p_iterator).first==nm)
+  // while (p_iterator != p_table->end() && (*p_iterator).first==nm)
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
        // printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
           SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
@@ -7107,14 +6955,17 @@ SgSymbolTable::find_class(const SgName &nm)
      return NULL;
    }
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 SgFunctionTypeSymbol*
 SgSymbolTable::findfunctype(const SgName &nm)
    {
      return find_function_type(nm);
    }
+#endif
 
 SgFunctionTypeSymbol*
-SgSymbolTable::find_function_type(const SgName &nm)
+SgSymbolTable::find_function_type(const SgName & nm)
    {
      assert(p_table != NULL);
      SgFunctionTypeSymbol* returnFunctionType = NULL;
@@ -7132,7 +6983,7 @@ SgSymbolTable::find_function_type(const SgName &nm)
    }
 
 SgLabelSymbol*
-SgSymbolTable::find_label(const SgName &nm)
+SgSymbolTable::find_label(const SgName & nm)
    {
      assert(p_table != NULL);
      if (p_table)
@@ -7178,14 +7029,17 @@ SgSymbolTable::find_namespace ( const SgName & nm )
      return NULL;
    }
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 SgFunctionSymbol*
-SgSymbolTable::findfunc(const SgName &nm, const SgType* t)
+SgSymbolTable::findfunc(const SgName & nm, const SgType* t)
    {
      return find_function(nm,t);
    }
+#endif
 
 SgFunctionSymbol*
-SgSymbolTable::find_function (const SgName &nm, const SgType* t)
+SgSymbolTable::find_function (const SgName & nm, const SgType* t)
    {
   // AS (083006): cleaned up logic so that the function only have one return statement.
 
@@ -7206,9 +7060,10 @@ SgSymbolTable::find_function (const SgName &nm, const SgType* t)
             // s = isSgFunctionSymbol((*i).second);
                s = isSgFunctionSymbol(i->second);
 
-                //  if ( (s != NULL) && (s->get_declaration()->get_type() == t))
-                // FMZ (10/29/2009) should compare name also
-                if ( (s != NULL) && (s->get_declaration()->get_type() == t) && s->get_name().str()==nm.str())
+            // if ( (s != NULL) && (s->get_declaration()->get_type() == t))
+            // FMZ (10/29/2009) should compare name also
+            // if ( (s != NULL) && (s->get_declaration()->get_type() == t) && s->get_name().str()==nm.str())
+               if ( (s != NULL) && (s->get_declaration()->get_type() == t) && get_table()->key_eq()(s->get_name(),nm))
                   {
                     p_name    = nm;
                     p_no_name = false;
@@ -7221,14 +7076,17 @@ SgSymbolTable::find_function (const SgName &nm, const SgType* t)
      return s;
    }
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 SgFunctionSymbol*
-SgSymbolTable::findfunc(const SgName &nm)
+SgSymbolTable::findfunc(const SgName & nm)
    {
      return find_function(nm);
    }
+#endif
 
 SgFunctionSymbol*
-SgSymbolTable::find_function(const SgName &nm)
+SgSymbolTable::find_function(const SgName & nm)
    {
      assert(p_table != NULL);
 
@@ -7240,7 +7098,8 @@ SgSymbolTable::find_function(const SgName &nm)
 
      while(p_iterator != p_table->end())
         {
-          if (isSgFunctionSymbol(p_iterator->second) && (*p_iterator).first==nm)
+       // if (isSgFunctionSymbol(p_iterator->second) && (*p_iterator).first==nm)
+          if (isSgFunctionSymbol(p_iterator->second) && get_table()->key_eq()((*p_iterator).first,nm))
              {
                p_name    = nm;
                p_no_name = false;
@@ -7277,7 +7136,8 @@ SgSymbolTable::find_function(const SgName &nm)
   // injected from other scopes using the Fortran "use" statment (or in a future implementation 
   // the C++ "using" directive or "using" declaration).
      p_iterator = save_original_iterator;
-     while(p_iterator != p_table->end() && (*p_iterator).first==nm)
+  // while(p_iterator != p_table->end() && (*p_iterator).first==nm)
+     while(p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,nm))
         {
        // printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
           SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
@@ -7307,9 +7167,10 @@ SgSymbolTable::find_function(const SgName &nm)
    }
 
 SgTemplateSymbol*
-SgSymbolTable::find_template(const SgName &nm)
+SgSymbolTable::find_template(const SgName & nm)
    {
      assert(p_table != NULL);
+
      if(p_table)
         {
           p_iterator = p_table->find(nm);
@@ -7345,12 +7206,16 @@ SgSymbolTable::find_template(const SgName &nm)
       SgNamespaceSymbol* find_namespace();
 */
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
 SgSymbol*
 SgSymbolTable::findfirstany()
    {
      return find_any();
    }
+#endif
+
 SgSymbol*
 SgSymbolTable::find_any()
    {
@@ -7367,12 +7232,16 @@ SgSymbolTable::find_any()
      return NULL;
    }
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
 SgVariableSymbol*
 SgSymbolTable::findfirstvar()
    {
      return find_variable();
    }
+#endif
+
 SgVariableSymbol*
 SgSymbolTable::find_variable()
    {
@@ -7394,12 +7263,16 @@ SgSymbolTable::find_variable()
      return NULL;
    }
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 // DQ (1/30/2007): Added these back into ROSE.
 SgClassSymbol*
 SgSymbolTable::findfirstclass()
    {
      return find_class();
    }
+#endif
+
 SgClassSymbol*
 SgSymbolTable::find_class()
    {
@@ -7421,12 +7294,16 @@ SgSymbolTable::find_class()
      return NULL;
    }
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 // DQ (1/30/2007): Added these back into ROSE.
 SgFunctionSymbol*
 SgSymbolTable::findfirstfunction()
    {
      return find_function();
    }
+#endif
+
 SgFunctionSymbol*
 SgSymbolTable::find_function()
    {
@@ -7450,7 +7327,7 @@ SgSymbolTable::find_function()
 
 #if 0
 // DQ (1/30/2007): Added to make the interface consistant
-// This function is not requires since SgFunctionTypeSymbols
+// This function is not required since SgFunctionTypeSymbols
 // are stored into their own function table.  So this is 
 // equivalent to STL function "begin()".
 SgFunctionSymbol*
@@ -7618,12 +7495,16 @@ SgSymbolTable::find_template()
       SgNamespaceSymbol* next_namespace();
 */
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
 SgSymbol*
 SgSymbolTable::nextany()
    {
      return next_any();
    }
+#endif
+
 SgSymbol*
 SgSymbolTable::next_any()
    {
@@ -7635,7 +7516,8 @@ SgSymbolTable::next_any()
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
           while( p_iterator != p_table->end() )
              {
-               if( p_no_name || (*p_iterator).first == p_name )
+            // if( p_no_name || (*p_iterator).first == p_name )
+               if( p_no_name || get_table()->key_eq()((*p_iterator).first,p_name) )
                     return (SgSymbol *) p_iterator->second;
                p_iterator++;
              }
@@ -7644,12 +7526,16 @@ SgSymbolTable::next_any()
      return NULL;
    }
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
 SgVariableSymbol*
 SgSymbolTable::nextvar()
    {
      return next_variable();
    }
+#endif
+
 SgVariableSymbol*
 SgSymbolTable::next_variable()
    {
@@ -7659,7 +7545,8 @@ SgSymbolTable::next_variable()
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-          while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first==p_name))
+       // while (p_iterator != p_table->end() && (p_no_name || (*p_iterator).first==p_name))
+          while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgVariableSymbol((*p_iterator).second))
                     return ((SgVariableSymbol *) (*p_iterator).second);
@@ -7670,12 +7557,16 @@ SgSymbolTable::next_variable()
      return NULL;
    }
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 // DQ (1/30/2007): Added these back into ROSE.
 SgClassSymbol*
 SgSymbolTable::nextclass()
    {
      return next_class();
    }
+#endif
+
 SgClassSymbol*
 SgSymbolTable::next_class()
    {
@@ -7685,9 +7576,10 @@ SgSymbolTable::next_class()
           p_iterator++; // go to next one
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-          while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first==p_name))
+       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
+          while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
-               if(isSgClassSymbol((*p_iterator).second))
+               if (isSgClassSymbol((*p_iterator).second))
                     return ((SgClassSymbol *)(*p_iterator).second);
                p_iterator++;
              }
@@ -7696,12 +7588,16 @@ SgSymbolTable::next_class()
      return NULL;
    }
 
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 // DQ (1/30/2007): Added these back into ROSE.
 SgFunctionSymbol*
 SgSymbolTable::nextfunc()
    {
      return next_function();
    }
+#endif
+
 SgFunctionSymbol*
 SgSymbolTable::next_function()
    {
@@ -7711,9 +7607,10 @@ SgSymbolTable::next_function()
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-          while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first==p_name))
+       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
+          while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
-               if(isSgFunctionSymbol((*p_iterator).second))
+               if (isSgFunctionSymbol((*p_iterator).second))
                     return ((SgFunctionSymbol *)(*p_iterator).second);
                p_iterator++;
              }
@@ -7731,7 +7628,8 @@ SgSymbolTable::next_typedef()
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-          while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first==p_name))
+       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
+          while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgTypedefSymbol((*p_iterator).second))
                     return ((SgTypedefSymbol *) (*p_iterator).second);
@@ -7753,9 +7651,10 @@ SgSymbolTable::next_enum()
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-          while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first==p_name))
+       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
+          while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
-               if(isSgEnumSymbol((*p_iterator).second))
+               if (isSgEnumSymbol((*p_iterator).second))
                     return ((SgEnumSymbol *)(*p_iterator).second);
                p_iterator++;
              }
@@ -7774,7 +7673,8 @@ SgSymbolTable::next_enum_field()
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-          while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first==p_name))
+       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
+          while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if(isSgEnumFieldSymbol((*p_iterator).second))
                     return ((SgEnumFieldSymbol *)(*p_iterator).second);
@@ -7794,7 +7694,8 @@ SgSymbolTable::next_label()
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-          while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first==p_name))
+       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
+          while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgLabelSymbol((*p_iterator).second))
                     return ((SgLabelSymbol *) (*p_iterator).second);
@@ -7814,7 +7715,8 @@ SgSymbolTable::next_namespace()
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-          while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first==p_name))
+       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
+          while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgNamespaceSymbol((*p_iterator).second))
                     return ((SgNamespaceSymbol *) (*p_iterator).second);
@@ -7834,7 +7736,8 @@ SgSymbolTable::next_template()
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-          while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first==p_name))
+       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
+          while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgTemplateSymbol((*p_iterator).second))
                     return ((SgTemplateSymbol *) (*p_iterator).second);
@@ -7846,8 +7749,8 @@ SgSymbolTable::next_template()
    }
 
 
-
-#if 1
+#if 0
+// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
 // DQ (1/30/2007): Added these back into ROSE.
 SgSymbol*
 SgSymbolTable::operator[](const SgName & nm)
@@ -7985,9 +7888,20 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
 
                     if (outputSymbolInfo == true)
                        {
-                         printf ("Symbol %4d: name = %s SgSymbol = %p = %s type = %p = %s = %s get_symbol_basis() = %p = %s = %s \n",
-                              idx,(*i).first.str(),(*i).second,(*i).second->class_name().c_str(),type,(type != NULL) ? type->class_name().c_str() : "NULL" ,
-                              nameOfType.str(),symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str());
+                         SgAliasSymbol* aliasSymbol = isSgAliasSymbol((*i).second);
+                         if (aliasSymbol != NULL)
+                            {
+                               ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
+                              printf ("Symbol %4d: name = %s SgSymbol = %p = %s (alias to %s) type = %p = %s = %s get_symbol_basis() = %p = %s = %s \n",
+                                      idx,(*i).first.str(),(*i).second,(*i).second->class_name().c_str(),aliasSymbol->get_alias()->class_name().c_str(),type,(type != NULL) ? type->class_name().c_str() : "NULL" ,
+                                   nameOfType.str(),symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str());
+                            }
+                           else
+                            {
+                              printf ("Symbol %4d: name = %s SgSymbol = %p = %s type = %p = %s = %s get_symbol_basis() = %p = %s = %s \n",
+                                   idx,(*i).first.str(),(*i).second,(*i).second->class_name().c_str(),type,(type != NULL) ? type->class_name().c_str() : "NULL" ,
+                                   nameOfType.str(),symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str());
+                            }
                        }
                   }
                  else
@@ -8196,7 +8110,6 @@ SgSymbolTable::get_symbols() const
 
      return returnSet;
    }
-
 
 SOURCE_SYMBOL_TABLE_END
 
@@ -8968,6 +8881,7 @@ SgInitializedName::get_mangled_name (void) const
 SgDeclarationStatement*
 SgInitializedName::get_declaration() const
    {
+     assert (this != NULL);
   // DQ (6/13/2005): This function assumes that the parents have been set!
   // so it should not be used in the EDG/Sage translation!
   // assert(get_parent() != NULL);
@@ -9143,6 +9057,20 @@ SgName::operator==(const SgName& n1) const
      return p_char == n1.p_char;
    }
 
+// DQ (11/27/2010): Added support for case insensitive name matching.
+bool
+SgName::caseInsensitiveEquality ( const SgName & x, const SgName & y )
+   {
+  // This function checks a case insensitive match of x against y.
+  // This is required because Fortran is case insensitive.
+
+     size_t x_length = x.p_char.length();
+     size_t y_length = y.p_char.length();
+
+     return (x_length == y_length) ? strncasecmp(x.p_char.c_str(),y.p_char.c_str(),x_length) == 0 : false;
+   }
+
+
 int
 SgName::operator<(const SgName& n1) const
    {
@@ -9316,6 +9244,28 @@ SgName::assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & 
       
      return returnName;
    }
+
+SgName
+SgName::invertCase() const
+   {
+     string s = p_char;
+
+     char* str = &(s[0]);
+     while(*str)
+        {
+          if(isupper(*str)) 
+               *str = tolower(*str);  
+            else
+               if(islower(*str)) 
+                    *str = toupper(*str); 
+          str++; 
+        }
+
+  // printf ("In SgName::invertCase() s = %s return_name = %s \n",this->str(),s.c_str());
+
+     return s;
+   }
+
 
 
 SOURCE_NAME_END
