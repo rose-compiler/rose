@@ -184,9 +184,6 @@ Grammar::setUpSupport ()
   // DQ (11/19/2007): Support for the Fortran namelist statement (SgNamelistStatement)
      NEW_TERMINAL_MACRO (NameGroup,     "NameGroup",     "TEMP_Name_Group" );
 
-  // DQ (11/21/2007): This is part of support for the common block statement
-     NEW_TERMINAL_MACRO (CommonBlockObject, "CommonBlockObject",     "TEMP_CommonBlockObject" );
-
   // DQ (12/1/2007): Support for the Fortran dimension statement
      NEW_TERMINAL_MACRO (DimensionObject, "DimensionObject",     "TEMP_DimensionObject" );
 
@@ -246,7 +243,7 @@ Grammar::setUpSupport ()
 
           GraphNodeList         | GraphEdgeList             | TypeTable           |
 
-          NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
+          NameGroup             | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | 
           DataStatementValue    ,
           "Support", "SupportTag", false);
@@ -273,40 +270,44 @@ Grammar::setUpSupport ()
   // SymbolTable.setDataPrototype("SgSymbolHashBase::iterator","iterator", "= NULL",
   //                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      SymbolTable.setDataPrototype("hash_iterator","iterator", "",
-                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
   // We do not traverse the following data member for the moment!
   // DQ (11/6/2001): changed option to permit generation of access functions
   // The name is used internally within the find member function to hold the string being sought
   // SymbolTable.setDataPrototype("SgName","name", "= NULL",
      SymbolTable.setDataPrototype("SgName","name", "= \"\"",
-                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (11/6/2001): changed option to permit generation of access functions
   // The no_name is used internally within the find member function to indicate if the name is being used
      SymbolTable.setDataPrototype("bool","no_name", "= false",
-                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // AJ (10/21/2004): Modified Sage III to use STL based hash table implementation.
   // DQ (11/6/2001): changed option to permit generation of access functions
   // SymbolTable.setDataPrototype("SgSymbolHashMultiMap*","table", "= NULL",
   //                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      SymbolTable.setDataPrototype(" rose_hash_multimap*","table", "= NULL",
-              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
-  // DQ (6/12/2007): Fixed use of std::set<SgNode*> to use SgNodeSet so taht ROSETTA's test for
+  // DQ (6/12/2007): Fixed use of std::set<SgNode*> to use SgNodeSet so that ROSETTA's test for
   // pointer to IR node can just look for "*" in the type.  This is a internal detail of ROSETTA.
   // DQ (3/10/2007): Adding set for symbols so that we can support fast tests for existance.
   // SymbolTable.setDataPrototype("SgNodeSetPtr","symbolSet", "= NULL",
   //          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // SymbolTable.setDataPrototype("std::set<SgNode*>","symbolSet", "",
      SymbolTable.setDataPrototype("SgNodeSet","symbolSet", "",
-              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/27/2010): data member to force case sensitive or case insensitive semantics (default is case sensitive).
+     SymbolTable.setDataPrototype("bool","case_insensitive","= false",
+                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
   // DQ (7/22/2010): Added type table to support stricter uniqueness of types and proper sharing.
      TypeTable.setFunctionPrototype( "HEADER_TYPE_TABLE", "../Grammar/Support.code" );
      TypeTable.setAutomaticGenerationOfConstructor(false);
      TypeTable.setDataPrototype    ( "SgSymbolTable*","type_table","= NULL",
-					     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+					             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
      Name.setFunctionPrototype                ( "HEADER_NAME", "../Grammar/Support.code");
 
@@ -1809,11 +1810,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
      NameGroup.setDataPrototype     ( "SgStringList", "name_list", "",
                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     CommonBlockObject.setFunctionPrototype ( "HEADER_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");
-     CommonBlockObject.setDataPrototype     ( "std::string", "block_name", "=\"\"",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     CommonBlockObject.setDataPrototype     ( "SgExprListExp*", "variable_reference_list", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DimensionObject.setFunctionPrototype ( "HEADER_DIMENSION_OBJECT", "../Grammar/Support.code");
      DimensionObject.setDataPrototype     ( "SgInitializedName*", "array", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2018,9 +2014,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
 
   // DQ (11/19/2007): Added support for Fortran namelist statement
      NameGroup.setFunctionSource         ( "SOURCE_NAME_GROUP", "../Grammar/Support.code");
-
-  // DQ (11/21/2007): support for common block statements
-     CommonBlockObject.setFunctionSource ( "SOURCE_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");
 
      DimensionObject.setFunctionSource ( "SOURCE_DIMENSION_OBJECT", "../Grammar/Support.code");
 

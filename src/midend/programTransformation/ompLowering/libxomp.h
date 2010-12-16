@@ -5,6 +5,9 @@
 #ifndef LIB_XOMP_H 
 #define LIB_XOMP_H
 
+// Fortran outlined function uses one parameter for each variable to be passed by reference
+// We predefine a max number of parameters to be allowed here.
+#define MAX_OUTLINED_FUNC_PARAMETER_COUNT 256
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -85,7 +88,7 @@ extern void XOMP_loop_end (void);
 extern void XOMP_loop_end_nowait (void);
    // --- end loop functions ---
 // flush without variable list
-extern void XOMP_flush_all ();
+extern void XOMP_flush_all (void);
 // omp flush with variable list, flush one by one, given each's start address and size
 extern void XOMP_flush_one (char * startAddress, int nbyte);
 

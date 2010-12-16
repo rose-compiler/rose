@@ -1277,8 +1277,10 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
              {
                ROSE_ASSERT(nameList.empty() == false);
 
-               SgInitializedNamePtrList::iterator i = nameList.begin();
+               curprint("IMPLICIT ");
 
+               SgInitializedNamePtrList::iterator i = nameList.begin();
+#if 0
                SgInitializedName* firstName = *i;
                SgInitializedName* secondName = NULL;
                i++;
@@ -1297,12 +1299,30 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
                curprint(firstName->get_name().str());
                if (secondName != NULL)
                   {
+                 // DQ (12/2/2010): These need not match.
                  // Make sure that the types match for consistancy (error checking)
-                    ROSE_ASSERT(firstName->get_type() == secondName->get_type());
+                 // ROSE_ASSERT(firstName->get_type() == secondName->get_type());
                     curprint(" - ");
                     curprint(secondName->get_name().str());
                   }
                curprint(")");
+#else
+            // DQ (12/2/2010): New code to handle implicit statements.
+               while (i != nameList.end())
+                  {
+                    SgInitializedName* implicitTypeName = *i;
+
+                    unp->u_fortran_type->unparseType(implicitTypeName->get_type(),info);
+                    curprint("(");
+                    curprint(implicitTypeName->get_name().str());
+                    curprint(")");
+
+                    i++;
+
+                    if (i != nameList.end())
+                         curprint(",");
+               }
+#endif
              }
         }
 
@@ -2408,7 +2428,19 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
 
      SgIfStmt* elseIfStatement = getElseIfStatement ( if_stmt );
 
+#if 0
+     printf ("\nIn unparseIfStmt(): line = %d \n",if_stmt->get_file_info()->get_line());
+     printf ("In unparseIfStmt(): if_stmt->get_use_then_keyword()     = %s \n",if_stmt->get_use_then_keyword() ? "true" : "false");
+     printf ("In unparseIfStmt(): if_stmt->get_is_else_if_statement() = %s \n",if_stmt->get_is_else_if_statement() ? "true" : "false");
+     printf ("In unparseIfStmt(): if_stmt->get_has_end_statement()    = %s \n",if_stmt->get_has_end_statement() ? "true" : "false");
+     printf ("In unparseIfStmt(): elseIfStatement = %p \n",elseIfStatement);
+#endif
+
+#if 0
      bool ifStatementInFalseBody = false;
+
+#if 1
+  // This code detects if this is an else-if statement.
      SgBasicBlock* parentBlock   = isSgBasicBlock(if_stmt->get_parent());
   // printf ("parentBlock = %p \n",parentBlock);
      if (parentBlock != NULL)
@@ -2419,19 +2451,48 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
              {
                ROSE_ASSERT (isSgBasicBlock(parentIfStatement->get_false_body()));
                SgStatementPtrList & statementList = isSgBasicBlock(parentIfStatement->get_false_body())->get_statements();
-               ifStatementInFalseBody = (find(statementList.begin(),statementList.end(),if_stmt) != statementList.end());
+
+            // Added code to make sure that the if is a part of an else and is the only statement inside the false block.
+            // if (statementList.size() > 1)
+                  {
+                    ifStatementInFalseBody = (find(statementList.begin(),statementList.end(),if_stmt) != statementList.end());
+                  }
              }
         }
+#endif
+
+     printf ("In unparseIfStmt(): ifStatementInFalseBody = %s \n",ifStatementInFalseBody ? "true" : "false");
+
+#if 0
+     SgBasicBlock* trueBlock  = isSgBasicBlock(if_stmt->get_true_body());
+     SgBasicBlock* falseBlock = isSgBasicBlock(if_stmt->get_false_body());
+
+     int numberOfStatementsInIfStatementTrueBody  = (trueBlock  == NULL) ? 0 : trueBlock->get_statements().size();
+     int numberOfStatementsInIfStatementFalseBody = (falseBlock == NULL) ? 0 : falseBlock->get_statements().size();
+  // int numberOfStatementsInIfStatement          = numberOfStatementsInIfStatementTrueBody + numberOfStatementsInIfStatementFalseBody;
+
+     printf ("In unparseIfStmt(): numberOfStatementsInIfStatementTrueBody  = %d \n",numberOfStatementsInIfStatementTrueBody);
+     printf ("In unparseIfStmt(): numberOfStatementsInIfStatementFalseBody = %d \n",numberOfStatementsInIfStatementFalseBody);
+
+     bool tooManyStatementsForIfWithoutThen = (numberOfStatementsInIfStatementTrueBody > 1);
+#endif
 
   // printf ("(if then case) ifStatementInFalseBody = %s \n",ifStatementInFalseBody ? "true" : "false");
-     bool output_as_elseif = ifStatementInFalseBody;
+  // bool output_as_elseif = ifStatementInFalseBody;
+  // bool output_as_elseif = ifStatementInFalseBody && !tooManyStatementsForIfWithoutThen;
+  // bool output_as_elseif = ifStatementInFalseBody && output_endif;
+  // bool output_as_elseif = ifStatementInFalseBody;
+#endif
 
   // printf ("Handling THEN case for if_stmt = %p \n",if_stmt);
   // DQ (12/26/2007): If this is an elseif statement then output the "THEN" even though we will not output an "ENDIF"
   // if (output_endif == true || output_as_elseif == true)
      if (output_endif == true)
         {
+          ROSE_ASSERT(if_stmt->get_use_then_keyword() == true);
+
           curprint("THEN");
+       // curprint("THEN ! Output as endif");
        // if (output_as_elseif == true) info.set_SkipFormatting();// curprint("\n      ");
           unparseStatement(if_stmt->get_true_body(), info);
        // if (output_as_elseif == true) info.unset_SkipFormatting();// curprint("\n      ");
@@ -2440,9 +2501,11 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
        else
         {
        // curprint("!output on same line!");
-          if (output_as_elseif == true)
+       // if (output_as_elseif == true)
+          if (if_stmt->get_use_then_keyword() == true)
              {
                curprint("THEN");
+            // curprint("THEN ! Output as elseif");
                unparseStatement(if_stmt->get_true_body(),info);
              }
             else
@@ -3301,8 +3364,9 @@ FortranCodeGeneration_locatedNode::unparsePrintStatement(SgStatement* stmt, SgUn
      unp->cur.insert_newline(1); 
    }
 
-void
-FortranCodeGeneration_locatedNode::unparse_IO_Support(SgStatement* stmt, SgUnparse_Info& info) 
+// void
+bool
+FortranCodeGeneration_locatedNode::unparse_IO_Support(SgStatement* stmt, bool skipUnit, SgUnparse_Info& info)
    {
   // Sage node corresponds to Fortran IO control info
      SgIOStatement* io_stmt = isSgIOStatement(stmt);
@@ -3311,30 +3375,54 @@ FortranCodeGeneration_locatedNode::unparse_IO_Support(SgStatement* stmt, SgUnpar
   // Unit is always unparsed (required for all but print statement)
   // ROSE_ASSERT(io_stmt->get_unit() != NULL);
 
-  // We need to generate code without the leading ","
-  // unparse_IO_Control_Support("UNIT",io_stmt->get_unit(),info);
-     curprint("UNIT=");
-
-     if (io_stmt->get_unit() != NULL)
+     bool isLeadingEntry = false;
+     if (skipUnit == false)
         {
-          unparseExpression(io_stmt->get_unit(), info);
+       // We need to generate code without the leading ","
+       // unparse_IO_Control_Support("UNIT",io_stmt->get_unit(),info);
+
+       // DQ (12/12/2010): Also for at least the gnu gfortran version 4.2.4, we can't output the "UNIT=" 
+       // string for the write statement. See test2010_144.f90 for an example of this.
+          bool skipOutputOfUnitString = (isSgWriteStatement(stmt) != NULL);
+          if (skipOutputOfUnitString == false)
+             {
+               curprint("UNIT=");
+             }
+
+          if (io_stmt->get_unit() != NULL)
+             {
+               unparseExpression(io_stmt->get_unit(), info);
+             }
+            else
+             {
+               curprint("*");
+             }
         }
        else
         {
-          curprint("*");
+          isLeadingEntry = true;
         }
 
-     unparse_IO_Control_Support("IOSTAT",io_stmt->get_iostat(),info);
-     unparse_IO_Control_Support("ERR",io_stmt->get_err(),info);
-     unparse_IO_Control_Support("IOMSG",io_stmt->get_iomsg(),info);
+     unparse_IO_Control_Support("IOSTAT",io_stmt->get_iostat(),isLeadingEntry,info);
+     isLeadingEntry = isLeadingEntry && (io_stmt->get_iostat() == NULL);
+
+     unparse_IO_Control_Support("ERR",io_stmt->get_err(),isLeadingEntry,info);
+     isLeadingEntry = isLeadingEntry && (io_stmt->get_err() == NULL);
+
+     unparse_IO_Control_Support("IOMSG",io_stmt->get_iomsg(),isLeadingEntry,info);
+     isLeadingEntry = isLeadingEntry && (io_stmt->get_iomsg() == NULL);
+
+     return isLeadingEntry;
    }
 
 void 
-FortranCodeGeneration_locatedNode::unparse_IO_Control_Support( string name, SgExpression* expr, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparse_IO_Control_Support( string name, SgExpression* expr, bool isLeadingEntry, SgUnparse_Info& info)
    {
      if (expr != NULL)
         {
-          curprint(", ");
+          if (isLeadingEntry == false)
+               curprint(", ");
+
           curprint(name);
           curprint("=");
           unparseExpression(expr, info);
@@ -3352,7 +3440,7 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
 
      SgExprListExp* iolist = readStatement->get_io_stmt_list();
 
-  // If only "READ 1,A" then this is using the format label "1" which is an alternative form or read statement.
+  // If only "READ 1,A" then this is using the format label "1" which is an alternative form of the read statement.
   // In this case the unit is not specified.
      if (readStatement->get_format() != NULL && readStatement->get_unit() == NULL)
         {
@@ -3365,20 +3453,22 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
        else
         {
           curprint("(");
-          unparse_IO_Support(readStatement,info);
+          unparse_IO_Support(readStatement,false,info);
 
-          unparse_IO_Control_Support("FMT",readStatement->get_format(),info);
-          unparse_IO_Control_Support("REC",readStatement->get_rec(),info);
-          unparse_IO_Control_Support("END",readStatement->get_end(),info);
+       // printf ("In unparseReadStatement(): FMT = %p = %s \n",readStatement->get_format(),readStatement->get_format()->class_name().c_str());
+
+          unparse_IO_Control_Support("FMT",readStatement->get_format(),false,info);
+          unparse_IO_Control_Support("REC",readStatement->get_rec(),false,info);
+          unparse_IO_Control_Support("END",readStatement->get_end(),false,info);
 
        // F90 specific
-          unparse_IO_Control_Support("NML",readStatement->get_namelist(),info);
-          unparse_IO_Control_Support("ADVANCE",readStatement->get_advance(),info);
-          unparse_IO_Control_Support("EOR",readStatement->get_eor(),info);
-          unparse_IO_Control_Support("SIZE",readStatement->get_size(),info);
+          unparse_IO_Control_Support("NML",readStatement->get_namelist(),false,info);
+          unparse_IO_Control_Support("ADVANCE",readStatement->get_advance(),false,info);
+          unparse_IO_Control_Support("EOR",readStatement->get_eor(),false,info);
+          unparse_IO_Control_Support("SIZE",readStatement->get_size(),false,info);
 
        // F2003 specific
-          unparse_IO_Control_Support("ASYNCHRONOUS",readStatement->get_asynchronous(),info);
+          unparse_IO_Control_Support("ASYNCHRONOUS",readStatement->get_asynchronous(),false,info);
 
           curprint(") ");
         }
@@ -3396,15 +3486,15 @@ FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUn
 
      curprint("WRITE (");
 
-     unparse_IO_Support(stmt,info);
+     unparse_IO_Support(stmt,false,info);
 
-     unparse_IO_Control_Support("FMT",writeStatement->get_format(),info);
-     unparse_IO_Control_Support("REC",writeStatement->get_rec(),info);
-     unparse_IO_Control_Support("NLT",writeStatement->get_namelist(),info);
-     unparse_IO_Control_Support("ADVANCE",writeStatement->get_advance(),info);
+     unparse_IO_Control_Support("FMT",writeStatement->get_format(),false,info);
+     unparse_IO_Control_Support("REC",writeStatement->get_rec(),false,info);
+     unparse_IO_Control_Support("NLT",writeStatement->get_namelist(),false,info);
+     unparse_IO_Control_Support("ADVANCE",writeStatement->get_advance(),false,info);
 
   // F2003 specific
-     unparse_IO_Control_Support("ASYNCHRONOUS",writeStatement->get_asynchronous(),info);
+     unparse_IO_Control_Support("ASYNCHRONOUS",writeStatement->get_asynchronous(),false,info);
 
      curprint(") ");
 
@@ -3422,23 +3512,23 @@ FortranCodeGeneration_locatedNode::unparseOpenStatement(SgStatement* stmt, SgUnp
 
      curprint("OPEN (");
 
-     unparse_IO_Support(stmt,info);
+     unparse_IO_Support(stmt,false,info);
 
-     unparse_IO_Control_Support("FILE",openStatement->get_file(),info);
-     unparse_IO_Control_Support("STATUS",openStatement->get_status(),info);
-     unparse_IO_Control_Support("ACCESS",openStatement->get_access(),info);
-     unparse_IO_Control_Support("FORM",openStatement->get_form(),info);
-     unparse_IO_Control_Support("RECL",openStatement->get_recl(),info);
-     unparse_IO_Control_Support("BLANK",openStatement->get_blank(),info);
+     unparse_IO_Control_Support("FILE",openStatement->get_file(),false,info);
+     unparse_IO_Control_Support("STATUS",openStatement->get_status(),false,info);
+     unparse_IO_Control_Support("ACCESS",openStatement->get_access(),false,info);
+     unparse_IO_Control_Support("FORM",openStatement->get_form(),false,info);
+     unparse_IO_Control_Support("RECL",openStatement->get_recl(),false,info);
+     unparse_IO_Control_Support("BLANK",openStatement->get_blank(),false,info);
 
   // F90 specific 
-     unparse_IO_Control_Support("POSITION",openStatement->get_position(),info);
-     unparse_IO_Control_Support("ACTION",openStatement->get_action(),info);
-     unparse_IO_Control_Support("DELIM",openStatement->get_delim(),info);
-     unparse_IO_Control_Support("PAD",openStatement->get_pad(),info);
+     unparse_IO_Control_Support("POSITION",openStatement->get_position(),false,info);
+     unparse_IO_Control_Support("ACTION",openStatement->get_action(),false,info);
+     unparse_IO_Control_Support("DELIM",openStatement->get_delim(),false,info);
+     unparse_IO_Control_Support("PAD",openStatement->get_pad(),false,info);
 
   // F2003 specific
-     unparse_IO_Control_Support("ASYNCHRONOUS",openStatement->get_asynchronous(),info);
+     unparse_IO_Control_Support("ASYNCHRONOUS",openStatement->get_asynchronous(),false,info);
 
      curprint(") ");
 
@@ -3457,9 +3547,9 @@ FortranCodeGeneration_locatedNode::unparseCloseStatement(SgStatement* stmt, SgUn
 
      curprint("CLOSE (");
 
-     unparse_IO_Support(stmt,info);
+     unparse_IO_Support(stmt,false,info);
 
-     unparse_IO_Control_Support("STATUS",closeStatement->get_status(),info);
+     unparse_IO_Control_Support("STATUS",closeStatement->get_status(),false,info);
 
      curprint(") ");
 
@@ -3477,50 +3567,62 @@ FortranCodeGeneration_locatedNode::unparseInquireStatement(SgStatement* stmt, Sg
 
      curprint("INQUIRE (");
 
+     bool isLeadingEntry = true;
      if (inquireStatement->get_iolengthExp() != NULL)
         {
        // This is the "INQUIRE (IOLENGTH=IOL)" case.
        // unparse_IO_Control_Support("IOLENGTH",inquireStatement->get_iolengthExp(),info);
           curprint("IOLENGTH=");
           unparseExpression(inquireStatement->get_iolengthExp(),info);
+          isLeadingEntry = false;
         }
        else
         {
        // This is the "INQUIRE(inquire-spec-list)" case.
 
-          unparse_IO_Support(stmt,info);
+       // DQ (12/11/2010): Fix for test2010_139.f90.
+          if (inquireStatement->get_unit() != NULL)
+             {
+            // Fortran rules don't allow output if "unit=*"
+               isLeadingEntry = unparse_IO_Support(stmt,false,info);
+             }
 
-          unparse_IO_Control_Support("FILE",inquireStatement->get_file(),info);
-          unparse_IO_Control_Support("ACCESS",inquireStatement->get_access(),info);
-          unparse_IO_Control_Support("FORM",inquireStatement->get_form(),info);
-          unparse_IO_Control_Support("RECL",inquireStatement->get_recl(),info);
-          unparse_IO_Control_Support("BLANK",inquireStatement->get_blank(),info);
-          unparse_IO_Control_Support("EXIST",inquireStatement->get_exist(),info);
-          unparse_IO_Control_Support("OPENED",inquireStatement->get_opened(),info);
-          unparse_IO_Control_Support("NUMBER",inquireStatement->get_number(),info);
-          unparse_IO_Control_Support("NAMED",inquireStatement->get_named(),info);
-          unparse_IO_Control_Support("NAME",inquireStatement->get_name(),info);
-          unparse_IO_Control_Support("SEQUENTIAL",inquireStatement->get_sequential(),info);
-          unparse_IO_Control_Support("DIRECT",inquireStatement->get_direct(),info);
-          unparse_IO_Control_Support("FORMATTED",inquireStatement->get_formatted(),info);
-          unparse_IO_Control_Support("UNFORMATTED",inquireStatement->get_unformatted(),info);
-          unparse_IO_Control_Support("NEXTREC",inquireStatement->get_nextrec(),info);
+          unparse_IO_Control_Support("FILE",inquireStatement->get_file(),isLeadingEntry,info);
+
+       // DQ (12/11/2010): If this fails then I guess we need to construct a more complex handling or a better approach).
+          isLeadingEntry = isLeadingEntry && (inquireStatement->get_file() == NULL);
+          ROSE_ASSERT(isLeadingEntry == false);
+
+          unparse_IO_Control_Support("ACCESS",inquireStatement->get_access(),false,info);
+          unparse_IO_Control_Support("FORM",inquireStatement->get_form(),false,info);
+          unparse_IO_Control_Support("RECL",inquireStatement->get_recl(),false,info);
+          unparse_IO_Control_Support("BLANK",inquireStatement->get_blank(),false,info);
+          unparse_IO_Control_Support("EXIST",inquireStatement->get_exist(),false,info);
+          unparse_IO_Control_Support("OPENED",inquireStatement->get_opened(),false,info);
+          unparse_IO_Control_Support("NUMBER",inquireStatement->get_number(),false,info);
+          unparse_IO_Control_Support("NAMED",inquireStatement->get_named(),false,info);
+          unparse_IO_Control_Support("NAME",inquireStatement->get_name(),false,info);
+          unparse_IO_Control_Support("SEQUENTIAL",inquireStatement->get_sequential(),false,info);
+          unparse_IO_Control_Support("DIRECT",inquireStatement->get_direct(),false,info);
+          unparse_IO_Control_Support("FORMATTED",inquireStatement->get_formatted(),false,info);
+          unparse_IO_Control_Support("UNFORMATTED",inquireStatement->get_unformatted(),false,info);
+          unparse_IO_Control_Support("NEXTREC",inquireStatement->get_nextrec(),false,info);
 
        // F90 specific 
-          unparse_IO_Control_Support("POSITION",inquireStatement->get_position(),info);
-          unparse_IO_Control_Support("ACTION",inquireStatement->get_action(),info);
-          unparse_IO_Control_Support("READ",inquireStatement->get_read(),info);
-          unparse_IO_Control_Support("WRITE",inquireStatement->get_write(),info);
-          unparse_IO_Control_Support("READWRITE",inquireStatement->get_readwrite(),info);
-          unparse_IO_Control_Support("DELIM",inquireStatement->get_delim(),info);
-          unparse_IO_Control_Support("PAD",inquireStatement->get_pad(),info);
+          unparse_IO_Control_Support("POSITION",inquireStatement->get_position(),false,info);
+          unparse_IO_Control_Support("ACTION",inquireStatement->get_action(),false,info);
+          unparse_IO_Control_Support("READ",inquireStatement->get_read(),false,info);
+          unparse_IO_Control_Support("WRITE",inquireStatement->get_write(),false,info);
+          unparse_IO_Control_Support("READWRITE",inquireStatement->get_readwrite(),false,info);
+          unparse_IO_Control_Support("DELIM",inquireStatement->get_delim(),false,info);
+          unparse_IO_Control_Support("PAD",inquireStatement->get_pad(),false,info);
 
        // F2003 specific
-          unparse_IO_Control_Support("ASYNCHRONOUS",inquireStatement->get_asynchronous(),info);
-          unparse_IO_Control_Support("DECIMAL",inquireStatement->get_decimal(),info);
-          unparse_IO_Control_Support("STREAM",inquireStatement->get_stream(),info);
-          unparse_IO_Control_Support("SIZE",inquireStatement->get_size(),info);
-          unparse_IO_Control_Support("PENDING",inquireStatement->get_pending(),info);
+          unparse_IO_Control_Support("ASYNCHRONOUS",inquireStatement->get_asynchronous(),false,info);
+          unparse_IO_Control_Support("DECIMAL",inquireStatement->get_decimal(),false,info);
+          unparse_IO_Control_Support("STREAM",inquireStatement->get_stream(),false,info);
+          unparse_IO_Control_Support("SIZE",inquireStatement->get_size(),false,info);
+          unparse_IO_Control_Support("PENDING",inquireStatement->get_pending(),false,info);
         }
 
      curprint(") ");
@@ -3540,7 +3642,7 @@ FortranCodeGeneration_locatedNode::unparseFlushStatement(SgStatement* stmt, SgUn
 
      curprint("FLUSH (");
 
-     unparse_IO_Support(stmt,info);
+     unparse_IO_Support(stmt,false,info);
 
      curprint(") ");
 
@@ -3559,7 +3661,7 @@ FortranCodeGeneration_locatedNode::unparseRewindStatement(SgStatement* stmt, SgU
 
      curprint("REWIND (");
 
-     unparse_IO_Support(stmt,info);
+     unparse_IO_Support(stmt,false,info);
 
      curprint(") ");
 
@@ -3578,7 +3680,7 @@ FortranCodeGeneration_locatedNode::unparseBackspaceStatement(SgStatement* stmt, 
 
      curprint("BACKSPACE (");
 
-     unparse_IO_Support(stmt,info);
+     unparse_IO_Support(stmt,false,info);
 
      curprint(") ");
 
@@ -3597,7 +3699,7 @@ FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, Sg
 
      curprint("ENDFILE (");
 
-     unparse_IO_Support(stmt,info);
+     unparse_IO_Support(stmt,false,info);
 
      curprint(") ");
 
@@ -3616,7 +3718,7 @@ FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnp
 
      curprint("WAIT (");
 
-     unparse_IO_Support(stmt,info);
+     unparse_IO_Support(stmt,false,info);
 
      curprint(") ");
 
@@ -3945,7 +4047,11 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                   }
                  else
                   {
-                    printf ("Warning: statement marked as public in non-module scope \n");
+                    // Liao 12/14/2010
+                    // SgAccessModifier::post_construction_initialization() will set the modifier to e_default, which in turn is equal to e_public
+                    // variable declarations should have public access by default.
+                    // So I turn off this warning after discussing this issue with Dan
+                   // printf ("Warning: statement marked as public in non-module scope in FortranCodeGeneration_locatedNode::unparseVarDecl(). \n");
                   }
              }
 
@@ -4073,6 +4179,8 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
         {
           curprint(" = ");
 
+       // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): init = %s \n",init,init->class_name().c_str());
+
        // I think the initializer for Fortran is always a SgExprListExp, but it need not be.
 #if 0
           SgAssignInitializer* assignInitializer = isSgAssignInitializer(init);
@@ -4113,7 +4221,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                   }
              }
 #else
-       // DQ (4/28/2008): Make this code simpler, by using differen initializer IR nodes.
+       // DQ (4/28/2008): Make this code simpler, by using different initializer IR nodes.
           SgInitializer* initializer = isSgInitializer(init);
           ROSE_ASSERT(initializer != NULL);
           unparseExpression(initializer, info);
@@ -5125,7 +5233,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
                  else
                   {
-                    printf ("Warning: statement marked as public in non-module scope \n");
+                    printf ("Warning: statement marked as public in non-module scope in FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(). \n");
                   }
              }
 

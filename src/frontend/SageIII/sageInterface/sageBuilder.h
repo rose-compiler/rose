@@ -61,6 +61,10 @@ Scope stack is provided as an alternative to manually passing scope parameters t
 */
 extern std::list<SgScopeStatement*> ScopeStack;
 
+// DQ (11/30/2010): Added support for building Fortran case insensitive symbol table handling.
+//! Support for construction of case sensitive/insensitive symbol table handling in scopes.
+extern bool symbol_table_case_insensitive_semantics;
+
 //! Public interfaces of the scope stack, should be stable
 void pushScopeStack (SgScopeStatement* stmt);
 void pushScopeStack (SgNode* node);
@@ -768,17 +772,27 @@ SgReturnStmt* buildReturnStmt_nfi(SgExpression* expression);
 SgNullStatement* buildNullStatement();
 SgNullStatement* buildNullStatement_nfi();
 
+//! Build Fortran attribute specification statement
+SgAttributeSpecificationStatement * buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::attribute_spec_enum kind);
+
+//! Build Fortran include line
+SgFortranIncludeLine* buildFortranIncludeLine(std::string filename);
+
+//! Build a Fortran common block, possibly with a name
+SgCommonBlockObject* buildCommonBlockObject(std::string name="", SgExprListExp* exp_list=NULL);
+
+//! Build a Fortran Common statement
+SgCommonBlock* buildCommonBlock(SgCommonBlockObject* first_block=NULL);
+
 // DQ (4/30/2010): Added support for building asm statements.
 //! Build a NULL statement
 SgAsmStmt* buildAsmStatement(std::string s);
 SgAsmStmt* buildAsmStatement_nfi(std::string s);
 
 // DQ (4/30/2010): Added support for building nop statement using asm statement
+// ! Building nop statement using asm statement
 SgAsmStmt* buildMultibyteNopStatement( int n );
 
-//Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
-//This does not work properly since the global scope expects declaration statement, not just SgNullStatement
-//SgStatement* buildStatementFromString(std::string str);
 
 //@}
 
