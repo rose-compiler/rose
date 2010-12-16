@@ -94,6 +94,8 @@ if HAVE_LIBYICES
   ROSE_YICES_LIBS_WITH_PATH = @YICES_PREFIX@/lib/libyices.a
 endif
 
+GLUT_LIBS = ${glut_path}
+
 # ROSE-DWARF libdwarf support
 if ROSE_USE_DWARF
   ROSE_DWARF_INCLUDES = -I$(dwarf_path)
@@ -379,9 +381,9 @@ ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
 
-# Test harness. See "test_harness.pl --help" for more info.
-TH=$(top_srcdir)/scripts/test_harness.pl \
+# Test harness variables. See "rth_run.pl --help" for more info.
+RTH_RUN=$(top_srcdir)/scripts/rth_run.pl \
 	srcdir=$(srcdir) top_srcdir=$(top_srcdir) \
 	VALGRIND=$(VALGRIND) BINARY_SAMPLES=$(BINARY_SAMPLES)
 
-
+RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl

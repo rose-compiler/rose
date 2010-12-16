@@ -13,6 +13,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 
 /* See header file for full documentation. */
 
@@ -62,8 +63,21 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
     } else {
         add_to_reason_string(result, (r & FUNC_INSNHEAD), do_pad, "H", "insn head");
     }
-    
-    add_to_reason_string(result, (r & FUNC_CALL_TARGET), do_pad, "C", "call target");
+
+    /* Function call:
+     *   "C" means the function was detected because we saw a call-like instructon (such as x86 CALL or FARCALL) or instruction
+     *       sequence (such as pushing the return value and then branching) in code that was determined to be reachable by
+     *       analyzing the control flow graph.
+     *
+     *   "c" means this function is the target of some call-like instruction (such as x86 CALL or FARCALL) but could not
+     *       determine whether the instruction is actually executed.
+     */
+    if (r & FUNC_CALL_TARGET) {
+        add_to_reason_string(result, true, do_pad, "C", "function call");
+    } else {
+        add_to_reason_string(result, (r & FUNC_CALL_INSN), do_pad, "c", "call instruction");
+    }
+
     add_to_reason_string(result, (r & FUNC_EH_FRAME),    do_pad, "X", "exception frame");
     add_to_reason_string(result, (r & FUNC_IMPORT),      do_pad, "I", "import");
     add_to_reason_string(result, (r & FUNC_SYMBOL),      do_pad, "S", "symbol");
@@ -79,11 +93,39 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
  *
  *******************************************************************************************************************************/
 
+/* Progress report class variables. */
+time_t Partitioner::progress_interval = 10;
+time_t Partitioner::progress_time = 0;
+FILE *Partitioner::progress_file = stderr;
 
+/* Set progress reporting values. */
+void
+Partitioner::set_progress_reporting(FILE *output, unsigned min_interval)
+{
+    progress_file = output;
+    progress_interval = min_interval;
+}
 
+/* Produce a progress report if enabled. */
+void
+Partitioner::progress(FILE *debug, const char *fmt, ...) const
+{
+    va_list ap;
+    va_start(ap, fmt);
 
+    time_t now = time(NULL);
+    
+    if (0==progress_time)
+        progress_time = now;
+    
+    if (progress_file!=NULL && now-progress_time >= progress_interval) {
+        progress_time = now;
+        vfprintf(progress_file, fmt, ap);
+    }
 
-
+    if (debug!=NULL)
+        vfprintf(debug, fmt, ap);
+}
 
 /* Parse argument for "-rose:partitioner_search" command-line swich. */
 unsigned
@@ -1094,6 +1136,23 @@ Partitioner::mark_func_patterns()
     }
 }
 
+/* Make all CALL/FARCALL targets functions.  This is a naive approach that won't work for some obfuscated software. A more
+ * thorough approach considers only those calls that are reachable.  A CALL whose target is the address following the CALL
+ * instruction is not counted as a function call. */
+void
+Partitioner::mark_call_insns()
+{
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        std::vector<SgAsmInstruction*> iv;
+        iv.push_back(ii->second);
+        rose_addr_t target_va=NO_TARGET;
+        if (ii->second->is_function_call(iv, &target_va) && target_va!=NO_TARGET &&
+            target_va!=ii->first + ii->second->get_raw_bytes().size()) {
+            add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET, "");
+        }
+    }
+}
+
 /* Look for NOP padding between functions */
 void
 Partitioner::create_nop_padding()
@@ -1331,6 +1390,8 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
     }
     if (func_heuristics & SgAsmFunctionDeclaration::FUNC_PATTERN)
         mark_func_patterns();
+    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_INSN)
+        mark_call_insns();
 
     /* Run user-defined function detectors, making sure that the basic block starts are up-to-date for each call. */
     if (func_heuristics & SgAsmFunctionDeclaration::FUNC_USERDEF) {
@@ -1527,24 +1588,12 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
 void
 Partitioner::analyze_cfg()
 {
-    static const time_t progress_interval = 10;
-    time_t progress_time = time(NULL);
-    bool progress_emitted = false;
-    size_t pass = 0; /*only used for progress and debugging*/
-
-    while (true) {
-        pass++;
-
+    for (size_t pass=1; true; pass++) {
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
-        if (debug || time(NULL)-progress_time > progress_interval) {
-            progress_time = time(NULL);
-            progress_emitted = true;
-            fprintf(debug?debug:stderr,
-                    "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-                    pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-                    blocks.size(), 1==blocks.size()?"":"s",
-                    blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
-        }
+        progress(debug, "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+                 pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+                 blocks.size(), 1==blocks.size()?"":"s",
+                 blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
 
         /* If function A makes a call to function B and we know that function B could return but the return address is not
          * part of any function, then mark function A as pending so that we rediscover its blocks. */   
@@ -1662,13 +1711,11 @@ Partitioner::analyze_cfg()
         }
     }
         
-    if (debug || progress_emitted) {
-        fprintf(debug?debug:stderr,
-                "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-                functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-                blocks.size(), 1==blocks.size()?"":"s",
-                blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
-    }
+    progress(debug,
+             "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+             functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+             blocks.size(), 1==blocks.size()?"":"s",
+             blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
 }
 
 void

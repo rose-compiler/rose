@@ -1,3 +1,0 @@
-c This file is changed by the configure script
-       integer OVUseDouble
-       parameter( OVUseDouble=0 )

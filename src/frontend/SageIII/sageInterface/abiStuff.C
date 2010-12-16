@@ -424,7 +424,7 @@ struct alignof {
 #endif
 };
 
-enum testenum { testenum_x = INT_MAX };
+enum testenum { testenum_x = INT_MAX }; /* NO_STRINGIFY */
 
 StructLayoutInfo SystemPrimitiveTypeLayoutGenerator::layoutType(SgType* t) const {
   StructLayoutInfo layout;

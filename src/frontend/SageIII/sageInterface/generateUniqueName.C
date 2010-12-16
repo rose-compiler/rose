@@ -70,6 +70,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
      string key;
      string additionalSuffix;
 
+    //--------------------- SgType--------------------------------------
      const SgType* type = isSgType(node);
      if (type != NULL)
         {
@@ -194,6 +195,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 #endif
         }
 
+    //--------------------- SgStatement--------------------------------------
      const SgStatement* statement = isSgStatement(node);
      if (statement != NULL)
         {
@@ -1065,6 +1067,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
              }
         }
 
+    //--------------------- SgSymbol--------------------------------------
      const SgSymbol* symbol = isSgSymbol(node);
      if (symbol != NULL)
         {
@@ -1208,6 +1211,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
              }
         }
 
+     //-------------------------------SgExpression-----------------------------------
   // Never share expressions within the merge process
      const SgExpression* expression = isSgExpression(node);
      if (expression != NULL)
@@ -1227,6 +1231,82 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
              }
         }
 
+     //-------------------------------SgInitializedName-----------------------------------
+     // Liao 11/4/2010, moved from SgSupport to SgLocatedNodeSupport
+    const SgInitializedName * i_name = isSgInitializedName(node); 
+    if (i_name)
+     {
+            const SgInitializedName* initializedName = isSgInitializedName(node);
+         // Make the mangled name from a SgInitializedName unique (not finished yet).
+         // This case will handle "extern A::x" vs. "namespace A { int x; }" which
+         // I expect will gnerate the same unique name but which are clearly different!
+
+         // Check for use of extern keyword (I think this is enough!)
+            key = initializedName->get_mangled_name();
+
+         // DQ (6/1/2006): Add the type to avoid variable declarations from different unnamed scopes from clashing.
+            string type = initializedName->get_type()->get_mangled();
+            key = key + type;
+
+            additionalSuffix = "__initialized_name";
+
+         // DQ (8/10/2010): Change to represent as const variable declaration.
+         // DQ (6/20/2006): Fixup to avoid "int x;" from being confused with "extern int x;"
+            const SgStorageModifier & storage = initializedName->get_storageModifier();
+            if (storage.isExtern())
+               {
+                 additionalSuffix += "__extern_initialized_name";
+               }
+#if 1
+         // DQ (2/17/2007): This causes problems and does not avoid orphaned initializers, 
+         // however without it SgInitializedName objects would be over shared!
+         // DQ (2/17/2007): Initializers can make that initializedName different and difficult to 
+         // share since we can't generate unique names fro expressions.
+            if (initializedName->get_initptr() != NULL)
+               {
+              // printf ("This is a SgInitializedName with an initializer so we can't share it! \n");
+              // key = key + StringUtility::numberToString(node);
+                 key = key + initializedName->get_initptr()->unparseToString();
+               }
+#else
+         // Maybe we need to unparse the initializer expressions so that they can be a part of the unique name that we generate!
+         // This would allow the perfect level of sharing (withouth oversharing or undersharing).
+            printf (" Possible over sharing of SgInitializedName objects because we don't account for initializer expressions \n");
+#endif
+
+         // DQ (3/3/2007): If this is part of a function parameter list then we want to record if it is a defining or 
+         // non-defining function (symbols for parameters of non-defining functions are not placed into the symbol table 
+         // and parameters of defining functions are placed into the defining function's function scope's symbol table.  
+         // The unique name we genetate can effect the symbols so we want to avoid having symbols moved inappropriately 
+         // due to over sharing from parameter names that are not sufficiently unique!
+            SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(node->get_parent());
+            if (functionParameterList != NULL)
+               {
+              // This is a function parameter
+                 SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(functionParameterList->get_parent());
+                 ROSE_ASSERT(functionDeclaration != NULL);
+                 if (functionDeclaration == functionDeclaration->get_definingDeclaration())
+                    { 
+                      key = key + "_parameter_of_defining_declaration";
+                    }
+                   else
+                    {
+                      key = key + "_parameter_of_nondefining_declaration";
+                    }
+               }
+
+         // DQ (3/7/2007): This could be a static variable in a class which will make two appearences in the source code.
+         // The first will be in the class as a declaration and the second will be outside the class (as a declaration 
+         // from the point of view of ROSE, but as a means of allocating space from teh pointof view of C++).
+            SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(node->get_parent());
+            if (variableDeclaration != NULL)
+               {
+              // To make this unique, append the mangled name of the scope of the variableDeclaration
+                 key += "_in_scope_" + variableDeclaration->get_scope()->get_mangled_name();
+               }
+     } 
+
+     //-------------------------------SgSupport-----------------------------------
      const SgSupport* support = isSgSupport(node);
      if (support != NULL)
         {
@@ -1255,6 +1335,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+#if 0
                case V_SgInitializedName:
                   {
                     const SgInitializedName* initializedName = isSgInitializedName(node);
@@ -1327,7 +1408,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                        }
                     break;
                   }
-
+#endif
             // DQ (7/24/2010): Added to support local and global type tables.
                case V_SgTypeTable:
                   {
@@ -1538,10 +1619,8 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
   // ROSE_ASSERT(key.empty() == false);
      if (key.empty() == true)
         {
-#if 0
+#if 1
           printf ("Empty key generated (should be ignored): node = %p = %s \n",node,node->class_name().c_str());
-#endif
-#if 0
           if (node->get_file_info() != NULL)
                node->get_file_info()->display("Empty key generated (should be ignored)");
 #endif

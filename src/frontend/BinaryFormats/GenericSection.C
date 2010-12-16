@@ -1,8 +1,8 @@
 /* Generic Sections. SgAsmGenericSection serves as a base class for all binary file formats that divide a file into contiguous
  * parts.  The SgAsmGenericSection class describes such a part. Most binary formats will subclass this. */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "stringify.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -50,6 +50,39 @@ SgAsmGenericSection::~SgAsmGenericSection()
         free(local_data_pool);
         local_data_pool = NULL;
     }
+}
+
+/** Increase file offset and mapping address to satisfy alignment constraints. This is typically done when initializing a new
+ *  section. The constructor places the new section at the end of the file before it knows what the alignment constraints will
+ *  be. The user should then set the alignment constraints (see set_file_alignment() and set_mapped_alignment()) and call this
+ *  method.  This method must be called before any additional sections are appended to the file.
+ *
+ *  The file offset and memory mapping address are adjusted independently.
+ *
+ *  On the other hand, if additional sections are in the way, they must first be moved out of the way with the
+ *  SgAsmGenericFile::shift_extend() method.
+ *
+ *  Returns true if the file offset and/or mapping address changed as a result of this call. */
+bool
+SgAsmGenericSection::align()
+{
+    bool changed = false;
+
+    if (get_file_alignment()>0) {
+        rose_addr_t old_offset = get_offset();
+        rose_addr_t new_offset = ALIGN_UP(old_offset, get_file_alignment());
+        set_offset(new_offset);
+        changed = changed ? true : (old_offset!=new_offset);
+    }
+
+    if (is_mapped() && get_mapped_alignment()>0) {
+        rose_addr_t old_rva = get_mapped_preferred_rva();
+        rose_addr_t new_rva = ALIGN_UP(old_rva, get_mapped_alignment());
+        set_mapped_preferred_rva(new_rva);
+        changed = changed ? true : (old_rva!=new_rva);
+    }
+
+    return changed;
 }
 
 /** Saves a reference to the original file data for a section based on the sections current offset and size. Once we do this,
@@ -440,16 +473,6 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
     /* Don't write past end of current EOF if we can help it. */
     f.seekp(0, std::ios::end);
     rose_addr_t filesize = f.tellp();
-
-#if 0
- // DQ (2/3/2009): Added to help debug problem that I was unable to figure out (handling *.o files).
-    if (filesize == 0)
-       {
-         printf ("In SgAsmGenericSection::write(): filesize = %zu offset = %zu bufsize = %zu \n",filesize,offset,bufsize);
-      // return offset+bufsize;
-       }
-#endif
-
     while (nwrite>0 && 0==((const char*)buf)[nwrite-1] && get_offset()+offset+nwrite>filesize)
         --nwrite;
 
@@ -747,7 +770,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = not associated\n",          p, w, "header");
     }
     
-    std::string purpose = to_string(p_purpose);
+    std::string purpose = stringifySgAsmGenericSectionSectionPurpose(p_purpose);
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", purpose.c_str());
 
     if (is_mapped()) {
@@ -773,19 +796,4 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (variantT() == V_SgAsmGenericSection) {
         hexdump(f, 0, std::string(p)+"data at ", p_data);
     }
-}
-
-
-std::string SgAsmGenericSection::to_string(SectionPurpose val)
-{
-  static char buf[64];
-  switch (val) {
-    case SP_UNSPECIFIED: return "not specified"; 
-    case SP_PROGRAM:     return "program-supplied data/code/etc"; 
-    case SP_HEADER:      return "executable format header";       
-    case SP_SYMTAB:      return "symbol table";                   
-    case SP_OTHER:       return "other";                          
-  };
-  snprintf(buf, sizeof(buf), "unknown section purpose (%zu)", (size_t)val);
-  return buf;
 }

@@ -1206,6 +1206,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
+  // DQ (11/20/2010): Added token handling support.
+  // Turn on the output of the tokens from the parser (only applies to Fortran support).
+  //
+     set_output_tokens(false);
+     ROSE_ASSERT (get_output_tokens() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(output_tokens)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("output tokens mode ON \n");
+          set_output_tokens(true);
+        }
+
+  //
   // Turn on the output of the parser actions for the parser (only applies to Fortran support).
   //
      set_skip_syntax_check(false);
@@ -1467,8 +1480,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_F2003_only(true);
           set_Fortran_only(true);
 
+       // DQ (12/2/2010): I agree with setting this to true.
        // It is requested (by Laksono at Rice) that CoArray Fortran defaults be to skip the syntax checking
-	// Laksono 2009.01.27: I think we should put the boolean to 'true' instead of 'false'
+       // Laksono 2009.01.27: I think we should put the boolean to 'true' instead of 'false'
           set_skip_syntax_check(true);
 
           if (get_sourceFileUsesCoArrayFortranFileExtension() == false)
@@ -2175,6 +2189,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(cray_pointer_support)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(output_parser_actions)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(output_tokens)",1);
      optionCount = sla(argv, "-rose:", "($)", "(exit_after_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_syntax_check)",1);
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
@@ -2491,6 +2506,11 @@ SgSourceFile::initializeGlobalScope()
      set_globalScope( new SgGlobal( globalScopeFileInfo ) );
      ROSE_ASSERT (get_globalScope() != NULL);
 
+     if (SageBuilder::symbol_table_case_insensitive_semantics == true)
+        {
+          get_globalScope()->setCaseInsensitive(true);
+        }
+
   // DQ (2/15/2006): Set the parent of the SgGlobal IR node
      get_globalScope()->set_parent(this);
 
@@ -2579,7 +2599,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
      if (fileList.empty() == false)
         {
-       // Note that we always process one file at a time using EDG or the Fortran frontend.
           ROSE_ASSERT(fileList.size() == 1);
 
        // DQ (8/31/2006): Convert the source file to have a path if it does not already
@@ -2634,6 +2653,10 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                file->set_outputLanguage(SgFile::e_Fortran_output_language);
 
                file->set_Fortran_only(true);
+
+            // DQ (11/30/2010): This variable activates scopes built within the SageBuilder
+            // interface to be built to use case insensitive symbol table handling.
+               SageBuilder::symbol_table_case_insensitive_semantics = true;
 
             // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true).
             // DQ (12/23/2008): Actually this is not redundant since the SgFile::initialization sets it to "false".
@@ -5338,6 +5361,25 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // Open Fortran Parser's openFortranParser_main() function API.  So we use this
   // global variable to pass the SgFile (so that the parser c_action functions can
   // build the Fotran AST using the existing SgFile.
+
+     // FMZ(7/27/2010): check command line options for Rice CAF syntax
+     //  -rose:CoArrayFortran, -rose:CAF, -rose:caf
+
+     bool using_rice_caf = false;
+     vector<string> ArgTmp = get_project()->get_originalCommandLineArgumentList();
+     int sizeArgs = ArgTmp.size();
+
+     for (int i = 0; i< sizeArgs; i++)  {
+       if (ArgTmp[i].find("-rose:caf",0)==0     || 
+           ArgTmp[i].find("-rose:CAF2.0",0)==0  ||
+           ArgTmp[i].find("-rose:CAF2.0",0)==0  ) {
+
+         using_rice_caf=true;
+         break;
+       }
+     }
+
+   
      extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
   // DQ (10/26/2010): Moved from SgSourceFile::callFrontEnd() so that the stack will 
@@ -5652,6 +5694,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           OFPCommandLine.push_back(classpath);
           OFPCommandLine.push_back("fortran.ofp.FrontEnd");
           OFPCommandLine.push_back("--dump");
+       // OFPCommandLine.push_back("--tokens");
 
        // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
@@ -5809,6 +5852,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      frontEndCommandLine.push_back("--class");
      frontEndCommandLine.push_back("fortran.ofp.parser.c.jni.FortranParserActionJNI");
 
+     //FMZ (7/26/2010)  added an option for using rice CAF. 
+     if (using_rice_caf==true) 
+          frontEndCommandLine.push_back("--RiceCAF");
+
 #if 0
   // Debugging output
      get_project()->display("Calling SgProject display");
@@ -5866,6 +5913,18 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           printf ("Fortran numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 #endif
 
+#if 0
+     frontEndCommandLine.push_back("--tokens");
+#endif
+
+     if (get_output_tokens() == true)
+        {
+       // Note that this will cause all other c_actions to not be executed (resulting in an empty file).
+       // So this makes since to run in an analysis mode only, not for generation of code or compiling 
+       // of the generated code.
+          frontEndCommandLine.push_back("--tokens");
+        }
+
      int openFortranParser_argc    = 0;
      char** openFortranParser_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,openFortranParser_argc,openFortranParser_argv);
@@ -5893,8 +5952,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      printf ("********************************************************************************************** \n");
 #else
 
+  // DQ (11/11/2010): There should be no include files on the stack from previous files, see test2010_78.C and test2010_79.C when
+  // compiled together on the same command line.
+     ROSE_ASSERT(astIncludeStack.size() == 0);
+
   // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
      int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
+
+  // DQ (11/11/2010): There should be no include files left in the stack, see test2010_78.C and test2010_79.C when
+  // compiled together on the same command line.
+  // ROSE_ASSERT(astIncludeStack.size() == 0);
+     if (astIncludeStack.size() != 0)
+        {
+          printf ("Warning: astIncludeStack not cleaned up after openFortranParser_main(): astIncludeStack.size() = %zu \n",astIncludeStack.size());
+        }
 #endif
 
      if ( get_verbose() > 1 )
@@ -7815,6 +7886,8 @@ SgFile::usage ( int status )
 "                             Fortran from file suffix)\n"
 "     -rose:CoArrayFortran, -rose:CAF, -rose:caf\n"
 "                             compile Co-Array Fortran code (extension of Fortran 2003)\n"
+"     -rose:CAF2.0, -rose:caf2.0\n"
+"                             compile Co-Array Fortran 2.0 code (Rice CAF extension)\n"
 "     -rose:Fortran2003, -rose:F2003, -rose:f2003\n"
 "                             compile Fortran 2003 code\n"
 "     -rose:Fortran95, -rose:F95, -rose:f95\n"
@@ -7908,6 +7981,8 @@ SgFile::usage ( int status )
 "                               separately).\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
+"     -rose:output_tokens     call parser with --tokens option (fortran only)\n"
+"                             (not yet supported for C/C++)\n"
 "     -rose:embedColorCodesInGeneratedCode LEVEL\n"
 "                             embed color codes into generated output for\n"
 "                               visualization of highlighted text using tview\n"
