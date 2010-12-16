@@ -710,8 +710,8 @@ $(TEST_Objects):expNormTest
 	./expNormTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
-	@$(MAKE) $(TEST_Objects)
-	@$(MAKE) simple_test
+	@echo @$(MAKE) $(TEST_Objects)
+	@echo @$(MAKE) simple_test
 
 	@echo "*********************************************************************************************************"
 	@echo "*** ROSE/projects/backstroke/tests/expNormalizationTest: make check rule complete (terminated normally) ******"
