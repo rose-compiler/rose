@@ -4077,6 +4077,7 @@ void c_action_entity_decl(Token_t * id)
 
                ROSE_ASSERT(astScopeStack.empty() == false);
                astScopeStack.front()->insert_symbol(name,variableSymbol);
+               ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
 
             // Test the symbol tables and the new support for case insensitive symbol tables.
                ROSE_ASSERT(astScopeStack.front()->symbol_exists(name) == true);

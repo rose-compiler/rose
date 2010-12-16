@@ -1454,6 +1454,15 @@ SageInterface::get_name ( const SgLocatedNodeSupport* node )
                returnName += n->get_use_name().str();
                break;
              }
+          case V_SgInitializedName:
+          {
+            const SgInitializedName * n = isSgInitializedName (node);
+            ROSE_ASSERT (n != NULL);
+            returnName = "initialized_name_";
+            returnName += n->get_name().str();
+
+            break;
+          }
 #if 0
           case V_SgInterfaceBody:
              {

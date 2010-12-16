@@ -2842,6 +2842,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
                     variableSymbol = new SgVariableSymbol(initializedName);
 
                     astScopeStack.front()->insert_symbol(variableName,variableSymbol);
+                    ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
                   }
              }
 
