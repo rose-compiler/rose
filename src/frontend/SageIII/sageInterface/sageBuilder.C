@@ -255,6 +255,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
        varDecl->set_definingDeclaration(varDecl);
 #endif
 
+  ROSE_ASSERT (varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
   return varDecl;
 }
 
