@@ -1,7 +1,7 @@
 //Author: George Vulov <georgevulov@hotmail.com>
 //Based on work by Justin Frye <jafrye@tamu.edu>
 
-#include "sage3basic.h"
+#include "rose.h"
 #include "staticSingleAssignment.h"
 #include "sageInterface.h"
 #include <map>

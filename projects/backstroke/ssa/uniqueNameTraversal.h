@@ -1,6 +1,6 @@
 //Author: Justin Frye <jafrye@tamu.edu>
 #pragma once
-#include "sage3basic.h"
+#include "rose.h"
 #include <vector>
 
 namespace ssa_private

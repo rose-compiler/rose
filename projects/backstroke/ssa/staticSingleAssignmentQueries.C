@@ -1,7 +1,7 @@
 //Author: George Vulov <georgevulov@hotmail.com>
 //Based on work by Justin Frye <jafrye@tamu.edu>
 #include "staticSingleAssignment.h"
-#include "sage3basic.h"
+#include "rose.h"
 #include <boost/foreach.hpp>
 #include <queue>
 
