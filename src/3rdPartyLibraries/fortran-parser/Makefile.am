@@ -61,11 +61,8 @@ endif
 
 # DQ (4/5/2010): And we need a version of this macro withouth the paths.
 OFP_SOURCE_FILES_WITHOUT_PATHS = \
-   FortranParserAction.h \
    c_actions_jni.c \
    token.h \
-   token.c \
-   ActionEnums.h \
    jni_token_funcs.h \
    jni_token_funcs.c 
 

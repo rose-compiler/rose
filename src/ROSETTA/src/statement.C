@@ -502,7 +502,7 @@ Grammar::setUpStatements ()
 
      Global.setFunctionPrototype( "HEADER_GLOBAL", "../Grammar/Statement.code" );
      Global.editSubstitute      ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     // Global.setFunctionPrototype( "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+  // Global.setFunctionPrototype( "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      Global.editSubstitute      ( "LIST_DATA_TYPE", "SgDeclarationStatementPtrList" );
      Global.editSubstitute      ( "LIST_NAME", "declarations" );
      Global.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
@@ -665,6 +665,14 @@ Grammar::setUpStatements ()
 
   // DQ (12/26/2007): Fortran specific, has associated endif statement
      IfStmt.setDataPrototype     ( "bool", "has_end_statement", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (12/7/2010): Fortran specific, has associated then keyword.
+     IfStmt.setDataPrototype     ( "bool", "use_then_keyword", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (12/7/2010): Fortran specific, has associated else keyword before if (is an else-if statement).
+     IfStmt.setDataPrototype     ( "bool", "is_else_if_statement", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ForStatement.setFunctionPrototype ( "HEADER_FOR_STATEMENT", "../Grammar/Statement.code" );
@@ -2090,7 +2098,9 @@ Grammar::setUpStatements ()
   // CommonBlock.setDataPrototype ("SgName", "name", "= \"\"",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      CommonBlock.setDataPrototype ( "SgCommonBlockObjectPtrList", "block_list", "",
-                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Liao 12/8/2010, This must be traversable to reach variable references underneath it.   
+                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  //                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // CommonBlock.setDataPrototype("SgInitializedNamePtrList", "variables", "",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      CommonBlock.setAutomaticGenerationOfDestructor(false);
