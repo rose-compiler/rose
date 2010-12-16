@@ -35,7 +35,13 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 	{
 		//Get the unique name of the def.
 		VarUniqueName * uName = StaticSingleAssignment::getUniqueName(node);
-		ROSE_ASSERT(uName);
+
+		//In some cases, a varRef isn't actually part of a variable name. For example,
+		//foo().x where foo returns a structure. x is an SgVarRefExp, but is not part of a variable name.
+		if (uName == NULL)
+		{
+			return ChildUses();
+		}
 
 		//Add this as a use. If it's not a use (e.g. target of an assignment), we'll fix it up later.
 		ssa->getLocalUsesTable()[node].insert(uName->getKey());
