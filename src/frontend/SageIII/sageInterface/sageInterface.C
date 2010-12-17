@@ -1454,6 +1454,15 @@ SageInterface::get_name ( const SgLocatedNodeSupport* node )
                returnName += n->get_use_name().str();
                break;
              }
+          case V_SgInitializedName:
+          {
+            const SgInitializedName * n = isSgInitializedName (node);
+            ROSE_ASSERT (n != NULL);
+            returnName = "initialized_name_";
+            returnName += n->get_name().str();
+
+            break;
+          }
 #if 0
           case V_SgInterfaceBody:
              {
@@ -7350,9 +7359,13 @@ static SgVariableSymbol * addArg(SgFunctionParameterList *paraList, SgInitialize
   initName->set_scope(scope);
   if (scope)
   {
-    SgVariableSymbol* sym = new SgVariableSymbol(initName);
-    scope->insert_symbol(initName->get_name(), sym);
-    sym->set_parent(scope->get_symbol_table());
+    SgVariableSymbol* sym = isSgVariableSymbol(initName->get_symbol_from_symbol_table());
+    if (sym == NULL)
+    {
+      sym = new SgVariableSymbol(initName);
+      scope->insert_symbol(initName->get_name(), sym);
+      sym->set_parent(scope->get_symbol_table());
+    }
     return sym;
   }
   else
@@ -8047,9 +8060,9 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
       SgVariableSymbol* varSymbol = scope->lookup_variable_symbol(name);
       if (varSymbol==NULL)
       {
-	varSymbol = new SgVariableSymbol(initName);
-	ROSE_ASSERT(varSymbol);
-	scope->insert_symbol(name, varSymbol);
+        varSymbol = new SgVariableSymbol(initName);
+        ROSE_ASSERT(varSymbol);
+        scope->insert_symbol(name, varSymbol);
       }
       else
       { // TODO consider prepend() and insert(), prev_decl_time is position dependent.
@@ -8059,6 +8072,14 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
 	initName->set_prev_decl_item(prev_decl);
       } //end if
     } //end for
+    // Liao 12/8/2010
+    // For Fortran, a common statement may refer to a variable which is declared later.
+    // In this case, a fake symbol is used for that variable reference.
+    // But we have to replace the fake one with the real one once the variable declaration is inserted into AST
+    if (SageInterface::is_Fortran_language() )
+    {
+      fixVariableReferences (scope);
+    }
   }
 
 int SageInterface::fixVariableReferences(SgNode* root)

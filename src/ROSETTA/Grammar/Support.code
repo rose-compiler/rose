@@ -7888,9 +7888,20 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
 
                     if (outputSymbolInfo == true)
                        {
-                         printf ("Symbol %4d: name = %s SgSymbol = %p = %s type = %p = %s = %s get_symbol_basis() = %p = %s = %s \n",
-                              idx,(*i).first.str(),(*i).second,(*i).second->class_name().c_str(),type,(type != NULL) ? type->class_name().c_str() : "NULL" ,
-                              nameOfType.str(),symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str());
+                         SgAliasSymbol* aliasSymbol = isSgAliasSymbol((*i).second);
+                         if (aliasSymbol != NULL)
+                            {
+                               ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
+                              printf ("Symbol %4d: name = %s SgSymbol = %p = %s (alias to %s) type = %p = %s = %s get_symbol_basis() = %p = %s = %s \n",
+                                      idx,(*i).first.str(),(*i).second,(*i).second->class_name().c_str(),aliasSymbol->get_alias()->class_name().c_str(),type,(type != NULL) ? type->class_name().c_str() : "NULL" ,
+                                   nameOfType.str(),symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str());
+                            }
+                           else
+                            {
+                              printf ("Symbol %4d: name = %s SgSymbol = %p = %s type = %p = %s = %s get_symbol_basis() = %p = %s = %s \n",
+                                   idx,(*i).first.str(),(*i).second,(*i).second->class_name().c_str(),type,(type != NULL) ? type->class_name().c_str() : "NULL" ,
+                                   nameOfType.str(),symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str());
+                            }
                        }
                   }
                  else
@@ -8870,6 +8881,7 @@ SgInitializedName::get_mangled_name (void) const
 SgDeclarationStatement*
 SgInitializedName::get_declaration() const
    {
+     assert (this != NULL);
   // DQ (6/13/2005): This function assumes that the parents have been set!
   // so it should not be used in the EDG/Sage translation!
   // assert(get_parent() != NULL);

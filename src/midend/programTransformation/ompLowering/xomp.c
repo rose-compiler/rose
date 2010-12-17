@@ -14,11 +14,12 @@
 #endif
 
 // avoid include omp.h 
-extern bool omp_get_thread_num();
+extern int omp_get_thread_num(void);
 
-#include <stdlib.h> // for getenv()
+#include <stdlib.h> // for getenv(), malloc(), etc
 #include <stdio.h> // for getenv()
 #include <assert.h>
+#include <stdarg.h>
 
 #if 0
 enum omp_rtl_enum {
@@ -82,15 +83,85 @@ void XOMP_terminate (int exitcode)
 #endif    
 }
 
+// array of pointers of void
+void *g_parameter[MAX_OUTLINED_FUNC_PARAMETER_COUNT];
+// void **g_parameter;
+
+#if 0
+static void run_me (void*);
+// a helper function to deal with one-to-multiple parameter mapping 
+// from C runtime (one void * data) to Fortran outlined function (multiple parameters)
+void run_me(void* data)
+{
+  //unwrap both function pointer and parameters to be passed
+  //  void *l_parameter[2]; // must use a local copy here !!
+  //  void (*func) (void *, void *);
+  //func =(void (*) (void *, void *)) (((void**)data)[0]);
+ 
+  typedef void (*FUNC_P)(void *, void *);  
+  FUNC_P func;
+  func =(FUNC_P) (((void**)data)[0]);
+  func(((void**)data)[1], ((void**)data)[2]);
+}
+#endif
+#include "run_me_defs.inc"
+
+void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argcount, ...);
 //Wrapper functions to support linking with Fortran programs
+//
 // OFP does not support extensions like %VAL, so we use XOMP to compensate the difference
 // between pass-by-reference vs. pass-by-value.
 //void xomp_parallel_start (void (*func) (void *), void *data, unsigned numThread)
 #pragma weak xomp_parallel_start_=xomp_parallel_start
-void xomp_parallel_start (void (*func) (void *), void *data, unsigned* numThread)
+//void xomp_parallel_start (void (*func) (void *), void *data, unsigned* numThread)
+//
+// We expect the outlined function from a Fortran task will have multiple parameters passed by references
+// This wrapper function will pack those parameters into a single one to be compatible with gomp's parallel_start function
+// A glue part from Fortran's multiple parameters --> XOMP's single parameter
+void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argcount, ...)
 {
-   XOMP_parallel_start (func, data, *numThread);
+  int x;
+  va_list v1;
+  int p_offset=1; // the first position is reserved to the function pointer to the outlined Fortran subroutine
+
+  // simplest case where no shared variables to be passed.
+  if (*argcount == 0)
+  {
+
+    XOMP_parallel_start (func, 0, *numThread);
+    return;
+  }
+  
+  // Handle one or more shared variables
+   
+  //TODO nested parallelism ??
+//  int parameter_count = *argcount +1; 
+//  g_parameter = (void**) malloc(sizeof(void*) * parameter_count);
+//  Unreliable malloc?  seg fault. Use predefined size instead
+//  if (g_parameter == (void**)0)
+//  {
+//    printf("xomp.c xomp_parallel_start(), malloc failed for %d parameters.\n", parameter_count);
+//    exit (3);
+//  }
+
+  g_parameter[0]= func;
+  va_start (v1, (*argcount));
+  for (x=0; x<(*argcount); x++)
+  {
+    g_parameter[p_offset+x]= va_arg(v1, void*);
+  }
+
+  switch (*argcount)
+  {
+//   XOMP_parallel_start (run_me, (void*) g_parameter, *numThread);
+   #include "run_me_callers.inc"
+   default:
+    printf("Error. Unhandled number of parameters %d \n", *argcount);
+    assert (0);
+    break;
+  }
 }
+
 void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread)
 {
 
@@ -102,9 +173,12 @@ void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread)
 #endif    
 }
 
+void xomp_parallel_end (void);
 #pragma weak xomp_parallel_end_=xomp_parallel_end
 void xomp_parallel_end (void)
 {
+  //TODO nested parallelism
+  //free(g_parameter);
   XOMP_parallel_end ();
 }
 void XOMP_parallel_end (void)
@@ -122,9 +196,9 @@ void XOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 //// only gcc 4.4.x has task support
 // It is fine to have older gcc to compile this, just remember to link with gcc 4.4 and beyond
-//#if __GNUC__ > 4 || \
-//  (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
-//                     (__GNUC_MINOR__ == 4 && \
+//#if __GNUC__ > 4 || \  //
+//  (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \  //
+//                     (__GNUC_MINOR__ == 4 && \  //
 //                      __GNUC_PATCHLEVEL__ >= 0)))
 
  GOMP_task (fn, data, cpyfn, arg_size, arg_align, if_clause, untied);
@@ -136,9 +210,9 @@ void XOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 void XOMP_taskwait (void)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
-//#if __GNUC__ > 4 || \
-//  (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
-//                     (__GNUC_MINOR__ == 4 && \
+//#if __GNUC__ > 4 || \           //
+//  (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \  //
+//                     (__GNUC_MINOR__ == 4 && \  //
 //                      __GNUC_PATCHLEVEL__ >= 0)))
 //
   GOMP_taskwait();
@@ -452,9 +526,9 @@ void XOMP_critical_end (void** data)
 extern bool XOMP_single(void)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
-  GOMP_single_start();
+  return GOMP_single_start();
 #else   
-  _ompc_do_single();
+  return _ompc_do_single();
 #endif    
 }
 

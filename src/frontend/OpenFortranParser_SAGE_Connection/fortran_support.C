@@ -707,7 +707,7 @@ createUnaryOperator ( SgExpression* exp, string name, bool is_user_defined_opera
           printf ("name = %s \n",name.c_str());
           printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 
-          currentScope->print_symboltable ("In createBinaryOperator()");
+       // currentScope->print_symboltable ("In createBinaryOperator()");
 
           SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(name,currentScope);
           ROSE_ASSERT(functionSymbol != NULL);
@@ -802,7 +802,7 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
           printf ("name = %s \n",name.c_str());
           printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 
-          currentScope->print_symboltable ("In createBinaryOperator()");
+       // currentScope->print_symboltable ("In createBinaryOperator()");
 
           SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(name,currentScope);
           ROSE_ASSERT(functionSymbol != NULL);
@@ -1630,9 +1630,76 @@ buildNumericLabelSymbolAndAssociateWithStatement(SgStatement* stmt, Token_t* lab
      return label_symbol;
    }
 
+
+// DQ (12/8/2010): This is a new function that should likely not be implemented!
+void
+processLabelOnStack( SgStatement* statement )
+   {
+  // The label functionality should be handled via the label toke passed as a function parameter and
+  // we should disable the generation of SgLabelSymbol and pushing them onto the stack via R313
+  // (a reference for this handling is the email with Scott 12/8/2010).
+
+     ROSE_ASSERT(statement != NULL);
+
+     if (astLabelSymbolStack.empty() == false)
+        {
+          SgLabelSymbol* labelSymbol = astLabelSymbolStack.front();
+          ROSE_ASSERT(labelSymbol != NULL);
+
+          astLabelSymbolStack.pop_front();
+
+#if 0
+       // DQ (12/9/2010): We only want to pop the stack, the label is processed using
+       // only the token from the c_action function parameter as suggested by Scott.
+
+       // SgVarRefExp* labelVarRef = SageBuilder::buildVarRefExp(labelSymbol);
+          SgLabelRefExp* labelRefExp = new SgLabelRefExp(labelSymbol);
+          setSourcePosition(labelRefExp);
+
+          statement->set_numeric_label(labelRefExp);
+#endif
+        }
+   }
+
+
+// DQ (12/8/2010): This is a new function that should likely not be implemented!
+void
+specialFixupForLabelOnStackAndNotPassedAsParameter( SgStatement* statement )
+   {
+// This is to make up for a bug in OFP where the label is pushed onto the stack
+// but not also passed as a c_action function function argument.  So this is
+// the only way to detect and process the label.
+
+     ROSE_ASSERT(statement != NULL);
+
+     if (astLabelSymbolStack.empty() == false)
+        {
+          SgLabelSymbol* labelSymbol = astLabelSymbolStack.front();
+          ROSE_ASSERT(labelSymbol != NULL);
+
+          astLabelSymbolStack.pop_front();
+
+#if 1
+       // DQ (12/9/2010): We only want to pop the stack, the label is processed using
+       // only the token from the c_action function parameter as suggested by Scott.
+
+       // SgVarRefExp* labelVarRef = SageBuilder::buildVarRefExp(labelSymbol);
+          SgLabelRefExp* labelRefExp = new SgLabelRefExp(labelSymbol);
+          setSourcePosition(labelRefExp);
+
+          statement->set_numeric_label(labelRefExp);
+#endif
+        }
+   }
+
+
 void
 setStatementNumericLabelUsingStack(SgStatement* statement)
    {
+  // DQ (12/9/2010): To provide consistant handling of labels we want to only process 
+  // labels passed as arguments to the appropriate c_action function.  So this processing
+  // should be redundant with that and disallowed.
+
   // Set the label using the stack 
      if (astLabelSymbolStack.empty() == false)
         {
@@ -2775,6 +2842,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
                     variableSymbol = new SgVariableSymbol(initializedName);
 
                     astScopeStack.front()->insert_symbol(variableName,variableSymbol);
+                    ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
                   }
              }
 
@@ -3605,7 +3673,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
   // printf ("In buildAttributeSpecificationStatement(): kind = %d label = %s \n",kind,label != NULL ? label->text : "NULL");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of buildAttributeSpecificationStatement()");
 #endif
@@ -3768,6 +3836,10 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
                astExpressionStack.pop_front();
              }
+#if 0
+          ROSE_ASSERT(astScopeStack.empty() == false);
+          astScopeStack.front()->print_symboltable("In buildAttributeSpecificationStatement()");
+#endif
 #if 0
        // Output debugging information about saved state (stack) information.
           outputState("At BASE of buildAttributeSpecificationStatement() for (parameter || external || allocatable || dimension) statement");
@@ -4538,7 +4610,7 @@ generateFunctionRefExp( Token_t* nameToken )
         }
        else
         {
-       // If the function has not been seen yet, it does not mean that this is an array.  It could be a function 
+       // If the function has not been seen yet, it does not mean that it is an array.  It could be a function 
        // to be declared later or an intrinsic function.  But the point is that it is a function!
 
        // For implicit function we build non-defining declarations
@@ -4558,6 +4630,9 @@ generateFunctionRefExp( Token_t* nameToken )
        // Set the parent to the global scope, mostly just to have it be non-NULL (checked by internal error checking).
           ROSE_ASSERT(astScopeStack.empty() == false);
 
+#if 0
+       // DQ (12/11/2010): I think this should not be treated as a global scope function. See test2010_140.f90.
+
        // The global scope is ALWAYS on the bottom of the stack.
           SgGlobal* globalScope = isSgGlobal(astScopeStack.back());
           ROSE_ASSERT(globalScope != NULL);
@@ -4574,7 +4649,35 @@ generateFunctionRefExp( Token_t* nameToken )
 
        // Insert the function into the global scope so that we can find it later.
           globalScope->insert_symbol(functionName,functionSymbol);
+#else
+       // We really want the nearest module scope or global scope is there is no module scope.
+       // See test2010_140.f90
+       // SgScopeStatement* currentScope = astScopeStack.front();
+          SgScopeStatement* currentScope = isSgClassDefinition(astScopeStack.front());
+          if (currentScope == NULL)
+             {
+               currentScope = TransformationSupport::getClassDefinition(astScopeStack.front());
+               if (currentScope == NULL)
+                  {
+                    currentScope = TransformationSupport::getGlobalScope(astScopeStack.front());
+                    ROSE_ASSERT(currentScope != NULL);
+                  }
+             }
+          ROSE_ASSERT(currentScope != NULL);
 
+          functionDeclaration->set_parent(currentScope);
+          functionDeclaration->set_scope(currentScope);
+
+          setSourcePosition(functionDeclaration,nameToken);
+       // We should not have to set this explicitly!
+          setSourcePosition(functionDeclaration->get_parameterList(),nameToken);
+
+       // Now build the function call and use the arguments from the ExprList on the top of the astExpressionStack!
+          SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(functionDeclaration);
+
+       // Insert the function into the global scope so that we can find it later.
+          currentScope->insert_symbol(functionName,functionSymbol);
+#endif
           functionRefExp = new SgFunctionRefExp(functionSymbol,NULL);
           setSourcePosition(functionRefExp);
         }
@@ -4595,10 +4698,28 @@ generateFunctionCall( Token_t* nameToken )
           printf ("Inside of generateFunctionCall(): nameToken = %s \n",nameToken->text);
 
   // The next element on the stack is the expression list of function arguments
-     ROSE_ASSERT(astExpressionStack.empty() == false);
-     SgExprListExp* functionArguments = isSgExprListExp(astExpressionStack.front());
-     astExpressionStack.pop_front();
+  // However, test2010_169.f90 demonstrates that an implicit function can be called 
+  // without "()", so it should not be an error to not have a SgExprListExp IR node
+  // on the stack.
 
+  // ROSE_ASSERT(astExpressionStack.empty() == false);
+  // SgExprListExp* functionArguments = isSgExprListExp(astExpressionStack.front());
+  // astExpressionStack.pop_front();
+     SgExprListExp* functionArguments = NULL;
+     if (astExpressionStack.empty() == false)
+        {
+          functionArguments = isSgExprListExp(astExpressionStack.front());
+          astExpressionStack.pop_front();
+        }
+       else
+        {
+       // printf ("Special case of function not called with () \n");
+          functionArguments = new SgExprListExp();
+          setSourcePosition(functionArguments);
+        }
+
+  // DQ (12/11/2010): If the name of this function is not found a function of this 
+  // name will be added to the current scope (see details in generateFunctionRefExp()).
      SgFunctionRefExp* functionRefExp = generateFunctionRefExp(nameToken);
 
      SgFunctionCallExp* functionCallExp  = new SgFunctionCallExp(functionRefExp,functionArguments,NULL);

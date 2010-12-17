@@ -808,7 +808,7 @@ namespace OmpSupport
 
 //! A helper function to generate implicit or explicit task for either omp parallel or omp task
 // It calls the ROSE AST outliner internally. 
-SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_name, ASTtools::VarSymSet_t& syms, std::set<SgInitializedName*>& readOnlyVars)
+SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_name, ASTtools::VarSymSet_t& syms, std::set<SgInitializedName*>& readOnlyVars, ASTtools::VarSymSet_t&pdSyms3)
 {
   ROSE_ASSERT(node != NULL);
   SgOmpClauseBodyStatement* target = isSgOmpClauseBodyStatement(node);  
@@ -823,9 +823,18 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   ROSE_ASSERT(body != NULL);
   SgFunctionDeclaration* result= NULL;
   //Initialize outliner 
-  //always wrap parameters for outlining used during OpenMP translation
-  Outliner::useParameterWrapper = true; 
-  Outliner::useStructureWrapper = true;
+  if (SageInterface::is_Fortran_language())
+  {
+    //We pass one variable per parameter, at least for Fortran 77
+    Outliner::useParameterWrapper = false;
+//    Outliner::enable_classic = true; // use subroutine's parameters directly
+  }
+  else 
+  {
+    // C/C++ : always wrap parameters into a structure for outlining used during OpenMP translation
+    Outliner::useParameterWrapper = true; 
+    Outliner::useStructureWrapper = true;
+  }
 
   //TODO there should be some semantics check for the regions to be outlined
   //for example, multiple entries or exists are not allowed for OpenMP
@@ -853,7 +862,7 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   // AllParameters - readOnlyVars  - private -firstprivate 
   // Union ASTtools::collectPointerDereferencingVarSyms(body_block, pdSyms) 
 
-  // Assume all parameters need to be passed by pointers first
+  // Assume all parameters need to be passed by reference/pointers first
   std::copy(syms.begin(), syms.end(), std::inserter(pdSyms,pdSyms.begin()));
 
   //exclude firstprivate variables: they are read only in fact
@@ -867,7 +876,7 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
 
   // Similarly , exclude private variable, also read only
  SgInitializedNamePtrList p_vars = collectClauseVariables (target, V_SgOmpPrivateClause);
- ASTtools::VarSymSet_t p_syms, pdSyms3;
+ ASTtools::VarSymSet_t p_syms; //, pdSyms3;
  convertAndFilter (p_vars, p_syms);
   //TODO keep class typed variables!!!  even if they are firstprivate or private!! 
   set_difference (pdSyms2.begin(), pdSyms2.end(),
@@ -877,7 +886,11 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   // lastprivate and reduction variables cannot be excluded  since write access to their shared copies
 
   // a data structure used to wrap parameters
-  SgClassDeclaration* struct_decl = Outliner::generateParameterStructureDeclaration (body_block, func_name, syms, pdSyms3, g_scope);
+  SgClassDeclaration* struct_decl = NULL; 
+  if (SageInterface::is_Fortran_language())
+    struct_decl = NULL;  // We cannot use structure for Fortran
+  else  
+     struct_decl = Outliner::generateParameterStructureDeclaration (body_block, func_name, syms, pdSyms3, g_scope);
   // ROSE_ASSERT (struct_decl != NULL); // can be NULL if no parameters to be passed
 
   //Generate the outlined function
@@ -890,10 +903,10 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   if (result->get_firstNondefiningDeclaration() != NULL)
     SageInterface::setStatic(result->get_firstNondefiningDeclaration());
 
-  // Generate a call to the outlined function
   // Generate packing statements
   // must pass target , not body_block to get the right scope in which the declarations are inserted
-  wrapper_name= Outliner::generatePackingStatements(target,syms,pdSyms3, struct_decl);
+  if (!SageInterface::is_Fortran_language()) 
+    wrapper_name= Outliner::generatePackingStatements(target,syms,pdSyms3, struct_decl);
   ROSE_ASSERT (result != NULL);
 
   // 12/7/2010
@@ -981,12 +994,13 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     cutPreprocessingInfo(target, PreprocessingInfo::inside, save_buf_inside) ;
      // generated an outlined function as the task
     std::string wrapper_name;
-    ASTtools::VarSymSet_t syms;
+    ASTtools::VarSymSet_t syms; // store all variables in the outlined task ???
+    ASTtools::VarSymSet_t pdSyms3; // store all variables which should be passed by references
     std::set<SgInitializedName*> readOnlyVars;
-    SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, readOnlyVars);
+    SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, readOnlyVars, pdSyms3);
 
     if (SageInterface::is_Fortran_language() )
-    { // EXTERNAL outlined_function
+    { // EXTERNAL outlined_function , otherwise the function name will be interpreted as a integer/real variable
       ROSE_ASSERT (func_def != NULL);
       SgBasicBlock * func_body = func_def->get_body();
       ROSE_ASSERT (func_body != NULL);
@@ -1000,7 +1014,7 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     SgScopeStatement * p_scope = target->get_scope();
     ROSE_ASSERT(p_scope != NULL);
 
-#ifndef ENABLE_XOMP  // direct use of gomp needs an explict call to the task in the original sequential process
+#ifndef ENABLE_XOMP  // direct use of gomp needs an explicit call to the task in the original sequential process
     // generate a function call to it
     SgStatement* func_call = Outliner::generateCall (outlined_func, syms, readOnlyVars, wrapper_name,p_scope);
     ROSE_ASSERT(func_call != NULL);  
@@ -1009,15 +1023,42 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     // TODO should we introduce another level of scope here?
     SageInterface::replaceStatement(target,func_call, true);
 #endif
-    //add GOMP_parallel_start (OUT_func_xxx, &__out_argv1__5876__, 0);
-    // or GOMP_parallel_start (OUT_func_xxx, 0, 0); // if no variables need to be passed
+
+    // Generate the parameter list for the call to the XOMP runtime function
+    SgExprListExp* parameters  = NULL;
+    if (SageInterface::is_Fortran_language())
+    { // The parameter list for Fortran is little bit different from C/C++'s XOMP interface 
+      // since we are forced to pass variables one by one in the parameter list to support Fortran 77
+       // void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argcount, ...)
+      //e.g. xomp_parallel_start(OUT__1__1527__,0,2,S,K)
+      SgExpression * parameter2= buildIntVal(0); // TODO numThread not 0 
+      SgExpression * parameter3 = buildIntVal (pdSyms3.size()); //TODO double check if pdSyms3 is the right set of variables to be passed
+      parameters = buildExprListExp(buildFunctionRefExp(outlined_func), parameter2, parameter3);
+      //appendExpression(parameters, buildFunctionRefExp(outlined_func));
+      //appendExpression(parameters, parameter2);
+      //appendExpression(parameters, parameter3);
+      ASTtools::VarSymSet_t::iterator iter = pdSyms3.begin();
+      for (; iter!=pdSyms3.end(); iter++)
+      {
+        const SgVariableSymbol * sb = *iter;
+        appendExpression (parameters, buildVarRefExp(const_cast<SgVariableSymbol *>(sb)));
+      }
+    }
+    else 
+    { 
+      // C/C++ case: 
+      //add GOMP_parallel_start (OUT_func_xxx, &__out_argv1__5876__, 0);
+      // or GOMP_parallel_start (OUT_func_xxx, 0, 0); // if no variables need to be passed
     SgExpression * parameter2 = NULL;
     if (syms.size()==0)
       parameter2 = buildIntVal(0);
     else
       parameter2 =  buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope));
-    SgExprListExp* parameters = buildExprListExp(buildFunctionRefExp(outlined_func), 
-        parameter2, buildIntVal(0)); 
+      parameters = buildExprListExp(buildFunctionRefExp(outlined_func), parameter2, buildIntVal(0)); 
+    }
+
+    ROSE_ASSERT (parameters != NULL);
+
 #ifdef ENABLE_XOMP
     SgExprStatement * s1 = buildFunctionCallStmt("XOMP_parallel_start", buildVoidType(), parameters, p_scope); 
     SageInterface::replaceStatement(target, s1 , true);
@@ -1125,8 +1166,9 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     // generated an outlined function as a task
     std::string wrapper_name;
     ASTtools::VarSymSet_t syms;
+    ASTtools::VarSymSet_t pdSyms3; // store all variables which should be passed by reference
     std::set<SgInitializedName*> readOnlyVars;
-    SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, readOnlyVars);
+    SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, readOnlyVars, pdSyms3);
 
     SgScopeStatement * p_scope = target->get_scope();
     ROSE_ASSERT(p_scope != NULL);

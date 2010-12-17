@@ -12,7 +12,8 @@ F77_TESTCODES_TO_PASS = \
     parallel-1.f \
     parallel-2.f \
     private.f \
-    schedule.f
+    schedule.f \
+    shared.f
 
 # DQ (3/4/2010): Added simple test code to debug fortran OFP usage.
 F77_TESTCODES_TO_PASS += testNewOFP.f

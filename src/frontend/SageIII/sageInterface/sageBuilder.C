@@ -161,7 +161,37 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 
   if (scope!=NULL) 
   {
-    fixVariableDeclaration(varDecl,scope);
+    // Liao 12/13/2010
+    // Fortran subroutine/function parameters have corresponding variable declarations in the body
+    // we need to share the initialized names of the parameters instead of creating new ones
+    bool isFortranParameter = false; 
+    if (SageInterface::is_Fortran_language())
+    {
+      SgFunctionDefinition * f_def = getEnclosingProcedure (scope);
+      if (f_def != NULL)
+      {
+        SgSymbolTable * st = f_def->get_symbol_table();
+        ROSE_ASSERT (st != NULL);
+        SgVariableSymbol * v_symbol = st->find_variable(name); 
+        if (v_symbol != NULL)
+        {
+          // replace the default one with the one from parameter
+          SgInitializedName *old_initName = varDecl->get_decl_item (name);
+          ROSE_ASSERT (old_initName != NULL);
+          SgInitializedName * new_initName = v_symbol->get_declaration();
+          ROSE_ASSERT (new_initName != NULL);
+          SgInitializedNamePtrList  n_list= varDecl->get_variables();
+          std::replace (n_list.begin(), n_list.end(),old_initName, new_initName );
+          SgNode * old_parent = new_initName->get_parent();
+          ROSE_ASSERT  (old_parent != NULL);
+          ROSE_ASSERT  (isSgFunctionParameterList(old_parent) != NULL);
+          new_initName->set_parent(varDecl); // adjust parent from SgFunctionParameterList to SgVariableDeclaration
+          isFortranParameter = true;
+        }
+      }
+    }
+    if (! isFortranParameter)
+      fixVariableDeclaration(varDecl,scope);
   }
 #if 0
   // SgVariableDefinition should be created internally
@@ -225,6 +255,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
        varDecl->set_definingDeclaration(varDecl);
 #endif
 
+  ROSE_ASSERT (varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
   return varDecl;
 }
 
