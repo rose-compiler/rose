@@ -15,7 +15,7 @@ namespace BackstrokeUtility
 	* dot and arrow operator to access member variables. A comma op conunts as a variable references
 	* if all its members are variable references (not just the last expression in the list).
 	* Note that an expression which is a variable reference necessarily has no side effects. */
-	bool IsVariableReference(SgExpression* expression);
+	bool isVariableReference(SgExpression* expression);
 
 	/** Given an expression, generates a temporary variable whose initializer optionally evaluates
 	* that expression. Then, the var reference expression returned can be used instead of the original

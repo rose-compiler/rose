@@ -181,7 +181,7 @@ SgExpression* EventProcessor::restoreVariable(VariableRenaming::VarName variable
 	return results.empty() ? NULL : results.front();
 }
 
-SgExpression* EventProcessor::getStackVar(SgType* type)
+SgVarRefExp* EventProcessor::getStackVar(SgType* type)
 {
 	string type_name;
 
@@ -298,9 +298,12 @@ FuncDeclPairs EventProcessor::processEvent()
 			;//continue;
 
 		// Print all handlers used in this result.
-		res.printHandlers();
-		res.getCost().print();
-		res.getVarTable().print();
+		if (SgProject::get_verbose() > 0 )
+		{
+			res.printHandlers();
+			res.getCost().print();
+			res.getVarTable().print();
+		}
 
 		StatementReversal stmt = res.generateReverseStatement();
 

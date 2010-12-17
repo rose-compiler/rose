@@ -1,24 +1,25 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = 
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke/slicing
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a
+# noinst_LIBRARIES lists all the librarlies that should be built, but not installed
+noinst_LIBRARIES =  libSSA.a
 
-# Liao 10/1/2010, support out of order parallel build
-$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a:
-	$(MAKE) -C $(top_builddir)/projects/backstroke/normalizations/
-$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a:
-	$(MAKE) -C $(top_builddir)/projects/backstroke/utilities/
+libSSA_a_DEPENDENCIES =
+libSSA_a_SOURCES = staticSingleAssignmentCalculation.C staticSingleAssignmentQueries.C uniqueNameTraversal.C defsAndUsesTraversal.C \
+		reachingDef.C
+include_HEADERS = staticSingleAssignment.h uniqueNameTraversal.h defsAndUsesTraversal.h iteratedDominanceFrontier.h \
+		reachingDef.h controlDependence.h controlPredicate.h dataflowCfgFilter.h
 
-noinst_PROGRAMS = expNormTest
-expNormTest_SOURCES = main.C
+noinst_PROGRAMS= ssaTestHarness
+ssaTestHarness_SOURCES = ssaTestHarness.C
+ssaTestHarness_LDADD = libSSA.a $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = test_norm.C 
+# EXTRA_DIST are files that are not compiled or installed. These include readme's, internal header files, etc.
+EXTRA_DIST = 
 
 CLEANFILES = 
 
-include_HEADERS =
 
 TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
@@ -123,7 +124,6 @@ test2004_39.C \
 test2004_40.C \
 test2004_42.C \
 test2004_43.C \
-test2004_44.C \
 test2004_45.C \
 test2004_47.C \
 test2004_48.C \
@@ -214,7 +214,6 @@ test2004_137.C \
 test2004_138.C \
 test2004_139.C \
 test2004_140.C \
-test2004_141.C \
 test2004_142.C \
 test2004_143.C \
 test2004_144.C \
@@ -232,7 +231,6 @@ test2004_155.C \
 test2004_156.C \
 test2004_157.C \
 test2004_158.C \
-test2004_159.C \
 test2004_160.C \
 test2004_161.C \
 test2004_162.C \
@@ -268,7 +266,6 @@ test2005_28.C \
 test2005_29.C \
 test2005_30.C \
 test2005_31.C \
-test2005_32.C \
 test2005_33.C \
 test2005_34.C \
 test2005_35.C \
@@ -345,7 +342,6 @@ test2005_110.C \
 test2005_111.C \
 test2005_112.C \
 test2005_113.C \
-test2005_114.C \
 test2005_116.C \
 test2005_117.C \
 test2005_118.C \
@@ -390,7 +386,6 @@ test2005_157.C \
 test2005_158.C \
 test2005_159.C \
 test2005_160.C \
-test2005_161.C \
 test2005_162.C \
 test2005_163.C \
 test2005_164.C \
@@ -412,11 +407,9 @@ test2005_182.C \
 test2005_183.C \
 test2005_184.C \
 test2005_185.C \
-test2005_187.C \
 test2005_189.C \
 test2005_190.C \
 test2005_191.C \
-test2005_192.C \
 test2005_193.C \
 test2005_194.C \
 test2005_195.C \
@@ -456,12 +449,10 @@ test2006_34.C \
 test2006_37.C \
 test2006_38.C \
 test2006_39.C \
-test2006_40.C \
 test2006_41.C \
 test2006_42.C \
 test2006_44.C \
 test2006_46.C \
-test2006_47.C \
 test2006_50.C \
 test2006_52.C \
 test2006_53.C \
@@ -473,7 +464,6 @@ test2006_59.C \
 test2006_61.C \
 test2006_62.C \
 test2006_63.C \
-test2006_66.C \
 test2006_67.C \
 test2006_68.C \
 test2006_69.C \
@@ -487,7 +477,6 @@ test2006_76.C \
 test2006_77.C \
 test2006_78.C \
 test2006_79.C \
-test2006_80.C \
 test2006_81.C \
 test2006_82.C \
 test2006_83.C \
@@ -504,7 +493,6 @@ test2006_94.C \
 test2006_95.C \
 test2006_96.C \
 test2006_98.C \
-test2006_99.C \
 test2006_101.C \
 test2006_102.C \
 test2006_103.C \
@@ -627,7 +615,6 @@ test2007_152.C \
 test2007_154.C \
 test2007_155.C \
 test2007_157.C \
-test2007_159.C \
 test2007_160.C \
 test2007_161.C \
 test2007_162.C \
@@ -673,60 +660,43 @@ math.C \
 inputForLoopLocator.C \
 X.C \
 inputBug317.C \
-test2006_148.C \
 test2007_51.C
 
-FAILED_TESTCODES = \
-test2004_02.C \
-test2005_49.C \
-test2005_88.C \
-test2005_179.C \
-test2006_54.C \
-test2006_159.C \
-test2006_165.C \
-test2007_84.C \
-test2009_30.C \
-test2009_31.C \
-inputBug327.C \
-test2009_37.C
+# These are currently failing testcodes that should be fixed
+# (as opposed to testcodes that are expected to fail)
+FAILURE_TESTCODES = \
+test2004_159.C \
+test2005_114.C \
+test2005_187.C \
+test2006_47.C \ 
+-->virtualCFG bug with visiting VarRef's of const values: (Not SSA Bug) \
+test2005_32.C \
+test2004_141.C \
+test2005_161.C \
+test2005_192.C \
+test2006_80.C \
+-->Catch statements don't appear in the virtual CFG: (Not SSA BUG) \
+test2006_66.C \
+--> No defs propagated to unreachable code (Have to detect unreachable code) \
+test2007_159.C \
+--> The virtual CFG doesn't contain the "original expression tree" for casts, but the traversals visit it: \
+test2004_44.C \
+--> VirtualCfg doesn't visit the parameters of SgAsmOp, so defs can't propagate to those uses: \
+test2006_40.C \
+test2006_99.C \
+test2006_148.C 
 
-ALL_TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS) 
+TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
-TEST_Objects = ${ALL_TESTCODES:.C=.o}
-
-simple_test:expNormTest FORCE
-	@cp $(top_srcdir)/projects/backstroke/tests/expNormalizationTest/test_norm.C test_norm.C
-	./expNormTest --edg:no_warnings -c test_norm.C
-
-
-## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
-
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
-
-$(TEST_Objects):expNormTest 
+$(TEST_Objects): ssaTestHarness
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./expNormTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
+	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
-	@echo @$(MAKE) $(TEST_Objects)
-	@echo @$(MAKE) simple_test
+	@$(MAKE) $(TEST_Objects)
+	@echo "*********************************************************************************************************"
+	@echo "****** ROSE/projects/backstroke/ssa: make check rule complete (terminated normally) ******"
+	@echo "*********************************************************************************************************"
 
-	@echo "*********************************************************************************************************"
-	@echo "*** ROSE/projects/backstroke/tests/expNormalizationTest: make check rule complete (terminated normally) ******"
-	@echo "*********************************************************************************************************"
- 
 clean-local:
 	rm -f *.o *.C
-
-mytest: FORCE
-	@$(MAKE) $(TEST_Objects)
-
-test: FORCE
-	@$(MAKE) $(simple_test)
-
-debug:
-	libtool gdb --args ./expNormTest test.C
-
-FORCE:

@@ -30,8 +30,9 @@ FuncDeclPairs normalizeEvents(
 			//Normalize this event function.
 			SgFunctionDeclaration* decl_normalized = BackstrokeNorm::normalizeEvent(decl);
 			
-			insertStatementAfter(decl, decl_normalized);
-			normalized_decls.push_back(FuncDeclPair(decl, decl_normalized));
+			//insertStatementAfter(decl, decl_normalized);
+			//normalized_decls.push_back(FuncDeclPair(decl, decl_normalized));
+			normalized_decls.push_back(FuncDeclPair(decl, decl));
 			
 			cout << "Function " << decl->get_name().str() << " is normalized!\n" << endl;
 		}
