@@ -677,6 +677,72 @@ print_shm_info_32(FILE *f, const uint8_t *_v, size_t sz)
                    v->swap_attempts, v->swap_successes);
 }
 
+static const Translate clone_flags[] = {
+    TF(CLONE_VM),                       /* 0x00000100  set if VM shared between processes */
+    TF(CLONE_FS),                       /* 0x00000200  set if fs info shared between processes */
+    TF(CLONE_FILES),                    /* 0x00000400  set if open files shared between processes */
+    TF(CLONE_SIGHAND),                  /* 0x00000800  set if signal handlers and blocked signals shared */
+    TF(CLONE_PTRACE),                   /* 0x00002000  set if we want to let tracing continue on the child too */
+    TF(CLONE_VFORK),                    /* 0x00004000  set if the parent wants the child to wake it up on mm_release */
+    TF(CLONE_PARENT),                   /* 0x00008000  set if we want to have the same parent as the cloner */
+    TF(CLONE_THREAD),                   /* 0x00010000  Same thread group? */
+    TF(CLONE_NEWNS),                    /* 0x00020000  New namespace group? */
+    TF(CLONE_SYSVSEM),                  /* 0x00040000  share system V SEM_UNDO semantics */
+    TF(CLONE_SETTLS),                   /* 0x00080000  create a new TLS for the child */
+    TF(CLONE_PARENT_SETTID),            /* 0x00100000  set the TID in the parent */
+    TF(CLONE_CHILD_CLEARTID),           /* 0x00200000  clear the TID in the child */
+    TF(CLONE_UNTRACED),                 /* 0x00800000  set if the tracing process can't force CLONE_PTRACE on this clone */
+    TF(CLONE_CHILD_SETTID),             /* 0x01000000  set the TID in the child */
+    TF(CLONE_STOPPED),                  /* 0x02000000  Start in stopped state */
+    TF_FMT(0xff, "(signal=0x%02x)"),    /* 0x000000ff  mask for signal to be sent at exit */
+    /* stuff not defined by glibc */
+    TF3(0x00400000, 0x00400000, CLONE_DETACHED), /* unused */
+    TF3(0x04000000, 0x04000000, CLONE_NEWUTS),   /* New utsname group? */
+    TF3(0x08000000, 0x08000000, CLONE_NEWIPC),   /* New ipcs */
+    TF3(0x10000000, 0x10000000, CLONE_NEWUSER),  /* New user namespace */
+    TF3(0x20000000, 0x20000000, CLONE_NEWPID),   /* New pid namespace */
+    TF3(0x40000000, 0x40000000, CLONE_NEWNET),   /* New network namespace */
+    TF3(0x80000000, 0x80000000, CLONE_IO),       /* Clone io context */
+    T_END
+};
+
+/* The layout of the kernel struct pt_regs in a 32-bit specimen */
+struct pt_regs_32 {
+    uint32_t bx;
+    uint32_t cx;
+    uint32_t dx;
+    uint32_t si;
+    uint32_t di;
+    uint32_t bp;
+    uint32_t ax;
+    uint32_t ds;
+    uint32_t es;
+    uint32_t fs;
+    uint32_t gs;
+    uint32_t orig_ax;
+    uint32_t ip;
+    uint32_t cs;
+    uint32_t flags;
+    uint32_t sp;
+    uint32_t ss;
+} __attribute__((packed));
+
+static int
+print_pt_regs_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(pt_regs_32)==sz);
+    const pt_regs_32 *v = (const pt_regs_32*)_v;
+    return fprintf(f, "bx=0x%"PRIx32", cx=0x%"PRIx32", dx=0x%"PRIx32", si=0x%"PRIx32", di=0x%"PRIx32
+                   ", bp=0x%"PRIx32", ax=0x%"PRIx32", ds=0x%"PRIx32", es=0x%"PRIx32", fs=0x%"PRIx32
+                   ", gs=0x%"PRIx32", orig_ax=0x%"PRIx32", ip=0x%"PRIx32", cs=0x%"PRIx32", flags=0x%"PRIx32
+                   ", sp=0x%"PRIx32", ss=0x%"PRIx32,
+                   v->bx, v->cx, v->dx, v->si, v->di,
+                   v->bp, v->ax, v->ds, v->es, v->fs,
+                   v->gs, v->orig_ax, v->ip, v->cs, v->flags,
+                   v->sp, v->ss);
+}
+
+
 
 
 
@@ -3645,6 +3711,80 @@ EmulationPolicy::emulate_syscall()
                     writeGPR(x86_gpr_ax, -ENOSYS);
                     syscall_leave("d");
                     break;
+            }
+            break;
+        }
+
+        case 120: { /* 0x78, clone */
+            /* From linux arch/x86/kernel/process.c:
+             *    long sys_clone(unsigned long clone_flags, unsigned long newsp,
+             *                   void __user *parent_tid, void __user *child_tid, struct pt_regs *regs)
+             */
+            syscall_enter("clone", "fpppp", clone_flags);
+            do {
+                unsigned flags = arg(0);
+                unsigned newsp = arg(1);
+                unsigned parent_tid_va = arg(2);
+                unsigned child_tid_va = arg(3);
+                unsigned regs_va = arg(4);
+                
+                /* We cannot handle multiple threads yet. */
+                if (newsp || parent_tid_va || child_tid_va || (flags & (CLONE_VM|CLONE_THREAD))) {
+                    writeGPR(x86_gpr_ax, -EINVAL);
+                    break;
+                }
+
+                /* ROSE simulates signal handling, therefore signal handlers cannot be shared. */
+                if (flags & CLONE_SIGHAND) {
+                    writeGPR(x86_gpr_ax, -EINVAL);
+                    break;
+                }
+
+                /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a
+                 * function for it to execute. We want fork-like semantics. */
+                pid_t pid = fork();
+                if (-1==pid) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
+
+                /* Return register values in child */
+                if (0==pid) {
+                    pt_regs_32 regs;
+                    regs.bx = readGPR(x86_gpr_bx).known_value();
+                    regs.cx = readGPR(x86_gpr_cx).known_value();
+                    regs.dx = readGPR(x86_gpr_dx).known_value();
+                    regs.si = readGPR(x86_gpr_si).known_value();
+                    regs.di = readGPR(x86_gpr_di).known_value();
+                    regs.bp = readGPR(x86_gpr_bp).known_value();
+                    regs.sp = readGPR(x86_gpr_sp).known_value();
+                    regs.cs = readSegreg(x86_segreg_cs).known_value();
+                    regs.ds = readSegreg(x86_segreg_ds).known_value();
+                    regs.es = readSegreg(x86_segreg_es).known_value();
+                    regs.fs = readSegreg(x86_segreg_fs).known_value();
+                    regs.gs = readSegreg(x86_segreg_gs).known_value();
+                    regs.ss = readSegreg(x86_segreg_ss).known_value();
+                    uint32_t flags = 0;
+                    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
+                        if (readFlag((X86Flag)i).known_value()) {
+                            flags |= (1u<<i);
+                        }
+                    }
+                    if (sizeof(regs)!=map->write(&regs, regs_va, sizeof regs)) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                        break;
+                    }
+                }
+
+                writeGPR(x86_gpr_ax, pid);
+            } while (0);
+
+            if (readGPR(x86_gpr_ax).known_value()) {
+                syscall_leave("d");
+            } else {
+                /* Child */
+                syscall_enter("child's clone", "fpppp");
+                syscall_leave("d----P", sizeof(pt_regs_32), print_pt_regs_32);
             }
             break;
         }
