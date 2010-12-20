@@ -3095,20 +3095,42 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
    }
 
   unsigned int SgValueExp::cfgIndexForEnd() const {
-    return 0;
+    return 1;
   }
 
   std::vector<CFGEdge> SgValueExp::cfgOutEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
-    ROSE_ASSERT (idx == 0);
-    makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+    switch (idx) {
+        case 0:
+            if (get_originalExpressionTree())
+                makeEdge(CFGNode(this, idx), get_originalExpressionTree()->cfgForBeginning(), result);
+            else 
+                makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);
+            break;
+        case 1:
+            makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+            break;
+        default:
+            ROSE_ASSERT(!"Bad index for SgValueExp");
+    }
     return result;
   }
 
   std::vector<CFGEdge> SgValueExp::cfgInEdges(unsigned int idx) {
     std::vector<CFGEdge> result;
-    ROSE_ASSERT (idx == 0);
-    makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+    switch (idx) {
+        case 0:
+            makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+            break;
+        case 1:
+            if (get_originalExpressionTree())
+                makeEdge(get_originalExpressionTree()->cfgForEnd(), CFGNode(this, idx), result);
+            else
+                makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
+            break;
+        default:
+            ROSE_ASSERT(!"Bad index for SgValueExp");
+    }
     return result;
   }
 
