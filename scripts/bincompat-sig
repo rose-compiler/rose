@@ -64,8 +64,7 @@ sub canonical_repo_branch {
 	my ($repo) = @_;
 	# The internal central repository and (TODO) the external central repository.
 	return "master" if grep { $repo eq $_ } @canonical_repos;
-	return "master" if $repo =~ m@^ssh://.*/nfs/casc/overture/ROSE/git/ROSE\.git$@;
-	return "master" if $repo =~ m@^ssh://.*/usr/casc/overture/ROSE/git/ROSE\.git$@;
+	return "master" if $repo =~ m@^ssh://.*/(nfs|usr)/casc/overture/ROSE/git/ROSE\.git$@;
 	return undef;
 }
 
