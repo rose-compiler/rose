@@ -25,13 +25,14 @@ FuncDeclPairs normalizeEvents(
 	vector<SgFunctionDeclaration*> func_decls = BackstrokeUtility::querySubTree<SgFunctionDeclaration > (global);
 	foreach (SgFunctionDeclaration* decl, func_decls)
 	{
+		//This ensures that we process every function only once
+		if (decl != decl->get_firstNondefiningDeclaration())
+			continue;
+
 		if (is_event(decl))
 		{
 			//Normalize this event function.
-			SgFunctionDeclaration* decl_normalized = BackstrokeNorm::normalizeEvent(decl);
-			
-			//insertStatementAfter(decl, decl_normalized);
-			//normalized_decls.push_back(FuncDeclPair(decl, decl_normalized));
+			BackstrokeNorm::normalizeEvent(decl);
 			normalized_decls.push_back(FuncDeclPair(decl, decl));
 			
 			cout << "Function " << decl->get_name().str() << " is normalized!\n" << endl;
