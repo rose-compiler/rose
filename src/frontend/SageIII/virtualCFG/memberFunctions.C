@@ -3462,10 +3462,11 @@ SgNewExp::cfgFindChildIndex(SgNode* n)
 	break;
       }
       case 1: {
-	if (this->get_constructor_args()) {
-	  makeEdge(CFGNode(this, idx), this->get_constructor_args()->cfgForBeginning(), result);
-	} else if (this->get_builtin_args()) {
+	if (this->get_builtin_args()) {
+           ROSE_ASSERT(get_builtin_args());
 	  makeEdge(CFGNode(this, idx), this->get_builtin_args()->cfgForBeginning(), result);
+    } else if (this->get_constructor_args()) {
+	  makeEdge(CFGNode(this, idx), this->get_constructor_args()->cfgForBeginning(), result);
 	} else {
 	  makeEdge(CFGNode(this, idx), CFGNode(this, 2), result);
 	}
@@ -3490,10 +3491,10 @@ SgNewExp::cfgFindChildIndex(SgNode* n)
 	break;
       }
       case 2: {
-	if (this->get_constructor_args()) {
-	  makeEdge(this->get_constructor_args()->cfgForEnd(), CFGNode(this, idx), result);
-	} else if (this->get_builtin_args()) {
+	if (this->get_builtin_args()) {
 	  makeEdge(this->get_builtin_args()->cfgForEnd(), CFGNode(this, idx), result);
+    } else if (this->get_constructor_args()) {
+	  makeEdge(this->get_constructor_args()->cfgForEnd(), CFGNode(this, idx), result);
 	} else {
 	  makeEdge(CFGNode(this, 1), CFGNode(this, idx), result);
 	}
