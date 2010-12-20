@@ -1524,30 +1524,48 @@ std::vector<CFGEdge> SgGotoStatement::cfgInEdges(unsigned int idx) {
 
 unsigned int
 SgAsmStmt::cfgIndexForEnd() const {
-  return 0;
+  return get_operands().size();
 }
 
+std::vector<CFGEdge>
+SgAsmStmt::cfgOutEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+
+  if (idx == get_operands().size()) {
+    makeEdge( CFGNode(this, idx), getNodeJustAfterInContainer(this), result );
+  } else if (idx < get_operands().size()) {
+    makeEdge( CFGNode(this, idx), get_operands()[idx]->cfgForBeginning(), result );
+  } else {
+    ROSE_ASSERT (!"Bad index for SgAsmStmt");
+  }
+
+  return result;
+}
+
+std::vector<CFGEdge>
+SgAsmStmt::cfgInEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  addIncomingFortranGotos(this, idx, result);
+
+  if (idx == 0) {
+    makeEdge( getNodeJustBeforeInContainer(this), CFGNode(this, idx), result );
+  } else if (idx <= get_operands().size()) {
+    makeEdge( get_operands()[idx-1]->cfgForEnd(), CFGNode(this, idx), result );
+  } else {
+    ROSE_ASSERT (!"Bad index for SgAsmStmt");
+  }
+
+  return result;
+}
+
+#if 0
 // Work around the fact that this node has children that we don't use in the
 // CFG, but might still be reached (using outEdges()) from
 unsigned int
 SgAsmStmt::cfgFindChildIndex(SgNode* n) {
   return 0;
 }
-
-std::vector<CFGEdge> SgAsmStmt::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<CFGEdge> result;
-  makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<CFGEdge> SgAsmStmt::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<CFGEdge> result;
-  addIncomingFortranGotos(this, idx, result);
-  makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
-  return result;
-}
+#endif
 
 unsigned int
 SgNullStatement::cfgIndexForEnd() const {
@@ -3713,15 +3731,23 @@ SgStatementExpression::cfgInEdges(unsigned int idx)
 unsigned int
 SgAsmOp::cfgIndexForEnd() const
    {
-     return 0;
+     return 1;
    }
 
 std::vector<CFGEdge>
 SgAsmOp::cfgOutEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
-     ROSE_ASSERT (idx == 0);
-     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     switch (idx) {
+       case 0: 
+         makeEdge(CFGNode(this, idx), get_expression()->cfgForBeginning(), result);
+         break;
+       case 1:  
+         makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+         break;
+       default:
+         ROSE_ASSERT(!"Bad index for SgAsmOp");
+     }
      return result;
    }
 
@@ -3729,8 +3755,16 @@ std::vector<CFGEdge>
 SgAsmOp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
-     ROSE_ASSERT (idx == 0);
-     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     switch (idx) {
+       case 0: 
+         makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+         break;
+       case 1:
+         makeEdge(get_expression()->cfgForEnd(), CFGNode(this, idx), result);
+         break;
+       default:
+         ROSE_ASSERT(!"Bad index for SgAsmOp");
+     }
      return result;
    }
 
