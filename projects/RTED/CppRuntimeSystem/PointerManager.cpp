@@ -6,6 +6,14 @@
 
 // -------------------------- Pointer Info -------------------------------
 
+static
+void insert(PointerManager::TargetToPointerMap& m, const PointerManager::TargetToPointerMap::value_type& val)
+{
+  assert(val.first == val.second->getTargetAddress());
+
+  m.insert(val);
+}
+
 
 PointerInfo::PointerInfo(MemoryAddress s)
 : source(s), target(nullAddr()), baseType(NULL)
@@ -122,7 +130,7 @@ void PointerManager::createDereferentiableMem(MemoryAddress sourceAddress, RsTyp
         return;
     }
 
-    targetToPointerMap.insert(TargetToPointerMap::value_type(nullAddr(), pi));
+    insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi));
 }
 
 
@@ -254,7 +262,7 @@ void PointerManager::registerPointerChange( MemoryAddress src, MemoryAddress tar
                 // reads or writes without first registering a pointer change will
                 // be treated as invalid
                 pi -> setTargetAddressForce( nullAddr() );
-                targetToPointerMap.insert(TargetToPointerMap::value_type(nullAddr(), pi));
+                insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi));
                 if( !( rs -> testingMode ))
                   *point_to<int>(pi->getSourceAddress()) = 0;
             } else {
@@ -282,11 +290,11 @@ void PointerManager::registerPointerChange( MemoryAddress src, MemoryAddress tar
         } catch(RuntimeViolation & vio) {
             // if target could not been set, then set pointer to null
             pi->setTargetAddressForce(nullAddr());
-            targetToPointerMap.insert(TargetToPointerMap::value_type(nullAddr(), pi));
+            insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi));
             throw vio;
         }
         // ...and insert it again with changed target
-        targetToPointerMap.insert(TargetToPointerMap::value_type(target,pi));
+        insert(targetToPointerMap, TargetToPointerMap::value_type(target, pi));
     }
 
 
@@ -385,7 +393,7 @@ void PointerManager::invalidatePointerToRegion(MemoryAddress from, MemoryAddress
         else
         {
             pi->setTargetAddress(nullAddr());
-            targetToPointerMap.insert(TargetToPointerMap::value_type(nullAddr(), pi));
+            insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi));
         }
     }
 
@@ -395,6 +403,8 @@ void PointerManager::invalidatePointerToRegion(MemoryAddress from, MemoryAddress
 
 bool PointerManager::removeFromRevMap(PointerInfo * pi)
 {
+    assert(!targetToPointerMap.empty());
+
     typedef TargetToPointerMap::iterator MapIter;
     std::pair<MapIter,MapIter> range = targetToPointerMap.equal_range(pi->getTargetAddress());
     //    bool found=false;
