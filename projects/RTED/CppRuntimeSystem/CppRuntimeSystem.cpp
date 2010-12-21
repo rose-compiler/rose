@@ -52,8 +52,7 @@ void RuntimeSystem::printMessage(std::string message) {
     //cerr << "++++++++++++++++++++++++++ " << message << endl;
   }
 #else
-  unused(message);
-  cerr << "+++ QT disabled" << endl;
+  cerr << "w/o QT: " << message << endl;
 #endif
 }
 

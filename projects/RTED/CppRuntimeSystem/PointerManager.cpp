@@ -48,9 +48,9 @@ void PointerInfo::setTargetAddress(MemoryAddress newAddr, bool doChecks)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
     MemoryManager * mm = rs->getMemManager();
+    const size_t    objsz = baseType->getByteSize();
+    MemoryAddress   oldTarget = target;
 
-
-    MemoryAddress oldTarget = target;
     target = newAddr;
 
     if (isNullAddr(oldTarget))//inital assignment -> no checks possible
@@ -58,42 +58,46 @@ void PointerInfo::setTargetAddress(MemoryAddress newAddr, bool doChecks)
 
 
     // Check if newAddr points to valid mem-region
-    MemoryType * newMem = mm->findContainingMem(target,    baseType->getByteSize());
-    MemoryType * oldMem = mm->findContainingMem(oldTarget, baseType->getByteSize());
+    MemoryType *    newMem = mm->findContainingMem(target, objsz);
 
     if (!newMem && !isNullAddr(newAddr)) //new address is invalid
     {
-        std::stringstream ss;
-        ss << "Tried to assign non allocated address 0x" << newAddr;
-        VariablesType * var = getVariable();
-        if(var)
-            ss << " to pointer " << var->getName();
-        else
-            ss << " to pointer at address 0x" << source;
+      std::stringstream ss;
+      ss << "Tried to assign non allocated address 0x" << newAddr;
+      VariablesType * var = getVariable();
+      if (var)
+          ss << " to pointer " << var->getName();
+      else
+          ss << " to pointer at address 0x" << source;
 
-        ss << std::endl;
+      ss << std::endl;
 
-        target = nullAddr();
-        rs->violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN,ss.str());
-        return;
+      target = nullAddr();
+      rs->violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN, ss.str());
+      return;
     }
 
     // Don't update the target with type information just because a pointer
     // points there -- but do check to make sure that the pointer isn't
     // definitely illegal (e.g. an int pointer pointing to a known double).
-    if(newMem)
-        // FIXME 2: This should really only check, and not merge
-        newMem->checkAndMergeMemType(newAddr - newMem->getAddress(),baseType);
+    if (newMem)
+    {
+      // FIXME 2: This should really only check, and not merge
+      newMem->checkAndMergeMemType(newAddr - newMem->getAddress(), baseType);
+    }
 
 
     // if old target was valid
     if (!isNullAddr(oldTarget))
     {
-        assert(oldMem);  //has to be valid, because checked when set
+      // has to be hold, because checked when set
+      assert(mm->findContainingMem(oldTarget, objsz) != NULL);
 
-        // old and new address is valid
-        if( newMem && doChecks )
-            mm->checkIfSameChunk(oldTarget,target,baseType);
+      // old and new address is valid
+      if (newMem && doChecks)
+      {
+        mm->checkIfSameChunk(oldTarget, target, baseType);
+      }
     }
 }
 
