@@ -4,8 +4,6 @@
 #include <iostream>
 #include <string>
 #include <map>
-#include <set>
-#include <list>
 #include <vector>
 #include <cassert>
 #include <fstream>
@@ -38,7 +36,7 @@
  *      - Check Functions:      check if certain memory allocations are safe/valid
  *
  * Features of RuntimeSystem include:
- *      - @b Checking @b memory @b reads.  
+ *      - @b Checking @b memory @b reads.
  *              Reads can be checked to ensure memory is readable (i.e. an
  *              address refers to allocated memory), initialized, and
  *              type-consistent.
@@ -151,7 +149,7 @@ class RuntimeSystem
          @endcode
          *
          * Using a std::string for the type is a convenience.  Calling
-         * createVariable( addr_type, const std::string&, const std::string&, RsType*)
+         * createVariable( MemoryAddress, const std::string&, const std::string&, RsType*)
          * is preferred.
          *
          * @param address       The (stack) address of the variable.
@@ -159,30 +157,30 @@ class RuntimeSystem
          *                      debugger and/or output, not to detect violations.
          * @param typeString    A valid RsType string.
          */
-        void createVariable(addr_type address,
+        void createVariable(MemoryAddress address,
                             const std::string & name,
                             const std::string & mangledName,
                             const std::string & typeString);
 
-        void createVariable(addr_type address,
+        void createVariable(MemoryAddress address,
                             const std::string & name,
                             const std::string & mangledName,
                             RsType *  type);
 
 
-        void createArray(   addr_type address,
+        void createArray(   MemoryAddress address,
                             const std::string & name,
                             const std::string & mangledName,
                             const std::string & baseType,
                             size_t size);
 
-        void createArray(   addr_type address,
+        void createArray(   MemoryAddress address,
                             const std::string & name,
                             const std::string & mangledName,
                             RsType * baseType,
                             size_t size);
 
-        void createArray(   addr_type address,
+        void createArray(   MemoryAddress address,
                             const std::string & name,
                             const std::string & mangledName,
                             RsArrayType * type);
@@ -199,7 +197,7 @@ class RuntimeSystem
          * same (and not an offset in an existing @c MemoryType) and the type is
          * a subtype, then the type of the memory layout is updated.
          */
-        void createObject(  addr_type address,
+        void createObject(  MemoryAddress address,
                             RsClassType* type );
 
 
@@ -224,14 +222,14 @@ class RuntimeSystem
          *                      verify that memory is used in a type-consistent
          *                      way.
          */
-        void createMemory(addr_type addr, size_t size,bool onStack = false, bool fromMalloc = false, RsType * type=NULL);
+        void createMemory(MemoryAddress addr, size_t size,bool onStack = false, bool fromMalloc = false, RsType * type=NULL);
         /// this version creates stackmemory, of given type
-        void createStackMemory(addr_type addr, size_t size,const std::string & type);
+        void createStackMemory(MemoryAddress addr, size_t size,const std::string & type);
 
 
         /** Symmetric to @ref createMemory.
          */
-        void freeMemory(addr_type startAddress, bool onStack = false, bool fromMalloc = false);
+        void freeMemory(MemoryAddress startAddress, bool onStack = false, bool fromMalloc = false);
 
 
         /** Registers that a pointer, at address @c sourceAddress has just been
@@ -265,16 +263,16 @@ class RuntimeSystem
          *      computable (e.g. if one stores an int with a fixed offset from
          *      the address).
          */
-        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
+        void registerPointerChange( MemoryAddress sourceAddress, MemoryAddress targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
         /// for documentation see PointerManager::registerPointerChange()
-        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, RsType * type, bool checkPointerMove=false, bool checkMemLeaks=true);
+        void registerPointerChange( MemoryAddress sourceAddress, MemoryAddress targetAddress, RsType * type, bool checkPointerMove=false, bool checkMemLeaks=true);
 
         /// Convenience function which takes mangledName instead of sourceAddress
-        void registerPointerChange( const std::string & mangledName, addr_type targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
+        void registerPointerChange( const std::string & mangledName, MemoryAddress targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
 
         /// Checks if two addresses lie in the same "typed chunk"
         /// equivalent to the check which is done on registerPointerChange
-        void checkPointerDereference( addr_type sourceAddress, addr_type derefed_address );
+        void checkPointerDereference( MemoryAddress sourceAddress, MemoryAddress derefed_address );
         void checkIfThisisNULL(void* thisExp);
 
 
@@ -320,11 +318,11 @@ class RuntimeSystem
 
         /// Checks if a specific memory region can be read (useful to check pointer derefs)
         /// true when region lies in allocated and initialized memory chunk
-        void checkMemRead(addr_type addr, size_t length, RsType * t = NULL);
+        void checkMemRead(MemoryAddress addr, size_t length, RsType * t = NULL);
 
         /// Checks if a specific memory region can be safely written
         /// true when region lies in allocated memory chunk
-        void checkMemWrite(addr_type addr, size_t length, RsType * t = NULL);
+        void checkMemWrite(MemoryAddress addr, size_t length, RsType * t = NULL);
 
 
 
@@ -346,7 +344,7 @@ class RuntimeSystem
         //
         //  Each function checks that a call to its associated cstdlib function
         //  would be legal, relative certain classes of errors, including:
-        //      
+        //
         //      1.  Ensuring that when necessary, strings have been properly
         //          initialized and a null terminator exists in the same memory
         //          region that the pointer refers to.
@@ -421,7 +419,7 @@ class RuntimeSystem
         MemoryManager memManager;
         /// Class to track all opened files and file-accesses
         FileManager fileManager;
-        /// Class to check arguments to certain cstdlib functions   
+        /// Class to check arguments to certain cstdlib functions
         CStdLibManager cstdlibManager;
         /// Class for managing all known types
         TypeSystem typeSystem;

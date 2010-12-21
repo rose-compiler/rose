@@ -2,28 +2,10 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-
 #include <string>
+#include <sstream>
 
-#ifndef  _WIN64
-#define unsigned_long_long unsigned long
-#else
-#define unsigned_long_long unsigned long long
-#endif
-
-typedef unsigned long addr_type;
-
-
-
-/// Compare Functor, which compares two pointer by comparing the objects they point to
-template <class T>
-struct PointerCmpFunc
-{
-    bool operator() (const T* o1, const T* o2)  {
-        return (*o1 < *o2);
-    }
-};
-
+// typedef unsigned long addr_type;
 
 
 /**
@@ -53,11 +35,14 @@ class SourcePosition
 std::ostream& operator<< (std::ostream &os, const SourcePosition & m);
 
 
-
-
-
-
-#include <sstream>
+struct PointerCompare
+{
+  template <class T>
+  bool operator()(const T* lhs, const T* rhs) const
+  {
+    return (*lhs) < (*rhs);
+  }
+};
 
 class RuntimeViolation
 {
@@ -84,7 +69,7 @@ class RuntimeViolation
                 INVALID_MEM_OVERLAP,     // some memory chunk overlaps with some
                                          // other memory chunk illegaly, e.g. in arguments to memcpy
                 INVALID_TYPE_ACCESS,     // invalid access to "typed" memory
-                UNEXPECTED_FUNCTION_SIGNATURE,  // a c program compiled with a missing or wrong 
+                UNEXPECTED_FUNCTION_SIGNATURE,  // a c program compiled with a missing or wrong
 					// prototype gave the wrong types at the callsite
                 NONE,                   // no violation
 		UNKNOWN_VIOLATION
@@ -139,6 +124,8 @@ class ViolationPolicy {
 };
 
 
-
+template <class T>
+inline
+void unused(const T&) {}
 
 #endif

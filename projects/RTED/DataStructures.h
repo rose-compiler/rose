@@ -12,7 +12,7 @@ using namespace SageBuilder;
  * it stores information about the dimension of the array
  * whether its allocated on the stack or heap
  * and the size for both dimensions
- * Finally, there is a bollean to indicate if this array is created with malloc
+ * Finally, there is a boolean to indicate if this array is created with malloc
  * -----------------------------------------------------------*/
 class RTedArray {
  public:
@@ -83,7 +83,7 @@ class RtedClassElement {
 	std::string manglElementName;
 	std::string elementType;
   SgDeclarationStatement* sgElement;
-  
+
   RtedClassElement(std::string _elementName,
 		  std::string _elementType,
 		   SgDeclarationStatement* _sgElement) {
@@ -112,7 +112,7 @@ class RtedClassArrayElement : public RtedClassElement {
           this -> array = array;
       }
 
-      size_t extraArgSize() { 
+      size_t extraArgSize() {
           // dimensionality, then each dimension
           return (array -> getDimension() + 1);
       }
@@ -135,7 +135,7 @@ class RtedClassDefinition {
   unsigned int nrOfElements;
   SgExpression* sizeClass;
   std::vector<RtedClassElement*> elements;
-  
+
   RtedClassDefinition(SgClassDefinition* _classDef,
 		  std::string _className,
 		  std::string _classType,
@@ -206,9 +206,9 @@ class RtedArguments {
   SgExpression* leftHandSideAssignmentExprStr;
   SgExprListExp* argumentList;
   RtedArguments(
-		std::string ffuncn, 
+		std::string ffuncn,
 		std::string fmangl,
-		std::string funcn, 
+		std::string funcn,
 		std::string mangl,
 		SgExpression* var,
 		SgStatement* stm,
@@ -235,7 +235,7 @@ class RtedArguments {
  }
   std::string toString() {
     return "func name: " + f_name + "  func mangl_name: " +f_mangled_name +
-      "data name: " + d_name + "  data mangl_name: " +d_mangled_name +  " varRefExp : " + 
+      "data name: " + d_name + "  data mangl_name: " +d_mangled_name +  " varRefExp : " +
       varRefExp->unparseToString() + " at addr: " + RoseBin_support::ToString(varRefExp)+
       "  stmt: "+stmt->unparseToString() + " at addr: " + RoseBin_support::ToString(stmt);
   }
@@ -245,7 +245,7 @@ class RtedArguments {
 
 class RtedForStmtProcessed : public AstAttribute {
     public:
-        static const std::string &Key;
+        static const std::string Key;
 
 
         RtedForStmtProcessed( SgExpression* _exp ) : exp( _exp ) {}

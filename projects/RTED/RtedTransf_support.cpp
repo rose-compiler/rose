@@ -14,7 +14,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 // This really belongs in the non-existent DataStructures.cpp
-const std::string &RtedForStmtProcessed::Key = std::string( "Rted::ForStmtProcessed" );
+const std::string RtedForStmtProcessed::Key( "Rted::ForStmtProcessed" );
 
 
 /* -----------------------------------------------------------
@@ -196,11 +196,13 @@ bool RtedTransformation::hasNonEmptyConstructor( SgClassType* type ) {
 }
 
 bool RtedTransformation::isNormalScope( SgNode* n ) {
-	return	isSgBasicBlock( n )
-			|| isSgIfStmt( n )
-			|| isSgWhileStmt( n )
-			|| isSgDoWhileStmt( n )
-			|| isSgForStatement( n );
+	return	(  isSgBasicBlock( n )
+          || isSgIfStmt( n )
+          || isSgWhileStmt( n )
+          || isSgDoWhileStmt( n )
+          || isSgForStatement( n )
+          || isSgUpcForAllStatement( n )
+          );
 }
 
 bool
@@ -940,6 +942,7 @@ void RtedTransformation::appendBaseType( SgExprListExp* arg_list, SgType* type )
         appendExpression(arg_list, buildString(""));
 }
 
+
 void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type ) {
 
     if( isSgClassType( type )) {
@@ -961,13 +964,10 @@ void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type 
     }
 }
 
-void RtedTransformation::prependPseudoForInitializerExpression(
-		SgExpression* exp, SgForStatement* for_stmt ) {
-
-  if (for_stmt==NULL) {
-    // something went wrong!
-     return;
-  }
+void
+RtedTransformation::prependPseudoForInitializerExpression(SgExpression* exp, SgStatement* for_stmt)
+{
+  ROSE_ASSERT (for_stmt!=NULL);
 
 	RtedForStmtProcessed *for_stmt_processed = NULL;
 
@@ -994,9 +994,9 @@ void RtedTransformation::prependPseudoForInitializerExpression(
 				buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
 				buildIntVal( 0 ));
 
-		// for( ... ; test; ... )
-		// -> for( ... ; test | (eval_once && ((eval_once = 0) | exp1 | exp2 ... )); ... )
-        SgExprStatement* test = isSgExprStatement( for_stmt -> get_test() );
+		    // for( ... ; test; ... )
+		    // -> for( ... ; test | (eval_once && ((eval_once = 0) | exp1 | exp2 ... )); ... )
+        SgExprStatement* test = isSgExprStatement( gfor_loop_test(for_stmt) );
         ROSE_ASSERT( test );
 
         SgExpression* old_test = test -> get_expression();

@@ -12,7 +12,7 @@ using namespace std;
 VariablesType::VariablesType(const std::string & name_,
                              const std::string & mangledName_,
                              const std::string & typeStr_,
-                             addr_type address_) :
+                             MemoryAddress address_) :
     name(name_),
     mangledName(mangledName_),
     address(address_)
@@ -36,7 +36,7 @@ VariablesType::VariablesType(const std::string & name_,
 
     RsClassType* class_type = dynamic_cast< RsClassType* >( type );
     if(     class_type != NULL
-            && RuntimeSystem::instance() -> getMemManager() 
+            && RuntimeSystem::instance() -> getMemManager()
                 -> getMemoryType( address )) {
         // When we create classes, the memory might be allocated in the
         // constructor.  In these cases, it's fine to call createvar with
@@ -51,7 +51,7 @@ VariablesType::VariablesType(const std::string & name_,
 VariablesType::VariablesType(const std::string & name_,
                              const std::string & mangledName_,
                              RsType * type_,
-                             addr_type address_) :
+                             MemoryAddress address_) :
     name(name_),
     mangledName(mangledName_),
     type(type_),
@@ -61,7 +61,7 @@ VariablesType::VariablesType(const std::string & name_,
 
   RsClassType* class_type = dynamic_cast< RsClassType* >( type );
   if(     class_type != NULL
-          && RuntimeSystem::instance() -> getMemManager() 
+          && RuntimeSystem::instance() -> getMemManager()
               -> getMemoryType( address )) {
       // When we create classes, the memory might be allocated in the
       // constructor.  In these cases, it's fine to call createvar with
@@ -126,4 +126,3 @@ ostream& operator<< (ostream &os, const VariablesType & m)
     m.print(os);
     return os;
 }
-

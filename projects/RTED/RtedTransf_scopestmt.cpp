@@ -13,7 +13,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 
-void 
+void
 RtedTransformation::visit_isSgScopeStatement( SgNode* n) {
     SgScopeStatement* stmt = isSgScopeStatement( n);
     if( stmt && (
@@ -21,6 +21,7 @@ RtedTransformation::visit_isSgScopeStatement( SgNode* n) {
           || isSgSwitchStatement( n)
           || isSgIfStmt( n)
           || isSgForStatement( n)
+          || isSgUpcForAllStatement( n)
           || isSgDoWhileStmt( n)
                 // if we have a basic block in another basic block, then it
                 // won't be covered by switch, function body, etc., but it does
@@ -37,7 +38,7 @@ RtedTransformation::visit_isSgScopeStatement( SgNode* n) {
     ) {
       ROSE_ASSERT( stmt);
       scopes[ stmt ] = n;
-    } 
+    }
 }
 
 #endif

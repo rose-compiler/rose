@@ -13,68 +13,60 @@ using namespace std;
 // Check that the first num bytes of ptr1 and ptr2 do not overlap.
 void CStdLibManager::
 check_overlap(
-        const void* ptr1, 
-        const void* ptr2, 
-        size_t size, 
+        const void* ptr1,
+        const void* ptr2,
+        size_t size,
         const string& desc
 ) {
     return check_overlap( ptr1, size, ptr2, size, desc);
 }
 
 // check that the memory allocated at ptr1 and ptr2 doesn't overlap
-void CStdLibManager::
-check_allocation_overlap(
-        const void* ptr1, 
-        const void* ptr2, 
-        const string& desc
-) {
-
+void
+CStdLibManager::check_allocation_overlap(const void* ptr1, const void* ptr2, const string&)
+{
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
-    MemoryType* p1_mem = mm->findContainingMem( (addr_type) ptr1 );
-    MemoryType* p2_mem = mm->findContainingMem( (addr_type) ptr2 );
+    MemoryType* p1_mem = mm->findContainingMem( memAddr(ptr1) );
+    MemoryType* p2_mem = mm->findContainingMem( memAddr(ptr2) );
 
     // if either source or dest is NULL or missing, we'll catch it in subsequent
     // checks to write/read
     if( p1_mem && p2_mem )
         check_overlap(
-            ptr1, 
-            p1_mem->getSize(), 
-            ptr2, 
-            p2_mem->getSize(), 
+            ptr1,
+            p1_mem->getSize(),
+            ptr2,
+            p2_mem->getSize(),
             "in call to memcpy"
         );
 
 
 }
 
-void CStdLibManager::
-check_overlap(
-        const void* ptr1, 
-        size_t size1,
-        const void* ptr2, 
-        size_t size2, 
-        const string& desc
-) {
-
+void
+CStdLibManager::check_overlap(const void* ptr1, size_t size1, const void* ptr2, size_t size2, const string& desc)
+{
     RuntimeSystem* rts = RuntimeSystem::instance();
 
-    addr_type   addr1 = (addr_type) ptr1,
-                addr2 = (addr_type) ptr2; 
-
-    addr_type range1_high, range2_low;
-    if( addr2 > addr1) {
-        range1_high = addr1 + size1;
-        range2_low = addr2;
-    } else {
-        range1_high = addr2 + size2;
-        range2_low = addr1;
+    if (ptr1 > ptr2)
+    {
+      std::swap(ptr1, ptr2);
+      std::swap(size1, size2);
     }
+
+    MemoryAddress addr1 = memAddr(ptr1);
+    MemoryAddress addr2 = memAddr(ptr2);
+
+    assert(addr1 < addr2);
+
+    MemoryAddress range1_high = addr1 + size1;
+    MemoryAddress range2_low = addr2;
 
     // range1 is the range that starts in the smaller region of memory.  The
     // only way for the high value (the end) of range1 to be greater than the
     // start (low value) of range2 is for the ranges to overlap.
-    if( range1_high > range2_low) {
+    if(range2_low < range1_high) {
         rts->violationHandler( RuntimeViolation::INVALID_MEM_OVERLAP, desc);
     }
 }
@@ -88,30 +80,30 @@ size_t CStdLibManager::check_string( const char* str) {
     RuntimeSystem* rts = RuntimeSystem::instance();
     MemoryManager* mm = rts->getMemManager();
 
-    MemoryType* memory = mm->findContainingMem( (addr_type) str);
+    MemoryType* memory = mm->findContainingMem( memAddr(str));
 
     if( NULL == memory) {
         stringstream desc;
-        desc    << "Trying to read from non-allocated MemoryRegion (Address " 
-                << "0x" << hex << (addr_type) str << ")" << endl;
+        desc    << "Trying to read from non-allocated MemoryRegion (Address "
+                << "0x" << memAddr(str) << ")" << endl;
         rts->violationHandler( RuntimeViolation::INVALID_READ, desc.str());
         return 0;
     } else {
         // str points somewhere within allocated memory.
         // Now we make sure that there's a null terminator within that memory
         // chunk
-        char* end = (char*) (memory->getAddress() + memory->getSize());
+        char* end = point_to<char>(memory->getAddress() + memory->getSize());
         for( char* p = (char*) str; p < end; ++p) {
             if( '\0' == *p) {
                 // size includes null terminator
                 size_t size = (p - str) + 1;
-                mm->checkRead( (addr_type) str, size);
+                mm->checkRead( memAddr(str), size);
                 return size;
             }
         }
 
         stringstream desc;
-        desc    << "Trying to read from string at " << (addr_type) str
+        desc    << "Trying to read from string at " << memAddr(str)
                 << " In memory chunk 0x" << hex << memory->getAddress() << " .. "
                 << hex << memory->getAddress() + memory->getSize()
                 << " But there is no null terminator from the pointer to the"
@@ -134,10 +126,10 @@ check_memcpy( void* destination, const void* source, size_t num) {
     check_allocation_overlap( destination, source );
 
     // checkmem   dest .. dest + num
-    mm->checkWrite( (addr_type) destination, num);
+    mm->checkWrite( memAddr(destination), num);
 
     // checkmem   source .. source + num
-    mm->checkRead( (addr_type) source, num);
+    mm->checkRead( memAddr(source), num);
 }
 
 
@@ -147,10 +139,10 @@ check_memmove( void* destination, const void* source, size_t num) {
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
     // checkmem   dest .. dest + num
-    mm->checkWrite( (addr_type) destination, num);
+    mm->checkWrite( memAddr(destination), num);
 
     // checkmem   source .. source + num
-    mm->checkRead( (addr_type) source, num);
+    mm->checkRead( memAddr(source), num);
 }
 
 
@@ -167,7 +159,7 @@ check_strcpy( char* destination, const char* source) {
     check_overlap( destination, source, len, "in call to strcpy");
 
     // check that destination was allocated
-    mm->checkWrite( (addr_type) destination, len);
+    mm->checkWrite( memAddr(destination), len);
 }
 
 
@@ -177,10 +169,10 @@ check_strncpy( char* destination, const char* source, size_t num) {
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
     // Don't need a \0 in first num chars, but memory must be readable
-    mm->checkRead( (addr_type) source, num);
+    mm->checkRead( memAddr(source), num);
 
     // check no-overlap
-    // 
+    //
     // DJH - doing check_allocation_overlap instead of check_overlap will raise
     // violations for copying substrings where the copied ranges don't overlap,
     // but the allocated ranges do (e.g. copying the first n characters of a
@@ -191,7 +183,7 @@ check_strncpy( char* destination, const char* source, size_t num) {
     check_allocation_overlap( destination, source, "in call to strncpy");
 
     // check that destination was allocated
-    mm->checkWrite( (addr_type) destination, num);
+    mm->checkWrite( memAddr(destination), num);
 }
 
 
@@ -213,15 +205,15 @@ check_strcat( char* destination, const char* source) {
         destination,
         // can't overlap with current destination string, or the bytes at the
         // end that we're going to write to.  -1 to avoid doublecounting the
-        // null terminators. 
+        // null terminators.
         destination_len + source_len - 1,
-        source, 
+        source,
         source_len,
         "in call to strcat"
     );
 
     // check that destination was allocated
-    mm->checkWrite( (addr_type) destination + destination_len, source_len - 1);
+    mm->checkWrite( memAddr(destination) + destination_len, source_len - 1);
 }
 
 
@@ -231,7 +223,7 @@ check_strncat( char* destination, const char* source, size_t num) {
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
     // Don't need a \0 in first num chars, but memory must be readable
-    mm->checkRead( (addr_type) source, num);
+    mm->checkRead( memAddr(source), num);
 
     // dest, however, must have null terminator in allocated memory
     size_t destination_len = check_string( destination );
@@ -241,18 +233,18 @@ check_strncat( char* destination, const char* source, size_t num) {
     check_overlap(
         destination,
         destination_len + num,
-        source, 
-        num, 
+        source,
+        num,
         "in call to strncat"
     );
 
     // check that destination was allocated
-    mm->checkWrite( (addr_type) destination + destination_len, num);
+    mm->checkWrite( memAddr(destination) + destination_len, num);
 }
 
 
 void CStdLibManager::
-check_strchr( const char* str, int character) {
+check_strchr( const char* str, int /* character */) {
     // strings must have null terminators in allocated memory
     check_string( str);
 }

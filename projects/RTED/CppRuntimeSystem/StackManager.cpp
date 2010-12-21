@@ -22,28 +22,28 @@ void StackManager::addVariable(VariablesType * var)
 
 
 
-VariablesType * StackManager::getVariable(addr_type addr)
+VariablesType * StackManager::getVariable(MemoryAddress addr)
 {
     AddrToVarMap::iterator it = addrToVarMap.find(addr);
-    if(it == addrToVarMap.end())
+    if (it == addrToVarMap.end())
         return NULL;
     else
         return it->second;
 }
 
-VariablesType * StackManager::getVariable(const string & mangledName)
+VariablesType * StackManager::getVariable(const string& mangledName)
 {
-    for(unsigned int i=0; i <  stack.size(); i++)
+    for (size_t i=0; i <  stack.size(); i++)
     {
-        if(stack[i]->getMangledName() == mangledName)
+        if (stack[i]->getMangledName() == mangledName)
             return stack[i];
     }
     return NULL;
 }
 
-void StackManager::getVariableByName(const std::string & name, vector<VariablesType*> & result)
+void StackManager::getVariableByName(const std::string& name, vector<VariablesType*> & result)
 {
-    for(unsigned int i=0; i <  stack.size(); i++)
+    for (size_t i=0; i < stack.size(); i++)
     {
         if(stack[i]->getName() == name)
             result.push_back(stack[i]);
@@ -135,9 +135,3 @@ void StackManager::print(ostream & os) const
 
     os << endl;
 }
-
-
-
-
-
-

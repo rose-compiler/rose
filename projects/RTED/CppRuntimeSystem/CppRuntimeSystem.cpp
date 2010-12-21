@@ -52,6 +52,7 @@ void RuntimeSystem::printMessage(std::string message) {
     //cerr << "++++++++++++++++++++++++++ " << message << endl;
   }
 #else
+  unused(message);
   cerr << "+++ QT disabled" << endl;
 #endif
 }
@@ -73,7 +74,7 @@ void RuntimeSystem::readConfigFile()
         return;
     }
 
-   
+
     string line;
     while( getline(file,line))
     {
@@ -86,9 +87,9 @@ void RuntimeSystem::readConfigFile()
 
         if(key == "qtDebugger")
             qtDebugger = (
-                value_name == "1" 
-                || value_name == "yes" 
-                || value_name == "on" 
+                value_name == "1"
+                || value_name == "yes"
+                || value_name == "on"
                 || value_name == "true"
             );
         else
@@ -212,29 +213,25 @@ void RuntimeSystem::clearStatus()
 // --------------------- Mem Checking ---------------------------------
 
 
-void RuntimeSystem::createMemory(addr_type addr, size_t size, bool onStack, bool fromMalloc, RsType * type)
+void RuntimeSystem::createMemory(MemoryAddress addr, size_t size, bool onStack, bool fromMalloc, RsType * type)
 {
-    // the created MemoryType is freed by memory manager
-    MemoryType * mt = new MemoryType( addr, size, curPos, onStack, fromMalloc );
-    memManager.allocateMemory(mt);
+  // "Warning: Stack Memory registered without type!"
+  assert(!onStack || type != NULL);
 
-    if(onStack)
-    {
-        if(type)
-        {
-            mt->registerMemType(0,type);
-            assert(type->getByteSize() == size);
-        }
-        else { //TODO make error to assert, if registration is done correct
-            cerr << "Warning: Stack Memory registered without type!" << endl;
-            //tps (09/15/2009): added abort.
-            exit(1);
-        }
-    }
+  // the created MemoryType is freed by memory manager
+  MemoryType mt( addr, size, onStack, fromMalloc, curPos);
+
+  if(onStack)
+  {
+    mt.registerMemType(0, type);
+    assert(type->getByteSize() == size);
+  }
+
+  memManager.allocateMemory(mt);
 }
 
 
-void RuntimeSystem::createStackMemory(addr_type addr, size_t size,const std::string & strType)
+void RuntimeSystem::createStackMemory(MemoryAddress addr, size_t size, const std::string& strType)
 {
     RsType * type = typeSystem.getTypeInfo(strType);
     createMemory(addr,size,true,false,type);
@@ -242,18 +239,18 @@ void RuntimeSystem::createStackMemory(addr_type addr, size_t size,const std::str
 
 
 
-void RuntimeSystem::freeMemory(addr_type startAddress, bool onStack, bool fromMalloc)
+void RuntimeSystem::freeMemory(MemoryAddress startAddress, bool onStack, bool fromMalloc)
 {
     memManager.freeMemory(startAddress, onStack, fromMalloc);
 }
 
 
-void RuntimeSystem::checkMemRead(addr_type addr, size_t size, RsType * t)
+void RuntimeSystem::checkMemRead(MemoryAddress addr, size_t size, RsType * t)
 {
     memManager.checkRead(addr,size,t);
 }
 
-void RuntimeSystem::checkMemWrite(addr_type addr, size_t size, RsType * t)
+void RuntimeSystem::checkMemWrite(MemoryAddress addr, size_t size, RsType * t)
 {
     memManager.checkWrite(addr,size,t);
 }
@@ -262,7 +259,7 @@ void RuntimeSystem::checkMemWrite(addr_type addr, size_t size, RsType * t)
 // --------------------- Stack Variables ---------------------------------
 
 
-void RuntimeSystem::createVariable(addr_type address,
+void RuntimeSystem::createVariable(MemoryAddress address,
                                    const string & name,
                                    const string & mangledName,
                                    const string & typeString)
@@ -271,7 +268,7 @@ void RuntimeSystem::createVariable(addr_type address,
     stackManager.addVariable(new VariablesType(name,mangledName,typeString,address));
 }
 
-void RuntimeSystem::createVariable(addr_type address,
+void RuntimeSystem::createVariable(MemoryAddress address,
                                    const string & name,
                                    const string & mangledName,
                                    RsType *  type)
@@ -283,7 +280,7 @@ void RuntimeSystem::createVariable(addr_type address,
 
 
 
-void RuntimeSystem::createArray( addr_type address,
+void RuntimeSystem::createArray( MemoryAddress address,
                                  const std::string & name,
                                  const std::string & mangledName,
                                  const std::string & baseType,
@@ -295,7 +292,7 @@ void RuntimeSystem::createArray( addr_type address,
 }
 
 
-void RuntimeSystem::createArray(    addr_type address,
+void RuntimeSystem::createArray(    MemoryAddress address,
                                     const std::string & name,
                                     const std::string & mangledName,
                                     RsType * baseType,
@@ -307,7 +304,7 @@ void RuntimeSystem::createArray(    addr_type address,
 }
 
 
-void RuntimeSystem::createArray(    addr_type address,
+void RuntimeSystem::createArray(    MemoryAddress address,
                                     const std::string & name,
                                     const std::string & mangledName,
                                     RsArrayType * type)
@@ -321,9 +318,9 @@ void RuntimeSystem::createArray(    addr_type address,
 }
 
 
-void RuntimeSystem::createObject(   addr_type address,
-                                    RsClassType* type ) {
-    MemoryType* mt = memManager.findContainingMem( address );
+void RuntimeSystem::createObject(MemoryAddress address, RsClassType* type )
+{
+    MemoryType* mt = memManager.findContainingMem(address);
     if( mt ) {
         if(     mt -> getAddress() == address
                 && type -> getByteSize() > mt -> getSize() ) {
@@ -336,11 +333,10 @@ void RuntimeSystem::createObject(   addr_type address,
         return;
     }
 
-    mt = new MemoryType(
-        address, type -> getByteSize(), curPos, false, false );
-    memManager.allocateMemory(mt );
+    MemoryType newBlock(address, type -> getByteSize(), false, false, curPos);
 
-    mt -> registerMemType( 0, type );
+    newBlock.registerMemType(0, type);
+    memManager.allocateMemory(newBlock);
 }
 
 
@@ -361,27 +357,27 @@ void RuntimeSystem::endScope ()
 // --------------------- Pointer Tracking---------------------------------
 
 
-void RuntimeSystem::registerPointerChange(addr_type source, addr_type target, bool checkPointerMove, bool checkMemLeaks)
+void RuntimeSystem::registerPointerChange(MemoryAddress source, MemoryAddress target, bool checkPointerMove, bool checkMemLeaks)
 {
     pointerManager.registerPointerChange(source,target,checkPointerMove, checkMemLeaks);
 }
 
-void RuntimeSystem::registerPointerChange(addr_type source, addr_type target,RsType * type, bool checkPointerMove, bool checkMemLeaks)
+void RuntimeSystem::registerPointerChange(MemoryAddress source, MemoryAddress target,RsType * type, bool checkPointerMove, bool checkMemLeaks)
 {
     RsPointerType* pt = dynamic_cast<RsPointerType*>( type );
     assert( pt );
     pointerManager.registerPointerChange(source,target,pt -> getBaseType(),checkPointerMove, checkMemLeaks);
 }
 
-void RuntimeSystem::registerPointerChange( const std::string & mangledName, addr_type target, bool checkPointerMove, bool checkMemLeaks)
+void RuntimeSystem::registerPointerChange( const std::string & mangledName, MemoryAddress target, bool checkPointerMove, bool checkMemLeaks)
 {
-    addr_type source = stackManager.getVariable(mangledName)->getAddress();
+    MemoryAddress source = stackManager.getVariable(mangledName)->getAddress();
     pointerManager.registerPointerChange(source,target,checkPointerMove, checkMemLeaks);
 }
 
 
 
-void RuntimeSystem::checkPointerDereference( addr_type source, addr_type derefed_address )
+void RuntimeSystem::checkPointerDereference( MemoryAddress source, MemoryAddress derefed_address )
 {
     pointerManager.checkPointerDereference(source,derefed_address);
 }
@@ -457,7 +453,7 @@ void RuntimeSystem::confirmFunctionSignature(
 
     if( nextCallFunctionTypes != types ) {
         stringstream ss;
-        ss  << "A call to function " << name 
+        ss  << "A call to function " << name
             << " had unexpected return or parameter type(s)." << endl << endl
 
             << "The callsite expected the following:" << endl;
@@ -492,9 +488,3 @@ void RuntimeSystem::setOutputFile(const std::string & filename)
     if(outFile.is_open());
         defaultOutStr = &outFile;
 }
-
-
-
-
-
-

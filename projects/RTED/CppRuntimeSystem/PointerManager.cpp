@@ -4,18 +4,15 @@
 
 #include <cassert>
 
-using namespace std;
-
 // -------------------------- Pointer Info -------------------------------
 
 
-PointerInfo::PointerInfo(addr_type s)
-    : source(s), target(0), baseType(NULL)
-{
-}
+PointerInfo::PointerInfo(MemoryAddress s)
+: source(s), target(nullAddr()), baseType(NULL)
+{}
 
-PointerInfo::PointerInfo(addr_type s, addr_type t, RsType * type)
-    : source(s), target(0), baseType(type)
+PointerInfo::PointerInfo(MemoryAddress s, MemoryAddress t, RsType * type)
+: source(s), target(nullAddr()), baseType(type)
 {
     setTargetAddress(t);
 }
@@ -24,8 +21,8 @@ PointerInfo::PointerInfo(addr_type s, addr_type t, RsType * type)
 PointerInfo::~PointerInfo()
 {
     // If still valid, invalidate the pointer
-    if(target != 0)
-        setTargetAddress(0);
+    if(!isNullAddr(target))
+       setTargetAddress(nullAddr());
 }
 
 VariablesType * PointerInfo::getVariable() const
@@ -39,36 +36,36 @@ bool PointerInfo::operator< (const PointerInfo & other ) const
 }
 
 
-void PointerInfo::setTargetAddress(addr_type newAddr, bool doChecks)
+void PointerInfo::setTargetAddress(MemoryAddress newAddr, bool doChecks)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
     MemoryManager * mm = rs->getMemManager();
 
 
-    addr_type oldTarget = target;
+    MemoryAddress oldTarget = target;
     target = newAddr;
 
-    if(oldTarget == 0)//inital assignment -> no checks possible
+    if (isNullAddr(oldTarget))//inital assignment -> no checks possible
         doChecks=false;
 
 
     // Check if newAddr points to valid mem-region
-    MemoryType * newMem = mm->findContainingMem(target,   baseType->getByteSize());
-    MemoryType * oldMem = mm->findContainingMem(oldTarget,baseType->getByteSize());
+    MemoryType * newMem = mm->findContainingMem(target,    baseType->getByteSize());
+    MemoryType * oldMem = mm->findContainingMem(oldTarget, baseType->getByteSize());
 
-    if(!newMem && newAddr != 0) //new address is invalid
+    if (!newMem && !isNullAddr(newAddr)) //new address is invalid
     {
-        stringstream ss;
-        ss << "Tried to assign non allocated address 0x" << hex << newAddr;
+        std::stringstream ss;
+        ss << "Tried to assign non allocated address 0x" << newAddr;
         VariablesType * var = getVariable();
         if(var)
             ss << " to pointer " << var->getName();
         else
-            ss << " to pointer at address 0x" << hex << source;
+            ss << " to pointer at address 0x" << source;
 
-        ss << endl;
+        ss << std::endl;
 
-        target=0;
+        target = nullAddr();
         rs->violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN,ss.str());
         return;
     }
@@ -78,11 +75,11 @@ void PointerInfo::setTargetAddress(addr_type newAddr, bool doChecks)
     // definitely illegal (e.g. an int pointer pointing to a known double).
     if(newMem)
         // FIXME 2: This should really only check, and not merge
-        newMem->checkAndMergeMemType(newAddr-newMem->getAddress(),baseType);
+        newMem->checkAndMergeMemType(newAddr - newMem->getAddress(),baseType);
 
 
     // if old target was valid
-    if(oldTarget != 0)
+    if (!isNullAddr(oldTarget))
     {
         assert(oldMem);  //has to be valid, because checked when set
 
@@ -93,10 +90,10 @@ void PointerInfo::setTargetAddress(addr_type newAddr, bool doChecks)
 }
 
 
-void PointerInfo::print(ostream & os) const
+void PointerInfo::print(std::ostream& os) const
 {
-    os << "0x" << hex << getSourceAddress() << "\t"
-       << "0x" << hex << getTargetAddress() << "\t"
+    os << "0x" << getSourceAddress() << "\t"
+       << "0x" << getTargetAddress() << "\t"
        << getBaseType()->getName();
 
     VariablesType * var = getVariable();
@@ -105,7 +102,7 @@ void PointerInfo::print(ostream & os) const
 
 }
 
-ostream& operator<< (ostream &os, const PointerInfo & m)
+std::ostream& operator<< (std::ostream& os, const PointerInfo& m)
 {
     m.print(os);
     return os;
@@ -115,23 +112,21 @@ ostream& operator<< (ostream &os, const PointerInfo & m)
 // -------------------------- PointerManager -------------------------------
 
 
-void PointerManager::createDereferentiableMem(addr_type sourceAddress, RsType * type)
+void PointerManager::createDereferentiableMem(MemoryAddress sourceAddress, RsType * type)
 {
-    PointerInfo * pi = new PointerInfo(sourceAddress,0,type);
-    pair<PointerSet::iterator, bool>  res = pointerInfoSet.insert(pi);
+    PointerInfo * pi = new PointerInfo(sourceAddress, nullAddr(), type);
+    std::pair<PointerSet::iterator, bool>  res = pointerInfoSet.insert(pi);
     if(!res.second)//pointer was already registered
     {
         delete pi;
         return;
     }
 
-
-    typedef TargetToPointerMap::value_type ValType;
-    targetToPointerMap.insert(ValType(0,pi));
+    targetToPointerMap.insert(TargetToPointerMap::value_type(nullAddr(), pi));
 }
 
 
-void PointerManager::createPointer(addr_type baseAddr, RsType * type)
+void PointerManager::createPointer(MemoryAddress baseAddr, RsType * type)
 {
     // If type is a pointer register it
     RsPointerType * pt = dynamic_cast<RsPointerType*>(type);
@@ -143,18 +138,18 @@ void PointerManager::createPointer(addr_type baseAddr, RsType * type)
     //  type x[ element_count ];
     //  &x == x         // this is true
     RsArrayType * at = dynamic_cast<RsArrayType*>(type);
-    if(at) {
+    if (at) {
         createDereferentiableMem(baseAddr,at->getBaseType());
-        registerPointerChange( baseAddr, baseAddr );
+        registerPointerChange( baseAddr, baseAddr, nocheck, check );
     }
 
     // If compound type, break down to basic types
-    for(int i = 0; i < type->getSubtypeCount(); i++)
+    for (int i = 0; i < type->getSubtypeCount(); ++i)
         createPointer(baseAddr + type->getSubtypeOffset(i), type->getSubtype(i) );
 }
 
 
-void PointerManager::deletePointer( addr_type src, bool checks )
+void PointerManager::deletePointer( MemoryAddress src, bool checks )
 {
     PointerInfo dummy (src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
@@ -175,42 +170,44 @@ void PointerManager::deletePointer( addr_type src, bool checks )
 }
 
 
-void PointerManager::deletePointerInRegion( addr_type from, addr_type to, bool checks)
+void PointerManager::deletePointerInRegion( MemoryAddress from, MemoryAddress to, bool checks)
 {
+    // \pp why not assert(from < to)?
     if(to <= from)
         return;
 
     PointerInfo objFrom(from);
     PointerInfo objTo(to-1);
 
-    PointerSetIter it  = pointerInfoSet.lower_bound(&objFrom);
-    PointerSetIter end = pointerInfoSet.upper_bound(&objTo  );
+    PointerSetIter lb = pointerInfoSet.lower_bound(&objFrom);
+    PointerSetIter ub = pointerInfoSet.upper_bound(&objTo  );
 
     // First store all pointer which have to be deleted
-    // erase(it,end) doesn't work because the pointer need to be removed from map
-    vector< PointerInfo* > toDelete;
-    for(; it != end; ++it)
-        toDelete.push_back( *it );
+    // erase(lb, ub) doesn't work because the pointer need to be removed from map
+    std::vector< PointerInfo* > toDelete(lb, ub);
 
     for(unsigned int i=0; i<toDelete.size(); i++ )
     {
-        bool check_this_pointer = 
-            checks && (
-                toDelete[ i ] -> getTargetAddress() < from
-                || toDelete[ i ] -> getTargetAddress() > to
-            );
-        //cout << "Deleting pointer at " << toDelete[i] << endl;
-        deletePointer( toDelete[i] -> getSourceAddress(), check_this_pointer );
+        PointerInfo*  curr = toDelete[i];
+        MemoryAddress loc = curr->getTargetAddress();
+
+        // check a pointer if it is required and the pointer points outside
+        //   the region
+        const bool    check_this_pointer = (  checks
+                                           && (loc < from || to < loc)
+                                           );
+
+        deletePointer(curr->getSourceAddress(), check_this_pointer);
     }
 }
 
 
-void PointerManager::registerPointerChange( addr_type src, addr_type target, RsType * bt, bool checkPointerMove, bool checkMemLeaks)
+void PointerManager::registerPointerChange( MemoryAddress src, MemoryAddress target, RsType * bt, bool checkPointerMove, bool checkMemLeaks)
 {
     PointerInfo dummy(src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
 
-    if(pointerInfoSet.find(&dummy) != pointerInfoSet.end())
+    if (i != pointerInfoSet.end())
     {
         // if pointer exists already, make sure that baseTypes match
         assert( (*i) -> baseType = bt );
@@ -224,18 +221,18 @@ void PointerManager::registerPointerChange( addr_type src, addr_type target, RsT
     registerPointerChange(src,target,checkPointerMove, checkMemLeaks);
 }
 
-void PointerManager::registerPointerChange( addr_type src, addr_type target, bool checkPointerMove, bool checkMemLeaks)
+void PointerManager::registerPointerChange( MemoryAddress src, MemoryAddress target, bool checkPointerMove, bool checkMemLeaks)
 {
     PointerInfo dummy(src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
 
     // forgot to call createPointer?
     // call the overloaded registerPointerChange() instead which does not require createPointer()
-    assert(pointerInfoSet.find(&dummy) != pointerInfoSet.end());
+    assert(i != pointerInfoSet.end());
 
     PointerInfo * pi = *i;
 
-    addr_type oldTarget = pi->getTargetAddress();
+    MemoryAddress oldTarget = pi->getTargetAddress();
 
 
     bool legal_move = true;
@@ -256,11 +253,10 @@ void PointerManager::registerPointerChange( addr_type src, addr_type target, boo
                 // Don't complain now, but invalidate the pointer so that subsequent
                 // reads or writes without first registering a pointer change will
                 // be treated as invalid
-                pi -> setTargetAddressForce( 0 );
-                targetToPointerMap.insert(TargetToPointerMap::value_type(0,pi));
+                pi -> setTargetAddressForce( nullAddr() );
+                targetToPointerMap.insert(TargetToPointerMap::value_type(nullAddr(), pi));
                 if( !( rs -> testingMode ))
-		  //*((int*) (pi -> getSourceAddress())) = NULL;
-		  *((int*) (pi -> getSourceAddress())) = 0; /*tps changed to avoid warning */
+                  *point_to<int>(pi->getSourceAddress()) = 0;
             } else {
                 // repeat check but throw invalid ptr assign
                 mm -> checkIfSameChunk(
@@ -285,8 +281,8 @@ void PointerManager::registerPointerChange( addr_type src, addr_type target, boo
             pi->setTargetAddress(target);
         } catch(RuntimeViolation & vio) {
             // if target could not been set, then set pointer to null
-            pi->setTargetAddressForce(0);
-            targetToPointerMap.insert(TargetToPointerMap::value_type(0,pi));
+            pi->setTargetAddressForce(nullAddr());
+            targetToPointerMap.insert(TargetToPointerMap::value_type(nullAddr(), pi));
             throw vio;
         }
         // ...and insert it again with changed target
@@ -309,7 +305,7 @@ bool PointerManager::checkForMemoryLeaks( PointerInfo* pi )
     );
 }
 
-bool PointerManager::checkForMemoryLeaks( addr_type address, size_t type_size, PointerInfo* pointer_to_blame )
+bool PointerManager::checkForMemoryLeaks( MemoryAddress address, size_t type_size, PointerInfo* pointer_to_blame )
 {
     bool found_leaks = false;
     MemoryManager * mm = RuntimeSystem::instance() -> getMemManager();
@@ -326,11 +322,11 @@ bool PointerManager::checkForMemoryLeaks( addr_type address, size_t type_size, P
         {
             found_leaks = true;
             RuntimeSystem * rs = RuntimeSystem::instance();
-            stringstream ss;
-            ss << "No pointer to allocated memory region: " << endl;
+            std::stringstream ss;
+            ss << "No pointer to allocated memory region: " << std::endl;
             if( pointer_to_blame ) {
-                ss << *mem << endl << "because this pointer has changed: " <<endl;
-                ss << *pointer_to_blame << endl;
+                ss << *mem << std::endl << "because this pointer has changed: " <<std::endl;
+                ss << *pointer_to_blame << std::endl;
             }
             rs->violationHandler(RuntimeViolation::MEM_WITHOUT_POINTER, ss.str());
         }
@@ -344,13 +340,13 @@ void PointerManager::checkIfPointerNULL( void* pointer)
 {
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	if (pointer==NULL) {
-		stringstream ss;
-		ss << "Accessing (This) NULL Pointer: " << endl;
+		std::stringstream ss;
+		ss << "Accessing (This) NULL Pointer: " << std::endl;
 		rs->violationHandler(RuntimeViolation::INVALID_WRITE, ss.str());
 	}
 }
 
-void PointerManager::checkPointerDereference( addr_type src, addr_type deref_addr)
+void PointerManager::checkPointerDereference( MemoryAddress src, MemoryAddress deref_addr)
 {
     MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
 
@@ -362,7 +358,7 @@ void PointerManager::checkPointerDereference( addr_type src, addr_type deref_add
     mm->checkIfSameChunk(pi->getTargetAddress(),deref_addr,pi->getBaseType());
 }
 
-void PointerManager::invalidatePointerToRegion(addr_type from, addr_type to, bool remove)
+void PointerManager::invalidatePointerToRegion(MemoryAddress from, MemoryAddress to, bool remove)
 {
     if(to <= from)
         return;
@@ -371,16 +367,16 @@ void PointerManager::invalidatePointerToRegion(addr_type from, addr_type to, boo
     Iter start= targetToPointerMap.lower_bound(from);
     Iter end  = targetToPointerMap.upper_bound(to-1);
 
-    //cout << "Invalidating region " << from << " " << to << endl;
+    //cout << "Invalidating region " << from << " " << to << std::endl;
     //print(cout);
     for(Iter i = start; i != end; ++i)
     {
-        //cout << "Matching Pointers " << i->first << endl << *(i->second) << endl << endl;
+        //cout << "Matching Pointers " << i->first << std::endl << *(i->second) << std::endl << std::endl;
         PointerInfo * pi = i->second;
         // assert that no pointer overlaps given region
         assert(pi->getTargetAddress() <= to - pi->getBaseType()->getByteSize());
 
-        if(remove)
+        if (remove)
         {
             PointerSet::iterator it = pointerInfoSet.find(pi);
             assert(it != pointerInfoSet.end());
@@ -388,8 +384,8 @@ void PointerManager::invalidatePointerToRegion(addr_type from, addr_type to, boo
         }
         else
         {
-            pi->setTargetAddress(0);
-            targetToPointerMap.insert(TargetToPointerMap::value_type(0,pi));
+            pi->setTargetAddress(nullAddr());
+            targetToPointerMap.insert(TargetToPointerMap::value_type(nullAddr(), pi));
         }
     }
 
@@ -400,7 +396,7 @@ void PointerManager::invalidatePointerToRegion(addr_type from, addr_type to, boo
 bool PointerManager::removeFromRevMap(PointerInfo * pi)
 {
     typedef TargetToPointerMap::iterator MapIter;
-    pair<MapIter,MapIter> range = targetToPointerMap.equal_range(pi->getTargetAddress());
+    std::pair<MapIter,MapIter> range = targetToPointerMap.equal_range(pi->getTargetAddress());
     //    bool found=false;
     for(MapIter i = range.first; i !=  range.second; ++i)
     {
@@ -415,18 +411,18 @@ bool PointerManager::removeFromRevMap(PointerInfo * pi)
 }
 
 
-PointerManager::PointerSetIter PointerManager::sourceRegionIter(addr_type sourceAddr)
+PointerManager::PointerSetIter PointerManager::sourceRegionIter(MemoryAddress sourceAddr)
 {
     PointerInfo dummy(sourceAddr);
     return pointerInfoSet.lower_bound(&dummy);
 }
 
-PointerManager::TargetToPointerMapIter PointerManager::targetRegionIterBegin(addr_type targetAddr)
+PointerManager::TargetToPointerMapIter PointerManager::targetRegionIterBegin(MemoryAddress targetAddr)
 {
     return targetToPointerMap.lower_bound(targetAddr);
 }
 
-PointerManager::TargetToPointerMapIter PointerManager::targetRegionIterEnd (addr_type targetAddr)
+PointerManager::TargetToPointerMapIter PointerManager::targetRegionIterEnd (MemoryAddress targetAddr)
 {
     return targetToPointerMap.upper_bound(targetAddr);
 }
@@ -437,7 +433,7 @@ void PointerManager::clearStatus()
     for(PointerSet::iterator it = pointerInfoSet.begin();
             it != pointerInfoSet.end(); ++it)
     {
-        (*it)->setTargetAddressForce(0); // skip pointer checks on delete
+        (*it)->setTargetAddressForce(nullAddr()); // skip pointer checks on delete
         delete *it;
     }
     pointerInfoSet.clear();
@@ -446,9 +442,9 @@ void PointerManager::clearStatus()
 }
 
 
-void PointerManager::print(ostream & os) const
+void PointerManager::print(std::ostream& os) const
 {
-    os << "---------------- Registered Pointer ----------------------" << endl;
+    os << "---------------- Registered Pointer ----------------------" << std::endl;
 
     for(PointerSet::const_iterator it = pointerInfoSet.begin();
          it != pointerInfoSet.end(); ++it)
@@ -457,14 +453,8 @@ void PointerManager::print(ostream & os) const
         //consistency check
         assert(targetToPointerMap.find(pi->getTargetAddress()) != targetToPointerMap.end() );
 
-        os << *pi << endl;
+        os << *pi << std::endl;
     }
 
-    os << "----------------------------------------------------------" << endl;
+    os << "----------------------------------------------------------" << std::endl;
 }
-
-
-
-
-
-

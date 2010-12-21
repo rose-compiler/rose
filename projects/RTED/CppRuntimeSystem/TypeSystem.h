@@ -44,7 +44,7 @@ class TypeSystem
 
         void print(std::ostream & os) const;
 
-        typedef std::set<RsType*,PointerCmpFunc<RsType> > TypeSet;
+        typedef std::set<RsType*, PointerCompare > TypeSet;
         typedef TypeSet::const_iterator const_iterator;
 
         const_iterator begin() const { return types.begin(); }

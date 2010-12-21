@@ -8,6 +8,8 @@
 #include <vector>
 #include <iostream>
 
+#include "ptrops.h"
+
 class VariablesType;
 
 
@@ -22,7 +24,7 @@ class StackManager
 
         /// Each variable is associated with a scope, use this function to create a new scope
         /// @param name  string description of scope, may be function name or "for-loop" ...
-        void beginScope(const std::string & name);
+        void beginScope(const std::string& name);
 
         /// Closes a scope and deletes all variables which where created via registerVariable()
         /// from the stack, tests for
@@ -39,7 +41,7 @@ class StackManager
 
 
         /// Returns variable at given memory location, or NULL if no var found
-        VariablesType * getVariable(addr_type);
+        VariablesType * getVariable(MemoryAddress);
 
         /// Returns Variable by mangledName (which is unique)
         /// much slower thant the version with address!, does linear search in stack
@@ -69,9 +71,8 @@ class StackManager
 
         std::vector<VariablesType *> stack;
 
-        typedef std::map<addr_type,VariablesType*> AddrToVarMap;
+        typedef std::map<MemoryAddress, VariablesType*> AddrToVarMap;
         AddrToVarMap addrToVarMap;
-
 };
 
 

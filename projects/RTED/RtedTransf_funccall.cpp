@@ -15,7 +15,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 /*********************************************************
- * Check if a function call is interesting, i.e. contains a 
+ * Check if a function call is interesting, i.e. contains a
  * call to a function that we need to check the parameters of
  ********************************************************/
 bool RtedTransformation::isStringModifyingFunctionCall(std::string name) {
@@ -45,7 +45,7 @@ int RtedTransformation::getDimensionForFuncCall(std::string name) {
 
 /*********************************************************
  * Check if a function call is a call to a function
- * on our ignore list. We do not want to check those 
+ * on our ignore list. We do not want to check those
  * functions right now.
  * This check makes sure that we dont push variables
  * on the stack for functions that we dont check
@@ -62,18 +62,23 @@ bool RtedTransformation::isFileIOFunctionCall(std::string name) {
 
 /*********************************************************
  * Check if a function call is a call to a function
- * on our ignore list. We do not want to check those 
+ * on our ignore list. We do not want to check those
  * functions right now.
  * This check makes sure that we dont push variables
  * on the stack for functions that we dont check
  * and hence the generated code is cleaner
  ********************************************************/
 bool RtedTransformation::isFunctionCallOnIgnoreList(std::string name) {
-   bool interesting = false;
-   if (name == "printf" || name == "malloc" || name == "calloc" || name == "free" || name == "upc_alloc" || name == "upc_free"
-         || name == "realloc")
-      interesting = true;
-   return interesting;
+   return (  name == "printf"
+          || name == "malloc"
+          || name == "calloc"
+          || name == "free"
+          || name == "upc_alloc"
+          || name == "upc_free"
+          || name == "realloc"
+          || name == "upc_global_alloc"
+          || name == "upc_all_alloc"
+          );
 }
 
 void RtedTransformation::insertFuncCall(RtedArguments* args) {

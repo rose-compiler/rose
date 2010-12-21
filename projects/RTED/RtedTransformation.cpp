@@ -76,8 +76,10 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
    varTraversal.traverseInputFiles(project,inheritedAttribute);
 
 
-   // tps: Traverse all classes that appear in header files and create copy in source file within a namespace.
-   // We need to know the sizeOf classes. To do so we need to modify the class but do not want to do this in the header file right now.
+   // tps: Traverse all classes that appear in header files and create copy in
+   // source file within a namespace We need to know the sizeOf classes. To do
+   // so we need to modify the class but do not want to do this in the header
+   // file right now.
    vector<SgClassDeclaration*> traverseClasses;
    insertNamespaceIntoSourceFile(project,traverseClasses);
    // traverse all header files and collect information

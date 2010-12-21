@@ -86,57 +86,57 @@ void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef) {
         appendConstructors(cdef, constructors);
 
         BOOST_FOREACH( SgDeclarationStatement* decl, constructors )
-{       SgMemberFunctionDeclaration* constructor
-        = isSgMemberFunctionDeclaration( decl );
-        // validate the postcondition of appendConstructors
-        ROSE_ASSERT( constructor );
+        {       SgMemberFunctionDeclaration* constructor
+                = isSgMemberFunctionDeclaration( decl );
+                // validate the postcondition of appendConstructors
+                ROSE_ASSERT( constructor );
 
-        // FIXME 2: Probably the thing to do in this case is simply to bail and
-        // trust that the constructor will get transformed when its definition
-        // is processed
-        SgFunctionDefinition* def = constructor -> get_definition();
-        ROSE_ASSERT( def );
+                // FIXME 2: Probably the thing to do in this case is simply to bail and
+                // trust that the constructor will get transformed when its definition
+                // is processed
+                SgFunctionDefinition* def = constructor -> get_definition();
+                ROSE_ASSERT( def );
 
-        SgBasicBlock* body = def -> get_body();
+                SgBasicBlock* body = def -> get_body();
 
-        // We need the symbol to build a this expression
-        SgSymbolTable* sym_tab
-        = cdef -> get_declaration() -> get_scope() -> get_symbol_table();
+                // We need the symbol to build a this expression
+                SgSymbolTable* sym_tab
+                = cdef -> get_declaration() -> get_scope() -> get_symbol_table();
 
-        SgClassSymbol* csym
-        = isSgClassSymbol(
-                        sym_tab -> find_class(
-                                        cdef -> get_declaration() -> get_name() ));
-        ROSE_ASSERT( csym );
+                SgClassSymbol* csym
+                = isSgClassSymbol(
+                                sym_tab -> find_class(
+                                                cdef -> get_declaration() -> get_name() ));
+                ROSE_ASSERT( csym );
 
-        SgType* type = cdef -> get_declaration() -> get_type();
+                SgType* type = cdef -> get_declaration() -> get_type();
 
-        // build arguments to roseCreateObject
-        SgExprListExp* arg_list = buildExprListExp();
-        appendTypeInformation( type, arg_list );
-        appendAddressAndSize(
-                        // we want &(*this), sizeof(*this)
-                        buildPointerDerefExp( buildThisExp( csym )), type, arg_list, 0 );
-        appendFileInfo( body, arg_list );
+                // build arguments to roseCreateObject
+                SgExprListExp* arg_list = buildExprListExp();
+                appendTypeInformation( type, arg_list );
+                appendAddressAndSize(
+                                // we want &(*this), sizeof(*this)
+                                buildPointerDerefExp( buildThisExp( csym )), type, arg_list, 0 );
+                appendFileInfo( body, arg_list );
 
-        // create the function call and prepend it to the constructor's body
-        ROSE_ASSERT( symbols->roseCreateObject );
-        SgExprStatement* fncall =
-        buildExprStatement(
-                        buildFunctionCallExp(
-                                        buildFunctionRefExp( symbols->roseCreateObject ),
-                                        arg_list ));
-        attachComment( fncall, "", PreprocessingInfo::before );
-        attachComment(
-                        fncall,
-                        "RS: Create Variable, parameters: "
-                        "type, basetype, indirection_level, "
-                        "address, size, filename, line, linetransformed",
-                        PreprocessingInfo::before );
+                // create the function call and prepend it to the constructor's body
+                ROSE_ASSERT( symbols->roseCreateObject );
+                SgExprStatement* fncall =
+                buildExprStatement(
+                                buildFunctionCallExp(
+                                                buildFunctionRefExp( symbols->roseCreateObject ),
+                                                arg_list ));
+                attachComment( fncall, "", PreprocessingInfo::before );
+                attachComment(
+                                fncall,
+                                "RS: Create Variable, parameters: "
+                                "type, basetype, indirection_level, "
+                                "address, size, filename, line, linetransformed",
+                                PreprocessingInfo::before );
 
-        ROSE_ASSERT( fncall );
-        body -> prepend_statement( fncall );
-}
+                ROSE_ASSERT( fncall );
+                body -> prepend_statement( fncall );
+        }
 }
 
 void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName) {
@@ -186,16 +186,19 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName) {
                 }
                 // for( int i =0;
                 // ForStmt .. ForInitStmt .. <stmt>
+                // upc_forall (int i = 9;
+                // ...
                 if (isSgForInitStatement(stmt -> get_parent())) {
                         // we have to handle for statements separately, because of parsing
                         // issues introduced by variable declarations in the for loop's
                         // init statement
-                        SgFunctionCallExp* buildVar = buildVariableCreateCallExpr(initName,
-                                        stmt);
-                        if (buildVar == NULL)
-                                return;
-                        prependPseudoForInitializerExpression(buildVar, isSgForStatement(
-                                        stmt -> get_parent() -> get_parent()));
+                        SgFunctionCallExp* buildVar = buildVariableCreateCallExpr(initName, stmt);
+                        ROSE_ASSERT(buildVar != NULL);
+
+                        SgStatement* const for_loop = gfor_loop(stmt -> get_parent() -> get_parent());
+                        ROSE_ASSERT(for_loop != NULL);
+
+                        prependPseudoForInitializerExpression(buildVar, isSgStatement(for_loop));
                 } else if (isSgIfStmt(scope)) {
                         SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName,
                                         stmt);
@@ -238,39 +241,35 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName) {
                                 }
                         }
 
-                } else if (isNormalScope(scope) || !isSgIfStmt(scope)) {
+//              } else if (isNormalScope(scope) || !isSgIfStmt(scope)) {
+                } else if (isNormalScope(scope)) {
                         // insert new stmt (exprStmt) after (old) stmt
                         SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName,
                                         stmt);
-                        if (exprStmt) {
-                                cerr << "++++++++++++ stmt :" << stmt << " mainFirst:"
-                                                << mainFirst << "   initName->get_scope():"
-                                                << initName->get_scope()
-                                                << "   mainFirst->get_scope():"
-                                                << mainFirst->get_scope() << endl;
-                                // FIXME 2: stmt == mainFirst is probably wrong for cases where the
-                                // statment we want to instrument really is the first one in main (and not
-                                // merely one in the global scope)
-                                if (stmt == mainFirst && initName->get_scope()
-                                                != mainFirst->get_scope()) {
-                                        mainBody -> prepend_statement(exprStmt);
-                                        cerr << "+++++++ insert Before... " << endl;
-                                } else {
-                                        // insert new stmt (exprStmt) after (old) stmt
-                                        insertStatementAfter(isSgStatement(stmt), exprStmt);
-                                        cerr << "+++++++ insert After... " << endl;
-                                }
+
+                        ROSE_ASSERT(exprStmt);
+                        //~ cerr << "++++++++++++ stmt :" << stmt << " mainFirst:"
+                                        //~ << mainFirst << "   initName->get_scope():"
+                                        //~ << initName->get_scope()
+                                        //~ << "   mainFirst->get_scope():"
+                                        //~ << mainFirst->get_scope() << endl;
+                        // FIXME 2: stmt == mainFirst is probably wrong for cases where the
+                        // statment we want to instrument really is the first one in main (and not
+                        // merely one in the global scope)
+                        if (stmt == mainFirst && initName->get_scope()
+                                        != mainFirst->get_scope()) {
+                                mainBody -> prepend_statement(exprStmt);
+                                cerr << "+++++++ insert Before... " << endl;
+                        } else {
+                                // insert new stmt (exprStmt) after (old) stmt
+                                insertStatementAfter(isSgStatement(stmt), exprStmt);
+                                cerr << "+++++++ insert After... " << endl;
                         }
                 }
                 else if (isSgNamespaceDefinitionStatement(scope)) {
                         cerr
                                         << "RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
                                         << name << " : " << scope->class_name() << endl;
-                }
-                else if (isSgUpcForAllStatement(scope)) { // \todo implement
-                       cerr
-                                        << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
-                                        << " : " << scope->class_name() << "\n\n\n\n" << endl;
                 }
                 else {
                         cerr
@@ -588,10 +587,11 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
                         // we have to handle for statements separately, because of parsing
                         // issues introduced by variable declarations in the for loop's
                         // init statement
-                        SgExpression* funcCallExp_vec = buildVariableInitCallExpr(initName,
-                                        varRefE, stmt, ismalloc);
-                        prependPseudoForInitializerExpression(funcCallExp_vec,
-                                        isSgForStatement(stmt -> get_parent() -> get_parent()));
+                        SgExpression*      funcCallExp_vec = buildVariableInitCallExpr(initName, varRefE, stmt, ismalloc);
+                        SgStatement* const for_stmt = gfor_loop(stmt -> get_parent() -> get_parent());
+
+                        ROSE_ASSERT(for_stmt != NULL);
+                        prependPseudoForInitializerExpression(funcCallExp_vec, for_stmt);
                 } else if (isSgIfStmt(scope)) {
                         SgExpression* funcCallExp = buildVariableInitCallExpr(initName,
                                         varRefE, stmt, ismalloc);
@@ -641,7 +641,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
                                         prependStatement(exprStmt, isSgScopeStatement(falseb));
                                 }
                         }
-                } else if (isNormalScope(scope) && !isSgIfStmt(scope)) {
+                } else if (isNormalScope(scope)) {
 
                         SgExpression* funcCallExp = buildVariableInitCallExpr(initName,
                                         varRefE, stmt, ismalloc);
@@ -663,11 +663,6 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
                                         << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
                                         << name << " : " << scope->class_name() << "\n\n\n\n"
                                         << endl;
-                }
-                else if (isSgUpcForAllStatement(scope)) { // \todo implement
-                       cerr
-                                        << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
-                                        << " : " << scope->class_name() << "\n\n\n\n" << endl;
                 }
                 else {
                         cerr
@@ -748,11 +743,6 @@ void RtedTransformation::insertCheckIfThisNull(SgThisExp* texp) {
                         cerr
                                         << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
                         //<< name
-                                        << " : " << scope->class_name() << "\n\n\n\n" << endl;
-                }
-                else if (isSgUpcForAllStatement(scope)) { // \todo implement
-                       cerr
-                                        << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
                                         << " : " << scope->class_name() << "\n\n\n\n" << endl;
                 }
                 else {
@@ -950,11 +940,6 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
                         //<< name
                                         << " : " << scope->class_name() << "\n\n\n\n" << endl;
                 }
-                else if (isSgUpcForAllStatement(scope)) { // \todo implement
-                       cerr
-                                        << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
-                                        << " : " << scope->class_name() << "\n\n\n\n" << endl;
-                }
                 else {
                         cerr
                                         << " -----------> RuntimeInstrumentation :: Surrounding Block is not Block! : "
@@ -1056,5 +1041,66 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
 
         // ---------------------------------------------
 }
+
+
+//
+// Functions added to treat UPC-forall and C/C++ for loops
+//   somewhat uniformly
+//
+
+SgStatement* gfor_loop(SgNode* astNode)
+{
+  SgStatement* res = NULL;
+
+  switch (astNode->variantT())
+  {
+    case V_SgForStatement:
+    case V_SgUpcForAllStatement:
+      res = isSgStatement(astNode);
+      break;
+    default: ;
+  }
+
+  return res;
+}
+
+SgForInitStatement* gfor_loop_init_stmt(SgStatement* forloop)
+{
+  SgForInitStatement* res = NULL;
+
+  switch (forloop->variantT())
+  {
+    case V_SgForStatement:
+      res = isSgForStatement(forloop)->get_for_init_stmt();
+      break;
+    case V_SgUpcForAllStatement:
+      res = isSgUpcForAllStatement(forloop)->get_for_init_stmt();
+      break;
+    default: ROSE_ASSERT(false);
+  }
+
+  ROSE_ASSERT(res != NULL);
+  return res;
+}
+
+SgStatement* gfor_loop_test(SgStatement* forloop)
+{
+  SgStatement* res = NULL;
+
+  switch (forloop->variantT())
+  {
+    case V_SgForStatement:
+      res = isSgForStatement(forloop)->get_test();
+      break;
+    case V_SgUpcForAllStatement:
+      res = isSgUpcForAllStatement(forloop)->get_test();
+      break;
+    default: ROSE_ASSERT(false);
+  }
+
+  ROSE_ASSERT(res != NULL);
+  return res;
+}
+
 
 #endif

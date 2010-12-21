@@ -18,11 +18,11 @@
 
 
 void
-assertme(bool value, std::string text, std::string left, std::string right) {
+assertme(bool value, const std::string& text, const std::string&, const std::string&) {
   // print error
   if (value==false) {
     SourcePosition curpos;
-    RuntimeSystem* rs = RuntimeSystem::instance(); 
+    RuntimeSystem* rs = RuntimeSystem::instance();
     curpos= rs->getCodePosition();
 #ifdef ROSE_WITH_ROSEQT
     if( rs -> isQtDebuggerEnabled() ) {
@@ -32,7 +32,7 @@ assertme(bool value, std::string text, std::string left, std::string right) {
         rd->startGui();
     }
 #endif
-    cerr << "Error::: " << text << endl;
+    std::cerr << "Error::: " << text << std::endl;
     rs->setCodePosition(curpos);
   }
 }

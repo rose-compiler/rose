@@ -13,6 +13,17 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
+static
+inline
+void ROSE_ASSERT_MSG(bool b, const std::string& msg)
+{
+  if (!b)
+  {
+    std::cerr << msg << std::endl;
+    ROSE_ASSERT(false);
+  }
+}
+
 /* -----------------------------------------------------------
  * Is the Initialized Name already known as an array element ?
  * -----------------------------------------------------------*/
@@ -539,6 +550,87 @@ void RtedTransformation::visit_isSgArrowExp(SgArrowExp* n) {
 #endif
 }
 
+void RtedTransformation::array_heap_alloc(SgInitializedName* initName, SgVarRefExp* varRef, SgExpression* sz)
+{
+  ROSE_ASSERT(initName && varRef && sz);
+
+  RTedArray* array = new RTedArray(false, initName, getSurroundingStatement(varRef), true, true, sz);
+
+  // varRef can not be a array access, its only an array Create
+  variablesUsedForArray.push_back(varRef);
+  create_array_define_varRef_multiArray[varRef] = array;
+}
+
+bool RtedTransformation::array_alloc_call(SgInitializedName* initName, SgVarRefExp* varRef, SgExprListExp* args, SgFunctionDeclaration* funcd)
+{
+  ROSE_ASSERT(initName && varRef && args && funcd);
+
+  bool call_was_malloc = false;
+
+  string funcname = funcd->get_name().str();
+  if (funcname == "malloc")
+  {
+    cerr << "... Detecting func call on right hand side : " << funcname << "     and size : "
+         << args->unparseToString() << endl;
+
+    ROSE_ASSERT( args->get_expressions().size() > 0 );
+
+    array_heap_alloc(initName, varRef, args->get_expressions()[0]);
+    call_was_malloc = true;
+  }
+  else if (funcname == "calloc")
+  {
+    cerr << "... Detecting func call on right hand side : " << funcname;
+
+    // copy the arguments to calloc so we know how much memory was allocated
+    ROSE_ASSERT( args->get_expressions().size() > 1 );
+    SgExpression* arg1 = args->get_expressions()[0];
+    SgExpression* arg2 = args->get_expressions()[1];
+    SgExpression* size_to_use = new SgMultiplyOp(args->get_file_info(), arg1, arg2);
+
+    array_heap_alloc(initName, varRef, size_to_use);
+  }
+  else if (funcname == "upc_all_alloc")
+  {
+    // \todo implement upc specific behaviour
+    ROSE_ASSERT(args->get_expressions().size() == 2);
+
+    SgExpression* arg1 = args->get_expressions()[0];
+    SgExpression* arg2 = args->get_expressions()[1];
+    SgExpression* size_to_use = new SgMultiplyOp(args->get_file_info(), arg1, arg2);
+
+    array_heap_alloc(initName, varRef, size_to_use);
+    call_was_malloc = true;
+  }
+
+  // call_was_malloc should probably indicate whether the call was handled (PP)
+  return call_was_malloc;
+}
+
+bool RtedTransformation::array_alloc_call(SgInitializedName* initName, SgVarRefExp* varRef, SgExprListExp* args, SgFunctionRefExp* funcr, bool default_result)
+{
+  ROSE_ASSERT(varRef);
+
+  // the function should probably return whether the allocation was handled
+  //   thus making the default_result superfluous.
+  //   However the original implementation does not reflect that,
+  //   therefore I add the extra parameter (PP).
+  bool res = default_result;
+
+  if (funcr) {
+    res = array_alloc_call(initName, varRef, args, funcr->getAssociatedFunctionDeclaration());
+  } else {
+     // right hand side of assign should only contain call to malloc somewhere
+     cerr << "RtedTransformation: UNHANDLED AND ACCEPTED FOR NOW. Right of Assign : Unknown (Array creation) : "
+          << "  line:" << varRef->unparseToString() << endl;
+     //	    ROSE_ASSERT(false);
+  }
+
+  return res;
+}
+
+
+
 // TODO 2 djh:  rewrite this function to be more robust
 //  i.e. handle general cases
 //  consider whether getting the initname is important
@@ -648,16 +740,14 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
             + expr_l->unparseToString() + " ", varRef);
       initName = mypair.first;
       varRef = mypair.second;
-      if (initName)
-         ROSE_ASSERT(varRef);
+      ROSE_ASSERT(!initName || varRef);
    }// ------------------------------------------------------------
    else if (isSgArrowExp(expr_l)) {
       std::pair<SgInitializedName*, SgVarRefExp*> mypair = getRightOfArrow(isSgArrowExp(expr_l), "Right of Arrow  - line: "
             + expr_l->unparseToString() + " ", varRef);
       initName = mypair.first;
       varRef = mypair.second;
-      if (initName)
-         ROSE_ASSERT(varRef);
+      ROSE_ASSERT(!initName || varRef);
    } // ------------------------------------------------------------
    else if (pointerDeref) {
       SgExpression* exp = pointerDeref->get_operand();
@@ -683,24 +773,21 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
                + exp->unparseToString() + " ", varRef);
          initName = mypair.first;
          varRef = mypair.second;
-         if (initName)
-            ROSE_ASSERT(varRef);
+         ROSE_ASSERT(!initName || varRef);
       }// ------------------------------------------------------------
       else if (isSgPointerDerefExp(exp)) {
          std::pair<SgInitializedName*, SgVarRefExp*> mypair = getRightOfPointerDeref(isSgPointerDerefExp(exp),
                "Right of PointerDeref  - line: " + exp->unparseToString() + " ", varRef);
          initName = mypair.first;
          varRef = mypair.second;
-         if (initName)
-            ROSE_ASSERT(varRef);
+         ROSE_ASSERT(!initName || varRef);
       }// ------------------------------------------------------------
       else if (isSgArrowExp(exp)) {
          std::pair<SgInitializedName*, SgVarRefExp*> mypair = getRightOfArrow(isSgArrowExp(exp),
                "Right of PointerDeref  - line: " + exp->unparseToString() + " ", varRef);
          initName = mypair.first;
          varRef = mypair.second;
-         if (initName)
-            ROSE_ASSERT(varRef);
+         ROSE_ASSERT(!initName || varRef);
       }// ------------------------------------------------------------
       else if (isSgCastExp(exp)) {
          std::vector<SgNode*> vars = NodeQuery::querySubTree(exp, V_SgVarRefExp);
@@ -736,9 +823,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
             // variable is on the left hand side
             varRef = varRefL;
             initName = (varRef)->get_symbol()->get_declaration();
-            if (initName)
-               ROSE_ASSERT(varRef);
-            ROSE_ASSERT(initName);
+            ROSE_ASSERT(initName && varRef);
          }
       }// ------------------------------------------------------------
 #endif
@@ -749,16 +834,14 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       ROSE_ASSERT(mypair.second);
       initName = mypair.first;
       varRef = mypair.second;
-      if (initName)
-         ROSE_ASSERT(varRef);
+      ROSE_ASSERT(!initName || varRef);
    }// ------------------------------------------------------------
    else if (isSgDotStarOp(expr_l)) {
       std::pair<SgInitializedName*, SgVarRefExp*> mypair = getRightOfDotStar(isSgDotStarOp(expr_l), "Right of Dot  - line: "
             + expr_l->unparseToString() + " ", varRef);
       initName = mypair.first;
       varRef = mypair.second;
-      if (initName)
-         ROSE_ASSERT(varRef);
+      ROSE_ASSERT(!initName || varRef);
    }// ------------------------------------------------------------
    else {
       cerr << "RtedTransformation : Left of assign - Unknown : " << expr_l->class_name() << "  line:"
@@ -769,8 +852,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
    ROSE_ASSERT(initName);
 
    // handle MALLOC
-   bool ismalloc = false;
-   bool iscalloc = false;
+   bool            last_was_malloc = false; // obfuscate, obfuscate!!!??? (PP)
    vector<SgNode*> calls = NodeQuery::querySubTree(expr_r, V_SgFunctionCallExp);
    vector<SgNode*>::const_iterator it = calls.begin();
    for (; it != calls.end(); ++it) {
@@ -782,68 +864,13 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
          ROSE_ASSERT(size);
 
          // find if sizeof present in size operator
+         // \why do we require that there is exactly one sizeof operand? (PP)
          vector<SgNode*> results = NodeQuery::querySubTree(size, V_SgSizeOfOp);
-         SgSizeOfOp* sizeofOp = NULL;
-         if (results.size() == 1) {
-            sizeofOp = isSgSizeOfOp(*(results.begin()));
-            ROSE_ASSERT(sizeofOp);
-         } else if (results.size() > 1) {
-            cerr << "More than 1 sizeof operand. Abort." << endl;
-            ROSE_ASSERT( false );
-         }
+         ROSE_ASSERT_MSG(results.size() == 1, "Expected to find excactly 1 sizeof operand. Abort.");
+
          SgExpression* func = funcc->get_function();
-         if (func && size) {
-            ismalloc = false;
-            SgFunctionRefExp* funcr = isSgFunctionRefExp(func);
-            if (funcr) {
-               SgFunctionDeclaration* funcd = funcr->getAssociatedFunctionDeclaration();
-               ROSE_ASSERT(funcd);
-               string funcname = funcd->get_name().str();
-               if (funcname == "malloc") {
-                  ismalloc = true;
-                  cerr << "... Detecting func call on right hand side : " << funcname << "     and size : "
-                        << size->unparseToString() << "   idx1 : " << indx1 << "  idx2 : " << indx2 << endl;
-               } else if (funcname == "calloc") {
-                  iscalloc = true;
-                  cerr << "... Detecting func call on right hand side : " << funcname;
-               }
-               ROSE_ASSERT(varRef);
-            } else {
-               // right hand side of assign should only contain call to malloc somewhere
-               cerr << "RtedTransformation: UNHANDLED AND ACCEPTED FOR NOW. Right of Assign : Unknown (Array creation) : "
-                     << func->class_name() << "  line:" << funcc->unparseToString() << endl;
-               //	    ROSE_ASSERT(false);
-            }
-            if (ismalloc) {
-               ROSE_ASSERT(initName);
-               ROSE_ASSERT(varRef);
 
-               // copy the argument to malloc so we know how much memory was allocated
-               ROSE_ASSERT( size->get_expressions().size() > 0 );
-               SgExpression* size_orig = isSgExprListExp(size) -> get_expressions()[0];
-
-               RTedArray* array = new RTedArray(false, initName, getSurroundingStatement(varRef), ismalloc, true, size_orig);
-               // varRef can not be a array access, its only an array Create
-               variablesUsedForArray.push_back(varRef);
-               create_array_define_varRef_multiArray[varRef] = array;
-            } else if (iscalloc) {
-               ROSE_ASSERT(initName);
-               ROSE_ASSERT(varRef);
-
-               // copy the arguments to calloc so we know how much memory was allocated
-               ROSE_ASSERT( size->get_expressions().size() > 1 );
-               SgExpression* size_to_use = new SgMultiplyOp(size -> get_file_info(),
-                     isSgExprListExp(size) -> get_expressions()[0], isSgExprListExp(size) -> get_expressions()[1]);
-
-               RTedArray* array = new RTedArray(false, initName, getSurroundingStatement(varRef), true, // array is on heap
-                     true, // array came form [mc]alloc
-                     size_to_use);
-
-               // varRef can not be a array access, its only an array Create
-               variablesUsedForArray.push_back(varRef);
-               create_array_define_varRef_multiArray[varRef] = array;
-            }
-         }
+         last_was_malloc = array_alloc_call(initName, varRef, size, isSgFunctionRefExp(func), last_was_malloc);
       }
    }
 
@@ -884,7 +911,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       // if we have not set this variable to be initialized yet,
       // we do so
       cerr << ">> Setting this var to be initialized : " << initName->unparseToString() << endl;
-      variableIsInitialized[varRef] = std::pair<SgInitializedName*, bool>(initName, ismalloc);
+      variableIsInitialized[varRef] = std::pair<SgInitializedName*, bool>(initName, last_was_malloc);
    }
    // ---------------------------------------------
 
@@ -1084,4 +1111,3 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
 }
 
 #endif
-

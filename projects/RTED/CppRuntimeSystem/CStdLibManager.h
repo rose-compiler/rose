@@ -5,7 +5,7 @@
 #include <string>
 #include <cstring>
 
-using namespace std;
+// using namespace std;
 
 
 /** Provides checks for functions in the C Standard Library.  Each function @c f
@@ -192,30 +192,30 @@ class CStdLibManager {
         //      gmtime
         //      localtime
         //      strftime
-        // }}}        
-    
+        // }}}
+
     private:
-       
+
         /** Check that the memory region (@c ptr1 : @c ptr1 + @c num) does not overlap
          * with memory region (@c ptr2 : @c ptr2 + num)
          */
         void check_overlap(
-            const void* ptr1, 
-            const void* ptr2, 
-            size_t num, 
-            const string& description = ""
+            const void* ptr1,
+            const void* ptr2,
+            size_t num,
+            const std::string& description = ""
         );
         void check_allocation_overlap(
-            const void* ptr1, 
-            const void* ptr2, 
-            const string& description = ""
+            const void* ptr1,
+            const void* ptr2,
+            const std::string& description = ""
         );
         void check_overlap(
-            const void* ptr1, 
-            size_t size1, 
-            const void* ptr2, 
-            size_t size2, 
-            const string& description = ""
+            const void* ptr1,
+            size_t size1,
+            const void* ptr2,
+            size_t size2,
+            const std::string& description = ""
         );
 
         /** Checks that str is initialized, and that it contains a null

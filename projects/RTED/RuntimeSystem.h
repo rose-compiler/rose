@@ -4,52 +4,67 @@
 //#include <cstdio>
 #include <stddef.h>
 
-#ifndef  _WIN64
-#define unsigned_long_long unsigned long
-#define signed_long_long long
-#else
-#define unsigned_long_long unsigned long long
-#define signed_long_long long long
-#endif
+#include "ptrops.h"
 
-typedef unsigned long addr_type;
-
-
+// typedef unsigned long addr_type;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /***************************** HELPER FUNCTIONS *************************************/
-const char* RuntimeSystem_roseConvertIntToString(int t);
+const char* rted_ConvertIntToString(int t);
 
 // USE GUI for debugging
 void Rted_debugDialog(const char* filename, int line, int lineTransformed);
 
-void RuntimeSystem_roseCheckpoint( const char* filename, const char* line, const char* lineTransformed );
+void rted_Checkpoint( const char* filename, const char* line, const char* lineTransformed );
 /***************************** HELPER FUNCTIONS *************************************/
 
 
 
 /***************************** ARRAY FUNCTIONS *************************************/
-void RuntimeSystem_roseCreateHeap(
+
+void
+rted_CreateHeapArr( const char* name,
+									  const char* mangl_name,
+									  const char* type,
+										const size_t* dimDescr,
+										size_t totalsize,
+									  const char* basetype,
+									  MemoryAddress address,
+									  const char* class_name,
+									  const char* filename,
+									  size_t line,
+									  size_t lineTransformed
+									);
+
+
+
+
+#if OBSOLETE_CODE
+
+void rted_CreateHeap(
         const char* name,
         const char* mangl_name,
         const char* type,
         const char* basetype,
         size_t indirection_level,       // how many dereferences to get to a non-pointer type
                                         // e.g. int*** has indirection level 3
-        addr_type address,
+        MemoryAddress address,
         long int size,
         long int mallocSize,
         int fromMalloc,                 // 1 if from call to malloc
                                         // 0 otherwise, if e.g. from new
         const char* class_name, const char* filename, const char* line,
-        const char* lineTransformed, int dimensions, ...);
+        const char* lineTransformed, int dimensions, const size_t* dimDesc);
 
-void RuntimeSystem_roseAccessHeap(const char* filename,
-		addr_type base_address, // &( array[ 0 ])
-		addr_type address, long int size, int read_write_mask, // 1 = read, 2 = write
+#endif /* OBSOLETE_CODE */
+
+
+void rted_AccessHeap(const char* filename,
+		MemoryAddress base_address, // &( array[ 0 ])
+		MemoryAddress address, long int size, int read_write_mask, // 1 = read, 2 = write
 		const char* line, const char* lineTransformed);
 /***************************** ARRAY FUNCTIONS *************************************/
 
@@ -57,11 +72,11 @@ void RuntimeSystem_roseAccessHeap(const char* filename,
 
 /***************************** FUNCTION CALLS *************************************/
 
-void RuntimeSystem_roseAssertFunctionSignature(
+void rted_AssertFunctionSignature(
 		const char* filename, const char* line, const char* lineTransformed,
 		const char* name, int type_count, ... );
 
-void RuntimeSystem_roseConfirmFunctionSignature(
+void rted_ConfirmFunctionSignature(
 		const char* name, int type_count, ... );
 
 void RuntimeSystem_handleSpecialFunctionCalls(const char* funcname,
@@ -69,18 +84,18 @@ void RuntimeSystem_handleSpecialFunctionCalls(const char* funcname,
 		const char* line, const char* lineTransformed, const char* stmtStr,
 		const char* leftHandSideVar);
 
-void RuntimeSystem_roseIOFunctionCall(const char* funcname,
+void rted_IOFunctionCall(const char* funcname,
 		const char* filename, const char* line, const char* lineTransformed,
 		const char* stmtStr, const char* leftHandSideVar, void* file,
 		const char* arg1, const char* arg2);
 
-void RuntimeSystem_roseFunctionCall(int count, ...);
+void rted_FunctionCall(int count, ...);
 /***************************** FUNCTION CALLS *************************************/
 
 
 
 /***************************** MEMORY FUNCTIONS *************************************/
-void RuntimeSystem_roseFreeMemory(
+void rted_FreeMemory(
         void* ptr,              // the address that is about to be freed
         int fromMalloc,         // whether the free expects to be paired with
                                 // memory allocated via 'malloc'.  In short,
@@ -89,10 +104,10 @@ void RuntimeSystem_roseFreeMemory(
         const char* filename,
         const char* line, const char* lineTransformed);
 
-void RuntimeSystem_roseReallocateMemory(void* ptr, unsigned long int size,
+void rted_ReallocateMemory(void* ptr, unsigned long int size,
 		const char* filename, const char* line, const char* lineTransformed);
 
-void RuntimeSystem_checkMemoryAccess(addr_type address, long int size,
+void RuntimeSystem_checkMemoryAccess(MemoryAddress address, long int size,
 		int read_write_mask);
 /***************************** MEMORY FUNCTIONS *************************************/
 
@@ -102,13 +117,13 @@ void RuntimeSystem_checkMemoryAccess(addr_type address, long int size,
 // handle scopes (so we can detect when locals go out of scope, free up the
 // memory and possibly complain if the local was the last var pointing to some
 // memory)
-void RuntimeSystem_roseEnterScope(const char* scope_name);
-void RuntimeSystem_roseExitScope(const char* filename, const char* line, const char* lineTransformed,
+void rted_EnterScope(const char* scope_name);
+void rted_ExitScope(const char* filename, const char* line, const char* lineTransformed,
 		const char* stmtStr);
 /***************************** SCOPE *************************************/
 
 
-  void RuntimeSystem_roseRtedClose(char* from);
+  void rted_RtedClose(char* from);
 
 // function used to indicate error
 void RuntimeSystem_callExit(const char* filename, const char* line,
@@ -121,16 +136,16 @@ extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 
 /***************************** VARIABLES *************************************/
 
-int RuntimeSystem_roseCreateVariable(const char* name,
+int rted_CreateVariable(const char* name,
 		const char* mangled_name, const char* type, const char* basetype,
-		size_t indirection_level, addr_type address, unsigned int size,
+		size_t indirection_level, MemoryAddress address, unsigned int size,
 		int init, const char* className, const char* filename,
 		const char* line, const char* lineTransformed);
 
 
 #if NOT_YET_IMPLEMENTED
 // for upc
-int RuntimeSystem_roseCreateSharedVariable( const char* name,
+int rted_CreateSharedVariable( const char* name,
 																						const char* mangled_name,
 																						const char* type,
 																						const char* basetype,
@@ -151,19 +166,19 @@ int RuntimeSystem_roseCreateSharedVariable( const char* name,
  * multiple times for the same address: e.g. if called in a base class
  * constructor and a sub class constructor.
  */
-int RuntimeSystem_roseCreateObject(
+int rted_CreateObject(
         const char* type,
         const char* basetype,
         size_t indirection_level,
-        addr_type address,
+        MemoryAddress address,
         unsigned int size,
         const char* filename,
         const char* line,
         const char* lineTransformed );
 
-int RuntimeSystem_roseInitVariable(const char* typeOfVar2,
+int rted_InitVariable(const char* typeOfVar2,
 		const char* baseType2, size_t indirection_level,
-		const char* class_name, addr_type address, unsigned int size,
+		const char* class_name, MemoryAddress address, unsigned int size,
 		int ismalloc, int pointer_changed, const char* filename,
 		const char* line, const char* lineTransformed);
 
@@ -182,12 +197,12 @@ int RuntimeSystem_roseInitVariable(const char* typeOfVar2,
        p = ...
  @endcode
  * It verifies that the pointer stays within “memory bounds”.  In particular, if
- * the pointer points to an array, RuntimeSystem_roseMovePointer checks that it
+ * the pointer points to an array, rted_MovePointer checks that it
  * isn't incremented beyond the bounds of the array, even if doing so results in
  * a pointer to allocated memory.
  */
-void RuntimeSystem_roseMovePointer(
-                addr_type address,
+void rted_MovePointer(
+                MemoryAddress address,
                 const char* type,
                 const char* base_type,
                 size_t indirection_level,
@@ -196,16 +211,16 @@ void RuntimeSystem_roseMovePointer(
                 const char* line,
                 const char* lineTransformed);
 
-void RuntimeSystem_roseAccessVariable(
-        addr_type address,
+void rted_AccessVariable(
+        MemoryAddress address,
         unsigned int size,
-        addr_type write_address,
+        MemoryAddress write_address,
         unsigned int write_size,
         int read_write_mask, //1 = read, 2 = write
         const char* filename, const char* line,
         const char* lineTransformed);
 
-void RuntimeSystem_roseCheckIfThisNULL(
+void rted_CheckIfThisNULL(
 		void* thisExp,
 		const char* filename, const char* line,
 		const char* lineTransformed);
@@ -215,7 +230,7 @@ void RuntimeSystem_roseCheckIfThisNULL(
 
 /***************************** TYPES *************************************/
 // handle structs and classes
-void RuntimeSystem_roseRegisterTypeCall(int count, ...);
+void rted_RegisterTypeCall(int count, ...);
 /***************************** TYPES *************************************/
 
 

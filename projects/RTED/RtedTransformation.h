@@ -314,6 +314,12 @@ private:
    void renameMain(SgFunctionDeclaration * sg_func);
    void changeReturnStmt(SgReturnStmt * rstmt);
 
+
+   /// factors commonalities of heap allocations (PP)
+   void array_heap_alloc(SgInitializedName* initName, SgVarRefExp* varRef, SgExpression* sz);
+   bool array_alloc_call(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionDeclaration*);
+   bool array_alloc_call(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionRefExp*, bool);
+
 public:
    RtedTransformation() {
       //inputFiles=files;
@@ -374,7 +380,7 @@ public:
     *
     * 	@param	for_stmt	The for statement to add @c exp to.
     */
-   void prependPseudoForInitializerExpression( SgExpression* exp, SgForStatement* for_stmt );
+   void prependPseudoForInitializerExpression( SgExpression* exp, SgStatement* for_stmt );
 
    bool isGlobalExternVariable(SgStatement* stmt);
 
@@ -395,5 +401,17 @@ public:
 
 };
 
+
+//
+// Functions added to treat UPC-forall and C/C++ for loops
+//   somewhat uniformly
+//
+
+/// \brief tests whether a node is either a C/C++ for loop, or a UPC forall loop.
+/// \return a pointer to a SgStatement if the argument points to a for-loop.
+///         NULL, otherwise.
+SgStatement* gfor_loop(SgNode* astNode);
+SgStatement* gfor_loop_test(SgStatement* astNode);
+SgForInitStatement* gfor_loop_init_stmt(SgStatement* astNode);
 
 #endif

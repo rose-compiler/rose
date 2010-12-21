@@ -30,7 +30,7 @@ class InheritedAttribute
 	                                               isForStatement(i),
 	                                               isBinaryOp(bo)
          {};
-	 InheritedAttribute ( const InheritedAttribute & X ) : 
+	 InheritedAttribute ( const InheritedAttribute & X ) :
 	                                                       function(X.function),
 	                                                       isAssignInitializer(X.isAssignInitializer),
 	                                                       isArrowExp(X.isArrowExp),
@@ -49,27 +49,45 @@ typedef bool SynthesizedAttribute;
 
 class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute>
    {
+		 typedef SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute> Base;
 
-     RtedTransformation* transf;
-     std::vector<SgExpression*>* rightOfbinaryOp;
-     std::vector<SgForStatement*>* for_stmt;
      public:
 
+		 typedef std::vector<SgStatement*>                                            LoopStack;
+		 typedef std::vector<SgBinaryOp*>                                             BinaryOpStack;
+
+
+   explicit
    VariableTraversal(RtedTransformation* t) ;
-     ~VariableTraversal() {};
+
+   ~VariableTraversal()
+	 {
+		 ROSE_ASSERT(for_loops.empty());
+		 ROSE_ASSERT(binary_ops.empty());
+	 }
 
      // Functions required
      InheritedAttribute evaluateInheritedAttribute (
-						    SgNode* astNode, 
+						    SgNode* astNode,
 						    InheritedAttribute inheritedAttribute );
-     
+
      SynthesizedAttribute evaluateSynthesizedAttribute (
 							SgNode* astNode,
 							InheritedAttribute inheritedAttribute,
 							SubTreeSynthesizedAttributes synthesizedAttributeList );
 
-     bool isRightOfBinaryOp(SgNode* node);
-     bool isInitializedNameInForStatement(SgForStatement* for_stmt,SgInitializedName* name);
+		 private:
+       RtedTransformation* const   transf;
+			 BinaryOpStack               binary_ops;  ///< stores all binary operations in the current traversal
+			 LoopStack                   for_loops;   ///< stores C/C++ for and UPC upc_forall
+
+			 // internal functions
+			 void handleIfVarRefExp(SgVarRefExp* varref, const InheritedAttribute& inh);
+
+		   // should fail when needed
+		   VariableTraversal();
+			 VariableTraversal(const VariableTraversal&);
+			 VariableTraversal& operator=(const VariableTraversal&);
    };
 
 #endif
