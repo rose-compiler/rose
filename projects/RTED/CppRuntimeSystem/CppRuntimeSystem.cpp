@@ -335,8 +335,8 @@ void RuntimeSystem::createObject(MemoryAddress address, RsClassType* type )
 
     MemoryType newBlock(address, type -> getByteSize(), false, false, curPos);
 
-    newBlock.registerMemType(0, type);
     memManager.allocateMemory(newBlock);
+    newBlock.registerMemType(0, type);
 }
 
 
