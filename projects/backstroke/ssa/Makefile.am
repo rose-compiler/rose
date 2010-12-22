@@ -214,6 +214,7 @@ test2004_137.C \
 test2004_138.C \
 test2004_139.C \
 test2004_140.C \
+test2004_141.C \
 test2004_142.C \
 test2004_143.C \
 test2004_144.C \
@@ -232,6 +233,7 @@ test2004_156.C \
 test2004_157.C \
 test2004_158.C \
 test2004_160.C \
+test2004_159.C \
 test2004_161.C \
 test2004_162.C \
 test2004_163.C \
@@ -266,6 +268,7 @@ test2005_28.C \
 test2005_29.C \
 test2005_30.C \
 test2005_31.C \
+test2005_32.C \
 test2005_33.C \
 test2005_34.C \
 test2005_35.C \
@@ -386,6 +389,7 @@ test2005_157.C \
 test2005_158.C \
 test2005_159.C \
 test2005_160.C \
+test2005_161.C \
 test2005_162.C \
 test2005_163.C \
 test2005_164.C \
@@ -410,6 +414,7 @@ test2005_185.C \
 test2005_189.C \
 test2005_190.C \
 test2005_191.C \
+test2005_192.C \
 test2005_193.C \
 test2005_194.C \
 test2005_195.C \
@@ -449,6 +454,7 @@ test2006_34.C \
 test2006_37.C \
 test2006_38.C \
 test2006_39.C \
+test2006_40.C \
 test2006_41.C \
 test2006_42.C \
 test2006_44.C \
@@ -477,6 +483,7 @@ test2006_76.C \
 test2006_77.C \
 test2006_78.C \
 test2006_79.C \
+test2006_80.C \
 test2006_81.C \
 test2006_82.C \
 test2006_83.C \
@@ -493,6 +500,7 @@ test2006_94.C \
 test2006_95.C \
 test2006_96.C \
 test2006_98.C \
+test2006_99.C \
 test2006_101.C \
 test2006_102.C \
 test2006_103.C \
@@ -527,6 +535,7 @@ test2006_144.C \
 test2006_145.C \
 test2006_146.C \
 test2006_147.C \
+test2006_148.C \
 test2006_149.C \
 test2006_150.C \
 test2006_151.C \
@@ -580,6 +589,7 @@ test2007_47.C \
 test2007_48.C \
 test2007_49.C \
 test2007_50.C \
+test2007_51.C \
 test2007_52.C \
 test2007_53.C \
 test2007_55.C \
@@ -659,32 +669,23 @@ lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
 X.C \
-inputBug317.C \
-test2007_51.C
+inputBug317.C 
+
 
 # These are currently failing testcodes that should be fixed
 # (as opposed to testcodes that are expected to fail)
 FAILURE_TESTCODES = \
-test2004_159.C \
-test2005_114.C \
-test2005_187.C \
-test2006_47.C \ 
--->virtualCFG bug with visiting VarRef's of const values: (Not SSA Bug) \
-test2005_32.C \
-test2004_141.C \
-test2005_161.C \
-test2005_192.C \
-test2006_80.C \
 -->Catch statements don't appear in the virtual CFG: (Not SSA BUG) \
 test2006_66.C \
 --> No defs propagated to unreachable code (Have to detect unreachable code) \
 test2007_159.C \
---> The virtual CFG doesn't contain the "original expression tree" for casts, but the traversals visit it: \
+--> The virtual CFG doesn't contain the "original expression tree" for casts, but the traversals visit it:\
 test2004_44.C \
---> VirtualCfg doesn't visit the parameters of SgAsmOp, so defs can't propagate to those uses: \
-test2006_40.C \
-test2006_99.C \
-test2006_148.C 
+--> Variables declared inside switch statements are not visited by the virtual CFG (not SSA bug)\
+test2005_187.C \
+test2005_114.C \
+test2006_47.C 
+
 
 TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
