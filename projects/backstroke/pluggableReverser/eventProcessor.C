@@ -242,10 +242,10 @@ std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() co
 	return output;
 }
 
-SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* type)
+SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* returnType)
 {
-	return buildFunctionCallExp("push", type, buildExprListExp(
-					getStackVar(type), exp));
+	SgExprListExp* parameters = SageBuilder::buildExprListExp(getStackVar(returnType), exp);
+	return buildFunctionCallExp("push", returnType, parameters);
 }
 
 SgExpression* EventProcessor::popVal(SgType* type)
@@ -295,7 +295,7 @@ FuncDeclPairs EventProcessor::processEvent()
 		// Here we check the validity for each result above. We have to make sure
 		// every state variable has the version 1.
 		if (!checkForInitialVersions(res.getVarTable()))
-			;//continue;
+			printf("WARNING: Not checking for correct initial versions!\n");//continue;
 
 		// Print all handlers used in this result.
 		if (SgProject::get_verbose() > 0 )
@@ -313,27 +313,32 @@ FuncDeclPairs EventProcessor::processEvent()
 		BackstrokeUtility::removeUselessParen(stmt.fwd_stmt);
 		BackstrokeUtility::removeUselessParen(stmt.rvs_stmt);
 
-		fixVariableReferences(stmt.fwd_stmt);
-		fixVariableReferences(stmt.rvs_stmt);
+		SageInterface::fixVariableReferences(stmt.fwd_stmt);
+		SageInterface::fixVariableReferences(stmt.rvs_stmt);
 
 		string ctr_str = lexical_cast<string> (ctr++);
 
+		SgScopeStatement* eventScope = SageInterface::getScope(event_);
+
+		//Create the function declaration for the forward body
 		SgName fwd_func_name = event_->get_name() + "_forward" + ctr_str;
 		SgFunctionDeclaration* fwd_func_decl =
-						buildDefiningFunctionDeclaration(
+						SageBuilder::buildDefiningFunctionDeclaration(
 						fwd_func_name, event_->get_orig_return_type(),
-						isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
+						isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
+						eventScope);
 		SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
 		SageInterface::replaceStatement(fwd_func_def->get_body(), isSgBasicBlock(stmt.fwd_stmt));
 
+		//Create the function declaration for the reverse body
 		SgName rvs_func_name = event_->get_name() + "_reverse" + ctr_str;
 		SgFunctionDeclaration* rvs_func_decl =
-						buildDefiningFunctionDeclaration(
+						SageBuilder::buildDefiningFunctionDeclaration(
 						rvs_func_name, event_->get_orig_return_type(),
-						isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
+						isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
+						eventScope);
 		SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
 		SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt.rvs_stmt));
-
 
 		// Add the cost information as comments to generated functions.
 		string comment = "Cost: " + lexical_cast<string> (res.getCost().getCost());

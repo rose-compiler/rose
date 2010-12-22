@@ -60,7 +60,7 @@ reverseEvents(EventProcessor* event_processor,
 	FuncDeclPairs normalized_events = normalizeEvents(is_event, project);
 
 	AstTests::runAllTests(project);
-	unparseProject(project);
+	//unparseProject(project);
 
 	VariableRenaming var_renaming(project);
 	var_renaming.run();
@@ -68,12 +68,11 @@ reverseEvents(EventProcessor* event_processor,
 	event_processor->setVariableRenaming(&var_renaming);
 
 	// Get the global scope.
-	SgGlobal* global = getFirstGlobalScope(project);
-	pushScopeStack(isSgScopeStatement(global));
-	
+	SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);
+	SageBuilder::pushScopeStack(isSgScopeStatement(globalScope));
+
 	vector<ProcessedEvent> output;
 
-#if 1
 	foreach(const FuncDeclPair& event_pair, normalized_events)
 	{
 		timer t;
@@ -89,8 +88,10 @@ reverseEvents(EventProcessor* event_processor,
 		reverse_foreach (const FuncDeclPair& fwd_rvs_event, processed_event.fwd_rvs_events)
 		{
 			// Put the generated statement after the normalized event.
-			insertStatementAfter(processed_event.normalized_event, fwd_rvs_event.second);
-			insertStatementAfter(processed_event.normalized_event, fwd_rvs_event.first);
+			SgFunctionDeclaration* originalEvent = 
+					isSgFunctionDeclaration(processed_event.normalized_event->get_definingDeclaration());
+			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.second);
+			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.first);
 		}
 
 		output.push_back(processed_event);
@@ -102,17 +103,16 @@ reverseEvents(EventProcessor* event_processor,
 	// Declare all stack variables on top of the generated file.
 	foreach(SgVariableDeclaration* decl, event_processor->getAllStackDeclarations())
 	{
-		prependStatement(decl, global);
+		prependStatement(decl, globalScope);
 	}
 
 	// Prepend includes to test files.
-	insertHeader("rctypes.h");
+	insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
 
-	popScopeStack();
+	SageBuilder::popScopeStack();
 
 	// Fix all variable references here.
-	fixVariableReferences(global);
-#endif
+	SageInterface::fixVariableReferences(globalScope);
 
 	return output;
 }
