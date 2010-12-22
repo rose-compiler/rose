@@ -116,7 +116,7 @@ void MemoryType::registerMemType(size_t offset, RsType * type)
     rs->printMessage("   ++ registerMemType at offset: " + ToString(offset) + "  type: "+type->getName());
 
     bool types_merged = checkAndMergeMemType(offset, type );
-    rs->printMessage("   ++ types_merged: "+types_merged);
+    rs->printMessage("   ++ types_merged: " + ToString(types_merged));
 
     if( !types_merged ) {
         // type wasn't merged, some previously unknown portion of this
@@ -140,7 +140,9 @@ void MemoryType::forceRegisterMemType(size_t offset, RsType* type ) {
 
 bool MemoryType::checkAndMergeMemType(size_t offset, RsType * type)
 {
-    if(typeInfo.size() ==0) // no types registered yet
+  std::cerr << ">> checkAndMergeMemType " << typeInfo.size() << std::endl;
+
+    if (typeInfo.size() ==0) // no types registered yet
         return false;
 
     RuntimeSystem * rs = RuntimeSystem::instance();
@@ -320,7 +322,7 @@ MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(size_t from, size_t t
 
     // the same for the beginning, but there we need the previous map entry
     TiIter lb = typeInfo.lower_bound(from);
-    
+
     // end is the iterator which points to typeInfo with offset >= to
     TiIter ub = typeInfo.lower_bound(to);
 
@@ -480,6 +482,7 @@ void MemoryManager::allocateMemory(const MemoryType& alloc)
         return;
     }
 
+    std::cerr << "* insert  " << adrObj << " / " << szObj << "  ## " << mem.size() << std::endl;
     mem.insert(MemoryTypeSet::value_type(adrObj, alloc));
 }
 

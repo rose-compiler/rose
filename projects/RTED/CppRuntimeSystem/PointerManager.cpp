@@ -60,6 +60,8 @@ void PointerInfo::setTargetAddress(MemoryAddress newAddr, bool doChecks)
     // Check if newAddr points to valid mem-region
     MemoryType *    newMem = mm->findContainingMem(target, objsz);
 
+    std::cerr << "size(mm) = " << mm->getAllocationSet().size() << " / " << (newMem ? newMem->getAddress() : memAddr(0)) << std::endl;
+
     if (!newMem && !isNullAddr(newAddr)) //new address is invalid
     {
       std::stringstream ss;
@@ -83,6 +85,7 @@ void PointerInfo::setTargetAddress(MemoryAddress newAddr, bool doChecks)
     if (newMem)
     {
       // FIXME 2: This should really only check, and not merge
+      assert(newMem->getAddress() <= newAddr);
       newMem->checkAndMergeMemType(newAddr - newMem->getAddress(), baseType);
     }
 
