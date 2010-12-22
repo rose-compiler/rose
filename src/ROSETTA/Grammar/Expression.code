@@ -587,6 +587,10 @@ HEADER_UNARY_ADD_OPERATOR_END
 HEADER_SIZEOF_OPERATOR_START
  // Liao, 11/17/2009
  int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_SIZEOF_OPERATOR_END
 
 
