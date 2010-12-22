@@ -36,7 +36,7 @@ sub is_generated {
 
 # Return true if the given directory (with path) is the ROSE install directory.
 sub is_install {
-  return 0 unless -d $_[0] && $ENV{prefix}!="";
+  return 0 unless -d $_[0] && $ENV{prefix} ne "";
   local($_)  = abs_path(@_);
   my $prefix = abs_path($ENV{'prefix'});
   return 1 if $prefix eq $_;
