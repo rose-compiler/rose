@@ -2,6 +2,7 @@
 //Based on work by Justin Frye <jafrye@tamu.edu>
 
 #include "rose.h"
+#include "CallGraph.h"
 #include "staticSingleAssignment.h"
 #include "sageInterface.h"
 #include <map>
@@ -30,20 +31,6 @@ using namespace boost;
 //Initializations of the static attribute tags
 string StaticSingleAssignment::varKeyTag = "ssa_varname_KeyTag";
 StaticSingleAssignment::VarName StaticSingleAssignment::emptyName;
-
-bool StaticSingleAssignment::isFromLibrary(SgNode* node)
-{
-	Sg_File_Info* fi = node->get_file_info();
-	if (fi->isCompilerGenerated())
-		return true;
-	string filename = fi->get_filenameString();
-
-	if ((filename.find("include") != string::npos))
-	{
-		return true;
-	}
-	return false;
-}
 
 bool StaticSingleAssignment::isBuiltinVar(const VarName& var)
 {
@@ -192,11 +179,11 @@ void StaticSingleAssignment::run()
 	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
 	DefsAndUsesTraversal defUseTrav(this);
 
-	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition > (project, V_SgFunctionDefinition);
+	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
+	FunctionFilter functionFilter;
 	foreach (SgFunctionDefinition* func, funcs)
 	{
-		ROSE_ASSERT(func);
-		if (!isFromLibrary(func))
+		if (functionFilter(func->get_declaration()))
 		{
 			if (getDebug())
 				cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
@@ -1061,5 +1048,100 @@ StaticSingleAssignment::getConditionsForNodeExecution(SgNode* node, const vector
 	else
 	{
 		return result;
+	}
+}
+
+
+/** This function is experimentation with interprocedural analysis.*/
+void StaticSingleAssignment::interprocedural()
+{
+	//First, let's build a call graph. Our goal is to find an order in which to process the functions
+	//So that callees are processed before callers. This way we would have exact information at each call site
+	CallGraphBuilder cgBuilder(project);
+	FunctionFilter functionFilter;
+	cgBuilder.buildCallGraph(functionFilter);
+
+	SgIncidenceDirectedGraph* callGraph = cgBuilder.getGraph();
+
+	//Build a map from SgGraphNode* to the corresponding function definitions
+	unordered_map<SgFunctionDefinition*, SgGraphNode*> graphNodeToFunction;
+	set<SgGraphNode*> allNodes = callGraph->computeNodeSet();
+
+	foreach(SgGraphNode* graphNode, allNodes)
+	{
+		SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(graphNode->get_SgNode());
+		if (funcDecl == NULL)
+			continue;
+
+		funcDecl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
+		if (funcDecl == NULL)
+			continue;
+
+		SgFunctionDefinition* funcDef = funcDecl->get_definition();
+		graphNodeToFunction[funcDef] = graphNode;
+	}
+
+	//Find functions of interest
+	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
+
+	//For each function of interest, we will either find a root node or we will find a cycle.
+	//The call graph might be disconnected, so we have to find all the root nodes. Later we will
+	//Do a depth-first search starting at the root nodes in order to determine in which order to processs the functions
+	unordered_set<SgFunctionDefinition*> rootNodes;
+
+	foreach (SgFunctionDefinition* funcDef, funcs)
+	{
+		if (!functionFilter(funcDef->get_declaration()))
+			continue;
+
+		//Keep going up the graph until we hit a cycle or a root
+		unordered_set<SgFunctionDefinition*> visited;
+		unordered_set<SgFunctionDefinition*> worklist;
+		worklist.insert(funcDef);
+
+		while (!worklist.empty())
+		{
+			SgFunctionDefinition* currFunc = *worklist.begin();
+			worklist.erase(worklist.begin());
+			visited.insert(currFunc);
+
+			ROSE_ASSERT(graphNodeToFunction.count(currFunc) > 0);
+			SgGraphNode* graphNode = graphNodeToFunction[currFunc];
+
+			vector<SgGraphNode*> callers;
+			callGraph->getPredecessors(graphNode, callers);
+
+			int callersWithDefinitions = 0;
+
+			//Insert the callers into the worklist. If one of them has already been visited,
+			//we have recursion.
+			foreach(SgGraphNode* callerNode, callers)
+			{
+				SgFunctionDeclaration* callerDecl = isSgFunctionDeclaration(callerNode->get_SgNode());
+				ROSE_ASSERT(callerDecl != NULL);
+				callerDecl = isSgFunctionDeclaration(callerDecl->get_definingDeclaration());
+				if (callerDecl == NULL)
+					continue;
+				SgFunctionDefinition* caller = callerDecl->get_definition();
+
+				callersWithDefinitions++;
+
+				//If we detect a cycle (recursion), just add an arbitrary element of the cycle as a root
+				if (visited.count(caller) > 0)
+				{
+					rootNodes.insert(caller);
+					continue;
+				}
+
+				//Add the caller to the worklist
+				worklist.insert(caller);
+			}
+
+			//If this function has no callers, it's a root in the call graph
+			if (callersWithDefinitions == 0)
+			{
+				rootNodes.insert(currFunc);
+			}
+		}
 	}
 }
