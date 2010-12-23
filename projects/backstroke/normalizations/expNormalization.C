@@ -19,8 +19,11 @@ using namespace BackstrokeNormUtility;
 	
 SgFunctionDeclaration* normalizeEvent(SgFunctionDeclaration* func_decl)
 {
-	ROSE_ASSERT(func_decl->get_definingDeclaration() != NULL);
-	SgFunctionDefinition* def_normalized = isSgFunctionDeclaration(func_decl->get_definingDeclaration())->get_definition();
+	func_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
+	ROSE_ASSERT(func_decl != NULL);
+	ROSE_ASSERT(func_decl->get_definition() != NULL);
+
+	SgFunctionDefinition* def_normalized = func_decl->get_definition();
 
 	ExtractFunctionArguments::NormalizeTree(def_normalized);
 	BackstrokeNormUtility::normalize(def_normalized->get_body());
