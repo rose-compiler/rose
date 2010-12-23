@@ -11,28 +11,22 @@ int main(int argc, char * argv[])
     SgProject* project = frontend(argc, argv);
 	SgSourceFile* source_file = isSgSourceFile((*project)[0]);
 
-
     vector<SgFunctionDeclaration*> func_decls =
             BackstrokeUtility::querySubTree<SgFunctionDeclaration>(getFirstGlobalScope(project));
 
-	set<SgFunctionDeclaration*> decls;
-
     foreach (SgFunctionDeclaration* func_decl, func_decls)
 	{
-		//func_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
-
 		// Make sure every function is normalized once.
-		if (decls.count(func_decl) > 0)
+		if (func_decl != func_decl->get_firstNondefiningDeclaration())
 			continue;
-		decls.insert(func_decl);
+		
+		// Can't normalize functions that don't have bodies
+		if (func_decl->get_definingDeclaration() == NULL)
+			continue;
 
 		if (func_decl && func_decl->get_file_info()->isSameFile(source_file))
 		{
 			SgFunctionDeclaration* normalized_decl = BackstrokeNorm::normalizeEvent(func_decl);
-			if (normalized_decl)
-			{
-				insertStatementAfter(func_decl, normalized_decl);
-			}
 		}
 	}
 
