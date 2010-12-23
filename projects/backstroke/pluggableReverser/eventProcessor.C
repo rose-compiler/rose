@@ -112,6 +112,7 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
 	foreach(StatementReversalHandler* stmt_handler, stmt_handlers_)
 	{
 		vector<EvaluationResult> res = stmt_handler->evaluate(stmt, var_table);
+		ROSE_ASSERT(!res.empty());
 
 		foreach(EvaluationResult& r1, res)
 		{

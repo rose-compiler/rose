@@ -84,6 +84,7 @@ reverseEvents(EventProcessor* event_processor,
 		
 		// Here reverse the event function into several versions.
 		processed_event.fwd_rvs_events = event_processor->processEvent(processed_event.normalized_event);
+		ROSE_ASSERT(!processed_event.fwd_rvs_events.empty());
 
 		reverse_foreach (const FuncDeclPair& fwd_rvs_event, processed_event.fwd_rvs_events)
 		{
@@ -97,7 +98,7 @@ reverseEvents(EventProcessor* event_processor,
 		output.push_back(processed_event);
 		
 		cout << "Time used: " << t.elapsed() << endl;
-		cout << "Event \"" << get_name(processed_event.event) << "\" is processed successfully!\n";
+		cout << "Event \"" << get_name(processed_event.event) << "\" as processed successfully!\n";
 	}
 
 	// Declare all stack variables on top of the generated file.

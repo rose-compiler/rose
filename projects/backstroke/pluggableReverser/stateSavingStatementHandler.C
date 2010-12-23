@@ -117,10 +117,6 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 		cout << VariableRenaming::keyToString(name) << endl;
 	cout << "^^^\n";
 #endif
-
-	// If there is no variable modified in this statement, just return empty.
-	if (modified_vars.empty())
-		return results;
 	
 	VariableVersionTable new_table = var_table;
 	new_table.reverseVersionAtStatementStart(stmt);
