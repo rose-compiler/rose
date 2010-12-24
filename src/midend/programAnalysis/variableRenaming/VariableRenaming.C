@@ -386,10 +386,6 @@ void VariableRenaming::findGlobalVars()
     InitNameVec vars = SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName);
     foreach(InitNameVec::value_type& iter, vars)
     {
-        //Ignore library/compiler generated variables.
-        if(isFromLibrary(iter))
-            continue;
-
         //Check if we are in global scope.
         SgNode* scope = iter->get_scope();
         if(isSgGlobal(scope))
