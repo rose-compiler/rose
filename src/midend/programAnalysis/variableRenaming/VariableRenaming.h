@@ -204,9 +204,7 @@ public:
     /** A table mapping a name to a single node.
      */
     typedef boost::unordered_map<VarName, SgNode*> FirstDefTable;
-    /** A list of names.
-     */
-    typedef std::vector<VarName> GlobalTable;
+
     /** A vector of SgInitializedName*
      */
     typedef std::vector<SgInitializedName*> InitNameVec;
@@ -281,10 +279,6 @@ private:
      */
     NumNodeRenameTable numRenameTable;
 
-    /** A list of all the global varibales in the program.
-     */
-    GlobalTable globalVarList;
-
 public:
     VariableRenaming(SgProject* proj): project(proj), DEBUG_MODE(SgProject::get_verbose() > 0), DEBUG_MODE_EXTRA(SgProject::get_verbose() > 1){}
 
@@ -311,10 +305,6 @@ private:
      * @return The renumbering assigned to ver @ node.
      */
     int addRenameNumberForNode(const VarName& var, SgNode* node);
-    
-    /** Locate all global varibales and add them to the table.
-     */
-    void findGlobalVars();
 
     bool isBuiltinVar(const VarName& var);
 
@@ -351,13 +341,6 @@ private:
      * @param results TableEntry reference where results are stored.
      */
     void aggregatePreviousDefs(cfgNode curNode, TableEntry& results);
-
-    /** Inserts definition points for all global variables.
-     *
-     * This will insert definitions for all global variables at 2 places.
-     * 1. At the entry points of all functionDefinitions.
-     */
-    void insertGlobalVarDefinitions();
 
     /** Expand all member definitions (chained names) to define every name in the chain.
      *
@@ -416,6 +399,12 @@ private:
      * @return Whether any new uses were inserted.
      */
     bool expandMemberUses(cfgNode curNode);
+
+	/** Insert defs for functions that are declared outside the function scope. */
+	void insertDefsForExternalVariables(SgFunctionDeclaration* function);
+
+	/** Returns a set of all the variables names that have uses in the subtree. */
+	std::set<VarName> getVarsUsedInSubtree(SgNode* root);
 
     void printToDOT(SgSourceFile* file, std::ofstream &outFile);
     void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
@@ -529,19 +518,6 @@ public:
      * @return Use Table.
      */
     const DefUseTable& getUseTable() const { return useTable; }
-
-
-    /** Get the listing of global variables.
-     *
-     * @return Global Var List.
-     */
-    GlobalTable& getGlobalVarList(){ return globalVarList; }
-
-    /** Get the listing of global variables.
-     *
-     * @return Global Var List.
-     */
-    const GlobalTable& getGlobalVarList() const { return globalVarList; }
 
 
 
