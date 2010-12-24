@@ -264,13 +264,13 @@ bool VariableRenaming::isFromLibrary(SgNode* node)
 
 bool VariableRenaming::isBuiltinVar(const VarName& var)
 {
-    //Test if the variable is compiler generated.
-    if(var[0]->get_name().getString().find("__") == 0)
-    {
-        //We are compiler generated, return true.
-        return true;
-    }
-    return false;
+	string name = var[0]->get_name().getString();
+	if (name == "__func__" ||
+			name == "__FUNCTION__" ||
+			name == "__PRETTY_FUNCTION__")
+		return true;
+
+	return false;
 }
 
 bool VariableRenaming::isPrefixOfName(VarName name, VarName prefix)
@@ -307,12 +307,6 @@ void VariableRenaming::run()
     firstDefList.clear();
     nodeRenameTable.clear();
     numRenameTable.clear();
-    globalVarList.clear();
-
-    if(DEBUG_MODE)
-        cout << "Locating global variables." << endl;
-
-    findGlobalVars();
 
     if(DEBUG_MODE)
         cout << "Performing UniqueNameTraversal..." << endl;
@@ -352,13 +346,6 @@ void VariableRenaming::run()
         cout << "Finished DefUseTraversal." << endl;
 
     if(DEBUG_MODE)
-        cout << "Inserting global variable definitions." << endl;
-
-    //Insert the global variables as being defined at every function entry and
-    //at every function call
-    insertGlobalVarDefinitions();
-
-    if(DEBUG_MODE)
     {
         printOriginalDefTable();
     }
@@ -372,61 +359,113 @@ void VariableRenaming::run()
         ROSE_ASSERT(func);
         if(!isFromLibrary(func))
         {
+			if(DEBUG_MODE)
+				cout << "Inserting external variable definitions." << endl;
+			insertDefsForExternalVariables(func->get_declaration());
+
             if(DEBUG_MODE)
                 cout << "Running DefUse on function: " << func->get_declaration()->get_name().getString() << func << endl;
             runDefUse(func);
         }
     }
-
-    return;
 }
 
-void VariableRenaming::findGlobalVars()
+/** Insert defs for functions that are declared outside the function scope. */
+void VariableRenaming::insertDefsForExternalVariables(SgFunctionDeclaration* function)
 {
-    InitNameVec vars = SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName);
-    foreach(InitNameVec::value_type& iter, vars)
-    {
-        //Check if we are in global scope.
-        SgNode* scope = iter->get_scope();
-        if(isSgGlobal(scope))
-        {
-            //Since forward declaration parameters are inserted in global scope,
-            //Check if we are in a forward declaration
-            if(SageInterface::getEnclosingFunctionDeclaration(iter))
-            {
-                //We are in a declaration, so not a global var.
-                continue;
-            }
-            //Add the variable to the global scope and name it.
-            VarUniqueName *uName = new VarUniqueName(iter);
-            iter->setAttribute(VariableRenaming::varKeyTag, uName);
-            //Add to the global var list
-            globalVarList.push_back(uName->getKey());
-            if(DEBUG_MODE)
-                cout << "Added global variable [" << iter->get_name().getString() << "] - " << iter << endl;
-        }
-    }
+	ROSE_ASSERT(function->get_definition() != NULL);
+
+	set<VarName> usedNames = getVarsUsedInSubtree(function);
+
+	TableEntry& originalVarsAtFunctionEntry = originalDefTable[function->get_definition()];
+	TableEntry& expandedVarsAtFunctionEntry = expandedDefTable[function->get_definition()];
+
+	//Iterate over each used variable and check it it is declared outside of the function scope
+	foreach(const VarName& usedVar, usedNames)
+	{
+		VarName rootName;
+		rootName.assign(1, usedVar[0]);
+
+		SgScopeStatement* varScope = SageInterface::getScope(rootName[0]);
+		SgScopeStatement* functionScope = function->get_definition();
+
+		//If it is a local variable, there should be a def somewhere inside the function
+		if (varScope == functionScope || SageInterface::isAncestor(functionScope, varScope))
+		{
+			//We still need to insert defs for compiler-generated variables (e.g. __func__), since they don't have defs in the AST
+			if (!isBuiltinVar(rootName))
+				continue;
+		}
+		else if (isSgGlobal(varScope))
+		{
+			//Handle the case of declaring "extern int x" inside the function
+			//Then, x has global scope but it actually has a definition inside the function so we don't need to insert one
+			if (SageInterface::isAncestor(function->get_definition(), rootName[0]))
+			{
+				//When else could a var be declared inside a function and be global?
+				SgVariableDeclaration* varDecl = isSgVariableDeclaration(rootName[0]->get_parent());
+				ROSE_ASSERT(varDecl != NULL);
+				ROSE_ASSERT(varDecl->get_declarationModifier().get_storageModifier().isExtern());
+				continue;
+			}
+		}
+
+		//Are there any other types of external vars?
+		ROSE_ASSERT(isBuiltinVar(rootName) || isSgClassDefinition(varScope) || isSgNamespaceDefinitionStatement(varScope)
+				|| isSgGlobal(varScope));
+
+		//The variable is not in local scope; we need to insert a def for it at the function definition
+		for (size_t i = 0; i < usedVar.size(); i++)
+		{
+			//Create a new varName vector that goes from beginning to end - i
+			VarName newName;
+			newName.assign(usedVar.begin(), usedVar.end() - i);
+			if (originalVarsAtFunctionEntry[newName].empty())
+			{
+				originalVarsAtFunctionEntry[newName].push_back(function->get_definition());
+			}
+			ROSE_ASSERT(expandedVarsAtFunctionEntry.count(newName) == 0);
+		}
+	}
 }
 
-void VariableRenaming::insertGlobalVarDefinitions()
+/** Returns a set of all the variables names that have uses in the subtree. */
+set<VariableRenaming::VarName> VariableRenaming::getVarsUsedInSubtree(SgNode* root)
 {
-    if(DEBUG_MODE)
-        cout << "Global Var List size: " << globalVarList.size() << endl;
+	class CollectUsesVarsTraversal : public AstSimpleProcessing
+	{
+	public:
+		VariableRenaming* ssa;
 
-    //Iterate the function definitions and insert definitions for all global variables
-    std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
-    foreach(std::vector<SgFunctionDefinition*>::value_type& iter, funcs)
-    {
-        SgFunctionDefinition* func = iter;
-        ROSE_ASSERT(func);
+		//All the varNames that have uses in the function
+		set<VarName> usedNames;
 
-        //Iterate the global table insert a def for each name at the function definition
-        foreach(GlobalTable::value_type& entry, globalVarList)
-        {
-            //Add this function definition as a definition point of this variable
-            originalDefTable[func][entry].push_back(func);
-        }
-    }
+		void visit(SgNode* node)
+		{
+			DefUseTable::const_iterator defEntry = ssa->useTable.find(node);
+			if (defEntry != ssa->useTable.end())
+			{
+				foreach(TableEntry::value_type& varDefsPair, ssa->useTable[node])
+				{
+					usedNames.insert(varDefsPair.first);
+				}
+			}
+
+			defEntry = ssa->originalDefTable.find(node);
+			if (defEntry != ssa->originalDefTable.end())
+			{
+				foreach(TableEntry::value_type& varDefsPair, ssa->originalDefTable[node])
+				{
+					usedNames.insert(varDefsPair.first);
+				}
+			}
+		}
+	};
+
+	CollectUsesVarsTraversal usesTrav;
+	usesTrav.ssa = this;
+	usesTrav.traverse(root, preorder);
+	return usesTrav.usedNames;
 }
 
 void VariableRenaming::toDOT(const std::string fileName)
