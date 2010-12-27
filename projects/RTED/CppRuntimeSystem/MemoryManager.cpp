@@ -1,12 +1,9 @@
-#include "MemoryManager.h"
-
-#include <boost/foreach.hpp>
 #include <sstream>
 #include <iostream>
 
-#include "CppRuntimeSystem.h"
+#include "MemoryManager.h"
 
-// using namespace std;
+#include "CppRuntimeSystem.h"
 
 
 // -----------------------    MemoryType  --------------------------------------
@@ -23,8 +20,8 @@ myStream << t << std::flush;
 return myStream.str(); //returns the string form of the std::stringstream object
 }
 
-MemoryType::MemoryType(MemoryAddress _addr, size_t _size, bool _onStack, bool _fromMalloc, const SourcePosition & _pos)
-: startAddress(_addr), size(_size), onStack(_onStack), fromMalloc( _fromMalloc ), allocPos(_pos)
+MemoryType::MemoryType(MemoryAddress _addr, size_t _size, AllocKind wherehow, const SourcePosition & _pos)
+: startAddress(_addr), size(_size), initialized(_size, false), origin(wherehow), allocPos(_pos)
 {
   // not memory has been initialized by default
   // \why pp?
@@ -33,27 +30,7 @@ MemoryType::MemoryType(MemoryAddress _addr, size_t _size, bool _onStack, bool _f
   rs->printMessage( "	***** Allocate Memory ::: " + HexToString(_addr) +
 					          "  size:" + ToString(_size) + "  pos1:" + ToString(_pos.getLineInOrigFile())
                   );
-
-  initialized.assign(size, false);
 }
-
-MemoryType::MemoryType( MemoryAddress _addr,
-                        size_t _size,
-                        bool _onStack,
-                        bool _fromMalloc,
-                        const std::string& file,
-                        int line1,
-                        int line2
-                      )
-: startAddress(_addr), size(_size), onStack(_onStack), fromMalloc( _fromMalloc ),
-  allocPos(file,line1,line2)
-{}
-
-//~ MemoryType::MemoryType(MemoryAddress addr, bool _onStack)
-//~ : startAddress(addr), size(0), onStack(_onStack), allocPos("unknown",-1,-1)
-//~ {}
-
-MemoryType::~MemoryType() {}
 
 void MemoryType::resize( size_t new_size ) {
     assert( new_size >= size );
@@ -462,32 +439,29 @@ bool MemoryManager::existOverlappingMem(MemoryAddress addr, size_t size)
 
 
 
-void MemoryManager::allocateMemory(const MemoryType& alloc)
+MemoryType* MemoryManager::allocateMemory(const MemoryType& alloc)
 {
-    RuntimeSystem * rs = RuntimeSystem::instance();
     size_t          szObj = alloc.getSize();
+    MemoryAddress   adrObj = alloc.getAddress();
 
     if (szObj == 0)
     {
-        rs->violationHandler(RuntimeViolation::EMPTY_ALLOCATION,"Tried to call malloc/new with size 0\n");
-        return;
+        RuntimeSystem::instance()->violationHandler(RuntimeViolation::EMPTY_ALLOCATION,"Tried to call malloc/new with size 0\n");
+        return NULL;
     }
-
-    MemoryAddress   adrObj = alloc.getAddress();
 
     if (existOverlappingMem(adrObj, szObj))
     {
         // the start address of new chunk lies in already allocated area
-        rs->violationHandler(RuntimeViolation::DOUBLE_ALLOCATION);
-        return;
+        RuntimeSystem::instance()->violationHandler(RuntimeViolation::DOUBLE_ALLOCATION);
+        return NULL;
     }
 
-    std::cerr << "* insert  " << adrObj << " / " << szObj << "  ## " << mem.size() << std::endl;
-    mem.insert(MemoryTypeSet::value_type(adrObj, alloc));
+    return &mem.insert(MemoryTypeSet::value_type(adrObj, alloc)).first->second;
 }
 
 
-void MemoryManager::freeMemory(MemoryAddress addr, bool onStack, bool fromMalloc)
+void MemoryManager::freeMemory(MemoryAddress addr, MemoryType::AllocKind freekind)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
     MemoryType*     m = findContainingMem(addr, 1);
@@ -517,36 +491,32 @@ void MemoryManager::freeMemory(MemoryAddress addr, bool onStack, bool fromMalloc
     }
 
     // free stack memory explicitly (i.e. not via exitScope)
-    if(m->isOnStack() && !onStack)
+    MemoryType::AllocKind allockind = m->howCreated();
+
+    if (allockind != freekind)
     {
-        std::stringstream desc;
-        desc << "Stack memory was explicitly freed (0x"
-             << *m << ")" <<std::endl;
+      std::stringstream desc;
 
-        rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
-        return;
+      switch (allockind)
+      {
+        case MemoryType::StackAlloc:
+          desc << "Stack memory was explicitly freed (0x" << *m << ")" <<std::endl;
+          break;
+
+        case MemoryType::CStyleAlloc:
+          desc << "Memory allocated via malloc freed with delete or delete[] (0x"
+               << *m <<std::endl;
+          break;
+
+        default:
+          assert(allockind == MemoryType::CxxStyleAlloc);
+          desc << "Memory allocated via new freed with 'free' function (0x"
+               << *m << ")" <<std::endl;
+      }
+
+      rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
+      return;
     }
-
-    // memory was malloc-d, but freed via delete
-    if( m -> wasFromMalloc() && !fromMalloc ) {
-        std::stringstream desc;
-        desc << "Memory allocated via malloc freed with delete or delete[] (0x"
-             << *m <<std::endl;
-
-        rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
-        return;
-    }
-
-    // memory was created via new, but freed via 'free' function
-    if( !(m -> wasFromMalloc()) && fromMalloc ) {
-        std::stringstream desc;
-        desc << "Memory allocated via new freed with 'free' function (0x"
-             << *m << ")" <<std::endl;
-
-        rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
-        return;
-    }
-
 
     PointerManager* pm = rs->getPointerManager();
     MemoryAddress   from = m->getAddress();
@@ -561,13 +531,12 @@ void MemoryManager::freeMemory(MemoryAddress addr, bool onStack, bool fromMalloc
 
 
 
-void MemoryManager::checkAccess(MemoryAddress addr, size_t size, RsType * t, MemoryType * & mt, RuntimeViolation::Type vioType)
+MemoryType* MemoryManager::checkAccess(MemoryAddress addr, size_t size, RsType * t, RuntimeViolation::Type vioType)
 {
-    RuntimeSystem * rs = RuntimeSystem::instance();
+    RuntimeSystem*    rs = RuntimeSystem::instance();
+    MemoryType *const res = findContainingMem(addr,size);
 
-
-    mt = findContainingMem(addr,size);
-    if(!mt)
+    if(!res)
     {
         std::stringstream desc;
         desc << "Trying to access non-allocated MemoryRegion "
@@ -582,10 +551,12 @@ void MemoryManager::checkAccess(MemoryAddress addr, size_t size, RsType * t, Mem
         rs->violationHandler(vioType,desc.str());
     }
 
-    if(t) {
-        rs->printMessage("   ++ found memory addr : "+HexToString(addr)+" size:"+ToString(size));
-    	mt->registerMemType(addr - mt->getAddress(),t);
+    if (t) {
+      rs->printMessage("   ++ found memory addr : "+HexToString(addr)+" size:"+ToString(size));
+    	res->registerMemType(addr - res->getAddress(), t);
     }
+
+    return res;
 }
 
 
@@ -594,13 +565,10 @@ void MemoryManager::checkAccess(MemoryAddress addr, size_t size, RsType * t, Mem
 void MemoryManager::checkRead(MemoryAddress addr, size_t size, RsType * t)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
+    MemoryType    * mt = checkAccess(addr,size,t,RuntimeViolation::INVALID_READ);
+    assert(mt != NULL && mt->getAddress() <= addr);
 
-    MemoryType * mt = NULL;
-    checkAccess(addr,size,t,mt,RuntimeViolation::INVALID_READ);
-    assert(mt);
-
-    assert(mt->getAddress() <= addr);
-    int from = addr - mt->getAddress();
+    const int       from = addr - mt->getAddress();
 
     if(! mt->isInitialized(from, from +size) )
     {
@@ -620,22 +588,21 @@ void MemoryManager::checkWrite(MemoryAddress addr, size_t size, RsType * t)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
     rs->printMessage("   ++ checkWrite : "+HexToString(addr)+" size:"+ToString(size));
-    MemoryType * mt = NULL;
-    checkAccess(addr,size,t,mt,RuntimeViolation::INVALID_WRITE);
-    assert(mt);
 
-    assert(mt->getAddress() <= addr);
-    int from = addr - mt->getAddress();
+    MemoryType *    mt = checkAccess(addr,size,t,RuntimeViolation::INVALID_WRITE);
+    assert(mt && mt->getAddress() <= addr);
+
+    const int       from = addr - mt->getAddress();
+
     mt->initialize(from,from + size);
     rs->printMessage("   ++ checkWrite done.");
 }
 
 bool MemoryManager::isInitialized(MemoryAddress addr, size_t size)
 {
-    MemoryType * mt = NULL;
-    checkAccess(addr,size,NULL,mt,RuntimeViolation::INVALID_READ);
+    MemoryType* mt = checkAccess(addr,size,NULL,RuntimeViolation::INVALID_READ);
+    const int   offset = addr - mt->getAddress();
 
-    int offset = addr - mt->getAddress();
     return mt->isInitialized(offset,offset+size);
 }
 
@@ -651,78 +618,76 @@ bool MemoryManager::checkIfSameChunk( MemoryAddress addr1,
 		                                  RuntimeViolation::Type violation
                                     )
 {
-    RuntimeSystem * rs = RuntimeSystem::instance();
+  RuntimeSystem *        rs = RuntimeSystem::instance();
+  RuntimeViolation::Type access_violation = violation;
+  if (access_violation != RuntimeViolation::NONE) access_violation = RuntimeViolation::INVALID_READ;
 
-    MemoryType * mem1 = NULL;
-    MemoryType * mem2 = NULL;
+  MemoryType *           mem1 = checkAccess(addr1, typeSize, NULL, access_violation);
+  MemoryType *           mem2 = checkAccess(addr2, typeSize, NULL, access_violation);
 
-    RuntimeViolation::Type access_violation
-        = ( violation == RuntimeViolation::NONE )
-            ? RuntimeViolation::NONE
-            : RuntimeViolation::INVALID_READ;
-    checkAccess(addr1,typeSize,NULL,mem1, access_violation );
-    checkAccess(addr2,typeSize,NULL,mem2, access_violation );
+  if (  violation == RuntimeViolation::NONE
+     && !(mem1 && mem2)
+     )
+  {
+    return false;
+  }
 
-    if(     violation == RuntimeViolation::NONE
-            && !( mem1 && mem2 )) {
-        return false;
-    }
+  assert(mem1 && mem2);
 
-    assert(mem1 && mem2);
+  if (mem1 != mem2)
+  {
+      std::stringstream ss;
+      ss << "Pointer changed allocation block from "
+         << "0x" << std::hex << addr1 << " to "
+         << "0x" << std::hex << addr2 <<std::endl;
 
-    if(mem1 != mem2)
+      rs->violationHandler( violation, ss.str() );
+      return false;
+  }
+
+  // mem1 == mem2, so we retire mem2
+  mem2 = NULL;
+
+  const MemoryAddress   memaddr = mem1->getAddress();
+  int                   off1 = addr1 - memaddr;
+  int                   off2 = addr2 - memaddr;
+  RsType*               type1 = mem1 -> getTypeAt( off1, typeSize );
+  RsType*               type2 = mem1 -> getTypeAt( off2, typeSize );
+  std::auto_ptr<RsType> guard1(NULL);
+  std::auto_ptr<RsType> guard2(NULL);
+
+  if( !type1 ) {
+      type1 = mem1 -> computeCompoundTypeAt( off1, typeSize );
+      guard1.reset(type1);
+  }
+
+  if( !type2 ) {
+      type2 = mem1 -> computeCompoundTypeAt( off2, typeSize );
+      guard2.reset(type2);
+  }
+
+  assert( type1 );
+  assert( type2 );
+
+  bool failed = !type1->isConsistentWith( *type2 );
+
+  if (!failed)
+  {
+    RsArrayType* array = dynamic_cast< RsArrayType* >( type1 );
+
+    if (  array
+       && !(  off1 + array -> getByteSize() >= off2 + typeSize  // the array element might be after the array [ N ]...
+           && off2 >= off1 // ... or before it [ -1 ]
+           )
+       )
     {
-        std::stringstream ss;
-        ss << "Pointer changed allocation block from "
-           << "0x" << std::hex << addr1 << " to "
-           << "0x" << std::hex << addr2 <<std::endl;
-
-        rs->violationHandler( violation, ss.str() );
-        return false;
+      // out of bounds error (e.g. int[2][3], ref [0][3])
+      failed = true;
     }
+  }
 
-    MemoryType * mem = mem1;
-    int off1 = addr1 - mem->getAddress();
-    int off2 = addr2 - mem->getAddress();
-
-    RsType* type1 = mem1 -> getTypeAt( off1, typeSize );
-    RsType* type2 = mem2 -> getTypeAt( off2, typeSize );
-
-    std::vector< RsType* > to_delete;
-    if( !type1 ) {
-        type1 = mem1 -> computeCompoundTypeAt( off1, typeSize );
-        to_delete.push_back( type1 );
-    }
-
-    if( !type2 ) {
-        type2 = mem1 -> computeCompoundTypeAt( off2, typeSize );
-        to_delete.push_back( type2 );
-    }
-
-    assert( type1 );
-    assert( type2 );
-
-    bool failed = false;
-    if( type1 -> isConsistentWith( *type2 )) {
-
-        RsArrayType* array = dynamic_cast< RsArrayType* >( type1 );
-        if(		array
-				&& !(
-					// the array element might be after the array [ N ]...
-					off1 + array -> getByteSize() >= off2 + typeSize
-					// ... or before it [ -1 ]
-					&& off2 >= off1 ))
-            // out of bounds error (e.g. int[2][3], ref [0][3])
-            failed = true;
-    } else
-        failed = true;
-
-    if( failed )
-        failNotSameChunk( type1, type2, off1, off2, mem1, mem2, violation );
-
-    BOOST_FOREACH( RsType* target, to_delete ) {
-        delete target;
-    }
+  if (failed)
+    failNotSameChunk( type1, type2, off1, off2, mem1, mem1, violation );
 
 	return !failed;
 }

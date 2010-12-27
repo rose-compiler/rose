@@ -18,10 +18,10 @@ class PointerInfo;
 class VariablesType
 {
     public:
-        VariablesType(const std::string & name,
-                      const std::string & mangledName,
-                      const std::string & typeStr,
-                      MemoryAddress address);
+        //~ VariablesType(const std::string & name,
+                      //~ const std::string & mangledName,
+                      //~ const std::string & typeStr,
+                      //~ MemoryAddress address);
 
         VariablesType(const std::string & name,
                       const std::string & mangledName,

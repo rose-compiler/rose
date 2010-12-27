@@ -9,6 +9,18 @@ using namespace std;
 
 ostream& out = cout;
 
+static
+void freeMemory(RuntimeSystem* rs, MemoryAddress addr, MemoryType::AllocKind kind = MemoryType::CxxStyleAlloc)
+{
+  rs->freeMemory(addr, kind);
+}
+
+static
+void createMemory(RuntimeSystem* rs, MemoryAddress addr, size_t sz, MemoryType::AllocKind kind = MemoryType::CxxStyleAlloc, RsType* t = NULL)
+{
+  rs->createMemory(addr, sz, kind, t);
+}
+
 
 #define TEST_INIT( MSG)                               \
     out << "-- " << (MSG) << endl ;		      \
@@ -76,7 +88,7 @@ ostream& out = cout;
     var = (char*) malloc( SZ);                                      \
     strcpy( var, "         ");                                      \
     var[ N] = ' ';                                                  \
-    rs->createMemory( memAddr(var), SZ);                         \
+    createMemory(rs,  memAddr(var), SZ);                         \
                                                                     \
     /* haven't initialized var yet */                               \
     try { TRY_BODY }                                                \
@@ -99,21 +111,21 @@ ostream& out = cout;
     try { TRY_BODY }                                                \
     TEST_CATCH( RuntimeViolation::INVALID_WRITE);                   \
     var = (char*) malloc( badsz );                                  \
-    rs->createMemory( memAddr(var), badsz );                     \
+    createMemory(rs,  memAddr(var), badsz );                     \
     /* var isn't large enough */                                    \
     try { TRY_BODY }                                                \
     TEST_CATCH( RuntimeViolation::INVALID_WRITE);                   \
                                                                     \
-    rs->freeMemory( memAddr(var));                               \
+    freeMemory(rs,  memAddr(var));                               \
     var = (char*) realloc( var, oksz );                             \
-    rs->createMemory( memAddr(var), oksz );
+    createMemory(rs,  memAddr(var), oksz );
 
 #define TEST_STRING_CAT( var, oksz)                                 \
     /* haven't allocated var yet */                                 \
     try { TRY_BODY }                                                \
     TEST_CATCH( RuntimeViolation::INVALID_READ);                    \
     var = (char*) malloc( oksz );                                   \
-    rs->createMemory( memAddr(var), oksz );                      \
+    createMemory(rs,  memAddr(var), oksz );                      \
     var[ 0 ] = ' ';                                                 \
     var[ 1 ] = '\0';                                                \
     rs->checkMemWrite( memAddr(var), 2);                         \
@@ -145,7 +157,7 @@ ostream& out = cout;
 
 #define TEST_STRING_CLEANUP( var)                                   \
     free( var );                                                    \
-    rs->freeMemory( memAddr(var) );                              \
+    freeMemory(rs,  memAddr(var) );                              \
     var = NULL;
 
 // -------------------------------------- Memory Checker ------------------------------------------
@@ -155,11 +167,11 @@ void testSuccessfulMallocFree()
     TEST_INIT("Testing Successful Malloc Free");
     errorFound=false; /*tps unused variable - removing warning */
 
-    rs->createMemory(memAddr(42),10);
+    createMemory(rs, memAddr(42),10);
 
     rs->log() << "After creation" << endl;
     rs->printMemStatus();
-    rs->freeMemory(memAddr(42));
+    freeMemory(rs, memAddr(42));
 
     rs->log() << "After free" << endl;
     rs->printMemStatus();
@@ -171,13 +183,13 @@ void testFreeInsideBlock()
 {
     TEST_INIT("Testing Invalid Free in allocated Block");
 
-    rs->createMemory(memAddr(42),10);
+    createMemory(rs, memAddr(42),10);
 
-    try  {  rs->freeMemory(memAddr(44)); }
+    try  {  freeMemory(rs, memAddr(44)); }
     TEST_CATCH(RuntimeViolation::INVALID_FREE);
 
     //free the right one
-    rs->freeMemory(memAddr(42));
+    freeMemory(rs, memAddr(42));
 
     CLEANUP
 
@@ -188,13 +200,13 @@ void testInvalidFree()
 {
     TEST_INIT("Testing invalid Free outside allocated Block");
 
-    rs->createMemory(memAddr(42),10);
+    createMemory(rs, memAddr(42),10);
 
-    try  {  rs->freeMemory(memAddr(500));   }
+    try  {  freeMemory(rs, memAddr(500));   }
     TEST_CATCH(RuntimeViolation::INVALID_FREE)
 
     //free the right one
-    rs->freeMemory(memAddr(42));
+    freeMemory(rs, memAddr(42));
 
     CLEANUP
 }
@@ -204,16 +216,16 @@ void testInvalidStackFree()
     TEST_INIT("Testing invalid Free of stack memory");
 
     // freeing heap memory should be fine
-    rs->createMemory(memAddr(42),10);
-    rs->freeMemory(memAddr(42));
+    createMemory(rs, memAddr(42),10);
+    freeMemory(rs, memAddr(42));
 
     // but freeing stack memory is not okay
     rs->createStackMemory(memAddr(42),sizeof(int),"SgTypeInt");
-    try  {  rs->freeMemory(memAddr(42));   }
+    try  {  freeMemory(rs, memAddr(42));   }
     TEST_CATCH(RuntimeViolation::INVALID_FREE)
 
     // test cleanup
-    rs->freeMemory(memAddr(42),true);
+    freeMemory(rs, memAddr(42), MemoryType::StackAlloc);
 
     CLEANUP
 }
@@ -222,10 +234,10 @@ void testDoubleFree()
 {
     TEST_INIT("Testing Double Free");
 
-    rs->createMemory(memAddr(42),10);
-    rs->freeMemory(memAddr(42));
+    createMemory(rs, memAddr(42),10);
+    freeMemory(rs, memAddr(42));
 
-    try  {  rs->freeMemory(memAddr(42));  }
+    try  {  freeMemory(rs, memAddr(42));  }
     TEST_CATCH(RuntimeViolation::INVALID_FREE)
 
     CLEANUP
@@ -236,13 +248,13 @@ void testDoubleAllocation()
     TEST_INIT("Testing Double Allocation");
 
 
-    rs->createMemory(memAddr(42),10);
+    createMemory(rs, memAddr(42),10);
 
-    try{  rs->createMemory(memAddr(45),10);  }
+    try{  createMemory(rs, memAddr(45),10);  }
     TEST_CATCH(RuntimeViolation::DOUBLE_ALLOCATION)
 
 
-    rs->freeMemory(memAddr(42));
+    freeMemory(rs, memAddr(42));
 
     CLEANUP
 }
@@ -252,17 +264,17 @@ void testMemoryLeaks()
 {
     TEST_INIT("Testing detection of memory leaks");
 
-    rs->createMemory(memAddr(42),10);
-    rs->createMemory(memAddr(60),10);
-    rs->createMemory(memAddr(0),10);
+    createMemory(rs, memAddr(42),10);
+    createMemory(rs, memAddr(60),10);
+    createMemory(rs, memAddr(0),10);
 
-    rs->freeMemory(memAddr(60));
+    freeMemory(rs, memAddr(60));
 
     try{ rs->doProgramExitChecks(); }
     TEST_CATCH(RuntimeViolation::MEMORY_LEAK)
 
-    rs->freeMemory(memAddr(0));
-    rs->freeMemory(memAddr(42));
+    freeMemory(rs, memAddr(0));
+    freeMemory(rs, memAddr(42));
 
     CLEANUP
 }
@@ -271,7 +283,7 @@ void testEmptyAllocation()
 {
     TEST_INIT("Testing detection of empty allocation");
 
-    try { rs->createMemory(memAddr(12),0); }
+    try { createMemory(rs, memAddr(12),0); }
     TEST_CATCH(RuntimeViolation::EMPTY_ALLOCATION)
 
     CLEANUP
@@ -282,7 +294,7 @@ void testMemAccess()
 {
     TEST_INIT("Testing memory access checks");
 
-    rs->createMemory(memAddr(0),10);
+    createMemory(rs, memAddr(0),10);
 
     rs->checkMemWrite(memAddr(9),1);
     try { rs->checkMemWrite(memAddr(9),2); }
@@ -294,7 +306,7 @@ void testMemAccess()
     rs->checkMemWrite(memAddr(0), 5);
     rs->checkMemRead(memAddr(3), 2);
 
-    rs->freeMemory(memAddr(0));
+    freeMemory(rs, memAddr(0));
 
     CLEANUP
 }
@@ -304,20 +316,20 @@ void testMallocDeleteCombinations()
     TEST_INIT("Testing malloc/delete, new/free and similar combinations");
 
     // memory created via malloc
-    rs -> createMemory( memAddr(0x42), sizeof( long ), false, true );
+    createMemory(rs,  memAddr(0x42), sizeof( long ), MemoryType::CStyleAlloc );
     // can't be freed via non-free (e.g. delete)
-    try { rs->freeMemory( memAddr(0x42), false, false ); }
+    try { freeMemory(rs,  memAddr(0x42), MemoryType::CxxStyleAlloc ); }
     TEST_CATCH( RuntimeViolation::INVALID_FREE )
     // but can be freed via free
-    rs->freeMemory( memAddr(0x42), false, true );
+    freeMemory(rs,  memAddr(0x42), MemoryType::CStyleAlloc );
 
     // memory created via new
-    rs -> createMemory( memAddr(0x42), sizeof( long ), false, false );
+    createMemory(rs,  memAddr(0x42), sizeof( long ), MemoryType::CxxStyleAlloc );
     // can't be freed via free
-    try { rs->freeMemory( memAddr(0x42), false, true ); }
+    try { freeMemory(rs,  memAddr(0x42), MemoryType::CStyleAlloc ); }
     TEST_CATCH( RuntimeViolation::INVALID_FREE )
     // but can be freed via delete
-    rs->freeMemory( memAddr(0x42), false, false );
+    freeMemory(rs,  memAddr(0x42), MemoryType::CxxStyleAlloc );
 
     CLEANUP
 }
@@ -502,8 +514,8 @@ void testImplicitScope()
     TEST_INIT("Testing detection of lost mem-regions");
     TypeSystem * ts = rs->getTypeSystem();
 
-    rs->createMemory(memAddr(10), 2*sizeof(int));
-    rs->createMemory(memAddr(18), 2*sizeof(int));
+    createMemory(rs, memAddr(10), 2*sizeof(int));
+    createMemory(rs, memAddr(18), 2*sizeof(int));
 
     MemoryAddress addr = memAddr(100);
     int           ptrSize = sizeof(void*);
@@ -522,8 +534,8 @@ void testImplicitScope()
         rs->endScope();
 
         /*
-        rs->freeMemory(10);
-        rs->freeMemory(18);
+        freeMemory(rs, 10);
+        freeMemory(rs, 18);
         rs->registerPointerChange("p1_to_10",NULL);
         rs->registerPointerChange("p1_to_20",NULL);
         */
@@ -535,8 +547,8 @@ void testImplicitScope()
 
     rs->endScope();
 
-    rs->freeMemory(memAddr(10));
-    rs->freeMemory(memAddr(18));
+    freeMemory(rs, memAddr(10));
+    freeMemory(rs, memAddr(18));
 
     CLEANUP
 }
@@ -554,8 +566,8 @@ void testLostMemRegionFromDoublePointer()
     MemoryAddress heap_addr_outer = memAddr(0x42);
     MemoryAddress heap_addr_inner = memAddr(0x24601);
 
-    rs -> createMemory( heap_addr_outer, 2 * sizeof( int* ));
-    rs -> createMemory( heap_addr_inner, 2 * sizeof( int ));
+    createMemory(rs,  heap_addr_outer, 2 * sizeof( int* ));
+    createMemory(rs,  heap_addr_inner, 2 * sizeof( int ));
 
     // int** ptr;
     rs -> createVariable( var_addr, "int**", "mangled_int**", int_ptr_ptr );
@@ -568,11 +580,11 @@ void testLostMemRegionFromDoublePointer()
     rs -> registerPointerChange( heap_addr_outer, heap_addr_inner, false );
 
 
-    try{ rs -> freeMemory( heap_addr_outer ); }
+    try{ freeMemory(rs,  heap_addr_outer ); }
     TEST_CATCH( RuntimeViolation::MEM_WITHOUT_POINTER )
 
-    rs -> freeMemory( heap_addr_inner );
-    rs -> freeMemory( heap_addr_outer );
+    freeMemory(rs,  heap_addr_inner );
+    freeMemory(rs,  heap_addr_outer );
 
     CLEANUP
 }
@@ -581,8 +593,8 @@ void testPointerChanged()
 {
     TEST_INIT("Pointer Tracking test: Pointer changes chunks");
 
-    rs->createMemory(memAddr(10), 2*sizeof(int));
-    rs->createMemory(memAddr(18), 2*sizeof(int));
+    createMemory(rs, memAddr(10), 2*sizeof(int));
+    createMemory(rs, memAddr(18), 2*sizeof(int));
 
     TypeSystem * ts = rs->getTypeSystem();
 
@@ -607,8 +619,8 @@ void testPointerChanged()
         rs->checkpoint(SourcePosition());
         rs->registerPointerChange("mangled_p1_to_18", memAddr(18+sizeof(int)));
 
-        rs->freeMemory(memAddr(10));
-        rs->freeMemory(memAddr(18));
+        freeMemory(rs, memAddr(10));
+        freeMemory(rs, memAddr(18));
     rs->endScope();
 
 
@@ -752,8 +764,8 @@ void testArrayAccess()
     TypeSystem * ts = rs->getTypeSystem();
 
     MemoryAddress heapAddr = memAddr(0x42);
-    rs->createMemory(heapAddr,10*sizeof(int));
-    rs->createMemory(heapAddr+10*sizeof(int),10); //allocate second chunk directly afterwards
+    createMemory(rs, heapAddr,10*sizeof(int));
+    createMemory(rs, heapAddr+10*sizeof(int),10); //allocate second chunk directly afterwards
 
     rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::Exit );
     rs->beginScope("Scope");
@@ -777,8 +789,8 @@ void testArrayAccess()
     try { rs->registerPointerChange(pointerAddr, heapAddr - sizeof(int),true); }
     TEST_CATCH ( RuntimeViolation::INVALID_READ )
 
-    rs->freeMemory(heapAddr);
-    rs->freeMemory(heapAddr+10*sizeof(int));
+    freeMemory(rs, heapAddr);
+    freeMemory(rs, heapAddr+10*sizeof(int));
 
     rs->endScope();
     rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::InvalidatePointer );
@@ -799,8 +811,8 @@ void testDoubleArrayHeapAccess()
     MemoryAddress heap_addr_outer = memAddr(0x42);
     MemoryAddress heap_addr_inner = memAddr(0x24601);
 
-    rs -> createMemory( heap_addr_outer, 2 * sizeof( int* ));
-    rs -> createMemory( heap_addr_inner, 2 * sizeof( int ));
+    createMemory(rs,  heap_addr_outer, 2 * sizeof( int* ));
+    createMemory(rs,  heap_addr_inner, 2 * sizeof( int ));
 
     // int** ptr;
     rs -> createVariable( var_addr, "int**", "mangled_int**", int_ptr_ptr );
@@ -813,8 +825,8 @@ void testDoubleArrayHeapAccess()
     rs -> registerPointerChange( heap_addr_outer, heap_addr_inner );
 
 
-    rs -> freeMemory( heap_addr_inner );
-    rs -> freeMemory( heap_addr_outer );
+    freeMemory(rs,  heap_addr_inner );
+    freeMemory(rs,  heap_addr_outer );
 
     CLEANUP
 }
@@ -827,10 +839,10 @@ void test_memcpy()
 
     MemoryAddress address = memAddr(0);
 
-    rs->createMemory( address += 4, 16);
+    createMemory(rs,  address += 4, 16);
     MemoryAddress ptr1 = address;
 
-    rs->createMemory( address += 16, 16);
+    createMemory(rs,  address += 16, 16);
     rs->checkMemWrite( address, 16);
     MemoryAddress ptr2 = address;
 
@@ -842,8 +854,8 @@ void test_memcpy()
     try { rs->check_memcpy( point_to<void>(ptr1), point_to<void>(ptr2 - 4), 16);}
     TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP)
 
-    rs->freeMemory( ptr1);
-    rs->freeMemory( ptr2);
+    freeMemory(rs,  ptr1);
+    freeMemory(rs,  ptr2);
 
     CLEANUP
 }
@@ -853,10 +865,10 @@ void test_memmove()
     TEST_INIT("Testing calls to memmove");
     MemoryAddress address = memAddr(0);
 
-    rs->createMemory( address += 4, 16);
+    createMemory(rs,  address += 4, 16);
     MemoryAddress ptr1 = address;
 
-    rs->createMemory( address += 16, 16);
+    createMemory(rs,  address += 16, 16);
     MemoryAddress ptr2 = address;
 
 
@@ -866,8 +878,8 @@ void test_memmove()
     rs->checkMemWrite( address, 16);
     rs->check_memmove( point_to<void>(ptr1), point_to<void>(ptr2), 16);
 
-    rs->freeMemory( ptr1);
-    rs->freeMemory( ptr2);
+    freeMemory(rs,  ptr1);
+    freeMemory(rs,  ptr2);
 
     CLEANUP
 }
@@ -1024,7 +1036,7 @@ void test_memcpy_strict_overlap()
     char* s2 = "here is string 2";
 
 
-    rs->createMemory( memAddr(s2), 16 * sizeof( char ));
+    createMemory(rs,  memAddr(s2), 16 * sizeof( char ));
     rs->checkMemWrite( memAddr(s2), 16 * sizeof( char ));
 
     s1 = &s2[ 7 ];
@@ -1034,7 +1046,7 @@ void test_memcpy_strict_overlap()
     try { rs->check_memcpy( s1, s2, 3);}
     TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP)
 
-    rs->freeMemory( memAddr(s2));
+    freeMemory(rs,  memAddr(s2));
 
     CLEANUP
 }
@@ -1049,9 +1061,9 @@ void test_meminit_nullterm_included()
     char s2[ 9 ] = "a string";
     char s3[ 9 ];
 
-    rs->createMemory( memAddr(s1), n);
-    rs->createMemory( memAddr(s2), n);
-    rs->createMemory( memAddr(s3), n);
+    createMemory(rs,  memAddr(s1), n);
+    createMemory(rs,  memAddr(s2), n);
+    createMemory(rs,  memAddr(s3), n);
 
     rs->checkMemWrite( memAddr(s2), n);
 
@@ -1059,9 +1071,9 @@ void test_meminit_nullterm_included()
     strcpy( s1, s2);
     rs->check_strcpy( (char*) s3, (const char*) s1);
 
-    rs->freeMemory( memAddr(s1));
-    rs->freeMemory( memAddr(s2));
-    rs->freeMemory( memAddr(s3));
+    freeMemory(rs,  memAddr(s1));
+    freeMemory(rs,  memAddr(s2));
+    freeMemory(rs,  memAddr(s3));
     CLEANUP
 }
 
@@ -1074,8 +1086,8 @@ void test_range_overlap()
     char s3[ 9 ] = "a string";
 
 
-    rs->createMemory( memAddr(s2), sizeof(s2));
-    rs->createMemory( memAddr(s3), sizeof(s3));
+    createMemory(rs,  memAddr(s2), sizeof(s2));
+    createMemory(rs,  memAddr(s3), sizeof(s3));
     rs->checkMemWrite( memAddr(s3), sizeof(s3));
     rs->check_strcpy( s2, s3);
 
@@ -1101,8 +1113,8 @@ void test_range_overlap()
     TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP)
 
 
-    rs->freeMemory( memAddr(s2));
-    rs->freeMemory( memAddr(s3));
+    freeMemory(rs,  memAddr(s2));
+    freeMemory(rs,  memAddr(s3));
 
     CLEANUP
 }
@@ -1137,7 +1149,7 @@ void testTypeSystemDetectNested()
     CHECKPOINT
     // Create Memory with first an A and then a B
     const MemoryAddress ADDR = memAddr(42);
-    rs->createMemory(ADDR,sizeof(A)+sizeof(B));
+    createMemory(rs, ADDR,sizeof(A)+sizeof(B));
     MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
     mt->registerMemType(0,ts->getTypeInfo("A"));
     CHECKPOINT
@@ -1179,7 +1191,7 @@ void testTypeSystemDetectNested()
     ts->print(rs->log());
 
     CHECKPOINT
-    rs->freeMemory(memAddr(42));
+    freeMemory(rs, memAddr(42));
 
     CLEANUP
 }
@@ -1199,7 +1211,7 @@ void testTypeSystemMerge()
 
     rs -> checkpoint( SourcePosition() );
     const MemoryAddress ADDR = memAddr(42);
-    rs->createMemory(ADDR,100);
+    createMemory(rs, ADDR,100);
 
         MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
         //first part in mem is a double
@@ -1217,7 +1229,7 @@ void testTypeSystemMerge()
 
 
     rs -> checkpoint( SourcePosition() );
-    rs->freeMemory(ADDR);
+    freeMemory(rs, ADDR);
 
     CLEANUP
 }
@@ -1242,7 +1254,7 @@ void testPartialTypeSystemArrayAccess() {
   //  size_t el2_a_offset = el2_offset + offsetof( Typ, a );
     size_t el2_b_offset = el2_offset + offsetof( Typ, b );
 
-    rs -> createMemory( Addr, 2 * sizeof( Typ ) );
+    createMemory(rs, Addr, 2 * sizeof( Typ ) );
     // register known memory
     //
     //  0       8   12  16
@@ -1261,7 +1273,7 @@ void testPartialTypeSystemArrayAccess() {
     CHECKPOINT
     mm -> checkIfSameChunk( Addr, Addr + el2_offset, (size_t)sizeof( Typ ));
 
-    rs -> freeMemory( Addr );
+    freeMemory(rs,  Addr );
     CLEANUP
 }
 
@@ -1293,7 +1305,7 @@ void testTypeSystemSubtypes() {
     assert( mt );
     assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
 
-    rs -> freeMemory( memAddr(0x42) );
+    freeMemory(rs,  memAddr(0x42) );
 
     // same test, but we call createObject in the reverse order
     rs -> createObject( memAddr(0x42), rs_sub );
@@ -1302,7 +1314,7 @@ void testTypeSystemSubtypes() {
     assert( mt );
     assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
 
-    rs -> freeMemory( memAddr(0x42) );
+    freeMemory(rs,  memAddr(0x42) );
 
     CLEANUP
 }
@@ -1340,7 +1352,7 @@ void testTypeSystemNested() {
     assert( mt );
     assert( rs_composite == mt -> getTypeAt( 0, mt -> getSize() ));
 
-    rs -> freeMemory( memAddr(0x42) );
+    freeMemory(rs,  memAddr(0x42) );
 
     CLEANUP
 }
@@ -1436,60 +1448,60 @@ int main(int, char**, char**)
         rs->setTestingMode(true);
         rs->setOutputFile("test_output.txt");
 
-        //~ testTypeConsistencyChecking();
-//~
-        //~ testTypeSystemDetectNested();
-        //~ testTypeSystemMerge();
-        //~ testPartialTypeSystemArrayAccess();
+        testTypeConsistencyChecking();
+
+        testTypeSystemDetectNested();
+        testTypeSystemMerge();
+        testPartialTypeSystemArrayAccess();
         testTypeSystemSubtypes();
-        //~ testTypeSystemNested();
-//~
-        //~ testSuccessfulMallocFree();
-//~
-        //~ testFreeInsideBlock();
-        //~ testInvalidFree();
-        //~ testInvalidStackFree();
-        //~ testDoubleFree();
-        //~ testDoubleAllocation();
-        //~ testMemoryLeaks();
-        //~ testEmptyAllocation();
-        //~ testMemAccess();
-        //~ testMallocDeleteCombinations();
-//~
-        //~ testFileDoubleClose();
-        //~ testFileDoubleOpen();
-        //~ testFileInvalidClose();
-        //~ testFileUnclosed();
-        //~ testFileInvalidAccess();
-//~
-        //~ testScopeFreesStack();
-        //~ testImplicitScope();
-//~
-        //~ testLostMemRegion();
-        //~ testLostMemRegionFromDoublePointer();
-        //~ testPointerChanged();
-        //~ testInvalidPointerAssign();
-        //~ testPointerTracking();
-        //~ testArrayAccess();
-        //~ testDoubleArrayHeapAccess();
-        //~ testMultidimensionalStackArrayAccess();
-//~
-//~
-        //~ test_memcpy();
-        //~ test_memmove();
-        //~ test_strcpy();
-        //~ test_strncpy();
-        //~ test_strcat();
-        //~ test_strncat();
-        //~ test_strchr();
-        //~ test_strpbrk();
-        //~ test_strspn();
-        //~ test_strstr();
-        //~ test_strlen();
-//~
-        //~ test_memcpy_strict_overlap();
-        //~ test_meminit_nullterm_included();
-        //~ test_range_overlap();
+        testTypeSystemNested();
+//~ //~
+        testSuccessfulMallocFree();
+//~ //~
+        testFreeInsideBlock();
+        testInvalidFree();
+        testInvalidStackFree();
+        testDoubleFree();
+        testDoubleAllocation();
+        testMemoryLeaks();
+        testEmptyAllocation();
+        testMemAccess();
+        testMallocDeleteCombinations();
+//~ //~
+        testFileDoubleClose();
+        testFileDoubleOpen();
+        testFileInvalidClose();
+        testFileUnclosed();
+        testFileInvalidAccess();
+//~ //~
+        testScopeFreesStack();
+        testImplicitScope();
+//~ //~
+        testLostMemRegion();
+        testLostMemRegionFromDoublePointer();
+        testPointerChanged();
+        testInvalidPointerAssign();
+        testPointerTracking();
+        testArrayAccess();
+        testDoubleArrayHeapAccess();
+        testMultidimensionalStackArrayAccess();
+//~ //~
+//~ //~
+        test_memcpy();
+        test_memmove();
+        test_strcpy();
+        test_strncpy();
+        test_strcat();
+        test_strncat();
+        test_strchr();
+        test_strpbrk();
+        test_strspn();
+        test_strstr();
+        test_strlen();
+//~ //~
+        test_memcpy_strict_overlap();
+        test_meminit_nullterm_included();
+        test_range_overlap();
 
 	rs->doProgramExitChecks();
 	printf("All tests passed. \n");

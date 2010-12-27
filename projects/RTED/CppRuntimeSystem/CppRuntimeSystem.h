@@ -222,14 +222,14 @@ class RuntimeSystem
          *                      verify that memory is used in a type-consistent
          *                      way.
          */
-        void createMemory(MemoryAddress addr, size_t size,bool onStack = false, bool fromMalloc = false, RsType * type=NULL);
+        void createMemory(MemoryAddress addr, size_t size, MemoryType::AllocKind kind, RsType * type=NULL);
         /// this version creates stackmemory, of given type
         void createStackMemory(MemoryAddress addr, size_t size,const std::string & type);
 
 
         /** Symmetric to @ref createMemory.
          */
-        void freeMemory(MemoryAddress startAddress, bool onStack = false, bool fromMalloc = false);
+        void freeMemory(MemoryAddress startAddress, MemoryType::AllocKind kind);
 
 
         /** Registers that a pointer, at address @c sourceAddress has just been

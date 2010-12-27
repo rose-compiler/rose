@@ -53,7 +53,7 @@ void PointerInfo::setTargetAddress(MemoryAddress newAddr, bool doChecks)
 
     target = newAddr;
 
-    if (isNullAddr(oldTarget))//inital assignment -> no checks possible
+    if (isNullAddr(oldTarget)) //inital assignment -> no checks possible
         doChecks=false;
 
 
@@ -326,7 +326,7 @@ bool PointerManager::checkForMemoryLeaks( MemoryAddress address, size_t type_siz
     MemoryManager * mm = RuntimeSystem::instance() -> getMemManager();
     MemoryType * mem = mm->findContainingMem( address, type_size );
 
-    if( mem && !mem->isOnStack() ) // no memory leaks on stack
+    if(mem && mem->howCreated() != MemoryType::StackAlloc) // no memory leaks on stack
     {
         // find other pointer still pointing to this region
         TargetToPointerMapIter begin = targetRegionIterBegin( mem -> getAddress() );

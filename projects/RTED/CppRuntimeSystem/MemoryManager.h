@@ -36,14 +36,9 @@ class MemoryType
         typedef std::map<size_t, RsType*> TypeInfoMap;
         typedef TypeInfoMap::iterator     TiIter;
 
+        enum AllocKind { StackAlloc = 0, CStyleAlloc = 1, CxxStyleAlloc = 2 };
 
-        MemoryType(MemoryAddress addr, size_t size, bool onStack, bool fromMalloc, const SourcePosition & pos);
-        MemoryType(MemoryAddress addr, size_t size, bool onStack, bool fromMalloc, const std::string & file, int line1, int line2);
-
-        // constructor which initialized only the address, used for comparison purposes
-        // MemoryType(MemoryAddress addr, bool onStack = false);
-
-        ~MemoryType();
+        MemoryType(MemoryAddress addr, size_t size, AllocKind kind, const SourcePosition& pos);
 
         /// Checks if an address lies in this memory chunk
         bool containsAddress(MemoryAddress addr);
@@ -60,8 +55,7 @@ class MemoryType
         MemoryAddress          getAddress() const { return startAddress; }
         size_t                 getSize()    const { return size; }
         const SourcePosition & getPos()     const { return allocPos; }
-        bool                   isOnStack()  const { return onStack; }
-        bool                   wasFromMalloc() const { return fromMalloc; }
+        AllocKind              howCreated() const { return origin; }
 
         void                   resize( size_t size );
 
@@ -133,8 +127,7 @@ class MemoryType
         const MemoryAddress startAddress; ///< address where memory chunk starts
         size_t              size;         ///< Size of allocation
         std::vector<bool>   initialized;  ///< stores for every byte if it was initialized
-        bool                onStack;      ///< Whether the memory lives on the stack or not (i.e. on the heap)
-        bool                fromMalloc;   ///< Whether the memory was allocated via a call to malloc (vice new)
+        AllocKind           origin;       ///< Where the memory is located and how the location was created
         SourcePosition      allocPos;     ///< Position in source file where malloc/new was called
 
 
@@ -181,11 +174,12 @@ class MemoryManager
         /// Destructor checks if there are still allocations which are not freed
         ~MemoryManager();
 
-        /// Adds new allocation, the MemoryType structure is freed by this class
-        void allocateMemory(const MemoryType& alloc);
+        /// \brief  Create a new allocation based on alloc
+        /// \return a pointer to the actual stored object (NULL in case something went wrong)
+        MemoryType* allocateMemory(const MemoryType& alloc);
 
         /// Frees allocated memory, throws error when no allocation is managed at this addr
-        void freeMemory(MemoryAddress addr, bool onStack=false, bool fromMalloc = false);
+        void freeMemory(MemoryAddress addr, MemoryType::AllocKind);
 
 
         /// Prints information about all currently allocated memory areas
@@ -264,11 +258,11 @@ class MemoryManager
          * @param size  size of chunk
          * @param t     if t != NULL, a accessMemWithType is called
          *              (which registers type and if there is already a type registered checks for consistency)
-         * @param mt    return value -> the allocated memory chunk
          * @param vio   the violation which is thrown if the chunk is not allocated
          *              (should be INVALID_READ or INVALID_WRITE)
+         * @return the allocated memory chunk
          */
-        void checkAccess(MemoryAddress addr, size_t size, RsType * t, MemoryType * & mt,RuntimeViolation::Type vio);
+        MemoryType* checkAccess(MemoryAddress addr, size_t size, RsType * t, RuntimeViolation::Type vio);
 
         /// Queries the map for a potential matching memory area
         /// finds the memory region with next lower or equal address

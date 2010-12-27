@@ -8,7 +8,7 @@
 
 using namespace std;
 
-
+/*
 VariablesType::VariablesType(const std::string & name_,
                              const std::string & mangledName_,
                              const std::string & typeStr_,
@@ -47,29 +47,30 @@ VariablesType::VariablesType(const std::string & name_,
     RuntimeSystem::instance()->createMemory(address,type->getByteSize(),true,false,type);
 
 }
+*/
 
-VariablesType::VariablesType(const std::string & name_,
-                             const std::string & mangledName_,
-                             RsType * type_,
-                             MemoryAddress address_) :
-    name(name_),
-    mangledName(mangledName_),
-    type(type_),
-    address(address_)
+VariablesType::VariablesType( const std::string & name_,
+                              const std::string & mangledName_,
+                              RsType * type_,
+                              MemoryAddress address_
+                            )
+: name(name_), mangledName(mangledName_), type(type_), address(address_)
 {
-  assert(type);
+  assert(type != NULL);
 
-  RsClassType* class_type = dynamic_cast< RsClassType* >( type );
-  if(     class_type != NULL
-          && RuntimeSystem::instance() -> getMemManager()
-              -> getMemoryType( address )) {
-      // When we create classes, the memory might be allocated in the
-      // constructor.  In these cases, it's fine to call createvar with
-      // existing memory
-      return;
+  RsClassType*   class_type = dynamic_cast< RsClassType* >( type );
+  RuntimeSystem* rs = RuntimeSystem::instance();
+  const bool     isCtorCall = (  class_type != NULL
+                              && rs->getMemManager()->getMemoryType(address) != NULL
+                              );
+
+  // When we create classes, the memory might be allocated in the
+  // constructor.  In these cases, it's fine to call createvar with
+  // existing memory
+  if (!isCtorCall)
+  {
+    rs->createMemory(address, type->getByteSize(), MemoryType::StackAlloc, type);
   }
-
-  RuntimeSystem::instance()->createMemory(address,type->getByteSize(),true,false,type);
 }
 
 
@@ -77,7 +78,7 @@ VariablesType::VariablesType(const std::string & name_,
 
 VariablesType::~VariablesType()
 {
-    RuntimeSystem::instance()->freeMemory(address, true);
+    RuntimeSystem::instance()->freeMemory(address, MemoryType::StackAlloc);
 }
 
 MemoryType * VariablesType::getAllocation() const

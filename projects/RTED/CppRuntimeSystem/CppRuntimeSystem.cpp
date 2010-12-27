@@ -212,35 +212,35 @@ void RuntimeSystem::clearStatus()
 // --------------------- Mem Checking ---------------------------------
 
 
-void RuntimeSystem::createMemory(MemoryAddress addr, size_t size, bool onStack, bool fromMalloc, RsType * type)
+void RuntimeSystem::createMemory(MemoryAddress addr, size_t size, MemoryType::AllocKind kind, RsType * type)
 {
   // "Warning: Stack Memory registered without type!"
-  assert(!onStack || type != NULL);
+  assert(kind != MemoryType::StackAlloc || type != NULL);
 
   // the created MemoryType is freed by memory manager
-  MemoryType mt( addr, size, onStack, fromMalloc, curPos);
+  const MemoryType mt(addr, size, kind, curPos);
+  MemoryType*      nb = memManager.allocateMemory(mt);
 
-  if(onStack)
+  if (kind == MemoryType::StackAlloc && nb != NULL)
   {
-    mt.registerMemType(0, type);
+    nb->registerMemType(0, type);
     assert(type->getByteSize() == size);
   }
-
-  memManager.allocateMemory(mt);
 }
 
 
 void RuntimeSystem::createStackMemory(MemoryAddress addr, size_t size, const std::string& strType)
 {
     RsType * type = typeSystem.getTypeInfo(strType);
-    createMemory(addr,size,true,false,type);
+
+    createMemory(addr, size, MemoryType::StackAlloc, type);
 }
 
 
 
-void RuntimeSystem::freeMemory(MemoryAddress startAddress, bool onStack, bool fromMalloc)
+void RuntimeSystem::freeMemory(MemoryAddress startAddress, MemoryType::AllocKind kind)
 {
-    memManager.freeMemory(startAddress, onStack, fromMalloc);
+    memManager.freeMemory(startAddress, kind);
 }
 
 
@@ -264,7 +264,25 @@ void RuntimeSystem::createVariable(MemoryAddress address,
                                    const string & typeString)
 {
     //TODO deprecated, because with typeString no pointer and arrays can be registered
-    stackManager.addVariable(new VariablesType(name,mangledName,typeString,address));
+    TypeSystem* ts = getTypeSystem();
+    RsType*     type = ts->getTypeInfo(typeString);
+
+    if(!type)
+    {
+        if(typeString == "SgArrayType")
+        {
+            //TODO just until registration is done correct
+            cerr << "Trying to register an array via createVariable!" << endl;
+            cerr << "Use createArray instead" << endl;
+            type = ts->getTypeInfo("SgPointerType");
+            // return;
+        }
+        else
+            assert(false);//unknown type
+    }
+
+    assert(type != NULL);
+    createVariable(address, name, mangledName, type);
 }
 
 void RuntimeSystem::createVariable(MemoryAddress address,
@@ -273,7 +291,7 @@ void RuntimeSystem::createVariable(MemoryAddress address,
                                    RsType *  type)
 {
   assert(type);
-    stackManager.addVariable(new VariablesType(name,mangledName,type,address));
+  stackManager.addVariable(new VariablesType(name,mangledName,type,address));
 }
 
 
@@ -319,26 +337,31 @@ void RuntimeSystem::createArray(    MemoryAddress address,
 
 void RuntimeSystem::createObject(MemoryAddress address, RsClassType* type )
 {
-    MemoryType* mt = memManager.findContainingMem(address);
-    if( mt ) {
-        if(     mt -> getAddress() == address
-                && type -> getByteSize() > mt -> getSize() ) {
+    assert(type != NULL);
+
+    const size_t szObj = type->getByteSize();
+    MemoryType*  mt = memManager.findContainingMem(address);
+
+    if (mt != NULL) {
+        if (szObj > mt -> getSize() && mt->getAddress() == address) {
             // Same address, larger size.  We assume that a base type was
             // registered, and now its subtype's constructor has been called
 
             mt -> resize( type -> getByteSize() );
             mt -> forceRegisterMemType( 0, type );
         }
+
+        // \pp what if mt->getAddress() == address?
         return;
     }
 
     // create a new entry
-    MemoryType newBlock(address, type -> getByteSize(), false, false, curPos);
+    const MemoryType newBlock(address, type->getByteSize(), MemoryType::CxxStyleAlloc, curPos);
+    MemoryType*      nb = memManager.allocateMemory(newBlock);
 
-    newBlock.registerMemType(0, type);
-
-    // after newBlock is set-up copy it into the memManager (last step!).
-    memManager.allocateMemory(newBlock);
+    // after the new block is allocated (and if the allocation succeeded)
+    //   register the proper memory layout
+    if (nb) nb->registerMemType(0, type);
 }
 
 
