@@ -18,120 +18,11 @@
 #include "reachingDef.h"
 #include "controlPredicate.h"
 #include "dataflowCfgFilter.h"
+#include "CallGraph.h"
+#include "uniqueNameTraversal.h"
 
 namespace ssa_private
 {
-
-/** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
- * This is used to assign absolute names to VarRefExp nodes during VariableRenaming.
- */
-class VarUniqueName : public AstAttribute
-{
-private:
-
-	/** The vector of initializedNames that uniquely identifies this VarRef.
-	 *  The node which this name is attached to should be the last in the list.
-	 */
-	std::vector<SgInitializedName*> key;
-
-	bool usesThis;
-
-public:
-
-	/** Constructs the attribute with an empty key.
-	 */
-	VarUniqueName() : key(), usesThis(false) { }
-
-	/** Constructs the attribute with value thisNode.
-	 *
-	 * The key will consist of only the current node.
-	 *
-	 * @param thisNode The node to use for the key.
-	 */
-	VarUniqueName(SgInitializedName* thisNode) : usesThis(false)
-	{
-		key.push_back(thisNode);
-	}
-
-	/** Constructs the attribute using the prefix vector and thisNode.
-	 *
-	 * The key will first be copied from the prefix value, and then the thisNode
-	 * value will be appended.
-	 *
-	 * @param prefix The prefix of the new name.
-	 * @param thisNode The node to append to the end of the new name.
-	 */
-	VarUniqueName(const std::vector<SgInitializedName*>& prefix, SgInitializedName* thisNode) : usesThis(false)
-	{
-		key.assign(prefix.begin(), prefix.end());
-		key.push_back(thisNode);
-	}
-
-	/** Copy the attribute.
-	 *
-	 * @param other The attribute to copy from.
-	 */
-	VarUniqueName(const VarUniqueName& other) : usesThis(false)
-	{
-		key.assign(other.key.begin(), other.key.end());
-	}
-
-	VarUniqueName* copy()
-	{
-		VarUniqueName* newName = new VarUniqueName(*this);
-		return newName;
-	}
-
-	/** Get a constant reference to the name.
-	 *
-	 * @return Constant Reference to the name.
-	 */
-	std::vector<SgInitializedName*>& getKey()
-	{
-		return key;
-	}
-
-	/** Set the value of the name.
-	 *
-	 * @param newKey The new name to use.
-	 */
-	void setKey(const std::vector<SgInitializedName*>& newKey)
-	{
-		key.assign(newKey.begin(), newKey.end());
-	}
-
-	bool getUsesThis()
-	{
-		return usesThis;
-	}
-
-	void setUsesThis(bool uses)
-	{
-		usesThis = uses;
-	}
-
-	/** Get the string representing this uniqueName
-	 *
-	 * @return The name string.
-	 */
-	std::string getNameString()
-	{
-		std::string name = "";
-		std::vector<SgInitializedName*>::iterator iter;
-		if (usesThis)
-			name += "this->";
-		for (iter = key.begin(); iter != key.end(); ++iter)
-		{
-			if (iter != key.begin())
-			{
-				name += ":";
-			}
-			name += (*iter)->get_name().getString();
-		}
-
-		return name;
-	}
-};
 
 /** This filter determines which function declarations get processed in the analysis. */
 struct FunctionFilter
@@ -350,6 +241,17 @@ private:
 		boost::unordered_map<SgFunctionDefinition*, SgGraphNode*> graphNodeToFunction,
 		std::vector<SgFunctionDefinition*> &processingOrder);
 
+	/** Add definitions at function call expressions for variables that are modified interprocedurally.
+	 * The definitions are inserted in the original def table.
+	 * @param funcDef function whose body should be queries for function calls
+	 * @param processed all the functions completely processed by SSA so far. If a callee is one of these functions,
+	 *			we can use exact information. */
+	void insertInterproceduralDefs(SgFunctionDefinition* funcDef, const boost::unordered_set<SgFunctionDefinition*>& processed,
+		ClassHierarchyWrapper* classHierarchy);
+
+	/** Given a call site and the callee function, return a list of functions modified by the callee that the
+	 * are also in the caller's scope. Note that the callee must have already been completely processed. */
+	std::set<VarName> getExactInterproceduralDefs(SgFunctionCallExp* callSite, SgFunctionDefinition* callee);
 
 	//------------ GRAPH OUTPUT FUNCTIONS ------------ //
 

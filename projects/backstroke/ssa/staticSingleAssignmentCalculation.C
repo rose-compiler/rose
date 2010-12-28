@@ -181,8 +181,10 @@ void StaticSingleAssignment::run(bool interprocedural)
 	//If interprocedural analysis is turned on, determine in which order we should process functions in order to
 	//process callees before calles whenever possible
 	vector<SgFunctionDefinition*> functionsToProcess;
+	auto_ptr<ClassHierarchyWrapper> classHierarchy;
 	if (interprocedural)
 	{
+		classHierarchy.reset(new ClassHierarchyWrapper(project));
 		functionsToProcess = calculateInterproceduralProcessingOrder();
 	}
 	else
@@ -222,6 +224,12 @@ void StaticSingleAssignment::run(bool interprocedural)
 		if (getDebug())
 			cout << "Finished DefsAndUsesTraversal..." << endl;
 
+		if (interprocedural)
+		{
+			insertInterproceduralDefs(func, functionsProcessed, classHierarchy.get());
+		}
+
+		//Insert definitions at the SgFunctionDefinition for external variables whose values flow inside the function
 		insertDefsForExternalVariables(func->get_declaration());
 
 		//Expand any member variable definition to also define its parents at the same node
