@@ -422,14 +422,15 @@ CallTargetSet::solveMemberFunctionPointerCall ( SgExpression *functionExp, Class
   left  = binaryExp->get_lhs_operand();
   right = binaryExp->get_rhs_operand();
 
-  printf ("binaryExp = %p = %s \n",binaryExp,binaryExp->class_name().c_str());
+  /*printf ("binaryExp = %p = %s \n",binaryExp,binaryExp->class_name().c_str());
   printf ("left  = %p = %s \n",left,left->class_name().c_str());
   printf ("right = %p = %s \n",right,right->class_name().c_str());
+  */
 
   // left side of the expression should have class type
   classType = isSgClassType( left->get_type()->findBaseType() );
   ROSE_ASSERT ( classType != NULL );
-  printf ("classType->get_declaration() = %p = %s \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
+  //printf ("classType->get_declaration() = %p = %s \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
 
   // DQ (2/23/2006): bug fix
   // classDefinition = isSgClassDeclaration( classType->get_declaration() )->get_definition();
@@ -480,7 +481,7 @@ CallTargetSet::solveMemberFunctionPointerCall ( SgExpression *functionExp, Class
             memberFunctionDeclaration->get_functionModifier().isPureVirtual() ) && !isSgThisExp( left ) )
       {
         SgClassDefinitionPtrList subclasses = classHierarchy->getSubclasses( classDefinition );
-        cout << "Virtual function " << memberFunctionDeclaration->get_mangled_name().str() << "\n";
+        //cout << "Virtual function " << memberFunctionDeclaration->get_mangled_name().str() << "\n";
         for ( SgClassDefinitionPtrList::iterator it_cls = subclasses.begin(); it_cls != subclasses.end(); it_cls++ )
         {
           SgClassDefinition *cls = isSgClassDefinition( *it_cls );
@@ -521,7 +522,7 @@ CallTargetSet::solveMemberFunctionPointerCall ( SgExpression *functionExp, Class
     }
   }
 
-  cout << "Function list size: " << functionList.size() << "\n";
+  //cout << "Function list size: " << functionList.size() << "\n";
   return functionList;
 }
 
