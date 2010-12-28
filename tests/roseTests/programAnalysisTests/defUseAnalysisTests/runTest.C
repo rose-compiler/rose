@@ -462,7 +462,7 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 1 -----------------------------------------
       argvList[1]=srcdir+"tests/test20.C";
       results.clear();      useresults.clear();
-      testOneFunction("::bar",argvList, debug, 5, results,useresults);
+      testOneFunction("::bar",argvList, debug, 7, results,useresults);
     }
 
     if (startNrInt<=21 || testAll) {
@@ -477,7 +477,7 @@ int main( int argc, char * argv[] )
       argvList[1]=srcdir+"tests/test22.C";
       results.clear();      useresults.clear();
       results.insert(pair<string,int>("b", 7));
-      testOneFunction("::func",argvList, debug, 12, results,useresults);
+      testOneFunction("::func",argvList, debug, 14, results,useresults);
     }
 
     if (startNrInt<=23 || testAll) {

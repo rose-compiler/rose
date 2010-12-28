@@ -133,9 +133,33 @@ public:
 	}
 };
 
+/** This filter determines which function declarations get processed in the analysis. */
+struct FunctionFilter
+{
+	bool operator()(SgFunctionDeclaration* funcDecl)
+	{
+		ROSE_ASSERT(funcDecl != NULL);
+
+		//Don't process any built-in functions
+		std::string filename = funcDecl->get_file_info()->get_filename();
+		if (filename.find("include") != string::npos)
+			return false;
+
+		//Exclude compiler generated functions
+		if (funcDecl->get_file_info()->isCompilerGenerated())
+			return false;
+
+		//We don't process functions that don't have definitions
+		if (funcDecl->get_definingDeclaration() == NULL)
+			return false;
+
+		return true;
+	}
+};
+
 } //namespace ssa_private
 
-/** Class that defines an VariableRenaming of a program
+/** Static single assignment analysis.
  *
  * Contains all the functionality to implement variable renaming on a given program.
  * For this class, we do not actually transform the AST directly, rather
@@ -309,6 +333,9 @@ private:
 	CfgPredicate getConditionsForNodeExecution(SgNode* node, const std::vector<FilteredCfgEdge>& stopEdges,
 		const std::multimap<SgNode*, FilteredCfgEdge> & controlDependencies, std::set<SgNode*>& visited);
 
+	/** This function is experimentation with interprocedural analysis.*/
+	void interprocedural();
+
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
 
@@ -398,17 +425,6 @@ public:
 	 * @return The name, or empty name.
 	 */
 	static VarName getVarName(SgNode* node);
-
-	/** Gets whether or not the initializedName is from a library.
-	 *
-	 * This method checks if the variable is compiler generated, and if its
-	 * filename has "/include/" in it. If so, it will return true. Otherwise, it returns
-	 * false.
-	 *
-	 * @param initName The SgInitializedName* to check.
-	 * @return true if initName is from a library, false if otherwise.
-	 */
-	static bool isFromLibrary(SgNode* node);
 
 	/** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
 	 *
