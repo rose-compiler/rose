@@ -145,8 +145,9 @@ struct FunctionFilter
 		if (filename.find("include") != string::npos)
 			return false;
 
-		//Exclude compiler generated functions
-		if (funcDecl->get_file_info()->isCompilerGenerated())
+		//Exclude compiler generated functions, but keep template instantiations
+		if (funcDecl->get_file_info()->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(funcDecl)
+				&& !isSgTemplateInstantiationMemberFunctionDecl(funcDecl))
 			return false;
 
 		//We don't process functions that don't have definitions
@@ -240,7 +241,10 @@ public:
 
 	~StaticSingleAssignment() { }
 
-	void run();
+	/** Run the analysis. If interprocedural analysis is not enabled, functionc all expressions (SgFunctionCallExp) will not
+	 * count as definitions of any variables.
+	 * @param interprocedural true to enable interprocedural analysis, false to perform no interprocedural analysis. */
+	void run(bool interprocedural);
 
 	static bool getDebug()
 	{
@@ -333,8 +337,21 @@ private:
 	CfgPredicate getConditionsForNodeExecution(SgNode* node, const std::vector<FilteredCfgEdge>& stopEdges,
 		const std::multimap<SgNode*, FilteredCfgEdge> & controlDependencies, std::set<SgNode*>& visited);
 
-	/** This function is experimentation with interprocedural analysis.*/
-	void interprocedural();
+	//------------ INTERPROCEDURAL ANALYSIS FUNCTIONS ------------ //
+
+	/** This function returns the order in which functions should be processed so that callees are processed before
+	 * callers whenever possible (this is sometimes not possible due to recursion). Internally, it builds a call graph
+	 * and constructs a depth-first ordering of it. */
+	std::vector<SgFunctionDefinition*> calculateInterproceduralProcessingOrder();
+
+	/** Add all the callees of the function to the processing list, then add the function itself. Does nothing
+	  * if the function is already in the list. */
+	void processCalleesThenFunction(SgFunctionDefinition* targetFunction, SgIncidenceDirectedGraph* callGraph,
+		boost::unordered_map<SgFunctionDefinition*, SgGraphNode*> graphNodeToFunction,
+		std::vector<SgFunctionDefinition*> &processingOrder);
+
+
+	//------------ GRAPH OUTPUT FUNCTIONS ------------ //
 
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
@@ -369,9 +386,7 @@ public:
 	void printOriginalDefTable();
 
 
-	/*
-	 *   Def/Use Table Access Functions
-	 */
+	//------------ DEF/USE TABLE ACCESS FUNCTIONS ------------ //
 
 	/** Get the table of definitions for every node.
 	 * These definitions are NOT propagated.
@@ -395,10 +410,10 @@ public:
 	/** Returns a list of all the variables used at this node. Note that uses don't propagate past an SgStatement.
 	  * Each use is mapped to the reaching definition to which the use corresponds. */
 	const NodeReachingDefTable& getUsesAtNode(SgNode* node) const;
-	
-	/*
-	 *   Static Utility Functions
-	 */
+
+
+	//------------ STATIC UTILITY FUNCTIONS FUNCTIONS ------------ //
+
 
 	/** Find if the given prefix is a prefix of the given name.
 	 *

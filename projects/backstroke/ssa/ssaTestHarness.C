@@ -174,7 +174,7 @@ int main(int argc, char** argv)
 
 	//Run the SSA analysis
 	StaticSingleAssignment ssa(project);
-	ssa.run();
+	ssa.run(true);
 
 	if (SgProject::get_verbose() > 0)
 	{
