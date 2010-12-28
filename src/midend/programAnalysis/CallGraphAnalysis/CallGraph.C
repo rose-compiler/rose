@@ -705,13 +705,13 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 std::vector<Properties*>
 CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit) { 
   std::vector<Properties*> props;
-  SgMemberFunctionDeclaration* decl = sgCtorInit->get_declaration();
-  if (decl != NULL) {
-    SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-    if (defDecl != NULL) {
-      props.push_back(new Properties(defDecl));
-    }
-  }
+  SgMemberFunctionDeclaration* memFunDecl = sgCtorInit->get_declaration();
+  ROSE_ASSERT(memFunDecl != NULL);
+  SgFunctionDeclaration* decl = isSgFunctionDeclaration(memFunDecl->get_firstNondefiningDeclaration());
+  if (decl == NULL)
+      decl = isSgFunctionDeclaration(memFunDecl->get_definingDeclaration());
+  ROSE_ASSERT(decl != NULL);
+  props.push_back(new Properties(decl));
   return props;
 }
 
