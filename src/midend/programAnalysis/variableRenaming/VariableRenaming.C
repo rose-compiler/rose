@@ -247,11 +247,15 @@ VariableRenaming::VarName VariableRenaming::getVarName(SgNode* node)
 }
 
 
-bool VariableRenaming::isFromLibrary(SgNode* node)
+bool VariableRenaming::isFromLibrary(SgFunctionDeclaration* node)
 {
   Sg_File_Info* fi = node->get_file_info();
-  if (fi->isCompilerGenerated())
+  if (fi->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(node)
+				&& !isSgTemplateInstantiationMemberFunctionDecl(node))
+  { 	
       return true;
+  }
+ 
   string filename = fi->get_filenameString();
   //cout << "Filename string '" << filename << "' for " << node->class_name() << node << endl;
   if ((filename.find("include") != std::string::npos))
@@ -357,7 +361,7 @@ void VariableRenaming::run()
     {
         SgFunctionDefinition* func = (*iter);
         ROSE_ASSERT(func);
-        if(!isFromLibrary(func))
+        if(!isFromLibrary(func->get_declaration()))
         {
 			if(DEBUG_MODE)
 				cout << "Inserting external variable definitions." << endl;

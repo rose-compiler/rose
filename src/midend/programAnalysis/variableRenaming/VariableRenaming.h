@@ -809,16 +809,16 @@ public:
      */
     static VarName getVarName(SgNode* node);
 
-    /** Gets whether or not the initializedName is from a library.
+    /** Gets whether or not the function is from a library.
      *
      * This method checks if the variable is compiler generated, and if its
      * filename has "/include/" in it. If so, it will return true. Otherwise, it returns
      * false.
      *
-     * @param initName The SgInitializedName* to check.
+     * @param node The function to check.
      * @return true if initName is from a library, false if otherwise.
      */
-    static bool isFromLibrary(SgNode* node);
+    static bool isFromLibrary(SgFunctionDeclaration* node);
 
     /** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
      *
