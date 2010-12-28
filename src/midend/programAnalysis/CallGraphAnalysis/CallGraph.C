@@ -1018,14 +1018,10 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
      inputFunctionDeclaration : isSgFunctionDeclaration( properties->functionDeclaration->get_definingDeclaration() )
     );
 
-  if( inputFunctionDeclaration == defDecl )
-    std::cout << " **** If you see this error message. Report to the ROSE team that a function declaration ****\n"
-      << " **** has the defining declaration erroneously attached to the nondef decl               ****\n";
-
   if(defDecl != NULL  && defDecl->get_definition() == NULL)
   {
     defDecl = NULL;
-    std::cout << " **** If you see this error message. Report to the ROSE team that a function declaration ****\n"
+    std::cerr << " **** If you see this error message. Report to the ROSE team that a function declaration ****\n"
       << " **** has a defining declaration but no definition                                       ****\n";
 
   }
