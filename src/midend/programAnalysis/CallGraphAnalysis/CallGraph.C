@@ -706,7 +706,14 @@ std::vector<Properties*>
 CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit) { 
   std::vector<Properties*> props;
   SgMemberFunctionDeclaration* memFunDecl = sgCtorInit->get_declaration();
-  ROSE_ASSERT(memFunDecl != NULL);
+  
+  //It's possibe to have a null constructor declaration, in case of compiler-generated
+  //default constructors.
+  if (memFunDecl == NULL)
+  {
+  	return props;
+  }
+
   SgFunctionDeclaration* decl = isSgFunctionDeclaration(memFunDecl->get_firstNondefiningDeclaration());
   if (decl == NULL)
       decl = isSgFunctionDeclaration(memFunDecl->get_definingDeclaration());
