@@ -264,7 +264,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
 
   Rose_STL_Container<FunctionData *>::iterator j = callGraphData.begin();
 
-  printf ("Build the node list callGraphData.size() = %zu \n",callGraphData.size());
+  //printf ("Build the node list callGraphData.size() = %zu \n",callGraphData.size());
 
   Rose_STL_Container<SgGraphNode*> nodeList;
   while ( j != callGraphData.end() )
