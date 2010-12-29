@@ -10,6 +10,7 @@
 //#include <boost/lexical_cast.hpp>
 #include "CallGraph.h"
 
+#include <err.h>
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
@@ -706,12 +707,15 @@ std::vector<Properties*>
 CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit) { 
   std::vector<Properties*> props;
   SgMemberFunctionDeclaration* memFunDecl = sgCtorInit->get_declaration();
-  ROSE_ASSERT(memFunDecl != NULL);
-  SgFunctionDeclaration* decl = isSgFunctionDeclaration(memFunDecl->get_firstNondefiningDeclaration());
-  if (decl == NULL)
-      decl = isSgFunctionDeclaration(memFunDecl->get_definingDeclaration());
-  ROSE_ASSERT(decl != NULL);
-  props.push_back(new Properties(decl));
+  if (memFunDecl != NULL) {
+      SgFunctionDeclaration* decl = isSgFunctionDeclaration(memFunDecl->get_firstNondefiningDeclaration());
+      if (decl == NULL)
+	  decl = isSgFunctionDeclaration(memFunDecl->get_definingDeclaration());
+      ROSE_ASSERT(decl != NULL);
+      props.push_back(new Properties(decl));
+  } else {
+      warnx("No declaration for SgConstructorInitializer");
+  }
   return props;
 }
 
