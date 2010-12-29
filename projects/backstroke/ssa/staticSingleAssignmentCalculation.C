@@ -582,12 +582,12 @@ void StaticSingleAssignment::buildUseTable(SgFunctionDefinition* func)
 }
 
 /** Returns a set of all the variables names that have uses in the subtree. */
-set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsUsedInSubtree(SgNode* root)
+set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsUsedInSubtree(SgNode* root) const
 {
 	class CollectUsesVarsTraversal : public AstSimpleProcessing
 	{
 	public:
-		StaticSingleAssignment* ssa;
+		const StaticSingleAssignment* ssa;
 
 		//All the varNames that have uses in the function
 		set<VarName> usedNames;

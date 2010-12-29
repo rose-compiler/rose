@@ -106,56 +106,121 @@ void StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 		vector<SgFunctionDeclaration*> callees;
 		CallTargetSet::getDeclarationsForExpression(callSite, classHierarchy, callees);
 
-		//Here we store all variables defined at the calls site
-		set<VarName> modifiedVars;
 
 		foreach(SgFunctionDeclaration* callee, callees)
 		{
-			SgFunctionDefinition* calleeDef = NULL;
-			if (callee->get_definingDeclaration() != NULL)
-			{
-				calleeDef = isSgFunctionDeclaration(callee->get_definingDeclaration())->get_definition();
-				if (calleeDef == NULL)
-				{
-					fprintf(stderr, "WARNING: Working around a ROSE bug. The function %s\n", callee->get_name().str());
-					fprintf(stderr, "has a defining declaration but no definition!");
-					continue;
-				}
-			}
-
-			//See if we can get exact information because the function has already been processed
-			if (calleeDef != NULL && processed.count(calleeDef) > 0)
-			{
-				//Yes, use exact info!
-				set<VarName> calleeModifiedVars = getExactInterproceduralDefs(callSite, calleeDef);
-				modifiedVars.insert(calleeModifiedVars.begin(), calleeModifiedVars.end());
-			}
-			else
-			{
-				//Nope, use an approximate bound :(
-
-			}
-
-			//Check if this is a member function. In this case, we should check if the "this" instance is modified
-			if (isSgMemberFunctionDeclaration(callee))
-			{
-				//TODO
-			}
+			processOneCallSite(callSite, callee, processed, classHierarchy);
 		}
-
-		//Insert the interprocedural defs at the call site
-		originalDefTable[callSite].insert(modifiedVars.begin(), modifiedVars.end());
 	}
 }
 
 
-set<StaticSingleAssignment::VarName> StaticSingleAssignment::getExactInterproceduralDefs(SgFunctionCallExp* callSite,
-									SgFunctionDefinition* callee)
+void StaticSingleAssignment::processOneCallSite(SgFunctionCallExp* callSite, SgFunctionDeclaration* callee,
+							const unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy)
+{
+	SgFunctionDefinition* calleeDef = NULL;
+	if (callee->get_definingDeclaration() != NULL)
+	{
+		calleeDef = isSgFunctionDeclaration(callee->get_definingDeclaration())->get_definition();
+		if (calleeDef == NULL)
+		{
+			fprintf(stderr, "WARNING: Working around a ROSE bug. The function %s\n", callee->get_name().str());
+			fprintf(stderr, "has a defining declaration but no definition!");
+		}
+	}
+
+	//See if we can get exact information because the function has already been processed
+	set<VarName> varsDefinedinCallee;
+	if (calleeDef != NULL && processed.count(calleeDef) > 0)
+	{
+		//Yes, use exact info!
+		varsDefinedinCallee = getVarsDefinedInSubtree(calleeDef);
+	}
+	else
+	{
+		//Nope, use an approximate bound :(
+	}
+
+	//Filter the variables that are not accessible from the caller and insert the rest as definitions
+	foreach (const VarName& definedVar, varsDefinedinCallee)
+	{
+		if (isVarInScope(definedVar, callSite))
+			originalDefTable[callSite].insert(definedVar);
+	}
+
+	//Check if this is a member function. In this case, we should check if the "this" instance is modified
+	SgMemberFunctionDeclaration* calleeMemFunDecl = isSgMemberFunctionDeclaration(callee);
+	if (calleeMemFunDecl != NULL && !calleeMemFunDecl->get_declarationModifier().get_storageModifier().isStatic())
+	{
+		//Get the LHS variable (e.g. x in the call site x.foo())
+		SgBinaryOp* functionRefExpression = isSgBinaryOp(callSite->get_function());
+		ROSE_ASSERT(functionRefExpression != NULL);
+		VarName lhsVar = getVarName(functionRefExpression->get_lhs_operand());
+
+		//It's possible that the member function is not operating on a variable; e.g. the function bar in foo().bar()
+		if (lhsVar != emptyName)
+		{
+			//If the callee has no definition, then we assume it modifies the object unless it is declared const
+			//This is also our loose estimate in case there is recursion
+			if (calleeDef == NULL || processed.count(calleeDef) == 0)
+			{
+				SgMemberFunctionType* calleeFuncType = isSgMemberFunctionType(calleeMemFunDecl->get_type());
+				ROSE_ASSERT(calleeFuncType != NULL);
+				if (!calleeFuncType->isConstFunc())
+				{
+					originalDefTable[callSite].insert(lhsVar);
+				}
+			}
+			//If the callee has a definition and we have already processed it we can use exact info to check if 'this' is modified
+			else
+			{
+				//Get the scope of variables in this class
+				SgClassDefinition* calleeClassScope = calleeMemFunDecl->get_class_scope();
+				ROSE_ASSERT(calleeClassScope != NULL);
+
+				//If any of the callee's defined variables is a member variable, then the "this" instance has been modified
+				foreach (const VarName& definedVar, varsDefinedinCallee)
+				{
+					//Only consider defs of member variables
+					SgScopeStatement* varScope = SageInterface::getScope(definedVar[0]);
+					if (!isSgClassDefinition(varScope))
+						continue;
+
+					//Only consider static variables
+					SgVariableDeclaration* varDecl = isSgVariableDeclaration(definedVar[0]->get_parent());
+					ROSE_ASSERT(varDecl != NULL);
+					if (varDecl->get_declarationModifier().get_storageModifier().isStatic())
+						continue;
+
+					//If the modified var is in the callee class scope, we know "this" has been modified
+					if (varScope == calleeClassScope)
+					{
+						originalDefTable[callSite].insert(lhsVar);
+						break;
+					}
+
+					//Even if the modified var is not in the callee's class scope, it could be an inherited variable
+					Rose_STL_Container<SgClassDefinition*> superclasses = classHierarchy->getAncestorClasses(calleeClassScope);
+					if (find(superclasses.begin(), superclasses.end(), varScope) != superclasses.end())
+					{
+						originalDefTable[callSite].insert(lhsVar);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	//Last thing: handle parameters passed by reference
+
+}
+
+set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsDefinedInSubtree(SgNode* root) const
 {
 	class CollectDefsTraversal : public AstSimpleProcessing
 	{
 	public:
-		StaticSingleAssignment* ssa;
+		const StaticSingleAssignment* ssa;
 
 		//All the varNames that have uses in the function
 		set<VarName> definedNames;
@@ -165,7 +230,7 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getExactInterproced
 			if (ssa->ssaLocalDefTable.find(node) == ssa->ssaLocalDefTable.end())
 				return;
 
-			NodeReachingDefTable& nodeDefs = ssa->ssaLocalDefTable[node];
+			const NodeReachingDefTable& nodeDefs = ssa->ssaLocalDefTable.find(node)->second;
 
 			foreach(const NodeReachingDefTable::value_type& varDefPair, nodeDefs)
 			{
@@ -176,20 +241,7 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getExactInterproced
 
 	CollectDefsTraversal defsTrav;
 	defsTrav.ssa = this;
-	defsTrav.traverse(callee, preorder);
+	defsTrav.traverse(root, preorder);
 
-	set<VarName> defs;
-
-	//Filter the variables that are not accessible from the caller
-	foreach (const VarName& definedVar, defsTrav.definedNames)
-	{
-		if (isVarInScope(definedVar, callSite))
-			defs.insert(definedVar);
-	}
-
-	//Add all variables that are aliased through function arguments
-	//E.g. variables passed by reference at the call site
-	//TODO:
-
-	return defs;
+	return defsTrav.definedNames;
 }

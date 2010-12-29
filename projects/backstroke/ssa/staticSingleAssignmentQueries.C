@@ -232,8 +232,12 @@ void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
 				string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
 
 
+				string label = escapeString(current.getNode()->class_name());
+				if (isSgFunctionDefinition(current.getNode()))
+					label += ":" + escapeString(isSgFunctionDefinition(current.getNode())->get_declaration()->get_name());
+
 				//Print this node
-				outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
+				outFile << id << " [label=\"<" << label << ">:" << current.getNode()
 						//Now we add the unique name information
 						<< ((name != "") ? "\\n" : "") << name
 						<< ((defUseStr != "") ? "\\n" : "") << defUseStr
@@ -378,9 +382,12 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 				//Copy out the string and trim off the last '\n'
 				string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
 
+				string label = escapeString(current.getNode()->class_name());
+				if (isSgFunctionDefinition(current.getNode()))
+					label += ":" + escapeString(isSgFunctionDefinition(current.getNode())->get_declaration()->get_name());
 
 				//Print this node
-				outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
+				outFile << id << " [label=\"<" << label << ">:" << current.getNode()
 						//Now we add the unique name information
 						<< ((name != "") ? "\\n" : "") << name
 						<< ((defUseStr != "") ? "\\n" : "") << defUseStr
@@ -450,11 +457,11 @@ VarUniqueName* StaticSingleAssignment::getUniqueName(SgNode* node)
 	return uName;
 }
 
-StaticSingleAssignment::VarName StaticSingleAssignment::getVarName(SgNode* node)
+const StaticSingleAssignment::VarName& StaticSingleAssignment::getVarName(SgNode* node)
 {
 	if (node == NULL || getUniqueName(node) == NULL)
 	{
-		return StaticSingleAssignment::VarName();
+		return emptyName;
 	}
 	return getUniqueName(node)->getKey();
 }

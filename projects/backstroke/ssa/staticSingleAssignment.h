@@ -195,8 +195,7 @@ private:
 	/** Insert defs for functions that are declared outside the function scope. */
 	void insertDefsForExternalVariables(SgFunctionDeclaration* function);
 
-	/** Returns a set of all the variables names that have uses in the subtree. */
-	std::set<VarName> getVarsUsedInSubtree(SgNode* root);
+
 
 	/** Find where phi functions need to be inserted and insert empty phi functions at those nodes.
 	 * This updates the IN part of the reaching def table with Phi functions.
@@ -249,9 +248,11 @@ private:
 	void insertInterproceduralDefs(SgFunctionDefinition* funcDef, const boost::unordered_set<SgFunctionDefinition*>& processed,
 		ClassHierarchyWrapper* classHierarchy);
 
-	/** Given a call site and the callee function, return a list of functions modified by the callee that the
-	 * are also in the caller's scope. Note that the callee must have already been completely processed. */
-	std::set<VarName> getExactInterproceduralDefs(SgFunctionCallExp* callSite, SgFunctionDefinition* callee);
+	/** Insert the interprocedural defs at a particular call site for a particular callee. This function may be called
+	 * multiple times for the same call site with different callees (e.g. in the case of virtual functions).
+	 * @param processed functions already processed by SSA */
+	void processOneCallSite(SgFunctionCallExp* callSite, SgFunctionDeclaration* callee,
+				const boost::unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy);
 
 	//------------ GRAPH OUTPUT FUNCTIONS ------------ //
 
@@ -313,6 +314,12 @@ public:
 	  * Each use is mapped to the reaching definition to which the use corresponds. */
 	const NodeReachingDefTable& getUsesAtNode(SgNode* node) const;
 
+	/** Returns a set of all the variables names that have uses in the subtree. */
+	std::set<VarName> getVarsUsedInSubtree(SgNode* root) const;
+
+	/** Given a node, traverses all its children in the AST and collects all the variable names that have definitions
+	 * in the subtree. */
+	std::set<VarName> getVarsDefinedInSubtree(SgNode* root) const;
 
 	//------------ STATIC UTILITY FUNCTIONS FUNCTIONS ------------ //
 
@@ -341,7 +348,7 @@ public:
 	 * @param node The node to get the name for.
 	 * @return The name, or empty name.
 	 */
-	static VarName getVarName(SgNode* node);
+	static const VarName& getVarName(SgNode* node);
 
 	/** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
 	 *
