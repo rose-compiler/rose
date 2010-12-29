@@ -172,9 +172,9 @@ int main(int argc, char** argv)
 		printf("\n\n ***** VariableRenaming Complete ***** \n\n");
 	}
 
-	//Run the SSA analysis
+	//Run the SSA analysis intraprocedurally
 	StaticSingleAssignment ssa(project);
-	ssa.run();
+	ssa.run(false);
 
 	if (SgProject::get_verbose() > 0)
 	{
@@ -187,7 +187,16 @@ int main(int argc, char** argv)
 	t.varRenaming = &varRenaming;
 	t.ssa = &ssa;
 	t.traverse(project, preorder);
-	
+
+	//Also test the interprocedural analysis
+	StaticSingleAssignment ssaInterprocedural(project);
+	ssaInterprocedural.run(true);
+
+	if (SgProject::get_verbose() > 0)
+	{
+		ssaInterprocedural.toFilteredDOT("interprocedural.dot");
+	}
+
 	return 0;
 }
 

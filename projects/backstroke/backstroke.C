@@ -26,7 +26,7 @@ FuncDeclPairs normalizeEvents(
 	foreach (SgFunctionDeclaration* decl, func_decls)
 	{
 		//This ensures that we process every function only once
-		if (decl != decl->get_firstNondefiningDeclaration())
+		if (decl != decl->get_definingDeclaration())
 			continue;
 
 		if (is_event(decl))
