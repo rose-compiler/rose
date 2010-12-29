@@ -98,14 +98,15 @@ void StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 									const boost::unordered_set<SgFunctionDefinition*>& processed,
 									ClassHierarchyWrapper* classHierarchy)
 {
-	vector<SgFunctionCallExp*> functionCalls = SageInterface::querySubTree<SgFunctionCallExp>(funcDef, V_SgFunctionCallExp);
+	vector<SgExpression*> functionCalls = SageInterface::querySubTree<SgExpression>(funcDef, V_SgFunctionCallExp);
+	vector<SgExpression*> constructorCalls = SageInterface::querySubTree<SgExpression>(funcDef, V_SgConstructorInitializer);
+	functionCalls.insert(functionCalls.end(), constructorCalls.begin(), constructorCalls.end());
 
-	foreach(SgFunctionCallExp* callSite, functionCalls)
+	foreach(SgExpression* callSite, functionCalls)
 	{
 		//First, see which functions this call site leads too
 		vector<SgFunctionDeclaration*> callees;
 		CallTargetSet::getDeclarationsForExpression(callSite, classHierarchy, callees);
-
 
 		foreach(SgFunctionDeclaration* callee, callees)
 		{
@@ -115,9 +116,10 @@ void StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 }
 
 
-void StaticSingleAssignment::processOneCallSite(SgFunctionCallExp* callSite, SgFunctionDeclaration* callee,
+void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFunctionDeclaration* callee,
 							const unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy)
 {
+	ROSE_ASSERT(isSgFunctionCallExp(callSite) || isSgConstructorInitializer(callSite));
 	SgFunctionDefinition* calleeDef = NULL;
 	if (callee->get_definingDeclaration() != NULL)
 	{
@@ -150,10 +152,12 @@ void StaticSingleAssignment::processOneCallSite(SgFunctionCallExp* callSite, SgF
 
 	//Check if this is a member function. In this case, we should check if the "this" instance is modified
 	SgMemberFunctionDeclaration* calleeMemFunDecl = isSgMemberFunctionDeclaration(callee);
-	if (calleeMemFunDecl != NULL && !calleeMemFunDecl->get_declarationModifier().get_storageModifier().isStatic())
+	if (calleeMemFunDecl != NULL
+			&& !calleeMemFunDecl->get_declarationModifier().get_storageModifier().isStatic()
+			&& isSgFunctionCallExp(callSite)) //No need to consider constructor initializers here, because they don't have a LHS var
 	{
 		//Get the LHS variable (e.g. x in the call site x.foo())
-		SgBinaryOp* functionRefExpression = isSgBinaryOp(callSite->get_function());
+		SgBinaryOp* functionRefExpression = isSgBinaryOp(isSgFunctionCallExp(callSite)->get_function());
 		ROSE_ASSERT(functionRefExpression != NULL);
 		VarName lhsVar = getVarName(functionRefExpression->get_lhs_operand());
 
@@ -213,35 +217,4 @@ void StaticSingleAssignment::processOneCallSite(SgFunctionCallExp* callSite, SgF
 
 	//Last thing: handle parameters passed by reference
 
-}
-
-set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsDefinedInSubtree(SgNode* root) const
-{
-	class CollectDefsTraversal : public AstSimpleProcessing
-	{
-	public:
-		const StaticSingleAssignment* ssa;
-
-		//All the varNames that have uses in the function
-		set<VarName> definedNames;
-
-		void visit(SgNode* node)
-		{
-			if (ssa->ssaLocalDefTable.find(node) == ssa->ssaLocalDefTable.end())
-				return;
-
-			const NodeReachingDefTable& nodeDefs = ssa->ssaLocalDefTable.find(node)->second;
-
-			foreach(const NodeReachingDefTable::value_type& varDefPair, nodeDefs)
-			{
-				definedNames.insert(varDefPair.first);
-			}
-		}
-	};
-
-	CollectDefsTraversal defsTrav;
-	defsTrav.ssa = this;
-	defsTrav.traverse(root, preorder);
-
-	return defsTrav.definedNames;
 }

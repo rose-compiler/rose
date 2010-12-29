@@ -250,8 +250,9 @@ private:
 
 	/** Insert the interprocedural defs at a particular call site for a particular callee. This function may be called
 	 * multiple times for the same call site with different callees (e.g. in the case of virtual functions).
+	 * The call site should either be a SgFunctionCallExp or SgConstructorInitializer
 	 * @param processed functions already processed by SSA */
-	void processOneCallSite(SgFunctionCallExp* callSite, SgFunctionDeclaration* callee,
+	void processOneCallSite(SgExpression* callSite, SgFunctionDeclaration* callee,
 				const boost::unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy);
 
 	//------------ GRAPH OUTPUT FUNCTIONS ------------ //

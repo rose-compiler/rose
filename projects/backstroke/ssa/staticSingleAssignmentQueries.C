@@ -507,3 +507,34 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getU
 		return usesIter->second;
 	}
 }
+
+set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsDefinedInSubtree(SgNode* root) const
+{
+	class CollectDefsTraversal : public AstSimpleProcessing
+	{
+	public:
+		const StaticSingleAssignment* ssa;
+
+		//All the varNames that have uses in the function
+		set<VarName> definedNames;
+
+		void visit(SgNode* node)
+		{
+			if (ssa->ssaLocalDefTable.find(node) == ssa->ssaLocalDefTable.end())
+				return;
+
+			const NodeReachingDefTable& nodeDefs = ssa->ssaLocalDefTable.find(node)->second;
+
+			foreach(const NodeReachingDefTable::value_type& varDefPair, nodeDefs)
+			{
+				definedNames.insert(varDefPair.first);
+			}
+		}
+	};
+
+	CollectDefsTraversal defsTrav;
+	defsTrav.ssa = this;
+	defsTrav.traverse(root, preorder);
+
+	return defsTrav.definedNames;
+}
