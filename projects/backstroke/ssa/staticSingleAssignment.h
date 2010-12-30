@@ -259,7 +259,7 @@ private:
 	 * "this" pointer. */
 	static bool varRequiresThisPointer(const VarName& var);
 
-	/** Returns true if the calle is acting on the same object instance as the caller. */
+	/** Returns true if the callee is acting on the same object instance as the caller. */
 	static bool isThisPointerSameInCallee(SgFunctionCallExp* callSite, SgMemberFunctionDeclaration* callee);
 
 	/** Returns true of the given expression evaluates to the 'this' pointer. False otherwise.

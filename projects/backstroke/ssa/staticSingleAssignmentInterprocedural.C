@@ -146,7 +146,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	//Filter the variables that are not accessible from the caller and insert the rest as definitions
 	foreach (const VarName& definedVar, varsDefinedinCallee)
 	{
-		//If the variable modified in the callee is a member variable, eee if it's on the same object instance
+		//If the variable modified in the callee is a member variable, see if it's on the same object instance
 		if (varRequiresThisPointer(definedVar))
 		{
 			ROSE_ASSERT(isSgMemberFunctionDeclaration(callee));
