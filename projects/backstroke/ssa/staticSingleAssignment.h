@@ -255,6 +255,18 @@ private:
 	void processOneCallSite(SgExpression* callSite, SgFunctionDeclaration* callee,
 				const boost::unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy);
 
+	/** Returns true if the variable is a nonstatic class variable, so it hass to be accessed by the
+	 * "this" pointer. */
+	static bool varRequiresThisPointer(const VarName& var);
+
+	/** Returns true if the calle is acting on the same object instance as the caller. */
+	static bool isThisPointerSameInCallee(SgFunctionCallExp* callSite, SgMemberFunctionDeclaration* callee);
+
+	/** Returns true of the given expression evaluates to the 'this' pointer. False otherwise.
+	 * This function is conservative; it will return false if it cannot statically determine that the
+	 * expression is equivalent to the 'This' pointe. */
+	static bool isThisPointer(SgExpression* expression);
+
 	//------------ GRAPH OUTPUT FUNCTIONS ------------ //
 
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
