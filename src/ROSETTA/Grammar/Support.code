@@ -8884,6 +8884,7 @@ SgInitializedName::get_mangled_name (void) const
 SgDeclarationStatement*
 SgInitializedName::get_declaration() const
    {
+     assert (this != NULL);
   // DQ (6/13/2005): This function assumes that the parents have been set!
   // so it should not be used in the EDG/Sage translation!
   // assert(get_parent() != NULL);

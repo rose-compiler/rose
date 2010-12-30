@@ -161,7 +161,37 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 
   if (scope!=NULL) 
   {
-    fixVariableDeclaration(varDecl,scope);
+    // Liao 12/13/2010
+    // Fortran subroutine/function parameters have corresponding variable declarations in the body
+    // we need to share the initialized names of the parameters instead of creating new ones
+    bool isFortranParameter = false; 
+    if (SageInterface::is_Fortran_language())
+    {
+      SgFunctionDefinition * f_def = getEnclosingProcedure (scope);
+      if (f_def != NULL)
+      {
+        SgSymbolTable * st = f_def->get_symbol_table();
+        ROSE_ASSERT (st != NULL);
+        SgVariableSymbol * v_symbol = st->find_variable(name); 
+        if (v_symbol != NULL)
+        {
+          // replace the default one with the one from parameter
+          SgInitializedName *old_initName = varDecl->get_decl_item (name);
+          ROSE_ASSERT (old_initName != NULL);
+          SgInitializedName * new_initName = v_symbol->get_declaration();
+          ROSE_ASSERT (new_initName != NULL);
+          SgInitializedNamePtrList  n_list= varDecl->get_variables();
+          std::replace (n_list.begin(), n_list.end(),old_initName, new_initName );
+          SgNode * old_parent = new_initName->get_parent();
+          ROSE_ASSERT  (old_parent != NULL);
+          ROSE_ASSERT  (isSgFunctionParameterList(old_parent) != NULL);
+          new_initName->set_parent(varDecl); // adjust parent from SgFunctionParameterList to SgVariableDeclaration
+          isFortranParameter = true;
+        }
+      }
+    }
+    if (! isFortranParameter)
+      fixVariableDeclaration(varDecl,scope);
   }
 #if 0
   // SgVariableDefinition should be created internally
@@ -225,6 +255,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
        varDecl->set_definingDeclaration(varDecl);
 #endif
 
+  //ROSE_ASSERT (varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
   return varDecl;
 }
 
@@ -712,6 +743,22 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
   // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): generated function func = %p \n",func);
 
+  // Liao 12/2/2010, special handling for Fortran functions and subroutines
+     if (SageInterface::is_Fortran_language() )
+     {
+       SgProcedureHeaderStatement * f_func = isSgProcedureHeaderStatement(func);
+       ROSE_ASSERT (f_func != NULL);
+       if (return_type == buildVoidType())
+         f_func->set_subprogram_kind(SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
+       else
+         f_func->set_subprogram_kind(SgProcedureHeaderStatement::e_function_subprogram_kind);
+       
+       // hide it from the unparser since fortran prototype func declaration is internally used by ROSE AST 
+       f_func->get_startOfConstruct()->unsetOutputInCodeGeneration();
+       f_func->get_endOfConstruct()->unsetOutputInCodeGeneration();
+       ROSE_ASSERT(f_func->get_startOfConstruct()->isOutputInCodeGeneration() == false);
+       ROSE_ASSERT(f_func->get_endOfConstruct()->isOutputInCodeGeneration() == false);
+     }
      return func;  
    }
 
@@ -879,6 +926,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
     //reuse function type, function symbol
 
 //    delete func_type;// bug 189
+
+    // Cong (10/25/2010): Make sure in this situation there is no defining declaration for this symbol.
+    //ROSE_ASSERT(func_symbol->get_declaration()->get_definingDeclaration() == NULL);
+
     func_type = func_symbol->get_declaration()->get_type();
     //func = new SgFunctionDeclaration(name,func_type,NULL);
     func = new actualFunction(name,func_type,NULL);
@@ -916,7 +967,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
    //TODO consider the difference between C++ and Fortran
   setParameterList(func,paralist);
          // fixup the scope and symbol of arguments,
-  SgInitializedNamePtrList argList = paralist->get_args();
+  SgInitializedNamePtrList& argList = paralist->get_args();
   Rose_STL_Container<SgInitializedName*>::iterator argi;
   for(argi=argList.begin(); argi!=argList.end(); argi++)
   {

@@ -627,20 +627,20 @@ Outliner::insert (SgFunctionDeclaration* func,
           ROSE_ASSERT(func->get_scope() != src_global);
         }
     // no need to build nondefining function prototype for Fortran, Liao, 3/11/2009    
-    if (SageInterface::is_Fortran_language() == true)
-      return;
+    //if (SageInterface::is_Fortran_language() == true)
+    //  return;
 #if 0
      printf ("************************************************************ \n");
      printf ("Building the outline function prototype in the ORIGINAL file \n");
      printf ("************************************************************ \n");
 #endif
      
-  // I don't understand what this is (appears to be a list of oulined function prototypes (non-defining declarations)).
+  // I don't understand what this is (appears to be a list of outlined function prototypes (non-defining declarations)).
   // It is used by both the insertGlobalPrototype() and 
      FuncDeclList_t friendFunctionPrototypeList;
 
-//     if (SageInterface::is_Fortran_language() == false)
-//        {
+     if (SageInterface::is_Fortran_language() == false)
+        {
 #if 1
        // Insert all necessary 'friend' declarations. This step will not build symbols for the symbol
        // table (although the build functions will they are removed in the insertFriendDecls() function).
@@ -648,7 +648,7 @@ Outliner::insert (SgFunctionDeclaration* func,
 #else
           printf ("Skipping the insertion of friend function declarations (testing only) \n");
 #endif
-//        }
+        }
    SgFunctionDeclaration* sourceFileFunctionPrototype = NULL;
    // insert a pointer to function declaration if use_dlopen is true
    // insert it into the original global scope
@@ -678,8 +678,10 @@ Outliner::insert (SgFunctionDeclaration* func,
      ROSE_ASSERT(sourceFileFunctionPrototypeSymbol != NULL);
      ROSE_ASSERT(sourceFileFunctionPrototypeSymbol->get_declaration() == sourceFileFunctionPrototype);
      ROSE_ASSERT(sourceFileFunctionPrototype->get_firstNondefiningDeclaration() == sourceFileFunctionPrototype);
+     // Liao 12/6/2010, this assertion is not right. SageInterface function is smart enough 
+     // to automatically set the defining declaration for the prototype
      // DQ (2/27/2009): Assert this as a test!
-     ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() == NULL);
+     //ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() == NULL);
    }
   // This is the outlined function prototype that is put into the separate file (when outlining is done to a separate file).
      SgFunctionDeclaration* outlinedFileFunctionPrototype = NULL;
@@ -750,7 +752,7 @@ Outliner::insert (SgFunctionDeclaration* func,
 
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
      // No forward declaration is needed for Fortran functions, Liao, 3/11/2009
-     if (SageInterface::is_Fortran_language() != true)
+     //if (SageInterface::is_Fortran_language() != true)
        ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
    }
 

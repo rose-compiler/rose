@@ -131,6 +131,21 @@ will be created to the "*.passed" target.  This allows these tests to be found e
 tests are expected to fail, their output is not emitted when they do so (this is like passing tests). However, the test harness
 does emit a single line message to indicate that the failure was ignored.
 
+=item promote = yes | no | FILE
+
+Automatically promoting tests from "may-fail" to "must-pass" is not always desired.  For instance, if a subproject under
+development has marked its tests as "promote", the developers of that subproject may want to automatically promote tests they
+run, but not have tests promoted when other developers run them.  Also, a continuous integration environment testing
+multiple architectures may have its own policies for deciding when a promotable test should be promoted.
+
+This "promote" property determines when a promotable test should be promoted.  A value of "yes" (the default) indicates that a
+test should be promoted to "must-pass" if the test passes, while a value of "no" indicates that promotable tests will not
+promote when they pass.  Any other value is interpreted as the name of a file, which if present causes the tests to be promoted
+when they pass, and if absent prevents their promotion.
+
+Note: The file, when present, should be empty.  We reserve the possibility of adding additional instructions to the file itself
+in order to control promotability in more detail.
+
 =back
 
 =head1 VARIABLES
@@ -262,7 +277,7 @@ sub help {
 # values are the values or an array of values.
 sub load_config {
   my($file,%vars) = @_;
-  my(%conf) = (answer=>'no', cmd=>[], diff=>'diff -u', disabled=>'no', filter=>'no', may_fail=>'no');
+  my(%conf) = (answer=>'no', cmd=>[], diff=>'diff -u', disabled=>'no', filter=>'no', may_fail=>'no', promote=>'yes');
   open CONFIG, "<", $file or die "$0: $file: $!\n";
   while (<CONFIG>) {
     s/\s*#.*//;
@@ -282,11 +297,21 @@ sub load_config {
   return %conf;
 }
 
+# Produce a temporary name for files, directories, etc.
 my $tempname = "AAA";
 sub tempname {
   my $name = sprintf "/tmp/th-%05d-%1s", $$, $tempname++;
   unlink $name;
   return $name;
+}
+
+# Returns true if a test should be promoted.  The argument is the value of the "promote" property.
+sub should_promote {
+  my($promote) = @_;
+  return 0 if $promote eq 'no';
+  return 1 if $promote eq 'yes';
+  return 1 if -f $promote;
+  return 0;
 }
 
 # Variables, augmented from the command-line
@@ -379,7 +404,7 @@ if ($config{may_fail} eq 'yes') {
   if ($status) {
     $ignored_failure = 1 if $status;
     $status = 0;
-  } elsif (0==$status && open CONFIG, "<", $config_file) {
+  } elsif (0==$status && should_promote($config{promote}) && open CONFIG, "<", $config_file) {
     my($s) = join "", <CONFIG>;
     close CONFIG;
     $s =~ s/^(\s*may_fail\s*=\s*)promote(\s*(#.*))?$/$1never$2/mg;
@@ -433,6 +458,8 @@ if ($config{may_fail} eq 'yes') {
     if ($status) {
       $ignored_failure = 1 if $status;
       $status = 0;
+    } elsif (!should_promote($config{promote})) {
+      # Not promoted
     } elsif ($lock) {
       $may_fail{$target} = 'no';
       open MAY_FAIL, ">", $file or do {

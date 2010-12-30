@@ -3151,6 +3151,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
                     variableSymbol = new SgVariableSymbol(initializedName);
 
                     astScopeStack.front()->insert_symbol(variableName,variableSymbol);
+                    ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
                   }
              }
 
@@ -3999,7 +4000,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
      SgAttributeSpecificationStatement *attributeSpecificationStatement = new SgAttributeSpecificationStatement();
 
-  // DQ (10/6/2008): It seems that we all of a sudden need thes to be set!
+  // DQ (10/6/2008): It seems that we all of a sudden need this to be set!
      attributeSpecificationStatement->set_definingDeclaration(attributeSpecificationStatement);
      attributeSpecificationStatement->set_firstNondefiningDeclaration(attributeSpecificationStatement);
 
