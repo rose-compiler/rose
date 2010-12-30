@@ -102,7 +102,7 @@ public:
     SgGraphNode* cfgForEnd(SgNode* node);
 
     //! Get the index of a CFG node.
-    int getIndex(SgGraphNode* node);
+    static int getIndex(SgGraphNode* node);
 
     //! Output the graph to a DOT file.
     void cfgToDot(SgNode* node, const std::string& file_name);
