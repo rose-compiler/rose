@@ -47,7 +47,7 @@ void testOneFunctionDEFUSE( std::string funcParamName,
 
     cout << "\n------------------------\nchecking for " << name << " -- " << funcName << " -- " << nodeNr << endl;
     if (maxNodes!=nrOfNodes) {
-      cout << " Error: Test should have " << nrOfNodes << " nodes. found: " << maxNodes << endl;
+      cerr << " Error: Test " << argvList[1] << " should have " << nrOfNodes << " nodes. found: " << maxNodes << endl;
       abort();
     }
     cout << " Test has nodes:  " << nrOfNodes <<  endl;
@@ -675,7 +675,7 @@ int main( int argc, char * argv[] )
 	// ------------------------------ TESTCASE 1 -----------------------------------------
 	argvList[1]=srcdir+"tests/test20.C";
 	resultsMe.clear();      useresults.clear();
-	testOneFunctionDEFUSE("::bar",argvList, debug, 5, resultsMe,useresults);
+	testOneFunctionDEFUSE("::bar",argvList, debug, 7, resultsMe,useresults);
       }
 
       if (startNrInt==21 || testAll) {
@@ -690,7 +690,7 @@ int main( int argc, char * argv[] )
 	argvList[1]=srcdir+"tests/test22.C";
 	resultsMe.clear();      useresults.clear();
 	resultsMe.insert(pair<string,int>("b", 7));
-	testOneFunctionDEFUSE("::func",argvList, debug, 12, resultsMe,useresults);
+	testOneFunctionDEFUSE("::func",argvList, debug, 14, resultsMe,useresults);
       }
 
       if (startNrInt==23 || testAll) {
@@ -712,8 +712,8 @@ int main( int argc, char * argv[] )
 	// ------------------------------ TESTCASE 24 -----------------------------------------
 	argvList[1]=srcdir+"tests/jacobi_seq.C";
 	resultsMe.clear();  useresults.clear();
-	testOneFunctionDEFUSE("::jacobi", argvList, debug, 548, resultsMe,useresults);
-	testOneFunctionDEFUSE("::main", argvList, debug, 548, resultsMe,useresults);
+	testOneFunctionDEFUSE("::jacobi", argvList, debug, 563, resultsMe,useresults);
+	testOneFunctionDEFUSE("::main", argvList, debug, 563, resultsMe,useresults);
       }
 
     }

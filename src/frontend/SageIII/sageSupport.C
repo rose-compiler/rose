@@ -3092,16 +3092,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // numberOfCommandLineArguments are parameters for the new command line that will be build
   // for EDG.
 
-  // Old information recorded here (but not useful any more):
-  // Complete Command line required to run ROSE Preprocessor (old version for SUN CC 4.2
-  // compiler worked out by Kei Davis at LANL):
-  //    ../src/rose -D__CPLUSPLUS -D__STDC__=0 -Dsun -Dsparc -Dunix -D__KCC -D__sun__ 
-  //         -D__sparc__ -D__unix__ -D_parc -D__unix -D__SVR4 -D_NO_LONGLONG 
-  //         -I/opt/SUNWspro/SC4.2/include/CC/ -I$APlusPlus/include test1.C
-
-  // DQ (1/17/2006): test this
-  // ROSE_ASSERT(get_fileInfo() != NULL);
-
   // printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s \n",get_file_info()->get_filenameString().c_str());
   // printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s = %s \n",get_file_info()->get_filenameString().c_str(),get_sourceFileNameWithPath().c_str());
      ROSE_ASSERT(get_file_info()->get_filenameString() == get_sourceFileNameWithPath());
@@ -3152,8 +3142,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      printf ("C_ConfigIncludeString   = %s \n",C_ConfigIncludeString.c_str());
 #endif
 
-  // JJW (12/11/2008): Change all of this to use vectors of strings, and add
-  // --edg_base_dir as a new ROSE-set flag
+  // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
      vector<string> commandLine;
 
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
@@ -3179,64 +3168,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // display("Called from SgFile::build_EDG_CommandLine");
 
-  // AS (03/08/2006) Added support for g++ preincludes
-  // Rose_STL_Container<std::string> listOfPreincludes;
-
-#if 0
-  // This functionality has been moved to before source name extraction since the 
-  // -include file will be extracted as a file and treated as a source file name 
-  // and the -include will not have an option.
-
-  // DQ (12/1/2006): Code added by Andreas (07/03/06) and moved to a new position 
-  // so that we could modify the string input from CXX_SPEC_DEF (configDefs).
-     string preinclude_string_target = "-include";
-     for (unsigned int i=1; i < argv.size(); i++)
-        {
-       // AS (070306) Handle g++ --include directives
-          std::string stack_arg(argv[i]);
-       // std::cout << "stack arg is: " << stack_arg << std::endl;
-          if( stack_arg.find(preinclude_string_target) <= 2)
-             {
-               i++;
-               ROSE_ASSERT(i<argv.size());
-               string currentArgument(argv[i]);
-
-            // Note that many new style C++ header files don't have a ".h" suffix
-               string headerSuffix = ".h";
-
-               int jlength = headerSuffix.size();
-               int length = currentArgument.size();
-               ROSE_ASSERT( length > jlength);
-               ROSE_ASSERT( ( currentArgument.compare(length - jlength, jlength, headerSuffix) == 0 ) || CommandlineProcessing::isSourceFilename(currentArgument));
-
-               string sourceFilePath = StringUtility::getPathFromFileName(currentArgument);
-               currentArgument = StringUtility::stripPathFromFileName(currentArgument);
-               if (sourceFilePath == "" )
-                    sourceFilePath = "./";
-               sourceFilePath = StringUtility::getAbsolutePathFromRelativePath(sourceFilePath);
-               currentArgument = sourceFilePath+"/"+currentArgument;
-
-            // std::cout << "Found preinclude : " << currentArgument << std::endl;
-
-               commandLine.push_back("--preinclude");
-               commandLine.push_back(currentArgument);
-             }
-        }
-#else
      SgProject* project = isSgProject(this->get_parent());
      ROSE_ASSERT (project != NULL);
-
-  // DQ (1/13/2009): The preincludeFileList was built if the -include <file> option was used
-     for (SgStringList::iterator i = project->get_preincludeFileList().begin(); i != project->get_preincludeFileList().end(); i++)
-        {
-       // Build the preinclude file list
-          ROSE_ASSERT(project->get_preincludeFileList().empty() == false);
-
-       // printf ("Building commandline: --preinclude %s \n",(*i).c_str());
-          commandLine.push_back("--preinclude");
-          commandLine.push_back(*i);
-        }
-#endif
 
      //AS(063006) Changed implementation so that real paths can be found later
      vector<string> includePaths;
@@ -3253,9 +3186,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
  
             // AS: Did changes to get absolute path
                std::string includeDirectorySpecifier =  argv[i].substr(2);
-#if 1
-               includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
-#endif               
+               includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );              
                includePaths.push_back(includeDirectorySpecifier);
              }
         }
@@ -3305,6 +3236,18 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
      commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
+
+  // DQ (1/13/2009): The preincludeFileList was built if the -include <file> option was used
+  // George Vulov (12/8/2010) Include the file rose_edg_required_macros_and_functions.h first, then the other preincludes
+     for (SgStringList::iterator i = project->get_preincludeFileList().begin(); i != project->get_preincludeFileList().end(); i++)
+        {
+       // Build the preinclude file list
+          ROSE_ASSERT(project->get_preincludeFileList().empty() == false);
+
+     //  printf ("Building commandline: --preinclude %s \n",(*i).c_str());
+          commandLine.push_back("--preinclude");
+          commandLine.push_back(*i);
+        }
 
   // DQ (12/2/2006): Both GNU and EDG determine the language mode from the source file name extension. 
   // In ROSE we also require that C files be explicitly specified to use the C language mode. Thus 
@@ -3939,6 +3882,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      printf ("Exiting at base of build_EDG_CommandLine() \n");
      ROSE_ABORT();
 #endif
+
+
    }
 
 // DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the 

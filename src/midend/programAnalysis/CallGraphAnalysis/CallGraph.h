@@ -90,12 +90,19 @@ namespace CallTargetSet
                                     ClassHierarchyWrapper* classHierarchy,
                                     Rose_STL_Container<Properties*>& propList);
 
-  // Populates functionList with definitions of all functions that may get called. This 
-  // is basically a wrapper around getPropertiesForExpression that extracts the 
-  // SgFunctionDefinition from the Properties object
+  //! Populates functionList with definitions of all functions that may get called. This
+  //! is basically a wrapper around getPropertiesForExpression that extracts the
+  //! SgFunctionDefinition from the Properties object. This returns only callees that have definitions -
+  //! to get all possible callees, use getDeclarationsForExpression
   void getDefinitionsForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<SgFunctionDefinition*>& defList);
+                                    Rose_STL_Container<SgFunctionDefinition*>& calleeList);
+
+  //! Populates functionList with declarations of all functions that may get called. This
+  //! is basically a wrapper around getPropertiesForExpression.
+  void getDeclarationsForExpression(SgExpression* exp,
+                                    ClassHierarchyWrapper* classHierarchy,
+                                    Rose_STL_Container<SgFunctionDeclaration*>& calleeList);
 
   // Gets a vector of SgExpressions that are associated with the current SgFunctionDefinition.
   // This functionality is necessary for virtual, interprocedural control flow graphs. However, 
@@ -264,7 +271,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
 
   Rose_STL_Container<FunctionData *>::iterator j = callGraphData.begin();
 
-  printf ("Build the node list callGraphData.size() = %zu \n",callGraphData.size());
+  //printf ("Build the node list callGraphData.size() = %zu \n",callGraphData.size());
 
   Rose_STL_Container<SgGraphNode*> nodeList;
   while ( j != callGraphData.end() )
