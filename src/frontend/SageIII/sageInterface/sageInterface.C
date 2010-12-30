@@ -1354,6 +1354,8 @@ SageInterface::get_name ( const SgExpression* expr )
              {
                const SgVarRefExp* varRef = isSgVarRefExp(expr);
                name = "var_ref_of_";
+               ROSE_ASSERT(varRef != NULL);
+               ROSE_ASSERT(varRef->get_symbol() != NULL);
                name += varRef->get_symbol()->get_name();
                break;
              }
