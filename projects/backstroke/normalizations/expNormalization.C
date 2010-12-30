@@ -17,145 +17,18 @@ using namespace SageInterface;
 using namespace BackstrokeUtility;
 using namespace BackstrokeNormUtility;
 	
-SgFunctionDeclaration* normalizeEvent(const SgFunctionDeclaration* func_decl)
+SgFunctionDeclaration* normalizeEvent(SgFunctionDeclaration* func_decl)
 {
-#if 0
-	ROSE_ASSERT(func_decl->get_definingDeclaration() == func_decl);
+	func_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
+	ROSE_ASSERT(func_decl != NULL);
+	ROSE_ASSERT(func_decl->get_definition() != NULL);
 
-    SgFunctionDeclaration* defining_decl = isSgFunctionDeclaration(func_decl->get_definingDeclaration());
-    ROSE_ASSERT(defining_decl && defining_decl->get_definition());
-	//ROSE_ASSERT(defining_decl->get_symbol_from_symbol_table());
-#endif
+	SgFunctionDefinition* def_normalized = func_decl->get_definition();
 
-	// Check if the function declaration passed in is not a constructor/destructor or overloaded operator.
-	const SgSpecialFunctionModifier func_modifier = func_decl->get_specialFunctionModifier();
-	if (func_modifier.isConstructor() ||
-			func_modifier.isDestructor() ||
-			func_modifier.isOperator())
-	{
-		cout << "Warning: The function to be normalized is a constructor/destructor/overloaded operator "
-				"which cannot be normalized." << endl;
-		return NULL;
-	}
-
-	// We don't normalize template functions.
-	if (func_decl->get_file_info()->isCompilerGenerated() ||
-			isSgTemplateInstantiationFunctionDecl(func_decl) ||
-			func_decl->isTemplateFunction() ||
-			func_decl->isSpecialization() ||
-			func_decl->isPartialSpecialization())
-		return NULL;
-
-	if (const SgMemberFunctionDeclaration* mem_func = isSgMemberFunctionDeclaration(func_decl))
-	{
-		// Currently jump the case of member functions.
-		return NULL;
-		
-		SgClassDeclaration* class_decl = mem_func->get_associatedClassDeclaration();
-		if (isSgTemplateInstantiationDecl(class_decl))
-			return NULL;
-	}
-
-	// Ignore friend functions.
-	if (func_decl->get_declarationModifier().isFriend())
-		return NULL;
-
-	// Ignore declarations in functions.
-	if (isSgBasicBlock(func_decl->get_parent()))
-		return NULL;
-
-	// We cannot copy a defining function declaration using copyStatement function.
-	// So we build a new function below.
-	
-	string func_name = func_decl->get_name() + string("_normalized");
-
-
-	SgFunctionParameterList* para_list = buildFunctionParameterList();
-	foreach (SgInitializedName* init_name, func_decl->get_parameterList()->get_args())
-	{
-		para_list->append_arg(buildInitializedName(init_name->get_name(), init_name->get_type()));
-	}
-
-	// For a non-defining declaration, we also build a non-defining normalized declaration.
-	if (func_decl->isForward())
-	{
-		SgFunctionDeclaration* decl_normalized =
-				buildNondefiningFunctionDeclaration(
-					func_name, func_decl->get_orig_return_type(),
-					para_list, 
-					getScope(func_decl));
-		return decl_normalized;
-	}
-
-	ROSE_ASSERT(func_decl->get_definition());
-
-	SgFunctionDeclaration* decl_normalized =
-			buildDefiningFunctionDeclaration(
-				func_name, func_decl->get_orig_return_type(),
-				para_list, //isSgFunctionParameterList(copyStatement(func_decl->get_parameterList())),
-				getScope(func_decl));
-	SgFunctionDefinition* def_normalized = decl_normalized->get_definition();
-
-#if 0
-	foreach (SgInitializedName* init_name, decl_normalized->get_parameterList()->get_args())
-	{
-		init_name->set_scope(def_normalized);
-		//ROSE_ASSERT(getScope(init_name) == def_normalized);
-	}
-#endif
-
-	replaceStatement(def_normalized->get_body(),
-			isSgBasicBlock(copyStatement(func_decl->get_definition()->get_body())));
-	ROSE_ASSERT(def_normalized->get_body());
-	SgVarRefExp* var;
-
-	//FIXME This part should be refined later!!!
-
-	// One of our test cases shows a bug here. We should remove preprocessing info from copies body.
-	// See test case "rose_test2003_16.C".
-	//if (def_normalized->get_body())
-	vector<SgLocatedNode*> located_nodes =
-			BackstrokeUtility::querySubTree<SgLocatedNode>(decl_normalized);
-	foreach (SgLocatedNode* located_node, located_nodes)
-	{
-		AttachedPreprocessingInfoType*& preprocess_info = located_node->getAttachedPreprocessingInfo();
-		if (preprocess_info)
-		{
-			preprocess_info->clear();
-#if 0
-			foreach (PreprocessingInfo* info, *preprocess_info)
-			{
-				if (info)
-				{
-					switch (info->getTypeOfDirective())
-					{
-						case PreprocessingInfo::CpreprocessorIfdefDeclaration:
-						case PreprocessingInfo::CpreprocessorIfndefDeclaration:
-						case PreprocessingInfo::CpreprocessorIfDeclaration:
-						case PreprocessingInfo::CpreprocessorDeadIfDeclaration:
-						case PreprocessingInfo::CpreprocessorElseDeclaration:
-						case PreprocessingInfo::CpreprocessorElifDeclaration:
-						case PreprocessingInfo::CpreprocessorEndifDeclaration:
-							//info->setString("");
-							break;
-						default:
-							break;
-					}
-				}
-			}
-#endif
-		}
-	}
-
-	ROSE_ASSERT(decl_normalized->get_symbol_from_symbol_table());
-
-	//SgFunctionDefinition* def_normalized = decl_normalized->get_definition();
 	ExtractFunctionArguments::NormalizeTree(def_normalized);
-    //normalizeEvent(defining_decl->get_definition());
 	BackstrokeNormUtility::normalize(def_normalized->get_body());
 
-	
-	return decl_normalized;
+	return func_decl;
 }
 
 namespace BackstrokeNormUtility

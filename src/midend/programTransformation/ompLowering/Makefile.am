@@ -4,14 +4,15 @@ INCLUDES = $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = libompLowering.la
 libompLowering_la_SOURCES = omp_lowering.cpp
-
+# avoid using libtool for libxomp.a since it will be directly linked to executable
 lib_LIBRARIES = libxomp.a
 libxomp_a_SOURCES = xomp.c
 
 include_HEADERS = omp_lowering.h libgomp_g.h \
-           libompc.h  libxomp.h
+           libompc.h  libxomp.h \
+	   run_me_defs.inc run_me_callers.inc
 
-EXTRA_DIST = CMakeLists.txt README
+EXTRA_DIST = CMakeLists.txt README run_me_caller_generator.sh run_me_generator.sh
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files core

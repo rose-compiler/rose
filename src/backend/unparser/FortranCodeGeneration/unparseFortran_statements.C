@@ -4047,7 +4047,11 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                   }
                  else
                   {
-                    printf ("Warning: statement marked as public in non-module scope \n");
+                    // Liao 12/14/2010
+                    // SgAccessModifier::post_construction_initialization() will set the modifier to e_default, which in turn is equal to e_public
+                    // variable declarations should have public access by default.
+                    // So I turn off this warning after discussing this issue with Dan
+                   // printf ("Warning: statement marked as public in non-module scope in FortranCodeGeneration_locatedNode::unparseVarDecl(). \n");
                   }
              }
 
@@ -5229,7 +5233,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
                  else
                   {
-                    printf ("Warning: statement marked as public in non-module scope \n");
+                    printf ("Warning: statement marked as public in non-module scope in FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(). \n");
                   }
              }
 

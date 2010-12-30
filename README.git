@@ -181,7 +181,7 @@ Now merge the changes from "master" into my branch
    git merge origin/master
 
 Note that this will most likely go smoothly if all changes
-are tken only from "master".  so it might be helpful (to
+are taken only from "master".  so it might be helpful (to
 avoid conflicts) to NOT try to update using anyone else's
 branch.
 

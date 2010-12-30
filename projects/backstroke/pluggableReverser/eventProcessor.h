@@ -50,7 +50,7 @@ private:
 	std::vector<EvaluationResult> filterResults(const std::vector<EvaluationResult>& results);
 
 	//! The following methods are for expression and statement handlers for store and restore.
-	SgExpression* getStackVar(SgType* type);
+	SgVarRefExp* getStackVar(SgType* type);
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
 	SgExpression* popVal(SgType* type);
 

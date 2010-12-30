@@ -2024,7 +2024,6 @@ HEADER_GOTO_STATEMENT_END
 HEADER_ASM_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 

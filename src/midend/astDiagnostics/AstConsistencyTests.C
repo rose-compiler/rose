@@ -2167,6 +2167,7 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
        // These are special case declarations
        // case V_SgFunctionParameterList:
           case V_SgCtorInitializerList:
+          case V_SgFortranIncludeLine:
 
        // A variable definition appears with a variable declaration, but a variable declaration can be a 
        // forward reference to the variable declaration containing the variable definitions (e.g. "extern int x;", 
@@ -2177,7 +2178,7 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
           case V_SgPragmaDeclaration:
 
        // These can appear multiple times and are not really associated with definitions 
-       // (but for consistancy they are consired to be their own defining declaration).
+       // (but for consistency they are considered to be their own defining declaration).
           case V_SgUsingDirectiveStatement:
           case V_SgUsingDeclarationStatement:
           case V_SgNamespaceAliasDeclarationStatement:
@@ -2257,6 +2258,8 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                          case V_SgMemberFunctionDeclaration:
                          case V_SgTemplateInstantiationFunctionDecl:
                          case V_SgTemplateInstantiationMemberFunctionDecl:
+                         case V_SgProcedureHeaderStatement: 
+                         case V_SgProgramHeaderStatement: 
                             {
                            // This is the reasonable case, where a function or template or typedef is 
                            // declared once (and only once and contains its definition).  Verify that 

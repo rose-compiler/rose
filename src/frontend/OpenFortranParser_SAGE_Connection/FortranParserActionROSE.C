@@ -4098,6 +4098,7 @@ void c_action_entity_decl(Token_t * id)
 
                ROSE_ASSERT(astScopeStack.empty() == false);
                astScopeStack.front()->insert_symbol(name,variableSymbol);
+               ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
 
             // Test the symbol tables and the new support for case insensitive symbol tables.
                ROSE_ASSERT(astScopeStack.front()->symbol_exists(name) == true);
@@ -7034,13 +7035,17 @@ void c_action_common_block_object_list(int count)
         }
 
      SgCommonBlockObject* commonBlockObject = new SgCommonBlockObject();
-  // setSourcePosition(commonBlockObject);
+     // Liao 12/9/2010
+     // We have to do this after moving SgCommonBlockObject to be under SgLocatedNodeSupport
+     // TODO: ask Dan to fill in real file info for both SgCommonBlockObject and the contained varRefList.
+     setSourcePosition(commonBlockObject);
 
      commonBlockObject->set_block_name(commonBlockName);
 
      SgExprListExp* varRefList = new SgExprListExp();
      commonBlockObject->set_variable_reference_list(varRefList);
 
+     // TODO: ask Dan to fill in real file info for varRefList.
      setSourcePosition(varRefList);
      varRefList->set_parent(commonBlockObject);
 
@@ -20079,6 +20084,9 @@ void c_action_start_of_file(const char *filename)
 
        // This does not always appear to be appending to the scope
           astScopeStack.front()->append_statement(includeLine);
+          // patch up defining and non-defining pointers, Liao 12/7/2010
+          includeLine->set_definingDeclaration(includeLine); 
+          includeLine->set_firstNondefiningDeclaration(includeLine); 
         }
 
 #if 1

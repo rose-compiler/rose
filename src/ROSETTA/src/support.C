@@ -184,9 +184,6 @@ Grammar::setUpSupport ()
   // DQ (11/19/2007): Support for the Fortran namelist statement (SgNamelistStatement)
      NEW_TERMINAL_MACRO (NameGroup,     "NameGroup",     "TEMP_Name_Group" );
 
-  // DQ (11/21/2007): This is part of support for the common block statement
-     NEW_TERMINAL_MACRO (CommonBlockObject, "CommonBlockObject",     "TEMP_CommonBlockObject" );
-
   // DQ (12/1/2007): Support for the Fortran dimension statement
      NEW_TERMINAL_MACRO (DimensionObject, "DimensionObject",     "TEMP_DimensionObject" );
 
@@ -246,7 +243,7 @@ Grammar::setUpSupport ()
 
           GraphNodeList         | GraphEdgeList             | TypeTable           |
 
-          NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
+          NameGroup             | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | 
           DataStatementValue    ,
           "Support", "SupportTag", false);
@@ -1813,11 +1810,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
      NameGroup.setDataPrototype     ( "SgStringList", "name_list", "",
                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     CommonBlockObject.setFunctionPrototype ( "HEADER_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");
-     CommonBlockObject.setDataPrototype     ( "std::string", "block_name", "=\"\"",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     CommonBlockObject.setDataPrototype     ( "SgExprListExp*", "variable_reference_list", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DimensionObject.setFunctionPrototype ( "HEADER_DIMENSION_OBJECT", "../Grammar/Support.code");
      DimensionObject.setDataPrototype     ( "SgInitializedName*", "array", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2022,9 +2014,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
 
   // DQ (11/19/2007): Added support for Fortran namelist statement
      NameGroup.setFunctionSource         ( "SOURCE_NAME_GROUP", "../Grammar/Support.code");
-
-  // DQ (11/21/2007): support for common block statements
-     CommonBlockObject.setFunctionSource ( "SOURCE_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");
 
      DimensionObject.setFunctionSource ( "SOURCE_DIMENSION_OBJECT", "../Grammar/Support.code");
 

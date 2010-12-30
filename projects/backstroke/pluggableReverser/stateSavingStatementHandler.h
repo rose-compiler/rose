@@ -3,6 +3,9 @@
 
 #include "handlerTypes.h"
 
+/** TODO:
+	-Correctly handle standard smart pointer types, such as auto_ptr, shared_ptr.
+ */
 class StateSavingStatementHandler : public StatementReversalHandler
 {
 	// A collection to avoid this handler calls itself by calling evaluateStatement function for the same statement.
