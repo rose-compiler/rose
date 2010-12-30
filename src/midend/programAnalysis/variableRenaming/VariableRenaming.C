@@ -812,13 +812,22 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
 
 SgInitializedName* VariableRenaming::UniqueNameTraversal::resolveTemporaryInitNames(SgInitializedName* name)
 {
-	if (!isSgVarRefExp(name->get_parent()))
-		return name;
-
-	foreach(SgInitializedName* otherName, allInitNames)
+	//Initialized names are children of varRefs when names are used before they are declared (possible in class definitions)
+	if (isSgVarRefExp(name->get_parent()))
 	{
-		if (otherName->get_prev_decl_item() == name)
-			return otherName;
+		foreach(SgInitializedName* otherName, allInitNames)
+		{
+			if (otherName->get_prev_decl_item() == name)
+				return otherName;
+		}
+	}
+
+	//Class variables defined in constructor pre-initializer lists have an extra initialized name there (so there can be an assign
+	// initializer). Track down the real initialized name corresponding to the declaration of the variable inside a class scope
+	if (isSgCtorInitializerList(name->get_declaration()))
+	{
+		if (name->get_prev_decl_item() != NULL)
+			return name->get_prev_decl_item();
 	}
 
 	return name;
@@ -837,7 +846,7 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
 
         //We want to assign this node its unique name, as well as adding it to the defs.
         VarUniqueName* uName = new VarUniqueName(name);
-        name->setAttribute(VariableRenaming::varKeyTag, uName);
+        node->setAttribute(VariableRenaming::varKeyTag, uName);
 
         return VariableRenaming::VarRefSynthAttr(name);
     }
@@ -2831,17 +2840,23 @@ VariableRenaming::ChildUses VariableRenaming::DefsAndUsesTraversal::evaluateSynt
 	}
 
 	//We want to propagate the def/use information up from the varRefs to the higher expressions.
-	if (isSgInitializedName(node))
+	if (SgInitializedName* initName = isSgInitializedName(node))
 	{
 		VarUniqueName * uName = VariableRenaming::getUniqueName(node);
-		ROSE_ASSERT(node);
+		ROSE_ASSERT(uName);
 
-		//Add this as a def
-		ssa->getDefTable()[node][uName->getKey()].push_back(node);
-
-		if (ssa->getDebug())
+		//Add this as a def, unless this initialized name is a preinitialization of a parent class. For example,
+		//in the base of B : A(3) { ... } where A is a superclass of B, an initialized name for A appears.
+		//Clearly, the initialized name for the parent class is not a real variable
+		if (initName->get_preinitialization() != SgInitializedName::e_virtual_base_class
+				&& initName->get_preinitialization() != SgInitializedName::e_nonvirtual_base_class)
 		{
-			cout << "Defined " << uName->getNameString() << endl;
+			ssa->getDefTable()[node][uName->getKey()].push_back(node);
+
+			if (ssa->getDebug())
+			{
+				cout << "Defined " << uName->getNameString() << endl;
+			}
 		}
 
 		return ChildUses();
