@@ -20,7 +20,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 
 		//We want to assign this node its unique name, as well as adding it to the defs.
 		VarUniqueName* uName = new VarUniqueName(name);
-		name->setAttribute(StaticSingleAssignment::varKeyTag, uName);
+		node->setAttribute(StaticSingleAssignment::varKeyTag, uName);
 
 		return VariableReferenceSet(name);
 	}
@@ -172,13 +172,24 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 
 SgInitializedName* UniqueNameTraversal::resolveTemporaryInitNames(SgInitializedName* name)
 {
-	if (!isSgVarRefExp(name->get_parent()))
-		return name;
-
-	foreach(SgInitializedName* otherName, allInitNames)
+	//Initialized names are children of varRefs when names are used before they are declared (possible in class definitions)
+	if (isSgVarRefExp(name->get_parent()))
 	{
-		if (otherName->get_prev_decl_item() == name)
-			return otherName;
+		foreach(SgInitializedName* otherName, allInitNames)
+		{
+			if (otherName->get_prev_decl_item() == name)
+				return otherName;
+		}
+	}
+
+	//Class variables defined in constructor pre-initializer lists have an extra initialized name there (so there can be an assign
+	// initializer). Track down the real initialized name corresponding to the declaration of the variable inside a class scope
+	if (isSgCtorInitializerList(name->get_declaration()))
+	{
+		if (name->get_prev_decl_item() != NULL)
+		{
+			return name->get_prev_decl_item();
+		}
 	}
 
 	return name;

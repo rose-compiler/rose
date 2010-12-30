@@ -146,6 +146,19 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	//Filter the variables that are not accessible from the caller and insert the rest as definitions
 	foreach (const VarName& definedVar, varsDefinedinCallee)
 	{
+		//If the variable modified in the callee is a member variable, see if it's on the same object instance
+		if (varRequiresThisPointer(definedVar))
+		{
+			ROSE_ASSERT(isSgMemberFunctionDeclaration(callee));
+
+			//Constructor initializers always have a new object instance
+			if (isSgConstructorInitializer(callSite))
+				continue;
+
+			if (!isThisPointerSameInCallee(isSgFunctionCallExp(callSite), isSgMemberFunctionDeclaration(callee)))
+				continue;
+		}
+
 		if (isVarInScope(definedVar, callSite))
 			originalDefTable[callSite].insert(definedVar);
 	}
@@ -186,17 +199,11 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 				foreach (const VarName& definedVar, varsDefinedinCallee)
 				{
 					//Only consider defs of member variables
-					SgScopeStatement* varScope = SageInterface::getScope(definedVar[0]);
-					if (!isSgClassDefinition(varScope))
-						continue;
-
-					//Only consider static variables
-					SgVariableDeclaration* varDecl = isSgVariableDeclaration(definedVar[0]->get_parent());
-					ROSE_ASSERT(varDecl != NULL);
-					if (varDecl->get_declarationModifier().get_storageModifier().isStatic())
+					if (!varRequiresThisPointer(definedVar))
 						continue;
 
 					//If the modified var is in the callee class scope, we know "this" has been modified
+					SgScopeStatement* varScope = SageInterface::getScope(definedVar[0]);
 					if (varScope == calleeClassScope)
 					{
 						originalDefTable[callSite].insert(lhsVar);
@@ -217,4 +224,59 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 
 	//Last thing: handle parameters passed by reference
 
+}
+
+
+bool StaticSingleAssignment::varRequiresThisPointer(const StaticSingleAssignment::VarName& var)
+{
+	ROSE_ASSERT(var != emptyName);
+	SgScopeStatement* varScope = SageInterface::getScope(var.front());
+
+	SgClassDefinition* varClass = isSgClassDefinition(varScope);
+	if (varClass == NULL)
+		return false;
+
+	//If it's a member variable, we still have to check that it's not static
+	SgVariableDeclaration* varDecl = isSgVariableDeclaration(var.front()->get_declaration());
+	ROSE_ASSERT(varDecl != NULL);
+
+	if (varDecl->get_declarationModifier().get_storageModifier().isStatic())
+		return false;
+
+	//If it's a member variable and it's not static, requires implicit 'this' pointer
+	return true;
+}
+
+
+bool StaticSingleAssignment::isThisPointerSameInCallee(SgFunctionCallExp* callSite, SgMemberFunctionDeclaration* callee)
+{
+	//We get the left-hand side of the call site. If it's the 'this' pointer, we should return true
+	//E.g. should return true for this->bar(), but false for a.bar() because in the second case bar() acts on a different instance
+	SgBinaryOp* functionRefExpression = isSgBinaryOp(callSite->get_function());
+	ROSE_ASSERT(functionRefExpression != NULL);
+
+	//The binary op is a dot op, arrow op, dot star op, etc
+	return isThisPointer(functionRefExpression->get_lhs_operand());
+}
+
+
+bool StaticSingleAssignment::isThisPointer(SgExpression* expression)
+{
+	switch (expression->variantT())
+	{
+		case V_SgThisExp:
+			return true;
+		case V_SgCastExp:
+		case V_SgPointerDerefExp:
+		case V_SgAddressOfOp:
+		{
+			SgUnaryOp* op = isSgUnaryOp(expression);
+			ROSE_ASSERT(op != NULL);
+			return isThisPointer(op->get_operand());
+		}
+		case V_SgCommaOpExp:
+			return isThisPointer(isSgCommaOpExp(expression)->get_rhs_operand());
+		default:
+			return false;
+	}
 }
