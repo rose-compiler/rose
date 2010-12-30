@@ -45,8 +45,20 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
           case V_SgTypeDefault:
              {
+#if 0
+            // DQ (12/29/2010): This provides a more obvious way to spot where default types are used (where we used to 
+            // instead use SgTypeInt as the default type it would output "integer".
+               curprint("ROSE_DEFAULT_TYPE");
+#else
+            // DQ (12/29/2010): We used to store an SgTypeInt in the AST for the default type, now we more correctly store 
+            // the SgDefaultType, but we don't fix them all up yet (but at least they are more explicit in the AST).
+            // To make the generated code more equivalent we output "integer" for the SgTypeDefault, until it is fixed
+            // better.  Note that all of the test code in Fortran_tests/*.f,f90,f03 pass without this translation via 
+            // the backend.
+               curprint("integer");
+#endif
                printf ("Error: SgTypeDefault should not be found in AST \n");
-               ROSE_ASSERT(false);
+            // ROSE_ASSERT(false);
                break;
              }
 

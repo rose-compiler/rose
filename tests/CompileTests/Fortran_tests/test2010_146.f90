@@ -21,7 +21,8 @@ subroutine rng_number_d0(state,x)
   real(kind=double), intent(out) :: x
   type(rng_state), intent(inout) :: state
 
-  x=state%array(state%index)
+! Unparsed as: "x = state%(array(state%index))"
+  x = state%array(state%index)
 
   return
 end subroutine rng_number_d0
