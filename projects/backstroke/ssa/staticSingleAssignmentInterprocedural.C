@@ -242,11 +242,11 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 		formalArgList = calleeDef->get_declaration()->get_args();
 	else
 		formalArgList = callee->get_args();
-	//Can be less due to implicit arguments
-	ROSE_ASSERT(actualArgList.size() <= formalArgList.size());  
+	//The number of actual arguments can be less than the number of formal arguments (with implicit arguments) or greater
+	//than the number of formal arguments (with varargs)
 
 	//First, treat the true arguments
-	for (size_t i = 0; i < actualArgList.size(); i++)
+	for (size_t i = 0; i < actualArgList.size() && i < formalArgList.size(); i++)
 	{
 		//Check that the actual argument was a variable name
 		const VarName& callerArgVarName = getVarName(actualArgList[i]);
@@ -254,6 +254,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 			continue;
 
 		//Check that the argument is passed by nonconst reference or is of a pointer type
+		//Note: here we are also filtering varArg types (SgTypeEllipse)
 		//FIXME: Here we should also filter const pointer types. Needs a new SageInterface function
 		SgType* formalArgType = formalArgList[i]->get_type();
 		if (!SageInterface::isNonconstReference(formalArgType) && !SageInterface::isPointerType(formalArgType))
