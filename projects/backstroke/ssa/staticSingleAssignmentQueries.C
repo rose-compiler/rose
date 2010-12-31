@@ -520,6 +520,11 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsDefinedInSub
 
 		void visit(SgNode* node)
 		{
+			//Vars defined on function entry are not 'really' defined. These definitions just represent the external value
+			//of the variable flowing inside the function body.
+			if (isSgFunctionDefinition(node))
+				return;
+
 			if (ssa->ssaLocalDefTable.find(node) == ssa->ssaLocalDefTable.end())
 				return;
 
