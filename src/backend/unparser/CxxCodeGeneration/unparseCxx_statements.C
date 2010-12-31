@@ -4524,7 +4524,10 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      //TODO wrap into a function and to be called by all
           SgInitializedNamePtrList::iterator p = enum_stmt->get_enumerators().begin();
           SgInitializedNamePtrList::iterator p_last = enum_stmt->get_enumerators().end();
-          p_last --;
+          
+		  //Guard against decrementing an invalid iterator
+		  if (p != p_last)
+			p_last--;
           for (; p!=enum_stmt->get_enumerators().end(); p++)
           {
             // Liao, 5/14/2009
