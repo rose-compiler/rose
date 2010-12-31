@@ -236,9 +236,14 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 
 	const SgExpressionPtrList& actualArgList = actualArguments->get_expressions();
 
-	//Get the formal arguments
-	const SgInitializedNamePtrList& formalArgList = callee->get_args();
-	ROSE_ASSERT(actualArgList.size() <= formalArgList.size());  //Can be less due to implicit arguments
+	//Get the formal arguments. We use the defining declaration if possible, because that's the one that varNames are attached to
+	SgInitializedNamePtrList formalArgList;
+	if (calleeDef != NULL)
+		formalArgList = calleeDef->get_declaration()->get_args();
+	else
+		formalArgList = callee->get_args();
+	//Can be less due to implicit arguments
+	ROSE_ASSERT(actualArgList.size() <= formalArgList.size());  
 
 	//First, treat the true arguments
 	for (size_t i = 0; i < actualArgList.size(); i++)
@@ -249,16 +254,29 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 			continue;
 
 		//Check that the argument is passed by nonconst reference or is of a pointer type
+		//FIXME: Here we should also filter const pointer types. Needs a new SageInterface function
 		SgType* formalArgType = formalArgList[i]->get_type();
 		if (!SageInterface::isNonconstReference(formalArgType) && !SageInterface::isPointerType(formalArgType))
 			continue;
+		
+		//See if we can use exact info here to determine if the callee modifies the argument
+		bool argModified = false;
+		if (calleeDef != NULL && processed.count(calleeDef) > 0)
+		{
+			//Get the variable name in the callee associated with the argument (since we've processed this function)
+			const VarName& calleeArgVarName = getVarName(formalArgList[i]);
 
-		//Get the variable name in the callee associated with the argument
-		const VarName& calleeArgVarName = getVarName(formalArgList[i]);
-		ROSE_ASSERT(calleeArgVarName != emptyName);
+			ROSE_ASSERT(calleeArgVarName != emptyName);
+			argModified = (varsDefinedinCallee.count(calleeArgVarName) > 0);
+		}
+		else
+		{
+			//Nope, use an approximate bound. We just assume that if the variable is passed by reference, it's modified
+			argModified = true;
+		}
 
-		//Check if the variable is modified. If so, the corresponding variable is defined in the caller
-		if (varsDefinedinCallee.count(calleeArgVarName) > 0)
+		//Define the actual parameter in the caller if the callee modifies it
+		if (argModified)
 		{
 			originalDefTable[callSite].insert(callerArgVarName);
 		}
