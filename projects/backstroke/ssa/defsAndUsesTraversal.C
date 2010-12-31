@@ -201,6 +201,12 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 				}
 			}
 		}
+		//Some other ops also preserve the current var. We don't really distinguish between the pointer variable
+		//and the value to which it points
+		else if (isSgCastExp(unaryOp) || isSgPointerDerefExp(unaryOp) || isSgAddressOfOp(unaryOp))
+		{
+			currentVar = attrs[0].getCurrentVar();
+		}
 
 		//Set all the uses as being used here.
 		addUsesToNode(unaryOp, uses);
