@@ -1,0 +1,5 @@
+-For post-increment ops, such as i++, the uses are incorrectly matched to the post-increment op. Instead, uses should be matched
+   to the definition that comes before the increment.
+
+-Dead code is not handled correctly. Uses of a variable inside dead code result in an assertion that there is a use
+   with no reaching definitions.
