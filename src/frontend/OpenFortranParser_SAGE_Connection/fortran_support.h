@@ -122,6 +122,59 @@ extern std::list<SgInterfaceStatement*> astInterfaceStack;
 // mechanism. Though at some point a unified approach might be required.
 extern std::vector<std::string> astIncludeStack;
 
+// DQ (12/29/2010): This handles a technical problem in the implementation or R612 and R613.
+// Namely I need the information in R613 to be available when processing the fully resolved
+// multi-part reference in R612.  I can't move the processing to R613, since the scope
+// information is unavailable except from the list of references in the fully resolved
+// multi-part reference. An alternative to this stack might be a stack of separate 
+// data-structures specific to the support of the R612 and R613 implementation.
+extern std::list<bool> astHasSelectionSubscriptStack;
+
+
+// DQ (12/29/2010): This class is used to support R612 and R613 handling.
+class MultipartReferenceType
+   {
+     public:
+          SgName name;
+          bool hasSelectionSubscriptList;
+
+       // Skipping support for hasImageSelector for initial work.
+       // bool hasImageSelector;
+
+          MultipartReferenceType ( const SgName & input_name, const bool & input_hasSelectionSubscriptList )
+             {
+               name                      = input_name;
+               hasSelectionSubscriptList = input_hasSelectionSubscriptList;
+             }
+
+      //  We need a default constructor to support use of this class in STL.
+          MultipartReferenceType ()
+             {
+            // name                      = input_name;
+               hasSelectionSubscriptList = false;
+             }
+
+       // We need a copy constructor and the operator== to support use of this class in STL.
+          MultipartReferenceType ( const MultipartReferenceType & X )
+             {
+               name                      = X.name;
+               hasSelectionSubscriptList = X.hasSelectionSubscriptList;
+             }
+
+       // We need a copy constructor and the operator== to support use of this class in STL.
+          bool operator== ( const MultipartReferenceType & X )
+             {
+               bool returnValue = false;
+               if (name == X.name && hasSelectionSubscriptList == X.hasSelectionSubscriptList)
+                    returnValue = true;
+               return returnValue;
+             }
+   };
+
+// DQ (12/29/2010): This stack is used to support R612 and R613 handling.
+extern std::list<MultipartReferenceType> astMultipartReferenceStack;
+
+
 
 // ***********************************************
 //              Function Prototypes
@@ -206,6 +259,12 @@ void trace_back_through_parent_scopes_searching_for_module (const SgName & modul
 
 SgVariableSymbol* trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableName, SgScopeStatement* currentScope );
 
+// DQ (10/14/2010): New interface to flatten R612 (build non-recursive version).
+// SgVariableSymbol* trace_back_through_parent_scopes_lookup_variable_symbol(const std::vector<std::string> & qualifiedNameList, SgScopeStatement* currentScope );
+// std::vector<SgVariableSymbol*> trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector<std::string> & qualifiedNameList, SgScopeStatement* currentScope );
+// std::vector<SgSymbol*> trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector<std::string> & qualifiedNameList, SgScopeStatement* currentScope );
+std::vector<SgSymbol*> trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector<MultipartReferenceType> & qualifiedNameList, SgScopeStatement* currentScope );
+
 // DQ (4/30/2008): Modified to handle derived types
 // void trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(const SgName & variableName, SgScopeStatement* currentScope, SgVariableSymbol* & variableSymbol, SgFunctionSymbol* & functionSymbol );
 void trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(const SgName & variableName, SgScopeStatement* currentScope, SgVariableSymbol* & variableSymbol, SgFunctionSymbol* & functionSymbol, SgClassSymbol* & classSymbol);
@@ -239,7 +298,11 @@ void processBindingAttributeSupport( std::string & bind_language, std::string & 
 
 void processFunctionPrefix( SgFunctionDeclaration* functionDeclaration );
 
-void generateFunctionCall( Token_t * nameToken );
+// void generateFunctionCall( Token_t * nameToken );
+// DQ (12/29/2010): Modified to return the associated SgFunctionSymbol so
+// that we can support greater uniformity in handling of R612 and R613.
+// void generateFunctionCall( Token_t* nameToken )
+SgFunctionSymbol* generateFunctionCall( Token_t * nameToken );
 
 SgFunctionRefExp* generateFunctionRefExp( Token_t* nameToken );
 
@@ -301,6 +364,15 @@ void processLabelOnStack( SgStatement* statement );
 
 //! This support is required to work around a bug in OFP (label == NULL in R807).
 void specialFixupForLabelOnStackAndNotPassedAsParameter( SgStatement* statement );
+
+//! Replace SgDefaultType in function return type if appropriate.
+void fixup_possible_incomplete_function_return_type();
+
+//! Fixup for use statements (e.g. function return types)
+void use_statement_fixup();
+
+//! This function isolates some of the support for the R612 and R613 implementation.
+std::string generateQualifiedName(const std::vector<MultipartReferenceType> & qualifiedNameList);
 
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
