@@ -222,8 +222,53 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 		}
 	}
 
-	//Last thing: handle parameters passed by reference
+	//
+	//Handle aliasing of paramters (e.g. parameters passed by reference)
+	//
 
+	//Get the actual arguments
+	SgExprListExp* actualArguments = NULL;
+	if (isSgFunctionCallExp(callSite))
+		actualArguments = isSgFunctionCallExp(callSite)->get_args();
+	else if (isSgConstructorInitializer(callSite))
+		actualArguments = isSgConstructorInitializer(callSite)->get_args();
+	ROSE_ASSERT(actualArguments != NULL);
+
+	const SgExpressionPtrList& actualArgList = actualArguments->get_expressions();
+
+	//Get the formal arguments
+	const SgInitializedNamePtrList& formalArgList = callee->get_args();
+	ROSE_ASSERT(actualArgList.size() <= formalArgList.size());  //Can be less due to implicit arguments
+
+	//First, treat the true arguments
+	for (size_t i = 0; i < actualArgList.size(); i++)
+	{
+		//Check that the actual argument was a variable name
+		const VarName& callerArgVarName = getVarName(actualArgList[i]);
+		if (callerArgVarName == emptyName)
+			continue;
+
+		//Check that the argument is passed by nonconst reference or is of a pointer type
+		SgType* formalArgType = formalArgList[i]->get_type();
+		if (!SageInterface::isNonconstReference(formalArgType) && !SageInterface::isPointerType(formalArgType))
+			continue;
+
+		//Get the variable name in the callee associated with the argument
+		const VarName& calleeArgVarName = getVarName(formalArgList[i]);
+		ROSE_ASSERT(calleeArgVarName != emptyName);
+
+		//Check if the variable is modified. If so, the corresponding variable is defined in the caller
+		if (varsDefinedinCallee.count(calleeArgVarName) > 0)
+		{
+			originalDefTable[callSite].insert(callerArgVarName);
+		}
+	}
+
+	//Now, handle the implicit arguments. We can have an implicit argument such as (int& x = globalVar)
+	for (size_t i = actualArgList.size(); i < formalArgList.size(); i++)
+	{
+		
+	}
 }
 
 
