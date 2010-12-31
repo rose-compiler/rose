@@ -255,6 +255,10 @@ private:
 	void processOneCallSite(SgExpression* callSite, SgFunctionDeclaration* callee,
 				const boost::unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy);
 
+	/** Given a variable that is in a callee's scope, returns true if the caller can access the same variable, false otherwise.
+	 * @param callSite either a SgFunctionCallExp or SgConstructorInitializer. */
+	static bool isVarAccessibleFromCaller(const VarName& var, SgExpression* callSite, SgFunctionDeclaration* callee);
+
 	/** Returns true if the variable is a nonstatic class variable, so it hass to be accessed by the
 	 * "this" pointer. */
 	static bool varRequiresThisPointer(const VarName& var);
@@ -362,6 +366,11 @@ public:
 	 * @return The name, or empty name.
 	 */
 	static const VarName& getVarName(SgNode* node);
+
+	/** If an expression evaluates to a reference of a variable, returns that variable.
+	 * Handles casts, comma ops, address of ops, etc. For example,
+	 * Given the expression (...., &a), this method would return the VarName for a. */
+	static const VarName& getVarForExpression(SgNode* node);
 
 	/** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
 	 *

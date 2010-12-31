@@ -146,20 +146,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	//Filter the variables that are not accessible from the caller and insert the rest as definitions
 	foreach (const VarName& definedVar, varsDefinedinCallee)
 	{
-		//If the variable modified in the callee is a member variable, see if it's on the same object instance
-		if (varRequiresThisPointer(definedVar))
-		{
-			ROSE_ASSERT(isSgMemberFunctionDeclaration(callee));
-
-			//Constructor initializers always have a new object instance
-			if (isSgConstructorInitializer(callSite))
-				continue;
-
-			if (!isThisPointerSameInCallee(isSgFunctionCallExp(callSite), isSgMemberFunctionDeclaration(callee)))
-				continue;
-		}
-
-		if (isVarInScope(definedVar, callSite))
+		if (isVarAccessibleFromCaller(definedVar, callSite, callee))
 			originalDefTable[callSite].insert(definedVar);
 	}
 
@@ -172,7 +159,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 		//Get the LHS variable (e.g. x in the call site x.foo())
 		SgBinaryOp* functionRefExpression = isSgBinaryOp(isSgFunctionCallExp(callSite)->get_function());
 		ROSE_ASSERT(functionRefExpression != NULL);
-		VarName lhsVar = getVarName(functionRefExpression->get_lhs_operand());
+		VarName lhsVar = getVarForExpression(functionRefExpression->get_lhs_operand());
 
 		//It's possible that the member function is not operating on a variable; e.g. the function bar in foo().bar()
 		if (lhsVar != emptyName)
@@ -223,7 +210,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	}
 
 	//
-	//Handle aliasing of paramters (e.g. parameters passed by reference)
+	//Handle aliasing of parameters (e.g. parameters passed by reference)
 	//
 
 	//Get the actual arguments
@@ -249,7 +236,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	for (size_t i = 0; i < actualArgList.size() && i < formalArgList.size(); i++)
 	{
 		//Check that the actual argument was a variable name
-		const VarName& callerArgVarName = getVarName(actualArgList[i]);
+		const VarName& callerArgVarName = getVarForExpression(actualArgList[i]);
 		if (callerArgVarName == emptyName)
 			continue;
 
@@ -261,7 +248,8 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 			continue;
 		
 		//See if we can use exact info here to determine if the callee modifies the argument
-		bool argModified = false;
+		//If not, we just take the safe assumption that the argument is modified
+		bool argModified = true;
 		if (calleeDef != NULL && processed.count(calleeDef) > 0)
 		{
 			//Get the variable name in the callee associated with the argument (since we've processed this function)
@@ -269,11 +257,6 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 
 			ROSE_ASSERT(calleeArgVarName != emptyName);
 			argModified = (varsDefinedinCallee.count(calleeArgVarName) > 0);
-		}
-		else
-		{
-			//Nope, use an approximate bound. We just assume that if the variable is passed by reference, it's modified
-			argModified = true;
 		}
 
 		//Define the actual parameter in the caller if the callee modifies it
@@ -284,10 +267,67 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	}
 
 	//Now, handle the implicit arguments. We can have an implicit argument such as (int& x = globalVar)
+	//If there are more formal arguments than actual arguments there are two cases
+	//case 1: The callee is a varArg function can no varargs are passed at the call site
+	//case 2: The callee has default argument values passed in
+	//We conly handle case 2. i.e. foo(int& x = globalVar)
 	for (size_t i = actualArgList.size(); i < formalArgList.size(); i++)
 	{
-		
+		SgInitializedName* formalArg = formalArgList[i];
+
+		//Again, filter out parameters passed by value
+		SgType* formalArgType = formalArg->get_type();
+		if (!SageInterface::isNonconstReference(formalArgType) && !SageInterface::isPointerType(formalArgType))
+			continue;
+
+		//Default arguments always have an assign initializer
+		if (formalArg->get_initializer() == NULL)
+			continue;
+
+		ROSE_ASSERT(isSgAssignInitializer(formalArg->get_initializer()));
+		SgExpression* defaultArgValue = isSgAssignInitializer(formalArg->get_initializer())->get_operand();
+
+		//See if the default value is a variable and that variable is in the caller's scope
+		const VarName& defaultArgVar = getVarForExpression(defaultArgValue);
+		if (defaultArgVar == emptyName || !isVarAccessibleFromCaller(defaultArgVar, callSite, callee))
+			continue;
+
+		//See if we can use exact info here to determine if the callee modifies the argument
+		//If not, we just take the safe assumption that the argument is modified
+		bool argModified = true;
+		if (calleeDef != NULL && processed.count(calleeDef) > 0)
+		{
+			//Get the variable name in the callee associated with the argument (since we've processed this function)
+			const VarName& calleeArgVarName = getVarName(formalArgList[i]);
+
+			ROSE_ASSERT(calleeArgVarName != emptyName);
+			argModified = (varsDefinedinCallee.count(calleeArgVarName) > 0);
+		}
+
+		//Define the default argument value in the caller if the callee modifies it
+		if (argModified)
+		{
+			originalDefTable[callSite].insert(defaultArgVar);
+		}
 	}
+}
+
+bool StaticSingleAssignment::isVarAccessibleFromCaller(const VarName& var, SgExpression* callSite, SgFunctionDeclaration* callee)
+{
+	//If the variable modified in the callee is a member variable, see if it's on the same object instance
+	if (varRequiresThisPointer(var))
+	{
+		ROSE_ASSERT(isSgMemberFunctionDeclaration(callee));
+
+		//Constructor initializers always have a new object instance
+		if (isSgConstructorInitializer(callSite))
+			return false;
+
+		if (!isThisPointerSameInCallee(isSgFunctionCallExp(callSite), isSgMemberFunctionDeclaration(callee)))
+			return false;
+	}
+
+	return isVarInScope(var, callSite);
 }
 
 

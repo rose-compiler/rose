@@ -543,3 +543,21 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsDefinedInSub
 
 	return defsTrav.definedNames;
 }
+
+const StaticSingleAssignment::VarName& StaticSingleAssignment::getVarForExpression(SgNode* node)
+{
+	if (getVarName(node) != emptyName)
+		return getVarName(node);
+
+	switch (node->variantT())
+	{
+		case V_SgCommaOpExp:
+			return getVarForExpression(isSgCommaOpExp(node)->get_rhs_operand());
+		case V_SgCastExp:
+		case V_SgPointerDerefExp:
+		case V_SgAddressOfOp:
+			return getVarForExpression(isSgUnaryOp(node)->get_operand());
+		default:
+			return emptyName;
+	}
+}
