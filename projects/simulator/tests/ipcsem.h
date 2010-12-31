@@ -26,7 +26,7 @@
 
 #include <errno.h>
 #include <sys/ipc.h>
-#include <sys/sem.h>
+//#include <sys/sem.h>
 
 
 #include "test.h"
