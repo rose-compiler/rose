@@ -34,6 +34,14 @@ struct IsEvent
 	}
 };
 
+struct DummyNodeFilter : public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> >
+{
+	Rose_STL_Container<SgNode*> operator()(SgNode* node) 
+	{
+		return Rose_STL_Container<SgNode*>(1, node);
+	}
+};
+
 int main(int argc, char** argv)
 {
 	//Add the preinclude option
@@ -68,6 +76,17 @@ int main(int argc, char** argv)
 
 	SgScopeStatement* globalScope = isSgScopeStatement(SageInterface::getFirstGlobalScope(project));
 	Backstroke::reverseEvents(&event_processor, IsEvent(), project);
+
+	//TODO: Fix the ROSE graphs so we don't have to do something this ugly
+	//Hack x 10 to delete leftover objects from building the call graph
+	VariantVector vv(V_SgDirectedGraphEdge);
+	vv.push_back(V_SgGraphNode);
+	vv.push_back(V_SgIncidenceDirectedGraph);
+	Rose_STL_Container<SgNode*> edgeList = NodeQuery::queryMemoryPool(DummyNodeFilter(), &vv);
+	foreach (SgNode* edge, edgeList)
+	{
+		delete edge;
+	}
 
 	AstTests::runAllTests(project);
 	return backend(project);

@@ -173,13 +173,6 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 	return false;
 }
 
-struct DummyNodeFilter : public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> >
-{
-	Rose_STL_Container<SgNode*> operator()(SgNode* node) 
-	{
-		return Rose_STL_Container<SgNode*>(1, node);
-	}
-};
 
 void StaticSingleAssignment::run(bool interprocedural)
 {
@@ -274,20 +267,6 @@ void StaticSingleAssignment::run(bool interprocedural)
 		//annotatePhiNodeWithConditions(func, controlDependencies);
 
 		functionsProcessed.insert(func);
-	}
-
-	if (interprocedural)
-	{
-		//TODO: Fix the ROSE graphs so we don't have to do something this ugly
-		//Hack x 10 to delete leftover objects from building the call graph
-		VariantVector vv(V_SgDirectedGraphEdge);
-		vv.push_back(V_SgGraphNode);
-		vv.push_back(V_SgIncidenceDirectedGraph);
-		Rose_STL_Container<SgNode*> edgeList = NodeQuery::queryMemoryPool(DummyNodeFilter(), &vv);
-		foreach (SgNode* edge, edgeList)
-		{
-			delete edge;
-		}
 	}
 }
 
