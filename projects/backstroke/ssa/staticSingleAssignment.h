@@ -350,6 +350,10 @@ public:
 	 * in the subtree. */
 	std::set<VarName> getVarsDefinedInSubtree(SgNode* root) const;
 
+	/** Given a node, traverses all its children in the AST and collects all the variable names that have original definitions
+	 * in the subtree. Expanded definitions are not included - for example if p.x is defined, p is not included. */
+	std::set<VarName> getOriginalVarsDefinedInSubtree(SgNode* root) const;
+
 	//------------ STATIC UTILITY FUNCTIONS FUNCTIONS ------------ //
 
 

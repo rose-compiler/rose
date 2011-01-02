@@ -544,6 +544,43 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsDefinedInSub
 	return defsTrav.definedNames;
 }
 
+set<StaticSingleAssignment::VarName> StaticSingleAssignment::getOriginalVarsDefinedInSubtree(SgNode* root) const
+{
+	class CollectDefsTraversal : public AstSimpleProcessing
+	{
+	public:
+		const StaticSingleAssignment* ssa;
+
+		//All the varNames that have uses in the function
+		set<VarName> definedNames;
+
+		void visit(SgNode* node)
+		{
+			//Vars defined on function entry are not 'really' defined. These definitions just represent the external value
+			//of the variable flowing inside the function body.
+			if (isSgFunctionDefinition(node))
+				return;
+
+			if (ssa->ssaLocalDefTable.find(node) == ssa->ssaLocalDefTable.end())
+				return;
+
+			const NodeReachingDefTable& nodeDefs = ssa->ssaLocalDefTable.find(node)->second;
+
+			foreach(const NodeReachingDefTable::value_type& varDefPair, nodeDefs)
+			{
+				if (varDefPair.second->isOriginalDef())
+					definedNames.insert(varDefPair.first);
+			}
+		}
+	};
+
+	CollectDefsTraversal defsTrav;
+	defsTrav.ssa = this;
+	defsTrav.traverse(root, preorder);
+
+	return defsTrav.definedNames;
+}
+
 const StaticSingleAssignment::VarName& StaticSingleAssignment::getVarForExpression(SgNode* node)
 {
 	if (getVarName(node) != emptyName)
