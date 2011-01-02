@@ -52,6 +52,17 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
 			processCalleesThenFunction(interestingFunction, callGraph, graphNodeToFunction, processingOrder);
 	}
 
+	//TODO: Fix the ROSE graphs so we don't have to do something this ugly
+	foreach (SgGraphNode* node, allNodes)
+	{
+		set<SgDirectedGraphEdge*> edges = callGraph->computeEdgeSetOut(node);
+		foreach (SgDirectedGraphEdge* edge, edges)
+		{
+			delete edge;
+		}
+		delete node;
+	}
+	delete callGraph;
 	return processingOrder;
 }
 
@@ -382,8 +393,8 @@ bool StaticSingleAssignment::isThisPointer(SgExpression* expression)
 	}
 }
 
-//! True if the type is a pointer pointing to a const object
-//! expanded recursively
+//! True if the type is a pointer pointing to a const object.
+//! expanded recursively.
 bool StaticSingleAssignment::isPointerToDeepConst(SgType* type)
 {
 	if (SgTypedefType* typeDef = isSgTypedefType(type))

@@ -198,6 +198,7 @@ int main(int argc, char** argv)
 		ssaInterprocedural.toFilteredDOT("interprocedural.dot");
 	}
 
+	AstTests::runAllTests(project);
 	return 0;
 }
 
