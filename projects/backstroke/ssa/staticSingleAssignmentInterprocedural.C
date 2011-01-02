@@ -242,9 +242,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 
 		//Check that the argument is passed by nonconst reference or is of a pointer type
 		//Note: here we are also filtering varArg types (SgTypeEllipse)
-		//FIXME: Here we should also filter const pointer types. Needs a new SageInterface function
-		SgType* formalArgType = formalArgList[i]->get_type();
-		if (!SageInterface::isNonconstReference(formalArgType) && !SageInterface::isPointerType(formalArgType))
+		if (!isArgumentNonConstReferenceOrPointer(formalArgList[i]))
 			continue;
 		
 		//See if we can use exact info here to determine if the callee modifies the argument
@@ -275,9 +273,8 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	{
 		SgInitializedName* formalArg = formalArgList[i];
 
-		//Again, filter out parameters passed by value
-		SgType* formalArgType = formalArg->get_type();
-		if (!SageInterface::isNonconstReference(formalArgType) && !SageInterface::isPointerType(formalArgType))
+		//Again, filter out parameters passed by value and const references
+		if (!isArgumentNonConstReferenceOrPointer(formalArg))
 			continue;
 
 		//Default arguments always have an assign initializer
@@ -383,4 +380,77 @@ bool StaticSingleAssignment::isThisPointer(SgExpression* expression)
 		default:
 			return false;
 	}
+}
+
+//! True if the type is a pointer pointing to a const object
+//! expanded recursively
+bool StaticSingleAssignment::isPointerToDeepConst(SgType* type)
+{
+	if (SgTypedefType* typeDef = isSgTypedefType(type))
+	{
+		return isPointerToDeepConst(typeDef->get_base_type());
+	}
+	else if (SgPointerType* pointerType = isSgPointerType(type))
+	{
+		SgType* baseType = pointerType->get_base_type();
+		if (SageInterface::isPointerType(baseType))
+		{
+			return isDeepConstPointer(baseType);
+		}
+		else
+		{
+			return SageInterface::isConstType(pointerType->get_base_type());
+		}
+	}
+	else if (SgModifierType* modifierType = isSgModifierType(type))
+	{
+		//We don't care about qualifiers of the top-level type. Only the object it points to must be
+		//const
+		return isPointerToDeepConst(modifierType->get_base_type());
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//! True if the type is a const pointer pointing to a const object.
+//! Expanded recursively
+bool StaticSingleAssignment::isDeepConstPointer(SgType* type)
+{
+	if (SgTypedefType* typeDef = isSgTypedefType(type))
+	{
+		return isDeepConstPointer(typeDef->get_base_type());
+	}
+	else if (SgModifierType* modifierType = isSgModifierType(type))
+	{
+		bool isConst = modifierType->get_typeModifier().get_constVolatileModifier().isConst();
+
+		if (isConst)
+		{
+			//If this pointer is const, we still have to make sure it points to a const value
+			return isPointerToDeepConst(modifierType->get_base_type());
+		}
+		else
+		{
+			//This was not a const-qualifier, so it changes nothing
+			return isDeepConstPointer(modifierType->get_base_type());
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool StaticSingleAssignment::isArgumentNonConstReferenceOrPointer(SgInitializedName* formalArgument)
+{
+	SgType* formalArgType = formalArgument->get_type();
+	if (SageInterface::isNonconstReference(formalArgType))
+		return true;
+
+	if (SageInterface::isPointerType(formalArgType))
+		return !isPointerToDeepConst(formalArgType);
+
+	return false;
 }

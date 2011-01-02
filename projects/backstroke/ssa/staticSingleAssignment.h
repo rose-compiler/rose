@@ -271,6 +271,18 @@ private:
 	 * expression is equivalent to the 'This' pointe. */
 	static bool isThisPointer(SgExpression* expression);
 
+	//! True if the type is a const pointer pointing to a const object.
+	//! Expanded recursively
+	static bool isDeepConstPointer(SgType* type);
+
+	//! True if the type is a pointer pointing to a const object.
+	//! Expanded recursively.
+	static bool isPointerToDeepConst(SgType* type);
+
+	/** Returns true if the given formal parameter is a reference or a nonconst pointer, so that it
+	 * its value is aliased between function calls. */
+	static bool isArgumentNonConstReferenceOrPointer(SgInitializedName* formalArgument);
+
 	//------------ GRAPH OUTPUT FUNCTIONS ------------ //
 
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
