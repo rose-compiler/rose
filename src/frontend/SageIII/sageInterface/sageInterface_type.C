@@ -216,6 +216,17 @@ namespace SageInterface
     return false;
   }
 
+bool isPointerToNonConstType(SgType* type)
+{
+	if (SgTypedefType* typeDef = isSgTypedefType(type))
+		return isPointerToNonConstType(typeDef->get_base_type());
+	else if (SgPointerType* pointerType = isSgPointerType(type))
+		return !SageInterface::isConstType(pointerType->get_base_type());
+	else if (SgModifierType* modifierType = isSgModifierType(type))
+		return isPointerToNonConstType(modifierType->get_base_type());
+	else
+		return false;
+}
 
   //! Check if an expression is an array access. If so, return its name and subscripts if requested. Based on AstInterface::IsArrayAccess()
   bool isArrayReference(SgExpression* ref, SgExpression** arrayName/*=NULL*/, vector<SgExpression*>** subscripts/*=NULL*/)

@@ -656,6 +656,13 @@ bool isReferenceType(SgType* t);
 //! Is this type a pointer type? (Handles typedefs correctly)
 bool isPointerType(SgType* t);
 
+//! Is this a pointer to a non-const type? Note that this function will return true for const pointers pointing to
+//! non-const types. For example, (int* const y) points to a modifiable int, so this function returns true. Meanwhile,
+//! it returns false for (int const * x) and (int const * const x) because these types point to a const int.
+//! Also, only the outer layer of nested pointers is unwrapped. So the function returns true for (const int ** y), but returns
+//! false for const (int * const * x)
+bool isPointerToNonConstType(SgType* type);
+
 //! Is this a const type?
 /* const char* p = "aa"; is not treated as having a const type. It is a pointer to const char.
  * Similarly, neither for const int b[10]; or const int & c =10;
