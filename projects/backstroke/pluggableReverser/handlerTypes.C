@@ -137,3 +137,8 @@ VariableRenaming* ReversalHandlerBase::getVariableRenaming()
 {
 	return event_handler_->getVariableRenaming();
 }
+
+const StaticSingleAssignment* ReversalHandlerBase::getSsa() const
+{
+	 return event_handler_->getInterproceduralSsa();
+}

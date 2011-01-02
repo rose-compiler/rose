@@ -1,4 +1,5 @@
 #include "stateSavingStatementHandler.h"
+#include "ssa/staticSingleAssignment.h"
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/lambda/lambda.hpp>
@@ -14,10 +15,8 @@ using namespace std;
 vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefsAtNode(SgNode* node)
 {
 	vector<VariableRenaming::VarName> modified_vars;
-	foreach (const VariableRenaming::NumNodeRenameTable::value_type& num_node,
-			getVariableRenaming()->getOriginalDefsForSubtree(node))
+	foreach (const StaticSingleAssignment::VarName& var_name, getSsa()->getOriginalVarsDefinedInSubtree(node))
 	{
-		const VariableRenaming::VarName& var_name = num_node.first;
 		// Get the declaration of this variable to see if it's declared inside of the given statement.
 		// If so, we don't have to store this variable.
 		if (!isAncestor(node, var_name[0]->get_declaration()))

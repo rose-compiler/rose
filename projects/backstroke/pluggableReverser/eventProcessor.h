@@ -98,7 +98,7 @@ public:
 	void setInterproceduralSsa(StaticSingleAssignment* ssa)
 	{ interproceduralSsa_ = ssa; }
 
-	StaticSingleAssignment* getInterproceduralSsa()
+	const StaticSingleAssignment* getInterproceduralSsa() const
 	{ return interproceduralSsa_; }
 
 	/**

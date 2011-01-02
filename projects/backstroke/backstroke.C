@@ -70,6 +70,7 @@ reverseEvents(EventProcessor* event_processor,
 
 	StaticSingleAssignment interproceduralSsa(project);
 	interproceduralSsa.run(true);
+	event_processor->setInterproceduralSsa(&interproceduralSsa);
 
 	// Get the global scope.
 	SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);

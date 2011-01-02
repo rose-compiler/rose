@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/any.hpp>
 #include "variableVersionTable.h"
+#include "ssa/staticSingleAssignment.h"
 #include "costModel.h"
 
 //Forward declarations
@@ -12,7 +13,6 @@ class StatementReversalHandler;
 class ReversalHandlerBase;
 class EventProcessor;
 
-//TODO: Just use std::pair here
 struct ExpressionReversal
 {
 	ExpressionReversal(SgExpression* fwd, SgExpression * rvs)
@@ -22,7 +22,6 @@ struct ExpressionReversal
 	SgExpression* rvs_exp;
 };
 
-//TODO: Just use std::pair here
 struct StatementReversal
 {
 	StatementReversal(SgStatement* fwd, SgStatement * rvs)
@@ -152,6 +151,9 @@ protected:
 	bool isStateVariable(SgExpression* exp);
 
 	VariableRenaming* getVariableRenaming();
+
+	//! Returns an object with interprocedural SSA analysis
+	const StaticSingleAssignment* getSsa() const;
 
 
 public:
