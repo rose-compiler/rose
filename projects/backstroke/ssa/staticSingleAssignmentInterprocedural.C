@@ -15,14 +15,6 @@ using namespace std;
 using namespace ssa_private;
 using namespace boost;
 
-struct DummyNodeFilter : public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> >
-{
-	Rose_STL_Container<SgNode*> operator()(SgNode* node) 
-	{
-		return Rose_STL_Container<SgNode*>(1, node);
-	}
-};
-
 vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralProcessingOrder()
 {
 	//First, let's build a call graph. Our goal is to find an order in which to process the functions
@@ -59,29 +51,6 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
 			processCalleesThenFunction(interestingFunction, callGraph, graphNodeToFunction, processingOrder);
 	}
 
-	//TODO: Fix the ROSE graphs so we don't have to do something this ugly
-	foreach (rose_graph_integer_node_hash_map::value_type& intNodePair, callGraph->get_node_index_to_node_map())
-	{
-		SgGraphNode* node = intNodePair.second;
-		delete node;
-	}
-
-	foreach (rose_graph_integer_edge_hash_map::value_type& intEdgePair, callGraph->get_edge_index_to_edge_map())
-	{
-		SgGraphEdge* edge = intEdgePair.second;
-		delete edge;
-	}
-
-	//Hack x 10 to delete leftover objects
-	VariantVector vv(V_SgDirectedGraphEdge);
-	vv.push_back(V_SgGraphNode);
-	Rose_STL_Container<SgNode*> edgeList = NodeQuery::queryMemoryPool(DummyNodeFilter(), &vv);
-	foreach (SgNode* edge, edgeList)
-	{
-		delete edge;
-	}
-
-	delete callGraph;
 	return processingOrder;
 }
 
