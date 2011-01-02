@@ -192,6 +192,8 @@ SgVarRefExp* EventProcessor::getStackVar(SgType* type)
 		type_name = "bool";
 	else if (isSgTypeFloat(type))
 		type_name = "float";
+	else if (isSgTypeDouble(type))
+		type_name = "double";
 	else
 		type_name = "any";
 
