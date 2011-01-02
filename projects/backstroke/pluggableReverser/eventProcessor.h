@@ -7,6 +7,7 @@
 #include "variableVersionTable.h"
 #include "handlerTypes.h"
 #include "utilities/types.h"
+#include "ssa/staticSingleAssignment.h"
 
 
 class VariableRenaming;
@@ -30,6 +31,9 @@ class EventProcessor
 
 	//! The variable renaming analysis object.
 	VariableRenaming* var_renaming_;
+
+	//! Interprocedural SSA analysis
+	StaticSingleAssignment* interproceduralSsa_;
 
 	//! This set is used to prevent infinite recursion when calling restoreVariable.
 	std::set<std::pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> > activeValueRestorations;
@@ -58,7 +62,7 @@ private:
 public:
 
 	EventProcessor(SgFunctionDeclaration* func_decl = NULL, VariableRenaming* var_renaming = NULL)
-	: event_(func_decl), var_renaming_(var_renaming) { }
+	: event_(func_decl), var_renaming_(var_renaming), interproceduralSsa_(NULL) { }
 
 	//! Add an expression handler to the pool of expression handlers.
 	void addExpressionHandler(ExpressionReversalHandler* exp_handler);
@@ -90,6 +94,12 @@ public:
 
 	VariableRenaming* getVariableRenaming() const
 	{ return var_renaming_;	}
+
+	void setInterproceduralSsa(StaticSingleAssignment* ssa)
+	{ interproceduralSsa_ = ssa; }
+
+	StaticSingleAssignment* getInterproceduralSsa()
+	{ return interproceduralSsa_; }
 
 	/**
 	* Given a variable and a version, returns an expression evaluating to the value of the variable

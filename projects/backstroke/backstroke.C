@@ -1,4 +1,5 @@
 #include "backstroke.h"
+#include "ssa/staticSingleAssignment.h"
 #include <utilities/utilities.h>
 #include <pluggableReverser/eventProcessor.h>
 #include <normalizations/expNormalization.h>
@@ -66,6 +67,9 @@ reverseEvents(EventProcessor* event_processor,
 	var_renaming.run();
 	// Make sure a VariableRenaming object is set for out event processor.
 	event_processor->setVariableRenaming(&var_renaming);
+
+	StaticSingleAssignment interproceduralSsa(project);
+	interproceduralSsa.run(true);
 
 	// Get the global scope.
 	SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);

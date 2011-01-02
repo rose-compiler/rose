@@ -9,11 +9,6 @@ using namespace std;
 
 struct IsEvent
 {
-	SgScopeStatement* globalScope;
-
-	IsEvent(SgScopeStatement* scope)
-	: globalScope(scope) {}
-
 	bool operator() (SgFunctionDeclaration* decl)
 	{
 		if (SgMemberFunctionDeclaration* memFunc = isSgMemberFunctionDeclaration(decl))
@@ -72,7 +67,7 @@ int main(int argc, char** argv)
 #endif
 
 	SgScopeStatement* globalScope = isSgScopeStatement(SageInterface::getFirstGlobalScope(project));
-	Backstroke::reverseEvents(&event_processor, IsEvent(globalScope), project);
+	Backstroke::reverseEvents(&event_processor, IsEvent(), project);
 
 	AstTests::runAllTests(project);
 	return backend(project);
