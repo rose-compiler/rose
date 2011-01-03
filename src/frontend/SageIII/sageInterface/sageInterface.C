@@ -7657,18 +7657,16 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
             // Because of iterator invalidation we must reset the iterators after each call to erase (I think).
                for (size_t n = 0; n < captureList.size(); n++)
                   {
-                    bool modifiedList = false;
                     AttachedPreprocessingInfoType::iterator k = comments->begin();
-                    while (k != comments->end() && modifiedList == false)
+                    while (k != comments->end())
                        {
                       // Only modify the list once per iteration over the captureList
-                      // if ((*comments)[*k] == NULL)
                          if (*k == NULL)
                             {
                               comments->erase(k);
-                              modifiedList = true;
+							  break;
                             }
-                         k++;
+                             k++;
                        }
                   }
              }
