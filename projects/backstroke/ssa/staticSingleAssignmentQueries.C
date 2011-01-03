@@ -546,6 +546,7 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsDefinedInSub
 
 set<StaticSingleAssignment::VarName> StaticSingleAssignment::getOriginalVarsDefinedInSubtree(SgNode* root) const
 {
+	ROSE_ASSERT(this != NULL && root != NULL);
 	class CollectDefsTraversal : public AstSimpleProcessing
 	{
 	public:
