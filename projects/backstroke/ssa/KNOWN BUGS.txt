@@ -1,3 +1,6 @@
+BUGS
+----
+
 -For post-increment ops, such as i++, the uses are incorrectly matched to the post-increment op. Instead, uses should be matched
    to the definition that comes before the increment.
 
@@ -5,3 +8,16 @@
    with no reaching definitions.
 
 -In interprocedural analysis, recursion is not yet handled
+
+-The analysis repeatedly traverses the virtual CFG, instead of building a static CFG up front. While this does not impact
+   correctness, it is a serious performance detriment
+
+
+TODO (in addition to fixing the above bugs)
+-----
+
+-Add more query functions
+
+-Add a classification for expanded defs, as either expanded from prefix or expanded from a member
+
+-Add a method to allow analyzing a single function
