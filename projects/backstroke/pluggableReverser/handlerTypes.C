@@ -142,3 +142,8 @@ const StaticSingleAssignment* ReversalHandlerBase::getSsa() const
 {
 	 return event_handler_->getInterproceduralSsa();
 }
+
+const IVariableFilter* ReversalHandlerBase::getVariableFilter() const
+{
+	return event_handler_->variableFilter_;
+}

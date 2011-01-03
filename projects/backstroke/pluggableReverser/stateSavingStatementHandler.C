@@ -1,5 +1,6 @@
 #include "stateSavingStatementHandler.h"
 #include "ssa/staticSingleAssignment.h"
+#include "eventProcessor.h"
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/lambda/lambda.hpp>
@@ -14,12 +15,13 @@ using namespace std;
 
 vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefsAtNode(SgNode* node)
 {
+	const IVariableFilter* filter = getVariableFilter();
 	vector<VariableRenaming::VarName> modified_vars;
 	foreach (const StaticSingleAssignment::VarName& var_name, getSsa()->getOriginalVarsDefinedInSubtree(node))
 	{
 		// Get the declaration of this variable to see if it's declared inside of the given statement.
 		// If so, we don't have to store this variable.
-		if (!isAncestor(node, var_name[0]->get_declaration()))
+		if (!isAncestor(node, var_name[0]->get_declaration()) && filter->isVariableInteresting(var_name))
 			modified_vars.push_back(var_name);
 	}
 
@@ -72,14 +74,16 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 	if (!child_result.empty())
 	{
 		StatementReversal child_reversal = child_result[0].generateReverseStatement();
-		prependStatement(child_reversal.fwd_stmt, fwd_stmt);
-		appendStatement(child_reversal.rvs_stmt, rvs_stmt);
+		SageInterface::prependStatement(child_reversal.fwd_stmt, fwd_stmt);
+		SageInterface::appendStatement(child_reversal.rvs_stmt, rvs_stmt);
 	}
 	else
 	{
-		prependStatement(copyStatement(stmt), fwd_stmt);
+		//In the forward code, include a copy of the original statement
+		SageInterface::prependStatement(copyStatement(stmt), fwd_stmt);
 	}
 
+	//Now, in the forward code, push all variables on the stack. Pop them in the reverse code
 	vector<VariableRenaming::VarName> modified_vars = eval_result.getAttribute<vector<VariableRenaming::VarName> >();
 	foreach (const VariableRenaming::VarName& var_name, modified_vars)
 	{
@@ -88,8 +92,8 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 		SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
 			copyExpression(var), popVal(var->get_type()));
 		
-		prependStatement(buildExprStatement(fwd_exp), fwd_stmt);
-		appendStatement(buildExprStatement(rvs_exp), rvs_stmt);
+		SageInterface::prependStatement(buildExprStatement(fwd_exp), fwd_stmt);
+		SageInterface::appendStatement(buildExprStatement(rvs_exp), rvs_stmt);
 	}
 
 	return StatementReversal(fwd_stmt, rvs_stmt);

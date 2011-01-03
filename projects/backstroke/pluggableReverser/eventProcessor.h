@@ -12,6 +12,17 @@
 
 class VariableRenaming;
 
+class IVariableFilter
+{
+public:
+	/** Given a variable declaration, return true if it's a variable of interest, false if the variable
+	 * should be ignored for purposes of reverse computation. Examples of variables to be ignored are
+	 * management variables such as an event scheduling queue, the standard output stream, etc. */
+	virtual bool isVariableInteresting(const VariableRenaming::VarName& var) const = 0;
+};
+
+/** Class that handles reversing an event. All expression handlers and statement handlers are registered with this
+ * class. */
 class EventProcessor
 {
 	//! This is the current event function to handle.
@@ -38,6 +49,9 @@ class EventProcessor
 	//! This set is used to prevent infinite recursion when calling restoreVariable.
 	std::set<std::pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> > activeValueRestorations;
 
+	//! Objects that determines which variables don't ever need to be reversed. E.g. management objects
+	IVariableFilter* variableFilter_;
+
 	//! Make those two classes the friends to let them use some private methods.
 	friend class ReversalHandlerBase;
 
@@ -61,8 +75,7 @@ private:
 
 public:
 
-	EventProcessor(SgFunctionDeclaration* func_decl = NULL, VariableRenaming* var_renaming = NULL)
-	: event_(func_decl), var_renaming_(var_renaming), interproceduralSsa_(NULL) { }
+	EventProcessor(IVariableFilter* varFilter = NULL);
 
 	//! Add an expression handler to the pool of expression handlers.
 	void addExpressionHandler(ExpressionReversalHandler* exp_handler);

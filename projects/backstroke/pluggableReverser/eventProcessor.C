@@ -12,6 +12,24 @@ using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
 
+/** A variable filter that considers every variable interesting. */
+class DefaultVariableFilter : public IVariableFilter
+{
+public:
+	virtual bool isVariableInteresting(const VariableRenaming::VarName&) const
+	{
+		return true;
+	}
+} defaultVariableFilter;
+
+EventProcessor::EventProcessor(IVariableFilter* varFilter) : event_(NULL), var_renaming_(NULL), interproceduralSsa_(NULL)
+{
+	if (varFilter == NULL)
+		variableFilter_ = &defaultVariableFilter;
+	else
+		variableFilter_ = varFilter;
+}
+
 void EventProcessor::addExpressionHandler(ExpressionReversalHandler* exp_handler)
 {
 	exp_handler->setEventHandler(this);

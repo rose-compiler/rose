@@ -12,6 +12,7 @@ class ExpressionReversalHandler;
 class StatementReversalHandler;
 class ReversalHandlerBase;
 class EventProcessor;
+class IVariableFilter;
 
 struct ExpressionReversal
 {
@@ -147,14 +148,17 @@ protected:
 	{ return pushVal(exp, exp->get_type()); }
 	SgExpression* popVal(SgType* type);
 
-	//! Return if the given variable is a state variable (currently, it should be the parameter of event function).
+	//! Return if the given variable is a state variable
 	bool isStateVariable(SgExpression* exp);
 
+	//! Returns an object with def-use analysis. To be replaced by SSA analysis in the future
 	VariableRenaming* getVariableRenaming();
 
 	//! Returns an object with interprocedural SSA analysis
 	const StaticSingleAssignment* getSsa() const;
 
+	//! Returns an object that determines whether the value of a given variable nees to be reversed.
+	const IVariableFilter* getVariableFilter() const;
 
 public:
 
