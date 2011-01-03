@@ -146,7 +146,6 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.117.msgctl.11.c \
 		   $(srcdir)/tests/syscall_tst.117.msgget.01.c \
 		   $(srcdir)/tests/syscall_tst.117.msgget.02.c \
-		   $(srcdir)/tests/syscall_tst.117.msgget.03.c \
 		   $(srcdir)/tests/syscall_tst.117.msgget.04.c \
 		   $(srcdir)/tests/syscall_tst.117.msgrcv.01.c \
 		   $(srcdir)/tests/syscall_tst.117.msgrcv.02.c \
@@ -330,6 +329,11 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.94.1.c \
 		   $(srcdir)/tests/syscall_tst.94.2.c \
 		   $(srcdir)/tests/syscall_tst.95.c 
+
+# These cannot be run reliably (at least not concurrently with other tests.
+#		   $(srcdir)/tests/syscall_tst.117.msgget.03.c
+#  			Tries to create message queues until all resources are exhausted in order to see what kind of error
+#			number we get. Unfortunately, other tests are also requiring message queues at the same time.
 
 TEST_INPUTS_NM_SRC = \
 		   $(srcdir)/tests/syscall.114.c \
