@@ -2,39 +2,37 @@
 #define reverse_rctypes_h
 
 #include <stdlib.h>
-#include <stack>
+#include <deque>
 #include <queue>
 #include <boost/any.hpp>
 
-using boost::any;
-
 template <class T>
-T push(std::stack<T>& data_stack, T val)
+T push(std::deque<T>& data_stack, T val)
 {
-    data_stack.push(val);
+    data_stack.push_back(val);
     return val;
 }
 
 template <class T>
-T pop(std::stack<T>& data_stack)
+T pop(std::deque<T>& data_stack)
 {
-    T val = data_stack.top();
-    data_stack.pop();
+    T val = data_stack.back();
+    data_stack.pop_back();
     return val;
 }
 
 template <class T>
-T push(std::stack<boost::any>& data_stack, T val)
+T push(std::deque<boost::any>& data_stack, T val)
 {
-    data_stack.push(boost::any(val));
+    data_stack.push_back(boost::any(val));
     return val;
 }
 
 template <class T>
-T pop(std::stack<boost::any>& data_stack)
+T pop(std::deque<boost::any>& data_stack)
 {
-    T val = boost::any_cast<T>(data_stack.top());
-    data_stack.pop();
+    T val = boost::any_cast<T>(data_stack.back());
+    data_stack.pop_back();
     return val;
 }
 

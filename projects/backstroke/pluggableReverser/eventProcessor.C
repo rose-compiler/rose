@@ -203,27 +203,47 @@ SgExpression* EventProcessor::restoreVariable(VariableRenaming::VarName variable
 SgVarRefExp* EventProcessor::getStackVar(SgType* type)
 {
 	string type_name;
+	string stackIdentifier;
 
 	if (isSgTypeInt(type))
-		type_name = "int";
-	else if (isSgTypeBool(type))
-		type_name = "bool";
-	else if (isSgTypeFloat(type))
-		type_name = "float";
-	else if (isSgTypeDouble(type))
-		type_name = "double";
-	else
-		type_name = "any";
-
-	string stack_name = event_->get_name() + "_" + type_name + "_stack";
-	if (stack_decls_.count(stack_name) == 0)
 	{
-		SgType* stack_type = buildStructDeclaration("std::stack<" + type_name + ">")->get_type();
-		ROSE_ASSERT(stack_type);
-		stack_decls_[stack_name] = buildVariableDeclaration(stack_name, stack_type);
+		//TODO: Just cast unsigned ints to ints before pushing them
+		stackIdentifier = "int";
+		type_name = "int";
+	}
+	else if (isSgTypeBool(type))
+	{
+		stackIdentifier = "bool";
+		type_name = "bool";
+	}
+	else if (isSgTypeFloat(type))
+	{
+		stackIdentifier = "float";
+		type_name = "float";
+	}
+	else if (isSgTypeDouble(type))
+	{
+		stackIdentifier = "double";
+		type_name = "double";
+	}
+	else
+	{
+		stackIdentifier = "any";
+		type_name = "boost::any";
 	}
 
-	return buildVarRefExp(stack_decls_[stack_name]->get_variables()[0]);
+	string stack_name = event_->get_name() + "_" + stackIdentifier + "_stack";
+	if (stack_decls_.count(stack_name) == 0)
+	{
+		SgClassDeclaration* stackTypeDeclaration = SageBuilder::buildStructDeclaration("std::deque<" + type_name + ">");
+		SgType* stack_type = stackTypeDeclaration->get_type();
+		ROSE_ASSERT(stack_type);
+		//delete stackTypeDeclaration;
+		
+		stack_decls_[stack_name] = SageBuilder::buildVariableDeclaration(stack_name, stack_type);
+	}
+
+	return SageBuilder::buildVarRefExp(stack_decls_[stack_name]->get_variables()[0]);
 }
 
 bool EventProcessor::isStateVariable(SgExpression* exp)
