@@ -9,9 +9,13 @@
 #   --The Rose Project Management.                                            #
 ###############################################################################
 
-# Directory containing this script, absolute name
+# Directory containing this script, which must be the top of the source tree.
 srcdir="${0%/*}"
 srcdir="$(cd $srcdir && pwd)"
+
+# Name of a file that would exist in a ROSE source tree but not other projects
+# that might be using this same build script.
+SOME_ROSE_FILE="scripts/autoconf-filter.pl"
 
 # This is the default location for build to use as a reference
 # to its macro definitions used by Autoconf and Automake.
@@ -50,7 +54,7 @@ done
 
 # If there's no autoconf-filter.pl script in this source tree, then we're building in some project external to ROSE, and
 # the "--srcpath" must be specified (or obtained from a config file).
-if [ ! -x $srcdir/scripts/autoconf-filter.pl -a "$ROSE_DISTRIBUTION" = "." ]; then
+if [ ! -e "$srcdir/$SOME_ROSE_FILE" -a "$ROSE_DISTRIBUTION" = "." ]; then
     [ -r $srcdir/config/ROSE_SOURCES ] && ROSE_DISTRIBUTION="$(head -n1 $srcdir/config/ROSE_SOURCES)"
 fi
 if [ ! -x "$ROSE_DISTRIBUTION/scripts/autoconf-filter.pl" ]; then
@@ -225,5 +229,9 @@ if [[ -n "$do_quiet" ]]; then
     (set -ex; $ROSE_DISTRIBUTION/scripts/quiet-mode) || true;
 fi
 
-# Save "--srcpath" value so rosegit-env can pick it up.
-echo $ROSE_DISTRIBUTION >$srcdir/config/ROSE_SOURCES 2>/dev/null
+# Save "--srcpath" value so rosegit-env can pick it up.  No need to do this for ROSE itself, just projects using the
+# ROSE build script.
+if [ ! -e "$srcdir/$SOME_ROSE_FILE" ]; then
+    echo $ROSE_DISTRIBUTION >$srcdir/config/ROSE_SOURCES 2>/dev/null
+fi
+
