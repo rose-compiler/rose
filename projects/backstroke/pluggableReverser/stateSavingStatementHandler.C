@@ -87,6 +87,15 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 	vector<VariableRenaming::VarName> modified_vars = eval_result.getAttribute<vector<VariableRenaming::VarName> >();
 	foreach (const VariableRenaming::VarName& var_name, modified_vars)
 	{
+		SgType* varType = var_name.back()->get_type();
+		if (SageInterface::isPointerType(varType))
+		{
+			fprintf(stderr, "ERROR: Correctly saving pointer types not yet implemented (it's not hard)\n");
+			fprintf(stderr, "The pointer is saved an restored, rather than the value it points to!\n");
+			fprintf(stderr, "Variable %s\n", VariableRenaming::keyToString(var_name).c_str());
+			ROSE_ASSERT(false);
+		}
+
 		SgExpression* var = VariableRenaming::buildVariableReference(var_name);
 		SgExpression* fwd_exp = pushVal(var);
 		SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
