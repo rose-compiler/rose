@@ -282,7 +282,10 @@ extern void XOMP_loop_default(int lower, int upper, int stride, long *n_lower, l
 
   // adjust inclusive stride here TODO
   // no -1/+1? if upper is already an inclusive bound
-  _p_upper = (_p_upper > upper + addOne ?_p_upper : upper + addOne);
+  if (isDecremental == 1)
+    _p_upper = (_p_upper > (upper + addOne) ?_p_upper : (upper + addOne));
+  else
+    _p_upper = (_p_upper < (upper + addOne) ?_p_upper : (upper + addOne));
 
   *n_lower = _p_lower;
   *n_upper = _p_upper;
