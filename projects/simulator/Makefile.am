@@ -317,7 +317,6 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.76.1.c \
 		   $(srcdir)/tests/syscall_tst.76.2.c \
 		   $(srcdir)/tests/syscall_tst.78.1.c \
-		   $(srcdir)/tests/syscall_tst.78.2.c \
 		   $(srcdir)/tests/syscall_tst.83.1.c \
 		   $(srcdir)/tests/syscall_tst.83.2.c \
 		   $(srcdir)/tests/syscall_tst.83.3.c \
@@ -334,6 +333,12 @@ TEST_INPUTS_TS_SRC = \
 #		   $(srcdir)/tests/syscall_tst.117.msgget.03.c
 #  			Tries to create message queues until all resources are exhausted in order to see what kind of error
 #			number we get. Unfortunately, other tests are also requiring message queues at the same time.
+#		   $(srcdir)/tests/syscall_tst.78.2.c
+#			Calls gettimeofday() in rapid succession for 30 seconds to make sure the value is monotonically
+#			increasing. However, some versions of the kernel have a bug in the way they interact with the RTC
+#			which can cause the clock to go backward by small amounts every so often.  See this discussion
+#			for an example: http://www.gossamer-threads.com/lists/linux/kernel/813344
+
 
 TEST_INPUTS_NM_SRC = \
 		   $(srcdir)/tests/syscall.114.c \
