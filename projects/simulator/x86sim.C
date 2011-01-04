@@ -1218,6 +1218,7 @@ public:
 
     /* Helper function for syscall 102, socketcall() and related syscalls */
     void sys_socket(int family, int type, int protocol);
+    void sys_bind(int fd, uint32_t addr_va, uint32_t addrlen);
 
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, long sz);
 };
@@ -2539,6 +2540,7 @@ void
 EmulationPolicy::sys_socket(int family, int type, int protocol)
 {
 #ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
     int a[3];
     a[0] = family;
     a[1] = type;
@@ -2548,6 +2550,35 @@ EmulationPolicy::sys_socket(int family, int type, int protocol)
     int result = syscall(SYS_socket, family, type, protocol);
 #endif
     writeGPR(x86_gpr_ax, -1==result?-errno:result);
+}
+
+void
+EmulationPolicy::sys_bind(int fd, uint32_t addr_va, uint32_t addrlen)
+{
+    if (addrlen<1 || addrlen>4096) {
+        writeGPR(x86_gpr_ax, -EINVAL);
+        return;
+    }
+    uint8_t *addrbuf = new uint8_t[addrlen];
+    if (addrlen!=map->read(addrbuf, addr_va, addrlen)) {
+        writeGPR(x86_gpr_ax, -EFAULT);
+        delete[] addrbuf;
+        return;
+    }
+
+#ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
+    ROSE_ASSERT(4==sizeof(void*));
+    int a[3];
+    a[0] = fd;
+    a[1] = (int)addrbuf;
+    a[2] = addrlen;
+    int result = syscall(SYS_socketcall, 2/*SYS_BIND*/, a);
+#else
+    int result = syscall(SYS_bind, fd, addrbuf, addrlen);
+#endif
+    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+    delete[] addrbuf;
 }
 
 void
@@ -3581,7 +3612,16 @@ EmulationPolicy::emulate_syscall()
                     break;
                 }
                     
-                case 2: /* SYS_BIND */
+                case 2: { /* SYS_BIND */
+                    if (12!=map->read(a, arg(1), 12)) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                        goto socketcall_error;
+                    }
+                    syscall_enter(a, "bind", "dpd");    /* FIXME: we could do a better job printing the address [RPM 2011-01-04] */
+                    sys_bind(a[0], a[1], a[2]);
+                    break;
+                }
+
                 case 3: /* SYS_CONNECT */
                 case 4: /* SYS_LISTEN */
                 case 5: /* SYS_ACCEPT */
@@ -3611,6 +3651,7 @@ EmulationPolicy::emulate_syscall()
             socketcall_error:
             syscall_enter("socketcall", "fp", socketcall_commands);
             syscall_leave("d");
+            break;
         }
 
         case 114: { /*0x72, wait4*/
