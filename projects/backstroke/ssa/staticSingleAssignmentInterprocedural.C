@@ -173,7 +173,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	if (calleeDef != NULL && processed.count(calleeDef) > 0)
 	{
 		//Yes, use exact info!
-		varsDefinedinCallee = getVarsDefinedInSubtree(calleeDef);
+		varsDefinedinCallee = getOriginalVarsDefinedInSubtree(calleeDef);
 	}
 	else
 	{
