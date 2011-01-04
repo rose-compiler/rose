@@ -215,9 +215,6 @@ void StaticSingleAssignment::run(bool interprocedural)
 		if (getDebug())
 			cout << "Finished DefsAndUsesTraversal..." << endl;
 
-		//Insert definitions at the SgFunctionDefinition for external variables whose values flow inside the function
-		insertDefsForExternalVariables(func->get_declaration());
-
 		//Expand any member variable definition to also define its parents at the same node
 		expandParentMemberDefinitions(func->get_declaration());
 
@@ -257,6 +254,9 @@ void StaticSingleAssignment::run(bool interprocedural)
 	//Now we have all local information, including interprocedural defs. Propagate the defs along control-flow
 	foreach (SgFunctionDefinition* func, interestingFunctions)
 	{
+		//Insert definitions at the SgFunctionDefinition for external variables whose values flow inside the function
+		insertDefsForExternalVariables(func->get_declaration());
+
 		//Create all ReachingDef objects:
 		//Create ReachingDef objects for all original definitions
 		populateLocalDefsTable(func->get_declaration());
@@ -412,7 +412,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 
 	while (!worklist.empty())
 	{
-		if (getDebug())
+		if (getDebugExtra())
 			cout << "-------------------------------------------------------------------------" << endl;
 		//Get the node to work on
 		current = *worklist.begin();
@@ -423,7 +423,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		//If we do this, then incorrect information will be propogated to the beginning of the function
 		if (current == FilteredCfgNode(func->cfgForEnd()))
 		{
-			if (getDebug())
+			if (getDebugExtra())
 				cout << "Skipped defUse on End of function definition." << endl;
 			continue;
 		}
@@ -441,7 +441,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 			{
 				//Add the node to the worklist
 				bool insertedNew = worklist.insert(nextNode).second;
-				if (insertedNew && getDebug())
+				if (insertedNew && getDebugExtra())
 				{
 					if (changed)
 						cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;

@@ -26,7 +26,7 @@ SgExpression* StaticSingleAssignment::buildVariableReference(const VarName& var,
 
 		SgVarRefExp* nextVar = SageBuilder::buildVarRefExp(var[i + 1], scope);
 
-		if (isSgPointerType(initName->get_type()))
+		if (SageInterface::isPointerType(initName->get_type()))
 		{
 			varsSoFar = SageBuilder::buildArrowExp(varsSoFar, nextVar);
 		}
@@ -74,7 +74,6 @@ void StaticSingleAssignment::printOriginalDefTable()
 	pair<SgNode*, std::set<VarName> > node;
 	foreach(node, originalDefTable)
 	{
-		cout << "  Original Def Table for [" << node.first->class_name() << ":" << node.first << "]:" << endl;
 		printOriginalDefs(node.first);
 	}
 }
@@ -84,7 +83,7 @@ void StaticSingleAssignment::printLocalDefUseTable(const StaticSingleAssignment:
 	foreach(const LocalDefUseTable::value_type& nodeVarsPair, table)
 	{
 		const SgNode* node = nodeVarsPair.first;
-		printf("%s@%d: ", node->class_name().c_str(), node->get_file_info()->get_line());
+		printf("    %s@%d: ", node->class_name().c_str(), node->get_file_info()->get_line());
 		foreach (const VarName& var, nodeVarsPair.second)
 		{
 			printf("%s, ", varnameToString(var).c_str());
