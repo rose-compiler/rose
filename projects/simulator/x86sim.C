@@ -119,7 +119,12 @@ static const Translate rlimit_resources[] = {TE(RLIMIT_CPU), TE(RLIMIT_FSIZE), T
                                              TE(RLIMIT_CORE), TE(RLIMIT_RSS), TE(RLIMIT_MEMLOCK), TE(RLIMIT_NPROC),
                                              TE(RLIMIT_NOFILE), TE(RLIMIT_OFILE), TE(RLIMIT_AS),
                                              TE(RLIMIT_LOCKS), TE(RLIMIT_SIGPENDING), TE(RLIMIT_MSGQUEUE),
-                                             TE(RLIMIT_NICE), TE(RLIMIT_RTPRIO),
+#ifdef RLIMIT_RTPRIO
+                                             TE(RLIMIT_RTPRIO),
+#endif
+#ifdef RLIMIT_NICE
+                                             TE(RLIMIT_NICE),
+#endif
 #ifdef RLIMIT_RTTIME
                                              TE(RLIMIT_RTTIME),
 #endif
