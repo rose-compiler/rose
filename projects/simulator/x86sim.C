@@ -1219,6 +1219,7 @@ public:
     /* Helper function for syscall 102, socketcall() and related syscalls */
     void sys_socket(int family, int type, int protocol);
     void sys_bind(int fd, uint32_t addr_va, uint32_t addrlen);
+    void sys_listen(int fd, int backlog);
 
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, long sz);
 };
@@ -2574,11 +2575,26 @@ EmulationPolicy::sys_bind(int fd, uint32_t addr_va, uint32_t addrlen)
     a[1] = (int)addrbuf;
     a[2] = addrlen;
     int result = syscall(SYS_socketcall, 2/*SYS_BIND*/, a);
-#else
+#else /* amd64 */
     int result = syscall(SYS_bind, fd, addrbuf, addrlen);
 #endif
     writeGPR(x86_gpr_ax, -1==result?-errno:result);
     delete[] addrbuf;
+}
+
+void
+EmulationPolicy::sys_listen(int fd, int backlog)
+{
+#ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
+    int a[2];
+    a[0] = fd;
+    a[1] = backlog;
+    int result = syscall(SYS_socketcall, 4/*SYS_LISTEN*/, a);
+#else /* amd64 */
+    int result = syscall(SYS_listen, fd, backlog);
+#endif
+    writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
 
 void
@@ -3622,8 +3638,17 @@ EmulationPolicy::emulate_syscall()
                     break;
                 }
 
+                case 4: { /* SYS_LISTEN */
+                    if (8!=map->read(a, arg(1), 8)) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                        goto socketcall_error;
+                    }
+                    syscall_enter(a, "listen", "dd");
+                    sys_listen(a[0], a[1]);
+                    break;
+                }
+                    
                 case 3: /* SYS_CONNECT */
-                case 4: /* SYS_LISTEN */
                 case 5: /* SYS_ACCEPT */
                 case 6: /* SYS_GETSOCKNAME */
                 case 7: /* SYS_GETPEERNAME */
