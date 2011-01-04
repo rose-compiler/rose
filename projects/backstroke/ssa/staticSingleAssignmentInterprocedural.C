@@ -215,6 +215,10 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 			//If the callee has a definition and we have already processed it we can use exact info to check if 'this' is modified
 			else
 			{
+				//TODO: We can be more precise here! Instead of defining the lhsVar, we can find exactly which
+				//elements of the lhs var were defined and only define those.
+				//For example, obj.setX(3) should only have a def for obj.x rather than for all of obj.
+
 				//Get the scope of variables in this class
 				SgClassDefinition* calleeClassScope = calleeMemFunDecl->get_class_scope();
 				ROSE_ASSERT(calleeClassScope != NULL);
