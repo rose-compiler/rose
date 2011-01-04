@@ -7,8 +7,6 @@ BUGS
 -Dead code is not handled correctly. Uses of a variable inside dead code result in an assertion that there is a use
    with no reaching definitions.
 
--In interprocedural analysis, recursion is not yet handled
-
 -The analysis repeatedly traverses the virtual CFG, instead of building a static CFG up front. While this does not impact
    correctness, it is a serious performance detriment
 
