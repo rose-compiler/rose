@@ -65,7 +65,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/shm.h>
-
+#include <sys/socket.h>
 
 /* Define this if you want strict emulation. When defined, every attempt is made for x86sim to provide an environment as close
  * as possible to running natively on hudson-rose-07.  Note that defining this might cause the simulator to malfunction since
@@ -747,9 +747,83 @@ print_pt_regs_32(FILE *f, const uint8_t *_v, size_t sz)
                    v->sp, v->ss);
 }
 
+static const Translate protocol_families[] = {
+    //TE2(1, PF_UNIX),
+    TE2(1, PF_LOCAL),   /* POSIX name for AF_UNIX */
+    TE2(2, PF_INET),
+    TE2(3, PF_AX25),
+    TE2(4, PF_IPX),
+    TE2(5, PF_APPLETALK),
+    TE2(6, PF_NETROM),
+    TE2(7, PF_BRIDGE),
+    TE2(8, PF_ATMPVC),
+    TE2(9, PF_X25),
+    TE2(10, PF_INET6),
+    TE2(11, PF_ROSE),
+    TE2(12, PF_DECnet),
+    TE2(13, PF_NETBEUI),
+    TE2(14, PF_SECURITY),
+    TE2(15, PF_KEY),
+    TE2(16, PF_NETLINK),
+    //TE2(16, PF_ROUTE),        same as netlink, used by 4.4BSD
+    TE2(17, PF_PACKET),
+    TE2(18, PF_ASH),
+    TE2(19, PF_ECONET),
+    TE2(20, PF_ATMSVC),
+    TE2(21, PF_RDS),
+    TE2(22, PF_SNA),
+    TE2(23, PF_IRDA),
+    TE2(24, PF_PPPOX),
+    TE2(25, PF_WANPIPE),
+    TE2(26, PF_LLC),
+    // 27, 28 unused
+    TE2(29, PF_CAN),
+    TE2(30, PF_TIPC),
+    TE2(31, PF_BLUETOOTH),
+    TE2(32, PF_IUCV),
+    TE2(33, PF_RXRPC),
+    TE2(34, PF_ISDN),
+    TE2(35, PF_PHONET),
+    TE2(36, PF_IEEE802154),
+    TE2(37, PF_CAIF),
+    T_END
+};
 
+static const Translate socket_types[] = {
+    TE2(1, SOCK_STREAM),
+    TE2(2, SOCK_DGRAM),
+    TE2(3, SOCK_RAW),
+    TE2(4, SOCK_RDM),
+    TE2(5, SOCK_SEQPACKET),
+    TE2(6, SOCK_DCCP),
+    TE2(10, SOCK_PACKET),
+    T_END
+};
 
-
+static const Translate socket_protocols[] = {
+    TE2(1, IPPROTO_ICMP),
+    TE2(2, IPPROTO_IGMP),
+    TE2(4, IPPROTO_IPIP),
+    TE2(6, IPPROTO_TCP),
+    TE2(8, IPPROTO_EGP),
+    TE2(12, IPPROTO_PUP),
+    TE2(17, IPPROTO_UDP),
+    TE2(22, IPPROTO_IDP),
+    TE2(33, IPPROTO_DCCP),
+    TE2(41, IPPROTO_IPV6),
+    TE2(46, IPPROTO_RSVP),
+    TE2(47, IPPROTO_GRE),
+    TE2(50, IPPROTO_ESP),
+    TE2(51, IPPROTO_AH),
+    TE2(94, IPPROTO_BEETPH),
+    TE2(103, IPPROTO_PIM),
+    TE2(108, IPPROTO_COMP),
+    TE2(132, IPPROTO_SCTP),
+    TE2(136, IPPROTO_UDPLITE),
+    TE2(255, IPPROTO_RAW), 
+    TE2(0, IPPROTO_IP),
+    T_END
+};
 
 
 
@@ -1142,6 +1216,8 @@ public:
     void sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va);
     void sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, uint32_t ptr);
 
+    /* Helper function for syscall 102, socketcall() and related syscalls */
+    void sys_socket(int family, int type, int protocol);
 
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, long sz);
 };
@@ -2460,6 +2536,21 @@ EmulationPolicy::sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, 
 }
 
 void
+EmulationPolicy::sys_socket(int family, int type, int protocol)
+{
+#ifdef SYS_socketcall /* i686 */
+    int a[3];
+    a[0] = family;
+    a[1] = type;
+    a[2] = protocol;
+    int result = syscall(SYS_socketcall, 1/*SYS_SOCKET*/, a);
+#else /* amd64 */
+    int result = syscall(SYS_socket, family, type, protocol);
+#endif
+    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+}
+
+void
 EmulationPolicy::emulate_syscall()
 {
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
@@ -3452,14 +3543,74 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 102: { // socketcall
-            syscall_enter("socketcall", "dp");
-            //uint32_t call=arg(0), args=arg(1);
-            writeGPR(x86_gpr_ax, -ENOSYS);
-            std::cerr << "Error: socketcall system call not implemented" << std::endl;
-            ROSE_ASSERT(true==false); // NOT IMPLEMENTED
+        case 102: { /* 0x66, socketcall */
+            /* Return value is written to eax by these helper functions. The struction of this code closely follows that in the
+             * Linux kernel. See linux/net/socket.c. */
+            static const Translate socketcall_commands[] = {
+                TE2(1, SYS_SOCKET),
+                TE2(2, SYS_BIND),
+                TE2(3, SYS_CONNECT),
+                TE2(4, SYS_LISTEN),
+                TE2(5, SYS_ACCEPT),
+                TE2(6, SYS_GETSOCKNAME),
+                TE2(7, SYS_GETPEERNAME),
+                TE2(8, SYS_SOCKETPAIR),
+                TE2(9, SYS_SEND),
+                TE2(10, SYS_RECV),
+                TE2(11, SYS_SENDTO),
+                TE2(12, SYS_RECVFROM),
+                TE2(13, SYS_SHUTDOWN),
+                TE2(14, SYS_SETSOCKOPT),
+                TE2(15, SYS_GETSOCKOPT),
+                TE2(16, SYS_SENDMSG),
+                TE2(17, SYS_RECVMSG),
+                TE2(18, SYS_ACCEPT4),
+                TE2(19, SYS_RECVMMSG),
+                T_END
+            };
+
+            uint32_t a[6];
+            switch (arg(0)) {
+                case 1: { /* SYS_SOCKET */
+                    if (12!=map->read(a, arg(1), 12)) {
+                        writeGPR(x86_gpr_ax, -EFAULT);
+                        goto socketcall_error;
+                    }
+                    syscall_enter(a, "socket", "fff", protocol_families, socket_types, socket_protocols);
+                    sys_socket(a[0], a[1], a[2]);
+                    break;
+                }
+                    
+                case 2: /* SYS_BIND */
+                case 3: /* SYS_CONNECT */
+                case 4: /* SYS_LISTEN */
+                case 5: /* SYS_ACCEPT */
+                case 6: /* SYS_GETSOCKNAME */
+                case 7: /* SYS_GETPEERNAME */
+                case 8: /* SYS_SOCKETPAIR */
+                case 9: /* SYS_SEND */
+                case 10: /* SYS_RECV */
+                case 11: /* SYS_SENDTO */
+                case 12: /* SYS_RECVFROM */
+                case 13: /* SYS_SHUTDOWN */
+                case 14: /* SYS_SETSOCKOPT */
+                case 15: /* SYS_GETSOCKOPT */
+                case 16: /* SYS_SENDMSG */
+                case 17: /* SYS_RECVMSG */
+                case 18: /* SYS_ACCEPT4 */
+                case 19: /* SYS_RECVMMSG */
+                    writeGPR(x86_gpr_ax, -ENOSYS);
+                    goto socketcall_error;
+                default:
+                    writeGPR(x86_gpr_ax, -EINVAL);
+                    goto socketcall_error;
+            }
             syscall_leave("d");
             break;
+
+            socketcall_error:
+            syscall_enter("socketcall", "fp", socketcall_commands);
+            syscall_leave("d");
         }
 
         case 114: { /*0x72, wait4*/
