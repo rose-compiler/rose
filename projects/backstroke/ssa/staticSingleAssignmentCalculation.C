@@ -185,41 +185,25 @@ void StaticSingleAssignment::run(bool interprocedural)
 	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
 	DefsAndUsesTraversal defUseTrav(this);
 
-	//If interprocedural analysis is turned on, determine in which order we should process functions in order to
-	//process callees before calles whenever possible
-	vector<SgFunctionDefinition*> functionsToProcess;
-	auto_ptr<ClassHierarchyWrapper> classHierarchy;
-	if (interprocedural)
+	//Get a list of all the functions that we'll process
+	unordered_set<SgFunctionDefinition*> interestingFunctions;
+	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
+	FunctionFilter functionFilter;
+	foreach (SgFunctionDefinition* f, funcs)
 	{
-		classHierarchy.reset(new ClassHierarchyWrapper(project));
-		functionsToProcess = calculateInterproceduralProcessingOrder();
-	}
-	else
-	{
-		vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
-			FunctionFilter functionFilter;
-		foreach (SgFunctionDefinition* f, funcs)
-		{
-			if (functionFilter(f->get_declaration()))
-				functionsToProcess.push_back(f);
-		}
+		if (functionFilter(f->get_declaration()))
+			interestingFunctions.insert(f);
 	}
 
-
-	//Annotate all functions of interest with variable names
-	//This is so we can get a loose bound of what variables are modified in a function even if it hasn't been processed yet
-	foreach (SgFunctionDefinition* func, functionsToProcess)
+	//Generate all local information before doing interprocedural analysis. This is so we know
+	//what variables are directly modified in each function body before we do interprocedural propagation
+	foreach (SgFunctionDefinition* func, interestingFunctions)
 	{
 		if (getDebug())
 			cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
 
 		uniqueTrav.traverse(func->get_declaration());
-	}
 
-	//Process all functions of interest
-	unordered_set<SgFunctionDefinition*> functionsProcessed;
-	foreach (SgFunctionDefinition* func, functionsToProcess)
-	{
 		if (getDebug())
 			cout << "Finished UniqueNameTraversal..." << endl;
 
@@ -231,11 +215,6 @@ void StaticSingleAssignment::run(bool interprocedural)
 		if (getDebug())
 			cout << "Finished DefsAndUsesTraversal..." << endl;
 
-		if (interprocedural)
-		{
-			insertInterproceduralDefs(func, functionsProcessed, classHierarchy.get());
-		}
-
 		//Insert definitions at the SgFunctionDefinition for external variables whose values flow inside the function
 		insertDefsForExternalVariables(func->get_declaration());
 
@@ -246,7 +225,38 @@ void StaticSingleAssignment::run(bool interprocedural)
 		expandParentMemberUses(func->get_declaration());
 
 		insertDefsForChildMemberUses(func->get_declaration());
+	}
 
+	//Interprocedural iterations. We iterate on the call graph until all interprocedural defs are propagated
+	//If there is no recursion, this only requires one iteration
+	if (interprocedural)
+	{
+		ClassHierarchyWrapper* classHierarchy = new ClassHierarchyWrapper(project);
+		vector<SgFunctionDefinition*> topologicalFunctionOrder = calculateInterproceduralProcessingOrder();
+
+		int iteration = 0;
+		while (true)
+		{
+			iteration++;
+			bool changedDefs = false;
+			foreach (SgFunctionDefinition* func, topologicalFunctionOrder)
+			{
+				bool newDefsForFunc = insertInterproceduralDefs(func, interestingFunctions, classHierarchy);
+				changedDefs = changedDefs || newDefsForFunc;
+			}
+
+			if (!changedDefs)
+				break;
+		}
+		if (getDebug())
+			printf("%d interprocedural iterations on the call graph!\n", iteration);
+
+		delete classHierarchy;
+	}
+
+	//Now we have all local information, including interprocedural defs. Propagate the defs along control-flow
+	foreach (SgFunctionDefinition* func, interestingFunctions)
+	{
 		//Create all ReachingDef objects:
 		//Create ReachingDef objects for all original definitions
 		populateLocalDefsTable(func->get_declaration());
@@ -265,8 +275,6 @@ void StaticSingleAssignment::run(bool interprocedural)
 
 		//Annotate phi functions with dependencies
 		//annotatePhiNodeWithConditions(func, controlDependencies);
-
-		functionsProcessed.insert(func);
 	}
 }
 

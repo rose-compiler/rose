@@ -123,7 +123,9 @@ private:
 	/** Map from each node to the variables used at that node and their reaching definitions. */
 	UseTable useTable;
 
-	/** Local definitions (actual definitions, not phi definitions). */
+	/** Local definitions (actual definitions, not phi definitions).
+	 * This table does not get populated until AFTER interprocedural propagation; hence
+	 * the values here cannot be used during interprocedural analysis.  */
 	boost::unordered_map<SgNode*, NodeReachingDefTable> ssaLocalDefTable;
 
 public:
@@ -243,9 +245,10 @@ private:
 	/** Add definitions at function call expressions for variables that are modified interprocedurally.
 	 * The definitions are inserted in the original def table.
 	 * @param funcDef function whose body should be queries for function calls
-	 * @param processed all the functions completely processed by SSA so far. If a callee is one of these functions,
-	 *			we can use exact information. */
-	void insertInterproceduralDefs(SgFunctionDefinition* funcDef, const boost::unordered_set<SgFunctionDefinition*>& processed,
+	 * @param processed all the functions completely processed by SSA. If a callee is one of these functions,
+	 *			we can use exact information.
+	 * @return true if new defs were inserted, false otherwise. */
+	bool insertInterproceduralDefs(SgFunctionDefinition* funcDef, const boost::unordered_set<SgFunctionDefinition*>& processed,
 		ClassHierarchyWrapper* classHierarchy);
 
 	/** Insert the interprocedural defs at a particular call site for a particular callee. This function may be called

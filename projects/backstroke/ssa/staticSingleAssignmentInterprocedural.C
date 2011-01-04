@@ -93,7 +93,7 @@ void StaticSingleAssignment::processCalleesThenFunction(SgFunctionDefinition* ta
 }
 
 
-void StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* funcDef,
+bool StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* funcDef,
 									const boost::unordered_set<SgFunctionDefinition*>& processed,
 									ClassHierarchyWrapper* classHierarchy)
 {
@@ -101,17 +101,30 @@ void StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 	vector<SgExpression*> constructorCalls = SageInterface::querySubTree<SgExpression>(funcDef, V_SgConstructorInitializer);
 	functionCalls.insert(functionCalls.end(), constructorCalls.begin(), constructorCalls.end());
 
+	bool changedDefs = false;
+
 	foreach(SgExpression* callSite, functionCalls)
 	{
 		//First, see which functions this call site leads too
 		vector<SgFunctionDeclaration*> callees;
 		CallTargetSet::getDeclarationsForExpression(callSite, classHierarchy, callees);
 
+		LocalDefUseTable::mapped_type oldDefs = originalDefTable[callSite];
+
+		//process each callee
 		foreach(SgFunctionDeclaration* callee, callees)
 		{
 			processOneCallSite(callSite, callee, processed, classHierarchy);
 		}
+
+		const LocalDefUseTable::mapped_type& newDefs = originalDefTable[callSite];
+		if (oldDefs != newDefs)
+		{
+			changedDefs = true;
+		}
 	}
+
+	return changedDefs;
 }
 
 

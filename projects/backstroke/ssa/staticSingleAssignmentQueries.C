@@ -525,14 +525,16 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsDefinedInSub
 			if (isSgFunctionDefinition(node))
 				return;
 
-			if (ssa->ssaLocalDefTable.find(node) == ssa->ssaLocalDefTable.end())
-				return;
-
-			const NodeReachingDefTable& nodeDefs = ssa->ssaLocalDefTable.find(node)->second;
-
-			foreach(const NodeReachingDefTable::value_type& varDefPair, nodeDefs)
+			if (ssa->originalDefTable.find(node) != ssa->originalDefTable.end())
 			{
-				definedNames.insert(varDefPair.first);
+				const LocalDefUseTable::mapped_type& nodeDefs = ssa->originalDefTable.find(node)->second;
+				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
+			}
+
+			if (ssa->expandedDefTable.find(node) != ssa->expandedDefTable.end())
+			{
+				const LocalDefUseTable::mapped_type& nodeDefs = ssa->expandedDefTable.find(node)->second;
+				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
 			}
 		}
 	};
@@ -562,15 +564,10 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getOriginalVarsDefi
 			if (isSgFunctionDefinition(node))
 				return;
 
-			if (ssa->ssaLocalDefTable.find(node) == ssa->ssaLocalDefTable.end())
-				return;
-
-			const NodeReachingDefTable& nodeDefs = ssa->ssaLocalDefTable.find(node)->second;
-
-			foreach(const NodeReachingDefTable::value_type& varDefPair, nodeDefs)
+			if (ssa->originalDefTable.find(node) != ssa->originalDefTable.end())
 			{
-				if (varDefPair.second->isOriginalDef())
-					definedNames.insert(varDefPair.first);
+				const LocalDefUseTable::mapped_type& nodeDefs = ssa->originalDefTable.find(node)->second;
+				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
 			}
 		}
 	};
