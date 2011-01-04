@@ -961,8 +961,14 @@ public:
     /* Emulates a Linux system call from an INT 0x80 instruction. */
     void emulate_syscall();
 
-    /* Print the name and arguments of a system call in a manner like strace */
+    /* Print the name and arguments of a system call in a manner like strace using values in registers */
     void syscall_enter(const char *name, const char *fmt, ...);
+
+    /* Print the name and arguments of a system call in a manner like strace using supplied valies */
+    void syscall_enter(uint32_t *values, const char *name, const char *fmt, ...);
+
+    /* Print the name and arguments of a system call in a manner like strace */
+    void syscall_enterv(uint32_t *values, const char *name, const char *format, va_list *app);
 
     /* Print the return value of a system call in a manner like strace */
     void syscall_leave(const char *format, ...);
@@ -4998,12 +5004,9 @@ EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_li
 }
 
 void
-EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
+EmulationPolicy::syscall_enterv(uint32_t *values, const char *name, const char *format, va_list *app)
 {
     static timeval first_call;
-
-    va_list ap;
-    va_start(ap, format);
 
     if (debug && trace_syscall) {
         timeval this_call;
@@ -5015,10 +5018,26 @@ EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
         fprintf(debug, "0x%08"PRIx64" %8.4f: ", readIP().known_value(), elapsed);
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
-            syscall_arginfo(format[i], arg(i), args+i, &ap);
+            syscall_arginfo(format[i], values?values[i]:arg(i), args+i, app);
         print_enter(debug, name, arg(-1), format, args);
     }
-    
+}
+
+void
+EmulationPolicy::syscall_enter(uint32_t *values, const char *name, const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    syscall_enterv(values, name, format, &ap);
+    va_end(ap);
+}
+
+void
+EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    syscall_enterv(NULL, name, format, &ap);
     va_end(ap);
 }
 
