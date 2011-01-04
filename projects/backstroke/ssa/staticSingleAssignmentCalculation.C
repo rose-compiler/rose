@@ -49,6 +49,12 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 	ROSE_ASSERT(var.size() > 0 && scope != NULL);
 	SgScopeStatement* varScope = SageInterface::getScope(var[0]);
 
+	//Work around a ROSE bug that sets incorrect scopes for built-in variables.
+	if (isBuiltinVar(var))
+	{
+		return SageInterface::isAncestor(scope, var[0]);
+	}
+
 	if (varScope == scope || SageInterface::isAncestor(varScope, scope))
 	{
 		//FIXME: In a basic block, the definition of the variable might come AFTER the node in question
@@ -167,8 +173,7 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 	return false;
 }
 
-//Function to perform the StaticSingleAssignment and annotate the AST
-void StaticSingleAssignment::run()
+void StaticSingleAssignment::run(bool interprocedural)
 {
 	originalDefTable.clear();
 	expandedDefTable.clear();
@@ -179,57 +184,88 @@ void StaticSingleAssignment::run()
 	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
 	DefsAndUsesTraversal defUseTrav(this);
 
-	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
-	FunctionFilter functionFilter;
-	foreach (SgFunctionDefinition* func, funcs)
+	//If interprocedural analysis is turned on, determine in which order we should process functions in order to
+	//process callees before calles whenever possible
+	vector<SgFunctionDefinition*> functionsToProcess;
+	auto_ptr<ClassHierarchyWrapper> classHierarchy;
+	if (interprocedural)
 	{
-		if (functionFilter(func->get_declaration()))
+		classHierarchy.reset(new ClassHierarchyWrapper(project));
+		functionsToProcess = calculateInterproceduralProcessingOrder();
+	}
+	else
+	{
+		vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
+			FunctionFilter functionFilter;
+		foreach (SgFunctionDefinition* f, funcs)
 		{
-			if (getDebug())
-				cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
-
-			uniqueTrav.traverse(func->get_declaration());
-
-			if (getDebug())
-				cout << "Finished UniqueNameTraversal..." << endl;
-
-			if (getDebug())
-				cout << "Running DefsAndUsesTraversal on function: " << SageInterface::get_name(func) << func << endl;
-
-			defUseTrav.traverse(func->get_declaration());
-
-			if (getDebug())
-				cout << "Finished DefsAndUsesTraversal..." << endl;
-
-			insertDefsForExternalVariables(func->get_declaration());
-
-			//Expand any member variable definition to also define its parents at the same node
-			expandParentMemberDefinitions(func->get_declaration());
-
-			//Expand any member variable uses to also use the parent variables (e.g. a.x also uses a)
-			expandParentMemberUses(func->get_declaration());
-
-			insertDefsForChildMemberUses(func->get_declaration());
-
-			//Create all ReachingDef objects:
-			//Create ReachingDef objects for all original definitions
-			populateLocalDefsTable(func->get_declaration());
-			//Insert phi functions at join points
-			multimap< FilteredCfgNode, pair<FilteredCfgNode, FilteredCfgEdge> > controlDependencies = insertPhiFunctions(func);
-
-			//Renumber all instantiated ReachingDef objects
-			renumberAllDefinitions(func);
-
-			if (getDebug())
-				cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
-			runDefUseDataFlow(func);
-
-			//We have all the propagated defs, now update the use table
-			buildUseTable(func);
-
-			//Annotate phi functions with dependencies
-			annotatePhiNodeWithConditions(func, controlDependencies);
+			if (functionFilter(f->get_declaration()))
+				functionsToProcess.push_back(f);
 		}
+	}
+
+
+	//Annotate all functions of interest with variable names
+	//This is so we can get a loose bound of what variables are modified in a function even if it hasn't been processed yet
+	foreach (SgFunctionDefinition* func, functionsToProcess)
+	{
+		if (getDebug())
+			cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
+
+		uniqueTrav.traverse(func->get_declaration());
+	}
+
+	//Process all functions of interest
+	unordered_set<SgFunctionDefinition*> functionsProcessed;
+	foreach (SgFunctionDefinition* func, functionsToProcess)
+	{
+		if (getDebug())
+			cout << "Finished UniqueNameTraversal..." << endl;
+
+		if (getDebug())
+			cout << "Running DefsAndUsesTraversal on function: " << SageInterface::get_name(func) << func << endl;
+
+		defUseTrav.traverse(func->get_declaration());
+
+		if (getDebug())
+			cout << "Finished DefsAndUsesTraversal..." << endl;
+
+		if (interprocedural)
+		{
+			insertInterproceduralDefs(func, functionsProcessed, classHierarchy.get());
+		}
+
+		//Insert definitions at the SgFunctionDefinition for external variables whose values flow inside the function
+		insertDefsForExternalVariables(func->get_declaration());
+
+		//Expand any member variable definition to also define its parents at the same node
+		expandParentMemberDefinitions(func->get_declaration());
+
+		//Expand any member variable uses to also use the parent variables (e.g. a.x also uses a)
+		expandParentMemberUses(func->get_declaration());
+
+		insertDefsForChildMemberUses(func->get_declaration());
+
+		//Create all ReachingDef objects:
+		//Create ReachingDef objects for all original definitions
+		populateLocalDefsTable(func->get_declaration());
+		//Insert phi functions at join points
+		multimap< FilteredCfgNode, pair<FilteredCfgNode, FilteredCfgEdge> > controlDependencies = insertPhiFunctions(func);
+
+		//Renumber all instantiated ReachingDef objects
+		renumberAllDefinitions(func);
+
+		if (getDebug())
+			cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
+		runDefUseDataFlow(func);
+
+		//We have all the propagated defs, now update the use table
+		buildUseTable(func);
+
+		//Annotate phi functions with dependencies
+		//annotatePhiNodeWithConditions(func, controlDependencies);
+
+		functionsProcessed.insert(func);
 	}
 }
 
@@ -538,7 +574,8 @@ void StaticSingleAssignment::buildUseTable(SgFunctionDefinition* func)
 				{
 					// There are no defs for this use at this node, this shouldn't happen
 					printf("Error: Found use for the name '%s', but no reaching defs!\n", varnameToString(usedVar).c_str());
-					printf("Node is %s:%d\n", node->class_name().c_str(), node->get_file_info()->get_line());
+					printf("Node is %s:%d in %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
+						node->get_file_info()->get_filename());
 					ROSE_ASSERT(false);
 				}
 			}
@@ -551,12 +588,12 @@ void StaticSingleAssignment::buildUseTable(SgFunctionDefinition* func)
 }
 
 /** Returns a set of all the variables names that have uses in the subtree. */
-set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsUsedInSubtree(SgNode* root)
+set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsUsedInSubtree(SgNode* root) const
 {
 	class CollectUsesVarsTraversal : public AstSimpleProcessing
 	{
 	public:
-		StaticSingleAssignment* ssa;
+		const StaticSingleAssignment* ssa;
 
 		//All the varNames that have uses in the function
 		set<VarName> usedNames;
@@ -1048,100 +1085,5 @@ StaticSingleAssignment::getConditionsForNodeExecution(SgNode* node, const vector
 	else
 	{
 		return result;
-	}
-}
-
-
-/** This function is experimentation with interprocedural analysis.*/
-void StaticSingleAssignment::interprocedural()
-{
-	//First, let's build a call graph. Our goal is to find an order in which to process the functions
-	//So that callees are processed before callers. This way we would have exact information at each call site
-	CallGraphBuilder cgBuilder(project);
-	FunctionFilter functionFilter;
-	cgBuilder.buildCallGraph(functionFilter);
-
-	SgIncidenceDirectedGraph* callGraph = cgBuilder.getGraph();
-
-	//Build a map from SgGraphNode* to the corresponding function definitions
-	unordered_map<SgFunctionDefinition*, SgGraphNode*> graphNodeToFunction;
-	set<SgGraphNode*> allNodes = callGraph->computeNodeSet();
-
-	foreach(SgGraphNode* graphNode, allNodes)
-	{
-		SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(graphNode->get_SgNode());
-		if (funcDecl == NULL)
-			continue;
-
-		funcDecl = isSgFunctionDeclaration(funcDecl->get_definingDeclaration());
-		if (funcDecl == NULL)
-			continue;
-
-		SgFunctionDefinition* funcDef = funcDecl->get_definition();
-		graphNodeToFunction[funcDef] = graphNode;
-	}
-
-	//Find functions of interest
-	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
-
-	//For each function of interest, we will either find a root node or we will find a cycle.
-	//The call graph might be disconnected, so we have to find all the root nodes. Later we will
-	//Do a depth-first search starting at the root nodes in order to determine in which order to processs the functions
-	unordered_set<SgFunctionDefinition*> rootNodes;
-
-	foreach (SgFunctionDefinition* funcDef, funcs)
-	{
-		if (!functionFilter(funcDef->get_declaration()))
-			continue;
-
-		//Keep going up the graph until we hit a cycle or a root
-		unordered_set<SgFunctionDefinition*> visited;
-		unordered_set<SgFunctionDefinition*> worklist;
-		worklist.insert(funcDef);
-
-		while (!worklist.empty())
-		{
-			SgFunctionDefinition* currFunc = *worklist.begin();
-			worklist.erase(worklist.begin());
-			visited.insert(currFunc);
-
-			ROSE_ASSERT(graphNodeToFunction.count(currFunc) > 0);
-			SgGraphNode* graphNode = graphNodeToFunction[currFunc];
-
-			vector<SgGraphNode*> callers;
-			callGraph->getPredecessors(graphNode, callers);
-
-			int callersWithDefinitions = 0;
-
-			//Insert the callers into the worklist. If one of them has already been visited,
-			//we have recursion.
-			foreach(SgGraphNode* callerNode, callers)
-			{
-				SgFunctionDeclaration* callerDecl = isSgFunctionDeclaration(callerNode->get_SgNode());
-				ROSE_ASSERT(callerDecl != NULL);
-				callerDecl = isSgFunctionDeclaration(callerDecl->get_definingDeclaration());
-				if (callerDecl == NULL)
-					continue;
-				SgFunctionDefinition* caller = callerDecl->get_definition();
-
-				callersWithDefinitions++;
-
-				//If we detect a cycle (recursion), just add an arbitrary element of the cycle as a root
-				if (visited.count(caller) > 0)
-				{
-					rootNodes.insert(caller);
-					continue;
-				}
-
-				//Add the caller to the worklist
-				worklist.insert(caller);
-			}
-
-			//If this function has no callers, it's a root in the call graph
-			if (callersWithDefinitions == 0)
-			{
-				rootNodes.insert(currFunc);
-			}
-		}
 	}
 }

@@ -4,25 +4,31 @@
 // DQ (10/11/2010): We only require this include to support the type: AstNameListType.
 #include "fortran_support.h"
 
-#define astScopeStack              (*(FortranParserState::getCurrentScopeStack()))
-#define astExpressionStack         (*(FortranParserState::getCurrentExpressionStack()))
-#define astNodeStack               (*(FortranParserState::getCurrentNodeStack()))
-#define astNameStack               (*(FortranParserState::getCurrentNameStack()))
-#define astTypeStack               (*(FortranParserState::getCurrentTypeStack()))
-#define astBaseTypeStack           (*(FortranParserState::getCurrentBaseTypeStack()))
-#define astIntentSpecStack         (*(FortranParserState::getCurrentIntentSpecStack()))
-#define astAttributeSpecStack      (*(FortranParserState::getCurrentAttributeSpecStack()))
-#define astInitializerStack        (*(FortranParserState::getCurrentInitializerStack()))
-#define astTypeKindStack           (*(FortranParserState::getCurrentTypeKindStack()))
-#define astTypeParameterStack      (*(FortranParserState::getCurrentTypeParameterStack()))
-#define astLabelSymbolStack        (*(FortranParserState::getCurrentLabelSymbolStack()))
-#define astIfStatementStack        (*(FortranParserState::getCurrentIfStatementStack()))
-#define astActualArgumentNameStack (*(FortranParserState::getCurrentActualArgumentNameStack()))
-#define astFunctionAttributeStack  (*(FortranParserState::getCurrentFunctionAttributeStack()))
-#define astIncludeStack            (*(FortranParserState::getCurrentIncludeStack()))
+#define astScopeStack                 (*(FortranParserState::getCurrentScopeStack()))
+#define astExpressionStack            (*(FortranParserState::getCurrentExpressionStack()))
+#define astNodeStack                  (*(FortranParserState::getCurrentNodeStack()))
+#define astNameStack                  (*(FortranParserState::getCurrentNameStack()))
+#define astTypeStack                  (*(FortranParserState::getCurrentTypeStack()))
+#define astBaseTypeStack              (*(FortranParserState::getCurrentBaseTypeStack()))
+#define astIntentSpecStack            (*(FortranParserState::getCurrentIntentSpecStack()))
+#define astAttributeSpecStack         (*(FortranParserState::getCurrentAttributeSpecStack()))
+#define astInitializerStack           (*(FortranParserState::getCurrentInitializerStack()))
+#define astTypeKindStack              (*(FortranParserState::getCurrentTypeKindStack()))
+#define astTypeParameterStack         (*(FortranParserState::getCurrentTypeParameterStack()))
+#define astLabelSymbolStack           (*(FortranParserState::getCurrentLabelSymbolStack()))
+#define astIfStatementStack           (*(FortranParserState::getCurrentIfStatementStack()))
+#define astActualArgumentNameStack    (*(FortranParserState::getCurrentActualArgumentNameStack()))
+#define astFunctionAttributeStack     (*(FortranParserState::getCurrentFunctionAttributeStack()))
+
+// DQ (12/29/2010): Note that this stack is not cleared in the FortranParserState::clearStacks() function (is this an error).
+#define astIncludeStack               (*(FortranParserState::getCurrentIncludeStack()))
 
 // DQ (9/11/2010): Added support for lists of unresolved functions.
-#define astUnresolvedFunctionsList (*(FortranParserState::getCurrentUnresolvedFunctionsList()))
+#define astUnresolvedFunctionsList    (*(FortranParserState::getCurrentUnresolvedFunctionsList()))
+
+// DQ (12/29/2010): Added support for R612 & R613 handling.
+#define astHasSelectionSubscriptStack (*(FortranParserState::getCurrentHasSelectionSubscriptStack()))
+#define astMultipartReferenceStack (*(FortranParserState::getCurrentMultipartReferenceStack()))
 
 
 using std::string;
@@ -35,7 +41,7 @@ using std::vector;
 class FortranParserState
    {
   // This class supports a stack of the collections of stacks required to represent 
-  // the state within the trnslation of the OFP actions to build the ROSE AST.
+  // the state within the translation of the OFP actions to build the ROSE AST.
 
      private:
        static stack<FortranParserState*>  statesStack;
@@ -60,6 +66,12 @@ class FortranParserState
 
     // DQ (9/11/2010): Added support for lists of unresolved functions.
        list<SgStatement*>      currUnresolvedFunctionsList;
+
+    // DQ (12/29/2010): Added support for R612 & R613 handling.
+       list<bool>              currAstHasSelectionSubscriptStack;
+
+    // DQ (12/29/2010): Added support for R612 & R613 handling.
+       list<MultipartReferenceType> currAstMultipartReferenceStack;
 
        void clearStacks();
 
@@ -168,11 +180,24 @@ class FortranParserState
           }
 
     // DQ (9/11/2010): Added support for lists of unresolved functions.
-       static  list<SgStatement*>  *getCurrentUnresolvedFunctionsList()
+       static  list<SgStatement*>      *getCurrentUnresolvedFunctionsList()
         {
           ROSE_ASSERT(statesStack.empty() == false);
           return &(statesStack.top()->currUnresolvedFunctionsList);
         }
+
+       static  list<bool>              *getCurrentHasSelectionSubscriptStack()
+          {
+            ROSE_ASSERT(statesStack.empty() == false);
+            return &(statesStack.top()->currAstHasSelectionSubscriptStack);
+          }
+
+
+       static  list<MultipartReferenceType> *getCurrentMultipartReferenceStack()
+          {
+            ROSE_ASSERT(statesStack.empty() == false);
+            return &(statesStack.top()->currAstMultipartReferenceStack);
+          }
 
     // Constructor:
     //   push "this" object of FortranParserState into the "statesStack"

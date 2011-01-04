@@ -647,11 +647,14 @@ bool isAssignable(SgType* type);
 //! Does a type have a trivial (built-in) destructor?
 bool hasTrivialDestructor(SgType* t);
 
-//! Is this type a non-constant reference type?
+//! Is this type a non-constant reference type? (Handles typedefs correctly)
 bool isNonconstReference(SgType* t);
 
-//! Is this type a const or non-const reference type?
+//! Is this type a const or non-const reference type? (Handles typedefs correctly)
 bool isReferenceType(SgType* t);
+
+//! Is this type a pointer type? (Handles typedefs correctly)
+bool isPointerType(SgType* t);
 
 //! Is this a const type?
 /* const char* p = "aa"; is not treated as having a const type. It is a pointer to const char.

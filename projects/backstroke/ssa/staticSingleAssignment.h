@@ -18,120 +18,11 @@
 #include "reachingDef.h"
 #include "controlPredicate.h"
 #include "dataflowCfgFilter.h"
+#include "CallGraph.h"
+#include "uniqueNameTraversal.h"
 
 namespace ssa_private
 {
-
-/** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
- * This is used to assign absolute names to VarRefExp nodes during VariableRenaming.
- */
-class VarUniqueName : public AstAttribute
-{
-private:
-
-	/** The vector of initializedNames that uniquely identifies this VarRef.
-	 *  The node which this name is attached to should be the last in the list.
-	 */
-	std::vector<SgInitializedName*> key;
-
-	bool usesThis;
-
-public:
-
-	/** Constructs the attribute with an empty key.
-	 */
-	VarUniqueName() : key(), usesThis(false) { }
-
-	/** Constructs the attribute with value thisNode.
-	 *
-	 * The key will consist of only the current node.
-	 *
-	 * @param thisNode The node to use for the key.
-	 */
-	VarUniqueName(SgInitializedName* thisNode) : usesThis(false)
-	{
-		key.push_back(thisNode);
-	}
-
-	/** Constructs the attribute using the prefix vector and thisNode.
-	 *
-	 * The key will first be copied from the prefix value, and then the thisNode
-	 * value will be appended.
-	 *
-	 * @param prefix The prefix of the new name.
-	 * @param thisNode The node to append to the end of the new name.
-	 */
-	VarUniqueName(const std::vector<SgInitializedName*>& prefix, SgInitializedName* thisNode) : usesThis(false)
-	{
-		key.assign(prefix.begin(), prefix.end());
-		key.push_back(thisNode);
-	}
-
-	/** Copy the attribute.
-	 *
-	 * @param other The attribute to copy from.
-	 */
-	VarUniqueName(const VarUniqueName& other) : usesThis(false)
-	{
-		key.assign(other.key.begin(), other.key.end());
-	}
-
-	VarUniqueName* copy()
-	{
-		VarUniqueName* newName = new VarUniqueName(*this);
-		return newName;
-	}
-
-	/** Get a constant reference to the name.
-	 *
-	 * @return Constant Reference to the name.
-	 */
-	std::vector<SgInitializedName*>& getKey()
-	{
-		return key;
-	}
-
-	/** Set the value of the name.
-	 *
-	 * @param newKey The new name to use.
-	 */
-	void setKey(const std::vector<SgInitializedName*>& newKey)
-	{
-		key.assign(newKey.begin(), newKey.end());
-	}
-
-	bool getUsesThis()
-	{
-		return usesThis;
-	}
-
-	void setUsesThis(bool uses)
-	{
-		usesThis = uses;
-	}
-
-	/** Get the string representing this uniqueName
-	 *
-	 * @return The name string.
-	 */
-	std::string getNameString()
-	{
-		std::string name = "";
-		std::vector<SgInitializedName*>::iterator iter;
-		if (usesThis)
-			name += "this->";
-		for (iter = key.begin(); iter != key.end(); ++iter)
-		{
-			if (iter != key.begin())
-			{
-				name += ":";
-			}
-			name += (*iter)->get_name().getString();
-		}
-
-		return name;
-	}
-};
 
 /** This filter determines which function declarations get processed in the analysis. */
 struct FunctionFilter
@@ -145,8 +36,9 @@ struct FunctionFilter
 		if (filename.find("include") != string::npos)
 			return false;
 
-		//Exclude compiler generated functions
-		if (funcDecl->get_file_info()->isCompilerGenerated())
+		//Exclude compiler generated functions, but keep template instantiations
+		if (funcDecl->get_file_info()->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(funcDecl)
+				&& !isSgTemplateInstantiationMemberFunctionDecl(funcDecl))
 			return false;
 
 		//We don't process functions that don't have definitions
@@ -240,7 +132,10 @@ public:
 
 	~StaticSingleAssignment() { }
 
-	void run();
+	/** Run the analysis. If interprocedural analysis is not enabled, functionc all expressions (SgFunctionCallExp) will not
+	 * count as definitions of any variables.
+	 * @param interprocedural true to enable interprocedural analysis, false to perform no interprocedural analysis. */
+	void run(bool interprocedural);
 
 	static bool getDebug()
 	{
@@ -256,7 +151,7 @@ private:
 	void runDefUseDataFlow(SgFunctionDefinition* func);
 
 	/** Returns true if the variable is implicitly defined at the function entry by the compiler. */
-	bool isBuiltinVar(const VarName& var);
+	static bool isBuiltinVar(const VarName& var);
 
 	/** Expand all member definitions (chained names) to define every name in the chain
 	 * that is shorter than the originally defined name.
@@ -300,8 +195,7 @@ private:
 	/** Insert defs for functions that are declared outside the function scope. */
 	void insertDefsForExternalVariables(SgFunctionDeclaration* function);
 
-	/** Returns a set of all the variables names that have uses in the subtree. */
-	std::set<VarName> getVarsUsedInSubtree(SgNode* root);
+
 
 	/** Find where phi functions need to be inserted and insert empty phi functions at those nodes.
 	 * This updates the IN part of the reaching def table with Phi functions.
@@ -333,8 +227,47 @@ private:
 	CfgPredicate getConditionsForNodeExecution(SgNode* node, const std::vector<FilteredCfgEdge>& stopEdges,
 		const std::multimap<SgNode*, FilteredCfgEdge> & controlDependencies, std::set<SgNode*>& visited);
 
-	/** This function is experimentation with interprocedural analysis.*/
-	void interprocedural();
+	//------------ INTERPROCEDURAL ANALYSIS FUNCTIONS ------------ //
+
+	/** This function returns the order in which functions should be processed so that callees are processed before
+	 * callers whenever possible (this is sometimes not possible due to recursion). Internally, it builds a call graph
+	 * and constructs a depth-first ordering of it. */
+	std::vector<SgFunctionDefinition*> calculateInterproceduralProcessingOrder();
+
+	/** Add all the callees of the function to the processing list, then add the function itself. Does nothing
+	  * if the function is already in the list. */
+	void processCalleesThenFunction(SgFunctionDefinition* targetFunction, SgIncidenceDirectedGraph* callGraph,
+		boost::unordered_map<SgFunctionDefinition*, SgGraphNode*> graphNodeToFunction,
+		std::vector<SgFunctionDefinition*> &processingOrder);
+
+	/** Add definitions at function call expressions for variables that are modified interprocedurally.
+	 * The definitions are inserted in the original def table.
+	 * @param funcDef function whose body should be queries for function calls
+	 * @param processed all the functions completely processed by SSA so far. If a callee is one of these functions,
+	 *			we can use exact information. */
+	void insertInterproceduralDefs(SgFunctionDefinition* funcDef, const boost::unordered_set<SgFunctionDefinition*>& processed,
+		ClassHierarchyWrapper* classHierarchy);
+
+	/** Insert the interprocedural defs at a particular call site for a particular callee. This function may be called
+	 * multiple times for the same call site with different callees (e.g. in the case of virtual functions).
+	 * The call site should either be a SgFunctionCallExp or SgConstructorInitializer
+	 * @param processed functions already processed by SSA */
+	void processOneCallSite(SgExpression* callSite, SgFunctionDeclaration* callee,
+				const boost::unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy);
+
+	/** Returns true if the variable is a nonstatic class variable, so it hass to be accessed by the
+	 * "this" pointer. */
+	static bool varRequiresThisPointer(const VarName& var);
+
+	/** Returns true if the callee is acting on the same object instance as the caller. */
+	static bool isThisPointerSameInCallee(SgFunctionCallExp* callSite, SgMemberFunctionDeclaration* callee);
+
+	/** Returns true of the given expression evaluates to the 'this' pointer. False otherwise.
+	 * This function is conservative; it will return false if it cannot statically determine that the
+	 * expression is equivalent to the 'This' pointe. */
+	static bool isThisPointer(SgExpression* expression);
+
+	//------------ GRAPH OUTPUT FUNCTIONS ------------ //
 
 	void printToDOT(SgSourceFile* file, std::ofstream &outFile);
 	void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
@@ -369,9 +302,7 @@ public:
 	void printOriginalDefTable();
 
 
-	/*
-	 *   Def/Use Table Access Functions
-	 */
+	//------------ DEF/USE TABLE ACCESS FUNCTIONS ------------ //
 
 	/** Get the table of definitions for every node.
 	 * These definitions are NOT propagated.
@@ -395,10 +326,16 @@ public:
 	/** Returns a list of all the variables used at this node. Note that uses don't propagate past an SgStatement.
 	  * Each use is mapped to the reaching definition to which the use corresponds. */
 	const NodeReachingDefTable& getUsesAtNode(SgNode* node) const;
-	
-	/*
-	 *   Static Utility Functions
-	 */
+
+	/** Returns a set of all the variables names that have uses in the subtree. */
+	std::set<VarName> getVarsUsedInSubtree(SgNode* root) const;
+
+	/** Given a node, traverses all its children in the AST and collects all the variable names that have definitions
+	 * in the subtree. */
+	std::set<VarName> getVarsDefinedInSubtree(SgNode* root) const;
+
+	//------------ STATIC UTILITY FUNCTIONS FUNCTIONS ------------ //
+
 
 	/** Find if the given prefix is a prefix of the given name.
 	 *
@@ -424,7 +361,7 @@ public:
 	 * @param node The node to get the name for.
 	 * @return The name, or empty name.
 	 */
-	static VarName getVarName(SgNode* node);
+	static const VarName& getVarName(SgNode* node);
 
 	/** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
 	 *
