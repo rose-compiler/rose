@@ -37,7 +37,7 @@ vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefsAtNode(
 	modified_vars.erase(
 		std::unique(modified_vars.begin(), modified_vars.end(), bind(BackstrokeUtility::isMemberOf, _2, _1)),
 		modified_vars.end());
-	
+
 	return modified_vars;
 }
 
@@ -124,7 +124,10 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	vector<VariableRenaming::VarName> modified_vars = getAllDefsAtNode(stmt);
 
 #if 0
-	cout << "Modified vars:\n";
+	string name;
+	if (isSgFunctionDefinition(stmt->get_parent()))
+		name = isSgFunctionDefinition(stmt->get_parent())->get_declaration()->get_name();
+	cout << "Modified vars in " << name << ":\n";
 	foreach (const VariableRenaming::VarName& name, modified_vars)
 		cout << VariableRenaming::keyToString(name) << endl;
 	cout << "^^^\n";
