@@ -197,8 +197,6 @@ private:
 	/** Insert defs for functions that are declared outside the function scope. */
 	void insertDefsForExternalVariables(SgFunctionDeclaration* function);
 
-
-
 	/** Find where phi functions need to be inserted and insert empty phi functions at those nodes.
 	 * This updates the IN part of the reaching def table with Phi functions.
 	 * @returns the control dependencies. */
@@ -223,6 +221,7 @@ private:
 	 * use information to match uses to their reaching defs. */
 	void buildUseTable(SgFunctionDefinition* func);
 
+	/** TODO: Remove this function. It is part of Gated single assignment calculation. */
 	void annotatePhiNodeWithConditions(SgFunctionDefinition* function,
 			const std::multimap< FilteredCfgNode, std::pair<FilteredCfgNode, FilteredCfgEdge> > & controlDependencies);
 
@@ -231,10 +230,16 @@ private:
 
 	//------------ INTERPROCEDURAL ANALYSIS FUNCTIONS ------------ //
 
+	/** Insert definitions at function call sites for all variables defined interprocedurally. Iterates on the
+	 * call graph until the definitions converge (hence it works with recursion).
+	 * @param interestinFunctions all functions that should be analyzed. */
+	void interproceduralDefPropagation(const boost::unordered_set<SgFunctionDefinition*>& interestingFunctions);
+
 	/** This function returns the order in which functions should be processed so that callees are processed before
 	 * callers whenever possible (this is sometimes not possible due to recursion). Internally, it builds a call graph
 	 * and constructs a depth-first ordering of it. */
-	std::vector<SgFunctionDefinition*> calculateInterproceduralProcessingOrder();
+	std::vector<SgFunctionDefinition*> calculateInterproceduralProcessingOrder(
+					const boost::unordered_set<SgFunctionDefinition*>& interestingFunctions);
 
 	/** Add all the callees of the function to the processing list, then add the function itself. Does nothing
 	  * if the function is already in the list. */

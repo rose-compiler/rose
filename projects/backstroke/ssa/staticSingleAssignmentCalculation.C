@@ -225,30 +225,9 @@ void StaticSingleAssignment::run(bool interprocedural)
 	}
 
 	//Interprocedural iterations. We iterate on the call graph until all interprocedural defs are propagated
-	//If there is no recursion, this only requires one iteration
 	if (interprocedural)
 	{
-		ClassHierarchyWrapper* classHierarchy = new ClassHierarchyWrapper(project);
-		vector<SgFunctionDefinition*> topologicalFunctionOrder = calculateInterproceduralProcessingOrder();
-
-		int iteration = 0;
-		while (true)
-		{
-			iteration++;
-			bool changedDefs = false;
-			foreach (SgFunctionDefinition* func, topologicalFunctionOrder)
-			{
-				bool newDefsForFunc = insertInterproceduralDefs(func, interestingFunctions, classHierarchy);
-				changedDefs = changedDefs || newDefsForFunc;
-			}
-
-			if (!changedDefs)
-				break;
-		}
-		if (getDebug())
-			printf("%d interprocedural iterations on the call graph!\n", iteration);
-
-		delete classHierarchy;
+		interproceduralDefPropagation(interestingFunctions);
 	}
 
 	//Now we have all local information, including interprocedural defs. Propagate the defs along control-flow

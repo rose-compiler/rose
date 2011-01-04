@@ -15,7 +15,36 @@ using namespace std;
 using namespace ssa_private;
 using namespace boost;
 
-vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralProcessingOrder()
+void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<SgFunctionDefinition*>& interestingFunctions)
+{
+	ClassHierarchyWrapper* classHierarchy = new ClassHierarchyWrapper(project);
+	vector<SgFunctionDefinition*> topologicalFunctionOrder = calculateInterproceduralProcessingOrder(interestingFunctions);
+
+	//If there is no recursion, this should only requires one iteration. However, we have to always do an extra
+	//iteration in which nothing changes
+	int iteration = 0;
+	while (true)
+	{
+		iteration++;
+		bool changedDefs = false;
+		foreach (SgFunctionDefinition* func, topologicalFunctionOrder)
+		{
+			bool newDefsForFunc = insertInterproceduralDefs(func, interestingFunctions, classHierarchy);
+			changedDefs = changedDefs || newDefsForFunc;
+		}
+
+		if (!changedDefs)
+			break;
+	}
+	if (getDebug())
+		printf("%d interprocedural iterations on the call graph!\n", iteration);
+
+	delete classHierarchy;
+}
+
+
+vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralProcessingOrder(
+									const unordered_set<SgFunctionDefinition*>& interestingFunctions)
 {
 	//First, let's build a call graph. Our goal is to find an order in which to process the functions
 	//So that callees are processed before callers. This way we would have exact information at each call site
@@ -40,15 +69,11 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
 		graphNodeToFunction[funcDef] = graphNode;
 	}
 
-	//Find functions of interest
-	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
-
 	//Order the functions of interest such that callees are processed before callers whenever possible
 	vector<SgFunctionDefinition*> processingOrder;
-	foreach (SgFunctionDefinition* interestingFunction, funcs)
+	foreach (SgFunctionDefinition* interestingFunction, interestingFunctions)
 	{
-		if (functionFilter(interestingFunction->get_declaration()))
-			processCalleesThenFunction(interestingFunction, callGraph, graphNodeToFunction, processingOrder);
+		processCalleesThenFunction(interestingFunction, callGraph, graphNodeToFunction, processingOrder);
 	}
 
 	return processingOrder;
