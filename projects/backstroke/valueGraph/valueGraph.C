@@ -135,7 +135,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 				SgExpression* lhs = binOp->get_lhs_operand();
 				SgExpression* rhs = binOp->get_rhs_operand();
 
-				ValueGraphNode* newNode = NULL;
+//				ValueGraphNode* newNode = NULL;
 
 				//OperaterType opType;
 
