@@ -15,6 +15,7 @@
 
 // avoid include omp.h 
 extern int omp_get_thread_num(void);
+extern int omp_get_num_threads(void);
 
 #include <stdlib.h> // for getenv(), malloc(), etc
 #include <stdio.h> // for getenv()
@@ -220,6 +221,71 @@ void XOMP_taskwait (void)
 
 #else
 #endif 
+}
+
+//Default loop scheduling, worksharing without any schedule clause
+// input upper bound is non-inclusive
+// output n_upper is inclusive 
+// stride is always positive, the operator decides on incremental or decremental
+extern void XOMP_loop_default(int lower, int upper, int stride, long *n_lower, long * n_upper)
+{
+  long  _p_lower;
+  long  _p_upper;
+  int _p_chunk_size;
+  int addOne ; // adjustment to upper bound
+
+  if (stride <0)
+  {
+    printf("Error in XOMP_loop_default() of xomp.c: stride must always be positive. stride = %d \n ", stride);
+    assert (0);
+  }
+
+  int isDecremental= 0;
+  if (lower>upper)
+    isDecremental = 1;  
+
+  // calculate loop iteration count from lower, upper and stride , 
+  // adjust inclusive stride here TODO
+  // no -1/+1? if upper is already an inclusive bound
+  int _p_iter_count = 0;
+  if (isDecremental == 1)
+  {
+    stride = 0 - stride;  // n
+    //    _p_iter_count = ( stride + ( upper + 1 -  lower)) /  stride;
+    addOne = 1;
+  }
+  else
+  {
+    addOne = -1;
+  }
+  _p_iter_count = ( stride + addOne + upper -  lower) /  stride;
+
+  // calculate a proper chunk size
+  // two cases: evenly divisible  20/5 =4
+  //   not evenly divisible 20/3= 6
+  // Initial candidate  
+
+  int _p_num_threads = omp_get_num_threads();
+
+  _p_chunk_size = _p_iter_count / _p_num_threads;
+  long _p_ck_temp = _p_chunk_size * _p_num_threads != _p_iter_count;
+
+  _p_chunk_size = _p_ck_temp + _p_chunk_size;
+
+  // decide on the lower and upper bound for the current thread
+  int _p_thread_id = omp_get_thread_num();
+
+  _p_lower =  lower + _p_chunk_size * _p_thread_id *  stride;
+
+  // -1 if upper is an inclusive bound, we do use inclusive in the final normalized loop
+  _p_upper = _p_lower + _p_chunk_size *  stride + addOne;
+
+  // adjust inclusive stride here TODO
+  // no -1/+1? if upper is already an inclusive bound
+  _p_upper = (_p_upper > upper + addOne ?_p_upper : upper + addOne);
+
+  *n_lower = _p_lower;
+  *n_upper = _p_upper;
 }
 
 // scheduler initialization, only meaningful used for OMNI
