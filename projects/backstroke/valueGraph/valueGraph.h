@@ -251,7 +251,7 @@ public:
 	ValueGraph() 
 	: ssa_(SageInterface::getProject())
 	{
-		ssa_.run();
+		ssa_.run(false);
 	}
 
 	void build(SgFunctionDefinition* funcDef);

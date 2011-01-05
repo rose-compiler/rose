@@ -26,7 +26,7 @@ int main(int argc, char * argv[])
 
 		if (func_decl && func_decl->get_file_info()->isSameFile(source_file))
 		{
-			SgFunctionDeclaration* normalized_decl = BackstrokeNorm::normalizeEvent(func_decl);
+			BackstrokeNorm::normalizeEvent(func_decl);
 		}
 	}
 

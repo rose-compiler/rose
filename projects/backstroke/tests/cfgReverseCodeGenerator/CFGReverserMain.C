@@ -41,7 +41,12 @@ struct IsEvent
 
 int main(int argc, char** argv)
 {
-	SgProject* project = frontend(argc, argv);
+	//Add the preinclude option
+	vector<string> commandArguments(argv, argv + argc);
+	commandArguments.push_back("-include");
+	commandArguments.push_back("rctypes.h");
+
+	SgProject* project = frontend(commandArguments);
 	AstTests::runAllTests(project);
 
 	EventProcessor event_processor;

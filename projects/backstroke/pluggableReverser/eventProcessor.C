@@ -319,7 +319,7 @@ FuncDeclPairs EventProcessor::processEvent()
 
 		string ctr_str = lexical_cast<string> (ctr++);
 
-		SgScopeStatement* eventScope = SageInterface::getScope(event_);
+		SgScopeStatement* eventScope = event_->get_scope();
 
 		//Create the function declaration for the forward body
 		SgName fwd_func_name = event_->get_name() + "_forward" + ctr_str;
