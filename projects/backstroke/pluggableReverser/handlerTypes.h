@@ -149,7 +149,13 @@ protected:
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
 	SgExpression* pushVal(SgExpression* exp)
 	{ return pushVal(exp, exp->get_type()); }
+
+	//! Generates an expression which pops a value from the back of a stack and evaluates to it
 	SgExpression* popVal(SgType* type);
+
+	//!Generates an expression which pops a value from the front of a stack and discards the value.
+	//! This is used for fossil collection (commit methods)
+	SgExpression* popVal_front(SgType* type);
 
 	//! Return if the given variable is a state variable
 	bool isStateVariable(SgExpression* exp);

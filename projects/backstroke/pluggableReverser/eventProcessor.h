@@ -70,7 +70,13 @@ private:
 	//! The following methods are for expression and statement handlers for store and restore.
 	SgVarRefExp* getStackVar(SgType* type);
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
+
+	//! Generate an expression which pops the top of a stack and returns the value
 	SgExpression* popVal(SgType* type);
+
+	//! Generate an expression which pops the bottom of a stack and discards the value.
+	//! This is used for fossil collection
+	SgExpression* popVal_front(SgType* type);
 
 
 public:

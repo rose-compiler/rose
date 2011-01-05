@@ -295,6 +295,14 @@ SgExpression* EventProcessor::popVal(SgType* type)
 					buildExprListExp(getStackVar(type)));
 }
 
+SgExpression* EventProcessor::popVal_front(SgType* type)
+{
+	SgVarRefExp* stackVariable = getStackVar(type);
+	string functionName = "pop_front< " + get_type_name(type) + " >";
+	SgTypeVoid* returnType = SageBuilder::buildVoidType();
+	return SageBuilder::buildFunctionCallExp(functionName, returnType, buildExprListExp(stackVariable));
+}
+
 bool EventProcessor::checkForInitialVersions(const VariableVersionTable& var_table)
 {
 	typedef std::map<VariableRenaming::VarName, std::set<int> > TableType;

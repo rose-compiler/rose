@@ -178,8 +178,8 @@ SgStatement* StateSavingStatementHandler::generateCommitAST(const EvaluationResu
 	foreach (const VariableRenaming::VarName&  varName, modified_vars)
 	{
 		SgType* varType = varName.back()->get_type();
-		SgExpression* popExpression = popVal(varType);
-		SageInterface::appendStatement(SageBuilder::buildExprStatement(popExpression), commitBody);
+		SgExpression* popExpression = popVal_front(varType);
+		SageInterface::prependStatement(SageBuilder::buildExprStatement(popExpression), commitBody);
 	}
 
 	return commitBody;

@@ -110,6 +110,11 @@ SgExpression* ReversalHandlerBase::popVal(SgType* type)
     return event_handler_->popVal(type);
 }
 
+SgExpression* ReversalHandlerBase::popVal_front(SgType* type)
+{
+    return event_handler_->popVal_front(type);
+}
+
 vector<EvaluationResult> ReversalHandlerBase::evaluateExpression(SgExpression* exp,
 		const VariableVersionTable& var_table, bool is_value_used)
 {
