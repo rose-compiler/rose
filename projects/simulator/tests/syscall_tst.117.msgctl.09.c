@@ -142,9 +142,15 @@ char *argv[];
 
 	if (argc == 1) {
 		/* Set default parameters */
+#if 1 /* We don't need such large defaults for testing under ROSE [RPM 2011-01-05] */
+                nreps = 1;
+                nprocs = 1;
+                nkids = 1;
+#else
 		nreps = MAXNREPS;
 		nprocs = MSGMNI;
 		nkids = MAXNKIDS;
+#endif
 	} else if (argc == 4) {
 		if (atoi(argv[1]) > MAXNREPS) {
 			tst_resm(TCONF,
