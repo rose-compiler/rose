@@ -1065,8 +1065,9 @@ public:
      * the error. */
     std::string read_string(uint32_t va, size_t limit=0, bool *error=NULL);
 
-    /* Reads a vector of NUL-terminated strings from specimen memory. */
-    std::vector<std::string> read_string_vector(uint32_t va);
+    /* Reads a null-terminated vector of pointers to NUL-terminated strings from specimen memory.  If some sort of segmentation
+     * fault or bus error would occur, then set *error to true and return all that we read, otherwise set it to false. */
+    std::vector<std::string> read_string_vector(uint32_t va, bool *error=NULL);
 
     /* Conditionally adds a signal to the queue of pending signals */
     void signal_arrival(int signo);
@@ -2071,28 +2072,33 @@ EmulationPolicy::read_string(uint32_t va, size_t limit/*=0*/, bool *error/*=NULL
 }
 
 std::vector<std::string>
-EmulationPolicy::read_string_vector(uint32_t va)
+EmulationPolicy::read_string_vector(uint32_t va, bool *_error/*=NULL*/)
 {
-    std::vector<std::string> vec;
-    size_t size = 4;
-    while(1) {
-      char buf[size];
-      size_t nread = map->read(buf, va, size);
+    bool had_error;
+    bool *error = _error ? _error : &had_error;
+    *error = false;
 
-      ROSE_ASSERT(nread == size);
+    std::vector<std::string> retval;
+    for (/*void*/; 1; va+=4) {
+        /* Read the pointer to the string */
+        uint32_t ptr;
+        if (sizeof(ptr) != map->read(&ptr, va, sizeof ptr)) {
+            *error = true;
+            return retval;
+        }
 
-      uint64_t result = 0;
-      for (size_t i=0, j=0; i<size; i+=8, j++)
-                result |= buf[j] << i;
+        /* Pointer list is null-terminated */
+        if (!ptr)
+            break;
 
-      //FIXME (?) is this the correct test for memory being null?
-      if ( result == 0 ) break;
+        /* Read the NUL-terminated string */
+        std::string str = read_string(ptr, 0, error);
+        if (*error)
+            return retval;
 
-      vec.push_back(read_string( result  ));
-      
-      va+=4;
+        retval.push_back(str);
     }
-    return vec;
+    return retval;
 }
 
 /* NOTE: not yet tested for guest_dirent_t == dirent64_t; i.e., the getdents64() syscall. [RPM 2010-11-17] */
@@ -2757,28 +2763,60 @@ EmulationPolicy::emulate_syscall()
             syscall_enter("execve", "spp");
             do {
                 bool error;
+
+                /* Name of executable */
                 std::string filename = read_string(arg(0), 0, &error);
                 if (error) {
                     writeGPR(x86_gpr_ax, -EFAULT);
                     break;
                 }
-                
-                std::vector<std::string > argv = read_string_vector(arg(1));
-                std::vector<std::string > envp = read_string_vector(arg(2));
 
+                /* Argument vector */
+                std::vector<std::string> argv = read_string_vector(arg(1), &error);
+                if (debug && trace_syscall) {
+                    if (!argv.empty())
+                        fputs("continued below...\n", debug);
+                    for (size_t i=0; i<argv.size(); i++) {
+                        fprintf(debug, "    argv[%zu] = ", i);
+                        print_string(debug, argv[i], false, false);
+                        fputc('\n', debug);
+                    }
+                }
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
                 std::vector<char*> sys_argv;
-                for (unsigned int i = 0; i < argv.size(); ++i)
+                for (size_t i = 0; i < argv.size(); ++i)
                     sys_argv.push_back(&argv[i][0]);
                 sys_argv.push_back(NULL);
 
+                /* Environment vector */
+                std::vector<std::string> envp = read_string_vector(arg(2), &error);
+                if (debug && trace_syscall) {
+                    if (argv.empty() && !envp.empty())
+                        fputs("continued below...\n", debug);
+                    for (size_t i=0; i<envp.size(); i++) {
+                        fprintf(debug, "    envp[%zu] = ", i);
+                        print_string(debug, envp[i], false, false);
+                        fputc('\n', debug);
+                    }
+                }
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
                 std::vector<char*> sys_envp;
                 for (unsigned int i = 0; i < envp.size(); ++i)
                     sys_envp.push_back(&envp[i][0]);
                 sys_envp.push_back(NULL);
-                
+
+                /* The real system call */
                 int result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
                 ROSE_ASSERT(-1==result);
                 writeGPR(x86_gpr_ax, -errno);
+                if (debug && trace_syscall && (!argv.empty() || !envp.empty()))
+                    fputs("execve failed with ", debug);
             } while (0);
             syscall_leave("d");
             break;
