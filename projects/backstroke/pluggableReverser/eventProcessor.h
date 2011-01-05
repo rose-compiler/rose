@@ -86,9 +86,11 @@ public:
 	//! Add a value extractor to the pool of variable value restorers
 	void addVariableValueRestorer(VariableValueRestorer* restorer);
 
-	//! The main interface which proceses an event function.
-	FuncDeclPairs processEvent();
-	FuncDeclPairs processEvent(SgFunctionDeclaration* event);
+	//! Returns three functions: the instrumented forward event, the reverse event, and the commit method
+	std::vector<EventReversalResult> processEvent();
+
+	//! Returns three functions: the instrumented forward event, the reverse event, and the commit method
+	std::vector<EventReversalResult> processEvent(SgFunctionDeclaration* event);
 
 	//! Return if the given variable is a state variable (currently we assume all variables except
 	//! those defined inside the event function are state varibles).

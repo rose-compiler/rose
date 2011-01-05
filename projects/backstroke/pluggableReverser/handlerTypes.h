@@ -71,6 +71,9 @@ public:
 	/** Generate the reverse AST for the statement whose reversal result this class holds. */
 	StatementReversal generateReverseStatement() const;
 
+	/** Generate the commit method portion of the AST. */
+	SgStatement* generateCommitStatement() const;
+
 	ExpressionReversalHandler* getExpressionHandler() const;
 
 	StatementReversalHandler* getStatementHandler() const;
@@ -196,6 +199,11 @@ public:
 
 	virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult) = 0;
 	virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
+
+	/** Generate the commit code. This code should release any state saved by the forward code, output any cached
+	 * output, etc.
+	 * TODO: Make this pure virtual. Right now, the default implementation does nothing. */
+	virtual SgStatement* generateCommitAST(const EvaluationResult& evaluationResult);
 };
 
 /** These types of reverse handlers recalculate a specific value of a variable at a different point

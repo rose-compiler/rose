@@ -14,12 +14,10 @@ using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-FuncDeclPairs normalizeEvents(
-	boost::function<bool(SgFunctionDeclaration*)> is_event,
-	SgProject* project)
+vector<SgFunctionDeclaration*> normalizeEvents(function<bool(SgFunctionDeclaration*)> is_event, SgProject* project)
 {
-	FuncDeclPairs normalized_decls;
 	// Get the global scope.
+	vector<SgFunctionDeclaration*> events;
 	SgGlobal* global = getFirstGlobalScope(project);
 	
 	// Get every function declaration and identify if it's an event function.
@@ -34,16 +32,13 @@ FuncDeclPairs normalizeEvents(
 		{
 			//Normalize this event function.
 			BackstrokeNorm::normalizeEvent(decl);
-			normalized_decls.push_back(FuncDeclPair(decl, decl));
+			events.push_back(decl);
 			
 			cout << "Function " << decl->get_name().str() << " is normalized!\n" << endl;
 		}
 	}
 
-	// Fix all variable references here.
-	fixVariableReferences(global);
-
-	return normalized_decls;
+	return events;
 }
 
 
@@ -58,7 +53,7 @@ reverseEvents(EventProcessor* event_processor,
 	//generateWholeGraphOfAST("graph");
 
 	// Normalize all events then reverse them.
-	FuncDeclPairs normalized_events = normalizeEvents(is_event, project);
+	vector<SgFunctionDeclaration*> allEventMethods = normalizeEvents(is_event, project);
 
 	AstTests::runAllTests(project);
 	//unparseProject(project);
@@ -78,26 +73,24 @@ reverseEvents(EventProcessor* event_processor,
 
 	vector<ProcessedEvent> output;
 
-	foreach(const FuncDeclPair& event_pair, normalized_events)
+	foreach(SgFunctionDeclaration* event, allEventMethods)
 	{
 		timer t;
 
 		ProcessedEvent processed_event;
-
-		processed_event.event = event_pair.first;
-		processed_event.normalized_event = event_pair.second;
+		processed_event.event = event;
 		
 		// Here reverse the event function into several versions.
-		processed_event.fwd_rvs_events = event_processor->processEvent(processed_event.normalized_event);
+		processed_event.fwd_rvs_events = event_processor->processEvent(event);
 		ROSE_ASSERT(!processed_event.fwd_rvs_events.empty());
 
-		reverse_foreach (const FuncDeclPair& fwd_rvs_event, processed_event.fwd_rvs_events)
+		reverse_foreach (const EventReversalResult& fwd_rvs_event, processed_event.fwd_rvs_events)
 		{
 			// Put the generated statement after the normalized event.
-			SgFunctionDeclaration* originalEvent = 
-					isSgFunctionDeclaration(processed_event.normalized_event->get_definingDeclaration());
-			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.second);
-			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.first);
+			SgFunctionDeclaration* originalEvent = isSgFunctionDeclaration(event->get_definingDeclaration());
+			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.commitMethod);
+			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.reverseEvent);
+			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.forwardEvent);
 		}
 
 		output.push_back(processed_event);
