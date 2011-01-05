@@ -80,6 +80,8 @@ enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
 typedef modify_ldt_ldt_s user_desc;
 #endif
 
+static bool did_fork = false;
+
 static const int PROGRESS_INTERVAL = 10; /* seconds */
 static int had_alarm = 0;
 static void alarm_handler(int) {
@@ -3983,6 +3985,7 @@ EmulationPolicy::emulate_syscall()
                     writeGPR(x86_gpr_ax, -errno);
                     break;
                 }
+                did_fork = true;
 
                 /* Return register values in child */
                 if (0==pid) {
@@ -5240,6 +5243,8 @@ EmulationPolicy::syscall_enterv(uint32_t *values, const char *name, const char *
             first_call = this_call;
         double elapsed = (this_call.tv_sec - first_call.tv_sec) + (this_call.tv_usec - first_call.tv_usec)/1e6;
 
+        if (did_fork)
+            fprintf(debug, "[pid %d] ", getpid());
         fprintf(debug, "0x%08"PRIx64" %8.4f: ", readIP().known_value(), elapsed);
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
