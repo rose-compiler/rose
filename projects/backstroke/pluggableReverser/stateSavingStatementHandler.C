@@ -168,3 +168,19 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 
 	return results;
 }
+
+SgStatement* StateSavingStatementHandler::generateCommitAST(const EvaluationResult& evalResult)
+{
+	//Pop all the functions
+	SgBasicBlock* commitBody = SageBuilder::buildBasicBlock();
+
+	vector<VariableRenaming::VarName> modified_vars = evalResult.getAttribute< vector<VariableRenaming::VarName> >();
+	foreach (const VariableRenaming::VarName&  varName, modified_vars)
+	{
+		SgType* varType = varName.back()->get_type();
+		SgExpression* popExpression = popVal(varType);
+		SageInterface::appendStatement(SageBuilder::buildExprStatement(popExpression), commitBody);
+	}
+
+	return commitBody;
+}
