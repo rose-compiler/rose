@@ -8,6 +8,7 @@ F77_TESTCODES_TO_PASS = \
     default.f \
     flush.f \
     exampleA251f.f \
+    ompdo-default.f \
     parallel.f \
     parallel-1.f \
     parallel-2.f \

@@ -17,7 +17,8 @@ F77_TESTCODES_REQUIRED_TO_RUN = \
 
 F90_TESTCODES_REQUIRED_TO_RUN = 
 
-TESTCODE_CURRENTLY_FAILING = 
+TESTCODE_CURRENTLY_FAILING = \
+  ompdo-default.f
 
 ALL_TESTCODES = \
   $(F77_TESTCODES_REQUIRED_TO_COMPILE) \
@@ -123,7 +124,7 @@ endif
 clean-local:
 	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out  rose_*.f rose_*.f90 rose_*.f95
 
-EXTRA_DIST =
+EXTRA_DIST = 
 
 CLEANFILES =
 

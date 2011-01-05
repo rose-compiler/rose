@@ -682,9 +682,10 @@ namespace OmpSupport
     }
     else 
     {
+#if 0 // Liao 1/4/2010, use a call to XOMP_loop_default() instead of generating statements to calculate loop bounds      
       // ---------------------------------------------------------------
       // calculate chunksize for static scheduling , if the chunk size is not specified.
-      if (!hasSpecifiedSize)
+      if (!hasSpecifiedSize) // This portion is always on since hasSpecifiedSize will turn on transOmpFor_others()
       {
         SgVariableDeclaration* chunk_decl=  buildVariableDeclaration("_p_chunk_size", buildIntType(), NULL,bb1);
         appendStatement(chunk_decl, bb1); 
@@ -761,6 +762,20 @@ namespace OmpSupport
       assign_upper = buildAssignStatement(buildVarRefExp(upper_decl),
           buildConditionalExp(cond_exp, buildVarRefExp(upper_decl), copyExpression(orig_upper) ));
       appendStatement(assign_upper, bb1);
+
+#else
+      //void XOMP_loop_default(int lower, int upper, int stride, long *n_lower, long * n_upper)
+      // XOMP_loop_default (lower, upper, stride, &_p_lower, &_p_upper );
+      // lower:  copyExpression(orig_lower)
+      // upper: copyExpression(orig_upper)
+      // stride: copyExpression(orig_stride)
+      // n_lower: buildVarRefExp(lower_decl)
+      // n_upper: buildVarRefExp(upper_decl)
+      SgExprListExp* call_parameters = buildExprListExp(copyExpression(orig_lower), copyExpression(orig_upper), copyExpression(orig_stride), 
+                  buildAddressOfOp(buildVarRefExp(lower_decl)), buildAddressOfOp(buildVarRefExp(upper_decl)) ); 
+      SgStatement * call_stmt =  buildFunctionCallStmt ("XOMP_loop_default", buildVoidType(), call_parameters, bb1);
+      appendStatement(call_stmt, bb1);
+#endif
 
       // add loop here
       appendStatement(for_loop, bb1); 

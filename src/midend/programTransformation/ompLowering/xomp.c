@@ -224,21 +224,15 @@ void XOMP_taskwait (void)
 }
 
 //Default loop scheduling, worksharing without any schedule clause
-// input upper bound is non-inclusive
-// output n_upper is inclusive 
-// stride is always positive, the operator decides on incremental or decremental
+// input upper bound is inclusive (loop normalized with <= or >=)
+// output n_upper is also inclusive 
+// stride is positive for incremental, negative for decremental iteration space
 extern void XOMP_loop_default(int lower, int upper, int stride, long *n_lower, long * n_upper)
 {
   long  _p_lower;
   long  _p_upper;
   int _p_chunk_size;
-  int addOne ; // adjustment to upper bound
-
-  if (stride <0)
-  {
-    printf("Error in XOMP_loop_default() of xomp.c: stride must always be positive. stride = %d \n ", stride);
-    assert (0);
-  }
+  int addOne ; // adjustment to input and output upper bounds, depending on if they are inclusive or non-inclusive
 
   int isDecremental= 0;
   if (lower>upper)
@@ -250,15 +244,28 @@ extern void XOMP_loop_default(int lower, int upper, int stride, long *n_lower, l
   int _p_iter_count = 0;
   if (isDecremental == 1)
   {
-    stride = 0 - stride;  // n
-    //    _p_iter_count = ( stride + ( upper + 1 -  lower)) /  stride;
     addOne = 1;
+    //stride = 0 - stride;  // n
+    if (stride >0)
+    {
+      printf("Error: in XOMP_loop_default() of xomp.c: stride must be negative for decremental iteration. stride = %d \n ", stride);
+      assert (0);
+    }
   }
-  else
+  else // incremental
   {
-    addOne = -1;
+    addOne = -1; // real bound should be non-inclusive - 1
+    if (stride <0)
+    {
+      printf("Error: in XOMP_loop_default() of xomp.c: stride must be positive for incremental iteration. stride = %d \n ", stride);
+      assert (0);
+    }
   }
-  _p_iter_count = ( stride + addOne + upper -  lower) /  stride;
+  // addOne is needed here only if the input upper bound is non-inclusive
+  // we use loop normalization to ensure upper bounds are inclusive already.
+  // So we don't need addOne here anymore
+  //_p_iter_count = ( stride + addOne + upper -  lower) /  stride;
+  _p_iter_count = ( stride + upper -  lower) /  stride;
 
   // calculate a proper chunk size
   // two cases: evenly divisible  20/5 =4
@@ -277,15 +284,20 @@ extern void XOMP_loop_default(int lower, int upper, int stride, long *n_lower, l
 
   _p_lower =  lower + _p_chunk_size * _p_thread_id *  stride;
 
-  // -1 if upper is an inclusive bound, we do use inclusive in the final normalized loop
+  //addOne is needed here if the output upper bound is inclusive
+  // -1 if the output n_upper is an inclusive bound, 
+  // we do use inclusive in the final normalized loop
   _p_upper = _p_lower + _p_chunk_size *  stride + addOne;
 
-  // adjust inclusive stride here TODO
-  // no -1/+1? if upper is already an inclusive bound
+  // adjust inclusive stride here 
+  // addOne is needed if the input upper bound is non-inclusive
+  // no -1/+1 since upper is already an inclusive bound
   if (isDecremental == 1)
-    _p_upper = (_p_upper > (upper + addOne) ?_p_upper : (upper + addOne));
+    _p_upper = (_p_upper > (upper ) ?_p_upper : (upper ));
+    //_p_upper = (_p_upper > (upper + addOne) ?_p_upper : (upper + addOne));
   else
-    _p_upper = (_p_upper < (upper + addOne) ?_p_upper : (upper + addOne));
+    _p_upper = (_p_upper < upper ?_p_upper : upper);
+    //_p_upper = (_p_upper < (upper + addOne) ?_p_upper : (upper + addOne));
 
   *n_lower = _p_lower;
   *n_upper = _p_upper;
