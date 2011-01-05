@@ -7,59 +7,59 @@
 #include "ptrops.h"
 
 inline
-bool operator<(const MemoryAddress& lhs, const MemoryAddress& rhs)
+bool operator<(const Address& lhs, const Address& rhs)
 {
   return lhs.local < rhs.local;
 }
 
 inline
-bool operator<=(const MemoryAddress& lhs, const MemoryAddress& rhs)
+bool operator<=(const Address& lhs, const Address& rhs)
 {
   return lhs.local <= rhs.local;
 }
 
 inline
-bool operator==(const MemoryAddress& lhs, const MemoryAddress& rhs)
+bool operator==(const Address& lhs, const Address& rhs)
 {
   return lhs.local == rhs.local;
 }
 
 inline
-bool operator!=(const MemoryAddress& lhs, const MemoryAddress& rhs)
+bool operator!=(const Address& lhs, const Address& rhs)
 {
   return !(lhs == rhs);
 }
 
 inline
-MemoryAddress& operator+=(MemoryAddress& lhs, long offset)
+Address& operator+=(Address& lhs, long offset)
 {
   lhs.local += offset;
   return lhs;
 }
 
 inline
-MemoryAddress operator+(const MemoryAddress& lhs, long offset)
+Address operator+(const Address& lhs, long offset)
 {
-  MemoryAddress tmp(lhs);
+  Address tmp(lhs);
 
   tmp.local += offset;
   return tmp;
 }
 
 inline
-long operator-(const MemoryAddress& lhs, const MemoryAddress& rhs)
+long operator-(const Address& lhs, const Address& rhs)
 {
   return lhs.local - rhs.local;
 }
 
 inline
-MemoryAddress operator-(const MemoryAddress& lhs, long offset)
+Address operator-(const Address& lhs, long offset)
 {
   return lhs + (-offset);
 }
 
 inline
-std::ostream& operator<<(std::ostream& s, const MemoryAddress& obj)
+std::ostream& operator<<(std::ostream& s, const Address& obj)
 {
   const void* addr = obj.local;
 
@@ -69,15 +69,15 @@ std::ostream& operator<<(std::ostream& s, const MemoryAddress& obj)
 
 template <class T>
 inline
-T* point_to(const MemoryAddress& addr)
+T* point_to(const Address& addr)
 {
   return reinterpret_cast<T*>(addr.local);
 }
 
 inline
-MemoryAddress memAddr(size_t sysaddr)
+Address memAddr(size_t sysaddr)
 {
-  MemoryAddress tmp;
+  Address tmp;
 
   tmp.local = reinterpret_cast<char*>(sysaddr);
   return tmp;
@@ -85,9 +85,9 @@ MemoryAddress memAddr(size_t sysaddr)
 
 template <class T>
 inline
-MemoryAddress memAddr(T* t)
+Address memAddr(T* t)
 {
-  MemoryAddress tmp;
+  Address tmp;
 
   tmp.local = reinterpret_cast<char*>(t);
   return tmp;
@@ -95,28 +95,29 @@ MemoryAddress memAddr(T* t)
 
 template <class T>
 inline
-MemoryAddress memAddr(const T* t)
+Address memAddr(const T* t)
 {
-  MemoryAddress tmp;
+  Address tmp;
 
   tmp.local = reinterpret_cast<char*>(const_cast<T*>(t));
   return tmp;
 }
 
 inline
-bool isNullAddr(const MemoryAddress& obj)
+bool isNullAddr(const Address& obj)
 {
   return obj.local == NULL;
 }
 
 inline
-MemoryAddress nullAddr()
+Address nullAddr()
 {
-  MemoryAddress obj;
+  Address obj;
 
   obj.local = NULL;
   return obj;
 }
+
 
 
 #endif /* _PTROPS_OPERATORS_H */

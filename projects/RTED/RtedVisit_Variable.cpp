@@ -34,9 +34,9 @@ bool isInitializedNameInForStatement(SgForInitStatement* inits, const SgInitiali
    return (find(initialized_names.begin(), initialized_names.end(), &name) != initialized_names.end());
 }
 
-/// /brief   tests whether astNode directly or indirectly is on the right hand
+/// \brief   tests whether astNode directly or indirectly is on the right hand
 ///          side of an expressions.
-/// /details indirectly means that if astNode is a child of a non-binary
+/// \details indirectly means that if astNode is a child of a non-binary
 ///          expression or a dot-expression, the isRightOfBinaryOp is invoked
 ///          'recursively' (with the parent node) as the new astNode.
 static
@@ -91,7 +91,7 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
       // information will be tracked when variables of that type are created.
       // ignore arrays in parameter lists as they're actually pointers, not stack arrays
       if ( array && !( isSgClassDefinition( gp )) && !( isSgFunctionDeclaration( gp ) )) {
-         RTedArray* arrayRted = new RTedArray(true, isSgInitializedName(astNode), NULL, false);
+         RTedArray* arrayRted = new RTedArray(isSgInitializedName(astNode), NULL, false);
          transf->populateDimensions( arrayRted, isSgInitializedName(astNode), array );
          transf->create_array_define_varRef_multiArray_stack[isSgInitializedName(astNode)] = arrayRted;
       }
@@ -342,7 +342,7 @@ bool test_call_argument(RtedTransformation* transf, const SgVarRefExp& varref)
        param_type = param_lst[arg_pos] -> get_type();
   }
 
-  // \why do we test for SgArrayType here? (PP)
+  // \pp why do we test for SgArrayType here? (PP)
   return (  ::isUsableAsSgArrayType(transf, varref.get_type())
          || ::isUsableAsSgReferenceType(transf, param_type)
          );

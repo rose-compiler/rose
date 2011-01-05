@@ -41,7 +41,7 @@ class StackManager
 
 
         /// Returns variable at given memory location, or NULL if no var found
-        VariablesType * getVariable(MemoryAddress);
+        VariablesType * getVariable(Address);
 
         /// Returns Variable by mangledName (which is unique)
         /// much slower thant the version with address!, does linear search in stack
@@ -57,25 +57,21 @@ class StackManager
         void clearStatus();
 
     protected:
+        typedef std::map<Address, VariablesType*> AddrToVarMap;
 
         struct ScopeInfo
         {
             ScopeInfo( const std::string & _name, int index)
-                : name(_name),stackIndex(index)
+                : name(_name), stackIndex(index)
             {}
 
             std::string name;        /// description of scope, either function-name or something like "for-loop"
             int         stackIndex;  /// index in stack-array where this scope starts
         };
-        std::vector<ScopeInfo> scope;
 
+        std::vector<ScopeInfo>       scope;
         std::vector<VariablesType *> stack;
-
-        typedef std::map<MemoryAddress, VariablesType*> AddrToVarMap;
-        AddrToVarMap addrToVarMap;
+        AddrToVarMap                 addrToVarMap;
 };
-
-
-
 
 #endif

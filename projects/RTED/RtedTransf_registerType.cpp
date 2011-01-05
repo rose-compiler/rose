@@ -80,7 +80,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 
 					RtedClassElement* el;
 					if( isSgArrayType( initName -> get_type() )) {
-						RTedArray* arrayRted = new RTedArray( true, initName, NULL, false );
+						RTedArray* arrayRted = new RTedArray( initName, NULL, false );
 						populateDimensions( arrayRted, initName, isSgArrayType( initName -> get_type() ));
 						el = new RtedClassArrayElement( name, type, sgElement, arrayRted );
 					} else {
@@ -230,17 +230,12 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 		SgExprListExp* arg_list = buildExprListExp();
 		appendExpression(arg_list, nrElements);
 
-		SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
-		SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
-		appendExpression(arg_list, filename);
-		appendExpression(arg_list, linenr);
-		SgExpression* linenrTransformed = buildString("x%%x");
-		appendExpression(arg_list, linenrTransformed);
-
-		appendExpression(arg_list, buildString(name));
-		appendExpression(arg_list, buildString(typeC));
-		appendExpression(arg_list, buildString(isunionType));
+		appendExpression(arg_list, buildStringVal(name));
+		appendExpression(arg_list, buildStringVal(typeC));
+		appendExpression(arg_list, buildStringVal(isunionType));
 		appendExpression(arg_list, rtedClass->sizeClass);
+
+		appendFileInfo(arg_list, stmt);
 
 		// search for classDef in classesNamespace that contains all introduced RTED:Classes
 		std::map<SgClassDefinition*, SgClassDefinition*>::const_iterator
@@ -269,7 +264,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 			string manglElementName = element->manglElementName;
 			SgDeclarationStatement* sgElement = element->sgElement;
 			//SgExpression* sgElements = deepCopy(sgElement);
-			SgExpression* elemName = buildString(manglElementName);
+			SgExpression* elemName = buildStringVal(manglElementName);
 
 			// FIXME 1: This will not work for references.  Consider:
 			//
@@ -341,32 +336,31 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 
 				// append the base type (if any) of pointers and arrays
 				SgType* type = varDecl->get_variables()[ 0 ]->get_type();
-				appendTypeInformation( type, arg_list, true, false );
+				appendTypeInformation( arg_list, type, true, false );
 
 				SgExpression* dotExp = buildDotExp(derefPointer,varref);
 				SgExpression* andOp = buildAddressOfOp(dotExp);
 				SgExpression* castOp = NULL;
 				if (rtedModifiedClass==NULL && classHasConstructor==false)
-				castOp = buildCastExp(andOp, symbols->size_t_member);
+				castOp = buildCastExp(andOp, symbols.size_t_member);
 				else {
 					SgExpression* minus = buildSubtractOp(andOp, buildIntVal(0));
-					castOp = buildCastExp(minus, symbols->size_t_member);
+					castOp = buildCastExp(minus, symbols.size_t_member);
 				}
 
 				appendExpression(arg_list, castOp);
 				appendExpression(arg_list, buildSizeOfOp( dotExp ));
 
 				// add extra type info (e.g. array dimensions)
-				element -> appendExtraArgs( arg_list );
+				appendDimensionsIfNeeded(arg_list, element);
 			} else {
 				cerr << " Declarationstatement not handled : " << sgElement->class_name() << endl;
-
 			}
 		}
 
-		ROSE_ASSERT(symbols->roseRegisterTypeCall);
+		ROSE_ASSERT(symbols.roseRegisterTypeCall);
 		//cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-		SgFunctionRefExp* memRef_r = buildFunctionRefExp( symbols->roseRegisterTypeCall);
+		SgFunctionRefExp* memRef_r = buildFunctionRefExp( symbols.roseRegisterTypeCall);
 		SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 				arg_list);
 		SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
@@ -407,9 +401,9 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 			"   " << stmt->unparseToString()<<endl;
 			//			abort();
 			if (insertBefore)
-			insertStatementBefore( isSgStatement( stmt ), exprStmt );
+			  insertStatementBefore( stmt, exprStmt );
 			else
-			insertStatementAfter( isSgStatement( stmt ), exprStmt );
+			  insertStatementAfter( stmt, exprStmt );
 		}
 	}
 	else {

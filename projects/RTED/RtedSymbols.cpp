@@ -1,65 +1,76 @@
 #include "rose.h"
 #include "RtedSymbols.h"
 
-bool RTEDDEBUG() {return false;}
+bool RTEDDEBUG() { return false; }
 
-#define LOOKUP( __x ) \
-    {\
-      SgFunctionSymbol* func = isSgScopeStatement(n)->lookup_function_symbol("RuntimeSystem_" #__x); \
-      if( isSgFunctionSymbol( func )) {\
-        __x = isSgFunctionSymbol( func );\
-        if (RTEDDEBUG())\
-        cerr << "Found MemberName : " #__x << endl;\
-      }\
-    }
+static inline
+void lookup(SgScopeStatement& n, const std::string& name, SgFunctionSymbol*& res)
+{
+  static const std::string prefix("rted_");
+
+  std::string sym(prefix);
+
+  sym.append(name);
+
+  SgFunctionSymbol* func = n.lookup_function_symbol(sym);
+  if (func == NULL) return;
+
+  res = func;
+  if (RTEDDEBUG()) std::cerr << "Found MemberName : " << name << std::endl;
+}
+
+static inline
+void initialize(SgScopeStatement* n, RtedSymbols& rtedsym)
+{
+  ROSE_ASSERT(n != NULL);
+
+  lookup(*n, "CreateHeapArr",            rtedsym.roseCreateHeapArr);
+  lookup(*n, "CreateHeapPtr",            rtedsym.roseCreateHeapPtr);
+  lookup(*n, "AccessHeap",               rtedsym.roseAccessHeap);
+  lookup(*n, "Checkpoint",               rtedsym.roseCheckpoint);
+  lookup(*n, "FunctionCall",             rtedsym.roseFunctionCall);
+  lookup(*n, "AssertFunctionSignature",  rtedsym.roseAssertFunctionSignature);
+  lookup(*n, "ConfirmFunctionSignature", rtedsym.roseConfirmFunctionSignature);
+  lookup(*n, "ConvertIntToString",       rtedsym.roseConvertIntToString);
+  lookup(*n, "CreateVariable",           rtedsym.roseCreateVariable);
+  lookup(*n, "CreateObject",             rtedsym.roseCreateObject);
+  lookup(*n, "InitVariable",             rtedsym.roseInitVariable);
+  lookup(*n, "MovePointer",              rtedsym.roseMovePointer);
+  lookup(*n, "EnterScope",               rtedsym.roseEnterScope);
+  lookup(*n, "ExitScope",                rtedsym.roseExitScope);
+  lookup(*n, "AccessVariable",           rtedsym.roseAccessVariable);
+  lookup(*n, "IOFunctionCall",           rtedsym.roseIOFunctionCall);
+  lookup(*n, "RegisterTypeCall",         rtedsym.roseRegisterTypeCall);
+  lookup(*n, "FreeMemory",               rtedsym.roseFreeMemory);
+  lookup(*n, "ReallocateMemory",         rtedsym.roseReallocateMemory);
+  lookup(*n, "CheckIfThisNULL",          rtedsym.roseCheckIfThisNULL);
+}
 
 
-
-using namespace std;
-
-void RtedSymbols::visit(SgNode* n) {
-
-  if (n == NULL)
-    return;
+void RtedSymbols::visit(SgNode* n)
+{
   // ******************** DETECT Member functions in RuntimeSystem.h *************************************************************
 
-  if (isSgScopeStatement(n)) {
+  SgScopeStatement*     n_scope = isSgScopeStatement(n);
 
-    LOOKUP( roseCreateHeap );
-    LOOKUP( roseAccessHeap );
-    LOOKUP( roseCheckpoint );
-    LOOKUP( roseFunctionCall );
-    LOOKUP( roseAssertFunctionSignature );
-    LOOKUP( roseConfirmFunctionSignature );
-    LOOKUP( roseConvertIntToString );
-    LOOKUP( roseCreateVariable );
-#if NOT_YET_IMPLEMENTED
-    LOOKUP( roseCreateSharedVariable );
-#endif /* NOT_YET_IMPLEMENTED */
-    LOOKUP( roseCreateObject );
-    LOOKUP( roseInitVariable );
-    LOOKUP( roseMovePointer );
-    LOOKUP( roseEnterScope );
-    LOOKUP( roseExitScope);
-    LOOKUP( roseAccessVariable );
-    LOOKUP( roseIOFunctionCall );
-    LOOKUP( roseRegisterTypeCall );
-    LOOKUP( roseFreeMemory );
-    LOOKUP( roseReallocateMemory );
-    LOOKUP( roseCheckIfThisNULL );
+  if (n_scope) {
+    initialize(n_scope, *this);
+    return;
   }
 
-  if (isSgTypedefDeclaration(n)) {
-  	SgTypedefDeclaration* typed = isSgTypedefDeclaration(n);
-		string name = typed->get_name().str();
-		if (name=="size_t") {
-			SgType* baseType = typed->get_base_type ();
-			size_t_member=baseType;
+  SgTypedefDeclaration* n_typedef = isSgTypedefDeclaration(n);
+
+  if (n_typedef) {
+		std::string name = n_typedef->get_name().str();
+
+    if (name=="size_t") {
+			SgType* baseType = n_typedef->get_base_type();
+
+      size_t_member = baseType;
 			if (RTEDDEBUG())
-			  cerr << "Found Type : " << name << endl;
+			  std::cerr << "Found Type : " << name << std::endl;
 		}
   }
 
   // ******************** DETECT Member functions in RuntimeSystem.h *************************************************************
-
 }

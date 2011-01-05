@@ -9,25 +9,12 @@ using namespace std;
 // ------------------------------ Source Position -----------------------------------
 
 SourcePosition::SourcePosition()
-    : file("Unknown"),
-      line1(-1),
-      line2(-1)
-{
-
-}
-
-SourcePosition::SourcePosition(const std::string & _file)
-    : file(_file),
-      line1(-1),
-      line2(-1)
+: file("Unknown"), line1(0), line2(0)
 {}
 
-SourcePosition::SourcePosition(const std::string & _file,int _line1, int _line2)
-    : file(_file),
-      line1(_line1),
-      line2(_line2)
+SourcePosition::SourcePosition(SourceInfo si)
+: file(si.file), line1(si.src_line), line2(si.rted_line)
 {}
-
 
 std::string SourcePosition::toString() const
 {
@@ -145,7 +132,3 @@ RuntimeViolation::Type RuntimeViolation::getViolationByString(const string & s)
     else if  (s == "UNEXPECTED_FUNCTION_SIGNATURE") return UNEXPECTED_FUNCTION_SIGNATURE;
     else                                       return UNKNOWN_VIOLATION;
 }
-
-
-
-

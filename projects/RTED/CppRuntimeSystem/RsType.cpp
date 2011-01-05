@@ -697,7 +697,7 @@ void RsBasicType::resolveTypeInfo(RsBasicType::SgType type_)
     }
 }
 
-std::string RsBasicType::readValueAt(MemoryAddress addr) const
+std::string RsBasicType::readValueAt(Address addr) const
 {
     std::stringstream str;
 

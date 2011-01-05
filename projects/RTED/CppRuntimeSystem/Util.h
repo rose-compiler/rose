@@ -7,6 +7,7 @@
 
 // typedef unsigned long addr_type;
 
+#include "rted_iface_structs.h"
 
 /**
  * This class represents a position in a sourcefile
@@ -15,22 +16,21 @@ class SourcePosition
 {
     public:
         SourcePosition();
-        SourcePosition(const std::string & file);
-        SourcePosition(const std::string & file,int line1, int line2);
+
+        explicit
+        SourcePosition(SourceInfo si);
 
         std::string toString() const;
-
         std::string getTransformedFile() const;
 
-        const std::string & getFile() const { return file; }
-
+        const std::string& getFile() const   { return file; }
         int getLineInOrigFile() const        { return line1; }
         int getLineInTransformedFile() const { return line2; }
 
-    protected:
+    private:
         std::string file;   ///< Absolute Path of source-file
-        int line1;          ///< line number in sourcefile
-        int line2;          ///< line number in transformed sourcefile
+        size_t      line1;  ///< line number in sourcefile
+        size_t      line2;  ///< line number in transformed sourcefile
 };
 std::ostream& operator<< (std::ostream &os, const SourcePosition & m);
 

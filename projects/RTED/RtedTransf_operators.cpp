@@ -48,15 +48,15 @@ void RtedTransformation::insert_pointer_change( SgExpression* exp ) {
     SgExprListExp* mp_args = buildExprListExp();
     appendAddress( mp_args, operand );
     // gives us type, base_type, indirection_level
-    appendTypeInformation( NULL, operand -> get_type(), mp_args );
+    appendTypeInformation( mp_args, NULL, operand -> get_type() );
     appendClassName( mp_args, operand -> get_type() );
     // gives us filename, lineno, linetransformed
-    appendFileInfo( exp, mp_args );
+    appendFileInfo( mp_args, exp );
 
-    SgExprStatement* mp_call = 
+    SgExprStatement* mp_call =
         buildExprStatement(
             buildFunctionCallExp(
-                buildFunctionRefExp( symbols->roseMovePointer ),
+                buildFunctionRefExp( symbols.roseMovePointer ),
                 mp_args
             ));
 
@@ -77,4 +77,3 @@ void RtedTransformation::visit_delete( SgDeleteExp* del ) {
 }
 
 #endif
-

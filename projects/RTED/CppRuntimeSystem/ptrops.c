@@ -1,33 +1,87 @@
 
+#include <assert.h>
+
 #include "ptrops.h"
 
-#ifdef __cplusplus
-#error "Compile this file ptrops.c with C or UPC"
-#endif
-
-Indirections remove(Indirections desc, size_t levels);
+size_t sizeof_Address_UPC(void)
 {
-  assert(desc.levels <= levels);
+  return sizeof(Address);
+}
 
-  desc.shared_mask >>= levels;
-  desc.levels -= levels;
+AddressDesc pd_deref(AddressDesc desc)
+{
+  assert(desc.levels >= 1);
+
+  desc.shared_mask >>= 1;
+  --desc.levels;
 
   return desc;
 }
 
-MemoryAddress deref(MemoryAddress addr, Indirections desc);
+AddressDesc pd_upc_addrof(AddressDesc desc, size_t shared_mask)
+{
+  desc.shared_mask <<= 1;
+  desc.shared_mask &= shared_mask;
+
+  ++desc.levels;
+
+  return desc;
+}
+
+AddressDesc pd_addrof(AddressDesc desc)
+{
+  return pd_upc_addrof(desc, 1);
+}
+
+
+AddressDesc pd_obj(void)
+{
+  AddressDesc pd;
+
+  pd.levels = 0;
+  pd.shared_mask = 0;
+
+  return pd;
+}
+
+AddressDesc pd_ptr(void)
+{
+  AddressDesc pd;
+
+  pd.levels = 1;
+  pd.shared_mask = 0;
+
+  return pd;
+}
+
+int pd_isPtr(AddressDesc desc)
+{
+  return (desc.levels != 0);
+}
+
+#ifdef __UPC__
+
+Address ptr_deref(Address addr, AddressDesc desc)
 {
   if (desc & MASK_SHARED == 0)
   {
-    addr = *((MemoryAddress*)addr.local);
+    addr = *((Address*)addr.local);
   }
   else
   {
-    addr = *((MemoryAddress shared*)addr.global);
+    addr = *((Address shared*)addr.global);
   }
+
+  return addr;
 }
 
-size_t sizeof_MemoryAddress_UPC()
+#else /* __UPC__ */
+
+Address ptr_deref(Address addr, AddressDesc unused)
 {
-  return sizeof(MemoryAddress);
+  addr = *((Address*)addr.local);
+
+  return addr;
 }
+
+#endif /* __UPC__ */

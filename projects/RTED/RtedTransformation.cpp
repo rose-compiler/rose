@@ -16,8 +16,6 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-
-
 /* -----------------------------------------------------------
  * Run frontend and return project
  * -----------------------------------------------------------*/
@@ -34,38 +32,42 @@ RtedTransformation::parse(int argc, char** argv) {
  * -----------------------------------------------------------*/
 void RtedTransformation::loadFunctionSymbols(SgProject* project) {
    // traverse the AST and find locations that need to be transformed
-   symbols->traverse(project, preorder);
+   symbols.traverse(project, preorder);
 
-   ROSE_ASSERT(symbols->roseCreateHeap);
-   ROSE_ASSERT(symbols->roseAccessHeap);
-   ROSE_ASSERT(symbols->roseFunctionCall);
-   ROSE_ASSERT(symbols->roseAssertFunctionSignature);
-   ROSE_ASSERT(symbols->roseConfirmFunctionSignature);
-   ROSE_ASSERT(symbols->roseFreeMemory);
-   ROSE_ASSERT(symbols->roseReallocateMemory);
-   ROSE_ASSERT(symbols->roseConvertIntToString);
-   ROSE_ASSERT(symbols->roseCheckpoint);
-   ROSE_ASSERT(symbols->roseCreateVariable);
-   ROSE_ASSERT(symbols->roseCreateObject);
-   ROSE_ASSERT(symbols->roseInitVariable);
-   ROSE_ASSERT(symbols->roseMovePointer);
-   ROSE_ASSERT(symbols->roseAccessVariable);
-   ROSE_ASSERT(symbols->roseEnterScope);
-   ROSE_ASSERT(symbols->roseExitScope);
-   ROSE_ASSERT(symbols->roseIOFunctionCall);
-   ROSE_ASSERT(symbols->roseRegisterTypeCall);
-   ROSE_ASSERT(symbols->size_t_member);
-   ROSE_ASSERT(symbols->roseCheckIfThisNULL);
+   ROSE_ASSERT(symbols.roseCreateHeapArr);
+   ROSE_ASSERT(symbols.roseCreateHeapPtr);
+   ROSE_ASSERT(symbols.roseAccessHeap);
+   ROSE_ASSERT(symbols.roseFunctionCall);
+   ROSE_ASSERT(symbols.roseAssertFunctionSignature);
+   ROSE_ASSERT(symbols.roseConfirmFunctionSignature);
+   ROSE_ASSERT(symbols.roseFreeMemory);
+   ROSE_ASSERT(symbols.roseReallocateMemory);
+   ROSE_ASSERT(symbols.roseCheckpoint);
+   ROSE_ASSERT(symbols.roseCreateVariable);
+   ROSE_ASSERT(symbols.roseCreateObject);
+   ROSE_ASSERT(symbols.roseInitVariable);
+   ROSE_ASSERT(symbols.roseMovePointer);
+   ROSE_ASSERT(symbols.roseAccessVariable);
+   ROSE_ASSERT(symbols.roseEnterScope);
+   ROSE_ASSERT(symbols.roseExitScope);
+   ROSE_ASSERT(symbols.roseIOFunctionCall);
+   ROSE_ASSERT(symbols.roseRegisterTypeCall);
+   ROSE_ASSERT(symbols.size_t_member);
+   ROSE_ASSERT(symbols.roseCheckIfThisNULL);
+
+   // ROSE_ASSERT(symbols.roseConvertIntToString);
 }
 
 /* -----------------------------------------------------------
  * Perform all transformations needed
  * -----------------------------------------------------------*/
-void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
-   if (RTEDDEBUG())   cout << "Running Transformation..." << endl;
-   globalScope = getFirstGlobalScope(isSgProject(project));
+void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles)
+{
    ROSE_ASSERT( project);
 
+   if (RTEDDEBUG())   cout << "Running Transformation..." << endl;
+
+   globalScope = getFirstGlobalScope(project);
    this -> rtedfiles = &rtedfiles;
    loadFunctionSymbols(project);
 

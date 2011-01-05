@@ -17,19 +17,61 @@ using namespace SageBuilder;
 const std::string RtedForStmtProcessed::Key( "Rted::ForStmtProcessed" );
 
 
-/* -----------------------------------------------------------
- * Helper Function
- * -----------------------------------------------------------*/
-SgStatement*
-RtedTransformation::getStatement(SgExpression* exp) {
-  SgStatement* stmt = NULL;
-  SgNode* expr = exp;
-  while (!isSgStatement(expr) && !isSgProject(expr))
-    expr = expr->get_parent();
-  if (isSgStatement(expr))
-    stmt = isSgStatement(expr);
-  return stmt;
+/**
+ * Helper Functions
+ *
+ *
+ * This function returns the statement that
+ * surrounds a given Node or Expression
+ ****************************************/
+SgStatement* getSurroundingStatement(SgNode* n)
+{
+  SgNode* stat = n;
+
+  while (!isSgStatement(stat) && !isSgProject(stat))
+  {
+    //~ if (stat->get_parent() == NULL)
+    //~ {
+    //~   cerr << " No parent possible for : " << n->unparseToString()
+    //~        <<"  :" << stat->unparseToString() << endl;
+    //~ }
+
+    stat = stat->get_parent();
+    ROSE_ASSERT(stat);
+  }
+
+  return isSgStatement(stat);
 }
+
+SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args)
+{
+  ROSE_ASSERT(stmt && checker && args);
+
+  SgFunctionRefExp*  funRef = buildFunctionRefExp(checker);
+  SgFunctionCallExp* funcCallExp = buildFunctionCallExp(funRef, args);
+  SgExprStatement*   exprStmt = buildExprStatement(funcCallExp);
+
+  insertStatementBefore(stmt, exprStmt);
+
+  return exprStmt;
+}
+
+SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args, const std::string& comment)
+{
+  SgExprStatement* exprStmt = checkBeforeStmt(stmt, checker, args);
+
+  attachComment(exprStmt, "", PreprocessingInfo::before);
+  attachComment(exprStmt, comment, PreprocessingInfo::before);
+
+  return exprStmt;
+}
+
+SgExprStatement*
+checkBeforeParentStmt(SgExpression* checked_node, SgFunctionSymbol* checker, SgExprListExp* args)
+{
+  return checkBeforeStmt(getSurroundingStatement(checked_node), checker, args);
+}
+
 
 
 SgExpression*
@@ -222,12 +264,6 @@ RtedTransformation::buildVarRef( SgInitializedName *&initName ) {
                 -> lookup_symbol( initName -> get_name() )));
 }
 
-SgExpression*
-RtedTransformation::buildString(std::string name) {
-  //  SgExpression* exp = buildCastExp(buildStringVal(name),buildPointerType(buildCharType()));
-  SgExpression* exp = buildStringVal(name);
-  return exp;
-}
 
 std::string
 RtedTransformation::removeSpecialChar(std::string str) {
@@ -409,23 +445,6 @@ RtedTransformation::getMinusMinusOp(SgMinusMinusOp* minus, std::string str
   return make_pair(initName,varRef);
 }
 
-/****************************************
- * This function returns the statement that
- * surrounds a given Node or Expression
- ****************************************/
-SgStatement*
-RtedTransformation::getSurroundingStatement(SgNode* n) {
-  SgNode* stat = n;
-  while (!isSgStatement(stat) && !isSgProject(stat)) {
-    if (stat->get_parent()==NULL) {
-      cerr << " No parent possible for : " << n->unparseToString()
-	   <<"  :" << stat->unparseToString() << endl;
-    }
-    ROSE_ASSERT(stat->get_parent());
-    stat = stat->get_parent();
-  }
-  return isSgStatement(stat);
-}
 
 // we have some expression, e.g. a var ref to m, but we want as much of the
 // expression as necessary to properly refer to m
@@ -616,15 +635,17 @@ bool RtedTransformation::isGlobalExternVariable(SgStatement* stmt) {
  * to instrumented function calls for constructing
  * SourcePosition objects.
  ************************************************/
-void RtedTransformation::appendFileInfo( SgNode* node, SgExprListExp* arg_list) {
+void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, SgNode* node)
+{
     ROSE_ASSERT( node );
-    appendFileInfo( node->get_file_info(), arg_list );
+    appendFileInfo( arg_list, node->get_file_info() );
 }
-void RtedTransformation::appendFileInfo( Sg_File_Info* file_info, SgExprListExp* arg_list) {
 
-    SgExpression* filename = buildString( file_info->get_filename() );
-    SgExpression* linenr = buildString( RoseBin_support::ToString( file_info->get_line() ));
-    SgExpression* linenrTransformed = buildString("x%%x");
+void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, Sg_File_Info* file_info)
+{
+    SgExpression* filename = buildStringVal( file_info->get_filename() );
+    SgExpression* linenr = buildIntVal( file_info->get_line() );
+    SgExpression* linenrTransformed = buildOpaqueVarRefExp("__LINE__");
 
     appendExpression( arg_list, filename );
     appendExpression( arg_list, linenr );
@@ -632,53 +653,80 @@ void RtedTransformation::appendFileInfo( Sg_File_Info* file_info, SgExprListExp*
 }
 
 
-void RtedTransformation::appendTypeInformation( SgInitializedName* initName, SgExprListExp* arg_list ) {
-    if( !initName ) return;
+// helpers
+static
+SgType* get_base_type(SgType* t)
+{
+  SgPointerType* sgptr = isSgPointerType(t);
+  if (sgptr != NULL) return sgptr;
 
-    appendTypeInformation( initName, initName -> get_type(), arg_list );
+  SgArrayType*   sgarr = isSgArrayType(t);
+  return sgarr;
 }
-void RtedTransformation::appendTypeInformation( SgInitializedName* initName, SgType* type, SgExprListExp* arg_list ) {
-    // arrays in parameters are actually passed as pointers, so we shouldn't
+
+static
+std::pair<SgType*, size_t>
+indirections(SgType* base_type)
+{
+  std::pair<SgType*, size_t> res(base_type, 0);
+
+  base_type = get_base_type(base_type);
+  while (base_type != NULL)
+  {
+    res.first = base_type;
+    ++res.second;
+
+    base_type = get_base_type(base_type);
+  }
+
+  return res;
+}
+
+
+void RtedTransformation::appendTypeInformation( SgExprListExp* arg_list, SgInitializedName* initName) {
+    // \pp was: if( !initName ) return;
+
+    ROSE_ASSERT(initName != NULL);
+
+    appendTypeInformation( arg_list, initName, initName -> get_type() );
+}
+
+void RtedTransformation::appendTypeInformation( SgExprListExp* arg_list, SgInitializedName* initName, SgType* type ) {
+    // arrays in parameters decay to pointers, so we shouldn't
     // treat them as stack arrays
-	bool array_to_pointer
-		=	initName
-            && isSgFunctionParameterList( getSurroundingStatement( initName ))
-            &&  type->class_name() == "SgArrayType";
+	bool array_decay = (  initName
+                     && isSgFunctionParameterList( getSurroundingStatement( initName ))
+                     && type->class_name() == "SgArrayType"
+                     );
 
-	appendTypeInformation( type, arg_list, false, array_to_pointer );
+	appendTypeInformation( arg_list, type, false, array_decay );
 }
 
-void RtedTransformation::appendTypeInformation( SgType* type, SgExprListExp* arg_list, bool resolve_class_names, bool array_to_pointer ) {
-    ROSE_ASSERT(type);
+void RtedTransformation::appendTypeInformation( SgExprListExp* arg_list,
+                                                SgType* type,
+                                                bool resolve_class_names,
+                                                bool array_to_pointer
+                                              )
+{
+  ROSE_ASSERT(type);
 
-    // we always resolve reference type information
-    if( isSgReferenceType( type )) {
-        appendTypeInformation(
-            isSgReferenceType( type ) -> get_base_type(),
-            arg_list,
-            resolve_class_names,
-            array_to_pointer );
-        return;
-    }
+  // we always resolve reference type information
+  if (isSgReferenceType( type )) {
+      appendTypeInformation(
+          arg_list,
+          isSgReferenceType( type ) -> get_base_type(),
+          resolve_class_names,
+          array_to_pointer );
+      return;
+  }
 
-    SgType* base_type = NULL;
-    size_t indirection_level = 0;
+  std::pair<SgType*, size_t> indir_desc = indirections(type);
+  SgType*                    base_type = indir_desc.first;
+  size_t                     indirection_level = indir_desc.second;
+	std::string                type_string = type->class_name();
+	std::string                base_type_string;
 
-    base_type = type;
-    while( true ) {
-        if (isSgPointerType( base_type )) {
-            base_type = isSgPointerType( base_type )->get_base_type();
-            ++indirection_level;
-        } else if( isSgArrayType( base_type )) {
-            base_type = isSgArrayType( base_type )->get_base_type();
-            ++indirection_level;
-        } else break;
-	}
-
-
-	std::string type_string = type -> class_name();
-	std::string base_type_string = "";
-	if( indirection_level > 0 )
+	if (indirection_level > 0)
 		base_type_string = base_type -> class_name();
 
 	// convert SgClassType to the mangled_name, if asked
@@ -696,22 +744,57 @@ void RtedTransformation::appendTypeInformation( SgType* type, SgExprListExp* arg
 	}
 
 	// convert array types to pointer types, if asked
-    if(	array_to_pointer &&  type_string == "SgArrayType" )
-        type_string =  "SgPointerType";
+  if (array_to_pointer && type_string == "SgArrayType")
+    type_string = "SgPointerType";
 
-    appendExpression( arg_list, buildString( type_string ));
-    appendExpression( arg_list, buildString( base_type_string ));
-    appendExpression( arg_list, buildIntVal( indirection_level ));
+  appendExpression( arg_list, buildStringVal( type_string ));
+  appendExpression( arg_list, buildStringVal( base_type_string ));
+  appendAddressDesc( arg_list, indirection_level );
 }
 
-void RtedTransformation::appendAddressAndSize(
-                         //   SgInitializedName* initName,
-					      SgScopeStatement* scope,
-                            SgExpression* varRefE,
-                            SgExprListExp* arg_list,
-					      int appendType,
-					      SgClassDefinition* UnionClass) {
+void
+RtedTransformation::appendAddressDesc(SgExprListExp* arg_list, size_t indirection_level)
+{
+  // \pp \todo
+}
 
+void
+RtedTransformation::appendDimensions(SgExprListExp* arg_list, RTedArray* arr)
+{
+      ROSE_ASSERT(arg_list && arr);
+
+		  SgExpression* noDims = SageBuilder::buildIntVal( arr->getDimension() );
+
+			SageInterface::appendExpression(arg_list, noDims);
+			BOOST_FOREACH( SgExpression* expr, arr->getIndices() ) {
+          if ( expr == NULL )
+          {
+              // \pp ???
+              expr = SageBuilder::buildIntVal( -1 );
+          }
+
+          ROSE_ASSERT( expr );
+          SageInterface::appendExpression( arg_list, expr );
+      }
+}
+
+void RtedTransformation::appendDimensionsIfNeeded( SgExprListExp* arg_list,
+                                                   RtedClassElement* rce
+                                                 )
+{
+  RTedArray* arr = rce->get_array();
+
+  if (arr == NULL) return;
+  appendDimensions(arg_list, arr);
+}
+
+void RtedTransformation::appendAddressAndSize( SgExprListExp* arg_list,
+                                               AppendKind am,
+                                               SgScopeStatement* scope,
+                                               SgExpression* varRefE,
+                                               SgClassDefinition* unionClass
+                                             )
+{
  //   SgScopeStatement* scope = NULL;
 
     // FIXME 2: It would be better to explicitly handle dot and arrow
@@ -722,7 +805,6 @@ void RtedTransformation::appendAddressAndSize(
     }
 #endif
 
-
     SgExpression* exp = varRefE;
     if ( isSgClassDefinition(scope) ) {
         // member -> &( var.member )
@@ -730,17 +812,19 @@ void RtedTransformation::appendAddressAndSize(
     }
     SgType* type  = NULL;
     if (varRefE) type=varRefE -> get_type();
-    appendAddressAndSize( exp, type, arg_list, appendType,UnionClass );
+
+    appendAddressAndSize( arg_list, am, exp, type, unionClass );
 }
 
 void RtedTransformation::appendAddressAndSize(
+                            SgExprListExp* arg_list,
+                            AppendKind am,
                             SgExpression* exp,
                             SgType* type,
-                            SgExprListExp* arg_list,
-                            int appendType,
-					      SgClassDefinition* unionclass) {
-
-    appendAddress( arg_list, exp );
+					                  SgClassDefinition* /*unionclass*/)
+{
+    SgExpression* op = exp;
+    SgExpression* szexp = NULL;
 
     // for pointer arithmetic variable access in expressions, we want the
     // equivalent expression that computes the new value.
@@ -752,17 +836,15 @@ void RtedTransformation::appendAddressAndSize(
     //
     // we want the last assignment to check that (p + 1) is a valid address to
     // read
-    if(     isSgPlusPlusOp( exp )
-            || isSgMinusMinusOp( exp )) {
-
-        exp = isSgUnaryOp( exp ) -> get_operand();
-    } else if( isSgPlusAssignOp( exp )
-                || isSgMinusAssignOp( exp )) {
-
-        exp = isSgBinaryOp( exp ) -> get_lhs_operand();
+    if (isSgPlusPlusOp( op ) || isSgMinusMinusOp( op ))
+    {
+      op = isSgUnaryOp( op ) -> get_operand();
+    }
+    else if( isSgPlusAssignOp( op ) || isSgMinusAssignOp( op ))
+    {
+      op = isSgBinaryOp( op ) -> get_lhs_operand();
     }
 
-    SgTreeCopy copy;
     // consider, e.g.
     //
     //      char* s1;
@@ -773,41 +855,38 @@ void RtedTransformation::appendAddressAndSize(
     //  we only want to access s2..s2+sizeof(char), not s2..s2+sizeof(s2)
     //
     //  but we do want to create the array as s2..s2+sizeof(s2)
-    if( appendType & 2 && isSgArrayType( type )) {
-        appendExpression(
-            arg_list,
-            buildSizeOfOp(
-                isSgType(
-                    isSgArrayType( type )
-                        -> get_base_type() -> copy( copy )))
-        );
-    } else {
+    if( (am == Complex) && isSgArrayType( type ))
+    {
+        SgTreeCopy copy;
+        SgNode*    clone = isSgArrayType(type)->get_base_type()->copy( copy );
+
+        szexp = buildSizeOfOp(isSgType(clone));
+    }
 #if 0
-      if (unionclass) {
+      else if (unionclass) {
 	cerr <<"isUnionClass" << endl;
 	SgType* classtype = unionclass ->get_declaration()->get_type();
 	cerr <<" unionclass : " << unionclass->unparseToString()<<"  type: " << classtype->class_name() << endl;
 
-          appendExpression(
-			   arg_list,
-			   buildSizeOfOp( isSgType(classtype-> copy( copy )))
+         szexp = buildSizeOfOp( isSgType(classtype-> copy( copy )));
 			   //			   buildSizeOfOp( buildIntVal(8))
-			   );
-      } else
+      }
 #endif
+    else if (op)
+    {
+        SgTreeCopy copy;
 
-    	if (exp)
-          appendExpression(
-            arg_list,
-            buildSizeOfOp( isSgExpression( exp -> copy( copy )))
-        );
-    	else
-          appendExpression(
-                arg_list,
-                buildSizeOfOp( isSgExpression( buildLongIntVal(0)))
-            );
-
+        szexp = buildSizeOfOp(isSgExpression( op -> copy( copy )));
     }
+    else
+    {
+        szexp = buildSizeOfOp(buildLongIntVal(0));
+    }
+
+    ROSE_ASSERT(szexp != NULL);
+
+    appendAddress( arg_list, exp );
+    appendExpression( arg_list, szexp );
 }
 
 // we have to make exp a valid lvalue
@@ -935,18 +1014,18 @@ void RtedTransformation::appendBaseType( SgExprListExp* arg_list, SgType* type )
 		base_type = ptr -> get_base_type();
 
 	if( base_type )
-        appendExpression(arg_list, buildString(
+        appendExpression(arg_list, buildStringVal(
 			base_type -> class_name()
 		));
 	else
-        appendExpression(arg_list, buildString(""));
+        appendExpression(arg_list, buildStringVal(""));
 }
 
 
 void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type ) {
 
     if( isSgClassType( type )) {
-        appendExpression(arg_list, buildString(
+        appendExpression(arg_list, buildStringVal(
 			isSgClassDeclaration( isSgClassType( type ) -> get_declaration() )
 				-> get_mangled_name() )
 		);
@@ -960,7 +1039,7 @@ void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type 
 
     } else {
 
-        appendExpression( arg_list, buildString( "" ));
+        appendExpression( arg_list, buildStringVal( "" ));
     }
 }
 
@@ -1133,7 +1212,7 @@ RtedTransformation::appendToGlobalConstructor(SgScopeStatement* scope, std::stri
 }
 
 void
-RtedTransformation::appendGlobalConstructor(SgScopeStatement* scope,
+RtedTransformation::appendGlobalConstructor(SgScopeStatement* /*scope*/,
 					    SgStatement* stmt) {
   // add the global constructor to the top of the file
   //ROSE_ASSERT(globalConstructorVariable);
@@ -1147,7 +1226,7 @@ RtedTransformation::appendGlobalConstructor(SgScopeStatement* scope,
 }
 
 void
-RtedTransformation::appendGlobalConstructorVariable(SgScopeStatement* scope,
+RtedTransformation::appendGlobalConstructorVariable(SgScopeStatement* /*scope*/,
 					    SgStatement* stmt) {
   // add the global constructor to the top of the file
   ROSE_ASSERT(globalConstructorVariable);

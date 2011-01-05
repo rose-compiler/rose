@@ -1,10 +1,8 @@
 #ifndef RTED_DS_H
 #define RTED_DS_H
+
 #include <boost/foreach.hpp>
 #include <string>
-
-using namespace SageInterface;
-using namespace SageBuilder;
 
 
 /* -----------------------------------------------------------
@@ -16,7 +14,7 @@ using namespace SageBuilder;
  * -----------------------------------------------------------*/
 class RTedArray {
  public:
-  bool stack;
+  // \pp removed field, b/c it was not referenced: bool stack;
   SgInitializedName* initName;
   SgStatement* surroundingStatement;
   bool onHeap;
@@ -24,49 +22,35 @@ class RTedArray {
   SgExpression* size;
   std::vector<SgExpression*> indices;
 
-  RTedArray(bool s, SgInitializedName* init, SgStatement* stmt,
-	    bool _onHeap, bool _fromMalloc = false, SgExpression* _size = NULL )
-	  :stack(s),initName(init),surroundingStatement(stmt), onHeap(_onHeap) ,
-	  fromMalloc (_fromMalloc), size(_size){
-#if 0
-      stack = s;
-	  initName = init;
-      surroundingStatement = stmt;
-      onHeap = _onHeap;
-      fromMalloc = _fromMalloc;
-      size = _size;
-#endif
-  }
-  virtual ~RTedArray() {}
+  RTedArray ( SgInitializedName* init,
+							SgStatement* stmt,
+	            bool _onHeap,
+							bool _fromMalloc = false,
+							SgExpression* _size = NULL
+						)
+	: initName(init), surroundingStatement(stmt), onHeap(_onHeap),
+	  fromMalloc (_fromMalloc), size(_size), indices()
+	{}
 
-  std::vector<SgExpression*> & getIndices() {
-      return indices;
-  }
+	virtual ~RTedArray() {}
 
-  int getDimension() {
-      return indices.size();
-  }
+  std::vector<SgExpression*>& getIndices() { return indices; }
 
-  void appendDimensionInformation( SgExprListExp* arg_list ) {
-      appendExpression( arg_list, buildIntVal( getDimension() ));
-      BOOST_FOREACH( SgExpression* expr, getIndices() ) {
-          if ( expr == NULL )
-              expr = buildIntVal( -1 );
-          ROSE_ASSERT( expr );
-          appendExpression( arg_list, expr );
-      }
-  }
+  int getDimension() { return indices.size(); }
 
-  std::string unparseToString() {
-	  std::string res = "";
-      std::vector< SgExpression* >::iterator i = indices.begin();
-      while( i != indices.end() ) {
+  std::string unparseToString()
+	{
+	  std::string                            res;
+    std::vector< SgExpression* >::iterator i = indices.begin();
+
+		while( i != indices.end() ) {
           res += (*i) -> unparseToString();
           ++i;
           if( i != indices.end() )
               res += ", ";
-      }
-	  return res;
+    }
+
+		return res;
   }
 };
 
@@ -84,41 +68,40 @@ class RtedClassElement {
 	std::string elementType;
   SgDeclarationStatement* sgElement;
 
-  RtedClassElement(std::string _elementName,
-		  std::string _elementType,
-		   SgDeclarationStatement* _sgElement) {
-    manglElementName = _elementName;
-    elementType = _elementType;
-    sgElement = _sgElement;
-    ROSE_ASSERT(sgElement);
+  RtedClassElement( std::string _elementName,
+		                std::string _elementType,
+		                SgDeclarationStatement* _sgElement
+									)
+	: manglElementName(_elementName), elementType(_elementType), sgElement(_sgElement)
+  {
+		ROSE_ASSERT(sgElement);
   }
-  virtual ~RtedClassElement(){}
+
+  virtual ~RtedClassElement() {}
 
   virtual size_t extraArgSize() { return 0; }
-  virtual void appendExtraArgs( SgExprListExp* arg_list ) {}
+	virtual RTedArray* get_array() { return NULL; }
 };
 
 class RtedClassArrayElement : public RtedClassElement {
-  private:
       RTedArray* array;
   public:
-      RtedClassArrayElement(
-            std::string elementName,
-            std::string elementType,
-            SgDeclarationStatement* sgElement,
-            RTedArray* array
-      ) : RtedClassElement( elementName, elementType, sgElement ) {
-
-          this -> array = array;
-      }
+      RtedClassArrayElement( std::string elementName,
+														 std::string elementType,
+														 SgDeclarationStatement* sgElement,
+														 RTedArray* arr
+						               )
+			: RtedClassElement(elementName, elementType, sgElement), array(arr)
+			{
+				ROSE_ASSERT(array);
+			}
 
       size_t extraArgSize() {
           // dimensionality, then each dimension
           return (array -> getDimension() + 1);
       }
-      void appendExtraArgs( SgExprListExp* arg_list ) {
-          array -> appendDimensionInformation( arg_list );
-      }
+
+			RTedArray* get_array() { return array; }
 };
 
 
@@ -154,7 +137,6 @@ class RtedClassDefinition {
 };
 
 
-#if 1
 /* -----------------------------------------------------------
  * This class stores information about all variable declarations
  * We need to know if they were initialized
@@ -172,8 +154,6 @@ class RTedVariableType {
   }
   virtual ~RTedVariableType(){}
 };
-#endif
-
 
 
 /* -----------------------------------------------------------
@@ -205,6 +185,7 @@ class RtedArguments {
   SgExpression* leftHandSideAssignmentExpr;
   SgExpression* leftHandSideAssignmentExprStr;
   SgExprListExp* argumentList;
+
   RtedArguments(
 		std::string ffuncn,
 		std::string fmangl,

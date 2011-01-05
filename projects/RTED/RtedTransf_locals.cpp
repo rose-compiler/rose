@@ -39,12 +39,12 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
 
     ROSE_ASSERT( stmt );
     ROSE_ASSERT( exit_file_info );
-    ROSE_ASSERT( symbols->roseEnterScope );
+    ROSE_ASSERT( symbols.roseEnterScope );
 
     SgExprListExp* enter_scope_args = buildExprListExp();
     appendExpression(
       enter_scope_args,
-      buildString(
+      buildStringVal(
         scope_name( stmt_or_block ) +
         ":"
         + RoseBin_support::ToString( stmt_or_block -> get_file_info() -> get_line() )
@@ -53,10 +53,14 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
 
 
     // enterScope( "foo:23");
+    // \pp \todo this works for C/UPC but not for C++ where
+    //           exceptions can lead to scope unwinding.
+    //           Use RAII to guarantee that the Rted scope information
+    //           is properly managed.
     SgExprStatement* fncall_enter
         = buildExprStatement(
             buildFunctionCallExp(
-              buildFunctionRefExp( symbols->roseEnterScope),
+              buildFunctionRefExp( symbols.roseEnterScope),
               enter_scope_args
             )
           );
@@ -83,34 +87,28 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
           isSgForStatement(parentStmt)->set_loop_body(bb);
         else if (isSgUpcForAllStatement(parentStmt))
           isSgUpcForAllStatement(parentStmt)->set_loop_body(bb);
-        // \todo else while handling missing?
-      } else
-      insertStatementBefore( stmt, fncall_enter );
+        // \pp \todo else while handling missing?
+      }
+      else
+      {
+        // \pp where/why is this needed???
+        insertStatementBefore( stmt, fncall_enter );
+      }
     }
 
     // exitScope( (char*) filename, (char*) line, (char*) lineTransformed, (char*) stmtStr);
     SgExprListExp* exit_scope_args = buildExprListExp();
     appendExpression(
       exit_scope_args,
-      buildString( exit_file_info -> get_filename() )
+      buildStringVal( removeSpecialChar( stmt->unparseToString()))
     );
-    appendExpression(
-      exit_scope_args,
-      buildString( RoseBin_support::ToString( exit_file_info -> get_line() ))
-    );
-    appendExpression(
-      exit_scope_args,
-      buildString( "x%%x" )
-    );
-    appendExpression(
-      exit_scope_args,
-      buildString( removeSpecialChar( stmt->unparseToString()))
-    );
+
+    appendFileInfo(exit_scope_args, exit_file_info);
 
     SgExprStatement* exit_scope_call =
         buildExprStatement(
           buildFunctionCallExp(
-            buildFunctionRefExp( symbols->roseExitScope),
+            buildFunctionRefExp( symbols.roseExitScope),
             exit_scope_args
           )
         );

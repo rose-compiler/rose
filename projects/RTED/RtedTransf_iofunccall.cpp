@@ -43,30 +43,25 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args  ) {
     int dimFuncCall = getDimensionForFuncCall(args->f_name);
     size+=dimFuncCall;
     //SgIntVal* sizeExp = buildIntVal(size);
-    SgExpression* callNameExp = buildString(args->f_name);
+    SgExpression* callNameExp = buildStringVal(args->f_name);
 
     //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
-    ROSE_ASSERT(symbols->roseIOFunctionCall);
+    ROSE_ASSERT(symbols.roseIOFunctionCall);
 
     SgExprListExp* arg_list = buildExprListExp();
     //appendExpression(arg_list, sizeExp);
     appendExpression(arg_list, callNameExp);
-    SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
-    SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
-    appendExpression(arg_list, filename);
-    appendExpression(arg_list, linenr);
 
-    SgExpression* linenrTransformed = buildString("x%%x");
-    appendExpression(arg_list, linenrTransformed);
-
-    appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
+    appendExpression(arg_list, buildStringVal(removeSpecialChar(stmt->unparseToString())));
     // this one is new, it indicates the variable on the left hand side of the statment,
     // if available
     if (args->leftHandSideAssignmentExprStr)
       appendExpression(arg_list, args->leftHandSideAssignmentExprStr);
-    else 
+    else
       appendExpression(arg_list, buildStringVal("NoAssignmentVar"));
     cerr << " ... Left hand side variable : " <<  args->leftHandSideAssignmentExpr << endl;
+
+    appendFileInfo(arg_list, stmt);
 
     // this is the file handle for fopen
 	// for fclose or fget the file handle is in the parameter!
@@ -88,8 +83,8 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args  ) {
     		appendExpression(arg_list, exp);
     	}
 		// 0 arguments
-    	appendExpression(arg_list, buildString("NULL"));
-    	appendExpression(arg_list, buildString("NULL"));
+    	appendExpression(arg_list, buildStringVal("NULL"));
+    	appendExpression(arg_list, buildStringVal("NULL"));
     }
     else if (args->f_name=="fgetc") {
 		// file handle
@@ -99,8 +94,8 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args  ) {
     		appendExpression(arg_list, exp);
     	}
     	// 0 arguments
-    	appendExpression(arg_list, buildString("NULL"));
-    	appendExpression(arg_list, buildString("NULL"));
+    	appendExpression(arg_list, buildStringVal("NULL"));
+    	appendExpression(arg_list, buildStringVal("NULL"));
     }
     else if (args->f_name=="fputc") {
 		// 2 arguments in reverse order
@@ -115,7 +110,7 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args  ) {
     		else
     			appendExpression(arg_list, exp);
     	}
-    	appendExpression(arg_list, buildString("NULL"));
+    	appendExpression(arg_list, buildStringVal("NULL"));
     } else if (args->f_name=="std::fstream") {
       cerr << " Detected fstream" << endl;
       appendExpression(arg_list, args->varRefExp); // file handle
@@ -125,17 +120,17 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args  ) {
           appendExpression(arg_list, exp);
       }
       // 0 arguments
-      appendExpression(arg_list, buildString("NULL"));
-      // appendExpression(arg_list, buildString("NULL"));
+      appendExpression(arg_list, buildStringVal("NULL"));
+      // appendExpression(arg_list, buildStringVal("NULL"));
 
     } else {
       cerr <<"Unknown io function call " << args->f_name << endl;
       abort();
     }
 
-    string symbolName2 = symbols->roseIOFunctionCall->get_name().str();
+    string symbolName2 = symbols.roseIOFunctionCall->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-    SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols->roseIOFunctionCall);
+    SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols.roseIOFunctionCall);
     SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r, arg_list);
     SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
     // create the function call and its comment

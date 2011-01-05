@@ -20,7 +20,7 @@ myStream << t << std::flush;
 return myStream.str(); //returns the string form of the std::stringstream object
 }
 
-MemoryType::MemoryType(MemoryAddress _addr, size_t _size, AllocKind wherehow, const SourcePosition & _pos)
+MemoryType::MemoryType(Address _addr, size_t _size, AllocKind wherehow, const SourcePosition & _pos)
 : startAddress(_addr), size(_size), initialized(_size, false), origin(wherehow), allocPos(_pos)
 {
   // not memory has been initialized by default
@@ -37,21 +37,21 @@ void MemoryType::resize( size_t new_size ) {
     size = new_size;
 }
 
-bool MemoryType::containsAddress(MemoryAddress queryAddress)
+bool MemoryType::containsAddress(Address queryAddress)
 {
     return (  startAddress <= queryAddress
            && queryAddress < startAddress + size
            );
 }
 
-bool MemoryType::containsMemArea(MemoryAddress queryAddr, size_t querySize)
+bool MemoryType::containsMemArea(Address queryAddr, size_t querySize)
 {
     return (  containsAddress(queryAddr)
            && containsAddress(queryAddr + (querySize - 1))
            );
 }
 
-bool MemoryType::overlapsMemArea(MemoryAddress queryAddr, size_t querySize)
+bool MemoryType::overlapsMemArea(Address queryAddr, size_t querySize)
 {
     return (  containsAddress(queryAddr)
            || containsAddress(queryAddr + (querySize-1))
@@ -391,7 +391,7 @@ MemoryManager::~MemoryManager()
 }
 
 
-MemoryType* MemoryManager::findPossibleMemMatch(MemoryAddress addr)
+MemoryType* MemoryManager::findPossibleMemMatch(Address addr)
 {
   if (mem.size()==0)
     return NULL;
@@ -423,14 +423,14 @@ MemoryType* MemoryManager::findPossibleMemMatch(MemoryAddress addr)
   return &(it->second);
 }
 
-MemoryType* MemoryManager::findContainingMem(MemoryAddress addr, size_t size)
+MemoryType* MemoryManager::findContainingMem(Address addr, size_t size)
 {
     MemoryType * res = findPossibleMemMatch(addr);
 
     return (res && res->containsMemArea(addr,size)) ?  res  : NULL;
 }
 
-bool MemoryManager::existOverlappingMem(MemoryAddress addr, size_t size)
+bool MemoryManager::existOverlappingMem(Address addr, size_t size)
 {
     MemoryType * res = findPossibleMemMatch(addr);
 
@@ -441,8 +441,8 @@ bool MemoryManager::existOverlappingMem(MemoryAddress addr, size_t size)
 
 MemoryType* MemoryManager::allocateMemory(const MemoryType& alloc)
 {
-    size_t          szObj = alloc.getSize();
-    MemoryAddress   adrObj = alloc.getAddress();
+    size_t    szObj = alloc.getSize();
+    Address   adrObj = alloc.getAddress();
 
     if (szObj == 0)
     {
@@ -461,7 +461,7 @@ MemoryType* MemoryManager::allocateMemory(const MemoryType& alloc)
 }
 
 
-void MemoryManager::freeMemory(MemoryAddress addr, MemoryType::AllocKind freekind)
+void MemoryManager::freeMemory(Address addr, MemoryType::AllocKind freekind)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
     MemoryType*     m = findContainingMem(addr, 1);
@@ -519,8 +519,8 @@ void MemoryManager::freeMemory(MemoryAddress addr, MemoryType::AllocKind freekin
     }
 
     PointerManager* pm = rs->getPointerManager();
-    MemoryAddress   from = m->getAddress();
-    MemoryAddress   to = from + m->getSize();
+    Address   from = m->getAddress();
+    Address   to = from + m->getSize();
 
     pm->deletePointerInRegion( from, to, true );
     pm->invalidatePointerToRegion( from, to );
@@ -531,7 +531,7 @@ void MemoryManager::freeMemory(MemoryAddress addr, MemoryType::AllocKind freekin
 
 
 
-MemoryType* MemoryManager::checkAccess(MemoryAddress addr, size_t size, RsType * t, RuntimeViolation::Type vioType)
+MemoryType* MemoryManager::checkAccess(Address addr, size_t size, RsType * t, RuntimeViolation::Type vioType)
 {
     RuntimeSystem*    rs = RuntimeSystem::instance();
     MemoryType *const res = findContainingMem(addr,size);
@@ -562,7 +562,7 @@ MemoryType* MemoryManager::checkAccess(MemoryAddress addr, size_t size, RsType *
 
 
 
-void MemoryManager::checkRead(MemoryAddress addr, size_t size, RsType * t)
+void MemoryManager::checkRead(Address addr, size_t size, RsType * t)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
     MemoryType    * mt = checkAccess(addr,size,t,RuntimeViolation::INVALID_READ);
@@ -584,7 +584,7 @@ void MemoryManager::checkRead(MemoryAddress addr, size_t size, RsType * t)
 
 
 
-void MemoryManager::checkWrite(MemoryAddress addr, size_t size, RsType * t)
+void MemoryManager::checkWrite(Address addr, size_t size, RsType * t)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
     rs->printMessage("   ++ checkWrite : "+HexToString(addr)+" size:"+ToString(size));
@@ -598,7 +598,7 @@ void MemoryManager::checkWrite(MemoryAddress addr, size_t size, RsType * t)
     rs->printMessage("   ++ checkWrite done.");
 }
 
-bool MemoryManager::isInitialized(MemoryAddress addr, size_t size)
+bool MemoryManager::isInitialized(Address addr, size_t size)
 {
     MemoryType* mt = checkAccess(addr,size,NULL,RuntimeViolation::INVALID_READ);
     const int   offset = addr - mt->getAddress();
@@ -607,13 +607,13 @@ bool MemoryManager::isInitialized(MemoryAddress addr, size_t size)
 }
 
 
-bool MemoryManager::checkIfSameChunk(MemoryAddress addr1, MemoryAddress addr2, RsType * type)
+bool MemoryManager::checkIfSameChunk(Address addr1, Address addr2, RsType * type)
 {
 	return checkIfSameChunk( addr1, addr2, type->getByteSize() );
 }
 
-bool MemoryManager::checkIfSameChunk( MemoryAddress addr1,
-		                                  MemoryAddress addr2,
+bool MemoryManager::checkIfSameChunk( Address addr1,
+		                                  Address addr2,
 		                                  size_t typeSize,
 		                                  RuntimeViolation::Type violation
                                     )
@@ -648,7 +648,7 @@ bool MemoryManager::checkIfSameChunk( MemoryAddress addr1,
   // mem1 == mem2, so we retire mem2
   mem2 = NULL;
 
-  const MemoryAddress   memaddr = mem1->getAddress();
+  const Address   memaddr = mem1->getAddress();
   int                   off1 = addr1 - memaddr;
   int                   off2 = addr2 - memaddr;
   RsType*               type1 = mem1 -> getTypeAt( off1, typeSize );
@@ -733,7 +733,7 @@ void MemoryManager::checkForNonFreedMem() const
 }
 
 
-MemoryType * MemoryManager::getMemoryType(MemoryAddress addr)
+MemoryType * MemoryManager::getMemoryType(Address addr)
 {
     MemoryType * possibleMatch = findPossibleMemMatch(addr);
 

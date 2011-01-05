@@ -22,7 +22,7 @@ void StackManager::addVariable(VariablesType * var)
 
 
 
-VariablesType * StackManager::getVariable(MemoryAddress addr)
+VariablesType * StackManager::getVariable(Address addr)
 {
     AddrToVarMap::iterator it = addrToVarMap.find(addr);
     if (it == addrToVarMap.end())

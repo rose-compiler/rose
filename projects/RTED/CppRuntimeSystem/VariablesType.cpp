@@ -12,7 +12,7 @@ using namespace std;
 VariablesType::VariablesType(const std::string & name_,
                              const std::string & mangledName_,
                              const std::string & typeStr_,
-                             MemoryAddress address_) :
+                             Address address_) :
     name(name_),
     mangledName(mangledName_),
     address(address_)
@@ -52,7 +52,7 @@ VariablesType::VariablesType(const std::string & name_,
 VariablesType::VariablesType( const std::string & name_,
                               const std::string & mangledName_,
                               RsType * type_,
-                              MemoryAddress address_
+                              Address address_
                             )
 : name(name_), mangledName(mangledName_), type(type_), address(address_)
 {

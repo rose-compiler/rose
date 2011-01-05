@@ -11,7 +11,8 @@ class RtedSymbols: public AstSimpleProcessing {
 private:
 
 public:
-	SgFunctionSymbol* roseCreateHeap;
+	SgFunctionSymbol* roseCreateHeapArr;
+	SgFunctionSymbol* roseCreateHeapPtr;
 	SgFunctionSymbol* roseAccessHeap;
 	SgFunctionSymbol* roseCheckpoint;
 	SgFunctionSymbol* roseFunctionCall;
@@ -21,9 +22,6 @@ public:
 	SgFunctionSymbol* roseReallocateMemory;
 	SgFunctionSymbol* roseConvertIntToString;
 	SgFunctionSymbol* roseCreateVariable;
-#if NOT_YET_IMPLEMENTED
-	SgFunctionSymbol* roseCreateSharedVariable; // for upc
-#endif /* NOT_YET_IMPLEMENTED */
 	SgFunctionSymbol* roseCreateObject;
 	SgFunctionSymbol* roseInitVariable;
 	SgFunctionSymbol* roseMovePointer;
@@ -36,7 +34,8 @@ public:
 	SgType* size_t_member;
 
 	RtedSymbols()
-  : roseCreateHeap(NULL),
+  : roseCreateHeapArr(NULL),
+	  roseCreateHeapPtr(NULL),
     roseAccessHeap(NULL),
     roseCheckpoint(NULL),
     roseFunctionCall(NULL),
@@ -46,9 +45,6 @@ public:
     roseReallocateMemory(NULL),
     roseConvertIntToString(NULL),
     roseCreateVariable(NULL),
-#if NOT_YET_IMPLEMENTED
-    roseCreateSharedVariable(NULL),
-#endif /* NOT_YET_IMPLEMENTED */
     roseCreateObject(NULL),
     roseInitVariable(NULL),
     roseAccessVariable(NULL),

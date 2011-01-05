@@ -4,20 +4,45 @@
 #ifndef RTEDTRANS_H
 #define RTEDTRANS_H
 
-
-
-
 #include <set>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
+
+
+/// \brief  finds the first parent that is a SgStatement node
+/// \return the parent statement or NULL if there is none
+SgStatement* getSurroundingStatement(SgNode* n);
+
+/// \brief   creates a statement node for calling the function checker with some arguments
+///          and adds the check before the statement where checked_node is a part of
+/// \return  the created statement node
+SgExprStatement* checkBeforeParentStmt(SgExpression* checked_node, SgFunctionSymbol* checker, SgExprListExp* args);
+
+/// \brief   creates a statement node for calling the function checker with some arguments
+///          and adds the check before the statement where checked_node is a part of
+/// \return  the created statement node
+SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args);
+
+/// \brief   adds a comment in addition to creating a check
+/// \return  the created statement node
+SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args, const std::string& comment);
+
+/// \brief   returns true, iff name refers to a char-array modifying function (e.g., strcpy, etc.)
+bool isStringModifyingFunctionCall(const std::string& name);
 
 /* -----------------------------------------------------------
  * tps : 6March 2009: This class adds transformations
  * so that runtime errors are caught at runtime before they happen
  * -----------------------------------------------------------*/
+
 class RtedTransformation : public AstSimpleProcessing {
 private:
    enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
+
+   // \pp added an enum to give names to what were integer values before.
+   //     For lack of an idea what the values stand for I use preliminary names:
+   //     Simple, Complex.
+   enum AppendKind { Simple = 0, Complex = 2 };
 
 
    // track the files that we're transforming, so we can ignore nodes and
@@ -106,9 +131,8 @@ private:
 
    // FUNCTIONS ------------------------------------------------------------
    // Helper function
-   SgStatement* getStatement(SgExpression* exp);
+
    // Transformation specific Helper Functions
-   SgStatement* getSurroundingStatement(SgNode* n);
    // Returns the defining definition for the function called by fn_call, if
    // possible.  If the direct link does not exist, will do a memory pool
    // traversal to find the definition.  May still return NULL if the definition
@@ -123,7 +147,7 @@ private:
    void insertConfirmFunctionSignature( SgFunctionDefinition* fndef );
    void insertFreeCall( SgExpression* exp );
    void insertReallocateCall( SgFunctionCallExp* exp );
-   SgExpression* buildString(std::string name);
+
    SgVarRefExp* buildVarRef( SgInitializedName *& initName );
    std::string getMangledNameOfExpression(SgExpression* expr);
 
@@ -163,6 +187,9 @@ public:
    SgReferenceType* isUsableAsSgReferenceType( SgType* type );
    bool isInInstrumentedFile( SgNode* n );
    void visit_isArraySgAssignOp(SgNode* n);
+
+   void appendFileInfo( SgExprListExp* arg_list, SgNode* n);
+   void appendFileInfo( SgExprListExp* arg_list, Sg_File_Info* n);
 private:
 
    SgType* resolveTypedefs( SgType* type );
@@ -172,9 +199,6 @@ private:
    /// is n a basic block, if statement, [do]while, or for statement
    bool isNormalScope( SgNode* n );
    SgExpression* getExprBelowAssignment(SgExpression* exp);
-   void appendFileInfo( SgNode* n, SgExprListExp* arg_list);
-   void appendFileInfo( Sg_File_Info* n, SgExprListExp* arg_list);
-
 
    // ********************* Deep copy classes in headers into source **********
    SgClassDeclaration* instrumentClassDeclarationIntoTopOfAllSourceFiles(SgProject* project, SgClassDeclaration* classDecl);
@@ -227,14 +251,13 @@ public:
 
    SgVarRefExp* resolveToVarRefRight(SgExpression* expr);
    SgVarRefExp* resolveToVarRefLeft(SgExpression* expr);
-   RtedSymbols* symbols;
+   RtedSymbols  symbols;
 
    bool isVarRefInCreateArray(SgInitializedName* search);
    void insertFuncCall(RtedArguments* args);
    void insertIOFuncCall(RtedArguments* args);
    void visit_isFunctionCall(SgNode* n);
    void visit_isFunctionDefinition(SgNode* n);
-   bool isStringModifyingFunctionCall(std::string name);
    int getDimensionForFuncCall(std::string name);
    bool isFunctionCallOnIgnoreList(std::string name);
    bool isFileIOFunctionCall(std::string name) ;
@@ -321,24 +344,22 @@ private:
    bool array_alloc_call(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionRefExp*, bool);
 
 public:
-   RtedTransformation() {
-      //inputFiles=files;
-      globalScope=NULL;
-      symbols = new RtedSymbols();
-      mainFirst=NULL;
-      mainEnd=NULL;
-      mainLast=NULL;
-      mainBody = NULL;
-      mainEndsWithReturn=false;
-      mainHasBeenChanged=false;
-      globConstructor=false;
-      globalConstructorVariable=NULL;
-      globalFunction=NULL;
-   };
-   virtual ~RtedTransformation(){
+   RtedTransformation()
+   : rtedfiles(NULL),
+     globalScope(NULL),
+     globConstructor(false),
+     globalFunction(NULL),
+     globalConstructorVariable(NULL),
+     mainLast(NULL),
+     mainFirst(NULL),
+     mainBody(NULL),
+     mainEnd(NULL),
+     mainEndsWithReturn(false),
+     mainHasBeenChanged(false),
+     symbols()
+   {}
 
-
-   };
+   virtual ~RtedTransformation() {}
 
    // PUBLIC FUNCTIONS ------------------------------------------------------------
    // Insert Header Files
@@ -351,12 +372,23 @@ public:
    SgProject* parse(int argc, char** argv);
    void loadFunctionSymbols(SgProject* project);
 
-   void appendTypeInformation(SgInitializedName* initName, SgExprListExp* arg_list);
-   void appendTypeInformation(SgInitializedName* initName, SgType* type, SgExprListExp* arg_list);
-   void appendTypeInformation(SgType* type, SgExprListExp* arg_list, bool resolve_class_names = true, bool array_to_pointer=false);
-   void appendAddressAndSize(//SgInitializedName* initName,
-         SgScopeStatement* scope, SgExpression* varRef, SgExprListExp* arg_list, int appendType, SgClassDefinition* cd=NULL);
-   void appendAddressAndSize(SgExpression* exp, SgType* type, SgExprListExp* arg_list, int appendType, SgClassDefinition* isUnionClass=NULL);
+   void appendTypeInformation(SgExprListExp* arg_list, SgInitializedName* initName);
+   void appendTypeInformation(SgExprListExp* arg_list, SgInitializedName* initName, SgType* type);
+   void appendTypeInformation(SgExprListExp* arg_list, SgType* type, bool resolve_class_names = true, bool array_to_pointer=false);
+
+   /// \brief appends an Address descriptor to the argument list
+   void appendAddressDesc(SgExprListExp* arg_list, size_t indirection_level);
+
+   /// \brief appends the array dimensions to the argument list
+   void appendDimensions(SgExprListExp* arg_list, RTedArray*);
+
+   /// \brief appends the array dimensions to the argument list if needed
+   ///        (i.e., rce is a RtedClassArrayElement)
+   void appendDimensionsIfNeeded(SgExprListExp* arg_list, RtedClassElement* rce);
+
+   void appendAddressAndSize(SgExprListExp* arg_list, AppendKind ak, SgScopeStatement* scope, SgExpression* varRef, SgClassDefinition* cd=NULL);
+   void appendAddressAndSize(SgExprListExp* arg_list, AppendKind ak, SgExpression* exp, SgType* type, SgClassDefinition* isUnionClass=NULL);
+
    void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
    void appendBaseType( SgExprListExp* arg_list, SgType* type );
    void appendClassName( SgExprListExp* arg_list, SgType* type );

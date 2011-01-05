@@ -64,7 +64,7 @@ RsType * TypeSystem::getTypeInfo(const string & name)
 }
 
 
-RsArrayType * TypeSystem::getArrayType(const string & name, size_t size)
+RsArrayType * TypeSystem::getArrayType(const string& name, size_t size)
 {
     RsType * bt = getTypeInfo(name);
 
@@ -73,54 +73,63 @@ RsArrayType * TypeSystem::getArrayType(const string & name, size_t size)
 }
 
 
-RsArrayType * TypeSystem::getArrayType(RsType * bt, size_t size)
+RsArrayType* TypeSystem::getArrayType(RsType* bt, size_t size)
 {
-    map<size_t, RsArrayType*> & m = arrTypeMap[bt];
-
+    map<size_t, RsArrayType*>&         m = arrTypeMap[bt];
     map<size_t,RsArrayType*>::iterator it = m.find(size);
-    if( it == m.end() )
-    {
-        RsArrayType * arrType = new RsArrayType(bt,size);
-        m.insert(make_pair<size_t,RsArrayType*>(size,arrType));
-        return arrType;
-    }
-    else
-        return it->second;
-}
 
-RsPointerType * TypeSystem::getPointerType(const string & name, size_t indirection)
-{
-    RsType * bt = getTypeInfo(name);
-    return getPointerType(bt,indirection);
+    if( it != m.end() ) return it->second;
+
+    RsArrayType*                       arrType = new RsArrayType(bt,size);
+
+    m.insert(make_pair<size_t,RsArrayType*>(size,arrType));
+    return arrType;
 }
 
 
-RsPointerType * TypeSystem::getPointerType(RsType * bt, size_t indirection)
+RsPointerType* TypeSystem::getPointerType(RsType* bt, AddressDesc desc)
 {
-    assert(indirection >= 1);
+    assert( pd_isPtr(desc) >= 1 );
     assert( bt != NULL );
 
-    map<size_t, RsPointerType * > & m = ptrTypeMap[bt];
+    TypeDerivatives&          m = ptrTypeMap[bt];
+    TypeDerivatives::iterator it = m.find(desc.levels); // we do not keep track of shared qualifiers on types
 
-    map<size_t,RsPointerType*>::iterator it = m.find(indirection);
-    if( it == m.end() )
-    {
-        RsType * base = NULL;
-        // multiple pointers are represented as pointer which have a pointer basetype
-        // build these base-types recursively
-        if(indirection > 1)
-            base = getPointerType(bt,indirection-1);
-        else
-            base = bt;
+    if( it != m.end() ) return it->second;
 
-        RsPointerType * ptrType = new RsPointerType(base);
-        m.insert(make_pair<size_t,RsPointerType*>(indirection,ptrType));
-        return ptrType;
-    }
+    RsType*                               base = NULL;
+    AddressDesc                           desc_prime = pd_deref(desc);
+
+    // multiple pointers are represented as pointer which have a pointer basetype
+    // build these base-types recursively
+    if (pd_isPtr(desc_prime))
+        base = getPointerType(bt, desc_prime);
     else
-        return it->second;
+        base = bt;
 
+    RsPointerType*                        ptrType = new RsPointerType(base);
+
+    m.insert(TypeDerivatives::value_type(desc.levels, ptrType));
+    return ptrType;
 }
+
+RsPointerType * TypeSystem::getPointerType(const string & name, AddressDesc desc)
+{
+    RsType * bt = getTypeInfo(name);
+    return getPointerType(bt, desc);
+}
+
+RsPointerType * TypeSystem::getPointerType(RsType * bt)
+{
+    return getPointerType(bt, pd_ptr());
+}
+
+RsPointerType * TypeSystem::getPointerType(const string & name)
+{
+    return getPointerType(getTypeInfo(name));
+}
+
+
 
 
 
@@ -161,6 +170,3 @@ std::ostream& operator<< (std::ostream &os, const TypeSystem & m)
     m.print(os);
     return os;
 }
-
-
-

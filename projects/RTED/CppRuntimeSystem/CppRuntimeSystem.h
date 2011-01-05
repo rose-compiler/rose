@@ -149,7 +149,7 @@ class RuntimeSystem
          @endcode
          *
          * Using a std::string for the type is a convenience.  Calling
-         * createVariable( MemoryAddress, const std::string&, const std::string&, RsType*)
+         * createVariable( Address, const std::string&, const std::string&, RsType*)
          * is preferred.
          *
          * @param address       The (stack) address of the variable.
@@ -157,30 +157,30 @@ class RuntimeSystem
          *                      debugger and/or output, not to detect violations.
          * @param typeString    A valid RsType string.
          */
-        void createVariable(MemoryAddress address,
+        void createVariable(Address address,
                             const std::string & name,
                             const std::string & mangledName,
                             const std::string & typeString);
 
-        void createVariable(MemoryAddress address,
+        void createVariable(Address address,
                             const std::string & name,
                             const std::string & mangledName,
                             RsType *  type);
 
 
-        void createArray(   MemoryAddress address,
+        void createArray(   Address address,
                             const std::string & name,
                             const std::string & mangledName,
                             const std::string & baseType,
                             size_t size);
 
-        void createArray(   MemoryAddress address,
+        void createArray(   Address address,
                             const std::string & name,
                             const std::string & mangledName,
                             RsType * baseType,
                             size_t size);
 
-        void createArray(   MemoryAddress address,
+        void createArray(   Address address,
                             const std::string & name,
                             const std::string & mangledName,
                             RsArrayType * type);
@@ -197,7 +197,7 @@ class RuntimeSystem
          * same (and not an offset in an existing @c MemoryType) and the type is
          * a subtype, then the type of the memory layout is updated.
          */
-        void createObject(  MemoryAddress address,
+        void createObject(  Address address,
                             RsClassType* type );
 
 
@@ -222,14 +222,14 @@ class RuntimeSystem
          *                      verify that memory is used in a type-consistent
          *                      way.
          */
-        void createMemory(MemoryAddress addr, size_t size, MemoryType::AllocKind kind, RsType * type=NULL);
+        void createMemory(Address addr, size_t size, MemoryType::AllocKind kind, RsType * type=NULL);
         /// this version creates stackmemory, of given type
-        void createStackMemory(MemoryAddress addr, size_t size,const std::string & type);
+        void createStackMemory(Address addr, size_t size,const std::string & type);
 
 
         /** Symmetric to @ref createMemory.
          */
-        void freeMemory(MemoryAddress startAddress, MemoryType::AllocKind kind);
+        void freeMemory(Address startAddress, MemoryType::AllocKind kind);
 
 
         /** Registers that a pointer, at address @c sourceAddress has just been
@@ -263,16 +263,16 @@ class RuntimeSystem
          *      computable (e.g. if one stores an int with a fixed offset from
          *      the address).
          */
-        void registerPointerChange( MemoryAddress sourceAddress, MemoryAddress targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
+        void registerPointerChange( Address sourceAddress, Address targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
         /// for documentation see PointerManager::registerPointerChange()
-        void registerPointerChange( MemoryAddress sourceAddress, MemoryAddress targetAddress, RsType * type, bool checkPointerMove=false, bool checkMemLeaks=true);
+        void registerPointerChange( Address sourceAddress, Address targetAddress, RsType * type, bool checkPointerMove=false, bool checkMemLeaks=true);
 
         /// Convenience function which takes mangledName instead of sourceAddress
-        void registerPointerChange( const std::string & mangledName, MemoryAddress targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
+        void registerPointerChange( const std::string & mangledName, Address targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
 
         /// Checks if two addresses lie in the same "typed chunk"
         /// equivalent to the check which is done on registerPointerChange
-        void checkPointerDereference( MemoryAddress sourceAddress, MemoryAddress derefed_address );
+        void checkPointerDereference( Address sourceAddress, Address derefed_address );
         void checkIfThisisNULL(void* thisExp);
 
 
@@ -318,11 +318,11 @@ class RuntimeSystem
 
         /// Checks if a specific memory region can be read (useful to check pointer derefs)
         /// true when region lies in allocated and initialized memory chunk
-        void checkMemRead(MemoryAddress addr, size_t length, RsType * t = NULL);
+        void checkMemRead(Address addr, size_t length, RsType * t = NULL);
 
         /// Checks if a specific memory region can be safely written
         /// true when region lies in allocated memory chunk
-        void checkMemWrite(MemoryAddress addr, size_t length, RsType * t = NULL);
+        void checkMemWrite(Address addr, size_t length, RsType * t = NULL);
 
 
 

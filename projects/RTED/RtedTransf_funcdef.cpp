@@ -31,7 +31,7 @@ RtedTransformation::insertVariableCreateInitForParams( SgFunctionDefinition* fnd
     SgBasicBlock* body = fndef->get_body();
     ROSE_ASSERT( body);
 
-    SgInitializedNamePtrList names 
+    SgInitializedNamePtrList names
       = fndef->get_declaration()->get_parameterList()->get_args();
 
     BOOST_FOREACH( SgInitializedName* param, names) {
@@ -57,7 +57,7 @@ RtedTransformation::insertConfirmFunctionSignature( SgFunctionDefinition* fndef 
 	// or perhaps we can simply skip the check entirely for C++
     if (isSgMemberFunctionDeclaration(fndef->get_declaration()))
 		return;
-	appendExpression( arg_list, buildString(
+	appendExpression( arg_list, buildStringVal(
 		fndef -> get_declaration() -> get_name()
 	));
 
@@ -68,21 +68,21 @@ RtedTransformation::insertConfirmFunctionSignature( SgFunctionDefinition* fndef 
 
 	// return type
 	appendTypeInformation(
+	  arg_list,
 		fndef -> get_declaration() -> get_type() -> get_return_type(),
-		arg_list,
 		true,
-		true ); 
+		true );
 
 	// parameter types
 	BOOST_FOREACH( SgType* param_type, param_types ) {
-		appendTypeInformation( param_type, arg_list, true, true ); 
+		appendTypeInformation( arg_list, param_type, true, true );
 	}
 
 
 	fndef -> get_body() -> prepend_statement(
 		buildExprStatement(
 			buildFunctionCallExp(
-				buildFunctionRefExp( symbols->roseConfirmFunctionSignature ),
+				buildFunctionRefExp( symbols.roseConfirmFunctionSignature ),
 				arg_list ))
 	);
 }

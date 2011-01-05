@@ -14,7 +14,7 @@ using namespace SageBuilder;
 
 
 
-void 
+void
 RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
@@ -25,15 +25,15 @@ RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
 	buildVarRefExp("runtimeSystem", globalScope);
       string symbolName = varRef_l->get_symbol()->get_name().str();
 #endif
-      ROSE_ASSERT(symbols->roseCheckpoint);
+      ROSE_ASSERT(symbols.roseCheckpoint);
 
       SgExprListExp* arg_list = buildExprListExp();
-      appendFileInfo( mainEnd , arg_list );
+      appendFileInfo( arg_list, mainEnd );
 
-      string symbolName2 = symbols->roseCheckpoint->get_name().str();
+      string symbolName2 = symbols.roseCheckpoint->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
       SgFunctionRefExp* memRef_r = buildFunctionRefExp(
-    		  symbols->roseCheckpoint);
+    		  symbols.roseCheckpoint);
       //      SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 							    arg_list);
@@ -80,7 +80,7 @@ RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
         replaceStatement( stmt, newRtnStmt );
     	  }
 #endif
-    	   insertStatementBefore(isSgStatement(stmt), exprStmt);
+    	   insertStatementBefore(stmt, exprStmt);
       } else
 	insertStatementAfter(isSgStatement(stmt), exprStmt);
       string comment = "RS : Insert Finalizing Call to Runtime System to check if error was detected (needed for automation)";

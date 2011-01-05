@@ -72,77 +72,78 @@ void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName, RTed
    insertArrayCreateCall(stmt, initName, var_ref, value);
 }
 
+
 SgStatement*
-RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefExp* varRef, RTedArray* array, SgStatement* stmt) {
-   // build the function call : runtimeSystem-->createArray(params); ---------------------------
-   string name = initName->get_mangled_name().str();
-   SgExpression* plainname = buildString(initName->get_name());
-   SgExpression* callNameExp = buildString(name);
+RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefExp* varRef, RTedArray* array, SgStatement* stmt)
+{
+   // build the function call:  rs.createHeapArr(...);
+   //                        or rs.createHeapPtr(...);
+   SgExprListExp*     arg_list = buildExprListExp();
+   const bool         parent_exists = (varRef->get_parent() != NULL);
+   SgExpression*      src_exp = parent_exists ? getExprBelowAssignment(varRef)
+                                              : varRef
+                                              ;
+   SgType*            src_type = src_exp->get_type();
+   const bool         isCreateHeapArr = (src_type->class_name() == "SgArrayType");
 
-   SgExprListExp* arg_list = buildExprListExp();
-   appendExpression(arg_list, plainname);
-   appendExpression(arg_list, callNameExp);
+   // \pp only calls to create-heap-arr?
+   ROSE_ASSERT(isCreateHeapArr);
 
-   if (varRef->get_parent() != NULL)
-      appendTypeInformation(NULL, getExprBelowAssignment(varRef) -> get_type(), arg_list);
-   else
-      appendTypeInformation(NULL, varRef -> get_type(), arg_list);
+   appendTypeInformation(arg_list, NULL, src_type);
 
-   SgScopeStatement* scope = NULL;
-   if (initName)
-      scope = initName->get_scope();
+   SgScopeStatement*  scope = (initName ? initName->get_scope() : NULL);
 #if 0
-   bool isUnionClass=false;
-   SgClassDefinition* unionclass = isSgClassDefinition(initName->get_scope());
-   if (unionclass &&
-         unionclass->get_declaration()->get_class_type()==SgClassDeclaration::e_union)
-   isUnionClass=true;
-   //if (!isUnionClass)
+   // \pp ???
+   SgClassDefinition* unionclass = isSgClassDefinition(scope);
+   bool               isUnionClass = (unionclass && unionclass->get_declaration()->get_class_type() == SgClassDeclaration::e_union);
 #endif
-   SgClassDefinition* unionclass = NULL;
 
-   if (varRef->get_parent() != NULL)
-      appendAddressAndSize(//initName,
-            scope, getExprBelowAssignment(varRef), arg_list, 0, unionclass);
-   else
-      appendAddressAndSize(//initName,
-            scope, varRef, arg_list, 0, unionclass);
+   appendAddressAndSize(arg_list, Simple, scope, src_exp, NULL /* unionclass */);
 
    //SgIntVal* ismalloc = buildIntVal( 0 );
-   SgExpression* size = buildIntVal(0);
-   SgExpression* fromMalloc = buildIntVal(0);
+   SgExpression*      size = buildIntVal(0);
+
+   // \pp what about assert(array -> onHeap)? after all we call createHeap ...
    if (array -> onHeap) {
       ROSE_ASSERT( array -> size );
-      size = buildCastExp(array -> size, buildLongType());
-      // track whether heap memory was allocated via malloc or new, to ensure
-      // that free/delete matches
-      if (array -> fromMalloc)
-         fromMalloc = buildIntVal(1);
+      // \pp do we need to free size?
+      size = buildCastExp(array -> size, buildUnsignedLongType());
    }
+
    appendExpression(arg_list, size);
-   appendExpression(arg_list, fromMalloc);
 
-   appendClassName(arg_list, initName -> get_type());
+   // target specific parameters
+   if (isCreateHeapArr)
+   {
+     // array->appendDimensionInformation(arg_list);
+     appendDimensions(arg_list, array);
 
-   SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
-   SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
-   appendExpression(arg_list, filename);
-   appendExpression(arg_list, linenr);
+     // source name
+     appendExpression(arg_list, buildStringVal(initName->get_name()));
 
-   SgExpression* linenrTransformed = buildString("x%%x");
-   appendExpression(arg_list, linenrTransformed);
+     // mangeled name
+     appendExpression(arg_list, buildStringVal(initName->get_mangled_name().str()));
+   }
+   else
+   {
+     // track whether heap memory was allocated via malloc or new, to ensure
+     // that free/delete matches
+     appendExpression(arg_list, buildIntVal(array -> fromMalloc ? 1 : 0));
+   }
 
-   array -> appendDimensionInformation(arg_list);
+   appendClassName(arg_list, initName->get_type());
+   appendFileInfo(arg_list, stmt);
 
-   //      appendExpression(arg_list, buildString(stmt->unparseToString()));
-   ROSE_ASSERT(symbols->roseCreateHeap);
-   string symbolName2 = symbols->roseCreateHeap->get_name().str();
-   //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-   SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols->roseCreateHeap);
-   //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
+   // create the call nodes
+   SgFunctionSymbol*  rted_fun = isCreateHeapArr ? symbols.roseCreateHeapArr
+                                                 : symbols.roseCreateHeapPtr
+                                                 ;
 
+   ROSE_ASSERT(rted_fun != NULL);
+   SgFunctionRefExp*  memRef_r = buildFunctionRefExp(rted_fun);
    SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r, arg_list);
-   SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+   SgExprStatement*   exprStmt = buildExprStatement(funcCallExp);
+
    return exprStmt;
 }
 
@@ -282,110 +283,90 @@ void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp, RTedArray
    insertArrayAccessCall(stmt, arrayExp, value);
 }
 
-void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* arrayExp, RTedArray* array) {
+void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* arrayExp, RTedArray* array)
+{
+  SgScopeStatement* scope = stmt->get_scope();
+  SgPntrArrRefExp*  arrRefExp = isSgPntrArrRefExp(arrayExp);
 
-   if (isSgStatement(stmt)) {
-      SgScopeStatement* scope = stmt->get_scope();
-      ROSE_ASSERT(scope);
+  ROSE_ASSERT(scope);
+  ROSE_ASSERT(arrRefExp);
 
-      SgExprListExp* arg_list = buildExprListExp();
+  // Recursively check each dimension of a multidimensional array access.
+  // This doesn't matter for stack arrays, since they're contiguous and can
+  // therefore be conceptually flattened, but it does matter for double
+  // pointer array access.
+  if (isSgPntrArrRefExp(arrRefExp -> get_lhs_operand())) {
+     //      a[ i ][ j ] = x;
+     //      x = a[ i ][ j ];
+     // in either case, a[ i ] is read, and read before a[ i ][ j ].
+     insertArrayAccessCall(stmt, arrRefExp -> get_lhs_operand(), array);
+  }
 
-      SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
-      SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
-      appendExpression(arg_list, filename);
+  int read_write_mask = 0;
+  // determine whether this array access is a read or write
+  SgNode* iter = arrayExp;
+  do {
+     SgNode* child = iter;
+     iter = iter->get_parent();
+     SgBinaryOp* binop = isSgBinaryOp(iter);
 
-      SgPntrArrRefExp* arrRefExp = isSgPntrArrRefExp(arrayExp);
-      ROSE_ASSERT( arrRefExp );
+     if (isSgAssignOp(iter)) {
+        ROSE_ASSERT( binop );
 
-      // Recursively check each dimension of a multidimensional array access.
-      // This doesn't matter for stack arrays, since they're contiguous and can
-      // therefore be conceptually flattened, but it does matter for double
-      // pointer array access.
-      if (isSgPntrArrRefExp(arrRefExp -> get_lhs_operand())) {
-         //      a[ i ][ j ] = x;
-         //      x = a[ i ][ j ];
-         // in either case, a[ i ] is read, and read before a[ i ][ j ].
-         insertArrayAccessCall(stmt, arrRefExp -> get_lhs_operand(), array);
-      }
+        // lhs write only, rhs read only
+        if (binop->get_lhs_operand() == child)
+           read_write_mask |= Write;
+        else
+           read_write_mask |= Read;
+        // regardless of which side arrayExp was on, we can stop now
+        break;
+     } else if (isSgAndAssignOp(iter) || isSgDivAssignOp(iter) || isSgIorAssignOp(iter) || isSgLshiftAssignOp(iter)
+           || isSgMinusAssignOp(iter) || isSgModAssignOp(iter) || isSgMultAssignOp(iter) || isSgPlusAssignOp(iter)
+           || isSgPointerAssignOp(iter) || isSgRshiftAssignOp(iter) || isSgXorAssignOp(iter)) {
 
-      int read_write_mask = 0;
-      // determine whether this array access is a read or write
-      SgNode* iter = arrayExp;
-      do {
-         SgNode* child = iter;
-         iter = iter->get_parent();
-         SgBinaryOp* binop = isSgBinaryOp(iter);
+        ROSE_ASSERT( binop );
+        // lhs read & write, rhs read only
+        read_write_mask |= Read;
+        if (binop->get_lhs_operand() == child)
+           read_write_mask |= Write;
+        // regardless of which side arrayExp was on, we can stop now
+        break;
+     } else if (isSgPntrArrRefExp(iter)) {
+        // outer[ inner[ ix ]] = val;
+        //  inner[ ix ]  is only a read
+        break;
+     } else if (isSgDotExp(iter)) {
+        ROSE_ASSERT( binop );
+        if (child == binop -> get_lhs_operand()) {
+           // arr[ ix ].member is neither a read nor write of the array
+           // itself.
+           break;
+        } // else foo.arr[ ix ] depends on parent context, so keep going
+     }
+  } while (iter);
+  // always do a bounds check
+  read_write_mask |= BoundsCheck;
 
-         if (isSgAssignOp(iter)) {
-            ROSE_ASSERT( binop );
+  // for contiguous array, base is at &array[0] whether on heap or on stack
+  SgTreeCopy        tree_copy;
+  SgPntrArrRefExp*  array_base = isSgPntrArrRefExp(arrRefExp -> copy(tree_copy));
 
-            // lhs write only, rhs read only
-            if (binop->get_lhs_operand() == child)
-               read_write_mask |= Write;
-            else
-               read_write_mask |= Read;
-            // regardless of which side arrayExp was on, we can stop now
-            break;
-         } else if (isSgAndAssignOp(iter) || isSgDivAssignOp(iter) || isSgIorAssignOp(iter) || isSgLshiftAssignOp(iter)
-               || isSgMinusAssignOp(iter) || isSgModAssignOp(iter) || isSgMultAssignOp(iter) || isSgPlusAssignOp(iter)
-               || isSgPointerAssignOp(iter) || isSgRshiftAssignOp(iter) || isSgXorAssignOp(iter)) {
+  array_base -> set_rhs_operand(buildIntVal(0));
 
-            ROSE_ASSERT( binop );
-            // lhs read & write, rhs read only
-            read_write_mask |= Read;
-            if (binop->get_lhs_operand() == child)
-               read_write_mask |= Write;
-            // regardless of which side arrayExp was on, we can stop now
-            break;
-         } else if (isSgPntrArrRefExp(iter)) {
-            // outer[ inner[ ix ]] = val;
-            //  inner[ ix ]  is only a read
-            break;
-         } else if (isSgDotExp(iter)) {
-            ROSE_ASSERT( binop );
-            if (child == binop -> get_lhs_operand()) {
-               // arr[ ix ].member is neither a read nor write of the array
-               // itself.
-               break;
-            } // else foo.arr[ ix ] depends on parent context, so keep going
-         }
-      } while (iter);
-      // always do a bounds check
-      read_write_mask |= BoundsCheck;
+  SgExprListExp*    arg_list = buildExprListExp();
 
-      // for contiguous array, base is at &array[0] whether on heap or on stack
-      SgTreeCopy tree_copy;
-      SgPntrArrRefExp* array_base = isSgPntrArrRefExp(arrRefExp -> copy(tree_copy));
-      array_base -> set_rhs_operand(buildIntVal(0));
-      appendAddress(arg_list, array_base);
-      appendAddressAndSize(NULL, arrRefExp, arg_list, 0);
-      appendExpression(arg_list, buildIntVal(read_write_mask));
+  appendAddress(arg_list, array_base);
+  appendAddressAndSize(arg_list, Simple, NULL, arrRefExp);
+  appendExpression(arg_list, buildIntVal(read_write_mask));
 
-      appendExpression(arg_list, linenr);
+  appendFileInfo(arg_list, stmt);
 
-      SgExpression* linenrTransformed = buildString("x%%x");
-      appendExpression(arg_list, linenrTransformed);
-
-      ROSE_ASSERT(symbols->roseAccessHeap);
-      string symbolName2 = symbols->roseAccessHeap->get_name().str();
-      //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-      SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols->roseAccessHeap);
-      //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
-
-      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r, arg_list);
-      SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-      insertStatementBefore(isSgStatement(stmt), exprStmt);
-      string empty_comment = "";
-      attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
-      string
-            comment =
-                  "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, read_write_mask, filename, linenr, linenrTransformed, part of error message)";
-      attachComment(exprStmt, comment, PreprocessingInfo::before);
-
-   } else {
-      cerr << "RuntimeInstrumentation :: Surrounding Statement could not be found! " << endl;
-      exit(0);
-   }
+  ROSE_ASSERT(symbols.roseAccessHeap);
+  checkBeforeStmt( stmt,
+                   symbols.roseAccessHeap,
+                   arg_list,
+                   "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, read_write_mask, filename, linenr, linenrTransformed, part of error message)"
+                 );
 }
 
 void RtedTransformation::populateDimensions(RTedArray* array, SgInitializedName* init, SgArrayType* type_) {
@@ -445,7 +426,7 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
    // arrays
    if (array && !(isSgClassDefinition(gp)) && !(fndec)) {
 
-      RTedArray* arrayRted = new RTedArray(true, initName, NULL, false);
+      RTedArray* arrayRted = new RTedArray(initName, NULL, false);
       populateDimensions(arrayRted, initName, array);
       create_array_define_varRef_multiArray_stack[initName] = arrayRted;
    }
@@ -554,9 +535,9 @@ void RtedTransformation::array_heap_alloc(SgInitializedName* initName, SgVarRefE
 {
   ROSE_ASSERT(initName && varRef && sz);
 
-  RTedArray* array = new RTedArray(false, initName, getSurroundingStatement(varRef), true, true, sz);
+  RTedArray* array = new RTedArray(initName, getSurroundingStatement(varRef), true, true, sz);
 
-  // varRef can not be a array access, its only an array Create
+  // varRef can not be an array access, its only an array Create
   variablesUsedForArray.push_back(varRef);
   create_array_define_varRef_multiArray[varRef] = array;
 }
@@ -565,7 +546,7 @@ bool RtedTransformation::array_alloc_call(SgInitializedName* initName, SgVarRefE
 {
   ROSE_ASSERT(initName && varRef && args && funcd);
 
-  bool call_was_malloc = false;
+  bool cStyleAlloc = false;
 
   string funcname = funcd->get_name().str();
   if (funcname == "malloc")
@@ -576,7 +557,7 @@ bool RtedTransformation::array_alloc_call(SgInitializedName* initName, SgVarRefE
     ROSE_ASSERT( args->get_expressions().size() > 0 );
 
     array_heap_alloc(initName, varRef, args->get_expressions()[0]);
-    call_was_malloc = true;
+    cStyleAlloc = true;
   }
   else if (funcname == "calloc")
   {
@@ -589,10 +570,11 @@ bool RtedTransformation::array_alloc_call(SgInitializedName* initName, SgVarRefE
     SgExpression* size_to_use = new SgMultiplyOp(args->get_file_info(), arg1, arg2);
 
     array_heap_alloc(initName, varRef, size_to_use);
+    // \pp missing? cStyleAlloc = true
   }
   else if (funcname == "upc_all_alloc")
   {
-    // \todo implement upc specific behaviour
+    // \pp \todo implement upc specific behaviour
     ROSE_ASSERT(args->get_expressions().size() == 2);
 
     SgExpression* arg1 = args->get_expressions()[0];
@@ -600,21 +582,21 @@ bool RtedTransformation::array_alloc_call(SgInitializedName* initName, SgVarRefE
     SgExpression* size_to_use = new SgMultiplyOp(args->get_file_info(), arg1, arg2);
 
     array_heap_alloc(initName, varRef, size_to_use);
-    call_was_malloc = true;
+    // \pp introduce upcStyleAlloc?
+    cStyleAlloc = true;
   }
 
-  // call_was_malloc should probably indicate whether the call was handled (PP)
-  return call_was_malloc;
+  return cStyleAlloc;
 }
 
 bool RtedTransformation::array_alloc_call(SgInitializedName* initName, SgVarRefExp* varRef, SgExprListExp* args, SgFunctionRefExp* funcr, bool default_result)
 {
   ROSE_ASSERT(varRef);
 
-  // the function should probably return whether the allocation was handled
+  // \pp the function should probably return whether the allocation was handled
   //   thus making the default_result superfluous.
   //   However the original implementation does not reflect that,
-  //   therefore I add the extra parameter (PP).
+  //   therefore I add the extra parameter.
   bool res = default_result;
 
   if (funcr) {
@@ -635,27 +617,25 @@ bool RtedTransformation::array_alloc_call(SgInitializedName* initName, SgVarRefE
 //  i.e. handle general cases
 //  consider whether getting the initname is important
 void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
-   SgAssignOp* assign = isSgAssignOp(n);
-
+   SgAssignOp*        assign = isSgAssignOp(n);
    SgInitializedName* initName = NULL;
-   // left hand side of assign
-   SgExpression* expr_l = assign->get_lhs_operand();
-   // right hand side of assign
-   SgExpression* expr_r = assign->get_rhs_operand();
+   SgExpression*      expr_l = assign->get_lhs_operand();
+   SgExpression*      expr_r = assign->get_rhs_operand();
 
    // varRef ([indx1][indx2]) = malloc (size); // total array alloc
    // varRef [indx1]([]) = malloc (size); // indx2 array alloc
-   SgExpression* indx1 = NULL;
-   SgExpression* indx2 = NULL;
+   SgExpression*      indx1 = NULL;
+   SgExpression*      indx2 = NULL;
 
    cerr << "   ::: Checking assignment : " << n->unparseToString() << endl;
 
    // FIXME 2: This probably does not handle n-dimensional arrays
    //
    // left side contains SgInitializedName somewhere ... search
-   SgVarRefExp* varRef = isSgVarRefExp(expr_l);
-   SgPntrArrRefExp* pntrArr = isSgPntrArrRefExp(expr_l);
+   SgVarRefExp*       varRef = isSgVarRefExp(expr_l);
+   SgPntrArrRefExp*   pntrArr = isSgPntrArrRefExp(expr_l);
    SgPointerDerefExp* pointerDeref = isSgPointerDerefExp(expr_l);
+
    if (varRef) {
       // is variable on left side
       // could be something like int** pntr; pntr = malloc ... (double array)
@@ -864,7 +844,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
          ROSE_ASSERT(size);
 
          // find if sizeof present in size operator
-         // \why do we require that there is exactly one sizeof operand? (PP)
+         // \pp why do we require that there is exactly one sizeof operand?
          vector<SgNode*> results = NodeQuery::querySubTree(size, V_SgSizeOfOp);
          ROSE_ASSERT_MSG(results.size() == 1, "Expected to find excactly 1 sizeof operand. Abort.");
 
@@ -881,25 +861,24 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
    //        a = ( b = new int, new int );
    //
    // handle new (implicit C++ malloc)
-   BOOST_FOREACH(
-         SgNode* exp,
-         NodeQuery::querySubTree( expr_r, V_SgNewExp ))
-            {
+   BOOST_FOREACH(SgNode* exp, NodeQuery::querySubTree( expr_r, V_SgNewExp ))
+   {
+      // FIXME 2: this is a false positive if operator new is overloaded
+      SgNewExp* new_op = isSgNewExp(exp);
 
-               // FIXME 2: this is a false positive if operator new is overloaded
-               SgNewExp* new_op = isSgNewExp(exp);
+      ROSE_ASSERT( new_op );
+      ROSE_ASSERT( varRef );
 
-               ROSE_ASSERT( new_op );
-               ROSE_ASSERT( varRef );
+      RTedArray *array = new RTedArray( initName,
+                                        getSurroundingStatement(varRef),
+                                        true, // memory on heap
+                                        false, // but not from call to malloc
+                                        buildSizeOfOp(new_op -> get_specified_type())
+                                      );
 
-               RTedArray *array = new RTedArray(false, // not on stack
-                     initName, getSurroundingStatement(varRef), true, // memory on heap
-                     false, // but not from call to malloc
-                     buildSizeOfOp(new_op -> get_specified_type()));
-
-               variablesUsedForArray.push_back(varRef);
-               create_array_define_varRef_multiArray[varRef] = array;
-            }
+      variablesUsedForArray.push_back(varRef);
+      create_array_define_varRef_multiArray[varRef] = array;
+   }
 
    // ---------------------------------------------
    // handle variables ..............................
@@ -1040,7 +1019,7 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
       if (create_access_call) {
          SgInitializedName* initName = varRef->get_symbol()->get_declaration();
          ROSE_ASSERT(initName);
-         RTedArray* array = new RTedArray(false, initName, getSurroundingStatement(n), false);
+         RTedArray* array = new RTedArray(initName, getSurroundingStatement(n), false);
          cerr << "!! CALL : " << varRef << " - " << varRef->unparseToString() << "    size : " << create_array_access_call.size()
                << "  -- " << array->unparseToString() << " : " << arrRefExp->unparseToString() << endl;
          create_array_access_call[arrRefExp] = array;
@@ -1091,7 +1070,7 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
             cerr << ">>Found a function call " << name << endl;
             if (isStringModifyingFunctionCall(name) == false && isFileIOFunctionCall(name) == false) {
                vector<SgExpression*> args;
-               SgExpression* varOnLeft = buildString("NoAssignmentVar2");
+               SgExpression* varOnLeft = buildStringVal("NoAssignmentVar2");
                SgStatement* stmt = getSurroundingStatement(isSgVarRefExp(n));
                ROSE_ASSERT(stmt);
                RtedArguments* funcCall = new RtedArguments(name, // function name

@@ -10,15 +10,24 @@ using namespace std;
 ostream& out = cout;
 
 static
-void freeMemory(RuntimeSystem* rs, MemoryAddress addr, MemoryType::AllocKind kind = MemoryType::CxxStyleAlloc)
+void freeMemory(RuntimeSystem* rs, Address addr, MemoryType::AllocKind kind = MemoryType::CxxStyleAlloc)
 {
   rs->freeMemory(addr, kind);
 }
 
 static
-void createMemory(RuntimeSystem* rs, MemoryAddress addr, size_t sz, MemoryType::AllocKind kind = MemoryType::CxxStyleAlloc, RsType* t = NULL)
+void createMemory(RuntimeSystem* rs, Address addr, size_t sz, MemoryType::AllocKind kind = MemoryType::CxxStyleAlloc, RsType* t = NULL)
 {
   rs->createMemory(addr, sz, kind, t);
+}
+
+static
+SourcePosition srcPosition(const char* file, size_t src, size_t rted)
+{
+  SourceInfo si;
+
+  si.file = file; si.src_line = src; si.rted_line = rted;
+  return SourcePosition(si);
 }
 
 
@@ -26,7 +35,7 @@ void createMemory(RuntimeSystem* rs, MemoryAddress addr, size_t sz, MemoryType::
     out << "-- " << (MSG) << endl ;		      \
     bool errorFound=false;                            \
     RuntimeSystem * rs = RuntimeSystem::instance();   \
-    rs->checkpoint(SourcePosition( (MSG), __LINE__, __LINE__ ));              \
+    rs->checkpoint(srcPosition( (MSG), __LINE__, __LINE__ ));              \
 
 
 //#ASR 07/07/10
@@ -53,7 +62,7 @@ void createMemory(RuntimeSystem* rs, MemoryAddress addr, size_t sz, MemoryType::
     }                                                              \
     errorFound=false;                                              \
 
-#define CHECKPOINT rs -> checkpoint( SourcePosition( "", __LINE__, __LINE__ ));
+#define CHECKPOINT rs -> checkpoint( srcPosition( "", __LINE__, __LINE__ ));
 
 
 #define CLEANUP  {  rs->doProgramExitChecks();  rs->clearStatus(); }
@@ -344,7 +353,7 @@ void testMallocDeleteCombinations()
 /*
 void testStack()
 {
-    MemoryAddress addr=0;
+    Address addr=0;
 
     RuntimeSystem * rs = RuntimeSystem::instance();
     rs->createVariable(addr+=4,"GlobalVar1","MangledGlobal1","SgInt");
@@ -489,7 +498,7 @@ void testScopeFreesStack()
 
 // Tests that an implicit scope exists, i.e. main's scope.  Calling
 // createVariable without ever calling beginScope or endScope should not result
-// in memory errors.MemoryAddress
+// in memory errors.Address
 void testImplicitScope()
 {
     TEST_INIT("Testing that an implicit scope exists for globals/main")
@@ -517,7 +526,7 @@ void testImplicitScope()
     createMemory(rs, memAddr(10), 2*sizeof(int));
     createMemory(rs, memAddr(18), 2*sizeof(int));
 
-    MemoryAddress addr = memAddr(100);
+    Address addr = memAddr(100);
     int           ptrSize = sizeof(void*);
 
     rs->beginScope("Scope1");
@@ -559,12 +568,14 @@ void testLostMemRegionFromDoublePointer()
                 "pointed to by heap ptr")
     TypeSystem * ts = rs -> getTypeSystem();
 
-    RsType* int_ptr = ts -> getPointerType( "SgTypeInt", 1 );
-    RsType* int_ptr_ptr = ts -> getPointerType( "SgTypeInt", 2 );
+    AddressDesc ptr_desc = pd_ptr();
+    RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
+    AddressDesc ptr_ptr_desc = pd_addrof(ptr_desc);
+    RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
 
-    MemoryAddress var_addr = memAddr(0x7ffb0);
-    MemoryAddress heap_addr_outer = memAddr(0x42);
-    MemoryAddress heap_addr_inner = memAddr(0x24601);
+    Address var_addr = memAddr(0x7ffb0);
+    Address heap_addr_outer = memAddr(0x42);
+    Address heap_addr_inner = memAddr(0x24601);
 
     createMemory(rs,  heap_addr_outer, 2 * sizeof( int* ));
     createMemory(rs,  heap_addr_inner, 2 * sizeof( int ));
@@ -600,7 +611,7 @@ void testPointerChanged()
 
     rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::Exit );
     // Case1: change of allocation chunk
-    MemoryAddress addr = memAddr(100);
+    Address addr = memAddr(100);
     int ptrSize = sizeof(void*);
     rs->beginScope("Scope1");
 
@@ -763,14 +774,14 @@ void testArrayAccess()
     TEST_INIT("Testing Heap Array")
     TypeSystem * ts = rs->getTypeSystem();
 
-    MemoryAddress heapAddr = memAddr(0x42);
+    Address heapAddr = memAddr(0x42);
     createMemory(rs, heapAddr,10*sizeof(int));
     createMemory(rs, heapAddr+10*sizeof(int),10); //allocate second chunk directly afterwards
 
     rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::Exit );
     rs->beginScope("Scope");
 
-    MemoryAddress pointerAddr = memAddr(0x100);
+    Address pointerAddr = memAddr(0x100);
     rs->createVariable(memAddr(0x100),"intPointer","mangled_intPointer",ts->getPointerType("SgTypeInt"));
     CHECKPOINT
     rs->registerPointerChange(pointerAddr,heapAddr,false);
@@ -804,12 +815,14 @@ void testDoubleArrayHeapAccess()
     errorFound=false; /*tps unused variable - removing warning */
     TypeSystem * ts = rs -> getTypeSystem();
 
-    RsType* int_ptr = ts -> getPointerType( "SgTypeInt", 1 );
-    RsType* int_ptr_ptr = ts -> getPointerType( "SgTypeInt", 2 );
+    AddressDesc ptr_desc = pd_ptr();
+    RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
+    AddressDesc ptr_ptr_desc = pd_addrof(ptr_desc);
+    RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
 
-    MemoryAddress var_addr = memAddr(0x7ffb0);
-    MemoryAddress heap_addr_outer = memAddr(0x42);
-    MemoryAddress heap_addr_inner = memAddr(0x24601);
+    Address var_addr = memAddr(0x7ffb0);
+    Address heap_addr_outer = memAddr(0x42);
+    Address heap_addr_inner = memAddr(0x24601);
 
     createMemory(rs,  heap_addr_outer, 2 * sizeof( int* ));
     createMemory(rs,  heap_addr_inner, 2 * sizeof( int ));
@@ -837,14 +850,14 @@ void test_memcpy()
 {
     TEST_INIT("Testing calls to memcpy");
 
-    MemoryAddress address = memAddr(0);
+    Address address = memAddr(0);
 
     createMemory(rs,  address += 4, 16);
-    MemoryAddress ptr1 = address;
+    Address ptr1 = address;
 
     createMemory(rs,  address += 16, 16);
     rs->checkMemWrite( address, 16);
-    MemoryAddress ptr2 = address;
+    Address ptr2 = address;
 
 
     // 4..20 doesn't overlap 20..36
@@ -863,13 +876,13 @@ void test_memcpy()
 void test_memmove()
 {
     TEST_INIT("Testing calls to memmove");
-    MemoryAddress address = memAddr(0);
+    Address address = memAddr(0);
 
     createMemory(rs,  address += 4, 16);
-    MemoryAddress ptr1 = address;
+    Address ptr1 = address;
 
     createMemory(rs,  address += 16, 16);
-    MemoryAddress ptr2 = address;
+    Address ptr2 = address;
 
 
     try { rs->check_memmove( point_to<void>(ptr1), point_to<void>(ptr2 - 4), 16);}
@@ -1148,7 +1161,7 @@ void testTypeSystemDetectNested()
 
     CHECKPOINT
     // Create Memory with first an A and then a B
-    const MemoryAddress ADDR = memAddr(42);
+    const Address ADDR = memAddr(42);
     createMemory(rs, ADDR,sizeof(A)+sizeof(B));
     MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
     mt->registerMemType(0,ts->getTypeInfo("A"));
@@ -1210,7 +1223,7 @@ void testTypeSystemMerge()
     ts->registerType(typeA);
 
     rs -> checkpoint( SourcePosition() );
-    const MemoryAddress ADDR = memAddr(42);
+    const Address ADDR = memAddr(42);
     createMemory(rs, ADDR,100);
 
         MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
@@ -1249,7 +1262,7 @@ void testPartialTypeSystemArrayAccess() {
     assert( typ -> isComplete() );
     ts -> registerType( typ );
 
-    MemoryAddress Addr = memAddr(0x42);
+    Address Addr = memAddr(0x42);
     size_t el2_offset = sizeof( Typ );
   //  size_t el2_a_offset = el2_offset + offsetof( Typ, a );
     size_t el2_b_offset = el2_offset + offsetof( Typ, b );

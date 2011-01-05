@@ -18,12 +18,19 @@ using namespace SageBuilder;
  * Check if a function call is interesting, i.e. contains a
  * call to a function that we need to check the parameters of
  ********************************************************/
-bool RtedTransformation::isStringModifyingFunctionCall(std::string name) {
-   bool interesting = false;
-   if (name == "memcpy" || name == "memmove" || name == "strcpy" || name == "strncpy" || name == "strcat" || name == "strncat"
-         || name == "strlen" || name == "strchr" || name == "strpbrk" || name == "strspn" || name == "strstr")
-      interesting = true;
-   return interesting;
+bool isStringModifyingFunctionCall(const std::string& name) {
+   return (  name == "memcpy"
+          || name == "memmove"
+          || name == "strcpy"
+          || name == "strncpy"
+          || name == "strcat"
+          || name == "strchr"
+          || name == "strlen"
+          || name == "strncat"
+          || name == "strpbrk"
+          || name == "strspn"
+          || name == "strstr"
+          );
 }
 
 /***************************************************************
@@ -69,294 +76,281 @@ bool RtedTransformation::isFileIOFunctionCall(std::string name) {
  * and hence the generated code is cleaner
  ********************************************************/
 bool RtedTransformation::isFunctionCallOnIgnoreList(std::string name) {
-   return (  name == "printf"
-          || name == "malloc"
-          || name == "calloc"
+   return (  name == "calloc"
           || name == "free"
+          || name == "malloc"
+          || name == "printf"
+          || name == "realloc"
+          || name == "upc_all_alloc"
           || name == "upc_alloc"
           || name == "upc_free"
-          || name == "realloc"
           || name == "upc_global_alloc"
-          || name == "upc_all_alloc"
           );
 }
 
-void RtedTransformation::insertFuncCall(RtedArguments* args) {
-   //  SgStatement* stmt = getSurroundingStatement(args->varRefExp);
-   SgStatement* stmt = args->stmt;
-   ROSE_ASSERT(stmt);
-   if (isSgStatement(stmt)) {
-      SgScopeStatement* scope = stmt->get_scope();
+void RtedTransformation::insertFuncCall(RtedArguments* args)
+{
+  //  SgStatement* stmt = getSurroundingStatement(args->varRefExp);
+  SgStatement* stmt = args->stmt;
 
-      ROSE_ASSERT(scope);
-      // fixed arguments
-      // 1 = name
-      // 2 = filename
-      // 3 = lineNr
-      // 4 = lineNrTransformed
-      // 5 = unparsedStmt for Error message
-      // 6 = Left Hand side variable, if assignment
+  ROSE_ASSERT(stmt);
+  SgScopeStatement* scope = stmt->get_scope();
 
-      int extra_params = 6;
-      // nr of args + 2 (for sepcialFunctions) + 6 =  args+6;
-      int size = extra_params + args->arguments.size();
-      // how many additional arguments does this function need?
-      int dimFuncCall = getDimensionForFuncCall(args->f_name);
-      size += dimFuncCall;
-      SgIntVal* sizeExp = buildIntVal(size);
-      SgExpression* callNameExp = buildString(args->f_name);
+  ROSE_ASSERT(scope);
+  // fixed arguments
+  // 1 = name
+  // 2 = unparsedStmt for Error message
+  // 3 = Left Hand side variable, if assignment
+  // 4 = filename
+  // 5 = lineNr
+  // 6 = lineNrTransformed
 
-      //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
-      ROSE_ASSERT(symbols->roseFunctionCall);
+  int extra_params = 6;
+  int size = extra_params + args->arguments.size(); // nr of args + 2 (for sepcialFunctions) + 6 =  args+6;
+  // how many additional arguments does this function need?
+  int dimFuncCall = getDimensionForFuncCall(args->f_name);
+  size += dimFuncCall;
+  SgIntVal* sizeExp = buildIntVal(size);
+  SgExpression* callNameExp = buildStringVal(args->f_name);
 
-      SgExprListExp* arg_list = buildExprListExp();
-      appendExpression(arg_list, sizeExp);
-      appendExpression(arg_list, callNameExp);
-      SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
-      SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
-      appendExpression(arg_list, filename);
-      appendExpression(arg_list, linenr);
+  //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
+  ROSE_ASSERT(symbols.roseFunctionCall);
 
-      SgExpression* linenrTransformed = buildString("x%%x");
-      appendExpression(arg_list, linenrTransformed);
+  SgExprListExp* arg_list = buildExprListExp();
 
-      appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
-      // this one is new, it indicates the variable on the left hand side of the statment,
-      // if available
-      ROSE_ASSERT(args->leftHandSideAssignmentExprStr);
-      appendExpression(arg_list, args->leftHandSideAssignmentExprStr);
-      cerr << " ... Left hand side variable : " << args->leftHandSideAssignmentExprStr << endl;
+  appendExpression(arg_list, sizeExp);
+  appendExpression(arg_list, callNameExp);
 
-      // if we need 2 additional parameters, we need to add them when necessary
-      if (isStringModifyingFunctionCall(args->f_name))
-         dimFuncCall = 2;
-      // iterate over all arguments of the function call, e.g. strcpy(arg1, arg2);
-      std::vector<SgExpression*>::const_iterator it = args->arguments.begin();
-      for (; it != args->arguments.end(); ++it) {
-         SgExpression* exp = deepCopy(*it);
+  appendExpression(arg_list, buildStringVal(removeSpecialChar(stmt->unparseToString())));
 
-         // ************ unary operation *******************************
-         if (isSgUnaryOp(exp))
-            exp = isSgUnaryOp(exp)->get_operand();
-         //cerr << " exp = " << exp->class_name() << endl;
-         // argument is a variable (varRef)
-         if (isSgVarRefExp(exp)) {
-            SgVarRefExp* var = isSgVarRefExp(exp);
-            SgType* type = var->get_type();
-            SgType* base_type = NULL;
-            if (isSgArrayType(type))
-               base_type = isSgArrayType(type)->get_base_type();
-            if (isSgPointerType(type))
-               base_type = isSgPointerType(type)->get_base_type();
+  // this one is new, it indicates the variable on the left hand side of the statment,
+  // if available
+  ROSE_ASSERT(args->leftHandSideAssignmentExprStr);
+  appendExpression(arg_list, args->leftHandSideAssignmentExprStr);
+  cerr << " ... Left hand side variable : " << args->leftHandSideAssignmentExprStr << endl;
 
-            cerr << " isSgVarRefExp :: type : " << type->class_name() << endl;
-            if (base_type)
-               cerr << "     base_type: " << base_type->class_name() << endl;
+  appendFileInfo(arg_list, stmt);
 
-            // --------- varRefExp is TypeChar -----------------------
-            if (isSgTypeChar(type) || isSgTypeChar(base_type)) {
-               string name = var->get_symbol()->get_declaration()->get_name().str();
-               //appendExpression(arg_list, manglName);
-               // in addition we want the allocated size for this variable
-               SgInitializedName* initName = var->get_symbol()->get_declaration();
-               ROSE_ASSERT(initName);
-               SgType* type = initName->get_typeptr();
-               ROSE_ASSERT(type);
-               SgArrayType* array = isSgArrayType(type);
-               if (array) {
-                  SgExpression * expr = array->get_index();
-                  cerr << " Found 00 - btype : " << array->get_base_type()->class_name() << "  index type: " << expr << endl;
-                  if (expr == NULL) {
-                     expr = buildString("00");
-                  } else
-                     expr = buildString(expr->unparseToString() + "\0");
-                  // this is the variable that we pass
-                  appendExpression(arg_list, var);
-                  if (dimFuncCall == 2)
-                     appendExpression(arg_list, expr);
-                  cerr << ">>> Found variable : " << name << "  with size : " << expr->unparseToString() << "  and val : " << var
-                        << endl;
-               } else {
-                  cerr << "Cant determine the size of the following object : " << var->class_name() << "  with type : "
-                        << type->class_name() << endl;
-                  if (base_type)
-                     cerr << "   and base type : " << base_type->class_name() << endl;
-                  if (isSgPointerType(type)) {
-                     // this is a pointer to char* but not an array allocation yet
-                     // We have to pass var so we can check whether the memories overlap!
-                     //SgExpression* emptyString = buildString("");
-                     appendExpression(arg_list, var);
-                     // if this is a pointer to e.g. malloc we cant statically determine the
-                     // size of the allocated address. We need to pass the variable
-                     // and check in the runtime system if the size for the variable is known!
-                     //	      SgExpression* numberToString = buildString("000");
-                     SgExpression* manglName = buildString(var->get_symbol()->get_declaration()->get_mangled_name().str());
-                     if (dimFuncCall == 2)
-                        appendExpression(arg_list, manglName);
-                  } else {
-                     // this is most likely a single char, the size of it is 1
-                     SgExpression* andSign = buildAddressOfOp(var);
-                     SgExpression* charCast = buildCastExp(andSign, buildPointerType(buildCharType()));
-                     appendExpression(arg_list, charCast);
-                     SgExpression* numberToString = buildString("001");
-                     if (dimFuncCall == 2)
-                        appendExpression(arg_list, numberToString);
+  // if we need 2 additional parameters, we need to add them when necessary
+  if (isStringModifyingFunctionCall(args->f_name))
+     dimFuncCall = 2;
+  // iterate over all arguments of the function call, e.g. strcpy(arg1, arg2);
+  std::vector<SgExpression*>::const_iterator it = args->arguments.begin();
+  for (; it != args->arguments.end(); ++it) {
+     SgExpression* exp = deepCopy(*it);
 
-                  }
-                  //ROSE_ASSERT(false);
-               }
-            }
+     // ************ unary operation *******************************
+     if (isSgUnaryOp(exp))
+        exp = isSgUnaryOp(exp)->get_operand();
+     //cerr << " exp = " << exp->class_name() << endl;
+     // argument is a variable (varRef)
+     if (isSgVarRefExp(exp)) {
+        SgVarRefExp* var = isSgVarRefExp(exp);
+        SgType* type = var->get_type();
+        SgType* base_type = NULL;
+        if (isSgArrayType(type))
+           base_type = isSgArrayType(type)->get_base_type();
+        if (isSgPointerType(type))
+           base_type = isSgPointerType(type)->get_base_type();
 
-            // --------- varRefExp is PointerType -----------------------
-            else if (isSgPointerType(type)) {
-               // handle pointers as parameters
-               cerr << "RtedTransformation - unknown type : " << type->class_name() << endl;
-               if (base_type)
-                  cerr << "   and base type : " << base_type->class_name() << "  var:" << var->unparseToString() << "   stmt:"
-                        << stmt->unparseToString() << endl;
-               if (var) {
-                  SgInitializedName* initName = var->get_symbol()->get_declaration();
-                  ROSE_ASSERT(initName);
-                  // if it is a initName in a parameterlist than we do not want to send it
-                  // as a mangled name because it will be something like: L22R__ARG1
-                  // instead we send it as a normal name that can be found on the stack
-                  SgExpression* manglName = buildString(initName->get_mangled_name().str());
-                  if (isSgFunctionParameterList(initName->get_parent())) {
-                     //	      cerr << "\n!!!!!!!!!!parent of initName = " << initName->get_parent()->class_name() << endl;
-                     manglName = buildString(initName->get_name().str());
-                  }
-                  ROSE_ASSERT(manglName);
-                  appendExpression(arg_list, manglName);
-               }
-               //ROSE_ASSERT(false);
-            }
+        cerr << " isSgVarRefExp :: type : " << type->class_name() << endl;
+        if (base_type)
+           cerr << "     base_type: " << base_type->class_name() << endl;
 
-            // --------- varRefExp is IntegerType -----------------------
-            else {
-               // handle integers as parameters
-               SgFunctionRefExp* memRef_r2 = NULL;
-               if (isSgTypeInt(type)) {
-                  ROSE_ASSERT(symbols->roseConvertIntToString);
-                  memRef_r2 = buildFunctionRefExp(symbols->roseConvertIntToString);
-               } else {
-                  cerr << "RtedTransformation - unknown type : " << type->class_name() << endl;
-                  ROSE_ASSERT(false);
-               }
-               ROSE_ASSERT(memRef_r2);
-               string symbolName3 = symbols->roseConvertIntToString->get_name().str();
-               cerr << " >>>>>>>> Symbol Member::: " << symbolName3 << endl;
+        // --------- varRefExp is TypeChar -----------------------
+        if (isSgTypeChar(type) || isSgTypeChar(base_type)) {
+           string name = var->get_symbol()->get_declaration()->get_name().str();
+           //appendExpression(arg_list, manglName);
+           // in addition we want the allocated size for this variable
+           SgInitializedName* initName = var->get_symbol()->get_declaration();
+           ROSE_ASSERT(initName);
+           SgType* type = initName->get_typeptr();
+           ROSE_ASSERT(type);
+           SgArrayType* array = isSgArrayType(type);
+           if (array) {
+              SgExpression * expr = array->get_index();
+              cerr << " Found 00 - btype : " << array->get_base_type()->class_name() << "  index type: " << expr << endl;
+              if (expr == NULL) {
+                 expr = buildStringVal("00");
+              } else
+                 expr = buildStringVal(expr->unparseToString() + "\0");
+              // this is the variable that we pass
+              appendExpression(arg_list, var);
+              if (dimFuncCall == 2)
+                 appendExpression(arg_list, expr);
+              cerr << ">>> Found variable : " << name << "  with size : " << expr->unparseToString() << "  and val : " << var
+                    << endl;
+           } else {
+              cerr << "Cant determine the size of the following object : " << var->class_name() << "  with type : "
+                    << type->class_name() << endl;
+              if (base_type)
+                 cerr << "   and base type : " << base_type->class_name() << endl;
+              if (isSgPointerType(type)) {
+                 // this is a pointer to char* but not an array allocation yet
+                 // We have to pass var so we can check whether the memories overlap!
+                 //SgExpression* emptyString = buildStringVal("");
+                 appendExpression(arg_list, var);
+                 // if this is a pointer to e.g. malloc we cant statically determine the
+                 // size of the allocated address. We need to pass the variable
+                 // and check in the runtime system if the size for the variable is known!
+                 //	      SgExpression* numberToString = buildStringVal("000");
+                 SgExpression* manglName = buildStringVal(var->get_symbol()->get_declaration()->get_mangled_name().str());
+                 if (dimFuncCall == 2)
+                    appendExpression(arg_list, manglName);
+              } else {
+                 // this is most likely a single char, the size of it is 1
+                 SgExpression* andSign = buildAddressOfOp(var);
+                 SgExpression* charCast = buildCastExp(andSign, buildPointerType(buildCharType()));
+                 appendExpression(arg_list, charCast);
+                 SgExpression* numberToString = buildStringVal("001");
+                 if (dimFuncCall == 2)
+                    appendExpression(arg_list, numberToString);
 
-               SgExprListExp* arg_list2 = buildExprListExp();
-               appendExpression(arg_list2, var);
-               SgFunctionCallExp* funcCallExp2 = buildFunctionCallExp(memRef_r2, arg_list2);
-               ROSE_ASSERT(funcCallExp2);
-               if (dimFuncCall == 2)
-                  appendExpression(arg_list, funcCallExp2);
-               cerr << " Created Function call  convertToString" << endl;
-            }
-         }
+              }
+              //ROSE_ASSERT(false);
+           }
+        }
 
-         // --------- this is not a varRefExp ----
-         else {
-            // if it is already a string, dont add extra quates
-            cerr << " isNotSgVarRefExp exp : " << exp->class_name() << "   " << exp->unparseToString() << endl;
-            if (isSgStringVal(exp)) {
-               string theString = isSgStringVal(exp)->get_value();
-               appendExpression(arg_list, buildString(theString + "\0"));
-               int sizeString = theString.size() + 1; // add the '\0' to it
-               string sizeStringStr = RoseBin_support::ToString(sizeString);
-               ROSE_ASSERT(sizeStringStr!="");
-               SgExpression* numberToString = buildString(sizeStringStr);
-               if (dimFuncCall == 2)
-                  appendExpression(arg_list, numberToString);
-            } else {
-               // default create a string
-               string theString = exp->unparseToString();
-               SgExpression* stringExp = buildString(theString + "\0");
-               appendExpression(arg_list, stringExp);
-               int sizeString = theString.size();
-               string sizeStringStr = RoseBin_support::ToString(sizeString);
-               ROSE_ASSERT(sizeStringStr!="");
-               SgExpression* numberToString = buildString(sizeStringStr);
-               if (dimFuncCall == 2)
-                  appendExpression(arg_list, numberToString);
-            }
-         }
-      }
+        // --------- varRefExp is PointerType -----------------------
+        else if (isSgPointerType(type)) {
+           // handle pointers as parameters
+           cerr << "RtedTransformation - unknown type : " << type->class_name() << endl;
+           if (base_type)
+              cerr << "   and base type : " << base_type->class_name() << "  var:" << var->unparseToString() << "   stmt:"
+                    << stmt->unparseToString() << endl;
+           if (var) {
+              SgInitializedName* initName = var->get_symbol()->get_declaration();
+              ROSE_ASSERT(initName);
+              // if it is a initName in a parameterlist than we do not want to send it
+              // as a mangled name because it will be something like: L22R__ARG1
+              // instead we send it as a normal name that can be found on the stack
+              SgExpression* manglName = buildStringVal(initName->get_mangled_name().str());
+              if (isSgFunctionParameterList(initName->get_parent())) {
+                 //	      cerr << "\n!!!!!!!!!!parent of initName = " << initName->get_parent()->class_name() << endl;
+                 manglName = buildStringVal(initName->get_name().str());
+              }
+              ROSE_ASSERT(manglName);
+              appendExpression(arg_list, manglName);
+           }
+           //ROSE_ASSERT(false);
+        }
 
-      string symbolName2 = symbols->roseFunctionCall->get_name().str();
-      //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-      SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols->roseFunctionCall);
-      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r, arg_list);
-      SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-      // create the function call and its comment
-      insertStatementBefore(isSgStatement(stmt), exprStmt);
-      string empty_comment = "";
-      attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
-      string
-            comment =
-                  "RS : Calling Function, parameters: (#args, function name, filename, linenr, linenrTransformed, error message, left hand var, other parameters)";
-      attachComment(exprStmt, comment, PreprocessingInfo::before);
+        // --------- varRefExp is IntegerType -----------------------
+        else {
+           // handle integers as parameters
+           SgFunctionRefExp* memRef_r2 = NULL;
+           if (isSgTypeInt(type)) {
+              ROSE_ASSERT(symbols.roseConvertIntToString);
+              memRef_r2 = buildFunctionRefExp(symbols.roseConvertIntToString);
+           } else {
+              cerr << "RtedTransformation - unknown type : " << type->class_name() << endl;
+              ROSE_ASSERT(false);
+           }
+           ROSE_ASSERT(memRef_r2);
+           string symbolName3 = symbols.roseConvertIntToString->get_name().str();
+           cerr << " >>>>>>>> Symbol Member::: " << symbolName3 << endl;
 
-   } else {
-      cerr << "RuntimeInstrumentation :: Surrounding Statement could not be found! " << endl;
-      exit(0);
-   }
+           SgExprListExp* arg_list2 = buildExprListExp();
+           appendExpression(arg_list2, var);
+           SgFunctionCallExp* funcCallExp2 = buildFunctionCallExp(memRef_r2, arg_list2);
+           ROSE_ASSERT(funcCallExp2);
+           if (dimFuncCall == 2)
+              appendExpression(arg_list, funcCallExp2);
+           cerr << " Created Function call  convertToString" << endl;
+        }
+     }
 
+     // --------- this is not a varRefExp ----
+     else {
+        // if it is already a string, dont add extra quates
+        cerr << " isNotSgVarRefExp exp : " << exp->class_name() << "   " << exp->unparseToString() << endl;
+        if (isSgStringVal(exp)) {
+           string theString = isSgStringVal(exp)->get_value();
+           appendExpression(arg_list, buildStringVal(theString + "\0"));
+           int sizeString = theString.size() + 1; // add the '\0' to it
+           string sizeStringStr = RoseBin_support::ToString(sizeString);
+           ROSE_ASSERT(sizeStringStr!="");
+           SgExpression* numberToString = buildStringVal(sizeStringStr);
+           if (dimFuncCall == 2)
+              appendExpression(arg_list, numberToString);
+        } else {
+           // default create a string
+           string theString = exp->unparseToString();
+           SgExpression* stringExp = buildStringVal(theString + "\0");
+           appendExpression(arg_list, stringExp);
+           int sizeString = theString.size();
+           string sizeStringStr = RoseBin_support::ToString(sizeString);
+           ROSE_ASSERT(sizeStringStr!="");
+           SgExpression* numberToString = buildStringVal(sizeStringStr);
+           if (dimFuncCall == 2)
+              appendExpression(arg_list, numberToString);
+        }
+     }
+  }
+
+  checkBeforeStmt( stmt,
+                   symbols.roseFunctionCall,
+                   arg_list,
+                   "RS : Calling Function, parameters: (#args, function name, filename, linenr, linenrTransformed, error message, left hand var, other parameters)"
+                 );
 }
 
-void RtedTransformation::insertAssertFunctionSignature(SgFunctionCallExp* fncall) {
-   SgStatement* stmt = getSurroundingStatement(fncall);
+template <class RoseFunctionRefExp>
+static
+void insertAssertFunctionSignature(RtedTransformation& rt, SgFunctionCallExp* fce, RoseFunctionRefExp* funref)
+{
+  // we aren't able to check the function signature at compile time, so we
+  // insert a check to do so at runtime
 
-   SgFunctionRefExp* fn_ref = isSgFunctionRefExp(fncall -> get_function());
-   SgDotExp* dotExp = isSgDotExp(fncall -> get_function());
-   SgMemberFunctionRefExp* mfn_ref = NULL;
-   if (dotExp) {
-      mfn_ref = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
-      // tps: actually, we might not need this for C++
-      return;
+  using SageInterface::appendExpression;
+  using SageBuilder::buildExprListExp;
+  using SageBuilder::buildStringVal;
+  using SageBuilder::buildIntVal;
+
+  ROSE_ASSERT(fce && funref);
+
+  SgExprListExp*                      arg_list = buildExprListExp();
+  Rose_STL_Container< SgExpression* > args = fce->get_args()->get_expressions();
+
+  appendExpression( arg_list, buildStringVal( funref->get_symbol()->get_name()) );
+  appendExpression( arg_list, buildIntVal( args.size() + 1 ));
+  rt.appendTypeInformation( arg_list,
+                            isSgFunctionType( funref->get_type() ) -> get_return_type(),
+                            true,
+                            true
+                          );
+
+   BOOST_FOREACH( SgExpression* arg, args ) {
+      rt.appendTypeInformation( arg_list, arg -> get_type(), true, true );
    }
-   ROSE_ASSERT( fn_ref || mfn_ref);
-
-   SgExprListExp* arg_list = buildExprListExp();
 
    // checkpoint information
-   appendFileInfo(fncall, arg_list);
+   rt.appendFileInfo(arg_list, fce);
 
-   // first arg is the name
+   checkBeforeParentStmt(fce, rt.symbols.roseAssertFunctionSignature, arg_list);
+}
+
+void RtedTransformation::insertAssertFunctionSignature(SgFunctionCallExp* fncall)
+{
+   ROSE_ASSERT(fncall);
+
+   SgFunctionRefExp* fn_ref = isSgFunctionRefExp(fncall -> get_function());
    if (fn_ref)
-      appendExpression(arg_list, buildString(fn_ref -> get_symbol() -> get_name()));
-   else if (mfn_ref)
-      appendExpression(arg_list, buildString(mfn_ref -> get_symbol() -> get_name()));
-   // append arg count (+1 for return type) and types
-   Rose_STL_Container< SgExpression* > args
-   = fncall -> get_args() -> get_expressions();
-   appendExpression( arg_list, buildIntVal( args.size() + 1 ));
-
-   // return type
-   if (fn_ref)
-   appendTypeInformation(
-         isSgFunctionType( fn_ref -> get_type() ) -> get_return_type(),
-         arg_list,true,true );
-   else if (mfn_ref)
-   appendTypeInformation(
-         isSgFunctionType( mfn_ref -> get_type() ) -> get_return_type(),
-         arg_list,true,true );
-
-   // parameter types
-   BOOST_FOREACH( SgExpression* arg, args ) {
-      appendTypeInformation( arg -> get_type(), arg_list, true, true );
+   {
+     ::insertAssertFunctionSignature(*this, fncall, fn_ref);
+     return;
    }
 
-   // we aren't able to check the function signature at compile time, so we
-   // insert a check to do so at runtime
-   insertStatementBefore(
-         stmt,
-         buildExprStatement(
-               buildFunctionCallExp(
-                     buildFunctionRefExp( symbols->roseAssertFunctionSignature ),
-                     arg_list
-               )));
+#if 0
+   // \pp not needed according to the code (and comment) below
+   SgDotExp* dotExp = isSgDotExp(fncall -> get_function());
+   if (dotExp) {
+      SgMemberFunctionRefExp* mfn_ref = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+      // tps: actually, we might not need this for C++
+      return;
+      // ::insertAssertFunctionSignature(*this, fncall, mfn_ref);
+   }
+#endif
 }
 
 void RtedTransformation::insertFreeCall(SgExpression* free) {
@@ -397,16 +391,10 @@ void RtedTransformation::insertFreeCall(SgExpression* free) {
    SgExprListExp* arg_list = buildExprListExp();
    appendExpression( arg_list, address_expression );
    appendExpression( arg_list, from_malloc_expression );
-   appendFileInfo( stmt, arg_list );
+   appendFileInfo( arg_list, stmt );
 
    // have to check validity of call to free before the call itself
-   insertStatementBefore(
-         stmt,
-         buildExprStatement(
-               buildFunctionCallExp(
-                     buildFunctionRefExp( symbols->roseFreeMemory),
-                     arg_list
-               )));
+   checkBeforeStmt(stmt, symbols.roseFreeMemory, arg_list);
 }
 
 void RtedTransformation::insertReallocateCall(SgFunctionCallExp* realloc_call) {
@@ -428,16 +416,10 @@ void RtedTransformation::insertReallocateCall(SgFunctionCallExp* realloc_call) {
    SgExprListExp* arg_list = buildExprListExp();
    appendExpression( arg_list, address_expression );
    appendExpression( arg_list, size_expression );
-   appendFileInfo( stmt, arg_list );
+   appendFileInfo( arg_list, stmt );
 
    // have to check validity of call to realloc before the call itself
-   insertStatementBefore(
-         stmt,
-         buildExprStatement(
-               buildFunctionCallExp(
-                     buildFunctionRefExp( symbols->roseReallocateMemory),
-                     arg_list
-               )));
+   checkBeforeStmt(stmt, symbols.roseReallocateMemory, arg_list);
 }
 
 /***************************************************************
@@ -580,9 +562,9 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
          SgExpression* varOnLeftStr=NULL;
          if (varOnLeft) {
             // need to get the mangled_name of the varRefExp on left hand side
-            varOnLeftStr = buildString(getMangledNameOfExpression(varOnLeft));
+            varOnLeftStr = buildStringVal(getMangledNameOfExpression(varOnLeft));
          } else {
-            varOnLeftStr = buildString("NoAssignmentVar");
+            varOnLeftStr = buildStringVal("NoAssignmentVar");
          }
 
          Rose_STL_Container<SgExpression*> expr = exprlist->get_expressions();

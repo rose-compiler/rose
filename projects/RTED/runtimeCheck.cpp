@@ -22,10 +22,6 @@ using namespace boost;
 using namespace std;
 using namespace boost::filesystem;
 
-static string rtedpath;
-static vector<string> cdirs;
-
-
 void
 runtimeCheck(int argc, char** argv, set<string>& rtedfiles) {
    // PARSE AND TRANSFORM - 1rst round--------------------------------
@@ -57,29 +53,37 @@ runtimeCheck(int argc, char** argv, set<string>& rtedfiles) {
  * Main Function for RTED
  * -----------------------------------------------------------*/
 int main(int argc, char** argv) {
+  static const std::string invocation = "./runtimeCheck NRFILES FILES [-I...]";
    // INIT -----------------------------------------------------
    // call RTED like this:
    if (argc < 2) { //7
-      cerr
-      << "./runtimeCheck NRFILES FILES [-I...]"
-      << endl;
+      std::cerr << invocation << std::endl;
       exit(0);
    }
+
    int nrfiles = static_cast<int>(strtol(argv[1], NULL, 10));
+
+   if (argc < nrfiles + 2) { //7
+      std::cerr << "NRFILES < NO-OF-ARGUMENTS" << std::endl << std::endl;
+      std::cerr << invocation << std::endl;
+      exit(0);
+   }
 
    set <string> rtedfiles;
    string abs_path="";
-   for (int i=0; i< argc; ++i) {
-      if (i>1 && i<=(nrfiles+1)) {
-         string filename = argv[i];
-         int pos=filename.rfind("/");
-         if (pos>0 && pos!=(int)string::npos) {
-            abs_path = filename.substr(0,pos+1);
-         }
-         rtedfiles.insert( system_complete( filename ).file_string() );
-         if (RTEDDEBUG())
-            cerr << i << ": >>>>> Found filename : " << filename << endl;
-      }
+
+   for (int i=2; i< nrfiles + 2; ++i)
+   {
+     string filename = argv[i];
+     int    pos=filename.rfind("/");
+
+     if (pos>0 && pos!=(int)string::npos) {
+        abs_path = filename.substr(0,pos+1);
+     }
+
+     rtedfiles.insert( system_complete( filename ).file_string() );
+     if (RTEDDEBUG())
+        cerr << i << ": >>>>> Found filename : " << filename << endl;
    }
    // files are pushed on through bash script
    //sort(rtedfiles.begin(), rtedfiles.end(),greater<string>());
@@ -87,19 +91,22 @@ int main(int argc, char** argv) {
       cerr << " >>>>>>>>>>>>>>>>>>>> NR OF FILES :: " << rtedfiles.size() << endl;
 
    // move arguments one to left
-   for (int i=2;i<argc;++i) {
-      argv[i-1]=argv[i];
-   }
-   argc=argc-1;
+   //~ for (int i=2;i<argc;++i) {
+      //~ argv[i-1]=argv[i];
+   //~ }
+   //~ argc=argc-1;
+   //~ for (int i=0; i< argc-1; ++i) {
+      //~ cout << i << " : " << argv[i] << endl;
+   //~ }
 
-   for (int i=0; i< argc; ++i) {
+   for (int i=1; i< argc; ++i) {
       cout << i << " : " << argv[i] << endl;
    }
 
    if (RTEDDEBUG())
       cerr << "Running RTED in :" << abs_path << endl;
 
-   runtimeCheck(argc, argv, rtedfiles);
+   runtimeCheck(argc-1, argv+1, rtedfiles);
    return 0;
 }
 

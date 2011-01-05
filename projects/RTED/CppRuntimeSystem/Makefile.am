@@ -14,9 +14,10 @@ libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
                                  CStdLibManager.cpp \
                                  VariablesType.cpp\
                                  RsType.cpp\
-                                 TypeSystem.cpp\
+                                 TypeSystem.cpp \
                                  PointerManager.cpp\
-                                 StackManager.cpp
+                                 StackManager.cpp \
+                                 ptrops.c
 
 
 
@@ -29,7 +30,7 @@ endif
 bin_PROGRAMS  = RuntimeSystemCppTest
 
 RuntimeSystemCppTest_SOURCES = test.cpp
-RuntimeSystemCppTest_LDADD   = libCppRuntimeSystem.la 
+RuntimeSystemCppTest_LDADD   = libCppRuntimeSystem.la
 
 
 pkginclude_HEADERS = CppRuntimeSystem.h \
@@ -53,5 +54,4 @@ check-local:
 
 
 clean-local:
-	rm -rf *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp 
-
+	rm -rf *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp

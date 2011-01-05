@@ -17,13 +17,15 @@
 
 using namespace std;
 
-
 RuntimeSystem * RuntimeSystem::single = NULL;
 
 RuntimeSystem* RuntimeSystem::instance()
 {
-    if(!single)
+    if (!single)
+    {
         single = new RuntimeSystem();
+        single->registerOutputStream( &std::cerr);
+    }
 
     return single;
 }
@@ -212,10 +214,12 @@ void RuntimeSystem::clearStatus()
 // --------------------- Mem Checking ---------------------------------
 
 
-void RuntimeSystem::createMemory(MemoryAddress addr, size_t size, MemoryType::AllocKind kind, RsType * type)
+void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKind kind, RsType * type)
 {
-  // "Warning: Stack Memory registered without type!"
-  assert(kind != MemoryType::StackAlloc || type != NULL);
+  // \pp it seems that we only get the type for stack allocations
+  //     should the type initialization then be moved to createStackMemory?
+  //     why do not we get types for C++ new?
+  //     is alloca handled?
 
   // the created MemoryType is freed by memory manager
   const MemoryType mt(addr, size, kind, curPos);
@@ -223,13 +227,16 @@ void RuntimeSystem::createMemory(MemoryAddress addr, size_t size, MemoryType::Al
 
   if (kind == MemoryType::StackAlloc && nb != NULL)
   {
+    // stack memory must have a type
+    assert(type != NULL);
+
     nb->registerMemType(0, type);
     assert(type->getByteSize() == size);
   }
 }
 
 
-void RuntimeSystem::createStackMemory(MemoryAddress addr, size_t size, const std::string& strType)
+void RuntimeSystem::createStackMemory(Address addr, size_t size, const std::string& strType)
 {
     RsType * type = typeSystem.getTypeInfo(strType);
 
@@ -238,18 +245,18 @@ void RuntimeSystem::createStackMemory(MemoryAddress addr, size_t size, const std
 
 
 
-void RuntimeSystem::freeMemory(MemoryAddress startAddress, MemoryType::AllocKind kind)
+void RuntimeSystem::freeMemory(Address startAddress, MemoryType::AllocKind kind)
 {
     memManager.freeMemory(startAddress, kind);
 }
 
 
-void RuntimeSystem::checkMemRead(MemoryAddress addr, size_t size, RsType * t)
+void RuntimeSystem::checkMemRead(Address addr, size_t size, RsType * t)
 {
     memManager.checkRead(addr,size,t);
 }
 
-void RuntimeSystem::checkMemWrite(MemoryAddress addr, size_t size, RsType * t)
+void RuntimeSystem::checkMemWrite(Address addr, size_t size, RsType * t)
 {
     memManager.checkWrite(addr,size,t);
 }
@@ -258,7 +265,7 @@ void RuntimeSystem::checkMemWrite(MemoryAddress addr, size_t size, RsType * t)
 // --------------------- Stack Variables ---------------------------------
 
 
-void RuntimeSystem::createVariable(MemoryAddress address,
+void RuntimeSystem::createVariable(Address address,
                                    const string & name,
                                    const string & mangledName,
                                    const string & typeString)
@@ -285,10 +292,10 @@ void RuntimeSystem::createVariable(MemoryAddress address,
     createVariable(address, name, mangledName, type);
 }
 
-void RuntimeSystem::createVariable(MemoryAddress address,
-                                   const string & name,
-                                   const string & mangledName,
-                                   RsType *  type)
+void RuntimeSystem::createVariable( Address address,
+                                    const string & name,
+                                    const string & mangledName,
+                                    RsType *  type)
 {
   assert(type);
   stackManager.addVariable(new VariablesType(name,mangledName,type,address));
@@ -297,31 +304,31 @@ void RuntimeSystem::createVariable(MemoryAddress address,
 
 
 
-void RuntimeSystem::createArray( MemoryAddress address,
+void RuntimeSystem::createArray( Address address,
                                  const std::string & name,
                                  const std::string & mangledName,
                                  const std::string & baseType,
                                  size_t size)
 {
-    RsType * t = typeSystem.getTypeInfo(baseType);
+  RsType * t = typeSystem.getTypeInfo(baseType);
 	assert( t );
-    createArray(address,name,mangledName,t,size);
+  createArray(address,name,mangledName,t,size);
 }
 
 
-void RuntimeSystem::createArray(    MemoryAddress address,
-                                    const std::string & name,
-                                    const std::string & mangledName,
-                                    RsType * baseType,
-                                    size_t size)
+void RuntimeSystem::createArray( Address address,
+                                 const std::string & name,
+                                 const std::string & mangledName,
+                                 RsType * baseType,
+                                 size_t size)
 {
-    RsArrayType * arrType = typeSystem.getArrayType(baseType,size);
+  RsArrayType * arrType = typeSystem.getArrayType(baseType,size);
 
 	createArray( address, name, mangledName, arrType);
 }
 
 
-void RuntimeSystem::createArray(    MemoryAddress address,
+void RuntimeSystem::createArray(    Address address,
                                     const std::string & name,
                                     const std::string & mangledName,
                                     RsArrayType * type)
@@ -335,7 +342,7 @@ void RuntimeSystem::createArray(    MemoryAddress address,
 }
 
 
-void RuntimeSystem::createObject(MemoryAddress address, RsClassType* type )
+void RuntimeSystem::createObject(Address address, RsClassType* type )
 {
     assert(type != NULL);
 
@@ -382,27 +389,27 @@ void RuntimeSystem::endScope ()
 // --------------------- Pointer Tracking---------------------------------
 
 
-void RuntimeSystem::registerPointerChange(MemoryAddress source, MemoryAddress target, bool checkPointerMove, bool checkMemLeaks)
+void RuntimeSystem::registerPointerChange(Address source, Address target, bool checkPointerMove, bool checkMemLeaks)
 {
     pointerManager.registerPointerChange(source,target,checkPointerMove, checkMemLeaks);
 }
 
-void RuntimeSystem::registerPointerChange(MemoryAddress source, MemoryAddress target,RsType * type, bool checkPointerMove, bool checkMemLeaks)
+void RuntimeSystem::registerPointerChange(Address source, Address target,RsType * type, bool checkPointerMove, bool checkMemLeaks)
 {
     RsPointerType* pt = dynamic_cast<RsPointerType*>( type );
     assert( pt );
     pointerManager.registerPointerChange(source,target,pt -> getBaseType(),checkPointerMove, checkMemLeaks);
 }
 
-void RuntimeSystem::registerPointerChange( const std::string & mangledName, MemoryAddress target, bool checkPointerMove, bool checkMemLeaks)
+void RuntimeSystem::registerPointerChange( const std::string & mangledName, Address target, bool checkPointerMove, bool checkMemLeaks)
 {
-    MemoryAddress source = stackManager.getVariable(mangledName)->getAddress();
+    Address source = stackManager.getVariable(mangledName)->getAddress();
     pointerManager.registerPointerChange(source,target,checkPointerMove, checkMemLeaks);
 }
 
 
 
-void RuntimeSystem::checkPointerDereference( MemoryAddress source, MemoryAddress derefed_address )
+void RuntimeSystem::checkPointerDereference( Address source, Address derefed_address )
 {
     pointerManager.checkPointerDereference(source,derefed_address);
 }

@@ -21,12 +21,12 @@ class VariablesType
         //~ VariablesType(const std::string & name,
                       //~ const std::string & mangledName,
                       //~ const std::string & typeStr,
-                      //~ MemoryAddress address);
+                      //~ Address address);
 
         VariablesType(const std::string & name,
                       const std::string & mangledName,
                       RsType * type,
-                      MemoryAddress address);
+                      Address address);
 
         ~VariablesType();
 
@@ -34,7 +34,7 @@ class VariablesType
         const std::string & getMangledName() const  { return mangledName; }
         RsType *            getType()        const  { return type;        }
 
-        MemoryAddress       getAddress()     const  { return address; }
+        Address       getAddress()     const  { return address; }
 
         size_t              getSize()        const;
 
@@ -57,7 +57,7 @@ class VariablesType
         RsType * type;
 
         /// address of this variable in memory
-        MemoryAddress address;
+        Address address;
 };
 
 

@@ -423,7 +423,7 @@ class RsBasicType : public RsType
 
         /// Interprets memory at specified address as this basic type
         /// and writes value into string for displaying
-        std::string readValueAt(MemoryAddress address) const;
+        std::string readValueAt(Address address) const;
 
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const;

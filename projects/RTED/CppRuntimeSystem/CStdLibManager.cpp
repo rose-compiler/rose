@@ -5,9 +5,6 @@
 #include <cstring>
 
 
-using namespace std;
-
-
 // ------------------ Util ----------------------------------------------------
 
 // Check that the first num bytes of ptr1 and ptr2 do not overlap.
@@ -16,14 +13,14 @@ check_overlap(
         const void* ptr1,
         const void* ptr2,
         size_t size,
-        const string& desc
+        const std::string& desc
 ) {
     return check_overlap( ptr1, size, ptr2, size, desc);
 }
 
 // check that the memory allocated at ptr1 and ptr2 doesn't overlap
 void
-CStdLibManager::check_allocation_overlap(const void* ptr1, const void* ptr2, const string&)
+CStdLibManager::check_allocation_overlap(const void* ptr1, const void* ptr2, const std::string&)
 {
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
@@ -45,7 +42,7 @@ CStdLibManager::check_allocation_overlap(const void* ptr1, const void* ptr2, con
 }
 
 void
-CStdLibManager::check_overlap(const void* ptr1, size_t size1, const void* ptr2, size_t size2, const string& desc)
+CStdLibManager::check_overlap(const void* ptr1, size_t size1, const void* ptr2, size_t size2, const std::string& desc)
 {
     RuntimeSystem* rts = RuntimeSystem::instance();
 
@@ -55,13 +52,13 @@ CStdLibManager::check_overlap(const void* ptr1, size_t size1, const void* ptr2, 
       std::swap(size1, size2);
     }
 
-    MemoryAddress addr1 = memAddr(ptr1);
-    MemoryAddress addr2 = memAddr(ptr2);
+    Address addr1 = memAddr(ptr1);
+    Address addr2 = memAddr(ptr2);
 
     assert(addr1 < addr2);
 
-    MemoryAddress range1_high = addr1 + size1;
-    MemoryAddress range2_low = addr2;
+    Address range1_high = addr1 + size1;
+    Address range2_low = addr2;
 
     // range1 is the range that starts in the smaller region of memory.  The
     // only way for the high value (the end) of range1 to be greater than the
@@ -83,9 +80,9 @@ size_t CStdLibManager::check_string( const char* str) {
     MemoryType* memory = mm->findContainingMem( memAddr(str));
 
     if( NULL == memory) {
-        stringstream desc;
+        std::stringstream desc;
         desc    << "Trying to read from non-allocated MemoryRegion (Address "
-                << "0x" << memAddr(str) << ")" << endl;
+                << "0x" << memAddr(str) << ")" << std::endl;
         rts->violationHandler( RuntimeViolation::INVALID_READ, desc.str());
         return 0;
     } else {
@@ -102,10 +99,10 @@ size_t CStdLibManager::check_string( const char* str) {
             }
         }
 
-        stringstream desc;
-        desc    << "Trying to read from string at " << memAddr(str)
-                << " In memory chunk 0x" << hex << memory->getAddress() << " .. "
-                << hex << memory->getAddress() + memory->getSize()
+        std::stringstream desc;
+        desc    << "Trying to read from std::string at " << memAddr(str)
+                << " In memory chunk 0x" << memory->getAddress() << " .. "
+                << (memory->getAddress() + memory->getSize())
                 << " But there is no null terminator from the pointer to the"
                 << " end of the chunk.";
         rts->violationHandler( RuntimeViolation::INVALID_READ, desc.str());
@@ -176,7 +173,7 @@ check_strncpy( char* destination, const char* source, size_t num) {
     // DJH - doing check_allocation_overlap instead of check_overlap will raise
     // violations for copying substrings where the copied ranges don't overlap,
     // but the allocated ranges do (e.g. copying the first n characters of a
-    // string to somewhere later in the string).
+    // std::string to somewhere later in the std::string).
     //
     // the RTED tests imply that such a copy is indeed a violation, but this
     // isn't clear to me.
@@ -203,7 +200,7 @@ check_strcat( char* destination, const char* source) {
     // check no-overlap
     check_overlap(
         destination,
-        // can't overlap with current destination string, or the bytes at the
+        // can't overlap with current destination std::string, or the bytes at the
         // end that we're going to write to.  -1 to avoid doublecounting the
         // null terminators.
         destination_len + source_len - 1,
@@ -245,14 +242,14 @@ check_strncat( char* destination, const char* source, size_t num) {
 
 void CStdLibManager::
 check_strchr( const char* str, int /* character */) {
-    // strings must have null terminators in allocated memory
+    // std::strings must have null terminators in allocated memory
     check_string( str);
 }
 
 
 void CStdLibManager::
 check_strpbrk( const char* str1, const char* str2) {
-    // strings must have null terminators in allocated memory
+    // std::strings must have null terminators in allocated memory
     check_string( str1);
     check_string( str2);
 }
@@ -260,7 +257,7 @@ check_strpbrk( const char* str1, const char* str2) {
 
 void CStdLibManager::
 check_strspn( const char* str1, const char* str2) {
-    // strings must have null terminators in allocated memory
+    // std::strings must have null terminators in allocated memory
     check_string( str1);
     check_string( str2);
 }
@@ -268,7 +265,7 @@ check_strspn( const char* str1, const char* str2) {
 
 void CStdLibManager::
 check_strstr( const char* str1, const char* str2) {
-    // strings must have null terminators in allocated memory
+    // std::strings must have null terminators in allocated memory
     check_string( str1);
     check_string( str2);
 }

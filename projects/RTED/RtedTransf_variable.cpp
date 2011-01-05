@@ -113,18 +113,21 @@ void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef) {
 
                 // build arguments to roseCreateObject
                 SgExprListExp* arg_list = buildExprListExp();
-                appendTypeInformation( type, arg_list );
-                appendAddressAndSize(
-                                // we want &(*this), sizeof(*this)
-                                buildPointerDerefExp( buildThisExp( csym )), type, arg_list, 0 );
-                appendFileInfo( body, arg_list );
+                appendTypeInformation( arg_list, type );
+                appendAddressAndSize( arg_list,
+                                      Simple,
+                                      buildPointerDerefExp( buildThisExp( csym )), // we want &(*this), sizeof(*this)
+                                      type
+                                    );
+
+                appendFileInfo( arg_list, body );
 
                 // create the function call and prepend it to the constructor's body
-                ROSE_ASSERT( symbols->roseCreateObject );
+                ROSE_ASSERT( symbols.roseCreateObject );
                 SgExprStatement* fncall =
                 buildExprStatement(
                                 buildFunctionCallExp(
-                                                buildFunctionRefExp( symbols->roseCreateObject ),
+                                                buildFunctionRefExp( symbols.roseCreateObject ),
                                                 arg_list ));
                 attachComment( fncall, "", PreprocessingInfo::before );
                 attachComment(
@@ -323,18 +326,18 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName,
 // convenience function
 SgFunctionCallExp*
 RtedTransformation::buildVariableCreateCallExpr(SgInitializedName* initName,
-                SgStatement* stmt, bool forceinit) {
+                SgStatement* /*stmt*/, bool forceinit) {
 
         SgInitializer* initializer = initName->get_initializer();
 
-        // FIXME 2: We don't handle initialzer clauses in constructors.
+        // FIXME 2: We don't handle initializer clauses in constructors.
         // E.g.
         // class A {
         //  int x, y;
         //  A : x( 1 ), y( 200 ) { }
         // };
         //
-        /* For non objects, any initialzer is enough for the variable to be
+        /* For non objects, any initializer is enough for the variable to be
          * fully initialized, e.g.
          *      int y = 200;    // safe to read y
          * However, all objects will have some initialzer, even if it's nothing more
@@ -350,8 +353,7 @@ RtedTransformation::buildVariableCreateCallExpr(SgInitializedName* initName,
 }
 
 SgFunctionCallExp*
-RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
-                string& debug_name, bool initb) {
+RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref, string& debug_name, bool initb) {
         // tps: I am not sure yet if this is needed
 #if 0
         // if the variable is called "this", then we want to take the
@@ -371,8 +373,8 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
 
         // build the function call : runtimeSystem-->createArray(params); ---------------------------
         SgExprListExp* arg_list = buildExprListExp();
-        SgExpression* callName = buildString(debug_name);
-        SgExpression* callNameExp = buildString(debug_name);
+        SgExpression* callName = buildStringVal(debug_name);
+        SgExpression* callNameExp = buildStringVal(debug_name);
 
         SgExpression* initBool = buildIntVal(0);
         bool isFileIO = isFileIOVariable(var_ref->get_type());
@@ -381,7 +383,7 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
 
         appendExpression(arg_list, callName);
         appendExpression(arg_list, callNameExp);
-        appendTypeInformation(var_ref -> get_type(), arg_list);
+        appendTypeInformation( arg_list, var_ref -> get_type());
 
         if (isSgVarRefExp(var_ref)) {
                 SgInitializedName* initName =
@@ -389,30 +391,19 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
                 SgScopeStatement* scope = NULL;
                 if (initName)
                         scope = initName->get_scope();
-                appendAddressAndSize(
-                //isSgVarRefExp(var_ref) -> get_symbol() -> get_declaration(),
-                                scope, isSgVarRefExp(var_ref), arg_list, 0);
+                appendAddressAndSize(arg_list, Simple, scope, isSgVarRefExp(var_ref));
         } else {
-                appendAddressAndSize(var_ref, var_ref -> get_type(), arg_list, 0);
+                appendAddressAndSize(arg_list, Simple, var_ref, var_ref -> get_type());
         }
 
         appendExpression(arg_list, initBool);
         appendClassName(arg_list, var_ref -> get_type());
 
-        SgExpression* filename = buildString(
-                        var_ref->get_file_info()->get_filename());
-        int currentlinenr = var_ref->get_file_info()->get_line();
-        SgExpression* linenr =
-                        buildString(RoseBin_support::ToString(currentlinenr));
-        appendExpression(arg_list, linenr);
-        appendExpression(arg_list, filename);
+        appendFileInfo(arg_list, var_ref);
 
-        SgExpression* linenrTransformed = buildString("x%%x");
-        appendExpression(arg_list, linenrTransformed);
-
-        ROSE_ASSERT(symbols->roseCreateVariable);
-        string symbolName2 = symbols->roseCreateVariable->get_name().str();
-        SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols->roseCreateVariable);
+        ROSE_ASSERT(symbols.roseCreateVariable);
+        string symbolName2 = symbols.roseCreateVariable->get_name().str();
+        SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols.roseCreateVariable);
 
         return buildFunctionCallExp(memRef_r, arg_list);
 }
@@ -470,7 +461,7 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
 
         // build the function call : runtimeSystem-->createArray(params); ---------------------------
         SgExprListExp* arg_list = buildExprListExp();
-        appendTypeInformation(NULL, exp -> get_type(), arg_list);
+        appendTypeInformation(arg_list, NULL, exp -> get_type());
         appendClassName(arg_list, exp -> get_type());
         SgScopeStatement* scope = NULL;
         if (initName)
@@ -482,8 +473,7 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
                 isUnionClass = true;
         //if (!isUnionClass)
         unionclass = NULL;
-        appendAddressAndSize(//initName,
-                        scope, exp, arg_list, 0, unionclass);
+        appendAddressAndSize(arg_list, Simple, scope, exp, unionclass);
 
         SgIntVal* ismallocV = buildIntVal(0);
         if (ismalloc)
@@ -510,19 +500,13 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
         cerr << "@@@@ varrefe = " << initName->get_scope()->class_name() << endl;
         appendExpression(arg_list, buildIntVal(is_pointer_change));
 
-        SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
-        SgExpression* linenr = buildString(RoseBin_support::ToString(
-                        stmt->get_file_info()->get_line()));
-        appendExpression(arg_list, filename);
-        appendExpression(arg_list, linenr);
-        SgExpression* linenrTransformed = buildString("x%%x");
-        appendExpression(arg_list, linenrTransformed);
+        appendFileInfo(arg_list, stmt);
 
-        //appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
+        //appendExpression(arg_list, buildStringVal(removeSpecialChar(stmt->unparseToString())));
 
-        ROSE_ASSERT(symbols->roseInitVariable);
-        string symbolName2 = symbols->roseInitVariable->get_name().str();
-        SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols->roseInitVariable);
+        ROSE_ASSERT(symbols.roseInitVariable);
+        string symbolName2 = symbols.roseInitVariable->get_name().str();
+        SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols.roseInitVariable);
         SgExpression* result = buildFunctionCallExp(memRef_r, arg_list);
 #if 0
         resultSet.push_back(result);
@@ -710,34 +694,17 @@ void RtedTransformation::insertCheckIfThisNull(SgThisExp* texp) {
                         SgExprListExp* arg_list = buildExprListExp();
                         appendExpression(arg_list, buildThisExp(texp->get_class_symbol()));
 
-                        SgExpression* filename = buildString(
-                                        stmt->get_file_info()->get_filename());
-                        SgExpression* linenr = buildString(RoseBin_support::ToString(
-                                        stmt->get_file_info()->get_line()));
-                        appendExpression(arg_list, filename);
-                        appendExpression(arg_list, linenr);
+                        appendFileInfo(arg_list, stmt);
 
-                        SgExpression* linenrTransformed = buildString("x%%x");
-                        appendExpression(arg_list, linenrTransformed);
+                        // appendExpression(arg_list, buildStringVal(removeSpecialChar(stmt->unparseToString())));
 
-                        // appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
+                        ROSE_ASSERT(symbols.roseCheckIfThisNULL);
+                        checkBeforeStmt( stmt,
+                                         symbols.roseCheckIfThisNULL,
+                                         arg_list,
+                                         "RS : roseCheckIfThisNULL, paramaters : (ThisExp, filename, line, line transformed, error Str)"
+                                       );
 
-                        ROSE_ASSERT(symbols->roseCheckIfThisNULL);
-                        string symbolName2 = symbols->roseCheckIfThisNULL->get_name().str();
-                        //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-                        SgFunctionRefExp* memRef_r =
-                                        buildFunctionRefExp(symbols->roseCheckIfThisNULL);
-                        SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-                                        arg_list);
-                        SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-                        // insert new stmt (exprStmt) before (old) stmt
-                        insertStatementBefore(isSgStatement(stmt), exprStmt);
-                        string empty_comment = "";
-                        attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
-                        string
-                                        comment =
-                                                        "RS : roseCheckIfThisNULL, paramaters : (ThisExp, filename, line, line transformed, error Str)";
-                        attachComment(exprStmt, comment, PreprocessingInfo::before);
                 } // basic block
                 else if (isSgNamespaceDefinitionStatement(scope)) {
                         cerr
@@ -899,40 +866,21 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
                                         }
                                 }
                         }
-                        appendAddressAndSize(//initName,
-                                        initscope, accessed_exp, arg_list, 2);
-                        appendAddressAndSize(//initName,
-                                        initscope, write_location_exp, arg_list, 2);
+                        appendAddressAndSize(arg_list, Complex, initscope, accessed_exp);
+                        appendAddressAndSize(arg_list, Complex, initscope, write_location_exp);
+
                         appendExpression(arg_list, buildIntVal(read_write_mask));
 
-                        SgExpression* filename = buildString(
-                                        stmt->get_file_info()->get_filename());
-                        SgExpression* linenr = buildString(RoseBin_support::ToString(
-                                        stmt->get_file_info()->get_line()));
-                        appendExpression(arg_list, filename);
-                        appendExpression(arg_list, linenr);
+                        appendFileInfo(arg_list, stmt);
 
-                        SgExpression* linenrTransformed = buildString("x%%x");
-                        appendExpression(arg_list, linenrTransformed);
+                        // appendExpression(arg_list, buildStringVal(removeSpecialChar(stmt->unparseToString())));
 
-                        // appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
-
-                        ROSE_ASSERT(symbols->roseAccessVariable);
-                        string symbolName2 = symbols->roseAccessVariable->get_name().str();
-                        //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-                        SgFunctionRefExp* memRef_r =
-                                        buildFunctionRefExp(symbols->roseAccessVariable);
-                        SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-                                        arg_list);
-                        SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-                        // insert new stmt (exprStmt) before (old) stmt
-                        insertStatementBefore(isSgStatement(stmt), exprStmt);
-                        string empty_comment = "";
-                        attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
-                        string
-                                        comment =
-                                                        "RS : Access Variable, paramaters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)";
-                        attachComment(exprStmt, comment, PreprocessingInfo::before);
+                        ROSE_ASSERT(symbols.roseAccessVariable);
+                        checkBeforeStmt( stmt,
+                                         symbols.roseAccessVariable,
+                                         arg_list,
+                                         "RS : Access Variable, paramaters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)"
+                                       );
                 } // basic block
                 else if (isSgNamespaceDefinitionStatement(scope)) {
                         cerr
@@ -1019,10 +967,12 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
                                         );
                         ROSE_ASSERT(sizeExp);
                         cerr << " $$$ sizeExp: " << sizeExp->unparseToString() << endl;
-                        RTedArray *array = new RTedArray(false, // not on stack
-                                        initName, getSurroundingStatement(initName), true, // on heap
-                                        false, // new op (not from malloc)
-                                        sizeExp);
+                        RTedArray *array = new RTedArray( initName,
+                                                          getSurroundingStatement(initName),
+                                                          true, // on heap
+                                                          false, // new op (not from malloc)
+                                                          sizeExp
+                                                        );
                         cerr << " $$$2 sizeExp: " << array->size->unparseToString() << endl;
                         // abort();
                         variablesUsedForArray.push_back(varRef);

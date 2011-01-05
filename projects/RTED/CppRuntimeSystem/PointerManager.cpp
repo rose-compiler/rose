@@ -15,11 +15,11 @@ void insert(PointerManager::TargetToPointerMap& m, const PointerManager::TargetT
 }
 
 
-PointerInfo::PointerInfo(MemoryAddress s)
+PointerInfo::PointerInfo(Address s)
 : source(s), target(nullAddr()), baseType(NULL)
 {}
 
-PointerInfo::PointerInfo(MemoryAddress s, MemoryAddress t, RsType * type)
+PointerInfo::PointerInfo(Address s, Address t, RsType * type)
 : source(s), target(nullAddr()), baseType(type)
 {
     setTargetAddress(t);
@@ -44,12 +44,12 @@ bool PointerInfo::operator< (const PointerInfo & other ) const
 }
 
 
-void PointerInfo::setTargetAddress(MemoryAddress newAddr, bool doChecks)
+void PointerInfo::setTargetAddress(Address newAddr, bool doChecks)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
     MemoryManager * mm = rs->getMemManager();
     const size_t    objsz = baseType->getByteSize();
-    MemoryAddress   oldTarget = target;
+    Address   oldTarget = target;
 
     target = newAddr;
 
@@ -127,7 +127,7 @@ std::ostream& operator<< (std::ostream& os, const PointerInfo& m)
 // -------------------------- PointerManager -------------------------------
 
 
-void PointerManager::createDereferentiableMem(MemoryAddress sourceAddress, RsType * type)
+void PointerManager::createDereferentiableMem(Address sourceAddress, RsType * type)
 {
     PointerInfo * pi = new PointerInfo(sourceAddress, nullAddr(), type);
     std::pair<PointerSet::iterator, bool>  res = pointerInfoSet.insert(pi);
@@ -141,7 +141,7 @@ void PointerManager::createDereferentiableMem(MemoryAddress sourceAddress, RsTyp
 }
 
 
-void PointerManager::createPointer(MemoryAddress baseAddr, RsType * type)
+void PointerManager::createPointer(Address baseAddr, RsType * type)
 {
     // If type is a pointer register it
     RsPointerType * pt = dynamic_cast<RsPointerType*>(type);
@@ -164,7 +164,7 @@ void PointerManager::createPointer(MemoryAddress baseAddr, RsType * type)
 }
 
 
-void PointerManager::deletePointer( MemoryAddress src, bool checks )
+void PointerManager::deletePointer( Address src, bool checks )
 {
     PointerInfo dummy (src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
@@ -185,7 +185,7 @@ void PointerManager::deletePointer( MemoryAddress src, bool checks )
 }
 
 
-void PointerManager::deletePointerInRegion( MemoryAddress from, MemoryAddress to, bool checks)
+void PointerManager::deletePointerInRegion( Address from, Address to, bool checks)
 {
     // \pp why not assert(from < to)?
     if(to <= from)
@@ -204,7 +204,7 @@ void PointerManager::deletePointerInRegion( MemoryAddress from, MemoryAddress to
     for(unsigned int i=0; i<toDelete.size(); i++ )
     {
         PointerInfo*  curr = toDelete[i];
-        MemoryAddress loc = curr->getTargetAddress();
+        Address loc = curr->getTargetAddress();
 
         // check a pointer if it is required and the pointer points outside
         //   the region
@@ -217,7 +217,7 @@ void PointerManager::deletePointerInRegion( MemoryAddress from, MemoryAddress to
 }
 
 
-void PointerManager::registerPointerChange( MemoryAddress src, MemoryAddress target, RsType * bt, bool checkPointerMove, bool checkMemLeaks)
+void PointerManager::registerPointerChange( Address src, Address target, RsType * bt, bool checkPointerMove, bool checkMemLeaks)
 {
     PointerInfo dummy(src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
@@ -236,7 +236,7 @@ void PointerManager::registerPointerChange( MemoryAddress src, MemoryAddress tar
     registerPointerChange(src,target,checkPointerMove, checkMemLeaks);
 }
 
-void PointerManager::registerPointerChange( MemoryAddress src, MemoryAddress target, bool checkPointerMove, bool checkMemLeaks)
+void PointerManager::registerPointerChange( Address src, Address target, bool checkPointerMove, bool checkMemLeaks)
 {
     PointerInfo dummy(src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
@@ -247,7 +247,7 @@ void PointerManager::registerPointerChange( MemoryAddress src, MemoryAddress tar
 
     PointerInfo * pi = *i;
 
-    MemoryAddress oldTarget = pi->getTargetAddress();
+    Address oldTarget = pi->getTargetAddress();
 
 
     bool legal_move = true;
@@ -320,7 +320,7 @@ bool PointerManager::checkForMemoryLeaks( PointerInfo* pi )
     );
 }
 
-bool PointerManager::checkForMemoryLeaks( MemoryAddress address, size_t type_size, PointerInfo* pointer_to_blame )
+bool PointerManager::checkForMemoryLeaks( Address address, size_t type_size, PointerInfo* pointer_to_blame )
 {
     bool found_leaks = false;
     MemoryManager * mm = RuntimeSystem::instance() -> getMemManager();
@@ -361,7 +361,7 @@ void PointerManager::checkIfPointerNULL( void* pointer)
 	}
 }
 
-void PointerManager::checkPointerDereference( MemoryAddress src, MemoryAddress deref_addr)
+void PointerManager::checkPointerDereference( Address src, Address deref_addr)
 {
     MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
 
@@ -373,7 +373,7 @@ void PointerManager::checkPointerDereference( MemoryAddress src, MemoryAddress d
     mm->checkIfSameChunk(pi->getTargetAddress(),deref_addr,pi->getBaseType());
 }
 
-void PointerManager::invalidatePointerToRegion(MemoryAddress from, MemoryAddress to, bool remove)
+void PointerManager::invalidatePointerToRegion(Address from, Address to, bool remove)
 {
     if(to <= from)
         return;
@@ -428,18 +428,18 @@ bool PointerManager::removeFromRevMap(PointerInfo * pi)
 }
 
 
-PointerManager::PointerSetIter PointerManager::sourceRegionIter(MemoryAddress sourceAddr)
+PointerManager::PointerSetIter PointerManager::sourceRegionIter(Address sourceAddr)
 {
     PointerInfo dummy(sourceAddr);
     return pointerInfoSet.lower_bound(&dummy);
 }
 
-PointerManager::TargetToPointerMapIter PointerManager::targetRegionIterBegin(MemoryAddress targetAddr)
+PointerManager::TargetToPointerMapIter PointerManager::targetRegionIterBegin(Address targetAddr)
 {
     return targetToPointerMap.lower_bound(targetAddr);
 }
 
-PointerManager::TargetToPointerMapIter PointerManager::targetRegionIterEnd (MemoryAddress targetAddr)
+PointerManager::TargetToPointerMapIter PointerManager::targetRegionIterEnd (Address targetAddr)
 {
     return targetToPointerMap.upper_bound(targetAddr);
 }

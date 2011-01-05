@@ -35,9 +35,11 @@ class TypeSystem
         RsArrayType * getArrayType(const std::string & baseTypeName, size_t size);
 
 
-        RsPointerType * getPointerType(RsType * baseType, size_t levelOfIndirection=1);
-        RsPointerType * getPointerType(const std::string & baseTypeName, size_t levelOfIndirection=1);
+        RsPointerType * getPointerType(RsType * baseType, AddressDesc levelOfIndirection);
+        RsPointerType * getPointerType(const std::string & baseTypeName, AddressDesc levelOfIndirection);
 
+        RsPointerType * getPointerType(RsType * baseType);
+        RsPointerType * getPointerType(const std::string & baseTypeName);
 
         /// Removes all registered datatypes, and adds the base datatypes
         void clearStatus();
@@ -47,17 +49,18 @@ class TypeSystem
         typedef std::set<RsType*, PointerCompare > TypeSet;
         typedef TypeSet::const_iterator const_iterator;
 
-        const_iterator begin() const { return types.begin(); }
-        const_iterator end()   const { return types.end();   }
+        // const_iterator begin() const { return types.begin(); }
+        // const_iterator end()   const { return types.end();   }
     protected:
-        TypeSet types;
+        typedef std::map<size_t, RsPointerType*>    TypeDerivatives;
+        typedef std::map<RsType*, TypeDerivatives>  TypeContainer;
 
-        ///arrTypeMap[baseType][arraySize] returns the ArrayType
-        std::map<RsType *,std::map<size_t, RsArrayType*> >   arrTypeMap;
+        typedef std::map<size_t, RsArrayType*>      ArrayDimensions;
+        typedef std::map<RsType*, ArrayDimensions>  ArrayDimContainer;
 
-        ///ptrTypeMap[baseType][indirectionLevel] return PointerType
-        std::map<RsType *,std::map<size_t, RsPointerType*> > ptrTypeMap;
-
+        TypeSet           types;
+        TypeContainer     ptrTypeMap;
+        ArrayDimContainer arrTypeMap;
 };
 
 std::ostream& operator<< (std::ostream &os, const TypeSystem & m);
