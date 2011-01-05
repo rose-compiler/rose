@@ -3329,6 +3329,14 @@ EmulationPolicy::emulate_syscall()
             break;
 	    }  
 
+        case 63: { /* 0x3f, dup2 */
+            syscall_enter("dup2", "dd");
+            int result = dup2(arg(0), arg(1));
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            syscall_leave("d");
+            break;
+        }
+            
         case 64: { /*0x40, getppid*/
             syscall_enter("getppid", "");
             writeGPR(x86_gpr_ax, getppid());
