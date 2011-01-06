@@ -65,6 +65,12 @@ static enum omp_rtl_enum get_rtl_type()
 }
 
 #endif
+// Nothing is needed for Fortran case
+void xomp_init ();
+#pragma weak xomp_init_=xomp_init
+void xomp_init ()
+{
+}
 
 //Runtime library initialization routine
 void XOMP_init (int argc, char ** argv)
@@ -75,6 +81,12 @@ void XOMP_init (int argc, char ** argv)
 #endif    
 }
 
+void xomp_terminate (int exitcode);
+#pragma weak xomp_terminate_=xomp_terminate
+void xomp_terminate (int exitcode)
+{
+  XOMP_terminate (exitcode);
+}
 // Runtime library termination routine
 void XOMP_terminate (int exitcode)
 {
@@ -223,14 +235,22 @@ void XOMP_taskwait (void)
 #endif 
 }
 
+//Accommodate Fortran issues: underscore, small case, pass-by-reference
+void xomp_loop_default (int* lower, int* upper, int* stride, int *n_lower, int * n_upper);
+#pragma weak xomp_loop_default_=xomp_loop_default
+void xomp_loop_default (int* lower, int* upper, int* stride, int *n_lower, int * n_upper)
+{
+  XOMP_loop_default (*lower, *upper, *stride, n_lower, n_upper);
+}
+
 //Default loop scheduling, worksharing without any schedule clause
 // input upper bound is inclusive (loop normalized with <= or >=)
 // output n_upper is also inclusive 
 // stride is positive for incremental, negative for decremental iteration space
-extern void XOMP_loop_default(int lower, int upper, int stride, long *n_lower, long * n_upper)
+extern void XOMP_loop_default(int lower, int upper, int stride, int*n_lower, int* n_upper)
 {
-  long  _p_lower;
-  long  _p_upper;
+  int _p_lower;
+  int _p_upper;
   int _p_chunk_size;
   int addOne ; // adjustment to input and output upper bounds, depending on if they are inclusive or non-inclusive
 
@@ -275,13 +295,14 @@ extern void XOMP_loop_default(int lower, int upper, int stride, long *n_lower, l
   int _p_num_threads = omp_get_num_threads();
 
   _p_chunk_size = _p_iter_count / _p_num_threads;
-  long _p_ck_temp = _p_chunk_size * _p_num_threads != _p_iter_count;
+  int _p_ck_temp = _p_chunk_size * _p_num_threads != _p_iter_count;
 
   _p_chunk_size = _p_ck_temp + _p_chunk_size;
 
   // decide on the lower and upper bound for the current thread
   int _p_thread_id = omp_get_thread_num();
 
+//  printf("inside xomp_loop_default(): _p_thread_id =%d\n", _p_thread_id);
   _p_lower =  lower + _p_chunk_size * _p_thread_id *  stride;
 
   //addOne is needed here if the output upper bound is inclusive
@@ -301,7 +322,9 @@ extern void XOMP_loop_default(int lower, int upper, int stride, long *n_lower, l
 
   *n_lower = _p_lower;
   *n_upper = _p_upper;
+//  printf("inside xomp_loop_default(): _p_lower=%d, _p_upper=%d\n", _p_lower,_p_upper);
 }
+
 
 // scheduler initialization, only meaningful used for OMNI
 void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size)
@@ -565,6 +588,13 @@ void XOMP_loop_end_nowait (void)
   GOMP_loop_end_nowait();
 #else   
 #endif    
+}
+
+void xomp_barrier(void);
+#pragma weak  xomp_barrier_=xomp_barrier
+void xomp_barrier(void)
+{
+  XOMP_barrier();
 }
 
 void XOMP_barrier (void)
