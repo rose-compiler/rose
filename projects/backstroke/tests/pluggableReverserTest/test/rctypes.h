@@ -47,7 +47,6 @@ T pop(std::deque<boost::any>& data_stack)
 template <class T>
 void pop_front(std::deque<boost::any>& data_stack)
 {
-	boost::any_cast<T>(data_stack.back());
     data_stack.pop_front();
 }
 
