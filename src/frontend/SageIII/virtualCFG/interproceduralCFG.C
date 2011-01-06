@@ -41,7 +41,23 @@ void InterproceduralCFG::buildFullCFG()
   graph_ = new SgIncidenceDirectedGraph;
   ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
 
-  buildCFG(start_->cfgForBeginning(), all_nodes_, explored, &classHierarchy);
+  // If the start node is an SgProject, build the CFG from main. 
+  CFGNode start;
+  if ( isSgProject(start_) ) {
+      SgFunctionDeclaration* mainDefDecl = SageInterface::findMain(start_);
+      if (mainDefDecl == NULL) 
+          ROSE_ASSERT (!"Cannot build CFG for project with no main function"); 
+
+      SgFunctionDefinition* mainDef = mainDefDecl->get_definition();
+      if (mainDef == NULL) 
+          ROSE_ASSERT (!"Cannot build CFG for project with no main function"); 
+
+      start = mainDef->cfgForBeginning();
+  } else {
+      start = start_->cfgForBeginning();
+  }
+
+  buildCFG(start, all_nodes_, explored, &classHierarchy);
 }
 
 void InterproceduralCFG::buildFilteredCFG()
