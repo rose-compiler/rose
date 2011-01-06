@@ -652,9 +652,8 @@ namespace OmpSupport
    else 
      loop_var_type = buildIntType();
 #endif
-     // expect int type now to support both C/C++ and Fortran, 1/5/2011
      // xomp interface expects long for some runtime calls now, 6/9/2010
-     loop_var_type = buildIntType();
+     loop_var_type = buildLongType();
     SgVariableDeclaration* index_decl =  buildVariableDeclaration("_p_index", loop_var_type , NULL,bb1); 
     SgVariableDeclaration* lower_decl =  buildVariableDeclaration("_p_lower", loop_var_type , NULL,bb1); 
     SgVariableDeclaration* upper_decl =  buildVariableDeclaration("_p_upper", loop_var_type , NULL,bb1); 

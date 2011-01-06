@@ -66,9 +66,8 @@ static enum omp_rtl_enum get_rtl_type()
 
 #endif
 // Nothing is needed for Fortran case
-void xomp_init ();
 #pragma weak xomp_init_=xomp_init
-void xomp_init ()
+void xomp_init (void)
 {
 }
 
@@ -235,19 +234,32 @@ void XOMP_taskwait (void)
 #endif 
 }
 
+// 2^31 -1 for 32-bit integer
+#define MAX_SIGNED_INT ((int)(1<< (sizeof(int)*8-1)) -1)
+// -2^31
+#define MIN_SIGNED_INT (0-(int)(1<< (sizeof(int)*8-1)))
+
+
+#define CHECK_SIGNED_INT_RANGE(x) assert((x>=MIN_SIGNED_INT) && (x<=MAX_SIGNED_INT))
+
 //Accommodate Fortran issues: underscore, small case, pass-by-reference
 void xomp_loop_default (int* lower, int* upper, int* stride, int *n_lower, int * n_upper);
 #pragma weak xomp_loop_default_=xomp_loop_default
 void xomp_loop_default (int* lower, int* upper, int* stride, int *n_lower, int * n_upper)
-{
-  XOMP_loop_default (*lower, *upper, *stride, n_lower, n_upper);
+{ // deal with mismatch between int and long int.
+  long l_lower, l_upper;
+  XOMP_loop_default (*lower, *upper, *stride, &l_lower, &l_upper);
+  CHECK_SIGNED_INT_RANGE(l_lower);
+  CHECK_SIGNED_INT_RANGE(l_upper);
+  *n_lower = l_lower;
+  *n_upper = l_upper;
 }
 
 //Default loop scheduling, worksharing without any schedule clause
 // input upper bound is inclusive (loop normalized with <= or >=)
 // output n_upper is also inclusive 
 // stride is positive for incremental, negative for decremental iteration space
-extern void XOMP_loop_default(int lower, int upper, int stride, int*n_lower, int* n_upper)
+extern void XOMP_loop_default(int lower, int upper, int stride, long* n_lower, long* n_upper)
 {
   int _p_lower;
   int _p_upper;
