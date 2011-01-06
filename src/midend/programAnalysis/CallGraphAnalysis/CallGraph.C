@@ -10,6 +10,7 @@
 //#include <boost/lexical_cast.hpp>
 #include "CallGraph.h"
 
+#include <err.h>
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
@@ -707,7 +708,7 @@ std::vector<Properties*>
 CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit) { 
   std::vector<Properties*> props;
   SgMemberFunctionDeclaration* memFunDecl = sgCtorInit->get_declaration();
-  
+
   //It's possibe to have a null constructor declaration, in case of compiler-generated
   //default constructors.
   if (memFunDecl == NULL)
