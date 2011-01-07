@@ -1248,6 +1248,12 @@ void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScop
 //! Fix symbol table for SgLabelStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL.
 void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
 
+//! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelRefExp are created transparently as needed.
+void setFortranNumericLabel(SgStatement* stmt, int label_value);
+
+//! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
+int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
+
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements. Should be used before attaching the statement into AST.
 void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
 //@}

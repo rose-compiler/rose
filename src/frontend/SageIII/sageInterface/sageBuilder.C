@@ -2165,6 +2165,17 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
   return result;
 } // buildOpaqueVarRefExp()
 
+//! Build a Fortran numeric label ref exp
+SgLabelRefExp * SageBuilder::buildLabelRefExp(SgLabelSymbol * s)
+{
+   SgLabelRefExp * result= NULL;
+   ROSE_ASSERT (s!= NULL);
+   result = new SgLabelRefExp(s);
+   ROSE_ASSERT (result != NULL);
+   setOneSourcePositionForTransformation(result);
+   return result;
+}
+
 SgFunctionParameterList*
 SageBuilder::buildFunctionParameterList(SgFunctionParameterTypeList * paraTypeList)
 {
@@ -2538,7 +2549,11 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
   label_scope->insert_symbol(lsymbol->get_name(), lsymbol);
  #endif 
 
-  if (scope)
+  // Liao 1/7/2010
+  // SgLabelStatement is used for CONTINUE statement in Fortran
+  // In this case , it has no inherent association with a Label symbol.
+  // It is up to the SageInterface::setNumericalLabel(SgStatement*) to handle label symbol
+  if (!SageInterface::is_Fortran_language() &&scope)
     fixLabelStatement(labelstmt,scope);
   // we don't want to set parent here yet
   // delay it until append_statement() or alike
@@ -2856,6 +2871,28 @@ SageBuilder::buildGotoStatement(SgLabelStatement *  label)
   SgGotoStatement* result = new SgGotoStatement(label);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgGotoStatement * 
+SageBuilder::buildGotoStatement(SgLabelSymbol*  symbol)
+{
+  SgGotoStatement* result = NULL;
+  ROSE_ASSERT (symbol != NULL);
+  if (SageInterface::is_Fortran_language())
+  {  // Fortran case
+    result = buildGotoStatement((SgLabelStatement *)NULL);
+    SgLabelRefExp* l_exp = buildLabelRefExp(symbol);
+    l_exp->set_parent(result);
+    result->set_label_expression(l_exp);
+  }  
+  else  // C/C++ case 
+  {
+    SgLabelStatement* l_stmt = isSgLabelStatement(symbol->get_declaration());
+    ROSE_ASSERT (l_stmt != NULL);
+    result = buildGotoStatement(l_stmt);
+  }  
+  ROSE_ASSERT(result);
   return result;
 }
 
