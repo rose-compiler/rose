@@ -547,6 +547,23 @@ static const Translate ipc_control[] = {
     T_END
 };
 
+static const Translate sem_control[] = {
+    TF3(0x00ff, IPC_INFO, IPC_INFO),
+    TF3(0x00ff, SEM_INFO, SEM_INFO),
+    TF3(0x00ff, IPC_STAT, IPC_STAT),
+    TF3(0x00ff, SEM_STAT, SEM_STAT),
+    TF3(0x00ff, GETALL,   GETALL),
+    TF3(0x00ff, GETVAL,   GETVAL),
+    TF3(0x00ff, GETPID,   GETPID),
+    TF3(0x00ff, GETNCNT,  GETNCNT),
+    TF3(0x00ff, GETZCNT,  GETZCNT),
+    TF3(0x00ff, SETVAL,   SETVAL),
+    TF3(0x00ff, SETALL,   SETALL),
+    TF3(0x00ff, IPC_RMID, IPC_RMID),
+    TF3(0x00ff, IPC_SET,  IPC_SET),
+    T_END
+};
+
 /* The ipc64_perm struct as layed out in the 32-bit specimen */
 struct ipc64_perm_32 {
     int32_t key;
@@ -610,6 +627,18 @@ print_msqid64_ds_32(FILE *f, const uint8_t *_v, size_t sz)
                       v->msg_lspid, v->msg_lrpid);
     return retval;
 }
+
+/* The semid64_ds struct as layed out in the 32-bit specimen */
+struct semid64_ds_32 {
+    ipc64_perm_32   sem_perm;
+    int32_t sem_otime;
+    uint32_t unused1;
+    int32_t sem_ctime;
+    uint32_t unused2;
+    uint32_t sem_nsems;
+    uint32_t unused3;
+    uint32_t unused4;
+};
 
 /* See <linux/ipc.h>; used by old version of msgrcv variety of syscall 117, ipc() */
 struct ipc_kludge_32 {
@@ -684,6 +713,20 @@ print_shm_info_32(FILE *f, const uint8_t *_v, size_t sz)
                    v->swap_attempts, v->swap_successes);
 }
 
+/* The seminfo struct as layed out in the 32-bit specimen */
+struct seminfo_32 {
+    int32_t        semmap;
+    int32_t        semmni;
+    int32_t        semmns;
+    int32_t        semmnu;
+    int32_t        semmsl;
+    int32_t        semopm;
+    int32_t        semume;
+    int32_t        semusz;
+    int32_t        semvmx;
+    int32_t        semaem;
+} __attribute__((packed));
+    
 static const Translate clone_flags[] = {
     TF(CLONE_VM),                       /* 0x00000100  set if VM shared between processes */
     TF(CLONE_FS),                       /* 0x00000200  set if fs info shared between processes */
@@ -1210,6 +1253,7 @@ public:
     /* Helper functions for syscall 117, ipc() and related syscalls */
     void sys_semtimedop(uint32_t semid, uint32_t tsops_va, uint32_t nsops, uint32_t timeout_va);
     void sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg);
+    void sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t semun);
     void sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgflg);
     void sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgtyp, uint32_t msgflg);
     void sys_msgget(uint32_t key, uint32_t msgflg);
@@ -2188,6 +2232,138 @@ EmulationPolicy::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
 #endif
     writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
+
+void
+EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t semun_va)
+{
+    union semun_32 {
+        uint32_t val;
+        uint32_t ptr;
+    };
+
+    union semun_native {
+        int val;
+        void *ptr;
+    };
+
+    semun_32 guest_semun;
+    if (sizeof(guest_semun)!=map->read(&guest_semun, semun_va, sizeof guest_semun)) {
+        writeGPR(x86_gpr_ax, -EFAULT);
+        return;
+    }
+
+    switch (cmd) {
+        case 3:         /* IPC_INFO */
+        case 19: {      /* SEM_INFO */
+            ROSE_ASSERT(!"sys_semctl(IPC_INFO|SEM_INFO) is not tested yet. [RPM 2011-01-07]");
+
+            seminfo host_seminfo;
+            semun_native host_semun;
+            host_semun.ptr = &host_seminfo;
+#ifdef SYS_ipc /* i686 */
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, &host_semun);
+#else
+            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_semun);
+#endif
+            if (-1==result) {
+                writeGPR(x86_gpr_ax, -errno);
+                return;
+            }
+
+            seminfo_32 guest_seminfo;
+            guest_seminfo.semmap = host_seminfo.semmap;
+            guest_seminfo.semmni = host_seminfo.semmni;
+            guest_seminfo.semmns = host_seminfo.semmns;
+            guest_seminfo.semmnu = host_seminfo.semmnu;
+            guest_seminfo.semmsl = host_seminfo.semmsl;
+            guest_seminfo.semopm = host_seminfo.semopm;
+            guest_seminfo.semume = host_seminfo.semume;
+            guest_seminfo.semusz = host_seminfo.semusz;
+            guest_seminfo.semvmx = host_seminfo.semvmx;
+            guest_seminfo.semaem = host_seminfo.semaem;
+            if (sizeof(guest_seminfo)!=map->write(&guest_seminfo, guest_semun.ptr, sizeof guest_seminfo)) {
+                writeGPR(x86_gpr_ax, -EFAULT);
+                return;
+            }
+
+            writeGPR(x86_gpr_ax, result);
+            break;
+        }
+
+        case 2:         /* IPC_STAT */
+        case 18: {      /* SEM_STAT */
+            ROSE_ASSERT(!"sys_semctl(IPC_STAT|SEM_STAT) is not tested yet. [RPM 2011-01-07]");
+
+            semid_ds host_ds;
+            semun_native semun;
+            semun.ptr = &host_ds;
+#ifdef SYS_ipc /* i686 */
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, &semun);
+#else
+            int result = syscall(SYS_semctl, semid, semnum, cmd, &semun);
+#endif
+            if (-1==result) {
+                writeGPR(x86_gpr_ax, -errno);
+                return;
+            }
+
+            semid64_ds_32 guest_ds;
+            guest_ds.sem_perm.key = host_ds.sem_perm.__key;
+            guest_ds.sem_perm.uid = host_ds.sem_perm.uid;
+            guest_ds.sem_perm.gid = host_ds.sem_perm.gid;
+            guest_ds.sem_perm.cuid = host_ds.sem_perm.cuid;
+            guest_ds.sem_perm.cgid = host_ds.sem_perm.cgid;
+            guest_ds.sem_perm.mode = host_ds.sem_perm.mode;
+            guest_ds.sem_perm.pad1 = host_ds.sem_perm.__pad1;
+            guest_ds.sem_perm.seq = host_ds.sem_perm.__seq;
+            guest_ds.sem_perm.pad2 = host_ds.sem_perm.__pad2;
+            guest_ds.sem_perm.unused1 = host_ds.sem_perm.__unused1;
+            guest_ds.sem_perm.unused2 = host_ds.sem_perm.__unused1;
+            guest_ds.sem_otime = host_ds.sem_otime;
+            guest_ds.unused1 = host_ds.__unused1;
+            guest_ds.sem_ctime = host_ds.sem_ctime;
+            guest_ds.unused2 = host_ds.__unused2;
+            guest_ds.sem_nsems = host_ds.sem_nsems;
+            guest_ds.unused3 = host_ds.__unused3;
+            guest_ds.unused4 = host_ds.__unused4;
+            if (sizeof(guest_ds)!=map->write(&guest_ds, guest_semun.ptr, sizeof guest_ds)) {
+                writeGPR(x86_gpr_ax, -EFAULT);
+                return;
+            }
+
+            writeGPR(x86_gpr_ax, result);
+            break;
+        };
+
+        case 1:         /* IPC_SET */
+        case 13:        /* GETALL */
+        case 12:        /* GETVAL */
+        case 11:        /* GETPID */
+        case 14:        /* GETNCNT */
+        case 15:        /* GETZCNT */
+        case 16:        /* SETVAL */
+        case 17: {      /* SETALL */
+            ROSE_ASSERT(!"sys_semctl(IPC_SET et al) are not implemented yet. [RPM 2011-01-07]");
+            writeGPR(x86_gpr_ax, -ENOSYS);
+            return;
+        }
+
+        case 0: {       /* IPC_RMID */
+#ifdef SYS_ipc /* i686 */
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, 0);
+#else
+            int result = syscall(SYS_semctl, semid, semnum, cmd, 0);
+#endif
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            break;
+        }
+
+        default:
+            writeGPR(x86_gpr_ax, -EINVAL);
+            return;
+    }
+}
+
 
 void
 EmulationPolicy::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgflg)
@@ -3885,8 +4061,8 @@ EmulationPolicy::emulate_syscall()
                     syscall_leave("d");
                     break;
                 case 3: /* SEMCTL */
-                    syscall_enter("ipc", "fdddpd", ipc_commands);
-                    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+                    syscall_enter("ipc", "fddfp", ipc_commands, sem_control);
+                    sys_semctl(first, second, third, ptr);
                     syscall_leave("d");
                     break;
                 case 4: /* SEMTIMEDOP */
