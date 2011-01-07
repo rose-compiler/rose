@@ -24,7 +24,7 @@ noinst_PROGRAMS = \
     buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
     deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
-    buildCommonBlock doLoopNormalization
+    buildCommonBlock doLoopNormalization buildLabelStatement2
 
 # list of test SAGE AST builders 
 annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
@@ -74,6 +74,7 @@ generateUniqueName_SOURCES               = generateUniqueName.C
 buildExternalStatement_SOURCES           = buildExternalStatement.C
 buildCommonBlock_SOURCES                 = buildCommonBlock.C
 doLoopNormalization_SOURCES              = doLoopNormalization.C
+buildLabelStatement2_SOURCES	         = buildLabelStatement2.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -139,7 +140,8 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
     rose_inputbuildProcedureHeaderStatement.f \
     rose_inputbuildExternalStatement.f \
     rose_inputbuildCommonBlock.f \
-    rose_inputdoLoopNormalization.f
+    rose_inputdoLoopNormalization.f \
+    rose_inputbuildLabelStatement2.f
 endif
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
@@ -244,6 +246,8 @@ rose_inputbuildCommonBlock.f:buildCommonBlock
 	./buildCommonBlock$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildCommonBlock.f
 rose_inputdoLoopNormalization.f:doLoopNormalization
 	./doLoopNormalization$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputdoLoopNormalization.f
+rose_inputbuildLabelStatement2.f:buildLabelStatement2
+	./buildLabelStatement2$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildLabelStatement2.f
 endif
 
 

@@ -41,6 +41,13 @@ using namespace std;
 using namespace SageBuilder;
 
 int SageInterface::gensym_counter = 0;
+template <typename T>
+static std::string numToString(T x)
+{
+  std::ostringstream os;
+  os <<x;
+  return os.str();
+}
 
 // DQ: 09/23/03
 // We require a global function for getting the string associated
@@ -8542,6 +8549,61 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
       }
     }// end label_scope
 } // fixLabelStatement()
+
+//! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelR
+//efExp are created transparently as needed.
+void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
+{
+  ROSE_ASSERT (stmt != NULL);
+  ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
+  SgScopeStatement* label_scope = getEnclosingFunctionDefinition(stmt);
+  ROSE_ASSERT (label_scope != NULL);
+  SgName label_name(numToString(label_value));
+  SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
+  if (symbol == NULL)
+  {
+    symbol = new SgLabelSymbol(NULL);
+    ROSE_ASSERT(symbol != NULL);
+    symbol->set_fortran_statement(stmt);
+    symbol->set_numeric_label_value(label_value);
+    label_scope->insert_symbol(label_name,symbol);
+  }
+  else
+  {
+    cerr<<"Error. SageInterface::setFortranNumericLabel() tries to set a duplicated label value!"<<endl;
+    ROSE_ASSERT (false);
+  }  
+  //SgLabelRefExp
+  SgLabelRefExp* ref_exp = buildLabelRefExp(symbol);
+  stmt->set_numeric_label(ref_exp);
+  ref_exp->set_parent(stmt);
+  
+}
+
+//! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
+int  SageInterface::suggestNextNumericLabel(SgFunctionDefinition* func_def)
+{
+  int result =10;
+  ROSE_ASSERT (func_def != NULL);
+  ROSE_ASSERT (SageInterface::is_Fortran_language()== true);
+  std::set<SgNode*> symbols = func_def->get_symbol_table()->get_symbols();
+  
+  // find the max label value, +10 to be the suggested next label value
+  std::set<SgNode*>::iterator iter ;
+  for (iter=symbols.begin(); iter !=symbols.end(); iter++)
+  {
+    SgLabelSymbol * l_symbol = isSgLabelSymbol(*iter);
+    if (l_symbol)
+    {
+      int cur_val = l_symbol->get_numeric_label_value();
+      if (result <=cur_val)
+        result = cur_val +10;
+    }
+  }
+
+  ROSE_ASSERT (result <=99999); // max 5 digits for F77 label
+  return result; 
+}
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements.
 void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)

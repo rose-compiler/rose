@@ -433,7 +433,7 @@ namespace OmpSupport
      }
   // and XOMP layer will compensate for the difference.
   */
-  static void transOmpFor_others(SgOmpForStatement * target,  
+  static void transOmpLoop_others(SgOmpClauseBodyStatement* target,  
       SgVariableDeclaration* index_decl, SgVariableDeclaration* lower_decl,  SgVariableDeclaration* upper_decl, 
       SgBasicBlock* bb1)
   {
@@ -449,12 +449,23 @@ namespace OmpSupport
     ROSE_ASSERT(body != NULL);
     // The OpenMP syntax requires that the omp for pragma is immediately followed by the for loop.
     SgForStatement * for_loop = isSgForStatement(body);
+    SgFortranDo* do_loop = isSgFortranDo(body);
+    SgStatement * loop = for_loop!=NULL? (SgStatement*)for_loop:(SgStatement*)do_loop;
 
     SgInitializedName* orig_index; 
     SgExpression* orig_lower, * orig_upper, * orig_stride; 
     bool isIncremental = true; // if the loop iteration space is incremental
     // grab the original loop 's controlling information
-    bool is_canonical = isCanonicalForLoop (for_loop, &orig_index, & orig_lower, &orig_upper, &orig_stride, NULL, &isIncremental);
+    bool is_canonical = false;
+    if (for_loop)
+      is_canonical = isCanonicalForLoop (for_loop, &orig_index, & orig_lower, &orig_upper, &orig_stride, NULL, &isIncremental);
+    else if (do_loop)
+      is_canonical = isCanonicalDoLoop (do_loop, &orig_index, & orig_lower, &orig_upper, &orig_stride, NULL, &isIncremental, NULL);
+    else
+    {
+      cerr<<"error! transOmpLoop_others(). loop is neither for_loop nor do_loop. Aborting.."<<endl;
+      ROSE_ASSERT (false);
+    }  
     ROSE_ASSERT(is_canonical == true);
 
     Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpScheduleClause);
@@ -520,30 +531,48 @@ namespace OmpSupport
       appendExpression(para_list, orig_chunk_size);
       //appendExpression(para_list, copyExpression(orig_chunk_size));
     }
-    appendExpression(para_list, buildAddressOfOp(buildVarRefExp(lower_decl)));
-    appendExpression(para_list, buildAddressOfOp(buildVarRefExp(upper_decl)));
+    if (for_loop)
+    {
+      appendExpression(para_list, buildAddressOfOp(buildVarRefExp(lower_decl)));
+      appendExpression(para_list, buildAddressOfOp(buildVarRefExp(upper_decl)));
+    }
+    else if (do_loop)
+    {
+      appendExpression(para_list, buildVarRefExp(lower_decl));
+      appendExpression(para_list, buildVarRefExp(upper_decl));
+    }
     SgFunctionCallExp* func_start_exp = buildFunctionCallExp(func_start_name, buildBoolType(), para_list, bb1);
     SgBasicBlock * true_body = buildBasicBlock();
     SgIfStmt* if_stmt = buildIfStmt(func_start_exp, true_body, NULL);
     appendStatement(if_stmt, bb1);
     // do {} while (GOMP_loop_static_next (&_p_lower, &_p_upper))
+    SgExprListExp * n_exp_list = NULL;
+    if (for_loop)
+    {
+      n_exp_list = buildExprListExp(buildAddressOfOp(buildVarRefExp(lower_decl)), buildAddressOfOp(buildVarRefExp(upper_decl)));
+    }
+    else if (do_loop)
+    {
+      n_exp_list = buildExprListExp(buildVarRefExp(lower_decl), buildVarRefExp(upper_decl));
+    }
+    ROSE_ASSERT (n_exp_list!=NULL);
     SgExpression* func_next_exp = buildFunctionCallExp(generateGOMPLoopNextFuncName(hasOrder, s_kind), buildBoolType(),
-        buildExprListExp(buildAddressOfOp(buildVarRefExp(lower_decl)), buildAddressOfOp(buildVarRefExp(upper_decl))), bb1);
+        n_exp_list, bb1);
     SgBasicBlock * do_body = buildBasicBlock();
     SgDoWhileStmt * do_while_stmt = buildDoWhileStmt(do_body, func_next_exp);
     appendStatement(do_while_stmt, true_body);
     // insert the loop into do-while
-    appendStatement(for_loop, do_body);
+    appendStatement(loop, do_body);
     // Rewrite loop control variables
-    replaceVariableReferences(for_loop,isSgVariableSymbol(orig_index->get_symbol_from_symbol_table ()), 
+    replaceVariableReferences(loop,isSgVariableSymbol(orig_index->get_symbol_from_symbol_table ()), 
                       getFirstVarSym(index_decl));
     int upperAdjust;
     if (isIncremental)  // adjust the bounds again, inclusive bound so -1 for incremental loop
       upperAdjust = -1;
     else 
       upperAdjust = 1;
-    SageInterface::setLoopLowerBound(for_loop, buildVarRefExp(lower_decl));
-    SageInterface::setLoopUpperBound(for_loop, buildAddOp(buildVarRefExp(upper_decl),buildIntVal(upperAdjust)));
+    SageInterface::setLoopLowerBound(loop, buildVarRefExp(lower_decl));
+    SageInterface::setLoopUpperBound(loop, buildAddOp(buildVarRefExp(upper_decl),buildIntVal(upperAdjust)));
     ROSE_ASSERT (orig_upper != NULL);
     transOmpVariables(target, bb1, orig_upper); // This should happen before the barrier is inserted.
     // GOMP_loop_end ();  or GOMP_loop_end_nowait (); 
@@ -573,7 +602,7 @@ namespace OmpSupport
   // < --> <= and > --> >=, 
   // GCC-GOMP use compiler-generated statements to schedule loop iterations using static schedule
   // All other schedule policies use runtime calls instead.
-  // We translate static schedule here and non-static ones in transOmpFor_others()
+  // We translate static schedule here and non-static ones in transOmpLoop_others()
   // 
   // Static schedule, including:
   //1. default (static even) case
@@ -610,11 +639,16 @@ namespace OmpSupport
   // MIN_EXP should be MAX_EXP
   // upper bound adjustment should be +1 instead of -1
   */
-  void transOmpFor(SgNode* node)
+  void transOmpLoop(SgNode* node)
+  //void transOmpFor(SgNode* node)
   {
     ROSE_ASSERT(node != NULL);
-    SgOmpForStatement* target = isSgOmpForStatement(node);
+    SgOmpForStatement* target1 = isSgOmpForStatement(node);
+    SgOmpDoStatement* target2 = isSgOmpDoStatement(node);
+
+    SgOmpClauseBodyStatement* target = (target1!=NULL?(SgOmpClauseBodyStatement*)target1:(SgOmpClauseBodyStatement*)target2);
     ROSE_ASSERT (target != NULL);
+
     SgScopeStatement* p_scope = target->get_scope();
     ROSE_ASSERT (p_scope != NULL);
 
@@ -622,17 +656,34 @@ namespace OmpSupport
     ROSE_ASSERT(body != NULL);
     // The OpenMP syntax requires that the omp for pragma is immediately followed by the for loop.
     SgForStatement * for_loop = isSgForStatement(body);
+    SgFortranDo * do_loop = isSgFortranDo(body);
+    SgStatement* loop = (for_loop!=NULL?(SgStatement*)for_loop:(SgStatement*)do_loop);
+    ROSE_ASSERT (loop != NULL);
+
     // Step 1. Loop normalization
     // we reuse the normalization from SageInterface, though it is different from what gomp expects.
     // the point is to have a consistent loop form. We can adjust the difference later on.
-    SageInterface::forLoopNormalization(for_loop);
+    if (for_loop) 
+      SageInterface::forLoopNormalization(for_loop);
+    else if (do_loop)
+      SageInterface::doLoopNormalization(do_loop);
+    else
+    {
+      cerr<<"error! transOmpLoop(). loop is neither for_loop nor do_loop. Aborting.."<<endl;
+      ROSE_ASSERT (false); 
+    }
+
     SgInitializedName * orig_index = NULL;
     SgExpression* orig_lower = NULL;
     SgExpression* orig_upper= NULL;
     SgExpression* orig_stride= NULL;
     bool isIncremental = true; // if the loop iteration space is incremental
     // grab the original loop 's controlling information
-    bool is_canonical = isCanonicalForLoop (for_loop, &orig_index, & orig_lower, &orig_upper, &orig_stride, NULL, &isIncremental);
+    bool is_canonical = false;
+    if (for_loop)
+      is_canonical = isCanonicalForLoop (for_loop, &orig_index, & orig_lower, &orig_upper, &orig_stride, NULL, &isIncremental);
+    else if (do_loop)
+      is_canonical = isCanonicalDoLoop (do_loop, &orig_index, & orig_lower, &orig_upper, &orig_stride, NULL, &isIncremental, NULL);
     ROSE_ASSERT(is_canonical == true);
 
     // step 2. Insert a basic block to replace SgOmpForStatement
@@ -653,10 +704,13 @@ namespace OmpSupport
      loop_var_type = buildIntType();
 #endif
      // xomp interface expects long for some runtime calls now, 6/9/2010
-     loop_var_type = buildLongType();
-    SgVariableDeclaration* index_decl =  buildVariableDeclaration("_p_index", loop_var_type , NULL,bb1); 
-    SgVariableDeclaration* lower_decl =  buildVariableDeclaration("_p_lower", loop_var_type , NULL,bb1); 
-    SgVariableDeclaration* upper_decl =  buildVariableDeclaration("_p_upper", loop_var_type , NULL,bb1); 
+    if (for_loop) 
+      loop_var_type = buildLongType();
+    else if (do_loop)  // No long integer in Fortran
+      loop_var_type = buildIntType();
+    SgVariableDeclaration* index_decl =  buildVariableDeclaration("p_index_", loop_var_type , NULL,bb1); 
+    SgVariableDeclaration* lower_decl =  buildVariableDeclaration("p_lower_", loop_var_type , NULL,bb1); 
+    SgVariableDeclaration* upper_decl =  buildVariableDeclaration("p_upper_", loop_var_type , NULL,bb1); 
 
     appendStatement(index_decl, bb1);
     appendStatement(lower_decl, bb1);
@@ -689,14 +743,14 @@ namespace OmpSupport
     //if (hasClause(target, V_SgOmpScheduleClause)) 
     if (!useStaticSchedule(target) || hasOrder || hasSpecifiedSize) 
     {
-      transOmpFor_others( target,   index_decl, lower_decl,   upper_decl, bb1);
+       transOmpLoop_others( target,   index_decl, lower_decl,   upper_decl, bb1);
     }
     else 
     {
 #if 0 // Liao 1/4/2010, use a call to XOMP_loop_default() instead of generating statements to calculate loop bounds      
       // ---------------------------------------------------------------
       // calculate chunksize for static scheduling , if the chunk size is not specified.
-      if (!hasSpecifiedSize) // This portion is always on since hasSpecifiedSize will turn on transOmpFor_others()
+      if (!hasSpecifiedSize) // This portion is always on since hasSpecifiedSize will turn on transOmpLoop_others()
       {
         SgVariableDeclaration* chunk_decl=  buildVariableDeclaration("_p_chunk_size", buildIntType(), NULL,bb1);
         appendStatement(chunk_decl, bb1); 
@@ -782,20 +836,33 @@ namespace OmpSupport
       // stride: copyExpression(orig_stride)
       // n_lower: buildVarRefExp(lower_decl)
       // n_upper: buildVarRefExp(upper_decl)
+      SgExpression* e4 = NULL; 
+      SgExpression* e5 = NULL; 
+      if (for_loop)
+      {
+        e4= buildAddressOfOp(buildVarRefExp(lower_decl));
+        e5= buildAddressOfOp(buildVarRefExp(upper_decl));
+       }
+       else if (do_loop)
+       {// Fortran, pass-by-reference by default
+        e4= buildVarRefExp(lower_decl);
+        e5= buildVarRefExp(upper_decl);
+       }
+       ROSE_ASSERT (e4&&e5);
       SgExprListExp* call_parameters = buildExprListExp(copyExpression(orig_lower), copyExpression(orig_upper), copyExpression(orig_stride), 
-                  buildAddressOfOp(buildVarRefExp(lower_decl)), buildAddressOfOp(buildVarRefExp(upper_decl)) ); 
+                  e4, e5);
       SgStatement * call_stmt =  buildFunctionCallStmt ("XOMP_loop_default", buildVoidType(), call_parameters, bb1);
       appendStatement(call_stmt, bb1);
 #endif
 
       // add loop here
-      appendStatement(for_loop, bb1); 
+      appendStatement(loop, bb1); 
       // replace loop index with the new one
-      replaceVariableReferences(for_loop,
+      replaceVariableReferences(loop,
          isSgVariableSymbol(orig_index->get_symbol_from_symbol_table()), getFirstVarSym(index_decl))    ; 
       // rewrite the lower and upper bounds
-      SageInterface::setLoopLowerBound(for_loop, buildVarRefExp(lower_decl)); 
-      SageInterface::setLoopUpperBound(for_loop, buildVarRefExp(upper_decl)); 
+      SageInterface::setLoopLowerBound(loop, buildVarRefExp(lower_decl)); 
+      SageInterface::setLoopUpperBound(loop, buildVarRefExp(upper_decl)); 
 
        transOmpVariables(target, bb1,orig_upper); // This should happen before the barrier is inserted.
       // insert barrier if there is no nowait clause
@@ -814,6 +881,7 @@ namespace OmpSupport
     // transOmpVariables(target, bb1); // This should happen before the barrier is inserted.
   } // end trans omp for
 
+#if 0
   // Ideally, this function should be merged with transOmpFor().
   // But it is not clean to do so given the difference between SgForStatement and SgFortranDo 
   void transOmpDo(SgNode* node)
@@ -897,7 +965,7 @@ namespace OmpSupport
     if (!useStaticSchedule(target) || hasOrder || hasSpecifiedSize) 
     {
       //TODO  other schedule for Fortran case
-     //  transOmpFor_others( target,   index_decl, lower_decl,   upper_decl, bb1);
+     //  transOmpLoop_others( target,   index_decl, lower_decl,   upper_decl, bb1);
     }
     else 
     {
@@ -939,7 +1007,7 @@ namespace OmpSupport
     // handle variables 
     // transOmpVariables(target, bb1); // This should happen before the barrier is inserted.
   } // end trans omp do
-
+#endif
 
   //! Check if an OpenMP statement has a clause of type vt
   Rose_STL_Container<SgOmpClause*> getClause(SgOmpClauseBodyStatement* clause_stmt, const VariantT & vt)
@@ -2625,15 +2693,16 @@ If not, wrong code will be generated later on. The reason follows:
             break;
           }
         case V_SgOmpForStatement:
-          {
-            transOmpFor(node);
-            break;
-          }
         case V_SgOmpDoStatement:
           {
-            transOmpDo(node);
+            //transOmpFor(node);
+            transOmpLoop(node);
             break;
           }
+//          {
+//            transOmpDo(node);
+//            break;
+//          }
         case V_SgOmpBarrierStatement:
           {
             transOmpBarrier(node);

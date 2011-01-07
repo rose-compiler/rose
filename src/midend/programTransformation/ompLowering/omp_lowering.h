@@ -50,11 +50,11 @@ namespace OmpSupport
   //! Translate omp task
   void transOmpTask(SgNode* node);
 
-  //! Translate omp for
-  void transOmpFor(SgNode* node);
+  //! Translate omp for or omp do loops
+  void transOmpLoop(SgNode* node);
 
   //! Translate Fortran omp do
-  void transOmpDo(SgNode* node);
+  //void transOmpDo(SgNode* node);
 
 
   //! Translate omp barrier

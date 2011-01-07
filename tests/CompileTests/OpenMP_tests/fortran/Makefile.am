@@ -10,6 +10,7 @@ F77_TESTCODES_TO_PASS = \
     exampleA251f.f \
     ompdo-default.f \
     ompdo-decremental.f \
+    ompdo-static.f \
     parallel.f \
     parallel-1.f \
     parallel-2.f \
