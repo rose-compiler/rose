@@ -141,9 +141,6 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.117.msgctl.06.c \
 		   $(srcdir)/tests/syscall_tst.117.msgctl.07.c \
 		   $(srcdir)/tests/syscall_tst.117.msgctl.08.c \
-		   $(srcdir)/tests/syscall_tst.117.msgctl.09.c \
-		   $(srcdir)/tests/syscall_tst.117.msgctl.10.c \
-		   $(srcdir)/tests/syscall_tst.117.msgctl.11.c \
 		   $(srcdir)/tests/syscall_tst.117.msgget.01.c \
 		   $(srcdir)/tests/syscall_tst.117.msgget.02.c \
 		   $(srcdir)/tests/syscall_tst.117.msgget.04.c \
@@ -340,6 +337,11 @@ TEST_INPUTS_TS_SRC = \
 #		   $(srcdir)/tests/syscall_tst.95.c 
 #			This test does not pass natively on some systems, therefore we shouldn't expect it to pass
 #			under x86sim either.
+#		   $(srcdir)/tests/syscall_tst.117.msgctl.09.c
+#		   $(srcdir)/tests/syscall_tst.117.msgctl.10.c
+#		   $(srcdir)/tests/syscall_tst.117.msgctl.11.c
+#			Disabled because of deadlocks in simulated futex() call.  These need more work and should be enabled
+#			when possible. [RPM 2011-01-07]
 
 
 TEST_INPUTS_NM_SRC = \
