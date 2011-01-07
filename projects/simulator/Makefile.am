@@ -326,8 +326,7 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.91.2.c \
 		   $(srcdir)/tests/syscall_tst.91.3.c \
 		   $(srcdir)/tests/syscall_tst.94.1.c \
-		   $(srcdir)/tests/syscall_tst.94.2.c \
-		   $(srcdir)/tests/syscall_tst.95.c 
+		   $(srcdir)/tests/syscall_tst.94.2.c
 
 # These cannot be run reliably (at least not concurrently with other tests.
 #		   $(srcdir)/tests/syscall_tst.117.msgget.03.c
@@ -338,6 +337,9 @@ TEST_INPUTS_TS_SRC = \
 #			increasing. However, some versions of the kernel have a bug in the way they interact with the RTC
 #			which can cause the clock to go backward by small amounts every so often.  See this discussion
 #			for an example: http://www.gossamer-threads.com/lists/linux/kernel/813344
+#		   $(srcdir)/tests/syscall_tst.95.c 
+#			This test does not pass natively on some systems, therefore we shouldn't expect it to pass
+#			under x86sim either.
 
 
 TEST_INPUTS_NM_SRC = \
