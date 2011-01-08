@@ -31,11 +31,11 @@ void RtedTransformation::executeTransformations() {
   if (RTEDDEBUG()) std::cerr << "\n # Elements in scopes  : " << scopes.size() << std::endl;
   BOOST_FOREACH( StatementNodePair i, scopes ) {
     SgStatement* stmt_to_bracket = i.first;
-    SgNode* end_of_scope = i.second;
-    ROSE_ASSERT( stmt_to_bracket );
-    ROSE_ASSERT( end_of_scope );
+    SgNode*      end_of_scope = i.second;
+    ROSE_ASSERT( stmt_to_bracket && end_of_scope);
+
     // bracket all scopes except constructors with enter/exit
-    bracketWithScopeEnterExit( stmt_to_bracket, end_of_scope );
+    bracketWithScopeEnterExit( stmt_to_bracket, end_of_scope->get_endOfConstruct() );
   }
 
   // bracket the bodies of constructors with enter/exit.  This is easier than

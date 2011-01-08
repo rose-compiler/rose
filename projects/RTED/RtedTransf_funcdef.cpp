@@ -48,43 +48,51 @@ RtedTransformation::insertVariableCreateInitForParams( SgFunctionDefinition* fnd
 }
 
 void
-RtedTransformation::insertConfirmFunctionSignature( SgFunctionDefinition* fndef ) {
-
-    SgExprListExp* arg_list = buildExprListExp();
-
-	// first arg is the name
-	// FIXME 2: This probably needs to be something closer to the mangled_name,
-	// or perhaps we can simply skip the check entirely for C++
-    if (isSgMemberFunctionDeclaration(fndef->get_declaration()))
-		return;
-	appendExpression( arg_list, buildStringVal(
-		fndef -> get_declaration() -> get_name()
-	));
-
-	// append param count (+1 for return type) and types
-	Rose_STL_Container< SgType* > param_types
-		= fndef -> get_declaration() -> get_type() -> get_arguments();
+RtedTransformation::appendSignature( SgExprListExp* arg_list, SgType* return_type, const SgTypePtrList& param_types)
+{
+	// number of type descriptors (arguments + return type)
 	appendExpression( arg_list, buildIntVal( param_types.size() + 1));
 
-	// return type
-	appendTypeInformation(
-	  arg_list,
-		fndef -> get_declaration() -> get_type() -> get_return_type(),
-		true,
-		true );
+  // generate a list of typedesc aggregate initializers representing the
+  //   function signature.
+  SgExprListExp* type_list = buildExprListExp();
 
-	// parameter types
-	BOOST_FOREACH( SgType* param_type, param_types ) {
-		appendTypeInformation( arg_list, param_type, true, true );
-	}
+  appendExpression( type_list, mkTypeInformation(return_type, true, true) );
 
+  BOOST_FOREACH( SgType* p_type, param_types ) {
+    appendExpression( type_list, mkTypeInformation( p_type, true, true ) );
+  }
 
-	fndef -> get_body() -> prepend_statement(
-		buildExprStatement(
-			buildFunctionCallExp(
-				buildFunctionRefExp( symbols.roseConfirmFunctionSignature ),
-				arg_list ))
-	);
+  // \pp \note probably roseTypeDesc below should really be an array of roseTypeDescs
+	appendExpression( arg_list, ctorTypeDescList(genAggregateInitializer(type_list, roseTypeDesc())) );
+}
+
+void
+RtedTransformation::insertConfirmFunctionSignature( SgFunctionDefinition* fndef )
+{
+	SgFunctionDeclaration* fndecl = fndef->get_declaration();
+
+  if (isSgMemberFunctionDeclaration(fndecl))
+		return;
+
+	SgExprListExp*         arg_list = buildExprListExp();
+
+  // first arg is the name
+	// \todo
+	// FIXME 2: This probably needs to be something closer to the mangled_name,
+	// or perhaps we can simply skip the check entirely for C++
+	appendExpression( arg_list, buildStringVal(fndecl -> get_name()) );
+
+	SgFunctionType*        fntype = fndecl->get_type();
+	SgType*                fnreturn = fntype->get_return_type();
+	SgTypePtrList&         fnparams = fntype->get_arguments();
+
+	appendSignature( arg_list, fnreturn, fnparams );
+
+  SgFunctionRefExp*      callee = buildFunctionRefExp( symbols.roseConfirmFunctionSignature );
+  SgStatement*           stmt = buildFunctionCallStmt( callee, arg_list );
+
+	fndef->get_body()->prepend_statement(stmt);
 }
 
 #endif

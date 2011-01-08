@@ -76,13 +76,17 @@ RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
 
 
         insertStatementBefore( stmt, newFnCallStmt );
-        insertStatementBefore(isSgStatement(stmt), exprStmt);
+        insertStatementBefore(stmt, exprStmt);
         replaceStatement( stmt, newRtnStmt );
     	  }
 #endif
     	   insertStatementBefore(stmt, exprStmt);
-      } else
-	insertStatementAfter(isSgStatement(stmt), exprStmt);
+      }
+      else
+      {
+        	insertStatementAfter(stmt, exprStmt);
+      }
+
       string comment = "RS : Insert Finalizing Call to Runtime System to check if error was detected (needed for automation)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
 

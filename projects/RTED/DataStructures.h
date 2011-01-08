@@ -110,29 +110,28 @@ class RtedClassArrayElement : public RtedClassElement {
  * We want to know types and sizes and offsets
  * of all the variables in a class and struct
  * -----------------------------------------------------------*/
-class RtedClassDefinition {
- public:
-  SgClassDefinition* classDef;
-  std::string manglClassName;
-  std::string classType;
-  unsigned int nrOfElements;
-  SgExpression* sizeClass;
+struct RtedClassDefinition
+{
+  SgClassDefinition*             classDef;
+  std::string                    manglClassName;
+  std::string                    classType;
+  unsigned int                   nrOfElements;
+  SgExpression*                  sizeClass;
   std::vector<RtedClassElement*> elements;
 
-  RtedClassDefinition(SgClassDefinition* _classDef,
-		  std::string _className,
-		  std::string _classType,
-		      unsigned int _elementsSize,
-              SgExpression* _sizeClass,
-		      std::vector<RtedClassElement*> _elements) {
-    classDef = _classDef;
-    manglClassName = _className;
-    classType = _classType;
-    nrOfElements = _elementsSize;
-    sizeClass = _sizeClass;
-    elements = _elements;
+  RtedClassDefinition( SgClassDefinition* _classDef,
+		                   std::string _className,
+		                   std::string _classType,
+		                   unsigned int _elementsSize,
+                       SgExpression* _sizeClass,
+		                   const std::vector<RtedClassElement*>& _elements
+										 )
+  : classDef(_classDef), manglClassName(_className), classType(_classType),
+		nrOfElements(_elementsSize), sizeClass(_sizeClass), elements(_elements)
+	{
     ROSE_ASSERT(classDef);
   }
+
   virtual ~RtedClassDefinition(){}
 };
 
@@ -152,6 +151,7 @@ class RTedVariableType {
     initName=init;
     initialized=initExp;
   }
+
   virtual ~RTedVariableType(){}
 };
 
@@ -166,61 +166,59 @@ class RTedVariableType {
  * arguments: Additional arguments used when "interesting functions" are called, such as
  *            strcpy, memcpy
  * -----------------------------------------------------------*/
-class RtedArguments {
- public:
-  SgStatement* stmt;
+struct RtedArguments {
   // The arguments hold either a FunctionCall
   // or a stackcall, if it is a function call
   // we need f_name, if it is a stack call
   // we use d_name for the variable that is put on stack
   // but we also use the func name to avoid certain functions
   // for being checked
-  std::string f_name;
-  std::string f_mangled_name;
-  std::string d_name;
-  std::string d_mangled_name;
-  SgInitializedName* initName;
-  SgExpression* varRefExp;
-  std::vector<SgExpression*> arguments;
-  SgExpression* leftHandSideAssignmentExpr;
-  SgExpression* leftHandSideAssignmentExprStr;
-  SgExprListExp* argumentList;
+	SgStatement*               stmt;
+  std::string                f_name;
+  std::string                f_mangled_name;
+  std::string                d_name;
+  std::string                d_mangled_name;
+  SgInitializedName*         initName;
+  SgExpression*              varRefExp;
+  SgExpression*              leftHandSideAssignmentExpr;
+  SgExpression*              leftHandSideAssignmentExprStr;
+	SgExprListExp*             argumentList;
+	SgExpressionPtrList        arguments;
 
-  RtedArguments(
-		std::string ffuncn,
-		std::string fmangl,
-		std::string funcn,
-		std::string mangl,
-		SgExpression* var,
-		SgStatement* stm,
-		std::vector<SgExpression*> args,
-		SgExpression* leftHandAssignStr,
-		SgExpression* leftHandAssign,
-		SgExprListExp* exprList
-		) {
-    ROSE_ASSERT(var);
-    stmt = stm;
-    f_name=ffuncn;
-    f_mangled_name=fmangl;
-    d_name=funcn;
-    d_mangled_name=mangl;
-    varRefExp=var;
-    arguments = args;
-    leftHandSideAssignmentExpr = leftHandAssign;
-    leftHandSideAssignmentExprStr = leftHandAssignStr;
-    argumentList = exprList;
-    if (isSgVarRefExp(var)) {
-      initName = isSgVarRefExp(var)->get_symbol()->get_declaration();
-      ROSE_ASSERT(initName);
-    }
- }
-  std::string toString() {
-    return "func name: " + f_name + "  func mangl_name: " +f_mangled_name +
-      "data name: " + d_name + "  data mangl_name: " +d_mangled_name +  " varRefExp : " +
-      varRefExp->unparseToString() + " at addr: " + RoseBin_support::ToString(varRefExp)+
-      "  stmt: "+stmt->unparseToString() + " at addr: " + RoseBin_support::ToString(stmt);
+  RtedArguments( SgStatement* stm,
+	               const std::string& ffuncn,
+		             const std::string& fmangl,
+		             const std::string& funcn,
+		             const std::string& mangl,
+		             SgExpression* var,
+		             SgExpression* leftHandAssignStr,
+		             SgExpression* leftHandAssign,
+		             SgExprListExp* exprList,
+								 const SgExpressionPtrList& args
+		           )
+	: stmt(stm),
+		f_name(ffuncn), f_mangled_name(fmangl), d_name(funcn), d_mangled_name(mangl),
+		initName(NULL), varRefExp(var),
+		leftHandSideAssignmentExpr(leftHandAssign), leftHandSideAssignmentExprStr (leftHandAssignStr),
+		argumentList(exprList), arguments(args)
+	{
+		ROSE_ASSERT(var);
+
+		if (isSgVarRefExp(var)) {
+			initName = isSgVarRefExp(var)->get_symbol()->get_declaration();
+			ROSE_ASSERT(initName);
+		}
+	}
+
+	std::string toString()
+	{
+    return ( "func name: " + f_name + "  func mangl_name: " + f_mangled_name
+		       + "data name: " + d_name + "  data mangl_name: " + d_mangled_name
+					 + " varRefExp : " + varRefExp->unparseToString() + " at addr: "
+					 + RoseBin_support::ToString(varRefExp)
+					 + "  stmt: "+stmt->unparseToString() + " at addr: " + RoseBin_support::ToString(stmt)
+					 );
   }
-  virtual ~RtedArguments() {}
 };
 
 

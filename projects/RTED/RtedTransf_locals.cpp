@@ -18,70 +18,65 @@ RtedTransformation::bracketWithScopeEnterExit( SgFunctionDefinition* fndef ) {
     SgBasicBlock* body = fndef -> get_body();
     ROSE_ASSERT( body );
 
-    bracketWithScopeEnterExit( isSgNode( body ), body -> get_endOfConstruct() );
+    bracketWithScopeEnterExit( body, body -> get_endOfConstruct() );
 }
+
 
 /// add @c beginScope before @c stmt and @c endScope after @c stmt.
 /// use @c end_of_scope to determine the @c Sg_File_Info to use for reporting
 /// error location.
 void
-RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of_scope) {
-    bracketWithScopeEnterExit( isSgNode( stmt ), end_of_scope -> get_endOfConstruct() );
-}
+RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt_or_block, Sg_File_Info* exit_file_info )
+{
+    ROSE_ASSERT(stmt_or_block && exit_file_info);
 
-void
-RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_Info* exit_file_info ) {
+    Sg_File_Info*  fiStmt = stmt_or_block -> get_file_info();
 
-    SgStatement* stmt = isSgStatement( stmt_or_block );
-    SgBasicBlock* block = isSgBasicBlock( stmt_or_block );
-    if (!stmt || stmt->get_file_info()->isCompilerGenerated())
+    // only instrument user code
+    if (fiStmt->isCompilerGenerated())
       return;
 
-    ROSE_ASSERT( stmt );
-    ROSE_ASSERT( exit_file_info );
-    ROSE_ASSERT( symbols.roseEnterScope );
-
+    SgBasicBlock*  block = isSgBasicBlock( stmt_or_block );
     SgExprListExp* enter_scope_args = buildExprListExp();
-    appendExpression(
-      enter_scope_args,
-      buildStringVal(
-        scope_name( stmt_or_block ) +
-        ":"
-        + RoseBin_support::ToString( stmt_or_block -> get_file_info() -> get_line() )
-      )
-    );
 
+    appendExpression( enter_scope_args,
+                      buildStringVal( scope_name( stmt_or_block )
+                                    + ":"
+                                    + RoseBin_support::ToString( fiStmt->get_line() )
+                                    )
+                    );
 
     // enterScope( "foo:23");
     // \pp \todo this works for C/UPC but not for C++ where
     //           exceptions can lead to scope unwinding.
     //           Use RAII to guarantee that the Rted scope information
     //           is properly managed.
-    SgExprStatement* fncall_enter
-        = buildExprStatement(
-            buildFunctionCallExp(
-              buildFunctionRefExp( symbols.roseEnterScope),
-              enter_scope_args
-            )
-          );
+    ROSE_ASSERT( symbols.roseEnterScope );
+    SgFunctionRefExp* checker = buildFunctionRefExp( symbols.roseEnterScope);
+    SgExprStatement*  fncall_enter = buildFunctionCallStmt(checker, enter_scope_args);
+
     // order is important here... a block is a statement, but a statement is not
     // necessarily a block
+    // \pp \todo since we create a block (at least in some cases), I suggest
+    //           to create the block up front (when needed/desired) and then
+    //           handle all cases alike.
     if( block )
         block -> prepend_statement( fncall_enter );
-    else {
-
-      cerr << "@@@ inserting scope : " << stmt->unparseToString() <<
-      	"   " << stmt->class_name() << "  " << stmt->get_file_info()->isCompilerGenerated() << endl;
+    else
+    {
+      cerr << "@@@ inserting scope : " << stmt_or_block->unparseToString() <<
+      	"   " << stmt_or_block->class_name() << "  " << fiStmt->isCompilerGenerated() << endl;
       // tps : 10/07/2009: what if the statement before is a for loop, then we have to insert a block as well
-      SgStatement* parentStmt = isSgStatement(stmt->get_parent());
+      SgStatement* parentStmt = isSgStatement(stmt_or_block->get_parent());
       ROSE_ASSERT(parentStmt);
+
       cerr << "    @@@ parent == " << parentStmt->class_name() << endl;
       if (gfor_loop(parentStmt) || isSgWhileStmt(parentStmt))
       {
         SgBasicBlock* bb = buildBasicBlock();
         bb->set_parent(parentStmt);
         bb->append_statement(fncall_enter);
-        bb->append_statement(stmt);
+        bb->append_statement(stmt_or_block);
 
         if (isSgForStatement(parentStmt))
           isSgForStatement(parentStmt)->set_loop_body(bb);
@@ -92,7 +87,7 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
       else
       {
         // \pp where/why is this needed???
-        insertStatementBefore( stmt, fncall_enter );
+        insertStatementBefore( stmt_or_block, fncall_enter );
       }
     }
 
@@ -100,7 +95,7 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
     SgExprListExp* exit_scope_args = buildExprListExp();
     appendExpression(
       exit_scope_args,
-      buildStringVal( removeSpecialChar( stmt->unparseToString()))
+      buildStringVal( removeSpecialChar( stmt_or_block->unparseToString()))
     );
 
     appendFileInfo(exit_scope_args, exit_file_info);
@@ -112,24 +107,16 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
             exit_scope_args
           )
         );
+
     // order is important here... a block is a statement, but a statement is not
     // necessarily a block
     if( block )
         block -> append_statement( exit_scope_call );
     else
-        insertStatementAfter( stmt, exit_scope_call );
+        insertStatementAfter( stmt_or_block, exit_scope_call );
 
-
-    attachComment(
-        exit_scope_call,
-        "",
-        PreprocessingInfo::before
-    );
-    attachComment(
-        exit_scope_call,
-        "RS : exitScope, parameters : ( filename, line, lineTransformed, error stmt)",
-        PreprocessingInfo::before
-    );
+    attachComment( exit_scope_call, "", PreprocessingInfo::before );
+    attachComment( exit_scope_call, "RS : exitScope, parameters : ( filename, line, lineTransformed, error stmt)", PreprocessingInfo::before);
 }
 
 

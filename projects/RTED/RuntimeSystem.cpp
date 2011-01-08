@@ -241,7 +241,7 @@ void rted_CreateHeapArr( TypeDesc      td,
 
 void rted_CreateHeapPtr( TypeDesc    td,
 												 Address     address,
-												 size_t      /*elemsize*/,
+												 size_t      /*size*/,
 												 size_t      mallocSize,
 												 int         fromMalloc,
 												 const char* class_name,
@@ -428,14 +428,14 @@ void handle_string_constant(const char** args, size_t i)
 }
 
 static inline
-int num_arg(const char** args, size_t noArgs, size_t i)
+int num_arg(const char** args, size_t noArgs, size_t idx)
 {
-	assert (noArgs > 0);
+	assert (idx < noArgs );
 
 	// \pp ???
-	if (i < noArgs - 1 && isdigit( args[ i + 1 ][ 0 ])) ++i;
+	// was: if (i < noArgs - 1 && isdigit( args[ i + 1 ][ 0 ])) ++i;
 
-  return numval(args[i]);
+  return numval(args[idx]);
 }
 
 
@@ -452,12 +452,13 @@ int num_arg(const char** args, size_t noArgs, size_t i)
  * line      : linenumber
  * stmtStr   : unparsed version of the line to be used for error message
  ********************************************************/
-static
-void RuntimeSystem_handleSpecialFunctionCalls( const char* fname,
-																							 const char** args,
-																							 int argsSize,
-																							 SourceInfo si
-																						 )
+void rted_FunctionCall( const char* fname,
+												const char* /*stmtStr*/,
+												const char* /*leftVar*/,
+												SourceInfo si,
+												size_t argc,
+												const char** args
+											)
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
@@ -469,25 +470,25 @@ void RuntimeSystem_handleSpecialFunctionCalls( const char* fname,
     // should not.
 
     if( 0 == strcmp("memcpy", fname)) {
-      rs->check_memcpy((void*) args[0], (const void*) args[2], num_arg(args, argsSize, 4));
+      rs->check_memcpy((void*) args[0], (const void*) args[2], num_arg(args, argc, 4));
     } else if ( 0 == strcmp("memmove", fname)) {
-      rs->check_memmove( (void*) args[0], (const void*) args[2], num_arg(args, argsSize, 4));
+      rs->check_memmove( (void*) args[0], (const void*) args[2], num_arg(args, argc, 4));
     } else if ( 0 == strcmp("strcpy", fname)) {
       handle_string_constant(args, 0);
       handle_string_constant(args, 2);
 
       rs->check_strcpy((char*) args[0], (const char*) args[2]);
     } else if ( 0 == strcmp("strncpy", fname)) {
-      rs->check_strncpy((char*) args[0], (const char*) args[2], num_arg(args, argsSize, 4));
+      rs->check_strncpy((char*) args[0], (const char*) args[2], num_arg(args, argc, 4));
     } else if ( 0 == strcmp("strcat", fname)) {
       handle_string_constant(args, 0);
       handle_string_constant(args, 2);
 
       rs->check_strcat((char*) args[0], (const char*) args[2]);
     } else if ( 0 == strcmp("strncat", fname)) {
-      rs->check_strncat( (char*) args[0], (const char*) args[2], num_arg(args, argsSize, 4));
+      rs->check_strncat( (char*) args[0], (const char*) args[2], num_arg(args, argc, 4));
     } else if ( 0 == strcmp("strchr", fname)) {
-      rs->check_strchr((const char*) args[0], num_arg(args, argsSize, 2));
+      rs->check_strchr((const char*) args[0], num_arg(args, argc, 2));
     } else if ( 0 == strcmp("strpbrk", fname)) {
       rs->check_strpbrk((const char*) args[0], (const char*) args[2]);
     } else if ( 0 == strcmp("strspn", fname)) {
@@ -604,73 +605,6 @@ void rted_IOFunctionCall( const char* fname,
 }
 
 
-
-
-
-/*********************************************************
- * This function is called when a function is called
- * The number of parameters is variable but some of the are fixed:
- * count        : number of parameters
- * name         : variable name if it is a variable to be put on the stack
- *              : function name if it is a function that is being called
- * mangled_name : mangled name of the above
- * scope        : Scope indicator (might not be necessary)
- * insertBefore : Indicates whether to push or pop a variable form the stack
- * filename     : file location
- * line         : linenumber
- * stmtStr      : unparsed version of the line to be used for error message
- * ...          : variable amount of additional parameters
- ********************************************************/
-void
-rted_FunctionCall(size_t count, ...) {
-  // handle the parameters within this call
-  va_list vl;
-  va_start(vl, count);
-
-	// \pp was: const char** args = (const char**)malloc(sizeof(const char*)*count+1);
-	const char* args[count+1];
-
-  size_t      posArgs = 0;
-  const char* name = NULL;
-	SourceInfo  si;
-  const char* stmtStr = NULL;
-  const char* leftVar = NULL;
-
-	si.file = NULL; si.src_line = 0; si.rted_line = 0;
-
-  for (size_t i=0; i < count; ++i) {
-		switch (i)
-		{
-			case 0: name = va_arg(vl, const char*); break;
-			case 1: si = va_arg(vl, SourceInfo); break;
-			case 2: stmtStr = va_arg(vl, const char*); break;
-			case 3: leftVar = va_arg(vl, const char*); break;
-			default:
-			  args[posArgs] = va_arg(vl, const char*);
-				++posArgs;
-	  }
-  }
-  va_end(vl);
-
-
-  //if (RuntimeSystem_isInterestingFunctionCall(name)==1) {
-  // if the string name is one of the above, we handle it specially
-  RuntimeSystem_handleSpecialFunctionCalls(name, args, posArgs, si /*, stmtStr, leftVar*/);
-
-
-	// \pp probably free(args) is missing
-
-  // } else if (RuntimeSystem_isFileIOFunctionCall(name)==1) {
-  // this will be replaced by a direct call
-  //RuntimeSystem_handleIOFunctionCall(name, args, posArgs, filename, line, lineTransf, stmtStr, leftVar, NULL);
-  //} else {
-  //printMessage("Unknown Function call to RuntimeSystem!\n");
-  //  exit(1);
-  //}
-}
-
-
-
 // ***************************************** FUNCTION CALL *************************************
 
 
@@ -678,10 +612,8 @@ rted_FunctionCall(size_t count, ...) {
 // ***************************************** SCOPE HANDLING *************************************
 
 void rted_EnterScope(const char* name) {
-
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs -> beginScope( name );
-
 }
 
 void rted_ExitScope(const char*, SourceInfo si)
@@ -703,11 +635,11 @@ void rted_ExitScope(const char*, SourceInfo si)
  * This function tells the runtime system that a variable is created
  * we store the type of the variable and whether it has been intialized
  ********************************************************/
-int rted_CreateVariable( const char* name,
-												 const char* mangled_name,
-												 TypeDesc td,
+int rted_CreateVariable( TypeDesc td,
 												 Address address,
 												 size_t size,
+												 const char* name,
+												 const char* mangled_name,
 												 int init,
 												 const char* class_name,
 												 SourceInfo si
@@ -859,26 +791,26 @@ void rted_Checkpoint(SourceInfo si) {
   rs -> checkpoint( SourcePosition( si ));
 }
 
-
-void
-rted_RegisterTypeCall(size_t count, ...) {
+void rted_RegisterTypeCall( const char* nameC,
+                            const char* /* typeC */,
+														const char* isUnionType,
+														size_t sizeC,
+														SourceInfo si,
+														size_t argc
+														...
+													)
+{
   // handle the parameters within this call
   va_list        vl;
-
-	va_start(vl, count);
-
-  SourceInfo     si = va_arg(vl, SourceInfo);
-  const char*    nameC = va_arg(vl,const char*);
-  /*const char* typeC = */ va_arg(vl,const char*);
-  const char*    isUnionType = va_arg(vl,const char*);
-  bool           isUnion = false;
-
-	if (*isUnionType=='1') isUnion=true;
-
-	// \pp was: addr_type sizeC = va_arg(vl, addr_type);
-	size_t         sizeC = numval(va_arg(vl, char*));
-  RuntimeSystem* rs = RuntimeSystem::instance();
+  // SourceInfo     si = va_arg(vl, SourceInfo);
+  // const char*    nameC = va_arg(vl,const char*);
+  // /*const char* typeC = */ va_arg(vl,const char*);
+  // const char*    isUnionType = va_arg(vl,const char*);
+	RuntimeSystem* rs = RuntimeSystem::instance();
 	TypeSystem&    ts = *rs->getTypeSystem();
+	bool           isUnion = (*isUnionType=='1');
+
+	va_start(vl, argc);
 
   rs -> checkpoint( SourcePosition( si ));
 
@@ -894,42 +826,45 @@ rted_RegisterTypeCall(size_t count, ...) {
     classType -> setUnionType( isUnion );
   }
 
-	size_t          argctr = 7;
+	size_t          argctr = 0;
 
-	while (argctr < count)
+	while (argctr < argc)
 	{
+		  argctr += 4;
+
+			assert(argctr <= argc);
+
 		  RsType*     t = NULL;
       std::string name(va_arg(vl,const char*));
-      std::string type(va_arg(vl,const char*));
-      std::string base_type(va_arg(vl,const char*));
-      AddressDesc addrDesc = va_arg( vl, AddressDesc );
+			TypeDesc    td = va_arg(vl,TypeDesc);
       size_t      offset = va_arg(vl, size_t);
       size_t      size = va_arg(vl, size_t);
 
-			argctr += 6;
-
-			if (type == "SgArrayType")
+			if (td.name == std::string("SgArrayType"))
 			{
 				// \pp was: t = RuntimeSystem_getRsArrayType(ts, &vl, dimensionality, size, base_type );
 
+        assert(argctr < argc);
 				const size_t dimensionality = va_arg( vl, size_t );
+				assert(dimensionality > 0);
+
 				size_t       dims[dimensionality+1];
 				size_t       pos = 0;
 
-        assert(dimensionality > 0);
-				argctr += dimensionality + 1;  // adjust the loop counter
 				dims[pos] = dimensionality;
+        argctr += dimensionality + 1;  // adjust the loop counter
+				assert(argctr <= argc);
 
-				while (++pos < dimensionality+1)
+				while (pos < dimensionality)
 				{
-					dims[pos] = va_arg( vl, size_t );
+					dims[++pos] = va_arg( vl, size_t );
 			  }
 
-				t = rs_getArrayType(ts, dims, size, base_type);
+				t = rs_getArrayType(ts, dims, size, td.base);
       }
 			else
 			{
-        t = rs_getType(ts, type, base_type, "", addrDesc);
+        t = rs_getType(ts, td.name, td.base, "", td.desc);
       }
 
       assert(t != NULL);
@@ -942,7 +877,6 @@ rted_RegisterTypeCall(size_t count, ...) {
       //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
   }
 
-	assert(argctr == count);
 	va_end(vl);
 }
 
@@ -970,7 +904,6 @@ void rted_ReallocateMemory( void* ptr, size_t size, SourceInfo si )
 	rs->freeMemory( memAddr(ptr), MemoryType::CStyleAlloc );
 	rs->createMemory( memAddr(ptr), size, MemoryType::CStyleAlloc);
 }
-
 
 
 void rted_CheckIfThisNULL( void* thisExp, SourceInfo si)

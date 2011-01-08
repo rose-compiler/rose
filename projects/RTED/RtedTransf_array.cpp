@@ -5,6 +5,7 @@
 #ifndef USE_ROSE
 
 #include <string>
+#include <algorithm>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -24,28 +25,36 @@ void ROSE_ASSERT_MSG(bool b, const std::string& msg)
   }
 }
 
+struct InitNameComp
+{
+  const SgInitializedName * const obj;
+
+  explicit
+  InitNameComp(const SgInitializedName* iname)
+  : obj(iname)
+  {}
+
+  bool operator()(const std::map<SgVarRefExp*, RTedArray*>::value_type& v) const
+  {
+    return v.second->initName == obj;
+  }
+};
+
+
 /* -----------------------------------------------------------
  * Is the Initialized Name already known as an array element ?
  * -----------------------------------------------------------*/
-bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search) {
-   bool found = false;
-   std::map<SgVarRefExp*, RTedArray*>::const_iterator it = create_array_define_varRef_multiArray.begin();
-   for (; it != create_array_define_varRef_multiArray.end(); ++it) {
-      //SgVarRefExp* varRef = it->first;
-      RTedArray* array = it->second;
-      SgInitializedName* initName = array->initName;
-      if (initName == search) {
-         found = true;
-      }
-   }
-   std::map<SgInitializedName*, RTedArray*>::const_iterator it2 = create_array_define_varRef_multiArray_stack.begin();
-   for (; it2 != create_array_define_varRef_multiArray_stack.end(); ++it2) {
-      SgInitializedName* initName = it2->first;
-      if (initName == search) {
-         found = true;
-      }
-   }
-   return found;
+bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search)
+{
+  using std::find_if;
+
+  if (create_array_define_varRef_multiArray_stack.find(search) != create_array_define_varRef_multiArray_stack.end())
+    return true;
+
+  std::map<SgVarRefExp*, RTedArray*>::iterator aa = create_array_define_varRef_multiArray.begin();
+  std::map<SgVarRefExp*, RTedArray*>::iterator zz = create_array_define_varRef_multiArray.end();
+
+  return std::find_if(aa, zz, InitNameComp(search)) != zz;
 }
 
 /* -----------------------------------------------------------
@@ -89,9 +98,9 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    // \pp only calls to create-heap-arr?
    ROSE_ASSERT(isCreateHeapArr);
 
-   appendTypeInformation(arg_list, NULL, src_type);
+   appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(NULL, src_type)));
 
-   SgScopeStatement*  scope = (initName ? initName->get_scope() : NULL);
+   SgScopeStatement*  scope = get_scope(initName);
 #if 0
    // \pp ???
    SgClassDefinition* unionclass = isSgClassDefinition(scope);
@@ -164,7 +173,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt, SgInitializedN
    bool global_stmt = false;
    std::vector<SgExpression*> value = array -> getIndices();
    //bool stack = array->stack;
-   if (isSgStatement(stmt)) {
+   if (stmt) {
       SgScopeStatement* scope = stmt->get_scope();
       string name = initName->get_mangled_name().str();
 
@@ -240,7 +249,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt, SgInitializedN
             cerr << "+++++++ insert Before... " << endl;
          } else {
             // insert new stmt (exprStmt) after (old) stmt
-            insertStatementAfter(isSgStatement(stmt), exprStmt);
+            insertStatementAfter(stmt, exprStmt);
             cerr << "+++++++ insert After... " << endl;
          }
 #endif
@@ -356,7 +365,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* 
   SgExprListExp*    arg_list = buildExprListExp();
 
   appendAddress(arg_list, array_base);
-  appendAddressAndSize(arg_list, Simple, NULL, arrRefExp);
+  appendAddressAndSize(arg_list, Simple, NULL, arrRefExp, NULL);
   appendExpression(arg_list, buildIntVal(read_write_mask));
 
   appendFileInfo(arg_list, stmt);
@@ -437,41 +446,53 @@ void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* n) {
          << " -------------------------------------" << endl;
 
 #if 1
-   SgExpression* right = isSgExpression(n->get_operand());
+   SgExpression*        right = n->get_operand();
    // right hand side should contain some VarRefExp
    std::vector<SgNode*> vars = NodeQuery::querySubTree(right, V_SgVarRefExp);
    std::vector<SgNode*>::const_iterator it = vars.begin();
-   bool abortme = false;
+
    for (; it != vars.end(); ++it) {
-      SgVarRefExp* varRef = isSgVarRefExp(*it);
+      SgVarRefExp*  varRef = isSgVarRefExp(*it);
       ROSE_ASSERT(varRef);
+
       SgExpression* parent = isSgExpression(varRef->get_parent());
       ROSE_ASSERT(parent);
-      SgDotExp* dotExp = isSgDotExp(parent);
-      SgArrowExp* arrowExp = isSgArrowExp(parent);
+
+      SgDotExp*     dotExp = isSgDotExp(parent);
+      SgArrowExp*   arrowExp = isSgArrowExp(parent);
       SgExpression* left = NULL;
+
       if (dotExp)
+      {
+         // \pp is this correct? why not get_lhs_operand
          left = dotExp->get_rhs_operand();
-      if (arrowExp)
+      }
+      else if (arrowExp)
+      {
          left = arrowExp->get_lhs_operand();
-      if ((left && left == varRef) || left == NULL) {
+      }
+
+      if (left == varRef || left == NULL)
+      {
          variable_access_pointerderef[n] = varRef;
          cerr << "$$$ DotExp: " << dotExp << "   arrowExp: " << arrowExp << endl;
          cerr << "  &&& Adding : " << varRef->unparseToString() << endl;
-      } else {
+      }
+      else
+      {
          cerr << "$$$ Found a SgPointerDerefExp  but not adding to list. " << endl;
          cerr << "  $$$ DotExp: " << dotExp << "   arrowExp: " << arrowExp << endl;
          cerr << "  $$$ left: " << left->unparseToString() << "   varRef: " << varRef->unparseToString() << endl;
-         abortme = true;
       }
    }
-   //  if (abortme) abort();
+
    if (vars.size() > 1) {
       cerr << "Warning : We added more than one SgVarRefExp to this map for SgPointerDerefExp. This might be a problem" << endl;
       //exit(1);
    }
+
 #if 1
-   std::vector<SgNode*> vars2 = NodeQuery::querySubTree(right, V_SgThisExp);
+   std::vector<SgNode*>                 vars2 = NodeQuery::querySubTree(right, V_SgThisExp);
    std::vector<SgNode*>::const_iterator it2 = vars2.begin();
    for (; it2 != vars2.end(); ++it2) {
       SgThisExp* varRef = isSgThisExp(*it2);
@@ -496,7 +517,7 @@ void RtedTransformation::visit_isSgArrowExp(SgArrowExp* n) {
    // left hand side should be a varrefexp or a thisOp
    std::vector<SgNode*> vars = NodeQuery::querySubTree(left, V_SgVarRefExp);
    std::vector<SgNode*>::const_iterator it = vars.begin();
-   bool abortme = false;
+
    for (; it != vars.end(); ++it) {
       SgVarRefExp* varRef = isSgVarRefExp(*it);
       ROSE_ASSERT(varRef);
@@ -507,10 +528,9 @@ void RtedTransformation::visit_isSgArrowExp(SgArrowExp* n) {
       } else {
          cerr << " &&& Not adding varRef because on right hand side of -> :" << varRef->unparseToString() << endl;
          cerr << "   &&& left : " << left->unparseToString() << "  varRef: " << varRef << "  left:" << left << endl;
-         abortme = true;
       }
    }
-   //  if (abortme) abort();
+
    if (vars.size() > 1) {
       cerr << "Warning : We added more than one SgVarRefExp to this map for SgArrowExp. This might be a problem" << endl;
       //exit(1);
@@ -950,15 +970,17 @@ void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt, RTedArra
       SgForStatement* forloop = buildForStatement(init_stmt, cond_stmt, incr_exp, loop_body);
 
       SgBasicBlock* bb = buildBasicBlock(stmt1, forloop);
-      insertStatementAfter(isSgStatement(stmt), bb);
+      insertStatementAfter(stmt, bb);
       string comment = "RS: Padding this newly generated array with empty space.";
       attachComment(bb, comment, PreprocessingInfo::before);
       popScopeStack();
    }
 }
 
-void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
-   SgPntrArrRefExp* arrRefExp = isSgPntrArrRefExp(n);
+void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* _n) {
+   SgPntrArrRefExp* arrRefExp = isSgPntrArrRefExp(_n);
+   ROSE_ASSERT(arrRefExp);
+
    // make sure the parent is not another pntr array (pntr->pntr), we only want the top one
    // also, ensure we don't count arr[ix].member as an array access, e.g. in the
    // following:
@@ -1019,7 +1041,7 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
       if (create_access_call) {
          SgInitializedName* initName = varRef->get_symbol()->get_declaration();
          ROSE_ASSERT(initName);
-         RTedArray* array = new RTedArray(initName, getSurroundingStatement(n), false);
+         RTedArray* array = new RTedArray(initName, getSurroundingStatement(arrRefExp), false);
          cerr << "!! CALL : " << varRef << " - " << varRef->unparseToString() << "    size : " << create_array_access_call.size()
                << "  -- " << array->unparseToString() << " : " << arrRefExp->unparseToString() << endl;
          create_array_access_call[arrRefExp] = array;
@@ -1029,9 +1051,9 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
 }
 
 // deprecated - will be removed
-void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
+void RtedTransformation::visit_isArrayExprListExp(SgNode* n)
+{
    // there could be a cast between SgExprListExp and SgVarRefExp
-   SgExprListExp* exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent());
 #if 1
    cerr << " >> checking node : " << n->class_name() << endl;
    if (isSgVarRefExp(n)) {
@@ -1040,49 +1062,77 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
             << isSgVarRefExp(n)->get_parent()->get_parent()->class_name() << endl;
    }
 #endif
-   SgNode* parent = isSgVarRefExp(n)->get_parent();
-   while (!isSgExprListExp(parent) && !isSgProject(parent)) {
+
+   SgVarRefExp* const    n_varref = isSgVarRefExp(n);
+   ROSE_ASSERT(n_varref);
+
+   SgNode*               parent = n_varref->get_parent();
+   SgExprListExp*        exprlist = isSgExprListExp(parent);
+
+   while (exprlist == NULL && !isSgProject(parent)) {
       parent = parent->get_parent();
-   }
-   if (isSgExprListExp(parent))
       exprlist = isSgExprListExp(parent);
-   //  if (isSgCastExp(isSgVarRefExp(n)->get_parent()))
-   //  exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent());
+   }
+
+   // if (isSgCastExp(isSgVarRefExp(n)->get_parent()))
+   // exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent());
    // check if this is a function call with array as parameter
-   if (exprlist) {
+
+   // \pp should this not be ROSE_ASSERT(exprlist) ??
+   if (exprlist)
+   {
       SgFunctionCallExp* fcexp = isSgFunctionCallExp(exprlist->get_parent());
-      if (fcexp) {
+
+      if (fcexp)
+      {
          cerr << "      ... Found a function call with varRef as parameter: " << fcexp->unparseToString() << endl;
          // check if parameter is array - then check function name
          // call func(array_name) to runtime system for runtime inspection
-         SgInitializedName* initName = isSgVarRefExp(n)->get_symbol()->get_declaration();
-         if (isVarRefInCreateArray(initName) || isVarInCreatedVariables(initName)) {
+         SgInitializedName* initName = n_varref->get_symbol()->get_declaration();
+
+         if (isVarRefInCreateArray(initName) || isVarInCreatedVariables(initName))
+         {
             // create this function call only, if it is not one of the
             // interesting function calls, such as strcpy, strcmp ...
             // because for those we do not need the parameters and do not
             // need to put them on the stack
+
             SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
             ROSE_ASSERT(refExp);
+
             SgFunctionDeclaration* decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration());
             ROSE_ASSERT(decl);
+
             string name = decl->get_name();
             string mangled_name = decl->get_mangled_name().str();
+
             cerr << ">>Found a function call " << name << endl;
-            if (isStringModifyingFunctionCall(name) == false && isFileIOFunctionCall(name) == false) {
-               vector<SgExpression*> args;
-               SgExpression* varOnLeft = buildStringVal("NoAssignmentVar2");
-               SgStatement* stmt = getSurroundingStatement(isSgVarRefExp(n));
+
+            if (!isStringModifyingFunctionCall(name) && !isFileIOFunctionCall(name))
+            {
+               SgExpression*  varOnLeft = buildStringVal("NoAssignmentVar2");
+               SgStatement*   stmt = getSurroundingStatement(isSgVarRefExp(n));
                ROSE_ASSERT(stmt);
-               RtedArguments* funcCall = new RtedArguments(name, // function name
-                     mangled_name,
-                     // we need this for the function as well
-                     initName->get_name(), // variable
-                     initName->get_mangled_name().str(), isSgVarRefExp(n), stmt, args, varOnLeft, varOnLeft, NULL);
+
+               RtedArguments* funcCall = new RtedArguments( stmt,
+                                                            name, // function name
+                                                            mangled_name, // we need this for the function as well
+                                                            initName->get_name(), // variable
+                                                            initName->get_mangled_name().str(),
+                                                            n_varref,
+                                                            varOnLeft,
+                                                            varOnLeft,
+                                                            NULL,
+                                                            SgExpressionPtrList()
+                                                          );
                ROSE_ASSERT(funcCall);
+
                cerr << " !!!!!!!!!! Adding function call." << name << endl;
                function_call.push_back(funcCall);
             }
-         } else {
+         }
+         else
+         {
             cerr << " This is a function call but its not passing an array element " << endl;
          }
       }

@@ -111,7 +111,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 	}
 }
 
-void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) {
+void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedClass) {
 	ROSE_ASSERT(rtedClass);
 	SgStatement* stmt;
 	SgScopeStatement* scope;
@@ -160,10 +160,8 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 				stmt = appendToGlobalConstructor(stmt->get_scope(),
 						rtedClass->classDef->get_declaration()->get_name());
 				scope = isSgScopeStatement(globalFunction);
-				ROSE_ASSERT(scope);
-				cerr << "Current scope = " << scope->class_name() << endl;
-				ROSE_ASSERT(isSgStatement(stmt));
 				ROSE_ASSERT(isNormalScope( scope));
+				cerr << "Current scope = " << scope->class_name() << endl;
 				global_stmt = true;
 			} else {
 				stmt = mainFirst;
@@ -177,12 +175,12 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 		}
 	} else {
 		cerr << "  the surrounding statement is (3): " << stmt->class_name()
-				<< endl;
+			   << endl;
 		//    stmt = mainFirst;
 		scope = stmt->get_scope();
 	}
 
-	if (isSgStatement(stmt)) {
+	if (stmt) {
 
 		string name = rtedClass->manglClassName;
 		string typeC = rtedClass->classType;
@@ -201,7 +199,8 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 
 
 		ROSE_ASSERT(scope);
-		if (isNormalScope(scope)) {// || isSgClassDefinition(scope)) {
+		if (isNormalScope(scope)) // || isSgClassDefinition(scope))
+		{
 			// insert new stmt before first Statement in main
 
 			/*
@@ -216,197 +215,217 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 			 "d", "SgDouble", offsetof(B,d) );
 			 */
 
-			int elements = rtedClass->nrOfElements; // elements passed to function
-			elements *= 6; // for each element pass name, type, basetype, indirection_level and offset
-			elements += 4; // ClassName , ClassType and Union? ,sizeOfClass
+			size_t argcount = rtedClass->nrOfElements; // elements passed to function
+
+      // for each element pass name, { type, basetype, indirection_level } and offset, and size
+			argcount *= 4;
 
 			BOOST_FOREACH( RtedClassElement* element, rtedClass -> elements )
-{			elements += element -> extraArgSize();
-		}
-
-		// tps (09/04/2009) added 3 parameters, filename, line, linetransformed
-		SgExpression* nrElements = buildIntVal(elements+3);
-
-		SgExprListExp* arg_list = buildExprListExp();
-		appendExpression(arg_list, nrElements);
-
-		appendExpression(arg_list, buildStringVal(name));
-		appendExpression(arg_list, buildStringVal(typeC));
-		appendExpression(arg_list, buildStringVal(isunionType));
-		appendExpression(arg_list, rtedClass->sizeClass);
-
-		appendFileInfo(arg_list, stmt);
-
-		// search for classDef in classesNamespace that contains all introduced RTED:Classes
-		std::map<SgClassDefinition*, SgClassDefinition*>::const_iterator
-		cit = classesInRTEDNamespace.find(rtedClass->classDef);
-		SgClassDefinition* rtedModifiedClass = NULL;
-		if (cit!=classesInRTEDNamespace.end()) {
-			rtedModifiedClass = cit->second;
-			cerr << "Found rtedModifiedClass : " << rtedModifiedClass->get_qualified_name().str() << endl;
-			cerr << "Found rtedModifiedClass Declaration: " << rtedModifiedClass->get_declaration()->unparseToString()  << endl;
-			cerr << "Found rtedModifiedClass Declaration Type: " << rtedModifiedClass->get_declaration()->get_type()->unparseToString() << endl;
-			cerr << "Address of rtedModifiedClass : " << rtedModifiedClass->get_declaration()->get_type() << endl;
-			cerr << "Address of defining rtedModifiedClass : " << rtedModifiedClass->get_declaration()->get_definingDeclaration() << endl;
-			cerr << "Address of nondefining rtedModifiedClass : " << rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() << endl;
-			cerr << "Address of rtedModifiedClass->get_declaration()->get_type()->get_declaration() : " << rtedModifiedClass->get_declaration()->get_type()->get_declaration()
-			<< "    Addr of rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() : " << rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() << endl;
-			ROSE_ASSERT(rtedModifiedClass->get_declaration()->get_type()->get_declaration() == rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration());
-		} else
-		cerr << "Did not find rtedModifiedClass using : " << rtedClass->classDef->get_qualified_name().str() << endl;
-
-		// go through each element and add name, type, basetype, offset and size
-		std::vector<RtedClassElement*> elementsC = rtedClass->elements;
-		//if (rtedModifiedClass) elementsC = rtedModifiedClass->elements;
-		std::vector<RtedClassElement*>::const_iterator itClass = elementsC.begin();
-		for (;itClass!=elementsC.end();++itClass) {
-			RtedClassElement* element = *itClass;
-			string manglElementName = element->manglElementName;
-			SgDeclarationStatement* sgElement = element->sgElement;
-			//SgExpression* sgElements = deepCopy(sgElement);
-			SgExpression* elemName = buildStringVal(manglElementName);
-
-			// FIXME 1: This will not work for references.  Consider:
-			//
-			//    #include <iostream>
-			//    using namespace std;
-			//
-			//    int i;
-			//    struct T {
-			//        int p;
-			//        int& r;
-			//
-			//        T() : r(i) {}
-			//    };
-			//
-			//    int main() { cout << offsetof( T, r ) << endl; }
-			//
-			// and see discussion (esp. follow ups) at:
-			//    http://gcc.gnu.org/ml/gcc/2003-11/msg00279.html
-			//
-			// build a function call for offsetof(A,d);
-			appendExpression(arg_list, elemName);
-
-			// build  (size_t )(&( *((struct A *)0)).x);
-			ROSE_ASSERT(rtedClass->classDef);
-			// cerr << " Type: " <<  rtedClass->classDef->get_declaration()->get_type()->class_name() << endl;
-
-
-			//		 cerr << " +++++++++++++ Looking for class : " << rtedClass->classDef->get_declaration()->get_qualified_name().str()
-			//	 << "    found : " << rtedModifiedClass << "   " << rtedModifiedClass->get_declaration()->get_qualified_name().str() << endl;
-
-			// tps (09/04/2009) : Added support to call offset of on C++ classes
-			SgExpression* nullPointer = NULL;
-			ROSE_ASSERT(rtedClass->classDef->get_declaration());
-			bool classHasConstructor=hasClassConstructor(rtedClass->classDef->get_declaration());
-			classHasConstructor=false;
-			if (rtedModifiedClass==NULL) {
-				cerr << "rtedModifiedClass==NULL" << endl;
-				// this is a C or C++ class in a source file without constructor
-				if ( classHasConstructor==false)
-				nullPointer = buildCastExp(buildIntVal(0),
-						buildPointerType(rtedClass->classDef->get_declaration()->get_type()));
-				else // or C++ class in a source file with constructor!
-				nullPointer = buildCastExp(buildIntVal(1),
-						buildPointerType(rtedClass->classDef->get_declaration()->get_type()));
-			} else {
-				// this is a C++ class in a header file
-				ROSE_ASSERT(rtedModifiedClass);
-				nullPointer = buildCastExp(buildIntVal(0),
-						buildPointerType(rtedModifiedClass->get_declaration()->get_type()));
-				cerr << "################ SOMETHING WRONG ? rtedModifiedClass :" << rtedModifiedClass
-				<< "   rtedClass : " << rtedClass->classDef << endl;
-				cerr << "What is the type : " << rtedModifiedClass->get_declaration()->get_type()->unparseToString() << endl;
-				//ROSE_ASSERT(rtedModifiedClass->get_declaration()!=rtedClass->classDef->get_declaration());
-				//ROSE_ASSERT(rtedModifiedClass->get_declaration()==rtedClass->classDef->get_declaration());
-				//abort();
+			{			argcount += element -> extraArgSize();
 			}
 
-			SgExpression* derefPointer = buildPointerDerefExp(nullPointer);
-			SgVariableDeclaration* varDecl = isSgVariableDeclaration(sgElement);
-			SgClassDefinition* cdeftest = isSgClassDefinition(varDecl->get_parent());
-			cerr << " varDecl->get_parent() : " << varDecl->get_parent()->class_name() << endl;
-			cerr << " rtedModifiedClass : " << rtedModifiedClass << endl;
-			cerr << " cdeftest : " << cdeftest << endl;
-			ROSE_ASSERT(cdeftest);
-			//if (rtedModifiedClass)
-			//ROSE_ASSERT(cdeftest==rtedModifiedClass);
-			if (varDecl) {
-				SgVarRefExp* varref = buildVarRefExp(varDecl);
+			SgExprListExp* arg_list = buildExprListExp();
+			SgExpression*  nrElements = buildIntVal(argcount);
 
-				// append the base type (if any) of pointers and arrays
-				SgType* type = varDecl->get_variables()[ 0 ]->get_type();
-				appendTypeInformation( arg_list, type, true, false );
+			appendExpression(arg_list, buildStringVal(name));
+			appendExpression(arg_list, buildStringVal(typeC));
+			appendExpression(arg_list, buildStringVal(isunionType));
+			appendExpression(arg_list, rtedClass->sizeClass);
+			appendFileInfo(arg_list, stmt);
+			appendExpression(arg_list, nrElements);
 
-				SgExpression* dotExp = buildDotExp(derefPointer,varref);
-				SgExpression* andOp = buildAddressOfOp(dotExp);
-				SgExpression* castOp = NULL;
-				if (rtedModifiedClass==NULL && classHasConstructor==false)
-				castOp = buildCastExp(andOp, symbols.size_t_member);
-				else {
-					SgExpression* minus = buildSubtractOp(andOp, buildIntVal(0));
-					castOp = buildCastExp(minus, symbols.size_t_member);
+			// search for classDef in classesNamespace that contains all introduced RTED:Classes
+			std::map<SgClassDefinition*, SgClassDefinition*>::const_iterator cit = classesInRTEDNamespace.find(rtedClass->classDef);
+			SgClassDefinition* rtedModifiedClass = NULL;
+			if (cit!=classesInRTEDNamespace.end()) {
+				rtedModifiedClass = cit->second;
+				cerr << "Found rtedModifiedClass : " << rtedModifiedClass->get_qualified_name().str() << endl;
+				cerr << "Found rtedModifiedClass Declaration: " << rtedModifiedClass->get_declaration()->unparseToString()  << endl;
+				cerr << "Found rtedModifiedClass Declaration Type: " << rtedModifiedClass->get_declaration()->get_type()->unparseToString() << endl;
+				cerr << "Address of rtedModifiedClass : " << rtedModifiedClass->get_declaration()->get_type() << endl;
+				cerr << "Address of defining rtedModifiedClass : " << rtedModifiedClass->get_declaration()->get_definingDeclaration() << endl;
+				cerr << "Address of nondefining rtedModifiedClass : " << rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() << endl;
+				cerr << "Address of rtedModifiedClass->get_declaration()->get_type()->get_declaration() : " << rtedModifiedClass->get_declaration()->get_type()->get_declaration()
+				<< "    Addr of rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() : " << rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() << endl;
+				ROSE_ASSERT(rtedModifiedClass->get_declaration()->get_type()->get_declaration() == rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration());
+			}
+			else
+			{
+			  cerr << "Did not find rtedModifiedClass using : " << rtedClass->classDef->get_qualified_name().str() << endl;
+			}
+
+			// go through each element and add name, type, basetype, offset and size
+			std::vector<RtedClassElement*> elementsC = rtedClass->elements;
+			//if (rtedModifiedClass) elementsC = rtedModifiedClass->elements;
+			std::vector<RtedClassElement*>::const_iterator itClass = elementsC.begin();
+			for (;itClass!=elementsC.end();++itClass) {
+				RtedClassElement* element = *itClass;
+				string manglElementName = element->manglElementName;
+				SgDeclarationStatement* sgElement = element->sgElement;
+				//SgExpression* sgElements = deepCopy(sgElement);
+				SgExpression* elemName = buildStringVal(manglElementName);
+
+				// FIXME 1: This will not work for references.  Consider:
+				//
+				//    #include <iostream>
+				//    using namespace std;
+				//
+				//    int i;
+				//    struct T {
+				//        int p;
+				//        int& r;
+				//
+				//        T() : r(i) {}
+				//    };
+				//
+				//    int main() { cout << offsetof( T, r ) << endl; }
+				//
+				// and see discussion (esp. follow ups) at:
+				//    http://gcc.gnu.org/ml/gcc/2003-11/msg00279.html
+				//
+				// build a function call for offsetof(A,d);
+				appendExpression(arg_list, elemName);
+
+				// build  (size_t )(&( *((struct A *)0)).x);
+				ROSE_ASSERT(rtedClass->classDef && rtedClass->classDef->get_declaration());
+				// cerr << " Type: " <<  rtedClass->classDef->get_declaration()->get_type()->class_name() << endl;
+
+
+				//		 cerr << " +++++++++++++ Looking for class : " << rtedClass->classDef->get_declaration()->get_qualified_name().str()
+				//	 << "    found : " << rtedModifiedClass << "   " << rtedModifiedClass->get_declaration()->get_qualified_name().str() << endl;
+
+				// tps (09/04/2009) : Added support to call offset of on C++ classes
+				SgExpression* nullPointer = NULL;
+
+				bool classHasConstructor=hasClassConstructor(rtedClass->classDef->get_declaration());
+
+				// \pp I am not sure why this is set to false here???
+				classHasConstructor=false;
+
+				if (rtedModifiedClass==NULL) {
+					cerr << "rtedModifiedClass==NULL" << endl;
+					// this is a C or C++ class in a source file without constructor
+
+					if ( classHasConstructor==false)
+					{
+					  nullPointer = buildCastExp( buildIntVal(0),
+							                          buildPointerType(rtedClass->classDef->get_declaration()->get_type())
+							                        );
+					}
+					else // or C++ class in a source file with constructor!
+					{
+						// \pp ???
+					  nullPointer = buildCastExp( buildIntVal(1),
+							                          buildPointerType(rtedClass->classDef->get_declaration()->get_type())
+							                        );
+					}
+				}
+				else
+				{
+					// this is a C++ class in a header file
+					ROSE_ASSERT(rtedModifiedClass);
+					nullPointer = buildCastExp( buildIntVal(0),
+							                        buildPointerType(rtedModifiedClass->get_declaration()->get_type())
+							                      );
+					cerr << "################ SOMETHING WRONG ? rtedModifiedClass :" << rtedModifiedClass
+					     << "   rtedClass : " << rtedClass->classDef << endl;
+					cerr << "What is the type : " << rtedModifiedClass->get_declaration()->get_type()->unparseToString() << endl;
 				}
 
-				appendExpression(arg_list, castOp);
-				appendExpression(arg_list, buildSizeOfOp( dotExp ));
+				SgExpression* derefPointer = buildPointerDerefExp(nullPointer);
+				SgVariableDeclaration* varDecl = isSgVariableDeclaration(sgElement);
+				SgClassDefinition* cdeftest = isSgClassDefinition(varDecl->get_parent());
 
-				// add extra type info (e.g. array dimensions)
-				appendDimensionsIfNeeded(arg_list, element);
-			} else {
-				cerr << " Declarationstatement not handled : " << sgElement->class_name() << endl;
-			}
-		}
+        ROSE_ASSERT(cdeftest);
+				cerr << " varDecl->get_parent() : " << varDecl->get_parent()->class_name() << endl;
+				cerr << " rtedModifiedClass : " << rtedModifiedClass << endl;
+				cerr << " cdeftest : " << cdeftest << endl;
 
-		ROSE_ASSERT(symbols.roseRegisterTypeCall);
-		//cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-		SgFunctionRefExp* memRef_r = buildFunctionRefExp( symbols.roseRegisterTypeCall);
-		SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-				arg_list);
-		SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-		//cerr <<"@@@@@ Creating regType for : " << stmt->unparseToString() << endl;
-		//abort();
-		if (origStmt->get_file_info()->isCompilerGenerated())
-		return;
-		if( global_stmt ) {
-			globalFunction->prepend_statement(exprStmt);
-			ROSE_ASSERT(isSgGlobal(globalScope));
-			ROSE_ASSERT(isSgClassDeclaration(origStmt));
-			//mainBody -> prepend_statement( exprStmt );
-			//next we need to find the variableDeclaration
-			// for that class and call:
-			SgVariableDeclaration* stmtVar =
-			getGlobalVariableForClass(isSgGlobal(globalScope),isSgClassDeclaration(origStmt));
-			ROSE_ASSERT(stmtVar);
-			//appendGlobalConstructor(globalScope,origStmt);
-			appendGlobalConstructor(globalScope,stmtVar);
-			appendGlobalConstructorVariable(globalScope,stmtVar);
-		}
-		else {
-			// insert it after if it is a classdefinition, otherwise
-			// if it is a class reference, we do it before
-			// check for assign initializer
-			SgVariableDeclaration* vardecl = isSgVariableDeclaration(stmt);
-			bool insertBefore=true;
-			if (vardecl) {
-				SgDeclarationStatement * sdecl = vardecl->get_baseTypeDefiningDeclaration ();
-				if (isSgClassDeclaration(sdecl))
-				insertBefore=false;
+				if (varDecl) {
+					SgVarRefExp* varref = buildVarRefExp(varDecl);
+
+					// append the base type (if any) of pointers and arrays
+					SgType* type = varDecl->get_variables()[ 0 ]->get_type();
+
+					appendExpression( arg_list, ctorTypeDesc(mkTypeInformation(type, true, false)) );
+
+					SgExpression* dotExp = buildDotExp(derefPointer,varref);
+					SgExpression* andOp = buildAddressOfOp(dotExp);
+					SgExpression* castOp = NULL;
+					if (rtedModifiedClass==NULL && classHasConstructor==false)
+					{
+					  castOp = buildCastExp(andOp, symbols.size_t_member);
+					}
+					else
+					{
+						SgExpression* minus = buildSubtractOp(andOp, buildIntVal(0));
+						castOp = buildCastExp(minus, symbols.size_t_member);
+					}
+
+					appendExpression(arg_list, castOp);
+					appendExpression(arg_list, buildSizeOfOp( dotExp ));
+
+					// add extra type info (e.g. array dimensions)
+					appendDimensionsIfNeeded(arg_list, element);
+				} else {
+					cerr << " Declarationstatement not handled : " << sgElement->class_name() << endl;
+				}
 			}
-			// is it a struct (classdecl) below the variable? then append afterwards
-			// else before
-			cerr << "isSgClassDefinition(stmt): " << isSgClassDefinition(stmt) <<
-			" isSgClassDeclaration(stmt): " << isSgClassDeclaration(stmt) <<
-			"   :: " << stmt->class_name() <<
-			"   " << stmt->unparseToString()<<endl;
-			//			abort();
-			if (insertBefore)
-			  insertStatementBefore( stmt, exprStmt );
-			else
-			  insertStatementAfter( stmt, exprStmt );
-		}
+
+			ROSE_ASSERT(symbols.roseRegisterTypeCall);
+			//cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
+			SgFunctionRefExp* memRef_r = buildFunctionRefExp( symbols.roseRegisterTypeCall);
+			SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
+					arg_list);
+			SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+			//cerr <<"@@@@@ Creating regType for : " << stmt->unparseToString() << endl;
+			//abort();
+
+			// \pp why is the following line here?
+			//     we should nail out earlier if we are not interesed ...
+			if (origStmt->get_file_info()->isCompilerGenerated())
+			return;
+
+			if( global_stmt ) {
+				globalFunction->prepend_statement(exprStmt);
+				ROSE_ASSERT(isSgGlobal(globalScope));
+				ROSE_ASSERT(isSgClassDeclaration(origStmt));
+				//mainBody -> prepend_statement( exprStmt );
+				//next we need to find the variableDeclaration
+				// for that class and call:
+				SgVariableDeclaration* stmtVar =
+				getGlobalVariableForClass(isSgGlobal(globalScope),isSgClassDeclaration(origStmt));
+				ROSE_ASSERT(stmtVar);
+				//appendGlobalConstructor(globalScope,origStmt);
+				appendGlobalConstructor(globalScope,stmtVar);
+				appendGlobalConstructorVariable(globalScope,stmtVar);
+			}
+			else {
+				// insert it after if it is a classdefinition, otherwise
+				// if it is a class reference, we do it before
+				// check for assign initializer
+				SgVariableDeclaration* vardecl = isSgVariableDeclaration(stmt);
+				bool insertBefore=true;
+				if (vardecl) {
+					SgDeclarationStatement * sdecl = vardecl->get_baseTypeDefiningDeclaration ();
+					if (isSgClassDeclaration(sdecl))
+					insertBefore=false;
+				}
+				// is it a struct (classdecl) below the variable? then append afterwards
+				// else before
+				cerr << "isSgClassDefinition(stmt): " << isSgClassDefinition(stmt) <<
+				" isSgClassDeclaration(stmt): " << isSgClassDeclaration(stmt) <<
+				"   :: " << stmt->class_name() <<
+				"   " << stmt->unparseToString()<<endl;
+				//			abort();
+				if (insertBefore)
+				  insertStatementBefore( stmt, exprStmt );
+				else
+				  insertStatementAfter( stmt, exprStmt );
+			}
 	}
-	else {
+	else
+	{
 		cerr
 		<< "RuntimeInstrumentation :: Surrounding Block is not Block! : "
 		<< name << " : " << scope->class_name() << "    stmt:" << stmt->unparseToString() << endl;

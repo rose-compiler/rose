@@ -8,10 +8,43 @@
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 
+inline
+SgScopeStatement* get_scope(SgInitializedName* initname)
+{
+  return initname ? initname->get_scope() : NULL;
+}
 
 /// \brief  finds the first parent that is a SgStatement node
 /// \return the parent statement or NULL if there is none
 SgStatement* getSurroundingStatement(SgNode* n);
+
+/// \brief   returns the base type for arrays and pointers
+/// \param t a type
+/// \return  the base_type, if it exists; t otherwise
+/// \note    type-modifiers are currently not skipped (should they be?)
+///          e.g., int* volatile X[] = /* ... */;
+SgType* get_arrptr_base(SgType* t);
+
+/// \brief   returns true, iff name refers to a char-array modifying function (e.g., strcpy, etc.)
+bool isStringModifyingFunctionCall(const std::string& name);
+
+/// \brief Check if a function call is a call to a function on our ignore list.
+/// \details We do not want to check those functions right now. This check makes
+///          sure that we dont push variables on the stack for functions that
+///          we dont check and hence the generated code is cleaner
+bool isFunctionCallOnIgnoreList(const std::string& name);
+
+/// \brief Check if a function call is a call to an IO function
+bool isFileIOFunctionCall(const std::string& name);
+
+/// \brief tests whether type is a C++ filestream (i.e., std::fstream)
+bool isFileIOVariable(SgType* type);
+
+/// \brief tests whether the declaration is a constructor
+bool isConstructor( SgDeclarationStatement* decl );
+
+//
+// helper functions to insert rted checks
 
 /// \brief   creates a statement node for calling the function checker with some arguments
 ///          and adds the check before the statement where checked_node is a part of
@@ -27,8 +60,11 @@ SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, S
 /// \return  the created statement node
 SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args, const std::string& comment);
 
-/// \brief   returns true, iff name refers to a char-array modifying function (e.g., strcpy, etc.)
-bool isStringModifyingFunctionCall(const std::string& name);
+//
+// functions that create arguments passed to the rted runtime system
+
+/// \brief   creates an aggregate initializer expression with a given type
+SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType* type);
 
 /* -----------------------------------------------------------
  * tps : 6March 2009: This class adds transformations
@@ -155,21 +191,8 @@ private:
     * Appends all of the constructors of @c type to @c constructors.  The
     * constructors are those member functions whose name matches that of the
     * type.
-    *
-    * @return @c constructors.
     */
-   SgDeclarationStatementPtrList& appendConstructors(
-         SgClassType* type, SgDeclarationStatementPtrList& constructors );
-   SgDeclarationStatementPtrList& appendConstructors(
-         SgClassDefinition* cdef, SgDeclarationStatementPtrList& constructors );
-   /**
-    * @return @c true @b iff @c type has any explicit constructors.  In such
-    * cases, it is necessary to be more careful about informing the runtime
-    * system of memory allocation.
-    */
-   bool hasNonEmptyConstructor( SgClassType* type );
-
-   bool isConstructor( SgFunctionDeclaration* fndecl );
+   void appendConstructors(SgClassDefinition* cdef, SgDeclarationStatementPtrList& constructors);
 
    /**
     * @return @c true @b iff @c exp is a descendent of an assignment expression
@@ -190,6 +213,10 @@ public:
 
    void appendFileInfo( SgExprListExp* arg_list, SgNode* n);
    void appendFileInfo( SgExprListExp* arg_list, Sg_File_Info* n);
+
+   /// appends a function signature (typecount, returntype, arg1, ... argn)
+   /// to the argument list.
+   void appendSignature( SgExprListExp* arg_list, SgType* return_type, const SgTypePtrList& param_types);
 private:
 
    SgType* resolveTypedefs( SgType* type );
@@ -215,7 +242,37 @@ private:
    // ********************* Deep copy classes in headers into source **********
 
 
+public:
+    /// \brief   creates a "C-style constructor" from an aggregate initializer
+    /// \details used, when aggregated values are passed as function arguments
+    /// \code
+    ///          foo( (CStyleCtorType) { 'a', "b", 3 } );
+    /// \endcode
+    SgCastExp* ctorTypeDesc(SgAggregateInitializer* exp) const;
 
+    /// \brief   creates a variable length array (VLA) "constructor"
+    ///          from a list of TypeDesc initializers.
+    /// \details used, when the VLA is passed as function arguments
+    /// \code
+    ///          foo( (TypeDesc[]) { tdobj1, tdobj2 } );
+    /// \endcode
+    SgCastExp* ctorTypeDescList(SgAggregateInitializer* exp) const;
+
+    /// \brief   creates a "C-style constructor" for a rted_SourceInfo object
+    ///          from an aggregate initializer
+    SgCastExp* ctorSourceInfo(SgAggregateInitializer* exp) const;
+
+    /// \brief   creates
+    SgAggregateInitializer* mkAddressDesc(size_t indirection_level) const;
+
+    /// \brief returns the canonical pointer to the rted_TypeDesc type
+    SgType* roseTypeDesc() const    { return NULL; /* symbols.roseTypeDesc */ }
+
+    /// \brief returns the canonical pointer to the rted_AddressDesc type
+    SgType* roseAddressDesc() const { return NULL; /* symbols.roseAddressDesc */ }
+
+    /// \brief returns the canonical pointer to the rted_FileInfo type
+    SgType* roseFileInfo() const    { return NULL; /* symbols.roseFileInfo */ }
 
 public:
    void insertMainCloseCall(SgStatement* main);
@@ -237,8 +294,7 @@ public:
          RTedArray* array,SgStatement* stmt);
 
    void insertArrayAccessCall(SgExpression* arrayExp, RTedArray* value);
-   void insertArrayAccessCall(SgStatement* stmt,
-         SgExpression* arrayExp, RTedArray* array);
+   void insertArrayAccessCall(SgStatement* stmt, SgExpression* arrayExp, RTedArray* array);
 
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDot(SgDotExp* dot , std::string str, SgVarRefExp* varRef);
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDotStar(SgDotStarOp* dot , std::string str, SgVarRefExp* varRef);
@@ -258,9 +314,6 @@ public:
    void insertIOFuncCall(RtedArguments* args);
    void visit_isFunctionCall(SgNode* n);
    void visit_isFunctionDefinition(SgNode* n);
-   int getDimensionForFuncCall(std::string name);
-   bool isFunctionCallOnIgnoreList(std::string name);
-   bool isFileIOFunctionCall(std::string name) ;
    SgExpression* getVariableLeftOfAssignmentFromChildOnRight(SgNode* n);
 
 
@@ -280,9 +333,8 @@ public:
 private:
    // simple scope handling
    std::string scope_name( SgNode* n);
-   void bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of_scope );
    void bracketWithScopeEnterExit( SgFunctionDefinition* fndef );
-   void bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_Info* exit_file_info );
+   void bracketWithScopeEnterExit( SgStatement* stmt_or_block, Sg_File_Info* exit_file_info );
 
 
    // is it a variable?
@@ -316,7 +368,6 @@ private:
    void insertAccessVariable(SgThisExp* varRefE,SgExpression* derefExp);
    void insertAccessVariable(SgScopeStatement* scope,
          SgExpression* derefExp, SgStatement* stmt, SgExpression* varRefE);
-   bool isFileIOVariable(SgType* type);
    void addFileIOFunctionCall(SgVarRefExp* n, bool read);
    void insertCheckIfThisNull(SgThisExp* texp);
 
@@ -372,12 +423,9 @@ public:
    SgProject* parse(int argc, char** argv);
    void loadFunctionSymbols(SgProject* project);
 
-   void appendTypeInformation(SgExprListExp* arg_list, SgInitializedName* initName);
-   void appendTypeInformation(SgExprListExp* arg_list, SgInitializedName* initName, SgType* type);
-   void appendTypeInformation(SgExprListExp* arg_list, SgType* type, bool resolve_class_names = true, bool array_to_pointer=false);
-
-   /// \brief appends an Address descriptor to the argument list
-   void appendAddressDesc(SgExprListExp* arg_list, size_t indirection_level);
+   SgAggregateInitializer* mkTypeInformation(SgInitializedName* initName);
+   SgAggregateInitializer* mkTypeInformation(SgInitializedName* initName, SgType* type);
+   SgAggregateInitializer* mkTypeInformation(SgType* type, bool resolve_class_names = true, bool array_to_pointer=false);
 
    /// \brief appends the array dimensions to the argument list
    void appendDimensions(SgExprListExp* arg_list, RTedArray*);
@@ -386,8 +434,8 @@ public:
    ///        (i.e., rce is a RtedClassArrayElement)
    void appendDimensionsIfNeeded(SgExprListExp* arg_list, RtedClassElement* rce);
 
-   void appendAddressAndSize(SgExprListExp* arg_list, AppendKind ak, SgScopeStatement* scope, SgExpression* varRef, SgClassDefinition* cd=NULL);
-   void appendAddressAndSize(SgExprListExp* arg_list, AppendKind ak, SgExpression* exp, SgType* type, SgClassDefinition* isUnionClass=NULL);
+   void appendAddressAndSize(SgExprListExp* arg_list, AppendKind ak, SgScopeStatement* scope, SgExpression* varRef, SgClassDefinition* cd);
+   void appendAddressAndSize(SgExprListExp* arg_list, AppendKind ak, SgExpression* exp, SgType* type, SgClassDefinition* isUnionClass);
 
    void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
    void appendBaseType( SgExprListExp* arg_list, SgType* type );
@@ -416,7 +464,7 @@ public:
 
    bool isGlobalExternVariable(SgStatement* stmt);
 
-   void insertRegisterTypeCall(RtedClassDefinition* rtedClass);
+   void insertRegisterTypeCall(RtedClassDefinition* const rtedClass);
    void visit_isClassDefinition(SgClassDefinition* cdef);
 
 

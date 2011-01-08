@@ -82,20 +82,26 @@ void rted_IOFunctionCall( const char* fname,
 												  SourceInfo si
 												);
 
-void rted_FunctionCall(size_t count, ...);
+void rted_FunctionCall( const char* name,
+												const char* /*stmtStr*/,
+												const char* /*leftVar*/,
+												SourceInfo si,
+												size_t argc,
+												const char** args
+											);
+
 /***************************** FUNCTION CALLS *************************************/
 
 
 
 /***************************** MEMORY FUNCTIONS *************************************/
-void
-rted_FreeMemory( void* ptr,              ///< the address that is about to be freed
-                 int fromMalloc,         ///< whether the free expects to be paired with
-                                         ///  memory allocated via 'malloc'.  In short,
-                                         ///  whether this is a call to free (1) or delete
-                                         ///  (0)
-                 SourceInfo si
-							 );
+void rted_FreeMemory( void* ptr,       ///< the address that is about to be freed
+                      int fromMalloc,  ///< whether the free expects to be paired with
+                                       ///  memory allocated via 'malloc'.  In short,
+                                       ///  whether this is a call to free (1) or delete
+                                       ///  (0)
+                      SourceInfo si
+							      );
 
 
 void rted_ReallocateMemory( void* ptr, size_t size, SourceInfo si );
@@ -127,11 +133,11 @@ extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 
 /***************************** VARIABLES *************************************/
 
-int rted_CreateVariable( const char* name,
-												 const char* mangled_name,
-												 TypeDesc td,
+int rted_CreateVariable( TypeDesc td,
 												 Address address,
 												 size_t size,
+												 const char* name,
+												 const char* mangled_name,
 												 int init,
 												 const char* class_name,
 												 SourceInfo si
@@ -187,14 +193,22 @@ void rted_AccessVariable( Address address,
 													SourceInfo si
 				                );
 
-void rted_CheckIfThisNULL( void* thisExp, SourceInfo si);
+void rted_CheckIfThisNULL( void* thisExp, SourceInfo si );
 /***************************** VARIABLES *************************************/
 
 
 
 /***************************** TYPES *************************************/
 // handle structs and classes
-void rted_RegisterTypeCall(size_t count, ...);
+void rted_RegisterTypeCall( const char* nameC,
+                            const char* /* typeC */,
+														const char* isUnionType,
+														size_t sizeC,
+														SourceInfo si,
+														size_t argc
+														...
+													);
+
 /***************************** TYPES *************************************/
 
 

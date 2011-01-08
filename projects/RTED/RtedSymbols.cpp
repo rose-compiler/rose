@@ -4,7 +4,22 @@
 bool RTEDDEBUG() { return false; }
 
 static inline
-void lookup(SgScopeStatement& n, const std::string& name, SgFunctionSymbol*& res)
+SgFunctionSymbol*
+find_sym(SgScopeStatement& n, const std::string& name, SgFunctionSymbol*)
+{
+  return n.lookup_function_symbol(name);
+}
+
+static inline
+SgClassSymbol*
+find_sym(SgScopeStatement& n, const std::string& name, SgClassSymbol*)
+{
+  return n.lookup_class_symbol(name);
+}
+
+template <class T>
+static inline
+void lookup(SgScopeStatement& n, const std::string& name, T*& res)
 {
   static const std::string prefix("rted_");
 
@@ -12,7 +27,7 @@ void lookup(SgScopeStatement& n, const std::string& name, SgFunctionSymbol*& res
 
   sym.append(name);
 
-  SgFunctionSymbol* func = n.lookup_function_symbol(sym);
+  SgFunctionSymbol* func = find_sym(n, sym, res);
   if (func == NULL) return;
 
   res = func;

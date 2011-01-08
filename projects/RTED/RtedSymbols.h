@@ -7,10 +7,7 @@ bool RTEDDEBUG();
  * tps : 6March 2009: This class adds transformations
  * so that runtime errors are caught at runtime before they happen
  * -----------------------------------------------------------*/
-class RtedSymbols: public AstSimpleProcessing {
-private:
-
-public:
+struct RtedSymbols : AstSimpleProcessing {
 	SgFunctionSymbol* roseCreateHeapArr;
 	SgFunctionSymbol* roseCreateHeapPtr;
 	SgFunctionSymbol* roseAccessHeap;
@@ -31,7 +28,10 @@ public:
 	SgFunctionSymbol* roseIOFunctionCall;
 	SgFunctionSymbol* roseRegisterTypeCall;
 	SgFunctionSymbol* roseCheckIfThisNULL;
-	SgType* size_t_member;
+
+  // \todo add other rted runtime data structures
+	SgClassSymbol*    roseTypeDesc;
+	SgType*           size_t_member;
 
 	RtedSymbols()
   : roseCreateHeapArr(NULL),
@@ -53,15 +53,12 @@ public:
     roseIOFunctionCall(NULL),
     roseRegisterTypeCall(NULL),
     roseCheckIfThisNULL(NULL),
+		roseTypeDesc(NULL),
     size_t_member(NULL)
 	{}
 
-	virtual ~RtedSymbols() {
-	}
-
 	// Traverse all nodes and check properties
 	virtual void visit(SgNode* n) ;
-
 };
 
 #endif

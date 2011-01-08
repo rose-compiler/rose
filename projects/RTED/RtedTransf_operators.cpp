@@ -39,18 +39,12 @@ void RtedTransformation::insert_pointer_change( SgExpression* exp ) {
     SgStatement* stmt = getSurroundingStatement( exp );
     ROSE_ASSERT( stmt );
 
-    SgExpression* operand = NULL;
-    if( u_op )
-        operand = u_op -> get_operand();
-    else if( b_op )
-        operand = b_op -> get_lhs_operand();
-
+    SgExpression*  operand = u_op ? u_op -> get_operand() : operand = b_op -> get_lhs_operand();
     SgExprListExp* mp_args = buildExprListExp();
+
+    appendExpression( mp_args, ctorTypeDesc(mkTypeInformation(NULL, operand -> get_type())) );
     appendAddress( mp_args, operand );
-    // gives us type, base_type, indirection_level
-    appendTypeInformation( mp_args, NULL, operand -> get_type() );
     appendClassName( mp_args, operand -> get_type() );
-    // gives us filename, lineno, linetransformed
     appendFileInfo( mp_args, exp );
 
     SgExprStatement* mp_call =

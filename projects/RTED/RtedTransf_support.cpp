@@ -26,9 +26,9 @@ const std::string RtedForStmtProcessed::Key( "Rted::ForStmtProcessed" );
  ****************************************/
 SgStatement* getSurroundingStatement(SgNode* n)
 {
-  SgNode* stat = n;
+  ROSE_ASSERT(n);
 
-  while (!isSgStatement(stat) && !isSgProject(stat))
+  while (!isSgStatement(n) && !isSgProject(n))
   {
     //~ if (stat->get_parent() == NULL)
     //~ {
@@ -36,12 +36,23 @@ SgStatement* getSurroundingStatement(SgNode* n)
     //~        <<"  :" << stat->unparseToString() << endl;
     //~ }
 
-    stat = stat->get_parent();
-    ROSE_ASSERT(stat);
+    n = n->get_parent();
+    ROSE_ASSERT(n);
   }
 
-  return isSgStatement(stat);
+  return isSgStatement(n);
 }
+
+SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType* type)
+{
+  SgAggregateInitializer* res = buildAggregateInitializer(initexpr, type);
+
+  // not sure whether the explicit braces flag needs to be set
+  res->set_need_explicit_braces(true);
+
+  return res;
+}
+
 
 SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args)
 {
@@ -72,6 +83,45 @@ checkBeforeParentStmt(SgExpression* checked_node, SgFunctionSymbol* checker, SgE
   return checkBeforeStmt(getSurroundingStatement(checked_node), checker, args);
 }
 
+
+//
+//
+
+SgCastExp*
+RtedTransformation::ctorTypeDesc(SgAggregateInitializer* exp) const
+{
+  ROSE_ASSERT(exp->get_initializers()->get_expressions().size() == 3);
+
+  return buildCastExp(exp, roseTypeDesc(), SgCastExp::e_C_style_cast);
+}
+
+SgCastExp*
+RtedTransformation::ctorTypeDescList(SgAggregateInitializer* exp) const
+{
+  SgType* type = buildArrayType(roseTypeDesc(), NULL);
+
+  return buildCastExp(exp, type, SgCastExp::e_C_style_cast);
+}
+
+SgCastExp*
+RtedTransformation::ctorSourceInfo(SgAggregateInitializer* exp) const
+{
+  ROSE_ASSERT(exp->get_initializers()->get_expressions().size() == 3);
+
+  return buildCastExp(exp, roseFileInfo(), SgCastExp::e_C_style_cast);
+}
+
+
+SgAggregateInitializer*
+RtedTransformation::mkAddressDesc(size_t indirection_level) const
+{
+  SgExprListExp* initexpr = buildExprListExp();
+
+  appendExpression(initexpr, buildIntVal(indirection_level));
+  appendExpression(initexpr, buildIntVal(0 /* upc_shared_mask */));
+
+  return genAggregateInitializer(initexpr, roseAddressDesc());
+}
 
 
 SgExpression*
@@ -181,60 +231,43 @@ RtedTransformation::isUsedAsLvalue( SgExpression* exp ) {
     );
 }
 
+bool isConstructor( SgDeclarationStatement* decl )
+{
+    // \note \tmp \pp the next linw was moved in, might not be needed
+    //                for calls from ExecuteTRansformations
+    SgMemberFunctionDeclaration* mfun = isSgMemberFunctionDeclaration( decl->get_definingDeclaration() );
 
-SgDeclarationStatementPtrList& RtedTransformation::appendConstructors(
-        SgClassType* type,  SgDeclarationStatementPtrList& constructors) {
-
-    SgClassDeclaration* decl
-        = isSgClassDeclaration(
-                type -> get_declaration() -> get_definingDeclaration() );
-    ROSE_ASSERT( decl );
-
-    SgClassDefinition* cdef = decl -> get_definition();
-    ROSE_ASSERT( cdef );
-
-    return appendConstructors( cdef, constructors );
-}
-
-SgDeclarationStatementPtrList& RtedTransformation::appendConstructors(
-        SgClassDefinition* cdef,  SgDeclarationStatementPtrList& constructors) {
-
-
-    SgDeclarationStatementPtrList& members = cdef -> get_members();
-    BOOST_FOREACH( SgDeclarationStatement* member, members ) {
-        SgMemberFunctionDeclaration* mfun
-            = isSgMemberFunctionDeclaration(
-                member -> get_definingDeclaration() );
-
-        if( isConstructor( mfun ))
-            constructors.push_back( mfun );
-    }
-
-    return constructors;
-}
-
-bool RtedTransformation::isConstructor( SgFunctionDeclaration* fndecl ) {
-    SgMemberFunctionDeclaration* mfun = isSgMemberFunctionDeclaration( fndecl );
     if( !mfun )
         // non member functions certainly aren't constructors
         return false;
 
     SgClassDeclaration* cdef = mfun -> get_associatedClassDeclaration();
 
+    // \pp I am not sure why this should work ...
+    //     e.g., why should be the mangeled name of the constructor
+    //     (which encodes parameters and types) be the same as the class
+    //     name?
+    // check hasClassConstructor for another variant ...
+
     // a constructor is a member function whose name matches that
-    return (
-        mfun -> get_mangled_name() == cdef -> get_mangled_name()
-        // SgClassDefinition.get_mangled_name can return the
-        // non-mangled name!
-        || mfun -> get_name() == cdef -> get_mangled_name()
-    );
+    return (  mfun -> get_mangled_name() == cdef -> get_mangled_name()
+              // SgClassDefinition.get_mangled_name can return the
+              // non-mangled name!
+           || mfun -> get_name() == cdef -> get_mangled_name()
+           );
 }
 
-bool RtedTransformation::hasNonEmptyConstructor( SgClassType* type ) {
-    SgDeclarationStatementPtrList constructors;
-    appendConstructors( type, constructors );
+static
+bool isNonConstructor(SgDeclarationStatement* decl)
+{
+  return !isConstructor(decl);
+}
 
-    return constructors.size() > 0;
+void RtedTransformation::appendConstructors(SgClassDefinition* cdef, SgDeclarationStatementPtrList& constructors)
+{
+  SgDeclarationStatementPtrList& members = cdef -> get_members();
+
+  std::remove_copy_if(members.begin(), members.end(), std::back_inserter(constructors), isNonConstructor);
 }
 
 bool RtedTransformation::isNormalScope( SgNode* n ) {
@@ -251,9 +284,8 @@ bool
 RtedTransformation::isInInstrumentedFile( SgNode* n ) {
 	ROSE_ASSERT( n );
 	std::string file_name = n -> get_file_info() -> get_filename();
-	return !(
-		rtedfiles -> find( file_name ) == rtedfiles -> end()
-	);
+
+  return rtedfiles -> find( file_name ) != rtedfiles -> end();
 }
 
 SgVarRefExp*
@@ -643,55 +675,63 @@ void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, SgNode* node)
 
 void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, Sg_File_Info* file_info)
 {
-    SgExpression* filename = buildStringVal( file_info->get_filename() );
-    SgExpression* linenr = buildIntVal( file_info->get_line() );
-    SgExpression* linenrTransformed = buildOpaqueVarRefExp("__LINE__");
+    SgExpression*           filename = buildStringVal( file_info->get_filename() );
+    SgExpression*           linenr = buildIntVal( file_info->get_line() );
+    SgExpression*           linenrTransformed = buildOpaqueVarRefExp("__LINE__");
+    SgExprListExp*          fiArgs = buildExprListExp();
 
-    appendExpression( arg_list, filename );
-    appendExpression( arg_list, linenr );
-    appendExpression( arg_list, linenrTransformed );
+    appendExpression( fiArgs, filename );
+    appendExpression( fiArgs, linenr );
+    appendExpression( fiArgs, linenrTransformed );
+
+    SgAggregateInitializer* fiCtorArg = genAggregateInitializer(fiArgs, roseFileInfo());
+
+    appendExpression( arg_list, ctorSourceInfo(fiCtorArg) );
 }
 
 
-// helpers
-static
-SgType* get_base_type(SgType* t)
+SgType* get_arrptr_base(SgType* t)
 {
   SgPointerType* sgptr = isSgPointerType(t);
   if (sgptr != NULL) return sgptr;
 
   SgArrayType*   sgarr = isSgArrayType(t);
-  return sgarr;
+  if (sgarr != NULL) return sgarr;
+
+  return t;
 }
 
+
+/// \brief  counts the number of indirection layers (i.e., Arrays, Pointers)
+///         between a type and the first non indirect type.
+/// \return A type and the length of indirections
 static
 std::pair<SgType*, size_t>
 indirections(SgType* base_type)
 {
   std::pair<SgType*, size_t> res(base_type, 0);
 
-  base_type = get_base_type(base_type);
-  while (base_type != NULL)
+  base_type = get_arrptr_base(base_type);
+  while (base_type != res.first)
   {
     res.first = base_type;
     ++res.second;
 
-    base_type = get_base_type(base_type);
+    base_type = get_arrptr_base(base_type);
   }
 
   return res;
 }
 
 
-void RtedTransformation::appendTypeInformation( SgExprListExp* arg_list, SgInitializedName* initName) {
-    // \pp was: if( !initName ) return;
-
+SgAggregateInitializer* RtedTransformation::mkTypeInformation(SgInitializedName* initName) {
+    // \pp was: if ( !initName ) return;
     ROSE_ASSERT(initName != NULL);
 
-    appendTypeInformation( arg_list, initName, initName -> get_type() );
+    return mkTypeInformation( initName, initName -> get_type() );
 }
 
-void RtedTransformation::appendTypeInformation( SgExprListExp* arg_list, SgInitializedName* initName, SgType* type ) {
+SgAggregateInitializer* RtedTransformation::mkTypeInformation(SgInitializedName* initName, SgType* type ) {
     // arrays in parameters decay to pointers, so we shouldn't
     // treat them as stack arrays
 	bool array_decay = (  initName
@@ -699,25 +739,22 @@ void RtedTransformation::appendTypeInformation( SgExprListExp* arg_list, SgIniti
                      && type->class_name() == "SgArrayType"
                      );
 
-	appendTypeInformation( arg_list, type, false, array_decay );
+	return mkTypeInformation( type, false, array_decay );
 }
 
-void RtedTransformation::appendTypeInformation( SgExprListExp* arg_list,
-                                                SgType* type,
-                                                bool resolve_class_names,
-                                                bool array_to_pointer
-                                              )
+SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
+                                                               bool resolve_class_names,
+                                                               bool array_to_pointer
+                                                             )
 {
   ROSE_ASSERT(type);
 
   // we always resolve reference type information
   if (isSgReferenceType( type )) {
-      appendTypeInformation(
-          arg_list,
-          isSgReferenceType( type ) -> get_base_type(),
-          resolve_class_names,
-          array_to_pointer );
-      return;
+      return mkTypeInformation( isSgReferenceType( type ) -> get_base_type(),
+                                resolve_class_names,
+                                array_to_pointer
+                              );
   }
 
   std::pair<SgType*, size_t> indir_desc = indirections(type);
@@ -747,16 +784,25 @@ void RtedTransformation::appendTypeInformation( SgExprListExp* arg_list,
   if (array_to_pointer && type_string == "SgArrayType")
     type_string = "SgPointerType";
 
-  appendExpression( arg_list, buildStringVal( type_string ));
-  appendExpression( arg_list, buildStringVal( base_type_string ));
-  appendAddressDesc( arg_list, indirection_level );
+  SgExprListExp*             initexpr = buildExprListExp();
+
+  appendExpression( initexpr, buildStringVal( type_string ));
+  appendExpression( initexpr, buildStringVal( base_type_string ));
+  appendExpression( initexpr, mkAddressDesc(indirection_level) );
+
+  // \note when the typedesc object is added to an argument list, it requires
+  //       an explicit type cast. This is not always required (e.g., when we
+  //       create a list of typedesc objects, b/c then the type cast is added
+  //       through the type cast on top of the typedecl list.
+  //
+  //       rted_CreateHeapArr((rted_typedesc) { "SgArrayType", "BaseType", { 1, 0 } }, ...
+  //     but:
+  //       rted_CreateHeapArr((rted_typedesc[]) { /* no typecast */ { "SgArrayType", "BaseType", { 1, 0 } }, { "SgArrayType", "BaseType", { 1, 0 } } }, ...
+
+  return genAggregateInitializer(initexpr, roseTypeDesc());
 }
 
-void
-RtedTransformation::appendAddressDesc(SgExprListExp* arg_list, size_t indirection_level)
-{
-  // \pp \todo
-}
+
 
 void
 RtedTransformation::appendDimensions(SgExprListExp* arg_list, RTedArray* arr)
@@ -806,12 +852,13 @@ void RtedTransformation::appendAddressAndSize( SgExprListExp* arg_list,
 #endif
 
     SgExpression* exp = varRefE;
+
     if ( isSgClassDefinition(scope) ) {
         // member -> &( var.member )
         exp = getUppermostLvalue( varRefE );
     }
-    SgType* type  = NULL;
-    if (varRefE) type=varRefE -> get_type();
+
+    SgType* type = (varRefE ? varRefE -> get_type() : NULL);
 
     appendAddressAndSize( arg_list, am, exp, type, unionClass );
 }
