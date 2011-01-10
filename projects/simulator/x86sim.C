@@ -2274,6 +2274,11 @@ EmulationPolicy::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
 void
 EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t semun_va)
 {
+    int version = cmd & 0x0100/*IPC_64*/;
+    cmd &= ~0x0100;
+
+    ROSE_ASSERT(version!=0);
+
     union semun_32 {
         uint32_t val;
         uint32_t ptr;
@@ -2289,19 +2294,18 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
         writeGPR(x86_gpr_ax, -EFAULT);
         return;
     }
+    
 
     switch (cmd) {
         case 3:         /* IPC_INFO */
         case 19: {      /* SEM_INFO */
-            ROSE_ASSERT(!"sys_semctl(IPC_INFO|SEM_INFO) is not tested yet. [RPM 2011-01-07]");
-
             seminfo host_seminfo;
+#ifdef SYS_ipc /* i686 */
             semun_native host_semun;
             host_semun.ptr = &host_seminfo;
-#ifdef SYS_ipc /* i686 */
             int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, &host_semun);
 #else
-            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_semun);
+            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_seminfo);
 #endif
             if (-1==result) {
                 writeGPR(x86_gpr_ax, -errno);
@@ -2330,15 +2334,13 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
 
         case 2:         /* IPC_STAT */
         case 18: {      /* SEM_STAT */
-            ROSE_ASSERT(!"sys_semctl(IPC_STAT|SEM_STAT) is not tested yet. [RPM 2011-01-07]");
-
             semid_ds host_ds;
+#ifdef SYS_ipc /* i686 */
             semun_native semun;
             semun.ptr = &host_ds;
-#ifdef SYS_ipc /* i686 */
             int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, &semun);
 #else
-            int result = syscall(SYS_semctl, semid, semnum, cmd, &semun);
+            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
 #endif
             if (-1==result) {
                 writeGPR(x86_gpr_ax, -errno);
@@ -2368,20 +2370,82 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
                 writeGPR(x86_gpr_ax, -EFAULT);
                 return;
             }
-
+                        
             writeGPR(x86_gpr_ax, result);
             break;
         };
 
-        case 1:         /* IPC_SET */
-        case 13:        /* GETALL */
+        case 1: {       /* IPC_SET */
+            semid64_ds_32 guest_ds;
+            if (sizeof(guest_ds)!=map->read(&guest_ds, guest_semun.ptr, sizeof(guest_ds))) {
+                writeGPR(x86_gpr_ax, -EFAULT);
+                return;
+            }
+#ifdef SYS_ipc  /* i686 */
+            semun_native semun;
+            semun.ptr = &guest_ds;
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, &semun);
+#else           /* amd64 */
+            semid_ds host_ds;
+            host_ds.sem_perm.__key = guest_ds.sem_perm.key;
+            host_ds.sem_perm.uid = guest_ds.sem_perm.uid;
+            host_ds.sem_perm.gid = guest_ds.sem_perm.gid;
+            host_ds.sem_perm.cuid = guest_ds.sem_perm.cuid;
+            host_ds.sem_perm.cgid = guest_ds.sem_perm.cgid;
+            host_ds.sem_perm.mode = guest_ds.sem_perm.mode;
+            host_ds.sem_perm.__pad1 = guest_ds.sem_perm.pad1;
+            host_ds.sem_perm.__seq = guest_ds.sem_perm.seq;
+            host_ds.sem_perm.__pad2 = guest_ds.sem_perm.pad2;
+            host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused1;
+            host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused2;
+            host_ds.sem_otime = guest_ds.sem_otime;
+            host_ds.__unused1 = guest_ds.unused1;
+            host_ds.sem_ctime = guest_ds.sem_ctime;
+            host_ds.__unused2 = guest_ds.unused2;
+            host_ds.sem_nsems = guest_ds.sem_nsems;
+            host_ds.__unused3 = guest_ds.unused3;
+            host_ds.__unused4 = guest_ds.unused4;
+            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
+#endif
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            break;
+        }
+
+        case 13: {      /* GETALL */
+            semid_ds host_ds;
+            int result = semctl(semid, -1, IPC_STAT, &host_ds);
+            if (-1==result) {
+                writeGPR(x86_gpr_ax, -errno);
+                return;
+            }
+            uint16_t *sem_values = (uint16_t*)my_addr(guest_semun.ptr, sizeof(uint16_t)*host_ds.sem_nsems);
+            if (!sem_values) {
+                writeGPR(x86_gpr_ax, -EFAULT);
+                return;
+            }
+#ifdef SYS_ipc  /* i686 */
+            semun_native semun;
+            semun.ptr = sem_values;
+            result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, &semun);
+#else
+            result = syscall(SYS_semctl, semid, semnum, cmd, sem_values);
+#endif
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            break;
+        }
+
+        case 14: {      /* GETNCNT */
+            int result = semctl(semid, semnum, cmd);
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            break;
+        }
+
         case 12:        /* GETVAL */
         case 11:        /* GETPID */
-        case 14:        /* GETNCNT */
         case 15:        /* GETZCNT */
         case 16:        /* SETVAL */
         case 17: {      /* SETALL */
-            ROSE_ASSERT(!"sys_semctl(IPC_SET et al) are not implemented yet. [RPM 2011-01-07]");
+            ROSE_ASSERT(!"sys_semctl() subcommand is not implemented yet. [RPM 2011-01-07]");
             writeGPR(x86_gpr_ax, -ENOSYS);
             return;
         }
