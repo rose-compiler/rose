@@ -138,28 +138,21 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.117.msgctl.01.c \
 		   $(srcdir)/tests/syscall_tst.117.msgctl.02.c \
 		   $(srcdir)/tests/syscall_tst.117.msgctl.03.c \
-		   $(srcdir)/tests/syscall_tst.117.msgctl.06.c \
-		   $(srcdir)/tests/syscall_tst.117.msgctl.07.c \
 		   $(srcdir)/tests/syscall_tst.117.msgctl.08.c \
 		   $(srcdir)/tests/syscall_tst.117.msgget.01.c \
 		   $(srcdir)/tests/syscall_tst.117.msgget.02.c \
-		   $(srcdir)/tests/syscall_tst.117.msgget.04.c \
 		   $(srcdir)/tests/syscall_tst.117.msgrcv.01.c \
-		   $(srcdir)/tests/syscall_tst.117.msgrcv.02.c \
 		   $(srcdir)/tests/syscall_tst.117.msgrcv.03.c \
 		   $(srcdir)/tests/syscall_tst.117.msgrcv.04.c \
 		   $(srcdir)/tests/syscall_tst.117.msgrcv.05.c \
 		   $(srcdir)/tests/syscall_tst.117.msgrcv.06.c \
 		   $(srcdir)/tests/syscall_tst.117.msgsnd.01.c \
-		   $(srcdir)/tests/syscall_tst.117.msgsnd.02.c \
 		   $(srcdir)/tests/syscall_tst.117.msgsnd.03.c \
 		   $(srcdir)/tests/syscall_tst.117.msgsnd.04.c \
 		   $(srcdir)/tests/syscall_tst.117.msgsnd.05.c \
 		   $(srcdir)/tests/syscall_tst.117.msgsnd.06.c \
 		   $(srcdir)/tests/syscall_tst.117.semctl.01.c \
-		   $(srcdir)/tests/syscall_tst.117.semctl.02.c \
 		   $(srcdir)/tests/syscall_tst.117.semctl.03.c \
-		   $(srcdir)/tests/syscall_tst.117.semctl.04.c \
 		   $(srcdir)/tests/syscall_tst.117.semctl.05.c \
 		   $(srcdir)/tests/syscall_tst.117.semctl.06.c \
 		   $(srcdir)/tests/syscall_tst.117.semget.01.c \
@@ -181,7 +174,6 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.117.shmdt.02.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.01.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.02.c \
-		   $(srcdir)/tests/syscall_tst.117.shmget.03.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.04.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.05.c \
 		   $(srcdir)/tests/syscall_tst.122.c \
@@ -189,7 +181,6 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.125.2.c \
 		   $(srcdir)/tests/syscall_tst.125.3.c \
 		   $(srcdir)/tests/syscall_tst.133.c \
-		   $(srcdir)/tests/syscall_tst.140.1.c \
 		   $(srcdir)/tests/syscall_tst.140.2.c \
 		   $(srcdir)/tests/syscall_tst.141.1.c \
 		   $(srcdir)/tests/syscall_tst.141.2.c \
@@ -327,8 +318,10 @@ TEST_INPUTS_TS_SRC = \
 
 # These cannot be run reliably (at least not concurrently with other tests.
 #		   $(srcdir)/tests/syscall_tst.117.msgget.03.c
-#  			Tries to create message queues until all resources are exhausted in order to see what kind of error
-#			number we get. Unfortunately, other tests are also requiring message queues at the same time.
+#		   $(srcdir)/tests/syscall_tst.117.shmget.03.c
+#  			Tries to create message queues or shared memory segments until all resources are exhausted in order
+#                       to see what kind of error number is returned. Unfortunately, other tests are also requiring these
+#			resources at the same time.
 #		   $(srcdir)/tests/syscall_tst.78.2.c
 #			Calls gettimeofday() in rapid succession for 30 seconds to make sure the value is monotonically
 #			increasing. However, some versions of the kernel have a bug in the way they interact with the RTC
@@ -337,11 +330,24 @@ TEST_INPUTS_TS_SRC = \
 #		   $(srcdir)/tests/syscall_tst.95.c 
 #			This test does not pass natively on some systems, therefore we shouldn't expect it to pass
 #			under x86sim either.
+#		   $(srcdir)/tests/syscall_tst.117.msgctl.06.c
+#		   $(srcdir)/tests/syscall_tst.117.msgctl.07.c
+#		   $(srcdir)/tests/syscall_tst.117.msgget.04.c
+#		   $(srcdir)/tests/syscall_tst.117.msgrcv.02.c
+#		   $(srcdir)/tests/syscall_tst.117.msgsnd.02.c
+#		   $(srcdir)/tests/syscall_tst.117.semctl.02.c
+#		   $(srcdir)/tests/syscall_tst.117.semctl.04.c
+#			These tests return -EACCESS when run natively on some kernels. They work fine when run with
+#			root effective uid, but we can't be testing ROSE like that!
 #		   $(srcdir)/tests/syscall_tst.117.msgctl.09.c
 #		   $(srcdir)/tests/syscall_tst.117.msgctl.10.c
 #		   $(srcdir)/tests/syscall_tst.117.msgctl.11.c
 #			Disabled because of deadlocks in simulated futex() call.  These need more work and should be enabled
 #			when possible. [RPM 2011-01-07]
+#		   $(srcdir)/tests/syscall_tst.140.1.c
+#			This test cannot be run under the simulator with stderr redirected to a file (it enters an infinite loop
+#			somewhere in the setrlimit() syscall emulation). Since "make check" runs tests with their stderr
+#			redirected to a file, we will skip this test.
 
 
 TEST_INPUTS_NM_SRC = \
