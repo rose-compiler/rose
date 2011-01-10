@@ -548,6 +548,7 @@ static const Translate ipc_control[] = {
 };
 
 static const Translate sem_control[] = {
+    TF3(0x00ff, IPC_RMID, IPC_RMID),
     TF3(0x00ff, IPC_INFO, IPC_INFO),
     TF3(0x00ff, SEM_INFO, SEM_INFO),
     TF3(0x00ff, IPC_STAT, IPC_STAT),
@@ -559,8 +560,8 @@ static const Translate sem_control[] = {
     TF3(0x00ff, GETZCNT,  GETZCNT),
     TF3(0x00ff, SETVAL,   SETVAL),
     TF3(0x00ff, SETALL,   SETALL),
-    TF3(0x00ff, IPC_RMID, IPC_RMID),
     TF3(0x00ff, IPC_SET,  IPC_SET),
+    TF3(0xff00, 0x0100, IPC_64),
     T_END
 };
 
@@ -2454,7 +2455,7 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
 #ifdef SYS_ipc /* i686 */
             int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, 0);
 #else
-            int result = syscall(SYS_semctl, semid, semnum, cmd, 0);
+            int result = semctl(semid, semnum, cmd);
 #endif
             writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
