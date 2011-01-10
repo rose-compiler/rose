@@ -2217,9 +2217,47 @@ int EmulationPolicy::getdents_syscall(int fd, uint32_t dirent_va, long sz)
 }
 
 void
-EmulationPolicy::sys_semtimedop(uint32_t semid, uint32_t tsops_va, uint32_t nsops, uint32_t timeout_va)
+EmulationPolicy::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, uint32_t timeout_va)
 {
-    writeGPR(x86_gpr_ax, -ENOSYS); /* FIXME */
+    static const Translate sem_flags[] = {
+        TF(IPC_NOWAIT), TF(SEM_UNDO), T_END
+    };
+
+    if (nsops<1) {
+        writeGPR(x86_gpr_ax, -EINVAL);
+        return;
+    }
+
+    /* struct sembuf is the same on both 32- and 64-bit platforms */
+    sembuf *sops = (sembuf*)my_addr(sops_va, nsops*sizeof(sembuf));
+    if (!sops) {
+        writeGPR(x86_gpr_ax, -EFAULT);
+        return;
+    }
+    if (debug && trace_syscall) {
+        fprintf(debug, " <continued...>\n");
+        for (uint32_t i=0; i<nsops; i++) {
+            fprintf(debug, "    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
+                    i, sops[i].sem_num, sops[i].sem_op);
+            print_flags(debug, sem_flags, sops[i].sem_flg);
+            fprintf(debug, " }\n");
+        }
+        fprintf(debug, "%32s", "= ");
+    }
+
+    timespec host_timeout;
+    if (timeout_va) {
+        timespec_32 guest_timeout;
+        if (sizeof(guest_timeout)!=map->read(&guest_timeout, timeout_va, sizeof guest_timeout)) {
+            writeGPR(x86_gpr_ax, -EFAULT);
+            return;
+        }
+        host_timeout.tv_sec = guest_timeout.tv_sec;
+        host_timeout.tv_nsec = guest_timeout.tv_nsec;
+    }
+
+    int result = semtimedop(semid, sops, nsops, timeout_va?&host_timeout:NULL);
+    writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
 
 void
@@ -3566,6 +3604,7 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
         case 75: { /*0x4B, setrlimit */
             syscall_enter("setrlimit", "fP", rlimit_resources, 8, print_rlimit);
             int resource = arg(0);
