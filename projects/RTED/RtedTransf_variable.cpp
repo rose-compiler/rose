@@ -233,7 +233,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
                 SgFunctionCallExp* buildVar = buildVariableCreateCallExpr(initName, stmt);
                 ROSE_ASSERT(buildVar != NULL);
 
-                SgStatement* const for_loop = gfor_loop(stmt -> get_parent() -> get_parent());
+                SgStatement* const for_loop = GeneralizdFor::is( stmt -> get_parent() -> get_parent() );
                 ROSE_ASSERT(for_loop != NULL);
 
                 prependPseudoForInitializerExpression(buildVar, isSgStatement(for_loop));
@@ -546,7 +546,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName, S
                 // issues introduced by variable declarations in the for loop's
                 // init statement
                 SgExpression*      funcCallExp_vec = buildVariableInitCallExpr(initName, varRefE, stmt, ismalloc);
-                SgStatement* const for_stmt = gfor_loop(stmt -> get_parent() -> get_parent());
+                SgStatement* const for_stmt = GeneralizdFor::is(stmt -> get_parent() -> get_parent());
 
                 ROSE_ASSERT(for_stmt != NULL);
                 prependPseudoForInitializerExpression(funcCallExp_vec, for_stmt);
@@ -898,59 +898,61 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
 //   somewhat uniformly
 //
 
-SgStatement* gfor_loop(SgNode* astNode)
+namespace GeneralizdFor
 {
-  SgStatement* res = NULL;
-
-  switch (astNode->variantT())
+  SgStatement* is(SgNode* astNode)
   {
-    case V_SgForStatement:
-    case V_SgUpcForAllStatement:
-      res = isSgStatement(astNode);
-      break;
-    default: ;
+    SgStatement* res = NULL;
+
+    switch (astNode->variantT())
+    {
+      case V_SgForStatement:
+      case V_SgUpcForAllStatement:
+        res = isSgStatement(astNode);
+        break;
+      default: ;
+    }
+
+    return res;
   }
 
-  return res;
-}
-
-SgForInitStatement* gfor_loop_init_stmt(SgStatement* forloop)
-{
-  SgForInitStatement* res = NULL;
-
-  switch (forloop->variantT())
+  SgForInitStatement* initializer(SgStatement* forloop)
   {
-    case V_SgForStatement:
-      res = isSgForStatement(forloop)->get_for_init_stmt();
-      break;
-    case V_SgUpcForAllStatement:
-      res = isSgUpcForAllStatement(forloop)->get_for_init_stmt();
-      break;
-    default: ROSE_ASSERT(false);
+    SgForInitStatement* res = NULL;
+
+    switch (forloop->variantT())
+    {
+      case V_SgForStatement:
+        res = isSgForStatement(forloop)->get_for_init_stmt();
+        break;
+      case V_SgUpcForAllStatement:
+        res = isSgUpcForAllStatement(forloop)->get_for_init_stmt();
+        break;
+      default: ROSE_ASSERT(false);
+    }
+
+    ROSE_ASSERT(res != NULL);
+    return res;
   }
 
-  ROSE_ASSERT(res != NULL);
-  return res;
-}
-
-SgStatement* gfor_loop_test(SgStatement* forloop)
-{
-  SgStatement* res = NULL;
-
-  switch (forloop->variantT())
+  SgStatement* test(SgStatement* forloop)
   {
-    case V_SgForStatement:
-      res = isSgForStatement(forloop)->get_test();
-      break;
-    case V_SgUpcForAllStatement:
-      res = isSgUpcForAllStatement(forloop)->get_test();
-      break;
-    default: ROSE_ASSERT(false);
+    SgStatement* res = NULL;
+
+    switch (forloop->variantT())
+    {
+      case V_SgForStatement:
+        res = isSgForStatement(forloop)->get_test();
+        break;
+      case V_SgUpcForAllStatement:
+        res = isSgUpcForAllStatement(forloop)->get_test();
+        break;
+      default: ROSE_ASSERT(false);
+    }
+
+    ROSE_ASSERT(res != NULL);
+    return res;
   }
-
-  ROSE_ASSERT(res != NULL);
-  return res;
 }
-
 
 #endif

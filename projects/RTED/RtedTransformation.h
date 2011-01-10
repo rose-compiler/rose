@@ -8,6 +8,8 @@
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 
+#include "CppRuntimeSystem/rted_iface_structs.h"
+
 inline
 SgScopeStatement* get_scope(SgInitializedName* initname)
 {
@@ -23,7 +25,7 @@ SgStatement* getSurroundingStatement(SgNode* n);
 /// \return  the base_type, if it exists; t otherwise
 /// \note    type-modifiers are currently not skipped (should they be?)
 ///          e.g., int* volatile X[] = /* ... */;
-SgType* get_arrptr_base(SgType* t);
+SgType* skip_ArrPtrType(SgType* t);
 
 /// \brief   returns true, iff name refers to a char-array modifying function (e.g., strcpy, etc.)
 bool isStringModifyingFunctionCall(const std::string& name);
@@ -219,9 +221,6 @@ public:
    void appendSignature( SgExprListExp* arg_list, SgType* return_type, const SgTypePtrList& param_types);
 private:
 
-   SgType* resolveTypedefs( SgType* type );
-   SgType* resolveReferencesAndTypedefs( SgType* type );
-
    bool isUsedAsLvalue( SgExpression* exp );
    /// is n a basic block, if statement, [do]while, or for statement
    bool isNormalScope( SgNode* n );
@@ -262,8 +261,8 @@ public:
     ///          from an aggregate initializer
     SgCastExp* ctorSourceInfo(SgAggregateInitializer* exp) const;
 
-    /// \brief   creates
-    SgAggregateInitializer* mkAddressDesc(size_t indirection_level) const;
+    /// \brief   creates an address descriptor
+    SgAggregateInitializer* mkAddressDesc(AddressDesc desc) const;
 
     /// \brief returns the canonical pointer to the rted_TypeDesc type
     SgType* roseTypeDesc() const    { return NULL; /* symbols.roseTypeDesc */ }
@@ -438,7 +437,6 @@ public:
    void appendAddressAndSize(SgExprListExp* arg_list, AppendKind ak, SgExpression* exp, SgType* type, SgClassDefinition* isUnionClass);
 
    void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
-   void appendBaseType( SgExprListExp* arg_list, SgType* type );
    void appendClassName( SgExprListExp* arg_list, SgType* type );
 
    /**
@@ -478,20 +476,26 @@ public:
    void visit_checkIsMain(SgNode* n);
    // Traverse all nodes and check properties
    virtual void visit(SgNode* n);
-
 };
 
 
 //
-// Functions added to treat UPC-forall and C/C++ for loops
+// Access Functions added to treat UPC-forall and C/C++ for loops
 //   somewhat uniformly
 //
 
-/// \brief tests whether a node is either a C/C++ for loop, or a UPC forall loop.
-/// \return a pointer to a SgStatement if the argument points to a for-loop.
-///         NULL, otherwise.
-SgStatement* gfor_loop(SgNode* astNode);
-SgStatement* gfor_loop_test(SgStatement* astNode);
-SgForInitStatement* gfor_loop_init_stmt(SgStatement* astNode);
+namespace GeneralizdFor
+{
+  /// \brief tests whether a node is either a C/C++ for loop, or a UPC forall loop.
+  /// \return a pointer to a SgStatement if the argument points to a for-loop.
+  ///         NULL, otherwise.
+  SgStatement* is(SgNode* astNode);
+
+  /// \brief returns the loop test of a generilized for statement
+  SgStatement* test(SgStatement* astNode);
+
+  /// \brief returns the initializer statement of a generilized for statement
+  SgForInitStatement* initializer(SgStatement* astNode);
+}
 
 #endif

@@ -71,7 +71,7 @@ RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt_or_block, Sg_Fi
       ROSE_ASSERT(parentStmt);
 
       cerr << "    @@@ parent == " << parentStmt->class_name() << endl;
-      if (gfor_loop(parentStmt) || isSgWhileStmt(parentStmt))
+      if (GeneralizdFor::is(parentStmt) || isSgWhileStmt(parentStmt))
       {
         SgBasicBlock* bb = buildBasicBlock();
         bb->set_parent(parentStmt);

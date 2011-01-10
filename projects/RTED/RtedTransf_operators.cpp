@@ -3,15 +3,12 @@
 // DQ (2/9/2010): Testing use of ROE to compile ROSE.
 #ifndef USE_ROSE
 
-#include <string>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
-using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
-
 
 void RtedTransformation::visit_pointer_movement( SgNode* node ) {
     SgUnaryOp* u_op = isSgUnaryOp( node );
@@ -39,7 +36,7 @@ void RtedTransformation::insert_pointer_change( SgExpression* exp ) {
     SgStatement* stmt = getSurroundingStatement( exp );
     ROSE_ASSERT( stmt );
 
-    SgExpression*  operand = u_op ? u_op -> get_operand() : operand = b_op -> get_lhs_operand();
+    SgExpression*  operand = u_op ? u_op -> get_operand() : b_op -> get_lhs_operand();
     SgExprListExp* mp_args = buildExprListExp();
 
     appendExpression( mp_args, ctorTypeDesc(mkTypeInformation(NULL, operand -> get_type())) );
@@ -47,12 +44,12 @@ void RtedTransformation::insert_pointer_change( SgExpression* exp ) {
     appendClassName( mp_args, operand -> get_type() );
     appendFileInfo( mp_args, exp );
 
+    ROSE_ASSERT(symbols.roseMovePointer);
     SgExprStatement* mp_call =
-        buildExprStatement(
-            buildFunctionCallExp(
+            buildFunctionCallStmt(
                 buildFunctionRefExp( symbols.roseMovePointer ),
                 mp_args
-            ));
+            );
 
     insertStatementAfter( stmt, mp_call );
     attachComment( mp_call, "", PreprocessingInfo::before );

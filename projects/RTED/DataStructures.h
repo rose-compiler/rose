@@ -1,8 +1,10 @@
 #ifndef RTED_DS_H
 #define RTED_DS_H
 
-#include <boost/foreach.hpp>
 #include <string>
+#include <vector>
+
+#include <rose.h>
 
 
 /* -----------------------------------------------------------

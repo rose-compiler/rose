@@ -5,6 +5,11 @@
 #ifndef USE_ROSE
 
 #include <string>
+
+#include <boost/foreach.hpp>
+
+#include "rosez.hpp"
+
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -84,6 +89,35 @@ checkBeforeParentStmt(SgExpression* checked_node, SgFunctionSymbol* checker, SgE
 }
 
 
+/**
+ * Follow the base type of @c type until we reach a non-typedef.
+ */
+static
+SgType* skip_Typedefs( SgType* type ) {
+     if( isSgTypedefType( type ))
+        return skip_Typedefs(
+            isSgTypedefType( type ) -> get_base_type() );
+
+     return type;
+}
+
+/**
+ * Follow the base type of @c type until we reach a non-typedef, non-reference.
+ */
+static
+SgType* skip_ReferencesAndTypedefs( SgType* type ) {
+     if( isSgTypedefType( type )) {
+        return skip_ReferencesAndTypedefs(
+            isSgTypedefType( type ) -> get_base_type() );
+    } else if( isSgReferenceType( type )) {
+        // resolve reference to reference ... to pointer
+        return skip_ReferencesAndTypedefs(
+            isSgReferenceType( type ) -> get_base_type() );
+    }
+
+    return type;
+}
+
 //
 //
 
@@ -113,12 +147,12 @@ RtedTransformation::ctorSourceInfo(SgAggregateInitializer* exp) const
 
 
 SgAggregateInitializer*
-RtedTransformation::mkAddressDesc(size_t indirection_level) const
+RtedTransformation::mkAddressDesc(AddressDesc desc) const
 {
   SgExprListExp* initexpr = buildExprListExp();
 
-  appendExpression(initexpr, buildIntVal(indirection_level));
-  appendExpression(initexpr, buildIntVal(0 /* upc_shared_mask */));
+  appendExpression(initexpr, buildIntVal(desc.levels));
+  appendExpression(initexpr, buildIntVal(desc.shared_mask));
 
   return genAggregateInitializer(initexpr, roseAddressDesc());
 }
@@ -181,44 +215,16 @@ RtedTransformation::isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* e
 }
 
 SgPointerType* RtedTransformation::isUsableAsSgPointerType( SgType* type ) {
-    return isSgPointerType( resolveReferencesAndTypedefs( type ));
+    return isSgPointerType( skip_ReferencesAndTypedefs( type ));
 }
 
 SgArrayType* RtedTransformation::isUsableAsSgArrayType( SgType* type ) {
-    return isSgArrayType( resolveReferencesAndTypedefs( type ));
+    return isSgArrayType( skip_ReferencesAndTypedefs( type ));
 }
 
 SgReferenceType* RtedTransformation::isUsableAsSgReferenceType( SgType* type ) {
-    return isSgReferenceType( resolveTypedefs( type ));
+    return isSgReferenceType( skip_Typedefs( type ));
 }
-
-/**
- * Follow the base type of @c type until we reach a non-typedef.
- */
-SgType* RtedTransformation::resolveTypedefs( SgType* type ) {
-     if( isSgTypedefType( type ))
-        return resolveTypedefs(
-            isSgTypedefType( type ) -> get_base_type() );
-
-     return type;
-}
-
-/**
- * Follow the base type of @c type until we reach a non-typedef, non-reference.
- */
-SgType* RtedTransformation::resolveReferencesAndTypedefs( SgType* type ) {
-     if( isSgTypedefType( type )) {
-        return resolveReferencesAndTypedefs(
-            isSgTypedefType( type ) -> get_base_type() );
-    } else if( isSgReferenceType( type )) {
-        // resolve reference to reference ... to pointer
-        return resolveReferencesAndTypedefs(
-            isSgReferenceType( type ) -> get_base_type() );
-    }
-
-    return type;
-}
-
 
 bool
 RtedTransformation::isUsedAsLvalue( SgExpression* exp ) {
@@ -690,50 +696,104 @@ void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, Sg_File_Info* 
 }
 
 
-SgType* get_arrptr_base(SgType* t)
+SgType* skip_ArrPtrType(SgType* t)
 {
   SgPointerType* sgptr = isSgPointerType(t);
-  if (sgptr != NULL) return sgptr;
+  if (sgptr != NULL) return sgptr->get_base_type();
 
   SgArrayType*   sgarr = isSgArrayType(t);
-  if (sgarr != NULL) return sgarr;
+  if (sgarr != NULL) return sgarr->get_base_type();
 
   return t;
 }
+
+
+struct IndirectionHandler
+{
+    typedef std::pair<SgType*, AddressDesc> ResultType;
+
+    IndirectionHandler()
+    : res(NULL, pd_obj())
+    {}
+
+    template <class SgNode>
+    void add_indirection(SgNode& n)
+    {
+      res.first = n.get_base_type();
+      res.second = pd_address_of(res.second);
+    }
+
+    static
+    bool empty(const SgUPC_AccessModifier& am)
+    {
+      return !am.get_isShared() && (am.get_layout() == 0);
+    }
+
+    static
+    size_t shared_mask(const SgUPC_AccessModifier& am)
+    {
+      return am.get_isShared() ? 1 : 0;
+    }
+
+    void handle(SgNode& n) { ez::unused(n); ROSE_ASSERT(false); }
+    void handle(SgPointerType& n) { add_indirection(n); }
+    void handle(SgArrayType& n)   { add_indirection(n); }
+
+    void handle(SgModifierType& n)
+    {
+      SgTypeModifier&       modifier = n.get_typeModifier();
+      SgUPC_AccessModifier& upcAccMod = modifier.get_upcModifier();
+
+      // \pp \note \todo
+      // the following if-statement should (probably) be removed.
+      // it is here b/c the Nov 2010 RTED code did not
+      // skip modified types.
+      if (!empty(upcAccMod))
+      {
+        res.first = n.get_base_type();
+        res.second.shared_mask |= shared_mask(upcAccMod);
+      }
+    }
+
+    SgType& type() const { return *res.first; }
+    ResultType result() const { return res; }
+
+  private:
+    std::pair<SgType*, AddressDesc> res;
+};
 
 
 /// \brief  counts the number of indirection layers (i.e., Arrays, Pointers)
 ///         between a type and the first non indirect type.
 /// \return A type and the length of indirections
 static
-std::pair<SgType*, size_t>
+IndirectionHandler::ResultType
 indirections(SgType* base_type)
 {
-  std::pair<SgType*, size_t> res(base_type, 0);
+  IndirectionHandler ih = ez::visitSgNode(IndirectionHandler(), base_type);
 
-  base_type = get_arrptr_base(base_type);
-  while (base_type != res.first)
+  while (base_type != &ih.type())
   {
-    res.first = base_type;
-    ++res.second;
-
-    base_type = get_arrptr_base(base_type);
+    base_type = &ih.type();
+    ih = ez::visitSgNode(ih, base_type);
   }
 
-  return res;
+  return ih.result();
 }
 
 
-SgAggregateInitializer* RtedTransformation::mkTypeInformation(SgInitializedName* initName) {
+SgAggregateInitializer* RtedTransformation::mkTypeInformation(SgInitializedName* initName)
+{
     // \pp was: if ( !initName ) return;
     ROSE_ASSERT(initName != NULL);
 
     return mkTypeInformation( initName, initName -> get_type() );
 }
 
-SgAggregateInitializer* RtedTransformation::mkTypeInformation(SgInitializedName* initName, SgType* type ) {
-    // arrays in parameters decay to pointers, so we shouldn't
-    // treat them as stack arrays
+SgAggregateInitializer* RtedTransformation::mkTypeInformation(SgInitializedName* initName, SgType* type)
+{
+  // arrays in parameters decay to pointers, so we shouldn't
+  // treat them as stack arrays
 	bool array_decay = (  initName
                      && isSgFunctionParameterList( getSurroundingStatement( initName ))
                      && type->class_name() == "SgArrayType"
@@ -750,20 +810,21 @@ SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
   ROSE_ASSERT(type);
 
   // we always resolve reference type information
-  if (isSgReferenceType( type )) {
+  if (isSgReferenceType( type ))
+  {
       return mkTypeInformation( isSgReferenceType( type ) -> get_base_type(),
                                 resolve_class_names,
                                 array_to_pointer
                               );
   }
 
-  std::pair<SgType*, size_t> indir_desc = indirections(type);
-  SgType*                    base_type = indir_desc.first;
-  size_t                     indirection_level = indir_desc.second;
-	std::string                type_string = type->class_name();
-	std::string                base_type_string;
+  IndirectionHandler::ResultType indir_desc = indirections(type);
+  SgType*                        base_type = indir_desc.first;
+  AddressDesc                    addrDesc = indir_desc.second;
+	std::string                    type_string = type->class_name();
+	std::string                    base_type_string;
 
-	if (indirection_level > 0)
+	if (addrDesc.levels > 0)
 		base_type_string = base_type -> class_name();
 
 	// convert SgClassType to the mangled_name, if asked
@@ -773,7 +834,8 @@ SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
 				=	isSgClassDeclaration(
 						isSgClassType( type ) -> get_declaration()
 					) -> get_mangled_name();
-		if( indirection_level > 0 && isSgClassType( base_type ))
+
+    if( addrDesc.levels > 0 && isSgClassType( base_type ))
 			base_type_string
 				=	isSgClassDeclaration(
 						isSgClassType( base_type ) -> get_declaration()
@@ -784,11 +846,11 @@ SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
   if (array_to_pointer && type_string == "SgArrayType")
     type_string = "SgPointerType";
 
-  SgExprListExp*             initexpr = buildExprListExp();
+  SgExprListExp*          initexpr = buildExprListExp();
 
   appendExpression( initexpr, buildStringVal( type_string ));
   appendExpression( initexpr, buildStringVal( base_type_string ));
-  appendExpression( initexpr, mkAddressDesc(indirection_level) );
+  appendExpression( initexpr, mkAddressDesc(addrDesc) );
 
   // \note when the typedesc object is added to an argument list, it requires
   //       an explicit type cast. This is not always required (e.g., when we
@@ -904,10 +966,9 @@ void RtedTransformation::appendAddressAndSize(
     //  but we do want to create the array as s2..s2+sizeof(s2)
     if( (am == Complex) && isSgArrayType( type ))
     {
-        SgTreeCopy copy;
-        SgNode*    clone = isSgArrayType(type)->get_base_type()->copy( copy );
+        SgType* clone = deepCopy(isSgArrayType(type)->get_base_type());
 
-        szexp = buildSizeOfOp(isSgType(clone));
+        szexp = buildSizeOfOp(clone);
     }
 #if 0
       else if (unionclass) {
@@ -921,9 +982,7 @@ void RtedTransformation::appendAddressAndSize(
 #endif
     else if (op)
     {
-        SgTreeCopy copy;
-
-        szexp = buildSizeOfOp(isSgExpression( op -> copy( copy )));
+        szexp = buildSizeOfOp(deepCopy(op));
     }
     else
     {
@@ -937,13 +996,15 @@ void RtedTransformation::appendAddressAndSize(
 }
 
 // we have to make exp a valid lvalue
+// \pp \todo the traversal of the subtree seems not needed
+//           why do not we just test whether a node is a cast-expression?
 class LValueVisitor : public AstSimpleProcessing
 {
 public:
   SgExpression* rv;
   bool first_node;
 
-  SgExpression* visit_subtree( SgNode* n ) {
+  SgExpression* visit_subtree( SgExpression* n ) {
     first_node = true;
     rv = NULL;
 
@@ -953,9 +1014,7 @@ public:
     // return something else.  Otherwise, if we've only modified
     // proper subtrees of n, n will have been appropriately modified
     // and we can simply return it.
-    return rv
-           ? rv
-           : isSgExpression( n );
+    return rv ? rv : isSgExpression( n );
   }
 
   /// strip out cast expressions from the subtree
@@ -982,14 +1041,16 @@ public:
 };
 
 static
-SgExpression* rted_AddrOf(SgExpression* const exp)
+SgExpression* mkAddressOf(SgExpression* const exp)
 {
-  // \why can the expression be NULL? (PP)
+  // \pp why can the expression be NULL?
   if (exp == NULL) return buildLongIntVal(0);
 
+  // \pp I am not convinced that we need to strip cast expressions ...
+  //     what's so bad about a cast of a cast?
   LValueVisitor       make_lvalue_visitor;
   SgTreeCopy          copy;
-  SgExpression* const exp_copy = make_lvalue_visitor.visit_subtree( exp -> copy( copy ));
+  SgExpression* const exp_copy = make_lvalue_visitor.visit_subtree( deepCopy(exp) );
 
   // needed for UPC, where we cannot cast a shared pointer directly to
   // an integer value.
@@ -997,8 +1058,8 @@ SgExpression* rted_AddrOf(SgExpression* const exp)
                                                      buildPointerType(buildVoidType())
                                                    );
 
-  // \note I believe that the type of the following cast expression should be
-  //       size_t instead of unsigned long (PP).
+  // \pp \todo I believe that the type of the following cast expression
+  //           should be size_t instead of unsigned long.
   return buildCastExp(cast_void_star, buildUnsignedLongType());
 }
 
@@ -1026,67 +1087,43 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
         exp = isSgBinaryOp( exp ) -> get_lhs_operand();
     }
 
-    //    if (exp)
-    //cerr << " exp to be added as address : " << exp->unparseToString() << endl;
-
     // get the address of exp
-    SgExpression* arg = rted_AddrOf(exp);
+    SgExpression* arg = mkAddressOf(exp);
 
     // add in offset if exp points to a complex data struture
-    if( offset != NULL ) {
+    if( offset != NULL )
+    {
         ROSE_ASSERT( exp != NULL );
-        arg = new SgAddOp(
-            exp -> get_file_info(), arg,
-            new SgMultiplyOp(
-                exp -> get_file_info(),
-                offset,
-                buildSizeOfOp( exp )
-            )
-        );
+        arg = new SgAddOp( exp -> get_file_info(),
+                           arg,
+                           new SgMultiplyOp( exp -> get_file_info(),
+                                             offset,
+                                             buildSizeOfOp( exp )
+                                           )
+                         );
     }
 
     appendExpression( arg_list, arg );
 }
 
 
-void RtedTransformation::appendBaseType( SgExprListExp* arg_list, SgType* type ) {
-	SgType* base_type = NULL;
+void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type )
+{
+    SgType* basetype = skip_ArrPtrType(type);
 
-	SgArrayType* arr = isSgArrayType( type );
-	SgPointerType* ptr = isSgPointerType( type );
+    if (basetype != type)
+    {
+      appendClassName( arg_list, basetype );
+    }
+    else if( isSgClassType( type ))
+    {
+      SgClassDeclaration* classdecl = isSgClassDeclaration( isSgClassType( type ) -> get_declaration() );
 
-	if( arr )
-		base_type = arr -> get_base_type();
-	else if ( ptr )
-		base_type = ptr -> get_base_type();
-
-	if( base_type )
-        appendExpression(arg_list, buildStringVal(
-			base_type -> class_name()
-		));
-	else
-        appendExpression(arg_list, buildStringVal(""));
-}
-
-
-void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type ) {
-
-    if( isSgClassType( type )) {
-        appendExpression(arg_list, buildStringVal(
-			isSgClassDeclaration( isSgClassType( type ) -> get_declaration() )
-				-> get_mangled_name() )
-		);
-    } else if( isSgArrayType( type )) {
-
-        appendClassName( arg_list, isSgArrayType( type ) -> get_base_type() );
-
-    } else if( isSgPointerType( type )) {
-
-        appendClassName( arg_list, isSgPointerType( type ) -> get_base_type() );
-
-    } else {
-
-        appendExpression( arg_list, buildStringVal( "" ));
+      appendExpression( arg_list, buildStringVal(classdecl->get_mangled_name() ));
+    }
+    else
+    {
+      appendExpression( arg_list, buildStringVal( "" ));
     }
 }
 
@@ -1122,7 +1159,7 @@ RtedTransformation::prependPseudoForInitializerExpression(SgExpression* exp, SgS
 
 		    // for( ... ; test; ... )
 		    // -> for( ... ; test | (eval_once && ((eval_once = 0) | exp1 | exp2 ... )); ... )
-        SgExprStatement* test = isSgExprStatement( gfor_loop_test(for_stmt) );
+        SgExprStatement* test = isSgExprStatement( GeneralizdFor::test(for_stmt) );
         ROSE_ASSERT( test );
 
         SgExpression* old_test = test -> get_expression();

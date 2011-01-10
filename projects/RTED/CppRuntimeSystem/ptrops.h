@@ -61,8 +61,8 @@ size_t sizeof_Address_UPC(void);
 AddressDesc pd_ptr(void);
 AddressDesc pd_obj(void);
 
-AddressDesc pd_addrof(AddressDesc);
-AddressDesc pd_upc_addrof(AddressDesc desc, size_t shared_mask);
+AddressDesc pd_address_of(AddressDesc);
+AddressDesc pd_upc_address_of(AddressDesc desc, size_t shared_mask);
 
 int pd_isPtr(AddressDesc addr);
 

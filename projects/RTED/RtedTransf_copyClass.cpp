@@ -5,7 +5,7 @@
 
 #include <string>
 #include <set>
-#include <boost/foreach.hpp>
+
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -159,7 +159,7 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
    // **********************
    if (RTEDDEBUG()) cerr <<"@@@ instrumenting into top "<< endl;
    // deep copy the classdecl and make it unparseable
-   SgClassDeclaration* cd_copy = isSgClassDeclaration(deepCopyNode(classDecl));
+   SgClassDeclaration* cd_copy = deepCopy(classDecl);
    // cout << ">>>>>> Original ClassType :::: " << classDecl->get_type() << endl;
    // cout << ">>>>>> Copied ClassType :::: " << cd_copy->get_type() << endl;
    // SgClassType* type_copy = new SgClassType(cd_copy);
@@ -175,8 +175,7 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
       //cerr << "copying node : " << node->class_name() << endl;
    }
    if (RTEDDEBUG()) cerr << "deep copy of firstnondefining" << endl;
-   SgClassDeclaration* cdn_copy = isSgClassDeclaration(deepCopyNode(
-         classDecl->get_firstNondefiningDeclaration()));
+   SgClassDeclaration* cdn_copy = isSgClassDeclaration(deepCopyNode(classDecl->get_firstNondefiningDeclaration()));
    ROSE_ASSERT(cdn_copy);
    vector<SgNode*> nodes = NodeQuery::querySubTree(cdn_copy, V_SgLocatedNode);
    vector<SgNode*>::const_iterator nodesIT = nodes.begin();
@@ -279,4 +278,3 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
 }
 
 #endif
-

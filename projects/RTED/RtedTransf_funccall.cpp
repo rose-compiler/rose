@@ -4,7 +4,7 @@
 #ifndef USE_ROSE
 
 #include <string>
-#include <boost/foreach.hpp>
+
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -124,7 +124,7 @@ void RtedTransformation::insertFuncCall(RtedArguments* args)
   appendFileInfo(arg_list, stmt);
 
   // how many additional arguments does this function need?
-  const size_t      dimFuncCall = getDimensionForFuncCall(args->f_name);
+  const size_t         dimFuncCall = getDimensionForFuncCall(args->f_name);
 
   // nr of args + 2 (for sepcialFunctions) + 6 =  args+6;
   SgExpressionPtrList& rose_args = args->arguments;
@@ -136,7 +136,7 @@ void RtedTransformation::insertFuncCall(RtedArguments* args)
   // \pp modifying the dimension count looks strange (in fact when comparing
   //     isStringModifyingFunctionCall to getDimensionForFuncCall one
   //     notices that the only affected call function is strlen)!
-  //     Since I do not understand the code below, the refactored/reformmatef
+  //     Since I do not understand the code below, the refactored/reformmated
   //     code below preserves the original behaviour.
   //     dimIsTwo is newly introduced and is true when the original code had
   //       dimFuncCall = 2.
@@ -162,7 +162,9 @@ void RtedTransformation::insertFuncCall(RtedArguments* args)
      {
         SgVarRefExp* var = isSgVarRefExp(exp);
         SgType*      vartype = var->get_type();
-        SgType*      base_type = get_arrptr_base(vartype);
+
+        // \pp what about skipping modifier types?
+        SgType*      base_type = skip_ArrPtrType(vartype);
 
         cerr << " isSgVarRefExp :: type : " << vartype->class_name() << endl;
         cerr << "     base_type: " << base_type->class_name() << endl;

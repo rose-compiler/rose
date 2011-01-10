@@ -6,6 +6,9 @@
 
 #include <string>
 #include <algorithm>
+
+#include <boost/foreach.hpp>
+
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -357,8 +360,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* 
   read_write_mask |= BoundsCheck;
 
   // for contiguous array, base is at &array[0] whether on heap or on stack
-  SgTreeCopy        tree_copy;
-  SgPntrArrRefExp*  array_base = isSgPntrArrRefExp(arrRefExp -> copy(tree_copy));
+  SgPntrArrRefExp*  array_base = deepCopy(arrRefExp);
 
   array_base -> set_rhs_operand(buildIntVal(0));
 
@@ -407,7 +409,7 @@ void RtedTransformation::populateDimensions(RTedArray* array, SgInitializedName*
          denominator = new SgMultiplyOp(file_info, denominator, *i, uint);
          ++i;
       }
-      assert( denominator != NULL );
+      ROSE_ASSERT( denominator != NULL );
 
       indices.insert(indices.begin(), new SgDivideOp(file_info, buildSizeOfOp(buildVarRefExp(init,
             getSurroundingStatement(init) -> get_scope())), denominator, uint));
@@ -859,8 +861,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       SgFunctionCallExp* funcc = isSgFunctionCallExp(*it);
       if (funcc) {
          // MALLOC : function call
-         SgTreeCopy treeCopy;
-         SgExprListExp* size = isSgExprListExp(funcc->get_args()->copy(treeCopy));
+         SgExprListExp* size = deepCopy(funcc->get_args());
          ROSE_ASSERT(size);
 
          // find if sizeof present in size operator
@@ -1014,15 +1015,11 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* _n) {
             SgExpression* expr2 = arrRefExp2->get_lhs_operand();
             right2 = arrRefExp2->get_rhs_operand();
             varRef = isSgVarRefExp(expr2);
-            if (varRef) {
-               // do nothing
-            } else if ((varRef = resolveToVarRefRight(expr2))) {
-               ROSE_ASSERT(varRef);
-            } else {
-               cerr << ">> RtedTransformation::ACCESS::SgPntrArrRefExp:: unknown left of SgPntrArrRefExp2: "
-                     << expr2->class_name() << " --" << arrRefExp->unparseToString() << "-- " << endl;
-               ROSE_ASSERT(false);
+
+            if (!varRef) {
+               varRef = resolveToVarRefRight(expr2);
             }
+
             ROSE_ASSERT(varRef);
          } else {
             cerr << ">> RtedTransformation::ACCESS::SgPntrArrRefExp:: unknown left of SgArrowExp: " << left->class_name()
@@ -1078,7 +1075,7 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n)
    // exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent());
    // check if this is a function call with array as parameter
 
-   // \pp should this not be ROSE_ASSERT(exprlist) ??
+   // \pp \todo should this not be ROSE_ASSERT(exprlist) ??
    if (exprlist)
    {
       SgFunctionCallExp* fcexp = isSgFunctionCallExp(exprlist->get_parent());

@@ -12,7 +12,7 @@ if !OS_MACOSX
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 # tps removed -pthreads from INCLUDES
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch 
+INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch
 INCLUDES2 = $(ROSE_INCLUDES) -I../../
 UPC_INCLUDES =  -I$(srcdir)/required/
 
@@ -30,7 +30,7 @@ LINK_QT_DEBUGGER=
 bin_PROGRAMS  = runtimeCheck
 
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl 
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl
 #$(top_builddir)/projects/RTED/CppRuntimeSystem/libCppRuntimeSystem.a
 
 RTS=RuntimeSystem.cpp
@@ -42,7 +42,7 @@ RTED_CC = $(LIBTOOL) --tag=CC --mode=link gcc $(AM_CXXFLAGS) \
 #$(LIBTOOL) --tag=CXX  --mode=link $(AM_PROG_UPC)
 if ROSE_USE_RTED
 RTED_UPC =  ./upccrose $(AM_CXXFLAGS) \
-	 $(AM_LDFLAGS) 
+	 $(AM_LDFLAGS)
 else
 RTED_UPC =
 endif
@@ -62,11 +62,11 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
 		       RtedSymbols.h \
 		       DataStructures.h \
 		       RuntimeSystem.h RuntimeSystem.cpp RuntimeSystem_ParsingWorkaround.h \
-		       RtedVisit_Variable.cpp RtedVisit.h
+		       RtedVisit_Variable.cpp RtedVisit.h rosez.hpp
 
 
 
-SUBDIRS = CppRuntimeSystem 
+SUBDIRS = CppRuntimeSystem
 
 runtimeCheck_LDADD =  $(ROSE_LIBS) CppRuntimeSystem/libCppRuntimeSystem.la
 
@@ -134,7 +134,7 @@ RTED_UPC_TEST_DIRS = $(RTED_UPC_LOCAL_TEST_DIRS) \
 else
 RTED_C_TEST_DIRS = 		 $(RTED_C_LOCAL_TEST_DIRS)
 RTED_CPP_TEST_DIRS =		 $(RTED_CPP_LOCAL_TEST_DIRS)
-RTED_UPC_TEST_DIRS =             $(RTED_UPC_LOCAL_TEST_DIRS) 
+RTED_UPC_TEST_DIRS =             $(RTED_UPC_LOCAL_TEST_DIRS)
 endif
 
 RTED_TEST_DIRS=$(RTED_C_TEST_DIRS) $(RTED_CPP_TEST_DIRS) $(RTED_UPC_TEST_DIRS)
@@ -361,9 +361,9 @@ TRANSFORMING_FILES = @echo -n "    testing if files compiles with gcc (with _s) 
 TRANSFORMING_FILES += $(2) \
 		      -g \
 		      -o $(patsubst %_rose$(strip $(1)), %.bin, $@) \
-		      $(filter rted_source/%$(strip $(1)), $^) 
+		      $(filter rted_source/%$(strip $(1)), $^)
 if ROSE_USE_RTED
-TRANSFORMING_FILES +=  -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) 
+TRANSFORMING_FILES +=  -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
 endif
 TRANSFORMING_FILES +=  -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
 		      -I$(top_builddir) -I$(srcdir) $(RTED_LIB) > $@.compile.out 2> $@.compile.err\
@@ -381,7 +381,7 @@ TRANSFORMING_FILES += ./runtimeCheck 2 $(filter rted_source/%$(strip $(1)), $^) 
 				       -c \
 				       $(INCLUDES) \
 				       -I$(top_builddir) \
-				       -I$(srcdir) 
+				       -I$(srcdir)
 if ROSE_USE_RTED
 TRANSFORMING_FILES +=  -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
 endif
@@ -391,10 +391,19 @@ TRANSFORMING_FILES +=  -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
 TRANSFORMING_FILES += if [ $$? -ne 0 ]; then exit 1; fi;
 
 TRANSFORMING_FILES += echo " done.";
+
+#if MAKEFILE_HANDLES_LINE_INFO
+
 TRANSFORMING_FILES += echo -n "   adding line information ... ";
 TRANSFORMING_FILES += cat rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) ) | \
 			  nl -p -b 'a' | \
 			  sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@;
+
+#else
+
+TRANSFORMING_FILES += cat rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) ) > $@;
+
+#endif
 
 TRANSFORMING_FILES += rm rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) );
 
@@ -415,7 +424,7 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$
 rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp rted_source/%_s.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
-rted_source/%_rose.upc: runtimeCheck rted_source/%.upc rted_source/%_s.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h 
+rted_source/%_rose.upc: runtimeCheck rted_source/%.upc rted_source/%_s.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC $(UPC_INCLUDES))
 
 
@@ -425,7 +434,7 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/Ru
 rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
-rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h 
+rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC $(UPC_INCLUDES))
 
 #------------------------------------------------------------------------------
@@ -450,9 +459,9 @@ rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(srcdir)/$(RTS) $(srcdir
 COMPILING_RUNTIME_SYSTEM = @echo " !>>>>>  compiling instrumented debugger code (with _s) ... $(filter rted_source/%$(strip $(1)), $^)"; \
 			   $(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
 				      $(srcdir)/$(RTS) \
-				      $(INCLUDES) 
+				      $(INCLUDES)
 if ROSE_USE_RTED
-COMPILING_RUNTIME_SYSTEM +=    -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) 
+COMPILING_RUNTIME_SYSTEM +=    -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
 endif
 COMPILING_RUNTIME_SYSTEM +=    -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
 				      -I$(top_builddir) \
@@ -586,7 +595,7 @@ runupc/%: rted_source/%.bin rted_source/%.expected-output
 		fi;
 	@echo " done."
 
-run_log/%: rted_source/%.bin rted_source/%.expected-output 
+run_log/%: rted_source/%.bin rted_source/%.expected-output
 	@echo "   logging results for runtime error detection ... $(filter %.bin, $?)"
 	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
 		if [ -f "$$OUTPUT_SRC" ]; then\
@@ -607,7 +616,7 @@ run_log/%: rted_source/%.bin rted_source/%.expected-output
 		fi;
 	@echo " done."
 
-runupc_log/%: rted_source/%.bin rted_source/%.expected-output 
+runupc_log/%: rted_source/%.bin rted_source/%.expected-output
 	@echo "   logging results for runtime error detection ... $(filter %.bin, $?)"
 	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
 		if [ -f "$$OUTPUT_SRC" ]; then\
@@ -668,11 +677,11 @@ RUN_LOG_TARGETS_LOCAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run_log, $(RTED_O
 RUN_LOG_TARGETS_LOCAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
 
 
-run: $(RUN_TARGETS_GLOBAL_C) $(RUN_TARGETS_LOCAL_C) $(RUN_TARGETS_GLOBAL_CPP) $(RUN_TARGETS_LOCAL_CPP) 
+run: $(RUN_TARGETS_GLOBAL_C) $(RUN_TARGETS_LOCAL_C) $(RUN_TARGETS_GLOBAL_CPP) $(RUN_TARGETS_LOCAL_CPP)
 
 runupc:  $(RUN_TARGETS_GLOBAL_UPC) $(RUN_TARGETS_LOCAL_UPC)
 
-run_log: $(RUN_LOG_TARGETS_GLOBAL_C) $(RUN_LOG_TARGETS_LOCAL_C) $(RUN_LOG_TARGETS_GLOBAL_CPP) $(RUN_LOG_TARGETS_LOCAL_CPP) 
+run_log: $(RUN_LOG_TARGETS_GLOBAL_C) $(RUN_LOG_TARGETS_LOCAL_C) $(RUN_LOG_TARGETS_GLOBAL_CPP) $(RUN_LOG_TARGETS_LOCAL_CPP)
 
 runupc_log: $(RUN_LOG_TARGETS_GLOBAL_UPC) $(RUN_LOG_TARGETS_LOCAL_UPC)
 
@@ -820,7 +829,7 @@ checkfast:	runtimeCheck  \
 	@echo "---------------------------------------------------------------------------------------"
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp rted_source 
+	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp rted_source
 
 if ROSE_USE_RTED
 # run/C/floating_point_errors
@@ -844,7 +853,7 @@ check-local: runtimeCheck  checkfast \
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
 else
-# DQ (11/10/2009): Comment out, with permission from Thomas, the RTED test until we 
+# DQ (11/10/2009): Comment out, with permission from Thomas, the RTED test until we
 # can explore the RedHat version 5 problem, 32-bit problem, and Mac OSX problem.
 # check-local: runtimeCheck checkfast
 check-local:

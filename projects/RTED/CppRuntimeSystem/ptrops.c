@@ -18,7 +18,7 @@ AddressDesc pd_deref(AddressDesc desc)
   return desc;
 }
 
-AddressDesc pd_upc_addrof(AddressDesc desc, size_t shared_mask)
+AddressDesc pd_upc_address_of(AddressDesc desc, size_t shared_mask)
 {
   desc.shared_mask <<= 1;
   desc.shared_mask &= shared_mask;
@@ -28,9 +28,9 @@ AddressDesc pd_upc_addrof(AddressDesc desc, size_t shared_mask)
   return desc;
 }
 
-AddressDesc pd_addrof(AddressDesc desc)
+AddressDesc pd_address_of(AddressDesc desc)
 {
-  return pd_upc_addrof(desc, 1);
+  return pd_upc_address_of(desc, 0);
 }
 
 

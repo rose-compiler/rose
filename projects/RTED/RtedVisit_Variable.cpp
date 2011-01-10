@@ -43,6 +43,7 @@ static
 bool isRightOfBinaryOp(const SgNode* astNode) {
    const SgNode* temp = astNode;
 
+   // \pp \todo the while loop can probably stop when we reach a non expression
    while (!isSgProject(temp))
    {
      const SgNode*     parent = temp->get_parent();
@@ -186,7 +187,7 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
    return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer,
          inheritedAttribute.isArrowExp, true, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
 
-   if (SgStatement* forLoop = gfor_loop(astNode))
+   if (SgStatement* forLoop = GeneralizdFor::is(astNode))
    {
       for_loops.push_back(forLoop);
       return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer,
@@ -267,10 +268,10 @@ bool test_binary_op(const VariableTraversal::BinaryOpStack& binary_ops, const Sg
   //       this does not mean that astNode == rhs. astNode could also be
   //       an (indirect) child of rhs.
   return (  !isRightOfBinaryOp(&varref)
-        || isSgArrayType(rhs->get_type())
-        || isSgNewExp(rhs)
-        || isSgReferenceType(binop->get_lhs_operand()->get_type())
-        );
+         || isSgArrayType(rhs->get_type())
+         || isSgNewExp(rhs)
+         || isSgReferenceType(binop->get_lhs_operand()->get_type())
+         );
 }
 
 /// \brief   tests whether a varref is related to a for loop
@@ -286,7 +287,7 @@ bool test_for_loops(const VariableTraversal::LoopStack& for_loops, const SgVarRe
 
   SgStatement* forloop = for_loops.back();
 
-  return (  ::isInitializedNameInForStatement(gfor_loop_init_stmt(forloop), varname)
+  return (  ::isInitializedNameInForStatement(GeneralizdFor::initializer(forloop), varname)
          || ::partOfUpcForallAffinityExpr(*forloop, varref)
          );
 }
@@ -391,7 +392,7 @@ SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* ast
    if (!inheritedAttribute.function) return localResult;
 
    // take from stacks, if applicable
-   if (gfor_loop(astNode))
+   if (GeneralizdFor::is(astNode))
    {
      ROSE_ASSERT(!for_loops.empty() && astNode == for_loops.back());
      for_loops.pop_back();

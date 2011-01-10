@@ -6,7 +6,6 @@
 #include <string>
 #include <set>
 
-#include <boost/foreach.hpp>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"

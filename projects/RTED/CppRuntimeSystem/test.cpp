@@ -570,7 +570,7 @@ void testLostMemRegionFromDoublePointer()
 
     AddressDesc ptr_desc = pd_ptr();
     RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
-    AddressDesc ptr_ptr_desc = pd_addrof(ptr_desc);
+    AddressDesc ptr_ptr_desc = pd_address_of(ptr_desc);
     RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
 
     Address var_addr = memAddr(0x7ffb0);
@@ -817,7 +817,7 @@ void testDoubleArrayHeapAccess()
 
     AddressDesc ptr_desc = pd_ptr();
     RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
-    AddressDesc ptr_ptr_desc = pd_addrof(ptr_desc);
+    AddressDesc ptr_ptr_desc = pd_address_of(ptr_desc);
     RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
 
     Address var_addr = memAddr(0x7ffb0);
