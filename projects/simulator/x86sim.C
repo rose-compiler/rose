@@ -920,13 +920,7 @@ public:
     SegmentInfo segreg_shadow[6];               /* Shadow values of segment registers from GDT */
     uint32_t mmap_start;                        /* Minimum address to use when looking for mmap free space */
     bool mmap_recycle;                          /* If false, then never reuse mmap addresses */
-    sigaction_32 signal_action[_NSIG+1];        /* Simulated actions for signal handling */
-    uint64_t signal_mask;                       /* Set by sigsetmask(), specifies signals that are not delivered */
-    std::queue<int> signal_queue;               /* List of pending signals in the order they arrived provided not masked */
-    bool signal_reprocess;                      /* Set to true if we might need to reprocess the signal_queue */
-    stack_32 signal_stack;                      /* Stack to use for signal handlers specifying SA_ONSTACK flag */
-    uint32_t signal_oldstack;                   /* Stack pointer before currently executing signal handler, or zero */
-    uint32_t signal_return;                     /* Return address for currently executing signal handler, or zero */
+
     std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
     static const uint32_t brk_base=0x08000000;  /* Lowest possible brk() value */
     std::string vdso_name;                      /* Optional base name of virtual dynamic shared object from kernel */
@@ -938,15 +932,13 @@ public:
     rose_addr_t ld_linux_base_va;               /* Base address for ld-linux.so if no preferred addresss for "LOAD#0" */
     uint32_t robust_list_head_va;               /* Address of robust futex list head. See set_robust_list() syscall */
 
+    /* Stuff related to signal handling. */
+    sigaction_32 signal_action[_NSIG+1];        /* Simulated actions for signal handling */
+    uint64_t signal_pending;                    /* Bit N is set if signal N+1 is pending */
+    uint64_t signal_mask;                       /* Masked signals; Bit N is set if signal N+1 is masked */
+    stack_32 signal_stack;                      /* Possible alternative stack to using during signal handling */
+    bool signal_reprocess;                      /* Set to true if we might need to deliver signals (e.g., signal_mask changed) */
     static const uint32_t SIGHANDLER_RETURN = 0xdeceaced;
-
-#if 0
-    uint32_t gsOffset;
-    void (*eipShadow)();
-    uint32_t signalStack;
-    std::vector<user_desc> thread_areas;
-#endif
-    
 
     /* Debugging, tracing, etc. */
     FILE *debug;                                /* Stream to which debugging output is sent (or NULL to suppress it) */
@@ -960,9 +952,9 @@ public:
     bool trace_signal;                          /* Show reception and delivery of signals */
 
     EmulationPolicy()
-        : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), signal_mask(0),
-          signal_reprocess(true), signal_oldstack(0), signal_return(0), vdso_mapped_va(0), vdso_entry_va(0),
+        : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000), robust_list_head_va(0),
+          signal_pending(0), signal_mask(0), signal_reprocess(false),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false), trace_progress(false), trace_signal(false) {
 
@@ -1113,17 +1105,17 @@ public:
      * fault or bus error would occur, then set *error to true and return all that we read, otherwise set it to false. */
     std::vector<std::string> read_string_vector(uint32_t va, bool *error=NULL);
 
-    /* Conditionally adds a signal to the queue of pending signals */
-    void signal_arrival(int signo);
+    /* Simulates the generation of a signal for the specimen.  The signal is made pending (unless it's ignored) and delivered synchronously. */
+    void signal_generate(int signo);
 
-    /* Dispatch all unmasked pending signals */
-    void signal_dispatch();
+    /* Deliver one (of possibly many) unmasked, pending signals. This must be called between simulated instructions. */
+    void signal_deliver_any();
 
-    /* Dispatch a signal. That is, emulation the specimen's signal handler or default action. */
-    void signal_dispatch(int signo);
+    /* Dispatch a signal. That is, emulate the specimen's signal handler or default action. This must be called between simulated instructions. */
+    void signal_deliver(int signo);
 
     /* Handles return from a signal handler. */
-    void signal_cleanup();
+    void signal_return();
 
     /* Same as the x86_push instruction */
     void push(VirtualMachineSemantics::ValueType<32> n) {
@@ -4722,16 +4714,8 @@ EmulationPolicy::emulate_syscall()
         case 176: { /* 0xb0, rt_sigpending */
             syscall_enter("rt_sigpending", "p");
             uint32_t sigset_va=arg(0);
-            uint64_t pending=0;
-            std::queue<int> tmp;
-            while (!signal_queue.empty()) {
-                int signo = signal_queue.front();
-                signal_queue.pop();
-                tmp.push(signo);
-                pending |= (1 << (signo - 1));
-            }
-            signal_queue = tmp;
-            if (8!=map->write(&pending, sigset_va, 8)) {
+            ROSE_ASSERT(8==sizeof(signal_pending));
+            if (8!=map->write(&signal_pending, sigset_va, 8)) {
                 writeGPR(x86_gpr_ax, -EFAULT);
             } else {
                 writeGPR(x86_gpr_ax, 0);
@@ -5634,19 +5618,21 @@ EmulationPolicy::arg(int idx)
     }
 }
 
-/* Place signal on queue of pending signals. */
+/* Called asynchronously to make a signal pending. The signal will be dropped if it's action is to ignore. Otherwise it will be made pending by
+ * setting the appropriate bit in the EmulationPolicy's signal_pending vector.   And yes, we know that this function is not async signal safe
+ * when signal tracing is enabled. */
 void
-EmulationPolicy::signal_arrival(int signo)
+EmulationPolicy::signal_generate(int signo)
 {
     ROSE_ASSERT(signo>0 && signo<_NSIG);
-    bool is_masked = (0 != (signal_mask & (1<<(signo-1))));
+    uint64_t sigbit = (uint64_t)1 << (signo-1);
+    bool is_masked = (0 != (signal_mask & sigbit));
 
     if (debug && trace_signal) {
-        fprintf(debug, " [signal ");
+        fprintf(debug, " [generated ");
         print_enum(debug, signal_names, signo);
         fprintf(debug, " (%s)", strsignal(signo));
     }
-
     
     if (signal_action[signo].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
         if (debug && trace_signal)
@@ -5654,52 +5640,51 @@ EmulationPolicy::signal_arrival(int signo)
     } else if (is_masked) {
         if (debug && trace_signal)
             fputs(" masked]", debug);
-        signal_queue.push(signo);
+        signal_pending |= sigbit;
     } else {
         if (debug && trace_signal)
-            fputs(" arrived]", debug);
-        signal_queue.push(signo);
+            fputs("]", debug);
+        signal_pending |= sigbit;
         signal_reprocess = true;
     }
 }
 
-/* Dispatch signals on the queue if they are not masked. */
+/* Deliver a pending, unmasked signal.  Posix doesn't specify an order, so we'll deliver the one with the lowest number. */
 void
-EmulationPolicy::signal_dispatch()
+EmulationPolicy::signal_deliver_any()
 {
-    std::queue<int> pending;
     if (signal_reprocess) {
         signal_reprocess = false;
-        while (!signal_queue.empty()) {
-            int signo = signal_queue.front();
-            signal_queue.pop();
-            bool is_pending = (0 != (signal_mask & (1 << (signo-1))));
-            if (is_pending) {
-                pending.push(signo);
-            } else {
-                signal_dispatch(signo);
+        for (size_t i=0; i<64; i++) {
+            uint64_t sigbit = (uint64_t)1 << i;
+            if ((signal_pending & sigbit) && 0==(signal_mask & sigbit)) {
+                signal_pending &= ~sigbit;
+                signal_deliver(i+1); /* bit N is signal N+1 */
+                return;
             }
         }
-        signal_queue = pending;
     }
 }
 
-/* Dispatch the specified signal */
+/* Deliver the specified signal. The signal is not removed from the signal_pending vector, nor is it added if its masked. */
 void
-EmulationPolicy::signal_dispatch(int signo)
+EmulationPolicy::signal_deliver(int signo)
 {
+    ROSE_ASSERT(signo>0 && signo<=64);
+
     if (debug && trace_signal) {
-        fprintf(debug, "0x%08"PRIx64": dispatching signal ", readIP().known_value());
+        fprintf(debug, "0x%08"PRIx64": delivering ", readIP().known_value());
         print_enum(debug, signal_names, signo);
-        fprintf(debug, " (%s)\n", strsignal(signo));
+        fprintf(debug, " (%s)", strsignal(signo));
     }
 
     if (signal_action[signo].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
+        /* The signal action may have changed since the signal was generated, so we need to check this again. */
         if (debug && trace_signal)
-            fprintf(debug, "    signal is ignored\n");
+            fprintf(debug, " ignored\n");
     } else if (signal_action[signo].handler_va==(uint32_t)(uint64_t)SIG_DFL) {
         if (debug && trace_signal)
-            fprintf(debug, "    signal causes default action\n");
+            fprintf(debug, " default\n");
         switch (signo) {
             case SIGFPE:
             case SIGILL:
@@ -5742,17 +5727,25 @@ EmulationPolicy::signal_dispatch(int signo)
         }
 
     } else if (signal_mask & ((uint64_t)1 << signo)) {
+        /* Masked, but do not adjust signal_pending vector. */
         if (debug && trace_signal)
-            fprintf(debug, "    signal is currently masked (procmask)\n");
+            fprintf(debug, " masked (discarded)\n");
     } else {
-        ROSE_ASSERT(0==signal_return); /* possible violation if specimen exits previous handler with longjmp */
-        ROSE_ASSERT(0==signal_oldstack); /* ditto */
-        signal_return = readIP().known_value();
+        if (debug && trace_signal)
+            fprintf(debug, " to 0x%08"PRIx32"\n", signal_action[signo].handler_va);
+
+        uint32_t signal_return = readIP().known_value();
+        push(signal_return);
 
         /* Switch to the alternate stack? */
-        signal_oldstack = readGPR(x86_gpr_sp).known_value();
+        uint32_t signal_oldstack = readGPR(x86_gpr_sp).known_value();
         if (0==(signal_stack.ss_flags & SS_ONSTACK) && 0!=(signal_action[signo].flags & SA_ONSTACK))
             writeGPR(x86_gpr_sp, number<32>(signal_stack.ss_sp + signal_stack.ss_size));
+
+        /* Push stuff that will be needed by the simulated sigreturn() syscall */
+        push(signal_oldstack);
+        push(signal_mask >> 32);
+        push(signal_mask & 0xffffffff);
 
         /* Caller-saved registers */
         push(readGPR(x86_gpr_ax));
@@ -5763,25 +5756,30 @@ EmulationPolicy::signal_dispatch(int signo)
         push(readGPR(x86_gpr_di));
         push(readGPR(x86_gpr_bp));
 
+        /* New signal mask */
+        signal_mask |= signal_action[signo].mask;
+        signal_mask |= (uint64_t)1 << (signo-1);
+        // signal_reprocess = true;  -- Not necessary because we're not clearing any */
+
         /* Signal handler arguments */
         push(readIP());
         push(number<32>(signo));
+
+        /* Invoke signal handler */
         push(number<32>(SIGHANDLER_RETURN)); /* fake return address to trigger signal_cleanup() call */
         writeIP(number<32>(signal_action[signo].handler_va));
     }
 }
 
-/* Warning: if the specimen calls longjmp() or siglongjmp() from inside the signal handler in order to exit the handler, this
- * signal_cleanup() function will never be executed. */
+/* Note: if the specimen's signal handler never returns then this function is never invoked.  The specimen may do a longjmp() or siglongjmp(),
+ * in which case the original stack, etc are restored anyway. Additionally, siglongjmp() may do a system call to set the signal mask back to
+ * the value saved by sigsetjmp(), if any. */
 void
-EmulationPolicy::signal_cleanup()
+EmulationPolicy::signal_return()
 {
     if (debug && trace_signal)
-        fprintf(debug, "0x%08"PRIx32": returning from signal handler\n", signal_return);
+        fprintf(debug, "[returning from signal handler]\n");
     
-    ROSE_ASSERT(signal_return!=0);
-    ROSE_ASSERT(signal_oldstack!=0);
-
     /* Discard handler arguments */
     pop(); /* signal number */
     pop(); /* signal address */
@@ -5795,13 +5793,16 @@ EmulationPolicy::signal_cleanup()
     writeGPR(x86_gpr_bx, pop());
     writeGPR(x86_gpr_ax, pop());
 
-    /* Restore normal stack */
-    writeGPR(x86_gpr_sp, number<32>(signal_oldstack));
-    signal_oldstack = 0;
+    /* Simulate the sigreturn system call (#119), the stack frame of which was set up by signal_deliver() */
+    uint64_t old_sigmask = pop().known_value(); /* low bits */
+    old_sigmask |= (uint64_t)pop().known_value() << 32; /* hi bits */
+    if (old_sigmask!=signal_mask)
+        signal_reprocess = true;
+    signal_mask = old_sigmask;
 
-    /* Resume execution at address where signal occurred */
-    writeIP(number<32>(signal_return));
-    signal_return = 0;
+    /* Simulate return from sigreturn */
+    writeGPR(x86_gpr_sp, pop());        /* restore stack pointer */
+    writeIP(pop());                     /* RET instruction */
 }
 
 static EmulationPolicy *signal_deliver_to;
@@ -5809,7 +5810,7 @@ static void
 signal_handler(int signo)
 {
     if (signal_deliver_to) {
-        signal_deliver_to->signal_arrival(signo);
+        signal_deliver_to->signal_generate(signo);
     } else {
         fprintf(stderr, "received signal %d (%s); this signal cannot be delivered so we're taking it ourselves\n",
                 signo, strsignal(signo));
@@ -6067,7 +6068,7 @@ main(int argc, char *argv[], char *envp[])
         }
         try {
             if (policy.readIP().known_value()==policy.SIGHANDLER_RETURN) {
-                policy.signal_cleanup();
+                policy.signal_return();
                 if (dump_at!=0 && dump_at==policy.SIGHANDLER_RETURN) {
                     fprintf(stderr, "Reached dump point.\n");
                     policy.dump_core(SIGABRT, dump_name);
@@ -6093,7 +6094,7 @@ main(int argc, char *argv[], char *envp[])
             if (policy.debug && policy.trace_state)
                 policy.dump_registers(policy.debug);
 
-            policy.signal_dispatch();
+            policy.signal_deliver_any();
         } catch (const Semantics::Exception &e) {
             std::cerr <<e <<"\n\n";
 #ifdef X86SIM_STRICT_EMULATION
@@ -6127,7 +6128,7 @@ main(int argc, char *argv[], char *envp[])
             }
             break;
         } catch (const EmulationPolicy::Signal &e) {
-            policy.signal_arrival(e.signo);
+            policy.signal_generate(e.signo);
         }
     }
     return 0;
