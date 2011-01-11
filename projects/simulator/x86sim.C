@@ -80,7 +80,7 @@ enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
 typedef modify_ldt_ldt_s user_desc;
 #endif
 
-static bool did_fork = false;
+static char *log_file_name = NULL;
 
 static const int PROGRESS_INTERVAL = 10; /* seconds */
 static int had_alarm = 0;
@@ -933,7 +933,7 @@ public:
     uint32_t robust_list_head_va;               /* Address of robust futex list head. See set_robust_list() syscall */
 
     /* Stuff related to signal handling. */
-    sigaction_32 signal_action[_NSIG+1];        /* Simulated actions for signal handling */
+    sigaction_32 signal_action[_NSIG];          /* Simulated actions for signal handling; elmt N is signal N+1 */
     uint64_t signal_pending;                    /* Bit N is set if signal N+1 is pending */
     uint64_t signal_mask;                       /* Masked signals; Bit N is set if signal N+1 is masked */
     stack_32 signal_stack;                      /* Possible alternative stack to using during signal handling */
@@ -1001,6 +1001,9 @@ public:
         signal_stack.ss_size = 0;
         signal_stack.ss_flags = SS_DISABLE;
     }
+
+    /* Enable debugging.  The PATTERN should be a printf-style format with an optional integer specifier for the process ID. */
+    void open_log_file(const char *pattern);
 
     /* Print machine register state for debugging */
     void dump_registers(FILE *f) const {
@@ -4290,15 +4293,24 @@ EmulationPolicy::emulate_syscall()
 
                 /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a
                  * function for it to execute. We want fork-like semantics. */
+                fflush(stdout);
+                fflush(stderr);
+                if (debug)
+                    fflush(debug);
                 pid_t pid = fork();
                 if (-1==pid) {
                     writeGPR(x86_gpr_ax, -errno);
                     break;
                 }
-                did_fork = true;
 
-                /* Return register values in child */
                 if (0==pid) {
+                    /* Pending signals are only for the parent */
+                    signal_pending = 0;
+
+                    /* Open a new log file if necessary */
+                    open_log_file(log_file_name);
+
+                    /* Return register values in child */
                     pt_regs_32 regs;
                     regs.bx = readGPR(x86_gpr_bx).known_value();
                     regs.cx = readGPR(x86_gpr_cx).known_value();
@@ -4660,14 +4672,15 @@ EmulationPolicy::emulate_syscall()
                     writeGPR(x86_gpr_ax, -EFAULT);
                     break;
                 }
-                if (oldact_va && sizeof(tmp) != map->write(signal_action+signum, oldact_va, sizeof tmp)) {
+                if (oldact_va && sizeof(tmp) != map->write(signal_action+signum-1, oldact_va, sizeof tmp)) {
                     writeGPR(x86_gpr_ax, -EFAULT);
                     break;
                 }
-                signal_action[signum] = tmp;
+                if (action_va)
+                    signal_action[signum-1] = tmp;
                 writeGPR(x86_gpr_ax, 0);
             } while (0);
-            syscall_leave("d");
+            syscall_leave("d--P", sizeof(sigaction_32), print_sigaction_32);
             break;
         }
 
@@ -5502,6 +5515,33 @@ EmulationPolicy::emulate_syscall()
 }
 
 void
+EmulationPolicy::open_log_file(const char *pattern)
+{
+    char name[4096];
+
+    if (pattern && *pattern) {
+        size_t nprinted = snprintf(name, sizeof name, pattern, getpid());
+        if (nprinted > sizeof name) {
+            fprintf(stderr, "name pattern overflow: %s\n", pattern);
+            debug = stderr;
+            return;
+        }
+    } else {
+        name[0] = '\0';
+    }
+
+    if (debug && debug!=stderr && debug!=stdout) {
+        fclose(debug);
+        debug = NULL;
+    }
+
+    if (name[0] && NULL==(debug = fopen(name, "w"))) {
+        fprintf(stderr, "%s: %s\n", strerror(errno), name);
+        return;
+    }
+}
+
+void
 EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *ap)
 {
     ROSE_ASSERT(info!=NULL);
@@ -5544,10 +5584,7 @@ EmulationPolicy::syscall_enterv(uint32_t *values, const char *name, const char *
         if (0==first_call.tv_sec)
             first_call = this_call;
         double elapsed = (this_call.tv_sec - first_call.tv_sec) + (this_call.tv_usec - first_call.tv_usec)/1e6;
-
-        if (did_fork)
-            fprintf(debug, "[pid %d] ", getpid());
-        fprintf(debug, "0x%08"PRIx64" %8.4f: ", readIP().known_value(), elapsed);
+        fprintf(debug, "[pid %d] 0x%08"PRIx64" %8.4f: ", getpid(), readIP().known_value(), elapsed);
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], values?values[i]:arg(i), args+i, app);
@@ -5631,10 +5668,10 @@ EmulationPolicy::signal_generate(int signo)
     if (debug && trace_signal) {
         fprintf(debug, " [generated ");
         print_enum(debug, signal_names, signo);
-        fprintf(debug, " (%s)", strsignal(signo));
+        fprintf(debug, "(%d)", signo);
     }
     
-    if (signal_action[signo].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
+    if (signal_action[signo-1].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
         if (debug && trace_signal)
             fputs(" ignored]", debug);
     } else if (is_masked) {
@@ -5675,14 +5712,14 @@ EmulationPolicy::signal_deliver(int signo)
     if (debug && trace_signal) {
         fprintf(debug, "0x%08"PRIx64": delivering ", readIP().known_value());
         print_enum(debug, signal_names, signo);
-        fprintf(debug, " (%s)", strsignal(signo));
+        fprintf(debug, "(%d)", signo);
     }
 
-    if (signal_action[signo].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
+    if (signal_action[signo-1].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
         /* The signal action may have changed since the signal was generated, so we need to check this again. */
         if (debug && trace_signal)
             fprintf(debug, " ignored\n");
-    } else if (signal_action[signo].handler_va==(uint32_t)(uint64_t)SIG_DFL) {
+    } else if (signal_action[signo-1].handler_va==(uint32_t)(uint64_t)SIG_DFL) {
         if (debug && trace_signal)
             fprintf(debug, " default\n");
         switch (signo) {
@@ -5732,14 +5769,14 @@ EmulationPolicy::signal_deliver(int signo)
             fprintf(debug, " masked (discarded)\n");
     } else {
         if (debug && trace_signal)
-            fprintf(debug, " to 0x%08"PRIx32"\n", signal_action[signo].handler_va);
+            fprintf(debug, " to 0x%08"PRIx32"\n", signal_action[signo-1].handler_va);
 
         uint32_t signal_return = readIP().known_value();
         push(signal_return);
 
         /* Switch to the alternate stack? */
         uint32_t signal_oldstack = readGPR(x86_gpr_sp).known_value();
-        if (0==(signal_stack.ss_flags & SS_ONSTACK) && 0!=(signal_action[signo].flags & SA_ONSTACK))
+        if (0==(signal_stack.ss_flags & SS_ONSTACK) && 0!=(signal_action[signo-1].flags & SA_ONSTACK))
             writeGPR(x86_gpr_sp, number<32>(signal_stack.ss_sp + signal_stack.ss_size));
 
         /* Push stuff that will be needed by the simulated sigreturn() syscall */
@@ -5757,7 +5794,7 @@ EmulationPolicy::signal_deliver(int signo)
         push(readGPR(x86_gpr_bp));
 
         /* New signal mask */
-        signal_mask |= signal_action[signo].mask;
+        signal_mask |= signal_action[signo-1].mask;
         signal_mask |= (uint64_t)1 << (signo-1);
         // signal_reprocess = true;  -- Not necessary because we're not clearing any */
 
@@ -5767,7 +5804,7 @@ EmulationPolicy::signal_deliver(int signo)
 
         /* Invoke signal handler */
         push(number<32>(SIGHANDLER_RETURN)); /* fake return address to trigger signal_cleanup() call */
-        writeIP(number<32>(signal_action[signo].handler_va));
+        writeIP(number<32>(signal_action[signo-1].handler_va));
     }
 }
 
@@ -5812,8 +5849,9 @@ signal_handler(int signo)
     if (signal_deliver_to) {
         signal_deliver_to->signal_generate(signo);
     } else {
-        fprintf(stderr, "received signal %d (%s); this signal cannot be delivered so we're taking it ourselves\n",
-                signo, strsignal(signo));
+        fprintf(stderr, "received ");
+        print_enum(stderr, signal_names, signo);
+        fprintf(stderr, "(%d); this signal cannot be delivered so we're taking it ourselves\n", signo);
         struct sigaction sa, old_sa;
         sa.sa_handler = SIG_DFL;
         sigemptyset(&sa.sa_mask);
@@ -5837,7 +5875,6 @@ main(int argc, char *argv[], char *envp[])
     Semantics t(policy);
     uint32_t dump_at = 0;               /* dump core the first time we hit this address, before the instruction is executed */
     std::string dump_name = "dump";
-    FILE *log_file = NULL;
 
     struct sigaction sa;
     sa.sa_handler = signal_handler;
@@ -5882,11 +5919,16 @@ main(int argc, char *argv[], char *envp[])
             argno++;
             break;
         } else if (!strncmp(argv[argno], "--log=", 6)) {
-            if (log_file)
-                fclose(log_file);
-            if (NULL==(log_file = fopen(argv[argno]+6, "w"))) {
-                fprintf(stderr, "%s: %s: %s\n", argv[0], strerror(errno), argv[argno+6]);
-                exit(1);
+            /* Save log file name pattern, extending it to an absolute name in case the specimen changes directories */
+            if (argv[argno][6]=='/') {
+                log_file_name = new char[strlen(argv[argno]+6)+1];
+                strcpy(log_file_name, argv[argno]+6);
+            } else {
+                char dirname[4096];
+                char *dirname_p = getcwd(dirname, sizeof dirname);
+                ROSE_ASSERT(dirname_p);
+                log_file_name = new char[strlen(dirname)+1+strlen(argv[argno]+6)+1];
+                sprintf(log_file_name, "%s/%s", dirname, argv[argno]+6);
             }
             argno++;
         } else if (!strncmp(argv[argno], "--debug=", 8)) {
@@ -6024,9 +6066,9 @@ main(int argc, char *argv[], char *envp[])
             exit(1);
         }
     }
+
     ROSE_ASSERT(argc-argno>=1); /* usage: executable name followed by executable's arguments */
-    if (policy.debug && log_file)
-        policy.debug = log_file;
+    policy.open_log_file(log_file_name);
     SgAsmGenericHeader *fhdr = policy.load(argv[argno]); /*header for main executable, not libraries*/
     policy.initialize_stack(fhdr, argc-argno, argv+argno);
 
