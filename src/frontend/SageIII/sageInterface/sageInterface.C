@@ -12566,7 +12566,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                          for (SgInitializedNamePtrList::iterator i = l.begin(); i != l.end(); i++)
                             {
                            // reset the scope, but make sure it was set to sourceBlock to make sure.
-                           // This might be an issue for extern varaible declaration that have a scope
+                           // This might be an issue for extern variable declaration that have a scope
                            // in a separate namespace of a static class member defined external to
                            // its class, etc. I don't want to worry about those cases right now.
                               ROSE_ASSERT((*i)->get_scope() == sourceBlock);
