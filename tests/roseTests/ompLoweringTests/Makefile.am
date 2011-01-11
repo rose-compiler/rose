@@ -74,6 +74,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         ompfor4.c \
 	ompfor-default.c \
 	ompfor-decremental.c \
+	ompfor-static.c \
 	ompGetNumThreads.c \
         orphaned-directives.c \
         parallel.c \

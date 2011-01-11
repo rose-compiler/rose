@@ -10,11 +10,11 @@ F77_TESTCODES_REQUIRED_TO_COMPILE =
 
 F90_TESTCODES_REQUIRED_TO_COMPILE = 
 
+#  ompdo-static.f 
 F77_TESTCODES_REQUIRED_TO_RUN = \
   helloworld.f \
   ompdo-default.f \
   ompdo-decremental.f \
-  ompdo-static.f \
   private.f \
   shared.f
 
