@@ -6076,12 +6076,15 @@ EmulationPolicy::signal_deliver(int signo)
 void
 EmulationPolicy::signal_return()
 {
-    if (debug && trace_signal)
-        fprintf(debug, "[returning from signal handler]\n");
-    
     /* Discard handler arguments */
-    pop(); /* signal number */
+    int signo = pop().known_value(); /* signal number */
     pop(); /* signal address */
+
+    if (debug && trace_signal) {
+        fprintf(debug, "[returning from ");
+        print_enum(debug, signal_names, signo);
+        fprintf(debug, " handler]\n");
+    }
 
     /* Restore caller-saved registers */
     writeGPR(x86_gpr_bp, pop());
