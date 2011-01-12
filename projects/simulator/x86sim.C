@@ -1282,13 +1282,19 @@ public:
                 buf[j] = (data.known_value() >> i) & 0xff;
             size_t nwritten = map->write(buf, base+offset, Len/8);
             if (nwritten!=Len/8) {
-                /* Writing to mem that's not mapped results in SIGSEGV; writing to mem that's mapped without write permission
-                 * results in SIGBUS. */
+#if 0   /* First attempt, according to Section 24.2.1 "Program Error Signals" of glibc documentation */
+                /* Writing to mem that's not mapped results in SIGBUS; writing to mem that's mapped without write permission
+                 * results in SIGSEGV. */
                 if (map->find(base+offset)) {
-                    throw Signal(SIGBUS);
-                } else {
                     throw Signal(SIGSEGV);
+                } else {
+                    throw Signal(SIGBUS);
                 }
+#else   /* Second attempt, according to actual experience */
+                /* The syscall_tst.117.shmdt.01 shows that mapping a shared memory segment, then unmapping it, then trying to
+                 * write to it will result in a SIGSEGV, not a SIGBUS. */
+                throw Signal(SIGSEGV);
+#endif
             }
         }
     }
