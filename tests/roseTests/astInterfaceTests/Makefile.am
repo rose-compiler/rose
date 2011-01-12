@@ -325,7 +325,8 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputRemoveStatementCommentRelocation_withoutTopBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C \
        inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C \
-       inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f
+       inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f \
+       inputbuildLabelStatement2.f
 
 
 check-local:
