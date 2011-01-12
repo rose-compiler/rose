@@ -12582,6 +12582,8 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                          //cout<<"found a function declaration to be moved ..."<<endl;
                        }
                      break;
+                     case V_SgFortranIncludeLine:
+                       break;
                     default:
                        {
                          printf ("Moving this declaration = %p = %s = %s between blocks is not yet supported \n",declaration,declaration->class_name().c_str(),get_name(declaration).c_str());
