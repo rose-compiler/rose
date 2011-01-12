@@ -11,6 +11,7 @@ F77_TESTCODES_TO_PASS = \
     ompdo-default.f \
     ompdo-decremental.f \
     ompdo-static.f \
+    ompdo-orphaned.f \
     parallel.f \
     parallel-1.f \
     parallel-2.f \
