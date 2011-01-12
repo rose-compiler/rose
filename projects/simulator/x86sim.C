@@ -394,7 +394,7 @@ static const Translate seek_whence[] = {TE(SEEK_SET), TE(SEEK_CUR), TE(SEEK_END)
 
 static const Translate flock_types[] = {TE(F_RDLCK), TE(F_WRLCK), TE(F_UNLCK), T_END};
 
-/* The kernel struct flock for a 32-bit guest on a 32- or 64-bit host */
+/* The kernel struct flock on a 32-bit architecture */
 struct flock_32 {
     uint16_t l_type;
     uint16_t l_whence;
@@ -403,8 +403,17 @@ struct flock_32 {
     int32_t l_pid;
 } __attribute__((packed));
 
-/* The kernel struct flock for a 32-bit guest using 64-bit files on a 32- or 64-bit host */
-struct flock_64 {
+/* The kernel struct flock on the host */
+struct flock_native {
+    short l_type;
+    short l_whence;
+    long l_start;
+    long l_len;
+    int l_pid;
+};
+
+/* The kernel struct flock64 on a 32-bit architecture */
+struct flock64_32 {
     uint16_t l_type;
     uint16_t l_whence;
     int64_t l_start;
@@ -412,8 +421,8 @@ struct flock_64 {
     int32_t l_pid;
 } __attribute__((packed));
 
-/* The kernel struct flock on the host */
-struct flock_64_native {
+/* The kernel struct flock64 on the host */
+struct flock64_native {
     short l_type;
     short l_whence;
     long long l_start;
@@ -421,7 +430,6 @@ struct flock_64_native {
     int l_pid;
 };
 
-#if 0 /* not used currently, but will be for syscall 143 when implemented */
 static int
 print_flock_32(FILE *f, const uint8_t *_v, size_t sz)
 {
@@ -434,13 +442,13 @@ print_flock_32(FILE *f, const uint8_t *_v, size_t sz)
     retval += fprintf(f, ", start=%"PRId32", len=%"PRId32", pid=%"PRId32, v->l_start, v->l_len, v->l_pid);
     return retval;
 }
-#endif
 
+#if 0 /* not currently used */
 static int
-print_flock_64(FILE *f, const uint8_t *_v, size_t sz)
+print_flock64_32(FILE *f, const uint8_t *_v, size_t sz)
 {
-    ROSE_ASSERT(sizeof(flock_64)==sz);
-    const flock_64 *v = (const flock_64*)_v;
+    ROSE_ASSERT(sizeof(flock64_32)==sz);
+    const flock64_32 *v = (const flock64_32*)_v;
     int retval = fprintf(f, "type=");
     retval += print_enum(f, flock_types, v->l_type);
     retval += fprintf(f, ", whence=");
@@ -448,6 +456,7 @@ print_flock_64(FILE *f, const uint8_t *_v, size_t sz)
     retval += fprintf(f, ", start=%"PRId64", len=%"PRId64", pid=%"PRId32, v->l_start, v->l_len, v->l_pid);
     return retval;
 }
+#endif
 
 struct statfs_32 {
     uint32_t f_type;
@@ -5379,38 +5388,17 @@ EmulationPolicy::emulate_syscall()
                     syscall_leave("d");
                     break;
                 }
-                case F_GETLK: {
-                    syscall_enter("fcntl64", "dfp", fcntl_cmds);
-                    flock_64 guest_fl;
-                    static flock_64_native host_fl;
-#ifdef SYS_fcntl64  /* host is 32-bit */
-                    result = syscall(SYS_fcntl64, fd, cmd, &host_fl);
-#else               /* host is 64-bit */
-                    result = syscall(SYS_fcntl, fd, cmd, &host_fl);
-#endif
-                    if (-1==result) {
-                        result = -errno;
-                    } else {
-                        guest_fl.l_type = host_fl.l_type;
-                        guest_fl.l_whence = host_fl.l_whence;
-                        guest_fl.l_start = host_fl.l_start;
-                        guest_fl.l_len = host_fl.l_len;
-                        guest_fl.l_pid = host_fl.l_pid;
-                        if (sizeof(guest_fl)!=map->write(&guest_fl, arg(2), sizeof guest_fl))
-                            result = -EFAULT;
-                    }
-                    writeGPR(x86_gpr_ax, result);
-                    syscall_leave("d--P", sizeof(flock_64), print_flock_64);
-                    break;
-                }
+                case F_GETLK:
                 case F_SETLK:
                 case F_SETLKW: {
-                    syscall_enter("fcntl64", "dfP", fcntl_cmds, sizeof(flock_64), print_flock_64);
-                    flock_64 guest_fl;
-                    static flock_64_native host_fl;
-                    if (sizeof(guest_fl)!=map->read(&guest_fl, arg(2), sizeof guest_fl)) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
-                    } else {
+                    syscall_enter("fcntl64", "dfP", fcntl_cmds, sizeof(flock_32), print_flock_32);
+                    do {
+                        flock_32 guest_fl;
+                        static flock_native host_fl;
+                        if (sizeof(guest_fl)!=map->read(&guest_fl, arg(2), sizeof guest_fl)) {
+                            writeGPR(x86_gpr_ax, -EFAULT);
+                            break;
+                        }
                         host_fl.l_type = guest_fl.l_type;
                         host_fl.l_whence = guest_fl.l_whence;
                         host_fl.l_start = guest_fl.l_start;
@@ -5421,9 +5409,29 @@ EmulationPolicy::emulate_syscall()
 #else                   /* host is 64-bit */
                         result = syscall(SYS_fcntl, fd, cmd, &host_fl);
 #endif
-                        writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                        if (-1==result) {
+                            writeGPR(x86_gpr_ax, -errno);
+                            break;
+                        }
+                        if (F_GETLK==cmd) {
+                            guest_fl.l_type = host_fl.l_type;
+                            guest_fl.l_whence = host_fl.l_whence;
+                            guest_fl.l_start = host_fl.l_start;
+                            guest_fl.l_len = host_fl.l_len;
+                            guest_fl.l_pid = host_fl.l_pid;
+                            if (sizeof(guest_fl)!=map->write(&guest_fl, arg(2), sizeof guest_fl)) {
+                                writeGPR(x86_gpr_ax, -EFAULT);
+                                break;
+                            }
+                        }
+
+                        writeGPR(x86_gpr_ax, result);
+                    } while (0);
+                    if (F_GETLK==cmd) {
+                        syscall_leave("d-P", sizeof(flock_32), print_flock_32);
+                    } else {
+                        syscall_leave("d");
                     }
-                    syscall_leave("d");
                     break;
                 }
                 default:
