@@ -152,30 +152,20 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.117.msgsnd.05.c \
 		   $(srcdir)/tests/syscall_tst.117.msgsnd.06.c \
 		   $(srcdir)/tests/syscall_tst.117.semctl.01.c \
-		   $(srcdir)/tests/syscall_tst.117.semctl.03.c \
 		   $(srcdir)/tests/syscall_tst.117.semctl.05.c \
-		   $(srcdir)/tests/syscall_tst.117.semctl.06.c \
 		   $(srcdir)/tests/syscall_tst.117.semget.01.c \
-		   $(srcdir)/tests/syscall_tst.117.semget.02.c \
 		   $(srcdir)/tests/syscall_tst.117.semget.03.c \
 		   $(srcdir)/tests/syscall_tst.117.semop.01.c \
-		   $(srcdir)/tests/syscall_tst.117.semop.02.c \
 		   $(srcdir)/tests/syscall_tst.117.semop.03.c \
 		   $(srcdir)/tests/syscall_tst.117.semop.04.c \
 		   $(srcdir)/tests/syscall_tst.117.semop.05.c \
 		   $(srcdir)/tests/syscall_tst.117.shmat.01.c \
-		   $(srcdir)/tests/syscall_tst.117.shmat.02.c \
-		   $(srcdir)/tests/syscall_tst.117.shmat.03.c \
 		   $(srcdir)/tests/syscall_tst.117.shmctl.01.c \
-		   $(srcdir)/tests/syscall_tst.117.shmctl.02.c \
-		   $(srcdir)/tests/syscall_tst.117.shmctl.03.c \
 		   $(srcdir)/tests/syscall_tst.117.shmctl.04.c \
 		   $(srcdir)/tests/syscall_tst.117.shmdt.01.c \
 		   $(srcdir)/tests/syscall_tst.117.shmdt.02.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.01.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.02.c \
-		   $(srcdir)/tests/syscall_tst.117.shmget.04.c \
-		   $(srcdir)/tests/syscall_tst.117.shmget.05.c \
 		   $(srcdir)/tests/syscall_tst.122.c \
 		   $(srcdir)/tests/syscall_tst.125.1.c \
 		   $(srcdir)/tests/syscall_tst.125.2.c \
@@ -215,14 +205,9 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.192.7.c \
 		   $(srcdir)/tests/syscall_tst.192.8.c \
 		   $(srcdir)/tests/syscall_tst.192.9.c \
-		   $(srcdir)/tests/syscall_tst.195.1.c \
-		   $(srcdir)/tests/syscall_tst.195.2.c \
-		   $(srcdir)/tests/syscall_tst.195.3.c \
 		   $(srcdir)/tests/syscall_tst.195.5.c \
 		   $(srcdir)/tests/syscall_tst.195.6.c \
 		   $(srcdir)/tests/syscall_tst.196.1.c \
-		   $(srcdir)/tests/syscall_tst.196.2.c \
-		   $(srcdir)/tests/syscall_tst.196.3.c \
 		   $(srcdir)/tests/syscall_tst.197.1.c \
 		   $(srcdir)/tests/syscall_tst.197.2.c \
 		   $(srcdir)/tests/syscall_tst.199.1.c \
@@ -307,7 +292,6 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.78.1.c \
 		   $(srcdir)/tests/syscall_tst.83.1.c \
 		   $(srcdir)/tests/syscall_tst.83.2.c \
-		   $(srcdir)/tests/syscall_tst.83.3.c \
 		   $(srcdir)/tests/syscall_tst.83.4.c \
 		   $(srcdir)/tests/syscall_tst.83.5.c \
 		   $(srcdir)/tests/syscall_tst.91.1.c \
@@ -336,12 +320,28 @@ TEST_INPUTS_TS_SRC = \
 #		   $(srcdir)/tests/syscall_tst.117.msgrcv.02.c
 #		   $(srcdir)/tests/syscall_tst.117.msgsnd.02.c
 #		   $(srcdir)/tests/syscall_tst.117.semctl.02.c
+#		   $(srcdir)/tests/syscall_tst.117.semctl.03.c
 #		   $(srcdir)/tests/syscall_tst.117.semctl.04.c
-#			These tests return -EACCESS when run natively on some kernels. They work fine when run with
-#			root effective uid, but we can't be testing ROSE like that!
+#		   $(srcdir)/tests/syscall_tst.117.semget.02.c
+#		   $(srcdir)/tests/syscall_tst.117.semop.02.c
+#		   $(srcdir)/tests/syscall_tst.117.shmat.02.c
+#		   $(srcdir)/tests/syscall_tst.117.shmat.03.c
+#		   $(srcdir)/tests/syscall_tst.117.shmctl.02.c
+#		   $(srcdir)/tests/syscall_tst.117.shmctl.03.c
+#		   $(srcdir)/tests/syscall_tst.117.shmget.04.c
+#		   $(srcdir)/tests/syscall_tst.117.shmget.05.c
+#		   $(srcdir)/tests/syscall_tst.195.1.c
+#		   $(srcdir)/tests/syscall_tst.195.2.c
+#		   $(srcdir)/tests/syscall_tst.195.3.c
+#		   $(srcdir)/tests/syscall_tst.196.2.c
+#		   $(srcdir)/tests/syscall_tst.196.3.c
+#		   $(srcdir)/tests/syscall_tst.83.3.c
+#			These tests either explicitly check for root effective uid, or the fail with EACCESS on some
+#			kernels. We can't be testing ROSE as root!
 #		   $(srcdir)/tests/syscall_tst.117.msgctl.09.c
 #		   $(srcdir)/tests/syscall_tst.117.msgctl.10.c
 #		   $(srcdir)/tests/syscall_tst.117.msgctl.11.c
+#		   $(srcdir)/tests/syscall_tst.117.semctl.06.c
 #			Disabled because of deadlocks in simulated futex() call.  These need more work and should be enabled
 #			when possible. [RPM 2011-01-07]
 #		   $(srcdir)/tests/syscall_tst.140.1.c
