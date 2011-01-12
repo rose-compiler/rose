@@ -64,9 +64,9 @@
 int local_flag = 1;
 
 #define NREPS	500
-#define NPROCS	3
-#define NKIDS	5
-#define NSEMS	5
+#define NPROCS	1
+#define NKIDS	1
+#define NSEMS	1
 #define HVAL	1000
 #define LVAL	100
 #define FAILED	0
@@ -200,7 +200,7 @@ static void dotest(key_t key)
 
 	nwait = 0;
 	srand(getpid());
-	if ((id = semget(key, NSEMS, IPC_CREAT | IPC_EXCL)) < 0) {
+	if ((id = semget(key, NSEMS, IPC_CREAT | IPC_EXCL | 0666)) < 0) {
 		tst_resm(TFAIL, "\tsemget() failed errno %d", errno);
 		exit(1);
 	}
