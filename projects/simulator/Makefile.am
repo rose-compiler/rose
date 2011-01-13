@@ -239,7 +239,6 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.221.15.c \
 		   $(srcdir)/tests/syscall_tst.221.16.c \
 		   $(srcdir)/tests/syscall_tst.221.17.c \
-		   $(srcdir)/tests/syscall_tst.221.18.c \
 		   $(srcdir)/tests/syscall_tst.221.19.c \
 		   $(srcdir)/tests/syscall_tst.221.20.c \
 		   $(srcdir)/tests/syscall_tst.221.21.c \
@@ -335,6 +334,7 @@ TEST_INPUTS_TS_SRC = \
 #		   $(srcdir)/tests/syscall_tst.195.3.c
 #		   $(srcdir)/tests/syscall_tst.196.2.c
 #		   $(srcdir)/tests/syscall_tst.196.3.c
+#		   $(srcdir)/tests/syscall_tst.221.18.c  (tries to setreud in a privileged way)
 #		   $(srcdir)/tests/syscall_tst.83.3.c
 #			These tests either explicitly check for root effective uid, or the fail with EACCESS on some
 #			kernels. We can't be testing ROSE as root!
