@@ -3103,6 +3103,8 @@ EmulationPolicy::emulate_syscall()
 
 
     switch (callno) {
+        //case 1: /* exit: see syscall 252, exit_group */
+
         case 3: { /*read*/
             syscall_enter("read", "dpd");
             int fd=arg(0);
@@ -5557,6 +5559,12 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+        case 1: /*exit*/
+            syscall_enter("exit", "d");
+            if (debug && trace_syscall)
+                fprintf(debug, "falls through to exit_group...\n");
+            /* fall through */
 
         case 252: { /*0xfc, exit_group*/
             syscall_enter("exit_group", "d");
