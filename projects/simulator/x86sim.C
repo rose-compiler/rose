@@ -989,7 +989,11 @@ public:
     unsigned core_styles;                       /* What kind of core dump(s) to make for dump_core() */
     std::string core_base_name;                 /* Name to use for core files ("core") */
     rose_addr_t ld_linux_base_va;               /* Base address for ld-linux.so if no preferred addresss for "LOAD#0" */
+
+    /* Stuff related to threads */
     uint32_t robust_list_head_va;               /* Address of robust futex list head. See set_robust_list() syscall */
+    uint32_t set_child_tid;                     /* See set_tid_address(2) man page and clone() emulation */
+    uint32_t clear_child_tid;                   /* See set_tid_address(2) man page and clone() emulation */
 
     /* Stuff related to signal handling. */
     sigaction_32 signal_action[_NSIG];          /* Simulated actions for signal handling; elmt N is signal N+1 */
@@ -1012,7 +1016,8 @@ public:
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), vdso_mapped_va(0), vdso_entry_va(0),
-          core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000), robust_list_head_va(0),
+          core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000),
+          robust_list_head_va(0), set_child_tid(0), clear_child_tid(0),
           signal_pending(0), signal_mask(0), signal_reprocess(false),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false), trace_progress(false), trace_signal(false) {
@@ -4559,6 +4564,21 @@ EmulationPolicy::emulate_syscall()
                     /* Open a new log file if necessary */
                     open_log_file(log_file_name);
 
+                    /* Thread-related things. ROSE isn't multi-threaded and the simulator doesn't support multi-threading, but
+                     * we still have to initialize a few data structures because the specimen may be using a thread-aware
+                     * library. */
+                    if (0!=(flags & CLONE_CHILD_SETTID)) {
+                        set_child_tid = child_tid_va;
+                        if (set_child_tid) {
+                            uint32_t pid32 = getpid();
+                            size_t nwritten = map->write(&pid32, set_child_tid, 4);
+                            ROSE_ASSERT(4==nwritten);
+                        }
+                    }
+                    if (0!=(flags & CLONE_CHILD_CLEARTID)) {
+                        clear_child_tid = child_tid_va;
+                    }
+
                     /* Return register values in child */
                     pt_regs_32 regs;
                     regs.bx = readGPR(x86_gpr_bx).known_value();
@@ -5540,6 +5560,16 @@ EmulationPolicy::emulate_syscall()
 
         case 252: { /*0xfc, exit_group*/
             syscall_enter("exit_group", "d");
+            if (clear_child_tid) {
+                /* From the set_tid_address(2) man page:
+                 *      When clear_child_tid is set, and the process exits, and the process was sharing memory with other
+                 *      processes or threads, then 0 is written at this address, and a futex(child_tidptr, FUTEX_WAKE, 1, NULL,
+                 *      NULL, 0) call is done. (That is, wake a single process waiting on this futex.) Errors are ignored. */
+                if (debug && trace_syscall)
+                    fprintf(debug, "[FIXME: skiping clear_child_tid]");
+                //FIXME [RPM 2010-11-13]
+            }
+
             if (debug && trace_syscall) fputs("(throwing...)\n", debug);
             int status=arg(0);
             throw Exit(__W_EXITCODE(status, 0));
@@ -5547,35 +5577,9 @@ EmulationPolicy::emulate_syscall()
 
         case 258: { /*0x102, set_tid_address*/
             syscall_enter("set_tid_address", "p");
-            uint32_t tid_va=arg(0);
-            
-            /* We want the 32-bit value to be updated by Linux, but if we're running on a 64-bit system then Linux will also
-             * update the following 32-bits (probably initializing them to zero).  Therefore we'll create 64 bits memory for
-             * Linux to update and map the low-order 32-bits into the specimen. */
-            int *tidptr = NULL;
-            if (sizeof(int)>4) {
-                const MemoryMap::MapElement *orig = map->find(tid_va);
-                if (orig->get_va()!=tid_va || orig->get_size()!=sizeof(int)) {
-                    tidptr = new int;
-                    *tidptr = 0;
-                    size_t nread = map->read(tidptr, tid_va, 4); /*only low-order bytes*/
-                    ROSE_ASSERT(4==nread);
-                    MemoryMap::MapElement submap(tid_va, 4, tidptr, 0, orig->get_mapperms());
-                    submap.set_name("set_tid_address");
-                    map->insert(submap);
-                }
-            } else {
-                tidptr = (int*)my_addr(tid_va, 4);
-            }
-
-            syscall(SYS_set_tid_address, tidptr);
+            clear_child_tid = arg(0);
             writeGPR(x86_gpr_ax, getpid());
-
             syscall_leave("d");
-            if (debug && trace_mmap) {
-                fprintf(debug, "  memory map after set_tid_address syscall:\n");
-                map->dump(debug, "    ");
-            }
             break;
         }
 
