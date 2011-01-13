@@ -42,7 +42,7 @@ void RtedTransformation::insert_pointer_change( SgExpression* exp ) {
     appendExpression( mp_args, ctorTypeDesc(mkTypeInformation(NULL, operand -> get_type())) );
     appendAddress( mp_args, operand );
     appendClassName( mp_args, operand -> get_type() );
-    appendFileInfo( mp_args, exp );
+    appendFileInfo( mp_args, stmt->get_scope(), exp -> get_file_info() );
 
     ROSE_ASSERT(symbols.roseMovePointer);
     SgExprStatement* mp_call =

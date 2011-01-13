@@ -25,7 +25,7 @@ using namespace SageBuilder;
 bool RtedTransformation::isVarInCreatedVariables(SgInitializedName* n) {
         bool ret = false;
         ROSE_ASSERT(n);
-        Rose_STL_Container<SgInitializedName*>::const_iterator it=variable_declarations.begin();
+        SgInitializedNamePtrList::const_iterator it=variable_declarations.begin();
         for (;it!=variable_declarations.end();++it) {
                 SgInitializedName* initName = *it;
                 if (initName==n) {
@@ -50,8 +50,8 @@ void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
         // don't track members of user types (structs, classes)
         if (isSgClassDefinition(varDecl -> get_parent()))
                 return;
-        Rose_STL_Container<SgInitializedName*> vars = varDecl->get_variables();
-        Rose_STL_Container<SgInitializedName*>::const_iterator it = vars.begin();
+        SgInitializedNamePtrList vars = varDecl->get_variables();
+        SgInitializedNamePtrList::const_iterator it = vars.begin();
         cerr << " ...... CHECKING Variable Declaration " << endl;
         for (;it!=vars.end();++it) {
                 SgInitializedName* initName = *it;
@@ -111,7 +111,7 @@ void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef) {
             appendExpression( arg_list, ctorTypeDesc(mkTypeInformation(type)) );
 
             appendAddressAndSize( arg_list,
-                                  Simple,
+                                  Whole,
                                   buildPointerDerefExp( buildThisExp( csym )), // we want &(*this), sizeof(*this)
                                   type,
                                   NULL
@@ -360,11 +360,15 @@ RtedTransformation::buildVariableCreateCallExpr(SgInitializedName* initName,
 
         string debug_name = initName -> get_name();
 
-        return buildVariableCreateCallExpr(buildVarRef(initName), debug_name, initb);
+        return buildVariableCreateCallExpr(genVarRef(initName), debug_name, initb);
 }
 
 SgFunctionCallExp*
-RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref, string& debug_name, bool initb) {
+RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref, string& debug_name, bool initb)
+{
+        ROSE_ASSERT( var_ref );
+
+
         // tps: I am not sure yet if this is needed
 #if 0
         // if the variable is called "this", then we want to take the
@@ -387,18 +391,26 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref, string& d
 
         appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(var_ref -> get_type())) );
 
-        SgVarRefExp*   theVarRef = isSgVarRefExp(var_ref);
+        SgVarRefExp*      theVarRef = isSgVarRefExp(var_ref);
+        SgScopeStatement* scope = NULL;
+
         if (theVarRef)
         {
             SgInitializedName* initName = theVarRef -> get_symbol() -> get_declaration();
-            SgScopeStatement* scope = get_scope(initName);
+            scope = get_scope(initName);
 
-            appendAddressAndSize(arg_list, Simple, scope, theVarRef, NULL);
+            appendAddressAndSize(arg_list, Whole, scope, theVarRef, NULL);
         }
         else
         {
-            appendAddressAndSize(arg_list, Simple, var_ref, var_ref -> get_type(), NULL);
+            SgStatement* varref_stmt = getSurroundingStatement(var_ref);
+
+            ROSE_ASSERT( varref_stmt );
+            appendAddressAndSize(arg_list, Whole, var_ref, var_ref -> get_type(), NULL);
+            scope = varref_stmt->get_scope();
         }
+
+        ROSE_ASSERT( scope );
 
         SgExpression*  callName = buildStringVal(debug_name);
         SgExpression*  callNameExp = buildStringVal(debug_name);
@@ -410,7 +422,7 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref, string& d
         appendExpression(arg_list, initBool);
 
         appendClassName(arg_list, var_ref -> get_type());
-        appendFileInfo(arg_list, var_ref);
+        appendFileInfo(arg_list, scope, var_ref->get_file_info());
 
         ROSE_ASSERT(symbols.roseCreateVariable);
         SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols.roseCreateVariable);
@@ -474,7 +486,7 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
         SgScopeStatement* scope = get_scope(initName);
 
         appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(NULL, exp -> get_type())) );
-        appendAddressAndSize(arg_list, Simple, scope, exp, NULL);
+        appendAddressAndSize(arg_list, Whole, scope, exp, NULL);
         appendClassName(arg_list, exp -> get_type());
 
         SgIntVal* ismallocV = buildIntVal(ismalloc ? 1 : 0);
@@ -781,8 +793,8 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
 
             SgExprListExp* arg_list = buildExprListExp();
 
-            appendAddressAndSize(arg_list, Complex, initscope, accessed_exp, NULL);
-            appendAddressAndSize(arg_list, Complex, initscope, write_location_exp, NULL);
+            appendAddressAndSize(arg_list, Elem, initscope, accessed_exp, NULL);
+            appendAddressAndSize(arg_list, Elem, initscope, write_location_exp, NULL);
             appendExpression(arg_list, buildIntVal(read_write_mask));
             appendFileInfo(arg_list, stmt);
 

@@ -568,9 +568,9 @@ void testLostMemRegionFromDoublePointer()
                 "pointed to by heap ptr")
     TypeSystem * ts = rs -> getTypeSystem();
 
-    AddressDesc ptr_desc = pd_ptr();
+    AddressDesc ptr_desc = rted_ptr();
     RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
-    AddressDesc ptr_ptr_desc = pd_address_of(ptr_desc);
+    AddressDesc ptr_ptr_desc = rted_address_of(ptr_desc);
     RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
 
     Address var_addr = memAddr(0x7ffb0);
@@ -815,9 +815,9 @@ void testDoubleArrayHeapAccess()
     errorFound=false; /*tps unused variable - removing warning */
     TypeSystem * ts = rs -> getTypeSystem();
 
-    AddressDesc ptr_desc = pd_ptr();
+    AddressDesc ptr_desc = rted_ptr();
     RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
-    AddressDesc ptr_ptr_desc = pd_address_of(ptr_desc);
+    AddressDesc ptr_ptr_desc = rted_address_of(ptr_desc);
     RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
 
     Address var_addr = memAddr(0x7ffb0);

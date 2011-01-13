@@ -8,30 +8,34 @@ bool RTEDDEBUG();
  * so that runtime errors are caught at runtime before they happen
  * -----------------------------------------------------------*/
 struct RtedSymbols : AstSimpleProcessing {
-	SgFunctionSymbol* roseCreateHeapArr;
-	SgFunctionSymbol* roseCreateHeapPtr;
-	SgFunctionSymbol* roseAccessHeap;
-	SgFunctionSymbol* roseCheckpoint;
-	SgFunctionSymbol* roseFunctionCall;
-	SgFunctionSymbol* roseAssertFunctionSignature;
-	SgFunctionSymbol* roseConfirmFunctionSignature;
-	SgFunctionSymbol* roseFreeMemory;
-	SgFunctionSymbol* roseReallocateMemory;
-	SgFunctionSymbol* roseConvertIntToString;
-	SgFunctionSymbol* roseCreateVariable;
-	SgFunctionSymbol* roseCreateObject;
-	SgFunctionSymbol* roseInitVariable;
-	SgFunctionSymbol* roseMovePointer;
-	SgFunctionSymbol* roseAccessVariable;
-	SgFunctionSymbol* roseEnterScope;
-	SgFunctionSymbol* roseExitScope;
-	SgFunctionSymbol* roseIOFunctionCall;
-	SgFunctionSymbol* roseRegisterTypeCall;
-	SgFunctionSymbol* roseCheckIfThisNULL;
+	SgFunctionSymbol*   roseCreateHeapArr;
+	SgFunctionSymbol*   roseCreateHeapPtr;
+	SgFunctionSymbol*   roseAccessHeap;
+	SgFunctionSymbol*   roseCheckpoint;
+	SgFunctionSymbol*   roseFunctionCall;
+	SgFunctionSymbol*   roseAssertFunctionSignature;
+	SgFunctionSymbol*   roseConfirmFunctionSignature;
+	SgFunctionSymbol*   roseFreeMemory;
+	SgFunctionSymbol*   roseReallocateMemory;
+	SgFunctionSymbol*   roseConvertIntToString;
+	SgFunctionSymbol*   roseCreateVariable;
+	SgFunctionSymbol*   roseCreateObject;
+	SgFunctionSymbol*   roseInitVariable;
+	SgFunctionSymbol*   roseMovePointer;
+	SgFunctionSymbol*   roseAccessVariable;
+	SgFunctionSymbol*   roseEnterScope;
+	SgFunctionSymbol*   roseExitScope;
+	SgFunctionSymbol*   roseIOFunctionCall;
+	SgFunctionSymbol*   roseRegisterTypeCall;
+	SgFunctionSymbol*   roseCheckIfThisNULL;
+	SgFunctionSymbol*   roseAddr;
+	SgFunctionSymbol*   roseAddrSh;
+	SgFunctionSymbol*   roseClose;
 
-  // \todo add other rted runtime data structures
-	SgClassSymbol*    roseTypeDesc;
-	SgType*           size_t_member;
+	SgType*             roseTypeDesc;
+	SgType*             roseAddressDesc;
+	SgType*             roseSourceInfo;
+	SgTypedefType*      size_t_member;
 
 	RtedSymbols()
   : roseCreateHeapArr(NULL),
@@ -53,12 +57,20 @@ struct RtedSymbols : AstSimpleProcessing {
     roseIOFunctionCall(NULL),
     roseRegisterTypeCall(NULL),
     roseCheckIfThisNULL(NULL),
+		roseAddr(NULL),
+		roseAddrSh(NULL),
+		roseClose(NULL),
+
 		roseTypeDesc(NULL),
+		roseAddressDesc(NULL),
+		roseSourceInfo(NULL),
     size_t_member(NULL)
 	{}
 
 	// Traverse all nodes and check properties
 	virtual void visit(SgNode* n) ;
+
+	static const std::string prefix;
 };
 
 #endif

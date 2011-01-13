@@ -62,6 +62,9 @@ bool isRightOfBinaryOp(const SgNode* astNode) {
 
 InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute) {
 
+
+
+
    if (isSgFunctionDefinition(astNode)) {
       // ------------------------------ visit isSgFunctionDefinition ----------------------------------------------
       transf->visit_checkIsMain(astNode);
@@ -72,8 +75,8 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
 
    if (isSgVariableDeclaration(astNode) && !isSgClassDefinition(isSgVariableDeclaration(astNode) -> get_parent())) {
       // ------------------------------ visit Variable Declarations ----------------------------------------------
-      Rose_STL_Container<SgInitializedName*> vars = isSgVariableDeclaration(astNode)->get_variables();
-      for (Rose_STL_Container<SgInitializedName*>::const_iterator it = vars.begin();it!=vars.end();++it) {
+      SgInitializedNamePtrList vars = isSgVariableDeclaration(astNode)->get_variables();
+      for (SgInitializedNamePtrList::const_iterator it = vars.begin();it!=vars.end();++it) {
          SgInitializedName* initName = *it;
          ROSE_ASSERT(initName);
          if( isSgReferenceType( initName -> get_type() ))
@@ -179,7 +182,7 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
    if (isSgReturnStmt(astNode)) {
       // ------------------------------ visit isSgReturnStmt ----------------------------------------------
       if (isSgReturnStmt(astNode)->get_expression())
-      transf->returnstmt.push_back(isSgReturnStmt(astNode));
+        transf->returnstmt.push_back(isSgReturnStmt(astNode));
    }
 
 

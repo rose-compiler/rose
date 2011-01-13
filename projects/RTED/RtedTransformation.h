@@ -5,16 +5,33 @@
 #define RTEDTRANS_H
 
 #include <set>
+#include <string>
+
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 
 #include "CppRuntimeSystem/rted_iface_structs.h"
+#include "CppRuntimeSystem/rted_typedefs.h"
+
+//
+// convenience and debug functions
+//
 
 inline
 SgScopeStatement* get_scope(SgInitializedName* initname)
 {
   return initname ? initname->get_scope() : NULL;
 }
+
+/// \brief returns whether a name belongs to rted (i.e., has prefix "rted_")
+bool isRtedDecl(const std::string& name);
+
+//
+// helper functions
+//
+
+/// \brief replaces doule quote with single quote characters in a string
+std::string removeSpecialChar(std::string str);
 
 /// \brief  finds the first parent that is a SgStatement node
 /// \return the parent statement or NULL if there is none
@@ -63,10 +80,13 @@ SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, S
 SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args, const std::string& comment);
 
 //
-// functions that create arguments passed to the rted runtime system
+// functions that create AST nodes for the RTED transformations
 
 /// \brief   creates an aggregate initializer expression with a given type
 SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType* type);
+
+/// \brief   creates a variable reference expression from a given name
+SgVarRefExp* genVarRef( SgInitializedName* initName );
 
 /* -----------------------------------------------------------
  * tps : 6March 2009: This class adds transformations
@@ -78,17 +98,15 @@ private:
    enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
 
    // \pp added an enum to give names to what were integer values before.
-   //     For lack of an idea what the values stand for I use preliminary names:
-   //     Simple, Complex.
-   enum AppendKind { Simple = 0, Complex = 2 };
-
+   //     Normal     ... affected size is the whole object
+   //     Elem       ... affected size is an array element
+   enum AppendKind { Whole = 0, Elem = 2 };
 
    // track the files that we're transforming, so we can ignore nodes and
    // references to nodes in other files
    std::set< std::string > *rtedfiles;
 
    // VARIABLES ------------------------------------------------------------
-   SgGlobal* globalScope;
    // ------------------------ array ------------------------------------
    // The array of callArray calls that need to be inserted
    std::map<SgVarRefExp*, RTedArray*> create_array_define_varRef_multiArray;
@@ -176,18 +194,13 @@ private:
    // traversal to find the definition.  May still return NULL if the definition
    // cannot be determined statically.
    SgFunctionDeclaration* getDefiningDeclaration( SgFunctionCallExp* fn_call );
-   // returns greatest lvalue expression ancestor (e.g the operand of an
-   // expression statement or assign op).
-   SgExpression* getUppermostLvalue( SgExpression* n );
+
    // insert: RuntimeSystem* runtimeSystem = new RuntimeSystem();
    void insertRuntimeSystemClass();
    void insertAssertFunctionSignature( SgFunctionCallExp* exp );
    void insertConfirmFunctionSignature( SgFunctionDefinition* fndef );
    void insertFreeCall( SgExpression* exp );
    void insertReallocateCall( SgFunctionCallExp* exp );
-
-   SgVarRefExp* buildVarRef( SgInitializedName *& initName );
-   std::string getMangledNameOfExpression(SgExpression* expr);
 
    /**
     * Appends all of the constructors of @c type to @c constructors.  The
@@ -213,8 +226,8 @@ public:
    bool isInInstrumentedFile( SgNode* n );
    void visit_isArraySgAssignOp(SgNode* n);
 
-   void appendFileInfo( SgExprListExp* arg_list, SgNode* n);
-   void appendFileInfo( SgExprListExp* arg_list, Sg_File_Info* n);
+   void appendFileInfo( SgExprListExp* arg_list, SgStatement* stmt);
+   void appendFileInfo( SgExprListExp* arg_list, SgScopeStatement* scope, Sg_File_Info* n);
 
    /// appends a function signature (typecount, returntype, arg1, ... argn)
    /// to the argument list.
@@ -264,14 +277,19 @@ public:
     /// \brief   creates an address descriptor
     SgAggregateInitializer* mkAddressDesc(AddressDesc desc) const;
 
+    /// \brief     creates an expression constructing an rted_address
+    /// \param exp an expression that will be converted into an address
+    /// \param upcShared indicates whether the address is part of the PGAS
+    SgFunctionCallExp* mkAddress(SgExpression* exp, bool upcShared) const;
+
     /// \brief returns the canonical pointer to the rted_TypeDesc type
-    SgType* roseTypeDesc() const    { return NULL; /* symbols.roseTypeDesc */ }
+    SgType* roseTypeDesc() const    { return symbols.roseTypeDesc; }
 
     /// \brief returns the canonical pointer to the rted_AddressDesc type
-    SgType* roseAddressDesc() const { return NULL; /* symbols.roseAddressDesc */ }
+    SgType* roseAddressDesc() const { return symbols.roseAddressDesc; }
 
     /// \brief returns the canonical pointer to the rted_FileInfo type
-    SgType* roseFileInfo() const    { return NULL; /* symbols.roseFileInfo */ }
+    SgType* roseFileInfo() const    { return symbols.roseSourceInfo; }
 
 public:
    void insertMainCloseCall(SgStatement* main);
@@ -313,7 +331,6 @@ public:
    void insertIOFuncCall(RtedArguments* args);
    void visit_isFunctionCall(SgNode* n);
    void visit_isFunctionDefinition(SgNode* n);
-   SgExpression* getVariableLeftOfAssignmentFromChildOnRight(SgNode* n);
 
 
 public:
@@ -377,7 +394,6 @@ public:
 private:
 
 
-   std::string removeSpecialChar(std::string str);
    bool traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt);
    bool traverseAllChildrenAndFind(SgInitializedName* varRef, SgStatement* stmt);
 
@@ -388,7 +404,7 @@ private:
    void changeReturnStmt(SgReturnStmt * rstmt);
 
 
-   /// factors commonalities of heap allocations (PP)
+   /// factors commonalities of heap allocations
    void array_heap_alloc(SgInitializedName* initName, SgVarRefExp* varRef, SgExpression* sz);
    bool array_alloc_call(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionDeclaration*);
    bool array_alloc_call(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionRefExp*, bool);
@@ -396,7 +412,6 @@ private:
 public:
    RtedTransformation()
    : rtedfiles(NULL),
-     globalScope(NULL),
      globConstructor(false),
      globalFunction(NULL),
      globalConstructorVariable(NULL),

@@ -16,30 +16,29 @@ using namespace SageBuilder;
 
 void
 RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
-  if (isSgStatement(stmt)) {
-    SgScopeStatement* scope = stmt->get_scope();
-    ROSE_ASSERT(scope);
-    if (isSgBasicBlock(scope)) {
+  ROSE_ASSERT(stmt);
+
+  SgScopeStatement* scope = stmt->get_scope();
+  ROSE_ASSERT(scope);
+  if (isSgBasicBlock(scope)) {
+
 #if 0
       SgVarRefExp* varRef_l =
 	buildVarRefExp("runtimeSystem", globalScope);
       string symbolName = varRef_l->get_symbol()->get_name().str();
 #endif
-      ROSE_ASSERT(symbols.roseCheckpoint);
 
-      SgExprListExp* arg_list = buildExprListExp();
-      appendFileInfo( arg_list, mainEnd );
+    ROSE_ASSERT(symbols.roseCheckpoint);
 
-      string symbolName2 = symbols.roseCheckpoint->get_name().str();
-      //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-      SgFunctionRefExp* memRef_r = buildFunctionRefExp(
-    		  symbols.roseCheckpoint);
-      //      SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
-      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-							    arg_list);
-      SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-      //cerr << " Last statement in main : " << stmt->class_name() << "  insertBefore : " << mainEndsWithReturn << endl;
-      if (mainEndsWithReturn) {
+    SgExprListExp*     arg_list = buildExprListExp();
+    appendFileInfo( arg_list, scope, mainEnd );
+
+    SgFunctionRefExp*  memRef_r = buildFunctionRefExp(symbols.roseCheckpoint);
+    SgExprStatement*   exprStmt = buildFunctionCallStmt(memRef_r, arg_list);
+
+    //cerr << " Last statement in main : " << stmt->class_name() << "  insertBefore : " << mainEndsWithReturn << endl;
+    if (mainEndsWithReturn) {
+
 #if 0
     	  if (mainHasBeenChanged==false) {
           // consider e.g.
@@ -80,23 +79,16 @@ RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
         replaceStatement( stmt, newRtnStmt );
     	  }
 #endif
-    	   insertStatementBefore(stmt, exprStmt);
-      }
-      else
-      {
-        	insertStatementAfter(stmt, exprStmt);
-      }
-
-      string comment = "RS : Insert Finalizing Call to Runtime System to check if error was detected (needed for automation)";
-      attachComment(exprStmt,comment,PreprocessingInfo::before);
-
+       insertStatementBefore(stmt, exprStmt);
+    }
+    else
+    {
+        insertStatementAfter(stmt, exprStmt);
     }
 
-  } else {
-    cerr
-      << "RuntimeInstrumentation :: Prolog Surrounding Statement could not be found! "
-      << stmt->class_name() << endl;
-    ROSE_ASSERT(false);
+    string comment = "RS : Insert Finalizing Call to Runtime System to check if error was detected (needed for automation)";
+    attachComment(exprStmt,comment,PreprocessingInfo::before);
+
   }
 }
 
@@ -108,18 +100,17 @@ RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
 void RtedTransformation::insertProlog(SgProject* proj) {
   cout << "Inserting headers ... " << endl;
   // grep all source (.c) files and insert headers
-  Rose_STL_Container<SgNode*> vec =
-    NodeQuery::querySubTree(proj,V_SgSourceFile);
+  SgNodePtrList vec = NodeQuery::querySubTree(proj,V_SgSourceFile);
   cerr << "Found source files : " << vec.size() << endl;
-  Rose_STL_Container<SgNode*>::iterator it = vec.begin();
+  SgNodePtrList::iterator it = vec.begin();
   for (;it!=vec.end();++it) {
     SgSourceFile* source = isSgSourceFile(*it);
     ROSE_ASSERT(source);
     cerr << "Creating pdf..." << endl;
     AstPDFGeneration pdf;
     pdf.generateWithinFile(source);
-    globalScope = source->get_globalScope();
-    pushScopeStack (isSgScopeStatement (globalScope));
+    SgGlobal* globalScope = source->get_globalScope();
+    pushScopeStack (globalScope);
     // this needs to be fixed
     //buildCpreprocessorDefineDeclaration(globalScope, "#define EXITCODE_OK 0");
 
@@ -182,7 +173,7 @@ void RtedTransformation::visit_checkIsMain(SgNode* n)
         // find the last statement
         SgBasicBlock* block = mainFunc->get_body();
         ROSE_ASSERT(block);
-        Rose_STL_Container<SgStatement*> stmts = block->get_statements();
+        SgStatementPtrList stmts = block->get_statements();
         SgStatement* first = stmts.front();
         SgStatement* last = stmts.back();
         if (isSgReturnStmt(last))

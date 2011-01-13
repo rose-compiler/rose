@@ -59,13 +59,14 @@ RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt_or_block, Sg_Fi
     // necessarily a block
     // \pp \todo since we create a block (at least in some cases), I suggest
     //           to create the block up front (when needed/desired) and then
-    //           handle all cases alike.
+    //           handle these cases with the same code.
     if( block )
         block -> prepend_statement( fncall_enter );
     else
     {
-      cerr << "@@@ inserting scope : " << stmt_or_block->unparseToString() <<
-      	"   " << stmt_or_block->class_name() << "  " << fiStmt->isCompilerGenerated() << endl;
+      cerr << "@@@ inserting scope : " << "   " << stmt_or_block->class_name()
+           << "  " << fiStmt->isCompilerGenerated() << endl;
+
       // tps : 10/07/2009: what if the statement before is a for loop, then we have to insert a block as well
       SgStatement* parentStmt = isSgStatement(stmt_or_block->get_parent());
       ROSE_ASSERT(parentStmt);
@@ -92,13 +93,15 @@ RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt_or_block, Sg_Fi
     }
 
     // exitScope( (char*) filename, (char*) line, (char*) lineTransformed, (char*) stmtStr);
-    SgExprListExp* exit_scope_args = buildExprListExp();
+    SgExprListExp*    exit_scope_args = buildExprListExp();
+    SgScopeStatement* scope = stmt_or_block->get_scope();
+
     appendExpression(
       exit_scope_args,
-      buildStringVal( removeSpecialChar( stmt_or_block->unparseToString()))
+      buildStringVal( removeSpecialChar("todo-unparse-string")) /* \pp \todo stmt_or_block->unparseToString()*/
     );
 
-    appendFileInfo(exit_scope_args, exit_file_info);
+    appendFileInfo(exit_scope_args, scope, exit_file_info);
 
     SgExprStatement* exit_scope_call =
         buildExprStatement(

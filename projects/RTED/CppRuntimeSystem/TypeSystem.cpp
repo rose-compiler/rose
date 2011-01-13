@@ -89,7 +89,7 @@ RsArrayType* TypeSystem::getArrayType(RsType* bt, size_t size)
 
 RsPointerType* TypeSystem::getPointerType(RsType* bt, AddressDesc desc)
 {
-    assert( pd_isPtr(desc) >= 1 );
+    assert( rted_isPtr(desc) >= 1 );
     assert( bt != NULL );
 
     TypeDerivatives&          m = ptrTypeMap[bt];
@@ -98,11 +98,11 @@ RsPointerType* TypeSystem::getPointerType(RsType* bt, AddressDesc desc)
     if( it != m.end() ) return it->second;
 
     RsType*                               base = NULL;
-    AddressDesc                           desc_prime = pd_deref(desc);
+    AddressDesc                           desc_prime = rted_deref_desc(desc);
 
     // multiple pointers are represented as pointer which have a pointer basetype
     // build these base-types recursively
-    if (pd_isPtr(desc_prime))
+    if (rted_isPtr(desc_prime))
         base = getPointerType(bt, desc_prime);
     else
         base = bt;
@@ -121,7 +121,7 @@ RsPointerType * TypeSystem::getPointerType(const string & name, AddressDesc desc
 
 RsPointerType * TypeSystem::getPointerType(RsType * bt)
 {
-    return getPointerType(bt, pd_ptr());
+    return getPointerType(bt, rted_ptr());
 }
 
 RsPointerType * TypeSystem::getPointerType(const string & name)

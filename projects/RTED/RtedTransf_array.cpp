@@ -73,6 +73,7 @@ void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RTedArray* value)
    insertArrayCreateCall(stmt, initName, n, value);
 }
 
+
 void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName, RTedArray* value) {
    ROSE_ASSERT(value);
    ROSE_ASSERT(initName);
@@ -80,7 +81,7 @@ void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName, RTed
    if (!stmt)
       stmt = getSurroundingStatement(initName);
 
-   SgVarRefExp* var_ref = buildVarRef(initName);
+   SgVarRefExp* var_ref = genVarRef(initName);
    insertArrayCreateCall(stmt, initName, var_ref, value);
 }
 
@@ -110,7 +111,7 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    bool               isUnionClass = (unionclass && unionclass->get_declaration()->get_class_type() == SgClassDeclaration::e_union);
 #endif
 
-   appendAddressAndSize(arg_list, Simple, scope, src_exp, NULL /* unionclass */);
+   appendAddressAndSize(arg_list, Whole, scope, src_exp, NULL /* unionclass */);
 
    //SgIntVal* ismalloc = buildIntVal( 0 );
    SgExpression*      size = buildIntVal(0);
@@ -367,7 +368,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* 
   SgExprListExp*    arg_list = buildExprListExp();
 
   appendAddress(arg_list, array_base);
-  appendAddressAndSize(arg_list, Simple, NULL, arrRefExp, NULL);
+  appendAddressAndSize(arg_list, Whole, NULL, arrRefExp, NULL);
   appendExpression(arg_list, buildIntVal(read_write_mask));
 
   appendFileInfo(arg_list, stmt);

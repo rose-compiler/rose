@@ -364,7 +364,11 @@ void insertAssertFunctionSignature(RtedTransformation& rt, SgFunctionCallExp* fc
 
   appendExpression( arg_list, buildStringVal( fnref->get_symbol()->get_name()) );
   rt.appendSignature( arg_list, fnReturn, fnArgTypes );
-  rt.appendFileInfo( arg_list, fce );
+
+  SgStatement*         stmt = getSurroundingStatement(fce);
+  ROSE_ASSERT(stmt);
+
+  rt.appendFileInfo( arg_list, stmt->get_scope(), fce->get_file_info() );
 
   checkBeforeParentStmt(fce, rt.symbols.roseAssertFunctionSignature, arg_list);
 }
@@ -462,8 +466,9 @@ void RtedTransformation::insertReallocateCall(SgFunctionCallExp* realloc_call)
  * Get the variable on the left hand side of an assignment
  * starting on the right hand side below the assignment in the tree
  **************************************************************/
+static
 SgExpression*
-RtedTransformation::getVariableLeftOfAssignmentFromChildOnRight(SgNode* n) {
+getExpressionLeftOfAssignmentFromChildOnRight(SgFunctionCallExp* n) {
    SgExpression* expr = NULL;
    SgNode* tempNode = n;
    while (!isSgAssignOp(tempNode) && !isSgProject(tempNode)) {
@@ -475,6 +480,29 @@ RtedTransformation::getVariableLeftOfAssignmentFromChildOnRight(SgNode* n) {
    }
    return expr;
 }
+
+static
+std::string
+getMangledNameOfExpression(SgExpression* expr) {
+  string manglName;
+  // look for varRef in the expr and return its mangled name
+  SgNodePtrList var_refs = NodeQuery::querySubTree(expr,V_SgVarRefExp);
+  if (var_refs.size()==0) {
+    // there should be at least one var ref
+    cerr << " getMangledNameOfExpression: varRef on left hand side not found : " << expr->unparseToString() << endl;
+  } else if (var_refs.size()==1) {
+    // correct, found on var ref
+    SgVarRefExp* varRef = isSgVarRefExp(*(var_refs.begin()));
+    ROSE_ASSERT(varRef && varRef->get_symbol()->get_declaration());
+    manglName = varRef->get_symbol()->get_declaration()->get_mangled_name();
+    cerr << " getMangledNameOfExpression: found varRef: " << manglName << endl;
+  } else if (var_refs.size()>1) {
+    // error
+    cerr << " getMangledNameOfExpression: Too many varRefs on left hand side : " << var_refs.size() << endl;
+  }
+  return manglName;
+}
+
 
 void RtedTransformation::addFileIOFunctionCall(SgVarRefExp* n, bool read) {
    // treat the IO variable as a function call
@@ -497,24 +525,24 @@ void RtedTransformation::addFileIOFunctionCall(SgVarRefExp* n, bool read) {
 /***************************************************************
  * Check if the current node is a "interesting" function call
  **************************************************************/
-void RtedTransformation::visit_isFunctionCall(SgNode* n)
+void RtedTransformation::visit_isFunctionCall(SgNode* n2)
 {
-  SgFunctionCallExp*      fcexp = isSgFunctionCallExp(n);
+  SgFunctionCallExp* const fcexp = isSgFunctionCallExp(n2);
   // handle arguments for any function call
   //handle_function_call_arguments.push_back(fcexp->get_args());
 
   if (fcexp == NULL) return;
 
-  SgExprListExp*          exprlist = isSgExprListExp(fcexp->get_args());
-  SgExpression*           callee = fcexp->get_function();
-  SgFunctionRefExp*       refExp = isSgFunctionRefExp(callee);
-  SgMemberFunctionRefExp* mrefExp = isSgMemberFunctionRefExp(callee);
-  SgDotExp*               dotExp = isSgDotExp(callee);
-  SgArrowExp*             arrowExp = isSgArrowExp(callee);
-  SgBinaryOp*             binop = isSgBinaryOp(callee);
-  SgDotStarOp*            dotStar = isSgDotStarOp(callee);
-  string                  name;
-  string                  mangled_name;
+  SgExprListExp* const     exprlist = isSgExprListExp(fcexp->get_args());
+  SgExpression*            callee = fcexp->get_function();
+  SgFunctionRefExp*        refExp = isSgFunctionRefExp(callee);
+  SgMemberFunctionRefExp*  mrefExp = isSgMemberFunctionRefExp(callee);
+  SgDotExp*                dotExp = isSgDotExp(callee);
+  SgArrowExp*              arrowExp = isSgArrowExp(callee);
+  SgBinaryOp*              binop = isSgBinaryOp(callee);
+  SgDotStarOp*             dotStar = isSgDotStarOp(callee);
+  string                   name;
+  string                   mangled_name;
 
   if (refExp) {
      SgFunctionDeclaration* decl = NULL;
@@ -601,7 +629,7 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n)
      // this is used, e.g. with  File* fp = fopen("file","r");
      // Therefore we need to go up and see if there is an AssignmentOperator
      // and get the var on the left side
-     SgExpression*  varOnLeft = getVariableLeftOfAssignmentFromChildOnRight(n);
+     SgExpression*  varOnLeft = getExpressionLeftOfAssignmentFromChildOnRight(fcexp);
      SgExpression*  varOnLeftStr=NULL;
      if (varOnLeft) {
         // need to get the mangled_name of the varRefExp on left hand side

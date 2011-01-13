@@ -7,6 +7,7 @@
 #include <string>
 
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "rosez.hpp"
 
@@ -294,47 +295,25 @@ RtedTransformation::isInInstrumentedFile( SgNode* n ) {
   return rtedfiles -> find( file_name ) != rtedfiles -> end();
 }
 
-SgVarRefExp*
-RtedTransformation::buildVarRef( SgInitializedName *&initName ) {
-    return buildVarRefExp(
-        isSgVariableSymbol(
-            initName -> get_scope()
-                -> lookup_symbol( initName -> get_name() )));
-}
-
-
-std::string
-RtedTransformation::removeSpecialChar(std::string str) {
+std::string removeSpecialChar(std::string str) {
   string searchString="\"";
   string replaceString="'";
   string::size_type pos = 0;
   while ( (pos = str.find(searchString, pos)) != string::npos ) {
     str.replace( pos, searchString.size(), replaceString );
-    pos++;
+    ++pos;
   }
   return str;
 }
 
+SgVarRefExp* genVarRef( SgInitializedName* initName )
+{
+    ROSE_ASSERT( initName );
 
-std::string
-RtedTransformation::getMangledNameOfExpression(SgExpression* expr) {
-  string manglName="";
-  // look for varRef in the expr and return its mangled name
-  Rose_STL_Container< SgNode * > var_refs = NodeQuery::querySubTree(expr,V_SgVarRefExp);
-  if (var_refs.size()==0) {
-    // there should be at least one var ref
-    cerr << " getMangledNameOfExpression: varRef on left hand side not found : " << expr->unparseToString() << endl;
-  } else if (var_refs.size()==1) {
-    // correct, found on var ref
-    SgVarRefExp* varRef = isSgVarRefExp(*(var_refs.begin()));
-    ROSE_ASSERT(varRef && varRef->get_symbol()->get_declaration());
-    manglName = varRef->get_symbol()->get_declaration()->get_mangled_name();
-    cerr << " getMangledNameOfExpression: found varRef: " << manglName << endl;
-  } else if (var_refs.size()>1) {
-    // error
-    cerr << " getMangledNameOfExpression: Too many varRefs on left hand side : " << var_refs.size() << endl;
-  }
-  return manglName;
+    SgScopeStatement* scope = initName -> get_scope();
+    SgVariableSymbol* varsym = isSgVariableSymbol(scope->lookup_symbol(initName->get_name()));
+
+    return buildVarRefExp(varsym);
 }
 
 /****************************************
@@ -484,35 +463,47 @@ RtedTransformation::getMinusMinusOp(SgMinusMinusOp* minus, std::string str
 }
 
 
-// we have some expression, e.g. a var ref to m, but we want as much of the
-// expression as necessary to properly refer to m
-//
-//  e.g. &foo.bar.m, instead of the erroneous &m
-SgExpression* RtedTransformation::getUppermostLvalue( SgExpression* exp ) {
-	if (exp)
-	cerr << "Checking if exp has parent: " << exp->unparseToString() << "  :" << endl;
-	if(exp==NULL || exp->get_parent()==NULL) return exp;
-	SgExpression* parent = isSgExpression( exp->get_parent() );
+/// \brief   we have some expression, e.g. a var ref to m, but we want as much
+///          of the expression as necessary to properly refer to m.
+/// \return  greatest lvalue expression ancestor (e.g the operand of an
+///          expression statement or assign op).
+/// \example &foo.bar.m, instead of the erroneous &m
+static
+SgExpression* getUppermostLvalue( SgExpression* exp )
+{
+	if (exp) cerr << "Checking if exp has parent: " << exp->unparseToString() << "  :" << endl;
 
-    while(  parent
-            && (isSgDotExp( parent ))) {
+	if (exp==NULL || exp->get_parent()==NULL) return exp;
 
-        // in c++, the rhs of the dot may be a member function, which we'd want
-        // to ignore
-        SgExpression* rhs = isSgDotExp( parent ) -> get_rhs_operand();
-        if( isSgMemberFunctionRefExp( rhs ))
-            // in, e.g.
-            //  foo.bar = 9001
-            //  foo.bar.=( 9001 )
-            // we want to stop at the dot exp
-            //  foo.bar
-            break;
+  SgType* const orig_type = exp->get_type();
+  SgDotExp*     parent = isSgDotExp( exp->get_parent() );
 
-        exp = parent;
-        parent = isSgExpression( parent->get_parent() );
-    }
+  // \pp \note why only SgDotExp? what about DotStar, Arrows, and DotArrow?
+  while (parent)
+  {
+      // in C++, the rhs of the dot may be a member function, which we'd want
+      // to ignore
+      SgExpression* rhs = parent -> get_rhs_operand();
+      if ( isSgMemberFunctionRefExp( rhs ))
+      {
+          // \pp ???? is this legal C++?
+          // in, e.g.
+          //  foo.bar = 9001
+          //  foo.bar.=( 9001 )
+          // we want to stop at the dot exp
+          //  foo.bar
+          break;
+      }
 
-    return exp;
+      exp = parent;
+      parent = isSgDotExp( parent->get_parent() );
+  }
+
+  // \pp added assert; if the function operates according to its description
+  //     then the returned type has to be the same as the field type.
+  ROSE_ASSERT(exp->get_type() == orig_type);
+
+  return exp;
 }
 
 SgFunctionDeclaration* RtedTransformation::getDefiningDeclaration( SgFunctionCallExp* fn_call ) {
@@ -673,17 +664,19 @@ bool RtedTransformation::isGlobalExternVariable(SgStatement* stmt) {
  * to instrumented function calls for constructing
  * SourcePosition objects.
  ************************************************/
-void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, SgNode* node)
+void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, SgStatement* stmt)
 {
-    ROSE_ASSERT( node );
-    appendFileInfo( arg_list, node->get_file_info() );
+    ROSE_ASSERT( arg_list && stmt );
+    appendFileInfo( arg_list, stmt->get_scope(), stmt->get_file_info() );
 }
 
-void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, Sg_File_Info* file_info)
+void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, SgScopeStatement* scope, Sg_File_Info* file_info)
 {
+    ROSE_ASSERT(arg_list && scope && file_info);
+
     SgExpression*           filename = buildStringVal( file_info->get_filename() );
     SgExpression*           linenr = buildIntVal( file_info->get_line() );
-    SgExpression*           linenrTransformed = buildOpaqueVarRefExp("__LINE__");
+    SgExpression*           linenrTransformed = buildOpaqueVarRefExp("__LINE__", scope);
     SgExprListExp*          fiArgs = buildExprListExp();
 
     appendExpression( fiArgs, filename );
@@ -708,51 +701,82 @@ SgType* skip_ArrPtrType(SgType* t)
 }
 
 
+static
+bool isUpcRelevant(const SgModifierType& n)
+{
+  const SgTypeModifier&       modifier = n.get_typeModifier();
+  const SgUPC_AccessModifier& upcModifier = modifier.get_upcModifier();
+
+  return !upcModifier.get_isShared();
+}
+
+static
+bool upcSharedFlag(const SgModifierType& n)
+{
+  const SgTypeModifier&       modifier = n.get_typeModifier();
+  const SgUPC_AccessModifier& upcModifier = modifier.get_upcModifier();
+
+  return upcModifier.get_isShared();
+}
+
+static
+bool isUpcShared(SgType* n)
+{
+  SgModifierType* t = isSgModifierType(n);
+  bool            res = false;
+
+  while (t != NULL && !res)
+  {
+    res = upcSharedFlag(*t);
+    t = isSgModifierType(t->get_base_type());
+  }
+
+  return res;
+}
+
+
 struct IndirectionHandler
 {
     typedef std::pair<SgType*, AddressDesc> ResultType;
 
     IndirectionHandler()
-    : res(NULL, pd_obj())
+    : res(NULL, rted_obj())
     {}
 
-    template <class SgNode>
-    void add_indirection(SgNode& n)
+    ~IndirectionHandler()
+    {
+      // the type must be set
+      ROSE_ASSERT(res.first);
+    }
+
+    template <class SgPtr>
+    void add_indirection(SgPtr& n)
     {
       res.first = n.get_base_type();
-      res.second = pd_address_of(res.second);
+      res.second = rted_address_of(res.second);
     }
 
-    static
-    bool empty(const SgUPC_AccessModifier& am)
-    {
-      return !am.get_isShared() && (am.get_layout() == 0);
-    }
-
-    static
-    size_t shared_mask(const SgUPC_AccessModifier& am)
-    {
-      return am.get_isShared() ? 1 : 0;
-    }
-
+    /// unexpected node type
     void handle(SgNode& n) { ez::unused(n); ROSE_ASSERT(false); }
+
+    /// base case
+    void handle(SgType& n) { res.first = &n; }
+
+    /// use base type
     void handle(SgPointerType& n) { add_indirection(n); }
     void handle(SgArrayType& n)   { add_indirection(n); }
 
+    /// extract UPC shared information
     void handle(SgModifierType& n)
     {
-      SgTypeModifier&       modifier = n.get_typeModifier();
-      SgUPC_AccessModifier& upcAccMod = modifier.get_upcModifier();
+      res.second.shared_mask |= upcSharedFlag(n);
 
       // \pp \note \todo
-      // the following if-statement should (probably) be removed.
-      // it is here b/c the Nov 2010 RTED code did not
+      // the following conditional and the function isUpcRelevant should
+      // (probably) be removed. It is here b/c the Nov 2010 RTED code did not
       // skip modified types.
-      if (!empty(upcAccMod))
-      {
-        res.first = n.get_base_type();
-        res.second.shared_mask |= shared_mask(upcAccMod);
-      }
+      //   to be: res.first = n.get_base_type();
+      res.first = isUpcRelevant(n) ? n.get_base_type() : &n;
     }
 
     SgType& type() const { return *res.first; }
@@ -925,6 +949,7 @@ void RtedTransformation::appendAddressAndSize( SgExprListExp* arg_list,
     appendAddressAndSize( arg_list, am, exp, type, unionClass );
 }
 
+
 void RtedTransformation::appendAddressAndSize(
                             SgExprListExp* arg_list,
                             AppendKind am,
@@ -932,8 +957,8 @@ void RtedTransformation::appendAddressAndSize(
                             SgType* type,
 					                  SgClassDefinition* /*unionclass*/)
 {
-    SgExpression* op = exp;
-    SgExpression* szexp = NULL;
+    SgExpression* szop = exp;    // only needed to get an expression where we can take the size
+    SgExpression* szexp = NULL;  // sizeof expression
 
     // for pointer arithmetic variable access in expressions, we want the
     // equivalent expression that computes the new value.
@@ -945,13 +970,13 @@ void RtedTransformation::appendAddressAndSize(
     //
     // we want the last assignment to check that (p + 1) is a valid address to
     // read
-    if (isSgPlusPlusOp( op ) || isSgMinusMinusOp( op ))
+    if (isSgPlusPlusOp( szop ) || isSgMinusMinusOp( szop ))
     {
-      op = isSgUnaryOp( op ) -> get_operand();
+      szop = isSgUnaryOp( szop ) -> get_operand();
     }
-    else if( isSgPlusAssignOp( op ) || isSgMinusAssignOp( op ))
+    else if( isSgPlusAssignOp( szop ) || isSgMinusAssignOp( szop ))
     {
-      op = isSgBinaryOp( op ) -> get_lhs_operand();
+      szop = isSgBinaryOp( szop ) -> get_lhs_operand();
     }
 
     // consider, e.g.
@@ -964,7 +989,7 @@ void RtedTransformation::appendAddressAndSize(
     //  we only want to access s2..s2+sizeof(char), not s2..s2+sizeof(s2)
     //
     //  but we do want to create the array as s2..s2+sizeof(s2)
-    if( (am == Complex) && isSgArrayType( type ))
+    if( (am == Elem) && isSgArrayType( type ))
     {
         SgType* clone = deepCopy(isSgArrayType(type)->get_base_type());
 
@@ -980,12 +1005,13 @@ void RtedTransformation::appendAddressAndSize(
 			   //			   buildSizeOfOp( buildIntVal(8))
       }
 #endif
-    else if (op)
+    else if (szop)
     {
-        szexp = buildSizeOfOp(deepCopy(op));
+        szexp = buildSizeOfOp(deepCopy(szop));
     }
     else
     {
+        // \pp can this happen?
         szexp = buildSizeOfOp(buildLongIntVal(0));
     }
 
@@ -1040,27 +1066,38 @@ public:
   }
 };
 
+
 static
-SgExpression* mkAddressOf(SgExpression* const exp)
+SgExpression* genAddressOf(SgExpression* const exp, bool upcShared)
 {
-  // \pp why can the expression be NULL?
+  // \pp \todo why can the expression be NULL?
   if (exp == NULL) return buildLongIntVal(0);
 
   // \pp I am not convinced that we need to strip cast expressions ...
-  //     what's so bad about a cast of a cast?
+  //     what's so bad about casting a cast?
   LValueVisitor       make_lvalue_visitor;
-  SgTreeCopy          copy;
   SgExpression* const exp_copy = make_lvalue_visitor.visit_subtree( deepCopy(exp) );
+  SgType*             char_ptr = buildPointerType(buildCharType());
 
-  // needed for UPC, where we cannot cast a shared pointer directly to
-  // an integer value.
-  SgExpression* const cast_void_star = buildCastExp( buildAddressOfOp(exp_copy),
-                                                     buildPointerType(buildVoidType())
-                                                   );
+  // in UPC we must not cast away the shared modifer
+  if (upcShared) char_ptr = buildUpcSharedType(char_ptr);
 
-  // \pp \todo I believe that the type of the following cast expression
-  //           should be size_t instead of unsigned long.
-  return buildCastExp(cast_void_star, buildUnsignedLongType());
+  // we return the address as [shared] char*
+  return buildCastExp(buildAddressOfOp(exp_copy), char_ptr);
+}
+
+SgFunctionCallExp* RtedTransformation::mkAddress(SgExpression* exp, bool upcShared) const
+{
+  ROSE_ASSERT( exp );
+
+  SgExprListExp* const    args = buildExprListExp();
+  SgFunctionSymbol* const ctor = ( upcShared ? symbols.roseAddrSh
+                                             : symbols.roseAddr
+                                 );
+
+  ROSE_ASSERT(ctor);
+  appendExpression(args, exp);
+  return buildFunctionCallExp(ctor, args);
 }
 
 
@@ -1068,7 +1105,8 @@ SgExpression* mkAddressOf(SgExpression* const exp)
  * Appends the address of exp.  If exp is ++, +=, -- or -=, the address of the
  * pointer after the assignment is appended to arg_list.
  */
-void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* exp) {
+void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* exp)
+{
     SgIntVal* offset = NULL;
     if( isSgPlusPlusOp( exp )) {
         offset = buildIntVal( 1 );
@@ -1088,7 +1126,8 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
     }
 
     // get the address of exp
-    SgExpression* arg = mkAddressOf(exp);
+    const bool    upcShared = isUpcShared(exp->get_type());
+    SgExpression* arg = genAddressOf(exp, upcShared);
 
     // add in offset if exp points to a complex data struture
     if( offset != NULL )
@@ -1103,7 +1142,7 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
                          );
     }
 
-    appendExpression( arg_list, arg );
+    appendExpression( arg_list, mkAddress(arg, upcShared) );
 }
 
 
@@ -1157,24 +1196,24 @@ RtedTransformation::prependPseudoForInitializerExpression(SgExpression* exp, SgS
 				buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
 				buildIntVal( 0 ));
 
-		    // for( ... ; test; ... )
-		    // -> for( ... ; test | (eval_once && ((eval_once = 0) | exp1 | exp2 ... )); ... )
-        SgExprStatement* test = isSgExprStatement( GeneralizdFor::test(for_stmt) );
-        ROSE_ASSERT( test );
+    // for( ... ; test; ... )
+    // -> for( ... ; test | (eval_once && ((eval_once = 0) | exp1 | exp2 ... )); ... )
+    SgExprStatement* test = isSgExprStatement( GeneralizdFor::test(for_stmt) );
+    ROSE_ASSERT( test );
 
-        SgExpression* old_test = test -> get_expression();
-        replaceExpression(
-            test -> get_expression(),
-            // test | ...
-            buildBinaryExpression< SgBitOrOp >(
-                // throw-away expression to avoid null values
-                buildIntVal( 0 ),
-                // eval_once && ...
-                buildBinaryExpression< SgAndOp >(
-                    buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
-                    initial_expression )),
-            true);
-        isSgBinaryOp( test -> get_expression() ) -> set_lhs_operand( old_test );
+    SgExpression* old_test = test -> get_expression();
+    replaceExpression(
+        test -> get_expression(),
+        // test | ...
+        buildBinaryExpression< SgBitOrOp >(
+            // throw-away expression to avoid null values
+            buildIntVal( 0 ),
+            // eval_once && ...
+            buildBinaryExpression< SgAndOp >(
+                buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
+                initial_expression )),
+        true);
+    isSgBinaryOp( test -> get_expression() ) -> set_lhs_operand( old_test );
 
 		replaceStatement( for_stmt, new_scope );
 		new_scope -> append_statement( for_stmt );
@@ -1245,9 +1284,8 @@ RtedTransformation::traverseAllChildrenAndFind(SgExpression* varRef,
   bool found =false;
   if (stmt==NULL)
     return found;
-  Rose_STL_Container< SgNode * > nodes =
-    NodeQuery::querySubTree(stmt,V_SgExpression);
-  Rose_STL_Container< SgNode * >::const_iterator it = nodes.begin();
+  SgNodePtrList nodes = NodeQuery::querySubTree(stmt,V_SgExpression);
+  SgNodePtrList::const_iterator it = nodes.begin();
   for (;it!=nodes.end();++it) {
     SgExpression* var = isSgExpression(*it);
     ROSE_ASSERT(var);
@@ -1260,22 +1298,19 @@ RtedTransformation::traverseAllChildrenAndFind(SgExpression* varRef,
 }
 
 bool
-RtedTransformation::traverseAllChildrenAndFind(SgInitializedName* varRef,
-					       SgStatement* stmt) {
-  bool found =false;
-  if (stmt==NULL)
-    return found;
-  Rose_STL_Container< SgNode * > nodes =
-    NodeQuery::querySubTree(stmt,V_SgInitializedName);
-  Rose_STL_Container< SgNode * >::const_iterator it = nodes.begin();
-  for (;it!=nodes.end();++it) {
-    SgInitializedName* var = isSgInitializedName(*it);
-    ROSE_ASSERT(var);
-    if (var==varRef) {
-      found=true;
-      break;
-    }
+RtedTransformation::traverseAllChildrenAndFind(SgInitializedName* varRef, SgStatement* stmt)
+{
+  if (stmt == NULL) return false;
+
+  bool found = false;
+  SgNodePtrList nodes = NodeQuery::querySubTree(stmt,V_SgInitializedName);
+  SgNodePtrList::const_iterator it = nodes.begin();
+
+  while (it != nodes.end() && !found)
+  {
+    found= (*it == varRef);
   }
+
   return found;
 }
 
@@ -1326,8 +1361,8 @@ RtedTransformation::getGlobalVariableForClass(SgGlobal* gl,
   string classDeclName = classStmt->get_name().str();
 
   // get all children of global
-  Rose_STL_Container<SgDeclarationStatement*> decls = gl->get_declarations();
-  Rose_STL_Container<SgDeclarationStatement*>::const_iterator it = decls.begin();
+  SgDeclarationStatementPtrList decls = gl->get_declarations();
+  SgDeclarationStatementPtrList::const_iterator it = decls.begin();
   for (;it!=decls.end();++it) {
     SgVariableDeclaration* vard = isSgVariableDeclaration(*it);
     if (vard) {

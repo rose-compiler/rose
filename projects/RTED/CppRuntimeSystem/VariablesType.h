@@ -8,7 +8,7 @@
 #include <cassert>
 #include "Util.h"
 
-#include "ptrops.h"
+#include "rted_typedefs.h"
 
 class MemoryType;
 class RsType;

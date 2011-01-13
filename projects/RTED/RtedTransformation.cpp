@@ -11,7 +11,6 @@
 #include "RtedTransformation.h"
 #include "RtedVisit.h"
 
-using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
@@ -53,20 +52,23 @@ void RtedTransformation::loadFunctionSymbols(SgProject* project) {
    ROSE_ASSERT(symbols.roseRegisterTypeCall);
    ROSE_ASSERT(symbols.size_t_member);
    ROSE_ASSERT(symbols.roseCheckIfThisNULL);
+   ROSE_ASSERT(symbols.roseConvertIntToString);
 
-   // ROSE_ASSERT(symbols.roseConvertIntToString);
+   ROSE_ASSERT(symbols.roseTypeDesc);
+   ROSE_ASSERT(symbols.roseAddressDesc);
+   ROSE_ASSERT(symbols.roseSourceInfo);
+   ROSE_ASSERT(symbols.size_t_member);
 }
 
 /* -----------------------------------------------------------
  * Perform all transformations needed
  * -----------------------------------------------------------*/
-void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles)
+void RtedTransformation::transform(SgProject* project, std::set<std::string>& rtedfiles)
 {
    ROSE_ASSERT( project);
 
-   if (RTEDDEBUG())   cout << "Running Transformation..." << endl;
+   if (RTEDDEBUG())   std::cout << "Running Transformation..." << std::endl;
 
-   globalScope = getFirstGlobalScope(project);
    this -> rtedfiles = &rtedfiles;
    loadFunctionSymbols(project);
 
@@ -81,10 +83,10 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles)
    // source file within a namespace We need to know the sizeOf classes. To do
    // so we need to modify the class but do not want to do this in the header
    // file right now.
-   vector<SgClassDeclaration*> traverseClasses;
+   std::vector<SgClassDeclaration*> traverseClasses;
    insertNamespaceIntoSourceFile(project,traverseClasses);
    // traverse all header files and collect information
-   vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
+   std::vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
    for (;travClassIt!=traverseClasses.end();++travClassIt) {
       // traverse the new classes with RTED namespace
       traverse(*travClassIt,preorder);

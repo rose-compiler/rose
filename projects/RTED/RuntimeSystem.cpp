@@ -257,7 +257,7 @@ void rted_CreateHeapPtr( TypeDesc    td,
   if( base_type == "SgClassType" )
     base_type = class_name;
 
-	Address        heap_address = ptr_deref(address, td.desc);
+	Address        heap_address = rted_deref(address, td.desc);
 	RsType*        rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
 	RsPointerType* rs_ptr_type = static_cast< RsPointerType* >(rs_type);
 	RsClassType*   class_type = dynamic_cast< RsClassType* >(rs_ptr_type->getBaseType());
@@ -267,7 +267,7 @@ void rted_CreateHeapPtr( TypeDesc    td,
 						<< "   basetype: " << td.base
 						<< "   class_name: " << class_name
 						<< "   indirection_level: " << ToString(td.desc.levels)
-						<< "   address: " << AsString(heap_address, pd_deref(td.desc))
+						<< "   address: " << AsString(heap_address, rted_deref_desc(td.desc))
 						<< "   malloc size: " << ToString(mallocSize)
 						<< std::endl;
 
@@ -675,11 +675,12 @@ int rted_CreateVariable( TypeDesc td,
       rs -> checkMemWrite( address, size );
   }
 
+  // can be invoked as part of an expression
   return 0;
 }
 
 
-void rted_CreateObject( TypeDesc td, Address address, SourceInfo si )
+int rted_CreateObject( TypeDesc td, Address address, SourceInfo si )
 {
 	assert(td.desc.shared_mask == 0); // no objects in UPC
 
@@ -691,6 +692,9 @@ void rted_CreateObject( TypeDesc td, Address address, SourceInfo si )
 
 	assert(rs_classtype);
   rs->createObject( address, rs_classtype );
+
+  // can be invoked as part of an expression
+  return 0;
 }
 
 
@@ -698,14 +702,14 @@ void rted_CreateObject( TypeDesc td, Address address, SourceInfo si )
  * For a given variable name, check if it is present
  * in the pool of variables created and return mangled_name
  ********************************************************/
-void rted_InitVariable( TypeDesc td,
-			                  Address address,
-			                  size_t size,
-												const char* class_name,
-			                  int ismalloc,
-			                  int pointer_changed,
-			                  SourceInfo si
-											)
+int rted_InitVariable( TypeDesc td,
+			                 Address address,
+			                 size_t size,
+											 const char* class_name,
+			                 int ismalloc,
+			                 int pointer_changed,
+			                 SourceInfo si
+										 )
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs -> checkpoint( SourcePosition( si ));
@@ -736,9 +740,12 @@ void rted_InitVariable( TypeDesc td,
 		)
 	{
 		// \pp \todo the following deref needs to know about the shared mask
-    Address heap_address = ptr_deref(address, pd_ptr());
+    Address heap_address = rted_deref(address, rted_ptr());
     rs -> registerPointerChange( address, heap_address, rs_type, false, true );
   }
+
+  // can be invoked as part of an expression
+  return 0;
 }
 
 // we want to catch errors like the following:
@@ -757,7 +764,7 @@ void rted_MovePointer( TypeDesc    td,
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs -> checkpoint( SourcePosition( si ));
 
-  Address heap_address = ptr_deref(address, td.desc);
+  Address heap_address = rted_deref(address, td.desc);
   RsType* rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
 
   rs -> registerPointerChange( address, heap_address, rs_type, true, false );

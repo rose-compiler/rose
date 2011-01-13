@@ -48,6 +48,9 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
    vector<SgNode*> results = NodeQuery::querySubTree(project,V_SgClassDeclaration);
    // insert at top of all C files in reverse order
    // only if the class has a constructor and if it is declared in a header file
+   // \pp why?
+
+#if 0
    // tps (11/06/2009) : it seems that the reverse iterator does not work on MAC OS, so I added another loop to get the reverse vector
    vector<SgNode*>::const_iterator classItR = results.begin();
    vector<SgNode*> resultsInv;
@@ -55,35 +58,38 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
       resultsInv.insert(resultsInv.begin(),*classItR);
    }
    ROSE_ASSERT(resultsInv.size()==results.size());
-   vector<SgNode*>::const_iterator classIt = resultsInv.begin();
-   for (;classIt!=resultsInv.end();classIt++) {
+#endif
+
+   vector<SgNode*>::reverse_iterator classIt = results.rbegin();
+   for (;classIt!=results.rend();classIt++)
+   {
       SgClassDeclaration* classDecl = isSgClassDeclaration(*classIt);
-      if (classDecl->get_definingDeclaration()==classDecl)
-         if (!classDecl->get_file_info()->isCompilerGenerated()) {
-            string filename = classDecl->get_file_info()->get_filenameString();
-            size_t idx = filename.rfind('.');
-            std::string extension ="";
-            if(idx != std::string::npos)
-               extension = filename.substr(idx+1);
-            if ((extension!="C" && extension!="cpp" && extension!="cxx") &&
-                  filename.find("include-staging")==string::npos &&
-                  filename.find("/usr/include")==string::npos
-            ) {
-               std::vector<std::pair<SgNode*,std::string> > vec = classDecl->returnDataMemberPointers();
-               if (RTEDDEBUG()) cerr << "\n ** Deep copy: Found classDecl : " << classDecl->get_name().str() << "  in File: " << filename <<
-                     "    with number of datamembers: " << vec.size() << "   defining " <<
-                     (classDecl->get_definingDeclaration()==classDecl) << endl;
-               if (hasPrivateDataMembers(classDecl)) {
-                  /*SgClassDeclaration* cdl = */instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
-                  //traverseClasses.push_back(cdl);
-               } //else
-               traverseClasses.push_back(classDecl);
-            } else if (
-                  filename.find("include-staging")==string::npos ||
-                  filename.find("/usr/include")==string::npos) {
-               std::string classname = classDecl->get_name().str();
-            }
-         }
+      if (  classDecl->get_definingDeclaration() == classDecl
+         && !classDecl->get_file_info()->isCompilerGenerated()
+         )
+      {
+          string filename = classDecl->get_file_info()->get_filenameString();
+          size_t idx = filename.rfind('.');
+          std::string extension;
+          if (idx != std::string::npos)
+             extension = filename.substr(idx+1);
+
+          if ((extension!="C" && extension!="cpp" && extension!="cxx") &&
+                filename.find("include-staging")==string::npos &&
+                filename.find("/usr/include")==string::npos
+             )
+          {
+             std::vector<std::pair<SgNode*,std::string> > vec = classDecl->returnDataMemberPointers();
+             if (RTEDDEBUG()) cerr << "\n ** Deep copy: Found classDecl : " << classDecl->get_name().str() << "  in File: " << filename <<
+                   "    with number of datamembers: " << vec.size() << "   defining " <<
+                   (classDecl->get_definingDeclaration()==classDecl) << endl;
+             if (hasPrivateDataMembers(classDecl)) {
+                /*SgClassDeclaration* cdl = */instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
+                //traverseClasses.push_back(cdl);
+             } //else
+             traverseClasses.push_back(classDecl);
+          }
+       }
    }
    moveupPreprocessingInfo(project);
 
@@ -232,8 +238,8 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
          // change each private: to public:
          SgClassDefinition* cd_def = cd_copy->get_definition();
          ROSE_ASSERT(cd_def);
-         Rose_STL_Container<SgDeclarationStatement*> decls = cd_def->get_members();
-         Rose_STL_Container<SgDeclarationStatement*>::const_iterator itDecls = decls.begin();
+         SgDeclarationStatementPtrList decls = cd_def->get_members();
+         SgDeclarationStatementPtrList::const_iterator itDecls = decls.begin();
          for (;itDecls!=decls.end();++itDecls) {
             SgVariableDeclaration* node = isSgVariableDeclaration(*itDecls);
             if (node) {

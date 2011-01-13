@@ -8,7 +8,7 @@
 #include <vector>
 #include <iostream>
 
-#include "ptrops.h"
+#include "rted_typedefs.h"
 
 class VariablesType;
 

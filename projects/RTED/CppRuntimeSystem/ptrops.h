@@ -14,7 +14,7 @@ extern "C" {
 
 static const size_t MASK_SHARED = 1;
 
-struct AddressDesc
+struct rted_AddressDesc
 {
   size_t levels;         ///< levels of indirections before a non pointer/reference type is reached
   size_t shared_mask;    ///< stores whether an indirection is shared for each level of indirections
@@ -22,7 +22,7 @@ struct AddressDesc
                          ///  shared_mask & (1 << l) == 0 otherwise
 };
 
-union Address
+union rted_Address
 {
   char          raw[SIZEOF_MEMORY_ADDRESS];  ///< must be >= the largest field in the union
                                              ///  this field is not directly accessed, but let
@@ -38,18 +38,18 @@ union Address
 
 #ifndef __cplusplus
 
-typedef union Address      Address;
-typedef struct AddressDesc AddressDesc;
+typedef union rted_Address      rted_Address;
+typedef struct rted_AddressDesc rted_AddressDesc;
 
 #endif /* __cplusplus */
 
 /// \brief  removes levels of indirections from desc
 /// \return a new Indirection Descriptor
-AddressDesc pd_deref(AddressDesc desc);
+rted_AddressDesc rted_deref_desc(rted_AddressDesc desc);
 
 /// \brief  removes levels of indirections from desc
 /// \return a new Indirection Descriptor
-Address ptr_deref(Address addr, AddressDesc desc);
+rted_Address rted_deref(rted_Address addr, rted_AddressDesc desc);
 
 /// \brief returns the size of the Address abstractions
 /// \note  in particular if this is compiled with UPC we need to make sure that
@@ -58,13 +58,38 @@ Address ptr_deref(Address addr, AddressDesc desc);
 ///        sizeof_Address_UPC() == sizeof(Address) at startup-time.
 size_t sizeof_Address_UPC(void);
 
-AddressDesc pd_ptr(void);
-AddressDesc pd_obj(void);
+rted_AddressDesc rted_ptr(void);
+rted_AddressDesc rted_obj(void);
 
-AddressDesc pd_address_of(AddressDesc);
-AddressDesc pd_upc_address_of(AddressDesc desc, size_t shared_mask);
+rted_AddressDesc rted_address_of(rted_AddressDesc);
+rted_AddressDesc rted_upc_address_of(rted_AddressDesc desc, size_t shared_mask);
 
-int pd_isPtr(AddressDesc addr);
+int rted_isPtr(rted_AddressDesc addr);
+
+
+static inline
+rted_Address rted_Addr(char* ptr)
+{
+  rted_Address addr;
+
+  addr.local = ptr;
+  return addr;
+}
+
+#ifdef __UPC__
+
+static inline
+rted_Address rted_AddrSh(shared char* ptr)
+{
+  rted_Address addr;
+
+  addr.global = ptr;
+  return addr;
+}
+
+#endif /* __UPC__ */
+
+
 
 #ifdef __cplusplus
 }

@@ -12,7 +12,7 @@ SourcePosition::SourcePosition()
 : file("Unknown"), line1(0), line2(0)
 {}
 
-SourcePosition::SourcePosition(SourceInfo si)
+SourcePosition::SourcePosition(rted_SourceInfo si)
 : file(si.file), line1(si.src_line), line2(si.rted_line)
 {}
 

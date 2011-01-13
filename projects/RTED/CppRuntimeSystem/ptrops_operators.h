@@ -4,7 +4,7 @@
 
 #include <ostream>
 
-#include "ptrops.h"
+#include "rted_typedefs.h"
 
 inline
 bool operator<(const Address& lhs, const Address& rhs)

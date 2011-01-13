@@ -18,7 +18,7 @@ class SourcePosition
         SourcePosition();
 
         explicit
-        SourcePosition(SourceInfo si);
+        SourcePosition(rted_SourceInfo si);
 
         std::string toString() const;
         std::string getTransformedFile() const;

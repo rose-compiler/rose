@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cassert>
 
-#include "ptrops.h"
+#include "rted_typedefs.h"
 
 
 /**

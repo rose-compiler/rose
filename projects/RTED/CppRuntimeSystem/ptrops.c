@@ -5,10 +5,10 @@
 
 size_t sizeof_Address_UPC(void)
 {
-  return sizeof(Address);
+  return sizeof(rted_Address);
 }
 
-AddressDesc pd_deref(AddressDesc desc)
+rted_AddressDesc rted_deref_desc(rted_AddressDesc desc)
 {
   assert(desc.levels >= 1);
 
@@ -18,7 +18,7 @@ AddressDesc pd_deref(AddressDesc desc)
   return desc;
 }
 
-AddressDesc pd_upc_address_of(AddressDesc desc, size_t shared_mask)
+rted_AddressDesc rted_upc_address_of(rted_AddressDesc desc, size_t shared_mask)
 {
   desc.shared_mask <<= 1;
   desc.shared_mask &= shared_mask;
@@ -28,15 +28,15 @@ AddressDesc pd_upc_address_of(AddressDesc desc, size_t shared_mask)
   return desc;
 }
 
-AddressDesc pd_address_of(AddressDesc desc)
+rted_AddressDesc rted_address_of(rted_AddressDesc desc)
 {
-  return pd_upc_address_of(desc, 0);
+  return rted_upc_address_of(desc, 0);
 }
 
 
-AddressDesc pd_obj(void)
+rted_AddressDesc rted_obj(void)
 {
-  AddressDesc pd;
+  rted_AddressDesc pd;
 
   pd.levels = 0;
   pd.shared_mask = 0;
@@ -44,9 +44,9 @@ AddressDesc pd_obj(void)
   return pd;
 }
 
-AddressDesc pd_ptr(void)
+rted_AddressDesc rted_ptr(void)
 {
-  AddressDesc pd;
+  rted_AddressDesc pd;
 
   pd.levels = 1;
   pd.shared_mask = 0;
@@ -54,14 +54,14 @@ AddressDesc pd_ptr(void)
   return pd;
 }
 
-int pd_isPtr(AddressDesc desc)
+int rted_isPtr(rted_AddressDesc desc)
 {
   return (desc.levels != 0);
 }
 
 #ifdef __UPC__
 
-Address ptr_deref(Address addr, AddressDesc desc)
+rted_Address rted_deref(rted_Address addr, rted_AddressDesc desc)
 {
   if (desc & MASK_SHARED == 0)
   {
@@ -77,9 +77,11 @@ Address ptr_deref(Address addr, AddressDesc desc)
 
 #else /* __UPC__ */
 
-Address ptr_deref(Address addr, AddressDesc unused)
+rted_Address rted_deref(rted_Address addr, rted_AddressDesc unused)
 {
-  addr = *((Address*)addr.local);
+  assert(unused.shared_mask == 0);
+
+  addr = *((rted_Address*)addr.local);
 
   return addr;
 }

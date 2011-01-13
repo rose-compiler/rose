@@ -10,20 +10,19 @@
 extern "C" {
 #endif
 
-#ifndef __cplusplus
-
-typedef struct TypeDesc TypeDesc;
-typedef struct SourceInfo SourceInfo;
-
-#endif
-
 /***************************** HELPER FUNCTIONS *************************************/
+// \pp \todo this function leaks memory, remove from interface
 const char* rted_ConvertIntToString(int t);
 
-// USE GUI for debugging
-void Rted_debugDialog(const char* filename, size_t line, size_t lineTransformed);
 
-void rted_Checkpoint(const char* filename, size_t line, size_t lineTransformed);
+#ifdef ROSE_WITH_ROSEQT
+
+// USE GUI for debugging
+void Rted_debugDialog(rted_SourceInfo si);
+
+#endif /* ROSE_WITH_ROSEQT */
+
+void rted_Checkpoint(rted_SourceInfo si);
 /***************************** HELPER FUNCTIONS *************************************/
 
 
@@ -31,32 +30,32 @@ void rted_Checkpoint(const char* filename, size_t line, size_t lineTransformed);
 /***************************** ARRAY FUNCTIONS *************************************/
 
 
-void rted_CreateHeapArr( TypeDesc      td,
-												 Address       address,
-												 size_t        elemsize,
-												 size_t        totalsize,
-												 const size_t* dimDescr,
-												 const char*   name,
-												 const char*   mangl_name,
-												 const char*   class_name,
-												 SourceInfo    si
+void rted_CreateHeapArr( rted_TypeDesc      td,
+												 rted_Address       address,
+												 size_t             elemsize,
+												 size_t             totalsize,
+												 const size_t*      dimDescr,
+												 const char*        name,
+												 const char*        mangl_name,
+												 const char*        class_name,
+												 rted_SourceInfo    si
 											 );
 
-void rted_CreateHeapPtr( TypeDesc    td,
-												 Address     address,
-												 size_t      size,
-												 size_t      mallocSize,
-												 int         fromMalloc,
-												 const char* class_name,
-												 SourceInfo  si
+void rted_CreateHeapPtr( rted_TypeDesc    td,
+												 rted_Address     address,
+												 size_t           size,
+												 size_t           mallocSize,
+												 int              fromMalloc,
+												 const char*      class_name,
+												 rted_SourceInfo  si
 											 );
 
 
-void rted_AccessHeap( Address base_address, // &( array[ 0 ])
-										  Address address,
-											size_t size,
-											int read_write_mask,  // 1 = read, 2 = write
-											SourceInfo si
+void rted_AccessHeap( rted_Address    base_address, // &( array[ 0 ])
+										  rted_Address    address,
+											size_t          size,
+											int             read_write_mask,  // 1 = read, 2 = write
+											rted_SourceInfo si
 										);
 
 /***************************** ARRAY FUNCTIONS *************************************/
@@ -65,29 +64,29 @@ void rted_AccessHeap( Address base_address, // &( array[ 0 ])
 
 /***************************** FUNCTION CALLS *************************************/
 
-void rted_AssertFunctionSignature( const char* name,
-																	 size_t type_count,
-																	 TypeDesc* typedescs,
-                                   SourceInfo si
+void rted_AssertFunctionSignature( const char*     name,
+																	 size_t          type_count,
+																	 rted_TypeDesc*  typedescs,
+                                   rted_SourceInfo si
 																 );
 
-void rted_ConfirmFunctionSignature(const char* name, size_t type_count, TypeDesc* types);
+void rted_ConfirmFunctionSignature(const char* name, size_t type_count, rted_TypeDesc* types);
 
-void rted_IOFunctionCall( const char* fname,
-													const char* /* stmtStr */,
-													const char* /* leftVar */,
-													void* file,
-													const char* arg1,
-													const char* arg2,
-												  SourceInfo si
+void rted_IOFunctionCall( const char*     fname,
+													const char*     stmtStr,
+													const char*     leftVar,
+													void*           file,
+													const char*     arg1,
+													const char*     arg2,
+												  rted_SourceInfo si
 												);
 
-void rted_FunctionCall( const char* name,
-												const char* /*stmtStr*/,
-												const char* /*leftVar*/,
-												SourceInfo si,
-												size_t argc,
-												const char** args
+void rted_FunctionCall( const char*     name,
+												const char*     unused_stmtStr,
+												const char*     unused_leftVar,
+												rted_SourceInfo si,
+												size_t          argc,
+												const char**    args
 											);
 
 /***************************** FUNCTION CALLS *************************************/
@@ -100,11 +99,11 @@ void rted_FreeMemory( void* ptr,       ///< the address that is about to be free
                                        ///  memory allocated via 'malloc'.  In short,
                                        ///  whether this is a call to free (1) or delete
                                        ///  (0)
-                      SourceInfo si
+                      rted_SourceInfo si
 							      );
 
 
-void rted_ReallocateMemory( void* ptr, size_t size, SourceInfo si );
+void rted_ReallocateMemory( void* ptr, size_t size, rted_SourceInfo si );
 /***************************** MEMORY FUNCTIONS *************************************/
 
 
@@ -114,12 +113,12 @@ void rted_ReallocateMemory( void* ptr, size_t size, SourceInfo si );
 // memory and possibly complain if the local was the last var pointing to some
 // memory)
 void rted_EnterScope(const char* scope_name);
-void rted_ExitScope(const char*, SourceInfo si);
+void rted_ExitScope(const char*, rted_SourceInfo si);
 
 /***************************** SCOPE *************************************/
 
 
-void rted_RtedClose(char* from);
+void rted_Close(char* from);
 
 // function used to indicate error
 // \pp is this function used / defined?
@@ -133,14 +132,14 @@ extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 
 /***************************** VARIABLES *************************************/
 
-int rted_CreateVariable( TypeDesc td,
-												 Address address,
-												 size_t size,
-												 const char* name,
-												 const char* mangled_name,
-												 int init,
-												 const char* class_name,
-												 SourceInfo si
+int rted_CreateVariable( rted_TypeDesc   td,
+												 rted_Address    address,
+												 size_t          size,
+												 const char*     name,
+												 const char*     mangled_name,
+												 int             init,
+												 const char*     class_name,
+												 rted_SourceInfo si
 						           );
 
 /**
@@ -149,16 +148,16 @@ int rted_CreateVariable( TypeDesc td,
  * multiple times for the same address: e.g. if called in a base class
  * constructor and a sub class constructor.
  */
-void rted_CreateObject( TypeDesc td, Address address, SourceInfo si );
+int rted_CreateObject( rted_TypeDesc td, rted_Address address, rted_SourceInfo si );
 
-void rted_InitVariable( TypeDesc td,
-			                  Address address,
-			                  size_t size,
-												const char* class_name,
-			                  int ismalloc,
-			                  int pointer_changed,
-			                  SourceInfo si
-											);
+int rted_InitVariable( rted_TypeDesc   td,
+		                   rted_Address    address,
+											 size_t          size,
+											 const char*     class_name,
+											 int             ismalloc,
+											 int             pointer_changed,
+											 rted_SourceInfo si
+										 );
 
 /**
  * This function is called when pointers are incremented.  For example, it will
@@ -179,33 +178,33 @@ void rted_InitVariable( TypeDesc td,
  * isn't incremented beyond the bounds of the array, even if doing so results in
  * a pointer to allocated memory.
  */
-void rted_MovePointer( TypeDesc    td,
-										   Address     address,
-										   const char* class_name,
-										   SourceInfo  si
+void rted_MovePointer( rted_TypeDesc    td,
+										   rted_Address     address,
+										   const char*      class_name,
+										   rted_SourceInfo  si
 										 );
 
-void rted_AccessVariable( Address address,
-													size_t size,
-													Address write_address,
-													size_t write_size,
-													int read_write_mask,
-													SourceInfo si
+void rted_AccessVariable( rted_Address    address,
+													size_t          size,
+													rted_Address    write_address,
+													size_t          write_size,
+													int             read_write_mask,
+													rted_SourceInfo si
 				                );
 
-void rted_CheckIfThisNULL( void* thisExp, SourceInfo si );
+void rted_CheckIfThisNULL( void* thisExp, rted_SourceInfo si );
 /***************************** VARIABLES *************************************/
 
 
 
 /***************************** TYPES *************************************/
 // handle structs and classes
-void rted_RegisterTypeCall( const char* nameC,
-                            const char* /* typeC */,
-														const char* isUnionType,
-														size_t sizeC,
-														SourceInfo si,
-														size_t argc
+void rted_RegisterTypeCall( const char*     nameC,
+                            const char*     unused_typeC,
+														const char*     isUnionType,
+														size_t          sizeC,
+														rted_SourceInfo si,
+														size_t          argc,
 														...
 													);
 

@@ -5,7 +5,7 @@
 #include <map>
 #include <set>
 
-#include "ptrops.h"
+#include "rted_typedefs.h"
 
 class RsType;
 class VariablesType;
