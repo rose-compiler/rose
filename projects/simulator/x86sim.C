@@ -1179,6 +1179,9 @@ public:
     /* Handles return from a signal handler. */
     void signal_return();
 
+    /* Pause until a useful signal arrives. */
+    void signal_pause();
+
     /* Same as the x86_push instruction */
     void push(VirtualMachineSemantics::ValueType<32> n) {
         VirtualMachineSemantics::ValueType<32> new_sp = add(readGPR(x86_gpr_sp), number<32>(-4));
@@ -3408,35 +3411,7 @@ EmulationPolicy::emulate_syscall()
 
         case 29: { /* 0x1d, pause */
             syscall_enter("pause", "");
-
-            /* Signals that terminate a process by default */
-            uint64_t terminating = (uint64_t)(-1);
-            terminating &= ~((uint64_t)1 << (SIGIO-1));
-            terminating &= ~((uint64_t)1 << (SIGURG-1));
-            terminating &= ~((uint64_t)1 << (SIGCHLD-1));
-            terminating &= ~((uint64_t)1 << (SIGCONT-1));
-            terminating &= ~((uint64_t)1 << (SIGSTOP-1));
-            terminating &= ~((uint64_t)1 << (SIGTTIN-1));
-            terminating &= ~((uint64_t)1 << (SIGTTOU-1));
-            terminating &= ~((uint64_t)1 << (SIGWINCH-1));
-
-            /* What signals would unpause this syscall? */
-            uint64_t unpause = 0;
-            for (uint64_t i=0; i<64; i++) {
-                uint64_t sigbit = (uint64_t)1 << i;
-                if (signal_action[i].handler_va==(uint64_t)SIG_DFL && 0!=(sigbit & terminating)) {
-                    unpause |= sigbit;
-                } else if (signal_action[i].handler_va!=0) {
-                    unpause |= sigbit;
-                }
-            }
-
-            /* Pause until the simulator receives a signal that should be delivered to the specimen.  We violate the
-             * semantics a tiny bit here: the pause() syscall returns before the signal handler is invoked.  I don't
-             * think this matters much since the handler will be invoked before the instruction that follows the "INT 80". */
-            while (0==(signal_pending & unpause & ~signal_mask))
-                pause();
-
+            signal_pause();
             writeGPR(x86_gpr_ax, -EINTR);
             syscall_leave("d");
             break;
@@ -5011,6 +4986,26 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 179: { /* 0xb3, rt_sigsuspend */
+            syscall_enter("rt_sigsuspend", "Pd", (size_t)8, print_sigmask);
+            do {
+                ROSE_ASSERT(8==arg(1));
+                ROSE_ASSERT(8==sizeof(signal_pending));
+                uint64_t new_signal_mask;
+                if (8!=map->read(&new_signal_mask, arg(0), 8)) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+                uint64_t old_signal_mask = signal_mask;
+                signal_mask = new_signal_mask;
+                signal_pause();
+                signal_mask = old_signal_mask;
+                writeGPR(x86_gpr_ax, -EINTR);
+            } while (0);
+            syscall_leave("d");
+            break;
+        }
+
 	case 183: { /* 0xb7, getcwd */
             syscall_enter("getcwd", "pd");
             do {
@@ -6121,6 +6116,40 @@ EmulationPolicy::signal_return()
     /* Simulate return from sigreturn */
     writeGPR(x86_gpr_sp, pop());        /* restore stack pointer */
     writeIP(pop());                     /* RET instruction */
+}
+
+/* Suspend execution until a signal arrives. The signal must not be masked, and must either terminate the process or have a
+ * signal handler. */
+void
+EmulationPolicy::signal_pause()
+{
+    /* Signals that terminate a process by default */
+    uint64_t terminating = (uint64_t)(-1);
+    terminating &= ~((uint64_t)1 << (SIGIO-1));
+    terminating &= ~((uint64_t)1 << (SIGURG-1));
+    terminating &= ~((uint64_t)1 << (SIGCHLD-1));
+    terminating &= ~((uint64_t)1 << (SIGCONT-1));
+    terminating &= ~((uint64_t)1 << (SIGSTOP-1));
+    terminating &= ~((uint64_t)1 << (SIGTTIN-1));
+    terminating &= ~((uint64_t)1 << (SIGTTOU-1));
+    terminating &= ~((uint64_t)1 << (SIGWINCH-1));
+
+    /* What signals would unpause this syscall? */
+    uint64_t unpause = 0;
+    for (uint64_t i=0; i<64; i++) {
+        uint64_t sigbit = (uint64_t)1 << i;
+        if (signal_action[i].handler_va==(uint64_t)SIG_DFL && 0!=(sigbit & terminating)) {
+            unpause |= sigbit;
+        } else if (signal_action[i].handler_va!=0) {
+            unpause |= sigbit;
+        }
+    }
+
+    /* Pause until the simulator receives a signal that should be delivered to the specimen.  We violate the
+     * semantics a tiny bit here: the pause() syscall returns before the signal handler is invoked.  I don't
+     * think this matters much since the handler will be invoked before the instruction that follows the "INT 80". */
+    while (0==(signal_pending & unpause & ~signal_mask))
+        pause();
 }
 
 static EmulationPolicy *signal_deliver_to;
