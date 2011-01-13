@@ -151,7 +151,7 @@ private:
 	void runDefUseDataFlow(SgFunctionDefinition* func);
 
 	/** Returns true if the variable is implicitly defined at the function entry by the compiler. */
-	bool isBuiltinVar(const VarName& var);
+	static bool isBuiltinVar(const VarName& var);
 
 	/** Expand all member definitions (chained names) to define every name in the chain
 	 * that is shorter than the originally defined name.

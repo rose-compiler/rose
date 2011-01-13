@@ -9,7 +9,7 @@ lib_LIBRARIES = libxomp.a
 libxomp_a_SOURCES = xomp.c
 
 include_HEADERS = omp_lowering.h libgomp_g.h \
-           libompc.h  libxomp.h \
+           libompc.h  libxomp.h libxompf.h \
 	   run_me_defs.inc run_me_callers.inc
 
 EXTRA_DIST = CMakeLists.txt README run_me_caller_generator.sh run_me_generator.sh

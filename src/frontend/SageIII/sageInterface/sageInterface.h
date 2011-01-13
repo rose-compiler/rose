@@ -647,11 +647,14 @@ bool isAssignable(SgType* type);
 //! Does a type have a trivial (built-in) destructor?
 bool hasTrivialDestructor(SgType* t);
 
-//! Is this type a non-constant reference type?
+//! Is this type a non-constant reference type? (Handles typedefs correctly)
 bool isNonconstReference(SgType* t);
 
-//! Is this type a const or non-const reference type?
+//! Is this type a const or non-const reference type? (Handles typedefs correctly)
 bool isReferenceType(SgType* t);
+
+//! Is this type a pointer type? (Handles typedefs correctly)
+bool isPointerType(SgType* t);
 
 //! Is this a const type?
 /* const char* p = "aa"; is not treated as having a const type. It is a pointer to const char.
@@ -797,6 +800,9 @@ void setLoopCondition(SgScopeStatement* loop, SgStatement* cond);
 //! A canonical form is defined as : one initialization statement, a test expression, and an increment expression , loop index variable should be of an integer type.  IsInclusiveUpperBound is true when <= or >= is used for loop condition
 bool isCanonicalForLoop(SgNode* loop, SgInitializedName** ivar=NULL, SgExpression** lb=NULL, SgExpression** ub=NULL, SgExpression** step=NULL, SgStatement** body=NULL, bool *hasIncrementalIterationSpace = NULL, bool* isInclusiveUpperBound = NULL);
 
+//! Check if a Fortran Do loop has a complete canonical form: Do I=1, 10, 1
+bool isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/, bool *hasIncrementalIterationSpace/*= NULL*/, bool* isInclusiveUpperBound/*=NULL*/);
+
 //! Set the lower bound of a loop header for (i=lb; ...)
 void setLoopLowerBound(SgNode* loop, SgExpression* lb);
 
@@ -813,6 +819,7 @@ bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //! Normalize a for loop, return true if successful
 //!
 //! Translations are :
+//!    For the init statement: for (int i=0;... ) becomes int i; for (i=0;..)   
 //!    For test expression:
 //!           i<x is normalized to i<= (x-1) and
 //!           i>x is normalized to i>= (x+1)
@@ -821,6 +828,9 @@ bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //!           i-- is normalized to i+=-1
 //!           i-=s is normalized to i+= -s
 bool forLoopNormalization(SgForStatement* loop);
+
+//!Normalize a Fortran Do loop. Make the default increment expression (1) explicit
+bool doLoopNormalization(SgFortranDo* loop);
 
 //!  Unroll a target loop with a specified unrolling factor. It handles steps larger than 1 and adds a fringe loop if the iteration count is not evenly divisible by the unrolling factor.
 bool loopUnrolling(SgForStatement* loop, size_t unrolling_factor);
@@ -893,6 +903,9 @@ static std::vector<NodeType*> getSgNodeListFromMemoryPool()
 /*! \brief top-down traversal from current node to find the main() function declaration
 */
 SgFunctionDeclaration* findMain(SgNode* currentNode);
+
+//! find the last declaration statement within a scope (if any). This is often useful to decide where to insert another declaration statement
+SgStatement* findLastDeclarationStatement(SgScopeStatement * scope);
 
 	  //midend/programTransformation/partialRedundancyElimination/pre.h
 //! find referenced symbols within an expression
@@ -1234,6 +1247,12 @@ void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScop
 
 //! Fix symbol table for SgLabelStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL.
 void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
+
+//! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelRefExp are created transparently as needed.
+void setFortranNumericLabel(SgStatement* stmt, int label_value);
+
+//! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
+int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements. Should be used before attaching the statement into AST.
 void fixStatement(SgStatement* stmt, SgScopeStatement* scope);

@@ -49,6 +49,12 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 	ROSE_ASSERT(var.size() > 0 && scope != NULL);
 	SgScopeStatement* varScope = SageInterface::getScope(var[0]);
 
+	//Work around a ROSE bug that sets incorrect scopes for built-in variables.
+	if (isBuiltinVar(var))
+	{
+		return SageInterface::isAncestor(scope, var[0]);
+	}
+
 	if (varScope == scope || SageInterface::isAncestor(varScope, scope))
 	{
 		//FIXME: In a basic block, the definition of the variable might come AFTER the node in question
@@ -257,7 +263,7 @@ void StaticSingleAssignment::run(bool interprocedural)
 		buildUseTable(func);
 
 		//Annotate phi functions with dependencies
-		annotatePhiNodeWithConditions(func, controlDependencies);
+		//annotatePhiNodeWithConditions(func, controlDependencies);
 
 		functionsProcessed.insert(func);
 	}

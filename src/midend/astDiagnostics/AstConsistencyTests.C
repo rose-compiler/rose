@@ -3946,11 +3946,24 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
                 
+               // driscoll6 (01/03/2011): Added this case.
+               case V_SgGraphEdge:
+               case V_SgDirectedGraphEdge:
+               case V_SgUndirectedGraphEdge:
+               case V_SgGraphNode:
+                  {
+                      if (! isSgGraph(support->get_parent()) ) {
+                          std::cerr << "Graph component " << support->class_name() << " requires SgGraph as parent" << std::endl;
+                          ROSE_ASSERT(false);
+                      }
+                      break;
+                  }
+
                default:
                   {
                     if (support->get_parent() != NULL)
                        {
-                         printf ("##### TestParentPointersInMemoryPool::visit(node = %p = %s) support->get_parent() != NULL \n",node,node->sage_class_name());
+                         printf ("##### TestParentPointersInMemoryPool::visit(node = %p = %s), support->get_parent() != NULL == %s\n",node,node->sage_class_name(),support->get_parent()->sage_class_name());
                        }
                     ROSE_ASSERT(support->get_parent() == NULL);
                     break;

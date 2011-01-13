@@ -1482,6 +1482,12 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             // outputFilename = file->get_sourceFileNameWithoutPath();
                outputFilename += ".s";
              }
+          else if (file->get_Cuda_only() == true) // Liao 12/29/2010, generate cuda source files
+             {
+               outputFilename = StringUtility::stripFileSuffixFromFileName (outputFilename);
+               outputFilename += ".cu";
+             }
+
 
           file->set_unparse_output_filename(outputFilename);
           ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);

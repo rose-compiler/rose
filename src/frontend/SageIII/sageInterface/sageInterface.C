@@ -41,6 +41,13 @@ using namespace std;
 using namespace SageBuilder;
 
 int SageInterface::gensym_counter = 0;
+template <typename T>
+static std::string numToString(T x)
+{
+  std::ostringstream os;
+  os <<x;
+  return os.str();
+}
 
 // DQ: 09/23/03
 // We require a global function for getting the string associated
@@ -4614,10 +4621,19 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
 bool SageInterface::isMain(const SgNode* n)
 {
  bool result = false;
- if (isSgFunctionDeclaration(n) &&
+ // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement 
+ if (SageInterface::is_Fortran_language())
+ {
+   if (isSgProgramHeaderStatement(n))
+     result = true;
+ }
+ else  
+ {
+   if (isSgFunctionDeclaration(n) &&
      isSgGlobal(isSgStatement(n)->get_scope())&&
      isSgFunctionDeclaration(n)->get_name() == "main")
    result = true;
+ }
 
    return result;
 }
@@ -4633,8 +4649,6 @@ bool SageInterface::isMain(const SgNode* n)
 
 // Revised by Jeremiah,
 // Added check to see if the scope is global: Liao
-
-//TODO: Fortran language specific implementation
 SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
   if (!n) return 0;
   if (isMain(n))
@@ -4653,6 +4667,28 @@ SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
   return 0;
 }
 
+//! iterate through the statement within a scope, find the last declaration statement (if any) after which 
+//  another declaration statement can be inserted.  
+// This is useful to find a safe place to insert a declaration statement with special requirements about where it can be inserted.
+// e.g. a variable declaration statement should not be inserted before IMPLICIT none in Fortran
+// If it returns NULL, a declaration statement should be able to be prepended to the scope
+SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scope)
+{   
+  SgStatement* rt = NULL;
+  ROSE_ASSERT (scope != NULL);
+
+  SgStatementPtrList stmt_list = scope->generateStatementList ();
+    
+  for (size_t i = 0; i<stmt_list.size(); i++)
+  { 
+    SgStatement* cur_stmt = stmt_list[i];
+    if (isSgDeclarationStatement(cur_stmt))
+      rt = cur_stmt;
+    //if (isSgImplicitStatement(cur_stmt)) || isSgFortranIncludeLine(cur_stmt) || isSgDeclarationStatement
+  } 
+    
+  return rt;
+}   
 
 SgNode * SageInterface::deepCopyNode (const SgNode* n)
 {
@@ -6193,6 +6229,20 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
 
   return true;
 }
+//!Normalize a Fortran Do loop. Make the default increment expression (1) explicit
+bool SageInterface::doLoopNormalization(SgFortranDo* loop)
+{
+  // TODO, normalize continue to enddo ?
+  ROSE_ASSERT (loop != NULL);
+  SgExpression* e_3 = loop->get_increment();
+  if (isSgNullExpression(e_3))
+  {
+    loop->set_increment(buildIntVal(1));
+    delete (e_3);
+  }
+
+  return true;
+}
 
 #if 0
 bool SageInterface::loopUnrolling(SgForStatement* loop, size_t unrolling_factor)
@@ -6726,6 +6776,140 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   //ROSE_ASSERT(isStrictIntegerType(ivarname->get_type()));
   return ivarname;
 }
+//! Get Fortran Do loop's key features
+bool SageInterface::isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/, bool *hasIncrementalIterationSpace/*= NULL*/, bool* isInclusiveUpperBound/*=NULL*/)
+{
+  ROSE_ASSERT(loop != NULL);
+  SgFortranDo* fs = isSgFortranDo(loop);
+  if (fs == NULL)
+    return false;
+  // 1. Check initialization statement is something like i=xx;
+  SgExpression * init = fs->get_initialization();
+  if (init == NULL)
+    return false;
+  SgAssignOp* init_assign = isSgAssignOp (init);
+  SgExpression *lbast=NULL, *ubast=NULL;
+ // SgExpression* ivarast=NULL, *stepast=NULL;
+  SgInitializedName* ivarname=NULL;
+
+  bool isCase1=false;
+  if (init_assign)
+   {
+     SgVarRefExp* var = isSgVarRefExp(init_assign->get_lhs_operand());
+     if (var)
+       ivarname = var->get_symbol()->get_declaration();
+     lbast = init_assign->get_rhs_operand();
+     if (ivarname && lbast )
+       isCase1 = true;
+   }
+   // if not i=1
+    if (!isCase1)
+      return false;
+
+  //Check loop index's type
+  if (!SageInterface::isStrictIntegerType(ivarname->get_type()))
+    return false;
+#if 0
+  //2. Check test expression i [<=, >=, <, > ,!=] bound
+  SgBinaryOp* test = isSgBinaryOp(fs->get_test_expr());
+  if (test == NULL)
+    return false;
+  switch (test->variantT()) {
+    case V_SgLessOrEqualOp:
+       if (isInclusiveUpperBound != NULL)
+         *isInclusiveUpperBound = true;
+       if (hasIncrementalIterationSpace != NULL)
+         *hasIncrementalIterationSpace = true;
+       break;
+    case V_SgLessThanOp:
+       if (isInclusiveUpperBound != NULL)
+         *isInclusiveUpperBound = false;
+       if (hasIncrementalIterationSpace != NULL)
+         *hasIncrementalIterationSpace = true;
+       break;
+    case V_SgGreaterOrEqualOp:
+       if (isInclusiveUpperBound != NULL)
+         *isInclusiveUpperBound = true;
+        if (hasIncrementalIterationSpace != NULL)
+         *hasIncrementalIterationSpace = false;
+      break;
+    case V_SgGreaterThanOp:
+       if (isInclusiveUpperBound != NULL)
+         *isInclusiveUpperBound = false;
+       if (hasIncrementalIterationSpace != NULL)
+         *hasIncrementalIterationSpace = false;
+      break;
+//    case V_SgNotEqualOp: // Do we really want to allow this != operator ?
+      break;
+    default:
+      return false;
+  }
+  // check the tested variable is the same as the loop index
+  SgVarRefExp* testvar = isSgVarRefExp(SkipCasting(test->get_lhs_operand()));
+  if (testvar == NULL)
+    return false;
+  if (testvar->get_symbol() != ivarname->get_symbol_from_symbol_table ())
+    return false;
+#endif
+ //grab the upper bound
+  ubast = loop->get_bound();
+  // Fortran Do loops always have inclusive upper bound  
+  if (isInclusiveUpperBound != NULL) 
+     *isInclusiveUpperBound = true;  
+  //3. Check the increment expression
+  SgExpression* incr = fs->get_increment();
+  ROSE_ASSERT (incr != NULL);
+  if (isSgNullExpression(incr))
+  {
+    cerr<<"Error:isCanonicalDoLoop() found NULL increment expression. Please call doLoopNormalization() first!"<<endl;
+    ROSE_ASSERT (false);
+  }
+  if (hasIncrementalIterationSpace != NULL)
+  {
+     *hasIncrementalIterationSpace = true;
+    // We can only tell a few cases 
+    if (SgIntVal* i_v = isSgIntVal(incr))
+    {
+      if (i_v->get_value()<0)
+     *hasIncrementalIterationSpace = false;
+    }
+  }
+#if 0
+  SgVarRefExp* incr_var = NULL;
+  switch (incr->variantT()) {
+    case V_SgPlusAssignOp: //+=
+    case V_SgMinusAssignOp://-=
+      incr_var = isSgVarRefExp(SkipCasting(isSgBinaryOp(incr)->get_lhs_operand()));
+      stepast = isSgBinaryOp(incr)->get_rhs_operand();
+      break;
+    case V_SgPlusPlusOp:   //++
+    case V_SgMinusMinusOp:  //--
+      incr_var = isSgVarRefExp(SkipCasting(isSgUnaryOp(incr)->get_operand()));
+      stepast = buildIntVal(1); // will this dangling SgNode cause any problem?
+      break;
+    default:
+      return false;
+  }
+  if (incr_var == NULL)
+    return false;
+  if (incr_var->get_symbol() != ivarname->get_symbol_from_symbol_table ())
+    return false;
+#endif
+  // return loop information if requested
+  if (ivar != NULL)
+    *ivar = ivarname;
+  if (lb != NULL)
+    *lb = lbast;
+  if (ub != NULL)
+    *ub = ubast;
+  if (step != NULL)
+    *step = incr;
+  if (body != NULL) {
+    *body = fs->get_body();
+  }
+  return true;
+}
+
 
 //! Based on AstInterface::IsFortranLoop() and ASTtools::getLoopIndexVar()
 //TODO check the loop index is not being written in the loop body
@@ -6733,8 +6917,14 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
 {
   ROSE_ASSERT(loop != NULL);
   SgForStatement* fs = isSgForStatement(loop);
+  //SgFortranDo* fs2 = isSgFortranDo(loop);
   if (fs == NULL)
-    return false;
+  { 
+   // if (fs2)
+   //   return isCanonicalDoLoop (fs2, ivar, lb, ub, step, body, hasIncrementalIterationSpace, isInclusiveUpperBound);
+   // else
+      return false;
+   }
   // 1. Check initialization statement is something like i=xx;
   SgStatementPtrList & init = fs->get_init_stmt();
   if (init.size() !=1)
@@ -6862,34 +7052,52 @@ void SageInterface::setLoopLowerBound(SgNode* loop, SgExpression* lb)
   ROSE_ASSERT(loop != NULL);
   ROSE_ASSERT(lb != NULL);
   SgForStatement* forstmt = isSgForStatement(loop);
-  ROSE_ASSERT(forstmt!= NULL);
+  SgFortranDo* dostmt = isSgFortranDo(loop);
+  //  ROSE_ASSERT(forstmt!= NULL);
 
-  // two cases: init_stmt is
-  //       SgExprStatement (assignment) like i=0;
-  //       SgVariableDeclaration int i =0 or
-  Rose_STL_Container<SgNode* > testList = NodeQuery::querySubTree( *((forstmt->get_init_stmt()).begin()), V_SgAssignOp);
-
-  if (testList.size()>0) // assignment statement
+  if (forstmt != NULL)
   {
-    ROSE_ASSERT(testList.size()==1);// only handle the case of 1 statement, canonical form
-    SgAssignOp * assignop = isSgAssignOp((*testList.begin()));
-    ROSE_ASSERT(assignop);
-    if( assignop->get_rhs_operand()->get_lvalue())
-      lb->set_lvalue(true);
-    assignop->set_rhs_operand(lb);
-    lb->set_parent(assignop);
-    //TODO what happens to the original rhs operand?
+    // two cases: init_stmt is
+    //       SgExprStatement (assignment) like i=0;
+    //       SgVariableDeclaration int i =0 or
+    Rose_STL_Container<SgNode* > testList = NodeQuery::querySubTree( *((forstmt->get_init_stmt()).begin()), V_SgAssignOp);
+    if (testList.size()>0) // assignment statement
+    {
+      ROSE_ASSERT(testList.size()==1);// only handle the case of 1 statement, canonical form
+      SgAssignOp * assignop = isSgAssignOp((*testList.begin()));
+      ROSE_ASSERT(assignop);
+      if( assignop->get_rhs_operand()->get_lvalue())
+        lb->set_lvalue(true);
+      assignop->set_rhs_operand(lb);
+      lb->set_parent(assignop);
+      //TODO what happens to the original rhs operand?
+    }
+    else // variable declaration case
+    {
+      // SgVariableDeclaration
+      Rose_STL_Container<SgNode* > testList = NodeQuery::querySubTree( *((forstmt->get_init_stmt()).begin()),  V_SgAssignInitializer );
+      ROSE_ASSERT(testList.size()==1);// only handle the case of 1 statement, canonical form
+      SgAssignInitializer* init = isSgAssignInitializer((*testList.begin()));
+      ROSE_ASSERT(init != NULL);
+      init->set_operand(lb);
+      lb->set_parent(init);
+      //TODO what happens to the original rhs operand?
+    }
   }
-  else // variable declaration case
+  else if (dostmt != NULL)
   {
-    // SgVariableDeclaration
-    Rose_STL_Container<SgNode* > testList = NodeQuery::querySubTree( *((forstmt->get_init_stmt()).begin()),  V_SgAssignInitializer );
-    ROSE_ASSERT(testList.size()==1);// only handle the case of 1 statement, canonical form
-    SgAssignInitializer* init = isSgAssignInitializer((*testList.begin()));
-    ROSE_ASSERT(init != NULL);
-    init->set_operand(lb);
-    lb->set_parent(init);
-    //TODO what happens to the original rhs operand?
+    SgExpression* init = dostmt->get_initialization();
+    ROSE_ASSERT (init != NULL);
+    SgAssignOp * a_op = isSgAssignOp (init);
+    ROSE_ASSERT (a_op!=NULL);
+    a_op->set_rhs_operand(lb);
+    lb->set_parent(a_op);
+    //TODO delete the previous operand?
+  }
+  else
+  {
+    cerr<<"Error. SageInterface::setLoopLowerBound(), illegal loop type:"<< loop->class_name()<<endl;
+    ROSE_ASSERT (false);
   }
 }
 
@@ -6899,13 +7107,28 @@ void SageInterface::setLoopUpperBound(SgNode* loop, SgExpression* ub)
   ROSE_ASSERT(loop != NULL);
   ROSE_ASSERT(ub != NULL);
   SgForStatement* forstmt = isSgForStatement(loop);
-  ROSE_ASSERT(forstmt!= NULL);
+  //  ROSE_ASSERT(forstmt!= NULL);
+  SgFortranDo* dostmt = isSgFortranDo(loop);
+  if (forstmt != NULL)
+  {
+    // set upper bound expression
+    SgBinaryOp * binop= isSgBinaryOp(isSgExprStatement(forstmt->get_test())->get_expression());
+    ROSE_ASSERT(binop != NULL);
+    binop->set_rhs_operand(ub);
+    ub->set_parent(binop);
+  }
+  else if (dostmt != NULL)
+  {
+    dostmt->set_bound(ub);
+    ub->set_parent(dostmt);
+    //TODO delete the original bound expression
+  }
+  else
+  {
+    cerr<<"Error. SageInterface::setLoopUpperBound(), illegal loop type:"<< loop->class_name()<<endl;
+    ROSE_ASSERT (false);
+  } 
 
-  // set upper bound expression
-  SgBinaryOp * binop= isSgBinaryOp(isSgExprStatement(forstmt->get_test())->get_expression());
-  ROSE_ASSERT(binop != NULL);
-  binop->set_rhs_operand(ub);
-  ub->set_parent(binop);
 }
 
 //! Set the stride(step) of a loop 's incremental expression, regardless the expression types (i+=s; i= i+s, etc)
@@ -6914,94 +7137,109 @@ void SageInterface::setLoopStride(SgNode* loop, SgExpression* stride)
   ROSE_ASSERT(loop != NULL);
   ROSE_ASSERT(stride != NULL);
   SgForStatement* forstmt = isSgForStatement(loop);
-  ROSE_ASSERT(forstmt!= NULL);
-
-  // set stride expression
-  // case 1: i++ change to i+=stride
-  Rose_STL_Container<SgNode*> testList = NodeQuery::querySubTree( forstmt->get_increment(), V_SgPlusPlusOp);
-  if (testList.size()>0)
+  SgFortranDo * dostmt = isSgFortranDo (loop);
+  // ROSE_ASSERT(forstmt!= NULL);
+  if (dostmt != NULL)
   {
-    ROSE_ASSERT(testList.size() == 1); // should have only one
-    SgVarRefExp *loopvarexp = isSgVarRefExp(SageInterface::deepCopy
-        (isSgPlusPlusOp( *testList.begin())->get_operand()));
-    SgPlusAssignOp *plusassignop = buildPlusAssignOp(loopvarexp, stride);
-    forstmt->set_increment(plusassignop);
+    dostmt->set_increment(stride);
+    stride->set_parent(dostmt);
+    //TODO delete original increment expression
   }
-
-  // case 1.5: i-- also changed to i+=stride
-  testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgMinusMinusOp);
-  if (testList.size()>0)
+  else  if (forstmt != NULL)  
   {
-    ROSE_ASSERT(testList.size()==1);// should have only one
-    SgVarRefExp *loopvarexp =isSgVarRefExp(SageInterface::deepCopy
-        (isSgMinusMinusOp(*testList.begin())->get_operand()));
-    SgPlusAssignOp *plusassignop = buildPlusAssignOp(loopvarexp, stride);
-    forstmt->set_increment(plusassignop);
-  }
-
-  // case 2: i+=X
-  testList = NodeQuery::querySubTree( forstmt->get_increment(), V_SgPlusAssignOp);
-  if (testList.size()>0)
-  {
-    ROSE_ASSERT(testList.size()==1);// should have only one
-    SgPlusAssignOp * assignop = isSgPlusAssignOp(*(testList.begin()));
-    ROSE_ASSERT(assignop!=NULL);
-    assignop->set_rhs_operand(stride);
-  }
-
-  // case 2.5: i-=X changed to i+=stride
-  testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgMinusAssignOp);
-  if (testList.size()>0)
-  {
-    ROSE_ASSERT(testList.size()==1);// should have only one
-    SgVarRefExp *loopvarexp =isSgVarRefExp(SageInterface::deepCopy
-        (isSgMinusAssignOp(*testList.begin())->get_lhs_operand()));
-    SgExprStatement* exprstmt = isSgExprStatement((*testList.begin())->get_parent());
-    ROSE_ASSERT(exprstmt !=NULL);
-    SgPlusAssignOp *plusassignop = buildPlusAssignOp(loopvarexp, stride);
-    exprstmt->set_expression(plusassignop);
-  }
-
-  // DQ (1/3/2007): I think this is a meaningless statement.
-  testList.empty();
-  // case 3: i=i + X or i =X +i  i
-  // TODO; what if users use i*=,etc ??
-  //      send out a warning: not canonical FOR/DO loop
-  //      or do this in the real frontend. MUST conform to canonical form
-  testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgAddOp);
-  if (testList.size()>0)
-  {
-    ROSE_ASSERT(testList.size()==1);// should have only one ??
-    // consider only the top first one
-    SgAddOp * addop = isSgAddOp(*(testList.begin()));
-    ROSE_ASSERT(addop!=NULL);
-    string loopvar= (isSgVarRefExp(isSgAssignOp(addop->get_parent())->get_lhs_operand())->get_symbol()->get_name()).getString();
-    if (isSgVarRefExp(addop->get_rhs_operand())!=NULL)
+    // set stride expression
+    // case 1: i++ change to i+=stride
+    Rose_STL_Container<SgNode*> testList = NodeQuery::querySubTree( forstmt->get_increment(), V_SgPlusPlusOp);
+    if (testList.size()>0)
     {
-      if ((isSgVarRefExp(addop->get_rhs_operand())->get_symbol()->get_name()).getString() ==loopvar)
-        addop->set_lhs_operand(stride);
+      ROSE_ASSERT(testList.size() == 1); // should have only one
+      SgVarRefExp *loopvarexp = isSgVarRefExp(SageInterface::deepCopy
+          (isSgPlusPlusOp( *testList.begin())->get_operand()));
+      SgPlusAssignOp *plusassignop = buildPlusAssignOp(loopvarexp, stride);
+      forstmt->set_increment(plusassignop);
+    }
+
+    // case 1.5: i-- also changed to i+=stride
+    testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgMinusMinusOp);
+    if (testList.size()>0)
+    {
+      ROSE_ASSERT(testList.size()==1);// should have only one
+      SgVarRefExp *loopvarexp =isSgVarRefExp(SageInterface::deepCopy
+          (isSgMinusMinusOp(*testList.begin())->get_operand()));
+      SgPlusAssignOp *plusassignop = buildPlusAssignOp(loopvarexp, stride);
+      forstmt->set_increment(plusassignop);
+    }
+
+    // case 2: i+=X
+    testList = NodeQuery::querySubTree( forstmt->get_increment(), V_SgPlusAssignOp);
+    if (testList.size()>0)
+    {
+      ROSE_ASSERT(testList.size()==1);// should have only one
+      SgPlusAssignOp * assignop = isSgPlusAssignOp(*(testList.begin()));
+      ROSE_ASSERT(assignop!=NULL);
+      assignop->set_rhs_operand(stride);
+    }
+
+    // case 2.5: i-=X changed to i+=stride
+    testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgMinusAssignOp);
+    if (testList.size()>0)
+    {
+      ROSE_ASSERT(testList.size()==1);// should have only one
+      SgVarRefExp *loopvarexp =isSgVarRefExp(SageInterface::deepCopy
+          (isSgMinusAssignOp(*testList.begin())->get_lhs_operand()));
+      SgExprStatement* exprstmt = isSgExprStatement((*testList.begin())->get_parent());
+      ROSE_ASSERT(exprstmt !=NULL);
+      SgPlusAssignOp *plusassignop = buildPlusAssignOp(loopvarexp, stride);
+      exprstmt->set_expression(plusassignop);
+    }
+
+    // DQ (1/3/2007): I think this is a meaningless statement.
+    testList.empty();
+    // case 3: i=i + X or i =X +i  i
+    // TODO; what if users use i*=,etc ??
+    //      send out a warning: not canonical FOR/DO loop
+    //      or do this in the real frontend. MUST conform to canonical form
+    testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgAddOp);
+    if (testList.size()>0)
+    {
+      ROSE_ASSERT(testList.size()==1);// should have only one ??
+      // consider only the top first one
+      SgAddOp * addop = isSgAddOp(*(testList.begin()));
+      ROSE_ASSERT(addop!=NULL);
+      string loopvar= (isSgVarRefExp(isSgAssignOp(addop->get_parent())->get_lhs_operand())->get_symbol()->get_name()).getString();
+      if (isSgVarRefExp(addop->get_rhs_operand())!=NULL)
+      {
+        if ((isSgVarRefExp(addop->get_rhs_operand())->get_symbol()->get_name()).getString() ==loopvar)
+          addop->set_lhs_operand(stride);
+        else
+          addop->set_rhs_operand(stride);
+      }
       else
         addop->set_rhs_operand(stride);
     }
-    else
-      addop->set_rhs_operand(stride);
-  }
 
-  // case 3.5: i=i - X
-  testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgSubtractOp);
-  if (testList.size()>0)
-  {
-    ROSE_ASSERT(testList.size()==1);// should have only one ??
-    // consider only the top first one
-    SgSubtractOp * subtractop = isSgSubtractOp(*(testList.begin()));
-    ROSE_ASSERT(subtractop!=NULL);
-    SgVarRefExp *loopvarexp =isSgVarRefExp(SageInterface::deepCopy
-        (isSgSubtractOp(*testList.begin())->get_lhs_operand()));
-    SgAssignOp *assignop = isSgAssignOp((*testList.begin())->get_parent());
-    ROSE_ASSERT(assignop !=NULL);
-    SgPlusAssignOp *plusassignop = buildPlusAssignOp(loopvarexp, stride);
-    assignop->set_rhs_operand(plusassignop);
+    // case 3.5: i=i - X
+    testList = NodeQuery::querySubTree(forstmt->get_increment(), V_SgSubtractOp);
+    if (testList.size()>0)
+    {
+      ROSE_ASSERT(testList.size()==1);// should have only one ??
+      // consider only the top first one
+      SgSubtractOp * subtractop = isSgSubtractOp(*(testList.begin()));
+      ROSE_ASSERT(subtractop!=NULL);
+      SgVarRefExp *loopvarexp =isSgVarRefExp(SageInterface::deepCopy
+          (isSgSubtractOp(*testList.begin())->get_lhs_operand()));
+      SgAssignOp *assignop = isSgAssignOp((*testList.begin())->get_parent());
+      ROSE_ASSERT(assignop !=NULL);
+      SgPlusAssignOp *plusassignop = buildPlusAssignOp(loopvarexp, stride);
+      assignop->set_rhs_operand(plusassignop);
+    }
   }
+  else
+  {
+    cerr<<"Error. SageInterface::setLoopStride(), illegal loop type:"<< loop->class_name()<<endl;
+    ROSE_ASSERT (false);
+
+  }  
 }
 
 //! Check if a SgNode _s is an assignment statement (any of =,+=,-=,&=,/=, ^=, etc)
@@ -8311,6 +8549,61 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
       }
     }// end label_scope
 } // fixLabelStatement()
+
+//! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelR
+//efExp are created transparently as needed.
+void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
+{
+  ROSE_ASSERT (stmt != NULL);
+  ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
+  SgScopeStatement* label_scope = getEnclosingFunctionDefinition(stmt);
+  ROSE_ASSERT (label_scope != NULL);
+  SgName label_name(numToString(label_value));
+  SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
+  if (symbol == NULL)
+  {
+    symbol = new SgLabelSymbol(NULL);
+    ROSE_ASSERT(symbol != NULL);
+    symbol->set_fortran_statement(stmt);
+    symbol->set_numeric_label_value(label_value);
+    label_scope->insert_symbol(label_name,symbol);
+  }
+  else
+  {
+    cerr<<"Error. SageInterface::setFortranNumericLabel() tries to set a duplicated label value!"<<endl;
+    ROSE_ASSERT (false);
+  }  
+  //SgLabelRefExp
+  SgLabelRefExp* ref_exp = buildLabelRefExp(symbol);
+  stmt->set_numeric_label(ref_exp);
+  ref_exp->set_parent(stmt);
+  
+}
+
+//! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
+int  SageInterface::suggestNextNumericLabel(SgFunctionDefinition* func_def)
+{
+  int result =10;
+  ROSE_ASSERT (func_def != NULL);
+  ROSE_ASSERT (SageInterface::is_Fortran_language()== true);
+  std::set<SgNode*> symbols = func_def->get_symbol_table()->get_symbols();
+  
+  // find the max label value, +10 to be the suggested next label value
+  std::set<SgNode*>::iterator iter ;
+  for (iter=symbols.begin(); iter !=symbols.end(); iter++)
+  {
+    SgLabelSymbol * l_symbol = isSgLabelSymbol(*iter);
+    if (l_symbol)
+    {
+      int cur_val = l_symbol->get_numeric_label_value();
+      if (result <=cur_val)
+        result = cur_val +10;
+    }
+  }
+
+  ROSE_ASSERT (result <=99999); // max 5 digits for F77 label
+  return result; 
+}
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements.
 void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
@@ -12273,7 +12566,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                          for (SgInitializedNamePtrList::iterator i = l.begin(); i != l.end(); i++)
                             {
                            // reset the scope, but make sure it was set to sourceBlock to make sure.
-                           // This might be an issue for extern varaible declaration that have a scope
+                           // This might be an issue for extern variable declaration that have a scope
                            // in a separate namespace of a static class member defined external to
                            // its class, etc. I don't want to worry about those cases right now.
                               ROSE_ASSERT((*i)->get_scope() == sourceBlock);
@@ -12289,6 +12582,8 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                          //cout<<"found a function declaration to be moved ..."<<endl;
                        }
                      break;
+                     case V_SgFortranIncludeLine:
+                       break;
                     default:
                        {
                          printf ("Moving this declaration = %p = %s = %s between blocks is not yet supported \n",declaration,declaration->class_name().c_str(),get_name(declaration).c_str());
