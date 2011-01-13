@@ -4307,12 +4307,12 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
 
      SgLocatedNode*     locatedNode = isSgLocatedNode(node);
      SgExpression*      expression  = isSgExpression(node);
-     SgInitializedName* initName    = isSgInitializedName(node);
      SgPragma*          pragma      = isSgPragma(node); // missed this one!! Liao, 1/30/2008
      SgGlobal*          global      = isSgGlobal(node); // SgGlobal should have NULL endOfConstruct()
 
   // if ((locatedNode) && (locatedNode->get_endOfConstruct() == NULL))
-     if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+  //   if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+     if (locatedNode != NULL)
         {
           locatedNode->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
           locatedNode->get_startOfConstruct()->set_parent(locatedNode);
@@ -4330,22 +4330,13 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
                expression->get_operatorPosition()->set_parent(expression);
              }
         }
-       else
+       else // special non-located node with file info
         {
-          if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
-             {
-           //  no endOfConstruct for SgInitializedName
-               initName->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-               initName->get_startOfConstruct()->set_parent(initName);
-             }
-            else
-             {
-               if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
-                  {
-                    pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-                    pragma->get_startOfConstruct()->set_parent(pragma);
-                  }
-             }
+           if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
+               {
+                 pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+                 pragma->get_startOfConstruct()->set_parent(pragma);
+               }
         }
    }
 
