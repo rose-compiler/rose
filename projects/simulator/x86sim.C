@@ -5515,9 +5515,9 @@ EmulationPolicy::emulate_syscall()
                     break;
             }
 
-            uint32_t futex1_va=arg(0), op=arg(1), val1=arg(2), timeout_va=arg(3), futex2_va=arg(4), val2=arg(5);
-            int *futex1 = (int*)my_addr(futex1_va, sizeof(int));
-            int *futex2 = (int*)my_addr(futex2_va, sizeof(int));
+            uint32_t futex1_va=arg(0), op=arg(1), val1=arg(2), timeout_va=arg(3), futex2_va=arg(4), val3=arg(5);
+            uint32_t *futex1 = (uint32_t*)my_addr(futex1_va, 4);
+            uint32_t *futex2 = (uint32_t*)my_addr(futex2_va, 4);
 
             struct timespec timespec_buf, *timespec=NULL;
             if (timeout_va) {
@@ -5529,7 +5529,18 @@ EmulationPolicy::emulate_syscall()
                 timespec = &timespec_buf;
             }
 
-            int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val2);
+#if 0 /* DEBUGGING [RPM 2011-01-13] */
+            if (debug) {
+                fprintf(debug,
+                        "\nROBB: futex1=%p, op=%"PRIu32", val1=%"PRIu32", timeout_va=0x%"PRIx32", futex2=%p, val3=%"PRIu32"\n",
+                        futex1, op, val1, timeout_va, futex2, val3);
+                if (futex1)
+                    fprintf(debug, "      *futex1 = %"PRIu32"\n", *futex1);
+                if (futex2)
+                    fprintf(debug, "      *futex2 = %"PRIu32"\n", *futex2);
+            }
+#endif
+            int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val3);
             if (-1==result) result = -errno;
             writeGPR(x86_gpr_ax, result);
             syscall_leave("d");
