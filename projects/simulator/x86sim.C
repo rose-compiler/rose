@@ -4593,7 +4593,7 @@ EmulationPolicy::emulate_syscall()
                 syscall_leave("d");
             } else {
                 /* Child */
-                syscall_enter("child's clone", "fpppp");
+                syscall_enter("child's clone", "fpppp", clone_flags);
                 syscall_leave("d----P", sizeof(pt_regs_32), print_pt_regs_32);
             }
             break;
@@ -5426,7 +5426,7 @@ EmulationPolicy::emulate_syscall()
                         writeGPR(x86_gpr_ax, result);
                     } while (0);
                     if (F_GETLK==cmd) {
-                        syscall_leave("d-P", sizeof(flock_32), print_flock_32);
+                        syscall_leave("d--P", sizeof(flock_32), print_flock_32);
                     } else {
                         syscall_leave("d");
                     }
@@ -5452,8 +5452,9 @@ EmulationPolicy::emulate_syscall()
         case 240: { /*0xf0, futex*/
             /* We cannot include <linux/futex.h> portably across a variety of Linux machines. */
             static const Translate opflags[] = {
+                TF3(0xff, 0x80, FUTEX_PRIVATE_FLAG|FUTEX_WAIT),
                 TF3(0x80, 0x80, FUTEX_PRIVATE_FLAG),
-                TF3(0x7f, 0, FUTEX_PRIVATE_FLAG),
+                TF3(0x7f, 0, FUTEX_WAIT),
                 TF3(0x7f, 1, FUTEX_WAKE),
                 TF3(0x7f, 2, FUTEX_FD),
                 TF3(0x7f, 3, FUTEX_REQUEUE),
@@ -5472,16 +5473,16 @@ EmulationPolicy::emulate_syscall()
             arg1 &= 0x7f;
             switch (arg1) {
                 case 0: /*FUTEX_WAIT*/
-                    syscall_enter("futex", "PfdP--", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
+                    syscall_enter("futex", "PfdP", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
                     break;
                 case 1: /*FUTEX_WAKE*/
-                    syscall_enter("futex", "Pfd---", 4, print_int_32, opflags);
+                    syscall_enter("futex", "Pfd", 4, print_int_32, opflags);
                     break;
                 case 2: /*FUTEX_FD*/
-                    syscall_enter("futex", "Pfd---", 4, print_int_32, opflags);
+                    syscall_enter("futex", "Pfd", 4, print_int_32, opflags);
                     break;
                 case 3: /*FUTEX_REQUEUE*/
-                    syscall_enter("futex", "Pfd-P-", 4, print_int_32, opflags, 4, print_int_32);
+                    syscall_enter("futex", "Pfd-P", 4, print_int_32, opflags, 4, print_int_32);
                     break;
                 case 4: /*FUTEX_CMP_REQUEUE*/
                     syscall_enter("futex", "Pfd-Pd", 4, print_int_32, opflags, 4, print_int_32);
