@@ -32,7 +32,7 @@ void SageBuilder::pushScopeStack (SgScopeStatement* stmt)
        stmt->class_name();
      }
 
-  ScopeStack.push_back(stmt); 
+  ScopeStack.push_back(stmt);
 }
 
 void SageBuilder::pushScopeStack (SgNode* node)
@@ -92,7 +92,7 @@ SageBuilder::buildInitializedName ( const SgName & name, SgType* type, SgInitial
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 //     ROSE_ASSERT(scope != NULL);
-#endif 
+#endif
      //foo(int);  empty name is possible here!!
      //ROSE_ASSERT(name.is_null() == false);
      ROSE_ASSERT(type != NULL);
@@ -106,7 +106,7 @@ SageBuilder::buildInitializedName ( const SgName & name, SgType* type, SgInitial
     ROSE_ASSERT(symbol_1);
     scope->insert_symbol(name, symbol_1);
     initializedName->set_scope(scope);
-#endif 
+#endif
     setSourcePositionForTransformation(initializedName);
     return initializedName;
 }
@@ -114,14 +114,14 @@ SageBuilder::buildInitializedName ( const SgName & name, SgType* type, SgInitial
 SgInitializedName *
 SageBuilder::buildInitializedName ( const std::string & name, SgType* type)
 {
-  SgName var_name(name);  
+  SgName var_name(name);
   return buildInitializedName(var_name,type);
 }
 
 SgInitializedName *
 SageBuilder::buildInitializedName ( const char* name, SgType* type)
 {
-  SgName var_name(name);  
+  SgName var_name(name);
   return buildInitializedName(var_name,type);
 }
 
@@ -139,7 +139,7 @@ SageBuilder::buildInitializedName_nfi ( const SgName & name, SgType* type, SgIni
 // could have two declarations for a same variable
 // extern int i;
 //  int i;
-SgVariableDeclaration* 
+SgVariableDeclaration*
 SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
  //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
 {
@@ -154,7 +154,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 
   varDecl->set_firstNondefiningDeclaration(varDecl);
 
-  if (scope!=NULL) 
+  if (scope!=NULL)
   {
     fixVariableDeclaration(varDecl,scope);
   }
@@ -164,8 +164,8 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   initName->set_declptr(variableDefinition);
   variableDefinition->set_parent(initName);
 #endif
-  SgInitializedName *initName = varDecl->get_decl_item (name);   
-  ROSE_ASSERT(initName); 
+  SgInitializedName *initName = varDecl->get_decl_item (name);
+  ROSE_ASSERT(initName);
   ROSE_ASSERT((initName->get_declptr())!=NULL);
 
 #if 1
@@ -185,7 +185,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 // could have two declarations for a same variable
 // extern int i;
 //  int i;
-SgVariableDeclaration* 
+SgVariableDeclaration*
 SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
  //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
 {
@@ -201,8 +201,8 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
     fixVariableDeclaration(varDecl,scope);
   }
 
-  SgInitializedName *initName = varDecl->get_decl_item (name);   
-  ROSE_ASSERT(initName); 
+  SgInitializedName *initName = varDecl->get_decl_item (name);
+  ROSE_ASSERT(initName);
   ROSE_ASSERT((initName->get_declptr())!=NULL);
 
 #if 1
@@ -237,8 +237,8 @@ SageBuilder::buildVariableDeclaration(const char* name, SgType* type, SgInitiali
   return buildVariableDeclaration(name2,type, varInit,scope);
 }
 
-//!Build a typedef declaration, such as: typedef int myint; 
-SgTypedefDeclaration* 
+//!Build a typedef declaration, such as: typedef int myint;
+SgTypedefDeclaration*
 SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeStatement* scope /*= NULL*/)
 {
   SgTypedefDeclaration* type_decl = buildTypedefDeclaration_nfi(name, base_type, scope);
@@ -250,16 +250,16 @@ SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type,
   return type_decl;
 }
 
-//!Build a typedef declaration, such as: typedef int myint; 
+//!Build a typedef declaration, such as: typedef int myint;
 // The side effects include: creating SgTypedefType, SgTypedefSymbol, and add SgTypedefType to the base type
-SgTypedefDeclaration* 
+SgTypedefDeclaration*
 SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type,  SgScopeStatement* scope /*= NULL*/)
 {
   ROSE_ASSERT (base_type != NULL);
   if (scope == NULL )
     scope = SageBuilder::topScopeStack();
 
-  // We don't yet support bottom up construction for this node yet    
+  // We don't yet support bottom up construction for this node yet
   ROSE_ASSERT(scope!=NULL);
 
   SgDeclarationStatement * base_decl= NULL;
@@ -294,7 +294,7 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
   //I tried two cases so far and the simplest typedef int MYINT will not have defining typedef declaration
   // the complex typedef struct frame {} frame; has a defining typedef declaration
   // base declaration should be associated with defining typedef declaration
-  if (base_decl) 
+  if (base_decl)
   {
     SgTypedefDeclaration* def_type_decl = new SgTypedefDeclaration(SgName(name),base_type,type_decl->get_type(), base_decl, NULL);
     def_type_decl->set_firstNondefiningDeclaration(type_decl);
@@ -312,8 +312,8 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
 }
 
 //-----------------------------------------------
-// Assertion `definingDeclaration != __null || firstNondefiningDeclaration != __null' 
-SgFunctionParameterList * 
+// Assertion `definingDeclaration != __null || firstNondefiningDeclaration != __null'
+SgFunctionParameterList *
 SageBuilder::buildFunctionParameterList(SgInitializedName* in1, SgInitializedName* in2, SgInitializedName* in3, SgInitializedName* in4, SgInitializedName* in5, SgInitializedName* in6, SgInitializedName* in7, SgInitializedName* in8, SgInitializedName* in9, SgInitializedName* in10)
 {
   SgFunctionParameterList *parameterList = new SgFunctionParameterList();
@@ -338,7 +338,7 @@ SageBuilder::buildFunctionParameterList(SgInitializedName* in1, SgInitializedNam
   return parameterList;
 }
 
-SgFunctionParameterList * 
+SgFunctionParameterList *
 SageBuilder::buildFunctionParameterList_nfi() {
   SgFunctionParameterList *parameterList = new SgFunctionParameterList();
   ROSE_ASSERT (parameterList);
@@ -352,10 +352,10 @@ SageBuilder::buildFunctionParameterList_nfi() {
 
 //-----------------------------------------------
 // no type vs. void type ?
-SgFunctionParameterTypeList * 
+SgFunctionParameterTypeList *
 SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList * paralist)
 {
-  if (paralist==NULL) 
+  if (paralist==NULL)
   return NULL;
   if (paralist->get_args().size()==0)
     return NULL;
@@ -368,7 +368,7 @@ SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList * paralist)
     (typePtrList->get_arguments()).push_back( (*i)->get_type() );
   setSourcePositionForTransformation(typePtrList);
   return typePtrList;
-  
+
 }
 
 
@@ -391,7 +391,7 @@ SageBuilder::buildFunctionParameterTypeList (SgExprListExp * expList)
 
 }
 
-SgFunctionParameterTypeList * 
+SgFunctionParameterTypeList *
 SageBuilder::buildFunctionParameterTypeList()
 {
   SgFunctionParameterTypeList* typePtrList = new SgFunctionParameterTypeList;
@@ -400,10 +400,10 @@ SageBuilder::buildFunctionParameterTypeList()
 }
 
 //-----------------------------------------------
-// build function type, 
-// 
+// build function type,
+//
 // insert into symbol table when not duplicated
-SgFunctionType * 
+SgFunctionType *
 SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList)
 {
   ROSE_ASSERT(return_type);
@@ -416,7 +416,7 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList 
     typeList->set_parent(funcType);
   }
   SgName typeName = funcType->get_mangled_type();
-  // maintain the type table 
+  // maintain the type table
   SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
   ROSE_ASSERT(fTable);
   // set its parent to global , deferred until the function is inserted to a scope
@@ -433,10 +433,10 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList 
 #if 1
 // DQ (1/4/2009): Need to finish this!!!
 //-----------------------------------------------
-// build member function type, 
-// 
+// build member function type,
+//
 // insert into symbol table when not duplicated
-SgMemberFunctionType * 
+SgMemberFunctionType *
 SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgClassDefinition *struct_name, /* const, volatile, restrict support */ unsigned int mfunc_specifier)
    {
      ROSE_ASSERT(return_type);
@@ -451,7 +451,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
           typeList->set_parent(funcType);
         }
      SgName typeName = funcType->get_mangled_type();
-  // maintain the type table 
+  // maintain the type table
      SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(fTable);
 
@@ -459,7 +459,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      if (typeInTable==NULL)
           fTable->insert_function_type(typeName,funcType);
 
-  // DQ (1/21/2009): TODO: Need to mark the function type as const, volatile, 
+  // DQ (1/21/2009): TODO: Need to mark the function type as const, volatile,
   // or restrict (assert that none are set for now).
      ROSE_ASSERT(mfunc_specifier == 0);
 
@@ -477,7 +477,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
   SgTypedefType* result = NULL;
 
   // Liao and Greg Bronevetsky , 8/27/2009
-  // patch up the symbol  
+  // patch up the symbol
   // and avoid duplicated creation
   // TODO  a function like fixTypeDeclaration() (similar to SageInterface::fixVariableDeclaration()) for this
   SgTypedefSymbol* type_symbol = scope->lookup_typedef_symbol(name);
@@ -488,7 +488,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
     type_symbol = new SgTypedefSymbol(type_decl);
     ROSE_ASSERT(type_symbol);
     SgName n = name;
-    scope->get_symbol_table()->insert(n, type_symbol); 
+    scope->get_symbol_table()->insert(n, type_symbol);
     type_decl->set_firstNondefiningDeclaration (type_decl);
     setOneSourcePositionForTransformation(type_decl);
     prependStatement(type_decl,scope);
@@ -496,7 +496,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
     Sg_File_Info* file_info = type_decl->get_file_info();
     file_info->unsetOutputInCodeGeneration ();
     result = new SgTypedefType(type_decl);
-  } 
+  }
   else
   {
     type_decl = type_symbol->get_declaration();
@@ -544,7 +544,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
   // DQ (2/25/2009): I think I added this recently but it is overly restrictive.
   // ROSE_ASSERT(scope != NULL);
 
-  // ROSE_ASSERT(scope->containsOnlyDeclarations()); 
+  // ROSE_ASSERT(scope->containsOnlyDeclarations());
   // this function is also called when building a function reference before the function declaration exists.  So, skip the check
      ROSE_ASSERT(name.is_null() == false);
      ROSE_ASSERT(return_type != NULL);
@@ -575,7 +575,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
   // function declaration
      actualFunction* func = NULL;
 
-  // search before using the function type to create the function declaration 
+  // search before using the function type to create the function declaration
   // TODO only search current scope or all ancestor scope??
   // We don't have lookup_member_function_symbol  yet
   // SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
@@ -591,7 +591,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
           ROSE_ASSERT(func != NULL);
 
        // NOTE: we want to allow the input scope to be NULL (and even the SageBuilder::topScopeStack() == NULL)
-       // so that function can be built bottom up style.  However this means that the symbol tables in the 
+       // so that function can be built bottom up style.  However this means that the symbol tables in the
        // scope of the returned function declaration will have to be setup separately.
           if (scope != NULL)
              {
@@ -617,7 +617,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
           ROSE_ASSERT(func->get_definingDeclaration() == NULL);
         }
-       else 
+       else
         {
           ROSE_ASSERT(scope != NULL);
 
@@ -627,11 +627,11 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
        // std::cout<<"debug:SageBuilder.C: 267: "<<"found func_symbol!"<<std::endl;
        // delete (func_type-> get_argument_list ());
        // delete func_type; // bug 189
-   
+
           func_type = func_symbol->get_declaration()->get_type();
           func = new actualFunction(name,func_type,NULL);
           ROSE_ASSERT(func);
-   
+
        // we don't care if it is member function or function here for a pointer
           SgFunctionDeclaration* prevDecl = NULL;
           prevDecl = func_symbol->get_declaration();
@@ -641,7 +641,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
           if (prevDecl == prevDecl->get_definingDeclaration())
              {
-            // The symbol points to a defining declaration and now that we have added a non-defining 
+            // The symbol points to a defining declaration and now that we have added a non-defining
             // declaration we should have the symbol point to the new non-defining declaration.
             // printf ("Switching declaration in functionSymbol to point to the non-defining declaration \n");
 
@@ -707,16 +707,16 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
   // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): generated function func = %p \n",func);
 
-     return func;  
+     return func;
    }
 
 
-//! Build a prototype for an existing function declaration (defining or nondefining ) 
+//! Build a prototype for an existing function declaration (defining or nondefining )
 SgFunctionDeclaration *
 SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope/*=NULL*/)
 {
   ROSE_ASSERT(funcdecl!=NULL);
-  SgName name=funcdecl->get_name(); 
+  SgName name=funcdecl->get_name();
   SgFunctionType * funcType = funcdecl->get_type();
   SgType* return_type = funcType->get_return_type();
   SgFunctionParameterList* paralist = deepCopy<SgFunctionParameterList>(funcdecl->get_parameterList());
@@ -755,12 +755,12 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* r
   return result;
 }
 
-//! Build a prototype for an existing member function declaration (defining or nondefining ) 
+//! Build a prototype for an existing member function declaration (defining or nondefining )
 SgMemberFunctionDeclaration *
 SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope/*=NULL*/)
 {
   ROSE_ASSERT(funcdecl!=NULL);
-  SgName name=funcdecl->get_name(); 
+  SgName name=funcdecl->get_name();
   SgFunctionType * funcType = funcdecl->get_type();
   SgType* return_type = funcType->get_return_type();
   SgFunctionParameterList* paralist = deepCopy<SgFunctionParameterList>(funcdecl->get_parameterList());
@@ -851,7 +851,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
   SgFunctionType * func_type = buildFunctionType(return_type,paralist);
   actualFunction * func;
 
- //  symbol table and non-defining 
+ //  symbol table and non-defining
   SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
   if (func_symbol ==NULL)
   {
@@ -881,10 +881,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
     // cannot do anything until append/prepend_statment() is invoked
   }
 
-  // definingDeclaration 
+  // definingDeclaration
   func->set_definingDeclaration(func);
 
-  // function body and definition are created before setting argument list 
+  // function body and definition are created before setting argument list
   SgBasicBlock * func_body = new SgBasicBlock();
   ROSE_ASSERT(func_body);
   SgFunctionDefinition * func_def = new SgFunctionDefinition(func,func_body);
@@ -908,7 +908,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
 
   func->set_parent(scope);
   func->set_scope(scope);
-  
+
   // set File_Info as transformation generated
   setSourcePositionForTransformation(func);
   return func;
@@ -1208,7 +1208,7 @@ SgLongDoubleVal* SageBuilder::buildLongDoubleVal_nfi(long double value, const st
 SgStringVal* SageBuilder::buildStringVal(std::string value /*=""*/)
 {
   SgStringVal* result = new SgStringVal(value);
-  ROSE_ASSERT(result);   
+  ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
   return result;
 }
@@ -1216,7 +1216,7 @@ SgStringVal* SageBuilder::buildStringVal(std::string value /*=""*/)
 SgStringVal* SageBuilder::buildStringVal_nfi(std::string value)
 {
   SgStringVal* result = new SgStringVal(value);
-  ROSE_ASSERT(result);   
+  ROSE_ASSERT(result);
   setOneSourcePositionNull(result);
   return result;
 }
@@ -1420,9 +1420,9 @@ SgThisExp* SageBuilder::buildThisExp_nfi(SgClassSymbol* sym)
 //----------------------build unary expressions----------------------
 template <class T>
 T* SageBuilder::buildUnaryExpression(SgExpression* operand)
-{ 
+{
   SgExpression* myoperand=operand;
-  
+
 #if 0
  // it is very tempting to reuse expressions during translation,
   // so try to catch such a mistake here
@@ -1430,40 +1430,40 @@ T* SageBuilder::buildUnaryExpression(SgExpression* operand)
     if (operand->get_parent()!=NULL)
     {
       cout<<"Warning! Found an illegal attempt to reuse operand of type "
-          << operand->class_name() << 
+          << operand->class_name() <<
         " when building a unary expression . Operand is being copied."<<endl;
      ROSE_ABORT();// remind user the issue
       myoperand = isSgExpression(deepCopy(operand));
     }
 #endif
   T* result = new T(myoperand, NULL);
-  ROSE_ASSERT(result);   
-  if (myoperand!=NULL) 
-  { 
+  ROSE_ASSERT(result);
+  if (myoperand!=NULL)
+  {
     myoperand->set_parent(result);
-  // set lvalue, it asserts operand!=NULL 
+  // set lvalue, it asserts operand!=NULL
     markLhsValues(result);
   }
   setOneSourcePositionForTransformation(result);
-  return result; 
+  return result;
 }
 
 template <class T>
 T* SageBuilder::buildUnaryExpression_nfi(SgExpression* operand) {
   SgExpression* myoperand=operand;
   T* result = new T(myoperand, NULL);
-  ROSE_ASSERT(result);   
-  if (myoperand!=NULL) 
-  { 
+  ROSE_ASSERT(result);
+  if (myoperand!=NULL)
+  {
     myoperand->set_parent(result);
-  // set lvalue, it asserts operand!=NULL 
+  // set lvalue, it asserts operand!=NULL
     markLhsValues(result);
   }
   result->set_startOfConstruct(NULL);
   result->set_endOfConstruct(NULL);
   result->set_operatorPosition(NULL);
   result->set_need_paren(false);
-  return result; 
+  return result;
 }
 
 #define BUILD_UNARY_DEF(suffix) \
@@ -1503,11 +1503,11 @@ SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
   return result;
 }
 
-SgNewExp * SageBuilder::buildNewExp(SgType* type, 
-				    SgExprListExp* exprListExp, 
-				    SgConstructorInitializer* constInit, 
-				    SgExpression* expr, 
-				    short int val, 
+SgNewExp * SageBuilder::buildNewExp(SgType* type,
+				    SgExprListExp* exprListExp,
+				    SgConstructorInitializer* constInit,
+				    SgExpression* expr,
+				    short int val,
 				    SgFunctionDeclaration* funcDecl)
 {
   SgNewExp* result = new SgNewExp(type, exprListExp, constInit, expr, val, funcDecl);
@@ -1602,7 +1602,7 @@ T* SageBuilder::buildBinaryExpression(SgExpression* lhs, SgExpression* rhs)
 #endif
   T* result = new T(mylhs,myrhs, NULL);
   ROSE_ASSERT(result);
-  if (mylhs!=NULL) 
+  if (mylhs!=NULL)
   {
    mylhs->set_parent(result);
   // set lvalue
@@ -1621,7 +1621,7 @@ T* SageBuilder::buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs)
   myrhs = rhs;
   T* result = new T(mylhs,myrhs, NULL);
   ROSE_ASSERT(result);
-  if (mylhs!=NULL) 
+  if (mylhs!=NULL)
   {
    mylhs->set_parent(result);
   // set lvalue
@@ -1701,7 +1701,7 @@ BUILD_BINARY_DEF(VarArgStartOp)
 SgArrayType* SageBuilder::buildArrayType(SgType* base_type/*=NULL*/, SgExpression* index/*=NULL*/)
 {
   SgArrayType* result = new SgArrayType(base_type,index);
-  ROSE_ASSERT(result); 
+  ROSE_ASSERT(result);
   if (index!=NULL) index->set_parent(result); // important!
   return result;
 }
@@ -1743,32 +1743,32 @@ SgNullExpression* SageBuilder::buildNullExpression() {
 SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = NULL */)
 {
   SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
-  ROSE_ASSERT(result);   
-  if (operand_i!=NULL) 
-  { 
+  ROSE_ASSERT(result);
+  if (operand_i!=NULL)
+  {
     operand_i->set_parent(result);
-  // set lvalue, it asserts operand!=NULL 
+  // set lvalue, it asserts operand!=NULL
     markLhsValues(result);
   }
   setOneSourcePositionForTransformation(result);
-  return result; 
+  return result;
 }
 
 SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = UNLL */)
 {
   SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
-  ROSE_ASSERT(result);   
-  if (operand_i!=NULL) 
-  { 
+  ROSE_ASSERT(result);
+  if (operand_i!=NULL)
+  {
     operand_i->set_parent(result);
-  // set lvalue, it asserts operand!=NULL 
+  // set lvalue, it asserts operand!=NULL
     markLhsValues(result);
   }
   result->set_startOfConstruct(NULL);
   result->set_endOfConstruct(NULL);
   result->set_operatorPosition(NULL);
   result->set_need_paren(false);
-  return result; 
+  return result;
 }
 
 //! Build an aggregate initializer
@@ -1978,7 +1978,7 @@ SageBuilder::buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scope
   SgSymbol* symbol = NULL;
   if (initname->get_scope()!=NULL)
     symbol = initname->get_symbol_from_symbol_table ();
-  
+
   if (symbol)
   {
     varRef = new SgVarRefExp(isSgVariableSymbol(symbol));
@@ -1992,11 +1992,11 @@ SageBuilder::buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scope
 }
 
 SgVarRefExp *
-SageBuilder::buildVarRefExp(const char* varName, SgScopeStatement* scope) 
+SageBuilder::buildVarRefExp(const char* varName, SgScopeStatement* scope)
 {
-   SgName name(varName);   
-   return buildVarRefExp(name,scope); 
-} 
+   SgName name(varName);
+   return buildVarRefExp(name,scope);
+}
 
 SgVarRefExp *
 SageBuilder::buildVarRefExp(const std::string& varName, SgScopeStatement* scope)
@@ -2015,11 +2015,11 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
   SgSymbol * symbol = NULL;
   SgVariableSymbol* varSymbol=NULL;
  if (scope)
-  symbol = lookupSymbolInParentScopes(name,scope); 
- if (symbol) 
-    varSymbol= isSgVariableSymbol(symbol); 
+  symbol = lookupSymbolInParentScopes(name,scope);
+ if (symbol)
+    varSymbol= isSgVariableSymbol(symbol);
   else
-// if not found: put fake init name and symbol here and 
+// if not found: put fake init name and symbol here and
 //waiting for a postProcessing phase to clean it up
 // two features: no scope and unknown type for initializedName
   {
@@ -2027,12 +2027,12 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
     name1->set_scope(scope); //buildInitializedName() does not set scope for various reasons
     varSymbol= new SgVariableSymbol(name1);
   }
-  ROSE_ASSERT(varSymbol); 
+  ROSE_ASSERT(varSymbol);
 
   SgVarRefExp *varRef = new SgVarRefExp(varSymbol);
   setOneSourcePositionForTransformation(varRef);
   ROSE_ASSERT(varRef);
-  return varRef; 
+  return varRef;
 }
 
 //! Build a variable reference from an existing variable declaration. The assumption is a SgVariableDeclartion only declares one variable in the ROSE AST.
@@ -2051,7 +2051,7 @@ SageBuilder::buildVarRefExp(SgVariableSymbol* sym)
   SgVarRefExp *varRef = new SgVarRefExp(sym);
   setOneSourcePositionForTransformation(varRef);
   ROSE_ASSERT(varRef);
-  return varRef; 
+  return varRef;
 }
 
 SgVarRefExp *
@@ -2060,10 +2060,10 @@ SageBuilder::buildVarRefExp_nfi(SgVariableSymbol* sym)
   SgVarRefExp *varRef = new SgVarRefExp(sym);
   setOneSourcePositionNull(varRef);
   ROSE_ASSERT(varRef);
-  return varRef; 
+  return varRef;
 }
 
-//!Build a variable reference expression at scope to an opaque variable which has unknown information except for its name.  Used when referring to an internal variable defined in some headers of runtime libraries.(The headers are not yet inserted into the file during translation). Similar to buildOpaqueType(); 
+//!Build a variable reference expression at scope to an opaque variable which has unknown information except for its name.  Used when referring to an internal variable defined in some headers of runtime libraries.(The headers are not yet inserted into the file during translation). Similar to buildOpaqueType();
 /*! It will declare a hidden int varName  at the specified scope to cheat the AST consistence tests.
  */
 SgVarRefExp*
@@ -2075,21 +2075,21 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
     scope = SageBuilder::topScopeStack();
   ROSE_ASSERT(scope != NULL);
 
-  SgSymbol * symbol = lookupSymbolInParentScopes(name,scope); 
+  SgSymbol * symbol = lookupSymbolInParentScopes(name,scope);
   if (symbol)
   {
     // Can be the same opaque var ref built before
   //  cerr<<"Error: trying to build an opaque var ref when the variable is actual explicit!"<<endl;
    //    ROSE_ASSERT(false);
      ROSE_ASSERT(isSgVariableSymbol(symbol));
-     result = buildVarRefExp(isSgVariableSymbol(symbol));  
+     result = buildVarRefExp(isSgVariableSymbol(symbol));
   }
   else
   {
     SgVariableDeclaration* fakeVar = buildVariableDeclaration(name, buildIntType(),NULL, scope);
     Sg_File_Info* file_info = fakeVar->get_file_info();
     file_info->unsetOutputInCodeGeneration ();
-    SgVariableSymbol * 	fakeSymbol = getFirstVarSym (fakeVar);   
+    SgVariableSymbol * 	fakeSymbol = getFirstVarSym (fakeVar);
     result = buildVarRefExp(fakeSymbol);
   } // if
   return result;
@@ -2139,21 +2139,21 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
     scope = SageBuilder::topScopeStack();
   ROSE_ASSERT(scope != NULL);
   SgFunctionSymbol* symbol = lookupFunctionSymbolInParentScopes(name,func_type,scope);
-  if (symbol==NULL) 
+  if (symbol==NULL)
     // in rare cases when function calls are inserted before any prototypes exist
   {
 #if 0
     // MiddleLevelRewrite::insert() does not merge content of headers into current AST
     symbol = lookupFunctionSymbolInParentScopes(name,scope); //TODO relax the matching
     if (symbol==NULL) {
-      // we require the declaration must exist before building a reference to it, or 
+      // we require the declaration must exist before building a reference to it, or
       // at least user should insert the header containing the prototype information first
       // using MiddleLevelRewrite::insert()
       cout<<"Error! building a reference to function: "<<name.getString()<<" before it is being declared before!"<<endl;
       ROSE_ASSERT(false);
     }
-#else 
-    // MiddleLevelRewrite::insert() might conflict this part by generating a dangling function symbol 
+#else
+    // MiddleLevelRewrite::insert() might conflict this part by generating a dangling function symbol
     SgType* return_type = func_type->get_return_type();
     SgFunctionParameterTypeList * paraTypeList = func_type->get_argument_list();
     SgFunctionParameterList *parList = buildFunctionParameterList(paraTypeList);
@@ -2269,7 +2269,7 @@ SageBuilder::buildFunctionRefExp(const SgName& name, SgScopeStatement* scope /*=
   SgFunctionSymbol* symbol = lookupFunctionSymbolInParentScopes(name,scope);
 
 
-  if (symbol==NULL) 
+  if (symbol==NULL)
 // in rare cases when function calls are inserted before any prototypes exist
   {
 // assume int return type, and empty parameter list
@@ -2280,7 +2280,7 @@ SageBuilder::buildFunctionRefExp(const SgName& name, SgScopeStatement* scope /*=
     SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
      funcDecl->get_declarationModifier().get_storageModifier().setExtern();
 
-   
+
     symbol = lookupFunctionSymbolInParentScopes(name,scope);
     ROSE_ASSERT(symbol);
   }
@@ -2295,7 +2295,7 @@ SageBuilder::buildFunctionRefExp(const SgName& name, SgScopeStatement* scope /*=
 SgFunctionRefExp *
 SageBuilder::buildFunctionRefExp(const char* name, SgScopeStatement* scope /*=NULL*/)
 {
-  SgName name2(name); 
+  SgName name2(name);
   return buildFunctionRefExp(name2,scope);
 }
 
@@ -2320,29 +2320,29 @@ SageBuilder::buildExprStatement_nfi(SgExpression*  exp)
   return expStmt;
 }
 
-SgFunctionCallExp* 
-SageBuilder::buildFunctionCallExp(const SgName& name, 
-                                                SgType* return_type, 
-                                                SgExprListExp* parameters/*=NULL*/, 
+SgFunctionCallExp*
+SageBuilder::buildFunctionCallExp(const SgName& name,
+                                                SgType* return_type,
+                                                SgExprListExp* parameters/*=NULL*/,
                                              SgScopeStatement* scope/*=NULL*/)
 {
-  if (scope == NULL)    
+  if (scope == NULL)
     scope = SageBuilder::topScopeStack();
-  ROSE_ASSERT(scope != NULL); 
+  ROSE_ASSERT(scope != NULL);
  if (parameters == NULL)
      parameters = buildExprListExp();
-  SgFunctionParameterTypeList * typeList= buildFunctionParameterTypeList(parameters); 
-  SgFunctionType * func_type = buildFunctionType(return_type,typeList); 
+  SgFunctionParameterTypeList * typeList= buildFunctionParameterTypeList(parameters);
+  SgFunctionType * func_type = buildFunctionType(return_type,typeList);
   SgFunctionRefExp* func_ref = buildFunctionRefExp(name,func_type,scope);
   SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
   parameters->set_parent(func_call_expr);
   setOneSourcePositionForTransformation(func_call_expr);
   ROSE_ASSERT(func_call_expr);
-  return func_call_expr;  
+  return func_call_expr;
 }
 
-SgFunctionCallExp* 
-SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym, 
+SgFunctionCallExp*
+SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym,
                                   SgExprListExp* parameters/*=NULL*/)
 {
   ROSE_ASSERT (sym);
@@ -2355,10 +2355,10 @@ SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym,
   parameters->set_parent(func_call_expr);
   setOneSourcePositionForTransformation(func_call_expr);
   ROSE_ASSERT(func_call_expr);
-  return func_call_expr;  
+  return func_call_expr;
 }
 
-SgFunctionCallExp* 
+SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters /*=NULL*/)
 {
   SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
@@ -2366,10 +2366,10 @@ SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters
   if (parameters) parameters->set_parent(func_call_expr);
   setOneSourcePositionNull(func_call_expr);
   ROSE_ASSERT(func_call_expr);
-  return func_call_expr;  
+  return func_call_expr;
 }
 
-SgFunctionCallExp* 
+SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters/*=NULL*/)
 {
   SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
@@ -2377,13 +2377,13 @@ SageBuilder::buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters/*=N
   if (parameters) parameters->set_parent(func_call_expr);
   setOneSourcePositionForTransformation(func_call_expr);
   ROSE_ASSERT(func_call_expr);
-  return func_call_expr;  
+  return func_call_expr;
 }
 
 SgExprStatement*
-SageBuilder::buildFunctionCallStmt(const SgName& name, 
-                      SgType* return_type, 
-                      SgExprListExp* parameters /*= NULL*/, 
+SageBuilder::buildFunctionCallStmt(const SgName& name,
+                      SgType* return_type,
+                      SgExprListExp* parameters /*= NULL*/,
                       SgScopeStatement* scope /*=NULL*/)
 {
   if (scope == NULL)
@@ -2407,9 +2407,9 @@ SgExprStatement*
 SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs)
 //SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs, SgScopeStatement* scope=NULL)
 {
-  ROSE_ASSERT(lhs != NULL); 
-  ROSE_ASSERT(rhs != NULL); 
-  
+  ROSE_ASSERT(lhs != NULL);
+  ROSE_ASSERT(rhs != NULL);
+
   //SgAssignOp* assignOp = new SgAssignOp(lhs,rhs,lhs->get_type());
 // SgBinaryOp::get_type() assume p_expression_type is not set
   SgAssignOp* assignOp = new SgAssignOp(lhs,rhs,NULL);
@@ -2417,7 +2417,7 @@ SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs)
   setOneSourcePositionForTransformation(assignOp);
   lhs->set_parent(assignOp);
   rhs->set_parent(assignOp);
-  
+
   lhs->set_lvalue (true);
   SgExprStatement* exp = new SgExprStatement(assignOp);
   ROSE_ASSERT(exp);
@@ -2434,24 +2434,24 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
  //  ROSE_ASSERT(scope != NULL); // We support bottom up building of label statements now
- 
+
    // should including current scope when searching for the function definition
    // since users can only pass FunctionDefinition when the function body is not yet attached
   SgLabelStatement * labelstmt = new SgLabelStatement(name,stmt);
   ROSE_ASSERT(labelstmt);
   setOneSourcePositionForTransformation(labelstmt);
-  
- if(stmt!=NULL) 
+
+ if(stmt!=NULL)
    stmt->set_parent(labelstmt);
  #if 0  // moved to fixLabelStatement()
   SgFunctionDefinition * label_scope = getEnclosingFunctionDefinition(scope,true);
   ROSE_ASSERT (label_scope);
   labelstmt->set_scope(label_scope);
   SgLabelSymbol* lsymbol= new SgLabelSymbol(labelstmt);
-  ROSE_ASSERT(lsymbol); 
+  ROSE_ASSERT(lsymbol);
   // TODO should we prevent duplicated insertion ?
   label_scope->insert_symbol(lsymbol->get_name(), lsymbol);
- #endif 
+ #endif
 
   if (scope)
     fixLabelStatement(labelstmt,scope);
@@ -2465,8 +2465,8 @@ SgLabelStatement * SageBuilder::buildLabelStatement_nfi(const SgName& name,  SgS
   SgLabelStatement * labelstmt = new SgLabelStatement(name,stmt);
   ROSE_ASSERT(labelstmt);
   setOneSourcePositionForTransformation(labelstmt);
-  
- if(stmt!=NULL) 
+
+ if(stmt!=NULL)
    stmt->set_parent(labelstmt);
   if (scope)
     fixLabelStatement(labelstmt,scope);
@@ -2507,14 +2507,14 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
   SgForStatement * result = new SgForStatement(test,increment, loop_body);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
-  if (test) 
+  if (test)
     test->set_parent(result);
-  if (loop_body) 
+  if (loop_body)
     loop_body->set_parent(result);
-  if (increment) 
+  if (increment)
     increment->set_parent(result);
 
-  // CH (5/13/2010): If the initialize_stmt is an object of SgForInitStatement, we can directly put it 
+  // CH (5/13/2010): If the initialize_stmt is an object of SgForInitStatement, we can directly put it
   // into for statement. Or else, there will be two semicolons after unparsing.
   if (SgForInitStatement* for_init_stmt = isSgForInitStatement(initialize_stmt))
   {
@@ -2526,10 +2526,10 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
   SgForInitStatement* init_stmt = new SgForInitStatement();
   ROSE_ASSERT(init_stmt);
   setOneSourcePositionForTransformation(init_stmt);
-  result->set_for_init_stmt(init_stmt);   
+  result->set_for_init_stmt(init_stmt);
   init_stmt->set_parent(result);
 
-  if (initialize_stmt) 
+  if (initialize_stmt)
   {
     init_stmt->append_init_stmt(initialize_stmt);
     // Support for "for (int i=0; )", Liao, 3/11/2009
@@ -2725,7 +2725,7 @@ SgBasicBlock* SageBuilder::buildBasicBlock_nfi(const vector<SgStatement*>& stmts
   return result;
 }
 
-SgGotoStatement * 
+SgGotoStatement *
 SageBuilder::buildGotoStatement(SgLabelStatement *  label)
 {
   SgGotoStatement* result = new SgGotoStatement(label);
@@ -2734,7 +2734,7 @@ SageBuilder::buildGotoStatement(SgLabelStatement *  label)
   return result;
 }
 
-SgGotoStatement * 
+SgGotoStatement *
 SageBuilder::buildGotoStatement_nfi(SgLabelStatement *  label)
 {
   SgGotoStatement* result = new SgGotoStatement(label);
@@ -2910,13 +2910,13 @@ SageBuilder::buildMultibyteNopStatement( int n )
 
 //! Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
 // This does not work properly since the global scope expects declaration statement, not just SgNullStatement
-#if 0    
+#if 0
 SgStatement* SageBuilder::buildStatementFromString(std::string str)
-{ 
+{
   SgStatement* result = NULL;
-  
+
     return result;
-     
+
 } //buildStatementFromString()
 #endif
 
@@ -2954,7 +2954,7 @@ SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
   // DQ (7/30/2010): Note that this is called by the outline test: tests/roseTests/astOutliningTests/moreTest3.cpp
   // DQ (7/28/2010): Now we want to make calling this function an error, the functions buildConst() will return SgModifierType objects instead.
      printf ("Error: this function SageBuilder::buildModifierType() should not be called! (call the buildConst() function (or whatever other function is required) directly \n");
-   ROSE_ASSERT(false); 
+   ROSE_ASSERT(false);
    // Liao, 8/13/2010, This function is being phased out. Please don't call this!!
 
   // DQ (7/26/2010): This needs to call the SgModifierType::createType() function so that we can properly abstract the creation of types into the type table.
@@ -2962,8 +2962,8 @@ SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
   // SgModifierType* result = SgModifierType::createType(base_type);
      ROSE_ASSERT(result != NULL);
 
-  // DQ (7/28/2010): Insert result type into type table and return it, or 
-  // replace the result type, if already available in the type table, with 
+  // DQ (7/28/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
   // the type from type table.
      result = SgModifierType::insertModifierTypeIntoTypeTable(result);
 
@@ -2971,16 +2971,16 @@ SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
    }
 #endif
 
-SgTypeBool * SageBuilder::buildBoolType() { 
-  SgTypeBool * result =SgTypeBool::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeBool * SageBuilder::buildBoolType() {
+  SgTypeBool * result =SgTypeBool::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeChar * SageBuilder::buildCharType() 
-{ 
-  SgTypeChar * result =SgTypeChar::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeChar * SageBuilder::buildCharType()
+{
+  SgTypeChar * result =SgTypeChar::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
@@ -2990,7 +2990,7 @@ SgTypeChar * SageBuilder::buildCharType()
   SgType##item * result =SgType##item::createType(); \
   ROSE_ASSERT(result); \
   return result; \
-  }  
+  }
 
   BUILD_SGTYPE_DEF(Bool)
   BUILD_SGTYPE_DEF(Char)
@@ -3014,109 +3014,109 @@ SgTypeChar * SageBuilder::buildCharType()
   BUILD_SGTYPE_DEF(UnsignedLongLong)
   BUILD_SGTYPE_DEF(UnsignedShort)
 #undef BUILD_SGTYPE_DEF
-#endif 
-SgTypeLongLong * SageBuilder::buildLongLongType() 
-{ 
-  SgTypeLongLong * result =SgTypeLongLong::createType(); 
-  ROSE_ASSERT(result); 
+#endif
+SgTypeLongLong * SageBuilder::buildLongLongType()
+{
+  SgTypeLongLong * result =SgTypeLongLong::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeLongDouble * SageBuilder::buildLongDoubleType() 
-{ 
-  SgTypeLongDouble * result =SgTypeLongDouble::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeLongDouble * SageBuilder::buildLongDoubleType()
+{
+  SgTypeLongDouble * result =SgTypeLongDouble::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeUnsignedLongLong * SageBuilder::buildUnsignedLongLongType() 
-{ 
-  SgTypeUnsignedLongLong * result =SgTypeUnsignedLongLong::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeUnsignedLongLong * SageBuilder::buildUnsignedLongLongType()
+{
+  SgTypeUnsignedLongLong * result =SgTypeUnsignedLongLong::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeUnsignedLong * SageBuilder::buildUnsignedLongType() 
-{ 
-  SgTypeUnsignedLong * result =SgTypeUnsignedLong::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeUnsignedLong * SageBuilder::buildUnsignedLongType()
+{
+  SgTypeUnsignedLong * result =SgTypeUnsignedLong::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeUnsignedInt * SageBuilder::buildUnsignedIntType() 
-{ 
-  SgTypeUnsignedInt * result =SgTypeUnsignedInt::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeUnsignedInt * SageBuilder::buildUnsignedIntType()
+{
+  SgTypeUnsignedInt * result =SgTypeUnsignedInt::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeSignedShort * SageBuilder::buildSignedShortType() 
-{ 
-  SgTypeSignedShort * result =SgTypeSignedShort::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeSignedShort * SageBuilder::buildSignedShortType()
+{
+  SgTypeSignedShort * result =SgTypeSignedShort::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeSignedInt * SageBuilder::buildSignedIntType() 
-{ 
-  SgTypeSignedInt * result =SgTypeSignedInt::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeSignedInt * SageBuilder::buildSignedIntType()
+{
+  SgTypeSignedInt * result =SgTypeSignedInt::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeUnsignedChar * SageBuilder::buildUnsignedCharType() 
-{ 
-  SgTypeUnsignedChar * result =SgTypeUnsignedChar::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeUnsignedChar * SageBuilder::buildUnsignedCharType()
+{
+  SgTypeUnsignedChar * result =SgTypeUnsignedChar::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeSignedLong * SageBuilder::buildSignedLongType() 
-{ 
-  SgTypeSignedLong * result =SgTypeSignedLong::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeSignedLong * SageBuilder::buildSignedLongType()
+{
+  SgTypeSignedLong * result =SgTypeSignedLong::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeSignedLongLong * SageBuilder::buildSignedLongLongType() 
-{ 
-  SgTypeSignedLongLong * result =SgTypeSignedLongLong::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeSignedLongLong * SageBuilder::buildSignedLongLongType()
+{
+  SgTypeSignedLongLong * result =SgTypeSignedLongLong::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeWchar * SageBuilder::buildWcharType() 
-{ 
-  SgTypeWchar * result =SgTypeWchar::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeWchar * SageBuilder::buildWcharType()
+{
+  SgTypeWchar * result =SgTypeWchar::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeSignedChar * SageBuilder::buildSignedCharType() 
-{ 
-  SgTypeSignedChar * result =SgTypeSignedChar::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeSignedChar * SageBuilder::buildSignedCharType()
+{
+  SgTypeSignedChar * result =SgTypeSignedChar::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeVoid * SageBuilder::buildVoidType() 
-{ 
-  SgTypeVoid * result =SgTypeVoid::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeVoid * SageBuilder::buildVoidType()
+{
+  SgTypeVoid * result =SgTypeVoid::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeUnknown * SageBuilder::buildUnknownType() 
-{ 
-  SgTypeUnknown * result =SgTypeUnknown::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeUnknown * SageBuilder::buildUnknownType()
+{
+  SgTypeUnknown * result =SgTypeUnknown::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeShort * SageBuilder::buildShortType() 
-{ 
-  SgTypeShort * result =SgTypeShort::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeShort * SageBuilder::buildShortType()
+{
+  SgTypeShort * result =SgTypeShort::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
@@ -3127,59 +3127,59 @@ SgTypeUnsignedShort * SageBuilder::buildUnsignedShortType()
   return result;
 }
 
-SgTypeLong * SageBuilder::buildLongType() 
-{ 
-  SgTypeLong * result =SgTypeLong::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeLong * SageBuilder::buildLongType()
+{
+  SgTypeLong * result =SgTypeLong::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
-SgTypeString * SageBuilder::buildStringType() 
+SgTypeString * SageBuilder::buildStringType()
    {
-  // DQ (8/17/2010): This function needs to use a different API to handle a literal 
+  // DQ (8/17/2010): This function needs to use a different API to handle a literal
   // value for the string size (typical) or an expression for the string size (rare).
   // For now we will make it an error to call this function.
 
-  // SgTypeString * result =SgTypeString::createType(); 
+  // SgTypeString * result =SgTypeString::createType();
      SgTypeString * result = NULL;
-     ROSE_ASSERT(result != NULL); 
+     ROSE_ASSERT(result != NULL);
      return result;
    }
 
-// SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral ) 
-SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpression ) 
+// SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral )
+SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpression )
    {
   // DQ (8/21/2010): This is a new API for this function.  This type is specific to Fortran use,
   // in C/C++ a string is just an array of char. We could have a consistant handling between
-  // C/C++ and Fortrna, but we have just corrected the implementation in Fortran to use this IR 
-  // node and we would have to add such support to C/C++.  The current implementation reflects 
+  // C/C++ and Fortrna, but we have just corrected the implementation in Fortran to use this IR
+  // node and we would have to add such support to C/C++.  The current implementation reflects
   // the grammar of the two languages.
 
-  // This function needs to use a different API to handle a literal 
+  // This function needs to use a different API to handle a literal
   // value for the string size (typical) or an expression for the string size (rare).
 
-  // SgTypeString* result = SgTypeString::createType(stringLengthExpression,stringLengthLiteral); 
+  // SgTypeString* result = SgTypeString::createType(stringLengthExpression,stringLengthLiteral);
      SgTypeString* result = SgTypeString::createType(stringLengthExpression);
-     ROSE_ASSERT(result != NULL); 
+     ROSE_ASSERT(result != NULL);
      return result;
    }
 
-SgTypeInt * SageBuilder::buildIntType() 
-{ 
-  SgTypeInt * result =SgTypeInt::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeInt * SageBuilder::buildIntType()
+{
+  SgTypeInt * result =SgTypeInt::createType();
+  ROSE_ASSERT(result);
   return result;
 }
-SgTypeDouble * SageBuilder::buildDoubleType() 
-{ 
-  SgTypeDouble * result =SgTypeDouble::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeDouble * SageBuilder::buildDoubleType()
+{
+  SgTypeDouble * result =SgTypeDouble::createType();
+  ROSE_ASSERT(result);
   return result;
 }
-SgTypeFloat * SageBuilder::buildFloatType() 
-{ 
-  SgTypeFloat * result =SgTypeFloat::createType(); 
-  ROSE_ASSERT(result); 
+SgTypeFloat * SageBuilder::buildFloatType()
+{
+  SgTypeFloat * result =SgTypeFloat::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
@@ -3199,8 +3199,8 @@ SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
      ROSE_ASSERT(result!=NULL);
      result->get_typeModifier().get_constVolatileModifier().setConst();
 
-  // DQ (7/28/2010): Insert result type into type table and return it, or 
-  // replace the result type, if already available in the type table, with 
+  // DQ (7/28/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
   // the type from type table.
       SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
@@ -3235,8 +3235,8 @@ SgModifierType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
 
      result->get_typeModifier().get_constVolatileModifier().setVolatile();
 
-  // DQ (7/29/2010): Insert result type into type table and return it, or 
-  // replace the result type, if already available in the type table, with 
+  // DQ (7/29/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
   // the type from type table.
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
@@ -3259,8 +3259,8 @@ SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
 
      result->get_typeModifier().setRestrict();
 
-  // DQ (7/29/2010): Insert result type into type table and return it, or 
-  // replace the result type, if already available in the type table, with 
+  // DQ (7/29/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
   // the type from type table.
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
@@ -3277,8 +3277,8 @@ SgModifierType* SageBuilder::buildUpcStrictType(SgType* base_type /*=NULL*/)
 
      result->get_typeModifier().get_upcModifier().set_modifier(SgUPC_AccessModifier::e_upc_strict);
 
-  // DQ (7/29/2010): Insert result type into type table and return it, or 
-  // replace the result type, if already available in the type table, with 
+  // DQ (7/29/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
   // the type from type table.
      SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
@@ -3295,8 +3295,8 @@ SgModifierType* SageBuilder::buildUpcRelaxedType(SgType* base_type /*=NULL*/)
 
      result->get_typeModifier().get_upcModifier().set_modifier(SgUPC_AccessModifier::e_upc_relaxed);
 
-  // DQ (7/29/2010): Insert result type into type table and return it, or 
-  // replace the result type, if already available in the type table, with 
+  // DQ (7/29/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
   // the type from type table.
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
@@ -3317,8 +3317,8 @@ SgModifierType* SageBuilder::buildUpcSharedType(SgType* base_type /*=NULL*/, lon
   // result->get_typeModifier().get_upcModifier().set_layout(-1); // No layout ("shared" without a block size)
      result->get_typeModifier().get_upcModifier().set_layout(layout); // No layout ("shared" without a block size)
 
-  // DQ (7/29/2010): Insert result type into type table and return it, or 
-  // replace the result type, if already available in the type table, with 
+  // DQ (7/29/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
   // the type from type table.
      SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
      if (result != result2)
@@ -3335,8 +3335,8 @@ SgModifierType* SageBuilder::buildUpcBlockIndefiniteType(SgType* base_type /*=NU
 
      result->get_typeModifier().get_upcModifier().set_layout(0); // [] layout
 
-  // DQ (7/29/2010): Insert result type into type table and return it, or 
-  // replace the result type, if already available in the type table, with 
+  // DQ (7/29/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
   // the type from type table.
      result = SgModifierType::insertModifierTypeIntoTypeTable(result);
 
@@ -3352,8 +3352,8 @@ SgModifierType* SageBuilder::buildUpcBlockStarType(SgType* base_type /*=NULL*/)
 
      result->get_typeModifier().get_upcModifier().set_layout(-2); // [*] layout
 
-  // DQ (7/29/2010): Insert result type into type table and return it, or 
-  // replace the result type, if already available in the type table, with 
+  // DQ (7/29/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
   // the type from type table.
      result = SgModifierType::insertModifierTypeIntoTypeTable(result);
 
@@ -3369,8 +3369,8 @@ SgModifierType* SageBuilder::buildUpcBlockNumberType(SgType* base_type, long blo
 
      result->get_typeModifier().get_upcModifier().set_layout(block_factor); // [block_factor] layout
 
-  // DQ (7/29/2010): Insert result type into type table and return it, or 
-  // replace the result type, if already available in the type table, with 
+  // DQ (7/29/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
   // the type from type table.
      result = SgModifierType::insertModifierTypeIntoTypeTable(result);
 
@@ -3405,7 +3405,7 @@ SgNamespaceDefinitionStatement* SageBuilder::buildNamespaceDefinition(SgNamespac
     }
     else
       result = new SgNamespaceDefinitionStatement(d);
-    
+
     ROSE_ASSERT(result);
     setOneSourcePositionForTransformation(result);
     return result;
@@ -3421,9 +3421,9 @@ SgClassDefinition* SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NU
       result = new SgClassDefinition(d);
      // result->set_parent(d); // set_declaration() == set_parent() in this case
     }
-    else 
+    else
       result = new SgClassDefinition();
-    
+
     ROSE_ASSERT(result);
     setOneSourcePositionForTransformation(result);
     return result;
@@ -3437,9 +3437,9 @@ SgClassDefinition* SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*
       result = new SgClassDefinition(d);
      // result->set_parent(d); // set_declaration() == set_parent() in this case
     }
-    else 
+    else
       result = new SgClassDefinition();
-    
+
     ROSE_ASSERT(result);
     setOneSourcePositionNull(result);
     return result;
@@ -3458,13 +3458,13 @@ SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgNa
 
      printf ("SageBuilder::buildNondefiningClassDeclaration_nfi(): (and setting source position) nondefdecl = %p \n",nondefdecl);
 
-  // The non-defining declaration asociated with a declaration does not have a 
+  // The non-defining declaration asociated with a declaration does not have a
   // source position...unless it is the position of the defining declaration.
   // setOneSourcePositionNull(nondefdecl);
      setSourcePosition(nondefdecl);
 
-  // This is find for now, but a little later in this function (if we can find a symbol) 
-  // we want to find the first non-defining declaration (using the symbol table) and use 
+  // This is find for now, but a little later in this function (if we can find a symbol)
+  // we want to find the first non-defining declaration (using the symbol table) and use
   // that as a paramter to "nondefdecl->set_firstNondefiningDeclaration()".
      nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
      nondefdecl->set_definingDeclaration(NULL);
@@ -3496,7 +3496,7 @@ SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgNa
 
           scope->insert_symbol(name, mysymbol);
 #else
-       // Reuse any previously defined symbols (to avoid redundant symbols in the symbol table) 
+       // Reuse any previously defined symbols (to avoid redundant symbols in the symbol table)
        // and find the firstNondefiningDeclaration.
           SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
           if (mysymbol != NULL)
@@ -3581,7 +3581,7 @@ SgEnumDeclaration* SageBuilder::buildNondefiningEnumDeclaration_nfi(const SgName
      nondefdecl->set_definingDeclaration(NULL);
 
   // Any non-defining declaration is not always a forward declaration.
-     nondefdecl->setForward();    
+     nondefdecl->setForward();
 
      if (scope != NULL)
         {
@@ -3614,7 +3614,7 @@ SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgS
   // TODO How about class type??
   // build defining declaration
      SgClassDefinition* classDef = buildClassDefinition();
-   
+
      SgClassDeclaration* defdecl = new SgClassDeclaration (name,SgClassDeclaration::e_struct,NULL,classDef);
      ROSE_ASSERT(defdecl);
      setOneSourcePositionForTransformation(defdecl);
@@ -3684,7 +3684,7 @@ SgNamespaceDeclarationStatement * SageBuilder::buildNamespaceDeclaration_nfi(con
   // TODO How about class type??
   // build defining declaration
      SgNamespaceDefinitionStatement* classDef = buildNamespaceDefinition(); //buildClassDefinition
-     
+
 
 #if 1
      SgNamespaceDeclarationStatement* defdecl = new SgNamespaceDeclarationStatement(name,classDef, unnamednamespace);
@@ -3699,7 +3699,7 @@ SgNamespaceDeclarationStatement * SageBuilder::buildNamespaceDeclaration_nfi(con
 #endif
 
 
-  // Get the nondefining declaration from the symbol if it has been built (if this works, 
+  // Get the nondefining declaration from the symbol if it has been built (if this works,
   // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
      SgNamespaceDeclarationStatement* nondefdecl = NULL;
 
@@ -3740,7 +3740,7 @@ SgNamespaceDeclarationStatement * SageBuilder::buildNamespaceDeclaration_nfi(con
 
        // The nondefining declaration will not appear in the source code, but is compiler
        // generated (so we have something about the class that we can reference; e.g in
-       // types).  At the moment we make it a transformation, there might be another kind 
+       // types).  At the moment we make it a transformation, there might be another kind
        // of source position that would be more precise.  FIXME.
        // setOneSourcePositionNull(nondefdecl);
           setOneSourcePositionForTransformation(nondefdecl);
@@ -3778,7 +3778,7 @@ SgNamespaceDeclarationStatement * SageBuilder::buildNamespaceDeclaration_nfi(con
      defdecl->set_firstNondefiningDeclaration(nondefdecl);
 
   // I don't think this is always a forward declaration (e.g. if it is not used in a prototype).
-  // Checking the olded EDG/ROSE interface it appears that it is always marked forward (unless 
+  // Checking the olded EDG/ROSE interface it appears that it is always marked forward (unless
   // used in a defining declaration).
      nondefdecl->setForward();
 
@@ -3816,7 +3816,7 @@ SgNamespaceDeclarationStatement * SageBuilder::buildNamespaceDeclaration_nfi(con
      ROSE_ASSERT(defdecl->get_firstNondefiningDeclaration() != defdecl->get_definingDeclaration());
 
 
-     return defdecl;    
+     return defdecl;
    }
 
 
@@ -3836,7 +3836,7 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
         }
        else
         {
-       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.   
+       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.
        // DQ (1/26/2009): I think this should be an error, but that appears it would
        // break the existing interface. Need to discuss this with Liao.
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
@@ -3872,7 +3872,7 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
 
        // The nondefining declaration will not appear in the source code, but is compiler
        // generated (so we have something about the class that we can reference; e.g in
-       // types).  At the moment we make it a transformation, there might be another kind 
+       // types).  At the moment we make it a transformation, there might be another kind
        // of source position that would be more precise.  FIXME.
        // setOneSourcePositionNull(nondefdecl);
           setOneSourcePositionForTransformation(nondefdecl);
@@ -3984,7 +3984,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
      defdecl->set_definingDeclaration(defdecl);
 #endif
 
-  // Step 2. build the nondefining declaration, 
+  // Step 2. build the nondefining declaration,
   // but only if the input nonDefiningDecl pointer was NULL and it does not exist
 #if 0
   // SgClassDeclaration* nondefdecl = new SgClassDeclaration (name,kind,NULL,NULL);
@@ -3998,7 +3998,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
   // TODO: Refactor this after we pass all of our tests.
      SgClassDeclaration* nondefdecl = buildNondefiningClassDeclaration (name,scope);
 #else
-  // Get the nondefining declaration from the symbol if it has been built (if this works, 
+  // Get the nondefining declaration from the symbol if it has been built (if this works,
   // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
      SgClassDeclaration* nondefdecl = NULL;
 
@@ -4011,7 +4011,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
         }
        else
         {
-       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.   
+       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.
        // DQ (1/26/2009): I think this should be an error, but that appears it would
        // break the existing interface. Need to discuss this with Liao.
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
@@ -4042,7 +4042,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
 
        // The nondefining declaration will not appear in the source code, but is compiler
        // generated (so we have something about the class that we can reference; e.g in
-       // types).  At the moment we make it a transformation, there might be another kind 
+       // types).  At the moment we make it a transformation, there might be another kind
        // of source position that would be more precise.  FIXME.
        // setOneSourcePositionNull(nondefdecl);
           setOneSourcePositionForTransformation(nondefdecl);
@@ -4061,7 +4061,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
              }
             else
              {
-       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.   
+       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.
             // DQ (1/26/2009): I think this should be an error, but that appears it would
             // break the existing interface. Need to discuss this with Liao.
             //   printf ("Warning: no scope provided to support symbol table entry! \n");
@@ -4082,9 +4082,9 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
      // Liao, 10/30/2009
      // The SgClassDeclaration constructor will automatically generate a SgClassType internally if NULL is passed for SgClassType
      // This is not desired when building a defining declaration and an inefficience in the constructor
-     // Ideally, only the first nondefining class declaration should have a dedicated SgClassType and 
+     // Ideally, only the first nondefining class declaration should have a dedicated SgClassType and
      // the defining class declaration (and other nondefining declaration) just shared that SgClassType.
-     if (defdecl->get_type () != NULL) 
+     if (defdecl->get_type () != NULL)
      {
        // if a defining class declaration's type is associated with a defining class.
        // This is a wrong SgClassType and has to be reset
@@ -4094,12 +4094,12 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
        }
      }
      // patch up the SgClassType for the defining class declaration
-     ROSE_ASSERT (nondefdecl->get_type() != NULL); 
-     ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl)); 
-     defdecl->set_type(nondefdecl->get_type()); 
+     ROSE_ASSERT (nondefdecl->get_type() != NULL);
+     ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl));
+     defdecl->set_type(nondefdecl->get_type());
 
   // I don't think this is always a forward declaration (e.g. if it is not used in a prototype).
-  // Checking the olded EDG/ROSE interface it appears that it is always marked forward (unless 
+  // Checking the olded EDG/ROSE interface it appears that it is always marked forward (unless
   // used in a defining declaration).
      nondefdecl->setForward();
 
@@ -4136,7 +4136,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
      ROSE_ASSERT(defdecl->get_definingDeclaration() == defdecl);
      ROSE_ASSERT(defdecl->get_firstNondefiningDeclaration() != defdecl->get_definingDeclaration());
 
-     return defdecl;    
+     return defdecl;
    }
 
 SgClassDeclaration * SageBuilder::buildStructDeclaration(const string& name, SgScopeStatement* scope/*=NULL*/)
@@ -4161,7 +4161,7 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration(const SgName& name, SgScop
     setOneSourcePositionForTransformation(decl);
     setOneSourcePositionForTransformation(decl->get_firstNondefiningDeclaration());
     setOneSourcePositionForTransformation(decl->get_definingDeclaration());
-    return decl;    
+    return decl;
   } //buildEnumDeclaration()
 
 SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
@@ -4189,7 +4189,7 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
     nondefdecl->set_scope(scope);
     defdecl->set_parent(scope);
     nondefdecl->set_parent(scope);
-    return defdecl;    
+    return defdecl;
   } //buildEnumDeclaration_nfi()
 
   //! Build a SgFile node
@@ -4209,29 +4209,29 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
           ROSE_ASSERT(project);
           project->get_fileList().clear();
 
-          arglist.push_back("cc"); 
-          arglist.push_back("-c"); 
+          arglist.push_back("cc");
+          arglist.push_back("-c");
           project->set_originalCommandLineArgumentList (arglist);
         }
 
      ifstream testfile(inputFileName.c_str());
-     if (!testfile.is_open()) 
+     if (!testfile.is_open())
         {
        // create a temporary file if the file does not exist.
        // have to do this, otherwise StringUtility::getAbsolutePathFromRelativePath() complains
        // which is called by result->setupSourceFilename(arglist);
           testfile.close();
-          ofstream outputfile(inputFileName.c_str(),ios::out); 
+          ofstream outputfile(inputFileName.c_str(),ios::out);
        // DQ (2/6/2009): I think this comment is helpful to put into the file (helps explain why the file exists).
           outputfile<<"// Output file generated so that StringUtility::getAbsolutePathFromRelativePath() will see a vaild file ... unparsed file will have rose_ prefix "<<endl;
           outputfile.close();
         }
        else // file already exists , load and parse it
         {
-       // should not reparse all files in case their ASTs have unsaved changes, 
+       // should not reparse all files in case their ASTs have unsaved changes,
        // just parse the newly loaded file only.
        // use argv here, change non-existing input file later on
-       // TODO add error code handling 
+       // TODO add error code handling
 
        // DQ (2/6/2009): Avoid closing this file twice (so put this here, instead of below).
           testfile.close();
@@ -4241,8 +4241,8 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // DQ (2/6/2009): Avoid closing this file twice (moved to false branch above).
   // testfile.close();
 
-  // DQ (2/6/2009): Need to add the inputFileName to the source file list in the project, 
-  // because this list will be used to subtract off the source files as required to build 
+  // DQ (2/6/2009): Need to add the inputFileName to the source file list in the project,
+  // because this list will be used to subtract off the source files as required to build
   // the commandline for the backend compiler.
      project->get_sourceFileNameList().push_back(inputFileName);
 
@@ -4251,7 +4251,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
      arglist = project->get_originalCommandLineArgumentList();
 
-  // DQ (2/6/2009): We will be compiling the source code generated in the 
+  // DQ (2/6/2009): We will be compiling the source code generated in the
   // "rose_<inputFileName>" file, so we don't want this on the argument stack.
      arglist.push_back(sourceFilename);
 
@@ -4275,7 +4275,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
   // DQ (9/3/2008): Added support for SgSourceFile IR node
   // SgFile* result = new SgFile (arglist, nextErrorCode, 0, project);
-  // AS(10/04/08) Because of refactoring we require the determineFileType function to be called 
+  // AS(10/04/08) Because of refactoring we require the determineFileType function to be called
   // to construct the node.
   // SgSourceFile* result = new SgSourceFile (arglist, nextErrorCode, 0, project);
   // SgSourceFile* result = isSgSourceFile(determineFileType(arglist, nextErrorCode, project));
@@ -4288,17 +4288,17 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
 
      result->set_parent(project);
-    if (!Outliner::use_dlopen)     
+    if (!Outliner::use_dlopen)
        project->set_file(*result);  // equal to push_back()
     else
     {
-      // Liao, 5/1/2009, 
-      // if the original command line is: gcc -c -o my.o my.c and we want to  
+      // Liao, 5/1/2009,
+      // if the original command line is: gcc -c -o my.o my.c and we want to
       // add a new file(mynew.c), the command line for the new file would become "gcc -c -o my.o mynew.c "
       // which overwrites the object file my.o from my.c and causes linking error.
       // To avoid this problem, I insert the file at the beginning and let the right object file to be the last generated one
       //
-      // TODO This is not an elegant fix and it causes some strange assertion failure in addAssociatedNodes(): default case node 
+      // TODO This is not an elegant fix and it causes some strange assertion failure in addAssociatedNodes(): default case node
       // So we only turn this on if Outliner:: use_dlopen is used for now
       // The semantics of adding a new source file can cause changes to linking phase (new object files etc.)
       // But ROSE has a long-time bug in handling combined compiling and linking command like "translator -o a.out a.c b.c"
@@ -4311,7 +4311,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
   // Not sure why a warning shows up from astPostProcessing.C
   // SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache)
-     if (result->get_globalMangledNameMap().size() != 0) 
+     if (result->get_globalMangledNameMap().size() != 0)
           result->clearGlobalMangledNameMap();
 
      return result;
@@ -4320,15 +4320,15 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
 PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::string & content,PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,PreprocessingInfo::DirectiveType dtype/* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)
    {
-     return SageInterface::attachComment(target,content, position, dtype);  
+     return SageInterface::attachComment(target,content, position, dtype);
    }
 
-//! #define xxx yyy 
+//! #define xxx yyy
 PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNode* target,const std::string & content,PreprocessingInfo::RelativePositionType position /* =PreprocessingInfo::before*/)
   {
     ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
     // simple input verification
-    std::string content2 = content;  
+    std::string content2 = content;
     boost::algorithm::trim(content2);
     string prefix = "#define";
     string::size_type pos = content2.find(prefix, 0);
@@ -4344,7 +4344,7 @@ PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNod
     ROSE_ASSERT(result);
     target->addToAttachedPreprocessingInfo(result);
     return result;
-  
+
   }
 
 //! Build an abstract handle from a SgNode
