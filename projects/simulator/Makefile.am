@@ -235,8 +235,6 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.221.11.c \
 		   $(srcdir)/tests/syscall_tst.221.12.c \
 		   $(srcdir)/tests/syscall_tst.221.13.c \
-		   $(srcdir)/tests/syscall_tst.221.14.c \
-		   $(srcdir)/tests/syscall_tst.221.15.c \
 		   $(srcdir)/tests/syscall_tst.221.16.c \
 		   $(srcdir)/tests/syscall_tst.221.17.c \
 		   $(srcdir)/tests/syscall_tst.221.19.c \
@@ -342,8 +340,10 @@ TEST_INPUTS_TS_SRC = \
 #		   $(srcdir)/tests/syscall_tst.117.msgctl.10.c
 #		   $(srcdir)/tests/syscall_tst.117.msgctl.11.c
 #		   $(srcdir)/tests/syscall_tst.117.semctl.06.c
+#		   $(srcdir)/tests/syscall_tst.221.14.c
+#		   $(srcdir)/tests/syscall_tst.221.15.c
 #			Disabled because of deadlocks in simulated futex() call.  These need more work and should be enabled
-#			when possible. [RPM 2011-01-07]
+#			when possible. [FIXME RPM 2011-01-07]
 #		   $(srcdir)/tests/syscall_tst.140.1.c
 #			This test cannot be run under the simulator with stderr redirected to a file (it enters an infinite loop
 #			somewhere in the setrlimit() syscall emulation). Since "make check" runs tests with their stderr
