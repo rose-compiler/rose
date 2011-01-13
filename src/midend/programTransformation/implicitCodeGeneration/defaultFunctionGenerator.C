@@ -597,6 +597,9 @@ user-defined constructors.
 #include <iostream>
 using namespace std;
 
+#include <sageBuilder.h>
+using namespace SageBuilder;
+
 #include "defaultFunctionGenerator.h"
 
 // Describe how new nodes should be added to the AST.
@@ -1628,6 +1631,8 @@ static SgClassSymbol* lookupClassSymbol(SgClassDeclaration* classDecl) {
   return classSymbol;
 }
 
+
+
 /** \brief  Return a 'this' expression relevant to the specified class.
  *  \param  classDecl   A SgClassDeclaration.
  *  \returns  A SgThisExp appropriate for classDecl.  User is
@@ -1642,10 +1647,7 @@ static SgThisExp *getThisExp(SgClassDeclaration *classDecl)
 	  isSgClassDeclaration(classDecl->copy(treeCopy));
   SgClassSymbol *classSymbol = new SgClassSymbol(classDeclaration);
 #endif
-  SgThisExp *thisExp = new SgThisExp(COMPILERGENERATED_FILE_INFO,
-                                     lookupClassSymbol(classDecl),
-				     0);
-  return thisExp;
+  return buildThisExp( lookupClassSymbol(classDecl) );
 }
 
 /** \brief Return the receiver (i.e., lhs) of a method invocation.
@@ -1745,8 +1747,7 @@ getVarRefForFormal(SgFunctionDefinition *functionDefinition,
 
   SgVariableSymbol *symbol = isSgVariableSymbol(specifiedInitName->get_symbol_from_symbol_table());
   ROSE_ASSERT (symbol != NULL);
-  SgVarRefExp *varRef = new SgVarRefExp(COMPILERGENERATED_FILE_INFO,
-					symbol);
+  SgVarRefExp *varRef = buildVarRefExp(symbol);
 
   return varRef;
 }
@@ -2037,28 +2038,22 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
 	  classSymbol1=lookupClassSymbol(classDeclaration);
           ROSE_ASSERT (classSymbol1 != NULL);
               //return *this
-	  SgPointerDerefExp * derefExp1=new SgPointerDerefExp(COMPILERGENERATED_FILE_INFO,
-                                                              new SgThisExp(COMPILERGENERATED_FILE_INFO,classSymbol1,0),NULL);
-	  SgReturnStmt * myReturn1=new SgReturnStmt(COMPILERGENERATED_FILE_INFO,derefExp1);
+	  SgPointerDerefExp * derefExp1= buildPointerDerefExp( buildThisExp(classSymbol1) );
+	  SgReturnStmt * myReturn1= buildReturnStmt(derefExp1);
           // true body & false body
-	  SgBasicBlock * trueBody1=new SgBasicBlock(COMPILERGENERATED_FILE_INFO,NULL);
+	  SgBasicBlock * trueBody1= buildBasicBlock(myReturn1);
 	  // Need to generate a false body.  Later when we invoke copy(),
 	  // SgScopeStatement::generateStatementList will assume that
 	  // get_false_body() is non-NULL
 	  // SgStatementPtrList falseList = ifStatement->get_false_body()->getStatementList();
-	  SgBasicBlock * falseBody1=new SgBasicBlock(COMPILERGENERATED_FILE_INFO,NULL);
-	  trueBody1->append_statement(myReturn1);
-          // this==&rhs	  
+	  SgBasicBlock * falseBody1= buildBasicBlock();
 	  SgVariableSymbol * symbolPar1= isSgVariableSymbol(parameter1->get_symbol_from_symbol_table());
           ROSE_ASSERT (symbolPar1 != NULL);
-	  SgVarRefExp* varPar1=new SgVarRefExp(COMPILERGENERATED_FILE_INFO,symbolPar1);
-	  SgAddressOfOp * addressOp1=new SgAddressOfOp(COMPILERGENERATED_FILE_INFO,isSgExpression(varPar1), NULL);
-          SgEqualityOp * equalityOp1=new SgEqualityOp(COMPILERGENERATED_FILE_INFO,isSgExpression(new SgThisExp(COMPILERGENERATED_FILE_INFO,classSymbol1,0)),
-                                                      isSgExpression(addressOp1), NULL);
-	  SgExprStatement * conditionStmt1=new SgExprStatement(COMPILERGENERATED_FILE_INFO,equalityOp1);
+      SgEqualityOp * equalityOp1= buildEqualityOp( buildThisExp(classSymbol1),
+                                                   buildAddressOfOp(buildVarRefExp(symbolPar1)));
+	  SgExprStatement * conditionStmt1= buildExprStatement(equalityOp1);
 
-	  SgIfStmt * ifStmt1=new SgIfStmt(COMPILERGENERATED_FILE_INFO,isSgStatement(conditionStmt1),
-                                          trueBody1, falseBody1);
+	  SgIfStmt * ifStmt1= buildIfStmt(conditionStmt1, trueBody1, falseBody1);
           bBlock1->append_statement(ifStmt1);
 	  ROSE_ASSERT(ifStmt1->get_scope() != NULL);
 	  ROSE_ASSERT(ifStmt1->get_scope() != ifStmt1);
@@ -2086,13 +2081,13 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
                 SgVariableSymbol* varSymbol2=isSgVariableSymbol((*listVariable)->get_symbol_from_symbol_table());
                 ROSE_ASSERT (varSymbol1 != NULL);
                 ROSE_ASSERT (varSymbol2 != NULL);
-               SgVarRefExp* lhsOperator=new SgVarRefExp(COMPILERGENERATED_FILE_INFO,varSymbol1);
-               SgVarRefExp* rhsOperator=new SgVarRefExp(COMPILERGENERATED_FILE_INFO,varSymbol2);
-                SgDotExp* dotExp1=new SgDotExp(COMPILERGENERATED_FILE_INFO,lhsOperator,rhsOperator,varType);
+               SgVarRefExp* lhsOperator= buildVarRefExp(varSymbol1);
+               SgVarRefExp* rhsOperator= buildVarRefExp(varSymbol2);
+                SgDotExp* dotExp1= buildDotExp(lhsOperator, rhsOperator);
 		//"_member(rhs._member)" for copy constructor
 		if (enumFunctionType==e_copy_constructor) {
-                   SgAssignInitializer * assignInit1= new SgAssignInitializer(COMPILERGENERATED_FILE_INFO,dotExp1,varType);
-                   SgInitializedName* initName1=new SgInitializedName(varName,varType,assignInit1,NULL);
+                   SgAssignInitializer * assignInit1= buildAssignInitializer(dotExp1,varType);
+                   SgInitializedName* initName1= buildInitializedName(varName,varType,assignInit1);
 		   initName1->set_file_info(COMPILERGENERATED_FILE_INFO);
               	   // Must set scope to global here!!
 	           initName1->set_scope(isSgGlobal(parentClassDef1->get_declaration()->get_scope()));
@@ -2101,10 +2096,10 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
 
 		// "_member=rhs.member;" for operator=
 		if (enumFunctionType==e_assignment_operator) { 
-		  SgVarRefExp* rhsOperator2=new SgVarRefExp(COMPILERGENERATED_FILE_INFO,varSymbol2);
-		  SgArrowExp * arrowExp1=new SgArrowExp(COMPILERGENERATED_FILE_INFO,new SgThisExp(COMPILERGENERATED_FILE_INFO,classSymbol1,0), rhsOperator2);
-		  SgAssignOp * assignOp1=new SgAssignOp(COMPILERGENERATED_FILE_INFO, arrowExp1, dotExp1, varType);
-		  SgExprStatement* myExpStmt1=new SgExprStatement(COMPILERGENERATED_FILE_INFO, assignOp1); 
+		  SgVarRefExp* rhsOperator2= buildVarRefExp(varSymbol2);
+		  SgArrowExp * arrowExp1= buildArrowExp( buildThisExp(classSymbol1), rhsOperator2);
+		  SgAssignOp * assignOp1= buildAssignOp( arrowExp1, dotExp1 );
+		  SgExprStatement* myExpStmt1= buildExprStatement(assignOp1); 
 		  bBlock1->append_statement(myExpStmt1);  
 		}
               } //end for
@@ -2113,10 +2108,8 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
 
         // "return *this;" for operator=
         if(enumFunctionType==e_assignment_operator){
-          SgPointerDerefExp * derefExp1=new SgPointerDerefExp(COMPILERGENERATED_FILE_INFO,\
-                                     new SgThisExp(COMPILERGENERATED_FILE_INFO,classSymbol1,0),NULL);
-
-          SgReturnStmt * myReturn1=new SgReturnStmt(COMPILERGENERATED_FILE_INFO,derefExp1);
+          SgPointerDerefExp * derefExp1= buildPointerDerefExp( buildThisExp(classSymbol1) );
+          SgReturnStmt * myReturn1= buildReturnStmt(derefExp1);
           bBlock1->append_statement(myReturn1);
         }
 	// AstPostProcessing(func->get_definition());
@@ -2207,7 +2200,7 @@ DefaultFunctionGenerator::generateDefaultFunctionType(defaultEnumFunctionType en
       base_type=isSgClassDeclaration(parentClassDef->get_declaration() \
 				      ->get_firstNondefiningDeclaration())->get_type();
       ROSE_ASSERT(base_type != NULL);
-      func_return_type  = new SgReferenceType(base_type);
+      func_return_type  = new SgReferenceType(base_type); //! TODO refactor to use build interface
       func_param_type = SgReferenceType::createType(base_type);
     }
   else
@@ -2217,7 +2210,7 @@ DefaultFunctionGenerator::generateDefaultFunctionType(defaultEnumFunctionType en
     }
   
   SgMemberFunctionType *func_type = 
-    new SgMemberFunctionType(func_return_type, false, parentClassDef->get_declaration()->get_type());
+    new SgMemberFunctionType(func_return_type, false, parentClassDef->get_declaration()->get_type()); //! TODO refactor to use build interface
   func_type->set_orig_return_type(func_return_type); //unparser will complain otherwise,reason?
   if (func_param_type != NULL)
      {
