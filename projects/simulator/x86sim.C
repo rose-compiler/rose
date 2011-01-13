@@ -72,6 +72,9 @@
  * some specimens will attempt to execute instructions that are not implemented in the x86 instruction semantics yet. */
 // #define X86SIM_STRICT_EMULATION
 
+/* Define this if you want log files to be unbuffered. This is often desirable when debugging */
+#define X86SIM_LOG_UNBUFFERED
+
 
 enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
 
@@ -5805,9 +5808,14 @@ EmulationPolicy::open_log_file(const char *pattern)
         debug = NULL;
     }
 
-    if (name[0] && NULL==(debug = fopen(name, "w"))) {
-        fprintf(stderr, "%s: %s\n", strerror(errno), name);
-        return;
+    if (name[0]) {
+        if (NULL==(debug = fopen(name, "w"))) {
+            fprintf(stderr, "%s: %s\n", strerror(errno), name);
+            return;
+        }
+#ifdef X86SIM_LOG_UNBUFFERED
+        setbuf(debug, NULL);
+#endif
     }
 }
 
