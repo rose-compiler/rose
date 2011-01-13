@@ -438,7 +438,11 @@ outputLogicalOperator(SgExpression* expr)
           SgType* rhs_type = rhs->get_type();
           if (isSgTypeBool(lhs_type) != NULL)
              {
-               ROSE_ASSERT(isSgTypeBool(rhs_type) != NULL);
+               if (isSgTypeBool(rhs_type) == NULL)
+               {
+                 printf ("Error: outputLogicalOperator(). Found a boolean lhs operand paired with a non-boolean rhs operand for SgExpression:%s\n",expr->class_name().c_str());
+                 ROSE_ASSERT(isSgTypeBool(rhs_type) != NULL);
+               }
                outputLogicalOperator = true;
              }
         }
