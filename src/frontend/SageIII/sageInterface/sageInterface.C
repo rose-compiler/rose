@@ -41,6 +41,7 @@ using namespace std;
 using namespace SageBuilder;
 
 int SageInterface::gensym_counter = 0;
+#if 0 // use StringUtility::numberToString() instead
 template <typename T>
 static std::string numToString(T x)
 {
@@ -48,7 +49,7 @@ static std::string numToString(T x)
   os <<x;
   return os.str();
 }
-
+#endif
 // DQ: 09/23/03
 // We require a global function for getting the string associated
 // with the definition of a variant (which is a global enum).
@@ -8558,7 +8559,7 @@ void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
   ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
   SgScopeStatement* label_scope = getEnclosingFunctionDefinition(stmt);
   ROSE_ASSERT (label_scope != NULL);
-  SgName label_name(numToString(label_value));
+  SgName label_name(StringUtility::numberToString(label_value));
   SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
   if (symbol == NULL)
   {
