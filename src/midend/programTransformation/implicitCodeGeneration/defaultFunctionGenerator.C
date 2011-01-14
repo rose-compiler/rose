@@ -2260,7 +2260,7 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
         base_type1=isSgClassDeclaration(parentClassDef1->get_declaration()\
                 ->get_firstNondefiningDeclaration())->get_type();
         ROSE_ASSERT(base_type1!=NULL);
-        func_return_type  = new SgReferenceType(base_type1);
+        func_return_type  = buildReferenceType(base_type1);
         }
      else
          func_return_type = SgTypeVoid::createType();
@@ -2303,7 +2303,7 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
         sfModifier.setOperator();                                                                                          
         
      SgFunctionDefinition * func_def =new SgFunctionDefinition(COMPILERGENERATED_FILE_INFO,func);
-     SgBasicBlock *func_body = new SgBasicBlock(COMPILERGENERATED_FILE_INFO);
+     SgBasicBlock *func_body = buildBasicBlock();
 
      func_def->set_body(func_body);
      func_def->set_parent(func); //necessary or not?
