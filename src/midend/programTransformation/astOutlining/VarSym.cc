@@ -74,7 +74,7 @@ getVarSymFromName_const (const SgInitializedName* name)
             v_sym = decl_scope->lookup_var_symbol (name->get_name ());
 
           if (!v_sym)
-            cerr << "Warning: getVarSymFromName_const (): Can't seem to find a symbol for '"
+            cerr << "Warning: astOutlining, getVarSymFromName_const (): Can't seem to find a symbol for '"
                  << name->get_name ().str ()
                  << "' " << endl;
         }
