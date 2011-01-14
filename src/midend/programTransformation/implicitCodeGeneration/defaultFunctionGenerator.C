@@ -2200,7 +2200,7 @@ DefaultFunctionGenerator::generateDefaultFunctionType(defaultEnumFunctionType en
       base_type=isSgClassDeclaration(parentClassDef->get_declaration() \
 				      ->get_firstNondefiningDeclaration())->get_type();
       ROSE_ASSERT(base_type != NULL);
-      func_return_type  = new SgReferenceType(base_type); //! TODO refactor to use build interface
+      func_return_type  = buildReferenceType(base_type);
       func_param_type = SgReferenceType::createType(base_type);
     }
   else
@@ -2209,8 +2209,12 @@ DefaultFunctionGenerator::generateDefaultFunctionType(defaultEnumFunctionType en
       func_param_type = NULL;
     }
   
-  SgMemberFunctionType *func_type = 
-    new SgMemberFunctionType(func_return_type, false, parentClassDef->get_declaration()->get_type()); //! TODO refactor to use build interface
+//SgMemberFunctionType *func_type = 
+//    new SgMemberFunctionType(func_return_type, false, parentClassDef->get_declaration()->get_type()); //! TODO refactor to use build interface
+  SgMemberFunctionType* func_type = buildMemberFunctionType(func_return_type,
+                                                            buildFunctionParameterTypeList(func_param_type), 
+                                                            parentClassDef, 
+                                                            0);
   func_type->set_orig_return_type(func_return_type); //unparser will complain otherwise,reason?
   if (func_param_type != NULL)
      {
