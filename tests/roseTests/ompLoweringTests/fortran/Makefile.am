@@ -15,6 +15,8 @@ F77_TESTCODES_REQUIRED_TO_RUN = \
   ompdo-default.f \
   ompdo-decremental.f \
   ompdo-static.f \
+  ompdo-orphaned.f \
+  ompdo-multiple.f \
   private.f \
   shared.f
 
