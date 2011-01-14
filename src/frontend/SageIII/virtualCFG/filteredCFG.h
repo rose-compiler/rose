@@ -18,9 +18,15 @@ namespace VirtualCFG
         FilterFunction filter;
 
       public:
-          FilteredCFGNode(CFGNode n):n(n)
+        FilteredCFGNode(CFGNode n):n(n)
         {
         }
+
+        /**  Need a default constructor to use with boost_graph. Underlying node will be invalid. */
+        FilteredCFGNode() : n()
+        {
+        }
+
         CFGNode toNode() const
         {
             return n;
@@ -77,6 +83,12 @@ namespace VirtualCFG
       FilteredCFGEdge(CFGPath p):p(p)
         {
         }
+
+        /**  Need a default constructor to use with boost_graph. Underlying path will be invalid. */
+        FilteredCFGEdge()
+        {
+        }
+
         std::string toString()const
         {
             return p.toString();
@@ -113,15 +125,15 @@ namespace VirtualCFG
         {
             return p.scopesBeingEntered();
         }
-        bool operator==(const FilteredCFGNode < FilterFunction > &o)const
+        bool operator==(const FilteredCFGEdge < FilterFunction > &o)const
         {
             return p == o.p;
         }
-        bool operator!=(const FilteredCFGNode < FilterFunction > &o)const
+        bool operator!=(const FilteredCFGEdge < FilterFunction > &o)const
         {
             return p != o.p;
         }
-        bool operator<(const FilteredCFGNode < FilterFunction > &o)const
+        bool operator<(const FilteredCFGEdge < FilterFunction > &o)const
         {
             return p < o.p;
         }
