@@ -28,6 +28,7 @@ namespace OmpSupport
 { 
   omp_rtl_enum rtl_type = e_gomp; /* default to  generate code targetting gcc's gomp */
 
+  unsigned int nCounter = 0;
   //------------------------------------
   // Add include "xxxx.h" into source files, right before the first statement from users
   // Lazy approach: assume all files will contain OpenMP runtime library calls
@@ -835,13 +836,29 @@ static void insert_libxompf_h(SgNode* startNode)
       loop_var_type = buildLongType();
     else if (do_loop)  // No long integer in Fortran
       loop_var_type = buildIntType();
-    SgVariableDeclaration* index_decl =  buildVariableDeclaration("p_index_", loop_var_type , NULL,bb1); 
-    SgVariableDeclaration* lower_decl =  buildVariableDeclaration("p_lower_", loop_var_type , NULL,bb1); 
-    SgVariableDeclaration* upper_decl =  buildVariableDeclaration("p_upper_", loop_var_type , NULL,bb1); 
+    SgVariableDeclaration* index_decl =  NULL; 
+    SgVariableDeclaration* lower_decl =  NULL; 
+    SgVariableDeclaration* upper_decl =  NULL;
+
+   if (SageInterface::is_Fortran_language() )
+   {// special rules to insert variable declarations in Fortran
+     // They have to be inserted to enclosing function body or enclosing parallel region body
+     // and after existing declaration statement sequence, if any.
+     nCounter ++;
+    index_decl = buildAndInsertDeclarationForOmp("p_index_"+StringUtility::numberToString(nCounter), loop_var_type , NULL,bb1); 
+    lower_decl = buildAndInsertDeclarationForOmp("p_lower_"+StringUtility::numberToString(nCounter), loop_var_type , NULL,bb1); 
+    upper_decl = buildAndInsertDeclarationForOmp("p_upper_"+StringUtility::numberToString(nCounter), loop_var_type , NULL,bb1); 
+   }
+   else
+   {  
+    index_decl = buildVariableDeclaration("p_index_", loop_var_type , NULL,bb1); 
+    lower_decl = buildVariableDeclaration("p_lower_", loop_var_type , NULL,bb1); 
+    upper_decl = buildVariableDeclaration("p_upper_", loop_var_type , NULL,bb1); 
 
     appendStatement(index_decl, bb1);
     appendStatement(lower_decl, bb1);
     appendStatement(upper_decl, bb1);
+   } 
 
     bool hasOrder = false;
     if (hasClause(target, V_SgOmpOrderedClause))
@@ -2039,6 +2056,61 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
 
      return bb;
    }
+//! This is a highly specialized operation which can find the right place to insert a Fortran variable declaration
+//  during OpenMP lowering.
+//
+//  The reasons are: 
+//    1)Fortran (at least F77) requires declaration statements to be consecutive within an enclosing function definition.
+//    The C99-style generation of 'int loop_index' within a SgBasicBlock in the middle of some executable statement is illegal
+//     for Fortran. We have to find the enclosing function body, located the declaration sequence, and add the new declaration 
+//     after it. 
+//
+//    2) When translating OpenMP constructs within a parallel region, the declaration (such as those for private variables of the construct ) 
+//       should be inserted into the declaration part of the body of the parallel region, which will become function body of the outlined
+//       function when translating the region later on.
+//       Insert the declaration to the current enclosing function definition is not correct. 
+//
+// Liao 1/12/2011
+  SgVariableDeclaration * buildAndInsertDeclarationForOmp(const std::string &name, SgType *type, SgInitializer *varInit, SgBasicBlock *orig_scope)
+{
+  ROSE_ASSERT (SageInterface::is_Fortran_language() == true);
+  SgVariableDeclaration * result = NULL;
+
+  // find the right scope (target body) to insert the declaration, start from the original scope
+
+  SgBasicBlock* t_body = NULL; 
+
+  //find enclosing parallel region's body
+  SgOmpParallelStatement * omp_stmt = isSgOmpParallelStatement(getEnclosingNode<SgOmpParallelStatement>(orig_scope));
+  if (omp_stmt)
+  {
+    SgBasicBlock * omp_body = isSgBasicBlock(omp_stmt->get_body());
+    ROSE_ASSERT(omp_body != NULL);
+    t_body = omp_body; 
+  }
+  else
+  {
+    // Find enclosing function body
+    SgFunctionDefinition* func_def = getEnclosingProcedure (orig_scope);
+    ROSE_ASSERT (func_def != NULL);
+    SgBasicBlock * f_body = func_def->get_body();
+    ROSE_ASSERT(f_body!= NULL);
+    t_body = f_body; 
+  }
+  ROSE_ASSERT (t_body != NULL);  
+
+  // Build the required variable declaration
+  result = buildVariableDeclaration (name, type, varInit, t_body);
+
+  // Insert to be the declaration after current declaration sequence, if any
+  SgStatement* l_stmt = findLastDeclarationStatement (t_body);
+  if (l_stmt)
+    insertStatementAfter(l_stmt,result);
+  else
+    prependStatement(result, t_body);
+  ROSE_ASSERT (result != NULL);
+  return result;
+}
 
     //! Translate clauses with variable lists, such as private, firstprivate, lastprivate, reduction, etc.
     //bb1 is the affected code block by the clause.
@@ -2098,16 +2170,29 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
           init = buildAssignInitializer(buildVarRefExp(orig_var, bb1));
         }
         string private_name = "_p_"+orig_name;
-        if (SageInterface::is_Fortran_language()) // leading _ is not allowed in Fortran
-          private_name = "p_"+orig_name;
+
+        if (SageInterface::is_Fortran_language() )
+        {
+          // leading _ is not allowed in Fortran
+          private_name = "i_"+orig_name;
+          nCounter ++; // Fortran does not have basic block as a scope at source level
+          // I have to generated all declarations at the same flat level under function definitions
+          // So a name counter is needed to avoid name collision
+          private_name = private_name + "_" + StringUtility::numberToString(nCounter);
+
+          // Special handling for variable declarations in Fortran
+          local_decl = buildAndInsertDeclarationForOmp (private_name, orig_type, init, bb1);
+        }
         else
+        {
           private_name = "_p_"+orig_name;
-        local_decl = buildVariableDeclaration(private_name, orig_type, init, bb1);
-        //ROSE_ASSERT (getFirst);
-       //   prependStatement(local_decl, bb1);
-       front_stmt_list.push_back(local_decl);   
+          local_decl = buildVariableDeclaration(private_name, orig_type, init, bb1);
+          //ROSE_ASSERT (getFirst);
+          //   prependStatement(local_decl, bb1);
+          front_stmt_list.push_back(local_decl);   
+        }
         // record the map from old to new symbol
-       var_map.insert( VariableSymbolMap_t::value_type( orig_symbol, getFirstVarSym(local_decl)) ); 
+        var_map.insert( VariableSymbolMap_t::value_type( orig_symbol, getFirstVarSym(local_decl)) ); 
       }
       // step 2. Initialize the local copy for array-type firstprivate variables TODO copyin, copyprivate
 #if 1
