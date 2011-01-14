@@ -4001,10 +4001,12 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
 
      SgNode *parent = node->get_parent();
 
-//     if (isSgInitializedName(node))
-//     {
-//       printf("Debug: found a init name in TestChildPointersInMemoryPool::visit()\n");
-//     }
+#if 0
+     if (isSgVariableSymbol(node))
+     {
+       printf("Debug: found a var symbol in TestChildPointersInMemoryPool::visit(), %p\n", node);
+     }
+#endif     
 #if ROSE_USE_VALGRIND
      VALGRIND_CHECK_DEFINED(parent);
 #endif
@@ -4330,7 +4332,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                             }
                            else
                             {
-                              printf ("SgVariableSymbol is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
+                              printf ("Warning: TestChildPointersInMemoryPool::visit(). SgVariableSymbol is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
                             }
                          break;
