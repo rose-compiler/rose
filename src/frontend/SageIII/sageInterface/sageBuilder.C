@@ -428,10 +428,20 @@ SageBuilder::buildFunctionParameterTypeList (SgExprListExp * expList)
 }
 
 SgFunctionParameterTypeList * 
-SageBuilder::buildFunctionParameterTypeList()
+SageBuilder::buildFunctionParameterTypeList(SgType* type0, SgType* type1, SgType* type2, SgType* type3,
+                                            SgType* type4, SgType* type5, SgType* type6, SgType* type7)
 {
   SgFunctionParameterTypeList* typePtrList = new SgFunctionParameterTypeList;
   ROSE_ASSERT(typePtrList);
+  SgTypePtrList& types = typePtrList->get_arguments();
+  if (type0) types.push_back(type0);
+  if (type1) types.push_back(type1);
+  if (type2) types.push_back(type2);
+  if (type3) types.push_back(type3);
+  if (type4) types.push_back(type4);
+  if (type5) types.push_back(type5);
+  if (type6) types.push_back(type6);
+  if (type7) types.push_back(type7);
   return typePtrList;
 }
 
