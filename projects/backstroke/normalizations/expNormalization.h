@@ -62,7 +62,7 @@ inline void normalizeEvent(SgFunctionDefinition* func_def)
 
 //! Normalize the given function. The output is the normalized function with a different name
 //! (with "_normalized" as postfix). This function shall not modify the input function declaration.
-SgFunctionDeclaration* normalizeEvent(const SgFunctionDeclaration* func_decl);
+SgFunctionDeclaration* normalizeEvent(SgFunctionDeclaration* func_decl);
 
 
 } // namespace BackstrokeNorm

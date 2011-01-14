@@ -421,4 +421,40 @@ class MemoryCheckingTraversalForAstFileIO : public ROSE_VisitTraversal
           void visit ( SgNode* node );
    };
 
+
+
+
+
+class TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute : AstInheritedAttribute
+   {
+     public:
+       // Use the source file as a way to report better quality errors.
+          SgSourceFile* sourceFile;
+
+       // This will be set as we encounter the SgSourceFile at the top of the AST within the traversal.
+          bool caseInsensitive;
+
+       // Required constructor.
+          TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute(bool b);
+
+       // Required copy constructor.
+          TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute(const TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute & X);
+   };
+
+class TestForProperLanguageAndSymbolTableCaseSensitivity : public AstTopDownProcessing<TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute> 
+   {
+  // DQ (11/28/2010): This class is part of a test to verify consistancy of 
+  // symbol table case sensitivity with languge.  C/C++ codes should use only 
+  // case sensitive symbol tables, while Fortran codes should use only case 
+  // insensitive symbol table handling.
+
+     public:
+       // Overloaded pure virtual function.
+          TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute evaluateInheritedAttribute(SgNode* node, TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute inheritedAttribute);
+
+       // Simple funtion to call to get the traversal started (sets up the inherited attribute, etc.).
+          static void test(SgNode* node);
+   };
+
+
 #endif

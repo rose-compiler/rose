@@ -1095,9 +1095,15 @@ SgFunctionCallExp* RtedTransformation::mkAddress(SgExpression* exp, bool upcShar
                                              : symbols.roseAddr
                                  );
 
+<<<<<<< HEAD
   ROSE_ASSERT(ctor);
   appendExpression(args, exp);
   return buildFunctionCallExp(ctor, args);
+=======
+  // \note I believe that the type of the following cast expression should
+  //       be size_t instead of unsigned long (PP).
+  return buildCastExp(cast_void_star, buildUnsignedLongType());
+>>>>>>> e4d9b200063c609d1db68b1781b95ff502484499
 }
 
 

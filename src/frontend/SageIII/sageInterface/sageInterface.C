@@ -1239,6 +1239,15 @@ SageInterface::get_name ( const SgSupport* node )
                break;
              }
 
+       // DQ (12/2/2010): Implemented case for SgName
+          case V_SgName:
+             {
+               const SgName* name_node = isSgName(node);
+               ROSE_ASSERT(name_node != NULL);
+               name = "_name_" + name_node->getString();
+               break;
+             }
+
           default:
              {
                printf ("Default reached in switch for SgSupport IR node = %s \n",node->class_name().c_str());
@@ -1445,6 +1454,15 @@ SageInterface::get_name ( const SgLocatedNodeSupport* node )
                returnName += n->get_use_name().str();
                break;
              }
+          case V_SgInitializedName:
+          {
+            const SgInitializedName * n = isSgInitializedName (node);
+            ROSE_ASSERT (n != NULL);
+            returnName = "initialized_name_";
+            returnName += n->get_name().str();
+
+            break;
+          }
 #if 0
           case V_SgInterfaceBody:
              {
@@ -1465,7 +1483,7 @@ SageInterface::get_name ( const SgLocatedNodeSupport* node )
 string
 SageInterface::get_name ( const SgNode* node )
    {
-  // This function is useful fro debugging
+  // This function is useful for debugging
   // This is the most general case of a function to return a name for an IR node.
   // Later this function will handle expressions, etc.
 
@@ -1544,6 +1562,28 @@ SageInterface::get_name ( const SgNode* node )
 
      return name;
    }
+
+
+string
+SageInterface::get_name ( const SgToken* token )
+   {
+  // This function is useful for debugging
+     string name = "undefined_name";
+
+     ROSE_ASSERT(token != NULL);
+     name = token->get_lexeme_string();
+
+  // Handle special cases
+     if (name == " ")
+        name = "<space>";
+     else if (name == "\n")
+        name = "<eol>";
+     else if (name == "\t")
+        name = "<tab>";
+
+     return name;
+   }
+
 
 SgMemberFunctionDeclaration*
 SageInterface::getDefaultConstructor( SgClassDeclaration* classDeclaration )
@@ -4153,20 +4193,19 @@ SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgNam
                                                         SgScopeStatement *currentScope)
                                                         //SgScopeStatement *currentScope=NULL)
 {
-     SgFunctionSymbol* functionSymbol = NULL;
-  if (currentScope == NULL)
-    currentScope = SageBuilder::topScopeStack();
-   ROSE_ASSERT(currentScope != NULL);
-      SgScopeStatement* tempScope = currentScope;
-     while (functionSymbol == NULL && tempScope != NULL)
-        {
-
-          functionSymbol = tempScope->lookup_function_symbol(functionName,t);
+    SgFunctionSymbol* functionSymbol = NULL;
+    if (currentScope == NULL)
+        currentScope = SageBuilder::topScopeStack();   
+    ROSE_ASSERT(currentScope != NULL);
+    SgScopeStatement* tempScope = currentScope;
+    while (functionSymbol == NULL && tempScope != NULL)
+    {
+        functionSymbol = tempScope->lookup_function_symbol(functionName,t);
         if (tempScope->get_parent()!=NULL) // avoid calling get_scope when parent is not set
-           tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
-         else tempScope = NULL;
-   }
-     return functionSymbol;
+            tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
+        else tempScope = NULL;
+    }
+    return functionSymbol;
 }
 
 // Liao, 1/22/2008
@@ -4174,31 +4213,31 @@ SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgNam
 // SgScopeStatement* SgStatement::get_scope() assumes all parent pointers are set, which is
 // not always true during translation.
 SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
-                                                        SgScopeStatement *cscope)
+        SgScopeStatement *cscope)
 {
-  SgSymbol* symbol = NULL;
- if (cscope == NULL)
-    cscope = SageBuilder::topScopeStack();
-  ROSE_ASSERT(cscope);
+    SgSymbol* symbol = NULL;
+    if (cscope == NULL)
+        cscope = SageBuilder::topScopeStack(); 
+    ROSE_ASSERT(cscope);
 
-  while ((cscope!=NULL)&&(symbol==NULL))
-  {
-    symbol = cscope->lookup_symbol(name);
-    //debug
-   // cscope->print_symboltable("debug sageInterface.C L3749...");
-   if (cscope->get_parent()!=NULL) // avoid calling get_scope when parent is not set
-    cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
-    else
-      cscope = NULL;
-  }
+    while ((cscope!=NULL)&&(symbol==NULL))
+    {
+        symbol = cscope->lookup_symbol(name);
+        //debug
+        // cscope->print_symboltable("debug sageInterface.C L3749...");
+        if (cscope->get_parent()!=NULL) // avoid calling get_scope when parent is not set
+            cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+        else 
+            cscope = NULL;
+    }
 
-  if (symbol==NULL)
-  {
-//    printf ("Warning: could not locate the specified name %s in any outer symbol table \n"e,
-//	name.str());
-  //  ROSE_ASSERT(false);
-  }
-  return symbol;
+    if (symbol==NULL)
+    {
+        //    printf ("Warning: could not locate the specified name %s in any outer symbol table \n"e,
+        //	name.str());
+        //  ROSE_ASSERT(false); 
+    }
+    return symbol;
 }
 
 SgVariableSymbol *
@@ -4773,13 +4812,39 @@ static  void getSwitchCasesHelper(SgStatement* top, vector<SgStatement*>& result
 SgScopeStatement*
 SageInterface::getScope( const SgNode* astNode )
    {
-  // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
+    if (const SgSymbol* symbol = isSgSymbol(astNode))
+        return symbol->get_scope();
+    else if (const SgInitializedName* initName = isSgInitializedName(astNode))
+        return initName->get_scope();
+    else if (const SgTemplateArgument* tempArg = isSgTemplateArgument(astNode))
+        return tempArg->get_scope();
+    else if (const SgQualifiedName* qualifiedName = isSgQualifiedName(astNode))
+        return qualifiedName->get_scope();
 
+  // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
   const SgNode* parentNode = astNode;
-  while ( (isSgScopeStatement(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
-        {
-          parentNode = parentNode->get_parent();
-        }
+  while (!isSgScopeStatement(parentNode))
+  {
+      //George Vulov (11/29/2010)
+      //Function parameter lists are siblings of SgFunctionDefinition, so just going up to parents
+      //produces SgGlobal.
+      if (isSgFunctionParameterList(parentNode) || isSgCtorInitializerList(parentNode))
+      {
+          const SgFunctionDeclaration* funcDeclaration = isSgFunctionDeclaration(parentNode->get_parent());
+          ROSE_ASSERT(funcDeclaration != NULL);
+          funcDeclaration = isSgFunctionDeclaration(funcDeclaration->get_definingDeclaration());
+          if (funcDeclaration != NULL)
+          {
+              return funcDeclaration->get_definition();
+          }
+      }
+
+      parentNode = parentNode->get_parent();
+      if (parentNode == NULL)
+      {
+          break;
+      }
+  }
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
@@ -7319,9 +7384,13 @@ static SgVariableSymbol * addArg(SgFunctionParameterList *paraList, SgInitialize
   initName->set_scope(scope);
   if (scope)
   {
-    SgVariableSymbol* sym = new SgVariableSymbol(initName);
-    scope->insert_symbol(initName->get_name(), sym);
-    sym->set_parent(scope->get_symbol_table());
+    SgVariableSymbol* sym = isSgVariableSymbol(initName->get_symbol_from_symbol_table());
+    if (sym == NULL)
+    {
+      sym = new SgVariableSymbol(initName);
+      scope->insert_symbol(initName->get_name(), sym);
+      sym->set_parent(scope->get_symbol_table());
+    }
     return sym;
   }
   else
@@ -8016,9 +8085,9 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
       SgVariableSymbol* varSymbol = scope->lookup_variable_symbol(name);
       if (varSymbol==NULL)
       {
-	varSymbol = new SgVariableSymbol(initName);
-	ROSE_ASSERT(varSymbol);
-	scope->insert_symbol(name, varSymbol);
+        varSymbol = new SgVariableSymbol(initName);
+        ROSE_ASSERT(varSymbol);
+        scope->insert_symbol(name, varSymbol);
       }
       else
       { // TODO consider prepend() and insert(), prev_decl_time is position dependent.
@@ -8028,6 +8097,14 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
 	initName->set_prev_decl_item(prev_decl);
       } //end if
     } //end for
+    // Liao 12/8/2010
+    // For Fortran, a common statement may refer to a variable which is declared later.
+    // In this case, a fake symbol is used for that variable reference.
+    // But we have to replace the fake one with the real one once the variable declaration is inserted into AST
+    if (SageInterface::is_Fortran_language() )
+    {
+      fixVariableReferences (scope);
+    }
   }
 
 int SageInterface::fixVariableReferences(SgNode* root)

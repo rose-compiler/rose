@@ -29,6 +29,7 @@ machine_name=`uname -n`
 start_time=`date`
 start_time_seconds="$(date +%s)"
 
+
 # DQ (10/19/2010): This is not used (removed) because the syntax where it was used was overly complex.
 # def_num_procs=16
 
@@ -44,12 +45,32 @@ echo "**************************************************************************
 # df /export
 
 # tps : 11/17/2010 Hudson support for UPC - order matters!
-export PATH=${PATH}:/nfs/apps/upc/4.5.1.2/bin
-if test "$MACHINE" = "i686" ; then
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/nfs/apps/upc/4.5.1.2/lib
+#export PATH=${PATH}:/nfs/apps/upc/4.5.1.2/bin
+#if test "$MACHINE" = "i686" ; then
+#    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/nfs/apps/upc/4.5.1.2/lib
+#else
+#    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/nfs/apps/upc/4.5.1.2/lib64
+#fi
+
+#tps : 11/16/2010 : Lets add support for UPC
+#tps : 11/22/2010 : The setup.sh has been updated by admin
+UPC_TEST_MACHINE=`uname -m`
+if test "$UPC_TEST_MACHINE" = "i686" ; then
+  echo "UPC not tested on 32bit machines for now."
 else
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/nfs/apps/upc/4.5.1.2/lib64
+# Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
+  set +e
+  # This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
+  # on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
+  # This UPC support must be thought out more carefully.
+  if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+    source /nfs/apps/upc/4.5.1.2/setup.sh
+  else
+    echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
+  fi
+  set -e
 fi
+
 
 if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
 	GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
@@ -119,8 +140,9 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 
    if [ $? -ne 0 ]  ; then
       echo "fatal error in cmake build , aborting..."
-   # tps : call this line before any exit. It resets the Windows test
-   echo 3 > $win_file
+    # DQ (11/23/2010): Removed as suggested by Thomas.
+    # tps : call this line before any exit. It resets the Windows test
+    # echo 3 > $win_file
       exit 3
    fi
 
@@ -169,7 +191,7 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
 NODE_NAME=`uname -n`
 # tps : 11/12/10 : Admins are installing openGL on hudson machines. Enabled openGL thereafter. Should pass.
 # tps : It seems opengl is not properly installed on the hudson-rose node. Skip the test on this node for now.
-if test \! \( "$MACHINE" = "i686" -o "$NODE_NAME" = "hudson-rose.llnl.gov"  -o "$NODE_NAME" = "hudson-rose-07.llnl.gov" -o "$NODE_NAME" = "hudson-rose-08.llnl.gov" \) ; then
+if test \! \( "$MACHINE" = "i686" -o "$NODE_NAME" = "hudson-rose.llnl.gov"  -o "$NODE_NAME" = "hudson-rose-07.llnl.gov" -o "$NODE_NAME" = "hudson-rose-08.llnl.gov"  -o "$NODE_NAME" = "hudson-rose-13.llnl.gov" -o "$NODE_NAME" = "hudson-rose-14.llnl.gov" -o "$NODE_NAME" = "hudson-rose-15.llnl.gov" -o "$NODE_NAME" = "hudson-rose-16.llnl.gov"\) ; then
 	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
 fi
 # tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
@@ -181,13 +203,6 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 fi
 fi
 
-
-if test \( "x$ROSE_TEST_BUILD_STYLE" = "xminimal" \) ; then
-# test 32bit version of RTED as well
-if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
-	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
-fi
-fi
 
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
 

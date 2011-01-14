@@ -377,7 +377,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),SageInterface::generateUniqueName(node,false).c_str(),matchingNodeInMergedAST,(fileInfo != NULL) ? fileInfo->get_raw_filename().c_str() : "NULL");
 #endif
 
-  // Include the current IR node in ths set of associated IR nodes
+  // Include the current IR node in this set of associated IR nodes
   // (to avoid having to add it explicitly before or after this function call).
      nodeList.insert(node);
      if (finalDeleteSet.find(node) != finalDeleteSet.end())
@@ -1822,6 +1822,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DQ (11/21/2007): Added support for another IR node.
           case V_SgEquivalenceStatement:
           case V_SgCommonBlock:
+          case V_SgCommonBlockObject:
           case V_SgInterfaceStatement:
           case V_SgImportStatement:
 
@@ -1890,6 +1891,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                    }
                break;
              }
+
+       // DQ (11/20/2010): We don't share token IR nodes, I think this is not required.
+          case V_SgToken:
 
        // DQ (1/23/2010): These are relatively new IR nodes that are finally being used and tested.
           case V_SgFileList:

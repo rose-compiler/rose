@@ -1,4 +1,4 @@
-This directory tests the use of the GNU "--include" option to specify the use of
+This directory tests the use of the GNU "-include" option to specify the use of
 a specific header file in advance of all other header files.  In this case it places
 the specified header file after the "rose_edg_required_macros_and_functions.h".
 See the Makefile.am for the example of the commandline used, or run "make check"

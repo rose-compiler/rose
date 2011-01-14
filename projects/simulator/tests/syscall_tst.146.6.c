@@ -186,6 +186,7 @@ void setup(void)
 #else
         /* This works fine -- no floating point instructions executed */
         strcpy(f_name, name);
+        strcat(f_name, ".");
         sprintf(f_name+strlen(f_name), "%d", getpid());
 #endif
 

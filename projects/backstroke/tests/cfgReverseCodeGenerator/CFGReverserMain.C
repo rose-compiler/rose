@@ -16,8 +16,26 @@ struct IsEvent
 
 	bool operator() (SgFunctionDeclaration* decl)
 	{
-		return globalScope->lookup_function_symbol("reverseMe") != NULL && 
-				decl->get_symbol_from_symbol_table() == globalScope->lookup_function_symbol("reverseMe");
+		if (SgMemberFunctionDeclaration* memFunc = isSgMemberFunctionDeclaration(decl))
+		{
+			SgClassDefinition* classDef = memFunc->get_class_scope();
+			SgClassDeclaration* classDecl = classDef->get_declaration();
+			string className = classDecl->get_name();
+
+			SgNamespaceDefinitionStatement* namespaceDef = isSgNamespaceDefinitionStatement(classDecl->get_parent());
+			if (namespaceDef != NULL)
+			{
+				string namespaceName = namespaceDef->get_namespaceDeclaration()->get_name();
+				if (namespaceName == "gas_station" && className == "GasStationEvents")
+				{
+					string funcName = decl->get_name();
+
+					if (funcName == "OnArrival" || funcName == "OnFinishedPumping" || funcName == "OnFinishedPaying")
+						return true;
+				}
+			}
+		}
+		return false;
 	}
 };
 
@@ -28,6 +46,7 @@ int main(int argc, char** argv)
 
 	EventProcessor event_processor;
 
+#ifdef REVERSE_CODE_GENERATION
 	//Add the handlers in order of priority. The lower ones will be used only if higher ones do not produce results
 	//Expression handlers:
 	event_processor.addExpressionHandler(new IdentityExpressionHandler);
@@ -43,6 +62,9 @@ int main(int argc, char** argv)
 	//Variable value extraction handlers
 	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
 	event_processor.addVariableValueRestorer(new ExtractFromUseValueRestorer);
+#else
+	event_processor.addStatementHandler(new StateSavingStatementHandler);
+#endif
 
 	SgScopeStatement* globalScope = isSgScopeStatement(SageInterface::getFirstGlobalScope(project));
 	Backstroke::reverseEvents(&event_processor, IsEvent(globalScope), project);

@@ -387,7 +387,15 @@ MemoryManager::MemoryManager()
 
 MemoryManager::~MemoryManager()
 {
+<<<<<<< HEAD
   checkForNonFreedMem();
+=======
+    checkForNonFreedMem();
+
+    // free all the allocation-types
+    for(MemoryTypeSet::iterator i = mem.begin(); i != mem.end(); ++i)
+        delete *i;
+>>>>>>> e4d9b200063c609d1db68b1781b95ff502484499
 }
 
 
@@ -754,10 +762,17 @@ void MemoryManager::print(std::ostream& os) const
         return;
     }
 
+<<<<<<< HEAD
     os << std::endl;
     os << "------------------------------- Memory Manager Status -----------------------------" << std::endl << std::endl;
     for (MemoryTypeSet::const_iterator i = mem.begin(); i != mem.end(); ++i)
         os << i->second << std::endl;
+=======
+    os << endl;
+    os << "------------------------------- Memory Manager Status -----------------------------" << endl << endl;
+    for(MemoryTypeSet::iterator i = mem.begin(); i != mem.end(); ++i)
+        os << **i << endl;
+>>>>>>> e4d9b200063c609d1db68b1781b95ff502484499
 
     os << "-----------------------------------------------------------------------------------" << std::endl;
     os << std::endl;

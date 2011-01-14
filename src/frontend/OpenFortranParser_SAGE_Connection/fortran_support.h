@@ -123,7 +123,6 @@ extern std::list<SgInterfaceStatement*> astInterfaceStack;
 extern std::vector<std::string> astIncludeStack;
 
 
-
 // ***********************************************
 //              Function Prototypes
 // ***********************************************
@@ -140,6 +139,8 @@ void setSourcePosition  ( SgInitializedName* initializedName, const TokenListTyp
 void setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token );
 void setSourcePosition  ( SgInitializedName* initializedName, Token_t* token );
 
+void setSourceEndPosition  ( SgLocatedNode* locatedNode, Token_t* token );
+
 // DQ (10/6/2008): the need for this is eliminated by moving some nodes that have source 
 // position from SgSupport to teh new SgLocatedNodeSupport subtree of SgLocatedNode.
 // void setSourcePosition  ( SgRenamePair* namePair, Token_t* token );
@@ -153,6 +154,7 @@ void resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode*
 // DQ (10/10/2010): This function is added to support resetting the end 
 // of the blocks (required to get comments woven into the AST properly).
 void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token );
+// void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token, const std::string & filename );
 void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, SgStatement* sourceStatement );
 void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNumber );
 
@@ -286,6 +288,19 @@ SgClassSymbol* buildIntrinsicModule_ISO_C_BINDING();
 
 //! Build the module symbols required to support intrinsic modules.
 SgClassSymbol* buildIntrinsicModule ( const std::string & name );
+
+// DQ (11/26/2010): Added support for building implicit variables.
+//! Support for building implicit variables (works even when the name matches an inplicit function).
+void buildImplicitVariableDeclaration( const SgName & variableName );
+
+//! Support to push tokens onto the astNameStack.
+void push_token(std::string s);
+
+//! Support to setting on statement (labels are found on the astLabelSymbolStack).
+void processLabelOnStack( SgStatement* statement );
+
+//! This support is required to work around a bug in OFP (label == NULL in R807).
+void specialFixupForLabelOnStackAndNotPassedAsParameter( SgStatement* statement );
 
 // endif for ROSE_FORTRAN_SUPPORT
 #endif

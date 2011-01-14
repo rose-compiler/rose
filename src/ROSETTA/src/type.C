@@ -734,7 +734,7 @@ Grammar::setUpTypes ()
      ArrayType.setFunctionSource           ( "SOURCE_ARRAY_TYPE", "../Grammar/Type.code");
      ModifierType.setFunctionSource        ( "SOURCE_MODIFIER_TYPE", "../Grammar/Type.code");
      QualifiedNameType.setFunctionSource   ( "SOURCE_QUALIFIED_NAME_TYPE", "../Grammar/Type.code");
-     TypeCrayPointer.editSubstitute        ( "MANGLED_ID_STRING", "s" );
+     TypeCrayPointer.editSubstitute        ( "MANGLED_ID_STRING", "CrayPointer" );
 
   // DQ (8/17/2010): Added support for SgTypeString (used in Fortran).
      TypeString.setFunctionSource         ( "SOURCE_TYPE_STRING_TYPE", "../Grammar/Type.code");

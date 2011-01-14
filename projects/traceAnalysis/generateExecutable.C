@@ -1,11 +1,229 @@
-/* Tests ability to build a new executable from scratch */
+// This file is based on testElfConstruct.C and testPeConstruct.C in the tests/roseTests/binaryTests directory.
 //#include "fileoffsetbits.h"
 #include "sage3basic.h"
+#include "AsmUnparser_compat.h" /* for unparseInstruction() for debugging [RPM 2010-11-12] */
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
-// This file is copied and modified slightly from the file testElfConstruct.C in the tests/roseTests/binaryTests directory.
-SgAsmGenericFile*
-generateExecutable( SgAsmBlock *block ) 
+/** Creates text sections from supplied instructions.
+ *
+ *  The supplied instructions are organized into zero or more text sections such that none of the sections has more than @p
+ *  max_separation bytes of unused space between any two instructions.  This is necessary because if the set of instructions
+ *  came from an execution trace, its likely to included instructions from widely separated regions of the process address space
+ *  (corresponding to instructions from the main executable and each of its shared objects).  If we attempt to place all the
+ *  instructions in a single section, then that section would have to be large enough to span from the minimum instruction
+ *  address to the maximum instruction address.
+ *
+ *  Sections are created in order of starting virtual address. They are also defined to be stored in this same order in the file
+ *  (which is created later).  Parts of a section that are not filled with instructions will be initialized to zero.
+ *
+ *  No attempt is to resolve instructions that overlap (the one starting at the higher address is written last).  Rather, we
+ *  depend on the caller to have supplied a list of instructions whose encoding bytes are consistent in the overlapping regions,
+ *  if any.
+ *
+ *  The return value is a list of sections that were created. The list is sorted by section preferred virtual address.
+ *
+ *  Implementation note: Using three loops to do this isn't the most efficient. We could use one loop and avoid a whole bunch 
+ *  of map lookups, but three loops is certainly the easy way. */
+template<class HeaderType, class SectionType>
+static std::vector<SectionType*>
+generateTextSections(HeaderType *fhdr, const Disassembler::InstructionMap &insns, const rose_addr_t max_separation=8192,
+                     const rose_addr_t mem_align=4096, const rose_addr_t file_align=4096)
+{
+    ROSE_ASSERT(fhdr);
+    std::vector<SectionType*> sections;
+
+#if 0 /* This is the fast alternative because it doesnt' do any std::map find() operations. */
+    
+    Disassembler::InstructionMap::const_iterator ii=insns.begin();
+    while (ii!=insns.end()) {
+        /* Find the first instruction (ij) that's more than max_separation bytes from the end of the previous instruction (after
+         * page alignment). This will be the point where we split the instructions into two different text sections.  The "ii"
+         * instruction iterator points to the first instruction of this section while the "ij" iterator points to the first
+         * instruction of the next section (or end). */
+        Disassembler::InstructionMap::const_iterator ij = ii;
+        rose_addr_t start_va = ALIGN_DN(ii->first, mem_align);
+        rose_addr_t end_va = ALIGN_UP(ii->first + ii->second->get_raw_bytes().size(), mem_align);
+        ROSE_ASSERT(start_va >= fhdr->get_base_va());
+        while (ij!=insns.end() && end_va + max_separation >= ALIGN_DN(ij->first, mem_align)) {
+            end_va = ALIGN_UP(ij->first + ij->second->get_raw_bytes().size(), mem_align);
+            ++ij;
+        }
+
+        /* Build the section */
+        SectionType *section = new SectionType(fhdr);
+        section->get_name()->set_string(".text" + StringUtility::numberToString(sections.size()));
+        section->set_purpose(SgAsmGenericSection::SP_PROGRAM);
+        section->set_file_alignment(page_align);
+        section->set_mapped_alignment(mem_align);
+        section->set_size(end_va - start_va);
+        section->set_mapped_preferred_rva(start_va - fhdr->get_base_va());
+        section->set_mapped_size(end_va - start_va);
+        section->set_mapped_rperm(true);
+        section->set_mapped_wperm(false);
+        section->set_mapped_xperm(true);
+        section->align();
+        sections.push_back(section);
+
+        /* Write instructions into the section */
+        unsigned char *content = section->writable_content(section->get_size());
+        for (/*void*/; ii!=ij; ii++) {
+            rose_addr_t offset = ii->first - start_va;
+            memcpy(content+offset, &(ii->second->get_raw_bytes()[0]), ii->second->get_raw_bytes().size());
+        }
+    }
+
+#else /* This is the cleaner alternative because ExtentMap figures out the text sections for us. */
+
+    typedef std::map<rose_addr_t, unsigned char*> SectionContent;
+
+    /* Determine what regions of address space we need for text sections. */
+    ExtentMap section_extents;
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
+        section_extents.insert(ii->first, ii->second->get_raw_bytes().size(), mem_align, mem_align);
+    section_extents.precipitate(max_separation);
+
+    /* Create the text sections */
+    SectionContent content;
+    for (ExtentMap::iterator sei=section_extents.begin(); sei!=section_extents.end(); ++sei) {
+        SectionType *section = new SectionType(fhdr);
+        section->get_name()->set_string(".text" + StringUtility::numberToString(sections.size()));
+        section->set_purpose(SgAsmGenericSection::SP_PROGRAM);
+        section->set_file_alignment(file_align);
+        section->set_mapped_alignment(mem_align);
+        section->set_size(sei->second);
+        section->set_mapped_preferred_rva(sei->first - fhdr->get_base_va());
+        section->set_mapped_size(sei->second);
+        section->set_mapped_rperm(true);
+        section->set_mapped_wperm(false);
+        section->set_mapped_xperm(true);
+        section->align();                                       /* Necessary because we changed alignment constraints */
+        sections.push_back(section);
+        content.insert(std::make_pair(sei->first, section->writable_content(sei->second)));
+    }
+    
+    /* Copy instructions into their appropriate sections. */
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        SectionContent::iterator ci=content.upper_bound(ii->first);
+        --ci;
+        rose_addr_t offset = ii->first - ci->first;
+        memcpy(ci->second + offset, &(ii->second->get_raw_bytes()[0]), ii->second->get_raw_bytes().size());
+    }
+    
+#endif
+    
+    return sections;
+}
+
+/** Generates a PE file containing the supplied instructions.  Most of this was copied from testPeConstruct.C in the
+ * tests/roseTests/binaryTests directory. */
+SgAsmGenericFile *
+generatePeExecutable(const std::string &name, const Disassembler::InstructionMap &insns, rose_addr_t entry_va)
+{
+    /* The SgAsmGenericFile is the root of a tree describing a binary file (executable, shared lib, object, core dump). */
+    SgAsmGenericFile *ef = new SgAsmGenericFile;
+
+    /***************************************************************************************************************************
+     * The DOS part of the file.
+     ***************************************************************************************************************************/
+
+    /* The DOS File Header is the first thing in the file, always at offset zero. The constructors generally take arguments to
+     * describe the new object's relationship with existing objects. In this case, the SgAsmDOSFileHeader is a child of the
+     * SgAsmGenericFile in the AST. If we were parsing an existing binary file then we would construct the SgAsmDOSFileHeader
+     * and then invoke parse(), which recursively constructs and parses everything reachable from the DOS File Header.
+     *
+     * A freshly constructed DOS File Header isn't too useful since nearly all its data members are initialized to zeros. But
+     * all we're using it for is to describe the location of the PE File Header. */
+    SgAsmDOSFileHeader *dos_fhdr = new SgAsmDOSFileHeader(ef);
+
+    /* The Extended DOS Header immediately follows the DOS File Header and contains the address of the PE File Header. In this
+     * example, we'll place the PE File Header immediately after the Extended DOS File Header. */
+    SgAsmDOSExtendedHeader *dos2 = new SgAsmDOSExtendedHeader(dos_fhdr);
+
+    /* The optional DOS real-mode text and data section. This isn't actually necessary if the program will only be run in
+     * Windows. Normally the DOS program will just print an error message that the program must be run in Windows.  DOS files
+     * don't have a section table like many other headers. Instead, the location and size of the text/data segment is stored
+     * directly in the DOS header. If the DOS text/data section is created, it must appear directly after the DOS Extended
+     * Header in the file. */
+    SgAsmGenericSection *dos_rm = new SgAsmGenericSection(ef, dos_fhdr);
+    dos_rm->set_size(0x90);
+    dos_rm->set_mapped_preferred_rva(0);
+    dos_rm->set_mapped_size(dos_rm->get_size());
+    dos_rm->set_mapped_rperm(true);
+    dos_rm->set_mapped_wperm(true);
+    dos_rm->set_mapped_xperm(true);
+    dos_fhdr->set_rm_section(dos_rm);
+    dos_fhdr->add_entry_rva(rose_rva_t(dos_rm->get_mapped_preferred_rva(), dos_rm));
+
+    /* Call reallocate() to give the sections we've defined so far a chance to adjust to the proper sizes since we'll need to
+     * know the final offsets in the next step. */
+    ef->reallocate();
+
+    /***************************************************************************************************************************
+     * PE File Header
+     ***************************************************************************************************************************/
+
+    /* The PE File Header follows the DOS Extended Header. We need to store the offset in the extended header.  PE files usually
+     * have a base virtual address of something like 0x01000000. However, the executable we're generating from a trace does not
+     * need a particular base address since it will include instructions from not only the main executable, but also any
+     * libraries that were (partially) executed. */
+    SgAsmPEFileHeader *fhdr = new SgAsmPEFileHeader(ef);
+    fhdr->set_base_va(0);                                       /* not typical */
+    dos2->set_e_lfanew(fhdr->get_offset());
+    ROSE_ASSERT(entry_va>=fhdr->get_base_va());
+    fhdr->add_entry_rva(entry_va - fhdr->get_base_va());        /* we know address but not section */
+
+    /***************************************************************************************************************************
+     * PE Section Table
+     ***************************************************************************************************************************/
+
+    /* Most files have a PE Section Table that describes the various sections in the file (the code, data, dynamic linking,
+     * symbol tables, string tables, etc). The PE Section Table is a child of the PE File Header. We give it an address that's
+     * at the end of the file. Generally, newly-constructed objects will have a size of at least one byte so that when placing
+     * new items at the EOF they'll have unique starting offsets (this is important for the functions that resize and/or
+     * rearrange sections--they need to know the relative order of sections in the file). */
+    SgAsmPESectionTable *sectab = new SgAsmPESectionTable(fhdr);
+
+    /***************************************************************************************************************************
+     * PE Text Section
+     ***************************************************************************************************************************/
+
+    /* Most PE executables have just one text section. However, the trace may have instructions that are widely separated in
+     * memory (some from the main executable and some from various shared libraries).  We'll create a text section for each area
+     * of memory. */
+    std::vector<SgAsmPESection*> text = generateTextSections<SgAsmPEFileHeader, SgAsmPESection>(fhdr, insns, 8192, 4096, 512);
+    for (std::vector<SgAsmPESection*>::iterator ti=text.begin(); ti!=text.end(); ++ti)
+        sectab->add_section(*ti);
+
+    /***************************************************************************************************************************
+     * Generate the output.
+     ***************************************************************************************************************************/
+
+    /* Some of the sections we created above have default sizes of one byte because there's no way to determine their true
+     * size until we're all done creating sections.  The SgAsmGenericFile::reallocate() traverses the AST and allocates the
+     * actual file storage for each section, adjusting other sections to make room and updating various tables and
+     * file-based data structures. */
+    ef->reallocate();
+
+    /* The .text section also contains (parts of) various other sections defined by the RVA/Size pairs. The way we do this is
+     * to first declare the .text section to be big enough only for the program instructions, then create the other sections
+     * immediately after it, allow all sections to allocate file space, and finally we extend the .text section to overlap with
+     * the following sections. */
+    // text->set_mapped_size(xxx);
+    // text->set_size(xxx);
+
+    /* Unparse the AST to generate an executable. */
+    std::ofstream f(name.c_str());
+    ef->unparse(f);
+
+    return ef;
+}
+
+/** Generates an ELF file containing the supplied instructions.  Most of this was copied from testElfConstruct.C in the
+ *  tests/roseTests/binaryTests directory. */
+SgAsmGenericFile *
+generateElfExecutable(const std::string &name, const Disassembler::InstructionMap &insns, rose_addr_t entry_va)
 {
     /* The SgAsmGenericFile is the root of a tree describing a binary file (executable, shared lib, object, core dump).
      * Usually this node appears in a much larger AST containing instructions contexts and other information, but for the
@@ -15,364 +233,62 @@ generateExecutable( SgAsmBlock *block )
     
     /* The ELF File Header is the first thing in the file, always at offset zero. The constructors generally take arguments to
      * describe the new object's relationship with existing objects, i.e., its location in the AST. In this case, the
-     * SgAsmElfFileHeader is a child of the SgAsmGenericFile (file headers are always children of their respective file).
-     *
-     * Section constructors (SgAsmElfFileHeader derives from SgAsmGenericSection) always place the new section at the current
-     * end-of-file and give it an initial size of one byte.  This ensures that each section has a unique starting address,
-     * which is important when file memory is actually allocated for a section and other sections need to be moved out of the
-     * way--the allocator needs to know the relative positions of the sections in order to correctly relocate them.
-     *
-     * If we were parsing an ELF file we would usually use ROSE's frontend() method. However, one can also parse the file by
-     * first constructing the SgAsmElfFileHeader and then invoking its parse() method, which parses the ELF File Header and
-     * everything that can be reached from that header.
-     * 
-     * We use 0x400000 as the virtual address of the main LOAD segment, which occupies the first part of the file, up through
-     * the end of the .text section (see below). ELF Headers don't actually store a base address, so instead of assigning one
-     * to the SgAsmElfFileHeader we'll leave the headers's base address at zero and add base_va explicitly whenever we need
-     * it. */
+     * SgAsmElfFileHeader is a child of the SgAsmGenericFile (file headers are always children of their respective file). */
     SgAsmElfFileHeader *fhdr = new SgAsmElfFileHeader(ef);
-    fhdr->get_exec_format()->set_word_size(8);                  /* default is 32-bit; we want 64-bit */
-    fhdr->set_isa(SgAsmExecutableFileFormat::ISA_X8664_Family); /* instruction set architecture; default is ISA_IA32_386 */
-    rose_addr_t base_va = 0x400000;                             /* base virtual address */
+    ROSE_ASSERT(entry_va>=fhdr->get_base_va());                 /* no worries here, since base is probably zero anyway */
+    fhdr->add_entry_rva(entry_va - fhdr->get_base_va());        /* we know address but not section */
 
-    /* ELF executable files always have an ELF Segment Table (also called the ELF Program Header Table) usually appears
-     * immediately after the ELF File Header.  The ELF Segment Table describes contiguous regions of the file that should be
-     * memory mapped by the loader. ELF Segments don't have names--names are imparted to the segment by virtue of a segment
-     * also being described by the ELF Section Table which we'll create later.
-     *
-     * Note that an SgAsmGenericSection (which represents both ELF Segments and ELF Sections) does not have the ELF Segment
-     * Table or ELF Section Table as a parent in the AST, but rather has the ELF File Header as a parent. This allows a single
-     * SgAsmGenericSection to represent an ELF Segment, an ELF Section, both, or neither. It also allows us to define ELF
-     * Segments and ELF Sections without needing to first define the ELF Segment Table or ELF Section Table, which is
-     * particularly useful when one wants one of those tables to appear at the end of the file. */
+    /* Place the ELF Segment Table immediately after the ELF File Header just created. We'll fill it in later, after we've
+     * determined the addresses of all the ELF Sections. */
     SgAsmElfSegmentTable *segtab = new SgAsmElfSegmentTable(fhdr);
 
-#if 1
-    /* Create the .text section to hold machine instructions. We'll eventually add it to the ELF Section Table (which will be
-     * created at the end of the file) and store its name in an ELF String Section associated with the ELF Section Table. The
-     * fact that we haven't created the string table yet doesn't prevent us from giving the section a name.
-     *
-     * A note about names: Names are represented by SgAsmGenericString objects. The SgAsmGenericString class is virtual and
-     * subclasses SgAsmBasicString and SgAsmStoredString represent strings that have no file storage and strings that are
-     * stored in the file, respectively.  The stored-string classes are further specialized to handle string tables for
-     * various file formats and understand how to map the string into a file, how to allocate and reallocate space, etc.  In
-     * general, you want to change the string characters (with set_string()) stored in an SgAsmGenericString that's already
-     * present in the AST.
-     * 
-     * The section constructors and reallocators don't worry about alignment issues--they always allocate from the next
-     * available byte. However, instructions typically need to satisfy some alignment constraints. We can easily adjust the
-     * file offset chosen by the constructor, but we also need to tell the reallocator about the alignment constraint.
-     * 
-     * NOTE: There's a slight nuance of the reallocator that must be accounted for if you want to be very precise about where
-     *       things are located in the file. When the reallocator shifts sections to make room for a section that needs to
-     *       grow, it shifts all affected sections by a uniform amount. This preserves overlaps (like when a segment overlaps
-     *       with a bunch of sections) but it also means that the alignment constraint we'll set for ".text" will cause the
-     *       ELF Segment Table constructed above at a lower offset to move in tandem with ".text" when the ELF File Header (at
-     *       an even lower address) needs to grow to its final size.  This isn't a problem--you just end up with a couple unused
-     *       bytes between the header and the segment table that will show up as a "hole" when subsequently parsed. If you're
-     *       picky, the correct solution is to give the header a chance to allocate its file space before we construct the
-     *       ".text" segment.
-     *
-     * In order to write the instructions out during the unparse phase, we create a new class from SgAsmElfSection and
-     * override the virtual unparse() method.  The reallocate() method is called just before unparsing and we augment that in
-     * order to set an ELF-specific bit in the ELF Section Table flags (alternatively, we could have set that bit after the
-     * add_section() call below that adds the .text section to the ELF Section Table, but we do it here for demonstration).
-     * The calculate_sizes() function is used by SgAsmElfSection::reallocate() to figure out how much space is needed for the
-     * section.
-     *
-     * The instructions correspond to the assembly:
-     *     .section .text
-     *     .global _start
-     * _start:
-     *     movl    $1, %eax    # _exit(86)
-     *     movl    $86, %ebx
-     *     int     $0x80 */
-    class TextSection : public SgAsmElfSection {
-    public:
-        TextSection(SgAsmElfFileHeader *fhdr, size_t ins_size, const unsigned char *ins_bytes)
-            : SgAsmElfSection(fhdr), ins_size(ins_size), ins_bytes(ins_bytes)
-            {}
-        virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
-            if (entsize)  *entsize  = 1;                        /* an "entry" is one byte of instruction */
-            if (required) *required = 1;                        /* each "entry" is also stored in one byte of the file */
-            if (optional) *optional = 0;                        /* there is no extra data per instruction byte */
-            if (entcount) *entcount = ins_size;                 /* number of "entries" is the total instruction bytes */
-            return ins_size;                                    /* return value is section size required */
-        }
-        virtual bool reallocate() {
-            bool retval = SgAsmElfSection::reallocate();        /* returns true if size or position of any section changed */
-            SgAsmElfSectionTableEntry *ste = get_section_entry();
-            ste->set_sh_flags(ste->get_sh_flags() | SgAsmElfSectionTableEntry::SHF_ALLOC); /* set the SHF_ALLOC bit */
-            return retval;
-        }
-        virtual void unparse(std::ostream &f) const {
-            write(f, 0, ins_size, ins_bytes);                   /* Write the instructions at offset zero in section */
-        }
-        size_t ins_size;
-        const unsigned char *ins_bytes;
-    };
-    ef->reallocate();                                           /* Give existing sections a chance to allocate file space */
-    static const unsigned char instructions[] = {0xb8, 0x01, 0x00, 0x00, 0x00, 0xbb, 0x56, 0x00, 0x00, 0x00, 0xcd, 0x80};
-    SgAsmElfSection *text = new TextSection(fhdr, NELMTS(instructions), instructions);
-    text->set_purpose(SgAsmGenericSection::SP_PROGRAM);         /* Program-supplied text/data/etc. */
-    text->set_offset(ALIGN_UP(text->get_offset(), 4));          /* Align on an 8-byte boundary */
-    text->set_file_alignment(4);                                /* Tell reallocator about alignment constraint */
-    text->set_mapped_alignment(4);                              /* Alignment constraint for memory mapping */
-    text->set_mapped_preferred_rva(base_va+text->get_offset()); /* Mapped address is based on file offset */
-    text->set_mapped_size(text->get_size());                    /* Mapped size is same as file size */
-    text->set_mapped_rperm(true);                               /* Readable */
-    text->set_mapped_wperm(false);                              /* Not writable */
-    text->set_mapped_xperm(true);                               /* Executable */
-    text->get_name()->set_string(".text");                      /* Give section the standard name */
-#else
-    /* Another way to do the same thing without a temporary class. */
-    ef->reallocate();
-    static const unsigned char instructions[] = {0xb8, 0x01, 0x00, 0x00, 0x00, 0xbb, 0x56, 0x00, 0x00, 0x00, 0xcd, 0x80};
-    SgAsmElfSection *text = new SgAsmElfSection(fhdr);
-    text->set_purpose(SgAsmGenericSection::SP_PROGRAM);         /* Program-supplied text/data/etc. */
-    text->set_offset(ALIGN_UP(text->get_offset(), 4));          /* Align on an 8-byte boundary */
-    text->set_file_alignment(4);                                /* Tell reallocator about alignment constraint */
-    text->set_size(sizeof instructions);                        /* Give section a specific size */
-    text->set_mapped_alignment(4);                              /* Alignment constraint for memory mapping */
-    text->set_mapped_preferred_rva(base_va+text->get_offset()); /* Mapped address is based on file offset */
-    text->set_mapped_size(text->get_size());                    /* Mapped size is same as file size */
-    text->set_mapped_rperm(true);                               /* Readable */
-    text->set_mapped_wperm(false);                              /* Not writable */
-    text->set_mapped_xperm(true);                               /* Executable */
-    text->get_name()->set_string(".text");                      /* Give section the standard name */
-    unsigned char *content = text->writable_content(sizeof instructions);
-    memcpy(content, instructions, sizeof instructions);
-#endif
+    /* Create text section(s) based on instructions. */
+    std::vector<SgAsmElfSection*> text = generateTextSections<SgAsmElfFileHeader, SgAsmElfSection>(fhdr, insns, 8192, 4096, 4096);
 
-
-    /* Set the main entry point to be the first virtual address in the text section. A rose_rva_t address is associated
-     * with a section (.text in this case) so that if the starting address of the section changes (such as via reallocate())
-     * then the rose_rva_t address will also change so as to continue to refer to the same byte of the section. */
-    rose_rva_t entry_rva(text->get_mapped_preferred_rva(), text);
-    fhdr->add_entry_rva(entry_rva);
-
-    /* We now add an entry to the ELF Segment Table. ELF Segments often overlap multiple sections, and in this case we're
-     * going to create a segment that overlaps with the ELF File Header, the ELF Segment Table, and the ".text" section. The
-     * functions that reallocate space for sections (since most are born with a size of one byte) understand that things may
-     * overlap and make appropriate adjustments. In this case all we need to do is set the starting offset and size. */
-    SgAsmElfSection *seg1 = new SgAsmElfSection(fhdr);          /* ELF Segments are represented by SgAsmElfSection */
-    seg1->get_name()->set_string("LOAD");                       /* Segment names aren't saved (but useful for debugging) */
-    seg1->set_offset(0);                                        /* Starts at beginning of file */
-    seg1->set_size(text->get_offset() + text->get_size());      /* Extends to end of .text section */
-    seg1->set_mapped_preferred_rva(base_va);                    /* Typically mapped by loader to this memory address */
-    seg1->set_mapped_size(seg1->get_size());                    /* Make mapped size match size in the file */
-    seg1->set_mapped_rperm(true);                               /* Readable */
-    seg1->set_mapped_wperm(false);                              /* Not writable */
-    seg1->set_mapped_xperm(true);                               /* Executable */
-    segtab->add_section(seg1);                                  /* Add definition to ELF Segment Table */
-
-    /* Add an empty PAX segment as further demonstration of adding an ELF Segment. We need to tell the loader that this
-     * section holds PAX Flags. There's no interface (currently) to do this at a generic level, so we make an adjustment
-     * directly to the ELF Segment Table entry. */
-    SgAsmElfSection *pax = new SgAsmElfSection(fhdr);
-    pax->get_name()->set_string("PAX Flags");                   /* Name just for debugging */
-    pax->set_offset(0);                                         /* Override address to be at zero rather than EOF */
-    pax->set_size(0);                                           /* Override size to be zero rather than one byte */
-    segtab->add_section(pax);                                   /* Add definition to ELF Segment Table */
-    pax->get_segment_entry()->set_type(SgAsmElfSegmentTableEntry::PT_PAX_FLAGS);
-    
-    /* In order to give sections names there has to be an ELF String Section where the names are stored. An ELF String Section
-     * is a section itself and will appear in the ELF Section Table. The name of this string section will be stored in a
-     * string section, possibly this same string section. */
+    /* Although ELF executables don't need a section table, we'll create one anyway and populate it with all the text
+     * sections. A section table needs a string table in which to store section names. The string table usually comes just
+     * before the section table in the file.  The string table is a section itself, and appears as an item in the section table.
+     * Section tables usually come at the end of the file. */
     SgAsmElfStringSection *shstrtab = new SgAsmElfStringSection(fhdr);
     shstrtab->get_name()->set_string(".shstrtab");
-
-    /* Most files have an ELF Section Table that describes the various sections in the file (the code, data, dynamic linking,
-     * symbol tables, string tables, etc). The ELF Section Table is a child of the ELF File Header, just as all other sections
-     * reachable from the ELF File Header are also children of the header.  The class SgAsmGenericSection is used to represent
-     * all types of contiguous file regions, whether they're ELF Sections, ELF Segments, PE Objects, etc.
-     * 
-     * The first entry of an ELF Section Table should always be an all-zero entry. It is not necessary to explicitly create
-     * the zero entry since the unparse() method will do so. When parsing an ELF Section Table, the parser will read the
-     * all-zero entry and actually create an empty, no-name, section with ID==0 (this is to handle cases that violate the ELF
-     * specification).
-     * 
-     * Section names are stored in an ELF String Section that's associated with the ELF Section Table. We make that
-     * association by adding the ELF String Section to the ELF Section Table. The first string table that's added will be the
-     * one that stores section names. */
     SgAsmElfSectionTable *sectab = new SgAsmElfSectionTable(fhdr);
-    sectab->add_section(text);                                  /* Add the .text section */
-    sectab->add_section(shstrtab);                              /* Add the string table to store section names. */
+    sectab->add_section(shstrtab);
 
-#if 1 /* This stuff is here for demonstration. It's not necessary for the generated a.out to function properly. */
-
-    /* Create a symbol table. Symbol tables should always be added to the ELF Section Table, and thus have a name. ELF Symbol
-     * Tables need to know the section that serves as storage for the symbol names, an ELF String Section. The string table
-     * for the section name (set above) does not need to be the same as the string table used for symbol names, although we
-     * use the same one here just for brevity. */
-    SgAsmElfSymbolSection *symtab = new SgAsmElfSymbolSection(fhdr, shstrtab);
-    symtab->get_name()->set_string(".dynsym-test");
-    symtab->set_is_dynamic(true);                               /* This is a symbol table for dynamic linking */
-    sectab->add_section(symtab);                                /* Make the entry in the ELF Section Table */
-
-    /* Add some symbols to the symbol table. Symbols are born with an empty name pointing into the symbol string table and the
-     * names should be adjusted by calling get_name()->set_string("xxx"); there is no need to construct new SgAsmStoredString
-     * objects and assign them with set_name(). */
-    SgAsmElfSymbol *symbol;
-
-    symbol = new SgAsmElfSymbol(symtab);                        /* New symbol is a child of the symbol table */
-    symbol->set_value(0xaabbccdd);                              /* Arbitrary symbol value, often an RVA */
-    symbol->set_size(512);                                      /* Arbitrary size of the thing to which the symbol refers */
-    symbol->get_name()->set_string("symbolA");                  /* Symbol name */
-
-    symbol = new SgAsmElfSymbol(symtab);
-    symbol->set_value(0x11223344);
-    symbol->set_size(4);
-    symbol->get_name()->set_string("symbolB");
-
-    /* Create a .dynamic section. Dynamic sections are generally added to both the section table and the segment table and are
-     * memory mapped with read/write permission. They need an ELF String Table in order to store the library names. In real
-     * executables the string table is usually separate from the others, but we'll just use the one we already created. */
-    SgAsmElfDynamicSection *dynamic = new SgAsmElfDynamicSection(fhdr, shstrtab);
-    dynamic->get_name()->set_string(".dynamic-test");           /* Give section a name */
-    dynamic->set_mapped_preferred_rva(0x800000);                /* RVA where loader will map section */
-    dynamic->set_mapped_size(dynamic->get_size());              /* Make mapped size same as file size */
-    dynamic->set_mapped_rperm(true);                            /* Readable */
-    dynamic->set_mapped_wperm(true);                            /* Writable */
-    dynamic->set_mapped_xperm(false);                           /* Not executable */
-    sectab->add_section(dynamic);                               /* Make an ELF Section Table entry */
-    segtab->add_section(dynamic);                               /* Make an ELF Segment Table entry */
-
-    /* Create some entries for the .dynamic section. Entries are born with a null name rather than an empty string since most
-     * entries don't have a string value. So an entry that requires a string value (like DT_NEEDED) will need to have a new
-     * string constructed. You don't have to worry about placing the new string in a particular string table since
-     * reallocate() will eventually take care of that, so you can even use the very simple SgAsmBasicString interface. */
-    SgAsmElfDynamicEntry *dynent;
-
-    /* Add some DT_NULL entries */
-    dynent = new SgAsmElfDynamicEntry(dynamic);
-    dynent = new SgAsmElfDynamicEntry(dynamic);
-    dynent = new SgAsmElfDynamicEntry(dynamic);
-
-    /* Add a library name */
-    dynent = new SgAsmElfDynamicEntry(dynamic);
-    dynent->set_d_tag(SgAsmElfDynamicEntry::DT_NEEDED);
-    dynent->set_name(new SgAsmBasicString("testlib"));
-
-    /* Create a relocation table. Relocation tables depend on a symbol table and, indirectly, a string table. */
-    SgAsmElfRelocSection *reladyn = new SgAsmElfRelocSection(fhdr, symtab,NULL);
-    reladyn->get_name()->set_string(".rela.dyn-test");
-    reladyn->set_uses_addend(true);                             /* This is a "rela" table rather than a "rel" table */
-    sectab->add_section(reladyn);                               /* Make an ELF Section Table entry */
-
-    /* Add a relocation entry to the relocation table. We create just one here, but in practice you would create as many as
-     * you need.  Even REL tabels have a set_r_addend() method, but you should leave the addend at zero for them. The
-     * relocation type determines how many bits of the offset are significant (and other details) and are described in the
-     * system <elf.h> file (we may eventually change this interface to unify the various file formats). */
-    SgAsmElfRelocEntry *relent = new SgAsmElfRelocEntry(reladyn);
-    relent->set_r_offset(0x080495ac);                           /* An arbitrary offset */
-    relent->set_r_addend(0xaa);                                 /* Arbitrary value to add to relocation address */
-    relent->set_sym(symtab->index_of(symbol));                  /* Index of symbol in its symbol table */
-    relent->set_type(SgAsmElfRelocEntry::R_386_JMP_SLOT);       /*  */
-
-    /* We can add notes to an executable */
-    SgAsmElfNoteSection *notes = new SgAsmElfNoteSection(fhdr);
-    notes->set_name(new SgAsmBasicString("ELF Notes"));
-    notes->set_mapped_preferred_rva(0x900000);                /* RVA where loader will map section */
-    notes->set_mapped_size(notes->get_size());              /* Make mapped size same as file size */
-    notes->set_mapped_rperm(true);                            /* Readable */
-    notes->set_mapped_wperm(true);                            /* Writable */
-    notes->set_mapped_xperm(false);                           /* Not executable */
-    SgAsmElfNoteEntry *note = new SgAsmElfNoteEntry(notes);
-    note->set_name(new SgAsmBasicString("ROSE"));
-    const char *payload = "This is a test note.";
-    for (size_t i=0; payload[i]; i++) {
-        note->get_payload().push_back(payload[i]);
+    /* Most ELF executables have just one PT_LOAD section for text, and it usually starts at the beginning of the file (i.e.,
+     * includes the ELF File Header and ELF Segment Table). We'll create one for each text section, the first of which will
+     * include everything earlier in the file. Since ROSE uses the same class for ELF Segments and ELF Sections, we only need to
+     * create the first segment. */
+    SgAsmElfSection *segment0 = NULL;
+    if (!text.empty()) {
+        segment0 = new SgAsmElfSection(fhdr);
+        segment0->get_name()->set_string("segment0");           /* ELF does not store name; used only for debugging */
+        segment0->set_offset(0);                                /* Start at beginning of file and...*/
+        segment0->set_size(text[0]->get_offset()+text[0]->get_size());   /* ...continue through end of first text section */
+        segment0->set_mapped_preferred_rva(text[0]->get_mapped_preferred_rva() -
+                                          text[0]->get_offset()); /* Address adjusted for pre-text file content */
+        segment0->set_mapped_size(segment0->get_size());
+        segment0->set_mapped_rperm(true);
+        segment0->set_mapped_wperm(false);
+        segment0->set_mapped_xperm(true);
+        segtab->add_section(segment0);
+        sectab->add_section(text[0]);
     }
-    segtab->add_section(notes);
 
-
-    /* Add a Symbol Version section.  This is a gnu extension to elf to support versioning of individual symbols 
-       the size of the symver section should match the size of the dynamic symbol section (nominally .dynsym).
-       there should also be an entry in the .dynamic section [DT_VERDEFNUM] that matches this same number.
-     */
-    SgAsmElfSymverSection* symver = new SgAsmElfSymverSection(fhdr);
-    symver->get_name()->set_string(".gnu-version-test");       /* Give section a name */
-    symver->set_mapped_preferred_rva(0xA00000);                /* RVA where loader will map section */
-    symver->set_mapped_size(symver->get_size());               /* Make mapped size same as file size */
-    symver->set_mapped_rperm(true);                            /* Readable */
-    symver->set_mapped_wperm(false);                           /* Writable */
-    symver->set_mapped_xperm(false);                           /* Not executable */
-    sectab->add_section(symver);                               /* Make an ELF Section Table entry */
-
-    for(size_t i=0; i < symtab->get_symbols()->get_symbols().size(); ++i){
-      SgAsmElfSymverEntry* symver_entry = new SgAsmElfSymverEntry(symver);
-      symver_entry->set_value(i);
+    /* Add the remaining sections to both the segment and section tables */
+    for (size_t i=1; i<text.size(); i++) {
+        segtab->add_section(text[i]);
+        sectab->add_section(text[i]);
     }
     
-    SgAsmElfSymverDefinedSection* symver_def = new SgAsmElfSymverDefinedSection(fhdr,shstrtab);
-    symver_def->get_name()->set_string(".gnu.version_d-test");
-    symver_def->set_mapped_preferred_rva(0xB00000);                /* RVA where loader will map section */
-    symver_def->set_mapped_size(symver_def->get_size());               /* Make mapped size same as file size */
-    symver_def->set_mapped_rperm(true);                            /* Readable */
-    symver_def->set_mapped_wperm(false);                           /* Writable */
-    symver_def->set_mapped_xperm(false);                           /* Not executable */
-
-    sectab->add_section(symver_def);                               /* Make an ELF Section Table entry */
-
-    /** normal case - one Aux structure*/
-    SgAsmElfSymverDefinedEntry* symdefEntry1 = new SgAsmElfSymverDefinedEntry(symver_def);
-    symdefEntry1->set_version(1);
-    symdefEntry1->set_hash(0xdeadbeef);// need to implement real hash support?
-    symdefEntry1->set_flags(0x0);
-    
-    SgAsmElfSymverDefinedAux* symdefAux1a = new SgAsmElfSymverDefinedAux(symdefEntry1, symver_def);
-    symdefAux1a->get_name()->set_string("version-1");
-
-    SgAsmElfSymverDefinedEntry* symdefEntry2 = new SgAsmElfSymverDefinedEntry(symver_def);
-    new SgAsmElfSymverDefinedAux(symdefEntry2, symver_def);
-    new SgAsmElfSymverDefinedAux(symdefEntry2, symver_def);
-
-    /* Very strange case, but technically legal - zero Aux */
-    new SgAsmElfSymverDefinedEntry(symver_def);
-
-    SgAsmElfSymverNeededSection* symver_need = new SgAsmElfSymverNeededSection(fhdr,shstrtab);
-    symver_need->get_name()->set_string(".gnu.version_d-test");
-    symver_need->set_mapped_preferred_rva(0xC00000);                /* RVA where loader will map section */
-    symver_need->set_mapped_size(symver_need->get_size());               /* Make mapped size same as file size */
-    symver_need->set_mapped_rperm(true);                            /* Readable */
-    symver_need->set_mapped_wperm(false);                           /* Writable */
-    symver_need->set_mapped_xperm(false);                           /* Not executable */
-    sectab->add_section(symver_need);                               /* Make an ELF Section Table entry */
-
-
-#endif
-
-    /* Some of the sections we created above have default sizes of one byte because there's no way to determine their true
-     * size until we're all done creating sections.  The SgAsmGenericFile::reallocate() traverses the AST and allocates the
-     * actual file storage for each section, adjusting other sections to make room and updating various tables and
-     * file-based data structures. You can call this function at any time, but it must be called before unparse(). */
+    /* Some of the sections we created above have default sizes of one byte because there's no way to determine their true size
+     * until we're all done creating things.  The SgAsmGenericFile::reallocate() traverses the AST and allocates the actual file
+     * storage and virtual memory for each section, adjusting other sections to make room and updating various tables and
+     * file-based data structures. We can call this function at any time, but it must be called before unparse(). */
     ef->reallocate();
 
-    /* The reallocate() has a shortcoming [as of 2008-12-19] in that it might not correctly update memory mappings in the case
-     * where the mapping for a section is inferred from the mapping of a containing segment when the section is shifted in the
-     * file to make room for an earlier section that's also in the segment.
-     * 
-     * We can work around that here by explicitly setting the memory mapping to be relative to the segment. However, we'll
-     * need to call reallocate() again because besides moving things around, reallocate() also updates some ELF-specific data
-     * structures from values stored in the more generic structures. */
-    text->set_mapped_preferred_rva(seg1->get_mapped_preferred_rva()+(text->get_offset()-seg1->get_offset()));
-    ef->reallocate(); /*won't resize or move things this time since we didn't modify much since the last call to reallocate()*/
-
-    /* Show some results. This is largely the same output as would be found in the *.dump file produced by many of the other
-     * binary analysis tools. */
-    ef->dump(stdout);
-    SgAsmGenericSectionPtrList all = ef->get_sections(true);
-    for (size_t i=0; i<all.size(); i++) {
-        fprintf(stdout, "Section %zu:\n", i);
-        all[i]->dump(stdout, "    ", -1);
-    }
-
     /* Unparse the AST to generate an executable. */
-    std::ofstream f("a.out");
+    std::ofstream f(name.c_str());
     ef->unparse(f);
-
- // return 0;
     return ef;
 }
 

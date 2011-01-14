@@ -273,6 +273,10 @@ struct hash_nodeptr
     */
      std::string get_name ( const SgC_PreprocessorDirectiveStatement* directive );
 
+   /*! \brief Generate a useful name to describe the SgToken IR node
+    */
+     std::string get_name ( const SgToken* token );
+
  //@}
 
  //------------------------------------------------------------------------
