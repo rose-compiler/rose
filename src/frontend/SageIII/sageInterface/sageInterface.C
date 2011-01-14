@@ -4307,9 +4307,15 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
 
      SgLocatedNode*     locatedNode = isSgLocatedNode(node);
      SgExpression*      expression  = isSgExpression(node);
+//     SgInitializedName* initName    = isSgInitializedName(node);
      SgPragma*          pragma      = isSgPragma(node); // missed this one!! Liao, 1/30/2008
      SgGlobal*          global      = isSgGlobal(node); // SgGlobal should have NULL endOfConstruct()
 
+#if 0
+     SgVariableDefinition * v_d = isSgVariableDefinition(node);
+     if (v_d )
+       printf ("Debug, Found a variable definition: %p\n", v_d);
+#endif
   // if ((locatedNode) && (locatedNode->get_endOfConstruct() == NULL))
   //   if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
      if (locatedNode != NULL)
@@ -4331,13 +4337,23 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
              }
         }
        else // special non-located node with file info
-        {
+       {
+//         if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
+//         {
+//           locatedNode->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+//           locatedNode->get_startOfConstruct()->set_parent(locatedNode);
+//
+//           locatedNode->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+//           locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
+//
+//         }
+//         else  
            if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
-               {
-                 pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-                 pragma->get_startOfConstruct()->set_parent(pragma);
-               }
-        }
+         {
+           pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+           pragma->get_startOfConstruct()->set_parent(pragma);
+         }
+       }
    }
 
 
@@ -4356,7 +4372,7 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
 
      SgLocatedNode *    locatedNode = isSgLocatedNode(node);
      SgExpression*      expression  = isSgExpression(node);
-     SgInitializedName* initName    = isSgInitializedName(node);
+//     SgInitializedName* initName    = isSgInitializedName(node);
      SgPragma*          pragma      = isSgPragma(node); // missed this one!! Liao, 1/30/2008
      SgGlobal*          global      = isSgGlobal(node); // SgGlobal should have NULL endOfConstruct()
 
@@ -4365,7 +4381,8 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
   // (i.e. when the start source postion is already NULL).
 
   // if ((locatedNode) && (locatedNode->get_endOfConstruct() == NULL))
-     if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+  //   if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+     if  (locatedNode != NULL) 
         {
           locatedNode->set_startOfConstruct(NULL);
 
@@ -4383,17 +4400,15 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
         }
        else
         {
-          if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
-             { //  no endOfConstruct for SgInitializedName
-               initName->set_startOfConstruct(NULL);
-             }
-            else
-             {
+//          if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
+//             { //  no endOfConstruct for SgInitializedName
+//               initName->set_startOfConstruct(NULL);
+//             }
+//            else
                if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
                   {
                     pragma->set_startOfConstruct(NULL);
                   }
-             }
         }
    }
 

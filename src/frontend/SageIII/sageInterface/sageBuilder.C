@@ -192,6 +192,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
           ROSE_ASSERT  (old_parent != NULL);
           ROSE_ASSERT  (isSgFunctionParameterList(old_parent) != NULL);
           new_initName->set_parent(varDecl); // adjust parent from SgFunctionParameterList to SgVariableDeclaration
+          delete (default_initName->get_declptr()); // delete the var definition
           delete (default_initName); // must delete the old one to pass AST consistency test
 
           isFortranParameter = true;
@@ -222,6 +223,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   ROSE_ASSERT((variableDefinition_original->get_endOfConstruct())!=NULL);
 #endif
   setSourcePositionForTransformation(varDecl);
+  //ROSE_ASSERT (isSgVariableDefinition(initName->get_declptr())->get_startOfConstruct()!=NULL);
   return varDecl;
 }
 
