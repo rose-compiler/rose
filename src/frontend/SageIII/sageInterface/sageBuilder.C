@@ -192,7 +192,14 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
           ROSE_ASSERT  (old_parent != NULL);
           ROSE_ASSERT  (isSgFunctionParameterList(old_parent) != NULL);
           new_initName->set_parent(varDecl); // adjust parent from SgFunctionParameterList to SgVariableDeclaration
-          delete (default_initName->get_declptr()); // delete the var definition
+
+          // delete (default_initName->get_declptr()); // relink the var definition
+          SgVariableDefinition * var_def = isSgVariableDefinition(default_initName->get_declptr()) ;
+          ROSE_ASSERT (var_def != NULL);
+          var_def->set_parent(new_initName);
+          var_def->set_vardefn(new_initName);
+          new_initName->set_declptr(var_def); // it was set to SgProcedureHeaderStatement as a function argument
+
           delete (default_initName); // must delete the old one to pass AST consistency test
 
           isFortranParameter = true;
