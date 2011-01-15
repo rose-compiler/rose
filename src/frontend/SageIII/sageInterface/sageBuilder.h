@@ -614,6 +614,10 @@ buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_t
 SgMemberFunctionDeclaration *
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
 
+//! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
+SgMemberFunctionDeclaration *
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope);
+
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
 SgMemberFunctionDeclaration *
 buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL);
