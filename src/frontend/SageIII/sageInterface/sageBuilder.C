@@ -882,7 +882,17 @@ SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclarat
   return result;
 }
 
-SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
+SgMemberFunctionDeclaration*
+SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope)
+{
+    SgType* return_type = func_type->get_return_type();
+    SgFunctionParameterList* paralist = buildFunctionParameterList(func_type->get_argument_list());
+
+    return SageBuilder::buildDefiningMemberFunctionDeclaration(name, return_type, paralist, scope);
+}
+
+SgMemberFunctionDeclaration*
+SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
 {
   SgMemberFunctionDeclaration * result = buildDefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,scope);
   // set definingdecl for SgCtorInitializerList
