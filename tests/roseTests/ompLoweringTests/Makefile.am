@@ -117,7 +117,7 @@ CXX_TESTCODES_REQUIRED_TO_RUN =  \
 	helloNested.cpp \
 	objectPrivate.cpp \
 	objectFirstPrivate.cpp \
-	objectLastprivate.cpp \
+   objectLastprivate.cpp \
 	orphanedAtomic.cpp \
 	preprocessingInfo2.cpp \
 	task_link.cpp \
