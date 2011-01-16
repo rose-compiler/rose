@@ -41,79 +41,11 @@ HEADER_START
        */
           SgType(const SgType & X);
 
-      /*! \if documentDevelopmentVersionUsingDoxygen 
-          \brief default destructor
-          \endif
-       */
-      // ~$CLASSNAME();
-
-      //! return string representing the mangled name
-      /*! This function is required to provide a unique identifier for type names internally
-       */
-       // virtual SgName get_mangled(SgUnparse_Info& = SgNO_UNPARSE_INFO);
-       // virtual SgName get_mangled( SgUnparse_Info & info );
-
        // RV (1/30/2006)
       /*! Returns a mangled string representation of this type.
           Equivalent types have the same mangled string.
        */
           virtual SgName get_mangled (void) const;
-
-#if 0
-       // DQ (3/2/2003): Implement get_parent from SgNode
-      //! get the parent node in the AST
-      /*! \ref memberFunction_getParent_DocumentationPage
-          The parent node permits access to higher levels of context information.
-       */
-          SgType* get_parent() const;
-#endif
-
-       // name TypeModifierGroup1 Type Modifiers
-      /* 
-          name Type Modifiers
-          \brief Compute modifier values.
-
-          These modifiers define associated properties of the type (e.g. const, extern,
-          etc.) At present these appear to be unimplemented (all functions return false).
-
-          \internal Return type should be changed to "bool."
-          \todo implement type modifier query functions in SgType class.
-       */
-#if 0
-      //! Tests for declaration as const
-          virtual bool isConst() const ;
-      //! Test for declaration as volatile
-          virtual bool isVolatile() const ;
-      //! Tests for declaration as restrict
-          virtual bool isRestrict() const ;
-      //! Tests for declaration as UPC shared
-          virtual bool isUPC_Shared() const ;
-      //! Tests for declaration as UPC strict
-          virtual bool isUPC_Strict() const ;
-      //! Tests for declaration as UPC relaxed
-          virtual bool isUPC_Relaxed() const ;
-#endif
-#if 0
-      //! Tests for declaration as extern
-          virtual bool isExtern() const ;
-      //! Tests for declaration as typedef
-          virtual bool isTypedef() const ;
-      //! Tests for declaration as virtual
-          virtual bool isVirtual() const ;
-      //! Test for declaration as protected
-          virtual bool isProtected() const ;
-      //! Test for declaration as private
-          virtual bool isPrivate() const ;
-      //! Test for declaration as public
-          virtual bool isPublic() const ;
-      //! Test for declaration as global
-//        virtual bool isGlobal() const ;
-      //! Test for declaration as auto (default)
-          virtual bool isAuto() const ;
-      //! Test for declaration as sync (depricated not used )
-//        virtual bool isSync() const ;
-#endif
-       /*! */
 
       /*! 
           name Numerical Modifiers
@@ -128,37 +60,49 @@ HEADER_START
           bool isFloatType() const;     //!< There are several sorts of float types (this queries an arbitrary type).
        /*! */
 
-#if 0
-       // These are unimplemented within SAGE 2
-          bool isLong() const;
-          bool isShort() const;
-#endif
+       // DQ (10/11/2007): These sorts of values are usually handled as enum fields in ROSE. They could be redone at some point.
+       // PC and AS new variables to support a flexible stripType() which takes an bit array as a paramater
+          static const unsigned char STRIP_MODIFIER_TYPE  = ((unsigned char) 1 << 0); // 0x01
+          static const unsigned char STRIP_REFERENCE_TYPE = ((unsigned char) 1 << 1); // 0x02
+          static const unsigned char STRIP_POINTER_TYPE   = ((unsigned char) 1 << 2); // 0x04
+          static const unsigned char STRIP_ARRAY_TYPE     = ((unsigned char) 1 << 3); // 0x08
+          static const unsigned char STRIP_TYPEDEF_TYPE   = ((unsigned char) 1 << 4); // 0x016
 
-      // DQ (10/11/2007): These sorts of values are usually handled as enum fields in ROSE. They could be redone at some point.
-      // PC and AS new variables to support a flexible stripType() which takes an bit array as a paramater
-         static const unsigned char STRIP_MODIFIER_TYPE  = ((unsigned char) 1 << 0); // 0x01
-         static const unsigned char STRIP_REFERENCE_TYPE = ((unsigned char) 1 << 1); // 0x02
-         static const unsigned char STRIP_POINTER_TYPE   = ((unsigned char) 1 << 2); // 0x04
-         static const unsigned char STRIP_ARRAY_TYPE     = ((unsigned char) 1 << 3); // 0x08
-         static const unsigned char STRIP_TYPEDEF_TYPE   = ((unsigned char) 1 << 4); // 0x016
+      /*! \brief Some types can hide other type IR nodes internally.  This function is true if it can hide another type (pointer, array, etc.).
 
-// DQ (9/7/2007): What is this and where did it come from???
-// #define PREFERENCE_READS_BOOKS      ((unsigned char) 1 << 3) // 0x08
-	 
-      //! Return the base type of the associated type.
-      /*! The base type is important when dealing with pointers, etc.
+          Result is true if it can hide a one or more types, else false.
+
+          \internal True only if this is either a SgPointerType, SgArrayType, SgReferenceType, SgTypedefType, SgFunctionType, or SgModifierType.
+       */
+          bool containsInternalTypes();
+
+      /*! \brief Generate a container of types hidden in the input type.
+
+          Returns a vector of types hidden in the input type (pointer, array, etc.).
+
+          \internal Order of types in vector is not significant (e.g. for SgFunctionType IR nodes).
+       */
+          Rose_STL_Container<SgType*> getInternalTypes() const;
+
+      /*! \brief Reset the base type.
+          This function resets the base type.  It is an error to call it for types where containsInternalTypes() == false.
+       */
+          void reset_base_type(SgType* baseType);
+
+      /*! \brief Return the base type of the associated type.
+          The base type is important when dealing with pointers, arrays, etc.
        */
           SgType* findBaseType() const;
 
-          SgType * dereference();              //!< Returns type hidden behind pointr of reference.
-          const SgType * dereference() const ; //!< Returns type hidden behind pointr of reference.
+          SgType * dereference();              //!< Returns type hidden behind pointer of reference.
+          const SgType * dereference() const ; //!< Returns type hidden behind pointer of reference.
 
-       // DQ (6/21/2005): Added to support getting a deeply nested type quickly and easily.
+       // DQ (6/21/2005): Added to support getting a deeply nested types quickly and easily.
       //! Returns hidden type beneath layers of typedefs, pointers, references, modifiers, array representation, etc.
-          //SgType* stripType() const;
           SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
 
        // DQ (6/30/2005): Added to support invistigation of hidden types
+      //! This only strips away typedefs and modifiers (specialized usage).
           SgType* stripTypedefsAndModifiers() const;
 
        // DQ (6/30/2005): Would these functions also be useful?
@@ -166,20 +110,10 @@ HEADER_START
        // SgType* stripModifiers() const;
 
        // DQ (7/26/2010): Now we finally need this function!
-       // Generates a new SgModifierType with modifiers set acordig to input parameter.
+       // Generates a new SgModifierType with modifiers set according to input parameter.
        // SgModifierType* matchModifiers(unsigned int f);
 
        // void printName(SgUnparse_Info& ui, ostream& os);
-
-#if 0
-      // DQ (3/26/2001): This does not appear to be used anywhere so comment it out for now!
-      // All possible sorts of basic types
-          enum basic_type_enum { t_Char, t_SignedChar, t_UnsignedChar,
-                                 t_Short, t_SignedShort, t_UnsignedShort, t_Int, t_SignedInt,
-                                 t_UnsignedInt, t_Long, t_SignedLong, t_UnsignedLong, t_Void,
-                                 t_Wchar, t_Float, t_Double, t_LongLong, t_LongDouble, t_Bool,
-                                 t_Default };
-#endif
 
 #if 0
        // This codes was part of an experiment to distinguish struct tag { int x; } X; from struct tag X;
@@ -204,21 +138,6 @@ HEADER_START
           bool isAutonomousTagDeclaration() const;
           void setAutonomousTagDeclaration();
           void unsetAutonomousTagDeclaration();
-#endif
-
-#if 0
-        // DQ (9/7/2007): This does not appear to be used anywhere!
-      /*! 
-          \brief Possible sorts of modifiers
-          \deprecated Values used previously in CC++ will be removed at some point.
-          \todo add additional modifieds for private, const, etc.; to match access functions.
-
-          Some of these modifiers are not used.
-       */
-          enum basic_modifier_enum { e_const = 0x00000001, //!< value for const modifier
-                                     e_sync  = 0x00000002, //!< (used only for CC++).
-                                     e_global= 0x00000004, //!< not used.
-                                   };
 #endif
 
        // DQ (9/7/2007): Support for Fortran attribute specifiers
@@ -259,25 +178,6 @@ HEADER_START
 
       //! handles promotion to float
           static SgType * float_promotion       (SgType *, SgType *);
-      /*! */
-
-      /* 
-          \if documentDevelopmentVersionUsingDoxygen
-          name Editing functions for modifiers
-          \brief Permits editing of modifiers (addition/removal).
-          \internal How are these meant to be used, since modifiers are not dynamic?
-          \endif
-       */
-
-#if 0
-       // DQ (4/5/2004): Removed since it is not used anywhere!
-      //! Permits removal of modifiers
-          static SgType * rmModifier  (SgType *, int);
-
-       // DQ (4/5/2004): Removed since it is not used anywhere!
-      //! Permits addition of modifiers
-          static SgType * addModifier (SgType *, int);
-#endif
       /*! */
 
        // DQ (4/27/2005): Added protected function to support refactored code for name mangling
@@ -2061,6 +1961,168 @@ SgType::getCurrentScope()
   // ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
 
      return currentScope;
+   }
+
+
+bool
+SgType::containsInternalTypes()
+   {
+  // DQ (1/14/2011): Added sunction to support collection of types in AST node query support.
+  // Some types can hide internal types and we often want to resolve type based properties 
+  // that require us to dig into these specific type IR nodes.  For example, when we traverse
+  // an AST subtree we might want to build a list of all referenced types (including indirect
+  // references through pointers and arrays, etc.).  This function is a simple interface that
+  // communicates the type IR nodes that can hide internal types and thus may require a 
+  // nested traverals or a specialized recursive traveral.
+
+     bool returnValue = false;
+
+     if ( isSgPointerType(this) != NULL || isSgArrayType(this)    != NULL || isSgReferenceType(this) != NULL || 
+          isSgTypedefType(this) != NULL || isSgFunctionType(this) != NULL || isSgModifierType(this)  != NULL)
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+Rose_STL_Container<SgType*>
+SgType::getInternalTypes() const
+   {
+  // This function builds a collection of internal types (unordered).
+
+     Rose_STL_Container<SgType*> internalTypes;
+
+  // Cast away const of "this" pointer
+     SgType* currentType = (SgType*) this;
+
+     SgModifierType*  modType     = NULL;
+     SgPointerType*   pointType   = NULL;
+     SgReferenceType* refType     = NULL;
+     SgArrayType*     arrayType   = NULL;
+     SgTypedefType*   typedefType = NULL;
+
+  // Initialize with the input type (not clear if this is helpful).
+  // internalTypes.push_back(currentType);
+
+     while (true)
+        {
+          if ( (modType = isSgModifierType(currentType)) )
+             {
+               currentType = modType->get_base_type();
+             }
+            else
+             {
+               if ( (refType = isSgReferenceType(currentType)) )
+                  {
+                    currentType = refType->get_base_type();
+                  }
+                 else
+                  {
+                    if ( (pointType = isSgPointerType(currentType)) )
+                       {
+                         currentType = pointType->get_base_type();
+                       }
+                      else
+                       {
+                         if ( (arrayType = isSgArrayType(currentType)) )
+                            {
+                              currentType = arrayType->get_base_type();
+                            }
+                           else
+                            {
+                              if ( (typedefType = isSgTypedefType(currentType)) )
+                                 {
+                                   currentType = typedefType->get_base_type();
+                                 }
+                                else
+                                 {
+                                // Exit the while(true){} loop!
+
+                                // If we have a SgFunctionType then we have to use a different approach to collect 
+                                // the different associated types.  I am not clear if this function should have
+                                // such broad semantics.
+                                   SgFunctionType* functionType = isSgFunctionType(currentType);
+                                   if (functionType != NULL)
+                                      {
+#if 0
+                                        printf ("Note: Found a SgFunctionType within SgType::getInternalTypes(), not clear how to handle this case... \n");
+                                     // ROSE_ASSERT(false);
+#endif
+                                      }
+
+                                   break;
+                                 }
+                            }
+                       }
+                  }
+             }
+
+          internalTypes.push_back(currentType);
+        }
+
+     return internalTypes;
+   }
+
+void
+SgType::reset_base_type(SgType* baseType)
+   {
+  // DQ (1/15/2011): This function is used to reset types within Fortran handling.
+  // Types that have not been see yet and are required to types within construct declarations
+  // are assigned a SgTypeDefault which is then replaces after all declarations have been seem.
+
+     SgType* parentType = (SgType*) this;
+
+     ROSE_ASSERT(parentType != NULL);
+     ROSE_ASSERT(parentType->containsInternalTypes() == true);
+
+     SgModifierType*  modType     = NULL;
+     SgPointerType*   pointType   = NULL;
+     SgReferenceType* refType     = NULL;
+     SgArrayType*     arrayType   = NULL;
+     SgTypedefType*   typedefType = NULL;
+
+     if ( (modType = isSgModifierType(parentType)) )
+        {
+          modType->set_base_type(baseType);
+        }
+       else
+        {
+          if ( (refType = isSgReferenceType(parentType)) )
+             {
+               refType->set_base_type(baseType);
+             }
+            else
+             {
+               if ( (pointType = isSgPointerType(parentType)) )
+                  {
+                    pointType->set_base_type(baseType);
+                  }
+                 else
+                  {
+                    if ( (arrayType = isSgArrayType(parentType)) )
+                       {
+                         arrayType->set_base_type(baseType);
+                       }
+                      else
+                       {
+                         if ( (typedefType = isSgTypedefType(parentType)) )
+                            {
+                           // DQ (1/15/2011): This does not make sense to approach this way, and I think is not required for Fortran support (at least).
+                           // typedefType->set_base_type(baseType);
+                              ROSE_ASSERT(typedefType->get_declaration() != NULL);
+                              printf ("Error: Typedef can't have there base type reset! \n");
+                              ROSE_ASSERT(false);
+                            }
+                           else
+                            {
+                              printf ("Unable to reset the base type for parentType = %p = %s \n",parentType,parentType->class_name().c_str());
+                              ROSE_ASSERT(false);
+                            }
+                       }
+                  }
+             }
+        }
    }
 
 SOURCE_MAIN_TYPE_END
