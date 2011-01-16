@@ -279,11 +279,16 @@ template<typename NodeFunctional>
       ROSE_ASSERT(node!=NULL);
 
       AstQuery<AstSimpleProcessing,NodeFunctional> astQuery(&nodeFunc);
-
+#if 0
+      printf ("In AstQueryNamespace::querySubTree() switch \n");
+#endif
       switch (defineQueryType)
       {
         case AstQueryNamespace::AllNodes:
           {
+#if 0
+            printf ("In AstQueryNamespace::querySubTree() case of AstQueryNamespace::AllNodes \n");
+#endif
             astQuery.traverse(node,treeTraversalOrder);
 
             break;
@@ -311,6 +316,7 @@ template<typename NodeFunctional>
           printf ("Sorry, ExtractTypes case not implemented for e_OneParameterFunctionClassification! \n");
           ROSE_ABORT();
           break;
+
         default:
           printf ("default reached in switch (queryType) \n");
           ROSE_ABORT();

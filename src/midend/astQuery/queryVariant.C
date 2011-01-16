@@ -80,17 +80,17 @@ mergeList ( NodeQuerySynthesizedAttributeType & nodeList, const Rose_STL_Contain
 
 
 // DQ (4/7/2004): Added to support more general lookup of data in the AST (vector of variants)
-void*
-querySolverGrammarElementFromVariantVector ( 
-   SgNode * astNode, 
-   VariantVector targetVariantVector,  NodeQuerySynthesizedAttributeType* returnNodeList )
+void* querySolverGrammarElementFromVariantVector ( SgNode * astNode, VariantVector targetVariantVector,  NodeQuerySynthesizedAttributeType* returnNodeList )
    {
   // This function extracts type nodes that would not be traversed so that they can
   // accumulated to a list.  The specific nodes collected into the list is controlled
   // by targetVariantVector.
 
      ROSE_ASSERT (astNode != NULL);
-     
+
+#if 0
+     printf ("Inside of void* querySolverGrammarElementFromVariantVector() astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+#endif
 
      Rose_STL_Container<SgNode*> nodesToVisitTraverseOnlyOnce;
 
@@ -99,14 +99,61 @@ querySolverGrammarElementFromVariantVector (
      vector<SgNode*>               succContainer      = astNode->get_traversalSuccessorContainer();
      vector<pair<SgNode*,string> > allNodesInSubtree  = astNode->returnDataMemberPointers();
 
-     if( succContainer.size() != allNodesInSubtree.size() )
-     for(vector<pair<SgNode*,string> >::iterator iItr = allNodesInSubtree.begin(); iItr!= allNodesInSubtree.end();
-         ++iItr )
-       if( isSgType(iItr->first) != NULL  )
-         if(std::find(succContainer.begin(),succContainer.end(),iItr->first) == succContainer.end() )
-           pushNewNode (returnNodeList,targetVariantVector,iItr->first);
- 
-    return NULL;  
+#if 0
+     printf ("succContainer.size()     = %zu \n",succContainer.size());
+     printf ("allNodesInSubtree.size() = %zu \n",allNodesInSubtree.size());
+#endif
+
+     if ( succContainer.size() != allNodesInSubtree.size() )
+        {
+          for (vector<pair<SgNode*,string> >::iterator iItr = allNodesInSubtree.begin(); iItr!= allNodesInSubtree.end(); ++iItr )
+             {
+#if 0
+               if ( iItr->first != NULL  )
+                    printf ("iItr->first = %p = %s \n",iItr->first,iItr->first->class_name().c_str());
+#endif
+               SgType* type = isSgType(iItr->first);
+               if ( type != NULL  )
+                  {
+                 // DQ (1/13/2011): If we have not already seen this entry then we have to chase down possible nested types.
+                 // if (std::find(succContainer.begin(),succContainer.end(),iItr->first) == succContainer.end() )
+                    if (std::find(succContainer.begin(),succContainer.end(),type) == succContainer.end() )
+                       {
+                      // Are there any other places where nested types can be found...?
+                      // if ( isSgPointerType(iItr->first) != NULL  || isSgArrayType(iItr->first) != NULL || isSgReferenceType(iItr->first) != NULL || isSgTypedefType(iItr->first) != NULL || isSgFunctionType(iItr->first) != NULL || isSgModifierType(iItr->first) != NULL)
+                      // if (type->containsInternalTypes() == true)
+                         if (type->containsInternalTypes() == true)
+                            {
+#if 0
+                              printf ("If we have not already seen this entry then we have to chase down possible nested types. \n");
+                           // ROSE_ASSERT(false);
+#endif
+
+                              Rose_STL_Container<SgType*> typeVector = type->getInternalTypes();
+#if 0
+                              printf ("----- typeVector.size() = %zu \n",typeVector.size());
+#endif
+                              Rose_STL_Container<SgType*>::iterator i = typeVector.begin();
+                              while(i != typeVector.end())
+                                 {
+#if 0
+                                   printf ("----- internal type = %s \n",(*i)->class_name().c_str());
+#endif
+                                // Add this type to the return list of types.
+                                   pushNewNode (returnNodeList,targetVariantVector,*i);
+
+                                   i++;
+                                 }
+                            }
+
+                      // pushNewNode (returnNodeList,targetVariantVector,iItr->first);
+                         pushNewNode (returnNodeList,targetVariantVector,type);
+                       }
+                  }
+             }
+        }
+
+     return NULL;
    } /* End function querySolverUnionFields() */
 
 NodeQuerySynthesizedAttributeType
