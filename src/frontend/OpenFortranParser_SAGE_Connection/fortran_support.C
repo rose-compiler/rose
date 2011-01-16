@@ -3161,9 +3161,13 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
                if (variableSymbol == NULL)
                   {
                     variableSymbol = new SgVariableSymbol(initializedName);
-
+                    //printf ("Debug, built a var symbol %p\n",variableSymbol);
                     astScopeStack.front()->insert_symbol(variableName,variableSymbol);
                     ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
+                    //SgSymbolTable * parent = isSgSymbolTable(variableSymbol->get_parent());
+                    //ROSE_ASSERT (parent != NULL);
+                   // ROSE_ASSERT (parent->find_variable(initializedName->get_name()) == variableSymbol);
+
                   }
              }
 
@@ -3176,7 +3180,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
        // Make sure that the variable does not already exist in this current scope!
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("Looking for symbol for initializedName = %s scope = %p = %s \n",initializedName->get_name().str(),initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
-#endif
+#endif 
        // Make sure we can find the newly added symbol!
        // ROSE_ASSERT(getTopOfScopeStack()->lookup_variable_symbol(variableName) != NULL);
 

@@ -8497,7 +8497,7 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
           if (variableSymbol != NULL)
              {
             // This variable was declared previously, if it is an array, then we do nothing. But if it is a 
-            // scalar then we have to convert it to a function returing the type of the scalar declaration.
+            // scalar then we have to convert it to a function returning the type of the scalar declaration.
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("We might have to convert this from a scalar to a function = %s \n",name.str());
 
@@ -8542,7 +8542,7 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
                   }
                  else
                   {
-                 // This case is visited in the handling of fortran statement functions (see test2007_179.f90).
+                 // This case is visited in the handling of Fortran statement functions (see test2007_179.f90).
 #if 0
                     printf ("This case is visited in the handling of fortran statement functions (see test2007_179.f90). \n");
 #endif
