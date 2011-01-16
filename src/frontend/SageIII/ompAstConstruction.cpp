@@ -1132,6 +1132,8 @@ This is no perfect solution until we handle preprocessing information as structu
       end_decl = isSgPragmaDeclaration (next_stmt);
       if ((end_decl) && (getOmpConstructEnum(end_decl) == end_omp_type))
         break;
+      else
+        end_decl = NULL; // MUST reset to NULL if not a match
       affected_stmts.push_back(next_stmt);
       next_stmt = getNextStatement (next_stmt);
     }  

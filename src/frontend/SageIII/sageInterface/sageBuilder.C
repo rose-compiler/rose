@@ -163,7 +163,8 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   {
     // Liao 12/13/2010
     // Fortran subroutine/function parameters have corresponding variable declarations in the body
-    // we need to share the initialized names of the parameters instead of creating new ones
+    // For this declaration, it should use the initialized names of the parameters instead of creating new ones
+    // The symbol of the init name should be under SgFunctionDefinition, instead of the function body block
     bool isFortranParameter = false; 
     if (SageInterface::is_Fortran_language())
     {
@@ -173,24 +174,33 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
         SgSymbolTable * st = f_def->get_symbol_table();
         ROSE_ASSERT (st != NULL);
         SgVariableSymbol * v_symbol = st->find_variable(name); 
-        if (v_symbol != NULL)
+        if (v_symbol != NULL) // find a function parameter with the same name
         {
           // replace the default one with the one from parameter
-          SgInitializedName *old_initName = varDecl->get_decl_item (name);
-          ROSE_ASSERT (old_initName != NULL);
+          SgInitializedName *default_initName = varDecl->get_decl_item (name);
+          ROSE_ASSERT (default_initName != NULL);
           SgInitializedName * new_initName = v_symbol->get_declaration();
           ROSE_ASSERT (new_initName != NULL);
-          SgInitializedNamePtrList  n_list= varDecl->get_variables();
-          std::replace (n_list.begin(), n_list.end(),old_initName, new_initName );
+          ROSE_ASSERT (default_initName != new_initName);
+
+          SgInitializedNamePtrList&  n_list= varDecl->get_variables();
+          std::replace (n_list.begin(), n_list.end(),default_initName, new_initName );
+          ROSE_ASSERT (varDecl->get_decl_item (name)==new_initName); //ensure the new one can be found  
+
+          // change the function argument's old parent to the variable declaration
           SgNode * old_parent = new_initName->get_parent();
           ROSE_ASSERT  (old_parent != NULL);
           ROSE_ASSERT  (isSgFunctionParameterList(old_parent) != NULL);
           new_initName->set_parent(varDecl); // adjust parent from SgFunctionParameterList to SgVariableDeclaration
+          delete (default_initName->get_declptr()); // delete the var definition
+          delete (default_initName); // must delete the old one to pass AST consistency test
+
           isFortranParameter = true;
         }
       }
     }
-    if (! isFortranParameter)
+    if (! isFortranParameter) // No need to add symbol to the function body if it is a Fortran parameter
+                              // The symbol should already exist under function definition for the parameter
       fixVariableDeclaration(varDecl,scope);
   }
 #if 0
@@ -213,6 +223,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   ROSE_ASSERT((variableDefinition_original->get_endOfConstruct())!=NULL);
 #endif
   setSourcePositionForTransformation(varDecl);
+  //ROSE_ASSERT (isSgVariableDefinition(initName->get_declptr())->get_startOfConstruct()!=NULL);
   return varDecl;
 }
 
