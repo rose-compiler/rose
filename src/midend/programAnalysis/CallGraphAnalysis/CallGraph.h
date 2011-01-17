@@ -27,6 +27,15 @@
 #include "sqlite3x.h"
 #endif
 
+class Properties;
+class FunctionData;
+
+// driscoll6 (1/2011) Use reference-counting shared_ptrs to avoid
+// memory leaks. (at the suggestion of George (vulov1))
+#include <boost/shared_ptr.hpp>
+typedef boost::shared_ptr<Properties> PropertiesPtr;
+typedef boost::shared_ptr<FunctionData> FunctionDataPtr; 
+
 //Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
 class Properties : public AstAttribute
 {
@@ -48,7 +57,7 @@ class Properties : public AstAttribute
     bool isPoly;
 
     Properties();
-    Properties(Properties* prop);
+    Properties(PropertiesPtr prop);
     Properties(SgFunctionDeclaration* inputFunctionDeclaration);
     Properties(std::string nid, std::string label, std::string type, std::string scope,
         bool hasDef, bool isPtr, bool isPoly);
@@ -71,24 +80,24 @@ namespace CallTargetSet
   typedef Rose_STL_Container<SgFunctionDeclaration *> SgFunctionDeclarationPtrList;
   typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
   // returns the list of declarations of all functions that may get called via the specified pointer
-  std::vector<Properties*> solveFunctionPointerCall ( SgPointerDerefExp *, SgProject * );
+  std::vector<PropertiesPtr> solveFunctionPointerCall ( SgPointerDerefExp *, SgProject * );
 
   // returns the list of declarations of all functions that may get called via a member function pointer
-  std::vector<Properties*> solveMemberFunctionPointerCall ( SgExpression *,ClassHierarchyWrapper * );
+  std::vector<PropertiesPtr> solveMemberFunctionPointerCall ( SgExpression *,ClassHierarchyWrapper * );
   Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType );
 
   // returns the list of declarations of all functions that may get called via a
   // member function (non/polymorphic) call
-  std::vector<Properties*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,		SgMemberFunctionDeclaration *, bool );
+  std::vector<PropertiesPtr> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,		SgMemberFunctionDeclaration *, bool );
 
   // returns the list of Properties of all constructors that may get called via 
   // an initialization.
-  std::vector<Properties*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
+  std::vector<PropertiesPtr> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
 
   // Populates functionList with Properties of all functions that may get called.
   void getPropertiesForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<Properties*>& propList);
+                                    Rose_STL_Container<PropertiesPtr>& propList);
 
   //! Populates functionList with definitions of all functions that may get called. This
   //! is basically a wrapper around getPropertiesForExpression that extracts the
@@ -125,11 +134,11 @@ class FunctionData
   public:
     FunctionData ( SgFunctionDeclaration* functionDeclaration, SgProject *project,
         ClassHierarchyWrapper * );
-    Properties *properties;
+    PropertiesPtr properties;
 
     // Relevant data for call graph
     //SgFunctionDeclaration* functionDeclaration;
-    Rose_STL_Container<Properties *> functionList;
+    Rose_STL_Container<PropertiesPtr> functionList;
     //@}
     //@{
     //Interfaces only defined when DB is NOT defined
@@ -180,7 +189,7 @@ SgGraphNode*
 findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration);
 
 SgGraphNode* 
-findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, Properties* functionProperties );
+findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, PropertiesPtr functionProperties );
 
 SgGraphNode* 
 findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, std::string name );
@@ -210,7 +219,7 @@ template<typename Predicate>
   void
 CallGraphBuilder::buildCallGraph (Predicate pred)
 {
-  Rose_STL_Container<FunctionData *> callGraphData;
+  Rose_STL_Container<FunctionDataPtr> callGraphData;
 
   //AS (09/23/06) Query the memory pool instead of subtree of project
   VariantVector vv( V_SgFunctionDeclaration );
@@ -251,7 +260,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
       if ( nonDefDecl )
         functionDeclaration = nonDefDecl;
     }
-    FunctionData* functionData = new FunctionData( functionDeclaration, project, &classHierarchy );
+    FunctionDataPtr functionData( new FunctionData(functionDeclaration, project, &classHierarchy) );
     //*i = functionDeclaration;
 
     ROSE_ASSERT(functionData->properties->functionDeclaration != NULL);
@@ -269,7 +278,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
   SgIncidenceDirectedGraph *returnGraph = new SgIncidenceDirectedGraph();
   ROSE_ASSERT (returnGraph != NULL);
 
-  Rose_STL_Container<FunctionData *>::iterator j = callGraphData.begin();
+  Rose_STL_Container<FunctionDataPtr>::iterator j = callGraphData.begin();
 
   //printf ("Build the node list callGraphData.size() = %zu \n",callGraphData.size());
 
@@ -289,7 +298,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
     SgGraphNode* node = new SgGraphNode( functionName);
     node->set_SgNode((*j)->properties->functionDeclaration);
 
-    node->addNewAttribute("Properties",(*j)->properties );
+    node->addNewAttribute( "Properties", (*j)->properties.get() );
 
     if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
     {
@@ -329,8 +338,8 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
     SgGraphNode* startingNode = findNode( nodeList, (*j)->properties->functionDeclaration);
     ROSE_ASSERT (startingNode != NULL);
 
-    Rose_STL_Container<Properties *> & functionList = (*j)->functionList;
-    Rose_STL_Container<Properties *>::iterator k = functionList.begin();
+    Rose_STL_Container<PropertiesPtr> & functionList = (*j)->functionList;
+    Rose_STL_Container<PropertiesPtr>::iterator k = functionList.begin();
 
     while ( k != functionList.end() )
     {
@@ -353,10 +362,10 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
         SgGraphNode *dummy;
         dummy = new SgGraphNode( "DUMMY" );
 
-        Properties* newProp = new Properties(*k);
+        PropertiesPtr newProp( new Properties(*k) );
 
         dummy->set_SgNode(newProp->functionDeclaration);
-        dummy->addNewAttribute("Properties",newProp );
+        dummy->addNewAttribute( "Properties", newProp.get() );
         if ( (*k)->functionDeclaration && (*k)->functionDeclaration->get_definingDeclaration() )
           newProp->hasDef =  true;
         else
