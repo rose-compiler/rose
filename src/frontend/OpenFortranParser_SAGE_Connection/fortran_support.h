@@ -374,6 +374,9 @@ void use_statement_fixup();
 //! This function isolates some of the support for the R612 and R613 implementation.
 std::string generateQualifiedName(const std::vector<MultipartReferenceType> & qualifiedNameList);
 
+//! Fixup for types in declarations where they could reference undeclared types which will be resolved at this point.
+void fixup_forward_type_declarations();
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
 

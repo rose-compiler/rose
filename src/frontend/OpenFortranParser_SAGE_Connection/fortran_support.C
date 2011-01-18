@@ -2372,8 +2372,9 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                               SgPointerType* pointerType = isSgPointerType(type);
                               SgType* baseType = pointerType->get_base_type();
                               ROSE_ASSERT(baseType != NULL);
-                           // printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-
+#if 0
+                              printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
                            // This is the same code for handling the class type as in the "case V_SgArrayType:" above.
                               SgClassType* classType = isSgClassType(baseType);
                               if (classType != NULL)
@@ -2399,8 +2400,9 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                                       {
                                         SgType* baseType = arrayType->get_base_type();
                                         ROSE_ASSERT(baseType != NULL);
-                                     // printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-
+#if 0
+                                        printf ("In the array: baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
                                         SgClassType* classType = isSgClassType(baseType);
                                         if (classType != NULL)
                                            {
@@ -2418,7 +2420,17 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                                            }
                                           else
                                            {
-                                             structureScope = NULL;
+                                          // DQ (1/13/2011): Added checking for possible SgTypeDefault that should have been fixed up by fixup_forward_type_declarations().
+                                             SgTypeDefault* defaultType = isSgTypeDefault(baseType);
+                                             if (defaultType != NULL)
+                                                {
+                                                  printf ("Error: SgTypeDefault identified in array base-type (result of unfixed up reference to type defined after initial reference). \n");
+                                               // ROSE_ASSERT(false);
+                                                }
+                                               else
+                                                {
+                                                  structureScope = NULL;
+                                                }
                                            }
                                       }
                                      else
@@ -2570,7 +2582,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                             }
                        }
 
-                 // Note that if this fails is it always because there was some case missed above (and so the structureScope was not set properly to permit the serach to be continued resolve a name in a nested type or scope).
+                 // Note that if this fails is it always because there was some case missed above (and so the structureScope was not set properly to permit the search to be continued resolve a name in a nested type or scope).
                     ROSE_ASSERT(i == (qualifiedNameList.size() - 1));
                   }
 
@@ -6316,18 +6328,6 @@ push_token(string s)
 
 
 void
-use_statement_fixup()
-   {
-  // printf ("Inside of use_statement_fixup() \n");
-
-  // Refactored this code to be called in R433 and R1109.
-     fixup_possible_incomplete_function_return_type();
-
-  // printf ("Leaving use_statement_fixup() \n");
-   }
-
-
-void
 replace_return_type (SgFunctionType* functionType, SgFunctionDeclaration* functionDeclaration, SgClassSymbol* derivedTypeSymbol)
    {
      bool has_ellipses = functionType->get_has_ellipses();
@@ -6458,6 +6458,18 @@ fixup_possible_incomplete_function_return_type()
   // printf ("Leaving fixup_possible_incomplete_function_return_type() \n");
    }
 
+void
+use_statement_fixup()
+   {
+  // printf ("Inside of use_statement_fixup() \n");
+
+  // Refactored this code to be called in R433 and R1109.
+     fixup_possible_incomplete_function_return_type();
+
+  // printf ("Leaving use_statement_fixup() \n");
+   }
+
+
 string 
 generateQualifiedName(const std::vector<MultipartReferenceType> & qualifiedNameList)
    {
@@ -6477,3 +6489,60 @@ generateQualifiedName(const std::vector<MultipartReferenceType> & qualifiedNameL
 
      return qualifiedNameString;
    }
+
+void
+fixup_forward_type_declarations()
+   {
+#if 0
+     printf ("Inside of fixup_forward_type_declarations() \n");
+#endif
+     SgScopeStatement* currentScope = astScopeStack.front();
+#if 0
+     printf ("Searching declarations in currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+     Rose_STL_Container<SgNode*> typeList = NodeQuery::generateListOfTypes(currentScope);
+#if 0
+     printf ("typeList.size() = %zu \n",typeList.size());
+#endif
+#if 0
+     printf ("/* AST Test: typeList.size() = %zu */ \n",typeList.size());
+     printf ("*** Sorted list *** \n");
+     NodeQuery::printNodeList(typeList);
+     printf ("*** Sorted list *** \n");
+#endif
+
+     for (size_t i = 0; i < typeList.size(); i++)
+        {
+#if 0
+          printf ("typeList[%zu] = %p = %s \n",i,typeList[i],typeList[i]->class_name().c_str());
+#endif
+          SgTypeDefault* defaultType = isSgTypeDefault(typeList[i]);
+          if (defaultType != NULL)
+             {
+            // This uses the order of the vector generated from NodeQuery::generateListOfTypes(), this might be a problem.
+               size_t parentTypeIndex = i-1;
+               SgType* parentType = isSgType(typeList[parentTypeIndex]);
+               ROSE_ASSERT(parentType != NULL);
+            // ROSE_ASSERT(parentType->containsInternalTypes() == true);
+               if (parentType->containsInternalTypes() == true)
+                  {
+                    string nameOfIntendedType = defaultType->get_name();
+#if 0
+                    printf ("Reset the base type in parentType = %p = %s to nameOfIntendedType = %s \n",parentType,parentType->class_name().c_str(),nameOfIntendedType.c_str());
+#endif
+                    SgSymbol* symbolOfIntendedType = currentScope->lookup_symbol(nameOfIntendedType);
+                    ROSE_ASSERT(symbolOfIntendedType != NULL);
+
+                    SgType* intendedType = symbolOfIntendedType->get_type();
+                    ROSE_ASSERT(intendedType != NULL);
+
+                    parentType->reset_base_type(intendedType);
+                  }
+             }
+        }
+#if 0
+     printf ("Leaving fixup_forward_type_declarations() \n");
+#endif
+   }
+
+
