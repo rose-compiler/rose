@@ -8050,6 +8050,40 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
     insertStatementList(targetStmt,newStmts,false);
   }
 
+  //! Insert a statement after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+  void SageInterface::insertStatementAfterLastDeclaration(SgStatement* stmt, SgScopeStatement* scope)
+  {
+    ROSE_ASSERT (stmt != NULL); 
+    ROSE_ASSERT (scope != NULL); 
+    // Insert to be the declaration after current declaration sequence, if any
+    SgStatement* l_stmt = findLastDeclarationStatement (scope);
+    if (l_stmt)
+      insertStatementAfter(l_stmt,stmt);
+    else
+      prependStatement(stmt, scope);
+  }
+
+  //! Insert a list of statements after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+  void SageInterface::insertStatementAfterLastDeclaration(std::vector<SgStatement*> stmt_list, SgScopeStatement* scope)
+  {
+    ROSE_ASSERT (scope != NULL); 
+    vector <SgStatement* >::iterator iter;
+    SgStatement* prev_stmt = NULL;
+    for (iter= stmt_list.begin(); iter != stmt_list.end(); iter++)
+    {
+      if (iter == stmt_list.begin())
+      {
+        insertStatementAfterLastDeclaration (*iter, scope);
+      }
+      else
+      {
+        ROSE_ASSERT (prev_stmt != NULL);
+        insertStatementAfter (prev_stmt, *iter);
+      }
+      prev_stmt = *iter;
+    }
+  }
+
   void SageInterface::insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo /*= true */)
   {
     insertStatement(targetStmt,newStmt,true, autoMovePreprocessingInfo);
