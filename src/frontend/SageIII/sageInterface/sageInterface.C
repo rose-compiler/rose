@@ -41,7 +41,15 @@ using namespace std;
 using namespace SageBuilder;
 
 int SageInterface::gensym_counter = 0;
-
+#if 0 // use StringUtility::numberToString() instead
+template <typename T>
+static std::string numToString(T x)
+{
+  std::ostringstream os;
+  os <<x;
+  return os.str();
+}
+#endif
 // DQ: 09/23/03
 // We require a global function for getting the string associated
 // with the definition of a variant (which is a global enum).
@@ -4299,12 +4307,18 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
 
      SgLocatedNode*     locatedNode = isSgLocatedNode(node);
      SgExpression*      expression  = isSgExpression(node);
-     SgInitializedName* initName    = isSgInitializedName(node);
+//     SgInitializedName* initName    = isSgInitializedName(node);
      SgPragma*          pragma      = isSgPragma(node); // missed this one!! Liao, 1/30/2008
      SgGlobal*          global      = isSgGlobal(node); // SgGlobal should have NULL endOfConstruct()
 
+#if 0
+     SgVariableDefinition * v_d = isSgVariableDefinition(node);
+     if (v_d )
+       printf ("Debug, Found a variable definition: %p\n", v_d);
+#endif
   // if ((locatedNode) && (locatedNode->get_endOfConstruct() == NULL))
-     if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+  //   if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+     if (locatedNode != NULL)
         {
           locatedNode->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
           locatedNode->get_startOfConstruct()->set_parent(locatedNode);
@@ -4322,23 +4336,24 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
                expression->get_operatorPosition()->set_parent(expression);
              }
         }
-       else
-        {
-          if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
-             {
-           //  no endOfConstruct for SgInitializedName
-               initName->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-               initName->get_startOfConstruct()->set_parent(initName);
-             }
-            else
-             {
-               if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
-                  {
-                    pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-                    pragma->get_startOfConstruct()->set_parent(pragma);
-                  }
-             }
-        }
+       else // special non-located node with file info
+       {
+//         if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
+//         {
+//           locatedNode->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+//           locatedNode->get_startOfConstruct()->set_parent(locatedNode);
+//
+//           locatedNode->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+//           locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
+//
+//         }
+//         else  
+           if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
+         {
+           pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+           pragma->get_startOfConstruct()->set_parent(pragma);
+         }
+       }
    }
 
 
@@ -4357,7 +4372,7 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
 
      SgLocatedNode *    locatedNode = isSgLocatedNode(node);
      SgExpression*      expression  = isSgExpression(node);
-     SgInitializedName* initName    = isSgInitializedName(node);
+//     SgInitializedName* initName    = isSgInitializedName(node);
      SgPragma*          pragma      = isSgPragma(node); // missed this one!! Liao, 1/30/2008
      SgGlobal*          global      = isSgGlobal(node); // SgGlobal should have NULL endOfConstruct()
 
@@ -4366,7 +4381,8 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
   // (i.e. when the start source postion is already NULL).
 
   // if ((locatedNode) && (locatedNode->get_endOfConstruct() == NULL))
-     if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+  //   if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+     if  (locatedNode != NULL) 
         {
           locatedNode->set_startOfConstruct(NULL);
 
@@ -4384,17 +4400,15 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
         }
        else
         {
-          if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
-             { //  no endOfConstruct for SgInitializedName
-               initName->set_startOfConstruct(NULL);
-             }
-            else
-             {
+//          if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
+//             { //  no endOfConstruct for SgInitializedName
+//               initName->set_startOfConstruct(NULL);
+//             }
+//            else
                if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
                   {
                     pragma->set_startOfConstruct(NULL);
                   }
-             }
         }
    }
 
@@ -8543,6 +8557,61 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
     }// end label_scope
 } // fixLabelStatement()
 
+//! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelR
+//efExp are created transparently as needed.
+void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
+{
+  ROSE_ASSERT (stmt != NULL);
+  ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
+  SgScopeStatement* label_scope = getEnclosingFunctionDefinition(stmt);
+  ROSE_ASSERT (label_scope != NULL);
+  SgName label_name(StringUtility::numberToString(label_value));
+  SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
+  if (symbol == NULL)
+  {
+    symbol = new SgLabelSymbol(NULL);
+    ROSE_ASSERT(symbol != NULL);
+    symbol->set_fortran_statement(stmt);
+    symbol->set_numeric_label_value(label_value);
+    label_scope->insert_symbol(label_name,symbol);
+  }
+  else
+  {
+    cerr<<"Error. SageInterface::setFortranNumericLabel() tries to set a duplicated label value!"<<endl;
+    ROSE_ASSERT (false);
+  }  
+  //SgLabelRefExp
+  SgLabelRefExp* ref_exp = buildLabelRefExp(symbol);
+  stmt->set_numeric_label(ref_exp);
+  ref_exp->set_parent(stmt);
+  
+}
+
+//! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
+int  SageInterface::suggestNextNumericLabel(SgFunctionDefinition* func_def)
+{
+  int result =10;
+  ROSE_ASSERT (func_def != NULL);
+  ROSE_ASSERT (SageInterface::is_Fortran_language()== true);
+  std::set<SgNode*> symbols = func_def->get_symbol_table()->get_symbols();
+  
+  // find the max label value, +10 to be the suggested next label value
+  std::set<SgNode*>::iterator iter ;
+  for (iter=symbols.begin(); iter !=symbols.end(); iter++)
+  {
+    SgLabelSymbol * l_symbol = isSgLabelSymbol(*iter);
+    if (l_symbol)
+    {
+      int cur_val = l_symbol->get_numeric_label_value();
+      if (result <=cur_val)
+        result = cur_val +10;
+    }
+  }
+
+  ROSE_ASSERT (result <=99999); // max 5 digits for F77 label
+  return result; 
+}
+
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements.
 void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
 {
@@ -12504,7 +12573,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                          for (SgInitializedNamePtrList::iterator i = l.begin(); i != l.end(); i++)
                             {
                            // reset the scope, but make sure it was set to sourceBlock to make sure.
-                           // This might be an issue for extern varaible declaration that have a scope
+                           // This might be an issue for extern variable declaration that have a scope
                            // in a separate namespace of a static class member defined external to
                            // its class, etc. I don't want to worry about those cases right now.
                               ROSE_ASSERT((*i)->get_scope() == sourceBlock);
@@ -12520,6 +12589,8 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                          //cout<<"found a function declaration to be moved ..."<<endl;
                        }
                      break;
+                     case V_SgFortranIncludeLine:
+                       break;
                     default:
                        {
                          printf ("Moving this declaration = %p = %s = %s between blocks is not yet supported \n",declaration,declaration->class_name().c_str(),get_name(declaration).c_str());

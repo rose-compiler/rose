@@ -92,6 +92,7 @@ createInitName (const string& name, SgType* type,
       scope->insert_symbol (sg_name, new_sym);
       ROSE_ASSERT (new_sym->get_parent() != NULL);
     }
+  ROSE_ASSERT (new_name->get_endOfConstruct() != NULL);
 
   return new_name;
 }

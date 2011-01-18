@@ -70,6 +70,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor6.c \
 	ompfor-default.c \
 	ompfor-decremental.c \
+	ompfor-static.c \
 	ompGetNumThreads.c \
 	ordered2.c \
 	ordered.c \

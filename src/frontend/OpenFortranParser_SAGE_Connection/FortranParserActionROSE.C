@@ -34,6 +34,13 @@ build_implicit_program_statement_if_required()
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("Building an implicit program-stmt: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 
+       // DQ (1/14/2011): Take care of types declared in the global scope.
+       // DQ (1/13/2011): Where this is in a module or type declaration other types may be referenced 
+       // which are constructed as SgTypeDefault and thus must be fixed up as soon as possible (i.e. 
+       // before references to them are possible in executable statements).  This function fixes up these
+       // references.
+          fixup_forward_type_declarations();
+
        // Token_t id = { 1, 1, 0, "rose_implicit_program_header" };
           Token_t id = { 1, 1, 0, (char*)ROSE_IMPLICIT_FORTRAN_PROGRAM_NAME };
           c_action_program_stmt(NULL,NULL,&id,NULL);
@@ -139,6 +146,12 @@ void c_action_specification_part(int numUseStmts, int numImportStmts, int numDec
   // We have got to this point and not had to build a containing main function then we will not
   // likely be any further before we process an action statement (not declaration statement).
      build_implicit_program_statement_if_required();
+
+  // DQ (1/13/2011): Where this is in a module or type declaration other types may be referenced 
+  // which are constructed as SgTypeDefault and thus must be fixed up as soon as possible (i.e. 
+  // before references to them are possible in executable statements).  This function fixes up these
+  // references.
+     fixup_forward_type_declarations();
 
   // DQ (11/24/2007): It might be that we could output a "contains" statement here (but it would be better if OFP implemented R1237).
 
@@ -1927,7 +1940,7 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
 #if !SKIP_C_ACTION_IMPLEMENTATION
   // printf ("astNameStack.size() = %zu \n",astNameStack.size());
 
-  // DQ (1/28/2009): The variable declaration may have already been built (if so then the scacks are empty).
+  // DQ (1/28/2009): The variable declaration may have already been built (if so then the stacks are empty).
      if (astNodeStack.empty() == false && astBaseTypeStack.empty() == false)
         {
           SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(label,false);
@@ -2331,7 +2344,7 @@ void c_action_component_array_spec(ofp_bool isExplicit)
   // the ":" operator is explicit. Test if it is ever true.
   // ROSE_ASSERT(isExplicit == false);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R443 c_action_component_array_spec()");
 #endif
@@ -3585,9 +3598,9 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 void c_action_attr_spec(Token_t * attrKeyword, int attr)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_attr_spec(): attrKeyword = %p = %s attr = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",attr);
+          printf ("In R503 c_action_attr_spec(): attrKeyword = %p = %s attr = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",attr);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R503 c_action_attr_spec()");
 #endif
@@ -3792,7 +3805,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
           astAttributeSpecStack.push_front(attr);
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R503 c_action_attr_spec()");
 #endif
@@ -4715,7 +4728,10 @@ void c_action_explicit_shape_spec(ofp_bool hasUpperBound)
      outputState("At TOP of R511 c_action_explicit_shape_spec()");
 #endif
 
-     int type = (hasUpperBound == true) ? ArraySpecElement_expr_colon_expr : ArraySpecElement_expr_colon;
+  // DQ (1/13/2011): See test2011_01.f90 for an example of where this might be a fix.
+  // int type = (hasUpperBound == true) ? ArraySpecElement_expr_colon_expr : ArraySpecElement_expr_colon;
+     int type = (hasUpperBound == true) ? ArraySpecElement_expr_colon_expr : ArraySpecElement_expr;
+
      c_action_array_spec_element(type);
 
 #if 1
@@ -7990,6 +8006,9 @@ void c_action_data_ref(int numPartRef)
           if (isSgVariableSymbol(tempSymbol) != NULL)
              {
             // This is the typical case.
+#if 0
+               printf ("Variable name = %s \n",tempSymbol->get_name().str());
+#endif
              }
             else
              {
@@ -8006,9 +8025,11 @@ void c_action_data_ref(int numPartRef)
              }
           ROSE_ASSERT(tempSymbol != NULL);
 
+       // DQ (1/13/2011): This is not computed correctly for test2011_02.f90.
        // DQ (12/23/2010): Removed this code...I think it is not longer required with the better handling of multi-part references...
        // Changed to because of test2007_59.f90 "a = sign(b,c) + int(real(c))" processing of "c" ate the function call on the stack "sign"
-          bool stackHoldsAnIndexExpression = (astExpressionStack.empty() == false) && ((isSgExprListExp(astExpressionStack.front()) != NULL) || (numPartRef > 1) && isSgNullExpression(astExpressionStack.front()));
+       // bool stackHoldsAnIndexExpression = (astExpressionStack.empty() == false) && ((isSgExprListExp(astExpressionStack.front()) != NULL) || (numPartRef > 1) && isSgNullExpression(astExpressionStack.front()));
+          bool stackHoldsAnIndexExpression = hasSelectionSubscriptList;
 
 #if 1
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
@@ -8476,7 +8497,7 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
           if (variableSymbol != NULL)
              {
             // This variable was declared previously, if it is an array, then we do nothing. But if it is a 
-            // scalar then we have to convert it to a function returing the type of the scalar declaration.
+            // scalar then we have to convert it to a function returning the type of the scalar declaration.
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("We might have to convert this from a scalar to a function = %s \n",name.str());
 
@@ -8521,7 +8542,7 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
                   }
                  else
                   {
-                 // This case is visited in the handling of fortran statement functions (see test2007_179.f90).
+                 // This case is visited in the handling of Fortran statement functions (see test2007_179.f90).
 #if 0
                     printf ("This case is visited in the handling of fortran statement functions (see test2007_179.f90). \n");
 #endif

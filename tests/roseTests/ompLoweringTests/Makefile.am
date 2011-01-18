@@ -74,6 +74,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         ompfor4.c \
 	ompfor-default.c \
 	ompfor-decremental.c \
+	ompfor-static.c \
 	ompGetNumThreads.c \
         orphaned-directives.c \
         parallel.c \
@@ -116,7 +117,7 @@ CXX_TESTCODES_REQUIRED_TO_RUN =  \
 	helloNested.cpp \
 	objectPrivate.cpp \
 	objectFirstPrivate.cpp \
-	objectLastprivate.cpp \
+   objectLastprivate.cpp \
 	orphanedAtomic.cpp \
 	preprocessingInfo2.cpp \
 	task_link.cpp \

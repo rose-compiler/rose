@@ -14,7 +14,8 @@ libquerySources = \
 
 # queryVariant.C
 
-nodeQuery.o : nodeQuery.C queryVariant.C
+# nodeQuery.o : nodeQuery.C queryVariant.C
+nodeQuery.lo : nodeQuery.C queryVariant.C
 
 # lib_LTLIBRARIES = libquery.a
 # libquery_a_SOURCES  = $(libquerySources)

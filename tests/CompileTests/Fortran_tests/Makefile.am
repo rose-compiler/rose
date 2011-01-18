@@ -192,12 +192,18 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_142.f90 \
      test2010_143.f90 \
      test2010_144.f90 \
+     test2010_151.f90 \
+     test2010_154.f90 \
      test2010_172.f90 \
      test2010_173.f90 \
      test2010_174.f90 \
      test2010_182.f90 \
      test2010_183.f90 \
      test2010_184.f90 \
+     test2011_01.f90 \
+     test2011_02.f90 \
+     test2011_04.f90 \
+     test2011_05.f90 \
      canonicalExample.f90
 
 # This used to work, but fails how that test2010_172.f90 and test2010_184.f90 pass
@@ -447,10 +453,8 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_148.f90 \
      test2010_149.f90 \
      test2010_150.f90 \
-     test2010_151.f90 \
      test2010_152.f90 \
      test2010_153.f90 \
-     test2010_154.f90 \
      test2010_155.f90 \
      test2010_156.f90 \
      test2010_158.f90 \
@@ -467,6 +471,8 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_169.f90 \
      test2010_170.f90 \
      test2010_175.f90 \
+     test2011_03.f90 \
+     test2011_06.f90 \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
