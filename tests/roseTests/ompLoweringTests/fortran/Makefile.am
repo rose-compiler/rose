@@ -18,6 +18,7 @@ F77_TESTCODES_REQUIRED_TO_RUN = \
   ompdo-orphaned.f \
   ompdo-multiple.f \
   private.f \
+  reduction.f \
   shared.f
 
 F90_TESTCODES_REQUIRED_TO_RUN = 

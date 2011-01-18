@@ -17,6 +17,7 @@ F77_TESTCODES_TO_PASS = \
     parallel-1.f \
     parallel-2.f \
     private.f \
+    reduction.f \
     schedule.f \
     shared.f
 
