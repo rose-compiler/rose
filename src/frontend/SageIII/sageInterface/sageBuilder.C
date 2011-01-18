@@ -4247,6 +4247,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
        // of source position that would be more precise.  FIXME.
        // setOneSourcePositionNull(nondefdecl);
           setOneSourcePositionForTransformation(nondefdecl);
+          ROSE_ASSERT (nondefdecl->get_startOfConstruct() != __null);
 
           nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
           nondefdecl->set_definingDeclaration(defdecl);
@@ -4274,7 +4275,11 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
 //     printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
   // setOneSourcePositionForTransformation(nondefdecl);
-     setOneSourcePositionNull(nondefdecl);
+  //
+  // Liao 1/18/2011, I changed the semantics of setOneSourcePositionNull to set file_info to null regardless the existence of 
+  // file_info of the input node.
+  // We do want to keep the file_info of nodefdecl if it is set already as compiler generated.
+  //    setOneSourcePositionNull(nondefdecl);
 
   // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
   // nondefdecl->set_definingDeclaration(defdecl);
