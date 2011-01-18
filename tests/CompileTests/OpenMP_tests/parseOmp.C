@@ -27,6 +27,15 @@ void visitorTraversal::visit(SgNode* node)
       <<node->get_file_info()->get_line()<<endl;
     attributelist->print();//debug only for now
   }
+#if 0  
+  // Show OpenMP nodes also for -rose:openmp:ast_only
+  if (SageInterface::isOmpStatement(node))
+  {
+    cout<<"----------------------------"<<endl;
+    cout<<"Found a SgOmp Statement"<<endl;
+    cout<<isSgStatement(node)->unparseToString()<<endl;; 
+  }
+#endif  
 }
 
 // must have argc and argv here!!
