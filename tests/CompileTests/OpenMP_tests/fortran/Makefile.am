@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 F77_TESTCODES_TO_PASS = \
+    array-one.f \
     helloworld.f \
     helloworld0.f \
     helloworld2.f \
@@ -19,7 +20,8 @@ F77_TESTCODES_TO_PASS = \
     private.f \
     reduction.f \
     schedule.f \
-    shared.f
+    shared.f \
+    shared-array.f
 
 # DQ (3/4/2010): Added simple test code to debug fortran OFP usage.
 F77_TESTCODES_TO_PASS += testNewOFP.f

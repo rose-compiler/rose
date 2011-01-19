@@ -256,7 +256,18 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
       new_param_name+= "p__";
     }
     else
-      new_param_name= "s_"+new_param_name; //s_ means shared variables
+    {
+      // Fortran:
+      // Liao 1/19/2010
+      // We have to keep the parameter names the same as the original ones
+      // Otherwise, we have to deep copy the SgArrayType used in the outlined portion and replace the name within dim info expression list.
+      //
+      // In an outlined function: 
+      // e.g. INTEGER :: s_N
+      //      DOUBLE PRECISION, DIMENSION(N) :: s_array // mismatch of N and s_N, the same SgArrayType is reused.
+      //new_param_name= "s_"+new_param_name; //s_ means shared variables
+      new_param_name= new_param_name; //s_ means shared variables
+    }
 
   }
 
