@@ -357,7 +357,6 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.63.2.c \
 		   $(srcdir)/tests/syscall_tst.63.3.c \
 		   $(srcdir)/tests/syscall_tst.63.4.c \
-		   $(srcdir)/tests/syscall_tst.63.5.c \
 		   $(srcdir)/tests/syscall_tst.64.1.c \
 		   $(srcdir)/tests/syscall_tst.64.2.c \
 		   $(srcdir)/tests/syscall_tst.76.1.c \
@@ -382,6 +381,7 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.99.1.c \
 		   $(srcdir)/tests/syscall_tst.99.2.c \
 		   $(srcdir)/tests/syscall_tst.99.3.c
+#		   $(srcdir)/tests/syscall_tst.63.5.c 
 
 
 TEST_INPUTS_NM_SRC = \
@@ -461,6 +461,7 @@ check-local: $(TEST_TARGETS)
 
 # "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
 clean-local:
+	if [ -d tmp-sim ]; then chmod -f a+rwx -R tmp-sim; fi
 	rm -rf tmp-sim x-core.rose test-file-fchown32
 
 EXTRA_DIST += $(TEST_INPUTS_SRC) $(TEST_SUPPORT_SRC) README x86sim.conf test_status.txt
