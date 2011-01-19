@@ -1,4 +1,4 @@
-OSX note (10/22/2010):
+Mac OS X note (10/22/2010):
 
 On rose-hudson-osx-2 (use this to get access to wget):
    export PATH=$PATH:/export/tmp.hudson-rose/opt/wget-1.11.4-inst/bin/
@@ -6,33 +6,33 @@ On rose-hudson-osx-2 (use this to get access to wget):
 
 **********************************************************************
 
-OSX note (12/31/2009):
-   ROSE currently requires OSX 10.5, it is not clear if earlier versions
-will work.  We are in the process of getting access to a new OSX 10.6 
+Mac OS X note (12/31/2009):
+   ROSE currently requires OS X v10.5, it is not clear if earlier versions
+will work.  We are in the process of getting access to a new OS X v10.6 
 system so that we can regularly test ROSE and generate the required 
 10.6 binaries for EDG.  At present Rice is reporting that 10.6 fails
 to implement the STL non-standard hash_map correctly and as a 
-result ROSE failes on OSX 10.6.  We are persuing getting this fixed,
+result ROSE failes on OS X v10.6.  We are persuing getting this fixed,
 but we don't have a way to test this yet.
 
 **********************************************************************
 
-OSX note (12/1/2009):
+Mac OS X note (12/1/2009):
    You must install the XCode package to have access to the required compilers, etc. on a Mac
-OSX system. Our experience on OSX 10.5 is that we have had to sometime install a newer
+OS X system. Our experience on OS X v10.5 is that we have had to sometime install a newer
 version of libtool (e.g. libtool-2.2.4.tar.bz2) as well. Don't forget to add it to the path.
 
 **********************************************************************
 
-OSX note (6/1/2008):
-   As of the more recent Subversion based versions of ROSE and Mac OS X 10.4 for Intel,
+Mac OS X note (6/1/2008):
+   As of the more recent Subversion based versions of ROSE and Mac OS X v10.4 for Intel,
 ROSE runs out of the box on Mac.  ROSE is however not supported on any non-x86 
 platform (this will change in the future).
 
 **********************************************************************
 
-Notes about OSX (and how we test on OSX systems):
-Required (or helpful) external software (as per our own OSX test configuration):
+Notes about OS X (and how we test on OS X systems):
+Required (or helpful) external software (as per our own OS X test configuration):
 
 boost_1_35_0.tar.gz:
      All installations of ROSE (any platform) require boost.
@@ -61,11 +61,11 @@ libtool-2.2.4.tar.bz2:
 
 
 Need to run: "/Users/dquinlan/local/libtool-install/bin/libtoolize --force --copy --ltdl --automake"
-the first time installed on OSX (ninjai specific detail).
+the first time installed on OS X (ninjai specific detail).
 (This is done by "build" when Dan's libtoolize is present).
 
 
-Crontab used for OSX tests:
+Crontab used for OS X tests:
 #MAILTO=willcock2@llnl.gov
 #24 21 * * 2-7 cd /Users/willcock2/ROSE/scripts && ./roseFreshTest ./roseFreshTestStub-Jeremiah-OSX-scidac.sh --with-C_DEBUG="-g -Wall -Wno-unknown-pragmas" --with-CXX_DEBUG="-g -Wall -Wno-unknown-pragmas" --enable-rosehpct
 #48 16 * * * cd /Users/willcock2/ROSE/scripts && ./roseFreshTest ./roseFreshTestStub-Jeremiah-OSX.sh --enable-edg_union_struct_debugging --with-C_DEBUG="-g -Wall -Wno-unknown-pragmas" --with-CXX_DEBUG="-g -Wall -Wno-unknown-pragmas" --enable-rosehpct
