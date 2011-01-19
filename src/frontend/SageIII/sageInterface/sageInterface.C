@@ -1832,6 +1832,17 @@ generateUniqueDeclaration ( SgDeclarationStatement* declaration )
      return keyDeclaration;
    }
 
+//! Check if a node is SgOmp*Statement
+bool SageInterface::isOmpStatement(SgNode* n)
+{
+  ROSE_ASSERT (n != NULL);
+  bool result = false;
+  if (isSgOmpBarrierStatement(n)||isSgOmpBodyStatement(n)|| isSgOmpFlushStatement(n)|| isSgOmpTaskwaitStatement(n) )
+    result = true;
+
+  return result;
+
+}
 // DQ (8/28/2005):
 bool
 SageInterface::isOverloaded ( SgFunctionDeclaration* functionDeclaration )
@@ -6775,9 +6786,34 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
       ivarname = var->get_symbol()->get_declaration();
       isCase2 = true;
     }
+  } 
+  else if (SgExprStatement* exp_stmt = isSgExprStatement(init1))
+  { //case like: for (i = 1, len1 = 0, len2=0; i <= n; i++) 
+     // AST is: SgCommaOpExp -> SgAssignOp -> SgVarRefExp
+    if (SgCommaOpExp* comma_exp = isSgCommaOpExp(exp_stmt->get_expression()))
+    {
+      SgCommaOpExp* leaf_exp = comma_exp;
+      while (isSgCommaOpExp(leaf_exp->get_lhs_operand()))
+        leaf_exp = isSgCommaOpExp(leaf_exp->get_lhs_operand());
+      if (SgAssignOp* assign_op = isSgAssignOp(leaf_exp->get_lhs_operand()))
+      {
+        SgVarRefExp* var = isSgVarRefExp(assign_op->get_lhs_operand());
+        if (var)
+        {
+          ivarname = var->get_symbol()->get_declaration();
+        }
+      }
+    }
+  }
+  else
+  {
+    cerr<<"Error. SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
+    cerr<<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
+    init1->get_file_info()->display("Debug"); 
+    ROSE_ASSERT (false);
   }
   // Cannot be both true
-  ROSE_ASSERT(!(isCase1&&isCase2));
+ // ROSE_ASSERT(!(isCase1&&isCase2));
 
   //Check loop index's type
   //ROSE_ASSERT(isStrictIntegerType(ivarname->get_type()));
@@ -12551,8 +12587,20 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
             // I am unclear if this is a reasonable constraint, it passes all tests but this one!
                if ((*i)->get_scope() != targetBlock)
                   {
-                    //(*i)->set_scope(targetBlock);
-                    printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
+                    if (SgFunctionDeclaration* func = isSgFunctionDeclaration(*i)) 
+                    { // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
+                      // The func declaration should be moved along with the call site.
+                      // The scope should be set to the new block also
+                      // Liao 1/14/2011
+                      if (func->get_firstNondefiningDeclaration() == func);
+                        func->set_scope(targetBlock);
+                    }
+                    else
+                    {
+                      //(*i)->set_scope(targetBlock);
+                      printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
+                      cerr<<"  "<<(*i)->class_name()<<endl;
+                    }
                   }
                //ROSE_ASSERT((*i)->get_scope() == targetBlock);
              }

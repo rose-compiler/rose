@@ -18,6 +18,7 @@ OMNI_PATH = @omni_omp_runtime_support_path@
 # Put test codes without main() entry here
 # They will be compiled only, not executed.
 C_TESTCODES_REQUIRED_TO_COMPILE = \
+	alignment.c \
 	dijkstra_open_mp.c \
         dynamicChunk.c \
 	endif.c \
