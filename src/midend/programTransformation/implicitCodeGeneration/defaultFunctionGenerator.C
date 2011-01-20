@@ -3124,19 +3124,28 @@ SgInitializer *DefaultFunctionGenerator::normalizeInitializer(SgInitializer *ori
            SgMemberFunctionDeclaration *defaultCtorDecl =
                    findOrGenerateDefaultFunctionDeclaration(e_constructor, objClsDef);
 
-           SgExprListExp *emptyArgList = new SgExprListExp(COMPILERGENERATED_FILE_INFO);
-           SgConstructorInitializer *newCtorInit = new SgConstructorInitializer(
-                COMPILERGENERATED_FILE_INFO,
-                defaultCtorDecl,
-                emptyArgList,
+           SgExprListExp *emptyArgList = buildExprListExp();
+
 #if 1
-                objClsDef->get_declaration()->get_type()
+           SgType* exp_type = objClsDef->get_declaration()->get_type();
 #else
           // For newest version of ROSE, where a constructor initializer may have any type
-                objType
+           SgType* exp_type = objType;
 #endif
-           );
-           emptyArgList->set_parent(newCtorInit);
+
+           bool need_name = false;
+           bool need_qualifier = false;
+           bool need_parenthesis_after_name = true;
+           bool associated_class_unknown = false;
+
+           SgConstructorInitializer *newCtorInit = buildConstructorInitializer(
+                defaultCtorDecl,
+                emptyArgList,
+                exp_type,
+                need_name,
+                need_qualifier,
+                need_parenthesis_after_name,
+                associated_class_unknown);
 
            return newCtorInit;
          }
@@ -3168,8 +3177,7 @@ SgInitializer *DefaultFunctionGenerator::normalizeInitializer(SgInitializer *ori
 
                 SgTreeCopy tc;
                 SgExpression *origCtorInitParamCopy = isSgExpression(origCtorInitParams.front()->copy(tc));
-                SgAssignInitializer *newAssignInit = new SgAssignInitializer(COMPILERGENERATED_FILE_INFO, origCtorInitParamCopy);
-                origCtorInitParamCopy->set_parent(newAssignInit);
+                SgAssignInitializer *newAssignInit = buildAssignInitializer(origCtorInitParamCopy);
                 return newAssignInit;
               }
            normalizeCtorInitializer(origCtorInit);
