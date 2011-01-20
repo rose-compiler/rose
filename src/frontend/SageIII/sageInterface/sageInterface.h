@@ -373,6 +373,9 @@ struct hash_nodeptr
   //! Get the mask expression from the header of a SgForAllStatement
   SgExpression* forallMaskExpression(SgForAllStatement* stmt);
 
+  //! Find all SgPntrArrRefExp under astNode, then add SgVarRefExp (if any) of SgPntrArrRefExp's dim_info into NodeList_t
+  void addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Container<SgNode *>& NodeList_t);
+
   // DQ (10/6/2006): Added support for faster mangled name generation (caching avoids recomputation).
   /*! \brief Support for faster mangled name generation (caching avoids recomputation).
 

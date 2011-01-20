@@ -7,7 +7,9 @@ GOMP_PATH = @gomp_omp_runtime_library_path@
 OMNI_PATH = @omni_omp_runtime_support_path@
 
 F77_TESTCODES_REQUIRED_TO_COMPILE = \
-  array-one.f
+  array-one.f \
+  jacobi.f \
+  shared-array.f
 
 F90_TESTCODES_REQUIRED_TO_COMPILE = 
 
@@ -20,8 +22,7 @@ F77_TESTCODES_REQUIRED_TO_RUN = \
   ompdo-multiple.f \
   private.f \
   reduction.f \
-  shared.f \
-  shared-array.f
+  shared.f
 
 F90_TESTCODES_REQUIRED_TO_RUN = 
 
