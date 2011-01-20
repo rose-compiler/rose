@@ -116,6 +116,13 @@ affecting whether the test is a failing or passing test.
 Before output is compared with a predetermined answer, both the output and the answer are fed through an optional filter. The
 filter should read from standard input and write to standard output.
 
+=item lockdir = DIRECTORY
+
+Name of directory where lock files will be created.  The default is to use the same directory in which the may-fail file
+appears. It may be necessary to set this to some other directory (like the current build directory) if the directory containing
+the may-fail file is not a local file system (locking should work fine for NFS, but doesn't work for sshfs).  See the description
+for the "may_fail" property.
+
 =item may_fail =  no | yes | promote | FILE[:DEFAULT]
 
 Specifies whether the test is allowed to fail.  If the value is "promote" then the test is allowed to fail, but once it
@@ -277,7 +284,8 @@ sub help {
 # values are the values or an array of values.
 sub load_config {
   my($file,%vars) = @_;
-  my(%conf) = (answer=>'no', cmd=>[], diff=>'diff -u', disabled=>'no', filter=>'no', may_fail=>'no', promote=>'yes');
+  my(%conf) = (answer=>'no', cmd=>[], diff=>'diff -u', disabled=>'no', filter=>'no', lockdir=>undef,
+	       may_fail=>'no', promote=>'yes');
   open CONFIG, "<", $file or die "$0: $file: $!\n";
   while (<CONFIG>) {
     s/\s*#.*//;
@@ -419,7 +427,8 @@ if ($config{may_fail} eq 'yes') {
   $default ||= 'no';
   die "$0: $file: no such file\n" unless -e $file;
   die "$0: $file: not readable\n" unless -r $file;
-  my $lock = -w $file ? "$file.lck" : "";
+  my($lock) = $config{lockdir} eq "" ? "$file.lck" : $config{lockdir} . "/" . ($file =~ /([^\/]+)$/)[0] . ".lck";
+  $lock = "" unless -w $file;
 
   # Obtain the lock if necessary.  If we can't write to the file then assume that nobody else is changing it either,
   # in which case we don't need exclusive access to read it.
