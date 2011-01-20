@@ -2534,12 +2534,7 @@ DefaultFunctionGenerator::generateDefaultConstructorCall(SgMemberFunctionDeclara
 
   // Create the argument list.
   // Create the arg list.
-  SgExprListExp *args = new SgExprListExp(COMPILERGENERATED_FILE_INFO);
-
-  // Put the arg, if any, in the arg list.
-  if ( arg != NULL ) {
-    args->append_expression(arg);
-  }
+  SgExprListExp *args = buildExprListExp(arg);
 
   // Create the SgConstructorInitializer.
   cout << "parent class def: " << parentClassDef->unparseToString() << endl;
@@ -2570,15 +2565,16 @@ DefaultFunctionGenerator::generateDefaultConstructorCall(SgMemberFunctionDeclara
      Therefore, we force parens to be true.
   */
   need_parenthesis_after_name = true;
+
   SgConstructorInitializer *ctorInitializer =
-    new SgConstructorInitializer(COMPILERGENERATED_FILE_INFO,
-                                 func,
-				 args,
-				 classDeclaration->get_type(),
-				 need_name,
-				 need_qualifier,
-				 need_parenthesis_after_name,
-				 associated_class_unknown);
+      buildConstructorInitializer(
+              func,
+              args,
+              classDeclaration->get_type(),
+              need_name,
+              need_qualifier,
+              need_parenthesis_after_name,
+              associated_class_unknown);
   
   // Create the SgInitializedName.
   // The name of the SgInitializedName is simply the name of the
@@ -2590,13 +2586,12 @@ DefaultFunctionGenerator::generateDefaultConstructorCall(SgMemberFunctionDeclara
   ROSE_ASSERT(classType != NULL);
 
   SgInitializedName *initializedName =
-    new SgInitializedName(className,
+    buildInitializedName(className,
 			  classType,
-			  ctorInitializer,
-			  func);
-  initializedName->set_file_info(COMPILERGENERATED_FILE_INFO);
-  initializedName->set_parent(ctorInitializerList);
-  initializedName->set_scope(func->get_scope());
+			  ctorInitializer);
+  //initializedName->set_file_info(COMPILERGENERATED_FILE_INFO);
+  //initializedName->set_parent(ctorInitializerList);
+  //initializedName->set_scope(func->get_scope());
   ctorInitializerList->append_ctor_initializer(initializedName);
 
   // Clean up the initializer list.
