@@ -2543,16 +2543,37 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
     int result = 0;
     ROSE_ASSERT(file != NULL);
     Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(file, V_SgOmpForStatement);
-    Rose_STL_Container<SgNode*>::iterator nodeListIterator = nodeList.begin();
-    // For each omp for statement
-    for ( ;nodeListIterator !=nodeList.end();  ++nodeListIterator)
+    Rose_STL_Container<SgNode*> nodeList2 = NodeQuery::querySubTree(file, V_SgOmpDoStatement);
+    
+    Rose_STL_Container<SgNode*> nodeList_merged (nodeList.size() + nodeList2.size()) ;
+    std::merge (nodeList.begin(), nodeList.end(), nodeList2.begin(), nodeList2.end(), nodeList_merged.begin());
+
+    Rose_STL_Container<SgNode*>::iterator nodeListIterator = nodeList_merged.begin();
+    // For each omp for/do statement
+    for ( ;nodeListIterator !=nodeList_merged.end();  ++nodeListIterator)
     {
-      SgOmpForStatement* node = isSgOmpForStatement(*nodeListIterator);
-      SgScopeStatement* directive_scope = node->get_scope();
+      SgStatement * omp_loop = NULL;
+      SgOmpForStatement* for_node = isSgOmpForStatement(*nodeListIterator);
+      SgOmpDoStatement* do_node = isSgOmpDoStatement(*nodeListIterator);
+      if (for_node)
+        omp_loop = for_node;
+      else if (do_node)
+        omp_loop = do_node;
+      else
+        ROSE_ASSERT (false);
+
+      SgScopeStatement* directive_scope = omp_loop->get_scope();
       ROSE_ASSERT(directive_scope != NULL);
       // Collected nested loops and their indices
       // skip the top level loop?
-      Rose_STL_Container<SgNode*> loops = NodeQuery::querySubTree(node->get_body(), V_SgForStatement);
+      Rose_STL_Container<SgNode*> loops; 
+      if (for_node)
+        loops = NodeQuery::querySubTree(for_node->get_body(), V_SgForStatement);
+      else if (do_node)
+        loops = NodeQuery::querySubTree(do_node->get_body(), V_SgFortranDo);
+      else
+        ROSE_ASSERT (false);
+
       Rose_STL_Container<SgNode*>::iterator loopIter = loops.begin();
       for (; loopIter!= loops.end(); loopIter++)
       {
@@ -2563,10 +2584,10 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
         if (isAncestor(var_scope, directive_scope) || var_scope==directive_scope)
         {
           // add it into the private variable list
-          if (!isInClauseVariableList(index_var, node, V_SgOmpPrivateClause)) 
+          if (!isInClauseVariableList(index_var, isSgOmpClauseBodyStatement(omp_loop), V_SgOmpPrivateClause)) 
           {
             result ++;
-            addClauseVariable(index_var,node, V_SgOmpPrivateClause);
+            addClauseVariable(index_var,isSgOmpClauseBodyStatement(omp_loop), V_SgOmpPrivateClause);
           }
         }
 
