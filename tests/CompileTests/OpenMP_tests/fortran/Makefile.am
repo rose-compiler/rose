@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 F77_TESTCODES_TO_PASS = \
+    array_initialize.f \
     array-one.f \
     helloworld.f \
     helloworld0.f \

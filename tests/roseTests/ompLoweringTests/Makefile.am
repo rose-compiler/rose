@@ -44,6 +44,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 # They will be compiled and executed when the gomp library path is set
 C_TESTCODES_REQUIRED_TO_RUN = \
         3loops.c \
+	array_init.c \
         atomic.c \
         barrier.c \
         critical.c \
@@ -119,7 +120,7 @@ CXX_TESTCODES_REQUIRED_TO_RUN =  \
 	helloNested.cpp \
 	objectPrivate.cpp \
 	objectFirstPrivate.cpp \
-   objectLastprivate.cpp \
+        objectLastprivate.cpp \
 	orphanedAtomic.cpp \
 	preprocessingInfo2.cpp \
 	task_link.cpp \
@@ -172,7 +173,7 @@ noinst_PROGRAMS = roseomp
 roseomp_SOURCES = roseomp.C
 
 # this flag is used for the long list of CXX test files
-TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
+TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
 
 # We only include test codes required to compile here.
 # Runnable codes are handled separatedly, 

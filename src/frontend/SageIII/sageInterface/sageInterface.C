@@ -6784,10 +6784,24 @@ bool SageInterface::loopInterchange(SgForStatement* loop, size_t depth, size_t l
   return true;
 }
 
-//!Return the loop index variable for a for loop
+//!Return the loop index variable for a C/C++ for or Fortran Do loop
 SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
 {
   ROSE_ASSERT(loop != NULL);
+  SgInitializedName* ivarname=NULL;
+
+  // Fortran case ------------------
+  if (SgFortranDo * do_loop = isSgFortranDo(loop))
+  {
+    SgAssignOp* assign_op = isSgAssignOp (do_loop->get_initialization());
+    ROSE_ASSERT (assign_op != NULL);
+    SgVarRefExp* var = isSgVarRefExp(assign_op->get_lhs_operand());
+    ROSE_ASSERT (var != NULL);
+    ivarname = var->get_symbol()->get_declaration();
+    ROSE_ASSERT (ivarname != NULL);
+    return ivarname;
+  }  
+  // C/C++ case ------------------------------ 
   SgForStatement* fs = isSgForStatement(loop);
   ROSE_ASSERT (fs != NULL);
 
@@ -6800,7 +6814,6 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   }
   SgStatement* init1 = init.front();
   SgExpression* ivarast=NULL;
-  SgInitializedName* ivarname=NULL;
 
   bool isCase1=false, isCase2=false;
   //consider C99 style: for (int i=0;...)

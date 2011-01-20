@@ -18,6 +18,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
 	jacobi.c \
 	alignment.c \
+	array_init.c \
 	atomic.c \
 	atoms-2.c \
 	barrier.c \
