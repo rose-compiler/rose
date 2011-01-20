@@ -2209,8 +2209,6 @@ DefaultFunctionGenerator::generateDefaultFunctionType(defaultEnumFunctionType en
       func_param_type = NULL;
     }
   
-//SgMemberFunctionType *func_type = 
-//    new SgMemberFunctionType(func_return_type, false, parentClassDef->get_declaration()->get_type()); //! TODO refactor to use build interface
   SgMemberFunctionType* func_type = buildMemberFunctionType(func_return_type,
                                                             buildFunctionParameterTypeList(func_param_type), 
                                                             parentClassDef, 
