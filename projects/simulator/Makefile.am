@@ -314,7 +314,7 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.63.2.c \
 		   $(srcdir)/tests/syscall_tst.63.3.c \
 		   $(srcdir)/tests/syscall_tst.63.4.c \
-           $(srcdir)/tests/syscall_tst.63.5.c \
+		   $(srcdir)/tests/syscall_tst.63.5.c \
 		   $(srcdir)/tests/syscall_tst.64.1.c \
 		   $(srcdir)/tests/syscall_tst.64.2.c \
 		   $(srcdir)/tests/syscall_tst.76.1.c \
@@ -332,10 +332,9 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.93.3.c \
 		   $(srcdir)/tests/syscall_tst.93.4.c \
 		   $(srcdir)/tests/syscall_tst.94.1.c \
-           $(srcdir)/tests/syscall_tst.94.2.c \
-           $(srcdir)/tests/syscall_tst.99.1.c \
-           $(srcdir)/tests/syscall_tst.99.2.c \
-           $(srcdir)/tests/syscall_tst.99.3.c
+		   $(srcdir)/tests/syscall_tst.94.2.c \
+		   $(srcdir)/tests/syscall_tst.99.1.c \
+		   $(srcdir)/tests/syscall_tst.99.2.c
 
 # These cannot be run reliably (at least not concurrently with other tests.
 #		   $(srcdir)/tests/syscall_tst.117.msgget.03.c
@@ -374,6 +373,7 @@ TEST_INPUTS_TS_SRC = \
 #		   $(srcdir)/tests/syscall_tst.196.3.c
 #		   $(srcdir)/tests/syscall_tst.221.18.c  (tries to setreud in a privileged way)
 #		   $(srcdir)/tests/syscall_tst.83.3.c
+#		   $(srcdir)/tests/syscall_tst.99.3.c
 #			These tests either explicitly check for root effective uid, or the fail with EACCESS on some
 #			kernels. We can't be testing ROSE as root!
 #		   $(srcdir)/tests/syscall_tst.117.msgctl.09.c
