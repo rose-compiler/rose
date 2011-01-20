@@ -217,8 +217,8 @@ static const Translate clock_names[] = {
 };
 
 struct timespec_32 {
-    uint32_t tv_sec;
-    uint32_t tv_nsec;
+    int32_t tv_sec;
+    int32_t tv_nsec;
 } __attribute__((packed));
 
 static int
@@ -226,7 +226,7 @@ print_timespec_32(FILE *f, const uint8_t *_ts, size_t sz)
 {
     assert(sz==sizeof(timespec_32));
     const timespec_32 *ts = (const timespec_32*)_ts;
-    return fprintf(f, "sec=%"PRIu32", nsec=%"PRIu32, ts->tv_sec, ts->tv_nsec);
+    return fprintf(f, "sec=%"PRId32", nsec=%"PRId32, ts->tv_sec, ts->tv_nsec);
 }
 
 struct timeval_32 {
@@ -4921,14 +4921,15 @@ EmulationPolicy::emulate_syscall()
                     writeGPR(x86_gpr_ax, -EFAULT);
                     break;
                 }
-                host_ts_in.tv_sec = guest_ts.tv_sec;
-                host_ts_in.tv_nsec = guest_ts.tv_nsec;
-                int result = nanosleep(&host_ts_in, &host_ts_out);
-                if (-1==result) {
-                    writeGPR(x86_gpr_ax, -errno);
+                if (guest_ts.tv_sec<0 || (unsigned long)guest_ts.tv_nsec >= 1000000000L) {
+                    writeGPR(x86_gpr_ax, -EINVAL);
                     break;
                 }
-                if (arg(1)) {
+                host_ts_in.tv_sec = guest_ts.tv_sec;
+                host_ts_in.tv_nsec = guest_ts.tv_nsec;
+
+                int result = nanosleep(&host_ts_in, &host_ts_out);
+                if (arg(1) && -1==result && EINTR==errno) {
                     guest_ts.tv_sec = host_ts_out.tv_sec;
                     guest_ts.tv_nsec = host_ts_out.tv_nsec;
                     if (sizeof(guest_ts)!=map->write(&guest_ts, arg(1), sizeof guest_ts)) {
@@ -4936,7 +4937,7 @@ EmulationPolicy::emulate_syscall()
                         break;
                     }
                 }
-                writeGPR(x86_gpr_ax, result);
+                writeGPR(x86_gpr_ax, -1==result?-errno:result);
             } while (0);
             syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
             break;
@@ -5939,7 +5940,8 @@ EmulationPolicy::syscall_leave(const char *format, ...)
         print_leave(debug, format[0], &info);
 
         /* Additionally, output any other buffer values that were filled in by a successful system call. */
-        if (format[0]!='d' || 0==(arg(-1) & 0x80000000)) {
+        int result = (int)(uint32_t)(arg(-1));
+        if (format[0]!='d' || -1!=result || -EINTR==result) {
             for (size_t i=1; format[i]; i++) {
                 if ('-'!=format[i]) {
                     syscall_arginfo(format[i], arg(i-1), &info, &ap);
