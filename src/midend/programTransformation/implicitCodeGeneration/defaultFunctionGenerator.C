@@ -2275,7 +2275,7 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
           SgTemplateInstantiationDecl *classDecl = isSgTemplateInstantiationDecl(parentClassDef1->get_declaration());
           ROSE_ASSERT(classDecl);
 
-          SgTemplateInstantiationMemberFunctionDecl *tempFunc =  new SgTemplateInstantiationMemberFunctionDecl(COMPILERGENERATED_FILE_INFO,func_name, func_type, NULL, classDecl->get_templateDeclaration(), classDecl->get_templateArguments());
+          SgTemplateInstantiationMemberFunctionDecl *tempFunc =  new SgTemplateInstantiationMemberFunctionDecl(COMPILERGENERATED_FILE_INFO,func_name, func_type, NULL, classDecl->get_templateDeclaration(), classDecl->get_templateArguments()); //! TODO use SageBuilder
           tempFunc->set_definingDeclaration(tempFunc);
           tempFunc->set_templateName(func_name);
           func = tempFunc;
@@ -2300,14 +2300,14 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
      else if (enumFunctionType==e_assignment_operator)
         sfModifier.setOperator();                                                                                          
         
-     SgFunctionDefinition * func_def =new SgFunctionDefinition(COMPILERGENERATED_FILE_INFO,func);
+     SgFunctionDefinition * func_def =new SgFunctionDefinition(COMPILERGENERATED_FILE_INFO,func); //! TODO use SageBuilder
      SgBasicBlock *func_body = buildBasicBlock();
 
      func_def->set_body(func_body);
      func_def->set_parent(func); //necessary or not?
 
         // parameter list
-     SgFunctionParameterList * parameterList = new SgFunctionParameterList(COMPILERGENERATED_FILE_INFO);
+     SgFunctionParameterList * parameterList = new SgFunctionParameterList(COMPILERGENERATED_FILE_INFO); //! TODO use SageBuilder
      ROSE_ASSERT(parameterList != NULL); /*why assert here, not before for all new operations?*/
      func->set_parameterList(parameterList);
 
@@ -2320,18 +2320,18 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
         base_type1=isSgClassDeclaration(parentClassDef1->get_declaration()\
                 ->get_firstNondefiningDeclaration())->get_type();
         ROSE_ASSERT(base_type1!=NULL);
-        SgModifierType * modifier_type1=new SgModifierType(base_type1);
+        SgModifierType * modifier_type1=new SgModifierType(base_type1); //! TODO use SageBuilder
 //      SgTypeModifier &type_modifier1 = modifier_type1->get_typeModifier();
 // SgConstVolatileModifier & const_modifier1= type_modifier1.get_constVolatileModifier();
         //      const_modifier1.setConst();
 
-        SgReferenceType * ref_type = new SgReferenceType(modifier_type1);
+        SgReferenceType * ref_type = new SgReferenceType(modifier_type1); //! TODO use SageBuilder
         SgInitializer * var1_initializer = NULL;
-        var1_init_name = new SgInitializedName(var1_name, ref_type,var1_initializer,NULL);
+        var1_init_name = new SgInitializedName(var1_name, ref_type,var1_initializer,NULL); //! TODO use SageBuilder 
         var1_init_name->set_scope(func_def);
         var1_init_name->set_file_info(COMPILERGENERATED_FILE_INFO);
 
-        SgVariableSymbol* sym = new SgVariableSymbol(var1_init_name);
+        SgVariableSymbol* sym = new SgVariableSymbol(var1_init_name); //! TODO use SageBuilder
         func_def->insert_symbol(var1_name, sym);
 
         ROSE_ASSERT(func->get_parameterList()!=NULL);
@@ -2342,7 +2342,7 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
      func->set_parent(parentClassDef1);
      parentClassDef1->append_member(func);
 
-     SgMemberFunctionSymbol *funcSymbol = new SgMemberFunctionSymbol(func);
+     SgMemberFunctionSymbol *funcSymbol = new SgMemberFunctionSymbol(func); //! TODO use SageBuilder
      cout << "inserting " << func_name.getString() << " = " << func << endl;
      parentClassDef1->insert_symbol(func_name, funcSymbol);
 
