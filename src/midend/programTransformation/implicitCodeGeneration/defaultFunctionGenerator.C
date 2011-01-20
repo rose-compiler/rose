@@ -2819,10 +2819,10 @@ void DefaultFunctionGenerator::generateImplicitInvocations(SgFunctionDefinition 
 	SgThisExp *thisExp = getThisExp(classDeclaration);
 #if 1
 	SgPointerType *pointerType = 
-	  new SgPointerType(baseClassType);
+	  buildPointerType(baseClassType);
 	
 	SgCastExp *lhs = 
-	  new SgCastExp(COMPILERGENERATED_FILE_INFO, thisExp, pointerType);
+	  buildCastExp(thisExp, pointerType);
 #endif
 	targetFunctionDeclaration = 
 	  getMethodInClass(memberFunctionDeclaration, baseClassDefn);
@@ -2944,19 +2944,19 @@ void DefaultFunctionGenerator::generateImplicitInvocations(SgFunctionDefinition 
 	  SgThisExp *thisExp = getThisExp(classDeclaration);
 #if 1
 	  SgPointerType *pointerType = 
-	    new SgPointerType(baseClassType);
+	    buildPointerType(baseClassType);
 
 	  SgCastExp *lhs = 
-	    new SgCastExp(COMPILERGENERATED_FILE_INFO, thisExp, pointerType);
+	    buildCastExp(thisExp, pointerType);
 #endif
 	  // Cast the rhs to (baseClassType &)arg:
           arg = getVarRefForFormal(functionDefinition, 0);
 
 	  SgReferenceType *referenceType = 
-	    new SgReferenceType(baseClassType);
+	    buildReferenceType(baseClassType);
 
 	  SgCastExp *rhs = 
-	    new SgCastExp(COMPILERGENERATED_FILE_INFO, arg, referenceType);
+	    buildCastExp(arg, referenceType);
 
 	  generateDefaultFunctionCall(targetFunctionDeclaration, 
 				      baseClassDefn,
