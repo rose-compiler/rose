@@ -2431,21 +2431,19 @@ DefaultFunctionGenerator::generateDefaultFunctionCall(SgMemberFunctionDeclaratio
   ROSE_ASSERT (functionSymbol != NULL);
 
   // Create SgMemberFunctionRefExp.
-  bool virtual_call = 0;
+  bool virtual_call = false;
+  bool needs_qualifier = false;
   SgMemberFunctionRefExp *functionRefExp =
-    new SgMemberFunctionRefExp(COMPILERGENERATED_FILE_INFO,
-                               functionSymbol,
-			       virtual_call,
-			       functype,
-			       false);
-  functionRefExp->set_need_qualifier(false);
+    buildMemberFunctionRefExp(functionSymbol,
+                              virtual_call,
+                              needs_qualifier);
 
   // Create the function expression-- a dot or arrow expression
   // depending on the type (pointer or non-pointer) of the receiver.
   
   // The type of the function expression is the return type of
   // the function.
-  SgType *expressionType = functype->get_return_type();
+  // SgType *expressionType = functype->get_return_type();
 
   // The lhs of the dot/arrow expression is the receiver and
   // the rhs is the member function ref expression created above.
@@ -2456,41 +2454,25 @@ DefaultFunctionGenerator::generateDefaultFunctionCall(SgMemberFunctionDeclaratio
   SgBinaryOp *function = NULL;
   if ( isSgPointerType(receiverType) ) {
     // The receiver is a pointer; create an arrow expression.
-    function = new SgArrowExp(COMPILERGENERATED_FILE_INFO,
-			    receiver,
-			    functionRefExp,
-			    expressionType);
+    function = buildArrowExp(receiver, functionRefExp);
     ROSE_ASSERT(receiver != NULL);
   } else {
     // The receiver is not a pointer; create a dot expression.
-    function = new SgDotExp(COMPILERGENERATED_FILE_INFO,
-			    receiver,
-			    functionRefExp,
-			    expressionType);
+    function = buildDotExp(receiver, functionRefExp);
     ROSE_ASSERT(receiver != NULL);
   }
   receiver->set_parent(function);
   
   // Create the arg list.
-  SgExprListExp *args = new SgExprListExp(COMPILERGENERATED_FILE_INFO);
-
-  // Put the arg, if any, in the arg list.
-  if ( arg != NULL ) {
-    args->append_expression(arg);
-  }
+  SgExprListExp *args = buildExprListExp(arg);
 
   // Finally, create the function call.
   SgFunctionCallExp *functionCallExp = 
-    new SgFunctionCallExp(COMPILERGENERATED_FILE_INFO,
-			  function,
-			  args,
-			  expressionType);
-
+    buildFunctionCallExp(functionSymbol, args);
 
   // Put the function call in an expression statement.
   SgExprStatement *exprStatement =
-    new SgExprStatement(COMPILERGENERATED_FILE_INFO,
-			functionCallExp);
+    buildExprStatement(functionCallExp);
 
   // Prepend the expression statement to the basic block.
   // NB:  appending might put this after a return statement!
