@@ -48,6 +48,7 @@ TEST_SUPPORT_SRC = $(srcdir)/tests/audit_parse_verify.c \
                    $(srcdir)/tests/audit_parse_verify_utils.c \
                    $(srcdir)/tests/audit_utils.c \
                    $(srcdir)/tests/cleanup.c \
+                   $(srcdir)/tests/cloner.c \
                    $(srcdir)/tests/get_high_address.c \
                    $(srcdir)/tests/libtestsuite.c \
                    $(srcdir)/tests/parse_opts.c \
@@ -64,6 +65,7 @@ TEST_SUPPORT_SRC = $(srcdir)/tests/audit_parse_verify.c \
 EXTRA_DIST +=      $(srcdir)/tests/audit_parse_verify.h \
 		   $(srcdir)/tests/audit_utils.h \
 		   $(srcdir)/tests/bintest_config.h \
+		   $(srcdir)/tests/clone_platform.h \
 		   $(srcdir)/tests/compat_16.h \
 		   $(srcdir)/tests/compat_uid.h \
 		   $(srcdir)/tests/compiler.h \
@@ -179,16 +181,27 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.142.1.c \
 		   $(srcdir)/tests/syscall_tst.142.2.c \
 		   $(srcdir)/tests/syscall_tst.142.3.c \
+		   $(srcdir)/tests/syscall_tst.144.1.c \
+		   $(srcdir)/tests/syscall_tst.144.2.c \
+		   $(srcdir)/tests/syscall_tst.144.3.c \
+		   $(srcdir)/tests/syscall_tst.144.4.c \
+		   $(srcdir)/tests/syscall_tst.144.5.c \
 		   $(srcdir)/tests/syscall_tst.146.1.c \
 		   $(srcdir)/tests/syscall_tst.146.2.c \
 		   $(srcdir)/tests/syscall_tst.146.3.c \
 		   $(srcdir)/tests/syscall_tst.146.4.c \
 		   $(srcdir)/tests/syscall_tst.146.5.c \
 		   $(srcdir)/tests/syscall_tst.146.6.c \
+		   $(srcdir)/tests/syscall_tst.162.1.c \
+		   $(srcdir)/tests/syscall_tst.162.2.c \
+		   $(srcdir)/tests/syscall_tst.162.3.c \
+		   $(srcdir)/tests/syscall_tst.162.4.c \
 		   $(srcdir)/tests/syscall_tst.174.1.c \
 		   $(srcdir)/tests/syscall_tst.174.2.c \
 		   $(srcdir)/tests/syscall_tst.174.3.c \
 		   $(srcdir)/tests/syscall_tst.175.c \
+		   $(srcdir)/tests/syscall_tst.176.1.c \
+		   $(srcdir)/tests/syscall_tst.179.1.c \
 		   $(srcdir)/tests/syscall_tst.183.1.c \
 		   $(srcdir)/tests/syscall_tst.183.2.c \
 		   $(srcdir)/tests/syscall_tst.183.3.c \
@@ -255,6 +268,8 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.265.c \
 		   $(srcdir)/tests/syscall_tst.266.c \
 		   $(srcdir)/tests/syscall_tst.306.c \
+		   $(srcdir)/tests/syscall_tst.1.1.c \
+		   $(srcdir)/tests/syscall_tst.1.2.c \
 		   $(srcdir)/tests/syscall_tst.3.1.c \
 		   $(srcdir)/tests/syscall_tst.3.2.c \
 		   $(srcdir)/tests/syscall_tst.3.3.c \
@@ -266,8 +281,21 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.4.5.c \
 		   $(srcdir)/tests/syscall_tst.13.1.c \
 		   $(srcdir)/tests/syscall_tst.13.2.c \
+		   $(srcdir)/tests/syscall_tst.19.1.c \
+		   $(srcdir)/tests/syscall_tst.19.2.c \
+		   $(srcdir)/tests/syscall_tst.19.3.c \
+		   $(srcdir)/tests/syscall_tst.19.4.c \
+		   $(srcdir)/tests/syscall_tst.19.5.c \
+		   $(srcdir)/tests/syscall_tst.19.6.c \
+		   $(srcdir)/tests/syscall_tst.19.7.c \
+		   $(srcdir)/tests/syscall_tst.19.8.c \
+		   $(srcdir)/tests/syscall_tst.19.9.c \
+		   $(srcdir)/tests/syscall_tst.19.10.c \
 		   $(srcdir)/tests/syscall_tst.20.1.c \
 		   $(srcdir)/tests/syscall_tst.20.2.c \
+		   $(srcdir)/tests/syscall_tst.29.1.c \
+		   $(srcdir)/tests/syscall_tst.29.2.c \
+		   $(srcdir)/tests/syscall_tst.29.3.c \
 		   $(srcdir)/tests/syscall_tst.30.c \
 		   $(srcdir)/tests/syscall_tst.311.c \
 		   $(srcdir)/tests/syscall_tst.33.1.c \
@@ -282,6 +310,11 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.60.1.c \
 		   $(srcdir)/tests/syscall_tst.60.2.c \
 		   $(srcdir)/tests/syscall_tst.60.3.c \
+		   $(srcdir)/tests/syscall_tst.63.1.c \
+		   $(srcdir)/tests/syscall_tst.63.2.c \
+		   $(srcdir)/tests/syscall_tst.63.3.c \
+		   $(srcdir)/tests/syscall_tst.63.4.c \
+           $(srcdir)/tests/syscall_tst.63.5.c \
 		   $(srcdir)/tests/syscall_tst.64.1.c \
 		   $(srcdir)/tests/syscall_tst.64.2.c \
 		   $(srcdir)/tests/syscall_tst.76.1.c \
@@ -294,8 +327,15 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.91.1.c \
 		   $(srcdir)/tests/syscall_tst.91.2.c \
 		   $(srcdir)/tests/syscall_tst.91.3.c \
+		   $(srcdir)/tests/syscall_tst.93.1.c \
+		   $(srcdir)/tests/syscall_tst.93.2.c \
+		   $(srcdir)/tests/syscall_tst.93.3.c \
+		   $(srcdir)/tests/syscall_tst.93.4.c \
 		   $(srcdir)/tests/syscall_tst.94.1.c \
-		   $(srcdir)/tests/syscall_tst.94.2.c
+           $(srcdir)/tests/syscall_tst.94.2.c \
+           $(srcdir)/tests/syscall_tst.99.1.c \
+           $(srcdir)/tests/syscall_tst.99.2.c \
+           $(srcdir)/tests/syscall_tst.99.3.c
 
 # These cannot be run reliably (at least not concurrently with other tests.
 #		   $(srcdir)/tests/syscall_tst.117.msgget.03.c
@@ -348,6 +388,7 @@ TEST_INPUTS_TS_SRC = \
 #			This test cannot be run under the simulator with stderr redirected to a file (it enters an infinite loop
 #			somewhere in the setrlimit() syscall emulation). Since "make check" runs tests with their stderr
 #			redirected to a file, we will skip this test.
+
 
 
 TEST_INPUTS_NM_SRC = \
@@ -451,6 +492,7 @@ check-local: $(TEST_TARGETS)
 
 # "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
 clean-local:
+	if [ -d tmp-sim ]; then chmod -f a+rwx -R tmp-sim; fi
 	rm -rf tmp-sim x-core.rose test-file-fchown32
 
 EXTRA_DIST += $(TEST_INPUTS_SRC) $(TEST_SUPPORT_SRC) README x86sim.conf test_status.txt
