@@ -116,7 +116,7 @@ print_user_desc(FILE *f, const uint8_t *_ud, size_t sz)
 static int
 print_int_32(FILE *f, const uint8_t *ptr, size_t sz)
 {
-    assert(4==sz);
+    ROSE_ASSERT(4==sz);
     return fprintf(f, "%"PRId32, *(const int32_t*)ptr);
 }
 
@@ -2370,9 +2370,10 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
         case 19: {      /* SEM_INFO */
             seminfo host_seminfo;
 #ifdef SYS_ipc /* i686 */
+            ROSE_ASSERT(version!=0);
             semun_native host_semun;
             host_semun.ptr = &host_seminfo;
-            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, &host_semun);
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
 #else
             int result = syscall(SYS_semctl, semid, semnum, cmd, &host_seminfo);
 #endif
@@ -2405,9 +2406,10 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
         case 18: {      /* SEM_STAT */
             semid_ds host_ds;
 #ifdef SYS_ipc /* i686 */
-            semun_native semun;
-            semun.ptr = &host_ds;
-            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, &semun);
+            ROSE_ASSERT(version!=0);
+            semun_native host_semun;
+            host_semun.ptr = &host_ds;
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
 #else
             int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
 #endif
@@ -2451,9 +2453,10 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
                 return;
             }
 #ifdef SYS_ipc  /* i686 */
+            ROSE_ASSERT(version!=0);
             semun_native semun;
             semun.ptr = &guest_ds;
-            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, &semun);
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
 #else           /* amd64 */
             semid_ds host_ds;
             host_ds.sem_perm.__key = guest_ds.sem_perm.key;
@@ -2500,7 +2503,7 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
 #ifdef SYS_ipc  /* i686 */
             semun_native semun;
             semun.ptr = sem_values;
-            result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, &semun);
+            result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
 #else
             result = syscall(SYS_semctl, semid, semnum, cmd, sem_values);
 #endif
@@ -2514,7 +2517,7 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
                 writeGPR(x86_gpr_ax, -EFAULT);
                 return;
             }
-            if (-1!=result && debug && trace_syscall) {
+            if (debug && trace_syscall) {
                 fprintf(debug, "<continued...>\n");
                 for (size_t i=0; i<host_ds.sem_nsems; i++) {
                     fprintf(debug, "    value[%zu] = %"PRId16"\n", i, sem_values[i]);
@@ -2522,6 +2525,7 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
                 fprintf(debug, "%32s", "= ");
             }
             delete[] sem_values;
+            writeGPR(x86_gpr_ax, result);
             break;
         }
             
@@ -2553,7 +2557,7 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
 #ifdef SYS_ipc  /* i686 */
             semun_native semun;
             semun.ptr = sem_values;
-            result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, &semun);
+            result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
 #else
             result = syscall(SYS_semctl, semid, semnum, cmd, sem_values);
 #endif
@@ -2566,14 +2570,14 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
         case 12:        /* GETVAL */
         case 15:        /* GETZCNT */
         case 14: {      /* GETNCNT */
-            int result = semctl(semid, semnum, cmd);
+            int result = semctl(semid, semnum, cmd, NULL);
             writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
         }
 
         case 16: {      /* SETVAL */
 #ifdef SYS_ipc  /* i686 */
-            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, guest_semun, cmd, 0);
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &guest_semun);
 #else
             int result = syscall(SYS_semctl, semid, semnum, cmd, guest_semun.val);
 #endif
@@ -2583,9 +2587,11 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
 
         case 0: {       /* IPC_RMID */
 #ifdef SYS_ipc /* i686 */
-            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd, 0);
+            semun_native host_semun;
+            memset(&host_semun, 0, sizeof host_semun);
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
 #else
-            int result = semctl(semid, semnum, cmd);
+            int result = semctl(semid, semnum, cmd, NULL);
 #endif
             writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
@@ -4383,7 +4389,14 @@ EmulationPolicy::emulate_syscall()
                     syscall_leave("d");
                     break;
                 case 3: /* SEMCTL */
-                    syscall_enter("ipc", "fddfp", ipc_commands, sem_control);
+                    switch (third & 0xff) {
+                        case 16: /*SETVAL*/
+                            syscall_enter("ipc", "fddfP", ipc_commands, sem_control, 4, print_int_32);
+                            break;
+                        default:
+                            syscall_enter("ipc", "fddfp", ipc_commands, sem_control);
+                            break;
+                    }
                     sys_semctl(first, second, third, ptr);
                     syscall_leave("d");
                     break;
