@@ -3081,24 +3081,28 @@ SgConstructorInitializer *DefaultFunctionGenerator::normalizeAssignInitializer(S
      SgExpression *operandCopy = isSgExpression(operand->copy(tc));
      ROSE_ASSERT(operandCopy != NULL);
 
-     SgExprListExp *rhsArgList = new SgExprListExp(COMPILERGENERATED_FILE_INFO);
-     rhsArgList->append_expression(operandCopy);
-     operandCopy->set_parent(rhsArgList);
+     SgExprListExp *rhsArgList = buildExprListExp(operandCopy);
 
-     SgConstructorInitializer *newCtorInit = new SgConstructorInitializer(
-                     COMPILERGENERATED_FILE_INFO,
+#if 1
+     SgType* exp_type = objClsDef->get_declaration()->get_type();
+#else
+     // For newest version of ROSE, where a constructor initializer may have any type
+     SgType* exp_type = objType;
+#endif
+
+     bool need_name = false;
+     bool need_qualifier = false;
+     bool need_parenthesis_after_name = true;
+     bool associated_class_unknown = false;
+
+     SgConstructorInitializer *newCtorInit = buildConstructorInitializer(
                      copyCtorDecl,
                      rhsArgList,
-#if 1
-                     objClsDef->get_declaration()->get_type()
-#else
-               // For newest version of ROSE, where a constructor initializer may have any type
-                     objType
-#endif
-                     );
-     rhsArgList->set_parent(newCtorInit);
-
-     newCtorInit->set_need_parenthesis_after_name(true);
+                     exp_type,
+                     need_name,
+                     need_qualifier,
+                     need_parenthesis_after_name,
+                     associated_class_unknown);
 
      return newCtorInit;
    }
