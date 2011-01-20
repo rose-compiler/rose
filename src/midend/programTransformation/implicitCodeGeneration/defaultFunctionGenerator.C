@@ -2282,8 +2282,8 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
         }
      else
         {
-          func =  new SgMemberFunctionDeclaration(COMPILERGENERATED_FILE_INFO,func_name, func_type);
-          func->set_definingDeclaration(func);
+          SgScopeStatement* scope = parentClassDef1->get_declaration()->get_scope();
+          func =  buildDefiningMemberFunctionDeclaration(func_name, func_type, scope); //! TODO use SageBuilder TODO correct?
         }
 
   // DQ (10/10/2006): These were never used and have been superceeded by explicit name qualification list stored in the SgDeclarationStatement.
