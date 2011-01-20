@@ -1409,6 +1409,13 @@ extern bool XOMP_master(void)
 #endif    
 }
 
+//---------
+void xomp_atomic_start(void);
+#pragma weak xomp_atomic_start_=xomp_atomic_start
+void xomp_atomic_start(void)
+{
+  XOMP_atomic_start();
+}
 void XOMP_atomic_start (void)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -1418,9 +1425,15 @@ void XOMP_atomic_start (void)
 #endif
 }
 
+//---------
+void xomp_atomic_end(void);
+#pragma weak xomp_atomic_end_=xomp_atomic_end
+void xomp_atomic_end(void)
+{
+  XOMP_atomic_end();
+}
 void XOMP_atomic_end (void)
 {
-
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
    GOMP_atomic_end();
 #else   

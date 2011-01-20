@@ -88,6 +88,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	recursive.c \
 	reduction2.c \
 	reduction.c \
+	reduction-classic.c \
 	rice1.c \
 	section.c \
 	set_num_threads.c \
