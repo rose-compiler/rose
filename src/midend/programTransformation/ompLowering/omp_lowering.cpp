@@ -2470,6 +2470,7 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
       for (; loopIter!= loops.end(); loopIter++)
       {
         SgInitializedName* index_var = getLoopIndexVariable(*loopIter);
+        ROSE_ASSERT (index_var != NULL);
         SgScopeStatement* var_scope = index_var->get_scope();
         // Only loop index variables declared in higher  or the same scopes matter
         if (isAncestor(var_scope, directive_scope) || var_scope==directive_scope)

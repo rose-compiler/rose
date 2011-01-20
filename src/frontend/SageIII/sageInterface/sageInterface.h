@@ -332,6 +332,8 @@ struct hash_nodeptr
    \brief Not sure the classifications right now
  */
 
+   //! Check if a node is SgOmp*Statement
+   bool isOmpStatement(SgNode* );
    /*! \brief Return true if function is overloaded.
     */
    // DQ (8/27/2005):
