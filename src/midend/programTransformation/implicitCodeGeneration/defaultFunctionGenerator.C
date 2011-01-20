@@ -3209,26 +3209,22 @@ SgFunctionCallExp *DefaultFunctionGenerator::translateAssignmentToOperatorEqCall
      SgMemberFunctionSymbol *operatorEqSym = isSgMemberFunctionSymbol(operatorEqDecl->get_symbol_from_symbol_table());
      ROSE_ASSERT(operatorEqSym != NULL);
      
-     SgMemberFunctionRefExp *operatorEqRef = new SgMemberFunctionRefExp(COMPILERGENERATED_FILE_INFO, operatorEqSym);
+     bool virtual_call = false; //! TODO correct?
+     bool need_qualifier = false; //! TODO correct?
+     SgMemberFunctionRefExp *operatorEqRef = buildMemberFunctionRefExp(operatorEqSym, virtual_call, need_qualifier);
+
      SgTreeCopy tc1;
      SgExpression *lhsCopy = isSgExpression(lhs->copy(tc1));
      ROSE_ASSERT(lhsCopy != NULL);
 
-     SgDotExp *dotExp = new SgDotExp(COMPILERGENERATED_FILE_INFO, lhsCopy, operatorEqRef);
-     operatorEqRef->set_parent(dotExp);
-     lhsCopy->set_parent(dotExp);
+     SgDotExp *dotExp = buildDotExp(lhsCopy, operatorEqRef);
 
      SgTreeCopy tc2;
      SgExpression *rhsCopy = isSgExpression(rhs->copy(tc2));
      ROSE_ASSERT(rhsCopy != NULL);
      
-     SgExprListExp *paramList = new SgExprListExp(COMPILERGENERATED_FILE_INFO);
-     paramList->append_expression(rhsCopy);
-     rhsCopy->set_parent(paramList);
-
-     SgFunctionCallExp *operatorEqCall = new SgFunctionCallExp(COMPILERGENERATED_FILE_INFO, dotExp, paramList);
-     dotExp->set_parent(operatorEqCall);
-     paramList->set_parent(operatorEqCall);
+     SgExprListExp *paramList = buildExprListExp(rhsCopy);
+     SgFunctionCallExp *operatorEqCall = buildFunctionCallExp(dotExp, paramList);
 
      return operatorEqCall;
    }
