@@ -194,9 +194,12 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
     // This is called the auto type conversion for function or array typed variables 
     // that are passed as function parameters
     // Liao 4/24/2009
-    if (isSgArrayType(param_base_type)) 
-      if (isSgFunctionDefinition(i_name->get_scope()))
-        param_base_type= SageBuilder::buildPointerType(isSgArrayType(param_base_type)->get_base_type());
+    if (!SageInterface::is_Fortran_language() ) // Only apply to C/C++, not Fortran!
+    {
+      if (isSgArrayType(param_base_type)) 
+        if (isSgFunctionDefinition(i_name->get_scope()))
+          param_base_type= SageBuilder::buildPointerType(isSgArrayType(param_base_type)->get_base_type());
+    }
      
     //For C++ reference type, we use its base type since pointer to a reference type is not allowed
     //Liao, 8/14/2009
