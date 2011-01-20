@@ -4814,17 +4814,21 @@ EmulationPolicy::emulate_syscall()
         case 144: { /* 0x90, int msync(void *addr, size_t length, int flags) */
             static const Translate msync_flags[] = { TF(MS_ASYNC), TF(MS_SYNC), TF(MS_INVALIDATE), T_END };
             syscall_enter("msync", "pdf", msync_flags);
-            void *addr = my_addr(arg(0), arg(1));
-            if (!addr) {
-                writeGPR(x86_gpr_ax, -ENOMEM);
-            } else {
-                int result = msync(addr, arg(1), arg(2));
-                if (-1==result) {
-                    writeGPR(x86_gpr_ax, -errno);
-                } else {
-                    writeGPR(x86_gpr_ax, result);
+            do {
+                if (arg(0) % 4096) {
+                    writeGPR(x86_gpr_ax, -EINVAL);
+                    break;
                 }
-            }
+
+                void *addr = my_addr(arg(0), arg(1));
+                if (!addr) {
+                    writeGPR(x86_gpr_ax, -ENOMEM);
+                    break;
+                }
+                
+                int result = msync(addr, arg(1), arg(2));
+                writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            } while (0);
             syscall_leave("d");
             break;
         }
