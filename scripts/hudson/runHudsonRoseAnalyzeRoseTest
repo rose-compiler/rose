@@ -144,7 +144,7 @@ else
 fi
 
 # Here will will build the executable (tests/testAnalysis) that we will then use to compile ROSE again.
-if test -e ROSE-compile-ROSE-executable-build ; then chmod -R u+w ROSE-compile-ROSE-executable-build ; fi
+if test -e ROSE-compile-ROSE-executable-build ; then chmod -R u+wx ROSE-compile-ROSE-executable-build ; fi
 rm -rf ROSE-compile-ROSE-executable-build
 mkdir ROSE-compile-ROSE-executable-build
 cd ROSE-compile-ROSE-executable-build
@@ -220,7 +220,7 @@ cd ..
 echo "Current directory:"
 pwd
 
-if test -e ROSE-compile-ROSE-build ; then chmod -R u+w ROSE-compile-ROSE-build ; fi
+if test -e ROSE-compile-ROSE-build ; then chmod -R u+wx ROSE-compile-ROSE-build ; fi
 rm -rf ROSE-compile-ROSE-build
 mkdir ROSE-compile-ROSE-build
 cd ROSE-compile-ROSE-build
