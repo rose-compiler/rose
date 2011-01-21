@@ -2320,7 +2320,7 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
         base_type1=isSgClassDeclaration(parentClassDef1->get_declaration()\
                 ->get_firstNondefiningDeclaration())->get_type();
         ROSE_ASSERT(base_type1!=NULL);
-        SgModifierType * modifier_type1=new SgModifierType(base_type1); //! TODO use SageBuilder
+        SgModifierType * modifier_type1= buildModifierType(base_type1);
 //      SgTypeModifier &type_modifier1 = modifier_type1->get_typeModifier();
 // SgConstVolatileModifier & const_modifier1= type_modifier1.get_constVolatileModifier();
         //      const_modifier1.setConst();
