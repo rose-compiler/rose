@@ -2056,6 +2056,68 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
 
      return bb;
    }
+
+  SgBasicBlock * getEnclosingRegionOrFuncDefinition(SgBasicBlock *orig_scope)
+{
+  ROSE_ASSERT (SageInterface::is_Fortran_language() == true);
+  // find the right scope (target body) to insert the declaration, start from the original scope
+  SgBasicBlock* t_body = NULL;
+
+  //find enclosing parallel region's body
+  SgOmpParallelStatement * omp_stmt = isSgOmpParallelStatement(getEnclosingNode<SgOmpParallelStatement>(orig_scope));
+  if (omp_stmt)
+  {
+    SgBasicBlock * omp_body = isSgBasicBlock(omp_stmt->get_body());
+    ROSE_ASSERT(omp_body != NULL);
+    t_body = omp_body;
+  }
+  else
+  {
+    // Find enclosing function body
+    SgFunctionDefinition* func_def = getEnclosingProcedure (orig_scope);
+    ROSE_ASSERT (func_def != NULL);
+    SgBasicBlock * f_body = func_def->get_body();
+    ROSE_ASSERT(f_body!= NULL);
+    t_body = f_body;
+  }
+  ROSE_ASSERT (t_body != NULL);
+  return t_body;
+}
+#if 0 // moved to sageInterface.C
+   // Insert a statement right after the last declaration with a target block.
+   // Useful to insert the last declaration or the first non-declaration statement
+   // to conform Fortran standard.
+   void insertStatementAfterLastDeclaration(SgStatement* stmt, SgBasicBlock * target_block)
+{
+  // Insert to be the declaration after current declaration sequence, if any
+  SgStatement* l_stmt = findLastDeclarationStatement (target_block);
+  if (l_stmt)
+    insertStatementAfter(l_stmt,stmt);
+  else
+    prependStatement(stmt, target_block);
+}
+// Insert a set of statement after the last declaration of a target block
+// TODO refactor to SageInterface
+    void insertStatementAfterLastDeclaration (std::vector<SgStatement*> stmt_list, SgBasicBlock * target_block)
+{
+  vector <SgStatement* >::iterator iter;
+  SgStatement* prev_stmt = NULL;
+  for (iter= stmt_list.begin(); iter != stmt_list.end(); iter++)
+  {
+    if (iter == stmt_list.begin())
+    {
+      insertStatementAfterLastDeclaration (*iter, target_block);
+    }
+    else
+    {
+      ROSE_ASSERT (prev_stmt != NULL);
+      insertStatementAfter (prev_stmt, *iter);
+    }
+    prev_stmt = *iter; 
+  }
+}
+#endif
+
 //! This is a highly specialized operation which can find the right place to insert a Fortran variable declaration
 //  during OpenMP lowering.
 //
@@ -2080,6 +2142,7 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
 
   SgBasicBlock* t_body = NULL; 
 
+#if 0
   //find enclosing parallel region's body
   SgOmpParallelStatement * omp_stmt = isSgOmpParallelStatement(getEnclosingNode<SgOmpParallelStatement>(orig_scope));
   if (omp_stmt)
@@ -2098,20 +2161,25 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
     t_body = f_body; 
   }
   ROSE_ASSERT (t_body != NULL);  
-
+#else
+   t_body = getEnclosingRegionOrFuncDefinition(orig_scope);
+#endif
   // Build the required variable declaration
   result = buildVariableDeclaration (name, type, varInit, t_body);
 
   // Insert to be the declaration after current declaration sequence, if any
+#if 0 
   SgStatement* l_stmt = findLastDeclarationStatement (t_body);
   if (l_stmt)
     insertStatementAfter(l_stmt,result);
   else
     prependStatement(result, t_body);
+#else
+    insertStatementAfterLastDeclaration (result, t_body);
+#endif    
   ROSE_ASSERT (result != NULL);
   return result;
 }
-
     //! Translate clauses with variable lists, such as private, firstprivate, lastprivate, reduction, etc.
     //bb1 is the affected code block by the clause.
     //Command steps are: insert local declarations for the variables:(all)
@@ -2134,7 +2202,7 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
      var_list.erase(new_end, var_list.end());
      VariableSymbolMap_t var_map; 
 
-     vector <SgStatement* > front_stmt_list, end_stmt_list;  
+     vector <SgStatement* > front_stmt_list, end_stmt_list, front_init_list;  
     
      for (size_t i=0; i< var_list.size(); i++)
      {
@@ -2208,7 +2276,16 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
       {
         r_operator = getReductionOperationType(orig_var, clause_stmt);
         SgExprStatement* init_stmt = buildAssignStatement(buildVarRefExp(local_decl), createInitialValueExp(r_operator));
-        front_stmt_list.push_back(init_stmt);   
+        if (SageInterface::is_Fortran_language() )
+        {
+          // Fortran initialization statements  cannot be interleaved with declaration statements.
+          // We save them here and insert them after all declaration statements are inserted.
+          front_init_list.push_back(init_stmt);
+        }
+        else
+        {
+          front_stmt_list.push_back(init_stmt);   
+        }
       }
 
       // step 3. Save the value back for lastprivate and reduction
@@ -2228,6 +2305,16 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
    // We delay the insertion of declaration, initialization , and save-back statements until variable replacement is done
    // in order to avoid replacing variables of these newly generated statements.
    prependStatementList(front_stmt_list, bb1); 
+   // Fortran: add initialization statements after all front statements are inserted
+  if (SageInterface::is_Fortran_language() )
+  {
+    SgBasicBlock * target_bb = getEnclosingRegionOrFuncDefinition (bb1);
+    insertStatementAfterLastDeclaration (front_init_list, target_bb);
+  }
+   else
+   {
+     ROSE_ASSERT (front_init_list.size() ==0);
+   }
    appendStatementList(end_stmt_list, bb1); 
 #if 1
    // Liao 1/7/2010 , add assertion here, useful when generating outlined functions by moving statements to a function body
