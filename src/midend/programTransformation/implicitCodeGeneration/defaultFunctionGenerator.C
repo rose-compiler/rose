@@ -2325,11 +2325,10 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
 // SgConstVolatileModifier & const_modifier1= type_modifier1.get_constVolatileModifier();
         //      const_modifier1.setConst();
 
-        SgReferenceType * ref_type = new SgReferenceType(modifier_type1); //! TODO use SageBuilder
+        SgReferenceType * ref_type = buildReferenceType(modifier_type1);
         SgInitializer * var1_initializer = NULL;
-        var1_init_name = new SgInitializedName(var1_name, ref_type,var1_initializer,NULL); //! TODO use SageBuilder 
+        var1_init_name = buildInitializedName(var1_name, ref_type, var1_initializer);
         var1_init_name->set_scope(func_def);
-        var1_init_name->set_file_info(COMPILERGENERATED_FILE_INFO);
 
         SgVariableSymbol* sym = new SgVariableSymbol(var1_init_name); //! TODO use SageBuilder
         func_def->insert_symbol(var1_name, sym);
