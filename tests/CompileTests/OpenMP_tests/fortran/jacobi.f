@@ -24,24 +24,31 @@
 *************************************************************
       implicit none 
 
-      integer n,m,mits 
+      integer n,m,mits,mtemp 
       double precision tol,relax,alpha 
 
-      common /idat/ n,m,mits
+      common /idat/ n,m,mits,mtemp
       common /fdat/tol,alpha,relax
 * 
 * Read info 
 * 
-      write(*,*) "Input n,m - grid dimension in x,y direction " 
-      read(5,*) n,m 
-      write(*,*) "Input alpha - Helmholts constant " 
-      read(5,*) alpha
-      write(*,*) "Input relax - Successive over-relaxation parameter"
-      read(5,*) relax 
-      write(*,*) "Input tol - error tolerance for iterative solver" 
-      read(5,*) tol 
-      write(*,*) "Input mits - Maximum iterations for solver" 
-      read(5,*) mits
+*     write(*,*) "Input n,m - grid dimension in x,y direction " 
+*     read(5,*) n,m 
+      n=500
+      m= 500
+
+*     write(*,*) "Input alpha - Helmholts constant " 
+*     read(5,*) alpha
+      alpha=0.0543
+*     write(*,*) "Input relax - Successive over-relaxation parameter"
+*     read(5,*) relax 
+      relax = 1.0
+*     write(*,*) "Input tol - error tolerance for iterative solver" 
+*     read(5,*) tol 
+      tol=0.0000000001
+*     write(*,*) "Input mits - Maximum iterations for solver" 
+*     read(5,*) mits
+      mits=5000
 
 *
 * Calls a driver routine 
@@ -80,7 +87,7 @@
 
 * Check error between exact solution
 
-      call  error_check (n,m,alpha,dx,dy,u,f)
+      call  error_check (n,m,dx,dy,u)
 
       return 
       end 
@@ -146,14 +153,12 @@
 *
 * Local variables 
 * 
-      integer i,j,k,k_local 
-      double precision error,resid,rsum,ax,ay,b
-      double precision error_local, uold(n,m)
+      integer i,j,k
+      double precision error,resid,ax,ay,b
+      double precision uold(n,m)
 
-      real ta,tb,tc,td,te,ta1,ta2,tb1,tb2,tc1,tc2,td1,td2
-      real te1,te2
-      real second
-      external second
+*      real second
+*      external second
 *
 * Initialize coefficients 
       ax = 1.0/(dx*dx) ! X-direction coef 
@@ -210,7 +215,7 @@
       return 
       end 
 
-      subroutine error_check (n,m,alpha,dx,dy,u,f) 
+      subroutine error_check (n,m,dx,dy,u) 
       implicit none 
 ************************************************************
 * Checks error between numerical and exact solution 
@@ -218,7 +223,7 @@
 ************************************************************ 
      
       integer n,m
-      double precision u(n,m),f(n,m),dx,dy,alpha 
+      double precision u(n,m),dx,dy
       
       integer i,j
       double precision xx,yy,temp,error 
