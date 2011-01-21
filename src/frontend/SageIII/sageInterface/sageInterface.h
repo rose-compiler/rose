@@ -373,6 +373,9 @@ struct hash_nodeptr
   //! Get the mask expression from the header of a SgForAllStatement
   SgExpression* forallMaskExpression(SgForAllStatement* stmt);
 
+  //! Find all SgPntrArrRefExp under astNode, then add SgVarRefExp (if any) of SgPntrArrRefExp's dim_info into NodeList_t
+  void addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Container<SgNode *>& NodeList_t);
+
   // DQ (10/6/2006): Added support for faster mangled name generation (caching avoids recomputation).
   /*! \brief Support for faster mangled name generation (caching avoids recomputation).
 
@@ -906,11 +909,11 @@ static std::vector<NodeType*> getSgNodeListFromMemoryPool()
 */
 SgFunctionDeclaration* findMain(SgNode* currentNode);
 
-//! find the last declaration statement within a scope (if any). This is often useful to decide where to insert another declaration statement
+//! Find the last declaration statement within a scope (if any). This is often useful to decide where to insert another declaration statement
 SgStatement* findLastDeclarationStatement(SgScopeStatement * scope);
 
 	  //midend/programTransformation/partialRedundancyElimination/pre.h
-//! find referenced symbols within an expression
+//! Find referenced symbols within an expression
 std::vector<SgVariableSymbol*> getSymbolsUsedInExpression(SgExpression* expr);
 
 //! Find break statements inside a particular statement, stopping at nested loops or switches
@@ -1149,6 +1152,12 @@ void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt, bool au
 
 //! Insert a list of statements after a target statement
 void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmt);
+
+//! Insert a statement after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+void insertStatementAfterLastDeclaration(SgStatement* stmt, SgScopeStatement* scope);
+
+//! Insert a list of statements after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+void insertStatementAfterLastDeclaration(std::vector<SgStatement*> stmt_list, SgScopeStatement* scope);
 
 //! Remove a statement from its attach point of the AST. Automatically keep its associated preprocessing information at the original place after the removal. The statement is still in memory and it is up to the users to decide if the removed one will be inserted somewhere else or released from memory (deleteAST()).
 void removeStatement(SgStatement* stmt, bool autoRelocatePreprocessingInfo = true);
