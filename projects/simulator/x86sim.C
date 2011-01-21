@@ -976,6 +976,212 @@ static const Translate socket_protocols[] = {
     T_END
 };
 
+/* command values for the ioctl syscall */
+static const Translate ioctl_commands[] = {
+    TE(TCGETS), TE(TCSETS), TE(TCSETSW), TE(TCGETA), TE(TIOCGPGRP), TE(TIOCSPGRP), TE(TIOCSWINSZ), TE(TIOCGWINSZ),
+    T_END
+};
+ 
+/* kernel struct termios on i686 */
+struct termios_32 {
+    uint32_t    c_iflag;                /* input mode flags */
+    uint32_t    c_oflag;                /* output mode flags */
+    uint32_t    c_cflag;                /* control mode flags */
+    uint32_t    c_lflag;                /* local mode flags */
+    uint8_t     c_line;                 /* line discipline */
+    uint8_t     c_cc[19/*NCCS*/];       /* control characters */
+} __attribute__((packed));
+
+/* kernel struct termios on host architecture */
+struct termios_native {
+    unsigned int        c_iflag;
+    unsigned int        c_oflag;
+    unsigned int        c_cflag;
+    unsigned int        c_lflag;
+    uint8_t             c_line;
+    uint8_t             c_cc[19/*NCCS*/];
+};
+
+static const Translate termios_iflags[] = {
+    TF3(0000001, 0000001, IGNBRK),
+    TF3(0000002, 0000002, BRKINT),
+    TF3(0000004, 0000004, IGNPAR),
+    TF3(0000010, 0000010, PARMRK),
+    TF3(0000020, 0000020, INPCK),
+    TF3(0000040, 0000040, ISTRIP),
+    TF3(0000100, 0000100, INLCR),
+    TF3(0000200, 0000200, IGNCR),
+    TF3(0000400, 0000400, ICRNL),
+    TF3(0001000, 0001000, IUCLC),
+    TF3(0002000, 0002000, IXON),
+    TF3(0004000, 0004000, IXANY),
+    TF3(0010000, 0010000, IXOFF),
+    TF3(0020000, 0020000, IMAXBEL),
+    TF3(0040000, 0040000, IUTF8),
+    T_END
+};
+
+static const Translate termios_oflags[] = {
+    TF3(0000001, 0000001, OPOST),
+    TF3(0000002, 0000002, OLCUC),
+    TF3(0000004, 0000004, ONLCR),
+    TF3(0000010, 0000010, OCRNL),
+    TF3(0000020, 0000020, ONOCR),
+    TF3(0000040, 0000040, ONLRET),
+    TF3(0000100, 0000100, OFILL),
+    TF3(0000200, 0000200, OFDEL),
+    TF3(0000400, 0000400, NLDLY),
+    TF3(0000000, 0000000, NL0),
+    TF3(0000400, 0000400, NL1),
+    TF3(0003000, 0003000, CRDLY),
+    TF3(0000000, 0000000, CR0),
+    TF3(0001000, 0001000, CR1),
+    TF3(0002000, 0002000, CR2),
+    TF3(0003000, 0003000, CR3),
+    TF3(0014000, 0014000, TABDLY),
+    TF3(0000000, 0000000, TAB0),
+    TF3(0004000, 0004000, TAB1),
+    TF3(0010000, 0010000, TAB2),
+    TF3(0014000, 0014000, TAB3),
+    TF3(0014000, 0014000, XTABS),
+    TF3(0020000, 0020000, BSDLY),
+    TF3(0000000, 0000000, BS0),
+    TF3(0020000, 0020000, BS1),
+    TF3(0040000, 0040000, VTDLY),
+    TF3(0000000, 0000000, VT0),
+    TF3(0040000, 0040000, VT1),
+    TF3(0100000, 0100000, FFDLY),
+    TF3(0000000, 0000000, FF0),
+    TF3(0100000, 0100000, FF1),
+    T_END
+};
+
+static const Translate termios_cflags[] = {
+#define CBAUD     0010017
+    
+    TF3(0010017, 0000000, B0),
+    TF3(0010017, 0000001, B50),
+    TF3(0010017, 0000002, B75),
+    TF3(0010017, 0000003, B110),
+    TF3(0010017, 0000004, B134),
+    TF3(0010017, 0000005, B150),
+    TF3(0010017, 0000006, B200),
+    TF3(0010017, 0000007, B300),
+    TF3(0010017, 0000010, B600),
+    TF3(0010017, 0000011, B1200),
+    TF3(0010017, 0000012, B1800),
+    TF3(0010017, 0000013, B2400),
+    TF3(0010017, 0000014, B4800),
+    TF3(0010017, 0000015, B9600),
+    TF3(0010017, 0000016, B19200),
+    TF3(0010017, 0000017, B38400),
+    TF3(0010017, 0010000, BOTHER),
+    TF3(0010017, 0010001, B57600),
+    TF3(0010017, 0010002, B115200),
+    TF3(0010017, 0010003, B230400),
+    TF3(0010017, 0010004, B460800),
+    TF3(0010017, 0010005, B500000),
+    TF3(0010017, 0010006, B576000),
+    TF3(0010017, 0010007, B921600),
+    TF3(0010017, 0010010, B1000000),
+    TF3(0010017, 0010011, B1152000),
+    TF3(0010017, 0010012, B1500000),
+    TF3(0010017, 0010013, B2000000),
+    TF3(0010017, 0010014, B2500000),
+    TF3(0010017, 0010015, B3000000),
+    TF3(0010017, 0010016, B3500000),
+    TF3(0010017, 0010017, B4000000),
+    
+    TF3(0000060, 0000060, CSIZE),
+    TF3(0000000, 0000000, CS5),
+    TF3(0000020, 0000020, CS6),
+    TF3(0000040, 0000040, CS7),
+    TF3(0000060, 0000060, CS8),
+    TF3(0000100, 0000100, CSTOPB),
+    TF3(0000200, 0000200, CREAD),
+    TF3(0000400, 0000400, PARENB),
+    TF3(0001000, 0001000, PARODD),
+    TF3(0002000, 0002000, HUPCL),
+    TF3(0004000, 0004000, CLOCAL),
+    
+    TF3(002003600000, 002003600000, CIBAUD),
+    TF3(010000000000, 010000000000, CMSPAR),
+    TF3(020000000000, 020000000000, CRTSCTS),
+
+    T_END
+};
+
+static const Translate termios_lflags[] = {
+    TF3(0000001, 0000001, ISIG),
+    TF3(0000002, 0000002, ICANON),
+    TF3(0000004, 0000004, XCASE),
+    TF3(0000010, 0000010, ECHO),
+    TF3(0000020, 0000020, ECHOE),
+    TF3(0000040, 0000040, ECHOK),
+    TF3(0000100, 0000100, ECHONL),
+    TF3(0000200, 0000200, NOFLSH),
+    TF3(0000400, 0000400, TOSTOP),
+    TF3(0001000, 0001000, ECHOCTL),
+    TF3(0002000, 0002000, ECHOPRT),
+    TF3(0004000, 0004000, ECHOKE),
+    TF3(0010000, 0010000, FLUSHO),
+    TF3(0040000, 0040000, PENDIN),
+    TF3(0100000, 0100000, IEXTEN),
+    TF3(0200000, 0200000, EXTPROC),
+    T_END
+};
+
+static int
+print_termios_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(termios_32)==sz);
+    const termios_32 *v = (const termios_32*)_v;
+    int retval = 0;
+    retval += fprintf(f, "c_iflag=");
+    retval += print_flags(f, termios_iflags, v->c_iflag);
+    retval += fprintf(f, ", c_oflag=");
+    retval += print_flags(f, termios_oflags, v->c_oflag);
+    retval += fprintf(f, ", c_cflag=");
+    retval += print_flags(f, termios_cflags, v->c_cflag);
+    retval += fprintf(f, ", c_lflag=");
+    retval += print_flags(f, termios_lflags, v->c_lflag);
+    retval += fprintf(f, ", c_line=%u, c_cc=[", v->c_line);
+    for (int i=0; i<19; i++)
+        retval += fprintf(f, "%s%u", i?",":"", v->c_cc[i]);
+    retval += fprintf(f, "]");
+    return retval;
+}
+
+/* Kernel's struct winsize on i686 */
+struct winsize_32 {
+    uint16_t    ws_row;
+    uint16_t    ws_col;
+    uint16_t    ws_xpixel;
+    uint16_t    ws_ypixel;
+} __attribute__((packed));
+
+/* struct winsize is same on 32 and 64 bit architectures */
+typedef winsize_32 winsize_native;
+
+static int
+print_winsize_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(winsize_32)==sz);
+    const winsize_32 *v = (const winsize_32*)_v;
+    return fprintf(f, "ws_row=%"PRIu16", ws_col=%"PRIu16", ws_xpixel=%"PRIu16", ws_ypixel=%"PRIu16,
+                   v->ws_row, v->ws_col, v->ws_xpixel, v->ws_ypixel);
+}
+
+            
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3696,98 +3902,59 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 54: { /*0x36, ioctl*/
-            static const Translate ioctl_cmd[] = {
-                TE(TCGETS), TE(TCSETS), TE(TCSETSW), TE(TCGETA), TE(TIOCGPGRP), TE(TIOCSPGRP), TE(TIOCSWINSZ), TE(TIOCGWINSZ),
-                T_END};
-            syscall_enter("ioctl", "dfd", ioctl_cmd);
-            
             int fd=arg(0);
-            uint32_t cmd=arg(1), arg2=arg(2);
-            int result = -ENOSYS;
+            uint32_t cmd=arg(1);
+
             switch (cmd) {
                 case TCGETS: { /* 0x00005401, tcgetattr*/
-                    struct termios ti;
-                    result = tcgetattr(fd, &ti);
-                    if (-1==result) {
-                        result = -errno;
-                    } else {
-                        /* The Linux kernel and glibc have different definitions for termios, with very different sizes (39
-                         * bytes vs 60) */                  
-                        size_t nwritten = map->write(&ti, arg2, 39);
-                        ROSE_ASSERT(39==nwritten);
-                    }
+                    syscall_enter("ioctl", "dfp", ioctl_commands);
+                    do {
+                        termios_native host_ti;
+                        int result = syscall(SYS_ioctl, fd, cmd, &host_ti);
+                        if (-1==result) {
+                            writeGPR(x86_gpr_ax, -errno);
+                            break;
+                        }
+                        termios_32 guest_ti;
+                        guest_ti.c_iflag = host_ti.c_iflag;
+                        guest_ti.c_oflag = host_ti.c_oflag;
+                        guest_ti.c_cflag = host_ti.c_cflag;
+                        guest_ti.c_lflag = host_ti.c_lflag;
+                        guest_ti.c_line = host_ti.c_line;
+                        for (int i=0; i<19; i++)
+                            guest_ti.c_cc[i] = host_ti.c_cc[i];
+                        if (sizeof(guest_ti)!=map->write(&guest_ti, arg(2), sizeof guest_ti)) {
+                            writeGPR(x86_gpr_ax, -EFAULT);
+                            break;
+                        }
+                        writeGPR(x86_gpr_ax, result);
+                    } while (0);
+                    syscall_leave("d--P", sizeof(termios_32), print_termios_32);
                     break;
                 }
 
-                case TCSETS:  /* 0x,00005402,  tcsetattr */
-                    /* TCSETS const struct termios *argp
-                       Equivalent to
-                          int tcsetattr(int fd, int optional_actions, const struct termios *termios_p);
-                          tcsetattr(fd, TCSANOW, argp).
-                       Set the current serial port settings. 
-                    */
-                case TCSETSW: { /* 0x00005403, tcsetattr  */
-                    /* Equivalent to 
-                         int tcsetattr(int fd, int optional_actions, const struct termios *termios_p);
-                         tcsetattr(fd, TCSADRAIN, argp).
-                       Allow the output buffer to drain, and set the current serial port settings. 
-
-                       Value of second argument is the only difference between TCSETS and TCSETSW
-
-                       typedef unsigned int     tcflag_t;
-                       typedef unsigned char    cc_t;
-                       typedef unsigned int     speed_t;
-
-                       struct termios {
-                         tcflag_t c_iflag;
-                         tcflag_t c_oflag;
-                         tcflag_t c_cflag;
-                         tcflag_t c_lflag;
-                         cc_t c_cc[NCCS];
-                         speed_t c_ispeed;
-                         speed_t c_ospeed;
-                       };
-
-
-                     */
-                    uint32_t optional_actions = arg(2);
-
-                    //Convert between 32 bit termios and whatever is
-                    //used on this machine
-                    struct termios_kernel {
-                         uint32_t c_iflag;
-                         uint32_t c_oflag;
-                         uint32_t c_cflag;
-                         uint32_t c_lflag;
-                         unsigned char c_cc[NCCS];
-                         uint32_t c_ispeed;
-                         uint32_t c_ospeed;
-                    };
-
-                    termios_kernel tik;
-
-                    size_t nread = map->read(&tik, arg(3), sizeof(termios_kernel));
-                    ROSE_ASSERT(sizeof(termios_kernel) == nread);
- 
-                    struct termios ti;
-
-                    CONV_FIELD(ti,tik,c_iflag);
-                    CONV_FIELD(ti,tik,c_oflag);
-                    CONV_FIELD(ti,tik,c_cflag);
-                    CONV_FIELD(ti,tik,c_lflag);
-                    CONV_FIELD(ti,tik,c_ispeed);
-
-                    for (int i = 0 ; i < NCCS ; i++ )
-                      ti.c_cc[i] = tik.c_cc[i];
-
-                    CONV_FIELD(ti,tik,c_ospeed);
-
-                    result = tcsetattr(fd, optional_actions, &ti);
-
-                    if (result==-1) {
-                        result = -errno;
-                    } 
-  
+                case TCSETSW:   /* 0x00005403 */
+                case TCSETSF:
+                case TCSETS: {  /* 0x00005402 */
+                    syscall_enter("ioctl", "dfP", ioctl_commands, sizeof(termios_32), print_termios_32);
+                    do {
+                        termios_32 guest_ti;
+                        if (sizeof(guest_ti)!=map->read(&guest_ti, arg(2), sizeof guest_ti)) {
+                            writeGPR(x86_gpr_ax, -EFAULT);
+                            break;
+                        }
+                        termios_native host_ti;
+                        host_ti.c_iflag = guest_ti.c_iflag;
+                        host_ti.c_oflag = guest_ti.c_oflag;
+                        host_ti.c_cflag = guest_ti.c_cflag;
+                        host_ti.c_lflag = guest_ti.c_lflag;
+                        host_ti.c_line = guest_ti.c_line;
+                        for (int i=0; i<19; i++)
+                            host_ti.c_cc[i] = guest_ti.c_cc[i];
+                        int result = syscall(SYS_ioctl, fd, cmd, &host_ti);
+                        writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                    } while (0);
+                    syscall_leave("d");
                     break;
                 }
 
@@ -3806,16 +3973,19 @@ EmulationPolicy::emulate_syscall()
 
                      */
 
+                    syscall_enter("ioctl", "dfd", ioctl_commands);
                     termio to;
 
-                    result = ioctl(fd, TCGETA, &to);
+                    int result = ioctl(fd, TCGETA, &to);
                     if (-1==result) {
                         result = -errno;
                     } else {
-                        size_t nwritten = map->write(&to, arg2, sizeof to);
+                        size_t nwritten = map->write(&to, arg(2), sizeof to);
                         ROSE_ASSERT(nwritten==sizeof to);
                     }
 
+                    writeGPR(x86_gpr_ax, result);
+                    syscall_leave("d");
                     break;
                 }
 
@@ -3827,66 +3997,91 @@ EmulationPolicy::emulate_syscall()
                        process.
                     */
 
-                    pid_t pgrp = tcgetpgrp(fd);
-                    if (-1==pgrp) {
-                        result = -errno;
-                    } else {
+                    syscall_enter("ioctl", "dfd", ioctl_commands);
+                    do {
+                        pid_t pgrp = tcgetpgrp(fd);
+                        if (-1==pgrp) {
+                            writeGPR(x86_gpr_ax, -errno);
+                            break;
+                        }
                         uint32_t pgrp_le;
                         SgAsmExecutableFileFormat::host_to_le(pgrp, &pgrp_le);
-                        size_t nwritten = map->write(&pgrp_le, arg2, 4);
+                        size_t nwritten = map->write(&pgrp_le, arg(2), 4);
                         ROSE_ASSERT(4==nwritten);
-                        result = 0;
-                    }
+                        writeGPR(x86_gpr_ax, pgrp);
+                    } while (0);
+                    syscall_leave("d");
                     break;
                 }
                     
                 case TIOCSPGRP: { /* 0x5410, tcsetpgrp*/
+                    syscall_enter("ioctl", "dfd", ioctl_commands);
                     uint32_t pgid_le;
-                    size_t nread = map->read(&pgid_le, arg2, 4);
+                    size_t nread = map->read(&pgid_le, arg(2), 4);
                     ROSE_ASSERT(4==nread);
                     pid_t pgid = SgAsmExecutableFileFormat::le_to_host(pgid_le);
-                    result = tcsetpgrp(fd, pgid);
+                    int result = tcsetpgrp(fd, pgid);
                     if (-1==result)
                         result = -errno;
+                    writeGPR(x86_gpr_ax, result);
+                    syscall_leave("d");
                     break;
                 }
 
                 case TIOCSWINSZ: { /* 0x5413, the winsize is const */
-                    /* Set window size.
-                       struct winsize {
-                          unsigned short ws_row;
-                          unsigned short ws_col;
-                          unsigned short ws_xpixel;   // unused 
-                          unsigned short ws_ypixel;   // unused 
-                       };
-                    */
-                    winsize ws;
-                    size_t nread = map->read(&ws, arg(2), sizeof(winsize));
-                    ROSE_ASSERT(sizeof(winsize) == nread);
+                    syscall_enter("ioctl", "dfP", ioctl_commands, sizeof(winsize_32), print_winsize_32);
+                    do {
+                        winsize_32 guest_ws;
+                        if (sizeof(guest_ws)!=map->read(&guest_ws, arg(2), sizeof guest_ws)) {
+                            writeGPR(x86_gpr_ax, -EFAULT);
+                            break;
+                        }
 
-                    result = ioctl(fd, TIOCSWINSZ, &ws);
-                    if (-1==result)
-                        result = -errno;
+                        winsize_native host_ws;
+                        host_ws.ws_row = guest_ws.ws_row;
+                        host_ws.ws_col = guest_ws.ws_col;
+                        host_ws.ws_xpixel = guest_ws.ws_xpixel;
+                        host_ws.ws_ypixel = guest_ws.ws_ypixel;
+
+                        int result = syscall(SYS_ioctl, fd, cmd, &host_ws);
+                        writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                    } while (0);
+                    syscall_leave("d");
                     break;
                 }
 
                 case TIOCGWINSZ: /* 0x5414, */ {
-                    struct winsize ws;
-                    result = ioctl(fd, TIOCGWINSZ, &ws);
-                    if (-1==result) {
-                        result = -errno;
-                    } else {
-                        size_t nwritten = map->write(&ws, arg2, sizeof ws);
-                        ROSE_ASSERT(nwritten==sizeof ws);
-                    }
+                    syscall_enter("ioctl", "dfp", ioctl_commands);
+                    do {
+                        winsize_native host_ws;
+                        int result = syscall(SYS_ioctl, fd, cmd, &host_ws);
+                        if (-1==result) {
+                            writeGPR(x86_gpr_ax, -errno);
+                            break;
+                        }
+
+                        winsize_32 guest_ws;
+                        guest_ws.ws_row = host_ws.ws_row;
+                        guest_ws.ws_col = host_ws.ws_col;
+                        guest_ws.ws_xpixel = host_ws.ws_xpixel;
+                        guest_ws.ws_ypixel = host_ws.ws_ypixel;
+                        if (sizeof(guest_ws)!=map->write(&guest_ws, arg(2), sizeof guest_ws)) {
+                            writeGPR(x86_gpr_ax, -EFAULT);
+                            break;
+                        }
+
+                        writeGPR(x86_gpr_ax, result);
+                    } while (0);
+                    syscall_leave("d--P", sizeof(winsize_32), print_winsize_32);
                     break;
                 }
-                default:
+
+                default: {
+                    syscall_enter("ioctl", "dfd", ioctl_commands);
                     fprintf(stderr, "  unhandled ioctl: %u\n", cmd);
                     abort();
+                }
             }
-            writeGPR(x86_gpr_ax, result);
-            syscall_leave("d");
             break;
         }
 
