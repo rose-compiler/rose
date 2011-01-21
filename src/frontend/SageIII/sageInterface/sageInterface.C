@@ -3212,6 +3212,41 @@ SgExpression* SageInterface::forallMaskExpression(SgForAllStatement* stmt) {
   return ls.back();
 }
 
+//Find all SgPntrArrRefExp under astNode, add the referenced dim_info SgVarRefExp (if any) into NodeList_t 
+void SageInterface::addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Container<SgNode *>& NodeList_t)
+{
+  ROSE_ASSERT (astNode != NULL);
+  Rose_STL_Container<SgNode*> arr_exp_list = NodeQuery::querySubTree(astNode,V_SgPntrArrRefExp);
+  for (Rose_STL_Container<SgNode*>::iterator iter_0 = arr_exp_list.begin(); iter_0 !=arr_exp_list.end(); iter_0 ++)
+  {
+    SgPntrArrRefExp * arr_exp = isSgPntrArrRefExp(*iter_0);
+    ROSE_ASSERT (arr_exp != NULL);
+    //printf("Debug: Found SgPntrArrRefExp :%p\n", arr_exp);
+    Rose_STL_Container<SgNode*> refList = NodeQuery::querySubTree(arr_exp->get_lhs_operand(),V_SgVarRefExp);
+    for (Rose_STL_Container<SgNode*>::iterator iter = refList.begin(); iter !=refList.end(); iter ++)
+    {
+      SgVarRefExp* cur_ref = isSgVarRefExp(*iter);
+      ROSE_ASSERT (cur_ref != NULL);
+      SgVariableSymbol * sym = cur_ref->get_symbol();
+      ROSE_ASSERT (sym != NULL);
+      SgInitializedName * i_name = sym->get_declaration();
+      ROSE_ASSERT (i_name != NULL);
+      SgArrayType * a_type = isSgArrayType(i_name->get_typeptr());
+      if (a_type && a_type->get_dim_info())
+      {
+        Rose_STL_Container<SgNode*> dim_ref_list = NodeQuery::querySubTree(a_type->get_dim_info(),V_SgVarRefExp);
+        for (Rose_STL_Container<SgNode*>::iterator iter2 = dim_ref_list.begin(); iter2 != dim_ref_list.end(); iter2++)
+        {
+          SgVarRefExp* dim_ref = isSgVarRefExp(*iter2);
+          //printf("Debug: Found indirect SgVarRefExp as part of array dimension declaration:%s\n", dim_ref->get_symbol()->get_name().str());
+          NodeList_t.push_back(dim_ref);
+        }
+      }
+    }
+  } // end for
+}
+
+
 bool
 SageInterface::is_C_language()
    {
@@ -8048,6 +8083,40 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
   void SageInterface::insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
   {
     insertStatementList(targetStmt,newStmts,false);
+  }
+
+  //! Insert a statement after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+  void SageInterface::insertStatementAfterLastDeclaration(SgStatement* stmt, SgScopeStatement* scope)
+  {
+    ROSE_ASSERT (stmt != NULL); 
+    ROSE_ASSERT (scope != NULL); 
+    // Insert to be the declaration after current declaration sequence, if any
+    SgStatement* l_stmt = findLastDeclarationStatement (scope);
+    if (l_stmt)
+      insertStatementAfter(l_stmt,stmt);
+    else
+      prependStatement(stmt, scope);
+  }
+
+  //! Insert a list of statements after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+  void SageInterface::insertStatementAfterLastDeclaration(std::vector<SgStatement*> stmt_list, SgScopeStatement* scope)
+  {
+    ROSE_ASSERT (scope != NULL); 
+    vector <SgStatement* >::iterator iter;
+    SgStatement* prev_stmt = NULL;
+    for (iter= stmt_list.begin(); iter != stmt_list.end(); iter++)
+    {
+      if (iter == stmt_list.begin())
+      {
+        insertStatementAfterLastDeclaration (*iter, scope);
+      }
+      else
+      {
+        ROSE_ASSERT (prev_stmt != NULL);
+        insertStatementAfter (prev_stmt, *iter);
+      }
+      prev_stmt = *iter;
+    }
   }
 
   void SageInterface::insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo /*= true */)
