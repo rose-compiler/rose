@@ -23,7 +23,8 @@ F77_TESTCODES_REQUIRED_TO_RUN = \
   ompdo-multiple.f \
   private.f \
   reduction.f \
-  shared.f
+  shared.f \
+  single.f
 
 F90_TESTCODES_REQUIRED_TO_RUN = 
 

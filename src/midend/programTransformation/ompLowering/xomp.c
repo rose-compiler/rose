@@ -1390,7 +1390,13 @@ void XOMP_critical_end (void** data)
     _ompc_exit_critical(data);
 #endif    
 }
-
+//---------
+bool xomp_single(void);
+#pragma weak xomp_single_=xomp_single
+bool xomp_single(void)
+{
+  return XOMP_single();
+}
 extern bool XOMP_single(void)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  

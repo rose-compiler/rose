@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = libompLowering.la
-libompLowering_la_SOURCES = omp_lowering.cpp
+libompLowering_la_SOURCES = omp_lowering.cpp omp_lowering.h
 # avoid using libtool for libxomp.a since it will be directly linked to executable
 lib_LIBRARIES = libxomp.a
 libxomp_a_SOURCES = xomp.c

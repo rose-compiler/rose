@@ -400,9 +400,9 @@ static void insert_libxompf_h(SgNode* startNode)
   // we don't expect input node is a func def already
   ROSE_ASSERT (isSgFunctionDefinition(startNode)  == NULL);
 
+#if 0
   //find enclosing parallel region's body
   SgBasicBlock * omp_body = NULL;
-
   SgOmpParallelStatement * omp_stmt = isSgOmpParallelStatement(getEnclosingNode<SgOmpParallelStatement>(startNode));
   if (omp_stmt)
   {
@@ -416,6 +416,8 @@ static void insert_libxompf_h(SgNode* startNode)
   SgBasicBlock * f_body = func_def->get_body();
 
   SgBasicBlock* t_body = (omp_body!=NULL)?omp_body:f_body;
+#endif  
+  SgBasicBlock* t_body = getEnclosingRegionOrFuncDefinition (startNode);
   ROSE_ASSERT (t_body != NULL);
   // Try to find an existing include 'libxompf.h'
   // Assumptions: 
@@ -624,8 +626,8 @@ static void insert_libxompf_h(SgNode* startNode)
       // Otherwise, unparser will complain.
       func_start_exp  = buildFunctionCallExp(func_start_name, buildIntType(), para_list, bb1);
       if_stmt = buildIfStmt(buildEqualityOp(func_start_exp,buildIntVal(1)), true_body, NULL);
-      if_stmt->set_use_then_keyword(true); 
-      if_stmt->set_has_end_statement(true); 
+      // if_stmt->set_use_then_keyword(true); 
+      // if_stmt->set_has_end_statement(true); 
     }
     else 
     {
@@ -2057,32 +2059,33 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
      return bb;
    }
 
-  SgBasicBlock * getEnclosingRegionOrFuncDefinition(SgBasicBlock *orig_scope)
-{
-  ROSE_ASSERT (SageInterface::is_Fortran_language() == true);
-  // find the right scope (target body) to insert the declaration, start from the original scope
-  SgBasicBlock* t_body = NULL;
-
-  //find enclosing parallel region's body
-  SgOmpParallelStatement * omp_stmt = isSgOmpParallelStatement(getEnclosingNode<SgOmpParallelStatement>(orig_scope));
-  if (omp_stmt)
+  //SgBasicBlock * getEnclosingRegionOrFuncDefinition(SgBasicBlock *orig_scope)
+  SgBasicBlock * getEnclosingRegionOrFuncDefinition(SgNode *orig_scope)
   {
-    SgBasicBlock * omp_body = isSgBasicBlock(omp_stmt->get_body());
-    ROSE_ASSERT(omp_body != NULL);
-    t_body = omp_body;
+    ROSE_ASSERT (SageInterface::is_Fortran_language() == true);
+    // find the right scope (target body) to insert the declaration, start from the original scope
+    SgBasicBlock* t_body = NULL;
+  
+    //find enclosing parallel region's body
+    SgOmpParallelStatement * omp_stmt = isSgOmpParallelStatement(getEnclosingNode<SgOmpParallelStatement>(orig_scope));
+    if (omp_stmt)
+    {
+      SgBasicBlock * omp_body = isSgBasicBlock(omp_stmt->get_body());
+      ROSE_ASSERT(omp_body != NULL);
+      t_body = omp_body;
+    }
+    else
+    {
+      // Find enclosing function body
+      SgFunctionDefinition* func_def = getEnclosingProcedure (orig_scope);
+      ROSE_ASSERT (func_def != NULL);
+      SgBasicBlock * f_body = func_def->get_body();
+      ROSE_ASSERT(f_body!= NULL);
+      t_body = f_body;
+    }
+    ROSE_ASSERT (t_body != NULL);
+    return t_body;
   }
-  else
-  {
-    // Find enclosing function body
-    SgFunctionDefinition* func_def = getEnclosingProcedure (orig_scope);
-    ROSE_ASSERT (func_def != NULL);
-    SgBasicBlock * f_body = func_def->get_body();
-    ROSE_ASSERT(f_body!= NULL);
-    t_body = f_body;
-  }
-  ROSE_ASSERT (t_body != NULL);
-  return t_body;
-}
 #if 0 // moved to sageInterface.C
    // Insert a statement right after the last declaration with a target block.
    // Useful to insert the last declaration or the first non-declaration statement
@@ -2398,14 +2401,35 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
     SgStatement* body = target->get_body();
     ROSE_ASSERT(body!= NULL );
 
+   SgIfStmt* if_stmt = NULL; 
+
+   if (SageInterface::is_Fortran_language())
+   {
 #ifdef ENABLE_XOMP
-    SgExpression* func_exp = buildFunctionCallExp("XOMP_single", buildBoolType(), NULL, scope);
+     SgExpression* func_exp = buildFunctionCallExp("XOMP_single", buildIntType(), NULL, scope);
 #else
-    SgExpression* func_exp = buildFunctionCallExp("GOMP_single_start", buildBoolType(), NULL, scope);
+     //     SgExpression* func_exp = buildFunctionCallExp("GOMP_single_start", buildIntType(), NULL, scope);
+     cerr<<"Fortran with Omni runtime is not yet implemented!"<<endl;
+     ROSE_ASSERT (false);
 #endif
-    SgIfStmt* if_stmt = buildIfStmt(func_exp, body, NULL); 
-    replaceStatement(target, if_stmt,true);
+
+     if_stmt = buildIfStmt(buildEqualityOp(func_exp,buildIntVal(1)), body, NULL); 
+   }
+   else // C/C++
+   {
+#ifdef ENABLE_XOMP
+     SgExpression* func_exp = buildFunctionCallExp("XOMP_single", buildBoolType(), NULL, scope);
+#else
+     SgExpression* func_exp = buildFunctionCallExp("GOMP_single_start", buildBoolType(), NULL, scope);
+#endif
+
+     if_stmt = buildIfStmt(func_exp, body, NULL); 
+   }
+
+   replaceStatement(target, if_stmt,true);
     SgBasicBlock* true_body = ensureBasicBlockAsTrueBodyOfIf (if_stmt);
+   if (SageInterface::is_Fortran_language())
+     insert_libxompf_h (if_stmt); // need prototype for xomp runtime function
     transOmpVariables(target, true_body);
     // handle nowait 
     if (!hasClause(target, V_SgOmpNowaitClause))
@@ -2789,209 +2813,209 @@ If not, wrong code will be generated later on. The reason follows:
       }
       
       void OUT__2__1527__(void **__out_argv)
-      {
-        int *i = (int *)(__out_argv[0]);
-      //  int _p_i;
-      //  _p_i =  *i;
-      //  for (_p_i = 0; _p_i < 1000; _p_i++) {
-        for (*i = 0; *i < 1000; (*i)++) {
-          void *__out_argv1__1527__[1];
-        // cannot access auto variable from the stack of another task instance!!
-          //__out_argv1__1527__[0] = ((void *)(&_p_i));
-          __out_argv1__1527__[0] = ((void *)(&(*i)));// this is the right translation
-          GOMP_task(OUT__1__1527__,&__out_argv1__1527__,0,4,4,1,0);
+{
+  int *i = (int *)(__out_argv[0]);
+  //  int _p_i;
+  //  _p_i =  *i;
+  //  for (_p_i = 0; _p_i < 1000; _p_i++) {
+  for (*i = 0; *i < 1000; (*i)++) {
+    void *__out_argv1__1527__[1];
+    // cannot access auto variable from the stack of another task instance!!
+    //__out_argv1__1527__[0] = ((void *)(&_p_i));
+    __out_argv1__1527__[0] = ((void *)(&(*i)));// this is the right translation
+    GOMP_task(OUT__1__1527__,&__out_argv1__1527__,0,4,4,1,0);
+  }
+}
+void OUT__1__1527__(void **__out_argv)
+{
+  int *i = (int *)(__out_argv[0]);
+  int _p_i;
+  _p_i =  *i;
+  assert(_p_i>=0);
+  assert(_p_i<10000);
+
+  process((item[_p_i]));
+}
+*
+  */
+int patchUpFirstprivateVariables(SgFile*  file)
+{
+  int result = 0;
+  ROSE_ASSERT(file != NULL);
+  Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(file, V_SgOmpTaskStatement);
+  Rose_STL_Container<SgNode*>::iterator iter = nodeList.begin();
+  for (; iter != nodeList.end(); iter ++)
+  {
+    SgOmpTaskStatement * target = isSgOmpTaskStatement(*iter);
+    SgScopeStatement* directive_scope = target->get_scope();
+    SgStatement* body = target->get_body();
+    ROSE_ASSERT(body != NULL);
+
+    // Find all variable references from the task's body
+    Rose_STL_Container<SgNode*> refList = NodeQuery::querySubTree(body, V_SgVarRefExp);
+    Rose_STL_Container<SgNode*>::iterator var_iter = refList.begin();
+    for (; var_iter != refList.end(); var_iter ++)
+    {
+      SgVarRefExp * var_ref = isSgVarRefExp(*var_iter);
+      ROSE_ASSERT(var_ref->get_symbol() != NULL);
+      SgInitializedName* init_var = var_ref->get_symbol()->get_declaration();
+      ROSE_ASSERT(init_var != NULL);
+      SgScopeStatement* var_scope = init_var->get_scope();
+      ROSE_ASSERT(var_scope != NULL);
+
+      // Variables with automatic storage duration that are declared in 
+      // a scope inside the construct are private. Skip them
+      if (isAncestor(directive_scope, var_scope))
+        continue;
+
+      if (SageInterface::isUseByAddressVariableRef(var_ref))
+        continue;
+      // Skip variables already with explicit data-sharing attributes
+      VariantVector vv (V_SgOmpDefaultClause);
+      vv.push_back(V_SgOmpPrivateClause);
+      vv.push_back(V_SgOmpSharedClause);
+      vv.push_back(V_SgOmpFirstprivateClause);
+      if (isInClauseVariableList(init_var, target ,vv)) 
+        continue;
+      // Skip variables which are class/structure members: part of another variable
+      if (isSgClassDefinition(init_var->get_scope()))
+        continue;
+      // Skip variables which are shared in enclosing constructs  
+      if(isSharedInEnclosingConstructs(init_var, target))
+        continue;
+      // Now it should be a firstprivate variable   
+      addClauseVariable(init_var, target, V_SgOmpFirstprivateClause);
+      result ++;
+    } // end for each variable reference
+  } // end for each SgOmpTaskStatement
+  return result;
+} // end patchUpFirstprivateVariables()
+
+//! Bottom-up processing AST tree to translate all OpenMP constructs
+// the major interface of omp_lowering
+// We now operation on scoped OpenMP regions and blocks
+//    SgBasicBlock
+//      /                   #
+//     /                    #
+// SgOmpParallelStatement   #
+//          \               #
+//           \              #
+//           SgBasicBlock   #
+//               \          #
+//                \         #
+//                SgOmpParallelStatement
+void lower_omp(SgSourceFile* file)
+{
+  ROSE_ASSERT(file != NULL);
+
+  patchUpPrivateVariables(file);
+  patchUpFirstprivateVariables(file);
+  // Liao 12/2/2010, Fortran does not require function prototypes
+  if (!SageInterface::is_Fortran_language() )
+    insertRTLHeaders(file);
+  insertRTLinitAndCleanCode(file);
+  //    translationDriver driver;
+  // SgOmpXXXStatment is compiler-generated and has no file info
+  //driver.traverseWithinFile(file,postorder);
+  //  driver.traverse(file,postorder);
+  // AST manipulation with postorder traversal is not reliable,
+  // We record nodes first then do changes to them
+
+  Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(file, V_SgStatement);
+  Rose_STL_Container<SgNode*>::reverse_iterator nodeListIterator = nodeList.rbegin();
+  for ( ;nodeListIterator !=nodeList.rend();  ++nodeListIterator)
+  {
+    SgStatement* node = isSgStatement(*nodeListIterator);
+    ROSE_ASSERT(node != NULL);
+    switch (node->variantT())
+    {
+      case V_SgOmpParallelStatement:
+        {
+          transOmpParallel(node);
+          break;
         }
-      }
-      void OUT__1__1527__(void **__out_argv)
-      {
-        int *i = (int *)(__out_argv[0]);
-        int _p_i;
-        _p_i =  *i;
-        assert(_p_i>=0);
-        assert(_p_i<10000);
-      
-        process((item[_p_i]));
-      }
-   *
-*/
-  int patchUpFirstprivateVariables(SgFile*  file)
-  {
-    int result = 0;
-    ROSE_ASSERT(file != NULL);
-    Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(file, V_SgOmpTaskStatement);
-    Rose_STL_Container<SgNode*>::iterator iter = nodeList.begin();
-    for (; iter != nodeList.end(); iter ++)
-    {
-      SgOmpTaskStatement * target = isSgOmpTaskStatement(*iter);
-      SgScopeStatement* directive_scope = target->get_scope();
-      SgStatement* body = target->get_body();
-      ROSE_ASSERT(body != NULL);
+      case V_SgOmpTaskStatement:
+        {
+          transOmpTask(node);
+          break;
+        }
+      case V_SgOmpForStatement:
+      case V_SgOmpDoStatement:
+        {
+          //transOmpFor(node);
+          transOmpLoop(node);
+          break;
+        }
+        //          {
+        //            transOmpDo(node);
+        //            break;
+        //          }
+      case V_SgOmpBarrierStatement:
+        {
+          transOmpBarrier(node);
+          break;
+        }
+      case V_SgOmpFlushStatement:
+        {
+          transOmpFlush(node);
+          break;
+        }
 
-      // Find all variable references from the task's body
-      Rose_STL_Container<SgNode*> refList = NodeQuery::querySubTree(body, V_SgVarRefExp);
-      Rose_STL_Container<SgNode*>::iterator var_iter = refList.begin();
-      for (; var_iter != refList.end(); var_iter ++)
-      {
-        SgVarRefExp * var_ref = isSgVarRefExp(*var_iter);
-        ROSE_ASSERT(var_ref->get_symbol() != NULL);
-        SgInitializedName* init_var = var_ref->get_symbol()->get_declaration();
-        ROSE_ASSERT(init_var != NULL);
-        SgScopeStatement* var_scope = init_var->get_scope();
-        ROSE_ASSERT(var_scope != NULL);
+      case V_SgOmpThreadprivateStatement:
+        {
+          transOmpThreadprivate(node);
+          break;
+        }
+      case V_SgOmpTaskwaitStatement:
+        {
+          transOmpTaskwait(node);
+          break;
+        }
+      case V_SgOmpSingleStatement:
+        {
+          transOmpSingle(node);
+          break;
+        }
+      case V_SgOmpMasterStatement:
+        {
+          transOmpMaster(node);
+          break;
+        }
+      case V_SgOmpAtomicStatement:
+        {
+          transOmpAtomic(node);
+          break;
+        }
+      case V_SgOmpOrderedStatement:
+        {
+          transOmpOrdered(node);
+          break;
+        }
+      case V_SgOmpCriticalStatement:
+        {
+          transOmpCritical(node);
+          break;
+        }
 
-        // Variables with automatic storage duration that are declared in 
-        // a scope inside the construct are private. Skip them
-        if (isAncestor(directive_scope, var_scope))
-          continue;
-
-        if (SageInterface::isUseByAddressVariableRef(var_ref))
-           continue;
-        // Skip variables already with explicit data-sharing attributes
-        VariantVector vv (V_SgOmpDefaultClause);
-        vv.push_back(V_SgOmpPrivateClause);
-        vv.push_back(V_SgOmpSharedClause);
-        vv.push_back(V_SgOmpFirstprivateClause);
-        if (isInClauseVariableList(init_var, target ,vv)) 
-          continue;
-        // Skip variables which are class/structure members: part of another variable
-        if (isSgClassDefinition(init_var->get_scope()))
-          continue;
-        // Skip variables which are shared in enclosing constructs  
-        if(isSharedInEnclosingConstructs(init_var, target))
-          continue;
-        // Now it should be a firstprivate variable   
-        addClauseVariable(init_var, target, V_SgOmpFirstprivateClause);
-        result ++;
-      } // end for each variable reference
-    } // end for each SgOmpTaskStatement
-    return result;
-  } // end patchUpFirstprivateVariables()
- 
-  //! Bottom-up processing AST tree to translate all OpenMP constructs
-  // the major interface of omp_lowering
-  // We now operation on scoped OpenMP regions and blocks
-  //    SgBasicBlock
-  //      /                   #
-  //     /                    #
-  // SgOmpParallelStatement   #
-  //          \               #
-  //           \              #
-  //           SgBasicBlock   #
-  //               \          #
-  //                \         #
-  //                SgOmpParallelStatement
-  void lower_omp(SgSourceFile* file)
-  {
-    ROSE_ASSERT(file != NULL);
-
-    patchUpPrivateVariables(file);
-    patchUpFirstprivateVariables(file);
-    // Liao 12/2/2010, Fortran does not require function prototypes
-    if (!SageInterface::is_Fortran_language() )
-      insertRTLHeaders(file);
-    insertRTLinitAndCleanCode(file);
-    //    translationDriver driver;
-    // SgOmpXXXStatment is compiler-generated and has no file info
-    //driver.traverseWithinFile(file,postorder);
-    //  driver.traverse(file,postorder);
-    // AST manipulation with postorder traversal is not reliable,
-    // We record nodes first then do changes to them
-
-    Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(file, V_SgStatement);
-    Rose_STL_Container<SgNode*>::reverse_iterator nodeListIterator = nodeList.rbegin();
-    for ( ;nodeListIterator !=nodeList.rend();  ++nodeListIterator)
-    {
-      SgStatement* node = isSgStatement(*nodeListIterator);
-      ROSE_ASSERT(node != NULL);
-      switch (node->variantT())
-      {
-        case V_SgOmpParallelStatement:
-          {
-            transOmpParallel(node);
-            break;
-          }
-        case V_SgOmpTaskStatement:
-          {
-            transOmpTask(node);
-            break;
-          }
-        case V_SgOmpForStatement:
-        case V_SgOmpDoStatement:
-          {
-            //transOmpFor(node);
-            transOmpLoop(node);
-            break;
-          }
-//          {
-//            transOmpDo(node);
-//            break;
-//          }
-        case V_SgOmpBarrierStatement:
-          {
-            transOmpBarrier(node);
-            break;
-          }
-        case V_SgOmpFlushStatement:
-          {
-            transOmpFlush(node);
-            break;
-          }
-
-        case V_SgOmpThreadprivateStatement:
-          {
-            transOmpThreadprivate(node);
-            break;
-          }
-       case V_SgOmpTaskwaitStatement:
-          {
-            transOmpTaskwait(node);
-            break;
-          }
-        case V_SgOmpSingleStatement:
-          {
-            transOmpSingle(node);
-            break;
-          }
-       case V_SgOmpMasterStatement:
-          {
-            transOmpMaster(node);
-            break;
-          }
-       case V_SgOmpAtomicStatement:
-          {
-            transOmpAtomic(node);
-            break;
-          }
-         case V_SgOmpOrderedStatement:
-          {
-            transOmpOrdered(node);
-            break;
-          }
-       case V_SgOmpCriticalStatement:
-          {
-            transOmpCritical(node);
-            break;
-          }
-
-        default:
-          {
-            // do nothing here    
-          }
-      }// switch
+      default:
+        {
+          // do nothing here    
+        }
+    }// switch
 
 
-    } 
+  } 
 
 #if 0
-    //3. Special handling for files with main() 
-    // rename main() to user_main()
-    SgFunctionDeclaration * mainFunc = findMain(cur_file);
-    if (mainFunc) 
-    {
-      renameMainToUserMain(mainFunc);
-    }
+  //3. Special handling for files with main() 
+  // rename main() to user_main()
+  SgFunctionDeclaration * mainFunc = findMain(cur_file);
+  if (mainFunc) 
+  {
+    renameMainToUserMain(mainFunc);
+  }
 #endif
 
-  }
+}
 
 } // end namespace
