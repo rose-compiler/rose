@@ -493,6 +493,22 @@ struct statfs_32 {
     uint32_t f_spare[4];
 } __attribute__((packed));
 
+/* kernel's struct statfs64 on i686 */
+struct statfs64_32 {
+    uint32_t f_type;
+    uint32_t f_bsize;
+    uint64_t f_blocks;
+    uint64_t f_bfree;
+    uint64_t f_bavail;
+    uint64_t f_files;
+    uint64_t f_ffree;
+    uint32_t f_fsid[2];
+    uint32_t f_namelen;
+    uint32_t f_frsize;
+    uint32_t f_flags;
+    uint32_t f_spare[4];
+} __attribute__((packed));
+
 struct statfs_64_native {
     unsigned f_type;
     unsigned f_bsize;
@@ -515,6 +531,19 @@ print_statfs_32(FILE *f, const uint8_t *_v, size_t sz)
     const statfs_32 *v = (const statfs_32*)_v;
     return fprintf(f, "type=%"PRIu32", bsize=%"PRIu32", blocks=%"PRIu32", bfree=%"PRIu32", bavail=%"PRIu32", files=%"PRIu32
                    ", ffree=%"PRIu32", fsid=[%"PRIu32",%"PRIu32"], namelen=%"PRIu32", frsize=%"PRIu32", flags=%"PRIu32
+                   ", spare=[%"PRIu32",%"PRIu32",%"PRIu32",%"PRIu32"]",
+                   v->f_type, v->f_bsize, v->f_blocks, v->f_bfree, v->f_bavail, v->f_files,
+                   v->f_ffree, v->f_fsid[0], v->f_fsid[1], v->f_namelen, v->f_frsize, v->f_flags,
+                   v->f_spare[0], v->f_spare[1], v->f_spare[2], v->f_spare[3]);
+}
+
+static int
+print_statfs64_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    ROSE_ASSERT(sizeof(statfs64_32)==sz);
+    const statfs64_32 *v = (const statfs64_32*)_v;
+    return fprintf(f, "type=%"PRIu32", bsize=%"PRIu32", blocks=%"PRIu64", bfree=%"PRIu64", bavail=%"PRIu64", files=%"PRIu64
+                   ", ffree=%"PRIu64", fsid=[%"PRIu32",%"PRIu32"], namelen=%"PRIu32", frsize=%"PRIu32", flags=%"PRIu32
                    ", spare=[%"PRIu32",%"PRIu32",%"PRIu32",%"PRIu32"]",
                    v->f_type, v->f_bsize, v->f_blocks, v->f_bfree, v->f_bavail, v->f_files,
                    v->f_ffree, v->f_fsid[0], v->f_fsid[1], v->f_namelen, v->f_frsize, v->f_flags,
@@ -5709,6 +5738,56 @@ EmulationPolicy::emulate_syscall()
                 writeGPR(x86_gpr_ax, result);
             } while (0);
             syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
+            break;
+        }
+
+        case 268: { /* 0x10c, statfs64 */
+            syscall_enter("statfs64", "sdp");
+            ROSE_ASSERT(arg(1)==sizeof(statfs64_32));
+            do {
+                bool error;
+                std::string path = read_string(arg(0), 0, &error);
+                if (error) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+
+                static statfs_64_native host_statfs;
+#ifdef SYS_statfs64 /* host is 32-bit machine */
+                int result = syscall(SYS_statfs64, path.c_str(), sizeof host_statfs, &host_statfs);
+#else           /* host is 64-bit machine */
+                int result = syscall(SYS_statfs, path.c_str(), &host_statfs);
+#endif
+                if (-1==result) {
+                    writeGPR(x86_gpr_ax, -errno);
+                    break;
+                }
+
+                statfs64_32 guest_statfs;
+                guest_statfs.f_type = host_statfs.f_type;
+                guest_statfs.f_bsize = host_statfs.f_bsize;
+                guest_statfs.f_blocks = host_statfs.f_blocks;
+                guest_statfs.f_bfree = host_statfs.f_bfree;
+                guest_statfs.f_bavail = host_statfs.f_bavail;
+                guest_statfs.f_files = host_statfs.f_files;
+                guest_statfs.f_ffree = host_statfs.f_ffree;
+                guest_statfs.f_fsid[0] = host_statfs.f_fsid[0];
+                guest_statfs.f_fsid[1] = host_statfs.f_fsid[1];
+                guest_statfs.f_namelen = host_statfs.f_namelen;
+                guest_statfs.f_frsize = host_statfs.f_frsize;
+                guest_statfs.f_flags = host_statfs.f_flags;
+                guest_statfs.f_spare[0] = host_statfs.f_spare[0];
+                guest_statfs.f_spare[1] = host_statfs.f_spare[1];
+                guest_statfs.f_spare[2] = host_statfs.f_spare[2];
+                guest_statfs.f_spare[3] = host_statfs.f_spare[3];
+                if (sizeof(guest_statfs)!=map->write(&guest_statfs, arg(2), sizeof guest_statfs)) {
+                    writeGPR(x86_gpr_ax, -EFAULT);
+                    break;
+                }
+
+                writeGPR(x86_gpr_ax, result);
+            } while (0);
+            syscall_leave("d--P", sizeof(statfs64_32), print_statfs64_32);
             break;
         }
 
