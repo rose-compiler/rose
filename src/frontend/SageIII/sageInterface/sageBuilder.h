@@ -125,6 +125,9 @@ SgReferenceType* buildReferenceType(SgType *base_type = NULL);
 //SgModifierType* buildModifierType(SgType *base_type = NULL);
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType for a number of the functions below.
+//! Build a modifier type.
+SgModifierType* buildModifierType(SgType* base_type = NULL);
+
 //! Build a const type.
 SgModifierType* buildConstType(SgType* base_type = NULL);
 
