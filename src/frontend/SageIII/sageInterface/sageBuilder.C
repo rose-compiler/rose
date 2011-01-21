@@ -3339,6 +3339,22 @@ SgTypeFloat * SageBuilder::buildFloatType()
 }
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType
+//! Build a modifier type.
+SgModifierType* SageBuilder::buildModifierType(SgType* base_type /* = NULL*/)
+   {
+  // DQ (7/28/2010): New (similar) approach using type table support.
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
+
+  // DQ (7/28/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+      SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+       delete result;
+     return result2;
+ }
+
   //! Build a constant type.
 SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
    {
