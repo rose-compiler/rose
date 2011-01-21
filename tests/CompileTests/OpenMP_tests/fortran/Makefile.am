@@ -1,28 +1,29 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 F77_TESTCODES_TO_PASS = \
-    array_initialize.f \
     array-one.f \
+    array_initialize.f \
+    default.f \
+    exampleA251f.f \
+    flush.f \
     helloworld.f \
     helloworld0.f \
     helloworld2.f \
     jacobi.f \
-    default.f \
-    flush.f \
-    exampleA251f.f \
-    ompdo-default.f \
+    master.f \
     ompdo-decremental.f \
-    ompdo-static.f \
-    ompdo-orphaned.f \
+    ompdo-default.f \
     ompdo-multiple.f \
-    parallel.f \
+    ompdo-orphaned.f \
+    ompdo-static.f \
     parallel-1.f \
     parallel-2.f \
+    parallel.f \
     private.f \
     reduction.f \
     schedule.f \
-    shared.f \
     shared-array.f \
+    shared.f \
     single.f
 
 # DQ (3/4/2010): Added simple test code to debug fortran OFP usage.

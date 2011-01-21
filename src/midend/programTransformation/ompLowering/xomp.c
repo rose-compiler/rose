@@ -1405,6 +1405,13 @@ extern bool XOMP_single(void)
   return _ompc_do_single();
 #endif    
 }
+//---------
+bool xomp_master(void);
+#pragma weak xomp_master_=xomp_master
+bool xomp_master(void)
+{
+  return XOMP_master();
+}
 
 extern bool XOMP_master(void)
 {

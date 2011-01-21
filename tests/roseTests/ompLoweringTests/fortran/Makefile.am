@@ -16,6 +16,7 @@ F77_TESTCODES_REQUIRED_TO_RUN = \
   array_initialize.f \
   helloworld.f \
   jacobi.f \
+  master.f \
   ompdo-default.f \
   ompdo-decremental.f \
   ompdo-static.f \

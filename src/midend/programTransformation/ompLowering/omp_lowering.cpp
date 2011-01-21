@@ -2353,6 +2353,8 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
 
   //  if (omp_get_thread_num () == 0) 
   //     { ... }
+  //  Or if (XOMP_master())   
+  //     { ...  }
   void transOmpMaster(SgNode * node)
   {
     ROSE_ASSERT(node != NULL );
@@ -2367,7 +2369,11 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
 
 #ifdef ENABLE_XOMP
    SgFunctionCallExp * func_call = buildFunctionCallExp("XOMP_master", buildIntType(), NULL, scope); 
-    SgIfStmt* if_stmt = buildIfStmt(func_call, body, NULL); 
+   SgIfStmt* if_stmt = NULL; 
+   if (SageInterface::is_Fortran_language())
+      if_stmt = buildIfStmt(buildEqualityOp(func_call,buildIntVal(1)), body, NULL); 
+   else   
+      if_stmt = buildIfStmt(func_call, body, NULL); 
 #else
     SgExpression* func_exp = buildFunctionCallExp("omp_get_thread_num", buildIntType(), NULL, scope);
     SgIfStmt* if_stmt = buildIfStmt(buildEqualityOp(func_exp,buildIntVal(0)), body, NULL); 
