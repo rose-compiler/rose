@@ -60,11 +60,4 @@ void RtedTransformation::insert_pointer_change( SgExpression* exp ) {
     );
 }
 
-
-
-void RtedTransformation::visit_delete( SgDeleteExp* del ) {
-  // FIXME 2: this is wrong if delete is overloaded
-  frees.push_back( del );
-}
-
 #endif

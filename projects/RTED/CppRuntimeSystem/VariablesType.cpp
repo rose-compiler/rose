@@ -8,53 +8,13 @@
 
 using namespace std;
 
-/*
-VariablesType::VariablesType(const std::string & name_,
-                             const std::string & mangledName_,
-                             const std::string & typeStr_,
-                             Address address_) :
-    name(name_),
-    mangledName(mangledName_),
-    address(address_)
-{
-    TypeSystem * ts = RuntimeSystem::instance()->getTypeSystem();
-    type = ts->getTypeInfo(typeStr_);
-
-    if(!type)
-    {
-        if(typeStr_ == "SgArrayType")
-        {
-            //TODO just until registration is done correct
-            cerr << "Trying to register an array via createVariable!" << endl;
-            cerr << "Use createArray instead" << endl;
-            type = ts->getTypeInfo("SgPointerType");
-            return;
-        }
-        else
-            assert(false);//unknown type
-    }
-
-    RsClassType* class_type = dynamic_cast< RsClassType* >( type );
-    if(     class_type != NULL
-            && RuntimeSystem::instance() -> getMemManager()
-                -> getMemoryType( address )) {
-        // When we create classes, the memory might be allocated in the
-        // constructor.  In these cases, it's fine to call createvar with
-        // existing memory
-        return;
-    }
-
-    RuntimeSystem::instance()->createMemory(address,type->getByteSize(),true,false,type);
-
-}
-*/
-
+// \pp todo: replace the ctor with one that takes a location instead of the address
 VariablesType::VariablesType( const std::string & name_,
                               const std::string & mangledName_,
                               RsType * type_,
                               Address address_
                             )
-: name(name_), mangledName(mangledName_), type(type_), address(address_)
+: name(name_), mangledName(mangledName_), type(type_), address(address_.local)
 {
   assert(type != NULL);
 
@@ -69,7 +29,7 @@ VariablesType::VariablesType( const std::string & name_,
   // existing memory
   if (!isCtorCall)
   {
-    rs->createMemory(address, type->getByteSize(), MemoryType::StackAlloc, type);
+    rs->createMemory(address_, type->getByteSize(), akStack, type);
   }
 }
 
@@ -78,13 +38,13 @@ VariablesType::VariablesType( const std::string & name_,
 
 VariablesType::~VariablesType()
 {
-    RuntimeSystem::instance()->freeMemory(address, MemoryType::StackAlloc);
+    RuntimeSystem::instance()->freeMemory(rted_Addr(address), akStack);
 }
 
 MemoryType * VariablesType::getAllocation() const
 {
     MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
-    MemoryType * mt =mm->getMemoryType(address);
+    MemoryType *    mt = mm->getMemoryType(address);
 
     assert(mt);
     //assert that in this chunk only this variable is stored
@@ -102,13 +62,13 @@ size_t  VariablesType::getSize() const
 
 PointerInfo * VariablesType::getPointerInfo() const
 {
-    PointerManager * pm = RuntimeSystem::instance()->getPointerManager();
-    PointerManager::PointerSetIter it = pm->sourceRegionIter(getAddress());
+    PointerManager *               pm = RuntimeSystem::instance()->getPointerManager();
+    PointerManager::PointerSetIter it = pm->sourceRegionIter(address);
 
-    if(it == pm->getPointerSet().end())
+    if (it == pm->getPointerSet().end())
         return NULL;
 
-    if( (*it)->getSourceAddress() == getAddress())
+    if ((*it)->getSourceAddress() == address)
         return *it;
     else
         return NULL;
@@ -118,7 +78,9 @@ PointerInfo * VariablesType::getPointerInfo() const
 
 void VariablesType::print(ostream & os) const
 {
-    os << "0x" << hex <<setw(6) << setfill('0') << address << "\t" << name << "(" << mangledName <<")" << " Type: " << type->getName()  ;
+    os << "0x" << hex << setw(6) << setfill('0') << HexToString(address)
+       << "\t" << name << "(" << mangledName <<")"
+       << " Type: " << type->getName()  ;
 }
 
 

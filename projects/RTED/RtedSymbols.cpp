@@ -85,10 +85,24 @@ struct RtedSymbolWrapper
     else if (name == "rted_SourceInfo")  rs.roseSourceInfo  = SgClassType::createType(&n);
   }
 
+  void handle_rtedTypes(const std::string& name, SgEnumDeclaration& n)
+  {
+    if      (name == "rted_AllocKind")   rs.roseAllocKind   = &n;
+  }
+
+  template <class SageNode>
+  void handle_rtedTypes(SageNode& n)
+  {
+    const std::string& name = n.get_name().str();
+
+    if ( !isRtedDecl(name) ) return;
+
+    handle_rtedTypes(name, n);
+  }
+
   void handle(SgNode&)
   {}
 
-  // \pp \todo This should probably be global scope
 	void handle(SgGlobal& n)
   {
     initialize(n, rs);
@@ -107,14 +121,14 @@ struct RtedSymbolWrapper
     }
   }
 
+  void handle(SgEnumDeclaration& n)
+  {
+    handle_rtedTypes(n);
+  }
+
   void handle(SgClassDeclaration& n)
   {
-    const std::string& name = n.get_name().str();
-
-    if ( isRtedDecl(name) )
-    {
-      handle_rtedTypes(name, n);
-    }
+    handle_rtedTypes(n);
   }
 };
 

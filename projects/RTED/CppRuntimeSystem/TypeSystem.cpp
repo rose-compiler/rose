@@ -20,12 +20,9 @@ void TypeSystem::clearStatus()
 {
     types.clear();
 
-    // Register all Base-Types
-    int count = RsBasicType::getBaseTypeCount();
-    for(int i=0; i<count; i++)
+    for (RsBasicType::SgType i = RsBasicType::SgTypeBool; i < RsBasicType::SgUnknownType; ++i)
     {
-        RsBasicType::SgType t = RsBasicType::getBaseType(i);
-        bool success = registerType(new RsBasicType(t));
+        const bool success = registerType( new RsBasicType(RsBasicType::create(i)) );
         assert(success);
     }
 }
@@ -75,15 +72,16 @@ RsArrayType * TypeSystem::getArrayType(const string& name, size_t size)
 
 RsArrayType* TypeSystem::getArrayType(RsType* bt, size_t size)
 {
-    map<size_t, RsArrayType*>&         m = arrTypeMap[bt];
-    map<size_t,RsArrayType*>::iterator it = m.find(size);
+    ArrayDimensions& m = arrTypeMap[bt];
+    RsArrayType&     t = m[size];
 
-    if( it != m.end() ) return it->second;
+    // new entry?
+    if (t == RsArrayType())
+    {
+      t = RsArrayType(bt, size);
+    }
 
-    RsArrayType*                       arrType = new RsArrayType(bt,size);
-
-    m.insert(make_pair<size_t,RsArrayType*>(size,arrType));
-    return arrType;
+    return &t;
 }
 
 
@@ -92,25 +90,23 @@ RsPointerType* TypeSystem::getPointerType(RsType* bt, AddressDesc desc)
     assert( rted_isPtr(desc) >= 1 );
     assert( bt != NULL );
 
-    TypeDerivatives&          m = ptrTypeMap[bt];
-    TypeDerivatives::iterator it = m.find(desc.levels); // we do not keep track of shared qualifiers on types
+    TypeDerivatives& m = ptrTypeMap[bt];
+    RsPointerType&   t = m[desc.levels];
 
-    if( it != m.end() ) return it->second;
+    // new entry?
+    if (t == RsPointerType())
+    {
+      AddressDesc desc_prime = rted_deref_desc(desc);
 
-    RsType*                               base = NULL;
-    AddressDesc                           desc_prime = rted_deref_desc(desc);
+      // multiple pointers are represented as pointer which have a pointer basetype
+      // build these base-types recursively
+      if (rted_isPtr(desc_prime))
+          bt = getPointerType(bt, desc_prime);
 
-    // multiple pointers are represented as pointer which have a pointer basetype
-    // build these base-types recursively
-    if (rted_isPtr(desc_prime))
-        base = getPointerType(bt, desc_prime);
-    else
-        base = bt;
+      t = RsPointerType(bt);
+    }
 
-    RsPointerType*                        ptrType = new RsPointerType(base);
-
-    m.insert(TypeDerivatives::value_type(desc.levels, ptrType));
-    return ptrType;
+    return &t;
 }
 
 RsPointerType * TypeSystem::getPointerType(const string & name, AddressDesc desc)

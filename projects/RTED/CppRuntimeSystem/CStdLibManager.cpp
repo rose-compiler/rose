@@ -10,8 +10,8 @@
 // Check that the first num bytes of ptr1 and ptr2 do not overlap.
 void CStdLibManager::
 check_overlap(
-        const void* ptr1,
-        const void* ptr2,
+        const char* ptr1,
+        const char* ptr2,
         size_t size,
         const std::string& desc
 ) {
@@ -20,12 +20,11 @@ check_overlap(
 
 // check that the memory allocated at ptr1 and ptr2 doesn't overlap
 void
-CStdLibManager::check_allocation_overlap(const void* ptr1, const void* ptr2, const std::string&)
+CStdLibManager::check_allocation_overlap(const char* ptr1, const char* ptr2, const std::string&)
 {
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
-
-    MemoryType* p1_mem = mm->findContainingMem( memAddr(ptr1) );
-    MemoryType* p2_mem = mm->findContainingMem( memAddr(ptr2) );
+    MemoryType*    p1_mem = mm->findContainingMem( ptr1 );
+    MemoryType*    p2_mem = mm->findContainingMem( ptr2 );
 
     // if either source or dest is NULL or missing, we'll catch it in subsequent
     // checks to write/read
@@ -42,7 +41,7 @@ CStdLibManager::check_allocation_overlap(const void* ptr1, const void* ptr2, con
 }
 
 void
-CStdLibManager::check_overlap(const void* ptr1, size_t size1, const void* ptr2, size_t size2, const std::string& desc)
+CStdLibManager::check_overlap(const char* ptr1, size_t size1, const char* ptr2, size_t size2, const std::string& desc)
 {
     RuntimeSystem* rts = RuntimeSystem::instance();
 
@@ -77,7 +76,7 @@ size_t CStdLibManager::check_string( const char* str) {
     RuntimeSystem* rts = RuntimeSystem::instance();
     MemoryManager* mm = rts->getMemManager();
 
-    MemoryType* memory = mm->findContainingMem( memAddr(str));
+    MemoryType* memory = mm->findContainingMem( str );
 
     if( NULL == memory) {
         std::stringstream desc;
@@ -89,12 +88,12 @@ size_t CStdLibManager::check_string( const char* str) {
         // str points somewhere within allocated memory.
         // Now we make sure that there's a null terminator within that memory
         // chunk
-        char* end = point_to<char>(memory->getAddress() + memory->getSize());
-        for( char* p = (char*) str; p < end; ++p) {
+        const char* end = memory->getAddress() + memory->getSize();
+        for( const char* p = (const char*) str; p < end; ++p) {
             if( '\0' == *p) {
                 // size includes null terminator
                 size_t size = (p - str) + 1;
-                mm->checkRead( memAddr(str), size);
+                mm->checkRead( str, size);
                 return size;
             }
         }
@@ -115,36 +114,36 @@ size_t CStdLibManager::check_string( const char* str) {
 // ------------------ CStdLib -------------------------------------------------
 
 void CStdLibManager::
-check_memcpy( void* destination, const void* source, size_t num) {
+check_memcpy( const void* destination, const void* source, size_t num) {
 
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
     // check no-overlap
-    check_allocation_overlap( destination, source );
+    check_allocation_overlap( static_cast<const char*>(destination), static_cast<const char*>(source) );
 
     // checkmem   dest .. dest + num
-    mm->checkWrite( memAddr(destination), num);
+    mm->checkWrite( static_cast<const char*>(destination), num);
 
     // checkmem   source .. source + num
-    mm->checkRead( memAddr(source), num);
+    mm->checkRead( static_cast<const char*>(source), num);
 }
 
 
 void CStdLibManager::
-check_memmove( void* destination, const void* source, size_t num) {
+check_memmove( const void* destination, const void* source, size_t num) {
 
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
     // checkmem   dest .. dest + num
-    mm->checkWrite( memAddr(destination), num);
+    mm->checkWrite( static_cast<const char*>(destination), num);
 
     // checkmem   source .. source + num
-    mm->checkRead( memAddr(source), num);
+    mm->checkRead( static_cast<const char*>(source), num);
 }
 
 
 void CStdLibManager::
-check_strcpy( char* destination, const char* source) {
+check_strcpy( const char* destination, const char* source) {
 
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
@@ -156,17 +155,17 @@ check_strcpy( char* destination, const char* source) {
     check_overlap( destination, source, len, "in call to strcpy");
 
     // check that destination was allocated
-    mm->checkWrite( memAddr(destination), len);
+    mm->checkWrite( destination, len);
 }
 
 
 void CStdLibManager::
-check_strncpy( char* destination, const char* source, size_t num) {
+check_strncpy( const char* destination, const char* source, size_t num) {
 
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
     // Don't need a \0 in first num chars, but memory must be readable
-    mm->checkRead( memAddr(source), num);
+    mm->checkRead( source, num);
 
     // check no-overlap
     //
@@ -180,12 +179,12 @@ check_strncpy( char* destination, const char* source, size_t num) {
     check_allocation_overlap( destination, source, "in call to strncpy");
 
     // check that destination was allocated
-    mm->checkWrite( memAddr(destination), num);
+    mm->checkWrite( destination, num);
 }
 
 
 void CStdLibManager::
-check_strcat( char* destination, const char* source) {
+check_strcat( const char* destination, const char* source) {
 
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
@@ -210,17 +209,17 @@ check_strcat( char* destination, const char* source) {
     );
 
     // check that destination was allocated
-    mm->checkWrite( memAddr(destination) + destination_len, source_len - 1);
+    mm->checkWrite( destination + destination_len, source_len - 1);
 }
 
 
 void CStdLibManager::
-check_strncat( char* destination, const char* source, size_t num) {
+check_strncat( const char* destination, const char* source, size_t num) {
 
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
     // Don't need a \0 in first num chars, but memory must be readable
-    mm->checkRead( memAddr(source), num);
+    mm->checkRead( source, num);
 
     // dest, however, must have null terminator in allocated memory
     size_t destination_len = check_string( destination );
@@ -236,7 +235,7 @@ check_strncat( char* destination, const char* source, size_t num) {
     );
 
     // check that destination was allocated
-    mm->checkWrite( memAddr(destination) + destination_len, num);
+    mm->checkWrite( destination + destination_len, num);
 }
 
 

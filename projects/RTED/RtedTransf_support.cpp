@@ -5,6 +5,7 @@
 #ifndef USE_ROSE
 
 #include <string>
+#include <algorithm>
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
@@ -156,6 +157,54 @@ RtedTransformation::mkAddressDesc(AddressDesc desc) const
   appendExpression(initexpr, buildIntVal(desc.shared_mask));
 
   return genAggregateInitializer(initexpr, roseAddressDesc());
+}
+
+static
+bool upcSharedFlag(const SgModifierType& n)
+{
+  const SgTypeModifier&       modifier = n.get_typeModifier();
+  const SgUPC_AccessModifier& upcModifier = modifier.get_upcModifier();
+
+  return upcModifier.get_isShared();
+}
+
+static
+bool isUpcShared(const SgType* n)
+{
+  const SgModifierType* t = isSgModifierType(n);
+  bool                  res = false;
+
+  // \pp \note can ModifierTypes be stacked?
+  while (t != NULL && !res)
+  {
+    res = upcSharedFlag(*t);
+    t = isSgModifierType(t->get_base_type());
+  }
+
+  return res;
+}
+
+/// \brief adds an AddressDesc for a single ptr/arr indirection
+/// \param the base type (already after the indirection)
+AddressDesc baseAddressDesc(const SgType* t)
+{
+  ROSE_ASSERT( t );
+
+  AddressDesc desc;
+
+  desc.levels = 0;
+  desc.shared_mask = isUpcShared(t);
+
+  return desc;
+}
+
+
+SgAggregateInitializer*
+RtedTransformation::mkAddressDesc(SgExpression* expr) const
+{
+  ROSE_ASSERT( expr );
+
+  return mkAddressDesc( baseAddressDesc(expr->get_type()) );
 }
 
 
@@ -615,9 +664,9 @@ int RtedTransformation::getDimension(SgInitializedName* initName) {
 int
 RtedTransformation::getDimension(SgInitializedName* initName, SgVarRefExp* varRef) {
   int dim =-1;
-  std::map<SgVarRefExp*, RTedArray*>::const_iterator it = create_array_define_varRef_multiArray.begin();
+  std::map<SgVarRefExp*, RtedArray*>::const_iterator it = create_array_define_varRef_multiArray.begin();
   for (;it!=create_array_define_varRef_multiArray.end();++it) {
-    RTedArray* array = it->second;
+    RtedArray* array = it->second;
     SgInitializedName* init = array->initName;
     if (init==initName) {
       dim=array->getDimension();
@@ -625,9 +674,9 @@ RtedTransformation::getDimension(SgInitializedName* initName, SgVarRefExp* varRe
     }
   }
 
-  std::map<SgInitializedName*, RTedArray*>::const_iterator it2= create_array_define_varRef_multiArray_stack.find(initName);
+  std::map<SgInitializedName*, RtedArray*>::const_iterator it2= create_array_define_varRef_multiArray_stack.find(initName);
   for (;it2!=create_array_define_varRef_multiArray_stack.end();++it2) {
-    RTedArray* array = it2->second;
+    RtedArray* array = it2->second;
     SgInitializedName* init = array->initName;
     if (init==initName) {
       dim=array->getDimension();
@@ -688,6 +737,13 @@ void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, SgScopeStateme
     appendExpression( arg_list, ctorSourceInfo(fiCtorArg) );
 }
 
+SgType* skip_ModifierType(SgType* t)
+{
+  SgModifierType* sgmod = isSgModifierType(t);
+  if (sgmod != NULL) return sgmod->get_base_type();
+
+  return t;
+}
 
 SgType* skip_ArrPtrType(SgType* t)
 {
@@ -697,6 +753,7 @@ SgType* skip_ArrPtrType(SgType* t)
   SgArrayType*   sgarr = isSgArrayType(t);
   if (sgarr != NULL) return sgarr->get_base_type();
 
+  // \pp \todo shouldn't we also skip modifier types?
   return t;
 }
 
@@ -709,31 +766,6 @@ bool isUpcRelevant(const SgModifierType& n)
 
   return !upcModifier.get_isShared();
 }
-
-static
-bool upcSharedFlag(const SgModifierType& n)
-{
-  const SgTypeModifier&       modifier = n.get_typeModifier();
-  const SgUPC_AccessModifier& upcModifier = modifier.get_upcModifier();
-
-  return upcModifier.get_isShared();
-}
-
-static
-bool isUpcShared(SgType* n)
-{
-  SgModifierType* t = isSgModifierType(n);
-  bool            res = false;
-
-  while (t != NULL && !res)
-  {
-    res = upcSharedFlag(*t);
-    t = isSgModifierType(t->get_base_type());
-  }
-
-  return res;
-}
-
 
 struct IndirectionHandler
 {
@@ -756,8 +788,14 @@ struct IndirectionHandler
       res.second = rted_address_of(res.second);
     }
 
+    void unexpected(SgNode& n)
+    {
+      ez::unused(n);
+      ROSE_ASSERT(false);
+    }
+
     /// unexpected node type
-    void handle(SgNode& n) { ez::unused(n); ROSE_ASSERT(false); }
+    void handle(SgNode& n) { unexpected(n); }
 
     /// base case
     void handle(SgType& n) { res.first = &n; }
@@ -765,6 +803,12 @@ struct IndirectionHandler
     /// use base type
     void handle(SgPointerType& n) { add_indirection(n); }
     void handle(SgArrayType& n)   { add_indirection(n); }
+
+    void handle(SgReferenceType& n)
+    {
+      res.first = n.get_base_type();
+      // references are not counted as indirections
+    }
 
     /// extract UPC shared information
     void handle(SgModifierType& n)
@@ -833,15 +877,6 @@ SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
 {
   ROSE_ASSERT(type);
 
-  // we always resolve reference type information
-  if (isSgReferenceType( type ))
-  {
-      return mkTypeInformation( isSgReferenceType( type ) -> get_base_type(),
-                                resolve_class_names,
-                                array_to_pointer
-                              );
-  }
-
   IndirectionHandler::ResultType indir_desc = indirections(type);
   SgType*                        base_type = indir_desc.first;
   AddressDesc                    addrDesc = indir_desc.second;
@@ -891,7 +926,7 @@ SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
 
 
 void
-RtedTransformation::appendDimensions(SgExprListExp* arg_list, RTedArray* arr)
+RtedTransformation::appendDimensions(SgExprListExp* arg_list, RtedArray* arr)
 {
       ROSE_ASSERT(arg_list && arr);
 
@@ -914,7 +949,7 @@ void RtedTransformation::appendDimensionsIfNeeded( SgExprListExp* arg_list,
                                                    RtedClassElement* rce
                                                  )
 {
-  RTedArray* arr = rce->get_array();
+  RtedArray* arr = rce->get_array();
 
   if (arr == NULL) return;
   appendDimensions(arg_list, arr);
@@ -1077,10 +1112,12 @@ SgExpression* genAddressOf(SgExpression* const exp, bool upcShared)
   //     what's so bad about casting a cast?
   LValueVisitor       make_lvalue_visitor;
   SgExpression* const exp_copy = make_lvalue_visitor.visit_subtree( deepCopy(exp) );
-  SgType*             char_ptr = buildPointerType(buildCharType());
+  SgType*             char_type = buildCharType();
 
   // in UPC we must not cast away the shared modifer
-  if (upcShared) char_ptr = buildUpcSharedType(char_ptr);
+  if (upcShared) char_type = buildUpcSharedType(char_type);
+
+  SgType*             char_ptr = buildPointerType(char_type);
 
   // we return the address as [shared] char*
   return buildCastExp(buildAddressOfOp(exp_copy), char_ptr);
@@ -1095,15 +1132,9 @@ SgFunctionCallExp* RtedTransformation::mkAddress(SgExpression* exp, bool upcShar
                                              : symbols.roseAddr
                                  );
 
-<<<<<<< HEAD
   ROSE_ASSERT(ctor);
   appendExpression(args, exp);
   return buildFunctionCallExp(ctor, args);
-=======
-  // \note I believe that the type of the following cast expression should
-  //       be size_t instead of unsigned long (PP).
-  return buildCastExp(cast_void_star, buildUnsignedLongType());
->>>>>>> e4d9b200063c609d1db68b1781b95ff502484499
 }
 
 
@@ -1132,6 +1163,8 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
     }
 
     // get the address of exp
+    std::cerr << "**** " << typeid(*exp->get_type()).name() << std::endl;
+
     const bool    upcShared = isUpcShared(exp->get_type());
     SgExpression* arg = genAddressOf(exp, upcShared);
 
@@ -1285,39 +1318,28 @@ RtedTransformation::buildGlobalConstructor(SgScopeStatement* scope, std::string 
 }
 
 bool
-RtedTransformation::traverseAllChildrenAndFind(SgExpression* varRef,
-					       SgStatement* stmt) {
-  bool found =false;
-  if (stmt==NULL)
-    return found;
-  SgNodePtrList nodes = NodeQuery::querySubTree(stmt,V_SgExpression);
-  SgNodePtrList::const_iterator it = nodes.begin();
-  for (;it!=nodes.end();++it) {
-    SgExpression* var = isSgExpression(*it);
-    ROSE_ASSERT(var);
-    if (var==varRef) {
-      found=true;
-      break;
-    }
-  }
-  return found;
+RtedTransformation::traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt)
+{
+  if (stmt==NULL) return false;
+
+  const SgNodePtrList           nodes = NodeQuery::querySubTree(stmt,V_SgExpression);
+  SgNodePtrList::const_iterator zz = nodes.end();
+  SgNodePtrList::const_iterator pos = std::find(nodes.begin(), zz, varRef);
+
+  return (pos != zz);
 }
 
 bool
 RtedTransformation::traverseAllChildrenAndFind(SgInitializedName* varRef, SgStatement* stmt)
 {
+  // \pp \todo replace this and the previous function with isParentOf implementation
   if (stmt == NULL) return false;
 
-  bool found = false;
-  SgNodePtrList nodes = NodeQuery::querySubTree(stmt,V_SgInitializedName);
-  SgNodePtrList::const_iterator it = nodes.begin();
+  const SgNodePtrList           nodes = NodeQuery::querySubTree(stmt,V_SgInitializedName);
+  SgNodePtrList::const_iterator zz = nodes.end();
+  SgNodePtrList::const_iterator pos = std::find(nodes.begin(), zz, varRef);
 
-  while (it != nodes.end() && !found)
-  {
-    found= (*it == varRef);
-  }
-
-  return found;
+  return (pos != zz);
 }
 
 SgBasicBlock*

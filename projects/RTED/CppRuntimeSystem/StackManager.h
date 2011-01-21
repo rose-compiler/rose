@@ -15,6 +15,8 @@ class VariablesType;
 
 class StackManager
 {
+    typedef const char* Location;
+
     public:
         StackManager();
         ~StackManager() {}
@@ -41,11 +43,11 @@ class StackManager
 
 
         /// Returns variable at given memory location, or NULL if no var found
-        VariablesType * getVariable(Address);
+        VariablesType * getVariable(Location);
 
         /// Returns Variable by mangledName (which is unique)
         /// much slower thant the version with address!, does linear search in stack
-        VariablesType * getVariable(const std::string & mangledName);
+        VariablesType * getVariableByMangledName(const std::string & mangledName);
 
         /// Finds all variables with given name, and puts them in a vector
         /// (only mangled name is unique! )
@@ -57,7 +59,7 @@ class StackManager
         void clearStatus();
 
     protected:
-        typedef std::map<Address, VariablesType*> AddrToVarMap;
+        typedef std::map<Location, VariablesType*> AddrToVarMap;
 
         struct ScopeInfo
         {

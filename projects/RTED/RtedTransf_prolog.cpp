@@ -239,14 +239,16 @@ void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
          SgExpression* stmt1 = buildFunctionCallExp
              ("RuntimeSystem_original_main",buildVoidType(),arg_list,body);
 
-		 SgStatement* st = buildVariableDeclaration("exit_code",buildIntType(),
+		     SgStatement* st = buildVariableDeclaration("exit_code",buildIntType(),
 					 buildAssignInitializer(stmt1),body);
          appendStatement(st, body);
 
          SgExprListExp* arg_list2 = buildExprListExp();
          appendExpression(arg_list2,buildStringVal("RuntimeSystem.cpp:main"));
-         SgExprStatement* stmt5 = buildFunctionCallStmt
-             ("RuntimeSystem_roseRtedClose",buildVoidType(),arg_list2,body);
+
+         ROSE_ASSERT(symbols.roseClose);
+         SgFunctionRefExp*  closeref = buildFunctionRefExp(symbols.roseClose);
+         SgExprStatement*   stmt5 = buildFunctionCallStmt(closeref,arg_list2);
          appendStatement(stmt5, body);
 
 

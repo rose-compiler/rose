@@ -16,6 +16,8 @@
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
+#include "rosez.hpp"
+
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -456,20 +458,22 @@ RtedTransformation::buildVariableCreateCallStmt(SgFunctionCallExp* funcCallExp)
 
 //std::vector<SgExpression*>
 SgExpression*
-RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
-                SgExpression* varRefE, SgStatement* stmt, bool ismalloc) {
-
+RtedTransformation::buildVariableInitCallExpr( SgInitializedName* initName,
+                                               SgExpression* varRefE,
+                                               SgStatement* stmt,
+                                               AllocKind allockind
+                                             )
+{
         // with
         //    arr[ ix ] = value;
         // we want the type of (arr[ ix ]), not arr, as that is the type being
         // written
         // tps (09/14/2009): We need to get all dereferences on the way up
-        std::vector<SgExpression*> exp_list;
-        SgExpression* exp = getExprBelowAssignment(varRefE);
+        SgExpression*       exp = getExprBelowAssignment(varRefE);
         cerr << " getExprBelowAssignment : " << exp->class_name() << "   "
                         << stmt->unparseToString() << endl;
 
-        if (isSgVarRefExp(exp) && ismalloc) {
+        if (isSgVarRefExp(exp) && (allockind == akCHeap)) {
                 SgType* thetype = initName->get_type();
                 cerr << "$$$$$ Found the AssignInitializer : "
                                 << isSgVarRefExp(exp)->get_parent() << endl;
@@ -482,14 +486,15 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
         }
 
         // build the function call : runtimeSystem-->createArray(params); ---------------------------
-        SgExprListExp* arg_list = buildExprListExp();
+        SgExprListExp*    arg_list = buildExprListExp();
         SgScopeStatement* scope = get_scope(initName);
 
         appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(NULL, exp -> get_type())) );
         appendAddressAndSize(arg_list, Whole, scope, exp, NULL);
         appendClassName(arg_list, exp -> get_type());
 
-        SgIntVal* ismallocV = buildIntVal(ismalloc ? 1 : 0);
+        // \pp \todo use allockind in the signature directly
+        SgIntVal*         ismallocV = buildIntVal(allockind == akCHeap);
 
         appendExpression(arg_list, ismallocV);
 
@@ -529,7 +534,7 @@ return resultSet;
         return result;
 }
 
-void RtedTransformation::insertInitializeVariable(SgInitializedName* initName, SgExpression* varRefE, bool ismalloc)
+void RtedTransformation::insertInitializeVariable(SgInitializedName* initName, SgExpression* varRefE, AllocKind allocKind)
 {
         ROSE_ASSERT(initName && varRefE);
 
@@ -557,72 +562,70 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName, S
                 // we have to handle for statements separately, because of parsing
                 // issues introduced by variable declarations in the for loop's
                 // init statement
-                SgExpression*      funcCallExp_vec = buildVariableInitCallExpr(initName, varRefE, stmt, ismalloc);
+                SgExpression*      funcCallExp_vec = buildVariableInitCallExpr(initName, varRefE, stmt, allocKind);
                 SgStatement* const for_stmt = GeneralizdFor::is(stmt -> get_parent() -> get_parent());
 
                 ROSE_ASSERT(for_stmt != NULL);
                 prependPseudoForInitializerExpression(funcCallExp_vec, for_stmt);
         } else if (isSgIfStmt(scope)) {
-                SgExpression* funcCallExp = buildVariableInitCallExpr(initName,
-                                varRefE, stmt, ismalloc);
-
-                SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+                SgExpression*      funcCallExp = buildVariableInitCallExpr(initName, varRefE, stmt, allocKind);
+                SgExprStatement*   exprStmt = buildExprStatement(funcCallExp);
                 cerr << "If Statment : inserting initvar" << endl;
-                if (exprStmt) {
-                        SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
-                        SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
-                        // find out if the varRefE is part of the true, false or
-                        // the condition
-                        bool partOfTrue = traverseAllChildrenAndFind(varRefE, trueb);
-                        bool partOfFalse = traverseAllChildrenAndFind(varRefE, falseb);
-                        bool partOfCondition = false;
-                        if (partOfTrue == false && partOfFalse == false)
-                                partOfCondition = true;
-                        cerr << "@@@@ If cond : partOfTrue: " << partOfTrue
-                                        << "   partOfFalse:" << partOfFalse
-                                        << "  partOfCondition:" << partOfCondition << endl;
-                        if (trueb && (partOfTrue || partOfCondition)) {
-                                if (!isSgBasicBlock(trueb)) {
-                                        removeStatement(trueb);
-                                        SgBasicBlock* bb = buildBasicBlock();
-                                        bb->set_parent(isSgIfStmt(scope));
-                                        isSgIfStmt(scope)->set_true_body(bb);
-                                        bb->prepend_statement(trueb);
-                                        trueb = bb;
-                                }
-                                prependStatement(exprStmt, isSgScopeStatement(trueb));
-                        }
-                        if (falseb && (partOfFalse || partOfCondition)) {
-                                if (!isSgBasicBlock(falseb)) {
-                                        removeStatement(falseb);
-                                        SgBasicBlock* bb = buildBasicBlock();
-                                        bb->set_parent(isSgIfStmt(scope));
-                                        isSgIfStmt(scope)->set_false_body(bb);
-                                        bb->prepend_statement(falseb);
-                                        falseb = bb;
-                                }
-                                prependStatement(exprStmt, isSgScopeStatement(falseb));
-                        } else if (partOfCondition) {
-                                // create false statement, this is sometimes needed
+                ROSE_ASSERT(exprStmt);
+
+                SgIfStmt*          ifStmt = isSgIfStmt(scope);
+                SgStatement*       trueb = ifStmt->get_true_body();
+                SgStatement*       falseb = ifStmt->get_false_body();
+                // find out if the varRefE is part of the true, false or
+                // the condition
+                const bool         partOfTrue = traverseAllChildrenAndFind(varRefE, trueb);
+                const bool         partOfFalse = traverseAllChildrenAndFind(varRefE, falseb);
+                const bool         partOfCondition = (!partOfTrue && !partOfFalse);
+
+                cerr << "@@@@ If cond : partOfTrue: " << partOfTrue
+                                << "   partOfFalse:" << partOfFalse
+                                << "  partOfCondition:" << partOfCondition << endl;
+
+                // \pp \todo simplify the branches below by using the
+                //           SageInterface::ensureBasicBlockAs* function family.
+                if (trueb && (partOfTrue || partOfCondition)) {
+                        if (!isSgBasicBlock(trueb)) {
+                                removeStatement(trueb);
                                 SgBasicBlock* bb = buildBasicBlock();
-                                bb->set_parent(isSgIfStmt(scope));
-                                isSgIfStmt(scope)->set_false_body(bb);
-                                falseb = bb;
-                                prependStatement(exprStmt, isSgScopeStatement(falseb));
+                                bb->set_parent(ifStmt);
+                                ifStmt->set_true_body(bb);
+                                bb->prepend_statement(trueb);
+                                trueb = bb;
                         }
+                        prependStatement(exprStmt, isSgScopeStatement(trueb));
+                }
+                if (falseb && (partOfFalse || partOfCondition)) {
+                        if (!isSgBasicBlock(falseb)) {
+                                removeStatement(falseb);
+                                SgBasicBlock* bb = buildBasicBlock();
+                                bb->set_parent(ifStmt);
+                                ifStmt->set_false_body(bb);
+                                bb->prepend_statement(falseb);
+                                falseb = bb;
+                        }
+                        prependStatement(exprStmt, isSgScopeStatement(falseb));
+                } else if (partOfCondition) {
+                        // create false statement, this is sometimes needed
+                        SgBasicBlock* bb = buildBasicBlock();
+                        bb->set_parent(ifStmt);
+                        ifStmt->set_false_body(bb);
+                        falseb = bb;
+                        prependStatement(exprStmt, isSgScopeStatement(falseb));
                 }
         }
         else if (isNormalScope(scope))
         {
-                SgExpression* funcCallExp = buildVariableInitCallExpr(initName,
-                                varRefE, stmt, ismalloc);
-
+                SgExpression*    funcCallExp = buildVariableInitCallExpr(initName, varRefE, stmt, allocKind);
                 SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-                string empty_comment = "";
+                string           empty_comment;
+                string           comment = "RS : Init Variable, paramaters : (tpye, basetype, class_name, address, size, ismalloc, is_pointer_change, filename, line, linenrTransformed, error line)";
+
                 attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
-                string
-                                comment =
-                                                "RS : Init Variable, paramaters : (tpye, basetype, class_name, address, size, ismalloc, is_pointer_change, filename, line, linenrTransformed, error line)";
                 attachComment(exprStmt, comment, PreprocessingInfo::before);
 
                 // insert new stmt (exprStmt) before (old) stmt
@@ -818,6 +821,30 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
     }
 }
 
+
+struct AllocInfo
+{
+  SgType*   newtype;
+  AllocKind allocKind;
+
+  AllocInfo()
+  : newtype(NULL), allocKind(akStack)
+  {}
+
+  void handle(SgNode&) { ROSE_ASSERT(false); }
+
+  void handle(SgNewExp& n)
+  {
+    newtype = n.get_type();
+    allocKind = ( isSgArrayType( skip_ModifierType(newtype) ) ? akCxxArrayNew
+                                                              : akCxxNew
+                );
+  }
+
+  void handle(SgExpression& n) {}
+};
+
+
 void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
         SgAssignInitializer* assign = isSgAssignInitializer(n);
         ROSE_ASSERT(assign);
@@ -847,55 +874,43 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
         // dont do this if the variable is global or an enum constant
         if (isSgGlobal(initName->get_scope()) || isSgEnumDeclaration(initName->get_parent())) {
         } else {
-                SgVarRefExp* varRef = buildVarRefExp(initName, scope);
-                varRef->get_file_info()->unsetOutputInCodeGeneration();
-                ROSE_ASSERT(varRef);
-                //insertThisStatementLater[exprStmt]=stmt;
-                bool ismalloc = false;
-                if (isSgNewExp(assign->get_operand()))
-                        ismalloc = true;
-                cerr << "Adding variable init : " << varRef->unparseToString() << endl;
-                variableIsInitialized[varRef] = std::pair<SgInitializedName*, bool>(
-                                initName, ismalloc);
-                //cerr << "Inserting new statement : " << exprStmt->unparseToString() << endl;
-                //cerr << "    after old statement : " << stmt->unparseToString() << endl;
+                SgVarRefExp* const varRef = buildVarRefExp(initName, scope);
 
+                // \pp \todo do we need the following line?
+                varRef->get_file_info()->unsetOutputInCodeGeneration();
+
+                const AllocInfo    allocInfo = ez::visitSgNode(AllocInfo(), assign->get_operand());
+
+                cerr << "Adding variable init : " << varRef->unparseToString() << endl;
+                variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, allocInfo.allocKind);
 
                 // tps (09/15/2009): The following code handles AssignInitializers for SgNewExp
                 // e.g. int *p = new int;
 #if 1
-                if (ismalloc) {
+                // \pp \todo the following block could be pushed into AllocInfo
+                if (allocInfo.newtype) {
                         // TODO 2: This handles new assign initializers, but not malloc assign
                         //          initializers.  Consider, e.g:
                         //
                         //          int* x = (int*) malloc( sizeof( int ));
-                        SgNewExp* oldnewExp = isSgNewExp(assign->get_operand());
-                        ROSE_ASSERT(oldnewExp);
-                        SgType* thesizetype = oldnewExp->get_specified_type();
-                        ROSE_ASSERT(thesizetype);
-                        SgExpression* sizeExp = buildSizeOfOp(
-                                        oldnewExp->get_specified_type()
-                        //                  buildPointerType(buildVoidType())
-                                        );
-                        ROSE_ASSERT(sizeExp);
-                        cerr << " $$$ sizeExp: " << sizeExp->unparseToString() << endl;
-                        RTedArray *array = new RTedArray( initName,
-                                                          getSurroundingStatement(initName),
-                                                          true, // on heap
-                                                          false, // new op (not from malloc)
-                                                          sizeExp
-                                                        );
-                        cerr << " $$$2 sizeExp: " << array->size->unparseToString() << endl;
-                        // abort();
+                        SgExpression* sizeExp = buildSizeOfOp(allocInfo.newtype);
+                        RtedArray*    array = new RtedArray( initName,
+                                                             getSurroundingStatement(initName),
+                                                             allocInfo.allocKind,
+                                                             sizeExp
+                                                           );
+
                         variablesUsedForArray.push_back(varRef);
-                        ROSE_ASSERT(varRef);
-                        ROSE_ASSERT(array);
-                        ROSE_ASSERT(array->size);
                         create_array_define_varRef_multiArray[varRef] = array;
+
                         cerr << ">> Setting this var to be initialized : "
-                                        << initName->unparseToString() << endl;
-                        variableIsInitialized[varRef]
-                                        = std::pair<SgInitializedName*, bool>(initName, ismalloc);
+                             << initName->unparseToString() << endl;
+
+                        // \pp \todo I believe that the following assignment
+                        //           can be safely removed as it duplicates
+                        //           the previous store to
+                        //           variableIsInitialized ...
+                        variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, allocInfo.allocKind);
                 }
 #endif
 

@@ -392,18 +392,11 @@ TRANSFORMING_FILES += if [ $$? -ne 0 ]; then exit 1; fi;
 
 TRANSFORMING_FILES += echo " done.";
 
-#if MAKEFILE_HANDLES_LINE_INFO
-
-TRANSFORMING_FILES += echo -n "   adding line information ... ";
-TRANSFORMING_FILES += cat rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) ) | \
-			  nl -p -b 'a' | \
-			  sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@;
-
-#else
-
+#was:TRANSFORMING_FILES += echo -n "   adding line information ... ";
+#was:TRANSFORMING_FILES += cat rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) ) | \
+#was:			  nl -p -b 'a' | \
+#was:			  sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@;
 TRANSFORMING_FILES += cat rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) ) > $@;
-
-#endif
 
 TRANSFORMING_FILES += rm rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) );
 

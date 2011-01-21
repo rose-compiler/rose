@@ -9,22 +9,52 @@
 
 #include "rted_iface_structs.h"
 
+template<typename T>
+inline
+std::string ToString(T t)
+{
+  std::ostringstream myStream; //creates an ostringstream object
+  myStream << t << std::flush;
+  return myStream.str(); //returns the string form of the stringstream object
+}
+
+template<typename T>
+inline
+std::string HexToString(T t)
+{
+  std::ostringstream myStream; //creates an ostringstream object
+  myStream << std::hex << t ;
+  return myStream.str(); //returns the string form of the stringstream object
+}
+
+inline
+const void* HexToString(const char* l)
+{
+  return l;
+}
+
+
+
 /**
  * This class represents a position in a sourcefile
  */
 class SourcePosition
 {
     public:
-        SourcePosition();
+        SourcePosition()
+        : file("Unknown"), line1(0), line2(0)
+        {}
 
         explicit
-        SourcePosition(rted_SourceInfo si);
+        SourcePosition(rted_SourceInfo si)
+        : file(si.file), line1(si.src_line), line2(si.rted_line)
+        {}
 
-        std::string toString() const;
+        std::string toString()           const;
         std::string getTransformedFile() const;
 
-        const std::string& getFile() const   { return file; }
-        int getLineInOrigFile() const        { return line1; }
+        const std::string& getFile()   const { return file; }
+        int getLineInOrigFile()        const { return line1; }
         int getLineInTransformedFile() const { return line2; }
 
     private:
@@ -32,6 +62,7 @@ class SourcePosition
         size_t      line1;  ///< line number in sourcefile
         size_t      line2;  ///< line number in transformed sourcefile
 };
+
 std::ostream& operator<< (std::ostream &os, const SourcePosition & m);
 
 

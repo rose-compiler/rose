@@ -80,7 +80,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 
 					RtedClassElement* el;
 					if( isSgArrayType( initName -> get_type() )) {
-						RTedArray* arrayRted = new RTedArray( initName, NULL, false );
+						RtedArray* arrayRted = new RtedArray( initName, NULL, akStack );
 						populateDimensions( arrayRted, initName, isSgArrayType( initName -> get_type() ));
 						el = new RtedClassArrayElement( name, type, sgElement, arrayRted );
 					} else {

@@ -29,10 +29,10 @@ union rted_Address
                                              ///  the non-UPC compiler generate code without
                                              ///  potentially truncating shared pointers
 
-  char *        local;                       ///< ordinary local pointer
+  const char *        local;                       ///< ordinary local pointer
 
 #ifdef __UPC__
-  char shared * global;                      ///< UPC shared ptr (not sure if really needed)
+  shared const char * global;                      ///< UPC shared ptr (not sure if really needed)
 #endif /* __UPC__ */
 };
 
@@ -64,11 +64,14 @@ rted_AddressDesc rted_obj(void);
 rted_AddressDesc rted_address_of(rted_AddressDesc);
 rted_AddressDesc rted_upc_address_of(rted_AddressDesc desc, size_t shared_mask);
 
+const char*
+rted_system_addr(rted_Address addr, rted_AddressDesc desc);
+
 int rted_isPtr(rted_AddressDesc addr);
 
 
 static inline
-rted_Address rted_Addr(char* ptr)
+rted_Address rted_Addr(const char* ptr)
 {
   rted_Address addr;
 
@@ -79,7 +82,7 @@ rted_Address rted_Addr(char* ptr)
 #ifdef __UPC__
 
 static inline
-rted_Address rted_AddrSh(shared char* ptr)
+rted_Address rted_AddrSh(shared const char* ptr)
 {
   rted_Address addr;
 

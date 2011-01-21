@@ -6,17 +6,6 @@
 #endif
 #include "CppRuntimeSystem.h"
 
-/**********************************************************
- *  Convert to string
- *********************************************************/
-  template<typename T>
-  std::string ToString(T t){
-  std::ostringstream myStream; //creates an ostringstream object
-  myStream << t << std::flush;
-  return myStream.str(); //returns the string form of the stringstream object
- }
-
-
 void
 assertme(bool value, const std::string& text, const std::string&, const std::string&) {
   // print error

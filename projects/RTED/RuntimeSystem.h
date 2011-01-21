@@ -29,7 +29,6 @@ void rted_Checkpoint(rted_SourceInfo si);
 
 /***************************** ARRAY FUNCTIONS *************************************/
 
-
 void rted_CreateHeapArr( rted_TypeDesc      td,
 												 rted_Address       address,
 												 size_t             elemsize,
@@ -45,17 +44,18 @@ void rted_CreateHeapPtr( rted_TypeDesc    td,
 												 rted_Address     address,
 												 size_t           size,
 												 size_t           mallocSize,
-												 int              fromMalloc,
+												 rted_AllocKind   allocKind,
 												 const char*      class_name,
 												 rted_SourceInfo  si
 											 );
 
 
-void rted_AccessHeap( rted_Address    base_address, // &( array[ 0 ])
-										  rted_Address    address,
-											size_t          size,
-											int             read_write_mask,  // 1 = read, 2 = write
-											rted_SourceInfo si
+void rted_AccessHeap( rted_Address     base_address, // &( array[ 0 ])
+										  rted_Address     address,
+											size_t           size,
+											rted_AddressDesc desc,
+											int              read_write_mask,  // 1 = read, 2 = write
+											rted_SourceInfo  si
 										);
 
 /***************************** ARRAY FUNCTIONS *************************************/
@@ -94,14 +94,13 @@ void rted_FunctionCall( const char*     name,
 
 
 /***************************** MEMORY FUNCTIONS *************************************/
-void rted_FreeMemory( void* ptr,       ///< the address that is about to be freed
-                      int fromMalloc,  ///< whether the free expects to be paired with
-                                       ///  memory allocated via 'malloc'.  In short,
-                                       ///  whether this is a call to free (1) or delete
-                                       ///  (0)
-                      rted_SourceInfo si
+void rted_FreeMemory( rted_Address     addr,      ///< the address that is about to be freed
+                      rted_AllocKind   freeKind,  ///< describes the kind of allocation
+											                            ///  that this free performs.
+																									///  Also indicates when ptr
+																									///  needs to be interpreted as shared ptr
+                      rted_SourceInfo  si
 							      );
-
 
 void rted_ReallocateMemory( void* ptr, size_t size, rted_SourceInfo si );
 /***************************** MEMORY FUNCTIONS *************************************/
@@ -154,7 +153,7 @@ int rted_InitVariable( rted_TypeDesc   td,
 		                   rted_Address    address,
 											 size_t          size,
 											 const char*     class_name,
-											 int             ismalloc,
+											 rted_AllocKind  allocKind,
 											 int             pointer_changed,
 											 rted_SourceInfo si
 										 );

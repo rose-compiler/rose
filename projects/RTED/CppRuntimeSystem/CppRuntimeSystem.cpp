@@ -19,6 +19,19 @@ using namespace std;
 
 RuntimeSystem * RuntimeSystem::single = NULL;
 
+
+static
+MemoryManager::Location
+location(Address addr, MemoryType::AllocKind ak)
+{
+  AddressDesc desc;
+
+  desc.levels = 1;
+  desc.shared_mask = ((ak & akUpcSharedHeap) == akUpcSharedHeap);
+
+  return rted_system_addr(addr, desc);
+}
+
 RuntimeSystem* RuntimeSystem::instance()
 {
     if (!single)
@@ -221,11 +234,12 @@ void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKin
   //     why do not we get types for C++ new?
   //     is alloca handled?
 
-  // the created MemoryType is freed by memory manager
-  const MemoryType mt(addr, size, kind, curPos);
-  MemoryType*      nb = memManager.allocateMemory(mt);
+  // \pp \todo replace the call to rted_obj with sth that describes the kind
+  //           of memory and allocation kind.
+  MemoryManager::Location loc = rted_system_addr(addr, rted_obj());
+  MemoryType*             nb = memManager.allocateMemory(loc, size, kind, curPos);
 
-  if (kind == MemoryType::StackAlloc && nb != NULL)
+  if (kind == akStack && nb != NULL)
   {
     // stack memory must have a type
     assert(type != NULL);
@@ -240,25 +254,29 @@ void RuntimeSystem::createStackMemory(Address addr, size_t size, const std::stri
 {
     RsType * type = typeSystem.getTypeInfo(strType);
 
-    createMemory(addr, size, MemoryType::StackAlloc, type);
+    createMemory(addr, size, akStack, type);
 }
 
 
 
-void RuntimeSystem::freeMemory(Address startAddress, MemoryType::AllocKind kind)
+void RuntimeSystem::freeMemory(Address addr, MemoryType::AllocKind kind)
 {
-    memManager.freeMemory(startAddress, kind);
+    memManager.freeMemory(location(addr, kind), kind);
 }
 
 
-void RuntimeSystem::checkMemRead(Address addr, size_t size, RsType * t)
+void RuntimeSystem::checkMemRead(Address addr, AddressDesc desc, size_t size, RsType* t)
 {
-    memManager.checkRead(addr,size,t);
+    MemoryManager::Location loc = rted_system_addr(addr, desc);
+
+    memManager.checkRead(loc, size, t);
 }
 
-void RuntimeSystem::checkMemWrite(Address addr, size_t size, RsType * t)
+void RuntimeSystem::checkMemWrite(Address addr, AddressDesc desc, size_t size, RsType * t)
 {
-    memManager.checkWrite(addr,size,t);
+    MemoryManager::Location loc = rted_system_addr(addr, desc);
+
+    memManager.checkWrite(loc, size, t);
 }
 
 
@@ -305,6 +323,7 @@ void RuntimeSystem::createVariable( Address address,
 
 
 void RuntimeSystem::createArray( Address address,
+                                 AddressDesc desc,
                                  const std::string & name,
                                  const std::string & mangledName,
                                  const std::string & baseType,
@@ -312,11 +331,12 @@ void RuntimeSystem::createArray( Address address,
 {
   RsType * t = typeSystem.getTypeInfo(baseType);
 	assert( t );
-  createArray(address,name,mangledName,t,size);
+  createArray(address, desc, name, mangledName, t, size);
 }
 
 
 void RuntimeSystem::createArray( Address address,
+                                 AddressDesc desc,
                                  const std::string & name,
                                  const std::string & mangledName,
                                  RsType * baseType,
@@ -324,21 +344,28 @@ void RuntimeSystem::createArray( Address address,
 {
   RsArrayType * arrType = typeSystem.getArrayType(baseType,size);
 
-	createArray( address, name, mangledName, arrType);
+	createArray( address, desc, name, mangledName, arrType);
 }
 
 
-void RuntimeSystem::createArray(    Address address,
-                                    const std::string & name,
-                                    const std::string & mangledName,
-                                    RsArrayType * type)
+void RuntimeSystem::createArray( Address address,
+                                 AddressDesc desc,
+                                 const std::string& name,
+                                 const std::string& mangledName,
+                                 RsArrayType * type
+                               )
 {
   assert(type);
-    stackManager.addVariable( new VariablesType( name, mangledName, type, address ));
-    pointerManager.createPointer( address, type -> getBaseType() );
 
-    // View an array as a pointer, which is stored at the address and which points at the address
-    pointerManager.registerPointerChange( address, address, false, false);
+  PointerManager::Location loc = rted_system_addr(address, desc);
+
+  // \pp why is the stackmanager invoked?
+  stackManager.addVariable( new VariablesType( name, mangledName, type, address ));
+
+  pointerManager.createPointer( loc, type -> getBaseType() );
+
+  // View an array as a pointer, which is stored at the address and which points at the address
+  pointerManager.registerPointerChange( loc, loc, false, false);
 }
 
 
@@ -346,25 +373,29 @@ void RuntimeSystem::createObject(Address address, RsClassType* type )
 {
     assert(type != NULL);
 
-    const size_t szObj = type->getByteSize();
-    MemoryType*  mt = memManager.findContainingMem(address);
+    // \pp \note we assume that UPC has no constructors, thus the address is
+    //           always local
+    MemoryType::Location loc = address.local;
+    const size_t         szObj = type->getByteSize();
+    MemoryType*          mt = memManager.findContainingMem(loc, szObj);
 
-    if (mt != NULL) {
-        if (szObj > mt -> getSize() && mt->getAddress() == address) {
+    if (mt) {
+        const bool base_ctor = szObj > mt->getSize() && loc == mt->getAddress();
+
+        if (base_ctor) {
             // Same address, larger size.  We assume that a base type was
-            // registered, and now its subtype's constructor has been called
+            // registered, and now the derived's constructor has been called
 
-            mt -> resize( type -> getByteSize() );
+            mt -> resize( szObj );
             mt -> forceRegisterMemType( 0, type );
         }
 
-        // \pp what if mt->getAddress() == address?
+        // \pp \todo what if !base_ctor?
         return;
     }
 
     // create a new entry
-    const MemoryType newBlock(address, type->getByteSize(), MemoryType::CxxStyleAlloc, curPos);
-    MemoryType*      nb = memManager.allocateMemory(newBlock);
+    MemoryType* nb = memManager.allocateMemory(loc, type->getByteSize(), akCxxNew, curPos);
 
     // after the new block is allocated (and if the allocation succeeded)
     //   register the proper memory layout
@@ -389,29 +420,43 @@ void RuntimeSystem::endScope ()
 // --------------------- Pointer Tracking---------------------------------
 
 
-void RuntimeSystem::registerPointerChange(Address source, Address target, bool checkPointerMove, bool checkMemLeaks)
+void RuntimeSystem::registerPointerChange( Address     src,
+                                           AddressDesc src_desc,
+                                           Address     tgt,
+                                           AddressDesc tgt_desc,
+                                           bool        checkPointerMove,
+                                           bool        checkMemLeaks
+                                         )
 {
-    pointerManager.registerPointerChange(source,target,checkPointerMove, checkMemLeaks);
+    MemoryManager::Location loc_src = rted_system_addr(src, src_desc);
+    MemoryManager::Location loc_tgt = rted_system_addr(tgt, tgt_desc);
+
+    pointerManager.registerPointerChange(loc_src,loc_tgt,checkPointerMove, checkMemLeaks);
 }
 
-void RuntimeSystem::registerPointerChange(Address source, Address target,RsType * type, bool checkPointerMove, bool checkMemLeaks)
+void RuntimeSystem::registerPointerChange( Address     src,
+                                           AddressDesc src_desc,
+                                           Address     tgt,
+                                           AddressDesc tgt_desc,
+                                           RsType*     type,
+                                           bool        checkPointerMove,
+                                           bool        checkMemLeaks
+                                         )
 {
-    RsPointerType* pt = dynamic_cast<RsPointerType*>( type );
+    MemoryManager::Location loc_src = rted_system_addr(src, src_desc);
+    MemoryManager::Location loc_tgt = rted_system_addr(tgt, tgt_desc);
+    RsPointerType*          pt = dynamic_cast<RsPointerType*>( type );
     assert( pt );
-    pointerManager.registerPointerChange(source,target,pt -> getBaseType(),checkPointerMove, checkMemLeaks);
+
+    pointerManager.registerPointerChange(loc_src, loc_tgt, pt->getBaseType(), checkPointerMove, checkMemLeaks);
 }
 
-void RuntimeSystem::registerPointerChange( const std::string & mangledName, Address target, bool checkPointerMove, bool checkMemLeaks)
+void RuntimeSystem::checkPointerDereference( Address src, AddressDesc src_desc, Address derefed_address, AddressDesc derefed_desc )
 {
-    Address source = stackManager.getVariable(mangledName)->getAddress();
-    pointerManager.registerPointerChange(source,target,checkPointerMove, checkMemLeaks);
-}
+    MemoryManager::Location loc_source = rted_system_addr(src, src_desc);
+    MemoryManager::Location loc_deref  = rted_system_addr(derefed_address, derefed_desc);
 
-
-
-void RuntimeSystem::checkPointerDereference( Address source, Address derefed_address )
-{
-    pointerManager.checkPointerDereference(source,derefed_address);
+    pointerManager.checkPointerDereference(loc_source, loc_deref);
 }
 
 void RuntimeSystem::checkIfThisisNULL(void* thisExp) {

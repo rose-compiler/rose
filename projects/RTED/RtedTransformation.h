@@ -26,6 +26,11 @@ SgScopeStatement* get_scope(SgInitializedName* initname)
 /// \brief returns whether a name belongs to rted (i.e., has prefix "rted_")
 bool isRtedDecl(const std::string& name);
 
+
+/// \brief adds an AddressDesc for a single ptr/arr indirection
+/// \param the base type (already after the indirection)
+AddressDesc baseAddressDesc(const SgType* t);
+
 //
 // helper functions
 //
@@ -43,6 +48,11 @@ SgStatement* getSurroundingStatement(SgNode* n);
 /// \note    type-modifiers are currently not skipped (should they be?)
 ///          e.g., int* volatile X[] = /* ... */;
 SgType* skip_ArrPtrType(SgType* t);
+
+/// \brief  skips one modifier type node
+/// \return the base type if t is an SgModifierType
+///         t otherwise
+SgType* skip_ModifierType(SgType* t);
 
 /// \brief   returns true, iff name refers to a char-array modifying function (e.g., strcpy, etc.)
 bool isStringModifyingFunctionCall(const std::string& name);
@@ -109,12 +119,15 @@ private:
    // VARIABLES ------------------------------------------------------------
    // ------------------------ array ------------------------------------
    // The array of callArray calls that need to be inserted
-   std::map<SgVarRefExp*, RTedArray*> create_array_define_varRef_multiArray;
-   std::map<SgExpression*, RTedArray*> create_array_access_call;
+   std::map<SgVarRefExp*, RtedArray*> create_array_define_varRef_multiArray;
+   std::map<SgExpression*, RtedArray*> create_array_access_call;
    // remember variables that were used to create an array. These cant be reused for array usage calls
    std::vector<SgVarRefExp*> variablesUsedForArray;
    // this vector is used to check which variables have been marked as initialized (through assignment)
-   std::map<SgVarRefExp*,std::pair< SgInitializedName*,bool> > variableIsInitialized;
+
+   typedef std::map<SgVarRefExp*,std::pair< SgInitializedName*, AllocKind> > InitializedVarMap;
+
+   InitializedVarMap variableIsInitialized;
    // when traversing variables, we find some that are initialized names
    // instead of varrefexp, and so we create new varrefexps but we do
    // add them later and not during the same traversal.
@@ -124,12 +137,14 @@ private:
    // We need to store the name, type and intialized value
 public:
    // We need to store the variables that are being accessed
-   std::map<SgInitializedName*, RTedArray*> create_array_define_varRef_multiArray_stack;
+   std::map<SgInitializedName*, RtedArray*> create_array_define_varRef_multiArray_stack;
    std::vector<SgVarRefExp*> variable_access_varref;
    std::vector<SgInitializedName*> variable_declarations;
    std::vector<SgFunctionDefinition*> function_definitions;
    // function calls to free
-   std::vector< SgExpression* > frees;
+
+   typedef std::vector< std::pair<SgExpression*, AllocKind> > Deallocations;
+   Deallocations frees;
    // return statements that need to be changed
    std::vector< SgReturnStmt*> returnstmt;
    // Track pointer arithmetic, e.g. ++, --
@@ -199,7 +214,7 @@ private:
    void insertRuntimeSystemClass();
    void insertAssertFunctionSignature( SgFunctionCallExp* exp );
    void insertConfirmFunctionSignature( SgFunctionDefinition* fndef );
-   void insertFreeCall( SgExpression* exp );
+   void insertFreeCall(SgExpression* freeExp, AllocKind ak);
    void insertReallocateCall( SgFunctionCallExp* exp );
 
    /**
@@ -277,6 +292,12 @@ public:
     /// \brief   creates an address descriptor
     SgAggregateInitializer* mkAddressDesc(AddressDesc desc) const;
 
+    /// \brief   creates an address descriptor based on the type of an expression
+    SgAggregateInitializer* mkAddressDesc(SgExpression* expr) const;
+
+    /// \brief   creates a Sage representation of ak
+    SgEnumVal* mkAllocKind(AllocKind ak) const;
+
     /// \brief     creates an expression constructing an rted_address
     /// \param exp an expression that will be converted into an address
     /// \param upcShared indicates whether the address is part of the PGAS
@@ -301,17 +322,17 @@ public:
    void visit_isArrayExprListExp(SgNode* n);
    void visit_isSgScopeStatement(SgNode* n);
 
-   void addPaddingToAllocatedMemory(SgStatement* stmt,  RTedArray* array);
+   void addPaddingToAllocatedMemory(SgStatement* stmt,  RtedArray* array);
 
    // Function that inserts call to array : runtimeSystem->callArray
-   void insertArrayCreateCall(SgVarRefExp* n, RTedArray* value);
-   void insertArrayCreateCall(SgInitializedName* initName,  RTedArray* value);
-   void insertArrayCreateCall(SgStatement* stmt,SgInitializedName* initName,  SgVarRefExp* varRef, RTedArray* value);
+   void insertArrayCreateCall(SgVarRefExp* n, RtedArray* value);
+   void insertArrayCreateCall(SgInitializedName* initName,  RtedArray* value);
+   void insertArrayCreateCall(SgStatement* stmt,SgInitializedName* initName,  SgVarRefExp* varRef, RtedArray* value);
    SgStatement* buildArrayCreateCall(SgInitializedName* initName, SgVarRefExp* varRef,
-         RTedArray* array,SgStatement* stmt);
+         RtedArray* array,SgStatement* stmt);
 
-   void insertArrayAccessCall(SgExpression* arrayExp, RTedArray* value);
-   void insertArrayAccessCall(SgStatement* stmt, SgExpression* arrayExp, RTedArray* array);
+   void insertArrayAccessCall(SgExpression* arrayExp, RtedArray* value);
+   void insertArrayAccessCall(SgStatement* stmt, SgExpression* arrayExp, RtedArray* array);
 
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDot(SgDotExp* dot , std::string str, SgVarRefExp* varRef);
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDotStar(SgDotStarOp* dot , std::string str, SgVarRefExp* varRef);
@@ -334,9 +355,6 @@ public:
 
 
 public:
-   /// Visit delete operators, to track memory frees.
-   void visit_delete( SgDeleteExp* del );
-
    /// Visit pointer assignments whose lhs is computed from the original value of
    /// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
    /// we say that such operations should not change the @e "Memory Chunk", i.e.
@@ -359,13 +377,8 @@ private:
    void insertVariableCreateCall(SgInitializedName* initName);
    void insertVariableCreateCall(SgInitializedName* initName,SgExpression* expr);
    bool isVarInCreatedVariables(SgInitializedName* n);
-   void insertInitializeVariable(SgInitializedName* initName,
-         SgExpression* varRefE, bool ismalloc );
-   //std::vector<SgExpression*>
-   SgExpression* buildVariableInitCallExpr(SgInitializedName* name,
-         SgExpression* varRefE,
-         SgStatement* stmt,
-         bool ismalloc );
+   void insertInitializeVariable(SgInitializedName*, SgExpression*, AllocKind);
+   SgExpression* buildVariableInitCallExpr(SgInitializedName*, SgExpression*, SgStatement*, AllocKind);
    SgFunctionCallExp* buildVariableCreateCallExpr(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
    // TODO 2 djh: test docs
    /**
@@ -403,11 +416,17 @@ private:
    void renameMain(SgFunctionDeclaration * sg_func);
    void changeReturnStmt(SgReturnStmt * rstmt);
 
-
    /// factors commonalities of heap allocations
-   void array_heap_alloc(SgInitializedName* initName, SgVarRefExp* varRef, SgExpression* sz);
-   bool array_alloc_call(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionDeclaration*);
-   bool array_alloc_call(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionRefExp*, bool);
+   void arrayHeapAlloc(SgInitializedName*, SgVarRefExp*, SgExpression*, AllocKind);
+
+   /// creates a heap array record for a single argument allocation (e.g., malloc)
+   void arrayHeapAlloc1(SgInitializedName*, SgVarRefExp*, SgExpressionPtrList&, AllocKind);
+
+   /// creates a heap array record for a two argument allocation (e.g., calloc)
+   void arrayHeapAlloc2(SgInitializedName*, SgVarRefExp*, SgExpressionPtrList&, AllocKind);
+
+   AllocKind arrayAllocCall(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionDeclaration*);
+   AllocKind arrayAllocCall(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionRefExp*, AllocKind);
 
 public:
    RtedTransformation()
@@ -442,7 +461,7 @@ public:
    SgAggregateInitializer* mkTypeInformation(SgType* type, bool resolve_class_names = true, bool array_to_pointer=false);
 
    /// \brief appends the array dimensions to the argument list
-   void appendDimensions(SgExprListExp* arg_list, RTedArray*);
+   void appendDimensions(SgExprListExp* arg_list, RtedArray*);
 
    /// \brief appends the array dimensions to the argument list if needed
    ///        (i.e., rce is a RtedClassArrayElement)
@@ -485,7 +504,7 @@ public:
    void executeTransformations();
    void insertNamespaceIntoSourceFile(  SgProject* project, std::vector<SgClassDeclaration*> &traverseClasses);
 
-   void populateDimensions( RTedArray* array, SgInitializedName* init, SgArrayType* type );
+   void populateDimensions( RtedArray* array, SgInitializedName* init, SgArrayType* type );
    int getDimension(SgInitializedName* initName);
    int getDimension(SgInitializedName* initName,SgVarRefExp* varRef);
    void visit_checkIsMain(SgNode* n);

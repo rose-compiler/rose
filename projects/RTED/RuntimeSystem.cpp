@@ -23,33 +23,10 @@
 #include "CppRuntimeSystem/DebuggerQt/RtedDebug.h"
 #endif
 
-static
-MemoryType::AllocKind heapAlloc(int fromMalloc)
-{
-  if (fromMalloc) return MemoryType::CStyleAlloc;
-
-	return MemoryType::CxxStyleAlloc;
-}
-
 
 /**********************************************************
  *  Convert to string
  *********************************************************/
-template<typename T>
-std::string ToString(T t)
-{
-  std::ostringstream myStream; //creates an ostringstream object
-  myStream << t << std::flush;
-  return myStream.str(); //returns the string form of the stringstream object
-}
-
-template<typename T>
-std::string HexToString(T t)
-{
-  std::ostringstream myStream; //creates an ostringstream object
-  myStream <<  std::hex <<  t ;
-  return myStream.str(); //returns the string form of the stringstream object
-}
 
 std::string AsString(Address addr, AddressDesc desc)
 {
@@ -71,8 +48,7 @@ enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
 /*********************************************************
  * This function is closed when RTED finishes (Destructor)
  ********************************************************/
-void
-rted_RtedClose(char* from) {
+void rted_Close(char* from) {
 
   RuntimeSystem * rs = RuntimeSystem::instance();
 
@@ -222,7 +198,7 @@ void rted_CreateHeapArr( TypeDesc      td,
 	assert(std::string("SgArrayType") == td.name);
 
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs->checkpoint(SourcePosition(si));
+  rs->checkpoint(SourcePosition(si) );
 
   std::string     base_type(td.base);
   if( base_type == "SgClassType" )
@@ -231,37 +207,37 @@ void rted_CreateHeapArr( TypeDesc      td,
 	// Aug 6 : TODO : move this to createVariable
 	RsArrayType* rstype = rs_getArrayType(*rs->getTypeSystem(), dimDescr, totalsize, base_type);
 
-	rs -> createArray( address, name, mangl_name, rstype );
+	rs -> createArray( address, td.desc, name, mangl_name, rstype );
 
 	if (initialize_next_array) {
-		rs -> checkMemWrite( address, elemsize );
+		rs -> checkMemWrite( address, td.desc, elemsize );
 		initialize_next_array = false;
 	}
 }
 
-void rted_CreateHeapPtr( TypeDesc    td,
-												 Address     address,
-												 size_t      /*size*/,
-												 size_t      mallocSize,
-												 int         fromMalloc,
-												 const char* class_name,
-												 SourceInfo  si
+void rted_CreateHeapPtr( TypeDesc       td,
+												 Address        address,
+												 size_t         /*size*/,
+												 size_t         mallocSize,
+												 rted_AllocKind allocKind,
+												 const char*    class_name,
+												 SourceInfo     si
 											 )
 {
 	assert(std::string("SgPointerType") == td.name);
 
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs->checkpoint(SourcePosition(si));
+  rs->checkpoint(SourcePosition(si) );
 
   std::string base_type(td.base);
   if( base_type == "SgClassType" )
     base_type = class_name;
 
-	Address        heap_address = rted_deref(address, td.desc);
 	RsType*        rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
 	RsPointerType* rs_ptr_type = static_cast< RsPointerType* >(rs_type);
 	RsClassType*   class_type = dynamic_cast< RsClassType* >(rs_ptr_type->getBaseType());
-
+	Address        heap_address = rted_deref(address, td.desc);
+	AddressDesc    heap_desc = rted_deref_desc(td.desc);
 
 	std::cerr << " registering heap type:" << td.name
 						<< "   basetype: " << td.base
@@ -274,17 +250,21 @@ void rted_CreateHeapPtr( TypeDesc    td,
 	// A class might have had its memory allocation registered in the
 	// constructor.  If there was no explicit constructor, however, we still
 	// have to allocate the memory here.
-	if(!class_type || rs->getMemManager()->findContainingMem(heap_address) == NULL)
+	MemoryManager::Location loc = rted_system_addr(heap_address, heap_desc);
+
+	if(!class_type || rs->getMemManager()->findContainingMem(loc) == NULL)
 	{
 		// FIXME 2: This won't handle the unlikely case of a C++ object being
 		// allocated via malloc and then freed with delete.
 
-		rs -> createMemory( heap_address, mallocSize, heapAlloc(fromMalloc) );
+		rs -> createMemory( heap_address, mallocSize, allocKind );
 	}
 
 	rs -> registerPointerChange(
 			address,
+			td.desc,
 			heap_address,
+			heap_desc,
 			rs_ptr_type,
 			false,  // checkPtrMove? no, pointer may change regions
 			true    // checkMemLeak? yes
@@ -293,13 +273,13 @@ void rted_CreateHeapPtr( TypeDesc    td,
 
 
 static
-void rs_checkMemoryAccess(RuntimeSystem& rs, Address address, size_t size, int read_write_mask)
+void rs_checkMemoryAccess(RuntimeSystem& rs, Address addr, AddressDesc desc, size_t size, int read_write_mask)
 {
   if (read_write_mask & Read)
-    rs.checkMemRead( address, size );
+    rs.checkMemRead( addr, desc, size );
 
   if (read_write_mask & Write)
-    rs.checkMemWrite( address, size );
+    rs.checkMemWrite( addr, desc, size );
 }
 
 
@@ -312,20 +292,25 @@ void rs_checkMemoryAccess(RuntimeSystem& rs, Address address, size_t size, int r
  * line      : linenumber
  * stmtStr   : unparsed version of the line to be used for error message
  ********************************************************/
-void rted_AccessHeap( Address base_address, // &( array[ 0 ])
-										  Address address,
-											size_t size,
-											int read_write_mask,  // 1 = read, 2 = write
-											SourceInfo si
+void rted_AccessHeap( rted_Address     base_address, // &( array[ 0 ])
+										  rted_Address     address,
+											size_t           size,
+											rted_AddressDesc desc,
+											int              read_write_mask,  // 1 = read, 2 = write
+											rted_SourceInfo  si
 										)
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs->checkpoint(SourcePosition(si));
+  rs->checkpoint(SourcePosition(si) );
 
-	rs_checkMemoryAccess(*rs, address, size, read_write_mask);
+	rs_checkMemoryAccess(*rs, address, desc, size, read_write_mask);
 
-  if( read_write_mask & BoundsCheck ) {
-    rs->getMemManager()->checkIfSameChunk(base_address, address, size);
+  if( read_write_mask & BoundsCheck )
+	{
+		MemoryManager::Location loc_base = rted_system_addr(base_address, desc);
+		MemoryManager::Location loc_addr = rted_system_addr(address, desc);
+
+    rs->getMemManager()->checkIfSameChunk(loc_base, loc_addr, size);
   }
 }
 
@@ -354,7 +339,7 @@ void rted_AssertFunctionSignature( const char* name,
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
-  rs -> checkpoint(SourcePosition(si));
+  rs -> checkpoint(SourcePosition(si) );
 
   std::vector< RsType* > types;
 
@@ -378,16 +363,20 @@ void rted_ConfirmFunctionSignature(const char* name, size_t type_count, TypeDesc
 static
 void RuntimeSystem_ensure_allocated_and_initialized( Address addr, size_t size)
 {
-  RuntimeSystem * rs = RuntimeSystem::instance();
+  RuntimeSystem *         rs = RuntimeSystem::instance();
 
-  // We trust that anything allocated is properly initialized -- we're not
+  // we assume a local address for C system functions
+	const AddressDesc       desc = rted_ptr();
+
+	// We trust that anything allocated is properly initialized -- we're not
   // working around a string constant so there's no need for us to do anything.
-  if(rs->getMemManager()->findContainingMem(addr) != NULL)
+	MemoryManager::Location loc = rted_system_addr(addr, desc);
+  if(rs->getMemManager()->findContainingMem(loc) != NULL)
     return;
 
   // \pp ???
-  rs->createArray(addr, "StringConstant", "MangledStringConstant", "SgTypeChar", size);
-  rs->checkMemWrite(addr, size);
+  rs->createArray(addr, desc, "StringConstant", "MangledStringConstant", "SgTypeChar", size);
+  rs->checkMemWrite(addr, desc, size);
 }
 
 
@@ -533,7 +522,7 @@ void rted_IOFunctionCall( const char* fname,
   // will have FILE* as parameter
   RuntimeSystem * rs = RuntimeSystem::instance();
 
-  rs -> checkpoint( SourcePosition(si));
+  rs -> checkpoint( SourcePosition(si) );
 
     // not handled (yet?)
     //  fclearerr
@@ -672,7 +661,7 @@ int rted_CreateVariable( TypeDesc td,
     if( type_name == "SgArrayType" )
       initialize_next_array = true;
     else
-      rs -> checkMemWrite( address, size );
+      rs -> checkMemWrite( address, td.desc, size );
   }
 
   // can be invoked as part of an expression
@@ -702,46 +691,43 @@ int rted_CreateObject( TypeDesc td, Address address, SourceInfo si )
  * For a given variable name, check if it is present
  * in the pool of variables created and return mangled_name
  ********************************************************/
-int rted_InitVariable( TypeDesc td,
-			                 Address address,
-			                 size_t size,
-											 const char* class_name,
-			                 int ismalloc,
-			                 int pointer_changed,
-			                 SourceInfo si
+int rted_InitVariable( TypeDesc       td,
+			                 Address        address,
+			                 size_t         size,
+											 const char*    class_name,
+			                 rted_AllocKind allocKind,
+			                 int            pointer_changed,
+			                 SourceInfo     si
 										 )
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs -> checkpoint( SourcePosition( si ));
 
-  std::string message = "   Init Var at address:  "
-	                      + HexToString(address)
-												+ "  type:"
-                        + td.name
-												+ "   size: "
-												+ ToString(size);
-  rs->printMessage(message);
+  std::stringstream message;
+
+	message << "   Init Var at address:  " << address.local
+					<< "  type:" << td.name
+					<< "   size: " << ToString(size);
+  rs->printMessage(message.str());
 
   RsType* rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
-  rs -> checkMemWrite( address, size, rs_type );
+  rs -> checkMemWrite( address, td.desc, size, rs_type );
 
   // This assumes roseInitVariable is called after the assignment has taken
   // place (otherwise we wouldn't get the new heap address).
   //
   // Note that we cannot call registerPointerChange until after the memory
   // creation is registered, which is done in roseCreateHeap.
-  //cerr << "============ Possible pointer change : ismalloc: "<<ismalloc<<
-  // "   pointer_changed:" << pointer_changed << " pointer_type:" <<
-  //  type<<endl;
 
-  if(  ismalloc != 1
-	  && pointer_changed == 1
-	  && 0 == strcmp( "SgPointerType", td.name)
-		)
+  if (  (allocKind & akCxxHeap) == akCxxHeap
+	   && pointer_changed == 1
+	   && strcmp( "SgPointerType", td.name) == 0
+		 )
 	{
-		// \pp \todo the following deref needs to know about the shared mask
-    Address heap_address = rted_deref(address, rted_ptr());
-    rs -> registerPointerChange( address, heap_address, rs_type, false, true );
+    Address     heap_address = rted_deref(address, td.desc);
+		AddressDesc heap_desc = rted_deref_desc(td.desc);
+
+    rs->registerPointerChange( address, td.desc, heap_address, heap_desc, rs_type, false, true );
   }
 
   // can be invoked as part of an expression
@@ -764,10 +750,11 @@ void rted_MovePointer( TypeDesc    td,
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs -> checkpoint( SourcePosition( si ));
 
-  Address heap_address = rted_deref(address, td.desc);
-  RsType* rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
+  Address     heap_address = rted_deref(address, td.desc);
+	AddressDesc heap_desc = rted_deref_desc(td.desc);
+  RsType*     rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
 
-  rs -> registerPointerChange( address, heap_address, rs_type, true, false );
+  rs->registerPointerChange( address, td.desc, heap_address, heap_desc, rs_type, true, false );
 }
 
 
@@ -785,8 +772,8 @@ void rted_AccessVariable( Address address,
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs->checkpoint( SourcePosition( si ));
 
-	rs_checkMemoryAccess(*rs, address, size, read_write_mask & Read);
-  rs_checkMemoryAccess(*rs, write_address, write_size, read_write_mask & Write);
+	rs_checkMemoryAccess(*rs, address, rted_obj(), size, read_write_mask & Read);
+  rs_checkMemoryAccess(*rs, write_address, rted_obj(), write_size, read_write_mask & Write);
 }
 
 // ***************************************** VARIABLE DECLARATIONS *************************************
@@ -875,10 +862,13 @@ void rted_RegisterTypeCall( const char* nameC,
       }
 
       assert(t != NULL);
-      std::string message = "   Register class-member:  " + name + "  offset:"
-                            + HexToString(offset)+ "   size: " + ToString(size);
+      std::stringstream message;
 
-			rs->printMessage(message);
+			 message << "   Register class-member:  " << name
+			         << "  offset:" << HexToString(offset)
+							 << "   size: " + ToString(size);
+
+			rs->printMessage(message.str());
       classType->addMember(name, t, offset);
 
       //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
@@ -887,29 +877,28 @@ void rted_RegisterTypeCall( const char* nameC,
 	va_end(vl);
 }
 
-void
-rted_FreeMemory( void* ptr,              ///< the address that is about to be freed
-                 int fromMalloc,         ///< whether the free expects to be paired with
-                                         ///  memory allocated via 'malloc'.  In short,
-                                         ///  whether this is a call to free (1) or delete
-                                         ///  (0)
-                 SourceInfo si
-							 )
+void rted_FreeMemory( rted_Address     addr,      ///< the address that is about to be freed
+                      rted_AllocKind   freeKind,  ///< describes the kind of allocation
+											                            ///  that this free performs.
+																									///  Also indicates when ptr
+																									///  needs to be interpreted as shared ptr
+                      rted_SourceInfo  si
+							      )
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
-	rs->checkpoint( SourcePosition(si));
-	rs->freeMemory( memAddr(ptr), heapAlloc(fromMalloc) );
+	rs->checkpoint( SourcePosition(si) );
+	rs->freeMemory( addr, freeKind );
 }
 
 
 void rted_ReallocateMemory( void* ptr, size_t size, SourceInfo si )
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs->checkpoint( SourcePosition(si));
+  rs->checkpoint( SourcePosition(si) );
 
-	rs->freeMemory( memAddr(ptr), MemoryType::CStyleAlloc );
-	rs->createMemory( memAddr(ptr), size, MemoryType::CStyleAlloc);
+	rs->freeMemory( memAddr(ptr), akCHeap );
+	rs->createMemory( memAddr(ptr), size, akCHeap );
 }
 
 
@@ -1000,9 +989,13 @@ rted_CreateHeap( const char* name,
     }
   } else if( type_name == "SgPointerType") {
     addr_type heap_address = *((addr_type*) address);
-    cerr << " registering heap   type:" << type << "  basetype:"<<basetype<<
-    		"  class_name:" <<class_name<<"  indirection_level:"<<ToString(indirection_level)<<
-    		"  address:"<<HexToString(heap_address) <<"  malloc size:"<<ToString(mallocSize)<<endl;
+    cerr << " registering heap   type: " << type
+		     << "  basetype: " << basetype
+				 << "  class_name: " << class_name
+				 << "  indirection_level: " << ToString(indirection_level)
+				 << "  address: " << HexToString(heap_address)
+				 << "  malloc size: " << ToString(mallocSize)
+				 << std::endl;
 
     RsPointerType* rs_type
       = static_cast< RsPointerType* >(

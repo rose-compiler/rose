@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <cassert>
+#include <vector>
 
 #include "rted_typedefs.h"
 
@@ -22,6 +23,10 @@ class RsType
         explicit
         RsType(const std::string& name)
         : stringId(name)
+        {}
+
+        RsType()
+        : stringId()
         {}
 
         virtual ~RsType() {}
@@ -159,6 +164,10 @@ std::pair<RsType*, size_t> RsType::getTypeAt(RsType * coarseType,  size_t offset
 class RsArrayType : public RsType
 {
     public:
+        RsArrayType()
+        : RsType(), baseType(NULL), elementCount(0)
+        {}
+
         RsArrayType(RsType * baseType, size_t size);
         virtual ~RsArrayType() {}
 
@@ -211,14 +220,20 @@ class RsArrayType : public RsType
         RsType * getBaseType() const          { return baseType; }
         int      arrayIndex(size_t offset) const;
 
-    protected:
+
+        bool operator==(const RsArrayType& rhs) const
+        {
+          return (  this->baseType == rhs.baseType
+                 && this->elementCount == rhs.elementCount
+                 );
+        }
+
+    private:
         RsType * baseType;
         size_t   elementCount;
 
 };
 
-
-#include <vector>
 
 class RsClassType : public RsType
 {
@@ -365,7 +380,7 @@ class RsBasicType : public RsType
         /// Enumeration of all basic types
         enum SgType
         {
-            SgTypeBool,
+            SgTypeBool,   // has to be the first type
             SgTypeChar,
             SgTypeWchar,
             // TODO 2: Remove typedef as a basic type, and either expand the
@@ -395,12 +410,19 @@ class RsBasicType : public RsType
             SgTypeVoid,
             SgPointerType,
             //SgReferenceType,
-            Unknown //Unknown always has to be last entry
+            SgUnknownType     // Unknown always has to be last entry
         };
 
 
-        RsBasicType(const std::string & typeStr);
-        RsBasicType(SgType type);
+        // RsBasicType(const std::string& typeStr);
+
+        RsBasicType(const std::string& name, SgType _ty, size_t sz)
+        : RsType(name), type(_ty), byteSize(sz)
+        {}
+
+        RsBasicType()
+        : RsType("unknown"), type(SgUnknownType), byteSize(0)
+        {}
 
         virtual ~RsBasicType() {}
 
@@ -418,7 +440,7 @@ class RsBasicType : public RsType
         virtual bool         isValidOffset(size_t offset) const    { return offset < byteSize;}
         std::string          getSubTypeString(int) const           { return ""; }
 
-        virtual std::string getDisplayName() const;
+        virtual std::string  getDisplayName() const;
 
 
         /// Interprets memory at specified address as this basic type
@@ -428,20 +450,20 @@ class RsBasicType : public RsType
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const;
 
-        static int    getBaseTypeCount()  { return Unknown;   }
-        static SgType getBaseType(int i);
+        static RsBasicType create(SgType ty);
 
     protected:
-
-        void resolveTypeInfo(SgType type_);
-        void resolveTypeInfo(const std::string & typeStr);
-
-        void setTypeInfo(SgType type_, size_t size_);
-        void setTypeInfo(const std::string & typeStr, size_t size);
-
-        size_t      byteSize;
         SgType      type;
+        size_t      byteSize;
 };
+
+inline
+RsBasicType::SgType& operator++(RsBasicType::SgType& val)
+{
+  val = static_cast<RsBasicType::SgType>(val + 1);
+
+  return val;
+}
 
 /**
  * Info structure for pointers
@@ -451,15 +473,25 @@ class RsBasicType : public RsType
 class RsPointerType : public RsBasicType
 {
     public:
+        explicit
         RsPointerType(RsType * baseType);
-        virtual ~RsPointerType() {}
 
+        RsPointerType()
+        : RsBasicType(), baseType(NULL)
+        {}
+
+        virtual ~RsPointerType() {}
 
         virtual std::string getDisplayName() const;
 
         RsType * getBaseType() const  { return baseType; }
 
-    protected:
+        bool operator==(const RsPointerType& rhs) const
+        {
+          return this->baseType == rhs.baseType;
+        }
+
+    private:
         /// Type the pointer points to
         /// pointer may point to other RsPointerType's
         /// to represent double/multiple pointers
@@ -485,14 +517,6 @@ class RsCompoundType : public RsClassType {
         virtual RsType*  getSubtypeAt( size_t offset ) const;
 };
 
-
-
-
-
-
-
-
-#include <cassert>
 /// Class with has a valid name
 /// mostly used for lookup as comparison object
 class InvalidType : public RsType

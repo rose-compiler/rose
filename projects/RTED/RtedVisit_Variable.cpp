@@ -87,17 +87,20 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
 
    if (isSgInitializedName(astNode)) {
       // ------------------------------ visit isSgInitializedName ----------------------------------------------
-      ROSE_ASSERT(isSgInitializedName(astNode)->get_typeptr());
-      SgArrayType* array = isSgArrayType(isSgInitializedName(astNode)->get_typeptr());
-      SgNode* gp = astNode -> get_parent() -> get_parent();
+      SgInitializedName* initname = isSgInitializedName(astNode);
+
+      ROSE_ASSERT(initname->get_typeptr());
+      SgArrayType*       array = isSgArrayType(initname->get_typeptr());
+      SgNode*            gp = initname -> get_parent() -> get_parent();
+
       // something like: struct type { int before; char c[ 10 ]; int after; }
       // does not need a createarray call, as the type is registered and any array
       // information will be tracked when variables of that type are created.
       // ignore arrays in parameter lists as they're actually pointers, not stack arrays
       if ( array && !( isSgClassDefinition( gp )) && !( isSgFunctionDeclaration( gp ) )) {
-         RTedArray* arrayRted = new RTedArray(isSgInitializedName(astNode), NULL, false);
-         transf->populateDimensions( arrayRted, isSgInitializedName(astNode), array );
-         transf->create_array_define_varRef_multiArray_stack[isSgInitializedName(astNode)] = arrayRted;
+         RtedArray* arrayRted = new RtedArray(initname, NULL, akStack);
+         transf->populateDimensions( arrayRted, initname, array );
+         transf->create_array_define_varRef_multiArray_stack[initname] = arrayRted;
       }
    }
 
@@ -176,7 +179,12 @@ InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode
 
    if( isSgDeleteExp( astNode )) {
       // ------------------------------ Detect delete (c++ free) ----------------------------------------------
-      transf->frees.push_back( isSgDeleteExp( astNode ) );
+      typedef RtedTransformation::Deallocations Deallocations;
+
+      SgDeleteExp*    del = isSgDeleteExp( astNode );
+      const AllocKind allocKind = (del->get_is_array() ? akCxxArrayNew : akCxxNew);
+
+      transf->frees.push_back( Deallocations::value_type(del, allocKind) );
    }
 
    if (isSgReturnStmt(astNode)) {

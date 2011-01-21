@@ -169,18 +169,21 @@ class RuntimeSystem
 
 
         void createArray(   Address address,
+                            AddressDesc desc,
                             const std::string & name,
                             const std::string & mangledName,
                             const std::string & baseType,
                             size_t size);
 
         void createArray(   Address address,
+                            AddressDesc desc,
                             const std::string & name,
                             const std::string & mangledName,
                             RsType * baseType,
                             size_t size);
 
         void createArray(   Address address,
+                            AddressDesc desc,
                             const std::string & name,
                             const std::string & mangledName,
                             RsArrayType * type);
@@ -223,6 +226,7 @@ class RuntimeSystem
          *                      way.
          */
         void createMemory(Address addr, size_t size, MemoryType::AllocKind kind, RsType * type=NULL);
+
         /// this version creates stackmemory, of given type
         void createStackMemory(Address addr, size_t size,const std::string & type);
 
@@ -263,16 +267,32 @@ class RuntimeSystem
          *      computable (e.g. if one stores an int with a fixed offset from
          *      the address).
          */
-        void registerPointerChange( Address sourceAddress, Address targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
-        /// for documentation see PointerManager::registerPointerChange()
-        void registerPointerChange( Address sourceAddress, Address targetAddress, RsType * type, bool checkPointerMove=false, bool checkMemLeaks=true);
+        void registerPointerChange( Address     src,
+                                    AddressDesc src_desc,
+                                    Address     target,
+                                    AddressDesc tgt_desc,
+                                    bool        checkPointerMove,
+                                    bool        checkMemLeaks
+                                  );
 
+        /// for documentation see PointerManager::registerPointerChange()
+        void registerPointerChange( Address     src,
+                                    AddressDesc src_desc,
+                                    Address     tgt,
+                                    AddressDesc tgt_desc,
+                                    RsType*     type,
+                                    bool        checkPointerMove, //=false,
+                                    bool        checkMemLeaks //=true
+                                  );
+
+#if OBSOLETE_CODE
         /// Convenience function which takes mangledName instead of sourceAddress
-        void registerPointerChange( const std::string & mangledName, Address targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
+        /// void registerPointerChange( const std::string & mangledName, Address targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
+#endif /* OBSOLETE_CODE */
 
         /// Checks if two addresses lie in the same "typed chunk"
         /// equivalent to the check which is done on registerPointerChange
-        void checkPointerDereference( Address sourceAddress, Address derefed_address );
+        void checkPointerDereference( Address src, AddressDesc src_desc, Address derefed_address, AddressDesc derefed_desc );
         void checkIfThisisNULL(void* thisExp);
 
 
@@ -318,11 +338,11 @@ class RuntimeSystem
 
         /// Checks if a specific memory region can be read (useful to check pointer derefs)
         /// true when region lies in allocated and initialized memory chunk
-        void checkMemRead(Address addr, size_t length, RsType * t = NULL);
+        void checkMemRead(Address addr, AddressDesc desc, size_t size, RsType* t = NULL);
 
         /// Checks if a specific memory region can be safely written
         /// true when region lies in allocated memory chunk
-        void checkMemWrite(Address addr, size_t length, RsType * t = NULL);
+        void checkMemWrite(Address addr, AddressDesc desc, size_t size, RsType* t = NULL);
 
 
 
@@ -352,12 +372,12 @@ class RuntimeSystem
         //      2.  Ensuring that destinations for writes are large enough, and
         //          do not overlap with sources, when doing so is inappropriate.
 
-        void check_memcpy ( void* destination , const void* source , size_t num ) { cstdlibManager.check_memcpy( destination , source , num );};
-        void check_memmove ( void* destination , const void* source , size_t num ) { cstdlibManager.check_memmove( destination , source , num );};
-        void check_strcpy ( char* destination , const char* source ) { cstdlibManager.check_strcpy( destination , source );};
-        void check_strncpy ( char* destination , const char* source , size_t num ) { cstdlibManager.check_strncpy( destination , source , num );};
-        void check_strcat ( char* destination , const char* source ) { cstdlibManager.check_strcat( destination , source );};
-        void check_strncat ( char* destination , const char* source , size_t num ) { cstdlibManager.check_strncat( destination , source , num );};
+        void check_memcpy ( const void* destination , const void* source , size_t num ) { cstdlibManager.check_memcpy( destination , source , num );};
+        void check_memmove ( const void* destination , const void* source , size_t num ) { cstdlibManager.check_memmove( destination , source , num );};
+        void check_strcpy ( const char* destination , const char* source ) { cstdlibManager.check_strcpy( destination , source );};
+        void check_strncpy ( const char* destination , const char* source , size_t num ) { cstdlibManager.check_strncpy( destination , source , num );};
+        void check_strcat ( const char* destination , const char* source ) { cstdlibManager.check_strcat( destination , source );};
+        void check_strncat ( const char* destination , const char* source , size_t num ) { cstdlibManager.check_strncat( destination , source , num );};
         void check_strchr ( const char* str1 , int character ) { cstdlibManager.check_strchr( str1 , character );};
         void check_strpbrk ( const char* str1 , const char* str2 ) { cstdlibManager.check_strpbrk( str1 , str2 );};
         void check_strspn ( const char* str1 , const char* str2 ) { cstdlibManager.check_strspn( str1 , str2 );};

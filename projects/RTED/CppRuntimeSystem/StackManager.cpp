@@ -14,7 +14,8 @@ void StackManager::addVariable(VariablesType * var)
 {
     assert(scope.size() > 0);
     // if the variable is (or contains) pointer register it to pointer manager
-    RuntimeSystem::instance()->getPointerManager()->createPointer(var->getAddress(),var->getType());
+
+    RuntimeSystem::instance()->getPointerManager()->createPointer(var->getAddress(), var->getType());
 
     addrToVarMap.insert(AddrToVarMap::value_type(var->getAddress(),var));
     stack.push_back(var);
@@ -22,7 +23,7 @@ void StackManager::addVariable(VariablesType * var)
 
 
 
-VariablesType * StackManager::getVariable(Address addr)
+VariablesType * StackManager::getVariable(Location addr)
 {
     AddrToVarMap::iterator it = addrToVarMap.find(addr);
     if (it == addrToVarMap.end())
@@ -31,7 +32,7 @@ VariablesType * StackManager::getVariable(Address addr)
         return it->second;
 }
 
-VariablesType * StackManager::getVariable(const string& mangledName)
+VariablesType * StackManager::getVariableByMangledName(const string& mangledName)
 {
     for (size_t i=0; i <  stack.size(); i++)
     {

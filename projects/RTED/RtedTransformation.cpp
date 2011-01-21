@@ -35,12 +35,13 @@ void RtedTransformation::loadFunctionSymbols(SgProject* project) {
    ROSE_ASSERT(symbols.roseCreateHeapArr);
    ROSE_ASSERT(symbols.roseCreateHeapPtr);
    ROSE_ASSERT(symbols.roseAccessHeap);
+   ROSE_ASSERT(symbols.roseCheckpoint);
    ROSE_ASSERT(symbols.roseFunctionCall);
    ROSE_ASSERT(symbols.roseAssertFunctionSignature);
    ROSE_ASSERT(symbols.roseConfirmFunctionSignature);
    ROSE_ASSERT(symbols.roseFreeMemory);
    ROSE_ASSERT(symbols.roseReallocateMemory);
-   ROSE_ASSERT(symbols.roseCheckpoint);
+   ROSE_ASSERT(symbols.roseConvertIntToString);
    ROSE_ASSERT(symbols.roseCreateVariable);
    ROSE_ASSERT(symbols.roseCreateObject);
    ROSE_ASSERT(symbols.roseInitVariable);
@@ -50,9 +51,12 @@ void RtedTransformation::loadFunctionSymbols(SgProject* project) {
    ROSE_ASSERT(symbols.roseExitScope);
    ROSE_ASSERT(symbols.roseIOFunctionCall);
    ROSE_ASSERT(symbols.roseRegisterTypeCall);
-   ROSE_ASSERT(symbols.size_t_member);
    ROSE_ASSERT(symbols.roseCheckIfThisNULL);
-   ROSE_ASSERT(symbols.roseConvertIntToString);
+   ROSE_ASSERT(symbols.roseAddr);
+   ROSE_ASSERT(symbols.roseAddrSh);
+   ROSE_ASSERT(symbols.roseClose);
+
+   ROSE_ASSERT(symbols.roseAllocKind);
 
    ROSE_ASSERT(symbols.roseTypeDesc);
    ROSE_ASSERT(symbols.roseAddressDesc);

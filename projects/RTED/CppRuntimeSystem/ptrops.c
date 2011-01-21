@@ -1,3 +1,14 @@
+//
+// Abstracts pointer accesses
+//
+//   When RTED is used on UPC systems this file HAS TO be compiled
+//   with UPC (otherwise shared pointers cannot be derefed).
+//   Note, the only UPC compiler supported is GCCUPC with the following
+//     command-line define: upc -DIN_TARGET_LIBS
+//
+//   In non-UPC context, this file can be compiled with a C/C++ compiler
+//
+// \email peter.pirkelbauer@llnl.gov
 
 #include <assert.h>
 
@@ -61,29 +72,56 @@ int rted_isPtr(rted_AddressDesc desc)
 
 #ifdef __UPC__
 
+union PtrCast
+{
+  shared char *     shptr;
+  upc_shared_ptr_t  shmem;
+};
+
+
 rted_Address rted_deref(rted_Address addr, rted_AddressDesc desc)
 {
-  if (desc & MASK_SHARED == 0)
+  if ((desc.shared_mask & MASK_SHARED) == 0)
   {
-    addr = *((Address*)addr.local);
+    addr = *((rted_Address*)addr.local);
   }
   else
   {
-    addr = *((Address shared*)addr.global);
+    addr = *((rted_Address shared*)addr.global);
   }
 
   return addr;
+}
+
+const char*
+rted_system_addr(rted_Address addr, rted_AddressDesc desc)
+{
+  union PtrCast ptrcast;
+
+  if ((desc.shared_mask & MASK_SHARED) == 0) { return addr.local; }
+
+  ptrcast.shptr = addr.global;
+  return (const char*) __upc_vm_map_addr(ptrcast.shmem);
 }
 
 #else /* __UPC__ */
 
 rted_Address rted_deref(rted_Address addr, rted_AddressDesc unused)
 {
+  // for shared memory this file has to be compiled with UPC
   assert(unused.shared_mask == 0);
 
   addr = *((rted_Address*)addr.local);
 
   return addr;
+}
+
+const char*
+rted_system_addr(rted_Address addr, rted_AddressDesc unused)
+{
+  assert(unused.shared_mask == 0);
+
+  return addr.local;
 }
 
 #endif /* __UPC__ */

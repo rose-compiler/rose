@@ -10,32 +10,31 @@
 
 #include "rted_typedefs.h"
 
+
 class MemoryType;
 class RsType;
 class PointerInfo;
 
 
+/// \brief   represents Variables
+/// \details variables are names that have a stack address associated
 class VariablesType
 {
-    public:
-        //~ VariablesType(const std::string & name,
-                      //~ const std::string & mangledName,
-                      //~ const std::string & typeStr,
-                      //~ Address address);
+  typedef const char* Location;
 
-        VariablesType(const std::string & name,
-                      const std::string & mangledName,
-                      RsType * type,
-                      Address address);
+    public:
+        VariablesType( const std::string & name,
+                       const std::string & mangledName,
+                       RsType * type,
+                       Address address
+                     );
 
         ~VariablesType();
 
         const std::string & getName()        const  { return name;        }
         const std::string & getMangledName() const  { return mangledName; }
         RsType *            getType()        const  { return type;        }
-
-        Address       getAddress()     const  { return address; }
-
+        Location            getAddress()     const  { return address; }
         size_t              getSize()        const;
 
         /// returns the allocation information for this var
@@ -57,7 +56,7 @@ class VariablesType
         RsType * type;
 
         /// address of this variable in memory
-        Address address;
+        Location address;
 };
 
 

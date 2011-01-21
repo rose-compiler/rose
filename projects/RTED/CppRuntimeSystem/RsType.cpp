@@ -572,20 +572,6 @@ void RsTypeDef::print(std::ostream & os) const
 // ----------------------------------- RsBasicType --------------------------------------
 
 
-RsBasicType::RsBasicType(const std::string & typeStr)
-    : RsType(typeStr)
-{
-    resolveTypeInfo(typeStr);
-}
-
-RsBasicType::RsBasicType(SgType t)
-    : RsType("UnresolvedBasicType"),type(t)
-{
-    resolveTypeInfo(type);
-}
-
-
-
 void RsBasicType::print(std::ostream & os) const
 {
     os << "Basic Type: " << getName() << std::endl;
@@ -627,108 +613,41 @@ std::string RsBasicType::getDisplayName() const
 }
 
 
-
-void RsBasicType::resolveTypeInfo(const std::string & typeStr)
-{
-    stringId = typeStr;
-
-    if      (typeStr=="SgTypeBool")             setTypeInfo(SgTypeBool,             sizeof(bool));
-    else if (typeStr=="SgTypeChar")             setTypeInfo(SgTypeChar,             sizeof(char));
-    else if (typeStr=="SgTypeWchar")            setTypeInfo(SgTypeWchar,            sizeof(wchar_t));
-    // FIXME 2: typedef should be removed (see todo in RsType.h)
-    else if (typeStr=="SgTypedefType")          setTypeInfo(SgTypedefType,          sizeof(void*));
-    else if (typeStr=="SgTypeDouble")           setTypeInfo(SgTypeDouble,           sizeof(double));
-    else if (typeStr=="SgTypeFloat")            setTypeInfo(SgTypeFloat,            sizeof(float));
-    else if (typeStr=="SgTypeInt")              setTypeInfo(SgTypeInt,              sizeof(int));
-    else if (typeStr=="SgTypeLong")             setTypeInfo(SgTypeLong,             sizeof(long));
-    else if (typeStr=="SgTypeLongDouble")       setTypeInfo(SgTypeLongDouble,       sizeof(long double));
-    else if (typeStr=="SgTypeLongLong")         setTypeInfo(SgTypeLongLong,         sizeof(long long));
-    else if (typeStr=="SgTypeShort")            setTypeInfo(SgTypeShort,            sizeof(short));
-    else if (typeStr=="SgTypeSignedChar")       setTypeInfo(SgTypeSignedChar,       sizeof(signed char));
-    else if (typeStr=="SgTypeSignedInt")        setTypeInfo(SgTypeSignedInt,        sizeof(signed int));
-    else if (typeStr=="SgTypeSignedLong")       setTypeInfo(SgTypeSignedLong,       sizeof(signed long));
-    else if (typeStr=="SgTypeSignedLongLong")   setTypeInfo(SgTypeSignedLongLong,   sizeof(signed long long));
-    else if (typeStr=="SgTypeSignedShort")      setTypeInfo(SgTypeSignedShort,      sizeof(signed short));
-    else if (typeStr=="SgTypeUnsignedChar")     setTypeInfo(SgTypeUnsignedChar,     sizeof(unsigned char));
-    else if (typeStr=="SgTypeUnsignedInt")      setTypeInfo(SgTypeUnsignedInt,      sizeof(unsigned int));
-    else if (typeStr=="SgTypeUnsignedLong")     setTypeInfo(SgTypeUnsignedLong,     sizeof(unsigned long));
-    else if (typeStr=="SgTypeUnsignedLongLong") setTypeInfo(SgTypeUnsignedLongLong, sizeof(unsigned long long));
-    else if (typeStr=="SgTypeUnsignedShort")    setTypeInfo(SgTypeUnsignedShort,    sizeof(unsigned short));
-    else if (typeStr=="SgTypeString")           setTypeInfo(SgTypeString,           sizeof(char*));
-    else if (typeStr=="SgTypeVoid")             setTypeInfo(SgTypeVoid,             0);
-    else if (typeStr=="SgPointerType")          setTypeInfo(SgPointerType,          sizeof(void*));
-   // else if (typeStr=="SgReferenceType")        setTypeInfo(SgReferenceType,        sizeof(void*));
-    else                                        setTypeInfo(Unknown, 0);
-}
-
-void RsBasicType::resolveTypeInfo(RsBasicType::SgType type_)
-{
-    type = type_;
-
-    switch(type)
-    {
-        case SgTypeBool:             setTypeInfo("SgTypeBool",             sizeof(bool));            break;
-        case SgTypeChar:             setTypeInfo("SgTypeChar",             sizeof(char));            break;
-        case SgTypeWchar:            setTypeInfo("SgTypeWchar",            sizeof(wchar_t));         break;
-        // FIXME 2: typedef should be removed (see todo in RsType.h)
-        case SgTypedefType:          setTypeInfo("SgTypedefType",          sizeof(void*));           break;
-        case SgTypeDouble:           setTypeInfo("SgTypeDouble",           sizeof(double));          break;
-        case SgTypeFloat:            setTypeInfo("SgTypeFloat",            sizeof(float));           break;
-        case SgTypeInt:              setTypeInfo("SgTypeInt",              sizeof(int));             break;
-        case SgTypeLong:             setTypeInfo("SgTypeLong",             sizeof(long));            break;
-        case SgTypeLongDouble:       setTypeInfo("SgTypeLongDouble",       sizeof(long double));     break;
-        case SgTypeLongLong:         setTypeInfo("SgTypeLongLong",         sizeof(long long));       break;
-        case SgTypeShort:            setTypeInfo("SgTypeShort",            sizeof(short));           break;
-        case SgTypeSignedChar:       setTypeInfo("SgTypeSignedChar",       sizeof(signed char));     break;
-        case SgTypeSignedInt:        setTypeInfo("SgTypeSignedInt",        sizeof(signed int));      break;
-        case SgTypeSignedLong:       setTypeInfo("SgTypeSignedLong",       sizeof(signed long));     break;
-        case SgTypeSignedLongLong:   setTypeInfo("SgTypeSignedLongLong",   sizeof(signed long long));break;
-        case SgTypeSignedShort:      setTypeInfo("SgTypeSignedShort",      sizeof(signed short));    break;
-        case SgTypeUnsignedChar:     setTypeInfo("SgTypeUnsignedChar",     sizeof(unsigned char));   break;
-        case SgTypeUnsignedInt:      setTypeInfo("SgTypeUnsignedInt",      sizeof(unsigned int));    break;
-        case SgTypeUnsignedLong:     setTypeInfo("SgTypeUnsignedLong",     sizeof(unsigned long));   break;
-        case SgTypeUnsignedLongLong: setTypeInfo("SgTypeUnsignedLongLong", sizeof(unsigned long long)); break;
-        case SgTypeUnsignedShort:    setTypeInfo("SgTypeUnsignedShort",    sizeof(unsigned short));  break;
-        case SgTypeString:           setTypeInfo("SgTypeString",           sizeof(char*));           break;
-        case SgTypeVoid:             setTypeInfo("SgTypeVoid",             0);                       break;
-        case SgPointerType:          setTypeInfo("SgPointerType",          sizeof(void*));           break;
-     //   case SgReferenceType:        setTypeInfo("SgReferenceType",        sizeof(void*));           break;
-        default:                     setTypeInfo("Unknown", 0);
-    }
-}
-
 std::string RsBasicType::readValueAt(Address addr) const
 {
     std::stringstream str;
 
-    MemoryManager * m = RuntimeSystem::instance()->getMemManager();
-    if(! m->isInitialized(addr, getByteSize()))
-        return "Not initialized";
+    // \pp \todo we need to know whether the adress is shared or not
+    MemoryManager::Location loc = rted_system_addr(addr, rted_ptr());
+    MemoryManager *         m = RuntimeSystem::instance()->getMemManager();
+
+    if (! m->isInitialized(loc, getByteSize()))
+      return "Not initialized";
 
 
     switch (type)
     {
-        case SgTypeBool:             str <<  *m->readMemory<bool>(addr);                break;
-        case SgTypeChar:             str <<  *m->readMemory<char>(addr);                break;
-        case SgTypeWchar:            str <<  *m->readMemory<wchar_t>(addr);             break;
-        case SgTypeDouble:           str <<  *m->readMemory<double>(addr);              break;
-        case SgTypeFloat:            str <<  *m->readMemory<float>(addr);               break;
-        case SgTypeInt:              str <<  *m->readMemory<int>(addr);                 break;
-        case SgTypeLong:             str <<  *m->readMemory<long>(addr);                break;
-        case SgTypeLongDouble:       str <<  *m->readMemory<long double>(addr);         break;
-        case SgTypeLongLong:         str <<  *m->readMemory<long long>(addr);           break;
-        case SgTypeShort:            str <<  *m->readMemory<short>(addr);               break;
-        case SgTypeSignedChar:       str <<  *m->readMemory<signed char>(addr);         break;
-        case SgTypeSignedInt:        str <<  *m->readMemory<signed int>(addr);          break;
-        case SgTypeSignedLong:       str <<  *m->readMemory<signed long>(addr);         break;
-        case SgTypeSignedLongLong:   str <<  *m->readMemory<signed long long>(addr);    break;
-        case SgTypeSignedShort:      str <<  *m->readMemory<signed short>(addr);        break;
-        case SgTypeUnsignedChar:     str <<  *m->readMemory<unsigned char>(addr);       break;
-        case SgTypeUnsignedInt:      str <<  *m->readMemory<unsigned int>(addr);        break;
-        case SgTypeUnsignedLong:     str <<  *m->readMemory<unsigned long>(addr);       break;
-        case SgTypeUnsignedLongLong: str <<  *m->readMemory<unsigned long long>(addr);  break;
-        case SgTypeUnsignedShort:    str <<  *m->readMemory<unsigned short>(addr);      break;
-        case SgTypeString:           str <<  *m->readMemory<char*>(addr);               break;
+        case SgTypeBool:             str <<  *m->readMemory<bool>(loc);                break;
+        case SgTypeChar:             str <<  *m->readMemory<char>(loc);                break;
+        case SgTypeWchar:            str <<  *m->readMemory<wchar_t>(loc);             break;
+        case SgTypeDouble:           str <<  *m->readMemory<double>(loc);              break;
+        case SgTypeFloat:            str <<  *m->readMemory<float>(loc);               break;
+        case SgTypeInt:              str <<  *m->readMemory<int>(loc);                 break;
+        case SgTypeLong:             str <<  *m->readMemory<long>(loc);                break;
+        case SgTypeLongDouble:       str <<  *m->readMemory<long double>(loc);         break;
+        case SgTypeLongLong:         str <<  *m->readMemory<long long>(loc);           break;
+        case SgTypeShort:            str <<  *m->readMemory<short>(loc);               break;
+        case SgTypeSignedChar:       str <<  *m->readMemory<signed char>(loc);         break;
+        case SgTypeSignedInt:        str <<  *m->readMemory<signed int>(loc);          break;
+        case SgTypeSignedLong:       str <<  *m->readMemory<signed long>(loc);         break;
+        case SgTypeSignedLongLong:   str <<  *m->readMemory<signed long long>(loc);    break;
+        case SgTypeSignedShort:      str <<  *m->readMemory<signed short>(loc);        break;
+        case SgTypeUnsignedChar:     str <<  *m->readMemory<unsigned char>(loc);       break;
+        case SgTypeUnsignedInt:      str <<  *m->readMemory<unsigned int>(loc);        break;
+        case SgTypeUnsignedLong:     str <<  *m->readMemory<unsigned long>(loc);       break;
+        case SgTypeUnsignedLongLong: str <<  *m->readMemory<unsigned long long>(loc);  break;
+        case SgTypeUnsignedShort:    str <<  *m->readMemory<unsigned short>(loc);      break;
+        case SgTypeString:           str <<  *m->readMemory<char*>(loc);               break;
         default:                     std::cerr << "RsBasicType::readValueAt with unknown type";
                                      assert(false);
     }
@@ -736,38 +655,53 @@ std::string RsBasicType::readValueAt(Address addr) const
     return str.str();
 }
 
-
-
-
-void RsBasicType::setTypeInfo(const std::string & name, size_t size)
+RsBasicType RsBasicType::create(SgType ty)
 {
-    stringId = name;
-    byteSize = size;
+  const char* name = NULL;
+  size_t      sz = 0;
+
+  switch(ty)
+  {
+    case SgTypeBool:             name = "SgTypeBool";             sz = sizeof(bool);               break;
+    case SgTypeChar:             name = "SgTypeChar";             sz = sizeof(char);               break;
+    case SgTypeWchar:            name = "SgTypeWchar";            sz = sizeof(wchar_t);            break;
+    case SgTypeDouble:           name = "SgTypeDouble";           sz = sizeof(double);             break;
+    case SgTypeFloat:            name = "SgTypeFloat";            sz = sizeof(float);              break;
+    case SgTypeInt:              name = "SgTypeInt";              sz = sizeof(int);                break;
+    case SgTypeLong:             name = "SgTypeLong";             sz = sizeof(long);               break;
+    case SgTypeLongDouble:       name = "SgTypeLongDouble";       sz = sizeof(long double);        break;
+    case SgTypeLongLong:         name = "SgTypeLongLong";         sz = sizeof(long long);          break;
+    case SgTypeShort:            name = "SgTypeShort";            sz = sizeof(short);              break;
+    case SgTypeSignedChar:       name = "SgTypeSignedChar";       sz = sizeof(signed char);        break;
+    case SgTypeSignedInt:        name = "SgTypeSignedInt";        sz = sizeof(signed int);         break;
+    case SgTypeSignedLong:       name = "SgTypeSignedLong";       sz = sizeof(signed long);        break;
+    case SgTypeSignedLongLong:   name = "SgTypeSignedLongLong";   sz = sizeof(signed long long);   break;
+    case SgTypeSignedShort:      name = "SgTypeSignedShort";      sz = sizeof(signed short);       break;
+    case SgTypeUnsignedChar:     name = "SgTypeUnsignedChar";     sz = sizeof(unsigned char);      break;
+    case SgTypeUnsignedInt:      name = "SgTypeUnsignedInt";      sz = sizeof(unsigned int);       break;
+    case SgTypeUnsignedLong:     name = "SgTypeUnsignedLong";     sz = sizeof(unsigned long);      break;
+    case SgTypeUnsignedLongLong: name = "SgTypeUnsignedLongLong"; sz = sizeof(unsigned long long); break;
+    case SgTypeUnsignedShort:    name = "SgTypeUnsignedShort";    sz = sizeof(unsigned short);     break;
+    case SgTypeString:           name = "SgTypeString";           sz = sizeof(char*);              break;
+    case SgPointerType:          name = "SgPointerType";          sz = sizeof(void*);              break;
+
+    // FIXME 2: typedef should be removed (see todo in RsType.h)
+    case SgTypedefType:          name = "SgTypedefType";          sz = sizeof(void*);              break;
+
+    case SgTypeVoid:             name = "SgTypeVoid";             sz = 0;                          break;
+    default:                     name = "Unknown";                sz = 0;
+  }
+
+  return RsBasicType(name, ty, sz);
 }
-
-void RsBasicType::setTypeInfo(SgType type_, size_t size_)
-{
-    type = type_;
-    byteSize = size_;
-}
-
-RsBasicType::SgType RsBasicType::getBaseType(int i)
-{
-    assert(i>=0 && i < RsBasicType::Unknown);
-    return (SgType)i;
-}
-
-
 
 
 // ----------------------------------- RsPointerType --------------------------------------
 
 
 RsPointerType::RsPointerType(RsType * baseType_)
-    : RsBasicType(SgPointerType),
-      baseType(baseType_)
-{
-}
+: RsBasicType( RsBasicType::create(RsBasicType::SgPointerType) ), baseType(baseType_)
+{}
 
 std::string RsPointerType::getDisplayName() const
 {

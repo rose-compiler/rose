@@ -159,12 +159,12 @@ class CStdLibManager {
         //      mbstowcs
         //      wcstombs
         //  string.h
-                void check_memcpy( void* destination, const void* source, size_t num);
-                void check_memmove( void* destination, const void* source, size_t num);
-                void check_strcpy( char* destination, const char* source);
-                void check_strncpy( char* destination, const char* source, size_t num);
-                void check_strcat( char* destination, const char* source);
-                void check_strncat( char* destination, const char* source, size_t num);
+                void check_memcpy( const void* destination, const void* source, size_t num);
+                void check_memmove( const void* destination, const void* source, size_t num);
+                void check_strcpy( const char* destination, const char* source);
+                void check_strncpy( const char* destination, const char* source, size_t num);
+                void check_strcat( const char* destination, const char* source);
+                void check_strncat( const char* destination, const char* source, size_t num);
         //      memcmp
         //      strcmp
         //      strcoll
@@ -200,20 +200,20 @@ class CStdLibManager {
          * with memory region (@c ptr2 : @c ptr2 + num)
          */
         void check_overlap(
-            const void* ptr1,
-            const void* ptr2,
+            const char* ptr1,
+            const char* ptr2,
             size_t num,
             const std::string& description = ""
         );
         void check_allocation_overlap(
-            const void* ptr1,
-            const void* ptr2,
+            const char* ptr1,
+            const char* ptr2,
             const std::string& description = ""
         );
         void check_overlap(
-            const void* ptr1,
+            const char* ptr1,
             size_t size1,
-            const void* ptr2,
+            const char* ptr2,
             size_t size2,
             const std::string& description = ""
         );

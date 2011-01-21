@@ -96,21 +96,19 @@ void RtedTransformation::executeTransformations() {
     insert_pointer_change( op );
   }
 
-  std::map<SgVarRefExp*,std::pair<SgInitializedName*,bool> >::const_iterator it5 = variableIsInitialized.begin();
+  InitializedVarMap::const_iterator it5 = variableIsInitialized.begin();
   for (; it5 != variableIsInitialized.end(); it5++) {
-    SgVarRefExp* varref = it5->first;
-    std::pair<SgInitializedName*,bool> p = it5->second;
-    SgInitializedName* init = p.first;
-    bool ismalloc = p.second;
-    ROSE_ASSERT(varref);
-    insertInitializeVariable(init, varref,ismalloc);
+    SgVarRefExp*                   varref = it5->first;
+    InitializedVarMap::mapped_type p = it5->second;
+
+    insertInitializeVariable(p.first, varref, p.second);
   }
 
   if (RTEDDEBUG()) std::cerr << "\n # Elements in create_array_define_varRef_multiArray  : "  << create_array_define_varRef_multiArray.size() << std::endl;
-  std::map<SgVarRefExp*, RTedArray*>::const_iterator itm =  create_array_define_varRef_multiArray.begin();
+  std::map<SgVarRefExp*, RtedArray*>::const_iterator itm =  create_array_define_varRef_multiArray.begin();
   for (; itm != create_array_define_varRef_multiArray.end(); itm++) {
     SgVarRefExp* array_node = itm->first;
-    RTedArray* array_size = itm->second;
+    RtedArray* array_size = itm->second;
     insertArrayCreateCall(array_node, array_size);
   }
 
@@ -153,10 +151,10 @@ void RtedTransformation::executeTransformations() {
   }
 
   if (RTEDDEBUG()) std::cerr << "\n # Elements in create_array_define_varRef_multiArray_stack  : "  << create_array_define_varRef_multiArray_stack.size() << std::endl;
-  std::map<SgInitializedName*, RTedArray*>::const_iterator itv = create_array_define_varRef_multiArray_stack.begin();
+  std::map<SgInitializedName*, RtedArray*>::const_iterator itv = create_array_define_varRef_multiArray_stack.begin();
   for (; itv != create_array_define_varRef_multiArray_stack.end(); itv++) {
     SgInitializedName* array_node = itv->first;
-    RTedArray* array_size = itv->second;
+    RtedArray* array_size = itv->second;
     insertArrayCreateCall(array_node, array_size);
   }
 
@@ -176,10 +174,10 @@ void RtedTransformation::executeTransformations() {
   }
 
   if (RTEDDEBUG()) std::cerr << "\n # Elements in create_array_access_call  : " << create_array_access_call.size() << std::endl;
-  std::map<SgExpression*, RTedArray*>::const_iterator ita = create_array_access_call.begin();
+  std::map<SgExpression*, RtedArray*>::const_iterator ita = create_array_access_call.begin();
   for (; ita != create_array_access_call.end(); ita++) {
     SgExpression* array_node = ita->first;
-    RTedArray* array_size = ita->second;
+    RtedArray* array_size = ita->second;
     insertArrayAccessCall(array_node, array_size);
   }
 
@@ -207,8 +205,10 @@ void RtedTransformation::executeTransformations() {
     }
   }
 
-  BOOST_FOREACH( SgExpression* expr, frees)
-    insertFreeCall( expr );
+  BOOST_FOREACH( Deallocations::value_type releaseOp, frees)
+  {
+    insertFreeCall( releaseOp.first, releaseOp.second );
+  }
 
   BOOST_FOREACH( SgFunctionCallExp* fcallexp, reallocs)
     insertReallocateCall( fcallexp );

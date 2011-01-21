@@ -37,7 +37,7 @@ struct InitNameComp
   : obj(iname)
   {}
 
-  bool operator()(const std::map<SgVarRefExp*, RTedArray*>::value_type& v) const
+  bool operator()(const std::map<SgVarRefExp*, RtedArray*>::value_type& v) const
   {
     return v.second->initName == obj;
   }
@@ -54,8 +54,8 @@ bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search)
   if (create_array_define_varRef_multiArray_stack.find(search) != create_array_define_varRef_multiArray_stack.end())
     return true;
 
-  std::map<SgVarRefExp*, RTedArray*>::iterator aa = create_array_define_varRef_multiArray.begin();
-  std::map<SgVarRefExp*, RTedArray*>::iterator zz = create_array_define_varRef_multiArray.end();
+  std::map<SgVarRefExp*, RtedArray*>::iterator aa = create_array_define_varRef_multiArray.begin();
+  std::map<SgVarRefExp*, RtedArray*>::iterator zz = create_array_define_varRef_multiArray.end();
 
   return std::find_if(aa, zz, InitNameComp(search)) != zz;
 }
@@ -63,7 +63,7 @@ bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search)
 /* -----------------------------------------------------------
  * Perform Transformation: insertArrayCreateCall
  * -----------------------------------------------------------*/
-void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RTedArray* value) {
+void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RtedArray* value) {
    ROSE_ASSERT(value);
    SgInitializedName* initName = n->get_symbol()->get_declaration();
    ROSE_ASSERT(initName);
@@ -74,7 +74,7 @@ void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RTedArray* value)
 }
 
 
-void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName, RTedArray* value) {
+void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName, RtedArray* value) {
    ROSE_ASSERT(value);
    ROSE_ASSERT(initName);
    SgStatement* stmt = value->surroundingStatement;
@@ -85,9 +85,55 @@ void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName, RTed
    insertArrayCreateCall(stmt, initName, var_ref, value);
 }
 
+// \pp \todo add to SageBuilder
+static
+SgEnumVal* buildEnumVal(int value, SgEnumDeclaration* decl, SgName name)
+{
+  SgEnumVal* enumVal = new SgEnumVal(value, decl, name);
+  ROSE_ASSERT(enumVal);
+  setOneSourcePositionForTransformation(enumVal);
+  return enumVal;
+}
+
+static
+std::string enumstring(AllocKind ak)
+{
+  const char* res = NULL;
+
+  switch (ak)
+  {
+    case akStack:          res = "akStack"; break;
+    case akCHeap:          res = "akCHeap"; break;
+
+    /* C++ */
+    case akCxxNew:         res = "akCxxNew"; break;
+    case akCxxArrayNew:    res = "akCxxArrayNew"; break;
+
+    /* UPC */
+    case akUpcSharedHeap:  res = "akUpcSharedHeap"; break;
+    case akUpcAlloc:       res = "akUpcAlloc"; break;
+    case akUpcGlobalAlloc: res = "akUpcGlobalAlloc"; break;
+    case akUpcAllAlloc:    res = "akUpcAllAlloc"; break;
+
+    default:               ROSE_ASSERT(false);
+  }
+
+  ROSE_ASSERT(res != NULL);
+  return res;
+}
+
+
+SgEnumVal*
+RtedTransformation::mkAllocKind(AllocKind ak) const
+{
+  ROSE_ASSERT(symbols.roseAllocKind);
+
+  return buildEnumVal(ak, symbols.roseAllocKind, enumstring(ak));
+}
+
 
 SgStatement*
-RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefExp* varRef, RTedArray* array, SgStatement* stmt)
+RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefExp* varRef, RtedArray* array, SgStatement* stmt)
 {
    // build the function call:  rs.createHeapArr(...);
    //                        or rs.createHeapPtr(...);
@@ -99,8 +145,8 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    SgType*            src_type = src_exp->get_type();
    const bool         isCreateHeapArr = (src_type->class_name() == "SgArrayType");
 
-   // \pp only calls to create-heap-arr?
-   ROSE_ASSERT(isCreateHeapArr);
+   // what kind of types do we get?
+   ROSE_ASSERT(isCreateHeapArr || src_type->class_name() == "SgPointerType");
 
    appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(NULL, src_type)));
 
@@ -116,8 +162,8 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    //SgIntVal* ismalloc = buildIntVal( 0 );
    SgExpression*      size = buildIntVal(0);
 
-   // \pp what about assert(array -> onHeap)? after all we call createHeap ...
-   if (array -> onHeap) {
+   // \pp \note what about assert(array -> onHeap)? after all we call createHeap ...
+   if (array -> allocKind != akStack) {
       ROSE_ASSERT( array -> size );
       // \pp do we need to free size?
       size = buildCastExp(array -> size, buildUnsignedLongType());
@@ -141,7 +187,8 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    {
      // track whether heap memory was allocated via malloc or new, to ensure
      // that free/delete matches
-     appendExpression(arg_list, buildIntVal(array -> fromMalloc ? 1 : 0));
+
+     appendExpression(arg_list, mkAllocKind(array->allocKind));
    }
 
    appendClassName(arg_list, initName->get_type());
@@ -161,7 +208,7 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
 }
 
 void RtedTransformation::insertArrayCreateCall(SgStatement* stmt, SgInitializedName* initName, SgVarRefExp* varRef,
-      RTedArray* array) {
+      RtedArray* array) {
    // make sure there is no extern in front of stmt
    bool externQual = isGlobalExternVariable(stmt);
    if (externQual) {
@@ -274,20 +321,18 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt, SgInitializedN
       ROSE_ASSERT(false);
    }
 
-   bool ismalloc = array->onHeap;
    // unfortunately the arrays are filled with '\0' which is a problem
    // for detecting other bugs such as not null terminated strings
    // therefore we call a function that appends code to the
    // original program to add padding different from '\0'
-   if (ismalloc)
+   if (array->allocKind != akStack)
       addPaddingToAllocatedMemory(stmt, array);
-
 }
 
 /* -----------------------------------------------------------
  * Perform Transformation: insertArrayCreateAccessCall
  * -----------------------------------------------------------*/
-void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp, RTedArray* value) {
+void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp, RtedArray* value) {
    SgStatement* stmt = value->surroundingStatement;
    if (!stmt)
       stmt = getSurroundingStatement(arrayExp);
@@ -296,7 +341,7 @@ void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp, RTedArray
    insertArrayAccessCall(stmt, arrayExp, value);
 }
 
-void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* arrayExp, RTedArray* array)
+void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* arrayExp, RtedArray* array)
 {
   SgScopeStatement* scope = stmt->get_scope();
   SgPntrArrRefExp*  arrRefExp = isSgPntrArrRefExp(arrayExp);
@@ -369,8 +414,9 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* 
 
   appendAddress(arg_list, array_base);
   appendAddressAndSize(arg_list, Whole, NULL, arrRefExp, NULL);
-  appendExpression(arg_list, buildIntVal(read_write_mask));
 
+  appendExpression(arg_list, mkAddressDesc(array_base));
+  appendExpression(arg_list, buildIntVal(read_write_mask));
   appendFileInfo(arg_list, stmt);
 
   ROSE_ASSERT(symbols.roseAccessHeap);
@@ -381,7 +427,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* 
                  );
 }
 
-void RtedTransformation::populateDimensions(RTedArray* array, SgInitializedName* init, SgArrayType* type_) {
+void RtedTransformation::populateDimensions(RtedArray* array, SgInitializedName* init, SgArrayType* type_) {
    std::vector<SgExpression*>& indices = array -> getIndices();
 
    bool implicit_index = false;
@@ -436,9 +482,10 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
    //
    // ignore arrays in parameter lists as they're actually pointers, not stack
    // arrays
-   if (array && !(isSgClassDefinition(gp)) && !(fndec)) {
+   if (array && !(isSgClassDefinition(gp)) && !(fndec))
+   {
+      RtedArray* arrayRted = new RtedArray(initName, NULL, akStack);
 
-      RTedArray* arrayRted = new RTedArray(initName, NULL, false);
       populateDimensions(arrayRted, initName, array);
       create_array_define_varRef_multiArray_stack[initName] = arrayRted;
    }
@@ -554,76 +601,109 @@ void RtedTransformation::visit_isSgArrowExp(SgArrowExp* n) {
 #endif
 }
 
-void RtedTransformation::array_heap_alloc(SgInitializedName* initName, SgVarRefExp* varRef, SgExpression* sz)
+void
+RtedTransformation::arrayHeapAlloc(SgInitializedName* initName, SgVarRefExp* varRef, SgExpression* sz, AllocKind ak)
 {
   ROSE_ASSERT(initName && varRef && sz);
 
-  RTedArray* array = new RTedArray(initName, getSurroundingStatement(varRef), true, true, sz);
+  SgStatement* stmt = getSurroundingStatement(varRef);
+  RtedArray*   array = new RtedArray(initName, stmt, ak, sz);
 
   // varRef can not be an array access, its only an array Create
   variablesUsedForArray.push_back(varRef);
   create_array_define_varRef_multiArray[varRef] = array;
 }
 
-bool RtedTransformation::array_alloc_call(SgInitializedName* initName, SgVarRefExp* varRef, SgExprListExp* args, SgFunctionDeclaration* funcd)
+void RtedTransformation::arrayHeapAlloc1( SgInitializedName* initName,
+                                          SgVarRefExp* varRef,
+                                          SgExpressionPtrList& args,
+                                          AllocKind ak
+                                        )
+{
+  ROSE_ASSERT( args.size() == 1 );
+
+  arrayHeapAlloc(initName, varRef, args[0], ak);
+}
+
+void RtedTransformation::arrayHeapAlloc2( SgInitializedName* initName,
+                                          SgVarRefExp* varRef,
+                                          SgExpressionPtrList& args,
+                                          AllocKind ak
+                                        )
+{
+  ROSE_ASSERT( args.size() == 2 );
+
+  // \pp \note where are the nodes freed, that are created here?
+  SgExpression* size_to_use = buildMultiplyOp(args[0], args[1]);
+
+  arrayHeapAlloc(initName, varRef, size_to_use, ak);
+}
+
+AllocKind
+RtedTransformation::arrayAllocCall( SgInitializedName* initName,
+                                    SgVarRefExp* varRef,
+                                    SgExprListExp* args,
+                                    SgFunctionDeclaration* funcd
+                                  )
 {
   ROSE_ASSERT(initName && varRef && args && funcd);
 
-  bool cStyleAlloc = false;
+  AllocKind   howAlloced = akUndefined;
+  std::string funcname = funcd->get_name().str();
 
-  string funcname = funcd->get_name().str();
+  std::cerr << "... Detecting func call on right hand side : " << funcname << "     and size : "
+            << args->unparseToString()
+            << std::endl;
+
   if (funcname == "malloc")
   {
-    cerr << "... Detecting func call on right hand side : " << funcname << "     and size : "
-         << args->unparseToString() << endl;
-
-    ROSE_ASSERT( args->get_expressions().size() > 0 );
-
-    array_heap_alloc(initName, varRef, args->get_expressions()[0]);
-    cStyleAlloc = true;
+    howAlloced = akCHeap;
+    arrayHeapAlloc1(initName, varRef, args->get_expressions(), howAlloced);
   }
   else if (funcname == "calloc")
   {
-    cerr << "... Detecting func call on right hand side : " << funcname;
-
-    // copy the arguments to calloc so we know how much memory was allocated
-    ROSE_ASSERT( args->get_expressions().size() > 1 );
-    SgExpression* arg1 = args->get_expressions()[0];
-    SgExpression* arg2 = args->get_expressions()[1];
-    SgExpression* size_to_use = new SgMultiplyOp(args->get_file_info(), arg1, arg2);
-
-    array_heap_alloc(initName, varRef, size_to_use);
-    // \pp missing? cStyleAlloc = true
+    howAlloced = akCHeap;
+    arrayHeapAlloc2(initName, varRef, args->get_expressions(), howAlloced);
+  }
+  else if (funcname == "upc_alloc")
+  {
+    howAlloced = akUpcAlloc;
+    arrayHeapAlloc1(initName, varRef, args->get_expressions(), howAlloced);
+  }
+  else if (funcname == "upc_local_alloc")
+  {
+    // deprecated
+    howAlloced = akUpcAlloc; // has the same effect as upc_alloc
+    arrayHeapAlloc2(initName, varRef, args->get_expressions(), howAlloced);
   }
   else if (funcname == "upc_all_alloc")
   {
-    // \pp \todo implement upc specific behaviour
-    ROSE_ASSERT(args->get_expressions().size() == 2);
-
-    SgExpression* arg1 = args->get_expressions()[0];
-    SgExpression* arg2 = args->get_expressions()[1];
-    SgExpression* size_to_use = new SgMultiplyOp(args->get_file_info(), arg1, arg2);
-
-    array_heap_alloc(initName, varRef, size_to_use);
-    // \pp introduce upcStyleAlloc?
-    cStyleAlloc = true;
+    howAlloced = akUpcAllAlloc;
+    arrayHeapAlloc2(initName, varRef, args->get_expressions(), howAlloced);
+  }
+  else if (funcname == "upc_global_alloc")
+  {
+    howAlloced = akUpcGlobalAlloc;
+    arrayHeapAlloc2(initName, varRef, args->get_expressions(), howAlloced);
   }
 
-  return cStyleAlloc;
+  ROSE_ASSERT(howAlloced != akUndefined);
+  return howAlloced;
 }
 
-bool RtedTransformation::array_alloc_call(SgInitializedName* initName, SgVarRefExp* varRef, SgExprListExp* args, SgFunctionRefExp* funcr, bool default_result)
+AllocKind RtedTransformation::arrayAllocCall(SgInitializedName* initName, SgVarRefExp* varRef, SgExprListExp* args, SgFunctionRefExp* funcr, AllocKind default_result)
 {
   ROSE_ASSERT(varRef);
 
-  // \pp the function should probably return whether the allocation was handled
+  // \pp \todo
+  //   the function should probably return whether the allocation was handled
   //   thus making the default_result superfluous.
   //   However the original implementation does not reflect that,
   //   therefore I add the extra parameter.
-  bool res = default_result;
+  AllocKind res = default_result;
 
   if (funcr) {
-    res = array_alloc_call(initName, varRef, args, funcr->getAssociatedFunctionDeclaration());
+    res = arrayAllocCall(initName, varRef, args, funcr->getAssociatedFunctionDeclaration());
   } else {
      // right hand side of assign should only contain call to malloc somewhere
      cerr << "RtedTransformation: UNHANDLED AND ACCEPTED FOR NOW. Right of Assign : Unknown (Array creation) : "
@@ -854,26 +934,25 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
    cerr << " expr_l : " << expr_l->class_name() << endl;
    ROSE_ASSERT(initName);
 
-   // handle MALLOC
-   bool            last_was_malloc = false; // obfuscate, obfuscate!!!??? (PP)
-   vector<SgNode*> calls = NodeQuery::querySubTree(expr_r, V_SgFunctionCallExp);
-   vector<SgNode*>::const_iterator it = calls.begin();
+   // handle MALLOC: function call
+   AllocKind                     last_alloc = akCxxNew; // \pp should this be akUndefined?
+   SgNodePtrList                 calls = NodeQuery::querySubTree(expr_r, V_SgFunctionCallExp);
+   SgNodePtrList::const_iterator it = calls.begin();
    for (; it != calls.end(); ++it) {
       SgFunctionCallExp* funcc = isSgFunctionCallExp(*it);
-      if (funcc) {
-         // MALLOC : function call
-         SgExprListExp* size = deepCopy(funcc->get_args());
-         ROSE_ASSERT(size);
+      ROSE_ASSERT(funcc);
 
-         // find if sizeof present in size operator
-         // \pp why do we require that there is exactly one sizeof operand?
-         vector<SgNode*> results = NodeQuery::querySubTree(size, V_SgSizeOfOp);
-         ROSE_ASSERT_MSG(results.size() == 1, "Expected to find excactly 1 sizeof operand. Abort.");
+      SgExprListExp*     size = deepCopy(funcc->get_args());
+      ROSE_ASSERT(size);
 
-         SgExpression* func = funcc->get_function();
+      // find if sizeof present in size operator
+      // \pp why do we require that there is exactly one sizeof operand?
+      vector<SgNode*> results = NodeQuery::querySubTree(size, V_SgSizeOfOp);
+      ROSE_ASSERT_MSG(results.size() == 1, "Expected to find excactly 1 sizeof operand. Abort.");
 
-         last_was_malloc = array_alloc_call(initName, varRef, size, isSgFunctionRefExp(func), last_was_malloc);
-      }
+      SgExpression*      func = funcc->get_function();
+
+      last_alloc = arrayAllocCall(initName, varRef, size, isSgFunctionRefExp(func), last_alloc);
    }
 
    // FIXME 3: This won't handle weird cases with, e.g. multiple news on the rhs,
@@ -883,7 +962,8 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
    //        a = ( b = new int, new int );
    //
    // handle new (implicit C++ malloc)
-   BOOST_FOREACH(SgNode* exp, NodeQuery::querySubTree( expr_r, V_SgNewExp ))
+   const SgNodePtrList& newnodes = NodeQuery::querySubTree( expr_r, V_SgNewExp );
+   BOOST_FOREACH(SgNode* exp, newnodes)
    {
       // FIXME 2: this is a false positive if operator new is overloaded
       SgNewExp* new_op = isSgNewExp(exp);
@@ -891,10 +971,12 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       ROSE_ASSERT( new_op );
       ROSE_ASSERT( varRef );
 
-      RTedArray *array = new RTedArray( initName,
+      const bool      arraynew = isSgArrayType( skip_ModifierType(new_op->get_type()) );
+      const AllocKind allocKind = (arraynew ? akCxxArrayNew : akCxxNew);
+
+      RtedArray *array = new RtedArray( initName,
                                         getSurroundingStatement(varRef),
-                                        true, // memory on heap
-                                        false, // but not from call to malloc
+                                        allocKind,
                                         buildSizeOfOp(new_op -> get_specified_type())
                                       );
 
@@ -905,46 +987,42 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
    // ---------------------------------------------
    // handle variables ..............................
    // here we should know the initName of the variable on the left hand side
-   ROSE_ASSERT(initName);
-   ROSE_ASSERT(varRef);
-   if (initName && varRef) {
-      // we now know that this variable must be initialized
-      // if we have not set this variable to be initialized yet,
-      // we do so
-      cerr << ">> Setting this var to be initialized : " << initName->unparseToString() << endl;
-      variableIsInitialized[varRef] = std::pair<SgInitializedName*, bool>(initName, last_was_malloc);
-   }
-   // ---------------------------------------------
+   ROSE_ASSERT(initName && varRef);
 
-
+   // we now know that this variable must be initialized
+   // if we have not set this variable to be initialized yet,
+   // we do so
+   cerr << ">> Setting this var to be initialized : " << initName->unparseToString() << endl;
+   variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, last_alloc);
 }
 
-void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt, RTedArray* array) {
-   printf(">>> Padding allocated memory with blank space\n");
-   //SgStatement* stmt = getSurroundingStatement(varRef);
-   ROSE_ASSERT(stmt);
-   // if you find this:
-   //   str1 = ((char *)(malloc(((((4 * n)) * (sizeof(char )))))));
-   // add the following lines:
-   //   int i;
-   //   for (i = 0; (i) < malloc(((((4 * n)) * (sizeof(char )); i++)
-   //     str1[i] = ' ';
+void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt, RtedArray* array)
+{
+    printf(">>> Padding allocated memory with blank space\n");
+    //SgStatement* stmt = getSurroundingStatement(varRef);
+    ROSE_ASSERT(stmt);
+    // if you find this:
+    //   str1 = ((char *)(malloc(((((4 * n)) * (sizeof(char )))))));
+    // add the following lines:
+    //   int i;
+    //   for (i = 0; (i) < malloc(((((4 * n)) * (sizeof(char )); i++)
+    //     str1[i] = ' ';
 
-   // we do this only for char*
-   bool cont = false;
-   SgInitializedName* initName = array->initName;
-   SgType* type = initName->get_type();
-   ROSE_ASSERT(type);
-   cerr << " Padding type : " << type->class_name() << endl;
-   if (isSgPointerType(type)) {
-      SgType* basetype = isSgPointerType(type)->get_base_type();
-      cerr << " Base type : " << basetype->class_name() << endl;
-      if (basetype && isSgTypeChar(basetype))
-         cont = true;
-   }
+    // we do this only for char*
+    SgInitializedName* initName = array->initName;
+    SgType*            type = initName->get_type();
+    ROSE_ASSERT(type);
+    cerr << " Padding type : " << type->class_name() << endl;
 
-   // since this is mainly to handle char* correctly, we only deal with one dim array for now
-   if (cont && array->getDimension() == 1) {
+    // \pp \todo do we need to skip modifiers?
+    if (!isSgPointerType(type)) return;
+
+    SgType* basetype = isSgPointerType(type)->get_base_type();
+    cerr << " Base type : " << basetype->class_name() << endl;
+
+    // since this is mainly to handle char* correctly, we only deal with one dim array for now
+    if (basetype && isSgTypeChar(basetype) && array->getDimension() == 1)
+    {
       // allocated size
       SgScopeStatement* scope = stmt->get_scope();
       SgExpression* size = array->getIndices()[0];
@@ -1039,7 +1117,7 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* _n) {
       if (create_access_call) {
          SgInitializedName* initName = varRef->get_symbol()->get_declaration();
          ROSE_ASSERT(initName);
-         RTedArray* array = new RTedArray(initName, getSurroundingStatement(arrRefExp), false);
+         RtedArray* array = new RtedArray(initName, getSurroundingStatement(arrRefExp), akStack);
          cerr << "!! CALL : " << varRef << " - " << varRef->unparseToString() << "    size : " << create_array_access_call.size()
                << "  -- " << array->unparseToString() << " : " << arrRefExp->unparseToString() << endl;
          create_array_access_call[arrRefExp] = array;

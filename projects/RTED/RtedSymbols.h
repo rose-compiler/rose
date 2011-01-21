@@ -32,6 +32,8 @@ struct RtedSymbols : AstSimpleProcessing {
 	SgFunctionSymbol*   roseAddrSh;
 	SgFunctionSymbol*   roseClose;
 
+	SgEnumDeclaration*  roseAllocKind;
+
 	SgType*             roseTypeDesc;
 	SgType*             roseAddressDesc;
 	SgType*             roseSourceInfo;
@@ -51,6 +53,7 @@ struct RtedSymbols : AstSimpleProcessing {
     roseCreateVariable(NULL),
     roseCreateObject(NULL),
     roseInitVariable(NULL),
+		roseMovePointer(NULL),
     roseAccessVariable(NULL),
     roseEnterScope(NULL),
     roseExitScope(NULL),
@@ -60,6 +63,8 @@ struct RtedSymbols : AstSimpleProcessing {
 		roseAddr(NULL),
 		roseAddrSh(NULL),
 		roseClose(NULL),
+
+		roseAllocKind(NULL),
 
 		roseTypeDesc(NULL),
 		roseAddressDesc(NULL),

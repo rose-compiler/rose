@@ -69,9 +69,9 @@ std::ostream& operator<<(std::ostream& s, const Address& obj)
 
 template <class T>
 inline
-T* point_to(const Address& addr)
+const T* point_to(const Address& addr)
 {
-  return reinterpret_cast<T*>(addr.local);
+  return reinterpret_cast<const T*>(addr.local);
 }
 
 inline
@@ -85,21 +85,11 @@ Address memAddr(size_t sysaddr)
 
 template <class T>
 inline
-Address memAddr(T* t)
-{
-  Address tmp;
-
-  tmp.local = reinterpret_cast<char*>(t);
-  return tmp;
-}
-
-template <class T>
-inline
 Address memAddr(const T* t)
 {
   Address tmp;
 
-  tmp.local = reinterpret_cast<char*>(const_cast<T*>(t));
+  tmp.local = reinterpret_cast<const char*>(t);
   return tmp;
 }
 

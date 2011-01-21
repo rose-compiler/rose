@@ -6,6 +6,8 @@
 
 #include <rose.h>
 
+#include "CppRuntimeSystem/rted_typedefs.h"
+
 
 /* -----------------------------------------------------------
  * This class represents a runtime array
@@ -14,46 +16,44 @@
  * and the size for both dimensions
  * Finally, there is a boolean to indicate if this array is created with malloc
  * -----------------------------------------------------------*/
-class RTedArray {
- public:
-  // \pp removed field, b/c it was not referenced: bool stack;
-  SgInitializedName* initName;
-  SgStatement* surroundingStatement;
-  bool onHeap;
-  bool fromMalloc;
-  SgExpression* size;
-  std::vector<SgExpression*> indices;
+class RtedArray {
+  public:
+		SgInitializedName*         initName;
+		SgStatement*               surroundingStatement;
+		AllocKind                  allocKind;
+		SgExpression*              size;
+		std::vector<SgExpression*> indices;
 
-  RTedArray ( SgInitializedName* init,
-							SgStatement* stmt,
-	            bool _onHeap,
-							bool _fromMalloc = false,
-							SgExpression* _size = NULL
-						)
-	: initName(init), surroundingStatement(stmt), onHeap(_onHeap),
-	  fromMalloc (_fromMalloc), size(_size), indices()
-	{}
+		RtedArray ( SgInitializedName* init,
+								SgStatement* stmt,
+								AllocKind _allocKind,
+								SgExpression* _size = NULL
+							)
+		: initName(init), surroundingStatement(stmt),
+			allocKind(_allocKind), size(_size), indices()
+		{}
 
-	virtual ~RTedArray() {}
+		virtual ~RtedArray() {}
 
-  std::vector<SgExpression*>& getIndices() { return indices; }
+		std::vector<SgExpression*>&       getIndices()       { return indices; }
+		const std::vector<SgExpression*>& getIndices() const { return indices; }
 
-  int getDimension() { return indices.size(); }
+		int getDimension() const { return indices.size(); }
 
-  std::string unparseToString()
-	{
-	  std::string                            res;
-    std::vector< SgExpression* >::iterator i = indices.begin();
+		std::string unparseToString() const
+		{
+			std::string                                  res;
+			std::vector< SgExpression* >::const_iterator i = indices.begin();
 
-		while( i != indices.end() ) {
-          res += (*i) -> unparseToString();
-          ++i;
-          if( i != indices.end() )
-              res += ", ";
-    }
+			while( i != indices.end() ) {
+						res += (*i) -> unparseToString();
+						++i;
+						if( i != indices.end() )
+								res += ", ";
+			}
 
-		return res;
-  }
+			return res;
+		}
 };
 
 
@@ -82,16 +82,16 @@ class RtedClassElement {
   virtual ~RtedClassElement() {}
 
   virtual size_t extraArgSize() { return 0; }
-	virtual RTedArray* get_array() { return NULL; }
+	virtual RtedArray* get_array() { return NULL; }
 };
 
 class RtedClassArrayElement : public RtedClassElement {
-      RTedArray* array;
+      RtedArray* array;
   public:
       RtedClassArrayElement( std::string elementName,
 														 std::string elementType,
 														 SgDeclarationStatement* sgElement,
-														 RTedArray* arr
+														 RtedArray* arr
 						               )
 			: RtedClassElement(elementName, elementType, sgElement), array(arr)
 			{
@@ -103,7 +103,7 @@ class RtedClassArrayElement : public RtedClassElement {
           return (array -> getDimension() + 1);
       }
 
-			RTedArray* get_array() { return array; }
+			RtedArray* get_array() { return array; }
 };
 
 

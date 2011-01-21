@@ -396,42 +396,41 @@ void RtedTransformation::insertAssertFunctionSignature(SgFunctionCallExp* fncall
 #endif
 }
 
-void RtedTransformation::insertFreeCall(SgExpression* free)
+void RtedTransformation::insertFreeCall(SgExpression* freeExp, AllocKind ak)
 {
-   SgFunctionCallExp* free_call = isSgFunctionCallExp(free);
-   SgDeleteExp*       del_exp = isSgDeleteExp(free);
-
-   ROSE_ASSERT( free_call || del_exp );
+   ROSE_ASSERT( freeExp );
 
    // stmt wraps a call to free -- most likely an expression statement
    // alert the RTS before the call to detect errors such as double-free
-   SgStatement*  stmt = getSurroundingStatement(free);
+   SgStatement*  stmt = getSurroundingStatement(freeExp);
    SgExpression* address_expression = NULL;
-   SgExpression* from_malloc_expression = NULL;
 
-   if (free_call) {
-      SgExpressionPtrList& args = free_call->get_args()->get_expressions();
-      ROSE_ASSERT( args.size() == 1 );
+   if ((ak & akCxxHeap) == akCxxHeap)
+   {
+     // \pp \todo what about delete[] ?
+     SgDeleteExp* delExp = isSgDeleteExp(freeExp);
+     ROSE_ASSERT(delExp);
 
-      address_expression = args.front();
-
-      // free should be paired with malloc
-      from_malloc_expression = buildIntVal( 1 );
+     address_expression = delExp -> get_variable();
    }
    else
    {
-      address_expression = del_exp -> get_variable();
+     SgFunctionCallExp*   callExp = isSgFunctionCallExp(freeExp);
+     ROSE_ASSERT(callExp);
 
-      // delete should be paired with new
-      from_malloc_expression = buildIntVal( 0 );
+     SgExpressionPtrList& args = callExp->get_args()->get_expressions();
+     ROSE_ASSERT( args.size() == 1 );
+
+     address_expression = args.front();
    }
 
-   ROSE_ASSERT( stmt && address_expression && from_malloc_expression );
+   ROSE_ASSERT( stmt && address_expression );
 
+   const bool     upcShared = ((ak & akUpcSharedHeap) == akUpcSharedHeap);
    SgExprListExp* arg_list = buildExprListExp();
 
-   appendExpression( arg_list, address_expression );
-   appendExpression( arg_list, from_malloc_expression );
+   appendExpression( arg_list, mkAddress(address_expression, upcShared) );
+   appendExpression( arg_list, mkAllocKind(ak) );
    appendFileInfo( arg_list, stmt );
 
    // have to check validity of call to free before the call itself
@@ -683,7 +682,11 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n2)
   }
   else if( "free" == name )
   {
-     frees.push_back( fcexp );
+     frees.push_back( Deallocations::value_type(fcexp, akCHeap) );
+  }
+  else if( "upc_free" == name )
+  {
+     frees.push_back( Deallocations::value_type(fcexp, akUpcSharedHeap) );
   }
   else if( "realloc" == name )
   {

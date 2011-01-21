@@ -4,26 +4,17 @@
 #include <sstream>
 #include <cassert>
 
-using namespace std;
-
 // ------------------------------ Source Position -----------------------------------
 
-SourcePosition::SourcePosition()
-: file("Unknown"), line1(0), line2(0)
-{}
-
-SourcePosition::SourcePosition(rted_SourceInfo si)
-: file(si.file), line1(si.src_line), line2(si.rted_line)
-{}
 
 std::string SourcePosition::toString() const
 {
-    stringstream stream;
+    std::stringstream stream;
     stream << *this;
     return stream.str();
 }
 
-ostream& operator<< (ostream &os, const SourcePosition & m)
+std::ostream& operator<< (std::ostream &os, const SourcePosition & m)
 {
     os << m.getFile() << "("
        << m.getLineInOrigFile() << ","
@@ -31,16 +22,19 @@ ostream& operator<< (ostream &os, const SourcePosition & m)
     return os;
 }
 
-string SourcePosition::getTransformedFile() const
+std::string SourcePosition::getTransformedFile() const
 {
-    int pos = file.find_last_of(".");
-    string fileWithoutSuffix  = file.substr(0,pos);
+    size_t      pos = file.find_last_of(".");
+    std::string fileWithoutSuffix = file.substr(0, pos);
+    std::string suffix;
 
-    string suffix;
-    if(pos <= (int)file.size() )
+    if (pos != std::string::npos)
         suffix = file.substr(pos);
 
-    return fileWithoutSuffix + "_rose" + suffix;
+    fileWithoutSuffix.append("_rose");
+    fileWithoutSuffix.append(suffix);
+
+    return fileWithoutSuffix;
 }
 
 
@@ -76,8 +70,8 @@ RuntimeViolation::RuntimeViolation(const RuntimeViolation & other)
 std::ostream& operator<< (std::ostream &os, const RuntimeViolation & m)
 {
 	os << "Violation: ";
-    os << m.getShortDesc() << " at " << m.getPos() << endl;
-    os << m.descStream().str() << endl;
+    os << m.getShortDesc() << " at " << m.getPos() << std::endl;
+    os << m.descStream().str() << std::endl;
     return os;
 }
 
@@ -111,7 +105,7 @@ std::string RuntimeViolation::getShortDescFromType(Type type)
 }
 
 
-RuntimeViolation::Type RuntimeViolation::getViolationByString(const string & s)
+RuntimeViolation::Type RuntimeViolation::getViolationByString(const std::string & s)
 {
     if       (s == "DOUBLE_ALLOCATION")        return DOUBLE_ALLOCATION;
     else if  (s == "INVALID_FREE")             return INVALID_FREE;

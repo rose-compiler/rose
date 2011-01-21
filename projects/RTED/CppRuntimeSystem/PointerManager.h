@@ -19,11 +19,13 @@ class PointerManager;
 class PointerInfo
 {
     public:
+        typedef const char* Location;
+
         friend class PointerManager; // because of protected constructors
 
-        Address getSourceAddress() const { return source; }
-        Address getTargetAddress() const { return target; }
-        RsType *  getBaseType()      const { return baseType; }
+        Location getSourceAddress() const { return source; }
+        Location getTargetAddress() const { return target; }
+        RsType * getBaseType()      const { return baseType; }
 
 
         /// Checks if there is a variable registered for sourceAddress
@@ -36,20 +38,21 @@ class PointerInfo
         void print(std::ostream & os) const;
 
     protected:
-        PointerInfo(Address source, Address target, RsType * type);
+        PointerInfo(Location source, Location target, RsType * type);
 
         // Use only for creating DummyObject to search set
-        PointerInfo(Address source);
+        explicit
+        PointerInfo(Location source);
 
         ~PointerInfo();
 
 
-        void setTargetAddress(Address t, bool checks=false);
-        void setTargetAddressForce(Address t) { target = t; }
+        void setTargetAddress(Location t, bool checks=false);
+        void setTargetAddressForce(Location t) { target = t; }
 
 
-        Address source;   ///< where pointer is stored in memory
-        Address target;   ///< where pointer points to
+        Location source;   ///< where pointer is stored in memory
+        Location target;   ///< where pointer points to
         RsType *      baseType; ///< the base type of the pointer i.e. type of target
 };
 
@@ -66,45 +69,47 @@ class PointerManager
         static const bool check = true;
         static const bool nocheck = !check;
 
+        typedef PointerInfo::Location Location;
+
         /// Registers a memory region  from sourceAddress to sourceAddress+sizeof(void*)
         /// which stores another address
         /// second parameter specifies the type of the target
-        void createDereferentiableMem(Address sourceAddress, RsType * targetType);
+        void createDereferentiableMem(Location sourceAddress, RsType * targetType);
 
         /// Call this function if a class was instantiated
         /// it iterates over the subtypes and if they are pointer or arrays
         /// they get registered as dereferentiable mem-regions
         /// @param classBaseAddr  the address where the class was instantiated
         /// @param type class type
-        void createPointer(Address classBaseAddr, RsType * type);
+        void createPointer(Location classBaseAddr, RsType * type);
 
         /// Delete a registered pointer
-        void deletePointer(Address sourceAddress, bool checks);
+        void deletePointer(Location sourceAddress, bool checks);
 
         /// Deletes all pointer with startaddress>=from and startaddress < to
         /// @param checks   if true, also test for memory leaks
-        void deletePointerInRegion( Address from, Address to, bool checks);
+        void deletePointerInRegion( Location from, Location to, bool checks);
 
         /// Registers that targetAddress is stored at sourceAddress, and the type of targetAddress
-        void registerPointerChange( Address sourceAddress, Address targetAddress, bool checkPointerMove, bool checkMemLeaks);
         /// sourceAddress has to be registered first with createPointer
+        void registerPointerChange( Location sourceAddress, Location targetAddress, bool checkPointerMove, bool checkMemLeaks);
 
         /// This function behaves like the previous implementation
         /// except when no pointer was found at this address it creates a new one with the given baseType
-        void registerPointerChange( Address sourceAddress, Address targetAddress, RsType * baseType, bool checks, bool checkMemLeaks);
+        void registerPointerChange( Location sourceAddress, Location targetAddress, RsType * baseType, bool checks, bool checkMemLeaks);
 
         /// Behaves like registerPointerChange(sourceAddress,deref_address,true), but after the
         /// function the same targetAddress is registered for the pointer,
         /// Example: *(p++)  call registerPointerChange()
         ///          *(p+1)  call checkPointerDereference()
-        void checkPointerDereference( Address sourceAddress, Address derefed_address );
+        void checkPointerDereference( Location sourceAddress, Location derefed_address );
         void checkIfPointerNULL( void* pointer);
 
         /// Invalidates all "Pointer" i.e. dereferentiable memory regions
         /// point in given memory chunk
         /// @param remove if true the pointer is only set to null
         ///               if false they are deleted
-        void invalidatePointerToRegion(Address from, Address to, bool remove=false);
+        void invalidatePointerToRegion(Location from, Location to, bool remove=false);
 
 
         typedef std::set<PointerInfo*, PointerCompare> PointerSet;
@@ -114,18 +119,18 @@ class PointerManager
         /// to iterate over region a1 until a2 (where a2 is exclusive!) use
         /// for(PointerSetIter i = sourceRegionIter(a1); i!= sourceRegionIter(a2); ++i)
         ///     PointerInfo * info = *i;
-        PointerSetIter sourceRegionIter(Address sourceAddr);
+        PointerSetIter sourceRegionIter(Location sourceAddr);
 
 
-        typedef std::multimap<Address,PointerInfo* > TargetToPointerMap;
+        typedef std::multimap<Location,PointerInfo* > TargetToPointerMap;
         typedef TargetToPointerMap::const_iterator TargetToPointerMapIter;
 
         /// Use this to get pointerInfos which have targetAddr in a specific region
         /// to iterate over region a1 until a2 (where a2 is exclusive!) use
         /// for(TargetToPointerMapIter i = targetRegionIterBegin(a1); i!= targetRegionIterEnd(a2); ++i)
         ///     PointerInfo * info = i->second; (i->first is the targetAddr)
-        TargetToPointerMapIter targetRegionIterBegin(Address targetAddr);
-        TargetToPointerMapIter targetRegionIterEnd (Address targetAddr);
+        TargetToPointerMapIter targetRegionIterBegin(Location targetAddr);
+        TargetToPointerMapIter targetRegionIterEnd (Location targetAddr);
 
 
         const PointerSet & getPointerSet() const { return pointerInfoSet; }
@@ -153,7 +158,7 @@ class PointerManager
         /// the destruction of its value is reported as the source of the memory
         /// leak.
         bool checkForMemoryLeaks(
-            Address       address,
+            Location       address,
             size_t          type_size,
             PointerInfo*    pointer_to_blame = NULL);
 

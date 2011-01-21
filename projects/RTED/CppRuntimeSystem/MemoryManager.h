@@ -33,26 +33,27 @@ class RsType;
 class MemoryType
 {
     public:
+        typedef const char*               Location;
         typedef std::map<size_t, RsType*> TypeInfoMap;
         typedef TypeInfoMap::iterator     TiIter;
 
-        enum AllocKind { StackAlloc = 0, CStyleAlloc = 1, CxxStyleAlloc = 2 };
+        typedef rted_AllocKind            AllocKind;
 
-        MemoryType(Address addr, size_t size, AllocKind kind, const SourcePosition& pos);
+        MemoryType(Location addr, size_t size, AllocKind kind, const SourcePosition& pos);
 
         /// Checks if an address lies in this memory chunk
-        bool containsAddress(Address addr);
+        bool containsAddress(Location addr);
         /// Checks if a memory area is part of this allocation
-        bool containsMemArea(Address addr, size_t size);
+        bool containsMemArea(Location addr, size_t size);
         /// Checks if this MemoryType overlaps another area
-        bool overlapsMemArea(Address queryAddr, size_t querySize);
+        bool overlapsMemArea(Location queryAddr, size_t querySize);
 
 
         /// Less operator uses startAdress
         bool operator< (const MemoryType & other) const;
 
 
-        Address          getAddress() const { return startAddress; }
+        Location               getAddress() const { return startAddress; }
         size_t                 getSize()    const { return size; }
         const SourcePosition & getPos()     const { return allocPos; }
         AllocKind              howCreated() const { return origin; }
@@ -76,14 +77,14 @@ class MemoryType
         void print() const;
 
         template<typename T>
-        T * readMemory(size_t offset)
+        const T* readMemory(size_t offset)
         {
             assert(offset<0 && offset+sizeof(T) >= size);
             assert(isInitialized(offset,offset+sizeof(T)));
 
-            char * charAddress = static_cast<char*>(startAddress);
-            charAddress += offset;
-            return static_cast<T*>(charAddress);
+            Location charAddress = startAddress + offset;
+
+            return static_cast<const T*>(charAddress);
         }
 
         /// This functions checks and registers typed access to memory
@@ -122,9 +123,9 @@ class MemoryType
         typedef std::pair<TiIter,TiIter> TiIterPair;
 
 
-        void insertType(Address offset, RsType * type);
+        void insertType(Location offset, RsType * type);
 
-        const Address startAddress; ///< address where memory chunk starts
+        Location            startAddress; ///< address where memory chunk starts
         size_t              size;         ///< Size of allocation
         std::vector<bool>   initialized;  ///< stores for every byte if it was initialized
         AllocKind           origin;       ///< Where the memory is located and how the location was created
@@ -169,17 +170,19 @@ std::ostream& operator<< (std::ostream &os, const MemoryType & m);
 class MemoryManager
 {
     public:
+        typedef const char* Location;
+
         MemoryManager();
 
         /// Destructor checks if there are still allocations which are not freed
         ~MemoryManager();
 
-        /// \brief  Create a new allocation based on alloc
+        /// \brief  Create a new allocation based on the parameters
         /// \return a pointer to the actual stored object (NULL in case something went wrong)
-        MemoryType* allocateMemory(const MemoryType& alloc);
+        MemoryType* allocateMemory(Location addr, size_t size, MemoryType::AllocKind kind, const SourcePosition& pos);
 
         /// Frees allocated memory, throws error when no allocation is managed at this addr
-        void freeMemory(Address addr, MemoryType::AllocKind);
+        void freeMemory(Location addr, MemoryType::AllocKind);
 
 
         /// Prints information about all currently allocated memory areas
@@ -187,18 +190,18 @@ class MemoryManager
 
         /// Check if memory region is allocated and initialized
         /// @param size     size=sizeof(DereferencedType)
-        void checkRead  (Address addr, size_t size, RsType * t=NULL);
+        void checkRead  (Location addr, size_t size, RsType * t=NULL);
 
         /// Checks if memory at position can be safely written, i.e. is allocated
         /// if true it marks that memory region as initialized
         /// that means this function should be called on every write!
-        void checkWrite (Address addr, size_t size, RsType * t=NULL);
+        void checkWrite (Location addr, size_t size, RsType * t=NULL);
 
 
         /**
          * @return @b true if the memory region containing
          * @c addr @c.. @c addr+size is initialized. */
-        bool  isInitialized(Address addr, size_t size);
+        bool  isInitialized(Location addr, size_t size);
 
 
         /// This check is intended to detect array out of bounds
@@ -211,10 +214,10 @@ class MemoryManager
         ///         otherwise.
         /// There a two kinds of violation: change of allocation chunk
         ///                                 change of "typed-chunk" (see example)
-        bool checkIfSameChunk(Address a1, Address a2, RsType * t);
+        bool checkIfSameChunk(Location a1, Location a2, RsType * t);
         bool checkIfSameChunk(
-                Address a1,
-                Address a2,
+                Location a1,
+                Location a2,
                 size_t size,
                 RuntimeViolation::Type violation = RuntimeViolation::POINTER_CHANGED_MEMAREA
         );
@@ -229,24 +232,24 @@ class MemoryManager
 
         /// Returns the MemoryType which stores the allocation information which is
         /// registered for this addr, or NULL if nothing is registered
-        MemoryType * getMemoryType(Address addr);
+        MemoryType * getMemoryType(Location addr);
 
         /// Returns mem-area which contains a given area, or NULL if nothing found
-        MemoryType * findContainingMem(Address addr, size_t size = 1) ;
+        MemoryType * findContainingMem(Location addr, size_t size = 1) ;
 
         /// Returns mem-area which overlaps with given area, or NULL if nothing found
-        bool existOverlappingMem(Address addr, size_t size) ;
+        bool existOverlappingMem(Location addr, size_t size) ;
 
 
-        typedef std::map<Address, MemoryType> MemoryTypeSet;
+        typedef std::map<Location, MemoryType> MemoryTypeSet;
         const  MemoryTypeSet & getAllocationSet() const { return mem; }
 
 
         template<typename T>
-        T* readMemory(Address address)
+        const T* readMemory(Location address)
         {
             checkRead(address, sizeof(T));
-            return point_to<T>(address);
+            return reinterpret_cast<const T*>(address);
         }
 
 
@@ -262,11 +265,11 @@ class MemoryManager
          *              (should be INVALID_READ or INVALID_WRITE)
          * @return the allocated memory chunk
          */
-        MemoryType* checkAccess(Address addr, size_t size, RsType * t, RuntimeViolation::Type vio);
+        MemoryType* checkAccess(Location addr, size_t size, RsType * t, RuntimeViolation::Type vio);
 
         /// Queries the map for a potential matching memory area
         /// finds the memory region with next lower or equal address
-        MemoryType * findPossibleMemMatch(Address addr);
+        MemoryType * findPossibleMemMatch(Location addr);
 
         void failNotSameChunk( RsType*, RsType*, size_t, size_t, MemoryType*, MemoryType*, RuntimeViolation::Type violation);
 
@@ -278,12 +281,5 @@ class MemoryManager
 };
 
 std::ostream& operator<< (std::ostream &os, const MemoryManager & m);
-
-
-
-
-
-
-
 
 #endif

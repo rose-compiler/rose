@@ -52,10 +52,10 @@ class TypeSystem
         // const_iterator begin() const { return types.begin(); }
         // const_iterator end()   const { return types.end();   }
     protected:
-        typedef std::map<size_t, RsPointerType*>    TypeDerivatives;
+        typedef std::map<size_t, RsPointerType>     TypeDerivatives;
         typedef std::map<RsType*, TypeDerivatives>  TypeContainer;
 
-        typedef std::map<size_t, RsArrayType*>      ArrayDimensions;
+        typedef std::map<size_t, RsArrayType>       ArrayDimensions;
         typedef std::map<RsType*, ArrayDimensions>  ArrayDimContainer;
 
         TypeSet           types;
