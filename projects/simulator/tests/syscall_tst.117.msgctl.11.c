@@ -55,7 +55,7 @@
 #define MAXNREPS	1000
 #ifndef CONFIG_COLDFIRE
 //#define MAXNPROCS	 1000000	/* This value is set to an arbitrary high limit. */
-#define MAXNPROCS       100             /* ROSE: be nice to users */
+#define MAXNPROCS       3             /* ROSE: be nice to users */
 #else
 #define MAXNPROCS	 100000	/* Coldfire can't deal with 1000000 */
 #endif
@@ -146,9 +146,15 @@ char *argv[];
 
 	if (argc == 1) {
 		/* Set default parameters */
+#if 1 /* We don't need such large defaults for ROSE [RPM 2011-01-05] */
+                nreps = 1;
+                nprocs = 1;
+                nkids = 1;
+#else
 		nreps = MAXNREPS;
 		nprocs = MSGMNI;
 		nkids = maxnkids;
+#endif
 	} else if (argc == 4) {
 		if (atoi(argv[1]) > MAXNREPS) {
 			tst_resm(TCONF,

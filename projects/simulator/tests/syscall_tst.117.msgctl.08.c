@@ -136,8 +136,13 @@ char *argv[];
 
 	if (argc == 1) {
 		/* Set default parameters */
+#if 1 /* Use a lower number of processes for testing in ROSE. [RPM 2011-01-05] */
+                nreps = 3;
+                nprocs = 2;
+#else
 		nreps = MAXNREPS;
 		nprocs = MSGMNI;
+#endif
 	} else if (argc == 3) {
 		if (atoi(argv[1]) > MAXNREPS) {
 			tst_resm(TCONF,
@@ -218,8 +223,12 @@ char *argv[];
 				tst_exit();
 			}
 #else
+#ifdef NOT_DEBUGGING
 			procstat = 1;
 			exit(dotest(keyarray[i], i));
+#else
+                        exit(0);
+#endif
 #endif
 		}
 		pidarray[i] = pid;

@@ -369,7 +369,7 @@ void cnt_setup(int opval)
 	 * semop command before we continue. Without this sleep, on SMP machine
 	 * the father semctl could be executed before the son semop.
 	 */
-	sleep(1);
+	sleep(3);
 }
 
 void child_cnt()

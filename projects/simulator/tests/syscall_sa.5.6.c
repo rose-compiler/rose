@@ -19,7 +19,7 @@ char fname[100] = "";
 void setup() {
   sprintf(fname,"tfile_%d",getpid());
 
-  if( mknod(fname, S_IFIFO | 0644, (dev_t)NULL) < 0 )
+  if( mknod(fname, S_IFIFO | 0644, (dev_t)0) < 0 )
     err(1,"mknod failed");
 }
 
