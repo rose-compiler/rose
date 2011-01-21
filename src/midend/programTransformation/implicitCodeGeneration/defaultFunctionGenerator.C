@@ -2307,7 +2307,7 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
      func_def->set_parent(func); //necessary or not?
 
         // parameter list
-     SgFunctionParameterList * parameterList = new SgFunctionParameterList(COMPILERGENERATED_FILE_INFO); //! TODO use SageBuilder
+     SgFunctionParameterList * parameterList = buildFunctionParameterList(); //! TODO use SageBuilder
      ROSE_ASSERT(parameterList != NULL); /*why assert here, not before for all new operations?*/
      func->set_parameterList(parameterList);
 
