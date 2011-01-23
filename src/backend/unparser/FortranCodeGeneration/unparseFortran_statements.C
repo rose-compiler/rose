@@ -2130,7 +2130,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
      isSameVariant = false;
 #endif
 
-  // printf ("In unparseVarDeclStmt(): isSameVariant = %s \n",isSameVariant ? "true" : "false");
+     printf ("In unparseVarDeclStmt(): isSameVariant = %s \n",isSameVariant ? "true" : "false");
      if (isSameVariant == true)
         {
        // printf ("These types are all the same so use the type attributes \n");
@@ -2165,6 +2165,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
 
           SgInitializedNamePtrList::iterator p = vardecl->get_variables().begin();
 
+#if 1
 #if 0
        // DQ (12/1/2007): Use stripType() with bit_array == STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE
        // Specifically avoid using STRIP_ARRAY_TYPE and STRIP_TYPEDEF_TYPE, since they would recursively go too far...
@@ -2180,7 +2181,11 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
        // printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 
           unp->u_fortran_type->unparseType(baseType,info);
-
+#else
+       // DQ (1/17/2011): Unparse the correct type directly...(or compute the intersection type of the types from the list of variables)...
+          printf ("In unparseVarDeclStmt(): (*p)->get_type() = %p = %s \n",(*p)->get_type(),(*p)->get_type()->class_name().c_str());
+          unp->u_fortran_type->unparseType((*p)->get_type(),info);
+#endif
           curprint(" :: ");
           ninfo.set_SkipBaseType();
           while (p != vardecl->get_variables().end())
@@ -3952,6 +3957,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
         {
        // printf ("In unparseVarDecl(): calling unparseType on type = %p = %s \n",type,type->class_name().c_str());
 
+#if 0
        // DQ (3/23/2008): If this is a SgPointerType then just output the 
        // base type (since the declaration will use the "POINTER" attribute).
        // unp->u_fortran_type->unparseType(type, info);
@@ -3962,11 +3968,13 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                ROSE_ASSERT(baseType != NULL);
                unp->u_fortran_type->unparseType(baseType, info);
              }
-          else
+            else
              {
                unp->u_fortran_type->unparseType(type, info);
              }
-
+#else
+          unp->u_fortran_type->unparseType(type, info);
+#endif
        // DQ (11/18/2007): Added support for ALLOCATABLE declaration attribute
           SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
           ROSE_ASSERT(variableDeclaration != NULL);
@@ -4026,7 +4034,8 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
             // PARAMETER in Fortran implies const in C/C++
                curprint(", PARAMETER");
              }
-
+#if 0
+       // DQ (1/17/2011): Pointers and arrays are not correctly handled in the unparsing of the type directly.
        // DQ (5/14/2008): Note that POINTER is only relevant if the variable is NOT declared as ALLOCATABLE.
        //                 If it is ALLOCATABLE then POINTER is not used.
        // DQ (11/23/2007): A better implementation of this might require that we strip off some modifiers
@@ -4036,7 +4045,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
              {
                curprint(", POINTER");
              }
-
+#endif
        // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() ? "true" : "false");
           if (variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() == true)
              {

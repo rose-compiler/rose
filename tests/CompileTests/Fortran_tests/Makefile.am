@@ -11,6 +11,11 @@ SUBDIRS = LANL_POP gfortranTestSuite
 # #######################
 
 F90_TESTCODES_REQUIRED_TO_PASS = \
+     test2011_01.f90 \
+     test2011_02.f90 \
+     test2011_04.f90 \
+     test2011_06.f90 \
+     test2011_07.f90 \
      test2007_01.f90 \
      test2007_02.f90 \
      test2007_03.f90 \
@@ -200,11 +205,31 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_182.f90 \
      test2010_183.f90 \
      test2010_184.f90 \
-     test2011_01.f90 \
-     test2011_02.f90 \
-     test2011_04.f90 \
      test2011_05.f90 \
      canonicalExample.f90
+
+# DQ (1/18/2011): Failing tests.
+#     test2007_100.f90
+#     test2007_135.f90 
+#     test2007_219.f90 
+#     test2010_35.f90
+#     test2010_49.f90
+#     test2010_59.f90 
+#     test2010_136.f90 
+#     test2010_151.f90 
+#     test2010_154.f90 
+#     test2010_174.f90 
+#     test2011_05.f90 
+
+
+# DQ (1/20/2011): Failing tests.
+#     test2007_248.f90 
+#     test2010_49.f90 
+#     test2010_136.f90 
+#     test2010_151.f90 
+
+# DQ (1/22/2011): Failing tests.
+
 
 # This used to work, but fails how that test2010_172.f90 and test2010_184.f90 pass
 # It seems that these are mutually exclusive!!!
@@ -313,6 +338,16 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2010_68.f \
      test2010_69.f
 
+# DQ (1/18/2011): Failing tests.
+#     test2007_150.f 
+#     test2007_209.f 
+#     test2007_227.f 
+#     test2007_232.f 
+
+# DQ (1/20/2011): Failing tests.
+#     test2007_227.f 
+
+
 F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_30.f03 \
      test2007_31.f03 \
@@ -343,6 +378,12 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2010_179.f03 \
      test2010_180.f03 \
      test2010_181.f03
+
+# DQ (1/18/2011): Failing tests.
+#     test2007_133.f03 
+
+# DQ (1/20/2011): Failing tests.
+#     test2007_133.f03 
 
 # DQ (4/3/2010): Added test code used in Fortran OpenMP tests.
 OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS = \

@@ -2035,6 +2035,9 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_pointer spec \n");
+#if 0
+            // DQ (1/20/2011): These are not processed after they are accumulated, so that the base 
+            // types will be properly handled for array of pointers, and pointers of arrays, etc.
 
             // DQ (8/29/2010): Handling multiple type-attr-specs requires checking the astTypeStack 
             // since that is where the results of previous type-attr-specs are pushed.
@@ -2053,6 +2056,7 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
                     astBaseTypeStack.push_front(previouslyBuiltType);
                   }
                convertBaseTypeOnStackToPointer();
+#endif
                break;
              }
 
@@ -2155,6 +2159,19 @@ void c_action_component_attr_spec_list__begin()
      outputState("At TOP of R441 c_action_component_attr_spec_list__begin()");
 #endif
 
+  // DQ (1/20/2011): We have to save the astAttributeSpecStack so that we can use the same attribute 
+  // stack for processing all variables in the declaration uniformally.  See test2007_248.f90 for an 
+  // example.  We will also have to test this support in R441 as well (similar parser action, but for 
+  // variable declarations inside of types.
+     printf ("Save the astAttributeSpecStack stack to reuse it for each variable in the declaration. \n");
+
+  // OR just don't delete the attributes until we process "c_action_component_attr_spec_list(int count)"!!!
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // Nothing to do here since we keep a stack and handle items pushed on the the stack later.
   // ROSE_ASSERT(astNameListStack.empty() == true);
      if (astNameStack.empty() == false)
@@ -2176,6 +2193,8 @@ void c_action_component_attr_spec_list__begin()
 
 void c_action_component_attr_spec_list(int count)
    {
+  // This function R441 is similar to R504 R503-F2008 but is used for declarations in types.
+
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_attr_spec_list(): count = %d (building the SgArrayType) astAttributeSpecStack.size() = %zu \n",count,astAttributeSpecStack.size());
 
@@ -2211,6 +2230,9 @@ void c_action_component_attr_spec_list(int count)
           astTypeStack.push_front(arrayType);
         }
 #endif
+
+  // printf ("In R441 c_action_component_attr_spec_list(): calling c_action_array_spec() \n");
+  // c_action_array_spec(count);
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -2264,6 +2286,7 @@ void c_action_component_decl(Token_t * id,
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("Warning: calling c_action_entity_decl() with new and unknown OFP 0.8.0 specific options \n");
 
+  // Calling R504, R503-F2008
      c_action_entity_decl(id,false,false,false,false);
 #else
      c_action_entity_decl(id);
@@ -2273,7 +2296,7 @@ void c_action_component_decl(Token_t * id,
 #endif
    }
 
-/** R442 list
+/** R442 R438-F2008 list
  * component_decl
  * component_decl_list
  *	:	component_decl ( T_COMMA component_decl )*
@@ -2303,8 +2326,10 @@ void c_action_component_decl_list__begin()
 
 void c_action_component_decl_list(int count)
    {
+  // This function R442 R438-F2008 is similar to R504 R503-F2008
+
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-        printf ("c_action_component_decl_list(): count = %d \n",count);
+        printf ("R442 R438-F2008 c_action_component_decl_list(): count = %d \n",count);
 
   // printf ("astNameStack.size() = %zu count = %d \n",astNameStack.size(),count);
   // ROSE_ASSERT(astNameStack.size() == (size_t)count);
@@ -2317,12 +2342,30 @@ void c_action_component_decl_list(int count)
 #endif
 
 #if 1
+  // DQ (1/20/2011): Refactored the code below so it could be called from R443 as well as R504.
+     bool hasArraySpec      = false;
+     bool hasInitialization = false;
+     printf ("In R442 R438-F2008 calling processAttributeSpecStack(false,false): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+     processAttributeSpecStack(hasArraySpec,hasInitialization);
+#endif
+
+#if 1
   // DQ (1/28/2009): This is called for variable declarations in structures.
      ROSE_ASSERT (astNodeStack.empty() == false && astBaseTypeStack.empty() == false);
 
   // DQ (1/28/2009): Refactored this code so it could be called in R442, R501, R504 and R1238.
   // Note that there is no token for this rule, so we pass in a NULL pointer.
      buildVariableDeclarationAndCleanupTypeStack(NULL);
+#endif
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R442 c_action_component_decl_list()");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -2350,9 +2393,15 @@ void c_action_component_array_spec(ofp_bool isExplicit)
 #endif
 
 #if 1
+  // DQ (1/18/2011): Called by R510 and R443.
+     int count = 1;
+     processMultidimensionalSubscriptsIntoExpressionList(count);
+#else
   // DQ (3/3/2008): Note that R443 is processed after R441, and we need the 
   // SgColonShapeExp objects to be pushed onto the stack before this code
   // can be executed.  So this code is moved to R443.
+
+#error "DEAD CODE!"
 
   // Code copied from R441
      if (astBaseTypeStack.empty() == true)
@@ -2365,8 +2414,14 @@ void c_action_component_array_spec(ofp_bool isExplicit)
         }
        else
         {
-       // DQ (3/24/2008): This code is modified to handle when the array index is explicit
+#error "DEAD CODE!"
 
+#if 0
+       // DQ (1/18/2011): I think we want this to be processed later...
+
+#error "DEAD CODE!"
+
+       // DQ (3/24/2008): This code is modified to handle when the array index is explicit
        // This has been moved from c_action_array_spec, since the c_action_array_spec_element() 
        // is called once per dimension of the array type.
        // int count = astExpressionStack.size();
@@ -2375,18 +2430,33 @@ void c_action_component_array_spec(ofp_bool isExplicit)
           SgArrayType* arrayType = NULL;
           if (isExplicit == true)
              {
+
+#error "DEAD CODE!"
+
             // If this is explicit then the R510 rule has already been called and the array type 
             // has been built on the astTypeStack already. See test2008_20.f90.
+#if 1
                ROSE_ASSERT(astTypeStack.empty() == false);
                arrayType = isSgArrayType(astTypeStack.front());
                ROSE_ASSERT(arrayType != NULL);
+#else
+               printf ("astTypeStack.empty() = %s \n",astTypeStack.empty() ? "true" : "false");
+               int count = astExpressionStack.size();
+               arrayType = convertTypeOnStackToArrayType(count);
+               ROSE_ASSERT(arrayType != NULL);
+               astTypeStack.push_front(arrayType);
+#endif
              }
             else
              {
+#error "DEAD CODE!"
+
                int count = astExpressionStack.size();
                arrayType = convertTypeOnStackToArrayType(count);
                astTypeStack.push_front(arrayType);
              }
+
+#error "DEAD CODE!"
 
        // DQ (3/23/2008): Added support for pointer to type (at least pointer to array type)
        // see test2008_18.f90.
@@ -2398,6 +2468,8 @@ void c_action_component_array_spec(ofp_bool isExplicit)
 #endif
                SgPointerType* pointerType = new SgPointerType(arrayType);
 
+#error "DEAD CODE!"
+
             // Remove the base type and push the pointerType
                astTypeStack.pop_front();
                astTypeStack.push_front(pointerType);
@@ -2405,7 +2477,14 @@ void c_action_component_array_spec(ofp_bool isExplicit)
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
+
+#error "DEAD CODE!"
+
              }
+#endif
+
+#error "DEAD CODE!"
+
         }
 #endif
 
@@ -2887,8 +2966,14 @@ void c_action_ac_value()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_value() \n");
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("In of R469 c_action_ac_value()");
+#endif
+
   // DQ (21/4/2008): Move the value from the astExpressionStack to the astInitializerStack
      ROSE_ASSERT(astExpressionStack.empty() == false);
+
 #if 0
   // DQ (4/5/2008): We no longer want to support a separate astInitializerStack because 
   // test2008_24.f90 demonstrates that the initializer can not be ordered correctly.
@@ -2910,9 +2995,71 @@ void c_action_ac_value_list__begin()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_value_list__begin() \n");
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R469 list c_action_ac_value_list__begin()");
+#endif
+
+  // DQ (1/17/2011): If we get there and there is an expression on the stack then 
+  // we should use it to convert the type into an array type.
+     printf ("MAYBE THIS IS WHERE THE TYPE SHOULD BE CONSTRUCTED AS A LAST RESORT (should be reading the attribute stack!) \n");
+
+#if 1
+  // DQ (1/17/2011): If there is an expression on the astExpressionStack then it is used to convert 
+  // the type in astTypeStack into an array.  See test2007_94.f90 for where this is required!
+  // Note that an alternative might be to check if the entry on the top of the astExpressionStack is a SgExprListExp...
+  // Error: The type should have been built in R504 R503-F2008 c_action_entity_decl(), since this is too late to build the type.
+  // if (astExpressionStack.empty() == false)
+     if ( (astExpressionStack.empty() == false) && (isSgExprListExp(astExpressionStack.front()) != NULL) )
+        {
+          printf ("Use the SgExprListExp to convert the type in astTypeStack into an array. \n");
+
+       // DQ (1/22/2011): This is not required for executable statements (where the astAttributeSpecStack 
+       // will be empty.  See test2010_49.f90 for an example (e.g. "localCount = (/ 2, 3, 5, 7 /)").
+       // Verify that the attribute stack has an entry to tell us what to do (but build an array for now!
+       // ROSE_ASSERT(astAttributeSpecStack.empty() == false);
+          if (astAttributeSpecStack.empty() == false)
+             {
+       // We don't know the count yet, not clear where we get that (assume 1 for initial test).
+       // Note that this parameter is no longer used, so it should be removed!
+          printf ("REMOVE USE OF count PARAMETER IN convertTypeOnStackToArrayType() \n");
+
+       // Note that this is a different count than then one in the function parameter list for this function.
+          int temp_count = 1;
+          SgArrayType* arrayType = convertTypeOnStackToArrayType(temp_count);
+          ROSE_ASSERT(arrayType != NULL);
+
+       // We might want this to be pushed onto the astBaseTypeStack!
+       // astTypeStack.push_front(arrayType);
+
+       // Remove the previous base type and push the new one.
+          astBaseTypeStack.pop_front();
+          astBaseTypeStack.push_front(arrayType);
+
+       // DQ (1/20/2011): Added test before we pop the entry off the stack.
+          ROSE_ASSERT(astAttributeSpecStack.front() == AttrSpec_DIMENSION || astAttributeSpecStack.front() == ComponentAttrSpec_dimension);
+          astAttributeSpecStack.pop_front();
+             }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("After converion of type to array type in R504 (list) c_action_entity_decl_list()");
+#endif
+        }
+#endif
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R469 list c_action_ac_value_list__begin()");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -2921,52 +3068,14 @@ void c_action_ac_value_list(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_value_list(): count = %d \n",count);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R469 list c_action_ac_value_list()");
 #endif
 
-#if 0
-  // DQ (21/4/2008):
-  // Take the values off the astExpressionStack and put them onto the astInitializerStack
-     for (int i=0; i < count; i++)
-        {
-       // ROSE_ASSERT(astExpressionStack.empty() == false);
-          if (astExpressionStack.empty() == false)
-             {
-               SgExpression* exp = astExpressionStack.front();
-               astExpressionStack.pop_front();
-               astInitializerStack.push_front(exp);
-             }
-            else
-             {
-            // This entry has already been moved onto the astInitializerStack (see test2007_94.f90)
-            // (e.g. a processed inplied do-loop already put onto the astInitializerStack).
-               ROSE_ASSERT(astInitializerStack.empty() == false);
-             }
-        }
-#else
+  // DQ (1/17/2011): I now think that MAYBE this should be handling the initialization instead of the R504 parser action!
+
   // Build a SgExprListExp and put the elements on the astInitializerStack into the stack and then put the SgExprListExp on the stack.
-#if 0
-     if (count > 1)
-        {
-          SgExprListExp* expressionList = new SgExprListExp();
-          setSourcePosition(expressionList);
-          for (int i=0; i < count; i++)
-             {
-               ROSE_ASSERT(astInitializerStack.empty() == false);
-               SgExpression* exp = astInitializerStack.front();
-               astInitializerStack.pop_front();
-            // expressionList->append_expression(exp);
-               expressionList->prepend_expression(exp);
-             }
-          astInitializerStack.push_front(expressionList);
-        }
-       else
-        {
-          ROSE_ASSERT(astInitializerStack.empty() == false);
-        }
-#else
   // DQ (5/4/2008): switching back from using astInitializerStack to using astExpressionStack.
      if (count > 1)
         {
@@ -2986,10 +3095,8 @@ void c_action_ac_value_list(int count)
         {
           ROSE_ASSERT(astExpressionStack.empty() == false);
         }
-#endif
-#endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R469 list c_action_ac_value_list()");
 #endif
@@ -3046,8 +3153,19 @@ void c_action_ac_implied_do()
   // have to process the loop control information in R471 and pass it on the stack to R470.
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExprListExp* loopControl = isSgExprListExp(astExpressionStack.front());
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At MIDDLE #1a of R470 list c_action_ac_implied_do()");
+#endif
+
      ROSE_ASSERT(loopControl != NULL);
      astExpressionStack.pop_front();
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At MIDDLE #1b of R470 list c_action_ac_implied_do()");
+#endif
 
   // There should be at most 3 elements in the loopControl (built by R471):
      SgExpressionPtrList & expressionList = loopControl->get_expressions();
@@ -3088,6 +3206,12 @@ void c_action_ac_implied_do()
      delete loopControl;
      loopControl = NULL;
 #endif
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At MIDDLE #1c of R470 list c_action_ac_implied_do()");
+#endif
+
 
 #if 0
      ROSE_ASSERT(astExpressionStack.empty() == false);
@@ -3165,7 +3289,7 @@ void c_action_ac_implied_do()
 
 #if 1
   // Output debugging information about saved state (stack) information.
-     outputState("At MIDDLE of R470 list c_action_ac_implied_do()");
+     outputState("At MIDDLE #2 of R470 list c_action_ac_implied_do()");
 #endif
 
 #if 0
@@ -3255,7 +3379,7 @@ void c_action_ac_implied_do()
 void c_action_ac_implied_do_control( ofp_bool hasStride )
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_ac_implied_do_control() \n");
+        printf ("In c_action_ac_implied_do_control(): hasStride = %s \n",hasStride ? "true" : "false");
 
   // Pull off 2 elements from the astExpressionStack (and a third if hasStride == true)
 
@@ -3300,7 +3424,8 @@ void c_action_ac_implied_do_control( ofp_bool hasStride )
      SgName do_variable_name = astNameStack.front()->text;
      astNameStack.pop_front();
 
-  // printf ("implied do loop variable name = %s \n",do_variable_name.str());
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("implied do loop variable name = %s \n",do_variable_name.str());
 
      SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(do_variable_name,astScopeStack.front());
      ROSE_ASSERT(variableSymbol != NULL);
@@ -3360,6 +3485,8 @@ c_action_scalar_int_variable()
 void
 c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos)
    {
+  // This function is similar to R441 component-attr-spec-list 
+
   // This is a variable declaration (build the SgVariableDeclaration and populate it using data saved on the stack).
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -3455,8 +3582,8 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
   // static const int DeclarationTypeSpec_unlimited=DeclarationTypeSpecBase+3;
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_declaration_type_spec() udtKeyword = %p = %s type = %d \n",udtKeyword,udtKeyword != NULL ? udtKeyword->text : "NULL",type);
-#if 0
+          printf ("In R502 c_action_declaration_type_spec() udtKeyword = %p = %s type = %d \n",udtKeyword,udtKeyword != NULL ? udtKeyword->text : "NULL",type);
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R502 c_action_declaration_type_spec()");
 #endif
@@ -3466,6 +3593,9 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
         {
           case DeclarationTypeSpec_INTRINSIC:
              {
+               if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+                    printf ("type == DeclarationTypeSpec_INTRINSIC \n");
+
             // This marks the type in a declaration to be one of the primative types, not really used in ROSE.
             // printf ("In c_action_declaration_type_spec(type = %d = DeclarationTypeSpec_INTRINSIC) \n",type);
             // printf ("Sorry, not implemented: c_action_declaration_type_spec(DeclarationTypeSpec_INTRINSIC) \n");
@@ -3565,7 +3695,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
                printf ("No type found on astTypeStack (make sure there is a base type on the astBaseTypeStack) \n");
           ROSE_ASSERT(astBaseTypeStack.empty() == false);
         }
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R502 c_action_declaration_type_spec()");
 #endif
@@ -3607,20 +3737,20 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
 
      switch(attr)
         {
-           case AttrSpec_none:
-              {
-                 if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-                      printf ("found a AttrSpec_none spec \n");
-                 break;
-              }
+          case AttrSpec_none:
+             {
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("found a AttrSpec_none spec \n");
+               break;
+             }
 
-           case AttrSpec_access:
-              {
-              // DQ (5/20/2008): This is a redundant specifier, it appears to only be used with AttrSpec_PUBLIC or AttrSpec_PRIVATE
-                 if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-                      printf ("found a AttrSpec_access spec \n");
-                 break;
-              }
+          case AttrSpec_access:
+             {
+            // DQ (5/20/2008): This is a redundant specifier, it appears to only be used with AttrSpec_PUBLIC or AttrSpec_PRIVATE
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("found a AttrSpec_access spec \n");
+               break;
+             }
 
            case AttrSpec_language_binding:
               {
@@ -3657,12 +3787,50 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  break;
               }
 
-           case AttrSpec_DIMENSION:
-              {
-                 if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-                      printf ("found a DIMENSION spec \n");
-                 break;
-              }
+          case AttrSpec_DIMENSION:
+             {
+            // DQ (1/16/2011): Just as with the case of AttrSpec_POINTER, we have to process this to generate an array.
+            // This should be done here so get the base type onto the astBaseTypeStack as soon as possible. Alternatively,
+            // we could reverse the stack entries so that we processed the astAttributeSpecStack in the correct (original) 
+            // order. This is only a problem when there are 2 or more entries such as "real, dimension(:), pointer :: h".
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("found a DIMENSION spec \n");
+
+            // At this point the array type is already built, but is built using the base type, also it is on the astTypeStack, and not the astBaseTypeStack.
+            // so we move it to the astBaseTypeStack stack.
+#if 0
+               SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
+               astTypeStack.push_front(arrayType);
+
+            // DQ (3/23/2008): Added support for pointer to type (at least pointer to array type)
+            // see test2008_18.f90.
+               if (astAttributeSpecStack.empty() == false)
+                  {
+                    int attributeSpec = astAttributeSpecStack.front();
+#if 0
+                    printf ("This is a valid attribute Spec on the stack: astAttributeSpecStack.size() = %zu attributeSpec = %d \n",astAttributeSpecStack.size(),attributeSpec);
+#endif
+                 // Not clear where this is required.
+                    if (attributeSpec == AttrSpec_POINTER)
+                         {
+                           SgPointerType* pointerType = new SgPointerType(arrayType);
+
+                        // Remove the base type and push the pointerType
+                           astTypeStack.pop_front();
+                           astTypeStack.push_front(pointerType);
+
+                        // DQ (1/16/2011): Use this as a way of detecting where it might be a problem to move array type construction to be done later.
+                           printf ("Exiting in R503 (case of pointer attribute on the astAttributeSpecStack) \n");
+                           ROSE_ASSERT(false);
+                         }
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+#endif
+               break;
+             }
 
            case AttrSpec_EXTERNAL:
               {
@@ -3710,7 +3878,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a POINTER spec \n");
-
+#if 0
               // DQ (2/1/2009): Change the type on the astBaseTypeStack 
               // to be a pointer with that base type. This attribute 
               // really should have an immediate effect.
@@ -3723,6 +3891,9 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  ROSE_ASSERT(astBaseTypeStack.empty() == true);
                  SgPointerType* pointerType = new SgPointerType(baseType);
                  astBaseTypeStack.push_front(pointerType);
+#endif
+#else
+                 printf ("R503: Case of AttrSpec_POINTER is now processed later when we have all of the attributes (since types are built right to left as the final stack is unwound). \n");
 #endif
                  break;
               }
@@ -3818,11 +3989,13 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
  *			( T_ASTERISK char_length )? ( initialization )? 
  */
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
-void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarraySpec, ofp_bool hasCharLength, ofp_bool unknown_bool)
+void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarraySpec, ofp_bool hasCharLength, ofp_bool hasInitialization)
 #else
 void c_action_entity_decl(Token_t * id)
 #endif
    {
+  // This function R504 R503-F2008 is similar to R442 R438-F2008
+
   // Push the entities onto the list at the top of the stack
      ROSE_ASSERT(id != NULL);
      ROSE_ASSERT(id->text != NULL);
@@ -3837,10 +4010,10 @@ void c_action_entity_decl(Token_t * id)
        // printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s \n",id->text);
           string current_filename = getCurrentFilename();
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
-          printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s file = %s hasArraySpec = %s hasCoarraySpec = %s hasCharLength = %s unknown_bool = %s \n",
+          printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s file = %s hasArraySpec = %s hasCoarraySpec = %s hasCharLength = %s hasInitialization = %s \n",
                id->text,current_filename.c_str(),hasArraySpec ? "true" : "false",
                hasCoarraySpec ? "true" : "false",hasCharLength ? "true" : "false",
-               unknown_bool ? "true" : "false");
+               hasInitialization ? "true" : "false");
 #else
           printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s file = %s \n",id->text,current_filename.c_str());
 #endif
@@ -3859,6 +4032,205 @@ void c_action_entity_decl(Token_t * id)
   // astNameStack.push_front(id);
   // astNameStack.push_back(id);
      astNameStack.push_front(id);
+
+#if 1
+  // DQ (1/18/2011): Refactored the code below so it could be called from R443 as well as R504.
+     printf ("In R504 R503-F2008 calling processAttributeSpecStack(hasArraySpec=%s,hasInitialization=%s): astAttributeSpecStack.size() = %zu \n",
+          hasArraySpec ? "true" : "false",hasInitialization ? "true" : "false",astAttributeSpecStack.size());
+     processAttributeSpecStack(hasArraySpec,hasInitialization);
+#else
+  // DQ (1/16/2011): Now is the latest point where we can process the type.  We have now seen all of the
+  // attributes and they are on the astAttributeSpecStack stack (which we can use to construct the
+  // correct base type (from the current base type).  Note that if there is an initializer for the
+  // variable it will be on top of the stack.  so this might be a better thing to handle AFTER the
+  // initializer has been consumed...
+     vector<int> savedAttributes;
+     printf ("In R504 R503-F2008 c_action_entity_decl(): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+#error "DEAD CODE!"
+
+     while (astAttributeSpecStack.empty() == false)
+        {
+
+#error "DEAD CODE!"
+
+       // Some attributes that are not order dependent (are there any in Fortran) should maybe we saved and put back on the stack.
+
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("In loop over attributes in R504 R503-F2008 c_action_entity_decl()");
+#endif
+
+          int attr = astAttributeSpecStack.front();
+
+#error "DEAD CODE!"
+
+          printf ("attribute spec on stack = %d \n",attr);
+
+       // Note that we need to handle just those attributes that effect the base type of the declaration.
+       // But since all attributes are stored on the stack we have to pop them all off, find the relevant 
+       // ones that effect the type, and then rebuild the stack.
+          switch(attr)
+             {
+
+#error "DEAD CODE!"
+
+               case AttrSpec_DIMENSION:
+                  {
+                 // Handle astAttributeSpecStack.push_front(AttrSpec_DIMENSION); done previously.
+                    if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                         printf ("found a DIMENSION spec \n");
+
+                    ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                    printf ("Here is where we need to build an array (where the base type has finally be correctly computed = %s \n",astBaseTypeStack.front()->class_name().c_str());
+
+#error "DEAD CODE!"
+
+                 // At this point the array type is already built, but is built using the base type, also it is on the astTypeStack, and not the astBaseTypeStack.
+                 // so we move it to the astBaseTypeStack stack.
+#if 1
+                 // We don't know the count yet, not clear where we get that (assume 1 for initial test).
+                 // Note that this parameter is no longer used, so it should be removed!
+                    printf ("REMOVE USE OF count PARAMETER IN convertTypeOnStackToArrayType() \n");
+#if 1
+#if 0
+                 // DQ (1/18/2011): 
+                    int count = 1;
+                    SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
+                    ROSE_ASSERT(arrayType != NULL);
+#endif
+                 // If the array spec is a part of the multi-part reference then process it as such and build the type on the astTypeStack (specific for that variable), else build it for the astBaseTypeStack for all variables.
+
+#error "DEAD CODE!"
+
+                    if (hasArraySpec == true)
+                       {
+#if 1
+                      // DQ (1/18/2011): 
+                         int count = 1;
+                         SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
+                         ROSE_ASSERT(arrayType != NULL);
+#endif
+                      // DQ (1/17/2011): Fixup the call to convertTypeOnStackToArrayType() to prepare a value on the correct type stack. See test2007_101.f90 for an example.
+                         ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                         ROSE_ASSERT(astTypeStack.empty() == true);
+
+                         astTypeStack.push_front(arrayType);
+
+#error "DEAD CODE!"
+
+                         printf ("Error, we want to build or modify only the the type in the astTypeStack and not touch the type in the astBaseTypeStack \n");
+                      // ROSE_ASSERT(false);
+                       }
+                      else
+                       {
+#if 1
+                         ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                         SgArrayType* arrayType = astBaseTypeStack.front();
+#endif
+                      // Remove the previous base type and push the new one.
+                         astBaseTypeStack.pop_front();
+#error "DEAD CODE!"
+
+                         astBaseTypeStack.push_front(arrayType);
+                       }
+#else
+                    int count = 1;
+                    SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
+                    ROSE_ASSERT(arrayType != NULL);
+
+                 // We might want this to be pushed onto the astBaseTypeStack!
+                 // astTypeStack.push_front(arrayType);
+
+#error "DEAD CODE!"
+
+                 // Remove the previous base type and push the new one.
+                    astBaseTypeStack.pop_front();
+                    astBaseTypeStack.push_front(arrayType);
+#endif
+#endif
+
+#error "DEAD CODE!"
+
+                    astAttributeSpecStack.pop_front();
+
+                 // DQ (1/17/2011): Remove any additional AttrSpec_DIMENSION entries associated with additional dimensions.
+                    while (astAttributeSpecStack.empty() == false && astAttributeSpecStack.front() == AttrSpec_DIMENSION)
+                       {
+#error "DEAD CODE!"
+
+                         astAttributeSpecStack.pop_front();
+                       }
+
+#if 1
+                 // Output debugging information about saved state (stack) information.
+                    outputState("After processing AttrSpec_DIMENSION in loop over attributes in R504 R503-F2008 c_action_entity_decl()");
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+#error "DEAD CODE!"
+
+               case AttrSpec_POINTER:
+                  {
+                    if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                         printf ("found a POINTER spec \n");
+
+                 // DQ (2/1/2009): Change the type on the astBaseTypeStack 
+                 // to be a pointer with that base type. This attribute 
+                 // really should have an immediate effect.
+                    convertBaseTypeOnStackToPointer();
+
+#error "DEAD CODE!"
+
+                    astAttributeSpecStack.pop_front();
+                    break;
+                 }
+
+               default:
+                  {
+                 // This is really an error because it means that we are ignoring all of attributes except 
+                 // for the specific cases handled above. so we have to save these attributes and use them
+                 // to rebuild the stack without the attributes processed above.  This is because some
+                 // attributes effect the type and some are just attributes to the save in the declaration.
+
+#error "DEAD CODE!"
+
+                    savedAttributes.push_back(attr);
+                    astAttributeSpecStack.pop_front();
+#if 1
+                    printf ("default reached in R504 R503-F2008 c_action_entity_decl() attr = %d \n",attr);
+                 // ROSE_ASSERT(false);
+#endif
+                  }
+             }
+
+#error "DEAD CODE!"
+
+       // DQ (1/16/2011): We can't cal this since we don't yet have a declaration to use.
+       // So we will have to save the entries that we don't process in the stack and push 
+       // those back onto the stack so that the variable declaration can be set properly later.
+       // setDeclarationAttributeSpec(variableDeclaration,astAttributeSpecStack.front());
+
+       // astAttributeSpecStack.pop_front();
+        }
+
+#error "DEAD CODE!"
+
+  // Replace the saved attributes on the stack (preserve the order as in the original stack).
+     vector<int>::reverse_iterator i = savedAttributes.rbegin();
+     while (i != savedAttributes.rend())
+        {
+
+#error "DEAD CODE!"
+
+          astAttributeSpecStack.push_front(*i);
+          i++;
+        }
+#endif
 
   // DQ (12/8/2007): The astBaseTypeStack should not be empty, but under new rules, the astTypeStack might be empty.
   // ROSE_ASSERT(astTypeStack.empty() == false);
@@ -3884,6 +4256,10 @@ void c_action_entity_decl(Token_t * id)
 
   // SgExpression* initializer = NULL;
      SgInitializer* initializer = NULL;
+
+  // DQ (1/17/2011): Note that if we handle the initializer before processing the type then this 
+  // will pick off the expression on the stack intended for the type.  Unless the initialized is
+  // processed by R496 (which contains a count!).
 
   // if (astInitializerStack.empty() == false)
      if (astExpressionStack.empty() == false)
@@ -3988,7 +4364,12 @@ void c_action_entity_decl(Token_t * id)
                astExpressionStack.pop_front();
                setSourcePosition(initializer);
 
-               ROSE_ASSERT(astExpressionStack.empty() == true);
+            // DQ (1/17/2011): There could still be entries on the stack since now the type if constructed AFTER the initializer is set.
+            // See test2007_94.f90 for an example of this.  Note that we can't generate the type when we process the array because
+            // we may still have pointer attributes coming as c_actions and we need to see everything and put it onto the stack
+            // and then construct the declaration's type via an unwinding of the stack (of all attributes that could contribute to
+            // the construction of the declaration's type.
+            // ROSE_ASSERT(astExpressionStack.empty() == true);
              }
         }
 
@@ -4127,8 +4508,7 @@ void c_action_entity_decl(Token_t * id)
         }
 
      ROSE_ASSERT(initializedName != NULL);
-  // if (initializedName != NULL)
-        {
+
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("Before cleaning up the stacks in R504 c_action_entity_decl()");
@@ -4163,6 +4543,7 @@ void c_action_entity_decl(Token_t * id)
 
      ROSE_ASSERT(astTypeStack.empty() == false);
 
+#if 0
   // See test2007_248.f90 for where the dimension type attribute is used with multiple variables in a single variable declaration.
      bool dimensionAttributeSpecFound = false;
      if (astAttributeSpecStack.empty() == false)
@@ -4179,17 +4560,28 @@ void c_action_entity_decl(Token_t * id)
              }
         }
 
-  // printf ("dimensionAttributeSpecFound = %s \n",dimensionAttributeSpecFound ? "true" : "false");
+     printf ("dimensionAttributeSpecFound = %s \n",dimensionAttributeSpecFound ? "true" : "false");
   // If the dimension attribute has been used then the type built on the stack applies to all types defined in any list of variables to be declared.
   // astTypeStack.pop_front();
      if (dimensionAttributeSpecFound == false)
+        {
+          ROSE_ASSERT(astTypeStack.empty() == false);
           astTypeStack.pop_front();
-
-  // Is this the correct location for this end of block?
         }
+#endif
 
      ROSE_ASSERT(astNameStack.empty() == false);
      astNameStack.pop_front();
+
+  // DQ (1/22/2011): We want to always rebuild the type on the astTypeStack, so pop the 
+  // current version (just used to build the SgInitializedName) off the astTypeStack.
+  // if (hasArraySpec == true)
+        {
+       // If the type was built specific for given variable then pop the astTypeStack and build a new one for any other variable.
+          ROSE_ASSERT(astTypeStack.empty() == false);
+          astTypeStack.pop_front();
+          ROSE_ASSERT(astTypeStack.empty() == true);
+       }
 #endif
 
 #if 1
@@ -4212,6 +4604,20 @@ void c_action_entity_decl_list__begin()
   // The use of the astNameListStack has been discontinued, we just use a stack of names (tokens) now!
   // This make for a simpler implementation and I don't think we require the additional complexity.
 
+
+  // DQ (1/20/2011): We have to save the astAttributeSpecStack so that we can use the same attribute 
+  // stack for processing all variables in the declaration uniformally.  See test2007_248.f90 for an 
+  // example.  We will also have to test this support in R441 as well (similar parser action, but for 
+  // variable declarations inside of types.
+     printf ("Save the astAttributeSpecStack stack to reuse it for each variable in the declaration. \n");
+
+  // OR just don't delete the attributes until we process "c_action_entity_decl_list(int count)"!!!
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // DQ (12/8/2007): Modified to reflect use of new astBaseTypeStack (see test2007_148.f)
   // DQ (12/7/2007): Added assertion.
   // ROSE_ASSERT(astTypeStack.empty() == false);
@@ -4232,6 +4638,8 @@ void c_action_entity_decl_list__begin()
 
 void c_action_entity_decl_list(int count)
    {
+  // This function R504 R503-F2008 is similar to R441 but is used for declarations in NON-types.
+
   // Since we already have the elements in the list we don't have to do anything here.
   // In general it is a tradeoff as to if we should build the list in the <rule>_list__begin()
   // function and then add the elements to the list in the element-specific functions or
@@ -4245,6 +4653,57 @@ void c_action_entity_decl_list(int count)
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R504 (list) c_action_entity_decl_list()");
+#endif
+
+#if 0
+  // Error: The type should have been built in R504 R503-F2008 c_action_entity_decl(), since this is too late to build the type.
+  // DQ (1/17/2011): If there is an expression on the astExpressionStack then it is used to convert 
+  // the type in astTypeStack into an array.
+     if (astExpressionStack.empty() == false)
+        {
+          printf ("Use the SgExprListExp to convert the type in astTypeStack into an array. \n");
+
+#error "DEAD CODE!"
+
+#if 1
+       // We don't know the count yet, not clear where we get that (assume 1 for initial test).
+       // Note that this parameter is no longer used, so it should be removed!
+          printf ("REMOVE USE OF count PARAMETER IN convertTypeOnStackToArrayType() \n");
+
+#error "DEAD CODE!"
+
+       // Note that this is a different count than then one in the function parameter list for this function.
+          int temp_count = 1;
+          SgArrayType* arrayType = convertTypeOnStackToArrayType(temp_count);
+          ROSE_ASSERT(arrayType != NULL);
+
+       // We might want this to be pushed onto the astBaseTypeStack!
+       // astTypeStack.push_front(arrayType);
+
+#error "DEAD CODE!"
+
+       // Remove the previous base type and push the new one.
+          astBaseTypeStack.pop_front();
+          astBaseTypeStack.push_front(arrayType);
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
+#error "DEAD CODE!"
+
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("After converion of type to array type in R504 (list) c_action_entity_decl_list()");
+#endif
+        }
+#endif
+
+#if 0
+  // DQ (1/17/2011): testing test2007_94.f90...
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
   // Note that we are not really using the count, but the astNodeStack.size() should match the count.
@@ -4290,6 +4749,8 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
 
      if (hasExpr == true)
         {
+          printf ("IN R506 ALL CODE COMMENTED OUT when hasExpr == true \n");
+
 #if 0
        // Drain the astExpressionStack, but gather all the expressions into a single list for each SgInitializedName
           SgExprListExp* expressionList = new SgExprListExp();
@@ -4542,13 +5003,16 @@ void c_action_array_spec(int count)
   // ROSE_ASSERT(astTypeStack.size() == (size_t)count);
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_array_spec(): count = %d (building the SgArrayType) astAttributeSpecStack.size() = %zu \n",count,astAttributeSpecStack.size());
+          printf ("In R510 c_action_array_spec(): count = %d (building the multi-dimensional shape for the future SgArrayType) astAttributeSpecStack.size() = %zu \n",count,astAttributeSpecStack.size());
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R510 #2 c_action_array_spec()");
 #endif
   // printf ("astBaseTypeStack.empty() = %s \n",astBaseTypeStack.empty() ? "true" : "false");
+
+  // DQ (1/17/2011): I think we can assert this now! No, test2007_34.f90 is still a counter example!
+  // ROSE_ASSERT(astBaseTypeStack.empty() == false);
 
   // DQ (12/27/2007): parameters associated with variable declaration type attributes (e.g. dimention attribute) should not be used yet. But I don't know how to avoid it!
   // if (astBaseTypeStack.empty() == true || astAttributeSpecStack.empty() == false)
@@ -4562,9 +5026,9 @@ void c_action_array_spec(int count)
         }
        else
         {
-       // This has been moved from c_action_array_spec, since the c_action_array_spec_element() 
+       // This has been moved to c_action_array_spec, since the c_action_array_spec_element() 
        // is called once per dimension of the array type.
-
+#if 0
           SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
           astTypeStack.push_front(arrayType);
 
@@ -4576,6 +5040,7 @@ void c_action_array_spec(int count)
 #if 0
                printf ("This is a valid attribute Spec on the stack: astAttributeSpecStack.size() = %zu attributeSpec = %d \n",astAttributeSpecStack.size(),attributeSpec);
 #endif
+            // Not clear where this is required.
                if (attributeSpec == AttrSpec_POINTER)
                     {
                       SgPointerType* pointerType = new SgPointerType(arrayType);
@@ -4583,15 +5048,101 @@ void c_action_array_spec(int count)
                    // Remove the base type and push the pointerType
                       astTypeStack.pop_front();
                       astTypeStack.push_front(pointerType);
+
+                   // DQ (1/16/2011): Use this as a way of detecting where it might be a problem to move array type construction to be done later.
+                      printf ("Exiting in R510 (case of pointer attribute on the astAttributeSpecStack) \n");
+                      ROSE_ASSERT(false);
                     }
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
              }
+#else
+#if 0
+       // DQ (1/16/2011): test2011_06.f90 (construction of array of pointers to float)
+       // the case of "real, dimension(:), pointer :: h".
+       // printf ("Moving the generation of the array type from R510 to R503! \n");
+
+       // DQ (1/17/2011): Moved the code to build the array index expression list from convertTypeOnStackToArrayType().
+          SgExprListExp* expresssionList = new SgExprListExp();
+       // arrayType->set_dim_info(expresssionList);
+          setSourcePosition(expresssionList);
+       // expresssionList->set_parent(arrayType);
+
+          for (int i=0; i < count; i++)
+             {
+               ROSE_ASSERT(astExpressionStack.empty() == false);
+            // printf ("Adding an expression to the array type dimension information = %s \n",SageInterface::get_name(astExpressionStack.front()).c_str());
+#if 0
+               printf ("Adding an expression to the array type dimension information = %s \n",SageInterface::get_name(astExpressionStack.front()).c_str());
+               SgExpression* DebugTmp = astExpressionStack.front();
+               int tmpInt = (int)DebugTmp->variantT();
+               printf("F_DEBUG::node is %s\n",Cxx_GrammarTerminalNames[tmpInt].name.c_str());
+#endif
+            // ROSE_ASSERT(arrayType->get_dim_info() != NULL);
+            // arrayType->get_dim_info()->prepend_expression(astExpressionStack.front());
+               expresssionList->prepend_expression(astExpressionStack.front());
+               astExpressionStack.pop_front();
+             }
+
+       // Put the SgExprListExp onto the stack
+          astExpressionStack.push_front(expresssionList);
+#endif
+#endif
         }
 
+  // DQ (1/16/2011): test2011_06.f90 (construction of array of pointers to float)
+  // the case of "real, dimension(:), pointer :: h".  However, this causes problems
+  // for knowing when to build the array type and causes misinterpretation of
+  // the expression list that we leave on the stack (which then causes a problem for
+  // test2007_94.f90 (tuning the implicit initialization index variable into a 
+  // function call expression instead of a variable reference.  We can either do a 
+  // better job of detecting when the variable name should be a variable instead of 
+  // a function call, or build the array to use a SgDefaultType and then fix it up 
+  // later...
+
+  // printf ("Moving the generation of the array type from R510 to R503! \n");
+
+#if 1
+  // DQ (1/18/2011): Called by R510 and R443.
+     processMultidimensionalSubscriptsIntoExpressionList(count);
+#else
+  // DQ (1/17/2011): Moved the code to build the array index expression list from convertTypeOnStackToArrayType().
+     SgExprListExp* expresssionList = new SgExprListExp();
+  // arrayType->set_dim_info(expresssionList);
+     setSourcePosition(expresssionList);
+  // expresssionList->set_parent(arrayType);
+
+     for (int i=0; i < count; i++)
+        {
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+       // printf ("Adding an expression to the array type dimension information = %s \n",SageInterface::get_name(astExpressionStack.front()).c_str());
 #if 0
+          printf ("Adding an expression to the array type dimension information = %s \n",SageInterface::get_name(astExpressionStack.front()).c_str());
+          SgExpression* DebugTmp = astExpressionStack.front();
+          int tmpInt = (int)DebugTmp->variantT();
+          printf("F_DEBUG::node is %s\n",Cxx_GrammarTerminalNames[tmpInt].name.c_str());
+#endif
+       // ROSE_ASSERT(arrayType->get_dim_info() != NULL);
+       // arrayType->get_dim_info()->prepend_expression(astExpressionStack.front());
+          expresssionList->prepend_expression(astExpressionStack.front());
+          astExpressionStack.pop_front();
+        }
+
+  // Put the SgExprListExp onto the stack
+     astExpressionStack.push_front(expresssionList);
+#endif
+
+#if 0
+  // DQ (1/17/2011): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type).
+     printf ("In R510 #2 c_action_array_spec(): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type). \n");
+     astAttributeSpecStack.push_front(AttrSpec_DIMENSION);
+#else
+     printf ("SKIPPING R510 #2 PUSH OF AttrSpec_DIMENSION ONTO astAttributeSpecStack \n");
+#endif
+
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R510 #2 c_action_array_spec()");
 #endif
@@ -4600,7 +5151,7 @@ void c_action_array_spec(int count)
 void c_action_array_spec_element(int type)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_array_spec_element(): (value pushed onto astAttributeSpecStack) type = %d \n",type);
+          printf ("In R510 c_action_array_spec_element(): (value pushed onto astAttributeSpecStack) type = %d \n",type);
 
   // We don't really need to push these integers onto the stack, as long as each one traslates (one-to-one) 
   // into expressions on the astExpressionStack.
@@ -4692,6 +5243,14 @@ void c_action_array_spec_element(int type)
           astExpressionStack.push_front(expression);
         }
 
+#if 1
+  // DQ (1/17/2011): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type).
+     printf ("In R510 #2 c_action_array_spec_element(): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type). \n");
+     astAttributeSpecStack.push_front(AttrSpec_DIMENSION);
+#else
+     printf ("SKIPPING R510 #2 PUSH OF AttrSpec_DIMENSION ONTO astAttributeSpecStack \n");
+#endif
+
   // A fundamental problem is that we may not know enough about the size of an array type at this point were we 
   // build it.  This will be fixed up later in teh process, so default values are provided which will indicate 
   // that additional data is required.
@@ -4761,6 +5320,8 @@ void c_action_explicit_shape_spec_list(int count)
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R511 c_action_explicit_shape_spec_list()");
 #endif
+
+     printf ("Calling R510 directly from R511... \n");
 
   // DQ (2/20/2008): Call the mechanism used to build an array type
      c_action_array_spec(count);
@@ -5862,15 +6423,28 @@ void c_action_dimension_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasCoA
 
      SgName arrayName = id->text;
 
+  // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
+     printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+  // ROSE_ASSERT(false);
+
   // We need to get a base type for the array.
      SgVariableSymbol* arraySymbol = trace_back_through_parent_scopes_lookup_variable_symbol(arrayName,astScopeStack.front());
      if (arraySymbol == NULL)
         {
+#if 1
+       // DQ (1/19/2011): Build the implicit variable
+          buildImplicitVariableDeclaration(arrayName);
+
+       // Now verify that it is present.
+          arraySymbol = trace_back_through_parent_scopes_lookup_variable_symbol(arrayName,astScopeStack.front());
+          ROSE_ASSERT(arraySymbol != NULL);
+#else
        // The array was not previously declared, but a declaration has been built (by the
        // first call to trace_back_through_parent_scopes_lookup_variable_symbol() and it is 
        // implicitly typed as a variable which we will still have to convert to an array.
           arraySymbol = trace_back_through_parent_scopes_lookup_variable_symbol(arrayName,astScopeStack.front());
           ROSE_ASSERT(arraySymbol != NULL);
+#endif
         }
        else
         {
@@ -6077,13 +6651,27 @@ void c_action_named_constant_def(Token_t *id)
 
   // Lookup the variable defined by "id" and build a variable reference using it
      SgName name = id->text;
+
+  // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
+     printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+  // ROSE_ASSERT(false);
+
      SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(name,astScopeStack.front());
 
      if (variableSymbol == NULL)
         {
+#if 1
+       // DQ (1/19/2011): Build the implicit variable
+          buildImplicitVariableDeclaration(name);
+
+       // Now verify that it is present.
+          variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(name,astScopeStack.front());
+          ROSE_ASSERT(variableSymbol != NULL);
+#else
        // If it was NULL the first time then it was at least built as a variable so ask a second time to return the symbol.
           variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(name,astScopeStack.front());
           ROSE_ASSERT(variableSymbol != NULL);
+#endif
         }
 
      SgVarRefExp* variableReference = new SgVarRefExp(variableSymbol);
@@ -7102,6 +7690,10 @@ void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
      ROSE_ASSERT(id != NULL);
      SgName variableName = id->text;
 
+  // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
+     printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+  // ROSE_ASSERT(false);
+
   // Look for the symbol associated with the variable given by the name starting
   // at the current scope and working backwards through the parent scopes.
   // SgVariableSymbol* variableSymbol = getTopOfScopeStack()->lookup_variable_symbol(variableName);
@@ -7137,10 +7729,18 @@ void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
        // The variable has not previously been declared.
        // OR it maybe declared at some point in the future (see test2010_51.90).
 
+#if 1
+       // DQ (1/19/2011): Build the implicit variable
+          buildImplicitVariableDeclaration(variableName);
+
+       // Now verify that it is present.
+          variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,astScopeStack.front());
+          ROSE_ASSERT(variableSymbol != NULL);
+#else
        // Note that the second time we look for it we will get a valid symbol.
           variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,getTopOfScopeStack());
           ROSE_ASSERT(variableSymbol != NULL);
-
+#endif
           constructedReference = new SgVarRefExp(variableSymbol);
           setSourcePosition(constructedReference,id);
 
@@ -7250,7 +7850,7 @@ void c_action_designator_or_func_ref()
    {
   // DQ (5/4/2008): I am unclear what to do with this rule! (called by test2008_22.f90)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_designator_or_func_ref() \n");
+          printf ("In (unknown rule) c_action_designator_or_func_ref() \n");
    }
 
 /**
@@ -7483,7 +8083,7 @@ void c_action_data_ref(int numPartRef)
           j++;
         }
 
-#if 0
+#if 1
      string qualifiedNameString = generateQualifiedName(qualifiedNameList);
      printf ("@@@@@@@@@@@@@@@@@@@ R612 qualifiedNameString = %s \n",qualifiedNameString.c_str());
 #endif
@@ -7525,7 +8125,7 @@ void c_action_data_ref(int numPartRef)
   // DQ (12/29/2010): Moved outside of conditional so that it could be tested afteward.
      SgFunctionSymbol* functionSymbol = NULL;
 
-#if 0
+#if 1
      printf ("In R612: variableSymbol = %p \n",variableSymbol);
 #endif
      if (variableSymbol == NULL)
@@ -7917,9 +8517,70 @@ void c_action_data_ref(int numPartRef)
                  // This is the case that isADerivedType == false.
                     ROSE_ASSERT(isADerivedType == false);
 
+                 // DQ (1/18/2011): In general everything is a function unless there is a hint that it is an array.
+
+                 // DQ (1/17/2011): This is not a good enough test to trigger a function vs. variable declaration...
+                    printf ("This is not a good enough test to trigger a function vs. variable declaration... variableName = %s \n",variableName.str());
+
+                    bool inCurrentScope = (astScopeStack.front()->lookup_variable_symbol(variableName) != NULL);
+                    printf ("inCurrentScope = %s \n",inCurrentScope ? "true" : "false");
+
+                 // DQ (1/17/2011): Check if this is supposed to be a function or a variable.
                  // If this is a SgExprListExp then it is part of a function
-                    SgExprListExp* expressionList = isSgExprListExp( (astExpressionStack.empty() == false) ? astExpressionStack.front() : NULL);
-                    if (expressionList != NULL)
+                 // SgExprListExp* expressionList = isSgExprListExp( (astExpressionStack.empty() == false) ? astExpressionStack.front() : NULL);
+                    SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(variableName,astScopeStack.front());
+#if 1
+                 // DQ (1/19/2011): Since we don't have the side-effect of trace_back_through_parent_scopes_lookup_variable_symbol() 
+                 // generating a symbol, their is not symbol to be found and interpretAsVariable will be false.  This causes the
+                 // named reference to be handled as a function (a SgFunctionSymbol will be incerted into the variableSymbolList.
+
+                 // We need to check if this is a name that has a valid  qualifiedNameList[(numPartRef-1)-i].hasSelectionSubscriptList.
+                 // ROSE_ASSERT(symbol != NULL);
+                 // bool interpretAsVariable = (isSgVariableSymbol(symbol) != NULL) ? true : false;
+                 // bool interpretAsVariable = (isSgFunctionSymbol(symbol) != NULL) ? false : true;
+                    bool interpretAsVariable = false;
+                    printf ("isSgVariableSymbol(symbol) = %p \n",isSgVariableSymbol(symbol));
+                    if (isSgVariableSymbol(symbol) == NULL)
+                       {
+                         printf ("isSgFunctionSymbol(symbol) = %p \n",isSgFunctionSymbol(symbol));
+                         if (isSgFunctionSymbol(symbol) != NULL)
+                          {
+                            interpretAsVariable = false;
+                          }
+                         else
+                          {
+                         // If this is not clearly a variable and it has parameters then it is to be interpreted to be a function.
+                            bool hasSelectionSubscriptList = qualifiedNameList[(numPartRef-1)].hasSelectionSubscriptList;
+                            printf ("hasSelectionSubscriptList = %s \n",hasSelectionSubscriptList ? "true" : "false");
+                         // interpretAsVariable = (hasSelectionSubscriptList == false);
+                            if (hasSelectionSubscriptList == true)
+                               {
+                              // Found a parameter list, this is a function!
+                                 interpretAsVariable = false;
+                               }
+                              else
+                               {
+                              // No parameter list, so this is variable (neither a function nor an array).
+                                 interpretAsVariable = true;
+                               }                            
+                          }
+                       }
+                      else
+                       {
+                      // interpretAsVariable = (isSgFunctionSymbol(symbol) != NULL) ? false : true;
+                         interpretAsVariable = true;
+                       }
+#else
+                    bool interpretAsVariable = false;
+                    if (isSgVariableSymbol(symbol) != NULL)
+                       {
+                         interpretAsVariable = true;
+                       }
+#endif
+                    printf ("interpretAsVariable = %s \n",interpretAsVariable ? "true" : "false");
+
+                 // if (expressionList != NULL)
+                    if (interpretAsVariable == false)
                        {
                       // printf ("Calling generateFunctionCall() for nameToken = %s \n",nameToken->text);
                       // generateFunctionCall(nameToken);
@@ -7937,12 +8598,23 @@ void c_action_data_ref(int numPartRef)
                          classSymbol    = NULL;
                          SgScopeStatement* currentScope = astScopeStack.front();
 
+#if 0
                       // This does not build a variable, but it does build a SgVariableSymbol.
                       // printf ("Building a SgVariableSymbol, though not building a SgVarRefExp (variableName = %s) \n",variableName.str());
                          trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol,classSymbol);
                          ROSE_ASSERT(variableSymbol != NULL);
-
+#else
+                      // DQ (1/19/2011): code to build new variable.
+                         printf ("We need to build a variable in the current scope = %p = %s for variableName = %s \n",currentScope,currentScope->class_name().c_str(),variableName.str());
+                         buildImplicitVariableDeclaration(variableName);
+#if 0
+                         printf ("Exiting due to incomplete code! \n");
+                         ROSE_ASSERT(false);
+#endif
+#endif
                       // Add the new variableSymbol to the list so that the processing of the list can be properly triggered.
+                         trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol,classSymbol);
+                         ROSE_ASSERT(variableSymbol != NULL);
                          variableSymbolList.push_back(variableSymbol);
                        }
                   }
@@ -7967,7 +8639,7 @@ void c_action_data_ref(int numPartRef)
   // ROSE_ASSERT(variableSymbol != NULL || functionSymbol != NULL);
 
   // DQ (12/29/2010): Can we assert this! This works!
-  // printf ("numPartRef = %d variableSymbolList.size() = %zu \n",numPartRef,variableSymbolList.size());
+     printf ("numPartRef = %d variableSymbolList.size() = %zu \n",numPartRef,variableSymbolList.size());
      ROSE_ASSERT( (size_t) numPartRef >= variableSymbolList.size());
 
   // DQ (12/29/2010): This fails for test2007_57.f90 (but after a lot of work we can enforce this uniromally for all of out simple test codes at least).
@@ -7998,8 +8670,9 @@ void c_action_data_ref(int numPartRef)
           tempSymbol = variableSymbolList[lastElement - i];
 
           bool hasSelectionSubscriptList = qualifiedNameList[lastElement - i].hasSelectionSubscriptList;
-#if 0
-          printf ("hasSelectionSubscriptList = %s \n",hasSelectionSubscriptList ? "true" : "false");
+#if 1
+          ROSE_ASSERT(tempSymbol != NULL);
+          printf ("hasSelectionSubscriptList = %s tempSymbol = %p = %s \n",hasSelectionSubscriptList ? "true" : "false",tempSymbol,tempSymbol->class_name().c_str());
 #endif
        // DQ (12/27/2010): Handle case of function return value initialization for derived type (see test2010_176.f90).
        // ROSE_ASSERT(variableSymbol != NULL);
@@ -8034,7 +8707,6 @@ void c_action_data_ref(int numPartRef)
 #if 1
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
              {
-            // printf ("Is an array type = %s \n",arrayType ? "true" : "false");
                printf ("stackHoldsAnIndexExpression = %s \n",stackHoldsAnIndexExpression ? "true" : "false");
 
                if (astExpressionStack.empty() == false)
@@ -8045,6 +8717,23 @@ void c_action_data_ref(int numPartRef)
        // Output debugging information about saved state (stack) information.
           outputState("At variableSymbol != NULL of R612 c_action_data_ref()");
 #endif
+
+          if (stackHoldsAnIndexExpression == true)
+             {
+               printf ("This variable reference must be converted into an array or a function. Can we know which? \n");
+
+            // Now that we don't have the side-effects of the trace_back_through_parent_scopes_lookup_variable_symbol() 
+            // building a variable symbol (or a variable or function symbol), we can better interpret evidence for the
+            // existance of an array and better interpret if this should be an array or function reference.
+            //    If there is a variable symbol matching this name in the current or parent scopes then it is an array.
+            //    If not, then it is a function reference.
+
+               printf ("tempSymbol = %p = %s \n",tempSymbol,tempSymbol->class_name().c_str());
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
 
           SgExpression* variable = NULL;
        // SgType* variableType = variableSymbol->get_type();
@@ -8233,7 +8922,7 @@ void c_action_data_ref(int numPartRef)
 
                default:
                   {
-#if 0
+#if 1
                     printf ("No special processing is required, this variable type is %s tempSymbol = %s \n",variableType->class_name().c_str(),tempSymbol->class_name().c_str());
 #endif
                  // variable = new SgVarRefExp(variableSymbol);
@@ -11029,10 +11718,23 @@ void c_action_forall_triplet_spec(Token_t * id, ofp_bool hasStride)
      ROSE_ASSERT(id != NULL);
      SgName name = id->text;
 
+  // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
+     printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+  // ROSE_ASSERT(false);
+
      SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(name,astScopeStack.front());
      if (variableSymbol == NULL)
         {
+#if 1
+       // DQ (1/19/2011): Build the implicit variable
+          buildImplicitVariableDeclaration(name);
+
+       // Now verify that it is present.
           variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(name,astScopeStack.front());
+          ROSE_ASSERT(variableSymbol != NULL);
+#else
+          variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(name,astScopeStack.front());
+#endif
         }
 
      ROSE_ASSERT(variableSymbol != NULL);
@@ -12489,12 +13191,26 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
                SgName variableName = variableToken->text;
             // printf ("Generating reference for index variable name = %s \n",variableName.str());
                astNameStack.pop_front();
+
+            // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
+               printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+            // ROSE_ASSERT(false);
+
                SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName, astScopeStack.front());
             // ROSE_ASSERT(variableSymbol != NULL);
                if (variableSymbol == NULL)
                   {
+#if 1
+                 // DQ (1/19/2011): Build the implicit variable
+                    buildImplicitVariableDeclaration(variableName);
+
+                 // Now verify that it is present.
+                    variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,astScopeStack.front());
+                    ROSE_ASSERT(variableSymbol != NULL);
+#else
                  // printf ("Rerunning trace_back_through_parent_scopes_lookup_variable_symbol() \n");
                     variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName, astScopeStack.front());
+#endif
                   }
                ROSE_ASSERT(variableSymbol != NULL);
                SgExpression* index = new SgVarRefExp(variableSymbol);
@@ -15451,6 +16167,10 @@ void c_action_io_implied_do_control()
 
   // printf ("implied do loop variable name = %s \n",do_variable_name.str());
 
+  // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
+     printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+  // ROSE_ASSERT(false);
+
      SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(do_variable_name,astScopeStack.front());
 
   // If this was an implicit variable then variableSymbol would be NULL, but the variable would have  
@@ -15461,7 +16181,16 @@ void c_action_io_implied_do_control()
   // later be a special scope stored in the implied do loop IR node.
      if (variableSymbol == NULL)
         {
+#if 1
+       // DQ (1/19/2011): Build the implicit variable
+          buildImplicitVariableDeclaration(do_variable_name);
+
+       // Now verify that it is present.
           variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(do_variable_name,astScopeStack.front());
+          ROSE_ASSERT(variableSymbol != NULL);
+#else
+          variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(do_variable_name,astScopeStack.front());
+#endif
         }
 
   // Now we can assert that this should be a pointer to a valid symbol.
@@ -20000,8 +20729,6 @@ void c_action_start_of_file(const char *filename)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_start_of_file(%s) \n",filename);
 #if 1
-//<<<<<<< HEAD
-
   // DQ: This is the earliest location to setup the global scope (I think).
      initialize_global_scope_if_required();
 
@@ -20009,7 +20736,6 @@ void c_action_start_of_file(const char *filename)
      // and is not an rmod file.  When parsing a top level file, the astIncludeStack should be empty.
      if (!astIncludeStack.empty() && !isARoseModuleFile(filename))  {
 #else       
-//=======
 #if 0
      printf ("In c_action_start_of_file(%s) astIncludeStack.size() = %zu \n",filename,astIncludeStack.size());
      printf ("##### Swiching from %s to %s \n",(astIncludeStack.size() == 0) ? "FIRST FILE" : getCurrentFilename().c_str(),filename);
@@ -20049,8 +20775,7 @@ void c_action_start_of_file(const char *filename)
         }
        else
         {
-#endif          
-//>>>>>>> f11faee3e9590235079a36f80c61a428afa7d3f9
+#endif
        // After the first time, ever call to this function is significant (represents use of the
        // Fortran include mechanism; not formally a part of the language grammar).
 
@@ -20111,16 +20836,13 @@ void c_action_start_of_file(const char *filename)
         }
 
 #if 1
-//<<<<<<< HEAD
      astIncludeStack.push_back(filename);
 #else
-//=======
 #if 0
      printf ("In c_action_start_of_file(): filenameString = %s astIncludeStack.size() = %zu \n",filenameString.c_str(),astIncludeStack.size());
 #endif
      astIncludeStack.push_back(filenameString);
 #endif     
-//>>>>>>> f11faee3e9590235079a36f80c61a428afa7d3f9
    }
 
 /*
