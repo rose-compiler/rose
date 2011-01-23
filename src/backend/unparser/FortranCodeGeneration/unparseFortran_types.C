@@ -23,7 +23,8 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
 #if 0
      printf("In unparseType: %s\n", type->class_name().c_str());
-  // cur << "\n/* Begin unparseType: " << type->sage_class_name() << " */\n";
+  // cur << "\n/* Begin unparseType: " << type->class_name() << " */\n";
+     curprint("\n! Begin unparseType:\n");
 #endif
 #if 0
      if (isDebug())
@@ -160,7 +161,8 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
 #if 0
      printf ("End unparseType: %s\n",type->class_name().c_str());
-  // cur << "\n/* End unparseType: "  << type->sage_class_name() << " */\n";
+  // curprint ("\n/* End unparseType: "  << type->class_name() << " */\n");
+     curprint("\n! End unparseType: \n");
 #endif
    }
 
@@ -222,9 +224,10 @@ void
 UnparseFortran_type::unparseBaseType(SgType* type, const std::string & nameOfType, SgUnparse_Info & info)
    {
   // printf ("Inside of UnparserFort::unparseBaseType \n");
-  // cur << "\n/* Inside of UnparserFort::unparseBaseType */\n";
+  // curprint ("\n! Inside of UnparserFort::unparseBaseType \n");
      curprint(nameOfType);
      unparseTypeKind(type,info);
+  // curprint ("\n! Leaving UnparserFort::unparseBaseType \n");
    }
 
 void 
@@ -274,12 +277,26 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info)
   //   real, dimension(10, 10) :: A1, A2
   //   real, dimension(:) :: B1
   //   character(len=*) :: s1
-  
+#if 0
+     curprint ("\n! Inside of UnparserFort::unparseArrayType \n");
+#endif
+
      SgArrayType* array_type = isSgArrayType(type);
      ROSE_ASSERT(array_type != NULL);
 
   // element type
+#if 0
      unparseType(array_type->get_base_type(), info);
+#else
+  // I think that supressStrippedTypeName() and SkipBaseType() are redundant...
+     if (info.supressStrippedTypeName() == false)
+        {
+       // DQ (1/16/2011): We only want to output the name of the stripped type once!
+          SgType* stripType = array_type->stripType();
+          unparseType(stripType, info);
+          info.set_supressStrippedTypeName();
+        }
+#endif
 
   // DQ (8/5/2010): It is an error to treat an array of char as a string (see test2010_16.f90).
 #if 0
@@ -354,18 +371,36 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info)
      ROSE_ASSERT(unp->u_fortran_locatedNode != NULL);
 
      unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* output parens */ true);
+
+  // DQ (1/16/2011): Plus unparse the base type...(unless it will just output the stripped types name).
+     if (array_type->get_base_type()->containsInternalTypes() == true)
+        {
+          unparseType(array_type->get_base_type(), info);
+        }
+#endif
+
+#if 0
+     curprint ("\n! Leaving UnparserFort::unparseArrayType \n");
 #endif
    }
 
 void 
 UnparseFortran_type::unparsePointerType(SgType* type, SgUnparse_Info& info)
    {
+#if 0
   // printf ("Inside of UnparserFort::unparsePointerType \n");
   // cur << "\n/* Inside of UnparserFort::unparsePointerType */\n";
-  
+     curprint ("\n! Inside of UnparserFort::unparsePointerType \n");
+#endif
+
+  // DQ (1/16/2011): Note that pointers in fortran are not expressed the same as in C/C++, are are
+  // only a part of the type which is managed more directly using attributes in the variable declaration.
+  // Not clear that we want to do anything here in the unparser...
+
      SgPointerType* pointer_type = isSgPointerType(type);
      ROSE_ASSERT(pointer_type != NULL);
 
+#if 0
   /* special cases: ptr to array, int (*p) [10] */ 
   /*                ptr to function, int (*p)(int) */
   /*                ptr to ptr to .. int (**p) (int) */
@@ -408,9 +443,29 @@ UnparseFortran_type::unparsePointerType(SgType* type, SgUnparse_Info& info)
                unparseType(pointer_type, ninfo);
              }
         }
+#else
+     if (info.supressStrippedTypeName() == false)
+        {
+       // DQ (1/16/2011): We only want to output the name of the stripped type once!
+          SgType* stripType = pointer_type->stripType();
+          unparseType(stripType, info);
+          info.set_supressStrippedTypeName();
+        }
 
+     curprint(", POINTER");
+
+  // DQ (1/16/2011): Plus unparse the base type...(unless it will just output the stripped types name).
+     if (pointer_type->get_base_type()->containsInternalTypes() == true)
+        {
+          unparseType(pointer_type->get_base_type(), info);
+        }
+#endif
+
+#if 0
   // printf ("Leaving of UnparserFort::unparsePointerType \n");
   // cur << "\n/* Leaving of UnparserFort::unparsePointerType */\n";
+     curprint ("\n! Leaving UnparserFort::unparsePointerType \n");
+#endif
    }
 
 void 

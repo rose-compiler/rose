@@ -1431,6 +1431,18 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+       // DQ (1/17/2011): Added support for SgExprListExp (to support debugging).
+          case V_SgExprListExp:
+             {
+               const SgExprListExp* exprListExp = isSgExprListExp(expr);
+               name = "expr_list_exp_";
+               for (size_t i = 0; i < exprListExp->get_expressions().size(); i++)
+                  {
+                    name += get_name(exprListExp->get_expressions()[i]);
+                  }
+               break;
+             }
+
           default:
              {
             // Nothing to do for other IR nodes
