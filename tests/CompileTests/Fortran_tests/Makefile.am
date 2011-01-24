@@ -216,6 +216,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_16.f90 \
      test2011_17.f90 \
      test2011_19.f90 \
+     test2011_20.f90 \
      canonicalExample.f90
 
 # DQ (1/18/2011): Failing tests.

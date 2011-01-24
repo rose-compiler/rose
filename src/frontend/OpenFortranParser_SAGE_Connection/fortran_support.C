@@ -2328,7 +2328,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
             // trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(qualifiedNameList[i],structureScope,variableSymbol,functionSymbol,classSymbol);
                trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(name,structureScope,variableSymbol,functionSymbol,classSymbol);
 
-#if 0
+#if 1
                printf ("In trace_back_through_parent_scopes_lookup_member_variable_symbol(): variableSymbol = %p \n",variableSymbol);
                printf ("In trace_back_through_parent_scopes_lookup_member_variable_symbol(): functionSymbol = %p \n",functionSymbol);
                printf ("In trace_back_through_parent_scopes_lookup_member_variable_symbol(): classSymbol    = %p \n",classSymbol);
@@ -2337,17 +2337,17 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                if (variableSymbol != NULL)
                   {
                  // ROSE_ASSERT(variableSymbol->get_type() != NULL);
-#if 0
+#if 1
                     printf ("variable type = %s \n",variableSymbol->get_type()->class_name().c_str());
 #endif
                  // This is a reference to a variable (perhaps a structure), and we can return variableSymbol as NULL.
                  // name = qualifiedNameList[i];
-#if 0
+#if 1
                     printf ("Found a variableSymbol = %p Next variable name = %s \n",variableSymbol,name.c_str());
 #endif
                     SgType* type = variableSymbol->get_type();
                     ROSE_ASSERT(type != NULL);
-#if 0
+#if 1
                     printf ("associated variable type = %s \n",type->class_name().c_str());
 #endif
                  // DQ (12/23/2010): I think a better implementation would strip off SgArrayType and SgPointerType as needed to get the the SgClassType
@@ -2373,7 +2373,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                               ROSE_ASSERT(classDefinition != NULL);
 
                               structureScope = classDefinition;
-                           // printf ("Set structureScope to %p \n",structureScope);
+                              printf ("Set structureScope to %p (case of class type) \n",structureScope);
                               break;
                             }
 
@@ -2382,8 +2382,9 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                               SgArrayType* arrayType = isSgArrayType(type);
                               SgType* baseType = arrayType->get_base_type();
                               ROSE_ASSERT(baseType != NULL);
-                           // printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-
+#if 1
+                              printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
                               SgClassType* classType = isSgClassType(baseType);
                               if (classType != NULL)
                                  {
@@ -2401,9 +2402,43 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                                  }
                                 else
                                  {
-                                   structureScope = NULL;
+                                   SgPointerType* pointerType = isSgPointerType(baseType);
+                                   if (pointerType != NULL)
+                                      {
+                                     // printf ("Case of array of pointers \n");
+                                     // ROSE_ASSERT(false);
+
+                                        SgType* baseType = pointerType->get_base_type();
+                                        ROSE_ASSERT(baseType != NULL);
+#if 1
+                                        printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
+                                        SgClassType* classType = isSgClassType(baseType);
+                                        if (classType != NULL)
+                                           {
+                                             ROSE_ASSERT(classType->get_declaration() != NULL);
+                                             SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+                                             ROSE_ASSERT(classDeclaration != NULL);
+
+                                          // Get the defining declaration!
+                                             SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+                                             ROSE_ASSERT(definingClassDeclaration != NULL);
+                                             SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+                                             ROSE_ASSERT(classDefinition != NULL);
+
+                                             structureScope = classDefinition;
+                                           }
+                                          else
+                                           {
+                                             structureScope = NULL;
+                                           }
+                                      }
+                                     else
+                                      {
+                                        structureScope = NULL;
+                                      }
                                  }
-                           // printf ("Set structureScope to %p \n",structureScope);
+                              printf ("Set structureScope to %p (case of array type) \n",structureScope);
                               break;
                             }
 
@@ -2412,7 +2447,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                               SgPointerType* pointerType = isSgPointerType(type);
                               SgType* baseType = pointerType->get_base_type();
                               ROSE_ASSERT(baseType != NULL);
-#if 0
+#if 1
                               printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 #endif
                            // This is the same code for handling the class type as in the "case V_SgArrayType:" above.
@@ -2440,7 +2475,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                                       {
                                         SgType* baseType = arrayType->get_base_type();
                                         ROSE_ASSERT(baseType != NULL);
-#if 0
+#if 1
                                         printf ("In the array: baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 #endif
                                         SgClassType* classType = isSgClassType(baseType);
@@ -2478,7 +2513,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                                         structureScope = NULL;
                                       }
                                  }
-                           // printf ("Set structureScope to %p \n",structureScope);
+                              printf ("Set structureScope to %p (case of pointr type) \n",structureScope);
                               break;
                             }
 
@@ -2493,7 +2528,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                          case V_SgTypeInt:
                             {
                               structureScope = NULL;
-                           // printf ("Set structureScope to NULL \n");
+                              printf ("Set structureScope to NULL (for primative types) \n");
                               break;
                             }
 
