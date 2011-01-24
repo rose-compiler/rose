@@ -2,6 +2,7 @@
 #define BACKSTROKE_VALUE_GRAPH
 
 #include <ssa/staticSingleAssignment.h>
+
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/bind.hpp>
 
@@ -259,7 +260,7 @@ public:
 	void toDot(const std::string& filename) const;
 
 private:
-	//! This function set or add a def node to the value graph. If the variable defined is assigne by a 
+	//! This function set or add a def node to the value graph. If the variable defined is assigned by a
 	//! node with a temporary variable, just set the name and version to the temporary one.
 	//! Or else, build a new graph node and add an edge from this new node to the target node.
 	void setNewDefNode(SgNode* defNode, Vertex useVertex);

@@ -70,64 +70,56 @@ void writeCFGEdge(std::ostream& out, const CFGEdgeType& e)
 
 
 // Predeclaration of class CFG.
-template <class CFGNodeType, class CFGEdgeType> class CFG;
+template <class CFGNodeFilter> class CFG;
+
+struct FullCFGNodeFilter
+{
+	bool operator()(const VirtualCFG::CFGNode& cfgNode) const
+	{ return true; }
+};
+
+struct InterestingCFGNodeFilter
+{
+	bool operator()(const VirtualCFG::CFGNode& cfgNode) const
+	{ return cfgNode.isInteresting(); }
+};
 
 //! A full CFG without any filtered nodes.
-typedef CFG<VirtualCFG::CFGNode,
-			VirtualCFG::CFGEdge> FullCFG;
+typedef CFG<FullCFGNodeFilter> FullCFG;
 
 
 //! A filtered CFG which only contains interesting nodes and edges.
-typedef CFG<VirtualCFG::InterestingNode,
-			VirtualCFG::InterestingEdge> FilteredCFG;
+typedef CFG<InterestingCFGNodeFilter> FilteredCFG;
 
 
 
 
 
 /********************************************************************/
-//	The concept required to be fulfilled by CFGNodeType is
+//	The concept required to be fulfilled by CFGNodeFilter is
 //
-//	struct CFGNodeType
+//	struct CFGNodeFilter
 //	{
-//		CFGNodeType();
-//		std::vector<CFGEdgeType> outEdges() const;
-//		SgNode* getNode() const;
-//		int getIndex() const;
-//		bool isInteresting() const;
-//		std::string toString() const;
-//		bool operator<(const CFGNodeType&);
+//		bool operator()(const VirtualCFG::CFGNode& cfgNode) const;
 //	};
 //
 /********************************************************************/
-//	The concept required to be fulfilled by CFGEdgeType is
-//
-//	struct CFGEdgeType
-//	{
-//		CFGEdgeType();
-//		CFGNodeType target();
-//		std::string toString() const;
-//	};
-//
-/********************************************************************/
-
-// TODO: We have to check if a CFG contains a cycle withou exit (infinite cycle), in which case
-// we cannot build a CDG for it.
 
 //! A class holding a Control Flow Graph.
 	
-template <class CFGNodeT, class CFGEdgeT>
+template <class CFGNodeFilter>
 class CFG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, 
-		boost::shared_ptr<CFGNodeT>, boost::shared_ptr<CFGEdgeT> >
+		boost::shared_ptr<VirtualCFG::FilteredCFGNode<CFGNodeFilter> >,
+		boost::shared_ptr<VirtualCFG::FilteredCFGEdge<CFGNodeFilter> > >
 {
 public:
-	typedef CFGNodeT CFGNodeType;
-	typedef CFGEdgeT CFGEdgeType;
+	typedef VirtualCFG::FilteredCFGNode<CFGNodeFilter> CFGNodeType;
+	typedef VirtualCFG::FilteredCFGEdge<CFGNodeFilter> CFGEdgeType;
 
-	typedef boost::shared_ptr<CFGNodeT> CFGNodePtr;
-	typedef boost::shared_ptr<CFGEdgeT> CFGEdgePtr;
+	typedef boost::shared_ptr<CFGNodeType> CFGNodePtr;
+	typedef boost::shared_ptr<CFGEdgeType> CFGEdgePtr;
 
-	typedef typename boost::graph_traits<CFG<CFGNodeT, CFGEdgeT> > GraphTraits;
+	typedef typename boost::graph_traits<CFG<CFGNodeFilter> > GraphTraits;
 	
 	typedef typename GraphTraits::vertex_descriptor Vertex;
 	typedef typename GraphTraits::edge_descriptor Edge;
@@ -190,7 +182,7 @@ public:
 	VertexVertexMap buildPostdominatorTree() const;
 
 	//! Build a reverse CFG.
-	CFG<CFGNodeType, CFGEdgeType> makeReverseCopy() const;
+	CFG<CFGNodeFilter> makeReverseCopy() const;
 
 	//! Output the graph to a DOT file.
 	void toDot(const std::string& filename) const;
@@ -203,7 +195,7 @@ public:
 
 	//! Given a CFG node, returns the corresponding vertex in the graph.
 	//! Returns Vertex::null_vertex() if the given node is not in the graph
-	Vertex getVertexForNode(const CFGNodeT &node);
+	Vertex getVertexForNode(const CFGNodeType &node) const;
 
 protected:
 
@@ -232,43 +224,43 @@ protected:
 	//! This class is used to copy vertices when calling copy_graph().
 	struct VertexCopier
 	{
-		VertexCopier(const CFG<CFGNodeType, CFGEdgeType>& g1, CFG<CFGNodeType, CFGEdgeType>& g2)
+		VertexCopier(const CFG<CFGNodeFilter>& g1, CFG<CFGNodeFilter>& g2)
 		: cfg1(g1), cfg2(g2) {}
 
 		void operator()(const Vertex& v1, Vertex& v2) const
 		{ cfg2[v2] = cfg1[v1]; }
 		
-		const CFG<CFGNodeType, CFGEdgeType>& cfg1;
-		CFG<CFGNodeType, CFGEdgeType>& cfg2;
+		const CFG<CFGNodeFilter>& cfg1;
+		CFG<CFGNodeFilter>& cfg2;
 	};
 
 	//! This class is used to copy edges when calling copy_graph().
 	struct EdgeCopier
 	{
-		EdgeCopier(const CFG<CFGNodeType, CFGEdgeType>& g1, CFG<CFGNodeType, CFGEdgeType>& g2)
+		EdgeCopier(const CFG<CFGNodeFilter>& g1, CFG<CFGNodeFilter>& g2)
 		: cfg1(g1), cfg2(g2) {}
 
 		void operator()(const Edge& e1, Edge& e2) const
 		{ cfg2[e2] = cfg1[e1]; }
 
-		const CFG<CFGNodeType, CFGEdgeType>& cfg1;
-		CFG<CFGNodeType, CFGEdgeType>& cfg2;
+		const CFG<CFGNodeFilter>& cfg1;
+		CFG<CFGNodeFilter>& cfg2;
 	};
 };
 
 
 
-template <class CFGNodeType, class CFGEdgeType>
-void CFG<CFGNodeType, CFGEdgeType>::toDot(const std::string& filename) const
+template <class CFGNodeFilter>
+void CFG<CFGNodeFilter>::toDot(const std::string& filename) const
 {
 	std::ofstream ofile(filename.c_str(), std::ios::out);
 	boost::write_graphviz(ofile, *this,
-			boost::bind(&CFG<CFGNodeType, CFGEdgeType>::writeGraphNode, this, ::_1, ::_2),
-			boost::bind(&CFG<CFGNodeType, CFGEdgeType>::writeGraphEdge, this, ::_1, ::_2));
+			boost::bind(&CFG<CFGNodeFilter>::writeGraphNode, this, ::_1, ::_2),
+			boost::bind(&CFG<CFGNodeFilter>::writeGraphEdge, this, ::_1, ::_2));
 }
 
-template <class CFGNodeType, class CFGEdgeType>
-void CFG<CFGNodeType, CFGEdgeType>::build(SgFunctionDefinition* funcDef)
+template <class CFGNodeFilter>
+void CFG<CFGNodeFilter>::build(SgFunctionDefinition* funcDef)
 {
 	ROSE_ASSERT(funcDef);
 	funcDef_ = funcDef;
@@ -291,10 +283,10 @@ void CFG<CFGNodeType, CFGEdgeType>::build(SgFunctionDefinition* funcDef)
 	ROSE_ASSERT(isSgFunctionDefinition((*this)[exit_]->getNode()));
 }
 
-template <class CFGNodeType, class CFGEdgeType>
-void CFG<CFGNodeType, CFGEdgeType>::setEntryAndExit()
+template <class CFGNodeFilter>
+void CFG<CFGNodeFilter>::setEntryAndExit()
 {
-	typename boost::graph_traits<CFG<CFGNodeType, CFGEdgeType> >::vertex_iterator i, j;
+	typename boost::graph_traits<CFG<CFGNodeFilter> >::vertex_iterator i, j;
 	for (tie(i, j) = boost::vertices(*this); i != j; ++i)
 	{
 		CFGNodePtr node = (*this)[*i];
@@ -321,8 +313,8 @@ void CFG<CFGNodeType, CFGEdgeType>::setEntryAndExit()
 	ROSE_ASSERT(exit_ != GraphTraits::null_vertex());
 }
 
-template <class CFGNodeType, class CFGEdgeType>
-void CFG<CFGNodeType, CFGEdgeType>::buildCFG(
+template <class CFGNodeFilter>
+void CFG<CFGNodeFilter>::buildCFG(
 		const CFGNodeType& node,
 		std::map<CFGNodeType, Vertex>& nodesAdded,
 		std::set<CFGNodeType>& nodesProcessed)
@@ -384,8 +376,8 @@ void CFG<CFGNodeType, CFGEdgeType>::buildCFG(
 	}
 }
 
-template <class CFGNodeType, class CFGEdgeType>
-typename CFG<CFGNodeType, CFGEdgeType>::VertexVertexMap CFG<CFGNodeType, CFGEdgeType>::buildDominatorTree() const
+template <class CFGNodeFilter>
+typename CFG<CFGNodeFilter>::VertexVertexMap CFG<CFGNodeFilter>::buildDominatorTree() const
 {
 	VertexVertexMap immediateDominators;
 	boost::associative_property_map<VertexVertexMap> domTreePredMap(immediateDominators);
@@ -395,8 +387,8 @@ typename CFG<CFGNodeType, CFGEdgeType>::VertexVertexMap CFG<CFGNodeType, CFGEdge
 	return immediateDominators;
 }
 
-template <class CFGNodeType, class CFGEdgeType>
-typename CFG<CFGNodeType, CFGEdgeType>::VertexVertexMap CFG<CFGNodeType, CFGEdgeType>::buildPostdominatorTree() const
+template <class CFGNodeFilter>
+typename CFG<CFGNodeFilter>::VertexVertexMap CFG<CFGNodeFilter>::buildPostdominatorTree() const
 {
 	VertexVertexMap immediatePostdominators;
 	boost::associative_property_map<VertexVertexMap> postdomTreePredMap(immediatePostdominators);
@@ -406,10 +398,10 @@ typename CFG<CFGNodeType, CFGEdgeType>::VertexVertexMap CFG<CFGNodeType, CFGEdge
 	return immediatePostdominators;
 }
 
-template <class CFGNodeType, class CFGEdgeType>
-CFG<CFGNodeType, CFGEdgeType> CFG<CFGNodeType, CFGEdgeType>::makeReverseCopy() const
+template <class CFGNodeFilter>
+CFG<CFGNodeFilter> CFG<CFGNodeFilter>::makeReverseCopy() const
 {
-	CFG<CFGNodeType, CFGEdgeType> reverseCFG;
+	CFG<CFGNodeFilter> reverseCFG;
 	// The following function makes a reverse CFG copy.
 	boost::transpose_graph(*this, reverseCFG, 
 		boost::vertex_copy(VertexCopier(*this, reverseCFG)).
@@ -421,32 +413,32 @@ CFG<CFGNodeType, CFGEdgeType> CFG<CFGNodeType, CFGEdgeType>::makeReverseCopy() c
 	return reverseCFG;
 }
 
-template <class CFGNodeType, class CFGEdgeType>
-std::vector<typename CFG<CFGNodeType, CFGEdgeType>::CFGNodePtr>
-CFG<CFGNodeType, CFGEdgeType>::getAllNodes() const
+template <class CFGNodeFilter>
+std::vector<typename CFG<CFGNodeFilter>::CFGNodePtr>
+CFG<CFGNodeFilter>::getAllNodes() const
 {
 	std::vector<CFGNodePtr> allNodes;
-	typename boost::graph_traits<CFG<CFGNodeType, CFGEdgeType> >::vertex_iterator i, j;
+	typename boost::graph_traits<CFG<CFGNodeFilter> >::vertex_iterator i, j;
 	for (boost::tie(i, j) = boost::vertices(*this); i != j; ++i)
 		allNodes.push_back((*this)[*i]);
 	return allNodes;
 }
 
-template <class CFGNodeType, class CFGEdgeType>
-std::vector<typename CFG<CFGNodeType, CFGEdgeType>::CFGEdgePtr>
-CFG<CFGNodeType, CFGEdgeType>::getAllEdges() const
+template <class CFGNodeFilter>
+std::vector<typename CFG<CFGNodeFilter>::CFGEdgePtr>
+CFG<CFGNodeFilter>::getAllEdges() const
 {
 	std::vector<CFGEdgePtr> allEdges;
-	typename boost::graph_traits<CFG<CFGNodeType, CFGEdgeType> >::edge_iterator i, j;
+	typename boost::graph_traits<CFG<CFGNodeFilter> >::edge_iterator i, j;
 	for (boost::tie(i, j) = boost::edges(*this); i != j; ++i)
 		allEdges.push_back((*this)[*i]);
 	return allEdges;
 }
 
-template <class CFGNodeType, class CFGEdgeType>
-typename CFG<CFGNodeType, CFGEdgeType>::Vertex CFG<CFGNodeType, CFGEdgeType>::getVertexForNode(const CFGNodeType &node)
+template <class CFGNodeFilter>
+typename CFG<CFGNodeFilter>::Vertex CFG<CFGNodeFilter>::getVertexForNode(const CFGNodeType &node) const
 {
-	typename std::map<CFGNodeType, Vertex>::iterator vertexIter = nodesToVertices_.find(node);
+	typename std::map<CFGNodeType, Vertex>::const_iterator vertexIter = nodesToVertices_.find(node);
 	if (vertexIter == nodesToVertices_.end())
 		return GraphTraits::null_vertex();
 	else

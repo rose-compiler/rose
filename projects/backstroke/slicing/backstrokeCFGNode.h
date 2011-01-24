@@ -50,8 +50,7 @@ struct CFGNodeFilter
 	}
 };
 
-typedef CFG<VirtualCFG::FilteredCFGNode<CFGNodeFilter>,
-			VirtualCFG::FilteredCFGEdge<CFGNodeFilter> > CFGForSSA;
+typedef CFG<CFGNodeFilter> CFGForSSA;
 
 
 

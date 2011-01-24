@@ -1,0 +1,45 @@
+struct S
+{
+    int i, j;
+};
+
+// Example 1, use affine information to retrieve the value. Memory use is conditional.
+// Consider an array case.
+
+void event1(S* s)
+{
+    if (s->i > 0)
+        s->i++;
+    else
+        s->i--;
+}
+
+/*
+void event1_forward(S* s)
+{
+    if (s->i == INT_MIN || s->i == INT_MIN - 1)
+        push(false);
+    else if (s->i == INT_MAX - 1 || s->i == INT_MAX)
+        push(true);
+
+    if (s->i > 0)
+        s->i++;
+    else
+        s->i--;
+}
+
+void event1_reverse(S* s)
+{
+    if (s->i == INT_MIN || s->i == INT_MAX)
+    {
+        if (pop())
+            s->i--;
+        else
+            s->i++;
+    }
+    else if (s->i > 0)
+        s->i--;
+    else 
+        s->i++;
+}
+*/
