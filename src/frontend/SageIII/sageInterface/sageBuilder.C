@@ -901,7 +901,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
    //TODO consider the difference between C++ and Fortran
   setParameterList(func,paralist);
          // fixup the scope and symbol of arguments,
-  SgInitializedNamePtrList& argList = paralist->get_args();
+  SgInitializedNamePtrList argList = paralist->get_args();
   Rose_STL_Container<SgInitializedName*>::iterator argi;
   for(argi=argList.begin(); argi!=argList.end(); argi++)
   {
