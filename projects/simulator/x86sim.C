@@ -6267,9 +6267,9 @@ EmulationPolicy::arg(int idx)
     }
 }
 
-/* Called asynchronously to make a signal pending. The signal will be dropped if it's action is to ignore. Otherwise it will be made pending by
- * setting the appropriate bit in the EmulationPolicy's signal_pending vector.   And yes, we know that this function is not async signal safe
- * when signal tracing is enabled. */
+/* Called asynchronously to make a signal pending. The signal will be dropped if it's action is to ignore. Otherwise it will be
+ * made pending by setting the appropriate bit in the EmulationPolicy's signal_pending vector.  And yes, we know that this
+ * function is not async signal safe when signal tracing is enabled. */
 void
 EmulationPolicy::signal_generate(int signo)
 {
@@ -6420,9 +6420,9 @@ EmulationPolicy::signal_deliver(int signo)
     }
 }
 
-/* Note: if the specimen's signal handler never returns then this function is never invoked.  The specimen may do a longjmp() or siglongjmp(),
- * in which case the original stack, etc are restored anyway. Additionally, siglongjmp() may do a system call to set the signal mask back to
- * the value saved by sigsetjmp(), if any. */
+/* Note: if the specimen's signal handler never returns then this function is never invoked.  The specimen may do a longjmp()
+ * or siglongjmp(), in which case the original stack, etc are restored anyway. Additionally, siglongjmp() may do a system call
+ * to set the signal mask back to the value saved by sigsetjmp(), if any. */
 void
 EmulationPolicy::signal_return()
 {
