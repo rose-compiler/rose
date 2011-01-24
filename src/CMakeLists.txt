@@ -283,7 +283,12 @@ set(roseBinaryFormats_fileList_part0
    ### Microsoft Windows PE Format */
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeExport.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeFileHeader.C
-   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeImport.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeImportDirectory.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeImportHNTEntry.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeImportILTEntry.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeImportLookupTable.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeImportSection.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeRvaSizePair.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeSection.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeSectionTable.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/PeStringTable.C
@@ -610,6 +615,7 @@ set( libsageInterface_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/sageInterface_type.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/generateUniqueName.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/sageBuilder.C 
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/sageBuilder_fortran.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/sageBuilderAsm.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/sageInterface/abiStuff.C
    )

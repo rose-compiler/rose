@@ -83,12 +83,14 @@ createInitName (const string& name, SgType* type,
 // DQ (2/24/2009): Added assertion.
   ROSE_ASSERT(name.empty() == false);
   SgInitializedName* new_name = new SgInitializedName (ASTtools::newFileInfo (), sg_name, type, init,decl, scope, 0);
+  setOneSourcePositionForTransformation (new_name);
   ROSE_ASSERT (new_name);
   // Insert symbol
   if (scope)
     {
       SgVariableSymbol* new_sym = new SgVariableSymbol (new_name);
       scope->insert_symbol (sg_name, new_sym);
+      ROSE_ASSERT (new_sym->get_parent() != NULL);
     }
 
   return new_name;
@@ -246,12 +248,15 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
   }
   else // very conservative one, assume the worst side effects (all are written) 
   {
-    new_param_name+= "p__";
     if (!SageInterface::is_Fortran_language())
     {
       new_param_type = SgPointerType::createType (param_base_type);
       ROSE_ASSERT (new_param_type);
+      new_param_name+= "p__";
     }
+    else
+      new_param_name= "s_"+new_param_name; //s_ means shared variables
+
   }
 
   // Fortran parameters are passed by reference by default,
@@ -954,8 +959,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
       }
     } else 
     { // create unwrapping statements from parameters/ or the array parameter for pointers
-      if (SageInterface::is_Fortran_language())
-        args_scope = NULL; // not sure about Fortran scope
+      //if (SageInterface::is_Fortran_language())
+      //  args_scope = NULL; // not sure about Fortran scope
 
       local_var_decl  = 
         createUnpackDecl (p_init_name, counter, isPointerDeref, i_name , struct_decl, body);
@@ -1044,25 +1049,40 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
     }
     counter ++;
   } //end for
+
+  SgBasicBlock* func_body = func->get_definition()->get_body();
+
   //For OpenMP lowering, we have to have a void * parameter even if there is no need to pass any parameters 
   //in order to match the gomp runtime lib 's function prototype for function pointers
   SgFile* cur_file = getEnclosingFileNode(func);
   ROSE_ASSERT (cur_file != NULL);
+  //if (cur_file->get_openmp_lowering () && ! SageInterface::is_Fortran_language())
   if (cur_file->get_openmp_lowering ())
   {
     if (syms.size() ==0)
     {
       SgName var1_name = "__out_argv";
-      ROSE_ASSERT (Outliner::useStructureWrapper);
       SgType* ptype= NULL; 
-      ptype = buildPointerType (buildVoidType());
+      // A dummy integer parameter for Fortran outlined function
+      if (SageInterface::is_Fortran_language() )
+      {
+        var1_name = "out_argv";
+        ptype = buildIntType();
+        SgVariableDeclaration *var_decl = buildVariableDeclaration(var1_name,ptype, NULL, func_body);
+        prependStatement(var_decl, func_body);
+
+      }
+      else
+      {
+        ptype = buildPointerType (buildVoidType());
+        ROSE_ASSERT (Outliner::useStructureWrapper);
+      }
       parameter1 = buildInitializedName(var1_name,ptype);
       appendArg(params,parameter1);
     }
   }
 
   // variable substitution 
-  SgBasicBlock* func_body = func->get_definition()->get_body();
   remapVarSyms (sym_remap, pdSyms, private_remap , func_body);
 }
 

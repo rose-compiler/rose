@@ -4,10 +4,13 @@ INCLUDES = $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = libsageInterface.la
 libsageInterface_la_SOURCES      = \
+     sageInterface.h \
      sageInterface.C \
      sageInterface_type.C \
      generateUniqueName.C \
+     sageBuilder.h \
      sageBuilder.C \
+     sageBuilder_fortran.C \
      abiStuff.C
 #     highLevelInterface.C
 
