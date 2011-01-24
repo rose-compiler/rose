@@ -130,7 +130,6 @@ syscall_tst.199.1 no
 syscall_tst.20.1 no
 syscall_tst.200.1 no
 syscall_tst.201.1 no
-syscall_tst.207 no
 syscall_tst.212 no
 syscall_tst.220.1 no
 syscall_tst.220.2 no
