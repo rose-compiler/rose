@@ -2286,8 +2286,10 @@ void c_action_component_decl(Token_t * id,
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("Warning: calling c_action_entity_decl() with new and unknown OFP 0.8.0 specific options \n");
 
+  // DQ (1/23/2011): Pass the actual parameters (required for test2011_20.f90).
   // Calling R504, R503-F2008
-     c_action_entity_decl(id,false,false,false,false);
+  // c_action_entity_decl(id,false,false,false,false);
+     c_action_entity_decl(id,hasComponentArraySpec,hasCoArraySpec,hasCharLength,hasComponentInitialization);
 #else
      c_action_entity_decl(id);
 #endif
@@ -2318,6 +2320,11 @@ void c_action_component_decl_list__begin()
           ROSE_ASSERT(nameToken->text != NULL);
           printf ("WARNING: In c_action_component_decl_list__begin() -- Top of astNameStack = %s \n",nameToken->text);
         }
+#endif
+
+     printf ("We need semantics here corresponding to that in R503-F2008??? \n");
+#if 1
+     convertBaseTypeToArrayWhereAppropriate();
 #endif
 
   // DQ (8/28/2010): This is not an error, but we might want to handle it better.
@@ -2393,6 +2400,7 @@ void c_action_component_array_spec(ofp_bool isExplicit)
 #endif
 
 #if 1
+  // DQ (1/23/2011): This might be better put into R443 c_action_deferred_shape_spec_list(int count), so that count would be available.
   // DQ (1/18/2011): Called by R510 and R443.
      int count = 1;
      processMultidimensionalSubscriptsIntoExpressionList(count);
@@ -2488,6 +2496,15 @@ void c_action_component_array_spec(ofp_bool isExplicit)
         }
 #endif
 
+#if 1
+  // DQ (1/17/2011): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type).
+     printf ("In R443 c_action_component_array_spec(): Push the ComponentAttrSpec_dimension attribute only the stack to trigger this to be handled as an array (build an array type). \n");
+  // astAttributeSpecStack.push_front(AttrSpec_DIMENSION);
+     astAttributeSpecStack.push_front(ComponentAttrSpec_dimension);
+#else
+     printf ("SKIPPING R443 PUSH OF ComponentAttrSpec_dimension ONTO astAttributeSpecStack \n");
+#endif
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R443 c_action_component_array_spec()");
@@ -2505,7 +2522,8 @@ void c_action_component_array_spec(ofp_bool isExplicit)
  */
 void c_action_deferred_shape_spec_list__begin()
    {
-  // This function is not used in the OFP/ROSE connection.
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_deferred_shape_spec_list__begin() \n");
    }
 
 void c_action_deferred_shape_spec_list(int count)
@@ -2531,7 +2549,7 @@ void c_action_deferred_shape_spec_list(int count)
           setSourcePosition(colonExp);
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R443 list c_action_deferred_shape_spec_list()");
 #endif
@@ -3032,10 +3050,15 @@ void c_action_ac_value_list__begin()
        // We might want this to be pushed onto the astBaseTypeStack!
        // astTypeStack.push_front(arrayType);
 
+#if 0
        // Remove the previous base type and push the new one.
           astBaseTypeStack.pop_front();
           astBaseTypeStack.push_front(arrayType);
-
+#else
+       // DQ (1/23/2011): Put the new type onto the astTypeStack instead of the astBaseTypeStack.
+          ROSE_ASSERT(astTypeStack.empty() == true);
+          astTypeStack.push_front(arrayType);
+#endif
        // DQ (1/20/2011): Added test before we pop the entry off the stack.
           ROSE_ASSERT(astAttributeSpecStack.front() == AttrSpec_DIMENSION || astAttributeSpecStack.front() == ComponentAttrSpec_dimension);
           astAttributeSpecStack.pop_front();
@@ -3047,7 +3070,7 @@ void c_action_ac_value_list__begin()
 #endif
 #if 1
        // Output debugging information about saved state (stack) information.
-          outputState("After converion of type to array type in R504 (list) c_action_entity_decl_list()");
+          outputState("After converion of type to array type in R469 (list__begin) c_action_ac_value_list__begin()");
 #endif
         }
 #endif
@@ -3968,10 +3991,12 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
              }
         }
 
+  // DQ (1/23/2011): The dimension attribute will be associated with an attribute pusded by R510 #2 c_action_array_spec_element().
   // DQ (5/20/2008): This is a redundant specifier, it appears to only be used with AttrSpec_PUBLIC or AttrSpec_PRIVATE
   // Push the attribue onto the stack (e.g. dimension)
   // astAttributeSpecStack.push_front(attr);
-     if (attr != AttrSpec_access)
+  // if (attr != AttrSpec_access)
+     if (attr != AttrSpec_access && attr != AttrSpec_DIMENSION)
         {
           astAttributeSpecStack.push_front(attr);
         }
@@ -4592,7 +4617,7 @@ void c_action_entity_decl(Token_t * id)
   // printf ("Leaving c_action_entity_decl \n");
    }
 
-/** R504 list
+/** R504 R503-F2008 list
  * entity_decl
  * entity_decl_list
  * 	:	entity_decl ( T_COMMA entity_decl )*
@@ -4604,6 +4629,10 @@ void c_action_entity_decl_list__begin()
   // The use of the astNameListStack has been discontinued, we just use a stack of names (tokens) now!
   // This make for a simpler implementation and I don't think we require the additional complexity.
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R504 (list__begin) c_action_entity_decl_list__begin()");
+#endif
 
   // DQ (1/20/2011): We have to save the astAttributeSpecStack so that we can use the same attribute 
   // stack for processing all variables in the declaration uniformally.  See test2007_248.f90 for an 
@@ -4613,10 +4642,7 @@ void c_action_entity_decl_list__begin()
 
   // OR just don't delete the attributes until we process "c_action_entity_decl_list(int count)"!!!
 
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
-#endif
+     printf ("Build the base type for the variable declaration. \n");
 
   // DQ (12/8/2007): Modified to reflect use of new astBaseTypeStack (see test2007_148.f)
   // DQ (12/7/2007): Added assertion.
@@ -4630,10 +4656,41 @@ void c_action_entity_decl_list__begin()
 
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
 
+     if (astExpressionStack.empty() == false)
+        {
+          printf ("Build array if there is an array attribute! \n");
+        }
+
   // This is the start of an entity list (used in variable declarations to hold the variables being declared
   // build the list and add the variable identifiers to the list
   // AstNameListType* nameList = new AstNameListType();
   // astNameListStack.push_front(nameList);
+
+#if 1
+     convertBaseTypeToArrayWhereAppropriate();
+#else
+  // This is the latest point for building the base type to be used in the declaration of multiple variables.
+  // DQ (1/20/2011): Refactored the code below so it could be called from R443 as well as R504.
+     bool hasArraySpec      = false;
+     bool hasInitialization = false;
+     printf ("In R504 (list__begin) c_action_entity_decl_list__begin()8-F2008 calling processAttributeSpecStack(false,false): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+     processAttributeSpecStack(hasArraySpec,hasInitialization);
+
+  // Note that if there are array or pointer attributes to process then processAttributeSpecStack() 
+  // sets up the astBaseTypeStack and astTypeStack, and we don't want an entry on the astTypeStack.
+  // ROSE_ASSERT(astTypeStack.empty() == false);
+     if (astTypeStack.empty() == false)
+        {
+          printf ("In R504 (list__begin) c_action_entity_decl_list__begin(): Clearing the top entry on the astTypeStack \n");
+          astTypeStack.pop_front();
+          ROSE_ASSERT(astTypeStack.empty() == true);
+        }
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 void c_action_entity_decl_list(int count)
@@ -4861,6 +4918,9 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
 
             // ROSE_ASSERT(astExpressionStack.empty() == false);
             // ROSE_ASSERT(isSgExprListExp(astExpressionStack.front()) == NULL);
+
+            // DQ (1/23/2011): Added test to explain why nothing is done in this code below.
+               ROSE_ASSERT(astExpressionStack.empty() == true);
 
                SgExprListExp* expressionList = new SgExprListExp();
                setSourcePosition(expressionList);

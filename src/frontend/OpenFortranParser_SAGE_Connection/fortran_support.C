@@ -6770,7 +6770,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
 #if 1
        // Output debugging information about saved state (stack) information.
-          outputState("In loop over attributes in R504 R503-F2008 c_action_entity_decl()");
+          outputState("In loop over attributes in processAttributeSpecStack()");
 #endif
 
        // int attr = astAttributeSpecStack.front();
@@ -6795,20 +6795,11 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
                  // At this point the array type is already built, but is built using the base type, also it is on the astTypeStack, and not the astBaseTypeStack.
                  // so we move it to the astBaseTypeStack stack.
-#if 1
+
                  // We don't know the count yet, not clear where we get that (assume 1 for initial test).
                  // Note that this parameter is no longer used, so it should be removed!
                     printf ("REMOVE USE OF count PARAMETER IN convertTypeOnStackToArrayType() \n");
-#if 1
-#if 0
-                 // DQ (1/18/2011): 
-                    int count = 1;
 
-#error "DEAD CODE"
-
-                    SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
-                    ROSE_ASSERT(arrayType != NULL);
-#endif
                  // If the array spec is a part of the multi-part reference then process it as such and build the type on the astTypeStack (specific for that variable), else build it for the astBaseTypeStack for all variables.
                  // if (hasArraySpec == true)
                     printf ("In processAttributeSpecStack(): hasArraySpec = %s hasInitialization = %s \n",hasArraySpec ? "true" : "false", hasInitialization ? "true" : "false");
@@ -6817,16 +6808,16 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                  // if (hasArraySpec == true || hasInitialization == false)
                  // if (hasArraySpec == true)
                  // if (astTypeStack.empty() == true || hasArraySpec == true)
-                    if ((astTypeStack.empty() == true || hasArraySpec == true) && hasInitialization == false)
+#if 0
+                    if ((astTypeStack.empty() == true || hasArraySpec == true) && hasInitialization == false) // This is a problem for test2011_16.f90
                        {
                          if (hasArraySpec == true)
                             {
-#if 1
                            // DQ (1/18/2011): 
                               int count = 1;
                               SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
                               ROSE_ASSERT(arrayType != NULL);
-#endif
+
                            // DQ (1/17/2011): Fixup the call to convertTypeOnStackToArrayType() to prepare a value on the correct type stack. See test2007_101.f90 for an example.
                               ROSE_ASSERT(astBaseTypeStack.empty() == false);
                               ROSE_ASSERT(astTypeStack.empty() == true);
@@ -6864,51 +6855,181 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                          ROSE_ASSERT(astBaseTypeStack.empty() == false);
                       // ROSE_ASSERT(astTypeStack.empty() == false);
                       // ROSE_ASSERT(astTypeStack.empty() == true);
-#if 0
-                         SgArrayType* arrayType = astBaseTypeStack.front();
-                      // Remove the previous base type and push the new one.
-
-#error "DEAD CODE"
-
-                         astBaseTypeStack.pop_front();
-                         astBaseTypeStack.push_front(arrayType);
-#endif
                        }
+#else
+                    if (hasInitialization == false)
+                       {
+                         if ((astTypeStack.empty() == true) || (hasArraySpec == true) ) // This is a problem for test2011_16.f90
+                            {
+                              if (hasArraySpec == true)
+                                 {
+                                // DQ (1/18/2011): 
+                                   int count = 1;
+                                   SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
+                                   ROSE_ASSERT(arrayType != NULL);
+
+                                // DQ (1/17/2011): Fixup the call to convertTypeOnStackToArrayType() to prepare a value on the correct type stack. See test2007_101.f90 for an example.
+                                   ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                                   ROSE_ASSERT(astTypeStack.empty() == true);
+
+                                   astTypeStack.push_front(arrayType);
+                                 }
+                                else
+                                 {
+                                // We want to use the type in astTypeStack, so push the base type from astBaseTypeStack
+                                   ROSE_ASSERT(astTypeStack.empty() == true);
+                                // ROSE_ASSERT(astBaseTypeStack.empty() == true);
+
+                                   if (astExpressionStack.empty() == false)
+                                      {
+                                        int count = 1;
+                                        SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
+                                        ROSE_ASSERT(arrayType != NULL);
+                                        astBaseTypeStack.pop_front();
+                                        astBaseTypeStack.push_front(arrayType);
+                                        astTypeStack.push_front(astBaseTypeStack.front());
+                                      }
+                                     else
+                                      {
+                                     // See test2011_07.f90 for an example of why this is required.
+                                        astTypeStack.push_front(astBaseTypeStack.front());
+                                      }
+                                 }
+
+                              printf ("Error, we want to build or modify only the the type in the astTypeStack and not touch the type in the astBaseTypeStack \n");
+                           // ROSE_ASSERT(false);
+                            }
+                           else
+                            {
+                           // Nothing do do here since the array type was processed previously!
+                              ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                           // ROSE_ASSERT(astTypeStack.empty() == false);
+                           // ROSE_ASSERT(astTypeStack.empty() == true);
+                            }
+                       }
+                      else
+                       {
+                      // This is the case of test2011_16.f90
+                         ROSE_ASSERT(hasInitialization == true);
+
+                      // DQ (1/23/2011): In test2011_19.f90 ("integer, dimension(2,kmax0) :: X(2,kmax1) = reshape( (/5,6/), (/2,kmax2/) )")
+                      // since hasInitialization is true when processing X and now with R469 list c_action_ac_value_list__begin() now
+                      // processing array types (e.g. for X) using convertTypeOnStackToArrayType() we don't want to process it here.
+
+                         if (hasArraySpec == true)
+                            {
+                              printf ("############ Sometimes we WANT to process this into an array ############## \n");
+
+                           // DQ (1/23/2011): If hasInitialization == true then the initializer is on the top of the stack and the array bound expression is beneath it.
+                           // Save the initializer and put it back on the stack after we process the array expression.
+                              ROSE_ASSERT(astExpressionStack.empty() == false);
+                              SgExpression* initializer = astExpressionStack.front();
+                              astExpressionStack.pop_front();
+
+                           // This is code need to handle test2011_16.f90 (but might make some other code fail, e.g. test2010_136.f90 and test2011_19.f90)!
+                              SgExprListExp* exprListExp = astExpressionStack.empty() == false ? isSgExprListExp(astExpressionStack.front()) : NULL;
+                              if (exprListExp != NULL)
+                                 {
+                                   int count = 1;
+                                   ROSE_ASSERT(astExpressionStack.empty() == false);
+                                   SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
+                                   ROSE_ASSERT(arrayType != NULL);
+
+                                // DQ (1/17/2011): Fixup the call to convertTypeOnStackToArrayType() to prepare a value on the correct type stack. See test2007_101.f90 for an example.
+                                   ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                                   ROSE_ASSERT(astTypeStack.empty() == true);
+
+                                   astTypeStack.push_front(arrayType);
+                                 }
+                                else
+                                 {
+                                // DQ (1/23/2011): This is the case for test2011_19.f90 and test2010_136.f90
+                                   printf ("This array attribute has previously been turned into an array, so we don't have to worry about it... \n");
+                                   ROSE_ASSERT(astTypeStack.empty() == false);
+                                   ROSE_ASSERT(isSgArrayType(astTypeStack.front()) != NULL);
+                                 }
+
+                           // Put the initializer back
+                              astExpressionStack.push_front(initializer);
+                            }
+                           else
+                            {
+                              printf ("############ Sometimes we DON'T want to process this into an array ############## \n");
+                            }
+                         ROSE_ASSERT(astExpressionStack.empty() == false);
+
+#if 0
+                      // DQ (1/23/2011): If hasInitialization == true then the initializer is on the top of the stack and the array bound expression is beneath it.
+                      // Save the initializer and put it back on the stack after we process the array expression.
+                         ROSE_ASSERT(astExpressionStack.empty() == false);
+                         SgExpression* initializer = astExpressionStack.front();
+                         astExpressionStack.pop_front();
+
+                         if ((astTypeStack.empty() == true) || (hasArraySpec == true) ) // This is a problem for test2011_16.f90
+                            {
+                           // ROSE_ASSERT(astExpressionStack.empty() == false);
+                              if (hasArraySpec == true)
+                                 {
+                                // DQ (1/18/2011): 
+                                   int count = 1;
+                                   SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
+                                   ROSE_ASSERT(arrayType != NULL);
+
+                                // DQ (1/17/2011): Fixup the call to convertTypeOnStackToArrayType() to prepare a value on the correct type stack. See test2007_101.f90 for an example.
+                                   ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                                   ROSE_ASSERT(astTypeStack.empty() == true);
+
+                                   astTypeStack.push_front(arrayType);
+                                 }
+                                else
+                                 {
+                                // We want to use the type in astTypeStack, so push the base type from astBaseTypeStack
+                                   ROSE_ASSERT(astTypeStack.empty() == true);
+                                // ROSE_ASSERT(astBaseTypeStack.empty() == true);
+
+                                   if (astExpressionStack.empty() == false)
+                                      {
+                                        int count = 1;
+                                        SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
+                                        ROSE_ASSERT(arrayType != NULL);
+                                        astBaseTypeStack.pop_front();
+                                        astBaseTypeStack.push_front(arrayType);
+                                        astTypeStack.push_front(astBaseTypeStack.front());
+                                      }
+                                     else
+                                      {
+                                     // See test2011_07.f90 for an example of why this is required.
+                                        astTypeStack.push_front(astBaseTypeStack.front());
+                                      }
+                                 }
+
+                              printf ("Error, we want to build or modify only the the type in the astTypeStack and not touch the type in the astBaseTypeStack \n");
+                           // ROSE_ASSERT(false);
+                            }
+                           else
+                            {
+                           // Nothing do do here since the array type was processed previously!
+                              ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                           // ROSE_ASSERT(astTypeStack.empty() == false);
+                           // ROSE_ASSERT(astTypeStack.empty() == true);
+                            }
+
+                      // Put the initializer back
+                         astExpressionStack.push_front(initializer);
+#else
+                      // Do nothing to have same semantics as in the code above!
+                         printf ("Do nothing to have same semantics as in the code above! \n");
+#endif
+                      // printf ("Case hasInitialization == true not handled yet! \n");
+                      // ROSE_ASSERT(false);
+                       }
+                    
+#endif
 
 #if 1
                  // Output debugging information about saved state (stack) information.
                     outputState("In processAttributeSpecStack(): After processing type for AttrSpec_DIMENSION");
 #endif
-
-#else
-
-#error "DEAD CODE"
-
-                    int count = 1;
-                    SgArrayType* arrayType = convertTypeOnStackToArrayType(count);
-                    ROSE_ASSERT(arrayType != NULL);
-
-                 // We might want this to be pushed onto the astBaseTypeStack!
-                 // astTypeStack.push_front(arrayType);
-
-                 // Remove the previous base type and push the new one.
-                    astBaseTypeStack.pop_front();
-                    astBaseTypeStack.push_front(arrayType);
-
-#error "DEAD CODE"
-
-#endif
-#endif
-
-#if 0
-                    astAttributeSpecStack.pop_front();
-                 // DQ (1/17/2011): Remove any additional AttrSpec_DIMENSION entries associated with additional dimensions.
-                 // while (astAttributeSpecStack.empty() == false && astAttributeSpecStack.front() == AttrSpec_DIMENSION)
-                    while (astAttributeSpecStack.empty() == false && (astAttributeSpecStack.front() == AttrSpec_DIMENSION || astAttributeSpecStack.front() == ComponentAttrSpec_dimension) )
-                       {
-                         astAttributeSpecStack.pop_front();
-                       }
-#else
                  // Increment as many times as required past this dimension case.
                     while ((*i == AttrSpec_DIMENSION || *i == ComponentAttrSpec_dimension) )
                        {
@@ -6916,7 +7037,6 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                          i++;
                          printf ("At end of stack = %s \n",i != astAttributeSpecStack.end() ? "false" : "true");
                        }
-#endif
 #if 1
                  // Output debugging information about saved state (stack) information.
                     outputState("After processing AttrSpec_DIMENSION in loop over attributes in R504 R503-F2008 c_action_entity_decl()");
@@ -6935,6 +7055,16 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                          printf ("found a POINTER spec \n");
 
+                    if (astTypeStack.empty() == false)
+                       {
+                      // Because the pointer attribute specification applies to the base type we have to force this to be applied to the base type.
+                      // So clear the astTypeStack so that the convertBaseTypeOnStackToPointer() will leave the generate type on the astBaseTypeStack.
+                      // Since the convertBaseTypeOnStackToPointer() is only called from this function we could change the semantics of that function
+                      // to include this semantics.
+                         printf ("Clear the type on the astTypeStack so that it can be recreated! \n");
+                         astTypeStack.pop_front();
+                       }
+
                  // DQ (2/1/2009): Change the type on the astBaseTypeStack 
                  // to be a pointer with that base type. This attribute 
                  // really should have an immediate effect.
@@ -6945,7 +7075,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
                  // astAttributeSpecStack.pop_front();
                     break;
-                 }
+                  }
 
                default:
                   {
@@ -6973,34 +7103,44 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
        // astAttributeSpecStack.pop_front();
 
-          printf ("At bottom of loop over the attrubutes *i = %d \n",*i);
+          printf ("At bottom of loop over the attrubutes (next attribute = %d = %s ) \n",i != astAttributeSpecStack.end() ? *i : -1,i != astAttributeSpecStack.end() ? "valid" : "end of list");
 
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("In BOTTOM of loop over attributes in processAttributeSpecStack()");
+#endif
        // i++;
         }
 
   // DQ (1/21/2011): Handling code such as "integer :: a(5), b(7)"
-     if (hasArraySpec == true)
+  // if (hasArraySpec == true)
         {
        // If this is a declarations such as "integer :: a(5)" then "hasArraySpec" is TRUE and we want to
        // remove the dimension attribute so that an additional veriable will use either the correct base 
        // type or a new dimension attribute (and associated array length expression).
 
-       // Remove only the dimension spec!!!
+       // Remove the dimension spec AND any pointer!!!
           std::vector<int> savedAttributes;
-          std::list<int>::iterator i = astAttributeSpecStack.begin();
-          while (i != astAttributeSpecStack.end())
+          std::list<int>::iterator j = astAttributeSpecStack.begin();
+          while (j != astAttributeSpecStack.end())
              {
-               if ( (*i != AttrSpec_DIMENSION) && (*i != ComponentAttrSpec_dimension) )
+            // DQ (1/22/2011): The base type has already been computed and it will have include both pointer 
+            // and array concepts already. We will not want to repeat these in another array type used for 
+            // subsequent variables.
+            // if ( (*j != AttrSpec_DIMENSION) && (*j != ComponentAttrSpec_dimension) )
+               if ( (*j != AttrSpec_DIMENSION) && (*j != ComponentAttrSpec_dimension) &&
+                    (*j != AttrSpec_POINTER)   && (*j != ComponentAttrSpec_pointer) )
                   {
-                    printf ("Save the attribute = %d \n",*i);
-                    savedAttributes.push_back(*i);
+                    printf ("Save the attribute = %d \n",*j);
+                    savedAttributes.push_back(*j);
                   }
                  else
                   {
-                    printf ("Found a dimension attribute \n");
+                 // printf ("Found a dimension attribute \n");
+                    printf ("Found a dimension or pointer attribute (already incorporated into the base type) \n");
                   }
 
-               i++;
+               j++;
              }
 
        // Clear the astAttributeSpecStack, so that we avoid redundant entries when we put back 
@@ -7013,13 +7153,61 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
           ROSE_ASSERT(astAttributeSpecStack.empty() == true);
 
        // Replace the saved attributes on the stack (preserve the order as in the original stack).
-          vector<int>::reverse_iterator j = savedAttributes.rbegin();
-          while (j != savedAttributes.rend())
+          vector<int>::reverse_iterator k = savedAttributes.rbegin();
+          while (k != savedAttributes.rend())
              {
-               astAttributeSpecStack.push_front(*j);
-               j++;
+               printf ("Adding *k = %d saved from first trip back onto the astAttributeSpecStack \n",*k);
+               astAttributeSpecStack.push_front(*k);
+               k++;
              }
         }
+#if 0
+       else
+        {
+       // Even if hasArraySpec == false, if there was a pointer, then it has already been factored into the base type and we want to remove it from being reprocessed for later variables.
+       // Remove the dimension spec AND any pointer!!!
+          std::vector<int> savedAttributes;
+          std::list<int>::iterator j = astAttributeSpecStack.begin();
+          while (j != astAttributeSpecStack.end())
+             {
+            // DQ (1/22/2011): The base type has already been computed and it will have include both pointer 
+            // and array concepts already. We will not want to repeat these in another array type used for 
+            // subsequent variables.
+            // if ( (*j != AttrSpec_POINTER) && (*j != ComponentAttrSpec_pointer) )
+               if ( (*j != AttrSpec_DIMENSION) && (*j != ComponentAttrSpec_dimension) &&
+                    (*j != AttrSpec_POINTER)   && (*j != ComponentAttrSpec_pointer) )
+                  {
+                    printf ("Save the attribute = %d \n",*j);
+                    savedAttributes.push_back(*j);
+                  }
+                 else
+                  {
+                 // printf ("Found a dimension attribute \n");
+                    printf ("Found a dimension or pointer attribute (already incorporated into the base type) \n");
+                  }
+
+               j++;
+             }
+
+       // Clear the astAttributeSpecStack, so that we avoid redundant entries when we put back 
+       // the saved entries.  See test2011_11.f90 for an example of where this is required.
+       // astAttributeSpecStack.clear();
+          while (astAttributeSpecStack.empty() == false)
+             {
+               astAttributeSpecStack.pop_front();
+             }
+          ROSE_ASSERT(astAttributeSpecStack.empty() == true);
+
+       // Replace the saved attributes on the stack (preserve the order as in the original stack).
+          vector<int>::reverse_iterator k = savedAttributes.rbegin();
+          while (k != savedAttributes.rend())
+             {
+               printf ("Adding *k = %d saved from first trip back onto the astAttributeSpecStack \n",*k);
+               astAttributeSpecStack.push_front(*k);
+               k++;
+             }
+        }
+#endif
 
 #if 0
   // Replace the saved attributes on the stack (preserve the order as in the original stack).
@@ -7066,4 +7254,29 @@ processMultidimensionalSubscriptsIntoExpressionList(int count)
 
   // Put the SgExprListExp onto the stack
      astExpressionStack.push_front(expresssionList);
+   }
+
+
+
+void
+convertBaseTypeToArrayWhereAppropriate()
+   {
+#if 1
+  // This is the latest point for building the base type to be used in the declaration of multiple variables.
+  // DQ (1/20/2011): Refactored the code below so it could be called from R443 as well as R504.
+     bool hasArraySpec      = false;
+     bool hasInitialization = false;
+     printf ("In convertBaseTypeToArrayWhereAppropriate (called by R504 (list__begin) c_action_entity_decl_list__begin()) calling processAttributeSpecStack(false,false): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+     processAttributeSpecStack(hasArraySpec,hasInitialization);
+
+  // Note that if there are array or pointer attributes to process then processAttributeSpecStack() 
+  // sets up the astBaseTypeStack and astTypeStack, and we don't want an entry on the astTypeStack.
+  // ROSE_ASSERT(astTypeStack.empty() == false);
+     if (astTypeStack.empty() == false)
+        {
+          printf ("In convertBaseTypeToArrayWhereAppropriate (called by R504 (list__begin) c_action_entity_decl_list__begin()): Clearing the top entry on the astTypeStack \n");
+          astTypeStack.pop_front();
+          ROSE_ASSERT(astTypeStack.empty() == true);
+        }
+#endif
    }
