@@ -78,7 +78,6 @@ syscall_tst.117.msgsnd.01 no
 syscall_tst.117.msgsnd.03 no
 syscall_tst.117.msgsnd.04 no
 syscall_tst.117.semget.03 no
-syscall_tst.117.shmat.01 no
 syscall_tst.117.shmctl.04 no
 syscall_tst.117.shmdt.01 no
 syscall_tst.117.shmdt.02 no
