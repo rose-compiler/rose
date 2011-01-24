@@ -5582,9 +5582,7 @@ EmulationPolicy::emulate_syscall()
              *
              * fchown() changes the ownership of the file referred to by the open file descriptor fd. */
             syscall_enter("fchown32", "ddd");
-            uint32_t fd = arg(0);
-            uid_t  user = arg(1);
-            gid_t group = arg(2);
+            int fd=arg(0), user=arg(1), group=arg(2);
             int result = syscall(SYS_fchown, fd, user, group);
             writeGPR(x86_gpr_ax, -1==result?-errno:result);
             syscall_leave("d");
