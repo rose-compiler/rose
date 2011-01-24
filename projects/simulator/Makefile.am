@@ -63,6 +63,8 @@ TEST_SUPPORT_SRC = $(srcdir)/tests/audit_parse_verify.c \
                    $(srcdir)/tests/tst_tmpdir.c
 
 EXTRA_DIST +=      $(TEST_SUPPORT_SRC) \
+		   $(srcdir)/tests/audit_parse_verify.h \
+		   $(srcdir)/tests/audit_utils.h \
 		   $(srcdir)/tests/bintest_config.h \
 		   $(srcdir)/tests/clone_platform.h \
 		   $(srcdir)/tests/compat_16.h \
