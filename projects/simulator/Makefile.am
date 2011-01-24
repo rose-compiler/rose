@@ -11,10 +11,10 @@ noinst_PROGRAMS=
 lib_LIBRARIES=
 
 ###############################################################################################################################
-#  DOCUMENTATION
+#  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
 
-EXTRA_DIST += README
+EXTRA_DIST += README x86sim.conf test_status.txt
 
 ###############################################################################################################################
 #  PROGRAMS
@@ -62,8 +62,7 @@ TEST_SUPPORT_SRC = $(srcdir)/tests/audit_parse_verify.c \
                    $(srcdir)/tests/tst_sig.c \
                    $(srcdir)/tests/tst_tmpdir.c
 
-EXTRA_DIST +=      $(srcdir)/tests/audit_parse_verify.h \
-		   $(srcdir)/tests/audit_utils.h \
+EXTRA_DIST +=      $(TEST_SUPPORT_SRC) \
 		   $(srcdir)/tests/bintest_config.h \
 		   $(srcdir)/tests/clone_platform.h \
 		   $(srcdir)/tests/compat_16.h \
@@ -425,6 +424,7 @@ TEST_INPUTS_NM_SRC = \
 		   $(srcdir)/tests/syscall.85.c 
 
 TEST_INPUTS_SRC    = $(TEST_INPUTS_SA_SRC) $(TEST_INPUTS_RT_SRC) $(TEST_INPUTS_TS_SRC) $(TEST_INPUTS_NM_SRC)
+EXTRA_DIST += $(TEST_INPUTS_SRC)
 
 TEST_INPUTS_SA = $(basename $(notdir $(TEST_INPUTS_SA_SRC)))
 TEST_INPUTS_RT = $(basename $(notdir $(TEST_INPUTS_RT_SRC)))
@@ -467,6 +467,7 @@ MOSTLYCLEANFILES += libtestsupport.a
 include_HEADERS += $(srcdir)/tests/ipcmsg.h  $(srcdir)/tests/ipcsem.h  $(srcdir)/tests/ipcshm.h
 IPC_SUPPORT_SRC = $(srcdir)/tests/libipc.c
 IPC_SUPPORT_OBJ = $(patsubst %.c, %.o, $(notdir $(IPC_SUPPORT_SRC)))
+EXTRA_DIST += $(IPC_SUPPORT_SRC)
 libipc.a: $(IPC_SUPPORT_OBJ)
 	@echo "  AR      $@"
 	@ar -rc $@ $(IPC_SUPPORT_OBJ)
@@ -494,5 +495,3 @@ check-local: $(TEST_TARGETS)
 clean-local:
 	if [ -d tmp-sim ]; then chmod -f a+rwx -R tmp-sim; fi
 	rm -rf tmp-sim x-core.rose test-file-fchown32
-
-EXTRA_DIST += $(TEST_INPUTS_SRC) $(TEST_SUPPORT_SRC) README x86sim.conf test_status.txt
