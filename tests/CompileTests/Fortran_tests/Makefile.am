@@ -206,6 +206,16 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_183.f90 \
      test2010_184.f90 \
      test2011_05.f90 \
+     test2011_08.f90 \
+     test2011_09.f90 \
+     test2011_10.f90 \
+     test2011_12.f90 \
+     test2011_13.f90 \
+     test2011_14.f90 \
+     test2011_15.f90 \
+     test2011_16.f90 \
+     test2011_17.f90 \
+     test2011_19.f90 \
      canonicalExample.f90
 
 # DQ (1/18/2011): Failing tests.
@@ -513,7 +523,8 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_170.f90 \
      test2010_175.f90 \
      test2011_03.f90 \
-     test2011_06.f90 \
+     test2011_11.f90 \
+     test2011_18.f90 \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
