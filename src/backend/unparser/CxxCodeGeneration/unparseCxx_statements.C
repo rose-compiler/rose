@@ -166,7 +166,15 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgName        tmp_name  = initializedName->get_name();
      SgInitializer *tmp_init = initializedName->get_initializer();
      SgType        *tmp_type = initializedName->get_type();
-
+     ROSE_ASSERT (initializedName!= NULL);
+#if 0
+   // Liao 11/9/2010, moved to upper callers since this is called when unparsing both old-style and new-style function parameter lists
+   // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
+   // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
+   // See example code: tests/CompileTests/C_tests/test2010_10.c
+    if (funcdecl_stmt->get_oldStyleDefinition() == false )
+       unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
+#endif
   // printf ("In unparseFunctionParameterDeclaration(): Argument name = %s \n",
   //      (tmp_name.str() != NULL) ? tmp_name.str() : "NULL NAME");
 
@@ -353,6 +361,13 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      SgInitializedNamePtrList::iterator p = funcdecl_stmt->get_args().begin();
      while ( p != funcdecl_stmt->get_args().end() )
         {
+          // Liao 11/9/2010, 
+         // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
+         // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
+         //  are outside of the parameter list
+         // See example code: tests/CompileTests/C_tests/test2010_10.c
+          if (funcdecl_stmt->get_oldStyleDefinition() == false)
+             unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
           unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
 
        // Move to the next argument
@@ -472,6 +487,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
                unp->u_sage->curprint_newline();
           while ( p != funcdecl_stmt->get_args().end() )
              {
+               unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
             // Output declarations for function parameters (using old-style K&R syntax)
             // printf ("Output declarations for function parameters (using old-style K&R syntax) \n");
                unparseFunctionParameterDeclaration(funcdecl_stmt,*p,true,ninfo2);
@@ -952,9 +968,10 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(declarationStatement);
                     ROSE_ASSERT(variableDeclaration != NULL);
                     SgInitializedNamePtrList & variableList = variableDeclaration->get_variables();
-                 // using directives must be issued sepearately for each variable!
+                 // using directives must be issued separately for each variable!
                     ROSE_ASSERT(variableList.size() == 1);
                     SgInitializedName* initializedName = *(variableList.begin());
+                    unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
                     ROSE_ASSERT(initializedName != NULL);
                     SgName variableName = initializedName->get_name();
                     curprint ( variableName.str());
@@ -3329,6 +3346,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( string(", "));
         }
         ROSE_ASSERT ((*p) != NULL);
+        unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
         curprint (  (*p)->get_name().str());
 
         // DQ (8/4/2005): Removed the use of "()" here since it breaks test2005_123.C
@@ -3557,6 +3575,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                decl_item = *p;
                ROSE_ASSERT(decl_item != NULL);
+               unp->u_exprStmt->unparseAttachedPreprocessingInfo(decl_item, info, PreprocessingInfo::before);
 
             // printf ("In unparseVarDeclStmt(): cname = decl_item->get_name() = %s \n",decl_item->get_name().str());
 
@@ -3964,6 +3983,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ninfo.set_SkipBaseType();
                curprint ( string(","));
              }
+         unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);    
         }
 
   // curprint ( string("\n/* Handle bit fields specifiers (if any) */ \n";
@@ -4501,8 +4521,13 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo.set_inEnumDecl();
           SgInitializer *tmp_init=NULL;
           SgName tmp_name;
-#if 1
+     //TODO wrap into a function and to be called by all
           SgInitializedNamePtrList::iterator p = enum_stmt->get_enumerators().begin();
+          SgInitializedNamePtrList::iterator p_last = enum_stmt->get_enumerators().end();
+          
+		  //Guard against decrementing an invalid iterator
+		  if (p != p_last)
+			p_last--;
           for (; p!=enum_stmt->get_enumerators().end(); p++)
           {
             // Liao, 5/14/2009
@@ -4515,6 +4540,7 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             bool isInSameFile = (field->get_file_info()->get_filename()==enum_stmt->get_file_info()->get_filename());
             if (isInSameFile)
             {
+              unparseAttachedPreprocessingInfo(field, info, PreprocessingInfo::before);
               // unparse the element   
               ROSE_ASSERT((*p) != NULL);
               tmp_name=(*p)->get_name();
@@ -4526,7 +4552,8 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                 unparseExpression(tmp_init, ninfo);
               }
 
-              if (p != enum_stmt->get_enumerators().end())
+              //if (p != (enum_stmt->get_enumerators().end()))
+              if (p != p_last)
               {
                 curprint ( string(","));
               }
@@ -4537,37 +4564,6 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           if  (enum_stmt->get_enumerators().size()!=0)
             // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
             unparseAttachedPreprocessingInfo(enum_stmt, info, PreprocessingInfo::inside);
-#else
-          if (p != enum_stmt->get_enumerators().end())
-          {
-            // curprint ( string("{"; 
-            while (true)
-            {
-              ROSE_ASSERT((*p) != NULL);
-              tmp_name=(*p)->get_name();
-              tmp_init=(*p)->get_initializer();
-              curprint ( tmp_name.str());
-              if (tmp_init != NULL)
-              {
-                curprint ( string("="));
-                unparseExpression(tmp_init, ninfo);
-              }
-              p++;
-              if (p != enum_stmt->get_enumerators().end())
-              {
-                curprint ( string(","));
-              }
-              else
-                break; 
-
-            } //end while
-
-            // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
-            unparseAttachedPreprocessingInfo(enum_stmt, info, PreprocessingInfo::inside);
-
-            // curprint ( string("}";
-          }
-#endif          
 
 #if 0
           if (!info.SkipSemiColon())

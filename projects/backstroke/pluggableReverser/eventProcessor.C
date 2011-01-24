@@ -12,6 +12,24 @@ using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
 
+/** A variable filter that considers every variable interesting. */
+class DefaultVariableFilter : public IVariableFilter
+{
+public:
+	virtual bool isVariableInteresting(const VariableRenaming::VarName&) const
+	{
+		return true;
+	}
+} defaultVariableFilter;
+
+EventProcessor::EventProcessor(IVariableFilter* varFilter) : event_(NULL), var_renaming_(NULL), interproceduralSsa_(NULL)
+{
+	if (varFilter == NULL)
+		variableFilter_ = &defaultVariableFilter;
+	else
+		variableFilter_ = varFilter;
+}
+
 void EventProcessor::addExpressionHandler(ExpressionReversalHandler* exp_handler)
 {
 	exp_handler->setEventHandler(this);
@@ -30,7 +48,7 @@ void EventProcessor::addVariableValueRestorer(VariableValueRestorer* restorer)
 	variableValueRestorers.push_back(restorer);
 }
 
-FuncDeclPairs EventProcessor::processEvent(SgFunctionDeclaration* event)
+std::vector<EventReversalResult> EventProcessor::processEvent(SgFunctionDeclaration* event)
 {
 	event_ = event;
 	return processEvent();
@@ -112,6 +130,7 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
 	foreach(StatementReversalHandler* stmt_handler, stmt_handlers_)
 	{
 		vector<EvaluationResult> res = stmt_handler->evaluate(stmt, var_table);
+		ROSE_ASSERT(!res.empty());
 
 		foreach(EvaluationResult& r1, res)
 		{
@@ -181,28 +200,50 @@ SgExpression* EventProcessor::restoreVariable(VariableRenaming::VarName variable
 	return results.empty() ? NULL : results.front();
 }
 
-SgExpression* EventProcessor::getStackVar(SgType* type)
+SgVarRefExp* EventProcessor::getStackVar(SgType* type)
 {
 	string type_name;
+	string stackIdentifier;
 
 	if (isSgTypeInt(type))
-		type_name = "int";
-	else if (isSgTypeBool(type))
-		type_name = "bool";
-	else if (isSgTypeFloat(type))
-		type_name = "float";
-	else
-		type_name = "any";
-
-	string stack_name = event_->get_name() + "_" + type_name + "_stack";
-	if (stack_decls_.count(stack_name) == 0)
 	{
-		SgType* stack_type = buildStructDeclaration("std::stack<" + type_name + ">")->get_type();
-		ROSE_ASSERT(stack_type);
-		stack_decls_[stack_name] = buildVariableDeclaration(stack_name, stack_type);
+		//TODO: Just cast unsigned ints to ints before pushing them
+		stackIdentifier = "int";
+		type_name = "int";
+	}
+	else if (isSgTypeBool(type))
+	{
+		stackIdentifier = "bool";
+		type_name = "bool";
+	}
+	else if (isSgTypeFloat(type))
+	{
+		stackIdentifier = "float";
+		type_name = "float";
+	}
+	else if (isSgTypeDouble(type))
+	{
+		stackIdentifier = "double";
+		type_name = "double";
+	}
+	else
+	{
+		stackIdentifier = "any";
+		type_name = "boost::any";
 	}
 
-	return buildVarRefExp(stack_decls_[stack_name]->get_variables()[0]);
+	string stack_name = event_->get_name() + "_" + stackIdentifier + "_stack";
+	if (stack_decls_.count(stack_name) == 0)
+	{
+		SgClassDeclaration* stackTypeDeclaration = SageBuilder::buildStructDeclaration("std::deque<" + type_name + ">");
+		SgType* stack_type = stackTypeDeclaration->get_type();
+		ROSE_ASSERT(stack_type);
+		//delete stackTypeDeclaration;
+		
+		stack_decls_[stack_name] = SageBuilder::buildVariableDeclaration(stack_name, stack_type);
+	}
+
+	return SageBuilder::buildVarRefExp(stack_decls_[stack_name]->get_variables()[0]);
 }
 
 bool EventProcessor::isStateVariable(SgExpression* exp)
@@ -242,16 +283,24 @@ std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() co
 	return output;
 }
 
-SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* type)
+SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* returnType)
 {
-	return buildFunctionCallExp("push", type, buildExprListExp(
-					getStackVar(type), exp));
+	SgExprListExp* parameters = SageBuilder::buildExprListExp(getStackVar(returnType), exp);
+	return buildFunctionCallExp("push", returnType, parameters);
 }
 
 SgExpression* EventProcessor::popVal(SgType* type)
 {
 	return buildFunctionCallExp("pop< " + get_type_name(type) + " >", type,
 					buildExprListExp(getStackVar(type)));
+}
+
+SgExpression* EventProcessor::popVal_front(SgType* type)
+{
+	SgVarRefExp* stackVariable = getStackVar(type);
+	string functionName = "pop_front< " + get_type_name(type) + " >";
+	SgTypeVoid* returnType = SageBuilder::buildVoidType();
+	return SageBuilder::buildFunctionCallExp(functionName, returnType, buildExprListExp(stackVariable));
 }
 
 bool EventProcessor::checkForInitialVersions(const VariableVersionTable& var_table)
@@ -271,7 +320,7 @@ bool EventProcessor::checkForInitialVersions(const VariableVersionTable& var_tab
 	return true;
 }
 
-FuncDeclPairs EventProcessor::processEvent()
+std::vector<EventReversalResult> EventProcessor::processEvent()
 {
 	// Before processing, build a variable version table for the event function.
 	VariableVersionTable var_table(event_, var_renaming_);
@@ -280,7 +329,7 @@ FuncDeclPairs EventProcessor::processEvent()
 	//var_table.print();
 
 	SgBasicBlock* body = isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
-	FuncDeclPairs outputs;
+	std::vector<EventReversalResult> outputs;
 
 	SimpleCostModel cost_model;
 	vector<EvaluationResult> results = evaluateStatement(body, var_table);
@@ -290,22 +339,22 @@ FuncDeclPairs EventProcessor::processEvent()
 	sort(results.begin(), results.end());
 
 	int ctr = 0;
-	foreach(EvaluationResult& res, results)
+	foreach(EvaluationResult& reversalResult, results)
 	{
 		// Here we check the validity for each result above. We have to make sure
 		// every state variable has the version 1.
-		if (!checkForInitialVersions(res.getVarTable()))
-			;//continue;
+		if (!checkForInitialVersions(reversalResult.getVarTable()))
+			printf("WARNING: Not checking for correct initial versions!\n");//continue;
 
 		// Print all handlers used in this result.
 		if (SgProject::get_verbose() > 0 )
 		{
-			res.printHandlers();
-			res.getCost().print();
-			res.getVarTable().print();
+			reversalResult.printHandlers();
+			reversalResult.getCost().print();
+			reversalResult.getVarTable().print();
 		}
 
-		StatementReversal stmt = res.generateReverseStatement();
+		StatementReversal stmt = reversalResult.generateReverseStatement();
 
 		// Normalize the result.
 		BackstrokeUtility::removeUselessBraces(stmt.fwd_stmt);
@@ -313,34 +362,51 @@ FuncDeclPairs EventProcessor::processEvent()
 		BackstrokeUtility::removeUselessParen(stmt.fwd_stmt);
 		BackstrokeUtility::removeUselessParen(stmt.rvs_stmt);
 
-		fixVariableReferences(stmt.fwd_stmt);
-		fixVariableReferences(stmt.rvs_stmt);
+		SageInterface::fixVariableReferences(stmt.fwd_stmt);
+		SageInterface::fixVariableReferences(stmt.rvs_stmt);
 
-		string ctr_str = lexical_cast<string> (ctr++);
+		string counterString = lexical_cast<string> (ctr++);
 
-		SgName fwd_func_name = event_->get_name() + "_forward" + ctr_str;
+		SgScopeStatement* eventScope = event_->get_scope();
+
+		//Create the function declaration for the forward body
+		SgName fwd_func_name = event_->get_name() + "_forward" + counterString;
 		SgFunctionDeclaration* fwd_func_decl =
-						buildDefiningFunctionDeclaration(
+						SageBuilder::buildDefiningFunctionDeclaration(
 						fwd_func_name, event_->get_orig_return_type(),
-						isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
+						isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
+						eventScope);
 		SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
 		SageInterface::replaceStatement(fwd_func_def->get_body(), isSgBasicBlock(stmt.fwd_stmt));
 
-		SgName rvs_func_name = event_->get_name() + "_reverse" + ctr_str;
+		//Create the function declaration for the reverse body
+		SgName rvs_func_name = event_->get_name() + "_reverse" + counterString;
 		SgFunctionDeclaration* rvs_func_decl =
-						buildDefiningFunctionDeclaration(
+						SageBuilder::buildDefiningFunctionDeclaration(
 						rvs_func_name, event_->get_orig_return_type(),
-						isSgFunctionParameterList(copyStatement(event_->get_parameterList())));
+						isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
+						eventScope);
 		SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
 		SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt.rvs_stmt));
 
+		//Create the function declaration for the commit method
+		SgName commitFunctionName = event_->get_name() + "_commit" + counterString;
+		SgFunctionDeclaration* commitFunctionDecl =
+						SageBuilder::buildDefiningFunctionDeclaration(
+						commitFunctionName, event_->get_orig_return_type(),
+						isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
+						eventScope);
+		SgFunctionDefinition* commitFunctionDefinition = commitFunctionDecl->get_definition();
+
+		SgStatement* commitBody = reversalResult.generateCommitStatement();
+		SageInterface::replaceStatement(commitFunctionDefinition->get_body(), isSgBasicBlock(commitBody));
 
 		// Add the cost information as comments to generated functions.
-		string comment = "Cost: " + lexical_cast<string> (res.getCost().getCost());
+		string comment = "Cost: " + lexical_cast<string> (reversalResult.getCost().getCost());
 		attachComment(fwd_func_decl, comment);
 		attachComment(rvs_func_decl, comment);
 
-		outputs.push_back(FuncDeclPair(fwd_func_decl, rvs_func_decl));
+		outputs.push_back(EventReversalResult(fwd_func_decl, rvs_func_decl, commitFunctionDecl));
 	}
 
 	return outputs;

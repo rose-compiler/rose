@@ -7,10 +7,22 @@
 #include "variableVersionTable.h"
 #include "handlerTypes.h"
 #include "utilities/types.h"
+#include "ssa/staticSingleAssignment.h"
 
 
 class VariableRenaming;
 
+class IVariableFilter
+{
+public:
+	/** Given a variable declaration, return true if it's a variable of interest, false if the variable
+	 * should be ignored for purposes of reverse computation. Examples of variables to be ignored are
+	 * management variables such as an event scheduling queue, the standard output stream, etc. */
+	virtual bool isVariableInteresting(const VariableRenaming::VarName& var) const = 0;
+};
+
+/** Class that handles reversing an event. All expression handlers and statement handlers are registered with this
+ * class. */
 class EventProcessor
 {
 	//! This is the current event function to handle.
@@ -31,8 +43,14 @@ class EventProcessor
 	//! The variable renaming analysis object.
 	VariableRenaming* var_renaming_;
 
+	//! Interprocedural SSA analysis
+	StaticSingleAssignment* interproceduralSsa_;
+
 	//! This set is used to prevent infinite recursion when calling restoreVariable.
 	std::set<std::pair<VariableRenaming::VarName, VariableRenaming::NumNodeRenameEntry> > activeValueRestorations;
+
+	//! Objects that determines which variables don't ever need to be reversed. E.g. management objects
+	IVariableFilter* variableFilter_;
 
 	//! Make those two classes the friends to let them use some private methods.
 	friend class ReversalHandlerBase;
@@ -50,15 +68,20 @@ private:
 	std::vector<EvaluationResult> filterResults(const std::vector<EvaluationResult>& results);
 
 	//! The following methods are for expression and statement handlers for store and restore.
-	SgExpression* getStackVar(SgType* type);
+	SgVarRefExp* getStackVar(SgType* type);
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
+
+	//! Generate an expression which pops the top of a stack and returns the value
 	SgExpression* popVal(SgType* type);
+
+	//! Generate an expression which pops the bottom of a stack and discards the value.
+	//! This is used for fossil collection
+	SgExpression* popVal_front(SgType* type);
 
 
 public:
 
-	EventProcessor(SgFunctionDeclaration* func_decl = NULL, VariableRenaming* var_renaming = NULL)
-	: event_(func_decl), var_renaming_(var_renaming) { }
+	EventProcessor(IVariableFilter* varFilter = NULL);
 
 	//! Add an expression handler to the pool of expression handlers.
 	void addExpressionHandler(ExpressionReversalHandler* exp_handler);
@@ -69,9 +92,11 @@ public:
 	//! Add a value extractor to the pool of variable value restorers
 	void addVariableValueRestorer(VariableValueRestorer* restorer);
 
-	//! The main interface which proceses an event function.
-	FuncDeclPairs processEvent();
-	FuncDeclPairs processEvent(SgFunctionDeclaration* event);
+	//! Returns three functions: the instrumented forward event, the reverse event, and the commit method
+	std::vector<EventReversalResult> processEvent();
+
+	//! Returns three functions: the instrumented forward event, the reverse event, and the commit method
+	std::vector<EventReversalResult> processEvent(SgFunctionDeclaration* event);
 
 	//! Return if the given variable is a state variable (currently we assume all variables except
 	//! those defined inside the event function are state varibles).
@@ -90,6 +115,12 @@ public:
 
 	VariableRenaming* getVariableRenaming() const
 	{ return var_renaming_;	}
+
+	void setInterproceduralSsa(StaticSingleAssignment* ssa)
+	{ interproceduralSsa_ = ssa; }
+
+	const StaticSingleAssignment* getInterproceduralSsa() const
+	{ return interproceduralSsa_; }
 
 	/**
 	* Given a variable and a version, returns an expression evaluating to the value of the variable

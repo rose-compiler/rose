@@ -30,7 +30,7 @@ execFormatsTest_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += execFormatsTest.passed
 EXTRA_DIST += execFormatsTest.conf
 execFormatsTest.passed: execFormatsTest.conf execFormatsTest
-	@$(TH) $< $@
+	@$(RTH_RUN) $< $@
 
 
 #Test the binary control flow graph that uses the semantic representation to perform an accurate analysis
@@ -41,7 +41,7 @@ STATIC_TEST_TARGETS += testBinCFG.passed
 EXTRA_DIST += testBinCFG.conf
 MOSTLYCLEANFILES += cfg_x86.dot
 testBinCFG.passed: testBinCFG.conf testBinCFG
-	@$(TH) INPUT=libm-2.3.6.so $< $@
+	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
 
 
 #Test the binary call graph that uses the semantic representation to perform an accurate analysis
@@ -52,7 +52,7 @@ STATIC_TEST_TARGETS += testBinCG.C
 EXTRA_DIST += testBinCG.conf
 MOSTLYCLEANFILES += cfg_x86.dot
 testBinCG.passed: testBinCG.conf testBinCG testBinCFG.passed
-	@$(TH) INPUT=libm-2.3.6.so $< $@
+	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
 
 
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
@@ -63,7 +63,7 @@ testElfStrtab_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += testElfStrtab.passed
 EXTRA_DIST += testElfStrtab.conf
 testElfStrtab.passed: testElfStrtab.conf testElfStrtab
-	@$(TH) INPUT=arm-poweroff $< $@
+	@$(RTH_RUN) INPUT=arm-poweroff $< $@
 
 
 # Reads in an ELF executable and changes the byte order from little-endian to big-endian or vice versa and writes out a new
@@ -74,7 +74,7 @@ testElfByteOrder_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIB
 STATIC_TEST_TARGETS += testElfByteOrder.passed
 EXTRA_DIST += testElfByteOrder.conf
 testElfByteOrder.passed: testElfByteOrder.conf testElfByteOrder testElfStrtab.passed
-	@$(TH) INPUT=arm-poweroff $< $@
+	@$(RTH_RUN) INPUT=arm-poweroff $< $@
 
 
 # Reads in an ELF executable and changes the word size from eight to four bytes or vice versa and writes out a new file. Note
@@ -85,7 +85,7 @@ testElfWordSize_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS
 STATIC_TEST_TARGETS += testElfWordSize.passed
 EXTRA_DIST += testElfWordSize.conf
 testElfWordSize.passed: testElfWordSize.conf testElfWordSize testElfStrtab.passed testElfByteOrder.passed
-	@$(TH) INPUT=arm-poweroff $< $@
+	@$(RTH_RUN) INPUT=arm-poweroff $< $@
 
 
 # Demonstrates how to change names of dynamically-linked functions. This example reads an ELF executable dynamically linked to
@@ -97,9 +97,9 @@ testElfSchulz_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += testElfSchulz-1.passed testElfSchulz-2.passed
 EXTRA_DIST += testElfSchulz.conf
 testElfSchulz-1.passed: testElfSchulz.conf testElfSchulz
-	@$(TH) FLAGS='-rose:partitioner_search -leftovers' N=1 $< $@
+	@$(RTH_RUN) FLAGS='-rose:partitioner_search -leftovers' N=1 $< $@
 testElfSchulz-2.passed: testElfSchulz.conf testElfSchulz
-	@$(TH) FLAGS='-rose:partitioner_search -leftovers' N=2 $< $@
+	@$(RTH_RUN) FLAGS='-rose:partitioner_search -leftovers' N=2 $< $@
 
 
 # Demonstrates how to build an ELF executable from scratch. Lots of comments in the source code. The resulting file is executable
@@ -111,7 +111,7 @@ STATIC_TEST_TARGETS += testElfConstruct.passed
 EXTRA_DIST += testElfConstruct.conf
 MOSTLYCLEANFILES += a.out
 testElfConstruct.passed: testElfConstruct.conf testElfConstruct
-	@$(TH) $< $@
+	@$(RTH_RUN) $< $@
 
 
 # Demonstrates how to build a PE executable from scratch. This demo is not as complete at the ELF version, but does show how to
@@ -123,7 +123,7 @@ STATIC_TEST_TARGETS += testPeConstruct.passed
 EXTRA_DIST += testPeConstruct.conf
 MOSTLYCLEANFILES += a.out
 testPeConstruct.passed: testPeConstruct.conf testPeConstruct
-	@$(TH) $< $@
+	@$(RTH_RUN) $< $@
 
 
 # Changes the size and/or location of a section in an executable file.
@@ -134,7 +134,7 @@ STATIC_TEST_TARGETS += shiftResizeSection.passed
 EXTRA_DIST += shiftResizeSection.conf shiftResizeSection.ans
 MOSTLYCLEANFILES += arm-ctrlaltdel.dump-1 arm-ctrlaltdel.dump-2 arm-ctrlaltdel.dump-3
 shiftResizeSection.passed: shiftResizeSection.conf shiftResizeSection
-	@$(TH) INPUT=arm-ctrlaltdel $< $@
+	@$(RTH_RUN) INPUT=arm-ctrlaltdel $< $@
 
 
 # Finds constant values and propagates them across instructions
@@ -145,7 +145,7 @@ findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += findConstants.passed
 EXTRA_DIST += semantics.conf findConstants.ans
 findConstants.passed: semantics.conf findConstants
-	@$(TH) CMD=findConstants INPUT=i686-test1.O3.bin $< $@
+	@$(RTH_RUN) CMD=findConstants INPUT=i686-test1.O3.bin $< $@
 
 
 # Finds constant values and propagates them across instructions using an ABI
@@ -156,7 +156,7 @@ findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += findConstantsABI.passed
 EXTRA_DIST += semantics.conf findConstantsABI.ans
 findConstantsABI.passed: semantics.conf findConstantsABI
-	@$(TH) CMD=findConstantsABI INPUT=i686-test1.O3.bin $< $@
+	@$(RTH_RUN) CMD=findConstantsABI INPUT=i686-test1.O3.bin $< $@
 
 
 # Uses VirtualMachineSemantics semantic analysis policy
@@ -167,7 +167,7 @@ virtualMachineSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(R
 STATIC_TEST_TARGETS += virtualMachineSemantics.passed
 EXTRA_DIST += semantics.conf virtualMachineSemantics.ans
 virtualMachineSemantics.passed: semantics.conf virtualMachineSemantics
-	@$(TH) CMD=virtualMachineSemantics INPUT=i686-test1.O3.bin $< $@
+	@$(RTH_RUN) CMD=virtualMachineSemantics INPUT=i686-test1.O3.bin $< $@
 
 
 # Use SymbolicSemantics semantic analysis policy
@@ -178,7 +178,7 @@ symbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS
 STATIC_TEST_TARGETS += symbolicSemantics.passed
 EXTRA_DIST += semantics.conf symbolicSemantics.ans
 symbolicSemantics.passed: semantics.conf symbolicSemantics
-	@$(TH) CMD=symbolicSemantics INPUT=i686-test1.O3.bin $< $@
+	@$(RTH_RUN) CMD=symbolicSemantics INPUT=i686-test1.O3.bin $< $@
 
 
 # Use SymbolicSemantics with YicesSolver policy, invoking "yices" executable. We should be able
@@ -192,7 +192,7 @@ EXTRA_DIST += semantics.conf yicesSemanticsExe.ans
 if HAVE_YICES
 STATIC_TEST_TARGETS += yicesSemanticsExe.passed
 yicesSemanticsExe.passed: semantics.conf yicesSemanticsExe
-	@$(TH) CMD=yicesSemanticsExe INPUT=i686-test1.O3.bin $< $@
+	@$(RTH_RUN) CMD=yicesSemanticsExe INPUT=i686-test1.O3.bin $< $@
 endif
 
 
@@ -207,7 +207,7 @@ EXTRA_DIST += semantics.conf yicesSemanticsLib.ans
 if HAVE_LIBYICES
 STATIC_TEST_TARGETS += yicesSemanticsLib.passed
 yicesSemanticsLib.passed: semantics.conf yicesSemanticsLib
-	@$(TH) CMD=yicesSemanticsLib INPUT=i686-test1.O3.bin $< $@
+	@$(RTH_RUN) CMD=yicesSemanticsLib INPUT=i686-test1.O3.bin $< $@
 endif
 
 
@@ -218,9 +218,9 @@ disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += disassemble.passed assembler.passed
 EXTRA_DIST += disassemble.conf disassemble.ans assembler.conf
 disassemble.passed: disassemble.conf disassemble
-	@$(TH) INPUT=i686-test1.O0.bin $< $@
+	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
 assembler.passed: assembler.conf disassemble
-	@$(TH) $< $@
+	@$(RTH_RUN) $< $@
 
 
 # Disassemble a file containing bare instructions
@@ -230,7 +230,7 @@ disassembleBuffer_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS
 STATIC_TEST_TARGETS += disassembleBuffer.passed
 EXTRA_DIST += disassembleBuffer.conf disassembleBuffer.ans
 disassembleBuffer.passed: disassembleBuffer.conf disassembleBuffer
-	@$(TH) INPUT=buffer2.raw ADDRESS=0x8048310 $< $@
+	@$(RTH_RUN) INPUT=buffer2.raw ADDRESS=0x8048310 $< $@
 
 
 noinst_PROGRAMS += testEtherInsns
@@ -239,7 +239,7 @@ testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += testEtherInsns.passed
 EXTRA_DIST += testEtherInsns.conf
 testEtherInsns.passed: testEtherInsns.conf testEtherInsns
-	@$(TH) $< $@
+	@$(RTH_RUN) $< $@
 
 
 # Program to show function boundary information for a binary executable
@@ -249,11 +249,11 @@ functionBoundaries_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += functionBoundaries_1.passed functionBoundaries_2.passed functionBoundaries_3.passed
 EXTRA_DIST += functionBoundaries.conf functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans
 functionBoundaries_1.passed: functionBoundaries.conf functionBoundaries disassemble.passed
-	@$(TH) INPUT=i686-test1.O0.bin N=1 $< $@
+	@$(RTH_RUN) INPUT=i686-test1.O0.bin N=1 $< $@
 functionBoundaries_2.passed: functionBoundaries.conf functionBoundaries findConstants.passed findConstantsABI.passed
-	@$(TH) INPUT=i686-test1.O3.bin N=2 $< $@
+	@$(RTH_RUN) INPUT=i686-test1.O3.bin N=2 $< $@
 functionBoundaries_3.passed: functionBoundaries.conf functionBoundaries
-	@$(TH) INPUT=i686-test1.O3-stripped.bin N=3 $< $@
+	@$(RTH_RUN) INPUT=i686-test1.O3-stripped.bin N=3 $< $@
 
 
 # Program to add read-only data to ELF core dumps.
@@ -263,7 +263,7 @@ expandCoreDump_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += expandCoreDump.passed
 EXTRA_DIST += expandCoreDump.conf
 expandCoreDump.passed: expandCoreDump.conf expandCoreDump
-	@$(TH) $< $@
+	@$(RTH_RUN) $< $@
 
 
 # Program that encodes/decodes data similar to ROT-13 but acceping binary data
@@ -272,7 +272,7 @@ rot13_SOURCES=rot13.C
 STATIC_TEST_TARGETS += rot13.passed
 EXTRA_DIST += rot13.conf
 rot13.passed: rot13.conf rot13
-	@$(TH) INPUT=i686-test1.O0.bin $< $@
+	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
 
 
 # Program to test the assembler (see also "disassemble --assemble")
@@ -282,7 +282,7 @@ testAssembler_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += testAssembler.passed
 EXTRA_DIST += testAssembler.conf testAssembler.ans
 testAssembler.passed: testAssembler.conf testAssembler
-	@$(TH) INPUT=buffer2.bin $< $@
+	@$(RTH_RUN) INPUT=buffer2.bin $< $@
 
 
 # Program to test that we can write and then read an AST for a binary executable
@@ -292,7 +292,7 @@ testAstIO_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += testAstIO.passed
 EXTRA_DIST += testAstIO.conf
 testAstIO.passed: testAstIO.conf testAstIO
-	@$(TH) INPUT=i686-test1.O0.bin $< $@
+	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
 
 
 # Program to test the RegisterDescriptor and RegisterDictionary classes.
@@ -302,7 +302,7 @@ testRegisters_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += testRegisters.passed
 EXTRA_DIST += testRegisters.conf
 testRegisters.passed: testRegisters.conf testRegisters
-	@$(TH) $< $@
+	@$(RTH_RUN) $< $@
 
 # Not sure what this does.
 if ROSE_USE_SQLITE_DATABASE
@@ -313,7 +313,7 @@ STATIC_TEST_TARGETS += testLibraryDb.passed
 EXTRA_DIST += testLibraryDb.conf
 MOSTLYCLEANFILES += test.db
 testLibraryDb.passed: testLibraryDb.conf testLibraryDb
-	@$(TH) $< $@
+	@$(RTH_RUN) $< $@
 endif
 
 ###############################################################################################################################
@@ -471,6 +471,7 @@ check-local:
 	@echo "  TESTING (disabled: all tests disabled for Cygwin)"
 else
 check-local: $(STATIC_TEST_TARGETS) dynamic_tests
+	$(RTH_STATS)
 endif
 
 else

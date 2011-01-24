@@ -922,6 +922,16 @@ HEADER_TYPE_STRING_TYPE_START
           void post_construction_initialization();
 HEADER_TYPE_STRING_TYPE_END
 
+HEADER_TYPE_DEFAULT_TYPE_START
+
+       // Generated a mangled name that accounts for the stored name internally.
+       // SgName get_mangled (void) const;
+
+      //! Default type creation to support intermediate types built during parsing (required for fortran only).
+          static SgTypeDefault* createType ( const SgName & nameOfType );
+
+HEADER_TYPE_DEFAULT_TYPE_END
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -1967,7 +1977,16 @@ SgType::handledUsingLocalTable(SgType* t)
      return returnValue;
    }
 
-
+// Liao 10/29/2010
+// My understanding of this code (may not be accurate):
+//  This function was designed to work with C/C++ and Fortran frontends to generate AST.
+//  For C/C++: a global variable curr_sg_scope is used 
+//  For Fortran: a stack is used 
+//  So code has to be conditionized with proper #ifdef ..#endf around the use of the variable or stack.
+//  
+//  Now we allow users to build types during AST transformation. This function will be called and scope can be NULL
+//  Neither the stack or global variable in frontends are used in this situation either.
+//  But this is perfectly legal. 
 SgScopeStatement*
 SgType::getCurrentScope()
    {
@@ -2030,7 +2049,9 @@ SgType::getCurrentScope()
 #endif
                   {
                  // This is a code generated after the initial C/C++/Fortran AST was built, so we don't know the current scope.
-                    printf ("In SgType::getCurrentScope(): Not in either the generation of C/C++ or Fortran AST construction \n");
+                // Liao 10/29/2010. We allow users to build types during AST transformation, which will trigger this line.
+                    if ( SgProject::get_verbose() > 1 ) 
+                      printf ("In SgType::getCurrentScope(): Not in either the generation of C/C++ or Fortran AST construction \n");
                     currentScope = NULL;
                   }
              }
@@ -2182,6 +2203,68 @@ SOURCE_TYPE_COMPLEX_TYPE_END
 
 
 SOURCE_TYPE_DEFAULT_TYPE_START
+
+SgName
+SgTypeDefault::get_mangled (void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+     SgName mangled_name;
+     mangled_name << "__" << "MANGLED_ID_DEFAULT_TYPE" << "b__" // start tag
+                  << p_name.str() // name of default type
+                  << "__" << "MANGLED_ID_DEFAULT_TYPE" << "e__"; // end tag
+
+#if 0
+     printf ("LEAVING: In SgTypeDefault::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#endif
+
+     return mangled_name;
+   }
+
+SgTypeDefault*
+SgTypeDefault::createType ( const SgName & nameOfType )
+   {
+     SgTypeDefault* returnType = new SgTypeDefault();
+     if (nameOfType.is_null() == false)
+        {
+          returnType->set_name(nameOfType);
+        }
+     ROSE_ASSERT(returnType != NULL);
+
+     SgName name = returnType->get_mangled();
+
+#if 0
+     printf ("In SgTypeDefault::createType(): Building a default type = %p mangled name = %s \n",returnType,name.str());
+#endif
+
+  // Only look for pointers to type in the global type table.
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+
+     if (t == NULL)
+        {
+       // The pointer type was not found in the type table, put it into the global type table.
+#if 0
+          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+          get_globalTypeTable()->insert_type(name,returnType);
+        }
+       else
+        {
+       // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+          printf ("Mangled type name for SgStringType = %s (already exists in type table) \n",name.str());
+#endif
+          ROSE_ASSERT(t != returnType);
+
+          delete returnType;
+          returnType = NULL;
+
+          returnType = isSgTypeDefault(t);
+        }
+
+     return returnType;
+   }
+
 SOURCE_TYPE_DEFAULT_TYPE_END
 
 

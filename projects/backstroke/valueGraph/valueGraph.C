@@ -34,7 +34,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 	vector<SgNode*> nodes = BackstrokeUtility::querySubTree<SgNode>(funcDef);
 	foreach (SgNode* node, nodes)
 	{
-		cout << node->class_name() << endl;
+		cout << "Build value graph node for: " << node->class_name() << endl;
 		
 		// Statement case: variable declaration.
 		if (SgStatement* stmt = isSgStatement(node))
@@ -45,6 +45,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 				{
 					SgInitializer* initalizer = initName->get_initializer();
 
+					// If the variable is not initialized.
 					if (initalizer == NULL)
 					{
 						setNewDefNode(initName, nullVertex());
@@ -53,6 +54,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 					{
 						SgExpression* operand = assignInit->get_operand();
 
+						// Find the correct vertex which defines the variable.
 						ROSE_ASSERT(nodeVertexMap_.count(operand) > 0);
 						Vertex rhsVertex = nodeVertexMap_.find(operand)->second;
 						
@@ -60,7 +62,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 					}
 					else
 					{
-						cout << initalizer->class_name() << endl;
+						cout << "The initializer: " << initalizer->class_name() << endl;
 						ROSE_ASSERT(!"Can only deal with assign initializer now!");
 					}
 				}
@@ -76,6 +78,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 			if (BackstrokeUtility::isVariableReference(expr))
 			{
 				// Get the var name and version for lhs.
+				// We don't know if this var is a use or def now.
 				VariableWithVersion var = getVariableWithVersion(expr);
 
 				if (var.isPseudoDef)
@@ -84,10 +87,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 					if (varVertexMap_.find(var) == varVertexMap_.end())
 					{
 						// Add the phi node.
-						Vertex v = add_vertex(*this);
-						(*this)[v] = new PhiNode(var);
-
-						// Add the var -> vertex to varVertexMap_
+						Vertex v = addVertex(new PhiNode(var));
 						varVertexMap_[var] = v;
 
 						// Connect the pseudo def to real defs.
@@ -124,10 +124,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 
 			else if (SgValueExp* valueExp = isSgValueExp(expr))
 			{
-				Vertex v = add_vertex(*this);
-				(*this)[v] = new ValueNode(valueExp);
-
-				nodeVertexMap_[expr] = v;
+				addVertex(new ValueNode(valueExp), expr);
 			}
 
 			else if (SgBinaryOp* binOp = isSgBinaryOp(expr))
@@ -135,7 +132,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 				SgExpression* lhs = binOp->get_lhs_operand();
 				SgExpression* rhs = binOp->get_rhs_operand();
 
-				ValueGraphNode* newNode = NULL;
+//				ValueGraphNode* newNode = NULL;
 
 				//OperaterType opType;
 
@@ -165,10 +162,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 
 					case V_SgAddOp:
 					{
-						Vertex v = add_vertex(*this);
-						(*this)[v] = new OperaterNode(OperaterNode::otAdd);
-
-						nodeVertexMap_[expr] = v;
+						Vertex v = addVertex(new OperaterNode(OperaterNode::otAdd), expr);
 
 						ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
 						ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
@@ -184,10 +178,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 
 					case V_SgPlusAssignOp:
 					{
-						Vertex v = add_vertex(*this);
-						(*this)[v] = new OperaterNode(OperaterNode::otAdd);
-
-						nodeVertexMap_[expr] = v;
+						Vertex v = addVertex(new OperaterNode(OperaterNode::otAdd), expr);
 
 						VariableWithVersion use = getVariableWithVersion(lhs);
 
@@ -240,11 +231,9 @@ void ValueGraph::setNewDefNode(SgNode* defNode, Vertex useVertex)
 		}
 		else
 		{
-			Vertex newVertex = add_vertex(*this);
-			(*this)[newVertex] = new ValueGraphNode(var);
+			Vertex newVertex = addVertex(new ValueGraphNode(var), defNode);
 
-			// Update tables.
-			nodeVertexMap_[defNode] = newVertex;
+			// Update the var to vertex map.
 			varVertexMap_[var] = newVertex;
 
 			Edge e = add_edge(newVertex, useVertex, *this).first;
@@ -254,12 +243,9 @@ void ValueGraph::setNewDefNode(SgNode* defNode, Vertex useVertex)
 	else
 	{
 		// A variable is declared but not defined.
-		
-		Vertex newVertex = add_vertex(*this);
-		(*this)[newVertex] = new ValueGraphNode(var);
+		Vertex newVertex = addVertex(new ValueGraphNode(var), defNode);
 
-		// Update tables.
-		nodeVertexMap_[defNode] = newVertex;
+		// Update the var to vertex map.
 		varVertexMap_[var] = newVertex;
 	}
 }
@@ -294,6 +280,7 @@ VariableWithVersion ValueGraph::getVariableWithVersion(SgNode* node, bool isUse)
 		SSA::ReachingDefPtr reachingDef = defTable.find(varName)->second;
 		version = reachingDef->getRenamingNumber();
 	}
+	
 	return VariableWithVersion(varName, version);
 }
 

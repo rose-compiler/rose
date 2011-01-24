@@ -1,10 +1,121 @@
 //Author: Justin Frye <jafrye@tamu.edu>
 #pragma once
-#include "sage3basic.h"
+#include "rose.h"
 #include <vector>
 
 namespace ssa_private
 {
+/** Class holding a unique name for a variable. Is attached to varRefs as a persistant attribute.
+ * This is used to assign absolute names to VarRefExp nodes during VariableRenaming.
+ */
+class VarUniqueName : public AstAttribute
+{
+private:
+
+	/** The vector of initializedNames that uniquely identifies this VarRef.
+	 *  The node which this name is attached to should be the last in the list.
+	 */
+	std::vector<SgInitializedName*> key;
+
+	bool usesThis;
+
+public:
+
+	/** Constructs the attribute with an empty key.
+	 */
+	VarUniqueName() : key(), usesThis(false) { }
+
+	/** Constructs the attribute with value thisNode.
+	 *
+	 * The key will consist of only the current node.
+	 *
+	 * @param thisNode The node to use for the key.
+	 */
+	VarUniqueName(SgInitializedName* thisNode) : usesThis(false)
+	{
+		key.push_back(thisNode);
+	}
+
+	/** Constructs the attribute using the prefix vector and thisNode.
+	 *
+	 * The key will first be copied from the prefix value, and then the thisNode
+	 * value will be appended.
+	 *
+	 * @param prefix The prefix of the new name.
+	 * @param thisNode The node to append to the end of the new name.
+	 */
+	VarUniqueName(const std::vector<SgInitializedName*>& prefix, SgInitializedName* thisNode) : usesThis(false)
+	{
+		key.assign(prefix.begin(), prefix.end());
+		key.push_back(thisNode);
+	}
+
+	/** Copy the attribute.
+	 *
+	 * @param other The attribute to copy from.
+	 */
+	VarUniqueName(const VarUniqueName& other) : usesThis(false)
+	{
+		key.assign(other.key.begin(), other.key.end());
+	}
+
+	VarUniqueName* copy()
+	{
+		VarUniqueName* newName = new VarUniqueName(*this);
+		return newName;
+	}
+
+	/** Get a constant reference to the name.
+	 *
+	 * @return Constant Reference to the name.
+	 */
+	std::vector<SgInitializedName*>& getKey()
+	{
+		return key;
+	}
+
+	/** Set the value of the name.
+	 *
+	 * @param newKey The new name to use.
+	 */
+	void setKey(const std::vector<SgInitializedName*>& newKey)
+	{
+		key.assign(newKey.begin(), newKey.end());
+	}
+
+	bool getUsesThis()
+	{
+		return usesThis;
+	}
+
+	void setUsesThis(bool uses)
+	{
+		usesThis = uses;
+	}
+
+	/** Get the string representing this uniqueName
+	 *
+	 * @return The name string.
+	 */
+	std::string getNameString()
+	{
+		std::string name = "";
+		std::vector<SgInitializedName*>::iterator iter;
+		if (usesThis)
+			name += "this->";
+		for (iter = key.begin(); iter != key.end(); ++iter)
+		{
+			if (iter != key.begin())
+			{
+				name += ":";
+			}
+			name += (*iter)->get_name().getString();
+		}
+
+		return name;
+	}
+};
+
 
 /** Attribute that describes the variables modified by a given expression.  */
 class VariableReferenceSet
@@ -67,6 +178,7 @@ public:
 		refs.assign(newRefs.begin(), newRefs.end());
 	}
 };
+
 
 /** Class to traverse the AST and assign unique names to every varRef. */
 class UniqueNameTraversal : public AstBottomUpProcessing<VariableReferenceSet>

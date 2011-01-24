@@ -1,17 +1,17 @@
 //Author: Justin Frye <jafrye@tamu.edu>
 #pragma once
-#include "sage3basic.h"
+#include "rose.h"
 #include "staticSingleAssignment.h"
 
 namespace ssa_private
 {
 
-/** Attribute that describes the variables modified by a given expression. */
-class ChildDefsAndUses
+/** Attribute that describes the variables used by a given expression. */
+class ChildUses
 {
 private:
-	/** Stores all of the varRefs that are defined in the current subtree.  */
-	std::vector<SgNode*> defs;
+	/** An assignment to the current expression in the AST would define this variable */
+	SgVarRefExp* currentVar;
 
 	/** Stores all the varRefs that are used in the current subTree. */
 	std::vector<SgNode*> uses;
@@ -19,81 +19,24 @@ private:
 public:
 
 	/** Create the attribute with no refs. 	 */
-	ChildDefsAndUses() : defs(), uses() { }
+	ChildUses() : currentVar(NULL)
+	{ }
 
-	/** Create the attribute with specified def/use.
-	 *
-	 * @param defNode The node to add to the list of defs, or NULL
-	 * @param useNode The node to add to the list of uses, or NULL
-	 */
-	ChildDefsAndUses(SgNode* defNode, SgNode* useNode)
+	ChildUses(SgNode* useNode, SgVarRefExp* var)
 	{
-		if (defNode)
-			defs.push_back(defNode);
-
-		if (useNode)
-			uses.push_back(useNode);
-	}
-
-	/** Create the attribute with the list of defs and the use.
-	 *
-	 * @param defTree The vector of defs to add, or an empty vector.
-	 * @param useNode The node to add to the list of uses, or NULL.
-	 */
-	ChildDefsAndUses(const std::vector<SgNode*>& defTree, SgNode* useNode)
-	{
-		if (defTree.size() > 0)
-			defs.assign(defTree.begin(), defTree.end());
-
-		if (useNode)
-			uses.push_back(useNode);
+		uses.push_back(useNode);
+		currentVar = var;
 	}
 
 	/** Create the attribute with the def and list of uses.
 	 *
-	 * @param defNode The node to add to the list of defs, or NULL.
 	 * @param useTree The vector of uses to add, or an empty vector.
 	 */
-	ChildDefsAndUses(SgNode* defNode, const std::vector<SgNode*>& useTree)
+	ChildUses(const std::vector<SgNode*>& useTree, SgVarRefExp* var = NULL)
 	{
 		if (useTree.size() > 0)
 			uses.assign(useTree.begin(), useTree.end());
-
-		if (defNode)
-			defs.push_back(defNode);
-	}
-
-	/** Create the attribute with the provided uses and defs.
-	 *
-	 * @param defTree The defs to use in this node, or empty vector.
-	 * @param useTree The uses to use in this node, or empty vector.
-	 */
-	ChildDefsAndUses(const std::vector<SgNode*>& defTree, const std::vector<SgNode*>& useTree)
-	{
-
-		if (defTree.size() > 0)
-			defs.assign(defTree.begin(), defTree.end());
-
-		if (useTree.size() > 0)
-			uses.assign(useTree.begin(), useTree.end());
-	}
-
-	/** Get the references for this node and below.
-	 *
-	 * @return A constant reference to the ref list.
-	 */
-	std::vector<SgNode*>& getDefs()
-	{
-		return defs;
-	}
-
-	/** Set the defs for this node and below.
-	 *
-	 * @param newDefs A constant reference to the defs to copy to this node.
-	 */
-	void setDefs(const std::vector<SgNode*>& newDefs)
-	{
-		defs.assign(newDefs.begin(), newDefs.end());
+		currentVar = var;
 	}
 
 	/** Get the uses for this node and below.
@@ -113,12 +56,17 @@ public:
 	{
 		uses.assign(newUses.begin(), newUses.end());
 	}
+
+	SgVarRefExp* getCurrentVar() const
+	{
+		return currentVar;
+	}
 };
 
 /** This class collects all the defs and uses associated with each node in the traversed CFG.
  * Note that this does not compute reachability information; it just records each instance of
  * a variable used or defined. */
-class DefsAndUsesTraversal : public AstBottomUpProcessing<ChildDefsAndUses>
+class DefsAndUsesTraversal : public AstBottomUpProcessing<ChildUses>
 {
 	StaticSingleAssignment* ssa;
 
@@ -134,12 +82,15 @@ public:
 	 * @param attr The attributes from the child nodes.
 	 * @return The attribute at this node.
 	 */
-	virtual ChildDefsAndUses evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs);
+	virtual ChildUses evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs);
 
 private:
 
 	/** Mark all the uses as occurring at the specified node. */
 	void addUsesToNode(SgNode* node, std::vector<SgNode*> uses);
+
+	/** Mark the given variable as being defined at the node. */
+	void addDefForVarAtNode(SgVarRefExp* currentVar, SgNode* defNode);
 };
 
 } //namespace ssa_private

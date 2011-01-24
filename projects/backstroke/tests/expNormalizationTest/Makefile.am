@@ -607,7 +607,6 @@ test2007_81.C \
 test2007_82.C \
 test2007_83.C \
 test2007_85.C \
-test2007_90.C \
 test2007_94.C \
 test2007_98.C \
 test2007_102.C \
@@ -688,7 +687,9 @@ test2007_84.C \
 test2009_30.C \
 test2009_31.C \
 inputBug327.C \
-test2009_37.C
+test2009_37.C \
+--> These fail due to having a defining declaration but a null function definition:\
+test2007_90.C
 
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 

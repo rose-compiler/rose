@@ -90,7 +90,7 @@ print_hex(FILE *f, uint32_t value)
 }
 
 int
-print_string(FILE *f, const std::string &value)
+print_string(FILE *f, const std::string &value, bool str_fault, bool str_trunc)
 {
     int retval=fprintf(f, "\"");
     for (size_t i=0; i<value.size(); i++) {
@@ -113,6 +113,10 @@ print_string(FILE *f, const std::string &value)
         }
     }
     retval += fprintf(f, "\"");
+    if (str_fault || str_trunc)
+        retval += fprintf(f, "...");
+    if (str_fault)
+        retval += fprintf(f, "[EFAULT]");
     return retval;
 }
 
@@ -151,7 +155,7 @@ print_single(FILE *f, char fmt, const ArgInfo *info)
             retval += print_struct(f, info->val, info->struct_printer, info->struct_buf, info->struct_size, info->struct_nread);
             break;
         case 's':
-            retval += print_string(f, info->str);
+            retval += print_string(f, info->str, info->str_fault, info->str_trunc);
             break;
         case 't':
             retval += print_time(f, info->val);

@@ -459,12 +459,16 @@ struct eqstdstr
 {
   bool operator()(string s1, string s2) const
   {
+ // Return true if s1 == s2, else return false.
     return s1.compare(s2) == 0;
   }
 };
 #if 0
+// DQ (12/1/2010): Changed the name to support using local version since the 
+// version is src/ROSETTA/Grammar/Support.code has been extended to support 
+// case sensitive/insensitive semantics.  I hope that is not required here!
 // milki (06/16/2010) Name clash in src/ROSETTA/Grammar/Support.code:325
-struct eqstr
+struct local_eqstr
 {
   bool operator()(const char* s1, const char* s2) const
   {
@@ -505,17 +509,26 @@ typedef boost::unordered_multimap<string, const char*, boost::hash<string>, eqst
 
 // boost::unordered_map<Key, Data, HashFcn, EqualKey, Alloc>
 
+#if 0
 // milki (07/08/2010) Convert map keys to std::string
 //typedef boost::unordered_map<const char *, int, boost::hash<const char *>, eqstr> str_int_map;
 //typedef boost::unordered_map<const char *, const char *, boost::hash<const char *>, eqstr> str_str_map;
 //typedef boost::unordered_map<const char *, str_int_map *, boost::hash<const char *>, eqstr> str_map_map;
-typedef boost::unordered_map<string, int, boost::hash<string>, eqstr> str_int_map;
-typedef boost::unordered_map<string, const char *, boost::hash<string>, eqstr> str_str_map;
-typedef boost::unordered_map<string, str_int_map *, boost::hash<string>, eqstr> str_map_map;
+typedef boost::unordered_map<string, int, boost::hash<string>, local_eqstr> str_int_map;
+typedef boost::unordered_map<string, const char *, boost::hash<string>, local_eqstr> str_str_map;
+typedef boost::unordered_map<string, str_int_map *, boost::hash<string>, local_eqstr> str_map_map;
 
 typedef boost::unordered_map<int, const char *, boost::hash<int>, eqint> int_str_map;
 //typedef boost::unordered_map<const char *, int_str_map *, boost::hash<const char *>, eqstr> int_map_map;
-typedef boost::unordered_map<string, int_str_map *, boost::hash<string>, eqstr> int_map_map;
+typedef boost::unordered_map<string, int_str_map *, boost::hash<string>, local_eqstr> int_map_map;
+#else
+// DQ (12/1/2010): Using eqstdstr in place of eqstr or local_eqstr.
+typedef boost::unordered_map<string, int, boost::hash<string>, eqstdstr> str_int_map;
+typedef boost::unordered_map<string, const char *, boost::hash<string>, eqstdstr> str_str_map;
+typedef boost::unordered_map<string, str_int_map *, boost::hash<string>, eqstdstr> str_map_map;
+typedef boost::unordered_map<int, const char *, boost::hash<int>, eqint> int_str_map;
+typedef boost::unordered_map<string, int_str_map *, boost::hash<string>, eqstdstr> int_map_map;
+#endif
 
 void prettyprint( map_type M ) {
   for( map_type::const_iterator it = M.cbegin() ; it != M.cend() ; it++ )
@@ -2062,8 +2075,8 @@ class MyTraversal
 	    for (name_iter n = nameList.begin(); n != nameList.end(); ++n) {
 	      
 	      assert(*n != NULL);
-	      SgInitializedName initName = **n;
-	      SgName sageName = initName.get_name();
+	      SgInitializedName* initName = *n;
+	      SgName sageName = initName->get_name();
 	      string varName = sageName.str();
 	      
 #ifdef DEBUG_OUTPUT
@@ -4181,7 +4194,9 @@ SideEffect::doSideEffect(list<SgNode*> *nodeList, list<string> &sourceFileNames,
 			 vector<string> &nodeListFileNames)
 
 {
-  int i;
+// DQ (12/1/2010): Fixed warning "warning: comparison between signed and unsigned integer expressions"
+// int i;
+  size_t i;
 
   // we will parse the source files, populating a database with
   // information gleaned from each source file.  

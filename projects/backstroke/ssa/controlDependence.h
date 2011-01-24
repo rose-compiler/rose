@@ -2,7 +2,7 @@
 
 #include <map>
 #include <utility>
-#include "sage3basic.h"
+#include "rose.h"
 #include "staticSingleAssignment.h"
 #include <boost/foreach.hpp>
 

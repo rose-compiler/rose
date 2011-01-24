@@ -12,7 +12,8 @@ noinst_PROGRAMS = slicing
 slicing_SOURCES = backstrokeSlicer.C test.C
 slicing_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
-slicing_include_HEADERS = backstrokeCFG.h backstrokeCDG.h backstrokeDDG.h backstrokePDG.h backstrokeSlicer.h
+slicing_include_HEADERS = backstrokeCFG.h backstrokeCDG.h backstrokeDDG.h backstrokePDG.h \
+							backstrokeSlicer.h backstrokeCFGNode.h
 slicing_includedir = $(includedir)/backstroke
 
 

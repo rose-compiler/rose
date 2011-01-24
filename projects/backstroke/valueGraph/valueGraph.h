@@ -252,7 +252,7 @@ public:
 	ValueGraph() 
 	: ssa_(SageInterface::getProject())
 	{
-		ssa_.run();
+		ssa_.run(false);
 	}
 
 	void build(SgFunctionDefinition* funcDef);
@@ -274,6 +274,22 @@ private:
 	{
 		//(*this)[edge]->writeDotString();
 	}
+
+	/** Add a new vertex to the value graph.
+	 *
+	 *  @param newNode A value graph node which will be added.
+	 *  @param sgNode The AST node which maps to the added value graph node.
+	 *  @return The new added vertex.
+	 */
+	Vertex addVertex(ValueGraphNode* newNode, SgNode* sgNode = NULL)
+	{
+		Vertex v = add_vertex(*this);
+		(*this)[v] = newNode;
+		if (sgNode)
+			nodeVertexMap_[sgNode] = v;
+		return v;
+	}
+
 
 	/** Given a SgNode, return its variable name and version.
 	 * 

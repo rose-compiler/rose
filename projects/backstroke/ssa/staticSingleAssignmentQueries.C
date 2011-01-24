@@ -1,7 +1,7 @@
 //Author: George Vulov <georgevulov@hotmail.com>
 //Based on work by Justin Frye <jafrye@tamu.edu>
 #include "staticSingleAssignment.h"
-#include "sage3basic.h"
+#include "rose.h"
 #include <boost/foreach.hpp>
 #include <queue>
 
@@ -26,7 +26,7 @@ SgExpression* StaticSingleAssignment::buildVariableReference(const VarName& var,
 
 		SgVarRefExp* nextVar = SageBuilder::buildVarRefExp(var[i + 1], scope);
 
-		if (isSgPointerType(initName->get_type()))
+		if (SageInterface::isPointerType(initName->get_type()))
 		{
 			varsSoFar = SageBuilder::buildArrowExp(varsSoFar, nextVar);
 		}
@@ -74,7 +74,6 @@ void StaticSingleAssignment::printOriginalDefTable()
 	pair<SgNode*, std::set<VarName> > node;
 	foreach(node, originalDefTable)
 	{
-		cout << "  Original Def Table for [" << node.first->class_name() << ":" << node.first << "]:" << endl;
 		printOriginalDefs(node.first);
 	}
 }
@@ -84,7 +83,7 @@ void StaticSingleAssignment::printLocalDefUseTable(const StaticSingleAssignment:
 	foreach(const LocalDefUseTable::value_type& nodeVarsPair, table)
 	{
 		const SgNode* node = nodeVarsPair.first;
-		printf("%s@%d: ", node->class_name().c_str(), node->get_file_info()->get_line());
+		printf("    %s@%d: ", node->class_name().c_str(), node->get_file_info()->get_line());
 		foreach (const VarName& var, nodeVarsPair.second)
 		{
 			printf("%s, ", varnameToString(var).c_str());
@@ -232,8 +231,12 @@ void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
 				string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
 
 
+				string label = escapeString(current.getNode()->class_name());
+				if (isSgFunctionDefinition(current.getNode()))
+					label += ":" + escapeString(isSgFunctionDefinition(current.getNode())->get_declaration()->get_name());
+
 				//Print this node
-				outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
+				outFile << id << " [label=\"<" << label << ">:" << current.getNode()
 						//Now we add the unique name information
 						<< ((name != "") ? "\\n" : "") << name
 						<< ((defUseStr != "") ? "\\n" : "") << defUseStr
@@ -302,8 +305,8 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 		return;
 	}
 
-	typedef FilteredCFGNode<IsDefUseFilter> cfgNode;
-	typedef FilteredCFGEdge<IsDefUseFilter> cfgEdge;
+	typedef FilteredCFGNode<DataflowCfgFilter> cfgNode;
+	typedef FilteredCFGEdge<DataflowCfgFilter> cfgEdge;
 
 	typedef vector<SgFunctionDefinition*> funcDefVec;
 	funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
@@ -344,8 +347,6 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 				string name = "";
 				if (uniqueName)
 				{
-					if (getDebug())
-						cout << "Getting Unique Name attribute." << endl;
 					VarUniqueName *attr = getUniqueName(current.getNode());
 					ROSE_ASSERT(attr);
 
@@ -380,9 +381,12 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 				//Copy out the string and trim off the last '\n'
 				string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
 
+				string label = escapeString(current.getNode()->class_name());
+				if (isSgFunctionDefinition(current.getNode()))
+					label += ":" + escapeString(isSgFunctionDefinition(current.getNode())->get_declaration()->get_name());
 
 				//Print this node
-				outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
+				outFile << id << " [label=\"<" << label << ">:" << current.getNode()
 						//Now we add the unique name information
 						<< ((name != "") ? "\\n" : "") << name
 						<< ((defUseStr != "") ? "\\n" : "") << defUseStr
@@ -452,11 +456,11 @@ VarUniqueName* StaticSingleAssignment::getUniqueName(SgNode* node)
 	return uName;
 }
 
-StaticSingleAssignment::VarName StaticSingleAssignment::getVarName(SgNode* node)
+const StaticSingleAssignment::VarName& StaticSingleAssignment::getVarName(SgNode* node)
 {
 	if (node == NULL || getUniqueName(node) == NULL)
 	{
-		return StaticSingleAssignment::VarName();
+		return emptyName;
 	}
 	return getUniqueName(node)->getKey();
 }
@@ -500,5 +504,94 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getU
 	else
 	{
 		return usesIter->second;
+	}
+}
+
+set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsDefinedInSubtree(SgNode* root) const
+{
+	class CollectDefsTraversal : public AstSimpleProcessing
+	{
+	public:
+		const StaticSingleAssignment* ssa;
+
+		//All the varNames that have uses in the function
+		set<VarName> definedNames;
+
+		void visit(SgNode* node)
+		{
+			//Vars defined on function entry are not 'really' defined. These definitions just represent the external value
+			//of the variable flowing inside the function body.
+			if (isSgFunctionDefinition(node))
+				return;
+
+			if (ssa->originalDefTable.find(node) != ssa->originalDefTable.end())
+			{
+				const LocalDefUseTable::mapped_type& nodeDefs = ssa->originalDefTable.find(node)->second;
+				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
+			}
+
+			if (ssa->expandedDefTable.find(node) != ssa->expandedDefTable.end())
+			{
+				const LocalDefUseTable::mapped_type& nodeDefs = ssa->expandedDefTable.find(node)->second;
+				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
+			}
+		}
+	};
+
+	CollectDefsTraversal defsTrav;
+	defsTrav.ssa = this;
+	defsTrav.traverse(root, preorder);
+
+	return defsTrav.definedNames;
+}
+
+set<StaticSingleAssignment::VarName> StaticSingleAssignment::getOriginalVarsDefinedInSubtree(SgNode* root) const
+{
+	ROSE_ASSERT(this != NULL && root != NULL);
+	class CollectDefsTraversal : public AstSimpleProcessing
+	{
+	public:
+		const StaticSingleAssignment* ssa;
+
+		//All the varNames that have uses in the function
+		set<VarName> definedNames;
+
+		void visit(SgNode* node)
+		{
+			//Vars defined on function entry are not 'really' defined. These definitions just represent the external value
+			//of the variable flowing inside the function body.
+			if (isSgFunctionDefinition(node))
+				return;
+
+			if (ssa->originalDefTable.find(node) != ssa->originalDefTable.end())
+			{
+				const LocalDefUseTable::mapped_type& nodeDefs = ssa->originalDefTable.find(node)->second;
+				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
+			}
+		}
+	};
+
+	CollectDefsTraversal defsTrav;
+	defsTrav.ssa = this;
+	defsTrav.traverse(root, preorder);
+
+	return defsTrav.definedNames;
+}
+
+const StaticSingleAssignment::VarName& StaticSingleAssignment::getVarForExpression(SgNode* node)
+{
+	if (getVarName(node) != emptyName)
+		return getVarName(node);
+
+	switch (node->variantT())
+	{
+		case V_SgCommaOpExp:
+			return getVarForExpression(isSgCommaOpExp(node)->get_rhs_operand());
+		case V_SgCastExp:
+		case V_SgPointerDerefExp:
+		case V_SgAddressOfOp:
+			return getVarForExpression(isSgUnaryOp(node)->get_operand());
+		default:
+			return emptyName;
 	}
 }

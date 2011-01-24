@@ -81,6 +81,11 @@ StatementReversal EvaluationResult::generateReverseStatement() const
 	return getStatementHandler()->generateReverseAST(getStatementInput(), *this);
 }
 
+SgStatement* EvaluationResult::generateCommitStatement() const
+{
+	return getStatementHandler()->generateCommitAST(*this);
+}
+
 void EvaluationResult::printHandlers() const
 {
 	static int tab_num = 0;
@@ -103,6 +108,11 @@ SgExpression* ReversalHandlerBase::pushVal(SgExpression* exp, SgType* type)
 SgExpression* ReversalHandlerBase::popVal(SgType* type)
 {
     return event_handler_->popVal(type);
+}
+
+SgExpression* ReversalHandlerBase::popVal_front(SgType* type)
+{
+    return event_handler_->popVal_front(type);
 }
 
 vector<EvaluationResult> ReversalHandlerBase::evaluateExpression(SgExpression* exp,
@@ -136,4 +146,20 @@ SgExpression* ReversalHandlerBase::restoreExpressionValue(SgExpression* expressi
 VariableRenaming* ReversalHandlerBase::getVariableRenaming()
 {
 	return event_handler_->getVariableRenaming();
+}
+
+const StaticSingleAssignment* ReversalHandlerBase::getSsa() const
+{
+	 return event_handler_->getInterproceduralSsa();
+}
+
+const IVariableFilter* ReversalHandlerBase::getVariableFilter() const
+{
+	return event_handler_->variableFilter_;
+}
+
+SgStatement* StatementReversalHandler::generateCommitAST(const EvaluationResult& evaluationResult)
+{
+	fprintf(stderr, "BACKSTROKE WARNING: Generating empty commit AST\n");
+	return SageBuilder::buildBasicBlock();
 }

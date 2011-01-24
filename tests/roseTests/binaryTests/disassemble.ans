@@ -14,7 +14,7 @@ using this memory map for disassembly:
     va 0x080496d4 + 0x00000008 = 0x080496dc rw- at anonymous + 0x00000000 i686-test1.O0.bin(.bss)
     va 0x080496dc + 0x00000924 = 0x0804a000 rw- at anonymous + 0x00000008 i686-test1.O0.bin(LOAD#3)
 disassembled 256 instructions and 1 failure (use --show-bad to see errors)
-0x080482c8: ============================ Function (call target, symbol) <_init>
+0x080482c8: ============================ Function (function call, symbol) <_init>
 0x080482c8: 55                |U     |   push   ebp
 0x080482c9: 89 e5             |..    |   mov    ebp, esp
 0x080482cb: 83 ec 08          |...   |   sub    esp, 0x08
@@ -30,19 +30,19 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x080482dd: c9                |.     |   leave  
 0x080482de: c3                |.     |   ret    
             (successors:...)
-0x080482f0: ============================ Function (call target, import) <signal@plt>
+0x080482f0: ============================ Function (function call, import) <signal@plt>
 0x080482f0: ff 25 b4 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b4]
             (successors:...)
-0x08048300: ============================ Function (call target, import) <puts@plt>
+0x08048300: ============================ Function (function call, import) <puts@plt>
 0x08048300: ff 25 b8 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b8]
             (successors:...)
-0x08048310: ============================ Function (call target, import) <__libc_start_main@plt>
+0x08048310: ============================ Function (function call, import) <__libc_start_main@plt>
 0x08048310: ff 25 bc 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496bc]
             (successors:...)
-0x08048320: ============================ Function (call target, import) <_exit@plt>
+0x08048320: ============================ Function (function call, import) <_exit@plt>
 0x08048320: ff 25 c0 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c0]
             (successors:...)
-0x08048330: ============================ Function (call target, import) <__gmon_start__@plt>
+0x08048330: ============================ Function (function call, import) <__gmon_start__@plt>
 0x08048330: ff 25 c4 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c4]
             (successors:...)
 0x08048340: ============================ Function (entry point, symbol) <_start>
@@ -67,7 +67,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048362: 90                |.     |   nop    
 0x08048363: 90                |.     |   nop    
             (successors: 0x08048364)
-0x08048364: ============================ Function (call target, symbol) <call_gmon_start>
+0x08048364: ============================ Function (function call, symbol) <call_gmon_start>
 0x08048364: 55                |U     |   push   ebp
 0x08048365: 89 e5             |..    |   mov    ebp, esp
 0x08048367: 53                |S     |   push   ebx
@@ -98,7 +98,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804838e: 90                |.     |   nop    
 0x0804838f: 90                |.     |   nop    
             (successors: 0x08048390)
-0x08048390: ============================ Function (call target, symbol) <__do_global_dtors_aux>
+0x08048390: ============================ Function (function call, symbol) <__do_global_dtors_aux>
 0x08048390: 55                |U     |   push   ebp
 0x08048391: 89 e5             |..    |   mov    ebp, esp
 0x08048393: 83 ec 08          |...   |   sub    esp, 0x08
@@ -134,7 +134,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x080483cc: c9                |.     |   leave  
 0x080483cd: c3                |.     |   ret    
             (successors:...)
-0x080483d0: ============================ Function (call target, symbol, discontiguous) <frame_dummy>
+0x080483d0: ============================ Function (function call, symbol, discontiguous) <frame_dummy>
 0x080483d0: 55                |U     |   push   ebp
 0x080483d1: 89 e5             |..    |   mov    ebp, esp
 0x080483d3: 83 ec 08          |...   |   sub    esp, 0x08
@@ -152,7 +152,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048402: 5d                |]     |   pop    ebp
 0x08048403: c3                |.     |   ret    
             (successors:...)
-0x08048404: ============================ Function (call target, symbol) <bar>
+0x08048404: ============================ Function (function call, symbol) <bar>
 0x08048404: 55                |U     |   push   ebp
 0x08048405: 89 e5             |..    |   mov    ebp, esp
 0x08048407: 83 ec 08          |...   |   sub    esp, 0x08
@@ -164,7 +164,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048416: c9                |.     |   leave  
 0x08048417: c3                |.     |   ret    
             (successors:...)
-0x08048418: ============================ Function (call target, symbol) <foo>
+0x08048418: ============================ Function (function call, symbol) <foo>
 0x08048418: 55                |U     |   push   ebp
 0x08048419: 89 e5             |..    |   mov    ebp, esp
 0x0804841b: 83 ec 08          |...   |   sub    esp, 0x08
@@ -276,7 +276,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804855e: 90                |.     |   nop    
 0x0804855f: 90                |.     |   nop    
             (successors: 0x08048560)
-0x08048560: ============================ Function (call target, symbol) <__do_global_ctors_aux>
+0x08048560: ============================ Function (function call, symbol) <__do_global_ctors_aux>
 0x08048560: 55                |U     |   push   ebp
 0x08048561: 89 e5             |..    |   mov    ebp, esp
 0x08048563: 53                |S     |   push   ebx
@@ -306,7 +306,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804858e: 5d                |]     |   pop    ebp
 0x0804858f: c3                |.     |   ret    
             (successors:...)
-0x08048590: ============================ Function (call target, symbol) <_fini>
+0x08048590: ============================ Function (function call, symbol) <_fini>
 0x08048590: 55                |U     |   push   ebp
 0x08048591: 89 e5             |..    |   mov    ebp, esp
 0x08048593: 53                |S     |   push   ebx

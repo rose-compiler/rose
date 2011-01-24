@@ -1,7 +1,8 @@
 //Author: George Vulov <georgevulov@hotmail.com>
 //Based on work by Justin Frye <jafrye@tamu.edu>
 
-#include "sage3basic.h"
+#include "rose.h"
+#include "CallGraph.h"
 #include "staticSingleAssignment.h"
 #include "sageInterface.h"
 #include <map>
@@ -31,20 +32,6 @@ using namespace boost;
 string StaticSingleAssignment::varKeyTag = "ssa_varname_KeyTag";
 StaticSingleAssignment::VarName StaticSingleAssignment::emptyName;
 
-bool StaticSingleAssignment::isFromLibrary(SgNode* node)
-{
-	Sg_File_Info* fi = node->get_file_info();
-	if (fi->isCompilerGenerated())
-		return true;
-	string filename = fi->get_filenameString();
-
-	if ((filename.find("include") != string::npos))
-	{
-		return true;
-	}
-	return false;
-}
-
 bool StaticSingleAssignment::isBuiltinVar(const VarName& var)
 {
 	string name = var[0]->get_name().getString();
@@ -62,10 +49,23 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 	ROSE_ASSERT(var.size() > 0 && scope != NULL);
 	SgScopeStatement* varScope = SageInterface::getScope(var[0]);
 
+	//Work around a ROSE bug that sets incorrect scopes for built-in variables.
+	if (isBuiltinVar(var))
+	{
+		return SageInterface::isAncestor(scope, var[0]);
+	}
+
 	if (varScope == scope || SageInterface::isAncestor(varScope, scope))
 	{
 		//FIXME: In a basic block, the definition of the variable might come AFTER the node in question
 		//We should return false in this case.
+
+		//Special case: a variable cannot be accessed in its own assign initializer
+		//This is important for loops where a variable is redefined on every iteration
+		//E.g. while (int a = 3) {}
+		if (SageInterface::isAncestor(var[0], astNode))
+			return false;
+
 		return true;
 	}
 	else if (isSgNamespaceDefinitionStatement(varScope) || isSgGlobal(varScope))
@@ -173,8 +173,8 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 	return false;
 }
 
-//Function to perform the StaticSingleAssignment and annotate the AST
-void StaticSingleAssignment::run()
+
+void StaticSingleAssignment::run(bool interprocedural)
 {
 	originalDefTable.clear();
 	expandedDefTable.clear();
@@ -185,57 +185,75 @@ void StaticSingleAssignment::run()
 	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
 	DefsAndUsesTraversal defUseTrav(this);
 
-	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition > (project, V_SgFunctionDefinition);
-	foreach (SgFunctionDefinition* func, funcs)
+	//Get a list of all the functions that we'll process
+	unordered_set<SgFunctionDefinition*> interestingFunctions;
+	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
+	FunctionFilter functionFilter;
+	foreach (SgFunctionDefinition* f, funcs)
 	{
-		ROSE_ASSERT(func);
-		if (!isFromLibrary(func))
-		{
-			if (getDebug())
-				cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
+		if (functionFilter(f->get_declaration()))
+			interestingFunctions.insert(f);
+	}
 
-			uniqueTrav.traverse(func->get_declaration());
+	//Generate all local information before doing interprocedural analysis. This is so we know
+	//what variables are directly modified in each function body before we do interprocedural propagation
+	foreach (SgFunctionDefinition* func, interestingFunctions)
+	{
+		if (getDebug())
+			cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
 
-			if (getDebug())
-				cout << "Finished UniqueNameTraversal..." << endl;
+		uniqueTrav.traverse(func->get_declaration());
 
-			if (getDebug())
-				cout << "Running DefsAndUsesTraversal on function: " << SageInterface::get_name(func) << func << endl;
+		if (getDebug())
+			cout << "Finished UniqueNameTraversal..." << endl;
 
-			defUseTrav.traverse(func->get_declaration());
+		if (getDebug())
+			cout << "Running DefsAndUsesTraversal on function: " << SageInterface::get_name(func) << func << endl;
 
-			if (getDebug())
-				cout << "Finished DefsAndUsesTraversal..." << endl;
+		defUseTrav.traverse(func->get_declaration());
 
-			insertDefsForExternalVariables(func->get_declaration());
+		if (getDebug())
+			cout << "Finished DefsAndUsesTraversal..." << endl;
 
-			//Expand any member variable definition to also define its parents at the same node
-			expandParentMemberDefinitions(func->get_declaration());
+		//Expand any member variable definition to also define its parents at the same node
+		expandParentMemberDefinitions(func->get_declaration());
 
-			//Expand any member variable uses to also use the parent variables (e.g. a.x also uses a)
-			expandParentMemberUses(func->get_declaration());
+		//Expand any member variable uses to also use the parent variables (e.g. a.x also uses a)
+		expandParentMemberUses(func->get_declaration());
 
-			insertDefsForChildMemberUses(func->get_declaration());
+		insertDefsForChildMemberUses(func->get_declaration());
+	}
 
-			//Create all ReachingDef objects:
-			//Create ReachingDef objects for all original definitions
-			populateLocalDefsTable(func->get_declaration());
-			//Insert phi functions at join points
-			multimap< FilteredCfgNode, pair<FilteredCfgNode, FilteredCfgEdge> > controlDependencies = insertPhiFunctions(func);
+	//Interprocedural iterations. We iterate on the call graph until all interprocedural defs are propagated
+	if (interprocedural)
+	{
+		interproceduralDefPropagation(interestingFunctions);
+	}
 
-			//Renumber all instantiated ReachingDef objects
-			renumberAllDefinitions(func);
+	//Now we have all local information, including interprocedural defs. Propagate the defs along control-flow
+	foreach (SgFunctionDefinition* func, interestingFunctions)
+	{
+		//Insert definitions at the SgFunctionDefinition for external variables whose values flow inside the function
+		insertDefsForExternalVariables(func->get_declaration());
 
-			if (getDebug())
-				cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
-			runDefUseDataFlow(func);
+		//Create all ReachingDef objects:
+		//Create ReachingDef objects for all original definitions
+		populateLocalDefsTable(func->get_declaration());
+		//Insert phi functions at join points
+		multimap< FilteredCfgNode, pair<FilteredCfgNode, FilteredCfgEdge> > controlDependencies = insertPhiFunctions(func);
 
-			//We have all the propagated defs, now update the use table
-			buildUseTable(func);
+		//Renumber all instantiated ReachingDef objects
+		renumberAllDefinitions(func);
 
-			//Annotate phi functions with dependencies
-			annotatePhiNodeWithConditions(func, controlDependencies);
-		}
+		if (getDebug())
+			cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
+		runDefUseDataFlow(func);
+
+		//We have all the propagated defs, now update the use table
+		buildUseTable(func);
+
+		//Annotate phi functions with dependencies
+		//annotatePhiNodeWithConditions(func, controlDependencies);
 	}
 }
 
@@ -373,7 +391,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 
 	while (!worklist.empty())
 	{
-		if (getDebug())
+		if (getDebugExtra())
 			cout << "-------------------------------------------------------------------------" << endl;
 		//Get the node to work on
 		current = *worklist.begin();
@@ -384,7 +402,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		//If we do this, then incorrect information will be propogated to the beginning of the function
 		if (current == FilteredCfgNode(func->cfgForEnd()))
 		{
-			if (getDebug())
+			if (getDebugExtra())
 				cout << "Skipped defUse on End of function definition." << endl;
 			continue;
 		}
@@ -402,7 +420,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 			{
 				//Add the node to the worklist
 				bool insertedNew = worklist.insert(nextNode).second;
-				if (insertedNew && getDebug())
+				if (insertedNew && getDebugExtra())
 				{
 					if (changed)
 						cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;
@@ -544,7 +562,8 @@ void StaticSingleAssignment::buildUseTable(SgFunctionDefinition* func)
 				{
 					// There are no defs for this use at this node, this shouldn't happen
 					printf("Error: Found use for the name '%s', but no reaching defs!\n", varnameToString(usedVar).c_str());
-					printf("Node is %s:%d\n", node->class_name().c_str(), node->get_file_info()->get_line());
+					printf("Node is %s:%d in %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
+						node->get_file_info()->get_filename());
 					ROSE_ASSERT(false);
 				}
 			}
@@ -557,12 +576,12 @@ void StaticSingleAssignment::buildUseTable(SgFunctionDefinition* func)
 }
 
 /** Returns a set of all the variables names that have uses in the subtree. */
-set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsUsedInSubtree(SgNode* root)
+set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsUsedInSubtree(SgNode* root) const
 {
 	class CollectUsesVarsTraversal : public AstSimpleProcessing
 	{
 	public:
-		StaticSingleAssignment* ssa;
+		const StaticSingleAssignment* ssa;
 
 		//All the varNames that have uses in the function
 		set<VarName> usedNames;
@@ -570,10 +589,16 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsUsedInSubtre
 		void visit(SgNode* node)
 		{
 			LocalDefUseTable::const_iterator useEntry = ssa->localUsesTable.find(node);
-			if (useEntry == ssa->localUsesTable.end())
-				return;
+			if (useEntry != ssa->localUsesTable.end())
+			{
+				usedNames.insert(useEntry->second.begin(), useEntry->second.end());
+			}
 
-			usedNames.insert(useEntry->second.begin(), useEntry->second.end());
+			LocalDefUseTable::const_iterator defEntry = ssa->originalDefTable.find(node);
+			if (defEntry != ssa->originalDefTable.end())
+			{
+				usedNames.insert(defEntry->second.begin(), defEntry->second.end());
+			}
 		}
 	};
 
@@ -678,6 +703,19 @@ void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaratio
 			//We still need to insert defs for compiler-generated variables (e.g. __func__), since they don't have defs in the AST
 			if (!isBuiltinVar(rootName))
 				continue;
+		}
+		else if (isSgGlobal(varScope))
+		{
+			//Handle the case of declaring "extern int x" inside the function
+			//Then, x has global scope but it actually has a definition inside the function so we don't need to insert one
+			if (SageInterface::isAncestor(function->get_definition(), rootName[0]))
+			{
+				//When else could a var be declared inside a function and be global?
+				SgVariableDeclaration* varDecl = isSgVariableDeclaration(rootName[0]->get_parent());
+				ROSE_ASSERT(varDecl != NULL);
+				ROSE_ASSERT(varDecl->get_declarationModifier().get_storageModifier().isExtern());
+				continue;
+			}
 		}
 
 		//Are there any other types of external vars?

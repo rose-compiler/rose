@@ -21,6 +21,9 @@ public:
 	SgFunctionSymbol* roseReallocateMemory;
 	SgFunctionSymbol* roseConvertIntToString;
 	SgFunctionSymbol* roseCreateVariable;
+#if NOT_YET_IMPLEMENTED
+	SgFunctionSymbol* roseCreateSharedVariable; // for upc
+#endif /* NOT_YET_IMPLEMENTED */
 	SgFunctionSymbol* roseCreateObject;
 	SgFunctionSymbol* roseInitVariable;
 	SgFunctionSymbol* roseMovePointer;
@@ -32,28 +35,31 @@ public:
 	SgFunctionSymbol* roseCheckIfThisNULL;
 	SgType* size_t_member;
 
-	RtedSymbols() {
-		roseCreateHeap = NULL;
-		roseAccessHeap = NULL;
-		roseCheckpoint = NULL;
-        roseFunctionCall = NULL;
-		roseAssertFunctionSignature = NULL;
-		roseConfirmFunctionSignature = NULL;
-        roseFreeMemory = NULL;
-        roseReallocateMemory = NULL;
-		roseConvertIntToString=NULL;
-		roseCreateVariable = NULL;
-		roseCreateObject = NULL;
-		roseInitVariable = NULL;
-		roseAccessVariable = NULL;
-		roseEnterScope = NULL;
-		roseExitScope = NULL;
-		roseIOFunctionCall=NULL;
-		roseRegisterTypeCall=NULL;
-		size_t_member=NULL;
-		roseCheckIfThisNULL=NULL;
-	};
-	
+	RtedSymbols()
+  : roseCreateHeap(NULL),
+    roseAccessHeap(NULL),
+    roseCheckpoint(NULL),
+    roseFunctionCall(NULL),
+    roseAssertFunctionSignature(NULL),
+    roseConfirmFunctionSignature(NULL),
+    roseFreeMemory(NULL),
+    roseReallocateMemory(NULL),
+    roseConvertIntToString(NULL),
+    roseCreateVariable(NULL),
+#if NOT_YET_IMPLEMENTED
+    roseCreateSharedVariable(NULL),
+#endif /* NOT_YET_IMPLEMENTED */
+    roseCreateObject(NULL),
+    roseInitVariable(NULL),
+    roseAccessVariable(NULL),
+    roseEnterScope(NULL),
+    roseExitScope(NULL),
+    roseIOFunctionCall(NULL),
+    roseRegisterTypeCall(NULL),
+    roseCheckIfThisNULL(NULL),
+    size_t_member(NULL)
+	{}
+
 	virtual ~RtedSymbols() {
 	}
 

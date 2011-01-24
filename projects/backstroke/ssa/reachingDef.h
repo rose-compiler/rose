@@ -2,7 +2,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <vector>
-#include <sage3basic.h>
+#include <rose.h>
 
 
 
@@ -60,6 +60,13 @@ public:
 	/** Get the renaming (SSA index) associated with this definition. 0 is the first value,
 	 * and numbers increase monotonically with program flow. */
 	int getRenamingNumber() const;
+
+	/** Returns true if this is an original definition (i.e. if p.x is defined, p.x is an original defintion
+	 * and p is an expanded definition) */
+	bool isOriginalDef() const
+	{
+		return defType == ORIGINAL_DEF;
+	}
 
 	bool operator==(const ReachingDef& other) const;
 

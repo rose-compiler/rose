@@ -258,8 +258,9 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseAssociateStatement       (SgStatement* stmt, SgUnparse_Info& info);
 
        // Unparse base class data members
-          virtual void unparse_IO_Support              (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparse_IO_Control_Support      ( std::string name, SgExpression* expr, SgUnparse_Info& info);
+       // virtual void unparse_IO_Support              (SgStatement* stmt, bool skipUnit, SgUnparse_Info& info);
+          virtual bool unparse_IO_Support              (SgStatement* stmt, bool skipUnit, SgUnparse_Info& info);
+          virtual void unparse_IO_Control_Support      ( std::string name, SgExpression* expr, bool isLeadingEntry, SgUnparse_Info& info);
 
        // virtual void unparseInOutStmt                (SgStatement* stmt, SgUnparse_Info& info);
        // virtual void unparseIOFileControlStatement   (SgStatement* stmt, SgUnparse_Info& info);
