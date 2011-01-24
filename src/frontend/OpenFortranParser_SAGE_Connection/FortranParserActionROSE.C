@@ -4970,6 +4970,17 @@ void c_action_null_init(Token_t * id)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_null_init(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
+
+  // DQ (1/23/2011): We don't have a NULL() IR node, so I will have to add one.  For the moment (debugging) use a value!.
+     SgIntVal* integerValue = new SgIntVal(0,"0");
+     ROSE_ASSERT(integerValue != NULL);
+
+     setSourcePosition(integerValue);
+
+     astExpressionStack.push_front(integerValue);
+
+     printf ("***** Need to build a NULL() value IR node ***** \n");
+  // ROSE_ASSERT(false);
    }
 
 /** R508
