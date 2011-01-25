@@ -1506,7 +1506,7 @@ void c_action_char_length(ofp_bool hasTypeParamValue)
           ROSE_ASSERT(charType != NULL);
 #if 1
        // Output debugging information about saved state (stack) information.
-          outputState("Before convertTypeOnStackToArrayType() in R426 c_action_char_length()");
+          outputState("Before generating a string in R426 c_action_char_length()");
 #endif
 
 #if 0
@@ -1546,8 +1546,10 @@ void c_action_char_length(ofp_bool hasTypeParamValue)
 #endif
         }
 
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R426 list c_action_char_length()");
+#endif
 
   // printf ("Exiting as a test! \n");
   // ROSE_ASSERT(false);
@@ -2809,8 +2811,34 @@ void c_action_type_param_spec_list__begin()
 {
 }
 void c_action_type_param_spec_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_type_param_spec_list() count = %d \n",count);
+
+  // This action is deminstrated in test2011_26.f03
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R456 c_action_type_param_spec_list()");
+#endif
+
+  // DQ (1/24/2011): Delete an entry from the stack to avoid unset parent in testGraphGeneration.
+  // This is a temp fix for test2011_26.f03 since we have no full implementation for 
+  // type kind handling in data member initializers.  This is part of an outstanding
+  // question to Craig about the OFP handling in this case.
+     if (astTypeParameterStack.empty() == false)
+        {
+          SgExpression* lengthValue = astTypeParameterStack.front();
+          astTypeParameterStack.pop_front();
+          delete lengthValue;
+          lengthValue = NULL;
+        }
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 /** R458 list
  * component_spec_list
@@ -3056,6 +3084,12 @@ void c_action_ac_value_list__begin()
           astBaseTypeStack.push_front(arrayType);
 #else
        // DQ (1/23/2011): Put the new type onto the astTypeStack instead of the astBaseTypeStack.
+       // ROSE_ASSERT(astTypeStack.empty() == true);
+          if (astTypeStack.empty() == false)
+             {
+            // See test2011_26.f03 for en exmple of where this is required.
+               astTypeStack.pop_front();
+             }
           ROSE_ASSERT(astTypeStack.empty() == true);
           astTypeStack.push_front(arrayType);
 #endif
@@ -4411,7 +4445,7 @@ void c_action_entity_decl(Token_t * id)
 
   // ROSE_ASSERT(variableSymbol == NULL);
 
-  // printf ("In R504 R503-F2008: variableSymbol = %p functionSymbol = %p classSymbol = %p \n",variableSymbol,functionSymbol,classSymbol);
+     printf ("In R504 R503-F2008: variableSymbol = %p functionSymbol = %p classSymbol = %p \n",variableSymbol,functionSymbol,classSymbol);
 
      if (functionSymbol != NULL)
         {
@@ -4533,6 +4567,9 @@ void c_action_entity_decl(Token_t * id)
         }
 
      ROSE_ASSERT(initializedName != NULL);
+
+  // DQ (1/24/2011): I think that this test should pass. No it fails for test2011_04.f90.
+  // ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -8698,6 +8735,36 @@ void c_action_data_ref(int numPartRef)
 
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("Found a previously defined variableSymbol = %p variable = %s \n",variableSymbol,variableName.str());
+
+       // DQ (1/24/2011): Test the variable symbol just found...
+          SgInitializedName* initializedName = variableSymbol->get_declaration();
+
+          ROSE_ASSERT(initializedName != NULL);
+#if 0
+          printf ("In R612: initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+
+          ROSE_ASSERT( initializedName->get_scope() != NULL);
+          printf ("initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
+          printf ("initializedName->get_type()  = %p = %s \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str());
+
+          SgSymbol* tmp_Symbol = SageInterface::lookupSymbolInParentScopes("x",astScopeStack.front());
+          ROSE_ASSERT(tmp_Symbol != NULL);
+#endif
+       // These don't work because the SageInterface versions fail to handle SgAlaisSymbols and non-SgVariableSymbols correctly.
+       // SgVariableSymbol* tmp_variableSymbol = SageInterface::lookupVariableSymbolInParentScopes("x",astScopeStack.front());
+       // ROSE_ASSERT(tmp_variableSymbol != NULL);
+
+       // SgVariableSymbol* local_variableSymbol = SageInterface::lookupVariableSymbolInParentScopes(initializedName->get_name(),astScopeStack.front());
+       // ROSE_ASSERT(local_variableSymbol != NULL);
+
+          ROSE_ASSERT( initializedName->get_scope()->get_symbol_table() != NULL);
+#if 0
+          initializedName->get_scope()->get_symbol_table()->print("Output symbol table from R612");
+#endif
+          ROSE_ASSERT( initializedName->get_scope()->lookup_variable_symbol(initializedName->get_name()) != NULL);
+          ROSE_ASSERT( initializedName->get_scope()->get_symbol_table()->find(initializedName) != NULL);
+
+          ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
         }
 
   // DQ (12/22/2010): We can't assert this (see testcode test2007_07.f90).
@@ -8915,25 +8982,107 @@ void c_action_data_ref(int numPartRef)
                   {
                  // printf ("Handling variableType as SgFunctionType \n");
                     SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(tempSymbol);
-                    ROSE_ASSERT(functionSymbol != NULL);
 
-                    ROSE_ASSERT(functionSymbol->get_declaration() != NULL);
-                    ROSE_ASSERT(functionSymbol->get_declaration()->get_type() != NULL);
-                    SgFunctionType* functionType = isSgFunctionType(functionSymbol->get_declaration()->get_type());
-                    ROSE_ASSERT(functionType != NULL);
-                    SgExpression* functionReference = new SgFunctionRefExp(functionSymbol,functionType);
-                    ROSE_ASSERT(functionReference != NULL);
+                 // ROSE_ASSERT(functionSymbol != NULL);
+                    if (functionSymbol != NULL)
+                       {
+                         ROSE_ASSERT(functionSymbol->get_declaration() != NULL);
+                         ROSE_ASSERT(functionSymbol->get_declaration()->get_type() != NULL);
+                         SgFunctionType* functionType = isSgFunctionType(functionSymbol->get_declaration()->get_type());
+                         ROSE_ASSERT(functionType != NULL);
+                         SgExpression* functionReference = new SgFunctionRefExp(functionSymbol,functionType);
+                         ROSE_ASSERT(functionReference != NULL);
 
-                    setSourcePosition(functionReference,nameToken);
+                         setSourcePosition(functionReference,nameToken);
 #if 0
-                 // DQ (12/28/2010): Fixing test2007_57.f90...
-                    variable = functionReference;
+                      // DQ (12/28/2010): Fixing test2007_57.f90...
+                         variable = functionReference;
 #else
-                 // DQ (12/28/2010): This branch is required for test2007_57.f90 to work.
-                 // Take the function call expression from the astExpressionStack
-                    variable = astExpressionStack.front();
-                    astExpressionStack.pop_front();
+                      // DQ (12/28/2010): This branch is required for test2007_57.f90 to work.
+                      // Take the function call expression from the astExpressionStack
+                         variable = astExpressionStack.front();
+                         astExpressionStack.pop_front();
 #endif
+                       }
+                      else
+                       {
+                      // DQ (1/24/2011): Added case to support variables with SgFunctionType to support procedure pointers.
+                      // See test2011_28.f90 for an example.
+                         SgVariableSymbol* variableSymbol = isSgVariableSymbol(tempSymbol);
+#if 0
+                         SgExpression* arrayVariable = new SgVarRefExp(variableSymbol);
+                         setSourcePosition(arrayVariable,nameToken);
+                         variable = arrayVariable;
+#else
+                         if (stackHoldsAnIndexExpression == true)
+                            {
+                              printf ("This variable reference must be converted into a function call. \n");
+
+                              printf ("tempSymbol = %p = %s \n",tempSymbol,tempSymbol->class_name().c_str());
+
+                           // Get the function symbol so that we can construct a function call.
+#if 1
+
+                              SgScopeStatement* topOfStack = *(astScopeStack.rbegin());
+                              ROSE_ASSERT(topOfStack != NULL);
+
+                              printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
+                              SgGlobal* globalScope = isSgGlobal(topOfStack);
+                              ROSE_ASSERT(globalScope != NULL);
+                              SgName programName = "procedure";
+                              ROSE_ASSERT(globalScope->symbol_exists(programName) == true);
+                           // functionSymbol = globalScope->lookup_function_symbol(programName);
+                              functionSymbol = globalScope->lookup_function_symbol(programName);
+                              ROSE_ASSERT(functionSymbol != NULL);
+
+#if 0
+                              SgFunctionType* functionType = isSgFunctionType(variableType);
+                              ROSE_ASSERT(functionType != NULL);
+                              SgSymbol* tempSymbol = isSgFunctionSymbol(functionType->get_symbol_from_symbol_table());
+                              ROSE_ASSERT(tempSymbol != NULL);
+                              printf ("tempSymbol = %p = %s \n",tempSymbol,tempSymbol->class_name().c_str());
+                              functionSymbol = isSgFunctionSymbol(tempSymbol);
+#endif
+                              ROSE_ASSERT(functionSymbol->get_declaration() != NULL);
+                              ROSE_ASSERT(functionSymbol->get_declaration()->get_type() != NULL);
+                              SgFunctionType* functionType = isSgFunctionType(functionSymbol->get_declaration()->get_type());
+#endif
+                              ROSE_ASSERT(functionType != NULL);
+                              SgExpression* functionReference = new SgFunctionRefExp(functionSymbol,functionType);
+                              ROSE_ASSERT(functionReference != NULL);
+
+                              setSourcePosition(functionReference,nameToken);
+
+                              ROSE_ASSERT(astExpressionStack.empty() == false);
+                              SgExprListExp* argumentList = isSgExprListExp(astExpressionStack.front());
+                              ROSE_ASSERT(argumentList != NULL);
+                              astExpressionStack.pop_front();
+                              SgFunctionCallExp* functionCall = new SgFunctionCallExp(functionReference,argumentList,SgTypeVoid::createType());
+
+                           // DQ (12/28/2010): Fixing test2007_57.f90...
+                           // variable = functionReference;
+                              variable = functionCall;
+                           // DQ (12/28/2010): This branch is required for test2007_57.f90 to work.
+                           // Take the function call expression from the astExpressionStack
+                           // variable = astExpressionStack.front();
+                           // astExpressionStack.pop_front();
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                           else
+                            {
+                              SgExpression* arrayVariable = new SgVarRefExp(variableSymbol);
+                              setSourcePosition(arrayVariable,nameToken);
+                              variable = arrayVariable;
+                            }
+#endif
+#if 0
+                         printf ("SgFunctionType of variables not handled yet! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
 
 #if 0
                     printf ("SgFunctionType not handled yet! \n");
@@ -9285,8 +9434,12 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
             // DQ (8/21/2010): Added support for string type so we have to eliminate SgTypeString as a posability before we conclude that we should build a function.
                SgTypeString* stringType = isSgTypeString(variableType);
 
-            // If this is either an array or a string type don't convert it to a function.
-               if (arrayType != NULL || stringType != NULL)
+            // DQ (1/24/2011): Added support for procedure pointer variables.
+               SgFunctionType* functionType = isSgFunctionType(variableType);
+
+            // If this is either an array or a string type or a function type, don't convert it to a function.
+            // if (arrayType != NULL || stringType != NULL)
+               if (arrayType != NULL || stringType != NULL || functionType != NULL)
                   {
                     if (arrayType != NULL)
                        {
@@ -9299,10 +9452,18 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
                          class_type = isSgClassType(arrayType->get_base_type());
 #endif
                        }
+
+                 // DQ (1/24/2011): Added support for procedure pointer variables.
+                    if (functionType != NULL)
+                       {
+                         if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                              printf ("This is an function type so it is OK for it to be called with parameters (procedure pointer variable) \n");
+                       }
                   }
                  else
                   {
                  // This case is visited in the handling of Fortran statement functions (see test2007_179.f90).
+                 // See also test2011_30.f90 for procedure pointers when used to call the functions to which they are pointed.
 #if 0
                     printf ("This case is visited in the handling of fortran statement functions (see test2007_179.f90). \n");
 #endif
@@ -18398,7 +18559,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 #endif
                             {
                               SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed */ false);
-#if 0
+#if 1
                               if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                                    printf ("R1109 (hasOnly == false && empty astNodeStack) Insert aliased symbol name = %s \n",symbolName.str());
 #endif
@@ -18628,6 +18789,17 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1109 c_action_use_stmt()");
+#endif
+
+#if 0
+  // DQ (1/24/2011): Debugging of test2011_30.f90
+     SgSymbol* tmp_variableSymbol_1 = SageInterface::lookupSymbolInParentScopes("x",astScopeStack.front());
+     ROSE_ASSERT(tmp_variableSymbol_1 != NULL);
+     printf ("tmp_variableSymbol_1 = %s \n",tmp_variableSymbol_1->class_name().c_str());
+
+  // These don't work because the SageInterface versions fail to handle SgAlaisSymbols and non-SgVariableSymbols correctly.
+  // SgVariableSymbol* tmp_variableSymbol = SageInterface::lookupVariableSymbolInParentScopes("x",astScopeStack.front());
+  // ROSE_ASSERT(tmp_variableSymbol != NULL);
 #endif
    }
 
@@ -19491,7 +19663,9 @@ void c_action_external_stmt(Token_t *label, Token_t *externalKeyword, Token_t *e
           SgVariableSymbol* variableSymbol = currentScope->lookup_variable_symbol(name);
        // ROSE_ASSERT(variableSymbol != NULL);
           if (variableSymbol != NULL)
+             {
                currentScope->remove_symbol(variableSymbol);
+             }
         }
 
 #if 1
@@ -19526,8 +19700,23 @@ void c_action_external_stmt(Token_t *label, Token_t *externalKeyword, Token_t *e
  */
 // void c_action_procedure_declaration_stmt(Token_t * label, ofp_bool hasProcInterface, int count)
 void c_action_procedure_declaration_stmt(Token_t *label, Token_t *procedureKeyword, Token_t *eos, ofp_bool hasProcInterface, int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_procedure_declaration_stmt(): label = %p = %s procedureKeyword = %p = %s eos = %p hasProcInterface = %s count = %d \n",
+               label,label != NULL ? label->text : "NULL",procedureKeyword,procedureKeyword != NULL ? procedureKeyword->text : "NULL",eos,hasProcInterface ? "true" : "false",count);
+
+  // We have got to this point and not had to build a containing main function then we will not
+  // likely be any further before we process an action statement (not declaration statement).
+     build_implicit_program_statement_if_required();
+
+#if 0
+  // DQ (1/18/2011): Also called by R510 and R443.
+     processMultidimensionalSubscriptsIntoExpressionList(count);
+#endif
+
+  // DQ (1/24/2011): Test2011_25.f90 demonstrates a use of a procedure attribure spec.
+     printf ("Sorry, procedure declaration statements are not implemented yet. \n");
+   }
 
 /** R1212
  * proc_interface
@@ -19550,8 +19739,13 @@ void c_action_procedure_declaration_stmt(Token_t *label, Token_t *procedureKeywo
  */
 // void c_action_proc_attr_spec(int spec)
 void c_action_proc_attr_spec(Token_t * attrKeyword, Token_t * id, int spec)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_proc_attr_spec(): attrKeyword = %p = %s id = %p = %s spec = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",id,id != NULL ? id->text : "NULL",spec);
+
+  // DQ (1/24/2011): Test2011_25.f90 demonstrates a use of a procedure attribure spec.
+     printf ("Sorry, procedure attributes specs are not implemented yet. \n");
+   }
 
 /** R1214
  * proc_decl
@@ -19561,8 +19755,164 @@ void c_action_proc_attr_spec(Token_t * attrKeyword, Token_t * id, int spec)
  * @param hasNullInit True if null-init is present.
  */
 void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_proc_decl(): id = %p = %s hasNullInit = %s \n",id,id != NULL ? id->text : "NULL",hasNullInit ? "true" : "false");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R1214 c_action_proc_decl()");
+#endif
+
+  // DQ (1/24/2011): In this function we build a variable as a procedure and define it as a function type 
+  // AND we build it as a variable with a symbol.  Not clear if this is how I really want to support fortran 
+  // procedure pointers.
+
+     ROSE_ASSERT(id != NULL);
+     astNameStack.push_front(id);
+
+     SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),false);
+     astBaseTypeStack.push_front(functionType);
+
+  // DQ (1/24/2011): Add an assocciated function "procedure()" to the global scope so that 
+  // fortran can build procedure pointers.
+     SgScopeStatement* topOfStack = *(astScopeStack.rbegin());
+     ROSE_ASSERT(topOfStack != NULL);
+
+     printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
+     SgGlobal* globalScope = isSgGlobal(topOfStack);
+     ROSE_ASSERT(globalScope != NULL);
+
+  // printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
+     ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
+     SgName programName = "procedure";
+  // SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(programName,functionType,NULL);
+     SgProcedureHeaderStatement* programDeclaration = new SgProcedureHeaderStatement(programName,functionType,NULL);
+
+     ROSE_ASSERT(id != NULL);
+
+     setSourcePosition(programDeclaration->get_parameterList(),id);
+     setSourcePosition(programDeclaration,id);
+
+  // This is the defining declaration and there is no non-defining declaration!
+     programDeclaration->set_definingDeclaration(programDeclaration);
+
+     programDeclaration->set_scope(topOfStack);
+     programDeclaration->set_parent(topOfStack);
+
+  // Add the program declaration to the global scope
+  // topOfStack->append_statement(programDeclaration);
+  // SgGlobal* globalScope = isSgGlobal(topOfStack);
+     ROSE_ASSERT(globalScope != NULL);
+  // globalScope->append_statement(programDeclaration);
+
+  // A symbol using this name should not already exist
+  // ROSE_ASSERT(globalScope->symbol_exists(programName) == false);
+     if (globalScope->symbol_exists(programName) == false)
+        {
+       // Add a symbol to the symbol table in global scope
+          SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(programDeclaration);
+          globalScope->insert_symbol(programName, functionSymbol);
+
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("Inserted SgFunctionSymbol in globalScope using name = %s \n",programName.str());
+
+       // SgVariableSymbol* variableSymbol = new SgVariableSymbol(variableInitilizedName);
+       // globalScope->insert_symbol(programName, variableSymbol);
+        }
+
+  // Now the symbol should be in place.
+     ROSE_ASSERT(globalScope->symbol_exists(programName) == true);
+
+#if 0
+  // We should get a variable generated from the call to c_action_entity_decl(id).
+
+  // Build a variable symbol for the name given by id.
+  // SgInitializedName* variableInitilizedName = SageBuilder::buildInitializedName(programName,functionType,NULL);
+  // variableInitilizedName->set_scope(globalScope);
+     SgName variableName = id->text;
+     SgVariableDeclaration* variableDeclaration = SageBuilder::buildVariableDeclaration(variableName,functionType,NULL,globalScope);
+     ROSE_ASSERT(variableDeclaration != NULL);
+     ROSE_ASSERT(globalScope->lookup_variable_symbol(variableName) != NULL);
+
+     ROSE_ASSERT(variableDeclaration->get_variables()[0]->get_symbol_from_symbol_table() != NULL);
+
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+          printf ("Inserted SgVariableSymbol in globalScope using name = %s \n",variableName.str());
+#endif
+
+
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+  // void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarraySpec, ofp_bool hasCharLength)
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("Warning: calling c_action_entity_decl() with new and unknown OFP 0.8.0 specific options \n");
+
+  // DQ (1/23/2011): Pass the actual parameters (required for test2011_20.f90).
+  // Calling R504, R503-F2008
+  // c_action_entity_decl(id,false,false,false,false);
+  // c_action_entity_decl(id,hasComponentArraySpec,hasCoArraySpec,hasCharLength,hasComponentInitialization);
+     c_action_entity_decl(id,false,false,false,hasNullInit);
+#else
+     c_action_entity_decl(id);
+#endif
+
+     SgName variableName = id->text;
+     SgSymbol* tmpSymbol = SageInterface::lookupSymbolInParentScopes(variableName,astScopeStack.front());
+     ROSE_ASSERT(tmpSymbol != NULL);
+
+#if 0
+  // This fails for test2011_31.f90 (but we don't need it, so don't use the problematic SageInterface::lookupVariableSymbolInParentScopes() function until it is fixed).
+  // These don't work because the SageInterface versions fail to handle SgAlaisSymbols and non-SgVariableSymbols correctly.
+  // However since the variable has been added to the current scope as a SgVariableSymbol it DOES where here as a special case.
+  // SgVariableSymbol* variableSymbol = globalScope->lookup_variable_symbol(variableName);
+     SgVariableSymbol* variableSymbol = SageInterface::lookupVariableSymbolInParentScopes(variableName,astScopeStack.front());
+     ROSE_ASSERT(variableSymbol != NULL);
+#else
+
+  // DQ (1/24/2011): This fails for test2011_31.f90 because if there exists a function in an outer scope with the same name as 
+  // that given by "id" the new variable declaration will not be added.  This is a problem to fix tomorrow morning...
+
+     printf ("tmpSymbol = %s \n",tmpSymbol->class_name().c_str());
+     SgVariableSymbol* variableSymbol = isSgVariableSymbol(tmpSymbol);
+     ROSE_ASSERT(variableSymbol != NULL);
+#endif
+
+     SgInitializedName* initializedName = variableSymbol->get_declaration();
+  // ROSE_ASSERT(variableDeclaration->get_variables()[0]->get_symbol_from_symbol_table() != NULL);
+     ROSE_ASSERT(initializedName != NULL);
+     ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
+
+     printf ("In R1214 c_action_proc_decl(): initializedName = %p \n",initializedName);
+
+     ROSE_ASSERT( initializedName->get_scope() != NULL);
+     printf ("initializedName->get_scope() = %s \n",initializedName->get_scope()->class_name().c_str());
+     ROSE_ASSERT( initializedName->get_scope()->get_symbol_table() != NULL);
+  // initializedName->get_scope()->get_symbol_table()->print("Output symbol table from R612");
+
+#if 0
+  // DQ (1/24/2011): I don't think this is called here, it should be called in R1214 c_action_proc_decl_list().
+     printf ("Calling buildVariableDeclarationAndCleanupTypeStack() \n");
+     buildVariableDeclarationAndCleanupTypeStack(NULL);
+     printf ("DONE: Calling buildVariableDeclarationAndCleanupTypeStack() \n");
+#endif
+
+     if (hasNullInit == true)
+        {
+       // See test2011_25.f90 for an example of this (procedure pointer).
+
+          printf ("Use the initializer on the astExpressionStack \n");
+        }
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R1214 c_action_proc_decl()");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
    
 /** R1214 list
  * proc_decl_list
@@ -19571,11 +19921,41 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
  * @param count The number of items in the list.
  */
 void c_action_proc_decl_list__begin()
-{
-}
+   {
+  // I don't think we have to do anything here (unless we have to complete the definition of the base type as we do for regular variable declarations).
+   }
+
 void c_action_proc_decl_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_proc_decl_list(): count = %d \n",count);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R1214 c_action_proc_decl_list()");
+#endif
+
+#if 1
+     printf ("Calling buildVariableDeclarationAndCleanupTypeStack() \n");
+     buildVariableDeclarationAndCleanupTypeStack(NULL);
+     printf ("DONE: Calling buildVariableDeclarationAndCleanupTypeStack() \n");
+#endif
+
+     ROSE_ASSERT(astNameStack.empty() == false);
+     astNameStack.pop_front();
+  // ROSE_ASSERT(astNameStack.empty() == true);
+     if (astNameStack.empty() == false)
+        {
+       // Since this is a new feature to support procedure pointer, let this go with an error message for the moment.
+       // See mpi_f08_interfaces_test.f03 for an example (line 1273).
+          printf ("ERROR: There are remaing entries (names) on the stack \n");
+        }
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R1214 c_action_proc_decl_list()");
+#endif
+   }
 
 /** R1216
  * intrinsic_stmt
@@ -19927,6 +20307,15 @@ returnType=SgTypeVoid::createType();
           astTypeStack.clear();
         }
      ROSE_ASSERT(astTypeStack.empty() == true);
+
+#if 0
+  // DQ (1/24/2011): Debugging of test2011_30.f90
+     SgSymbol* tmp_Symbol = SageInterface::lookupSymbolInParentScopes("x",astScopeStack.front());
+     ROSE_ASSERT(tmp_Symbol != NULL);
+  // These don't work because the SageInterface versions fail to handle SgAlaisSymbols and non-SgVariableSymbols correctly.
+  // SgVariableSymbol* tmp_variableSymbol = SageInterface::lookupVariableSymbolInParentScopes("x",astScopeStack.front());
+  // ROSE_ASSERT(tmp_variableSymbol != NULL);
+#endif
    }
 
 

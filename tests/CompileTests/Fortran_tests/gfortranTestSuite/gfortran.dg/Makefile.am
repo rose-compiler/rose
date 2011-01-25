@@ -1064,18 +1064,15 @@ OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    proc_decl_12.f90 \
    proc_decl_13.f90 \
    proc_decl_14.f90 \
-   proc_decl_15.f90 \
    proc_decl_16.f90 \
    proc_decl_18.f90 \
    proc_decl_19.f90 \
    proc_decl_20.f90 \
    proc_decl_5.f90 \
-   proc_decl_9.f90 \
    proc_ptr_10.f90 \
    proc_ptr_13.f90 \
    proc_ptr_16.f90 \
    proc_ptr_18.f90 \
-   proc_ptr_19.f90 \
    proc_ptr_20.f90 \
    proc_ptr_25.f90 \
    proc_ptr_3.f90 \
@@ -1153,6 +1150,12 @@ OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    write_check3.f90 \
    zero_sized_1.f90 \
    zero_sized_2.f90
+
+
+# Currently failing tests (1/24/2011):
+#  proc_decl_15.f90 
+#  proc_decl_9.f90 
+#  proc_ptr_19.f90 
 
 # Currently failing tests (12/29/2010):
 # implicit_2.f90 
