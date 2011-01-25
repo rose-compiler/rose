@@ -2165,7 +2165,7 @@ void c_action_component_attr_spec_list__begin()
   // stack for processing all variables in the declaration uniformally.  See test2007_248.f90 for an 
   // example.  We will also have to test this support in R441 as well (similar parser action, but for 
   // variable declarations inside of types.
-     printf ("Save the astAttributeSpecStack stack to reuse it for each variable in the declaration. \n");
+  // printf ("Save the astAttributeSpecStack stack to reuse it for each variable in the declaration. \n");
 
   // OR just don't delete the attributes until we process "c_action_component_attr_spec_list(int count)"!!!
 
@@ -2324,10 +2324,8 @@ void c_action_component_decl_list__begin()
         }
 #endif
 
-     printf ("We need semantics here corresponding to that in R503-F2008??? \n");
-#if 1
+  // printf ("We need semantics here corresponding to that in R503-F2008??? \n");
      convertBaseTypeToArrayWhereAppropriate();
-#endif
 
   // DQ (8/28/2010): This is not an error, but we might want to handle it better.
   // ROSE_ASSERT(astNameStack.empty() == true);
@@ -2354,7 +2352,7 @@ void c_action_component_decl_list(int count)
   // DQ (1/20/2011): Refactored the code below so it could be called from R443 as well as R504.
      bool hasArraySpec      = false;
      bool hasInitialization = false;
-     printf ("In R442 R438-F2008 calling processAttributeSpecStack(false,false): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+  // printf ("In R442 R438-F2008 calling processAttributeSpecStack(false,false): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
      processAttributeSpecStack(hasArraySpec,hasInitialization);
 #endif
 
@@ -2500,7 +2498,7 @@ void c_action_component_array_spec(ofp_bool isExplicit)
 
 #if 1
   // DQ (1/17/2011): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type).
-     printf ("In R443 c_action_component_array_spec(): Push the ComponentAttrSpec_dimension attribute only the stack to trigger this to be handled as an array (build an array type). \n");
+  // printf ("In R443 c_action_component_array_spec(): Push the ComponentAttrSpec_dimension attribute only the stack to trigger this to be handled as an array (build an array type). \n");
   // astAttributeSpecStack.push_front(AttrSpec_DIMENSION);
      astAttributeSpecStack.push_front(ComponentAttrSpec_dimension);
 #else
@@ -3048,7 +3046,7 @@ void c_action_ac_value_list__begin()
 
   // DQ (1/17/2011): If we get there and there is an expression on the stack then 
   // we should use it to convert the type into an array type.
-     printf ("MAYBE THIS IS WHERE THE TYPE SHOULD BE CONSTRUCTED AS A LAST RESORT (should be reading the attribute stack!) \n");
+  // printf ("MAYBE THIS IS WHERE THE TYPE SHOULD BE CONSTRUCTED AS A LAST RESORT (should be reading the attribute stack!) \n");
 
 #if 1
   // DQ (1/17/2011): If there is an expression on the astExpressionStack then it is used to convert 
@@ -3068,7 +3066,7 @@ void c_action_ac_value_list__begin()
              {
        // We don't know the count yet, not clear where we get that (assume 1 for initial test).
        // Note that this parameter is no longer used, so it should be removed!
-          printf ("REMOVE USE OF count PARAMETER IN convertTypeOnStackToArrayType() \n");
+       // printf ("REMOVE USE OF count PARAMETER IN convertTypeOnStackToArrayType() \n");
 
        // Note that this is a different count than then one in the function parameter list for this function.
           int temp_count = 1;
@@ -3633,14 +3631,10 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 
   // So we need to build the SgType and push it onto the type stack!
 
-  // static const int DeclarationTypeSpec_INTRINSIC=DeclarationTypeSpecBase+0;
-  // static const int DeclarationTypeSpec_TYPE=DeclarationTypeSpecBase+1;
-  // static const int DeclarationTypeSpec_CLASS=DeclarationTypeSpecBase+2;
-  // static const int DeclarationTypeSpec_unlimited=DeclarationTypeSpecBase+3;
-
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R502 c_action_declaration_type_spec() udtKeyword = %p = %s type = %d \n",udtKeyword,udtKeyword != NULL ? udtKeyword->text : "NULL",type);
-#if 1
+
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R502 c_action_declaration_type_spec()");
 #endif
@@ -3752,7 +3746,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
                printf ("No type found on astTypeStack (make sure there is a base type on the astBaseTypeStack) \n");
           ROSE_ASSERT(astBaseTypeStack.empty() == false);
         }
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R502 c_action_declaration_type_spec()");
 #endif
@@ -3950,7 +3944,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  astBaseTypeStack.push_front(pointerType);
 #endif
 #else
-                 printf ("R503: Case of AttrSpec_POINTER is now processed later when we have all of the attributes (since types are built right to left as the final stack is unwound). \n");
+              // printf ("R503: Case of AttrSpec_POINTER is now processed later when we have all of the attributes (since types are built right to left as the final stack is unwound). \n");
 #endif
                  break;
               }
@@ -4094,8 +4088,8 @@ void c_action_entity_decl(Token_t * id)
 
 #if 1
   // DQ (1/18/2011): Refactored the code below so it could be called from R443 as well as R504.
-     printf ("In R504 R503-F2008 calling processAttributeSpecStack(hasArraySpec=%s,hasInitialization=%s): astAttributeSpecStack.size() = %zu \n",
-          hasArraySpec ? "true" : "false",hasInitialization ? "true" : "false",astAttributeSpecStack.size());
+  // printf ("In R504 R503-F2008 calling processAttributeSpecStack(hasArraySpec=%s,hasInitialization=%s): astAttributeSpecStack.size() = %zu \n",
+  //      hasArraySpec ? "true" : "false",hasInitialization ? "true" : "false",astAttributeSpecStack.size());
      processAttributeSpecStack(hasArraySpec,hasInitialization);
 #else
   // DQ (1/16/2011): Now is the latest point where we can process the type.  We have now seen all of the
@@ -4445,7 +4439,7 @@ void c_action_entity_decl(Token_t * id)
 
   // ROSE_ASSERT(variableSymbol == NULL);
 
-     printf ("In R504 R503-F2008: variableSymbol = %p functionSymbol = %p classSymbol = %p \n",variableSymbol,functionSymbol,classSymbol);
+  // printf ("In R504 R503-F2008: variableSymbol = %p functionSymbol = %p classSymbol = %p \n",variableSymbol,functionSymbol,classSymbol);
 
      if (functionSymbol != NULL)
         {
@@ -4675,11 +4669,11 @@ void c_action_entity_decl_list__begin()
   // stack for processing all variables in the declaration uniformally.  See test2007_248.f90 for an 
   // example.  We will also have to test this support in R441 as well (similar parser action, but for 
   // variable declarations inside of types.
-     printf ("Save the astAttributeSpecStack stack to reuse it for each variable in the declaration. \n");
+  // printf ("Save the astAttributeSpecStack stack to reuse it for each variable in the declaration. \n");
 
   // OR just don't delete the attributes until we process "c_action_entity_decl_list(int count)"!!!
 
-     printf ("Build the base type for the variable declaration. \n");
+  // printf ("Build the base type for the variable declaration. \n");
 
   // DQ (12/8/2007): Modified to reflect use of new astBaseTypeStack (see test2007_148.f)
   // DQ (12/7/2007): Added assertion.
@@ -4693,10 +4687,12 @@ void c_action_entity_decl_list__begin()
 
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
 
+#if 0
      if (astExpressionStack.empty() == false)
         {
           printf ("Build array if there is an array attribute! \n");
         }
+#endif
 
   // This is the start of an entity list (used in variable declarations to hold the variables being declared
   // build the list and add the variable identifiers to the list
@@ -4843,79 +4839,6 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
 
      if (hasExpr == true)
         {
-          printf ("IN R506 ALL CODE COMMENTED OUT when hasExpr == true \n");
-
-#if 0
-       // Drain the astExpressionStack, but gather all the expressions into a single list for each SgInitializedName
-          SgExprListExp* expressionList = new SgExprListExp();
-          setSourcePosition(expressionList);
-          while(astExpressionStack.empty() == false)
-             {
-            // Transfer the IR node from the astExpressionStack to the astNodeStack.
-               SgExpression* initializer = astExpressionStack.front();
-               astExpressionStack.pop_front();
-
-            // DQ (11/29/2007): I built a new stack for initializers to avoud over use of the 
-            // astNodeStack (which is where we put variables (SgInitializedName objects) within 
-            // variable declarations.
-            // astNodeStack.push_front(initializer);
-            // astInitializerStack.push_front(initializer);
-               ROSE_ASSERT(initializer != NULL);
-               expressionList->append_expression(initializer);
-             }
-
-          astInitializerStack.push_front(expressionList);
-#else
-       // DQ (4/21/2008): We now build our initialization expressions on the astInitializerStack
-#if 0
-       // This is the usual case for when the initializer has been already placed onto the astInitializerStack.
-       // Drain the astInitializerStack, but gather all the expressions into a single list for each SgInitializedName
-          SgExprListExp* expressionList = new SgExprListExp();
-          setSourcePosition(expressionList);
-          if (astInitializerStack.empty() == false)
-             {
-               while(astInitializerStack.empty() == false)
-                  {
-                 // Transfer the IR node from the astExpressionStack to the astNodeStack.
-                    SgExpression* initializer = astInitializerStack.front();
-                    astInitializerStack.pop_front();
-
-                 // DQ (11/29/2007): I built a new stack for initializers to avoud over use of the 
-                 // astNodeStack (which is where we put variables (SgInitializedName objects) within 
-                 // variable declarations.
-                 // astNodeStack.push_front(initializer);
-                 // astInitializerStack.push_front(initializer);
-                    ROSE_ASSERT(initializer != NULL);
-                    expressionList->append_expression(initializer);
-                  }
-
-               astInitializerStack.push_front(expressionList);
-             }
-            else
-             {
-            // This is the case for test2007_181.f90 ("integer :: n = 1"). Note that ac_value() is not called here!
-               if (astExpressionStack.empty() == false)
-                  {
-                    while(astExpressionStack.empty() == false)
-                       {
-                      // Transfer the IR node from the astExpressionStack to the astNodeStack.
-                         SgExpression* initializer = astExpressionStack.front();
-                         astExpressionStack.pop_front();
-
-                         ROSE_ASSERT(initializer != NULL);
-                         expressionList->append_expression(initializer);
-                       }
-
-                    astInitializerStack.push_front(expressionList);
-                  }
-                 else
-                  {
-                    printf ("Could not find an initializer on the stack (either the astInitializerStack nor the astExpressionStack) \n");
-                    ROSE_ASSERT(false);
-                  }
-             }
-#else
-       // if (astInitializerStack.empty() == false)
           if (astExpressionStack.empty() == false)
              {
             // This already has an SgExprListExp
@@ -4927,23 +4850,6 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
             // is for initialization.  So clear the astExpressionStack.  Later we might need to have saved this,
             // but for now it appears to be redundant with the type specification which we can derive in the 
             // unparser.
-#if 0
-               ROSE_ASSERT(astExpressionStack.empty() == false);
-               ROSE_ASSERT(isSgVarRefExp(astExpressionStack.front()) != NULL);
-               astExpressionStack.pop_front();
-#else
-            // DQ (4/30/2008): I am unclear if this is still required.
-               if (astExpressionStack.empty() == false && isSgVarRefExp(astExpressionStack.front()) != NULL)
-                  {
-#if 0
-                    printf ("Poping a useless expression off the stack = %p = %s = %s \n",astExpressionStack.front(),astExpressionStack.front()->class_name().c_str(),SageInterface::get_name(astExpressionStack.front()).c_str());
-                    astExpressionStack.pop_front();
-#else
-                 // DQ (4/7/2010): test2010_01.f90 demonstrates that we need this expression as an initializer for F90 code.
-                 // printf ("Skip poping a seemingly useless expression off the stack (It is the initializer for a variable (see test2010_01.f90) = %p = %s = %s \n",astExpressionStack.front(),astExpressionStack.front()->class_name().c_str(),SageInterface::get_name(astExpressionStack.front()).c_str());
-#endif
-                  }
-#endif
 
             // SgVarRefExp* variable = isSgVarRefExp(astExpressionStack.front());
             // variable->set_initializer(astInitializerStack.front());
@@ -4982,8 +4888,6 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
                     ROSE_ASSERT(false);
                   }
              }
-#endif
-#endif
         }
 
   // DQ (5/4/2008): Now that we don't use the astInitializerStack, we can't assert this.
@@ -5244,10 +5148,10 @@ void c_action_array_spec(int count)
 
 #if 0
   // DQ (1/17/2011): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type).
-     printf ("In R510 #2 c_action_array_spec(): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type). \n");
+  // printf ("In R510 #2 c_action_array_spec(): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type). \n");
      astAttributeSpecStack.push_front(AttrSpec_DIMENSION);
 #else
-     printf ("SKIPPING R510 #2 PUSH OF AttrSpec_DIMENSION ONTO astAttributeSpecStack \n");
+  // printf ("SKIPPING R510 #2 PUSH OF AttrSpec_DIMENSION ONTO astAttributeSpecStack \n");
 #endif
 
 #if 1
@@ -5353,7 +5257,7 @@ void c_action_array_spec_element(int type)
 
 #if 1
   // DQ (1/17/2011): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type).
-     printf ("In R510 #2 c_action_array_spec_element(): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type). \n");
+  // printf ("In R510 #2 c_action_array_spec_element(): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type). \n");
      astAttributeSpecStack.push_front(AttrSpec_DIMENSION);
 #else
      printf ("SKIPPING R510 #2 PUSH OF AttrSpec_DIMENSION ONTO astAttributeSpecStack \n");
@@ -5429,7 +5333,7 @@ void c_action_explicit_shape_spec_list(int count)
      outputState("At TOP of R511 c_action_explicit_shape_spec_list()");
 #endif
 
-     printf ("Calling R510 directly from R511... \n");
+  // printf ("Calling R510 directly from R511... \n");
 
   // DQ (2/20/2008): Call the mechanism used to build an array type
      c_action_array_spec(count);
@@ -6532,7 +6436,7 @@ void c_action_dimension_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasCoA
      SgName arrayName = id->text;
 
   // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
-     printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+  // printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
   // ROSE_ASSERT(false);
 
   // We need to get a base type for the array.
@@ -6761,7 +6665,7 @@ void c_action_named_constant_def(Token_t *id)
      SgName name = id->text;
 
   // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
-     printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+  // printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
   // ROSE_ASSERT(false);
 
      SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(name,astScopeStack.front());
@@ -7799,7 +7703,7 @@ void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
      SgName variableName = id->text;
 
   // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
-     printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+  // printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
   // ROSE_ASSERT(false);
 
   // Look for the symbol associated with the variable given by the name starting
@@ -8191,7 +8095,7 @@ void c_action_data_ref(int numPartRef)
           j++;
         }
 
-#if 1
+#if 0
      string qualifiedNameString = generateQualifiedName(qualifiedNameList);
      printf ("@@@@@@@@@@@@@@@@@@@ R612 qualifiedNameString = %s \n",qualifiedNameString.c_str());
 #endif
@@ -8233,7 +8137,7 @@ void c_action_data_ref(int numPartRef)
   // DQ (12/29/2010): Moved outside of conditional so that it could be tested afteward.
      SgFunctionSymbol* functionSymbol = NULL;
 
-#if 1
+#if 0
      printf ("In R612: variableSymbol = %p \n",variableSymbol);
 #endif
      if (variableSymbol == NULL)
@@ -8319,7 +8223,7 @@ void c_action_data_ref(int numPartRef)
                  // ROSE_ASSERT(false);
 
                     SgName functionName = nameToken->text;
-#if 1
+#if 0
                  // Output debugging information about saved state (stack) information.
                     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                          outputState("Build the implicit function type in R612 c_action_data_ref()");
@@ -8610,7 +8514,8 @@ void c_action_data_ref(int numPartRef)
                     ROSE_ASSERT(classSymbol != NULL);
                     SgMemberFunctionSymbol* memberFunctionSymbol = new SgMemberFunctionSymbol(memberfuncdecl);
 
-                    printf ("WARNING: Still need to add SgMemberFunctionSymbol to typeDeclarationScope = %p \n",typeDeclarationScope);
+                    if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                         printf ("WARNING: Still need to add SgMemberFunctionSymbol to typeDeclarationScope = %p \n",typeDeclarationScope);
 
                     variableSymbolList.push_back(memberFunctionSymbol);
                  // printf ("Test #4 variableSymbolList.size() = %zu \n",variableSymbolList.size());
@@ -8628,10 +8533,10 @@ void c_action_data_ref(int numPartRef)
                  // DQ (1/18/2011): In general everything is a function unless there is a hint that it is an array.
 
                  // DQ (1/17/2011): This is not a good enough test to trigger a function vs. variable declaration...
-                    printf ("This is not a good enough test to trigger a function vs. variable declaration... variableName = %s \n",variableName.str());
+                 // printf ("This is not a good enough test to trigger a function vs. variable declaration... variableName = %s \n",variableName.str());
 
-                    bool inCurrentScope = (astScopeStack.front()->lookup_variable_symbol(variableName) != NULL);
-                    printf ("inCurrentScope = %s \n",inCurrentScope ? "true" : "false");
+                 // bool inCurrentScope = (astScopeStack.front()->lookup_variable_symbol(variableName) != NULL);
+                 // printf ("inCurrentScope = %s \n",inCurrentScope ? "true" : "false");
 
                  // DQ (1/17/2011): Check if this is supposed to be a function or a variable.
                  // If this is a SgExprListExp then it is part of a function
@@ -8647,10 +8552,10 @@ void c_action_data_ref(int numPartRef)
                  // bool interpretAsVariable = (isSgVariableSymbol(symbol) != NULL) ? true : false;
                  // bool interpretAsVariable = (isSgFunctionSymbol(symbol) != NULL) ? false : true;
                     bool interpretAsVariable = false;
-                    printf ("isSgVariableSymbol(symbol) = %p \n",isSgVariableSymbol(symbol));
+                 // printf ("isSgVariableSymbol(symbol) = %p \n",isSgVariableSymbol(symbol));
                     if (isSgVariableSymbol(symbol) == NULL)
                        {
-                         printf ("isSgFunctionSymbol(symbol) = %p \n",isSgFunctionSymbol(symbol));
+                      // printf ("isSgFunctionSymbol(symbol) = %p \n",isSgFunctionSymbol(symbol));
                          if (isSgFunctionSymbol(symbol) != NULL)
                           {
                             interpretAsVariable = false;
@@ -8659,7 +8564,7 @@ void c_action_data_ref(int numPartRef)
                           {
                          // If this is not clearly a variable and it has parameters then it is to be interpreted to be a function.
                             bool hasSelectionSubscriptList = qualifiedNameList[(numPartRef-1)].hasSelectionSubscriptList;
-                            printf ("hasSelectionSubscriptList = %s \n",hasSelectionSubscriptList ? "true" : "false");
+                         // printf ("hasSelectionSubscriptList = %s \n",hasSelectionSubscriptList ? "true" : "false");
                          // interpretAsVariable = (hasSelectionSubscriptList == false);
                             if (hasSelectionSubscriptList == true)
                                {
@@ -8685,7 +8590,7 @@ void c_action_data_ref(int numPartRef)
                          interpretAsVariable = true;
                        }
 #endif
-                    printf ("interpretAsVariable = %s \n",interpretAsVariable ? "true" : "false");
+                 // printf ("interpretAsVariable = %s \n",interpretAsVariable ? "true" : "false");
 
                  // if (expressionList != NULL)
                     if (interpretAsVariable == false)
@@ -8713,7 +8618,7 @@ void c_action_data_ref(int numPartRef)
                          ROSE_ASSERT(variableSymbol != NULL);
 #else
                       // DQ (1/19/2011): code to build new variable.
-                         printf ("We need to build a variable in the current scope = %p = %s for variableName = %s \n",currentScope,currentScope->class_name().c_str(),variableName.str());
+                      // printf ("We need to build a variable in the current scope = %p = %s for variableName = %s \n",currentScope,currentScope->class_name().c_str(),variableName.str());
                          buildImplicitVariableDeclaration(variableName);
 #if 0
                          printf ("Exiting due to incomplete code! \n");
@@ -8777,7 +8682,7 @@ void c_action_data_ref(int numPartRef)
   // ROSE_ASSERT(variableSymbol != NULL || functionSymbol != NULL);
 
   // DQ (12/29/2010): Can we assert this! This works!
-     printf ("numPartRef = %d variableSymbolList.size() = %zu \n",numPartRef,variableSymbolList.size());
+  // printf ("numPartRef = %d variableSymbolList.size() = %zu \n",numPartRef,variableSymbolList.size());
      ROSE_ASSERT( (size_t) numPartRef >= variableSymbolList.size());
 
   // DQ (12/29/2010): This fails for test2007_57.f90 (but after a lot of work we can enforce this uniromally for all of out simple test codes at least).
@@ -8808,10 +8713,10 @@ void c_action_data_ref(int numPartRef)
           tempSymbol = variableSymbolList[lastElement - i];
 
           bool hasSelectionSubscriptList = qualifiedNameList[lastElement - i].hasSelectionSubscriptList;
-#if 1
+
           ROSE_ASSERT(tempSymbol != NULL);
-          printf ("hasSelectionSubscriptList = %s tempSymbol = %p = %s \n",hasSelectionSubscriptList ? "true" : "false",tempSymbol,tempSymbol->class_name().c_str());
-#endif
+       // printf ("hasSelectionSubscriptList = %s tempSymbol = %p = %s \n",hasSelectionSubscriptList ? "true" : "false",tempSymbol,tempSymbol->class_name().c_str());
+
        // DQ (12/27/2010): Handle case of function return value initialization for derived type (see test2010_176.f90).
        // ROSE_ASSERT(variableSymbol != NULL);
           if (isSgVariableSymbol(tempSymbol) != NULL)
@@ -8858,7 +8763,7 @@ void c_action_data_ref(int numPartRef)
 
           if (stackHoldsAnIndexExpression == true)
              {
-               printf ("This variable reference must be converted into an array or a function. Can we know which? \n");
+            // printf ("This variable reference must be converted into an array or a function. Can we know which? \n");
 
             // Now that we don't have the side-effects of the trace_back_through_parent_scopes_lookup_variable_symbol() 
             // building a variable symbol (or a variable or function symbol), we can better interpret evidence for the
@@ -8866,7 +8771,7 @@ void c_action_data_ref(int numPartRef)
             //    If there is a variable symbol matching this name in the current or parent scopes then it is an array.
             //    If not, then it is a function reference.
 
-               printf ("tempSymbol = %p = %s \n",tempSymbol,tempSymbol->class_name().c_str());
+            // printf ("tempSymbol = %p = %s \n",tempSymbol,tempSymbol->class_name().c_str());
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -9016,9 +8921,8 @@ void c_action_data_ref(int numPartRef)
 #else
                          if (stackHoldsAnIndexExpression == true)
                             {
-                              printf ("This variable reference must be converted into a function call. \n");
-
-                              printf ("tempSymbol = %p = %s \n",tempSymbol,tempSymbol->class_name().c_str());
+                           // printf ("This variable reference must be converted into a function call. \n");
+                           // printf ("tempSymbol = %p = %s \n",tempSymbol,tempSymbol->class_name().c_str());
 
                            // Get the function symbol so that we can construct a function call.
 #if 1
@@ -9026,9 +8930,11 @@ void c_action_data_ref(int numPartRef)
                               SgScopeStatement* topOfStack = *(astScopeStack.rbegin());
                               ROSE_ASSERT(topOfStack != NULL);
 
-                              printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
+                           // printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
                               SgGlobal* globalScope = isSgGlobal(topOfStack);
                               ROSE_ASSERT(globalScope != NULL);
+
+                           // DQ (1/24/2011): Default name for procedure to use as declaration for symbol needed for function reference...(where required)...
                               SgName programName = "procedure";
                               ROSE_ASSERT(globalScope->symbol_exists(programName) == true);
                            // functionSymbol = globalScope->lookup_function_symbol(programName);
@@ -9142,7 +9048,7 @@ void c_action_data_ref(int numPartRef)
 
                default:
                   {
-#if 1
+#if 0
                     printf ("No special processing is required, this variable type is %s tempSymbol = %s \n",variableType->class_name().c_str(),tempSymbol->class_name().c_str());
 #endif
                  // variable = new SgVarRefExp(variableSymbol);
@@ -11951,7 +11857,7 @@ void c_action_forall_triplet_spec(Token_t * id, ofp_bool hasStride)
      SgName name = id->text;
 
   // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
-     printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+  // printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
   // ROSE_ASSERT(false);
 
      SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(name,astScopeStack.front());
@@ -13425,7 +13331,7 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
                astNameStack.pop_front();
 
             // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
-               printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+            // printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
             // ROSE_ASSERT(false);
 
                SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName, astScopeStack.front());
@@ -14643,7 +14549,7 @@ void c_action_file_unit_number()
        // Note that if this is a scalar-logical-expression, then the expression is likely from a if-stmt and not a part of a format statement.
           SgExpression* expressionOnStack = astExpressionStack.front();
        // Using a switch statement allows us to more cleanly handle a growing number of special cases.
-          printf ("expressionOnStack = %p = %s \n",expressionOnStack,expressionOnStack->class_name().c_str());
+       // printf ("expressionOnStack = %p = %s \n",expressionOnStack,expressionOnStack->class_name().c_str());
           switch(expressionOnStack->variantT())
              {
             // Handle case of format label (integer): print 1, N
@@ -14663,7 +14569,7 @@ void c_action_file_unit_number()
             // Handle case of format string (passed as a variable):  CHARACTER(len=*) :: fmtstr;  PRINT fmtstr, str (see test2010_125.f90).
                case V_SgVarRefExp:
                   {
-                    printf ("expressionOnStack->get_type() = %p = %s \n",expressionOnStack->get_type(),expressionOnStack->get_type()->class_name().c_str());
+                 // printf ("expressionOnStack->get_type() = %p = %s \n",expressionOnStack->get_type(),expressionOnStack->get_type()->class_name().c_str());
                     SgTypeInt* intType = isSgTypeInt(expressionOnStack->get_type());
                     if (intType != NULL)
                        {
@@ -16400,7 +16306,7 @@ void c_action_io_implied_do_control()
   // printf ("implied do loop variable name = %s \n",do_variable_name.str());
 
   // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
-     printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+  // printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
   // ROSE_ASSERT(false);
 
      SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(do_variable_name,astScopeStack.front());
@@ -17048,7 +16954,7 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id,
           ROSE_ASSERT( matchingName(id->text,"iolength") == true);
 
           ROSE_ASSERT(astExpressionStack.empty() == false);
-          printf ("astExpressionStack.front() = %p = %s \n",astExpressionStack.front(),astExpressionStack.front()->class_name().c_str());
+       // printf ("astExpressionStack.front() = %p = %s \n",astExpressionStack.front(),astExpressionStack.front()->class_name().c_str());
 
           ROSE_ASSERT(astExpressionStack.empty() == false);
           SgExprListExp* outputList = isSgExprListExp(astExpressionStack.front());
@@ -18433,6 +18339,9 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
   // DQ (10/23/2010): Added intrinsic module support.
      moduleSymbol = buildIntrinsicModule(name.str());
 
+  // DQ (1/25/2011): I think this is always NULL.
+     ROSE_ASSERT(moduleSymbol == NULL);
+
   // If moduleSymbol is still null then this was not an intrinsic module and we have to search a bit.
      if ( moduleSymbol == NULL )
         {
@@ -19715,7 +19624,7 @@ void c_action_procedure_declaration_stmt(Token_t *label, Token_t *procedureKeywo
 #endif
 
   // DQ (1/24/2011): Test2011_25.f90 demonstrates a use of a procedure attribure spec.
-     printf ("Sorry, procedure declaration statements are not implemented yet. \n");
+  // printf ("Sorry, procedure declaration statements are not implemented yet. \n");
    }
 
 /** R1212
@@ -19782,7 +19691,7 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
      SgScopeStatement* topOfStack = *(astScopeStack.rbegin());
      ROSE_ASSERT(topOfStack != NULL);
 
-     printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
+  // printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
      SgGlobal* globalScope = isSgGlobal(topOfStack);
      ROSE_ASSERT(globalScope != NULL);
 
@@ -19980,10 +19889,10 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
   // DQ (1/25/2011): Until the SgVariableDeclaration is built, we can't assert this!
   // ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
 
-     printf ("In R1214 c_action_proc_decl(): initializedName = %p \n",initializedName);
+  // printf ("In R1214 c_action_proc_decl(): initializedName = %p \n",initializedName);
 
      ROSE_ASSERT( initializedName->get_scope() != NULL);
-     printf ("initializedName->get_scope() = %s \n",initializedName->get_scope()->class_name().c_str());
+  // printf ("initializedName->get_scope() = %s \n",initializedName->get_scope()->class_name().c_str());
      ROSE_ASSERT( initializedName->get_scope()->get_symbol_table() != NULL);
   // initializedName->get_scope()->get_symbol_table()->print("Output symbol table from R612");
 
@@ -19996,9 +19905,10 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
 
      if (hasNullInit == true)
         {
+       // We could use the stack value to build the SgInitializedName more directly.
        // See test2011_25.f90 for an example of this (procedure pointer).
 
-          printf ("Use the initializer on the astExpressionStack \n");
+       // printf ("Use the initializer on the astExpressionStack \n");
           ROSE_ASSERT(astExpressionStack.empty() == false);
           SgAssignInitializer* initializer = new SgAssignInitializer(astExpressionStack.front(),NULL);
           setSourcePosition(initializer);
@@ -20044,9 +19954,9 @@ void c_action_proc_decl_list(int count)
 #endif
 
 #if 1
-     printf ("Calling buildVariableDeclarationAndCleanupTypeStack() \n");
+  // printf ("Calling buildVariableDeclarationAndCleanupTypeStack() \n");
      buildVariableDeclarationAndCleanupTypeStack(NULL);
-     printf ("DONE: Calling buildVariableDeclarationAndCleanupTypeStack() \n");
+  // printf ("DONE: Calling buildVariableDeclarationAndCleanupTypeStack() \n");
 #endif
 
 #if 0
