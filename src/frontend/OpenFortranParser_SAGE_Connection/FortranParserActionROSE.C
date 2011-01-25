@@ -19764,6 +19764,9 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
      outputState("At TOP of R1214 c_action_proc_decl()");
 #endif
 
+  // DQ (1/25/2011): This could be the first statement in a program (see test2011_35.f90).
+     build_implicit_program_statement_if_required();
+
   // DQ (1/24/2011): In this function we build a variable as a procedure and define it as a function type 
   // AND we build it as a variable with a symbol.  Not clear if this is how I really want to support fortran 
   // procedure pointers.
@@ -19841,7 +19844,7 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
           printf ("Inserted SgVariableSymbol in globalScope using name = %s \n",variableName.str());
 #endif
 
-
+#if 0
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
   // void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarraySpec, ofp_bool hasCharLength)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -19855,9 +19858,100 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
 #else
      c_action_entity_decl(id);
 #endif
+#else
+  // DQ (1/25/2011): We can't use c_action_entity_decl() since it tests for the existence of the referenced name
+  // in an outer scope this causes problems when the name was previously used in a outer scope (see test2011_32.f90
+  // as an example).
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("In R1214 c_action_proc_decl(): BEFORE building a procedure pointer...");
+#endif
+
+#if 0
+  // We should get a variable generated from the call to c_action_entity_decl(id).
+
+  // Build a variable symbol for the name given by id.
+  // SgInitializedName* variableInitilizedName = SageBuilder::buildInitializedName(programName,functionType,NULL);
+  // variableInitilizedName->set_scope(globalScope);
+     ROSE_ASSERT(id != NULL);
+     SgName variableName = id->text;
+     printf ("Building procedure pointer name = %s \n",variableName.str());
+
+  // The SageBuilder::buildVariableDeclaration() function has some fixes that fixup Fortran specific handling of 
+  // variables that match function parameters, this causes problems when we use this function within the Fortran 
+  // support in ROSE.  So I will skip using this and Liao and I will have to fix this up together later.
+     SgVariableDeclaration* variableDeclaration = SageBuilder::buildVariableDeclaration(variableName,functionType,NULL,astScopeStack.front());
+     ROSE_ASSERT(variableDeclaration != NULL);
+     ROSE_ASSERT(astScopeStack.front()->lookup_variable_symbol(variableName) != NULL);
+
+     ROSE_ASSERT(variableDeclaration->get_variables()[0]->get_symbol_from_symbol_table() != NULL);
+
+     astScopeStack.front()->append_statement(variableDeclaration);
+
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+          printf ("Inserted SgVariableSymbol in globalScope using name = %s \n",variableName.str());
+#endif
+
+#if 0
+  // DQ (1/25/2011): Build the variable using mechanisms already in ROSE (since I can't use the xxx interface function).
+
+  // We don't really need the name on the stack.
+     ROSE_ASSERT(astNameStack.empty() == false);
+     astNameStack.pop_front();
 
      SgName variableName = id->text;
-     SgSymbol* tmpSymbol = SageInterface::lookupSymbolInParentScopes(variableName,astScopeStack.front());
+     ROSE_ASSERT(astBaseTypeStack.empty() == false);
+     SgType* type = astBaseTypeStack.front();
+     astBaseTypeStack.pop_front();
+
+     SgInitializedName* initializedName = new SgInitializedName(variableName,type,NULL,NULL,NULL);
+     setSourcePosition(initializedName);
+
+  // printf ("Built a new SgInitializedName = %p = %s \n",initializedName,variableName.str());
+  // DQ (12/14/2007): This will be set in buildVariableDeclaration()
+  // initializedName->set_scope(currentScope);
+
+     astNodeStack.push_front(initializedName);
+
+     bool buildingImplicitVariable = false;
+     SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,buildingImplicitVariable);
+     ROSE_ASSERT(variableDeclaration != NULL);
+#else
+
+  // DQ (1/25/2011): This support used the fortran support function: buildVariableDeclaration() in R1214 c_action_proc_decl_list(int count).
+     SgName variableName = id->text;
+     ROSE_ASSERT(astBaseTypeStack.empty() == false);
+     SgType* type = astBaseTypeStack.front();
+
+  // DQ (1/25/2011): We need this on the stack for when buildVariableDeclarationAndCleanupTypeStack() is called in R1214 c_action_proc_decl_list(int count).
+  // astBaseTypeStack.pop_front();
+
+     SgInitializedName* initializedName = new SgInitializedName(variableName,type,NULL,NULL,NULL);
+     setSourcePosition(initializedName);
+
+  // This will be filled in by buildVariableDeclaration (fortran support), but we set it here since it is tested below.
+     initializedName->set_scope(astScopeStack.front());
+
+  // The semantics of the call to buildVariableDeclaration (fortran support) required the SgInitializedName objects on the stack.
+     astNodeStack.push_front(initializedName);
+#endif
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("In R1214 c_action_proc_decl(): AFTER building a procedure pointer...");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+#endif
+
+
+#if 0
+     SgName tmp_variableName = id->text;
+     SgSymbol* tmpSymbol = SageInterface::lookupSymbolInParentScopes(tmp_variableName,astScopeStack.front());
      ROSE_ASSERT(tmpSymbol != NULL);
 
 #if 0
@@ -19879,8 +19973,12 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
 
      SgInitializedName* initializedName = variableSymbol->get_declaration();
   // ROSE_ASSERT(variableDeclaration->get_variables()[0]->get_symbol_from_symbol_table() != NULL);
+#endif
+
      ROSE_ASSERT(initializedName != NULL);
-     ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
+
+  // DQ (1/25/2011): Until the SgVariableDeclaration is built, we can't assert this!
+  // ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
 
      printf ("In R1214 c_action_proc_decl(): initializedName = %p \n",initializedName);
 
@@ -19901,6 +19999,16 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
        // See test2011_25.f90 for an example of this (procedure pointer).
 
           printf ("Use the initializer on the astExpressionStack \n");
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgAssignInitializer* initializer = new SgAssignInitializer(astExpressionStack.front(),NULL);
+          setSourcePosition(initializer);
+          initializedName->set_initptr(initializer);
+          astExpressionStack.pop_front();
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
 #if 1
@@ -19941,6 +20049,7 @@ void c_action_proc_decl_list(int count)
      printf ("DONE: Calling buildVariableDeclarationAndCleanupTypeStack() \n");
 #endif
 
+#if 0
      ROSE_ASSERT(astNameStack.empty() == false);
      astNameStack.pop_front();
   // ROSE_ASSERT(astNameStack.empty() == true);
@@ -19950,6 +20059,15 @@ void c_action_proc_decl_list(int count)
        // See mpi_f08_interfaces_test.f03 for an example (line 1273).
           printf ("ERROR: There are remaing entries (names) on the stack \n");
         }
+#else
+     ROSE_ASSERT(astNameStack.empty() == false);
+     for (int i = 0; i < count; i++)
+        {
+          ROSE_ASSERT(astNameStack.empty() == false);
+          astNameStack.pop_front();
+        }
+     ROSE_ASSERT(astNameStack.empty() == true);
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.

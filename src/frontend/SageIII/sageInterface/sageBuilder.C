@@ -148,6 +148,8 @@ SgVariableDeclaration*
 SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
  //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
 {
+   printf ("Inside of SageBuilder::buildVariableDeclaration() name = %s \n",name.str());
+
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
 //   ROSE_ASSERT(scope != NULL); // enable bottomup construction: scope can be unknown
@@ -192,9 +194,11 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
           ROSE_ASSERT  (old_parent != NULL);
           ROSE_ASSERT  (isSgFunctionParameterList(old_parent) != NULL);
           new_initName->set_parent(varDecl); // adjust parent from SgFunctionParameterList to SgVariableDeclaration
+#if 1
+       // DQ (1/25/2011): Deleting these causes problems if I use this function in the Fortran support...
           delete (default_initName->get_declptr()); // delete the var definition
           delete (default_initName); // must delete the old one to pass AST consistency test
-
+#endif
           isFortranParameter = true;
         }
       }
@@ -209,8 +213,18 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   initName->set_declptr(variableDefinition);
   variableDefinition->set_parent(initName);
 #endif
+#if 1
+// DQ (1/25/2011): Deleting the objects above causes problems if I use this function in the Fortran support...
+  printf ("Inside of SageBuilder::buildVariableDeclaration(): find the SgInitializedName for name = %s in varDecl = %p size = %zu \n",name.str(),varDecl,varDecl->get_variables().size());
+  for (size_t i = 0; i < varDecl->get_variables().size(); i++)
+     {
+       ROSE_ASSERT(varDecl->get_variables()[i] != NULL);
+       printf ("varDecl->get_variables()[%zu] = %s \n",i,varDecl->get_variables()[i]->get_name().str());
+     }
+  printf ("End of variable list \n");
+#endif
   SgInitializedName *initName = varDecl->get_decl_item (name);   
-  ROSE_ASSERT(initName); 
+  ROSE_ASSERT(initName != NULL);
   ROSE_ASSERT((initName->get_declptr())!=NULL);
 
 #if 1

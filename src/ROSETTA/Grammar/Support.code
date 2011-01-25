@@ -9042,13 +9042,29 @@ SgName::get_length() const
      return p_char.size();
    }
 
-SgName::SgName(const char * str): p_char(str ? str : "") {}
+SgName::SgName(const char * str): p_char(str ? str : "")
+   {
+  // Nothing to do here!
+   }
 
 // DQ (9/9/2004): Added support for conversion of strings to SgName
 // I always wanted this and it was a pain that it didn't exist previously!
 SgName::SgName(const std::string & str): p_char(str) {}
 
-SgName::SgName(const SgName& n): p_char(n.p_char) {}
+SgName::SgName(const SgName& n): p_char(n.p_char)
+   {
+#if 0
+  // DQ (1/25/2011): Added check...plus message...
+     if (p_char.empty() == true)
+        {
+          printf ("WARNING: SgName copy constructor called for empty string \n");
+        }
+       else
+        {
+          printf ("In SgName copy constructor name = %s \n",p_char.c_str());
+        }
+#endif
+   }
 
 // SgName::SgName(const char *str, int n): p_char(str, n) {} // get first n chars in the string
 
