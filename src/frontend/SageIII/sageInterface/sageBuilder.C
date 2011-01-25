@@ -194,7 +194,14 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
           new_initName->set_parent(varDecl); // adjust parent from SgFunctionParameterList to SgVariableDeclaration
 
        // DQ (1/25/2011): Deleting these causes problems if I use this function in the Fortran support...
-          delete (default_initName->get_declptr()); // delete the var definition
+       // delete (default_initName->get_declptr()); // delete the var definition
+          // delete (default_initName->get_declptr()); // relink the var definition
+          SgVariableDefinition * var_def = isSgVariableDefinition(default_initName->get_declptr()) ;
+          ROSE_ASSERT (var_def != NULL);
+          var_def->set_parent(new_initName);
+          var_def->set_vardefn(new_initName);
+          new_initName->set_declptr(var_def); // it was set to SgProcedureHeaderStatement as a function argument
+
           delete (default_initName); // must delete the old one to pass AST consistency test
           isFortranParameter = true;
         }
@@ -4242,6 +4249,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
        // of source position that would be more precise.  FIXME.
        // setOneSourcePositionNull(nondefdecl);
           setOneSourcePositionForTransformation(nondefdecl);
+          ROSE_ASSERT (nondefdecl->get_startOfConstruct() != __null);
 
           nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
           nondefdecl->set_definingDeclaration(defdecl);
@@ -4269,7 +4277,11 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
 //     printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
   // setOneSourcePositionForTransformation(nondefdecl);
-     setOneSourcePositionNull(nondefdecl);
+  //
+  // Liao 1/18/2011, I changed the semantics of setOneSourcePositionNull to set file_info to null regardless the existence of 
+  // file_info of the input node.
+  // We do want to keep the file_info of nodefdecl if it is set already as compiler generated.
+  //    setOneSourcePositionNull(nondefdecl);
 
   // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
   // nondefdecl->set_definingDeclaration(defdecl);
