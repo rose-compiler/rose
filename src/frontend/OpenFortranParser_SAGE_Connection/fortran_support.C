@@ -3271,6 +3271,10 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
 
        // DQ (12/14/2007): This should not have been specified as built in global scope!
           ROSE_ASSERT(isSgGlobal(initializedName->get_scope()) == NULL);
+
+       // DQ (1/24/2011): I think that this test should pass.
+          ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
+
 #if 0
        // Make sure that the variable does not already exist in this current scope!
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
@@ -4940,7 +4944,22 @@ convertTypeOnStackToArrayType( int count )
   // Use the type on the astTypeStack and build an array from it (at least if the type == 700)
   // SgType* baseType = getTopOfTypeStack();
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
-     SgType* baseType = astBaseTypeStack.front();
+
+  // DQ (1/24/2011): If there is an entry on the astTypeStack then we are supposed to turn it into an array.
+  // Most of the time astTypeStack.empty() == true, so this hanppend mostly for multipart 
+  // specifications such as "character A(2)*7" array of strings of length 7.
+  // SgType* baseType = astBaseTypeStack.front();
+     SgType* baseType = NULL;
+     if (astTypeStack.empty() == false)
+        {
+          printf ("Unusual case of declaration such as: character A(2)*7 \n");
+          baseType = astTypeStack.front();
+        }
+       else
+        {
+       // This is the typical case...
+          baseType = astBaseTypeStack.front();
+        }
 
 #if 0
   // DQ (1/16/2011): The newer design (better, I hope) does not wait until the wrong type is built and then try to undo it.
@@ -6905,8 +6924,18 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
                                 // DQ (1/17/2011): Fixup the call to convertTypeOnStackToArrayType() to prepare a value on the correct type stack. See test2007_101.f90 for an example.
                                    ROSE_ASSERT(astBaseTypeStack.empty() == false);
-                                   ROSE_ASSERT(astTypeStack.empty() == true);
 
+                                // This is false for test2011_23.f90 ("character :: A(2)*7)") but true nearly everywhere else...
+                                // ROSE_ASSERT(astTypeStack.empty() == true);
+                                   if (astTypeStack.empty() == false)
+                                      {
+                                     // When multiple specifiers are used (e.g. arrays of strings) to construct non-base types we
+                                     // do so in place at the front of the astTypeStack.  There should be at most a single entry.
+                                        printf ("Handling case of declarations such as: character :: A(2)*7) \n");
+                                        astTypeStack.pop_front();
+                                      }
+                                   ROSE_ASSERT(astTypeStack.empty() == true);
+                                   
                                    astTypeStack.push_front(arrayType);
                                  }
                                 else

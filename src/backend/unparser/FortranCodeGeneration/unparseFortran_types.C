@@ -81,7 +81,7 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeString:           unparseStringType(type, info); break;
 
        // scalar integral types
-          case V_SgTypeChar:            unparseBaseType(type,"CHARACTER",info); break;
+          case V_SgTypeChar:             unparseBaseType(type,"CHARACTER",info); break;
        // case V_SgTypeSignedChar:       unparseBaseType(type,"CHARACTER",info); break;
        // case V_SgTypeUnsignedChar:     unparseBaseType(type,"CHARACTER",info); break;
 
@@ -130,12 +130,14 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
        // DQ (12/1/2007): We need to unparse the kind and type parameters
           case V_SgModifierType:         unparseModifierType(type, info); break;
 
+       // DQ (1/24/2011): Added to support procedure pointers (see test2011_28.f90).
+          case V_SgFunctionType:         unparseFunctionType(type, info); break;
+
 #if 0
        // DQ (8/15/2007): I don't think these apply to Fortran.
           case V_SgNamedType:            unparseNameType(type, info); break;
        // case V_SgEnumType:             unparseEnumType(type, info); break;
           case V_SgTypedefType:          unparseTypedefType(type, info); break;
-          case V_SgFunctionType:         unparseFunctionType(type, info); break;
           case V_SgMemberFunctionType:   unparseMemberFunctionType(type, info); break;
 #endif
           default: 
@@ -582,11 +584,18 @@ UnparseFortran_type::unparseModifierType(SgType* type, SgUnparse_Info& info)
 
 void
 UnparseFortran_type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
-{
-  SgFunctionType* func_type = isSgFunctionType(type);
-  ROSE_ASSERT (func_type != NULL);
+   {
+     SgFunctionType* func_type = isSgFunctionType(type);
+     ROSE_ASSERT (func_type != NULL);
 
-  SgUnparse_Info ninfo(info);
+     SgUnparse_Info ninfo(info);
+
+  // DQ (1/24/2011): The case of a procedure type in Fortran is quite simple.
+  // Note that test2011_28.f90 demonstrates an example of this.
+  // curprint("procedure()");
+     curprint("procedure(), pointer");
+
+#if 0
   int needParen = 0;
   if (ninfo.isReferenceToSomething() || ninfo.isPointerToSomething()) {
       needParen=1;
@@ -641,7 +650,9 @@ UnparseFortran_type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 	  unparseType(func_type, ninfo);
 	}
     }
-}
+#endif
+
+   }
 
 
 //----------------------------------------------------------------------------
