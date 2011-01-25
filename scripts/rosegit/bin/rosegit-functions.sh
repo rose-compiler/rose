@@ -234,7 +234,7 @@ rosegit_show_environment () {
     echo "Source tree:       $ROSEGIT_SRC"
     echo "Build tree:        $ROSEGIT_BLD"
     [ "$ROSEGIT_SRC" != "$ROSE_SRC" ] && echo "ROSE source tree:  $ROSE_SRC"
-    echo "Current HEAD:      $(git rev-parse HEAD)"
+    echo "Current HEAD:      $(cd $ROSEGIT_SRC && git rev-parse HEAD)"
     echo "Software:"
     echo "    $(make --version |head -n1)"
     echo "    $(gcc --version |head -n1)"
@@ -245,7 +245,7 @@ rosegit_show_environment () {
     echo "    libtool $((libtool --version || libtool -V) 2>/dev/null |head -n1)"
     echo "    $((tex --version || echo tex NOT INSTALLED) 2>/dev/null |head -n1)"
     echo "    $((latex --version || echo latex NOT INSTALLED) 2>/dev/null |head -n1)"
-    echo "    $(swig -version |grep -i version)"
+    echo "    $(((swig -version |grep -i version) ||echo swig NOT INSTALLED) 2>/dev/null)"
     if [ -f /usr/include/boost/version.hpp ]; then
 	echo "    boost (in /usr/include)" \
 	    $(sed -n '/#define BOOST_LIB_VERSION/s/.*"\(.*\)"/\1/p' </usr/include/boost/version.hpp | tr _ .)

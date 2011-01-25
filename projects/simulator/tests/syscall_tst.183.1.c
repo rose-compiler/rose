@@ -116,7 +116,9 @@ int main(int ac, char **av)
 			}
 
 			errno = 0;
+#if 0 /* This statement appears to be left over from someone's debugging [RPM 2010-12-03] */
                         if( testcases[i].buf == NULL ) exit(1);
+#endif
 			test_erg = getcwd(testcases[i].buf, testcases[i].size);
 			TEST_ERRNO = errno;
 

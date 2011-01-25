@@ -156,7 +156,49 @@ void* querySolverGrammarElementFromVariantVector ( SgNode * astNode, VariantVect
                   }
              }
         }
+#if 0
+    // This code cannot be put here. Since the same SgVarRefExp will also be found during variable substitution phase.
+    // We don't want to replace the original SgVarRefExp!!
+    // Liao 1/19/2011. query the dim_info of SgArrayType associated with SgPntrArrRefExp
+    // e.g.  assuming a subtree has a reference to an array, then the variables used to declare the array dimensions should also be treated as referenced/used by the subtree
+    // even though the reference is indirect. 
+    // AST should look like: 
+    //    SgPntrArrRefExp -> SgVarRefExp (lhs) -> SgVariableSymbol(symbol) -> SgInitializedName -> SgArrayType (typeptr)  -> SgExprListExp (dim_info)
+    // AST outlining needs to find indirect use of a variable to work properly
+    if (std::find(targetVariantVector.begin(), targetVariantVector.end(), V_SgVarRefExp) != targetVariantVector.end())
+    // Only do this if SgVarRefExp is of interest
+    { 
+      if (SgPntrArrRefExp * arr_exp = isSgPntrArrRefExp(astNode))
+      {
+        printf("Debug: queryVariant.C Found SgPntrArrRefExp :%p\n", arr_exp);
+        Rose_STL_Container<SgNode*> refList = NodeQuery::querySubTree(arr_exp->get_lhs_operand(),V_SgVarRefExp);
+        // find the array reference from the lhs operand, which could be a complex arithmetic expression
+        SgVarRefExp* array_ref = NULL; 
+        for (Rose_STL_Container<SgNode*>::iterator iter = refList.begin(); iter !=refList.end(); iter ++)
+        {
+          SgVarRefExp* cur_ref = isSgVarRefExp(*iter);
+          ROSE_ASSERT (cur_ref != NULL);
+          SgVariableSymbol * sym = cur_ref->get_symbol();
+          ROSE_ASSERT (sym != NULL);
+          SgInitializedName * i_name = sym->get_declaration();
+          ROSE_ASSERT (i_name != NULL);
+          SgArrayType * a_type = isSgArrayType(i_name->get_typeptr());
+          if (a_type)
+          {
+            Rose_STL_Container<SgNode*> dim_ref_list = NodeQuery::querySubTree(a_type->get_dim_info(),V_SgVarRefExp);
+            for (Rose_STL_Container<SgNode*>::iterator iter2 = dim_ref_list.begin(); iter2 != dim_ref_list.end(); iter2++)
+            {
+              SgVarRefExp* dim_ref = isSgVarRefExp(*iter2); 
+              printf("Debug: queryVariant.C Found indirect SgVarRefExp as part of array dimension declaration:%s\n", dim_ref->get_symbol()->get_name().str());
+              pushNewNode (returnNodeList, targetVariantVector, *iter2);
+            }
 
+          }  
+
+        }
+      } // end if SgPntrArrRefExp
+    } // end if find()
+#endif
      return NULL;
    } /* End function querySolverUnionFields() */
 

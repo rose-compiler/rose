@@ -1844,6 +1844,17 @@ generateUniqueDeclaration ( SgDeclarationStatement* declaration )
      return keyDeclaration;
    }
 
+//! Check if a node is SgOmp*Statement
+bool SageInterface::isOmpStatement(SgNode* n)
+{
+  ROSE_ASSERT (n != NULL);
+  bool result = false;
+  if (isSgOmpBarrierStatement(n)||isSgOmpBodyStatement(n)|| isSgOmpFlushStatement(n)|| isSgOmpTaskwaitStatement(n) )
+    result = true;
+
+  return result;
+
+}
 // DQ (8/28/2005):
 bool
 SageInterface::isOverloaded ( SgFunctionDeclaration* functionDeclaration )
@@ -3212,6 +3223,41 @@ SgExpression* SageInterface::forallMaskExpression(SgForAllStatement* stmt) {
   if (isSgAssignOp(ls.back())) return 0;
   return ls.back();
 }
+
+//Find all SgPntrArrRefExp under astNode, add the referenced dim_info SgVarRefExp (if any) into NodeList_t 
+void SageInterface::addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Container<SgNode *>& NodeList_t)
+{
+  ROSE_ASSERT (astNode != NULL);
+  Rose_STL_Container<SgNode*> arr_exp_list = NodeQuery::querySubTree(astNode,V_SgPntrArrRefExp);
+  for (Rose_STL_Container<SgNode*>::iterator iter_0 = arr_exp_list.begin(); iter_0 !=arr_exp_list.end(); iter_0 ++)
+  {
+    SgPntrArrRefExp * arr_exp = isSgPntrArrRefExp(*iter_0);
+    ROSE_ASSERT (arr_exp != NULL);
+    //printf("Debug: Found SgPntrArrRefExp :%p\n", arr_exp);
+    Rose_STL_Container<SgNode*> refList = NodeQuery::querySubTree(arr_exp->get_lhs_operand(),V_SgVarRefExp);
+    for (Rose_STL_Container<SgNode*>::iterator iter = refList.begin(); iter !=refList.end(); iter ++)
+    {
+      SgVarRefExp* cur_ref = isSgVarRefExp(*iter);
+      ROSE_ASSERT (cur_ref != NULL);
+      SgVariableSymbol * sym = cur_ref->get_symbol();
+      ROSE_ASSERT (sym != NULL);
+      SgInitializedName * i_name = sym->get_declaration();
+      ROSE_ASSERT (i_name != NULL);
+      SgArrayType * a_type = isSgArrayType(i_name->get_typeptr());
+      if (a_type && a_type->get_dim_info())
+      {
+        Rose_STL_Container<SgNode*> dim_ref_list = NodeQuery::querySubTree(a_type->get_dim_info(),V_SgVarRefExp);
+        for (Rose_STL_Container<SgNode*>::iterator iter2 = dim_ref_list.begin(); iter2 != dim_ref_list.end(); iter2++)
+        {
+          SgVarRefExp* dim_ref = isSgVarRefExp(*iter2);
+          //printf("Debug: Found indirect SgVarRefExp as part of array dimension declaration:%s\n", dim_ref->get_symbol()->get_name().str());
+          NodeList_t.push_back(dim_ref);
+        }
+      }
+    }
+  } // end for
+}
+
 
 bool
 SageInterface::is_C_language()
@@ -6797,9 +6843,34 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
       ivarname = var->get_symbol()->get_declaration();
       isCase2 = true;
     }
+  } 
+  else if (SgExprStatement* exp_stmt = isSgExprStatement(init1))
+  { //case like: for (i = 1, len1 = 0, len2=0; i <= n; i++) 
+     // AST is: SgCommaOpExp -> SgAssignOp -> SgVarRefExp
+    if (SgCommaOpExp* comma_exp = isSgCommaOpExp(exp_stmt->get_expression()))
+    {
+      SgCommaOpExp* leaf_exp = comma_exp;
+      while (isSgCommaOpExp(leaf_exp->get_lhs_operand()))
+        leaf_exp = isSgCommaOpExp(leaf_exp->get_lhs_operand());
+      if (SgAssignOp* assign_op = isSgAssignOp(leaf_exp->get_lhs_operand()))
+      {
+        SgVarRefExp* var = isSgVarRefExp(assign_op->get_lhs_operand());
+        if (var)
+        {
+          ivarname = var->get_symbol()->get_declaration();
+        }
+      }
+    }
+  }
+  else
+  {
+    cerr<<"Error. SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
+    cerr<<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
+    init1->get_file_info()->display("Debug"); 
+    ROSE_ASSERT (false);
   }
   // Cannot be both true
-  ROSE_ASSERT(!(isCase1&&isCase2));
+ // ROSE_ASSERT(!(isCase1&&isCase2));
 
   //Check loop index's type
   //ROSE_ASSERT(isStrictIntegerType(ivarname->get_type()));
@@ -8034,6 +8105,40 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
   void SageInterface::insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
   {
     insertStatementList(targetStmt,newStmts,false);
+  }
+
+  //! Insert a statement after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+  void SageInterface::insertStatementAfterLastDeclaration(SgStatement* stmt, SgScopeStatement* scope)
+  {
+    ROSE_ASSERT (stmt != NULL); 
+    ROSE_ASSERT (scope != NULL); 
+    // Insert to be the declaration after current declaration sequence, if any
+    SgStatement* l_stmt = findLastDeclarationStatement (scope);
+    if (l_stmt)
+      insertStatementAfter(l_stmt,stmt);
+    else
+      prependStatement(stmt, scope);
+  }
+
+  //! Insert a list of statements after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+  void SageInterface::insertStatementAfterLastDeclaration(std::vector<SgStatement*> stmt_list, SgScopeStatement* scope)
+  {
+    ROSE_ASSERT (scope != NULL); 
+    vector <SgStatement* >::iterator iter;
+    SgStatement* prev_stmt = NULL;
+    for (iter= stmt_list.begin(); iter != stmt_list.end(); iter++)
+    {
+      if (iter == stmt_list.begin())
+      {
+        insertStatementAfterLastDeclaration (*iter, scope);
+      }
+      else
+      {
+        ROSE_ASSERT (prev_stmt != NULL);
+        insertStatementAfter (prev_stmt, *iter);
+      }
+      prev_stmt = *iter;
+    }
   }
 
   void SageInterface::insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo /*= true */)
@@ -12573,8 +12678,20 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
             // I am unclear if this is a reasonable constraint, it passes all tests but this one!
                if ((*i)->get_scope() != targetBlock)
                   {
-                    //(*i)->set_scope(targetBlock);
-                    printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
+                    if (SgFunctionDeclaration* func = isSgFunctionDeclaration(*i)) 
+                    { // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
+                      // The func declaration should be moved along with the call site.
+                      // The scope should be set to the new block also
+                      // Liao 1/14/2011
+                      if (func->get_firstNondefiningDeclaration() == func);
+                        func->set_scope(targetBlock);
+                    }
+                    else
+                    {
+                      //(*i)->set_scope(targetBlock);
+                      printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
+                      cerr<<"  "<<(*i)->class_name()<<endl;
+                    }
                   }
                //ROSE_ASSERT((*i)->get_scope() == targetBlock);
              }

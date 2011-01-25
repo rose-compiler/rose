@@ -93,7 +93,7 @@ int main(int ac, char **av)
 		 */
 		while ((msg_q =
 			msgget(msgkey + num_queue,
-			       IPC_CREAT | IPC_EXCL)) != -1) {
+			       IPC_CREAT | IPC_EXCL | 0600)) != -1) {
 			msg_q_arr[num_queue] = msg_q;
 			if (num_queue == maxmsgs) {
 				tst_resm(TINFO, "The maximum number of message"
@@ -147,7 +147,7 @@ void setup(void)
 
 	maxmsgs = get_max_msgqueues();
 	if (maxmsgs < 0)
-		tst_brkm(TBROK, cleanup, "");
+		tst_brkm(TBROK, cleanup, "maxmsgs is zero");
 
 	msg_q_arr = (int *)calloc(maxmsgs, sizeof(int));
 	if (msg_q_arr == NULL) {

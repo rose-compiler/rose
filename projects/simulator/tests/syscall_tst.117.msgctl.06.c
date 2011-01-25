@@ -97,8 +97,8 @@ int main(int argc, char *argv[])
 	 */
 
 	if (buf.msg_qnum != 0) {
-		tst_resm(TFAIL, "error: unexpected nbr of messages %d",
-			 buf.msg_qnum);
+		tst_resm(TFAIL, "error: unexpected nbr of messages %ld",
+			 (long)buf.msg_qnum);
 		tst_exit();
 	}
 	if (buf.msg_perm.uid != getuid()) {

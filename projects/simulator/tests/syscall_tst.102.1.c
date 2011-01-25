@@ -97,8 +97,10 @@ struct test_case_t {
 		SYS_SOCKET, {
 	PF_UNIX, SOCK_DGRAM, 0}, "unix domain dgram"}, {
 		SYS_SOCKET, {
+#if 0 /* Requires root euid, so skip it for ROSE. [RPM 2011-01-04] */
 	AF_INET, SOCK_RAW, 6}, "Raw socket"}, {
 		SYS_SOCKET, {
+#endif
 	PF_INET, SOCK_DGRAM, 17}, "UDP dgram"}
 };
 

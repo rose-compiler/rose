@@ -17,6 +17,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
 	jacobi.c \
+	alignment.c \
 	atomic.c \
 	atoms-2.c \
 	barrier.c \
@@ -87,6 +88,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	recursive.c \
 	reduction2.c \
 	reduction.c \
+	reduction-classic.c \
 	rice1.c \
 	section.c \
 	set_num_threads.c \

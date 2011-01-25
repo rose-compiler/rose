@@ -1150,7 +1150,7 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
  // DQ (1/13/2011): This will only get a subset of types.
     nodeList = NodeQuery::querySubTree (astNode,V_SgType);
 #else
- // DQ (1/13/2011): But I don't think this is the correct appraoch...
+ // DQ (1/13/2011): But I don't think this is the correct approach...
     AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::ExtractTypes;
     nodeList = NodeQuery::querySubTree (astNode,V_SgType,defineQueryType);
 #endif
