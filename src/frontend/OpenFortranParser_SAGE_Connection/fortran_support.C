@@ -2082,7 +2082,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
   // trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol);
      trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol,classSymbol);
 
-#if 1
+#if 0
      printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): variableSymbol = %p \n",variableSymbol);
      printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): functionSymbol = %p \n",functionSymbol);
      printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): classSymbol    = %p \n",classSymbol);
@@ -2240,7 +2240,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
                printf ("Done building implicit function or variable reference expression. \n");
 #endif
 #else
-               printf ("NOTE: CANCLED SEMANTICS THAT BUILD IMPLICIT VARIABLE SYMBOLS \n");
+            // printf ("NOTE: CANCLED SEMANTICS THAT BUILD IMPLICIT VARIABLE SYMBOLS \n");
 #endif
              }
         }
@@ -2328,7 +2328,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
             // trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(qualifiedNameList[i],structureScope,variableSymbol,functionSymbol,classSymbol);
                trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(name,structureScope,variableSymbol,functionSymbol,classSymbol);
 
-#if 1
+#if 0
                printf ("In trace_back_through_parent_scopes_lookup_member_variable_symbol(): variableSymbol = %p \n",variableSymbol);
                printf ("In trace_back_through_parent_scopes_lookup_member_variable_symbol(): functionSymbol = %p \n",functionSymbol);
                printf ("In trace_back_through_parent_scopes_lookup_member_variable_symbol(): classSymbol    = %p \n",classSymbol);
@@ -2337,17 +2337,17 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                if (variableSymbol != NULL)
                   {
                  // ROSE_ASSERT(variableSymbol->get_type() != NULL);
-#if 1
+#if 0
                     printf ("variable type = %s \n",variableSymbol->get_type()->class_name().c_str());
 #endif
                  // This is a reference to a variable (perhaps a structure), and we can return variableSymbol as NULL.
                  // name = qualifiedNameList[i];
-#if 1
+#if 0
                     printf ("Found a variableSymbol = %p Next variable name = %s \n",variableSymbol,name.c_str());
 #endif
                     SgType* type = variableSymbol->get_type();
                     ROSE_ASSERT(type != NULL);
-#if 1
+#if 0
                     printf ("associated variable type = %s \n",type->class_name().c_str());
 #endif
                  // DQ (12/23/2010): I think a better implementation would strip off SgArrayType and SgPointerType as needed to get the the SgClassType
@@ -2373,7 +2373,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                               ROSE_ASSERT(classDefinition != NULL);
 
                               structureScope = classDefinition;
-                              printf ("Set structureScope to %p (case of class type) \n",structureScope);
+                           // printf ("Set structureScope to %p (case of class type) \n",structureScope);
                               break;
                             }
 
@@ -2382,7 +2382,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                               SgArrayType* arrayType = isSgArrayType(type);
                               SgType* baseType = arrayType->get_base_type();
                               ROSE_ASSERT(baseType != NULL);
-#if 1
+#if 0
                               printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 #endif
                               SgClassType* classType = isSgClassType(baseType);
@@ -2410,7 +2410,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
 
                                         SgType* baseType = pointerType->get_base_type();
                                         ROSE_ASSERT(baseType != NULL);
-#if 1
+#if 0
                                         printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 #endif
                                         SgClassType* classType = isSgClassType(baseType);
@@ -2438,7 +2438,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                                         structureScope = NULL;
                                       }
                                  }
-                              printf ("Set structureScope to %p (case of array type) \n",structureScope);
+                           // printf ("Set structureScope to %p (case of array type) \n",structureScope);
                               break;
                             }
 
@@ -2447,7 +2447,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                               SgPointerType* pointerType = isSgPointerType(type);
                               SgType* baseType = pointerType->get_base_type();
                               ROSE_ASSERT(baseType != NULL);
-#if 1
+#if 0
                               printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 #endif
                            // This is the same code for handling the class type as in the "case V_SgArrayType:" above.
@@ -2475,7 +2475,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                                       {
                                         SgType* baseType = arrayType->get_base_type();
                                         ROSE_ASSERT(baseType != NULL);
-#if 1
+#if 0
                                         printf ("In the array: baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 #endif
                                         SgClassType* classType = isSgClassType(baseType);
@@ -2513,7 +2513,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                                         structureScope = NULL;
                                       }
                                  }
-                              printf ("Set structureScope to %p (case of pointr type) \n",structureScope);
+                           // printf ("Set structureScope to %p (case of pointr type) \n",structureScope);
                               break;
                             }
 
@@ -2528,7 +2528,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                          case V_SgTypeInt:
                             {
                               structureScope = NULL;
-                              printf ("Set structureScope to NULL (for primative types) \n");
+                           // printf ("Set structureScope to NULL (for primative types) \n");
                               break;
                             }
 
@@ -2536,8 +2536,8 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                          default:
                             {
                               structureScope = NULL;
-                              printf ("Set structureScope to NULL \n");
-                              printf ("Warning: what is this type, associated variable type = %s \n",type->class_name().c_str());
+                           // printf ("Set structureScope to NULL \n");
+                           // printf ("Warning: what is this type, associated variable type = %s \n",type->class_name().c_str());
                            // ROSE_ASSERT(false);
                             }
                        }
@@ -2550,7 +2550,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                   }
                  else
                   {
-#if 1
+#if 0
                     printf ("In trace_back_through_parent_scopes_lookup_member_variable_symbol(): functionSymbol = %p \n",functionSymbol);
 #endif
                     if (functionSymbol != NULL)
@@ -2599,7 +2599,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                        }
                       else
                        {
-#if 1
+#if 0
                          printf ("In trace_back_through_parent_scopes_lookup_member_variable_symbol(): classSymbol = %p \n",classSymbol);
 #endif
                          if (classSymbol != NULL)
@@ -2610,7 +2610,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                             }
                            else
                             {
-#if 1
+#if 0
                                printf ("########## This is reference has not been seen previously: name = %s qualifiedNameList.size() = %zu \n",name.c_str(),qualifiedNameList.size());
 #endif
                            // Nothing was found, so we can return variableSymbol as NULL.
@@ -2623,7 +2623,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                               if (qualifiedNameList.size() == 1)
                                  {
                                 // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
-                                   printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
+                                // printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
                                 // ROSE_ASSERT(false);
 
                                 // This will build the variable symbol if the variable is not found.
@@ -2638,7 +2638,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                                      else
                                       {
                                      // I think this may be an error...output a message for now.
-#if 1
+#if 0
                                         printf ("Warning: variable symbol not built for expected implicit reference = %s \n",name.c_str());
 #endif
 #if 0
@@ -2697,11 +2697,13 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
         }
 #endif
 
+#if 0
   // DQ (1/19/2011): I think this is valid debugging code.
      if (returnSymbolList.empty() == true)
         {
           printf ("*** WARNING: returnSymbolList is empty (might be an error) *** \n");
         }
+#endif
 
   // DQ (12/28/2010): Fixed this test to handle case of single part implicit references.
   // DQ (12/27/2010): Can we assert this?  Maybe not for implicitly declared variables (which are by definition only a single part, not multi-part).
@@ -3044,7 +3046,7 @@ buildDerivedTypeStatementAndDefinition (string name, SgScopeStatement* scope)
   // DQ (8/28/2010): Save the attributes used and clear the astAttributeSpecStack for this declaration (see test2010_34.f90).
      while (astAttributeSpecStack.empty() == false)
         {
-#if 1
+#if 0
           printf ("In buildDerivedTypeStatementAndDefinition(): Process attribute spec %d \n",astAttributeSpecStack.front());
 #endif
           setDeclarationAttributeSpec(classDeclaration,astAttributeSpecStack.front());
@@ -3269,7 +3271,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
           ROSE_ASSERT(variableSymbol != NULL);
           ROSE_ASSERT(initializedName->get_scope() != NULL);
 
-       // DQ (12/14/2007): This should not have been specified as built in global scope!
+       // DQ (12/14/2007): Error checking... this should not have been specified as built in global scope!
           if (isSgGlobal(initializedName->get_scope()) != NULL)
              {
                printf ("Error: isSgGlobal(initializedName->get_scope()) != NULL *** initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
@@ -3337,7 +3339,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
   // DQ (11/18/2007): Save the attributes used and clear the astAttributeSpecStack for this declaration
      while (astAttributeSpecStack.empty() == false)
         {
-          printf ("In buildVariableDeclaration(): Process attribute spec %d ",astAttributeSpecStack.front());
+       // printf ("In buildVariableDeclaration(): Process attribute spec %d ",astAttributeSpecStack.front());
           setDeclarationAttributeSpec(variableDeclaration,astAttributeSpecStack.front());
 
           if (astAttributeSpecStack.front() == AttrSpec_PUBLIC || astAttributeSpecStack.front() == AttrSpec_PRIVATE)
@@ -4339,9 +4341,9 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 void
 setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int astAttributeSpec )
    {
-     printf ("In setDeclarationAttributeSpec(): variableDeclaration = %p astAttributeSpec = %d \n",variableDeclaration,astAttributeSpec);
+  // printf ("In setDeclarationAttributeSpec(): variableDeclaration = %p astAttributeSpec = %d \n",variableDeclaration,astAttributeSpec);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of setDeclarationAttributeSpec()");
 #endif
@@ -4497,18 +4499,6 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
             // printf ("Error: Are these F08 attribute specs? astAttributeSpec = %d \n",astAttributeSpec);
                break;
 
-/*
-// DQ (3/3/2008): Note that array declarations that appear in types are are processed
-// using different rules and different enum values for similar concepts.
-
-static const int ComponentAttrSpec_pointer=ComponentAttrSpecBase+0;
-static const int ComponentAttrSpec_dimension_paren=ComponentAttrSpecBase+1;
-static const int ComponentAttrSpec_dimension_bracket=ComponentAttrSpecBase+2;
-static const int ComponentAttrSpec_allocatable=ComponentAttrSpecBase+3;
-static const int ComponentAttrSpec_access_spec=ComponentAttrSpecBase+4;
-static const int ComponentAttrSpec_kind=ComponentAttrSpecBase+5;
-static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
-*/
           case ComponentAttrSpec_pointer:
 #if 1
             // DQ (8/29/2010): This should be enabled so that we can at least see that it is not implemented.
@@ -4711,7 +4701,7 @@ convertVariableSymbolToFunctionCallExp( SgVariableSymbol* variableSymbol, Token_
 
      ROSE_ASSERT(nameToken != NULL);
 
-     printf ("In convertVariableSymbolToFunctionCallExp(): This function call to generateFunctionCall() is ignoring its new SgFunctionSymbol return type. \n");
+  // printf ("In convertVariableSymbolToFunctionCallExp(): This function call to generateFunctionCall() is ignoring its new SgFunctionSymbol return type. \n");
 
      generateFunctionCall(nameToken);
    }
@@ -4774,161 +4764,6 @@ convertExpressionOnStackToFunctionCallExp()
         }
    }
 
-#if 0
-// Note: it might make more sense for "convert" function to not have return types and leave their result on the stack.
-SgArrayType*
-OLD_convertTypeOnStackToArrayType( int count )
-   {
-  // This function uses the entry on the top of the type stach and the expressions on the astExpressionStack
-  // and replaced the top o the typeStack with a SgArrayType.  This conversion of base type to array type is
-  // required because we often find out later after having declarated a variable that it is an array (either
-  // in the process of building the variable declaration or because an "allocatable statement" is seen after
-  // the variable declaration).
-
-     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-          printf ("In convertTypeOnStackToArrayType(count = %d) \n",count);
-
-#error "OLD CODE"
-
-#if 1
-  // Output debugging information about saved state (stack) information.
-     outputState("At TOP of convertTypeOnStackToArrayType()");
-#endif
-
-  // Use the type on the astTypeStack and build an array from it (at least if the type == 700)
-  // SgType* baseType = getTopOfTypeStack();
-     ROSE_ASSERT(astBaseTypeStack.empty() == false);
-     SgType* baseType = astBaseTypeStack.front();
-
-#error "OLD CODE"
-
-  // DQ (2/1/2009): If this is associated with a pointer to an array, then the base type has already been 
-  // converted to a pointer and we need to undo this new feature. The problem is that test2009_27.f90
-  // demonstrates that a pointer type is was not properly built (now fixed) and in that case the
-  // c_action_array_spec() rule is not called.  So we have to convert base types to pointer types 
-  // when we see the pointer attribute, however if we later see an array attribute then it is a 
-  // pointer to an array, not a array of pointers, so we have to undo the pointer conversion and
-  // subsitute an array converstion (to get an array of the base type) and then generate the pointer
-  // to the array.  Or so I think at the moment!
-     SgPointerType* pointerType = isSgPointerType(baseType);
-     bool convertedPointerBaseTypeToArrayOfBaseType = false;
-     if (pointerType != NULL)
-        {
-          printf ("In convertTypeOnStackToArrayType(): Reaching for the base type of SgPointerType (to undo convertion of base type to pointer type) \n");
-          SgType* tmp_baseType = pointerType->get_base_type();
-          ROSE_ASSERT(tmp_baseType != NULL);
-          baseType = tmp_baseType;
-
-       // Delete the pointer type (should not have been shared)...
-          delete pointerType;
-          pointerType = NULL;
-
-          convertedPointerBaseTypeToArrayOfBaseType = true;
-        }
-
-#error "OLD CODE"
-
-     ROSE_ASSERT(baseType != NULL);
-
-  // Leave this on the stack so that other arrays or references to it can use it as a 
-  // base type (e.g. for a differently dimensioned array).
-  // astTypeStack.pop_front();
-
-  // At this point we have not seen the "dimension"
-#if 0
-  // Debugging code
-     if (astAttributeSpecStack.empty() == false)
-        {
-          std::list<int>::iterator i = astAttributeSpecStack.begin();
-          while (i != astAttributeSpecStack.end())
-             {
-               printf ("astAttributeSpecStack i = %d \n",*i);
-               i++;
-             }
-        }
-#endif
-
-  // depending on the syntax type used to declare the array).
-  // ROSE_ASSERT (astAttributeSpecStack.empty() == true);
-
-  // Generate a NULL expression that we can fixup later when we see a dimension statement or when we see more of the declaration.
-  // Actually the p_index is used for C/C++ and the the p_dim_info is used for Fortran, we need to make this more uniform.
-     SgExpression* sizeExpression = new SgNullExpression();
-     setSourcePosition(sizeExpression);
-
-#error "OLD CODE"
-
-#if 0
-     printf ("I think we need to call the SgArrayType::createType() interface instead of new SgArrayType()\n");
-#endif
-
-  // Build the array type
-     SgArrayType* arrayType = new SgArrayType(baseType,sizeExpression);
-     ROSE_ASSERT(arrayType != NULL);
-
-  // Mark the rank as count, even though we have not seen the dimension expressions yet.
-     arrayType->set_rank(count);
-  // printf ("arrayType built with rank = %d (set from the input count parameter) \n",arrayType->get_rank());
-
-#error "OLD CODE"
-
-  // Get the expressions from the astExpressionStack
-     if (arrayType->get_dim_info() == NULL)
-        {
-       // printf ("Building the list of dimensions for the array type \n");
-          SgExprListExp* expresssionList = new SgExprListExp();
-          arrayType->set_dim_info(expresssionList);
-          setSourcePosition(expresssionList);
-          expresssionList->set_parent(arrayType);
-        }
-
-#error "OLD CODE"
-
-     for (int i=0; i < count; i++)
-        {
-          ROSE_ASSERT(astExpressionStack.empty() == false);
-       // printf ("Adding an expression to the array type dimension information = %s \n",SageInterface::get_name(astExpressionStack.front()).c_str());
-#if 0
-          printf ("Adding an expression to the array type dimension information = %s \n",SageInterface::get_name(astExpressionStack.front()).c_str());
-          SgExpression* DebugTmp = astExpressionStack.front();
-          int tmpInt = (int)DebugTmp->variantT();
-          printf("F_DEBUG::node is %s\n",Cxx_GrammarTerminalNames[tmpInt].name.c_str());
-#endif
-          ROSE_ASSERT(arrayType->get_dim_info() != NULL);
-          arrayType->get_dim_info()->prepend_expression(astExpressionStack.front());
-          astExpressionStack.pop_front();
-        }
-
-#error "OLD CODE"
-
-  // Set the scope so that we can cal unparseToString()
-  // sizeExpression->set_scope(getTopOfScopeStack());
-
-  // printf ("sizeExpression->unparseToString() = %s \n",sizeExpression->unparseToString().c_str());
-
-  // Need to set the parent of the sizeExpression since we don't traverse the types to set such things in the AST postprocessing.
-     sizeExpression->set_parent(arrayType);
-
-  // This is an error since we never know when it is the base_type and when it is an original type in a variable declaration.
-  // Remove the base_type from the astTypeStack, before we push the new arrayType
-  // astTypeStack.pop_front();
-
-#if 1
-  // Output debugging information about saved state (stack) information.
-     outputState("At BOTTOM of convertTypeOnStackToArrayType()");
-#endif
-
-#error "OLD CODE"
-
-  // printf ("Exiting at base of convertTypeOnStackToArrayType \n");
-  // ROSE_ASSERT(false);
-
-  // Put the array type onto the type stack
-  // astTypeStack.push_front(arrayType);
-     return arrayType;
-   }
-#endif
-
 
 // Note: it might make more sense for "convert" function to not have return types and leave their result on the stack.
 SgArrayType*
@@ -4943,7 +4778,7 @@ convertTypeOnStackToArrayType( int count )
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In convertTypeOnStackToArrayType(count = %d) \n",count);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of convertTypeOnStackToArrayType()");
 #endif
@@ -5091,7 +4926,7 @@ convertTypeOnStackToArrayType( int count )
   // Remove the base_type from the astTypeStack, before we push the new arrayType
   // astTypeStack.pop_front();
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of convertTypeOnStackToArrayType()");
 #endif
@@ -6206,7 +6041,7 @@ convertBaseTypeOnStackToPointer()
      astBaseTypeStack.push_front(pointerType);
 #else
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
-     printf ("In convertBaseTypeOnStackToPointer(): astTypeStack.empty() = %s \n",astTypeStack.empty() ? "true" : "false");
+  // printf ("In convertBaseTypeOnStackToPointer(): astTypeStack.empty() = %s \n",astTypeStack.empty() ? "true" : "false");
 
   // If there is already en entry on the astTypeStack, then modify it.
   // However, I am not clear if this is always the only semantics that we want.
@@ -6345,10 +6180,11 @@ buildIntrinsicModule_ISO_C_BINDING()
 
      const string name = "ISO_C_BINDING";
 
-     printf ("Building the module file for ISO_C_BINDING \n");
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+          printf ("Building the module file for ISO_C_BINDING \n");
 
 #if 1
-     printf ("Commented out internal constuction of ISO_C_BINDING intrinsic module and using explicitly prepared external file implementation of that module. \n");
+  // printf ("Commented out internal constuction of ISO_C_BINDING intrinsic module and using explicitly prepared external file implementation of that module. \n");
 #else
   // Use the global scope as a location to put the intrinsic modules.
      ROSE_ASSERT(astScopeStack.empty() == false);
@@ -6821,7 +6657,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
   // variable it will be on top of the stack.  so this might be a better thing to handle AFTER the
   // initializer has been consumed...
      vector<int> savedAttributes;
-     printf ("In processAttributeSpecStack(): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+  // printf ("In processAttributeSpecStack(): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
 
      std::list<int>::iterator i = astAttributeSpecStack.begin();
   // while (astAttributeSpecStack.empty() == false)
@@ -6836,7 +6672,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
        // int attr = astAttributeSpecStack.front();
           int attr = *i;
-          printf ("attribute spec on stack = %d \n",attr);
+       // printf ("attribute spec on stack = %d \n",attr);
 
        // Note that we need to handle just those attributes that effect the base type of the declaration.
        // But since all attributes are stored on the stack we have to pop them all off, find the relevant 
@@ -6852,18 +6688,18 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                          printf ("found a DIMENSION spec \n");
 
                     ROSE_ASSERT(astBaseTypeStack.empty() == false);
-                    printf ("Here is where we need to build an array (where the base type has finally be correctly computed = %s \n",astBaseTypeStack.front()->class_name().c_str());
+                 // printf ("Here is where we need to build an array (where the base type has finally be correctly computed = %s \n",astBaseTypeStack.front()->class_name().c_str());
 
                  // At this point the array type is already built, but is built using the base type, also it is on the astTypeStack, and not the astBaseTypeStack.
                  // so we move it to the astBaseTypeStack stack.
 
                  // We don't know the count yet, not clear where we get that (assume 1 for initial test).
                  // Note that this parameter is no longer used, so it should be removed!
-                    printf ("REMOVE USE OF count PARAMETER IN convertTypeOnStackToArrayType() \n");
+                 // printf ("REMOVE USE OF count PARAMETER IN convertTypeOnStackToArrayType() \n");
 
                  // If the array spec is a part of the multi-part reference then process it as such and build the type on the astTypeStack (specific for that variable), else build it for the astBaseTypeStack for all variables.
                  // if (hasArraySpec == true)
-                    printf ("In processAttributeSpecStack(): hasArraySpec = %s hasInitialization = %s \n",hasArraySpec ? "true" : "false", hasInitialization ? "true" : "false");
+                 // printf ("In processAttributeSpecStack(): hasArraySpec = %s hasInitialization = %s \n",hasArraySpec ? "true" : "false", hasInitialization ? "true" : "false");
 
                  // DQ (1/22/2011): Not clear now to handle hasInitialization...
                  // if (hasArraySpec == true || hasInitialization == false)
@@ -6907,7 +6743,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                                  }
                             }
 
-                         printf ("Error, we want to build or modify only the the type in the astTypeStack and not touch the type in the astBaseTypeStack \n");
+                      // printf ("Error, we want to build or modify only the the type in the astTypeStack and not touch the type in the astBaseTypeStack \n");
                       // ROSE_ASSERT(false);
                        }
                       else
@@ -6938,7 +6774,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                                       {
                                      // When multiple specifiers are used (e.g. arrays of strings) to construct non-base types we
                                      // do so in place at the front of the astTypeStack.  There should be at most a single entry.
-                                        printf ("Handling case of declarations such as: character :: A(2)*7) \n");
+                                     // printf ("Handling case of declarations such as: character :: A(2)*7) \n");
                                         astTypeStack.pop_front();
                                       }
                                    ROSE_ASSERT(astTypeStack.empty() == true);
@@ -6967,7 +6803,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                                       }
                                  }
 
-                              printf ("Error, we want to build or modify only the the type in the astTypeStack and not touch the type in the astBaseTypeStack \n");
+                           // printf ("Error, we want to build or modify only the the type in the astTypeStack and not touch the type in the astBaseTypeStack \n");
                            // ROSE_ASSERT(false);
                             }
                            else
@@ -6989,7 +6825,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
                          if (hasArraySpec == true)
                             {
-                              printf ("############ Sometimes we WANT to process this into an array ############## \n");
+                           // printf ("############ Sometimes we WANT to process this into an array ############## \n");
 
                            // DQ (1/23/2011): If hasInitialization == true then the initializer is on the top of the stack and the array bound expression is beneath it.
                            // Save the initializer and put it back on the stack after we process the array expression.
@@ -7015,7 +6851,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                                 else
                                  {
                                 // DQ (1/23/2011): This is the case for test2011_19.f90 and test2010_136.f90
-                                   printf ("This array attribute has previously been turned into an array, so we don't have to worry about it... \n");
+                                // printf ("This array attribute has previously been turned into an array, so we don't have to worry about it... \n");
                                    ROSE_ASSERT(astTypeStack.empty() == false);
                                    ROSE_ASSERT(isSgArrayType(astTypeStack.front()) != NULL);
                                  }
@@ -7025,7 +6861,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                             }
                            else
                             {
-                              printf ("############ Sometimes we DON'T want to process this into an array ############## \n");
+                           // printf ("############ Sometimes we DON'T want to process this into an array ############## \n");
                             }
                          ROSE_ASSERT(astExpressionStack.empty() == false);
 
@@ -7089,7 +6925,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                          astExpressionStack.push_front(initializer);
 #else
                       // Do nothing to have same semantics as in the code above!
-                         printf ("Do nothing to have same semantics as in the code above! \n");
+                      // printf ("Do nothing to have same semantics as in the code above! \n");
 #endif
                       // printf ("Case hasInitialization == true not handled yet! \n");
                       // ROSE_ASSERT(false);
@@ -7104,9 +6940,9 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                  // Increment as many times as required past this dimension case.
                     while ((*i == AttrSpec_DIMENSION || *i == ComponentAttrSpec_dimension) )
                        {
-                         printf ("Incrementing past the AttrSpec_DIMENSION or ComponentAttrSpec_dimension *i = %d \n",*i);
+                      // printf ("Incrementing past the AttrSpec_DIMENSION or ComponentAttrSpec_dimension *i = %d \n",*i);
                          i++;
-                         printf ("At end of stack = %s \n",i != astAttributeSpecStack.end() ? "false" : "true");
+                      // printf ("At end of stack = %s \n",i != astAttributeSpecStack.end() ? "false" : "true");
                        }
 #if 1
                  // Output debugging information about saved state (stack) information.
@@ -7132,7 +6968,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                       // So clear the astTypeStack so that the convertBaseTypeOnStackToPointer() will leave the generate type on the astBaseTypeStack.
                       // Since the convertBaseTypeOnStackToPointer() is only called from this function we could change the semantics of that function
                       // to include this semantics.
-                         printf ("Clear the type on the astTypeStack so that it can be recreated! \n");
+                      // printf ("Clear the type on the astTypeStack so that it can be recreated! \n");
                          astTypeStack.pop_front();
                        }
 
@@ -7160,7 +6996,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
                  // Increment once past this default case.
                     i++;
-#if 1
+#if 0
                     printf ("default reached in R504 R503-F2008 c_action_entity_decl() attr = %d \n",attr);
                  // ROSE_ASSERT(false);
 #endif
@@ -7174,7 +7010,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
        // astAttributeSpecStack.pop_front();
 
-          printf ("At bottom of loop over the attrubutes (next attribute = %d = %s ) \n",i != astAttributeSpecStack.end() ? *i : -1,i != astAttributeSpecStack.end() ? "valid" : "end of list");
+       // printf ("At bottom of loop over the attrubutes (next attribute = %d = %s ) \n",i != astAttributeSpecStack.end() ? *i : -1,i != astAttributeSpecStack.end() ? "valid" : "end of list");
 
 #if 1
        // Output debugging information about saved state (stack) information.
@@ -7202,13 +7038,13 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                if ( (*j != AttrSpec_DIMENSION) && (*j != ComponentAttrSpec_dimension) &&
                     (*j != AttrSpec_POINTER)   && (*j != ComponentAttrSpec_pointer) )
                   {
-                    printf ("Save the attribute = %d \n",*j);
+                 // printf ("Save the attribute = %d \n",*j);
                     savedAttributes.push_back(*j);
                   }
                  else
                   {
                  // printf ("Found a dimension attribute \n");
-                    printf ("Found a dimension or pointer attribute (already incorporated into the base type) \n");
+                 // printf ("Found a dimension or pointer attribute (already incorporated into the base type) \n");
                   }
 
                j++;
@@ -7227,7 +7063,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
           vector<int>::reverse_iterator k = savedAttributes.rbegin();
           while (k != savedAttributes.rend())
              {
-               printf ("Adding *k = %d saved from first trip back onto the astAttributeSpecStack \n",*k);
+            // printf ("Adding *k = %d saved from first trip back onto the astAttributeSpecStack \n",*k);
                astAttributeSpecStack.push_front(*k);
                k++;
              }
@@ -7290,7 +7126,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
         }
 #endif
 
-     printf ("Leaving processAttributeSpecStack(): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+  // printf ("Leaving processAttributeSpecStack(): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
    }
 
 
@@ -7299,7 +7135,7 @@ processMultidimensionalSubscriptsIntoExpressionList(int count)
    {
   // DQ (1/18/2011): Refactored this code so it could be called in R510 and R443.
 
-     printf ("In processMultidimensionalSubscriptsIntoExpressionList( count = %d ) \n",count);
+  // printf ("In processMultidimensionalSubscriptsIntoExpressionList( count = %d ) \n",count);
 
   // DQ (1/17/2011): Moved the code to build the array index expression list from convertTypeOnStackToArrayType().
      SgExprListExp* expresssionList = new SgExprListExp();
@@ -7337,7 +7173,7 @@ convertBaseTypeToArrayWhereAppropriate()
   // DQ (1/20/2011): Refactored the code below so it could be called from R443 as well as R504.
      bool hasArraySpec      = false;
      bool hasInitialization = false;
-     printf ("In convertBaseTypeToArrayWhereAppropriate (called by R504 (list__begin) c_action_entity_decl_list__begin()) calling processAttributeSpecStack(false,false): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+  // printf ("In convertBaseTypeToArrayWhereAppropriate (called by R504 (list__begin) c_action_entity_decl_list__begin()) calling processAttributeSpecStack(false,false): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
      processAttributeSpecStack(hasArraySpec,hasInitialization);
 
   // Note that if there are array or pointer attributes to process then processAttributeSpecStack() 
@@ -7345,7 +7181,7 @@ convertBaseTypeToArrayWhereAppropriate()
   // ROSE_ASSERT(astTypeStack.empty() == false);
      if (astTypeStack.empty() == false)
         {
-          printf ("In convertBaseTypeToArrayWhereAppropriate (called by R504 (list__begin) c_action_entity_decl_list__begin()): Clearing the top entry on the astTypeStack \n");
+       // printf ("In convertBaseTypeToArrayWhereAppropriate (called by R504 (list__begin) c_action_entity_decl_list__begin()): Clearing the top entry on the astTypeStack \n");
           astTypeStack.pop_front();
           ROSE_ASSERT(astTypeStack.empty() == true);
         }

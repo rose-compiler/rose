@@ -1,9 +1,6 @@
-! { dg-do compile }
-!
-! PR 39946: PROCEDURE statements: interface with RESULT variable
-!
-! Original test case by Juergen Reuter <reuter@physik.uni-freiburg.de>
-! Modified by Janus Weil <janus@gcc.gnu.org>
+! I think this is using F03 syntax for procedure pointers.
+! So this might really be a FFortran 2003 test code 
+! (syntax fails for gfortran, but is part of the gfortran test suite).
 
   procedure(prc_is_allowed), pointer :: fptr
 

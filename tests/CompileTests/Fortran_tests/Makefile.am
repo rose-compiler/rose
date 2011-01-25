@@ -239,9 +239,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
 #     test2010_136.f90 
 #     test2010_151.f90 
 
-# DQ (1/22/2011): Failing tests.
-
-
 # This used to work, but fails how that test2010_172.f90 and test2010_184.f90 pass
 # It seems that these are mutually exclusive!!!
 #    test2007_103.f90

@@ -58,7 +58,12 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
             // the backend.
                curprint("integer");
 #endif
-               printf ("Error: SgTypeDefault should not be found in AST \n");
+
+            // DQ (1/25/2011): We now try to to translations of the use of SgTypeDefault when we see it in the AST.  This work in incomplete, so we issue a warning at the moment.
+               if ( SgProject::get_verbose() > 1 )
+                  {
+                    printf ("Warning: SgTypeDefault should not be found in AST \n");
+                  }
             // ROSE_ASSERT(false);
                break;
              }

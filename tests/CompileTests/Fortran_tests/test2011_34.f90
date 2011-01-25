@@ -1,8 +1,6 @@
-! { dg-do run }
-!
-! PR fortran/37253
-!
-! Contributed by Dominique d'Humieres <dominiq@lps.ens.fr>
+! I think this is using F03 syntax for procedure pointers.
+! So this might really be a FFortran 2003 test code 
+! (syntax fails for gfortran, but is part of the gfortran test suite).
 
 module myMod
 
@@ -23,8 +21,7 @@ end module myMod
 program myProg
   use myMod
   PROCEDURE (real), POINTER :: p => NULL()
-!  p => proc3
-!  call proc4( p )
+  p => proc3
+  call proc4( p )
 end program myProg
  
-! { dg-final { cleanup-modules "myMod" } }

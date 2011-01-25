@@ -1,6 +1,7 @@
-! { dg-do run }
-! PR fortran/35830
-!
+! I think this is using F03 syntax for procedure pointers.
+! So this might really be a FFortran 2003 test code 
+! (syntax fails for gfortran, but is part of the gfortran test suite).
+
 function f()
   real, allocatable :: f(:)
   allocate(f(1:3))
@@ -15,6 +16,6 @@ program test
     end function
   end interface
   procedure(ai) :: f
-!  if(any(f() /= [9,8,7])) call abort()
-!  if(size(f()) /= 3) call abort()
+  if(any(f() /= [9,8,7])) call abort()
+  if(size(f()) /= 3) call abort()
 end

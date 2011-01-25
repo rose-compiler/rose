@@ -2130,7 +2130,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
      isSameVariant = false;
 #endif
 
-     printf ("In unparseVarDeclStmt(): isSameVariant = %s \n",isSameVariant ? "true" : "false");
+  // printf ("In unparseVarDeclStmt(): isSameVariant = %s \n",isSameVariant ? "true" : "false");
      if (isSameVariant == true)
         {
        // printf ("These types are all the same so use the type attributes \n");
