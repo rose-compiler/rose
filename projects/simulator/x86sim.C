@@ -4682,7 +4682,7 @@ EmulationPolicy::emulate_syscall()
                         case 0:         /* IPC_RMID */
                             syscall_enter("ipc", "fdf", ipc_commands, msg_control);
                             break;
-                        case 2:         /* IPC_SET */
+                        case 1:         /* IPC_SET */
                             syscall_enter("ipc", "fdf-P", ipc_commands, msg_control, sizeof(msqid64_ds_32), print_msqid64_ds_32);
                             break;
                         default:
