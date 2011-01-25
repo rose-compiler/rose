@@ -4682,7 +4682,7 @@ EmulationPolicy::emulate_syscall()
                         case 0:         /* IPC_RMID */
                             syscall_enter("ipc", "fdf", ipc_commands, msg_control);
                             break;
-                        case 2:         /* IPC_SET */
+                        case 1:         /* IPC_SET */
                             syscall_enter("ipc", "fdf-P", ipc_commands, msg_control, sizeof(msqid64_ds_32), print_msqid64_ds_32);
                             break;
                         default:
@@ -5582,9 +5582,7 @@ EmulationPolicy::emulate_syscall()
              *
              * fchown() changes the ownership of the file referred to by the open file descriptor fd. */
             syscall_enter("fchown32", "ddd");
-            uint32_t fd = arg(0);
-            uid_t  user = arg(1);
-            gid_t group = arg(2);
+            int fd=arg(0), user=arg(1), group=arg(2);
             int result = syscall(SYS_fchown, fd, user, group);
             writeGPR(x86_gpr_ax, -1==result?-errno:result);
             syscall_leave("d");
@@ -6267,9 +6265,9 @@ EmulationPolicy::arg(int idx)
     }
 }
 
-/* Called asynchronously to make a signal pending. The signal will be dropped if it's action is to ignore. Otherwise it will be made pending by
- * setting the appropriate bit in the EmulationPolicy's signal_pending vector.   And yes, we know that this function is not async signal safe
- * when signal tracing is enabled. */
+/* Called asynchronously to make a signal pending. The signal will be dropped if it's action is to ignore. Otherwise it will be
+ * made pending by setting the appropriate bit in the EmulationPolicy's signal_pending vector.  And yes, we know that this
+ * function is not async signal safe when signal tracing is enabled. */
 void
 EmulationPolicy::signal_generate(int signo)
 {
@@ -6420,9 +6418,9 @@ EmulationPolicy::signal_deliver(int signo)
     }
 }
 
-/* Note: if the specimen's signal handler never returns then this function is never invoked.  The specimen may do a longjmp() or siglongjmp(),
- * in which case the original stack, etc are restored anyway. Additionally, siglongjmp() may do a system call to set the signal mask back to
- * the value saved by sigsetjmp(), if any. */
+/* Note: if the specimen's signal handler never returns then this function is never invoked.  The specimen may do a longjmp()
+ * or siglongjmp(), in which case the original stack, etc are restored anyway. Additionally, siglongjmp() may do a system call
+ * to set the signal mask back to the value saved by sigsetjmp(), if any. */
 void
 EmulationPolicy::signal_return()
 {
