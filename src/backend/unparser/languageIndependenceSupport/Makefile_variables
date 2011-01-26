@@ -1,0 +1,27 @@
+
+unparseLanguageIndependenceSupport_la_sources=\
+	$(languageIndependenceSupportPath)/unparseLanguageIndependentConstructs.C \
+	$(languageIndependenceSupportPath)/name_qualification_support.C \
+	$(languageIndependenceSupportPath)/unparser_opt.C \
+	$(languageIndependenceSupportPath)/modified_sage.C \
+	$(languageIndependenceSupportPath)/unparse_debug.C \
+	$(languageIndependenceSupportPath)/modified_sage_isUnaryOp.C 
+
+
+unparseLanguageIndependenceSupport_includeHeaders=\
+	$(languageIndependenceSupportPath)/unparseLanguageIndependentConstructs.h \
+	$(languageIndependenceSupportPath)/name_qualification_support.h \
+	$(languageIndependenceSupportPath)/unparser_opt.h \
+	$(languageIndependenceSupportPath)/modified_sage.h \
+	$(languageIndependenceSupportPath)/unparse_debug.h
+
+
+unparseLanguageIndependenceSupport_extraDist=\
+	$(languageIndependenceSupportPath)/CMakeLists.txt
+
+
+unparseLanguageIndependenceSupport_cleanLocal=\
+	rm -rf \
+		$(languageIndependenceSupportPath)/ii_files \
+		$(languageIndependenceSupportPath)/ti_files \
+		$(languageIndependenceSupportPath)/core

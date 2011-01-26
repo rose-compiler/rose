@@ -2537,12 +2537,6 @@ src/midend/programTransformation/loopProcessing/outsideInterface/Makefile
 src/midend/programTransformation/loopProcessing/driver/Makefile
 src/backend/Makefile
 src/backend/unparser/Makefile
-src/backend/unparser/formatSupport/Makefile
-src/backend/unparser/languageIndependenceSupport/Makefile
-src/backend/unparser/CxxCodeGeneration/Makefile
-src/backend/unparser/FortranCodeGeneration/Makefile
-src/backend/unparser/PHPCodeGeneration/Makefile
-src/backend/asmUnparser/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/sqlite3x/Makefile

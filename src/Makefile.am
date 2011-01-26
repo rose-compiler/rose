@@ -79,11 +79,6 @@ endif
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
    $(top_builddir)/src/backend/unparser/libunparse.la \
-   $(top_builddir)/src/backend/unparser/languageIndependenceSupport/libunparseLanguageIndependenceSupport.la \
-   $(top_builddir)/src/backend/unparser/CxxCodeGeneration/libunparseCxx.la \
-   $(top_builddir)/src/backend/unparser/FortranCodeGeneration/libunparseFortran.la \
-   $(top_builddir)/src/backend/unparser/PHPCodeGeneration/libunparsePHP.la \
-   $(top_builddir)/src/backend/unparser/formatSupport/libunparseFormatSupport.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
