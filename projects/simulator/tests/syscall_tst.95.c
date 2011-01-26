@@ -63,7 +63,6 @@
 #include <sys/stat.h>
 #include <sys/fcntl.h>
 #include <unistd.h>
-#include <selinux/selinux.h>
 #include "test.h"
 #include "usctest.h"
 #include "audit_utils.h"
@@ -71,7 +70,6 @@
 char *TCID = "audit_syscall_fchown";
 int TST_TOTAL = 6;
 extern int Tst_count;
-security_context_t subj;
 
 #define LOG_HEADER_SIZE 100
 

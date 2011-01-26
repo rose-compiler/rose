@@ -67,13 +67,16 @@
  *
  */
 
+#define _ATFILE_SOURCE
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <linux/fcntl.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "test.h"
 #include "usctest.h"

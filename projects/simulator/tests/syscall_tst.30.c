@@ -75,7 +75,6 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/time.h>
-#include <selinux/selinux.h>
 #include <utime.h>
 
 #include <sys/types.h>
@@ -114,7 +113,6 @@ void syscall_success()
 {
 	TEST_RETURN = -1;       /* reset verify value */
 	int fd;				/* file descriptor  */	
-	int rc=0;
     char filename[40] ="test-input-success-utime";
 
 	/* utime setup  */
@@ -142,9 +140,7 @@ void syscall_success()
 
 void syscall_fail()
 {
-	char log_header[LOG_HEADER_SIZE] = "";
 	TEST_RETURN = -1;       /* reset verify value */
-	int rc;				/* return code  */	
     char filename2[40] ="/bin/grep";
 
 	TEST(syscall( __NR_utime, filename2, &utbuf ));

@@ -92,6 +92,7 @@ int main(int ac, char **av)
 
 		switch (TEST_ERRNO) {
 		case ENOENT:
+                case EINVAL:            /* Some kernels return this instead [RPM 2011-01-04] */
 			tst_resm(TPASS, "expected failure - errno "
 				 "= %d : %s", TEST_ERRNO, strerror(TEST_ERRNO));
 			break;

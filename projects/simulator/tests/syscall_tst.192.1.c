@@ -89,7 +89,7 @@ option_t options[] = {
 int main(int argc, char *argv[])
 {
 	char *array, *msg;
-	int i, lc;
+	int lc;
 	int fd;
 	unsigned int pages, memsize;
 
@@ -155,9 +155,11 @@ int main(int argc, char *argv[])
                         /* This is faster and also writes to all addresses [RPM 2010-11-16] */
                         memset(array, 0x96, memsize);
 #else
-			for (i = 0; i < memsize; i++) {
+                        {
+                            int i;
+                            for (i = 0; i < memsize; i++)
 				array[i] = (char)i;
-			}
+                        }
 #endif
 
 			/*
