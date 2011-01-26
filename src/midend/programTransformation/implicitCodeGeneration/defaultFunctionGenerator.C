@@ -2303,6 +2303,7 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
      SgFunctionDefinition * func_def =new SgFunctionDefinition(COMPILERGENERATED_FILE_INFO,func); //! TODO use SageBuilder
      SgBasicBlock *func_body = buildBasicBlock();
 
+     func_body->set_parent(func_def);
      func_def->set_body(func_body);
      func_def->set_parent(func); //necessary or not?
 
