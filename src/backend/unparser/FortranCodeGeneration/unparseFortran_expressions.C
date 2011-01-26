@@ -1069,8 +1069,10 @@ FortranCodeGeneration_locatedNode::unparseConInit(SgExpression* expr, SgUnparse_
    {
   // DQ (5/3/2008): This is now used for all initialization of user-defined types.
 
-     printf ("Case SgConstructorInitializer not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
+  // DQ (1/25/2011): This is not used within Fortran 90 code.
+  // printf ("Case SgConstructorInitializer not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
   // ROSE_ASSERT(false);
+
      SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(expr);
      ROSE_ASSERT(constructorInitializer != NULL);
 

@@ -377,6 +377,15 @@ std::string generateQualifiedName(const std::vector<MultipartReferenceType> & qu
 //! Fixup for types in declarations where they could reference undeclared types which will be resolved at this point.
 void fixup_forward_type_declarations();
 
+//! Generate correct type using attributes specs (operates exclusively on AST stacks).
+void processAttributeSpecStack(bool hasArraySpec, bool hasInitialization);
+
+//! Common handling of multidimensional subscripts in array declarations (called by R510 and R443).
+void processMultidimensionalSubscriptsIntoExpressionList(int count);
+
+//! Used in R504 R503-F2008 list and Rxxx.
+void convertBaseTypeToArrayWhereAppropriate();
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
 
