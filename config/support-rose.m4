@@ -2536,6 +2536,7 @@ src/midend/programTransformation/loopProcessing/slicing/Makefile
 src/midend/programTransformation/loopProcessing/outsideInterface/Makefile
 src/midend/programTransformation/loopProcessing/driver/Makefile
 src/backend/Makefile
+src/backend/asmUnparser/Makefile
 src/backend/unparser/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
