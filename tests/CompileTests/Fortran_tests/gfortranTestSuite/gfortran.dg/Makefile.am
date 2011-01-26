@@ -1154,6 +1154,12 @@ OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    zero_sized_1.f90 \
    zero_sized_2.f90
 
+
+# Currently failing tests (1/24/2011):
+#  proc_decl_15.f90 
+#  proc_decl_9.f90 
+#  proc_ptr_19.f90 
+
 # Currently failing tests (12/29/2010):
 # implicit_2.f90 
 # implicit_derived_type_1.f90
