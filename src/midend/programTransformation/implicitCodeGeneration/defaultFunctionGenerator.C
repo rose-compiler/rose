@@ -1801,7 +1801,8 @@ findClassesInvokedViaDestructors(SgNode *subtree,
 
     // Is this destructor invoked on this?
     SgNode *receiver = getMethodInvocationLhs(functionCallExp);
-    if ( isSgThisExp(lookThroughCastExpAndAssignInitializer(receiver) ) ) {
+    if ( receiver != NULL && 
+         isSgThisExp(lookThroughCastExpAndAssignInitializer(receiver) ) ) {
       SgClassDefinition *classDefinition = 
 	isSgClassDefinition(invokedMethodDeclaration->get_scope());
       ROSE_ASSERT(classDefinition != NULL);
@@ -1859,7 +1860,8 @@ findClassesInvokedViaOperatorEquals(SgNode *subtree,
 
     // Is this operator= invoked on this?
     SgNode *receiver = getMethodInvocationLhs(functionCallExp);
-    if ( isSgThisExp(lookThroughCastExpAndAssignInitializer(receiver) ) ) {
+    if ( receiver != NULL && 
+         isSgThisExp(lookThroughCastExpAndAssignInitializer(receiver) ) ) {
       SgClassDefinition *classDefinition = 
 	isSgClassDefinition(invokedMethodDeclaration->get_scope());
       ROSE_ASSERT(classDefinition != NULL);
