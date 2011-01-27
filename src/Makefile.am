@@ -41,7 +41,6 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
       $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
       $(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la \
       $(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la \
-      $(top_builddir)/src/backend/asmUnparser/libroseAsmUnparser.la \
       $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
       $(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la 
 else
@@ -78,7 +77,7 @@ endif
 # TODO: correct list!
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
-   $(top_builddir)/src/backend/unparser/libunparse.la \
+   $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
