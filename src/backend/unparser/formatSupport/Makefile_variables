@@ -1,6 +1,6 @@
 
 unparseFormatSupport_la_sources=\
->...$(unparseFormat_includeHeaders:.h=.C)
+	$(unparseFormat_includeHeaders:.h=.C)
 
 
 unparseFormat_includeHeaders=\
