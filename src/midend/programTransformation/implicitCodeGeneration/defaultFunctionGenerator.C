@@ -2312,12 +2312,9 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
      func_def->set_parent(func); //necessary or not?
 
         // parameter list
-     SgFunctionParameterList * parameterList = buildFunctionParameterList();
-     ROSE_ASSERT(parameterList != NULL); /*why assert here, not before for all new operations?*/
-     func->set_parameterList(parameterList);
+     SgFunctionParameterList * parameterList;
 
      // generate the argument for copy constructor and assignment operator
-    SgInitializedName * var1_init_name;
      if((enumFunctionType==e_copy_constructor)||(enumFunctionType==e_assignment_operator))
      {
         SgName var1_name = "rhs";
@@ -2325,22 +2322,22 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
         base_type1=isSgClassDeclaration(parentClassDef1->get_declaration()\
                 ->get_firstNondefiningDeclaration())->get_type();
         ROSE_ASSERT(base_type1!=NULL);
-        SgModifierType * modifier_type1= buildModifierType(base_type1);
-//      SgTypeModifier &type_modifier1 = modifier_type1->get_typeModifier();
-// SgConstVolatileModifier & const_modifier1= type_modifier1.get_constVolatileModifier();
-        //      const_modifier1.setConst();
 
-        SgReferenceType * ref_type = buildReferenceType(modifier_type1);
-        SgInitializer * var1_initializer = NULL;
-        var1_init_name = buildInitializedName(var1_name, ref_type, var1_initializer);
-        var1_init_name->set_scope(func_def);
+        SgReferenceType * ref_type = buildReferenceType(base_type1);
+        SgInitializedName* var1_init_name = buildInitializedName(var1_name, ref_type);
 
         SgVariableSymbol* sym = new SgVariableSymbol(var1_init_name); //! TODO use SageBuilder
         func_def->insert_symbol(var1_name, sym);
 
-        ROSE_ASSERT(func->get_parameterList()!=NULL);
-        func->get_parameterList()->append_arg(var1_init_name);
+        parameterList = buildFunctionParameterList(var1_init_name);
+        var1_init_name->set_scope(func_def);
+        ROSE_ASSERT(var1_init_name->get_scope() != NULL);
+      } else {
+          parameterList = buildFunctionParameterList();
       }
+     ROSE_ASSERT(parameterList != NULL);
+     func->set_parameterList(parameterList);
+
         /*insert to class scope, move to this point because generateDefinition() needs scope info for func*/
      func->set_scope(parentClassDef1);
      func->set_parent(parentClassDef1);
