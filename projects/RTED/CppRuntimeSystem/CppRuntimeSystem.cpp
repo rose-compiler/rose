@@ -122,9 +122,11 @@ void RuntimeSystem::readConfigFile()
 }
 
 
-void RuntimeSystem::checkpoint(const SourcePosition & pos)
+void RuntimeSystem::checkpoint(const SourcePosition& pos)
 {
     curPos = pos;
+
+    std::cerr << "A" << pos << std::endl;
 
 #ifdef ROSE_WITH_ROSEQT
     if(qtDebugger)
@@ -226,6 +228,19 @@ void RuntimeSystem::clearStatus()
 
 // --------------------- Mem Checking ---------------------------------
 
+static
+AddressDesc asDesc(MemoryType::AllocKind kind)
+{
+  if ((kind & akUpcSharedHeap) == 0) return rted_obj();
+
+  AddressDesc desc;
+
+  desc.shared_mask = 1;
+  desc.levels = 1;
+
+  return desc;
+}
+
 
 void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKind kind, RsType * type)
 {
@@ -236,7 +251,7 @@ void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKin
 
   // \pp \todo replace the call to rted_obj with sth that describes the kind
   //           of memory and allocation kind.
-  MemoryManager::Location loc = rted_system_addr(addr, rted_obj());
+  MemoryManager::Location loc = rted_system_addr(addr, asDesc(kind));
   MemoryType*             nb = memManager.allocateMemory(loc, size, kind, curPos);
 
   if (kind == akStack && nb != NULL)
@@ -377,7 +392,7 @@ void RuntimeSystem::createObject(Address address, RsClassType* type )
     //           always local
     MemoryType::Location loc = address.local;
     const size_t         szObj = type->getByteSize();
-    MemoryType*          mt = memManager.findContainingMem(loc, szObj);
+    MemoryType*          mt = memManager.findContainingMem(loc, 1);
 
     if (mt) {
         const bool base_ctor = szObj > mt->getSize() && loc == mt->getAddress();
@@ -395,7 +410,7 @@ void RuntimeSystem::createObject(Address address, RsClassType* type )
     }
 
     // create a new entry
-    MemoryType* nb = memManager.allocateMemory(loc, type->getByteSize(), akCxxNew, curPos);
+    MemoryType* nb = memManager.allocateMemory(loc, szObj, akCxxNew, curPos);
 
     // after the new block is allocated (and if the allocation succeeded)
     //   register the proper memory layout
@@ -434,19 +449,19 @@ void RuntimeSystem::registerPointerChange( Address     src,
     pointerManager.registerPointerChange(loc_src,loc_tgt,checkPointerMove, checkMemLeaks);
 }
 
-void RuntimeSystem::registerPointerChange( Address     src,
-                                           AddressDesc src_desc,
-                                           Address     tgt,
-                                           AddressDesc tgt_desc,
-                                           RsType*     type,
-                                           bool        checkPointerMove,
-                                           bool        checkMemLeaks
+void RuntimeSystem::registerPointerChange( Address        src,
+                                           AddressDesc    src_desc,
+                                           Address        tgt,
+                                           AddressDesc    tgt_desc,
+                                           RsPointerType* pt,
+                                           bool           checkPointerMove,
+                                           bool           checkMemLeaks
                                          )
 {
+    assert( pt );
+
     MemoryManager::Location loc_src = rted_system_addr(src, src_desc);
     MemoryManager::Location loc_tgt = rted_system_addr(tgt, tgt_desc);
-    RsPointerType*          pt = dynamic_cast<RsPointerType*>( type );
-    assert( pt );
 
     pointerManager.registerPointerChange(loc_src, loc_tgt, pt->getBaseType(), checkPointerMove, checkMemLeaks);
 }

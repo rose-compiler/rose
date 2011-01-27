@@ -663,11 +663,12 @@ void RtedTransformation::insertCheckIfThisNull(SgThisExp* texp)
                 appendFileInfo(arg_list, stmt);
 
                 ROSE_ASSERT(symbols.roseCheckIfThisNULL);
-                checkBeforeStmt( stmt,
-                                 symbols.roseCheckIfThisNULL,
-                                 arg_list,
-                                 "RS : roseCheckIfThisNULL, parameters : (ThisExp, filename, line, line transformed, error Str)"
-                               );
+                insertCheck( ilBefore,
+                             stmt,
+                             symbols.roseCheckIfThisNULL,
+                             arg_list,
+                             "RS : roseCheckIfThisNULL, parameters : (ThisExp, filename, line, line transformed, error Str)"
+                           );
 
         } // basic block
         else
@@ -804,11 +805,12 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
             // appendExpression(arg_list, buildStringVal(removeSpecialChar(stmt->unparseToString())));
 
             ROSE_ASSERT(symbols.roseAccessVariable);
-            checkBeforeStmt( stmt,
-                             symbols.roseAccessVariable,
-                             arg_list,
-                             "RS : Access Variable, paramaters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)"
-                           );
+            insertCheck( ilBefore,
+                         stmt,
+                         symbols.roseAccessVariable,
+                         arg_list,
+                         "RS : Access Variable, paramaters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)"
+                       );
     } // basic block
     else
     {
@@ -845,18 +847,12 @@ struct AllocInfo
 };
 
 
-void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
-        SgAssignInitializer* assign = isSgAssignInitializer(n);
+void RtedTransformation::visit_isAssignInitializer(SgAssignInitializer* const assign)
+{
         ROSE_ASSERT(assign);
-        cerr << "\n\n???????????? Found assign init op : " << n->unparseToString()
-                        << endl;
-        SgInitializedName* initName = NULL;
-        SgNode* ancestor = n;
-        while (initName == NULL && ancestor != NULL) {
-                initName = isSgInitializedName(ancestor);
-                ancestor = ancestor -> get_parent();
-        }
-        ROSE_ASSERT(initName);
+
+        // \pp why is assign->get_parent not enough?
+        SgInitializedName*   initName = &ez::ancestor<SgInitializedName>(*assign);
 
         // ---------------------------------------------
         // we now know that this variable must be initialized
@@ -865,9 +861,9 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
         cerr << ">>>>>>> Setting this var to be assign initialized : "
                         << initName->unparseToString() << "  and assignInit: "
                         << assign->unparseToString() << endl;
-        SgStatement* stmt = getSurroundingStatement(assign);
+        SgStatement*         stmt = getSurroundingStatement(initName);
         ROSE_ASSERT(stmt);
-        SgScopeStatement* scope = stmt->get_scope();
+        SgScopeStatement*    scope = stmt->get_scope();
         ROSE_ASSERT(scope);
         //      SgType* type = initName->get_type();
 

@@ -29,7 +29,7 @@ void RtedTransformation::executeTransformations() {
   // Note: For function calls, this must occur before variable
   // initialization, so that assignments of function return values happen before exitScope is called.
   if (RTEDDEBUG()) std::cerr << "\n # Elements in scopes  : " << scopes.size() << std::endl;
-  BOOST_FOREACH( StatementNodePair i, scopes ) {
+  BOOST_FOREACH( ScopeMap::value_type i, scopes ) {
     SgStatement* stmt_to_bracket = i.first;
     SgNode*      end_of_scope = i.second;
     ROSE_ASSERT( stmt_to_bracket && end_of_scope);
@@ -211,16 +211,18 @@ void RtedTransformation::executeTransformations() {
   }
 
   BOOST_FOREACH( SgFunctionCallExp* fcallexp, reallocs)
+  {
     insertReallocateCall( fcallexp );
+  }
 
-
+  std::for_each( upcbarriers.begin(),
+                 upcbarriers.end(),
+                 std::bind1st(std::mem_fun(&RtedTransformation::transformUpcBarriers), this)
+               );
 
   if (RTEDDEBUG())  std::cerr << "Inserting main close call" << std::endl;
 
-  // \todo: changed b/c this triggers an assertion failure while debugging sth
-  //        else.
-  // was: ROSE_ASSERT(mainLast); insertMainCloseCall(mainLast);
-  if (mainLast) insertMainCloseCall(mainLast);
+  insertMainCloseCall();
 }
 
 

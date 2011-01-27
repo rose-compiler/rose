@@ -39,22 +39,6 @@ rted_AddressDesc rted_upc_address_of(rted_AddressDesc desc, size_t shared_mask)
   return desc;
 }
 
-rted_AddressDesc rted_address_of(rted_AddressDesc desc)
-{
-  return rted_upc_address_of(desc, 0);
-}
-
-
-rted_AddressDesc rted_obj(void)
-{
-  rted_AddressDesc pd;
-
-  pd.levels = 0;
-  pd.shared_mask = 0;
-
-  return pd;
-}
-
 rted_AddressDesc rted_ptr(void)
 {
   rted_AddressDesc pd;
@@ -74,7 +58,7 @@ int rted_isPtr(rted_AddressDesc desc)
 
 union PtrCast
 {
-  shared char *     shptr;
+  shared const char *     shptr;
   upc_shared_ptr_t  shmem;
 };
 
@@ -83,11 +67,11 @@ rted_Address rted_deref(rted_Address addr, rted_AddressDesc desc)
 {
   if ((desc.shared_mask & MASK_SHARED) == 0)
   {
-    addr = *((rted_Address*)addr.local);
+    addr.local = *((const char**)addr.local);
   }
   else
   {
-    addr = *((rted_Address shared*)addr.global);
+    addr.global = *((shared const char* shared*)addr.global);
   }
 
   return addr;

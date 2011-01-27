@@ -28,16 +28,19 @@
  *  Convert to string
  *********************************************************/
 
+static
 std::string AsString(Address addr, AddressDesc desc)
 {
   std::ostringstream myStream; //creates an ostringstream object
 
-  myStream << std::hex << addr ;
-
-	if (desc.shared_mask == MASK_SHARED)
+	if ((desc.shared_mask & MASK_SHARED) == MASK_SHARED)
 	{
 		myStream << "/* shm = " << std::bitset<64>(desc.shared_mask) << "*/ ";
 	}
+	else
+	{
+		myStream << std::hex << ((void*)addr.local);
+  }
 
   return myStream.str(); //returns the string form of the stringstream object
 }
@@ -243,7 +246,7 @@ void rted_CreateHeapPtr( TypeDesc       td,
 						<< "   basetype: " << td.base
 						<< "   class_name: " << class_name
 						<< "   indirection_level: " << ToString(td.desc.levels)
-						<< "   address: " << AsString(heap_address, rted_deref_desc(td.desc))
+						<< "   address: " << AsString(heap_address, heap_desc)
 						<< "   malloc size: " << ToString(mallocSize)
 						<< std::endl;
 
@@ -252,14 +255,19 @@ void rted_CreateHeapPtr( TypeDesc       td,
 	// have to allocate the memory here.
 	MemoryManager::Location loc = rted_system_addr(heap_address, heap_desc);
 
-	if(!class_type || rs->getMemManager()->findContainingMem(loc) == NULL)
+  std::cerr << " <<<<:" << HexToString(loc) << "  -- " << allocKind << std::endl;
+
+	if(!class_type || rs->getMemManager()->findContainingMem(loc, 1) == NULL)
 	{
 		// FIXME 2: This won't handle the unlikely case of a C++ object being
 		// allocated via malloc and then freed with delete.
 
+    printf("X9\n");
 		rs -> createMemory( heap_address, mallocSize, allocKind );
+		printf("XA\n");
 	}
 
+  printf("X*\n");
 	rs -> registerPointerChange(
 			address,
 			td.desc,
@@ -269,6 +277,8 @@ void rted_CreateHeapPtr( TypeDesc       td,
 			false,  // checkPtrMove? no, pointer may change regions
 			true    // checkMemLeak? yes
 			);
+
+  printf("X#\n");
 }
 
 
@@ -371,7 +381,7 @@ void RuntimeSystem_ensure_allocated_and_initialized( Address addr, size_t size)
 	// We trust that anything allocated is properly initialized -- we're not
   // working around a string constant so there's no need for us to do anything.
 	MemoryManager::Location loc = rted_system_addr(addr, desc);
-  if(rs->getMemManager()->findContainingMem(loc) != NULL)
+  if(rs->getMemManager()->findContainingMem(loc, 1) != NULL)
     return;
 
   // \pp ???
@@ -701,11 +711,12 @@ int rted_InitVariable( TypeDesc       td,
 										 )
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
+
   rs -> checkpoint( SourcePosition( si ));
 
-  std::stringstream message;
+	std::stringstream message;
 
-	message << "   Init Var at address:  " << address.local
+	message << "   Init Var at address:  " << HexToString(address.local)
 					<< "  type:" << td.name
 					<< "   size: " << ToString(size);
   rs->printMessage(message.str());
@@ -724,10 +735,12 @@ int rted_InitVariable( TypeDesc       td,
 	   && strcmp( "SgPointerType", td.name) == 0
 		 )
 	{
-    Address     heap_address = rted_deref(address, td.desc);
-		AddressDesc heap_desc = rted_deref_desc(td.desc);
+    Address        heap_address = rted_deref(address, td.desc);
+		AddressDesc    heap_desc = rted_deref_desc(td.desc);
+		RsPointerType* rp = dynamic_cast<RsPointerType*>(rs_type);
 
-    rs->registerPointerChange( address, td.desc, heap_address, heap_desc, rs_type, false, true );
+    assert(rp);
+    rs->registerPointerChange( address, td.desc, heap_address, heap_desc, rp, false, true );
   }
 
   // can be invoked as part of an expression
@@ -750,11 +763,12 @@ void rted_MovePointer( TypeDesc    td,
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs -> checkpoint( SourcePosition( si ));
 
-  Address     heap_address = rted_deref(address, td.desc);
-	AddressDesc heap_desc = rted_deref_desc(td.desc);
-  RsType*     rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
+  Address        heap_address = rted_deref(address, td.desc);
+	AddressDesc    heap_desc = rted_deref_desc(td.desc);
+  RsType*        rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
+	RsPointerType* rp = dynamic_cast<RsPointerType*>(rs_type);
 
-  rs->registerPointerChange( address, td.desc, heap_address, heap_desc, rs_type, true, false );
+  rs->registerPointerChange( address, td.desc, heap_address, heap_desc, rp, true, false );
 }
 
 

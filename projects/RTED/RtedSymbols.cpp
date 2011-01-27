@@ -5,7 +5,7 @@
 #include "RtedSymbols.h"
 #include "rosez.hpp"
 
-bool RTEDDEBUG() { return false; }
+bool RTEDDEBUG() { return true; }
 
 bool isRtedDecl(const std::string& name)
 {
@@ -67,6 +67,7 @@ void initialize(SgScopeStatement& n, RtedSymbols& rtedsym)
   lookup(n, "Addr",                     rtedsym.roseAddr);
   lookup(n, "AddrSh",                   rtedsym.roseAddrSh);
   lookup(n, "Close",                    rtedsym.roseClose);
+  lookup(n, "ProcessMsg",               rtedsym.roseProcessMsg);
 }
 
 struct RtedSymbolWrapper

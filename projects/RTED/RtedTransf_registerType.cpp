@@ -35,7 +35,8 @@ bool RtedTransformation::hasClassConstructor(SgClassDeclaration* classdec) {
 	return constr;
 }
 
-void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
+void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
+{
 	//cerr << "Found class definition : " << cdef->unparseToString() << endl;
 	vector<RtedClassElement*> elements;
 
@@ -118,7 +119,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
   string            name = rtedClass->manglClassName;
 	if (isRtedDecl(name)) return;
 
-	SgStatement*      stmt = NULL;
+	SgStatement*      stmt = rtedClass->classDef; // \pp was: = getSurroundingStatement(rtedClass->classDef);
 	SgScopeStatement* scope = NULL;
 	bool              global_stmt = false;
 
@@ -128,7 +129,6 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
 	//
 	// we want to call register type before type is used, but where it's in
 	// scope
-	stmt = getSurroundingStatement(rtedClass->classDef);
 	SgStatement* origStmt = stmt;
 	//cerr <<"@@@@ registerType : " << stmt->unparseToString() << endl;
 	//	abort();

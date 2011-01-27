@@ -9,7 +9,13 @@
 static
 void insert(PointerManager::TargetToPointerMap& m, const PointerManager::TargetToPointerMap::value_type& val)
 {
-  assert(val.first == val.second->getTargetAddress());
+  if (val.first != val.second->getTargetAddress())
+  {
+    std::cout << HexToString(val.first) << " <---> "
+              << HexToString(val.second->getTargetAddress())
+              << std::endl;
+    assert(val.first == val.second->getTargetAddress());
+  }
 
   m.insert(val);
 }
@@ -46,28 +52,24 @@ bool PointerInfo::operator< (const PointerInfo & other ) const
 }
 
 
-void PointerInfo::setTargetAddress(Location newAddr, bool doChecks)
+void PointerInfo::setTargetAddress(Location newAddr, bool doCheck)
 {
-    RuntimeSystem * rs = RuntimeSystem::instance();
-    MemoryManager * mm = rs->getMemManager();
-    const size_t    objsz = baseType->getByteSize();
-    Location        oldTarget = target;
+    RuntimeSystem* rs = RuntimeSystem::instance();
+    MemoryManager* mm = rs->getMemManager();
+    const size_t   objsz = baseType->getByteSize();
+    MemoryType*    newMem = mm->findContainingMem(newAddr, objsz);
 
-    target = newAddr;
+    std::cerr << "size(mm) = " << mm->getAllocationSet().size()
+              << " @ " << HexToString(newAddr)
+              << " == ";
 
-    if (!oldTarget) //inital assignment -> no checks possible
-        doChecks=false;
-
-
-    // Check if newAddr points to valid mem-region
-    MemoryType *    newMem = mm->findContainingMem(target, objsz);
-
-    std::cerr << "size(mm) = " << mm->getAllocationSet().size() << " / "
-              << HexToString(newMem ? newMem->getAddress() : NULL)
-              << std::endl;
+    if (newMem) std::cerr << HexToString(newMem->getAddress());
+    else std::cerr << "<null>";
+    std::cerr << std::endl;
 
     if (!newMem && newAddr) //new address is invalid
     {
+      std::cerr << "{NULL" << std::endl;
       std::stringstream ss;
       ss << "Tried to assign non allocated address 0x" << newAddr;
       VariablesType * var = getVariable();
@@ -79,6 +81,7 @@ void PointerInfo::setTargetAddress(Location newAddr, bool doChecks)
       ss << std::endl;
 
       target = NULL;
+      std::cerr << "NULL}" << std::endl;
       rs->violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN, ss.str());
       return;
     }
@@ -88,24 +91,30 @@ void PointerInfo::setTargetAddress(Location newAddr, bool doChecks)
     // definitely illegal (e.g. an int pointer pointing to a known double).
     if (newMem)
     {
+      std::cerr << "{bbb" << std::endl;
       // FIXME 2: This should really only check, and not merge
       assert(newMem->getAddress() <= newAddr);
       newMem->checkAndMergeMemType(newAddr - newMem->getAddress(), baseType);
+      std::cerr << "bbb}" << std::endl;
     }
 
-
-    // if old target was valid
-    if (oldTarget)
+    // if old target is valid
+    if (target)
     {
-      // has to be hold, because checked when set
-      assert(mm->findContainingMem(oldTarget, objsz) != NULL);
+      std::cerr << "{aaa" << std::endl;
+      // has to hold, because checked when set
+      assert(mm->findContainingMem(target, objsz) != NULL);
 
       // old and new address is valid
-      if (newMem && doChecks)
+      if (newMem && doCheck)
       {
-        mm->checkIfSameChunk(oldTarget, target, baseType);
+        mm->checkIfSameChunk(target, newAddr, baseType);
       }
+      std::cerr << "aaa}" << std::endl;
     }
+
+    std::cerr << "target-set" << HexToString(newAddr) << std::endl;
+    target = newAddr;
 }
 
 
@@ -305,7 +314,9 @@ void PointerManager::registerPointerChange( Location src, Location target, bool 
             throw vio;
         }
         // ...and insert it again with changed target
+        std::cerr << "here$$$" << std::endl;
         insert(targetToPointerMap, TargetToPointerMap::value_type(target, pi));
+        std::cerr << "there$$$" << std::endl;
     }
 
 

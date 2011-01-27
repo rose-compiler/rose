@@ -14,10 +14,11 @@ using namespace SageBuilder;
 
 
 void
-RtedTransformation::visit_isSgScopeStatement( SgNode* n) {
-    SgScopeStatement* stmt = isSgScopeStatement( n);
-    if( stmt && (
-          isSgWhileStmt( n)
+RtedTransformation::visit_isSgScopeStatement( SgScopeStatement* const n)
+{
+    ROSE_ASSERT(n);
+
+    if(   isSgWhileStmt( n)
           || isSgSwitchStatement( n)
           || isSgIfStmt( n)
           || isSgForStatement( n)
@@ -32,12 +33,10 @@ RtedTransformation::visit_isSgScopeStatement( SgNode* n) {
                 //              float x;
                 //          }
                 //      }
-          ||    ( isSgBasicBlock( n )
-                    && isSgBasicBlock( n -> get_parent() ))
-        )
-    ) {
-      ROSE_ASSERT( stmt);
-      scopes[ stmt ] = n;
+          ||    ( isSgBasicBlock( n ) && isSgBasicBlock( n -> get_parent() ))
+      )
+    {
+      scopes[ n ] = n;
     }
 }
 

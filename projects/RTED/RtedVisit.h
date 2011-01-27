@@ -76,6 +76,8 @@ class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,
 							InheritedAttribute inheritedAttribute,
 							SubTreeSynthesizedAttributes synthesizedAttributeList );
 
+	  friend class InheritedAttributeHandler;
+
 		 private:
        RtedTransformation* const   transf;
 			 BinaryOpStack               binary_ops;  ///< stores all binary operations in the current traversal

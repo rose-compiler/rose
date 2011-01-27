@@ -59,9 +59,7 @@ rted_Address rted_deref(rted_Address addr, rted_AddressDesc desc);
 size_t sizeof_Address_UPC(void);
 
 rted_AddressDesc rted_ptr(void);
-rted_AddressDesc rted_obj(void);
 
-rted_AddressDesc rted_address_of(rted_AddressDesc);
 rted_AddressDesc rted_upc_address_of(rted_AddressDesc desc, size_t shared_mask);
 
 const char*
@@ -69,14 +67,33 @@ rted_system_addr(rted_Address addr, rted_AddressDesc desc);
 
 int rted_isPtr(rted_AddressDesc addr);
 
-
 static inline
-rted_Address rted_Addr(const char* ptr)
+rted_Address rted_Addr(const void* ptr)
 {
   rted_Address addr;
 
-  addr.local = ptr;
+  addr.local = (const char*)ptr;
   return addr;
+}
+
+static inline
+rted_AddressDesc rted_obj(void)
+{
+  rted_AddressDesc pd;
+
+  pd.levels = 0;
+  pd.shared_mask = 0;
+
+  return pd;
+}
+
+static inline
+rted_AddressDesc rted_address_of(rted_AddressDesc desc)
+{
+  ++desc.levels;
+  desc.shared_mask <<= 1;
+
+  return desc;
 }
 
 #ifdef __UPC__

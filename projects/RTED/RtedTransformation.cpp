@@ -56,6 +56,8 @@ void RtedTransformation::loadFunctionSymbols(SgProject* project) {
    ROSE_ASSERT(symbols.roseAddrSh);
    ROSE_ASSERT(symbols.roseClose);
 
+   ROSE_ASSERT(symbols.roseProcessMsg);
+
    ROSE_ASSERT(symbols.roseAllocKind);
 
    ROSE_ASSERT(symbols.roseTypeDesc);
@@ -87,8 +89,13 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
    // source file within a namespace We need to know the sizeOf classes. To do
    // so we need to modify the class but do not want to do this in the header
    // file right now.
+
+   // \pp \note can the loop be done as part of varTraversal, or seperated into
+   //           another class? This way we could eliminate the dependency
+   //           between Rtedtransformation and AstSimpleProcessing.
    std::vector<SgClassDeclaration*> traverseClasses;
-   insertNamespaceIntoSourceFile(project,traverseClasses);
+   insertNamespaceIntoSourceFile(project, traverseClasses);
+
    // traverse all header files and collect information
    std::vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
    for (;travClassIt!=traverseClasses.end();++travClassIt) {
@@ -104,20 +111,19 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
  * Collects information needed for transformations
  * -----------------------------------------------------------*/
 
+// \pp this is called from AstSimpleProcessing::traverse
 void RtedTransformation::visit(SgNode* n) {
    if (isSgScopeStatement(n)) {
-#if 1
+
       // if, while, do, etc., where we need to check for locals going out of scope
-      visit_isSgScopeStatement(n);
+      visit_isSgScopeStatement(isSgScopeStatement(n));
       // *********************** DETECT structs and class definitions ***************
       if (isSgClassDefinition(n)) {
          // call to a specific function that needs to be checked
          //cerr << " +++++++++++++++++++++ FOUND Class Def!! ++++++++++++++++ " << endl;
          visit_isClassDefinition(isSgClassDefinition(n));
       }
-#endif
    }
-
 }
 
 #endif

@@ -42,7 +42,7 @@ static
 void registerPointerChange( RuntimeSystem* rs,
                             Address src,
                             Address tgt,
-                            RsType* t,
+                            RsPointerType* t,
                             bool checkPointerMove = false,
                             bool checkMemLeaks = true
                           )
@@ -1373,7 +1373,7 @@ void testTypeSystemSubtypes() {
     // order and end up with the more specific (larger) type.
     rs -> createObject( memAddr(0x42), rs_base );
     rs -> createObject( memAddr(0x42), rs_sub );
-    MemoryType* mt = mm -> findContainingMem( reinterpret_cast<const char*>(0x42) );
+    MemoryType* mt = mm -> findContainingMem( reinterpret_cast<const char*>(0x42), 1 );
     assert( mt );
     assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
 
@@ -1382,7 +1382,7 @@ void testTypeSystemSubtypes() {
     // same test, but we call createObject in the reverse order
     rs -> createObject( memAddr(0x42), rs_sub );
     rs -> createObject( memAddr(0x42), rs_base );
-    mt = mm -> findContainingMem( reinterpret_cast<const char*>(0x42) );
+    mt = mm -> findContainingMem( reinterpret_cast<const char*>(0x42), 1 );
     assert( mt );
     assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
 
@@ -1416,7 +1416,7 @@ void testTypeSystemNested() {
     // Once we create the larger class, we should ignore calls to the composite
     // types.  If we did this in the reverse order the types would be merged.
     rs -> createObject( memAddr(0x42), rs_composite );
-    MemoryType* mt = mm -> findContainingMem( reinterpret_cast<const char*>(0x42) );
+    MemoryType* mt = mm -> findContainingMem( reinterpret_cast<const char*>(0x42), 1 );
     assert( mt );
     assert( rs_composite == mt -> getTypeAt( 0, mt -> getSize() ));
 
@@ -1515,8 +1515,8 @@ void testTypeConsistencyChecking() {
 
 extern "C"
 {
-  //~ int upc_main(int, char**, char**)
-  int main(int, char**, char**)
+  int upc_main(int, char**, char**)
+  //~ int main(int, char**, char**)
   {
 
       try
@@ -1525,11 +1525,11 @@ extern "C"
           rs->setTestingMode(true);
           rs->setOutputFile("test_output.txt");
 
-          //~ testTypeConsistencyChecking();
-//~
-          //~ testTypeSystemDetectNested();
-          //~ testTypeSystemMerge();
-          //~ testPartialTypeSystemArrayAccess();
+          testTypeConsistencyChecking();
+//~ //~
+          testTypeSystemDetectNested();
+          testTypeSystemMerge();
+          testPartialTypeSystemArrayAccess();
 
 
           testTypeSystemSubtypes();

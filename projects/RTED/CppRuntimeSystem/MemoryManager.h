@@ -235,7 +235,7 @@ class MemoryManager
         MemoryType * getMemoryType(Location addr);
 
         /// Returns mem-area which contains a given area, or NULL if nothing found
-        MemoryType * findContainingMem(Location addr, size_t size = 1) ;
+        MemoryType * findContainingMem(Location addr, size_t size) ;
 
         /// Returns mem-area which overlaps with given area, or NULL if nothing found
         bool existOverlappingMem(Location addr, size_t size) ;

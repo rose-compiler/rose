@@ -325,11 +325,12 @@ void RtedTransformation::insertFuncCall(RtedArguments* args)
   }
 
   ROSE_ASSERT(symbols.roseFunctionCall);
-  checkBeforeStmt( stmt,
-                   symbols.roseFunctionCall,
-                   arg_list,
-                   "RS : Calling Function, parameters: (#args, function name, filename, linenr, linenrTransformed, error message, left hand var, other parameters)"
-                 );
+  insertCheck( ilBefore,
+               stmt,
+               symbols.roseFunctionCall,
+               arg_list,
+               "RS : Calling Function, parameters: (#args, function name, filename, linenr, linenrTransformed, error message, left hand var, other parameters)"
+             );
 }
 
 static
@@ -370,7 +371,7 @@ void insertAssertFunctionSignature(RtedTransformation& rt, SgFunctionCallExp* fc
 
   rt.appendFileInfo( arg_list, stmt->get_scope(), fce->get_file_info() );
 
-  checkBeforeParentStmt(fce, rt.symbols.roseAssertFunctionSignature, arg_list);
+  insertCheckOnStmtLevel(ilBefore, fce, rt.symbols.roseAssertFunctionSignature, arg_list);
 }
 
 void RtedTransformation::insertAssertFunctionSignature(SgFunctionCallExp* fncall)
@@ -434,7 +435,7 @@ void RtedTransformation::insertFreeCall(SgExpression* freeExp, AllocKind ak)
    appendFileInfo( arg_list, stmt );
 
    // have to check validity of call to free before the call itself
-   checkBeforeStmt(stmt, symbols.roseFreeMemory, arg_list);
+   insertCheck(ilBefore, stmt, symbols.roseFreeMemory, arg_list);
 }
 
 void RtedTransformation::insertReallocateCall(SgFunctionCallExp* realloc_call)
@@ -458,7 +459,7 @@ void RtedTransformation::insertReallocateCall(SgFunctionCallExp* realloc_call)
    appendFileInfo( arg_list, stmt );
 
    // have to check validity of call to realloc before the call itself
-   checkBeforeStmt(stmt, symbols.roseReallocateMemory, arg_list);
+   insertCheck(ilBefore, stmt, symbols.roseReallocateMemory, arg_list);
 }
 
 /***************************************************************
@@ -524,13 +525,9 @@ void RtedTransformation::addFileIOFunctionCall(SgVarRefExp* n, bool read) {
 /***************************************************************
  * Check if the current node is a "interesting" function call
  **************************************************************/
-void RtedTransformation::visit_isFunctionCall(SgNode* n2)
+void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
 {
-  SgFunctionCallExp* const fcexp = isSgFunctionCallExp(n2);
-  // handle arguments for any function call
-  //handle_function_call_arguments.push_back(fcexp->get_args());
-
-  if (fcexp == NULL) return;
+  ROSE_ASSERT(fcexp);
 
   SgExprListExp* const     exprlist = isSgExprListExp(fcexp->get_args());
   SgExpression*            callee = fcexp->get_function();

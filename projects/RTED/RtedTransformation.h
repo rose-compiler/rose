@@ -26,6 +26,15 @@ SgScopeStatement* get_scope(SgInitializedName* initname)
 /// \brief returns whether a name belongs to rted (i.e., has prefix "rted_")
 bool isRtedDecl(const std::string& name);
 
+/// \brief returns true if func points to the main function of a
+///        C, C++, or UPC program.
+/// \note  recognizes UPC main functions (as opposed to SageInterface::isMain)
+// \pp \todo integrate into SageInterface::isMain
+bool is_main_func(const SgFunctionDefinition* func);
+
+/// \brief builds a UPC barrier statement
+// \pp \todo integrate into SageBuilder
+SgUpcBarrierStatement* buildUpcBarrierStatement();
 
 /// \brief adds an AddressDesc for a single ptr/arr indirection
 /// \param the base type (already after the indirection)
@@ -35,12 +44,15 @@ AddressDesc baseAddressDesc(const SgType* t);
 // helper functions
 //
 
-/// \brief replaces doule quote with single quote characters in a string
+/// \brief replaces double quote with single quote characters in a string
 std::string removeSpecialChar(std::string str);
 
-/// \brief  finds the first parent that is a SgStatement node
+/// \brief  finds the first parent that is an SgStatement node
 /// \return the parent statement or NULL if there is none
-SgStatement* getSurroundingStatement(SgNode* n);
+SgStatement* getSurroundingStatement(SgExpression* n);
+
+/// \overload
+SgStatement* getSurroundingStatement(SgInitializedName* n);
 
 /// \brief   returns the base type for arrays and pointers
 /// \param t a type
@@ -72,22 +84,33 @@ bool isFileIOVariable(SgType* type);
 /// \brief tests whether the declaration is a constructor
 bool isConstructor( SgDeclarationStatement* decl );
 
+/// \brief tests whether n was declared in a class / struct
+bool isStructMember(const SgInitializedName& n);
+
+/// \brief tests whether n is a function parameter
+bool isFunctionParameter(const SgInitializedName& n);
+
 //
 // helper functions to insert rted checks
 
-/// \brief   creates a statement node for calling the function checker with some arguments
-///          and adds the check before the statement where checked_node is a part of
-/// \return  the created statement node
-SgExprStatement* checkBeforeParentStmt(SgExpression* checked_node, SgFunctionSymbol* checker, SgExprListExp* args);
+enum InsertLoc { ilAfter = 0, ilBefore = 1 };
+
+SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args);
 
 /// \brief   creates a statement node for calling the function checker with some arguments
 ///          and adds the check before the statement where checked_node is a part of
 /// \return  the created statement node
-SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args);
+SgExprStatement* insertCheckOnStmtLevel(InsertLoc iloc, SgExpression* checked_node, SgFunctionSymbol* checker, SgExprListExp* args);
+
+/// \brief   creates a statement node for calling the function checker with some arguments
+///          and adds depending on iloc adds the check before or after the statement where
+///          checked_node is a part of
+/// \return  the created statement node
+SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args);
 
 /// \brief   adds a comment in addition to creating a check
 /// \return  the created statement node
-SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args, const std::string& comment);
+SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args, const std::string& comment);
 
 //
 // functions that create AST nodes for the RTED transformations
@@ -152,26 +175,27 @@ public:
 private:
    // map of expr ϵ { SgPointerDerefExp, SgArrowExp }, SgVarRefExp pairs
    // the deref expression must be an ancestor of the varref
-   std::map<SgExpression*,SgVarRefExp*> variable_access_pointerderef;
+   std::map<SgExpression*,SgVarRefExp*>  variable_access_pointerderef;
    // The second SgExpression can contain either SgVarRefExp,
    // or a SgThisExp
-   std::map<SgExpression*,SgVarRefExp*> variable_access_arrowexp;
-   std::map<SgExpression*,SgThisExp*> variable_access_arrowthisexp;
-
+   std::map<SgExpression*, SgVarRefExp*> variable_access_arrowexp;
+   std::map<SgExpression*, SgThisExp*>   variable_access_arrowthisexp;
 
    // ------------------------ string -----------------------------------
    // handle call to functioncall
-   std::vector<RtedArguments*> function_call;
-   // calls to functions whose definitions we don't know, and thus, whose
-   // signatures we must check at runtime
-   std::vector<SgFunctionCallExp*> function_call_missing_def;
-   // function calls to realloc
-   std::vector<SgFunctionCallExp*> reallocs;
+   std::vector<RtedArguments*>         function_call;
+   std::vector<SgFunctionCallExp*>     function_call_missing_def; ///< calls to functions whose
+                                                                  ///  definitions we don't know, and thus, whose
+                                                                  ///  signatures we must check at runtime
+   std::vector<SgFunctionCallExp*>     reallocs;                  ///< function calls to realloc
+
+public:
+   std::vector<SgUpcBarrierStatement*> upcbarriers;
 
 
    // what statements we need to bracket with enter/exit scope calls
-   std::map<SgStatement*, SgNode*> scopes;
-   typedef std::pair<SgStatement*, SgNode*> StatementNodePair;
+   typedef std::map<SgStatement*, SgNode*> ScopeMap;
+   ScopeMap scopes;
 
    // store all classdefinitions found
    std::map<SgClassDefinition*,RtedClassDefinition*> class_definitions;
@@ -192,13 +216,8 @@ private:
    // and retrieved through the visit function
    SgClassSymbol* runtimeClassSymbol;
    SgScopeStatement* rememberTopNode;
-   SgStatement* mainLast;
    SgStatement* mainFirst;
    SgBasicBlock* mainBody;
-   Sg_File_Info* mainEnd;
-   bool mainEndsWithReturn;
-   bool mainHasBeenChanged;
-   SgReturnStmt* mainReturnStmt;
 
    // FUNCTIONS ------------------------------------------------------------
    // Helper function
@@ -239,7 +258,7 @@ public:
    SgArrayType* isUsableAsSgArrayType( SgType* type );
    SgReferenceType* isUsableAsSgReferenceType( SgType* type );
    bool isInInstrumentedFile( SgNode* n );
-   void visit_isArraySgAssignOp(SgNode* n);
+   void visit_isArraySgAssignOp(SgAssignOp* const);
 
    void appendFileInfo( SgExprListExp* arg_list, SgStatement* stmt);
    void appendFileInfo( SgExprListExp* arg_list, SgScopeStatement* scope, Sg_File_Info* n);
@@ -277,6 +296,14 @@ public:
     /// \endcode
     SgCastExp* ctorTypeDesc(SgAggregateInitializer* exp) const;
 
+    /// \brief   creates a "C-style constructor" for a rted_SourceInfo object
+    ///          from an aggregate initializer
+    SgCastExp* ctorSourceInfo(SgAggregateInitializer* exp) const;
+
+    /// \brief   creates a "C-style constructor" for a rted_AddressDesc object
+    ///          from an aggregate initializer
+    SgCastExp* ctorAddressDesc(SgAggregateInitializer* exp) const;
+
     /// \brief   creates a variable length array (VLA) "constructor"
     ///          from a list of TypeDesc initializers.
     /// \details used, when the VLA is passed as function arguments
@@ -284,10 +311,6 @@ public:
     ///          foo( (TypeDesc[]) { tdobj1, tdobj2 } );
     /// \endcode
     SgCastExp* ctorTypeDescList(SgAggregateInitializer* exp) const;
-
-    /// \brief   creates a "C-style constructor" for a rted_SourceInfo object
-    ///          from an aggregate initializer
-    SgCastExp* ctorSourceInfo(SgAggregateInitializer* exp) const;
 
     /// \brief   creates an address descriptor
     SgAggregateInitializer* mkAddressDesc(AddressDesc desc) const;
@@ -313,14 +336,15 @@ public:
     SgType* roseFileInfo() const    { return symbols.roseSourceInfo; }
 
 public:
-   void insertMainCloseCall(SgStatement* main);
+   /// \brief rewrites the last statement in main (see member variable mainLast)
+   void insertMainCloseCall();
 
    void visit_isArraySgInitializedName(SgNode* n);
-   void visit_isAssignInitializer(SgNode* n);
+   void visit_isAssignInitializer(SgAssignInitializer* const n);
 
-   void visit_isArrayPntrArrRefExp(SgNode* n);
+   void visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const n);
    void visit_isArrayExprListExp(SgNode* n);
-   void visit_isSgScopeStatement(SgNode* n);
+   void visit_isSgScopeStatement(SgScopeStatement* const n);
 
    void addPaddingToAllocatedMemory(SgStatement* stmt,  RtedArray* array);
 
@@ -337,8 +361,7 @@ public:
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDot(SgDotExp* dot , std::string str, SgVarRefExp* varRef);
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDotStar(SgDotStarOp* dot , std::string str, SgVarRefExp* varRef);
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrow(SgArrowExp* arrow , std::string str, SgVarRefExp* varRef);
-   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrowStar(SgArrowStarOp* arrowstar, std::string str,
-         SgVarRefExp* varRef);
+   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrowStar(SgArrowStarOp* arrowstar, std::string str, SgVarRefExp* varRef);
    std::pair<SgInitializedName*,SgVarRefExp*> getPlusPlusOp(SgPlusPlusOp* plus ,std::string str, SgVarRefExp* varRef);
    std::pair<SgInitializedName*,SgVarRefExp*> getMinusMinusOp(SgMinusMinusOp* minus ,std::string str, SgVarRefExp* varRef);
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfPointerDeref(SgPointerDerefExp* dot, std::string str, SgVarRefExp* varRef);
@@ -350,9 +373,7 @@ public:
    bool isVarRefInCreateArray(SgInitializedName* search);
    void insertFuncCall(RtedArguments* args);
    void insertIOFuncCall(RtedArguments* args);
-   void visit_isFunctionCall(SgNode* n);
-   void visit_isFunctionDefinition(SgNode* n);
-
+   void visit_isFunctionCall(SgFunctionCallExp* const fcexp);
 
 public:
    /// Visit pointer assignments whose lhs is computed from the original value of
@@ -402,8 +423,8 @@ private:
 
 public:
    void visit_isSgVarRefExp(SgVarRefExp* n, bool isRightBranchOfBinaryOp, bool thinkItsStopSearch);
-   void visit_isSgArrowExp(SgArrowExp* n);
-   void visit_isSgPointerDerefExp(SgPointerDerefExp* n);
+   void visit_isSgArrowExp(SgArrowExp* const n);
+   void visit_isSgPointerDerefExp(SgPointerDerefExp* const);
 private:
 
 
@@ -430,16 +451,27 @@ private:
 
 public:
    RtedTransformation()
-   : rtedfiles(NULL),
+   : AstSimpleProcessing(),
+
+     rtedfiles(NULL),
+
+     create_array_define_varRef_multiArray(),
+     create_array_access_call(),
+     variablesUsedForArray(),
+     pointer_movements(),
+     variable_access_pointerderef(),
+     variable_access_arrowexp(),
+     variable_access_arrowthisexp(),
+     function_call(),
+     function_call_missing_def(),
+     reallocs(),
+     upcbarriers(),
+     scopes(),
      globConstructor(false),
      globalFunction(NULL),
      globalConstructorVariable(NULL),
-     mainLast(NULL),
      mainFirst(NULL),
      mainBody(NULL),
-     mainEnd(NULL),
-     mainEndsWithReturn(false),
-     mainHasBeenChanged(false),
      symbols()
    {}
 
@@ -497,19 +529,26 @@ public:
    bool isGlobalExternVariable(SgStatement* stmt);
 
    void insertRegisterTypeCall(RtedClassDefinition* const rtedClass);
-   void visit_isClassDefinition(SgClassDefinition* cdef);
-
-
+   void visit_isClassDefinition(SgClassDefinition* const cdef);
 
    void executeTransformations();
    void insertNamespaceIntoSourceFile(  SgProject* project, std::vector<SgClassDeclaration*> &traverseClasses);
 
    void populateDimensions( RtedArray* array, SgInitializedName* init, SgArrayType* type );
-   int getDimension(SgInitializedName* initName);
-   int getDimension(SgInitializedName* initName,SgVarRefExp* varRef);
-   void visit_checkIsMain(SgNode* n);
-   // Traverse all nodes and check properties
-   virtual void visit(SgNode* n);
+   void visit_checkIsMain(SgFunctionDefinition* const);
+
+   //
+   // implemented in RtedTransf_Upc.cpp
+
+   /// \brief transforms a UPC barrier statement
+   void transformUpcBarriers(SgUpcBarrierStatement* stmt);
+
+
+   //
+   // dependencies on AstSimpleProcessing
+   //   (see also comment in RtedTransformation.cpp)
+
+   virtual void visit(SgNode* n); // needed for the class extraction
 };
 
 

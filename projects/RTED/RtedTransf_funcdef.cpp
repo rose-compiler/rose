@@ -15,17 +15,6 @@ using namespace SageBuilder;
 
 
 void
-RtedTransformation::visit_isFunctionDefinition( SgNode* node) {
-    visit_checkIsMain( node);
-
-    SgFunctionDefinition* fndef = isSgFunctionDefinition( node);
-    ROSE_ASSERT( fndef);
-
-    function_definitions.push_back( fndef);
-}
-
-
-void
 RtedTransformation::insertVariableCreateInitForParams( SgFunctionDefinition* fndef) {
 
     SgBasicBlock* body = fndef->get_body();

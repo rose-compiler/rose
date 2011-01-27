@@ -9,6 +9,8 @@
 
 #include <boost/foreach.hpp>
 
+#include "rosez.hpp"
+
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -174,7 +176,6 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    // target specific parameters
    if (isCreateHeapArr)
    {
-     // array->appendDimensionInformation(arg_list);
      appendDimensions(arg_list, array);
 
      // source name
@@ -187,7 +188,6 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    {
      // track whether heap memory was allocated via malloc or new, to ensure
      // that free/delete matches
-
      appendExpression(arg_list, mkAllocKind(array->allocKind));
    }
 
@@ -201,8 +201,7 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
 
    ROSE_ASSERT(rted_fun != NULL);
    SgFunctionRefExp*  memRef_r = buildFunctionRefExp(rted_fun);
-   SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r, arg_list);
-   SgExprStatement*   exprStmt = buildExprStatement(funcCallExp);
+   SgExprStatement*   exprStmt = buildFunctionCallStmt(memRef_r, arg_list);
 
    return exprStmt;
 }
@@ -415,16 +414,17 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* 
   appendAddress(arg_list, array_base);
   appendAddressAndSize(arg_list, Whole, NULL, arrRefExp, NULL);
 
-  appendExpression(arg_list, mkAddressDesc(array_base));
+  appendExpression(arg_list, ctorAddressDesc(mkAddressDesc(array_base)));
   appendExpression(arg_list, buildIntVal(read_write_mask));
   appendFileInfo(arg_list, stmt);
 
   ROSE_ASSERT(symbols.roseAccessHeap);
-  checkBeforeStmt( stmt,
-                   symbols.roseAccessHeap,
-                   arg_list,
-                   "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, read_write_mask, filename, linenr, linenrTransformed, part of error message)"
-                 );
+  insertCheck( ilBefore,
+               stmt,
+               symbols.roseAccessHeap,
+               arg_list,
+               "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, read_write_mask, filename, linenr, linenrTransformed, part of error message)"
+              );
 }
 
 void RtedTransformation::populateDimensions(RtedArray* array, SgInitializedName* init, SgArrayType* type_) {
@@ -466,15 +466,11 @@ void RtedTransformation::populateDimensions(RtedArray* array, SgInitializedName*
 void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
    SgInitializedName* initName = isSgInitializedName(n);
    ROSE_ASSERT(initName);
-   int dimension = 0;
-   dimension = getDimension(initName);
    // STACK ARRAY : lets see if we assign an array here
    SgType* type = initName->get_typeptr();
    ROSE_ASSERT(type);
    SgArrayType* array = isSgArrayType(type);
 
-   SgNode* gp = n -> get_parent() -> get_parent();
-   SgFunctionDeclaration* fndec = isSgFunctionDeclaration(gp);
    // something like:
    // 	struct type { int before; char c[ 10 ]; int after; }
    // does not need a createarray call, as the type is registered and any array
@@ -482,7 +478,7 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
    //
    // ignore arrays in parameter lists as they're actually pointers, not stack
    // arrays
-   if (array && !(isSgClassDefinition(gp)) && !(fndec))
+   if (array && !(isStructMember(*initName)) && !isFunctionParameter(*initName))
    {
       RtedArray* arrayRted = new RtedArray(initName, NULL, akStack);
 
@@ -491,11 +487,10 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
    }
 }
 
-void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* n) {
-   cerr << "\n$$$$$ visit_isSgPointerDerefExp : " << n->unparseToString() << "  in line : " << n->get_file_info()->get_line()
-         << " -------------------------------------" << endl;
+void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* const n)
+{
+   ROSE_ASSERT(n);
 
-#if 1
    SgExpression*        right = n->get_operand();
    // right hand side should contain some VarRefExp
    std::vector<SgNode*> vars = NodeQuery::querySubTree(right, V_SgVarRefExp);
@@ -555,12 +550,11 @@ void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* n) {
       //exit(1);
    }
 #endif
-#endif
 }
 
-void RtedTransformation::visit_isSgArrowExp(SgArrowExp* n) {
-   cerr << "\n$$$$$ visit_isSgArrowExp : " << n->unparseToString() << "  in line : " << n->get_file_info()->get_line()
-         << " -------------------------------------" << endl;
+void RtedTransformation::visit_isSgArrowExp(SgArrowExp* const n)
+{
+   ROSE_ASSERT(n);
 
    SgExpression* left = isSgExpression(n->get_lhs_operand());
    ROSE_ASSERT(left);
@@ -719,8 +713,10 @@ AllocKind RtedTransformation::arrayAllocCall(SgInitializedName* initName, SgVarR
 // TODO 2 djh:  rewrite this function to be more robust
 //  i.e. handle general cases
 //  consider whether getting the initname is important
-void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
-   SgAssignOp*        assign = isSgAssignOp(n);
+void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
+{
+   ROSE_ASSERT(assign);
+
    SgInitializedName* initName = NULL;
    SgExpression*      expr_l = assign->get_lhs_operand();
    SgExpression*      expr_r = assign->get_rhs_operand();
@@ -730,7 +726,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
    SgExpression*      indx1 = NULL;
    SgExpression*      indx2 = NULL;
 
-   cerr << "   ::: Checking assignment : " << n->unparseToString() << endl;
+   cerr << "   ::: Checking assignment : " << assign->unparseToString() << endl;
 
    // FIXME 2: This probably does not handle n-dimensional arrays
    //
@@ -1057,8 +1053,8 @@ void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt, RtedArra
    }
 }
 
-void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* _n) {
-   SgPntrArrRefExp* arrRefExp = isSgPntrArrRefExp(_n);
+void RtedTransformation::visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const arrRefExp)
+{
    ROSE_ASSERT(arrRefExp);
 
    // make sure the parent is not another pntr array (pntr->pntr), we only want the top one
@@ -1140,15 +1136,7 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n)
 #endif
 
    SgVarRefExp* const    n_varref = isSgVarRefExp(n);
-   ROSE_ASSERT(n_varref);
-
-   SgNode*               parent = n_varref->get_parent();
-   SgExprListExp*        exprlist = isSgExprListExp(parent);
-
-   while (exprlist == NULL && !isSgProject(parent)) {
-      parent = parent->get_parent();
-      exprlist = isSgExprListExp(parent);
-   }
+   SgExprListExp*        exprlist = ez::ancestor<SgExprListExp>(n_varref);
 
    // if (isSgCastExp(isSgVarRefExp(n)->get_parent()))
    // exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent());
@@ -1187,7 +1175,7 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n)
             if (!isStringModifyingFunctionCall(name) && !isFileIOFunctionCall(name))
             {
                SgExpression*  varOnLeft = buildStringVal("NoAssignmentVar2");
-               SgStatement*   stmt = getSurroundingStatement(isSgVarRefExp(n));
+               SgStatement*   stmt = getSurroundingStatement(n_varref);
                ROSE_ASSERT(stmt);
 
                RtedArguments* funcCall = new RtedArguments( stmt,

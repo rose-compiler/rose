@@ -22,21 +22,21 @@ struct rted_SourceInfo
 enum rted_AllocKind
 {
 	akUndefined      = 0,
-	akStack          = 1,
-	akCHeap          = 2,
 
-	/* language groups */
-	akCxxHeap        = 32,  /* C++ new/delete */
-	akUpcSharedHeap  = 64,  /* UPC, but also used for upc_free */
+	/* allocation categories */
+	akStack          = 16,
+	akCHeap          = 32,
+	akCxxHeap        = 64,   /* C++ new/delete */
+	akUpcSharedHeap  = 128,  /* UPC, but also used for upc_free */
 
   /* C++ */
-	akCxxNew         = 3 | akCxxHeap,
-	akCxxArrayNew    = 4 | akCxxHeap,
+	akCxxNew         = 1 | akCxxHeap, /* for new and delete */
+	akCxxArrayNew    = 2 | akCxxHeap, /* for new T[] and delete[] */
 
   /* UPC */
-	akUpcAlloc       = 5 | akUpcSharedHeap,
-	akUpcGlobalAlloc = 6 | akUpcSharedHeap,
-	akUpcAllAlloc    = 7 | akUpcSharedHeap
+	akUpcAlloc       = 1 | akUpcSharedHeap, /* and upc_local_alloc */
+	akUpcGlobalAlloc = 2 | akUpcSharedHeap,
+	akUpcAllAlloc    = 3 | akUpcSharedHeap
 };
 
 

@@ -31,23 +31,41 @@ const std::string RtedForStmtProcessed::Key( "Rted::ForStmtProcessed" );
  * This function returns the statement that
  * surrounds a given Node or Expression
  ****************************************/
-SgStatement* getSurroundingStatement(SgNode* n)
+
+bool is_main_func(const SgFunctionDefinition* fndef)
 {
-  ROSE_ASSERT(n);
+  ROSE_ASSERT(fndef);
 
-  while (!isSgStatement(n) && !isSgProject(n))
-  {
-    //~ if (stat->get_parent() == NULL)
-    //~ {
-    //~   cerr << " No parent possible for : " << n->unparseToString()
-    //~        <<"  :" << stat->unparseToString() << endl;
-    //~ }
+  const SgFunctionDeclaration* fndecl = fndef->get_declaration();
+  ROSE_ASSERT(fndecl);
 
-    n = n->get_parent();
-    ROSE_ASSERT(n);
-  }
+  const std::string fnname = fndecl->get_name().str();
 
-  return isSgStatement(n);
+  return (  isSgGlobal(fndef->get_scope())
+         && (  fnname == "main"
+            || fnname == "upc_main"
+            )
+         );
+}
+
+
+SgUpcBarrierStatement* buildUpcBarrierStatement()
+{
+  SgExpression*          exp = NULL;
+  SgUpcBarrierStatement* barrier_stmt = new SgUpcBarrierStatement(exp);
+
+  setOneSourcePositionForTransformation(barrier_stmt);
+  return barrier_stmt;
+}
+
+SgStatement* getSurroundingStatement(SgExpression* n)
+{
+  return ez::ancestor<SgStatement>(n);
+}
+
+SgStatement* getSurroundingStatement(SgInitializedName* n)
+{
+  return ez::ancestor<SgStatement>(n);
 }
 
 SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType* type)
@@ -61,7 +79,7 @@ SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType*
 }
 
 
-SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args)
+SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args)
 {
   ROSE_ASSERT(stmt && checker && args);
 
@@ -69,14 +87,14 @@ SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, S
   SgFunctionCallExp* funcCallExp = buildFunctionCallExp(funRef, args);
   SgExprStatement*   exprStmt = buildExprStatement(funcCallExp);
 
-  insertStatementBefore(stmt, exprStmt);
+  SageInterface::insertStatement(stmt, exprStmt, iloc == ilBefore);
 
   return exprStmt;
 }
 
-SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args, const std::string& comment)
+SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args, const std::string& comment)
 {
-  SgExprStatement* exprStmt = checkBeforeStmt(stmt, checker, args);
+  SgExprStatement* exprStmt = insertCheck(ilBefore, stmt, checker, args);
 
   attachComment(exprStmt, "", PreprocessingInfo::before);
   attachComment(exprStmt, comment, PreprocessingInfo::before);
@@ -85,9 +103,19 @@ SgExprStatement* checkBeforeStmt(SgStatement* stmt, SgFunctionSymbol* checker, S
 }
 
 SgExprStatement*
-checkBeforeParentStmt(SgExpression* checked_node, SgFunctionSymbol* checker, SgExprListExp* args)
+insertCheckOnStmtLevel(InsertLoc iloc, SgExpression* checked_node, SgFunctionSymbol* checker, SgExprListExp* args)
 {
-  return checkBeforeStmt(getSurroundingStatement(checked_node), checker, args);
+  return insertCheck(iloc, getSurroundingStatement(checked_node), checker, args);
+}
+
+bool isFunctionParameter(const SgInitializedName& n)
+{
+   return isSgFunctionDeclaration(n.get_parent() -> get_parent());
+}
+
+bool isStructMember(const SgInitializedName& n)
+{
+   return isSgClassDefinition(n.get_parent() -> get_parent());
 }
 
 
@@ -123,29 +151,46 @@ SgType* skip_ReferencesAndTypedefs( SgType* type ) {
 //
 //
 
-SgCastExp*
-RtedTransformation::ctorTypeDesc(SgAggregateInitializer* exp) const
+static
+SgCastExp* cstyle_ctor(SgType* type, SgAggregateInitializer* exp)
 {
-  ROSE_ASSERT(exp->get_initializers()->get_expressions().size() == 3);
+  ROSE_ASSERT(type && exp);
 
-  return buildCastExp(exp, roseTypeDesc(), SgCastExp::e_C_style_cast);
+  return buildCastExp(exp, type, SgCastExp::e_C_style_cast);
+}
+
+static
+SgCastExp* cstyle_ctor(SgType* type, SgAggregateInitializer* exp, size_t args)
+{
+  ROSE_ASSERT(exp->get_initializers()->get_expressions().size() == args);
+
+  return cstyle_ctor(type, exp);
 }
 
 SgCastExp*
-RtedTransformation::ctorTypeDescList(SgAggregateInitializer* exp) const
+RtedTransformation::ctorTypeDesc(SgAggregateInitializer* exp) const
 {
-  SgType* type = buildArrayType(roseTypeDesc(), NULL);
-
-  return buildCastExp(exp, type, SgCastExp::e_C_style_cast);
+  return cstyle_ctor(roseTypeDesc(), exp, 3);
 }
 
 SgCastExp*
 RtedTransformation::ctorSourceInfo(SgAggregateInitializer* exp) const
 {
-  ROSE_ASSERT(exp->get_initializers()->get_expressions().size() == 3);
-
-  return buildCastExp(exp, roseFileInfo(), SgCastExp::e_C_style_cast);
+  return cstyle_ctor(roseFileInfo(), exp, 3);
 }
+
+SgCastExp*
+RtedTransformation::ctorAddressDesc(SgAggregateInitializer* exp) const
+{
+  return cstyle_ctor(roseAddressDesc(), exp, 2);
+}
+
+SgCastExp*
+RtedTransformation::ctorTypeDescList(SgAggregateInitializer* exp) const
+{
+  return cstyle_ctor(buildArrayType(roseTypeDesc(), NULL), exp);
+}
+
 
 
 SgAggregateInitializer*
@@ -640,53 +685,6 @@ RtedTransformation::resolveToVarRefLeft(SgExpression* expr) {
   return result;
 }
 
-int RtedTransformation::getDimension(SgInitializedName* initName) {
-  ROSE_ASSERT(initName);
-  int dimension = 0;
-  SgType* type = initName->get_type();
-  ROSE_ASSERT(type);
-  if (isSgArrayType(type)) {
-    dimension++;
-  } else {
-    while (isSgPointerType(type) && !isSgPointerMemberType(type)) {
-      SgPointerType* pointer = isSgPointerType(type);
-      ROSE_ASSERT(pointer);
-      type = pointer->dereference();
-      ROSE_ASSERT(type);
-      dimension++;
-      ROSE_ASSERT(dimension<10);
-      //cerr << "Dimension : " << dimension << "  : " << type->class_name() << endl;
-    }
-  }
-  return dimension;
-}
-
-int
-RtedTransformation::getDimension(SgInitializedName* initName, SgVarRefExp* varRef) {
-  int dim =-1;
-  std::map<SgVarRefExp*, RtedArray*>::const_iterator it = create_array_define_varRef_multiArray.begin();
-  for (;it!=create_array_define_varRef_multiArray.end();++it) {
-    RtedArray* array = it->second;
-    SgInitializedName* init = array->initName;
-    if (init==initName) {
-      dim=array->getDimension();
-      cerr << "Found init : " << init->unparseToString() << " dim : " << dim << "  compare to : " << initName->unparseToString()<<endl;
-    }
-  }
-
-  std::map<SgInitializedName*, RtedArray*>::const_iterator it2= create_array_define_varRef_multiArray_stack.find(initName);
-  for (;it2!=create_array_define_varRef_multiArray_stack.end();++it2) {
-    RtedArray* array = it2->second;
-    SgInitializedName* init = array->initName;
-    if (init==initName) {
-      dim=array->getDimension();
-    }
-  }
-  cerr << " -------------------------- resizing dimension to : " << dim << "  for : " << varRef->unparseToString() << endl;
-  return dim;
-}
-
-
 
 bool RtedTransformation::isGlobalExternVariable(SgStatement* stmt) {
   bool externQual =false;
@@ -758,15 +756,6 @@ SgType* skip_ArrPtrType(SgType* t)
 }
 
 
-static
-bool isUpcRelevant(const SgModifierType& n)
-{
-  const SgTypeModifier&       modifier = n.get_typeModifier();
-  const SgUPC_AccessModifier& upcModifier = modifier.get_upcModifier();
-
-  return !upcModifier.get_isShared();
-}
-
 struct IndirectionHandler
 {
     typedef std::pair<SgType*, AddressDesc> ResultType;
@@ -784,8 +773,9 @@ struct IndirectionHandler
     template <class SgPtr>
     void add_indirection(SgPtr& n)
     {
+      std::cerr << "*" << std::endl;
       res.first = n.get_base_type();
-      res.second = rted_address_of(res.second);
+      ++res.second.levels;
     }
 
     void unexpected(SgNode& n)
@@ -798,7 +788,11 @@ struct IndirectionHandler
     void handle(SgNode& n) { unexpected(n); }
 
     /// base case
-    void handle(SgType& n) { res.first = &n; }
+    void handle(SgType& n)
+    {
+      res.first = &n;
+      std::cerr << "!" << std::endl;
+    }
 
     /// use base type
     void handle(SgPointerType& n) { add_indirection(n); }
@@ -806,21 +800,29 @@ struct IndirectionHandler
 
     void handle(SgReferenceType& n)
     {
-      res.first = n.get_base_type();
       // references are not counted as indirections
+      res.first = n.get_base_type();
     }
 
     /// extract UPC shared information
     void handle(SgModifierType& n)
     {
-      res.second.shared_mask |= upcSharedFlag(n);
+      std::cerr << "." << std::endl;
+      bool sharedFlag = upcSharedFlag(n);
+
+      if (sharedFlag)
+      {
+        const size_t mask_bit = (1 << res.second.levels);
+
+        ROSE_ASSERT((res.second.shared_mask & mask_bit) == 0);
+        res.second.shared_mask |= mask_bit;
+      }
 
       // \pp \note \todo
-      // the following conditional and the function isUpcRelevant should
-      // (probably) be removed. It is here b/c the Nov 2010 RTED code did not
-      // skip modified types.
+      // the following conditional should (probably) be removed It is here b/c.
+      // the Nov 2010 RTED code did not skip modified types                   .
       //   to be: res.first = n.get_base_type();
-      res.first = isUpcRelevant(n) ? n.get_base_type() : &n;
+      res.first = sharedFlag ? n.get_base_type() : &n;
     }
 
     SgType& type() const { return *res.first; }
@@ -838,6 +840,7 @@ static
 IndirectionHandler::ResultType
 indirections(SgType* base_type)
 {
+  std::cerr << "$[$" << std::endl;
   IndirectionHandler ih = ez::visitSgNode(IndirectionHandler(), base_type);
 
   while (base_type != &ih.type())
@@ -846,6 +849,7 @@ indirections(SgType* base_type)
     ih = ez::visitSgNode(ih, base_type);
   }
 
+  std::cerr << "$]$" << std::endl;
   return ih.result();
 }
 
@@ -1115,7 +1119,9 @@ SgExpression* genAddressOf(SgExpression* const exp, bool upcShared)
   SgType*             char_type = buildCharType();
 
   // in UPC we must not cast away the shared modifer
-  if (upcShared) char_type = buildUpcSharedType(char_type);
+  // \pp \todo replace the magic -1 with sth more meaningful
+  //           also in Cxx_Grammar and SageBuilder
+  if (upcShared) char_type = buildUpcSharedType(char_type, -1);
 
   SgType*             char_ptr = buildPointerType(char_type);
 
@@ -1127,10 +1133,21 @@ SgFunctionCallExp* RtedTransformation::mkAddress(SgExpression* exp, bool upcShar
 {
   ROSE_ASSERT( exp );
 
-  SgExprListExp* const    args = buildExprListExp();
-  SgFunctionSymbol* const ctor = ( upcShared ? symbols.roseAddrSh
-                                             : symbols.roseAddr
-                                 );
+  SgExprListExp* const args = buildExprListExp();
+  SgFunctionSymbol*    ctor = symbols.roseAddr;
+
+  // for upc shared pointers we call rted_AddrSh and cast the
+  //   expression to a shared char*
+  if (upcShared)
+  {
+    SgType* char_type = buildCharType();
+
+    // \pp \todo replace the magic -1 with sth more meaningful
+    SgType* shchar_type = buildUpcSharedType(char_type, -1);
+
+    exp = buildCastExp(exp, buildPointerType(shchar_type));
+    ctor = symbols.roseAddrSh;
+  }
 
   ROSE_ASSERT(ctor);
   appendExpression(args, exp);

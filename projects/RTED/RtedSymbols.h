@@ -1,6 +1,8 @@
 #ifndef RTEDSYM_H
 #define RTEDSYM_H
 
+#include "rose.h"
+
 bool RTEDDEBUG();
 
 /* -----------------------------------------------------------
@@ -31,6 +33,9 @@ struct RtedSymbols : AstSimpleProcessing {
 	SgFunctionSymbol*   roseAddr;
 	SgFunctionSymbol*   roseAddrSh;
 	SgFunctionSymbol*   roseClose;
+
+	// symbols for UPC
+	SgFunctionSymbol*   roseProcessMsg;
 
 	SgEnumDeclaration*  roseAllocKind;
 
@@ -63,6 +68,8 @@ struct RtedSymbols : AstSimpleProcessing {
 		roseAddr(NULL),
 		roseAddrSh(NULL),
 		roseClose(NULL),
+
+		roseProcessMsg(NULL),
 
 		roseAllocKind(NULL),
 

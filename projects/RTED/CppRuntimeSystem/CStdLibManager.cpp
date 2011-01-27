@@ -23,8 +23,8 @@ void
 CStdLibManager::check_allocation_overlap(const char* ptr1, const char* ptr2, const std::string&)
 {
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
-    MemoryType*    p1_mem = mm->findContainingMem( ptr1 );
-    MemoryType*    p2_mem = mm->findContainingMem( ptr2 );
+    MemoryType*    p1_mem = mm->findContainingMem( ptr1, 1 );
+    MemoryType*    p2_mem = mm->findContainingMem( ptr2, 1 );
 
     // if either source or dest is NULL or missing, we'll catch it in subsequent
     // checks to write/read
@@ -76,12 +76,12 @@ size_t CStdLibManager::check_string( const char* str) {
     RuntimeSystem* rts = RuntimeSystem::instance();
     MemoryManager* mm = rts->getMemManager();
 
-    MemoryType* memory = mm->findContainingMem( str );
+    MemoryType* memory = mm->findContainingMem( str, 1 );
 
     if( NULL == memory) {
         std::stringstream desc;
         desc    << "Trying to read from non-allocated MemoryRegion (Address "
-                << "0x" << memAddr(str) << ")" << std::endl;
+                << "0x" << HexToString(str) << ")" << std::endl;
         rts->violationHandler( RuntimeViolation::INVALID_READ, desc.str());
         return 0;
     } else {

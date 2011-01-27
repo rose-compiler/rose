@@ -6,15 +6,14 @@
 #include <string>
 #include <set>
 
+#include "rosez.hpp"
+
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
-//#include "RuntimeSystem.h"
 
 using namespace std;
-using namespace SageInterface;
 using namespace SageBuilder;
-
 
 void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vector<SgClassDeclaration*>& traverseClasses) {
 
@@ -95,42 +94,59 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
 
 }
 
+/// \brief  starting from n returns the first AST node that is an SgStatement
+/// \return n, if n is a SgStatement;
+///         otherwise, the first parent of n that is a SgStatement.
+static
+SgStatement* getStatementLevelNode(SgLocatedNode& n)
+{
+  SgStatement* stmt = isSgStatement(&n);
+  if (stmt) return stmt;
+
+  return &ez::ancestor<SgStatement>(n);
+}
+
+
 void RtedTransformation::moveupPreprocessingInfo(SgProject* project) {
    vector<SgNode*> results = NodeQuery::querySubTree(project, V_SgSourceFile);
    vector<SgNode*>::const_iterator classIt = results.begin();
-   for (; classIt != results.end(); classIt++) {
+   for (; classIt != results.end(); classIt++)
+   {
       SgSourceFile* sf = isSgSourceFile(*classIt);
       ROSE_ASSERT(sf);
-      bool isInSourceFileSet = isInInstrumentedFile(sf);
-      if (isInSourceFileSet) {
-         // if the first located node has the preprocessing info then we are fine
-         // otherwise move the info up to the first one
-         if (RTEDDEBUG()) cerr << "Moving up preprocessing info for file : "        << sf->get_file_info()->get_filename() << endl;
-         vector<SgNode*> nodes = 	NodeQuery::querySubTree(sf, V_SgLocatedNode);
-         vector<SgNode*>::const_iterator nodesIT = nodes.begin();
-         SgLocatedNode* firstNode = isSgLocatedNode(*nodesIT);
-         if (!firstNode)
-            continue; // go to next file
-         AttachedPreprocessingInfoType* info =	firstNode->getAttachedPreprocessingInfo();
-         //cerr << " Found firstNode  -  info = " << info << endl;
-         if (info && info->size() > 0)
-            continue; // we are done
-         // otherwise find located node with info and move up
-         for (; nodesIT != nodes.end(); nodesIT++) {
-            SgLocatedNode* node = isSgLocatedNode(*nodesIT);
-            ROSE_ASSERT(node);
-            info = node->getAttachedPreprocessingInfo();
-            //if (info!=NULL)
-            //  cerr << "     node  -  info = " << info << "   size = " << info->size() << endl;
-            if (info && info->size() > 0) {
-               //cerr << " firstNode : " << firstNode->class_name() << " surr(firstNode) : " << getSurroundingStatement(firstNode)->class_name() <<
-               //  " node : " << node->class_name() << " surr(node) : " << getSurroundingStatement(node)->class_name() << endl;
-               SageInterface::moveUpPreprocessingInfo(
-                     getSurroundingStatement(firstNode),
-                     getSurroundingStatement(node));
-            }
-         }
 
+      if (!isInInstrumentedFile(sf)) continue;
+
+      // if the first located node has the preprocessing info then we are fine
+      // otherwise move the info up to the first one
+      if (RTEDDEBUG()) cerr << "Moving up preprocessing info for file : "        << sf->get_file_info()->get_filename() << endl;
+
+      const vector<SgNode*>           nodes = NodeQuery::querySubTree(sf, V_SgLocatedNode);
+      if (nodes.empty()) continue; // go to next file
+
+      vector<SgNode*>::const_iterator nodesIT = nodes.begin();
+      SgLocatedNode*                  firstNode = isSgLocatedNode(*nodesIT);
+      AttachedPreprocessingInfoType*  info =	firstNode->getAttachedPreprocessingInfo();
+
+      // \pp why is the first node handled specially??
+      if (info && info->size() > 0) continue; // we are done
+
+      // otherwise find located node with info and move up
+      // \pp \todo insert ++nodesIT b/c the node is already handled anyway
+      for (; nodesIT != nodes.end(); ++nodesIT)
+      {
+        SgLocatedNode* node = isSgLocatedNode(*nodesIT);
+        ROSE_ASSERT(node);
+        info = node->getAttachedPreprocessingInfo();
+        //if (info!=NULL)
+        //  cerr << "     node  -  info = " << info << "   size = " << info->size() << endl;
+        if (info && info->size() > 0) {
+           //cerr << " firstNode : " << firstNode->class_name() << " surr(firstNode) : " << getSurroundingStatement(firstNode)->class_name() <<
+           //  " node : " << node->class_name() << " surr(node) : " << getSurroundingStatement(node)->class_name() << endl;
+           SageInterface::moveUpPreprocessingInfo(
+                 getStatementLevelNode(*firstNode),
+                 getStatementLevelNode(*node));
+        }
       }
    }
 }
@@ -165,7 +181,7 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
    // **********************
    if (RTEDDEBUG()) cerr <<"@@@ instrumenting into top "<< endl;
    // deep copy the classdecl and make it unparseable
-   SgClassDeclaration* cd_copy = deepCopy(classDecl);
+   SgClassDeclaration* cd_copy = SageInterface::deepCopy(classDecl);
    // cout << ">>>>>> Original ClassType :::: " << classDecl->get_type() << endl;
    // cout << ">>>>>> Copied ClassType :::: " << cd_copy->get_type() << endl;
    // SgClassType* type_copy = new SgClassType(cd_copy);
@@ -181,8 +197,11 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
       //cerr << "copying node : " << node->class_name() << endl;
    }
    if (RTEDDEBUG()) cerr << "deep copy of firstnondefining" << endl;
-   SgClassDeclaration* cdn_copy = isSgClassDeclaration(deepCopyNode(classDecl->get_firstNondefiningDeclaration()));
+
+   SgClassDeclaration* nondefDecl = isSgClassDeclaration(classDecl->get_firstNondefiningDeclaration());
+   SgClassDeclaration* cdn_copy = SageInterface::deepCopy(nondefDecl);
    ROSE_ASSERT(cdn_copy);
+
    vector<SgNode*> nodes = NodeQuery::querySubTree(cdn_copy, V_SgLocatedNode);
    vector<SgNode*>::const_iterator nodesIT = nodes.begin();
    for (; nodesIT != nodes.end(); nodesIT++) {
@@ -227,11 +246,15 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
                V_SgFunctionDeclaration);
          vector<SgNode*>::const_iterator remNodesIt = remNodes.begin();
          for (; remNodesIt != remNodes.end(); remNodesIt++) {
-            SgFunctionDeclaration* node = isSgFunctionDeclaration(
-                  *remNodesIt);
+            SgFunctionDeclaration* node = isSgFunctionDeclaration(*remNodesIt);
             ROSE_ASSERT(node);
+            SageInterface::removeStatement(node);
+#if 0
+            // since SgFunctionDeclaration is a SgStatement, we can remove the call
+            // to getSurroundingStatement
             SgStatement* stmt = getSurroundingStatement(node);
             SageInterface::removeStatement(stmt);
+#endif
          }
 
          if (RTEDDEBUG()) cerr << "  changing privates to public" << endl;

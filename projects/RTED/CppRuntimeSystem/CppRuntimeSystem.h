@@ -276,13 +276,13 @@ class RuntimeSystem
                                   );
 
         /// for documentation see PointerManager::registerPointerChange()
-        void registerPointerChange( Address     src,
-                                    AddressDesc src_desc,
-                                    Address     tgt,
-                                    AddressDesc tgt_desc,
-                                    RsType*     type,
-                                    bool        checkPointerMove, //=false,
-                                    bool        checkMemLeaks //=true
+        void registerPointerChange( Address        src,
+                                    AddressDesc    src_desc,
+                                    Address        tgt,
+                                    AddressDesc    tgt_desc,
+                                    RsPointerType* type,
+                                    bool           checkPointerMove, //=false,
+                                    bool           checkMemLeaks //=true
                                   );
 
 #if OBSOLETE_CODE

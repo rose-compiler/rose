@@ -55,20 +55,23 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \
                        RtedTransf_locals.cpp RtedTransf_scopestmt.cpp \
                        RtedTransf_funcdef.cpp RtedTransf_variable.cpp \
-		       RtedTransf_returnStmt.cpp \
+										   RtedTransf_returnStmt.cpp RtedTransf_Upc.cpp \
                        RtedTransf_iofunccall.cpp RtedTransf_operators.cpp \
                        RtedTransf_copyClass.cpp \
 		       RtedTransformation.h \
 		       RtedSymbols.h \
 		       DataStructures.h \
-		       RuntimeSystem.h RuntimeSystem.cpp RuntimeSystem_ParsingWorkaround.h \
+		       RuntimeSystem_ParsingWorkaround.h \
 		       RtedVisit_Variable.cpp RtedVisit.h rosez.hpp
+
+# \pp included: RuntimeSystem.h RuntimeSystem.cpp
 
 
 
 SUBDIRS = CppRuntimeSystem
 
-runtimeCheck_LDADD =  $(ROSE_LIBS) CppRuntimeSystem/libCppRuntimeSystem.la
+# \pp was: runtimeCheck_LDADD =  $(ROSE_LIBS) CppRuntimeSystem/libCppRuntimeSystem.la
+runtimeCheck_LDADD =  $(ROSE_LIBS)
 
 runtimeCheck.o: runtimeCheck.cpp
 
