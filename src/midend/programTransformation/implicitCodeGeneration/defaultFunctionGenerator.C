@@ -2480,6 +2480,11 @@ DefaultFunctionGenerator::generateDefaultFunctionCall(SgMemberFunctionDeclaratio
   // NB:  appending might put this after a return statement!
   basicBlock->prepend_statement(exprStatement);
 
+  // driscoll6 (01/26/2011) Calls to base class destructors (TODO cite spec)
+  // are always implicit. Never output them in code generation.
+  exprStatement->get_startOfConstruct()->unsetOutputInCodeGeneration();
+  exprStatement->get_endOfConstruct()->unsetOutputInCodeGeneration();
+
   // Clean up the basic block to which we have just added this
   // expression.
   // AstPostProcessing(basicBlock);
