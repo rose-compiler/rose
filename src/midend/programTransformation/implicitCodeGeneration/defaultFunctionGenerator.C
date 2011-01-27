@@ -2058,7 +2058,9 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
 	  ROSE_ASSERT(ifStmt1->get_scope() != NULL);
 	  ROSE_ASSERT(ifStmt1->get_scope() != ifStmt1);
 	  ROSE_ASSERT(ifStmt1->get_scope() == bBlock1);
-	  ROSE_ASSERT(ifStmt1->get_parent() != NULL);
+	  ROSE_ASSERT(ifStmt1->get_parent() == bBlock1);
+	  ROSE_ASSERT(trueBody1->get_parent() == ifStmt1);
+	  ROSE_ASSERT(falseBody1->get_parent() == ifStmt1);
 	}
 
 
