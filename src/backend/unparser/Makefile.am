@@ -1,13 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 ###############################################################################
-cxxCodeGenerationPath=$(srcdir)/CxxCodeGeneration
-formatSupportPath=$(srcdir)/formatSupport
-fortranCodeGenerationPath=$(srcdir)/FortranCodeGeneration
-languageIndependenceSupportPath=$(srcdir)/languageIndependenceSupport
-phpCodeGenerationPath=$(srcdir)/PHPCodeGeneration
-
-
 # Subdirectory specifics
 # TOO (01/26/11): relative paths must be updated for each propagation upward
 # in the flattening of Makefiles 
@@ -18,6 +11,12 @@ include $(fortranCodeGenerationPath)/Makefile_variables
 include $(languageIndependenceSupportPath)/Makefile_variables
 include $(phpCodeGenerationPath)/Makefile_variables
 
+
+cxxCodeGenerationPath=$(srcdir)/CxxCodeGeneration
+formatSupportPath=$(srcdir)/formatSupport
+fortranCodeGenerationPath=$(srcdir)/FortranCodeGeneration
+languageIndependenceSupportPath=$(srcdir)/languageIndependenceSupport
+phpCodeGenerationPath=$(srcdir)/PHPCodeGeneration
 
 ###############################################################################
 
