@@ -1,17 +1,18 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 ###############################################################################
-cxxCodeGenerationPath=$(srcdir)/unparser/CxxCodeGeneration#
-formatSupportPath=$(srcdir)/unparser/formatSupport#
-fortranCodeGenerationPath=$(srcdir)/unparser/FortranCodeGeneration#
-languageIndependenceSupportPath=$(srcdir)/unparser/languageIndependenceSupport#
-phpCodeGenerationPath=$(srcdir)/unparser/PHPCodeGeneration#
-
-
 # Subdirectory specifics
-# TOO (01/26/11): relative paths must be updated for each propagation upward
-# in the flattening of Makefiles 
+# TOO (01/26/11): paths prefixed with $(srcdir) must be updated for each 
+# propagation upward in the flattening of Makefiles 
 #
+unparserPath=$(srcdir)/unparser#
+cxxCodeGenerationPath=$(unparserPath)/CxxCodeGeneration#
+formatSupportPath=$(unparserPath)/formatSupport#
+fortranCodeGenerationPath=$(unparserPath)/FortranCodeGeneration#
+languageIndependenceSupportPath=$(unparserPath)/languageIndependenceSupport#
+phpCodeGenerationPath=$(unparserPath)/PHPCodeGeneration#
+
+include $(unparserPath)/Makefile_variables
 include $(cxxCodeGenerationPath)/Makefile_variables
 include $(formatSupportPath)/Makefile_variables
 include $(fortranCodeGenerationPath)/Makefile_variables
@@ -22,59 +23,29 @@ include $(phpCodeGenerationPath)/Makefile_variables
 ###############################################################################
 
 INCLUDES=\
->...$(ROSE_INCLUDES)
+	$(ROSE_INCLUDES)
 
 
-noinst_LTLIBRARIES = libunparse.la
+noinst_LTLIBRARIES=\
 
-
-# unparser_headers = copy_unparser.h unparser.h unparse_sym.h
-unparser_headers = unparser.h unparse_sym.h astUnparseAttribute.h
-unparser_sources = $(unparser_headers:.h=.C)
 
 
 ##################################################################
 
-libunparse_la_SOURCES=\
->...$(unparser_sources) \
->...$(unparser_headers) \
->...$(unparseCxxCodeGeneration_la_sources) \
->...$(unparseFormatSupport_la_sources) \
->...$(unparseFortran_la_sources) \
->...$(unparseLanguageIndependenceSupport_la_sources) \
->...$(unparsePHPCodeGeneration_la_sources)
+libbackend_la_SOURCES=\
 
-
-libunparse_la_LIBADD = # 
 
 
 include_HEADERS=\
->...$(unparser_headers) \
->...$(unparseCxxCodeGeneration_includeHeaders) \
->...$(unparseFormat_includeHeaders) \
->...$(unparseFortran_includeHeaders) \
->...$(unparseLanguageIndependenceSupport_includeHeaders) \
->...$(unparsePHPCodeGeneration_includeHeaders)
 
 
 
 EXTRA_DIST=\
->...CMakeLists.txt \
->...unparser.docs \
->...$(unparseCxxCodeGeneration_extraDist) \
->...$(unparseFormatSupport_extraDist) \
->...$(unparseFortran_extraDist) \
->...$(unparseLanguageIndependenceSupport_extraDist) \
->...$(unparsePHPCodeGeneration_extraDist)
+	CMakeLists.txt
+
 
 
 clean-local:
->...rm -rf Templates.DB ii_files ti_files core
->...$(unparseCxxCodeGeneration_cleanLocal)
->...$(unparseFormatSupport_cleanLocal)
->...$(unparseFortran_cleanLocal)
->...$(unparseLanguageIndependenceSupport_cleanLocal)
->...$(unparsePHPCodeGeneration_cleanLocal)
 
 
 
@@ -84,6 +55,4 @@ clean-local:
 
 # DQ (10/29/2010): We have to include "asmUnparser" directory so that its header files 
 # will be installed by "make install", even with language only options are used.
-SUBDIRS = unparser asmUnparser
-
-EXTRA_DIST = CMakeLists.txt
+SUBDIRS = asmUnparser

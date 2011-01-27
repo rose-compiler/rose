@@ -1,11 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 ###############################################################################
-cxxCodeGenerationPath=$(srcdir)/CxxCodeGeneration#
-formatSupportPath=$(srcdir)/formatSupport#
-fortranCodeGenerationPath=$(srcdir)/FortranCodeGeneration#
-languageIndependenceSupportPath=$(srcdir)/languageIndependenceSupport#
-phpCodeGenerationPath=$(srcdir)/PHPCodeGeneration#
+cxxCodeGenerationPath=$(srcdir)/CxxCodeGeneration
+formatSupportPath=$(srcdir)/formatSupport
+fortranCodeGenerationPath=$(srcdir)/FortranCodeGeneration
+languageIndependenceSupportPath=$(srcdir)/languageIndependenceSupport
+phpCodeGenerationPath=$(srcdir)/PHPCodeGeneration
 
 
 # Subdirectory specifics
