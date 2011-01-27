@@ -3391,6 +3391,12 @@ void DefaultFunctionGenerator::visit (SgNode * astNode)
          {
            break;
          }
+
+        // driscoll6 (01/26/2011) SgInitializedNames in SgFunctionParameterLists should not be
+        // normalized.
+        if ( isSgFunctionParameterList(initName->get_parent()) != NULL) {
+            break;
+        }
   
         SgInitializer *newInit = normalizeInitializer(initName->get_initializer(), initName->get_type());
         initName->set_initializer(newInit);
