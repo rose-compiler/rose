@@ -1270,7 +1270,7 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
       SgFunctionRefExp *func_ref1 = buildFunctionRefExp (outlined_func); 
       external_stmt1->get_parameter_list()->prepend_expression(func_ref1);
       func_ref1->set_parent(external_stmt1->get_parameter_list());
-      // TODO, must put it into the declaration statement part, after possible implicit/include statements, if any
+      // must put it into the declaration statement part, after possible implicit/include statements, if any
       SgStatement* l_stmt = findLastDeclarationStatement (func_body); 
       if (l_stmt)
         insertStatementAfter(l_stmt,external_stmt1);
@@ -1301,9 +1301,7 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
       SgExpression * parameter2= buildIntVal(0); // TODO numThread not 0 
       SgExpression * parameter3 = buildIntVal (pdSyms3.size()); //TODO double check if pdSyms3 is the right set of variables to be passed
       parameters = buildExprListExp(buildFunctionRefExp(outlined_func), parameter2, parameter3);
-      //appendExpression(parameters, buildFunctionRefExp(outlined_func));
-      //appendExpression(parameters, parameter2);
-      //appendExpression(parameters, parameter3);
+
       ASTtools::VarSymSet_t::iterator iter = pdSyms3.begin();
       for (; iter!=pdSyms3.end(); iter++)
       {
