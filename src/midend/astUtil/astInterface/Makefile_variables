@@ -1,0 +1,36 @@
+
+mauAstInterface_includes=\
+	-I$(mauAstInterfacePath)/.. \
+	-I$(top_srcdir)/src/util \
+	-I$(top_srcdir)/src/util/support
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+mauAstInterface_la_sources=\
+	$(mauAstInterfacePath)/AstInterface.C \
+	$(mauAstInterfacePath)/CPPAstInterface.C
+
+
+mauAstInterface_includeHeaders=\
+	$(mauAstInterfacePath)/AstInterface.h \
+	$(mauAstInterfacePath)/CPPAstInterface.h \
+	$(mauAstInterfacePath)/AstInterface_ROSE.h
+
+
+mauAstInterface_extraDist=\
+	$(mauAstInterfacePath)/CMakeLists.txt
+
+
+mauAstInterface_cleanLocal=\
+	rm -rf \
+		$(mauAstInterfacePath)/Templates.DB \
+		$(mauAstInterfacePath)/ii_files \
+		$(mauAstInterfacePath)/ti_files \
+		$(mauAstInterfacePath)/cxx_templates
+
+
+mauAstInterface_distCleanLocal=\
+	rm -rf $(mauAstInterfacePath)/Templates.DB
