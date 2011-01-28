@@ -1,0 +1,19 @@
+
+mptFunctionCallNormalization_la_sources=\
+	$(mptFunctionCallNormalizationPath)/FunctionNormalization.C
+
+
+mptFunctionCallNormalization_includeHeaders=\
+	$(mptFunctionCallNormalizationPath)/FunctionNormalization.h
+
+
+mptFunctionCallNormalization_extraDist=\
+$(mptFunctionCallNormalizationPath)/CMakeLists.txt
+
+
+mptFunctionCallNormalization_cleanLocal=\
+	rm -rf \
+		$(mptFunctionCallNormalizationPath)/Templates.DB \
+		$(mptFunctionCallNormalizationPath)/ii_files \
+		$(mptFunctionCallNormalizationPath)/ti_files \
+		$(mptFunctionCallNormalizationPath)/core

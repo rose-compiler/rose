@@ -2493,8 +2493,6 @@ src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile
 src/midend/abstractHandle/Makefile
-src/midend/programTransformation/astInlining/Makefile
-src/midend/programTransformation/astOutlining/Makefile
 src/midend/astUtil/Makefile
 src/midend/astUtil/astInterface/Makefile
 src/midend/astUtil/astSupport/Makefile  
@@ -2505,7 +2503,6 @@ src/midend/astProcessing/Makefile
 src/midend/astRewriteMechanism/Makefile
 src/midend/astDiagnostics/Makefile
 src/midend/binaryAnalyses/Makefile
-src/midend/programTransformation/ompLowering/Makefile
 src/midend/programAnalysis/Makefile
 src/midend/programAnalysis/CallGraphAnalysis/Makefile
 src/midend/programAnalysis/OAWrap/Makefile
@@ -2522,19 +2519,6 @@ src/midend/programAnalysis/sideEffectAnalysis/Makefile
 src/midend/programAnalysis/distributedMemoryAnalysis/Makefile
 src/midend/programAnalysis/graphAnalysis/Makefile
 src/midend/programTransformation/Makefile
-src/midend/programTransformation/partialRedundancyElimination/Makefile
-src/midend/programTransformation/finiteDifferencing/Makefile
-src/midend/programTransformation/functionCallNormalization/Makefile
-src/midend/programTransformation/constantFolding/Makefile
-src/midend/programTransformation/implicitCodeGeneration/Makefile
-src/midend/programTransformation/loopProcessing/Makefile
-src/midend/programTransformation/loopProcessing/prepostTransformation/Makefile
-src/midend/programTransformation/loopProcessing/depInfo/Makefile
-src/midend/programTransformation/loopProcessing/depGraph/Makefile
-src/midend/programTransformation/loopProcessing/computation/Makefile
-src/midend/programTransformation/loopProcessing/slicing/Makefile
-src/midend/programTransformation/loopProcessing/outsideInterface/Makefile
-src/midend/programTransformation/loopProcessing/driver/Makefile
 src/backend/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
