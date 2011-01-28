@@ -39,6 +39,7 @@ endif
 rosePerformanceTest.passed: rosePerformanceTest
 	@$(RTH_RUN) EXE=./$< ARGS="-rose:compilationPerformanceFile ROSE_PERFORMANCE_DATA.csv -c $(srcdir)/input.C" \
 		$(srcdir)/tests.conf $@
+EXTRA_DIST += input.C ExampleTimings.txt
 MOSTLYCLEANFILES += ROSE_PERFORMANCE_DATA.csv
 
 ################################################################################
