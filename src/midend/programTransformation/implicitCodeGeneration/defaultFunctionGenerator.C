@@ -2373,7 +2373,6 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
   // operator=, we have work to do!
   // AstPostProcessing(parentClassDef1);
   // AstPostProcessing(func_def);
-  generateImplicitInvocations(func_def);
 
   if ( enumFunctionType == e_copy_constructor )
     ROSE_ASSERT(isCopyConstructor(func));
