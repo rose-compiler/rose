@@ -163,7 +163,7 @@ InitializeExplicitScopes::visit ( SgNode *node)
                               ROSE_ASSERT(initializerList != NULL);
                               SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(initializerList->get_parent());
                               ROSE_ASSERT(memberFunctionDeclaration != NULL);
-                              printf ("memberFunctionDeclaration->get_definition() = %p \n",memberFunctionDeclaration->get_definition());
+                              //printf ("memberFunctionDeclaration->get_definition() = %p \n",memberFunctionDeclaration->get_definition());
 
                            // Check if this function declaration has a function definition
                               if (memberFunctionDeclaration->get_definition() == NULL)
