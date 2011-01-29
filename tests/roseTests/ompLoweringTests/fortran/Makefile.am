@@ -25,7 +25,10 @@ F77_TESTCODES_REQUIRED_TO_RUN = \
   private.f \
   reduction.f \
   shared.f \
-  single.f
+  single.f \
+  task_largenumber.f \
+  task_scalar.f \
+  task_simplest.f
 
 F90_TESTCODES_REQUIRED_TO_RUN = 
 

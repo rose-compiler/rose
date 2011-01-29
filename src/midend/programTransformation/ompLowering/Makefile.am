@@ -6,7 +6,8 @@ noinst_LTLIBRARIES = libompLowering.la
 libompLowering_la_SOURCES = omp_lowering.cpp omp_lowering.h
 # avoid using libtool for libxomp.a since it will be directly linked to executable
 lib_LIBRARIES = libxomp.a
-libxomp_a_SOURCES = xomp.c
+libxomp_a_SOURCES = xomp.c run_me_task_defs.inc
+#libxomp_a_CXXFLAGS = -pthreads
 
 include_HEADERS = omp_lowering.h libgomp_g.h \
            libompc.h  libxomp.h libxompf.h \

@@ -24,7 +24,10 @@ F77_TESTCODES_TO_PASS = \
     schedule.f \
     shared-array.f \
     shared.f \
-    single.f
+    single.f \
+    task_largenumber.f \
+    task_scalar.f \
+    task_simplest.f
 
 # DQ (3/4/2010): Added simple test code to debug fortran OFP usage.
 F77_TESTCODES_TO_PASS += testNewOFP.f
@@ -53,12 +56,14 @@ F90_TESTCODES_TO_PASS = \
 # barrier.f, exmpaleA221f.f  wrong comment position for the 2nd barrier
 # exampleA11f.f  combined parallel do is attached to wrong place, and is not removed!
 # ompdo-decremental-2.f  wrong location for !$omp parallel do 
+# task_largenumber2.f : bug 495 https://outreach.scidac.gov/tracker/?func=detail&atid=185&aid=495&group_id=24
 TESTCODES_CURRENTLY_FAILING = \
     barrier.f \
     exampleA11f.f \
     exampleA211f.f \
     exampleA281f.f \
     exampleA102f.f90 \
+    task_largenumber2.f \
     exampleA161f.f90 \
     flush2.f \
     exmpaleA221f.f \

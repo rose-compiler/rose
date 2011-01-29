@@ -94,6 +94,11 @@ SgVariableSymbol *
 getVarSymFromName (SgInitializedName* name)
 {
   const SgVariableSymbol* v_sym = getVarSymFromName_const (name);
+  if (v_sym == NULL)
+  {
+    //cerr<<"Warning: VarSym.cc getVarSymFromName() fails to find a symbol for:"<<name->get_name().getString()<<endl;
+    //ROSE_ASSERT (v_sym != NULL);
+  }
   return const_cast<SgVariableSymbol *> (v_sym);
 }
 
@@ -175,9 +180,26 @@ getVarSyms (SgNode* n, ASTtools::VarSymSet_t* p_syms)
         SgVariableDeclaration* v_decl = isSgVariableDeclaration (n);
         ROSE_ASSERT (v_decl);
         SgInitializedNamePtrList& names = v_decl->get_variables ();
-        transform (names.begin (), names.end (),
-                   inserter (syms, syms.begin ()),
-                   getVarSymFromName);
+//        transform (names.begin (), names.end (),
+//                   inserter (syms, syms.begin ()),
+//                   getVarSymFromName);
+       for (SgInitializedNamePtrList::iterator iter = names.begin (); iter != names.end (); iter++)
+       {
+         SgVariableSymbol* v_sym = getVarSymFromName(*iter);  
+         // We relax for Fortran since the external function_name is not well implemented right now
+         // Liao 1/21/2010
+         // TODO
+         if (v_sym == NULL)
+         {
+           if (SageInterface::is_Fortran_language() )
+             cerr<<"Warning: getVarSyms() cannot find a symbol for "<< (*iter)->get_name().getString()<<endl;
+           else
+             ROSE_ASSERT (v_sym != NULL);
+         }
+
+         if (v_sym)
+           syms.insert (v_sym);
+       }
       }
       break;
     case V_SgInitializedName:
