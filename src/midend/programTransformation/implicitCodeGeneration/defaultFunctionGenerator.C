@@ -2376,6 +2376,10 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
 
   if ( enumFunctionType == e_copy_constructor )
     ROSE_ASSERT(isCopyConstructor(func));
+
+  // Generated functions should be "inline". TODO double check the spec on this
+  func->get_functionModifier().setInline();
+
   return func;
 }
 
