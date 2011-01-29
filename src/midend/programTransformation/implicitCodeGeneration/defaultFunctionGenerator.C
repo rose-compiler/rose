@@ -2399,6 +2399,12 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
   // Generated functions should be "inline". TODO double check the spec on this
   func->get_functionModifier().setInline();
 
+  // Set File_Info
+  func     -> set_file_info(COMPILERGENERATED_FILE_INFO);
+  func_def -> set_file_info(COMPILERGENERATED_FILE_INFO);
+  func     -> set_endOfConstruct(COMPILERGENERATED_FILE_INFO);
+  func_def -> set_endOfConstruct(COMPILERGENERATED_FILE_INFO);
+
   return func;
 }
 
