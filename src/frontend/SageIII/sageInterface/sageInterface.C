@@ -12720,6 +12720,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                        }
                      break;
                      case V_SgFortranIncludeLine:
+                     case V_SgAttributeSpecificationStatement:
                        break;
                     default:
                        {

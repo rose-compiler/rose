@@ -1074,8 +1074,21 @@ This is no perfect solution until we handle preprocessing information as structu
    end_type = getOmpConstructEnum (end_decl);
    ROSE_ASSERT (begin_type == getBeginOmpConstructEnum(end_type));
 
+#if 0
    // Make sure they are at the same level ??
-   ROSE_ASSERT (begin_decl->get_parent() == end_decl->get_parent()); 
+   // Fortran do loop may have wrong file info, which cause comments to be attached to another scope
+   // Consequently, the end pragma will be in a higher/ different scope
+   // A workaround for bug 495: https://outreach.scidac.gov/tracker/?func=detail&atid=185&aid=495&group_id=24
+   if (SageInterface::is_Fortran_language() )
+   {
+     if (begin_decl->get_parent() != end_decl->get_parent())
+     {
+       ROSE_ASSERT (isAncestor (end_decl->get_parent(), begin_decl->get_parent()));
+     }
+   }
+   else  
+#endif     
+    ROSE_ASSERT (begin_decl->get_parent() == end_decl->get_parent()); 
 
    // merge end directive's clause to the begin directive.
    OmpAttribute* begin_att = getOmpAttribute (begin_decl); 
@@ -1123,6 +1136,9 @@ This is no perfect solution until we handle preprocessing information as structu
     omp_construct_enum end_omp_type = getEndOmpConstructEnum(omp_type);
     SgPragmaDeclaration* end_decl = NULL; 
     SgStatement* next_stmt = getNextStatement(decl);
+  //  SgStatement* prev_stmt = decl;
+  //  SgBasicBlock* func_body = getEnclosingProcedure (decl)->get_body();
+  //  ROSE_ASSERT (func_body != NULL);
 
     std::vector<SgStatement*> affected_stmts; // statements which are inside the begin .. end pair
 
@@ -1135,8 +1151,38 @@ This is no perfect solution until we handle preprocessing information as structu
       else
         end_decl = NULL; // MUST reset to NULL if not a match
       affected_stmts.push_back(next_stmt);
+   //   prev_stmt = next_stmt; // save previous statement
       next_stmt = getNextStatement (next_stmt);
-    }  
+#if 0
+      // Liao 1/21/2011
+      // A workaround of wrong file info for Do loop body
+      // See bug 495 https://outreach.scidac.gov/tracker/?func=detail&atid=185&aid=495&group_id=24
+      // Comments will not be attached before ENDDO, but some parent located node instead.
+      // SageInterface::getNextStatement() will not climb out current scope and find a matching end directive attached to a parent node.
+      //
+      // For example 
+      //        do i = 1, 10
+      //     !$omp task 
+      //        call process(item(i))
+      //     !$omp end task
+      //          enddo
+      // The !$omp end task comments will not be attached before ENDDO , but inside SgBasicBlock, which is an ancestor node  
+     if (SageInterface::is_Fortran_language() )
+     {
+      // try to climb up one statement level, until reaching the function body
+       SgStatement* parent_stmt  = getEnclosingStatement(prev_stmt->get_parent());
+       // getNextStatement() cannot take SgFortranDo's body as input (the body is not a child of its scope's declaration list)
+       // So we climb up to the parent do loop
+       if (isSgFortranDo(parent_stmt->get_parent()))  
+         parent_stmt = isSgFortranDo(parent_stmt->get_parent());
+       else if (isSgWhileStmt(parent_stmt->get_parent()))  
+         parent_stmt = isSgWhileStmt(parent_stmt->get_parent());
+
+       if (parent_stmt != func_body) 
+         next_stmt = getNextStatement (parent_stmt);
+     }
+#endif     
+    }  // end while
 
     // mandatory end directives for most begin directives, except for two cases:
     // !$omp end do
@@ -1146,7 +1192,7 @@ This is no perfect solution until we handle preprocessing information as structu
       if ((end_omp_type!=e_end_do) &&  (end_omp_type!=e_end_parallel_do))
       {
         cerr<<"merge_Matching_Fortran_Pragma_pairs(): cannot find required end directive for: "<< endl;
-        cerr<<decl->unparseToString()<<endl;
+        cerr<<decl->get_pragma()->get_pragma()<<endl;
         ROSE_ASSERT (false);
       }
       else 

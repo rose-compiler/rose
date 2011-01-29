@@ -1418,7 +1418,6 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
 
    Since we use the ROSE outliner to generate the outlined function. The parameters are wrapped into an array of pointers to them
   So the calculation of data(parameter) size/align is simplified . They are all pointer types.
-  TODO we now use a structure to wrap parameters, we have to go through each field of the structure to compute the size!
   */
   void transOmpTask(SgNode* node)
   {
@@ -1426,12 +1425,24 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     SgOmpTaskStatement* target = isSgOmpTaskStatement(node);
     ROSE_ASSERT (target != NULL);
 
+    // Liao 1/24/2011
+    // For Fortran code, we have to insert EXTERNAL OUTLINED_FUNC into 
+    // the function body containing the parallel region
+    // TODO verify this is also necessary for OMP TASK
+    SgFunctionDefinition * func_def = NULL;
+    if (SageInterface::is_Fortran_language() )
+    {
+      func_def = getEnclosingFunctionDefinition(target);
+      ROSE_ASSERT (func_def != NULL);
+    }
+
     SgStatement * body =  target->get_body();
     ROSE_ASSERT(body != NULL);
     // Save preprocessing info as early as possible, avoiding mess up from the outliner
     AttachedPreprocessingInfoType save_buf1, save_buf2;
     cutPreprocessingInfo(target, PreprocessingInfo::before, save_buf1) ;
     cutPreprocessingInfo(target, PreprocessingInfo::after, save_buf2) ;
+
     // generated an outlined function as a task
     std::string wrapper_name;
     ASTtools::VarSymSet_t syms;
@@ -1439,10 +1450,32 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     std::set<SgInitializedName*> readOnlyVars;
     SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, readOnlyVars, pdSyms3);
 
+    if (SageInterface::is_Fortran_language() )
+    { // EXTERNAL outlined_function , otherwise the function name will be interpreted as a integer/real variable
+      ROSE_ASSERT (func_def != NULL);
+      // There could be an enclosing parallel region
+      //SgBasicBlock * func_body = func_def->get_body();
+      SgBasicBlock * enclosing_body = getEnclosingRegionOrFuncDefinition (target);
+      ROSE_ASSERT (enclosing_body != NULL);
+      SgAttributeSpecificationStatement* external_stmt1 = buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_externalStatement)
+;
+      SgFunctionRefExp *func_ref1 = buildFunctionRefExp (outlined_func);
+      external_stmt1->get_parameter_list()->prepend_expression(func_ref1);
+      func_ref1->set_parent(external_stmt1->get_parameter_list());
+      // must put it into the declaration statement part, after possible implicit/include statements, if any
+      SgStatement* l_stmt = findLastDeclarationStatement (enclosing_body);
+      if (l_stmt)
+        insertStatementAfter(l_stmt,external_stmt1);
+      else
+        prependStatement(external_stmt1, enclosing_body);
+    }
+
+
     SgScopeStatement * p_scope = target->get_scope();
     ROSE_ASSERT(p_scope != NULL);
     // Generate a call to it
    
+    SgExprListExp* parameters =  NULL;
     //SgStatement* func_call = Outliner::generateCall (outlined_func, syms, readOnlyVars, wrapper_name,p_scope);
     //ROSE_ASSERT(func_call != NULL);
 
@@ -1454,30 +1487,53 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     //      file_info->unsetOutputInCodeGeneration ();
     //
     //func_call->get_file_info()->unsetOutputInCodeGeneration (); 
-    //  void GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *), long arg_size, long arg_align, 
-    //                  bool if_clause, unsigned flags)
     SgExpression * parameter_data = NULL;
     SgExpression * parameter_cpyfn = NULL;
     SgExpression * parameter_arg_size = NULL;
     SgExpression * parameter_arg_align = NULL;
     SgExpression * parameter_if_clause =  NULL;
     SgExpression * parameter_untied = NULL;
+    SgExpression * parameter_argcount = NULL;
     size_t parameter_count = syms.size();
-    if ( parameter_count == 0) // No parameters to be passed at all
-    {
-      parameter_data = buildIntVal(0);
-      parameter_cpyfn=buildIntVal(0); // no copy function is needed
-      parameter_arg_size = buildIntVal(0);
-      parameter_arg_align = buildIntVal(0);
+   
+    if (SageInterface::is_Fortran_language())
+    { // Fortran case
+    //  void xomp_task (void (*fn) (void *), void (*cpyfn) (void *, void *), int * arg_size, int * arg_align, 
+    //                  int * if_clause, int * untied, int * argcount, ...)
+      
+        parameter_cpyfn=buildIntVal(0); // no special copy function for array of pointers
+        parameter_arg_size = buildIntVal( parameter_count * sizeof(void*) );
+        //  TODO get right alignment
+        parameter_arg_align = buildIntVal(4);
     }
-    else
-    {
-      parameter_data =  buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope));
-      parameter_cpyfn=buildIntVal(0); // no special copy function for array of pointers
-      // arg size of array of pointers = pointer_count * pointer_size
-      // ROSE does not support cross compilation so sizeof(void*) can use as a workaround for now
-      parameter_arg_size = buildIntVal( parameter_count* sizeof(void*));
-      parameter_arg_align = buildIntVal(sizeof(void*));
+    else // C/C++ case
+    //  void GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *), long arg_size, long arg_align, 
+    //                  bool if_clause, unsigned flags)
+    { 
+      if ( parameter_count == 0) // No parameters to be passed at all
+      {
+        parameter_data = buildIntVal(0);
+        parameter_cpyfn=buildIntVal(0); // no copy function is needed
+        parameter_arg_size = buildIntVal(0);
+        parameter_arg_align = buildIntVal(0);
+      }
+      else
+      {
+        SgVarRefExp * data_ref = buildVarRefExp(wrapper_name, p_scope);
+        ROSE_ASSERT (data_ref != NULL);
+        SgType * data_type = data_ref->get_type();
+        parameter_data =  buildAddressOfOp(data_ref);
+        parameter_cpyfn=buildIntVal(0); // no special copy function for array of pointers
+        // arg size of array of pointers = pointer_count * pointer_size
+        // ROSE does not support cross compilation so sizeof(void*) can use as a workaround for now
+        //we now use a structure containing pointers or non-pointer typed members to wrap parameters
+        parameter_arg_size =  buildSizeOfOp(data_type);
+        //  parameter_arg_size = buildIntVal( parameter_count* sizeof(void*));
+        //  TODO get right alignment
+        parameter_arg_align = buildIntVal(4);
+        //parameter_arg_align = buildIntVal(sizeof(void*));
+      }
+
     }
 
     if (hasClause(target, V_SgOmpIfClause))
@@ -1496,8 +1552,63 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     else  
       parameter_untied = buildIntVal(0);
 
-    SgExprListExp* parameters = buildExprListExp(buildFunctionRefExp(outlined_func),
+    
+   // parameters are different between Fortran and C/C++
+   // To support pass-by-value and pass-by-reference in the XOMP runtime
+   // We use a triplet for each parameter to be passed to XOMP
+   // <pass_by_value-ref, value-size, parameter-address>
+   // e.g. if a integer i is intended to be passed by value in the task
+   //   we generate three argument for it: 1, sizeof(int), i
+    // similarly, for an array item[10], passed by reference in the task
+    //   we generate: 0, sizeof(void*), item
+    //   As a result, the variable length argument list is 3 times the count of original parameters long
+    if (SageInterface::is_Fortran_language())
+    {
+      parameters = buildExprListExp(buildFunctionRefExp(outlined_func),
+        parameter_cpyfn, parameter_arg_size, parameter_arg_align, parameter_if_clause, parameter_untied);
+
+      parameter_argcount =  buildIntVal (syms.size()*3);
+      appendExpression (parameters,parameter_argcount);
+      ASTtools::VarSymSet_t::iterator iter = syms.begin();
+      for (; iter!=syms.end(); iter++)
+      {
+        const SgVariableSymbol * sb = *iter;
+        bool b_pass_value = true;
+        // TODO more accurate way to decide on pass-by-value or pass-by-reference
+        // We temporarily use pass-by-value for scalar type, and pass-by-reference for array type
+        SgType * s_type = sb->get_type();
+        if (isScalarType(s_type))
+        {
+          b_pass_value = true;
+          appendExpression (parameters,buildIntVal(1));
+        }
+        else
+        {
+          b_pass_value = false;
+          appendExpression (parameters,buildIntVal(0));
+        }
+
+        //2nd of the triplet, the size of the parameter type, 
+        // if pass-by-value, the actual size
+        // if pass-by-reference, the pointer size
+        if (b_pass_value)
+        { //TODO accurate calculation of type size for Fortran, assume integer for now
+          appendExpression (parameters,buildIntVal(4));
+        }
+        else  
+        { // get target platform's pointer size 
+          appendExpression (parameters,buildIntVal(sizeof(void*)));
+        }
+        
+        // the third of the triplet
+        appendExpression (parameters, buildVarRefExp(const_cast<SgVariableSymbol *>(sb)));
+      }
+    }  
+    else
+    {
+      parameters = buildExprListExp(buildFunctionRefExp(outlined_func),
         parameter_data, parameter_cpyfn, parameter_arg_size, parameter_arg_align, parameter_if_clause, parameter_untied);
+    }
 
 #ifdef ENABLE_XOMP
     SgExprStatement * s1 = buildFunctionCallStmt("XOMP_task", buildVoidType(), parameters, p_scope);
