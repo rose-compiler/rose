@@ -74,7 +74,7 @@ getVarSymFromName_const (const SgInitializedName* name)
             v_sym = decl_scope->lookup_var_symbol (name->get_name ());
 
           if (!v_sym)
-            cerr << "Warning: getVarSymFromName_const (): Can't seem to find a symbol for '"
+            cerr << "Warning: astOutlining, getVarSymFromName_const (): Can't seem to find a symbol for '"
                  << name->get_name ().str ()
                  << "' " << endl;
         }
@@ -209,21 +209,24 @@ getFirstVarSym_const (const SgVariableDeclaration* decl)
     return 0;
 }
 
-
 SgVariableSymbol *
 ASTtools::getFirstVarSym (SgVariableDeclaration* decl)
 {
   const SgVariableSymbol* sym = getFirstVarSym_const (decl);
   return const_cast<SgVariableSymbol *> (sym);
 }
+
 #endif
+
 void
 ASTtools::collectRefdVarSyms (const SgStatement* s, VarSymSet_t& syms)
 {
   // First, collect all variable reference expressions, {e}
   typedef Rose_STL_Container<SgNode *> NodeList_t;
   NodeList_t var_refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVarRefExp);
-
+//  NodeList_t type_list = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgType,AstQueryNamespace::ExtractTypes);
+  
+  SageInterface::addVarRefExpFromArrayDimInfo(const_cast<SgStatement *> (s), var_refs);
   // Next, insert the variable symbol for each e into syms.
   transform (var_refs.begin (),
              var_refs.end (),

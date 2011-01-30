@@ -66,7 +66,7 @@ extern int Tst_count;		/* Test Case counter for tst_* routines */
 int exp_enos[] = { 0 };		/* List must end with 0 */
 
 //#define MAXNPROCS	10000 /*These should be sufficient*/
-#define MAXNPROCS	100   /* ROSE: be nice to users */
+#define MAXNPROCS	5   /* ROSE: be nice to users */
 #define MAXNREPS	10000 /*Else they srewup the system un-necessarily*/
 #define FAIL		1
 #define PASS		0
@@ -134,8 +134,13 @@ char *argv[];
 
 	if (argc == 1) {
 		/* Set default parameters */
+#if 1 /* We don't need such large defaults for ROSE. [RPM 2011-01-05] */
+                nreps = 1;
+                nprocs = 1;
+#else
 		nreps = MAXNREPS;
 		nprocs = MSGMNI;
+#endif
 	} else if (argc == 3) {
 		if (atoi(argv[1]) > MAXNREPS) {
 			tst_resm(TCONF,

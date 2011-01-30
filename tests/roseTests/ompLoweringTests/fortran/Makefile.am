@@ -6,7 +6,10 @@ INCLUDES = $(ROSE_INCLUDES)
 GOMP_PATH = @gomp_omp_runtime_library_path@
 OMNI_PATH = @omni_omp_runtime_support_path@
 
-F77_TESTCODES_REQUIRED_TO_COMPILE = 
+F77_TESTCODES_REQUIRED_TO_COMPILE = \
+  array-one.f \
+  jacobi.f \
+  shared-array.f
 
 F90_TESTCODES_REQUIRED_TO_COMPILE = 
 
@@ -14,7 +17,11 @@ F77_TESTCODES_REQUIRED_TO_RUN = \
   helloworld.f \
   ompdo-default.f \
   ompdo-decremental.f \
+  ompdo-static.f \
+  ompdo-orphaned.f \
+  ompdo-multiple.f \
   private.f \
+  reduction.f \
   shared.f
 
 F90_TESTCODES_REQUIRED_TO_RUN = 

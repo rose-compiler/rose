@@ -1,4 +1,5 @@
 #include <time.h>
+#include <err.h>
 
 char *TCID = "syscall.13";
 int TST_TOTAL = 1;

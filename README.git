@@ -75,6 +75,14 @@ X     git push origin matt
 
     < change back the file: /nfs/casc/overture/ROSE/git/ROSE.git/hooks/pre-receive >
 
+############## Building a new cloned repository and branch using smgit ############
+
+    60  15:47   smgit clone /nfs/casc/overture/ROSE/git/ROSE.git git-dq-java-rc
+    62  15:59   cd git-dq-java-rc
+  # 64  16:01   smgit branch dq-java-rc --track origin/dq-java-rc // This failed...I don't know why.
+    65  16:02   smgit branch dq-java-rc
+    66  16:02   smgit checkout dq-java-rc
+    67  16:02   git branch
 
 ############## WE DESCRIBE HOW TO CREATE A NEW BRANCH  ####################
 

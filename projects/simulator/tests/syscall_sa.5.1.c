@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <err.h>
 
+#include <unistd.h>
+
 char *TCID = "syscall.5";
 int TST_TOTAL = 1;
 
@@ -16,8 +18,6 @@ int TST_TOTAL = 1;
 char pfilname[40] = "";
 
 int main() {
-	char *msg;		/* message returned from parse_opts */
-
 	struct stat statbuf;
 	int fd0, fd1;
 	unsigned short filmode;

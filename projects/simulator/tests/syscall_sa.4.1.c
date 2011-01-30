@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
+#include <unistd.h>
 
 char *TCID = "syscall.4";
 int TST_TOTAL = 1;
@@ -26,7 +27,7 @@ int main() {
 
   int result = write(fd, &buf, 1);
 
-  if( fd == -1 )
+  if( result == -1 )
     err(1,"write failed");
 
   close(fd);

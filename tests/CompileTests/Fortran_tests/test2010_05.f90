@@ -1,10 +1,10 @@
-MODULE precision
+MODULE precision_05
      EXTERNAL MPI_WTIME
      REAL MPI_WTIME
-END MODULE precision
+END MODULE precision_05
 
 subroutine timer()
-  use precision
+  use precision_05
   implicit none
 
   real t1wc

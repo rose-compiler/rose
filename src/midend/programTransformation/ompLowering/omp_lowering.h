@@ -20,6 +20,7 @@ namespace OmpSupport
     e_omni,
     e_last_rtl
   };
+  extern unsigned int nCounter; // translation generated variable counter, used to avoid name collision
 
   extern omp_rtl_enum rtl_type; 
   typedef std::map<const SgVariableSymbol *, SgVariableSymbol *> VariableSymbolMap_t;
@@ -50,11 +51,11 @@ namespace OmpSupport
   //! Translate omp task
   void transOmpTask(SgNode* node);
 
-  //! Translate omp for
-  void transOmpFor(SgNode* node);
+  //! Translate omp for or omp do loops
+  void transOmpLoop(SgNode* node);
 
   //! Translate Fortran omp do
-  void transOmpDo(SgNode* node);
+  //void transOmpDo(SgNode* node);
 
 
   //! Translate omp barrier
@@ -149,6 +150,8 @@ namespace OmpSupport
   //! Collect threadprivate variables within the current project, return a set to avoid duplicated elements. No input parameters are needed since it finds match from memory pools
   std::set<SgInitializedName*> collectThreadprivateVariables();
 
+  //! Special handling when trying to build and insert a variable declaration into a BB within Fortran OpenMP code
+  SgVariableDeclaration * buildAndInsertDeclarationForOmp(const std::string &name, SgType *type, SgInitializer *varInit, SgBasicBlock *orig_scope);
 } // end namespace OmpSupport  
 
 #endif //OMP_LOWERING_H
