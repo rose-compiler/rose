@@ -92,6 +92,7 @@ createInitName (const string& name, SgType* type,
       scope->insert_symbol (sg_name, new_sym);
       ROSE_ASSERT (new_sym->get_parent() != NULL);
     }
+  ROSE_ASSERT (new_name->get_endOfConstruct() != NULL);
 
   return new_name;
 }
@@ -193,9 +194,12 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
     // This is called the auto type conversion for function or array typed variables 
     // that are passed as function parameters
     // Liao 4/24/2009
-    if (isSgArrayType(param_base_type)) 
-      if (isSgFunctionDefinition(i_name->get_scope()))
-        param_base_type= SageBuilder::buildPointerType(isSgArrayType(param_base_type)->get_base_type());
+    if (!SageInterface::is_Fortran_language() ) // Only apply to C/C++, not Fortran!
+    {
+      if (isSgArrayType(param_base_type)) 
+        if (isSgFunctionDefinition(i_name->get_scope()))
+          param_base_type= SageBuilder::buildPointerType(isSgArrayType(param_base_type)->get_base_type());
+    }
      
     //For C++ reference type, we use its base type since pointer to a reference type is not allowed
     //Liao, 8/14/2009
@@ -255,7 +259,18 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
       new_param_name+= "p__";
     }
     else
-      new_param_name= "s_"+new_param_name; //s_ means shared variables
+    {
+      // Fortran:
+      // Liao 1/19/2010
+      // We have to keep the parameter names the same as the original ones
+      // Otherwise, we have to deep copy the SgArrayType used in the outlined portion and replace the name within dim info expression list.
+      //
+      // In an outlined function: 
+      // e.g. INTEGER :: s_N
+      //      DOUBLE PRECISION, DIMENSION(N) :: s_array // mismatch of N and s_N, the same SgArrayType is reused.
+      //new_param_name= "s_"+new_param_name; //s_ means shared variables
+      new_param_name= new_param_name; //s_ means shared variables
+    }
 
   }
 

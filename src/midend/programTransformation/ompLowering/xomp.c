@@ -233,15 +233,17 @@ void XOMP_taskwait (void)
 #else
 #endif 
 }
-
+//===================================== loop scheduling ==============================================
 // 2^31 -1 for 32-bit integer
-#define MAX_SIGNED_INT ((int)(1<< (sizeof(int)*8-1)) -1)
+//#define MAX_SIGNED_INT ((int)(1<< (sizeof(int)*8-1)) -1)
+#define MAX_SIGNED_INT 2147483647l
 // -2^31
-#define MIN_SIGNED_INT (0-(int)(1<< (sizeof(int)*8-1)))
-
+//#define MIN_SIGNED_INT (0-(int)(1<< (sizeof(int)*8-1)))
+#define MIN_SIGNED_INT -2147483648l
 
 #define CHECK_SIGNED_INT_RANGE(x) assert((x>=MIN_SIGNED_INT) && (x<=MAX_SIGNED_INT))
 
+// -------default scheduling ----------------------
 //Accommodate Fortran issues: underscore, small case, pass-by-reference
 void xomp_loop_default (int* lower, int* upper, int* stride, int *n_lower, int * n_upper);
 #pragma weak xomp_loop_default_=xomp_loop_default
@@ -338,22 +340,119 @@ extern void XOMP_loop_default(int lower, int upper, int stride, long* n_lower, l
 }
 
 
+//---------------- init-----------------------------------------
+//---------- static--------------
+//Glue to support Fortran
+void xomp_loop_static_init(int* lower, int* upper, int* stride, int* chunk_size);
+#pragma weak xomp_loop_static_init_=xomp_loop_static_init
+void xomp_loop_static_init(int* lower, int* upper, int* stride, int* chunk_size)
+{
+  XOMP_loop_static_init (*lower, *upper, *stride, *chunk_size);
+}
 // scheduler initialization, only meaningful used for OMNI
 void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   // empty operation for gomp
 #else   
+  // adjust inclusive upper bounds of XOMP to non inclusive bounds of GOMP and OMNI
+  if (stride>0)
+    upper ++; //+1 to be non-inclusive for an incremental iteration space
+  else
+    upper --;
    _ompc_static_sched_init (lower, upper, stride, chunk_size);
 #endif    
 }
 
+//---------- dynamic--------------
+//Glue to support Fortran
+void xomp_loop_dynamic_init(int* lower, int* upper, int* stride, int* chunk_size);
+#pragma weak xomp_loop_dynamic_init_=xomp_loop_dynamic_init
+void xomp_loop_dynamic_init(int* lower, int* upper, int* stride, int* chunk_size)
+{
+  XOMP_loop_dynamic_init (*lower, *upper, *stride, *chunk_size);
+}
+// scheduler initialization, only meaningful used for OMNI
+void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_size)
+{
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  // empty operation for gomp
+#else
+  // adjust inclusive upper bounds of XOMP to non inclusive bounds of GOMP and OMNI
+  if (stride>0)
+    upper ++; //+1 to be non-inclusive for an incremental iteration space
+  else
+    upper --;
+   _ompc_dynamic_sched_init (lower, upper, stride, chunk_size);
+#endif
+}
+
+//---------- guided--------------
+//Glue to support Fortran
+void xomp_loop_guided_init(int* lower, int* upper, int* stride, int* chunk_size);
+#pragma weak xomp_loop_guided_init_=xomp_loop_guided_init
+void xomp_loop_guided_init(int* lower, int* upper, int* stride, int* chunk_size)
+{
+  XOMP_loop_guided_init (*lower, *upper, *stride, *chunk_size);
+}
+// scheduler initialization, only meaningful used for OMNI
+void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size)
+{
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  // empty operation for gomp
+#else
+  // adjust inclusive upper bounds of XOMP to non inclusive bounds of GOMP and OMNI
+  if (stride>0)
+    upper ++; //+1 to be non-inclusive for an incremental iteration space
+  else
+    upper --;
+   _ompc_guided_sched_init (lower, upper, stride, chunk_size);
+#endif
+}
+
+//---------- runtime--------------
+//Glue to support Fortran
+void xomp_loop_runtime_init(int* lower, int* upper, int* stride);
+#pragma weak xomp_loop_runtime_init_=xomp_loop_runtime_init
+void xomp_loop_runtime_init(int* lower, int* upper, int* stride)
+{
+  XOMP_loop_runtime_init (*lower, *upper, *stride);
+}
+// scheduler initialization, only meaningful used for OMNI
+void XOMP_loop_runtime_init(int lower, int upper, int stride)
+{
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  // empty operation for gomp
+#else
+  // adjust inclusive upper bounds of XOMP to non inclusive bounds of GOMP and OMNI
+  if (stride>0)
+    upper ++; //+1 to be non-inclusive for an incremental iteration space
+  else
+    upper --;
+   _ompc_runtime_sched_init (lower, upper, stride);
+#endif
+}
+
+
+//---------------- init ordered -----------------------------------------
+//----------- static
+void xomp_loop_ordered_static_init(int* lower, int* upper, int* stride, int* chunk_size);
+#pragma weak xomp_loop_ordered_static_init_=xomp_loop_ordered_static_init
+void xomp_loop_ordered_static_init(int* lower, int* upper, int* stride, int* chunk_size)
+{
+  XOMP_loop_ordered_static_init (*lower, *upper, *stride, *chunk_size);
+}
 // scheduler initialization, only meaningful used for OMNI
 void XOMP_loop_ordered_static_init(int lower, int upper, int stride, int chunk_size)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   // empty operation for gomp
 #else   
+  // adjust inclusive upper bounds of XOMP to non inclusive bounds of GOMP and OMNI
+  if (stride>0)
+    upper ++; //+1 to be non-inclusive for an incremental iteration space
+  else
+    upper --;
    // used for the ordered clause
    // void _ompc_init_ordered(int lb,int step)
    _ompc_init_ordered (lower, upper);
@@ -366,12 +465,12 @@ void XOMP_loop_ordered_static_init(int lower, int upper, int stride, int chunk_s
 }
 
 
-void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_size)
+//-----------dynamic
+void xomp_loop_ordered_dynamic_init(int* lower, int* upper, int* stride, int* chunk_size);
+#pragma weak xomp_loop_ordered_dynamic_init_=xomp_loop_ordered_dynamic_init
+void xomp_loop_ordered_dynamic_init(int* lower, int* upper, int* stride, int* chunk_size)
 {
-#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
-#else   
-  _ompc_dynamic_sched_init (lower, upper, stride, chunk_size);
-#endif    
+  XOMP_loop_ordered_dynamic_init (*lower, *upper, *stride, *chunk_size);
 }
 
 // scheduler initialization, only meaningful used for OMNI
@@ -380,6 +479,12 @@ void XOMP_loop_ordered_dynamic_init(int lower, int upper, int stride, int chunk_
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   // empty operation for gomp
 #else   
+  // adjust inclusive upper bounds of XOMP to non inclusive bounds of GOMP and OMNI
+  if (stride>0)
+    upper ++; //+1 to be non-inclusive for an incremental iteration space
+  else
+    upper --;
+
    // used for the ordered clause
    // void _ompc_init_ordered(int lb,int step)
    _ompc_init_ordered (lower, upper);
@@ -389,14 +494,12 @@ void XOMP_loop_ordered_dynamic_init(int lower, int upper, int stride, int chunk_
 #endif    
 }
 
-
-void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size)
+//-----------guided
+void xomp_loop_ordered_guided_init(int* lower, int* upper, int* stride, int* chunk_size);
+#pragma weak xomp_loop_ordered_guided_init_=xomp_loop_ordered_guided_init
+void xomp_loop_ordered_guided_init(int* lower, int* upper, int* stride, int* chunk_size)
 {
-
-#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
-#else   
-  _ompc_guided_sched_init (lower, upper, stride, chunk_size);
-#endif    
+  XOMP_loop_ordered_guided_init (*lower, *upper, *stride, *chunk_size);
 }
 // scheduler initialization, only meaningful used for OMNI
 void XOMP_loop_ordered_guided_init(int lower, int upper, int stride, int chunk_size)
@@ -404,6 +507,12 @@ void XOMP_loop_ordered_guided_init(int lower, int upper, int stride, int chunk_s
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   // empty operation for gomp
 #else   
+  // adjust inclusive upper bounds of XOMP to non inclusive bounds of GOMP and OMNI
+  if (stride>0)
+    upper ++; //+1 to be non-inclusive for an incremental iteration space
+  else
+    upper --;
+
    // used for the ordered clause
    // void _ompc_init_ordered(int lb,int step)
    _ompc_init_ordered (lower, upper);
@@ -413,13 +522,12 @@ void XOMP_loop_ordered_guided_init(int lower, int upper, int stride, int chunk_s
 #endif    
 }
 
-
-void XOMP_loop_runtime_init(int lower, int upper, int stride)
+//-----------runtime
+void xomp_loop_ordered_runtime_init(int* lower, int* upper, int* stride);
+#pragma weak xomp_loop_ordered_runtime_init_=xomp_loop_ordered_runtime_init
+void xomp_loop_ordered_runtime_init(int* lower, int* upper, int* stride)
 {
-#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
-#else   
-  _ompc_runtime_sched_init (lower, upper, stride);
-#endif    
+  XOMP_loop_ordered_runtime_init (*lower, *upper, *stride);
 }
 // scheduler initialization, only meaningful used for OMNI
 void XOMP_loop_ordered_runtime_init(int lower, int upper, int stride)
@@ -427,6 +535,12 @@ void XOMP_loop_ordered_runtime_init(int lower, int upper, int stride)
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   // empty operation for gomp
 #else   
+  // adjust inclusive upper bounds of XOMP to non inclusive bounds of GOMP and OMNI
+  if (stride>0)
+    upper ++; //+1 to be non-inclusive for an incremental iteration space
+  else
+    upper --;
+
    // used for the ordered clause
    // void _ompc_init_ordered(int lb,int step)
    _ompc_init_ordered (lower, upper);
@@ -434,17 +548,186 @@ void XOMP_loop_ordered_runtime_init(int lower, int upper, int stride)
 #endif    
 }
 
+//----------------------  start---------------------------------
+// -----------  static
+bool xomp_loop_static_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend);
+#pragma weak xomp_loop_static_start_=xomp_loop_static_start
+bool xomp_loop_static_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend)
+{
+  long l_istart, l_iend;
+  bool rt; 
+  rt = XOMP_loop_static_start (*start, *end, *incr, *chunk_size, &l_istart, &l_iend);
+  if (rt)
+  {
+    CHECK_SIGNED_INT_RANGE(l_istart);
+    CHECK_SIGNED_INT_RANGE(l_iend);
+  }
+  *istart = l_istart;
+  *iend = l_iend;
+//  printf ("debug: xomp_loop_static_start() start=%ld , end=%ld, rt =%d size is=%lu \n", l_istart, l_iend, rt,sizeof(rt));
+  return rt;
 
-// if (start), 
+}
 bool XOMP_loop_static_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
+  bool rt ;
+  long lend;
+
+// convert inclusive bounds of XOMP to non-inclusive upper bound from GOMP/OMNI
+  if (incr>0 )
+   end ++;
+  else
+   end --;
+ 
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
-  return GOMP_loop_static_start (start, end, incr, chunk_size, istart, iend);
+  rt = GOMP_loop_static_start (start, end, incr, chunk_size, istart, &lend);
 #else   
-  return _ompc_static_sched_next((int*)istart, (int*)iend);
+  rt = _ompc_static_sched_next((int*)istart, (int*)(&lend));
 #endif    
+
+// convert non-inclusive upper bound from GOMP/OMNI to inclusive bounds of XOMP
+  if (incr > 0)
+   *iend = lend -1 ;
+  else
+   *iend = lend + 1;
+
+  return rt; 
+}
+// -----------  dynamic
+bool xomp_loop_dynamic_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend);
+#pragma weak xomp_loop_dynamic_start_=xomp_loop_dynamic_start
+bool xomp_loop_dynamic_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend)
+{
+  long l_istart, l_iend;
+  bool rt;
+  rt = XOMP_loop_dynamic_start (*start, *end, *incr, *chunk_size, &l_istart, &l_iend);
+  if (rt)
+  {
+    CHECK_SIGNED_INT_RANGE(l_istart);
+    CHECK_SIGNED_INT_RANGE(l_iend);
+  }
+  *istart = l_istart;
+  *iend = l_iend;
+//  printf ("debug: xomp_loop_dynamic_start() start=%ld , end=%ld, rt =%d size is=%lu \n", l_istart, l_iend, rt,sizeof(rt));
+  return rt;
+
+}
+bool XOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+{
+  bool rt ;
+  long lend;
+
+// convert inclusive bounds of XOMP to non-inclusive upper bound from GOMP/OMNI
+  if (incr>0 )
+   end ++;
+  else
+   end --;
+
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_dynamic_start (start, end, incr, chunk_size, istart, &lend);
+#else  
+  rt = _ompc_dynamic_sched_next((int*)istart, (int*)(&lend));
+#endif   
+
+// convert non-inclusive upper bound from GOMP/OMNI to inclusive bounds of XOMP
+  if (incr > 0)
+   *iend = lend -1 ;
+  else
+   *iend = lend + 1;
+
+  return rt;
+}
+// -----------  guided
+bool xomp_loop_guided_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend);
+#pragma weak xomp_loop_guided_start_=xomp_loop_guided_start
+bool xomp_loop_guided_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend)
+{
+  long l_istart, l_iend;
+  bool rt;
+  rt = XOMP_loop_guided_start (*start, *end, *incr, *chunk_size, &l_istart, &l_iend);
+  if (rt)
+  {
+    CHECK_SIGNED_INT_RANGE(l_istart);
+    CHECK_SIGNED_INT_RANGE(l_iend);
+  }
+  *istart = l_istart;
+  *iend = l_iend;
+//  printf ("debug: xomp_loop_guided_start() start=%ld , end=%ld, rt =%d size is=%lu \n", l_istart, l_iend, rt,sizeof(rt));
+  return rt;
+
+}
+bool XOMP_loop_guided_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+{
+  bool rt ;
+  long lend;
+
+// convert inclusive bounds of XOMP to non-inclusive upper bound from GOMP/OMNI
+  if (incr>0 )
+   end ++;
+  else
+   end --;
+
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_guided_start (start, end, incr, chunk_size, istart, &lend);
+#else  
+  rt = _ompc_guided_sched_next((int*)istart, (int*)(&lend));
+#endif   
+
+// convert non-inclusive upper bound from GOMP/OMNI to inclusive bounds of XOMP
+  if (incr > 0)
+   *iend = lend -1 ;
+  else
+   *iend = lend + 1;
+
+  return rt;
+}
+// -----------  runtime
+bool xomp_loop_runtime_start(int* start, int* end, int* incr, int *istart, int *iend);
+#pragma weak xomp_loop_runtime_start_=xomp_loop_runtime_start
+bool xomp_loop_runtime_start(int* start, int* end, int* incr, int *istart, int *iend)
+{
+  long l_istart, l_iend;
+  bool rt;
+  rt = XOMP_loop_runtime_start (*start, *end, *incr,  &l_istart, &l_iend);
+  if (rt)
+  {
+    CHECK_SIGNED_INT_RANGE(l_istart);
+    CHECK_SIGNED_INT_RANGE(l_iend);
+  }
+  *istart = l_istart;
+  *iend = l_iend;
+//  printf ("debug: xomp_loop_runtime_start() start=%ld , end=%ld, rt =%d size is=%lu \n", l_istart, l_iend, rt,sizeof(rt));
+  return rt;
+
+}
+bool XOMP_loop_runtime_start (long start, long end, long incr,long *istart, long *iend)
+{
+  bool rt ;
+  long lend;
+
+// convert inclusive bounds of XOMP to non-inclusive upper bound from GOMP/OMNI
+  if (incr>0 )
+   end ++;
+  else
+   end --;
+
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_runtime_start (start, end, incr, istart, &lend);
+#else  
+  rt = _ompc_runtime_sched_next((int*)istart, (int*)(&lend));
+#endif   
+
+// convert non-inclusive upper bound from GOMP/OMNI to inclusive bounds of XOMP
+  if (incr > 0)
+   *iend = lend -1 ;
+  else
+   *iend = lend + 1;
+
+  return rt;
 }
 
+#if 0
+//-------dynamic
 bool XOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -454,6 +737,7 @@ bool XOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size,l
 #endif    
 
 }
+//-------guided
 bool XOMP_loop_guided_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -463,6 +747,7 @@ bool XOMP_loop_guided_start (long start, long end, long incr, long chunk_size,lo
 #endif    
 
 }
+//-------runtime
 bool XOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -472,8 +757,188 @@ bool XOMP_loop_runtime_start (long start, long end, long incr, long *istart, lon
 #endif    
 
 }
+#endif
+ //----------------------------------ordered start --------------------------
+// -----------  ordered_static
+bool xomp_loop_ordered_static_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend);
+#pragma weak xomp_loop_ordered_static_start_=xomp_loop_ordered_static_start
+bool xomp_loop_ordered_static_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend)
+{
+  long l_istart, l_iend;
+  bool rt; 
+  rt = XOMP_loop_ordered_static_start (*start, *end, *incr, *chunk_size, &l_istart, &l_iend);
+  if (rt)
+  {
+    CHECK_SIGNED_INT_RANGE(l_istart);
+    CHECK_SIGNED_INT_RANGE(l_iend);
+  } 
+  *istart = l_istart;
+  *iend = l_iend;
+//  printf ("debug: xomp_loop_ordered_static_start() start=%ld , end=%ld, rt =%d size is=%lu \n", l_istart, l_iend, rt,sizeof(rt));
+  return rt;
+  
+}
+bool XOMP_loop_ordered_static_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+{
+  bool rt ;
+  long lend;
+  
+// convert inclusive bounds of XOMP to non-inclusive upper bound from GOMP/OMNI
+  if (incr>0 )
+   end ++;
+  else 
+   end --;
+   
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_ordered_static_start (start, end, incr, chunk_size, istart, &lend);
+#else   
+  rt = _ompc_static_sched_next((int*)istart, (int*)(&lend));
+#endif    
 
- // loop ordered start
+// convert non-inclusive upper bound from GOMP/OMNI to inclusive bounds of XOMP
+  if (incr > 0)
+   *iend = lend -1 ;
+  else
+   *iend = lend + 1;
+   
+  return rt;
+} 
+
+// -----------  ordered_dynamic
+bool xomp_loop_ordered_dynamic_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend);
+#pragma weak xomp_loop_ordered_dynamic_start_=xomp_loop_ordered_dynamic_start
+bool xomp_loop_ordered_dynamic_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend)
+{
+  long l_istart, l_iend;
+  bool rt; 
+  rt = XOMP_loop_ordered_dynamic_start (*start, *end, *incr, *chunk_size, &l_istart, &l_iend);
+  if (rt)
+  {
+    CHECK_SIGNED_INT_RANGE(l_istart);
+    CHECK_SIGNED_INT_RANGE(l_iend);
+  } 
+  *istart = l_istart;
+  *iend = l_iend;
+//  printf ("debug: xomp_loop_ordered_dynamic_start() start=%ld , end=%ld, rt =%d size is=%lu \n", l_istart, l_iend, rt,sizeof(rt));
+  return rt;
+  
+}
+bool XOMP_loop_ordered_dynamic_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+{
+  bool rt ;
+  long lend;
+  
+// convert inclusive bounds of XOMP to non-inclusive upper bound from GOMP/OMNI
+  if (incr>0 )
+   end ++;
+  else 
+   end --;
+   
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_ordered_dynamic_start (start, end, incr, chunk_size, istart, &lend);
+#else   
+  rt = _ompc_dynamic_sched_next((int*)istart, (int*)(&lend));
+#endif    
+
+// convert non-inclusive upper bound from GOMP/OMNI to inclusive bounds of XOMP
+  if (incr > 0)
+   *iend = lend -1 ;
+  else
+   *iend = lend + 1;
+   
+  return rt;
+} 
+
+// -----------  ordered_guided
+bool xomp_loop_ordered_guided_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend);
+#pragma weak xomp_loop_ordered_guided_start_=xomp_loop_ordered_guided_start
+bool xomp_loop_ordered_guided_start(int* start, int* end, int* incr, int* chunk_size,int *istart, int *iend)
+{
+  long l_istart, l_iend;
+  bool rt; 
+  rt = XOMP_loop_ordered_guided_start (*start, *end, *incr, *chunk_size, &l_istart, &l_iend);
+  if (rt)
+  {
+    CHECK_SIGNED_INT_RANGE(l_istart);
+    CHECK_SIGNED_INT_RANGE(l_iend);
+  } 
+  *istart = l_istart;
+  *iend = l_iend;
+//  printf ("debug: xomp_loop_ordered_guided_start() start=%ld , end=%ld, rt =%d size is=%lu \n", l_istart, l_iend, rt,sizeof(rt));
+  return rt;
+  
+}
+bool XOMP_loop_ordered_guided_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+{
+  bool rt ;
+  long lend;
+  
+// convert inclusive bounds of XOMP to non-inclusive upper bound from GOMP/OMNI
+  if (incr>0 )
+   end ++;
+  else 
+   end --;
+   
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_ordered_guided_start (start, end, incr, chunk_size, istart, &lend);
+#else   
+  rt = _ompc_guided_sched_next((int*)istart, (int*)(&lend));
+#endif    
+
+// convert non-inclusive upper bound from GOMP/OMNI to inclusive bounds of XOMP
+  if (incr > 0)
+   *iend = lend -1 ;
+  else
+   *iend = lend + 1;
+   
+  return rt;
+} 
+// -----------  ordered_runtime
+bool xomp_loop_ordered_runtime_start(int* start, int* end, int* incr, int *istart, int *iend);
+#pragma weak xomp_loop_ordered_runtime_start_=xomp_loop_ordered_runtime_start
+bool xomp_loop_ordered_runtime_start(int* start, int* end, int* incr, int *istart, int *iend)
+{
+  long l_istart, l_iend;
+  bool rt;
+  rt = XOMP_loop_ordered_runtime_start (*start, *end, *incr,  &l_istart, &l_iend);
+  if (rt)
+  {
+    CHECK_SIGNED_INT_RANGE(l_istart);
+    CHECK_SIGNED_INT_RANGE(l_iend);
+  }
+  *istart = l_istart;
+  *iend = l_iend;
+//  printf ("debug: xomp_loop_ordered_runtime_start() start=%ld , end=%ld, rt =%d size is=%lu \n", l_istart, l_iend, rt,sizeof(rt));
+  return rt;
+
+}
+bool XOMP_loop_ordered_runtime_start (long start, long end, long incr,long *istart, long *iend)
+{
+  bool rt ;
+  long lend;
+
+// convert inclusive bounds of XOMP to non-inclusive upper bound from GOMP/OMNI
+  if (incr>0 )
+   end ++;
+  else
+   end --;
+
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_ordered_runtime_start (start, end, incr, istart, &lend);
+#else
+#endif
+
+// convert non-inclusive upper bound from GOMP/OMNI to inclusive bounds of XOMP
+  if (incr > 0)
+   *iend = lend -1 ;
+  else
+   *iend = lend + 1;
+
+  return rt;
+}
+
+#if 0
+//-------static
 bool XOMP_loop_ordered_static_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -483,6 +948,7 @@ bool XOMP_loop_ordered_static_start (long start, long end, long incr, long chunk
 #endif    
 }
 
+//-------dynamic
 bool XOMP_loop_ordered_dynamic_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -492,6 +958,7 @@ bool XOMP_loop_ordered_dynamic_start (long start, long end, long incr, long chun
 #endif    
 }
 
+//-------guided
 bool XOMP_loop_ordered_guided_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -501,6 +968,7 @@ bool XOMP_loop_ordered_guided_start (long start, long end, long incr, long chunk
 #endif    
 }
 
+//-------runtime
 bool XOMP_loop_ordered_runtime_start (long start, long end, long incr, long *istart, long *iend)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -508,18 +976,142 @@ bool XOMP_loop_ordered_runtime_start (long start, long end, long incr, long *ist
 #else   
 #endif    
 }
+#endif
 
-
-// next
+//---------------------------- loop next------------------------------------------
+//----- static--
+bool xomp_loop_static_next(int* l, int * u);
+#pragma weak xomp_loop_static_next_=xomp_loop_static_next
+bool xomp_loop_static_next(int* l, int * u)
+{
+  long l_l, l_u;
+  bool rt; 
+  rt = XOMP_loop_static_next(&l_l, &l_u);
+  if (rt)
+  { // avoid assertion on garbage values
+    CHECK_SIGNED_INT_RANGE(l_l);
+    CHECK_SIGNED_INT_RANGE(l_u);
+  }
+  *l= l_l;
+  *u= l_u;
+  return rt; 
+}
 bool XOMP_loop_static_next (long * l, long *u)
 {
+  bool rt;
+  long lu;
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
-  return GOMP_loop_static_next (l, u);
+  rt = GOMP_loop_static_next (l, &lu);
 #else   
-   return _ompc_static_sched_next((int*)l, (int*)u);
+   rt = _ompc_static_sched_next((int*)l, (int*)(&lu));
 #endif    
+  if (*l< lu)
+    *u = lu -1;
+  else
+    *u = lu +1;
+   return rt;
+}
+//----- dynamic--
+bool xomp_loop_dynamic_next(int* l, int * u);
+#pragma weak xomp_loop_dynamic_next_=xomp_loop_dynamic_next
+bool xomp_loop_dynamic_next(int* l, int * u)
+{
+  long l_l, l_u;
+  bool rt;
+  rt = XOMP_loop_dynamic_next(&l_l, &l_u);
+  if (rt)
+  { // avoid assertion on garbage values
+    CHECK_SIGNED_INT_RANGE(l_l);
+    CHECK_SIGNED_INT_RANGE(l_u);
+  }
+  *l= l_l;
+  *u= l_u;
+  return rt;
+}
+bool XOMP_loop_dynamic_next (long * l, long *u)
+{
+  bool rt;
+  long lu;
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_dynamic_next (l, &lu);
+#else
+   rt = _ompc_dynamic_sched_next((int*)l, (int*)(&lu));
+#endif
+  if (*l< lu)
+    *u = lu -1;
+  else 
+    *u = lu +1;
+   return rt;
 }
 
+//----- guided--
+bool xomp_loop_guided_next(int* l, int * u);
+#pragma weak xomp_loop_guided_next_=xomp_loop_guided_next
+bool xomp_loop_guided_next(int* l, int * u)
+{
+  long l_l, l_u;
+  bool rt;
+  rt = XOMP_loop_guided_next(&l_l, &l_u);
+  if (rt)
+  { // avoid assertion on garbage values
+    CHECK_SIGNED_INT_RANGE(l_l);
+    CHECK_SIGNED_INT_RANGE(l_u);
+  }
+  *l= l_l;
+  *u= l_u;
+  return rt;
+}
+bool XOMP_loop_guided_next (long * l, long *u)
+{
+  bool rt;
+  long lu;
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_guided_next (l, &lu);
+#else
+   rt = _ompc_guided_sched_next((int*)l, (int*)(&lu));
+#endif
+  if (*l< lu)
+    *u = lu -1;
+  else 
+    *u = lu +1;
+   return rt;
+}
+
+//----- runtime--
+bool xomp_loop_runtime_next(int* l, int * u);
+#pragma weak xomp_loop_runtime_next_=xomp_loop_runtime_next
+bool xomp_loop_runtime_next(int* l, int * u)
+{
+  long l_l, l_u;
+  bool rt;
+  rt = XOMP_loop_runtime_next(&l_l, &l_u);
+  if (rt)
+  { // avoid assertion on garbage values
+    CHECK_SIGNED_INT_RANGE(l_l);
+    CHECK_SIGNED_INT_RANGE(l_u);
+  }
+  *l= l_l;
+  *u= l_u;
+  return rt;
+}
+bool XOMP_loop_runtime_next (long * l, long *u)
+{
+  bool rt;
+  long lu;
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_runtime_next (l, &lu);
+#else
+   rt = _ompc_runtime_sched_next((int*)l, (int*)(&lu));
+#endif
+  if (*l< lu)
+    *u = lu -1;
+  else 
+    *u = lu +1;
+   return rt;
+}
+
+#if 0
+//----- dynamic--
 bool XOMP_loop_dynamic_next (long *l, long *u)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -530,6 +1122,7 @@ bool XOMP_loop_dynamic_next (long *l, long *u)
 }
 
 
+//----- guided--
 bool XOMP_loop_guided_next (long *l, long *u)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -540,6 +1133,7 @@ bool XOMP_loop_guided_next (long *l, long *u)
 }
 
 
+//----- runtime--
 bool XOMP_loop_runtime_next (long *l, long *u)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -548,8 +1142,142 @@ bool XOMP_loop_runtime_next (long *l, long *u)
    return _ompc_runtime_sched_next((int *)l, (int *)u);
 #endif    
 }
+#endif
 
+//---------------------------- loop ordered next------------------------------------------
+//----- ordered_static--
+bool xomp_loop_ordered_static_next(int* l, int * u);
+#pragma weak xomp_loop_ordered_static_next_=xomp_loop_ordered_static_next
+bool xomp_loop_ordered_static_next(int* l, int * u)
+{
+  long l_l, l_u;
+  bool rt;
+  rt = XOMP_loop_ordered_static_next(&l_l, &l_u);
+  if (rt)
+  { // avoid assertion on garbage values
+    CHECK_SIGNED_INT_RANGE(l_l);
+    CHECK_SIGNED_INT_RANGE(l_u);
+  }
+  *l= l_l;
+  *u= l_u;
+  return rt;
+}
+bool XOMP_loop_ordered_static_next (long * l, long *u)
+{
+  bool rt;
+  long lu;
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_ordered_static_next (l, &lu);
+#else
+   rt = _ompc_static_sched_next((int*)l, (int*)(&lu));
+#endif
+  if (*l< lu)
+    *u = lu -1;
+  else 
+    *u = lu +1;
+   return rt;
+}
+//----- ordered_dynamic--
+bool xomp_loop_ordered_dynamic_next(int* l, int * u);
+#pragma weak xomp_loop_ordered_dynamic_next_=xomp_loop_ordered_dynamic_next
+bool xomp_loop_ordered_dynamic_next(int* l, int * u)
+{
+  long l_l, l_u;
+  bool rt;
+  rt = XOMP_loop_ordered_dynamic_next(&l_l, &l_u);
+  if (rt)
+  { // avoid assertion on garbage values
+    CHECK_SIGNED_INT_RANGE(l_l);
+    CHECK_SIGNED_INT_RANGE(l_u);
+  }
+  *l= l_l;
+  *u= l_u;
+  return rt;
+}
+bool XOMP_loop_ordered_dynamic_next (long * l, long *u)
+{
+  bool rt;
+  long lu;
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_ordered_dynamic_next (l, &lu);
+#else
+   rt = _ompc_dynamic_sched_next((int*)l, (int*)(&lu));
+#endif
+  if (*l< lu)
+    *u = lu -1;
+  else 
+    *u = lu +1;
+   return rt;
+}
 
+//----- ordered_guided--
+bool xomp_loop_ordered_guided_next(int* l, int * u);
+#pragma weak xomp_loop_ordered_guided_next_=xomp_loop_ordered_guided_next
+bool xomp_loop_ordered_guided_next(int* l, int * u)
+{
+  long l_l, l_u;
+  bool rt;
+  rt = XOMP_loop_ordered_guided_next(&l_l, &l_u);
+  if (rt)
+  { // avoid assertion on garbage values
+    CHECK_SIGNED_INT_RANGE(l_l);
+    CHECK_SIGNED_INT_RANGE(l_u);
+  }
+  *l= l_l;
+  *u= l_u;
+  return rt;
+}
+bool XOMP_loop_ordered_guided_next (long * l, long *u)
+{
+  bool rt;
+  long lu;
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_ordered_guided_next (l, &lu);
+#else
+   rt = _ompc_guided_sched_next((int*)l, (int*)(&lu));
+#endif
+  if (*l< lu)
+    *u = lu -1;
+  else 
+    *u = lu +1;
+   return rt;
+}
+
+//----- ordered_runtime--
+bool xomp_loop_ordered_runtime_next(int* l, int * u);
+#pragma weak xomp_loop_ordered_runtime_next_=xomp_loop_ordered_runtime_next
+bool xomp_loop_ordered_runtime_next(int* l, int * u)
+{
+  long l_l, l_u;
+  bool rt;
+  rt = XOMP_loop_ordered_runtime_next(&l_l, &l_u);
+  if (rt)
+  { // avoid assertion on garbage values
+    CHECK_SIGNED_INT_RANGE(l_l);
+    CHECK_SIGNED_INT_RANGE(l_u);
+  }
+  *l= l_l;
+  *u= l_u;
+  return rt;
+}
+bool XOMP_loop_ordered_runtime_next (long * l, long *u)
+{
+  bool rt;
+  long lu;
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  rt = GOMP_loop_ordered_runtime_next (l, &lu);
+#else
+   rt = _ompc_runtime_sched_next((int*)l, (int*)(&lu));
+#endif
+  if (*l< lu)
+    *u = lu -1;
+  else 
+    *u = lu +1;
+   return rt;
+}
+
+#if 0
+//------static
 bool XOMP_loop_ordered_static_next (long *a, long * b)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -561,6 +1289,7 @@ bool XOMP_loop_ordered_static_next (long *a, long * b)
 #endif    
 }
 
+//------dynamic
 bool XOMP_loop_ordered_dynamic_next (long * a, long * b)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -569,6 +1298,7 @@ bool XOMP_loop_ordered_dynamic_next (long * a, long * b)
   return _ompc_dynamic_sched_next ((int *)a,(int *)b);
 #endif    
 }
+//------guided
 bool XOMP_loop_ordered_guided_next (long *a, long *b)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -577,6 +1307,7 @@ bool XOMP_loop_ordered_guided_next (long *a, long *b)
   return _ompc_guided_sched_next ((int *)a,(int *)b);
 #endif    
 }
+//------runtime
 bool XOMP_loop_ordered_runtime_next (long *a, long *b)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -585,13 +1316,27 @@ bool XOMP_loop_ordered_runtime_next (long *a, long *b)
   return _ompc_runtime_sched_next ((int*)a,(int*)b);
 #endif    
 }
-
+#endif
+//---------------  others---------------------------------------
+void xomp_loop_end(void);
+#pragma weak xomp_loop_end_=xomp_loop_end
+void xomp_loop_end(void)
+{
+  XOMP_loop_end();
+}
 void XOMP_loop_end (void)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_loop_end();
 #else   
 #endif    
+}
+//---------
+void xomp_loop_end_nowait(void);
+#pragma weak xomp_loop_end_nowait_=xomp_loop_end_nowait
+void xomp_loop_end_nowait(void)
+{
+  XOMP_loop_end_nowait();
 }
 
 void XOMP_loop_end_nowait (void)
@@ -602,13 +1347,13 @@ void XOMP_loop_end_nowait (void)
 #endif    
 }
 
+//---------
 void xomp_barrier(void);
 #pragma weak  xomp_barrier_=xomp_barrier
 void xomp_barrier(void)
 {
   XOMP_barrier();
 }
-
 void XOMP_barrier (void)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -664,6 +1409,13 @@ extern bool XOMP_master(void)
 #endif    
 }
 
+//---------
+void xomp_atomic_start(void);
+#pragma weak xomp_atomic_start_=xomp_atomic_start
+void xomp_atomic_start(void)
+{
+  XOMP_atomic_start();
+}
 void XOMP_atomic_start (void)
 {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
@@ -673,9 +1425,15 @@ void XOMP_atomic_start (void)
 #endif
 }
 
+//---------
+void xomp_atomic_end(void);
+#pragma weak xomp_atomic_end_=xomp_atomic_end
+void xomp_atomic_end(void)
+{
+  XOMP_atomic_end();
+}
 void XOMP_atomic_end (void)
 {
-
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
    GOMP_atomic_end();
 #else   

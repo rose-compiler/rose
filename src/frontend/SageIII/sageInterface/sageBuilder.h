@@ -467,6 +467,9 @@ SgVarRefExp * buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scop
  */
 SgVarRefExp* buildOpaqueVarRefExp(const std::string& varName,SgScopeStatement* scope=NULL);
 
+//! Build a Fortran numeric label ref exp
+SgLabelRefExp * buildLabelRefExp(SgLabelSymbol * s);
+
 //! Build SgFunctionRefExp based on a C++ function's name and function type. It will lookup symbol table internally starting from scope. A hidden prototype will be created internally to introduce a new function symbol if the function symbol cannot be found. 
 SgFunctionRefExp * buildFunctionRefExp(const SgName& name, const SgType* func_type, SgScopeStatement* scope=NULL);
 
@@ -663,6 +666,9 @@ SgLabelStatement * buildLabelStatement_nfi(const SgName& name, SgStatement * stm
 //! Build a goto statement
 SgGotoStatement * buildGotoStatement(SgLabelStatement *  label=NULL);
 SgGotoStatement * buildGotoStatement_nfi(SgLabelStatement *  label);
+
+//! Build a goto statement from a label symbol, supporting both C/C++ and Fortran cases
+SgGotoStatement * buildGotoStatement(SgLabelSymbol*  symbol);
 
 //! Build a case option statement
 SgCaseOptionStmt * buildCaseOptionStmt( SgExpression * key = NULL,SgStatement *body = NULL);
