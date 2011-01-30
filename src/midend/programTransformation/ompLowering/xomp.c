@@ -15,6 +15,7 @@
 
 // avoid include omp.h 
 extern int omp_get_thread_num(void);
+extern int omp_get_num_threads(void);
 
 #include <stdlib.h> // for getenv(), malloc(), etc
 #include <stdio.h> // for getenv()
@@ -64,6 +65,11 @@ static enum omp_rtl_enum get_rtl_type()
 }
 
 #endif
+// Nothing is needed for Fortran case
+#pragma weak xomp_init_=xomp_init
+void xomp_init (void)
+{
+}
 
 //Runtime library initialization routine
 void XOMP_init (int argc, char ** argv)
@@ -74,6 +80,12 @@ void XOMP_init (int argc, char ** argv)
 #endif    
 }
 
+void xomp_terminate (int exitcode);
+#pragma weak xomp_terminate_=xomp_terminate
+void xomp_terminate (int exitcode)
+{
+  XOMP_terminate (exitcode);
+}
 // Runtime library termination routine
 void XOMP_terminate (int exitcode)
 {
@@ -221,6 +233,110 @@ void XOMP_taskwait (void)
 #else
 #endif 
 }
+
+// 2^31 -1 for 32-bit integer
+#define MAX_SIGNED_INT ((int)(1<< (sizeof(int)*8-1)) -1)
+// -2^31
+#define MIN_SIGNED_INT (0-(int)(1<< (sizeof(int)*8-1)))
+
+
+#define CHECK_SIGNED_INT_RANGE(x) assert((x>=MIN_SIGNED_INT) && (x<=MAX_SIGNED_INT))
+
+//Accommodate Fortran issues: underscore, small case, pass-by-reference
+void xomp_loop_default (int* lower, int* upper, int* stride, int *n_lower, int * n_upper);
+#pragma weak xomp_loop_default_=xomp_loop_default
+void xomp_loop_default (int* lower, int* upper, int* stride, int *n_lower, int * n_upper)
+{ // deal with mismatch between int and long int.
+  long l_lower, l_upper;
+  XOMP_loop_default (*lower, *upper, *stride, &l_lower, &l_upper);
+  CHECK_SIGNED_INT_RANGE(l_lower);
+  CHECK_SIGNED_INT_RANGE(l_upper);
+  *n_lower = l_lower;
+  *n_upper = l_upper;
+}
+
+//Default loop scheduling, worksharing without any schedule clause
+// input upper bound is inclusive (loop normalized with <= or >=)
+// output n_upper is also inclusive 
+// stride is positive for incremental, negative for decremental iteration space
+extern void XOMP_loop_default(int lower, int upper, int stride, long* n_lower, long* n_upper)
+{
+  int _p_lower;
+  int _p_upper;
+  int _p_chunk_size;
+  int addOne ; // adjustment to input and output upper bounds, depending on if they are inclusive or non-inclusive
+
+  int isDecremental= 0;
+  if (lower>upper)
+    isDecremental = 1;  
+
+  // calculate loop iteration count from lower, upper and stride , 
+  // adjust inclusive stride here TODO
+  // no -1/+1? if upper is already an inclusive bound
+  int _p_iter_count = 0;
+  if (isDecremental == 1)
+  {
+    addOne = 1;
+    //stride = 0 - stride;  // n
+    if (stride >0)
+    {
+      printf("Error: in XOMP_loop_default() of xomp.c: stride must be negative for decremental iteration. stride = %d \n ", stride);
+      assert (0);
+    }
+  }
+  else // incremental
+  {
+    addOne = -1; // real bound should be non-inclusive - 1
+    if (stride <0)
+    {
+      printf("Error: in XOMP_loop_default() of xomp.c: stride must be positive for incremental iteration. stride = %d \n ", stride);
+      assert (0);
+    }
+  }
+  // addOne is needed here only if the input upper bound is non-inclusive
+  // we use loop normalization to ensure upper bounds are inclusive already.
+  // So we don't need addOne here anymore
+  //_p_iter_count = ( stride + addOne + upper -  lower) /  stride;
+  _p_iter_count = ( stride + upper -  lower) /  stride;
+
+  // calculate a proper chunk size
+  // two cases: evenly divisible  20/5 =4
+  //   not evenly divisible 20/3= 6
+  // Initial candidate  
+
+  int _p_num_threads = omp_get_num_threads();
+
+  _p_chunk_size = _p_iter_count / _p_num_threads;
+  int _p_ck_temp = _p_chunk_size * _p_num_threads != _p_iter_count;
+
+  _p_chunk_size = _p_ck_temp + _p_chunk_size;
+
+  // decide on the lower and upper bound for the current thread
+  int _p_thread_id = omp_get_thread_num();
+
+//  printf("inside xomp_loop_default(): _p_thread_id =%d\n", _p_thread_id);
+  _p_lower =  lower + _p_chunk_size * _p_thread_id *  stride;
+
+  //addOne is needed here if the output upper bound is inclusive
+  // -1 if the output n_upper is an inclusive bound, 
+  // we do use inclusive in the final normalized loop
+  _p_upper = _p_lower + _p_chunk_size *  stride + addOne;
+
+  // adjust inclusive stride here 
+  // addOne is needed if the input upper bound is non-inclusive
+  // no -1/+1 since upper is already an inclusive bound
+  if (isDecremental == 1)
+    _p_upper = (_p_upper > (upper ) ?_p_upper : (upper ));
+    //_p_upper = (_p_upper > (upper + addOne) ?_p_upper : (upper + addOne));
+  else
+    _p_upper = (_p_upper < upper ?_p_upper : upper);
+    //_p_upper = (_p_upper < (upper + addOne) ?_p_upper : (upper + addOne));
+
+  *n_lower = _p_lower;
+  *n_upper = _p_upper;
+//  printf("inside xomp_loop_default(): _p_lower=%d, _p_upper=%d\n", _p_lower,_p_upper);
+}
+
 
 // scheduler initialization, only meaningful used for OMNI
 void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size)
@@ -484,6 +600,13 @@ void XOMP_loop_end_nowait (void)
   GOMP_loop_end_nowait();
 #else   
 #endif    
+}
+
+void xomp_barrier(void);
+#pragma weak  xomp_barrier_=xomp_barrier
+void xomp_barrier(void)
+{
+  XOMP_barrier();
 }
 
 void XOMP_barrier (void)

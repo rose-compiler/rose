@@ -1048,15 +1048,12 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
   //     cout << "Input declaration: " << inputFunctionDeclaration << " as opposed to " << functionDeclaration << "\n"; 
 
   // Test for a forward declaration (declaration without a definition)
-  if ( defDecl )
+  if ( defDecl != NULL )
   {
-    SgFunctionDefinition* functionDefinition = defDecl->get_definition();
-    ROSE_ASSERT ( defDecl );
-    ROSE_ASSERT ( functionDefinition != NULL );
     hasDefinition = true;
 
     Rose_STL_Container<SgNode*> functionCallExpList = 
-      NodeQuery::querySubTree(functionDefinition, V_SgFunctionCallExp);
+      NodeQuery::querySubTree(defDecl, V_SgFunctionCallExp);
     foreach (SgNode* functionCallExp, functionCallExpList) {
       CallTargetSet::getPropertiesForExpression(isSgFunctionCallExp(functionCallExp), 
                                                 classHierarchy, 
@@ -1064,7 +1061,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     }
 
     Rose_STL_Container<SgNode*> ctorInitList = 
-      NodeQuery::querySubTree(functionDefinition, V_SgConstructorInitializer);
+      NodeQuery::querySubTree(defDecl, V_SgConstructorInitializer);
     foreach (SgNode* ctorInit, ctorInitList) {
       CallTargetSet::getPropertiesForExpression(isSgConstructorInitializer(ctorInit), 
                                                 classHierarchy, 
