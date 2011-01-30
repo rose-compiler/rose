@@ -8,6 +8,8 @@ F77_TESTCODES_TO_PASS = \
     default.f \
     flush.f \
     exampleA251f.f \
+    ompdo-default.f \
+    ompdo-decremental.f \
     parallel.f \
     parallel-1.f \
     parallel-2.f \
@@ -41,6 +43,7 @@ F90_TESTCODES_TO_PASS = \
 # exampleA41f.f90:  test code has error?
 # barrier.f, exmpaleA221f.f  wrong comment position for the 2nd barrier
 # exampleA11f.f  combined parallel do is attached to wrong place, and is not removed!
+# ompdo-decremental-2.f  wrong location for !$omp parallel do 
 TESTCODES_CURRENTLY_FAILING = \
     barrier.f \
     exampleA11f.f \
@@ -52,7 +55,8 @@ TESTCODES_CURRENTLY_FAILING = \
     exmpaleA221f.f \
     conditional.f \
     exampleA41f.f90 \
-    exampleA134f.f90
+    exampleA134f.f90 \
+    ompdo-decremental-2.f 
 
 #ROSE_FLAGS = -rose:openmp
 ROSE_FLAGS = -rose:openmp:ast_only

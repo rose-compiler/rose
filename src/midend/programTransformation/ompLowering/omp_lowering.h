@@ -53,6 +53,10 @@ namespace OmpSupport
   //! Translate omp for
   void transOmpFor(SgNode* node);
 
+  //! Translate Fortran omp do
+  void transOmpDo(SgNode* node);
+
+
   //! Translate omp barrier
   void transOmpBarrier(SgNode* node);
 
@@ -118,8 +122,8 @@ namespace OmpSupport
   //! Get OpenMP clauses from an eligible OpenMP statement
   Rose_STL_Container<SgOmpClause*>  getClause(SgOmpClauseBodyStatement* clause_stmt, const VariantT & vt);
 
-  //! Check if an omp for loop use static schedule or not, including: default schedule, or schedule(static[,chunk_size]) 
-  bool useStaticSchedule(SgOmpForStatement* omp_for);
+  //! Check if an omp for/do loop use static schedule or not, including: default schedule, or schedule(static[,chunk_size]) 
+  bool useStaticSchedule(SgOmpClauseBodyStatement* omp_loop);
 
   //! Return a reduction variable's reduction operation type
   SgOmpClause::omp_reduction_operator_enum getReductionOperationType(SgInitializedName* init_name, SgOmpClauseBodyStatement* clause_stmt);

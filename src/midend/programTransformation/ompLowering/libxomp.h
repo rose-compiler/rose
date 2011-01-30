@@ -24,6 +24,7 @@ extern "C" {
 
 //Runtime library initialization routine
 extern void XOMP_init (int argc, char ** argv);
+extern void xomp_init (void);
 
 // Runtime library termination routine
 extern void XOMP_terminate (int exitcode);
@@ -38,6 +39,10 @@ extern void XOMP_taskwait (void);
 // scheduler functions, union of runtime library functions
 // empty body if not used by one
 // scheduler initialization, only meaningful used for OMNI
+
+//Default loop scheduling, worksharing without any schedule clause
+extern void XOMP_loop_default(int lower, int upper, int stride, long* n_lower, long* n_upper);
+
 extern void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size);

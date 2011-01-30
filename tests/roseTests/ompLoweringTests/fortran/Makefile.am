@@ -12,6 +12,8 @@ F90_TESTCODES_REQUIRED_TO_COMPILE =
 
 F77_TESTCODES_REQUIRED_TO_RUN = \
   helloworld.f \
+  ompdo-default.f \
+  ompdo-decremental.f \
   private.f \
   shared.f
 
@@ -123,7 +125,7 @@ endif
 clean-local:
 	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out  rose_*.f rose_*.f90 rose_*.f95
 
-EXTRA_DIST =
+EXTRA_DIST = 
 
 CLEANFILES =
 
