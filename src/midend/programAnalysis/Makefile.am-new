@@ -16,6 +16,7 @@ include $(srcdir)/CFG/Makefile_variables
 include $(srcdir)/dataflowAnalysis/Makefile_variables
 include $(srcdir)/defUseAnalysis/Makefile_variables
 include $(srcdir)/distributedMemoryAnalysis/Makefile_variables
+include $(srcdir)/dominanceAnalysis/Makefile_variables
 
 
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
@@ -24,6 +25,7 @@ mpaCFGPath=$(srcdir)/CFG#
 mpaDataflowAnalysisPath=$(srcdir)/dataflowAnalysis#
 mpaDefUseAnalysisPath=$(srcdir)/defUseAnalysis#
 mpaDistributedMemoryAnalysisPath=$(srcdir)/distributedMemoryAnalysis#
+mpaDominanceAnalysisPath=$(srcdir)/dominanceAnalysis#
 
 ###############################################################################
 
@@ -65,7 +67,8 @@ include_HEADERS=\
 	$(mpaCFG_includeHeaders) \
 	$(mpaDataflowAnalysis_includeHeaders) \
 	$(mpaDefUseAnalysis_includeHeaders) \
-	$(mpaDistributedMemoryAnalysis_includeHeaders)
+	$(mpaDistributedMemoryAnalysis_includeHeaders) \
+	$(mpaDominanceAnalysis_includeHeaders)
 
 
 noinst_HEADERS=\
@@ -80,7 +83,8 @@ EXTRA_DIST=\
 	$(mpaCFG_extraDist) \
 	$(mpaDataflowAnalysis_extraDist) \
 	$(mpaDefUseAnalysis_extraDist) \
-	$(mpaDistributedMemoryAnalysis_extraDist)
+	$(mpaDistributedMemoryAnalysis_extraDist) \
+	$(mpaDominanceAnalysis_extraDist)
 
 
 clean-local:
@@ -90,6 +94,7 @@ clean-local:
 	$(mpaCFG_cleanLocal)
 	$(mpaDataflowAnalysis_cleanLocal)
 	$(mpaDefUseAnalysis_cleanLocal)
+	$(mpaDominanceAnalysis_cleanLocal)
 
 
 distclean-local:
@@ -98,6 +103,7 @@ distclean-local:
 	$(mpaCFG_distCleanLocal)
 	$(mpaDataflowAnalysis_distCleanLocal)
 	$(mpaDefUseAnalysis_distCleanLocal)
+	$(mpaDominanceAnalysis_distCleanLocal)
 
 
 
@@ -110,7 +116,7 @@ distclean-local:
 
 
 #SUBDIRS = OAWrap \
-#          valuePropagation  dominanceAnalysis \
+#          valuePropagation \
 #          staticInterproceduralSlicing pointerAnal \
 #          sideEffectAnalysis \
 #          graphAnalysis variableRenaming
