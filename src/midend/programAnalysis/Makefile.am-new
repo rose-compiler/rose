@@ -23,7 +23,7 @@ include $(srcdir)/graphAnalysis/Makefile_variables
 include $(srcdir)/OAWrap/Makefile_variables
 include $(srcdir)/pointerAnal/Makefile_variables
 include $(srcdir)/sideEffectAnalysis/Makefile_variables
-
+include $(srcdir)/staticInterproceduralSlicing/Makefile_variables
 
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
 mpaCallGraphAnalysisPath=$(srcdir)/CallGraphAnalysis#
@@ -36,6 +36,7 @@ mpaGraphAnalysisPath=$(srcdir)/graphAnalysis#
 mpaOAWrapPath=$(srcdir)/OAWrap#
 mpaPointerAnalPath=$(srcdir)/pointerAnal#
 mpaSideEffectAnalysisPath=$(srcdir)/sideEffectAnalysis#
+mpaStaticInterproceduralSlicingPath=$(srcdir)/staticInterproceduralSlicing#
 
 ###############################################################################
 
@@ -54,7 +55,8 @@ INCLUDES=\
 	$(mpaDistributedMemoryAnalysis_includes) \
 	$(mpaOAWrap_includes) \
 	$(mpaPointerAnal_includes) \
-	$(mpaSideEffectAnalysis_includes)
+	$(mpaSideEffectAnalysis_includes) \
+	$(mpaStaticInterproceduralSlicing_includes)
 
 
 BUILT_SOURCES=\
@@ -76,7 +78,8 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaGraphAnalysis_la_sources) \
 	$(mpaOAWrap_la_sources) \
 	$(mpaPointerAnal_la_sources) \
-	$(mpaSideEffectAnalysis_la_sources)
+	$(mpaSideEffectAnalysis_la_sources) \
+	$(mpaStaticInterproceduralSlicing_la_sources)
 
 
 include_HEADERS=\
@@ -89,7 +92,8 @@ include_HEADERS=\
 	$(mpaGraphAnalysis_includeHeaders) \
 	$(mpaOAWrap_includeHeaders) \
 	$(mpaPointerAnal_includeHeaders) \
-	$(mpaSideEffectAnalysis_includeHeaders)
+	$(mpaSideEffectAnalysis_includeHeaders) \
+	$(mpaStaticInterproceduralSlicing_includeHeaders)
 
 
 noinst_HEADERS=\
@@ -109,7 +113,8 @@ EXTRA_DIST=\
 	$(mpaGraphAnalysis_extraDist) \
 	$(mpaOAWrap_extraDist) \
 	$(mpaPointerAnal_extraDist) \
-	$(mpaSideEffectAnalysis_extraDist)
+	$(mpaSideEffectAnalysis_extraDist) \
+	$(mpaStaticInterproceduralSlicing_extraDist)
 
 
 clean-local:
@@ -123,6 +128,7 @@ clean-local:
 	$(mpaGraphAnalysis_cleanLocal)
 	$(mpaOAWrap_cleanLocal)
 	$(mpaPointerAnal_cleanLocal)
+	$(mpaStaticInterproceduralSlicing_cleanLocal)
 
 
 distclean-local:
@@ -135,6 +141,7 @@ distclean-local:
 	$(mpaGraphAnalysis_distCleanLocal)
 	$(mpaOAWrap_distCleanLocal)
 	$(mpaPointerAnal_distCleanLocal)
+	$(mpaStaticInterproceduralSlicing_distCleanLocal)
 
 
 
@@ -148,7 +155,6 @@ distclean-local:
 
 #SUBDIRS = 
 #          valuePropagation \
-#          staticInterproceduralSlicing \
 #          variableRenaming
 
 # DQ (9/6/2005): Commented out these directories since they

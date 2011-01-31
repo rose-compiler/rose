@@ -2502,7 +2502,6 @@ src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
 src/midend/programAnalysis/valuePropagation/Makefile
 src/midend/programAnalysis/variableRenaming/Makefile
-src/midend/programAnalysis/staticInterproceduralSlicing/Makefile
 src/midend/programTransformation/Makefile
 src/midend/programTransformation/astInlining/Makefile
 src/midend/programTransformation/astOutlining/Makefile
