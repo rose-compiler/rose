@@ -448,10 +448,20 @@ SageBuilder::buildFunctionParameterTypeList (SgExprListExp * expList)
 }
 
 SgFunctionParameterTypeList * 
-SageBuilder::buildFunctionParameterTypeList()
+SageBuilder::buildFunctionParameterTypeList(SgType* type0, SgType* type1, SgType* type2, SgType* type3,
+                                            SgType* type4, SgType* type5, SgType* type6, SgType* type7)
 {
   SgFunctionParameterTypeList* typePtrList = new SgFunctionParameterTypeList;
   ROSE_ASSERT(typePtrList);
+  SgTypePtrList& types = typePtrList->get_arguments();
+  if (type0) types.push_back(type0);
+  if (type1) types.push_back(type1);
+  if (type2) types.push_back(type2);
+  if (type3) types.push_back(type3);
+  if (type4) types.push_back(type4);
+  if (type5) types.push_back(type5);
+  if (type6) types.push_back(type6);
+  if (type7) types.push_back(type7);
   return typePtrList;
 }
 
@@ -892,7 +902,17 @@ SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclarat
   return result;
 }
 
-SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
+SgMemberFunctionDeclaration*
+SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope)
+{
+    SgType* return_type = func_type->get_return_type();
+    SgFunctionParameterList* paralist = buildFunctionParameterList(func_type->get_argument_list());
+
+    return SageBuilder::buildDefiningMemberFunctionDeclaration(name, return_type, paralist, scope);
+}
+
+SgMemberFunctionDeclaration*
+SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
 {
   SgMemberFunctionDeclaration * result = buildDefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,scope);
   // set definingdecl for SgCtorInitializerList
@@ -3376,6 +3396,22 @@ SgTypeFloat * SageBuilder::buildFloatType()
 }
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType
+//! Build a modifier type.
+SgModifierType* SageBuilder::buildModifierType(SgType* base_type /* = NULL*/)
+   {
+  // DQ (7/28/2010): New (similar) approach using type table support.
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
+
+  // DQ (7/28/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+      SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+       delete result;
+     return result2;
+ }
+
   //! Build a constant type.
 SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
    {

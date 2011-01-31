@@ -197,8 +197,18 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_142.f90 \
      test2010_143.f90 \
      test2010_144.f90 \
+     test2010_150.f90 \
      test2010_151.f90 \
+     test2010_152.f90 \
+     test2010_153.f90 \
      test2010_154.f90 \
+     test2010_155.f90 \
+     test2010_156.f90 \
+     test2010_158.f90 \
+     test2010_165.f90 \
+     test2010_166.f90 \
+     test2010_167.f90 \
+     test2010_168.f90 \
      test2010_172.f90 \
      test2010_173.f90 \
      test2010_174.f90 \
@@ -501,22 +511,12 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_147.f90 \
      test2010_148.f90 \
      test2010_149.f90 \
-     test2010_150.f90 \
-     test2010_152.f90 \
-     test2010_153.f90 \
-     test2010_155.f90 \
-     test2010_156.f90 \
-     test2010_158.f90 \
      test2010_159.f90 \
      test2010_160.f90 \
      test2010_161.f90 \
      test2010_162.f90 \
      test2010_163.f90 \
      test2010_164.f90 \
-     test2010_165.f90 \
-     test2010_166.f90 \
-     test2010_167.f90 \
-     test2010_168.f90 \
      test2010_169.f90 \
      test2010_170.f90 \
      test2010_175.f90 \
@@ -532,6 +532,8 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      X-ifStmt.f90 \
      X-pointerAttr.f90 \
      X-return-with-expr.f90
+
+# DQ(1/30/2011): Rice bugs are test2010_150.* - test2010_168.*
 
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
 #    test2008_02.f
