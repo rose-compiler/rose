@@ -21,7 +21,7 @@
 #include "rose.h"
 
 #define NPASSES 3                       /* number of passes through this test, each pass creates and deletes nodes */
-#define NTHREADS 300                    /* zero implies using only the main thread; >0 implies creation of sub-threads */
+#define NTHREADS 2                      /* zero implies using only the main thread; >0 implies creation of sub-threads */
 #define NODES_PER_THREAD 2000           /* number of nodes to create per thread */
 
 #define thread_of(G)    ((G)/NODES_PER_THREAD)

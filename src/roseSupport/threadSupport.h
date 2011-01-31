@@ -66,17 +66,18 @@
  *  that might call the same function should block until the first caller completes.  These macros can be used for that
  *  purpose.
  *
- *  The MUTEX is briefly locked to inspect and initilization state, and then unlocked before the user-supplied body is
+ *  The MUTEX is briefly locked to inspect the state of initilization, and then unlocked before the user-supplied body is
  *  executed.  The user is permitted to obtain the mutex lock again in the body if desired, although this is only necessary if
  *  other code paths (outside the RTS_INIT construct) might interfere with the body.
  *
  *  If ALLOW_RECURSION is true, then a recursive call from the body will jump over the RTS_INIT construct without doing
- *  anything (other than briefly obtaining the mutex lock to inspect the initialized state). Otherwise a recursive call from
- *  the body is considered a logic error and the process will be aborted. For convenience, we define two additional macros:
- *  RTS_INIT_RECURSIVE and RTS_INIT_NONRECURSIVE.
+ *  anything (other than briefly obtaining the mutex lock to inspect the state of initializatione). Otherwise a recursive call
+ *  from the body is considered a logic error and the process will be aborted. For convenience, we define two additional
+ *  macros, RTS_INIT_RECURSIVE and RTS_INIT_NONRECURSIVE, which may be used in place of the two-argument RTS_INIT macro.
  *
  *  The user-supplied body may exit prematurely either by a "break" statement or by throwing an exception.  In either case, the
- *  initialization is assumed to have completed and the body will not be executed by any other future call.
+ *  initialization is assumed to have completed and the body will not be executed by any other future call.  Any other kind of
+ *  premature exit from the body (return, goto, longjmp, etc) results in undefined behavior.
  *
  *  Example code. Consider a class method which is responsible for one-time initialization of certain class data
  *  structures. This initialization function is called by nearly every other method in the class, and therefore anything that
@@ -91,6 +92,7 @@
  *          register_subclass(new Subclass2);
  *          register_subclass(new Subclass3);
  *      } RTS_INIT_END;
+ *  }
  *  @endcode
  */
 #define RTS_INIT(MUTEX, ALLOW_RECURSION)                                                                                       \
