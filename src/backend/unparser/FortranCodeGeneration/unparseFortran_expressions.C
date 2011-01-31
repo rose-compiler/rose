@@ -181,7 +181,15 @@ FortranCodeGeneration_locatedNode::unparseActualArgumentExpression(SgExpression*
      SgActualArgumentExpression* actualArgumentExpression = isSgActualArgumentExpression(expr);
 
      curprint(actualArgumentExpression->get_argument_name());
-     curprint("=");
+
+  // DQ (1/30/2011): If the name is "*" then this is an "alternative return label".
+  // Note that we might want this to appear more explicitly as a specialized IR 
+  // node in the future.
+     if (actualArgumentExpression->get_argument_name() != "*")
+        {
+          curprint("=");
+        }
+
      unparseExpression(actualArgumentExpression->get_expression(),info);
    }
 
@@ -1431,7 +1439,9 @@ FortranCodeGeneration_locatedNode::unparseStringVal(SgExpression* expr, SgUnpars
   // Sage node corresponds to a Fortran string constant
      SgStringVal* str_val = isSgStringVal(expr);
      ROSE_ASSERT(str_val != NULL);
-     ROSE_ASSERT(str_val->get_value().empty() == false);      
+
+  // DQ (1/30/2011): It is OK to have an empty string value (see test2010_156.f90).
+  // ROSE_ASSERT(str_val->get_value().empty() == false);      
 
   // String values in fortran can use either double or single quotes ("..." or '...') to be used.
      string str;
