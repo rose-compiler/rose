@@ -90,10 +90,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
    $(top_builddir)/src/midend/astUtil/libastUtil.la \
-   $(top_builddir)/src/midend/programAnalysis/CFG/libCFG.la \
-   $(top_builddir)/src/midend/programAnalysis/CallGraphAnalysis/libCallGraph.la \
    $(top_builddir)/src/midend/programAnalysis/OAWrap/libOAWrap.la \
-   $(top_builddir)/src/midend/programAnalysis/dataflowAnalysis/libdataflowAnalysis.la \
    $(top_builddir)/src/midend/programAnalysis/defUseAnalysis/libDefUseAnalysis.la \
    $(top_builddir)/src/midend/programAnalysis/graphAnalysis/libSB_GraphAnalysis.la \
    $(top_builddir)/src/midend/programAnalysis/pointerAnal/libpointerAnal.la \

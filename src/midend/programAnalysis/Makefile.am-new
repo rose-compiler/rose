@@ -11,42 +11,76 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #>..e.g. include $(cxxCodeGenerationPath)/Makefile_variables
 #
 include $(srcdir)/annotationLanguageParser/Makefile_variables
+include $(srcdir)/CallGraphAnalysis/Makefile_variables
+include $(srcdir)/CFG/Makefile_variables
+include $(srcdir)/dataflowAnalysis/Makefile_variables
 
 
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
+mpaCallGraphAnalysisPath=$(srcdir)/CallGraphAnalysis#
+mpaCFGPath=$(srcdir)/CFG#
+mpaDataflowAnalysisPath=$(srcdir)/dataflowAnalysis#
 
 ###############################################################################
 
 # Taken from midend/programAnalysis/annotationLanguageParser
 AM_CXXFLAGS = -D__LOCALSTL_H
 
+
 INCLUDES=\
+	$(mpaCallGraphAnalysis_includes) \
+	$(mpaCFG_includes) \
+	$(mpaDataflowAnalysis_includes)
 
 
-noinst_LTLIBRARIES = libprogramAnalysis.la
+BUILT_SOURCES=\
+	$(mpaAnnotationLanguageParser_builtSources)
+
+
+noinst_LTLIBRARIES=\
+	libprogramAnalysis.la \
+	$(mpaAnnotationLanguageParser_noinstLTLIBRARIES)
 
 ##################################################################
 
 libprogramAnalysis_la_SOURCES=\
+	$(mpaCallGraphAnalysis_la_sources) \
+	$(mpaCFG_la_sources) \
+	$(mpaDataflowAnalysis_la_sources)
 
 
 include_HEADERS=\
+	$(mpaCallGraphAnalysis_includeHeaders) \
+	$(mpaCFG_includeHeaders) \
+	$(mpaDataflowAnalysis_includeHeaders)
 
 
-dist_include_HEADERS=\
+noinst_HEADERS=\
+	$(mpaAnnotationLanguageParser_noinstHeaders)
 
 
 EXTRA_DIST=\
 	CMakeLists.txt \
-	OpenAnalysis
+	OpenAnalysis \
+	$(mpaAnnotationLanguageParser_extraDist) \
+	$(mpaCallGraphAnalysis_extraDist) \
+	$(mpaCFG_extraDist) \
+	$(mpaDataflowAnalysis_extraDist)
 
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates
+	$(mpaAnnotationLanguageParser_cleanLocal)
+	$(mpaCallGraphAnalysis_cleanLocal)
+	$(mpaCFG_cleanLocal)
+	$(mpaDataflowAnalysis_cleanLocal)
 
 
 distclean-local:
 	rm -rf Templates.DB
+	$(mpaCallGraphAnalysis_distCleanLocal)
+	$(mpaCFG_distCleanLocal)
+	$(mpaDataflowAnalysis_distCleanLocal)
 
 
 
@@ -58,15 +92,10 @@ distclean-local:
 
 
 
-# DQ (5/3/2007): Old version before Christian's work was added.
-#SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis
-#          valuePropagation  dominatorTreesAndDominanceFrontiers
-#          staticProgramSlicing proceduralSlicing
-
-#SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis \
+#SUBDIRS = OAWrap dataflowAnalysis \
 #          valuePropagation  defUseAnalysis dominanceAnalysis \
 #          staticInterproceduralSlicing pointerAnal \
-#          annotationLanguageParser sideEffectAnalysis distributedMemoryAnalysis \
+#          sideEffectAnalysis distributedMemoryAnalysis \
 #          graphAnalysis variableRenaming
 
 # DQ (9/6/2005): Commented out these directories since they

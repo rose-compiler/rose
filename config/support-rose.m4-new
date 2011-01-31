@@ -2500,10 +2500,7 @@ src/midend/astRewriteMechanism/Makefile
 src/midend/astDiagnostics/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
-src/midend/programAnalysis/CallGraphAnalysis/Makefile
 src/midend/programAnalysis/OAWrap/Makefile
-src/midend/programAnalysis/CFG/Makefile
-src/midend/programAnalysis/dataflowAnalysis/Makefile
 src/midend/programAnalysis/pointerAnal/Makefile
 src/midend/programAnalysis/valuePropagation/Makefile
 src/midend/programAnalysis/variableRenaming/Makefile
