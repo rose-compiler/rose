@@ -46,7 +46,9 @@ mpaVariableRenamingPath=$(srcdir)/variableRenaming#
 ###############################################################################
 
 # Taken from midend/programAnalysis/annotationLanguageParser
-AM_CXXFLAGS = -D__LOCALSTL_H
+AM_CXXFLAGS=\
+	-D__LOCALSTL_H
+
 
 INCLUDES_OMP=\
 	$(mpaDefUseAnalysis_includesOmp) \
