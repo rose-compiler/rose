@@ -6,8 +6,10 @@ mpaAnnotationLanguageParser_builtSources=\
 	language.tab.h
 
 
+# TOO (1/31/11): TODO: must this library be created in the
+# annotationLanguageParser directory?
 mpaAnnotationLanguageParser_noinstLTLIBRARIES=\
-	$(mpaAnnotationLanguageParserPath)/libannotationLanguageParser.la
+	libannotationLanguageParser.la
 
 
 ## Specifications for building the pdf library.
