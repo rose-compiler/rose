@@ -1,4 +1,6 @@
 # Non-recursive Makefile
+# dominatorTreesAndDominanceFrontiers is not utilized (config/support-rose.m4 does not
+# generate a Makefile for it)
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
@@ -17,6 +19,7 @@ include $(srcdir)/dataflowAnalysis/Makefile_variables
 include $(srcdir)/defUseAnalysis/Makefile_variables
 include $(srcdir)/distributedMemoryAnalysis/Makefile_variables
 include $(srcdir)/dominanceAnalysis/Makefile_variables
+include $(srcdir)/graphAnalysis/Makefile_variables
 
 
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
@@ -26,6 +29,7 @@ mpaDataflowAnalysisPath=$(srcdir)/dataflowAnalysis#
 mpaDefUseAnalysisPath=$(srcdir)/defUseAnalysis#
 mpaDistributedMemoryAnalysisPath=$(srcdir)/distributedMemoryAnalysis#
 mpaDominanceAnalysisPath=$(srcdir)/dominanceAnalysis#
+mpaGraphAnalysisPath=$(srcdir)/graphAnalysis#
 
 ###############################################################################
 
@@ -59,7 +63,8 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaCallGraphAnalysis_la_sources) \
 	$(mpaCFG_la_sources) \
 	$(mpaDataflowAnalysis_la_sources) \
-	$(mpaDefUseAnalysis_la_sources)
+	$(mpaDefUseAnalysis_la_sources) \
+	$(mpaGraphAnalysis_la_sources)
 
 
 include_HEADERS=\
@@ -68,7 +73,8 @@ include_HEADERS=\
 	$(mpaDataflowAnalysis_includeHeaders) \
 	$(mpaDefUseAnalysis_includeHeaders) \
 	$(mpaDistributedMemoryAnalysis_includeHeaders) \
-	$(mpaDominanceAnalysis_includeHeaders)
+	$(mpaDominanceAnalysis_includeHeaders) \
+	$(mpaGraphAnalysis_includeHeaders)
 
 
 noinst_HEADERS=\
@@ -84,7 +90,8 @@ EXTRA_DIST=\
 	$(mpaDataflowAnalysis_extraDist) \
 	$(mpaDefUseAnalysis_extraDist) \
 	$(mpaDistributedMemoryAnalysis_extraDist) \
-	$(mpaDominanceAnalysis_extraDist)
+	$(mpaDominanceAnalysis_extraDist) \
+	$(mpaGraphAnalysis_extraDist)
 
 
 clean-local:
@@ -95,6 +102,7 @@ clean-local:
 	$(mpaDataflowAnalysis_cleanLocal)
 	$(mpaDefUseAnalysis_cleanLocal)
 	$(mpaDominanceAnalysis_cleanLocal)
+	$(mpaGraphAnalysis_cleanLocal)
 
 
 distclean-local:
@@ -104,6 +112,7 @@ distclean-local:
 	$(mpaDataflowAnalysis_distCleanLocal)
 	$(mpaDefUseAnalysis_distCleanLocal)
 	$(mpaDominanceAnalysis_distCleanLocal)
+	$(mpaGraphAnalysis_distCleanLocal)
 
 
 
