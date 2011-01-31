@@ -1,3 +1,4 @@
+# Non-recursive Makefile
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 asmUnparser_la_sources=\

@@ -1,3 +1,5 @@
+# Non-recursive Makefile
+
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 ###############################################################################
@@ -6,7 +8,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # in the flattening of Makefiles
 #
 # Caution: include path cannot contain variable,
-#	e.g. include cxxCodeGenerationPath/Makefile_variables
+#	e.g. include $(cxxCodeGenerationPath)/Makefile_variables
 #
 include $(srcdir)/unparser/Makefile_variables
 include $(srcdir)/unparser/CxxCodeGeneration/Makefile_variables
