@@ -214,9 +214,34 @@ void xomp_task(void (*func) (void *), void (*cpyfn) (void *, void *), int* arg_s
                int* if_clause, int* untied, int * argcount, ...);
 #pragma weak xomp_task_=xomp_task
 // Main tasks: 
-//   convert Fortran parameter types to the right C one 
-//   wrap function pointer to a outlined function routine and all its parameters into one single parameter gp_parameter[]
-//   Call the real xomp_task () with the bridge run_me_task_#() function
+//   Convert Fortran parameters to the right C ones so XOMP_task() can handle them properly
+//     The challenge is that Fortran parameters are all passed by references.
+//     But XOMP_task() has to support both pass-by-reference and pass-by-value. 
+//     Especially, the values/addresses must be copied into task data when tasks are created. 
+//     Since a task's parent function stack may not exist when a task is being executed. 
+//
+//  Solution: 
+//   Compiler provides all information about the nature (value vs. reference) of parameter, size, and where to get the parameter.
+//   The XOMP layer encodes all information into a single data segment, which will be copied into each task by gomp_task() etc. 
+//   The XOMP layer also provides function (run_me_task_ ()) to decode the data segment, and call the outlined Fortran subroutine. 
+//
+//   Wrap function pointer to a outlined function routine and all its parameters into one single parameter gp_parameter[]
+//   The single data segment has the following layout
+//        8 bytes for the function pointer to the outlined Fortran subroutine
+//        a triplet for each parameter. Every triplet has the following layout
+//          1 byte for a boolean value to indicate if the parameter should be passed by value
+//          4 bytes for the size of the parameter, size should be equal to sizeof (void*) if not pass-by-value ( pointer type instead)
+//          x bytes for value or address, x will be the size provide by the 2nd element of the triplet.
+//  For example, if we have a outlined function with two parameters: 
+//     an integer index suitable for pass-by-value, This is very typical for a task's firstprivate variables.
+//     an array pass-by-reference, 
+//  The data segment to be created will contain (assuming 64-bit target):
+//      8 bytes (function pointer), 
+//      1 byte(byValue=true),  4 bytes (int value),           8 bytes(address of the index)
+//      1 byte(byValue=false), 8 bytes (address of the array), 8 bytes(address of the array)
+//  Total   38 bytes for the data segment
+//
+//  Finally, we can call the real xomp_task () with the bridge run_me_task_#() function
 void xomp_task(void (*func) (void *), void (*cpyfn) (void *, void *), int* arg_size, int* arg_align, 
                int* if_clause, int* untied, int * argcount, ...)
 {
@@ -255,7 +280,6 @@ void xomp_task(void (*func) (void *), void (*cpyfn) (void *, void *), int* arg_s
   // We need to use dedicated private g_parameter for each task. 
   // Single the parent function of tasks may die out before children tasks begin execution: untied case
   char * pg_parameter = (char*) malloc(larg_size); // allocate 8+4 =12 bytes for pg_parameter, this is the data to be coped into each task!
-  //char * pg_parameter = (char*) malloc(larg_size); // allocate 8+4 =12 bytes for pg_parameter, this is the data to be coped into each task!
   // save mixed addresses and values as needed. 
   if (pg_parameter == (void*)0)
   {
@@ -282,6 +306,9 @@ void xomp_task(void (*func) (void *), void (*cpyfn) (void *, void *), int* arg_s
   { 
      // grab 1st of the triplet: pass-by-value or not
     int by_value = *(int*)(va_arg(v1, void*));
+    bool bValue = (by_value==1)?true:false;
+    memcpy (&(pg_parameter[p_offset]),&bValue, sizeof(bool)); // we use 1 byte to store the by-value flag
+    p_offset+= sizeof(bool);
 
      // grab 2nd of the triplet: size of the value/address
     int v_size =  *(int*)(va_arg(v1, void*));
@@ -289,11 +316,14 @@ void xomp_task(void (*func) (void *), void (*cpyfn) (void *, void *), int* arg_s
     { // verify size of address
       assert (v_size == sizeof(void*));
     }
+    memcpy (&(pg_parameter[p_offset]),&v_size, sizeof(int)); // we use 4 byte to store the size
+    p_offset+= sizeof(int);
 
     // 3rd of the triplet: address (of the value) : store value or address as required 
     if (by_value)
     {
-      char * i = (char*)(va_arg(v1, void*)); // every thing is a pointer from Fortran to xomp
+      char * i = (char*)(va_arg(v1, void*)); // every parameter is a pointer to something from Fortran to xomp
+      // in this case, the pointer points to a value, we just copy the pointed value bytes 
       memcpy (&(pg_parameter[p_offset]),i, v_size);
     }  
     else
@@ -301,32 +331,17 @@ void xomp_task(void (*func) (void *), void (*cpyfn) (void *, void *), int* arg_s
       // address
       void * i2 = (void*) (va_arg(v1, void*)); 
       memcpy (&(pg_parameter[p_offset]),&i2, v_size);
-    //  printf ("Debug, fortran xomp, array address is %p\n", i2);
+#if 0      
+      printf ("Debug, fortran xomp, source array address is %p\n", i2);
+      // debug the array copied
+      int* item = (int*) (i2);
+      int ii;
+      for (ii = 0; ii<10; ii++)
+        printf ("source item [%d]=%d\n", ii, item[ii]);
+#endif        
     }
     p_offset+=v_size; // shift offset
   }
-
-  // 2nd parameter ----------------
-#if 0   
-  // address
-   void * i2 = (void*) (va_arg(v1, void*)); 
-   memcpy (&(pg_parameter[p_offset]),&i2, sizeof(void*));
-   printf ("Debug, fortran xomp, array address is %p\n", i2);
-
-// #else
-   // value, get its address
-   char * i2 = (char*)(va_arg(v1, void*)); // every thing is a pointer from Fortran to xomp
-   //gstruct_40 i2 = *(gstruct_40*)(va_arg(v1, void*)); // every thing is a pointer from Fortran to xomp
-   //copy all bytes of the value
-   memcpy (&(pg_parameter[p_offset]),i2, 40);
-   //memcpy (&(pg_parameter[p_offset]),&i2, 40);
-   p_offset+=40;
-   // debug the array copied
-   int* item = (int*) (i2);
-   int ii;
-   for (ii = 0; ii<10; ii++)
-     printf ("item [%d]=%d\n", ii, item[ii]);
-#endif
 
 //  printf ("Debug xomp()  largcount = %d\n", largcount);
   switch (largcount)

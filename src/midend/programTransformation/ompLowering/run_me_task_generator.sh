@@ -28,15 +28,56 @@ do
     fi
   done  
   echo "  FUNC_P func;"
-  echo "  func =(FUNC_P) (((void**)data)[0]);"
+#  echo "  func =(FUNC_P) (((void**)data)[0]);"
+  echo "  int offset =0 ;"
 
+  echo "  memcpy (&func, data, sizeof(FUNC_P));"
+  echo "  offset +=  sizeof(FUNC_P);"
+  echo "  char * p[$c];"
+
+  echo "  int i;"
+  echo "  // Decode the remaining of void* data to be individual parameters one by one"
+  echo "  for (i=0; i<$c; i++)"
+  echo "  {"
+  echo "     // 1. Decode the pass-by-value flag" 
+  echo "     bool bValue;"
+  echo "     memcpy(&bValue, &(((char*)data)[offset]), sizeof(bool)); // we use 1 byte to store the by-value flag"
+  echo "     offset+= sizeof(bool);"
+    
+  echo "     // 2. Decode the size of the parameter"
+  echo "     int v_size; "
+  echo "     memcpy (&v_size, &(((char*)data)[offset]),sizeof(int)); // we use 4 byte to store the size "
+  echo "     offset+= sizeof(int);"
+  echo "     "
+  echo "     // 3. Copy the address/value"
+  echo "     if (bValue)"
+  echo "     {// Must allocate memory to copy value parameter"
+  echo "       p[i] = malloc (v_size); "
+  echo "       if (p[i] == NULL) printf (\"Fatal error in xomp, run_me_task_(). Cannot allocate memory for a value parameter!\\n \");"
+  echo "       memcpy (p[i], &( ((char*)data)[offset]), v_size);"
+  echo "     }  "
+  echo "     else"
+  echo "     {"
+  echo "       // copy address"
+  echo "       // No allocation is needed for address parameter"
+  echo "       assert (v_size == sizeof (void*));"
+  echo "       memcpy (&(p[i]), &( ((char*)data)[offset]), v_size);"
+  echo "     }"
+  echo "     offset += sizeof(v_size);"
+  echo "    "
+  echo "   } // end for loop"
+
+# call the function-------
+  TTT=""
+  let TTT+="$c-1"
+#  echo $TTT
   echo "  func("
-  for ((e=1; e<=$c;e++ ))
+  for ((e=0; e<$c;e++ ))
   do
-    if [ $e -ne $c ] ; then
-      echo "              ((void**)data)[$e],"
+    if [ $e -ne $TTT ] ; then
+      echo "              p[$e],"
     else
-      echo "              ((void**)data)[$e]);"
+      echo "              p[$e]);"
     fi
 
   done  
