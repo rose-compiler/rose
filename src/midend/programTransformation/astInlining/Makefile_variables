@@ -1,24 +1,24 @@
 
 mptAstInlining_la_sources=\
-	$(astInliningPath)/inliner.C \
-	$(astInliningPath)/inlinerSupport.C \
-	$(astInliningPath)/isPotentiallyModified.C \
-	$(astInliningPath)/replaceExpressionWithStatement.C 
+	$(mptAstInliningPath)/inliner.C \
+	$(mptAstInliningPath)/inlinerSupport.C \
+	$(mptAstInliningPath)/isPotentiallyModified.C \
+	$(mptAstInliningPath)/replaceExpressionWithStatement.C 
 
 
 mptAstInlining_includeHeaders=\
-	$(astInliningPath)/replaceExpressionWithStatement.h \
-	$(astInliningPath)/inlinerSupport.h \
-	$(astInliningPath)/inliner.h
+	$(mptAstInliningPath)/replaceExpressionWithStatement.h \
+	$(mptAstInliningPath)/inlinerSupport.h \
+	$(mptAstInliningPath)/inliner.h
 
 
 mptAstInlining_extraDist=\
-	$(astInliningPath)/CMakeLists.txt
+	$(mptAstInliningPath)/CMakeLists.txt
 
 
 mptAstInlining_cleanLocal=\
 	rm -rf \
-		$(astInliningPath)/Templates.DB \
-		$(astInliningPath)/ii_files \
-		$(astInliningPath)/ti_files \
-		$(astInliningPath)/core
+		$(mptAstInliningPath)/Templates.DB \
+		$(mptAstInliningPath)/ii_files \
+		$(mptAstInliningPath)/ti_files \
+		$(mptAstInliningPath)/core
