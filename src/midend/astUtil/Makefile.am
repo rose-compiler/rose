@@ -35,7 +35,7 @@ noinst_LTLIBRARIES=\
 
 ##################################################################
 
-libastUtil_la_sources=\
+libastUtil_la_SOURCES=\
 	$(mauAnnotation_la_sources) \
 	$(mauAstInterface_la_sources) \
 	$(mauAstSupport_la_sources) \
