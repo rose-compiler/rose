@@ -1,0 +1,44 @@
+# Non-recursive Makefile
+
+if ROSE_MPI
+
+mpaDistributedMemoryAnalysis_includes=\
+	-DROSE_MPI 
+
+#LTCXXCOMPILE = \
+#	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
+#        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+#        $(AM_CXXFLAGS) $(CXXFLAGS)
+#CXXCOMPILE = \
+#	$(MPICXX) $(DEFS) \
+#        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+#        $(AM_CXXFLAGS) $(CXXFLAGS)
+#CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
+#        $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+
+mpaDistributedMemoryAnalysis_noinstLTLIBRARIES=\
+	$(mpaDistributedMemoryAnalysisPath)/libdistributedMemoryAnalysis.la
+
+
+libdistributedMemoryAnalysis_la_SOURCES=\
+	$(mpaDistributedMemoryAnalysisPath)/DistributedMemoryAnalysis.C \
+	$(mpaDistributedMemoryAnalysisPath)/functionNames.C
+
+
+mpaDistributedMemoryAnalysis_includeHeaders=\
+	$(mpaDistributedMemoryAnalysisPath)/functionNames.h \
+	$(mpaDistributedMemoryAnalysisPath)/DistributedMemoryAnalysis.h \
+	$(mpaDistributedMemoryAnalysisPath)/DistributedMemoryAnalysisImplementation.h \
+	$(mpaDistributedMemoryAnalysisPath)/functionLevelTraversal.h
+
+endif
+
+
+mpaDistributedMemoryAnalysis_extraDist=\
+	$(mpaDistributedMemoryAnalysisPath)/CMakeLists.txt \
+	$(mpaDistributedMemoryAnalysisPath)/DistributedMemoryAnalysis.C \
+	$(mpaDistributedMemoryAnalysisPath)/functionNames.C \
+	$(mpaDistributedMemoryAnalysisPath)/functionNames.h \
+	$(mpaDistributedMemoryAnalysisPath)/DistributedMemoryAnalysis.h \
+	$(mpaDistributedMemoryAnalysisPath)/DistributedMemoryAnalysisImplementation.h \
+	$(mpaDistributedMemoryAnalysisPath)/functionLevelTraversal.h

@@ -15,6 +15,7 @@ include $(srcdir)/CallGraphAnalysis/Makefile_variables
 include $(srcdir)/CFG/Makefile_variables
 include $(srcdir)/dataflowAnalysis/Makefile_variables
 include $(srcdir)/defUseAnalysis/Makefile_variables
+include $(srcdir)/distributedMemoryAnalysis/Makefile_variables
 
 
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
@@ -22,6 +23,7 @@ mpaCallGraphAnalysisPath=$(srcdir)/CallGraphAnalysis#
 mpaCFGPath=$(srcdir)/CFG#
 mpaDataflowAnalysisPath=$(srcdir)/dataflowAnalysis#
 mpaDefUseAnalysisPath=$(srcdir)/defUseAnalysis#
+mpaDistributedMemoryAnalysisPath=$(srcdir)/distributedMemoryAnalysis#
 
 ###############################################################################
 
@@ -35,8 +37,9 @@ INCLUDES_OMP=\
 INCLUDES=\
 	$(mpaCallGraphAnalysis_includes) \
 	$(mpaCFG_includes) \
-	$(mpaDataflowAnalysis_includes)
-	$(mpaDefUseAnalysis_includes)
+	$(mpaDataflowAnalysis_includes) \
+	$(mpaDefUseAnalysis_includes) \
+	$(mpaDistributedMemoryAnalysis_includes)
 
 
 BUILT_SOURCES=\
@@ -45,7 +48,8 @@ BUILT_SOURCES=\
 
 noinst_LTLIBRARIES=\
 	libprogramAnalysis.la \
-	$(mpaAnnotationLanguageParser_noinstLTLIBRARIES)
+	$(mpaAnnotationLanguageParser_noinstLTLIBRARIES) \
+	$(mpaDistributedMemoryAnalysis_noinstLTLIBRARIES)
 
 ##################################################################
 
@@ -60,7 +64,8 @@ include_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \
 	$(mpaCFG_includeHeaders) \
 	$(mpaDataflowAnalysis_includeHeaders) \
-	$(mpaDefUseAnalysis_includeHeaders)
+	$(mpaDefUseAnalysis_includeHeaders) \
+	$(mpaDistributedMemoryAnalysis_includeHeaders)
 
 
 noinst_HEADERS=\
@@ -74,7 +79,8 @@ EXTRA_DIST=\
 	$(mpaCallGraphAnalysis_extraDist) \
 	$(mpaCFG_extraDist) \
 	$(mpaDataflowAnalysis_extraDist) \
-	$(mpaDefUseAnalysis_extraDist)
+	$(mpaDefUseAnalysis_extraDist) \
+	$(mpaDistributedMemoryAnalysis_extraDist)
 
 
 clean-local:
@@ -106,7 +112,7 @@ distclean-local:
 #SUBDIRS = OAWrap \
 #          valuePropagation  dominanceAnalysis \
 #          staticInterproceduralSlicing pointerAnal \
-#          sideEffectAnalysis distributedMemoryAnalysis \
+#          sideEffectAnalysis \
 #          graphAnalysis variableRenaming
 
 # DQ (9/6/2005): Commented out these directories since they
