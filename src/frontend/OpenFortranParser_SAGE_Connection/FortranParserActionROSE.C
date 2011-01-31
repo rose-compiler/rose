@@ -8135,11 +8135,11 @@ void c_action_section_subscript_list(int count)
                     ROSE_ASSERT(astLabelSymbolStack.empty() == false);
                  // expression = astLabelSymbolStack.front()->get_numeric_label_value();
                     int integerLabelValue = astLabelSymbolStack.front()->get_numeric_label_value();
-                    printf ("integerLabelValue = %d \n",integerLabelValue);
+                 // printf ("integerLabelValue = %d \n",integerLabelValue);
                     expression = new SgIntVal(integerLabelValue,"");
                     setSourcePosition(expression);
                     SgName name = "*";
-                    printf ("name = %s \n",name.str());
+                 // printf ("name = %s \n",name.str());
                     expression = new SgActualArgumentExpression(name,expression);
                     setSourcePosition(expression,astActualArgumentNameStack.front());
 
