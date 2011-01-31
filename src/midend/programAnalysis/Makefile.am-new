@@ -25,6 +25,8 @@ include $(srcdir)/pointerAnal/Makefile_variables
 include $(srcdir)/sideEffectAnalysis/Makefile_variables
 include $(srcdir)/staticInterproceduralSlicing/Makefile_variables
 include $(srcdir)/valuePropagation/Makefile_variables
+include $(srcdir)/variableRenaming/Makefile_variables
+
 
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
 mpaCallGraphAnalysisPath=$(srcdir)/CallGraphAnalysis#
@@ -39,6 +41,7 @@ mpaPointerAnalPath=$(srcdir)/pointerAnal#
 mpaSideEffectAnalysisPath=$(srcdir)/sideEffectAnalysis#
 mpaStaticInterproceduralSlicingPath=$(srcdir)/staticInterproceduralSlicing#
 mpaValuePropagationPath=$(srcdir)/valuePropagation#
+mpaVariableRenamingPath=$(srcdir)/variableRenaming#
 
 ###############################################################################
 
@@ -46,7 +49,8 @@ mpaValuePropagationPath=$(srcdir)/valuePropagation#
 AM_CXXFLAGS = -D__LOCALSTL_H
 
 INCLUDES_OMP=\
-	$(mpaDefUseAnalysis_includesOmp)
+	$(mpaDefUseAnalysis_includesOmp) \
+	$(mpaVariableRenaming_includesOmp)
 
 
 INCLUDES=\
@@ -59,7 +63,9 @@ INCLUDES=\
 	$(mpaPointerAnal_includes) \
 	$(mpaSideEffectAnalysis_includes) \
 	$(mpaStaticInterproceduralSlicing_includes) \
-	$(mpaValuePropagation_includes)
+	$(mpaValuePropagation_includes) \
+	$(mpaVariableRenaming_includes) \
+	$(INCLUDES_OMP)
 
 
 BUILT_SOURCES=\
@@ -83,7 +89,8 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaPointerAnal_la_sources) \
 	$(mpaSideEffectAnalysis_la_sources) \
 	$(mpaStaticInterproceduralSlicing_la_sources) \
-	$(mpaValuePropagation_la_sources)
+	$(mpaValuePropagation_la_sources) \
+	$(mpaVariableRenaming_la_sources)
 
 
 include_HEADERS=\
@@ -98,7 +105,8 @@ include_HEADERS=\
 	$(mpaPointerAnal_includeHeaders) \
 	$(mpaSideEffectAnalysis_includeHeaders) \
 	$(mpaStaticInterproceduralSlicing_includeHeaders) \
-	$(mpaValuePropagation_includeHeaders)
+	$(mpaValuePropagation_includeHeaders) \
+	$(mpaVariableRenaming_includeHeaders)
 
 
 noinst_HEADERS=\
@@ -120,7 +128,8 @@ EXTRA_DIST=\
 	$(mpaPointerAnal_extraDist) \
 	$(mpaSideEffectAnalysis_extraDist) \
 	$(mpaStaticInterproceduralSlicing_extraDist) \
-	$(mpaValuepropagation_extraDist)
+	$(mpaValuepropagation_extraDist) \
+	$(mpaVariableRenaming_extraDist)
 
 
 clean-local:
@@ -136,6 +145,7 @@ clean-local:
 	$(mpaPointerAnal_cleanLocal)
 	$(mpaStaticInterproceduralSlicing_cleanLocal)
 	$(mpaValuePropagation_cleanLocal)
+	$(mpaVariableRenaming_cleanLocal)
 
 
 distclean-local:
@@ -150,25 +160,10 @@ distclean-local:
 	$(mpaPointerAnal_distCleanLocal)
 	$(mpaStaticInterproceduralSlicing_distCleanLocal)
 	$(mpaValuePropagation_distCleanLocal)
+	$(mpaVariableRenaming_distCleanLocal)
 
 
 
-
-
-
-
-
-
-
-
-#SUBDIRS = 
-#          valuePropagation \
-#          variableRenaming
-
-# DQ (9/6/2005): Commented out these directories since they
-# represent code that used the older graph interface and they
-# no longer compile!  These will be updated later.
-# staticProgramSlicing proceduralSlicing
 
 ## The grammar generator (ROSETTA) should use its own template repository
 # CXX_TEMPLATE_REPOSITORY_PATH = .
