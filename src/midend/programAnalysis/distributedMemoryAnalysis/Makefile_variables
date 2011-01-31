@@ -16,8 +16,10 @@ mpaDistributedMemoryAnalysis_includes=\
 #CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
 #        $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
+# TOO (1/31/11): TODO: must this library be created in the
+# distributedMemoryAnalysis directory?
 mpaDistributedMemoryAnalysis_noinstLTLIBRARIES=\
-	$(mpaDistributedMemoryAnalysisPath)/libdistributedMemoryAnalysis.la
+	libdistributedMemoryAnalysis.la
 
 
 libdistributedMemoryAnalysis_la_SOURCES=\
