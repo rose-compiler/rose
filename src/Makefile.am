@@ -89,10 +89,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
    $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
-   $(top_builddir)/src/midend/astUtil/annotation/libannotation.la \
-   $(top_builddir)/src/midend/astUtil/astInterface/libastInterface.la \
-   $(top_builddir)/src/midend/astUtil/astSupport/libastSupport.la \
-   $(top_builddir)/src/midend/astUtil/symbolicVal/libsymbolicVal.la \
+   $(top_builddir)/src/midend/astUtil/libastUtil.la \
    $(top_builddir)/src/midend/programAnalysis/CFG/libCFG.la \
    $(top_builddir)/src/midend/programAnalysis/CallGraphAnalysis/libCallGraph.la \
    $(top_builddir)/src/midend/programAnalysis/OAWrap/libOAWrap.la \
