@@ -14,23 +14,29 @@ include $(srcdir)/annotationLanguageParser/Makefile_variables
 include $(srcdir)/CallGraphAnalysis/Makefile_variables
 include $(srcdir)/CFG/Makefile_variables
 include $(srcdir)/dataflowAnalysis/Makefile_variables
+include $(srcdir)/defUseAnalysis/Makefile_variables
 
 
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
 mpaCallGraphAnalysisPath=$(srcdir)/CallGraphAnalysis#
 mpaCFGPath=$(srcdir)/CFG#
 mpaDataflowAnalysisPath=$(srcdir)/dataflowAnalysis#
+mpaDefUseAnalysisPath=$(srcdir)/defUseAnalysis#
 
 ###############################################################################
 
 # Taken from midend/programAnalysis/annotationLanguageParser
 AM_CXXFLAGS = -D__LOCALSTL_H
 
+INCLUDES_OMP=\
+	$(mpaDefUseAnalysis_includesOmp)
+
 
 INCLUDES=\
 	$(mpaCallGraphAnalysis_includes) \
 	$(mpaCFG_includes) \
 	$(mpaDataflowAnalysis_includes)
+	$(mpaDefUseAnalysis_includes)
 
 
 BUILT_SOURCES=\
@@ -46,13 +52,15 @@ noinst_LTLIBRARIES=\
 libprogramAnalysis_la_SOURCES=\
 	$(mpaCallGraphAnalysis_la_sources) \
 	$(mpaCFG_la_sources) \
-	$(mpaDataflowAnalysis_la_sources)
+	$(mpaDataflowAnalysis_la_sources) \
+	$(mpaDefUseAnalysis_la_sources)
 
 
 include_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \
 	$(mpaCFG_includeHeaders) \
-	$(mpaDataflowAnalysis_includeHeaders)
+	$(mpaDataflowAnalysis_includeHeaders) \
+	$(mpaDefUseAnalysis_includeHeaders)
 
 
 noinst_HEADERS=\
@@ -65,7 +73,8 @@ EXTRA_DIST=\
 	$(mpaAnnotationLanguageParser_extraDist) \
 	$(mpaCallGraphAnalysis_extraDist) \
 	$(mpaCFG_extraDist) \
-	$(mpaDataflowAnalysis_extraDist)
+	$(mpaDataflowAnalysis_extraDist) \
+	$(mpaDefUseAnalysis_extraDist)
 
 
 clean-local:
@@ -74,6 +83,7 @@ clean-local:
 	$(mpaCallGraphAnalysis_cleanLocal)
 	$(mpaCFG_cleanLocal)
 	$(mpaDataflowAnalysis_cleanLocal)
+	$(mpaDefUseAnalysis_cleanLocal)
 
 
 distclean-local:
@@ -81,6 +91,7 @@ distclean-local:
 	$(mpaCallGraphAnalysis_distCleanLocal)
 	$(mpaCFG_distCleanLocal)
 	$(mpaDataflowAnalysis_distCleanLocal)
+	$(mpaDefUseAnalysis_distCleanLocal)
 
 
 
@@ -92,8 +103,8 @@ distclean-local:
 
 
 
-#SUBDIRS = OAWrap dataflowAnalysis \
-#          valuePropagation  defUseAnalysis dominanceAnalysis \
+#SUBDIRS = OAWrap \
+#          valuePropagation  dominanceAnalysis \
 #          staticInterproceduralSlicing pointerAnal \
 #          sideEffectAnalysis distributedMemoryAnalysis \
 #          graphAnalysis variableRenaming
