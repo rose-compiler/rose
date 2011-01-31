@@ -1367,8 +1367,15 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
             // labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
              }
 
+          SgTypeDefault* defaultType = isSgTypeDefault(node);
+          if (defaultType != NULL)
+             {
+            // printf ("Graph this node (%s) \n",node->class_name().c_str());
+               labelWithSourceCode += string("\\n  name = ") + defaultType->get_name().str() + "  ";
+             }
+
        // labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
-          labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
+          labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(node) + "  ";
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
