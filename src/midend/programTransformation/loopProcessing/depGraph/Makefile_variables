@@ -1,0 +1,46 @@
+
+mpt_lpDepGraph_includes=\
+	-I$(mpt_lpDepGraphPath)/../driver \
+	-I$(mpt_lpDepGraphPath)/../depInfo \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal 
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpt_lpDepGraph_la_sources=\
+	$(mpt_lpDepGraphPath)/DepGraphBuild.C \
+	$(mpt_lpDepGraphPath)/LoopAnalysis.C \
+	$(mpt_lpDepGraphPath)/TransDepGraph.C
+
+
+mpt_lpDepGraph_includeHeaders=\
+	$(mpt_lpDepGraphPath)/DepGraphBuild.h \
+	$(mpt_lpDepGraphPath)/DepGraph.h \
+	$(mpt_lpDepGraphPath)/DepGraphTransform.h \
+	$(mpt_lpDepGraphPath)/LoopAnalysis.h \
+	$(mpt_lpDepGraphPath)/TransDepGraph.h \
+	$(mpt_lpDepGraphPath)/TransDepGraphImpl.h
+
+
+mpt_lpDepGraph_extraDist=\
+	$(mpt_lpDepGraphPath)/CMakeLists.txt
+
+
+mpt_lpDepGraph_cleanLocal=\
+	rm -rf \
+		$(mpt_lpDepGraphPath)/Templates.DB \
+		$(mpt_lpDepGraphPath)/ii_files \
+		$(mpt_lpDepGraphPath)/ti_files \
+		$(mpt_lpDepGraphPath)/cxx_templates
+
+
+mpt_lpDepGraph_distCleanLocal=\
+	rm -rf \
+		$(mpt_lpDepGraphPath)/Templates.DB
