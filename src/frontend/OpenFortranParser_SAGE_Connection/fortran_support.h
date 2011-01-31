@@ -386,6 +386,9 @@ void processMultidimensionalSubscriptsIntoExpressionList(int count);
 //! Used in R504 R503-F2008 list and Rxxx.
 void convertBaseTypeToArrayWhereAppropriate();
 
+//! Refactored code to support R504.
+SgInitializedName* buildInitializedNameAndPutOntoStack(const SgName & name, SgType* type, SgInitializer* initializer);
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
 
