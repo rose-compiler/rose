@@ -8163,7 +8163,7 @@ void c_action_section_subscript_list(int count)
             // astExpressionStack.pop_front();
              }
 
-          printf ("In c_action_section_subscript_list(): AFTER astExpressionStack processing \n");
+       // printf ("In c_action_section_subscript_list(): AFTER astExpressionStack processing \n");
 
           astExpressionStack.push_front(expressionList);
         }
