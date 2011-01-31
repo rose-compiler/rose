@@ -2494,10 +2494,6 @@ src/frontend/Disassemblers/Makefile
 src/midend/Makefile
 src/midend/abstractHandle/Makefile
 src/midend/astUtil/Makefile
-src/midend/astUtil/astInterface/Makefile
-src/midend/astUtil/astSupport/Makefile  
-src/midend/astUtil/symbolicVal/Makefile  
-src/midend/astUtil/annotation/Makefile
 src/midend/astQuery/Makefile
 src/midend/astProcessing/Makefile
 src/midend/astRewriteMechanism/Makefile
