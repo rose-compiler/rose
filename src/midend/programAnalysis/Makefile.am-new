@@ -20,6 +20,7 @@ include $(srcdir)/defUseAnalysis/Makefile_variables
 include $(srcdir)/distributedMemoryAnalysis/Makefile_variables
 include $(srcdir)/dominanceAnalysis/Makefile_variables
 include $(srcdir)/graphAnalysis/Makefile_variables
+include $(srcdir)/OAWrap/Makefile_variables
 
 
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
@@ -30,6 +31,7 @@ mpaDefUseAnalysisPath=$(srcdir)/defUseAnalysis#
 mpaDistributedMemoryAnalysisPath=$(srcdir)/distributedMemoryAnalysis#
 mpaDominanceAnalysisPath=$(srcdir)/dominanceAnalysis#
 mpaGraphAnalysisPath=$(srcdir)/graphAnalysis#
+mpaOAWrapPath=$(srcdir)/OAWrap#
 
 ###############################################################################
 
@@ -45,7 +47,8 @@ INCLUDES=\
 	$(mpaCFG_includes) \
 	$(mpaDataflowAnalysis_includes) \
 	$(mpaDefUseAnalysis_includes) \
-	$(mpaDistributedMemoryAnalysis_includes)
+	$(mpaDistributedMemoryAnalysis_includes) \
+	$(mpaOAWrap_includes)
 
 
 BUILT_SOURCES=\
@@ -64,7 +67,8 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaCFG_la_sources) \
 	$(mpaDataflowAnalysis_la_sources) \
 	$(mpaDefUseAnalysis_la_sources) \
-	$(mpaGraphAnalysis_la_sources)
+	$(mpaGraphAnalysis_la_sources) \
+	$(mpaOAWrap_la_sources)
 
 
 include_HEADERS=\
@@ -74,7 +78,8 @@ include_HEADERS=\
 	$(mpaDefUseAnalysis_includeHeaders) \
 	$(mpaDistributedMemoryAnalysis_includeHeaders) \
 	$(mpaDominanceAnalysis_includeHeaders) \
-	$(mpaGraphAnalysis_includeHeaders)
+	$(mpaGraphAnalysis_includeHeaders) \
+	$(mpaOAWrap_includeHeaders)
 
 
 noinst_HEADERS=\
@@ -91,7 +96,8 @@ EXTRA_DIST=\
 	$(mpaDefUseAnalysis_extraDist) \
 	$(mpaDistributedMemoryAnalysis_extraDist) \
 	$(mpaDominanceAnalysis_extraDist) \
-	$(mpaGraphAnalysis_extraDist)
+	$(mpaGraphAnalysis_extraDist) \
+	$(mpaOAWrap_extraDist)
 
 
 clean-local:
@@ -103,6 +109,7 @@ clean-local:
 	$(mpaDefUseAnalysis_cleanLocal)
 	$(mpaDominanceAnalysis_cleanLocal)
 	$(mpaGraphAnalysis_cleanLocal)
+	$(mpaOAWrap_cleanLocal)
 
 
 distclean-local:
@@ -113,6 +120,7 @@ distclean-local:
 	$(mpaDefUseAnalysis_distCleanLocal)
 	$(mpaDominanceAnalysis_distCleanLocal)
 	$(mpaGraphAnalysis_distCleanLocal)
+	$(mpaOAWrap_distCleanLocal)
 
 
 
@@ -124,11 +132,11 @@ distclean-local:
 
 
 
-#SUBDIRS = OAWrap \
+#SUBDIRS = 
 #          valuePropagation \
 #          staticInterproceduralSlicing pointerAnal \
 #          sideEffectAnalysis \
-#          graphAnalysis variableRenaming
+#          variableRenaming
 
 # DQ (9/6/2005): Commented out these directories since they
 # represent code that used the older graph interface and they
