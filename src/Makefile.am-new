@@ -87,7 +87,6 @@ libroseLibraries = \
    $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
    $(top_builddir)/src/midend/astUtil/libastUtil.la \
-   $(top_builddir)/src/midend/programAnalysis/valuePropagation/libvaluePropagation.la \
    $(top_builddir)/src/midend/programAnalysis/variableRenaming/libVariableRenaming.la \
    $(top_builddir)/src/midend/programTransformation/astInlining/libastinlining.la \
    $(top_builddir)/src/midend/programTransformation/astOutlining/libastOutliner.la \

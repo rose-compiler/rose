@@ -24,6 +24,7 @@ include $(srcdir)/OAWrap/Makefile_variables
 include $(srcdir)/pointerAnal/Makefile_variables
 include $(srcdir)/sideEffectAnalysis/Makefile_variables
 include $(srcdir)/staticInterproceduralSlicing/Makefile_variables
+include $(srcdir)/valuePropagation/Makefile_variables
 
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
 mpaCallGraphAnalysisPath=$(srcdir)/CallGraphAnalysis#
@@ -37,6 +38,7 @@ mpaOAWrapPath=$(srcdir)/OAWrap#
 mpaPointerAnalPath=$(srcdir)/pointerAnal#
 mpaSideEffectAnalysisPath=$(srcdir)/sideEffectAnalysis#
 mpaStaticInterproceduralSlicingPath=$(srcdir)/staticInterproceduralSlicing#
+mpaValuePropagationPath=$(srcdir)/valuePropagation#
 
 ###############################################################################
 
@@ -56,7 +58,8 @@ INCLUDES=\
 	$(mpaOAWrap_includes) \
 	$(mpaPointerAnal_includes) \
 	$(mpaSideEffectAnalysis_includes) \
-	$(mpaStaticInterproceduralSlicing_includes)
+	$(mpaStaticInterproceduralSlicing_includes) \
+	$(mpaValuePropagation_includes)
 
 
 BUILT_SOURCES=\
@@ -79,7 +82,8 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaOAWrap_la_sources) \
 	$(mpaPointerAnal_la_sources) \
 	$(mpaSideEffectAnalysis_la_sources) \
-	$(mpaStaticInterproceduralSlicing_la_sources)
+	$(mpaStaticInterproceduralSlicing_la_sources) \
+	$(mpaValuePropagation_la_sources)
 
 
 include_HEADERS=\
@@ -93,7 +97,8 @@ include_HEADERS=\
 	$(mpaOAWrap_includeHeaders) \
 	$(mpaPointerAnal_includeHeaders) \
 	$(mpaSideEffectAnalysis_includeHeaders) \
-	$(mpaStaticInterproceduralSlicing_includeHeaders)
+	$(mpaStaticInterproceduralSlicing_includeHeaders) \
+	$(mpaValuePropagation_includeHeaders)
 
 
 noinst_HEADERS=\
@@ -114,7 +119,8 @@ EXTRA_DIST=\
 	$(mpaOAWrap_extraDist) \
 	$(mpaPointerAnal_extraDist) \
 	$(mpaSideEffectAnalysis_extraDist) \
-	$(mpaStaticInterproceduralSlicing_extraDist)
+	$(mpaStaticInterproceduralSlicing_extraDist) \
+	$(mpaValuepropagation_extraDist)
 
 
 clean-local:
@@ -129,6 +135,7 @@ clean-local:
 	$(mpaOAWrap_cleanLocal)
 	$(mpaPointerAnal_cleanLocal)
 	$(mpaStaticInterproceduralSlicing_cleanLocal)
+	$(mpaValuePropagation_cleanLocal)
 
 
 distclean-local:
@@ -142,6 +149,7 @@ distclean-local:
 	$(mpaOAWrap_distCleanLocal)
 	$(mpaPointerAnal_distCleanLocal)
 	$(mpaStaticInterproceduralSlicing_distCleanLocal)
+	$(mpaValuePropagation_distCleanLocal)
 
 
 
