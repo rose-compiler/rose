@@ -191,10 +191,10 @@ getVarSyms (SgNode* n, ASTtools::VarSymSet_t* p_syms)
          // TODO
          if (v_sym == NULL)
          {
-           if (SageInterface::is_Fortran_language() )
+           //if (SageInterface::is_Fortran_language() )
              cerr<<"Warning: getVarSyms() cannot find a symbol for "<< (*iter)->get_name().getString()<<endl;
-           else
-             ROSE_ASSERT (v_sym != NULL);
+           //else
+             //ROSE_ASSERT (v_sym != NULL);
          }
 
          if (v_sym)
