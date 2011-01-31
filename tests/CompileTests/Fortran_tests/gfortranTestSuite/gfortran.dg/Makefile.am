@@ -272,7 +272,7 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    elemental_subroutine_7.f90 \
    empty_format_1.f90 \
    empty_function_1.f90 \
-   endfile.f90 \
+   endfile_f90.f90 \
    endfile_2.f90 \
    endfile_3.f90 \
    endfile_4.f90 \
@@ -772,7 +772,7 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    write_fmt_trim.f90 \
    write_padding.f90 \
    write_recursive.f90 \
-   wtruncate.f90 \
+   wtruncate_f90.f90 \
    zero_array_components_1.f90 \
    zero_length_1.f90 \
    zero_sized_3.f90 \
@@ -1191,507 +1191,6 @@ OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
 # value_1.f90
 
 
-
-
-# Older list of tests
-SEPT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
-   PR19754_2.f90 \
-   PR40660.f90 \
-   achar_1.f90 \
-   actual_pointer_function_1.f90 \
-   actual_procedure_1.f90 \
-   advance_1.f90 \
-   advance_4.f90 \
-   advance_5.f90 \
-   aint_anint_1.f90 \
-   aliasing_dummy_2.f90 \
-   aliasing_dummy_3.f90 \
-   aliasing_dummy_5.f90 \
-   all_bounds_1.f90 \
-   allocatable_module_1.f90 \
-   allocate_char_star_scalar_1.f90 \
-   allocate_error_1.f90 \
-   anint_1.f90 \
-   any_all_1.f90 \
-   any_all_2.f90 \
-   append_1.f90 \
-   array_2.f90 \
-   array_alloc_1.f90 \
-   array_alloc_2.f90 \
-   array_alloc_3.f90 \
-   array_constructor_15.f90 \
-   array_constructor_16.f90 \
-   array_constructor_5.f90 \
-   array_function_1.f90 \
-   array_memcpy_4.f90 \
-   array_memcpy_5.f90 \
-   array_memset_2.f90 \
-   array_simplify_1.f90 \
-   array_temporaries_1.f90 \
-   array_temporaries_2.f90 \
-   arrayio_10.f90 \
-   arrayio_11.f90 \
-   arrayio_7.f90 \
-   arrayio_9.f90 \
-   arrayio_derived_1.f90 \
-   arrayio_derived_2.f90 \
-   assign_func_dtcomp_1.f90 \
-   associated_1.f90 \
-   associated_2.f90 \
-   associated_4.f90 \
-   assumed_charlen_sharing.f90 \
-   assumed_shape_ranks_2.f90 \
-   assumed_size_refs_3.f90 \
-   auto_array_1.f90 \
-   automatic_char_len_2.f90 \
-   automatic_default_init_1.f90 \
-   backspace_7.f90 \
-   bound_1.f90 \
-   bound_3.f90 \
-   bound_5.f90 \
-   bound_6.f90 \
-   bound_8.f90 \
-   bounds_check_7.f90 \
-   bounds_check_9.f90 \
-   bounds_check_array_ctor_1.f90 \
-   bounds_check_array_ctor_2.f90 \
-   bounds_check_array_ctor_4.f90 \
-   bounds_check_array_ctor_6.f90 \
-   bounds_check_array_ctor_7.f90 \
-   bounds_check_array_ctor_8.f90 \
-   bounds_check_strlen_1.f90 \
-   bounds_check_strlen_2.f90 \
-   bounds_check_strlen_3.f90 \
-   bounds_check_strlen_5.f90 \
-   bounds_check_strlen_6.f90 \
-   char_array_constructor_3.f90 \
-   char_bounds_check_fail_1.f90 \
-   char_component_initializer_1.f90 \
-   char_component_initializer_2.f90 \
-   char_cons_len.f90 \
-   char_cshift_3.f90 \
-   char_decl_1.f90 \
-   char_length_14.f90 \
-   char_length_17.f90 \
-   char_pointer_assign_5.f90 \
-   char_pointer_comp_assign.f90 \
-   char_pointer_dependency.f90 \
-   char_pointer_dummy.f90 \
-   char_pointer_func.f90 \
-   char_result_11.f90 \
-   char_result_9.f90 \
-   char_type_len.f90 \
-   character_comparison_3.f90 \
-   common_1.f90 \
-   common_2.f90 \
-   complex_intrinsic_1.f90 \
-   complex_read.f90 \
-   complex_write.f90 \
-   contained_equivalence_1.f90 \
-   continuation_10.f90 \
-   continuation_3.f90 \
-   continuation_4.f90 \
-   continuation_8.f90 \
-   convert_1.f90 \
-   convert_implied_open.f90 \
-   count_mask_1.f90 \
-   cshift_bounds_1.f90 \
-   cshift_bounds_2.f90 \
-   cshift_bounds_3.f90 \
-   cshift_bounds_4.f90 \
-   data_array_4.f90 \
-   data_char_2.f90 \
-   deallocate_error_1.f90 \
-   deallocate_error_2.f90 \
-   default_format_1.f90 \
-   default_format_denormal_1.f90 \
-   default_initialization_2.f90 \
-   dependency_13.f90 \
-   dependency_2.f90 \
-   dependency_20.f90 \
-   dependency_21.f90 \
-   dependency_27.f90 \
-   dependency_3.f90 \
-   dependency_32.f90 \
-   dependency_33.f90 \
-   dependency_34.f90 \
-   dependency_35.f90 \
-   der_array_io_3.f90 \
-   der_io_3.f90 \
-   der_pointer_2.f90 \
-   der_pointer_3.f90 \
-   der_ptr_component_1.f90 \
-   derived_pointer_recursion_2.f90 \
-   dev_null.F90 \
-   dev_null_postprocessed.f90 \
-   direct_io_1.f90 \
-   direct_io_11.f90 \
-   direct_io_12.f90 \
-   direct_io_2.f90 \
-   direct_io_4.f90 \
-   direct_io_5.f90 \
-   direct_io_6.f90 \
-   direct_io_8.f90 \
-   do_1.f90 \
-   do_check_1.f90 \
-   do_check_2.f90 \
-   do_check_4.f90 \
-   dummy_functions_1.f90 \
-   e_d_fmt.f90 \
-   edit_real_1.f90 \
-   elemental_dependency_3.f90 \
-   elemental_subroutine_1.f90 \
-   elemental_subroutine_7.f90 \
-   empty_format_1.f90 \
-   endfile.f90 \
-   endfile_2.f90 \
-   endfile_3.f90 \
-   endfile_4.f90 \
-   eof_1.f90 \
-   eof_2.f90 \
-   eof_3.f90 \
-   eor_1.f90 \
-   eor_handling_3.f90 \
-   eor_handling_4.f90 \
-   eor_handling_5.f90 \
-   eoshift.f90 \
-   eoshift_bounds_1.f90 \
-   equiv_constraint_4.f90 \
-   error_format.f90 \
-   exponent_1.f90 \
-   exponent_2.f90 \
-   f2c_3.f90 \
-   fgetc_1.f90 \
-   fgetc_2.f90 \
-   float_1.f90 \
-   fmt_colon.f90 \
-   fmt_error_4.f90 \
-   fmt_error_5.f90 \
-   fmt_f0_1.f90 \
-   fmt_float.f90 \
-   fmt_huge.f90 \
-   fmt_p_1.f90 \
-   fmt_read.f90 \
-   fmt_t_1.f90 \
-   fmt_t_2.f90 \
-   fmt_t_3.f90 \
-   fmt_t_4.f90 \
-   fmt_zero_precision.f90 \
-   fold_nearest.f90 \
-   forall_13.f90 \
-   forall_3.f90 \
-   forall_7.f90 \
-   forall_char_dependencies_1.f90 \
-   ftell_1.f90 \
-   ftell_2.f90 \
-   func_derived_2.f90 \
-   func_result_2.f90 \
-   function_charlen_2.f90 \
-   generic_15.f90 \
-   generic_4.f90 \
-   getenv_1.f90 \
-   global_references_2.f90 \
-   host_assoc_call_6.f90 \
-   host_assoc_function_3.f90 \
-   host_assoc_function_4.f90 \
-   iargc.f90 \
-   ichar_2.f90 \
-   implicit_3.f90 \
-   in_pack_rank7.f90 \
-   init_flag_2.f90 \
-   init_flag_3.f90 \
-   init_flag_4.f90 \
-   init_flag_5.f90 \
-   init_flag_6.f90 \
-   initialization_11.f90 \
-   initialization_18.f90 \
-   initialization_19.f90 \
-   initialization_25.f90 \
-   int_conv_1.f90 \
-   integer_exponentiation_1.f90 \
-   interface_14.f90 \
-   interface_assignment_1.f90 \
-   internal_pack_3.f90 \
-   internal_pack_4.f90 \
-   internal_pack_5.f90 \
-   internal_readwrite_2.f90 \
-   internal_write_1.f90 \
-   intrinsic_5.f90 \
-   intrinsic_modulo_1.f90 \
-   intrinsic_pack_4.f90 \
-   intrinsic_product_1.f90 \
-   intrinsic_sign_1.f90 \
-   intrinsic_spread_3.f90 \
-   intrinsic_verify_1.f90 \
-   io_real_boz2.f90 \
-   iostat_1.f90 \
-   ishft_2.f90 \
-   ishft_4.f90 \
-   label_4.f90 \
-   large_integer_kind_2.f90 \
-   large_real_kind_form_io_2.f90 \
-   largeequiv_1.f90 \
-   linked_list_1.f90 \
-   list_read_1.f90 \
-   list_read_10.f90 \
-   list_read_2.f90 \
-   list_read_3.f90 \
-   list_read_4.f90 \
-   list_read_6.f90 \
-   list_read_7.f90 \
-   list_read_8.f90 \
-   list_read_9.f90 \
-   logical_1.f90 \
-   logical_data_1.f90 \
-   logical_dot_product.f90 \
-   malloc_free_1.f90 \
-   matmul_1.f90 \
-   matmul_2.f90 \
-   matmul_4.f90 \
-   matmul_5.f90 \
-   matmul_7.f90 \
-   matmul_bounds_2.f90 \
-   matmul_bounds_3.f90 \
-   matmul_bounds_4.f90 \
-   matmul_bounds_5.f90 \
-   maxloc_1.f90 \
-   maxloc_bounds_1.f90 \
-   maxloc_bounds_2.f90 \
-   maxloc_bounds_3.f90 \
-   maxloc_bounds_4.f90 \
-   maxloc_bounds_5.f90 \
-   maxloc_bounds_6.f90 \
-   maxloc_bounds_7.f90 \
-   maxloc_bounds_8.f90 \
-   maxlocval_1.f90 \
-   maxlocval_3.f90 \
-   merge_char_1.f90 \
-   merge_char_3.f90 \
-   merge_char_const.f90 \
-   min_max_optional_1.f90 \
-   min_max_optional_5.f90 \
-   minlocval_2.f90 \
-   minmaxloc_2.f90 \
-   minmaxloc_4.f90 \
-   missing_optional_dummy_1.f90 \
-   missing_optional_dummy_6.f90 \
-   missing_parens_2.f90 \
-   module_blank_common.f90 \
-   module_commons_1.f90 \
-   module_commons_2.f90 \
-   module_equivalence_2.f90 \
-   module_equivalence_5.f90 \
-   module_equivalence_6.f90 \
-   module_interface_1.f90 \
-   module_md5_1.f90 \
-   module_private_array_refs_1.f90 \
-   module_proc_external_dummy.f90 \
-   module_read_1.f90 \
-   multiple_allocation_1.f90 \
-   multiple_allocation_2.f90 \
-   mvbits_3.f90 \
-   mvbits_4.f90 \
-   mvbits_5.f90 \
-   mvbits_8.f90 \
-   namelist_24.f90 \
-   namelist_25.f90 \
-   namelist_37.f90 \
-   namelist_41.f90 \
-   namelist_58.f90 \
-   namelist_60.f90 \
-   namelist_62.f90 \
-   nearest_1.f90 \
-   negative-z-descriptor.f90 \
-   negative_automatic_size.f90 \
-   nested_reshape.f90 \
-   nesting_1.f90 \
-   nint_1.f90 \
-   nint_2.f90 \
-   noadv_size.f90 \
-   nonreturning_statements.f90 \
-   nosigned_zero_1.f90 \
-   nosigned_zero_2.f90 \
-   open_access_append_1.f90 \
-   open_access_append_2.f90 \
-   open_new.f90 \
-   open_status_1.f90 \
-   open_status_2.f90 \
-   open_status_3.f90 \
-   output_exponents_1.f90 \
-   pack_bounds_1.f90 \
-   pack_mask_1.f90 \
-   pad_no.f90 \
-   parameter_unused.f90 \
-   parens_4.f90 \
-   parens_5.f90 \
-   parens_6.f90 \
-   past_eor.f90 \
-   pointer_1.f90 \
-   pointer_function_actual_2.f90 \
-   pointer_init_1.f90 \
-   pr15129.f90 \
-   pr15140.f90 \
-   pr15324.f90 \
-   pr15959.f90 \
-   pr16861.f90 \
-   pr16935.f90 \
-   pr17090.f90 \
-   pr17143.f90 \
-   pr17164.f90 \
-   pr17612.f90 \
-   pr17615.f90 \
-   pr17706.f90 \
-   pr18025.f90 \
-   pr19467.f90 \
-   pr19928-2.f90 \
-   pr20086.f90 \
-   pr20124.f90 \
-   pr20257.f90 \
-   pr20480.f90 \
-   pr29581.f90 \
-   pr29713.f90 \
-   pr32533.f90 \
-   pr32738.f90 \
-   pr33794.f90 \
-   pr35662.f90 \
-   pr35944-1.f90 \
-   pr35944-2.f90 \
-   pr36286.f90 \
-   pr41212.f90 \
-   pr43505.f90 \
-   print_fmt_1.f90 \
-   program_name_1.f90 \
-   promotion.f90 \
-   pure_byref_1.f90 \
-   pure_byref_2.f90 \
-   pure_byref_3.f90 \
-   pure_formal_proc_2.f90 \
-   random_3.f90 \
-   read_2.f90 \
-   read_bad_advance.f90 \
-   read_eof_8.f90 \
-   read_eor.f90 \
-   read_float_1.f90 \
-   read_float_3.f90 \
-   read_infnan_1.f90 \
-   read_logical.f90 \
-   read_repeat.f90 \
-   read_size_noadvance.f90 \
-   read_x_eof.f90 \
-   read_x_eor.f90 \
-   readwrite_unf_direct_eor_1.f90 \
-   real_const_2.f90 \
-   recursive_check_10.f90 \
-   recursive_check_11.f90 \
-   recursive_check_12.f90 \
-   recursive_check_13.f90 \
-   recursive_check_7.f90 \
-   recursive_check_8.f90 \
-   recursive_check_9.f90 \
-   recursive_stack.f90 \
-   reduction.f90 \
-   repeat_1.f90 \
-   repeat_3.f90 \
-   repeat_5.f90 \
-   reshape_4.f90 \
-   reshape_order_1.f90 \
-   reshape_order_2.f90 \
-   reshape_order_3.f90 \
-   reshape_order_4.f90 \
-   reshape_pad_1.f90 \
-   reshape_rank7.f90 \
-   ret_array_1.f90 \
-   ret_pointer_1.f90 \
-   rose_dev_null.F90 \
-   rrspacing_1.f90 \
-   runtime_warning_1.f90 \
-   save_2.f90 \
-   scalar_mask_1.f90 \
-   scalar_mask_2.f90 \
-   scale_1.f90 \
-   scan_1.f90 \
-   select_1.f90 \
-   select_2.f90 \
-   select_3.f90 \
-   select_5.f90 \
-   select_char_1.f90 \
-   selected_kind_1.f90 \
-   shape_3.f90 \
-   shape_4.f90 \
-   shift-kind_2.f90 \
-   simplify_modulo.f90 \
-   single_char_string.f90 \
-   size_optional_dim_1.f90 \
-   slash_1.f90 \
-   spec_expr_5.f90 \
-   specification_type_resolution_1.f90 \
-   spread_bounds_1.f90 \
-   spread_zerosize_1.f90 \
-   stfunc_1.f90 \
-   streamio_4.f90 \
-   streamio_5.f90 \
-   string_pad_trunc.f90 \
-   sum_zero_array_1.f90 \
-   temporary_1.f90 \
-   test_com_block.f90 \
-   tiny_1.f90 \
-   tiny_2.f90 \
-   tl_editing.f90 \
-   transfer_simplify_5.f90 \
-   transpose_1.f90 \
-   transpose_2.f90 \
-   transpose_conjg_1.f90 \
-   transpose_reshape_r10.f90 \
-   trim_optimize_1.f90 \
-   trim_optimize_2.f90 \
-   unf_read_corrupted_2.f90 \
-   unformatted_recl_1.f90 \
-   unit_1.f90 \
-   unpack_bounds_1.f90 \
-   unpack_bounds_2.f90 \
-   unpack_bounds_3.f90 \
-   unpack_mask_1.f90 \
-   use_13.f90 \
-   use_allocated_1.f90 \
-   use_only_1.f90 \
-   used_types_11.f90 \
-   used_types_19.f90 \
-   userdef_operator_1.f90 \
-   warn_conversion_2.f90 \
-   warn_std_1.f90 \
-   warn_std_2.f90 \
-   warn_std_3.f90 \
-   warn_unused_var.f90 \
-   where_nested_1.f90 \
-   whole_file_12.f90 \
-   whole_file_13.f90 \
-   whole_file_19.f90 \
-   whole_file_21.f90 \
-   whole_file_22.f90 \
-   whole_file_25.f90 \
-   whole_file_26.f90 \
-   whole_file_5.f90 \
-   whole_file_6.f90 \
-   write_0_pe_format.f90 \
-   write_direct_eor.f90 \
-   write_fmt_trim.f90 \
-   write_padding.f90 \
-   write_recursive.f90 \
-   write_to_null.F90 \
-   wtruncate.f90 \
-   zero_array_components_1.f90 \
-   zero_length_1.f90 \
-   zero_sized_3.f90 \
-   zero_sized_4.f90 \
-   zero_sized_5.f90
-
-# Failing in gfortran syntax check:
-#  actual_array_constructor_3.f90 
-
-# Failing in ROSE:
-#   actual_array_interface_1.f90
-
-
 OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
    PR19872.f \
    allocate_zerosize_3.f \
@@ -1713,7 +1212,7 @@ OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
    dollar_edit_descriptor_1.f \
    dollar_edit_descriptor_2.f \
    dos_eol.f \
-   endfile.f \
+   endfile_f77.f \
    extended_char_comparison_1.f \
    fmt_bz_bn.f \
    fmt_bz_bn_err.f \
@@ -1767,7 +1266,7 @@ OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
    write_back.f \
    write_rewind_1.f \
    write_rewind_2.f \
-   wtruncate.f \
+   wtruncate_f77.f \
    x_slash_1.f \
    x_slash_2.f
 
@@ -1782,75 +1281,6 @@ OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
 # pr16433.f
 # pr19657.f
 # pr24823.f
-
-SEPT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
-   PR19872.f \
-   allocate_zerosize_3.f \
-   array_constructor_type_9.f \
-   backslash_3.f \
-   backspace_1.f \
-   bounds_check_2.f \
-   char_comparison_1.f \
-   comma.f \
-   comma_format_extension_4.f \
-   common_equivalence_1.f \
-   constant_substring.f \
-   continuation_5.f \
-   continuation_6.f \
-   csqrt_2.f \
-   debug_2.f \
-   direct_io_10.f \
-   direct_io_9.f \
-   dollar_edit_descriptor_1.f \
-   dollar_edit_descriptor_2.f \
-   dos_eol.f \
-   endfile.f \
-   extended_char_comparison_1.f \
-   fmt_bz_bn.f \
-   fmt_bz_bn_err.f \
-   fmt_cache_2.f \
-   fmt_error_9.f \
-   fmt_f_an_p.f \
-   fmt_missing_period_3.f \
-   fmt_t_6.f \
-   fmt_tl.f \
-   fmt_with_extra.f \
-   g77_intrinsics_funcs.f \
-   g77_intrinsics_sub.f \
-   itime_idate_1.f \
-   itime_idate_2.f \
-   literal_character_constant_1_x.F \
-   literal_character_constant_1_y.F \
-   literal_character_constant_1_z.F \
-   open-options-blanks.f \
-   overwrite_1.f \
-   pr17472.f \
-   pr19155.f \
-   pr19216.f \
-   pr20755.f \
-   pr20954.f \
-   pr21730.f \
-   pr22491.f \
-   pr25603.f \
-   pr41162.f \
-   read_comma.f \
-   read_empty_file.f \
-   read_eof_6.f \
-   read_many_1.f \
-   real_const_1.f \
-   record_marker_2.f \
-   secnds-1.f \
-   secnds.f \
-   string_null_compare_1.f \
-   substr_2.f \
-   substr_3.f \
-   t_editing.f \
-   write_back.f \
-   write_rewind_1.f \
-   write_rewind_2.f \
-   wtruncate.f \
-   x_slash_1.f \
-   x_slash_2.f 
 
 # Sept 1 2010 passing tests that are now failing.
 # Failing in gfortran syntax check:
@@ -2211,14 +1641,19 @@ $(TEST_F90_Objects): ../../../../testTranslator ${ALL_TESTCODES}
 	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90) && touch $@
 #	$(VALGRIND) ../../../../testCodeGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) ../../../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+#	ls -l $@
 
 $(TEST_F77_Objects): ../../../../testTranslator ${ALL_TESTCODES}
 #	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
-	$(VALGRIND) ../../../../testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+#	$(VALGRIND) ../../../../testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77) && touch $@ 
+#	ls -l $@
 
 $(TEST_F77_FIXED_FORMAT_Objects): ../../../../testTranslator ${ALL_TESTCODES}
-	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f) && touch $@
+#	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 #	$(VALGRIND) ../../../../testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+#	ls -l $@
 
 # Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
 #       So we use -rose:skip_syntax_check to avoid the frontend syntax checking and -rose:skipfinalCompileStep
