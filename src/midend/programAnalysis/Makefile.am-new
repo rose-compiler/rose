@@ -21,6 +21,8 @@ include $(srcdir)/distributedMemoryAnalysis/Makefile_variables
 include $(srcdir)/dominanceAnalysis/Makefile_variables
 include $(srcdir)/graphAnalysis/Makefile_variables
 include $(srcdir)/OAWrap/Makefile_variables
+include $(srcdir)/pointerAnal/Makefile_variables
+include $(srcdir)/sideEffectAnalysis/Makefile_variables
 
 
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
@@ -32,6 +34,8 @@ mpaDistributedMemoryAnalysisPath=$(srcdir)/distributedMemoryAnalysis#
 mpaDominanceAnalysisPath=$(srcdir)/dominanceAnalysis#
 mpaGraphAnalysisPath=$(srcdir)/graphAnalysis#
 mpaOAWrapPath=$(srcdir)/OAWrap#
+mpaPointerAnalPath=$(srcdir)/pointerAnal#
+mpaSideEffectAnalysisPath=$(srcdir)/sideEffectAnalysis#
 
 ###############################################################################
 
@@ -48,7 +52,9 @@ INCLUDES=\
 	$(mpaDataflowAnalysis_includes) \
 	$(mpaDefUseAnalysis_includes) \
 	$(mpaDistributedMemoryAnalysis_includes) \
-	$(mpaOAWrap_includes)
+	$(mpaOAWrap_includes) \
+	$(mpaPointerAnal_includes) \
+	$(mpaSideEffectAnalysis_includes)
 
 
 BUILT_SOURCES=\
@@ -68,7 +74,9 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaDataflowAnalysis_la_sources) \
 	$(mpaDefUseAnalysis_la_sources) \
 	$(mpaGraphAnalysis_la_sources) \
-	$(mpaOAWrap_la_sources)
+	$(mpaOAWrap_la_sources) \
+	$(mpaPointerAnal_la_sources) \
+	$(mpaSideEffectAnalysis_la_sources)
 
 
 include_HEADERS=\
@@ -79,7 +87,9 @@ include_HEADERS=\
 	$(mpaDistributedMemoryAnalysis_includeHeaders) \
 	$(mpaDominanceAnalysis_includeHeaders) \
 	$(mpaGraphAnalysis_includeHeaders) \
-	$(mpaOAWrap_includeHeaders)
+	$(mpaOAWrap_includeHeaders) \
+	$(mpaPointerAnal_includeHeaders) \
+	$(mpaSideEffectAnalysis_includeHeaders)
 
 
 noinst_HEADERS=\
@@ -97,7 +107,9 @@ EXTRA_DIST=\
 	$(mpaDistributedMemoryAnalysis_extraDist) \
 	$(mpaDominanceAnalysis_extraDist) \
 	$(mpaGraphAnalysis_extraDist) \
-	$(mpaOAWrap_extraDist)
+	$(mpaOAWrap_extraDist) \
+	$(mpaPointerAnal_extraDist) \
+	$(mpaSideEffectAnalysis_extraDist)
 
 
 clean-local:
@@ -110,6 +122,7 @@ clean-local:
 	$(mpaDominanceAnalysis_cleanLocal)
 	$(mpaGraphAnalysis_cleanLocal)
 	$(mpaOAWrap_cleanLocal)
+	$(mpaPointerAnal_cleanLocal)
 
 
 distclean-local:
@@ -121,6 +134,7 @@ distclean-local:
 	$(mpaDominanceAnalysis_distCleanLocal)
 	$(mpaGraphAnalysis_distCleanLocal)
 	$(mpaOAWrap_distCleanLocal)
+	$(mpaPointerAnal_distCleanLocal)
 
 
 
@@ -134,8 +148,7 @@ distclean-local:
 
 #SUBDIRS = 
 #          valuePropagation \
-#          staticInterproceduralSlicing pointerAnal \
-#          sideEffectAnalysis \
+#          staticInterproceduralSlicing \
 #          variableRenaming
 
 # DQ (9/6/2005): Commented out these directories since they
