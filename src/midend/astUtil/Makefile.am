@@ -6,21 +6,27 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # in the flattening of Makefiles
 #
 # Caution: include path cannot contain variable,
-#    e.g. include cxxCodeGenerationPath/Makefile_variables
+#    e.g. include $(cxxCodeGenerationPath)/Makefile_variables
 #
 include $(srcdir)/annotation/Makefile_variables
 include $(srcdir)/astInterface/Makefile_variables
+include $(srcdir)/astSupport/Makefile_variables
+include $(srcdir)/symbolicVal/Makefile_variables
 
 
 mauAnnotationPath=$(srcdir)/annotation#
 mauAstInterfacePath=$(srcdir)/astInterface#
+mauAstSupportPath=$(srcdir)/astSupport#
+mauSymbolicValPath=$(srcdir)/symbolicVal#
 
 ###############################################################################
 
 INCLUDES=\
 	$(ROSE_INCLUDES) \
 	$(mauAnnotation_includes) \
-	$(mauAstInterface_includes)
+	$(mauAstInterface_includes) \
+	$(mauAstSupport_includes) \
+	$(mauSymbolicVal_includes)
 
 
 noinst_LTLIBRARIES=\
@@ -31,35 +37,38 @@ noinst_LTLIBRARIES=\
 
 libastUtil_la_sources=\
 	$(mauAnnotation_la_sources) \
-	$(mauAstInterface_la_sources)
+	$(mauAstInterface_la_sources) \
+	$(mauAstSupport_la_sources) \
+	$(mauSymbolicVal_la_sources)
 
 
 include_HEADERS=\
 	$(mauAnnotation_includeHeaders) \
-	$(mauAstInterface_includeHeaders)
+	$(mauAstInterface_includeHeaders) \
+	$(mauAstSupport_includeHeaders) \
+	$(mauSymbolicVal_includeHeaders)
 
 
 EXTRA_DIST=\
 	CMakeLists.txt \
 	$(mauAnnotation_extraDist) \
-	$(mauAstInterface_extraDist)
+	$(mauAstInterface_extraDist) \
+	$(mauAstSupport_extraDist) \
+	$(mauSymbolicVal_extraDist)
 
 
 clean-local:
 	$(mauAnnotation_cleanLocal)
 	$(mauAstInterface_cleanLocal)
+	$(mauAstSupport_cleanLocal)
+	$(mauSymbolicVal_cleanLocal)
 
 
 distclean-local:
 	$(mauAnnotation_distCleanLocal)
 	$(mauAstInterface_distCleanLocal)
-
-
-
-
-
-#SUBDIRS = astSupport  symbolicVal 
-
+	$(mauAstSupport_distCleanLocal)
+	$(mauSymbolicVal_distCleanLocal)
 
 
 

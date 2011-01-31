@@ -1,3 +1,4 @@
+# Non-recursive Makefile
 
 mauAnnotation_includes=\
 	-I$(mauAnnotationPath)/../astInterface \
