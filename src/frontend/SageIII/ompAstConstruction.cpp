@@ -1347,7 +1347,13 @@ This is no perfect solution until we handle preprocessing information as structu
       if (position == PreprocessingInfo::before)
       { 
         // Don't automatically move comments here!
-        insertStatementBefore (stmt, p_decl, false);
+        if (isSgBasicBlock(stmt) && isSgFortranDo (stmt->get_parent()))
+        {// special handling for the body of SgFortranDo.  The comments will be attached before the body
+         // But we cannot insert the pragma before the body. So we prepend it into the body instead
+          prependStatement(p_decl, isSgBasicBlock(stmt));
+        }
+        else
+          insertStatementBefore (stmt, p_decl, false);
       }
       else if (position == PreprocessingInfo::inside)
       {
