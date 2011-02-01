@@ -40,7 +40,7 @@ ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 # (if rose.docs.in is modified)
 all-local: rose.docs 
 
-all: remove_sage3basic_h_pch
+all: enforce_policies remove_sage3basic_h_pch
 
 # DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't 
 # allow exactly this (what was I thinking?). Commented out until I get a better fix.
