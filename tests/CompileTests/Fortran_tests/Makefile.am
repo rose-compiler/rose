@@ -210,7 +210,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_161.f90 \
      test2010_162.f90 \
      test2010_163.f90 \
-     test2010_164.f90 \
      test2010_165.f90 \
      test2010_166.f90 \
      test2010_167.f90 \
@@ -234,7 +233,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_19.f90 \
      test2011_20.f90 \
      test2011_36.f90 \
-     test2011_37.f90 \
      test2011_39.f90 \
      test2011_40.f90 \
      canonicalExample.f90
@@ -293,6 +291,13 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
 if !ROSE_USING_GFORTRAN_VERSION_4_0
  # These are tests that fail using the gfrotran version 4.0 compiler (but pass with all other versions of gfortran).
    F90_TESTCODES_REQUIRED_TO_PASS += test2007_263.f90
+endif
+
+# DQ (2/1/2011): These test codes will not pass the initial syntax checking with the GNU gfortran version 4.4.x compiler.
+if !ROSE_USING_GFORTRAN_VERSION_4_4
+   F90_TESTCODES_REQUIRED_TO_PASS += \
+     test2010_164.f90 \
+     test2011_37.f90 
 endif
 
 
@@ -419,7 +424,18 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2010_178.f03 \
      test2010_179.f03 \
      test2010_180.f03 \
-     test2010_181.f03
+     test2010_181.f03 \
+     test2011_24.f03 \
+     test2011_25.f03 \
+     test2011_27.f03 \
+     test2011_28.f03 \
+     test2011_29.f03 \
+     test2011_30.f03 \
+     test2011_31.f03 \
+     test2011_32.f03 \
+     test2011_33.f03 \
+     test2011_34.f03 \
+     test2011_35.f03 
 
 # DQ (1/18/2011): Failing tests.
 #     test2007_133.f03 
@@ -603,7 +619,11 @@ F03_TESTCODES_CURRENTLY_FAILING = \
      test2010_104.f03 \
      test2010_106.f03 \
      test2010_126.f03 \
-     test2010_171.f03
+     test2010_171.f03 \
+     X-lost-func-return-type.f03 \
+     X-constructor-inititalizer.f03
+
+# DQ (1/31/2010): X-lost-func-return-type.f03 and X-constructor-inititalizer.f03 are new test codes from Rice.
 
 F08_TESTCODES_CURRENTLY_FAILING = \
      test2010_98.f08
