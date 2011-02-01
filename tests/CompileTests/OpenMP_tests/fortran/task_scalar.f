@@ -7,7 +7,7 @@
       integer i
 
 !$omp parallel
-!$omp single
+!$omp single private(i)
       print *, 'using ', omp_get_num_threads(), ' threads' 
       do i = 1, 10
 !$omp task 

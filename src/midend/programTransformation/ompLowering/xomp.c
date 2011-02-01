@@ -159,7 +159,7 @@ void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argc
 //    exit (3);
 //  }
 
-  printf("Debug: xomp_parallel_start(), g_parameter at address %p\n", g_parameter);
+//  printf("Debug: xomp_parallel_start(), g_parameter at address %p\n", g_parameter);
   g_parameter[0]= func;
   va_start (v1, (*argcount));
   for (x=0; x<(*argcount); x++)
