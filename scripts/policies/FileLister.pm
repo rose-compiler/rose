@@ -18,7 +18,7 @@ sub new {
 sub is_3rdparty {
   local($_) = @_;
   return 1 if m(/alt-mpi-headers/mpich-([\d\.]+)(p\d)?(/|$)); # in projects/compass/src/util/MPIAbstraction
-  return 1 if m(/src/3rdPartyLibraries(/|$));
+  return 1 if m(/3rdPartyLibraries(/|$));
   return 0;
 }
 

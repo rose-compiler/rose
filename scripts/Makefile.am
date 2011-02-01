@@ -21,6 +21,7 @@ distributedScripts =				\
      policies/FileLister.pm                     \
      policies/NoExceedinglyLongLines.pl		\
      policies/NoRoseIncludes.pl			\
+     policies/NoTabCharacters.pl		\
      policies/NoUsingInHeaders.pl		\
      policies/UniqueHeaderNames.pl		\
      policies/UnixLineTermination.pl		\
