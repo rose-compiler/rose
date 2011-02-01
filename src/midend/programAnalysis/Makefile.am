@@ -169,4 +169,4 @@ distclean-local:
 
 
 ## The grammar generator (ROSETTA) should use its own template repository
-# CXX_TEMPLATE_REPOSITORY_PATH = .
+CXX_TEMPLATE_REPOSITORY_PATH = .
