@@ -13,7 +13,6 @@
 !$omp task 
       print *, 'Item ', i, ' by thread ', omp_get_thread_num()
 !$omp end task
-      continue ! use a no-op stmt to get comment position right, a workaround
       enddo  
 !$omp end single
 !$omp end parallel

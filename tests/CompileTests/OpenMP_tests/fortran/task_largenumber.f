@@ -18,7 +18,6 @@
 !$omp task 
       call process(i,item)
 !$omp end task
-      continue ! use a no-op stmt to get comment position right, a workaround
       enddo  
 !$omp end single
 !$omp end parallel

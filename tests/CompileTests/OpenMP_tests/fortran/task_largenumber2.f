@@ -18,6 +18,7 @@
 !$omp task 
       call process(item(i))
 !$omp end task
+      continue
       enddo  
 !$omp end single
 !$omp end parallel

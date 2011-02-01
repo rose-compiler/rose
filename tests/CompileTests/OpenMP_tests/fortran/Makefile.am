@@ -26,6 +26,7 @@ F77_TESTCODES_TO_PASS = \
     shared.f \
     single.f \
     task_largenumber.f \
+    task_largenumber2.f \
     task_scalar.f \
     task_simplest.f
 
@@ -63,7 +64,6 @@ TESTCODES_CURRENTLY_FAILING = \
     exampleA211f.f \
     exampleA281f.f \
     exampleA102f.f90 \
-    task_largenumber2.f \
     exampleA161f.f90 \
     flush2.f \
     exmpaleA221f.f \
