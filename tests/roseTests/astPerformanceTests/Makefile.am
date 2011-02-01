@@ -45,13 +45,14 @@ MOSTLYCLEANFILES += ROSE_PERFORMANCE_DATA.csv
 ################################################################################
 # astThreadedCreation -- creates/deletes nodes with lots of threads
 ################################################################################
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 noinst_PROGRAMS += astThreadedCreation
 astThreadedCreation_SOURCES = astThreadedCreation.C
 astThreadedCreation_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 ROSE_TESTS += astThreadedCreation
 astThreadedCreation.passed: astThreadedCreation
 	@$(RTH_RUN) EXE=./$< $(srcdir)/tests.conf $@
-
+endif
 
 
 
