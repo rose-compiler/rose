@@ -1193,7 +1193,7 @@ print_winsize_32(FILE *f, const uint8_t *_v, size_t sz)
 
 
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
- * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
+ * use it because it also does constant folding, which means that its symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
  * since we're only operating on known addresses and values, and thus override all superclass methods dealing with memory. */
 class EmulationPolicy: public VirtualMachineSemantics::Policy {
@@ -3617,7 +3617,7 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 14: { /*0xe, mknod*/
-            syscall_enter("mknod", "sdd");
+            syscall_enter("mknod", "sfd", file_mode_flags);
             do {
                 uint32_t path_va = arg(0);
                 int mode = arg(1);
