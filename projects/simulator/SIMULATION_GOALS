@@ -20,6 +20,7 @@ dirname - strip non-directory suffix from file name
 echo - display a line of text
 expand - convert tabs to spaces
 expr - evaluate expressions
+f77
 false - do nothing, unsuccessfully
 file - determine file type
 fold - wrap each input line to fit in specified width
@@ -28,6 +29,7 @@ gzip, gunzip, zcat - compress or expand files
 grep, egrep, fgrep - print lines matching a pattern
 head - output the first part of files
 iconv - Convert encoding of given files from one encoding to another
+less - browse or page through a text file 
 lex,flex - fast lexical analyzer generator
 ln - make links between files
 locale - Get locale-specific information. 
@@ -41,6 +43,7 @@ nl - number lines of files
 nm - list symbols from object files
 od - dump files in octal and other formats
 paste - merge lines of files
+patch - apply a diff file to an original
 printf - format and print data
 pwd    - return working directory name 
 rm     - remove files (sit on your hands first!) 
@@ -88,14 +91,12 @@ find - search for files in a directory hierarchy
  Ignored. Continuing with a corrupt state...
  instruction semantics: instruction not implemented [0x804b3c7:fld    DOUBLE PTR ds:[0x08065120]]
 
-f77
- syscall_120(0x01200011, 0x00000000, 0x00000000, 0x00000000, 0x4001a708, 0xbfffe268) is not implemented yet
 
 fuser - identify processes using files or sockets
  Cannot open a network socket.
 
 ipcs - report XSI interprocess communication facilities status
- Error: system call ipc case SGMCTL not implemented
+ lt-x86sim: /home/saebjornsen1/WORK/ROSE.git/ROSE/projects/simulator/x86sim.C:4772: void EmulationPolicy::emulate_syscall(): Assertion `!"not handled"' failed.
 
 kill - terminate a process
  kill: can't find process "%1"
@@ -217,7 +218,19 @@ vi,e  - creen-oriented (visual) display editor based on ex
 
 df - report file system disk space usage
 
- syscall_268(0x08055a10, 0x00000054, 0xbfffe788, 0x08055a10, 0x00254ff4, 0xbfffe768) is not implemented yet
+ instruction semantics: instruction not implemented [0x8049e60:fild   QWORD PTR ss:[esp]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8049e70:fstp   DOUBLE PTR ss:[ebp + 0xfffff808(-0x000007f8)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8049e76:fld    DOUBLE PTR ss:[ebp + 0xfffff808(-0x000007f8)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8049e7c:fld    FLOAT PTR ds:[ebx + 0xffffd2ac(-0x00002d54)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8049e82:fxch   st(1)]
 
 
 more
@@ -235,13 +248,9 @@ mv     - move files or directories
  register "st(1)" is not available for i386
 
 
-less - browse or page through a text file 
-
- syscall_118(0x00000005, 0x00000000, 0x00000000, 0xbffff100, 0xbffff218, 0xbffff148) is not implemented yet
 
 strip - Discard symbols from object files
-patch - apply a diff file to an original
- syscall_38(0x08062010, 0x08062070, 0x00000000, 0x08062070, 0x08062010, 0xbfffdfd8) is not implemented yet
+ strip: sandbox-emulator.2.o: File format not recognized
 
 ls -l - list contents of directory (long format, including size, permissions, and ownership) 
  syscall_229(0xbfffd960, 0x07c7eb0f, 0x00000000, 0x00000000, 0x07c80870, 0xbfffd928) is not implemented yet

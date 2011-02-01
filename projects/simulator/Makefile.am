@@ -129,6 +129,8 @@ TEST_INPUTS_RT_SRC = \
 
 # TEST_INPUTS_TS_SRC = $(wildcard $(srcdir)/tests/syscall_ts*.c)
 TEST_INPUTS_TS_SRC = \
+		   $(srcdir)/tests/syscall_tst.100.1.c \
+		   $(srcdir)/tests/syscall_tst.100.2.c \
 		   $(srcdir)/tests/syscall_tst.102.1.c \
 		   $(srcdir)/tests/syscall_tst.102.2.c \
 		   $(srcdir)/tests/syscall_tst.102.3.c \
@@ -169,6 +171,9 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.117.shmdt.02.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.01.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.02.c \
+		   $(srcdir)/tests/syscall_tst.118.1.c \
+		   $(srcdir)/tests/syscall_tst.118.2.c \
+		   $(srcdir)/tests/syscall_tst.118.3.c \
 		   $(srcdir)/tests/syscall_tst.122.c \
 		   $(srcdir)/tests/syscall_tst.125.1.c \
 		   $(srcdir)/tests/syscall_tst.125.2.c \
@@ -230,6 +235,9 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.200.1.c \
 		   $(srcdir)/tests/syscall_tst.200.3.c \
 		   $(srcdir)/tests/syscall_tst.201.1.c \
+		   $(srcdir)/tests/syscall_tst.205.1.c \
+		   $(srcdir)/tests/syscall_tst.205.2.c \
+		   $(srcdir)/tests/syscall_tst.205.4.c \
 		   $(srcdir)/tests/syscall_tst.207.c \
 		   $(srcdir)/tests/syscall_tst.212.c \
 		   $(srcdir)/tests/syscall_tst.220.1.c \
@@ -280,6 +288,10 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.4.3.c \
 		   $(srcdir)/tests/syscall_tst.4.4.c \
 		   $(srcdir)/tests/syscall_tst.4.5.c \
+		   $(srcdir)/tests/syscall_tst.9.1.c \
+		   $(srcdir)/tests/syscall_tst.9.2.c \
+		   $(srcdir)/tests/syscall_tst.9.3.c \
+		   $(srcdir)/tests/syscall_tst.9.4.c \
 		   $(srcdir)/tests/syscall_tst.13.1.c \
 		   $(srcdir)/tests/syscall_tst.13.2.c \
 		   $(srcdir)/tests/syscall_tst.19.1.c \
@@ -301,6 +313,19 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.311.c \
 		   $(srcdir)/tests/syscall_tst.33.1.c \
 		   $(srcdir)/tests/syscall_tst.33.2.c \
+		   $(srcdir)/tests/syscall_tst.36.1.c \
+		   $(srcdir)/tests/syscall_tst.36.2.c \
+		   $(srcdir)/tests/syscall_tst.38.1.c \
+		   $(srcdir)/tests/syscall_tst.38.2.c \
+		   $(srcdir)/tests/syscall_tst.38.3.c \
+		   $(srcdir)/tests/syscall_tst.38.4.c \
+		   $(srcdir)/tests/syscall_tst.38.5.c \
+		   $(srcdir)/tests/syscall_tst.38.6.c \
+		   $(srcdir)/tests/syscall_tst.38.7.c \
+		   $(srcdir)/tests/syscall_tst.38.8.c \
+		   $(srcdir)/tests/syscall_tst.38.10.c \
+		   $(srcdir)/tests/syscall_tst.38.13.c \
+		   $(srcdir)/tests/syscall_tst.38.14.c \
 		   $(srcdir)/tests/syscall_tst.54.c \
 		   $(srcdir)/tests/syscall_tst.24.1.c \
 		   $(srcdir)/tests/syscall_tst.24.2.c \
