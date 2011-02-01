@@ -56,6 +56,7 @@ INCLUDES_OMP=\
 
 
 INCLUDES=\
+	$(ROSE_INCLUDES) \
 	$(mpaCallGraphAnalysis_includes) \
 	$(mpaCFG_includes) \
 	$(mpaDataflowAnalysis_includes) \
