@@ -12,8 +12,12 @@ use strict;
 use FileLister;
 my $warning = "warning ";	# non-empty means these are warnings rather than errors
 
+# If no files or directories are specified and the CWD is the top of the ROSE source tree, then check
+# only the "src" directory.
+@ARGV = "src" if !@ARGV && -d "scripts/policies";
+
 my $nfail=0;
-my $files = FileLister->new();
+my $files = FileLister->new(@ARGV);
 while (my $filename = $files->next_file) {
   if ($filename=~/\.(h|hh|hpp|code2|macro)$/ && open FILE, "<", $filename) {
     while (<FILE>) {
