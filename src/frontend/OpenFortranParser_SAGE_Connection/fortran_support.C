@@ -6023,6 +6023,9 @@ fixup_forward_type_declarations()
                SgType* parentType = isSgType(typeList[parentTypeIndex]);
                ROSE_ASSERT(parentType != NULL);
             // ROSE_ASSERT(parentType->containsInternalTypes() == true);
+#if 0
+               printf ("parentType->containsInternalTypes() = %s \n",parentType->containsInternalTypes() ? "true" : "false");
+#endif
                if (parentType->containsInternalTypes() == true)
                   {
                     string nameOfIntendedType = defaultType->get_name();
@@ -6030,12 +6033,28 @@ fixup_forward_type_declarations()
                     printf ("Reset the base type in parentType = %p = %s to nameOfIntendedType = %s \n",parentType,parentType->class_name().c_str(),nameOfIntendedType.c_str());
 #endif
                     SgSymbol* symbolOfIntendedType = currentScope->lookup_symbol(nameOfIntendedType);
+#if 0
+                 // DQ (1/30/2011): This is a bug in OFP that is being fixed by Craig.
                     ROSE_ASSERT(symbolOfIntendedType != NULL);
 
                     SgType* intendedType = symbolOfIntendedType->get_type();
                     ROSE_ASSERT(intendedType != NULL);
 
                     parentType->reset_base_type(intendedType);
+#else
+                 // DQ (1/30/2011): For now just test to make sure it is a valid symbol before trying to fixup the type.
+                    if (symbolOfIntendedType != NULL)
+                       {
+                         SgType* intendedType = symbolOfIntendedType->get_type();
+                         ROSE_ASSERT(intendedType != NULL);
+
+                         parentType->reset_base_type(intendedType);
+                       }
+                      else
+                       {
+                         printf ("WARNING: This is a bug in OFP (see test2011_26.f03) (ignoring the problem for now...) \n");
+                       }                    
+#endif
                   }
              }
         }
@@ -6393,4 +6412,35 @@ convertBaseTypeToArrayWhereAppropriate()
           astTypeStack.pop_front();
           ROSE_ASSERT(astTypeStack.empty() == true);
         }
+   }
+
+
+
+SgInitializedName*
+buildInitializedNameAndPutOntoStack(const SgName & name, SgType* type, SgInitializer* initializer)
+   {
+  // DQ (1/30/2011): Refactored code to support R504.
+
+  // printf ("Building a new SgInitializedName that will be assembled into a variable declaration later. \n");
+     SgInitializedName* initializedName = new SgInitializedName(name,type,initializer,NULL,NULL);
+
+  // DQ (9/11/2010): There is not associated SgVariableSymbol associated with this, so we need to build one.
+  // This fixes test2010_45.f90 which references a variable declared in the same variable declaration.
+     SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+
+  // DQ (11/29/2010): Set the scope for the SgInitializedName IR node (caught when trying to output (print) the symbol table).
+     initializedName->set_scope(getTopOfScopeStack());
+
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     astScopeStack.front()->insert_symbol(name,variableSymbol);
+     ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
+
+  // Test the symbol tables and the new support for case insensitive symbol tables.
+     ROSE_ASSERT(astScopeStack.front()->symbol_exists(name) == true);
+     ROSE_ASSERT(astScopeStack.front()->isCaseInsensitive() == true);
+     SgName invertedCaseName = name.invertCase();
+     ROSE_ASSERT(astScopeStack.front()->symbol_exists(invertedCaseName) == true);
+     ROSE_ASSERT(initializedName != NULL);
+
+     return initializedName;
    }

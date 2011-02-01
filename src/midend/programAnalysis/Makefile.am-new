@@ -1,0 +1,78 @@
+# Non-recursive Makefile
+
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+###############################################################################
+# Subdirectory specifics
+# TOO (01/26/11): relative paths must be updated for each propagation upward
+# in the flattening of Makefiles
+#
+# Caution: include path cannot contain variable,
+#>..e.g. include $(cxxCodeGenerationPath)/Makefile_variables
+#
+include $(srcdir)/annotationLanguageParser/Makefile_variables
+
+
+mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
+
+###############################################################################
+
+# Taken from midend/programAnalysis/annotationLanguageParser
+AM_CXXFLAGS = -D__LOCALSTL_H
+
+INCLUDES=\
+
+
+noinst_LTLIBRARIES = libprogramAnalysis.la
+
+##################################################################
+
+libprogramAnalysis_la_SOURCES=\
+
+
+include_HEADERS=\
+
+
+dist_include_HEADERS=\
+
+
+EXTRA_DIST=\
+	CMakeLists.txt \
+	OpenAnalysis
+
+
+clean-local:
+	rm -rf Templates.DB ii_files ti_files cxx_templates
+
+
+distclean-local:
+	rm -rf Templates.DB
+
+
+
+
+
+
+
+
+
+
+
+# DQ (5/3/2007): Old version before Christian's work was added.
+#SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis
+#          valuePropagation  dominatorTreesAndDominanceFrontiers
+#          staticProgramSlicing proceduralSlicing
+
+#SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis \
+#          valuePropagation  defUseAnalysis dominanceAnalysis \
+#          staticInterproceduralSlicing pointerAnal \
+#          annotationLanguageParser sideEffectAnalysis distributedMemoryAnalysis \
+#          graphAnalysis variableRenaming
+
+# DQ (9/6/2005): Commented out these directories since they
+# represent code that used the older graph interface and they
+# no longer compile!  These will be updated later.
+# staticProgramSlicing proceduralSlicing
+
+## The grammar generator (ROSETTA) should use its own template repository
+# CXX_TEMPLATE_REPOSITORY_PATH = .

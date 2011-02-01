@@ -1,0 +1,78 @@
+
+mptLoopProcessing_includes=\
+	-I$(mptLoopProcessingPath)/driver \
+	-I$(mptLoopProcessingPath)/prepostTransformation \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	$(mpt_lpComputation_includes) \
+	$(mpt_lpDepGraph_includes) \
+	$(mpt_lpDepInfo_includes) \
+	$(mpt_lpDriver_includes) \
+	$(mpt_lpPrepostTransofmration_includes) \
+	$(mpt_lpSlicing_includes)
+
+
+# TODO: should all of these be included in top-level??
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mptLoopProcessing_la_sources=\
+	$(mpt_lpComputation_la_sources) \
+	$(mpt_lpDepGraph_la_sources) \
+	$(mpt_lpDepInfo_la_sources) \
+	$(mpt_lpDriver_la_sources) \
+	$(mpt_lpOutsideInterface_la_sources) \
+	$(mpt_lpPrepostTransformation_la_sources) \
+	$(mpt_lpSlicing_la_sources)
+
+
+mptLoopProcessing_includeHeaders=\
+	$(mpt_lpComputation_includeHeaders) \
+	$(mpt_lpDepGraph_includeHeaders) \
+	$(mpt_lpDepInfo_includeHeaders) \
+	$(mpt_lpDriver_includeHeaders) \
+	$(mpt_lpOutsideInterface_includeHeaders) \
+	$(mpt_lpPrepostTransformation_includeHeaders) \
+	$(mpt_lpSlicing_includeHeaders)
+
+
+mptLoopProcessing_extraDist=\
+	$(mptLoopProcessingPath)/CMakeLists.txt \
+	$(mpt_lpComputation_extraDist) \
+	$(mpt_lpDepGraph_extraDist) \
+	$(mpt_lpDepInfo_extraDist) \
+	$(mpt_lpDriver_extraDist) \
+	$(mpt_lpOutsideInterface_extraDist) \
+	$(mpt_lpPrepostTransformation_extraDist) \
+	$(mpt_lpSlicing_extraDist)
+
+
+mptLoopProcessing_cleanLocal=\
+	rm -rf \
+		$(mptLoopProcessingPath)/Templates.DB \
+		$(mptLoopProcessingPath)/ii_files \
+		$(mptLoopProcessingPath)/ti_files \
+		$(mptLoopProcessingPath)/cxx_templates \
+		$(mptLoopProcessingPath)/rose_mm.C; \
+	$(mpt_lpComputation_cleanLocal); \
+	$(mpt_lpDepGraph_cleanLocal); \
+	$(mpt_lpDepInfo_cleanLocal); \
+	$(mpt_lpDriver_cleanLocal); \
+	$(mpt_lpOutsideInterface_cleanLocal); \
+	$(mpt_lpPrepostTransformation_cleanLocal); \
+	$(mpt_lpSlicing_cleanLocal)
+
+
+mptLoopProcessing_distCleanLocal=\
+	rm -rf \
+		$(mptLoopProcessingPath)/Templates.DB; \
+	$(mpt_lpComputation_distCleanLocal); \
+	$(mpt_lpDepGraph_distCleanLocal); \
+	$(mpt_lpDepInfo_distCleanLocal); \
+	$(mpt_lpDriver_distCleanLocal); \
+	$(mpt_lpPrepostTransformation_distCleanLocal); \
+	$(mpt_lpSlicing_distCleanLocal)

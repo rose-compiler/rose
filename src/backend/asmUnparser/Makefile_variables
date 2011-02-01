@@ -1,0 +1,21 @@
+# Non-recursive Makefile
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+asmUnparser_la_sources=\
+	$(asmUnparserPath)/AsmUnparser.C \
+	$(asmUnparserPath)/AsmUnparser_compat.C \
+	$(asmUnparserPath)/unparseX86Asm.C \
+	$(asmUnparserPath)/unparseArmAsm.C \
+	$(asmUnparserPath)/unparsePowerpcAsm.C
+else
+asmUnparser_la_sources=# 
+endif
+
+
+asmUnparser_distIncludeHeaders=\
+	$(asmUnparserPath)/AsmUnparser.h \
+	$(asmUnparserPath)/AsmUnparser_compat.h
+
+
+asmUnparser_extraDist=\
+	$(asmUnparserPath)/CMakeLists.txt
