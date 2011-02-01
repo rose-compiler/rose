@@ -143,7 +143,7 @@ namespace OmpSupport
     }
 
     SgExprStatement * expStmt=  buildFunctionCallStmt (SgName("XOMP_init"),
-	buildVoidType(), exp_list_exp,currentscope);
+        buildVoidType(), exp_list_exp,currentscope);
     //  cout<<"debug:"<<expStmt->unparseToString()<<endl;
     //prepend to main body
     // Liao 1/5/2011
@@ -175,16 +175,16 @@ namespace OmpSupport
 
     //build call exp stmt
     SgExprStatement * expStmt2= buildFunctionCallStmt (SgName("XOMP_terminate"),
-	buildVoidType(),exp_list_exp2,mainDef->get_body());
+        buildVoidType(),exp_list_exp2,mainDef->get_body());
     // find return statement, insert before it
     Rose_STL_Container<SgNode*> rtList = NodeQuery::querySubTree(mainDef, V_SgReturnStmt);
     if (rtList.size()>0)
     {
       for(Rose_STL_Container<SgNode*>::iterator i= rtList.begin();i!=rtList.end();i++)
       {
-	SgStatement *targetBB= isSgStatement((*i)->get_parent());
-	ROSE_ASSERT(targetBB != NULL);
-	insertStatement(isSgStatement(*i),expStmt2);
+        SgStatement *targetBB= isSgStatement((*i)->get_parent());
+        ROSE_ASSERT(targetBB != NULL);
+        insertStatement(isSgStatement(*i),expStmt2);
       }
     }
     else //if not found append to function body
@@ -1015,9 +1015,9 @@ static void insert_libxompf_h(SgNode* startNode)
         //insertStatementAfter(for_loop, buildFunctionCallStmt("GOMP_barrier", buildVoidType(), NULL, bb1));
 #ifdef ENABLE_XOMP
         appendStatement(buildFunctionCallStmt("XOMP_barrier", buildVoidType(), NULL, bb1), bb1);
-#else	
+#else   
         appendStatement(buildFunctionCallStmt("GOMP_barrier", buildVoidType(), NULL, bb1), bb1);
-#endif	
+#endif  
       }
     }
 

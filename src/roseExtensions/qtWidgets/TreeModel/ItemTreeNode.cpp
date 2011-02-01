@@ -6,12 +6,12 @@
 #include <QDebug>
 
 ItemTreeNode::ItemTreeNode()
-	: parent(NULL), notifyModel(NULL)
+        : parent(NULL), notifyModel(NULL)
 {}
 
 ItemTreeNode::~ItemTreeNode()
 {
-	qDeleteAll(children);
+        qDeleteAll(children);
 }
 
 int ItemTreeNode::addChild(ItemTreeNode * c)
@@ -113,18 +113,18 @@ void  ItemTreeNode::takeAllChildren(QList<ItemTreeNode*> & output)
 
 int ItemTreeNode::getRow() const
 {
-	//assume that there is only one node on highest level (one root)
-	if(parent==NULL)
-		return 0;
+        //assume that there is only one node on highest level (one root)
+        if(parent==NULL)
+                return 0;
 
-	//const cast is safe, indexOf does no write access
-	ItemTreeNode * nonConstThis = const_cast<ItemTreeNode*>(this);
-	return parent->children.indexOf(nonConstThis);
+        //const cast is safe, indexOf does no write access
+        ItemTreeNode * nonConstThis = const_cast<ItemTreeNode*>(this);
+        return parent->children.indexOf(nonConstThis);
 }
 
 QVariant ItemTreeNode::data(int role, int column) const
 {
-	return QString("NoData");
+        return QString("NoData");
 }
 
 int ItemTreeNode::getChildId(ItemTreeNode * child)

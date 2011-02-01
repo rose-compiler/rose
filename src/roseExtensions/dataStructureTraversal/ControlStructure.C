@@ -25,18 +25,18 @@ list<SgNode*> queryNodePragmaDeclarationFromName2(SgNode* node, SgNode* nameNode
   ROSE_ASSERT( nameToMatch.length() > 0 );
 
   if(node->variantT() == V_SgPragmaDeclaration){
-       	SgPragmaDeclaration* sagePragmaDeclaration = isSgPragmaDeclaration(node);
-	ROSE_ASSERT( sagePragmaDeclaration );
-	ROSE_ASSERT( sagePragmaDeclaration->get_pragma() != NULL ); 
-	ROSE_ASSERT( sagePragmaDeclaration->get_pragma()->get_pragma() );
+        SgPragmaDeclaration* sagePragmaDeclaration = isSgPragmaDeclaration(node);
+        ROSE_ASSERT( sagePragmaDeclaration );
+        ROSE_ASSERT( sagePragmaDeclaration->get_pragma() != NULL ); 
+        ROSE_ASSERT( sagePragmaDeclaration->get_pragma()->get_pragma() );
         string pragmaDeclarationString =  sagePragmaDeclaration->get_pragma()->get_pragma();
         //extract the part before the leftmost = is pragmaDeclarationString
-	pragmaDeclarationString = pragmaDeclarationString.substr(0,pragmaDeclarationString.find("="));
-	//if the name-criteria is met accept node
-	if(pragmaDeclarationString.find( nameToMatch ) != pragmaDeclarationString.length() ){
-		cout << pragmaDeclarationString << endl;
-		returnList.push_back(node);
-	}
+        pragmaDeclarationString = pragmaDeclarationString.substr(0,pragmaDeclarationString.find("="));
+        //if the name-criteria is met accept node
+        if(pragmaDeclarationString.find( nameToMatch ) != pragmaDeclarationString.length() ){
+                cout << pragmaDeclarationString << endl;
+                returnList.push_back(node);
+        }
    }
    return returnList;
 }
@@ -59,7 +59,7 @@ list < string > queryFindPragmaString (SgNode * node)
       ROSE_ASSERT (sagePragmaDeclaration->get_pragma () != NULL);
       ROSE_ASSERT (sagePragmaDeclaration->get_pragma ()->get_pragma ());
       returnList.push_back (sagePragmaDeclaration->get_pragma ()->
-			    get_pragma ());
+                            get_pragma ());
     }
   return returnList;
 
@@ -83,7 +83,7 @@ string findPragmaStringUnionControl (string pragmaString,
       pragmaString.length ())
     {
       pragmaString =
-	StringUtility::copyEdit (pragmaString,
+        StringUtility::copyEdit (pragmaString,
                                  name_prefix + unionName + name_postfix, "");
       pragmaString = StringUtility::copyEdit (pragmaString, "=", "");
 
@@ -91,7 +91,7 @@ string findPragmaStringUnionControl (string pragmaString,
     }
   else
     return "";
-}				/* End function: findPragmaStringUnionControl() */
+}                               /* End function: findPragmaStringUnionControl() */
 
 
 /*
@@ -112,17 +112,17 @@ parsePragmaStringRHS (string pragmaString, string prefix, string name)
   if (pragmaString.find (prefix + name) != string::npos)
     {
 /*      pragmaString =
-	StringUtility::copyEdit (pragmaString, prefix + name, "");
+        StringUtility::copyEdit (pragmaString, prefix + name, "");
       pragmaString = StringUtility::copyEdit (pragmaString, "=", "");*/
       pragmaString =
-	pragmaString.substr (pragmaString.find ("=") + 1,
+        pragmaString.substr (pragmaString.find ("=") + 1,
                              pragmaString.length ());
 
       return trim (pragmaString);
     }
   else
     return "";
-}				/* End method: parsePragmaStringRHS() */
+}                               /* End method: parsePragmaStringRHS() */
 
 /*
  *  The function:
@@ -150,7 +150,7 @@ parsePragmaStringLHS (string pragmaString, string prefix, string terminator)
   else
     return "";
 
-}				/* End method: parsePragmaStringLHS() */
+}                               /* End method: parsePragmaStringLHS() */
 
 string ControlStructureContainer::getPragmaString ()
 {
@@ -195,7 +195,7 @@ list <
   ControlStructureContainer *
   >queryFindCommentsInScope (const string stringPrefixToMatch,
                              const string stringToMatch,
-			     SgScopeStatement * sageScopeStatement)
+                             SgScopeStatement * sageScopeStatement)
 {
   ROSE_ASSERT (stringPrefixToMatch.length () > 0);
   ROSE_ASSERT (stringToMatch.length () > 0);
@@ -208,12 +208,12 @@ list <
    list < SgNode * >pragmaDeclarations =
     NodeQuery::querySubTree (sageScopeStatement,
                              new SgName (stringToMatch.c_str ()),
-			     NodeQuery::PragmaDeclarationFromName);
+                             NodeQuery::PragmaDeclarationFromName);
 
 
 /*  cout << "BEFORE LIST" << endl; 
   list < SgNode * >pragmaDeclarations = queryNodePragmaDeclarationFromName2(sageScopeStatement,
-		                            new SgName(stringToMatch.c_str()));
+                                            new SgName(stringToMatch.c_str()));
   cout << "AFTER LIST" << endl;*/
   //return the pragmas in containers
 /*  for (list < SgNode * >::iterator i = pragmaDeclarations.begin ();
@@ -235,124 +235,124 @@ list <
   if (sageScopeStatement->variantT () == V_SgClassDefinition)
     {
       SgDeclarationStatementPtrList statementsInScope =
-	sageScopeStatement->getDeclarationList ();
+        sageScopeStatement->getDeclarationList ();
       SgDeclarationStatementPtrList::iterator i;
       for (i = statementsInScope.begin (); i != statementsInScope.end (); i++)
-	{
+        {
 
-	  SgLocatedNode *locatedNode = isSgLocatedNode (*i);
-	  ROSE_ASSERT (locatedNode != NULL);
+          SgLocatedNode *locatedNode = isSgLocatedNode (*i);
+          ROSE_ASSERT (locatedNode != NULL);
 
-	  //find all comments attached to current node.
-	  AttachedPreprocessingInfoType *comments =
-	    locatedNode->getAttachedPreprocessingInfo ();
+          //find all comments attached to current node.
+          AttachedPreprocessingInfoType *comments =
+            locatedNode->getAttachedPreprocessingInfo ();
 
-	  if (comments != NULL)
-	    {
-	      //We need to find comments which fits the criteria    
-	      printf ("Found attached comments (at %p of type: %s): \n",
-		      locatedNode, locatedNode->sage_class_name ());
-	      AttachedPreprocessingInfoType::iterator j;
-	      for (j = comments->begin (); j != comments->end (); j++)
-		{
-		  ROSE_ASSERT ((*j) != NULL);
-		  string comment = (*j)->getString ();
-		  //see if comment begins with stringPrefixToMatch
-		  string tempString = comment.substr (0, comment.find (' '));
-		  if (tempString == stringPrefixToMatch)
-		    {		//+stringPrefixToMatch ){
-		      //cout << "Found string" << endl;
+          if (comments != NULL)
+            {
+              //We need to find comments which fits the criteria    
+              printf ("Found attached comments (at %p of type: %s): \n",
+                      locatedNode, locatedNode->sage_class_name ());
+              AttachedPreprocessingInfoType::iterator j;
+              for (j = comments->begin (); j != comments->end (); j++)
+                {
+                  ROSE_ASSERT ((*j) != NULL);
+                  string comment = (*j)->getString ();
+                  //see if comment begins with stringPrefixToMatch
+                  string tempString = comment.substr (0, comment.find (' '));
+                  if (tempString == stringPrefixToMatch)
+                    {           //+stringPrefixToMatch ){
+                      //cout << "Found string" << endl;
 
-		      comment =
-			StringUtility::copyEdit (comment, stringPrefixToMatch,
+                      comment =
+                        StringUtility::copyEdit (comment, stringPrefixToMatch,
                                                  "");
 
-		      //see if the comment has an element which matches the stringToMatch
-		      if (comment.find (stringToMatch) != string::npos)
-			{
-			  //puit the matching comment into a container    
-			  ControlStructureContainer *container =
-			    new ControlStructureContainer ();
-			  container->setPragmaString (comment);
-			  container->setAssociatedStatement (locatedNode);
+                      //see if the comment has an element which matches the stringToMatch
+                      if (comment.find (stringToMatch) != string::npos)
+                        {
+                          //puit the matching comment into a container    
+                          ControlStructureContainer *container =
+                            new ControlStructureContainer ();
+                          container->setPragmaString (comment);
+                          container->setAssociatedStatement (locatedNode);
 
-			  returnList.push_back (container);
-			}
-		    }
+                          returnList.push_back (container);
+                        }
+                    }
 //                printf ("          Attached Comment (relativePosition=%s):\n %s\n Next comment: \n",
 //                    ((*j)->relativePosition == PreprocessingInfo::before) ? "before" : "after",(*j)->getString());
 
-		}
-	    }
-	}
+                }
+            }
+        }
     }
   else
     {
       // AS 12/18/03 PS!! The same as the above, but a different iterator. Will replace this when a
       // different solution has arisen. PS!! 
       SgStatementPtrList statementsInScope =
-	sageScopeStatement->getStatementList ();
+        sageScopeStatement->getStatementList ();
       SgStatementPtrList::iterator i;
 
       for (i = statementsInScope.begin (); i != statementsInScope.end (); i++)
-	{
+        {
 
-	  SgLocatedNode *locatedNode = isSgLocatedNode (*i);
-	  ROSE_ASSERT (locatedNode != NULL);
+          SgLocatedNode *locatedNode = isSgLocatedNode (*i);
+          ROSE_ASSERT (locatedNode != NULL);
 
-	  //find all comments attached to current node.
-	  AttachedPreprocessingInfoType *comments =
-	    locatedNode->getAttachedPreprocessingInfo ();
+          //find all comments attached to current node.
+          AttachedPreprocessingInfoType *comments =
+            locatedNode->getAttachedPreprocessingInfo ();
 
-	  if (comments != NULL)
-	    {
-	      //We need to find comments which fits the criteria    
-	      //printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
-	      AttachedPreprocessingInfoType::iterator j;
-	      for (j = comments->begin (); j != comments->end (); j++)
-		{
-		  ROSE_ASSERT ((*j) != NULL);
-		  string comment = (*j)->getString ();
-		  //see if comment begins with stringPrefixToMatch
-		  string tempString = comment.substr (0, comment.find (' '));
-		  if (tempString == stringPrefixToMatch)
-		    {		//+stringPrefixToMatch ){
-		      comment =
-			StringUtility::copyEdit (comment, stringPrefixToMatch,
+          if (comments != NULL)
+            {
+              //We need to find comments which fits the criteria    
+              //printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+              AttachedPreprocessingInfoType::iterator j;
+              for (j = comments->begin (); j != comments->end (); j++)
+                {
+                  ROSE_ASSERT ((*j) != NULL);
+                  string comment = (*j)->getString ();
+                  //see if comment begins with stringPrefixToMatch
+                  string tempString = comment.substr (0, comment.find (' '));
+                  if (tempString == stringPrefixToMatch)
+                    {           //+stringPrefixToMatch ){
+                      comment =
+                        StringUtility::copyEdit (comment, stringPrefixToMatch,
                                                  "");
 
-		      cout << "And the string is: " << comment << endl;
+                      cout << "And the string is: " << comment << endl;
 
-		      if (comment.find (stringToMatch) != string::npos)
-			{
-			  cout << "And even the string is matched." << endl;
-			  //ROSE_ASSERT(comment.find('=') != comment.length());
-			  //string variableName = comment.substr(comment.find(stringToMatch), comment.find('='));
-			  cout << "And the string is a match" << endl;
+                      if (comment.find (stringToMatch) != string::npos)
+                        {
+                          cout << "And even the string is matched." << endl;
+                          //ROSE_ASSERT(comment.find('=') != comment.length());
+                          //string variableName = comment.substr(comment.find(stringToMatch), comment.find('='));
+                          cout << "And the string is a match" << endl;
 
 
-			  //puit the matching comment into a container    
-			  ControlStructureContainer *container =
-			    new ControlStructureContainer ();
-			  container->setPragmaString (comment);
-			  container->setAssociatedStatement (locatedNode);
+                          //puit the matching comment into a container    
+                          ControlStructureContainer *container =
+                            new ControlStructureContainer ();
+                          container->setPragmaString (comment);
+                          container->setAssociatedStatement (locatedNode);
 
-			  returnList.push_back (container);
-			}
-		    }
-		  printf
-		    ("          Attached Comment (relativePosition=%s):\n %s\n Next comment: \n",
+                          returnList.push_back (container);
+                        }
+                    }
+                  printf
+                    ("          Attached Comment (relativePosition=%s):\n %s\n Next comment: \n",
                      ((*j)->relativePosition ==
                       PreprocessingInfo::before) ? "before" : "after",
                      (*j)->getString ());
 
-		}
-	    }
-	}
+                }
+            }
+        }
 
     }
   return returnList;
-}				/* End function:  queryFindCommentsInScope() */
+}                               /* End function:  queryFindCommentsInScope() */
 
 /*
 list  <ControlStructureContainer* > 
@@ -520,8 +520,8 @@ list  <ControlStructureContainer* >
 
 string
 checkPragmaRHSUnionControl (const list < SgNode * >unionFields,
-			    const list < SgNode * >classFields,
-			    const string pragmaRHS)
+                            const list < SgNode * >classFields,
+                            const string pragmaRHS)
 {
   string returnString = "";
 cout << "BEFORE checkPragmaRHSUnionControl" << endl;
@@ -542,96 +542,96 @@ cout << "BEFORE checkPragmaRHSUnionControl" << endl;
       rightBorder = substring.find (rightCondition);
 
       subConditionToCheck =
-	substring.substr (leftBorder + 1, rightBorder - 1);
+        substring.substr (leftBorder + 1, rightBorder - 1);
 
       if (subConditionToCheck.find ("==") != string::npos)
-	{
-	  string controlVariableName =
-	    subConditionToCheck.substr (0, subConditionToCheck.find ("=="));
-	  string condition =
-	    subConditionToCheck.substr (subConditionToCheck.find ("==") + 2,
-					subConditionToCheck.length ());
+        {
+          string controlVariableName =
+            subConditionToCheck.substr (0, subConditionToCheck.find ("=="));
+          string condition =
+            subConditionToCheck.substr (subConditionToCheck.find ("==") + 2,
+                                        subConditionToCheck.length ());
 
-	  //check to see if a a variable exist in the parent scope of the union with the name controlVariableName 
-	  list < SgNode * >variableDeclaration =
-	    NodeQuery::queryNodeList (classFields,
-				      new SgName (controlVariableName.
-						  c_str ()),
-				      NodeQuery::VariableDeclarationFromName);
-	  ROSE_ASSERT (variableDeclaration.empty () == false);
+          //check to see if a a variable exist in the parent scope of the union with the name controlVariableName 
+          list < SgNode * >variableDeclaration =
+            NodeQuery::queryNodeList (classFields,
+                                      new SgName (controlVariableName.
+                                                  c_str ()),
+                                      NodeQuery::VariableDeclarationFromName);
+          ROSE_ASSERT (variableDeclaration.empty () == false);
 
-	  tempString =
-	    " (classReference->" + controlVariableName + "==" + condition +
-	    ") ";
-	}
+          tempString =
+            " (classReference->" + controlVariableName + "==" + condition +
+            ") ";
+        }
       else if (subConditionToCheck.find ("!=") != string::npos)
-	{
-	  string controlVariableName =
-	    subConditionToCheck.substr (0, subConditionToCheck.find ("!="));
-	  string condition =
-	    subConditionToCheck.substr (subConditionToCheck.find ("!=") + 2,
-					subConditionToCheck.length ());
+        {
+          string controlVariableName =
+            subConditionToCheck.substr (0, subConditionToCheck.find ("!="));
+          string condition =
+            subConditionToCheck.substr (subConditionToCheck.find ("!=") + 2,
+                                        subConditionToCheck.length ());
 
-	  //check to see if a a variable exist in the parent scope of the union with the name controlVariableName 
-	  list < SgNode * >variableDeclaration =
-	    NodeQuery::queryNodeList (classFields,
-				      new SgName (controlVariableName.
-						  c_str ()),
-				      NodeQuery::VariableDeclarationFromName);
-	  ROSE_ASSERT (variableDeclaration.empty () == false);
+          //check to see if a a variable exist in the parent scope of the union with the name controlVariableName 
+          list < SgNode * >variableDeclaration =
+            NodeQuery::queryNodeList (classFields,
+                                      new SgName (controlVariableName.
+                                                  c_str ()),
+                                      NodeQuery::VariableDeclarationFromName);
+          ROSE_ASSERT (variableDeclaration.empty () == false);
 
-	  tempString =
-	    " (classReference->" + controlVariableName + "!=" + condition +
-	    ") ";
-	}
+          tempString =
+            " (classReference->" + controlVariableName + "!=" + condition +
+            ") ";
+        }
       else
-	{
+        {
 
-	  cerr <<
-	    "Case not implemented yet in (controlVariableName??condition). Terminating.\n";
-	  cout << pragmaRHS << "\n";
-	  exit (1);
+          cerr <<
+            "Case not implemented yet in (controlVariableName??condition). Terminating.\n";
+          cout << pragmaRHS << "\n";
+          exit (1);
 
-	}
+        }
       //check to see if there exist any more control variables
       substring = substring.substr (rightBorder + 1, substring.length ());
 
       if (substring.find (leftCondition) != string::npos)
-	{
-	  if (substring.find ("&") != string::npos)
-	    {
-	      returnString = returnString + tempString + " & ";
-	      substring =
-		substring.substr (substring.find ("&") + 1,
-				  substring.length ());
-	    }
-	  else if (substring.find ("|") != string::npos)
-	    {
-	      returnString = returnString + tempString + " | ";
-	      substring =
-		substring.substr (substring.find ("|") + 1,
-				  substring.length ());
+        {
+          if (substring.find ("&") != string::npos)
+            {
+              returnString = returnString + tempString + " & ";
+              substring =
+                substring.substr (substring.find ("&") + 1,
+                                  substring.length ());
+            }
+          else if (substring.find ("|") != string::npos)
+            {
+              returnString = returnString + tempString + " | ";
+              substring =
+                substring.substr (substring.find ("|") + 1,
+                                  substring.length ());
 
-	    }
-	  else
-	    {
-	      cerr << "Case not implemented yet in (--)?(--). Terminating\n";
-	      cout << pragmaRHS << "\"\n" << substring << "\"\n";
-	      cout << substring.
-		find (leftCondition) << "::" << string::npos << "\n";
-	      exit (1);
-	    }
+            }
+          else
+            {
+              cerr << "Case not implemented yet in (--)?(--). Terminating\n";
+              cout << pragmaRHS << "\"\n" << substring << "\"\n";
+              cout << substring.
+                find (leftCondition) << "::" << string::npos << "\n";
+              exit (1);
+            }
 
-	}
+        }
       else
-	returnString = returnString + tempString;
-    }				/* end while */
+        returnString = returnString + tempString;
+    }                           /* end while */
 
 cout << "AFTER checkPragmaRHSUnionControl" << endl;
 
 
   
   return "if(" + returnString + ")";
-};				/* End function: checkPragmaRHSUnionControl() */
+};                              /* End function: checkPragmaRHSUnionControl() */
 
 

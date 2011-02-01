@@ -1077,7 +1077,7 @@ CustomMemoryPoolDOTGeneration::frontendCompatibilityFilter(SgNode* node)
      SgFunctionParameterList* functionParateterList = isSgFunctionParameterList(node);
      if (functionParateterList != NULL)
         {
-          SgInitializedNamePtrList::iterator i = 	functionParateterList->get_args().begin();
+          SgInitializedNamePtrList::iterator i =        functionParateterList->get_args().begin();
           while (i != functionParateterList->get_args().end())
              {
                SgInitializedName* declaration = *i;
@@ -2329,7 +2329,7 @@ generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename, CustomMe
    {
 #ifdef _MSC_VER
   // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
-	 extern set<SgNode*> getSetOfFrontendSpecificNodes();
+         extern set<SgNode*> getSetOfFrontendSpecificNodes();
 #endif
 
 #if 1

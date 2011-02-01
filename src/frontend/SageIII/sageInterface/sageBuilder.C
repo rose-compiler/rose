@@ -936,7 +936,7 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
 template <class actualFunction>
 actualFunction *
 SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
-//	(const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
+//      (const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
 {
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
@@ -1614,11 +1614,11 @@ SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
 }
 
 SgNewExp * SageBuilder::buildNewExp(SgType* type, 
-				    SgExprListExp* exprListExp, 
-				    SgConstructorInitializer* constInit, 
-				    SgExpression* expr, 
-				    short int val, 
-				    SgFunctionDeclaration* funcDecl)
+                                    SgExprListExp* exprListExp, 
+                                    SgConstructorInitializer* constInit, 
+                                    SgExpression* expr, 
+                                    short int val, 
+                                    SgFunctionDeclaration* funcDecl)
 {
   SgNewExp* result = new SgNewExp(type, exprListExp, constInit, expr, val, funcDecl);
   ROSE_ASSERT(result);
@@ -2199,7 +2199,7 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
     SgVariableDeclaration* fakeVar = buildVariableDeclaration(name, buildIntType(),NULL, scope);
     Sg_File_Info* file_info = fakeVar->get_file_info();
     file_info->unsetOutputInCodeGeneration ();
-    SgVariableSymbol * 	fakeSymbol = getFirstVarSym (fakeVar);   
+    SgVariableSymbol *  fakeSymbol = getFirstVarSym (fakeVar);   
     result = buildVarRefExp(fakeSymbol);
   } // if
   return result;
@@ -3991,7 +3991,7 @@ SgNamespaceDeclarationStatement * SageBuilder::buildNamespaceDeclaration_nfi(con
 
           //nondefdecl->set_parent(topScopeStack());
           nondefdecl->set_parent(scope);
-		  ROSE_ASSERT(nondefdecl->get_parent());
+                  ROSE_ASSERT(nondefdecl->get_parent());
 
           if (scope != NULL)
              {

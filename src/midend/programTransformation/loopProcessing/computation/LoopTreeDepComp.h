@@ -67,7 +67,7 @@ class LoopTreeDepGraphNode
      : MultiGraphObserveNodeTemplate<LoopTreeNode*>(c, s),
        loopMap(_loopMap), domain(_dm)
      { if (s->GetOrigStmt() != AST_NULL) 
-	 s->AttachObserver(*this);
+         s->AttachObserver(*this);
      }
 
    void UpdateInsertStmtLoop( const InsertStmtLoopInfo& _info)
@@ -137,13 +137,13 @@ class LoopTreeDepGraphCreate
   void UpdateInsertLoop( const InsertLoopInfo &info);
  public:
   LoopTreeDepGraphCreate( const LoopTreeNodeDepMap& m, 
-			  BaseGraphCreate *b = 0 )
+                          BaseGraphCreate *b = 0 )
     : DepInfoGraphCreate<LoopTreeDepGraphNode>(b), map(m) {}
   ~LoopTreeDepGraphCreate();
   
   void BuildDep( LoopTransformInterface &fa, DepInfoAnal &anal, 
                 LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2, 
-		DepType t);
+                DepType t);
 
   void AddNode(LoopTreeDepGraphNode* result);
   LoopTreeDepGraphNode* CreateNode(LoopTreeNode *s, LoopTreeDepGraphNode* that = 0);
@@ -152,7 +152,7 @@ class LoopTreeDepGraphCreate
                                     const DomainCond& c);
   bool DeleteNode( LoopTreeDepGraphNode *n);
   DepInfoEdge* CreateEdge( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2,
-			   const DepInfo& info);
+                           const DepInfo& info);
   DepInfoEdge* CreateEdgeFromOrigAst( LoopTreeDepGraphNode *n1,
                                       LoopTreeDepGraphNode *n2, const DepInfo& info);
 };

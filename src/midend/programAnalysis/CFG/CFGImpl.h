@@ -90,7 +90,7 @@ class CFGEdgeImpl : public MultiGraphElem
        case CFGConfig::COND_FALSE: return "false"; 
        case CFGConfig::ALWAYS: return "always";
        default:
-		   { assert(false); /* Avoid MSVC warning */ return "error"; }
+                   { assert(false); /* Avoid MSVC warning */ return "error"; }
        }
     }
   virtual void write(std:: ostream& out) const

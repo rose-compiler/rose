@@ -427,7 +427,7 @@ SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sPageTableEntry.", prefix);
     }
 
-	int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = 0x%04x\n", p, w, "flags",  p_flags);
     fprintf(f, "%s%-*s = %u\n",     p, w, "pageno", p_pageno);
@@ -536,7 +536,7 @@ SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sLESectionTableEntry.", prefix);
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = %"PRIu64" bytes\n", p, w, "mapped_size",      p_mapped_size);
     fprintf(f, "%s%-*s = 0x%08"PRIx64"\n",   p, w, "base_addr",        p_base_addr);
@@ -631,14 +631,14 @@ SgAsmLESectionTable::ctor(rose_addr_t offset, rose_addr_t size)
 
             section_size = std::min(entry->get_mapped_size(), entry->get_pagemap_nentries() * fhdr->get_e_page_size());
 
-		} else {
+                } else {
             ROSE_ASSERT(FAMILY_LX==fhdr->get_exec_format()->get_family());
             section_offset = fhdr->get_e_data_pages_offset() + ((pageno-1) << fhdr->get_e_page_offset_shift());
 
             section_size = std::min(entry->get_mapped_size(),
                                     (rose_addr_t)(entry->get_pagemap_nentries() * (1<<fhdr->get_e_page_offset_shift())));
 
-		}
+                }
 
         SgAsmLESection *section = new SgAsmLESection(fhdr);
         section->set_offset(section_offset);
@@ -791,7 +791,7 @@ SgAsmLENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sLENameTable.", prefix);
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
@@ -942,7 +942,7 @@ SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%s%sEntryTable.", prefix, get_header()->format_name());
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu entry points\n", p, w, "size", p_entries.size());

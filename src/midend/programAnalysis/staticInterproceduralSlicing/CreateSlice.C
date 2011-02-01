@@ -7,38 +7,38 @@ using namespace std;
 
 void printSgNode(SgNode *node)
 {
-	cout <<"\"";
-	if (isSgInitializedName(node))
-		cout <<isSgInitializedName(node)->get_qualified_name().getString();
-	else
-	if (!isSgPragma(node))
+        cout <<"\"";
+        if (isSgInitializedName(node))
+                cout <<isSgInitializedName(node)->get_qualified_name().getString();
+        else
+        if (!isSgPragma(node))
           cout<<node->unparseToString();
-        cout <<"\" of class "<<node->class_name();	
+        cout <<"\" of class "<<node->class_name();      
 }
 
 BooleanSafeKeeper CreateSlice::evaluateInheritedAttribute(SgNode * node, BooleanSafeKeeper partOfSlice)
 {
 
-	if (isSgFile(node))
-	{
-		currentFile=isSgFile(node);
-	}
-	if (isSgBasicBlock(node) || isSgGlobal(node))
-	{
-		delayedRemoveListStack.push(std::list<SgNode*>());
-	}
-//	cout <<"eIA"<<endl;
-	if (_toSave.count(node))
-	{
-		
-//		cout <<"eIA: this node is in the slice ";
-//		printSgNode(node);
-//		cout <<endl;
-		return BooleanSafeKeeper(true);
-	}
-	else
-		return BooleanSafeKeeper(false);
-	
+        if (isSgFile(node))
+        {
+                currentFile=isSgFile(node);
+        }
+        if (isSgBasicBlock(node) || isSgGlobal(node))
+        {
+                delayedRemoveListStack.push(std::list<SgNode*>());
+        }
+//      cout <<"eIA"<<endl;
+        if (_toSave.count(node))
+        {
+                
+//              cout <<"eIA: this node is in the slice ";
+//              printSgNode(node);
+//              cout <<endl;
+                return BooleanSafeKeeper(true);
+        }
+        else
+                return BooleanSafeKeeper(false);
+        
     // if set::count(node)>0
     if (_toSave.count(node))
     {
@@ -59,17 +59,17 @@ BooleanSafeKeeper CreateSlice::evaluateInheritedAttribute(SgNode * node, Boolean
 
     if (partOfSlice.boolean)
         _toSave.insert(node);
-				
+                                
     return partOfSlice;
 }
 
 BooleanSafeKeeper CreateSlice::evaluateSynthesizedAttribute(SgNode * node, BooleanSafeKeeper inherited,
                                                SubTreeSynthesizedAttributes atts)
 {
-	if (isSgFile(node))
-	{
-		currentFile=NULL;
-	}
+        if (isSgFile(node))
+        {
+                currentFile=NULL;
+        }
         /*
                 if (isSgStatement(node))                
                         cout << "processing statement ";
@@ -191,7 +191,7 @@ BooleanSafeKeeper CreateSlice::evaluateSynthesizedAttribute(SgNode * node, Boole
 //                                              if (node->get_file_info ()->isOutputInCodeGeneration ())
                                         if (currentFile && node->get_file_info ()->isSameFile(currentFile)) {
 #ifndef _MSC_VER
-							LowLevelRewrite::remove(isSgStatement(node));
+                                                        LowLevelRewrite::remove(isSgStatement(node));
 #else
  #pragma message ("WARNING: No implementation for Windows yet.")
  ROSE_ASSERT(false);

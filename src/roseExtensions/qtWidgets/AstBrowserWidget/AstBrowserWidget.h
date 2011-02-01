@@ -28,29 +28,29 @@ class AstFilterInterface;
  */
 class QDESIGNER_WIDGET_EXPORT AstBrowserWidget : public RoseTreeView
 {
-	Q_OBJECT
+        Q_OBJECT
 
-	public:
-		AstBrowserWidget(QWidget*parent=0);
-		AstBrowserWidget(SgNode * node, QWidget * parent=0);
-		virtual ~AstBrowserWidget();
+        public:
+                AstBrowserWidget(QWidget*parent=0);
+                AstBrowserWidget(SgNode * node, QWidget * parent=0);
+                virtual ~AstBrowserWidget();
 
-	public slots:
+        public slots:
                 /// Sets the root node of the View
-		virtual void setNode(SgNode * node);
+                virtual void setNode(SgNode * node);
         virtual bool gotoNode( SgNode *node )
                 { return false; }
 
-		/** Filters the view by using an AstFilterInterface
+                /** Filters the view by using an AstFilterInterface
                  *   @param newFilter the filter, for resetting (show all nodes) use NULL */
                 virtual void setFilter(AstFilterInterface * newFilter);
 
-		/// Convenience function which creates an AstFilterFileById and filters the view with it
-		virtual void setFileFilter(int fileId);
+                /// Convenience function which creates an AstFilterFileById and filters the view with it
+                virtual void setFileFilter(int fileId);
 
-	protected:
+        protected:
 
-		QtAstModel * model;
+                QtAstModel * model;
 };
 
 #endif

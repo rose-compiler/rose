@@ -60,37 +60,37 @@ class RIFGNodeIterator;
 //===============================================================================================
 class RIFG {
 public:
-	enum EdgeDirection { ED_INCOMING, ED_OUTGOING };
-	enum ForwardBackward { FORWARD, BACKWARD };
+        enum EdgeDirection { ED_INCOMING, ED_OUTGOING };
+        enum ForwardBackward { FORWARD, BACKWARD };
 
-	//-------------------------------------------------------------------------------------------
-	// assumption: node identifiers are mostly dense, though some may have been freed
-	//-------------------------------------------------------------------------------------------
-	virtual unsigned int HighWaterMarkNodeId()=0;  // largest node id in the graph
+        //-------------------------------------------------------------------------------------------
+        // assumption: node identifiers are mostly dense, though some may have been freed
+        //-------------------------------------------------------------------------------------------
+        virtual unsigned int HighWaterMarkNodeId()=0;  // largest node id in the graph
 
 
-	virtual int IsValid(RIFGNodeId n)=0;     // is the node id still valid, or has it been freed
-	virtual int GetFanin(TarjanIntervals *, RIFGNodeId)=0;
+        virtual int IsValid(RIFGNodeId n)=0;     // is the node id still valid, or has it been freed
+        virtual int GetFanin(TarjanIntervals *, RIFGNodeId)=0;
 
-	virtual RIFGNodeId GetRootNode()=0;
-	virtual RIFGNodeId GetFirstNode()=0;
-	virtual RIFGNodeId GetLastNode()=0;
+        virtual RIFGNodeId GetRootNode()=0;
+        virtual RIFGNodeId GetFirstNode()=0;
+        virtual RIFGNodeId GetLastNode()=0;
 
-	virtual RIFGNodeId GetNextNode(RIFGNodeId n)=0;
-	virtual RIFGNodeId GetPrevNode(RIFGNodeId n)=0;
+        virtual RIFGNodeId GetNextNode(RIFGNodeId n)=0;
+        virtual RIFGNodeId GetPrevNode(RIFGNodeId n)=0;
 
-	virtual RIFGNodeId GetEdgeSrc(RIFGEdgeId e)=0;
-	virtual RIFGNodeId GetEdgeSink(RIFGEdgeId e)=0;
+        virtual RIFGNodeId GetEdgeSrc(RIFGEdgeId e)=0;
+        virtual RIFGNodeId GetEdgeSink(RIFGEdgeId e)=0;
 
-	virtual RIFGNodeId *GetTopologicalMap(TarjanIntervals *)=0;
+        virtual RIFGNodeId *GetTopologicalMap(TarjanIntervals *)=0;
 
-	virtual RIFGNode *GetRIFGNode(RIFGNodeId n)=0;
-	virtual RIFGEdge *GetRIFGEdge(RIFGEdgeId e)=0;
-	
-	virtual RIFGEdgeIterator *GetEdgeIterator(RIFG &fg, RIFGNodeId n,  EdgeDirection ed)=0;
-	virtual RIFGNodeIterator *GetNodeIterator(RIFG &fg, ForwardBackward fb)=0;
-	
-	virtual ~RIFG() { }
+        virtual RIFGNode *GetRIFGNode(RIFGNodeId n)=0;
+        virtual RIFGEdge *GetRIFGEdge(RIFGEdgeId e)=0;
+        
+        virtual RIFGEdgeIterator *GetEdgeIterator(RIFG &fg, RIFGNodeId n,  EdgeDirection ed)=0;
+        virtual RIFGNodeIterator *GetNodeIterator(RIFG &fg, ForwardBackward fb)=0;
+        
+        virtual ~RIFG() { }
 };
 
 //===============================================================================================
@@ -98,11 +98,11 @@ public:
 //===============================================================================================
 class RIFGEdgeIterator {
 public:
-	virtual RIFGEdgeId Current()=0;
-	virtual RIFGEdgeId operator++(int)=0;
+        virtual RIFGEdgeId Current()=0;
+        virtual RIFGEdgeId operator++(int)=0;
 
-	virtual void Reset()=0;
-	virtual ~RIFGEdgeIterator() { }
+        virtual void Reset()=0;
+        virtual ~RIFGEdgeIterator() { }
 };
 
 //===============================================================================================
@@ -110,9 +110,9 @@ public:
 //===============================================================================================
 class RIFGNodeIterator {
 public:
-	virtual RIFGNodeId Current() = 0;
-	virtual RIFGNodeId operator++(int) = 0;
+        virtual RIFGNodeId Current() = 0;
+        virtual RIFGNodeId operator++(int) = 0;
 
-	virtual void Reset() = 0;
+        virtual void Reset() = 0;
 };
 #endif

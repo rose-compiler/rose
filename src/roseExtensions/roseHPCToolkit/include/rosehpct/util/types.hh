@@ -377,7 +377,7 @@ namespace Types
      *  \note Does not work for enums?
      */
     typedef typename Select<isStdArith || isPointer || isMemberPointer,
-			    T, ReferredType&>::Result  ParameterType;
+                            T, ReferredType&>::Result  ParameterType;
   }; /* END TypeTraits */
 
   /*!

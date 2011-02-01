@@ -129,11 +129,11 @@ Grammar::setUpSymbols ()
   // VariableSymbol.excludeFunctionPrototype ( "HEADER_GET_NAME",             "../Grammar/Symbol.code" );
   // VariableSymbol.setFunctionPrototype     ( "HEADER_GET_NAME_DECLARATION", "../Grammar/Symbol.code" );
      VariableSymbol.setDataPrototype   ( "SgInitializedName*", "declaration", "= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // TypeSymbol.setDataPrototype   ( "SgInitializedName*", "declaration", "= NULL");
 
      FunctionSymbol.setDataPrototype   ( "SgFunctionDeclaration*", "declaration", "= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      FunctionTypeSymbol.excludeFunctionPrototype ( "HEADER_GET_NAME", "../Grammar/Symbol.code" );
      FunctionTypeSymbol.excludeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Symbol.code" );
@@ -141,7 +141,7 @@ Grammar::setUpSymbols ()
      FunctionTypeSymbol.setDataPrototype   ( "SgName" , "name", "= \"\"",
                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionTypeSymbol.setDataPrototype   ( "SgType*", "type", "= NULL",
-					     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE);
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE);
 
   // DQ (9/25/2004): This function should be modified (customized) to return p_declaration->firstNondefiningDeclaration() 
   // instead of p_declaration!  This way only nondefining declarations are shared (though all declarations share a 
@@ -166,24 +166,24 @@ Grammar::setUpSymbols ()
   //               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      EnumSymbol.setDataPrototype     ( "SgEnumDeclaration*",    "declaration", "= NULL",
-				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      EnumFieldSymbol.setDataPrototype( "SgInitializedName*",    "declaration", "= NULL",
-				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypedefSymbol.setDataPrototype  ( "SgTypedefDeclaration*", "declaration", "= NULL",
-				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      MemberFunctionSymbol.setFunctionPrototype ( "HEADER_DECLARATION", "../Grammar/Symbol.code" );
 
   // This is depricated (it is not used in Fortran, but still used in C/C++).
      LabelSymbol.setFunctionPrototype     ( "HEADER_LABEL_SYMBOL", "../Grammar/Symbol.code" );
      LabelSymbol.setDataPrototype         ( "SgLabelStatement*", "declaration", "= NULL",
-					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      LabelSymbol.setDataPrototype         ( "SgStatement*", "fortran_statement", "= NULL",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelSymbol.setDataPrototype         ( "int", "numeric_label_value", "= -1",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelSymbol.setDataPrototype         ( "SgLabelSymbol::label_type_enum", "label_type", "= SgLabelSymbol::e_unknown_label_type",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // LabelSymbol.setDataPrototype         ( "bool", "elseLabel", "= false",
   //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // LabelSymbol.setDataPrototype         ( "bool", "endLabel", "= false",
@@ -200,7 +200,7 @@ Grammar::setUpSymbols ()
   // DefaultSymbol.setDataPrototype       ( "SgName", "name", "= SgdefaultName",
   //               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DefaultSymbol.setDataPrototype       ( "SgType*", "type", "= NULL",
-					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE);
 
   // DQ (8/30/2009): Added support for namespace alias to the NamespaceSymbol.
   // DQ (12/23/2005): This has been here for a long time, but in trying to remove unused SgName 
@@ -210,11 +210,11 @@ Grammar::setUpSymbols ()
      NamespaceSymbol.setDataPrototype   ( "SgName" , "name", "= \"\"",
                    CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      NamespaceSymbol.setDataPrototype     ( "SgNamespaceDeclarationStatement*", "declaration", "= NULL",
-				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      NamespaceSymbol.setDataPrototype     ( "SgNamespaceAliasDeclarationStatement*", "aliasDeclaration", "= NULL",
-				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      NamespaceSymbol.setDataPrototype     ( "bool", "isAlias", "= false",
-				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if USE_FORTRAN_IR_NODES
   // DQ (3/19/2007): Support for Fortran IR nodes (contributed by Rice)
@@ -230,13 +230,13 @@ Grammar::setUpSymbols ()
 
   // DQ (3/20/2007): Added data members based on Rice work by Gina).
      IntrinsicSymbol.setDataPrototype   ( "SgInitializedName*", "declaration", "= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      InterfaceSymbol.setDataPrototype   ( "SgInterfaceStatement*", "declaration", "= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ModuleSymbol.setDataPrototype      ( "SgModuleStatement*", "declaration", "= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      CommonSymbol.setDataPrototype      ( "SgInitializedName*", "declaration", "= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 #if ADD_ALIAS_SYMBOL

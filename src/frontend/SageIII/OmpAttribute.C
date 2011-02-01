@@ -254,7 +254,7 @@ namespace OmpSupport
         clause_map[clause_type]=true;
         clauses.push_back(clause_type);
         //        cout<<"adding a clause:"<< OmpSupport::toString(clause_type)<<" to attr:"<< this<<endl;
-        //	cout<<"clauses have member count="<<clauses.size()<<endl;
+        //      cout<<"clauses have member count="<<clauses.size()<<endl;
         ROSE_ASSERT(clause_type == clauses[clauses.size()-1]);
       }
     }
