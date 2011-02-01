@@ -5393,6 +5393,9 @@ HEADER_UNPARSE_INFO_START
             // FMZ: Added for generate fortran xxx.rose_mod file
                b_outputFortranModFile      = 43, /*!< Fortran mod file generation */
 
+            // DQ (1/16/2011): Fortran support required.
+               b_supressStrippedTypeName = 44, /*!< Unparsing of Fortran types with multiple attributes requires skipping the stripped base type name if it has already been output. */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -5608,6 +5611,10 @@ HEADER_UNPARSE_INFO_START
           bool SkipFormatting() const;
           void set_SkipFormatting();
           void unset_SkipFormatting();
+
+          bool supressStrippedTypeName() const;
+          void set_supressStrippedTypeName();
+          void unset_supressStrippedTypeName();
 
           std::string get_operator_name();
           void set_operator_name(const std::string& on);
@@ -9035,13 +9042,29 @@ SgName::get_length() const
      return p_char.size();
    }
 
-SgName::SgName(const char * str): p_char(str ? str : "") {}
+SgName::SgName(const char * str): p_char(str ? str : "")
+   {
+  // Nothing to do here!
+   }
 
 // DQ (9/9/2004): Added support for conversion of strings to SgName
 // I always wanted this and it was a pain that it didn't exist previously!
 SgName::SgName(const std::string & str): p_char(str) {}
 
-SgName::SgName(const SgName& n): p_char(n.p_char) {}
+SgName::SgName(const SgName& n): p_char(n.p_char)
+   {
+#if 0
+  // DQ (1/25/2011): Added check...plus message...
+     if (p_char.empty() == true)
+        {
+          printf ("WARNING: SgName copy constructor called for empty string \n");
+        }
+       else
+        {
+          printf ("In SgName copy constructor name = %s \n",p_char.c_str());
+        }
+#endif
+   }
 
 // SgName::SgName(const char *str, int n): p_char(str, n) {} // get first n chars in the string
 
@@ -13507,6 +13530,19 @@ SgUnparse_Info::set_SkipFormatting()
 void
 SgUnparse_Info::unset_SkipFormatting()
    { unsetBit(b_SkipFormatting); }
+
+// DQ (9/22/2007): Added optional handling of Fortran type attributes, these may have to be setup for each different kind of type attribute.
+bool
+SgUnparse_Info::supressStrippedTypeName() const
+   { return checkBit(b_supressStrippedTypeName); }
+
+void
+SgUnparse_Info::set_supressStrippedTypeName()
+   { setBit(b_supressStrippedTypeName); }
+
+void
+SgUnparse_Info::unset_supressStrippedTypeName()
+   { unsetBit(b_supressStrippedTypeName); }
 
 
 SgName&
