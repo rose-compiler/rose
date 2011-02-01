@@ -98,17 +98,17 @@
       // traversing edges into a node
       for (DefaultDUchain::EdgeIterator edges = 
              defuse.GetNodeEdgeIterator(refnode, DefaultDUchain::EdgeIn);
-	   !edges.ReachEnd(); ++edges) {
+           !edges.ReachEnd(); ++edges) {
         GraphEdge *e = *edges;
-	DefUseChainNode* addnode = defuse.GetEdgeEndPoint( e, DefaultDUchain::EdgeOut);
-	if(addnode->get_stmt() != NULL){
-	  //This test is needed so that we don't try to include a NULL-pointer. The get_stmt() of a input parameter is NULL as it is not a statement and we include the input parameter in the AST later, so we don't need to collect it here.
-	// insert only if not in slice. Since the defusechains graphs may be cyclic, we
-	// need this testing so that we avoid neverending loop.
-	if(!alreadyInSlice(slice, addnode->get_stmt())){
-	  stmtlist.push_front(addnode->get_stmt());
-	  slice.insert(addnode->get_stmt());
-	  }
+        DefUseChainNode* addnode = defuse.GetEdgeEndPoint( e, DefaultDUchain::EdgeOut);
+        if(addnode->get_stmt() != NULL){
+          //This test is needed so that we don't try to include a NULL-pointer. The get_stmt() of a input parameter is NULL as it is not a statement and we include the input parameter in the AST later, so we don't need to collect it here.
+        // insert only if not in slice. Since the defusechains graphs may be cyclic, we
+        // need this testing so that we avoid neverending loop.
+        if(!alreadyInSlice(slice, addnode->get_stmt())){
+          stmtlist.push_front(addnode->get_stmt());
+          slice.insert(addnode->get_stmt());
+          }
       }
       }
     }

@@ -96,19 +96,19 @@ SSA::SSA (CFG& _cfg)
     while (b != work_list.end()) {
       DomTree::DomFrontIterator d(dt.domtree_node(*b));
       while ((bool)d) {
-	CFG::Node* blk = dynamic_cast<CFG::Node*>((DGraph::Node*)d);
-	if (blks_with_phi.find(blk) == blks_with_phi.end()) {
-	  Phi* p = new Phi(var_name, cfg);
-	  phi_node_sets[blk].insert(p);
-	  cout << "inserted Phi node ";
-	  p->dump(cout);
-	  cout << " in node ";
-	  blk->dump(cout);
-	  cout << endl;
-	  if (work_list.find(blk) == work_list.end())
-	    work_list.insert(blk);
-	}
-	++d;
+        CFG::Node* blk = dynamic_cast<CFG::Node*>((DGraph::Node*)d);
+        if (blks_with_phi.find(blk) == blks_with_phi.end()) {
+          Phi* p = new Phi(var_name, cfg);
+          phi_node_sets[blk].insert(p);
+          cout << "inserted Phi node ";
+          p->dump(cout);
+          cout << " in node ";
+          blk->dump(cout);
+          cout << endl;
+          if (work_list.find(blk) == work_list.end())
+            work_list.insert(blk);
+        }
+        ++d;
       }
       ++b;
     }
@@ -137,10 +137,10 @@ SSA::dump (ostream& os)
     if ((bool)phi_iter) {
       os << "Phi Nodes:" << endl;
       while ((bool)phi_iter) {
-	os << "    ";
-	((Phi*)phi_iter)->dump(os);
-	os << endl;
-	++phi_iter;
+        os << "    ";
+        ((Phi*)phi_iter)->dump(os);
+        os << endl;
+        ++phi_iter;
       }
     }
     os << endl;

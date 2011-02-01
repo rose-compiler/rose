@@ -400,8 +400,8 @@ void RoseBin::visit(SgNode* node) {
   if (asmNode)
     if (asmNode->get_parent()==NULL) {
       if (!isSgAsmBlock(asmNode)) {
-	cerr << " PARENT == NULL :: " << asmNode->class_name() << endl;
-	ROSE_ASSERT(asmNode->get_parent());
+        cerr << " PARENT == NULL :: " << asmNode->class_name() << endl;
+        ROSE_ASSERT(asmNode->get_parent());
       }
     }
 }

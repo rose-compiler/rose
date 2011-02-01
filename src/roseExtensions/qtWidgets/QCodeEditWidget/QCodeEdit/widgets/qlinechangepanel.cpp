@@ -16,8 +16,8 @@
 #include "qlinechangepanel.h"
 
 /*!
-	\file qlinechangepanel.cpp
-	\brief Implementation of the QLineChangePanel class.
+        \file qlinechangepanel.cpp
+        \brief Implementation of the QLineChangePanel class.
 */
 
 #include "qeditor.h"
@@ -32,34 +32,34 @@
 #include <QContextMenuEvent>
 
 /*!
-	\ingroup widgets
-	@{
+        \ingroup widgets
+        @{
 */
 
 /*!
-	\class QLineMarkPanel
-	\brief A specific panel in charge of drawing line numbers of an editor
-	
-	\see QEditorInterface
+        \class QLineMarkPanel
+        \brief A specific panel in charge of drawing line numbers of an editor
+        
+        \see QEditorInterface
 */
 
 QCE_AUTO_REGISTER(QLineChangePanel)
 
 /*!
-	\brief Constructor
+        \brief Constructor
 */
 QLineChangePanel::QLineChangePanel(QWidget *p)
  : QPanel(p)
 {
-	setFixedWidth(4);
+        setFixedWidth(4);
 }
 
 /*!
-	\brief Empty destructor
+        \brief Empty destructor
 */
 QLineChangePanel::~QLineChangePanel()
 {
-	
+        
 }
 
 /*!
@@ -67,54 +67,54 @@ QLineChangePanel::~QLineChangePanel()
 */
 QString QLineChangePanel::type() const
 {
-	return "Line changes";
+        return "Line changes";
 }
 
 /*!
-	\internal
+        \internal
 */
 void QLineChangePanel::paint(QPainter *p, QEditor *e)
 {
-	if ( !e || !e->document() )
-		return;
-	
-	const QFontMetrics fm( e->document()->font() );
-	
-	int n, posY,
-		maxCount = 0,
-		as = fm.ascent(),
-		ls = fm.lineSpacing(),
-		pageBottom = e->viewport()->height(),
-		contentsY = e->verticalOffset();
-	
-	QString txt;
-	
-	QDocument *d = e->document();
-	n = d->lineNumber(contentsY);
-	posY = 2 + d->y(n) - contentsY;
-	
-	for ( ; ; ++n )
-	{
-		//qDebug("n = %i; pos = %i", n, posY);
-		QDocumentLine line = d->line(n);
-		
-		if ( line.isNull() || ((posY - as) > pageBottom) )
-			break;
-		
-		if ( line.isHidden() )
-			continue;
-		
-		int span = line.lineSpan();
-		
-		if ( d->isLineModified(line) )
-		{
-			p->fillRect(1, posY, 2, ls * span, Qt::red);
-		} else if ( d->hasLineEverBeenModified(line) ) {
-			p->fillRect(1, posY, 2, ls * span, Qt::green);
-		}
-		
-		posY += ls * span;
-	}
+        if ( !e || !e->document() )
+                return;
+        
+        const QFontMetrics fm( e->document()->font() );
+        
+        int n, posY,
+                maxCount = 0,
+                as = fm.ascent(),
+                ls = fm.lineSpacing(),
+                pageBottom = e->viewport()->height(),
+                contentsY = e->verticalOffset();
+        
+        QString txt;
+        
+        QDocument *d = e->document();
+        n = d->lineNumber(contentsY);
+        posY = 2 + d->y(n) - contentsY;
+        
+        for ( ; ; ++n )
+        {
+                //qDebug("n = %i; pos = %i", n, posY);
+                QDocumentLine line = d->line(n);
+                
+                if ( line.isNull() || ((posY - as) > pageBottom) )
+                        break;
+                
+                if ( line.isHidden() )
+                        continue;
+                
+                int span = line.lineSpan();
+                
+                if ( d->isLineModified(line) )
+                {
+                        p->fillRect(1, posY, 2, ls * span, Qt::red);
+                } else if ( d->hasLineEverBeenModified(line) ) {
+                        p->fillRect(1, posY, 2, ls * span, Qt::green);
+                }
+                
+                posY += ls * span;
+        }
 }
 
 /*! @} */

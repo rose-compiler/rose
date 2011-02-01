@@ -30,7 +30,7 @@ SgAsmType* getRegisterType(const RegisterDescriptor &rdesc) {
  ****************************************************/
 SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt, 
                                                              list<SgAsmExpression*> *children, 
-							     const string& typeOfOperandIn) {
+                                                             const string& typeOfOperandIn) {
   string typeOfOperand = typeOfOperandIn;
   SgAsmExpression* binNode=NULL;
   int sizeOfList = children->size();
@@ -73,15 +73,15 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       resolveRegisterX86(symbol, &regDesc);
       if (isSgAsmMemoryReferenceExpression(child)) {
         binNode = new SgAsmx86RegisterReferenceExpression(regDesc);
-	isSgAsmx86RegisterReferenceExpression(binNode)->set_type(getRegisterType(regDesc));
-	isSgAsmMemoryReferenceExpression(child)->set_segment(binNode);
-	binNode->set_parent(child);
-	binNode=child;
+        isSgAsmx86RegisterReferenceExpression(binNode)->set_type(getRegisterType(regDesc));
+        isSgAsmMemoryReferenceExpression(child)->set_segment(binNode);
+        binNode->set_parent(child);
+        binNode=child;
 
       } else {
         binNode = child;
-	// do nothing
-	// if we have a jump case, we have a value only and no RegRef
+        // do nothing
+        // if we have a jump case, we have a value only and no RegRef
       }
 #if 0
       // resolve the register information
@@ -121,30 +121,30 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       list<SgAsmExpression*>::iterator childList = children->begin();
       int count=0;
       if (children->size()==1) {
-	// the add has only one child
-	SgAsmExpression* child = *(children->begin());
-	if (child) {
+        // the add has only one child
+        SgAsmExpression* child = *(children->begin());
+        if (child) {
           binNode = child;
-	  // child->set_parent(previousExp);
-	  // if (isSgAsmMemoryReferenceExpression(previousExp)) 
-	  //   isSgAsmMemoryReferenceExpression(previousExp)->set_address(child);
-	  // changed on 16Jan08
-	  //if (isSgAsmRegisterReferenceExpression(previousExp))
-	  //  isSgAsmRegisterReferenceExpression(previousExp)->set_offset(child);
-	}
+          // child->set_parent(previousExp);
+          // if (isSgAsmMemoryReferenceExpression(previousExp)) 
+          //   isSgAsmMemoryReferenceExpression(previousExp)->set_address(child);
+          // changed on 16Jan08
+          //if (isSgAsmRegisterReferenceExpression(previousExp))
+          //  isSgAsmRegisterReferenceExpression(previousExp)->set_offset(child);
+        }
       } else {
-	binNode = new SgAsmBinaryAdd();        
-	for (; childList!=children->end();++childList) {
-	  SgAsmExpression* child = *childList;
-	  if (child) {
-	    if (count==0)
-	      isSgAsmBinaryAdd(binNode)->set_lhs(child);
-	    else
-	      isSgAsmBinaryAdd(binNode)->set_rhs(child);
-	    child->set_parent(binNode);
-	  }
-	  count++;
-	}
+        binNode = new SgAsmBinaryAdd();        
+        for (; childList!=children->end();++childList) {
+          SgAsmExpression* child = *childList;
+          if (child) {
+            if (count==0)
+              isSgAsmBinaryAdd(binNode)->set_lhs(child);
+            else
+              isSgAsmBinaryAdd(binNode)->set_rhs(child);
+            child->set_parent(binNode);
+          }
+          count++;
+        }
       }
     } 
     else if (expt->symbol=="-") {
@@ -210,18 +210,18 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       // we return the binNode of the child
       binNode = *(children->begin());
       if (isSgAsmMemoryReferenceExpression(binNode)) {
-	SgAsmMemoryReferenceExpression* memRefT = isSgAsmMemoryReferenceExpression(binNode);
-	if (expt->symbol=="b1") 
-	  memRefT->set_type(SgAsmTypeByte::createType());
-	else if (expt->symbol=="b2") 
-	  memRefT->set_type(SgAsmTypeWord::createType());
-	else if (expt->symbol=="b4") 
-	  memRefT->set_type(SgAsmTypeDoubleWord::createType());
-	else if (expt->symbol=="b6") 
-	  memRefT->set_type(SgAsmTypeByte::createType()); // FIXME
-	else if (expt->symbol=="b8") 
-	  memRefT->set_type(SgAsmTypeQuadWord::createType());
-	ROSE_ASSERT (memRefT->get_type());
+        SgAsmMemoryReferenceExpression* memRefT = isSgAsmMemoryReferenceExpression(binNode);
+        if (expt->symbol=="b1") 
+          memRefT->set_type(SgAsmTypeByte::createType());
+        else if (expt->symbol=="b2") 
+          memRefT->set_type(SgAsmTypeWord::createType());
+        else if (expt->symbol=="b4") 
+          memRefT->set_type(SgAsmTypeDoubleWord::createType());
+        else if (expt->symbol=="b6") 
+          memRefT->set_type(SgAsmTypeByte::createType()); // FIXME
+        else if (expt->symbol=="b8") 
+          memRefT->set_type(SgAsmTypeQuadWord::createType());
+        ROSE_ASSERT (memRefT->get_type());
       } 
     }
 
@@ -269,11 +269,11 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
               } else {
                 cerr << "ERROR :: unhandled type of value: " << typeOfOperand << " val: " << 
                   RoseBin_support::ToString(expt->immediate) << endl;
-		//              exit(0);
-		// creating defualt for now
-		binNode = new SgAsmDoubleWordValueExpression();
-		isSgAsmDoubleWordValueExpression(binNode)->set_value(expt->immediate);
-	      }
+                //              exit(0);
+                // creating defualt for now
+                binNode = new SgAsmDoubleWordValueExpression();
+                isSgAsmDoubleWordValueExpression(binNode)->set_value(expt->immediate);
+              }
     
     if (RoseBin_support::DEBUG_MODE())
       cout <<  typeOfOperand << endl;
@@ -314,10 +314,10 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
  * return the replacement text for an expression
  ****************************************************/
 string RoseBin_IDAPRO_buildTree::getReplacementText(
-						    rose_hash::unordered_map< int, exprSubstitutionType> *rememberSubstitution, 
-						    int operand_id, 
-						    int expr_id_root,
-						    int address) {
+                                                    rose_hash::unordered_map< int, exprSubstitutionType> *rememberSubstitution, 
+                                                    int operand_id, 
+                                                    int expr_id_root,
+                                                    int address) {
   string text = "";
 
   rose_hash::unordered_map< int, exprSubstitutionType>::iterator it =  rememberSubstitution->find(address);
@@ -364,13 +364,13 @@ std::string RoseBin_IDAPRO_buildTree::getComment(int address,
  * to create the subtree of one operand
  ****************************************************/
 SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int address,
-									int expr_id_root, 
-									const map <int, vector<int> >& subTree, 
-									const string& typeOfOperand,
-									std::vector < exprTreeType > *rememberExpressionTree,
-									int operand_id,
-									rose_hash::unordered_map <int, exprSubstitutionType> *rememberSubstitution,
-									rose_hash::unordered_map <int, string> *rememberComments) {
+                                                                        int expr_id_root, 
+                                                                        const map <int, vector<int> >& subTree, 
+                                                                        const string& typeOfOperand,
+                                                                        std::vector < exprTreeType > *rememberExpressionTree,
+                                                                        int operand_id,
+                                                                        rose_hash::unordered_map <int, exprSubstitutionType> *rememberSubstitution,
+                                                                        rose_hash::unordered_map <int, string> *rememberComments) {
   //cerr << "resolveRecursivelyExpression inside " << address << " " << expr_id_root << " " << typeOfOperand << " " << operand_id << endl;
   SgAsmExpression* binExp=NULL;
   if (RoseBin_support::DEBUG_MODE())

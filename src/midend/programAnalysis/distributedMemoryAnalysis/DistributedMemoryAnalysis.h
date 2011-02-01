@@ -40,10 +40,10 @@ public:
   static const int root_process = 0;
   std::pair<int, int> computeFunctionIndices(SgNode *root,
                                              InheritedAttributeType rootInheritedValue,
-					     AstTopDownProcessing<InheritedAttributeType> *preTraversal);
+                                             AstTopDownProcessing<InheritedAttributeType> *preTraversal);
   void computeFunctionIndicesPerNode(SgNode *root, std::vector<int>& functionToProcessor,  
                                      InheritedAttributeType rootInheritedValue,
-				     AstTopDownProcessing<InheritedAttributeType> *preTraversal);
+                                     AstTopDownProcessing<InheritedAttributeType> *preTraversal);
   void sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<InheritedAttributeType>& inhertiedValues,
                      std::vector<size_t>& nodeCounts, std::vector<size_t>& funcWeights);
   

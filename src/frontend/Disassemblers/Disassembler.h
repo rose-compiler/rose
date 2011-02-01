@@ -149,7 +149,7 @@ public:
      *  which call the basic block and individual instruction disassembler methods, but which are called by the methods that
      *  disassemble sections, headers, and entire files. */
     enum SearchHeuristic 
-	{
+        {
         SEARCH_FOLLOWING = 0x0001,      /**< Disassemble at the address that follows each disassembled instruction, regardless
                                          *   of whether the following address is a successor. */
         SEARCH_IMMEDIATE = 0x0002,      /**< Disassemble at the immediate operands of other instructions.  This is a

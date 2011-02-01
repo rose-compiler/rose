@@ -161,7 +161,7 @@ ostream& cfgToDotForDebugging(ostream& o, string graphName, CFGNode start) {
   }  
 
 ostream& cfgToDotForDebugging(ostream& o, string graphName,
-			      InterestingNode start) {
+                              InterestingNode start) {
   o << "digraph " << graphName << " {\n";
   CfgToDotImpl<InterestingNode, InterestingEdge, true> impl(o);
   impl.processNodes(start);

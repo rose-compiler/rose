@@ -365,7 +365,7 @@ const MemoryMap::MapElement *
 MemoryMap::find(rose_addr_t va) const
 {
     if (!sorted) {
-	std::sort(elements.begin(), elements.end());
+        std::sort(elements.begin(), elements.end());
         sorted = true;
     }
 
@@ -388,7 +388,7 @@ rose_addr_t
 MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) const
 {
     if (!sorted) {
-	std::sort(elements.begin(), elements.end());
+        std::sort(elements.begin(), elements.end());
         sorted = true;
     }
 
@@ -415,7 +415,7 @@ rose_addr_t
 MemoryMap::find_last_free(rose_addr_t max) const
 {
     if (!sorted) {
-	std::sort(elements.begin(), elements.end());
+        std::sort(elements.begin(), elements.end());
         sorted = true;
     }
 
@@ -446,7 +446,7 @@ MemoryMap::find_last_free(rose_addr_t max) const
 const std::vector<MemoryMap::MapElement> &
 MemoryMap::get_elements() const {
     if (!sorted) {
-	std::sort(elements.begin(), elements.end());
+        std::sort(elements.begin(), elements.end());
         sorted = true;
     }
     return elements;
@@ -619,7 +619,7 @@ void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {
     if (!sorted) {
-	std::sort(elements.begin(), elements.end());
+        std::sort(elements.begin(), elements.end());
         sorted = true;
     }
 

@@ -89,8 +89,8 @@ class FindStatementsVisitor: public std::binary_function<SgNode*, std::vector<Sg
   void* operator()(first_argument_type node, std::vector<SgStatement*>* insns ) const{
     if (isSgStatement(node))
       //      if (!isSgStatement(node)->get_file_info()->isCompilerGenerated())
-	insns->push_back(isSgStatement(node));
-	//}
+        insns->push_back(isSgStatement(node));
+        //}
     return NULL;
   }
 };
@@ -209,7 +209,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorit
   void visit(SgNode* node);
   void checkControlFlow( SgAsmInstruction* binInst,
                          int functionSize, int countDown,
-			 std::string& currentFunctionName, int func_nr);
+                         std::string& currentFunctionName, int func_nr);
 
   SgGraphNode*
     getNodeFor(uint64_t inst) { return deftable_instr[inst];}
@@ -222,7 +222,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorit
   template <class T>
     bool from_string(T& t,
                      const std::string& s,
-		     std::ios_base& (*f)(std::ios_base&))
+                     std::ios_base& (*f)(std::ios_base&))
     {
       std::istringstream iss(s);
       return !(iss >> f >> t).fail();

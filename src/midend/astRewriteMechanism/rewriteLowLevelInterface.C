@@ -23,41 +23,41 @@ LowLevelRewrite::remove(SgStatement* astNode)
 void
 LowLevelRewrite::insert(SgStatement* targetStatement, SgStatementPtrList newStatementList, bool insertBeforeNode)
 {
-	//George Vulov 6/15/2010 - These functions have been gutted and just call through to SageInterface
-	//The implmementations were not updated to work correctly with the new AST
-	//This class as a whole is deprecated.
-	SageInterface::insertStatementList(targetStatement, newStatementList, insertBeforeNode);
+        //George Vulov 6/15/2010 - These functions have been gutted and just call through to SageInterface
+        //The implmementations were not updated to work correctly with the new AST
+        //This class as a whole is deprecated.
+        SageInterface::insertStatementList(targetStatement, newStatementList, insertBeforeNode);
 }
 
 
 void
 LowLevelRewrite::replace(SgStatement* targetStatement, SgStatementPtrList newStatementList)
 {
-	//George Vulov 6/15/2010 - These functions have been gutted and just call through to SageInterface
-	//The implmementations were not updated to work correctly with the new AST
-	//This class as a whole is deprecated.
-	SageInterface::insertStatementListBefore(targetStatement, newStatementList);
-	SageInterface::removeStatement(targetStatement);
+        //George Vulov 6/15/2010 - These functions have been gutted and just call through to SageInterface
+        //The implmementations were not updated to work correctly with the new AST
+        //This class as a whole is deprecated.
+        SageInterface::insertStatementListBefore(targetStatement, newStatementList);
+        SageInterface::removeStatement(targetStatement);
 }
 
 
 void
 LowLevelRewrite::insert(SgStatement* targetStatement, SgStatement* newStatement, bool insertBeforeNode)
 {
-	//George Vulov 6/15/2010 - These functions have been gutted and just call through to SageInterface
-	//The implmementations were not updated to work correctly with the new AST
-	//This class as a whole is deprecated.
-	SageInterface::insertStatement(targetStatement, newStatement, insertBeforeNode);
+        //George Vulov 6/15/2010 - These functions have been gutted and just call through to SageInterface
+        //The implmementations were not updated to work correctly with the new AST
+        //This class as a whole is deprecated.
+        SageInterface::insertStatement(targetStatement, newStatement, insertBeforeNode);
 }
 
 
 void
 LowLevelRewrite::replace(SgStatement* targetStatement, SgStatement* newStatement)
 {
-	//George Vulov 6/15/2010 - These functions have been gutted and just call through to SageInterface
-	//The implmementations were not updated to work correctly with the new AST
-	//This class as a whole is deprecated.
-	SageInterface::replaceStatement(targetStatement, newStatement);
+        //George Vulov 6/15/2010 - These functions have been gutted and just call through to SageInterface
+        //The implmementations were not updated to work correctly with the new AST
+        //This class as a whole is deprecated.
+        SageInterface::replaceStatement(targetStatement, newStatement);
 }
 
 // ************************************************

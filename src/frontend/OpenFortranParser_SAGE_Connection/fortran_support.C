@@ -21,19 +21,19 @@ std::list<SgInterfaceStatement*> astInterfaceStack;
 
 Token_t *create_token(int line, int col, int type, const char *text)
   {
-	 Token_t *tmp_token = NULL;
+         Token_t *tmp_token = NULL;
 
-	 tmp_token = (Token_t*) malloc(sizeof(Token_t));
-	 tmp_token->line = line;
-	 tmp_token->col = col;
-	 tmp_token->type = type;
+         tmp_token = (Token_t*) malloc(sizeof(Token_t));
+         tmp_token->line = line;
+         tmp_token->col = col;
+         tmp_token->type = type;
  /* Make a copy of our own to make sure it isn't freed on us.  */
     if (text != NULL)
          tmp_token->text = strdup(text);
       else
          tmp_token->text = NULL;
 
-	 return tmp_token;
+         return tmp_token;
   }
 
 
@@ -3775,9 +3775,9 @@ generateImplicitType( string name )
   // These will have to be modified to account for user defined implicit type rules later.
 
   // The DEFAULT implicit typing is based on the first letter of the name Implicit type
-  // A to H 	REAL
-  // I to N 	INTEGER
-  // O to Z 	REAL
+  // A to H     REAL
+  // I to N     INTEGER
+  // O to Z     REAL
 
      SgType* returnType = NULL;
 

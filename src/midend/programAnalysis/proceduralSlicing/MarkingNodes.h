@@ -122,7 +122,7 @@ class MarkingNodes : public AstTopDownBottomUpProcessing<bool, bool> {
   This function implements the virtual function "evaluateSynthesizedAttribute" in the class AstTopDownBottomUpProcessing.
   */
   bool virtual evaluateSynthesizedAttribute(SgNode* astNode,
- 					    bool inherited, vector<bool> synattri);
+                                            bool inherited, vector<bool> synattri);
 
 /*!
   This function implements the virtual function "defaultSynthesizedAttribute" in the class AstTopDownBottomUpProcessing. The default return value is "false", implying that the default answer to whether an AST node is to be kept for the slice or not, is not to keep.

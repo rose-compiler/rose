@@ -18,10 +18,10 @@ static SymbolicVal GetDefaultBlockSize(AstInterface& fa, const CompSlice* slice)
 
        LoopTransformOptions* opt = LoopTransformOptions::GetInstance();
        if (!opt->DoDynamicTuning()) {
-	    return opt->GetDefaultBlockSize();
+            return opt->GetDefaultBlockSize();
        }
        else {
-	   int dt = opt->GetDynamicTuningIndex();
+           int dt = opt->GetDynamicTuningIndex();
            AstInterface::AstNodeList l;
            l.push_back(fa.CreateConstInt(dt));
 
@@ -51,13 +51,13 @@ SetBlocking( AstInterface& fa, CompSliceLocalityRegistry *anal, CompSliceNest& n
          blocksize.clear();
          unsigned num = n.NumberOfEntries();
          int reuseLevel = SliceNestReuseLevel(anal, n); 
-	 for (int i = 0; i < reuseLevel; ++i)
+         for (int i = 0; i < reuseLevel; ++i)
              blocksize.push_back(1);
          size_t index;
          for ( index = reuseLevel; index < num-spill; ++index)  {
              blocksize.push_back(GetDefaultBlockSize(fa, n[index]));
          }
-	 for (; index < num; ++index)
+         for (; index < num; ++index)
              blocksize.push_back(1);
    }
 
@@ -82,7 +82,7 @@ SetBlocking( AstInterface& fa,CompSliceLocalityRegistry *anal, CompSliceNest& n)
             return;
          }
          int reuseLevel = SliceNestReuseLevel(anal, n); 
-	 for (int i = 0; i < reuseLevel; ++i)
+         for (int i = 0; i < reuseLevel; ++i)
              blocksize.push_back(1);
          for ( size_t index = reuseLevel; index < num; ++index) 
              blocksize.push_back(GetDefaultBlockSize(fa,n[index]));

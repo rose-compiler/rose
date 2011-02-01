@@ -33,7 +33,7 @@ class DefUseChain
     : VirtualGraphCreateTemplate<Node, Edge>(c) {}
 
   virtual Node* CreateNode( AstInterface& fa, const AstNodePtr& ref, 
-			    const AstNodePtr& stmt, bool def)
+                            const AstNodePtr& stmt, bool def)
     {
       Node* n = new Node(this, ref, stmt, def);
       AddNode(n);
@@ -48,10 +48,10 @@ class DefUseChain
     }
   
   void build( AstInterface& fa,
-	      ReachingDefinitionAnalysis& r, 
+              ReachingDefinitionAnalysis& r, 
               AliasAnalysisInterface& alias,
-	      FunctionSideEffectInterface* f = 0);
-  //Build ReachingDefinition internally	      
+              FunctionSideEffectInterface* f = 0);
+  //Build ReachingDefinition internally       
   void build(AstInterface& fa, AstNodePtr root,  
              AliasAnalysisInterface* alias = 0, 
              FunctionSideEffectInterface* f = 0);
@@ -334,7 +334,7 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
         AstNodePtr cur = *p;
         if (DebugDefUseChain())  
             std::cerr << "processing stmt : " << AstToString(cur) << std::endl;
-	collect(fa, cur, &opgen, &opread, &opkill); 
+        collect(fa, cur, &opgen, &opread, &opkill); 
       }
   }
 
@@ -376,13 +376,13 @@ void PropagateDefUseChainUpdate( DefUseChain<Node> *graph,
         Node* use = *usep;
         if (use->is_definition())
           continue;
-	GraphNodePredecessorIterator<DefUseChain<Node> > defp(graph,use);
+        GraphNodePredecessorIterator<DefUseChain<Node> > defp(graph,use);
         Node *tmp = *defp;
-	++defp;
-	if (defp.ReachEnd()) {
-	  assert( tmp == cur);
-	  update.update_use_node(use, cur, append);
-	}
+        ++defp;
+        if (defp.ReachEnd()) {
+          assert( tmp == cur);
+          update.update_use_node(use, cur, append);
+        }
       }
     }
     else {
@@ -400,7 +400,7 @@ void PropagateDefUseChainUpdate( DefUseChain<Node> *graph,
           Node* def = *defp;
           ++defp;
           if (defp.ReachEnd()) {
-	    if (update.update_def_node(def, cur, append)) 
+            if (update.update_def_node(def, cur, append)) 
               append(def);
           }
         }

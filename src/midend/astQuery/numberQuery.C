@@ -32,7 +32,7 @@ NumberQuery::queryNumberOfArgsInParenthesisOperator (SgNode * astNode, string ty
 
   switch (astNode->variantT ())
   {
-    case V_SgExprListExp:	// SgExprListExp
+    case V_SgExprListExp:       // SgExprListExp
       {
         // char *typeName = "XXX";
         int numberOfArgs = sageExprListExp->get_expressions ().size ();
@@ -46,7 +46,7 @@ NumberQuery::queryNumberOfArgsInParenthesisOperator (SgNode * astNode, string ty
         break;
       }
 
-    case V_SgFunctionCallExp:	//SgExprCallExp
+    case V_SgFunctionCallExp:   //SgExprCallExp
       {
         // const char *matchingFunctionName = "operator()";
 
@@ -77,7 +77,7 @@ NumberQuery::queryNumberOfArgsInParenthesisOperator (SgNode * astNode, string ty
   } /* End switch-case */
 
   return returnNumberList;
-}				// End function queryNumberOfArgsInParenthesisOperator() 
+}                               // End function queryNumberOfArgsInParenthesisOperator() 
 
 
   NumberQuerySynthesizedAttributeType
@@ -188,7 +188,7 @@ NumberQuery::queryNumberOfOperands (SgNode * astNode)
         // Nothing to do here (implemented to avoid g++ warnings about unhandled enum values)
         break;
       }
-  }				/* End switch-case */
+  }                             /* End switch-case */
 
   if (numberOfArgs > 0)
   {
@@ -221,7 +221,7 @@ NumberQuery::queryNumberOfArgsInScalarIndexingOperator (SgNode * astNode)
 
   switch (astNode->variantT ())
   {
-    case V_SgExprListExp:	// SgExprListExp
+    case V_SgExprListExp:       // SgExprListExp
       {
         // char *typeName = "XXX";
         int numberOfArgs = sageExprListExp->get_expressions ().size ();
@@ -235,7 +235,7 @@ NumberQuery::queryNumberOfArgsInScalarIndexingOperator (SgNode * astNode)
         break;
       }
 
-    case V_SgFunctionCallExp:	//SgExprCallExp
+    case V_SgFunctionCallExp:   //SgExprCallExp
       {
         // const char *matchingFunctionName = "operator()";
 

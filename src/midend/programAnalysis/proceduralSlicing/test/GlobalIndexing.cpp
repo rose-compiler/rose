@@ -13,10 +13,10 @@ void GlobalIndexing :: visit(SgNode* node){
 
       list_of_statements.push_front(isSgNode(*it));
       if(!(*it)->attribute.exists("global_index")){
-	(*it)->attribute.add("global_index", new GlobalIndex(0));
-	global_index++;
-	(*it)->attribute.set("global_index", (AstAttribute*)global_index);
-	//cout << "globalindex="<< global_index << endl;
+        (*it)->attribute.add("global_index", new GlobalIndex(0));
+        global_index++;
+        (*it)->attribute.set("global_index", (AstAttribute*)global_index);
+        //cout << "globalindex="<< global_index << endl;
       }
     }
   }

@@ -307,7 +307,7 @@ Grammar::setUpSupport ()
      TypeTable.setFunctionPrototype( "HEADER_TYPE_TABLE", "../Grammar/Support.code" );
      TypeTable.setAutomaticGenerationOfConstructor(false);
      TypeTable.setDataPrototype    ( "SgSymbolTable*","type_table","= NULL",
-					             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+                                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
      Name.setFunctionPrototype                ( "HEADER_NAME", "../Grammar/Support.code");
 

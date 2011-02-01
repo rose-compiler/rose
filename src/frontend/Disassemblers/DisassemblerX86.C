@@ -672,7 +672,7 @@ DisassemblerX86::effectiveAddressSize() const
             case x86_insnsize_16: return x86_insnsize_32;
             case x86_insnsize_32: return x86_insnsize_16;
             case x86_insnsize_64: return x86_insnsize_32;
-			default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return insnSize; }
+                        default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return insnSize; }
         }
     } else {
         return insnSize;
@@ -697,7 +697,7 @@ DisassemblerX86::effectiveOperandSize() const
                     return x86_insnsize_64;
                 return x86_insnsize_16;
             }
-			default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return insnSize; }
+                        default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return insnSize; }
         }
     } else {
         X86InstructionSize s = insnSize;
@@ -733,7 +733,7 @@ DisassemblerX86::mmPrefix() const
                 return mmF3;
             }
         }
-		default: { ROSE_ASSERT(false);  /* avoid MSCV warning by adding return stmt */ return mmNone; }
+                default: { ROSE_ASSERT(false);  /* avoid MSCV warning by adding return stmt */ return mmNone; }
     }
 }
 
@@ -754,7 +754,7 @@ DisassemblerX86::sizeToMode(X86InstructionSize s)
         case x86_insnsize_16: return rmWord;
         case x86_insnsize_32: return rmDWord;
         case x86_insnsize_64: return rmQWord;
-		default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return rmWord; }
+                default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return rmWord; }
     }
 }
 
@@ -766,7 +766,7 @@ DisassemblerX86::sizeToType(X86InstructionSize s)
         case x86_insnsize_16: return SgAsmTypeWord::createType();
         case x86_insnsize_32: return SgAsmTypeDoubleWord::createType();
         case x86_insnsize_64: return SgAsmTypeQuadWord::createType();
-		default: { abort(); /* avoid MSCV warning by adding return stmt */ return NULL; }
+                default: { abort(); /* avoid MSCV warning by adding return stmt */ return NULL; }
     }
 }
 
@@ -1287,7 +1287,7 @@ DisassemblerX86::getImmForAddr()
         case x86_insnsize_16: return getImmWord();
         case x86_insnsize_32: return getImmDWord();
         case x86_insnsize_64: return getImmQWord();
-		default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
+                default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
     }
 }
 
@@ -1298,7 +1298,7 @@ DisassemblerX86::getImmIv()
         case x86_insnsize_16: return getImmWord();
         case x86_insnsize_32: return getImmDWord();
         case x86_insnsize_64: return getImmQWord();
-		default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
+                default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
     }
 }
 
@@ -1358,7 +1358,7 @@ DisassemblerX86::getImmIzAsIv()
             return getImmDWord();
         }
         default:
-			{ ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
+                        { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
     }
 }
 
@@ -5627,7 +5627,7 @@ DisassemblerX86::decodeX87InstructionD8()
             case 5: return makeInstruction(x86_fsubr, "fsubr", modrm);
             case 6: return makeInstruction(x86_fdiv, "fdiv",  modrm);
             case 7: return makeInstruction(x86_fdivr, "fdivr", modrm);
-			default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
+                        default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
         }
     } else { // Two-operand register forms
         switch (regField) {
@@ -5639,7 +5639,7 @@ DisassemblerX86::decodeX87InstructionD8()
             case 5: return makeInstruction(x86_fsubr, "fsubr", makeRegister(0, rmST), modrm);
             case 6: return makeInstruction(x86_fdiv, "fdiv",   makeRegister(0, rmST), modrm);
             case 7: return makeInstruction(x86_fdivr, "fdivr", makeRegister(0, rmST), modrm);
-			default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
+                        default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
         }
     }
 }

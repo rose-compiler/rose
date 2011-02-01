@@ -17,11 +17,11 @@ GraphAlgorithms::getDefinitionForUsage(RoseBin_Graph* vizzGraph,
     if (edge) {
       SgGraphNode* source = isSgGraphNode(edge->get_from());
       if (source) {
-	string type_n = vizzGraph->getProperty(SgGraph::type, edge);
-	//if (RoseBin_support::DEBUG_MODE())
-	//cout << " found a predecessor with type : " << type_n << endl;
-	if (type_n==RoseBin_support::ToString(SgGraph::usage))
-	  return source;
+        string type_n = vizzGraph->getProperty(SgGraph::type, edge);
+        //if (RoseBin_support::DEBUG_MODE())
+        //cout << " found a predecessor with type : " << type_n << endl;
+        if (type_n==RoseBin_support::ToString(SgGraph::usage))
+          return source;
       }
     }
   }
@@ -31,7 +31,7 @@ GraphAlgorithms::getDefinitionForUsage(RoseBin_Graph* vizzGraph,
 
 void
 GraphAlgorithms::getDirectCFGSuccessors(RoseBin_Graph* vizzGraph,
-					SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
+                                        SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
   //SgGraphEdgeList* gedges = vizzGraph->get_edges();
   rose_graph_integer_edge_hash_multimap edges = vizzGraph->get_node_index_to_edge_multimap_edgesOut();
   rose_graph_integer_edge_hash_multimap::iterator it1, it2;
@@ -49,10 +49,10 @@ GraphAlgorithms::getDirectCFGSuccessors(RoseBin_Graph* vizzGraph,
       //cerr << "  with target node = " << target->get_name() << endl;
       ROSE_ASSERT(target);
       if (target) {
-	string type_n = vizzGraph->getProperty(SgGraph::type, edge);
-	if (type_n==RoseBin_support::ToString(SgGraph::cfg))
-	  if (isDirectCFGEdge(target, node))
-	    vec.push_back(target);
+        string type_n = vizzGraph->getProperty(SgGraph::type, edge);
+        if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+          if (isDirectCFGEdge(target, node))
+            vec.push_back(target);
       }
     }
   }
@@ -62,10 +62,10 @@ GraphAlgorithms::getDirectCFGSuccessors(RoseBin_Graph* vizzGraph,
 
 void
 GraphAlgorithms::getDirectCFGPredecessors(RoseBin_Graph* vizzGraph,
-					  SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
+                                          SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
   rose_graph_integer_edge_hash_multimap::iterator it1, it2;
   pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
-	  vizzGraph->get_node_index_to_edge_multimap_edgesIn().equal_range(node->get_index());
+          vizzGraph->get_node_index_to_edge_multimap_edgesIn().equal_range(node->get_index());
   it1 = iter.first;
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
@@ -73,10 +73,10 @@ GraphAlgorithms::getDirectCFGPredecessors(RoseBin_Graph* vizzGraph,
     if (edge) {
       SgGraphNode* source = isSgGraphNode(edge->get_from());
       if (source) {
-	string type_n = vizzGraph->getProperty(SgGraph::type, edge);
-	if (type_n==RoseBin_support::ToString(SgGraph::cfg))
-	  if (isDirectCFGEdge(node, source))
-	    vec.push_back(source);
+        string type_n = vizzGraph->getProperty(SgGraph::type, edge);
+        if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+          if (isDirectCFGEdge(node, source))
+            vec.push_back(source);
       }
     }
   }
@@ -103,7 +103,7 @@ GraphAlgorithms::isDirectCFGEdge(SgGraphNode* sgNode,
       ROSE_ASSERT(info);
       vector<VirtualBinCFG::CFGEdge> outEdges = instSgNodeBefore->cfgBinOutEdges(info);
       //cerr << "           -- Checking DirectCFG between: " << sgNode->get_name() << "  and before: " << 
-      //	sgNodeBefore->get_name() << "    nr outedges: " << outEdges.size() << endl;
+      //        sgNodeBefore->get_name() << "    nr outedges: " << outEdges.size() << endl;
       for (size_t i = 0; i < outEdges.size(); ++i) {
         if (outEdges[i].target().getNode() == instSgNode) {
           isDirectedControlFlowEdge = true;
@@ -147,15 +147,15 @@ GraphAlgorithms::isValidCFGEdge(SgGraphNode* sgNode,
       int byte = 1;
       ROSE_ASSERT(info);
       while (nodeBeforeInSet==NULL && byte<8) {
-	nodeBeforeInSet = info->getInstructionAtAddress(instSgNode->get_address() - byte);
-	byte++;
+        nodeBeforeInSet = info->getInstructionAtAddress(instSgNode->get_address() - byte);
+        byte++;
       }
       if (RoseBin_support::DEBUG_MODE())
       cout << " *** nodeBeforeInSet = " << nodeBeforeInSet << "  instSgNodeBefore : " << instSgNodeBefore << "   byte : " << byte << endl;
       if (nodeBeforeInSet == instSgNodeBefore) {
-	//if (!isAsmUnconditionalBranch(nodeBeforeInSet))
-	if (RoseBin_support::DEBUG_MODE())
-	cout << " isDirectedControlFlowEdge = true  --  isAsmUnconditionalBranch(nodeBeforeInSet) : " << isAsmUnconditionalBranch(nodeBeforeInSet) << endl;
+        //if (!isAsmUnconditionalBranch(nodeBeforeInSet))
+        if (RoseBin_support::DEBUG_MODE())
+        cout << " isDirectedControlFlowEdge = true  --  isAsmUnconditionalBranch(nodeBeforeInSet) : " << isAsmUnconditionalBranch(nodeBeforeInSet) << endl;
         isDirectedControlFlowEdge = true;
       }
       if (RoseBin_support::DEBUG_MODE()) {
@@ -163,7 +163,7 @@ GraphAlgorithms::isValidCFGEdge(SgGraphNode* sgNode,
       cout << " inst->get_kind() == x86_call : " << (inst->get_kind() == x86_call) << "     inst->get_kind() == x86_ret : " << (inst->get_kind() == x86_ret) << endl;
       }
       if ((inst->get_kind() == x86_call || inst->get_kind() == x86_ret) && isDirectedControlFlowEdge)
-	valid=false;
+        valid=false;
     }
   }
   /*

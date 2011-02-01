@@ -283,12 +283,12 @@ FortranCodeGeneration_locatedNode::unparseFuncCall(SgExpression* expr, SgUnparse
       SgExpressionPtrList& list = func_call->get_args()->get_expressions();
       SgExpressionPtrList::iterator arg = list.begin();
       while (arg != list.end()) {
-//	SgConstructorInitializer* con_init = isSgConstructorInitializer(*arg);
-	unparseExpression((*arg), ninfo);
-	arg++;
-	if (arg != list.end()) {
-	  curprint(",");
-	}
+//      SgConstructorInitializer* con_init = isSgConstructorInitializer(*arg);
+        unparseExpression((*arg), ninfo);
+        arg++;
+        if (arg != list.end()) {
+          curprint(",");
+        }
       }
     }
     curprint(")");
@@ -1327,7 +1327,7 @@ FortranCodeGeneration_locatedNode::unparseVarRef(SgExpression* expr, SgUnparse_I
           if (cdef != NULL)
              {
 #ifndef _MSC_VER
-	    // tps (02/02/2010): Does not work for some reason under Windows: SgClassDeclaration unknown.
+            // tps (02/02/2010): Does not work for some reason under Windows: SgClassDeclaration unknown.
                SgClassDeclaration* cdecl = isSgClassDeclaration(cdef->get_declaration());
                if (cdecl != NULL && vd->get_declarationModifier().get_storageModifier().isStatic()) 
                   {
@@ -1811,30 +1811,30 @@ FortranCodeGeneration_locatedNode::printStartParen(SgExpression* expr, SgUnparse
       VariantT parentVariant = GetOperatorVariant(parentExpr);
       SgExpression* first = GetFirstOperand(parentExpr);
       if (parentVariant == V_SgPntrArrRefExp && first != expr) {
-	return false;
+        return false;
       }
 
       int parentPrecedence = GetPrecedence(parentVariant);
       if (parentPrecedence == 0) {
-	return true;
+        return true;
       }
       
       VariantT exprVariant = GetOperatorVariant(expr);
       int exprPrecedence = GetPrecedence(exprVariant);
       if (exprPrecedence > parentPrecedence) {
-	return false;
+        return false;
       } 
       else if (exprPrecedence == parentPrecedence) {
-	if (first == 0) {
-	  return true; 
-	}
-	int assoc = GetAssociativity(parentVariant);
-	if (assoc > 0 && first != expr) {
-	  return false;
-	}
-	if (assoc < 0 && first == expr) {
-	  return false;
-	}
+        if (first == 0) {
+          return true; 
+        }
+        int assoc = GetAssociativity(parentVariant);
+        if (assoc > 0 && first != expr) {
+          return false;
+        }
+        if (assoc < 0 && first == expr) {
+          return false;
+        }
       }
     }
   }
@@ -1978,13 +1978,13 @@ FortranCodeGeneration_locatedNode::isUnaryOperatorPlus(SgExpression* expr)
     if (mfunc_sym) {
       SgMemberFunctionDeclaration* mfunc_decl = mfunc_sym->get_declaration();
       if (mfunc_decl) {
-	SgName func_name = mfunc_decl->get_name();
-	if (strcmp(func_name.str(), "operator+") == 0) {
-	  SgInitializedNamePtrList argList = mfunc_decl->get_args();
-	  if (argList.size() == 0) {
-	    return true;
-	  }
-	}
+        SgName func_name = mfunc_decl->get_name();
+        if (strcmp(func_name.str(), "operator+") == 0) {
+          SgInitializedNamePtrList argList = mfunc_decl->get_args();
+          if (argList.size() == 0) {
+            return true;
+          }
+        }
       }
     }
   }
@@ -2010,13 +2010,13 @@ FortranCodeGeneration_locatedNode::isUnaryOperatorMinus(SgExpression* expr)
     if (mfunc_sym) {
       SgMemberFunctionDeclaration* mfunc_decl = mfunc_sym->get_declaration();
       if (mfunc_decl) {
-	SgName func_name = mfunc_decl->get_name();
-	if (strcmp(func_name.str(), "operator-") == 0) {
-	  SgInitializedNamePtrList argList = mfunc_decl->get_args();
-	  if (argList.size() == 0) {
-	    return true;
-	  }
-	}
+        SgName func_name = mfunc_decl->get_name();
+        if (strcmp(func_name.str(), "operator-") == 0) {
+          SgInitializedNamePtrList argList = mfunc_decl->get_args();
+          if (argList.size() == 0) {
+            return true;
+          }
+        }
       }
     }
   }
@@ -2100,7 +2100,7 @@ GetFirstOperand(SgExpression* expr)
     else {
       SgBinaryOp *op2 = isSgBinaryOp(expr);
       if (op2) {
-	return op2->get_lhs_operand();
+        return op2->get_lhs_operand();
       }
     }
   }

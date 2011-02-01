@@ -55,8 +55,8 @@ public:
   // The DOT-specific separator tells if the variable is the last variable in for instance a class. If it is separator = false, if not
   // separator=true. You may specify a comment to print with the variable if it is to be graphed.
   string addVariable (string variableType, string variableName,
-		      void *variablePointer, string variableComment =
-		      "", bool separator = false);
+                      void *variablePointer, string variableComment =
+                      "", bool separator = false);
 
 //  string addVariable(string variableType, string variableName, ostringstream* variableValue, string variableReferenceName = "", bool separator = false);
 
@@ -65,56 +65,56 @@ public:
 // These functions is meant to be used to add a variable of a generic type which is not a pointer. In the future this may be
 // replaces by a template. Reason why this has not been done is because of limitations in ROSE.
   string addVariable (string variableType, string variableName,
-		      string variable, string variableReferenceName =
-		      "", bool separator = false);
+                      string variable, string variableReferenceName =
+                      "", bool separator = false);
   string addVariable (string variableType, string variableName,
-		      double variableValue, string variableReferenceName =
-		      "", bool separator = false);
+                      double variableValue, string variableReferenceName =
+                      "", bool separator = false);
   string addVariable (string variableType, string variableName,
-		      int variableValue, string variableReferenceName =
-		      "", bool separator = false);
+                      int variableValue, string variableReferenceName =
+                      "", bool separator = false);
   string addVariable (string variableType, string variableName,
-		      long variableValue, string variableReferenceName =
-		      "", bool separator = false);
+                      long variableValue, string variableReferenceName =
+                      "", bool separator = false);
   string addVariable (string variableType, string variableName,
-		      float variableValue, string variableReferenceName =
-		      "", bool separator = false);
+                      float variableValue, string variableReferenceName =
+                      "", bool separator = false);
   string addVariable (string variableType, string variableName, char variable,
-		      string variableReferenceName = "", bool separator =
-		      false);
+                      string variableReferenceName = "", bool separator =
+                      false);
   string addVariable (string variableType, string variableName, bool variable,
-		      string variableReferenceName = "", bool separator =
-		      false);
+                      string variableReferenceName = "", bool separator =
+                      false);
   string addVariable (string variableType, string variableName,
-		      unsigned char variable, string variableReferenceName =
-		      "", bool separator = false);
+                      unsigned char variable, string variableReferenceName =
+                      "", bool separator = false);
   string addVariable (string variableType, string variableName,
-		      long long variable, string variableReferenceName =
-		      "", bool separator = false);
+                      long long variable, string variableReferenceName =
+                      "", bool separator = false);
   string addVariable (string variableType, string variableName,
-		      long double variable, string variableReferenceName =
-		      "", bool separator = false);
+                      long double variable, string variableReferenceName =
+                      "", bool separator = false);
   string addVariable (string variableType, string variableName,
-		      short variable, string variableReferenceName =
-		      "", bool separator = false);
+                      short variable, string variableReferenceName =
+                      "", bool separator = false);
   string addVariable (string variableType, string variableName,
-		      unsigned int variable, string variableReferenceName =
-		      "", bool separator = false);
+                      unsigned int variable, string variableReferenceName =
+                      "", bool separator = false);
   string addVariable (string variableType, string variableName,
-		      unsigned long variable, string variableReferenceName =
-		      "", bool separator = false);
+                      unsigned long variable, string variableReferenceName =
+                      "", bool separator = false);
   string addVariable (string variableType, string variableName,
-		      unsigned long long variable,
-		      string variableReferenceName = "", bool separator =
-		      false);
+                      unsigned long long variable,
+                      string variableReferenceName = "", bool separator =
+                      false);
   string addVariable (string variableType, string variableName,
-		      unsigned short variable, string variableReferenceName =
-		      "", bool separator = false);
+                      unsigned short variable, string variableReferenceName =
+                      "", bool separator = false);
 
   //Adds an edge between
   //        node1:node1variable -> node2
   void addEdge (void *node2, void *node1variable, void *node1,
-		string edgeLabel = "", string option = "");
+                string edgeLabel = "", string option = "");
 
   //Checks to see if the pointer key has been referenced before 
   bool checkIfMapKeyExist (void *key);

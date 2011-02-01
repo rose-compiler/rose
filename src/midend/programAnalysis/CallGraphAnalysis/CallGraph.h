@@ -79,7 +79,7 @@ namespace CallTargetSet
 
   // returns the list of declarations of all functions that may get called via a
   // member function (non/polymorphic) call
-  std::vector<Properties*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,		SgMemberFunctionDeclaration *, bool );
+  std::vector<Properties*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,            SgMemberFunctionDeclaration *, bool );
 
   // returns the list of Properties of all constructors that may get called via 
   // an initialization.
@@ -294,9 +294,9 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
     if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
     {
       std::cout << "Function: "
-	<< (*j)->properties->functionDeclaration->get_scope()->get_qualified_name().getString() +
-	(*j)->properties->functionDeclaration->get_mangled_name().getString()
-	<< " has declaration " << (*j)->isDefined() << "\n";
+        << (*j)->properties->functionDeclaration->get_scope()->get_qualified_name().getString() +
+        (*j)->properties->functionDeclaration->get_mangled_name().getString()
+        << " has declaration " << (*j)->isDefined() << "\n";
     }
     nodeList.push_back( node );
     /*
@@ -384,11 +384,11 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
         {
           ROSE_ASSERT(startingNode != NULL && endNode != NULL);
           returnGraph->addDirectedEdge( startingNode, endNode, " " );
-	}else if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL ){
-	  std::cout << "Did not add edge since it already exist" << std::endl;
-	  std::cout << "\tEndNode " << (*k)->functionDeclaration->get_name().str() 
-	    << "\t" << (*k)->hasDef << "\n";
-	}
+        }else if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL ){
+          std::cout << "Did not add edge since it already exist" << std::endl;
+          std::cout << "\tEndNode " << (*k)->functionDeclaration->get_name().str() 
+            << "\t" << (*k)->hasDef << "\n";
+        }
       }
       totEdges++;
       k++;
