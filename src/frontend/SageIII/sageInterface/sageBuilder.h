@@ -125,6 +125,9 @@ SgReferenceType* buildReferenceType(SgType *base_type = NULL);
 //SgModifierType* buildModifierType(SgType *base_type = NULL);
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType for a number of the functions below.
+//! Build a modifier type.
+SgModifierType* buildModifierType(SgType* base_type = NULL);
+
 //! Build a const type.
 SgModifierType* buildConstType(SgType* base_type = NULL);
 
@@ -545,9 +548,12 @@ buildFunctionParameterTypeList(SgFunctionParameterList * paralist);
 SgFunctionParameterTypeList *
 buildFunctionParameterTypeList(SgExprListExp * expList);
 
-//! Build an empty SgFunctionParameterTypeList 
+//! Build an SgFunctionParameterTypeList from SgTypes. To build an
 SgFunctionParameterTypeList *
-buildFunctionParameterTypeList();
+buildFunctionParameterTypeList(SgType* type0 = NULL, SgType* type1 = NULL,
+                               SgType* type2 = NULL, SgType* type3 = NULL,
+                               SgType* type4 = NULL, SgType* type5 = NULL,
+                               SgType* type6 = NULL, SgType* type7 = NULL);
 
 
 //--------------------------------------------------------------
@@ -613,6 +619,10 @@ buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_t
 //! Build a defining ( non-prototype) member function declaration
 SgMemberFunctionDeclaration *
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
+
+//! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
+SgMemberFunctionDeclaration *
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope);
 
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
 SgMemberFunctionDeclaration *
