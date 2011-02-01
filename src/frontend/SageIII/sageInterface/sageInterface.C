@@ -6867,6 +6867,31 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   //ROSE_ASSERT(isStrictIntegerType(ivarname->get_type()));
   return ivarname;
 }
+
+//!Check if a SgInitializedName is used as a loop index within a AST subtree
+//! This function will use a bottom-up traverse starting from the subtree to find all enclosing loops and check if ivar is used as an index for either of them.
+bool SageInterface::isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree_root)
+{
+  ROSE_ASSERT (ivar != NULL);
+  ROSE_ASSERT (subtree_root != NULL);
+  bool result = false;
+  SgScopeStatement * cur_loop = findEnclosingLoop (getEnclosingStatement(subtree_root));
+  while (cur_loop)
+  {
+    SgInitializedName * i_index = getLoopIndexVariable (cur_loop);
+    if (i_index == ivar)
+    {
+      result = true;
+      break;
+    }
+    else
+    { // findEnclosingLoop() is inclusive. 
+      cur_loop = findEnclosingLoop (getEnclosingStatement(cur_loop->get_parent()));
+    }
+  }
+  return result; 
+}
+
 //! Get Fortran Do loop's key features
 bool SageInterface::isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/, bool *hasIncrementalIterationSpace/*= NULL*/, bool* isInclusiveUpperBound/*=NULL*/)
 {

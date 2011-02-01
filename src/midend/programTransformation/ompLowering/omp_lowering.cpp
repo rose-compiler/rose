@@ -1574,16 +1574,20 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
       {
         const SgVariableSymbol * sb = *iter;
         bool b_pass_value = true;
-        // TODO more accurate way to decide on pass-by-value or pass-by-reference
-        // We temporarily use pass-by-value for scalar type, and pass-by-reference for array type
-        SgType * s_type = sb->get_type();
-        if (isScalarType(s_type))
+        // Assumption: 
+        //   transOmpVariables() should already handled most private, reduction variables
+        //    Anything left should be passed by reference by default , except for loop index variables. 
+        // We check if a variable is a loop index, and pass it by value. 
+        //   
+        // TODO more accurate way to decide on pass-by-value or pass-by-reference in patchUpPrivateVariables()
+        //    and patchUpFirstprivateVariables()
+        if (isLoopIndexVariable (sb->get_declaration(), target))
         {
           b_pass_value = true;
           appendExpression (parameters,buildIntVal(1));
         }
         else
-        {
+        { // all other should be treated as shared variables ( pass-by-reference )
           b_pass_value = false;
           appendExpression (parameters,buildIntVal(0));
         }
@@ -1593,7 +1597,16 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
         // if pass-by-reference, the pointer size
         if (b_pass_value)
         { //TODO accurate calculation of type size for Fortran, assume integer for now
-          appendExpression (parameters,buildIntVal(4));
+           // Provide an interface function for this.
+          // Is it feasible to calculate all sizes during compilation time ??
+          SgType * s_type = sb->get_type();
+          if (isSgTypeInt(s_type))
+            appendExpression (parameters,buildIntVal(sizeof(int)));
+          else
+          {
+            printf("Error. transOmpTask(): unhandled Fortran type  (%s) for pass-by-value.\n",s_type->class_name().c_str());
+            ROSE_ASSERT (false);
+          }
         }
         else  
         { // get target platform's pointer size 
@@ -3025,7 +3038,7 @@ void lower_omp(SgSourceFile* file)
 {
   ROSE_ASSERT(file != NULL);
 
-  patchUpPrivateVariables(file);
+  patchUpPrivateVariables(file); // the order of these two functions matter! We want to patch up private variable first!
   patchUpFirstprivateVariables(file);
   // Liao 12/2/2010, Fortran does not require function prototypes
   if (!SageInterface::is_Fortran_language() )
