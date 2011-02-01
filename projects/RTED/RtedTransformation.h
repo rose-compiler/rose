@@ -90,6 +90,25 @@ bool isStructMember(const SgInitializedName& n);
 /// \brief tests whether n is a function parameter
 bool isFunctionParameter(const SgInitializedName& n);
 
+/// \brief true, iff n is a basic block, if statement, [do]while, or for statement
+bool isNormalScope( SgScopeStatement* n );
+
+/// \brief tests whether the statement defines a global external variable
+///        OR a function parameter of a function declared extern (\pp ???)
+bool isGlobalExternVariable(SgStatement* stmt);
+
+/// \brief Follow the base type of @c type until we reach a non-typedef, non-reference.
+SgType* skip_ReferencesAndTypedefs( SgType* type );
+
+/// \brief checks if varRef is part of stmt
+/// \todo replace with isAncestorOf
+bool traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt);
+
+/// \brief checks if initName is part of stmt
+/// \todo replace with isAncestorOf
+bool traverseAllChildrenAndFind(SgInitializedName* initName, SgStatement* stmt);
+
+
 //
 // helper functions to insert rted checks
 
@@ -254,7 +273,6 @@ public:
     * @return @c SgPointerType if @c type is a pointer type, reference to pointer
     * type or typedef whose base type is a pointer type, and @c null otherwise.
     */
-   SgPointerType* isUsableAsSgPointerType( SgType* type );
    SgArrayType* isUsableAsSgArrayType( SgType* type );
    SgReferenceType* isUsableAsSgReferenceType( SgType* type );
    bool isInInstrumentedFile( SgNode* n );
@@ -269,8 +287,6 @@ public:
 private:
 
    bool isUsedAsLvalue( SgExpression* exp );
-   /// is n a basic block, if statement, [do]while, or for statement
-   bool isNormalScope( SgNode* n );
    SgExpression* getExprBelowAssignment(SgExpression* exp);
 
    // ********************* Deep copy classes in headers into source **********
@@ -312,6 +328,8 @@ public:
     /// \endcode
     SgCastExp* ctorTypeDescList(SgAggregateInitializer* exp) const;
 
+    SgCastExp* ctorDimensionList(SgAggregateInitializer* exp) const;
+
     /// \brief   creates an address descriptor
     SgAggregateInitializer* mkAddressDesc(AddressDesc desc) const;
 
@@ -335,15 +353,16 @@ public:
     /// \brief returns the canonical pointer to the rted_FileInfo type
     SgType* roseFileInfo() const    { return symbols.roseSourceInfo; }
 
+    /// \brief returns the RTED representation type for array dimensions
+    SgType* roseDimensionType() const { return SageBuilder::buildUnsignedLongType(); }
+
 public:
    /// \brief rewrites the last statement in main (see member variable mainLast)
    void insertMainCloseCall();
 
-   void visit_isArraySgInitializedName(SgNode* n);
    void visit_isAssignInitializer(SgAssignInitializer* const n);
 
    void visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const n);
-   void visit_isArrayExprListExp(SgNode* n);
    void visit_isSgScopeStatement(SgScopeStatement* const n);
 
    void addPaddingToAllocatedMemory(SgStatement* stmt,  RtedArray* array);
@@ -376,24 +395,17 @@ public:
    void visit_isFunctionCall(SgFunctionCallExp* const fcexp);
 
 public:
-   /// Visit pointer assignments whose lhs is computed from the original value of
-   /// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
-   /// we say that such operations should not change the @e "Memory Chunk", i.e.
-   /// the array the pointer refers to.
-   void visit_pointer_movement( SgNode* node );
    /// Insert calls to registerPointerChange.  Don't worry about checkMemReads,
    /// those should be handled elsewhere (i.e. varref), but after the assignment,
    /// even if the memory was readable, ensure we stayed within array bounds.
    void insert_pointer_change( SgExpression* op );
 private:
    // simple scope handling
-   std::string scope_name( SgNode* n);
    void bracketWithScopeEnterExit( SgFunctionDefinition* fndef );
    void bracketWithScopeEnterExit( SgStatement* stmt_or_block, Sg_File_Info* exit_file_info );
 
 
    // is it a variable?
-   void visit_isSgVariableDeclaration(SgNode* n);
    void insertCreateObjectCall( RtedClassDefinition* cdef );
    void insertVariableCreateCall(SgInitializedName* initName);
    void insertVariableCreateCall(SgInitializedName* initName,SgExpression* expr);
@@ -426,12 +438,6 @@ public:
    void visit_isSgArrowExp(SgArrowExp* const n);
    void visit_isSgPointerDerefExp(SgPointerDerefExp* const);
 private:
-
-
-   bool traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt);
-   bool traverseAllChildrenAndFind(SgInitializedName* varRef, SgStatement* stmt);
-
-
    /// Renames the original main function
    /// copied from projects/UpcTranslation/upc_translation.C
    void renameMain(SgFunctionDeclaration * sg_func);
@@ -525,8 +531,6 @@ public:
     * 	@param	for_stmt	The for statement to add @c exp to.
     */
    void prependPseudoForInitializerExpression( SgExpression* exp, SgStatement* for_stmt );
-
-   bool isGlobalExternVariable(SgStatement* stmt);
 
    void insertRegisterTypeCall(RtedClassDefinition* const rtedClass);
    void visit_isClassDefinition(SgClassDefinition* const cdef);

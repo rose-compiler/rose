@@ -68,6 +68,7 @@ void initialize(SgScopeStatement& n, RtedSymbols& rtedsym)
   lookup(n, "AddrSh",                   rtedsym.roseAddrSh);
   lookup(n, "Close",                    rtedsym.roseClose);
   lookup(n, "ProcessMsg",               rtedsym.roseProcessMsg);
+  lookup(n, "UpcInitialize",            rtedsym.roseUpcInitialize);
 }
 
 struct RtedSymbolWrapper

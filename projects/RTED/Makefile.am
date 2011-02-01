@@ -133,7 +133,8 @@ RTED_UPC_TEST_DIRS = $(RTED_UPC_LOCAL_TEST_DIRS) \
 		$(rted_path)/UPC/H_Memoryerr \
 		$(rted_path)/UPC/I_Wronorder \
 		$(rted_path)/UPC/J_Nonportbl \
-		$(rted_path)/UPC/K_Warnings
+		$(rted_path)/UPC/K_Warnings \
+		$(rted_path)/UPC/xtra
 else
 RTED_C_TEST_DIRS = 		 $(RTED_C_LOCAL_TEST_DIRS)
 RTED_CPP_TEST_DIRS =		 $(RTED_CPP_LOCAL_TEST_DIRS)

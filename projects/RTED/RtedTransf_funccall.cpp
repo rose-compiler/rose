@@ -87,6 +87,7 @@ bool isFunctionCallOnIgnoreList(const std::string& name) {
           || name == "printf"
           || name == "realloc"
           || name == "upc_all_alloc"
+          || name == "upc_local_alloc"
           || name == "upc_alloc"
           || name == "upc_free"
           || name == "upc_global_alloc"
@@ -553,12 +554,12 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
      mdecl = isSgMemberFunctionDeclaration(mrefExp->getAssociatedMemberFunctionDeclaration());
      name = mdecl->get_name();
      mangled_name = mdecl->get_mangled_name().str();
-  #if 0
+#if 0
      cerr << "### DotExp :   left : " <<binop->get_lhs_operand()->class_name() <<
      ":   right : " <<binop->get_rhs_operand()->class_name() << endl;
      cerr << "### DotExp :   left : " <<binop->get_lhs_operand()->unparseToString() <<
      ":   right : " <<binop->get_rhs_operand()->unparseToString() << endl;
-  #endif
+#endif
   } else if (mrefExp) {
      SgMemberFunctionDeclaration* mdecl = NULL;
      ROSE_ASSERT(mrefExp);
@@ -566,6 +567,7 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
      name = mdecl->get_name();
      mangled_name = mdecl->get_mangled_name().str();
   } else if (dotStar) {
+     // \pp \todo what about dot arrow expressions?
      // e.g. : (testclassA.*testclassAPtr)()
      SgExpression* right = dotStar->get_rhs_operand();
      // we want to make sure that the right hand side is not NULL

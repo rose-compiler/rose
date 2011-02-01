@@ -45,35 +45,6 @@ bool isFileIOVariable(SgType* type)
         return name == "std::fstream";
 }
 
-void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
-        SgVariableDeclaration* varDecl = isSgVariableDeclaration(n);
-
-        // FIXME 2 djh: perhaps n->get_parent should be n->get_scope ?
-        // don't track members of user types (structs, classes)
-        if (isSgClassDefinition(varDecl -> get_parent()))
-                return;
-        SgInitializedNamePtrList vars = varDecl->get_variables();
-        SgInitializedNamePtrList::const_iterator it = vars.begin();
-        cerr << " ...... CHECKING Variable Declaration " << endl;
-        for (;it!=vars.end();++it) {
-                SgInitializedName* initName = *it;
-                ROSE_ASSERT(initName);
-
-                SgType* var_type = initName -> get_type();
-                // FIXME 2: probably need to handle typedef to reference, recursive
-                // typedef/reference, &c.
-                // reference types don't create more memory as far as the RTS is
-                // concerned (in that &foo == &bar for bar a ref. of foo)
-                if( isSgReferenceType( var_type ))
-                continue;
-
-                // need to get the type and the possible value that it is initialized with
-                cerr << "      Detected initName : " << initName->unparseToString();
-                cerr <<"  type : " << initName->get_type()->unparseToString() << endl;
-                variable_declarations.push_back(initName);
-
-        }
-}
 
 void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef) {
         SgClassDefinition*            cdef = rcdef -> classDef;
@@ -155,7 +126,7 @@ void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef) {
 ///        Possibly, the difference behavior might just reflect clones
 ///        that have run apart...
 static
-void adjustStmtAndScopeIfNeeded(SgStatement*& stmt, SgScopeStatement* scope, bool& was_compgen, SgStatement* mainfirst)
+void adjustStmtAndScopeIfNeeded(SgStatement*& stmt, SgScopeStatement*& scope, bool& was_compgen, SgStatement* mainfirst)
 {
     // what if there is an array creation within a ClassDefinition
     if (isSgClassDefinition(scope)) {
@@ -181,7 +152,7 @@ void adjustStmtAndScopeIfNeeded(SgStatement*& stmt, SgScopeStatement* scope, boo
               ROSE_ASSERT( decl->get_file_info()->isCompilerGenerated() );
             }
     }
-    // what is there is an array creation in a global scope
+    // what if there is an array creation in a global scope
     else if (isSgGlobal(scope))
     {
             cerr << "RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
@@ -196,7 +167,7 @@ void adjustStmtAndScopeIfNeeded(SgStatement*& stmt, SgScopeStatement* scope, boo
 }
 
 static
-void adjustStmtAndScopeIfNeeded_NoCompilerGen(SgStatement*& stmt, SgScopeStatement* scope, SgStatement* mainfirst)
+void adjustStmtAndScopeIfNeeded_NoCompilerGen(SgStatement*& stmt, SgScopeStatement*& scope, SgStatement* mainfirst)
 {
   bool compgen = false;
 
@@ -208,16 +179,14 @@ void adjustStmtAndScopeIfNeeded_NoCompilerGen(SgStatement*& stmt, SgScopeStateme
 
 void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
 {
-        SgStatement* stmt = getSurroundingStatement(initName);
-        ROSE_ASSERT(stmt);
+        ROSE_ASSERT(initName);
 
-        // make sure there is no extern in front of stmt
-        if (isGlobalExternVariable(stmt)) {
-                cerr
-                                << "Skipping this insertVariableCreateCall because it probably occurs multiple times (with and without extern)."
-                                << endl;
-                return;
-        }
+        SgStatement*      stmt = getSurroundingStatement(initName);
+
+        // extern variables are not handled; they will be handled in the
+        // defining translation unit.
+        // \pp \todo shall control for having the defining translation unit?
+        if (isGlobalExternVariable(stmt)) return;
 
         SgScopeStatement* scope = stmt->get_scope();
         ROSE_ASSERT(scope);
@@ -238,18 +207,17 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
                 SgStatement* const for_loop = GeneralizdFor::is( stmt -> get_parent() -> get_parent() );
                 ROSE_ASSERT(for_loop != NULL);
 
-                prependPseudoForInitializerExpression(buildVar, isSgStatement(for_loop));
+                prependPseudoForInitializerExpression(buildVar, for_loop);
         } else if (isSgIfStmt(scope)) {
-                SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName,
-                                stmt);
+                SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName, stmt);
+
                 if (exprStmt) {
                         SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
                         SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
                         bool partOfTrue = traverseAllChildrenAndFind(initName, trueb);
                         bool partOfFalse = traverseAllChildrenAndFind(initName, falseb);
-                        bool partOfCondition = false;
-                        if (partOfTrue == false && partOfFalse == false)
-                                partOfCondition = true;
+                        bool partOfCondition = (!partOfTrue && !partOfFalse);
+
                         if (trueb && (partOfTrue || partOfCondition)) {
                                 if (!isSgBasicBlock(trueb)) {
                                         removeStatement(trueb);
@@ -456,7 +424,7 @@ RtedTransformation::buildVariableCreateCallStmt(SgFunctionCallExp* funcCallExp)
   return exprStmt;
 }
 
-//std::vector<SgExpression*>
+
 SgExpression*
 RtedTransformation::buildVariableInitCallExpr( SgInitializedName* initName,
                                                SgExpression* varRefE,
@@ -464,39 +432,21 @@ RtedTransformation::buildVariableInitCallExpr( SgInitializedName* initName,
                                                AllocKind allockind
                                              )
 {
+        ROSE_ASSERT(initName && varRefE && stmt);
+
         // with
         //    arr[ ix ] = value;
         // we want the type of (arr[ ix ]), not arr, as that is the type being
         // written
         // tps (09/14/2009): We need to get all dereferences on the way up
-        SgExpression*       exp = getExprBelowAssignment(varRefE);
+        SgExpression* const     exp = getExprBelowAssignment(varRefE);
+        ROSE_ASSERT(exp);
         cerr << " getExprBelowAssignment : " << exp->class_name() << "   "
-                        << stmt->unparseToString() << endl;
-
-        if (isSgVarRefExp(exp) && (allockind == akCHeap)) {
-                SgType* thetype = initName->get_type();
-                cerr << "$$$$$ Found the AssignInitializer : "
-                                << isSgVarRefExp(exp)->get_parent() << endl;
-                cerr << "$$$$$ Found the InitName : " << initName->unparseToString()
-                                << endl;
-                cerr << "$$$$$ Found the InitName Type: " << thetype->class_name()
-                                << endl;
-                //if (isSgPointerType(thetype))
-                //      exp_list.push_back(buildPointerDerefExp(exp));
-        }
+             << stmt->unparseToString() << endl;
 
         // build the function call : runtimeSystem-->createArray(params); ---------------------------
-        SgExprListExp*    arg_list = buildExprListExp();
-        SgScopeStatement* scope = get_scope(initName);
-
-        appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(NULL, exp -> get_type())) );
-        appendAddressAndSize(arg_list, Whole, scope, exp, NULL);
-        appendClassName(arg_list, exp -> get_type());
-
-        // \pp \todo use allockind in the signature directly
-        SgIntVal*         ismallocV = buildIntVal(allockind == akCHeap);
-
-        appendExpression(arg_list, ismallocV);
+        SgExprListExp* const    arg_list = buildExprListExp();
+        SgScopeStatement* const scope = get_scope(initName);
 
         // with
         //    int* p;
@@ -504,33 +454,22 @@ RtedTransformation::buildVariableInitCallExpr( SgInitializedName* initName,
         //    p = (int*) malloc(sizeof(int));
         // but this is not
         //    *p = 10;
-        int is_pointer_change =0;
-#if 1
-        SgExpression* lval = getExprBelowAssignment(varRefE);
-        if (lval)
-          is_pointer_change = isSgExprStatement(stmt) && isSgPointerType(
-                                                                         lval-> get_type());
-#else
-          is_pointer_change = isSgExprStatement(stmt) && isSgPointerType(
-                        isSgExprStatement(stmt) -> get_expression() -> get_type());
-#endif
+        const int               is_pointer_change = (  isSgExprStatement(stmt)
+                                                    && isSgPointerType(exp->get_type())
+                                                    );
 
-        cerr << "@@@@ varrefe = " << initName->get_scope()->class_name() << endl;
+        appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(NULL, exp -> get_type())) );
+        appendAddressAndSize(arg_list, Whole, scope, exp, NULL);
         appendExpression(arg_list, buildIntVal(is_pointer_change));
-
+        appendExpression(arg_list, mkAllocKind(allockind));
+        appendClassName(arg_list, exp -> get_type());
         appendFileInfo(arg_list, stmt);
 
-        //appendExpression(arg_list, buildStringVal(removeSpecialChar(stmt->unparseToString())));
-
         ROSE_ASSERT(symbols.roseInitVariable);
-        string symbolName2 = symbols.roseInitVariable->get_name().str();
-        SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols.roseInitVariable);
-        SgExpression* result = buildFunctionCallExp(memRef_r, arg_list);
-#if 0
-        resultSet.push_back(result);
-}
-return resultSet;
-#endif
+        std::string             symbolName2 = symbols.roseInitVariable->get_name().str();
+        SgFunctionRefExp*       memRef_r = buildFunctionRefExp(symbols.roseInitVariable);
+        SgExpression*           result = buildFunctionCallExp(memRef_r, arg_list);
+
         return result;
 }
 

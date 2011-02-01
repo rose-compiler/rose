@@ -527,10 +527,8 @@ void RuntimeSystem::checkFileAccess(std::fstream& file, bool read)
 
 // --------------------- Function Signature Verification -----------------
 
-void RuntimeSystem::expectFunctionSignature(
-            const std::string & name,
-            const std::vector< RsType* > types ) {
-
+void RuntimeSystem::expectFunctionSignature(const std::string & name, const std::vector< RsType* >& types)
+{
     nextCallFunctionName = name;
     nextCallFunctionTypes = types;
 }

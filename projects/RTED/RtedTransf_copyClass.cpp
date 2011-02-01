@@ -73,7 +73,7 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
           if (idx != std::string::npos)
              extension = filename.substr(idx+1);
 
-          if ((extension!="C" && extension!="cpp" && extension!="cxx") &&
+          if ((extension!="C" && extension!="cpp" && extension!="cxx" && extension!="upc" && extension!="cc") &&
                 filename.find("include-staging")==string::npos &&
                 filename.find("/usr/include")==string::npos
              )

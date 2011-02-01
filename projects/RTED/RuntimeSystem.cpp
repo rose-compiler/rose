@@ -16,6 +16,7 @@
 #include <numeric>
 
 #include "RuntimeSystem.h"
+#include "ParallelRTS.h"
 
 #include "CppRuntimeSystem/CppRuntimeSystem.h"
 
@@ -51,8 +52,8 @@ enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
 /*********************************************************
  * This function is closed when RTED finishes (Destructor)
  ********************************************************/
-void rted_Close(char* from) {
-
+void rted_Close(char* from)
+{
   RuntimeSystem * rs = RuntimeSystem::instance();
 
   rs->doProgramExitChecks();
@@ -60,7 +61,7 @@ void rted_Close(char* from) {
   std::string stdfrom(from);
   // The runtime system would have exited if it had found an error
   rs->log( "Failed to discover error in RTED test. Origin : "+stdfrom+"\n" );
-  exit( 1 );
+  // exit( 1 );
 }
 
 
@@ -187,16 +188,16 @@ static bool initialize_next_array = false;
  * line      : linenumber
  ********************************************************/
 
-void rted_CreateHeapArr( TypeDesc      td,
-												 Address       address,
-												 size_t        elemsize,
-												 size_t        totalsize,
-												 const size_t* dimDescr,
-												 const char*   name,
-												 const char*   mangl_name,
-												 const char*   class_name,
-												 SourceInfo    si
-											 )
+void  rted_CreateHeapArr( rted_TypeDesc      td,
+												  rted_Address       address,
+												  size_t             elemsize,    /* \pp always 0 ? */
+												  size_t             totalsize,
+												  const size_t*      dimDescr,
+												  const char*        name,
+												  const char*        mangl_name,
+												  const char*        class_name,
+												  rted_SourceInfo    si
+											  )
 {
 	assert(std::string("SgArrayType") == td.name);
 
@@ -218,16 +219,18 @@ void rted_CreateHeapArr( TypeDesc      td,
 	}
 }
 
-void rted_CreateHeapPtr( TypeDesc       td,
-												 Address        address,
-												 size_t         /*size*/,
-												 size_t         mallocSize,
-												 rted_AllocKind allocKind,
-												 const char*    class_name,
-												 SourceInfo     si
-											 )
+
+
+void _rted_CreateHeapPtr( rted_TypeDesc    td,
+											    rted_Address     address,
+											    size_t           size,
+											    size_t           mallocSize,
+											    rted_AllocKind   allocKind,
+											    const char*      class_name,
+											    rted_SourceInfo  si
+											  )
 {
-	assert(std::string("SgPointerType") == td.name);
+  assert(std::string("SgPointerType") == td.name);
 
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs->checkpoint(SourcePosition(si) );
@@ -262,12 +265,9 @@ void rted_CreateHeapPtr( TypeDesc       td,
 		// FIXME 2: This won't handle the unlikely case of a C++ object being
 		// allocated via malloc and then freed with delete.
 
-    printf("X9\n");
 		rs -> createMemory( heap_address, mallocSize, allocKind );
-		printf("XA\n");
 	}
 
-  printf("X*\n");
 	rs -> registerPointerChange(
 			address,
 			td.desc,
@@ -277,8 +277,20 @@ void rted_CreateHeapPtr( TypeDesc       td,
 			false,  // checkPtrMove? no, pointer may change regions
 			true    // checkMemLeak? yes
 			);
+}
 
-  printf("X#\n");
+void rted_CreateHeapPtr( rted_TypeDesc    td,
+												 rted_Address     address,
+												 size_t           size,
+												 size_t           mallocSize,
+												 rted_AllocKind   allocKind,
+												 const char*      class_name,
+												 rted_SourceInfo  si
+											 )
+{
+	rted_ProcessMsg();
+	snd_CreateHeapPtr(td, address, size, mallocSize, allocKind, class_name, si);
+	_rted_CreateHeapPtr(td, address, size, mallocSize, allocKind, class_name, si);
 }
 
 
@@ -310,6 +322,8 @@ void rted_AccessHeap( rted_Address     base_address, // &( array[ 0 ])
 											rted_SourceInfo  si
 										)
 {
+	rted_ProcessMsg();
+
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs->checkpoint(SourcePosition(si) );
 
@@ -349,7 +363,7 @@ void rted_AssertFunctionSignature( const char* name,
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
-  rs -> checkpoint(SourcePosition(si) );
+  rs -> checkpoint( SourcePosition(si) );
 
   std::vector< RsType* > types;
 
@@ -594,13 +608,11 @@ void rted_IOFunctionCall( const char* fname,
       rs -> checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("putc", fname)) {
       rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
-    }
-     else if ( 0 == strcmp("std::fstream", fname)) {
-       if (0 == strcmp(arg1,"r"))
-				 rs -> checkFileAccess((std::fstream&) file,true /* is_read? */);
-       else
-				 rs -> checkFileAccess((std::fstream&) file,false /* is_read? */);
-    }
+    } else if ( 0 == strcmp("std::fstream", fname)) {
+			 rs -> checkFileAccess((std::fstream&) file, strcmp(arg1,"r") == 0 /* is_read? */);
+    } else {
+			// \pp does a fall through indicate an error?
+		}
 }
 
 
@@ -610,13 +622,18 @@ void rted_IOFunctionCall( const char* fname,
 
 // ***************************************** SCOPE HANDLING *************************************
 
-void rted_EnterScope(const char* name) {
+void rted_EnterScope(const char* name)
+{
+	rted_ProcessMsg();
+
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs -> beginScope( name );
 }
 
 void rted_ExitScope(const char*, SourceInfo si)
 {
+	rted_ProcessMsg();
+
   RuntimeSystem * rs = RuntimeSystem::instance();
 
 	rs -> checkpoint( SourcePosition( si ));
@@ -644,6 +661,8 @@ int rted_CreateVariable( TypeDesc td,
 												 SourceInfo si
 						           )
 {
+	rted_ProcessMsg();
+
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs -> checkpoint( SourcePosition( si ));
 
@@ -681,6 +700,8 @@ int rted_CreateVariable( TypeDesc td,
 
 int rted_CreateObject( TypeDesc td, Address address, SourceInfo si )
 {
+	rted_ProcessMsg();
+
 	assert(td.desc.shared_mask == 0); // no objects in UPC
 
   RuntimeSystem * rs = RuntimeSystem::instance();
@@ -701,14 +722,31 @@ int rted_CreateObject( TypeDesc td, Address address, SourceInfo si )
  * For a given variable name, check if it is present
  * in the pool of variables created and return mangled_name
  ********************************************************/
-int rted_InitVariable( TypeDesc       td,
-			                 Address        address,
-			                 size_t         size,
-											 const char*    class_name,
-			                 rted_AllocKind allocKind,
-			                 int            pointer_changed,
-			                 SourceInfo     si
+
+int rted_InitVariable( rted_TypeDesc   td,
+		                   rted_Address    address,
+											 size_t          size,
+											 int             pointer_changed,
+											 rted_AllocKind  allocKind,
+											 const char*     class_name,
+											 rted_SourceInfo si
 										 )
+{
+  rted_ProcessMsg();
+	snd_InitVariable         ( td, address, size, pointer_changed, allocKind, class_name, si );
+
+	return _rted_InitVariable( td, address, size, pointer_changed, allocKind, class_name, si );
+}
+
+
+int _rted_InitVariable( rted_TypeDesc   td,
+		                    rted_Address    address,
+											  size_t          size,
+											  int             pointer_changed,
+											  rted_AllocKind  allocKind,
+											  const char*     class_name,
+											  rted_SourceInfo si
+										  )
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
@@ -760,6 +798,8 @@ void rted_MovePointer( TypeDesc    td,
 										   SourceInfo  si
 										 )
 {
+	rted_ProcessMsg();
+
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs -> checkpoint( SourcePosition( si ));
 
@@ -783,6 +823,8 @@ void rted_AccessVariable( Address address,
 													SourceInfo si
 				                )
 {
+	rted_ProcessMsg();
+
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs->checkpoint( SourcePosition( si ));
 
@@ -794,7 +836,10 @@ void rted_AccessVariable( Address address,
 
 
 // A simple way for users to manually set checkpoints
-void rted_Checkpoint(SourceInfo si) {
+void rted_Checkpoint(SourceInfo si)
+{
+	rted_ProcessMsg();
+
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs -> checkpoint( SourcePosition( si ));
 }
@@ -891,13 +936,7 @@ void rted_RegisterTypeCall( const char* nameC,
 	va_end(vl);
 }
 
-void rted_FreeMemory( rted_Address     addr,      ///< the address that is about to be freed
-                      rted_AllocKind   freeKind,  ///< describes the kind of allocation
-											                            ///  that this free performs.
-																									///  Also indicates when ptr
-																									///  needs to be interpreted as shared ptr
-                      rted_SourceInfo  si
-							      )
+void _rted_FreeMemory(rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo si)
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
@@ -905,9 +944,18 @@ void rted_FreeMemory( rted_Address     addr,      ///< the address that is about
 	rs->freeMemory( addr, freeKind );
 }
 
+void rted_FreeMemory(rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo si)
+{
+	rted_ProcessMsg();
+	snd_FreeMemory( addr, freeKind, si );
+
+	_rted_FreeMemory( addr, freeKind, si );
+}
 
 void rted_ReallocateMemory( void* ptr, size_t size, SourceInfo si )
 {
+	rted_ProcessMsg();
+
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs->checkpoint( SourcePosition(si) );
 
@@ -918,172 +966,10 @@ void rted_ReallocateMemory( void* ptr, size_t size, SourceInfo si )
 
 void rted_CheckIfThisNULL( void* thisExp, SourceInfo si)
 {
+	rted_ProcessMsg();
+
 	RuntimeSystem * rs = RuntimeSystem::instance();
 
 	rs->checkpoint( SourcePosition( si ));
 	rs->checkIfThisisNULL(thisExp);
 }
-
-
-#if OBSOLETE_CODE
-
-extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
-
-
-int main(int argc, char **argv, char ** envp) {
-
-  int exit_code = RuntimeSystem_original_main(argc, argv, envp);
-  rted_RtedClose((char*)"RuntimeSystem.cpp:main");
-
-  return exit_code;
-}
-
-
-void rted_CreateHeapArr( TypeDesc      td,
-												 Address       address,
-												 size_t        elemsize,
-												 size_t        totalsize,
-												 const size_t* dimDescr,
-												 const char*   name,
-												 const char*   mangl_name,
-												 const char*   class_name,
-												 SourceInfo    si
-											 );
-
-
-/*********************************************************
- * This function is called when an array is created
- * name      : variable name
- * manglname : variable mangl_name
- * type      : Sage Type
- * dimension : 1 or 2
- * sizeA     : size of dimension 1
- * sizeB     : size of dimension 2
- * ismalloc  : Allocated through malloc?
- * filename  : file location
- * line      : linenumber
- ********************************************************/
-void
-rted_CreateHeap( const char* name,
-                 const char* mangl_name,
-								 const char* type,
-								 const char* basetype,
-								 size_t indirection_level,
-								 addr_type address,
-								 long int size,
-								 long int mallocSize,
-								 int fromMalloc,
-								 const char* class_name,
-								 const char* filename,
-								 size_t line,
-								 size_t lineTransformed,
-								 const size_t* dimDesc
-							 )
-						{
-
-
-  RuntimeSystem * rs = RuntimeSystem::instance();
-  rs -> checkpoint( SourcePosition( filename, line, lineTransformed));
-
-    string type_name = type;
-  string base_type = basetype;
-  if( base_type == "SgClassType" )
-    base_type = class_name;
-
-
-  if( type_name == "SgArrayType" ) {
-    // Aug 6 : TODO : move this to createVariable
-    RsArrayType* type = RuntimeSystem_getRsArrayType( dimDesc, size, base_type );
-
-    rs -> createArray( address, name, mangl_name, type );
-
-    if( initialize_next_array ) {
-      rs -> checkMemWrite( address, size );
-      initialize_next_array = false;
-    }
-  } else if( type_name == "SgPointerType") {
-    addr_type heap_address = *((addr_type*) address);
-    cerr << " registering heap   type: " << type
-		     << "  basetype: " << basetype
-				 << "  class_name: " << class_name
-				 << "  indirection_level: " << ToString(indirection_level)
-				 << "  address: " << HexToString(heap_address)
-				 << "  malloc size: " << ToString(mallocSize)
-				 << std::endl;
-
-    RsPointerType* rs_type
-      = static_cast< RsPointerType* >(
-          RuntimeSystem_getRsType(
-							type,
-							basetype,
-							class_name,
-							indirection_level ));
-    RsClassType* class_type
-      = dynamic_cast< RsClassType* >( rs_type -> getBaseType() );
-    // A class might have had its memory allocation registered in the
-    // constructor.  If there was no explicit constructor, however, we still
-    // have to allocate the memory here.
-    if(   !class_type
-          || rs -> getMemManager() -> findContainingMem( heap_address) == NULL ) {
-      // FIXME 2: This won't handle the unlikely case of a C++ object being
-      // allocated via malloc and then freed with delete.
-      //
-      // object memory allocation is handled in the constructor
-      bool was_from_malloc = ( fromMalloc == 1 );
-      rs -> createMemory( heap_address, mallocSize, false, was_from_malloc );
-    }
-    rs -> registerPointerChange(
-				address,
-				heap_address,
-        rs_type,
-				false,  // checkPtrMove? no, pointer may change regions
-				true    // checkMemLeak? yes
-				);
-  } else {
-    cerr << "Unexpected Array Type: " << type << endl;
-    exit( 1 );
-  }
-}
-
-#endif /* OBSOLETE_CODE */
-
-#if UNUSED_CODE
-
-/*********************************************************
- * Check if a function call is interesting, i.e. contains a
- * call to a function that we need to check the parameters of
- ********************************************************/
-static
-int RuntimeSystem_isInterestingFunctionCall(const char* name) {
-  int interesting=0;//false;
-  if ( ( strcmp(name,"memcpy")==0 ||
-         strcmp(name ,"memmove")==0 ||
-	 strcmp(name ,"strcpy")==0 ||
-	 strcmp(name ,"strncpy")==0 ||
-	 strcmp(name ,"strcat")==0 ||
-	 strcmp(name ,"strncat")==0 ||
-	 strcmp(name ,"strlen")==0 ||
-	 strcmp(name ,"strchr")==0 ||
-	 strcmp(name ,"strpbrk")==0 ||
-	 strcmp(name ,"strspn")==0  ||
-	 strcmp(name ,"strstr")==0
-	 )) {
-    interesting=1;
-  }
-  return interesting;
-}
-
-/*********************************************************
- * Convert an integer to const char*
- ********************************************************/
-const char*
-rted_ConvertIntToString(int t) {
-  int size = sizeof(int);
-  char* text = (char*)malloc(size+1);
-  if (text)
-    sprintf(text,"%d",t);
-  //printMessage("String converted from int : %s ",text);
-  return text;
-}
-
-#endif /* UNUSED_CODE */

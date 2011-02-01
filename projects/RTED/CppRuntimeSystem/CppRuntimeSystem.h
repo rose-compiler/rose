@@ -328,6 +328,7 @@ class RuntimeSystem
          *                 of the parameters.
          */
         void expectFunctionSignature( const std::string & name, const std::vector< RsType* > types );
+
         /** This function should be called at all function definitions, to
          * verify the signature of separately compiled callsites, if necessary.
          * Only applicable to C programs.

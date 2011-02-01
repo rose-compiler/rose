@@ -48,12 +48,14 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
 	//
 	// Since we're not intstrumenting these classes, we shouldn't register their
 	// types.
-	if (cdef -> get_file_info() -> isCompilerGenerated()
-			&& cdef -> get_declaration() -> get_file_info() -> isCompilerGenerated()) {
-
+	if (  cdef -> get_file_info() -> isCompilerGenerated()
+		 && cdef -> get_declaration() -> get_file_info() -> isCompilerGenerated()
+		 )
+	{
 		//cerr << "Skipping compiler generated class" << cdef->unparseToString() <<endl;
 		return;
 	}
+
 	SgDeclarationStatementPtrList members = cdef->get_members();
 	SgDeclarationStatementPtrList::const_iterator itMem = members.begin();
 	for (;itMem!=members.end();++itMem) {
@@ -81,7 +83,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
 
 					RtedClassElement* el;
 					if( isSgArrayType( initName -> get_type() )) {
-						RtedArray* arrayRted = new RtedArray( initName, NULL, akStack );
+						RtedArray* arrayRted = new RtedArray( initName, getSurroundingStatement(initName), akStack );
 						populateDimensions( arrayRted, initName, isSgArrayType( initName -> get_type() ));
 						el = new RtedClassArrayElement( name, type, sgElement, arrayRted );
 					} else {
@@ -96,18 +98,19 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
 		}
 	}
 
-	RtedClassDefinition* cd = new RtedClassDefinition(cdef,
-  			cdef->get_mangled_name().str(),
-  //			cdef->get_qualified_name().str(),
-			cdef->get_declaration()->get_type()->class_name(),
-			elements.size(),
-			buildSizeOfOp( cdef->get_declaration()->get_type() ),
-			elements);
-	std::map<SgClassDefinition*,RtedClassDefinition*>::const_iterator it =
-	class_definitions.find(cdef);
-	if (it==class_definitions.end()) {
-		cerr << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Found ClassDefinition " << cdef->get_qualified_name().str() << endl;
-		cerr << ">>>>>>>>>>>>>>> cdef = " << cdef << endl;
+	RtedClassDefinition* cd = new RtedClassDefinition( cdef,
+  			                                             cdef->get_mangled_name().str(),
+			                                               cdef->get_declaration()->get_type()->class_name(),
+			                                               buildSizeOfOp( cdef->get_declaration()->get_type() ),
+			                                               elements
+			                                             );
+
+	std::map<SgClassDefinition*,RtedClassDefinition*>::const_iterator it = class_definitions.find(cdef);
+
+	if (it==class_definitions.end())
+	{
+		cerr << ">>>> Found ClassDefinition " << cdef->get_qualified_name().str() << endl;
+		cerr << ">> cdef = " << cdef << endl;
 		class_definitions[cdef]=cd;
 	}
 }
@@ -217,12 +220,12 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
 		 "d", "SgDouble", offsetof(B,d) );
 		 */
 
-		size_t argcount = rtedClass->nrOfElements; // elements passed to function
+		size_t argcount = rtedClass->nrOfElems(); // elements passed to function
 
 		// for each element pass name, { type, basetype, indirection_level } and offset, and size
 		argcount *= 4;
 
-		BOOST_FOREACH( RtedClassElement* element, rtedClass -> elements )
+		BOOST_FOREACH( RtedClassElement* element, rtedClass -> elems )
 		{			argcount += element -> extraArgSize();
 		}
 
@@ -248,7 +251,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
 			cerr << "Address of defining rtedModifiedClass : " << rtedModifiedClass->get_declaration()->get_definingDeclaration() << endl;
 			cerr << "Address of nondefining rtedModifiedClass : " << rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() << endl;
 			cerr << "Address of rtedModifiedClass->get_declaration()->get_type()->get_declaration() : " << rtedModifiedClass->get_declaration()->get_type()->get_declaration()
-			<< "    Addr of rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() : " << rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() << endl;
+			     << "    Addr of rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() : " << rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() << endl;
 			ROSE_ASSERT(rtedModifiedClass->get_declaration()->get_type()->get_declaration() == rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration());
 		}
 		else
@@ -257,15 +260,14 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
 		}
 
 		// go through each element and add name, type, basetype, offset and size
-		std::vector<RtedClassElement*> elementsC = rtedClass->elements;
-		//if (rtedModifiedClass) elementsC = rtedModifiedClass->elements;
+		const std::vector<RtedClassElement*>&          elementsC = rtedClass->elems;
 		std::vector<RtedClassElement*>::const_iterator itClass = elementsC.begin();
+
 		for (;itClass!=elementsC.end();++itClass) {
-			RtedClassElement* element = *itClass;
-			string manglElementName = element->manglElementName;
+			RtedClassElement*       element = *itClass;
+			string                  manglElementName = element->manglElementName;
 			SgDeclarationStatement* sgElement = element->sgElement;
-			//SgExpression* sgElements = deepCopy(sgElement);
-			SgExpression* elemName = buildStringVal(manglElementName);
+			SgExpression*           elemName = buildStringVal(manglElementName);
 
 			// FIXME 1: This will not work for references.  Consider:
 			//
@@ -290,18 +292,12 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
 
 			// build  (size_t )(&( *((struct A *)0)).x);
 			ROSE_ASSERT(rtedClass->classDef && rtedClass->classDef->get_declaration());
-			// cerr << " Type: " <<  rtedClass->classDef->get_declaration()->get_type()->class_name() << endl;
-
-
-			//		 cerr << " +++++++++++++ Looking for class : " << rtedClass->classDef->get_declaration()->get_qualified_name().str()
-			//	 << "    found : " << rtedModifiedClass << "   " << rtedModifiedClass->get_declaration()->get_qualified_name().str() << endl;
 
 			// tps (09/04/2009) : Added support to call offset of on C++ classes
 			SgExpression* nullPointer = NULL;
+			bool          classHasConstructor=hasClassConstructor(rtedClass->classDef->get_declaration());
 
-			bool classHasConstructor=hasClassConstructor(rtedClass->classDef->get_declaration());
-
-			// \pp I am not sure why this is set to false here???
+			// \pp \todo I am not sure why this is set to false here???
 			classHasConstructor=false;
 
 			if (rtedModifiedClass==NULL) {
@@ -384,9 +380,9 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
 		//abort();
 
 		// \pp why is the following line here?
-		//     we should bail out earlier if we are not interesed ...
+		//     we should bail out earlier if we are not interested ...
 		if (origStmt->get_file_info()->isCompilerGenerated())
-		return;
+		  return;
 
 		if( global_stmt ) {
 			globalFunction->prepend_statement(exprStmt);
@@ -395,8 +391,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
 			//mainBody -> prepend_statement( exprStmt );
 			//next we need to find the variableDeclaration
 			// for that class and call:
-			SgVariableDeclaration* stmtVar =
-			getGlobalVariableForClass(isSgGlobal(globalScope),isSgClassDeclaration(origStmt));
+			SgVariableDeclaration* stmtVar = getGlobalVariableForClass(isSgGlobal(globalScope),isSgClassDeclaration(origStmt));
 			ROSE_ASSERT(stmtVar);
 			//appendGlobalConstructor(globalScope,origStmt);
 			appendGlobalConstructor(globalScope,stmtVar);
@@ -426,11 +421,10 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
 			  insertStatementAfter( stmt, exprStmt );
 		}
 	}
-	else
+	else // isNormalScope
 	{
-		cerr
-		<< "RuntimeInstrumentation :: Surrounding Block is not Block! : "
-		<< name << " : " << scope->class_name() << "    stmt:" << stmt->unparseToString() << endl;
+		cerr << "RuntimeInstrumentation :: Surrounding Block is not Block! : "
+		     << name << " : " << scope->class_name() << "    stmt:" << stmt->unparseToString() << endl;
 		ROSE_ASSERT(false);
 	}
 }

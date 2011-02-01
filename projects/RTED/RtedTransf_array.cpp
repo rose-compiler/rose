@@ -65,25 +65,27 @@ bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search)
 /* -----------------------------------------------------------
  * Perform Transformation: insertArrayCreateCall
  * -----------------------------------------------------------*/
-void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RtedArray* value) {
-   ROSE_ASSERT(value);
+void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RtedArray* value)
+{
+   ROSE_ASSERT(n && value);
+
    SgInitializedName* initName = n->get_symbol()->get_declaration();
    ROSE_ASSERT(initName);
+
    SgStatement* stmt = value->surroundingStatement;
-   if (!stmt)
-      stmt = getSurroundingStatement(n);
+   ROSE_ASSERT(stmt);
+
    insertArrayCreateCall(stmt, initName, n, value);
 }
 
 
 void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName, RtedArray* value) {
-   ROSE_ASSERT(value);
-   ROSE_ASSERT(initName);
-   SgStatement* stmt = value->surroundingStatement;
-   if (!stmt)
-      stmt = getSurroundingStatement(initName);
+   ROSE_ASSERT(initName && value);
 
    SgVarRefExp* var_ref = genVarRef(initName);
+   SgStatement* stmt = value->surroundingStatement;
+   ROSE_ASSERT(stmt);
+
    insertArrayCreateCall(stmt, initName, var_ref, value);
 }
 
@@ -150,6 +152,10 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    // what kind of types do we get?
    ROSE_ASSERT(isCreateHeapArr || src_type->class_name() == "SgPointerType");
 
+   // if we have an array, then it has to be on the stack
+   // \pp \todo handle C++ new[]
+   ROSE_ASSERT(!isCreateHeapArr || array->allocKind == akStack);
+
    appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(NULL, src_type)));
 
    SgScopeStatement*  scope = get_scope(initName);
@@ -162,13 +168,16 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    appendAddressAndSize(arg_list, Whole, scope, src_exp, NULL /* unionclass */);
 
    //SgIntVal* ismalloc = buildIntVal( 0 );
-   SgExpression*      size = buildIntVal(0);
+   SgExpression*      size = array -> size;
 
-   // \pp \note what about assert(array -> onHeap)? after all we call createHeap ...
-   if (array -> allocKind != akStack) {
-      ROSE_ASSERT( array -> size );
-      // \pp do we need to free size?
-      size = buildCastExp(array -> size, buildUnsignedLongType());
+   if (size)
+   {
+     size = buildCastExp(size, buildUnsignedLongType());
+   }
+   else
+   {
+     ROSE_ASSERT( array -> allocKind == akStack );
+     size = buildIntVal(0);  // \pp this seems always to give 0 when allocKind == akStack ...
    }
 
    appendExpression(arg_list, size);
@@ -206,119 +215,111 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    return exprStmt;
 }
 
-void RtedTransformation::insertArrayCreateCall(SgStatement* stmt, SgInitializedName* initName, SgVarRefExp* varRef,
-      RtedArray* array) {
-   // make sure there is no extern in front of stmt
-   bool externQual = isGlobalExternVariable(stmt);
-   if (externQual) {
-      cerr << "Skipping this insertArrayCreate because it probably occurs multiple times (with and without extern)." << endl;
-      return;
+void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
+                                                SgInitializedName* initName,
+                                                SgVarRefExp* varRef,
+                                                RtedArray* array
+                                              )
+{
+   ROSE_ASSERT(stmt && varRef && initName && array);
+
+   // Skipping extern arrays because they will be handled in the defining
+   //   translation unit.
+   // \pp \todo Maybe we should check that there really is one...
+   if (isGlobalExternVariable(stmt)) return;
+
+   bool                 global_stmt = false;
+   SgScopeStatement*    scope = stmt->get_scope();
+   ROSE_ASSERT(scope);
+
+   // what if there is an array creation within a ClassDefinition
+   if (isSgClassDefinition(scope)) {
+       // new stmt = the classdef scope
+       SgClassDeclaration* decl = isSgClassDeclaration(scope->get_parent());
+       ROSE_ASSERT(decl);
+       stmt = isSgVariableDeclaration(decl->get_parent());
+       if (!stmt) {
+         cerr << " Error . stmt is unknown : " << decl->get_parent()->class_name() << endl;
+         ROSE_ASSERT( false );
+       }
+       scope = scope->get_scope();
+       // We want to insert the stmt before this classdefinition, if its still in a valid block
+       cerr << " ....... Found ClassDefinition Scope. New Scope is : " << scope->class_name() << "  stmt:"
+             << stmt->class_name() << endl;
+   }
+   // what is there is an array creation in a global scope
+   else if (isSgGlobal(scope)) {
+       scope = mainBody;
+       global_stmt = true;
    }
 
-   ROSE_ASSERT(initName && initName->get_parent());
-   ROSE_ASSERT(varRef);
-   //cerr <<" varref is unparsed? : " << varRef->get_file_info()->isOutputInCodeGeneration() << endl;
-   //ROSE_ASSERT(varRef->get_parent() || varRef->get_file_info()->isOutputInCodeGeneration()==false);
+   if (isSgIfStmt(scope)) {
+       SgStatement* exprStmt = buildArrayCreateCall(initName, varRef, array, stmt);
+       ROSE_ASSERT(exprStmt);
+       // get the two bodies of the ifstmt and prepend to them
+       cerr << "If Statment : inserting createHeap" << endl;
+       SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
+       SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
+       bool partOfTrue = traverseAllChildrenAndFind(varRef, trueb);
+       bool partOfFalse = traverseAllChildrenAndFind(varRef, falseb);
+       bool partOfCondition = (!partOfTrue && !partOfFalse);
 
-   bool global_stmt = false;
-   std::vector<SgExpression*> value = array -> getIndices();
-   //bool stack = array->stack;
-   if (stmt) {
-      SgScopeStatement* scope = stmt->get_scope();
-      string name = initName->get_mangled_name().str();
-
-      ROSE_ASSERT(scope);
-      // what if there is an array creation within a ClassDefinition
-      if (isSgClassDefinition(scope)) {
-         // new stmt = the classdef scope
-         SgClassDeclaration* decl = isSgClassDeclaration(scope->get_parent());
-         ROSE_ASSERT(decl);
-         stmt = isSgVariableDeclaration(decl->get_parent());
-         if (!stmt) {
-            cerr << " Error . stmt is unknown : " << decl->get_parent()->class_name() << endl;
-            ROSE_ASSERT( false );
+       if (trueb && (partOfTrue || partOfCondition)) {
+         if (!isSgBasicBlock(trueb)) {
+             removeStatement(trueb);
+             SgBasicBlock* bb = buildBasicBlock();
+             bb->set_parent(isSgIfStmt(scope));
+             isSgIfStmt(scope)->set_true_body(bb);
+             bb->prepend_statement(trueb);
+             trueb = bb;
          }
-         scope = scope->get_scope();
-         // We want to insert the stmt before this classdefinition, if its still in a valid block
-         cerr << " ....... Found ClassDefinition Scope. New Scope is : " << scope->class_name() << "  stmt:"
-               << stmt->class_name() << endl;
-      }
-      // what is there is an array creation in a global scope
-      else if (isSgGlobal(scope)) {
-         scope = mainBody;
-         global_stmt = true;
-      }
-      if (isSgIfStmt(scope)) {
-         SgStatement* exprStmt = buildArrayCreateCall(initName, varRef, array, stmt);
-         ROSE_ASSERT(exprStmt);
-         // get the two bodies of the ifstmt and prepend to them
-         cerr << "If Statment : inserting createHeap" << endl;
-         SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
-         SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
-         bool partOfTrue = traverseAllChildrenAndFind(varRef, trueb);
-         bool partOfFalse = traverseAllChildrenAndFind(varRef, falseb);
-         bool partOfCondition = false;
-         if (partOfTrue == false && partOfFalse == false)
-            partOfCondition = true;
-         if (trueb && (partOfTrue || partOfCondition)) {
-            if (!isSgBasicBlock(trueb)) {
-               removeStatement(trueb);
-               SgBasicBlock* bb = buildBasicBlock();
-               bb->set_parent(isSgIfStmt(scope));
-               isSgIfStmt(scope)->set_true_body(bb);
-               bb->prepend_statement(trueb);
-               trueb = bb;
-            }
-            prependStatement(exprStmt, isSgScopeStatement(trueb));
+         prependStatement(exprStmt, isSgScopeStatement(trueb));
+       }
+       if (falseb && (partOfFalse || partOfCondition)) {
+         if (!isSgBasicBlock(falseb)) {
+             removeStatement(falseb);
+             SgBasicBlock* bb = buildBasicBlock();
+             bb->set_parent(isSgIfStmt(scope));
+             isSgIfStmt(scope)->set_false_body(bb);
+             bb->prepend_statement(falseb);
+             falseb = bb;
          }
-         if (falseb && (partOfFalse || partOfCondition)) {
-            if (!isSgBasicBlock(falseb)) {
-               removeStatement(falseb);
-               SgBasicBlock* bb = buildBasicBlock();
-               bb->set_parent(isSgIfStmt(scope));
-               isSgIfStmt(scope)->set_false_body(bb);
-               bb->prepend_statement(falseb);
-               falseb = bb;
-            }
-            prependStatement(exprStmt, isSgScopeStatement(falseb));
-         } else if (partOfCondition) {
-            // create false statement, this is sometimes needed
-            SgBasicBlock* bb = buildBasicBlock();
-            bb->set_parent(isSgIfStmt(scope));
-            isSgIfStmt(scope)->set_false_body(bb);
-            falseb = bb;
-            prependStatement(exprStmt, isSgScopeStatement(falseb));
-         }
-      } else if (isSgBasicBlock(scope)) {
-         SgStatement* exprStmt = buildArrayCreateCall(initName, varRef, array, stmt);
-#if 1
-         cerr << "++++++++++++ stmt :" << stmt << " mainFirst:" << mainFirst << "   initName->get_scope():"
-               << initName->get_scope() << "   mainFirst->get_scope():" << mainFirst->get_scope() << endl;
-         if (global_stmt && initName->get_scope() != mainFirst->get_scope()) {
-            mainBody -> prepend_statement(exprStmt);
-            cerr << "+++++++ insert Before... " << endl;
-         } else {
-            // insert new stmt (exprStmt) after (old) stmt
-            insertStatementAfter(stmt, exprStmt);
-            cerr << "+++++++ insert After... " << endl;
-         }
-#endif
-         string empty_comment = "";
-         attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
-         string
-               comment =
-                     "RS : Create Array Variable, paramaters : (name, manglname, typr, basetype, address, sizeof(type), array size, fromMalloc, filename, linenr, linenrTransformed, dimension info ...)";
-         attachComment(exprStmt, comment, PreprocessingInfo::before);
-      } else if (isSgNamespaceDefinitionStatement(scope)) {
-         cerr << "RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
-      } else {
-         cerr << "RuntimeInstrumentation :: Surrounding Block is not Block! : " << name << " : " << scope->class_name() << endl;
+         prependStatement(exprStmt, isSgScopeStatement(falseb));
+       } else if (partOfCondition) {
+         // \pp \todo why do we modify the false branch, if it was a condition?
+         // \pp \note this branch looks dead b/c partOfCondition is tested before
          ROSE_ASSERT(false);
+
+         // create false statement, this is sometimes needed
+         SgBasicBlock* bb = buildBasicBlock();
+         bb->set_parent(isSgIfStmt(scope));
+         isSgIfStmt(scope)->set_false_body(bb);
+         prependStatement(exprStmt, isSgScopeStatement(bb));
+       }
+   } else if (isSgBasicBlock(scope)) {
+       SgStatement* exprStmt = buildArrayCreateCall(initName, varRef, array, stmt);
+
+      if (global_stmt && initName->get_scope() != mainFirst->get_scope()) {
+         mainBody -> prepend_statement(exprStmt);
+         cerr << "+++++++ insert Before... " << endl;
+      } else {
+         // insert new stmt (exprStmt) after (old) stmt
+         insertStatementAfter(stmt, exprStmt);
+         cerr << "+++++++ insert After... " << endl;
       }
-   } else {
-      cerr << "RuntimeInstrumentation :: Surrounding Statement could not be found! " << stmt->class_name() << endl;
-      ROSE_ASSERT(false);
-   }
+
+      string empty_comment = "";
+      attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
+      string
+            comment =
+                  "RS : Create Array Variable, paramaters : (name, manglname, typr, basetype, address, sizeof(type), array size, fromMalloc, filename, linenr, linenrTransformed, dimension info ...)";
+      attachComment(exprStmt, comment, PreprocessingInfo::before);
+  } else {
+      const std::string    name = initName->get_mangled_name().str();
+
+      cerr << "RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
+      ROSE_ASSERT(isSgNamespaceDefinitionStatement(scope));
+  }
 
    // unfortunately the arrays are filled with '\0' which is a problem
    // for detecting other bugs such as not null terminated strings
@@ -331,12 +332,13 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt, SgInitializedN
 /* -----------------------------------------------------------
  * Perform Transformation: insertArrayCreateAccessCall
  * -----------------------------------------------------------*/
-void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp, RtedArray* value) {
+void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp, RtedArray* value)
+{
+   ROSE_ASSERT( arrayExp && value );
+
    SgStatement* stmt = value->surroundingStatement;
-   if (!stmt)
-      stmt = getSurroundingStatement(arrayExp);
-   ROSE_ASSERT( arrayExp );
    ROSE_ASSERT( stmt );
+
    insertArrayAccessCall(stmt, arrayExp, value);
 }
 
@@ -460,30 +462,6 @@ void RtedTransformation::populateDimensions(RtedArray* array, SgInitializedName*
 
       indices.insert(indices.begin(), new SgDivideOp(file_info, buildSizeOfOp(buildVarRefExp(init,
             getSurroundingStatement(init) -> get_scope())), denominator, uint));
-   }
-}
-
-void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
-   SgInitializedName* initName = isSgInitializedName(n);
-   ROSE_ASSERT(initName);
-   // STACK ARRAY : lets see if we assign an array here
-   SgType* type = initName->get_typeptr();
-   ROSE_ASSERT(type);
-   SgArrayType* array = isSgArrayType(type);
-
-   // something like:
-   // 	struct type { int before; char c[ 10 ]; int after; }
-   // does not need a createarray call, as the type is registered and any array
-   // information will be tracked when variables of that type are created
-   //
-   // ignore arrays in parameter lists as they're actually pointers, not stack
-   // arrays
-   if (array && !(isStructMember(*initName)) && !isFunctionParameter(*initName))
-   {
-      RtedArray* arrayRted = new RtedArray(initName, NULL, akStack);
-
-      populateDimensions(arrayRted, initName, array);
-      create_array_define_varRef_multiArray_stack[initName] = arrayRted;
    }
 }
 
@@ -970,14 +948,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
       const bool      arraynew = isSgArrayType( skip_ModifierType(new_op->get_type()) );
       const AllocKind allocKind = (arraynew ? akCxxArrayNew : akCxxNew);
 
-      RtedArray *array = new RtedArray( initName,
-                                        getSurroundingStatement(varRef),
-                                        allocKind,
-                                        buildSizeOfOp(new_op -> get_specified_type())
-                                      );
-
-      variablesUsedForArray.push_back(varRef);
-      create_array_define_varRef_multiArray[varRef] = array;
+      arrayHeapAlloc(initName, varRef, buildSizeOfOp(new_op -> get_specified_type()), allocKind);
    }
 
    // ---------------------------------------------
@@ -1122,85 +1093,5 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const arrRe
 
 }
 
-// deprecated - will be removed
-void RtedTransformation::visit_isArrayExprListExp(SgNode* n)
-{
-   // there could be a cast between SgExprListExp and SgVarRefExp
-#if 1
-   cerr << " >> checking node : " << n->class_name() << endl;
-   if (isSgVarRefExp(n)) {
-      cerr << ">>>>>>>>>>> checkign func : " << isSgVarRefExp(n)->unparseToString() << "    parent : "
-            << isSgVarRefExp(n)->get_parent()->class_name() << "    parent : "
-            << isSgVarRefExp(n)->get_parent()->get_parent()->class_name() << endl;
-   }
-#endif
-
-   SgVarRefExp* const    n_varref = isSgVarRefExp(n);
-   SgExprListExp*        exprlist = ez::ancestor<SgExprListExp>(n_varref);
-
-   // if (isSgCastExp(isSgVarRefExp(n)->get_parent()))
-   // exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent());
-   // check if this is a function call with array as parameter
-
-   // \pp \todo should this not be ROSE_ASSERT(exprlist) ??
-   if (exprlist)
-   {
-      SgFunctionCallExp* fcexp = isSgFunctionCallExp(exprlist->get_parent());
-
-      if (fcexp)
-      {
-         cerr << "      ... Found a function call with varRef as parameter: " << fcexp->unparseToString() << endl;
-         // check if parameter is array - then check function name
-         // call func(array_name) to runtime system for runtime inspection
-         SgInitializedName* initName = n_varref->get_symbol()->get_declaration();
-
-         if (isVarRefInCreateArray(initName) || isVarInCreatedVariables(initName))
-         {
-            // create this function call only, if it is not one of the
-            // interesting function calls, such as strcpy, strcmp ...
-            // because for those we do not need the parameters and do not
-            // need to put them on the stack
-
-            SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
-            ROSE_ASSERT(refExp);
-
-            SgFunctionDeclaration* decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration());
-            ROSE_ASSERT(decl);
-
-            string name = decl->get_name();
-            string mangled_name = decl->get_mangled_name().str();
-
-            cerr << ">>Found a function call " << name << endl;
-
-            if (!isStringModifyingFunctionCall(name) && !isFileIOFunctionCall(name))
-            {
-               SgExpression*  varOnLeft = buildStringVal("NoAssignmentVar2");
-               SgStatement*   stmt = getSurroundingStatement(n_varref);
-               ROSE_ASSERT(stmt);
-
-               RtedArguments* funcCall = new RtedArguments( stmt,
-                                                            name, // function name
-                                                            mangled_name, // we need this for the function as well
-                                                            initName->get_name(), // variable
-                                                            initName->get_mangled_name().str(),
-                                                            n_varref,
-                                                            varOnLeft,
-                                                            varOnLeft,
-                                                            NULL,
-                                                            SgExpressionPtrList()
-                                                          );
-               ROSE_ASSERT(funcCall);
-
-               cerr << " !!!!!!!!!! Adding function call." << name << endl;
-               function_call.push_back(funcCall);
-            }
-         }
-         else
-         {
-            cerr << " This is a function call but its not passing an array element " << endl;
-         }
-      }
-   }
-}
 
 #endif

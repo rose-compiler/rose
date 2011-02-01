@@ -3,6 +3,7 @@
  runtimesystem=""
  stdlib=""
  rtedlib=""
+ upcflags="-O0 -g -dwarf-2-upc"
 
  for var in "$@"
  do
@@ -40,22 +41,21 @@
 
 # compiling with C++ and RTED runtime?
 if [ "$runtimesystem" != "" ]; then
-  echo "g++ -c $runtimesystem"
-  g++ -c $runtimesystem
+  echo "g++ -g -DWITH_UPC=1 -c $runtimesystem"
+  g++ -g -DWITH_UPC=1 -c $runtimesystem
+
+  echo "upc $upcflags -DWITH_UPC=1 -c ParallelRTS.upc"
+  upc $upcflags -DWITH_UPC=1 -c ParallelRTS.upc
 
   # find the libstdc++ that the C++ compiler would use
-  stdlibfile=`g++ --print-file-name=libstdc++.so`
-  stdlibdir=`dirname $stdlibfile`
-
-  stdlib="-L$stdlibdir -lstdc++"
-  rtedlib="RuntimeSystem.o -L./CppRuntimeSystem/.libs/ -lCppRuntimeSystem"
+  rtedlib="ParallelRTS.o RuntimeSystem.o -L./CppRuntimeSystem/.libs/ -lCppRuntimeSystem"
 fi
 
-echo "upc $newOption -c $inpfiles"
-upc $newOption -c $inpfiles
+echo "upc -O0 -dwarf-2-upc $newOption -c $inpfiles"
+upc $upcflags $newOption -c $inpfiles
 
-echo "upc -o $executable $objfiles $rtedlib $stdlib"
-exec upc -o $executable $objfiles $rtedlib $stdlib
+echo "upc++link -o $executable $objfiles $rtedlib $stdlib"
+upc++link -dwarf-2-upc -o $executable $objfiles $rtedlib
 
 echo "$objfiles"
 rm $objfiles

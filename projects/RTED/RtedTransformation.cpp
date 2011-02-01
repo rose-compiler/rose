@@ -57,6 +57,7 @@ void RtedTransformation::loadFunctionSymbols(SgProject* project) {
    ROSE_ASSERT(symbols.roseClose);
 
    ROSE_ASSERT(symbols.roseProcessMsg);
+   ROSE_ASSERT(symbols.roseUpcInitialize);
 
    ROSE_ASSERT(symbols.roseAllocKind);
 

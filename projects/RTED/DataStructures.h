@@ -16,8 +16,8 @@
  * and the size for both dimensions
  * Finally, there is a boolean to indicate if this array is created with malloc
  * -----------------------------------------------------------*/
-class RtedArray {
-  public:
+struct RtedArray
+{
 		SgInitializedName*         initName;
 		SgStatement*               surroundingStatement;
 		AllocKind                  allocKind;
@@ -29,9 +29,11 @@ class RtedArray {
 								AllocKind _allocKind,
 								SgExpression* _size = NULL
 							)
-		: initName(init), surroundingStatement(stmt),
-			allocKind(_allocKind), size(_size), indices()
-		{}
+		: initName(init), surroundingStatement(stmt), allocKind(_allocKind), size(_size), indices()
+		{
+			ROSE_ASSERT(initName && surroundingStatement && (allocKind != akUndefined));
+			ROSE_ASSERT((allocKind == akStack) || size);
+		}
 
 		virtual ~RtedArray() {}
 
@@ -54,6 +56,9 @@ class RtedArray {
 
 			return res;
 		}
+
+	private:
+	  RtedArray();
 };
 
 
@@ -117,22 +122,25 @@ struct RtedClassDefinition
   SgClassDefinition*             classDef;
   std::string                    manglClassName;
   std::string                    classType;
-  unsigned int                   nrOfElements;
   SgExpression*                  sizeClass;
-  std::vector<RtedClassElement*> elements;
+  std::vector<RtedClassElement*> elems;
 
   RtedClassDefinition( SgClassDefinition* _classDef,
 		                   std::string _className,
 		                   std::string _classType,
-		                   unsigned int _elementsSize,
                        SgExpression* _sizeClass,
 		                   const std::vector<RtedClassElement*>& _elements
 										 )
   : classDef(_classDef), manglClassName(_className), classType(_classType),
-		nrOfElements(_elementsSize), sizeClass(_sizeClass), elements(_elements)
+		sizeClass(_sizeClass), elems(_elements)
 	{
     ROSE_ASSERT(classDef);
   }
+
+	size_t nrOfElems() const
+	{
+		return elems.size();
+	}
 
   virtual ~RtedClassDefinition(){}
 };

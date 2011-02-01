@@ -36,6 +36,7 @@ struct RtedSymbols : AstSimpleProcessing {
 
 	// symbols for UPC
 	SgFunctionSymbol*   roseProcessMsg;
+	SgFunctionSymbol*   roseUpcInitialize;
 
 	SgEnumDeclaration*  roseAllocKind;
 
@@ -70,6 +71,7 @@ struct RtedSymbols : AstSimpleProcessing {
 		roseClose(NULL),
 
 		roseProcessMsg(NULL),
+		roseUpcInitialize(NULL),
 
 		roseAllocKind(NULL),
 

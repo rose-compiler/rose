@@ -6,6 +6,8 @@
 #include "CppRuntimeSystem/rted_iface_structs.h"
 #include "CppRuntimeSystem/ptrops.h"
 
+#include "ParallelRTS.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,25 +31,45 @@ void rted_Checkpoint(rted_SourceInfo si);
 
 /***************************** ARRAY FUNCTIONS *************************************/
 
-void rted_CreateHeapArr( rted_TypeDesc      td,
-												 rted_Address       address,
-												 size_t             elemsize,
-												 size_t             totalsize,
-												 const size_t*      dimDescr,
-												 const char*        name,
-												 const char*        mangl_name,
-												 const char*        class_name,
-												 rted_SourceInfo    si
+/// \brief    notifies the runtime system that memory for an array is allocated
+///           without involving dynamic memory utilities (*?). For example,
+///           a global array (could be UPC shared), an array declared within
+///           function scope (could be static). *? check for C++ new[].
+/// \details  Since this function is called for static allocations, we do not
+///           add a UPC runtime version. (1) arrays in function scope cannot be
+///           shared; (2) global shared arrays are initialized by all UPC threads.
+/// \pp \todo should this be better called rted_CreateArrayMem?
+void rted_CreateHeapArr( rted_TypeDesc   td,
+												 rted_Address    address,
+												 size_t          elemsize,
+												 size_t          totalsize,
+												 const size_t*   dimDescr,
+												 const char*     name,
+												 const char*     mangl_name,
+												 const char*     class_name,
+												 rted_SourceInfo si
 											 );
 
-void rted_CreateHeapPtr( rted_TypeDesc    td,
-												 rted_Address     address,
-												 size_t           size,
-												 size_t           mallocSize,
-												 rted_AllocKind   allocKind,
-												 const char*      class_name,
-												 rted_SourceInfo  si
+
+void rted_CreateHeapPtr( rted_TypeDesc   td,
+												 rted_Address    address,
+												 size_t          size,
+												 size_t          mallocSize,
+												 rted_AllocKind  allocKind,
+												 const char*     class_name,
+												 rted_SourceInfo si
 											 );
+
+/// \brief internal variant
+void _rted_CreateHeapPtr( rted_TypeDesc   td,
+											    rted_Address    address,
+											    size_t          size,
+											    size_t          mallocSize,
+											    rted_AllocKind  allocKind,
+											    const char*     class_name,
+											    rted_SourceInfo si
+											  );
+
 
 
 void rted_AccessHeap( rted_Address     base_address, // &( array[ 0 ])
@@ -94,13 +116,15 @@ void rted_FunctionCall( const char*     name,
 
 
 /***************************** MEMORY FUNCTIONS *************************************/
-void rted_FreeMemory( rted_Address     addr,      ///< the address that is about to be freed
-                      rted_AllocKind   freeKind,  ///< describes the kind of allocation
-											                            ///  that this free performs.
-																									///  Also indicates when ptr
-																									///  needs to be interpreted as shared ptr
-                      rted_SourceInfo  si
-							      );
+
+/// \param addr     the address that is about to be freed
+/// \param freeKind describes the kind of allocation that this free performs.
+///                 Also indicates when ptr needs to be interpreted as shared ptr.
+/// \param si       source location
+void rted_FreeMemory(rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo si);
+
+/// \brief internal version
+void _rted_FreeMemory(rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo si);
 
 void rted_ReallocateMemory( void* ptr, size_t size, rted_SourceInfo si );
 /***************************** MEMORY FUNCTIONS *************************************/
@@ -149,14 +173,26 @@ int rted_CreateVariable( rted_TypeDesc   td,
  */
 int rted_CreateObject( rted_TypeDesc td, rted_Address address, rted_SourceInfo si );
 
+
 int rted_InitVariable( rted_TypeDesc   td,
 		                   rted_Address    address,
 											 size_t          size,
-											 const char*     class_name,
-											 rted_AllocKind  allocKind,
 											 int             pointer_changed,
+											 rted_AllocKind  allocKind,
+											 const char*     class_name,
 											 rted_SourceInfo si
 										 );
+
+/// \brief internal version
+int _rted_InitVariable( rted_TypeDesc   td,
+		                    rted_Address    address,
+											  size_t          size,
+											  int             pointer_changed,
+											  rted_AllocKind  allocKind,
+											  const char*     class_name,
+											  rted_SourceInfo si
+										  );
+
 
 /**
  * This function is called when pointers are incremented.  For example, it will
@@ -208,7 +244,6 @@ void rted_RegisterTypeCall( const char*     nameC,
 													);
 
 /***************************** TYPES *************************************/
-
 
 
 #ifdef __cplusplus

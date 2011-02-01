@@ -12,6 +12,38 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
+/// Determines a nice scope name for @c stmt.  This is only used for convenience
+/// in the debugger, and does not affect any checks.
+static
+std::string scope_name(SgStatement* stmt) {
+
+    if( isSgWhileStmt( stmt)) {
+      return "while";
+    } else if( isSgIfStmt( stmt)) {
+      return "if";
+    } else if( isSgForStatement( stmt)) {
+      return "for";
+    } else if( isSgUpcForAllStatement( stmt)) {
+      return "upc_forall";
+    } else if( isSgDoWhileStmt( stmt)) {
+      return "do";
+    } else {
+      //cerr << " Trying to query stmt : " << stmt->class_name() << endl;
+      vector<SgNode*> calls
+        = NodeQuery::querySubTree( stmt, V_SgFunctionCallExp);
+
+      if( calls.size() > 0) {
+        SgFunctionCallExp* fncall = isSgFunctionCallExp( calls[0]);
+        ROSE_ASSERT( fncall);
+        return fncall
+                ->getAssociatedFunctionDeclaration()
+                ->get_name().getString();
+      } else {
+        cerr << "Unable to determine scope name." << endl;
+        return "unknown";
+      }
+    }
+}
 
 void
 RtedTransformation::bracketWithScopeEnterExit( SgFunctionDefinition* fndef ) {
@@ -120,40 +152,6 @@ RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt_or_block, Sg_Fi
 
     attachComment( exit_scope_call, "", PreprocessingInfo::before );
     attachComment( exit_scope_call, "RS : exitScope, parameters : ( filename, line, lineTransformed, error stmt)", PreprocessingInfo::before);
-}
-
-
-/// Determines a nice scope name for @c stmt.  This is only used for convenience
-/// in the debugger, and does not affect any checks.
-std::string
-RtedTransformation::scope_name( SgNode* stmt) {
-
-    if( isSgWhileStmt( stmt)) {
-      return "while";
-    } else if( isSgIfStmt( stmt)) {
-      return "if";
-    } else if( isSgForStatement( stmt)) {
-      return "for";
-    } else if( isSgUpcForAllStatement( stmt)) {
-      return "upc_forall";
-    } else if( isSgDoWhileStmt( stmt)) {
-      return "do";
-    } else {
-      //cerr << " Trying to query stmt : " << stmt->class_name() << endl;
-      vector<SgNode*> calls
-        = NodeQuery::querySubTree( stmt, V_SgFunctionCallExp);
-
-      if( calls.size() > 0) {
-        SgFunctionCallExp* fncall = isSgFunctionCallExp( calls[0]);
-        ROSE_ASSERT( fncall);
-        return fncall
-                ->getAssociatedFunctionDeclaration()
-                ->get_name().getString();
-      } else {
-        cerr << "Unable to determine scope name." << endl;
-        return "unknown";
-      }
-    }
 }
 
 #endif

@@ -131,10 +131,6 @@ SgType* skip_Typedefs( SgType* type ) {
      return type;
 }
 
-/**
- * Follow the base type of @c type until we reach a non-typedef, non-reference.
- */
-static
 SgType* skip_ReferencesAndTypedefs( SgType* type ) {
      if( isSgTypedefType( type )) {
         return skip_ReferencesAndTypedefs(
@@ -191,6 +187,11 @@ RtedTransformation::ctorTypeDescList(SgAggregateInitializer* exp) const
   return cstyle_ctor(buildArrayType(roseTypeDesc(), NULL), exp);
 }
 
+SgCastExp*
+RtedTransformation::ctorDimensionList(SgAggregateInitializer* exp) const
+{
+  return cstyle_ctor(buildArrayType(roseDimensionType(), NULL), exp);
+}
 
 
 SgAggregateInitializer*
@@ -309,10 +310,6 @@ RtedTransformation::isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* e
     return false;
 }
 
-SgPointerType* RtedTransformation::isUsableAsSgPointerType( SgType* type ) {
-    return isSgPointerType( skip_ReferencesAndTypedefs( type ));
-}
-
 SgArrayType* RtedTransformation::isUsableAsSgArrayType( SgType* type ) {
     return isSgArrayType( skip_ReferencesAndTypedefs( type ));
 }
@@ -332,10 +329,13 @@ RtedTransformation::isUsedAsLvalue( SgExpression* exp ) {
     );
 }
 
+
 bool isConstructor( SgDeclarationStatement* decl )
 {
-    // \note \tmp \pp the next linw was moved in, might not be needed
-    //                for calls from ExecuteTRansformations
+    // \pp \todo consider replacing with SageInterface::isCtor
+
+    // \note \tmp \pp the next line was moved in, might not be needed
+    //                for calls from ExecuteTransformations
     SgMemberFunctionDeclaration* mfun = isSgMemberFunctionDeclaration( decl->get_definingDeclaration() );
 
     if( !mfun )
@@ -371,7 +371,7 @@ void RtedTransformation::appendConstructors(SgClassDefinition* cdef, SgDeclarati
   std::remove_copy_if(members.begin(), members.end(), std::back_inserter(constructors), isNonConstructor);
 }
 
-bool RtedTransformation::isNormalScope( SgNode* n ) {
+bool isNormalScope( SgScopeStatement* n ) {
 	return	(  isSgBasicBlock( n )
           || isSgIfStmt( n )
           || isSgWhileStmt( n )
@@ -686,23 +686,27 @@ RtedTransformation::resolveToVarRefLeft(SgExpression* expr) {
 }
 
 
-bool RtedTransformation::isGlobalExternVariable(SgStatement* stmt) {
-  bool externQual =false;
-#if 1
-  SgDeclarationStatement* declstmt = isSgDeclarationStatement(stmt);
+bool isGlobalExternVariable(SgStatement* stmt)
+{
+  bool                     res = false;
+  SgDeclarationStatement*  declstmt = isSgDeclarationStatement(stmt);
   SgFunctionParameterList* funcparam = isSgFunctionParameterList(stmt);
-  if (funcparam) {
+
+  if (funcparam)
+  {
     SgFunctionDeclaration* funcdeclstmt = isSgFunctionDeclaration(funcparam->get_parent());
     ROSE_ASSERT(funcdeclstmt);
-    externQual = funcdeclstmt->get_declarationModifier().get_storageModifier().isExtern();
-    cerr << ">>>>>>>>>>>>>>>> stmt-param : " << funcdeclstmt->unparseToString() << "  " << funcdeclstmt->class_name() <<
-      "  " << externQual << endl;
-  } else if (declstmt) {
-    externQual = declstmt->get_declarationModifier().get_storageModifier().isExtern();
+
+    // \pp why can a parameter be extern global?
+    // \pp \todo I am not sure that this describes the desired behaviour for parameters...
+    res = funcdeclstmt->get_declarationModifier().get_storageModifier().isExtern();
   }
-  cerr << ">>>>>>>>>>>>>>>> stmt : " << stmt->unparseToString() << "  " << stmt->class_name() << endl;
-#endif
-  return externQual;
+  else if (declstmt)
+  {
+    res = declstmt->get_declarationModifier().get_storageModifier().isExtern();
+  }
+
+  return res;
 }
 
 
@@ -934,9 +938,10 @@ RtedTransformation::appendDimensions(SgExprListExp* arg_list, RtedArray* arr)
 {
       ROSE_ASSERT(arg_list && arr);
 
-		  SgExpression* noDims = SageBuilder::buildIntVal( arr->getDimension() );
+      SgExprListExp* dimargs = buildExprListExp();
+		  SgExpression*  noDims = SageBuilder::buildIntVal( arr->getDimension() );
 
-			SageInterface::appendExpression(arg_list, noDims);
+			SageInterface::appendExpression(dimargs, noDims);
 			BOOST_FOREACH( SgExpression* expr, arr->getIndices() ) {
           if ( expr == NULL )
           {
@@ -945,13 +950,21 @@ RtedTransformation::appendDimensions(SgExprListExp* arg_list, RtedArray* arr)
           }
 
           ROSE_ASSERT( expr );
-          SageInterface::appendExpression( arg_list, expr );
+
+          // we add a value 0, otherwise the unparser skips the expressions
+          // \pp \todo fix the unparser
+          expr = SageBuilder::buildAddOp(expr, SageBuilder::buildIntVal(0));
+
+          SageInterface::appendExpression( dimargs, expr );
       }
+
+      SgExpression* dimexpr = ctorDimensionList(genAggregateInitializer(dimargs, roseDimensionType()));
+
+      std::cerr << dimexpr->unparseToString() << std::endl;
+      SageInterface::appendExpression(arg_list, dimexpr);
 }
 
-void RtedTransformation::appendDimensionsIfNeeded( SgExprListExp* arg_list,
-                                                   RtedClassElement* rce
-                                                 )
+void RtedTransformation::appendDimensionsIfNeeded( SgExprListExp* arg_list, RtedClassElement* rce )
 {
   RtedArray* arr = rce->get_array();
 
@@ -1334,8 +1347,7 @@ RtedTransformation::buildGlobalConstructor(SgScopeStatement* scope, std::string 
   return block;
 }
 
-bool
-RtedTransformation::traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt)
+bool traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt)
 {
   if (stmt==NULL) return false;
 
@@ -1346,10 +1358,9 @@ RtedTransformation::traverseAllChildrenAndFind(SgExpression* varRef, SgStatement
   return (pos != zz);
 }
 
-bool
-RtedTransformation::traverseAllChildrenAndFind(SgInitializedName* varRef, SgStatement* stmt)
+bool traverseAllChildrenAndFind(SgInitializedName* varRef, SgStatement* stmt)
 {
-  // \pp \todo replace this and the previous function with isParentOf implementation
+  // \pp \todo replace this and the previous function with isAncestorOf implementation
   if (stmt == NULL) return false;
 
   const SgNodePtrList           nodes = NodeQuery::querySubTree(stmt,V_SgInitializedName);

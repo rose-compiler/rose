@@ -187,17 +187,18 @@ void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
   appendExpression(arg_list, bupc_arg2);
   appendExpression(arg_list, bupc_arg3);
 
-  SgExpression*      stmt1 = buildFunctionCallExp( "RuntimeSystem_original_main",
-                                                   buildVoidType(),
-                                                   arg_list,
-                                                   body
-                                                 );
+  SgExpression*      callmain = buildFunctionCallExp( "RuntimeSystem_original_main",
+                                                      buildVoidType(),
+                                                      arg_list,
+                                                      body
+                                                    );
   SgStatement*       st = buildVariableDeclaration( "exit_code",
                                                     buildIntType(),
-                                                    buildAssignInitializer(stmt1),
+                                                    buildAssignInitializer(callmain),
                                                     body
                                                   );
   appendStatement(st, body);
+  insertCheck(ilBefore, st, symbols.roseUpcInitialize, buildExprListExp());
 
   SgExprListExp*     arg_list2 = buildExprListExp();
   appendExpression(arg_list2, buildStringVal("RuntimeSystem.cpp:main"));

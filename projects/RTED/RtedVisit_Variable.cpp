@@ -62,6 +62,12 @@ bool isRightOfBinaryOp(const SgNode* astNode) {
    return false;
 }
 
+static
+bool isUsableAsSgPointerType( SgType* type ) {
+    return isSgPointerType( skip_ReferencesAndTypedefs( type ));
+}
+
+
 struct InheritedAttributeHandler
 {
   VariableTraversal& vt;
@@ -109,7 +115,7 @@ struct InheritedAttributeHandler
       // ignore arrays in parameter lists as they're actually pointers, not stack arrays
       if ( !array || isStructMember(n) || isFunctionParameter(n) ) return;
 
-      RtedArray* arrayRted = new RtedArray(&n, NULL, akStack);
+      RtedArray* arrayRted = new RtedArray(&n, getSurroundingStatement(&n), akStack);
 
       vt.transf->populateDimensions( arrayRted, &n, array );
       vt.transf->create_array_define_varRef_multiArray_stack[&n] = arrayRted;
@@ -170,9 +176,14 @@ struct InheritedAttributeHandler
    // Expressions
    //
 
+
+   /// Visit pointer assignments whose lhs is computed from the original value of
+   /// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
+   /// we say that such operations should not change the @e "Memory Chunk", i.e.
+   /// the array the pointer refers to.
    void push_if_ptr_movement(SgExpression& astNode, SgExpression* operand)
    {
-      if( vt.transf->isUsableAsSgPointerType( operand -> get_type() )) {
+      if( isUsableAsSgPointerType( operand -> get_type() )) {
          // we don't care about int++, only pointers, or reference to pointers.
          vt.transf->pointer_movements.push_back( &astNode );
       }
