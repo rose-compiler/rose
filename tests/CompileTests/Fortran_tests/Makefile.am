@@ -205,6 +205,12 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_155.f90 \
      test2010_156.f90 \
      test2010_158.f90 \
+     test2010_159.f90 \
+     test2010_160.f90 \
+     test2010_161.f90 \
+     test2010_162.f90 \
+     test2010_163.f90 \
+     test2010_164.f90 \
      test2010_165.f90 \
      test2010_166.f90 \
      test2010_167.f90 \
@@ -227,7 +233,25 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_17.f90 \
      test2011_19.f90 \
      test2011_20.f90 \
+     test2011_36.f90 \
+     test2011_37.f90 \
+     test2011_39.f90 \
+     test2011_40.f90 \
      canonicalExample.f90
+
+# DQ (1/31/2011): Some F90 testcodes need to be be F03 testcodes.  These are
+# fixed as only F03 codes (note that test2011_26.f03 is already a F03 code).
+#     test2011_24.f90
+#     test2011_25.f90
+#     test2011_27.f90
+#     test2011_28.f90
+#     test2011_29.f90
+#     test2011_30.f90
+#     test2011_31.f90
+#     test2011_32.f90
+#     test2011_33.f90
+#     test2011_34.f90
+#     test2011_35.f90
 
 # DQ (1/18/2011): Failing tests.
 #     test2007_100.f90
@@ -511,12 +535,6 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_147.f90 \
      test2010_148.f90 \
      test2010_149.f90 \
-     test2010_159.f90 \
-     test2010_160.f90 \
-     test2010_161.f90 \
-     test2010_162.f90 \
-     test2010_163.f90 \
-     test2010_164.f90 \
      test2010_169.f90 \
      test2010_170.f90 \
      test2010_175.f90 \

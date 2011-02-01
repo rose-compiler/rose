@@ -1443,11 +1443,23 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+       // DQ (1/31/2011): Added to support Fortran debugging.
+          case V_SgActualArgumentExpression:
+             {
+               const SgActualArgumentExpression* actualArgExp = isSgActualArgumentExpression(expr);
+               name = "actual_arg_exp_name_";
+               name += actualArgExp->get_argument_name();
+               name = "_exp_";
+               name += get_name(actualArgExp->get_expression());
+               break;
+             }
+
           default:
              {
             // Nothing to do for other IR nodes
 
             // DQ (4/8/2010): define something specific to this function to make debugging more clear.
+            // printf ("Note: default reached in get_name() expr = %p = %s \n",expr,expr->class_name().c_str());
                name = "undefined_expression_name";
                break;
              }
