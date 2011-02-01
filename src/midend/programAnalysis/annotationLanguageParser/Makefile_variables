@@ -69,7 +69,7 @@ mpaAnnotationLanguageParser_extraDist=\
 	$(mpaAnnotationLanguageParserPath)/language.y
 
 
-language-parser.cc: $(srcdir)/language.y
+language-parser.cc: $(mpaAnnotationLanguageParserPath)/language.y
 	bison -d -pann -o ./tempBisonOutput.c \
 		$(mpaAnnotationLanguageParserPath)/language.y
 	mv \
