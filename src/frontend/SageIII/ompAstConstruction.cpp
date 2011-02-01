@@ -380,7 +380,10 @@ namespace OmpSupport
       SgInitializedName* iname = isSgInitializedName((*iter).second);
       ROSE_ASSERT(iname !=NULL);
       //target->get_variables().push_back(iname);
-      target->get_variables().push_back(buildVarRefExp(iname));
+      // Liao 1/27/2010, fix the empty parent pointer of the SgVarRefExp here
+      SgVarRefExp * var_ref = buildVarRefExp(iname);
+      target->get_variables().push_back(var_ref);
+      var_ref->set_parent(target);
     }
   }
 

@@ -1,0 +1,60 @@
+
+mptAstOutlining_la_sources=\
+	$(mptAstOutliningPath)/Check.cc \
+	$(mptAstOutliningPath)/Outliner.cc \
+	$(mptAstOutliningPath)/NameGenerator.cc \
+	$(mptAstOutliningPath)/PragmaInterface.cc \
+	$(mptAstOutliningPath)/ASTtools.cc \
+	$(mptAstOutliningPath)/Copy.cc \
+	$(mptAstOutliningPath)/Jumps.cc \
+	$(mptAstOutliningPath)/PrePostTraversal.cc \
+	$(mptAstOutliningPath)/PreprocessingInfo.cc \
+	$(mptAstOutliningPath)/StmtRewrite.cc \
+	$(mptAstOutliningPath)/This.cc \
+	$(mptAstOutliningPath)/VarSym.cc \
+	$(mptAstOutliningPath)/Case.cc \
+	$(mptAstOutliningPath)/ExtractIfs.cc \
+	$(mptAstOutliningPath)/If.cc \
+	$(mptAstOutliningPath)/IfDirectiveContextFinder.cc \
+	$(mptAstOutliningPath)/IfDirectiveExtractor.cc \
+	$(mptAstOutliningPath)/Block.cc \
+	$(mptAstOutliningPath)/NonLocalDecls.cc \
+	$(mptAstOutliningPath)/PreprocIfs.cc \
+	$(mptAstOutliningPath)/NonLocalControlFlow.cc \
+	$(mptAstOutliningPath)/Preprocess.cc \
+	$(mptAstOutliningPath)/ThisExprs.cc \
+	$(mptAstOutliningPath)/CollectVars.cc \
+	$(mptAstOutliningPath)/GenerateCall.cc \
+	$(mptAstOutliningPath)/GenerateFunc.cc \
+	$(mptAstOutliningPath)/Insert.cc \
+	$(mptAstOutliningPath)/Transform.cc
+
+
+mptAstOutlining_includeHeaders=\
+	$(mptAstOutliningPath)/Outliner.hh \
+	$(mptAstOutliningPath)/NameGenerator.hh \
+	$(mptAstOutliningPath)/ASTtools.hh \
+	$(mptAstOutliningPath)/Copy.hh \
+	$(mptAstOutliningPath)/Jumps.hh \
+	$(mptAstOutliningPath)/PrePostTraversal.hh \
+	$(mptAstOutliningPath)/PreprocessingInfo.hh \
+	$(mptAstOutliningPath)/StmtRewrite.hh \
+	$(mptAstOutliningPath)/This.hh \
+	$(mptAstOutliningPath)/VarSym.hh \
+	$(mptAstOutliningPath)/IfDirectiveContextFinder.hh \
+	$(mptAstOutliningPath)/IfDirectiveExtractor.hh \
+	$(mptAstOutliningPath)/If.hh \
+	$(mptAstOutliningPath)/Preprocess.hh 
+
+
+mptAstOutlining_extraDist=\
+	$(mptAstOutliningPath)/CMakeLists.txt \
+	$(mptAstOutliningPath)/README
+
+
+mptAstOutlining_cleanLocal=\
+	rm -rf \
+		$(mptAstOutliningPath)/Templates.DB \
+		$(mptAstOutliningPath)/ii_files \
+		$(mptAstOutliningPath)/ti_files \
+		$(mptAstOutliningPath)/core

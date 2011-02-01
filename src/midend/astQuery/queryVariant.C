@@ -119,6 +119,9 @@ void* querySolverGrammarElementFromVariantVector ( SgNode * astNode, VariantVect
                  // if (std::find(succContainer.begin(),succContainer.end(),iItr->first) == succContainer.end() )
                     if (std::find(succContainer.begin(),succContainer.end(),type) == succContainer.end() )
                        {
+                      // DQ (1/30/2010): Push the current type onto the list first, then any internal types...
+                         pushNewNode (returnNodeList,targetVariantVector,type);
+
                       // Are there any other places where nested types can be found...?
                       // if ( isSgPointerType(iItr->first) != NULL  || isSgArrayType(iItr->first) != NULL || isSgReferenceType(iItr->first) != NULL || isSgTypedefType(iItr->first) != NULL || isSgFunctionType(iItr->first) != NULL || isSgModifierType(iItr->first) != NULL)
                       // if (type->containsInternalTypes() == true)
@@ -139,23 +142,24 @@ void* querySolverGrammarElementFromVariantVector ( SgNode * astNode, VariantVect
 #if 0
                                    printf ("----- internal type = %s \n",(*i)->class_name().c_str());
 #endif
-#if 1
                                 // DQ (1/16/2011): This causes a test in tests/roseTests/programAnalysisTests/variableLivenessTests 
                                 // to fail with error "Error :: Number of nodes = 37  should be : 36"
 
                                 // Add this type to the return list of types.
                                    pushNewNode (returnNodeList,targetVariantVector,*i);
-#endif
+
                                    i++;
                                  }
                             }
 
+                      // DQ (1/30/2010): Move this code to the top of the basic block.
                       // pushNewNode (returnNodeList,targetVariantVector,iItr->first);
-                         pushNewNode (returnNodeList,targetVariantVector,type);
+                      // pushNewNode (returnNodeList,targetVariantVector,type);
                        }
                   }
              }
         }
+
 #if 0
     // This code cannot be put here. Since the same SgVarRefExp will also be found during variable substitution phase.
     // We don't want to replace the original SgVarRefExp!!

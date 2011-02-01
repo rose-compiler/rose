@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <err.h>
 
+#include <unistd.h>
+
 char *TCID = "syscall.4";
 int TST_TOTAL = 1;
 
@@ -21,7 +23,7 @@ int main() {
   int fd;
   int iws;
   int badcount = 0;
-  char pwbuf[255];
+  char pwbuf[256];
 
   sprintf(fileName,"tfile_%d",getpid());
 

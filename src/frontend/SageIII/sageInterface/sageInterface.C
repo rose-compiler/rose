@@ -1431,6 +1431,18 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+       // DQ (1/17/2011): Added support for SgExprListExp (to support debugging).
+          case V_SgExprListExp:
+             {
+               const SgExprListExp* exprListExp = isSgExprListExp(expr);
+               name = "expr_list_exp_";
+               for (size_t i = 0; i < exprListExp->get_expressions().size(); i++)
+                  {
+                    name += get_name(exprListExp->get_expressions()[i]);
+                  }
+               break;
+             }
+
           default:
              {
             // Nothing to do for other IR nodes
@@ -4299,13 +4311,23 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
 SgVariableSymbol *
 SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
                                                         SgScopeStatement *cscope)
-{
-  SgVariableSymbol* result = NULL;
-  SgSymbol* symbol=lookupSymbolInParentScopes(name,cscope);
-  if (symbol!=NULL)
-    result = isSgVariableSymbol(symbol);
-  return result;
-}
+   {
+  // DQ (1/24/2011): This function is inconsistant with an implementation that would correctly handle SgAliasSymbols.
+  // Also this function might get a SgClassSymbol instead of a SgVariableSymbol when both names are used.
+  // This function needs to be fixed to handle the multi-map semantics of the symbol tables.
+     SgVariableSymbol* result = NULL;
+     SgSymbol* symbol=lookupSymbolInParentScopes(name,cscope);
+     if (symbol != NULL)
+        {
+          if (isSgAliasSymbol(symbol) != NULL)
+             {
+               printf ("Error: This SageInterface::lookupVariableSymbolInParentScopes() function does not handle SgAliasSymbols \n");
+               ROSE_ASSERT(false);
+             }
+          result = isSgVariableSymbol(symbol);
+        }
+     return result;
+   }
 
 void
 SageInterface::setSourcePosition( SgLocatedNode* locatedNode )

@@ -1107,7 +1107,8 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
     // Check if this is a SgFile or SgGlobal where there is only a single SgFile in the SgProject!
     if (isSgFile(astNode) != NULL || isSgGlobal(astNode) != NULL)
     {
-     // printf ("This is not a SgProject, but it is a SgFile or SgGlobal so check if this is an only file before using the memory pool! \n");
+   // DQ (1/25/2011): We want to be able to use this functionality, it is not depreicated...
+   // printf ("This is not a SgProject, but it is a SgFile or SgGlobal so check if this is an only file before using the memory pool! \n");
       SgProject* project = TransformationSupport::getProject(astNode);
 
       // 2nd chance to reset useMemoryPool and provide an optimized query for types!

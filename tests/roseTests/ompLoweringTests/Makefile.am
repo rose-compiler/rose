@@ -38,6 +38,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         task_underIf.c \
         task_wait.c \
         task_wait2.c \
+	task_untied4.c \
 	twoRegions.c 
 
 # Put test codes which can run (with main() ) here

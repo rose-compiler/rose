@@ -1,0 +1,27 @@
+
+mptPartialRedundancyElimination_includes=\
+	-I$(top_srcdir)/src/midend/programAnalysis/CFG 
+
+
+mptPartialRedundancyElimination_la_sources=\
+	$(mptPartialRedundancyEliminationPath)/expressionTreeEqual.C \
+	$(mptPartialRedundancyEliminationPath)/pre.C \
+	$(mptPartialRedundancyEliminationPath)/controlFlowGraph.C
+
+
+mptPartialRedundancyElimination_includeHeaders=\
+	$(mptPartialRedundancyEliminationPath)/expressionTreeEqual.h \
+	$(mptPartialRedundancyEliminationPath)/pre.h \
+	$(mptPartialRedundancyEliminationPath)/controlFlowGraph.h
+
+
+mptPartialRedundancyElimination_extraDist=\
+	$(mptPartialRedundancyEliminationPath)/CMakeLists.txt
+
+
+mptPartialRedundancyElimination_cleanLocal=\
+	rm -rf \
+		$(mptPartialRedundancyEliminationPath)/Templates.DB \
+		$(mptPartialRedundancyEliminationPath)/ii_files \
+		$(mptPartialRedundancyEliminationPath)/ti_files \
+		$(mptPartialRedundancyEliminationPath)/core
