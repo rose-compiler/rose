@@ -75,6 +75,9 @@
 /* Define this if you want log files to be unbuffered. This is often desirable when debugging */
 #define X86SIM_LOG_UNBUFFERED
 
+/* Define this if you want binary trace files to be unbuffered. This is often desirable when debugging */
+#define X86SIM_BINARY_TRACE_UNBUFFERED
+
 
 enum CoreStyle { CORE_ELF=0x0001, CORE_ROSE=0x0002 }; /*bit vector*/
 
@@ -1190,7 +1193,7 @@ print_winsize_32(FILE *f, const uint8_t *_v, size_t sz)
 
 
 /* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
- * use it because it also does constant folding, which means that it's symbolic aspects are never actually used here. We only
+ * use it because it also does constant folding, which means that its symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
  * since we're only operating on known addresses and values, and thus override all superclass methods dealing with memory. */
 class EmulationPolicy: public VirtualMachineSemantics::Policy {
@@ -1265,6 +1268,7 @@ public:
     bool trace_loader;                          /* Show diagnostics for the program loading */
     bool trace_progress;			/* Show progress now and then */
     bool trace_signal;                          /* Show reception and delivery of signals */
+    FILE *binary_trace;                         /* Stream for binary trace. See projects/traceAnalysis/trace.C for details */
 
     EmulationPolicy()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), vdso_mapped_va(0), vdso_entry_va(0),
@@ -1272,7 +1276,7 @@ public:
           robust_list_head_va(0), set_child_tid(0), clear_child_tid(0),
           signal_pending(0), signal_mask(0), signal_reprocess(false),
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
-          trace_loader(false), trace_progress(false), trace_signal(false) {
+          trace_loader(false), trace_progress(false), trace_signal(false), binary_trace(NULL) {
 
         vdso_name = "x86vdso";
         vdso_paths.push_back(".");
@@ -1438,6 +1442,12 @@ public:
 
     /* Pause until a useful signal arrives. */
     void signal_pause();
+
+    /* Start an instruction trace file. No-op if "binary_trace" is null. */
+    void binary_trace_start();
+
+    /* Add an instruction to the binary trace file. No-op if "binary_trace" is null. */
+    void binary_trace_add(const SgAsmInstruction *insn);
 
     /* Same as the x86_push instruction */
     void push(VirtualMachineSemantics::ValueType<32> n) {
@@ -3607,7 +3617,7 @@ EmulationPolicy::emulate_syscall()
         }
 
         case 14: { /*0xe, mknod*/
-            syscall_enter("mknod", "sdd");
+            syscall_enter("mknod", "sfd", file_mode_flags);
             do {
                 uint32_t path_va = arg(0);
                 int mode = arg(1);
@@ -4812,6 +4822,8 @@ EmulationPolicy::emulate_syscall()
                 fflush(stderr);
                 if (debug)
                     fflush(debug);
+                if (binary_trace)
+                    fflush(binary_trace);
                 pid_t pid = fork();
                 if (-1==pid) {
                     writeGPR(x86_gpr_ax, -errno);
@@ -4822,8 +4834,12 @@ EmulationPolicy::emulate_syscall()
                     /* Pending signals are only for the parent */
                     signal_pending = 0;
 
-                    /* Open a new log file if necessary */
+                    /* Open new log files if necessary */
                     open_log_file(log_file_name);
+                    if (binary_trace) {
+                        fclose(binary_trace);
+                        binary_trace = NULL;
+                    }
 
                     /* Thread-related things. ROSE isn't multi-threaded and the simulator doesn't support multi-threading, but
                      * we still have to initialize a few data structures because the specimen may be using a thread-aware
@@ -6489,6 +6505,125 @@ EmulationPolicy::signal_pause()
         pause();
 }
 
+void
+EmulationPolicy::binary_trace_start()
+{
+    if (!binary_trace)
+        return;
+    
+    static const uint16_t magic = 0x5445;
+    size_t n = fwrite(&magic, 2, 1, binary_trace);
+    assert(1==n);
+
+    static const uint16_t version = 0x0033;
+    n = fwrite(&version, 2, 1, binary_trace);
+    assert(1==n);
+
+    static const uint32_t nprocs = 1;
+    n = fwrite(&nprocs, 4, 1, binary_trace);
+    assert(1==n);
+
+    char exename_buf[32];
+    strncpy(exename_buf, exename.c_str(), 32);
+    exename_buf[31] = '\0';
+    n = fwrite(exename_buf, 32, 1, binary_trace);
+    assert(1==n);
+
+    uint32_t pid = getpid();
+    n = fwrite(&pid, 4, 1, binary_trace);
+    assert(1==n);
+
+    static const uint32_t nmodules = 0;
+    n = fwrite(&nmodules, 4, 1, binary_trace);
+    assert(1==n);
+}
+
+void
+EmulationPolicy::binary_trace_add(const SgAsmInstruction *insn)
+{
+    if (!binary_trace)
+        return;
+
+    uint32_t addr = insn->get_address();
+    size_t n = fwrite(&addr, 4, 1, binary_trace);
+    assert(1==n);
+
+    static const uint32_t tid = getpid();
+    n = fwrite(&tid, 4, 1, binary_trace);
+    assert(1==n);
+
+    size_t insn_size = insn->get_raw_bytes().size();
+    assert(insn_size<=255);
+    uint8_t insn_size_byte = insn_size;
+    n = fwrite(&insn_size_byte, 1, 1, binary_trace);
+    assert(1==n);
+
+    n = fwrite(&insn->get_raw_bytes()[0], insn_size, 1, binary_trace);
+    assert(1==n);
+
+    uint32_t r = 0;
+    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
+        r |= readFlag((X86Flag)i).known_value() << i;
+    n = fwrite(&r, 4, 1, binary_trace);
+    assert(1==n);
+
+    r = readGPR(x86_gpr_ax).known_value();
+    n = fwrite(&r, 4, 1, binary_trace);
+    assert(1==n);
+    
+    r = readGPR(x86_gpr_bx).known_value();
+    n = fwrite(&r, 4, 1, binary_trace);
+    assert(1==n);
+    
+    r = readGPR(x86_gpr_cx).known_value();
+    n = fwrite(&r, 4, 1, binary_trace);
+    assert(1==n);
+    
+    r = readGPR(x86_gpr_dx).known_value();
+    n = fwrite(&r, 4, 1, binary_trace);
+    assert(1==n);
+    
+    r = readGPR(x86_gpr_si).known_value();
+    n = fwrite(&r, 4, 1, binary_trace);
+    assert(1==n);
+    
+    r = readGPR(x86_gpr_di).known_value();
+    n = fwrite(&r, 4, 1, binary_trace);
+    assert(1==n);
+    
+    r = readGPR(x86_gpr_bp).known_value();
+    n = fwrite(&r, 4, 1, binary_trace);
+    assert(1==n);
+    
+    r = readGPR(x86_gpr_sp).known_value();
+    n = fwrite(&r, 4, 1, binary_trace);
+    assert(1==n);
+
+    r = readSegreg(x86_segreg_cs).known_value();
+    n = fwrite(&r, 2, 1, binary_trace);
+    assert(1==n);
+
+    r = readSegreg(x86_segreg_ss).known_value();
+    n = fwrite(&r, 2, 1, binary_trace);
+    assert(1==n);
+
+    r = readSegreg(x86_segreg_es).known_value();
+    n = fwrite(&r, 2, 1, binary_trace);
+    assert(1==n);
+
+    r = readSegreg(x86_segreg_ds).known_value();
+    n = fwrite(&r, 2, 1, binary_trace);
+    assert(1==n);
+
+    r = readSegreg(x86_segreg_fs).known_value();
+    n = fwrite(&r, 2, 1, binary_trace);
+    assert(1==n);
+
+    r = readSegreg(x86_segreg_gs).known_value();
+    n = fwrite(&r, 2, 1, binary_trace);
+    assert(1==n);
+}
+
 static EmulationPolicy *signal_deliver_to;
 static void
 signal_handler(int signo)
@@ -6707,6 +6842,18 @@ main(int argc, char *argv[], char *envp[])
                 if (!auxvp->type)
                     break;
             }
+            
+        } else if (!strncmp(argv[argno], "--trace=", 8)) {
+            if (policy.binary_trace)
+                fclose(policy.binary_trace);
+            if (NULL==(policy.binary_trace=fopen(argv[argno]+8, "wb"))) {
+                fprintf(stderr, "%s: %s: %s\n", argv[0], argv[argno]+8, strerror(errno));
+                exit(1);
+            }
+#ifdef X86SIM_BINARY_TRACE_UNBUFFERED
+            setbuf(policy.binary_trace, NULL);
+#endif
+            argno++;
 
         } else {
             fprintf(stderr, "usage: %s [--debug] PROGRAM ARGUMENTS...\n", argv[0]);
@@ -6718,6 +6865,7 @@ main(int argc, char *argv[], char *envp[])
     policy.open_log_file(log_file_name);
     SgAsmGenericHeader *fhdr = policy.load(argv[argno]); /*header for main executable, not libraries*/
     policy.initialize_stack(fhdr, argc-argno, argv+argno);
+    policy.binary_trace_start();
 
     /* Debugging */
     if (policy.debug && policy.trace_mmap) {
@@ -6779,6 +6927,7 @@ main(int argc, char *argv[], char *envp[])
                 policy.map->dump(policy.debug, "  ");
                 seen_entry_va = true;
             }
+            policy.binary_trace_add(insn);
             t.processInstruction(insn);
             if (policy.debug && policy.trace_state)
                 policy.dump_registers(policy.debug);

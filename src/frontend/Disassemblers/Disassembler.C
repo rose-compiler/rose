@@ -85,7 +85,10 @@ SgAsmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& i
     return retval;
 }
 
-/* List of disassembler subclasses */
+/* Mutex for class-wide operations (such as adjusting Disassembler::disassemblers) */
+pthread_mutex_t Disassembler::class_mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
+
+/* List of disassembler subclasses (protect with class_mutex) */
 std::vector<Disassembler*> Disassembler::disassemblers;
 
 /* Hook for construction */
@@ -196,31 +199,31 @@ Disassembler::parse_switches(const std::string &s, unsigned flags)
     return flags;
 }
 
-/* Initialize the class */
+/* Initialize the class. Thread safe. */
 void
 Disassembler::initclass()
 {
-    static bool initialized=false;
-    if (!initialized) {
-        initialized = true;
+    RTS_INIT_RECURSIVE(class_mutex) {
         register_subclass(new DisassemblerArm());
         register_subclass(new DisassemblerPowerpc());
         register_subclass(new DisassemblerX86(2)); /*16-bit*/
         register_subclass(new DisassemblerX86(4)); /*32-bit*/
         register_subclass(new DisassemblerX86(8)); /*64-bit*/
-    }
+    } RTS_INIT_END;
 }
 
-/* Class method to register a new disassembler subclass */
+/* Class method to register a new disassembler subclass. Thread safe. */
 void
 Disassembler::register_subclass(Disassembler *factory)
 {
     initclass();
-    ROSE_ASSERT(factory!=NULL);
-    disassemblers.push_back(factory);
+    RTS_MUTEX(class_mutex) {
+        ROSE_ASSERT(factory!=NULL);
+        disassemblers.push_back(factory);
+    } RTS_MUTEX_END;
 }
 
-/* Class method */
+/* Class method. Thread safe by virtue of lookup(SgAsmGenericHeader*). */
 Disassembler *
 Disassembler::lookup(SgAsmInterpretation *interp)
 {
@@ -235,15 +238,22 @@ Disassembler::lookup(SgAsmInterpretation *interp)
     return retval;
 }
 
-/* Class method */
+/* Class method. Thread safe. */
 Disassembler *
 Disassembler::lookup(SgAsmGenericHeader *header)
 {
     initclass();
-    for (size_t i=disassemblers.size(); i>0; --i) {
-        if (disassemblers[i-1]->can_disassemble(header))
-            return disassemblers[i-1];
-    }
+    Disassembler *retval = NULL;
+
+    RTS_MUTEX(class_mutex) {
+        for (size_t i=disassemblers.size(); i>0 && !retval; --i) {
+            if (disassemblers[i-1]->can_disassemble(header))
+                retval = disassemblers[i-1];
+        }
+    } RTS_MUTEX_END;
+    
+    if (retval)
+        return retval;
     throw Exception("no disassembler for architecture");
 }
 
@@ -262,7 +272,8 @@ Disassembler::disassemble(SgAsmInterpretation *interp, AddressSet *successors, B
         delete p;
 }
 
-/* Class method for backward compatability with the old Disassembler name space. */
+/* Class method for backward compatability with the old Disassembler name space.
+ * Not thread safe because Partitioner::Partitioner is not. */
 void
 Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
 {
@@ -314,7 +325,7 @@ Disassembler::set_alignment(size_t n)
     p_alignment = n;
 }
 
-/* Progress report class variables. */
+/* Progress report class variables, all protected by class_mutex */
 time_t Disassembler::progress_interval = 10;
 time_t Disassembler::progress_time = 0;
 FILE *Disassembler::progress_file = stderr;
@@ -323,8 +334,10 @@ FILE *Disassembler::progress_file = stderr;
 void
 Disassembler::set_progress_reporting(FILE *output, unsigned min_interval)
 {
-    progress_file = output;
-    progress_interval = min_interval;
+    RTS_MUTEX(class_mutex) {
+        progress_file = output;
+        progress_interval = min_interval;
+    } RTS_MUTEX_END;
 }
 
 /* Produce a progress report if enabled. */
@@ -335,17 +348,21 @@ Disassembler::progress(FILE *debug, const char *fmt, ...) const
     va_start(ap, fmt);
 
     time_t now = time(NULL);
-    
-    if (0==progress_time)
-        progress_time = now;
-    
-    if (progress_file!=NULL && now-progress_time >= progress_interval) {
-        progress_time = now;
-        vfprintf(progress_file, fmt, ap);
-    }
 
-    if (debug!=NULL)
-        vfprintf(debug, fmt, ap);
+    RTS_MUTEX(class_mutex) {
+        if (0==progress_time)
+            progress_time = now;
+    
+        if (progress_file!=NULL && now-progress_time >= progress_interval) {
+            progress_time = now;
+            vfprintf(progress_file, fmt, ap);
+        }
+
+        if (debug!=NULL)
+            vfprintf(debug, fmt, ap);
+    } RTS_MUTEX_END;
+
+    va_end(ap);
 }
 
 /* Update progress, keeping track of the number of instructions disassembled. */
@@ -356,7 +373,7 @@ Disassembler::update_progress(SgAsmInstruction *insn)
         p_ndisassembled++;
 
     progress(p_debug, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n",
-             insn->get_address(), p_ndisassembled);
+             insn?insn->get_address():(uint64_t)0, p_ndisassembled);
 }
 
 /* Disassemble one instruction. */
@@ -825,6 +842,7 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
     }
 
     /* Do not require execute permission if the user wants to disassemble everything. */
+    /* FIXME: Not thread safe! [RPM 2011-01-27] */
     unsigned orig_protections = get_protection();
     if (p_search & SEARCH_NONEXE)
         set_protection(orig_protections & ~MemoryMap::MM_PROT_EXEC);
@@ -845,7 +863,10 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
      *       machine). If the user really needs to know this information they can probably calculate it using an ExtentMap and
      *       traversing the instructions in the final AST.  Another problem is that since the disassembler runs before the
      *       partitioner, and the partitioner might throw away unused instructions, calculating the references here in the
-     *       disassembler is not accurate.  [RPM 2010-04-30] */
+     *       disassembler is not accurate.  [RPM 2010-04-30]
+     *
+     * NOTE: Since mark_referenced_instructions() is not thread safe, its inclusion here would cause this method to be not
+     *       thread safe also. [RPM 2011-01-27] */
     mark_referenced_instructions(interp, map, retval);
 #endif
 

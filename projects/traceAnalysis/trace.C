@@ -89,7 +89,7 @@ struct trace_file
 Disassembler::InstructionMap
 read_trace_file(const string & traceFileName, uint64_t & entry_va )
    {
-     const size_t MAX_INST_SIZE = 10;           // Warning: x86 instructions can be up to 15 bytes [RPM]
+     const size_t MAX_INST_SIZE = 16;
      entry_va = 0;
 
      SgAsmGenericFile *file = new SgAsmGenericFile();
@@ -172,19 +172,23 @@ read_trace_file(const string & traceFileName, uint64_t & entry_va )
                uint32_t eax, ebx, ecx, edx, esi,edi,ebp,esp;
                uint16_t cs,ss,es,ds,fs,gs;
 
+#ifdef DO_TRACE
+               printf("instruction at trace offset %ld\n", ftell(tf));
+#endif
+
                fread(&exec, 4, 1, tf);
                fread(&tid, 4, 1, tf);
                fread(&byte, 1, 1, tf); inst_size = byte;
+#ifdef DO_TRACE
+               printf("\tva=0x%"PRIx32", tid=%"PRIu32", inst_size=%zu\n", exec, tid, inst_size);
+#endif
                ROSE_ASSERT(inst_size <= sizeof inst_bytes);
                fread(inst_bytes, inst_size,1,tf);
-
 #ifdef DO_TRACE
-               printf("instruction: va=0x%"PRIx32", tid=%"PRIu32", inst_size=%zu, raw=0x", exec, tid, inst_size);
+               printf("\tinsn bytes = [");
                for (size_t j=0; j<inst_size; j++)
-                  {
-                    printf("%02x", inst_bytes[j]);
-                  }
-               printf("\n");
+                   printf("%s0x%02x", j?" ":"", inst_bytes[j]);
+               printf("]\n");
 #endif
 
                if (0==entry_va)

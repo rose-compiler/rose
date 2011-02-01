@@ -6,49 +6,64 @@ INCLUDES = $(ROSE_INCLUDES)
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-# This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = testPerformance rosePerformanceTest
+EXTRA_DIST = tests.conf
 
-# Allow development using -lrose -ledg (simpler) or using 
-# long list of separate libraries (for faster development)
-ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
+# Forward declarations
+bin_PROGRAMS  =
+noinst_PROGRAMS =
+ROSE_TESTS =
+MOSTLYCLEANFILES =
 
-testPerformance_SOURCES      = testPerformance.C
-testPerformance_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
-rosePerformanceTest_SOURCES      = rosePerformanceTest.C
-rosePerformanceTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+################################################################################
+# testPerformance -- tests how fast the "new" operator works
+################################################################################
+bin_PROGRAMS += testPerformance
+testPerformance_SOURCES = testPerformance.C
+testPerformance_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+if !ROSE_BUILD_OS_IS_CYGWIN
+    ROSE_TESTS += testPerformance
+endif
+testPerformance.passed: testPerformance
+	@$(RTH_RUN) EXE=./$< $(srcdir)/tests.conf $@
 
-# source files don't contain anything that would be merged
-# TESTCODES = $(srcdir)/performanceTest.C
+################################################################################
+# rosePerformanceTest
+################################################################################
+bin_PROGRAMS += rosePerformanceTest
+rosePerformanceTest_SOURCES = rosePerformanceTest.C
+rosePerformanceTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+if !ROSE_BUILD_OS_IS_CYGWIN
+    ROSE_TESTS += rosePerformanceTest
+endif
+rosePerformanceTest.passed: rosePerformanceTest
+	@$(RTH_RUN) EXE=./$< ARGS="-rose:compilationPerformanceFile ROSE_PERFORMANCE_DATA.csv -c $(srcdir)/input.C" \
+		$(srcdir)/tests.conf $@
+EXTRA_DIST += input.C ExampleTimings.txt
+MOSTLYCLEANFILES += ROSE_PERFORMANCE_DATA.csv
 
-checkPerformance: testPerformance
-	./testPerformance
-
-checkRosePerformance: rosePerformanceTest
-	./rosePerformanceTest -rose:compilationPerformanceFile ROSE_PERFORMANCE_DATA.csv -c $(srcdir)/input.C
-
-EXTRA_DIST =
-
-# DQ (3/21/2009): These tests don't appear to run under Cygwin.
-if ROSE_BUILD_OS_IS_CYGWIN
-check-local:
-#	@$(MAKE) checkPerformance
-	@echo "****************************************************************************"
-	@echo "*** ROSE/tests/roseTests/astPerformanceTests: (commented out for Cygwin) ***"
-	@echo "****************************************************************************"
-else
-check-local:
-	@$(MAKE) checkPerformance
-	@echo "************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/astPerformanceTests: make check rule complete (terminated normally) ***"
-	@echo "************************************************************************************************"
+################################################################################
+# astThreadedCreation -- creates/deletes nodes with lots of threads
+################################################################################
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+noinst_PROGRAMS += astThreadedCreation
+astThreadedCreation_SOURCES = astThreadedCreation.C
+astThreadedCreation_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+ROSE_TESTS += astThreadedCreation
+astThreadedCreation.passed: astThreadedCreation
+	@$(RTH_RUN) EXE=./$< $(srcdir)/tests.conf $@
 endif
 
-clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_*.C rose_performance_report_lockfile.lock
-
-distclean-local:
-	rm -rf Templates.DB 
 
 
+
+
+
+
+################################################################################
+# Run all tests
+################################################################################
+check-local: $(addsuffix .passed, $(ROSE_TESTS)) $(srcdir)/tests.conf
+MOSTLYCLEANFILES += \
+	$(addsuffix .passed, $(ROSE_TESTS)) \
+	$(addsuffix .failed, $(ROSE_TESTS))

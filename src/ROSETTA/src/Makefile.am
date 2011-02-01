@@ -79,6 +79,7 @@ $(CXX_PREPROC_CODES): CxxGrammarMetaProgram$(EXEEXT) $(GRAMMAR_SOURCE_FILES)
 #  Build a link so that the executable can find the *.code file in ../Grammar
 #	rm -f Grammar
 #	ln -s $(top_srcdir)/src/ROSETTA/Grammar Grammar
+	@echo "  GEN     ROSETTA-generated files"
 	$(VALGRIND) ./CxxGrammarMetaProgram ${top_builddir}/src/frontend/SageIII/
 
 noinst_PROGRAMS = CxxGrammarMetaProgram

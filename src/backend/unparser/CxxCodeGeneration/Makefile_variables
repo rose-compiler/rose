@@ -1,0 +1,22 @@
+
+unparseCxxCodeGeneration_la_sources=\
+	$(cxxCodeGenerationPath)/unparseCxx_expressions.C \
+	$(cxxCodeGenerationPath)/unparseCxx_statements.C \
+	$(cxxCodeGenerationPath)/unparseCxx_types.C
+
+
+unparseCxxCodeGeneration_includeHeaders=\
+	$(cxxCodeGenerationPath)/unparseCxx.h \
+	$(cxxCodeGenerationPath)/unparseCxx_types.h
+
+
+unparseCxxCodeGeneration_extraDist=\
+	$(cxxCodeGenerationPath)/CMakeLists.txt
+
+
+unparseCxxCodeGeneration_cleanLocal=\
+	rm -rf \
+		$(cxxCodeGenerationPath)/ii_files \
+		$(cxxCodeGenerationPath)/ti_files \
+		$(cxxCodeGenerationPath)/core
+

@@ -1,0 +1,104 @@
+# Non-recursive Makefile
+
+mpaAnnotationLanguageParser_builtSources=\
+	language-lexer.cc \
+	language-parser.cc \
+	language.tab.h
+
+
+mpaAnnotationLanguageParser_noinstLTLIBRARIES=\
+	$(mpaAnnotationLanguageParserPath)/libannotationLanguageParser.la
+
+
+## Specifications for building the pdf library.
+libannotationLanguageParser_la_SOURCES = \
+	language-lexer.cc \
+	language-parser.cc \
+	language.tab.h \
+	$(mpaAnnotationLanguageParserPath)/annotations.cc \
+	$(mpaAnnotationLanguageParserPath)/annvariable.cc \
+	$(mpaAnnotationLanguageParserPath)/structure.cc \
+	$(mpaAnnotationLanguageParserPath)/enum_property.cc \
+	$(mpaAnnotationLanguageParserPath)/procedure.cc \
+	$(mpaAnnotationLanguageParserPath)/set_property.cc \
+	$(mpaAnnotationLanguageParserPath)/pointerrule.cc \
+	$(mpaAnnotationLanguageParserPath)/analyze.cc \
+	$(mpaAnnotationLanguageParserPath)/rule.cc \
+	$(mpaAnnotationLanguageParserPath)/broadway_expr.cc \
+	$(mpaAnnotationLanguageParserPath)/report.cc
+
+
+mpaAnnotationLanguageParser_noinstHeaders=\
+	$(mpaAnnotationLanguageParserPath)/actionchanger.h \
+	$(mpaAnnotationLanguageParserPath)/analyze.h \
+	$(mpaAnnotationLanguageParserPath)/annvariable.h \
+	$(mpaAnnotationLanguageParserPath)/callingcontext.h \
+	$(mpaAnnotationLanguageParserPath)/diagnostic.h \
+	$(mpaAnnotationLanguageParserPath)/localstl.h \
+	$(mpaAnnotationLanguageParserPath)/property.h \
+	$(mpaAnnotationLanguageParserPath)/set_property.h \
+	$(mpaAnnotationLanguageParserPath)/action.h \
+	$(mpaAnnotationLanguageParserPath)/ann.h \
+	$(mpaAnnotationLanguageParserPath)/bdwy_liveness.h \
+	$(mpaAnnotationLanguageParserPath)/constantprop.h \
+	$(mpaAnnotationLanguageParserPath)/enum_property.h \
+	$(mpaAnnotationLanguageParserPath)/pointerrule.h \
+	$(mpaAnnotationLanguageParserPath)/report.h \
+	$(mpaAnnotationLanguageParserPath)/structure.h \
+	$(mpaAnnotationLanguageParserPath)/adaptor_statistics.h \
+	$(mpaAnnotationLanguageParserPath)/annotations.h \
+	$(mpaAnnotationLanguageParserPath)/broadway.h \
+	$(mpaAnnotationLanguageParserPath)/cpattern.h \
+	$(mpaAnnotationLanguageParserPath)/broadway_expr.h \
+	$(mpaAnnotationLanguageParserPath)/procedure.h \
+	$(mpaAnnotationLanguageParserPath)/rule.h \
+	$(mpaAnnotationLanguageParserPath)/unification_ann.h
+
+
+libannotationLanguageParser_la_DEPENDENCES=\
+	language-lexer.cc \
+	language-parser.cc \
+	language.tab.h
+
+
+mpaAnnotationLanguageParser_extraDist=\
+	$(mpaAnnotationLanguageParserPath)/CMakeLists.txt \
+	$(mpaAnnotationLanguageParserPath)/language.l \
+	$(mpaAnnotationLanguageParserPath)/language.y
+
+
+language-parser.cc: $(srcdir)/language.y
+	bison -d -pann -o ./tempBisonOutput.c \
+		$(mpaAnnotationLanguageParserPath)/language.y
+	mv \
+		tempBisonOutput.c \
+		language-parser.cc
+	mv \
+		tempBisonOutput.h \
+		language.tab.h
+
+
+# TOO (12/03/2010): added -o option to flex to ensure that generated files are output
+# into the correct directory -- this target is called from the "top-level" Makefile
+# flex: can't open lex.ann.c if "flex -o lex.ann.c"...note the space between -o and lex.ann.c
+language-lexer.cc: $(mpaAnnotationLanguageParserPath)/language.l language-parser.cc
+	flex -olex.ann.c \
+		$(mpaAnnotationLanguageParserPath)/language.l
+	mv \
+		lex.ann.c \
+		language-lexer.cc
+
+
+language.tab.h: language-parser.cc
+
+
+mpaAnnotationLanguageParser_cleanLocal=\
+	rm -f \
+		language-lexer.cc \
+		lex.ann.c \
+		language-parser.cc \
+		language.tab.h \
+		tempBisonOutput.*; \
+	rm -f \
+		$(mpaAnnotationLanguageParserPath)/*.lo \
+		$(mpaAnnotationLanguageParserPath)/*.la
