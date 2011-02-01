@@ -1285,10 +1285,24 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
   // Unparse the lhs and rhs separately to about extra "()".  A little later this will be a 
   // variable declaration, but we will not be able to unparse it as such since the type 
   // (integer) is not explicitly represented.
+     ROSE_ASSERT(lb != NULL);
      SgBinaryOp* binaryExpression = isSgBinaryOp(lb);
+     if (binaryExpression == NULL)
+        {
+       // This is a temporary fix to support some initial testing.
+          printf ("lb = %p = %s \n",lb,lb->class_name().c_str());
+          unparseExpression(lb, info);
+          curprint(" = 1");
+        }
+       else
+        {
+     ROSE_ASSERT(binaryExpression != NULL);
+     ROSE_ASSERT(binaryExpression->get_lhs_operand() != NULL);
      unparseExpression(binaryExpression->get_lhs_operand(), info);
      curprint(" = ");
+     ROSE_ASSERT(binaryExpression->get_rhs_operand() != NULL);
      unparseExpression(binaryExpression->get_rhs_operand(), info);
+        }
 #endif
 
      curprint(", ");

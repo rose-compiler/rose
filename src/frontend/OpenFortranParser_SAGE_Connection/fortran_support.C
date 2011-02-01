@@ -82,6 +82,10 @@ setSourcePosition( SgLocatedNode* locatedNode )
      ROSE_ASSERT(isSgGlobal(locatedNode) == NULL);
 
   // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
+     if (locatedNode->get_endOfConstruct() != NULL || locatedNode->get_startOfConstruct() != NULL)
+        {
+          printf ("In setSourcePosition(SgLocatedNode* locatedNode): locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+        }
      ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
      ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
 
@@ -1844,7 +1848,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(): variableName = %s currentScope = %p = %s \n",variableName.str(),currentScope,currentScope->class_name().c_str());
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("In trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable()");
 #endif
@@ -1992,7 +1996,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
             // This has to be a function call since we can't be building a variable to represent an implicitly type variable. 
             // See jacobi.f for an example of this. Also, currently test2010_45.f90 demonstrates a case of "integer x = 42, y = x" 
             // where the initializer to "y" is not built as a symbol yet as part of the construction of the variable declaration.
-#if 1
+#if 0
                outputState("scope marked as implicit none, so we must construct function in trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
             // DQ (9/11/2010): Since this must be a function, we can build a function reference expression and a function declaration, but in what scope.
@@ -2072,7 +2076,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
 
-#if 1
+#if 0
   // This function could have returned a NULL pointer if there was no symbol found ???
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("Leaving trace_back_through_parent_scopes_lookup_variable_symbol(): variableSymbol = %p functionSymbol = %p \n",variableSymbol,functionSymbol);
@@ -2101,7 +2105,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
   // std::vector<SgVariableSymbol*> returnSymbolList;
      std::vector<SgSymbol*> returnSymbolList;
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector<std::string>,SgScopeStatement*)");
 #endif
@@ -2483,7 +2487,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
              }
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector<std::string>,SgScopeStatement*)");
 #endif
@@ -2600,7 +2604,7 @@ buildImplicitVariableDeclaration( const SgName & variableName )
   // DQ (1/17/2011): Adding an additional test based on debugging test2007_94.f90.
      ROSE_ASSERT(initializedName->get_scope()->lookup_variable_symbol(variableName) != NULL);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of building an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
@@ -3781,7 +3785,7 @@ generateImplicitType( string name )
 
      SgType* returnType = NULL;
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of generateImplicitType()");
 #endif
@@ -4751,6 +4755,19 @@ generateFunctionCall( Token_t* nameToken )
           setSourcePosition(functionArguments);
         }
 
+#if 0
+     SgExpressionPtrList & argList = functionArguments->get_expressions();
+     printf ("\n\n\n\n############### In generateFunctionCall() ################# \n");
+     for (size_t i = 0; i < argList.size(); i++)
+        {
+          printf ("argList[%zu] = %s \n",i,SageInterface::get_name(argList[i]).c_str());
+        }
+#endif
+#if 0
+     printf ("Exting after test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // DQ (12/11/2010): If the name of this function is not found a function of this 
   // name will be added to the current scope (see details in generateFunctionRefExp()).
      SgFunctionRefExp* functionRefExp = generateFunctionRefExp(nameToken);
@@ -4989,7 +5006,19 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
             // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeDefault::createType(),NULL,NULL,NULL);
             // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeDefault::createType());
             // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeDefault::createType(),NULL,procedureDeclaration,NULL);
-               SgInitializedName* initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,procedureDeclaration,NULL);
+            // SgInitializedName* initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,procedureDeclaration,NULL);
+
+            // DQ (1/31/2010): The argument could be a alternate-return dummy argument
+               SgInitializedName* initializedName = NULL;
+               if (arg_name == "*")
+                  {
+                 // Note that alternate return is an obsolescent feature in Fortran 95 and Fortran 90
+                    initializedName = new SgInitializedName(arg_name,SgTypeVoid::createType(),NULL,procedureDeclaration,NULL);
+                  }
+                 else
+                  {
+                    initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,procedureDeclaration,NULL);
+                  }
 
                procedureDeclaration->append_arg(initializedName);
 
