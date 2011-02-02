@@ -34,7 +34,6 @@ class FunctionData;
 // memory leaks. (at the suggestion of George (vulov1))
 #include <boost/shared_ptr.hpp>
 typedef boost::shared_ptr<Properties> PropertiesPtr;
-typedef boost::shared_ptr<FunctionData> FunctionDataPtr; 
 
 //Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
 class Properties : public AstAttribute
@@ -134,7 +133,7 @@ class FunctionData
   public:
     FunctionData ( SgFunctionDeclaration* functionDeclaration, SgProject *project,
         ClassHierarchyWrapper * );
-    PropertiesPtr properties;
+    Properties* properties;
 
     // Relevant data for call graph
     //SgFunctionDeclaration* functionDeclaration;
@@ -219,7 +218,7 @@ template<typename Predicate>
   void
 CallGraphBuilder::buildCallGraph (Predicate pred)
 {
-  Rose_STL_Container<FunctionDataPtr> callGraphData;
+  Rose_STL_Container<FunctionData> callGraphData;
 
   //AS (09/23/06) Query the memory pool instead of subtree of project
   VariantVector vv( V_SgFunctionDeclaration );
@@ -260,10 +259,10 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
       if ( nonDefDecl )
         functionDeclaration = nonDefDecl;
     }
-    FunctionDataPtr functionData( new FunctionData(functionDeclaration, project, &classHierarchy) );
+    FunctionData functionData(functionDeclaration, project, &classHierarchy);
     //*i = functionDeclaration;
 
-    ROSE_ASSERT(functionData->properties->functionDeclaration != NULL);
+    ROSE_ASSERT(functionData.properties->functionDeclaration != NULL);
     //AS(032806) Filter out functions baced on criteria in predicate
     if(pred(functionDeclaration)==true)
     {
@@ -278,7 +277,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
   SgIncidenceDirectedGraph *returnGraph = new SgIncidenceDirectedGraph();
   ROSE_ASSERT (returnGraph != NULL);
 
-  Rose_STL_Container<FunctionDataPtr>::iterator j = callGraphData.begin();
+  Rose_STL_Container<FunctionData>::iterator j = callGraphData.begin();
 
   //printf ("Build the node list callGraphData.size() = %zu \n",callGraphData.size());
 
@@ -286,26 +285,26 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
   while ( j != callGraphData.end() )
   {
     std::string functionName;
-    ROSE_ASSERT ( (*j)->properties->functionDeclaration );
-    functionName = (*j)->properties->functionDeclaration->get_mangled_name().getString();
+    ROSE_ASSERT ( j->properties->functionDeclaration );
+    functionName = j->properties->functionDeclaration->get_mangled_name().getString();
 
     // Generate a unique name to test against later
-    SgFunctionDeclaration* id = (*j)->properties->functionDeclaration;
+    SgFunctionDeclaration* id = j->properties->functionDeclaration;
     SgDeclarationStatement *nonDefDeclInClass =
       isSgMemberFunctionDeclaration( id->get_firstNondefiningDeclaration() );
     if ( nonDefDeclInClass )
       ROSE_ASSERT ( id == nonDefDeclInClass );
     SgGraphNode* node = new SgGraphNode( functionName);
-    node->set_SgNode((*j)->properties->functionDeclaration);
+    node->set_SgNode(j->properties->functionDeclaration);
 
-    node->addNewAttribute( "Properties", (*j)->properties.get() );
+    node->addNewAttribute( "Properties", j->properties );
 
     if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
     {
       std::cout << "Function: "
-	<< (*j)->properties->functionDeclaration->get_scope()->get_qualified_name().getString() +
-	(*j)->properties->functionDeclaration->get_mangled_name().getString()
-	<< " has declaration " << (*j)->isDefined() << "\n";
+	<< j->properties->functionDeclaration->get_scope()->get_qualified_name().getString() +
+	j->properties->functionDeclaration->get_mangled_name().getString()
+	<< " has declaration " << j->isDefined() << "\n";
     }
     nodeList.push_back( node );
     /*
@@ -319,7 +318,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
     k++;
     }
      */
-    ROSE_ASSERT ( (*j)->properties->functionType );
+    ROSE_ASSERT ( j->properties->functionType );
     returnGraph->addNode( node );
     j++;
   }
@@ -334,11 +333,11 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
   {
 
     //                printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
-    ROSE_ASSERT( (*j)->properties->functionDeclaration != NULL );
-    SgGraphNode* startingNode = findNode( nodeList, (*j)->properties->functionDeclaration);
+    ROSE_ASSERT( j->properties->functionDeclaration != NULL );
+    SgGraphNode* startingNode = findNode( nodeList, j->properties->functionDeclaration);
     ROSE_ASSERT (startingNode != NULL);
 
-    Rose_STL_Container<PropertiesPtr> & functionList = (*j)->functionList;
+    Rose_STL_Container<PropertiesPtr> & functionList = j->functionList;
     Rose_STL_Container<PropertiesPtr>::iterator k = functionList.begin();
 
     while ( k != functionList.end() )
@@ -362,10 +361,10 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
         SgGraphNode *dummy;
         dummy = new SgGraphNode( "DUMMY" );
 
-        PropertiesPtr newProp( new Properties(*k) );
+        Properties* newProp = new Properties(*k);
 
         dummy->set_SgNode(newProp->functionDeclaration);
-        dummy->addNewAttribute( "Properties", newProp.get() );
+        dummy->addNewAttribute( "Properties", newProp );
         if ( (*k)->functionDeclaration && (*k)->functionDeclaration->get_definingDeclaration() )
           newProp->hasDef =  true;
         else
