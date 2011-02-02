@@ -8,10 +8,10 @@ indented in a sane manner when viewed by other developers.  Code editors
 a user presses the key labeled \"Tab\":
 
    XEmacs:  (setq indent-tabs-mode nil)          [see Robb]
-   vim:     [please add hints to scripts/policies/NoTabCharacters]
-   Eclipse: [please add hints to scripts/policies/NoTabCharacters]
+   vim:     [please add hints to $0]
+   Eclipse: [please add hints to $0]
 
-If your editor is not capable of inserting an appropriate number of TAB
+If your editor is not capable of inserting an appropriate number of SPACE
 characters when you press the \"Tab\" key, then you can convert TAB characters
 to SPACE characters with the Unix \"expand\" command.
 
