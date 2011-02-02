@@ -1028,7 +1028,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
   hasDefinition = false;
 
   functionDeclaration = inputFunctionDeclaration;
-  properties = PropertiesPtr( new Properties(inputFunctionDeclaration) );
+  properties = new Properties(inputFunctionDeclaration);
   SgFunctionDeclaration *defDecl =
     (
      inputFunctionDeclaration->get_definition() != NULL ? 
