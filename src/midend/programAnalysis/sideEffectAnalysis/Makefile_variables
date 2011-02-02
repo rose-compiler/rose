@@ -1,0 +1,21 @@
+# Non-recursive Makefile
+
+if ROSE_USE_SQLITE_DATABASE
+mpaSideEffectAnalysis_includes=\
+	$(BOOST_CPPFLAGS) \
+	$(SQLITE_DATABASE_INCLUDE)
+
+
+## Specifications for building the pdf library.
+mpaSideEffectAnalysis_la_sources=\
+	$(mpaSideEffectAnalysisPath)/sideEffect.C
+
+
+mpaSideEffectAnalysis_includeHeaders=\
+	$(mpaSideEffectAnalysisPath)/sideEffect.h \
+	$(mpaSideEffectAnalysisPath)/SqliteDatabaseGraph.h
+
+endif
+
+mpaSideEffectAnalysis_extraDist=\
+	$(mpaSideEffectAnalysisPath)/CMakeLists.txt
