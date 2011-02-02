@@ -302,9 +302,9 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
     if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
     {
       std::cout << "Function: "
-	<< j->properties->functionDeclaration->get_scope()->get_qualified_name().getString() +
-	j->properties->functionDeclaration->get_mangled_name().getString()
-	<< " has declaration " << j->isDefined() << "\n";
+        << j->properties->functionDeclaration->get_scope()->get_qualified_name().getString() +
+        j->properties->functionDeclaration->get_mangled_name().getString()
+        << " has declaration " << j->isDefined() << "\n";
     }
     nodeList.push_back( node );
     /*
