@@ -68,6 +68,7 @@ my $nfail=0;
 my $files = FileLister->new(@ARGV);
 while (my $filename = $files->next_file) {
   next unless $filename =~ /\.(h|hh|hpp|c|C|cpp)$/;
+  next if $filename =~ /\/EDG\//; # We don't own EDG sources and therefore can't enforce style constraints
   if (open FILE, "<", $filename) {
     my $has_tabs;
     while (<FILE>) {
