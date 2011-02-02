@@ -2,7 +2,7 @@
 ! FortranParserActionROSE.C's action 'c_action_type_bound_procedure_part'
 ! is unimplemented. It fails an assertion.
 
-module m
+module m104
   type :: t
   contains
     procedure :: p

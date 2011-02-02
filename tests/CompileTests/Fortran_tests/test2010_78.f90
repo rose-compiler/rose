@@ -19,7 +19,7 @@
 ! Your assistance in debugging these problems is greatly appreciated.
 ! Zung
 
-module m1
+module m178
   integer :: i1
 end module
 
