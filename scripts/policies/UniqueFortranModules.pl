@@ -39,4 +39,5 @@ for my $module (sort keys %modules) {
   print "        $_\n" for @{$modules{$module}};
 }
 
-exit($nfail>0 ? 1 : 0);
+# 0=success; 128=warning; 1==error
+exit($nfail>0 ? 128 : 0);
