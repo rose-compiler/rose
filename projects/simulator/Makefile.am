@@ -766,7 +766,6 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_mutex_init.3-1.c\
 		    $(srcdir)/pthread_tests/pthread_mutex_init.3-2.c\
 		    $(srcdir)/pthread_tests/pthread_mutex_init.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_init.5-1.c\
 		    $(srcdir)/pthread_tests/pthread_mutex_init.5-3.c\
 		    $(srcdir)/pthread_tests/pthread_mutex_lock.1-1.c\
 		    $(srcdir)/pthread_tests/pthread_mutex_lock.2-1.c\
@@ -899,6 +898,7 @@ PTHREAD_TEST_INPUTS_SRC = \
 # it has to be killed by 'kill -9 '
 #		    $(srcdir)/pthread_tests/pthread_cond_init.4-1.c\
 #		    $(srcdir)/pthread_tests/pthread_mutex_trylock.1-1.c\
+#		    $(srcdir)/pthread_tests/pthread_mutex_init.5-1.c\
 #
 # no main function: 
 #		    $(srcdir)/pthread_tests/pthread_once.4-1.c\
