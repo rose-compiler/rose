@@ -1,17 +1,32 @@
 package FileLister;
 use strict;
+use Carp;
 use Cwd 'abs_path';
 
 sub new {
   my($cls,@root) = @_;
+  my $self = bless {build=>0,               # include build subtrees identified by presence of "include-staging"?
+		    edg=>0,                 # enter the EDG_* directories containing C/C++ parser source code?
+		    thirdparty=>0,          # software not "owned by" ROSE developers, other than EDG which is handled above
+		    generated=>0,           # software that is machine-generated
+		    install=>0,             # files in the ROSE install directory
+		    recursive=>1,           # recurse into directories
+		    pending=>\@root,        # files and directories that are pending
+		   }, $cls;
+
+  # Parse switches (usually directly from the command-line)
+  while (@root && $root[0]=~/^--?([_a-zA-Z]\w*)(=(.*))?/) {
+    my($var,$val) = ($1,$3);
+    $val = 1 unless defined $val;
+    croak "unknown switch: --$var" unless exists $self->{$var};
+    $self->{$var} = $val;
+    shift @root;
+  }
+  shift @root if @root eq "--";
+
   push @root, "." unless @root;
-  return bless {build=>0,               # include build subtrees identified by presence of "include-staging"?
-		edg=>0,                 # enter the EDG_* directories containing C/C++ parser source code?
-		thirdparty=>0,          # software not "owned by" ROSE developers, other than EDG which is handled above
-		generated=>0,           # software that is machine-generated
-		install=>0,             # files in the ROSE install directory
-                pending=>\@root,        # files and directories that are pending
-               }, $cls;
+  $self->{pending} = \@root;
+  return $self;
 }
 
 # Return true if the given file or directory (with path) is third-party software.
@@ -57,7 +72,7 @@ sub next_name {
       ($retval =~ /~$/      && ! -d $retval)     # editor backup files
      ) {
     return $self->next_name; # skip this name, return the next one
-  } elsif (opendir DIR, $retval) {
+  } elsif ($self->{recursive} && opendir DIR, $retval) {
     # Change 'unshift' to 'push' to get a breadth-first search
     unshift @{$self->{pending}}, map {"$retval/$_"} grep {!/^\.\.?$/} sort readdir DIR;
     close DIR;
