@@ -1,10 +1,10 @@
-module X
-end module X
+module X62
+end module X62
 
-module Y
-   use X
-end module Y
+module Y62
+   use X62
+end module Y62
 
-module Z
-   use Y
-end module Z
+module Z62
+   use Y62
+end module Z62
