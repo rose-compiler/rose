@@ -2,7 +2,7 @@
 ! So this might really be a FFortran 2003 test code 
 ! (syntax fails for gfortran, but is part of the gfortran test suite).
 
-module modproc
+module modproc30
   implicit none
   interface bar
     procedure x
@@ -12,7 +12,7 @@ module modproc
     integer function sub()
     end function sub
   end interface
-end module modproc
+end module modproc30
 
 integer function x()
    implicit none
@@ -20,7 +20,7 @@ integer function x()
 end function x
 
 program test
-  use modproc
+  use modproc30
   implicit none
   integer i
   i = x()

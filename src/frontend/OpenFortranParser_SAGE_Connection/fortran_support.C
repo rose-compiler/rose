@@ -493,6 +493,34 @@ resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token )
           SgDeclarationStatement* functionDeclaration = functionDefinition->get_declaration();
           resetEndingSourcePosition(functionDeclaration,token);
         }
+    // Liao 2/1/2010. The SgBasicBlock of a SgFortranDo has to be adjusted also
+    // 1. the begin construct should be the same as the one of its first child statement
+    // 2. the end construct should be the same as SgFortranDo's end of construct
+    // This is the fix to bug 495: https://outreach.scidac.gov/tracker/index.php?func=detail&aid=495&group_id=24&atid=185
+    SgFortranDo  * f_do = isSgFortranDo(targetLocatedNode);
+    if (f_do != NULL)
+    {
+      SgBasicBlock * body = f_do->get_body();
+      ROSE_ASSERT (body != NULL);
+      // adjust the startOfConstruct
+      SgStatementPtrList stmt_list = body->get_statements(); 
+      if (stmt_list.size()>0)
+       {
+         SgStatement* first_stmt = stmt_list[0];
+         ROSE_ASSERT(first_stmt !=NULL);
+         body->get_startOfConstruct()->set_filename(first_stmt->get_startOfConstruct()->get_filename());
+         body->get_startOfConstruct()->set_line(first_stmt->get_startOfConstruct()->get_line());
+         body->get_startOfConstruct()->set_col(first_stmt->get_startOfConstruct()->get_col());
+       }
+     // adjust the endOfConstruct:   
+     // BTW. c_action_block () also tries to reset the end construct for the block.
+     // But the line number set here can be larger than the new line number c_action_block () tries to set and 
+     // the larger one will be kept.
+         body->get_endOfConstruct()->set_filename(f_do->get_endOfConstruct()->get_filename());
+         body->get_endOfConstruct()->set_line(f_do->get_endOfConstruct()->get_line());
+         body->get_endOfConstruct()->set_col(f_do->get_endOfConstruct()->get_col());
+       
+    }
 
   // If this is the top level scope then iterate over the outer scopes to reset the end of each scope on the stack.
      if (astScopeStack.front() == targetLocatedNode)
