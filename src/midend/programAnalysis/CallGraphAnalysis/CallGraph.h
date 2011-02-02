@@ -56,7 +56,7 @@ class Properties : public AstAttribute
     bool isPoly;
 
     Properties();
-    Properties(PropertiesPtr prop);
+    Properties(Properties* prop);
     Properties(SgFunctionDeclaration* inputFunctionDeclaration);
     Properties(std::string nid, std::string label, std::string type, std::string scope,
         bool hasDef, bool isPtr, bool isPoly);
@@ -79,24 +79,24 @@ namespace CallTargetSet
   typedef Rose_STL_Container<SgFunctionDeclaration *> SgFunctionDeclarationPtrList;
   typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
   // returns the list of declarations of all functions that may get called via the specified pointer
-  std::vector<PropertiesPtr> solveFunctionPointerCall ( SgPointerDerefExp *, SgProject * );
+  std::vector<Properties*> solveFunctionPointerCall ( SgPointerDerefExp *, SgProject * );
 
   // returns the list of declarations of all functions that may get called via a member function pointer
-  std::vector<PropertiesPtr> solveMemberFunctionPointerCall ( SgExpression *,ClassHierarchyWrapper * );
+  std::vector<Properties*> solveMemberFunctionPointerCall ( SgExpression *,ClassHierarchyWrapper * );
   Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType );
 
   // returns the list of declarations of all functions that may get called via a
   // member function (non/polymorphic) call
-  std::vector<PropertiesPtr> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,		SgMemberFunctionDeclaration *, bool );
+  std::vector<Properties*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,		SgMemberFunctionDeclaration *, bool );
 
   // returns the list of Properties of all constructors that may get called via 
   // an initialization.
-  std::vector<PropertiesPtr> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
+  std::vector<Properties*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
 
   // Populates functionList with Properties of all functions that may get called.
   void getPropertiesForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<PropertiesPtr>& propList);
+                                    Rose_STL_Container<Properties*>& propList);
 
   //! Populates functionList with definitions of all functions that may get called. This
   //! is basically a wrapper around getPropertiesForExpression that extracts the
@@ -137,7 +137,7 @@ class FunctionData
 
     // Relevant data for call graph
     //SgFunctionDeclaration* functionDeclaration;
-    Rose_STL_Container<PropertiesPtr> functionList;
+    Rose_STL_Container<Properties *> functionList;
     //@}
     //@{
     //Interfaces only defined when DB is NOT defined
@@ -188,7 +188,7 @@ SgGraphNode*
 findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration);
 
 SgGraphNode* 
-findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, PropertiesPtr functionProperties );
+findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, Properties* functionProperties );
 
 SgGraphNode* 
 findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, std::string name );
