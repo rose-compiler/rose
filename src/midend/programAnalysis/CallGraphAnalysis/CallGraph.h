@@ -337,8 +337,8 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
     SgGraphNode* startingNode = findNode( nodeList, j->properties->functionDeclaration);
     ROSE_ASSERT (startingNode != NULL);
 
-    Rose_STL_Container<PropertiesPtr> & functionList = j->functionList;
-    Rose_STL_Container<PropertiesPtr>::iterator k = functionList.begin();
+    Rose_STL_Container<Properties*> & functionList = j->functionList;
+    Rose_STL_Container<Properties*>::iterator k = functionList.begin();
 
     while ( k != functionList.end() )
     {
