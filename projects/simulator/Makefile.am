@@ -1,4 +1,4 @@
-# Makefile for an x86 simulator called "sandbox". At this time the simulator is highly Linux-specific.  On platforms other
+# Makefile for an x86 simulator called "x86sim". At this time the simulator is highly Linux-specific.  On platforms other
 # than Linux, this simulator is simply a main() that prints an error message and exits.
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
@@ -19,14 +19,6 @@ EXTRA_DIST += README x86sim.conf test_status.txt
 ###############################################################################################################################
 #  PROGRAMS
 ###############################################################################################################################
-
-# The old simulator, which uses ROSE's disassembler, but not ROSE's ability to parse ELF containers. This is built but
-# not tested.  It is being replaced by the new simulator, x86sim.
-noinst_PROGRAMS += sandbox
-include_HEADERS += mymemory.h simulate.h
-sandbox_SOURCES = emulator.C simulate.C linuxcalls.C elfload.C
-sandbox_CPPFLAGS = $(ROSE_INCLUDES) -UDEBUG
-sandbox_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # The new simulator, which uses ROSE interfaces where possible.  The rest of this makefile deals only with this new simulator.
 noinst_PROGRAMS += x86sim
