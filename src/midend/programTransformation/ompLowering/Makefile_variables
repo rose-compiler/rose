@@ -9,7 +9,11 @@ mptOmpLowering_libLibraries=\
 
 
 libxomp_a_SOURCES=\
-	$(mptOmpLoweringPath)/xomp.c
+	$(mptOmpLoweringPath)/xomp.c \
+	$(mptOmpLoweringPath)/run_me_callers.inc \
+	$(mptOmpLoweringPath)/run_me_defs.inc \
+	$(mptOmpLoweringPath)/run_me_callers2.inc \
+	$(mptOmpLoweringPath)/run_me_task_defs.inc
 
 
 mptOmpLowering_includeHeaders=\
@@ -18,8 +22,6 @@ mptOmpLowering_includeHeaders=\
 	$(mptOmpLoweringPath)/libompc.h \
 	$(mptOmpLoweringPath)/libxomp.h \
 	$(mptOmpLoweringPath)/libxompf.h \
-	$(mptOmpLoweringPath)/run_me_defs.inc \
-	$(mptOmpLoweringPath)/run_me_callers.inc
 
 
 mptOmpLowering_extraDist=\
