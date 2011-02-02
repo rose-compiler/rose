@@ -5701,9 +5701,21 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
   if (oldStmt == newStmt) return;
   SgStatement * p = isSgStatement(oldStmt->get_parent());
   ROSE_ASSERT(p);
+#if 0  
   // TODO  handle replace the body of a C/Fortran function definition with a single statement?
-  oldStmt->set_parent(p); // needed ?
-  p->replace_statement(oldStmt,newStmt);
+  // Liao 2/1/2010, in some case, we want to replace the entire body (SgBasicBlock) for some parent nodes.
+  // the built-in replace_statement() (insert_child() underneath) may not defined for them. 
+  if (SgFortranDo * f_do = isSgFortranDo (p)) 
+  {
+    ROSE_ASSERT (f_do->get_body() == oldStmt);
+    if (!isSgBasicBlock(newStmt))
+     newStmt = buildBasicBlock (newStmt);
+    f_do->set_body(isSgBasicBlock(newStmt));
+    newStmt->set_parent(f_do);
+  } 
+  else 
+#endif    
+    p->replace_statement(oldStmt,newStmt);
 
 // Some translators have their own handling for this (e.g. the outliner)
   if (movePreprocessinInfo)
