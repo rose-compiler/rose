@@ -39,17 +39,17 @@ static int cond_return (int input);
    to prepare next round of token recognition!!
 */
 #define YY_INPUT(buf, result, max_size) { \
-		if (*ompparserinput == '\0') result = 0; \
-		else { strncpy(buf, ompparserinput, max_size); \
-			buf[max_size] = 0; \
-			result = strlen(buf); \
-			ompparserinput += result; \
-		} \
-		}
+                if (*ompparserinput == '\0') result = 0; \
+                else { strncpy(buf, ompparserinput, max_size); \
+                        buf[max_size] = 0; \
+                        result = strlen(buf); \
+                        ompparserinput += result; \
+                } \
+                }
 
 %}
 
-blank		[ ]
+blank           [ ]
 newline         [\n]
 digit           [0-9]
 
@@ -59,10 +59,10 @@ id              [a-zA-Z_][a-zA-Z0-9_]*
 {digit}{digit}* { omp_lval.itype = atoi(strdup(yytext)); return (ICONSTANT); }
 omp             { return cond_return ( OMP); }
 parallel        { return cond_return ( PARALLEL); }
-task		{ return cond_return ( TASK ); }
-taskwait	{ return cond_return ( TASKWAIT ); }
+task            { return cond_return ( TASK ); }
+taskwait        { return cond_return ( TASKWAIT ); }
 untied          { return cond_return ( UNTIED );}
-if		{ return ( IF); } /*if is a keyword in C/C++, no change to be a variable*/
+if              { return ( IF); } /*if is a keyword in C/C++, no change to be a variable*/
 num_threads     { /*Can be either a clause name or a variable name */ 
                   return cond_return (NUM_THREADS);
                   /*
@@ -89,7 +89,7 @@ section         { return cond_return ( SECTION ); }
 single          { return cond_return ( SINGLE ); }
 nowait          { return cond_return ( NOWAIT); }
 for             { return ( FOR ); } /*keyword in C/C++ */
-collapse	{ return cond_return ( COLLAPSE ); }
+collapse        { return cond_return ( COLLAPSE ); }
 master          { return cond_return ( MASTER ); }
 critical        { return cond_return ( CRITICAL ); }
 barrier         { return cond_return ( BARRIER ); }
@@ -107,18 +107,18 @@ reduction       { return cond_return ( REDUCTION ); }
 copyin          { return cond_return ( COPYIN ); }
 
 "="             { return('='); }
-"("		{ return ('('); }
-")"		{ return (')'); }
-","		{ return (','); }
-":"		{ return (':'); }
-"+"		{ return ('+'); }
-"*"		{ return ('*'); }
-"-"		{ return ('-'); }
-"&"		{ return ('&'); }
-"^"		{ return ('^'); }
-"|"		{ return ('|'); }
-"&&"		{ return (LOGAND); }
-"||"		{ return (LOGOR); }
+"("             { return ('('); }
+")"             { return (')'); }
+","             { return (','); }
+":"             { return (':'); }
+"+"             { return ('+'); }
+"*"             { return ('*'); }
+"-"             { return ('-'); }
+"&"             { return ('&'); }
+"^"             { return ('^'); }
+"|"             { return ('|'); }
+"&&"            { return (LOGAND); }
+"||"            { return (LOGOR); }
 
 ">>="            {return(RIGHT_ASSIGN2); }
 "<<="            {return(LEFT_ASSIGN2); }
@@ -131,52 +131,52 @@ copyin          { return cond_return ( COPYIN ); }
 "^="             {return(XOR_ASSIGN2); }
 "|="             {return(OR_ASSIGN2); }
 
-"<"		{ return ('<'); }
-">"		{ return ('>'); }
-"<="		{ return (LE_OP2);}
-">="		{ return (GE_OP2);}
-"=="		{ return (EQ_OP2);}
-"!="		{ return (NE_OP2);}
+"<"             { return ('<'); }
+">"             { return ('>'); }
+"<="            { return (LE_OP2);}
+">="            { return (GE_OP2);}
+"=="            { return (EQ_OP2);}
+"!="            { return (NE_OP2);}
 "\\"          { /*printf("found a backslash\n"); This does not work properly but can be ignored*/}
 
 {newline}       { /* printf("found a new line\n"); */ /* return (NEWLINE); We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */ }
 
 <EXPR>.         { int c = yytext[0];
-		  int parenCount = 1;
-		  for (;;) {
-			if (c == EOF)
-				return LEXICALERROR;
-			if (c == ')')
-				--parenCount;
-			if (parenCount == 0) {
-				unput(')');
-				omp_lval.stype =strdup(gExpressionString.c_str()); 
-				gExpressionString = "";
-				BEGIN(INITIAL);
-				return EXPRESSION;
-			}
-			gExpressionString += c;
-			if (c == '(')
-				parenCount++;
-		  	c = yyinput();
-		  }
-			
-		}
+                  int parenCount = 1;
+                  for (;;) {
+                        if (c == EOF)
+                                return LEXICALERROR;
+                        if (c == ')')
+                                --parenCount;
+                        if (parenCount == 0) {
+                                unput(')');
+                                omp_lval.stype =strdup(gExpressionString.c_str()); 
+                                gExpressionString = "";
+                                BEGIN(INITIAL);
+                                return EXPRESSION;
+                        }
+                        gExpressionString += c;
+                        if (c == '(')
+                                parenCount++;
+                        c = yyinput();
+                  }
+                        
+                }
 
-expr		{ return (EXPRESSION); }
+expr            { return (EXPRESSION); }
 identifier      { return (IDENTIFIER); /*not in use for now*/ }
-{id}		{ omp_lval.stype = strdup(yytext); 
+{id}            { omp_lval.stype = strdup(yytext); 
                   return (ID_EXPRESSION); }
 
-{blank}*	;
-.		{ return (LEXICALERROR);}
+{blank}*        ;
+.               { return (LEXICALERROR);}
 
 %%
 
 
 /* yy_push_state can't be called outside of this file, provide a wrapper */
 extern void omp_parse_expr() {
-	yy_push_state(EXPR);
+        yy_push_state(EXPR);
 }
 
 /* entry point invoked by callers to start scanning for a string */
