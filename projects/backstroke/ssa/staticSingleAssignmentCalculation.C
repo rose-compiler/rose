@@ -45,17 +45,17 @@ bool StaticSingleAssignment::isBuiltinVar(const VarName& var)
 
 bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 {
-	SgScopeStatement* scope = SageInterface::getScope(astNode);
-	ROSE_ASSERT(var.size() > 0 && scope != NULL);
+	SgScopeStatement* accessingScope = SageInterface::getScope(astNode);
+	ROSE_ASSERT(var.size() > 0 && accessingScope != NULL);
 	SgScopeStatement* varScope = SageInterface::getScope(var[0]);
 
 	//Work around a ROSE bug that sets incorrect scopes for built-in variables.
 	if (isBuiltinVar(var))
 	{
-		return SageInterface::isAncestor(scope, var[0]);
+		return SageInterface::isAncestor(accessingScope, var[0]);
 	}
 
-	if (varScope == scope || SageInterface::isAncestor(varScope, scope))
+	if (varScope == accessingScope || SageInterface::isAncestor(varScope, accessingScope))
 	{
 		//FIXME: In a basic block, the definition of the variable might come AFTER the node in question
 		//We should return false in this case.
@@ -101,18 +101,35 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 			}
 		}
 
-		//If the variable is a class member, see if the scope is a member function
-		SgNode* curr = scope;
-		while (curr != NULL && !isSgMemberFunctionDeclaration(curr))
+		//If the variable is accessed by a friend function, then it is available. Check if the function
+		//looking to access the var is a friend
+		SgFunctionDeclaration* accessingFunction = SageInterface::getEnclosingFunctionDeclaration(accessingScope, true);
+		SgName accessingFunctionName = accessingFunction->get_mangled_name();
+
+		//We'll look at all functions declared inside the variables class and see if any of them is the accessing function
+		//and is declared a friend
+		vector<SgFunctionDeclaration*> nestedFunctions =
+				SageInterface::querySubTree<SgFunctionDeclaration>(varClassScope, V_SgFunctionDeclaration);
+		foreach (SgFunctionDeclaration* nestedFunction, nestedFunctions)
 		{
-			curr = curr->get_parent();
+			if (SageInterface::getEnclosingClassDefinition(nestedFunction) != varClassScope)
+				continue;
+
+			if (!nestedFunction->get_declarationModifier().isFriend())
+				continue;
+
+			if (nestedFunction->get_mangled_name() != accessingFunctionName)
+				continue;
+
+			//The accessing function is a friend, so the variable is in scope
+			return true;
 		}
 
-		if (curr == NULL)
+		//The variable is a class member; see if the accessing function is a member function of the same class
+		SgMemberFunctionDeclaration* memFunction = isSgMemberFunctionDeclaration(accessingFunction);
+		if (memFunction == NULL)
 			return false;
 
-		SgMemberFunctionDeclaration* memFunction = isSgMemberFunctionDeclaration(curr);
-		ROSE_ASSERT(memFunction != NULL);
 		SgClassDefinition* funcClassScope = memFunction->get_class_scope();
 		ROSE_ASSERT(funcClassScope != NULL);
 
