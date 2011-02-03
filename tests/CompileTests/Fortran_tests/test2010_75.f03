@@ -1,4 +1,4 @@
-module mpi_f08_types
+module mpi_f08_types_10_75
 
    use, intrinsic :: ISO_C_BINDING
 
@@ -14,4 +14,4 @@ module mpi_f08_types
  ! type(MPI_Comm), protected, bind(C) :: MPI_COMM_WORLD
  ! type(MPI_Comm), public, bind(C, name="ompi_f08_mpi_comm_world") :: MPI_COMM_WORLD
 
-end module mpi_f08_types
+end module mpi_f08_types_10_75

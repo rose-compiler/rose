@@ -8,6 +8,10 @@
 ! OFP treats the two halves as separate tokens.
 
       program p
+
+    ! DQ (1/31/2010): This test code should have implicit none.
+      implicit none
+
       integer hello
      1world
       helloworld = 0

@@ -82,6 +82,10 @@ setSourcePosition( SgLocatedNode* locatedNode )
      ROSE_ASSERT(isSgGlobal(locatedNode) == NULL);
 
   // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
+     if (locatedNode->get_endOfConstruct() != NULL || locatedNode->get_startOfConstruct() != NULL)
+        {
+          printf ("In setSourcePosition(SgLocatedNode* locatedNode): locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+        }
      ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
      ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
 
@@ -1418,7 +1422,7 @@ buildNumericLabelSymbol(Token_t* label)
                int label_value = atoi(label->text);
             // printf ("Building a SgLabelSymbol for a numeric label that we have not see yet: label_value = %d = %s \n",label_value,label->text);
 
-               returnSymbol = new SgLabelSymbol(NULL);
+               returnSymbol = new SgLabelSymbol((SgLabelStatement*) NULL);
                ROSE_ASSERT(returnSymbol != NULL);
                returnSymbol->set_fortran_statement(NULL);
                returnSymbol->set_numeric_label_value(label_value);
@@ -1501,7 +1505,7 @@ buildNumericLabelSymbolAndAssociateWithStatement(SgStatement* stmt, Token_t* lab
      if (label_symbol == NULL)
         {
        // If this does not exist then build the associated label symbol and put it into the function's symbol table.
-          label_symbol = new SgLabelSymbol(NULL);
+          label_symbol = new SgLabelSymbol((SgLabelStatement*) NULL);
           label_symbol->set_fortran_statement(stmt);
 
        // DQ (12/24/2007): The new design stores the numeric label value in the SgLabelSymbol.
@@ -1872,7 +1876,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(): variableName = %s currentScope = %p = %s \n",variableName.str(),currentScope,currentScope->class_name().c_str());
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("In trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable()");
 #endif
@@ -2020,7 +2024,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
             // This has to be a function call since we can't be building a variable to represent an implicitly type variable. 
             // See jacobi.f for an example of this. Also, currently test2010_45.f90 demonstrates a case of "integer x = 42, y = x" 
             // where the initializer to "y" is not built as a symbol yet as part of the construction of the variable declaration.
-#if 1
+#if 0
                outputState("scope marked as implicit none, so we must construct function in trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
             // DQ (9/11/2010): Since this must be a function, we can build a function reference expression and a function declaration, but in what scope.
@@ -2036,6 +2040,9 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
 
             // Define this as a function returning void type for now, but it will have to be fixed when we finally see the function definition.
                SgFunctionType* functionType             = new SgFunctionType (SgTypeVoid::createType());
+#if 0
+               printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
                SgFunctionDefinition* functionDefinition = NULL;
 
                SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(name,functionType,functionDefinition);
@@ -2100,7 +2107,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
 
-#if 1
+#if 0
   // This function could have returned a NULL pointer if there was no symbol found ???
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("Leaving trace_back_through_parent_scopes_lookup_variable_symbol(): variableSymbol = %p functionSymbol = %p \n",variableSymbol,functionSymbol);
@@ -2129,7 +2136,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
   // std::vector<SgVariableSymbol*> returnSymbolList;
      std::vector<SgSymbol*> returnSymbolList;
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector<std::string>,SgScopeStatement*)");
 #endif
@@ -2511,7 +2518,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
              }
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector<std::string>,SgScopeStatement*)");
 #endif
@@ -2628,7 +2635,7 @@ buildImplicitVariableDeclaration( const SgName & variableName )
   // DQ (1/17/2011): Adding an additional test based on debugging test2007_94.f90.
      ROSE_ASSERT(initializedName->get_scope()->lookup_variable_symbol(variableName) != NULL);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of building an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
@@ -3809,7 +3816,7 @@ generateImplicitType( string name )
 
      SgType* returnType = NULL;
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of generateImplicitType()");
 #endif
@@ -3900,6 +3907,9 @@ SgFunctionType* generateImplicitFunctionType( string functionName)
      SgFunctionType* functionType = new SgFunctionType(returnType,has_ellipses);
      ROSE_ASSERT(functionType != NULL);
      ROSE_ASSERT(functionType->get_argument_list() != NULL);
+#if 0
+     printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
 
      if (argumentListOnStack == true)
         {
@@ -4779,6 +4789,19 @@ generateFunctionCall( Token_t* nameToken )
           setSourcePosition(functionArguments);
         }
 
+#if 0
+     SgExpressionPtrList & argList = functionArguments->get_expressions();
+     printf ("\n\n\n\n############### In generateFunctionCall() ################# \n");
+     for (size_t i = 0; i < argList.size(); i++)
+        {
+          printf ("argList[%zu] = %s \n",i,SageInterface::get_name(argList[i]).c_str());
+        }
+#endif
+#if 0
+     printf ("Exting after test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // DQ (12/11/2010): If the name of this function is not found a function of this 
   // name will be added to the current scope (see details in generateFunctionRefExp()).
      SgFunctionRefExp* functionRefExp = generateFunctionRefExp(nameToken);
@@ -5017,7 +5040,27 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
             // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeDefault::createType(),NULL,NULL,NULL);
             // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeDefault::createType());
             // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeDefault::createType(),NULL,procedureDeclaration,NULL);
-               SgInitializedName* initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,procedureDeclaration,NULL);
+            // SgInitializedName* initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,procedureDeclaration,NULL);
+
+            // DQ (1/31/2010): The argument could be a alternate-return dummy argument
+               SgInitializedName* initializedName = NULL;
+               bool isAnAlternativeReturnParameter = (arg_name == "*");
+               if (isAnAlternativeReturnParameter == true)
+                  {
+                 // DQ (2/1/2011): Since we will generate a label and with name "*" and independently resolve which 
+                 // label argument is referenced in the return statement, we need not bury the name directly into 
+                 // the arg_name (unless we need to have the references be seperate in the symbol table, so maybe we do!).
+
+                 // Note that alternate return is an obsolescent feature in Fortran 95 and Fortran 90
+                 // initializedName = new SgInitializedName(arg_name,SgTypeVoid::createType(),NULL,procedureDeclaration,NULL);
+                    initializedName = new SgInitializedName(arg_name,SgTypeLabel::createType(),NULL,procedureDeclaration,NULL);
+                  }
+                 else
+                  {
+                 // DQ (2/2/2011): The type might not be specified using implicit type rules, so we should likely define 
+                 // the type as SgTypeUnknown and then fix it up later (at the end of the functions declarations).
+                    initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,procedureDeclaration,NULL);
+                  }
 
                procedureDeclaration->append_arg(initializedName);
 
@@ -5032,15 +5075,38 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
                ROSE_ASSERT(astNameStack.empty() == false);
                astNameStack.pop_front();
 
-            // Now build associated SgVariableSymbol and put it into the current scope (function definition scope)
-               SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
-               procedureDefinition->insert_symbol(arg_name,variableSymbol);
+               if (isAnAlternativeReturnParameter == true)
+                  {
+                 // If this is a label argument then build a SgLabelSymbol.
+                 // We might want them to be positionally relevant rather than name relevent,
+                 // this would define a mechanism that was insensitive to transformations.
+                 // We need a new SgLabelSymbol constructor to support the use here.
+                 // SgLabelSymbol* labelSymbol = new SgLabelSymbol(arg_name);
+                    SgLabelSymbol* labelSymbol = new SgLabelSymbol(initializedName);
+                    procedureDefinition->insert_symbol(arg_name,labelSymbol);
+                  }
+                 else
+                  {
+                 // Now build associated SgVariableSymbol and put it into the current scope (function definition scope)
+                    SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+                    procedureDefinition->insert_symbol(arg_name,variableSymbol);
+                  }
 
             // DQ (12/17/2007): Make sure the scope was set!
                ROSE_ASSERT(initializedName->get_scope() != NULL);
              }
 
           ROSE_ASSERT(procedureDeclaration->get_args().empty() == false);
+
+          SgFunctionType* functionType = isSgFunctionType(procedureDeclaration->get_type());
+          ROSE_ASSERT(functionType != NULL);
+
+       // DQ (2/2/2011): This should be empty at this point, it will be fixed up either as we process declarations 
+       // in the function that will defin the types or types will be assigned using the implicit type rules (which 
+       // might not have even been seen yet for the function) when we are finished processing all of the functions 
+       // declarations.  Note that this information will be need by the alternative return support when we compute
+       // the index for the unparsed code.
+          ROSE_ASSERT(functionType->get_arguments().empty() == true);
         }
 
   // printf ("Added function programName = %s (symbol = %p) to scope = %p = %s \n",tempName.str(),functionSymbol,astScopeStack.front(),astScopeStack.front()->class_name().c_str());
@@ -5881,6 +5947,10 @@ replace_return_type (SgFunctionType* functionType, SgFunctionDeclaration* functi
 
      SgFunctionType* newFunctionType = new SgFunctionType(derivedTypeSymbol->get_declaration()->get_type(),has_ellipses);
   // printf ("newFunctionType = %p \n",newFunctionType);
+
+#if 0
+     printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
 
   // DQ (12/26/2010): Not clear if this should be allowed or not...I would like to fix it later.
   // printf ("NOTE: Sharing the function type argument list in use_statement_fixup() \n");
