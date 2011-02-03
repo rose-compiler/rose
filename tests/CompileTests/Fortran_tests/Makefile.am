@@ -560,7 +560,6 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2011_21.f90 \
      test2011_22.f90 \
      test2011_23.f90 \
-     test2011_26.f90 \
      test2011_38.f90 \
      test2011_41.f90 \
      test2011_42.f90 \
@@ -651,6 +650,7 @@ F03_TESTCODES_CURRENTLY_FAILING = \
      test2010_106.f03 \
      test2010_126.f03 \
      test2010_171.f03 \
+     test2011_26.f03 \
      X-lost-func-return-type.f03 \
      X-constructor-inititalizer.f03
 
