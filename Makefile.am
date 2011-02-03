@@ -65,7 +65,6 @@ remove_sage3basic_h_pch:
 # etc.
 export prefix	# for use by policy scripts
 enforce_policies:
-	@echo "The \"make check\" rule has been run in all subdirectories, now enforcing source code policies."
 	(cd $(top_srcdir) && ./scripts/policies-checker.sh)
 
 
