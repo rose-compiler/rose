@@ -1,0 +1,50 @@
+# Non-recursive Makefile
+
+if ROSE_USE_GCC_OMP
+mpaVariableRenaming_includesOmp=\
+	-DROSE_GCC_OMP 
+endif
+
+mpaVariableRenaming_includes=\
+	-I$(mpaVariableRenamingPath)/.. \
+	-I$(mpaVariableRenamingPath)/../dataflowAnalysis \
+	-I$(mpaVariableRenamingPath)/../CFG \
+	-I$(top_srcdir)/src/midend/loopProcessing \
+	-I$(top_srcdir)/src/midend/astUtil \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	-I$(top_srcdir)/src/midend/astUtil/annotation \
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	$(mpaVariableRenaming_includesOmp)
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpaVariableRenaming_la_sources=\
+	$(mpaVariableRenamingPath)/VariableRenaming.C
+
+
+mpaVariableRenaming_includeHeaders=\
+	$(mpaVariableRenamingPath)/VariableRenaming.h
+
+
+mpaVariableRenaming_extraDist=\
+	$(mpaVariableRenamingPath)/CMakeLists.txt
+
+
+mpaVariableRenaming_cleanLocal=\
+	rm -rf \
+		$(mpaVariableRenamingPath)/Templates.DB \
+		$(mpaVariableRenamingPath)/ii_files \
+		$(mpaVariableRenamingPath)/ti_files \
+		$(mpaVariableRenamingPath)/cxx_templates
+
+
+mpaVariableRenaming_distCleanLocal=\
+	rm -rf \
+		$(mpaVariableRenamingPath)/Templates.DB
