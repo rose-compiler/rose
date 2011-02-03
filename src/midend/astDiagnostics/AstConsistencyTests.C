@@ -2591,7 +2591,15 @@ TestAstSymbolTables::visit ( SgNode* node )
                       // ROSE_ASSERT(labelSymbol->get_declaration() != NULL);
                          if (labelSymbol->get_declaration() == NULL)
                             {
+#if 0
                               ROSE_ASSERT(labelSymbol->get_fortran_statement() != NULL);
+#else
+                           // DQ (2/2/2011): Added support in SgLabelSymbol for Fortran alternative return parameters (see test2010_164.f90).
+                              if (labelSymbol->get_fortran_statement() == NULL)
+                                 {
+                                   ROSE_ASSERT(labelSymbol->get_fortran_alternate_return_parameter() != NULL);
+                                 }
+#endif
                             }
                          break;
                        }
@@ -2894,7 +2902,15 @@ TestAstAccessToDeclarations::test ( SgNode* node )
             // ROSE_ASSERT(tmp->get_declaration() != NULL);
                if (tmp->get_declaration() == NULL)
                   {
+#if 0
                     ROSE_ASSERT(tmp->get_fortran_statement() != NULL);
+#else
+                 // DQ (2/2/2011): Added support in SgLabelSymbol for Fortran alternative return parameters (see test2010_164.f90).
+                    if (tmp->get_fortran_statement() == NULL)
+                       {
+                         ROSE_ASSERT(tmp->get_fortran_alternate_return_parameter() != NULL);
+                       }
+#endif
                   }
                break;
              }
