@@ -231,23 +231,38 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
   // into (what) that would trigger these to be treated as alternative return arguments.
   // We could also check if the enclosing statement is an IO statement.  So there are a number of options here.
   // curprint("*");
-#if 0
-     SgNode* parentNode = labelRefExp->get_parent();
-     if (isSgExprListExp(parentNode) != NULL)
-        {
-          curprint("*");
-        }
-#endif
+
      SgStatement* tmp_statement = SageInterface::getEnclosingStatement(labelRefExp);
      ROSE_ASSERT(tmp_statement != NULL);
-     if (isSgIOStatement(tmp_statement) == NULL)
+
+  // Check for either a SgIOStatement or a SgReturnStatement (not the special case we are looking for)
+     if (isSgIOStatement(tmp_statement) == NULL && isSgReturnStmt(tmp_statement) == NULL)
         {
        // Output "*" if this is NOT a SgIOStatement (OK since I think that only functions in a function CALL statement can be used with alternative IO, is this true?
           curprint("*");
+
+       // Instead of the numericLabelString, we output the index into the array of arguments with type == SgLabelSymbol taken from the function declaration's parameter list.
+          curprint(numericLabelString);
+        }
+       else
+        {
+          if (isSgReturnStmt(tmp_statement) != NULL)
+             {
+            // This is a return statement, but we have to check if it is associated with a function that has SgTypeLabel parameters.
+               bool functionHasAlternativeArgumentParameters = true;
+
+            // This is always a valid value (but not be correct)... just testing for now...
+            // We have to corrolate this SgLabelRefExp with the SgLabelSymbol of the correct parameter.
+               curprint("1");
+             }
+            else
+             {
+            // This is the most common case.
+               curprint(numericLabelString);
+             }
         }
 #endif
 
-     curprint(numericLabelString);
    }
 
 //----------------------------------------------------------------------------
