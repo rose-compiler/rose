@@ -2631,6 +2631,22 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true
   conditional->set_parent(ifstmt);
   true_body->set_parent(ifstmt);
   if (false_body != NULL) false_body->set_parent(ifstmt);
+
+  if (SageInterface::is_Fortran_language() )
+  {
+    // Liao 1/20/2010
+    // According to Fortran 77 standard Chapter 11.5 to 11.9, 
+    // this is a Fortran Block IF statement, if the true body is:
+    // 1. A block of statement under SgBasicBlock
+    // 2. DO, block if, or another logical if
+    // Otherwise it is a logical if statement
+    if (isSgBasicBlock(true_body)|| isSgFortranDo(true_body)|| isSgIfStmt(true_body)) 
+    {
+      ifstmt->set_use_then_keyword(true);
+      ifstmt->set_has_end_statement(true);
+    } 
+  }
+
   return ifstmt;
 }
 

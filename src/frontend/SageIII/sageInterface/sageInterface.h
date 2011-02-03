@@ -789,6 +789,10 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* label);
 //!Return the loop index variable for a for loop
 SgInitializedName* getLoopIndexVariable(SgNode* loop);
 
+//!Check if a SgInitializedName is used as a loop index within a AST subtree
+//! This function will use a bottom-up traverse starting from the subtree_root to find all enclosing loops and check if ivar is used as an index for either of them. 
+bool isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree_root);
+
 //! Routines to get and set the body of a loop
 SgStatement* getLoopBody(SgScopeStatement* loop);
 

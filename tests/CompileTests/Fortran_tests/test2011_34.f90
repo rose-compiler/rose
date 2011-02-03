@@ -2,7 +2,7 @@
 ! So this might really be a FFortran 2003 test code 
 ! (syntax fails for gfortran, but is part of the gfortran test suite).
 
-module myMod
+module myMod34
 
   CONTAINS
 
@@ -16,10 +16,10 @@ module myMod
      if (arg1(0)/=7) call abort()
   end subroutine proc4
 
-end module myMod
+end module myMod34
 
 program myProg
-  use myMod
+  use myMod34
   PROCEDURE (real), POINTER :: p => NULL()
   p => proc3
   call proc4( p )

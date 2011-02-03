@@ -5701,9 +5701,21 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
   if (oldStmt == newStmt) return;
   SgStatement * p = isSgStatement(oldStmt->get_parent());
   ROSE_ASSERT(p);
+#if 0  
   // TODO  handle replace the body of a C/Fortran function definition with a single statement?
-  oldStmt->set_parent(p); // needed ?
-  p->replace_statement(oldStmt,newStmt);
+  // Liao 2/1/2010, in some case, we want to replace the entire body (SgBasicBlock) for some parent nodes.
+  // the built-in replace_statement() (insert_child() underneath) may not defined for them. 
+  if (SgFortranDo * f_do = isSgFortranDo (p)) 
+  {
+    ROSE_ASSERT (f_do->get_body() == oldStmt);
+    if (!isSgBasicBlock(newStmt))
+     newStmt = buildBasicBlock (newStmt);
+    f_do->set_body(isSgBasicBlock(newStmt));
+    newStmt->set_parent(f_do);
+  } 
+  else 
+#endif    
+    p->replace_statement(oldStmt,newStmt);
 
 // Some translators have their own handling for this (e.g. the outliner)
   if (movePreprocessinInfo)
@@ -6806,10 +6818,24 @@ bool SageInterface::loopInterchange(SgForStatement* loop, size_t depth, size_t l
   return true;
 }
 
-//!Return the loop index variable for a for loop
+//!Return the loop index variable for a C/C++ for or Fortran Do loop
 SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
 {
   ROSE_ASSERT(loop != NULL);
+  SgInitializedName* ivarname=NULL;
+
+  // Fortran case ------------------
+  if (SgFortranDo * do_loop = isSgFortranDo(loop))
+  {
+    SgAssignOp* assign_op = isSgAssignOp (do_loop->get_initialization());
+    ROSE_ASSERT (assign_op != NULL);
+    SgVarRefExp* var = isSgVarRefExp(assign_op->get_lhs_operand());
+    ROSE_ASSERT (var != NULL);
+    ivarname = var->get_symbol()->get_declaration();
+    ROSE_ASSERT (ivarname != NULL);
+    return ivarname;
+  }  
+  // C/C++ case ------------------------------ 
   SgForStatement* fs = isSgForStatement(loop);
   ROSE_ASSERT (fs != NULL);
 
@@ -6822,7 +6848,6 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   }
   SgStatement* init1 = init.front();
   SgExpression* ivarast=NULL;
-  SgInitializedName* ivarname=NULL;
 
   bool isCase1=false, isCase2=false;
   //consider C99 style: for (int i=0;...)
@@ -6876,6 +6901,31 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   //ROSE_ASSERT(isStrictIntegerType(ivarname->get_type()));
   return ivarname;
 }
+
+//!Check if a SgInitializedName is used as a loop index within a AST subtree
+//! This function will use a bottom-up traverse starting from the subtree to find all enclosing loops and check if ivar is used as an index for either of them.
+bool SageInterface::isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree_root)
+{
+  ROSE_ASSERT (ivar != NULL);
+  ROSE_ASSERT (subtree_root != NULL);
+  bool result = false;
+  SgScopeStatement * cur_loop = findEnclosingLoop (getEnclosingStatement(subtree_root));
+  while (cur_loop)
+  {
+    SgInitializedName * i_index = getLoopIndexVariable (cur_loop);
+    if (i_index == ivar)
+    {
+      result = true;
+      break;
+    }
+    else
+    { // findEnclosingLoop() is inclusive. 
+      cur_loop = findEnclosingLoop (getEnclosingStatement(cur_loop->get_parent()));
+    }
+  }
+  return result; 
+}
+
 //! Get Fortran Do loop's key features
 bool SageInterface::isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/, bool *hasIncrementalIterationSpace/*= NULL*/, bool* isInclusiveUpperBound/*=NULL*/)
 {
@@ -12729,6 +12779,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                        }
                      break;
                      case V_SgFortranIncludeLine:
+                     case V_SgAttributeSpecificationStatement:
                        break;
                     default:
                        {
