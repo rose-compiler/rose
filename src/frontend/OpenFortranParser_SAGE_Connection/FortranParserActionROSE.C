@@ -18623,6 +18623,9 @@ void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp
 
           SgInitializedName* argumentInitializedName = NULL;
           SgIntVal* integerValue = isSgIntVal(returnValue);
+
+#if 0
+       // DQ (2/2/2011): Saving the return support for alternative return handling until tomorrow.
           if (integerValue != NULL)
              {
             // This might be a function with alternative return arguments (keep checking).
@@ -18633,7 +18636,6 @@ void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp
 
                SgFunctionDeclaration* functionDeclaration = functionDefinition->get_declaration();
                ROSE_ASSERT(functionDeclaration != NULL);
-
 
                SgInitializedNamePtrList & args = functionDeclaration->get_args();
                ROSE_ASSERT(alternativeReturnValue < args.size());
@@ -18684,6 +18686,7 @@ void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp
             // No need to change the set value above.
                ROSE_ASSERT(returnValue != NULL);
              }
+#endif
         }
        else
         {
