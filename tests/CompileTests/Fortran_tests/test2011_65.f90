@@ -16,6 +16,7 @@ program p
     ! The following call is incorrect because F90 requires that
     ! positional arguments come before keyword arguments.
     ! However, OFP accepts it and ROSE fails an assertion on it.
-    call g(k=0, *100, *100)  ! assertion failure: 'keyword' is null
+    call g(k=0, *100, *200)  ! assertion failure: 'keyword' is null
 100 continue
+200 continue
 end program

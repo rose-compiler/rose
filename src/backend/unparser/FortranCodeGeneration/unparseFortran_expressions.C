@@ -251,14 +251,58 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
             // This is a return statement, but we have to check if it is associated with a function that has SgTypeLabel parameters.
                bool functionHasAlternativeArgumentParameters = true;
 
+               size_t alternativeReturnValue = 0;
+
             // This is always a valid value (but not be correct)... just testing for now...
-            // We have to corrolate this SgLabelRefExp with the SgLabelSymbol of the correct parameter.
-               curprint("1");
+            // We have to correlate this SgLabelRefExp with the SgLabelSymbol of the correct parameter.
+
+            // Note that this code is similar (copyied from) to R1236 c_action_return_stmt() in the ROSE Fortran support.
+               SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingFunctionDefinition(tmp_statement, /* includingSelf= */ true);
+               ROSE_ASSERT(functionDefinition != NULL);
+
+               SgFunctionDeclaration* functionDeclaration = functionDefinition->get_declaration();
+               ROSE_ASSERT(functionDeclaration != NULL);
+
+               SgInitializedNamePtrList & args = functionDeclaration->get_args();
+               ROSE_ASSERT(alternativeReturnValue < args.size());
+
+            // The Fortran world starts at one (not zero)!
+               size_t counter = 1;
+
+               for (size_t i = 0; i < args.size(); i++)
+                  {
+                     SgType* argumentType = args[i]->get_type();
+                     SgTypeLabel* labelType = isSgTypeLabel(argumentType);
+                     if (labelType != NULL)
+                        {
+                       // Search the argument list for a matching symbol.
+                          SgSymbol* tmp_symbol = args[i]->get_symbol_from_symbol_table();
+                          if (tmp_symbol == labelSymbol && alternativeReturnValue < 1)
+                             {
+                            // We have a match.
+                               alternativeReturnValue = counter;
+                             }
+
+#if 0
+                          if (counter == alternativeReturnValue)
+                             {
+                               argumentInitializedName = args[i];
+                             }
+#endif
+                          counter++;
+                        }
+                  }
+
+            // This is using Fortran world numbering (which starts a one, not zero).
+            // curprint("1");
+               ROSE_ASSERT(alternativeReturnValue > 0);
+               ROSE_ASSERT(alternativeReturnValue <= args.size());
+               curprint(StringUtility::numberToString(alternativeReturnValue));
              }
             else
              {
             // This is the most common case.
-               curprint(numericLabelString);
+                curprint(numericLabelString);
              }
         }
 #endif
