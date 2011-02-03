@@ -180,6 +180,8 @@ Grammar::setUpSymbols ()
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      LabelSymbol.setDataPrototype         ( "SgStatement*", "fortran_statement", "= NULL",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LabelSymbol.setDataPrototype         ( "SgInitializedName*", "fortran_alternate_return_parameter", "= NULL",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelSymbol.setDataPrototype         ( "int", "numeric_label_value", "= -1",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelSymbol.setDataPrototype         ( "SgLabelSymbol::label_type_enum", "label_type", "= SgLabelSymbol::e_unknown_label_type",

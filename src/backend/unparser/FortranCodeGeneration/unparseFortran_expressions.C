@@ -182,6 +182,13 @@ FortranCodeGeneration_locatedNode::unparseActualArgumentExpression(SgExpression*
 
      curprint(actualArgumentExpression->get_argument_name());
 
+#if 1
+  // DQ (2/2/2011): Now we don't want to support the use of SgActualArgumentExpression 
+  // to hide a alternative return argument.  So the name should never be "*". Now we
+  // use a newer implementation with SgLabelRefExp instead (and a new SgTypeLabel IR node).
+     ROSE_ASSERT(actualArgumentExpression->get_argument_name() != "*");
+     curprint("=");
+#else
   // DQ (1/30/2011): If the name is "*" then this is an "alternative return label".
   // Note that we might want this to appear more explicitly as a specialized IR 
   // node in the future.
@@ -189,6 +196,7 @@ FortranCodeGeneration_locatedNode::unparseActualArgumentExpression(SgExpression*
         {
           curprint("=");
         }
+#endif
 
      unparseExpression(actualArgumentExpression->get_expression(),info);
    }
@@ -207,7 +215,98 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
      ROSE_ASSERT(numericLabel >= 0);
 
      string numericLabelString = StringUtility::numberToString(numericLabel);
-     curprint(numericLabelString);
+
+#if 0
+  // This solution was going to use type checking, but is more complex so I have selected a simpler approach (initially for now).
+     bool isFunctionCallArgumentForAlternativeReturnType = labelRefExp->isFunctionCallArgumentForAlternativeReturnType();
+     if (isFunctionCallArgumentForAlternativeReturnType == true)
+        {
+          curprint("*");
+        }
+#else
+  // DQ (2/2/2011): We can't do this since it will effect where lables are unparse in the OPEN statement (and likely other I/O statements).
+  // After some email with Scott this is required to be handled via a special case so since in all other case the SgLabelRefExp shuld
+  // have a IOStatement as a parent, we will look for where the parent is part of an expression list.  This could be improved later.
+  // the best way to handle this would be to do the type checking, and I'm OK with that approach.  The backup plan is to embed names
+  // into (what) that would trigger these to be treated as alternative return arguments.
+  // We could also check if the enclosing statement is an IO statement.  So there are a number of options here.
+  // curprint("*");
+
+     SgStatement* tmp_statement = SageInterface::getEnclosingStatement(labelRefExp);
+     ROSE_ASSERT(tmp_statement != NULL);
+
+  // Check for either a SgIOStatement or a SgReturnStatement (not the special case we are looking for)
+     if (isSgIOStatement(tmp_statement) == NULL && isSgReturnStmt(tmp_statement) == NULL)
+        {
+       // Output "*" if this is NOT a SgIOStatement (OK since I think that only functions in a function CALL statement can be used with alternative IO, is this true?
+          curprint("*");
+
+       // Instead of the numericLabelString, we output the index into the array of arguments with type == SgLabelSymbol taken from the function declaration's parameter list.
+          curprint(numericLabelString);
+        }
+       else
+        {
+          if (isSgReturnStmt(tmp_statement) != NULL)
+             {
+            // This is a return statement, but we have to check if it is associated with a function that has SgTypeLabel parameters.
+               bool functionHasAlternativeArgumentParameters = true;
+
+               size_t alternativeReturnValue = 0;
+
+            // This is always a valid value (but not be correct)... just testing for now...
+            // We have to correlate this SgLabelRefExp with the SgLabelSymbol of the correct parameter.
+
+            // Note that this code is similar (copyied from) to R1236 c_action_return_stmt() in the ROSE Fortran support.
+               SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingFunctionDefinition(tmp_statement, /* includingSelf= */ true);
+               ROSE_ASSERT(functionDefinition != NULL);
+
+               SgFunctionDeclaration* functionDeclaration = functionDefinition->get_declaration();
+               ROSE_ASSERT(functionDeclaration != NULL);
+
+               SgInitializedNamePtrList & args = functionDeclaration->get_args();
+               ROSE_ASSERT(alternativeReturnValue < args.size());
+
+            // The Fortran world starts at one (not zero)!
+               size_t counter = 1;
+
+               for (size_t i = 0; i < args.size(); i++)
+                  {
+                     SgType* argumentType = args[i]->get_type();
+                     SgTypeLabel* labelType = isSgTypeLabel(argumentType);
+                     if (labelType != NULL)
+                        {
+                       // Search the argument list for a matching symbol.
+                          SgSymbol* tmp_symbol = args[i]->get_symbol_from_symbol_table();
+                          if (tmp_symbol == labelSymbol && alternativeReturnValue < 1)
+                             {
+                            // We have a match.
+                               alternativeReturnValue = counter;
+                             }
+
+#if 0
+                          if (counter == alternativeReturnValue)
+                             {
+                               argumentInitializedName = args[i];
+                             }
+#endif
+                          counter++;
+                        }
+                  }
+
+            // This is using Fortran world numbering (which starts a one, not zero).
+            // curprint("1");
+               ROSE_ASSERT(alternativeReturnValue > 0);
+               ROSE_ASSERT(alternativeReturnValue <= args.size());
+               curprint(StringUtility::numberToString(alternativeReturnValue));
+             }
+            else
+             {
+            // This is the most common case.
+                curprint(numericLabelString);
+             }
+        }
+#endif
+
    }
 
 //----------------------------------------------------------------------------
@@ -1285,10 +1384,24 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
   // Unparse the lhs and rhs separately to about extra "()".  A little later this will be a 
   // variable declaration, but we will not be able to unparse it as such since the type 
   // (integer) is not explicitly represented.
+     ROSE_ASSERT(lb != NULL);
      SgBinaryOp* binaryExpression = isSgBinaryOp(lb);
+     if (binaryExpression == NULL)
+        {
+       // This is a temporary fix to support some initial testing.
+          printf ("lb = %p = %s \n",lb,lb->class_name().c_str());
+          unparseExpression(lb, info);
+          curprint(" = 1");
+        }
+       else
+        {
+     ROSE_ASSERT(binaryExpression != NULL);
+     ROSE_ASSERT(binaryExpression->get_lhs_operand() != NULL);
      unparseExpression(binaryExpression->get_lhs_operand(), info);
      curprint(" = ");
+     ROSE_ASSERT(binaryExpression->get_rhs_operand() != NULL);
      unparseExpression(binaryExpression->get_rhs_operand(), info);
+        }
 #endif
 
      curprint(", ");
