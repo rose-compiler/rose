@@ -14343,7 +14343,7 @@ void c_action_io_implied_do_control()
           printf ("stride = %p \n",stride);
 #endif
         }
-     printf ("In c_action_io_implied_do_control(): Stride set to stride = %p \n",stride);
+  // printf ("In c_action_io_implied_do_control(): Stride set to stride = %p \n",stride);
 
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExpression* upperBound = astExpressionStack.front();
@@ -18604,7 +18604,7 @@ void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token
 void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp_bool hasScalarIntExpr)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_return_stmt(): label = %s hasScalarIntExpr = %s \n",(label != NULL) ? label->text : "NULL", hasScalarIntExpr ? "true" : "false");
+          printf ("In R1236 c_action_return_stmt(): label = %s hasScalarIntExpr = %s \n",(label != NULL) ? label->text : "NULL", hasScalarIntExpr ? "true" : "false");
 
      SgExpression* returnValue = NULL;
      bool returningFromFunctionUsingAlternativeReturnArguments = false;
@@ -18624,12 +18624,12 @@ void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp
           SgInitializedName* argumentInitializedName = NULL;
           SgIntVal* integerValue = isSgIntVal(returnValue);
 
-#if 0
+#if 1
        // DQ (2/2/2011): Saving the return support for alternative return handling until tomorrow.
           if (integerValue != NULL)
              {
             // This might be a function with alternative return arguments (keep checking).
-                size_t alternativeReturnValue = (size_t) integerValue->get_value();
+               size_t alternativeReturnValue = (size_t) integerValue->get_value();
 
                SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingFunctionDefinition(astScopeStack.front(), /* includingSelf= */ true);
                ROSE_ASSERT(functionDefinition != NULL);
@@ -18638,7 +18638,14 @@ void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp
                ROSE_ASSERT(functionDeclaration != NULL);
 
                SgInitializedNamePtrList & args = functionDeclaration->get_args();
-               ROSE_ASSERT(alternativeReturnValue < args.size());
+
+            // These is the only valid range of numbers allowed.
+               if (alternativeReturnValue < 1 || alternativeReturnValue > args.size())
+                  {
+                    printf ("Error: alternativeReturnValue = %zu is out of range for this function's parameter list \n",alternativeReturnValue);
+                  }
+               ROSE_ASSERT(alternativeReturnValue > 0);
+               ROSE_ASSERT(alternativeReturnValue <= args.size());
 
             // The Fortran world starts at one (not zero)!
                size_t counter = 1;
