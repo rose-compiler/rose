@@ -66,6 +66,7 @@
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include <sys/socket.h>
+#include <grp.h>
 
 /* Define this if you want strict emulation. When defined, every attempt is made for x86sim to provide an environment as close
  * as possible to running natively on hudson-rose-07.  Note that defining this might cause the simulator to malfunction since
@@ -3493,6 +3494,28 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
+        case 9: { /* 0x9, link */
+            syscall_enter("link", "ss");
+            bool error;
+
+            std::string oldpath = read_string(arg(0), 0, &error);
+	    if (error) {
+		    writeGPR(x86_gpr_ax, -EFAULT);
+		    break;
+	    }
+            std::string newpath = read_string(arg(1), 0, &error);
+	    if (error) {
+		    writeGPR(x86_gpr_ax, -EFAULT);
+		    break;
+	    }
+
+            int result = syscall(SYS_link,oldpath.c_str(), newpath.c_str());
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+
+            syscall_leave("d");
+            break;
+        }
+
         case 10: { /*0xa, unlink*/
             syscall_enter("unlink", "s");
             do {
@@ -3769,6 +3792,14 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+        case 36: { /*0x24, sync*/
+            //  void sync(void);
+            syscall_enter("sync", "");
+            sync();
+            writeGPR(x86_gpr_ax, 0);
+            syscall_leave("d");
+            break;
+        }
 
 	case 37: { /* 0x25, kill */
             syscall_enter("kill", "df", signal_names);
@@ -3780,6 +3811,29 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+
+	case 38: { /* 0x26, rename */
+            syscall_enter("rename", "ss");
+            bool error;
+
+            std::string oldpath = read_string(arg(0), 0, &error);
+	    if (error) {
+		    writeGPR(x86_gpr_ax, -EFAULT);
+		    break;
+	    }
+            std::string newpath = read_string(arg(1), 0, &error);
+	    if (error) {
+		    writeGPR(x86_gpr_ax, -EFAULT);
+		    break;
+	    }
+
+            int result = syscall(SYS_rename,oldpath.c_str(), newpath.c_str());
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+
+            syscall_leave("d");
+            break;
+        }
+
 
 	case 39: { /* 0x27, mkdir */
             syscall_enter("mkdir", "sd");
@@ -4349,22 +4403,42 @@ EmulationPolicy::emulate_syscall()
             break;
         }
 
-        case 99: { /* 0x63, statfs */
-            syscall_enter("statfs", "sp");
+        case 99:    /* 0x63, statfs */
+        case 100: { /* 0x63, fstatfs */
+
+            if( 99 == callno )
+              syscall_enter("statfs", "sp");
+            else
+              syscall_enter("fstatfs", "dp");
+
             do {
-                bool error;
-                std::string path = read_string(arg(0), 0, &error);
-                if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
-                    break;
+                int result;
+                static statfs_64_native host_statfs;
+
+                if(99==callno){
+
+                  bool error;
+                  std::string path = read_string(arg(0), 0, &error);
+                  if (error) {
+                      writeGPR(x86_gpr_ax, -EFAULT);
+                      break;
+                  }
+
+#ifdef SYS_statfs64 /* host is 32-bit machine */
+                  result = syscall(SYS_statfs64 , path.c_str(), sizeof host_statfs, &host_statfs);
+#else             /* host is 64-bit machine */
+                  result = syscall(SYS_statfs, path.c_str(), &host_statfs);
+#endif
+                }else{
+
+#ifdef SYS_statfs64 /* host is 32-bit machine */
+                  result = syscall(SYS_fstatfs64 ,arg(0), sizeof host_statfs, &host_statfs);
+#else             /* host is 64-bit machine */
+                  result = syscall(SYS_fstatfs, arg(0), &host_statfs);
+#endif
+
                 }
 
-                static statfs_64_native host_statfs;
-#ifdef SYS_statfs64 /* host is 32-bit machine */
-                int result = syscall(SYS_statfs64, path.c_str(), sizeof host_statfs, &host_statfs);
-#else           /* host is 64-bit machine */
-                int result = syscall(SYS_statfs, path.c_str(), &host_statfs);
-#endif
                 if (-1==result) {
                     writeGPR(x86_gpr_ax, -errno);
                     break;
@@ -4788,6 +4862,17 @@ EmulationPolicy::emulate_syscall()
                     syscall_leave("d");
                     break;
             }
+            break;
+        }
+
+        case 118: { /* 0x76, fsync */
+            /*
+                int fsync(int fd);
+            */
+            syscall_enter("fsync", "d");
+            int result = fsync( arg(0));
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            syscall_leave("d");
             break;
         }
 
@@ -5590,6 +5675,36 @@ EmulationPolicy::emulate_syscall()
             syscall_leave("d");
             break;
         }
+#if 0
+        case 205: { /* 0xCD, getgroups32 */
+            /*
+               int getgroups(int size, gid_t list[]); 
+            */
+            syscall_enter("getgroups32", "d-");
+            gid_t list[arg(0)];
+            int result = getgroups( arg(0), list);
+            size_t nwritten = map->write(list, arg(1), arg(0));
+            ROSE_ASSERT(nwritten == (size_t)arg(0));
+
+            writeGPR(x86_gpr_ax, result);
+            syscall_leave("d");
+            break;
+        }
+
+        case 206: { /* 0xCD, setgroups32 */
+            /*
+               int setgroups(size_t size, const gid_t *list);
+            */
+            syscall_enter("setgroups32", "d-");
+            gid_t list[arg(0)];
+            size_t nread = map->write(&list, arg(1), arg(0));
+            ROSE_ASSERT(nread == arg(0));
+            int result = setgroups( arg(0), list);
+            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            syscall_leave("d");
+            break;
+        }
+#endif
 
         case 207: { /*0xcf, fchown32 */
             /* int fchown(int fd, uid_t owner, gid_t group);
