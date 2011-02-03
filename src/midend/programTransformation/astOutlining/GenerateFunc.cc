@@ -981,31 +981,7 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
         createUnpackDecl (p_init_name, counter, isPointerDeref, i_name , struct_decl, body);
       ROSE_ASSERT (local_var_decl);
       prependStatement (local_var_decl,body);
-#if 0 // moved to OmpSupport::transOmpVariables()     
-      // also create a private copy for firstprivate and reduction variables
-      // and transfer the value from the shared copy
-      // // local_var_decl for regular (shared) firstprivate, reduction variables, 
-      // int *_pp_sum1; 
-      //   _pp_sum1 = ((int *)(__ompc_args[2]));
-      //  // local_var_decl2 for firstprivate and reduction variables
-      //  //  we avoid using copy constructor here
-      //  int _p_sum1;  
-      //  _p_sum1 = * _pp_sum1; // use a dedicated assignment statement instead
-      if (fpSyms.find(*i)!=fpSyms.end() || fpSyms.find(*i)!=fpSyms.end())  
-      {
-        
-      // firstprivate and reduction variables use the 2nd local declaration 
-      // and use the private_remap instead of sym_remap
-        local_var_decl2 = buildVariableDeclaration ("_p_"+name_str, i_name->get_type(), NULL, args_scope); 
-        SageInterface::insertStatementAfter(local_var_decl, local_var_decl2);
-        recordSymRemap (*i, local_var_decl2, args_scope, private_remap);
-        SgExprStatement* assign_stmt = buildAssignStatement(buildVarRefExp(local_var_decl2), 
-                             buildPointerDerefExp(buildVarRefExp(local_var_decl)));
-        SageInterface::insertStatementAfter(local_var_decl2, assign_stmt);
-      }
-      else 
-#endif        
-        // regular and shared variables used the first local declaration
+       // regular and shared variables used the first local declaration
         recordSymRemap (*i, local_var_decl, args_scope, sym_remap);
       // transfer the value for firstprivate variables. 
       // TODO

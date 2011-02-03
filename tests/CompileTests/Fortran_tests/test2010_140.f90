@@ -1,4 +1,4 @@
-module mpi
+module mpi140
  ! This results in the function non-defining declaration in the nearest module scope (SgClassDefinition) (not the global scope).
  ! And the symbol table fixed up as expected.
    EXTERNAL MPI_WTIME
