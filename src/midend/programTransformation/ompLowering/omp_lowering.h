@@ -152,6 +152,8 @@ namespace OmpSupport
 
   //! Special handling when trying to build and insert a variable declaration into a BB within Fortran OpenMP code
   SgVariableDeclaration * buildAndInsertDeclarationForOmp(const std::string &name, SgType *type, SgInitializer *varInit, SgBasicBlock *orig_scope);
+  //! Find an enclosing parallel region or function definition's body
+  SgBasicBlock* getEnclosingRegionOrFuncDefinition (SgNode *);
 } // end namespace OmpSupport  
 
 #endif //OMP_LOWERING_H

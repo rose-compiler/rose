@@ -11840,6 +11840,11 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
 
      setSourcePosition(loopStatement,doKeyword);
      body->set_parent(loopStatement);
+  // Liao 2/1/2011, set the body's endOfConstruct to be the same as the loop statement's endOfConstruct
+  // We should not use the endOfConstruct of fortran loop here since c_action_end_do_stmt()
+  // will call resetEndingSourcePosition() to change it later on.
+  //   body->set_endOfConstruct (new Sg_File_Info(*(loopStatement->get_endOfConstruct())));
+  //   body->get_endOfConstruct()->set_line(6);
 
      astScopeStack.front()->append_statement(loopStatement);
 
