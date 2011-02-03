@@ -1197,7 +1197,7 @@ print_winsize_32(FILE *f, const uint8_t *_v, size_t sz)
  * use it because it also does constant folding, which means that its symbolic aspects are never actually used here. We only
  * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
  * since we're only operating on known addresses and values, and thus override all superclass methods dealing with memory. */
-class EmulationPolicy: public VirtualMachineSemantics::Policy {
+class RSIM_Thread: public VirtualMachineSemantics::Policy {
 public:
     struct SegmentInfo {
         uint32_t base, limit;
@@ -1271,7 +1271,7 @@ public:
     bool trace_signal;                          /* Show reception and delivery of signals */
     FILE *binary_trace;                         /* Stream for binary trace. See projects/traceAnalysis/trace.C for details */
 
-    EmulationPolicy()
+    RSIM_Thread()
         : map(NULL), disassembler(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000),
           robust_list_head_va(0), set_child_tid(0), clear_child_tid(0),
@@ -1279,91 +1279,18 @@ public:
           debug(NULL), trace_insn(false), trace_state(false), trace_mem(false), trace_mmap(false), trace_syscall(false),
           trace_loader(false), trace_progress(false), trace_signal(false), binary_trace(NULL) {
 
-        vdso_name = "x86vdso";
-        vdso_paths.push_back(".");
-#ifdef X86_VDSO_PATH_1
-        vdso_paths.push_back(X86_VDSO_PATH_1);
-#endif
-#ifdef X86_VDSO_PATH_2
-        vdso_paths.push_back(X86_VDSO_PATH_2);
-#endif
-        
-
-        for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
-            writeGPR((X86GeneralPurposeRegister)i, 0);
-        for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
-            writeFlag((X86Flag)i, 0);
-        writeIP(0);
-        writeFlag((X86Flag)1, true_());
-        writeGPR(x86_gpr_sp, 0xbffff000ul);     /* high end of stack, exclusive */
-
-        memset(gdt, 0, sizeof gdt);
-        gdt[0x23>>3].entry_number = 0x23>>3;
-        gdt[0x23>>3].limit = 0x000fffff;
-        gdt[0x23>>3].seg_32bit = 1;
-        gdt[0x23>>3].read_exec_only = 1;
-        gdt[0x23>>3].limit_in_pages = 1;
-        gdt[0x23>>3].useable = 1;
-        gdt[0x2b>>3].entry_number = 0x2b>>3;
-        gdt[0x2b>>3].limit = 0x000fffff;
-        gdt[0x2b>>3].seg_32bit = 1;
-        gdt[0x2b>>3].limit_in_pages = 1;
-        gdt[0x2b>>3].useable = 1;
-
-        writeSegreg(x86_segreg_cs, 0x23);
-        writeSegreg(x86_segreg_ds, 0x2b);
-        writeSegreg(x86_segreg_es, 0x2b);
-        writeSegreg(x86_segreg_ss, 0x2b);
-        writeSegreg(x86_segreg_fs, 0x2b);
-        writeSegreg(x86_segreg_gs, 0x2b);
-
-        memset(signal_action, 0, sizeof signal_action);
-        signal_stack.ss_sp = 0;
-        signal_stack.ss_size = 0;
-        signal_stack.ss_flags = SS_DISABLE;
+        ctor();
     }
+
+    void ctor();
 
     /* Enable debugging.  The PATTERN should be a printf-style format with an optional integer specifier for the process ID. */
     void open_log_file(const char *pattern);
 
     /* Print machine register state for debugging */
-    void dump_registers(FILE *f) const {
-        fprintf(f, "  Machine state:\n");
-        fprintf(f, "    eax=0x%08"PRIx64" ebx=0x%08"PRIx64" ecx=0x%08"PRIx64" edx=0x%08"PRIx64"\n",
-                readGPR(x86_gpr_ax).known_value(), readGPR(x86_gpr_bx).known_value(),
-                readGPR(x86_gpr_cx).known_value(), readGPR(x86_gpr_dx).known_value());
-        fprintf(f, "    esi=0x%08"PRIx64" edi=0x%08"PRIx64" ebp=0x%08"PRIx64" esp=0x%08"PRIx64" eip=0x%08"PRIx64"\n",
-                readGPR(x86_gpr_si).known_value(), readGPR(x86_gpr_di).known_value(),
-                readGPR(x86_gpr_bp).known_value(), readGPR(x86_gpr_sp).known_value(),
-                get_ip().known_value());
-        for (int i=0; i<6; i++) {
-            X86SegmentRegister sr = (X86SegmentRegister)i;
-            fprintf(f, "    %s=0x%04"PRIx64" base=0x%08"PRIx32" limit=0x%08"PRIx32" present=%s\n",
-                    segregToString(sr), readSegreg(sr).known_value(), segreg_shadow[sr].base, segreg_shadow[sr].limit,
-                    segreg_shadow[sr].present?"yes":"no");
-        }
+    void dump_registers(FILE *f) const;
 
-        uint32_t eflags = get_eflags();
-        fprintf(f, "    flags: 0x%08"PRIx32":", eflags);
-        static const char *flag_name[] = {"cf",  "#1",  "pf",   "#3",    "af",    "#5",  "zf",  "sf",
-                                          "tf",  "if",  "df",   "of", "iopl0", "iopl1",  "nt", "#15",
-                                          "rf",  "vm",  "ac",  "vif",   "vip",    "id", "#22", "#23",
-                                          "#24", "#25", "#26", "#27",   "#28",   "#29", "#30", "#31"};
-        for (uint32_t i=0; i<32; i++) {
-            if (eflags & (1u<<i))
-                fprintf(f, " %s", flag_name[i]);
-        }
-        fprintf(f, "\n");
-    }
-
-    uint32_t get_eflags() const {
-        uint32_t eflags = 0;
-        for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
-            if (readFlag((X86Flag)i).is_known())
-                eflags |= readFlag((X86Flag)i).known_value() ? 1u<<i : 0u;
-        }
-        return eflags;
-    }
+    uint32_t get_eflags() const;
 
     /* Generate an ELF Core Dump on behalf of the specimen.  This is a real core dump that can be used with GDB and contains
      * the same information as if the specimen had been running natively and dumped its own core. In other words, the core
@@ -1451,19 +1378,10 @@ public:
     void binary_trace_add(const SgAsmInstruction *insn);
 
     /* Same as the x86_push instruction */
-    void push(VirtualMachineSemantics::ValueType<32> n) {
-        VirtualMachineSemantics::ValueType<32> new_sp = add(readGPR(x86_gpr_sp), number<32>(-4));
-        writeMemory(x86_segreg_ss, new_sp, n, true_());
-        writeGPR(x86_gpr_sp, new_sp);
-    }
+    void push(VirtualMachineSemantics::ValueType<32> n);
 
     /* Same as the x86_pop instruction */
-    VirtualMachineSemantics::ValueType<32> pop() {
-        VirtualMachineSemantics::ValueType<32> old_sp = readGPR(x86_gpr_sp);
-        VirtualMachineSemantics::ValueType<32> retval = readMemory<32>(x86_segreg_ss, old_sp, true_());
-        writeGPR(x86_gpr_sp, add(old_sp, number<32>(4)));
-        return retval;
-    }
+    VirtualMachineSemantics::ValueType<32> pop();
 
     /* Called by X86InstructionSemantics. Used by x86_and instruction to set AF flag */
     VirtualMachineSemantics::ValueType<1> undefined_() {
@@ -1603,11 +1521,119 @@ public:
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, long sz);
 };
 
+/* Constructor */
+void
+RSIM_Thread::ctor()
+{
+    vdso_name = "x86vdso";
+    vdso_paths.push_back(".");
+#ifdef X86_VDSO_PATH_1
+    vdso_paths.push_back(X86_VDSO_PATH_1);
+#endif
+#ifdef X86_VDSO_PATH_2
+    vdso_paths.push_back(X86_VDSO_PATH_2);
+#endif
+
+
+    for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
+        writeGPR((X86GeneralPurposeRegister)i, 0);
+    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
+        writeFlag((X86Flag)i, 0);
+    writeIP(0);
+    writeFlag((X86Flag)1, true_());
+    writeGPR(x86_gpr_sp, 0xbffff000ul);     /* high end of stack, exclusive */
+
+    memset(gdt, 0, sizeof gdt);
+    gdt[0x23>>3].entry_number = 0x23>>3;
+    gdt[0x23>>3].limit = 0x000fffff;
+    gdt[0x23>>3].seg_32bit = 1;
+    gdt[0x23>>3].read_exec_only = 1;
+    gdt[0x23>>3].limit_in_pages = 1;
+    gdt[0x23>>3].useable = 1;
+    gdt[0x2b>>3].entry_number = 0x2b>>3;
+    gdt[0x2b>>3].limit = 0x000fffff;
+    gdt[0x2b>>3].seg_32bit = 1;
+    gdt[0x2b>>3].limit_in_pages = 1;
+    gdt[0x2b>>3].useable = 1;
+
+    writeSegreg(x86_segreg_cs, 0x23);
+    writeSegreg(x86_segreg_ds, 0x2b);
+    writeSegreg(x86_segreg_es, 0x2b);
+    writeSegreg(x86_segreg_ss, 0x2b);
+    writeSegreg(x86_segreg_fs, 0x2b);
+    writeSegreg(x86_segreg_gs, 0x2b);
+
+    memset(signal_action, 0, sizeof signal_action);
+    signal_stack.ss_sp = 0;
+    signal_stack.ss_size = 0;
+    signal_stack.ss_flags = SS_DISABLE;
+}
+
+void
+RSIM_Thread::dump_registers(FILE *f) const
+{
+    fprintf(f, "  Machine state:\n");
+    fprintf(f, "    eax=0x%08"PRIx64" ebx=0x%08"PRIx64" ecx=0x%08"PRIx64" edx=0x%08"PRIx64"\n",
+            readGPR(x86_gpr_ax).known_value(), readGPR(x86_gpr_bx).known_value(),
+            readGPR(x86_gpr_cx).known_value(), readGPR(x86_gpr_dx).known_value());
+    fprintf(f, "    esi=0x%08"PRIx64" edi=0x%08"PRIx64" ebp=0x%08"PRIx64" esp=0x%08"PRIx64" eip=0x%08"PRIx64"\n",
+            readGPR(x86_gpr_si).known_value(), readGPR(x86_gpr_di).known_value(),
+            readGPR(x86_gpr_bp).known_value(), readGPR(x86_gpr_sp).known_value(),
+            get_ip().known_value());
+    for (int i=0; i<6; i++) {
+        X86SegmentRegister sr = (X86SegmentRegister)i;
+        fprintf(f, "    %s=0x%04"PRIx64" base=0x%08"PRIx32" limit=0x%08"PRIx32" present=%s\n",
+                segregToString(sr), readSegreg(sr).known_value(), segreg_shadow[sr].base, segreg_shadow[sr].limit,
+                segreg_shadow[sr].present?"yes":"no");
+    }
+
+    uint32_t eflags = get_eflags();
+    fprintf(f, "    flags: 0x%08"PRIx32":", eflags);
+    static const char *flag_name[] = {"cf",  "#1",  "pf",   "#3",    "af",    "#5",  "zf",  "sf",
+                                      "tf",  "if",  "df",   "of", "iopl0", "iopl1",  "nt", "#15",
+                                      "rf",  "vm",  "ac",  "vif",   "vip",    "id", "#22", "#23",
+                                      "#24", "#25", "#26", "#27",   "#28",   "#29", "#30", "#31"};
+    for (uint32_t i=0; i<32; i++) {
+        if (eflags & (1u<<i))
+            fprintf(f, " %s", flag_name[i]);
+    }
+    fprintf(f, "\n");
+}
+
+uint32_t
+RSIM_Thread::get_eflags() const
+{
+    uint32_t eflags = 0;
+    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
+        if (readFlag((X86Flag)i).is_known())
+            eflags |= readFlag((X86Flag)i).known_value() ? 1u<<i : 0u;
+    }
+    return eflags;
+}
+
+void
+RSIM_Thread::push(VirtualMachineSemantics::ValueType<32> n)
+{
+    VirtualMachineSemantics::ValueType<32> new_sp = add(readGPR(x86_gpr_sp), number<32>(-4));
+    writeMemory(x86_segreg_ss, new_sp, n, true_());
+    writeGPR(x86_gpr_sp, new_sp);
+}
+
+VirtualMachineSemantics::ValueType<32>
+RSIM_Thread::pop()
+{
+    VirtualMachineSemantics::ValueType<32> old_sp = readGPR(x86_gpr_sp);
+    VirtualMachineSemantics::ValueType<32> retval = readMemory<32>(x86_segreg_ss, old_sp, true_());
+    writeGPR(x86_gpr_sp, add(old_sp, number<32>(4)));
+    return retval;
+}
+
+
+
 /* Using the new interface is still about as complicated as the old interface because we need to perform only a partial link.
  * We want ROSE to link the interpreter (usually /lib/ld-linux.so) into the AST but not link in any other shared objects.
  * Then we want ROSE to map the interpreter (if present) and all main ELF Segments into the specimen address space but not
  * make any of the usual adjustments for ELF Sections that also specify a mapping. */
-
 struct SimLoader: public BinaryLoaderElf {
 public:
     SgAsmGenericHeader *interpreter;                    /* header linked into AST for .interp section */
@@ -1713,7 +1739,7 @@ public:
 };
 
 SgAsmGenericHeader*
-EmulationPolicy::load(const char *name)
+RSIM_Thread::load(const char *name)
 {
     /* Find the executable by searching the PATH environment variable. The executable name and full path name are both saved
      * in the class (exename and exeargs[0]). */ 
@@ -1833,7 +1859,7 @@ EmulationPolicy::load(const char *name)
     return fhdr;
 }
 
-void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[])
+void RSIM_Thread::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[])
 {
     /* We only handle ELF for now */
     SgAsmElfFileHeader *fhdr = isSgAsmElfFileHeader(_fhdr);
@@ -2060,7 +2086,7 @@ void EmulationPolicy::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char
 }
 
 SgAsmx86Instruction *
-EmulationPolicy::current_insn()
+RSIM_Thread::current_insn()
 {
     rose_addr_t ip = readIP().known_value();
 
@@ -2092,7 +2118,7 @@ EmulationPolicy::current_insn()
 }
 
 void
-EmulationPolicy::dump_core(int signo, std::string base_name)
+RSIM_Thread::dump_core(int signo, std::string base_name)
 {
     if (base_name.empty())
         base_name = core_base_name;
@@ -2393,7 +2419,7 @@ EmulationPolicy::dump_core(int signo, std::string base_name)
 }
 
 void *
-EmulationPolicy::my_addr(uint32_t va, size_t nbytes)
+RSIM_Thread::my_addr(uint32_t va, size_t nbytes)
 {
     /* Obtain mapping information and check that the specified number of bytes are mapped. */
     const MemoryMap::MapElement *me = map->find(va);
@@ -2410,7 +2436,7 @@ EmulationPolicy::my_addr(uint32_t va, size_t nbytes)
 }
 
 uint32_t
-EmulationPolicy::guest_va(void *addr, size_t nbytes)
+RSIM_Thread::guest_va(void *addr, size_t nbytes)
 {
     const std::vector<MemoryMap::MapElement> elmts = map->get_elements();
     for (std::vector<MemoryMap::MapElement>::const_iterator ei=elmts.begin(); ei!=elmts.end(); ++ei) {
@@ -2424,7 +2450,7 @@ EmulationPolicy::guest_va(void *addr, size_t nbytes)
 }
 
 std::string
-EmulationPolicy::read_string(uint32_t va, size_t limit/*=0*/, bool *error/*=NULL*/)
+RSIM_Thread::read_string(uint32_t va, size_t limit/*=0*/, bool *error/*=NULL*/)
 {
     std::string retval;
     while (1) {
@@ -2448,7 +2474,7 @@ EmulationPolicy::read_string(uint32_t va, size_t limit/*=0*/, bool *error/*=NULL
 }
 
 std::vector<std::string>
-EmulationPolicy::read_string_vector(uint32_t va, bool *_error/*=NULL*/)
+RSIM_Thread::read_string_vector(uint32_t va, bool *_error/*=NULL*/)
 {
     bool had_error;
     bool *error = _error ? _error : &had_error;
@@ -2479,7 +2505,7 @@ EmulationPolicy::read_string_vector(uint32_t va, bool *_error/*=NULL*/)
 
 /* NOTE: not yet tested for guest_dirent_t == dirent64_t; i.e., the getdents64() syscall. [RPM 2010-11-17] */
 template<class guest_dirent_t> /* either dirent32_t or dirent64_t */
-int EmulationPolicy::getdents_syscall(int fd, uint32_t dirent_va, long sz)
+int RSIM_Thread::getdents_syscall(int fd, uint32_t dirent_va, long sz)
 {
     ROSE_ASSERT(sizeof(dirent64_t)>=sizeof(guest_dirent_t));
 
@@ -2549,7 +2575,7 @@ int EmulationPolicy::getdents_syscall(int fd, uint32_t dirent_va, long sz)
 }
 
 void
-EmulationPolicy::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, uint32_t timeout_va)
+RSIM_Thread::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, uint32_t timeout_va)
 {
     static const Translate sem_flags[] = {
         TF(IPC_NOWAIT), TF(SEM_UNDO), T_END
@@ -2593,7 +2619,7 @@ EmulationPolicy::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops
 }
 
 void
-EmulationPolicy::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
+RSIM_Thread::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
 {
 #ifdef SYS_ipc /* i686 */
     int result = syscall(SYS_ipc, 2, key, nsems, semflg);
@@ -2604,7 +2630,7 @@ EmulationPolicy::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
 }
 
 void
-EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t semun_va)
+RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t semun_va)
 {
     int version = cmd & 0x0100/*IPC_64*/;
     cmd &= ~0x0100;
@@ -2868,7 +2894,7 @@ EmulationPolicy::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint3
 
 
 void
-EmulationPolicy::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgflg)
+RSIM_Thread::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgflg)
 {
     if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
         writeGPR(x86_gpr_ax, -EINVAL);
@@ -2914,7 +2940,7 @@ EmulationPolicy::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, ui
 }
 
 void
-EmulationPolicy::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgtyp, uint32_t msgflg)
+RSIM_Thread::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgtyp, uint32_t msgflg)
 {
     if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
         writeGPR(x86_gpr_ax, -EINVAL);
@@ -2947,14 +2973,14 @@ EmulationPolicy::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, ui
 }
 
 void
-EmulationPolicy::sys_msgget(uint32_t key, uint32_t msgflg)
+RSIM_Thread::sys_msgget(uint32_t key, uint32_t msgflg)
 {
     int result = msgget(key, msgflg);
     writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
 
 void
-EmulationPolicy::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
+RSIM_Thread::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
 {
     int version = cmd & 0x0100/*IPC_64*/;
     cmd &= ~0x0100;
@@ -3061,7 +3087,7 @@ EmulationPolicy::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
 }
 
 void
-EmulationPolicy::sys_shmdt(uint32_t shmaddr_va)
+RSIM_Thread::sys_shmdt(uint32_t shmaddr_va)
 {
     const MemoryMap::MapElement *me = map->find(shmaddr_va);
     if (!me || me->get_va()!=shmaddr_va || me->get_offset()!=0 || me->is_anonymous()) {
@@ -3080,14 +3106,14 @@ EmulationPolicy::sys_shmdt(uint32_t shmaddr_va)
 }
 
 void
-EmulationPolicy::sys_shmget(uint32_t key, uint32_t size, uint32_t shmflg)
+RSIM_Thread::sys_shmget(uint32_t key, uint32_t size, uint32_t shmflg)
 {
     int result = shmget(key, size, shmflg);
     writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
 
 void
-EmulationPolicy::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
+RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
 {
     int version = cmd & 0x0100/*IPC_64*/;
     cmd &= ~0x0100;
@@ -3259,7 +3285,7 @@ EmulationPolicy::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
 }
 
 void
-EmulationPolicy::sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, uint32_t shmaddr)
+RSIM_Thread::sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, uint32_t shmaddr)
 {
     if (0==shmaddr) {
         shmaddr = map->find_last_free();
@@ -3302,7 +3328,7 @@ EmulationPolicy::sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, 
 }
 
 void
-EmulationPolicy::sys_socket(int family, int type, int protocol)
+RSIM_Thread::sys_socket(int family, int type, int protocol)
 {
 #ifdef SYS_socketcall /* i686 */
     ROSE_ASSERT(4==sizeof(int));
@@ -3318,7 +3344,7 @@ EmulationPolicy::sys_socket(int family, int type, int protocol)
 }
 
 void
-EmulationPolicy::sys_bind(int fd, uint32_t addr_va, uint32_t addrlen)
+RSIM_Thread::sys_bind(int fd, uint32_t addr_va, uint32_t addrlen)
 {
     if (addrlen<1 || addrlen>4096) {
         writeGPR(x86_gpr_ax, -EINVAL);
@@ -3347,7 +3373,7 @@ EmulationPolicy::sys_bind(int fd, uint32_t addr_va, uint32_t addrlen)
 }
 
 void
-EmulationPolicy::sys_listen(int fd, int backlog)
+RSIM_Thread::sys_listen(int fd, int backlog)
 {
 #ifdef SYS_socketcall /* i686 */
     ROSE_ASSERT(4==sizeof(int));
@@ -3362,7 +3388,7 @@ EmulationPolicy::sys_listen(int fd, int backlog)
 }
 
 void
-EmulationPolicy::emulate_syscall()
+RSIM_Thread::emulate_syscall()
 {
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
      *          according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers. */
@@ -6250,7 +6276,7 @@ EmulationPolicy::emulate_syscall()
 }
 
 void
-EmulationPolicy::open_log_file(const char *pattern)
+RSIM_Thread::open_log_file(const char *pattern)
 {
     char name[4096];
 
@@ -6282,7 +6308,7 @@ EmulationPolicy::open_log_file(const char *pattern)
 }
 
 void
-EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *ap)
+RSIM_Thread::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *ap)
 {
     ROSE_ASSERT(info!=NULL);
     info->val = val;
@@ -6314,7 +6340,7 @@ EmulationPolicy::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_li
 }
 
 void
-EmulationPolicy::syscall_enterv(uint32_t *values, const char *name, const char *format, va_list *app)
+RSIM_Thread::syscall_enterv(uint32_t *values, const char *name, const char *format, va_list *app)
 {
     static timeval first_call;
 
@@ -6333,7 +6359,7 @@ EmulationPolicy::syscall_enterv(uint32_t *values, const char *name, const char *
 }
 
 void
-EmulationPolicy::syscall_enter(uint32_t *values, const char *name, const char *format, ...)
+RSIM_Thread::syscall_enter(uint32_t *values, const char *name, const char *format, ...)
 {
     va_list ap;
     va_start(ap, format);
@@ -6342,7 +6368,7 @@ EmulationPolicy::syscall_enter(uint32_t *values, const char *name, const char *f
 }
 
 void
-EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
+RSIM_Thread::syscall_enter(const char *name, const char *format, ...)
 {
     va_list ap;
     va_start(ap, format);
@@ -6351,7 +6377,7 @@ EmulationPolicy::syscall_enter(const char *name, const char *format, ...)
 }
 
 void
-EmulationPolicy::syscall_leave(const char *format, ...) 
+RSIM_Thread::syscall_leave(const char *format, ...) 
 {
     va_list ap;
     va_start(ap, format);
@@ -6382,7 +6408,7 @@ EmulationPolicy::syscall_leave(const char *format, ...)
 }
 
 uint32_t
-EmulationPolicy::arg(int idx)
+RSIM_Thread::arg(int idx)
 {
     switch (idx) {
         case -1: return readGPR(x86_gpr_ax).known_value();      /* syscall return value */
@@ -6397,10 +6423,10 @@ EmulationPolicy::arg(int idx)
 }
 
 /* Called asynchronously to make a signal pending. The signal will be dropped if it's action is to ignore. Otherwise it will be
- * made pending by setting the appropriate bit in the EmulationPolicy's signal_pending vector.  And yes, we know that this
+ * made pending by setting the appropriate bit in the RSIM_Thread's signal_pending vector.  And yes, we know that this
  * function is not async signal safe when signal tracing is enabled. */
 void
-EmulationPolicy::signal_generate(int signo)
+RSIM_Thread::signal_generate(int signo)
 {
     ROSE_ASSERT(signo>0 && signo<_NSIG);
     uint64_t sigbit = (uint64_t)1 << (signo-1);
@@ -6429,7 +6455,7 @@ EmulationPolicy::signal_generate(int signo)
 
 /* Deliver a pending, unmasked signal.  Posix doesn't specify an order, so we'll deliver the one with the lowest number. */
 void
-EmulationPolicy::signal_deliver_any()
+RSIM_Thread::signal_deliver_any()
 {
     if (signal_reprocess) {
         signal_reprocess = false;
@@ -6446,7 +6472,7 @@ EmulationPolicy::signal_deliver_any()
 
 /* Deliver the specified signal. The signal is not removed from the signal_pending vector, nor is it added if its masked. */
 void
-EmulationPolicy::signal_deliver(int signo)
+RSIM_Thread::signal_deliver(int signo)
 {
     ROSE_ASSERT(signo>0 && signo<=64);
 
@@ -6553,7 +6579,7 @@ EmulationPolicy::signal_deliver(int signo)
  * or siglongjmp(), in which case the original stack, etc are restored anyway. Additionally, siglongjmp() may do a system call
  * to set the signal mask back to the value saved by sigsetjmp(), if any. */
 void
-EmulationPolicy::signal_return()
+RSIM_Thread::signal_return()
 {
     /* Discard handler arguments */
     int signo = pop().known_value(); /* signal number */
@@ -6589,7 +6615,7 @@ EmulationPolicy::signal_return()
 /* Suspend execution until a signal arrives. The signal must not be masked, and must either terminate the process or have a
  * signal handler. */
 void
-EmulationPolicy::signal_pause()
+RSIM_Thread::signal_pause()
 {
     /* Signals that terminate a process by default */
     uint64_t terminating = (uint64_t)(-1);
@@ -6621,7 +6647,7 @@ EmulationPolicy::signal_pause()
 }
 
 void
-EmulationPolicy::binary_trace_start()
+RSIM_Thread::binary_trace_start()
 {
     if (!binary_trace)
         return;
@@ -6654,7 +6680,7 @@ EmulationPolicy::binary_trace_start()
 }
 
 void
-EmulationPolicy::binary_trace_add(const SgAsmInstruction *insn)
+RSIM_Thread::binary_trace_add(const SgAsmInstruction *insn)
 {
     if (!binary_trace)
         return;
@@ -6739,7 +6765,7 @@ EmulationPolicy::binary_trace_add(const SgAsmInstruction *insn)
     assert(1==n);
 }
 
-static EmulationPolicy *signal_deliver_to;
+static RSIM_Thread *signal_deliver_to;
 static void
 signal_handler(int signo)
 {
@@ -6767,8 +6793,8 @@ signal_handler(int signo)
 int
 main(int argc, char *argv[], char *envp[])
 {
-    typedef X86InstructionSemantics<EmulationPolicy, VirtualMachineSemantics::ValueType> Semantics;
-    EmulationPolicy policy;
+    typedef X86InstructionSemantics<RSIM_Thread, VirtualMachineSemantics::ValueType> Semantics;
+    RSIM_Thread policy;
     Semantics t(policy);
     uint32_t dump_at = 0;               /* dump core the first time we hit this address, before the instruction is executed */
     std::string dump_name = "dump";
@@ -7060,7 +7086,7 @@ main(int argc, char *argv[], char *envp[])
             std::cerr <<e <<"\n\n";
             policy.dump_core(SIGILL);
             abort();
-        } catch (const EmulationPolicy::Exit &e) {
+        } catch (const RSIM_Thread::Exit &e) {
             /* specimen has exited */
             if (policy.robust_list_head_va)
                 fprintf(stderr, "warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
@@ -7080,7 +7106,7 @@ main(int argc, char *argv[], char *envp[])
                 exit(1);
             }
             break;
-        } catch (const EmulationPolicy::Signal &e) {
+        } catch (const RSIM_Thread::Signal &e) {
             policy.signal_generate(e.signo);
         }
     }
