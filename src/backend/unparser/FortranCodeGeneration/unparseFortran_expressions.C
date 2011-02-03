@@ -216,18 +216,8 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
 
      string numericLabelString = StringUtility::numberToString(numericLabel);
 
-  // SgType* tempType = labelRefExp->get_type();
-  // ROSE_ASSERT(tempType != NULL);
-
-  // This will fail to work because the symbol is associated with the SgLabelStatement (which is not associated with the function call.
 #if 0
-     printf ("In Fortran unparseLabelRefExp(): labelSymbol->get_label_type() = %d \n",labelSymbol->get_label_type());
-     if (labelSymbol->get_label_type() == SgLabelSymbol::e_alternative_return_type)
-        {
-          curprint("*");
-        }
-#else
-#if 0
+  // This solution was going to use type checking, but is more complex so I have selected a simpler approach (initially for now).
      bool isFunctionCallArgumentForAlternativeReturnType = labelRefExp->isFunctionCallArgumentForAlternativeReturnType();
      if (isFunctionCallArgumentForAlternativeReturnType == true)
         {
@@ -241,12 +231,20 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
   // into (what) that would trigger these to be treated as alternative return arguments.
   // We could also check if the enclosing statement is an IO statement.  So there are a number of options here.
   // curprint("*");
+#if 0
      SgNode* parentNode = labelRefExp->get_parent();
      if (isSgExprListExp(parentNode) != NULL)
         {
           curprint("*");
         }
 #endif
+     SgStatement* tmp_statement = SageInterface::getEnclosingStatement(labelRefExp);
+     ROSE_ASSERT(tmp_statement != NULL);
+     if (isSgIOStatement(tmp_statement) == NULL)
+        {
+       // Output "*" if this is NOT a SgIOStatement (OK since I think that only functions in a function CALL statement can be used with alternative IO, is this true?
+          curprint("*");
+        }
 #endif
 
      curprint(numericLabelString);

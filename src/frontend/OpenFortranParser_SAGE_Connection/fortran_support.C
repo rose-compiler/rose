@@ -2040,7 +2040,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
 
             // Define this as a function returning void type for now, but it will have to be fixed when we finally see the function definition.
                SgFunctionType* functionType             = new SgFunctionType (SgTypeVoid::createType());
-#if 1
+#if 0
                printf ("#########################################  functionType = %p ####################################### \n",functionType);
 #endif
                SgFunctionDefinition* functionDefinition = NULL;
@@ -3907,7 +3907,7 @@ SgFunctionType* generateImplicitFunctionType( string functionName)
      SgFunctionType* functionType = new SgFunctionType(returnType,has_ellipses);
      ROSE_ASSERT(functionType != NULL);
      ROSE_ASSERT(functionType->get_argument_list() != NULL);
-#if 1
+#if 0
      printf ("#########################################  functionType = %p ####################################### \n",functionType);
 #endif
 
@@ -5948,7 +5948,7 @@ replace_return_type (SgFunctionType* functionType, SgFunctionDeclaration* functi
      SgFunctionType* newFunctionType = new SgFunctionType(derivedTypeSymbol->get_declaration()->get_type(),has_ellipses);
   // printf ("newFunctionType = %p \n",newFunctionType);
 
-#if 1
+#if 0
      printf ("#########################################  functionType = %p ####################################### \n",functionType);
 #endif
 
