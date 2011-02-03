@@ -918,7 +918,6 @@ bug3:
 # test code in parallel and avoid name conflicts with *.mod (gfortran) and *.rmod (rose) files.
 enforce_module_name_policy:
 	$(top_srcdir)/scripts/policies/UniqueFortranModules.pl $(srcdir)
-#	$(top_srcdir)/scripts/policies/UniqueFortranModules.pl $(srcdir)/*.f??
 
 
 tests:
@@ -937,7 +936,7 @@ check-local:
 #	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
 if !ROSE_USING_GFORTRAN_VERSION_4_0
 # DQ (2/2/2011): This test presently fails (test codes are being fixed).
-#	@$(MAKE) enforce_module_name_policy
+	@$(MAKE) enforce_module_name_policy
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
 	@$(MAKE) testCPP_Defines
