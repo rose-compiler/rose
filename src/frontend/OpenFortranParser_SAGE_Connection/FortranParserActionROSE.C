@@ -7243,7 +7243,9 @@ void c_action_data_ref(int numPartRef)
                     SgName functionName = "fortran_constructor_function";
                     ROSE_ASSERT(classType != NULL);
                     SgFunctionType* functionType = new SgFunctionType(classType,false);
-
+#if 1
+                    printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
                     SgName mangledName = functionType->get_mangled_type();
                     SgNode::get_globalFunctionTypeTable()->insert_function_type(mangledName,functionType);
 
@@ -8112,6 +8114,7 @@ void c_action_section_subscript_list(int count)
   //       -if (1 .eq. foo()) then ... end if 
   //         the expression stack is not empty, but it is "SgIntVal" for "1" not for the subscript list
 
+#if 0
   // DQ (1/31/2011): test2010_162.f90 demonstrates that this should always be processed.
   // if (astExpressionStack.empty() == false || count == 0)
         {
@@ -8229,6 +8232,62 @@ void c_action_section_subscript_list(int count)
 
           astExpressionStack.push_front(expressionList);
         }
+#else
+  // DQ (2/1/2011): This is the older version of the code that is better suited to use with the newer version of R1220 from Zung's fix.
+  // But I am not sure that this predicit is required... see test2010_162.f90 and recheck...
+     if (astExpressionStack.empty() == false || count == 0)
+        {
+          SgExprListExp* expressionList = new SgExprListExp();
+       // rose_check(expressionList != NULL);
+
+          ROSE_ASSERT(expressionList != NULL);
+
+          setSourcePosition(expressionList);
+
+       // printf ("In c_action_section_subscript_list(): astActualArgumentNameStack.size() = %zu \n",astActualArgumentNameStack.size());
+
+          for (int i=0; i < count; i++)
+             {
+            // printf ("count = %d i = %d \n",count,i);
+
+	       //rose_check(astExpressionStack.empty() == false);
+               ROSE_ASSERT(astExpressionStack.empty() == false);
+               SgExpression* expression = astExpressionStack.front();
+
+            // DQ (2/2/2011): Why are we rebuilding the SgActualArgumentExpression objects?
+
+            // DQ (11/30/2007): Actual arguments have associated names which have to be recorded on to a separate stack.
+            // test2007_162.h demonstrates this problems (and test2007_184.f). Built astActualArgumentNameStack to support this.
+            // Actual argument specification permits function arguments to be specified in any order. Examples: sum(array,dim=1)
+               if (astActualArgumentNameStack.empty() == false)
+                  {
+                 // print_token(astActualArgumentNameStack.front());
+                    SgName name = astActualArgumentNameStack.front()->text;
+
+                 // See test2007_162.f for an example of where this restriction is required.  It might 
+                 // be that we need a special stack for this!
+                 // if (name != "defaultString")
+                       {
+                      // DQ (2/2/2011): Doesn't this just nest a SgActualArgumentExpression into another SgActualArgumentExpression.
+                         ROSE_ASSERT(isSgActualArgumentExpression(expression) != NULL);
+
+                         expression = new SgActualArgumentExpression(name,expression);
+                         setSourcePosition(expression,astActualArgumentNameStack.front());
+
+                         astActualArgumentNameStack.pop_front();
+                       }
+                  }
+
+               expressionList->prepend_expression(expression);
+               expression->set_parent(expressionList);
+               astExpressionStack.pop_front();
+             }
+
+       // printf ("In c_action_section_subscript_list(): AFTER astExpressionStack processing \n");
+
+          astExpressionStack.push_front(expressionList);
+        }
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -8242,6 +8301,11 @@ void c_action_section_subscript_list(int count)
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
         }
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -15570,6 +15634,9 @@ void c_action_program_stmt(Token_t *label, Token_t *programKeyword, Token_t *id,
 
   // We should test if this is in the function type table, but do this later
      SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),false);
+#if 1
+     printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
      SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(programName,functionType,NULL);
 
   // This is the defining declaration and there is no non-defining declaration!
@@ -16677,6 +16744,10 @@ void c_action_block_data_stmt(Token_t *label, Token_t *blockKeyword, Token_t *da
      SgName name = id->text;
      SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),false);
 
+#if 1
+     printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
+
   // Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
   // The SgProcedureHeaderStatement can be used for a Fortran function, subroutine, or block data declaration.
      SgProcedureHeaderStatement* blockDataDeclaration = new SgProcedureHeaderStatement(name,functionType,NULL);
@@ -17311,6 +17382,10 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
      SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),false);
      astBaseTypeStack.push_front(functionType);
 
+#if 1
+     printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
+
   // DQ (1/24/2011): Add an assocciated function "procedure()" to the global scope so that 
   // fortran can build procedure pointers.
      SgScopeStatement* topOfStack = *(astScopeStack.rbegin());
@@ -17621,7 +17696,7 @@ void c_action_actual_arg_spec(Token_t * keyword)
           printf ("In c_action_actual_arg_spec() keyword = %p = %s \n",keyword,(keyword != NULL) ? keyword->text : "NULL");
 
   // This handles the case of "DIM" in "sum(array,DIM=1)"
-
+#if 0
   // DQ (1/30/2011): This is allowed to be NULL, see test2010_164.f90.
   // ROSE_ASSERT(keyword != NULL);
      if (keyword != NULL)
@@ -17631,6 +17706,22 @@ void c_action_actual_arg_spec(Token_t * keyword)
        // astNameStack.push_front(keyword);
           astActualArgumentNameStack.push_front(keyword);
         }
+#else
+  // DQ (2/1/2011): This is the version of the code that I want here, from Zung.
+  // This builds the SgActualArgumentExpression as early as possible so that
+  // name will be associated with expressions and cases where name might not be
+  // associated with expressions will not cause separate stacks to be out of sync.
+     if (keyword != NULL)
+        {
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* expression = astExpressionStack.front();
+          astExpressionStack.pop_front();
+          SgName name(keyword->text);
+          expression = new SgActualArgumentExpression(name,expression);
+          setSourcePosition(expression);
+          astExpressionStack.push_front(expression);
+        }
+#endif
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -17688,6 +17779,60 @@ void c_action_actual_arg(ofp_bool hasExpr, Token_t * label)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_actual_arg() hasExpr = %s label = %p = %s \n",hasExpr ? "true" : "false",label,(label != NULL) ? label->text : "NULL");
+
+#if 1
+     outputState("At TOP of R1221 c_action_actual_arg()");
+#endif
+
+#if 1
+	// DXN (01/06/2011):
+	// concatenate '*' and the label and push it on the astExpressionStack as the actual argument.
+	if (label != NULL)
+	   {
+    // string asteriskArg = "*" + string(label->text);
+       string asteriskArg = label->text;
+    // SgVarRefExp* p_actualArg = SageBuilder::buildOpaqueVarRefExp(asteriskArg, getTopOfScopeStack());
+
+    // Get the SgLabelSymbol
+       SgSymbol* temp_symbol = SageInterface:: lookupSymbolInParentScopes (asteriskArg,astScopeStack.front());
+       ROSE_ASSERT(temp_symbol != NULL);
+
+       SgLabelSymbol* labelSymbol = isSgLabelSymbol(temp_symbol);
+       ROSE_ASSERT(labelSymbol != NULL);
+
+       SgLabelRefExp* actualArg = SageBuilder::buildLabelRefExp(labelSymbol);
+
+		 astExpressionStack.push_front(actualArg);
+
+		 // don't need the label on top of the astLabelStack any more:
+		 if (!astLabelSymbolStack.empty())
+		    {
+			  astLabelSymbolStack.pop_front();
+		    }
+		 else
+		    {
+			  if ( SgProject::get_verbose() > 0)
+		    	  printf("WARNING: astLabelSymbolStack is empty: c_action_actual_arg: Line %d Col %d\n", label->line, label->col);
+		    }
+
+#if 1
+          outputState("After handling case of label != NULL in R1221 c_action_actual_arg()");
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+	   }
+#endif
+
+#if 1
+     outputState("At BOTTOM of R1221 c_action_actual_arg()");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 /**
@@ -17768,6 +17913,9 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, 
   // the function types used in the program.  The advantage of not sharing function types is that the return type 
   // is each to change as we parse the function specification statement section (before the executable statment section).
      SgFunctionType* functionType = new SgFunctionType(returnType,false);
+#if 1
+     printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
 
   // Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
      SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(tempName,functionType,NULL);
@@ -18080,6 +18228,10 @@ void c_action_subroutine_stmt(Token_t * label, Token_t * keyword, Token_t * name
   // However, once we see the function parameters and their type we will have to update the function type!
      SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),false);
 
+#if 1
+     printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
+
   // Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
      SgProcedureHeaderStatement* subroutineDeclaration = new SgProcedureHeaderStatement(tempName,functionType,NULL);
  
@@ -18327,6 +18479,10 @@ void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token
 
      ROSE_ASSERT(returnType != NULL);
      SgFunctionType* functionType = new SgFunctionType(returnType,false);
+
+#if 1
+     printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
 
   // Reuse the current functions scope (this makes for a strange design, but entry statements are a primative concept).
   // SgFunctionDefinition* functionDefinition = NULL;

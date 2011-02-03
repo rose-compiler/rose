@@ -554,9 +554,59 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_169.f90 \
      test2010_170.f90 \
      test2010_175.f90 \
+     test2011_01.f90 \
+     test2011_02.f90 \
      test2011_03.f90 \
+     test2011_04.f90 \
+     test2011_06.f90 \
+     test2011_07.f90 \
      test2011_11.f90 \
      test2011_18.f90 \
+     test2011_21.f90 \
+     test2011_22.f90 \
+     test2011_23.f90 \
+     test2011_24.f90 \
+     test2011_25.f90 \
+     test2011_26.f90 \
+     test2011_27.f90 \
+     test2011_28.f90 \
+     test2011_29.f90 \
+     test2011_30.f90 \
+     test2011_31.f90 \
+     test2011_32.f90 \
+     test2011_33.f90 \
+     test2011_34.f90 \
+     test2011_35.f90 \
+     test2011_37.f90 \
+     test2011_38.f90 \
+     test2011_41.f90 \
+     test2011_42.f90 \
+     test2011_43.f90 \
+     test2011_44.f90 \
+     test2011_45.f90 \
+     test2011_46.f90 \
+     test2011_47.f90 \
+     test2011_48.f90 \
+     test2011_49.f90 \
+     test2011_50.f90 \
+     test2011_51.f90 \
+     test2011_52.f90 \
+     test2011_53.f90 \
+     test2011_54.f90 \
+     test2011_55.f90 \
+     test2011_56.f90 \
+     test2011_57.f90 \
+     test2011_58.f90 \
+     test2011_59.f90 \
+     test2011_60.f90 \
+     test2011_61.f90 \
+     test2011_62.f90 \
+     test2011_63.f90 \
+     test2011_64.f90 \
+     test2011_65.f90 \
+     test2011_66.f90 \
+     test2011_67.f90 \
+     test2011_68.f90 \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
@@ -883,7 +933,11 @@ bug3:
 	../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:output_parser_actions -I$(srcdir) -c $(srcdir)/test2010_81.f90
 
 
-
+# DQ (2/2/2011): We are now enforcing the module names are unique so that we can always run the 
+# test code in parallel and avoid name conflicts with *.mod (gfortran) and *.rmod (rose) files.
+enforce_module_name_policy:
+	$(top_srcdir)/scripts/policies/UniqueFortranModules.pl $(srcdir)
+#	$(top_srcdir)/scripts/policies/UniqueFortranModules.pl $(srcdir)/*.f??
 
 
 tests:
@@ -901,6 +955,8 @@ check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
 if !ROSE_USING_GFORTRAN_VERSION_4_0
+# DQ (2/2/2011): This test presently fails (test codes are being fixed).
+#	@$(MAKE) enforce_module_name_policy
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
 	@$(MAKE) testCPP_Defines

@@ -1368,6 +1368,17 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+       // DQ (2/2/2011): Added case to support fortran use of label references in alternate return parameters.
+          case V_SgLabelRefExp:
+             {
+               const SgLabelRefExp* labelRef = isSgLabelRefExp(expr);
+               name = "label_ref_of_";
+               ROSE_ASSERT(labelRef != NULL);
+               ROSE_ASSERT(labelRef->get_symbol() != NULL);
+               name += labelRef->get_symbol()->get_name();
+               break;
+             }
+
           case V_SgPntrArrRefExp:
              {
                const SgPntrArrRefExp* arrayRef = isSgPntrArrRefExp(expr);
@@ -8708,7 +8719,9 @@ void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
   SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
   if (symbol == NULL)
   {
-    symbol = new SgLabelSymbol(NULL);
+ // DQ (2/2/2011): We want to call the old constructor (we now have another constructor that takes a SgInitializedName pointer).
+ // symbol = new SgLabelSymbol(NULL);
+    symbol = new SgLabelSymbol((SgLabelStatement*) NULL);
     ROSE_ASSERT(symbol != NULL);
     symbol->set_fortran_statement(stmt);
     symbol->set_numeric_label_value(label_value);

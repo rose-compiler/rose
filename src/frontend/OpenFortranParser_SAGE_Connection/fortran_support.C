@@ -1394,7 +1394,7 @@ buildNumericLabelSymbol(Token_t* label)
                int label_value = atoi(label->text);
             // printf ("Building a SgLabelSymbol for a numeric label that we have not see yet: label_value = %d = %s \n",label_value,label->text);
 
-               returnSymbol = new SgLabelSymbol(NULL);
+               returnSymbol = new SgLabelSymbol((SgLabelStatement*) NULL);
                ROSE_ASSERT(returnSymbol != NULL);
                returnSymbol->set_fortran_statement(NULL);
                returnSymbol->set_numeric_label_value(label_value);
@@ -1477,7 +1477,7 @@ buildNumericLabelSymbolAndAssociateWithStatement(SgStatement* stmt, Token_t* lab
      if (label_symbol == NULL)
         {
        // If this does not exist then build the associated label symbol and put it into the function's symbol table.
-          label_symbol = new SgLabelSymbol(NULL);
+          label_symbol = new SgLabelSymbol((SgLabelStatement*) NULL);
           label_symbol->set_fortran_statement(stmt);
 
        // DQ (12/24/2007): The new design stores the numeric label value in the SgLabelSymbol.
@@ -2012,6 +2012,9 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
 
             // Define this as a function returning void type for now, but it will have to be fixed when we finally see the function definition.
                SgFunctionType* functionType             = new SgFunctionType (SgTypeVoid::createType());
+#if 1
+               printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
                SgFunctionDefinition* functionDefinition = NULL;
 
                SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(name,functionType,functionDefinition);
@@ -3876,6 +3879,9 @@ SgFunctionType* generateImplicitFunctionType( string functionName)
      SgFunctionType* functionType = new SgFunctionType(returnType,has_ellipses);
      ROSE_ASSERT(functionType != NULL);
      ROSE_ASSERT(functionType->get_argument_list() != NULL);
+#if 1
+     printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
 
      if (argumentListOnStack == true)
         {
@@ -5010,13 +5016,21 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
 
             // DQ (1/31/2010): The argument could be a alternate-return dummy argument
                SgInitializedName* initializedName = NULL;
-               if (arg_name == "*")
+               bool isAnAlternativeReturnParameter = (arg_name == "*");
+               if (isAnAlternativeReturnParameter == true)
                   {
+                 // DQ (2/1/2011): Since we will generate a label and with name "*" and independently resolve which 
+                 // label argument is referenced in the return statement, we need not bury the name directly into 
+                 // the arg_name (unless we need to have the references be seperate in the symbol table, so maybe we do!).
+
                  // Note that alternate return is an obsolescent feature in Fortran 95 and Fortran 90
-                    initializedName = new SgInitializedName(arg_name,SgTypeVoid::createType(),NULL,procedureDeclaration,NULL);
+                 // initializedName = new SgInitializedName(arg_name,SgTypeVoid::createType(),NULL,procedureDeclaration,NULL);
+                    initializedName = new SgInitializedName(arg_name,SgTypeLabel::createType(),NULL,procedureDeclaration,NULL);
                   }
                  else
                   {
+                 // DQ (2/2/2011): The type might not be specified using implicit type rules, so we should likely define 
+                 // the type as SgTypeUnknown and then fix it up later (at the end of the functions declarations).
                     initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,procedureDeclaration,NULL);
                   }
 
@@ -5033,15 +5047,38 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
                ROSE_ASSERT(astNameStack.empty() == false);
                astNameStack.pop_front();
 
-            // Now build associated SgVariableSymbol and put it into the current scope (function definition scope)
-               SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
-               procedureDefinition->insert_symbol(arg_name,variableSymbol);
+               if (isAnAlternativeReturnParameter == true)
+                  {
+                 // If this is a label argument then build a SgLabelSymbol.
+                 // We might want them to be positionally relevant rather than name relevent,
+                 // this would define a mechanism that was insensitive to transformations.
+                 // We need a new SgLabelSymbol constructor to support the use here.
+                 // SgLabelSymbol* labelSymbol = new SgLabelSymbol(arg_name);
+                    SgLabelSymbol* labelSymbol = new SgLabelSymbol(initializedName);
+                    procedureDefinition->insert_symbol(arg_name,labelSymbol);
+                  }
+                 else
+                  {
+                 // Now build associated SgVariableSymbol and put it into the current scope (function definition scope)
+                    SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+                    procedureDefinition->insert_symbol(arg_name,variableSymbol);
+                  }
 
             // DQ (12/17/2007): Make sure the scope was set!
                ROSE_ASSERT(initializedName->get_scope() != NULL);
              }
 
           ROSE_ASSERT(procedureDeclaration->get_args().empty() == false);
+
+          SgFunctionType* functionType = isSgFunctionType(procedureDeclaration->get_type());
+          ROSE_ASSERT(functionType != NULL);
+
+       // DQ (2/2/2011): This should be empty at this point, it will be fixed up either as we process declarations 
+       // in the function that will defin the types or types will be assigned using the implicit type rules (which 
+       // might not have even been seen yet for the function) when we are finished processing all of the functions 
+       // declarations.  Note that this information will be need by the alternative return support when we compute
+       // the index for the unparsed code.
+          ROSE_ASSERT(functionType->get_arguments().empty() == true);
         }
 
   // printf ("Added function programName = %s (symbol = %p) to scope = %p = %s \n",tempName.str(),functionSymbol,astScopeStack.front(),astScopeStack.front()->class_name().c_str());
@@ -5882,6 +5919,10 @@ replace_return_type (SgFunctionType* functionType, SgFunctionDeclaration* functi
 
      SgFunctionType* newFunctionType = new SgFunctionType(derivedTypeSymbol->get_declaration()->get_type(),has_ellipses);
   // printf ("newFunctionType = %p \n",newFunctionType);
+
+#if 1
+     printf ("#########################################  functionType = %p ####################################### \n",functionType);
+#endif
 
   // DQ (12/26/2010): Not clear if this should be allowed or not...I would like to fix it later.
   // printf ("NOTE: Sharing the function type argument list in use_statement_fixup() \n");

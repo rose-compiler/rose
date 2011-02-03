@@ -182,6 +182,13 @@ FortranCodeGeneration_locatedNode::unparseActualArgumentExpression(SgExpression*
 
      curprint(actualArgumentExpression->get_argument_name());
 
+#if 1
+  // DQ (2/2/2011): Now we don't want to support the use of SgActualArgumentExpression 
+  // to hide a alternative return argument.  So the name should never be "*". Now we
+  // use a newer implementation with SgLabelRefExp instead (and a new SgTypeLabel IR node).
+     ROSE_ASSERT(actualArgumentExpression->get_argument_name() != "*");
+     curprint("=");
+#else
   // DQ (1/30/2011): If the name is "*" then this is an "alternative return label".
   // Note that we might want this to appear more explicitly as a specialized IR 
   // node in the future.
@@ -189,6 +196,7 @@ FortranCodeGeneration_locatedNode::unparseActualArgumentExpression(SgExpression*
         {
           curprint("=");
         }
+#endif
 
      unparseExpression(actualArgumentExpression->get_expression(),info);
    }
@@ -207,6 +215,29 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
      ROSE_ASSERT(numericLabel >= 0);
 
      string numericLabelString = StringUtility::numberToString(numericLabel);
+
+  // SgType* tempType = labelRefExp->get_type();
+  // ROSE_ASSERT(tempType != NULL);
+
+  // This will fail to work because the symbol is associated with the SgLabelStatement (which is not associated with the function call.
+#if 0
+     printf ("In Fortran unparseLabelRefExp(): labelSymbol->get_label_type() = %d \n",labelSymbol->get_label_type());
+     if (labelSymbol->get_label_type() == SgLabelSymbol::e_alternative_return_type)
+        {
+          curprint("*");
+        }
+#else
+#if 0
+     bool isFunctionCallArgumentForAlternativeReturnType = labelRefExp->isFunctionCallArgumentForAlternativeReturnType();
+     if (isFunctionCallArgumentForAlternativeReturnType == true)
+        {
+          curprint("*");
+        }
+#else
+          curprint("*");
+#endif
+#endif
+
      curprint(numericLabelString);
    }
 
