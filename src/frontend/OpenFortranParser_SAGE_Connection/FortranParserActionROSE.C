@@ -18607,6 +18607,7 @@ void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp
           printf ("In c_action_return_stmt(): label = %s hasScalarIntExpr = %s \n",(label != NULL) ? label->text : "NULL", hasScalarIntExpr ? "true" : "false");
 
      SgExpression* returnValue = NULL;
+     bool returningFromFunctionUsingAlternativeReturnArguments = false;
      if (hasScalarIntExpr == true)
         {
 #if 0
@@ -18619,6 +18620,70 @@ void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp
        // setSourcePosition(returnValue,keyword);
        // setSourcePosition(returnValue);
 #endif
+
+          SgInitializedName* argumentInitializedName = NULL;
+          SgIntVal* integerValue = isSgIntVal(returnValue);
+          if (integerValue != NULL)
+             {
+            // This might be a function with alternative return arguments (keep checking).
+                size_t alternativeReturnValue = (size_t) integerValue->get_value();
+
+               SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingFunctionDefinition(astScopeStack.front(), /* includingSelf= */ true);
+               ROSE_ASSERT(functionDefinition != NULL);
+
+               SgFunctionDeclaration* functionDeclaration = functionDefinition->get_declaration();
+               ROSE_ASSERT(functionDeclaration != NULL);
+
+
+               SgInitializedNamePtrList & args = functionDeclaration->get_args();
+               ROSE_ASSERT(alternativeReturnValue < args.size());
+
+            // The Fortran world starts at one (not zero)!
+               size_t counter = 1;
+
+               for (size_t i = 0; i < args.size(); i++)
+                  {
+                     SgType* argumentType = args[i]->get_type();
+                     SgTypeLabel* labelType = isSgTypeLabel(argumentType);
+                     if (labelType != NULL)
+                        {
+                          if (counter == alternativeReturnValue)
+                             {
+                               argumentInitializedName = args[i];
+                             }
+
+                          counter++;
+                        }
+                  }
+
+               if (argumentInitializedName != NULL)
+                  {
+                    returningFromFunctionUsingAlternativeReturnArguments = true;
+                    SgSymbol* tempSymbol = argumentInitializedName->search_for_symbol_from_symbol_table();
+                    ROSE_ASSERT(tempSymbol != NULL);
+                    SgLabelSymbol* labelSymbol = isSgLabelSymbol(tempSymbol);
+                    ROSE_ASSERT(labelSymbol != NULL);
+
+                 // Before we build the label reference expression delete the SgIntVal IR node.
+                    ROSE_ASSERT(returnValue != NULL);
+                    delete returnValue;
+                    returnValue = NULL;
+
+                    returnValue = new SgLabelRefExp (labelSymbol);
+                    setSourcePosition(returnValue);
+                  }
+                 else
+                  {
+                 // No need to change the set value above.
+                    ROSE_ASSERT(returnValue != NULL);
+                  }
+             }
+            else
+             {
+            // This could not be a function with alternative return arguments.
+            // No need to change the set value above.
+               ROSE_ASSERT(returnValue != NULL);
+             }
         }
        else
         {
