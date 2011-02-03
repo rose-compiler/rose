@@ -7243,7 +7243,7 @@ void c_action_data_ref(int numPartRef)
                     SgName functionName = "fortran_constructor_function";
                     ROSE_ASSERT(classType != NULL);
                     SgFunctionType* functionType = new SgFunctionType(classType,false);
-#if 1
+#if 0
                     printf ("#########################################  functionType = %p ####################################### \n",functionType);
 #endif
                     SgName mangledName = functionType->get_mangled_type();
@@ -15639,7 +15639,7 @@ void c_action_program_stmt(Token_t *label, Token_t *programKeyword, Token_t *id,
 
   // We should test if this is in the function type table, but do this later
      SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),false);
-#if 1
+#if 0
      printf ("#########################################  functionType = %p ####################################### \n",functionType);
 #endif
      SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(programName,functionType,NULL);
@@ -16749,7 +16749,7 @@ void c_action_block_data_stmt(Token_t *label, Token_t *blockKeyword, Token_t *da
      SgName name = id->text;
      SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),false);
 
-#if 1
+#if 0
      printf ("#########################################  functionType = %p ####################################### \n",functionType);
 #endif
 
@@ -17387,7 +17387,7 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
      SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),false);
      astBaseTypeStack.push_front(functionType);
 
-#if 1
+#if 0
      printf ("#########################################  functionType = %p ####################################### \n",functionType);
 #endif
 
@@ -17918,7 +17918,7 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, 
   // the function types used in the program.  The advantage of not sharing function types is that the return type 
   // is each to change as we parse the function specification statement section (before the executable statment section).
      SgFunctionType* functionType = new SgFunctionType(returnType,false);
-#if 1
+#if 0
      printf ("#########################################  functionType = %p ####################################### \n",functionType);
 #endif
 
@@ -18233,7 +18233,7 @@ void c_action_subroutine_stmt(Token_t * label, Token_t * keyword, Token_t * name
   // However, once we see the function parameters and their type we will have to update the function type!
      SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(),false);
 
-#if 1
+#if 0
      printf ("#########################################  functionType = %p ####################################### \n",functionType);
 #endif
 
@@ -18485,7 +18485,7 @@ void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token
      ROSE_ASSERT(returnType != NULL);
      SgFunctionType* functionType = new SgFunctionType(returnType,false);
 
-#if 1
+#if 0
      printf ("#########################################  functionType = %p ####################################### \n",functionType);
 #endif
 
