@@ -49,4 +49,4 @@ clean:
 	rm -f language-lexer.cc lex.ann.c language-parser.cc language.tab.h tempBisonOutput.*
 	rm -f *.lo *.la
 
-EXTRA_DIST = CMakeLists.txt language.l language.y
+EXTRA_DIST = CMakeLists.txt language.l language.y PolicyControl.txt
