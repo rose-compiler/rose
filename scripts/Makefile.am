@@ -23,6 +23,7 @@ distributedScripts =				\
      policies/NoRoseIncludes.pl			\
      policies/NoTabCharacters.pl		\
      policies/NoUsingInHeaders.pl		\
+     policies/Policies.pm			\
      policies/UniqueFortranModules.pl		\
      policies/UniqueHeaderNames.pl		\
      policies/UnixLineTermination.pl		\

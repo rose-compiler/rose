@@ -10,7 +10,7 @@ sub new {
 		    thirdparty=>0,          # software not "owned by" ROSE developers, other than EDG which is handled above
 		    generated=>0,           # software that is machine-generated
 		    install=>0,             # files in the ROSE install directory
-		    recursive=>1,           # recurse into directories
+		    recursive=>1,           # recurse into directories; -1=never; 0=only into specified dirs; 1=always
 		    pending=>\@root,        # files and directories that are pending
 		   }, $cls;
 
@@ -25,6 +25,20 @@ sub new {
   shift @root if @root eq "--";
 
   push @root, "." unless @root;
+
+  # Recurse into directories that are specified on the command-line, but no further.
+  if (0==$self->{recursive}) {
+    my @expanded;
+    for my $dir (@root) {
+      push @expanded, $dir;
+      if (opendir DIR, $dir) {
+	push @expanded, map {"$dir/$_"} sort readdir DIR;
+	closedir DIR;
+      }
+    }
+    @root = @expanded;
+  }
+
   $self->{pending} = \@root;
   return $self;
 }
@@ -72,7 +86,7 @@ sub next_name {
       ($retval =~ /~$/      && ! -d $retval)     # editor backup files
      ) {
     return $self->next_name; # skip this name, return the next one
-  } elsif ($self->{recursive} && opendir DIR, $retval) {
+  } elsif ($self->{recursive}>0 && opendir DIR, $retval) {
     # Change 'unshift' to 'push' to get a breadth-first search
     unshift @{$self->{pending}}, map {"$retval/$_"} grep {!/^\.\.?$/} sort readdir DIR;
     close DIR;

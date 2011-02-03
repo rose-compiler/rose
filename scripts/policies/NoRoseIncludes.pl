@@ -10,6 +10,7 @@ EOF
 BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 use strict;
 use FileLister;
+use Policies;
 my $warning = "warning ";	# non-empty means these are warnings rather than errors
 
 # If no files or directories are specified and the CWD is the top of the ROSE source tree, then check
@@ -19,7 +20,7 @@ my $warning = "warning ";	# non-empty means these are warnings rather than error
 my $nfail=0;
 my $files = FileLister->new(@ARGV);
 while (my $filename = $files->next_file) {
-  if ($filename=~/\.(h|hh|hpp|code2|macro)$/ && open FILE, "<", $filename) {
+  if ($filename=~/\.(h|hh|hpp|code2|macro)$/ && !is_disabled($filename) && open FILE, "<", $filename) {
     while (<FILE>) {
       if (/^#\s*include\s*["<](rose|sage3|sage3basic)\.h[>"]/) {
 	print $desc unless $nfail++;
