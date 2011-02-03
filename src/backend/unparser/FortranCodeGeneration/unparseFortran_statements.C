@@ -3121,7 +3121,7 @@ FortranCodeGeneration_locatedNode::unparseReturnStmt(SgStatement* stmt, SgUnpars
   // if (altret != NULL)
      if (isSgNullExpression(altret) == NULL)
         {
-          ROSE_ASSERT(isSgValueExp(altret));
+       // ROSE_ASSERT(isSgValueExp(altret));
           curprint(" ");
           unparseExpression(altret, info);
         }

@@ -1349,6 +1349,13 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                labelWithSourceCode += string("\\n value = ") + valueExp->get_constant_folded_value_as_string() + "  ";
              }
 
+       // DQ (2/2/2011): Added support for fortran...
+          SgActualArgumentExpression* actualArgumentExpression = isSgActualArgumentExpression(node);
+          if (actualArgumentExpression != NULL)
+             {
+               labelWithSourceCode += string("\\n name = ") + actualArgumentExpression->get_argument_name() + "  ";
+             }
+
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
