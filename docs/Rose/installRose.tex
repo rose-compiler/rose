@@ -14,8 +14,9 @@ how ROSE is developed and where it is regularly tested.
 ROSE has been developed on Linux/Intel platforms. We have addressed
 significant portability issues for ROSE, and routinely work on both 64
 and 32 bit Linux and Mac OS X platforms. ROSE is nightly tested on
-about 20 different versions of Linux and Max OS X and works with all
-modern versions of the GNU compilers (3.4.x and later) and Intel
+about 20 different versions of Linux and Max OS X and works with most 
+modern versions of the GNU compilers (4.0.x to 4.4.x 
+and Intel
 compilers. See section ref{NMI\_testing} for details. Recent work has
 ported ROSE to Cygwin (under Microsoft Windows; not released
 generallay at the moment) and a port to Visual Studio is ongoing work.
@@ -40,7 +41,7 @@ cases also require a C compiler.
 % We use the GNU g++ compiler most often, but the Intel compiler (version 9.1) will also work.
 Present development work is done on Intel/Linux platforms
 %using the GNU g++ 3.3.x, 3.4.x, and 4.x; and the Intel compilers.
-using the GNU g++ 3.4.x, and 4.x; and the Intel compilers.  Other people using ROSE
+using the GNU g++ 4.0.x to 4.4.x; and the Intel compilers.  Other people using ROSE
 regularly use Mac OS X (but version 10.5, Leopard, or later).
 %GNU compilers older
 %than 3.3.x are not supported within the ROSE project, but in some cases they might work 
@@ -99,8 +100,9 @@ and limitations on how their software may be used.
     % ROSE is delivered as either a development version (svn) or as a distribution for
     % users. The (typical) user version comes either with EDG source or binary distribution.
 
-   \item {\bf g++} : version $>=$ 3.4.x  \\
-     In order to use OpenMP or gFortran g++ $>=$ 4.2.x is required.
+   \item {\bf g++} : version 4.0.x to 4.4.x 
+\footnote{Support for GCC 4.5 and higher versions is still ongoing work.} \\
+     In order to use gFortran g++ $>=$ 4.2.x is required.
 
    \item {\bf BOOST} : version $>=$ 1.36.0  \\
      Visit \htmladdnormallink{www.boost.org}{http://www.boost.org/}
