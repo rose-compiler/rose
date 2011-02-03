@@ -22,7 +22,7 @@ EXTRA_DIST += README x86sim.conf test_status.txt
 
 # The new simulator, which uses ROSE interfaces where possible.  The rest of this makefile deals only with this new simulator.
 noinst_PROGRAMS += x86sim
-include_HEADERS += x86print.h
+include_HEADERS += x86sim.h x86print.h
 x86sim_SOURCES = x86sim.C x86print.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'
 x86sim_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
