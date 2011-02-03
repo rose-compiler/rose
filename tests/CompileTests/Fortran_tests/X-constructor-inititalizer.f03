@@ -1,4 +1,4 @@
-module m
+module m_constructor_init
 
   TYPE T
   END TYPE

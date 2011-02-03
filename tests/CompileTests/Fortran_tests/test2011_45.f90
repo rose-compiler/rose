@@ -1,4 +1,4 @@
-module sky
+module sky_11_45
   private
   public  :: sphere
   real,        dimension(5) :: bottom
@@ -12,10 +12,10 @@ contains
        if ( miles .ge. bottom(i) ) zone = layer(i)
     end do
   end function sphere
-end module sky
+end module sky_11_45
 
 program atmosphere
-  use sky
+  use sky_11_45
   real, dimension(3) :: altitude = (/ 1.2, 45.6, 789.0 /)
   if(sphere(altitude(1)).EQ." Tropo" .AND. &
        sphere(altitude(2)).EQ."  Meso" .AND. &

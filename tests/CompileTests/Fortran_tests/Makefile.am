@@ -458,7 +458,8 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS += $(OPENMP_TESTS_F77_TESTCODES_REQU
 
 
 if !ROSE_USING_GFORTRAN_VERSION_4_1
-   F03_TESTCODES_REQUIRED_TO_PASS += test2007_43.f03
+# This now passes as part of the F03_TESTCODES_REQUIRED_TO_PASS tests
+#   F03_TESTCODES_REQUIRED_TO_PASS += test2007_43.f03
 endif
 
 # #######################
@@ -474,7 +475,6 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2007_84.f90 \
      test2007_87.f90 \
      test2007_88.f90 \
-     test2007_103.f90 \
      test2007_107.f90 \
      test2007_108.f90 \
      test2007_131.f90 \
@@ -554,30 +554,13 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_169.f90 \
      test2010_170.f90 \
      test2010_175.f90 \
-     test2011_01.f90 \
-     test2011_02.f90 \
      test2011_03.f90 \
-     test2011_04.f90 \
-     test2011_06.f90 \
-     test2011_07.f90 \
      test2011_11.f90 \
      test2011_18.f90 \
      test2011_21.f90 \
      test2011_22.f90 \
      test2011_23.f90 \
-     test2011_24.f90 \
-     test2011_25.f90 \
      test2011_26.f90 \
-     test2011_27.f90 \
-     test2011_28.f90 \
-     test2011_29.f90 \
-     test2011_30.f90 \
-     test2011_31.f90 \
-     test2011_32.f90 \
-     test2011_33.f90 \
-     test2011_34.f90 \
-     test2011_35.f90 \
-     test2011_37.f90 \
      test2011_38.f90 \
      test2011_41.f90 \
      test2011_42.f90 \
@@ -649,8 +632,6 @@ F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2010_55.f \
      test2010_56.f \
      test2010_57.f \
-     test2010_68.f \
-     test2010_69.f \
      test2010_70.f \
      test2010_105.f \
      test2010_157.f

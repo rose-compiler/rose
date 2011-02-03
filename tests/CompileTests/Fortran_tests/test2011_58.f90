@@ -1,5 +1,5 @@
 ! Contributed by Jean Utke
-module m 
+module m_11_58
   type, public :: t1
       integer         :: m1
    end type t1
@@ -9,7 +9,7 @@ module m
 end module 
 
 program p 
-  use m
+  use m_11_58
   type(t2) :: anInstance
   print *,'OK'
 end program

@@ -234,7 +234,18 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
           curprint("*");
         }
 #else
+  // DQ (2/2/2011): We can't do this since it will effect where lables are unparse in the OPEN statement (and likely other I/O statements).
+  // After some email with Scott this is required to be handled via a special case so since in all other case the SgLabelRefExp shuld
+  // have a IOStatement as a parent, we will look for where the parent is part of an expression list.  This could be improved later.
+  // the best way to handle this would be to do the type checking, and I'm OK with that approach.  The backup plan is to embed names
+  // into (what) that would trigger these to be treated as alternative return arguments.
+  // We could also check if the enclosing statement is an IO statement.  So there are a number of options here.
+  // curprint("*");
+     SgNode* parentNode = labelRefExp->get_parent();
+     if (isSgExprListExp(parentNode) != NULL)
+        {
           curprint("*");
+        }
 #endif
 #endif
 

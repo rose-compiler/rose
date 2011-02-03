@@ -1,13 +1,13 @@
-module a
+module a_11_54
   integer longName
-end module a
+end module a_11_54
 
-module b
+module b_11_54
   integer longName
-end module b
+end module b_11_54
 
-module a1
-  use a, only: s => longName
+module a1_11_54
+  use a_11_54, only: s => longName
   private :: foo
   public :: a1Foo
   interface a1Foo
@@ -17,10 +17,10 @@ contains
   subroutine foo()
     s=s+1
   end subroutine foo
-end module a1
+end module a1_11_54
 
-module b1
-  use b, only: s => longName
+module b1_11_54
+  use b_11_54, only: s => longName
   private :: foo
   public :: b1Foo
   interface b1Foo
@@ -30,13 +30,13 @@ contains
   subroutine foo()
     s=s+1
   end subroutine foo
-end module b1
+end module b1_11_54
 
 program multRename
-  use a, only: aL=>longName
-  use b, only: bL=>longName
-  use a1
-  use b1
+  use a_11_54, only: aL=>longName
+  use b_11_54, only: bL=>longName
+  use a1_11_54
+  use b1_11_54
   aL=1
   bL=2
   call a1Foo()

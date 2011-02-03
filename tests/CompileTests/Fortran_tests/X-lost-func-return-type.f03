@@ -1,6 +1,6 @@
 ! defining a component with the same name as that of an existing function,
 ! removes the return type of this function.
-module m
+module m_lost_return_type
 
   type t
     integer :: k
