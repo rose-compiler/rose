@@ -43,6 +43,9 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( ReferenceType       , "ReferenceType",        "T_REFERENCE" );
      NEW_TERMINAL_MACRO ( TypeCAFTeam         , "TypeCAFTeam",          "T_CAFTEAM" );
 
+  // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
+     NEW_TERMINAL_MACRO ( TypeLabel           , "TypeLabel",            "T_LABLE" );
+
   // DQ (5/7/2004): Made this a terminal, was previously a nonterminal 
   // with a TemplateInstantiationType derived from it.
      NEW_TERMINAL_MACRO ( ClassType           , "ClassType",            "T_CLASS" );
@@ -135,7 +138,7 @@ Grammar::setUpTypes ()
           ReferenceType    | NamedType         | ModifierType      | FunctionType         |
           ArrayType        | TypeEllipse       | TemplateType      | QualifiedNameType    |
           TypeComplex      | TypeImaginary     | TypeDefault       | TypeCAFTeam          |
-          TypeCrayPointer , "Type","TypeTag", false);
+          TypeCrayPointer  | TypeLabel , "Type","TypeTag", false);
 
 #if 1
   // ***********************************************************************
@@ -370,6 +373,9 @@ Grammar::setUpTypes ()
   // UnknownMemberFunctionType.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // PartialFunctionType.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      PartialFunctionModifierType.setDataPrototype ("static SgPartialFunctionModifierType*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
+     TypeLabel.setDataPrototype            ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // DQ (8/25/2006): We can't specify an initializer if this is a static pointer type 
   // (since this triggers the output of the initialization code in the constructor).
@@ -637,6 +643,10 @@ Grammar::setUpTypes ()
      TypeDefault.setDataPrototype ("SgName", "name" , "= \"\"",
 				 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
+     TypeLabel.setFunctionPrototype ("HEADER_TYPE_LABEL_TYPE", "../Grammar/Type.code" );
+     TypeLabel.setDataPrototype ("SgName", "name" , "= \"\"", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // ***********************************************************************
   // ***********************************************************************
@@ -753,6 +763,11 @@ Grammar::setUpTypes ()
      TypeDefault.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      TypeDefault.setFunctionSource         ( "SOURCE_TYPE_DEFAULT_TYPE", "../Grammar/Type.code");
   // TypeDefault.setFunctionSource         ( "SOURCE_GET_MANGLED_STRING_TYPE", "../Grammar/Type.code");
+
+  // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
+     TypeLabel.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     TypeLabel.setFunctionSource         ( "SOURCE_TYPE_LABEL_TYPE", "../Grammar/Type.code");
+
 #endif
    }
 

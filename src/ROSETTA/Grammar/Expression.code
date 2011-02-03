@@ -258,6 +258,10 @@ HEADER_LABEL_REF_EXPRESSION_START
        // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
        // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
+       // DQ (2/2/2011): This is support for Fortran alternative return type arguments.
+      //! Support for recognition of Fortran alternative return type arguments.
+          bool isFunctionCallArgumentForAlternativeReturnType() const;
+
 HEADER_LABEL_REF_EXPRESSION_END
 
 
@@ -2128,6 +2132,63 @@ SgLabelRefExp::get_numeric_label_value() const
      return p_symbol->get_numeric_label_value();
    }
 
+bool
+SgLabelRefExp::isFunctionCallArgumentForAlternativeReturnType() const
+   {
+  // We might want to make sure that this is for a Fortran AST.
+
+  // This is relevant more for type checking than for the unparing since a SgLabel expression will always be output using "*" syntax.
+
+  // However initial results from this test is showing that the function type arguments list is at least sometime empty when it should not be.
+
+     bool returnValue = false;
+
+#if 0
+  // SgFunctionCallExp* enclosingFunctionCall = SageInterface::getEnclosingNode<SgFunctionCallExp>(this);
+     SgNode* tmp_enclosingFunctionCall = SageInterface::getEnclosingNode<SgFunctionCallExp>(this);
+     ROSE_ASSERT(tmp_enclosingFunctionCall != NULL);
+
+     SgNode* tmp_exprListExp = SageInterface::getEnclosingNode<SgExprListExp>(this);
+     ROSE_ASSERT(tmp_exprListExp != NULL);
+
+  // Compute the index position of the current element (finish later)...
+     size_t positionInList = 1;
+
+     SgFunctionCallExp* enclosingFunctionCall = isSgFunctionCallExp(tmp_enclosingFunctionCall);
+     ROSE_ASSERT(enclosingFunctionCall != NULL);
+
+     SgExpression* tmp_functionRefExp = enclosingFunctionCall->get_function();
+     ROSE_ASSERT(tmp_functionRefExp != NULL);
+
+  // Could this alternatively be a Fortran procedure pointer?
+     SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(tmp_functionRefExp);
+     ROSE_ASSERT(functionRefExp != NULL);
+
+     SgType* tmp_functionType = functionRefExp->get_type();
+     ROSE_ASSERT(tmp_functionRefExp != NULL);
+     SgFunctionType* functionType = isSgFunctionType(tmp_functionType);
+     ROSE_ASSERT(functionType != NULL);
+
+     SgFunctionParameterTypeList* functionParameterTypeList = functionType->get_argument_list();
+     ROSE_ASSERT(functionParameterTypeList != NULL);
+
+     SgTypePtrList & functionTypeArguments = functionParameterTypeList->get_arguments();
+
+     printf ("functionTypeArguments.size() = %zu \n",functionTypeArguments.size());
+     ROSE_ASSERT(positionInList < functionTypeArguments.size());
+
+     SgType* tmp_thisParametersType = functionTypeArguments[positionInList];
+     ROSE_ASSERT(tmp_thisParametersType != NULL);
+
+     SgTypeLabel* labelType = isSgTypeLabel(tmp_thisParametersType);
+
+     returnValue = (labelType != NULL);
+
+     printf ("In SgLabelRefExp::isFunctionCallArgumentForAlternativeReturnType(): returnValue = %s \n",returnValue ? "true" : "false");
+#endif
+
+     return returnValue;
+   }
 
 #if 0
 const SgName & 
