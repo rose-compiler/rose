@@ -25,15 +25,15 @@ class SlicingInfo:public AstSimpleProcessing
   public:
 
     SlicingInfo();
-		// manually add a node to the slicing set
-		void addNode(SgNode * sgNode)
-		{	
-			targets.push_back(sgNode);	
-		}
-		void setSliceTargetString(std::string target)
-		{
-			sliceStatement=target;	
-		};
+                // manually add a node to the slicing set
+                void addNode(SgNode * sgNode)
+                {       
+                        targets.push_back(sgNode);      
+                }
+                void setSliceTargetString(std::string target)
+                {
+                        sliceStatement=target;  
+                };
 
     // ! Returns the SgFunctionDeclaration that we are targeting
     SgFunctionDeclaration *getTargetFunction()
@@ -78,10 +78,10 @@ class SlicingInfo:public AstSimpleProcessing
        again. */
     bool _markStatement;
 
-		
-		// string for pragma to identify for slicing for functions calls of given function
+                
+                // string for pragma to identify for slicing for functions calls of given function
     std::string sliceFunctionCalls;
-		// string for pragma to slice for the following statement
+                // string for pragma to slice for the following statement
     std::string sliceStatement;
 };
 

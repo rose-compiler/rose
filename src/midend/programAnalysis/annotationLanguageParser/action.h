@@ -85,7 +85,7 @@ public:
    * substitution. */
 
   virtual void lookup(procedureAnn * procedure,
-		      Annotations * annotations);
+                      Annotations * annotations);
   
   /** @brief Test the condition
    *
@@ -93,8 +93,8 @@ public:
    * the results in the _candidates map. */
 
   void test(callsiteEntry * callsite,
-	    procLocation * where,
-	    propertyAnalyzer * property_analyzer);
+            procLocation * where,
+            propertyAnalyzer * property_analyzer);
 
   /** @brief Is applicable
    *
@@ -109,9 +109,9 @@ public:
    * replace the given procedure call. */
 
   stmtNode * generate_replacement(callsiteEntry * callsite,
-				  propertyAnalyzer * analyzer,
+                                  propertyAnalyzer * analyzer,
                                   Linker &linker,
-				  Annotations * annotations);
+                                  Annotations * annotations);
 };
 
 #endif /* BDWY_ACTION_H */

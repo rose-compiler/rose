@@ -19,8 +19,8 @@
 #include "qce-config.h"
 
 /*!
-	\file qreliablefilewatch.h
-	\brief Definition of the QReliableFileWatch class
+        \file qreliablefilewatch.h
+        \brief Definition of the QReliableFileWatch class
 */
 
 #include <QHash>
@@ -30,43 +30,43 @@
 
 class QCE_EXPORT QReliableFileWatch : protected QFileSystemWatcher
 {
-	friend class QPointer<QReliableFileWatch>;
-	
-	Q_OBJECT
-	
-	public:
-		QReliableFileWatch(QObject *p = 0);
-		virtual ~QReliableFileWatch();
-		
-	public slots:
-		void addWatch(const QString& file, QObject *recipient);
-		void removeWatch(const QString& file, QObject *recipient);
-		
-	protected:
-		virtual void timerEvent(QTimerEvent *e);
-		
-	private slots:
-		void sourceChanged(const QString& filepath);
-		
-	private:
-		enum State
-		{
-			Clean		= 0,
-			Recent		= 1,
-			Duplicate	= 2
-		};
-		
-		struct Watch
-		{
-			char state;
-			quint64 size;
-			quint16 checksum;
-			QList< QPointer<QObject> > recipients;
-		};
-		
-		QBasicTimer m_timer;
-		
-		QHash<QString, Watch> m_targets;
+        friend class QPointer<QReliableFileWatch>;
+        
+        Q_OBJECT
+        
+        public:
+                QReliableFileWatch(QObject *p = 0);
+                virtual ~QReliableFileWatch();
+                
+        public slots:
+                void addWatch(const QString& file, QObject *recipient);
+                void removeWatch(const QString& file, QObject *recipient);
+                
+        protected:
+                virtual void timerEvent(QTimerEvent *e);
+                
+        private slots:
+                void sourceChanged(const QString& filepath);
+                
+        private:
+                enum State
+                {
+                        Clean           = 0,
+                        Recent          = 1,
+                        Duplicate       = 2
+                };
+                
+                struct Watch
+                {
+                        char state;
+                        quint64 size;
+                        quint16 checksum;
+                        QList< QPointer<QObject> > recipients;
+                };
+                
+                QBasicTimer m_timer;
+                
+                QHash<QString, Watch> m_targets;
 };
 
 #endif // !_QRELIABLE_FILE_WATCH_H_

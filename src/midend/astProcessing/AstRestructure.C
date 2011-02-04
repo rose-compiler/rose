@@ -33,10 +33,10 @@ AstRestructure::unlock(SgNode* astNode) {
       // test is necessary otherwise the access would insert a default element
       Schedule::iterator sch=scheduledReplacements.find(astNode);
       if(sch!=scheduledReplacements.end()) {
-	SgStatement* astNode2=dynamic_cast<SgStatement*>(astNode);
-	ROSE_ASSERT(astNode2);
-	cout << "Replacing Node: " << astNode2->sage_class_name() << endl;
-	immediateReplace(astNode2,scheduledReplacements[astNode2]);
+        SgStatement* astNode2=dynamic_cast<SgStatement*>(astNode);
+        ROSE_ASSERT(astNode2);
+        cout << "Replacing Node: " << astNode2->sage_class_name() << endl;
+        immediateReplace(astNode2,scheduledReplacements[astNode2]);
       }
     } else {
       cerr << "ERROR: attempted to unlock non-locked node " << astNode->sage_class_name() << " @" << astNode << endl;

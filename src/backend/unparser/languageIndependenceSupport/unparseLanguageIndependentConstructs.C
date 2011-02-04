@@ -358,8 +358,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
      curprint ( string("\n/* Unparse statement (" ) + StringUtility::numberToString(stmt) 
          + "): class_name() = " + stmt->class_name() 
-		+ " raw line (start) = " + tostring(stmt->get_startOfConstruct()->get_raw_line()) 
-		+ " raw line (end) = " + tostring(stmt->get_endOfConstruct()->get_raw_line()) 
+                + " raw line (start) = " + tostring(stmt->get_startOfConstruct()->get_raw_line()) 
+                + " raw line (end) = " + tostring(stmt->get_endOfConstruct()->get_raw_line()) 
          + " */ \n");
      char buffer[100];
      snprintf (buffer,100,"%p",stmt);
@@ -1410,8 +1410,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                 else
                                    curprint ( (*i)->getString());
                             }
-						else
-						   curprint ( (*i)->getString());
+                                                else
+                                                   curprint ( (*i)->getString());
                          break;
 
                  // Comment out these declarations where they occur because we don't need
@@ -1667,7 +1667,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 
                  // Two cases must be considered here: prefix unary and postfix unary 
                  // operators. Most of the unary operators are prefix. In this case, we must
-                 // first unparse the rhs and then the lhs.	
+                 // first unparse the rhs and then the lhs.     
                  // if (isUnaryPostfixOperator(binary_op->get_rhs_operand())); // Postfix unary operator.
                     if (unp->u_sage->isUnaryPostfixOperator(binary_op->get_rhs_operand()))  // Postfix unary operator.
                        {

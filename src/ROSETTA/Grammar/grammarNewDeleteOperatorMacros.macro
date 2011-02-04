@@ -12,7 +12,7 @@
 // Is there some reason these are global variables rather than class variables? [RPM 2011-01-27]
 int  $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE = DEFAULT_CLASS_ALLOCATION_POOL_SIZE;
 $CLASSNAME* $CLASSNAME_Current_Link        = NULL;
-static pthread_mutex_t $CLASSNAME_allocation_mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
+static pthread_mutex_t $CLASSNAME_allocation_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // This macro protects allocation functions by locking/unlocking a mutex. We have one mutex defined for each Sage class. The
 // HOW argument should be the word "lock" or "unlock".  Using a macro allows us to not have to use conditional compilation

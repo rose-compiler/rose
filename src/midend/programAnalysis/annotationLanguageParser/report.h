@@ -19,14 +19,14 @@ public:
   {}
 
   virtual void lookup(enumPropertyAnn * default_property,
-		      procedureAnn * procedure,
-		      Annotations * annotations) =0;
+                      procedureAnn * procedure,
+                      Annotations * annotations) =0;
 
 #ifdef NONEMPTY
   virtual void report(std::ostream & out,
-		      bool is_error,
-		      Analyzer * analyzer,
-		      procLocation * where) =0;
+                      bool is_error,
+                      Analyzer * analyzer,
+                      procLocation * where) =0;
 
   // static callNode * callnode(stmtNode * stmt);
 #endif
@@ -50,14 +50,14 @@ public:
   literalReportElementAnn(const parserID * name);
 
   virtual void lookup(enumPropertyAnn * default_property,
-		      procedureAnn * procedure,
-		      Annotations * annotations);
+                      procedureAnn * procedure,
+                      Annotations * annotations);
 
 #ifdef NONEMPTY
   virtual void report(std::ostream & out,
-		      bool is_error,
-		      Analyzer * analyzer,
-		      procLocation * where);
+                      bool is_error,
+                      Analyzer * analyzer,
+                      procLocation * where);
 #endif
 };
 
@@ -85,14 +85,14 @@ public:
                              exprAnn * expr, int line);
 
   virtual void lookup(enumPropertyAnn * default_property,
-		      procedureAnn * procedure,
-		      Annotations * annotations);
+                      procedureAnn * procedure,
+                      Annotations * annotations);
 
 #ifdef NONEMPTY
   virtual void report(std::ostream & out,
-		      bool is_error,
-		      Analyzer * analyzer,
-		      procLocation * where);
+                      bool is_error,
+                      Analyzer * analyzer,
+                      procLocation * where);
 #endif
 };
 
@@ -122,14 +122,14 @@ public:
   locationReportElementAnn(const parserID * id);
 
   virtual void lookup(enumPropertyAnn * default_property,
-		      procedureAnn * procedure,
-		      Annotations * annotations);
+                      procedureAnn * procedure,
+                      Annotations * annotations);
 
 #ifdef NONEMPTY
   virtual void report(std::ostream & out,
-		      bool is_error,
-		      Analyzer * analyzer,
-		      procLocation * where);
+                      bool is_error,
+                      Analyzer * analyzer,
+                      procLocation * where);
 
 #endif
 };
@@ -167,14 +167,14 @@ public:
   bindingReportElementAnn(const parserID * varname, bool size_only);
 
   virtual void lookup(enumPropertyAnn * default_property,
-		      procedureAnn * procedure,
-		      Annotations * annotations);
+                      procedureAnn * procedure,
+                      Annotations * annotations);
 
 #ifdef NONEMPTY
   virtual void report(std::ostream & out,
-		      bool is_error,
-		      Analyzer * analyzer,
-		      procLocation * where);
+                      bool is_error,
+                      Analyzer * analyzer,
+                      procLocation * where);
 #endif
 };
 
@@ -215,17 +215,17 @@ public:
   virtual ~reportAnn() {};
 
   reportAnn(exprAnn * condition,
-	    bool is_error,
-	    report_element_list * elements, int line);
+            bool is_error,
+            report_element_list * elements, int line);
 
   virtual void lookup(procedureAnn * procedure,
-		      Annotations * annotations);
+                      Annotations * annotations);
 
 #ifdef NONEMPTY
   virtual void report(std::ostream & out,
-		      Analyzer * analyzer,
-		      procLocation * where,
-		      propertyAnalyzer * property_analyzer);
+                      Analyzer * analyzer,
+                      procLocation * where,
+                      propertyAnalyzer * property_analyzer);
 #endif
 };
 

@@ -321,7 +321,7 @@ protected:
   Node* root_node;                                           // the root node
   bool DFS_needed, BFS_needed;                               // has a DFS / BFS been done on this graph?
   void add (Edge* e) throw (DuplicateEdge, EdgeInUse, EmptyEdge,
-			    DuplicateNode, NodeInUse, EmptyNode);
+                            DuplicateNode, NodeInUse, EmptyNode);
   void add (Node* n) throw (DuplicateNode, NodeInUse, EmptyNode);
   void remove (Edge* e) throw (NonexistentEdge, EmptyEdge);
   void remove (Node* n) throw (NonexistentNode, DeletingRootOfNonSingletonGraph, EmptyNode);

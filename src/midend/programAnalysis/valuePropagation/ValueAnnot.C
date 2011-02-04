@@ -245,7 +245,7 @@ is_value_restrict_op( AstInterface& fa, const AstNodePtr& exp,
 
 bool ValueAnnotation::
 is_access_value( CPPAstInterface& fa, const AstNodePtr& exp, AstNodePtr* obj, std::string* name,
-		 AstInterface::AstNodeList* args, HasValueDescriptor* desc)
+                 AstInterface::AstNodeList* args, HasValueDescriptor* desc)
 {
   std::string funcname = values.is_known_member_function( fa, exp, obj, args, desc);
   if (funcname != "") {
