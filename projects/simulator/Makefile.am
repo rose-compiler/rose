@@ -355,6 +355,46 @@ TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/tests/syscall_tst.99.2.c
 
 # These cannot be run reliably (at least not concurrently with other tests.
+# This variable is unused, but the scripts/policies/UnusedSources policy picks up these names to make these
+# otherwise unused fails as used.
+TEST_INPUTS_FAILING = \
+		   $(srcdir)/tests/syscall_tst.117.msgget.03.c \
+		   $(srcdir)/tests/syscall_tst.117.shmget.03.c \
+		   $(srcdir)/tests/syscall_tst.78.2.c          \
+		   $(srcdir)/tests/syscall_tst.95.c 	       \
+		   $(srcdir)/tests/syscall_tst.117.msgctl.06.c \
+		   $(srcdir)/tests/syscall_tst.117.msgctl.07.c \
+		   $(srcdir)/tests/syscall_tst.117.msgget.04.c \
+		   $(srcdir)/tests/syscall_tst.117.msgrcv.02.c \
+		   $(srcdir)/tests/syscall_tst.117.msgsnd.02.c \
+		   $(srcdir)/tests/syscall_tst.117.semctl.02.c \
+		   $(srcdir)/tests/syscall_tst.117.semctl.03.c \
+		   $(srcdir)/tests/syscall_tst.117.semctl.04.c \
+		   $(srcdir)/tests/syscall_tst.117.semget.02.c \
+		   $(srcdir)/tests/syscall_tst.117.semop.02.c  \
+		   $(srcdir)/tests/syscall_tst.117.shmat.02.c  \
+		   $(srcdir)/tests/syscall_tst.117.shmat.03.c  \
+		   $(srcdir)/tests/syscall_tst.117.shmctl.02.c \
+		   $(srcdir)/tests/syscall_tst.117.shmctl.03.c \
+		   $(srcdir)/tests/syscall_tst.117.shmget.04.c \
+		   $(srcdir)/tests/syscall_tst.117.shmget.05.c \
+		   $(srcdir)/tests/syscall_tst.195.1.c	       \
+		   $(srcdir)/tests/syscall_tst.195.2.c	       \
+		   $(srcdir)/tests/syscall_tst.195.3.c	       \
+		   $(srcdir)/tests/syscall_tst.196.2.c	       \
+		   $(srcdir)/tests/syscall_tst.196.3.c	       \
+		   $(srcdir)/tests/syscall_tst.221.18.c	       \
+		   $(srcdir)/tests/syscall_tst.83.3.c	       \
+		   $(srcdir)/tests/syscall_tst.99.3.c	       \
+		   $(srcdir)/tests/syscall_tst.117.msgctl.09.c \
+		   $(srcdir)/tests/syscall_tst.117.msgctl.10.c \
+		   $(srcdir)/tests/syscall_tst.117.msgctl.11.c \
+		   $(srcdir)/tests/syscall_tst.117.semctl.06.c \
+		   $(srcdir)/tests/syscall_tst.221.14.c	       \
+		   $(srcdir)/tests/syscall_tst.221.15.c	       \
+		   $(srcdir)/tests/syscall_tst.140.1.c
+
+#	Comments about $(TEST_INPUTS_FAILING) and why they're commented out.
 #		   $(srcdir)/tests/syscall_tst.117.msgget.03.c
 #		   $(srcdir)/tests/syscall_tst.117.shmget.03.c
 #  			Tries to create message queues or shared memory segments until all resources are exhausted in order
