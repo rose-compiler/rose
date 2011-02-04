@@ -509,399 +509,399 @@ MOSTLYCLEANFILES += libipc.a
 ###############################################################################################################################
 
 PTHREAD_TEST_INPUTS_SRC = \
-		    $(srcdir)/pthread_tests/pthread_atfork.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_atfork.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_atfork.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_atfork.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_atfork.3-2.c\
-		    $(srcdir)/pthread_tests/pthread_atfork.3-3.c\
-		    $(srcdir)/pthread_tests/pthread_atfork.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_destroy.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_destroy.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_destroy.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_getdetachstate.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_getdetachstate.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_attr_getinheritsched.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_getschedparam.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_getschedpolicy.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_getscope.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_getstack.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_getstacksize.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_init.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_init.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_init.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_init.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setdetachstate.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setdetachstate.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setdetachstate.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setdetachstate.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-3.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-4.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-3.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-4.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setschedpolicy.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setschedpolicy.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setscope.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setscope.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setscope.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setstack.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setstack.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setstack.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setstack.6-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setstack.7-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setstacksize.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setstacksize.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_attr_setstacksize.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrierattr_destroy.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrierattr_getpshared.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrierattr_getpshared.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrierattr_init.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrierattr_init.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrierattr_setpshared.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrierattr_setpshared.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrier_destroy.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrier_destroy.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrier_init.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrier_init.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrier_init.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrier_wait.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrier_wait.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrier_wait.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_barrier_wait.3-2.c\
-		    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c\
-		    $(srcdir)/pthread_tests/pthread_cancel.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_cancel.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_cancel.1-3.c\
-		    $(srcdir)/pthread_tests/pthread_cancel.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_cancel.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_cancel.2-3.c\
-		    $(srcdir)/pthread_tests/pthread_cancel.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_cancel.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_cancel.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_cancel.5-2.c\
-		    $(srcdir)/pthread_tests/pthread_cleanup_pop.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_cleanup_pop.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_cleanup_pop.1-3.c\
-		    $(srcdir)/pthread_tests/pthread_cleanup_push.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_cleanup_push.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_cleanup_push.1-3.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_destroy.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_destroy.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_destroy.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_destroy.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_getclock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_getclock.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_getpshared.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_getpshared.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_getpshared.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_init.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_init.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_setclock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_setclock.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_setclock.1-3.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_setclock.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_setpshared.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_setpshared.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_condattr_setpshared.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-3.c\
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.4-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_destroy.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_destroy.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_destroy.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_init.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_init.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_init.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_init.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_init.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_init.4-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_signal.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_signal.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_signal.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_signal.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_signal.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_signal.4-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-3.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-4.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-5.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-6.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-7.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.4-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_timedwait.4-3.c\
-		    $(srcdir)/pthread_tests/pthread_cond_wait.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_wait.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_wait.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_cond_wait.2-3.c\
-		    $(srcdir)/pthread_tests/pthread_cond_wait.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_cond_wait.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.10-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.11-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.12-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_create.1-3.c\
-		    $(srcdir)/pthread_tests/pthread_create.14-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.1-4.c\
-		    $(srcdir)/pthread_tests/pthread_create.15-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.1-5.c\
-		    $(srcdir)/pthread_tests/pthread_create.1-6.c\
-		    $(srcdir)/pthread_tests/pthread_create.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.3-2.c\
-		    $(srcdir)/pthread_tests/pthread_create.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.5-2.c\
-		    $(srcdir)/pthread_tests/pthread_create.8-1.c\
-		    $(srcdir)/pthread_tests/pthread_create.8-2.c\
-		    $(srcdir)/pthread_tests/pthread_detach.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_detach.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_detach.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_detach.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_detach.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_detach.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_detach.4-2.c\
-		    $(srcdir)/pthread_tests/pthread_detach.4-3.c\
-		    $(srcdir)/pthread_tests/pthread_equal.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_equal.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_equal.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_exit.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_exit.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_exit.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_exit.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_exit.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_exit.3-2.c\
-		    $(srcdir)/pthread_tests/pthread_exit.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_exit.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_exit.6-1.c\
-		    $(srcdir)/pthread_tests/pthread_exit.6-2.c\
-		    $(srcdir)/pthread_tests/pthread_getcpuclockid.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_getschedparam.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_getschedparam.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_getschedparam.1-3.c\
-		    $(srcdir)/pthread_tests/pthread_getschedparam.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_getspecific.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_getspecific.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_join.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_join.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_join.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_join.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_join.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_join.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_join.6-2.c\
-		    $(srcdir)/pthread_tests/pthread_join.6-3.c\
-		    $(srcdir)/pthread_tests/pthread_key_create.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_key_create.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_key_create.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_key_create.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_key_delete.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_key_delete.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_key_delete.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_kill.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_kill.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_kill.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_kill.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_kill.6-1.c\
-		    $(srcdir)/pthread_tests/pthread_kill.7-1.c\
-		    $(srcdir)/pthread_tests/pthread_kill.8-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_destroy.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_destroy.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_destroy.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_destroy.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_getprioceiling.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_getprioceiling.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_getprioceiling.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_getprotocol.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_getpshared.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_getpshared.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_getpshared.1-3.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_getpshared.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_gettype.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_gettype.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_gettype.1-3.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_gettype.1-4.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_gettype.1-5.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_init.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_init.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setprioceiling.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setprioceiling.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setprioceiling.3-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.3-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-3.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-4.c\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.7-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_destroy.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_destroy.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_destroy.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_destroy.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_destroy.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_destroy.5-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_getprioceiling.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_init.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_init.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_init.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_init.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_init.3-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_init.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_init.5-3.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_lock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_lock.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_lock.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_lock.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_lock.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.5-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.5-3.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_trylock.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_trylock.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_trylock.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_trylock.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_trylock.4-2.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_trylock.4-3.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_unlock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_unlock.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_unlock.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_unlock.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_mutex_unlock.5-2.c\
-		    $(srcdir)/pthread_tests/pthread_once.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_once.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_once.1-3.c\
-		    $(srcdir)/pthread_tests/pthread_once.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_once.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_once.6-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlockattr_destroy.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlockattr_destroy.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlockattr_getpshared.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlockattr_getpshared.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlockattr_getpshared.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlockattr_init.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlockattr_init.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlockattr_setpshared.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_destroy.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_destroy.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_init.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_init.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_init.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_init.6-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.2-3.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.6-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.6-2.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.6-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.6-2.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_tryrdlock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_trywrlock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_unlock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_unlock.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_unlock.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_unlock.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_unlock.4-2.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_wrlock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_wrlock.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_rwlock_wrlock.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_self.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_setcancelstate.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_setcancelstate.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_setcancelstate.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_setcancelstate.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_setcanceltype.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_setcanceltype.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_setcanceltype.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_setschedparam.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_setschedparam.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_setschedparam.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_setschedparam.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_setschedprio.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_setspecific.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_setspecific.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.10-1.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.12-1.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.14-1.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.15-1.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.16-1.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.18-1.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.5-1.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.6-1.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.7-1.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.8-1.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.8-2.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.8-3.c\
-		    $(srcdir)/pthread_tests/pthread_sigmask.9-1.c\
-		    $(srcdir)/pthread_tests/pthread_spin_destroy.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_spin_destroy.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_spin_init.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_spin_init.2-1.c\
-		    $(srcdir)/pthread_tests/pthread_spin_init.2-2.c\
-		    $(srcdir)/pthread_tests/pthread_spin_init.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_spin_lock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_spin_lock.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_spin_lock.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_spin_lock.3-2.c\
-		    $(srcdir)/pthread_tests/pthread_spin_trylock.4-1.c\
-		    $(srcdir)/pthread_tests/pthread_spin_unlock.1-1.c\
-		    $(srcdir)/pthread_tests/pthread_spin_unlock.1-2.c\
-		    $(srcdir)/pthread_tests/pthread_spin_unlock.3-1.c\
-		    $(srcdir)/pthread_tests/pthread_testcancel.1-1.c\
+		    $(srcdir)/pthread_tests/pthread_atfork.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_atfork.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_atfork.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_atfork.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_atfork.3-2.c \
+		    $(srcdir)/pthread_tests/pthread_atfork.3-3.c \
+		    $(srcdir)/pthread_tests/pthread_atfork.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_destroy.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_destroy.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_destroy.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_getdetachstate.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_getdetachstate.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_attr_getinheritsched.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_getschedparam.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_getschedpolicy.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_getscope.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_getstack.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_getstacksize.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_init.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_init.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_init.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_init.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setdetachstate.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setdetachstate.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setdetachstate.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setdetachstate.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-3.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-4.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-3.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-4.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setschedpolicy.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setschedpolicy.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setscope.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setscope.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setscope.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setstack.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setstack.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setstack.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setstack.6-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setstack.7-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setstacksize.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setstacksize.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_attr_setstacksize.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrierattr_destroy.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrierattr_getpshared.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrierattr_getpshared.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrierattr_init.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrierattr_init.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrierattr_setpshared.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrierattr_setpshared.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrier_destroy.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrier_destroy.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrier_init.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrier_init.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrier_init.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrier_wait.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrier_wait.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrier_wait.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_barrier_wait.3-2.c \
+		    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c \
+		    $(srcdir)/pthread_tests/pthread_cancel.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_cancel.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_cancel.1-3.c \
+		    $(srcdir)/pthread_tests/pthread_cancel.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_cancel.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_cancel.2-3.c \
+		    $(srcdir)/pthread_tests/pthread_cancel.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_cancel.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_cancel.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_cancel.5-2.c \
+		    $(srcdir)/pthread_tests/pthread_cleanup_pop.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_cleanup_pop.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_cleanup_pop.1-3.c \
+		    $(srcdir)/pthread_tests/pthread_cleanup_push.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_cleanup_push.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_cleanup_push.1-3.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_destroy.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_destroy.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_destroy.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_destroy.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_getclock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_getclock.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_getpshared.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_getpshared.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_getpshared.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_init.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_init.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_setclock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_setclock.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_setclock.1-3.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_setclock.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_setpshared.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_setpshared.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_condattr_setpshared.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-3.c \
+		    $(srcdir)/pthread_tests/pthread_cond_broadcast.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_broadcast.4-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_destroy.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_destroy.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_destroy.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_init.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_init.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_init.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_init.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_init.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_init.4-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_signal.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_signal.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_signal.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_signal.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_signal.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_signal.4-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-3.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-4.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-5.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-6.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.2-7.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.4-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_timedwait.4-3.c \
+		    $(srcdir)/pthread_tests/pthread_cond_wait.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_wait.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_wait.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_wait.2-3.c \
+		    $(srcdir)/pthread_tests/pthread_cond_wait.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_cond_wait.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.10-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.11-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.12-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_create.1-3.c \
+		    $(srcdir)/pthread_tests/pthread_create.14-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.1-4.c \
+		    $(srcdir)/pthread_tests/pthread_create.15-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.1-5.c \
+		    $(srcdir)/pthread_tests/pthread_create.1-6.c \
+		    $(srcdir)/pthread_tests/pthread_create.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.3-2.c \
+		    $(srcdir)/pthread_tests/pthread_create.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.5-2.c \
+		    $(srcdir)/pthread_tests/pthread_create.8-1.c \
+		    $(srcdir)/pthread_tests/pthread_create.8-2.c \
+		    $(srcdir)/pthread_tests/pthread_detach.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_detach.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_detach.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_detach.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_detach.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_detach.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_detach.4-2.c \
+		    $(srcdir)/pthread_tests/pthread_detach.4-3.c \
+		    $(srcdir)/pthread_tests/pthread_equal.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_equal.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_equal.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_exit.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_exit.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_exit.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_exit.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_exit.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_exit.3-2.c \
+		    $(srcdir)/pthread_tests/pthread_exit.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_exit.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_exit.6-1.c \
+		    $(srcdir)/pthread_tests/pthread_exit.6-2.c \
+		    $(srcdir)/pthread_tests/pthread_getcpuclockid.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_getschedparam.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_getschedparam.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_getschedparam.1-3.c \
+		    $(srcdir)/pthread_tests/pthread_getschedparam.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_getspecific.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_getspecific.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_join.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_join.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_join.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_join.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_join.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_join.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_join.6-2.c \
+		    $(srcdir)/pthread_tests/pthread_join.6-3.c \
+		    $(srcdir)/pthread_tests/pthread_key_create.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_key_create.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_key_create.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_key_create.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_key_delete.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_key_delete.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_key_delete.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_kill.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_kill.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_kill.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_kill.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_kill.6-1.c \
+		    $(srcdir)/pthread_tests/pthread_kill.7-1.c \
+		    $(srcdir)/pthread_tests/pthread_kill.8-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_destroy.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_destroy.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_destroy.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_destroy.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_getprioceiling.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_getprioceiling.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_getprioceiling.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_getprotocol.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_getpshared.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_getpshared.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_getpshared.1-3.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_getpshared.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_gettype.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_gettype.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_gettype.1-3.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_gettype.1-4.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_gettype.1-5.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_init.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_init.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setprioceiling.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setprioceiling.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setprioceiling.3-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.3-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-3.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-4.c \
+		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.7-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_destroy.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_destroy.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_destroy.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_destroy.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_destroy.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_destroy.5-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_getprioceiling.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_init.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_init.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_init.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_init.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_init.3-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_init.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_init.5-3.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_lock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_lock.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_lock.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_lock.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_lock.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.5-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_timedlock.5-3.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_trylock.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_trylock.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_trylock.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_trylock.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_trylock.4-2.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_trylock.4-3.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_unlock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_unlock.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_unlock.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_unlock.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_mutex_unlock.5-2.c \
+		    $(srcdir)/pthread_tests/pthread_once.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_once.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_once.1-3.c \
+		    $(srcdir)/pthread_tests/pthread_once.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_once.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_once.6-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlockattr_destroy.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlockattr_destroy.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlockattr_getpshared.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlockattr_getpshared.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlockattr_getpshared.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlockattr_init.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlockattr_init.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlockattr_setpshared.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_destroy.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_destroy.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_init.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_init.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_init.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_init.6-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.2-3.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_rdlock.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.6-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedrdlock.6-2.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.6-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_timedwrlock.6-2.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_tryrdlock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_trywrlock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_unlock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_unlock.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_unlock.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_unlock.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_unlock.4-2.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_wrlock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_wrlock.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_rwlock_wrlock.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_self.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_setcancelstate.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_setcancelstate.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_setcancelstate.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_setcancelstate.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_setcanceltype.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_setcanceltype.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_setcanceltype.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_setschedparam.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_setschedparam.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_setschedparam.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_setschedparam.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_setschedprio.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_setspecific.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_setspecific.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.10-1.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.12-1.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.14-1.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.15-1.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.16-1.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.18-1.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.5-1.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.6-1.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.7-1.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.8-1.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.8-2.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.8-3.c \
+		    $(srcdir)/pthread_tests/pthread_sigmask.9-1.c \
+		    $(srcdir)/pthread_tests/pthread_spin_destroy.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_spin_destroy.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_spin_init.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_spin_init.2-1.c \
+		    $(srcdir)/pthread_tests/pthread_spin_init.2-2.c \
+		    $(srcdir)/pthread_tests/pthread_spin_init.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_spin_lock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_spin_lock.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_spin_lock.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_spin_lock.3-2.c \
+		    $(srcdir)/pthread_tests/pthread_spin_trylock.4-1.c \
+		    $(srcdir)/pthread_tests/pthread_spin_unlock.1-1.c \
+		    $(srcdir)/pthread_tests/pthread_spin_unlock.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_spin_unlock.3-1.c \
+		    $(srcdir)/pthread_tests/pthread_testcancel.1-1.c \
 		    $(srcdir)/pthread_tests/pthread_testcancel.2-1.c
 
 
 # compile error in these tests with undeclared variables
 #		    $(srcdir)/pthread_tests/pthread_mutexattr_getprotocol.1-2.c
-#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.1-1.c\
-#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-1.c\
-#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-2.c\
+#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.1-1.c \
+#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-1.c \
+#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-2.c \
 #
 # these tests just take a very long time
 #
-#		    $(srcdir)/pthread_tests/pthread_spin_trylock.1-1.c\
-#		    $(srcdir)/pthread_tests/pthread_cond_init.1-3.c\
+#		    $(srcdir)/pthread_tests/pthread_spin_trylock.1-1.c \
+#		    $(srcdir)/pthread_tests/pthread_cond_init.1-3.c \
 # this job doesn't stop even when terminated with control c and make terminates
 # it has to be killed by 'kill -9 '
-#		    $(srcdir)/pthread_tests/pthread_cond_init.4-1.c\
-#		    $(srcdir)/pthread_tests/pthread_mutex_trylock.1-1.c\
-#		    $(srcdir)/pthread_tests/pthread_mutex_init.5-1.c\
+#		    $(srcdir)/pthread_tests/pthread_cond_init.4-1.c \
+#		    $(srcdir)/pthread_tests/pthread_mutex_trylock.1-1.c \
+#		    $(srcdir)/pthread_tests/pthread_mutex_init.5-1.c \
 #
 # no main function: 
-#		    $(srcdir)/pthread_tests/pthread_once.4-1.c\
+#		    $(srcdir)/pthread_tests/pthread_once.4-1.c \
 #
 
 PTHREAD_TEST_INCLUDES= \
