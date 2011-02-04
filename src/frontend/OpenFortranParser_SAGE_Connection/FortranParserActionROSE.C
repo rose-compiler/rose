@@ -8250,7 +8250,7 @@ void c_action_section_subscript_list(int count)
              {
             // printf ("count = %d i = %d \n",count,i);
 
-	       //rose_check(astExpressionStack.empty() == false);
+               //rose_check(astExpressionStack.empty() == false);
                ROSE_ASSERT(astExpressionStack.empty() == false);
                SgExpression* expression = astExpressionStack.front();
 
@@ -17790,10 +17790,10 @@ void c_action_actual_arg(ofp_bool hasExpr, Token_t * label)
 #endif
 
 #if 1
-	// DXN (01/06/2011):
-	// concatenate '*' and the label and push it on the astExpressionStack as the actual argument.
-	if (label != NULL)
-	   {
+        // DXN (01/06/2011):
+        // concatenate '*' and the label and push it on the astExpressionStack as the actual argument.
+        if (label != NULL)
+           {
     // string asteriskArg = "*" + string(label->text);
        string asteriskArg = label->text;
     // SgVarRefExp* p_actualArg = SageBuilder::buildOpaqueVarRefExp(asteriskArg, getTopOfScopeStack());
@@ -17807,18 +17807,18 @@ void c_action_actual_arg(ofp_bool hasExpr, Token_t * label)
 
        SgLabelRefExp* actualArg = SageBuilder::buildLabelRefExp(labelSymbol);
 
-		 astExpressionStack.push_front(actualArg);
+                 astExpressionStack.push_front(actualArg);
 
-		 // don't need the label on top of the astLabelStack any more:
-		 if (!astLabelSymbolStack.empty())
-		    {
-			  astLabelSymbolStack.pop_front();
-		    }
-		 else
-		    {
-			  if ( SgProject::get_verbose() > 0)
-		    	  printf("WARNING: astLabelSymbolStack is empty: c_action_actual_arg: Line %d Col %d\n", label->line, label->col);
-		    }
+                 // don't need the label on top of the astLabelStack any more:
+                 if (!astLabelSymbolStack.empty())
+                    {
+                          astLabelSymbolStack.pop_front();
+                    }
+                 else
+                    {
+                          if ( SgProject::get_verbose() > 0)
+                          printf("WARNING: astLabelSymbolStack is empty: c_action_actual_arg: Line %d Col %d\n", label->line, label->col);
+                    }
 
 #if 1
           outputState("After handling case of label != NULL in R1221 c_action_actual_arg()");
@@ -17827,7 +17827,7 @@ void c_action_actual_arg(ofp_bool hasExpr, Token_t * label)
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
-	   }
+           }
 #endif
 
 #if 1
