@@ -144,15 +144,15 @@ struct hash_nodeptr
  */
    // Liao 1/22/2008, used for get symbols for generating variable reference nodes
    // ! Find a variable symbol in current and ancestor scopes for a given name
-   SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName &	name,
+   SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName & name,
                                                          SgScopeStatement *currentScope=NULL);
    //! Find a symbol in current and ancestor scopes for a given variable name, starting from top of ScopeStack if currentscope is not given or NULL.
-   SgSymbol *lookupSymbolInParentScopes (const SgName &	name,
+   SgSymbol *lookupSymbolInParentScopes (const SgName & name,
                                                          SgScopeStatement *currentScope=NULL);
 
    // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
    //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
-   SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &	functionName,
+   SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName & functionName,
                                                          SgScopeStatement *currentScope=NULL);
 
    // Liao, 1/24/2008, find exact match for a function
@@ -541,7 +541,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
 
   bool isPrototypeInScope (SgScopeStatement * scope,
                            SgFunctionDeclaration * functionDeclaration,
-			   SgDeclarationStatement * startingAtDeclaration);
+                           SgDeclarationStatement * startingAtDeclaration);
 
   //!check if node1 is a strict ancestor of node 2. (a node is not considered its own ancestor)
   bool isAncestor(SgNode* node1, SgNode* node2);
@@ -916,7 +916,7 @@ SgFunctionDeclaration* findMain(SgNode* currentNode);
 //! Find the last declaration statement within a scope (if any). This is often useful to decide where to insert another declaration statement
 SgStatement* findLastDeclarationStatement(SgScopeStatement * scope);
 
-	  //midend/programTransformation/partialRedundancyElimination/pre.h
+          //midend/programTransformation/partialRedundancyElimination/pre.h
 //! Find referenced symbols within an expression
 std::vector<SgVariableSymbol*> getSymbolsUsedInExpression(SgExpression* expr);
 
@@ -1054,12 +1054,12 @@ SgScopeStatement* getScope(const SgNode* astNode);
 */
   // Liao, 1/9/2008
   /*!
-  	\brief return the first global scope under current project
+        \brief return the first global scope under current project
   */
   SgGlobal * getFirstGlobalScope(SgProject *project);
 
   /*!
-	\brief get the last statement within a scope, return NULL if it does not exit
+        \brief get the last statement within a scope, return NULL if it does not exit
   */
   SgStatement* getLastStatement(SgScopeStatement *scope);
 
@@ -1198,11 +1198,11 @@ void replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldE
 
 //! Replace a given expression with a list of statements produced by a generator
 void replaceExpressionWithStatement(SgExpression* from,
-				    SageInterface::StatementGenerator* to);
+                                    SageInterface::StatementGenerator* to);
 //! Similar to replaceExpressionWithStatement, but with more restrictions.
 //! Assumptions: from is not within the test of a loop or ifStmt,  not currently traversing from or the statement it is in
 void replaceSubexpressionWithStatement(SgExpression* from,
-				      SageInterface::StatementGenerator* to);
+                                      SageInterface::StatementGenerator* to);
 
 //! Set operands for expressions with single operand, such as unary expressions. handle file info, lvalue, pointer downcasting, parent pointer etc.
 void setOperand(SgExpression* target, SgExpression* operand);
@@ -1409,9 +1409,9 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
   bool isNodeEqual(SgNode* node1, SgNode* node2); //?
   bool isTreeEqual(SgNode* tree1, SgNode* tree2);
 
-	//! Are two expressions equal (using a deep comparison)?
+        //! Are two expressions equal (using a deep comparison)?
   bool expressionTreeEqual(SgExpression*, SgExpression*);
-	//! Are corresponding expressions in two lists equal (using a deep comparison)?
+        //! Are corresponding expressions in two lists equal (using a deep comparison)?
   bool expressionTreeEqualStar(const SgExpressionPtrList&,
                              const SgExpressionPtrList&);
 
@@ -1532,7 +1532,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
 
   bool isPrototypeInScope (SgScopeStatement * scope,
                            SgFunctionDeclaration * functionDeclaration,
-			   SgDeclarationStatement * startingAtDeclaration);
+                           SgDeclarationStatement * startingAtDeclaration);
 
   bool MayRedefined(SgExpression* expr, SgNode* root);
   // bool isPotentiallyModified(SgExpression* expr, SgNode* root); // inlinderSupport.h
@@ -1565,7 +1565,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
   //src/midend/programTransformation/partialRedundancyElimination/pre.h
   int countComputationsOfExpressionIn(SgExpression* expr, SgNode* root);
 
-  	//src/midend/astInlining/replaceExpressionWithStatement.h
+        //src/midend/astInlining/replaceExpressionWithStatement.h
   void replaceAssignmentStmtWithStatement(SgExprStatement* from, StatementGenerator* to);
 
   void replaceSubexpressionWithStatement(SgExpression* from,
@@ -1621,7 +1621,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
 * get a descendent child node using preorder searching
 * get an ancestor node using bottomup/reverse searching
 
-  	// SgName or string?
+        // SgName or string?
   std::string getFunctionName (SgFunctionCallExp* functionCallExp);
   std::string getFunctionTypeName ( SgFunctionCallExp* functionCallExpression );
 

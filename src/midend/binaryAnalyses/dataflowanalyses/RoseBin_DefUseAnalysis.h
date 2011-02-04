@@ -18,15 +18,15 @@ class RoseBin_DefUseAnalysis  : public RoseBin_DataFlowAbstract {
 
   void addDefElement(SgGraphNode* sgNode,
                      std::pair<X86RegisterClass, int>  initName,
-		     SgGraphNode* defNode);
+                     SgGraphNode* defNode);
 
   void addUseElement(SgGraphNode* sgNode,
                      std::pair<X86RegisterClass, int>  initName,
-		     SgGraphNode* defNode);
+                     SgGraphNode* defNode);
 
   void addAnyElement(tabletype* tabl, SgGraphNode* sgNode,
                      std::pair<X86RegisterClass, int>  initName,
-		     SgGraphNode* defNode);
+                     SgGraphNode* defNode);
 
 
 
@@ -37,8 +37,8 @@ class RoseBin_DefUseAnalysis  : public RoseBin_DataFlowAbstract {
 
 
   //void handleDefCopy(SgGraphNode* sgNode,
-  //		     int nrOfInEdges,
-  //	     SgGraphNode* sgNodeBefore);
+  //                 int nrOfInEdges,
+  //         SgGraphNode* sgNodeBefore);
 
 
   void mapDefUnion(SgGraphNode* before, SgGraphNode* other, SgGraphNode* sgNode);
@@ -47,7 +47,7 @@ class RoseBin_DefUseAnalysis  : public RoseBin_DataFlowAbstract {
 
   bool checkElementsForEquality(const multitype* t1, const multitype* t2);
   void getOtherInNode(std::vector<SgGraphNode*>& vec,
-		      SgGraphNode* cfgNode, SgGraphNode* oneNode);
+                      SgGraphNode* cfgNode, SgGraphNode* oneNode);
 
   void printDefMap();
   void printUseMap();
@@ -56,10 +56,10 @@ class RoseBin_DefUseAnalysis  : public RoseBin_DataFlowAbstract {
 
   bool searchMulti(const multitype* multi, std::pair<X86RegisterClass, int>  initName);
   bool searchMulti(const multitype* multi, std::pair<X86RegisterClass, int>  initName,
-				    SgGraphNode* val);
+                                    SgGraphNode* val);
 
   void replaceElement(SgGraphNode* sgNode,
-		      std::pair<X86RegisterClass, int>  initName);
+                      std::pair<X86RegisterClass, int>  initName);
   void clearRegisters();
 
   void handleCopy(bool def,SgGraphNode* sgNode, SgGraphNode* sgNodeBefore);

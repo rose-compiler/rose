@@ -48,7 +48,7 @@ InsnSemanticsExpr::to_str(Operator o)
         case OP_ZEROP: return "zerop";
     }
     ROSE_ASSERT(!"list is not complete"); /*do not add as default since that would turn off compiler warnings*/
-	return "list is not complete"; // tps: removes warning in MSC compiler
+        return "list is not complete"; // tps: removes warning in MSC compiler
 }
 
 /* Shallow delete: delete this node if it has no parents, but not its children */

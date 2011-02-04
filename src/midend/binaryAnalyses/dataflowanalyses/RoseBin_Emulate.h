@@ -35,21 +35,21 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
 
 
   void assignRegister(std::pair<X86RegisterClass, int>  code,
-		      RoseBin_support::X86PositionInRegister pos,
-		      uint8_t &b_val,
-		      uint16_t &w_val,
-		      uint32_t &dw_val,
-		      uint64_t &qw_val);
+                      RoseBin_support::X86PositionInRegister pos,
+                      uint8_t &b_val,
+                      uint16_t &w_val,
+                      uint32_t &dw_val,
+                      uint64_t &qw_val);
 
   void assignRegister(std::pair<X86RegisterClass, int>  code,
-		      uint64_t &qw_val);
+                      uint64_t &qw_val);
 
 
   /*
   int64_t trackValueForRegister(SgGraphNode* node,
-				std::pair<X86RegisterClass, int>  codeSearch,
-				bool& cantTrack,
-				SgAsmRegisterReferenceExpression* refExpr_rightHand);
+                                std::pair<X86RegisterClass, int>  codeSearch,
+                                bool& cantTrack,
+                                SgAsmRegisterReferenceExpression* refExpr_rightHand);
   */
 
   void clearRegisters();

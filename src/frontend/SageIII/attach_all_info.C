@@ -48,12 +48,12 @@ readWordsInFile( std::string filename){
      std::vector<std::string> variantsToUse;
      std::fstream file_op(filename.c_str());
      if (file_op.fail()) {
-	  std::cout << "error: could not find file \"" << filename 
-	           << "\" which is meant to include the styles to enforce with " 
-		   << "the name checker." << std::endl;
-			          exit(1);    // abort program
-				      
-				  }
+          std::cout << "error: could not find file \"" << filename 
+                   << "\" which is meant to include the styles to enforce with " 
+                   << "the name checker." << std::endl;
+                                  exit(1);    // abort program
+                                      
+                                  }
 
      std::string current_word;
 
@@ -70,21 +70,21 @@ readWordsInFile( std::string filename){
 //! Wrapper around the SLA string option processing routine.
 int
 getRoseOptionValuesFromCommandline (vector<string>& argv, const string& opt_name,
-		std::vector<std::string>& values)
+                std::vector<std::string>& values)
    {
      int num_matches = sla_str (argv,
-		     OPTION_PREFIX_ROSE,
-		     OPTION_VALUE_SEPARATOR,
-		     opt_name,
-		     (std::string *)NULL);
+                     OPTION_PREFIX_ROSE,
+                     OPTION_VALUE_SEPARATOR,
+                     opt_name,
+                     (std::string *)NULL);
      if (num_matches > 0)
-	{
-	  vector<string> raw_values(num_matches);
-	  sla_str (argv,
+        {
+          vector<string> raw_values(num_matches);
+          sla_str (argv,
 OPTION_PREFIX_ROSE, OPTION_VALUE_SEPARATOR, opt_name,
-			  &raw_values[0]);
-	  values.insert(values.end(), raw_values.begin(), raw_values.end());
-	}
+                          &raw_values[0]);
+          values.insert(values.end(), raw_values.begin(), raw_values.end());
+        }
      return num_matches;
    }
 
@@ -120,11 +120,11 @@ AttachAllPreprocessingInfoTreeTrav(SgFile * sagep)
      if ( raw_conf_filename.size() >= 1  )
         {
           ROSE_ASSERT( raw_conf_filename.size() >= 1);
-	       lookForExcludePaths = true;
+               lookForExcludePaths = true;
 
           for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   )
              {
-    	         pathsToExclude.push_back(raw_conf_filename[i]);
+                 pathsToExclude.push_back(raw_conf_filename[i]);
              }
         }
 
@@ -135,11 +135,11 @@ AttachAllPreprocessingInfoTreeTrav(SgFile * sagep)
      if ( raw_conf_filename.size() >= 1  )
         {
           ROSE_ASSERT( raw_conf_filename.size() >= 1);
-	       lookForIncludePaths = true;
+               lookForIncludePaths = true;
 
           for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   )
              {
-    	         pathsToInclude.push_back(raw_conf_filename[i]);
+                 pathsToInclude.push_back(raw_conf_filename[i]);
              }
         }
 
@@ -155,7 +155,7 @@ AttachAllPreprocessingInfoTreeTrav(SgFile * sagep)
           std::vector<std::string> wordsInFile;
           for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   )
              {
-    	         wordsInFile = readWordsInFile(raw_conf_filename[i]);
+                 wordsInFile = readWordsInFile(raw_conf_filename[i]);
                for( unsigned int j = 0 ; j < wordsInFile.size() ; j++   )
                     pathsToInclude.push_back(wordsInFile[j]);
              }
@@ -261,7 +261,7 @@ AttachAllPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, Atta
                     if ( file_name_str.find(*iItr) != string::npos )
                        {
                          includePath  = true; 
-                         break;			
+                         break;                 
                        }
                   }
              }
@@ -581,7 +581,7 @@ AttachAllPreprocessingInfoTreeTrav::display(const std::string & label) const
   /* map: key = filename, value = the first node in AST from the file (could be NULL) */
   /* std::map<std::string, SgNode*> map_of_first_node; */
   /* I need to keep the order for each file when it is discovered from AST */
-     int nFiles;			/* total number of files involved */
+     int nFiles;                        /* total number of files involved */
      std::map<int, int> map_of_file_order;
      std::vector<SgNode*> array_of_first_nodes;
 

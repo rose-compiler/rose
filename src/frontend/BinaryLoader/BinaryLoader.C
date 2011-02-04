@@ -145,7 +145,7 @@ BinaryLoader::find_so_file(const std::string &libname) const
             return libpath;
         }
 #endif
-	}
+        }
     if (debug) {
         if (directories.empty()) fprintf(debug, "BinaryLoader:   no search directories\n");
         fprintf(debug, "BinaryLoader:   not found; throwing exception.\n");
@@ -532,7 +532,7 @@ BinaryLoader::addSectionsForRemap(SgAsmGenericHeader* header, SgAsmGenericSectio
 {
     allSections.insert(allSections.end(),
                        header->get_sections()->get_sections().begin(),
-		       header->get_sections()->get_sections().end());
+                       header->get_sections()->get_sections().end());
 }
 
 std::vector<std::string>

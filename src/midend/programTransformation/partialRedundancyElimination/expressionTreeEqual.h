@@ -15,7 +15,7 @@ bool expressionTreeEqual(SgExpression*, SgExpression*);
 
 //! Are corresponding expressions in two lists equal (using a deep comparison)?
 bool expressionTreeEqualStar(const SgExpressionPtrList&,
-			     const SgExpressionPtrList&);
+                             const SgExpressionPtrList&);
 
 // closing scope of namespace: PRE
 // }

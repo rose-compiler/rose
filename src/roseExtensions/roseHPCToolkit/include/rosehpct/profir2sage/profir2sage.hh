@@ -38,8 +38,8 @@ namespace RoseHPCT
 
   //! Attach metrics from a ProfIR tree to a Sage IR tree.
   void attachMetrics (const IRTree_t* hpc_root,
-		      SgProject* sage_root,
-		      bool verbose = false);
+                      SgProject* sage_root,
+                      bool verbose = false);
   //! A quick reference to all file nodes of Profile IRs 
   // obtained from multiple profile xml files
   extern std::set<const RoseHPCT::IRNode *> profFileNodes_;

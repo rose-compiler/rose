@@ -364,7 +364,7 @@ FixupSourcePositionInformation::evaluateSynthesizedAttribute
 
           if (file->get_file_info()->ok() == false) {
                file->get_file_info()->display("file: debug");
-	  }
+          }
 
           ROSE_ASSERT(file->get_file_info()->ok() == true);
 

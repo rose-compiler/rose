@@ -20,9 +20,9 @@ class InsertPragma : public SgSimpleProcessing{
   void virtual visit(SgNode* node);
   void set_statement(int n){no_statement=n;}
   void createFunctionDeclaration(SgGlobal* global, list<SgNode*> var_list,
-				 SgFunctionDeclaration*& printf_func,
-				 SgFunctionDeclaration*& fopen_func,
-				 SgFunctionDeclaration*& fclose_func);
+                                 SgFunctionDeclaration*& printf_func,
+                                 SgFunctionDeclaration*& fopen_func,
+                                 SgFunctionDeclaration*& fclose_func);
   void createFunctionCallprintf(SgGlobal*& root, SgFunctionDeclaration* printf_func,list<SgNode*> var_list,SgExprStatement*& func_expr);
   void createFunctionCallfopen(SgGlobal*& root, SgFunctionDeclaration* fopen_func,SgExprStatement*& func_expr);
   void createFunctionCallfclose(SgGlobal*& root, SgFunctionDeclaration* fclose_func,SgExprStatement*& func_expr);

@@ -294,6 +294,15 @@ EXTRA_DIST += testAstIO.conf
 testAstIO.passed: testAstIO.conf testAstIO
 	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
 
+# Program to test that SgAsmGenericFile::neuter works across AST-IO.
+noinst_PROGRAMS += testAstNeuter
+testAstNeuter_SOURCES=testAstNeuter.C
+testAstNeuter_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testAstNeuter.passed
+EXTRA_DIST += testAstNeuter.conf
+MOSTLYCLEANFILES += testAstNeuter.ast
+testAstNeuter.passed: testAstNeuter.conf testAstNeuter
+	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
 
 # Program to test the RegisterDescriptor and RegisterDictionary classes.
 noinst_PROGRAMS += testRegisters
@@ -412,6 +421,9 @@ demo_rot13: rot13
 	: no demo yet for rot13
 
 demo_testAstIO: testAstIO
+	: no demo yet for $<
+
+demo_testAstNeuter: testAstNeuter
 	: no demo yet for $<
 
 demo_testRegisters: testRegisters

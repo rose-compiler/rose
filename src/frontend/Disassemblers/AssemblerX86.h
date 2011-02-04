@@ -139,7 +139,7 @@ private:
 
     /** Operand types, from Intel "Instruction Set Reference, A-M" section 3.1.1.2, Vol. 2A 3-3 */
     enum OperandDefn 
-	{
+        {
         od_none,        /**< Operand is not present as part of the instruction. */
         od_AL,          /**< AL register. */
         od_AX,          /**< AX register. */
@@ -380,7 +380,7 @@ private:
     };
 
     enum MemoryReferencePattern 
-	{
+        {
         mrp_unknown,
         mrp_disp,                       /* displacement */
         mrp_index,                      /* register*scale */

@@ -20,25 +20,25 @@ class LinearizeInheritedAttribute
 class LinearizeAST : public SgTopDownProcessing<LinearizeInheritedAttribute>
    {
      private:
-	  //The idea is to create an inorder ordering of the nodes using a SgTopDownBottomUp
-	  //traversal. The idea is that every node can be viewed as a leaf node if you diregard
-	  //it's subtree. Using 4 nodes we can describe any such operation
-	  //                                 A
-	  //                                 |
-	  //                                 B
-	  //                                /|
-	  //                               C D
-	  // Here we will first pop C and B. then D and A. 
-	  // In another example
-	  //                                 A
-	  //                                 |
-	  //                                 B
-	  //                                 |
-	  //                                 C
-	  // we will first pop C and B, then A.
-	  //
-	  // PS! This operation will only be applied on expression. For all other constructs the
-	  // ordering of the preorder traversal is used.
+          //The idea is to create an inorder ordering of the nodes using a SgTopDownBottomUp
+          //traversal. The idea is that every node can be viewed as a leaf node if you diregard
+          //it's subtree. Using 4 nodes we can describe any such operation
+          //                                 A
+          //                                 |
+          //                                 B
+          //                                /|
+          //                               C D
+          // Here we will first pop C and B. then D and A. 
+          // In another example
+          //                                 A
+          //                                 |
+          //                                 B
+          //                                 |
+          //                                 C
+          // we will first pop C and B, then A.
+          //
+          // PS! This operation will only be applied on expression. For all other constructs the
+          // ordering of the preorder traversal is used.
           //Handle the case where the root node is part of an expression
 
 
@@ -58,9 +58,9 @@ class LinearizeAST : public SgTopDownProcessing<LinearizeInheritedAttribute>
        LinearizeAST();
 
  
-	  std::vector<SgNode*>
-	  get_linearization();
-	  void printVector(std::vector<SgNode*>& vec);
+          std::vector<SgNode*>
+          get_linearization();
+          void printVector(std::vector<SgNode*>& vec);
    };
 
 

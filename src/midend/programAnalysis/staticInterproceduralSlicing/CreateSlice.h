@@ -18,10 +18,10 @@
 
 class BooleanSafeKeeper
 {
-	public:
-	BooleanSafeKeeper():boolean(false){}
-	BooleanSafeKeeper(bool boolVal):boolean(boolVal){};
-	bool boolean;
+        public:
+        BooleanSafeKeeper():boolean(false){}
+        BooleanSafeKeeper(bool boolVal):boolean(boolVal){};
+        bool boolean;
 };
 
 
@@ -38,7 +38,7 @@ class CreateSlice:public AstTopDownBottomUpProcessing < BooleanSafeKeeper,Boolea
         bool traverse(SgNode * node)
         {
                 currentFile=NULL;
-//		return traverse(node,BooleanSafeKeeper(false));
+//              return traverse(node,BooleanSafeKeeper(false));
                 return AstTopDownBottomUpProcessing <BooleanSafeKeeper,BooleanSafeKeeper>::traverse(node,BooleanSafeKeeper( false)).boolean;
         }
   protected:
@@ -50,18 +50,18 @@ class CreateSlice:public AstTopDownBottomUpProcessing < BooleanSafeKeeper,Boolea
                                                                SubTreeSynthesizedAttributes atts);
         BooleanSafeKeeper defaultSynthesizedAttribute(BooleanSafeKeeper inh)
         {
-	        // std::cout<<"DEFAULT SYNTHESIZED ATTRIBUTE CONSTRUCTOR CALLED\n";
+                // std::cout<<"DEFAULT SYNTHESIZED ATTRIBUTE CONSTRUCTOR CALLED\n";
                 return inh;
         }
         std::stack<std::list<SgNode *> > delayedRemoveListStack;
         /*    virtual bool defaultSynthesizedAttribute()
           {
           return false;
-          }	
-	  virtual bool defaultInheritedAttribute()
-	  {
-	  return false;
-	  } */
+          }     
+          virtual bool defaultInheritedAttribute()
+          {
+          return false;
+          } */
   private:
 
         std::set < SgNode * >_toSave;

@@ -33,9 +33,9 @@ namespace VirtualCFG
         }
         std::string toString() const
         {
-						std::string nToString= n.toString();
-						if (nToString.find('>',0)>0)
-						nToString.insert(nToString.find('>',0)+1,"\n");
+                                                std::string nToString= n.toString();
+                                                if (nToString.find('>',0)>0)
+                                                nToString.insert(nToString.find('>',0)+1,"\n");
             return nToString;
         }
         std::string toStringForDebugging() const

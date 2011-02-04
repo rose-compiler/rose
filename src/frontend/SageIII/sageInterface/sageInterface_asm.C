@@ -19,7 +19,7 @@ SageInterface::getAsmConstant(SgAsmValueExpression *expr)
         default: {
             std::cerr << "Bad variant " << expr->class_name() << " in " <<__func__ << std::endl;
             abort();
-	    // DQ (11/30/2009): avoid MSVC warning of path without return stmt.
+            // DQ (11/30/2009): avoid MSVC warning of path without return stmt.
             return 0;
         }
     }
@@ -40,7 +40,7 @@ SageInterface::getAsmSignedConstant(SgAsmValueExpression *expr)
         default: {
             std::cerr <<"Bad variant " <<expr->class_name() <<" in " <<__func__ <<std::endl;
             abort();
-	    // DQ (11/30/2009): avoid MSVC warning of path without return stmt.
+            // DQ (11/30/2009): avoid MSVC warning of path without return stmt.
             return 0;
         }
     }

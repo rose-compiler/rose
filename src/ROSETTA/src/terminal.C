@@ -377,7 +377,7 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
                                  }
                             }
                        }
-	               }
+                       }
 
                constructArgCopy  = constructArgCopy1  + constructArgCopy;
                constructArgList  = constructArgList1  + constructArgList;
@@ -716,7 +716,7 @@ Terminal::setDataPrototype ( const GrammarString & inputMemberData)
 {
   // MK: This is the correct place to put the memberData info
   Terminal::addElementToList (getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST),
-				       inputMemberData );
+                                       inputMemberData );
   
   // Once the string for the class declaration is built we have to 
   // construct one for the data source code list.  This will be a 
@@ -897,7 +897,7 @@ Terminal::excludeSubTreeDataPrototype ( const GrammarString & inputMemberData )
 {
   // Note that the exclusion of data works slightly differently than for function prototypes
   Terminal::addElementToList(getMemberDataPrototypeList(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST), 
-				      inputMemberData);
+                                      inputMemberData);
 }
 
 void
@@ -910,9 +910,9 @@ Terminal::excludeSubTreeDataPrototype (
           new GrammarString (inputTypeNameString,
                              inputVariableNameString, 
                              inputDefaultInitializer,
-			     CONSTRUCTOR_PARAMETER,
-			     BUILD_ACCESS_FUNCTIONS,
-			     DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+                             CONSTRUCTOR_PARAMETER,
+                             BUILD_ACCESS_FUNCTIONS,
+                             DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      excludeSubTreeDataPrototype (*temp);
    }
 
@@ -958,23 +958,23 @@ void Terminal::addElementToList ( vector<GrammarString *> & targetList, const Gr
      vector<GrammarString *>::iterator stringListIterator;
   // Error checking (make sure the element is not already in the list!)
      for( stringListIterator = targetList.begin();
-	  stringListIterator != targetList.end();
-	  stringListIterator++ )
+          stringListIterator != targetList.end();
+          stringListIterator++ )
        {
-	 if (*stringListIterator == &element)
-	   {
-	     printf ("Duplicate entry found in list! (targetList[%d] == element) \n",i);
-	     duplicateEntryFound = true;
-	     
-	     // If any of the GrammarString objects is marked to skip construction 
-	     // of access functions (for all the data at a node!) then mark it in the list's copy
-	     if (element.generateDataAccessFunctions() == NO_ACCESS_FUNCTIONS)
-	       (*stringListIterator)->setAutomaticGenerationOfDataAccessFunctions(NO_ACCESS_FUNCTIONS);
+         if (*stringListIterator == &element)
+           {
+             printf ("Duplicate entry found in list! (targetList[%d] == element) \n",i);
+             duplicateEntryFound = true;
+             
+             // If any of the GrammarString objects is marked to skip construction 
+             // of access functions (for all the data at a node!) then mark it in the list's copy
+             if (element.generateDataAccessFunctions() == NO_ACCESS_FUNCTIONS)
+               (*stringListIterator)->setAutomaticGenerationOfDataAccessFunctions(NO_ACCESS_FUNCTIONS);
 
-	   }
+           }
 
-	 i++;
-	 // ROSE_ASSERT (targetList[i] != element);
+         i++;
+         // ROSE_ASSERT (targetList[i] != element);
        }
 
   // Since the grammar tree is not build yet we cannot search the parents
@@ -982,8 +982,8 @@ void Terminal::addElementToList ( vector<GrammarString *> & targetList, const Gr
   // exclude any elements (this is post processed).
      if (duplicateEntryFound == false)
        {
-	 const GrammarString *const &tmpRef = new GrammarString(element);
-	 targetList.push_back( (GrammarString *const &) tmpRef );
+         const GrammarString *const &tmpRef = new GrammarString(element);
+         targetList.push_back( (GrammarString *const &) tmpRef );
        }
    }
 
@@ -1197,30 +1197,30 @@ Terminal::consistencyCheck() const
                     (*it)->consistencyCheck();
                   }
 
-	       for( it = memberFunctionPrototypeList[j][k].begin(); 
-		    it != memberFunctionPrototypeList[j][k].end(); it++ ) 
+               for( it = memberFunctionPrototypeList[j][k].begin(); 
+                    it != memberFunctionPrototypeList[j][k].end(); it++ ) 
                   {
-		    assert( *it != NULL );
+                    assert( *it != NULL );
                     (*it)->consistencyCheck();
-		  }
+                  }
 
-	       for( it = memberFunctionSourceList[j][k].begin(); 
-		    it != memberFunctionSourceList[j][k].end(); it++ ) 
+               for( it = memberFunctionSourceList[j][k].begin(); 
+                    it != memberFunctionSourceList[j][k].end(); it++ ) 
                   {
-		    assert( *it != NULL );
+                    assert( *it != NULL );
                     (*it)->consistencyCheck();
-		  }
+                  }
                }
 #endif
 
   // check the subclass list for valid objects
      for( vector<Terminal*>::const_iterator terminalIterator = subclasses.begin(); 
-	  terminalIterator != subclasses.end(); 
-	  terminalIterator++)
+          terminalIterator != subclasses.end(); 
+          terminalIterator++)
        {
-	 // printf ("terminalList[%d].getName() = %s \n",i,terminalList[i].getName());
-	 ROSE_ASSERT((*terminalIterator)!=NULL);
-	 (*terminalIterator)->consistencyCheck();
+         // printf ("terminalList[%d].getName() = %s \n",i,terminalList[i].getName());
+         ROSE_ASSERT((*terminalIterator)!=NULL);
+         (*terminalIterator)->consistencyCheck();
          ROSE_ASSERT ((*terminalIterator)->getBaseClass() == this);
         }
    }
@@ -1236,12 +1236,12 @@ Terminal::display( const string& label ) const
      printf ("Tag Name = %s \n", getTagName().c_str());
 
      for( vector<Terminal*>::const_iterator terminalIterator = subclasses.begin(); 
-	  terminalIterator != subclasses.end(); 
-	  terminalIterator++)
+          terminalIterator != subclasses.end(); 
+          terminalIterator++)
        {
-	 ROSE_ASSERT((*terminalIterator)!=NULL);
-	 string nameInProductionRule = (*terminalIterator)->name;
-	 printf ("     OR:    nameInProductionRule = %s \n", nameInProductionRule.c_str());
+         ROSE_ASSERT((*terminalIterator)!=NULL);
+         string nameInProductionRule = (*terminalIterator)->name;
+         printf ("     OR:    nameInProductionRule = %s \n", nameInProductionRule.c_str());
        }
 
    }
@@ -1258,7 +1258,7 @@ Terminal::checkListOfGrammarStrings(vector<GrammarString *>& checkList)
     {
       jt = it; jt++;
       for( jt = checkList.begin(); jt != checkList.end(); jt++ )
-	if(*it==*jt) ROSE_ABORT();
+        if(*it==*jt) ROSE_ABORT();
     }      
   return;
 }
@@ -1438,13 +1438,13 @@ Terminal::buildPointerInMemoryPoolCheck ()
                        {
                          s += "     if ( p_" + varNameString + " != NULL )\n" ;
                          s += "        { \n" ;
-		         // CH (4/8/2010): Use boost::unordered instead
-			 //			 s += "#ifdef _MSCx_VER \n" ;
+                         // CH (4/8/2010): Use boost::unordered instead
+                         //                      s += "#ifdef _MSCx_VER \n" ;
                          //s += "          rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it; \n" ;
-			 //			 s += "#else \n" ;
+                         //                      s += "#else \n" ;
                          //s += "          rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
                          s += "          rose_hash_multimap::iterator it; \n" ;
-			 //			 s += "#endif \n" ;
+                         //                      s += "#endif \n" ;
                          s += "          for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n" ;
                          s += "             {\n";
                          s += "               if ( it->second != NULL )\n" ;

@@ -111,7 +111,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
   void traverseGraph(std::vector <SgGraphNode*>& rootNodes,
                      RoseBin_DataFlowAbstract* defuse,
-		     bool interprocedural);
+                     bool interprocedural);
 
 
   void init(bool interp, bool pedges) {

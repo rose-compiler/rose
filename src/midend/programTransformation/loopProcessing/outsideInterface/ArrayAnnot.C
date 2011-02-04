@@ -329,7 +329,7 @@ is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, CPPAstIn
 
 AstNodePtr ArrayAnnotation::
 create_access_array_elem( CPPAstInterface& fa, const AstNodePtr& array,
-			  const AstInterface::AstNodeList& args)
+                          const AstInterface::AstNodeList& args)
 {
   return arrays.create_known_member_function( fa, array, "elem", args);
 }
@@ -342,7 +342,7 @@ create_access_array_elem( const AstNodePtr& array, const SymbolicFunction::Argum
 
 AstNodePtr ArrayAnnotation ::
 create_reshape_array( CPPAstInterface& fa, const AstNodePtr& array,
-			  const CPPAstInterface::AstNodeList& args)
+                          const CPPAstInterface::AstNodeList& args)
 {
   return arrays.create_known_member_function( fa, array, "reshape", args);
 }
@@ -357,7 +357,7 @@ create_access_array_length( const AstNodePtr& array, const SymbolicVal& dim)
 
 AstNodePtr ArrayAnnotation::
 create_access_array_length( CPPAstInterface& fa, const AstNodePtr& array, 
-			    int dim)
+                            int dim)
 {
   CPPAstInterface::AstNodeList args;
   args.push_back( fa.CreateConstInt(dim));

@@ -14,12 +14,12 @@ static double TwoPi = 2.0 * Pi;
 
 
 DisplayEdge::DisplayEdge(DisplayNode * from, DisplayNode * to)
-	: source(from),
+        : source(from),
           dest(to),
-	  paintMode(BEZIER_CUBIC),
-	  arrowSize(10),
-	  penWidth(2),
-	  color(Qt::black)
+          paintMode(BEZIER_CUBIC),
+          arrowSize(10),
+          penWidth(2),
+          color(Qt::black)
 {
     setAcceptedMouseButtons(0);
     adjust();
@@ -100,35 +100,35 @@ void DisplayEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWi
 
     QPointF controlPoint(destPoint.x(),sourcePoint.y());
 
-	QPainterPath path(sourcePoint);
+        QPainterPath path(sourcePoint);
     switch (paintMode)
     {
-		case BEZIER_CUBIC:
-	    	path.cubicTo(controlPoint,controlPoint,destPoint);
-	    	painter->strokePath(path,painter->pen());
-	    	break;
-		case BEZIER_QUAD:
-	    	path.quadTo(controlPoint,destPoint);
-	    	painter->strokePath(path,painter->pen());
-	    	break;
-		case RECTANGULAR:
-			{
-				double halfY=sourcePoint.y() + (destPoint.y()-sourcePoint.y())/2;
-				path.lineTo(QPointF(sourcePoint.x(),halfY));
-				path.lineTo(QPointF(destPoint.x(),halfY));
-				path.lineTo(destPoint);
-				painter->strokePath(path,painter->pen());
-			}
+                case BEZIER_CUBIC:
+                path.cubicTo(controlPoint,controlPoint,destPoint);
+                painter->strokePath(path,painter->pen());
+                break;
+                case BEZIER_QUAD:
+                path.quadTo(controlPoint,destPoint);
+                painter->strokePath(path,painter->pen());
+                break;
+                case RECTANGULAR:
+                        {
+                                double halfY=sourcePoint.y() + (destPoint.y()-sourcePoint.y())/2;
+                                path.lineTo(QPointF(sourcePoint.x(),halfY));
+                                path.lineTo(QPointF(destPoint.x(),halfY));
+                                path.lineTo(destPoint);
+                                painter->strokePath(path,painter->pen());
+                        }
 
-			//painter->drawLine(QLineF(sourcePoint,controlPoint));
-			//painter->drawLine(QLineF(controlPoint,destPoint));
-			break;
-		case STRAIGHT:
-			controlPoint=sourcePoint;
-			painter->drawLine(QLineF(controlPoint,destPoint));
-			break;
-		default:
-			qDebug() << "Unknown Edge Painting Mode";
+                        //painter->drawLine(QLineF(sourcePoint,controlPoint));
+                        //painter->drawLine(QLineF(controlPoint,destPoint));
+                        break;
+                case STRAIGHT:
+                        controlPoint=sourcePoint;
+                        painter->drawLine(QLineF(controlPoint,destPoint));
+                        break;
+                default:
+                        qDebug() << "Unknown Edge Painting Mode";
     }
 
     QLineF arrowTangent(controlPoint,destPoint);
