@@ -75,10 +75,12 @@ testTranslator2010_02_test: testTranslator2010_02
 testTranslator2010_03_test: testTranslator2010_03 
 	./testTranslator2010_03 -rose:verbose 0 $(srcdir)/input_testTranslator2010_3.C
 
+# DQ (2/4/2011): Added test code to evaluate line numbers of SgLabelStatement that
+# were previously marked as transforamtions and thus has line numbers == zero.
 test_label_stmt_file_info_translator: label_stmt_file_info_translator
 	./label_stmt_file_info_translator -rose:verbose 0 -c $(srcdir)/input_label_stmt_file_info_translator.C
 
-EXTRA_DIST = CMakeLists.txt inputbug125.C input_testTranslator2010_2.C input_testTranslator2010_3.C input_ompVariableCollecting.C
+EXTRA_DIST = CMakeLists.txt inputbug125.C input_testTranslator2010_2.C input_testTranslator2010_3.C input_ompVariableCollecting.C input_label_stmt_file_info_translator.C
 
 check-local:
 #	@$(MAKE) testbug125 testqualifiedName testTranslator2010_01_test
