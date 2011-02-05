@@ -52,7 +52,7 @@ class UnwrapCond : public SymbolicVisitor
         //printf("debug: before assertion ...");
         // Turned off this assertion to allow more complex condition expressions like b*b-1 and so on
         // Liao, 5/24/2010
-        // assert(p == pivot); 	   
+        // assert(p == pivot);     
         left = 1;
         for (iter=v.GetOpdIterator(); !iter.ReachEnd(); iter.Advance()) {
           if (iter.Current() != p )

@@ -27,18 +27,18 @@ class QDropEvent;
 */
 class AstGraphWidget : public RoseGraphicsView
 {
-	Q_OBJECT
+        Q_OBJECT
 
-	public:
-		AstGraphWidget(QWidget * parent=0);
-		virtual ~AstGraphWidget();
+        public:
+                AstGraphWidget(QWidget * parent=0);
+                virtual ~AstGraphWidget();
 
 
-	protected:
+        protected:
         virtual void updateGraph(SgNode * node, AstFilterInterface * filter);
 
-		QGraphicsScene * scene;
-		DisplayTreeNode * root;
+                QGraphicsScene * scene;
+                DisplayTreeNode * root;
 };
 
 

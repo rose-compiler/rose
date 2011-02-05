@@ -10,7 +10,7 @@ class ValuePropagateNode : public DefUseChainNode
   HasValueDescriptor desc;
  public:
   ValuePropagateNode( MultiGraphCreate *c, const AstNodePtr& ref, 
-		      const AstNodePtr& _stmt, bool def)
+                      const AstNodePtr& _stmt, bool def)
     : DefUseChainNode( c, ref, _stmt, def) {}
 
   const HasValueDescriptor& get_desc() const { return desc; }
@@ -71,13 +71,13 @@ class ValuePropagate
   void build( AstInterface& fa, const AstNodePtr& head,
                    ReachingDefinitionAnalysis& r, 
                    AliasAnalysisInterface& alias,
-	           FunctionSideEffectInterface* f = 0);
+                   FunctionSideEffectInterface* f = 0);
   void build (AstInterface& fa, const AstNodePtr& head, 
                    AliasAnalysisInterface& alias,
-	           FunctionSideEffectInterface* f = 0);
+                   FunctionSideEffectInterface* f = 0);
 
   bool known_value( const AstNodePtr& exp, 
- 		  HasValueDescriptor* result = 0, bool *change = 0);
+                  HasValueDescriptor* result = 0, bool *change = 0);
 
   HasValueMap& get_value_map() { return valmap; }
 };

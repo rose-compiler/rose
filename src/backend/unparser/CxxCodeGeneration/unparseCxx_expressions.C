@@ -472,7 +472,7 @@ void Unparse_ExprStmt::unparseExpression(SgExpression* expr, SgUnparse_Info& inf
           if ( !info.SkipComments() || !info.SkipCPPDirectives() )
              {
                curprint ( "\n /* In unparseExpression paren " + expr->sage_class_name() +
-				  " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
+                                  " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
              }
 #endif
           if (printParen)
@@ -1163,7 +1163,7 @@ Unparse_ExprStmt::unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info)
 
                  // Two cases must be considered here: prefix unary and postfix unary 
                  // operators. Most of the unary operators are prefix. In this case, we must
-                 // first unparse the rhs and then the lhs.	
+                 // first unparse the rhs and then the lhs.     
                  // if (isUnaryPostfixOperator(binary_op->get_rhs_operand())); // Postfix unary operator.
                     if (unp->u_sage->isUnaryPostfixOperator(binary_op->get_rhs_operand()))  // Postfix unary operator.
                        {
@@ -1823,12 +1823,12 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
-	   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
+           // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
 //#ifndef _MSCx_VER
 //#pragma message ("WARNING: Commented out body of unparseMFuncRef()")
-//	   printf ("Error: Commented out body of unparseMFuncRef() \n");
-//	   ROSE_ASSERT(false);
+//         printf ("Error: Commented out body of unparseMFuncRef() \n");
+//         ROSE_ASSERT(false);
 //#else
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      ROSE_ASSERT(mfunc_ref != NULL);
@@ -1849,7 +1849,7 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
   // DQ (2/16/2004): error in templates (test2004_18.C)
      ROSE_ASSERT (cdef != NULL);
      SgClassDeclaration* decl;
-	 decl = cdef->get_declaration();
+         decl = cdef->get_declaration();
 #if 0
      printf ("Inside of unparseMFuncRef expr = %p (name = %s::%s) \n",expr,cdecl->get_name().str(),mfd->get_name().str());
      curprint ( "\n /* Inside of unparseMFuncRef */ \n");
@@ -4015,14 +4015,14 @@ Unparse_ExprStmt::unparseThrowOp(SgExpression* expr, SgUnparse_Info& info)
                        }
                       else
                        {
-			 //Liao, 5/23/2009
-			 // This is not necessarily true.
-			 // A derived class's constructor initializer list acutally 
-			 // can call its base class's constructor, even there is no
-			 // user-defined default constructor for the base class.
-			 // In this case, the parenthesis of the superclass is still needed.
-			 // e.g: baseclass::baselcass( ):superclass() {};
-			 // See bug 351
+                         //Liao, 5/23/2009
+                         // This is not necessarily true.
+                         // A derived class's constructor initializer list acutally 
+                         // can call its base class's constructor, even there is no
+                         // user-defined default constructor for the base class.
+                         // In this case, the parenthesis of the superclass is still needed.
+                         // e.g: baseclass::baselcass( ):superclass() {};
+                         // See bug 351
                       // DQ (8/5/2005): Now we force the get_args() pointer to always be a valid pointer and explicitly store a
                       // bool value to control when we output the "()" after the class name.
                          //ROSE_ASSERT(constructorInitializer->get_need_parenthesis_after_name() == false);

@@ -36,7 +36,7 @@ class AttachAllPreprocessingInfoTreeTrav : public AttachPreprocessingInfoTreeTra
        /* map: key = filename, value = the first node in AST from the file (could be NULL) */
        /* std::map<std::string, SgNode*> map_of_first_node; */
        /* I need to keep the order for each file when it is discovered from AST */
-          int nFiles;			/* total number of files involved */
+          int nFiles;                   /* total number of files involved */
           std::map<int, int> map_of_file_order;
 
           std::vector<SgNode*> array_of_first_nodes;
@@ -72,12 +72,12 @@ class AttachAllPreprocessingInfoTreeTrav : public AttachPreprocessingInfoTreeTra
           AttachPreprocessingInfoTreeTrav, although we need to set the data
           used by them before calling them, and update the data after they
           use it. */
-          AttachPreprocessingInfoTreeTraversalInheritedAttrribute evaluateInheritedAttribute( SgNode *n,	AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh);
+          AttachPreprocessingInfoTreeTraversalInheritedAttrribute evaluateInheritedAttribute( SgNode *n,        AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh);
           AttachPreprocessingInfoTreeTraversalSynthesizedAttribute evaluateSynthesizedAttribute( SgNode *n,AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh, SubTreeSynthesizedAttributes st);
 
        /* to handle those files which contain no IR nodes. */
      private:
-          std::istream & dependancies;	/* use cin for now, better to run ROSE internally to get the list. TODO. */
+          std::istream & dependancies;  /* use cin for now, better to run ROSE internally to get the list. TODO. */
      public:
        /* attach preproc info from files containing no IR nodes: assume the
           order of the list of dependency files are in the correct order,

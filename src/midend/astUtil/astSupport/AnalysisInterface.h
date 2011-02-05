@@ -63,7 +63,7 @@ class NoFunctionAliasAnalysis : public FunctionAliasInterface
  public:
   virtual bool
     may_alias(AstInterface& fa, const AstNodePtr& fc, const AstNodePtr& result,
-	      CollectObject< std::pair<AstNodePtr, int> >& collectalias) 
+              CollectObject< std::pair<AstNodePtr, int> >& collectalias) 
    { return false; }
   virtual ~NoFunctionAliasAnalysis() {}
 };

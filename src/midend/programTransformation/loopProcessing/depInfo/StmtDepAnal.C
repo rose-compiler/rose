@@ -107,7 +107,7 @@ bool NormalizeMatrix( Mat& analMatrix, int rows, int cols)
     for ( k = 0 ; k < rows && k < cols; k++) {
        int pti, pt = -1, ptnum = -1;
        for ( pti = k ; pti < rows; ++pti) {
-	 if (analMatrix[pti][k] != 0) {
+         if (analMatrix[pti][k] != 0) {
             int ptnum1 = 0;
             for (int j = k; j < cols; ++j) {
                if (analMatrix[pti][j].GetValType() != VAL_CONST)
@@ -123,29 +123,29 @@ bool NormalizeMatrix( Mat& analMatrix, int rows, int cols)
          continue;
        if (pt != k) {
          for (int i = k; i < cols; i++) {
-	   SymbolicVal t = analMatrix[k][i];
-	   analMatrix[k][i] = analMatrix[pt][i];
-	   analMatrix[pt][i] = t;
+           SymbolicVal t = analMatrix[k][i];
+           analMatrix[k][i] = analMatrix[pt][i];
+           analMatrix[pt][i] = t;
          }
        }
        for (int i = k+1; i < rows; i++) {
          SymbolicVal f1 = analMatrix[i][k], f2 = analMatrix[k][k];
          if (f1 == 0) continue;
          for (int j = k; j < cols; j++) {
-	    analMatrix[i][j] = analMatrix[i][j] * f2 - analMatrix[k][j] * f1;
+            analMatrix[i][j] = analMatrix[i][j] * f2 - analMatrix[k][j] * f1;
          }
          assert(analMatrix[i][k] == 0);
        }
     }
     for ( k-- ; k >= 0; k--) {
       if (analMatrix[k][k] == 0)
-	continue;
+        continue;
       for (int i = k-1; i >= 0; i--) {
         SymbolicVal f1 = analMatrix[i][k], f2 = analMatrix[k][k];
         if (f1 == 0) continue;
-	for (int j = i; j < cols; j++) {
-	  analMatrix[i][j] = analMatrix[i][j] * f2 - analMatrix[k][j] * f1;
-	}
+        for (int j = i; j < cols; j++) {
+          analMatrix[i][j] = analMatrix[i][j] * f2 - analMatrix[k][j] * f1;
+        }
         assert(analMatrix[i][k] == 0);
       }
     }
@@ -162,21 +162,21 @@ int SetDepDirection( DepInfo &edd, int commLevel, Collect &result)
       DepRel eq(DEPDIR_EQ, 0), lt(DEPDIR_LE, -1);
       int i;
       for ( i = 0; i < commLevel; i++) {
-	DepRel e1 = edd.Entry(i,i) & lt; 
-	if (!e1.IsTop()) {
-	  DepInfo edd1( edd);
-	  edd1.Entry( i,i) = e1;
+        DepRel e1 = edd.Entry(i,i) & lt; 
+        if (!e1.IsTop()) {
+          DepInfo edd1( edd);
+          edd1.Entry( i,i) = e1;
           assert(!edd1.IsTop());
-	  result(edd1);
-	}
-	DepRel &e2 = edd.Entry(i,i);
+          result(edd1);
+        }
+        DepRel &e2 = edd.Entry(i,i);
         e2  &= eq;
-	if (e2.IsTop())
+        if (e2.IsTop())
           return i;
       }
       return i+1;
     }
-	 
+         
 //extern DepTestStatistics DepStats;
 
 template <class CoeffVec, class BoundVec, class BoundOp, class Dep>
@@ -275,28 +275,28 @@ bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
            int odiff = diff;
            diff = diff / c;   
            if (odiff != diff * c)
-			  {
-				  	//DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_NONE)));
-					result[i][j] = DepRel(DEPDIR_NONE);
-					return true;
+                          {
+                                        //DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_NONE)));
+                                        result[i][j] = DepRel(DEPDIR_NONE);
+                                        return true;
            }
         }
         hasdiff = true;
       }
       if (hasdiff) {
-		//DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_EQ, diff)));
-		result[i][j] = rel * DepRel(DEPDIR_EQ, diff);
-		return true; // precise dependence
+                //DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_EQ, diff)));
+                result[i][j] = rel * DepRel(DEPDIR_EQ, diff);
+                return true; // precise dependence
       }
       else if (signs[i] != 2) {
-		if (signs[dim]* signs[i] > 0) {
-			//DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_GE, diff)));
-			result[i][j] = rel * DepRel(DEPDIR_GE, diff);
-		}
-		else {
-			//DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_LE, diff)));
-			result[i][j] = rel * DepRel(DEPDIR_LE, diff);
-		}
+                if (signs[dim]* signs[i] > 0) {
+                        //DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_GE, diff)));
+                        result[i][j] = rel * DepRel(DEPDIR_GE, diff);
+                }
+                else {
+                        //DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_LE, diff)));
+                        result[i][j] = rel * DepRel(DEPDIR_LE, diff);
+                }
       }
     }
   }

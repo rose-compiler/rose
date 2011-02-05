@@ -265,7 +265,7 @@ RemoveInitializedNamePtr::evaluateInheritedAttribute (
                if (!dynamic_cast<SgProject*>(locNode) && !dynamic_cast<SgFile*>(locNode) )
                   {
                  // only SgProject and SgFile can be root nodes after EDG->SAGE translation
-	                 assert(false);
+                         assert(false);
                   }
              }
           ia.parentNode = node;

@@ -567,8 +567,8 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                             this->UsingDeclRelativeToDeclarations,
                             this->UsingDirRelativeToDeclarations_2,
                             this->UsingDeclRelativeToDeclarations_2,
-							this->UsingDirectivesSet,
-							this->UsingDeclarationsSet
+                                                        this->UsingDirectivesSet,
+                                                        this->UsingDeclarationsSet
                         );
 #else
 // tps (12/7/2009) This is currently not defined since it fails in Release mode
@@ -789,7 +789,7 @@ ROSE_ASSERT(false);
                         }
 
 //#else
-//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//                                                      // tps (12/7/2009) This is currently not defines since it fails in Release mode
 //#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement2 : UsingDirectivesSet commented out right now.")
 //#endif
                 }
@@ -833,7 +833,7 @@ ROSE_ASSERT(false);
 
                         }
 //#else
-//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//                                                      // tps (12/7/2009) This is currently not defines since it fails in Release mode
 //#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement : UsingDeclarationSet commented out right now.")
 //#endif
 
@@ -1267,7 +1267,7 @@ ROSE_ASSERT(false);
                 }
 
 //#else
-//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//                                                      // tps (12/7/2009) This is currently not defines since it fails in Release mode
 //#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement3: UsingDirectivesSet commented out right now.")
 //#endif
 
@@ -1366,9 +1366,9 @@ ROSE_ASSERT(false);
                         }
 
                         TimingPerformance::accumulateTime ( startTimeCase_8, accumulatedEvaluateInheritedAttributeCaseTime[8], accumulatedEvaluateInheritedAttributeCaseCalls[8] );
-				}
+                                }
 //#else
-//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//                                                      // tps (12/7/2009) This is currently not defines since it fails in Release mode
 //#pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement2: UsingDeclarationSet commented out right now.")
 //#endif
 
@@ -1405,7 +1405,7 @@ ROSE_ASSERT(false);
                     this->UsingDeclarationsSet
                 );
 #else
-							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+                                                        // tps (12/7/2009) This is currently not defines since it fails in Release mode
 #pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement4: UsingDirectivesSet commented out right now.")
  ROSE_ASSERT(false);
 
@@ -1503,7 +1503,7 @@ ROSE_ASSERT(false);
                 TimingPerformance::accumulateTime ( startTimeCase_2, accumulatedEvaluateInheritedAttributeCaseTime[2], accumulatedEvaluateInheritedAttributeCaseCalls[2] );
 
                 return InheritedAttributeSgScopeStatement(inheritedAttribute.depth + 1, inheritedAttribute.pointer_VectorScopeStack);
-		}
+                }
 
      // DQ (8/3/2007): accumulate the elapsed time for this function
         TimingPerformance::accumulateTime ( startTime, accumulatedEvaluateInheritedAttribute_2_Time, accumulatedEvaluateInheritedAttribute_2_Calls );
@@ -2422,9 +2422,9 @@ void SetUsingDirectivesSetAndUsingDeclarationsSet(HiddenListComputationTraversal
 
 // CH (4/7/2010) : The coresponding member has been added.
 //#ifndef _MSCx_VER
-						(exampleTraversal.UsingDirectivesSet).insert(using_directive_with_scope);
+                                                (exampleTraversal.UsingDirectivesSet).insert(using_directive_with_scope);
 //#else
-//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//                                                      // tps (12/7/2009) This is currently not defines since it fails in Release mode
 //#pragma message ("WARNING: HiddenList: SetUsingDirectivesSetAndUsingDeclarationsSet: UsingDirectivesSet commented out right now.")
 //#endif
 
@@ -2458,7 +2458,7 @@ void SetUsingDirectivesSetAndUsingDeclarationsSet(HiddenListComputationTraversal
 //#ifdef _MSCx_VER
                         (exampleTraversal.UsingDeclarationsSet).insert(using_declaration_with_scope);
 //#else
-//							// tps (12/7/2009) This is currently not defines since it fails in Release mode
+//                                                      // tps (12/7/2009) This is currently not defines since it fails in Release mode
 //#pragma message ("WARNING: HiddenList: SetUsingDirectivesSetAndUsingDeclarationsSet: UsingDeclarationSet commented out right now.")
 //#endif
 

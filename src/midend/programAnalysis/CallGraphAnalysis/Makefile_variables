@@ -1,0 +1,32 @@
+# Non-recursive Makefile
+
+mpaCallGraphAnalysis_includes=\
+	$(BOOST_CPPFLAGS)
+
+
+mpaCallGraphAnalysis_la_sources=\
+	$(mpaCallGraphAnalysisPath)/CallGraph.C \
+	$(mpaCallGraphAnalysisPath)/CallGraphDB.C \
+	$(mpaCallGraphAnalysisPath)/ClassHierarchyGraph.C
+
+
+mpaCallGraphAnalysis_includeHeaders=\
+	$(mpaCallGraphAnalysisPath)/CallGraph.h \
+	$(mpaCallGraphAnalysisPath)/ClassHierarchyGraph.h
+
+
+mpaCallGraphAnalysis_extraDist=\
+	$(mpaCallGraphAnalysisPath)/CMakeLists.txt
+
+
+mpaCallGraphAnalysis_cleanLocal=\
+	rm -rf \
+		$(mpaCallGraphAnalysisPath)/Templates.DB \
+		$(mpaCallGraphAnalysisPath)/ii_files \
+		$(mpaCallGraphAnalysisPath)/ti_files \
+		$(mpaCallGraphAnalysisPath)/cxx_templates
+
+
+mpaCallGraphAnalysis_distCleanLocal=\
+	rm -rf \
+		$(mpaCallGraphAnalysisPath)/Templates.DB

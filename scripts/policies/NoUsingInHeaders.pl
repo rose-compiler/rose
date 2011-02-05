@@ -8,12 +8,13 @@ EOF
 BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 use strict;
 use FileLister;
+use Policies;
 my $warning = "warning ";	# non-empty means issue warnings rather than errors
 
 my $nfail=0;
 my $files = FileLister->new();
 while (my $filename = $files->next_file) {
-  if ($filename =~ /\.(h|hh|hpp)$/ && open FILE, "<", $filename) {
+  if ($filename =~ /\.(h|hh|hpp)$/ && !is_disabled($filename) && open FILE, "<", $filename) {
     while (<FILE>) {
       if (/^\b(using\s+namespace\s+[a-z_A-Z]\w*)/) {
 	print $desc unless $nfail++;
