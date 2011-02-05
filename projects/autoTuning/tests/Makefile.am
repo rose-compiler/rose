@@ -59,6 +59,8 @@ clean-local:
 
 #-------------------------------
 if ROSE_BUILD_ROSEHPCT
+
+# DQ (2/5/2011): These could be run in parallel...or is there a problem with that?
 check-local:
 	@echo "Test for auto tuning... "
 	@$(MAKE) rose_jacobi.c

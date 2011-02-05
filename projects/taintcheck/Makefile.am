@@ -16,3 +16,7 @@ CLEANFILES = *.dot
 clean:
 	rm -f *.dot *.gml *.lo *.la *.s *.o
 
+check-local:
+	@echo "********************************************************************************"
+	@echo "*** ROSE/projects/taintcheck: make check rule complete (terminated normally) ***"
+	@echo "********************************************************************************"
