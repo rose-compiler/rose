@@ -59,9 +59,6 @@ if ROSE_USE_SQLITE_DATABASE
 		$(top_builddir)/src/roseExtensions/sqlite3x/libRoseSQLite3xDatabase.la
    OPT_SQLITE3_LDFLAGS       = $(SQLITE3_LDFLAGS)
 
-# side effect requires sqlite3
-   libsideEffect_LIBS = \
-			$(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/libsideEffect.la
 else
    libroseSqlite3xConnection = 
    OPT_SQLITE3_LDFLAGS =
@@ -90,16 +87,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
    $(top_builddir)/src/midend/astUtil/libastUtil.la \
-   $(top_builddir)/src/midend/programAnalysis/CFG/libCFG.la \
-   $(top_builddir)/src/midend/programAnalysis/CallGraphAnalysis/libCallGraph.la \
-   $(top_builddir)/src/midend/programAnalysis/OAWrap/libOAWrap.la \
-   $(top_builddir)/src/midend/programAnalysis/dataflowAnalysis/libdataflowAnalysis.la \
-   $(top_builddir)/src/midend/programAnalysis/defUseAnalysis/libDefUseAnalysis.la \
-   $(top_builddir)/src/midend/programAnalysis/graphAnalysis/libSB_GraphAnalysis.la \
-   $(top_builddir)/src/midend/programAnalysis/pointerAnal/libpointerAnal.la \
-   $(top_builddir)/src/midend/programAnalysis/staticInterproceduralSlicing/libStaticSlicing.la \
-   $(top_builddir)/src/midend/programAnalysis/valuePropagation/libvaluePropagation.la \
-   $(top_builddir)/src/midend/programAnalysis/variableRenaming/libVariableRenaming.la \
+   $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/astInlining/libastinlining.la \
    $(top_builddir)/src/midend/programTransformation/astOutlining/libastOutliner.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/computation/libcomputation.la \
@@ -120,7 +108,6 @@ libroseLibraries = \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
    $(libroseSqlite3xConnection) \
-   $(libsideEffect_LIBS) \
    $(libroseQtExtension)
 
 # DQ (4/17/2010): Added support to permit minimal ROSE configurations (e.g. --enable-only-fortran).

@@ -29,8 +29,8 @@ struct functions_1
 struct basic_blocks_1
 {
     std::string id;
-	std::string parent_function;
-	std::string address;
+        std::string parent_function;
+        std::string address;
 };
 
 struct instructions_1

@@ -315,7 +315,7 @@ OutmostCopyRoot( CopyArrayUnit& unit, DepCompAstRefGraphCreate& refDep, LoopTree
 LoopTreeNode*  DepCompCopyArrayCollect:: ComputeCommonRoot(CopyArrayUnit::NodeSet& refs)
 {
 // tps (12/09/09) : FIX : Changed the name "interface" to interfaces , as interface is a keyword in MSVC.
-	LoopTreeInterface interfaces;
+        LoopTreeInterface interfaces;
     CopyArrayUnit::NodeSet::const_iterator rp = refs.begin();
 
     LoopTreeNode *curroot = GetEnclosingLoop((*rp)->GetInfo().stmt, interfaces);
@@ -337,7 +337,7 @@ bool EnforceCopyRootRemove(NodeIter nodes, const DepCompAstRefGraphNode* outnode
                      DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& cuts)
 {
 // tps (12/09/09) : FIX : Changed the name "interface" to interfaces , as interface is a keyword in MSVC.
-	LoopTreeInterface interfaces;
+        LoopTreeInterface interfaces;
    bool removeall = true; 
    LoopTreeNode* outstmt = outnode->GetInfo().stmt;
    for ( ; !nodes.ReachEnd(); ++nodes) {

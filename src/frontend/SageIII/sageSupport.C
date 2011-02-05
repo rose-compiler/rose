@@ -983,7 +983,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              {
             // AS Changed source code to support absolute paths
                std::string libraryDirectorySpecifier = argv[i].substr(2);
-               libraryDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(libraryDirectorySpecifier);			     
+               libraryDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(libraryDirectorySpecifier);                        
                p_libraryDirectorySpecifierList.push_back(libraryDirectorySpecifier);
 
              }
@@ -2052,11 +2052,11 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                     p_skipfinalCompileStep = true;
                     break;
                case 8 :
-	       // all of 7 (above) plus compile resulting unparsed code (without transformations)
+               // all of 7 (above) plus compile resulting unparsed code (without transformations)
                     p_skip_transformation  = true;
                     break;
                case 9 :
-	       // all of 8 (above) plus run transformations before unparsing (do everything)
+               // all of 8 (above) plus run transformations before unparsing (do everything)
                     break;
                default:
                  // default mode is an error
@@ -2260,7 +2260,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)^", "(astMergeCommandFile)",filename,1);
      optionCount = sla(argv, "-rose:", "($)^", "(compilationPerformanceFile)",filename,1);
 
-	 //AS(093007) Remove paramaters relating to excluding and include comments and directives
+         //AS(093007) Remove paramaters relating to excluding and include comments and directives
      optionCount = sla(argv, "-rose:", "($)^", "(excludeCommentsAndDirectives)", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)^", "(excludeCommentsAndDirectivesFrom)", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)^", "(includeCommentsAndDirectives)", &integerOption, 1);
@@ -2619,8 +2619,8 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
        // ROSE_ASSERT(sourceFilename.substr(0,targetSubstring.size()) == targetSubstring);
 
        // Rama: 12/06/06: Fixup for problem with file names.  
-	    // Made changes to this file and string utilities function getAbsolutePathFromRelativePath by cloning it with name getAbsolutePathFromRelativePathWithErrors
-	    // Also refer to script that tests -- reasonably exhaustively -- to various combinarions of input files.
+            // Made changes to this file and string utilities function getAbsolutePathFromRelativePath by cloning it with name getAbsolutePathFromRelativePathWithErrors
+            // Also refer to script that tests -- reasonably exhaustively -- to various combinarions of input files.
 
           if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
                printf ("sourceFilename encountered an error in filename\n");
@@ -3298,17 +3298,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      bool enable_opencl = CommandlineProcessing::isOption(argv,"-","opencl",true) || get_OpenCL_only();
      
      if (enable_cuda || enable_opencl) {
-	makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
-     	if (enable_cuda && !enable_opencl) {
-     		commandLine.push_back("-DROSE_LANGUAGE_MODE=2");
-     	}
-     	else if (enable_opencl && !enable_cuda) {
-     		commandLine.push_back("-DROSE_LANGUAGE_MODE=3");
-     	}
-	else {
-		printf ("Error: CUDA and OpenCL are mutually exclusive.\n");
-     		ROSE_ASSERT(false);
-     	}
+        makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
+        if (enable_cuda && !enable_opencl) {
+                commandLine.push_back("-DROSE_LANGUAGE_MODE=2");
+        }
+        else if (enable_opencl && !enable_cuda) {
+                commandLine.push_back("-DROSE_LANGUAGE_MODE=3");
+        }
+        else {
+                printf ("Error: CUDA and OpenCL are mutually exclusive.\n");
+                ROSE_ASSERT(false);
+        }
      }
      else {
           if (get_C_only() == true || get_C99_only() == true)
@@ -3917,7 +3917,7 @@ SgProject::parse(const vector<string>& argv)
 #endif
 
   // builds file list (or none if this is a link line)
-	  processCommandLine(argv);
+          processCommandLine(argv);
 
      int errorCode = 0;
 
@@ -5876,7 +5876,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
 
        // I think we have to permit an optional space between the "-I" and the path
-          if (	"-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
+          if (  "-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
              {
             // The source file path is already included!
                foundSourceDirectoryExplicitlyListedInIncludePaths = true;
@@ -6253,7 +6253,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
        // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
 
        // I think we have to permit an optional space between the "-I" and the path
-          if (	"-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
+          if (  "-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
              {
             // The source file path is already included!
                foundSourceDirectoryExplicitlyListedInIncludePaths = true;
@@ -6521,10 +6521,10 @@ SgSourceFile::build_PHP_AST()
      string phpFileName = this->get_sourceFileNameWithPath();
 #ifdef _MSC_VER
 #pragma message ("WARNING: PHP not supported within initial MSVC port of ROSE.")
-	 printf ("WARNING: PHP not supported within initial MSVC port of ROSE.");
-	 ROSE_ASSERT(false);
+         printf ("WARNING: PHP not supported within initial MSVC port of ROSE.");
+         ROSE_ASSERT(false);
 
-	 int frontendErrorLevel = -1;
+         int frontendErrorLevel = -1;
 #else
 #ifdef ROSE_BUILD_PHP_LANGUAGE_SUPPORT
      int frontendErrorLevel = php_main(phpFileName, this);
@@ -7684,7 +7684,7 @@ int SgProject::link ( std::string linkerName )
        if (usesAbsolutePath == false)
        {
          string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
-		   printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
+                   printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
          argcArgvList.remove(targetSourceFileToRemove);
        }
        else
@@ -8571,132 +8571,132 @@ SgFunctionCallExp::getAssociatedFunctionDeclaration() const
 SgFunctionSymbol*
 SgFunctionCallExp::getAssociatedFunctionSymbol() const
 {
-	// This is helpful in chasing down the associated declaration to this function reference.
-	// But this refactored function does the first step of getting the symbol, so that it
-	// can also be used separately in the outlining support.
-	SgFunctionSymbol* returnSymbol = NULL;
+        // This is helpful in chasing down the associated declaration to this function reference.
+        // But this refactored function does the first step of getting the symbol, so that it
+        // can also be used separately in the outlining support.
+        SgFunctionSymbol* returnSymbol = NULL;
 
-	// Note that as I recall there are a number of different types of IR nodes that
-	// the functionCallExp->get_function() can return (this is the complete list,
-	// as tested in astConsistancyTests.C):
-	//   - SgDotExp
-	//   - SgDotStarOp
-	//   - SgArrowExp
-	//   - SgArrowStarOp
-	//   - SgPointerDerefExp
-	//   - SgFunctionRefExp
-	//   - SgMemberFunctionRefExp
+        // Note that as I recall there are a number of different types of IR nodes that
+        // the functionCallExp->get_function() can return (this is the complete list,
+        // as tested in astConsistancyTests.C):
+        //   - SgDotExp
+        //   - SgDotStarOp
+        //   - SgArrowExp
+        //   - SgArrowStarOp
+        //   - SgPointerDerefExp
+        //   - SgFunctionRefExp
+        //   - SgMemberFunctionRefExp
 
-	//Some virtual functions are resolved statically (e.g. for objects allocated on the stack)
-	bool isAlwaysResolvedStatically = false;
+        //Some virtual functions are resolved statically (e.g. for objects allocated on the stack)
+        bool isAlwaysResolvedStatically = false;
 
-	SgExpression* functionExp = this->get_function();
-	switch (functionExp->variantT())
-	{
-		case V_SgFunctionRefExp:
-		{
-			SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
-			ROSE_ASSERT(functionRefExp != NULL);
-			returnSymbol = functionRefExp->get_symbol();
+        SgExpression* functionExp = this->get_function();
+        switch (functionExp->variantT())
+        {
+                case V_SgFunctionRefExp:
+                {
+                        SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
+                        ROSE_ASSERT(functionRefExp != NULL);
+                        returnSymbol = functionRefExp->get_symbol();
 
-			// DQ (2/8/2009): Can we assert this! What about pointers to functions?
-			ROSE_ASSERT(returnSymbol != NULL);
-			break;
-		}
+                        // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+                        ROSE_ASSERT(returnSymbol != NULL);
+                        break;
+                }
 
-		case V_SgMemberFunctionRefExp:
-		{
-			SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExp);
-			ROSE_ASSERT(memberFunctionRefExp != NULL);
-			returnSymbol = memberFunctionRefExp->get_symbol();
+                case V_SgMemberFunctionRefExp:
+                {
+                        SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExp);
+                        ROSE_ASSERT(memberFunctionRefExp != NULL);
+                        returnSymbol = memberFunctionRefExp->get_symbol();
 
-			// DQ (2/8/2009): Can we assert this! What about pointers to functions?
-			ROSE_ASSERT(returnSymbol != NULL);
-			break;
-		}
+                        // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+                        ROSE_ASSERT(returnSymbol != NULL);
+                        break;
+                }
 
-		case V_SgArrowExp:
-		{
-			// The lhs is the this pointer (SgThisExp) and the rhs is the member function.
-			SgArrowExp* arrayExp = isSgArrowExp(functionExp);
-			ROSE_ASSERT(arrayExp != NULL);
+                case V_SgArrowExp:
+                {
+                        // The lhs is the this pointer (SgThisExp) and the rhs is the member function.
+                        SgArrowExp* arrayExp = isSgArrowExp(functionExp);
+                        ROSE_ASSERT(arrayExp != NULL);
 
-			SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrayExp->get_rhs_operand());
+                        SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrayExp->get_rhs_operand());
 
-			// DQ (2/21/2010): Relaxed this constraint because it failes in fixupPrettyFunction test.
-			// ROSE_ASSERT(memberFunctionRefExp != NULL);
-			if (memberFunctionRefExp != NULL)
-			{
-				returnSymbol = memberFunctionRefExp->get_symbol();
+                        // DQ (2/21/2010): Relaxed this constraint because it failes in fixupPrettyFunction test.
+                        // ROSE_ASSERT(memberFunctionRefExp != NULL);
+                        if (memberFunctionRefExp != NULL)
+                        {
+                                returnSymbol = memberFunctionRefExp->get_symbol();
 
-				// DQ (2/8/2009): Can we assert this! What about pointers to functions?
-				ROSE_ASSERT(returnSymbol != NULL);
-			}
-			break;
-		}
+                                // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+                                ROSE_ASSERT(returnSymbol != NULL);
+                        }
+                        break;
+                }
 
-		case V_SgDotExp:
-		{
-			SgDotExp * dotExp = isSgDotExp(functionExp);
-			ROSE_ASSERT(dotExp != NULL);
-			SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
-			ROSE_ASSERT(memberFunctionRefExp != NULL);
-			returnSymbol = memberFunctionRefExp->get_symbol();
+                case V_SgDotExp:
+                {
+                        SgDotExp * dotExp = isSgDotExp(functionExp);
+                        ROSE_ASSERT(dotExp != NULL);
+                        SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+                        ROSE_ASSERT(memberFunctionRefExp != NULL);
+                        returnSymbol = memberFunctionRefExp->get_symbol();
 
-			// DQ (2/8/2009): Can we assert this! What about pointers to functions?
-			ROSE_ASSERT(returnSymbol != NULL);
+                        // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+                        ROSE_ASSERT(returnSymbol != NULL);
 
-			//Virtual functions called through the dot operator are resolved statically if they are not
-			//called on reference types.
-			isAlwaysResolvedStatically = !isSgReferenceType(dotExp->get_lhs_operand());
+                        //Virtual functions called through the dot operator are resolved statically if they are not
+                        //called on reference types.
+                        isAlwaysResolvedStatically = !isSgReferenceType(dotExp->get_lhs_operand());
 
-			break;
-		}
+                        break;
+                }
 
-		// Liao, 5/19/2009
-		// A pointer to function can be associated to any functions with a matching function type
-		// There is no single function declaration which is associated with it.
-		// In this case return NULL should be allowed and the caller has to handle it accordingly
-		case V_SgPointerDerefExp:
-		{
-			break;
-		}
+                // Liao, 5/19/2009
+                // A pointer to function can be associated to any functions with a matching function type
+                // There is no single function declaration which is associated with it.
+                // In this case return NULL should be allowed and the caller has to handle it accordingly
+                case V_SgPointerDerefExp:
+                {
+                        break;
+                }
 
-		//DotStar (Section 5.5 of C++ standard) is used to call a member function pointer and implicitly specify
-		//the associated 'this' parameter. In this case, we can't statically determine which function is getting called
-		//and should return null.
-		case V_SgDotStarOp:
-		{
-			break;
-		}
+                //DotStar (Section 5.5 of C++ standard) is used to call a member function pointer and implicitly specify
+                //the associated 'this' parameter. In this case, we can't statically determine which function is getting called
+                //and should return null.
+                case V_SgDotStarOp:
+                {
+                        break;
+                }
 
-		//ArrowStar (Section 5.5 of C++ standard) is used to call a member function pointer and implicitly specify
-		//the associated 'this' parameter. In this case, we can't statically determine which function is getting called
-		//and should return null.
-		case V_SgArrowStarOp:
-		{
-			break;
-		}
+                //ArrowStar (Section 5.5 of C++ standard) is used to call a member function pointer and implicitly specify
+                //the associated 'this' parameter. In this case, we can't statically determine which function is getting called
+                //and should return null.
+                case V_SgArrowStarOp:
+                {
+                        break;
+                }
 
-		default:
-		{
-			printf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
-			ROSE_ASSERT(false);
-		}
-	}
+                default:
+                {
+                        printf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
+                        ROSE_ASSERT(false);
+                }
+        }
 
-	//If the function is virtual, the function call might actually be to a different symbol.
-	//We should return NULL in this case to preserve correctness
-	if (returnSymbol != NULL && !isAlwaysResolvedStatically)
-	{
-		SgFunctionModifier& functionModifier = returnSymbol->get_declaration()->get_functionModifier();
-		if (functionModifier.isVirtual() || functionModifier.isPureVirtual())
-		{
-			returnSymbol = NULL;
-		}
-	}
+        //If the function is virtual, the function call might actually be to a different symbol.
+        //We should return NULL in this case to preserve correctness
+        if (returnSymbol != NULL && !isAlwaysResolvedStatically)
+        {
+                SgFunctionModifier& functionModifier = returnSymbol->get_declaration()->get_functionModifier();
+                if (functionModifier.isVirtual() || functionModifier.isPureVirtual())
+                {
+                        returnSymbol = NULL;
+                }
+        }
 
-	return returnSymbol;
+        return returnSymbol;
 }
 #endif
 

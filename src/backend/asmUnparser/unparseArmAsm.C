@@ -29,11 +29,11 @@ static std::string unparseArmCondition(ArmInstructionCondition cond) { // Unpars
 #ifndef _MSC_VER
     std::string retval = stringifyArmInstructionCondition(cond, "arm_cond_");
 #else
-	ROSE_ASSERT(false);
-	std::string retval ="";
+        ROSE_ASSERT(false);
+        std::string retval ="";
 #endif
 
-	ROSE_ASSERT(retval[0]!='(');
+        ROSE_ASSERT(retval[0]!='(');
     return retval;
 }
 

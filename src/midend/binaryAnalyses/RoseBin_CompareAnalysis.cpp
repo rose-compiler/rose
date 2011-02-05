@@ -60,7 +60,7 @@ void RoseBin_CompareAnalysis::create_map_functions() {
     if(RoseBin_support::filterName(name)==false) {
       SgAsmFunctionDeclaration* funcD=bin_funcs[name];
       //      cerr << " found function " << name << " " << 
-      //	funcDef->get_name().str() << " " << funcD->get_name() << endl;
+      //        funcDef->get_name().str() << " " << funcD->get_name() << endl;
       function_map[name]=(make_pair(funcDef,funcD));
     }
   }
@@ -107,88 +107,88 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
       X86RegisterClass cl = (X86RegisterClass)refExp->get_descriptor().get_major();
       int reg = refExp->get_descriptor().get_minor();
       if (cl == x86_regclass_gpr && reg==x86_gpr_cx) 
-	isValidInstr=false;
+        isValidInstr=false;
       if (cl == x86_regclass_gpr && reg==x86_gpr_bp) {
-	isValidInstr=false;
-	// if this is the main funtion and we find a <pop BP>
-	// then we want not to process the rest of the instructions.
-	if (func_name=="main")
-	  main_prolog_end=false;
+        isValidInstr=false;
+        // if this is the main funtion and we find a <pop BP>
+        // then we want not to process the rest of the instructions.
+        if (func_name=="main")
+          main_prolog_end=false;
       }
     } else
       if (inst->get_kind() == x86_mov) {
-	//cerr << " enerting mov " << endl;
-	// its a mov
-	SgAsmOperandList* opList = inst->get_operandList();
-	SgAsmExpressionPtrList exprList = opList->get_operands();
-	SgAsmExpressionPtrList::iterator it = exprList.begin();
-	int iteration=0;
-	bool isMovBp0=false;
-	bool isMovSp1=false;
-	for (;it!=exprList.end();it++) {
-	  SgAsmExpression* binExp = (*it);
-	  ROSE_ASSERT(binExp);
-	  //cerr << " type " << binExp->class_name() << endl;
-	  SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp);
-	  if (refExp) {
-	    //ROSE_ASSERT(refExp);
+        //cerr << " enerting mov " << endl;
+        // its a mov
+        SgAsmOperandList* opList = inst->get_operandList();
+        SgAsmExpressionPtrList exprList = opList->get_operands();
+        SgAsmExpressionPtrList::iterator it = exprList.begin();
+        int iteration=0;
+        bool isMovBp0=false;
+        bool isMovSp1=false;
+        for (;it!=exprList.end();it++) {
+          SgAsmExpression* binExp = (*it);
+          ROSE_ASSERT(binExp);
+          //cerr << " type " << binExp->class_name() << endl;
+          SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp);
+          if (refExp) {
+            //ROSE_ASSERT(refExp);
             X86RegisterClass cl = (X86RegisterClass)refExp->get_descriptor().get_major();
             int reg = refExp->get_descriptor().get_minor();
-	    if (iteration==0 && cl == x86_regclass_gpr && reg==x86_gpr_bp) 
-	      isMovBp0=true;
-	    if (iteration==1 && cl == x86_regclass_gpr && reg==x86_gpr_sp) 
-	      isMovSp1=true; 
-	  }
-	  iteration++;
-	}
-	if (isMovBp0 && isMovSp1) {
-	  isValidInstr=false;
-	  *output += "skipped Mov Bp,Sp\n";
-	  // if this is main, then this is where the function begins
-	  if (func_name=="main")
-	    main_prolog_end=true;
-	}
+            if (iteration==0 && cl == x86_regclass_gpr && reg==x86_gpr_bp) 
+              isMovBp0=true;
+            if (iteration==1 && cl == x86_regclass_gpr && reg==x86_gpr_sp) 
+              isMovSp1=true; 
+          }
+          iteration++;
+        }
+        if (isMovBp0 && isMovSp1) {
+          isValidInstr=false;
+          *output += "skipped Mov Bp,Sp\n";
+          // if this is main, then this is where the function begins
+          if (func_name=="main")
+            main_prolog_end=true;
+        }
       } else 
-	if (inst->get_kind() == x86_sub) {
-	  //cerr << " enerting sub " << endl;
-	  // its a sub
-	  SgAsmOperandList* opList = inst->get_operandList();
-	  SgAsmExpressionPtrList exprList = opList->get_operands();
-	  SgAsmExpressionPtrList::iterator it = exprList.begin();
-	  int iteration=0;
-	  bool isSubSp0=false;
-	  bool isSubVal1=false;
-	  for (;it!=exprList.end();it++) {
-	    SgAsmExpression* binExp = (*it);
-	    ROSE_ASSERT(binExp);
-	    //cerr << " type " << binExp->class_name() << endl;
-	    SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp);
-	    SgAsmValueExpression* valExp = isSgAsmValueExpression(binExp);
-	    if (refExp && iteration==0) {
+        if (inst->get_kind() == x86_sub) {
+          //cerr << " enerting sub " << endl;
+          // its a sub
+          SgAsmOperandList* opList = inst->get_operandList();
+          SgAsmExpressionPtrList exprList = opList->get_operands();
+          SgAsmExpressionPtrList::iterator it = exprList.begin();
+          int iteration=0;
+          bool isSubSp0=false;
+          bool isSubVal1=false;
+          for (;it!=exprList.end();it++) {
+            SgAsmExpression* binExp = (*it);
+            ROSE_ASSERT(binExp);
+            //cerr << " type " << binExp->class_name() << endl;
+            SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp);
+            SgAsmValueExpression* valExp = isSgAsmValueExpression(binExp);
+            if (refExp && iteration==0) {
               X86RegisterClass cl = (X86RegisterClass)refExp->get_descriptor().get_major();
               int reg = refExp->get_descriptor().get_minor();
-	      if (cl == x86_regclass_gpr && reg==x86_gpr_sp) 
-		isSubSp0=true;
-	    }
-	    if (valExp && iteration==1) {
-	      isSubVal1=true;
-	    }
-	    iteration++;
-	  }
-	  if (isSubSp0 && isSubVal1) {
-	    isValidInstr=false;
-	    *output += "skipped Sub Sp,Val\n";
-	  }
-	} else
-	  if (inst->get_kind() == x86_ret) {
-	    isValidInstr=false;
-	  } else
-	    if (inst->get_kind() == x86_leave) {
-	      isValidInstr=false;
-	    } else{
-	      // found generic instruction
-	      //    isValidInstr=true;
-	    }
+              if (cl == x86_regclass_gpr && reg==x86_gpr_sp) 
+                isSubSp0=true;
+            }
+            if (valExp && iteration==1) {
+              isSubVal1=true;
+            }
+            iteration++;
+          }
+          if (isSubSp0 && isSubVal1) {
+            isValidInstr=false;
+            *output += "skipped Sub Sp,Val\n";
+          }
+        } else
+          if (inst->get_kind() == x86_ret) {
+            isValidInstr=false;
+          } else
+            if (inst->get_kind() == x86_leave) {
+              isValidInstr=false;
+            } else{
+              // found generic instruction
+              //    isValidInstr=true;
+            }
 
   if (isValidInstr==false) {
     stat->setAttribute(attributeName,createAttribute(0));
@@ -209,18 +209,18 @@ string RoseBin_CompareAnalysis::checkVariable(SgAsmValueExpression* rhs) {
       valStr = RoseBin_support::ToString(val);
     } else
       if (isSgAsmDoubleFloatValueExpression(rhs)) {
-	double val = isSgAsmDoubleFloatValueExpression(rhs)->get_value();
-	//cerr << " checking local float variable at bp " << RoseBin_support::ToString(val) << endl;
-	valStr = RoseBin_support::ToString(val);
+        double val = isSgAsmDoubleFloatValueExpression(rhs)->get_value();
+        //cerr << " checking local float variable at bp " << RoseBin_support::ToString(val) << endl;
+        valStr = RoseBin_support::ToString(val);
       } else
-	if (isSgAsmDoubleWordValueExpression(rhs)) {
-	  int val = isSgAsmDoubleWordValueExpression(rhs)->get_value();
-	  //cerr << " checking local int variable at bp " << RoseBin_support::ToString(val) << endl;
-	  valStr = RoseBin_support::ToString(val);
-	} else {
-	  cerr << " the type of value is currently not handled - CompareAnalysis " << endl;
-	  exit(0);
-	}
+        if (isSgAsmDoubleWordValueExpression(rhs)) {
+          int val = isSgAsmDoubleWordValueExpression(rhs)->get_value();
+          //cerr << " checking local int variable at bp " << RoseBin_support::ToString(val) << endl;
+          valStr = RoseBin_support::ToString(val);
+        } else {
+          cerr << " the type of value is currently not handled - CompareAnalysis " << endl;
+          exit(0);
+        }
   } else {
     cerr << " >> cannot check for variable location 3. " << endl;
     exit(0);
@@ -229,9 +229,9 @@ string RoseBin_CompareAnalysis::checkVariable(SgAsmValueExpression* rhs) {
 }
 
 void RoseBin_CompareAnalysis::storeVariable(string val, 
-					    string name,
-					    SgAsmValueExpression* node
-					    ) {
+                                            string name,
+                                            SgAsmValueExpression* node
+                                            ) {
   cerr << " storing variable : " << name << " val: " << val << endl;
   local_vars[val]=(make_pair(name, node));
   node->setAttribute(attributeName,createAttribute(2));
@@ -295,10 +295,10 @@ bool RoseBin_CompareAnalysis::existsVariable(string value) {
 }
 
 string RoseBin_CompareAnalysis::resolve_binaryInstruction(SgAsmInstruction* mov,
-							  string *left,
-							  string *right,
-							  string name
-							  ) {
+                                                          string *left,
+                                                          string *right,
+                                                          string name
+                                                          ) {
 
   SgAsmOperandList* opList = mov->get_operandList();
   SgAsmExpressionPtrList exprList = opList->get_operands();
@@ -320,31 +320,31 @@ string RoseBin_CompareAnalysis::resolve_binaryInstruction(SgAsmInstruction* mov,
     if (memref) {
       SgAsmx86RegisterReferenceExpression* myexp = isSgAsmx86RegisterReferenceExpression(memref->get_segment());
       if (myexp) {
-	// register
-	string regName = resolveRegister(myexp->get_descriptor());
-	
-	SgAsmBinaryAdd* binAdd = isSgAsmBinaryAdd(memref->get_address());
-	if (binAdd) {
-	  SgAsmValueExpression* rhs = isSgAsmValueExpression(binAdd->get_rhs());
-	  value = checkVariable(rhs);
-	  if (existsVariable(value)==false) 
-	    storeVariable(value, name, rhs);
-	  string varname = getVariableName(value);
-	  str = regName +": ["+varname +"]";
-	  rhs->setAttribute(attributeName,createAttribute(2));	      
-	}
+        // register
+        string regName = resolveRegister(myexp->get_descriptor());
+        
+        SgAsmBinaryAdd* binAdd = isSgAsmBinaryAdd(memref->get_address());
+        if (binAdd) {
+          SgAsmValueExpression* rhs = isSgAsmValueExpression(binAdd->get_rhs());
+          value = checkVariable(rhs);
+          if (existsVariable(value)==false) 
+            storeVariable(value, name, rhs);
+          string varname = getVariableName(value);
+          str = regName +": ["+varname +"]";
+          rhs->setAttribute(attributeName,createAttribute(2));        
+        }
       }
       else {
-	//str = regName;
-	//myexp->setAttribute(attributeName,createAttribute(2));	      
-        memref->setAttribute(attributeName,createAttribute(2));	      
+        //str = regName;
+        //myexp->setAttribute(attributeName,createAttribute(2));              
+        memref->setAttribute(attributeName,createAttribute(2));       
       }
     } //left
     SgAsmValueExpression* valExp = isSgAsmValueExpression(binExp);
     if (valExp) {
       string value = checkVariable(valExp);
       str = value ;
-      valExp->setAttribute(attributeName,createAttribute(2));	      
+      valExp->setAttribute(attributeName,createAttribute(2));         
     }
     if (iteration==0)
       *left=str;
@@ -362,8 +362,8 @@ string RoseBin_CompareAnalysis::resolve_binaryInstruction(SgAsmInstruction* mov,
 
 bool RoseBin_CompareAnalysis::isReturnStmt(SgNode* srcNode,
                                            SgAsmNode* binNode,
-					   string *output,
-					   int &nodes_matched) {
+                                           string *output,
+                                           int &nodes_matched) {
   bool isreturn=false;
   // check if return matches
   SgReturnStmt* returnS = isSgReturnStmt(srcNode);
@@ -385,8 +385,8 @@ bool RoseBin_CompareAnalysis::isReturnStmt(SgNode* srcNode,
  *********************************************************/
 bool RoseBin_CompareAnalysis::isFunctionCall(SgNode* srcNode,
                                              SgAsmNode* binNode,
-					     string *output,
-					     int &nodes_matched) {
+                                             string *output,
+                                             int &nodes_matched) {
   bool isfunction=false;
   cerr << "   inside isFunctionCall " << endl;
   SgFunctionCallExp* srcCall = isSgFunctionCallExp(srcNode);
@@ -406,8 +406,8 @@ bool RoseBin_CompareAnalysis::isFunctionCall(SgNode* srcNode,
 
 bool RoseBin_CompareAnalysis::isSgPlusPlus(SgNode* srcNode,
                                            SgAsmNode* binNode,
-					   string *output,
-					   int &nodes_matched) {
+                                           string *output,
+                                           int &nodes_matched) {
   bool isplus=false;
   cerr << "   inside isSgPlusPlus " << endl;
   SgPlusPlusOp* srcCall = isSgPlusPlusOp(srcNode);
@@ -442,15 +442,15 @@ bool RoseBin_CompareAnalysis::isSgPlusPlus(SgNode* srcNode,
  *   if yes, set attributes for proper visualization
  *********************************************************/
 bool RoseBin_CompareAnalysis::isVariableDeclaration(SgNode* srcNode,
-						    SgAsmNode* binNode,
-						    string *output,
-						    int &nodes_matched,
-						    int array_bin_length,
-						    int &bin_count,
-						    SgNode* src_statements[],
-						    SgAsmNode* bin_statements[],
-						    bool &increase_source
-						    ) {
+                                                    SgAsmNode* binNode,
+                                                    string *output,
+                                                    int &nodes_matched,
+                                                    int array_bin_length,
+                                                    int &bin_count,
+                                                    SgNode* src_statements[],
+                                                    SgAsmNode* bin_statements[],
+                                                    bool &increase_source
+                                                    ) {
   bool isvar=false;
   cerr << "   inside isVariableDeclaration " << endl;
   SgVariableDeclaration* varDecl = isSgVariableDeclaration(srcNode);
@@ -519,21 +519,21 @@ bool RoseBin_CompareAnalysis::isVariableDeclaration(SgNode* srcNode,
       ROSE_ASSERT(initName);
       SgInitializer* init = initName->get_initptr();
       if (isSgAssignInitializer(init)) {
-	SgAssignInitializer* assInit = isSgAssignInitializer(init);
-	ROSE_ASSERT(assInit);
-	SgExpression* op = assInit->get_operand();
-	if (isSgIntVal(op) && isSgAsmDoubleWordValueExpression(valExp)) {
-	  // we got a integer && DoubleWord match
-	  nodes_matched++;
-	  isvar=true;
-	  varDecl->setAttribute(attributeName,createAttribute(2));
-	  mov->setAttribute(attributeName,createAttribute(2));
-	  mov->set_comment("mov SS:[" + name +"] , "+value);
-	  //local_last_variable = roh_val;
-	  isSgIntVal(op)->setAttribute(attributeName,createAttribute(2));
-	  isSgAsmDoubleWordValueExpression(valExp)->setAttribute(attributeName,createAttribute(2));
-	  isSgAsmx86RegisterReferenceExpression(refExp_Left)->setAttribute(attributeName,createAttribute(2));
-	}
+        SgAssignInitializer* assInit = isSgAssignInitializer(init);
+        ROSE_ASSERT(assInit);
+        SgExpression* op = assInit->get_operand();
+        if (isSgIntVal(op) && isSgAsmDoubleWordValueExpression(valExp)) {
+          // we got a integer && DoubleWord match
+          nodes_matched++;
+          isvar=true;
+          varDecl->setAttribute(attributeName,createAttribute(2));
+          mov->setAttribute(attributeName,createAttribute(2));
+          mov->set_comment("mov SS:[" + name +"] , "+value);
+          //local_last_variable = roh_val;
+          isSgIntVal(op)->setAttribute(attributeName,createAttribute(2));
+          isSgAsmDoubleWordValueExpression(valExp)->setAttribute(attributeName,createAttribute(2));
+          isSgAsmx86RegisterReferenceExpression(refExp_Left)->setAttribute(attributeName,createAttribute(2));
+        }
       }
     }
   }
@@ -544,11 +544,11 @@ bool RoseBin_CompareAnalysis::isVariableDeclaration(SgNode* srcNode,
  * check if binary operands are a vardecl or assignment
  ****************************************************/
 void RoseBin_CompareAnalysis::resolve_bin_vardecl_or_assignment(bool &isVarDecl0, 
-								bool &isVarDecl1,
-								bool &isAssign0,
-								bool &isAssign1,
-								SgAsmx86Instruction* mov
-								) {
+                                                                bool &isVarDecl1,
+                                                                bool &isAssign0,
+                                                                bool &isAssign1,
+                                                                SgAsmx86Instruction* mov
+                                                                ) {
   SgAsmOperandList* opList = mov->get_operandList();
   SgAsmExpressionPtrList exprList = opList->get_operands();
   SgAsmExpressionPtrList::iterator it = exprList.begin();
@@ -560,25 +560,25 @@ void RoseBin_CompareAnalysis::resolve_bin_vardecl_or_assignment(bool &isVarDecl0
     if (iteration==0) {
       refExp_Left = isSgAsmx86RegisterReferenceExpression(binExp);
       if (refExp_Left ) {
-	// first operand is refExp (variabledecl || assignOp)
+        // first operand is refExp (variabledecl || assignOp)
         if (refExp_Left->get_descriptor().get_major() == x86_regclass_segment &&
             refExp_Left->get_descriptor().get_minor() == x86_segreg_ss) { 
-	  isVarDecl0=true;
-	  isAssign0=true;
-	}	else
-	  isAssign0=true;
+          isVarDecl0=true;
+          isAssign0=true;
+        }       else
+          isAssign0=true;
       }
     }
     if (iteration==1) {
       refExp_Right = isSgAsmx86RegisterReferenceExpression(binExp);
       valExp = isSgAsmValueExpression(binExp);
       if (valExp ) {
-	// second operand is Value (variabledecl)
-	isVarDecl1=true;
+        // second operand is Value (variabledecl)
+        isVarDecl1=true;
       }
       if (valExp || refExp_Right) {
-	// second operand is refExp (assignOp) 
-	isAssign1=true;
+        // second operand is refExp (assignOp) 
+        isAssign1=true;
       }
     }
     iteration++;
@@ -608,16 +608,16 @@ void RoseBin_CompareAnalysis::resolve_bin_vardecl_or_assignment(bool &isVarDecl0
  *********************************************************/
 bool RoseBin_CompareAnalysis::isAssignOp(SgNode* srcNode,
                                          SgAsmNode* binNode,
-					 string *output,
-					 int &nodes_matched,
-					 int array_bin_length,
-					 int array_src_length,
-					 int &bin_count,
-					 int src_count,
-					 SgNode* src_statements[],
-					 SgAsmNode* bin_statements[],
-					 bool &increase_source
-					 ) {
+                                         string *output,
+                                         int &nodes_matched,
+                                         int array_bin_length,
+                                         int array_src_length,
+                                         int &bin_count,
+                                         int src_count,
+                                         SgNode* src_statements[],
+                                         SgAsmNode* bin_statements[],
+                                         bool &increase_source
+                                         ) {
   bool isassign=false;
   cerr << "   inside isAssignOp    " << endl;
   SgAssignOp* assign = isSgAssignOp(srcNode);
@@ -662,7 +662,7 @@ bool RoseBin_CompareAnalysis::isAssignOp(SgNode* srcNode,
 
     cerr << "  assign && mov (left, right) = " <<
       RoseBin_support::resBool(isAssign0) <<"-"<< RoseBin_support::resBool(isAssign1) << "\n";
-     	  
+          
     if (isAssign0 && isAssign1) {
       ROSE_ASSERT(mov);
       *output+= " !! assignOp ............... \n" ;
@@ -683,19 +683,19 @@ bool RoseBin_CompareAnalysis::isAssignOp(SgNode* srcNode,
       // i.e. dont_increase = false
       bool increase_bool_count=true;
       bool success = handleSourceExpression(expr,
-					    &src_statements[0],
-					    &bin_statements[0],
-					    output,
-					    bin_count,
-					    src_count,
-					    nodes_matched,
-					    array_bin_length,
-					    array_src_length,
-					    assign,
-					    increase_bool_count);
+                                            &src_statements[0],
+                                            &bin_statements[0],
+                                            output,
+                                            bin_count,
+                                            src_count,
+                                            nodes_matched,
+                                            array_bin_length,
+                                            array_src_length,
+                                            assign,
+                                            increase_bool_count);
       if (!success) {
-	cerr << " !! no success .. increasing only source . " << endl;
-	increase_source=true;
+        cerr << " !! no success .. increasing only source . " << endl;
+        increase_source=true;
       }
       //      last_left_source_var=varname;
     }
@@ -739,18 +739,18 @@ bool RoseBin_CompareAnalysis::isAssignOp(SgNode* srcNode,
       cerr << " assign :: trying to handle " << expr->class_name() << " vs. " << binNode->class_name() << endl;
       bool increase_bool_count=false;
       bool success = handleSourceExpression(expr,
-					    &src_statements[0],
-					    &bin_statements[0],
-					    output,
-					    bin_count,
-					    src_count,
-					    nodes_matched,
-					    array_bin_length,
-					    array_src_length,
-					    assign,
-					    increase_bool_count);
+                                            &src_statements[0],
+                                            &bin_statements[0],
+                                            output,
+                                            bin_count,
+                                            src_count,
+                                            nodes_matched,
+                                            array_bin_length,
+                                            array_src_length,
+                                            assign,
+                                            increase_bool_count);
       if (!success) 
-	increase_source=true;
+        increase_source=true;
     } else {
       cerr << " !!! ERROR : AssignOp : We cant find the corresponding binary node: >> " << binNode->class_name() << endl;
       //exit(0);
@@ -768,14 +768,14 @@ void RoseBin_CompareAnalysis::pushOnStack(SgExpression* expr){
 
 SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
                                                      SgNode* src_statements[],
-						     SgAsmNode* bin_statements[],
-						     string *output,
-						     int &bin_count,
-						     int src_count,
-						     int &nodes_matched,
-						     int array_bin_length,
-						     int array_src_length,
-						     bool &keep_binary_node) {
+                                                     SgAsmNode* bin_statements[],
+                                                     string *output,
+                                                     int &bin_count,
+                                                     int src_count,
+                                                     int &nodes_matched,
+                                                     int array_bin_length,
+                                                     int array_src_length,
+                                                     bool &keep_binary_node) {
 
   ROSE_ASSERT(expr);
   cerr << "   ---- inside isExpression " << expr->class_name() << endl;
@@ -799,23 +799,23 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
                                                  &right,"none" );
       sub->set_comment("sub "+left+","+right);
       if (tookSrcNodeFromStack) {
-	subop->setAttribute(attributeName,createAttribute(3));
-	sub->setAttribute(attributeName,createAttribute(3)); 
+        subop->setAttribute(attributeName,createAttribute(3));
+        sub->setAttribute(attributeName,createAttribute(3)); 
       } else {
-	subop->setAttribute(attributeName,createAttribute(2));
-	sub->setAttribute(attributeName,createAttribute(2));
+        subop->setAttribute(attributeName,createAttribute(2));
+        sub->setAttribute(attributeName,createAttribute(2));
       }
       //      string isVariable = getVariableName(roh_val);
       //if (isVariable!="")
       //local_last_variable = roh_val;
       if (tookSrcNodeFromStack)
-	expr=NULL;
+        expr=NULL;
       else {
-	expr = subop->get_rhs_operand();
-	pushOnStack(subop->get_lhs_operand());
+        expr = subop->get_rhs_operand();
+        pushOnStack(subop->get_lhs_operand());
       }
       if (expr!=NULL)
-	cerr << "  next expr " << expr->class_name() << endl;
+        cerr << "  next expr " << expr->class_name() << endl;
     } else {
       // apperently we have not found this binary node,
       // we want to skip it for now but remember it for the next run
@@ -834,142 +834,142 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
       binNode = bin_statements[(bin_count)];
       ROSE_ASSERT(binNode);
       cerr << "      checking isSgAddOp against " << binNode->class_name() << 
-	" " << binNode << endl;
+        " " << binNode << endl;
       SgAsmx86Instruction* add = isSgAsmx86Instruction(binNode);
       if (add && add->get_kind() == x86_add) {
-	cerr << "       found addOp. binCount: " << bin_count << endl;
-	*output += "   !! addOp ............... \n" ;
-	(nodes_matched)++;
-	string left="";
-	string right="";
-	string roh_val = resolve_binaryInstruction(add, &left, 
+        cerr << "       found addOp. binCount: " << bin_count << endl;
+        *output += "   !! addOp ............... \n" ;
+        (nodes_matched)++;
+        string left="";
+        string right="";
+        string roh_val = resolve_binaryInstruction(add, &left, 
                                                    &right,"none" );
         addop->setAttribute(attributeName,createAttribute(2));
-	add->setAttribute(attributeName,createAttribute(2));
-	add->set_comment("add "+left+","+right);
-	//string isVariable = getVariableName(roh_val);
-	//if (isVariable!="")
-	//local_last_variable = roh_val;
-	if (tookSrcNodeFromStack)
-	  expr=NULL;
-	else {
-	  expr = addop->get_rhs_operand();
-	  pushOnStack(addop->get_lhs_operand());
-	}
-	if (expr!=NULL)
-	  cerr << "  next expr " << expr->class_name() << endl;
+        add->setAttribute(attributeName,createAttribute(2));
+        add->set_comment("add "+left+","+right);
+        //string isVariable = getVariableName(roh_val);
+        //if (isVariable!="")
+        //local_last_variable = roh_val;
+        if (tookSrcNodeFromStack)
+          expr=NULL;
+        else {
+          expr = addop->get_rhs_operand();
+          pushOnStack(addop->get_lhs_operand());
+        }
+        if (expr!=NULL)
+          cerr << "  next expr " << expr->class_name() << endl;
       } else {
-	// apperently we have not found this binary node,
-	// we want to skip it for now but remember it for the next run
-	cerr << "   Not a SgAddOp. skipping and remembering this node.  " << endl;
-	expr = addop->get_rhs_operand();
-	keep_binary_node=true;
-	//	switchSrcStatements(&src_statements[0], src_count, src_count+1,array_src_length);
-	srcNodesTodo.push(addop);
+        // apperently we have not found this binary node,
+        // we want to skip it for now but remember it for the next run
+        cerr << "   Not a SgAddOp. skipping and remembering this node.  " << endl;
+        expr = addop->get_rhs_operand();
+        keep_binary_node=true;
+        //      switchSrcStatements(&src_statements[0], src_count, src_count+1,array_src_length);
+        srcNodesTodo.push(addop);
       }
     }  else
 
       if (isSgMultiplyOp(expr)) {
-	SgMultiplyOp* addop = isSgMultiplyOp(expr);
-	SgAsmNode* binNode = NULL;
-	// get the possibleAddOp on the binary side
-	binNode = bin_statements[(bin_count)];
-	SgAsmNode* binNodeNext = bin_statements[(++bin_count)];
-	SgAsmNode* binNodeNextNext = bin_statements[(++bin_count)];
-	ROSE_ASSERT(binNode);
-	ROSE_ASSERT(binNodeNext);
-	ROSE_ASSERT(binNodeNextNext);
-	cerr << "      checking isSgMultiplyOp against " << binNode->class_name() <<
-	  " " << binNode << endl;
-	SgAsmx86Instruction* mov = isSgAsmx86Instruction(binNode);
-	SgAsmx86Instruction* shl = isSgAsmx86Instruction(binNodeNext);
-	SgAsmx86Instruction* lea = isSgAsmx86Instruction(binNodeNextNext);
-	if (mov && mov->get_kind() == x86_mov && shl && shl->get_kind() == x86_shl) {
-	  *output += "   !! multiplyOp ............... \n" ;
-	  cerr << "       found multiOp. binCount: " << bin_count << endl;
-	  (nodes_matched)++;
-	  string left="";
-	  string right="";
-	  string roh_val = resolve_binaryInstruction(mov, &left, 
+        SgMultiplyOp* addop = isSgMultiplyOp(expr);
+        SgAsmNode* binNode = NULL;
+        // get the possibleAddOp on the binary side
+        binNode = bin_statements[(bin_count)];
+        SgAsmNode* binNodeNext = bin_statements[(++bin_count)];
+        SgAsmNode* binNodeNextNext = bin_statements[(++bin_count)];
+        ROSE_ASSERT(binNode);
+        ROSE_ASSERT(binNodeNext);
+        ROSE_ASSERT(binNodeNextNext);
+        cerr << "      checking isSgMultiplyOp against " << binNode->class_name() <<
+          " " << binNode << endl;
+        SgAsmx86Instruction* mov = isSgAsmx86Instruction(binNode);
+        SgAsmx86Instruction* shl = isSgAsmx86Instruction(binNodeNext);
+        SgAsmx86Instruction* lea = isSgAsmx86Instruction(binNodeNextNext);
+        if (mov && mov->get_kind() == x86_mov && shl && shl->get_kind() == x86_shl) {
+          *output += "   !! multiplyOp ............... \n" ;
+          cerr << "       found multiOp. binCount: " << bin_count << endl;
+          (nodes_matched)++;
+          string left="";
+          string right="";
+          string roh_val = resolve_binaryInstruction(mov, &left, 
                                                      &right,"none" );
 
-	  addop->setAttribute(attributeName,createAttribute(2));
-	  mov->setAttribute(attributeName,createAttribute(2));
-	  mov->set_comment("mul "+left+","+right);
-	  shl->setAttribute(attributeName,createAttribute(2));
-	  shl->set_comment("mul "+left+","+right);
+          addop->setAttribute(attributeName,createAttribute(2));
+          mov->setAttribute(attributeName,createAttribute(2));
+          mov->set_comment("mul "+left+","+right);
+          shl->setAttribute(attributeName,createAttribute(2));
+          shl->set_comment("mul "+left+","+right);
           ROSE_ASSERT (lea && lea->get_kind() == x86_lea);
-	  lea->setAttribute(attributeName,createAttribute(2));
-	  lea->set_comment("mul "+left+","+right);
-	  
-	  if (tookSrcNodeFromStack)
-	    expr=NULL;
-	  else {
-	    expr = addop->get_rhs_operand();
-	    pushOnStack(addop->get_lhs_operand());
-	  }
-	  if (expr!=NULL)
-	    cerr << "  next expr " << expr->class_name() << endl;
-	} else {
-	  // apperently we have not found this binary node,
-	  // we want to skip it for now but remember it for the next run
-	  expr = addop->get_rhs_operand();
-	  keep_binary_node=true;
-	  cerr << "   Not a SgMultiplyOp. skipping and remembering this node.  " << endl;
-	  //	switchSrcStatements(&src_statements[0], src_count, src_count+1,array_src_length);
-	  srcNodesTodo.push(addop);
-	}
-	//	binNode = binNodeNextNext;
+          lea->setAttribute(attributeName,createAttribute(2));
+          lea->set_comment("mul "+left+","+right);
+          
+          if (tookSrcNodeFromStack)
+            expr=NULL;
+          else {
+            expr = addop->get_rhs_operand();
+            pushOnStack(addop->get_lhs_operand());
+          }
+          if (expr!=NULL)
+            cerr << "  next expr " << expr->class_name() << endl;
+        } else {
+          // apperently we have not found this binary node,
+          // we want to skip it for now but remember it for the next run
+          expr = addop->get_rhs_operand();
+          keep_binary_node=true;
+          cerr << "   Not a SgMultiplyOp. skipping and remembering this node.  " << endl;
+          //    switchSrcStatements(&src_statements[0], src_count, src_count+1,array_src_length);
+          srcNodesTodo.push(addop);
+        }
+        //      binNode = binNodeNextNext;
       } else 
 
-	if (isSgDivideOp(expr)) {
-	  SgDivideOp* addop = isSgDivideOp(expr);
-	  SgAsmNode* binNode = NULL;
-	  // get the possibleAddOp on the binary side
-	  binNode = bin_statements[(bin_count)];
-	  ROSE_ASSERT(binNode);
-	  cerr << "      checking isSgDivideOp against " << binNode->class_name() << endl;
-	  SgAsmx86Instruction* shr = isSgAsmx86Instruction(binNode);
-	  if (shr && shr->get_kind() == x86_shr) {
-	    *output += "   !! divideOp ............... \n" ;
-	    (nodes_matched)++;
-	    string left="";
-	    string right="";
-	    string roh_val = resolve_binaryInstruction(shr, &left, 
+        if (isSgDivideOp(expr)) {
+          SgDivideOp* addop = isSgDivideOp(expr);
+          SgAsmNode* binNode = NULL;
+          // get the possibleAddOp on the binary side
+          binNode = bin_statements[(bin_count)];
+          ROSE_ASSERT(binNode);
+          cerr << "      checking isSgDivideOp against " << binNode->class_name() << endl;
+          SgAsmx86Instruction* shr = isSgAsmx86Instruction(binNode);
+          if (shr && shr->get_kind() == x86_shr) {
+            *output += "   !! divideOp ............... \n" ;
+            (nodes_matched)++;
+            string left="";
+            string right="";
+            string roh_val = resolve_binaryInstruction(shr, &left, 
                                                        &right,"none" );
 
-	    addop->setAttribute(attributeName,createAttribute(2));
-	    shr->setAttribute(attributeName,createAttribute(2));
-	    shr->set_comment("div "+left+","+right);
-	    //string isVariable = getVariableName(roh_val);
-	    //if (isVariable!="")
-	    //local_last_variable = roh_val;
-	    if (tookSrcNodeFromStack)
-	      expr=NULL;
-	    else {
-	      expr = addop->get_rhs_operand();
-	      pushOnStack(addop->get_lhs_operand());
-	    }
-	    if (expr!=NULL)
-	      cerr << "  next expr " << expr->class_name() << endl;
-	  } else {
-	    // apperently we have not found this binary node,
-	    // we want to skip it for now but remember it for the next run
-	    expr = addop->get_rhs_operand();
-	    keep_binary_node=true;
-	    cerr << "   Not a SgDivideOp. skipping and remembering this node.  " << endl;
-	    //	switchSrcStatements(&src_statements[0], src_count, src_count+1,array_src_length);
-	    srcNodesTodo.push(addop);
-	  }
+            addop->setAttribute(attributeName,createAttribute(2));
+            shr->setAttribute(attributeName,createAttribute(2));
+            shr->set_comment("div "+left+","+right);
+            //string isVariable = getVariableName(roh_val);
+            //if (isVariable!="")
+            //local_last_variable = roh_val;
+            if (tookSrcNodeFromStack)
+              expr=NULL;
+            else {
+              expr = addop->get_rhs_operand();
+              pushOnStack(addop->get_lhs_operand());
+            }
+            if (expr!=NULL)
+              cerr << "  next expr " << expr->class_name() << endl;
+          } else {
+            // apperently we have not found this binary node,
+            // we want to skip it for now but remember it for the next run
+            expr = addop->get_rhs_operand();
+            keep_binary_node=true;
+            cerr << "   Not a SgDivideOp. skipping and remembering this node.  " << endl;
+            //  switchSrcStatements(&src_statements[0], src_count, src_count+1,array_src_length);
+            srcNodesTodo.push(addop);
+          }
 
-	} 
+        } 
 
-	else {
-	  cerr << " !!! WARNING : isExpression :: could not resolve the expression : " << expr->class_name() << endl;
+        else {
+          cerr << " !!! WARNING : isExpression :: could not resolve the expression : " << expr->class_name() << endl;
 
-	  expr=NULL;
-	  //    exit(0);
-	}
+          expr=NULL;
+          //    exit(0);
+        }
 
   if (expr==NULL) {
     if (!srcNodesTodo.empty()) {
@@ -996,16 +996,16 @@ bool RoseBin_CompareAnalysis::isAnExpression(SgExpression* expr) {
 
 bool RoseBin_CompareAnalysis::handleSourceExpression(
                                                      SgExpression* expr,
-						     SgNode* src_statements[],
-						     SgAsmNode* bin_statements[],
-						     std::string *output,
-						     int &bin_count,
-						     int src_count,
-						     int &nodes_matched,
-						     int array_bin_length,
-						     int array_src_length,
-						     SgAssignOp* assign,
-						     bool increase_bin_count) {
+                                                     SgNode* src_statements[],
+                                                     SgAsmNode* bin_statements[],
+                                                     std::string *output,
+                                                     int &bin_count,
+                                                     int src_count,
+                                                     int &nodes_matched,
+                                                     int array_bin_length,
+                                                     int array_src_length,
+                                                     SgAssignOp* assign,
+                                                     bool increase_bin_count) {
   if (!isAnExpression(expr))
     return true;
   bool success =true;
@@ -1025,26 +1025,26 @@ bool RoseBin_CompareAnalysis::handleSourceExpression(
     } else {
       // increase this only if the last variable assigned to, is different than current
       if (increase_bin_count) {
-	++bin_count;
-	cerr << "!!!! increasing bin_count to " << bin_count << endl;
+        ++bin_count;
+        cerr << "!!!! increasing bin_count to " << bin_count << endl;
       }
     }
     if (bin_count>=array_bin_length) {
       cerr << " FATAL ERROR :: bin_count too large " << endl;
       exit(0);
     }
-    expr = isExpression(expr,	
-			&src_statements[0],
-			&bin_statements[0],
-			output,
-			bin_count,
-			src_count,
-			nodes_matched,
-			array_bin_length,
-			array_src_length,
-			keep_binary_node
-			
-			);
+    expr = isExpression(expr,   
+                        &src_statements[0],
+                        &bin_statements[0],
+                        output,
+                        bin_count,
+                        src_count,
+                        nodes_matched,
+                        array_bin_length,
+                        array_src_length,
+                        keep_binary_node
+                        
+                        );
   } // while loop
   //  if (expr==NULL) 
   //success=false;
@@ -1059,10 +1059,10 @@ bool RoseBin_CompareAnalysis::handleSourceExpression(
  * one filled with src statements and one filled with bin instructions
  ****************************************************/
 int RoseBin_CompareAnalysis::match_statements(int array_src_length,
-					      int array_bin_length,
-					      SgNode* src_statements[],
-					      SgAsmNode* bin_statements[],
-					      string *output) {
+                                              int array_bin_length,
+                                              SgNode* src_statements[],
+                                              SgAsmNode* bin_statements[],
+                                              string *output) {
 
   /**********************************************************
    * Check preconditions
@@ -1091,22 +1091,22 @@ int RoseBin_CompareAnalysis::match_statements(int array_src_length,
       // if one round has no matches, then we try to match the same src
       // against the next bin instruction
       if (increase_only_src) {
-	if (src_count < (array_src_length-1))
-	  src_count++;
-	increase_only_src = false;
-	cerr << " >> increasing src  " << src_count << endl;
+        if (src_count < (array_src_length-1))
+          src_count++;
+        increase_only_src = false;
+        cerr << " >> increasing src  " << src_count << endl;
       } else {
-	cerr << " >> increasing bin  " << bin_count << endl;
-	if (bin_count < (array_bin_length-1))
-	  bin_count++;
+        cerr << " >> increasing bin  " << bin_count << endl;
+        if (bin_count < (array_bin_length-1))
+          bin_count++;
       }
     } else {
       // else increase both
       cerr << " >> increasing both src and bin " << src_count << " " << bin_count << endl;
       if (src_count < (array_src_length-1))
-	src_count++;
+        src_count++;
       if (bin_count < (array_bin_length-1))
-	bin_count++;
+        bin_count++;
       cerr << " >> new round : src and bin " << src_count << " " << bin_count << endl;
     }
     old_round_matched = nodes_matched;
@@ -1145,32 +1145,32 @@ int RoseBin_CompareAnalysis::match_statements(int array_src_length,
     } else
 
       if (isVariableDeclaration(srcNode, binNode, output, nodes_matched,
-				array_bin_length, bin_count, 
-				&src_statements[0],
-				&bin_statements[0],
-				increase_only_src)) {
-	cerr << " >>> found VariableDeclaration . Increasing source only ? " << RoseBin_support::resBool(increase_only_src) << endl;
+                                array_bin_length, bin_count, 
+                                &src_statements[0],
+                                &bin_statements[0],
+                                increase_only_src)) {
+        cerr << " >>> found VariableDeclaration . Increasing source only ? " << RoseBin_support::resBool(increase_only_src) << endl;
       } else
 
-	if (isAssignOp(srcNode, binNode, output, nodes_matched,
+        if (isAssignOp(srcNode, binNode, output, nodes_matched,
                        array_bin_length, array_src_length,bin_count, src_count,
-		       &src_statements[0],
-		       &bin_statements[0],
-		       increase_only_src)) {
+                       &src_statements[0],
+                       &bin_statements[0],
+                       increase_only_src)) {
           cerr << " >>> found AssignOp . Increasing source only ? " << RoseBin_support::resBool(increase_only_src) << endl;
-	} else
+        } else
 
-	  if (isSgPlusPlus(srcNode, binNode, output, nodes_matched)){
-	    cerr << " >>> found SgPlusPlus . \n";
-	  } 
+          if (isSgPlusPlus(srcNode, binNode, output, nodes_matched)){
+            cerr << " >>> found SgPlusPlus . \n";
+          } 
 
-	  else {
-	    cerr << " !!! ERROR : >>>> > cant resolve " << srcNode->class_name() <<
-	      " ( " << binNode->class_name() << ")" << endl;
-	    nodes_matched++;
-	    binNode->setAttribute(attributeName,createAttribute(1));
-	    srcNode->setAttribute(attributeName,createAttribute(1));
-	  }
+          else {
+            cerr << " !!! ERROR : >>>> > cant resolve " << srcNode->class_name() <<
+              " ( " << binNode->class_name() << ")" << endl;
+            nodes_matched++;
+            binNode->setAttribute(attributeName,createAttribute(1));
+            srcNode->setAttribute(attributeName,createAttribute(1));
+          }
 
     cerr << " >>> finished checking  nodes: " << srcNode->class_name() << "  vs.  " << binNode->class_name() << "\n" << endl;
 
@@ -1201,7 +1201,7 @@ int RoseBin_CompareAnalysis::match_statements(int array_src_length,
  ****************************************************/
 void RoseBin_CompareAnalysis::checkFunctions(string name,
                                              SgFunctionDeclaration* funcDecl,
-					     SgAsmFunctionDeclaration* binDecl) {
+                                             SgAsmFunctionDeclaration* binDecl) {
 
   string output="\n**** *************************\n";
   /*
@@ -1224,7 +1224,7 @@ void RoseBin_CompareAnalysis::checkFunctions(string name,
   // failes because : constant value is not known
   SgNode* src_statements[list_size];
   it = stmts.begin();
-  int count=0;		       
+  int count=0;                 
   for (;it!=stmts.end();it++) {
   SgStatement* state = isSgStatement(*it);
   // if the next node is an SgExprStatement, we want to filter it out
@@ -1277,7 +1277,7 @@ void RoseBin_CompareAnalysis::checkFunctions(string name,
 
   SgAsmNode* bin_statements[list_size2];
   std::list<SgAsmStatement*>::iterator itb = stats.begin();
-  count=0;		       
+  count=0;                     
   for (;itb!=stats.end();itb++) {
   SgAsmStatement* state = isSgAsmStatement(*itb);
   // apply filter for certain known instructions
@@ -1289,7 +1289,7 @@ void RoseBin_CompareAnalysis::checkFunctions(string name,
   if (!filter) {
   //string childIndex = RoseBin_support::ToString(bb_bin->getChildIndex(state));
   output += name + ": found bin stmt:" + state->class_name() + 
-  //	"    child nr: " + childIndex + 
+  //    "    child nr: " + childIndex + 
   "    valid instr : " + RoseBin_support::resBool(!filter) + 
   "  count " + RoseBin_support::ToString(count) +"\n";
   bin_statements[count++]=state;

@@ -450,7 +450,7 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
                     if (func_name.getString() == "operator++" || func_name.getString() == "operator--")
                        {
                          SgInitializedNamePtrList argList = mfunc_decl->get_args();
-	                   // postfix operators have one argument (0), prefix operators have none ()
+                           // postfix operators have one argument (0), prefix operators have none ()
                          if (argList.size() == 1)
                             return true;
                        }
@@ -579,7 +579,7 @@ int GetOperatorVariant(SgExpression* expr) {
     else if (func_name == "operator->") return V_SgArrowExp;
     else if (func_name == "operator.") return V_SgDotExp;
     else if (func_name.find("operator") == string::npos ||
-	     func_name == "operator()") return V_SgFunctionCallExp;
+             func_name == "operator()") return V_SgFunctionCallExp;
     else if (func_name.find("operator") != string::npos) return V_SgCastExp;
     else
      {
@@ -1164,14 +1164,14 @@ bool Unparse_MOD_SAGE::RemovePareninExprList(SgExprListExp* expr_list) {
     if (func_call != NULL) {
       SgDotExp* dot_exp = isSgDotExp(func_call->get_function());
       if (dot_exp != NULL) {
-	SgBinaryOp* binary_op = isSgBinaryOp(dot_exp);
-	if (binary_op != NULL) {
-	  //check if there is only one expression in the list and this expression
-	  //contains the member operator() overloaded function
-	  if (i == expr_list->get_expressions().end() && 
-	      isBinaryParenOperator(binary_op->get_rhs_operand()))
-	    return true;
-	}
+        SgBinaryOp* binary_op = isSgBinaryOp(dot_exp);
+        if (binary_op != NULL) {
+          //check if there is only one expression in the list and this expression
+          //contains the member operator() overloaded function
+          if (i == expr_list->get_expressions().end() && 
+              isBinaryParenOperator(binary_op->get_rhs_operand()))
+            return true;
+        }
       }
     }
   }

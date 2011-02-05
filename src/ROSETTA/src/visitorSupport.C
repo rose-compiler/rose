@@ -62,10 +62,10 @@ string Grammar::buildVisitorBaseClass() {
 
      // DXN (08/28/2010): add template base class for visitors that return results.
      s += "template <class R> class Visitor_R: public ROSE_VisitorPattern {\n ";
-     s += "protected:\n	 /** Result of a visit method.\n    */\n    R _result;\npublic:\n";
-     s += "    virtual ~Visitor_R() {}\n	/**@return the result of the visitor's computation.\n    */\n";
-     s += "    virtual R& getResult() {	return _result;	}\n";
-     s += "    /**@return the result of the visitor's computation.\n	*/\n";
+     s += "protected:\n  /** Result of a visit method.\n    */\n    R _result;\npublic:\n";
+     s += "    virtual ~Visitor_R() {}\n        /**@return the result of the visitor's computation.\n    */\n";
+     s += "    virtual R& getResult() { return _result; }\n";
+     s += "    /**@return the result of the visitor's computation.\n    */\n";
      s += "    virtual const R& getResult() const { return _result; }\n};\n\n";
 
      // DXN: (08/29/2010): add template base class for the strategy pattern.
@@ -75,7 +75,7 @@ string Grammar::buildVisitorBaseClass() {
      s += " * known strategies as friend to facilitate communication between the strategies\n";
      s += " * and their context.\n";
      s += " */\ntemplate <class R> class ContextVis_R: public Visitor_R<R> {\n";
-     s += "protected:\n	/** Strategy to process a node, can be set dynamically.\n	*/\n";
+     s += "protected:\n /** Strategy to process a node, can be set dynamically.\n       */\n";
      s += "    ROSE_VisitorPattern* _strategy; // not owned by this context.\n public:\n";
      s += "    virtual ~ContextVis_R() {_strategy = NULL; }\n";
      s += "    /** Allows the strategy to be set dynamically.\n";

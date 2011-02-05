@@ -334,11 +334,11 @@ BUILD_UNARY_PROTO(VarArgEndOp)
 
 //! Build a type casting expression
 SgCastExp * buildCastExp(SgExpression *  operand_i = NULL,
-		SgType * expression_type = NULL,
-		SgCastExp::cast_type_enum cast_type = SgCastExp::e_C_style_cast);
+                SgType * expression_type = NULL,
+                SgCastExp::cast_type_enum cast_type = SgCastExp::e_C_style_cast);
 SgCastExp * buildCastExp_nfi(SgExpression *  operand_i,
-		SgType * expression_type,
-		SgCastExp::cast_type_enum cast_type);
+                SgType * expression_type,
+                SgCastExp::cast_type_enum cast_type);
 
 //! Build vararg op expression
 SgVarArgOp * buildVarArgOp_nfi(SgExpression *  operand_i, SgType * expression_type);
@@ -353,10 +353,10 @@ SgPlusPlusOp* buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode 
 
 SgNewExp * buildNewExp(SgType* type, 
                        SgExprListExp* exprListExp, 
-		       SgConstructorInitializer* constInit, 
-		       SgExpression* expr, 
-		       short int val, 
-		       SgFunctionDeclaration* funcDecl);
+                       SgConstructorInitializer* constInit, 
+                       SgExpression* expr, 
+                       short int val, 
+                       SgFunctionDeclaration* funcDecl);
  
 
 #undef BUILD_UNARY_PROTO

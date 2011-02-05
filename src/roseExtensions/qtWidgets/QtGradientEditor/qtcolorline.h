@@ -60,7 +60,7 @@ class QtColorLine : public QWidget
 public:
 
     enum ColorComponent 
-	{
+        {
         Red,
         Green,
         Blue,

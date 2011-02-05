@@ -14,13 +14,6 @@
         print *, "Iteration ", i, " by thread:", j
       enddo  
 
-!$omp do private(j)
-      do i = 1, 10
-        j = omp_get_thread_num();
-        print *, "Iteration ", i, " by thread:", j
-      enddo  
-
-
 !$omp do private(j) schedule(dynamic,3)
       do i = 1, 10
         j = omp_get_thread_num();

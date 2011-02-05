@@ -62,7 +62,7 @@ class BlockOuterLoopOpt : public LoopTransformOptions::OptRegistryType
     virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv) 
       { 
         argv.erase(argv.begin() + index);
-	ReadDefaultBlockSize(opt,argv,index); 
+        ReadDefaultBlockSize(opt,argv,index); 
         opt.SetBlockSel( new OuterLoopReuseBlocking( 1 )); 
       }
   public:
@@ -74,7 +74,7 @@ class BlockInnerLoopOpt : public LoopTransformOptions::OptRegistryType
     virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
       { 
         argv.erase(argv.begin() + index);
-	ReadDefaultBlockSize(opt,argv,index); 
+        ReadDefaultBlockSize(opt,argv,index); 
         opt.SetBlockSel( new InnerLoopReuseBlocking());
       }
   public:
@@ -86,7 +86,7 @@ class BlockAllLoopOpt : public LoopTransformOptions::OptRegistryType
     virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
       {
         argv.erase(argv.begin() + index);
-	ReadDefaultBlockSize(opt,argv,index); 
+        ReadDefaultBlockSize(opt,argv,index); 
         opt.SetBlockSel( new AllLoopReuseBlocking());
       }
   public:
@@ -98,7 +98,7 @@ class CopyArrayOpt : public LoopTransformOptions::OptRegistryType
     virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
       {
         argv.erase(argv.begin() + index);
-	int dim = ReadDefaultCopyDim(opt,argv,index); 
+        int dim = ReadDefaultCopyDim(opt,argv,index); 
         opt.SetCopySel( new CopyArrayUnderSizeLimit(dim));
       }
   public:

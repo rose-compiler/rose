@@ -36,7 +36,7 @@ typedef std::vector<std::list<token_type> > token_container_container;
 #include "advanced_preprocessing_hooks.h"
 #include "attributeListMap.h"
 
-#include <boost/filesystem.hpp>		// exsits()
+#include <boost/filesystem.hpp>         // exsits()
 
 //Include files to get the current path
 #include <unistd.h>
@@ -105,8 +105,8 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 // CH (4/7/2010): Wave issue fixed.
 //#ifndef _MSCx_VER
 //#pragma message ("WARNING: Wave support not ported to Windows MSVC.")
-//	   printf ("ERROR: Wave support not ported to Windows MSVC. \n");
-//	   ROSE_ASSERT(false);
+//         printf ("ERROR: Wave support not ported to Windows MSVC. \n");
+//         ROSE_ASSERT(false);
 //#else
      ROSE_ASSERT(sageFilePtr != NULL);
      std::string sourceFileName = sageFilePtr->getFileName();
@@ -160,7 +160,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
           if (i->substr(0,2) == "-D")
              {
                string macro = i->substr(2);
-	       
+               
                if (SgProject::get_verbose() >= 1)
                     printf ("Adding predefined macro to the macroList macro = %s \n",macro.c_str());
 
@@ -206,14 +206,14 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
           if (i->substr(0,2) == "-I")
              {
                includeSpecifierlist.push_back(*i);
-	       if(SgProject::get_verbose() >= 1)
+               if(SgProject::get_verbose() >= 1)
                     std::cout << *i << std::endl;
              }
           if (i->substr(0,2) == "-D")
              {
                string macro = i->substr(2);
-	                                   
-	       if(SgProject::get_verbose() >= 1)
+                                           
+               if(SgProject::get_verbose() >= 1)
                    printf ("Adding macro to the macroList macro = %s \n",macro.c_str());
                macroList.push_back(macro);
              }
@@ -332,8 +332,8 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 
      for (std::vector<std::string>::iterator it_beg = macroList.begin(); it_beg != macroList.end(); ++it_beg)
         {
-          if (SgProject::get_verbose() >= 1)			  
-              	std::cout << "Predef macro:\"" << *it_beg << "\""<<std::endl;
+          if (SgProject::get_verbose() >= 1)                      
+                std::cout << "Predef macro:\"" << *it_beg << "\""<<std::endl;
           if ((*it_beg)!="")
                ctx.add_macro_definition(*it_beg,true);
         }
@@ -435,7 +435,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
      if (SgProject::get_verbose() >= 1)
           printf ("DONE: Adding the preinclude file \n");
 
-		// Start Lexing
+                // Start Lexing
      try{ 
 // DQ (8/29/2009): It appears that this test fails to compile using ROSE (some template name contains "____L" as a substring).
 #ifndef USE_ROSE
@@ -469,15 +469,15 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
                     wave_tokenStream.push_back(*first);
                     first++;
 #endif
-	               }
+                       }
 
-	            catch (boost::wave::cpp_exception &e)
+                    catch (boost::wave::cpp_exception &e)
                   {
                  // some preprocessing error
                  // This is a problem for using compass with emacs (see testEmacs.C).
                  // cerr  << "WAVE 1: " << e.file_name() << "(" << e.line_no() << "): "
                  //       << e.description() << endl;
-	               }
+                       }
 
                catch (boost::wave::cpplexer::lexing_exception &e)
                   {
@@ -516,29 +516,29 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
                << "(" << current_position.get_line() << "): "
                << "unexpected exception caught." << endl;
         }
-		// End Lexing
+                // End Lexing
 
      attributeListMap.attach_line_to_macro_call();
 
 #if 1
-	// King84 (2010.09.23): We capture the raw token stream because the tokens that aren't pre-processed tokens don't show up in the individual file's list of tokens.  Also, #line directives get obeyed and mapped into different files.  If we want to reproduce the original file failthfully, we have to use the raw list.  I leave the rest here for future reference, since it took some figuring out to get right.
+        // King84 (2010.09.23): We capture the raw token stream because the tokens that aren't pre-processed tokens don't show up in the individual file's list of tokens.  Also, #line directives get obeyed and mapped into different files.  If we want to reproduce the original file failthfully, we have to use the raw list.  I leave the rest here for future reference, since it took some figuring out to get right.
      if (SgProject::get_verbose() >= 1)
-	     std::cout << "File " << sourceFileName << " has " << ctx.get_hooks().tokens.size() << " tokens." << std::endl;
-	 for (std::list< token_type >::iterator i = ctx.get_hooks().tokens.begin(); i != ctx.get_hooks().tokens.end(); ++i)
-	 {
-		sageFilePtr->get_rawTokenStream().push_back(*i);
-	 }
+             std::cout << "File " << sourceFileName << " has " << ctx.get_hooks().tokens.size() << " tokens." << std::endl;
+         for (std::list< token_type >::iterator i = ctx.get_hooks().tokens.begin(); i != ctx.get_hooks().tokens.end(); ++i)
+         {
+                sageFilePtr->get_rawTokenStream().push_back(*i);
+         }
 #else
 //     sageFilePtr->get_rawTokenStream().clear();
      assert(attributeListMap.currentMapOfAttributes.find(sourceFileName) != attributeListMap.currentMapOfAttributes.end());
-	 for (std::vector<PreprocessingInfo*>::iterator i = attributeListMap.currentMapOfAttributes[sourceFileName]->getList().begin(); i != attributeListMap.currentMapOfAttributes[sourceFileName]->getList().end(); ++i)
-	 {
-		// King84 (2010.09.23): We aren't doing tokens, so we cheat by stringizing everything.  I guess we could get the tokens out of here, but I'm lazy, since we aren't doing this for real anyway
+         for (std::vector<PreprocessingInfo*>::iterator i = attributeListMap.currentMapOfAttributes[sourceFileName]->getList().begin(); i != attributeListMap.currentMapOfAttributes[sourceFileName]->getList().end(); ++i)
+         {
+                // King84 (2010.09.23): We aren't doing tokens, so we cheat by stringizing everything.  I guess we could get the tokens out of here, but I'm lazy, since we aren't doing this for real anyway
         {
             token_type holder = token_type(boost::wave::T_CPPCOMMENT, (**i).getString().c_str(), boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(), 0, 0));
-			sageFilePtr->get_rawTokenStream().push_back( holder );
+                        sageFilePtr->get_rawTokenStream().push_back( holder );
         }
-	 }
+         }
 #endif
 
 #if 0
@@ -571,8 +571,8 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
           ROSEAttributesList*  attrList = it_files->second;
           mapFilenameToAttributes[filename2] = attrList;
 
-		  // TODO:
-		  // King84 (2010.09.22) Add preprocessing info vector to file object, so we can access it later for unparsing
+                  // TODO:
+                  // King84 (2010.09.22) Add preprocessing info vector to file object, so we can access it later for unparsing
 
           if (SgProject::get_verbose() >= 1)
             std::cout << "source file name:" << sageFilePtr->generate_C_preprocessor_intermediate_filename(filename2) << std::endl;

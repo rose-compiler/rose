@@ -41,7 +41,7 @@ class Support {
     for (typename std::vector<T >::const_iterator l = worklist.begin(); l != worklist.end(); ++l) {
       T aNode = *l;
       if (aNode == filterNode)
-	contained = true;
+        contained = true;
     }
     return contained;
   }
@@ -81,13 +81,13 @@ class Support {
     ::std::string fullName = functionDeclaration->get_qualified_name().str();
 
     if ((fullName.find("std::") != std::string::npos) ||
-	(fullName.find("__") != std::string::npos) ||
-	(fullName.find("operator") != std::string::npos)
-	) return ""; // Explicitly ignore all nodes in the ::std namespace
+        (fullName.find("__") != std::string::npos) ||
+        (fullName.find("operator") != std::string::npos)
+        ) return ""; // Explicitly ignore all nodes in the ::std namespace
 
     std::string filename = getFileNameString(functionDeclaration->get_file_info()->get_filename());
     if ((filename.find("/usr/") != std::string::npos)
-	) return ""; // Explicitly ignore all nodes in the ::std namespace
+        ) return ""; // Explicitly ignore all nodes in the ::std namespace
     fullName = fullName+getAppName(functionDeclaration);
     return fullName;
   }

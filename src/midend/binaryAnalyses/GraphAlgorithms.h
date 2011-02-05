@@ -11,8 +11,8 @@ private:
 public:
   //remove later!
    //typedef rose_hash::unordered_map <std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
-  //	typedef rose_graph_node_edge_hash_multimap edgeType;
-	//	typedef rose_graph_hash_multimap nodeType;
+  //    typedef rose_graph_node_edge_hash_multimap edgeType;
+        //      typedef rose_graph_hash_multimap nodeType;
 
   VirtualBinCFG::AuxiliaryInformation* info;
 

@@ -32,86 +32,86 @@ Summary of the changes:
     C style comments has been cleaned up and are (hopefully:) upto the standard.
 =========================================================================================
     Naming of variables: 
-	changed the lex variable names (states/start conditions) so that 
-	    CXX_COMMENT to corresponds to C++ style comments (beginning with //) and 
-	    C_COMMENT to correspond to C-style comments (enclosed by / * and * / ).
-	Earlier they were
-	    C_COMMENT corresponded to C++ style comments
-	    CPP_COMMENT corresponded to C-style comments.
-	It was felt that the names were confusing.
-	The other choice was to name the C-style comments as C_COMMENT and C++ style 
-	comments as CPP_COMMENT as in Wave. That was also found to be confusing, as CPP usually 
-	means C Pre Processor). The new terminology is (partly) taken from makefiles which 
-	allows 3 types of flags (C_FLAGS/CPP_FLAGS/CXX_FLAGS).
+        changed the lex variable names (states/start conditions) so that 
+            CXX_COMMENT to corresponds to C++ style comments (beginning with //) and 
+            C_COMMENT to correspond to C-style comments (enclosed by / * and * / ).
+        Earlier they were
+            C_COMMENT corresponded to C++ style comments
+            CPP_COMMENT corresponded to C-style comments.
+        It was felt that the names were confusing.
+        The other choice was to name the C-style comments as C_COMMENT and C++ style 
+        comments as CPP_COMMENT as in Wave. That was also found to be confusing, as CPP usually 
+        means C Pre Processor). The new terminology is (partly) taken from makefiles which 
+        allows 3 types of flags (C_FLAGS/CPP_FLAGS/CXX_FLAGS).
 
 =========================================================================================
-	Use STL types for instead of fixed size buffers for the following data structures
-	commentString, macroString and bracestack.  (earlier they were 
-		char commentString[10000000] for comments 
-		char macroString[10000000] for macro strings
-		and char bracestack[500] for matching of braces)
+        Use STL types for instead of fixed size buffers for the following data structures
+        commentString, macroString and bracestack.  (earlier they were 
+                char commentString[10000000] for comments 
+                char macroString[10000000] for macro strings
+                and char bracestack[500] for matching of braces)
 =========================================================================================
     Exact Position information for literals
-	The previous method to get the position information from EDG is incorrect in 
-	most of the cases. A second scan (like this lexer does) of the input was thought 
-	to be necessary to attach additional info.
+        The previous method to get the position information from EDG is incorrect in 
+        most of the cases. A second scan (like this lexer does) of the input was thought 
+        to be necessary to attach additional info.
 =========================================================================================
     Support for char literals
-	including the '\e' '\U' which would be part of 2008 standard
-	refer to ???? for details
+        including the '\e' '\U' which would be part of 2008 standard
+        refer to ???? for details
 =========================================================================================
     Semi colons
-	We have to ensure that semi colons for that donot actually end 
-	statements are taken care of carefully.
-	class A {
-	f(); <-- this semi colon should be taken care of carefully.
-	}
+        We have to ensure that semi colons for that donot actually end 
+        statements are taken care of carefully.
+        class A {
+        f(); <-- this semi colon should be taken care of carefully.
+        }
 =========================================================================================
     Double colons (::'s)
         They can only occur in  .........
-	we identify them with 
+        we identify them with 
 =========================================================================================
 trigraphs
     
 =========================================================================================
     backslashes followed by newlines
-	Either inside or outside of comments
+        Either inside or outside of comments
 =========================================================================================
     Whitespace info:
-	The 
+        The 
 
 =========================================================================================
     Line number information:
-	A better line count
+        A better line count
 
 =========================================================================================
     Trigraphs/Digraphs
 =========================================================================================
     Proper identification and matching of different varieties of brackets
-	Parenthesis ()
-	Curly braces {}: The support for this existed earlier
-	Square brackets []
+        Parenthesis ()
+        Curly braces {}: The support for this existed earlier
+        Square brackets []
 =========================================================================================
     Support for keywords
-	C++
-	C
-	C99
-	C++Ox 
-	    Ones only in 
+        C++
+        C
+        C99
+        C++Ox 
+            Ones only in 
 =========================================================================================
     To be done in CHAR literals
-	wierd char literals
-	testing for octal and hex char literals
-	testing for backslashes in char literals.
+        wierd char literals
+        testing for octal and hex char literals
+        testing for backslashes in char literals.
     To be done in INT literals
-	testing for 
+        testing for 
 =========================================================================================
     Limitations/open questions: 
-	This lexer does not handle lots of important cases, like 
-		character literals etc.  
-		Trigraph sequences, alternative tokens (lex.trigraph and lex.digraph of the standard).  
-		hexadecimal floating point literals and similar arcane stuff 
-			(HOW DOES EDG handle them? How does Wave handle them?)
+        This lexer does not handle lots of important cases, like 
+                character literals etc.  
+                Trigraph sequences, alternative tokens (lex.trigraph and lex.digraph of the standard).  
+                hexadecimal floating point literals and similar arcane stuff 
+                        (HOW DOES EDG handle them? How does Wave handle them?)
     The user should probably use the wave workaround (does it support these?????), if she needs such things.
 =========================================================================================
     Use of standard variable names like ([:space:] and [:blank:]) that come with FLEX. 
@@ -122,22 +122,22 @@ trigraphs
     A ROSE-sequence point in the original program is a position in the input program where 
     synchronization of the AST happens with the input program. For now, the sequence points
     are specific lexical tokens in the input program. In specific, they are 
-	parenthesis: () 
-	curly braces: {} 
-	semi colons: ;
-	new lines: \n
+        parenthesis: () 
+        curly braces: {} 
+        semi colons: ;
+        new lines: \n
     The possible are contenders for being sequence points
-	keywords???
+        keywords???
 
 
     Sequence points of the program so that exact code generation is done
-	If the code is not transformed? we synchronize the code generation
-	If the code is transformed, we synchronize the code generation immediately after the next sequence point.
+        If the code is not transformed? we synchronize the code generation
+        If the code is transformed, we synchronize the code generation immediately after the next sequence point.
 
     An extension to the above token/character based sequence-points is to use parsing-constructs in the
     the grammar of the source language, like
-	end of statement-sequence
-	end of function/class/namespace definition
+        end of statement-sequence
+        end of function/class/namespace definition
 =========================================================================================
     ellipsis????
 
@@ -177,7 +177,7 @@ write test cases so that
 */
 /*
        CHANGE LINES LIKE THIS TO ACCEPT std::string instead of char*, which makes us give it a c_str
-		    preprocessorList.addElement(macrotype,macroString_str.c_str(),globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
+                    preprocessorList.addElement(macrotype,macroString_str.c_str(),globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
 */
 
 #include "sage3basic.hhh"
@@ -241,8 +241,8 @@ namespace ROSE_token_ids
     //whitespace token IDs
     enum whitespace
     { 
-	T_NOTKNOWN,
-	//The following are non UNIX whitespace
+        T_NOTKNOWN,
+        //The following are non UNIX whitespace
     };
 
 #if 0
@@ -578,18 +578,18 @@ int num_of_newlines(char*);
 ROSEAttributesList preprocessorList;
 
 // DQ (10/30/2005): Changed
-// string			\"([^"]|"\\\""|"\\\n")*\"
+// string                       \"([^"]|"\\\""|"\\\n")*\"
 // to 
-// string			\"([^"]|"\\\n")*\"
+// string                       \"([^"]|"\\\n")*\"
 // to fix test2005_184.C (use of "\\" in string caused following 
 // macros to be ignored until a double quote (e.g. ") was found).
 
 // DQ (6/25/2006): This was the value before I tried the previous value
-// string			\"([^"]|"\\\n")*\"
+// string                       \"([^"]|"\\\n")*\"
 // I tried:
-// string			\"([^"]|"\\n")*\"
+// string                       \"([^"]|"\\n")*\"
 // and: 
-// string			\"([^"]|"\\\\n")*\"
+// string                       \"([^"]|"\\\\n")*\"
 // This however didn't make any difference, so I restored it it it previous value!
 
 // DQ (6/25/2006): What did fix the problem with continuation chars in C++ comments was changing
@@ -598,12 +598,12 @@ ROSEAttributesList preprocessorList;
 //add stuff for char literals???????????
 
 /*
-whitespacenl           	[\t\n ]+
-whitespace      	[\t ]+
-lineprefix		^{whitespace}*"#"{whitespace}*
-macrokeyword 		"include"|"define"|"undef"|"line"|"error"|"warning"|"if"|"ifdef"|"ifndef"|"elif"|"else"|"endif"
-mlinkagespecification	^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C++\"")){whitespacenl}*"{"
-string			\"([^"]|"\\\n")*\"
+whitespacenl            [\t\n ]+
+whitespace              [\t ]+
+lineprefix              ^{whitespace}*"#"{whitespace}*
+macrokeyword            "include"|"define"|"undef"|"line"|"error"|"warning"|"if"|"ifdef"|"ifndef"|"elif"|"else"|"endif"
+mlinkagespecification   ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C++\"")){whitespacenl}*"{"
+string                  \"([^"]|"\\\n")*\"
 */
 
 //refresher: blank and space function exactly as the STDLIB functions isblank and isspace respectively.
@@ -612,17 +612,17 @@ string			\"([^"]|"\\\n")*\"
 //refer to http://www.gatago.com/comp/std/c/18426853.html among others for difference between these two.
 /*
 The following was the original 
-whitespacenl           	[\t\n ]+
-whitespace      	[\t ]+
+whitespacenl            [\t\n ]+
+whitespace              [\t ]+
 
 I changed it to
-whitespacenl           	[:space:]+
-whitespace      	[:blank:]+
+whitespacenl            [:space:]+
+whitespace              [:blank:]+
 This does not work.
 
 What worked was the following:
-whitespacenl           	[[:space:]]+
-whitespace      	[[:blank:]]+
+whitespacenl            [[:space:]]+
+whitespace              [[:blank:]]+
 
 */
 
@@ -630,83 +630,83 @@ whitespace      	[[:blank:]]+
 I am not sure if the whitespacenl would count the number of newlines in code that has backslashes properly.
 */
 %}
-whitespacenl           	[[:space:]]+
-whitespace      	[[:blank:]]+
-lineprefix		^{whitespace}*"#"{whitespace}*
-macrokeyword 		"include"|"define"|"undef"|"line"|"error"|"warning"|"if"|"ifdef"|"ifndef"|"elif"|"else"|"endif"
-mlinkagespecification	^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C++\"")){whitespacenl}*"{"
-string			\"([^"]|"\\\n")*\"
+whitespacenl            [[:space:]]+
+whitespace              [[:blank:]]+
+lineprefix              ^{whitespace}*"#"{whitespace}*
+macrokeyword            "include"|"define"|"undef"|"line"|"error"|"warning"|"if"|"ifdef"|"ifndef"|"elif"|"else"|"endif"
+mlinkagespecification   ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C++\"")){whitespacenl}*"{"
+string                  \"([^"]|"\\\n")*\"
 %s NORMAL CXX_COMMENT C_COMMENT STRING_LIT MACRO C_COMMENT_INMACRO
 %%
 %{
 int preproc_line_num = 1;
-	/*bad way to initialize*/
+        /*bad way to initialize*/
 int preproc_start_line_num = preproc_line_num;
 int preproc_column_num = 1;
 int preproc_start_column_num = preproc_column_num;
-			/*Do we need this  ???*/
+                        /*Do we need this  ???*/
 BEGIN NORMAL;
 %}
 <NORMAL>{mlinkagespecification} { 
-				    preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationStart, 
-					    yytext,globalFileName,preproc_line_num,preproc_column_num,0); 
-				    preproc_line_num+=num_of_newlines(yytext); 
-				    preproc_column_num+=strlen(yytext); 
+                                    preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationStart, 
+                                            yytext,globalFileName,preproc_line_num,preproc_column_num,0); 
+                                    preproc_line_num+=num_of_newlines(yytext); 
+                                    preproc_column_num+=strlen(yytext); 
 
-				    curr_brace_depth++; 
-				    pushbracestack(curr_brace_depth);
+                                    curr_brace_depth++; 
+                                    pushbracestack(curr_brace_depth);
                                 }
-	/*Handle the braces (left and right). Push and Pop the bracestack accordingly*/
-<NORMAL>"{"	{ 
-		    if(!isemptystack()) 
-		    { 
-			/* we only count braces within a linkage specification. */ 
-			curr_brace_depth++; 
-		    } 
-		    //printf("Ram: found left brace at preproc_line_num = %d, preproc_column_num = %d\n", preproc_line_num, preproc_column_num);
-		    preproc_column_num++; 
+        /*Handle the braces (left and right). Push and Pop the bracestack accordingly*/
+<NORMAL>"{"     { 
+                    if(!isemptystack()) 
+                    { 
+                        /* we only count braces within a linkage specification. */ 
+                        curr_brace_depth++; 
+                    } 
+                    //printf("Ram: found left brace at preproc_line_num = %d, preproc_column_num = %d\n", preproc_line_num, preproc_column_num);
+                    preproc_column_num++; 
                 }
 
 <NORMAL>"}"     { 
-		    if(!isemptystack()) 
-		    { 
-			if(curr_brace_depth==topcurlybracestack()) 
-			{ 
-			    popbracestack(); 
-			    preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationEnd, 
-							    yytext, globalFileName, preproc_line_num, preproc_column_num, 0); 
-			}
-			curr_brace_depth--; 
-		    } 
-		    //printf("Ram: found right brace at preproc_line_num = %d, preproc_column_num = %d\n", preproc_line_num, preproc_column_num);
-		    preproc_column_num++; 
-		}
+                    if(!isemptystack()) 
+                    { 
+                        if(curr_brace_depth==topcurlybracestack()) 
+                        { 
+                            popbracestack(); 
+                            preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationEnd, 
+                                                            yytext, globalFileName, preproc_line_num, preproc_column_num, 0); 
+                        }
+                        curr_brace_depth--; 
+                    } 
+                    //printf("Ram: found right brace at preproc_line_num = %d, preproc_column_num = %d\n", preproc_line_num, preproc_column_num);
+                    preproc_column_num++; 
+                }
 
-<NORMAL>"("	{ 
-		    /*if(!isemptystack()) 
-		    { 
-			//we only count braces within a linkage specification. 
-			curr_brace_depth++; 
-		    }
+<NORMAL>"("     { 
+                    /*if(!isemptystack()) 
+                    { 
+                        //we only count braces within a linkage specification. 
+                        curr_brace_depth++; 
+                    }
                     */
-		    preproc_column_num++; 
+                    preproc_column_num++; 
                 }
 
 <NORMAL>")"     { 
-		    /*
-		    if(!isemptystack()) 
-		    { 
-			if(curr_brace_depth==topcurlybracestack()) 
-			{ 
-			    popbracestack(); 
-			    preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationEnd, 
-							    yytext, globalFileName, preproc_line_num, preproc_column_num, 0); 
-			}
-			curr_brace_depth--; 
-		    } 
-		    */
-		    preproc_column_num++; 
-		}
+                    /*
+                    if(!isemptystack()) 
+                    { 
+                        if(curr_brace_depth==topcurlybracestack()) 
+                        { 
+                            popbracestack(); 
+                            preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationEnd, 
+                                                            yytext, globalFileName, preproc_line_num, preproc_column_num, 0); 
+                        }
+                        curr_brace_depth--; 
+                    } 
+                    */
+                    preproc_column_num++; 
+                }
 
 <NORMAL>[a-zA-Z_][a-zA-Z0-9_]*       {
 
@@ -740,28 +740,28 @@ BEGIN NORMAL;
                                           ROSE_token_stream_pointer->push_back(p_se);
                                     }
 <NORMAL>"\""    { 
-		}
-	/*begin handling the C++ style comments. */
-<NORMAL>"\/\/" 	{
-		    /*Handle the C comments.*/ 
-		    preproc_start_line_num=preproc_line_num; 
-		    preproc_start_column_num=preproc_column_num; 
-		    preproc_column_num+=2; 
-		    commentString = yytext; 
-		    BEGIN CXX_COMMENT;
- 		}
+                }
+        /*begin handling the C++ style comments. */
+<NORMAL>"\/\/"  {
+                    /*Handle the C comments.*/ 
+                    preproc_start_line_num=preproc_line_num; 
+                    preproc_start_column_num=preproc_column_num; 
+                    preproc_column_num+=2; 
+                    commentString = yytext; 
+                    BEGIN CXX_COMMENT;
+                }
 
-	/*The normal mode actions. Handle the preprocessor stuff and anyother characters. */
-	/*Do we need the backslash character?????????????*/
-<NORMAL>"/*" 	{
-		    preproc_start_line_num=preproc_line_num; 
-		    preproc_start_column_num=preproc_column_num; 
-		    preproc_column_num+=strlen(yytext);
-		    
-		    //copy the comment to commentString 
-		    commentString = yytext; 
-		    BEGIN C_COMMENT; 
-		}
+        /*The normal mode actions. Handle the preprocessor stuff and anyother characters. */
+        /*Do we need the backslash character?????????????*/
+<NORMAL>"/*"    {
+                    preproc_start_line_num=preproc_line_num; 
+                    preproc_start_column_num=preproc_column_num; 
+                    preproc_column_num+=strlen(yytext);
+                    
+                    //copy the comment to commentString 
+                    commentString = yytext; 
+                    BEGIN C_COMMENT; 
+                }
     /*These are the alternative tokens. Refer to page 12 of C++ std to understand their representation*/
                   /*<NORMAL>"<%"     {curr_token = ALT_LEFT_CURLY; do_yytext_bookeeping(); }
 <NORMAL>"<%"     { }
@@ -770,145 +770,145 @@ BEGIN NORMAL;
 
 
 
-<NORMAL>"static_cast"	{ 
-		    /*
-		    if(!isemptystack()) 
-		    { 
-			//we only count braces within a linkage specification. 
-			curr_brace_depth++; 
-		    
-			*/
-		    preproc_column_num++; 
+<NORMAL>"static_cast"   { 
+                    /*
+                    if(!isemptystack()) 
+                    { 
+                        //we only count braces within a linkage specification. 
+                        curr_brace_depth++; 
+                    
+                        */
+                    preproc_column_num++; 
                 }
 
 
-<NORMAL>{lineprefix}"include"	{ macrotype=PreprocessingInfo::CpreprocessorIncludeDeclaration; HANDLEMACROSTART }
-<NORMAL>{lineprefix}"define" 	{ macrotype=PreprocessingInfo::CpreprocessorDefineDeclaration; HANDLEMACROSTART }
-<NORMAL>{lineprefix}"undef" 	{ macrotype=PreprocessingInfo::CpreprocessorUndefDeclaration; HANDLEMACROSTART }
-<NORMAL>{lineprefix}"line" 	{ macrotype=PreprocessingInfo::CpreprocessorLineDeclaration; HANDLEMACROSTART }
-<NORMAL>{lineprefix}"error" 	{ macrotype=PreprocessingInfo::CpreprocessorErrorDeclaration; HANDLEMACROSTART }
-<NORMAL>{lineprefix}"if" 	{ macrotype=PreprocessingInfo::CpreprocessorIfDeclaration; HANDLEMACROSTART }
-<NORMAL>{lineprefix}"ifdef" 	{ macrotype=PreprocessingInfo::CpreprocessorIfdefDeclaration; HANDLEMACROSTART }
-<NORMAL>{lineprefix}"ifndef" 	{ macrotype=PreprocessingInfo::CpreprocessorIfndefDeclaration; HANDLEMACROSTART }
-<NORMAL>{lineprefix}"elif" 	{ macrotype=PreprocessingInfo::CpreprocessorElifDeclaration; HANDLEMACROSTART }
-<NORMAL>{lineprefix}"else" 	{ macrotype=PreprocessingInfo::CpreprocessorElseDeclaration; HANDLEMACROSTART }
-<NORMAL>{lineprefix}"endif" 	{ macrotype=PreprocessingInfo::CpreprocessorEndifDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"include"   { macrotype=PreprocessingInfo::CpreprocessorIncludeDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"define"    { macrotype=PreprocessingInfo::CpreprocessorDefineDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"undef"     { macrotype=PreprocessingInfo::CpreprocessorUndefDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"line"      { macrotype=PreprocessingInfo::CpreprocessorLineDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"error"     { macrotype=PreprocessingInfo::CpreprocessorErrorDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"if"        { macrotype=PreprocessingInfo::CpreprocessorIfDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"ifdef"     { macrotype=PreprocessingInfo::CpreprocessorIfdefDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"ifndef"    { macrotype=PreprocessingInfo::CpreprocessorIfndefDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"elif"      { macrotype=PreprocessingInfo::CpreprocessorElifDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"else"      { macrotype=PreprocessingInfo::CpreprocessorElseDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"endif"     { macrotype=PreprocessingInfo::CpreprocessorEndifDeclaration; HANDLEMACROSTART }
 <NORMAL>{lineprefix}"warning"   { macrotype=PreprocessingInfo::CpreprocessorWarningDeclaration; HANDLEMACROSTART }
-	/*Add code here to attach the whitespace before newlines (and general lineprefix code) */
-<NORMAL>\n			{ preproc_line_num++; preproc_column_num=1; } 
-		/*<NORMAL>{string}		{ / *???IS THIS RIGHT???* / preproc_line_num+=num_of_newlines(yytext); preproc_column_num+=strlen(yytext); }*/
-<NORMAL>"\""		        { /*preproc_line_num+=num_of_newlines(yytext);*/ preproc_column_num+=strlen(yytext); BEGIN STRING_LIT;}
-			    /*<NORMAL>"\'"		        { preproc_line_num+=num_of_newlines(yytext); preproc_column_num+=strlen(yytext); BEGIN CHAR_LIT;}*/
-                            /*<NORMAL>"'"		        { preproc_line_num+=num_of_newlines(yytext); preproc_column_num+=strlen(yytext); BEGIN CHAR_LIT;}*/
-<NORMAL>.			{ preproc_column_num++; }
-	/*Actions for a string literal.*/
-<STRING_LIT>[^\\"\n]	{/*eat anything that is not a newline or a backslash or a doublequote*/ preproc_column_num+=strlen(yytext); }
-<STRING_LIT>\\[^\"\n]	{/*if the backslash is followed by anything other than a newline or doublequote, eat them. */ preproc_column_num+=strlen(yytext); }
-<STRING_LIT>\\\"	{/*if a backslash preceeds the doublequote, eat both.*/ preproc_column_num+=strlen(yytext); }
-<STRING_LIT>\\\n	{/*if a backslash preceeds the newline, eat both, donot increment preproc_line_num.*/ preproc_column_num+=strlen(yytext); }
-<STRING_LIT>\"		{ /* if it is a doublequote, end the STRING_LIT state.*/ BEGIN NORMAL; }
-<STRING_LIT>\n		{ /* count the newlines */ preproc_line_num++; }
-	/*Actions for a C++ style comment.*/
-<CXX_COMMENT>[^\\\n]	{ /* eat anything that is not a backslash or a newline*/ commentString += yytext;}
-<CXX_COMMENT>\\[^\n]	{ 
-			    /*eat up backslashes not immdediately followed by newlines*/ 
-			    commentString += yytext;
-			    /*fix the preproc_column_num at other places ????????????????????  ??????????????*/ 
-			    preproc_column_num=1; 
-			}
+        /*Add code here to attach the whitespace before newlines (and general lineprefix code) */
+<NORMAL>\n                      { preproc_line_num++; preproc_column_num=1; } 
+                /*<NORMAL>{string}              { / *???IS THIS RIGHT???* / preproc_line_num+=num_of_newlines(yytext); preproc_column_num+=strlen(yytext); }*/
+<NORMAL>"\""                    { /*preproc_line_num+=num_of_newlines(yytext);*/ preproc_column_num+=strlen(yytext); BEGIN STRING_LIT;}
+                            /*<NORMAL>"\'"                      { preproc_line_num+=num_of_newlines(yytext); preproc_column_num+=strlen(yytext); BEGIN CHAR_LIT;}*/
+                            /*<NORMAL>"'"                       { preproc_line_num+=num_of_newlines(yytext); preproc_column_num+=strlen(yytext); BEGIN CHAR_LIT;}*/
+<NORMAL>.                       { preproc_column_num++; }
+        /*Actions for a string literal.*/
+<STRING_LIT>[^\\"\n]    {/*eat anything that is not a newline or a backslash or a doublequote*/ preproc_column_num+=strlen(yytext); }
+<STRING_LIT>\\[^\"\n]   {/*if the backslash is followed by anything other than a newline or doublequote, eat them. */ preproc_column_num+=strlen(yytext); }
+<STRING_LIT>\\\"        {/*if a backslash preceeds the doublequote, eat both.*/ preproc_column_num+=strlen(yytext); }
+<STRING_LIT>\\\n        {/*if a backslash preceeds the newline, eat both, donot increment preproc_line_num.*/ preproc_column_num+=strlen(yytext); }
+<STRING_LIT>\"          { /* if it is a doublequote, end the STRING_LIT state.*/ BEGIN NORMAL; }
+<STRING_LIT>\n          { /* count the newlines */ preproc_line_num++; }
+        /*Actions for a C++ style comment.*/
+<CXX_COMMENT>[^\\\n]    { /* eat anything that is not a backslash or a newline*/ commentString += yytext;}
+<CXX_COMMENT>\\[^\n]    { 
+                            /*eat up backslashes not immdediately followed by newlines*/ 
+                            commentString += yytext;
+                            /*fix the preproc_column_num at other places ????????????????????  ??????????????*/ 
+                            preproc_column_num=1; 
+                        }
 
-<CXX_COMMENT>\\\n	{ 
-			    /*if backslash is followed by a newline, then eat them (backslash, newline) up, increment preproc_line_num and continue*/ 
-			    commentString += yytext;
-			    preproc_line_num++; 
+<CXX_COMMENT>\\\n       { 
+                            /*if backslash is followed by a newline, then eat them (backslash, newline) up, increment preproc_line_num and continue*/ 
+                            commentString += yytext;
+                            preproc_line_num++; 
 }
-<CXX_COMMENT>\n		{
-			    preproc_line_num++; preproc_column_num=1; 
-			    commentString += yytext;
-			    preprocessorList.addElement(PreprocessingInfo::CplusplusStyleComment, 
-				    commentString,globalFileName, preproc_start_line_num, preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
+<CXX_COMMENT>\n         {
+                            preproc_line_num++; preproc_column_num=1; 
+                            commentString += yytext;
+                            preprocessorList.addElement(PreprocessingInfo::CplusplusStyleComment, 
+                                    commentString,globalFileName, preproc_start_line_num, preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
 
-			    BEGIN NORMAL; 
-			}
-	/*Actions while in a C style comment.*/
-<C_COMMENT>\n		{
-			    commentString += yytext;
-			    preproc_line_num++; 
-			    preproc_column_num=1; 
-			}
-<C_COMMENT>"*/"	{
-			    commentString += yytext;
-			    preproc_column_num+=strlen(yytext); 
-			    /*printf("hello Ram: The comment string is ####%s#############. It is of %d lines, the current line number is %d\n",
-				    commentString.c_str(), preproc_line_num-preproc_start_line_num+1, preproc_line_num);
-				    */
-			    preprocessorList.addElement(PreprocessingInfo::C_StyleComment,commentString,globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num+1); 
-			    BEGIN(NORMAL); 
-			}
-<C_COMMENT>. 	{ 
-		    commentString += yytext;
-		    preproc_column_num++; 
-		}
+                            BEGIN NORMAL; 
+                        }
+        /*Actions while in a C style comment.*/
+<C_COMMENT>\n           {
+                            commentString += yytext;
+                            preproc_line_num++; 
+                            preproc_column_num=1; 
+                        }
+<C_COMMENT>"*/" {
+                            commentString += yytext;
+                            preproc_column_num+=strlen(yytext); 
+                            /*printf("hello Ram: The comment string is ####%s#############. It is of %d lines, the current line number is %d\n",
+                                    commentString.c_str(), preproc_line_num-preproc_start_line_num+1, preproc_line_num);
+                                    */
+                            preprocessorList.addElement(PreprocessingInfo::C_StyleComment,commentString,globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num+1); 
+                            BEGIN(NORMAL); 
+                        }
+<C_COMMENT>.    { 
+                    commentString += yytext;
+                    preproc_column_num++; 
+                }
 
-	/*Actions while in a MACRO.*/
-<MACRO>\\\n	{ 
-		    macroString += yytext;
-		    preproc_line_num++; 
-		    preproc_column_num=1;
-		}
-<MACRO>\n 	{
-		    macroString += yytext;
-		    preproc_line_num++; 
-		    preproc_column_num=1; 
-		    
-		    preprocessorList.addElement(macrotype,macroString,globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
-		    BEGIN NORMAL; 
-		}
-<MACRO>"\/*" 	{
-		    //does this cover all cases?????????
-		    preproc_column_num+=2; 
-		    macroString += yytext;
+        /*Actions while in a MACRO.*/
+<MACRO>\\\n     { 
+                    macroString += yytext;
+                    preproc_line_num++; 
+                    preproc_column_num=1;
+                }
+<MACRO>\n       {
+                    macroString += yytext;
+                    preproc_line_num++; 
+                    preproc_column_num=1; 
+                    
+                    preprocessorList.addElement(macrotype,macroString,globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
+                    BEGIN NORMAL; 
+                }
+<MACRO>"\/*"    {
+                    //does this cover all cases?????????
+                    preproc_column_num+=2; 
+                    macroString += yytext;
 
-		    /*
-				//Do we need to do something like this?
-		                commentString = yytext;
-		    */
-		    BEGIN C_COMMENT_INMACRO;
-		}
-<MACRO>.	{ 
-		    macroString += yytext;
-		    preproc_column_num++; 
-		}
+                    /*
+                                //Do we need to do something like this?
+                                commentString = yytext;
+                    */
+                    BEGIN C_COMMENT_INMACRO;
+                }
+<MACRO>.        { 
+                    macroString += yytext;
+                    preproc_column_num++; 
+                }
 <C_COMMENT_INMACRO>"*/"   { 
-				//??????????????????????????????????????????????????????????????
-				//This code copies the comment into the macrobuffer.
-				//Should we not copy it to comment buffer also?????
-				macroString += yytext;
+                                //??????????????????????????????????????????????????????????????
+                                //This code copies the comment into the macrobuffer.
+                                //Should we not copy it to comment buffer also?????
+                                macroString += yytext;
 
-				/*
-				commentString += yytext;
-				//should we do something like this??
-				preprocessorList.addElement(PreprocessingInfo::C_StyleComment,commentString.c_str(),globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
-				*/
-				preproc_column_num+=strlen(yytext); 
-				BEGIN MACRO; 
-			    }
-<C_COMMENT_INMACRO>\n	    { 
-				macroString += yytext;
+                                /*
+                                commentString += yytext;
+                                //should we do something like this??
+                                preprocessorList.addElement(PreprocessingInfo::C_StyleComment,commentString.c_str(),globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
+                                */
+                                preproc_column_num+=strlen(yytext); 
+                                BEGIN MACRO; 
+                            }
+<C_COMMENT_INMACRO>\n       { 
+                                macroString += yytext;
 
-				//Do we need to do something like this?
-				//commentString += yytext;
+                                //Do we need to do something like this?
+                                //commentString += yytext;
 
-				preproc_line_num++; preproc_column_num=1; 
-			    }
-<C_COMMENT_INMACRO>.	    { 
-				macroString += yytext;
+                                preproc_line_num++; preproc_column_num=1; 
+                            }
+<C_COMMENT_INMACRO>.        { 
+                                macroString += yytext;
 
-				//Do we need to do something like this?
-				//commentString += yytext;
+                                //Do we need to do something like this?
+                                //commentString += yytext;
 
-				preproc_column_num++; 
-			    }
+                                preproc_column_num++; 
+                            }
 %%
 
 const int maxstacksize=500;
@@ -962,18 +962,18 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 
      if ( fileName.empty() == false )
         {
-	  std::map<std::string,ROSEAttributesList* >::iterator iItr= 
-		  mapFilenameToAttributes.find(fileName);
-	  //std::cout << "Trying to find fileName " << fileName << std::endl;
+          std::map<std::string,ROSEAttributesList* >::iterator iItr= 
+                  mapFilenameToAttributes.find(fileName);
+          //std::cout << "Trying to find fileName " << fileName << std::endl;
           if ( iItr != mapFilenameToAttributes.end())
              {
                      //std::cout << "Found requested file: " << fileName << " size: " << iItr->second->size() << std::endl; 
-	       for(std::vector<PreprocessingInfo*>::iterator jItr = iItr->second->getList().begin(); 
-			       jItr != iItr->second->getList().end(); ++jItr){
-		     //std::cout << "Inserting element" <<  (*jItr)->getString() << std::endl;
+               for(std::vector<PreprocessingInfo*>::iterator jItr = iItr->second->getList().begin(); 
+                               jItr != iItr->second->getList().end(); ++jItr){
+                     //std::cout << "Inserting element" <<  (*jItr)->getString() << std::endl;
                      preprocessorInfoList->insertElement(**jItr);
 
-	       }
+               }
 
              }
           else{
