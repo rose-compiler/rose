@@ -25,19 +25,19 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	std::string filename;
+        std::string filename;
 
     SgProject *project = frontend(argc, argv);
 #ifdef NEWDU
     EDefUse *edu=new EDefUse(project);
-		// Create the global def-use analysis
-		if (edu->run(false)==1)
-		{
-			std::cerr<<"createDDG:: DFAnalysis failed!  -- edu->run(false)==0"<<endl;
-			exit(0);
-		}
+                // Create the global def-use analysis
+                if (edu->run(false)==1)
+                {
+                        std::cerr<<"createDDG:: DFAnalysis failed!  -- edu->run(false)==0"<<endl;
+                        exit(0);
+                }
 #endif
-		std::vector<InterproceduralInfo*> ip;
+                std::vector<InterproceduralInfo*> ip;
 
     list < SgNode * >functionDeclarations = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
 
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
         else
         {
             // get the control depenence for this function
-						ipi=new InterproceduralInfo(fD);
+                                                ipi=new InterproceduralInfo(fD);
 
             ROSE_ASSERT(ipi != NULL);
 
@@ -73,13 +73,13 @@ int main(int argc, char *argv[])
 #else
             ddg = new DataDependenceGraph(fD->get_definition());
 #endif
-	//printf("DDG for %s:\n", fD->get_name().str());
-						
+        //printf("DDG for %s:\n", fD->get_name().str());
+                                                
             filename = (fD->get_definition()->get_file_info()->get_filenameString ()) + "." +
                 (fD->get_name().getString()) + ".ddg.dot";
             ddg->writeDot((char *)filename.c_str());
 
         }   
     }
-		return 0;
+                return 0;
 }

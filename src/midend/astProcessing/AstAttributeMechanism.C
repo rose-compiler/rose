@@ -22,7 +22,7 @@ AstAttribute::~AstAttribute()
 std::string
 AstAttribute::toString()
    {
-     return "";
+     return StringUtility::numberToString((void*)(this));
    }
 
 AstAttribute*
@@ -78,8 +78,8 @@ AstAttribute::additionalNodeInfo()
 AstAttribute*
 AstAttribute::copy()
 {
-	//Implementations need to overload this to make a proper copy.
-	return NULL;
+        //Implementations need to overload this to make a proper copy.
+        return NULL;
 }
 
 bool

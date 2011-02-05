@@ -69,10 +69,10 @@ class GrammarString
   // GrammarString( char* inputTypeNameString, char* inputVariableNameString );
   GrammarString( const std::string& inputTypeNameString,
                  const std::string& inputVariableNameString, 
-		 const std::string& defaultInitializer, 
-		 const ConstructParamEnum& isConstructorParameter,
-		 const BuildAccessEnum& buildAccessFunctions,
-		 const TraversalFlag& toBeTraversedDuringTreeTraversal,
+                 const std::string& defaultInitializer, 
+                 const ConstructParamEnum& isConstructorParameter,
+                 const BuildAccessEnum& buildAccessFunctions,
+                 const TraversalFlag& toBeTraversedDuringTreeTraversal,
                  const DeleteFlag& delete_flag,
                  const CopyConfigEnum& toBeCopied);
   GrammarString( const GrammarString & X );

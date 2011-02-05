@@ -212,16 +212,16 @@ class TestExpressionTypes : public AstSimpleProcessing
 
 class TestLValues : public AstSimpleProcessing
 {
-	// This class uses a traversal to test the isLValue() and isDefinable() member functions on each 
-	// SgExpression IR node. The goal is to verify that each member function, were
-	// appropriate, returns whether or not its argument is an lvalue or definable.
+        // This class uses a traversal to test the isLValue() and isDefinable() member functions on each 
+        // SgExpression IR node. The goal is to verify that each member function, were
+        // appropriate, returns whether or not its argument is an lvalue or definable.
 
 public:
-	//! static function to do test on any IR node
-	// static void test(SgNode* node);
+        //! static function to do test on any IR node
+        // static void test(SgNode* node);
 
-	//! visit function required for traversal
-	void visit ( SgNode* node );
+        //! visit function required for traversal
+        void visit ( SgNode* node );
 };
 
 // class TestMangledNames : public AstSimpleProcessing

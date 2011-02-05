@@ -82,11 +82,11 @@ class DepInfoAnal
                       DepInfoCollect &outDeps, DepInfoCollect &inDeps, 
                       int deptype = DEPTYPE_DATA);
  private:
-	DependenceTesting& handle;
-	// A map store AST nodes and loop nest information
-  	std::map <AstNodePtr, LoopDepInfo, std::less <AstNodePtr> > stmtInfo;
-	// A map store modified variables and the set of loops modifying them.
-  	ModifyVariableInfo varmodInfo;		      
+        DependenceTesting& handle;
+        // A map store AST nodes and loop nest information
+        std::map <AstNodePtr, LoopDepInfo, std::less <AstNodePtr> > stmtInfo;
+        // A map store modified variables and the set of loops modifying them.
+        ModifyVariableInfo varmodInfo;                
 };
 
 class DependenceTesting{
@@ -130,7 +130,7 @@ class SetDepEntry
        }
        else if ( l2 >= dim1) {
          assert(dep != 0);
-	 SetDepRel( *dep, e, l1, l2-dim1);
+         SetDepRel( *dep, e, l1, l2-dim1);
          if (DebugDep())
             std::cerr << "setting dep entry(" << l1 << ", " << l2-dim1 << ") = " << e.toString() << "\n";
        }
@@ -254,7 +254,7 @@ class MakeUniqueVarGetBound
   ReverseRecMap &reverse;
   void VisitVar( const SymbolicVar& var)
   {
-	  result = GetBound(var);
+          result = GetBound(var);
   }
  public:
    MakeUniqueVarGetBound( ReverseRecMap& r1, LoopTransformInterface& ai, DepInfoAnal& a) 

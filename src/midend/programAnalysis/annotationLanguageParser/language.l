@@ -31,13 +31,13 @@ int line_number_offset = 0;
 
 %}
 
-	/* -- Prefix all symbols with "ann" */
+        /* -- Prefix all symbols with "ann" */
 
 %option prefix="ann"
 %option noyywrap
 %option yylineno
 
-	/* -- Define the four states: "BDWY" for all Broadway annotations
+        /* -- Define the four states: "BDWY" for all Broadway annotations
            language tokens, "C" for C code fragments, and "META" for
            meta-symbols. The meta-symbols always embedded in the C
            patterns. The "BDWYID" state is used for proecdure names, which
@@ -48,7 +48,7 @@ int line_number_offset = 0;
 %s C
 %s META
 
-	/* -- Define some useful short-hands */
+        /* -- Define some useful short-hands */
 
 identifier ([a-zA-Z_][0-9a-zA-Z_.]*)
 any_white ([ \011\013\014\015])
@@ -74,12 +74,12 @@ s_char ([^"\\\n]|{escape_sequence})
 
 %%
 
-	/* -- General rules for handling line number directives */
+        /* -- General rules for handling line number directives */
 
 <INITIAL,C,BDWY,META>^{hwhite}*"#"{hwhite}*[0-9].*"\n" |
 <INITIAL,C,BDWY,META>^{hwhite}*"#"{hwhite}*line.*"\n" { adjust_line_number(anntext); }
 
-	/* -- State transition (context sensitivity) rules */
+        /* -- State transition (context sensitivity) rules */
 
 <INITIAL,BDWY>"%{"  { BEGIN(C); }
 <C>"}%"             { BEGIN(BDWY); }
@@ -87,7 +87,7 @@ s_char ([^"\\\n]|{escape_sequence})
 <C>"${"             { BEGIN(META); }
 <META>"}"           { BEGIN(C); }
 
-	/* -- General rules for handling white-space (including regular line number
+        /* -- General rules for handling white-space (including regular line number
               adjustment */
 
 {any_white}+     {  }
@@ -98,7 +98,7 @@ s_char ([^"\\\n]|{escape_sequence})
 
 <INITIAL>.       { annlval.t_tok = (annlineno - line_number_offset); return anntext[0]; }
 
-	/* -- Broadway annotation tokens ------------------------------------------------------ */
+        /* -- Broadway annotation tokens ------------------------------------------------------ */
 
 <BDWY>"property"       { annlval.t_tok = (annlineno - line_number_offset); return tokMAYPROPERTY; }
 <BDWY>"may-property"   { annlval.t_tok = (annlineno - line_number_offset); return tokMAYPROPERTY; }
@@ -196,7 +196,7 @@ s_char ([^"\\\n]|{escape_sequence})
 
 <BDWY>.              { annlval.t_tok = (annlineno - line_number_offset); return anntext[0]; }
 
-	/* -- Embedded meta-tokens ------------------------------------------------------------ */
+        /* -- Embedded meta-tokens ------------------------------------------------------------ */
 
 <META>"expr"        { annlval.t_tok = (annlineno - line_number_offset); return metatokEXPR; }
 <META>"stmt"        { annlval.t_tok = (annlineno - line_number_offset); return metatokSTMT; }

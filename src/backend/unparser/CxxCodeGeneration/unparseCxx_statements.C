@@ -693,8 +693,8 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 //#if USE_UPC_IR_NODES
 //#if UPC_EXTENSIONS_ALLOWED //TODO turn on by default?
 // Liao, 6/13/2008: UPC support
-    case V_SgUpcNotifyStatement:           	  unparseUpcNotifyStatement(stmt, info); break;
-    case V_SgUpcWaitStatement:            	  unparseUpcWaitStatement(stmt, info); break;
+    case V_SgUpcNotifyStatement:                  unparseUpcNotifyStatement(stmt, info); break;
+    case V_SgUpcWaitStatement:                    unparseUpcWaitStatement(stmt, info); break;
     case V_SgUpcBarrierStatement:                 unparseUpcBarrierStatement(stmt, info); break;
     case V_SgUpcFenceStatement:                   unparseUpcFenceStatement(stmt, info); break;
     case V_SgUpcForAllStatement:                  unparseUpcForAllStatement(stmt, info);    break; 

@@ -163,7 +163,8 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   {
     // Liao 12/13/2010
     // Fortran subroutine/function parameters have corresponding variable declarations in the body
-    // we need to share the initialized names of the parameters instead of creating new ones
+    // For this declaration, it should use the initialized names of the parameters instead of creating new ones
+    // The symbol of the init name should be under SgFunctionDefinition, instead of the function body block
     bool isFortranParameter = false; 
     if (SageInterface::is_Fortran_language())
     {
@@ -173,24 +174,41 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
         SgSymbolTable * st = f_def->get_symbol_table();
         ROSE_ASSERT (st != NULL);
         SgVariableSymbol * v_symbol = st->find_variable(name); 
-        if (v_symbol != NULL)
+        if (v_symbol != NULL) // find a function parameter with the same name
         {
           // replace the default one with the one from parameter
-          SgInitializedName *old_initName = varDecl->get_decl_item (name);
-          ROSE_ASSERT (old_initName != NULL);
+          SgInitializedName *default_initName = varDecl->get_decl_item (name);
+          ROSE_ASSERT (default_initName != NULL);
           SgInitializedName * new_initName = v_symbol->get_declaration();
           ROSE_ASSERT (new_initName != NULL);
-          SgInitializedNamePtrList  n_list= varDecl->get_variables();
-          std::replace (n_list.begin(), n_list.end(),old_initName, new_initName );
+          ROSE_ASSERT (default_initName != new_initName);
+
+          SgInitializedNamePtrList&  n_list= varDecl->get_variables();
+          std::replace (n_list.begin(), n_list.end(),default_initName, new_initName );
+          ROSE_ASSERT (varDecl->get_decl_item (name)==new_initName); //ensure the new one can be found  
+
+          // change the function argument's old parent to the variable declaration
           SgNode * old_parent = new_initName->get_parent();
           ROSE_ASSERT  (old_parent != NULL);
           ROSE_ASSERT  (isSgFunctionParameterList(old_parent) != NULL);
           new_initName->set_parent(varDecl); // adjust parent from SgFunctionParameterList to SgVariableDeclaration
+
+       // DQ (1/25/2011): Deleting these causes problems if I use this function in the Fortran support...
+       // delete (default_initName->get_declptr()); // delete the var definition
+          // delete (default_initName->get_declptr()); // relink the var definition
+          SgVariableDefinition * var_def = isSgVariableDefinition(default_initName->get_declptr()) ;
+          ROSE_ASSERT (var_def != NULL);
+          var_def->set_parent(new_initName);
+          var_def->set_vardefn(new_initName);
+          new_initName->set_declptr(var_def); // it was set to SgProcedureHeaderStatement as a function argument
+
+          delete (default_initName); // must delete the old one to pass AST consistency test
           isFortranParameter = true;
         }
       }
     }
-    if (! isFortranParameter)
+    if (! isFortranParameter) // No need to add symbol to the function body if it is a Fortran parameter
+                              // The symbol should already exist under function definition for the parameter
       fixVariableDeclaration(varDecl,scope);
   }
 #if 0
@@ -199,8 +217,9 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   initName->set_declptr(variableDefinition);
   variableDefinition->set_parent(initName);
 #endif
+
   SgInitializedName *initName = varDecl->get_decl_item (name);   
-  ROSE_ASSERT(initName); 
+  ROSE_ASSERT(initName != NULL);
   ROSE_ASSERT((initName->get_declptr())!=NULL);
 
 #if 1
@@ -213,6 +232,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   ROSE_ASSERT((variableDefinition_original->get_endOfConstruct())!=NULL);
 #endif
   setSourcePositionForTransformation(varDecl);
+  //ROSE_ASSERT (isSgVariableDefinition(initName->get_declptr())->get_startOfConstruct()!=NULL);
   return varDecl;
 }
 
@@ -428,10 +448,20 @@ SageBuilder::buildFunctionParameterTypeList (SgExprListExp * expList)
 }
 
 SgFunctionParameterTypeList * 
-SageBuilder::buildFunctionParameterTypeList()
+SageBuilder::buildFunctionParameterTypeList(SgType* type0, SgType* type1, SgType* type2, SgType* type3,
+                                            SgType* type4, SgType* type5, SgType* type6, SgType* type7)
 {
   SgFunctionParameterTypeList* typePtrList = new SgFunctionParameterTypeList;
   ROSE_ASSERT(typePtrList);
+  SgTypePtrList& types = typePtrList->get_arguments();
+  if (type0) types.push_back(type0);
+  if (type1) types.push_back(type1);
+  if (type2) types.push_back(type2);
+  if (type3) types.push_back(type3);
+  if (type4) types.push_back(type4);
+  if (type5) types.push_back(type5);
+  if (type6) types.push_back(type6);
+  if (type7) types.push_back(type7);
   return typePtrList;
 }
 
@@ -872,7 +902,17 @@ SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclarat
   return result;
 }
 
-SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
+SgMemberFunctionDeclaration*
+SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope)
+{
+    SgType* return_type = func_type->get_return_type();
+    SgFunctionParameterList* paralist = buildFunctionParameterList(func_type->get_argument_list());
+
+    return SageBuilder::buildDefiningMemberFunctionDeclaration(name, return_type, paralist, scope);
+}
+
+SgMemberFunctionDeclaration*
+SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
 {
   SgMemberFunctionDeclaration * result = buildDefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,scope);
   // set definingdecl for SgCtorInitializerList
@@ -896,7 +936,7 @@ SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration
 template <class actualFunction>
 actualFunction *
 SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
-//	(const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
+//      (const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
 {
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
@@ -1574,11 +1614,11 @@ SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
 }
 
 SgNewExp * SageBuilder::buildNewExp(SgType* type, 
-				    SgExprListExp* exprListExp, 
-				    SgConstructorInitializer* constInit, 
-				    SgExpression* expr, 
-				    short int val, 
-				    SgFunctionDeclaration* funcDecl)
+                                    SgExprListExp* exprListExp, 
+                                    SgConstructorInitializer* constInit, 
+                                    SgExpression* expr, 
+                                    short int val, 
+                                    SgFunctionDeclaration* funcDecl)
 {
   SgNewExp* result = new SgNewExp(type, exprListExp, constInit, expr, val, funcDecl);
   ROSE_ASSERT(result);
@@ -2159,11 +2199,22 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
     SgVariableDeclaration* fakeVar = buildVariableDeclaration(name, buildIntType(),NULL, scope);
     Sg_File_Info* file_info = fakeVar->get_file_info();
     file_info->unsetOutputInCodeGeneration ();
-    SgVariableSymbol * 	fakeSymbol = getFirstVarSym (fakeVar);   
+    SgVariableSymbol *  fakeSymbol = getFirstVarSym (fakeVar);   
     result = buildVarRefExp(fakeSymbol);
   } // if
   return result;
 } // buildOpaqueVarRefExp()
+
+//! Build a Fortran numeric label ref exp
+SgLabelRefExp * SageBuilder::buildLabelRefExp(SgLabelSymbol * s)
+{
+   SgLabelRefExp * result= NULL;
+   ROSE_ASSERT (s!= NULL);
+   result = new SgLabelRefExp(s);
+   ROSE_ASSERT (result != NULL);
+   setOneSourcePositionForTransformation(result);
+   return result;
+}
 
 SgFunctionParameterList*
 SageBuilder::buildFunctionParameterList(SgFunctionParameterTypeList * paraTypeList)
@@ -2538,7 +2589,11 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
   label_scope->insert_symbol(lsymbol->get_name(), lsymbol);
  #endif 
 
-  if (scope)
+  // Liao 1/7/2010
+  // SgLabelStatement is used for CONTINUE statement in Fortran
+  // In this case , it has no inherent association with a Label symbol.
+  // It is up to the SageInterface::setNumericalLabel(SgStatement*) to handle label symbol
+  if (!SageInterface::is_Fortran_language() &&scope)
     fixLabelStatement(labelstmt,scope);
   // we don't want to set parent here yet
   // delay it until append_statement() or alike
@@ -2576,6 +2631,22 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true
   conditional->set_parent(ifstmt);
   true_body->set_parent(ifstmt);
   if (false_body != NULL) false_body->set_parent(ifstmt);
+
+  if (SageInterface::is_Fortran_language() )
+  {
+    // Liao 1/20/2010
+    // According to Fortran 77 standard Chapter 11.5 to 11.9, 
+    // this is a Fortran Block IF statement, if the true body is:
+    // 1. A block of statement under SgBasicBlock
+    // 2. DO, block if, or another logical if
+    // Otherwise it is a logical if statement
+    if (isSgBasicBlock(true_body)|| isSgFortranDo(true_body)|| isSgIfStmt(true_body)) 
+    {
+      ifstmt->set_use_then_keyword(true);
+      ifstmt->set_has_end_statement(true);
+    } 
+  }
+
   return ifstmt;
 }
 
@@ -2856,6 +2927,28 @@ SageBuilder::buildGotoStatement(SgLabelStatement *  label)
   SgGotoStatement* result = new SgGotoStatement(label);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgGotoStatement * 
+SageBuilder::buildGotoStatement(SgLabelSymbol*  symbol)
+{
+  SgGotoStatement* result = NULL;
+  ROSE_ASSERT (symbol != NULL);
+  if (SageInterface::is_Fortran_language())
+  {  // Fortran case
+    result = buildGotoStatement((SgLabelStatement *)NULL);
+    SgLabelRefExp* l_exp = buildLabelRefExp(symbol);
+    l_exp->set_parent(result);
+    result->set_label_expression(l_exp);
+  }  
+  else  // C/C++ case 
+  {
+    SgLabelStatement* l_stmt = isSgLabelStatement(symbol->get_declaration());
+    ROSE_ASSERT (l_stmt != NULL);
+    result = buildGotoStatement(l_stmt);
+  }  
+  ROSE_ASSERT(result);
   return result;
 }
 
@@ -3319,6 +3412,22 @@ SgTypeFloat * SageBuilder::buildFloatType()
 }
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType
+//! Build a modifier type.
+SgModifierType* SageBuilder::buildModifierType(SgType* base_type /* = NULL*/)
+   {
+  // DQ (7/28/2010): New (similar) approach using type table support.
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
+
+  // DQ (7/28/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+      SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+       delete result;
+     return result2;
+ }
+
   //! Build a constant type.
 SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
    {
@@ -3898,7 +4007,7 @@ SgNamespaceDeclarationStatement * SageBuilder::buildNamespaceDeclaration_nfi(con
 
           //nondefdecl->set_parent(topScopeStack());
           nondefdecl->set_parent(scope);
-		  ROSE_ASSERT(nondefdecl->get_parent());
+                  ROSE_ASSERT(nondefdecl->get_parent());
 
           if (scope != NULL)
              {
@@ -4192,6 +4301,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
        // of source position that would be more precise.  FIXME.
        // setOneSourcePositionNull(nondefdecl);
           setOneSourcePositionForTransformation(nondefdecl);
+          ROSE_ASSERT (nondefdecl->get_startOfConstruct() != __null);
 
           nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
           nondefdecl->set_definingDeclaration(defdecl);
@@ -4219,7 +4329,11 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
 //     printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
   // setOneSourcePositionForTransformation(nondefdecl);
-     setOneSourcePositionNull(nondefdecl);
+  //
+  // Liao 1/18/2011, I changed the semantics of setOneSourcePositionNull to set file_info to null regardless the existence of 
+  // file_info of the input node.
+  // We do want to keep the file_info of nodefdecl if it is set already as compiler generated.
+  //    setOneSourcePositionNull(nondefdecl);
 
   // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
   // nondefdecl->set_definingDeclaration(defdecl);

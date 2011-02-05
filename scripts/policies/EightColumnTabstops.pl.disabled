@@ -17,6 +17,7 @@ BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 use strict;
 use FileLister;
 use Text::Tabs;
+use Policies;
 
 my $verbose;
 while ($ARGV[0] =~ /^-/) {
@@ -117,7 +118,7 @@ sub lines {
 my $nfail=0;
 my $files = FileLister->new(@ARGV);
 while (my $filename = $files->next_file) {
-  if ($filename =~ /\.(h|hh|hpp|c|cpp|C)$/ && open FILE, "<", $filename) {
+  if ($filename =~ /\.(h|hh|hpp|c|cpp|C)$/ && !is_disabled($filename) && open FILE, "<", $filename) {
     #DEBUG "FILE", $filename;
     my @lines = lines(\*FILE);
     close FILE;

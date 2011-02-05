@@ -72,7 +72,7 @@ public:
         return RIFG_NIL;
       }
     }
-  }	
+  }     
 
   RIFGEdgeId operator++(int) {
     CFG::Edge *old;
@@ -143,7 +143,7 @@ public:
   void Reset() { assert(0); }
   virtual ~OARIFGNodeIterator() {};
 private:
-  RIFG::ForwardBackward fb;	
+  RIFG::ForwardBackward fb;     
   CFG::BiDirNodesIterator oa_iter;
 };
 

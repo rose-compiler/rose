@@ -41,8 +41,8 @@ public:
 
   analyzeAnn(Annotations * anns,
              const parserID * property_name,
-	     rule_list * rules,
-	     int line);
+             rule_list * rules,
+             int line);
 
   /** @brief Return the property */
 
@@ -54,7 +54,7 @@ public:
 
 #ifdef __PROCLOCATION
   void test(procLocation * where,
-	    propertyAnalyzer * property_analyzer);
+            propertyAnalyzer * property_analyzer);
 #endif
 
   /** @brief Compute the next state
@@ -64,7 +64,7 @@ public:
 
 #ifdef __PROCLOCATION
   void compute_next(procLocation * where,
-		    propertyAnalyzer * property_analyzer);
+                    propertyAnalyzer * property_analyzer);
 #endif
 
   /** @brief Apply next state
@@ -74,13 +74,13 @@ public:
 
 #ifdef __PROCLOCATION
   void apply_next(procLocation * where,
-		  propertyAnalyzer * property_analyzer,
-		  memoryblock_set & changes);
+                  propertyAnalyzer * property_analyzer,
+                  memoryblock_set & changes);
 #endif
   /** @brief Look up */
 
   void lookup(procedureAnn * procedure,
-	      Annotations * annotations);
+              Annotations * annotations);
 
 };
 

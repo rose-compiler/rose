@@ -29,8 +29,8 @@ class SimpleDirectedGraphNode {
 
 public:
   
-	// Han: changed to virtual
-	virtual ~SimpleDirectedGraphNode() {}
+        // Han: changed to virtual
+        virtual ~SimpleDirectedGraphNode() {}
       
   //! get the nodes which are pointed to by the current node
   std::set<SimpleDirectedGraphNode *> getSuccessors() {return _succs;}
@@ -42,8 +42,8 @@ public:
   //! add an edge from n to the current node
   void addPredecessor(SimpleDirectedGraphNode * n) {_preds.insert(n);}
 
-	void removeSuccessor(SimpleDirectedGraphNode * n) {_succs.erase(n);}
-	void removePredecessor(SimpleDirectedGraphNode * n) {_preds.erase(n);}
+        void removeSuccessor(SimpleDirectedGraphNode * n) {_succs.erase(n);}
+        void removePredecessor(SimpleDirectedGraphNode * n) {_preds.erase(n);}
   
   //! test whether n is a successor of the current node
   bool hasSuccessor(SimpleDirectedGraphNode * n) {return _succs.count(n) != 0;}
@@ -85,8 +85,8 @@ class SimpleDirectedGraph {
 public:
 
   SimpleDirectedGraph() {}
-	// Han: changed to virtual
-	virtual ~SimpleDirectedGraph() {}
+        // Han: changed to virtual
+        virtual ~SimpleDirectedGraph() {}
 
   //! get all the nodes in the graph
   std::set<SimpleDirectedGraphNode *> getNodes() {return _nodes;}
@@ -95,32 +95,32 @@ public:
   virtual void addNode(SimpleDirectedGraphNode * node) {
     _nodes.insert(node);
   }
-	virtual void removeNode(SimpleDirectedGraphNode * node) 
-	{
-		_nodes.erase(node);
-	}
-				
+        virtual void removeNode(SimpleDirectedGraphNode * node) 
+        {
+                _nodes.erase(node);
+        }
+                                
 
-	//! Remove a linkt between "from" and "to"
-	virtual void removeLink(SimpleDirectedGraphNode * from, SimpleDirectedGraphNode * to) {
-		if(from != NULL && to != NULL)
-		{
-			from->removeSuccessor(to);
-			to->removePredecessor(from);
-		}
-	}
-	
+        //! Remove a linkt between "from" and "to"
+        virtual void removeLink(SimpleDirectedGraphNode * from, SimpleDirectedGraphNode * to) {
+                if(from != NULL && to != NULL)
+                {
+                        from->removeSuccessor(to);
+                        to->removePredecessor(from);
+                }
+        }
+        
 
   //! Add a link to the graph between "from" and to "to"
   virtual void addLink(SimpleDirectedGraphNode * from, SimpleDirectedGraphNode * to) {
 
     // Add "to" to the successors of "from" and "from" to the
     // predecessors of "to" to initialize the edge in the graph
-		//if(from != NULL && to != NULL)
-		//{
-			from->addSuccessor(to);
-			to->addPredecessor(from);
-		//}
+                //if(from != NULL && to != NULL)
+                //{
+                        from->addSuccessor(to);
+                        to->addPredecessor(from);
+                //}
   }
 
   //! Check if a node containing data is in the graph
@@ -141,15 +141,15 @@ public:
       std::set<SimpleDirectedGraphNode *> succs = (*i)->getSuccessors();
       std::set<SimpleDirectedGraphNode *>::iterator j;
       for (j = succs.begin(); j != succs.end(); j++) {
-	std::cout << "    succ: ";
-	_displayData(*j, std::cout);
-	std::cout << std::endl;
+        std::cout << "    succ: ";
+        _displayData(*j, std::cout);
+        std::cout << std::endl;
       }
       std::set<SimpleDirectedGraphNode *> preds = (*i)->getPredecessors();
       for (j = preds.begin(); j != preds.end(); j++) {
-	std::cout << "    pred: ";
-	_displayData(*j, std::cout);
-	std::cout << std::endl;
+        std::cout << "    pred: ";
+        _displayData(*j, std::cout);
+        std::cout << std::endl;
       }
       std::cout << std::endl;
     }
@@ -177,15 +177,15 @@ public:
       std::set<SimpleDirectedGraphNode *> succs = d1->getSuccessors();
       std::set<SimpleDirectedGraphNode *>::iterator j;
       for (j = succs.begin(); j != succs.end(); j++) {
-	SimpleDirectedGraphNode * d2 = *j;
-	
-	char buf1[sizeof(SimpleDirectedGraphNode *)*2 + 3];
-	char buf2[sizeof(SimpleDirectedGraphNode *)*2 + 3];
-	
-	sprintf(buf1, "%p", d1);
-	sprintf(buf2, "%p", d2);
+        SimpleDirectedGraphNode * d2 = *j;
+        
+        char buf1[sizeof(SimpleDirectedGraphNode *)*2 + 3];
+        char buf2[sizeof(SimpleDirectedGraphNode *)*2 + 3];
+        
+        sprintf(buf1, "%p", d1);
+        sprintf(buf2, "%p", d2);
 
-	f << "\"" << buf1 << "\" -> \"" << buf2 << "\";" << std::endl;
+        f << "\"" << buf1 << "\" -> \"" << buf2 << "\";" << std::endl;
       }
     }
 
@@ -218,31 +218,31 @@ public:
       //if we haven't already seen it, add it to our return list, and
       //push its children onto the stack
       if (reachables.count(curr) == 0) {
-	reachables.insert(curr);
+        reachables.insert(curr);
 
-	//depending on TraverseDirection, children should either be
-	//the successors or predecessors of curr
-	std::set<SimpleDirectedGraphNode *> children;
-	switch(dir) {
-	case FORWARD:
-	  children = curr->getSuccessors();
-	  break;
-	case BACKWARD:
-	  children = curr->getPredecessors();
-	  break;
-	default:
-	  //This should never happen
-	  abort();
-	  break;
-	}
+        //depending on TraverseDirection, children should either be
+        //the successors or predecessors of curr
+        std::set<SimpleDirectedGraphNode *> children;
+        switch(dir) {
+        case FORWARD:
+          children = curr->getSuccessors();
+          break;
+        case BACKWARD:
+          children = curr->getPredecessors();
+          break;
+        default:
+          //This should never happen
+          abort();
+          break;
+        }
 
-	//push the children onto the stack
-	std::set<SimpleDirectedGraphNode *>::iterator i;
-	for (i = children.begin(); i != children.end(); i++) {
-	  remaining.push(*i);
-	}
+        //push the children onto the stack
+        std::set<SimpleDirectedGraphNode *>::iterator i;
+        for (i = children.begin(); i != children.end(); i++) {
+          remaining.push(*i);
+        }
       } else {
-	//Do nothing - we've already seen this node
+        //Do nothing - we've already seen this node
       }
     }
 

@@ -23,10 +23,10 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	std::string filename;
+        std::string filename;
 
     SgProject *project = frontend(argc, argv);
-		std::vector<InterproceduralInfo*> ip;
+                std::vector<InterproceduralInfo*> ip;
 
     list < SgNode * >functionDeclarations = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
 
@@ -52,17 +52,17 @@ int main(int argc, char *argv[])
         else
         {
             // get the control depenence for this function
-						ipi=new InterproceduralInfo(fD);
+                                                ipi=new InterproceduralInfo(fD);
 
             ROSE_ASSERT(ipi != NULL);
 
             // get control dependence for this function defintion
             cdg = new ControlDependenceGraph(fD->get_definition(), ipi);
-						cdg->computeInterproceduralInformation(ipi);
-//						cdg->debugCoutNodeList();
+                                                cdg->computeInterproceduralInformation(ipi);
+//                                              cdg->debugCoutNodeList();
 
             filename =
-								(fD->get_definition()->get_file_info()->get_filenameString ())
+                                                                (fD->get_definition()->get_file_info()->get_filenameString ())
                  + "." +
                 (fD->get_name().getString()) + ".cdg.dot";
             cdg->writeDot((char *)filename.c_str());

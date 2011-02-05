@@ -303,9 +303,9 @@ bool isPointerToNonConstType(SgType* type)
       SgIntVal * valExpInt = isSgIntVal(indexExp);
       ROSE_ASSERT(valExp || valExpInt); // TODO: return -1 is better ?
       if (valExp)
-	result = valExp->get_value(); 
+        result = valExp->get_value(); 
       else 
-	result = valExpInt->get_value(); 
+        result = valExpInt->get_value(); 
     }
 
     // consider multi dimensional case 
@@ -1071,7 +1071,7 @@ bool isPointerToNonConstType(SgType* type)
            De # IEEE 754r decimal floating point (128 bits)
            Df # IEEE 754r decimal floating point (32 bits)
            Dh # IEEE 754r half-precision floating point (16 bits)
-           u <source-name>	# vendor extended type
+           u <source-name>      # vendor extended type
            */
       case V_SgTypeComplex:
         result += "C";
@@ -1089,7 +1089,7 @@ bool isPointerToNonConstType(SgType* type)
 
     return result;
   }
-  //! <CV-qualifiers> ::= [r] [V] [K] 	# restrict (C99), volatile, const
+  //! <CV-qualifiers> ::= [r] [V] [K]   # restrict (C99), volatile, const
   // the order of handling const, volatile, and restric matters
   // Quote of the specification:
   // "In cases where multiple order-insensitive qualifiers are present, 

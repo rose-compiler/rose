@@ -341,7 +341,7 @@ NodeQuerySynthesizedAttributeType NodeQuery::queryNodeClassDeclarationsFromTypeN
        cout<< "\n\n The typenames is : " << currentTypeName << "\n\n" << previousTypeName << "\n\n";
 
        }while( previousTypeName != currentTypeName);
-     */	
+     */ 
   }
 
   return returnList;
@@ -484,7 +484,7 @@ NodeQuery::querySolverArguments (SgNode * astNode)
       {
         // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
       }
-  }				/* End switch-case */
+  }                             /* End switch-case */
 
   return returnNodeList;
 }
@@ -499,7 +499,7 @@ NodeQuery::querySolverFunctionDeclarations (SgNode * astNode)
     returnNodeList.push_back (astNode);
 
   return returnNodeList;
-}				/* End function querySolverFunctionDeclarations() */
+}                               /* End function querySolverFunctionDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverMemberFunctionDeclarations (SgNode * astNode)
@@ -511,7 +511,7 @@ NodeQuery::querySolverMemberFunctionDeclarations (SgNode * astNode)
     returnNodeList.push_back (astNode);
 
   return returnNodeList;
-}				/* End function querySolverMemberFunctionDeclarations() */
+}                               /* End function querySolverMemberFunctionDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverVariableTypes (SgNode * astNode)
@@ -585,7 +585,7 @@ NodeQuery::querySolverVariableTypes (SgNode * astNode)
           returnNodeList.push_back (typeNode);
         }
         break;
-      }				/* End case V_SgVariableDeclaration */
+      }                         /* End case V_SgVariableDeclaration */
 
     case V_SgFunctionDeclaration:
     case V_SgMemberFunctionDeclaration:
@@ -621,12 +621,12 @@ NodeQuery::querySolverVariableTypes (SgNode * astNode)
       {
         // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
       }
-  }				/* End switch case astNode */
+  }                             /* End switch case astNode */
 
 
 
   return returnNodeList;
-}				/* End function querySolverType() */
+}                               /* End function querySolverType() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverVariableDeclarations (SgNode * astNode)
@@ -682,10 +682,10 @@ NodeQuery::querySolverVariableDeclarations (SgNode * astNode)
       {
         // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
       }
-  }				/* End switch-case */
+  }                             /* End switch-case */
 
   return returnNodeList;
-}				/* End function querySolverVariableDeclarations() */
+}                               /* End function querySolverVariableDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverClassDeclarations (SgNode * astNode)
@@ -701,7 +701,7 @@ NodeQuery::querySolverClassDeclarations (SgNode * astNode)
 
 
   return returnNodeList;
-}				/* End function querySolverClassDeclarations() */
+}                               /* End function querySolverClassDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverStructDeclarations (SgNode * astNode)
@@ -717,7 +717,7 @@ NodeQuery::querySolverStructDeclarations (SgNode * astNode)
 
 
   return returnNodeList;
-}				/* End function querySolverStructDeclarations() */
+}                               /* End function querySolverStructDeclarations() */
 
 
   NodeQuerySynthesizedAttributeType
@@ -734,7 +734,7 @@ NodeQuery::querySolverUnionDeclarations (SgNode * astNode)
 
 
   return returnNodeList;
-}				/* End function querySolverUnionDeclarations() */
+}                               /* End function querySolverUnionDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverTypedefDeclarations (SgNode * astNode)
@@ -747,7 +747,7 @@ NodeQuery::querySolverTypedefDeclarations (SgNode * astNode)
 
 
   return returnNodeList;
-}				/* End function querySolverTypedefDeclarations() */
+}                               /* End function querySolverTypedefDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverClassFields (SgNode * astNode)
@@ -792,7 +792,7 @@ NodeQuery::querySolverClassFields (SgNode * astNode)
     }
   }
   return returnNodeList;
-}				/* End function querySolverClassFields() */
+}                               /* End function querySolverClassFields() */
 
 
   NodeQuerySynthesizedAttributeType
@@ -833,7 +833,7 @@ NodeQuery::querySolverStructFields (SgNode * astNode)
 
 
   return returnNodeList;
-}				/* End function querySolverClassFields() */
+}                               /* End function querySolverClassFields() */
 
 
 
@@ -877,7 +877,7 @@ NodeQuery::querySolverUnionFields (SgNode * astNode)
 
   return returnNodeList;
 
-}				/* End function querySolverUnionFields() */
+}                               /* End function querySolverUnionFields() */
 
 
 
@@ -902,7 +902,7 @@ NodeQuery::querySolverStructDefinitions (SgNode * astNode)
   }
 
   return returnNodeList;
-}				/* End function querySolverClassFields() */
+}                               /* End function querySolverClassFields() */
 
 
 
@@ -928,129 +928,106 @@ NodeQuery::querySolverFunctionDeclarationFromDefinition (SgNode * astNode,
 
   return returnNodeList;
 
-}				/* End function querySolverUnionFields() */
+}                               /* End function querySolverUnionFields() */
 
 
 
 
-NodeQuerySynthesizedAttributeType NodeQuery::querySubTree 
-( SgNode * subTree,
-  TypeOfQueryTypeOneParameter elementReturnType,
-  AstQueryNamespace::QueryDepth defineQueryType){
-  return AstQueryNamespace::querySubTree(subTree, getFunction(elementReturnType), defineQueryType);
-}
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, TypeOfQueryTypeOneParameter elementReturnType, AstQueryNamespace::QueryDepth defineQueryType)
+   {
+#if 0
+     printf ("Inside of NodeQuery::querySubTree #1 \n");
+#endif
+     return AstQueryNamespace::querySubTree(subTree, getFunction(elementReturnType), defineQueryType);
+   }
 
 // get the SgNode's conforming to the test in querySolverFunction or
 // get the SgNode's conforming to the test in the TypeOfQueryTypeTwoParamters the user specify.
-NodeQuerySynthesizedAttributeType NodeQuery::querySubTree 
-( SgNode * subTree,
-  SgNode * traversal,
-  roseFunctionPointerTwoParameters querySolverFunction,
-  AstQueryNamespace::QueryDepth defineQueryType){
-  return AstQueryNamespace::querySubTree(subTree, 
-      std::bind2nd(std::ptr_fun(querySolverFunction),traversal), defineQueryType);
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, SgNode * traversal, roseFunctionPointerTwoParameters querySolverFunction, AstQueryNamespace::QueryDepth defineQueryType)
+   {
+#if 0
+     printf ("Inside of NodeQuery::querySubTree #2 \n");
+#endif
+     return AstQueryNamespace::querySubTree(subTree, std::bind2nd(std::ptr_fun(querySolverFunction),traversal), defineQueryType);
+   }
 
-
-};
-NodeQuerySynthesizedAttributeType NodeQuery::querySubTree
-( SgNode * subTree,
-  SgNode * traversal,
-  TypeOfQueryTypeTwoParameters elementReturnType,
-  AstQueryNamespace::QueryDepth defineQueryType ){
-  return AstQueryNamespace::querySubTree(subTree, 
-      std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
-};
-
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, SgNode * traversal, TypeOfQueryTypeTwoParameters elementReturnType, AstQueryNamespace::QueryDepth defineQueryType )
+   {
+#if 0
+     printf ("Inside of NodeQuery::querySubTree #3 \n");
+#endif
+     return AstQueryNamespace::querySubTree(subTree, std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
+   }
 
 
 // perform a query on a list<SgNode>
-Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
-( Rose_STL_Container< SgNode * >nodeList,
-  Rose_STL_Container< SgNode * > (*querySolverFunction)(SgNode*) ){
-  return AstQueryNamespace::queryRange< Rose_STL_Container<SgNode*> >(nodeList.begin(), nodeList.end(),
-      querySolverFunction);
-};
-Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
-( Rose_STL_Container<SgNode*> nodeList,
-  TypeOfQueryTypeOneParameter elementReturnType ){
-  return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),getFunction(elementReturnType));
+Rose_STL_Container<SgNode*> NodeQuery::queryNodeList ( Rose_STL_Container< SgNode * >nodeList, Rose_STL_Container< SgNode * > (*querySolverFunction)(SgNode*) )
+   {
+     return AstQueryNamespace::queryRange< Rose_STL_Container<SgNode*> >(nodeList.begin(), nodeList.end(), querySolverFunction);
+   }
 
-};
+Rose_STL_Container<SgNode*> NodeQuery::queryNodeList ( Rose_STL_Container<SgNode*> nodeList, TypeOfQueryTypeOneParameter elementReturnType )
+   {
+     return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),getFunction(elementReturnType));
+   }
 
 NodeQuerySynthesizedAttributeType
-NodeQuery::querySubTree
-(SgNode * subTree,
- roseFunctionPointerOneParameter elementReturnType,
- AstQueryNamespace::QueryDepth defineQueryType 
- ){
-
-  return  AstQueryNamespace::querySubTree(subTree,
-      std::ptr_fun(elementReturnType),defineQueryType);
-
-};
+NodeQuery::querySubTree (SgNode * subTree, roseFunctionPointerOneParameter elementReturnType, AstQueryNamespace::QueryDepth defineQueryType )
+   {
+#if 0
+     printf ("Inside of NodeQuery::querySubTree #4 \n");
+#endif
+     return  AstQueryNamespace::querySubTree(subTree,std::ptr_fun(elementReturnType),defineQueryType);
+   }
 
 
+Rose_STL_Container<SgNode*> NodeQuery::queryNodeList ( Rose_STL_Container<SgNode*> nodeList, SgNode * targetNode, roseFunctionPointerTwoParameters querySolverFunction )
+   {
+     return AstQueryNamespace::queryRange<SgNode*, Rose_STL_Container<SgNode*> >(nodeList.begin(), nodeList.end(), querySolverFunction, targetNode);
+  // std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
+   }
 
-Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
-( Rose_STL_Container<SgNode*> nodeList,
-  SgNode * targetNode,
-  roseFunctionPointerTwoParameters querySolverFunction ){
-  return AstQueryNamespace::queryRange<SgNode*, Rose_STL_Container<SgNode*> >(nodeList.begin(), nodeList.end(),
-      querySolverFunction, targetNode);
-  //                                  std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
-
-};
-Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
-( Rose_STL_Container<SgNode*> nodeList,
-  SgNode * targetNode,
-  TypeOfQueryTypeTwoParameters elementReturnType ){
-  return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
-      std::bind2nd(getFunction(elementReturnType), targetNode));
-
-};
+Rose_STL_Container<SgNode*> NodeQuery::queryNodeList ( Rose_STL_Container<SgNode*> nodeList, SgNode * targetNode, TypeOfQueryTypeTwoParameters elementReturnType )
+   {
+     return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),std::bind2nd(getFunction(elementReturnType), targetNode));
+   }
 
 // DQ (4/8/2004): Added query based on vector of variants
 
-NodeQuerySynthesizedAttributeType NodeQuery::querySubTree
-( SgNode * subTree,
-  VariantVector targetVariantVector,
-  AstQueryNamespace::QueryDepth defineQueryType){
-  NodeQuerySynthesizedAttributeType returnList;
-  AstQueryNamespace::querySubTree(subTree, 
-      boost::bind(querySolverGrammarElementFromVariantVector, _1,targetVariantVector,&returnList), defineQueryType);
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, VariantVector targetVariantVector, AstQueryNamespace::QueryDepth defineQueryType)
+   {
+     NodeQuerySynthesizedAttributeType returnList;
+#if 0
+     printf ("Inside of NodeQuery::querySubTree #5 \n");
+#endif
+     AstQueryNamespace::querySubTree(subTree, boost::bind(querySolverGrammarElementFromVariantVector, _1,targetVariantVector,&returnList), defineQueryType);
 
-  return returnList;
-};
+     return returnList;
+   }
 
-NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList
-( NodeQuerySynthesizedAttributeType nodeList,
-  VariantVector targetVariantVector){
+NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList ( NodeQuerySynthesizedAttributeType nodeList, VariantVector targetVariantVector)
+   {
+     NodeQuerySynthesizedAttributeType returnList;
 
-  NodeQuerySynthesizedAttributeType returnList;
+     AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), boost::bind(querySolverGrammarElementFromVariantVector, _1,targetVariantVector,&returnList));
 
-  AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), 
-      boost::bind(querySolverGrammarElementFromVariantVector, _1,targetVariantVector,&returnList));
-
-  return returnList;
-};
+     return returnList;
+   }
 
 // DQ (3/26/2004): Added query based on variant
-NodeQuerySynthesizedAttributeType NodeQuery::querySubTree 
-( SgNode * subTree,
-  VariantT targetVariant,
-  AstQueryNamespace::QueryDepth defineQueryType ){
-  return NodeQuery::querySubTree(subTree,
-      VariantVector(targetVariant), defineQueryType);
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, VariantT targetVariant, AstQueryNamespace::QueryDepth defineQueryType )
+   {
+#if 0
+     printf ("Inside of NodeQuery::querySubTree #6 \n");
+#endif
+     return NodeQuery::querySubTree(subTree, VariantVector(targetVariant), defineQueryType);
+   }
 
-};
+NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList ( NodeQuerySynthesizedAttributeType queryList, VariantT targetVariant)
+   {
+     return NodeQuery::queryNodeList(queryList,VariantVector(targetVariant));
+   }
 
-NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList 
-( NodeQuerySynthesizedAttributeType queryList,
-  VariantT targetVariant){
-  return NodeQuery::queryNodeList(queryList,
-      VariantVector(targetVariant));
-
-};
 #if 0
 // DQ (3/14/207): Older version using a return type of std::list
 class TypeQueryDummyFunctionalTest :  public std::unary_function<SgNode*, std::list<SgNode*> > 
@@ -1059,29 +1036,29 @@ class TypeQueryDummyFunctionalTest :  public std::unary_function<SgNode*, std::l
     result_type operator()(SgNode* node );
 };
 
-  TypeQueryDummyFunctionalTest::result_type
+TypeQueryDummyFunctionalTest::result_type
 TypeQueryDummyFunctionalTest::operator()(SgNode* node )
-{
-  result_type returnType;
-  returnType.push_back(node);
-  return returnType; 
-}
+   {
+     result_type returnType;
+     returnType.push_back(node);
+     return returnType; 
+   }
 #endif
 
 class TypeQueryDummyFunctionalTest :  public std::binary_function<SgNode*, Rose_STL_Container<SgNode*>*, void* >
-{
-  public:
-    result_type operator()(SgNode* node, Rose_STL_Container<SgNode*>* ) const;
-};
+   {
+     public:
+          result_type operator()(SgNode* node, Rose_STL_Container<SgNode*>* ) const;
+   };
 
 TypeQueryDummyFunctionalTest::result_type
 TypeQueryDummyFunctionalTest::operator()(SgNode* node, Rose_STL_Container<SgNode*>* returnList) const
-{
-  returnList->push_back(node);
+   {
+     returnList->push_back(node);
 
   // DQ (9/25/2007): Fixed up to return NULL pointer! Approved fix by Andreas.
-  return NULL;
-}
+     return NULL;
+   }
 
 typedef SgNode* node_ptr;
 
@@ -1130,7 +1107,8 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
     // Check if this is a SgFile or SgGlobal where there is only a single SgFile in the SgProject!
     if (isSgFile(astNode) != NULL || isSgGlobal(astNode) != NULL)
     {
-      printf ("This is not a SgProject, but it is a SgFile or SgGlobal so check if this is an only file before using the memory pool! \n");
+   // DQ (1/25/2011): We want to be able to use this functionality, it is not depreicated...
+   // printf ("This is not a SgProject, but it is a SgFile or SgGlobal so check if this is an only file before using the memory pool! \n");
       SgProject* project = TransformationSupport::getProject(astNode);
 
       // 2nd chance to reset useMemoryPool and provide an optimized query for types!
@@ -1161,12 +1139,21 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
   }
   else
   {
-    // This operation is expensive and not always accurate (though only vacuious descrutors might be missing).
+    // This operation is expensive and not always accurate (though only vacuious destructors might be missing).
     // As a result we would like to depricate its use in ROSE (at least for V_SgType \n");
+#if 0
     printf ("The use of this mechanism to get type information on arbitrary subtrees is depricated! (subtree at %p = %s) \n",astNode,astNode->class_name().c_str());
+#endif
 
     // Get the types from the specified subtree
+#if 1
+ // DQ (1/13/2011): This will only get a subset of types.
     nodeList = NodeQuery::querySubTree (astNode,V_SgType);
+#else
+ // DQ (1/13/2011): But I don't think this is the correct approach...
+    AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::ExtractTypes;
+    nodeList = NodeQuery::querySubTree (astNode,V_SgType,defineQueryType);
+#endif
 
 #if 0
     printf ("/* AST Test: nodeList.size() = %zu */ \n",nodeList.size());
@@ -1177,7 +1164,9 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
     // DQ (9/25/2007): These operations don't exist for a std::vector and were used with we used std::list.
     // nodeList.sort();
     // nodeList.unique();
+#if 0
     printf ("Skipping use of std::list<>::sort() and std::list<>::unique() now that we are using std::vector! (Is this a problem for NodeQuery::generateListOfTypes()?) \n");
+#endif
   }
 
 #if 0

@@ -90,12 +90,12 @@ public:
    * get the real declNode from the header files. */
 
   annVariable(std::string name, 
-	      std::string procedure_name,
-	      bool is_new,
-	      bool is_global,
-	      bool is_external,
-	      bool is_formal,
-	      bool is_io);
+              std::string procedure_name,
+              bool is_new,
+              bool is_global,
+              bool is_external,
+              bool is_formal,
+              bool is_io);
   
   /** @brief Destructor
    *
