@@ -241,21 +241,21 @@ class RoseBin_support {
   static std::string
     resolveValue(SgAsmValueExpression* expr,
                  bool is_mnemonic_call,
-		 uint8_t &b_val,
-		 uint16_t &w_val,
-		 uint32_t &dw_val,
-		 uint64_t &qw_val,
+                 uint8_t &b_val,
+                 uint16_t &w_val,
+                 uint32_t &dw_val,
+                 uint64_t &qw_val,
                  bool unparseSignedConstants = false);
 
 
   static bool bigEndian() {
     unsigned char SwapTest[2] = { 1, 0 };
     if( *(short *) SwapTest == 1 ){
-	//little endian
-	return false;
+        //little endian
+        return false;
       } else  {
-	//big endian
-	return true;
+        //big endian
+        return true;
       }
   }
 
@@ -271,15 +271,15 @@ class RoseBin_support {
 
   static bool isConditionalInstruction(SgAsmx86Instruction*inst) {
     if (x86InstructionIsConditionalControlTransfer(inst) ||
-	x86InstructionIsConditionalDataTransfer(inst))
+        x86InstructionIsConditionalDataTransfer(inst))
       return true;
     return false;
   }
 
   static bool isConditionalFlagInstruction(SgAsmx86Instruction*inst) {
     if (x86InstructionIsConditionalFlagControlTransfer(inst) ||
-	x86InstructionIsConditionalFlagDataTransfer(inst) ||
-	x86InstructionIsConditionalFlagBitAndByte(inst))
+        x86InstructionIsConditionalFlagDataTransfer(inst) ||
+        x86InstructionIsConditionalFlagBitAndByte(inst))
       return true;
     return false;
   }
@@ -290,8 +290,8 @@ class RoseBin_support {
     bool condInst = false;
     if (RoseBin_Def::RoseAssemblyLanguage==RoseBin_Def::x86) {
       if (isSgAsmx86ConditionalDataTransferInstruction(inst) ||
-	  isSgAsmx86ConditionalControlTransferInstruction(inst))
-	condInst = true;
+          isSgAsmx86ConditionalControlTransferInstruction(inst))
+        condInst = true;
     }
     return condInst;
   }
@@ -301,10 +301,10 @@ class RoseBin_support {
     bool condInst = false;
     if (RoseBin_Def::RoseAssemblyLanguage==RoseBin_Def::x86) {
       if (isSgAsmx86ConditionalFlagDataTransferInstruction(inst) ||
-	  isSgAsmx86ConditionalFlagBitAndByteInstruction(inst) ||
-	  isSgAsmx86ConditionalFlagControlTransferInstruction(inst) ||
-	  isSgAsmx86ConditionalFlagStringInstruction(inst))
-	condInst = true;
+          isSgAsmx86ConditionalFlagBitAndByteInstruction(inst) ||
+          isSgAsmx86ConditionalFlagControlTransferInstruction(inst) ||
+          isSgAsmx86ConditionalFlagStringInstruction(inst))
+        condInst = true;
     }
   return condInst;
   }
@@ -333,11 +333,11 @@ class RoseBin_support {
     std::string newComment = "";
     for (int i=0; i< (int)comment.size() ; ++i) {
       if (comment[i]=='&')
-	newComment += "&amp;";
+        newComment += "&amp;";
       else if (comment[i]=='"')
-	newComment += "&quot;";
+        newComment += "&quot;";
       else
-	newComment += comment[i];
+        newComment += comment[i];
     }
     comment = newComment;
   }
@@ -350,9 +350,9 @@ class RoseBin_support {
   }
 #else
     static inline double getTime() {
-	// tps (12/08/2009): GetTime unimplemented but will pass like this.
-		return 0;
-	}
+        // tps (12/08/2009): GetTime unimplemented but will pass like this.
+                return 0;
+        }
 #endif
 
 

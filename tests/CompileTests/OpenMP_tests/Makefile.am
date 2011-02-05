@@ -17,6 +17,8 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
 	jacobi.c \
+	alignment.c \
+	array_init.c \
 	atomic.c \
 	atoms-2.c \
 	barrier.c \
@@ -68,6 +70,9 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor4.c \
 	ompfor5.c \
 	ompfor6.c \
+	ompfor-default.c \
+	ompfor-decremental.c \
+	ompfor-static.c \
 	ompGetNumThreads.c \
 	ordered2.c \
 	ordered.c \
@@ -84,6 +89,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	recursive.c \
 	reduction2.c \
 	reduction.c \
+	reduction-classic.c \
 	rice1.c \
 	section.c \
 	set_num_threads.c \
@@ -101,6 +107,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	task_untied.c \
 	task_untied2.c \
 	task_untied3.c \
+	task_untied4.c \
 	task_underIf.c \
 	task_wait.c \
 	task_wait2.c \

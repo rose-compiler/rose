@@ -24,7 +24,7 @@ noinst_PROGRAMS = \
     buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
     deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
-    buildCommonBlock
+    buildCommonBlock doLoopNormalization buildLabelStatement2
 
 # list of test SAGE AST builders 
 annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
@@ -73,6 +73,8 @@ removeStatementCommentRelocation_SOURCES = removeStatementCommentRelocation.C
 generateUniqueName_SOURCES               = generateUniqueName.C
 buildExternalStatement_SOURCES           = buildExternalStatement.C
 buildCommonBlock_SOURCES                 = buildCommonBlock.C
+doLoopNormalization_SOURCES              = doLoopNormalization.C
+buildLabelStatement2_SOURCES	         = buildLabelStatement2.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -113,7 +115,6 @@ generatedCodeExamples = \
   rose_inputbuildNullStatement.C \
   rose_inputbuildForStmt.C \
   rose_inputcanonicalLoop.C \
-  rose_inputloopNormalization.C \
   rose_inputcollectReadWriteVariables.C \
   rose_inputtypeTraits.C \
   rose_inputlivenessAnalysis.C \
@@ -124,6 +125,7 @@ generatedCodeExamples = \
   rose_inputgetDependentDecls.C \
   rose_inputloopInterchange.C \
   rose_inputloopTiling.C \
+  rose_inputloopNormalization.C \
   rose_inputdeepDelete.C \
   rose_inputinsertStatementBeforeFunction.C \
   rose_inputRemoveStatementCommentRelocation.C \
@@ -137,7 +139,9 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   generatedCodeExamples += \
     rose_inputbuildProcedureHeaderStatement.f \
     rose_inputbuildExternalStatement.f \
-    rose_inputbuildCommonBlock.f
+    rose_inputbuildCommonBlock.f \
+    rose_inputdoLoopNormalization.f \
+    rose_inputbuildLabelStatement2.f
 endif
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
@@ -240,6 +244,10 @@ rose_inputbuildExternalStatement.f:buildExternalStatement
 	./buildExternalStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildExternalStatement.f
 rose_inputbuildCommonBlock.f:buildCommonBlock
 	./buildCommonBlock$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildCommonBlock.f
+rose_inputdoLoopNormalization.f:doLoopNormalization
+	./doLoopNormalization$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputdoLoopNormalization.f
+rose_inputbuildLabelStatement2.f:buildLabelStatement2
+	./buildLabelStatement2$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildLabelStatement2.f
 endif
 
 
@@ -317,7 +325,8 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputRemoveStatementCommentRelocation_withoutTopBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C \
        inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C \
-       inputbuildExternalStatement.f inputbuildCommonBlock.f
+       inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f \
+       inputbuildLabelStatement2.f
 
 
 check-local:

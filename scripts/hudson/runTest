@@ -178,6 +178,9 @@ fi
 CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 echo "ROSE install tree will be: $CONFIGURE_PREFIX_DIR"
 
+# Liao 1/6/2010
+# Remove the stale installation tree since the stale headers will be included before updated ones are used.
+rm -rf $CONFIGURE_PREFIX_DIR/*
 
 if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
@@ -241,11 +244,11 @@ fi
 # tps (02/04/2010) : Checking the EDG submodule version
 git submodule status
 
-if test -e ROSE-install ; then chmod -R u+w ROSE-install ; fi
+if test -e ROSE-install ; then chmod -R u+xw ROSE-install ; fi
 rm -rf ROSE-install
 
 
-if test -e ROSE-build ; then chmod -R u+w ROSE-build ; fi
+if test -e ROSE-build ; then chmod -R u+wx ROSE-build ; fi
 rm -rf ROSE-build
 mkdir ROSE-build
 cd ROSE-build

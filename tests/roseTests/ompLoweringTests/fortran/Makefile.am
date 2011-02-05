@@ -6,14 +6,29 @@ INCLUDES = $(ROSE_INCLUDES)
 GOMP_PATH = @gomp_omp_runtime_library_path@
 OMNI_PATH = @omni_omp_runtime_support_path@
 
-F77_TESTCODES_REQUIRED_TO_COMPILE = 
+F77_TESTCODES_REQUIRED_TO_COMPILE = \
+  array-one.f \
+  shared-array.f
 
 F90_TESTCODES_REQUIRED_TO_COMPILE = 
 
 F77_TESTCODES_REQUIRED_TO_RUN = \
+  array_initialize.f \
   helloworld.f \
+  jacobi.f \
+  master.f \
+  ompdo-default.f \
+  ompdo-decremental.f \
+  ompdo-static.f \
+  ompdo-orphaned.f \
+  ompdo-multiple.f \
   private.f \
-  shared.f
+  reduction.f \
+  shared.f \
+  single.f \
+  task_largenumber.f \
+  task_scalar.f \
+  task_simplest.f
 
 F90_TESTCODES_REQUIRED_TO_RUN = 
 
@@ -46,7 +61,7 @@ TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/
 ../roseomp:
 	make -C ../. roseomp
 # this flag is used for the long list of CXX test files
-TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering --edg:no_warnings #-fno-underscoring #-rose:verbose 2 #--edg:restrict #-rose:wave 
+TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-fno-underscoring #-rose:verbose 2 #--edg:restrict #-rose:wave 
 
 
 # rules to build .o from .f for OpenMP test codes
@@ -123,7 +138,7 @@ endif
 clean-local:
 	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out  rose_*.f rose_*.f90 rose_*.f95
 
-EXTRA_DIST =
+EXTRA_DIST = 
 
 CLEANFILES =
 

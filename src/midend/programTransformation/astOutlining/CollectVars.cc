@@ -94,59 +94,6 @@ Outliner::collectVars (const SgStatement* s,
         inserter (syms, syms.begin ()));
     dump (syms, "(U - L) \\cap Q = ");
   }
-
-#if 0 // Handled by OmpSupport::transOmpVariables()
-  // Collect OpenMP private variables 
-  // Is OpenMP lowering requested?
-  if  (SageInterface::getEnclosingFileNode(const_cast<SgStatement*>(s))->get_openmp_lowering())
-  {
-   // cout<<"detected openmp lowering ...."<<endl;
-    //ROSE_ASSERT(s != NULL);
-    ROSE_ASSERT(s->get_parent() != NULL);
-    SgOmpParallelStatement * p_stmt = 
-         const_cast<SgOmpParallelStatement *>(isSgOmpParallelStatement(s->get_parent()));
-    if (p_stmt) // is the target the block of a parallel region?
-    {
-#if 0
-      Rose_STL_Container<SgOmpClause*> p_clause = 
-        NodeQuery::queryNodeList<SgOmpClause>(p_stmt->get_clauses(),V_SgOmpPrivateClause);
-      if (p_clause.size()>0)  // Does a private clause exist? 
-      {
-        ROSE_ASSERT(p_clause.size() ==1); // we only expect one private clause in AST
-        //cout<<"Found private clause:"<<isSgOmpPrivateClause(p_clause[0])->unparseToString()<<endl;
-        SgInitializedNamePtrList namelist = isSgOmpPrivateClause(p_clause[0])->get_variables();
-        SgInitializedNamePtrList::const_iterator iter = namelist.begin();
-        for (; iter!=namelist.end(); iter++)
-        {
-          SgInitializedName * iname = *iter;
-          ROSE_ASSERT(iname != NULL);
-          SgSymbol* symbol = iname->get_symbol_from_symbol_table();
-          ROSE_ASSERT(symbol);
-          SgVariableSymbol* varsymbol = isSgVariableSymbol(symbol);
-          ROSE_ASSERT( varsymbol != NULL);
-          psyms.insert(varsymbol);
-        }
-      } // end if private clause
-#else
-      collectOmpClauseVars(p_stmt, psyms, V_SgOmpPrivateClause); 
-#endif
-    } // end if body of omp parallel
-
-    // set subtract  original_parameters - private_parameters  
-    // TODO private_parameters == neither live-in nor live-out variables
-    ASTtools::VarSymSet_t diff_private;
-    set_difference(syms.begin(), syms.end(), psyms.begin(), psyms.end(),
-                inserter (diff_private, diff_private.begin()));
-    syms = diff_private; 
-
-    // collect firstprivate, reduction etc. They should be kept 
-    // in both syms and fpsyms since a parameter for each of them need to be passed 
-    // and a private copy is also needed. 
-  collectOmpClauseVars(p_stmt, fpsyms, V_SgOmpFirstprivateClause); 
-  collectOmpClauseVars(p_stmt, reductionSyms, V_SgOmpReductionClause); 
-     
-  } // end if openmp lowering
-#endif  
 }
 
 // eof

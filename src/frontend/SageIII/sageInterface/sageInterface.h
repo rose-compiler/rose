@@ -144,15 +144,15 @@ struct hash_nodeptr
  */
    // Liao 1/22/2008, used for get symbols for generating variable reference nodes
    // ! Find a variable symbol in current and ancestor scopes for a given name
-   SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName &	name,
+   SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName & name,
                                                          SgScopeStatement *currentScope=NULL);
    //! Find a symbol in current and ancestor scopes for a given variable name, starting from top of ScopeStack if currentscope is not given or NULL.
-   SgSymbol *lookupSymbolInParentScopes (const SgName &	name,
+   SgSymbol *lookupSymbolInParentScopes (const SgName & name,
                                                          SgScopeStatement *currentScope=NULL);
 
    // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
    //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
-   SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &	functionName,
+   SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName & functionName,
                                                          SgScopeStatement *currentScope=NULL);
 
    // Liao, 1/24/2008, find exact match for a function
@@ -332,6 +332,8 @@ struct hash_nodeptr
    \brief Not sure the classifications right now
  */
 
+   //! Check if a node is SgOmp*Statement
+   bool isOmpStatement(SgNode* );
    /*! \brief Return true if function is overloaded.
     */
    // DQ (8/27/2005):
@@ -370,6 +372,9 @@ struct hash_nodeptr
 
   //! Get the mask expression from the header of a SgForAllStatement
   SgExpression* forallMaskExpression(SgForAllStatement* stmt);
+
+  //! Find all SgPntrArrRefExp under astNode, then add SgVarRefExp (if any) of SgPntrArrRefExp's dim_info into NodeList_t
+  void addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Container<SgNode *>& NodeList_t);
 
   // DQ (10/6/2006): Added support for faster mangled name generation (caching avoids recomputation).
   /*! \brief Support for faster mangled name generation (caching avoids recomputation).
@@ -536,7 +541,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
 
   bool isPrototypeInScope (SgScopeStatement * scope,
                            SgFunctionDeclaration * functionDeclaration,
-			   SgDeclarationStatement * startingAtDeclaration);
+                           SgDeclarationStatement * startingAtDeclaration);
 
   //!check if node1 is a strict ancestor of node 2. (a node is not considered its own ancestor)
   bool isAncestor(SgNode* node1, SgNode* node2);
@@ -791,6 +796,10 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* label);
 //!Return the loop index variable for a for loop
 SgInitializedName* getLoopIndexVariable(SgNode* loop);
 
+//!Check if a SgInitializedName is used as a loop index within a AST subtree
+//! This function will use a bottom-up traverse starting from the subtree_root to find all enclosing loops and check if ivar is used as an index for either of them. 
+bool isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree_root);
+
 //! Routines to get and set the body of a loop
 SgStatement* getLoopBody(SgScopeStatement* loop);
 
@@ -806,6 +815,9 @@ void setLoopCondition(SgScopeStatement* loop, SgStatement* cond);
 //!
 //! A canonical form is defined as : one initialization statement, a test expression, and an increment expression , loop index variable should be of an integer type.  IsInclusiveUpperBound is true when <= or >= is used for loop condition
 bool isCanonicalForLoop(SgNode* loop, SgInitializedName** ivar=NULL, SgExpression** lb=NULL, SgExpression** ub=NULL, SgExpression** step=NULL, SgStatement** body=NULL, bool *hasIncrementalIterationSpace = NULL, bool* isInclusiveUpperBound = NULL);
+
+//! Check if a Fortran Do loop has a complete canonical form: Do I=1, 10, 1
+bool isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/, bool *hasIncrementalIterationSpace/*= NULL*/, bool* isInclusiveUpperBound/*=NULL*/);
 
 //! Set the lower bound of a loop header for (i=lb; ...)
 void setLoopLowerBound(SgNode* loop, SgExpression* lb);
@@ -823,6 +835,7 @@ bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //! Normalize a for loop, return true if successful
 //!
 //! Translations are :
+//!    For the init statement: for (int i=0;... ) becomes int i; for (i=0;..)   
 //!    For test expression:
 //!           i<x is normalized to i<= (x-1) and
 //!           i>x is normalized to i>= (x+1)
@@ -831,6 +844,9 @@ bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //!           i-- is normalized to i+=-1
 //!           i-=s is normalized to i+= -s
 bool forLoopNormalization(SgForStatement* loop);
+
+//!Normalize a Fortran Do loop. Make the default increment expression (1) explicit
+bool doLoopNormalization(SgFortranDo* loop);
 
 //!  Unroll a target loop with a specified unrolling factor. It handles steps larger than 1 and adds a fringe loop if the iteration count is not evenly divisible by the unrolling factor.
 bool loopUnrolling(SgForStatement* loop, size_t unrolling_factor);
@@ -904,8 +920,11 @@ static std::vector<NodeType*> getSgNodeListFromMemoryPool()
 */
 SgFunctionDeclaration* findMain(SgNode* currentNode);
 
-	  //midend/programTransformation/partialRedundancyElimination/pre.h
-//! find referenced symbols within an expression
+//! Find the last declaration statement within a scope (if any). This is often useful to decide where to insert another declaration statement
+SgStatement* findLastDeclarationStatement(SgScopeStatement * scope);
+
+          //midend/programTransformation/partialRedundancyElimination/pre.h
+//! Find referenced symbols within an expression
 std::vector<SgVariableSymbol*> getSymbolsUsedInExpression(SgExpression* expr);
 
 //! Find break statements inside a particular statement, stopping at nested loops or switches
@@ -1042,12 +1061,12 @@ SgScopeStatement* getScope(const SgNode* astNode);
 */
   // Liao, 1/9/2008
   /*!
-  	\brief return the first global scope under current project
+        \brief return the first global scope under current project
   */
   SgGlobal * getFirstGlobalScope(SgProject *project);
 
   /*!
-	\brief get the last statement within a scope, return NULL if it does not exit
+        \brief get the last statement within a scope, return NULL if it does not exit
   */
   SgStatement* getLastStatement(SgScopeStatement *scope);
 
@@ -1145,6 +1164,12 @@ void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt, bool au
 //! Insert a list of statements after a target statement
 void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmt);
 
+//! Insert a statement after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+void insertStatementAfterLastDeclaration(SgStatement* stmt, SgScopeStatement* scope);
+
+//! Insert a list of statements after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+void insertStatementAfterLastDeclaration(std::vector<SgStatement*> stmt_list, SgScopeStatement* scope);
+
 //! Remove a statement from its attach point of the AST. Automatically keep its associated preprocessing information at the original place after the removal. The statement is still in memory and it is up to the users to decide if the removed one will be inserted somewhere else or released from memory (deleteAST()).
 void removeStatement(SgStatement* stmt, bool autoRelocatePreprocessingInfo = true);
 
@@ -1180,11 +1205,11 @@ void replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldE
 
 //! Replace a given expression with a list of statements produced by a generator
 void replaceExpressionWithStatement(SgExpression* from,
-				    SageInterface::StatementGenerator* to);
+                                    SageInterface::StatementGenerator* to);
 //! Similar to replaceExpressionWithStatement, but with more restrictions.
 //! Assumptions: from is not within the test of a loop or ifStmt,  not currently traversing from or the statement it is in
 void replaceSubexpressionWithStatement(SgExpression* from,
-				      SageInterface::StatementGenerator* to);
+                                      SageInterface::StatementGenerator* to);
 
 //! Set operands for expressions with single operand, such as unary expressions. handle file info, lvalue, pointer downcasting, parent pointer etc.
 void setOperand(SgExpression* target, SgExpression* operand);
@@ -1244,6 +1269,12 @@ void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScop
 
 //! Fix symbol table for SgLabelStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL.
 void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
+
+//! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelRefExp are created transparently as needed.
+void setFortranNumericLabel(SgStatement* stmt, int label_value);
+
+//! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
+int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements. Should be used before attaching the statement into AST.
 void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
@@ -1385,9 +1416,9 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
   bool isNodeEqual(SgNode* node1, SgNode* node2); //?
   bool isTreeEqual(SgNode* tree1, SgNode* tree2);
 
-	//! Are two expressions equal (using a deep comparison)?
+        //! Are two expressions equal (using a deep comparison)?
   bool expressionTreeEqual(SgExpression*, SgExpression*);
-	//! Are corresponding expressions in two lists equal (using a deep comparison)?
+        //! Are corresponding expressions in two lists equal (using a deep comparison)?
   bool expressionTreeEqualStar(const SgExpressionPtrList&,
                              const SgExpressionPtrList&);
 
@@ -1508,7 +1539,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
 
   bool isPrototypeInScope (SgScopeStatement * scope,
                            SgFunctionDeclaration * functionDeclaration,
-			   SgDeclarationStatement * startingAtDeclaration);
+                           SgDeclarationStatement * startingAtDeclaration);
 
   bool MayRedefined(SgExpression* expr, SgNode* root);
   // bool isPotentiallyModified(SgExpression* expr, SgNode* root); // inlinderSupport.h
@@ -1541,7 +1572,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
   //src/midend/programTransformation/partialRedundancyElimination/pre.h
   int countComputationsOfExpressionIn(SgExpression* expr, SgNode* root);
 
-  	//src/midend/astInlining/replaceExpressionWithStatement.h
+        //src/midend/astInlining/replaceExpressionWithStatement.h
   void replaceAssignmentStmtWithStatement(SgExprStatement* from, StatementGenerator* to);
 
   void replaceSubexpressionWithStatement(SgExpression* from,
@@ -1597,7 +1628,7 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
 * get a descendent child node using preorder searching
 * get an ancestor node using bottomup/reverse searching
 
-  	// SgName or string?
+        // SgName or string?
   std::string getFunctionName (SgFunctionCallExp* functionCallExp);
   std::string getFunctionTypeName ( SgFunctionCallExp* functionCallExpression );
 

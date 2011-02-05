@@ -20,6 +20,7 @@ namespace OmpSupport
     e_omni,
     e_last_rtl
   };
+  extern unsigned int nCounter; // translation generated variable counter, used to avoid name collision
 
   extern omp_rtl_enum rtl_type; 
   typedef std::map<const SgVariableSymbol *, SgVariableSymbol *> VariableSymbolMap_t;
@@ -50,8 +51,12 @@ namespace OmpSupport
   //! Translate omp task
   void transOmpTask(SgNode* node);
 
-  //! Translate omp for
-  void transOmpFor(SgNode* node);
+  //! Translate omp for or omp do loops
+  void transOmpLoop(SgNode* node);
+
+  //! Translate Fortran omp do
+  //void transOmpDo(SgNode* node);
+
 
   //! Translate omp barrier
   void transOmpBarrier(SgNode* node);
@@ -118,8 +123,8 @@ namespace OmpSupport
   //! Get OpenMP clauses from an eligible OpenMP statement
   Rose_STL_Container<SgOmpClause*>  getClause(SgOmpClauseBodyStatement* clause_stmt, const VariantT & vt);
 
-  //! Check if an omp for loop use static schedule or not, including: default schedule, or schedule(static[,chunk_size]) 
-  bool useStaticSchedule(SgOmpForStatement* omp_for);
+  //! Check if an omp for/do loop use static schedule or not, including: default schedule, or schedule(static[,chunk_size]) 
+  bool useStaticSchedule(SgOmpClauseBodyStatement* omp_loop);
 
   //! Return a reduction variable's reduction operation type
   SgOmpClause::omp_reduction_operator_enum getReductionOperationType(SgInitializedName* init_name, SgOmpClauseBodyStatement* clause_stmt);
@@ -145,6 +150,10 @@ namespace OmpSupport
   //! Collect threadprivate variables within the current project, return a set to avoid duplicated elements. No input parameters are needed since it finds match from memory pools
   std::set<SgInitializedName*> collectThreadprivateVariables();
 
+  //! Special handling when trying to build and insert a variable declaration into a BB within Fortran OpenMP code
+  SgVariableDeclaration * buildAndInsertDeclarationForOmp(const std::string &name, SgType *type, SgInitializer *varInit, SgBasicBlock *orig_scope);
+  //! Find an enclosing parallel region or function definition's body
+  SgBasicBlock* getEnclosingRegionOrFuncDefinition (SgNode *);
 } // end namespace OmpSupport  
 
 #endif //OMP_LOWERING_H

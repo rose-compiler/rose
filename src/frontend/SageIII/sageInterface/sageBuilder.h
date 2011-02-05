@@ -125,6 +125,9 @@ SgReferenceType* buildReferenceType(SgType *base_type = NULL);
 //SgModifierType* buildModifierType(SgType *base_type = NULL);
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType for a number of the functions below.
+//! Build a modifier type.
+SgModifierType* buildModifierType(SgType* base_type = NULL);
+
 //! Build a const type.
 SgModifierType* buildConstType(SgType* base_type = NULL);
 
@@ -331,11 +334,11 @@ BUILD_UNARY_PROTO(VarArgEndOp)
 
 //! Build a type casting expression
 SgCastExp * buildCastExp(SgExpression *  operand_i = NULL,
-		SgType * expression_type = NULL,
-		SgCastExp::cast_type_enum cast_type = SgCastExp::e_C_style_cast);
+                SgType * expression_type = NULL,
+                SgCastExp::cast_type_enum cast_type = SgCastExp::e_C_style_cast);
 SgCastExp * buildCastExp_nfi(SgExpression *  operand_i,
-		SgType * expression_type,
-		SgCastExp::cast_type_enum cast_type);
+                SgType * expression_type,
+                SgCastExp::cast_type_enum cast_type);
 
 //! Build vararg op expression
 SgVarArgOp * buildVarArgOp_nfi(SgExpression *  operand_i, SgType * expression_type);
@@ -350,10 +353,10 @@ SgPlusPlusOp* buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode 
 
 SgNewExp * buildNewExp(SgType* type, 
                        SgExprListExp* exprListExp, 
-		       SgConstructorInitializer* constInit, 
-		       SgExpression* expr, 
-		       short int val, 
-		       SgFunctionDeclaration* funcDecl);
+                       SgConstructorInitializer* constInit, 
+                       SgExpression* expr, 
+                       short int val, 
+                       SgFunctionDeclaration* funcDecl);
  
 
 #undef BUILD_UNARY_PROTO
@@ -464,6 +467,9 @@ SgVarRefExp * buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scop
  */
 SgVarRefExp* buildOpaqueVarRefExp(const std::string& varName,SgScopeStatement* scope=NULL);
 
+//! Build a Fortran numeric label ref exp
+SgLabelRefExp * buildLabelRefExp(SgLabelSymbol * s);
+
 //! Build SgFunctionRefExp based on a C++ function's name and function type. It will lookup symbol table internally starting from scope. A hidden prototype will be created internally to introduce a new function symbol if the function symbol cannot be found. 
 SgFunctionRefExp * buildFunctionRefExp(const SgName& name, const SgType* func_type, SgScopeStatement* scope=NULL);
 
@@ -542,9 +548,12 @@ buildFunctionParameterTypeList(SgFunctionParameterList * paralist);
 SgFunctionParameterTypeList *
 buildFunctionParameterTypeList(SgExprListExp * expList);
 
-//! Build an empty SgFunctionParameterTypeList 
+//! Build an SgFunctionParameterTypeList from SgTypes. To build an
 SgFunctionParameterTypeList *
-buildFunctionParameterTypeList();
+buildFunctionParameterTypeList(SgType* type0 = NULL, SgType* type1 = NULL,
+                               SgType* type2 = NULL, SgType* type3 = NULL,
+                               SgType* type4 = NULL, SgType* type5 = NULL,
+                               SgType* type6 = NULL, SgType* type7 = NULL);
 
 
 //--------------------------------------------------------------
@@ -611,6 +620,10 @@ buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_t
 SgMemberFunctionDeclaration *
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
 
+//! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
+SgMemberFunctionDeclaration *
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope);
+
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
 SgMemberFunctionDeclaration *
 buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL);
@@ -653,6 +666,9 @@ SgLabelStatement * buildLabelStatement_nfi(const SgName& name, SgStatement * stm
 //! Build a goto statement
 SgGotoStatement * buildGotoStatement(SgLabelStatement *  label=NULL);
 SgGotoStatement * buildGotoStatement_nfi(SgLabelStatement *  label);
+
+//! Build a goto statement from a label symbol, supporting both C/C++ and Fortran cases
+SgGotoStatement * buildGotoStatement(SgLabelSymbol*  symbol);
 
 //! Build a case option statement
 SgCaseOptionStmt * buildCaseOptionStmt( SgExpression * key = NULL,SgStatement *body = NULL);

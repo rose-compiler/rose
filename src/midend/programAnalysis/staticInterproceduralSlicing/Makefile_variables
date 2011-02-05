@@ -1,0 +1,63 @@
+# Non-recursive Makefile
+
+mpaStaticInterproceduralSlicing_includes=\
+	-I$(mpaStaticInterproceduralSlicingPath)/.. \
+	-I$(mpaStaticInterproceduralSlicingPath)/../dataflowAnalysis \
+	-I$(mpaStaticInterproceduralSlicingPath)/../CFG \
+	-I$(top_srcdir)/src/midend/loopProcessing \
+	-I$(top_srcdir)/src/midend/astUtil \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	-I$(top_srcdir)/src/midend/astUtil/annotation \
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs
+
+
+# DQ (1/2/2007): Copied the ControlFlowGraph.C and ControlFlowGraph.h from ../dominatorTreesAndDominanceFrontiers
+# since that directory has been deprecated.
+
+mpaStaticInterproceduralSlicing_la_sources=\
+	$(mpaStaticInterproceduralSlicingPath)/ControlDependenceGraph.C \
+	$(mpaStaticInterproceduralSlicingPath)/DataDependenceGraph.C \
+	$(mpaStaticInterproceduralSlicingPath)/MergedDependenceGraph.C \
+	$(mpaStaticInterproceduralSlicingPath)/CreateSlice.C \
+	$(mpaStaticInterproceduralSlicingPath)/SlicingInfo.C \
+	$(mpaStaticInterproceduralSlicingPath)/CreateSliceSet.C \
+	$(mpaStaticInterproceduralSlicingPath)/DependenceGraph.C \
+	$(mpaStaticInterproceduralSlicingPath)/FunctionDependenceGraph.C \
+	$(mpaStaticInterproceduralSlicingPath)/SystemDependenceGraph.C \
+	$(mpaStaticInterproceduralSlicingPath)/DefUseExtension.C \
+	$(mpaStaticInterproceduralSlicingPath)/EDefUse.C \
+	$(mpaStaticInterproceduralSlicingPath)/ControlFlowGraph.C
+
+
+mpaStaticInterproceduralSlicing_includeHeaders=\
+	$(mpaStaticInterproceduralSlicingPath)/DebugTool.h \
+	$(mpaStaticInterproceduralSlicingPath)/DefUseExtension.h \
+	$(mpaStaticInterproceduralSlicingPath)/DependenceGraph.h \
+	$(mpaStaticInterproceduralSlicingPath)/InterproceduralInfo.h \
+	$(mpaStaticInterproceduralSlicingPath)/SimpleDirectedGraph.h \
+	$(mpaStaticInterproceduralSlicingPath)/SlicingInfo.h \
+	$(mpaStaticInterproceduralSlicingPath)/EDefUse.h \
+	$(mpaStaticInterproceduralSlicingPath)/SDGLibraryExtender.h \
+	$(mpaStaticInterproceduralSlicingPath)/CreateSlice.h \
+	$(mpaStaticInterproceduralSlicingPath)/CreateSliceSet.h \
+	$(mpaStaticInterproceduralSlicingPath)/ControlFlowGraph.h
+
+
+mpaStaticInterproceduralSlicing_extraDist=\
+	$(mpaStaticInterproceduralSlicingPath)/CMakeLists.txt
+
+
+mpaStaticInterproceduralSlicing_cleanLocal=\
+	rm -rf \
+		$(mpaStaticInterproceduralSlicingPath)/Templates.DB \
+		$(mpaStaticInterproceduralSlicingPath)/ii_files \
+		$(mpaStaticInterproceduralSlicingPath)/ti_files \
+		$(mpaStaticInterproceduralSlicingPath)/cxx_templates
+
+
+mpaStaticInterproceduralSlicing_distCleanLocal=\
+	rm -rf \
+		$(mpaStaticInterproceduralSlicingPath)/Templates.DB

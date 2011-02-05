@@ -64,7 +64,7 @@ unsigned int CallGraph::Node::label_count = 0; // First node will be numbered 1
 
 //--------------------------------------------------------------------------------------------------------------------
 CallGraph::CallGraph (IRInterface &_ir, IRProcIterator *procInter, 
-		      const SymHandle& _name) 
+                      const SymHandle& _name) 
   : ir(_ir)
 {
   entry = exit = NULL;
@@ -125,7 +125,7 @@ CallGraph::build_graph(IRProcIterator* procIter)
 // Recursively build all statement blocks within a procedure
 void
 CallGraph::build_graph_from_block(CallGraph::Node* currProcNode,
-				  IRStmtIterator* stmtIter)
+                                  IRStmtIterator* stmtIter)
 {
   // Iterate over the statements of this block adding procedure references
   for ( ; stmtIter->IsValid(); ++(*stmtIter)) {
@@ -157,9 +157,9 @@ CallGraph::build_graph_from_block(CallGraph::Node* currProcNode,
     case STRUCT_MULTIWAY_CONDITIONAL: {
       int numcases = ir.NumMultiCases(stmt);
       for (int i = 0; i < numcases; ++i) {
-	IRStmtIterator* it = ir.MultiBody(stmt, i);
-	build_graph_from_block(currProcNode, it);
-	delete it;
+        IRStmtIterator* it = ir.MultiBody(stmt, i);
+        build_graph_from_block(currProcNode, it);
+        delete it;
       }
       IRStmtIterator* it = ir.GetMultiCatchall(stmt);
       build_graph_from_block(currProcNode, it);
@@ -175,13 +175,13 @@ CallGraph::build_graph_from_block(CallGraph::Node* currProcNode,
       // Iterate over procedure calls of a statement
       IRCallsiteIterator* callsiteIt = ir.GetCallsites(stmt);
       for ( ; callsiteIt->IsValid(); ++(*callsiteIt)) {
-	ExprHandle expr = callsiteIt->Current();
-	SymHandle sym = ir.GetSymHandle(expr);
-	
-	// Add a node (if nonexistent) and edge
-	CallGraph::Node* node = FindOrAddNode(sym);
-	node->add_use(expr);
-	connect(currProcNode, node, NORMAL_EDGE);
+        ExprHandle expr = callsiteIt->Current();
+        SymHandle sym = ir.GetSymHandle(expr);
+        
+        // Add a node (if nonexistent) and edge
+        CallGraph::Node* node = FindOrAddNode(sym);
+        node->add_use(expr);
+        connect(currProcNode, node, NORMAL_EDGE);
       }
       delete callsiteIt;
       break;

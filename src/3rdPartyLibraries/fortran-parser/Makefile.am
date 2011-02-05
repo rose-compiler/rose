@@ -114,7 +114,7 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
 	   filename=`basename $$f`; \
       echo "filename = $$filename"; \
       if test -e $$f; then \
-         echo "Using OFP source file $$f from version $(OFP_VERSION) found in OpenFortranParser-${OFP_VERSION}.jar file."; \
+         echo "Using OFP source file $f from version $(OFP_VERSION) found in OpenFortranParser-${OFP_VERSION}.jar file."; \
          cp $$f $$filename; \
       else \
          echo "Warning: $$f is not found in jar file."; \
@@ -127,7 +127,7 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
                cp ${srcdir}/$$filename $$filename; \
             fi; \
          else \
-            echo "Error: can't use default (version 0.8.1) OFP source file $filename_without_path with OpenFortranParser-${OFP_VERSION}.jar file."; \
+            echo "Error: can't use default (version 0.8.1) OFP source file $$filename with OpenFortranParser-${OFP_VERSION}.jar file."; \
             exit 1; \
          fi; \
       fi; \

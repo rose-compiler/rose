@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <err.h>
+#include <unistd.h>
 
 int main() {
   int result = syscall(224);

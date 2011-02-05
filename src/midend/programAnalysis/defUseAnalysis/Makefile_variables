@@ -1,0 +1,67 @@
+# Non-recursive Makefile
+
+if ROSE_USE_GCC_OMP
+mpaDefUseAnalysis_includesOmp=\
+	-DROSE_GCC_OMP 
+endif
+
+
+mpaDefUseAnalysis_includes=\
+	-I$(mpaDefUseAnalysisPath)/.. \
+	-I$(mpaDefUseAnalysisPath)/../dataflowAnalysis \
+	-I$(mpaDefUseAnalysisPath)/../CFG \
+	-I$(top_srcdir)/src/midend/loopProcessing \
+	-I$(top_srcdir)/src/midend/astUtil \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	-I$(top_srcdir)/src/midend/astUtil/annotation \
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal  \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	$(mpaDefUseAnalysis_includesOmp)
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+# DQ (11/8/2007): The runTest.cpp file was moved to tests/roseTests/programAnalysisTests/defUseAnalysisTests/runTest.C by Thomas.
+# libDefUseAnalysis_la_SOURCES = $(srcdir)/GlobalVarAnalysis.cpp $(srcdir)/DefUseAnalysis.cpp $(srcdir)/DefUseAnalysis_perFunction.cpp $(srcdir)/dfaToDot.cpp $(srcdir)/runTest.cpp
+mpaDefUseAnalysis_la_sources=\
+	$(mpaDefUseAnalysisPath)/GlobalVarAnalysis.cpp \
+	$(mpaDefUseAnalysisPath)/DefUseAnalysis.cpp \
+	$(mpaDefUseAnalysisPath)/DefUseAnalysis_perFunction.cpp \
+	$(mpaDefUseAnalysisPath)/dfaToDot.cpp \
+	$(mpaDefUseAnalysisPath)/LivenessAnalysis.cpp \
+	$(mpaDefUseAnalysisPath)/DefUseAnalysisAbstract.cpp
+
+
+mpaDefUseAnalysis_includeHeaders=\
+	$(mpaDefUseAnalysisPath)/DefUseAnalysis.h \
+	$(mpaDefUseAnalysisPath)/BottomUpTraversalLiveness.h \
+	$(mpaDefUseAnalysisPath)/DefUseAnalysis_perFunction.h \
+	$(mpaDefUseAnalysisPath)/DFAFilter.h \
+	$(mpaDefUseAnalysisPath)/DFAnalysis.h \
+	$(mpaDefUseAnalysisPath)/dfaToDot.h \
+	$(mpaDefUseAnalysisPath)/GlobalVarAnalysis.h \
+	$(mpaDefUseAnalysisPath)/support.h \
+	$(mpaDefUseAnalysisPath)/LivenessAnalysis.h \
+	$(mpaDefUseAnalysisPath)/DefUseAnalysisAbstract.h
+
+
+mpaDefUseAnalysis_extraDist=\
+	$(mpaDefUseAnalysisPath)/CMakeLists.txt
+
+
+mpaDefUseAnalysis_cleanLocal=\
+	rm -rf \
+		$(mpaDefUseAnalysisPath)/Templates.DB \
+		$(mpaDefUseAnalysisPath)/ii_files \
+		$(mpaDefUseAnalysisPath)/ti_files \
+		$(mpaDefUseAnalysisPath)/cxx_templates
+
+
+mpaDefUseAnalysis_distCleanLocal=\
+	rm -rf \
+		$(mpaDefUseAnalysisPath)/Templates.DB

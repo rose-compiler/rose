@@ -11,6 +11,11 @@ SUBDIRS = LANL_POP gfortranTestSuite
 # #######################
 
 F90_TESTCODES_REQUIRED_TO_PASS = \
+     test2011_01.f90 \
+     test2011_02.f90 \
+     test2011_04.f90 \
+     test2011_06.f90 \
+     test2011_07.f90 \
      test2007_01.f90 \
      test2007_02.f90 \
      test2007_03.f90 \
@@ -192,13 +197,79 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_142.f90 \
      test2010_143.f90 \
      test2010_144.f90 \
+     test2010_150.f90 \
+     test2010_151.f90 \
+     test2010_152.f90 \
+     test2010_153.f90 \
+     test2010_154.f90 \
+     test2010_155.f90 \
+     test2010_156.f90 \
+     test2010_158.f90 \
+     test2010_159.f90 \
+     test2010_160.f90 \
+     test2010_161.f90 \
+     test2010_162.f90 \
+     test2010_163.f90 \
+     test2010_165.f90 \
+     test2010_166.f90 \
+     test2010_167.f90 \
+     test2010_168.f90 \
      test2010_172.f90 \
      test2010_173.f90 \
      test2010_174.f90 \
      test2010_182.f90 \
      test2010_183.f90 \
      test2010_184.f90 \
+     test2011_05.f90 \
+     test2011_08.f90 \
+     test2011_09.f90 \
+     test2011_10.f90 \
+     test2011_12.f90 \
+     test2011_13.f90 \
+     test2011_14.f90 \
+     test2011_15.f90 \
+     test2011_16.f90 \
+     test2011_17.f90 \
+     test2011_19.f90 \
+     test2011_20.f90 \
+     test2011_36.f90 \
+     test2011_39.f90 \
+     test2011_40.f90 \
      canonicalExample.f90
+
+# DQ (1/31/2011): Some F90 testcodes need to be be F03 testcodes.  These are
+# fixed as only F03 codes (note that test2011_26.f03 is already a F03 code).
+#     test2011_24.f90
+#     test2011_25.f90
+#     test2011_27.f90
+#     test2011_28.f90
+#     test2011_29.f90
+#     test2011_30.f90
+#     test2011_31.f90
+#     test2011_32.f90
+#     test2011_33.f90
+#     test2011_34.f90
+#     test2011_35.f90
+
+# DQ (1/18/2011): Failing tests.
+#     test2007_100.f90
+#     test2007_135.f90 
+#     test2007_219.f90 
+#     test2010_35.f90
+#     test2010_49.f90
+#     test2010_59.f90 
+#     test2010_136.f90 
+#     test2010_151.f90 
+#     test2010_154.f90 
+#     test2010_174.f90 
+#     test2011_05.f90 
+
+
+# DQ (1/20/2011): Failing tests.
+#     test2007_248.f90 
+#     test2010_49.f90 
+#     test2010_136.f90 
+#     test2010_151.f90 
 
 # This used to work, but fails how that test2010_172.f90 and test2010_184.f90 pass
 # It seems that these are mutually exclusive!!!
@@ -220,6 +291,13 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
 if !ROSE_USING_GFORTRAN_VERSION_4_0
  # These are tests that fail using the gfrotran version 4.0 compiler (but pass with all other versions of gfortran).
    F90_TESTCODES_REQUIRED_TO_PASS += test2007_263.f90
+endif
+
+# DQ (2/1/2011): These test codes will not pass the initial syntax checking with the GNU gfortran version 4.4.x compiler.
+if !ROSE_USING_GFORTRAN_VERSION_4_4
+   F90_TESTCODES_REQUIRED_TO_PASS += \
+     test2010_164.f90 \
+     test2011_37.f90 
 endif
 
 
@@ -307,6 +385,16 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2010_68.f \
      test2010_69.f
 
+# DQ (1/18/2011): Failing tests.
+#     test2007_150.f 
+#     test2007_209.f 
+#     test2007_227.f 
+#     test2007_232.f 
+
+# DQ (1/20/2011): Failing tests.
+#     test2007_227.f 
+
+
 F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_30.f03 \
      test2007_31.f03 \
@@ -336,7 +424,24 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2010_178.f03 \
      test2010_179.f03 \
      test2010_180.f03 \
-     test2010_181.f03
+     test2010_181.f03 \
+     test2011_24.f03 \
+     test2011_25.f03 \
+     test2011_27.f03 \
+     test2011_28.f03 \
+     test2011_29.f03 \
+     test2011_30.f03 \
+     test2011_31.f03 \
+     test2011_32.f03 \
+     test2011_33.f03 \
+     test2011_34.f03 \
+     test2011_35.f03 
+
+# DQ (1/18/2011): Failing tests.
+#     test2007_133.f03 
+
+# DQ (1/20/2011): Failing tests.
+#     test2007_133.f03 
 
 # DQ (4/3/2010): Added test code used in Fortran OpenMP tests.
 OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS = \
@@ -353,7 +458,8 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS += $(OPENMP_TESTS_F77_TESTCODES_REQU
 
 
 if !ROSE_USING_GFORTRAN_VERSION_4_1
-   F03_TESTCODES_REQUIRED_TO_PASS += test2007_43.f03
+# This now passes as part of the F03_TESTCODES_REQUIRED_TO_PASS tests
+#   F03_TESTCODES_REQUIRED_TO_PASS += test2007_43.f03
 endif
 
 # #######################
@@ -369,7 +475,6 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2007_84.f90 \
      test2007_87.f90 \
      test2007_88.f90 \
-     test2007_103.f90 \
      test2007_107.f90 \
      test2007_108.f90 \
      test2007_131.f90 \
@@ -446,27 +551,44 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_147.f90 \
      test2010_148.f90 \
      test2010_149.f90 \
-     test2010_150.f90 \
-     test2010_151.f90 \
-     test2010_152.f90 \
-     test2010_153.f90 \
-     test2010_154.f90 \
-     test2010_155.f90 \
-     test2010_156.f90 \
-     test2010_158.f90 \
-     test2010_159.f90 \
-     test2010_160.f90 \
-     test2010_161.f90 \
-     test2010_162.f90 \
-     test2010_163.f90 \
-     test2010_164.f90 \
-     test2010_165.f90 \
-     test2010_166.f90 \
-     test2010_167.f90 \
-     test2010_168.f90 \
      test2010_169.f90 \
      test2010_170.f90 \
      test2010_175.f90 \
+     test2011_03.f90 \
+     test2011_11.f90 \
+     test2011_18.f90 \
+     test2011_21.f90 \
+     test2011_22.f90 \
+     test2011_23.f90 \
+     test2011_38.f90 \
+     test2011_41.f90 \
+     test2011_42.f90 \
+     test2011_43.f90 \
+     test2011_44.f90 \
+     test2011_45.f90 \
+     test2011_46.f90 \
+     test2011_47.f90 \
+     test2011_48.f90 \
+     test2011_49.f90 \
+     test2011_50.f90 \
+     test2011_51.f90 \
+     test2011_52.f90 \
+     test2011_53.f90 \
+     test2011_54.f90 \
+     test2011_55.f90 \
+     test2011_56.f90 \
+     test2011_57.f90 \
+     test2011_58.f90 \
+     test2011_59.f90 \
+     test2011_60.f90 \
+     test2011_61.f90 \
+     test2011_62.f90 \
+     test2011_63.f90 \
+     test2011_64.f90 \
+     test2011_65.f90 \
+     test2011_66.f90 \
+     test2011_67.f90 \
+     test2011_68.f90 \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
@@ -476,6 +598,8 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      X-ifStmt.f90 \
      X-pointerAttr.f90 \
      X-return-with-expr.f90
+
+# DQ(1/30/2011): Rice bugs are test2010_150.* - test2010_168.*
 
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
 #    test2008_02.f
@@ -507,8 +631,6 @@ F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2010_55.f \
      test2010_56.f \
      test2010_57.f \
-     test2010_68.f \
-     test2010_69.f \
      test2010_70.f \
      test2010_105.f \
      test2010_157.f
@@ -527,7 +649,12 @@ F03_TESTCODES_CURRENTLY_FAILING = \
      test2010_104.f03 \
      test2010_106.f03 \
      test2010_126.f03 \
-     test2010_171.f03
+     test2010_171.f03 \
+     test2011_26.f03 \
+     X-lost-func-return-type.f03 \
+     X-constructor-inititalizer.f03
+
+# DQ (1/31/2010): X-lost-func-return-type.f03 and X-constructor-inititalizer.f03 are new test codes from Rice.
 
 F08_TESTCODES_CURRENTLY_FAILING = \
      test2010_98.f08
@@ -787,7 +914,10 @@ bug3:
 	../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:output_parser_actions -I$(srcdir) -c $(srcdir)/test2010_81.f90
 
 
-
+# DQ (2/2/2011): We are now enforcing the module names are unique so that we can always run the 
+# test code in parallel and avoid name conflicts with *.mod (gfortran) and *.rmod (rose) files.
+enforce_module_name_policy:
+	$(top_srcdir)/scripts/policies/UniqueFortranModules.pl $(srcdir)
 
 
 tests:
@@ -805,6 +935,8 @@ check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
 if !ROSE_USING_GFORTRAN_VERSION_4_0
+# DQ (2/2/2011): This test presently fails (test codes are being fixed).
+	@$(MAKE) enforce_module_name_policy
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
 	@$(MAKE) testCPP_Defines

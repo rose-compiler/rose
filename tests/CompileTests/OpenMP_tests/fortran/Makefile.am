@@ -1,19 +1,34 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 F77_TESTCODES_TO_PASS = \
+    array-one.f \
+    array_initialize.f \
+    default.f \
+    exampleA251f.f \
+    flush.f \
     helloworld.f \
     helloworld0.f \
     helloworld2.f \
     jacobi.f \
-    default.f \
-    flush.f \
-    exampleA251f.f \
-    parallel.f \
+    master.f \
+    ompdo-decremental.f \
+    ompdo-default.f \
+    ompdo-multiple.f \
+    ompdo-orphaned.f \
+    ompdo-static.f \
     parallel-1.f \
     parallel-2.f \
+    parallel.f \
     private.f \
+    reduction.f \
     schedule.f \
-    shared.f
+    shared-array.f \
+    shared.f \
+    single.f \
+    task_largenumber.f \
+    task_largenumber2.f \
+    task_scalar.f \
+    task_simplest.f
 
 # DQ (3/4/2010): Added simple test code to debug fortran OFP usage.
 F77_TESTCODES_TO_PASS += testNewOFP.f
@@ -41,6 +56,8 @@ F90_TESTCODES_TO_PASS = \
 # exampleA41f.f90:  test code has error?
 # barrier.f, exmpaleA221f.f  wrong comment position for the 2nd barrier
 # exampleA11f.f  combined parallel do is attached to wrong place, and is not removed!
+# ompdo-decremental-2.f  wrong location for !$omp parallel do 
+# task_largenumber2.f : bug 495 https://outreach.scidac.gov/tracker/?func=detail&atid=185&aid=495&group_id=24
 TESTCODES_CURRENTLY_FAILING = \
     barrier.f \
     exampleA11f.f \
@@ -52,7 +69,8 @@ TESTCODES_CURRENTLY_FAILING = \
     exmpaleA221f.f \
     conditional.f \
     exampleA41f.f90 \
-    exampleA134f.f90
+    exampleA134f.f90 \
+    ompdo-decremental-2.f 
 
 #ROSE_FLAGS = -rose:openmp
 ROSE_FLAGS = -rose:openmp:ast_only

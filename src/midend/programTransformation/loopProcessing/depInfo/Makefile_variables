@@ -1,0 +1,53 @@
+
+mpt_lpDepInfo_includes=\
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+	-I$(top_srcdir)/src/midend/programTransformation/loopProcessing/driver
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpt_lpDepInfo_la_sources=\
+	$(mpt_lpDepInfoPath)/DepEDD.C \
+	$(mpt_lpDepInfoPath)/DepInfoAnal.C \
+	$(mpt_lpDepInfoPath)/ReuseAnalysis.C \
+	$(mpt_lpDepInfoPath)/DepInfo.C \
+	$(mpt_lpDepInfoPath)/DepInfoSet.C \
+	$(mpt_lpDepInfoPath)/DepRel.C \
+	$(mpt_lpDepInfoPath)/DomainInfo.C \
+	$(mpt_lpDepInfoPath)/StmtDepAnal.C
+
+
+mpt_lpDepInfo_includeHeaders=\
+	$(mpt_lpDepInfoPath)/DepEDD.h \
+	$(mpt_lpDepInfoPath)/DepInfo.h \
+	$(mpt_lpDepInfoPath)/DepInfoUpdate.h \
+	$(mpt_lpDepInfoPath)/DomainInfo.h \
+	$(mpt_lpDepInfoPath)/DepInfoAnal.h \
+	$(mpt_lpDepInfoPath)/DepInfoSet.h \
+	$(mpt_lpDepInfoPath)/DepRel.h \
+	$(mpt_lpDepInfoPath)/DomainInfoUpdate.h \
+	$(mpt_lpDepInfoPath)/ReuseAnalysis.h \
+	$(mpt_lpDepInfoPath)/StmtDepAnal.h
+
+
+mpt_lpDepInfo_extraDist=\
+	$(mpt_lpDepInfoPath)/CMakeLists.txt
+
+
+mpt_lpDepInfo_cleanLocal=\
+	rm -rf \
+		$(mpt_lpDepInfoPath)/Templates.DB \
+		$(mpt_lpDepInfoPath)/ii_files \
+		$(mpt_lpDepInfoPath)/ti_files \
+		$(mpt_lpDepInfoPath)/cxx_templates
+
+
+mpt_lpDepInfo_distCleanLocal=\
+	rm -rf \
+		$(mpt_lpDepInfoPath)/Templates.DB

@@ -1,12 +1,12 @@
-module rngdef
+module rngdef147
   implicit none
   type :: rng_state
      integer :: indexXXX
      real, dimension(7:10) :: arrayXXX
   end type rng_state
-end module rngdef
+end module rngdef147
 
-  use rngdef
+  use rngdef147
   implicit none
   real :: x
   type(rng_state) :: state

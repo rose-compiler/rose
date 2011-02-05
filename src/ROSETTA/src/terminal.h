@@ -61,7 +61,7 @@ class Terminal
   // Terminal/nonterminal for the base class of this terminal (set in the
   // NonTerminal constructor)
   Terminal* baseClass;
-		   
+                   
   // Subclasses of this AST node type
   std::vector<Terminal *>    subclasses;
 
@@ -194,7 +194,7 @@ class Terminal
   void excludeSubTreeDataPrototype ( const GrammarString & inputMemberData );
   void excludeSubTreeDataPrototype ( const std::string& inputTypeNameString,
                                      const std::string& inputVariableNameString,
-				     const std::string& defaultInitializer );
+                                     const std::string& defaultInitializer );
 
 
   // Data is handled slightly differently, there are no subtree mechanisms
@@ -205,11 +205,11 @@ class Terminal
 // AJ (12/3/2004): Added support for deleation of data members
   void setDataPrototype            ( const std::string& inputTypeNameString, 
                                      const std::string& inputVariableNameString, 
-				     const std::string& defaultInitializer,
-				     const ConstructParamEnum& constructorParameter,
-				     const BuildAccessEnum& buildAccessFunctions,
-				     const TraversalFlag& toBeTraversedDuringTreeTraversal,
-				     const DeleteFlag& delete_flag,
+                                     const std::string& defaultInitializer,
+                                     const ConstructParamEnum& constructorParameter,
+                                     const BuildAccessEnum& buildAccessFunctions,
+                                     const TraversalFlag& toBeTraversedDuringTreeTraversal,
+                                     const DeleteFlag& delete_flag,
                                      const CopyConfigEnum& toBeCopied = COPY_DATA);
 
   virtual ~Terminal ();

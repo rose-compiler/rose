@@ -47,7 +47,7 @@ public:
                                         string variablePrefix = "");
   SgVariableDeclaration*
   queryFindUnionControlVariableDeclaration (SgNode * subTree,
-					    string unionName);
+                                            string unionName);
   string generateCodeFindActiveUnionVariableTypeName (SgVariableDeclaration *
                                                       controlVariableDeclarataion);
   map<SgTypedefDeclaration*,SgType*> 

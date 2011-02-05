@@ -24,7 +24,7 @@ class CPPTypeCollection
   std::string is_known_member_function( CPPAstInterface& fa, const AstNodePtr& exp, 
                                    AstNodePtr* obj = 0, 
                                    AstInterface::AstNodeList* args = 0,
-                                   Descriptor* desc = 0);			   
+                                   Descriptor* desc = 0);                          
   std::string is_known_member_function( CPPAstInterface& fa, const SymbolicVal& exp,
                                    AstNodePtr* obj = 0,
                                    SymbolicFunction::Arguments* args = 0,
@@ -68,8 +68,8 @@ is_known_member_function( CPPAstInterface& fa, const SymbolicVal& exp, AstNodePt
 template <class Descriptor>
 std::string CPPTypeCollection<Descriptor>::
 is_known_member_function( CPPAstInterface& fa, const AstNodePtr& exp,
-			  AstNodePtr* objp, AstInterface::AstNodeList* args,
-			  Descriptor* desc)
+                          AstNodePtr* objp, AstInterface::AstNodeList* args,
+                          Descriptor* desc)
 {
   AstNodePtr obj;
   std::string fname;

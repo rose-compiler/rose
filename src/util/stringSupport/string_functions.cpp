@@ -71,7 +71,7 @@ StringUtility::htmlEscape(const std::string& s) {
     default: s2 += s[i]; break;
     }
   }
-	      return s2;
+              return s2;
 }
 
 
@@ -81,21 +81,21 @@ StringUtility::findfile(std::string patternString, std::string pathString)
      std::list<std::string> patternMatches;
 
 #if ROSE_MICROSOFT_OS
-	 printf ("Error: MSVS implementation of StringUtility::findfile required (not implemented) \n");
+         printf ("Error: MSVS implementation of StringUtility::findfile required (not implemented) \n");
 #define __builtin_constant_p(exp) (0)
-	 // tps: todo Windows: have not hit this assert yet.
-	 ROSE_ASSERT(false);
+         // tps: todo Windows: have not hit this assert yet.
+         ROSE_ASSERT(false);
 #else
-     DIR* dir;			      /* pointer to the scanned directory. */
-     struct dirent* entry;	/* pointer to one directory entry.   */
+     DIR* dir;                        /* pointer to the scanned directory. */
+     struct dirent* entry;      /* pointer to one directory entry.   */
   // struct stat dir_stat; /* used by stat().                   */
     
   /* open the directory for reading */
      dir = opendir(pathString.c_str());
      if (!dir) {
           std::cerr << "Cannot read directory:" << pathString << std::endl;
-	  perror("");
-	  return patternMatches;
+          perror("");
+          return patternMatches;
      }
 
   /* scan the directory, traversing each sub-directory, and */
@@ -103,10 +103,10 @@ StringUtility::findfile(std::string patternString, std::string pathString)
      while ((entry = readdir(dir))) {
        /* check if the pattern matchs. */
           std::string entryName = entry->d_name ? entry->d_name : "";
-	  if (entry->d_name && entryName.find(patternString) != std::string::npos) {
-	       patternMatches.push_back(pathString+"/"+entryName);
+          if (entry->d_name && entryName.find(patternString) != std::string::npos) {
+               patternMatches.push_back(pathString+"/"+entryName);
 
-	  }
+          }
 
      }
 #endif
@@ -121,12 +121,12 @@ StringUtility::readWordsInFile( std::string filename)
      std::vector<std::string> variantsToUse;
      std::fstream file_op(filename.c_str());
      if (file_op.fail()) {
-	  std::cout << "error: could not find file \"" << filename 
-	           << "\" which is meant to include the styles to enforce with " 
-		   << "the name checker." << std::endl;
-			          exit(1);    // abort program
-				      
-				  }
+          std::cout << "error: could not find file \"" << filename 
+                   << "\" which is meant to include the styles to enforce with " 
+                   << "the name checker." << std::endl;
+                                  exit(1);    // abort program
+                                      
+                                  }
 
      std::string current_word;
 
@@ -160,57 +160,57 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
      resolved_path[0] = '\0';
 
 #if ROSE_MICROSOFT_OS
-	 // tps (08/19/2010): added this function
-	 PathCanonicalize(resolved_path,relativePath.c_str());
-	 string resultingPath=string(resolved_path);
+         // tps (08/19/2010): added this function
+         PathCanonicalize(resolved_path,relativePath.c_str());
+         string resultingPath=string(resolved_path);
 #else
   // DQ (9/3/2006): Note that "realpath()" 
   // can return an error if it processes a file or directory that does not exist.  This is 
   // a problem for include paths that are specified on the commandline and which don't exist; 
   // most compilers silently ignore these and we have to at least ignore them.
-	 //	 string resultingPath="";
-	 // tps (01/08/2010) : This implementation was incorrect as it mixed char* and string. Fixed it.
-	 char* rp = realpath( relativePath.c_str(), resolved_path);
+         //      string resultingPath="";
+         // tps (01/08/2010) : This implementation was incorrect as it mixed char* and string. Fixed it.
+         char* rp = realpath( relativePath.c_str(), resolved_path);
          string resultingPath = "";
-	 if (rp!=NULL)
-	   resultingPath = string(rp);
+         if (rp!=NULL)
+           resultingPath = string(rp);
 #endif
 
-	 //printf("resultingPath == %s    printErrorIfAny == %d \n",resultingPath.c_str(),printErrorIfAny);
+         //printf("resultingPath == %s    printErrorIfAny == %d \n",resultingPath.c_str(),printErrorIfAny);
   // If there was an error then resultingPath is NULL, else it points to resolved_path.
      if ( resultingPath.empty() == true ) //== NULL )
         {
        // DQ (9/4/2006): SgProject is not available within this code since it is used to compile 
        // ROSETTA before the IR nodes are defined!  So we should just comment it out.
        // DQ (9/4/2006): Only output such warnings if verbose is set to some value greater than zero.
-	    if(printErrorIfAny == true)
-	    {
+            if(printErrorIfAny == true)
+            {
           //if (SgProject::get_verbose() > 0)
              //{
             // Output the kind of error that occured ...
-	    //Ask DAN and add checks for 64 bit machines here
-	    //extern int errno; 
-	    // Output the kind of error that occured ...  
+            //Ask DAN and add checks for 64 bit machines here
+            //extern int errno; 
+            // Output the kind of error that occured ...  
                printf ("relativePath = %s errno = %d resolved_path is undefined \n",relativePath.c_str(),errno);
                printf ("     error = %s \n",strerror(errno));
 
             // In case of error return the original relativePath
                printf ("Error: StringUtility::getAbsolutePathFromRelativePath incured an error in use of realpath() and is returning the input relativePath. \n");
              //}
-	    }
-	// printf("returnString0 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
-		returnString = relativePath;
+            }
+        // printf("returnString0 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
+                returnString = relativePath;
         }
        else
         {
        // "realpath()" worked so return the corrected absolute path.
-	// printf("returnString1 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
+        // printf("returnString1 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
           returnString = resolved_path;
         }
 
      //printf("returnString3 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
 
-	 ROSE_ASSERT(returnString.empty() == false);
+         ROSE_ASSERT(returnString.empty() == false);
 
      return returnString;
    }
@@ -224,20 +224,20 @@ StringUtility::listToString ( const list<string> & X, bool separateStrings )
   // printf ("In listToString: Print out the list of variable names (X.size() = %zu): \n",X.size());
      list<string>::const_iterator listStringElementIterator;
      for (listStringElementIterator = X.begin(); 
-		     listStringElementIterator != X.end();
-		     listStringElementIterator++)
-	{
+                     listStringElementIterator != X.end();
+                     listStringElementIterator++)
+        {
        // display each string representing a variable name
 #if 0
-	  printf ("     string element (length=%d) in nameStringList = %s \n",
-			  (*listStringElementIterator).length(),
-			  (*listStringElementIterator).c_str());
+          printf ("     string element (length=%d) in nameStringList = %s \n",
+                          (*listStringElementIterator).length(),
+                          (*listStringElementIterator).c_str());
 #endif
        // returnString += (*listStringElementIterator) + "\n";
-	  returnString += *listStringElementIterator + " ";
-	  if (separateStrings)
-	       returnString += "\n";
-	}
+          returnString += *listStringElementIterator + " ";
+          if (separateStrings)
+               returnString += "\n";
+        }
 
   // printf ("In listToString: returnString = %s \n",returnString.c_str());
      return returnString;
@@ -250,13 +250,13 @@ StringUtility::listToString ( const vector<string> & X, bool separateStrings )
      string returnString;
      vector<string>::const_iterator listStringElementIterator;
      for (listStringElementIterator = X.begin(); 
-		     listStringElementIterator != X.end();
-		     listStringElementIterator++)
-	{
-	  returnString += *listStringElementIterator + " ";
-	  if (separateStrings)
-	       returnString += "\n";
-	}
+                     listStringElementIterator != X.end();
+                     listStringElementIterator++)
+        {
+          returnString += *listStringElementIterator + " ";
+          if (separateStrings)
+               returnString += "\n";
+        }
 
      return returnString;
    }
@@ -280,34 +280,34 @@ StringUtility::stringToList ( const string & X )
 
 #if 0
      printf ("Initial value: currentPos = %d nextPos = %d remainingSubstring.length() = %d \n",
-		     currentPos,nextPos,remainingSubstring.length());
+                     currentPos,nextPos,remainingSubstring.length());
 #endif
 
   // If there is no trailing '\n' then at least include the input X string into the list
      if (nextPos == string::npos)
-	  returnStringList.push_back(X);
+          returnStringList.push_back(X);
 
      while (nextPos != string::npos)
-	{
-	  int nextSubStringLength = (nextPos - currentPos) + 0;
-	  string substring = remainingSubstring.substr(0,nextSubStringLength+0);
+        {
+          int nextSubStringLength = (nextPos - currentPos) + 0;
+          string substring = remainingSubstring.substr(0,nextSubStringLength+0);
 #if 0
-	  printf ("In stringToList: substring = [%s] \n",substring.c_str());
+          printf ("In stringToList: substring = [%s] \n",substring.c_str());
 #endif
-	  returnStringList.push_back(substring);
-	  remainingSubstring =
-		  remainingSubstring.substr(nextPos+1,(remainingSubstring.length()-nextSubStringLength)-0);
+          returnStringList.push_back(substring);
+          remainingSubstring =
+                  remainingSubstring.substr(nextPos+1,(remainingSubstring.length()-nextSubStringLength)-0);
 #if 0
-	  printf ("nextSubStringLength = %d substring = %s\n",nextSubStringLength,substring.c_str());
-	  printf ("remainingSubstring.length() = %d remainingSubstring = \n%s \n",
-			  remainingSubstring.length(),remainingSubstring.c_str());
+          printf ("nextSubStringLength = %d substring = %s\n",nextSubStringLength,substring.c_str());
+          printf ("remainingSubstring.length() = %d remainingSubstring = \n%s \n",
+                          remainingSubstring.length(),remainingSubstring.c_str());
 #endif
-	  currentPos = 0;
-	  nextPos = remainingSubstring.find('\n');
+          currentPos = 0;
+          nextPos = remainingSubstring.find('\n');
 #if 0
-	  printf ("Value in loop: currentPos = %d nextPos = %d \n",currentPos,nextPos);
+          printf ("Value in loop: currentPos = %d nextPos = %d \n",currentPos,nextPos);
 #endif
-	}
+        }
 
   // Remove any strings consisting of only CRs and null strings saved within the list
      returnStringList.remove("\n");
@@ -330,14 +330,14 @@ StringUtility::listToString ( const list<int> & X, bool separateStrings )
      string returnString;
      list<int>::const_iterator listStringElementIterator;
      for (listStringElementIterator  = X.begin(); 
-		     listStringElementIterator != X.end();
-		     listStringElementIterator++)
-	{
+                     listStringElementIterator != X.end();
+                     listStringElementIterator++)
+        {
        // display each string representing a number
-	  returnString += numberToString(*listStringElementIterator) + " ";
-	  if (separateStrings)
-	       returnString += "\n";
-	}
+          returnString += numberToString(*listStringElementIterator) + " ";
+          if (separateStrings)
+               returnString += "\n";
+        }
 
      return returnString;
    }
@@ -532,137 +532,137 @@ StringUtility::removePseudoRedundentSubstrings ( string X )
 
 #if 0
      for (i = XStringList.begin(); i != XStringList.end(); i++)
-	{
-	  printf ("AT TOP: (*i = %s) (size: %d) \n",(*i).c_str(),(*i).length());
-	}
+        {
+          printf ("AT TOP: (*i = %s) (size: %d) \n",(*i).c_str(),(*i).length());
+        }
 #endif
 
   // Two loops over the list of strings represents a quadratic complexity!
      for (i = XStringList.begin(); i != XStringList.end(); i++)
-	{
-	  string i_modifiedString;
+        {
+          string i_modifiedString;
        // printf ("At top of loop over XStringList \n");
 
        // Build list of the differences between strings
-	  list<string> listOfDifferences;
+          list<string> listOfDifferences;
 
-	  for (list<string>::iterator j = XStringList.begin(); j != XStringList.end(); j++)
-	     {
-	    // compare *i and *j and check for pseudo-redundence
-	    // printf ("top of loop through string: compare *i and *j and check for pseudo-redundence \n");
+          for (list<string>::iterator j = XStringList.begin(); j != XStringList.end(); j++)
+             {
+            // compare *i and *j and check for pseudo-redundence
+            // printf ("top of loop through string: compare *i and *j and check for pseudo-redundence \n");
 
-	    // build information about *i
-	       string::const_iterator i_diffpos        = find_if ( (*i).begin(), (*i).end(), isNumber );
+            // build information about *i
+               string::const_iterator i_diffpos        = find_if ( (*i).begin(), (*i).end(), isNumber );
 
-	    // build information about *j
-	       string::const_iterator j_diffpos        = find_if ( (*j).begin(), (*j).end(), isNumber );
+            // build information about *j
+               string::const_iterator j_diffpos        = find_if ( (*j).begin(), (*j).end(), isNumber );
 #if 0
-	       printf ("Testing (*i = %s) == (*j = %s) ) (sizes are: %d and %d) \n",
-			       (*i).c_str(),(*j).c_str(),(*i).length(),(*j).length());
+               printf ("Testing (*i = %s) == (*j = %s) ) (sizes are: %d and %d) \n",
+                               (*i).c_str(),(*j).c_str(),(*i).length(),(*j).length());
 #endif
 
-	       unsigned int i_subStringLength  = i_diffpos - (*i).begin();
-	       unsigned int j_subStringLength  = j_diffpos - (*j).begin();
+               unsigned int i_subStringLength  = i_diffpos - (*i).begin();
+               unsigned int j_subStringLength  = j_diffpos - (*j).begin();
 
-	    // printf ("i_subStringLength = %d j_subStringLength = %d \n",i_subStringLength,j_subStringLength);
+            // printf ("i_subStringLength = %d j_subStringLength = %d \n",i_subStringLength,j_subStringLength);
 
-	    // Must be the same length string AND
-	    // the same length substring occuring before the first number AND
-	    // there must have been a number in the string
-	       if ( ((*i).size() == (*j).size()) &&
-			       (i_subStringLength  == j_subStringLength)  &&
-			       (i_diffpos != (*i).end()) )
-		  {
-		 // printf ("substrings could be the same ... \n");
+            // Must be the same length string AND
+            // the same length substring occuring before the first number AND
+            // there must have been a number in the string
+               if ( ((*i).size() == (*j).size()) &&
+                               (i_subStringLength  == j_subStringLength)  &&
+                               (i_diffpos != (*i).end()) )
+                  {
+                 // printf ("substrings could be the same ... \n");
 
-		    i_modifiedString = *i; i_modifiedString[i_subStringLength] = '$';
-		    string j_modifiedString = *j; j_modifiedString[j_subStringLength] = '$';
+                    i_modifiedString = *i; i_modifiedString[i_subStringLength] = '$';
+                    string j_modifiedString = *j; j_modifiedString[j_subStringLength] = '$';
 #if 0
-		    printf ("Testing (i_modifiedString = %s) == (j_modifiedString = %s) \n",
-				    i_modifiedString.c_str(),j_modifiedString.c_str());
+                    printf ("Testing (i_modifiedString = %s) == (j_modifiedString = %s) \n",
+                                    i_modifiedString.c_str(),j_modifiedString.c_str());
 #endif
 
-		 // After modifying the strings (uniformly) see if we have a match
-		    if ( i_modifiedString == j_modifiedString )
-		       {
-		      // (*i) and (*j) match upto the value of the number
-		      // record this as a modified string
-		      // modifiedStringList.push_back(i_modifiedString);
+                 // After modifying the strings (uniformly) see if we have a match
+                    if ( i_modifiedString == j_modifiedString )
+                       {
+                      // (*i) and (*j) match upto the value of the number
+                      // record this as a modified string
+                      // modifiedStringList.push_back(i_modifiedString);
 
-		      // Remove these strings (after we finish these nested loops)
-			 listOfStringsToRemove.push_back(*i);
+                      // Remove these strings (after we finish these nested loops)
+                         listOfStringsToRemove.push_back(*i);
 
-		      // Build a string from the number that differentiates the two strings
-			 string i_numberString(1, *i_diffpos);
-			 string j_numberString(1, *j_diffpos);
+                      // Build a string from the number that differentiates the two strings
+                         string i_numberString(1, *i_diffpos);
+                         string j_numberString(1, *j_diffpos);
 #if 0
-			 printf ("Found a pseudo match between two strings: diff = %s and %s between %s and %s \n",
-					 i_numberString.c_str(),j_numberString.c_str(),(*i).c_str(),(*j).c_str());
+                         printf ("Found a pseudo match between two strings: diff = %s and %s between %s and %s \n",
+                                         i_numberString.c_str(),j_numberString.c_str(),(*i).c_str(),(*j).c_str());
 #endif
-		      // Save the differences between the pseudo matching strings
-			 listOfDifferences.push_back(i_numberString);
-			 listOfDifferences.push_back(j_numberString);
-		       }
-		  }
+                      // Save the differences between the pseudo matching strings
+                         listOfDifferences.push_back(i_numberString);
+                         listOfDifferences.push_back(j_numberString);
+                       }
+                  }
 #if 0
-	       else
-		  {
-		    printf ("No similar substrings found! \n");
-		  }
+               else
+                  {
+                    printf ("No similar substrings found! \n");
+                  }
 
-	       printf ("bottom of loop through string: compare *i and *j and check for pseudo-redundence \n");
+               printf ("bottom of loop through string: compare *i and *j and check for pseudo-redundence \n");
 #endif
-	     }
+             }
 
        // printf ("listOfDifferences.size() = %zu \n",listOfDifferences.size());
 
        // If there are any elements then we can proceed
-	  if (!listOfDifferences.empty())
-	     {
+          if (!listOfDifferences.empty())
+             {
 #if 0
-	       printf ("Base of test of *i and *j (before sort): listOfDifferences = \n%s \n",listToString(listOfDifferences).c_str());
+               printf ("Base of test of *i and *j (before sort): listOfDifferences = \n%s \n",listToString(listOfDifferences).c_str());
 #endif
-	       listOfDifferences.sort();
+               listOfDifferences.sort();
 #if 0
-	       printf ("Base of test of *i and *j (after sort): listOfDifferences = \n%s \n",listToString(listOfDifferences).c_str());
+               printf ("Base of test of *i and *j (after sort): listOfDifferences = \n%s \n",listToString(listOfDifferences).c_str());
 #endif
-	       listOfDifferences.unique();
+               listOfDifferences.unique();
 #if 0
-	       printf ("Base of test of *i and *j (after unique): listOfDifferences = \n%s \n",listToString(listOfDifferences).c_str());
-#endif
-
-	       string maxvalue = listOfDifferences.back();
-	       ROSE_ASSERT (!maxvalue.empty());
-
-#if 0
-	       printf ("Max value = %s \n",maxvalue.c_str());
+               printf ("Base of test of *i and *j (after unique): listOfDifferences = \n%s \n",listToString(listOfDifferences).c_str());
 #endif
 
-	    // char* diffpos = find_if ( modifiedString.c_str(), modifiedString.c_str()+modifiedString.length(), isMarker );
-	       string::iterator diffpos = find_if (i_modifiedString.begin(), i_modifiedString.end(), isMarker );
+               string maxvalue = listOfDifferences.back();
+               ROSE_ASSERT (!maxvalue.empty());
 
 #if 0
-	       printf ("Before copyEdit: diffpos = %c final string = %s \n",*diffpos,modifiedString.c_str());
+               printf ("Max value = %s \n",maxvalue.c_str());
 #endif
 
-	       *diffpos = maxvalue[0];
-	    // modifiedString = copyEdit(modifiedString,string("$Y"),maxvalue);
+            // char* diffpos = find_if ( modifiedString.c_str(), modifiedString.c_str()+modifiedString.length(), isMarker );
+               string::iterator diffpos = find_if (i_modifiedString.begin(), i_modifiedString.end(), isMarker );
 
 #if 0
-	       printf ("Final string = %s \n",modifiedString.c_str());
+               printf ("Before copyEdit: diffpos = %c final string = %s \n",*diffpos,modifiedString.c_str());
 #endif
 
-	       modifiedStringList.push_back(i_modifiedString);
-	     }
+               *diffpos = maxvalue[0];
+            // modifiedString = copyEdit(modifiedString,string("$Y"),maxvalue);
+
 #if 0
-	  else
-	     {
-	       printf ("No differences to process \n");
-	     }
-
-	  printf ("At base of loop over XStringList \n");
+               printf ("Final string = %s \n",modifiedString.c_str());
 #endif
-	}
+
+               modifiedStringList.push_back(i_modifiedString);
+             }
+#if 0
+          else
+             {
+               printf ("No differences to process \n");
+             }
+
+          printf ("At base of loop over XStringList \n");
+#endif
+        }
 
 #if 0
      printf ("Now sort and remove non-unique elements \n");
@@ -677,9 +677,9 @@ StringUtility::removePseudoRedundentSubstrings ( string X )
 #endif
 
      for (i = listOfStringsToRemove.begin(); i != listOfStringsToRemove.end(); i++)
-	{
-	  XStringList.remove(*i);
-	}
+        {
+          XStringList.remove(*i);
+        }
 #if 0
      printf ("After loop: XStringList.size() = %zu \n",XStringList.size());
      printf ("After loop: XStringList = %s \n",listToString(XStringList).c_str());
@@ -712,9 +712,9 @@ StringUtility::removePseudoRedundentSubstrings ( string X )
 
 #if 0
      for (i = XStringList.begin(); i != XStringList.end(); i++)
-	{
-	  printf ("AT BOTTOM: (*i = %s) (size: %d) \n",(*i).c_str(),(*i).length());
-	}
+        {
+          printf ("AT BOTTOM: (*i = %s) (size: %d) \n",(*i).c_str(),(*i).length());
+        }
 
      printf ("Returning from StringUtility::removePseudoRedundentSubstrings() (calling listToString member function) \n");
 #endif
@@ -730,9 +730,9 @@ StringUtility::isSameName ( const std::string& s1, const std::string& s2 )
   // return strcmp(fname, fileName) == 0;
   // The strings are the same only if ZERO is the return value from strcmp()
      if (s1 == s2)
-	{
-	  returnValue = true;
-	}
+        {
+          returnValue = true;
+        }
      return returnValue;
    }
 #endif
@@ -744,10 +744,10 @@ StringUtility::isSameName ( const std::string& s1, const std::string& s2 )
 // allocs memory only once
 string
 StringUtility::copyEdit (
-		const string& inputString, 
-		const string& oldToken, 
-		const string& newToken )
-		  {
+                const string& inputString, 
+                const string& oldToken, 
+                const string& newToken )
+                  {
      // std::cerr << "StringUtility::copyEdit '" << inputString << "' '" << oldToken << "' '" << newToken << "'" << std::endl;
      string returnString;
      std::string::size_type oldTokenSize = oldToken.size();
@@ -757,23 +757,23 @@ StringUtility::copyEdit (
      while (true) {
        position = inputString.find(oldToken, position);
        if (position == string::npos) {
-	 returnString += inputString.substr(lastPosition);
-	 break;
+         returnString += inputString.substr(lastPosition);
+         break;
        } else {
-	 returnString += inputString.substr(lastPosition, position - lastPosition);
-	 returnString += newToken;
-	 position = lastPosition = position + oldTokenSize;
-	     }
-	}
+         returnString += inputString.substr(lastPosition, position - lastPosition);
+         returnString += newToken;
+         position = lastPosition = position + oldTokenSize;
+             }
+        }
 
      return returnString;
    }
 
 void
 StringUtility::writeFile (
-		const string& outputString,
-		const string& fileNameString,
-		const string& directoryName)
+                const string& outputString,
+                const string& fileNameString,
+                const string& directoryName)
    {
   // char* directoryName = strdup(directoryName);
 
@@ -805,9 +805,9 @@ StringUtility::writeFile (
 
 StringUtility::FileWithLineNumbers
 StringUtility::copyEdit (
-		const StringUtility::FileWithLineNumbers& inputString, 
-		const string& oldToken, 
-		const string& newToken ) {
+                const StringUtility::FileWithLineNumbers& inputString, 
+                const string& oldToken, 
+                const string& newToken ) {
   StringUtility::FileWithLineNumbers result = inputString;
   for (unsigned int i = 0; i < result.size(); ++i) {
     result[i].str = copyEdit(result[i].str, oldToken, newToken);
@@ -817,9 +817,9 @@ StringUtility::copyEdit (
 
 StringUtility::FileWithLineNumbers
 StringUtility::copyEdit (
-		const StringUtility::FileWithLineNumbers& inputString, 
-		const string& oldToken, 
-		const StringUtility::FileWithLineNumbers& newToken ) {
+                const StringUtility::FileWithLineNumbers& inputString, 
+                const string& oldToken, 
+                const StringUtility::FileWithLineNumbers& newToken ) {
   StringUtility::FileWithLineNumbers result = inputString;
   for (unsigned int i = 0; i < result.size(); ++i) {
     string str = result[i].str;
@@ -837,7 +837,7 @@ StringUtility::copyEdit (
   return result;
 }
 
-	string 
+        string 
 StringUtility::readFile ( const string& fileName )
    {
   // Reads entire text file and places contents into a single string
@@ -852,20 +852,20 @@ StringUtility::readFile ( const string& fileName )
      ifstream inputFile;
      inputFile.open( fileName.c_str(), ios::binary );
      if (inputFile.good() != true)
-	{
-	  printf ("ERROR: File not found -- %s \n",fileName.c_str());
-	  //ROSE_ABORT();
+        {
+          printf ("ERROR: File not found -- %s \n",fileName.c_str());
+          //ROSE_ABORT();
             std::string s( "ERROR: File not found -- " );
             s += fileName;
             throw s;
-	}
+        }
 
      ROSE_ASSERT (inputFile.good() == true);
 
   // get length of file:
      inputFile.seekg (0, ios::end);
      std::streamoff length = inputFile.tellg();
-     inputFile.seekg (0, ios::beg);	  
+     inputFile.seekg (0, ios::beg);       
 
   // allocate memory:
      buffer = new char [length+1];
@@ -907,13 +907,13 @@ StringUtility::readFileWithPos ( const string& fileName )
      ifstream inputFile;
 
 
-	 inputFile.open( fileName.c_str(), ios::binary );
+         inputFile.open( fileName.c_str(), ios::binary );
 
 
      if (inputFile.good() != true)
         {
-	     printf ("ERROR: File not found -- %s \n",fileName.c_str());
-	    // ROSE_ABORT();
+             printf ("ERROR: File not found -- %s \n",fileName.c_str());
+            // ROSE_ABORT();
           std::string s( "ERROR: File not found -- " );
           s += fileName;
           throw s;
@@ -924,7 +924,7 @@ StringUtility::readFileWithPos ( const string& fileName )
   // get length of file:
      inputFile.seekg (0, ios::end);
      std::streamoff length = inputFile.tellg();
-     inputFile.seekg (0, ios::beg);	  
+     inputFile.seekg (0, ios::beg);       
 
   // allocate memory:
      buffer = new char [length+1];
@@ -1082,9 +1082,9 @@ StringUtility::indentMultilineString ( const string& inputString, int statementC
 // found
 void
 StringUtility::splitStringIntoStrings(
-		const string& inputString, 
-		char separator, 
-		vector<string>& stringList )
+                const string& inputString, 
+                char separator, 
+                vector<string>& stringList )
    {
   // This function was written by Bobby Philip in support of the newer approach toward
   // handling a broader number of back-end C++ compilers.
@@ -1095,20 +1095,20 @@ StringUtility::splitStringIntoStrings(
      while (true) {
        pos = inputString.find(separator, pos);
        if (pos == string::npos) {
-	 stringList.push_back(inputString.substr(lastPos));
-	 return;
+         stringList.push_back(inputString.substr(lastPos));
+         return;
        } else {
-	 if (pos != lastPos) {
-	   stringList.push_back(inputString.substr(lastPos, pos - lastPos));
-	     }
-	 lastPos = pos = pos + 1;
-	}
-	}
+         if (pos != lastPos) {
+           stringList.push_back(inputString.substr(lastPos, pos - lastPos));
+             }
+         lastPos = pos = pos + 1;
+        }
+        }
    }
 
 #if 0
 // DQ (2/18/2006): Added simple checksum (good enough for short strings)
-	unsigned short int 
+        unsigned short int 
 StringUtility::chksum(char *buffer, int len)
    {
   // This is a simple checksum function (obtained off the web):
@@ -1129,13 +1129,13 @@ StringUtility::chksum(char *buffer, int len)
      word = (unsigned short *) buffer;
      len >>= 1; /* Words only */
      for (i=0; i< len; i++)
-	  accum += (unsigned long) *word++;
+          accum += (unsigned long) *word++;
 
      chksm = (accum & 0xffff); /* Mask all but low word */
      chksm += (accum >> 16); /* Sum all the carries */
 
      if (chksm > 0xffff) /* If this also carried */
-	  chksm++; /* Sum this too */
+          chksm++; /* Sum this too */
      return (unsigned short) (chksm & 0xffff);
    }
 #endif
@@ -1143,7 +1143,7 @@ StringUtility::chksum(char *buffer, int len)
 
 // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
 // JJW (10/15/2007): Does this compute a ones-complement checksum like used for TCP?
-	unsigned long
+        unsigned long
 StringUtility::generate_checksum( string s )
    {
   // This function returns a unique checksum from the mangled name used 
@@ -1158,12 +1158,12 @@ StringUtility::generate_checksum( string s )
 
   // The checksum function requires a even length string (so we have to fix it up)
      if (uniqueName.size() % 2 != 0)
-	{
+        {
        // printf ("Adding another character to make string an even valued length \n");
        // Use a character that does not appear in mangled 
        // names so that no other mangled name could include it.
-	  uniqueName += "#";
-	}
+          uniqueName += "#";
+        }
      ROSE_ASSERT(uniqueName.size() % 2 == 0);
 
   // Call a simple checksum function
@@ -1175,13 +1175,13 @@ StringUtility::generate_checksum( string s )
      accum = 0;
      unsigned int len  = uniqueName.size() / 2; /* Words only */
      for (unsigned int i=0; i< len; i++)
-	  accum += (unsigned long) (((unsigned short*)uniqueName.data())[i]);
+          accum += (unsigned long) (((unsigned short*)uniqueName.data())[i]);
 
      chksm = (accum & 0xffff); /* Mask all but low word */
      chksm += (accum >> 16); /* Sum all the carries */
 
      if (chksm > 0xffff) /* If this also carried */
-	  chksm++; /* Sum this too */
+          chksm++; /* Sum this too */
      unsigned short checksum = (unsigned short) (chksm & 0xffff);
 
   // printf ("Checksum = %d \n",checksum);
@@ -1211,23 +1211,23 @@ StringUtility::stripPathFromFileName ( const string & fileNameWithPath )
      strcpy(c_version, fileNameWithPath.c_str());
 
 #if ROSE_MICROSOFT_OS
-//	 printf ("Error: basename() not available in MSVS (work around not implemented) \n");
-//	 ROSE_ASSERT(false);
+//       printf ("Error: basename() not available in MSVS (work around not implemented) \n");
+//       ROSE_ASSERT(false);
    char drive[_MAX_DRIVE];
    char dir[_MAX_DIR];
    char fname[_MAX_FNAME];
    char ext[_MAX_EXT];
 
    _splitpath(c_version,drive,dir,fname,ext);
-	 // tps (08/17/2010) - Made this work under Windows. 
-	 string fnamestr(fname);
-	 string extstr(ext);
-	 returnString = fnamestr+extstr;
+         // tps (08/17/2010) - Made this work under Windows. 
+         string fnamestr(fname);
+         string extstr(ext);
+         returnString = fnamestr+extstr;
 #else
      returnString = basename(c_version);
 #endif
 
-	 return returnString;
+         return returnString;
 #endif
 
 #if 0
@@ -1273,9 +1273,9 @@ StringUtility::stripPathFromFileName ( const string & fileNameWithPath )
      const char *startOfString = &(fileNameWithPath[0]);
      const char *search = &(fileNameWithPath[len]);
      while ((search >= startOfString) && ('/' != *search))
-	{
-	  --search;
-	}
+        {
+          --search;
+        }
      ++search;
 
      char *returnString = new char[1 + len - (search - startOfString)];
@@ -1324,11 +1324,11 @@ StringUtility::stripFileSuffixFromFileName ( const string & fileNameWithSuffix )
      const char *lastDot = strrchr(startOfString, '.');
      const size_t lengthOfFileWithoutSuffix = ((lastDot == NULL) ? fileNameWithPath.size() : (lastDot - fileNameWithSuffix));
      string returnString = fileNameWithSuffix.substr(
-		     char *returnString = new char[lengthOfFileWithoutSuffix + 1];
-		     ROSE_ASSERT(NULL != returnString);
-		     returnString[lengthOfFileWithoutSuffix] = '\0';
-		     return (char *)memcpy(returnString, fileNameWithSuffix, 
-			     lengthOfFileWithoutSuffix);
+                     char *returnString = new char[lengthOfFileWithoutSuffix + 1];
+                     ROSE_ASSERT(NULL != returnString);
+                     returnString[lengthOfFileWithoutSuffix] = '\0';
+                     return (char *)memcpy(returnString, fileNameWithSuffix, 
+                             lengthOfFileWithoutSuffix);
 #endif
    }
 
@@ -1374,14 +1374,14 @@ StringUtility::getPathFromFileName ( const string & fileNameWithPath )
    char fname[_MAX_FNAME];
    char ext[_MAX_EXT];
 
-	 _splitpath(c_version,drive,dir,fname,ext);
-//	 printf ("Error: dirname() not supported in MSVS 9work around not implemented) \n");
-//	 printf ("dirname = %s \n",dir);
-	 // tps (08/17/2010) - Made this work under Windows.
-	 string drivestr(drive);
-	 string dirstr(dir);
-	 string returnString = drivestr+dirstr;
-//	 ROSE_ASSERT(false);
+         _splitpath(c_version,drive,dir,fname,ext);
+//       printf ("Error: dirname() not supported in MSVS 9work around not implemented) \n");
+//       printf ("dirname = %s \n",dir);
+         // tps (08/17/2010) - Made this work under Windows.
+         string drivestr(drive);
+         string dirstr(dir);
+         string returnString = drivestr+dirstr;
+//       ROSE_ASSERT(false);
 #else
      string returnString = dirname(c_version);
 #endif
@@ -1422,23 +1422,23 @@ StringUtility::escapeNewLineCharaters ( const string & X )
      int stringLength = X.length();
 
      for (int i=0; i < stringLength; i++)
-	{
-	  if ( X[i] == '\n' )
-	     {
-	       returnString += "\\l";
-	     }
-	  else
-	     {
-	       if ( X[i] == '\"' )
-		  {
-		    returnString += "\\\"";
-		  }
-	       else
-		  {
-		    returnString += X[i];
-		  }
-	     }
-	}
+        {
+          if ( X[i] == '\n' )
+             {
+               returnString += "\\l";
+             }
+          else
+             {
+               if ( X[i] == '\"' )
+                  {
+                    returnString += "\\\"";
+                  }
+               else
+                  {
+                    returnString += X[i];
+                  }
+             }
+        }
 
      return returnString;
    }

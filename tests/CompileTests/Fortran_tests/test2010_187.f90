@@ -1,4 +1,4 @@
-module m
+module mtest2010_187
   type t
     integer :: i
   end type t
@@ -8,4 +8,4 @@ contains
     dimension x(:)
 !    print *, x(1)%i
   end subroutine s
-end module m
+end module mtest2010_187

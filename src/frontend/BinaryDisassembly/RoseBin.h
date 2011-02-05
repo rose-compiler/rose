@@ -36,9 +36,9 @@ class RoseBin : public RoseBin_abstract {
  public:
 
   RoseBin(char* host, 
-	  char* user, 
-	  char* passw, 
-	  char* dbase) {
+          char* user, 
+          char* passw, 
+          char* dbase) {
     RoseBin_support::setDebugMode(true);    
     //    RoseBin_support::setDebugMode(false);    
         RoseBin_support::setDataBaseSupport(true);    

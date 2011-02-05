@@ -50,7 +50,7 @@ class FdFindCopiesVisitor: public AstSimpleProcessing {
 };
 
 void replaceCopiesOfExpression(SgExpression* src, SgExpression* tgt, 
-			       SgNode* root) {
+                               SgNode* root) {
 #ifdef FD_DEBUG
   cout << "replaceCopiesOfExpression: src = " << src->unparseToString() << ", tgt = " << tgt->unparseToString() << ", root = " << root->unparseToString() << endl;
 #endif
@@ -113,26 +113,26 @@ class FdFindModifyingStatementsVisitor
       case V_SgLshiftAssignOp:
       case V_SgRshiftAssignOp:
       if (anyOfListPotentiallyModifiedIn(syms, n))
-	mods.push_back(isSgExpression(n));
+        mods.push_back(isSgExpression(n));
       break;
 
       case V_SgPlusPlusOp:
       case V_SgMinusMinusOp:
       if (anyOfListPotentiallyModifiedIn(syms, n))
-	mods.push_back(isSgExpression(n));
+        mods.push_back(isSgExpression(n));
       break;
 
       case V_SgAssignInitializer: {
-	SgAssignInitializer* init = isSgAssignInitializer(n);
-	assert (init);
-	for (unsigned int i = 0; i < syms.size(); ++i) {
-	  SgInitializedName* initname = syms[i]->get_declaration();
-	  if (init->get_parent() == initname ||
-	      init->get_parent()->get_parent() == initname) {
-	    initializersToSplit.push_back(init);
-	    break;
-	  }
-	}
+        SgAssignInitializer* init = isSgAssignInitializer(n);
+        assert (init);
+        for (unsigned int i = 0; i < syms.size(); ++i) {
+          SgInitializedName* initname = syms[i]->get_declaration();
+          if (init->get_parent() == initname ||
+              init->get_parent()->get_parent() == initname) {
+            initializersToSplit.push_back(init);
+            break;
+          }
+        }
       }
       break;
 
@@ -207,8 +207,8 @@ SgExpression* doFdVariableUpdate(
 // an arbitrary expression (which will be used as-is) or one of the form (var,
 // (something, value)) (which will be changed to (var = value)).
 void doFiniteDifferencingOne(SgExpression* e, 
-			     SgBasicBlock* root,
-			     RewriteRule* rules)
+                             SgBasicBlock* root,
+                             RewriteRule* rules)
    {
      SgStatementPtrList& root_stmts = root->get_statements();
      SgStatementPtrList::iterator i;
@@ -330,7 +330,7 @@ void doFiniteDifferencingOne(SgExpression* e,
                          lhs->set_parent(add);
                          one->set_parent(add);
                          replaceCopiesOfExpression(lhs,add,eCopy);
-	                    }
+                            }
                     break;
 
                     case V_SgMinusMinusOp:
@@ -557,7 +557,7 @@ void moveForDeclaredVariables(SgNode* root)
 #if 0
                SgStatementPtrList::iterator fiiter = std::find(inits.begin(), inits.end(), decls[j]);
                assert (fiiter != inits.end());
-	       size_t idx = fiiter - inits.begin();
+               size_t idx = fiiter - inits.begin();
                inits.erase(inits.begin() + idx);
                inits.insert(inits.begin() + idx, ls.begin(), ls.end());
 #endif
@@ -636,125 +636,125 @@ class IsModifiedBadlyVisitor: public AstSimpleProcessing {
         case V_SgDoWhileStmt:
         case V_SgSwitchStatement:
         case V_SgCaseOptionStmt:
-	case V_SgForStatement:
-	case V_SgForInitStatement:
+        case V_SgForStatement:
+        case V_SgForInitStatement:
 #ifdef FD_DEBUG
         cout << "Statement: Variable " << initname->get_name().getString() << " is safe" << endl;
 #endif
         // Safe
         break;
 
-	case V_SgPlusPlusOp:
-	case V_SgMinusMinusOp:
+        case V_SgPlusPlusOp:
+        case V_SgMinusMinusOp:
 #ifdef FD_DEBUG
         cout << "Inc/dec: Variable " << initname->get_name().getString() << " is safe" << endl;
 #endif
-	// Safe
-	break;
+        // Safe
+        break;
 
-	case V_SgAddOp:
-	case V_SgSubtractOp:
-	case V_SgMinusOp:
-	case V_SgUnaryAddOp:
-	case V_SgNotOp:
-	case V_SgPointerDerefExp:
-	case V_SgBitComplementOp:
-	case V_SgThrowOp:
-	case V_SgEqualityOp:
-	case V_SgLessThanOp:
-	case V_SgLessOrEqualOp:
-	case V_SgGreaterThanOp:
-	case V_SgGreaterOrEqualOp:
-	case V_SgNotEqualOp:
-	case V_SgMultiplyOp:
-	case V_SgDivideOp:
-	case V_SgIntegerDivideOp:
-	case V_SgModOp:
-	case V_SgAndOp:
-	case V_SgOrOp:
-	case V_SgBitAndOp:
-	case V_SgBitOrOp:
-	case V_SgBitXorOp:
-	case V_SgCommaOpExp:
-	case V_SgLshiftOp:
-	case V_SgRshiftOp:
-	case V_SgAssignInitializer:
+        case V_SgAddOp:
+        case V_SgSubtractOp:
+        case V_SgMinusOp:
+        case V_SgUnaryAddOp:
+        case V_SgNotOp:
+        case V_SgPointerDerefExp:
+        case V_SgBitComplementOp:
+        case V_SgThrowOp:
+        case V_SgEqualityOp:
+        case V_SgLessThanOp:
+        case V_SgLessOrEqualOp:
+        case V_SgGreaterThanOp:
+        case V_SgGreaterOrEqualOp:
+        case V_SgNotEqualOp:
+        case V_SgMultiplyOp:
+        case V_SgDivideOp:
+        case V_SgIntegerDivideOp:
+        case V_SgModOp:
+        case V_SgAndOp:
+        case V_SgOrOp:
+        case V_SgBitAndOp:
+        case V_SgBitOrOp:
+        case V_SgBitXorOp:
+        case V_SgCommaOpExp:
+        case V_SgLshiftOp:
+        case V_SgRshiftOp:
+        case V_SgAssignInitializer:
 #ifdef FD_DEBUG
         cout << "Non-mutating: Variable " << initname->get_name().getString() << " is safe" << endl;
 #endif
-	// Safe
-	break;
+        // Safe
+        break;
 
-	case V_SgExprListExp:
-	if (isSgFunctionCallExp(n->get_parent()->get_parent())) {
-	  if (isPotentiallyModified(vr, n->get_parent()->get_parent())) {
+        case V_SgExprListExp:
+        if (isSgFunctionCallExp(n->get_parent()->get_parent())) {
+          if (isPotentiallyModified(vr, n->get_parent()->get_parent())) {
 #ifdef FD_DEBUG
             cout << "Function call: Variable " << initname->get_name().getString() << " is unsafe" << endl;
 #endif
             safe = false;
           }
-	} else if (isSgConstructorInitializer(n->get_parent()->get_parent())) {
+        } else if (isSgConstructorInitializer(n->get_parent()->get_parent())) {
 #ifdef FD_DEBUG
           cout << "Constructor: Variable " << initname->get_name().getString() << " is unsafe" << endl;
 #endif
-	  safe = false;
-	  // FIXME: constructors
-	} else {
-	  cerr << n->get_parent()->get_parent()->sage_class_name() << endl;
-	  assert (!"Unknown SgExprListExp case");
-	}
-	break;
+          safe = false;
+          // FIXME: constructors
+        } else {
+          cerr << n->get_parent()->get_parent()->sage_class_name() << endl;
+          assert (!"Unknown SgExprListExp case");
+        }
+        break;
 
-	case V_SgAssignOp:
-	case V_SgPlusAssignOp:
-	case V_SgMinusAssignOp: {
-	  SgBinaryOp* binop = isSgBinaryOp(vr->get_parent());
-	  SgExpression* rhs = binop->get_rhs_operand();
-	  bool lhs_good = (binop->get_lhs_operand() == vr);
+        case V_SgAssignOp:
+        case V_SgPlusAssignOp:
+        case V_SgMinusAssignOp: {
+          SgBinaryOp* binop = isSgBinaryOp(vr->get_parent());
+          SgExpression* rhs = binop->get_rhs_operand();
+          bool lhs_good = (binop->get_lhs_operand() == vr);
 #ifdef FD_DEBUG
           cout << "Assign case for " << initname->get_name().getString() << endl;
           cout << "lhs_good = " << (lhs_good ? "true" : "false") << endl;
 #endif
-	  SgAddOp* rhs_a = isSgAddOp(rhs);
-	  SgExpression* rhs_a_lhs = rhs_a ? rhs_a->get_lhs_operand() : 0;
-	  SgExpression* rhs_a_rhs = rhs_a ? rhs_a->get_rhs_operand() : 0;
-	  if (lhs_good) {
-	    if (isSgValueExp(binop->get_rhs_operand())) {
-	      // Safe
-	    } else if (isSgVarRefExp(rhs)) {
-	      // Safe
-	    } else if (isSgCastExp(binop->get_rhs_operand()) &&
-		       isSgValueExp(isSgCastExp(binop->get_rhs_operand())
-			->get_operand())) {
-	      // Safe
-	    } else if (isSgAssignOp(binop) && 
-		       rhs_a &&
-		       ((isSgVarRefExp(rhs_a_lhs) && 
-			  isSgVarRefExp(rhs_a_lhs)->get_symbol()
-			     ->get_declaration() == initname) ||
-		        (isSgVarRefExp(rhs_a_rhs) && 
-			  isSgVarRefExp(rhs_a_rhs)->get_symbol()
-			     ->get_declaration() == initname))) {
-	      // Safe
-	    } else {
+          SgAddOp* rhs_a = isSgAddOp(rhs);
+          SgExpression* rhs_a_lhs = rhs_a ? rhs_a->get_lhs_operand() : 0;
+          SgExpression* rhs_a_rhs = rhs_a ? rhs_a->get_rhs_operand() : 0;
+          if (lhs_good) {
+            if (isSgValueExp(binop->get_rhs_operand())) {
+              // Safe
+            } else if (isSgVarRefExp(rhs)) {
+              // Safe
+            } else if (isSgCastExp(binop->get_rhs_operand()) &&
+                       isSgValueExp(isSgCastExp(binop->get_rhs_operand())
+                        ->get_operand())) {
+              // Safe
+            } else if (isSgAssignOp(binop) && 
+                       rhs_a &&
+                       ((isSgVarRefExp(rhs_a_lhs) && 
+                          isSgVarRefExp(rhs_a_lhs)->get_symbol()
+                             ->get_declaration() == initname) ||
+                        (isSgVarRefExp(rhs_a_rhs) && 
+                          isSgVarRefExp(rhs_a_rhs)->get_symbol()
+                             ->get_declaration() == initname))) {
+              // Safe
+            } else {
 #ifdef FD_DEBUG
-	      cout << "Assign: Variable " << initname->get_name().str() << " is unsafe because of " << binop->unparseToString() << ": " << binop->get_rhs_operand()->sage_class_name() << endl;
+              cout << "Assign: Variable " << initname->get_name().str() << " is unsafe because of " << binop->unparseToString() << ": " << binop->get_rhs_operand()->sage_class_name() << endl;
 #endif
-	      safe = false;
-	    }
-	  } else {
-	    // Safe: RHS of assignment
-	  }
-	}
-	break;
+              safe = false;
+            }
+          } else {
+            // Safe: RHS of assignment
+          }
+        }
+        break;
 
-	default: {
+        default: {
 #ifdef FD_DEBUG
-	  cout << "Default: Variable " << initname->get_name().str() << " is unsafe because of " << vr->get_parent()->unparseToString() << ": " << vr->get_parent()->sage_class_name() << endl;
+          cout << "Default: Variable " << initname->get_name().str() << " is unsafe because of " << vr->get_parent()->unparseToString() << ": " << vr->get_parent()->sage_class_name() << endl;
 #endif
-	  safe = false;
-	}
-	break;
+          safe = false;
+        }
+        break;
       }
     }
   }
@@ -781,7 +781,7 @@ void simpleIndexFiniteDifferencing(SgNode* root) {
     vector<SgInitializedName*> initnames = fiv.initnames;
     set<SgInitializedName*> safe_vars;
     for (vector<SgInitializedName*>::iterator i = initnames.begin();
-	 i != initnames.end(); ++i) {
+         i != initnames.end(); ++i) {
       SgInitializedName* initname = *i;
 #ifdef FD_DEBUG
       cout << "Found variable " << initname->get_name().str() << endl;
@@ -789,7 +789,7 @@ void simpleIndexFiniteDifferencing(SgNode* root) {
       bool safe = true;
       IsModifiedBadlyVisitor(initname, safe).traverse(body, preorder);
       if (safe)
-	safe_vars.insert(initname);
+        safe_vars.insert(initname);
 #ifdef FD_DEBUG
       cout << "Variable " << initname->get_name().str() << " is " << (safe ? "" : "not ") << "safe" << endl;
 #endif
@@ -800,13 +800,13 @@ void simpleIndexFiniteDifferencing(SgNode* root) {
     for (unsigned int i = 0; i < fmv.exprs.size(); ++i) {
       bool alreadyProcessed = false;
       for (unsigned int j = 0; j < i; ++j) {
-	if (expressionTreeEqual(fmv.exprs[i], fmv.exprs[j])) {
-	  alreadyProcessed = true;
-	  break;
-	}
+        if (expressionTreeEqual(fmv.exprs[i], fmv.exprs[j])) {
+          alreadyProcessed = true;
+          break;
+        }
       }
       if (alreadyProcessed)
-	continue;
+        continue;
 
 #ifdef FD_DEBUG
       cout << "Testing expression " << fmv.exprs[i]->unparseToString() << " for possible FD" << endl;
@@ -816,15 +816,15 @@ void simpleIndexFiniteDifferencing(SgNode* root) {
       SgExpression* expr2 = fmv.exprs[i]->get_rhs_operand();
       bool isConst1 = isSgValueExp(expr1);
       bool isSafeVar1 = isSgVarRefExp(expr1) && 
-			safe_vars.find(isSgVarRefExp(expr1)->get_symbol()
-					->get_declaration())
-			  != safe_vars.end();
+                        safe_vars.find(isSgVarRefExp(expr1)->get_symbol()
+                                        ->get_declaration())
+                          != safe_vars.end();
       bool isGood1 = isConst1 || isSafeVar1;
       bool isConst2 = isSgValueExp(expr2);
       bool isSafeVar2 = isSgVarRefExp(expr2) && 
-			safe_vars.find(isSgVarRefExp(expr2)->get_symbol()
-					->get_declaration())
-			  != safe_vars.end();
+                        safe_vars.find(isSgVarRefExp(expr2)->get_symbol()
+                                        ->get_declaration())
+                          != safe_vars.end();
       bool isGood2 = isConst2 || isSafeVar2;
 #ifdef FD_DEBUG
       cout << boolalpha << "isGood1 = " << isGood1 << ", isGood2 = " << isGood2 << endl;
@@ -833,7 +833,7 @@ void simpleIndexFiniteDifferencing(SgNode* root) {
 #ifdef FD_DEBUG
         cout << "Expression is good to run FD on" << endl;
 #endif
-	mult_exprs.push_back(fmv.exprs[i]);
+        mult_exprs.push_back(fmv.exprs[i]);
       } else {
 #ifdef FD_DEBUG
         cout << "Expression is not good to run FD on" << endl;
@@ -842,7 +842,7 @@ void simpleIndexFiniteDifferencing(SgNode* root) {
     }
     for (int i = mult_exprs.size() - 1; i >= 0; --i)
       doFiniteDifferencingOne(mult_exprs[i], body, 
-			      getFiniteDifferencingRules());
+                              getFiniteDifferencingRules());
 
     SgNode* bodyCopyForRewrite = body;
     rewrite(getAlgebraicRules(), bodyCopyForRewrite); // This might update bodyCopyForRewrite

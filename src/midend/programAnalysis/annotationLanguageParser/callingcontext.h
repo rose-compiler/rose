@@ -38,10 +38,10 @@ public:
 
   callingContext(procLocation * where,
                  operandNode * call,
-		 propertyAnalyzer * property_analyzer,
-		 procedureAnn * procedure_annotations,
-		 procedureInfo * caller,
-		 Annotations * annotations);
+                 propertyAnalyzer * property_analyzer,
+                 procedureAnn * procedure_annotations,
+                 procedureInfo * caller,
+                 Annotations * annotations);
 
   /** @brief Get the call site location */
 

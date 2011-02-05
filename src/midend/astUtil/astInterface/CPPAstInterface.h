@@ -18,7 +18,7 @@ class CPPAstInterface : public AstInterface
   // and the dot or arrow expressions nodes into 'access'
   bool IsMemberFunctionCall( const AstNodePtr& n, 
                                        AstNodePtr* obj = 0,
-	                               std::string* funcname = 0, 
+                                       std::string* funcname = 0, 
                                        AstNodePtr* access = 0,
                                        AstInterface::AstNodeList* args = 0);
   AstNodePtr CreateFunctionCall( const AstNodePtr& func, 

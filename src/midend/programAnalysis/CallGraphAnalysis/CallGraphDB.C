@@ -256,8 +256,8 @@ writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB, SgIncidenceDirectedGraph* 
               to_property->functionDeclaration->get_mangled_name().getString();
           }
 
-	  if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
-	    std::cout << "Creating edge between " << mnglName << " " << n2mnglName << " " << to_property->functionType->get_mangled( ).getString() << std::endl;
+          if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+            std::cout << "Creating edge between " << mnglName << " " << n2mnglName << " " << to_property->functionType->get_mangled( ).getString() << std::endl;
 
           st << "INSERT INTO Edges VALUES (\"" << mnglName << "\", \"" << n2mnglName << "\", \"" << edge->get_name()
             << "\", \"" << to_property->functionType->get_mangled( ).getString() << "\", \"" << cls << "\");";
@@ -372,16 +372,16 @@ solveVirtualFunctions( sqlite3x::sqlite3_connection& gDB, string dbHierarchy )
 
         sqlite3x::sqlite3_reader r = cmd.executereader();
 
-	if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
-	  cout << "Now executing: " << command;
+        if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+          cout << "Now executing: " << command;
 
         std::vector<string> inserts;
         while( r.read() )
         {
           string nnid  = r.getstring(0);
-          //	      int gid = (*itr)[1];
+          //          int gid = (*itr)[1];
           string lbl   = r.getstring(2);
-          //	      int is_def = (*itr)[3];
+          //          int is_def = (*itr)[3];
           string fType = r.getstring(4) ;
           string scope = r.getstring(3);
           command = "INSERT INTO Edges VALUES ( \"" + nid1 + "\", \"" + nnid + "\", \"" + lbl + "\", \"" + fType +

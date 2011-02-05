@@ -48,9 +48,9 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
   // compare src statements and  bin instructions
   int match_statements(int array_src_length,
                        int array_bin_length,
-		       SgNode* src_statements[],
-		       SgAsmNode* bin_statements[],
-		       std::string *output);
+                       SgNode* src_statements[],
+                       SgAsmNode* bin_statements[],
+                       std::string *output);
 
 
   bool tookSrcNodeFromStack;
@@ -66,41 +66,41 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
    * if we have a FgFunctionCallExp, then the binary instruction must be a binaryfunccall too
    *********************************************************/
   bool isFunctionCall(SgNode* srcNode,
-		      SgAsmNode* binNode,
-		      std::string *output,
-		      int &nodes_matched);
+                      SgAsmNode* binNode,
+                      std::string *output,
+                      int &nodes_matched);
 
   bool isReturnStmt(SgNode* srcNode,
-		    SgAsmNode* binNode,
-		    std::string *output,
-		    int &nodes_matched);
+                    SgAsmNode* binNode,
+                    std::string *output,
+                    int &nodes_matched);
 
   bool isVariableDeclaration(SgNode* srcNode,
                              SgAsmNode* binNode,
-			     std::string *output,
-			     int &nodes_matched,
-			     int array_bin_length,
-			     int &bin_count,
-			     SgNode* src_statements[],
-			     SgAsmNode* bin_statements[],
-			     bool &increase_source);
+                             std::string *output,
+                             int &nodes_matched,
+                             int array_bin_length,
+                             int &bin_count,
+                             SgNode* src_statements[],
+                             SgAsmNode* bin_statements[],
+                             bool &increase_source);
 
   bool isAssignOp(SgNode* srcNode,
-		  SgAsmNode* binNode,
-		  std::string *output,
-		  int &nodes_matched,
-		  int array_bin_length,
-		  int array_src_length,
-		  int &bin_count,
-		  int src_count,
-		  SgNode* src_statements[],
-		  SgAsmNode* bin_statements[],
-		  bool &increase_source);		  
+                  SgAsmNode* binNode,
+                  std::string *output,
+                  int &nodes_matched,
+                  int array_bin_length,
+                  int array_src_length,
+                  int &bin_count,
+                  int src_count,
+                  SgNode* src_statements[],
+                  SgAsmNode* bin_statements[],
+                  bool &increase_source);                 
 
   bool isSgPlusPlus(SgNode* srcNode,
-		    SgAsmNode* binNode,
-		    std::string *output,
-		    int &nodes_matched);
+                    SgAsmNode* binNode,
+                    std::string *output,
+                    int &nodes_matched);
 
   std::string checkVariable(SgAsmValueExpression* rhs);
   void storeVariable(std::string val, std::string name,
@@ -112,34 +112,34 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
   
 
   bool handleSourceExpression(SgExpression* expr,
-			      SgNode* src_statements[],
-			      SgAsmNode* bin_statements[],
-			      std::string *output,
-			      int &bin_count,
-			      int src_count,
-			      int &nodes_matched,
-			      int array_bin_length,
-			      int array_src_length,
-			      SgAssignOp* assign,
-			      bool dont_increase_bool_count);
+                              SgNode* src_statements[],
+                              SgAsmNode* bin_statements[],
+                              std::string *output,
+                              int &bin_count,
+                              int src_count,
+                              int &nodes_matched,
+                              int array_bin_length,
+                              int array_src_length,
+                              SgAssignOp* assign,
+                              bool dont_increase_bool_count);
 
   SgExpression* isExpression( SgExpression* expr,
-			      SgNode* src_statements[],
-			      SgAsmNode* bin_statements[],
-			      std::string *output,
-			      int &bin_count,
-			      int src_count,
-			      int &nodes_matched,
-			      int array_bin_length,
-			      int array_src_length,
-			      bool& keep_binary_node);
+                              SgNode* src_statements[],
+                              SgAsmNode* bin_statements[],
+                              std::string *output,
+                              int &bin_count,
+                              int src_count,
+                              int &nodes_matched,
+                              int array_bin_length,
+                              int array_src_length,
+                              bool& keep_binary_node);
 
   std::string last_src_variable_left;
 
   std::string resolve_binaryInstruction(SgAsmInstruction* mov,
-					std::string *left,
-					std::string *right,
-					std::string varName);
+                                        std::string *left,
+                                        std::string *right,
+                                        std::string varName);
 
   bool existsVariable(std::string value);
 
@@ -149,10 +149,10 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
 
   void resolve_bin_vardecl_or_assignment(bool &isVarDecl0, 
                                          bool &isVarDecl1,
-					 bool &isAssign0,
-					 bool &isAssign1,
-					 SgAsmx86Instruction* mov
-					 );
+                                         bool &isAssign0,
+                                         bool &isAssign1,
+                                         SgAsmx86Instruction* mov
+                                         );
 
  public:
 
@@ -172,12 +172,12 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
 
   // compare a src function and a binary function
   void checkFunctions(std::string name,
-		      SgFunctionDeclaration* funcDecl,
-		      SgAsmFunctionDeclaration* binDecl);
+                      SgFunctionDeclaration* funcDecl,
+                      SgAsmFunctionDeclaration* binDecl);
 
   // filter instructions that are known
   bool instruction_filter(SgAsmStatement* stat, std::string name,
-			  std::string *output);
+                          std::string *output);
 
 
 };

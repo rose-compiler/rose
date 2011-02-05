@@ -20,11 +20,11 @@ class RoseBin_GMLGraph : public RoseBin_Graph {
   std::map < SgAsmFunctionDeclaration*, int > funcMap;
 
   void printEdges_single( VirtualBinCFG::AuxiliaryInformation* info,
-			  bool forward_analysis, std::ofstream& myfile);
+                          bool forward_analysis, std::ofstream& myfile);
   void printEdges_multiple( VirtualBinCFG::AuxiliaryInformation* info,
-			  bool forward_analysis, std::ofstream& myfile);
+                          bool forward_analysis, std::ofstream& myfile);
   void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-			  bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge);
+                          bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge);
 
   bool skipFunctions;
   bool skipInternalEdges;

@@ -1,0 +1,25 @@
+
+mptFiniteDifferencing_includes=\
+	-I${top_srcdir}/src/midend/programAnalysis/CFG 
+
+
+mptFiniteDifferencing_la_sources=\
+	$(mptFiniteDifferencingPath)/finiteDifferencing.C \
+	$(mptFiniteDifferencingPath)/patternRewrite.C
+
+
+mptFiniteDifferencing_includeHeaders=\
+	$(mptFiniteDifferencingPath)/finiteDifferencing.h \
+	$(mptFiniteDifferencingPath)/patternRewrite.h
+
+
+mptFiniteDifferencing_extraDist=\
+	$(mptFiniteDifferencingPath)/CMakeLists.txt
+
+
+mptFiniteDifferencing_cleanLocal=\
+	rm -rf \
+		$(mptFiniteDifferencingPath)/Templates.DB \
+		$(mptFiniteDifferencingPath)/ii_files \
+		$(mptFiniteDifferencingPath)/ti_files \
+		$(mptFiniteDifferencingPath)/core
