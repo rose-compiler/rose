@@ -1,0 +1,118 @@
+Hints for using XEmacs with ROSE
+
+General Features:
+   * Can run in a text terminal or as a GUI, and is portable across
+     all versions of MS Windows (native or cygwin), Mac OS X, Linux,
+     and nearly every version of Unix in existence.  All GUI functions
+     have a corresponding keyboard invocation; in fact, many diehard
+     XEmacs users never even touch the mouse.
+
+   * Multiple GUI windows (aka, "frames"). Each frame (GUI or text)
+     can be split into an arbitrary number of horizontal and/or
+     vertical panes, each of which can be a window into a separate
+     file or different locations in the same file.
+
+   * Can edit an arbitrary number of files simultaneously in a single
+     editing session.  The user is warned if a file they're editing
+     changes under them (e.g., you do a "git checkout FILE" while
+     you're editing FILE).
+
+   * Context-sensitive, language-aware, customizable and extendible
+     indentation engines.  These engines generally indent code
+     automatically as it is typed and can reindent large regions of
+     code on demand. The "cc-mode" package is the indentation engine
+     for C, C++, and Java.
+
+   * Syntax-based highlighting (colorizing) for most languages.
+
+   * Highly customizable using LISP.
+
+   * There's a "vi" mode for people that can't live without vi key
+     bindings.  I used this 20 years ago when switching from vi to
+     emacs and being a vi power user (i.e., I knew and used every vi
+     command at the time) wasn't too impressed.
+
+   * Searching by full regular expressions (Perl style).
+
+   * Extensive on-line help system called "info" for XEmacs itself,
+     the GNU C library, and many system tools.  Can also view man
+     pages.
+
+   * Able to bookmark locations in active buffers so you can easily
+     jump back and forth. For instance, I often bookmark an error line
+     as "e" so that as I search around other source files I can jump
+     back back to the error very quickly.
+
+   * It is said that XEmacs capabilities "include everything and
+     the kitchen sink." You can use Usenet news groups and email, you
+     can look up definitions of words, run LISP programs, use a
+     terminal emulator, browse the web, check spelling of a word or
+     region, etc.
+
+   * XEmacs can remember your current location in each file between
+     invocations of XEmacs (although this isn't usually an issue for
+     me since I keep XEmacs runnings for days at a time).
+
+Features specific to ROSE programming:
+
+   * You can compile ROSE inside XEmacs and then jump immediately to
+     each line that produced an error or warning message.  There's
+     a "grep" mode that works similarly (grep for a pattern and then
+     jump to each match).
+
+   * You can run GDB inside XEmacs and XEmacs will make sure that the
+     current line of code is always displayed.
+
+   * C++ code is automatically indented as you type, and intra-line
+     spacing can also be adjusted (Robb's pilf-mode).
+
+   * The func-menu system scans C code to build a pull-down menu
+     of all the function definitions in the file (also accessible in
+     non-GUI mode), so there's no more searching through the file to
+     find functions.
+
+   * The "etags" system can build an index of functions and types
+     across the entire ROSE source code, so finding a definition is
+     often just a matter of typing its name (or even just the first
+     few characters).  The index can also be used to search for
+     arbitrary text strings across multiple files.
+
+   * Can be configured so pressing the "Tab" key does various
+     things: (re)indent the current line using the indentation engine
+     appropriate for the language being edited, or advance to the next
+     tab stop as defined by the user.  Insert actual TAB characters or
+     an appropriate number of SPACE characters.
+
+   * Can be configured so Backspace and Delete keys are "hungry",
+     eating up as much white space as possible.
+
+   * Rectangle mode ("C-x r" commands) can be used to line things up
+     vertically. E.g., you just added a new member to an enum and the
+     new symbol is longer than all the others, so all the nicely lined
+     up "=" signs need to be shifted right a bit -- you just open up a
+     rectangle.
+
+   * Block comments are free flowing.  You just type away and XEmacs
+     will insert line feeds and decoration.  If you edited a block
+     comment you can "refill" it so all the lines are approximately
+     the same length again.
+
+Getting started:
+
+   Have a look at Robb's configuration and his pilf-mode.  They're
+   both contained in the "xemacs" directory of his DeveloperScripts
+   repository:
+
+     $ git clone git://spizella.com/~matzke/DeveloperScripts
+
+   If you rename the "xemacs" directory to ~/.xemacs then XEmacs will
+   see it and load it. There might be some other dependencies in
+   init.el that you'll need to comment out or download separately.
+
+   The help system is entered with "C-h i". You might want to comment
+   out the part of Robb's init.el file that inhibits the startup
+   message.
+
+   Wikipedia has a good article about Emacs in general (XEmacs is
+   a 20 year old fork of Emacs and both branches remain largely
+   compatible with each other): http://en.wikipedia.org/wiki/Emacs
