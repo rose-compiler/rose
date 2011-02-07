@@ -50,8 +50,8 @@ public:
   /** @brief Create a new property */
 
   propertyAnn(const parserID * name,
-	      Direction direction,
-	      propertyKind kind)
+              Direction direction,
+              propertyKind kind)
     : Ann(name->line()),
       _name(name->name()),
       _is_enabled(true),

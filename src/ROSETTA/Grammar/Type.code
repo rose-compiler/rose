@@ -832,6 +832,16 @@ HEADER_TYPE_DEFAULT_TYPE_START
 
 HEADER_TYPE_DEFAULT_TYPE_END
 
+HEADER_TYPE_LABEL_TYPE_START
+
+       // Generated a mangled name that accounts for the stored name internally.
+       // SgName get_mangled (void) const;
+
+      //! Label type creation to support intermediate types built during parsing (required for fortran only).
+          static SgTypeLabel* createType ( const SgName & nameOfType );
+
+HEADER_TYPE_LABEL_TYPE_END
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -2328,6 +2338,72 @@ SgTypeDefault::createType ( const SgName & nameOfType )
    }
 
 SOURCE_TYPE_DEFAULT_TYPE_END
+
+
+SOURCE_TYPE_LABEL_TYPE_START
+
+SgName
+SgTypeLabel::get_mangled (void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+     SgName mangled_name;
+     mangled_name << "__" << "MANGLED_ID_LABEL_TYPE" << "b__" // start tag
+                  << p_name.str() // name of default type
+                  << "__" << "MANGLED_ID_LABEL_TYPE" << "e__"; // end tag
+
+#if 0
+     printf ("LEAVING: In SgTypeLabel::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#endif
+
+     return mangled_name;
+   }
+
+SgTypeLabel*
+SgTypeLabel::createType ( const SgName & nameOfType )
+   {
+     SgTypeLabel* returnType = new SgTypeLabel();
+     if (nameOfType.is_null() == false)
+        {
+          returnType->set_name(nameOfType);
+        }
+     ROSE_ASSERT(returnType != NULL);
+
+     SgName name = returnType->get_mangled();
+
+#if 0
+     printf ("In SgTypeLabel::createType(): Building a label type = %p mangled name = %s \n",returnType,name.str());
+#endif
+
+  // Only look for pointers to type in the global type table.
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+
+     if (t == NULL)
+        {
+       // The pointer type was not found in the type table, put it into the global type table.
+#if 0
+          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+          get_globalTypeTable()->insert_type(name,returnType);
+        }
+       else
+        {
+       // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+          printf ("Mangled type name for SgStringType = %s (already exists in type table) \n",name.str());
+#endif
+          ROSE_ASSERT(t != returnType);
+
+          delete returnType;
+          returnType = NULL;
+
+          returnType = isSgTypeLabel(t);
+        }
+
+     return returnType;
+   }
+
+SOURCE_TYPE_LABEL_TYPE_END
 
 
 SOURCE_POINTER_TYPE_START

@@ -6148,7 +6148,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
           sp,sp->class_name().c_str(),symbolBasis,symbolBasis != NULL ? symbolBasis->class_name().c_str() : "NULL");
 #endif
 
-#if 0
+#if 1
   // #if SYMBOL_TABLE_ERROR_CHECKING
   // SgFunctionTypeSymbol does not have a valid get_symbol_basis(), so skip this case!
      if (isSgFunctionTypeSymbol(sp) == NULL)

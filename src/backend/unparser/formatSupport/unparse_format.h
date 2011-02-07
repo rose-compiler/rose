@@ -108,8 +108,8 @@ class UnparseFormat
        // DQ (2/16/2004): Make this part of the public interface (to control old-style K&R C function definitions)
           void insert_newline(int i = 1, int indent = -1);
 
-	  //   private:
-	  //Unparser* unp;
+          //   private:
+          //Unparser* unp;
      public:
        // UnparserFormat(Unparser* unp,std::ostream* _os, UnparseFormatHelp *help = NULL):unp(unp){};
           UnparseFormat( std::ostream* _os = NULL, UnparseFormatHelp *help = NULL );

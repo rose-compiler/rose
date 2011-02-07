@@ -143,7 +143,7 @@ operator()( const SymbolicVal& orig)
     SymbolicFunctionDeclarationGroup elem;
     if (anal.is_array_construct_op( fa, arrayExp, 0, 0, 0, &elem)) {
       if (! elem.get_val( args, result))
-	assert(false);
+        assert(false);
       result = ReplaceVal( result, *this);
     }
     else if (!fa.IsVarRef(arrayExp)) {
@@ -157,7 +157,7 @@ operator()( const SymbolicVal& orig)
       args.clear();
       args.push_back(dim);
       if (! len.get_val( args, result))
-	assert(false);
+        assert(false);
       result = ReplaceVal( result, *this);
     }
     else if (!fa.IsVarRef(arrayExp)) {
@@ -256,15 +256,15 @@ operator () ( AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
          AstNodePtr cur = (*p);
          AstNodePtr ncur = cur;
          if (operator()(fa, cur, ncur))
-	     fa.BlockAppendStmt( result, ncur);
+             fa.BlockAppendStmt( result, ncur);
          else
-	     fa.BlockAppendStmt( result, cur);
+             fa.BlockAppendStmt( result, cur);
       }
       if (reshape) {
          AstInterface::AstNodeList argList;
          for (int i = 0; i < dimension; ++i) {
-	   AstNodePtr curlen = lenlist[i].CodeGen(fa);
-	   argList.push_back( curlen);
+           AstNodePtr curlen = lenlist[i].CodeGen(fa);
+           argList.push_back( curlen);
          }
          AstNodePtr reshapeStmt = ArrayAnnotation::get_inst()->create_reshape_array(fa,modArray, argList);
          fa.BlockAppendStmt(result, reshapeStmt);

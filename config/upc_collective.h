@@ -23,7 +23,7 @@ typedef enum {
   UPC_MAX,
   UPC_FUNC,
   UPC_NONCOMM_FUNC
-  } upc_opt_t;
+  } upc_op_t; // IR (12/8/2010): spelling mistake from upc_opt_t to upc_op_t rectified.
 
 /* 7.3.1 Re-localization Operations*/
 extern void upc_all_broadcast(shared void * restrict dst, shared const void * restrict src, size_t nbytes, upc_flag_t flags);
@@ -41,7 +41,9 @@ extern void upc_all_permute(shared void * restrict dst, shared const void * rest
 /* 7.3.2 Computational Operations */
 
 /* DQ (9/18/2010): Added upc_op_t type (not clear why it is not already defined) */
-typedef size_t upc_op_t;
+// Indranil (12/8/2010): Shouldn't need it anymore. Commented out.
+// upc_op_t was defined in the enum just defined above, but mispelled as upt_opt_t
+// typedef size_t upc_op_t;
 
 #define UPC_TWO_REDUCE_PROTOTYPES(typecode,fulltype) \
   extern void upc_all_reduce##typecode (shared void * restrict dst, \

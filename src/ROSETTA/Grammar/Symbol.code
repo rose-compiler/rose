@@ -54,13 +54,19 @@ HEADER_LABEL_SYMBOL_START
       //! Type of label used (fortran only)
           enum label_type_enum
              {
-               e_unknown_label_type     = 0,
-               e_non_numeric_label_type = 1,
-               e_start_label_type       = 2,
-               e_else_label_type        = 3,
-               e_end_label_type         = 4,
-               e_last_label_type        = 5
+               e_unknown_label_type      = 0,
+               e_non_numeric_label_type  = 1,
+               e_start_label_type        = 2,
+               e_else_label_type         = 3,
+               e_end_label_type          = 4,
+            // DQ (2/1/2011): Added support for Fortran specific alternative return labels.
+               e_alternative_return_type = 5,
+               e_last_label_type         = 6
              };
+
+       // DQ (2/1/2011): Added support for named lable to handle arternative return parameters in Fortran.
+       // SgLabelSymbol ( const SgName & name );
+          SgLabelSymbol ( SgInitializedName* initializedName );
 
 HEADER_LABEL_SYMBOL_END
 
@@ -313,6 +319,7 @@ SgLabelSymbol::get_name() const
        else
         {
           SgStatement* fortranStatement = get_fortran_statement();
+#if 0
           ROSE_ASSERT(fortranStatement != NULL);
 
        // int numericLabel = fortranStatement->get_numeric_label();
@@ -320,11 +327,28 @@ SgLabelSymbol::get_name() const
        // printf ("SgLabelSymbol::get_name(): numericLabel = %d \n",numericLabel);
 
           name = StringUtility::numberToString(numericLabel);
+#else
+          if (fortranStatement != NULL)
+             {
+               int numericLabel = get_numeric_label_value();
+               name = StringUtility::numberToString(numericLabel);
+             }
+            else
+             {
+            // DQ (2/2/2011): Fortran specific code.
+               SgInitializedName* alternativeReturnDeclaration = get_fortran_alternate_return_parameter();
+               if (alternativeReturnDeclaration != NULL)
+                  {
+                    name = alternativeReturnDeclaration->get_name();
+                  }
+             }
+#endif
         }
 
      return name;
    }
 
+// DQ (2/1/2011): This function has the wrong semantics for the case of labels.
 // DQ (2/6/2007): This returns the basis for the SHORT_GET_NAME
 SgNode*
 SgLabelSymbol::get_symbol_basis() const
@@ -332,12 +356,41 @@ SgLabelSymbol::get_symbol_basis() const
   // DQ (12/9/2007): Modified (see comment above).
   // return get_declaration();
 
-     SgStatement* returnStatement = get_declaration();
+#if 0
+  // DQ (2/2/2011): This is OK since this is the C/C++ semantics.
+  // DQ (2/1/2011): This function has the wrong semantics for the case of labels.
+  // I am not clear how to handle this function, but I think it is required to support 
+  // internal testing of the symbol tables.  If we supported a pointer to the
+  // SgInitializedName object used in the function declaration's parameter list,
+  // then we could use that as a concept of declaration (similar to the semantics of 
+  // a SgVariableSymbol).
+
+     printf ("Error: This function has the wrong semantics for the case of labels. \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // SgStatement* returnStatement = get_declaration();
+     SgLocatedNode* returnStatement = get_declaration();
      if (returnStatement == NULL)
         {
           SgStatement* fortranStatement = get_fortran_statement();
+#if 0
           ROSE_ASSERT(fortranStatement != NULL);
           returnStatement = fortranStatement;
+#else
+          if (fortranStatement != NULL)
+             {
+               returnStatement = fortranStatement;
+             }
+            else
+             {
+               SgInitializedName* alternativeReturnDeclaration = get_fortran_alternate_return_parameter();
+               if (alternativeReturnDeclaration != NULL)
+                  {
+                    returnStatement = alternativeReturnDeclaration;
+                  }
+             }
+#endif
         }
 
      return returnStatement;
@@ -346,10 +399,30 @@ SgLabelSymbol::get_symbol_basis() const
 SgType*
 SgLabelSymbol::get_type() const 
    {
-  // It is not clear that the symbol should have an associated type (return NULL).
-  // return NULL;
-     return SgTypeDefault::createType();
+  // DQ (2/1/2011): Label symbols can only have a label type.
+     return SgTypeLabel::createType();
    }
+
+// DQ (2/1/2011): Added support for named lable to handle arternative return parameters in Fortran.
+SgLabelSymbol::SgLabelSymbol ( SgInitializedName* initializedName )
+   : SgSymbol()
+   {
+  // This constructor is used to support Fortran alternative return parameters in the function declaration.
+  // Note that we don't really use the name but I didn't want to make this a default constructor.
+
+  // We could support a pointer to the SgInitializedName object used in the function declaration's parameter list.
+     ROSE_ASSERT(initializedName != NULL);
+
+  // Verify that this is used correctly.
+     ROSE_ASSERT(initializedName->get_name() == "*");
+
+  // Set the internal mode to support analysis...
+     p_label_type = e_alternative_return_type;
+
+     set_fortran_alternate_return_parameter(initializedName);
+   }
+
+
 SOURCE_LABEL_SYMBOL_END
 
 

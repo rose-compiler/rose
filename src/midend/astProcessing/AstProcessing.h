@@ -1070,13 +1070,13 @@ performTraversal(SgGraphNode* node, SgIncidenceDirectedGraph* g, SgIncidenceDire
 
      std::set<SgDirectedGraphEdge*>::iterator i;
      std::set<SgDirectedGraphEdge*>::iterator j;
-     	
+        
 
     std::set<SgDirectedGraphEdge*> edgeset = g->computeEdgeSetOut(node);
     std::set<SgGraphNode*> successorset;
 
     for (std::set<SgDirectedGraphEdge*>::iterator i = edgeset.begin(); i != edgeset.end(); i++) {
-        if (std::find(currentSolving.begin(), currentSolving.end(), *i) != currentSolving.end()) {				
+        if (std::find(currentSolving.begin(), currentSolving.end(), *i) != currentSolving.end()) {                              
             successorset.insert((*i)->get_to());
         }
         //else {
@@ -1095,22 +1095,22 @@ performTraversal(SgGraphNode* node, SgIncidenceDirectedGraph* g, SgIncidenceDire
         if (child != NULL) {
         //      cout << "Child is not null" << endl;
          
-	      //if (traversed->find(child) == traversed->end()) {& traversed2.find(child) == traversed2.end() 
+              //if (traversed->find(child) == traversed->end()) {& traversed2.find(child) == traversed2.end() 
                   //std::cout << "performing traversal" << std::endl;
                   if (end == false) {
-		  performTraversal(child, g, g2, inheritedValue, graphTraversal, false, endnode, false);
+                  performTraversal(child, g, g2, inheritedValue, graphTraversal, false, endnode, false);
                   }
-		  
+                  
 //                   if (traversedlocal.find(node) == traversedlocal.end()) {
 //                      trav
          }
 //                   }
-//	      else {
+//            else {
  //               traversedlocal.insert(child);
-//	      }
+//            }
               
          else {
-	   
+           
            if (graphTraversal == BOTH || graphTraversal == SYNTHESIZED) {
                 synthesizedAttributes->push(defaultSynthesizedAttribute(inheritedValue));
            }
@@ -1207,14 +1207,14 @@ performTraversal(SgNode* node,
 
                if (child != NULL)
                   {
-		
-	   	    
-		   
-                    	performTraversal(child, inheritedValue, treeTraversalOrder);
-		    	
-		
-	           
-		//ENDEDIT
+                
+                    
+                   
+                        performTraversal(child, inheritedValue, treeTraversalOrder);
+                        
+                
+                   
+                //ENDEDIT
                    }
                  else
                   {

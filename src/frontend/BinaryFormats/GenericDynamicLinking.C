@@ -79,8 +79,8 @@ SgAsmGenericSymbol::stringifyDefState() const
 #ifndef _MSC_VER
     return stringifySgAsmGenericSymbolSymbolDefState(p_def_state);
 #else
-	ROSE_ASSERT(false);
-	return "";
+        ROSE_ASSERT(false);
+        return "";
 #endif
 }
 
@@ -90,8 +90,8 @@ SgAsmGenericSymbol::stringifyType() const
 #ifndef _MSC_VER
     return stringifySgAsmGenericSymbolSymbolType(p_type);
 #else
-	ROSE_ASSERT(false);
-	return "";
+        ROSE_ASSERT(false);
+        return "";
 #endif
 }
 
@@ -101,8 +101,8 @@ SgAsmGenericSymbol::stringifyBinding() const
 #ifndef _MSC_VER
     return stringifySgAsmGenericSymbolSymbolBinding(p_binding);
 #else
-	ROSE_ASSERT(false);
-	return "";
+        ROSE_ASSERT(false);
+        return "";
 #endif
 }
 

@@ -46,18 +46,18 @@ graph:          DIGRAPH graph_name LBRACE
                 // write nodes, gather edges to the end of the file
                 stmt_list RBRACE
                 {
-		  buf = (char *)malloc(buf_len);
+                  buf = (char *)malloc(buf_len);
                   if (!(buf > 0))
                   {
-		    cerr << "ERROR: could not allocate memory for the edges!";
-		  }
-		  while (!edges.empty())
-		  {
-		    strcat(buf, edges.front().c_str());
-		    edges.pop();
-		  }
+                    cerr << "ERROR: could not allocate memory for the edges!";
+                  }
+                  while (!edges.empty())
+                  {
+                    strcat(buf, edges.front().c_str());
+                    edges.pop();
+                  }
                   GML << buf << "\n]\n";
-		}
+                }
 
 graph_name:     STRING
 
@@ -81,11 +81,11 @@ subgraph:       SUBGRAPH NAME LBRACE
 node_stmt:      ID
                 {
                   GML << "\n\tnode [\n\t\tid " << $1; // << "\"";
-	        }
+                }
                 label_list
-		{
+                {
                   GML << "\n\t]";
-		}
+                }
 
 edge_stmt:      ID LARROW ID
                 {
@@ -95,55 +95,55 @@ edge_stmt:      ID LARROW ID
                 label_list
                 {
                   edge_str += "\n\t]";
-		  edges.push(edge_str);
-		  buf_len += edge_str.length();
+                  edges.push(edge_str);
+                  buf_len += edge_str.length();
                   in_edge_stmt = 0;
                 }
 
 label_list:     LBRK LABEL ASSGN ID
                 {
-		  // write node labels and graphical options, save edge labels and options
+                  // write node labels and graphical options, save edge labels and options
                   if (in_edge_stmt)
                     edge_str += "\n\t\tlabel \"" + (std::string)$4 + "\"";
-		  else
+                  else
                     GML << "\n\t\tlabel \"" << $4 << "\"";
                   crt_options = "\n\t\tgraphics [";
-		}
+                }
                 option_list
                 {
-		  // all nodes of the subgraph have the same color
-		  std::ostringstream cl;
-		  cl << crt_subgraph;
-		  crt_options += "\n\t\t\tfill " + cl.str() + "\n\t\t]";
+                  // all nodes of the subgraph have the same color
+                  std::ostringstream cl;
+                  cl << crt_subgraph;
+                  crt_options += "\n\t\t\tfill " + cl.str() + "\n\t\t]";
 
-		  // save the options for edges, write the options for nodes
-		  if (in_edge_stmt)
-		    edge_str += crt_options;
-		  else
-		    GML << crt_options;
+                  // save the options for edges, write the options for nodes
+                  if (in_edge_stmt)
+                    edge_str += crt_options;
+                  else
+                    GML << crt_options;
                 }
                 RBRK
                 | LBRK LABEL ASSGN STRING
                 {
                   if (in_edge_stmt)
-		  {
-		    std::string tmp = $4;
+                  {
+                    std::string tmp = $4;
                     edge_str += "\n\t\tlabel \"" + tmp  + "\"";
-		  }
-		  else
+                  }
+                  else
                     GML << "\n\t\tlabel \"" << $4 << "\"";
                   crt_options = "\n\t\tgraphics [";
-		}
+                }
                 option_list
                 {
-		  std::ostringstream cl;
-		  cl << crt_subgraph;
-		  crt_options += "\n\t\t\tfill " + cl.str() + "\n\t\t]";
+                  std::ostringstream cl;
+                  cl << crt_subgraph;
+                  crt_options += "\n\t\t\tfill " + cl.str() + "\n\t\t]";
 
-		  if (in_edge_stmt)
-		    edge_str += crt_options;
-		  else
-		    GML << crt_options;
+                  if (in_edge_stmt)
+                    edge_str += crt_options;
+                  else
+                    GML << crt_options;
                 }
                 RBRK
 
@@ -156,22 +156,22 @@ option:         DIR ASSGN NONE
                 }
                 | DIR ASSGN BOTH
                 {
-		  crt_options += "\n\t\t\tarrow \"both\"";
+                  crt_options += "\n\t\t\tarrow \"both\"";
                 }
                 | SHAPE ASSGN DIAMOND
                 {
-		  crt_options += "\n\t\t\ttype \"oval\"";
+                  crt_options += "\n\t\t\ttype \"oval\"";
                 }
 
-		// TODO: label and color are now only associated with the whole graph...
-		//... not with the nodes or inner graphs (which don't exist yet)
+                // TODO: label and color are now only associated with the whole graph...
+                //... not with the nodes or inner graphs (which don't exist yet)
 option_stmt:    LABEL ASSGN STRING
                 {
-		  GML << "\n\tLabelGraphics [\n\t\ttype \"" << $3 << "\"\n\t]";
+                  GML << "\n\tLabelGraphics [\n\t\ttype \"" << $3 << "\"\n\t]";
                 }
                 | COLOR ASSGN NAME
                 {
-		  GML << "\n\tgraphics [\n\t\toutline \"" << $3 << "\"\n\t]";
+                  GML << "\n\tgraphics [\n\t\toutline \"" << $3 << "\"\n\t]";
                 }
 %%
 

@@ -97,9 +97,9 @@ Tree::PreOrderIterator::PreOrderIterator (Tree& t)
       // reset all the preoder_next links
       std::set<Node*>::iterator ni = t.node_set.begin();
       while (ni != t.node_set.end()) {
-	Node* n = *ni;
-	n->next_preorder = 0;
-	++ni;
+        Node* n = *ni;
+        n->next_preorder = 0;
+        ++ni;
       }
       t.create_preorder_links(t.root_node);
       t.preorder_needed = false;

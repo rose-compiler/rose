@@ -113,70 +113,70 @@ class DisplayNode : public QGraphicsItem
  */
 class DisplayTreeNode : public DisplayNode
 {
-	friend class DisplayTreeGenerator;
+        friend class DisplayTreeGenerator;
 
-	public:
-		DisplayTreeNode(QGraphicsScene * scene=NULL);
-		virtual ~DisplayTreeNode();
-
-
-		DisplayTreeNode * getParent();
-		int childrenCount() const    	     { return childEdges.size(); }
-		DisplayTreeNode * getChild (int i);
-		DisplayTreeNode * getFirstChild();
-		DisplayTreeNode * getLastChild();
+        public:
+                DisplayTreeNode(QGraphicsScene * scene=NULL);
+                virtual ~DisplayTreeNode();
 
 
-		//Deletes Children in range [from,to)
-		//'to' is exclusive
-		void deleteChildren(int from, int to);
+                DisplayTreeNode * getParent();
+                int childrenCount() const            { return childEdges.size(); }
+                DisplayTreeNode * getChild (int i);
+                DisplayTreeNode * getFirstChild();
+                DisplayTreeNode * getLastChild();
 
 
-		/// Inserts a child with a given displayName in the tree
-		DisplayTreeNode * addChild(const QString & dispName);
+                //Deletes Children in range [from,to)
+                //'to' is exclusive
+                void deleteChildren(int from, int to);
 
-		/// Adds an existing DisplayTreeNode (and with it a subtree)
-		/// to the tree (DisplayTreeNode takes ownership of c)
-		void addChild(DisplayTreeNode * c);
 
-		/// Overloaded to set recursively the scene in the children
-		virtual void setScene(QGraphicsScene * s);
+                /// Inserts a child with a given displayName in the tree
+                DisplayTreeNode * addChild(const QString & dispName);
 
-		/// Additional edges for displaying can be added here
-		/// takes ownership of the edge
-		/// f.e. for debug purposes
-		void registerAdditionalEdge(DisplayEdge *e);
+                /// Adds an existing DisplayTreeNode (and with it a subtree)
+                /// to the tree (DisplayTreeNode takes ownership of c)
+                void addChild(DisplayTreeNode * c);
 
-		/// Generates a new Tree out of two separate subtrees
-		/// @param scene the scene of the merged tree, the subtrees are moved to that scene
-		/// @param name  displayName of the new root node
-		/// @param n1    left subtree
-		/// @param n2    right subtree
-		static DisplayTreeNode * mergeTrees(QGraphicsScene * scene,
+                /// Overloaded to set recursively the scene in the children
+                virtual void setScene(QGraphicsScene * s);
+
+                /// Additional edges for displaying can be added here
+                /// takes ownership of the edge
+                /// f.e. for debug purposes
+                void registerAdditionalEdge(DisplayEdge *e);
+
+                /// Generates a new Tree out of two separate subtrees
+                /// @param scene the scene of the merged tree, the subtrees are moved to that scene
+                /// @param name  displayName of the new root node
+                /// @param n1    left subtree
+                /// @param n2    right subtree
+                static DisplayTreeNode * mergeTrees(QGraphicsScene * scene,
                                                     const QString & name,
                                                     DisplayTreeNode * n1,
                                                     DisplayTreeNode * n2);
 
 
-		/// If n successing children have no subchildren and have same caption
+                /// If n successing children have no subchildren and have same caption
         /// delete them, and create node with caption "n x oldcaption"
-		/// useful f.e. in an Sage-AST when a lot nodes with the same caption
-		/// appear after each other
-		static void simplifyTree(DisplayTreeNode * node);
+                /// useful f.e. in an Sage-AST when a lot nodes with the same caption
+                /// appear after each other
+                static void simplifyTree(DisplayTreeNode * node);
 
-	protected:
-		QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+        protected:
+                QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
-		DisplayTreeNode * addChild(SgNode * sgNode);
+                DisplayTreeNode * addChild(SgNode * sgNode);
 
-		/// Child Edges go from parent to child
-		QList<DisplayEdge* > childEdges;
-		/// Additional edges, difference to childEdges: target is not deleted when node is deleted
-		/// each node deletes its outgoing additionalEdges
+                /// Child Edges go from parent to child
+                QList<DisplayEdge* > childEdges;
+                /// Additional edges, difference to childEdges: target is not deleted when node is deleted
+                /// each node deletes its outgoing additionalEdges
         QList<DisplayEdge* > additionalEdges;
 
         /// Source node of parentEdge is the parent, destination is this node
-		DisplayEdge * parentEdge;
+                DisplayEdge * parentEdge;
 };
 
 
@@ -189,13 +189,13 @@ class DisplayTreeNode : public DisplayNode
  */
 class DisplayTreeGenerator
 {
-	public:
-		DisplayTreeNode * generateTree(SgNode * sgRoot, AstFilterInterface * filter=NULL);
+        public:
+                DisplayTreeNode * generateTree(SgNode * sgRoot, AstFilterInterface * filter=NULL);
 
-	protected:
-		void visit(DisplayTreeNode * parent, SgNode * sgNode, AstFilterInterface * filter);
+        protected:
+                void visit(DisplayTreeNode * parent, SgNode * sgNode, AstFilterInterface * filter);
 
-		DisplayTreeNode * treeRoot;
+                DisplayTreeNode * treeRoot;
 };
 
 
