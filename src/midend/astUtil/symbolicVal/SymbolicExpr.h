@@ -42,7 +42,7 @@ class SymbolicTerm
             if (v.IsNIL())
                 return SymbolicConst(time1, time2); 
             else // v is not NULL
-	      if ( time1 == 1 && time2 == 1)
+              if ( time1 == 1 && time2 == 1)
                return v;
             return ApplyBinOP( op, v, SymbolicConst(time1,time2));
           }

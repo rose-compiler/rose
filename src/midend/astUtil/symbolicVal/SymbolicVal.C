@@ -191,9 +191,9 @@ std::string RelToString( CompareRel r)
   default:
     assert(false);
   }
-	// tps (12/07/2009) This part is never reached
-	assert(false);
-	return NULL;
+        // tps (12/07/2009) This part is never reached
+        assert(false);
+        return NULL;
 }
 
 
@@ -231,9 +231,9 @@ AstNodePtr  SymbolicCond :: CodeGen(AstInterface &fa) const
   default:
      assert(false);
   }
-	// tps (12/07/2009) This part is never reached
-	assert(false);
-	return fa.CreateBinaryOP(AstInterface::BOP_EQ, val1.CodeGen(fa), val2.CodeGen(fa));
+        // tps (12/07/2009) This part is never reached
+        assert(false);
+        return fa.CreateBinaryOP(AstInterface::BOP_EQ, val1.CodeGen(fa), val2.CodeGen(fa));
 }
 
 AstNodePtr SymbolicMultiply::

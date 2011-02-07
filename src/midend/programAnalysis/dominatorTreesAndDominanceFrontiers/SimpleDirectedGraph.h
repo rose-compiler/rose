@@ -116,15 +116,15 @@ public:
       std::set<SimpleDirectedGraphNode *> succs = (*i)->getSuccessors();
       std::set<SimpleDirectedGraphNode *>::iterator j;
       for (j = succs.begin(); j != succs.end(); j++) {
-	std::cout << "    succ: ";
-	_displayData(*j, std::cout);
-	std::cout << std::endl;
+        std::cout << "    succ: ";
+        _displayData(*j, std::cout);
+        std::cout << std::endl;
       }
       std::set<SimpleDirectedGraphNode *> preds = (*i)->getPredecessors();
       for (j = preds.begin(); j != preds.end(); j++) {
-	std::cout << "    pred: ";
-	_displayData(*j, std::cout);
-	std::cout << std::endl;
+        std::cout << "    pred: ";
+        _displayData(*j, std::cout);
+        std::cout << std::endl;
       }
       std::cout << std::endl;
     }
@@ -152,15 +152,15 @@ public:
       std::set<SimpleDirectedGraphNode *> succs = d1->getSuccessors();
       std::set<SimpleDirectedGraphNode *>::iterator j;
       for (j = succs.begin(); j != succs.end(); j++) {
-	SimpleDirectedGraphNode * d2 = *j;
-	
-	char buf1[sizeof(SimpleDirectedGraphNode *)*2 + 3];
-	char buf2[sizeof(SimpleDirectedGraphNode *)*2 + 3];
-	
-	sprintf(buf1, "%p", d1);
-	sprintf(buf2, "%p", d2);
+        SimpleDirectedGraphNode * d2 = *j;
+        
+        char buf1[sizeof(SimpleDirectedGraphNode *)*2 + 3];
+        char buf2[sizeof(SimpleDirectedGraphNode *)*2 + 3];
+        
+        sprintf(buf1, "%p", d1);
+        sprintf(buf2, "%p", d2);
 
-	f << "\"" << buf1 << "\" -> \"" << buf2 << "\";" << std::endl;
+        f << "\"" << buf1 << "\" -> \"" << buf2 << "\";" << std::endl;
       }
     }
 
@@ -193,31 +193,31 @@ public:
       //if we haven't already seen it, add it to our return list, and
       //push its children onto the stack
       if (reachables.count(curr) == 0) {
-	reachables.insert(curr);
+        reachables.insert(curr);
 
-	//depending on TraverseDirection, children should either be
-	//the successors or predecessors of curr
-	std::set<SimpleDirectedGraphNode *> children;
-	switch(dir) {
-	case FORWARD:
-	  children = curr->getSuccessors();
-	  break;
-	case BACKWARD:
-	  children = curr->getPredecessors();
-	  break;
-	default:
-	  //This should never happen
-	  abort();
-	  break;
-	}
+        //depending on TraverseDirection, children should either be
+        //the successors or predecessors of curr
+        std::set<SimpleDirectedGraphNode *> children;
+        switch(dir) {
+        case FORWARD:
+          children = curr->getSuccessors();
+          break;
+        case BACKWARD:
+          children = curr->getPredecessors();
+          break;
+        default:
+          //This should never happen
+          abort();
+          break;
+        }
 
-	//push the children onto the stack
-	std::set<SimpleDirectedGraphNode *>::iterator i;
-	for (i = children.begin(); i != children.end(); i++) {
-	  remaining.push(*i);
-	}
+        //push the children onto the stack
+        std::set<SimpleDirectedGraphNode *>::iterator i;
+        for (i = children.begin(); i != children.end(); i++) {
+          remaining.push(*i);
+        }
       } else {
-	//Do nothing - we've already seen this node
+        //Do nothing - we've already seen this node
       }
     }
 

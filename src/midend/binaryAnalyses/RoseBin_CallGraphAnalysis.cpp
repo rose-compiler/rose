@@ -15,7 +15,7 @@ static bool debug = false;
 void
 RoseBin_CallGraphAnalysis::findClusterOfNode(SgGraphNode* next_n,
                                              int& currentCluster,
-					     std::map<SgAsmFunctionDeclaration*,int>& visited) {
+                                             std::map<SgAsmFunctionDeclaration*,int>& visited) {
   int resultsCluster=0;
   std::map<SgAsmFunctionDeclaration*,int>::const_iterator t = visited.begin();
   for (;t!=visited.end();++t) {
@@ -68,30 +68,30 @@ RoseBin_CallGraphAnalysis::findClusterOfNode(SgGraphNode* next_n,
       SgAsmFunctionDeclaration* func_next = isSgAsmFunctionDeclaration(next->get_SgNode());
       ROSE_ASSERT(func_next);
 
-	std::set<SgGraphNode*>::iterator
-	  it =visited_f.find(next);
-	if (it==visited_f.end()) {
-	  visited_f.insert(next);
-	  // not has not been visited before, but is it in one of our clusters?
-	  std::map<SgAsmFunctionDeclaration*,int>::const_iterator clust = visited.find(func_next);
-	  if (clust!=visited.end()) {
-	    // found it in clusters
-	    resultsCluster=clust->second;
+        std::set<SgGraphNode*>::iterator
+          it =visited_f.find(next);
+        if (it==visited_f.end()) {
+          visited_f.insert(next);
+          // not has not been visited before, but is it in one of our clusters?
+          std::map<SgAsmFunctionDeclaration*,int>::const_iterator clust = visited.find(func_next);
+          if (clust!=visited.end()) {
+            // found it in clusters
+            resultsCluster=clust->second;
     if (debug)
-	    cerr << "   >>>> RoseBin_CallGraph: node previously iterated : ." <<
-	      RoseBin_support::HexToString(isSgAsmFunctionDeclaration(func_next)->get_address()) <<
-	      "  in cluster : " << resultsCluster << endl;
-	  } else {
-	    // if it is not in a cluster, remember it for now.
-	    curr_cluster.insert(next);
-	    // add to worklist only if this node was not visited on a prior run
-	    worklist.push_back(next);
-	    if (debug)
-	    cerr << "    >>>> RoseBin_CallGraph: iterating currently : ." <<
-	      RoseBin_support::HexToString(isSgAsmFunctionDeclaration(func_next)->get_address()) <<
-	      "  cluster found so far is : " << resultsCluster << endl;
-	  }
-	}
+            cerr << "   >>>> RoseBin_CallGraph: node previously iterated : ." <<
+              RoseBin_support::HexToString(isSgAsmFunctionDeclaration(func_next)->get_address()) <<
+              "  in cluster : " << resultsCluster << endl;
+          } else {
+            // if it is not in a cluster, remember it for now.
+            curr_cluster.insert(next);
+            // add to worklist only if this node was not visited on a prior run
+            worklist.push_back(next);
+            if (debug)
+            cerr << "    >>>> RoseBin_CallGraph: iterating currently : ." <<
+              RoseBin_support::HexToString(isSgAsmFunctionDeclaration(func_next)->get_address()) <<
+              "  cluster found so far is : " << resultsCluster << endl;
+          }
+        }
 
     } // for
   } // while
@@ -179,11 +179,11 @@ RoseBin_CallGraphAnalysis::getConnectedComponents(std::map<int,std::set<SgAsmFun
       std::set<SgAsmFunctionDeclaration*>  funcs = comps->second;
       std::set<SgAsmFunctionDeclaration*>::const_iterator it = funcs.begin();
       for (;it!=funcs.end();++it) {
-	SgAsmFunctionDeclaration* function = *it;
-	string name = function->get_name();
-	name.append("_f");
-	if (debug)
-	cerr << "   CALLGRAPH :  function : " << name << endl;
+        SgAsmFunctionDeclaration* function = *it;
+        string name = function->get_name();
+        name.append("_f");
+        if (debug)
+        cerr << "   CALLGRAPH :  function : " << name << endl;
       }
   }
 }

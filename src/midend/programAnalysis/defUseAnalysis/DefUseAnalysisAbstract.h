@@ -40,13 +40,13 @@ class DefUseAnalysisAbstract : public Support {
   bool searchMulti(const multitype* multi, SgInitializedName* initName);
   //  bool searchMulti(const multitype* multi, SgInitializedName* initName, SgNode* node);
   bool searchVector(std::vector <filteredCFGNodeType> done, 
-		    filteredCFGNodeType cfgNode);
+                    filteredCFGNodeType cfgNode);
 
   SgInitializedName* getInitName(SgNode* l_expr);  
 
   SgExpression* resolveCast(SgExpression* expr);
   bool isDoubleExactEntry(const multitype* multi, 
-			  SgInitializedName* name, SgNode* sgNode);
+                          SgInitializedName* name, SgNode* sgNode);
 
   bool checkElementsForEquality(const multitype* t1, const multitype* t2);
 
@@ -62,11 +62,11 @@ class DefUseAnalysisAbstract : public Support {
       filteredCFGEdgeType filterEdge = *i;
       T filterNode = filterEdge.source();
       if (filterNode.getNode()!=oneNode)
-	otherNode = filterNode.getNode();
+        otherNode = filterNode.getNode();
     }  
     if (DEBUG_MODE_EXTRA)
       std::cout << "getOtherInNode:: other: " << otherNode << "  previous: " << 
-	oneNode << "  size of in: " << in_edges.size() << std::endl;
+        oneNode << "  size of in: " << in_edges.size() << std::endl;
     return otherNode;
   }
 

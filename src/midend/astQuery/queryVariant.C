@@ -110,7 +110,11 @@ void* querySolverGrammarElementFromVariantVector ( SgNode * astNode, VariantVect
              {
 #if 0
                if ( iItr->first != NULL  )
+                  {
+                 // printf ("iItr->first = %p = %s \n",iItr->first,iItr->first->class_name().c_str());
+                    printf ("iItr->first = %p \n",iItr->first);
                     printf ("iItr->first = %p = %s \n",iItr->first,iItr->first->class_name().c_str());
+                  }
 #endif
                SgType* type = isSgType(iItr->first);
                if ( type != NULL  )

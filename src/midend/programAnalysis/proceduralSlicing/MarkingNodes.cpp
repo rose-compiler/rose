@@ -22,8 +22,8 @@ bool MarkingNodes::evaluateInheritedAttribute(SgNode* astNode, bool inherited){
     set<SgNode*>::const_iterator s;
     for(s=stmtlist.begin();s!=stmtlist.end();++s){ 
       if(astNode==(*s)){ 
-	keepNode(astNode);
-	keep = true; 
+        keepNode(astNode);
+        keep = true; 
       } 
     } 
   }
@@ -69,7 +69,7 @@ bool MarkingNodes::evaluateInheritedAttribute(SgNode* astNode, bool inherited){
   }
   
   // check if it is a variable on the right hand side, and in case it is,
-  // check if the declaration of the variable is marked!	
+  // check if the declaration of the variable is marked!        
   checkIfDeclared(astNode,keep);
   
   // Make sure SgGlobal is always marked
@@ -85,7 +85,7 @@ bool MarkingNodes::evaluateInheritedAttribute(SgNode* astNode, bool inherited){
  * evaluateSynthesizedAttribute
  * * * * * * * * * * * * * * */
 bool MarkingNodes::evaluateSynthesizedAttribute(SgNode* astNode,
-						  bool inherited, vector<bool> synattri){
+                                                  bool inherited, vector<bool> synattri){
   bool keep = false;  // default
 
   // If inherited info to keep, then keep.
@@ -98,12 +98,12 @@ bool MarkingNodes::evaluateSynthesizedAttribute(SgNode* astNode,
     vector<bool>::iterator it;
     for(it=synattri.begin(); it!=synattri.end(); ++it){
       if(*it){
-	keepNode(astNode);
-	// Now in the case of a SgBasicBlock we want to pass on information to keep
-	// the node up in the AST.
-	if(isSgBasicBlock(astNode) != NULL){
-	  keep = true;
-	}
+        keepNode(astNode);
+        // Now in the case of a SgBasicBlock we want to pass on information to keep
+        // the node up in the AST.
+        if(isSgBasicBlock(astNode) != NULL){
+          keep = true;
+        }
       }
     }
   }
@@ -116,9 +116,9 @@ bool MarkingNodes::evaluateSynthesizedAttribute(SgNode* astNode,
       // init statements
       list<SgStatement*> init = isSgForStatement(astNode)->get_init_stmt();
       for(list<SgStatement*>::const_iterator it=init.begin(); it!=init.end(); ++it){
-	insertInList(isSgNode(*it));
-	keepNode(isSgNode(*it));
-	keep = true;
+        insertInList(isSgNode(*it));
+        keepNode(isSgNode(*it));
+        keep = true;
       }
       // test expression
       SgExpression* test = isSgForStatement(astNode)->get_test_expr();
@@ -169,10 +169,10 @@ bool MarkingNodes::evaluateSynthesizedAttribute(SgNode* astNode,
     if(astNode->attribute.exists("keep")){
       SgFunctionDeclaration* funcdecl = TransformationSupport::getFunctionDeclaration(astNode);
       if(funcdecl->get_definition()==sliceThisFunc){
-	//If we find a function reference in the function in which the slicing criterion is, then add these function references to a list: They have to be included in the slice.
-	SgFunctionSymbol* symbol = isSgFunctionRefExp(astNode)->get_symbol();
-	SgFunctionDeclaration* decl = symbol->get_declaration();
-	funclist.push_front(decl);
+        //If we find a function reference in the function in which the slicing criterion is, then add these function references to a list: They have to be included in the slice.
+        SgFunctionSymbol* symbol = isSgFunctionRefExp(astNode)->get_symbol();
+        SgFunctionDeclaration* decl = symbol->get_declaration();
+        funclist.push_front(decl);
       }
     }
   }
@@ -193,23 +193,23 @@ void MarkingNodes::checkIfDeclared(SgNode* node,bool keep){
       SgInitializedName* declaration = symbol->get_declaration();
       SgDeclarationStatement* stmt = declaration->get_declaration();
       if(!stmt->attribute.exists("keep")){ 
-	stmt->attribute.add("keep", new KeepAttribute(true));
-	// must also make sure that subtree from this statement is marked with true: That
-	// is taken care of in evaluateInherited - in the if-branch if(inherited), because the
-	// bool keep will be true for the children.
+        stmt->attribute.add("keep", new KeepAttribute(true));
+        // must also make sure that subtree from this statement is marked with true: That
+        // is taken care of in evaluateInherited - in the if-branch if(inherited), because the
+        // bool keep will be true for the children.
       }
       // Including the class definition within a class
       if(isSgClassDefinition(stmt->get_parent())!=NULL){
-	SgClassDefinition* parent = isSgClassDefinition(stmt->get_parent());
-	if(!parent->attribute.exists("keep")){ 
-	  parent->attribute.add("keep", new KeepAttribute(true));
-	}
-	if(isSgClassDeclaration(parent->get_parent())!=NULL){
-	  SgClassDeclaration* classdecl = isSgClassDeclaration(parent->get_parent());
-	  if(!classdecl->attribute.exists("keep")){ 
-	    classdecl->attribute.add("keep", new KeepAttribute(true));
-	  }
-	}
+        SgClassDefinition* parent = isSgClassDefinition(stmt->get_parent());
+        if(!parent->attribute.exists("keep")){ 
+          parent->attribute.add("keep", new KeepAttribute(true));
+        }
+        if(isSgClassDeclaration(parent->get_parent())!=NULL){
+          SgClassDeclaration* classdecl = isSgClassDeclaration(parent->get_parent());
+          if(!classdecl->attribute.exists("keep")){ 
+            classdecl->attribute.add("keep", new KeepAttribute(true));
+          }
+        }
       }
     }
   }

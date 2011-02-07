@@ -9,6 +9,7 @@ EXTRA_DIST=
 include_HEADERS=
 noinst_PROGRAMS=
 lib_LIBRARIES=
+TEST_TARGETS = 
 
 ###############################################################################################################################
 #  DOCUMENTATION, CONFIGURATION, ETC
@@ -509,35 +510,35 @@ TEST_INPUTS    = $(TEST_INPUTS_SA) $(TEST_INPUTS_RT) $(TEST_INPUTS_TS) $(TEST_IN
 MOSTLYCLEANFILES += $(TEST_INPUTS) $(addsuffix .o, $(TEST_INPUTS)) \
                     $(addsuffix .o, $(basename $(notdir $(TEST_SUPPORT_SRC))))
 
-# The test inputs
+# The test inputs. These will not be generated if ENABLE_I386 is not defined.
 $(TEST_INPUTS_SA): %: $(srcdir)/tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ $^
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/tests -Wall -o $@ $^
 $(TEST_INPUTS_RT): %: $(srcdir)/tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ $^ -lrt
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/tests -Wall -o $@ $^ -lrt
 $(TEST_INPUTS_TS): %: $(srcdir)/tests/%.c libtestsupport.a libipc.a
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ $^ -lrt 
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/tests -Wall -o $@ $^ -lrt 
 $(TEST_INPUTS_NM): %: $(srcdir)/tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ $^ 
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/tests -Wall -o $@ $^ 
 # Target to manually build the test inputs. (Not used internally)
 .PHONY: test_inputs
 test_inputs: $(TEST_INPUTS)
 
 
-# The test support library
+# The test support library. These will not be generated if ENABLE_I386 is not defined.
 TEST_SUPPORT_OBJ = $(patsubst %.c, %.o, $(notdir $(TEST_SUPPORT_SRC)))
 libtestsupport.a: $(TEST_SUPPORT_OBJ)
 	@echo "  AR      $@"
 	@ar -rc $@ $(TEST_SUPPORT_OBJ)
 $(TEST_SUPPORT_OBJ): %.o: $(srcdir)/tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ -c $^
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/tests -Wall -o $@ -c $^
 MOSTLYCLEANFILES += libtestsupport.a
 
-# The ipc support library
+# The ipc support library. These will not be generated if ENABLE_I386 is not defined.
 include_HEADERS += $(srcdir)/tests/ipcmsg.h  $(srcdir)/tests/ipcsem.h  $(srcdir)/tests/ipcshm.h
 IPC_SUPPORT_SRC = $(srcdir)/tests/libipc.c
 IPC_SUPPORT_OBJ = $(patsubst %.c, %.o, $(notdir $(IPC_SUPPORT_SRC)))
@@ -547,7 +548,7 @@ libipc.a: $(IPC_SUPPORT_OBJ)
 	@ar -rc $@ $(IPC_SUPPORT_OBJ)
 $(IPC_SUPPORT_OBJ): %.o: $(srcdir)/tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/tests -Wall -o $@ -c $^
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/tests -Wall -o $@ -c $^
 MOSTLYCLEANFILES += libipc.a
 
 
@@ -557,11 +558,18 @@ MOSTLYCLEANFILES += libipc.a
 
 # Test targets are test names suffixed with ".passed" (but when a test fails it produces ".failed" instead).
 # Each target runs "x86sim" on one of the TEST_INPUT files. Exit status determines success or failure.
-TEST_TARGETS = $(addsuffix .passed, $(TEST_INPUTS))
-MOSTLYCLEANFILES += $(TEST_TARGETS) $(patsubst %.passed, %.failed, $(TEST_TARGETS))
+# Test targets must be 32-bit x86; if we don't have that capability then the tests are not run.
+if ENABLE_I386
+TEST_TARGETS += $(addsuffix .passed, $(TEST_INPUTS))
 $(TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
+else
+TEST_TARGETS += warn_no_tests
+warn_no_tests:
+	@echo "  NOTE    x86sim testing is disabled (no i386 support)"
+endif
 
+MOSTLYCLEANFILES += $(TEST_TARGETS) $(patsubst %.passed, %.failed, $(TEST_TARGETS))
 check-local: $(TEST_TARGETS)
 	@$(RTH_STATS)
 

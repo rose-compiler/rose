@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
       // meaningless output...? includes return statements...
       set<SgNode*>::const_iterator s;
       for(s=stmt.begin();s!=stmt.end();++s){
-	cout <<"    - " << (*s)->unparseToString() << endl;
+        cout <<"    - " << (*s)->unparseToString() << endl;
       }  
       cout << "\n(No rose_filename written. Only the above list is the output.)\n\n" <<endl;
     }
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
       cout << "RESULT OF SLICING:" << endl;
       set<SgNode*>::const_iterator s;
       for(s=stmt_in_slice.begin();s!=stmt_in_slice.end();++s){
-	cout <<"    - " << (*s)->unparseToString() << endl;
+        cout <<"    - " << (*s)->unparseToString() << endl;
       }  
       cout << "\n(No rose_filename written. Only the above list is the output.)\n\n" <<endl;
     }

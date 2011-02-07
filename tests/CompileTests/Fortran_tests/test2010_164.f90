@@ -1,4 +1,8 @@
 ! S08C-cant-assert-keyword-nonnull.f90
+
+! DQ (2/1/2011): This test code is not tested with the gfortran 4.4 
+! compiler since it fails in the syntax checking.
+
 ! In 'c_action_actual_arg_spec', assertion 'keyword' != NULL is incorrect.
 ! CASE C: rule for 'actual_arg_spec'.
 !
@@ -8,7 +12,7 @@
 ! The subroutine definition for reference below is commented out because
 ! it causes front end to fail another assertion before showing this bug.
 ! subroutine g(k, *)
-!   integer :: k
+!    integer :: k
 ! end subroutine
 
 program p

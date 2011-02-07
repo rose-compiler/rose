@@ -179,7 +179,7 @@ conditionalToBuildNewVariable ( string typeName, string variableNameSource, stri
         }
        else
         {
-          rhs = "          " + newVariableName + " = new " + typeName + "( *" +	variableNameSource + "); \n";
+          rhs = "          " + newVariableName + " = new " + typeName + "( *" + variableNameSource + "); \n";
         }
      string returnString = "     if ( " + variableNameSource + " != NULL ) \n"
                          + "        { \n"
@@ -695,8 +695,8 @@ GrammarString::getDataAccessFunctionPrototypeString () const
            break;
      case TAG_BUILD_ACCESS_FUNCTIONS:
      case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:
-	  returnString = "     public: \n         " + typeNameStringTmp + " get_" +
-	                 variableNameStringTmp + "() const;\n         void set_"  
+          returnString = "     public: \n         " + typeNameStringTmp + " get_" +
+                         variableNameStringTmp + "() const;\n         void set_"  
                          + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
                          variableNameStringTmp + ");\n";
           break;
@@ -1052,8 +1052,8 @@ GrammarString::display( const string& label ) const
 // BP : 10/25/2001, a non recursive version that
 // allocs memory only once
 string GrammarString::copyEdit ( const string& inputString, 
-				 const string& oldToken, 
-				 const string& newToken )
+                                 const string& oldToken, 
+                                 const string& newToken )
 {
   return StringUtility::copyEdit(inputString, oldToken, newToken);
 }

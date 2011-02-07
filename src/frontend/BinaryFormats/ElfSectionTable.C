@@ -161,7 +161,7 @@ SgAsmElfSectionTable::parse()
             SgAsmElfSection *linked = need_linked ? is_parsed[entry->get_sh_link()] : NULL;
 
             /* Relocation sections might have a second linked section stored in sh_info. */
-	    bool need_info_linked = (entry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_REL ||
+            bool need_info_linked = (entry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_REL ||
                                      entry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_RELA) &&
                                     entry->get_sh_info() > 0;
             ROSE_ASSERT(!need_info_linked || entry->get_sh_info()<entries.size());
@@ -460,10 +460,10 @@ SgAsmElfSectionTableEntry::to_string(SectionType t)
 #ifndef _MSC_VER
     std::string retval = stringifySgAsmElfSectionTableEntrySectionType(t);
 #else
-	ROSE_ASSERT(false);
-	std::string retval = "";
+        ROSE_ASSERT(false);
+        std::string retval = "";
 #endif
-	if ('('!=retval[0])
+        if ('('!=retval[0])
         return retval;
     
     char buf[128];
@@ -494,16 +494,16 @@ SgAsmElfSectionTableEntry::to_string(SectionFlags val)
     if(val & (1 << i)){
       switch(1 << i){
         case SHF_NULL:      str += "NULL";break;
-	case SHF_WRITE:     str += "WRITE";break;
-	case SHF_ALLOC:     str += "ALLOC";break;
-	case SHF_EXECINSTR: str +=  "CODE";break;
-	case SHF_MERGE:     str += "MERGE";break;/** Might be merged */
-	case SHF_STRINGS:   str += "STRINGS";break;
-	case SHF_INFO_LINK: str += "INFO_LINK";break;
-	case SHF_LINK_ORDER:str += "LINK_ORDER";break;
-	case SHF_OS_NONCONFORMING:str += "OS SPECIAL";break;
-	case SHF_GROUP:     str += "GROUP";break;
-	case SHF_TLS:       str += "TLS";break;
+        case SHF_WRITE:     str += "WRITE";break;
+        case SHF_ALLOC:     str += "ALLOC";break;
+        case SHF_EXECINSTR: str +=  "CODE";break;
+        case SHF_MERGE:     str += "MERGE";break;/** Might be merged */
+        case SHF_STRINGS:   str += "STRINGS";break;
+        case SHF_INFO_LINK: str += "INFO_LINK";break;
+        case SHF_LINK_ORDER:str += "LINK_ORDER";break;
+        case SHF_OS_NONCONFORMING:str += "OS SPECIAL";break;
+        case SHF_GROUP:     str += "GROUP";break;
+        case SHF_TLS:       str += "TLS";break;
       };
     }
   }

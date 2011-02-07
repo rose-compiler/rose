@@ -283,7 +283,7 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sDOSFileHeader.", prefix);
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u bytes\n",              p, w, "e_last_page_size",     p_e_last_page_size);

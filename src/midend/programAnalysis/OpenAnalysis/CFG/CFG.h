@@ -82,9 +82,9 @@ public:
   // Changes here must be also reflected in CFG.C:edgeTypeToString.
   enum EdgeType 
   { 
-		  TRUE_EDGE = 0, FALLTHROUGH_EDGE, FALSE_EDGE,
-		  BACK_EDGE, MULTIWAY_EDGE, BREAK_EDGE,
-		  CONTINUE_EDGE, RETURN_EDGE };
+                  TRUE_EDGE = 0, FALLTHROUGH_EDGE, FALSE_EDGE,
+                  BACK_EDGE, MULTIWAY_EDGE, BREAK_EDGE,
+                  CONTINUE_EDGE, RETURN_EDGE };
 
 private:
   //------------------------------------------------------------------------------------------------------------------
@@ -287,20 +287,20 @@ private:
     NodeLabelList* return_nodes, NodeLabelList* continue_nodes);
 
   IRStmtType build_stmt (Node* prev_node, StmtHandle, NodeLabelList& exit_nodes, NodeLabelList* break_nodes,
-			    NodeLabelList* return_nodes, NodeLabelList* continue_nodes)
+                            NodeLabelList* return_nodes, NodeLabelList* continue_nodes)
     throw (Unexpected_Break, Unexpected_Return, Unexpected_Continue);
   IRStmtType build_CFG_loop (Node* prev_node, StmtHandle th, NodeLabelList& exit_nodes,
                              NodeLabelList* return_nodes);
   IRStmtType build_CFG_end_tested_loop (Node* prev_node, StmtHandle th, NodeLabelList& exit_nodes,
-				        NodeLabelList* return_nodes);
+                                        NodeLabelList* return_nodes);
   IRStmtType build_CFG_twoway_branch (Node* prev_node, StmtHandle th, NodeLabelList& exit_nodes,
-					  NodeLabelList* break_nodes, NodeLabelList* return_nodes,
+                                          NodeLabelList* break_nodes, NodeLabelList* return_nodes,
                                           NodeLabelList* continue_nodes);
   IRStmtType build_CFG_multiway_branch (Node* prev_node, StmtHandle th, NodeLabelList& exit_nodes,
-					    NodeLabelList* break_nodes, NodeLabelList* return_nodes,
+                                            NodeLabelList* break_nodes, NodeLabelList* return_nodes,
                                             NodeLabelList* continue_nodes);
   IRStmtType build_CFG_multiway_branch_with_fallthrough (Node* prev_node, StmtHandle th, NodeLabelList& exit_nodes,
-					    NodeLabelList* return_nodes, NodeLabelList* continue_nodes);
+                                            NodeLabelList* return_nodes, NodeLabelList* continue_nodes);
   IRStmtType build_CFG_unconditional_jump (Node* prev_node, StmtHandle stmt);
   IRStmtType build_CFG_unconditional_jump_i (Node* prev_node, StmtHandle stmt);
   IRStmtType build_CFG_ustruct_twoway_branch (Node* prev_node, StmtHandle stmt, CFG::NodeLabelList& exit_nodes);
