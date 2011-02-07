@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "RSIM_Common.h"
+#include "RSIM_Simulator.h"
 
 int
 print_user_desc_32(FILE *f, const uint8_t *_ud, size_t sz)

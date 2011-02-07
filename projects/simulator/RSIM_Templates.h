@@ -80,18 +80,18 @@ int RSIM_Thread::getdents_syscall(int fd, uint32_t dirent_va, long sz)
 }
 
 template <size_t Len> VirtualMachineSemantics::ValueType<Len>
-RSIM_Thread::readMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
-                        const VirtualMachineSemantics::ValueType<1> cond) {
+RSIM_SemanticPolicy::readMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
+                                const VirtualMachineSemantics::ValueType<1> cond) {
     ROSE_ASSERT(0==Len % 8 && Len<=64);
-    uint32_t base = process->segreg_shadow[sr].base;
+    uint32_t base = thread->process->segreg_shadow[sr].base;
     uint32_t offset = addr.known_value();
-    ROSE_ASSERT(offset <= process->segreg_shadow[sr].limit);
-    ROSE_ASSERT(offset + (Len/8) - 1 <= process->segreg_shadow[sr].limit);
+    ROSE_ASSERT(offset <= thread->process->segreg_shadow[sr].limit);
+    ROSE_ASSERT(offset + (Len/8) - 1 <= thread->process->segreg_shadow[sr].limit);
 
     ROSE_ASSERT(cond.is_known());
     if (cond.known_value()) {
         uint8_t buf[Len/8];
-        size_t nread = process->get_memory()->read(buf, base+offset, Len/8);
+        size_t nread = thread->process->get_memory()->read(buf, base+offset, Len/8);
         if (nread!=Len/8)
             throw Signal(SIGSEGV);
         uint64_t result = 0;
@@ -109,13 +109,13 @@ RSIM_Thread::readMemory(X86SegmentRegister sr, const VirtualMachineSemantics::Va
 
 /* Writes memory to the memory map rather than the super class. */
 template <size_t Len> void
-RSIM_Thread::writeMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
-                         const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond) {
+RSIM_SemanticPolicy::writeMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
+                                 const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond) {
     ROSE_ASSERT(0==Len % 8 && Len<=64);
-    uint32_t base = process->segreg_shadow[sr].base;
+    uint32_t base = thread->process->segreg_shadow[sr].base;
     uint32_t offset = addr.known_value();
-    ROSE_ASSERT(offset <= process->segreg_shadow[sr].limit);
-    ROSE_ASSERT(offset + (Len/8) - 1 <= process->segreg_shadow[sr].limit);
+    ROSE_ASSERT(offset <= thread->process->segreg_shadow[sr].limit);
+    ROSE_ASSERT(offset + (Len/8) - 1 <= thread->process->segreg_shadow[sr].limit);
     ROSE_ASSERT(data.is_known());
     ROSE_ASSERT(cond.is_known());
     if (cond.known_value()) {
@@ -126,12 +126,12 @@ RSIM_Thread::writeMemory(X86SegmentRegister sr, const VirtualMachineSemantics::V
         uint8_t buf[Len/8];
         for (size_t i=0, j=0; i<Len; i+=8, j++)
             buf[j] = (data.known_value() >> i) & 0xff;
-        size_t nwritten = process->get_memory()->write(buf, base+offset, Len/8);
+        size_t nwritten = thread->process->get_memory()->write(buf, base+offset, Len/8);
         if (nwritten!=Len/8) {
 #if 0   /* First attempt, according to Section 24.2.1 "Program Error Signals" of glibc documentation */
             /* Writing to mem that's not mapped results in SIGBUS; writing to mem that's mapped without write permission
              * results in SIGSEGV. */
-            if (process->get_memory()->find(base+offset)) {
+            if (thread->process->get_memory()->find(base+offset)) {
                 throw Signal(SIGSEGV);
             } else {
                 throw Signal(SIGBUS);

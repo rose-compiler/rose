@@ -1,8 +1,7 @@
 #include "sage3basic.h"
 
 #include "BinaryLoaderElf.h"
-#include "RSIM_Process.h"
-#include "RSIM_Thread.h"
+#include "RSIM_Simulator.h"
 
 #include <boost/regex.hpp>
 #include <errno.h>
@@ -32,20 +31,19 @@ RSIM_Process::ctor()
     gdt[0x2b>>3].seg_32bit = 1;
     gdt[0x2b>>3].limit_in_pages = 1;
     gdt[0x2b>>3].useable = 1;
-
 }
 
 FILE *
 RSIM_Process::tracing(unsigned what) const
 {
-    return (trace & what) ? debug : NULL;
+    return (trace_flags & what) ? trace_file : NULL;
 }
 
 void
 RSIM_Process::set_tracing(FILE *f, unsigned what)
 {
-    debug = f;
-    trace = what;
+    trace_file = f;
+    trace_flags = what;
 }
 
 RSIM_Thread *
@@ -235,7 +233,7 @@ RSIM_Process::load(const char *name)
      * (we'll use the PE interpretation). */
     SgAsmInterpretation *interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
     SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
-    thread->writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
+    thread->policy.writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
 
     /* Link the interpreter into the AST */
     SimLoader *loader = new SimLoader(interpretation, tracing(TRACE_LOADER), interpname);
@@ -247,7 +245,7 @@ RSIM_Process::load(const char *name)
         SgAsmGenericSection *load0 = loader->interpreter->get_section_by_name("LOAD#0");
         if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
             loader->interpreter->set_base_va(ld_linux_base_va);
-        thread->writeIP(loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va());
+        thread->policy.writeIP(loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va());
     }
 
     /* Sort the headers so they're in order by entry address. In other words, if the interpreter's entry address is below the
@@ -610,33 +608,33 @@ RSIM_Process::dump_core(int signo, std::string base_name)
 }
 
 void
-RSIM_Process::open_log_file(const char *pattern)
+RSIM_Process::open_trace_file()
 {
     char name[4096];
 
-    if (pattern && *pattern) {
-        size_t nprinted = snprintf(name, sizeof name, pattern, getpid());
+    if (!trace_file_name.empty()) {
+        size_t nprinted = snprintf(name, sizeof name, trace_file_name.c_str(), getpid());
         if (nprinted > sizeof name) {
-            fprintf(stderr, "name pattern overflow: %s\n", pattern);
-            debug = stderr;
+            fprintf(stderr, "name pattern overflow: %s\n", trace_file_name.c_str());
+            trace_file = stderr;
             return;
         }
     } else {
         name[0] = '\0';
     }
 
-    if (debug && debug!=stderr && debug!=stdout) {
-        fclose(debug);
-        debug = NULL;
+    if (trace_file && trace_file!=stderr && trace_file!=stdout) {
+        fclose(trace_file);
+        trace_file = NULL;
     }
 
     if (name[0]) {
-        if (NULL==(debug = fopen(name, "w"))) {
+        if (NULL==(trace_file = fopen(name, "w"))) {
             fprintf(stderr, "%s: %s\n", strerror(errno), name);
             return;
         }
 #ifdef X86SIM_LOG_UNBUFFERED
-        setbuf(debug, NULL);
+        setbuf(trace_file, NULL);
 #endif
     }
 }
@@ -644,119 +642,119 @@ RSIM_Process::open_log_file(const char *pattern)
 void
 RSIM_Process::binary_trace_start()
 {
-    if (!binary_trace)
+    if (!btrace_file)
         return;
     
     static const uint16_t magic = 0x5445;
-    size_t n = fwrite(&magic, 2, 1, binary_trace);
+    size_t n = fwrite(&magic, 2, 1, btrace_file);
     assert(1==n);
 
     static const uint16_t version = 0x0033;
-    n = fwrite(&version, 2, 1, binary_trace);
+    n = fwrite(&version, 2, 1, btrace_file);
     assert(1==n);
 
     static const uint32_t nprocs = 1;
-    n = fwrite(&nprocs, 4, 1, binary_trace);
+    n = fwrite(&nprocs, 4, 1, btrace_file);
     assert(1==n);
 
     char exename_buf[32];
     strncpy(exename_buf, exename.c_str(), 32);
     exename_buf[31] = '\0';
-    n = fwrite(exename_buf, 32, 1, binary_trace);
+    n = fwrite(exename_buf, 32, 1, btrace_file);
     assert(1==n);
 
     uint32_t pid = getpid();
-    n = fwrite(&pid, 4, 1, binary_trace);
+    n = fwrite(&pid, 4, 1, btrace_file);
     assert(1==n);
 
     static const uint32_t nmodules = 0;
-    n = fwrite(&nmodules, 4, 1, binary_trace);
+    n = fwrite(&nmodules, 4, 1, btrace_file);
     assert(1==n);
 }
 
 void
 RSIM_Process::binary_trace_add(RSIM_Thread *thread, const SgAsmInstruction *insn)
 {
-    if (!binary_trace)
+    if (!btrace_file)
         return;
 
     uint32_t addr = insn->get_address();
-    size_t n = fwrite(&addr, 4, 1, binary_trace);
+    size_t n = fwrite(&addr, 4, 1, btrace_file);
     assert(1==n);
 
     static const uint32_t tid = thread->get_tid();
-    n = fwrite(&tid, 4, 1, binary_trace);
+    n = fwrite(&tid, 4, 1, btrace_file);
     assert(1==n);
 
     size_t insn_size = insn->get_raw_bytes().size();
     assert(insn_size<=255);
     uint8_t insn_size_byte = insn_size;
-    n = fwrite(&insn_size_byte, 1, 1, binary_trace);
+    n = fwrite(&insn_size_byte, 1, 1, btrace_file);
     assert(1==n);
 
-    n = fwrite(&insn->get_raw_bytes()[0], insn_size, 1, binary_trace);
+    n = fwrite(&insn->get_raw_bytes()[0], insn_size, 1, btrace_file);
     assert(1==n);
 
     uint32_t r = 0;
     for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
-        r |= thread->readFlag((X86Flag)i).known_value() << i;
-    n = fwrite(&r, 4, 1, binary_trace);
+        r |= thread->policy.readFlag((X86Flag)i).known_value() << i;
+    n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
 
-    r = thread->readGPR(x86_gpr_ax).known_value();
-    n = fwrite(&r, 4, 1, binary_trace);
+    r = thread->policy.readGPR(x86_gpr_ax).known_value();
+    n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->readGPR(x86_gpr_bx).known_value();
-    n = fwrite(&r, 4, 1, binary_trace);
+    r = thread->policy.readGPR(x86_gpr_bx).known_value();
+    n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->readGPR(x86_gpr_cx).known_value();
-    n = fwrite(&r, 4, 1, binary_trace);
+    r = thread->policy.readGPR(x86_gpr_cx).known_value();
+    n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->readGPR(x86_gpr_dx).known_value();
-    n = fwrite(&r, 4, 1, binary_trace);
+    r = thread->policy.readGPR(x86_gpr_dx).known_value();
+    n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->readGPR(x86_gpr_si).known_value();
-    n = fwrite(&r, 4, 1, binary_trace);
+    r = thread->policy.readGPR(x86_gpr_si).known_value();
+    n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->readGPR(x86_gpr_di).known_value();
-    n = fwrite(&r, 4, 1, binary_trace);
+    r = thread->policy.readGPR(x86_gpr_di).known_value();
+    n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->readGPR(x86_gpr_bp).known_value();
-    n = fwrite(&r, 4, 1, binary_trace);
+    r = thread->policy.readGPR(x86_gpr_bp).known_value();
+    n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->readGPR(x86_gpr_sp).known_value();
-    n = fwrite(&r, 4, 1, binary_trace);
+    r = thread->policy.readGPR(x86_gpr_sp).known_value();
+    n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
 
-    r = thread->readSegreg(x86_segreg_cs).known_value();
-    n = fwrite(&r, 2, 1, binary_trace);
+    r = thread->policy.readSegreg(x86_segreg_cs).known_value();
+    n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->readSegreg(x86_segreg_ss).known_value();
-    n = fwrite(&r, 2, 1, binary_trace);
+    r = thread->policy.readSegreg(x86_segreg_ss).known_value();
+    n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->readSegreg(x86_segreg_es).known_value();
-    n = fwrite(&r, 2, 1, binary_trace);
+    r = thread->policy.readSegreg(x86_segreg_es).known_value();
+    n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->readSegreg(x86_segreg_ds).known_value();
-    n = fwrite(&r, 2, 1, binary_trace);
+    r = thread->policy.readSegreg(x86_segreg_ds).known_value();
+    n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->readSegreg(x86_segreg_fs).known_value();
-    n = fwrite(&r, 2, 1, binary_trace);
+    r = thread->policy.readSegreg(x86_segreg_fs).known_value();
+    n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->readSegreg(x86_segreg_gs).known_value();
-    n = fwrite(&r, 2, 1, binary_trace);
+    r = thread->policy.readSegreg(x86_segreg_gs).known_value();
+    n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 }
 
@@ -767,4 +765,4 @@ RSIM_Process::load_segreg_shadow(X86SegmentRegister sr, unsigned gdt_num)
     segreg_shadow[sr] = gdt[gdt_num];
     ROSE_ASSERT(segreg_shadow[sr].present);
 }
-
+    

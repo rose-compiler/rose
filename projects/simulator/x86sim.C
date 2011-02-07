@@ -17,7 +17,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
 
-#include "x86sim.h"
+#include "RSIM_Simulator.h"
 #include "x86print.h"
 #include <stdarg.h>
 
@@ -56,61 +56,15 @@
 #include <sys/socket.h>
 #include <grp.h>
 
-/* Define this if you want strict emulation. When defined, every attempt is made for x86sim to provide an environment as close
- * as possible to running natively on hudson-rose-07.  Note that defining this might cause the simulator to malfunction since
- * some specimens will attempt to execute instructions that are not implemented in the x86 instruction semantics yet. */
-// #define X86SIM_STRICT_EMULATION
-
-/* Define this if you want log files to be unbuffered. This is often desirable when debugging */
-#define X86SIM_LOG_UNBUFFERED
-
-/* Define this if you want binary trace files to be unbuffered. This is often desirable when debugging */
-#define X86SIM_BINARY_TRACE_UNBUFFERED
-
 
 #define CONV_FIELD(var1, var2, field) var1.field = var2.field
-
-static char *log_file_name = NULL;
-
-static const int PROGRESS_INTERVAL = 10; /* seconds */
-static int had_alarm = 0;
-static void alarm_handler(int) {
-    had_alarm = 1;
-}
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void
 RSIM_Thread::emulate_syscall()
 {
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
      *          according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers. */
-    unsigned callno = readGPR(x86_gpr_ax).known_value();
+    unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
 
 
 
@@ -125,11 +79,11 @@ RSIM_Thread::emulate_syscall()
             char buf[size];
             ssize_t nread = read(fd, buf, size);
             if (-1==nread) {
-                writeGPR(x86_gpr_ax, -errno);
+                sys_return(-errno);
             } else if (process->get_memory()->write(buf, buf_va, (size_t)nread)!=(size_t)nread) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                sys_return(-EFAULT);
             } else {
-                writeGPR(x86_gpr_ax, nread);
+                sys_return(nread);
             }
             syscall_leave("d-b", nread>0?nread:0);
             break;
@@ -143,13 +97,13 @@ RSIM_Thread::emulate_syscall()
             uint8_t buf[size];
             size_t nread = process->get_memory()->read(buf, buf_va, size);
             if (nread!=size) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                sys_return(-EFAULT);
             } else {
                 ssize_t nwritten = write(fd, buf, size);
                 if (-1==nwritten) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                 } else {
-                    writeGPR(x86_gpr_ax, nwritten);
+                    sys_return(nwritten);
                 }
             }
             syscall_leave("d");
@@ -163,17 +117,17 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string filename = read_string(filename_va, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 uint32_t flags=arg(1), mode=(flags & O_CREAT)?arg(2):0;
                 int fd = open(filename.c_str(), flags, mode);
                 if (-1==fd) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
-                writeGPR(x86_gpr_ax, fd);
+                sys_return(fd);
             } while (0);
             syscall_leave("d");
             break;
@@ -184,10 +138,10 @@ RSIM_Thread::emulate_syscall()
             int fd=arg(0);
             if (1==fd || 2==fd) {
                 /* ROSE is using these */
-                writeGPR(x86_gpr_ax, -EPERM);
+                sys_return(-EPERM);
             } else {
                 int status = close(fd);
-                writeGPR(x86_gpr_ax, status<0 ? -errno : status);
+                sys_return(status<0 ? -errno : status);
             }
             syscall_leave("d");
             break;
@@ -209,7 +163,7 @@ RSIM_Thread::emulate_syscall()
                 size_t nwritten = process->get_memory()->write(&status_le, status_va, 4);
                 ROSE_ASSERT(4==nwritten);
             }
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
             syscall_leave("d");
             break;
         }
@@ -221,18 +175,18 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string sys_filename = read_string(filename, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 	        mode_t mode = arg(1);
 
 	        int result = creat(sys_filename.c_str(), mode);
                 if (result == -1) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -244,17 +198,17 @@ RSIM_Thread::emulate_syscall()
 
             std::string oldpath = read_string(arg(0), 0, &error);
 	    if (error) {
-		    writeGPR(x86_gpr_ax, -EFAULT);
+		    sys_return(-EFAULT);
 		    break;
 	    }
             std::string newpath = read_string(arg(1), 0, &error);
 	    if (error) {
-		    writeGPR(x86_gpr_ax, -EFAULT);
+		    sys_return(-EFAULT);
 		    break;
 	    }
 
             int result = syscall(SYS_link,oldpath.c_str(), newpath.c_str());
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            sys_return(-1==result?-errno:result);
 
             syscall_leave("d");
             break;
@@ -267,17 +221,17 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string filename = read_string(filename_va, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
                 int result = unlink(filename.c_str());
                 if (result == -1) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
                 
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -291,7 +245,7 @@ RSIM_Thread::emulate_syscall()
                 /* Name of executable */
                 std::string filename = read_string(arg(0), 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
@@ -307,7 +261,7 @@ RSIM_Thread::emulate_syscall()
                     }
                 }
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 std::vector<char*> sys_argv;
@@ -327,7 +281,7 @@ RSIM_Thread::emulate_syscall()
                     }
                 }
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 std::vector<char*> sys_envp;
@@ -338,7 +292,7 @@ RSIM_Thread::emulate_syscall()
                 /* The real system call */
                 int result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
                 ROSE_ASSERT(-1==result);
-                writeGPR(x86_gpr_ax, -errno);
+                sys_return(-errno);
                 if (tracing(TRACE_SYSCALL) && (!argv.empty() || !envp.empty()))
                     fputs("execve failed with ", tracing(TRACE_SYSCALL));
             } while (0);
@@ -353,17 +307,17 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string sys_path = read_string(path, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
                 int result = chdir(sys_path.c_str());
                 if (result == -1) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -378,7 +332,7 @@ RSIM_Thread::emulate_syscall()
                 size_t nwritten = process->get_memory()->write(&t_le, arg(0), 4);
                 ROSE_ASSERT(4==nwritten);
             }
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
             syscall_leave("t");
             break;
         }
@@ -392,11 +346,11 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string path = read_string(path_va, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 int result = mknod(path.c_str(), mode, dev);
-                writeGPR(x86_gpr_ax, -1==result ? -errno : result);
+                sys_return(-1==result ? -errno : result);
             } while (0);
             syscall_leave("d");
             break;
@@ -409,13 +363,13 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string sys_filename = read_string(filename, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 mode_t mode = arg(1);
                 int result = chmod(sys_filename.c_str(), mode);
                 if (result == -1) result = -errno;
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -424,21 +378,21 @@ RSIM_Thread::emulate_syscall()
         case 19: { /* 0x13, lseek(int fd, off_t offset, int whence) */
             syscall_enter("lseek", "ddf", seek_whence);
             off_t result = lseek(arg(0), arg(1), arg(2));
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            sys_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
 
         case 20: { /*0x14, getpid*/
             syscall_enter("getpid", "");
-            writeGPR(x86_gpr_ax, getpid());
+            sys_return(getpid());
             syscall_leave("d");
             break;
         }
 
         case 24: { /*0x18, getuid*/
             syscall_enter("getuid", "");
-            writeGPR(x86_gpr_ax, getuid());
+            sys_return(getuid());
             syscall_leave("d");
             break;
         }
@@ -446,7 +400,7 @@ RSIM_Thread::emulate_syscall()
         case 27: { /* 0x1b, alarm */
             syscall_enter("alarm", "d");
             int result = alarm(arg(0));
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
             syscall_leave("d");
             break;
         }
@@ -454,7 +408,7 @@ RSIM_Thread::emulate_syscall()
         case 29: { /* 0x1d, pause */
             syscall_enter("pause", "");
             signal_pause();
-            writeGPR(x86_gpr_ax, -EINTR);
+            sys_return(-EINTR);
             syscall_leave("d");
             break;
         }
@@ -482,7 +436,7 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string filename = read_string(arg(0), 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
@@ -511,7 +465,7 @@ RSIM_Thread::emulate_syscall()
                 } else {
                     result = utime(filename.c_str(), NULL);
                 }
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -525,13 +479,13 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string name = read_string(name_va, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 int mode=arg(1);
                 int result = access(name.c_str(), mode);
                 if (-1==result) result = -errno;
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -540,7 +494,7 @@ RSIM_Thread::emulate_syscall()
             //  void sync(void);
             syscall_enter("sync", "");
             sync();
-            writeGPR(x86_gpr_ax, 0);
+            sys_return(0);
             syscall_leave("d");
             break;
         }
@@ -551,7 +505,7 @@ RSIM_Thread::emulate_syscall()
             int sig=arg(1);
             int result = kill(pid, sig);
             if (result == -1) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
             syscall_leave("d");
             break;
         }
@@ -562,17 +516,17 @@ RSIM_Thread::emulate_syscall()
 
             std::string oldpath = read_string(arg(0), 0, &error);
 	    if (error) {
-		    writeGPR(x86_gpr_ax, -EFAULT);
+		    sys_return(-EFAULT);
 		    break;
 	    }
             std::string newpath = read_string(arg(1), 0, &error);
 	    if (error) {
-		    writeGPR(x86_gpr_ax, -EFAULT);
+		    sys_return(-EFAULT);
 		    break;
 	    }
 
             int result = syscall(SYS_rename,oldpath.c_str(), newpath.c_str());
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            sys_return(-1==result?-errno:result);
 
             syscall_leave("d");
             break;
@@ -586,14 +540,14 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string sys_pathname = read_string(pathname, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 mode_t mode = arg(1);
 
                 int result = mkdir(sys_pathname.c_str(), mode);
                 if (result == -1) result = -errno;
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -606,13 +560,13 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string sys_pathname = read_string(pathname, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
                 int result = rmdir(sys_pathname.c_str());
                 if (result == -1) result = -errno;
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -623,7 +577,7 @@ RSIM_Thread::emulate_syscall()
             uint32_t fd = arg(0);
             int result = dup(fd);
             if (-1==result) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
             syscall_leave("d");
             break;
         }
@@ -654,7 +608,7 @@ RSIM_Thread::emulate_syscall()
 
 
             if (-1==result) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
             syscall_leave("d");
             break;
         }
@@ -684,28 +638,28 @@ RSIM_Thread::emulate_syscall()
                 process->get_memory()->dump(tracing(TRACE_MMAP), "    ");
             }
 
-            writeGPR(x86_gpr_ax, retval);
+            sys_return(retval);
             syscall_leave("p");
             break;
         }
 
         case 47: { /*0x2f, getgid*/
             syscall_enter("getgid", "");
-            writeGPR(x86_gpr_ax, getgid());
+            sys_return(getgid());
             syscall_leave("d");
             break;
         }
 
         case 49: { /*0x31, geteuid*/
             syscall_enter("geteuid", "");
-            writeGPR(x86_gpr_ax, geteuid());
+            sys_return(geteuid());
             syscall_leave("d");
             break;
         }
 
         case 50: { /*0x32, getegid*/
             syscall_enter("getegid", "");
-            writeGPR(x86_gpr_ax, getegid());
+            sys_return(getegid());
             syscall_leave("d");
             break;
         }
@@ -721,7 +675,7 @@ RSIM_Thread::emulate_syscall()
                         termios_native host_ti;
                         int result = syscall(SYS_ioctl, fd, cmd, &host_ti);
                         if (-1==result) {
-                            writeGPR(x86_gpr_ax, -errno);
+                            sys_return(-errno);
                             break;
                         }
                         termios_32 guest_ti;
@@ -733,10 +687,10 @@ RSIM_Thread::emulate_syscall()
                         for (int i=0; i<19; i++)
                             guest_ti.c_cc[i] = host_ti.c_cc[i];
                         if (sizeof(guest_ti)!=process->get_memory()->write(&guest_ti, arg(2), sizeof guest_ti)) {
-                            writeGPR(x86_gpr_ax, -EFAULT);
+                            sys_return(-EFAULT);
                             break;
                         }
-                        writeGPR(x86_gpr_ax, result);
+                        sys_return(result);
                     } while (0);
                     syscall_leave("d--P", sizeof(termios_32), print_termios_32);
                     break;
@@ -749,7 +703,7 @@ RSIM_Thread::emulate_syscall()
                     do {
                         termios_32 guest_ti;
                         if (sizeof(guest_ti)!=process->get_memory()->read(&guest_ti, arg(2), sizeof guest_ti)) {
-                            writeGPR(x86_gpr_ax, -EFAULT);
+                            sys_return(-EFAULT);
                             break;
                         }
                         termios_native host_ti;
@@ -761,7 +715,7 @@ RSIM_Thread::emulate_syscall()
                         for (int i=0; i<19; i++)
                             host_ti.c_cc[i] = guest_ti.c_cc[i];
                         int result = syscall(SYS_ioctl, fd, cmd, &host_ti);
-                        writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                        sys_return(-1==result?-errno:result);
                     } while (0);
                     syscall_leave("d");
                     break;
@@ -793,7 +747,7 @@ RSIM_Thread::emulate_syscall()
                         ROSE_ASSERT(nwritten==sizeof to);
                     }
 
-                    writeGPR(x86_gpr_ax, result);
+                    sys_return(result);
                     syscall_leave("d");
                     break;
                 }
@@ -810,14 +764,14 @@ RSIM_Thread::emulate_syscall()
                     do {
                         pid_t pgrp = tcgetpgrp(fd);
                         if (-1==pgrp) {
-                            writeGPR(x86_gpr_ax, -errno);
+                            sys_return(-errno);
                             break;
                         }
                         uint32_t pgrp_le;
                         SgAsmExecutableFileFormat::host_to_le(pgrp, &pgrp_le);
                         size_t nwritten = process->get_memory()->write(&pgrp_le, arg(2), 4);
                         ROSE_ASSERT(4==nwritten);
-                        writeGPR(x86_gpr_ax, pgrp);
+                        sys_return(pgrp);
                     } while (0);
                     syscall_leave("d");
                     break;
@@ -832,7 +786,7 @@ RSIM_Thread::emulate_syscall()
                     int result = tcsetpgrp(fd, pgid);
                     if (-1==result)
                         result = -errno;
-                    writeGPR(x86_gpr_ax, result);
+                    sys_return(result);
                     syscall_leave("d");
                     break;
                 }
@@ -842,7 +796,7 @@ RSIM_Thread::emulate_syscall()
                     do {
                         winsize_32 guest_ws;
                         if (sizeof(guest_ws)!=process->get_memory()->read(&guest_ws, arg(2), sizeof guest_ws)) {
-                            writeGPR(x86_gpr_ax, -EFAULT);
+                            sys_return(-EFAULT);
                             break;
                         }
 
@@ -853,7 +807,7 @@ RSIM_Thread::emulate_syscall()
                         host_ws.ws_ypixel = guest_ws.ws_ypixel;
 
                         int result = syscall(SYS_ioctl, fd, cmd, &host_ws);
-                        writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                        sys_return(-1==result?-errno:result);
                     } while (0);
                     syscall_leave("d");
                     break;
@@ -865,7 +819,7 @@ RSIM_Thread::emulate_syscall()
                         winsize_native host_ws;
                         int result = syscall(SYS_ioctl, fd, cmd, &host_ws);
                         if (-1==result) {
-                            writeGPR(x86_gpr_ax, -errno);
+                            sys_return(-errno);
                             break;
                         }
 
@@ -875,11 +829,11 @@ RSIM_Thread::emulate_syscall()
                         guest_ws.ws_xpixel = host_ws.ws_xpixel;
                         guest_ws.ws_ypixel = host_ws.ws_ypixel;
                         if (sizeof(guest_ws)!=process->get_memory()->write(&guest_ws, arg(2), sizeof guest_ws)) {
-                            writeGPR(x86_gpr_ax, -EFAULT);
+                            sys_return(-EFAULT);
                             break;
                         }
 
-                        writeGPR(x86_gpr_ax, result);
+                        sys_return(result);
                     } while (0);
                     syscall_leave("d--P", sizeof(winsize_32), print_winsize_32);
                     break;
@@ -899,7 +853,7 @@ RSIM_Thread::emulate_syscall()
             pid_t pid=arg(0), pgid=arg(1);
             int result = setpgid(pid, pgid);
             if (-1==result) { result = -errno; }
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
             syscall_leave("d");
             break;
         }
@@ -916,7 +870,7 @@ RSIM_Thread::emulate_syscall()
 
 	    int result = syscall(SYS_umask, mode); 
             if (result == -1) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
 
             syscall_leave("d");
             break;
@@ -925,21 +879,21 @@ RSIM_Thread::emulate_syscall()
         case 63: { /* 0x3f, dup2 */
             syscall_enter("dup2", "dd");
             int result = dup2(arg(0), arg(1));
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            sys_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
             
         case 64: { /*0x40, getppid*/
             syscall_enter("getppid", "");
-            writeGPR(x86_gpr_ax, getppid());
+            sys_return(getppid());
             syscall_leave("d");
             break;
         }
 
         case 65: { /*0x41, getpgrp*/
             syscall_enter("getpgrp", "");
-            writeGPR(x86_gpr_ax, getpgrp());
+            sys_return(getpgrp());
             syscall_leave("d");
             break;
         }
@@ -955,7 +909,7 @@ RSIM_Thread::emulate_syscall()
             rlimit_native.rlim_cur = rlimit_guest[0];
             rlimit_native.rlim_max = rlimit_guest[1];
             int result = setrlimit(resource, &rlimit_native);
-            writeGPR(x86_gpr_ax, -1==result ? -errno : result);
+            sys_return(-1==result ? -errno : result);
             syscall_leave("d");
             break;
         }
@@ -974,7 +928,7 @@ RSIM_Thread::emulate_syscall()
                 struct rlimit rlimit_native;
                 int result = getrlimit(resource, &rlimit_native);
                 if (-1==result) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
@@ -982,11 +936,11 @@ RSIM_Thread::emulate_syscall()
                 rlimit_guest[0] = rlimit_native.rlim_cur;
                 rlimit_guest[1] = rlimit_native.rlim_max;
                 if (8!=process->get_memory()->write(rlimit_guest, rlimit_va, 8)) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d-P", 8, print_rlimit);
             break;
@@ -1008,7 +962,7 @@ RSIM_Thread::emulate_syscall()
                     result = -EFAULT;
             }
 
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
             syscall_leave("dP", sizeof guest_time, print_timeval_32);
             break;
         }
@@ -1020,17 +974,17 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string sys_oldpath = read_string(oldpath, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 std::string sys_newpath = read_string(newpath, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 int result = symlink(sys_oldpath.c_str(),sys_newpath.c_str());
                 if (result == -1) result = -errno;
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -1044,7 +998,7 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string sys_path = read_string(path, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 int result = readlink(sys_path.c_str(), sys_buf, bufsize);
@@ -1054,7 +1008,7 @@ RSIM_Thread::emulate_syscall()
                     size_t nwritten = process->get_memory()->write(sys_buf, buf_va, result);
                     ROSE_ASSERT(nwritten == (size_t)result);
                 }
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -1071,7 +1025,7 @@ RSIM_Thread::emulate_syscall()
 
                 /* Check ranges */
                 if (aligned_va+aligned_sz <= aligned_va) { /* FIXME: not sure if sz==0 is an error */
-                    writeGPR(x86_gpr_ax, -EINVAL);
+                    sys_return(-EINVAL);
                     break;
                 }
 
@@ -1080,7 +1034,7 @@ RSIM_Thread::emulate_syscall()
                 extents.insert(ExtentPair(aligned_va, aligned_sz));
                 extents.erase(process->get_memory()->va_extents());
                 if (!extents.empty()) {
-                    writeGPR(x86_gpr_ax, -ENOMEM);
+                    sys_return(-ENOMEM);
                     break;
                 }
 
@@ -1092,7 +1046,7 @@ RSIM_Thread::emulate_syscall()
                 if (rose_addr && ALIGN_UP((uint64_t)rose_addr, (uint64_t)PAGE_SIZE)==(uint64_t)rose_addr)
                     (void)munmap(rose_addr, aligned_sz);
 
-                writeGPR(x86_gpr_ax, 0);
+                sys_return(0);
             } while (0);
             if (tracing(TRACE_MMAP)) {
                 fprintf(tracing(TRACE_MMAP), " memory map after munmap syscall:\n");
@@ -1107,7 +1061,7 @@ RSIM_Thread::emulate_syscall()
             int fd = arg(0);
             off_t len = arg(1);
             int result = ftruncate(fd, len);
-            writeGPR(x86_gpr_ax, -1==result ? -errno : result);
+            sys_return(-1==result ? -errno : result);
             syscall_leave("d");
             break;
         }
@@ -1126,7 +1080,7 @@ RSIM_Thread::emulate_syscall()
 
 	        int result = fchmod(fd, mode);
             if (result == -1) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
 
             syscall_leave("d");
             break;
@@ -1143,7 +1097,7 @@ RSIM_Thread::emulate_syscall()
             int user = arg(1);
             int group = arg(2);
             int result = syscall(SYS_fchown, fd, user, group);
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            sys_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
@@ -1165,7 +1119,7 @@ RSIM_Thread::emulate_syscall()
                   bool error;
                   std::string path = read_string(arg(0), 0, &error);
                   if (error) {
-                      writeGPR(x86_gpr_ax, -EFAULT);
+                      sys_return(-EFAULT);
                       break;
                   }
 
@@ -1185,7 +1139,7 @@ RSIM_Thread::emulate_syscall()
                 }
 
                 if (-1==result) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
@@ -1207,11 +1161,11 @@ RSIM_Thread::emulate_syscall()
                 guest_statfs.f_spare[2] = host_statfs.f_spare[2];
                 guest_statfs.f_spare[3] = host_statfs.f_spare[3];
                 if (sizeof(guest_statfs)!=process->get_memory()->write(&guest_statfs, arg(1), sizeof guest_statfs)) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d-P", sizeof(statfs_32), print_statfs_32);
             break;
@@ -1247,7 +1201,7 @@ RSIM_Thread::emulate_syscall()
             switch (arg(0)) {
                 case 1: { /* SYS_SOCKET */
                     if (12!=process->get_memory()->read(a, arg(1), 12)) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
+                        sys_return(-EFAULT);
                         goto socketcall_error;
                     }
                     syscall_enter(a, "socket", "fff", protocol_families, socket_types, socket_protocols);
@@ -1257,7 +1211,7 @@ RSIM_Thread::emulate_syscall()
                     
                 case 2: { /* SYS_BIND */
                     if (12!=process->get_memory()->read(a, arg(1), 12)) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
+                        sys_return(-EFAULT);
                         goto socketcall_error;
                     }
                     syscall_enter(a, "bind", "dpd");    /* FIXME: we could do a better job printing the address [RPM 2011-01-04] */
@@ -1267,7 +1221,7 @@ RSIM_Thread::emulate_syscall()
 
                 case 4: { /* SYS_LISTEN */
                     if (8!=process->get_memory()->read(a, arg(1), 8)) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
+                        sys_return(-EFAULT);
                         goto socketcall_error;
                     }
                     syscall_enter(a, "listen", "dd");
@@ -1291,10 +1245,10 @@ RSIM_Thread::emulate_syscall()
                 case 17: /* SYS_RECVMSG */
                 case 18: /* SYS_ACCEPT4 */
                 case 19: /* SYS_RECVMMSG */
-                    writeGPR(x86_gpr_ax, -ENOSYS);
+                    sys_return(-ENOSYS);
                     goto socketcall_error;
                 default:
-                    writeGPR(x86_gpr_ax, -EINVAL);
+                    sys_return(-EINVAL);
                     goto socketcall_error;
             }
             syscall_leave("d");
@@ -1366,7 +1320,7 @@ RSIM_Thread::emulate_syscall()
                     ROSE_ASSERT(nwritten == sizeof out);
                 }
             }
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
             syscall_leave("d");
             break;
         }
@@ -1415,7 +1369,7 @@ RSIM_Thread::emulate_syscall()
             int result  = syscall(SYS_sysinfo, &host_sys);
 
             if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
+                sys_return(-errno);
             } else {
                 guest_sysinfo guest_sys;
                 guest_sys.uptime = host_sys.uptime;
@@ -1436,9 +1390,9 @@ RSIM_Thread::emulate_syscall()
 
                 size_t nwritten = process->get_memory()->write(&guest_sys, arg(0), sizeof(guest_sys));
                 if (nwritten!=sizeof(guest_sys)) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                 } else {
-                    writeGPR(x86_gpr_ax, result);
+                    sys_return(result);
                 }
             }
             syscall_leave("d");
@@ -1490,7 +1444,7 @@ RSIM_Thread::emulate_syscall()
                         syscall_enter("ipc", "fddfP", ipc_commands, ipc_flags, sizeof(ipc_kludge_32), print_ipc_kludge_32);
                         ipc_kludge_32 kludge;
                         if (8!=process->get_memory()->read(&kludge, arg(4), 8)) {
-                            writeGPR(x86_gpr_ax, -ENOSYS);
+                            sys_return(-ENOSYS);
                         } else {
                             sys_msgrcv(first, kludge.msgp, second, kludge.msgtyp, third);
                         }
@@ -1539,7 +1493,7 @@ RSIM_Thread::emulate_syscall()
                     if (1==version) {
                         /* This was the entry point for kernel-originating calls from iBCS2 in 2.2 days */
                         syscall_enter("ipc", "fdddpd", ipc_commands);
-                        writeGPR(x86_gpr_ax, -EINVAL);
+                        sys_return(-EINVAL);
                         syscall_leave("d");
                     } else {
                         syscall_enter("ipc", "fdfpp", ipc_commands, ipc_flags);
@@ -1603,7 +1557,7 @@ RSIM_Thread::emulate_syscall()
                 }
                 default:
                     syscall_enter("ipc", "fdddpd", ipc_commands);
-                    writeGPR(x86_gpr_ax, -ENOSYS);
+                    sys_return(-ENOSYS);
                     syscall_leave("d");
                     break;
             }
@@ -1616,7 +1570,7 @@ RSIM_Thread::emulate_syscall()
             */
             syscall_enter("fsync", "d");
             int result = fsync( arg(0));
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            sys_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
@@ -1636,27 +1590,27 @@ RSIM_Thread::emulate_syscall()
                 
                 /* We cannot handle multiple threads yet. */
                 if (newsp || parent_tid_va || child_tid_va || (flags & (CLONE_VM|CLONE_THREAD))) {
-                    writeGPR(x86_gpr_ax, -EINVAL);
+                    sys_return(-EINVAL);
                     break;
                 }
 
                 /* ROSE simulates signal handling, therefore signal handlers cannot be shared. */
                 if (flags & CLONE_SIGHAND) {
-                    writeGPR(x86_gpr_ax, -EINVAL);
+                    sys_return(-EINVAL);
                     break;
                 }
 
-                /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a
-                 * function for it to execute. We want fork-like semantics. */
+                /* Flush some files so buffered content isn't output twice. */
                 fflush(stdout);
                 fflush(stderr);
                 if (tracing(TRACE_ALL))
                     fflush(tracing(TRACE_ALL));
-                if (process->binary_trace)
-                    fflush(process->binary_trace);
+
+                /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a
+                 * function for it to execute. We want fork-like semantics. */
                 pid_t pid = fork();
                 if (-1==pid) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
@@ -1665,10 +1619,10 @@ RSIM_Thread::emulate_syscall()
                     signal_pending = 0;
 
                     /* Open new log files if necessary */
-                    process->open_log_file(log_file_name);
-                    if (process->binary_trace) {
-                        fclose(process->binary_trace);
-                        process->binary_trace = NULL;
+                    process->open_trace_file();
+                    if (process->btrace_file) {
+                        fclose(process->btrace_file);
+                        process->btrace_file = NULL;
                     }
 
                     /* Thread-related things. ROSE isn't multi-threaded and the simulator doesn't support multi-threading, but
@@ -1688,35 +1642,35 @@ RSIM_Thread::emulate_syscall()
 
                     /* Return register values in child */
                     pt_regs_32 regs;
-                    regs.bx = readGPR(x86_gpr_bx).known_value();
-                    regs.cx = readGPR(x86_gpr_cx).known_value();
-                    regs.dx = readGPR(x86_gpr_dx).known_value();
-                    regs.si = readGPR(x86_gpr_si).known_value();
-                    regs.di = readGPR(x86_gpr_di).known_value();
-                    regs.bp = readGPR(x86_gpr_bp).known_value();
-                    regs.sp = readGPR(x86_gpr_sp).known_value();
-                    regs.cs = readSegreg(x86_segreg_cs).known_value();
-                    regs.ds = readSegreg(x86_segreg_ds).known_value();
-                    regs.es = readSegreg(x86_segreg_es).known_value();
-                    regs.fs = readSegreg(x86_segreg_fs).known_value();
-                    regs.gs = readSegreg(x86_segreg_gs).known_value();
-                    regs.ss = readSegreg(x86_segreg_ss).known_value();
+                    regs.bx = policy.readGPR(x86_gpr_bx).known_value();
+                    regs.cx = policy.readGPR(x86_gpr_cx).known_value();
+                    regs.dx = policy.readGPR(x86_gpr_dx).known_value();
+                    regs.si = policy.readGPR(x86_gpr_si).known_value();
+                    regs.di = policy.readGPR(x86_gpr_di).known_value();
+                    regs.bp = policy.readGPR(x86_gpr_bp).known_value();
+                    regs.sp = policy.readGPR(x86_gpr_sp).known_value();
+                    regs.cs = policy.readSegreg(x86_segreg_cs).known_value();
+                    regs.ds = policy.readSegreg(x86_segreg_ds).known_value();
+                    regs.es = policy.readSegreg(x86_segreg_es).known_value();
+                    regs.fs = policy.readSegreg(x86_segreg_fs).known_value();
+                    regs.gs = policy.readSegreg(x86_segreg_gs).known_value();
+                    regs.ss = policy.readSegreg(x86_segreg_ss).known_value();
                     uint32_t flags = 0;
                     for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
-                        if (readFlag((X86Flag)i).known_value()) {
+                        if (policy.readFlag((X86Flag)i).known_value()) {
                             flags |= (1u<<i);
                         }
                     }
                     if (sizeof(regs)!=process->get_memory()->write(&regs, regs_va, sizeof regs)) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
+                        sys_return(-EFAULT);
                         break;
                     }
                 }
 
-                writeGPR(x86_gpr_ax, pid);
+                sys_return(pid);
             } while (0);
 
-            if (readGPR(x86_gpr_ax).known_value()) {
+            if (policy.readGPR(x86_gpr_ax).known_value()) {
                 syscall_leave("d");
             } else {
                 /* Child */
@@ -1739,12 +1693,12 @@ RSIM_Thread::emulate_syscall()
             strcpy(buf+5*65, "example.com");                            /*domainname*/
             size_t nwritten = process->get_memory()->write(buf, dest_va, sizeof buf);
             if( nwritten <= 0 ) {
-              writeGPR(x86_gpr_ax, -EFAULT);
+              sys_return(-EFAULT);
               break;
             }
 
             ROSE_ASSERT(nwritten==sizeof buf);
-            writeGPR(x86_gpr_ax, 0);
+            sys_return(0);
             syscall_leave("d");
             break;
         }
@@ -1755,7 +1709,7 @@ RSIM_Thread::emulate_syscall()
 
 	    int result = fchdir(file_descriptor);
             if (result == -1) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
 
             syscall_leave("d");
             break;
@@ -1769,7 +1723,7 @@ RSIM_Thread::emulate_syscall()
                                   ((perms & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
                                   ((perms & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
             if (va % PAGE_SIZE) {
-                writeGPR(x86_gpr_ax, -EINVAL);
+                sys_return(-EINVAL);
             } else {
                 uint32_t aligned_sz = ALIGN_UP(size, PAGE_SIZE);
 
@@ -1779,13 +1733,13 @@ RSIM_Thread::emulate_syscall()
                  * read into ROSE's memory in such a way that segments are not aligned on page boundaries. We cannot change
                  * protections on these non-aligned sections. */
                 if (-1==mprotect(my_addr(va, size), size, perms) && EINVAL!=errno) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                 } else {
                     try {
                         process->get_memory()->mprotect(MemoryMap::MapElement(va, aligned_sz, rose_perms));
-                        writeGPR(x86_gpr_ax, 0);
+                        sys_return(0);
                     } catch (const MemoryMap::NotMapped &e) {
-                        writeGPR(x86_gpr_ax, -ENOMEM);
+                        sys_return(-ENOMEM);
                     }
                 }
             }
@@ -1814,9 +1768,9 @@ RSIM_Thread::emulate_syscall()
 
             off64_t result = lseek64(fd, offset, whence);
             if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
+                sys_return(-errno);
             } else {
-                writeGPR(x86_gpr_ax, 0);
+                sys_return(0);
                 size_t nwritten = process->get_memory()->write(&result, result_va, sizeof result);
                 ROSE_ASSERT(nwritten==sizeof result);
             }
@@ -1828,7 +1782,7 @@ RSIM_Thread::emulate_syscall()
             int fd = arg(0), sz = arg(2);
             uint32_t dirent_va = arg(1);
             int status = getdents_syscall<dirent32_t>(fd, dirent_va, sz);
-            writeGPR(x86_gpr_ax, status);
+            sys_return(status);
             syscall_leave("d-P", status>0?status:0, print_dentries_32);
             break;
         }
@@ -1864,7 +1818,7 @@ RSIM_Thread::emulate_syscall()
                 timeval host_timeout, *tvp=NULL;
                 if (tv_va) {
                     if (sizeof(guest_timeout)!=process->get_memory()->read(&guest_timeout, tv_va, sizeof guest_timeout)) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
+                        sys_return(-EFAULT);
                         break;
                     } else {
                         host_timeout.tv_sec = guest_timeout.tv_sec;
@@ -1875,14 +1829,14 @@ RSIM_Thread::emulate_syscall()
 
                 int result = select(fd, inp, outp, exp, tvp);
                 if (-1==result) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
                 if ((in_va  && sizeof(in) !=process->get_memory()->write(inp,  in_va,  sizeof in))  ||
                     (out_va && sizeof(out)!=process->get_memory()->write(outp, out_va, sizeof out)) ||
                     (ex_va  && sizeof(ex) !=process->get_memory()->write(exp,  ex_va,  sizeof ex))) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
@@ -1890,7 +1844,7 @@ RSIM_Thread::emulate_syscall()
                     guest_timeout.tv_sec = tvp->tv_sec;
                     guest_timeout.tv_usec = tvp->tv_usec;
                     if (sizeof(guest_timeout)!=process->get_memory()->write(&guest_timeout, tv_va, sizeof guest_timeout)) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
+                        sys_return(-EFAULT);
                         break;
                     }
                 }
@@ -1908,18 +1862,18 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("msync", "pdf", msync_flags);
             do {
                 if (arg(0) % 4096) {
-                    writeGPR(x86_gpr_ax, -EINVAL);
+                    sys_return(-EINVAL);
                     break;
                 }
 
                 void *addr = my_addr(arg(0), arg(1));
                 if (!addr) {
-                    writeGPR(x86_gpr_ax, -ENOMEM);
+                    sys_return(-ENOMEM);
                     break;
                 }
                 
                 int result = msync(addr, arg(1), arg(2));
-                writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                sys_return(-1==result?-errno:result);
             } while (0);
             syscall_leave("d");
             break;
@@ -1997,7 +1951,7 @@ RSIM_Thread::emulate_syscall()
                         fputc('\n', tracing(TRACE_SYSCALL));
                 }
             }
-            writeGPR(x86_gpr_ax, retval);
+            sys_return(retval);
             if (tracing(TRACE_SYSCALL) && niov>0 && niov<=1024)
                 fprintf(tracing(TRACE_SYSCALL), "%*s = ", 51, ""); /* align for return value */
             syscall_leave("d");
@@ -2010,11 +1964,11 @@ RSIM_Thread::emulate_syscall()
                 timespec_32 guest_ts;
                 timespec host_ts_in, host_ts_out;
                 if (sizeof(guest_ts)!=process->get_memory()->read(&guest_ts, arg(0), sizeof guest_ts)) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 if (guest_ts.tv_sec<0 || (unsigned long)guest_ts.tv_nsec >= 1000000000L) {
-                    writeGPR(x86_gpr_ax, -EINVAL);
+                    sys_return(-EINVAL);
                     break;
                 }
                 host_ts_in.tv_sec = guest_ts.tv_sec;
@@ -2025,11 +1979,11 @@ RSIM_Thread::emulate_syscall()
                     guest_ts.tv_sec = host_ts_out.tv_sec;
                     guest_ts.tv_nsec = host_ts_out.tv_nsec;
                     if (sizeof(guest_ts)!=process->get_memory()->write(&guest_ts, arg(1), sizeof guest_ts)) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
+                        sys_return(-EFAULT);
                         break;
                     }
                 }
-                writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                sys_return(-1==result?-errno:result);
             } while (0);
             syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
             break;
@@ -2043,23 +1997,23 @@ RSIM_Thread::emulate_syscall()
                 size_t sigsetsize=arg(3);
 
                 if (sigsetsize!=8 || signum<1 || signum>_NSIG) {
-                    writeGPR(x86_gpr_ax, -EINVAL);
+                    sys_return(-EINVAL);
                     break;
                 }
 
 
                 sigaction_32 tmp;
                 if (action_va && sizeof(tmp) != process->get_memory()->read(&tmp, action_va, sizeof tmp)) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 if (oldact_va && sizeof(tmp) != process->get_memory()->write(signal_action+signum-1, oldact_va, sizeof tmp)) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 if (action_va)
                     signal_action[signum-1] = tmp;
-                writeGPR(x86_gpr_ax, 0);
+                sys_return(0);
             } while (0);
             syscall_leave("d--P", sizeof(sigaction_32), print_sigaction_32);
             break;
@@ -2089,7 +2043,7 @@ RSIM_Thread::emulate_syscall()
                     /* SIG_SETMASK */
                     signal_mask = sigset;
                 } else {
-                    writeGPR(x86_gpr_ax, -EINVAL);
+                    sys_return(-EINVAL);
                     break;
                 }
                 if (signal_mask!=saved)
@@ -2100,7 +2054,7 @@ RSIM_Thread::emulate_syscall()
                 size_t nwritten = process->get_memory()->write(&saved, get_va, sizeof saved);
                 ROSE_ASSERT(nwritten==sizeof saved);
             }
-            writeGPR(x86_gpr_ax, 0);
+            sys_return(0);
             syscall_leave("d--P", (size_t)8, print_sigmask);
             break;
         }
@@ -2110,9 +2064,9 @@ RSIM_Thread::emulate_syscall()
             uint32_t sigset_va=arg(0);
             ROSE_ASSERT(8==sizeof(signal_pending));
             if (8!=process->get_memory()->write(&signal_pending, sigset_va, 8)) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                sys_return(-EFAULT);
             } else {
-                writeGPR(x86_gpr_ax, 0);
+                sys_return(0);
             }
             syscall_leave("dP", sizeof(uint64_t), print_sigmask);
             break;
@@ -2125,14 +2079,14 @@ RSIM_Thread::emulate_syscall()
                 ROSE_ASSERT(8==sizeof(signal_pending));
                 uint64_t new_signal_mask;
                 if (8!=process->get_memory()->read(&new_signal_mask, arg(0), 8)) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 uint64_t old_signal_mask = signal_mask;
                 signal_mask = new_signal_mask;
                 signal_pause();
                 signal_mask = old_signal_mask;
-                writeGPR(x86_gpr_ax, -EINTR);
+                sys_return(-EINTR);
             } while (0);
             syscall_leave("d");
             break;
@@ -2144,22 +2098,22 @@ RSIM_Thread::emulate_syscall()
                 static char buf[4096]; /* page size in kernel */
                 int result = syscall(SYS_getcwd, buf, sizeof buf);
                 if (-1==result) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
                 size_t len = strlen(buf) + 1;
                 if (len > arg(1)) {
-                    writeGPR(x86_gpr_ax, -ERANGE);
+                    sys_return(-ERANGE);
                     break;
                 }
 
                 if (len!=process->get_memory()->write(buf, arg(0), len)) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("ds");
             break;
@@ -2171,7 +2125,7 @@ RSIM_Thread::emulate_syscall()
                 uint32_t new_stack_va=arg(0), old_stack_va=arg(1);
 
                 /* Are we currently executing on the alternate stack? */
-                uint32_t sp = readGPR(x86_gpr_sp).known_value();
+                uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
                 bool on_stack = (0==(signal_stack.ss_flags & SS_DISABLE) &&
                                  sp >= signal_stack.ss_sp &&
                                  sp < signal_stack.ss_sp + signal_stack.ss_size);
@@ -2181,7 +2135,7 @@ RSIM_Thread::emulate_syscall()
                     tmp.ss_flags &= ~SS_ONSTACK;
                     if (on_stack) tmp.ss_flags |= SS_ONSTACK;
                     if (sizeof(tmp)!=process->get_memory()->write(&tmp, old_stack_va, sizeof tmp)) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
+                        sys_return(-EFAULT);
                         break;
                     }
                 }
@@ -2190,23 +2144,23 @@ RSIM_Thread::emulate_syscall()
                     stack_32 tmp;
                     tmp.ss_flags &= ~SS_ONSTACK;
                     if (sizeof(tmp)!=process->get_memory()->read(&tmp, new_stack_va, sizeof tmp)) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
+                        sys_return(-EFAULT);
                         break;
                     }
                     if (on_stack) {
-                        writeGPR(x86_gpr_ax, -EINVAL);  /* can't set alt stack while we're using it */
+                        sys_return(-EINVAL);  /* can't set alt stack while we're using it */
                         break;
                     } else if ((tmp.ss_flags & ~(SS_DISABLE|SS_ONSTACK))) {
-                        writeGPR(x86_gpr_ax, -EINVAL);  /* invalid flags */
+                        sys_return(-EINVAL);  /* invalid flags */
                         break;
                     } else if (0==(tmp.ss_flags & SS_DISABLE) && tmp.ss_size < 4096) {
-                        writeGPR(x86_gpr_ax, -ENOMEM);  /* stack must be at least one page large */
+                        sys_return(-ENOMEM);  /* stack must be at least one page large */
                         break;
                     }
                     signal_stack = tmp;
                 }
 
-                writeGPR(x86_gpr_ax, 0);
+                sys_return(0);
             } while (0);
             syscall_leave("d-P", sizeof(stack_32), print_stack_32);
             break;
@@ -2237,7 +2191,7 @@ RSIM_Thread::emulate_syscall()
                 try {
                     start = process->get_memory()->find_free(process->mmap_start, aligned_size, PAGE_SIZE);
                 } catch (const MemoryMap::NoFreeSpace &e) {
-                    writeGPR(x86_gpr_ax, -ENOMEM);
+                    sys_return(-ENOMEM);
                     goto mmap2_done;
                 }
             }
@@ -2250,7 +2204,7 @@ RSIM_Thread::emulate_syscall()
                 buf = mmap(NULL, size, prot, flags & ~MAP_FIXED, fd, offset);
             }
             if (MAP_FAILED==buf) {
-                writeGPR(x86_gpr_ax, -errno);
+                sys_return(-errno);
             } else {
                 /* Try to figure out a reasonable name for the map element. If we're mapping a file, we can get the file name
                  * from the proc filesystem. The name is only used to aid debugging. */
@@ -2275,7 +2229,7 @@ RSIM_Thread::emulate_syscall()
                 melmt.set_name("mmap2("+melmt_name+")");
                 process->get_memory()->erase(melmt); /*clear space space first to avoid MemoryMap::Inconsistent exception*/
                 process->get_memory()->insert(melmt);
-                writeGPR(x86_gpr_ax, start);
+                sys_return(start);
             }
 
         mmap2_done:
@@ -2330,7 +2284,7 @@ RSIM_Thread::emulate_syscall()
                     bool error;
                     std::string name = read_string(arg(0), 0, &error);
                     if (error) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
+                        sys_return(-EFAULT);
                         break;
                     }
                     result = syscall(host_callno, (unsigned long)name.c_str(), (unsigned long)kernel_stat);
@@ -2338,7 +2292,7 @@ RSIM_Thread::emulate_syscall()
                     result = syscall(host_callno, (unsigned long)arg(0), (unsigned long)kernel_stat);
                 }
                 if (-1==result) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
@@ -2383,7 +2337,7 @@ RSIM_Thread::emulate_syscall()
                     process->get_memory()->write(kernel_stat, arg(1), kernel_stat_size);
                 }
 
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d-P", sizeof(kernel_stat_32), print_kernel_stat_32);
             break;
@@ -2392,7 +2346,7 @@ RSIM_Thread::emulate_syscall()
 	case 199: { /*0xc7, getuid32 */
             syscall_enter("getuid32", "");
             uid_t id = getuid();
-            writeGPR(x86_gpr_ax, id);
+            sys_return(id);
             syscall_leave("d");
 	    break;
 	}
@@ -2400,7 +2354,7 @@ RSIM_Thread::emulate_syscall()
 	case 200: { /*0xc8, getgid32 */
             syscall_enter("getgid32", "");
             uid_t id = getgid();
-            writeGPR(x86_gpr_ax, id);
+            sys_return(id);
             syscall_leave("d");
             break;
         }
@@ -2408,7 +2362,7 @@ RSIM_Thread::emulate_syscall()
 	case 201: { /*0xc9, geteuid32 */
             syscall_enter("geteuid32", "");
             uid_t id = geteuid();
-            writeGPR(x86_gpr_ax, id);
+            sys_return(id);
             syscall_leave("d");
             break;
         }
@@ -2416,7 +2370,7 @@ RSIM_Thread::emulate_syscall()
         case 202: { /*0xca, getegid32 */
             syscall_enter("getegid32", "");
             uid_t id = getegid();
-            writeGPR(x86_gpr_ax, id);
+            sys_return(id);
             syscall_leave("d");
             break;
         }
@@ -2431,7 +2385,7 @@ RSIM_Thread::emulate_syscall()
             size_t nwritten = process->get_memory()->write(list, arg(1), arg(0));
             ROSE_ASSERT(nwritten == (size_t)arg(0));
 
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
             syscall_leave("d");
             break;
         }
@@ -2445,7 +2399,7 @@ RSIM_Thread::emulate_syscall()
             size_t nread = process->get_memory()->write(&list, arg(1), arg(0));
             ROSE_ASSERT(nread == arg(0));
             int result = setgroups( arg(0), list);
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            sys_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
@@ -2460,7 +2414,7 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("fchown32", "ddd");
             int fd=arg(0), user=arg(1), group=arg(2);
             int result = syscall(SYS_fchown, fd, user, group);
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            sys_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
@@ -2471,13 +2425,13 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string filename = read_string(arg(0), 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 uid_t user = arg(1);
                 gid_t group = arg(2);
                 int result = chown(filename.c_str(),user,group);
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -2488,7 +2442,7 @@ RSIM_Thread::emulate_syscall()
             int fd = arg(0), sz = arg(2);
             uint32_t dirent_va = arg(1);
             int status = getdents_syscall<dirent64_t>(fd, dirent_va, sz);
-            writeGPR(x86_gpr_ax, status);
+            sys_return(status);
             syscall_leave("d-P", status>0?status:0, print_dentries_64);
             break;
         }
@@ -2520,7 +2474,7 @@ RSIM_Thread::emulate_syscall()
                 case F_GETSIG: {
                     syscall_enter("fcntl64", "df", fcntl_cmds);
                     result = fcntl(fd, cmd, other);
-                    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                    sys_return(-1==result?-errno:result);
                     syscall_leave("d");
                     break;
                 }
@@ -2528,21 +2482,21 @@ RSIM_Thread::emulate_syscall()
                 case F_SETOWN: {
                     syscall_enter("fcntl64", "dfd", fcntl_cmds);
                     result = fcntl(fd, cmd, other);
-                    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                    sys_return(-1==result?-errno:result);
                     syscall_leave("d");
                     break;
                 }
                 case F_SETFL: {
                     syscall_enter("fcntl64", "dff", fcntl_cmds, open_flags);
                     result = fcntl(fd, cmd, other);
-                    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                    sys_return(-1==result?-errno:result);
                     syscall_leave("d");
                     break;
                 }
                 case F_SETSIG: {
                     syscall_enter("fcntl64", "dff", fcntl_cmds, signal_names);
                     result = fcntl(fd, cmd, other);
-                    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                    sys_return(-1==result?-errno:result);
                     syscall_leave("d");
                     break;
                 }
@@ -2554,7 +2508,7 @@ RSIM_Thread::emulate_syscall()
                         flock_32 guest_fl;
                         static flock_native host_fl;
                         if (sizeof(guest_fl)!=process->get_memory()->read(&guest_fl, arg(2), sizeof guest_fl)) {
-                            writeGPR(x86_gpr_ax, -EFAULT);
+                            sys_return(-EFAULT);
                             break;
                         }
                         host_fl.l_type = guest_fl.l_type;
@@ -2568,7 +2522,7 @@ RSIM_Thread::emulate_syscall()
                         result = syscall(SYS_fcntl, fd, cmd, &host_fl);
 #endif
                         if (-1==result) {
-                            writeGPR(x86_gpr_ax, -errno);
+                            sys_return(-errno);
                             break;
                         }
                         if (F_GETLK==cmd) {
@@ -2578,12 +2532,12 @@ RSIM_Thread::emulate_syscall()
                             guest_fl.l_len = host_fl.l_len;
                             guest_fl.l_pid = host_fl.l_pid;
                             if (sizeof(guest_fl)!=process->get_memory()->write(&guest_fl, arg(2), sizeof guest_fl)) {
-                                writeGPR(x86_gpr_ax, -EFAULT);
+                                sys_return(-EFAULT);
                                 break;
                             }
                         }
 
-                        writeGPR(x86_gpr_ax, result);
+                        sys_return(result);
                     } while (0);
                     if (F_GETLK==cmd) {
                         syscall_leave("d--P", sizeof(flock_32), print_flock_32);
@@ -2594,7 +2548,7 @@ RSIM_Thread::emulate_syscall()
                 }
                 default:
                     syscall_enter("fcntl64", "dfd", fcntl_cmds);
-                    writeGPR(x86_gpr_ax, -EINVAL);
+                    sys_return(-EINVAL);
                     syscall_leave("d");
                     break;
             }
@@ -2604,7 +2558,7 @@ RSIM_Thread::emulate_syscall()
         case 224: { /*0xe0, gettid*/
             // We have no concept of threads
             syscall_enter("gettid", "");
-            writeGPR(x86_gpr_ax, getpid());
+            sys_return(getpid());
             syscall_leave("d");
             break;
        }
@@ -2680,7 +2634,7 @@ RSIM_Thread::emulate_syscall()
 #endif
             int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val3);
             if (-1==result) result = -errno;
-            writeGPR(x86_gpr_ax, result);
+            sys_return(result);
             syscall_leave("d");
             break;
         }
@@ -2701,10 +2655,10 @@ RSIM_Thread::emulate_syscall()
             process->gdt[ud.entry_number] = ud;
             size_t nwritten = process->get_memory()->write(&ud, arg(0), sizeof ud);
             ROSE_ASSERT(nwritten==sizeof ud);
-            writeGPR(x86_gpr_ax, 0);
+            sys_return(0);
             /* Reload all the segreg shadow values from the (modified) descriptor table */
             for (size_t i=0; i<6; i++)
-                writeSegreg((X86SegmentRegister)i, readSegreg((X86SegmentRegister)i));
+                policy.writeSegreg((X86SegmentRegister)i, policy.readSegreg((X86SegmentRegister)i));
             syscall_leave("d");
             break;
         }
@@ -2735,7 +2689,7 @@ RSIM_Thread::emulate_syscall()
         case 258: { /*0x102, set_tid_address*/
             syscall_enter("set_tid_address", "p");
             clear_child_tid = arg(0);
-            writeGPR(x86_gpr_ax, getpid());
+            sys_return(getpid());
             syscall_leave("d");
             break;
         }
@@ -2745,7 +2699,7 @@ RSIM_Thread::emulate_syscall()
             do {
                 timespec_32 guest_ts;
                 if (sizeof(guest_ts)!=process->get_memory()->read(&guest_ts, arg(1), sizeof guest_ts)) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
@@ -2753,7 +2707,7 @@ RSIM_Thread::emulate_syscall()
                 host_ts.tv_sec = guest_ts.tv_sec;
                 host_ts.tv_nsec = guest_ts.tv_nsec;
                 int result = syscall(SYS_clock_settime, arg(0), &host_ts);
-                writeGPR(x86_gpr_ax, -1==result?-errno:result);
+                sys_return(-1==result?-errno:result);
             } while (0);
             syscall_leave("d");
             break;
@@ -2765,7 +2719,7 @@ RSIM_Thread::emulate_syscall()
                 static timespec host_ts;
                 int result = syscall(SYS_clock_gettime, arg(0), &host_ts);
                 if (-1==result) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
@@ -2773,11 +2727,11 @@ RSIM_Thread::emulate_syscall()
                 guest_ts.tv_sec = host_ts.tv_sec;
                 guest_ts.tv_nsec = host_ts.tv_nsec;
                 if (sizeof(guest_ts)!=process->get_memory()->write(&guest_ts, arg(1), sizeof guest_ts)) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
             break;
@@ -2790,7 +2744,7 @@ RSIM_Thread::emulate_syscall()
                 timespec *host_tsp = arg(1) ? &host_ts : NULL;
                 int result = syscall(SYS_clock_getres, arg(0), host_tsp);
                 if (-1==result) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
@@ -2799,12 +2753,12 @@ RSIM_Thread::emulate_syscall()
                     guest_ts.tv_sec = host_ts.tv_sec;
                     guest_ts.tv_nsec = host_ts.tv_nsec;
                     if (sizeof(guest_ts)!=process->get_memory()->write(&guest_ts, arg(1), sizeof guest_ts)) {
-                        writeGPR(x86_gpr_ax, -EFAULT);
+                        sys_return(-EFAULT);
                         break;
                     }
                 }
 
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
             break;
@@ -2817,7 +2771,7 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string path = read_string(arg(0), 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
@@ -2828,7 +2782,7 @@ RSIM_Thread::emulate_syscall()
                 int result = syscall(SYS_statfs, path.c_str(), &host_statfs);
 #endif
                 if (-1==result) {
-                    writeGPR(x86_gpr_ax, -errno);
+                    sys_return(-errno);
                     break;
                 }
 
@@ -2850,11 +2804,11 @@ RSIM_Thread::emulate_syscall()
                 guest_statfs.f_spare[2] = host_statfs.f_spare[2];
                 guest_statfs.f_spare[3] = host_statfs.f_spare[3];
                 if (sizeof(guest_statfs)!=process->get_memory()->write(&guest_statfs, arg(2), sizeof guest_statfs)) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d--P", sizeof(statfs64_32), print_statfs64_32);
             break;
@@ -2894,7 +2848,7 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string filename = read_string(arg(0), 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
@@ -2927,7 +2881,7 @@ RSIM_Thread::emulate_syscall()
                     result = utimes(filename.c_str(), NULL);
                 }
 
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -2942,7 +2896,7 @@ RSIM_Thread::emulate_syscall()
                 bool error;
                 std::string sys_path = read_string(path, 0, &error);
                 if (error) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
                 mode_t mode = arg(2);
@@ -2950,7 +2904,7 @@ RSIM_Thread::emulate_syscall()
 
                 int result = syscall( 306, dirfd, (long) sys_path.c_str(), mode, flags);
                 if (result == -1) result = -errno;
-                writeGPR(x86_gpr_ax, result);
+                sys_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -2961,13 +2915,13 @@ RSIM_Thread::emulate_syscall()
             do {
                 uint32_t head_va=arg(0), len=arg(1);
                 if (len!=sizeof(robust_list_head_32)) {
-                    writeGPR(x86_gpr_ax, -EINVAL);
+                    sys_return(-EINVAL);
                     break;
                 }
 
                 robust_list_head_32 guest_head;
                 if (sizeof(guest_head)!=process->get_memory()->read(&guest_head, head_va, sizeof(guest_head))) {
-                    writeGPR(x86_gpr_ax, -EFAULT);
+                    sys_return(-EFAULT);
                     break;
                 }
 
@@ -2976,7 +2930,7 @@ RSIM_Thread::emulate_syscall()
                  * fact, we can't tell the kernel because that would cause our own list (set by libc) to be removed from the
                  * kernel. */
                 robust_list_head_va = head_va;
-                writeGPR(x86_gpr_ax, 0);
+                sys_return(0);
             } while (0);
             syscall_leave("d");
             break;
@@ -2996,352 +2950,13 @@ RSIM_Thread::emulate_syscall()
 
 
 
-static RSIM_Thread *signal_deliver_to;
-static void
-signal_handler(int signo)
-{
-    if (signal_deliver_to) {
-        signal_deliver_to->signal_generate(signo);
-    } else {
-        fprintf(stderr, "received ");
-        print_enum(stderr, signal_names, signo);
-        fprintf(stderr, "(%d); this signal cannot be delivered so we're taking it ourselves\n", signo);
-        struct sigaction sa, old_sa;
-        sa.sa_handler = SIG_DFL;
-        sigemptyset(&sa.sa_mask);
-        sa.sa_flags = SA_RESTART;
-        sigaction(signo, &sa, &old_sa);
-        sigset_t ss, old_ss;
-        sigemptyset(&ss);
-        sigaddset(&ss, signo);
-        sigprocmask(SIG_UNBLOCK, &ss, &old_ss);
-        raise(signo);
-        sigprocmask(SIG_SETMASK, &old_ss, NULL);
-        sigaction(signo, &old_sa, NULL);
-    }
-}
 
 int
 main(int argc, char *argv[], char *envp[])
 {
-    typedef X86InstructionSemantics<RSIM_Thread, VirtualMachineSemantics::ValueType> Semantics;
-    RSIM_Process *process = new RSIM_Process;
-    uint32_t dump_at = 0;               /* dump core the first time we hit this address, before the instruction is executed */
-    std::string dump_name = "dump";
-
-    struct sigaction sa;
-    sa.sa_handler = signal_handler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-    sigaction(SIGHUP,   &sa, NULL);
-    sigaction(SIGINT,   &sa, NULL);
-    sigaction(SIGQUIT,  &sa, NULL);
-    sigaction(SIGILL,   &sa, NULL);
-    sigaction(SIGTRAP,  &sa, NULL);
-    sigaction(SIGABRT,  &sa, NULL);
-    sigaction(SIGBUS,   &sa, NULL);
-    sigaction(SIGFPE,   &sa, NULL);
-    sigaction(SIGUSR1,  &sa, NULL);
-    sigaction(SIGSEGV,  &sa, NULL);
-    sigaction(SIGUSR2,  &sa, NULL);
-    sigaction(SIGPIPE,  &sa, NULL);
-    sigaction(SIGALRM,  &sa, NULL);
-    sigaction(SIGTERM,  &sa, NULL);
-    sigaction(SIGSTKFLT,&sa, NULL);
-    sigaction(SIGCHLD,  &sa, NULL);
-    sigaction(SIGTSTP,  &sa, NULL);
-    sigaction(SIGTTIN,  &sa, NULL);
-    sigaction(SIGTTOU,  &sa, NULL);
-    sigaction(SIGURG,   &sa, NULL);
-    sigaction(SIGXCPU,  &sa, NULL);
-    sigaction(SIGXFSZ,  &sa, NULL);
-    sigaction(SIGVTALRM,&sa, NULL);
-    sigaction(SIGPROF,  &sa, NULL);
-    sigaction(SIGWINCH, &sa, NULL);
-    sigaction(SIGIO,    &sa, NULL);
-    sigaction(SIGPWR,   &sa, NULL);
-    sigaction(SIGSYS,   &sa, NULL);
-    sigaction(SIGXFSZ,  &sa, NULL);
-    for (int i=SIGRTMIN; i<=SIGRTMAX; i++)
-        sigaction(i, &sa, NULL);
-
-    /* Parse command-line */
-    int argno = 1;
-    while (argno<argc && '-'==argv[argno][0]) {
-        if (!strcmp(argv[argno], "--")) {
-            argno++;
-            break;
-        } else if (!strncmp(argv[argno], "--log=", 6)) {
-            /* Save log file name pattern, extending it to an absolute name in case the specimen changes directories */
-            if (argv[argno][6]=='/') {
-                log_file_name = new char[strlen(argv[argno]+6)+1];
-                strcpy(log_file_name, argv[argno]+6);
-            } else {
-                char dirname[4096];
-                char *dirname_p = getcwd(dirname, sizeof dirname);
-                ROSE_ASSERT(dirname_p);
-                log_file_name = new char[strlen(dirname)+1+strlen(argv[argno]+6)+1];
-                sprintf(log_file_name, "%s/%s", dirname, argv[argno]+6);
-            }
-            argno++;
-        } else if (!strncmp(argv[argno], "--debug=", 8)) {
-            unsigned trace_flags = 0;
-            char *s = argv[argno]+8;
-            while (s && *s) {
-                char *comma = strchr(s, ',');
-                std::string word(s, comma?comma-s:strlen(s));
-                s = comma ? comma+1 : NULL;
-                if (word=="all") {
-                    trace_flags = TRACE_ALL;
-                } else if (word=="insn") {
-                    trace_flags |= TRACE_INSN;
-                } else if (word=="state") {
-                    trace_flags |= TRACE_STATE;
-                } else if (word=="mem") {
-                    trace_flags |= TRACE_MEM;
-                } else if (word=="mmap") {
-                    trace_flags |= TRACE_MMAP;
-                } else if (word=="signal") {
-                    trace_flags |= TRACE_SIGNAL;
-                } else if (word=="syscall") {
-                    trace_flags |= TRACE_SYSCALL;
-                } else if (word=="loader") {
-                    trace_flags |= TRACE_LOADER;
-                } else if (word=="progress") {
-                    trace_flags |= TRACE_PROGRESS;
-                } else {
-                    fprintf(stderr, "%s: debug words must be from the set: "
-                            "all, insn, state, mem, mmap, syscall, signal, loader, progress\n",
-                            argv[0]);
-                    exit(1);
-                }
-            }
-            process->set_tracing(stderr, trace_flags);
-            argno++;
-        } else if (!strcmp(argv[argno], "--debug")) {
-            process->set_tracing(stderr, TRACE_INSN|TRACE_SYSCALL|TRACE_SIGNAL);
-            argno++;
-        } else if (!strncmp(argv[argno], "--core=", 7)) {
-            unsigned core_styles = 0;
-            for (char *s=argv[argno]+7; s && *s; /*void*/) {
-                if (!strncmp(s, "elf", 3)) {
-                    s += 3;
-                    core_styles |= CORE_ELF;
-                } else if (!strncmp(s, "rose", 4)) {
-                    s += 4;
-                    core_styles |= CORE_ROSE;
-                } else {
-                    fprintf(stderr, "%s: unknown core dump type for %s\n", argv[0], argv[argno]);
-                }
-                while (','==*s) s++;
-            }
-            process->core_styles = core_styles;
-            argno++;
-        } else if (!strncmp(argv[argno], "--dump=", 7)) {
-            char *rest;
-            errno = 0;
-            dump_at = strtoul(argv[argno]+7, &rest, 0);
-            if (rest==argv[argno]+7 || errno!=0) {
-                fprintf(stderr, "%s: --dump=N requires an address, N\n", argv[0]);
-                exit(1);
-            }
-            if (','==rest[0] && rest[1])
-                dump_name = rest+1;
-            argno++;
-        } else if (!strncmp(argv[argno], "--interp=", 9)) {
-            process->set_interpname(argv[argno++]+9);
-        } else if (!strncmp(argv[argno], "--vdso=", 7)) {
-            std::vector<std::string> vdso_paths;
-            for (char *s=argv[argno]+7; s && *s; /*void*/) {
-                char *colon = strchr(s, ':');
-                vdso_paths.push_back(std::string(s, colon?colon-s:strlen(s)));
-                s = colon ? colon+1 : NULL;
-            }
-            process->vdso_paths = vdso_paths;
-            argno++;
-        } else if (!strcmp(argv[argno], "--showauxv")) {
-            fprintf(stderr, "showing the auxiliary vector for x86sim:\n");
-            argno++;
-            struct auxv_t {
-                unsigned long type;
-                unsigned long val;
-            };
-            char **p = envp;
-            while (*p++);
-            for (auxv_t *auxvp=(auxv_t*)p; 1; auxvp++) {
-                switch (auxvp->type) {
-                    case 0:  fprintf(stderr, "    0  AT_NULL         %lu\n", auxvp->val); break;
-                    case 1:  fprintf(stderr, "    1  AT_IGNORE       %lu\n", auxvp->val); break;
-                    case 2:  fprintf(stderr, "    2  AT_EXECFD       %lu\n", auxvp->val); break;
-                    case 3:  fprintf(stderr, "    3  AT_PHDR         0x%lx\n", auxvp->val); break;
-                    case 4:  fprintf(stderr, "    4  AT_PHENT        0x%lx\n", auxvp->val); break;
-                    case 5:  fprintf(stderr, "    5  AT_PHNUM        %lu\n", auxvp->val); break;
-                    case 6:  fprintf(stderr, "    6  AT_PAGESZ       %lu\n", auxvp->val); break;
-                    case 7:  fprintf(stderr, "    7  AT_BASE         0x%lx\n", auxvp->val); break;
-                    case 8:  fprintf(stderr, "    8  AT_FLAGS        0x%lx\n", auxvp->val); break;
-                    case 9:  fprintf(stderr, "    9  AT_ENTRY        0x%lx\n", auxvp->val); break;
-                    case 10: fprintf(stderr, "    10 AT_NOTELF       %lu\n", auxvp->val); break;
-                    case 11: fprintf(stderr, "    11 AT_UID          %ld\n", auxvp->val); break;
-                    case 12: fprintf(stderr, "    12 AT_EUID         %ld\n", auxvp->val); break;
-                    case 13: fprintf(stderr, "    13 AT_GID          %ld\n", auxvp->val); break;
-                    case 14: fprintf(stderr, "    14 AT_EGID         %ld\n", auxvp->val); break;
-                    case 15: fprintf(stderr, "    15 AT_PLATFORM     0x%lx\n", auxvp->val); break;
-                    case 16: fprintf(stderr, "    16 AT_HWCAP        0x%lx\n", auxvp->val); break;
-                    case 17: fprintf(stderr, "    17 AT_CLKTCK       %lu\n", auxvp->val); break;
-                    case 18: fprintf(stderr, "    18 AT_FPUCW        %lu\n", auxvp->val); break;
-                    case 19: fprintf(stderr, "    19 AT_DCACHEBSIZE  %lu\n", auxvp->val); break;
-                    case 20: fprintf(stderr, "    20 AT_ICACHEBSIZE  %lu\n", auxvp->val); break;
-                    case 21: fprintf(stderr, "    21 AT_UCACHEBSIZE  %lu\n", auxvp->val); break;
-                    case 22: fprintf(stderr, "    22 AT_IGNOREPPC    %lu\n", auxvp->val); break;
-                    case 23: fprintf(stderr, "    23 AT_SECURE       %ld\n", auxvp->val); break;
-
-                    case 32: fprintf(stderr, "    32 AT_SYSINFO      0x%lx\n", auxvp->val); break;
-                    case 33: fprintf(stderr, "    33 AT_SYSINFO_PHDR 0x%lx\n", auxvp->val); break;
-                    case 34: fprintf(stderr, "    34 AT_L1I_CACHESHAPE 0x%lx\n", auxvp->val); break;
-                    case 35: fprintf(stderr, "    35 AT_L1D_CACHESHAPE 0x%lx\n", auxvp->val); break;
-                    case 36: fprintf(stderr, "    36 AT_L2_CACHESHAPE  0x%lx\n", auxvp->val); break;
-                    case 37: fprintf(stderr, "    37 AT_L3_CACHESHAPE  0x%lx\n", auxvp->val); break;
-
-                    default: fprintf(stderr, "    %lu AT_(unknown)   0x%lx\n", auxvp->type, auxvp->val); break;
-                }
-                if (!auxvp->type)
-                    break;
-            }
-            
-        } else if (!strncmp(argv[argno], "--trace=", 8)) {
-            if (process->binary_trace)
-                fclose(process->binary_trace);
-            if (NULL==(process->binary_trace=fopen(argv[argno]+8, "wb"))) {
-                fprintf(stderr, "%s: %s: %s\n", argv[0], argv[argno]+8, strerror(errno));
-                exit(1);
-            }
-#ifdef X86SIM_BINARY_TRACE_UNBUFFERED
-            setbuf(process->binary_trace, NULL);
-#endif
-            argno++;
-
-        } else {
-            fprintf(stderr, "usage: %s [--debug] PROGRAM ARGUMENTS...\n", argv[0]);
-            exit(1);
-        }
-    }
-
-    ROSE_ASSERT(argc-argno>=1); /* usage: executable name followed by executable's arguments */
-    process->open_log_file(log_file_name);
-    SgAsmGenericHeader *fhdr = process->load(argv[argno]); /*header for main executable, not libraries*/
-    process->binary_trace_start();
-    
-    RSIM_Thread *thread = process->get_thread(getpid());
-    Semantics t(*thread);
-    thread->initialize_stack(fhdr, argc-argno, argv+argno);
-    signal_deliver_to = thread;
-    struct timeval sim_start_time;
-    gettimeofday(&sim_start_time, NULL);
-    bool seen_entry_va = false;
-
-    /* Debugging */
-    if (process->tracing(TRACE_MMAP)) {
-        fprintf(process->tracing(TRACE_MMAP), "memory map after program load:\n");
-        process->get_memory()->dump(process->tracing(TRACE_MMAP), "  ");
-    }
-    if (thread->tracing(TRACE_STATE)) {
-        fprintf(thread->tracing(TRACE_STATE), "Initial state:\n");
-        thread->dump_registers(thread->tracing(TRACE_STATE));
-    }
-    if (process->tracing(TRACE_PROGRESS)) {
-        struct sigaction sa;
-        sa.sa_handler = alarm_handler;
-        sigemptyset(&sa.sa_mask);
-        sa.sa_flags = SA_RESTART;
-        sigaction(SIGALRM, &sa, NULL);
-        alarm(PROGRESS_INTERVAL);
-    }
-
-    /*========================================================================================================================
-     *                               THE SIMULATOR MAY NOW BE MULTI-THREADED
-     *
-     *  Until this point, the simulator was running in a single thread.  Within the big "while" simulation loop below, the
-     *  specimen may spawn threads, each of which will cause a new thread to be started in the simulator.
-     *========================================================================================================================*/
-    while (true) {
-        if (had_alarm) {
-            had_alarm = 0;
-            alarm(PROGRESS_INTERVAL);
-            if (process->tracing(TRACE_PROGRESS)) {
-                struct timeval cur_time;
-                gettimeofday(&cur_time, NULL);
-                double nsec = cur_time.tv_sec + cur_time.tv_usec/1e6 - (sim_start_time.tv_sec + sim_start_time.tv_usec/1e6);
-                double insn_rate = nsec>0 ? process->get_ninsns() / nsec : 0;
-                fprintf(process->tracing(TRACE_PROGRESS), "x86sim: processed %zu insns in %d sec (%d insns/sec)\n",
-                        process->get_ninsns(), (int)(nsec+0.5), (int)(insn_rate+0.5));
-            }
-        }
-        try {
-            if (thread->readIP().known_value()==thread->SIGHANDLER_RETURN) {
-                thread->signal_return();
-                if (dump_at!=0 && dump_at==thread->SIGHANDLER_RETURN) {
-                    fprintf(stderr, "Reached dump point.\n");
-                    process->dump_core(SIGABRT, dump_name);
-                    dump_at = 0;
-                }
-                continue;
-            }
-
-            if (dump_at!=0 && dump_at == thread->readIP().known_value()) {
-                fprintf(stderr, "Reached dump point.\n");
-                process->dump_core(SIGABRT, dump_name);
-                dump_at = 0;
-            }
-
-            SgAsmx86Instruction *insn = thread->current_insn();
-            if (thread->tracing(TRACE_MMAP) &&
-                !seen_entry_va && insn->get_address()==fhdr->get_base_va()+fhdr->get_entry_rva()) {
-                fprintf(thread->tracing(TRACE_MMAP), "memory map at program entry:\n");
-                process->get_memory()->dump(thread->tracing(TRACE_MMAP), "  ");
-                seen_entry_va = true;
-            }
-            process->binary_trace_add(thread, insn);
-            t.processInstruction(insn);
-            if (thread->tracing(TRACE_STATE))
-                thread->dump_registers(thread->tracing(TRACE_STATE));
-
-            thread->signal_deliver_any();
-        } catch (const Semantics::Exception &e) {
-            std::cerr <<e <<"\n\n";
-#ifdef X86SIM_STRICT_EMULATION
-            process->dump_core(SIGILL);
-            abort();
-#else
-            std::cerr <<"Ignored. Continuing with a corrupt state...\n";
-#endif
-        } catch (const VirtualMachineSemantics::Policy::Exception &e) {
-            std::cerr <<e <<"\n\n";
-            process->dump_core(SIGILL);
-            abort();
-        } catch (const RSIM_Thread::Exit &e) {
-            /* specimen has exited */
-            if (thread->robust_list_head_va)
-                fprintf(stderr, "warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
-            if (WIFEXITED(e.status)) {
-                fprintf(stderr, "specimen exited with status %d\n", WEXITSTATUS(e.status));
-		if (WEXITSTATUS(e.status))
-                    exit(WEXITSTATUS(e.status));
-            } else if (WIFSIGNALED(e.status)) {
-                fprintf(stderr, "specimen exited due to signal ");
-                print_enum(stderr, signal_names, WTERMSIG(e.status));
-                fprintf(stderr, " (%s)%s\n", strsignal(WTERMSIG(e.status)), WCOREDUMP(e.status)?" core dumped":"");
-                exit(1);
-            } else if (WIFSTOPPED(e.status)) {
-                fprintf(stderr, "specimen is stopped due to signal ");
-                print_enum(stderr, signal_names, WSTOPSIG(e.status));
-                fprintf(stderr, " (%s)\n", strsignal(WSTOPSIG(e.status)));
-                exit(1);
-            }
-            break;
-        } catch (const RSIM_Thread::Signal &e) {
-            thread->signal_generate(e.signo);
-        }
-    }
+    RSIM_Simulator simulator(argc, argv, envp);
+    simulator.activate();
+    simulator.main_loop();
     return 0;
 }
 

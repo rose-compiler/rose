@@ -17,6 +17,17 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 
+/* Define this if you want strict emulation. When defined, every attempt is made for x86sim to provide an environment as close
+ * as possible to running natively on hudson-rose-07.  Note that defining this might cause the simulator to malfunction since
+ * some specimens will attempt to execute instructions that are not implemented in the x86 instruction semantics yet. */
+// #define X86SIM_STRICT_EMULATION
+
+/* Define this if you want log files to be unbuffered. This is often desirable when debugging */
+#define X86SIM_LOG_UNBUFFERED
+
+/* Define this if you want binary trace files to be unbuffered. This is often desirable when debugging */
+#define X86SIM_BINARY_TRACE_UNBUFFERED
+
 class RSIM_Process;
 class RSIM_Thread;
 

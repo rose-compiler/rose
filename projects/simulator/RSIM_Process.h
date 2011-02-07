@@ -21,9 +21,10 @@ public:
         }
     };
 
+    /** Creates an empty process containing no threads. */
     RSIM_Process()
         : map(NULL),
-          debug(NULL), trace(0), binary_trace(NULL),
+          trace_file(NULL), trace_flags(0), btrace_file(NULL),
           brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
         ctor();
@@ -42,13 +43,16 @@ public:
     MemoryMap *get_memory() const {             /**< Returns the memory map for the simulated process. */
         return map;
     }
-    FILE *get_debug() const {                   /**< Return file for debugging; null if debugging is disabled. */
-        return debug;
+    void set_trace_name(const std::string &s) {
+        trace_file_name = s;
+    }
+    std::string get_trace_name(void) const {
+        return trace_file_name;
     }
 
-    /** Initialize tracing by (re)opening the log file with the specified name pattern.  The pattern should be a printf-style
-     *  format with an optional integer specifier for the process ID. */
-    void open_log_file(const char *pattern);
+    /** Initialize tracing by (re)opening the trace file with the name pattern that was specified with set_trace_name().  The
+     *  pattern should be a printf-style format with an optional integer specifier for the thread ID. */
+    void open_trace_file();
 
     /** Returns a file for tracing, or NULL if tracing is disabled.  The WHAT argument should be a bit vector describing the
      *  tracing facilities in which we're interested (all facilities use the same file).  If tracing is enabled for any of the
@@ -57,6 +61,11 @@ public:
 
     /** Sets tracing file and facilities. */
     void set_tracing(FILE*, unsigned what);
+
+    /** Sets the core dump styles. */
+    void set_core_styles(unsigned bitmask) {
+        core_flags = bitmask;
+    }
 
     /** Loads a new executable image into an existing process. */
     SgAsmGenericHeader *load(const char *name);
@@ -93,11 +102,13 @@ private:
     std::string exename;                        /**< Name of executable without any path components */
     std::string interpname;                     /**< Name of interpreter from ".interp" section or "--interp=" switch */
     MemoryMap *map;                             /**< Describes how specimen's memory is mapped to simulator memory */
-    FILE *debug;                                /**< Stream to which debugging output is sent (or NULL to suppress it) */
-    unsigned trace;                             /**< Bit vector of what to trace. See TraceFlags. */
+    std::string trace_file_name;                /**< Pattern for trace file names. May include %d for thread ID. */
+    FILE *trace_file;                           /**< Stream to which debugging output is sent (or NULL to suppress it) */
+    unsigned trace_flags;                       /**< Bit vector of what to trace. See TraceFlags. */
+    unsigned core_flags;                        /**< Bit vector describing how to produce core dumps. */
 
 public: /* FIXME */
-    FILE *binary_trace;                         /**< Stream for binary trace. See projects/traceAnalysis/trace.C for details */
+    FILE *btrace_file;                          /**< Stream for binary trace. See projects/traceAnalysis/trace.C for details */
     std::vector<std::string> exeargs;           /**< Specimen argv with PATH-resolved argv[0] */
     Disassembler::InstructionMap icache;        /**< Cache of disassembled instructions */
 

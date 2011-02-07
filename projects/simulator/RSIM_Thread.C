@@ -1,7 +1,5 @@
 #include "sage3basic.h"
-
-#include "RSIM_Thread.h"
-#include "RSIM_Process.h"
+#include "RSIM_Simulator.h"
 
 #include <errno.h>
 #include <stdarg.h>
@@ -12,6 +10,16 @@
 /* Constructor */
 void
 RSIM_Thread::ctor()
+{
+    memset(&last_report, 0, sizeof last_report);
+    memset(signal_action, 0, sizeof signal_action);
+    signal_stack.ss_sp = 0;
+    signal_stack.ss_size = 0;
+    signal_stack.ss_flags = SS_DISABLE;
+}
+
+void
+RSIM_SemanticPolicy::ctor()
 {
     for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
         writeGPR((X86GeneralPurposeRegister)i, 0);
@@ -27,11 +35,6 @@ RSIM_Thread::ctor()
     writeSegreg(x86_segreg_ss, 0x2b);
     writeSegreg(x86_segreg_fs, 0x2b);
     writeSegreg(x86_segreg_gs, 0x2b);
-
-    memset(signal_action, 0, sizeof signal_action);
-    signal_stack.ss_sp = 0;
-    signal_stack.ss_size = 0;
-    signal_stack.ss_flags = SS_DISABLE;
 }
 
 FILE *
@@ -40,69 +43,10 @@ RSIM_Thread::tracing(unsigned what) const
     return process->tracing(what);
 }
 
-void
-RSIM_Thread::dump_registers(FILE *f) const
-{
-    fprintf(f, "  Machine state:\n");
-    fprintf(f, "    eax=0x%08"PRIx64" ebx=0x%08"PRIx64" ecx=0x%08"PRIx64" edx=0x%08"PRIx64"\n",
-            readGPR(x86_gpr_ax).known_value(), readGPR(x86_gpr_bx).known_value(),
-            readGPR(x86_gpr_cx).known_value(), readGPR(x86_gpr_dx).known_value());
-    fprintf(f, "    esi=0x%08"PRIx64" edi=0x%08"PRIx64" ebp=0x%08"PRIx64" esp=0x%08"PRIx64" eip=0x%08"PRIx64"\n",
-            readGPR(x86_gpr_si).known_value(), readGPR(x86_gpr_di).known_value(),
-            readGPR(x86_gpr_bp).known_value(), readGPR(x86_gpr_sp).known_value(),
-            get_ip().known_value());
-    for (int i=0; i<6; i++) {
-        X86SegmentRegister sr = (X86SegmentRegister)i;
-        fprintf(f, "    %s=0x%04"PRIx64" base=0x%08"PRIx32" limit=0x%08"PRIx32" present=%s\n",
-                segregToString(sr), readSegreg(sr).known_value(), process->segreg_shadow[sr].base, process->segreg_shadow[sr].limit,
-                process->segreg_shadow[sr].present?"yes":"no");
-    }
-
-    uint32_t eflags = get_eflags();
-    fprintf(f, "    flags: 0x%08"PRIx32":", eflags);
-    static const char *flag_name[] = {"cf",  "#1",  "pf",   "#3",    "af",    "#5",  "zf",  "sf",
-                                      "tf",  "if",  "df",   "of", "iopl0", "iopl1",  "nt", "#15",
-                                      "rf",  "vm",  "ac",  "vif",   "vip",    "id", "#22", "#23",
-                                      "#24", "#25", "#26", "#27",   "#28",   "#29", "#30", "#31"};
-    for (uint32_t i=0; i<32; i++) {
-        if (eflags & (1u<<i))
-            fprintf(f, " %s", flag_name[i]);
-    }
-    fprintf(f, "\n");
-}
-
-uint32_t
-RSIM_Thread::get_eflags() const
-{
-    uint32_t eflags = 0;
-    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
-        if (readFlag((X86Flag)i).is_known())
-            eflags |= readFlag((X86Flag)i).known_value() ? 1u<<i : 0u;
-    }
-    return eflags;
-}
-
-void
-RSIM_Thread::push(VirtualMachineSemantics::ValueType<32> n)
-{
-    VirtualMachineSemantics::ValueType<32> new_sp = add(readGPR(x86_gpr_sp), number<32>(-4));
-    writeMemory(x86_segreg_ss, new_sp, n, true_());
-    writeGPR(x86_gpr_sp, new_sp);
-}
-
-VirtualMachineSemantics::ValueType<32>
-RSIM_Thread::pop()
-{
-    VirtualMachineSemantics::ValueType<32> old_sp = readGPR(x86_gpr_sp);
-    VirtualMachineSemantics::ValueType<32> retval = readMemory<32>(x86_segreg_ss, old_sp, true_());
-    writeGPR(x86_gpr_sp, add(old_sp, number<32>(4)));
-    return retval;
-}
-
 SgAsmx86Instruction *
 RSIM_Thread::current_insn()
 {
-    rose_addr_t ip = readIP().known_value();
+    rose_addr_t ip = policy.readIP().known_value();
 
     /* Use the cached instruction if possible. */
     Disassembler::InstructionMap::iterator found = process->icache.find(ip);
@@ -224,14 +168,14 @@ RSIM_Thread::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, ui
     };
 
     if (nsops<1) {
-        writeGPR(x86_gpr_ax, -EINVAL);
+        policy.writeGPR(x86_gpr_ax, -EINVAL);
         return;
     }
 
     /* struct sembuf is the same on both 32- and 64-bit platforms */
     sembuf *sops = (sembuf*)my_addr(sops_va, nsops*sizeof(sembuf));
     if (!sops) {
-        writeGPR(x86_gpr_ax, -EFAULT);
+        policy.writeGPR(x86_gpr_ax, -EFAULT);
         return;
     }
     if (tracing(TRACE_SYSCALL)) {
@@ -249,7 +193,7 @@ RSIM_Thread::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, ui
     if (timeout_va) {
         timespec_32 guest_timeout;
         if (sizeof(guest_timeout)!=process->get_memory()->read(&guest_timeout, timeout_va, sizeof guest_timeout)) {
-            writeGPR(x86_gpr_ax, -EFAULT);
+            policy.writeGPR(x86_gpr_ax, -EFAULT);
             return;
         }
         host_timeout.tv_sec = guest_timeout.tv_sec;
@@ -257,7 +201,7 @@ RSIM_Thread::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, ui
     }
 
     int result = semtimedop(semid, sops, nsops, timeout_va?&host_timeout:NULL);
-    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+    policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
 
 void
@@ -268,7 +212,7 @@ RSIM_Thread::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
 #else
     int result = syscall(SYS_semget, key, nsems, semflg);
 #endif
-    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+    policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
 
 void
@@ -280,7 +224,7 @@ RSIM_Thread::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[])
 
     /* Allocate the stack */
     static const size_t stack_size = 0x00015000;
-    size_t sp = readGPR(x86_gpr_sp).known_value();
+    size_t sp = policy.readGPR(x86_gpr_sp).known_value();
     size_t stack_addr = sp - stack_size;
     MemoryMap::MapElement melmt(stack_addr, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
     melmt.set_name("[stack]");
@@ -495,7 +439,7 @@ RSIM_Thread::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[])
     sp -= 4 * pointers.size();
     process->get_memory()->write(&(pointers[0]), sp, 4*pointers.size());
 
-    writeGPR(x86_gpr_sp, sp);
+    policy.writeGPR(x86_gpr_sp, sp);
 }
 
 void
@@ -518,7 +462,7 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
 
     semun_32 guest_semun;
     if (sizeof(guest_semun)!=process->get_memory()->read(&guest_semun, semun_va, sizeof guest_semun)) {
-        writeGPR(x86_gpr_ax, -EFAULT);
+        policy.writeGPR(x86_gpr_ax, -EFAULT);
         return;
     }
     
@@ -536,7 +480,7 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
             int result = syscall(SYS_semctl, semid, semnum, cmd, &host_seminfo);
 #endif
             if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
+                policy.writeGPR(x86_gpr_ax, -errno);
                 return;
             }
 
@@ -552,11 +496,11 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
             guest_seminfo.semvmx = host_seminfo.semvmx;
             guest_seminfo.semaem = host_seminfo.semaem;
             if (sizeof(guest_seminfo)!=process->get_memory()->write(&guest_seminfo, guest_semun.ptr, sizeof guest_seminfo)) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 return;
             }
 
-            writeGPR(x86_gpr_ax, result);
+            policy.writeGPR(x86_gpr_ax, result);
             break;
         }
 
@@ -572,7 +516,7 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
             int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
 #endif
             if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
+                policy.writeGPR(x86_gpr_ax, -errno);
                 return;
             }
 
@@ -596,18 +540,18 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
             guest_ds.unused3 = host_ds.__unused3;
             guest_ds.unused4 = host_ds.__unused4;
             if (sizeof(guest_ds)!=process->get_memory()->write(&guest_ds, guest_semun.ptr, sizeof guest_ds)) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 return;
             }
                         
-            writeGPR(x86_gpr_ax, result);
+            policy.writeGPR(x86_gpr_ax, result);
             break;
         };
 
         case 1: {       /* IPC_SET */
             semid64_ds_32 guest_ds;
             if (sizeof(guest_ds)!=process->get_memory()->read(&guest_ds, guest_semun.ptr, sizeof(guest_ds))) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 return;
             }
 #ifdef SYS_ipc  /* i686 */
@@ -637,7 +581,7 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
             host_ds.__unused4 = guest_ds.unused4;
             int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
 #endif
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
         }
 
@@ -645,16 +589,16 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
             semid_ds host_ds;
             int result = semctl(semid, -1, IPC_STAT, &host_ds);
             if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
+                policy.writeGPR(x86_gpr_ax, -errno);
                 return;
             }
             if (host_ds.sem_nsems<1) {
-                writeGPR(x86_gpr_ax, -EINVAL);
+                policy.writeGPR(x86_gpr_ax, -EINVAL);
                 return;
             }
             size_t nbytes = 2 * host_ds.sem_nsems;
             if (NULL==my_addr(guest_semun.ptr, nbytes)) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 return;
             }
             uint16_t *sem_values = new uint16_t[host_ds.sem_nsems];
@@ -667,12 +611,12 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
 #endif
             if (-1==result) {
                 delete[] sem_values;
-                writeGPR(x86_gpr_ax, -errno);
+                policy.writeGPR(x86_gpr_ax, -errno);
                 return;
             }
             if (nbytes!=process->get_memory()->write(sem_values, guest_semun.ptr, nbytes)) {
                 delete[] sem_values;
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 return;
             }
             if (tracing(TRACE_SYSCALL)) {
@@ -683,7 +627,7 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
                 fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
             }
             delete[] sem_values;
-            writeGPR(x86_gpr_ax, result);
+            policy.writeGPR(x86_gpr_ax, result);
             break;
         }
             
@@ -691,18 +635,18 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
             semid_ds host_ds;
             int result = semctl(semid, -1, IPC_STAT, &host_ds);
             if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
+                policy.writeGPR(x86_gpr_ax, -errno);
                 return;
             }
             if (host_ds.sem_nsems<1) {
-                writeGPR(x86_gpr_ax, -EINVAL);
+                policy.writeGPR(x86_gpr_ax, -EINVAL);
                 return;
             }
             uint16_t *sem_values = new uint16_t[host_ds.sem_nsems];
             size_t nbytes = 2 * host_ds.sem_nsems;
             if (nbytes!=process->get_memory()->read(sem_values, guest_semun.ptr, nbytes)) {
                 delete[] sem_values;
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 return;
             }
             if (tracing(TRACE_SYSCALL)) {
@@ -719,7 +663,7 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
 #else
             result = syscall(SYS_semctl, semid, semnum, cmd, sem_values);
 #endif
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
             delete[] sem_values;
             break;
         }
@@ -729,7 +673,7 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
         case 15:        /* GETZCNT */
         case 14: {      /* GETNCNT */
             int result = semctl(semid, semnum, cmd, NULL);
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
         }
 
@@ -739,7 +683,7 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
 #else
             int result = syscall(SYS_semctl, semid, semnum, cmd, guest_semun.val);
 #endif
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
         }
 
@@ -751,12 +695,12 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
 #else
             int result = semctl(semid, semnum, cmd, NULL);
 #endif
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
         }
 
         default:
-            writeGPR(x86_gpr_ax, -EINVAL);
+            policy.writeGPR(x86_gpr_ax, -EINVAL);
             return;
     }
 }
@@ -766,26 +710,26 @@ void
 RSIM_Thread::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgflg)
 {
     if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
-        writeGPR(x86_gpr_ax, -EINVAL);
+        policy.writeGPR(x86_gpr_ax, -EINVAL);
         return;
     }
 
     /* Read the message buffer from the specimen. */
     uint8_t *buf = new uint8_t[msgsz+8]; /* msgsz does not include "long mtype", only "char mtext[]" */
     if (!buf) {
-        writeGPR(x86_gpr_ax, -ENOMEM);
+        policy.writeGPR(x86_gpr_ax, -ENOMEM);
         return;
     }
     if (4+msgsz!=process->get_memory()->read(buf, msgp_va, 4+msgsz)) {
         delete[] buf;
-        writeGPR(x86_gpr_ax, -EFAULT);
+        policy.writeGPR(x86_gpr_ax, -EFAULT);
         return;
     }
 
     /* Message type must be positive */
     if (*(int32_t*)buf <= 0) {
         delete[] buf;
-        writeGPR(x86_gpr_ax, -EINVAL);
+        policy.writeGPR(x86_gpr_ax, -EINVAL);
         return;
     }
 
@@ -800,19 +744,19 @@ RSIM_Thread::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32
     int result = msgsnd(msqid, buf, msgsz, msgflg);
     if (-1==result) {
         delete[] buf;
-        writeGPR(x86_gpr_ax, -errno);
+        policy.writeGPR(x86_gpr_ax, -errno);
         return;
     }
 
     delete[] buf;
-    writeGPR(x86_gpr_ax, result);
+    policy.writeGPR(x86_gpr_ax, result);
 }
 
 void
 RSIM_Thread::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgtyp, uint32_t msgflg)
 {
     if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
-        writeGPR(x86_gpr_ax, -EINVAL);
+        policy.writeGPR(x86_gpr_ax, -EINVAL);
         return;
     }
 
@@ -820,7 +764,7 @@ RSIM_Thread::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32
     int result = msgrcv(msqid, buf, msgsz, msgtyp, msgflg);
     if (-1==result) {
         delete[] buf;
-        writeGPR(x86_gpr_ax, -errno);
+        policy.writeGPR(x86_gpr_ax, -errno);
         return;
     }
 
@@ -833,19 +777,19 @@ RSIM_Thread::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32
 
     if (4+msgsz!=process->get_memory()->write(buf, msgp_va, 4+msgsz)) {
         delete[] buf;
-        writeGPR(x86_gpr_ax, -EFAULT);
+        policy.writeGPR(x86_gpr_ax, -EFAULT);
         return;
     }
 
     delete[] buf;
-    writeGPR(x86_gpr_ax, result);
+    policy.writeGPR(x86_gpr_ax, result);
 }
 
 void
 RSIM_Thread::sys_msgget(uint32_t key, uint32_t msgflg)
 {
     int result = msgget(key, msgflg);
-    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+    policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
 
 void
@@ -857,7 +801,7 @@ RSIM_Thread::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
     switch (cmd) {
         case 3:    /* IPC_INFO */
         case 12: { /* MSG_INFO */
-            writeGPR(x86_gpr_ax, -ENOSYS);              /* FIXME */
+            policy.writeGPR(x86_gpr_ax, -ENOSYS);              /* FIXME */
             break;
         }
 
@@ -867,7 +811,7 @@ RSIM_Thread::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
             static msqid_ds host_ds;
             int result = msgctl(msqid, cmd, &host_ds);
             if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
+                policy.writeGPR(x86_gpr_ax, -errno);
                 break;
             }
 
@@ -904,25 +848,25 @@ RSIM_Thread::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
             guest_ds.unused5 = host_ds.__unused5;
 
             if (sizeof(guest_ds)!=process->get_memory()->write(&guest_ds, buf_va, sizeof guest_ds)) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 break;
             }
 
-            writeGPR(x86_gpr_ax, result);
+            policy.writeGPR(x86_gpr_ax, result);
             break;
         }
 
         case 0: { /* IPC_RMID */
             /* NOTE: syscall tracing will not show "IPC_RMID" if the IPC_64 flag is also present */
             int result = msgctl(msqid, cmd, NULL);
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
         }
 
         case 1: { /* IPC_SET */
             msqid64_ds_32 guest_ds;
             if (sizeof(guest_ds)!=process->get_memory()->read(&guest_ds, buf_va, sizeof guest_ds)) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 break;
             }
 
@@ -944,12 +888,12 @@ RSIM_Thread::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
             host_ds.msg_lrpid = guest_ds.msg_lrpid;
 
             int result = msgctl(msqid, cmd, &host_ds);
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
         }
 
         default: {
-            writeGPR(x86_gpr_ax, -EINVAL);
+            policy.writeGPR(x86_gpr_ax, -EINVAL);
             break;
         }
     }
@@ -960,25 +904,25 @@ RSIM_Thread::sys_shmdt(uint32_t shmaddr_va)
 {
     const MemoryMap::MapElement *me = process->get_memory()->find(shmaddr_va);
     if (!me || me->get_va()!=shmaddr_va || me->get_offset()!=0 || me->is_anonymous()) {
-        writeGPR(x86_gpr_ax, -EINVAL);
+        policy.writeGPR(x86_gpr_ax, -EINVAL);
         return;
     }
 
     int result = shmdt(me->get_base());
     if (-1==result) {
-        writeGPR(x86_gpr_ax, -errno);
+        policy.writeGPR(x86_gpr_ax, -errno);
         return;
     }
 
     process->get_memory()->erase(*me);
-    writeGPR(x86_gpr_ax, result);
+    policy.writeGPR(x86_gpr_ax, result);
 }
 
 void
 RSIM_Thread::sys_shmget(uint32_t key, uint32_t size, uint32_t shmflg)
 {
     int result = shmget(key, size, shmflg);
-    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+    policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
 
 void
@@ -994,7 +938,7 @@ RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             static shmid_ds host_ds;
             int result = shmctl(shmid, cmd, &host_ds);
             if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
+                policy.writeGPR(x86_gpr_ax, -errno);
                 break;
             }
 
@@ -1030,11 +974,11 @@ RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             guest_ds.unused5 = host_ds.__unused5;
 
             if (sizeof(guest_ds)!=process->get_memory()->write(&guest_ds, buf_va, sizeof guest_ds)) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 break;
             }
 
-            writeGPR(x86_gpr_ax, result);
+            policy.writeGPR(x86_gpr_ax, result);
             break;
         }
 
@@ -1042,7 +986,7 @@ RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             shm_info host_info;
             int result = shmctl(shmid, cmd, (shmid_ds*)&host_info);
             if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
+                policy.writeGPR(x86_gpr_ax, -errno);
                 break;
             }
 
@@ -1055,11 +999,11 @@ RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             guest_info.swap_successes = host_info.swap_successes;
 
             if (sizeof(guest_info)!=process->get_memory()->write(&guest_info, buf_va, sizeof guest_info)) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 break;
             }
 
-            writeGPR(x86_gpr_ax, result);
+            policy.writeGPR(x86_gpr_ax, result);
             break;
         }
 
@@ -1067,7 +1011,7 @@ RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             shminfo64_native host_info;
             int result = shmctl(shmid, cmd, (shmid_ds*)&host_info);
             if (-1==result) {
-                writeGPR(x86_gpr_ax, -errno);
+                policy.writeGPR(x86_gpr_ax, -errno);
                 return;
             }
 
@@ -1082,18 +1026,18 @@ RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             guest_info.unused3 = host_info.unused3;
             guest_info.unused4 = host_info.unused4;
             if (sizeof(guest_info)!=process->get_memory()->write(&guest_info, buf_va, sizeof guest_info)) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 return;
             }
 
-            writeGPR(x86_gpr_ax, result);
+            policy.writeGPR(x86_gpr_ax, result);
             break;
         }
 
         case 11:   /* SHM_LOCK */
         case 12: { /* SHM_UNLOCK */
             int result = shmctl(shmid, cmd, NULL);
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
         }
 
@@ -1101,7 +1045,7 @@ RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             ROSE_ASSERT(version!=0);
             shmid64_ds_32 guest_ds;
             if (sizeof(guest_ds)!=process->get_memory()->read(&guest_ds, buf_va, sizeof guest_ds)) {
-                writeGPR(x86_gpr_ax, -EFAULT);
+                policy.writeGPR(x86_gpr_ax, -EFAULT);
                 return;
             }
             shmid_ds host_ds;
@@ -1136,18 +1080,18 @@ RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             host_ds.__unused5 = guest_ds.unused5;
 
             int result = shmctl(shmid, cmd, &host_ds);
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
         }
 
         case 0: { /* IPC_RMID */
             int result = shmctl(shmid, cmd, NULL);
-            writeGPR(x86_gpr_ax, -1==result?-errno:result);
+            policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
             break;
         }
 
         default: {
-            writeGPR(x86_gpr_ax, -EINVAL);
+            policy.writeGPR(x86_gpr_ax, -EINVAL);
             break;
         }
     }
@@ -1161,20 +1105,20 @@ RSIM_Thread::sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, uint
     } else if (shmflg & SHM_RND) {
         shmaddr = ALIGN_DN(shmaddr, SHMLBA);
     } else if (ALIGN_DN(shmaddr, 4096)!=shmaddr) {
-        writeGPR(x86_gpr_ax, -EINVAL);
+        policy.writeGPR(x86_gpr_ax, -EINVAL);
         return;
     }
 
     /* We don't handle SHM_REMAP */
     if (shmflg & SHM_REMAP) {
-        writeGPR(x86_gpr_ax, -EINVAL);
+        policy.writeGPR(x86_gpr_ax, -EINVAL);
         return;
     }
 
     /* Map shared memory into the simulator */
     void *buf = shmat(shmid, NULL, shmflg);
     if (!buf) {
-        writeGPR(x86_gpr_ax, -errno);
+        policy.writeGPR(x86_gpr_ax, -errno);
         return;
     }
 
@@ -1190,10 +1134,10 @@ RSIM_Thread::sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, uint
 
     /* Return values */
     if (4!=process->get_memory()->write(&shmaddr, result_va, 4)) {
-        writeGPR(x86_gpr_ax, -EFAULT);
+        policy.writeGPR(x86_gpr_ax, -EFAULT);
         return;
     }
-    writeGPR(x86_gpr_ax, shmaddr);
+    policy.writeGPR(x86_gpr_ax, shmaddr);
 }
 
 void
@@ -1209,19 +1153,19 @@ RSIM_Thread::sys_socket(int family, int type, int protocol)
 #else /* amd64 */
     int result = syscall(SYS_socket, family, type, protocol);
 #endif
-    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+    policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
 
 void
 RSIM_Thread::sys_bind(int fd, uint32_t addr_va, uint32_t addrlen)
 {
     if (addrlen<1 || addrlen>4096) {
-        writeGPR(x86_gpr_ax, -EINVAL);
+        policy.writeGPR(x86_gpr_ax, -EINVAL);
         return;
     }
     uint8_t *addrbuf = new uint8_t[addrlen];
     if (addrlen!=process->get_memory()->read(addrbuf, addr_va, addrlen)) {
-        writeGPR(x86_gpr_ax, -EFAULT);
+        policy.writeGPR(x86_gpr_ax, -EFAULT);
         delete[] addrbuf;
         return;
     }
@@ -1237,7 +1181,7 @@ RSIM_Thread::sys_bind(int fd, uint32_t addr_va, uint32_t addrlen)
 #else /* amd64 */
     int result = syscall(SYS_bind, fd, addrbuf, addrlen);
 #endif
-    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+    policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
     delete[] addrbuf;
 }
 
@@ -1253,7 +1197,7 @@ RSIM_Thread::sys_listen(int fd, int backlog)
 #else /* amd64 */
     int result = syscall(SYS_listen, fd, backlog);
 #endif
-    writeGPR(x86_gpr_ax, -1==result?-errno:result);
+    policy.writeGPR(x86_gpr_ax, -1==result?-errno:result);
 }
 
 void
@@ -1299,7 +1243,7 @@ RSIM_Thread::syscall_enterv(uint32_t *values, const char *name, const char *form
         if (0==first_call.tv_sec)
             first_call = this_call;
         double elapsed = (this_call.tv_sec - first_call.tv_sec) + (this_call.tv_usec - first_call.tv_usec)/1e6;
-        fprintf(tracing(TRACE_SYSCALL), "[pid %d] 0x%08"PRIx64" %8.4f: ", getpid(), readIP().known_value(), elapsed);
+        fprintf(tracing(TRACE_SYSCALL), "[pid %d] 0x%08"PRIx64" %8.4f: ", getpid(), policy.readIP().known_value(), elapsed);
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], values?values[i]:arg(i), args+i, app);
@@ -1335,7 +1279,7 @@ RSIM_Thread::syscall_leave(const char *format, ...)
     if (tracing(TRACE_SYSCALL)) {
         /* System calls return an integer (negative error numbers, non-negative success) */
         ArgInfo info;
-        uint32_t value = readGPR(x86_gpr_ax).known_value();
+        uint32_t value = policy.readGPR(x86_gpr_ax).known_value();
         syscall_arginfo(format[0], value, &info, &ap);
         print_leave(tracing(TRACE_SYSCALL), format[0], &info);
 
@@ -1360,13 +1304,13 @@ uint32_t
 RSIM_Thread::arg(int idx)
 {
     switch (idx) {
-        case -1: return readGPR(x86_gpr_ax).known_value();      /* syscall return value */
-        case 0: return readGPR(x86_gpr_bx).known_value();
-        case 1: return readGPR(x86_gpr_cx).known_value();
-        case 2: return readGPR(x86_gpr_dx).known_value();
-        case 3: return readGPR(x86_gpr_si).known_value();
-        case 4: return readGPR(x86_gpr_di).known_value();
-        case 5: return readGPR(x86_gpr_bp).known_value();
+        case -1: return policy.readGPR(x86_gpr_ax).known_value();      /* syscall return value */
+        case 0: return policy.readGPR(x86_gpr_bx).known_value();
+        case 1: return policy.readGPR(x86_gpr_cx).known_value();
+        case 2: return policy.readGPR(x86_gpr_dx).known_value();
+        case 3: return policy.readGPR(x86_gpr_si).known_value();
+        case 4: return policy.readGPR(x86_gpr_di).known_value();
+        case 5: return policy.readGPR(x86_gpr_bp).known_value();
         default: assert(!"invalid argument number"); abort();
     }
 }
@@ -1426,7 +1370,7 @@ RSIM_Thread::signal_deliver(int signo)
     ROSE_ASSERT(signo>0 && signo<=64);
 
     if (tracing(TRACE_SIGNAL)) {
-        fprintf(tracing(TRACE_SIGNAL), "0x%08"PRIx64": delivering ", readIP().known_value());
+        fprintf(tracing(TRACE_SIGNAL), "0x%08"PRIx64": delivering ", policy.readIP().known_value());
         print_enum(tracing(TRACE_SIGNAL), signal_names, signo);
         fprintf(tracing(TRACE_SIGNAL), "(%d)", signo);
     }
@@ -1487,27 +1431,27 @@ RSIM_Thread::signal_deliver(int signo)
         if (tracing(TRACE_SIGNAL))
             fprintf(tracing(TRACE_SIGNAL), " to 0x%08"PRIx32"\n", signal_action[signo-1].handler_va);
 
-        uint32_t signal_return = readIP().known_value();
-        push(signal_return);
+        uint32_t signal_return = policy.readIP().known_value();
+        policy.push(signal_return);
 
         /* Switch to the alternate stack? */
-        uint32_t signal_oldstack = readGPR(x86_gpr_sp).known_value();
+        uint32_t signal_oldstack = policy.readGPR(x86_gpr_sp).known_value();
         if (0==(signal_stack.ss_flags & SS_ONSTACK) && 0!=(signal_action[signo-1].flags & SA_ONSTACK))
-            writeGPR(x86_gpr_sp, number<32>(signal_stack.ss_sp + signal_stack.ss_size));
+            policy.writeGPR(x86_gpr_sp, policy.number<32>(signal_stack.ss_sp + signal_stack.ss_size));
 
         /* Push stuff that will be needed by the simulated sigreturn() syscall */
-        push(signal_oldstack);
-        push(signal_mask >> 32);
-        push(signal_mask & 0xffffffff);
+        policy.push(signal_oldstack);
+        policy.push(signal_mask >> 32);
+        policy.push(signal_mask & 0xffffffff);
 
         /* Caller-saved registers */
-        push(readGPR(x86_gpr_ax));
-        push(readGPR(x86_gpr_bx));
-        push(readGPR(x86_gpr_cx));
-        push(readGPR(x86_gpr_dx));
-        push(readGPR(x86_gpr_si));
-        push(readGPR(x86_gpr_di));
-        push(readGPR(x86_gpr_bp));
+        policy.push(policy.readGPR(x86_gpr_ax));
+        policy.push(policy.readGPR(x86_gpr_bx));
+        policy.push(policy.readGPR(x86_gpr_cx));
+        policy.push(policy.readGPR(x86_gpr_dx));
+        policy.push(policy.readGPR(x86_gpr_si));
+        policy.push(policy.readGPR(x86_gpr_di));
+        policy.push(policy.readGPR(x86_gpr_bp));
 
         /* New signal mask */
         signal_mask |= signal_action[signo-1].mask;
@@ -1515,12 +1459,12 @@ RSIM_Thread::signal_deliver(int signo)
         // signal_reprocess = true;  -- Not necessary because we're not clearing any */
 
         /* Signal handler arguments */
-        push(readIP());
-        push(number<32>(signo));
+        policy.push(policy.readIP());
+        policy.push(policy.number<32>(signo));
 
         /* Invoke signal handler */
-        push(number<32>(SIGHANDLER_RETURN)); /* fake return address to trigger signal_cleanup() call */
-        writeIP(number<32>(signal_action[signo-1].handler_va));
+        policy.push(policy.number<32>(SIGHANDLER_RETURN)); /* fake return address to trigger signal_cleanup() call */
+        policy.writeIP(policy.number<32>(signal_action[signo-1].handler_va));
     }
 }
 
@@ -1531,8 +1475,8 @@ void
 RSIM_Thread::signal_return()
 {
     /* Discard handler arguments */
-    int signo = pop().known_value(); /* signal number */
-    pop(); /* signal address */
+    int signo = policy.pop().known_value(); /* signal number */
+    policy.pop(); /* signal address */
 
     if (tracing(TRACE_SIGNAL)) {
         fprintf(tracing(TRACE_SIGNAL), "[returning from ");
@@ -1541,24 +1485,24 @@ RSIM_Thread::signal_return()
     }
 
     /* Restore caller-saved registers */
-    writeGPR(x86_gpr_bp, pop());
-    writeGPR(x86_gpr_di, pop());
-    writeGPR(x86_gpr_si, pop());
-    writeGPR(x86_gpr_dx, pop());
-    writeGPR(x86_gpr_cx, pop());
-    writeGPR(x86_gpr_bx, pop());
-    writeGPR(x86_gpr_ax, pop());
+    policy.writeGPR(x86_gpr_bp, policy.pop());
+    policy.writeGPR(x86_gpr_di, policy.pop());
+    policy.writeGPR(x86_gpr_si, policy.pop());
+    policy.writeGPR(x86_gpr_dx, policy.pop());
+    policy.writeGPR(x86_gpr_cx, policy.pop());
+    policy.writeGPR(x86_gpr_bx, policy.pop());
+    policy.writeGPR(x86_gpr_ax, policy.pop());
 
     /* Simulate the sigreturn system call (#119), the stack frame of which was set up by signal_deliver() */
-    uint64_t old_sigmask = pop().known_value(); /* low bits */
-    old_sigmask |= (uint64_t)pop().known_value() << 32; /* hi bits */
+    uint64_t old_sigmask = policy.pop().known_value(); /* low bits */
+    old_sigmask |= (uint64_t)policy.pop().known_value() << 32; /* hi bits */
     if (old_sigmask!=signal_mask)
         signal_reprocess = true;
     signal_mask = old_sigmask;
 
     /* Simulate return from sigreturn */
-    writeGPR(x86_gpr_sp, pop());        /* restore stack pointer */
-    writeIP(pop());                     /* RET instruction */
+    policy.writeGPR(x86_gpr_sp, policy.pop());        /* restore stack pointer */
+    policy.writeIP(policy.pop());                     /* RET instruction */
 }
 
 /* Suspend execution until a signal arrives. The signal must not be masked, and must either terminate the process or have a
@@ -1596,10 +1540,24 @@ RSIM_Thread::signal_pause()
 }
 
 void
-RSIM_Thread::writeSegreg(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<16> &val)
+RSIM_Thread::report_progress_maybe()
 {
-    ROSE_ASSERT(3 == (val.known_value() & 7)); /*GDT and privilege level 3*/
-    VirtualMachineSemantics::Policy::writeSegreg(sr, val);
-    process->load_segreg_shadow(sr, val.known_value()>>3);
+    if (tracing(TRACE_PROGRESS)) {
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        double delta = (now.tv_sec - last_report.tv_sec) + 1e-1 * (now.tv_usec - last_report.tv_usec);
+        if (delta > report_interval) {
+            double insn_rate = delta>0 ? get_ninsns() / delta : 0;
+            fprintf(process->tracing(TRACE_PROGRESS), "RSIM_Thread: thread %d: processed %zu insns in %d sec (%d insns/sec)\n",
+                    getpid(), process->get_ninsns(), (int)(delta+0.5), (int)(insn_rate+0.5));
+        }
+        last_report = now;
+    }
+}
+
+void
+RSIM_Thread::sys_return(const RSIM_SEMANTIC_VTYPE<32>& retval)
+{
+    policy.writeGPR(x86_gpr_ax, retval);
 }
 

@@ -1,16 +1,7 @@
 #ifndef ROSE_RSIM_Thread_H
 #define ROSE_RSIM_Thread_H
 
-#include "AsmUnparser_compat.h"         /* needed for unparseInstructionWithAddress() */
-#include "RSIM_Common.h"
-#include "VirtualMachineSemantics.h"
-
-
-/* We use the VirtualMachineSemantics policy. That policy is able to handle a certain level of symbolic computation, but we
- * use it because it also does constant folding, which means that its symbolic aspects are never actually used here. We only
- * have a few methods to specialize this way.   The VirtualMachineSemantics::Memory is not used -- we use a MemoryMap instead
- * since we're only operating on known addresses and values, and thus override all superclass methods dealing with memory. */
-class RSIM_Thread: public VirtualMachineSemantics::Policy {
+class RSIM_Thread {
 public:
     /* Thrown by exit system calls. */
     struct Exit {
@@ -18,75 +9,54 @@ public:
         int status;                             /* same value as returned by waitpid() */
     };
 
-    /* Thrown for signals. */
-    struct Signal {
-        explicit Signal(int signo): signo(signo) {}
-        int signo;
-    };
-
 public:
-    RSIM_Process *process;                      /* Process to which this thread belongs */
-    Disassembler *disassembler;                 /* Disassembler to use for obtaining instructions */
-
-    /* Stuff related to threads */
-    uint32_t robust_list_head_va;               /* Address of robust futex list head. See set_robust_list() syscall */
-    uint32_t set_child_tid;                     /* See set_tid_address(2) man page and clone() emulation */
-    uint32_t clear_child_tid;                   /* See set_tid_address(2) man page and clone() emulation */
-
-    /* Stuff related to signal handling. */
-    sigaction_32 signal_action[_NSIG];          /* Simulated actions for signal handling; elmt N is signal N+1 */
-    uint64_t signal_pending;                    /* Bit N is set if signal N+1 is pending */
-    uint64_t signal_mask;                       /* Masked signals; Bit N is set if signal N+1 is masked */
-    stack_32 signal_stack;                      /* Possible alternative stack to using during signal handling */
-    bool signal_reprocess;                      /* Set to true if we might need to deliver signals (e.g., signal_mask changed) */
-    static const uint32_t SIGHANDLER_RETURN = 0xdeceaced;
-
-    /* Debugging, tracing, etc. */
     RSIM_Thread(RSIM_Process *process)
-        : process(process), disassembler(NULL),
+        : process(process), policy(this), semantics(policy), disassembler(NULL), report_interval(10.0),
           robust_list_head_va(0), set_child_tid(0), clear_child_tid(0),
           signal_pending(0), signal_mask(0), signal_reprocess(false) {
-
-        ctor();
     }
+    
+    /** Initialize the stack for the specimen.  The argc and argv are the command-line of the specimen, not ROSE or the
+     *  simulator. */
+    void initialize_stack(SgAsmGenericHeader*, int argc, char *argv[]);
 
-    void ctor();
+    /** Return the file descriptor used for a debugging facility.  If the facility is disabled then a null pointer is returned. */
+    FILE *tracing(unsigned what) const;
 
+    /** Return the thread ID. Since each simulated thread is mapped to a unique real thread, the ID of the real thread also
+     *  serves as the ID of the simulated thread. Linux uses one process per thread, so a thread ID is the same as a process
+     *  ID. */
     int get_tid() {
         return getpid();
     }
+    
+    /** Print a progress report if progress reporting is enabled and enough time has elapsed since the previous report. */
+    void report_progress_maybe();
 
-    /*FIXME*/
-    FILE *tracing(unsigned what) const;
-
-    /* Print machine register state for debugging */
-    void dump_registers(FILE *f) const;
-
-    uint32_t get_eflags() const;
-
-    /* Recursively load an executable and its libraries libraries into memory, creating the MemoryMap object that describes
-     * the mapping from the specimen's address space to the simulator's address space.
+    /** Recursively load an executable and its libraries libraries into memory, creating the MemoryMap object that describes
+     *  the mapping from the specimen's address space to the simulator's address space.
      *
-     * There are two ways to load dynamic libraries:
-     *   1. Load the dynamic linker (ld-linux.so) and simulate it in order to load the libraries.  This is the most accurate
-     *      since it delegates the dynamic linking to the actual dynamic linker.  It thus allows different linkers to be
-     *      used.
-     *   2. Use Matt Brown's work to have ROSE itself resolve the dynamic linking issues.  This approach gives us better
-     *      control over the finer details such as which directories are searched, etc. since we have total control over the
-     *      linker.  However, Matt's work is not complete at this time [2010-07-20].
+     *  There are two ways to load dynamic libraries:
+     *  <ul>
+     *    <li>Load the dynamic linker (ld-linux.so) and simulate it in order to load the libraries.  This is the most accurate
+     *        since it delegates the dynamic linking to the actual dynamic linker.  It thus allows different linkers to be
+     *        used.</li>
+     *    <li>Use Matt Brown's work to have ROSE itself resolve the dynamic linking issues.  This approach gives us better
+     *        control over the finer details such as which directories are searched, etc. since we have total control over the
+     *        linker.  However, Matt's work is not complete at this time [2010-07-20].</li>
+     *  </ul>
      *
-     * We use the first approach. */
+     *  We use the first approach. */
     SgAsmGenericHeader* load(const char *name);
 
-    /* Initialize the stack for the specimen.  The argc and argv are the command-line of the specimen, not ROSE or the
-     * simulator. */
-    void initialize_stack(SgAsmGenericHeader*, int argc, char *argv[]);
-
-    /* Returns instruction at current IP, disassembling it if necessary, and caching it. */
+    /** Returns instruction at current IP, disassembling it if necessary, and caching it. */
     SgAsmx86Instruction *current_insn();
 
     /* Returns an argument of a system call */
     uint32_t arg(int idx);
+
+    /* Causes a system call to return a particular value. */
+    void sys_return(const RSIM_SEMANTIC_VTYPE<32> &value);
 
     /* Emulates a Linux system call from an INT 0x80 instruction. */
     void emulate_syscall();
@@ -123,13 +93,15 @@ public:
      * fault or bus error would occur, then set *error to true and return all that we read, otherwise set it to false. */
     std::vector<std::string> read_string_vector(uint32_t va, bool *error=NULL);
 
-    /* Simulates the generation of a signal for the specimen.  The signal is made pending (unless it's ignored) and delivered synchronously. */
+    /* Simulates the generation of a signal for the specimen.  The signal is made pending (unless it's ignored) and delivered
+     * synchronously. */
     void signal_generate(int signo);
 
     /* Deliver one (of possibly many) unmasked, pending signals. This must be called between simulated instructions. */
     void signal_deliver_any();
 
-    /* Dispatch a signal. That is, emulate the specimen's signal handler or default action. This must be called between simulated instructions. */
+    /* Dispatch a signal. That is, emulate the specimen's signal handler or default action. This must be called between
+     * simulated instructions. */
     void signal_deliver(int signo);
 
     /* Handles return from a signal handler. */
@@ -137,69 +109,6 @@ public:
 
     /* Pause until a useful signal arrives. */
     void signal_pause();
-
-    /* Same as the x86_push instruction */
-    void push(VirtualMachineSemantics::ValueType<32> n);
-
-    /* Same as the x86_pop instruction */
-    VirtualMachineSemantics::ValueType<32> pop();
-
-    /* Called by X86InstructionSemantics. Used by x86_and instruction to set AF flag */
-    VirtualMachineSemantics::ValueType<1> undefined_() {
-        return 1;
-    }
-
-    /* Called by X86InstructionSemantics for the HLT instruction */
-    void hlt() {
-        fprintf(stderr, "hlt\n");
-        abort();
-    }
-
-    /* Called by X86InstructionSemantics for the INT instruction */
-    void interrupt(uint8_t num) {
-        if (num != 0x80) {
-            fprintf(stderr, "Bad interrupt\n");
-            abort();
-        }
-        emulate_syscall();
-    }
-
-    /* Called by X86InstructionSemantics for the SYSENTER instruction */
-    void sysenter() {
-        emulate_syscall();
-
-        /* On linux, SYSENTER is followed by zero or more NOPs, followed by a JMP back to just before the SYSENTER in order to
-         * restart interrupted system calls, followed by POPs for the callee-saved registers. A non-interrupted system call
-         * should return to the first POP instruction, which happens to be 9 bytes after the end of the SYSENTER. */
-        writeIP(add(readIP(), number<32>(9)));
-    }
-
-    /* Called by X86InstructionSemantics */
-    void startInstruction(SgAsmInstruction* insn) {
-        if (tracing(TRACE_INSN)) {
-            if (isatty(fileno(tracing(TRACE_INSN)))) {
-                fprintf(tracing(TRACE_INSN), "\033[K\n[%07zu] %s\033[K\r\033[1A",
-                        get_ninsns(), unparseInstructionWithAddress(insn).c_str());
-            } else {
-                fprintf(tracing(TRACE_INSN),
-                        "[%07zu] 0x%08"PRIx64": %s\n", get_ninsns(), insn->get_address(), unparseInstruction(insn).c_str());
-            }
-        }
-        VirtualMachineSemantics::Policy::startInstruction(insn);
-    }
-
-    /* Write value to a segment register and its shadow. */
-    void writeSegreg(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<16> &val);
-
-    /* Reads memory from the memory map rather than the super class. */
-    template <size_t Len> VirtualMachineSemantics::ValueType<Len>
-    readMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
-               const VirtualMachineSemantics::ValueType<1> cond);
-
-    /* Writes memory to the memory map rather than the super class. */
-    template <size_t Len> void
-    writeMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
-                const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond);
 
     /* Helper functions for syscall 117, ipc() and related syscalls */
     void sys_semtimedop(uint32_t semid, uint32_t tsops_va, uint32_t nsops, uint32_t timeout_va);
@@ -219,8 +128,39 @@ public:
     void sys_bind(int fd, uint32_t addr_va, uint32_t addrlen);
     void sys_listen(int fd, int backlog);
 
+    /* Return number of instructions executed */
+    size_t get_ninsns() const {
+        return policy.get_ninsns();
+    }
+    
+public: //FIXME
+    void ctor();
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, long sz);
-};
+    
+    RSIM_Process *process;                      /* Process to which this thread belongs */
+    RSIM_SemanticPolicy policy;
+    RSIM_Semantics semantics;
+    Disassembler *disassembler;                 /* Disassembler to use for obtaining instructions */
 
+
+    /* Debugging, tracing, etc. */
+    struct timeval last_report;                 /* Time of last progress report. */
+    double report_interval;                     /* Minimum seconds between progress reports. */
+
+    static const uint32_t SIGHANDLER_RETURN = 0xdeceaced;
+
+    /* Stuff related to threads */
+    uint32_t robust_list_head_va;               /* Address of robust futex list head. See set_robust_list() syscall */
+    uint32_t set_child_tid;                     /* See set_tid_address(2) man page and clone() emulation */
+    uint32_t clear_child_tid;                   /* See set_tid_address(2) man page and clone() emulation */
+
+    /* Stuff related to signal handling. */
+    sigaction_32 signal_action[_NSIG];          /* Simulated actions for signal handling; elmt N is signal N+1 */
+    uint64_t signal_pending;                    /* Bit N is set if signal N+1 is pending */
+    uint64_t signal_mask;                       /* Masked signals; Bit N is set if signal N+1 is masked */
+    stack_32 signal_stack;                      /* Possible alternative stack to using during signal handling */
+    bool signal_reprocess;                      /* Set to true if we might need to deliver signals (e.g., signal_mask changed) */
+
+};
 
 #endif /* ROSE_RSIM_Thread_H */
