@@ -1,4 +1,15 @@
-Mac OS X note (10/22/2010):
+**********************************************************************
+Mac OS X note (2/2/2011):
+
+Required software to build ROSE: Please install them first.
+* iOS SDK: with XCode package . This gives you gcc/g++/gmake etc.
+* git: if you want to get ROSE via our git repository
+* wget: required to download EDG binaries hosted at rosecompiler.org
+* boost 1.36 or higher version
+
+
+Environment settings:
+edit your .profile and 
 
 On rose-hudson-osx-2 (use this to get access to wget):
    export PATH=$PATH:/export/tmp.hudson-rose/opt/wget-1.11.4-inst/bin/
