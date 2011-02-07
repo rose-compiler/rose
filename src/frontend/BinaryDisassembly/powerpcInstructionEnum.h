@@ -364,7 +364,8 @@ enum PowerpcInstructionKind
      powerpc_rlwinm_record, // Rotate Left Word Immediate then AND with Mask 
      powerpc_rlwnm, // Rotate Left Word then AND with Mask 
      powerpc_rlwnm_record, // Rotate Left Word then AND with Mask 
-     powerpc_sc, // System Call 
+     powerpc_sc, // System Call
+     powerpc_si,
      powerpc_slbia, // SLB Invalidate All 
      powerpc_slbie, // SLB Invalidate Entry 
      powerpc_sld, // Shift Left Doubleword 

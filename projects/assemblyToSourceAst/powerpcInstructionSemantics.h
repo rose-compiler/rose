@@ -673,6 +673,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            policy.writeSPR(powerpc_spr_xer,policy.or_(policy.and_(policy.readSPR(powerpc_spr_xer),number<32>(0xDFFFFFFFU)),policy.ite(carry_out,number<32>(0x20000000U),number<32>(0x0))));
            break;
          }
+
       case powerpc_si:
          {
            ROSE_ASSERT(operands.size() == 3);
@@ -921,11 +922,11 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            SgAsmPowerpcRegisterReferenceExpression* BI = isSgAsmPowerpcRegisterReferenceExpression(operands[1]);
            ROSE_ASSERT(BI != NULL);
-           ROSE_ASSERT(BI->get_register_class() == powerpc_regclass_cr);
-           ROSE_ASSERT(BI->get_conditionRegisterGranularity() == powerpc_condreggranularity_bit);
+           ROSE_ASSERT(BI->get_descriptor().get_major() == powerpc_regclass_cr);
+           ROSE_ASSERT(BI->get_descriptor().get_nbits() == 1);
 
         // This needs a collection of helpfer functions!
-           int bi_value = BI->get_register_number();
+           int bi_value = BI->get_descriptor().get_offset();
            Word(4) CR_field = policy.readCRField(bi_value/4);
            Word(1) CR_bi = extract<0,1>(policy.shiftRight(CR_field,number<2>(3 - bi_value % 4)));
            Word(1) COND_ok = BO_0 ? policy.true_() : BO_1 ? CR_bi : policy.invert(CR_bi);
