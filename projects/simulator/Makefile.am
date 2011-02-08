@@ -489,21 +489,12 @@ libtestsupport.a: $(SYS_TEST_SUPPORT_OBJ)
 	@ar -rc $@ $(SYS_TEST_SUPPORT_OBJ)
 $(SYS_TEST_SUPPORT_OBJ): %.o: $(srcdir)/syscall_tests/%.c
 	@echo "  CC32    $@"
-<<<<<<< HEAD
 	@$(CC) -m32 -g -I$(srcdir)/syscall_tests -Wall -o $@ -c $^
 MOSTLYCLEANFILES += libtestsupport.a
 
 # The ipc support library
 include_HEADERS += $(srcdir)/syscall_tests/ipcmsg.h  $(srcdir)/syscall_tests/ipcsem.h  $(srcdir)/syscall_tests/ipcshm.h
 IPC_SUPPORT_SRC = $(srcdir)/syscall_tests/libipc.c
-=======
-	@$(CC) $(CFLAGS32) -g -I$(srcdir)/syscall_tests -Wall -o $@ -c $^
-MOSTLYCLEANFILES += libtestsupport.a
-
-# The ipc support library. These will not be generated if ENABLE_I386 is not defined.
-include_HEADERS += $(srcdir)/syscall_tests/ipcmsg.h  $(srcdir)/syscall_tests/ipcsem.h  $(srcdir)/syscall_tests/ipcshm.h
-IPC_SUPPORT_SRC = $(srcdir)/syscall_tests/libipc.c
->>>>>>> 528125010ab733015545bb4bb8fb73556dccb59a
 IPC_SUPPORT_OBJ = $(patsubst %.c, %.o, $(notdir $(IPC_SUPPORT_SRC)))
 EXTRA_DIST += $(IPC_SUPPORT_SRC)
 libipc.a: $(IPC_SUPPORT_OBJ)
@@ -511,11 +502,7 @@ libipc.a: $(IPC_SUPPORT_OBJ)
 	@ar -rc $@ $(IPC_SUPPORT_OBJ)
 $(IPC_SUPPORT_OBJ): %.o: $(srcdir)/syscall_tests/%.c
 	@echo "  CC32    $@"
-<<<<<<< HEAD
 	@$(CC) -m32 -g -I$(srcdir)/syscall_tests -Wall -o $@ -c $^
-=======
-	@$(CC) $(CFLAGS32) -g -I$(srcdir)/syscall_tests -Wall -o $@ -c $^
->>>>>>> 528125010ab733015545bb4bb8fb73556dccb59a
 MOSTLYCLEANFILES += libipc.a
 
 
