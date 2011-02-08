@@ -17,6 +17,20 @@ then
 else
    origparentdir="$1"
    includedir="$2"
+
+
+# TOO (02/04/11): in case we have /usr/apps/gcc/...
+# then ./include-staging//usr/apps/gcc/... does not exist
+# which happens when user specifies compilers using the CC/CXX
+# environment variables
+# Also for fName in /usr/apps/gcc/.../g++_HEADERS doesn't exist
+
+if [ ! -d "$origparentdir"/"$includedir" ]; then
+    echo "$origparentdir"/"$includedir is not a directory!!"
+    exit 1;
+fi
+
+
    if [ -d "$origparentdir" ]
    then
      includeString=""
