@@ -95,12 +95,17 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
      EO="-n"
    fi
 
+if test `expr index "$BACKEND_CXX_COMPILER" /` = "1"; then
+	BACKEND_CXX_COMPILER_INSTALL_PATH=${BACKEND_CXX_COMPILER:1}
+else
+	BACKEND_CXX_COMPILER_INSTALL_PATH=${BACKEND_CXX_COMPILER}
+fi
 
  # Include the directory with the subdirectories of header files
    if test "x$enable_new_edg_interface" = "xyes"; then
      includeString="{`${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo -n \\\"$dir\\\",\ ; done` \"/usr/include\"}"
    else
-     includeString="{\"${BACKEND_CXX_COMPILER}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_CXX_COMPILER}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
+	includeString="{\"${BACKEND_CXX_COMPILER_INSTALL_PATH}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_CXX_COMPILER_INSTALL_PATH}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
    fi
 
    echo "includeString = $includeString"
@@ -187,11 +192,17 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
      EO="-n"
    fi
 
+if test `expr index "$BACKEND_C_COMPILER" /` = "1"; then
+  BACKEND_C_COMPILER_INSTALL_PATH=${BACKEND_C_COMPILER:1}
+else
+  BACKEND_C_COMPILER_INSTALL_PATH=${BACKEND_C_COMPILER}
+fi
+
  # Include the directory with the subdirectories of header files
    if test "x$enable_new_edg_interface" = "xyes"; then
      includeString="{`${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo -n \\\"$dir\\\",\ ; done` \"/usr/include\"}"
    else
-     includeString="{\"${BACKEND_C_COMPILER}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_C_COMPILER}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
+     includeString="{\"${BACKEND_C_COMPILER_INSTALL_PATH}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_C_COMPILER_INSTALL_PATH}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
    fi
 
    echo "includeString = $includeString"

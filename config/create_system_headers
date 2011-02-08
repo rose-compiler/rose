@@ -232,7 +232,7 @@ fi
 # echo "Building separate header directories"
 
 iDir=0
-sh "$roseHome/config/get_compiler_header_dirs" "$compilerName" | while read dirName
+sh "$roseHome/config/get_compiler_header_dirs" "$1" | while read dirName
    do
          iDir=`expr "$iDir" + 1 `
         echo "processing header file directory $dirName to be mapped to $mainTargetDir/hdrs${iDir}"
