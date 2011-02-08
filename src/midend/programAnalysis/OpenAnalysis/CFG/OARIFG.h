@@ -49,10 +49,10 @@
 class OARIFG : public RIFG {
 private:
   CFG &cfg;
-  std::map<RIFGNodeId, CFG::Node *> nodeid_to_node_map;	
-  std::map<RIFGEdgeId, CFG::Edge *> edgeid_to_edge_map;	
+  std::map<RIFGNodeId, CFG::Node *> nodeid_to_node_map; 
+  std::map<RIFGEdgeId, CFG::Edge *> edgeid_to_edge_map; 
 public:
-  std::map<CFG::Edge *, RIFGEdgeId> edge_to_id_map;	
+  std::map<CFG::Edge *, RIFGEdgeId> edge_to_id_map;     
   OARIFG(CFG &_cfg);
   ~OARIFG();
   friend class OARIFGNodeIterator;
@@ -78,7 +78,7 @@ public:
 
   RIFGNode *GetRIFGNode(RIFGNodeId n);
   RIFGEdge *GetRIFGEdge(RIFGEdgeId e);
-	
+        
   RIFGEdgeIterator *GetEdgeIterator(RIFG &fg, RIFGNodeId n, RIFG::EdgeDirection ed);
   RIFGNodeIterator *GetNodeIterator(RIFG &fg, RIFG::ForwardBackward fb);
 };

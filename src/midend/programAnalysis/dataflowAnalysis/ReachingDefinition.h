@@ -24,7 +24,7 @@ class ReachingDefinitionBase
   void collect_refs ( AstInterface& fa, const AstNodePtr& h,
                       FunctionSideEffectInterface* a=0,
                       AstInterface::AstNodeList* in = 0);
-  // Insert an entry into the list, the entry is <scope_name+name, variable_definition_info>		      
+  // Insert an entry into the list, the entry is <scope_name+name, variable_definition_info>                  
   void add_ref( const std::string& name, const AstNodePtr& scope, const std::pair<AstNodePtr,AstNodePtr>& def);
   void add_unknown_def ( const std::pair<AstNodePtr,AstNodePtr>& def)
       { add_data( "unknown", def); }
@@ -125,13 +125,13 @@ class ReachingDefinitionAnalysis
   ~ReachingDefinitionAnalysis()
     {
       if (g != 0)
-	delete g;
+        delete g;
     }
   void operator() ( AstInterface& fa, const AstNodePtr& h, 
                     FunctionSideEffectInterface* anal = 0);
   //Collecting all definition data represented by a bit vector 'repr', saving the data into 'collect'
   void collect_ast( const ReachingDefinitions& repr, 
-		    CollectObject< std::pair<AstNodePtr, AstNodePtr> >& collect);
+                    CollectObject< std::pair<AstNodePtr, AstNodePtr> >& collect);
 
   const ReachingDefinitionGenerator* get_generator() const
     { return g; }

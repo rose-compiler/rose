@@ -18,7 +18,7 @@
  */
 
 /* Based on examples/docs from:
- *	http://java.sun.com/j2se/1.4.2/docs/guide/jni/spec/invocation.html#wp9502
+ *      http://java.sun.com/j2se/1.4.2/docs/guide/jni/spec/invocation.html#wp9502
  * http://java.sun.com/j2se/1.4.2/docs/guide/jni/spec/jniTOC.html
  * http://java.sun.com/docs/books/jni/html/invoke.html 
  */
@@ -108,7 +108,7 @@ int openFortranParser_main(int argc, char **argv)
     assert(env_status == 0);
 #endif
 
-	 return status;
+         return status;
   }
 
 

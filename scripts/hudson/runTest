@@ -158,6 +158,18 @@ fi
 # CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes"
 CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
 
+# The "--enable-i386" configure switch was added in commit f5389299 on 2011-02-06. If this switch is present, then configure will
+# try to determine how to generate 32-bit x86 executables with the C compiler and will fail if such a capability is not
+# possible.  This is the same behavior as previously, except previously the failure didn't occur until we hit a makefile that
+# actually tried to generate an i386 executable.  If "--disable-i386" switch were specified then tests that require i386 input
+# files will not run (and will not cause a make failure).  If neither --enable-i386 nor --disable-i386 are specified then
+# configure will try to determine whether generating i386 is possible and act as if either --enable-i386 or --disable-i386
+# was specified.
+#
+# Since we want the a00-ROSE-from-scratch Hudson tests to fail if configure can't figure out how to generate i386, we explicitly
+# request that i386 support be present by invoking configure with "--enable-i386".   [RPM 2011-02-06]
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
+
 # Setup the prefix directory so that an install tree can be generated 
 # for use with secondary testing of other projects using ROSE.
 # We want the install tree for all the different versions of ROSE in the 

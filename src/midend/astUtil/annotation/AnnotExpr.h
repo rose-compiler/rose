@@ -126,7 +126,7 @@ class ExtendibleParamDescriptor
   SymbolicValDescriptor& get_param() { return first; }
   std::string get_param_name() const 
         { assert(first.get_val().GetValType() == VAL_VAR); return first.get_val().toString(); }
-  //! Get the name for the range 	
+  //! Get the name for the range        
   std::string get_extend_var() const { return second.first; }
   //! Get the lower bound and upper bound of the parameter
   bool get_extension( int& lb, int& ub) const; 

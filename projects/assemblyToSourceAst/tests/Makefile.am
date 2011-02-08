@@ -4,7 +4,11 @@
 
 EXTRA_DIST= test0.c test1.c test2.c lib.h
 
+if ENABLE_I386
 inputs = test0 test1 test2
+else
+inputs =
+endif
 
 all: $(inputs)
 

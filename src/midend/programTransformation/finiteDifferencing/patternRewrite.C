@@ -188,9 +188,9 @@ class VariablePattern: public Pattern {
   virtual bool match(SgNode* n, PatternVariables& vars) const {
     NodeClass* n2 = dynamic_cast<NodeClass*>(n);
     if (n2 && 
-	(!vars[name] || 
+        (!vars[name] || 
          (isSgExpression(n2) && isSgExpression(vars[name]) &&
-	   expressionTreeEqual(isSgExpression(n2), 
+           expressionTreeEqual(isSgExpression(n2), 
                                isSgExpression(vars[name]))))) {
       vars[name] = n2;
       return true;
@@ -214,7 +214,7 @@ class NullPattern: public Pattern {
     ROSE_ASSERT (!"Should not use NullPattern in substitutions");
 
 #ifdef _MSC_VER
-	#pragma message ("patternrewrite: Returning arbitrary value")
+        #pragma message ("patternrewrite: Returning arbitrary value")
     return false; // Windows requires return value
 #endif
   }
@@ -282,7 +282,7 @@ class AddIntsPattern: public Pattern {
     ROSE_ASSERT (false);
 
 #ifdef _MSC_VER
-	#pragma message ("patternRewrite: Returning arbitrary value")
+        #pragma message ("patternRewrite: Returning arbitrary value")
     return false; // Windows requires return value
 #endif
   }
@@ -330,27 +330,27 @@ class FoldIntConstantsInMultiply: public RewriteRule {
 RewriteRule* getAlgebraicRules() {
   RewriteRuleCombiner* rules = new RewriteRuleCombiner();
   rules->add(patact(p_AddOp(p_value("a"), p_value("b")),
-		    new AddIntsPattern("a", "b")));
+                    new AddIntsPattern("a", "b")));
   rules->add(patact(p_AddOp(p_AddOp(p_var("a"), p_value("b")), p_value("c")),
-		    p_AddOp(p_var("a"), new AddIntsPattern("b", "c"))));
+                    p_AddOp(p_var("a"), new AddIntsPattern("b", "c"))));
   rules->add(new MoveConstantsToLeftInMultiply());
   rules->add(new FoldIntConstantsInMultiply());
   rules->add(patact(p_MultiplyOp(p_AddOp(p_var("a"), p_var("b")), p_var("c")),
-		    p_AddOp(p_MultiplyOp(p_var("a"), p_var("c")),
-			    p_MultiplyOp(p_var("b"), p_var("c")))));
+                    p_AddOp(p_MultiplyOp(p_var("a"), p_var("c")),
+                            p_MultiplyOp(p_var("b"), p_var("c")))));
   rules->add(patact(p_MultiplyOp(p_var("c"), p_AddOp(p_var("a"), p_var("b"))),
-		    p_AddOp(p_MultiplyOp(p_var("c"), p_var("a")),
-			    p_MultiplyOp(p_var("c"), p_var("b")))));
+                    p_AddOp(p_MultiplyOp(p_var("c"), p_var("a")),
+                            p_MultiplyOp(p_var("c"), p_var("b")))));
   rules->add(patact(p_AddOp(p_var("a"), p_AddOp(p_var("b"), p_var("c"))),
-		    p_AddOp(p_AddOp(p_var("a"), p_var("b")), p_var("c"))));
+                    p_AddOp(p_AddOp(p_var("a"), p_var("b")), p_var("c"))));
   rules->add(patact(p_MultiplyOp(p_int(1), p_var("a")),
-		    p_var("a")));
+                    p_var("a")));
   rules->add(patact(p_MultiplyOp(p_var("a"), p_int(1)),
-		    p_var("a")));
+                    p_var("a")));
   rules->add(patact(p_MultiplyOp(p_int(0), p_var("a")),
-		    p_int(0)));
+                    p_int(0)));
   rules->add(patact(p_MultiplyOp(p_var("a"), p_int(0)),
-		    p_int(0)));
+                    p_int(0)));
   return rules;
 }
 

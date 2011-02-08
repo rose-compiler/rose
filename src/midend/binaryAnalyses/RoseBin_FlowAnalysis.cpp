@@ -34,16 +34,16 @@ RoseBin_FlowAnalysis::RoseBin_FlowAnalysis(SgAsmNode* global, GraphAlgorithms* a
       // However, for now we want to pertain the flat hierarchy of function-instruction
       // instead of function-block-instruction and hence have to convert this.
       if (!db)
-	flattenBlocks(globalBin);
+        flattenBlocks(globalBin);
 #endif
 #if 0
       if (!db)
-	convertBlocksToFunctions(globalBin);
+        convertBlocksToFunctions(globalBin);
 #endif
       initFunctionList(globalBin);
 #if 0
       if (!db) {
-      	resolveFunctions(globalBin);
+        resolveFunctions(globalBin);
       }
 #endif
       //      printAST(globalBin);
@@ -145,12 +145,12 @@ RoseBin_FlowAnalysis::sameParents(SgGraphNode* node, SgGraphNode* next) {
       SgAsmFunctionDeclaration* func1 = isSgAsmFunctionDeclaration(thisNode->get_parent()->get_parent());
       SgAsmFunctionDeclaration* func2 = isSgAsmFunctionDeclaration(nextNode->get_parent()->get_parent());
       if (func1==func2)
-	same=true;
+        same=true;
     } else {
       SgAsmFunctionDeclaration* func1 = isSgAsmFunctionDeclaration(thisNode->get_parent());
       SgAsmFunctionDeclaration* func2 = isSgAsmFunctionDeclaration(nextNode->get_parent());
       if (func1==func2)
-	same=true;
+        same=true;
     }
   }
   return same;
@@ -170,15 +170,15 @@ RoseBin_FlowAnalysis::flattenBlocks(SgAsmNode* globalNode) {
     if (block && block!=globalNode) {
       SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(block->get_parent());
       if (func) {
-	ROSE_ASSERT(g_algo->info);
-	g_algo->info->returnTargets[func].insert(g_algo->info->returnTargets[block].begin(), g_algo->info->returnTargets[block].end());
-	vector <SgNode*> vec =block->get_traversalSuccessorContainer();
-	for (unsigned int itf = 0; itf < vec.size() ; itf++) {
-	  SgAsmInstruction* finst = isSgAsmInstruction(vec[itf]);
-	  finst->set_parent(func);
-	  func->append_statement(finst);
-	}
-	func->remove_statement(block);
+        ROSE_ASSERT(g_algo->info);
+        g_algo->info->returnTargets[func].insert(g_algo->info->returnTargets[block].begin(), g_algo->info->returnTargets[block].end());
+        vector <SgNode*> vec =block->get_traversalSuccessorContainer();
+        for (unsigned int itf = 0; itf < vec.size() ; itf++) {
+          SgAsmInstruction* finst = isSgAsmInstruction(vec[itf]);
+          finst->set_parent(func);
+          func->append_statement(finst);
+        }
+        func->remove_statement(block);
       }
 
     }
@@ -209,9 +209,9 @@ RoseBin_FlowAnalysis::convertBlocksToFunctions(SgAsmNode* globalNode) {
       func->set_parent(globalNode);
       vector <SgNode*> vec =block->get_traversalSuccessorContainer();
       for (unsigned int itf = 0; itf < vec.size() ; itf++) {
-	SgAsmInstruction* finst = isSgAsmInstruction(vec[itf]);
-	finst->set_parent(func);
-	func->append_statement(finst);
+        SgAsmInstruction* finst = isSgAsmInstruction(vec[itf]);
+        finst->set_parent(func);
+        func->append_statement(finst);
       }
       block->remove_children();
     }
@@ -240,7 +240,7 @@ RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
     nr++;
     if ((nr % 100)==0)
       if (RoseBin_support::DEBUG_MODE())
-	cerr << " funcListSize : " << tree.size() << "  -- iteration : " << nr << "   func " << funcD->get_name() << endl;
+        cerr << " funcListSize : " << tree.size() << "  -- iteration : " << nr << "   func " << funcD->get_name() << endl;
 
     //SgAsmFunctionDeclaration* funcD = isSgAsmFunctionDeclaration(*itV);
     //itV++;
@@ -257,7 +257,7 @@ RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
       SgAsmx86Instruction* finst = isSgAsmx86Instruction(funcVec[itf]);
       ROSE_ASSERT(finst);
       if (finst->get_kind() == x86_ret || finst->get_kind() == x86_hlt) {
-	hasStopCondition=true;
+        hasStopCondition=true;
       }
     }
     //cerr << " last : " << last << endl;
@@ -267,26 +267,26 @@ RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
     if (nextInst) {
       SgAsmFunctionDeclaration* nextFunc = isSgAsmFunctionDeclaration(nextInst->get_parent());
       if (nextFunc) {
-	ROSE_ASSERT(g_algo->info);
+        ROSE_ASSERT(g_algo->info);
         g_algo->info->returnTargets[funcD].insert(g_algo->info->returnTargets[nextFunc].begin(), g_algo->info->returnTargets[nextFunc].end());
-	// make sure that this function is being changed and should not be covered again
-	//visitedFunctions.push_back(nextFunc);
-	// visit current function after alternation again
-	//tree.push_back(funcD);
-	// now we remove this next function and iterate thrgouh all instructions and
-	// attach them to the old function
-	vector <SgNode*> funcNextVec =nextFunc->get_traversalSuccessorContainer();
-	for (unsigned int i=0; i < funcNextVec.size(); ++i) {
-	  SgAsmInstruction* inst = isSgAsmInstruction(funcNextVec[i]);
-	  ROSE_ASSERT(inst);
-	  inst->set_parent(funcD);
-	  funcD->append_statement(inst);
-	  //nextFunc->remove_statement(inst);
-	  // delete nextFunc; // should delete this later when iterator is done
-	}
-	nextFunc->remove_children();
-	nextFunc->set_parent(NULL);
-	isSgAsmBlock(globalNode)->remove_statement(nextFunc);
+        // make sure that this function is being changed and should not be covered again
+        //visitedFunctions.push_back(nextFunc);
+        // visit current function after alternation again
+        //tree.push_back(funcD);
+        // now we remove this next function and iterate thrgouh all instructions and
+        // attach them to the old function
+        vector <SgNode*> funcNextVec =nextFunc->get_traversalSuccessorContainer();
+        for (unsigned int i=0; i < funcNextVec.size(); ++i) {
+          SgAsmInstruction* inst = isSgAsmInstruction(funcNextVec[i]);
+          ROSE_ASSERT(inst);
+          inst->set_parent(funcD);
+          funcD->append_statement(inst);
+          //nextFunc->remove_statement(inst);
+          // delete nextFunc; // should delete this later when iterator is done
+        }
+        nextFunc->remove_children();
+        nextFunc->set_parent(NULL);
+        isSgAsmBlock(globalNode)->remove_statement(nextFunc);
       }
     }
   } // for
@@ -316,8 +316,8 @@ RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* instx, bool hasStopCondi
       // found the next instruction
       nextFlow = isSgAsmInstruction(it2->second);
       //if (RoseBin_support::DEBUG_MODE())
-      //	cout << " function resolution: resolving next : " << nextFlow->class_name() << "    this : "
-      //	     << unparser->unparseInstruction(inst) << endl;
+      //        cout << " function resolution: resolving next : " << nextFlow->class_name() << "    this : "
+      //             << unparser->unparseInstruction(inst) << endl;
     }
   }
 
@@ -331,7 +331,7 @@ RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* instx, bool hasStopCondi
   } else {
     if (RoseBin_support::DEBUG_MODE())
       if (!(inst->get_kind() == x86_nop || inst->get_kind() == x86_ret))
-	cerr << " WARNING: function resolution::  cant resolve :  " << inst->class_name() << "(" << unparseInstruction(inst) << ")" << endl;
+        cerr << " WARNING: function resolution::  cant resolve :  " << inst->class_name() << "(" << unparseInstruction(inst) << ")" << endl;
   }
 
   return nextFlow;
@@ -358,84 +358,84 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86Instruction* inst) {
       SgAsmRegisterReferenceExpression* regRef = isSgAsmRegisterReferenceExpression(exp);
 
       //if (RoseBin_support::DEBUG_MODE())
-      //	cout << " inst (jmp):: " << inst->get_mnemonic() << "  addr : " << addrhex3.str() << endl;
+      //        cout << " inst (jmp):: " << inst->get_mnemonic() << "  addr : " << addrhex3.str() << endl;
       SgAsmValueExpression* valExpr = isSgAsmValueExpression(exp);
       SgAsmMemoryReferenceExpression* memExpr = isSgAsmMemoryReferenceExpression(exp);
       string valStr = "";
       if (valExpr) {
-	uint8_t byte_val=0xF;
-	uint16_t word_val=0xFF;
-	uint32_t double_word_val=0xFFFF;
-	uint64_t quad_word_val=0xFFFFFFFFU;
+        uint8_t byte_val=0xF;
+        uint16_t word_val=0xFF;
+        uint32_t double_word_val=0xFFFF;
+        uint64_t quad_word_val=0xFFFFFFFFU;
 
-	valStr =
-	  RoseBin_support::resolveValue(valExpr, true,
-					byte_val,
-					word_val,
-					double_word_val,
-					quad_word_val);
+        valStr =
+          RoseBin_support::resolveValue(valExpr, true,
+                                        byte_val,
+                                        word_val,
+                                        double_word_val,
+                                        quad_word_val);
 
-	//if (RoseBin_support::DEBUG_MODE())
-	//cout << "   found value ....... :: " << valStr << endl;
-	funcName = valExpr->get_replacement();
-	//if (funcName=="")
-	//  funcName="noName";
+        //if (RoseBin_support::DEBUG_MODE())
+        //cout << "   found value ....... :: " << valStr << endl;
+        funcName = valExpr->get_replacement();
+        //if (funcName=="")
+        //  funcName="noName";
       }
       if (memExpr) {
-	continue;
-	// this is a jump to data ... do not handle right now!!
+        continue;
+        // this is a jump to data ... do not handle right now!!
       }
 
       // convert val string to long
       uint64_t val=0;
       if(from_string<uint64_t>(val, valStr, std::hex)) {
-	ostringstream addrhex2;
-	addrhex2 << hex << setw(8) << val ;
-	//if (RoseBin_support::DEBUG_MODE())
-	//cerr << "    looking for value ("<<valStr << " ) in InstrSet: "
-	//     << val << "  " << addrhex2.str() << endl;
+        ostringstream addrhex2;
+        addrhex2 << hex << setw(8) << val ;
+        //if (RoseBin_support::DEBUG_MODE())
+        //cerr << "    looking for value ("<<valStr << " ) in InstrSet: "
+        //     << val << "  " << addrhex2.str() << endl;
         rose_hash::unordered_map <uint64_t, SgAsmInstruction* >::const_iterator itc =
-	  rememberInstructions.find(val);
-	if (itc!=rememberInstructions.end()) {
-	  SgAsmInstruction* target = itc->second;
+          rememberInstructions.find(val);
+        if (itc!=rememberInstructions.end()) {
+          SgAsmInstruction* target = itc->second;
 
-	  // we set the target (jump to for each control instruction)
-	  ROSE_ASSERT(target);
+          // we set the target (jump to for each control instruction)
+          ROSE_ASSERT(target);
 
 
-	  //if (RoseBin_support::DEBUG_MODE())
-	  //cout << "    >>> target found! " << target << "     funcName " << funcName << endl;
-	  if (funcName!="") {
-	    SgAsmNode* block = target;
-	    if (!db)
-	      block = isSgAsmNode(target->get_parent());
-	    ROSE_ASSERT(block);
-	    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(block->get_parent());
+          //if (RoseBin_support::DEBUG_MODE())
+          //cout << "    >>> target found! " << target << "     funcName " << funcName << endl;
+          if (funcName!="") {
+            SgAsmNode* block = target;
+            if (!db)
+              block = isSgAsmNode(target->get_parent());
+            ROSE_ASSERT(block);
+            SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(block->get_parent());
 
-	    if (func) {
-	      string fname = func->get_name();
-	      uint64_t val_f=0;
-	      if(from_string<uint64_t>(val_f, fname, std::hex)) {
-		// func name is a hex number
-		func->set_name(funcName);
-		//		inst->set_comment(funcName);
-	      } else {
-		// its a name
-	      }
-	    }
-	  }
-	  return target;
-	} else {
-	  //if (RoseBin_support::DEBUG_MODE())
-	  //  cerr << "    >>>>>>>>>>>>>>> !!! OPS :: Target not found ...  \n" << endl;
-	}
+            if (func) {
+              string fname = func->get_name();
+              uint64_t val_f=0;
+              if(from_string<uint64_t>(val_f, fname, std::hex)) {
+                // func name is a hex number
+                func->set_name(funcName);
+                //              inst->set_comment(funcName);
+              } else {
+                // its a name
+              }
+            }
+          }
+          return target;
+        } else {
+          //if (RoseBin_support::DEBUG_MODE())
+          //  cerr << "    >>>>>>>>>>>>>>> !!! OPS :: Target not found ...  \n" << endl;
+        }
       }
       else{
-	//	std::cerr << "FlowAnalysis ::  from_string failed .. " << std::endl;
-	if (valStr!="")
-	  if (RoseBin_support::DEBUG_MODE())
-	  cerr << " WARNING: Cant convert string to long - in process_jump  :: " << regRef->class_name() <<
-	    " inst :: " << inst->get_mnemonic() << "  addr : " << addrhex3.str() << " target : " << valStr << endl;
+        //      std::cerr << "FlowAnalysis ::  from_string failed .. " << std::endl;
+        if (valStr!="")
+          if (RoseBin_support::DEBUG_MODE())
+          cerr << " WARNING: Cant convert string to long - in process_jump  :: " << regRef->class_name() <<
+            " inst :: " << inst->get_mnemonic() << "  addr : " << addrhex3.str() << " target : " << valStr << endl;
       }
     }
 
@@ -476,66 +476,66 @@ RoseBin_FlowAnalysis::process_jumps() {
       SgAsmx86Instruction* target = isSgAsmx86Instruction(process_jumps_get_target(inst));
       if (target) {
         //cerr << "Target is " << std::hex << target->get_address() << endl;
-	// inst->get_targets().push_back(target);
-	// we set the sources (for each node)
-	ROSE_ASSERT(g_algo->info);
+        // inst->get_targets().push_back(target);
+        // we set the sources (for each node)
+        ROSE_ASSERT(g_algo->info);
         g_algo->info->incomingEdges[target].insert(inst->get_address());
-	// tps: changed this algorithm so that it runs in
-	// linear time!
+        // tps: changed this algorithm so that it runs in
+        // linear time!
         ROSE_ASSERT (target->get_parent());
-	if (target->get_parent()) {
-	  // ROSE_ASSERT(target->get_parent());
-	  SgAsmNode* b_b = target;
-	  if (!db)
-	    b_b = isSgAsmNode(target->get_parent());
-	  ROSE_ASSERT(b_b);
-	  SgAsmFunctionDeclaration* b_func = isSgAsmFunctionDeclaration(b_b->get_parent());
+        if (target->get_parent()) {
+          // ROSE_ASSERT(target->get_parent());
+          SgAsmNode* b_b = target;
+          if (!db)
+            b_b = isSgAsmNode(target->get_parent());
+          ROSE_ASSERT(b_b);
+          SgAsmFunctionDeclaration* b_func = isSgAsmFunctionDeclaration(b_b->get_parent());
 
-	  if (b_func) {
-	    // (16/Oct/07) tps: this is tricky, it appears that sometimes the target can
-	    // be just a jmp to a new location, so we should forward this information to the correct
-	    // function.
-	    // Therefore we need to check if the current function has a return statement.
-	    // If not, we want to forward this information.
-	    if (target->get_kind() == x86_jmp) {
-	      //cerr << " >>>>>>>> found a jmp target - number of children: " << b_func->get_traversalSuccessorContainer().size() << endl;
-	      if (b_func->get_numberOfTraversalSuccessors()==1) {
-		SgAsmx86Instruction* target2 = isSgAsmx86Instruction(process_jumps_get_target(inst));
-		if (target2) {
-		  b_b = target2;
-		  if (!db)
-		    b_b = isSgAsmNode(target2->get_parent());
-		  b_func = isSgAsmFunctionDeclaration(b_b->get_parent());
-		}
-	      }
-	    }
+          if (b_func) {
+            // (16/Oct/07) tps: this is tricky, it appears that sometimes the target can
+            // be just a jmp to a new location, so we should forward this information to the correct
+            // function.
+            // Therefore we need to check if the current function has a return statement.
+            // If not, we want to forward this information.
+            if (target->get_kind() == x86_jmp) {
+              //cerr << " >>>>>>>> found a jmp target - number of children: " << b_func->get_traversalSuccessorContainer().size() << endl;
+              if (b_func->get_numberOfTraversalSuccessors()==1) {
+                SgAsmx86Instruction* target2 = isSgAsmx86Instruction(process_jumps_get_target(inst));
+                if (target2) {
+                  b_b = target2;
+                  if (!db)
+                    b_b = isSgAsmNode(target2->get_parent());
+                  b_func = isSgAsmFunctionDeclaration(b_b->get_parent());
+                }
+              }
+            }
 
 
-	    if (inst->get_parent()) {
+            if (inst->get_parent()) {
               //cerr << "Inst has a parent" << endl;
-	      if (inst->get_comment()=="")
-	      	inst->set_comment(""+b_func->get_name());
-	      ROSE_ASSERT(g_algo->info);
+              if (inst->get_comment()=="")
+                inst->set_comment(""+b_func->get_name());
+              ROSE_ASSERT(g_algo->info);
               SgAsmInstruction* inst_after = g_algo->info->getInstructionAtAddress(inst->get_address() + inst->get_raw_bytes().size()); // inst->cfgBinFlowOutEdge(info);
               if (inst_after) {
                 //cerr << "Added dest " << std::hex << isSgAsmStatement(inst_after)->get_address() << " for function" << endl;
                 b_func->append_dest(isSgAsmStatement(inst_after));
               }
-	    }
-	  } else {
-	    if (RoseBin_support::DEBUG_MODE())
-	    cerr << " NO FUNCTION DETECTED ABOVE BLOCK . " << endl;
-	  }
+            }
+          } else {
+            if (RoseBin_support::DEBUG_MODE())
+            cerr << " NO FUNCTION DETECTED ABOVE BLOCK . " << endl;
+          }
 
-	} else {
-	  if (RoseBin_support::DEBUG_MODE())
-	    cerr << "   WARNING :: process_jumps: target has no parent ... i.e. no FunctionDeclaration to it " <<
-	    target->class_name() << endl;
-	}
+        } else {
+          if (RoseBin_support::DEBUG_MODE())
+            cerr << "   WARNING :: process_jumps: target has no parent ... i.e. no FunctionDeclaration to it " <<
+            target->class_name() << endl;
+        }
       } else {
-	if (inst)
-	  if (RoseBin_support::DEBUG_MODE())
-	    cerr << "    WARNING :: process_jumps: No target found for node " << RoseBin_support::HexToString(inst->get_address())
+        if (inst)
+          if (RoseBin_support::DEBUG_MODE())
+            cerr << "    WARNING :: process_jumps: No target found for node " << RoseBin_support::HexToString(inst->get_address())
                  << "   " << inst->get_mnemonic() << endl;
       }
     } else {
@@ -543,9 +543,9 @@ RoseBin_FlowAnalysis::process_jumps() {
       // might be a jmp
       SgAsmx86Instruction* target = isSgAsmx86Instruction(process_jumps_get_target(inst));
       if (target) {
-	// inst->get_targets().push_back(target);
-	// we set the sources (for each node)
-	ROSE_ASSERT(g_algo->info);
+        // inst->get_targets().push_back(target);
+        // we set the sources (for each node)
+        ROSE_ASSERT(g_algo->info);
         g_algo->info->incomingEdges[target].insert(inst->get_address());
       }
     }
@@ -562,31 +562,31 @@ RoseBin_FlowAnalysis::process_jumps() {
     if (target->get_kind() == x86_ret) {
       SgAsmNode* b_b = target;
       if (!db)
-	b_b = isSgAsmNode(target->get_parent());
+        b_b = isSgAsmNode(target->get_parent());
       SgAsmFunctionDeclaration* parent = isSgAsmFunctionDeclaration(b_b->get_parent());
       if (parent) {
-	//ROSE_ASSERT(parent);
-	std::vector <SgAsmStatement*> dest_list = parent->get_dest();
+        //ROSE_ASSERT(parent);
+        std::vector <SgAsmStatement*> dest_list = parent->get_dest();
         for (size_t i = 0; i < dest_list.size(); ++i) {
           ROSE_ASSERT (isSgAsmInstruction(dest_list[i]));
           //cerr << "Adding ret target " << std::hex << dest_list[i]->get_address() << " to " << std::hex << target->get_address() << endl;
           //info->indirectJumpAndReturnTargets[target].insert(dest_list[i]->get_address());
-	  ROSE_ASSERT(g_algo->info);
+          ROSE_ASSERT(g_algo->info);
           g_algo->info->incomingEdges[isSgAsmInstruction(dest_list[i])].insert(target->get_address());
         }
 
-	std::vector <SgAsmStatement*>::iterator it3 = dest_list.begin();
-	for (; it3!=dest_list.end();++it3) {
-	  SgAsmInstruction* dest = isSgAsmInstruction(*it3);
-	  if (dest) {
-	    dest->append_sources(target);
-	    //cerr << " appending source to " << dest->get_address() << "   target: " << target->get_address() << endl;
-	  }
-	} // for
+        std::vector <SgAsmStatement*>::iterator it3 = dest_list.begin();
+        for (; it3!=dest_list.end();++it3) {
+          SgAsmInstruction* dest = isSgAsmInstruction(*it3);
+          if (dest) {
+            dest->append_sources(target);
+            //cerr << " appending source to " << dest->get_address() << "   target: " << target->get_address() << endl;
+          }
+        } // for
       } else { // if parent
-	if (RoseBin_support::DEBUG_MODE())
-	  cerr << "   ERROR :: RET jumps :: no parent found for ret : " << target->class_name() << endl;
-	//exit (0);
+        if (RoseBin_support::DEBUG_MODE())
+          cerr << "   ERROR :: RET jumps :: no parent found for ret : " << target->class_name() << endl;
+        //exit (0);
       }
     } // if ret
 #endif
@@ -681,7 +681,7 @@ RoseBin_FlowAnalysis::visit(SgNode* node) {
     //if ((func_nr % 1)==0)
     //  if (RoseBin_support::DEBUG_MODE())
     //    cout  << analysisName << " Func Nr: " << (++func_nr) << "  blocks:" <<
-    //	   sizeList << "  ***************** checking function : " << name << endl;
+    //     sizeList << "  ***************** checking function : " << name << endl;
 
     if (forward_analysis) {
       stat = list.front();
@@ -700,24 +700,24 @@ RoseBin_FlowAnalysis::visit(SgNode* node) {
       string typeFunction ="function";
       SgGraphNode* src=NULL;
       if (analysisName=="callgraph") {
-	//	src = vizzGraph->createNode (name, typeFunction, binDecl->get_address(), vizzGraph->graph->get_graph_id(), false, binDecl);
-	src = addCFNode (name, typeFunction, binDecl->get_address(), false, binDecl);
+        //      src = vizzGraph->createNode (name, typeFunction, binDecl->get_address(), vizzGraph->graph->get_graph_id(), false, binDecl);
+        src = addCFNode (name, typeFunction, binDecl->get_address(), false, binDecl);
       } else {
-	//src = vizzGraph->createNode (name, typeFunction, binDecl->get_address(), vizzGraph->graph->get_graph_id(), true, binDecl);
-	//cerr << ">> adding node (f) src: " << RoseBin_support::HexToString(binDecl->get_address()) << endl;
-	src = addCFNode (name, typeFunction, binDecl->get_address(), true, binDecl);
-	string mnemonic=inst->get_mnemonic();
-	//SgGraphNode* trg = vizzGraph->createNode (mnemonic, typeNode, inst->get_address(), vizzGraph->graph->get_graph_id(),false, inst);
-	//cerr << ">> adding node (first) trg: " << RoseBin_support::HexToString(inst->get_address()) << endl;
-	SgGraphNode* trg = addCFNode (mnemonic, typeNode, inst->get_address(), false, inst);
-	string unp_name = unparseInstructionWithAddress(inst);
-	trg->append_properties(SgGraph::name,unp_name);
-	if (analysisName=="dfa")
-	  trg->append_properties(SgGraph::dfa_standard,unp_name);
-	//cerr << "Create edge " << endl;
-	//	SgDirectedGraphEdge* edge = vizzGraph->createEdge ( typeFunction, vizzGraph->graph->get_graph_id(), src, binDecl->get_address(), trg, inst->get_address());
-	SgDirectedGraphEdge* edge = vizzGraph->addDirectedEdge ( src, trg, typeFunction);
-	vizzGraph->setProperty(SgGraph::type, edge, RoseBin_support::ToString(SgGraph::cfg));
+        //src = vizzGraph->createNode (name, typeFunction, binDecl->get_address(), vizzGraph->graph->get_graph_id(), true, binDecl);
+        //cerr << ">> adding node (f) src: " << RoseBin_support::HexToString(binDecl->get_address()) << endl;
+        src = addCFNode (name, typeFunction, binDecl->get_address(), true, binDecl);
+        string mnemonic=inst->get_mnemonic();
+        //SgGraphNode* trg = vizzGraph->createNode (mnemonic, typeNode, inst->get_address(), vizzGraph->graph->get_graph_id(),false, inst);
+        //cerr << ">> adding node (first) trg: " << RoseBin_support::HexToString(inst->get_address()) << endl;
+        SgGraphNode* trg = addCFNode (mnemonic, typeNode, inst->get_address(), false, inst);
+        string unp_name = unparseInstructionWithAddress(inst);
+        trg->append_properties(SgGraph::name,unp_name);
+        if (analysisName=="dfa")
+          trg->append_properties(SgGraph::dfa_standard,unp_name);
+        //cerr << "Create edge " << endl;
+        //      SgDirectedGraphEdge* edge = vizzGraph->createEdge ( typeFunction, vizzGraph->graph->get_graph_id(), src, binDecl->get_address(), trg, inst->get_address());
+        SgDirectedGraphEdge* edge = vizzGraph->addDirectedEdge ( src, trg, typeFunction);
+        vizzGraph->setProperty(SgGraph::type, edge, RoseBin_support::ToString(SgGraph::cfg));
       }
 
       local_visited.clear();
@@ -736,8 +736,8 @@ RoseBin_FlowAnalysis::visit(SgNode* node) {
 
 void
 RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
-					int functionSize, int countDown,
-					string& currentFunctionName, int func_nr) {
+                                        int functionSize, int countDown,
+                                        string& currentFunctionName, int func_nr) {
   //cerr << "check control flow" << endl;
   while (!worklist_forthisfunction.empty()) {
     SgAsmInstruction* binInst = worklist_forthisfunction.top();
@@ -765,7 +765,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
     string name = binInst->get_mnemonic();
     //    if (RoseBin_support::DEBUG_MODE())
     //         cout << " " << addrhex.str() << "  " << func_nr << " :: " << functionSize <<
-    // 	"/" << countDown << "  ---------- next CFG instruction : " << name <<   "  vecSize : " << vec.size() << endl;
+    //  "/" << countDown << "  ---------- next CFG instruction : " << name <<   "  vecSize : " << vec.size() << endl;
 
 
 
@@ -774,8 +774,8 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
       VirtualBinCFG::CFGNode cfg_target = edge.target();
       VirtualBinCFG::CFGNode cfg_source = edge.source();
       if (!forward_analysis) {
-	cfg_target = edge.source();
-	cfg_source = edge.target();
+        cfg_target = edge.source();
+        cfg_source = edge.target();
       }
       SgAsmInstruction* bin_target = isSgAsmInstruction(cfg_target.getNode());
       SgAsmInstruction* thisbin = isSgAsmInstruction(cfg_source.getNode());
@@ -786,274 +786,274 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
       string src_mnemonic = thisbin->get_mnemonic();
       int src_address = thisbin->get_address();
       if (analysisName=="callgraph")
-	src_address = funcDecl->get_address();
+        src_address = funcDecl->get_address();
       ostringstream addrhex_s;
       addrhex_s << hex << setw(8) << src_address ;
 
       SgGraphNode* src =NULL;
       string hexStr = addrhex_s.str();
       if (analysisName!="callgraph") {
-	vector<SgGraphNode*> sources;
-	vizzGraph->checkIfGraphNodeExists(hexStr, sources);
-	vector<SgGraphNode*>::const_iterator src_it = 
-	  sources.begin();
-	for (;src_it!=sources.end();++src_it) {
-	  // should only be one node! adapted to new interface
-	  src = *src_it;
-	}
-	if (src==NULL) {
-	  //  src= vizzGraph->createNode (src_mnemonic, typeNode, src_address, vizzGraph->graph->get_graph_id(), false, thisbin);
-	  src= addCFNode (src_mnemonic, typeNode, src_address,  false, thisbin);
+        vector<SgGraphNode*> sources;
+        vizzGraph->checkIfGraphNodeExists(hexStr, sources);
+        vector<SgGraphNode*>::const_iterator src_it = 
+          sources.begin();
+        for (;src_it!=sources.end();++src_it) {
+          // should only be one node! adapted to new interface
+          src = *src_it;
+        }
+        if (src==NULL) {
+          //  src= vizzGraph->createNode (src_mnemonic, typeNode, src_address, vizzGraph->graph->get_graph_id(), false, thisbin);
+          src= addCFNode (src_mnemonic, typeNode, src_address,  false, thisbin);
 
-	  string unp_name = unparseInstructionWithAddress(thisbin);
-	  src->append_properties(SgGraph::name,unp_name);
-	  if (analysisName=="dfa")
-	    src->append_properties(SgGraph::dfa_standard,unp_name);
-	}
-	ROSE_ASSERT(src);
+          string unp_name = unparseInstructionWithAddress(thisbin);
+          src->append_properties(SgGraph::name,unp_name);
+          if (analysisName=="dfa")
+            src->append_properties(SgGraph::dfa_standard,unp_name);
+        }
+        ROSE_ASSERT(src);
         if (thisbinX86->get_kind() == x86_call) {
           uint64_t returnAddr = thisbinX86->get_address() + thisbinX86->get_raw_bytes().size();
-	  ROSE_ASSERT(g_algo->info);
+          ROSE_ASSERT(g_algo->info);
           SgAsmInstruction* retInsn = g_algo->info->getInstructionAtAddress(returnAddr);
-	  if (retInsn) {
-	    //worklist_forthisfunction.push(retInsn);
-	    //ostringstream tgthex_s;
-	    //tgthex_s << hex << setw(8) << returnAddr ;
-	    //string tgtStr = tgthex_s.str();
-	    //SgGraphNode* tgt = vizzGraph->checkIfGraphNodeExists(tgtStr);
+          if (retInsn) {
+            //worklist_forthisfunction.push(retInsn);
+            //ostringstream tgthex_s;
+            //tgthex_s << hex << setw(8) << returnAddr ;
+            //string tgtStr = tgthex_s.str();
+            //SgGraphNode* tgt = vizzGraph->checkIfGraphNodeExists(tgtStr);
 
-	    // tps (25 Aug 2008) : this line seems broken!
-	    //string mne = retInsn->get_mnemonic();
+            // tps (25 Aug 2008) : this line seems broken!
+            //string mne = retInsn->get_mnemonic();
 
-	    //if (!tgt) {tgt = vizzGraph->createNode(mne, typeNode, returnAddr, vizzGraph->graph->get_graph_id(), false, retInsn);}
-	    // cerr << " ------> Creating return edge : " << thisbinX86->get_address() << " " << returnAddr << endl;
-	    // vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(), src, thisbinX86->get_address(), tgt, returnAddr);
+            //if (!tgt) {tgt = vizzGraph->createNode(mne, typeNode, returnAddr, vizzGraph->graph->get_graph_id(), false, retInsn);}
+            // cerr << " ------> Creating return edge : " << thisbinX86->get_address() << " " << returnAddr << endl;
+            // vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(), src, thisbinX86->get_address(), tgt, returnAddr);
 
 
-	  }
+          }
         }
       }
 
       else if (analysisName=="callgraph") {
-	// These are special cases that annotate the call graph (nodes)
-	// so that the visualization can pick up the properties and color correctly
-	ROSE_ASSERT(g_algo->info);
-	if (thisbinX86->get_kind() == x86_jmp) {
+        // These are special cases that annotate the call graph (nodes)
+        // so that the visualization can pick up the properties and color correctly
+        ROSE_ASSERT(g_algo->info);
+        if (thisbinX86->get_kind() == x86_jmp) {
 
-	  if (thisbinX86->cfgBinOutEdges(g_algo->info).empty()) {
-	    funcDeclNode->append_properties(SgGraph::nodest_jmp,RoseBin_support::ToString("nodest_jmp"));
-	  }
-	}
-	else if (thisbinX86->get_kind() == x86_call) {
-	  //cerr << "CallGRAPH: Found call : " <<
-	  //  RoseBin_support::HexToString(VirtualBinCFG::CFGNode(thisbinX86).getNode()->get_address()) << " to " <<
-	  //  RoseBin_support::HexToString(VirtualBinCFG::CFGNode(g_algo->info->getInstructionAtAddress(thisbinX86->get_address() + thisbinX86->get_raw_bytes().size())).getNode()->get_address()) <<  endl;
+          if (thisbinX86->cfgBinOutEdges(g_algo->info).empty()) {
+            funcDeclNode->append_properties(SgGraph::nodest_jmp,RoseBin_support::ToString("nodest_jmp"));
+          }
+        }
+        else if (thisbinX86->get_kind() == x86_call) {
+          //cerr << "CallGRAPH: Found call : " <<
+          //  RoseBin_support::HexToString(VirtualBinCFG::CFGNode(thisbinX86).getNode()->get_address()) << " to " <<
+          //  RoseBin_support::HexToString(VirtualBinCFG::CFGNode(g_algo->info->getInstructionAtAddress(thisbinX86->get_address() + thisbinX86->get_raw_bytes().size())).getNode()->get_address()) <<  endl;
 
           vector<VirtualBinCFG::CFGEdge> dests = thisbinX86->cfgBinOutEdges(g_algo->info);
           dests.push_back(VirtualBinCFG::CFGEdge(VirtualBinCFG::CFGNode(thisbinX86), VirtualBinCFG::CFGNode(g_algo->info->getInstructionAtAddress(thisbinX86->get_address() + thisbinX86->get_raw_bytes().size())), g_algo->info));
-	  if (!dests.empty()) {
-	    SgAsmNode* parent = isSgAsmNode(dests[0].target().getNode()->get_parent());
-	    if (!db)
-	      parent = isSgAsmNode(parent->get_parent());
-	    if (parent) {
-	      SgAsmFunctionDeclaration* funcdestparent = isSgAsmFunctionDeclaration(parent);
-	      string trg_func_name = funcdestparent->get_name();
-	      if (trg_func_name==currentFunctionName) {
-		funcDeclNode->append_properties(SgGraph::itself_call,RoseBin_support::ToString("itself_call"));
-	      }
-	    }
-	  } else {
-	    funcDeclNode->append_properties(SgGraph::nodest_call,RoseBin_support::ToString("nodest_call"));
-	    //cerr << " no destination found for call " << addrhex.str() << endl;
-	  }
-	}
-	else if (thisbinX86->get_kind() == x86_int) {
-	  funcDeclNode->append_properties(SgGraph::interrupt,RoseBin_support::ToString("interrupt"));
-	}
+          if (!dests.empty()) {
+            SgAsmNode* parent = isSgAsmNode(dests[0].target().getNode()->get_parent());
+            if (!db)
+              parent = isSgAsmNode(parent->get_parent());
+            if (parent) {
+              SgAsmFunctionDeclaration* funcdestparent = isSgAsmFunctionDeclaration(parent);
+              string trg_func_name = funcdestparent->get_name();
+              if (trg_func_name==currentFunctionName) {
+                funcDeclNode->append_properties(SgGraph::itself_call,RoseBin_support::ToString("itself_call"));
+              }
+            }
+          } else {
+            funcDeclNode->append_properties(SgGraph::nodest_call,RoseBin_support::ToString("nodest_call"));
+            //cerr << " no destination found for call " << addrhex.str() << endl;
+          }
+        }
+        else if (thisbinX86->get_kind() == x86_int) {
+          funcDeclNode->append_properties(SgGraph::interrupt,RoseBin_support::ToString("interrupt"));
+        }
       }
 
 
       if (bin_target!=NULL) {
-	string trg_func_name = "";
-	int trg_func_address =1;
-	string hexStrf = "";
+        string trg_func_name = "";
+        int trg_func_address =1;
+        string hexStrf = "";
 
-	SgAsmFunctionDeclaration* funcDeclparent=NULL;
-	if (analysisName=="callgraph") {
-	  SgAsmNode* parent = dynamic_cast<SgAsmNode*>(bin_target->get_parent());
-	  if (parent==NULL)
-	    continue;
-	  if (!db)
-	    parent = isSgAsmNode(parent->get_parent());
-	  ROSE_ASSERT(parent);
+        SgAsmFunctionDeclaration* funcDeclparent=NULL;
+        if (analysisName=="callgraph") {
+          SgAsmNode* parent = dynamic_cast<SgAsmNode*>(bin_target->get_parent());
+          if (parent==NULL)
+            continue;
+          if (!db)
+            parent = isSgAsmNode(parent->get_parent());
+          ROSE_ASSERT(parent);
 
-	  funcDeclparent = isSgAsmFunctionDeclaration(parent);
-	  ROSE_ASSERT(funcDeclparent);
+          funcDeclparent = isSgAsmFunctionDeclaration(parent);
+          ROSE_ASSERT(funcDeclparent);
 
-	  trg_func_name = funcDeclparent->get_name();
-	  trg_func_address = funcDeclparent->get_address();
-	  ostringstream addrhex_tf;
-	  addrhex_tf << hex << setw(8) << trg_func_address ;
-	  hexStrf = addrhex_tf.str();
-	  //cerr << " CALLGRAPH TARGET PARENT : " << hexStrf << endl;
-	}
+          trg_func_name = funcDeclparent->get_name();
+          trg_func_address = funcDeclparent->get_address();
+          ostringstream addrhex_tf;
+          addrhex_tf << hex << setw(8) << trg_func_address ;
+          hexStrf = addrhex_tf.str();
+          //cerr << " CALLGRAPH TARGET PARENT : " << hexStrf << endl;
+        }
 
-	string trg_mnemonic = bin_target->get_mnemonic();
-	int trg_address = bin_target->get_address();
-	ostringstream addrhex_t;
-	addrhex_t << hex << setw(8) << trg_address ;
+        string trg_mnemonic = bin_target->get_mnemonic();
+        int trg_address = bin_target->get_address();
+        ostringstream addrhex_t;
+        addrhex_t << hex << setw(8) << trg_address ;
 
-	if (RoseBin_support::DEBUG_MODE())
-	  cout << "     OUTEDGES TO: vec[" << i << "/" << vec.size() << "]  :" <<
-	    addrhex_t.str() << "  " << trg_mnemonic << endl;
+        if (RoseBin_support::DEBUG_MODE())
+          cout << "     OUTEDGES TO: vec[" << i << "/" << vec.size() << "]  :" <<
+            addrhex_t.str() << "  " << trg_mnemonic << endl;
 
-	string hexStr = addrhex_t.str();
-	SgGraphNode* trg=NULL;
-	vector<SgGraphNode*> targets;
-	if (analysisName=="callgraph")
-	  vizzGraph->checkIfGraphNodeExists(hexStrf, targets);
-	else
-	  vizzGraph->checkIfGraphNodeExists(hexStr, targets);
-	vector<SgGraphNode*>::const_iterator src_it = 
-	  targets.begin();
-	for (;src_it!=targets.end();++src_it) {
-	  // should only be one node! adapted to new interface
-	  trg = *src_it;
-	}
-	//ROSE_ASSERT(trg);
+        string hexStr = addrhex_t.str();
+        SgGraphNode* trg=NULL;
+        vector<SgGraphNode*> targets;
+        if (analysisName=="callgraph")
+          vizzGraph->checkIfGraphNodeExists(hexStrf, targets);
+        else
+          vizzGraph->checkIfGraphNodeExists(hexStr, targets);
+        vector<SgGraphNode*>::const_iterator src_it = 
+          targets.begin();
+        for (;src_it!=targets.end();++src_it) {
+          // should only be one node! adapted to new interface
+          trg = *src_it;
+        }
+        //ROSE_ASSERT(trg);
 
-	bool target_visited = false;
+        bool target_visited = false;
 
-	// DQ (4/23/2009): We want the type defined in the base class.
-	// rose_hash::unordered_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
+        // DQ (4/23/2009): We want the type defined in the base class.
+        // rose_hash::unordered_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
 // CH (4/9/2010): Use boost::unordered instead   
 //#ifndef _MSCx_VER
 #if 1
-	rose_hash::unordered_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
+        rose_hash::unordered_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
 #else
-	rose_hash::unordered_map <string, SgAsmInstruction*,rose_hash::hash_string>::iterator vis = local_visited.find(hexStr);
+        rose_hash::unordered_map <string, SgAsmInstruction*,rose_hash::hash_string>::iterator vis = local_visited.find(hexStr);
 #endif
-	if (vis!=local_visited.end())
-	  target_visited=true;
+        if (vis!=local_visited.end())
+          target_visited=true;
 
-	if (trg==NULL) {
-	  if (analysisName=="callgraph") {
-	    //	    cerr << " >>> TARGET FUNC NAME " << trg_func_name << endl;
-	    //trg = vizzGraph->createNode (trg_func_name, typeNode, trg_func_address, vizzGraph->graph->get_graph_id(),false, funcDeclparent);
-	    trg = addCFNode (trg_func_name, typeNode, trg_func_address,false, funcDeclparent);
-	  }	  else {
-	    //trg = vizzGraph->createNode (trg_mnemonic, typeNode, trg_address, vizzGraph->graph->get_graph_id(),false, bin_target);
-	    trg = addCFNode (trg_mnemonic, typeNode, trg_address, false, bin_target);
-	  }
-	  string unp_name = unparseInstructionWithAddress(bin_target);
-	  //cout << " (target==NULL) unparse name : " << unp_name << endl;
-	  trg->append_properties(SgGraph::name,unp_name);
-	  if (analysisName=="dfa")
-	    trg->append_properties(SgGraph::dfa_standard,unp_name);
+        if (trg==NULL) {
+          if (analysisName=="callgraph") {
+            //      cerr << " >>> TARGET FUNC NAME " << trg_func_name << endl;
+            //trg = vizzGraph->createNode (trg_func_name, typeNode, trg_func_address, vizzGraph->graph->get_graph_id(),false, funcDeclparent);
+            trg = addCFNode (trg_func_name, typeNode, trg_func_address,false, funcDeclparent);
+          }       else {
+            //trg = vizzGraph->createNode (trg_mnemonic, typeNode, trg_address, vizzGraph->graph->get_graph_id(),false, bin_target);
+            trg = addCFNode (trg_mnemonic, typeNode, trg_address, false, bin_target);
+          }
+          string unp_name = unparseInstructionWithAddress(bin_target);
+          //cout << " (target==NULL) unparse name : " << unp_name << endl;
+          trg->append_properties(SgGraph::name,unp_name);
+          if (analysisName=="dfa")
+            trg->append_properties(SgGraph::dfa_standard,unp_name);
 
-	} else {
-	  string unp_name = unparseInstructionWithAddress(bin_target);
-	  //cout << "    unparse name : " << unp_name << endl;
-	  trg->append_properties(SgGraph::name,unp_name);
-	  if (analysisName=="dfa")
-	    trg->append_properties(SgGraph::dfa_standard,unp_name);
-	}
-
-
-	ROSE_ASSERT(trg);
-	local_visited[hexStr] = bin_target;
-
-	string name="";
-	if (analysisName=="callgraph")
-	  name = RoseBin_support::ToString(src_address)+RoseBin_support::ToString(trg_func_address);
-	else
-	  name = RoseBin_support::ToString(src_address)+RoseBin_support::ToString(trg_address);
-
-	bool exists = vizzGraph->checkIfDirectedGraphEdgeExists(src, trg);
-	if (!exists) {
-	  if (analysisName=="callgraph") {
-	    if (currentFunctionName!=trg_func_name && thisbinX86->get_kind() != x86_ret) {
-	      //	      SgDirectedGraphEdge* edge = vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(), funcDeclNode, src_address, trg, trg_func_address);
-	      SgDirectedGraphEdge* edge = vizzGraph->addDirectedEdge( funcDeclNode, trg, typeEdge);
-	      //cerr << "CallGraph : create edge : " << RoseBin_support::HexToString(src_address) << " to func : " << RoseBin_support::HexToString(trg_func_address) << endl;
-	      vizzGraph->setProperty(SgGraph::type, edge, RoseBin_support::ToString(SgGraph::cfg));
-	    }
-	  } else {
-	    //string addr = RoseBin_support::HexToString(binInst->get_address());
-	    //if (addr==" 8048392" || addr==" 80482fd")
-	    //  cerr << " >>>>>>>>>> found " << addr << "  -- target_address : " << RoseBin_support::HexToString(trg_address) << endl;
-	    //	    SgDirectedGraphEdge* edge =vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(), src, src_address, trg, trg_address);
-	    SgDirectedGraphEdge* edge = vizzGraph->addDirectedEdge( src, trg, typeEdge);
-	    vizzGraph->setProperty(SgGraph::type, edge, RoseBin_support::ToString(SgGraph::cfg));
-	  }
-	}
+        } else {
+          string unp_name = unparseInstructionWithAddress(bin_target);
+          //cout << "    unparse name : " << unp_name << endl;
+          trg->append_properties(SgGraph::name,unp_name);
+          if (analysisName=="dfa")
+            trg->append_properties(SgGraph::dfa_standard,unp_name);
+        }
 
 
+        ROSE_ASSERT(trg);
+        local_visited[hexStr] = bin_target;
 
-	if (analysisName!="callgraph") {
-	  // handle return edges
-	  SgAsmStatementPtrList sources = thisbin->get_sources();
-	  SgAsmStatementPtrList::iterator it = sources.begin();
-	  for (;it!=sources.end();++it) {
-	    SgAsmInstruction* instT = isSgAsmInstruction(*it);
-	    //cerr << " This node is called from : " << instT->get_address() << endl;
-	    ostringstream addr_t;
-	    addr_t << hex << setw(8) << instT->get_address() ;
-	    SgGraphNode* trg =NULL;
-	    string hexStr = addr_t.str();
-	    vector<SgGraphNode*> targets;
-	    vizzGraph->checkIfGraphNodeExists(hexStr, targets);
-	    vector<SgGraphNode*>::const_iterator src_it = 
-	      targets.begin();
-	    for (;src_it!=targets.end();++src_it) {
-	  // should only be one node! adapted to new interface
-	      trg = *src_it;
-	    }
-	    //trg= vizzGraph->checkIfGraphNodeExists(hexStr);
-	    if (trg==NULL) {
-	      string hexa = RoseBin_support::HexToString(instT->get_address());
-	      hexa = hexa.substr(1,hexa.size());
-	      string name = "0x"+hexa+":"+instT->get_mnemonic();
-	      //trg= vizzGraph->createNode (name, typeNode, instT->get_address(), vizzGraph->graph->get_graph_id(), false, instT);
-	      trg= addCFNode(name, typeNode, instT->get_address(),  false, instT);
+        string name="";
+        if (analysisName=="callgraph")
+          name = RoseBin_support::ToString(src_address)+RoseBin_support::ToString(trg_func_address);
+        else
+          name = RoseBin_support::ToString(src_address)+RoseBin_support::ToString(trg_address);
 
-	    }
+        bool exists = vizzGraph->checkIfDirectedGraphEdgeExists(src, trg);
+        if (!exists) {
+          if (analysisName=="callgraph") {
+            if (currentFunctionName!=trg_func_name && thisbinX86->get_kind() != x86_ret) {
+              //              SgDirectedGraphEdge* edge = vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(), funcDeclNode, src_address, trg, trg_func_address);
+              SgDirectedGraphEdge* edge = vizzGraph->addDirectedEdge( funcDeclNode, trg, typeEdge);
+              //cerr << "CallGraph : create edge : " << RoseBin_support::HexToString(src_address) << " to func : " << RoseBin_support::HexToString(trg_func_address) << endl;
+              vizzGraph->setProperty(SgGraph::type, edge, RoseBin_support::ToString(SgGraph::cfg));
+            }
+          } else {
+            //string addr = RoseBin_support::HexToString(binInst->get_address());
+            //if (addr==" 8048392" || addr==" 80482fd")
+            //  cerr << " >>>>>>>>>> found " << addr << "  -- target_address : " << RoseBin_support::HexToString(trg_address) << endl;
+            //      SgDirectedGraphEdge* edge =vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(), src, src_address, trg, trg_address);
+            SgDirectedGraphEdge* edge = vizzGraph->addDirectedEdge( src, trg, typeEdge);
+            vizzGraph->setProperty(SgGraph::type, edge, RoseBin_support::ToString(SgGraph::cfg));
+          }
+        }
 
-	    bool exists = vizzGraph->checkIfDirectedGraphEdgeExists( trg,src);
-	    if (!exists) {
-	      bool same = sameParents(trg,src);
-	      if (!same) {
-		SgDirectedGraphEdge* edge =vizzGraph->addDirectedEdge( trg, src, typeEdge);
-		//SgDirectedGraphEdge* edge =vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(),  trg, instT->get_address(), src, src_address);
-		vizzGraph->setProperty(SgGraph::type, edge, RoseBin_support::ToString(SgGraph::cfg));
-	      }
-	    }
-	  }
-	}
 
-	if (!target_visited) {
-	  // check if target is in the same function!!!
-	  SgAsmNode* block = bin_target;
-	  if (!db)
-	    block = isSgAsmNode(bin_target->get_parent());
-	  ROSE_ASSERT(block);
-	  SgAsmFunctionDeclaration* funcPar = isSgAsmFunctionDeclaration(block->get_parent());
-	  if (funcPar) {
-	    string nameFunc = funcPar->get_name();
-	    if (nameFunc==currentFunctionName) {
-	      //checkControlFlow(bin_target, functionSize, countDown, currentFunctionName);
-	      worklist_forthisfunction.push(bin_target);
-	    }
-	  } else {
-	    if (RoseBin_support::DEBUG_MODE())
-	    cerr << " ERROR:: Target Instruction has no parent! " << bin_target->class_name() << endl;
-	  }
-	} // if visited
+
+        if (analysisName!="callgraph") {
+          // handle return edges
+          SgAsmStatementPtrList sources = thisbin->get_sources();
+          SgAsmStatementPtrList::iterator it = sources.begin();
+          for (;it!=sources.end();++it) {
+            SgAsmInstruction* instT = isSgAsmInstruction(*it);
+            //cerr << " This node is called from : " << instT->get_address() << endl;
+            ostringstream addr_t;
+            addr_t << hex << setw(8) << instT->get_address() ;
+            SgGraphNode* trg =NULL;
+            string hexStr = addr_t.str();
+            vector<SgGraphNode*> targets;
+            vizzGraph->checkIfGraphNodeExists(hexStr, targets);
+            vector<SgGraphNode*>::const_iterator src_it = 
+              targets.begin();
+            for (;src_it!=targets.end();++src_it) {
+          // should only be one node! adapted to new interface
+              trg = *src_it;
+            }
+            //trg= vizzGraph->checkIfGraphNodeExists(hexStr);
+            if (trg==NULL) {
+              string hexa = RoseBin_support::HexToString(instT->get_address());
+              hexa = hexa.substr(1,hexa.size());
+              string name = "0x"+hexa+":"+instT->get_mnemonic();
+              //trg= vizzGraph->createNode (name, typeNode, instT->get_address(), vizzGraph->graph->get_graph_id(), false, instT);
+              trg= addCFNode(name, typeNode, instT->get_address(),  false, instT);
+
+            }
+
+            bool exists = vizzGraph->checkIfDirectedGraphEdgeExists( trg,src);
+            if (!exists) {
+              bool same = sameParents(trg,src);
+              if (!same) {
+                SgDirectedGraphEdge* edge =vizzGraph->addDirectedEdge( trg, src, typeEdge);
+                //SgDirectedGraphEdge* edge =vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(),  trg, instT->get_address(), src, src_address);
+                vizzGraph->setProperty(SgGraph::type, edge, RoseBin_support::ToString(SgGraph::cfg));
+              }
+            }
+          }
+        }
+
+        if (!target_visited) {
+          // check if target is in the same function!!!
+          SgAsmNode* block = bin_target;
+          if (!db)
+            block = isSgAsmNode(bin_target->get_parent());
+          ROSE_ASSERT(block);
+          SgAsmFunctionDeclaration* funcPar = isSgAsmFunctionDeclaration(block->get_parent());
+          if (funcPar) {
+            string nameFunc = funcPar->get_name();
+            if (nameFunc==currentFunctionName) {
+              //checkControlFlow(bin_target, functionSize, countDown, currentFunctionName);
+              worklist_forthisfunction.push(bin_target);
+            }
+          } else {
+            if (RoseBin_support::DEBUG_MODE())
+            cerr << " ERROR:: Target Instruction has no parent! " << bin_target->class_name() << endl;
+          }
+        } // if visited
       } else {
-	nr_target_missed++;
-	if (binInst)
-	  if (RoseBin_support::DEBUG_MODE())
-	  cerr << " WARNING:: no target found for " << RoseBin_support::HexToString(binInst->get_address()) << " " << binInst->class_name() << endl;
+        nr_target_missed++;
+        if (binInst)
+          if (RoseBin_support::DEBUG_MODE())
+          cerr << " WARNING:: no target found for " << RoseBin_support::HexToString(binInst->get_address()) << " " << binInst->class_name() << endl;
       }
     }
   }

@@ -35,7 +35,7 @@ SgFunctionDefinition* PRE::getFunctionDefinition(SgNode* n) {
 // of one of them?
 // FIXME: move to inliner
 bool anyOfListPotentiallyModifiedIn(const vector<SgVariableSymbol*>& syms,
-				    SgNode* n) {
+                                    SgNode* n) {
   bool modified = false;
   for (vector<SgVariableSymbol*>::const_iterator j = syms.begin();
       j != syms.end(); ++j) {
@@ -49,12 +49,12 @@ bool anyOfListPotentiallyModifiedIn(const vector<SgVariableSymbol*>& syms,
     if (isSgVariableDeclaration(n)) {
       SgVariableDeclaration* decl = isSgVariableDeclaration(n);
       for (SgInitializedNamePtrList::const_iterator i = 
-	     decl->get_variables().begin();
-	   i != decl->get_variables().end(); ++i) {
-	if (*i == (*j)->get_declaration()) {
-	  modified = true;
-	  break;
-	}
+             decl->get_variables().begin();
+           i != decl->get_variables().end(); ++i) {
+        if (*i == (*j)->get_declaration()) {
+          modified = true;
+          break;
+        }
       }
     }
     if (modified) break;
@@ -104,7 +104,7 @@ class ExpressionTreeEqualTo {
 #define FIXPOINT_BEGIN(cfg) \
 { \
   VertexIter i = cfg.graph.vertices().begin(), \
-	     end = cfg.graph.vertices().end(); \
+             end = cfg.graph.vertices().end(); \
   queue<Vertex> Q; \
   for (; i != end; ++i) { \
     Q.push(*i); \
@@ -117,13 +117,13 @@ class ExpressionTreeEqualTo {
 #define FIXPOINT_END(cfg, get_outflow, outflow_iter) \
     if (changed) { \
       outflow_iter j = cfg.graph.get_outflow(v).begin(),\
-		   jend = cfg.graph.get_outflow(v).end(); \
+                   jend = cfg.graph.get_outflow(v).end(); \
       for (; j != jend; ++j) { \
-	if (cfg.graph.source(*j) != v) \
-	  Q.push(cfg.graph.source(*j)); \
-	else \
-	  Q.push(cfg.graph.target(*j));  \
-	  /* Includes case when j->source = j->target = v */ \
+        if (cfg.graph.source(*j) != v) \
+          Q.push(cfg.graph.source(*j)); \
+        else \
+          Q.push(cfg.graph.target(*j));  \
+          /* Includes case when j->source = j->target = v */ \
       } \
     } \
   } \
@@ -165,7 +165,7 @@ class ReplaceExpressionWithVarrefVisitor: public AstSimpleProcessing {
 
   public:
   ReplaceExpressionWithVarrefVisitor(SgExpression* expr, 
-				     SgVarRefExp* vr):
+                                     SgVarRefExp* vr):
     expr(expr), vr(vr) {}
 
   virtual void visit(SgNode* n) {
@@ -223,7 +223,7 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
   // cerr << "Trying to do PRE using expression " << expr->unparseToString() << " whose type is " << expr->sage_class_name() << endl;
 
      VertexIter i   = cfg.graph.vertices().begin(), 
-	             end = cfg.graph.vertices().end();
+                     end = cfg.graph.vertices().end();
 
   // cerr << "CFG has " << distance(i, end) << " nodes" << endl;
 
@@ -249,7 +249,7 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
           for (unsigned int j = 0; j < stmts.size(); ++j)
              {
                if (anyOfListPotentiallyModifiedIn(symbols_in_expression, stmts[j]))
-	                 argumentsModifiedInStatement[j] = true;
+                         argumentsModifiedInStatement[j] = true;
                expressionComputedInStatement[j] = countComputationsOfExpressionIn(expr, stmts[j]);
              }
 
@@ -538,10 +538,10 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
   // printf ("At start of loop: insertions.size() = %zu \n",insertions.size());
      for (vector<pair<SgNode*, bool> >::iterator i = insertions.begin(); i != insertions.end(); ++i)
         {
-	  SgTreeCopy tc1, tc2;
-	  SgVarRefExp* cachevarCopy = isSgVarRefExp(cachevar->copy(tc1));
-	  ROSE_ASSERT (cachevarCopy);
-	  cachevarCopy->set_lvalue(true);
+          SgTreeCopy tc1, tc2;
+          SgVarRefExp* cachevarCopy = isSgVarRefExp(cachevar->copy(tc1));
+          ROSE_ASSERT (cachevarCopy);
+          cachevarCopy->set_lvalue(true);
           SgExpression* operation = new SgAssignOp(SgNULL_FILE, cachevarCopy, isSgExpression(expr->copy(tc2)));
 #if 0
           printf ("Inside of loop: insertions.size() = %zu \n",insertions.size());

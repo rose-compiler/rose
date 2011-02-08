@@ -18,8 +18,8 @@ using namespace std;
 ControlDependenceGraph::ControlDependenceGraph(SgFunctionDefinition * functionStart, InterproceduralInfo * ii):
   source(SliceCFGNode(functionStart->cfgForBeginning())),
   sink(SliceCFGNode(functionStart->cfgForEnd())),
-  dominatorTree(functionStart,POST_DOMINATOR)	, /*
-						    dominanceFrontier(dominatorTree)*/
+  dominatorTree(functionStart,POST_DOMINATOR)   , /*
+                                                    dominanceFrontier(dominatorTree)*/
   head(functionStart)
 {
   // store all function calls, they are needed often
@@ -30,20 +30,20 @@ ControlDependenceGraph::ControlDependenceGraph(SgFunctionDefinition * functionSt
   createSyntacticDependencies();
   // after the construction, add the FORMAL parameters to the entry-node
   // enty to formal out (return)
-  //		establishEdge(getNode(DependenceNode::ENTRY,functionStart),getNode(DependenceNode::FORMALRETURN,functionStart->get_declaration()),CONTROL);
+  //            establishEdge(getNode(DependenceNode::ENTRY,functionStart),getNode(DependenceNode::FORMALRETURN,functionStart->get_declaration()),CONTROL);
   establishEdge(getNode(DependenceNode::ENTRY,functionStart),getNode(DependenceNode::FORMALRETURN,functionStart->get_declaration()),BELONGS_TO);
   // and give this node an explcit name, looks nicer in the graphs
-  //		getNode(DependenceNode::FORMALRETURN,functionStart->get_declaration())->setName(std::string("RETURN"));
+  //            getNode(DependenceNode::FORMALRETURN,functionStart->get_declaration())->setName(std::string("RETURN"));
   // for all initialized parameters
   Rose_STL_Container<SgInitializedName*> argList=functionStart->get_declaration()->get_args();
   for (Rose_STL_Container<SgInitializedName*>::iterator i=argList.begin();i!=argList.end();i++)
     {
       //is the paremeter a elipsis, if so, continue....
       if (isSgTypeEllipse((*i)->get_type()))
-	{
-	  cerr<<"Warning: Ellipsis found, NOT SUPPORTET"<<endl<<__LINE__<< " of "<<__FILE__<<endl;
-	  continue;
-	}
+        {
+          cerr<<"Warning: Ellipsis found, NOT SUPPORTET"<<endl<<__LINE__<< " of "<<__FILE__<<endl;
+          continue;
+        }
 
       // the formal in parameters completely depend of the entry, since wihtout it, there are no parameters
       establishEdge(getNode(DependenceNode::ENTRY,functionStart),getNode(DependenceNode::FORMALIN,*i),CONTROL);
@@ -52,7 +52,7 @@ ControlDependenceGraph::ControlDependenceGraph(SgFunctionDefinition * functionSt
   //      // create an sysntactic edge, this parameter is required to syntactically comple the call
   //    establishEdge(getNode(DependenceNode::FORMALIN,*i),getNode(DependenceNode::ENTRY,functionStart),SYNTACTIC);
 
-    		
+                
   std::ofstream f("cfg.dot");
   cfgToDot(f,string("cfg"),source);
   f.close();
@@ -101,19 +101,19 @@ void ControlDependenceGraph::addDependence(int aID,int bID,EdgeType type)
   a=dominatorTree.getCFGNodeFromID(aID).getNode();
   b=dominatorTree.getCFGNodeFromID(bID).getNode();
   DependenceNode *depNA,*depNB;
-  //	cout << bID<<"("<<b->unparseToString()<<")->"<<aID<<"("<<b->unparseToString()<<")"<<endl;
+  //    cout << bID<<"("<<b->unparseToString()<<")->"<<aID<<"("<<b->unparseToString()<<")"<<endl;
   // this is probably not a good style, but this is the only place where the DependenceNodes are createated by using getNode. The source node is a specieal node and should be attributed as ENTRY. Sice the current graph structure does not allow to manipulate a node after it hase bee created, this has to be done on creation. def is the function definition node and the entry point for the function
   depNA=depNB=NULL;
   if (source==dominatorTree.getCFGNodeFromID(bID))
     {
       depNB=getNode(DependenceNode::ENTRY,b);
-		
+                
     }
 
   // if the a-node (direct child of the function definition) is a initialized name and its parent is the function definition)
   if (isSgFunctionParameterList(a->get_parent()) && isSgFunctionDeclaration(a->get_parent()->get_parent()))
     depNA=getNode(DependenceNode::FORMALIN,a);
-	
+        
   if (depNA==NULL) depNA=getNode(a);
   if (depNB==NULL) depNB=getNode(b);
   
@@ -122,7 +122,7 @@ void ControlDependenceGraph::addDependence(int aID,int bID,EdgeType type)
       isSgContinueStmt(depNode))
     {
       if (debugme)
-	cout <<"control stmt found"<<endl;
+        cout <<"control stmt found"<<endl;
       // his a explicit control changing node
       // use the SYNTACTIC EDGE to enforce a backwrad dependency
       //establishEdge(depNA,depNB,SYNTACTIC);
@@ -153,27 +153,27 @@ void dfsVisit(SliceCFGNode p)
     {
       SliceCFGNode q=edges[childNr].target();
       if (!T.count(q))
-	{
-	  T.insert(q);
-	  dfsVisit(q);
-	  low[p]=min(low[p],low[q]);				
-	}
+        {
+          T.insert(q);
+          dfsVisit(q);
+          low[p]=min(low[p],low[q]);                            
+        }
       else
-	{
-	  low[p]=min(low[p],dfsnum[q]);
-	}			
-    }	
+        {
+          low[p]=min(low[p],dfsnum[q]);
+        }                       
+    }   
   if (low[p]==dfsnum[p])
     {
-      //	cout<<"component: "<<p.getNode()->unparseToString()<<endl;
+      //        cout<<"component: "<<p.getNode()->unparseToString()<<endl;
       while(L.top()!=p)
-	{
-	  SliceCFGNode v=L.top();
-	  L.pop();
-	  //cout <<"\t"<<v.getNode()->unparseToString()<<endl;
-	}
+        {
+          SliceCFGNode v=L.top();
+          L.pop();
+          //cout <<"\t"<<v.getNode()->unparseToString()<<endl;
+        }
       L.pop();
-    }	
+    }   
 }
 
 void articualtionPoints(SliceCFGNode p)
@@ -197,42 +197,42 @@ void ControlDependenceGraph::buildCDG()
       SliceCFGNode a=dominatorTree.getCFGNodeFromID(aID);
       std::vector<SliceCFGEdge> edges=a.outEdges();
       for (unsigned int j=0;j<edges.size();j++)
-	{
-	  SliceCFGNode b=edges[j].target();
-	  bID=dominatorTree.getID(b);
-	  //		processDependence(aID,bID);
-	  if (!dominatorTree.dominates(bID,aID))
-	    {
-	      // calculate the least common dominator
-	      if (aID==0) leastCommonDominator=0;
-	      // lcd is either A or imdom(A)
-	      if (dominatorTree.dominates(aID,bID))
-		{
-		  // case 2 on page 325
-		  leastCommonDominator=aID;// a dominates b -> lcd is A
-		  // now attribute all nodes on the path from B to lCD as beubg deoebdebt on a
-		  for (int current=bID;current!=leastCommonDominator;current=dominatorTree.getImDomID(current))
-		    {
-		      // mark as dependent on A
-		      addDependence(current,aID);
-		      //				cout <<aID<<"->"<< current<<endl;
-		    }
-		  addDependence(aID,aID);
-		  //			cout <<aID<<"->"<<aID<<endl;				
-		}
-	      else
-		{
-		  leastCommonDominator=dominatorTree.getImDomID(aID);
-		  //case 2 on page 325
-		  for (int current=bID;current!=leastCommonDominator;current=dominatorTree.getImDomID(current))
-		    {
-		      // mark as dependent on A
-		      addDependence(current,aID);
-		      //				cout <<aID<<"->"<< current<<endl;
-		    }
-		}
-	    }			
-	}
+        {
+          SliceCFGNode b=edges[j].target();
+          bID=dominatorTree.getID(b);
+          //            processDependence(aID,bID);
+          if (!dominatorTree.dominates(bID,aID))
+            {
+              // calculate the least common dominator
+              if (aID==0) leastCommonDominator=0;
+              // lcd is either A or imdom(A)
+              if (dominatorTree.dominates(aID,bID))
+                {
+                  // case 2 on page 325
+                  leastCommonDominator=aID;// a dominates b -> lcd is A
+                  // now attribute all nodes on the path from B to lCD as beubg deoebdebt on a
+                  for (int current=bID;current!=leastCommonDominator;current=dominatorTree.getImDomID(current))
+                    {
+                      // mark as dependent on A
+                      addDependence(current,aID);
+                      //                                cout <<aID<<"->"<< current<<endl;
+                    }
+                  addDependence(aID,aID);
+                  //                    cout <<aID<<"->"<<aID<<endl;                            
+                }
+              else
+                {
+                  leastCommonDominator=dominatorTree.getImDomID(aID);
+                  //case 2 on page 325
+                  for (int current=bID;current!=leastCommonDominator;current=dominatorTree.getImDomID(current))
+                    {
+                      // mark as dependent on A
+                      addDependence(current,aID);
+                      //                                cout <<aID<<"->"<< current<<endl;
+                    }
+                }
+            }                   
+        }
     }
   // J. Ferrante & K. Ottenstein added addition edges to the cfg, which I did not do. To account for this, the dependence between the source and the sink have to be processed
   // The entry-node is post-dominated by the sink, therefore the least common deminator is the sink
@@ -246,7 +246,7 @@ void ControlDependenceGraph::buildCDG()
       // mark as dependent on A
       addDependence(current,aID);
     }
-  //cout<<"Source to string" << source.getNode()->unparseToString()<<endl;	
+  //cout<<"Source to string" << source.getNode()->unparseToString()<<endl;      
 }
 
 
@@ -262,7 +262,7 @@ void ControlDependenceGraph::computeAdditionalFunctioncallDepencencies()
     //ROSE_ASSERT(interestingNode!=NULL);
     
     //if (isSgStatement(interestingNode->get_parent())) interestingNode=interestingNode->get_parent();
-    // add actual out (return-value)  edge			
+    // add actual out (return-value)  edge                      
     
     establishEdge(getNode(call),getNode(DependenceNode::ACTUALRETURN,call),DependenceGraph::BELONGS_TO);
     getNode(DependenceNode::ACTUALRETURN,call)->setName(std::string("RETURN"));
@@ -277,7 +277,7 @@ void ControlDependenceGraph::computeAdditionalFunctioncallDepencencies()
       establishEdge(getNode(call),getNode(DependenceNode::ACTUALIN,*j),DependenceGraph::SYNTACTIC);
       establishEdge(getNode(DependenceNode::ACTUALIN,*j),getNode(call),DependenceGraph::SYNTACTIC);
       establishEdge(getNode(DependenceNode::ACTUALIN,*j),getNode(call),DependenceGraph::CONTROL);
-      //				establishEdge(getNode(parentStmt),getNode(DependenceNode::ACTUALOUT,*j),BELONGS_TO);
+      //                                establishEdge(getNode(parentStmt),getNode(DependenceNode::ACTUALOUT,*j),BELONGS_TO);
     }
   }
 }
@@ -300,9 +300,9 @@ void ControlDependenceGraph::computeInterproceduralInformation(InterproceduralIn
   for (Rose_STL_Container< SgNode * >::iterator  i=functionCalls.begin();i!=functionCalls.end();i++)
     {
       if (debugme)
-	cout <<"callsite found"<<endl;
+        cout <<"callsite found"<<endl;
       if (debugme)
-	cout <<"found: "<<(*i)->unparseToString()<< " of type " <<(*i)->class_name()<<endl;
+        cout <<"found: "<<(*i)->unparseToString()<< " of type " <<(*i)->class_name()<<endl;
       SgFunctionCallExp * call=isSgFunctionCallExp(*i);
       // get the next interesting node
       SgNode * interestingNode=DUVariableAnalysisExt::getNextParentInterstingNode(*i);
@@ -317,20 +317,20 @@ void ControlDependenceGraph::computeInterproceduralInformation(InterproceduralIn
 
       // store the slice imporatnt node
       if (debugme) {
-	cout <<call<<endl;
-	cout <<interestingNode<<endl;
-	cout <<interestingNode->class_name()<<endl;
-	cout <<interestingNode->unparseToString()<<endl;
+        cout <<call<<endl;
+        cout <<interestingNode<<endl;
+        cout <<interestingNode->class_name()<<endl;
+        cout <<interestingNode->unparseToString()<<endl;
       }
       if (isSgExprStatement(interestingNode->get_parent())) interestingNode=interestingNode->get_parent();
       ii->setSliceImportantNode(id,interestingNode);
       // for every parameter in the calls SgExpListExpr
       Rose_STL_Container<SgExpression*> params=call->get_args()->get_expressions();
       for (Rose_STL_Container<SgExpression*>::iterator j=params.begin();j!=params.end();j++)
-	{
-	  // add the ref to the actual in list ..
-	  ii->addActualIn(id,*j);
-	}
+        {
+          // add the ref to the actual in list ..
+          ii->addActualIn(id,*j);
+        }
     }
 }
 
@@ -351,44 +351,44 @@ void ControlDependenceGraph::_buildCDG()
     {
       ControlNode *currentNode=_cfg->getNode(i, ControlFlowGraph::BACKWARD);
       if (debugme)
-	if (currentNode==NULL)
-	  cout <<i<<"(NULL):"<<endl;
-	else if (currentNode->getNode()==NULL)
-	  cout <<i<<"(empty):"<<currentNode->getType()<<endl;
-	else
-	  cout <<i<<"("<<currentNode->getNode()->unparseToString()<<"):"<<currentNode->getType()<<endl;
+        if (currentNode==NULL)
+          cout <<i<<"(NULL):"<<endl;
+        else if (currentNode->getNode()==NULL)
+          cout <<i<<"(empty):"<<currentNode->getType()<<endl;
+        else
+          cout <<i<<"("<<currentNode->getNode()->unparseToString()<<"):"<<currentNode->getType()<<endl;
 
       if (currentNode->getType() !=ControlNode::EMPTY)
-	{
-	  DependenceNode * currentDepNode=createNodeC(currentNode);
-		
-	  if (debugme)
-	    cout << "bdf:";
-				
-	  set < int >frontier = _df->getFrontier(i);
-	  // for all nodes in the reverse-dmonance-frontier (absoultely dominating nodes)
-	  for (set < int >::iterator j = frontier.begin(); j != frontier.end(); j++)
-	    {
-	      int nodeIndex = *j;
+        {
+          DependenceNode * currentDepNode=createNodeC(currentNode);
+                
+          if (debugme)
+            cout << "bdf:";
+                                
+          set < int >frontier = _df->getFrontier(i);
+          // for all nodes in the reverse-dmonance-frontier (absoultely dominating nodes)
+          for (set < int >::iterator j = frontier.begin(); j != frontier.end(); j++)
+            {
+              int nodeIndex = *j;
 
 
-	      ControlNode *parentNode = _cfg->getNode(nodeIndex, ControlFlowGraph::BACKWARD);
-	      if (debugme)
-		cout <<"\t>"<< parentNode->getNode()->unparseToString()<<"<";
+              ControlNode *parentNode = _cfg->getNode(nodeIndex, ControlFlowGraph::BACKWARD);
+              if (debugme)
+                cout <<"\t>"<< parentNode->getNode()->unparseToString()<<"<";
 
-	      if (parentNode->getType() == ControlNode::EMPTY)
+              if (parentNode->getType() == ControlNode::EMPTY)
                 continue;
 
-	      DependenceNode *parentDepNode = createNodeC(parentNode);
+              DependenceNode *parentDepNode = createNodeC(parentNode);
 
-	      // link them (we need to link the nodes from the new graph, not
-	      // the originals)
-	      establishEdge(parentDepNode,currentDepNode);
+              // link them (we need to link the nodes from the new graph, not
+              // the originals)
+              establishEdge(parentDepNode,currentDepNode);
 
-	      // If the "to" link is a break or a continue statement, we need
-	      // to link it in the opposite direction too, to ensure that they
-	      // are correctly accounted for when calculating
-	      // slices.
+              // If the "to" link is a break or a continue statement, we need
+              // to link it in the opposite direction too, to ensure that they
+              // are correctly accounted for when calculating
+              // slices.
               /* If we have something like this:
 
                  while (x < 5) { if (x == 3) break; x++; }
@@ -403,13 +403,13 @@ void ControlDependenceGraph::_buildCDG()
                  suffices for now. */
 
               ///if ((currentNode->getType() == DependenceNode::SGNODE)
-	      if ((currentNode->getType() == DominatorTreesAndDominanceFrontiers::ControlNode::SGNODE)
-		  && ((isSgBreakStmt(currentNode->getNode())) || (isSgContinueStmt(currentNode->getNode()))))
+              if ((currentNode->getType() == DominatorTreesAndDominanceFrontiers::ControlNode::SGNODE)
+                  && ((isSgBreakStmt(currentNode->getNode())) || (isSgContinueStmt(currentNode->getNode()))))
                 establishEdge(currentDepNode, parentDepNode);
-	    }
-	  if (debugme)
-	    cout << endl;
-	}
+            }
+          if (debugme)
+            cout << endl;
+        }
     }
 
   if (_interprocedural != NULL)
@@ -445,7 +445,7 @@ void ControlDependenceGraph::_buildInterprocedural()
 
       if ((node->numPredecessors() == 0) && (node != entry))
         {
-	  establishEdge(entry, node);
+          establishEdge(entry, node);
         }
     }
 
@@ -471,7 +471,7 @@ void ControlDependenceGraph::_buildInterprocedural()
       DependenceNode *formal_in = new DependenceNode(DependenceNode::FORMALIN,
                                                      name->get_name().str());
       DependenceNode *formal_out = new DependenceNode(DependenceNode::FORMALOUT,
-						      name->get_name().str());
+                                                      name->get_name().str());
 
       establishEdge(entry, createNode(formal_in));
       establishEdge(entry, createNode(formal_out));
@@ -492,103 +492,103 @@ void ControlDependenceGraph::_buildInterprocedural()
 
       list < SgFunctionCallExp * >calls = InterproceduralInfo::extractFunctionCalls(currnode);
       if (calls.empty())
-	continue;
+        continue;
 
       for (list < SgFunctionCallExp * >::iterator i = calls.begin(); i != calls.end(); i++)
         {
-	  SgFunctionCallExp *call = *i;
+          SgFunctionCallExp *call = *i;
 
-	  // This needs to be replaced with some call graph analysis
-	  SgFunctionRefExp *func = isSgFunctionRefExp(call->get_function());
+          // This needs to be replaced with some call graph analysis
+          SgFunctionRefExp *func = isSgFunctionRefExp(call->get_function());
 
-	  ROSE_ASSERT(func != NULL);
-	  SgName func_name = func->get_symbol()->get_name();
+          ROSE_ASSERT(func != NULL);
+          SgName func_name = func->get_symbol()->get_name();
 
-	  InterproceduralInfo::CallSiteStructure callstructure;
-	  callstructure.callsite = new DependenceNode(DependenceNode::CALLSITE, call);
-	  // the call site is control dependent on the statement (i.e. for
-	  // the call site to happen, the statement must be executed)
-	  DependenceNode *callsite = createNode(callstructure.callsite);
+          InterproceduralInfo::CallSiteStructure callstructure;
+          callstructure.callsite = new DependenceNode(DependenceNode::CALLSITE, call);
+          // the call site is control dependent on the statement (i.e. for
+          // the call site to happen, the statement must be executed)
+          DependenceNode *callsite = createNode(callstructure.callsite);
 
-	  // addLink(callsite, getNode(currnode));
-	  establishEdge(getNode(currnode), callsite);
+          // addLink(callsite, getNode(currnode));
+          establishEdge(getNode(currnode), callsite);
 
-	  // create an actual out node for the return value, control
-	  // dependent on callsite
-	  string return_name = func_name.str();
+          // create an actual out node for the return value, control
+          // dependent on callsite
+          string return_name = func_name.str();
 
-	  return_name = return_name + " return";
-	  callstructure.actual_return =
-	    new DependenceNode(DependenceNode::ACTUALOUT, return_name);
-	  DependenceNode *actual_return = createNode(callstructure.actual_return);
+          return_name = return_name + " return";
+          callstructure.actual_return =
+            new DependenceNode(DependenceNode::ACTUALOUT, return_name);
+          DependenceNode *actual_return = createNode(callstructure.actual_return);
 
-	  establishEdge(callsite, actual_return);
+          establishEdge(callsite, actual_return);
 
-	  // For each argument in the function call, build an actual_in and
-	  // actual_out, control dependent on callsite
-	  SgExpressionPtrList args = call->get_args()->get_expressions();
+          // For each argument in the function call, build an actual_in and
+          // actual_out, control dependent on callsite
+          SgExpressionPtrList args = call->get_args()->get_expressions();
 
-	  for (SgExpressionPtrList::iterator j = args.begin(); j != args.end(); j++)
+          for (SgExpressionPtrList::iterator j = args.begin(); j != args.end(); j++)
             {
-	      SgExpression *arg = *j;
-	      DependenceNode *actual_in = new DependenceNode(DependenceNode::ACTUALIN, arg);
-	      DependenceNode *actual_out = new DependenceNode(DependenceNode::ACTUALOUT, arg);
+              SgExpression *arg = *j;
+              DependenceNode *actual_in = new DependenceNode(DependenceNode::ACTUALIN, arg);
+              DependenceNode *actual_out = new DependenceNode(DependenceNode::ACTUALOUT, arg);
 
-	      establishEdge(callsite, createNode(actual_in));
-	      establishEdge(callsite, createNode(actual_out));
-	      callstructure.actual_in[arg] = actual_in;
-	      callstructure.actual_out[arg] = actual_out;
+              establishEdge(callsite, createNode(actual_in));
+              establishEdge(callsite, createNode(actual_out));
+              callstructure.actual_in[arg] = actual_in;
+              callstructure.actual_out[arg] = actual_out;
 
-	      // To preserve the order of expressions in the parameter list, 
-	      // 
-	      // we insert them into expr_order
-	      callstructure.expr_order.push_back(arg);
+              // To preserve the order of expressions in the parameter list, 
+              // 
+              // we insert them into expr_order
+              callstructure.expr_order.push_back(arg);
             }
 
-	  // add the callstructure to interprocedural info
-	  _interprocedural->callsite_map[call] = callstructure;
+          // add the callstructure to interprocedural info
+          _interprocedural->callsite_map[call] = callstructure;
         }
     }
 }
 #endif
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-/*	
-	DependenceNode *ControlDependenceGraph::createNodeC(ControlNode * cnode)
-	{
-	DependenceNode *newNode;
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+/*      
+        DependenceNode *ControlDependenceGraph::createNodeC(ControlNode * cnode)
+        {
+        DependenceNode *newNode;
 
-	if (_cnode_map.count(cnode) == 0)
-	{
+        if (_cnode_map.count(cnode) == 0)
+        {
         if (cnode->getType() == ControlNode::EMPTY)
         {
-	newNode = createNode(new DependenceNode(DependenceNode::CONTROL));
+        newNode = createNode(new DependenceNode(DependenceNode::CONTROL));
         }
         else
         {
-	SgNode *tmp = cnode->getNode();
+        SgNode *tmp = cnode->getNode();
 
-	while (!isSgStatement(tmp) && !isSgExpressionRoot(tmp))
-	{
-	tmp = tmp->get_parent();
-	}
-	newNode = createNode(tmp);
+        while (!isSgStatement(tmp) && !isSgExpressionRoot(tmp))
+        {
+        tmp = tmp->get_parent();
+        }
+        newNode = createNode(tmp);
         }
 
         _cnode_map[cnode] = newNode;
         return newNode;
-	}
-	else
-	{
+        }
+        else
+        {
         return _cnode_map[cnode];
-	}
-	}*/
+        }
+        }*/

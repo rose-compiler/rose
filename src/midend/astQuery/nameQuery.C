@@ -43,27 +43,27 @@ NameQuery::queryNameArgumentNames (SgNode * astNode)
       for (argumentIterator i = sageNameList.begin();
            i != sageNameList.end(); ++i)
         {
-	  SgInitializedName* elementNode = *i;
-	  ROSE_ASSERT (elementNode != NULL);
+          SgInitializedName* elementNode = *i;
+          ROSE_ASSERT (elementNode != NULL);
 
-	  string sageArgument(elementNode->get_name().str());
+          string sageArgument(elementNode->get_name().str());
 
-	  returnNameList.push_back(sageArgument.c_str());
+          returnNameList.push_back(sageArgument.c_str());
 
-	  countArguments += 1;
-	}
+          countArguments += 1;
+        }
 #if DEBUG_NAMEQUERY
       printf ("\nHere is a function declaration :Line = %d Columns = %d \n",
-	      ROSE::getLineNumber (isSgLocatedNode (astNode)),
-	      ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+              ROSE::getLineNumber (isSgLocatedNode (astNode)),
+              ROSE::getColumnNumber (isSgLocatedNode (astNode)));
       cout << "The filename is:" << ROSE::
-	getFileName (isSgLocatedNode (astNode)) << endl;
+        getFileName (isSgLocatedNode (astNode)) << endl;
       cout << "The count of arguments is: " << countArguments << endl;
 #endif
     }
 
   return returnNameList;
-}				/* End function queryNameArgumentNames() */
+}                               /* End function queryNameArgumentNames() */
 
 
 NameQuerySynthesizedAttributeType
@@ -78,22 +78,22 @@ NameQuery::queryNameClassDeclarationNames (SgNode * astNode)
 
   if (sageClassDeclaration != NULL)
     if (sageClassDeclaration->get_class_type () ==
-	SgClassDeclaration::e_class)
+        SgClassDeclaration::e_class)
       {
 
-	string name = sageClassDeclaration->get_name ().str ();
+        string name = sageClassDeclaration->get_name ().str ();
 
 #if DEBUG_NAMEQUERY
-	printf ("In case: CLASS_DECL_STMT name = %s \n", name.c_str ());
+        printf ("In case: CLASS_DECL_STMT name = %s \n", name.c_str ());
 #endif
 
-	returnNameList.push_back (name);
+        returnNameList.push_back (name);
       }
 
 
   return returnNameList;
 
-}				/* End function queryNameClassDeclarationNames() */
+}                               /* End function queryNameClassDeclarationNames() */
 
 
 NameQuerySynthesizedAttributeType
@@ -108,21 +108,21 @@ NameQuery::queryNameStructNames (SgNode * astNode)
 
   if (sageClassDeclaration != NULL)
     if (sageClassDeclaration->get_class_type () ==
-	SgClassDeclaration::e_struct)
+        SgClassDeclaration::e_struct)
       {
-	string name = sageClassDeclaration->get_name ().str ();
+        string name = sageClassDeclaration->get_name ().str ();
 
 #if DEBUG_NAMEQUERY
-	printf ("In case: CLASS_DECL_STMT name = %s \n", name.c_str ());
+        printf ("In case: CLASS_DECL_STMT name = %s \n", name.c_str ());
 #endif
 
-	returnNameList.push_back (name);
+        returnNameList.push_back (name);
       }
 
 
   return returnNameList;
 
-}				/* End function queryNameStructNames() */
+}                               /* End function queryNameStructNames() */
 
 
 NameQuerySynthesizedAttributeType
@@ -137,21 +137,21 @@ NameQuery::queryNameUnionNames (SgNode * astNode)
 
   if (sageClassDeclaration != NULL)
     if (sageClassDeclaration->get_class_type () ==
-	SgClassDeclaration::e_union)
+        SgClassDeclaration::e_union)
       {
-	string name = sageClassDeclaration->get_name ().str ();
+        string name = sageClassDeclaration->get_name ().str ();
 
 #if DEBUG_NAMEQUERY
-	printf ("In case: CLASS_DECL_STMT name = %s \n", name.c_str ());
+        printf ("In case: CLASS_DECL_STMT name = %s \n", name.c_str ());
 #endif
 
-	returnNameList.push_back (name);
+        returnNameList.push_back (name);
       }
 
 
   return returnNameList;
 
-}				/* End function queryNameUnionNames() */
+}                               /* End function queryNameUnionNames() */
 
 NameQuerySynthesizedAttributeType
 NameQuery::queryNameMemberFunctionDeclarationNames (SgNode * astNode)
@@ -178,7 +178,7 @@ NameQuery::queryNameMemberFunctionDeclarationNames (SgNode * astNode)
 
   return returnNameList;
 
-}				/* End function queryNameMemberFunctionDeclarationNames() */
+}                               /* End function queryNameMemberFunctionDeclarationNames() */
 
 
 
@@ -207,7 +207,7 @@ NameQuery::queryNameFunctionDeclarationNames (SgNode * astNode)
 
   return returnNameList;
 
-}				/* End function queryNameFunctionDeclarationNames() */
+}                               /* End function queryNameFunctionDeclarationNames() */
 
 
 NameQuerySynthesizedAttributeType
@@ -245,46 +245,46 @@ NameQuery::queryNameVariableTypeNames (SgNode * astNode)
 
     case V_SgVariableDeclaration:
       {
-	SgVariableDeclaration *sageVariableDeclaration =
-	  isSgVariableDeclaration (astNode);
-	ROSE_ASSERT (sageVariableDeclaration != NULL);
+        SgVariableDeclaration *sageVariableDeclaration =
+          isSgVariableDeclaration (astNode);
+        ROSE_ASSERT (sageVariableDeclaration != NULL);
 
-	SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
+        SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
 
 #if DEBUG_NAMEQUERY
-	printf ("\nIn filename: %s ",
-		ROSE::getFileName (isSgLocatedNode (astNode)));
-	printf ("\nHere is a variable :Line = %d Columns = %d \n",
-		ROSE::getLineNumber (isSgLocatedNode (astNode)),
-		ROSE::getColumnNumber (isSgLocatedNode (astNode)));
-	//cout << "The typename of the variable is: " << typeName << endl;
+        printf ("\nIn filename: %s ",
+                ROSE::getFileName (isSgLocatedNode (astNode)));
+        printf ("\nHere is a variable :Line = %d Columns = %d \n",
+                ROSE::getLineNumber (isSgLocatedNode (astNode)),
+                ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+        //cout << "The typename of the variable is: " << typeName << endl;
 #endif
 
-	typedef SgInitializedNamePtrList::iterator variableIterator;
-	SgType *typeNode;
+        typedef SgInitializedNamePtrList::iterator variableIterator;
+        SgType *typeNode;
 
-	for (variableIterator variableListElement = sageInitializedNameList.begin ();
+        for (variableIterator variableListElement = sageInitializedNameList.begin ();
              variableListElement != sageInitializedNameList.end ();
-	     ++variableListElement)
+             ++variableListElement)
           {
-	    SgInitializedName* elmVar = *variableListElement;
+            SgInitializedName* elmVar = *variableListElement;
 
-	    typeNode = elmVar->get_type();
-	    ROSE_ASSERT (typeNode != NULL);
-	    returnNameList.push_back (TransformationSupport::getTypeName (typeNode));
+            typeNode = elmVar->get_type();
+            ROSE_ASSERT (typeNode != NULL);
+            returnNameList.push_back (TransformationSupport::getTypeName (typeNode));
 #if DEBUG_NAMEQUERY
-	    cout << "The typeName of the variable is: " <<
-	      TransformationSupport::getTypeName (typeNode) << endl;
+            cout << "The typeName of the variable is: " <<
+              TransformationSupport::getTypeName (typeNode) << endl;
 #endif
-	  }
-	break;
-      }				/* End case V_SgVariableDeclaration */
+          }
+        break;
+      }                         /* End case V_SgVariableDeclaration */
 
     case V_SgFunctionDeclaration:
     case V_SgMemberFunctionDeclaration:
        {
       SgFunctionDeclaration * sageFunctionDeclaration =
-	isSgFunctionDeclaration (astNode);
+        isSgFunctionDeclaration (astNode);
       ROSE_ASSERT (sageFunctionDeclaration != NULL);
 
       SgInitializedNamePtrList sageInitializedNameList = sageFunctionDeclaration->get_args ();
@@ -292,10 +292,10 @@ NameQuery::queryNameVariableTypeNames (SgNode * astNode)
 
 #if DEBUG_NAMEQUERY
       printf ("\nIn filename: %s ",
-	      ROSE::getFileName (isSgLocatedNode (astNode)));
+              ROSE::getFileName (isSgLocatedNode (astNode)));
       printf ("\nHere is a variable :Line = %d Columns = %d \n",
-	      ROSE::getLineNumber (isSgLocatedNode (astNode)),
-	      ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+              ROSE::getLineNumber (isSgLocatedNode (astNode)),
+              ROSE::getColumnNumber (isSgLocatedNode (astNode)));
       //cout << "The typename of the variable is: " << typeName << endl;
 #endif
 
@@ -307,17 +307,17 @@ NameQuery::queryNameVariableTypeNames (SgNode * astNode)
            variableListElement != sageInitializedNameList.end ();
            ++variableListElement)
         {
-	  SgInitializedName* elmVar = *variableListElement;
+          SgInitializedName* elmVar = *variableListElement;
 
-	  ROSE_ASSERT (elmVar != NULL);
-	  typeNode = elmVar->get_type ();
-	  ROSE_ASSERT (typeNode != NULL);
-	  returnNameList.push_back (TransformationSupport::getTypeName (typeNode));
+          ROSE_ASSERT (elmVar != NULL);
+          typeNode = elmVar->get_type ();
+          ROSE_ASSERT (typeNode != NULL);
+          returnNameList.push_back (TransformationSupport::getTypeName (typeNode));
 #if DEBUG_NAMEQUERY
-	  cout << "The typeName of the variable is: " <<
-	    TransformationSupport::getTypeName (typeNode) << endl;
+          cout << "The typeName of the variable is: " <<
+            TransformationSupport::getTypeName (typeNode) << endl;
 #endif
-	}
+        }
 
       break;
        }
@@ -325,13 +325,13 @@ NameQuery::queryNameVariableTypeNames (SgNode * astNode)
         {
        // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
         }
-    }				/* End switch case astNode */
+    }                           /* End switch case astNode */
 
 
 
   return returnNameList;
 
-}				/* End function queryNameVariableTypeNames() */
+}                               /* End function queryNameVariableTypeNames() */
 
 
 
@@ -383,45 +383,45 @@ NameQuery::queryNameVariableNames (SgNode * astNode)
 
     case V_SgVariableDeclaration:
       {
-	SgVariableDeclaration *sageVariableDeclaration =
-	  isSgVariableDeclaration (astNode);
-	ROSE_ASSERT (sageVariableDeclaration != NULL);
+        SgVariableDeclaration *sageVariableDeclaration =
+          isSgVariableDeclaration (astNode);
+        ROSE_ASSERT (sageVariableDeclaration != NULL);
 
-	SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
+        SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
 
 #if DEBUG_NAMEQUERY
-	printf ("\nIn filename: %s ",
-		ROSE::getFileName (isSgLocatedNode (astNode)));
-	printf ("\nHere is a variable :Line = %d Columns = %d \n",
-		ROSE::getLineNumber (isSgLocatedNode (astNode)),
-		ROSE::getColumnNumber (isSgLocatedNode (astNode)));
-	//cout << "The typename of the variable is: " << typeName << endl;
+        printf ("\nIn filename: %s ",
+                ROSE::getFileName (isSgLocatedNode (astNode)));
+        printf ("\nHere is a variable :Line = %d Columns = %d \n",
+                ROSE::getLineNumber (isSgLocatedNode (astNode)),
+                ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+        //cout << "The typename of the variable is: " << typeName << endl;
 #endif
 
-	typedef SgInitializedNamePtrList::iterator variableIterator;
+        typedef SgInitializedNamePtrList::iterator variableIterator;
 
         for (variableIterator variableListElement =
              sageInitializedNameList.begin ();
              variableListElement != sageInitializedNameList.end ();
              ++variableListElement)
           {
-	    SgInitializedName* elmVar = *variableListElement;
+            SgInitializedName* elmVar = *variableListElement;
             ROSE_ASSERT (elmVar != NULL);
-	    string name = elmVar->get_name ().str ();
-	    ROSE_ASSERT (name.length () > 0);
-	    returnNameList.push_back (name);
+            string name = elmVar->get_name ().str ();
+            ROSE_ASSERT (name.length () > 0);
+            returnNameList.push_back (name);
 #if DEBUG_NAMEQUERY
-	    cout << "The name of the variable is: " << name << endl;
+            cout << "The name of the variable is: " << name << endl;
 #endif
-	  }
-	break;
-      }				/* End case V_SgVariableDeclaration */
+          }
+        break;
+      }                         /* End case V_SgVariableDeclaration */
 
     case V_SgFunctionDeclaration:
     case V_SgMemberFunctionDeclaration:
        {
       SgFunctionDeclaration * sageFunctionDeclaration =
-	isSgFunctionDeclaration (astNode);
+        isSgFunctionDeclaration (astNode);
       ROSE_ASSERT (sageFunctionDeclaration != NULL);
 
       SgInitializedNamePtrList sageInitializedNameList = sageFunctionDeclaration->get_args ();
@@ -434,16 +434,16 @@ NameQuery::queryNameVariableNames (SgNode * astNode)
            variableListElement != sageInitializedNameList.end ();
            ++variableListElement)
         {
-	  SgInitializedName* elmVar = *variableListElement;
+          SgInitializedName* elmVar = *variableListElement;
 
           ROSE_ASSERT (elmVar != NULL);
-	  string name = elmVar->get_name ().str ();
-	  ROSE_ASSERT (name.length () > 0);
-	  returnNameList.push_back (name);
+          string name = elmVar->get_name ().str ();
+          ROSE_ASSERT (name.length () > 0);
+          returnNameList.push_back (name);
 #if 1
-	  cout << "The name of the variable is: " << name << endl;
+          cout << "The name of the variable is: " << name << endl;
 #endif
-	}
+        }
 
       break;
         }
@@ -452,12 +452,12 @@ NameQuery::queryNameVariableNames (SgNode * astNode)
         {
        // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
         }
-    }				/* End switch case astNode */
+    }                           /* End switch case astNode */
 
 
   return returnNameList;
 
-}				/* End function queryNameVariableNames() */
+}                               /* End function queryNameVariableNames() */
 
 
 
@@ -476,47 +476,47 @@ NameQuery::queryNameClassFieldNames (SgNode * astNode)
     {
       ROSE_ASSERT (sageClassDefinition->get_declaration () != NULL);
       if (sageClassDefinition->get_declaration ()->get_class_type () ==
-	  SgClassDeclaration::e_class)
-	{
-	  SgDeclarationStatementPtrList declarationStatementPtrList =
-	    sageClassDefinition->get_members ();
+          SgClassDeclaration::e_class)
+        {
+          SgDeclarationStatementPtrList declarationStatementPtrList =
+            sageClassDefinition->get_members ();
 
-	typedef SgDeclarationStatementPtrList::iterator LI;
+        typedef SgDeclarationStatementPtrList::iterator LI;
 
         for (LI i = declarationStatementPtrList.begin ();
              i != declarationStatementPtrList.end (); ++i)
           {
-	    SgNode *listElement = *i;
+            SgNode *listElement = *i;
 
-	    SgVariableDeclaration *sageVariableDeclaration =
-	      isSgVariableDeclaration (listElement);
+            SgVariableDeclaration *sageVariableDeclaration =
+              isSgVariableDeclaration (listElement);
 
-	    if (sageVariableDeclaration != NULL)
-	      {
+            if (sageVariableDeclaration != NULL)
+              {
 
 
-		typedef SgInitializedNamePtrList::iterator INITLI;
+                typedef SgInitializedNamePtrList::iterator INITLI;
 
-		SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
+                SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
 
                 for (INITLI i = sageInitializedNameList.begin ();
                      i != sageInitializedNameList.end (); ++i)
                   {
                     SgInitializedName* initializedListElement = *i;
-		    ROSE_ASSERT (isSgInitializedName (initializedListElement) != NULL);
+                    ROSE_ASSERT (isSgInitializedName (initializedListElement) != NULL);
 
-		    returnNameList.push_back (initializedListElement->get_name ().str ());
+                    returnNameList.push_back (initializedListElement->get_name ().str ());
 
-		  }		/* End iteration over declarationStatementPtrList */
+                  }             /* End iteration over declarationStatementPtrList */
 
-	      }			/* End iteration over declarationStatementPtrList */
-	  }
+              }                 /* End iteration over declarationStatementPtrList */
+          }
 
       }
     }
   return returnNameList;
 
-}				/* End function queryClassFieldNames() */
+}                               /* End function queryClassFieldNames() */
 
 
 NameQuerySynthesizedAttributeType
@@ -535,48 +535,48 @@ NameQuery::queryNameUnionFieldNames (SgNode * astNode)
     {
       ROSE_ASSERT (sageClassDefinition->get_declaration () != NULL);
       if (sageClassDefinition->get_declaration ()->get_class_type () ==
-	  SgClassDeclaration::e_struct)
-	{
-	  SgDeclarationStatementPtrList declarationStatementPtrList =
-	    sageClassDefinition->get_members ();
+          SgClassDeclaration::e_struct)
+        {
+          SgDeclarationStatementPtrList declarationStatementPtrList =
+            sageClassDefinition->get_members ();
 
-	typedef SgDeclarationStatementPtrList::iterator LI;
+        typedef SgDeclarationStatementPtrList::iterator LI;
 
         for (LI i = declarationStatementPtrList.begin ();
              i != declarationStatementPtrList.end (); ++i)
           {
             SgNode *listElement = *i;
 
-	    SgVariableDeclaration *sageVariableDeclaration =
-	      isSgVariableDeclaration (listElement);
+            SgVariableDeclaration *sageVariableDeclaration =
+              isSgVariableDeclaration (listElement);
 
-	    if (sageVariableDeclaration != NULL)
-	      {
+            if (sageVariableDeclaration != NULL)
+              {
 
 
-		typedef SgInitializedNamePtrList::iterator INITLI;
+                typedef SgInitializedNamePtrList::iterator INITLI;
 
-		SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
+                SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
 
                 for (INITLI i = sageInitializedNameList.begin ();
                      i != sageInitializedNameList.end (); ++i)
                   {
-		    SgInitializedName* initializedListElement = *i;
-		    ROSE_ASSERT (isSgInitializedName (initializedListElement) != NULL);
+                    SgInitializedName* initializedListElement = *i;
+                    ROSE_ASSERT (isSgInitializedName (initializedListElement) != NULL);
 
-		    returnNameList.push_back (initializedListElement->get_name().str());
+                    returnNameList.push_back (initializedListElement->get_name().str());
 
-		  }		/* End iteration over declarationStatementPtrList */
+                  }             /* End iteration over declarationStatementPtrList */
 
-	      }			/* End iteration over declarationStatementPtrList */
-	  }
+              }                 /* End iteration over declarationStatementPtrList */
+          }
 
         }
     }
 
   return returnNameList;
 
-}				/* End function queryUnionFieldNames() */
+}                               /* End function queryUnionFieldNames() */
 
 
 NameQuerySynthesizedAttributeType
@@ -595,47 +595,47 @@ NameQuery::queryNameStructFieldNames (SgNode * astNode)
     {
       ROSE_ASSERT (sageClassDefinition->get_declaration () != NULL);
       if (sageClassDefinition->get_declaration ()->get_class_type () ==
-	  SgClassDeclaration::e_union)
-	{
-	  SgDeclarationStatementPtrList declarationStatementPtrList =
-	    sageClassDefinition->get_members ();
+          SgClassDeclaration::e_union)
+        {
+          SgDeclarationStatementPtrList declarationStatementPtrList =
+            sageClassDefinition->get_members ();
 
           typedef SgDeclarationStatementPtrList::iterator LI;
           
           for (LI i = declarationStatementPtrList.begin ();
                i != declarationStatementPtrList.end (); ++i)
           {
-	    SgNode *listElement = *i;
+            SgNode *listElement = *i;
 
-	    SgVariableDeclaration *sageVariableDeclaration =
-	      isSgVariableDeclaration (listElement);
+            SgVariableDeclaration *sageVariableDeclaration =
+              isSgVariableDeclaration (listElement);
 
-	    if (sageVariableDeclaration != NULL)
-	      {
+            if (sageVariableDeclaration != NULL)
+              {
 
 
-		typedef SgInitializedNamePtrList::iterator INITLI;
+                typedef SgInitializedNamePtrList::iterator INITLI;
 
-		SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
+                SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
 
                 for (INITLI i = sageInitializedNameList.begin ();
                      i != sageInitializedNameList.end (); ++i)
                   {
-		    SgInitializedName* initializedListElement = *i;
-		    ROSE_ASSERT (isSgInitializedName (initializedListElement) != NULL);
+                    SgInitializedName* initializedListElement = *i;
+                    ROSE_ASSERT (isSgInitializedName (initializedListElement) != NULL);
 
-		    returnNameList.push_back (initializedListElement->get_name ().str ());
+                    returnNameList.push_back (initializedListElement->get_name ().str ());
 
-		  }		/* End iteration over declarationStatementPtrList */
+                  }             /* End iteration over declarationStatementPtrList */
 
-	      }			/* End iteration over declarationStatementPtrList */
-	  }
+              }                 /* End iteration over declarationStatementPtrList */
+          }
 
       }
     }
   return returnNameList;
 
-}				/* End function queryStructFieldNames() */
+}                               /* End function queryStructFieldNames() */
 
 
 NameQuerySynthesizedAttributeType
@@ -661,7 +661,7 @@ NameQuery::queryNameFunctionReferenceNames (SgNode * astNode)
 
   return returnNameList;
 
-}				/* End function NameQuery::queryNameVariableNames() */
+}                               /* End function NameQuery::queryNameVariableNames() */
 
 
 NameQuerySynthesizedAttributeType
@@ -680,54 +680,54 @@ NameQuery::queryVariableNamesWithTypeName (SgNode * astNode, string matchingName
     {
     case V_SgVariableDeclaration:
       {
-	SgVariableDeclaration *sageVariableDeclaration =
-	  isSgVariableDeclaration (astNode);
-	ROSE_ASSERT (sageVariableDeclaration != NULL);
+        SgVariableDeclaration *sageVariableDeclaration =
+          isSgVariableDeclaration (astNode);
+        ROSE_ASSERT (sageVariableDeclaration != NULL);
 
-	SgInitializedNamePtrList sageInitializedNameList =
-	  sageVariableDeclaration->get_variables ();
+        SgInitializedNamePtrList sageInitializedNameList =
+          sageVariableDeclaration->get_variables ();
 
 #if DEBUG_NAMEQUERY
-	printf ("\nIn filename: %s ",
-		ROSE::getFileName (isSgLocatedNode (astNode)));
-	printf ("\nHere is a variable :Line = %d Columns = %d \n",
-		ROSE::getLineNumber (isSgLocatedNode (astNode)),
-		ROSE::getColumnNumber (isSgLocatedNode (astNode)));
-	//cout << "The typename of the variable is: " << typeName << endl;
+        printf ("\nIn filename: %s ",
+                ROSE::getFileName (isSgLocatedNode (astNode)));
+        printf ("\nHere is a variable :Line = %d Columns = %d \n",
+                ROSE::getLineNumber (isSgLocatedNode (astNode)),
+                ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+        //cout << "The typename of the variable is: " << typeName << endl;
 #endif
-	SgType *typeNode;
-	typedef SgInitializedNamePtrList::iterator variableIterator;
+        SgType *typeNode;
+        typedef SgInitializedNamePtrList::iterator variableIterator;
 
         for (variableIterator variableListElement =
              sageInitializedNameList.begin ();
              variableListElement != sageInitializedNameList.end ();
              ++variableListElement)
           {
-	    SgInitializedName* elmVar = *variableListElement;
+            SgInitializedName* elmVar = *variableListElement;
 
-	    ROSE_ASSERT (elmVar != NULL);
-	    typeNode = elmVar->get_type ();
-	    ROSE_ASSERT (typeNode != NULL);
-	    string typeName = TransformationSupport::getTypeName(typeNode);
+            ROSE_ASSERT (elmVar != NULL);
+            typeNode = elmVar->get_type ();
+            ROSE_ASSERT (typeNode != NULL);
+            string typeName = TransformationSupport::getTypeName(typeNode);
 
-	    if (typeName == matchingName)
-	      {
-		string name = elmVar->get_name ().str ();
-		ROSE_ASSERT (name.length () > 0);
-		returnNameList.push_back (name);
+            if (typeName == matchingName)
+              {
+                string name = elmVar->get_name ().str ();
+                ROSE_ASSERT (name.length () > 0);
+                returnNameList.push_back (name);
 #if DEBUG_NAMEQUERY
-		cout << "The name of the variable is: " << name << endl;
+                cout << "The name of the variable is: " << name << endl;
 #endif
-	      }
-	  }
-	break;
-      }				/* End case V_SgVariableDeclaration */
+              }
+          }
+        break;
+      }                         /* End case V_SgVariableDeclaration */
 
     case V_SgFunctionDeclaration:
     case V_SgMemberFunctionDeclaration:
        {
       SgFunctionDeclaration * sageFunctionDeclaration =
-	isSgFunctionDeclaration (astNode);
+        isSgFunctionDeclaration (astNode);
       ROSE_ASSERT (sageFunctionDeclaration != NULL);
 
       SgInitializedNamePtrList sageInitializedNameList = sageFunctionDeclaration->get_args ();
@@ -741,23 +741,23 @@ NameQuery::queryVariableNamesWithTypeName (SgNode * astNode, string matchingName
            variableListElement != sageInitializedNameList.end ();
            ++variableListElement)
         {
-	  SgInitializedName* elmVar = *variableListElement;
+          SgInitializedName* elmVar = *variableListElement;
 
-	  ROSE_ASSERT (elmVar != NULL);
-	  typeNode = elmVar->get_type ();
-	  ROSE_ASSERT (typeNode != NULL);
-	  string typeName = TransformationSupport::getTypeName (typeNode);
+          ROSE_ASSERT (elmVar != NULL);
+          typeNode = elmVar->get_type ();
+          ROSE_ASSERT (typeNode != NULL);
+          string typeName = TransformationSupport::getTypeName (typeNode);
 
-	  if (typeName == matchingName)
-	    {
-	      string name = elmVar->get_name ().str ();
-	      ROSE_ASSERT (name.length () > 0);
-	      returnNameList.push_back (name);
+          if (typeName == matchingName)
+            {
+              string name = elmVar->get_name ().str ();
+              ROSE_ASSERT (name.length () > 0);
+              returnNameList.push_back (name);
 #if DEBUG_NAMEQUERY
-	      cout << "The name of the variable is: " << name << endl;
+              cout << "The name of the variable is: " << name << endl;
 #endif
-	    }
-	}
+            }
+        }
 
       break;
        }
@@ -766,11 +766,11 @@ NameQuery::queryVariableNamesWithTypeName (SgNode * astNode, string matchingName
         {
        // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
         }
-    }				/* End switch case astNode */
+    }                           /* End switch case astNode */
 
   return returnNameList;
 
-}				/* End function NameQuery::queryNameVariableNames() */
+}                               /* End function NameQuery::queryNameVariableNames() */
 
 
 NameQuerySynthesizedAttributeType
@@ -785,7 +785,7 @@ NameQuery::queryNameTypedefDeclarationNames (SgNode * astNode)
     returnNodeList.push_back (sageTypedefDeclaration->get_name ().str ());
 
   return returnNodeList;
-}				/* End function queryNameTypedefDeclarationNames */
+}                               /* End function queryNameTypedefDeclarationNames */
 
 
 // DQ (8/27/2006): This functionality already exists elsewhere
@@ -804,229 +804,229 @@ NameQuery::queryNameTypeName (SgNode * astNode)
     switch (type->variantT ())
       {
       case V_SgTypeComplex:
-	typeName = "complex";
-	break;
+        typeName = "complex";
+        break;
       case V_SgTypeImaginary:
-	typeName = "imaginary";
-	break;
+        typeName = "imaginary";
+        break;
       case V_SgTypeBool:
-	typeName = "bool";
-	break;
+        typeName = "bool";
+        break;
       case V_SgEnumType:
-	typeName = "enum";
-	break;
+        typeName = "enum";
+        break;
       case V_SgTypeChar:
-	typeName = "char";
-	break;
+        typeName = "char";
+        break;
       case V_SgTypeVoid:
-	typeName = "void";
-	break;
+        typeName = "void";
+        break;
       case V_SgTypeInt:
-	typeName = "int";
-	break;
+        typeName = "int";
+        break;
       case V_SgTypeDouble:
-	typeName = "double";
-	break;
+        typeName = "double";
+        break;
       case V_SgTypeFloat:
-	typeName = "float";
-	break;
+        typeName = "float";
+        break;
       case V_SgTypeLong:
-	typeName = "long";
-	break;
+        typeName = "long";
+        break;
       case V_SgTypeLongDouble:
-	typeName = "long double";
-	break;
+        typeName = "long double";
+        break;
       case V_SgTypeEllipse:
-	typeName = "ellipse";
-	break;
+        typeName = "ellipse";
+        break;
       case V_SgTypeGlobalVoid:
-	typeName = "void";
-	break;
+        typeName = "void";
+        break;
       case V_SgTypeLongLong:
-	typeName = "long long";
-	break;
+        typeName = "long long";
+        break;
       case V_SgTypeShort:
-	typeName = "short";
-	break;
+        typeName = "short";
+        break;
       case V_SgTypeSignedChar:
-	typeName = "signed char";
-	break;
+        typeName = "signed char";
+        break;
       case V_SgTypeSignedInt:
-	typeName = "signed int";
-	break;
+        typeName = "signed int";
+        break;
       case V_SgTypeSignedLong:
-	typeName = "signed long";
-	break;
+        typeName = "signed long";
+        break;
       case V_SgTypeSignedShort:
-	typeName = "signed short";
-	break;
+        typeName = "signed short";
+        break;
       case V_SgTypeString:
-	typeName = "string";
-	break;
+        typeName = "string";
+        break;
       case V_SgTypeUnknown:
-	typeName = "unknown";
-	break;
+        typeName = "unknown";
+        break;
       case V_SgTypeUnsignedChar:
-	typeName = "unsigned char";
-	break;
+        typeName = "unsigned char";
+        break;
       case V_SgTypeUnsignedInt:
-	typeName = "unsigned int";
-	break;
+        typeName = "unsigned int";
+        break;
       case V_SgTypeUnsignedLong:
-	typeName = "unsigned long";
-	break;
+        typeName = "unsigned long";
+        break;
       case V_SgTypeUnsignedShort:
-	typeName = "unsigned short";
-	break;
+        typeName = "unsigned short";
+        break;
       case V_SgTypeUnsignedLongLong:
-	typeName = "unsigned long long";
-	break;
+        typeName = "unsigned long long";
+        break;
       case V_SgReferenceType:
-	{
-	  ROSE_ASSERT (isSgReferenceType (type)->get_base_type () != NULL);
+        {
+          ROSE_ASSERT (isSgReferenceType (type)->get_base_type () != NULL);
 
-	  Rose_STL_Container< string > subTypeNames = queryNameTypeName (isSgReferenceType (type)->get_base_type ());
+          Rose_STL_Container< string > subTypeNames = queryNameTypeName (isSgReferenceType (type)->get_base_type ());
 
-	  typedef Rose_STL_Container< string >::iterator typeIterator;
+          typedef Rose_STL_Container< string >::iterator typeIterator;
 
-	  //This iterator will only contain one name
+          //This iterator will only contain one name
           for (typeIterator i = subTypeNames.begin ();
                i != subTypeNames.end (); ++i)
             {
-	      string e = *i;
-	      typeName = e;
-	      break;
-	    }
+              string e = *i;
+              typeName = e;
+              break;
+            }
 
-	  break;
-	}
+          break;
+        }
       case V_SgPointerType:
-	{
-	  ROSE_ASSERT (isSgPointerType (type)->get_base_type () != NULL);
+        {
+          ROSE_ASSERT (isSgPointerType (type)->get_base_type () != NULL);
 
-	  Rose_STL_Container< string > subTypeNames =
-	    queryNameTypeName (isSgPointerType (type)->get_base_type ());
+          Rose_STL_Container< string > subTypeNames =
+            queryNameTypeName (isSgPointerType (type)->get_base_type ());
 
-	  typedef Rose_STL_Container< string >::iterator typeIterator;
+          typedef Rose_STL_Container< string >::iterator typeIterator;
 
-	  //This iterator will only contain one name
+          //This iterator will only contain one name
           for (typeIterator i = subTypeNames.begin ();
                i != subTypeNames.end (); ++i)
             {
-	      string e = *i;
-	      typeName = e;
-	      break;
-	    }
+              string e = *i;
+              typeName = e;
+              break;
+            }
 
-	  break;
-	}
+          break;
+        }
       case V_SgModifierType:
-	{
-	  ROSE_ASSERT (isSgModifierType (type)->get_base_type () != NULL);
+        {
+          ROSE_ASSERT (isSgModifierType (type)->get_base_type () != NULL);
 
-	  Rose_STL_Container< string > subTypeNames =
-	    queryNameTypeName (isSgModifierType (type)->get_base_type ());
+          Rose_STL_Container< string > subTypeNames =
+            queryNameTypeName (isSgModifierType (type)->get_base_type ());
 
-	  typedef Rose_STL_Container< string >::iterator typeIterator;
+          typedef Rose_STL_Container< string >::iterator typeIterator;
 
-	  //This iterator will only contain one name
+          //This iterator will only contain one name
           for (typeIterator i = subTypeNames.begin ();
                i != subTypeNames.end (); ++i)
             {
-	      string e = *i;
-	      typeName = e;
-	      break;
-	    }
-	  break;
-	}
+              string e = *i;
+              typeName = e;
+              break;
+            }
+          break;
+        }
       case V_SgNamedType:
-	{
-	  SgNamedType *sageNamedType = isSgNamedType (type);
-	  ROSE_ASSERT (sageNamedType != NULL);
-	  typeName = sageNamedType->get_name ().str ();
-	  break;
-	}
+        {
+          SgNamedType *sageNamedType = isSgNamedType (type);
+          ROSE_ASSERT (sageNamedType != NULL);
+          typeName = sageNamedType->get_name ().str ();
+          break;
+        }
       case V_SgClassType:
-	{
-	  SgClassType *sageClassType = isSgClassType (type);
-	  ROSE_ASSERT (sageClassType != NULL);
-	  typeName = sageClassType->get_name ().str ();
-	  break;
-	}
+        {
+          SgClassType *sageClassType = isSgClassType (type);
+          ROSE_ASSERT (sageClassType != NULL);
+          typeName = sageClassType->get_name ().str ();
+          break;
+        }
       case V_SgTypedefType:
-	{
-	  SgTypedefType *sageTypedefType = isSgTypedefType (type);
-	  ROSE_ASSERT (sageTypedefType != NULL);
-	  typeName = sageTypedefType->get_name ().str ();
-	  break;
-	}
+        {
+          SgTypedefType *sageTypedefType = isSgTypedefType (type);
+          ROSE_ASSERT (sageTypedefType != NULL);
+          typeName = sageTypedefType->get_name ().str ();
+          break;
+        }
       case V_SgPointerMemberType:
-	{
-	  SgPointerMemberType *pointerMemberType =
-	    isSgPointerMemberType (type);
-	  ROSE_ASSERT (pointerMemberType != NULL);
-	  SgClassType *classType =
+        {
+          SgPointerMemberType *pointerMemberType =
+            isSgPointerMemberType (type);
+          ROSE_ASSERT (pointerMemberType != NULL);
+          SgClassType *classType =
             isSgClassType(pointerMemberType->get_class_type()->stripTypedefsAndModifiers());
-	  ROSE_ASSERT (classType != NULL);
-	  SgClassDeclaration *classDeclaration =
-	    isSgClassDeclaration(classType->get_declaration());
-	  ROSE_ASSERT (classDeclaration != NULL);
-	  typeName = classDeclaration->get_name ().str ();
-	  break;
-	}
+          ROSE_ASSERT (classType != NULL);
+          SgClassDeclaration *classDeclaration =
+            isSgClassDeclaration(classType->get_declaration());
+          ROSE_ASSERT (classDeclaration != NULL);
+          typeName = classDeclaration->get_name ().str ();
+          break;
+        }
       case V_SgArrayType:
-	{
-	  ROSE_ASSERT (isSgArrayType (type)->get_base_type () != NULL);
+        {
+          ROSE_ASSERT (isSgArrayType (type)->get_base_type () != NULL);
 
 
-	  Rose_STL_Container< string > subTypeNames =
-	    queryNameTypeName (isSgArrayType (type)->get_base_type ());
+          Rose_STL_Container< string > subTypeNames =
+            queryNameTypeName (isSgArrayType (type)->get_base_type ());
 
-	  typedef Rose_STL_Container< string >::iterator typeIterator;
+          typedef Rose_STL_Container< string >::iterator typeIterator;
 
-	  //This iterator will only contain one name
-	  for (typeIterator i = subTypeNames.begin ();
+          //This iterator will only contain one name
+          for (typeIterator i = subTypeNames.begin ();
                i != subTypeNames.end (); ++i)
             {
-	      string e = *i;
-	      typeName = e;
-	      break;
-	    }
-	  break;
-	}
+              string e = *i;
+              typeName = e;
+              break;
+            }
+          break;
+        }
       case V_SgFunctionType:
-	{
-	  SgFunctionType *functionType = isSgFunctionType (type);
-	  ROSE_ASSERT (functionType != NULL);
-	  typeName = functionType->get_mangled_type ().str ();
-	  break;
-	}
+        {
+          SgFunctionType *functionType = isSgFunctionType (type);
+          ROSE_ASSERT (functionType != NULL);
+          typeName = functionType->get_mangled_type ().str ();
+          break;
+        }
       case V_SgMemberFunctionType:
-	{
-	  SgMemberFunctionType *memberFunctionType =
-	    isSgMemberFunctionType (type);
-	  ROSE_ASSERT (memberFunctionType != NULL);
-	  SgClassType *classType =
-	    isSgClassType(memberFunctionType->get_class_type()->stripTypedefsAndModifiers());
-	  ROSE_ASSERT (classType != NULL);
-	  SgClassDeclaration *classDeclaration =
-	    isSgClassDeclaration(classType->get_declaration());
-	  ROSE_ASSERT (classDeclaration != NULL);
-	  typeName = classDeclaration->get_name ().str ();
-	  break;
-	}
+        {
+          SgMemberFunctionType *memberFunctionType =
+            isSgMemberFunctionType (type);
+          ROSE_ASSERT (memberFunctionType != NULL);
+          SgClassType *classType =
+            isSgClassType(memberFunctionType->get_class_type()->stripTypedefsAndModifiers());
+          ROSE_ASSERT (classType != NULL);
+          SgClassDeclaration *classDeclaration =
+            isSgClassDeclaration(classType->get_declaration());
+          ROSE_ASSERT (classDeclaration != NULL);
+          typeName = classDeclaration->get_name ().str ();
+          break;
+        }
       case V_SgTypeWchar:
-	typeName = "wchar";
-	break;
+        typeName = "wchar";
+        break;
       case V_SgTypeDefault:
-	typeName = "default";
-	break;
+        typeName = "default";
+        break;
       default:
         printf
           ("default reached in switch within TransformationSupport::getTypeName type->sage_class_name() = %s variant = %d \n",
            type->sage_class_name (), type->variant ());
         ROSE_ABORT ();
-	break;
+        break;
       }
 
   // Fix for purify problem report
@@ -1054,77 +1054,77 @@ std::pointer_to_unary_function<SgNode*, Rose_STL_Container<std::string> > NameQu
              }
     case VariableNames:
       {
-	__x = queryNameVariableNames;
-	break;
+        __x = queryNameVariableNames;
+        break;
       }
     case VariableTypeNames:
       {
-	__x = queryNameVariableTypeNames;
-	break;
+        __x = queryNameVariableTypeNames;
+        break;
       }
     case FunctionDeclarationNames:
       {
-	__x =
-	  queryNameFunctionDeclarationNames;
-	break;
+        __x =
+          queryNameFunctionDeclarationNames;
+        break;
       }
     case MemberFunctionDeclarationNames:
       {
-	__x =
-	  queryNameMemberFunctionDeclarationNames;
-	break;
+        __x =
+          queryNameMemberFunctionDeclarationNames;
+        break;
       }
     case ClassDeclarationNames:
       {
-	__x = queryNameClassDeclarationNames;
-	break;
+        __x = queryNameClassDeclarationNames;
+        break;
       }
     case ArgumentNames:
       {
-	__x = queryNameArgumentNames;
-	break;
+        __x = queryNameArgumentNames;
+        break;
       }
     case StructNames:
       {
-	__x = queryNameStructNames;
-	break;
+        __x = queryNameStructNames;
+        break;
       }
     case UnionNames:
       {
-	__x = queryNameUnionNames;
-	break;
+        __x = queryNameUnionNames;
+        break;
       }
     case ClassFieldNames:
       {
-	__x = queryNameClassFieldNames;
-	break;
+        __x = queryNameClassFieldNames;
+        break;
       }
     case StructFieldNames:
       {
-	__x = queryNameStructFieldNames;
-	break;
+        __x = queryNameStructFieldNames;
+        break;
       }
     case UnionFieldNames:
       {
-	__x = queryNameUnionFieldNames;
-	break;
+        __x = queryNameUnionFieldNames;
+        break;
       }
     case FunctionReferenceNames:
       {
-	__x =
-	  queryNameFunctionReferenceNames;
-	break;
+        __x =
+          queryNameFunctionReferenceNames;
+        break;
       }
     case TypedefDeclarationNames:
       {
-	__x =
-	  queryNameTypedefDeclarationNames;
-	break;
+        __x =
+          queryNameTypedefDeclarationNames;
+        break;
       }
     case TypeNames:
       {
-	__x = queryNameTypeName;
-	break;
+        __x = queryNameTypeName;
+        break;
       }
 
 
@@ -1150,8 +1150,8 @@ std::pointer_to_binary_function<SgNode*, std::string, Rose_STL_Container<std::st
           case VariableNamesWithTypeName:
              {
                __x =
-	         queryVariableNamesWithTypeName;
-	       break;
+                 queryVariableNamesWithTypeName;
+               break;
              }
           default:
              {

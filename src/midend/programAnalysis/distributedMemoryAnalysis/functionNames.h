@@ -48,7 +48,7 @@ protected:
                 result += "\n";
         }
 #if DEBUG_OUTPUT_FUNCNAMES
-	std::cout << " eval synthesized: node: " << node->class_name() << "  result:" << result << " ..............\n" <<std::endl;
+        std::cout << " eval synthesized: node: " << node->class_name() << "  result:" << result << " ..............\n" <<std::endl;
 #endif
         return result;
     }
@@ -79,7 +79,7 @@ protected:
         std::stringstream s;
         s << "process " << myID() << ": at depth " << depth << ": function " << funcName;
 #if DEBUG_OUTPUT_FUNCNAMES
-	std::cout << " analyzeSubtree of funcDecl: " << funcName << "  id:" << myID()
+        std::cout << " analyzeSubtree of funcDecl: " << funcName << "  id:" << myID()
                   << "       result:  " << s.str() << std::endl;
 #endif
         return s.str();
