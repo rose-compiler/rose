@@ -232,7 +232,7 @@ class CollectReadRefWrap : public CollectObject<AstNodePtr>
          func->get_read(fa, ref, this); 
          if (DebugLocalInfoCollect()) 
            std::cerr << "Collecting read variables from a function call: " << AstToString(ref) << " within statement: " << AstToString(stmt) << std::endl;
-      }	 
+      }  
       else if (fa.IsArrayAccess(ref, 0, &args)) {
         if (DebugLocalInfoCollect()) 
            std::cerr << "Collecting read variables from an array access: " << AstToString(ref) << " within statement: " << AstToString(stmt) << std::endl;
@@ -490,7 +490,7 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 
 bool StmtVarAliasCollect::
 may_alias(AstInterface& fa, const AstNodePtr& r1, 
-	  const AstNodePtr& r2)
+          const AstNodePtr& r2)
 {
   AstNodeType t1, t2;
   if (fa.IsExpression(r1, &t1) == AST_NULL || fa.IsExpression(r2, &t2)==AST_NULL)

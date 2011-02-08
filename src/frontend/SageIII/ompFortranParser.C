@@ -514,12 +514,12 @@ static bool ofs_match_varlist()
 
 //! Match a clause with a form like clause (varlist)
 // 6 allowed 6 clause types are
-// 	copyin (var_list)
-// 	copyprivate(var-list) 
-// 	firstprivate (var_list)
-// 	lastprivate (var_list)
-// 	private (var_list)
-// 	shared (var_list)
+//      copyin (var_list)
+//      copyprivate(var-list) 
+//      firstprivate (var_list)
+//      lastprivate (var_list)
+//      private (var_list)
+//      shared (var_list)
 // add clause and varlist if successful, 
 //otherwise undo any side effects and return false
 static bool ofs_match_clause_varlist(omp_construct_enum clausetype)
@@ -842,7 +842,7 @@ static bool ofs_match_clause_reduction()
     {
       printf("error in reduction(op:varlist) match: no ':' is found for %s\n",old_char);
       assert(false);
-    }	
+    }   
     // match the rest "varlist)"
     if (!ofs_match_varlist())
     {
@@ -899,21 +899,21 @@ static bool ofs_match_omp_directive_end()
 //a bit vector for all possible OpenMP Fortran clauses: 
 //  15 in total for OpenMP 3.0
 // in alphabet order
-#define BV_CLAUSE_COLLAPSE	(1<<0)
-#define BV_CLAUSE_COPYIN 	(1<<1)
-#define BV_CLAUSE_COPYPRIVATE 	(1<<2)
-#define BV_CLAUSE_DEFAULT	(1<<3)
-#define BV_CLAUSE_FIRSTPRIVATE 	(1<<4)
-#define BV_CLAUSE_IF		(1<<5)
-#define BV_CLAUSE_LASTPRIVATE	(1<<6)
-#define BV_CLAUSE_NOWAIT 	(1<<7)
-#define BV_CLAUSE_NUM_THREADS 	(1<<8)
-#define BV_CLAUSE_ORDERED	(1<<9)
-#define BV_CLAUSE_PRIVATE 	(1<<10)
-#define BV_CLAUSE_REDUCTION 	(1<<11)
-#define BV_CLAUSE_SCHEDULE	(1<<12)
-#define BV_CLAUSE_SHARED 	(1<<13)
-#define BV_CLAUSE_UNTIED 	(1<<14)
+#define BV_CLAUSE_COLLAPSE      (1<<0)
+#define BV_CLAUSE_COPYIN        (1<<1)
+#define BV_CLAUSE_COPYPRIVATE   (1<<2)
+#define BV_CLAUSE_DEFAULT       (1<<3)
+#define BV_CLAUSE_FIRSTPRIVATE  (1<<4)
+#define BV_CLAUSE_IF            (1<<5)
+#define BV_CLAUSE_LASTPRIVATE   (1<<6)
+#define BV_CLAUSE_NOWAIT        (1<<7)
+#define BV_CLAUSE_NUM_THREADS   (1<<8)
+#define BV_CLAUSE_ORDERED       (1<<9)
+#define BV_CLAUSE_PRIVATE       (1<<10)
+#define BV_CLAUSE_REDUCTION     (1<<11)
+#define BV_CLAUSE_SCHEDULE      (1<<12)
+#define BV_CLAUSE_SHARED        (1<<13)
+#define BV_CLAUSE_UNTIED        (1<<14)
 
 // common bit vector values for some directive's allowed clauses
 #define BV_OMP_PARALLEL_CLAUSES \
@@ -977,7 +977,7 @@ static bool ofs_match_omp_clauses(int bitvector)
       }
     }
     else     
-      firstiter = false;	
+      firstiter = false;        
 #endif    
     ofs_skip_whitespace();
 
@@ -1322,7 +1322,7 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
           ompattribute = buildOmpAttribute(e_parallel_do, c_sgnode, true);
           ofs_match_omp_clauses(BV_OMP_PARALLEL_CLAUSES|BV_OMP_DO_CLAUSES);
         }
-        //!$omp parallel sections	
+        //!$omp parallel sections       
         else if (ofs_match_substr("sections"))
         {
           ompattribute = buildOmpAttribute(e_parallel_sections,c_sgnode, true);

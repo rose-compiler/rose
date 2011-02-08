@@ -157,7 +157,7 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
          CompSliceNest& result)
 {
 // tps (12/09/09) : FIX : Changed the name "interface" to interfaces , as interface is a keyword in MSVC.
-	LoopTreeInterface interfaces;
+        LoopTreeInterface interfaces;
   LoopTreeNode *root = comp.GetLoopTreeRoot();
   int rootlevel = root->LoopLevel();
   int size, slicesize;
@@ -194,7 +194,7 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
       LoopTreeNode *loop = GetEnclosingLoop(stmt, interfaces);
       for ( ; index >= rootlevel; loop = GetEnclosingLoop(loop, interfaces)) {
         curloop.SetLoop(loop, index--);
-	if (anal.LoopSlicible( comp, tg, curloop, buf1)) 
+        if (anal.LoopSlicible( comp, tg, curloop, buf1)) 
            break;
       } 
       if (loop == 0) break;
@@ -284,26 +284,26 @@ Transform ( LoopTransformInterface &fa, LoopTreeDepComp &comp,
       CompSlice::SliceLoopInfo info = loopIter.CurrentInfo();
       LoopTreeTraverseSelectStmt inStmts(loop);
       for (LoopTreeNode *s; (s = inStmts.Current()); ) {
-	inStmts.Advance();
-	CompSlice::SliceStmtInfo info1(slice->QuerySliceStmtInfo(s));
-	if (info1.loop != loop)  {
-	  DepRel r ( DEPDIR_LE, info1.align - info.minalign);
+        inStmts.Advance();
+        CompSlice::SliceStmtInfo info1(slice->QuerySliceStmtInfo(s));
+        if (info1.loop != loop)  {
+          DepRel r ( DEPDIR_LE, info1.align - info.minalign);
           DepRel r1 = comp.GetDomain(s).Entry(info1.loop->LoopLevel(), loop->LoopLevel());
           DepRel r2 = r & r1;
           if (r2 != r1 && !r2.IsTop())
-	      LoopTreeSplitStmt()( s, info1.loop, loop, r);
-	}
+              LoopTreeSplitStmt()( s, info1.loop, loop, r);
+        }
       }
       DepCompDistributeLoop()(comp, loop);
       loop = loopIter.Current();
       while (loopIter.CurrentInfo().stmtcount < CountEnclosedStmts(loop)) {
-	while (loop->ChildCount() == 1) {
-	  LoopTreeNode* child = loop->FirstChild();
-	  LoopTreeSwapNodePos()( loop, child);
-	  if (child->IncreaseLoopLevel())
-	    break;
-	}
-	DepCompDistributeLoop()( comp, loop );
+        while (loop->ChildCount() == 1) {
+          LoopTreeNode* child = loop->FirstChild();
+          LoopTreeSwapNodePos()( loop, child);
+          if (child->IncreaseLoopLevel())
+            break;
+        }
+        DepCompDistributeLoop()( comp, loop );
       }
     }
   }

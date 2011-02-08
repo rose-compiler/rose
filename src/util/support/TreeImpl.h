@@ -92,7 +92,7 @@ class TreeTraverse
        case ChildrenOnly:
           return n->FirstChild();
        default:
-		   { assert(false); /* avoid MSVC warning about path without return stmt. */ return NULL; }
+                   { assert(false); /* avoid MSVC warning about path without return stmt. */ return NULL; }
       }
     }
   static T* LastNode( T *n, TraversalOpt opt=PreOrder)
@@ -104,7 +104,7 @@ class TreeTraverse
          return n;
       case ChildrenOnly: return n->LastChild();
       default:
-		  { assert(false); /* avoid MSVC warning about path without return stmt. */ return NULL; }
+                  { assert(false); /* avoid MSVC warning about path without return stmt. */ return NULL; }
       }
    }
   static T* PrevNode( T *n, TraversalOpt opt=PreOrder)
@@ -130,10 +130,10 @@ class TreeTraverse
       case ChildrenOnly:
           return n->PrevSibling();
       default:
-		  assert(false);
+                  assert(false);
      }
   /* avoid MSVC warning about path without return stmt. */ 
-	 return NULL;
+         return NULL;
    }
   static T* NextNode( T *n, TraversalOpt opt=PreOrder)
    { T *result = 0;
@@ -161,7 +161,7 @@ class TreeTraverse
           assert(false);
      }
   /* avoid MSVC warning about path without return stmt. */ 
-	 return NULL;
+         return NULL;
    }
 };
 

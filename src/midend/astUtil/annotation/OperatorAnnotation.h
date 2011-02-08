@@ -17,7 +17,7 @@ class OperatorAnnotCollection
   TypeCollection<Descriptor>::typemap;
  public:
   void read_descriptor( const OperatorDeclaration& target,
-			const std::string& annot, std::istream& in)
+                        const std::string& annot, std::istream& in)
   {
      Descriptor d;
      d.read(in, target);
@@ -30,7 +30,7 @@ class OperatorAnnotCollection
     }
   bool known_operator( AstInterface& fa, 
                        const AstNodePtr& exp, AstInterface::AstNodeList* argp= 0, 
-		       Descriptor* desc= 0, bool replpar = false,
+                       Descriptor* desc= 0, bool replpar = false,
                        Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen =0) const
   {
     AstInterface::AstNodeList args;

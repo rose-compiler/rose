@@ -96,26 +96,26 @@ DomTree::DomTree (DGraph& g)
       tmp_dom.clear();
       DGraph::SourceNodesIterator src_iter(graph_node_vector[i]);
       while ((bool)src_iter && dom_set[graph_node_num[(DGraph::Node*)src_iter]].empty())
-	++src_iter;
+        ++src_iter;
       if ((bool)src_iter) {
-	int node_num = graph_node_num[(DGraph::Node*)src_iter];
-	tmp_dom = dom_set[node_num];
-	++src_iter;
+        int node_num = graph_node_num[(DGraph::Node*)src_iter];
+        tmp_dom = dom_set[node_num];
+        ++src_iter;
       }
       while ((bool)src_iter) {
-	int node_num = graph_node_num[(DGraph::Node*)src_iter];
-	if (!dom_set[node_num].empty()) {
-	  std::set<int> tmp;
-	  std::set_intersection(tmp_dom.begin(), tmp_dom.end(), dom_set[node_num].begin(), dom_set[node_num].end(),
+        int node_num = graph_node_num[(DGraph::Node*)src_iter];
+        if (!dom_set[node_num].empty()) {
+          std::set<int> tmp;
+          std::set_intersection(tmp_dom.begin(), tmp_dom.end(), dom_set[node_num].begin(), dom_set[node_num].end(),
                                 std::inserter(tmp, tmp.begin()));
           tmp_dom = tmp;
-	}
-	++src_iter;
+        }
+        ++src_iter;
       }
       tmp_dom.insert(i);
       if (!(tmp_dom == dom_set[i])) {
-	changed = true;
-	dom_set[i] = tmp_dom;
+        changed = true;
+        dom_set[i] = tmp_dom;
       }
     }
   }
@@ -127,7 +127,7 @@ DomTree::DomTree (DGraph& g)
     while (ds_iter != dom_set[i].end()) {
       int val = *ds_iter;
       if ((parent_of_i < val) && (val != i))
-	parent_of_i = val;
+        parent_of_i = val;
       ++ds_iter;
     }
     if (parent_of_i >= 0)
@@ -168,20 +168,20 @@ DomTree::compute_dominance_frontiers ()
     if (b->num_incoming() > 1) {
       DGraph::SourceNodesIterator p(b);
       while ((bool)p) {
-	DGraph::Node* runner = p;
-	// this parent may be unreachable in the control flow graph and, hence, may have no corresponding Dominator
-	// Tree node
-	if (dom_tree_node.find(p) != dom_tree_node.end()) {
-	  Node* b_dom_tree_node = dom_tree_node[b];
-	  Node* runner_dom_tree_node = dom_tree_node[runner];
-	  while (runner_dom_tree_node != b_dom_tree_node->parent()) {
-	    if (runner_dom_tree_node->dom_front.find(b_dom_tree_node) == runner_dom_tree_node->dom_front.end())
-	      runner_dom_tree_node->dom_front.insert(b_dom_tree_node);
-	    runner = dynamic_cast<Node*>(runner_dom_tree_node->parent())->graph_node_ptr;
-	    runner_dom_tree_node = dom_tree_node[runner];
-	  }
-	}
-	++p;
+        DGraph::Node* runner = p;
+        // this parent may be unreachable in the control flow graph and, hence, may have no corresponding Dominator
+        // Tree node
+        if (dom_tree_node.find(p) != dom_tree_node.end()) {
+          Node* b_dom_tree_node = dom_tree_node[b];
+          Node* runner_dom_tree_node = dom_tree_node[runner];
+          while (runner_dom_tree_node != b_dom_tree_node->parent()) {
+            if (runner_dom_tree_node->dom_front.find(b_dom_tree_node) == runner_dom_tree_node->dom_front.end())
+              runner_dom_tree_node->dom_front.insert(b_dom_tree_node);
+            runner = dynamic_cast<Node*>(runner_dom_tree_node->parent())->graph_node_ptr;
+            runner_dom_tree_node = dom_tree_node[runner];
+          }
+        }
+        ++p;
       }
     }
     ++nodes_iter;
@@ -210,9 +210,9 @@ DomTree::dump (ostream& os)
       dynamic_cast<Node*>((Tree::Node*)child_iter)->graph_node_ptr->dump(os);
       ++child_iter;
       while ((bool)child_iter) {
-	os << ", ";
-	(dynamic_cast<Node*>((Tree::Node*)child_iter))->graph_node_ptr->dump(os);
-	++child_iter;
+        os << ", ";
+        (dynamic_cast<Node*>((Tree::Node*)child_iter))->graph_node_ptr->dump(os);
+        ++child_iter;
       }
     }
     os << "}  DF = {";
@@ -221,9 +221,9 @@ DomTree::dump (ostream& os)
       ((DGraph::Node*)front_iter)->dump(os);
       ++front_iter;
       while ((bool)front_iter) {
-	os << ", ";
-	((DGraph::Node*)front_iter)->dump(os);
-	++front_iter;
+        os << ", ";
+        ((DGraph::Node*)front_iter)->dump(os);
+        ++front_iter;
       }
     }
     os << "}" << endl;

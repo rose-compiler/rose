@@ -54,7 +54,7 @@ class ProcessAstTree : public ProcessAstTreeBase
  protected:
   virtual bool ProcessLoop(AstInterface &fa, const AstNodePtr& s, 
                                const AstNodePtr& body,
-	                       AstInterface::TraversalVisitType t) ;
+                               AstInterface::TraversalVisitType t) ;
   virtual bool ProcessIf( AstInterface &fa, const AstNodePtr& s,
                              const AstNodePtr& cond, const AstNodePtr& truebody,
                              const AstNodePtr& falsebody, 

@@ -864,7 +864,7 @@ ResetParentPointers::evaluateInheritedAttribute (
 #if STRICT_ERROR_CHECKING
                  // Only SgProject and SgFile can be root nodes after EDG->SAGE translation
                     printf ("Warning: only SgProject and SgFile can be root nodes after EDG->SAGE translation \n");
-	                 ROSE_ABORT();
+                         ROSE_ABORT();
 #endif
                   }
              }
@@ -1932,7 +1932,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                   if (locatedNode->get_parent()==NULL) 
                   {
                     SageInterface::dumpInfo(locatedNode,"ResetParentPointersInMemoryPool::visit() error: found a func dec without defining declaration and its non-defining declaration has no scope info. ");
-		    ROSE_ASSERT(locatedNode->get_parent() != NULL);
+                    ROSE_ASSERT(locatedNode->get_parent() != NULL);
                   }
                     break;
                   }

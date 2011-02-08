@@ -52,13 +52,13 @@ string get_type_name(SgType* t)
    {
   // printf ("t->class_name() = %s \n",t->class_name().c_str());
 
-	   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
+           // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
 //#ifndef _MSCx_VER
 //#pragma message ("WARNING: Commented out body of get_type_name()")
-//	   printf ("Error: Commented out body of get_type_name() \n");
-//	   ROSE_ASSERT(false);
-//	   return "ERROR IN get_type_name()";
+//         printf ("Error: Commented out body of get_type_name() \n");
+//         ROSE_ASSERT(false);
+//         return "ERROR IN get_type_name()";
 //#else
      switch (t->variant())
         {
@@ -110,7 +110,7 @@ string get_type_name(SgType* t)
                 SgTypeComplex* complexType = isSgTypeComplex(t);
                 ROSE_ASSERT(complexType != NULL);
                 string returnString = get_type_name(complexType->get_base_type()) + " _Complex";
-		return returnString;
+                return returnString;
              }
 
        // DQ (8/27/2006): Added require imaginary support to complete the complex support.
@@ -170,10 +170,10 @@ string get_type_name(SgType* t)
               {
                 SgClassType* class_type = isSgClassType(t);
                 ROSE_ASSERT(class_type != NULL);
-				// CH (4/7/2010): 'cdecl' is a keywork of MSVC
+                                // CH (4/7/2010): 'cdecl' is a keywork of MSVC
                 //SgClassDeclaration* cdecl;
-				SgClassDeclaration* decl;
-				decl = isSgClassDeclaration(class_type->get_declaration());
+                                SgClassDeclaration* decl;
+                                decl = isSgClassDeclaration(class_type->get_declaration());
                 SgName nm = decl->get_qualified_name();
                 //printf ("In unparseType(%p): nm = %s \n",t,nm.str());
                 if (nm.getString() != "")
@@ -728,7 +728,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      info.display("Inside of Unparse_Type::unparseClassType");
 #endif
 
-	 // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
+         // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
      SgClassType* class_type = isSgClassType(type);
      ROSE_ASSERT(class_type != NULL);
