@@ -9,6 +9,7 @@ EXTRA_DIST=
 include_HEADERS=
 noinst_PROGRAMS=
 lib_LIBRARIES=
+TEST_TARGETS = 
 
 ###############################################################################################################################
 #  DOCUMENTATION, CONFIGURATION, ETC
@@ -462,37 +463,47 @@ SYS_TEST_INPUTS    = $(SYS_TEST_INPUTS_SA) $(SYS_TEST_INPUTS_RT) $(SYS_TEST_INPU
 MOSTLYCLEANFILES += $(SYS_TEST_INPUTS) $(addsuffix .o, $(SYS_TEST_INPUTS)) \
                     $(addsuffix .o, $(basename $(notdir $(SYS_TEST_SUPPORT_SRC))))
 
-# The test inputs
+# The test inputs. These will not be generated if ENABLE_I386 is not defined.
 $(SYS_TEST_INPUTS_SA): %: $(srcdir)/syscall_tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/syscall_tests -Wall -o $@ $^
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/syscall_tests -Wall -o $@ $^
 $(SYS_TEST_INPUTS_RT): %: $(srcdir)/syscall_tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/syscall_tests -Wall -o $@ $^ -lrt
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/syscall_tests -Wall -o $@ $^ -lrt
 $(SYS_TEST_INPUTS_TS): %: $(srcdir)/syscall_tests/%.c libtestsupport.a libipc.a
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/syscall_tests -Wall -o $@ $^ -lrt 
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/syscall_tests -Wall -o $@ $^ -lrt 
 $(SYS_TEST_INPUTS_NM): %: $(srcdir)/syscall_tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/syscall_tests -Wall -o $@ $^ 
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/syscall_tests -Wall -o $@ $^ 
+
 # Target to manually build the test inputs. (Not used internally)
 .PHONY: test_inputs
 test_inputs: $(SYS_TEST_INPUTS)
 
 
-# The test support library
+# The test support library. These will not be generated if ENABLE_I386 is not defined.
 SYS_TEST_SUPPORT_OBJ = $(patsubst %.c, %.o, $(notdir $(SYS_TEST_SUPPORT_SRC)))
 libtestsupport.a: $(SYS_TEST_SUPPORT_OBJ)
 	@echo "  AR      $@"
 	@ar -rc $@ $(SYS_TEST_SUPPORT_OBJ)
 $(SYS_TEST_SUPPORT_OBJ): %.o: $(srcdir)/syscall_tests/%.c
 	@echo "  CC32    $@"
+<<<<<<< HEAD
 	@$(CC) -m32 -g -I$(srcdir)/syscall_tests -Wall -o $@ -c $^
 MOSTLYCLEANFILES += libtestsupport.a
 
 # The ipc support library
 include_HEADERS += $(srcdir)/syscall_tests/ipcmsg.h  $(srcdir)/syscall_tests/ipcsem.h  $(srcdir)/syscall_tests/ipcshm.h
 IPC_SUPPORT_SRC = $(srcdir)/syscall_tests/libipc.c
+=======
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/syscall_tests -Wall -o $@ -c $^
+MOSTLYCLEANFILES += libtestsupport.a
+
+# The ipc support library. These will not be generated if ENABLE_I386 is not defined.
+include_HEADERS += $(srcdir)/syscall_tests/ipcmsg.h  $(srcdir)/syscall_tests/ipcsem.h  $(srcdir)/syscall_tests/ipcshm.h
+IPC_SUPPORT_SRC = $(srcdir)/syscall_tests/libipc.c
+>>>>>>> 528125010ab733015545bb4bb8fb73556dccb59a
 IPC_SUPPORT_OBJ = $(patsubst %.c, %.o, $(notdir $(IPC_SUPPORT_SRC)))
 EXTRA_DIST += $(IPC_SUPPORT_SRC)
 libipc.a: $(IPC_SUPPORT_OBJ)
@@ -500,7 +511,11 @@ libipc.a: $(IPC_SUPPORT_OBJ)
 	@ar -rc $@ $(IPC_SUPPORT_OBJ)
 $(IPC_SUPPORT_OBJ): %.o: $(srcdir)/syscall_tests/%.c
 	@echo "  CC32    $@"
+<<<<<<< HEAD
 	@$(CC) -m32 -g -I$(srcdir)/syscall_tests -Wall -o $@ -c $^
+=======
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/syscall_tests -Wall -o $@ -c $^
+>>>>>>> 528125010ab733015545bb4bb8fb73556dccb59a
 MOSTLYCLEANFILES += libipc.a
 
 
@@ -990,14 +1005,22 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 ###############################################################################################################################
 
 # Test targets are test names suffixed with ".passed" (but when a test fails it produces ".failed" instead).
-# Each target runs "x86sim" on one of the SYS_TEST_INPUT files. Exit status determines success or failure.
-SYS_TEST_TARGETS = $(addsuffix .passed, $(SYS_TEST_INPUTS))
-MOSTLYCLEANFILES += $(SYS_TEST_TARGETS) $(patsubst %.passed, %.failed, $(SYS_TEST_TARGETS))
+# Each target runs "x86sim" on one of the TEST_INPUT files. Exit status determines success or failure.
+# Test targets must be 32-bit x86; if we don't have that capability then the tests are not run.
+if ENABLE_I386
+SYS_TEST_TARGETS += $(addsuffix .passed, $(SYS_TEST_INPUTS))
 $(SYS_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
+else
+SYS_TEST_TARGETS += warn_no_tests
+warn_no_tests:
+	@echo "  NOTE    x86sim testing is disabled (no i386 support)"
+endif
 
 check-syscalls:  $(SYS_TEST_TARGETS)
 	@$(RTH_STATS)
+
+MOSTLYCLEANFILES += $(SYS_TEST_TARGETS) $(patsubst %.passed, %.failed, $(SYS_TEST_TARGETS))
 
 
 check-local: $(PTHREAD_TEST_TARGETS)  $(SYS_TEST_TARGETS)
