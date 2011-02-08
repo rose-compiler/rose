@@ -978,9 +978,16 @@ MOSTLYCLEANFILES += $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS)) \
 
 
 
-
+if ENABLE_I386
 $(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
+
+
+else
+
+PTHREAD_TEST_TARGETS = warn_no_tests
+
+endif
 
 check-pthread:  $(PTHREAD_TEST_TARGETS)
 	@$(RTH_STATS)
@@ -995,11 +1002,11 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 # Each target runs "x86sim" on one of the TEST_INPUT files. Exit status determines success or failure.
 # Test targets must be 32-bit x86; if we don't have that capability then the tests are not run.
 if ENABLE_I386
-SYS_TEST_TARGETS += $(addsuffix .passed, $(SYS_TEST_INPUTS))
+SYS_TEST_TARGETS = $(addsuffix .passed, $(SYS_TEST_INPUTS))
 $(SYS_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
 else
-SYS_TEST_TARGETS += warn_no_tests
+SYS_TEST_TARGETS = warn_no_tests
 warn_no_tests:
 	@echo "  NOTE    x86sim testing is disabled (no i386 support)"
 endif
