@@ -3019,19 +3019,19 @@ VariableRenaming::ChildUses VariableRenaming::DefsAndUsesTraversal::evaluateSynt
                         {
                                 addDefForVarAtNode(currentVar, unaryOp);
 
-				//++ and -- always use their operand. Make sure it's part of the uses
-				if (find(uses.begin(), uses.end(), currentVar) == uses.end())
-				{
-					uses.push_back(currentVar);
-				}
-			}
-		}
-		//Some other ops also preserve the current var. We don't really distinguish between the pointer variable
-		//and the value to which it points
-		else if (isSgCastExp(unaryOp) || isSgPointerDerefExp(unaryOp) || isSgAddressOfOp(unaryOp))
-		{
-			currentVar = attrs[0].getCurrentVar();
-		}
+                                //++ and -- always use their operand. Make sure it's part of the uses
+                                if (find(uses.begin(), uses.end(), currentVar) == uses.end())
+                                {
+                                        uses.push_back(currentVar);
+                                }
+                        }
+                }
+                //Some other ops also preserve the current var. We don't really distinguish between the pointer variable
+                //and the value to which it points
+                else if (isSgCastExp(unaryOp) || isSgPointerDerefExp(unaryOp) || isSgAddressOfOp(unaryOp))
+                {
+                        currentVar = attrs[0].getCurrentVar();
+                }
 
                 //Set all the uses as being used here.
                 addUsesToNode(unaryOp, uses);
@@ -3060,9 +3060,9 @@ VariableRenaming::ChildUses VariableRenaming::DefsAndUsesTraversal::evaluateSynt
                 //Set all the uses as being used here.
                 addUsesToNode(node, uses);
 
-		//We don't propagate the variables here up the tree.
-		return ChildUses(uses, NULL);
-	}
+                //We don't propagate the variables here up the tree.
+                return ChildUses(uses, NULL);
+        }
 }
 
 /** Mark all the uses as occurring at the specified node. */
