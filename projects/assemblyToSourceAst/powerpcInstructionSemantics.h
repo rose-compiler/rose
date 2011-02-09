@@ -674,7 +674,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            break;
          }
 
-      case powerpc_si:
+      case powerpc_addic:
          {
            ROSE_ASSERT(operands.size() == 3);
           Word(32) RA = read32(operands[1]);
