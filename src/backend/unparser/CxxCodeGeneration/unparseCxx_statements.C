@@ -4525,9 +4525,9 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           SgInitializedNamePtrList::iterator p = enum_stmt->get_enumerators().begin();
           SgInitializedNamePtrList::iterator p_last = enum_stmt->get_enumerators().end();
           
-		  //Guard against decrementing an invalid iterator
-		  if (p != p_last)
-			p_last--;
+                  //Guard against decrementing an invalid iterator
+                  if (p != p_last)
+                        p_last--;
           for (; p!=enum_stmt->get_enumerators().end(); p++)
           {
             // Liao, 5/14/2009

@@ -8075,7 +8075,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                          if (*k == NULL)
                             {
                               comments->erase(k);
-							  break;
+                                                          break;
                             }
                              k++;
                        }
