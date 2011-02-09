@@ -6,7 +6,11 @@ Required software to build ROSE: Please install them first.
 * git: if you want to get ROSE via our git repository
 * wget: required to download EDG binaries hosted at rosecompiler.org
 * boost 1.36 or higher version
-
+* gnu libtool 2.2.4: the default libtool is incompatible with ROSE. 
+   Please install gnu libtool ( build from its source, version 2.2.4 is recommended) 
+   to another path (/path-to/glibtool-2.2.4/)
+   and export the gnu libtool's path to be ahead of the default /usr/bin : 
+   e.g. export PATH =/path-to/glibtool-2.2.4/bin:$PATH
 
 Environment settings:
 edit your .profile and 
