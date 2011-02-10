@@ -121,10 +121,10 @@ libtoolize_name=
 #    # See README.OSX
 #    libtoolize_name=/Users/dquinlan/local/libtool-install/bin/libtoolize
 # Liao 2/9/2011. Try to find glibtoolize first
-if [[ -n "$(type glibtoolize)" ]]; then
-    libtoolize_name=$(which glibtoolize)
-elif [[ -n "$(type libtoolize)" ]]; then
+if [[ -n "$(type libtoolize)" ]]; then
     libtoolize_name=$(which libtoolize)
+elif [[ -n "$(type glibtoolize)" ]]; then
+    libtoolize_name=$(which glibtoolize)
 else
     # If the user is running build then libtool should be available.
     echo "$0: neither libtoolize nor glibtoolize were found in the user's path." 2>&1
