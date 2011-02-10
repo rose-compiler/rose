@@ -11,6 +11,8 @@ Required software to build ROSE: Please install them first.
    to another path (/path-to/glibtool-2.2.4/)
    and export the gnu libtool's path to be ahead of the default /usr/bin : 
    e.g. export PATH =/path-to/glibtool-2.2.4/bin:$PATH
+* Ghostscript (9.00 works for us. Other versions should also be fine).
+  We need ps2pdf, which is shipped as part of it.
 
 Environment settings:
 edit your .profile and 

@@ -111,7 +111,10 @@ check-local: $(TEST_INPUTS)
 	./coreTest -interp:expectedReturnValue 20 $(srcdir)/testInput/core/constructors.C
 	./coreTest -interp:expectedReturnValue 59 $(srcdir)/testInput/core/arrays.C
 	./coreTest -interp:expectedReturnValue 42 $(srcdir)/testInput/core/globals.c
+#Liao 2/9/2011. Mac OS X 10.6: builtin functions have no definition.     
+if !OS_MACOSX
 	./coreTest -interp:expectedReturnStr $$'\xb4\xc3\x03\x45\x04\x5f\x6c\x35\x36\xef\x43\x59\xef\xfc\x34\xd8' $(srcdir)/testInput/md5.c
+endif	
 	./coreTest -interp:expectedReturnValue 4 $(srcdir)/testInput/core/nestedUnion.c
 	./coreTest -interp:expectUndefinedReturnValue $(srcdir)/testInput/core/anonUnionStruct.c
 	./coreTest -interp:expectedReturnValue 42 $(srcdir)/testInput/core/anonUnionCtor.C
