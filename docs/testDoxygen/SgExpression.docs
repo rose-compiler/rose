@@ -97,7 +97,7 @@ is not a part of the user interface and users should call get_type() instead.
 As a design point IPR has an empty expression, not an empty statement. And empty statement can 
 be built as an expression statement with an empty expression (which IPR does have).
 We should consider having such an empty expression.  Currently we have and
-expression statment with a null pointer (none too elegant). Sage III now has both a 
+expression statement with a null pointer (none too elegant). Sage III now has both a 
 SgNullStatement and a SgNullExpression.
 
 \todo Consider placing the VARARGS expression nodes into a common base class
