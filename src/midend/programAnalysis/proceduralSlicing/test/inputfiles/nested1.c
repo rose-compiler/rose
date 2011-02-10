@@ -20,18 +20,18 @@ int main(){
     for(j=1; j<=c; j++){
       a=5;
       while(i==a){
-	b=c;
-	c = j+4;
-	if(j==c && istrue){
-	  f=c;
-	  e--;	
-	  break;
-	}
-	else{
-	  i++;
-	  b--;
-	  a++;
-	}
+        b=c;
+        c = j+4;
+        if(j==c && istrue){
+          f=c;
+          e--;  
+          break;
+        }
+        else{
+          i++;
+          b--;
+          a++;
+        }
       }
     }
     b-=a; 

@@ -40,8 +40,8 @@ void DominanceFrontier::_buildFrontier() {
       int runnerID = runner->getID(cfgDir);
       int currID = currNode->getID(cfgDir);
       while (runnerID != _dt->getDom(currID)) {
-	_domFrontier[runnerID].insert(currID);
-	runnerID = _dt->getDom(runnerID);
+        _domFrontier[runnerID].insert(currID);
+        runnerID = _dt->getDom(runnerID);
       }
     }
   }

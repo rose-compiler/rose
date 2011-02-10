@@ -1,4 +1,21 @@
-Mac OS X note (10/22/2010):
+**********************************************************************
+Mac OS X note (2/2/2011):
+
+Required software to build ROSE: Please install them first.
+* iOS SDK: with XCode package . This gives you gcc/g++/gmake etc.
+* git: if you want to get ROSE via our git repository
+* wget: required to download EDG binaries hosted at rosecompiler.org
+* boost 1.36 or higher version
+* gnu libtool 2.2.4: the default libtool is incompatible with ROSE. 
+   Please install gnu libtool ( build from its source, version 2.2.4 is recommended) 
+   to another path (/path-to/glibtool-2.2.4/)
+   and export the gnu libtool's path to be ahead of the default /usr/bin : 
+   e.g. export PATH =/path-to/glibtool-2.2.4/bin:$PATH
+* Ghostscript (9.00 works for us. Other versions should also be fine).
+  We need ps2pdf, which is shipped as part of it.
+
+Environment settings:
+edit your .profile and 
 
 On rose-hudson-osx-2 (use this to get access to wget):
    export PATH=$PATH:/export/tmp.hudson-rose/opt/wget-1.11.4-inst/bin/

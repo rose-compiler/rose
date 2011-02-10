@@ -370,9 +370,9 @@ class SelectSlice
   SymbolicVal GetBlockSize() 
    { 
       if (anal != 0 && block > 1) 
-	  return anal->GetBlockSize(index);
+          return anal->GetBlockSize(index);
        else
-	  return 1; 
+          return 1; 
    }
 } ;
 

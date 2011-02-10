@@ -49,7 +49,7 @@ inquote          \\\"
                   return STRING;
                 }
 
-[\n]		{ yylineno++;}
+[\n]            { yylineno++;}
 .               ;
 
 %%

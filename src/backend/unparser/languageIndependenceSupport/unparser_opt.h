@@ -17,7 +17,7 @@
  *  debug_opt - debugging information to standard output
  *  class_opt - "class" in front of function parameters
  *  forced_transformation_format - controls whether or not to use file information
- *				   when formatting 
+ *                                 when formatting 
 !*/
 #include <stdio.h>
 

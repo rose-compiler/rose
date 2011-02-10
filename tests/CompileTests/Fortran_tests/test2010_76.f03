@@ -1,5 +1,5 @@
 
-module mpi_f08_types
+module mpi_f08_types_10_76
 
    use, intrinsic :: ISO_C_BINDING
 
@@ -27,4 +27,4 @@ module mpi_f08_types
       TYPE ( CFI_dim_t ) , DIMENSION(CFI_MAX_RANK) :: dim
    END TYPE CFI_cdesc_t
 
-end module mpi_f08_types
+end module mpi_f08_types_10_76

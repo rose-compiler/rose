@@ -120,7 +120,7 @@ class DefUseAnalysis : public DFAnalysis, Support {
   std::map< SgNode* , multitype  > getDefMap() { return table;}
   std::map< SgNode* , multitype  > getUseMap() { return usetable;}
   void setMaps(std::map< SgNode* , multitype  > def,
-	  std::map< SgNode* , multitype > use) {
+          std::map< SgNode* , multitype > use) {
     table = def;
     usetable = use;
   }

@@ -938,7 +938,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
        // This define is copied from OFP actionEnum.h This needs to be better handled later (using a proper enum type).
 #define IntentSpecBase 600
 #ifndef _MSC_VER
-			// tps (02/02/2010) : error C2513: 'const int' : no variable declared before '='
+                        // tps (02/02/2010) : error C2513: 'const int' : no variable declared before '='
           const int IN    = IntentSpecBase+0;
           const int OUT   = IntentSpecBase+1;
           const int INOUT = IntentSpecBase+2;
@@ -1946,7 +1946,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
         {
           inClass = true;
           inCname = cdefn->get_declaration()->get_name();
-          if (cdefn->get_declaration()->get_class_type()	== SgClassDeclaration::e_class)
+          if (cdefn->get_declaration()->get_class_type()        == SgClassDeclaration::e_class)
                ninfo.set_CheckAccess();
         }
 
@@ -3121,7 +3121,7 @@ FortranCodeGeneration_locatedNode::unparseReturnStmt(SgStatement* stmt, SgUnpars
   // if (altret != NULL)
      if (isSgNullExpression(altret) == NULL)
         {
-          ROSE_ASSERT(isSgValueExp(altret));
+       // ROSE_ASSERT(isSgValueExp(altret));
           curprint(" ");
           unparseExpression(altret, info);
         }
@@ -3862,25 +3862,25 @@ FortranCodeGeneration_locatedNode::unparseAttachedPreprocessingInfo(SgStatement*
     ROSE_ASSERT ((*i) != NULL);
     ROSE_ASSERT ((*i)->getTypeOfDirective()  != PreprocessingInfo::CpreprocessorUnknownDeclaration);
     ROSE_ASSERT ((*i)->getRelativePosition() == PreprocessingInfo::before || 
-		 (*i)->getRelativePosition() == PreprocessingInfo::after);
+                 (*i)->getRelativePosition() == PreprocessingInfo::after);
     
     // Check and see if the statement should be printed.
     if ((*i)->getRelativePosition() == whereToUnparse) {
       unp->cur.format(stmt, info, FORMAT_BEFORE_DIRECTIVE);
       
       switch ((*i)->getTypeOfDirective()) {
-	// Comments don't have to be further commented
+        // Comments don't have to be further commented
       case PreprocessingInfo::C_StyleComment:
       case PreprocessingInfo::CplusplusStyleComment:
-	if ( !info.SkipComments() ) {
-	  curprint("! ");
+        if ( !info.SkipComments() ) {
+          curprint("! ");
      curprint((*i)->getString());
-	}
-	break;
-	
+        }
+        break;
+        
       default:
-	printf ("Error: FortranCodeGeneration_locatedNode::unparseAttachedPreprocessingInfo(): default switch reached\n");
-	ROSE_ABORT();
+        printf ("Error: FortranCodeGeneration_locatedNode::unparseAttachedPreprocessingInfo(): default switch reached\n");
+        ROSE_ABORT();
       }
       unp->cur.format(stmt, info, FORMAT_AFTER_DIRECTIVE);      
     }
@@ -3908,14 +3908,14 @@ FortranCodeGeneration_locatedNode::genPUAutomaticStmts(SgStatement* stmt, SgUnpa
 
 void
 FortranCodeGeneration_locatedNode::unparseFuncArgs(SgInitializedNamePtrList* args, 
-			      SgUnparse_Info& info)
+                              SgUnparse_Info& info)
 {
   unparseInitNamePtrList(args, info);
 }
 
 void
 FortranCodeGeneration_locatedNode::unparseInitNamePtrList(SgInitializedNamePtrList* args, 
-				     SgUnparse_Info& info)
+                                     SgUnparse_Info& info)
 {
   SgInitializedNamePtrList::iterator it = args->begin();
   while (it != args->end()) {
@@ -4283,20 +4283,20 @@ FortranCodeGeneration_locatedNode::printAccessModifier(SgDeclarationStatement * 
     bool flag = false;
     if (info.isPrivateAccess()) {
       if (!decl_stmt->get_declarationModifier().get_accessModifier().isPrivate())
-	flag = true;
+        flag = true;
     }
     else {
       if (info.isProtectedAccess()) {
-	if (!decl_stmt->get_declarationModifier().get_accessModifier().isProtected())
-	  flag = true;
+        if (!decl_stmt->get_declarationModifier().get_accessModifier().isProtected())
+          flag = true;
       }
       else {
-	if (info.isPublicAccess()) {
-	  if (!decl_stmt->get_declarationModifier().get_accessModifier().isPublic())
-	    flag = true;
-	}
-	else
-	  flag = true;
+        if (info.isPublicAccess()) {
+          if (!decl_stmt->get_declarationModifier().get_accessModifier().isPublic())
+            flag = true;
+        }
+        else
+          flag = true;
       }
     }
     
@@ -4305,23 +4305,23 @@ FortranCodeGeneration_locatedNode::printAccessModifier(SgDeclarationStatement * 
     if (decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()) {
       info.set_isPrivateAccess();
       if (flag) {
-	curprint("private: ");
+        curprint("private: ");
       }
     }
     else {
       if (decl_stmt->get_declarationModifier().get_accessModifier().isProtected()) {
-	info.set_isProtectedAccess();
-	if (flag) {
-	  curprint("protected: ");
-	}
+        info.set_isProtectedAccess();
+        if (flag) {
+          curprint("protected: ");
+        }
       }
       else {
-	/* default, always print Public */
-	ROSE_ASSERT (decl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true);
-	info.set_isPublicAccess();
-	if (flag) {
-	  curprint("public: ");
-	}
+        /* default, always print Public */
+        ROSE_ASSERT (decl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true);
+        info.set_isPublicAccess();
+        if (flag) {
+          curprint("public: ");
+        }
       }
     }
   }

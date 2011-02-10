@@ -15,13 +15,13 @@
 
 class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
   void getCFGNodesForFunction(std::set<SgGraphNode*>& visited_f,
-			      std::set<std::string>& visited_names,
-			      SgGraphNode* next_n, std::string nodeName);
+                              std::set<std::string>& visited_names,
+                              SgGraphNode* next_n, std::string nodeName);
 
  public:
 
   RoseBin_ControlFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract* ,
-			      bool printedges,GraphAlgorithms* algo):
+                              bool printedges,GraphAlgorithms* algo):
   RoseBin_FlowAnalysis(global,algo) {
     typeNode="CFG";
     typeEdge="CFG-E";
@@ -31,7 +31,7 @@ class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
   }
   /*
   RoseBin_ControlFlowAnalysis(SgAsmNode* global, bool forward, RoseFile* ,
-			      bool printedges, GraphAlgorithms* algo):
+                              bool printedges, GraphAlgorithms* algo):
       RoseBin_FlowAnalysis(global, algo) {
     typeNode="CFG";
     typeEdge="CFG-E";
@@ -54,7 +54,7 @@ class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
   }
 
   //void checkControlFlow(SgAsmInstruction* binInst, int functionSize, int countDown,
-  //			std::string& nameOfFunction, int func_nr);
+  //                    std::string& nameOfFunction, int func_nr);
 
   // visit the binary AST
   //void visit(SgNode* node) ;

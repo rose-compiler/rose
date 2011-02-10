@@ -45,7 +45,7 @@ public:
 
 #ifdef __PROCLOCATION
   virtual bool test(procLocation * where,
-		    propertyAnalyzer * property_analyzer) =0;
+                    propertyAnalyzer * property_analyzer) =0;
 #endif
   /** @brief Compute the next state
    *
@@ -64,9 +64,9 @@ public:
 
 #ifdef __PROCLOCATION
   virtual void apply_next(procLocation * where,
-			  propertyAnalyzer * property_analyzer,
-			  ruleAnn * rule,
-			  memoryblock_set & changes);
+                          propertyAnalyzer * property_analyzer,
+                          ruleAnn * rule,
+                          memoryblock_set & changes);
 #endif
 
   /** @brief Lookup method
@@ -76,8 +76,8 @@ public:
    *  in the expressions. */
 
   virtual void lookup(propertyAnn * default_property,
-		      procedureAnn * procedure,
-		      Annotations * annotations) =0;
+                      procedureAnn * procedure,
+                      Annotations * annotations) =0;
 
   /** @brief Report method
    *
@@ -131,20 +131,20 @@ public:
    */
 
   connectiveExprAnn(Broadway::Operator op,
-		    exprAnn * lhs,
-		    exprAnn * rhs,
-		    int line);
+                    exprAnn * lhs,
+                    exprAnn * rhs,
+                    int line);
 
   inline exprAnn * lhs() const { return _lhs; }
   inline exprAnn * rhs() const { return _rhs; }
 
 #ifdef __PROCLOCATION
   virtual bool test(procLocation * where,
-		    propertyAnalyzer * property_analyzer);
+                    propertyAnalyzer * property_analyzer);
 #endif
   virtual void lookup(propertyAnn * default_property,
-		      procedureAnn * procedure,
-		      Annotations * annotations);
+                      procedureAnn * procedure,
+                      Annotations * annotations);
 
 #ifdef __PROCLOCATION
   virtual void report(std::ostream & out, bool is_error, procLocation * where);
@@ -276,11 +276,11 @@ public:
   virtual ~enumPropertyExprAnn() {};
 
   enumPropertyExprAnn(Broadway::FlowSensitivity flow_sensitivity,
-		      const parserID * property,
-		      const parserID * lhs,
-		      Broadway::Operator op,
-		      const parserID * rhs,
-		      int line);
+                      const parserID * property,
+                      const parserID * lhs,
+                      Broadway::Operator op,
+                      const parserID * rhs,
+                      int line);
 
   /** @brief Is RHS a property value?
    *
@@ -291,7 +291,7 @@ public:
 
 #ifdef __PROCLOCATION
   virtual bool test(procLocation * where,
-		    propertyAnalyzer * property_analyzer);
+                    propertyAnalyzer * property_analyzer);
 #endif
 
 #ifdef __PROCLOCATION
@@ -300,13 +300,13 @@ public:
 
 #ifdef __PROCLOCATION
   virtual void apply_next(procLocation * where,
-			  propertyAnalyzer * property_analyzer,
-			  ruleAnn * rule,
-			  memoryblock_set & changes);
+                          propertyAnalyzer * property_analyzer,
+                          ruleAnn * rule,
+                          memoryblock_set & changes);
 #endif
   virtual void lookup(propertyAnn * default_property,
-		      procedureAnn * procedure,
-		      Annotations * annotations);
+                      procedureAnn * procedure,
+                      Annotations * annotations);
 
 #ifdef __PROCLOCATION
   virtual void report(std::ostream & out, bool is_error, procLocation * where);
@@ -385,14 +385,14 @@ public:
 
   setPropertyExprAnn(Broadway::FlowSensitivity flow_sensitivity,
                      const parserID * setProperty,
-		     const parserID * lhs,
-		     Broadway::Operator op,
-		     const parserID * rhs,
-		     int line);
+                     const parserID * lhs,
+                     Broadway::Operator op,
+                     const parserID * rhs,
+                     int line);
 
 #ifdef __PROCLOCATION
   virtual bool test(procLocation * where,
-		    propertyAnalyzer * property_analyzer);
+                    propertyAnalyzer * property_analyzer);
 #endif
 
 #ifdef __PROCLOCATION
@@ -401,14 +401,14 @@ public:
 
 #ifdef __PROCLOCATION
   virtual void apply_next(procLocation * where,
-			  propertyAnalyzer * property_analyzer,
-			  ruleAnn * rule,
-			  memoryblock_set & changes);
+                          propertyAnalyzer * property_analyzer,
+                          ruleAnn * rule,
+                          memoryblock_set & changes);
 #endif
 
   virtual void lookup(propertyAnn * default_property,
-		      procedureAnn * procedure,
-		      Annotations * annotations);
+                      procedureAnn * procedure,
+                      Annotations * annotations);
 
 #ifdef __PROCLOCATION
   virtual void report(std::ostream & out, bool is_error, procLocation * where);
@@ -495,26 +495,26 @@ public:
 #ifdef __EXPRNODE
   numericExprAnn(const parserID * lhs,
                  exprNode * expr,
-		 int line);
+                 int line);
 #endif
 
 #ifdef __PROCLOCATION
   virtual bool test(procLocation * where,
-		    propertyAnalyzer * property_analyzer);
+                    propertyAnalyzer * property_analyzer);
 #endif
 
 #ifdef __PROCLOCATION
   virtual void compute_next(procLocation * where, ruleAnn * rule);
 
   virtual void apply_next(procLocation * where,
-			  propertyAnalyzer * property_analyzer,
-			  ruleAnn * rule,
-			  memoryblock_set & changes);
+                          propertyAnalyzer * property_analyzer,
+                          ruleAnn * rule,
+                          memoryblock_set & changes);
 #endif
 
   virtual void lookup(propertyAnn * default_property,
-		      procedureAnn * procedure,
-		      Annotations * annotations);
+                      procedureAnn * procedure,
+                      Annotations * annotations);
 
 #ifdef __PROCLOCATION
   virtual void report(std::ostream & out, bool is_error, procLocation * where);
@@ -567,15 +567,15 @@ public:
 
   pointerExprAnn(Broadway::Operator op,
                  const parserID * lhs,
-		 const parserID * rhs);
+                 const parserID * rhs);
 
 #ifdef __PROCLOCATION
   virtual bool test(procLocation * where,
-		    propertyAnalyzer * property_analyzer);
+                    propertyAnalyzer * property_analyzer);
 #endif
   virtual void lookup(propertyAnn * default_property,
-		      procedureAnn * procedure,
-		      Annotations * annotations);
+                      procedureAnn * procedure,
+                      Annotations * annotations);
 
 #ifdef __PROCLOCATION
   virtual void report(std::ostream & out, bool is_error, procLocation * where);
@@ -620,7 +620,7 @@ public:
   inline int line() const { return _line; }
 
   void lookup(procedureAnn * procedure,
-	      Annotations * annotations);
+              Annotations * annotations);
 
   /** @brief Eval function
    *

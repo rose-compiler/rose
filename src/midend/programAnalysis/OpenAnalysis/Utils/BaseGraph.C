@@ -101,9 +101,9 @@ BaseGraph::DFSIterator::DFSIterator (BaseGraph& g)
       // reset all the DFS succ links and call the recursive routine to re-create them
       std::set<Node*>::iterator ni = g.node_set.begin();
       while (ni != g.node_set.end()) {
-	Node* n = *ni;
-	n->dfs_succ = 0;
-	++ni;
+        Node* n = *ni;
+        n->dfs_succ = 0;
+        ++ni;
       }
       g.create_DFS_links(g.root_node);
       g.DFS_needed = false;
@@ -127,9 +127,9 @@ BaseGraph::BFSIterator::BFSIterator (BaseGraph& g)
       // reset all the BFS succ links and call the recursive routine to re-create them
       std::set<Node*>::iterator ni = g.node_set.begin();
       while (ni != g.node_set.end()) {
-	Node* n = *ni;
-	n->bfs_succ = 0;
-	++ni;
+        Node* n = *ni;
+        n->bfs_succ = 0;
+        ++ni;
       }
       g.create_BFS_links(g.root_node);
       g.BFS_needed = false;
@@ -146,7 +146,7 @@ void
 BaseGraph::add (BaseGraph::Edge* e)
   throw (BaseGraph::DuplicateEdge, BaseGraph::EdgeInUse, BaseGraph::EmptyEdge,
          /* indirect: from BaseGraph::add(BaseGraph::Node) */
-	 BaseGraph::DuplicateNode, BaseGraph::NodeInUse, BaseGraph::EmptyNode)
+         BaseGraph::DuplicateNode, BaseGraph::NodeInUse, BaseGraph::EmptyNode)
 
 {
   if (e == 0)

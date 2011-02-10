@@ -23,7 +23,6 @@ SgAsmGenericFile::ctor()
     ROSE_ASSERT(p_holes == NULL);
     ROSE_ASSERT(p_truncate_zeros == false);
 
-    // tps (02/01/2010) : This assert fails on a 32bit machine :   GenericFile.C:23: void SgAsmGenericFile::ctor(): Assertion `p_headers == __null' failed.
     ROSE_ASSERT(p_headers == NULL);
     p_headers  = new SgAsmGenericHeaderList();
     ROSE_ASSERT(p_headers != NULL);
@@ -1311,10 +1310,19 @@ SgAsmGenericFile::reallocate()
 }
 
 /** Mirror image of parsing an executable file. The result (unless the AST has been modified) should be identical to the
- *  original file. */
+ *  original file.  If the file's neuter property is true, then rather than creating a binary file, the output will
+ *  contain a note indicating that the neuter property is set.  This is intended to prevent ASTs that represent malicious
+ *  binaries from accidently being used to create the binary. */
 void
 SgAsmGenericFile::unparse(std::ostream &f) const
 {
+    if (get_neuter()) {
+        f.seekp(0);
+        f <<"NOTE: ROSE is refusing to create a binary file for this AST.\n"
+          <<"      See SgAsmGenericFile::set_neuter() for details.\n";
+        return;
+    }
+
 #if 0
     /* This is only for debugging -- fill the file with something other than zero so we have a better chance of making sure
      * that all data is written back to the file, including things that are zero. */

@@ -1220,6 +1220,17 @@ else
    echo "ROSE might use wget to automatically download EDG binaries as required during the build ...";
    echo "***** wget WAS found *****";
 fi
+# Check for availability of ps2pdf, part of ghostscript (used for generating pdf files).
+AC_CHECK_TOOL(ROSE_PS2PDF_PATH, [ps2pdf], [no])
+AM_CONDITIONAL(ROSE_USE_PS2PDF, [test "$ROSE_PS2PDF_PATH" != "no"])
+if test "$ROSE_PS2PDF_PATH" = "no"; then
+   echo "Error: ps2pdf was NOT found "
+   echo "ROSE requires ps2pdf (part of ghostscript) to generate pdf files.";
+   exit 1;
+else
+   echo "***** ps2pdf WAS found *****";
+fi
+
 
 # Liao 12/18/2009, we switch to wget instead of curl
 # curl directs error messages to the output file,which is a very bad behavior.
@@ -1304,6 +1315,9 @@ AM_CONDITIONAL(ROSE_USE_TRACE_ANALYSIS, [test "x$trace_support" = xyes])
 
 # Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
 ROSE_SUPPORT_YICES
+
+# Call supporting macro to check for "--enable-i386" switch
+ROSE_SUPPORT_I386
 
 # Call supporting macro to internal Satisfiability (SAT) Solver
 ROSE_SUPPORT_SAT

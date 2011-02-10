@@ -226,7 +226,7 @@ class LoopTreeTraverse : public TreeTraverse<LoopTreeNode>
   void Reset() { cur = FirstNode(root, opt); last = LastNode(root,opt); }
   void Advance()
      { if (cur != 0 && cur != last)
-	 cur = NextNode(cur, opt);
+         cur = NextNode(cur, opt);
        else
          cur = 0;
      }
