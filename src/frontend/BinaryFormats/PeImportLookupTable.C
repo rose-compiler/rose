@@ -40,15 +40,25 @@ SgAsmPEImportLookupTable::parse(rose_rva_t rva, size_t idir_idx)
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(isec->get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
-    /* Read the Import Lookup (or Address) Table, an array of 32 or 64 bit values, the last of which is zero */
+    /* Read the Import Lookup (or Address) Table, an array of 32 or 64 bit values, the last of which is zero. If the RVA of the
+     * Lookup or Address Table is zero then there is no table and we just return the empty table.  If import table address is
+     * out of bounds then issue a warning and return the empty table. */
     if (rva.get_section()!=isec) {
-        rose_addr_t start_rva = isec->get_mapped_actual_va() - isec->get_base_va();
-        SgAsmPEImportSection::import_mesg("SgAsmPEImportSection::ctor: warning: %s rva is outside PE Import Table\n"
-                                          "        Import Directory Entry #%zu\n"
-                                          "        %s rva is %s\n"
-                                          "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
-                                          tname.c_str(), idir_idx, tname.c_str(), rva.to_string().c_str(),
-                                          start_rva, start_rva+isec->get_mapped_size());
+        if (0==rva.get_rva()) {
+            //SgAsmPEImportSection::import_mesg("SgAsmPEImportLookupTable::parse: warning: no %s, rva is zero\n", tname.c_str());
+            return this;
+        } else {
+            rose_addr_t start_rva = isec->get_mapped_actual_va() - isec->get_base_va();
+            if (SgAsmPEImportSection::import_mesg("SgAsmPEImportLookupTable::parse: warning: %s rva is outside PE Import Table\n"
+                                                  "        Import Directory Entry #%zu\n"
+                                                  "        %s rva is %s\n"
+                                                  "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
+                                                  tname.c_str(), idir_idx, tname.c_str(), rva.to_string().c_str(),
+                                                  start_rva, start_rva+isec->get_mapped_size())) {
+                fprintf(stderr, "Memory map in effect at time of error:\n");
+                fhdr->get_loader_map()->dump(stderr, "    ");
+            }
+        }
     }
 
     for (size_t i=0; 1; i++) {
@@ -58,14 +68,16 @@ SgAsmPEImportLookupTable::parse(rose_rva_t rva, size_t idir_idx)
         try {
             isec->read_content(fhdr->get_loader_map(), rva.get_rva(), buf, fhdr->get_word_size());
         } catch (const MemoryMap::NotMapped &e) {
+            /* We can't read (part of) the entry, so we'll assume it's all zero (which terminates the table). */
             if (SgAsmPEImportSection::import_mesg("SgAsmPEImportSection::ctor: error: in PE Import Directory entry %zu: "
                                                   "%s entry %zu starting at RVA 0x%08"PRIx64
                                                   " contains unmapped virtual address 0x%08"PRIx64"\n",
                                                   idir_idx, tname.c_str(), i, rva.get_rva(), e.va) &&
                 e.map) {
-                    fprintf(stderr, "Memory map in effect at time of error:\n");
-                    e.map->dump(stderr, "    ");
+                fprintf(stderr, "Memory map in effect at time of error:\n");
+                e.map->dump(stderr, "    ");
             }
+            memset(buf, 0, sizeof buf);
         }
 
         if (4==fhdr->get_word_size()) {

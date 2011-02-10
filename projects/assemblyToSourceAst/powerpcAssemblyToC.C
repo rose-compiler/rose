@@ -397,6 +397,13 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
         isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function()) &&
         isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function())->get_symbol()->get_declaration() == systemCallSym->get_declaration());
   }
+
+    void undefinedInstruction(SgAsmPowerpcInstruction*) {
+        fprintf(stderr, "Bad instruction\n");
+        ROSE_ASSERT(false);
+        abort();
+    }
+
   virtual SgStatement* getWhileBody() const {return whileBody;}
   virtual SgBasicBlock* getSwitchBody() const {return switchBody;}
   virtual SgVariableSymbol* getIPSymbol() const {return ipSym;}
