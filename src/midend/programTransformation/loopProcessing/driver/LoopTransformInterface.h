@@ -18,7 +18,7 @@ class ArrayAbstractionInterface {
                                  const AstNodePtr& s, AstNodePtr* array = 0,
                                  AstInterface::AstNodeList* index = 0) = 0 ;
   //! Get the lower and upper bound of an array's dim'th dimension
-  // Return true if successful.				 
+  // Return true if successful.                          
   virtual bool GetArrayBound( AstInterface& fa,
                                  const AstNodePtr& array, 
                                  int dim, int &lb, int &ub) = 0;
@@ -85,7 +85,7 @@ class LoopTransformInterface
   bool IsMemoryAccess( const AstNodePtr& s)
    { return (arrayInfo != 0 && arrayInfo->IsArrayAccess(fa, s)) ||
             fa.IsMemoryAccess(s); }
-	    
+            
   bool IsLoop( const AstNodePtr& s, 
                        SymbolicVal* init = 0, SymbolicVal* cond=0,
                        SymbolicVal* incr =0, AstNodePtr* body=0);
@@ -97,7 +97,7 @@ class LoopTransformInterface
                                    AstInterface::AstNodeList* index = 0)  
    { return (arrayInfo != 0 && arrayInfo->IsArrayAccess(fa, s, array, index)) ||
             fa.IsArrayAccess(s, array, index); }
-  //! Create an array access, using arrayInfo by default, astInterface otherwise 	    
+  //! Create an array access, using arrayInfo by default, astInterface otherwise            
   virtual AstNodePtr CreateArrayAccess( const AstNodePtr& arr,
                                 AstInterface::AstNodeList& index) 
   { 

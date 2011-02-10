@@ -92,7 +92,7 @@ void OpenAnalysis::OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<N
             switch( e->getType()) {
             case CFG::TRUE_EDGE: t = CFGConfig::COND_TRUE; break;
             case CFG::FALSE_EDGE: t = CFGConfig::COND_FALSE; break;
-	    default: ROSE_ASSERT (!"Bad CFG edge case");
+            default: ROSE_ASSERT (!"Bad CFG edge case");
             } 
             Node *nn1 = nodeMap.Map(n1);
             ng.CreateEdge(nn, nn1,t); 

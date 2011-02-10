@@ -25,7 +25,7 @@ void SlicingInfo::visit(SgNode * node)
 
         if (pragma_name == sliceFunctionCalls)
         {
-						
+                                                
             _markFunction = true;
         }
         else if (pragma_name == sliceStatement)
@@ -34,30 +34,30 @@ void SlicingInfo::visit(SgNode * node)
         }
         // get the next line and mark the statement as` one of the slicing
         // target
-				if (_markStatement || _markFunction)
-				{
-					SgStatement *stmnt = dynamic_cast < SgStatement * >(isSgPragmaDeclaration(node));
+                                if (_markStatement || _markFunction)
+                                {
+                                        SgStatement *stmnt = dynamic_cast < SgStatement * >(isSgPragmaDeclaration(node));
 
-					if (stmnt == NULL)
-						cout << "error" << endl;
-					SgStatement *next = ROSE::getNextStatement(stmnt);
+                                        if (stmnt == NULL)
+                                                cout << "error" << endl;
+                                        SgStatement *next = ROSE::getNextStatement(stmnt);
 
-					if (next == NULL)
-						cout << "Next is NULL" << endl;
-						
-					else
-					{
-						// if the following statement is a loop or a if markthe controlexpression instead of the controlflow-stmt
+                                        if (next == NULL)
+                                                cout << "Next is NULL" << endl;
+                                                
+                                        else
+                                        {
+                                                // if the following statement is a loop or a if markthe controlexpression instead of the controlflow-stmt
                                                      if (isSgForStatement(next)) next=isSgForStatement(next)->get_test();
                                                 else if (isSgDoWhileStmt(next)) next=isSgDoWhileStmt(next)->get_condition ();
                                                 else if (isSgWhileStmt(next)) next=isSgWhileStmt(next)->get_condition();
-						else if (isSgIfStmt(next)) next = isSgIfStmt(next)->get_conditional();
-						
-							
-						targets.push_back(node);						
-						targets.push_back(next);
-					}
-				}
+                                                else if (isSgIfStmt(next)) next = isSgIfStmt(next)->get_conditional();
+                                                
+                                                        
+                                                targets.push_back(node);                                                
+                                                targets.push_back(next);
+                                        }
+                                }
         return;
     }
 

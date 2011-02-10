@@ -42,7 +42,7 @@ DepInfo DepInfoGenerator:: GetTopDepInfo()
 { 
   return DepInfo();
 }
-		    
+                    
 DepInfo DepInfoGenerator::GetBottomDepInfo(int nr, int nc, int commLevel  )
 {
   assert(commLevel <= nr && commLevel <= nc);
@@ -111,7 +111,7 @@ std::string DepType2String(DepType t)
   if (t&DEPTYPE_SCALAR) result += " SCALAR_DEP";
   if (t&DEPTYPE_BACKSCALAR) result += " SCALAR_BACK_DEP";
   if (t&DEPTYPE_IO) result += " IO_DEP";
-  if (t&DEPTYPE_DATA) result += " DATA_DEP";	
+  if (t&DEPTYPE_DATA) result += " DATA_DEP";    
   if (t&DEPTYPE_BACKCTRL) result += " BACKCTRL_DEP";
   
   if (t&DEPTYPE_TRANS) result += " TRANS_DEP";
@@ -209,7 +209,7 @@ bool DepInfo :: ClosureEntries()
     for (int j = 0; j < cols(); j++) {
       DepRel e1 = Entry(i,j);
       if (e1.Closure()) {
-	Entry(i,j) = e1;
+        Entry(i,j) = e1;
         mod = true;
       }
     }

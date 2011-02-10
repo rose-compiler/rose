@@ -127,7 +127,7 @@ bool OperatorSideEffectDescriptor::read( istream& in, const OperatorDeclaration&
   if (BaseClass::read(in, op)) {
     for (size_t i = 0; i < decl.num_of_params(); ++i) {
       if (contain_parameter(i))
-	++param_num;
+        ++param_num;
     }
     return true;
   }

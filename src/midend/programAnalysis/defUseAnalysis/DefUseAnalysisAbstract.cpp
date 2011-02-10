@@ -14,7 +14,7 @@ using namespace std;
  *  find element in vector
  *********************************************************/
 bool DefUseAnalysisAbstract::searchVector(vector <filteredCFGNodeType> done, 
-				    filteredCFGNodeType cfgNode) {
+                                    filteredCFGNodeType cfgNode) {
   bool found = false;
   for (vector<filteredCFGNodeType >::const_iterator i = done.begin(); i != done.end(); ++i) {
     filteredCFGNodeType node = *i;
@@ -31,7 +31,7 @@ bool DefUseAnalysisAbstract::searchVector(vector <filteredCFGNodeType> done,
  *  Search for the value and key in the multimap
  *********************************************************/
 bool DefUseAnalysisAbstract::isDoubleExactEntry(const multitype* multi, 
-					  SgInitializedName* name, SgNode* sgNode) {
+                                          SgInitializedName* name, SgNode* sgNode) {
   bool isCurrentValueContained=false;
   multitype::const_iterator i = multi->begin();    
   //SgNode* sgNodeMM = NULL;
@@ -94,7 +94,7 @@ bool DefUseAnalysisAbstract::checkElementsForEquality(const multitype* t1, const
       SgInitializedName* init2 = (*it2).first;
       SgNode* node2 = (*it2).second;
       if (init1==init2 && node1==node2)
-	identical=true;
+        identical=true;
     }
     if (identical==false)
       changed = true;

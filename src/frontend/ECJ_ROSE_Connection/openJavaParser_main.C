@@ -105,7 +105,7 @@ int openJavaParser_main(int argc, char **argv)
     assert(env_status == 0);
 #endif
 
-	 return status;
+         return status;
   }
 
 #if 0

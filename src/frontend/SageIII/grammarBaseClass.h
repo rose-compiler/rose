@@ -11,7 +11,7 @@ class ROSE_BaseGrammar
 
      public:
 
-	  ROSE_BaseGrammar ();
+          ROSE_BaseGrammar ();
 
        // Experimental interface
        // ROSE_BaseGrammar ( SgFile *file );

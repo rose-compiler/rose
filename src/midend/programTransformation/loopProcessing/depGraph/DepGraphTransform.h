@@ -15,7 +15,7 @@ inline DepDirection EdgeDir2DepDir( GraphAccess::EdgeDirection dir)
   case GraphAccess::BiEdge: return DEP_SRC_SINK;
   default: assert(false);
   } 
-	// tps (12/09/2009) : Removed warning : not all control paths return a value
+        // tps (12/09/2009) : Removed warning : not all control paths return a value
   assert(false);
   return DEP_SRC;
 }

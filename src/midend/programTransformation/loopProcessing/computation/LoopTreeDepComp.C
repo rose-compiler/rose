@@ -220,8 +220,8 @@ class BuildLoopDepGraphEdges : public AstTreeDepGraphBuildImpl
           GetDepInfoIteratorImpl( GraphAccessInterface::Edge* ge, DepType t) 
         { DepInfoEdge *e = static_cast<DepInfoEdge*>(ge);
           return SelectDepType(e->GetInfo(),t)? 
-	        DepInfoConstIterator(new SingleIterator<DepInfo>(e->GetInfo())) 
-	         : DepInfoConstIterator(); 
+                DepInfoConstIterator(new SingleIterator<DepInfo>(e->GetInfo())) 
+                 : DepInfoConstIterator(); 
         }
   virtual AstNodePtr GetNodeAst( GraphAccessInterface::Node *gn) 
         { 

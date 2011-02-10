@@ -357,7 +357,7 @@ private:
 
   annVariable * new_global(const std::string & varname,
                            bool is_external,
-			   bool is_io);
+                           bool is_io);
 
   /** @brief OLD add globals method
    *

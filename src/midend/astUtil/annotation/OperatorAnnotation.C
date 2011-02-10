@@ -60,7 +60,7 @@ static bool
 AliasAnnotAnal(AstInterface& fa, 
                OperatorAnnotCollection <OperatorAliasDescriptor>& aliasInfo,
                const AstNodePtr& fc, const AstNodePtr& result, 
-	       CollectObject< pair<AstNodePtr, int> >& collectalias)
+               CollectObject< pair<AstNodePtr, int> >& collectalias)
 {
   AstInterface::AstNodeList args;
   OperatorAliasDescriptor desc; 
@@ -77,11 +77,11 @@ AliasAnnotAnal(AstInterface& fa,
       string varname = *p2;
       AstNodePtr arg = paramMap.find(varname).get_ast();
       if (arg != AST_NULL) {
-	collectalias( pair<AstNodePtr, int>(arg, index));
+        collectalias( pair<AstNodePtr, int>(arg, index));
       }
       else {
-	AstNodePtr var = fa.CreateVarRef(varname);
-	collectalias( pair<AstNodePtr, int>(var, index));
+        AstNodePtr var = fa.CreateVarRef(varname);
+        collectalias( pair<AstNodePtr, int>(var, index));
       }
     }
   }

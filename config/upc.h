@@ -42,16 +42,31 @@ extern void upc_memget(void * restrict dst, shared const void * restrict src, si
 extern void upc_memput(shared void * restrict dst, const void * restrict src, size_t n);
 extern void upc_memset(shared void *dst, int c, size_t n);
 
-/** UPC 1.2 functions: added by Camille **/
+/** UPC 1.2 functions: added by Indranil **/
+/** this were defined as enums , so that thet do not get expanded in the preprocessor */
+/** When these get expanded, the reparesed code also has the expanded form which is   */
+/** not only less readable but also might be problem when the reparsed coded is       */
+/** compiled using a different compiler which might have a different implementation   */
+/** for the flags                                                                     */ 
+// Flags that are passed to upc_collective functions for synchronization
+typedef enum{
+    UPC_IN_NOSYNC   = 1,
+    UPC_IN_MYSYNC   = 2,
+    UPC_OUT_NOSYNC  = 4,
+    UPC_OUT_MYSYNC  = 8,
+    UPC_IN_ALLSYNC  = 16,
+    UPC_OUT_ALLSYNC = 32
+}upc_flag_t;
 
-#define UPC_IN_NOSYNC   1
-#define UPC_IN_MYSYNC   2
-#define UPC_IN_ALLSYNC  16
-#define UPC_OUT_NOSYNC	4
-#define UPC_OUT_MYSYNC	8
-#define UPC_OUT_ALLSYNC	32
-
-typedef int     upc_flag_t;
+/* Initial macro definitions of the above flags which were getting expanded */
+// #define UPC_IN_NOSYNC    1
+// #define UPC_IN_MYSYNC    2
+// #define UPC_IN_ALLSYNC  16
+// #define UPC_OUT_NOSYNC   4
+// #define UPC_OUT_MYSYNC   8
+// #define UPC_OUT_ALLSYNC 32
+// 
+// typedef int     upc_flag_t;
 
 #endif
 

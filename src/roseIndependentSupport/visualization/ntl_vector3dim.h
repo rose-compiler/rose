@@ -97,10 +97,10 @@ public:
   inline ntlVector3Dim<Scalar> operator/ (Scalar) const;
 
   // equality test operator
-  inline bool	   operator== (const ntlVector3Dim<Scalar>&) const;
+  inline bool      operator== (const ntlVector3Dim<Scalar>&) const;
   // inequality test operator
 
-  inline bool	   operator!= (const ntlVector3Dim<Scalar>&) const;
+  inline bool      operator!= (const ntlVector3Dim<Scalar>&) const;
 
   // scalar product
   inline Scalar operator|( const ntlVector3Dim<Scalar> &v ) const;
@@ -118,13 +118,13 @@ public:
   inline ntlVector3Dim<Scalar> operator^( const ntlVector3Dim<Scalar> &v ) const;
 
   // Projection normal to a vector
-  inline ntlVector3Dim<Scalar>	  getOrthogonalntlVector3Dim() const;
+  inline ntlVector3Dim<Scalar>    getOrthogonalntlVector3Dim() const;
   // Project into a plane
   inline const ntlVector3Dim<Scalar>& projectNormalTo(const ntlVector3Dim<Scalar> &v);
   // Reflect at normal
-  inline ntlVector3Dim<Scalar>	  getReflectedAt(const ntlVector3Dim<Scalar>& n) const;
+  inline ntlVector3Dim<Scalar>    getReflectedAt(const ntlVector3Dim<Scalar>& n) const;
   // Refract vector at normal with two refraction indices
-  inline ntlVector3Dim<Scalar>	  refractAt(const ntlVector3Dim<Scalar>& normal, double nt, double nair, int &refRefl) const;
+  inline ntlVector3Dim<Scalar>    refractAt(const ntlVector3Dim<Scalar>& normal, double nt, double nair, int &refRefl) const;
   
   // minimize
   inline const ntlVector3Dim<Scalar> &minimize(const ntlVector3Dim<Scalar> &);
@@ -142,11 +142,11 @@ public:
   // Get minimal vector length
   inline static Scalar getEpsilon( );
 
-	//! Assume this vector is an RGB color, and convert it to HSV
-	inline void rgbToHsv( void );
+        //! Assume this vector is an RGB color, and convert it to HSV
+        inline void rgbToHsv( void );
 
-	//! Assume this vector is HSV and convert to RGB
-	inline void hsvToRgb( void );
+        //! Assume this vector is HSV and convert to RGB
+        inline void hsvToRgb( void );
 
 protected:
   
@@ -287,8 +287,8 @@ inline ntlVector3Dim<Scalar>
 ntlVector3Dim<Scalar>::operator^( const ntlVector3Dim<Scalar> &v ) const
 {
   return ntlVector3Dim<Scalar>(value[1]*v.value[2] - value[2]*v.value[1],
-			value[2]*v.value[0] - value[0]*v.value[2],
-			value[0]*v.value[1] - value[1]*v.value[0]);
+                        value[2]*v.value[0] - value[0]*v.value[2],
+                        value[0]*v.value[1] - value[1]*v.value[0]);
 }
 
 
@@ -485,8 +485,8 @@ inline ntlVector3Dim<Scalar>
 ntlVector3Dim<Scalar>::operator+( const ntlVector3Dim<Scalar> &v ) const
 {
   return ntlVector3Dim<Scalar>(value[0]+v.value[0],
-			value[1]+v.value[1],
-			value[2]+v.value[2]);
+                        value[1]+v.value[1],
+                        value[2]+v.value[2]);
 }
 
 
@@ -500,8 +500,8 @@ inline ntlVector3Dim<Scalar>
 ntlVector3Dim<Scalar>::operator+(Scalar s) const
 {
   return ntlVector3Dim<Scalar>(value[0]+s,
-			value[1]+s,
-			value[2]+s);
+                        value[1]+s,
+                        value[2]+s);
 }
 
 
@@ -515,8 +515,8 @@ inline ntlVector3Dim<Scalar>
 ntlVector3Dim<Scalar>::operator-( const ntlVector3Dim<Scalar> &v ) const
 {
   return ntlVector3Dim<Scalar>(value[0]-v.value[0],
-			value[1]-v.value[1],
-			value[2]-v.value[2]);
+                        value[1]-v.value[1],
+                        value[2]-v.value[2]);
 }
 
 
@@ -530,8 +530,8 @@ inline ntlVector3Dim<Scalar>
 ntlVector3Dim<Scalar>::operator-(Scalar s ) const
 {
   return ntlVector3Dim<Scalar>(value[0]-s,
-			value[1]-s,
-			value[2]-s);
+                        value[1]-s,
+                        value[2]-s);
 }
 
 
@@ -546,8 +546,8 @@ inline ntlVector3Dim<Scalar>
 ntlVector3Dim<Scalar>::operator*( const ntlVector3Dim<Scalar>& v) const
 {
   return ntlVector3Dim<Scalar>(value[0]*v.value[0],
-			value[1]*v.value[1],
-			value[2]*v.value[2]);
+                        value[1]*v.value[1],
+                        value[2]*v.value[2]);
 }
 
 
@@ -574,8 +574,8 @@ inline ntlVector3Dim<Scalar>
 ntlVector3Dim<Scalar>::operator/(const ntlVector3Dim<Scalar>& v) const
 {
   return ntlVector3Dim<Scalar>(value[0]/v.value[0],
-			value[1]/v.value[1],
-			value[2]/v.value[2]);
+                        value[1]/v.value[1],
+                        value[2]/v.value[2]);
 }
 
 
@@ -590,8 +590,8 @@ inline ntlVector3Dim<Scalar>
 ntlVector3Dim<Scalar>::operator/(Scalar s) const
 {
   return ntlVector3Dim<Scalar>(value[0]/s,
-			value[1]/s,
-			value[2]/s);
+                        value[1]/s,
+                        value[2]/s);
 }
 
 
@@ -608,8 +608,8 @@ inline bool
 ntlVector3Dim<Scalar>::operator== (const ntlVector3Dim<Scalar>& c) const
 {
   return (ABS(value[0]-c.value[0]) + 
-	  ABS(value[1]-c.value[1]) + 
-	  ABS(value[2]-c.value[2]) < VECTOR_EPSILON);
+          ABS(value[1]-c.value[1]) + 
+          ABS(value[2]-c.value[2]) < VECTOR_EPSILON);
 }
 
 
@@ -625,8 +625,8 @@ inline bool
 ntlVector3Dim<Scalar>::operator!= (const ntlVector3Dim<Scalar>& c) const
 {
   return (!(ABS(value[0]-c.value[0]) + 
-	    ABS(value[1]-c.value[1]) + 
-	    ABS(value[2]-c.value[2]) < VECTOR_EPSILON));
+            ABS(value[1]-c.value[1]) + 
+            ABS(value[2]-c.value[2]) < VECTOR_EPSILON));
 }
 
 
@@ -741,19 +741,19 @@ ntlVector3Dim<Scalar>::normalize()
   Scalar l = value[0]*value[0] + value[1]*value[1] + value[2]*value[2];  
   if (fabs(l-1.) < VECTOR_EPSILON*VECTOR_EPSILON) {
     norm = 1.;
-	} else if (l > VECTOR_EPSILON*VECTOR_EPSILON) {
+        } else if (l > VECTOR_EPSILON*VECTOR_EPSILON) {
     norm = sqrt(l);
     double fac = 1./norm;
     value[0] *= fac;
     value[1] *= fac;
     value[2] *= fac; 
-	} else {
+        } else {
     value[0]= value[1]= value[2]= 0;
     norm = 0.;
   }
   return (Scalar)norm;
 
-	// OLD
+        // OLD
   if (l < VECTOR_EPSILON*VECTOR_EPSILON)
   {
     value[0]= value[1]= value[2]= 0;
@@ -850,20 +850,20 @@ template<class Scalar>
 inline ntlVector3Dim<Scalar>
 ntlVector3Dim<Scalar>::refractAt(const ntlVector3Dim<Scalar>& normal, double nt, double nair, int &refRefl) const
 {
-	//double nair = mpGlob->getRefIndex();
-	//double nt = myRefIndex;
-	double eta = nair / nt;
-	double n = -((*this) | normal);
-	double t = 1.0 + eta*eta* (n*n-1.0);
-	if(t<0.0) {
-		// we have total reflection!
-		refRefl = 1;
-	} else {
-		// normal reflection
-		t = eta*n - sqrt(t);
-		return( (*this)*eta + normal*t );
-	}
-	return (*this);
+        //double nair = mpGlob->getRefIndex();
+        //double nt = myRefIndex;
+        double eta = nair / nt;
+        double n = -((*this) | normal);
+        double t = 1.0 + eta*eta* (n*n-1.0);
+        if(t<0.0) {
+                // we have total reflection!
+                refRefl = 1;
+        } else {
+                // normal reflection
+                t = eta*n - sqrt(t);
+                return( (*this)*eta + normal*t );
+        }
+        return (*this);
 }
 
 
@@ -875,8 +875,8 @@ inline ntlVector3Dim<Scalar>
 ntlVector3Dim<Scalar>::crossProd(const ntlVector3Dim<Scalar> &v) const
 {
   ntlVector3Dim cp( (value[1]*v[2] - value[2]*v[1]),
-		    (value[2]*v[0] - value[0]*v[2]),
-		    (value[0]*v[1] - value[1]*v[0]) );
+                    (value[2]*v[0] - value[0]*v[2]),
+                    (value[0]*v[1] - value[1]*v[0]) );
   return cp;
 }
 
@@ -936,38 +936,38 @@ template<class Scalar>
 inline void 
 ntlVector3Dim<Scalar>::rgbToHsv( void )
 {
-	Scalar h=0,s=0,v=0;
-	Scalar maxrgb, minrgb, delta;
-	// convert to hsv...
-	maxrgb = value[0];
-	int maxindex = 1;
-	if(value[2] > maxrgb){ maxrgb = value[2]; maxindex = 2; }
-	if(value[1] > maxrgb){ maxrgb = value[1]; maxindex = 3; }
-	minrgb = value[0];
-	if(value[2] < minrgb) minrgb = value[2];
-	if(value[1] < minrgb) minrgb = value[1];
+        Scalar h=0,s=0,v=0;
+        Scalar maxrgb, minrgb, delta;
+        // convert to hsv...
+        maxrgb = value[0];
+        int maxindex = 1;
+        if(value[2] > maxrgb){ maxrgb = value[2]; maxindex = 2; }
+        if(value[1] > maxrgb){ maxrgb = value[1]; maxindex = 3; }
+        minrgb = value[0];
+        if(value[2] < minrgb) minrgb = value[2];
+        if(value[1] < minrgb) minrgb = value[1];
 
-	v = maxrgb;
-	delta = maxrgb-minrgb;
+        v = maxrgb;
+        delta = maxrgb-minrgb;
 
-	if(maxrgb > 0) s = delta/maxrgb;
-	else s = 0;
+        if(maxrgb > 0) s = delta/maxrgb;
+        else s = 0;
 
-	h = 0;
-	if(s > 0) {
-		if(maxindex == 1) {
-			h = ((value[1]-value[2])/delta)  + 0.0; }
-		if(maxindex == 2) {
-			h = ((value[2]-value[0])/delta)  + 2.0; }
-		if(maxindex == 3) {
-			h = ((value[0]-value[1])/delta)  + 4.0; }
-		h *= 60.0;
-		if(h < 0.0) h += 360.0;
-	}
+        h = 0;
+        if(s > 0) {
+                if(maxindex == 1) {
+                        h = ((value[1]-value[2])/delta)  + 0.0; }
+                if(maxindex == 2) {
+                        h = ((value[2]-value[0])/delta)  + 2.0; }
+                if(maxindex == 3) {
+                        h = ((value[0]-value[1])/delta)  + 4.0; }
+                h *= 60.0;
+                if(h < 0.0) h += 360.0;
+        }
 
-	value[0] = h;
-	value[1] = s;
-	value[2] = v;
+        value[0] = h;
+        value[1] = s;
+        value[2] = v;
 }
 
 /*************************************************************************
@@ -977,33 +977,33 @@ template<class Scalar>
 inline void 
 ntlVector3Dim<Scalar>::hsvToRgb( void )
 {
-	Scalar h = value[0], s = value[1], v = value[2];
-	Scalar r=0,g=0,b=0;
-	Scalar p,q,t, fracth;
-	int floorh;
-	// ...and back to rgb
-	if(s == 0) {
-		r = g = b = v; }
-	else {
-		h /= 60.0;
-		floorh = (int)h;
-		fracth = h - floorh;
-		p = v * (1.0 - s);
-		q = v * (1.0 - (s * fracth));
-		t = v * (1.0 - (s * (1.0 - fracth)));
-		switch (floorh) {
-		case 0: r = v; g = t; b = p; break;
-		case 1: r = q; g = v; b = p; break;
-		case 2: r = p; g = v; b = t; break;
-		case 3: r = p; g = q; b = v; break;
-		case 4: r = t; g = p; b = v; break;
-		case 5: r = v; g = p; b = q; break;
-		}
-	}
+        Scalar h = value[0], s = value[1], v = value[2];
+        Scalar r=0,g=0,b=0;
+        Scalar p,q,t, fracth;
+        int floorh;
+        // ...and back to rgb
+        if(s == 0) {
+                r = g = b = v; }
+        else {
+                h /= 60.0;
+                floorh = (int)h;
+                fracth = h - floorh;
+                p = v * (1.0 - s);
+                q = v * (1.0 - (s * fracth));
+                t = v * (1.0 - (s * (1.0 - fracth)));
+                switch (floorh) {
+                case 0: r = v; g = t; b = p; break;
+                case 1: r = q; g = v; b = p; break;
+                case 2: r = p; g = v; b = t; break;
+                case 3: r = p; g = q; b = v; break;
+                case 4: r = t; g = p; b = v; break;
+                case 5: r = v; g = p; b = q; break;
+                }
+        }
 
-	value[0] = r;
-	value[1] = g;
-	value[2] = b;
+        value[0] = r;
+        value[1] = g;
+        value[2] = b;
 }
 
 

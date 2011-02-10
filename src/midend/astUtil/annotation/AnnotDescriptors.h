@@ -68,7 +68,7 @@ class ContainerDescriptor : public Container
    void Dump() const  { write(std::cerr); }
    std::string ToString() const { std::stringstream out; write(out); return out.str(); }
    bool read( std::istream& in)
-	{ 
+        { 
          return ReadContainer<Container, Member,sep, left, right>::read(*this, in); 
         }
 };
@@ -92,14 +92,14 @@ class SetDescriptor : public std::set<Member>
            }
            return false;
         }
-	void write( std::ostream& out) const
-	     { WriteContainer<std::set<Member>, sep, left, right>::write(*this, out); }
+        void write( std::ostream& out) const
+             { WriteContainer<std::set<Member>, sep, left, right>::write(*this, out); }
         void Dump() const  { write(std::cerr); }
         std::string ToString() const { std::stringstream out; write(out); return out.str(); }
-	bool read( std::istream& in)
-	    { 
-	      return ReadContainer<SetDescriptor<Member,sep,left,right>, Member,
-		                  sep, left, right>::read(*this, in); 
+        bool read( std::istream& in)
+            { 
+              return ReadContainer<SetDescriptor<Member,sep,left,right>, Member,
+                                  sep, left, right>::read(*this, in); 
             }
 
     };
@@ -114,7 +114,7 @@ class MapDescriptor : public std::map< Key,Member>
          const_iterator( const typename std::map< Key,Member>::const_iterator& that) 
             : std::map< Key,Member>::const_iterator(that) {}
          CollectPair<const Key,Member,':'> operator *() const 
-	    {
+            {
                   return std::map< Key,Member>::const_iterator ::operator*();
             }
      };
@@ -133,10 +133,10 @@ class MapDescriptor : public std::map< Key,Member>
          }
      bool read( std::istream& in)
          { 
-	   return ReadContainer<MapDescriptor<Key,Member,sep,left,right>, 
+           return ReadContainer<MapDescriptor<Key,Member,sep,left,right>, 
                                 CollectPair<Key,Member,0>, 
                                 sep, left, right>::read(*this, in); 
-	 }
+         }
 
      void write( std::ostream& out) const
           { WriteContainer<MapDescriptor<Key,Member,sep,left,right>, sep, left, right>::write(*this, out); }
