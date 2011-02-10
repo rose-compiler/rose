@@ -100,13 +100,28 @@ rm -rf autom4te.cache
 # Test libtool version and run libtoolize.  Warn if the libtool version is too old, but run it anyway.  Show the command that
 # is run by preceding it with a "+ " on stderr as is the usual debugging style for shell scripts.
 ###############################################################################################################################
-
+# Liao 2/9/2011. Ensure the libtool on Mac is the gnu one
+OS=`uname -s`
+if test "$OS" = "Darwin" ; then 
+  if [[ -n "$(type libtool)" ]]; then
+     echo "Check libtool on Mac OS X ..."
+    libtool --version  
+   if [ $? -ne 0 ]; then
+     echo "Error. The libtool found is not gnu libtool." 
+     echo "Please install gnu libtool (e.g. version 2.2.4) and export its path before the default libtool's path!" 
+     exit 1;
+   else
+     echo "Found a gnu libtool."
+   fi
+  fi
+fi
 # Look for libtoolize, glibtoolize in various places.
 libtoolize_name=
-if [[ -x /Users/dquinlan/local/libtool-install/bin/libtoolize ]]; then
-    # See README.OSX
-    libtoolize_name=/Users/dquinlan/local/libtool-install/bin/libtoolize
-elif [[ -n "$(type libtoolize)" ]]; then
+#if [[ -x /Users/dquinlan/local/libtool-install/bin/libtoolize ]]; then
+#    # See README.OSX
+#    libtoolize_name=/Users/dquinlan/local/libtool-install/bin/libtoolize
+# Liao 2/9/2011. Try to find glibtoolize first
+if [[ -n "$(type libtoolize)" ]]; then
     libtoolize_name=$(which libtoolize)
 elif [[ -n "$(type glibtoolize)" ]]; then
     libtoolize_name=$(which glibtoolize)
