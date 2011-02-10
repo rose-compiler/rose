@@ -2636,7 +2636,7 @@
 
 	* Removed generation of SgNullStatement IR nodes within EDG/Sage
 	  translation.  We still want to have SgNullStatement and
-	  SgNullExpression IR nodes avalailbe for use in Sage III, but
+	  SgNullExpression IR nodes available for use in Sage III, but
 	  they were being generated in unreasonable numbers in the AST
 	  because they are a bit too common within the EDG AST.
 
