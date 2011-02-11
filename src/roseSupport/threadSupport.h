@@ -14,11 +14,20 @@
  *      within the RTS_MUTEX macros, a private (non-shared) variable might be named "RTS_Mp_mutex".
  *
  *   4. Constructs that allow a user-supplied compound statement as a "body" should allow the body to "break" or "throw". Both
- *      forms of premature exit should behave as if the body executed to completion (except in the case of throw, the exception
- *      is raised again automatically).
+ *      forms of premature exit should behave as if the body executed to completion (except throw will throw the exception
+ *      again automatically).
+ *
+ *   5. New functionality shall have types, constants, and functions reminiscent of the POSIX threads interface, but whose
+ *      names begin with "RTS_" rather than "pthread_".
  */
 
+#include <assert.h>
 #include <pthread.h>
+#include <stdint.h>
+
+/******************************************************************************************************************************
+ *                                      Paired macros for using pthread_mutex_t
+ ******************************************************************************************************************************/
 
 /** Protect a critical section with a mutual exclusion lock.
  *
@@ -41,10 +50,10 @@
  */
 #define RTS_MUTEX(MUTEX)                                                                                                       \
     do {        /* standard CPP macro protection */                                                                            \
-        pthread_mutex_t *RTS_Mp_mutex = &MUTEX; /* saved for when we need to unlock it */                                      \
+        pthread_mutex_t *RTS_Mp_mutex = &(MUTEX); /* saved for when we need to unlock it */                                    \
         int RTS_Mp_err = pthread_mutex_lock(RTS_Mp_mutex);                                                                     \
+        assert(0==RTS_Mp_err);                                                                                                 \
         do {    /* so we can catch "break" statements */                                                                       \
-            assert(0==RTS_Mp_err);                                                                                             \
             try {                                                                                                              \
 
 /** End an RTS_MUTEX construct. */
@@ -53,11 +62,199 @@
                 RTS_Mp_err = pthread_mutex_unlock(RTS_Mp_mutex);                                                               \
                 assert(0==RTS_Mp_err);                                                                                         \
                 throw;                                                                                                         \
-            };                                                                                                                 \
+            }                                                                                                                  \
         } while (0);                                                                                                           \
         RTS_Mp_err = pthread_mutex_unlock(RTS_Mp_mutex);                                                                       \
         assert(0==RTS_Mp_err);                                                                                                 \
     } while (0)
+
+
+/*******************************************************************************************************************************
+ *                                      Paired macros for using RTS_rwlock_t
+ *******************************************************************************************************************************/
+
+/** Protect a critical section with a read-write lock.
+ *
+ *  These macros should be used within ROSE whenever we need to protect a critical section among two kinds of access: reading
+ *  and writing.
+ *
+ *  This construct allows at most one thread to hold a write lock, or multiple threads to hold read locks.  Write locks are
+ *  granted only when no other thread holds a read or write lock, and a request for a write lock blocks (becomes pending) if
+ *  the lock cannot be granted.  Read locks are granted only when no write lock is already granted to another thread, and no
+ *  write lock is pending.
+ *
+ *  Like POSIX read-write locks, RTS_rwlock_t allows a single thread to obtain multiple read locks recursively. Unlike POSIX
+ *  read-write locks, RTS_rwlock_t also allows the following:
+ *
+ *  <ul>
+ *    <li>A lock (read or write) is granted to a thread which already holds a write lock.  The POSIX implementation deadlocks
+ *        in this situation.  This feature is useful in ROSE when a read-write lock guards access to data members of an object,
+ *        and the object methods can be invoked recursively.</li>
+ *    <li>The RTS_rwlock_unlock() function releases locks in the reverse order they were granted and should only be called by
+ *        the thread to which the lock was granted.</li>
+ *  </ul>
+ *
+ *  In particular, this implementation does not allow a thread which holds only read locks to be granted a write lock (i.e., no
+ *  lock upgrading). Like POSIX read-write locks, this situation will lead to deadlock.
+ *
+ *  The RTS_READ macro should be paired with an RTS_READ_END macro; the RTS_WRITE macro should be paired with an RTS_WRITE_END
+ *  macro.  The RTS_RWLOCK macro is a generalization of RTS_READ and RTS_WRITE where its second argument is either the word
+ *  "rdlock" or "wrlock", respectively. It should be paired with an RTS_RWLOCK_END macro.
+ *
+ *  The critical section may exit only via "break" statement, throwing an exception, or falling through the end.  Exceptions
+ *  thrown by the critical section will release the lock before rethrowing the exception.
+ *
+ *  A simple example demonstrating how locks can be obtained recursively.  Any number of threads can be operating on a single,
+ *  common object concurrently and each of the four defined operations remains atomic.
+ *
+ *  @code
+ *  class Stack {
+ *  public:
+ *      Stack() {
+ *          RTS_rwlock_init(&rwlock, NULL);
+ *      }
+ *  
+ *      MD5sum sum() const {
+ *          MD5sum retval;
+ *          RTS_READ(rwlock) {
+ *              for (size_t i=0; i<stack.size(); i++)
+ *                  retval.composite(stack[i]);
+ *          } RTS_READ_END;
+ *          return retval;
+ *      }
+ *
+ *      void push(const std::string &s) {
+ *          RTS_WRITE(rwlock) {
+ *              stack.push_back(s);
+ *          } RTS_WRITE_END;
+ *      }
+ *  
+ *      // swap top and third from top; toss second from top
+ *      // throw exception when stack becomes too small
+ *      void adjust() {
+ *          RTS_WRITE(rwlock) {
+ *              std::string s1 = pop(); // may throw
+ *              (void) pop();           // may throw
+ *              std::string s2 = pop(); // may throw
+ *              push(s1);
+ *              push(s2);
+ *          } RTS_WRITE_END;
+ *      }
+ *
+ *      // adjust() until sum specified termination condition
+ *      // throw exception when stack becomes too small
+ *      void adjust_until(const MD5sum &term) {
+ *          RTS_WRITE(rwlock) {
+ *              while (sum()!=term)    // recursive read lock
+ *                  adjust();          // recursive write lock; may throw
+ *          } RTS_WRITE_END;
+ *      }
+ *  
+ *  private:
+ *      std::vector<std::string> stack;
+ *      mutable RTS_rwlock_t rwlock;   // mutable so sum() can be const as user would expect
+ *  };
+ *  @endcode
+ */
+#define RTS_RWLOCK(RWLOCK, HOW)                                                                                                \
+    do {        /* standard CPP macro protection */                                                                            \
+        RTS_rwlock_t *RTS_Wp_rwlock = &(RWLOCK); /* saved for when we need to unlock it */                                     \
+        int RTS_Wp_err = RTS_rwlock_##HOW(RTS_Wp_rwlock);                                                                      \
+        assert(0==RTS_Wp_err);                                                                                                 \
+        do {    /* so we can catch "break" statements */                                                                       \
+            try {
+                
+#define RTS_RWLOCK_END                                                                                                         \
+            } catch (...) {                                                                                                    \
+                RTS_Wp_err = RTS_rwlock_unlock(RTS_Wp_rwlock);                                                                 \
+                assert(0==RTS_Wp_err);                                                                                         \
+                throw;                                                                                                         \
+            }                                                                                                                  \
+        } while (0);                                                                                                           \
+        RTS_Wp_err = RTS_rwlock_unlock(RTS_Wp_rwlock);                                                                         \
+        assert(0==RTS_Wp_err);                                                                                                 \
+    } while (0)
+
+#define RTS_READ(RWLOCK)        RTS_RWLOCK(RWLOCK, rdlock)                      /**< See RTS_RWLOCK. */
+#define RTS_READ_END            RTS_RWLOCK_END                                  /**< See RTS_RWLOCK. */
+#define RTS_WRITE(RWLOCK)       RTS_RWLOCK(RWLOCK, wrlock)                      /**< See RTS_RWLOCK. */
+#define RTS_WRITE_END           RTS_RWLOCK_END                                  /**< See RTS_RWLOCK. */
+
+/*******************************************************************************************************************************
+ *                                      Types and functions for RTS_rwlock_t
+ *
+ * Programmers should generally use the RTS_READ and RTS_WRITE macros in their source code. The symbols defined here are
+ * similar to pthread_rwlock* symbols and are mostly to support RTS_READ and RTS_WRITE macros (like how the pthread_mutex*
+ * symbols support the RTS_MUTEX macro).
+ *******************************************************************************************************************************/
+
+/** A read-write lock for ROSE Thread Support.  As with POSIX Thread types, this type should be treated as opaque and
+ *  initialized with RTS_RWLOCK_INITIALIZER or RTS_rwlock_init().  It is used as the argument for RTS_READ and RTS_WRITE
+ *  macros. */
+struct RTS_rwlock_t {
+    pthread_rwlock_t rwlock;                    /* the main read-write lock */
+    pthread_mutex_t mutex;                      /* mutex to protect the following data members */
+    static const size_t max_nlocks = 64;        /* max number of locks: 8*sizeof(lock_types) */
+    size_t nlocks;                              /* number of write locks held */
+    pthread_t owner;                            /* thread that currently holds the write lock */
+};
+
+/** Static initializer for an RTS_rwlock_t instance, similar in nature to PTHREAD_RWLOCK_INITIALIZER. */
+#define RTS_RWLOCK_INITIALIZER { PTHREAD_RWLOCK_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, 0/*...*/ }
+
+/** Intializes an RTS_rwlock_t in a manner similar to pthread_rwlock_init(). */
+int RTS_rwlock_init(RTS_rwlock_t *rwlock, pthread_rwlockattr_t *wrlock_attrs);
+              
+/** Obtain a read lock.
+ *
+ *  The semantics are identical to pthread_rwlock_rdlock() documented in "The Open Group Base Specifications Issue 6: IEEE Std
+ *  1003.1, 2004 Edition" [1] with the following changes:
+ *
+ *  <ul>
+ *    <li>If the calling thread holds a write lock, then the read lock is automatically granted.  A single process can be both
+ *        reading and writing, and may hold multiple kinds locks.</li>
+ *    <li>Calls to RTS_rwlock_unlock() release the recursive locks in the opposite order they were obtained.</li>
+ *  </ul>
+ *
+ *  [1] http://pubs.opengroup.org/onlinepubs/009695399/functions/pthread_rwlock_rdlock.html
+ */
+int RTS_rwlock_rdlock(RTS_rwlock_t *rwlock);
+
+/** Obtain a write lock.
+ * 
+ *  The semantics are identical to pthread_rwlock_wrlock() documented in "The Open Group Base Specifications Issue 6: IEEE Std
+ *  1003.1, 2004 Edition" [1] with the following changes:
+ *
+ *  <ul>
+ *    <li>If the calling thread already holds a write lock, then a recursive write lock is automatically granted.  A single
+ *        process can hold multiple write locks.</li>
+ *    <li>Calls to RTS_rwlock_unlock() release the recursive locks in the opposite order they were obtained.</li>
+ *  </ul>
+ *
+ *  Note that a write lock will not be granted if a thread already holds only read locks.  Attempting to obtain a write lock in
+ *  this situation will result in deadlock.
+ *
+ *  [1] http://pubs.opengroup.org/onlinepubs/009695399/functions/pthread_rwlock_wrlock.html
+ */
+int RTS_rwlock_wrlock(RTS_rwlock_t *rwlock);
+
+/** Release a read or write lock.
+ *
+ *  The semantics are identical to pthread_rwlock_unlock() documented in "The Open Group Base Specification Issue 6: IEEE Std
+ *  1003.1, 2004 Edition" [1] with the following additions:
+ *
+ *  <ul>
+ *    <li>Recursive locks are released in the oposite order they were acquired.</li>
+ *  </ul>
+ *
+ *  [1] http://pubs.opengroup.org/onlinepubs/009695399/functions/pthread_rwlock_unlock.html
+ */
+int RTS_rwlock_unlock(RTS_rwlock_t *rwlock);
+
+
+/*******************************************************************************************************************************
+ *                                      Paired macros for initialization functions
+ *******************************************************************************************************************************/
 
 
 /** Initializer synchronization.
@@ -71,7 +268,7 @@
  *  other code paths (outside the RTS_INIT construct) might interfere with the body.
  *
  *  If ALLOW_RECURSION is true, then a recursive call from the body will jump over the RTS_INIT construct without doing
- *  anything (other than briefly obtaining the mutex lock to inspect the state of initializatione). Otherwise a recursive call
+ *  anything (other than briefly obtaining the mutex lock to inspect the state of initialization). Otherwise a recursive call
  *  from the body is considered a logic error and the process will be aborted. For convenience, we define two additional
  *  macros, RTS_INIT_RECURSIVE and RTS_INIT_NONRECURSIVE, which may be used in place of the two-argument RTS_INIT macro.
  *
@@ -100,7 +297,7 @@
         static bool RTS_Is_initialized=false, RTS_Is_initializing=false;        /* "s"==shared; "p"=private */                 \
         static pthread_t RTS_Is_initializer;                                                                                   \
         static pthread_cond_t RTS_Is_condition=PTHREAD_COND_INITIALIZER;                                                       \
-        pthread_mutex_t *RTS_Ip_mutex = &MUTEX;                                                                                \
+        pthread_mutex_t *RTS_Ip_mutex = &(MUTEX);                                                                              \
         bool RTS_Ip_initialized, RTS_Ip_initializing;                                                                          \
         bool RTS_Ip_allow_recursion = (ALLOW_RECURSION);                                                                       \
                                                                                                                                \
