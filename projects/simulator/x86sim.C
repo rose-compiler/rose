@@ -60,6 +60,831 @@
 #define CONV_FIELD(var1, var2, field) var1.field = var2.field
 
 void
+RSIM_Thread::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, uint32_t timeout_va)
+{
+    static const Translate sem_flags[] = {
+        TF(IPC_NOWAIT), TF(SEM_UNDO), T_END
+    };
+
+    if (nsops<1) {
+        syscall_return(-EINVAL);
+        return;
+    }
+
+    /* struct sembuf is the same on both 32- and 64-bit platforms */
+    sembuf sops[nsops * sizeof(sembuf)];
+    if (nsops*sizeof(sembuf)!=get_process()->mem_read(sops, sops_va, nsops*sizeof(sembuf))) {
+        syscall_return(-EFAULT);
+        return;
+    }
+    if (tracing(TRACE_SYSCALL)) {
+        fprintf(tracing(TRACE_SYSCALL), " <continued...>\n");
+        for (uint32_t i=0; i<nsops; i++) {
+            fprintf(tracing(TRACE_SYSCALL), "    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
+                    i, sops[i].sem_num, sops[i].sem_op);
+            print_flags(tracing(TRACE_SYSCALL), sem_flags, sops[i].sem_flg);
+            fprintf(tracing(TRACE_SYSCALL), " }\n");
+        }
+        fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
+    }
+
+    timespec host_timeout;
+    if (timeout_va) {
+        timespec_32 guest_timeout;
+        if (sizeof(guest_timeout)!=get_process()->mem_read(&guest_timeout, timeout_va, sizeof guest_timeout)) {
+            syscall_return(-EFAULT);
+            return;
+        }
+        host_timeout.tv_sec = guest_timeout.tv_sec;
+        host_timeout.tv_nsec = guest_timeout.tv_nsec;
+    }
+
+    int result = semtimedop(semid, sops, nsops, timeout_va?&host_timeout:NULL);
+    syscall_return(-1==result?-errno:result);
+}
+
+void
+RSIM_Thread::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
+{
+#ifdef SYS_ipc /* i686 */
+    int result = syscall(SYS_ipc, 2, key, nsems, semflg);
+#else
+    int result = syscall(SYS_semget, key, nsems, semflg);
+#endif
+    syscall_return(-1==result?-errno:result);
+}
+
+void
+RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t semun_va)
+{
+    int version = cmd & 0x0100/*IPC_64*/;
+    cmd &= ~0x0100;
+
+    ROSE_ASSERT(version!=0);
+
+    union semun_32 {
+        uint32_t val;
+        uint32_t ptr;
+    };
+
+    union semun_native {
+        int val;
+        void *ptr;
+    };
+
+    semun_32 guest_semun;
+    if (sizeof(guest_semun)!=get_process()->mem_read(&guest_semun, semun_va, sizeof guest_semun)) {
+        syscall_return(-EFAULT);
+        return;
+    }
+    
+
+    switch (cmd) {
+        case 3:         /* IPC_INFO */
+        case 19: {      /* SEM_INFO */
+            seminfo host_seminfo;
+#ifdef SYS_ipc /* i686 */
+            ROSE_ASSERT(version!=0);
+            semun_native host_semun;
+            host_semun.ptr = &host_seminfo;
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
+#else
+            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_seminfo);
+#endif
+            if (-1==result) {
+                syscall_return(-errno);
+                return;
+            }
+
+            seminfo_32 guest_seminfo;
+            guest_seminfo.semmap = host_seminfo.semmap;
+            guest_seminfo.semmni = host_seminfo.semmni;
+            guest_seminfo.semmns = host_seminfo.semmns;
+            guest_seminfo.semmnu = host_seminfo.semmnu;
+            guest_seminfo.semmsl = host_seminfo.semmsl;
+            guest_seminfo.semopm = host_seminfo.semopm;
+            guest_seminfo.semume = host_seminfo.semume;
+            guest_seminfo.semusz = host_seminfo.semusz;
+            guest_seminfo.semvmx = host_seminfo.semvmx;
+            guest_seminfo.semaem = host_seminfo.semaem;
+            if (sizeof(guest_seminfo)!=get_process()->mem_write(&guest_seminfo, guest_semun.ptr, sizeof guest_seminfo)) {
+                syscall_return(-EFAULT);
+                return;
+            }
+
+            syscall_return(result);
+            break;
+        }
+
+        case 2:         /* IPC_STAT */
+        case 18: {      /* SEM_STAT */
+            semid_ds host_ds;
+#ifdef SYS_ipc /* i686 */
+            ROSE_ASSERT(version!=0);
+            semun_native host_semun;
+            host_semun.ptr = &host_ds;
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
+#else
+            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
+#endif
+            if (-1==result) {
+                syscall_return(-errno);
+                return;
+            }
+
+            semid64_ds_32 guest_ds;
+            guest_ds.sem_perm.key = host_ds.sem_perm.__key;
+            guest_ds.sem_perm.uid = host_ds.sem_perm.uid;
+            guest_ds.sem_perm.gid = host_ds.sem_perm.gid;
+            guest_ds.sem_perm.cuid = host_ds.sem_perm.cuid;
+            guest_ds.sem_perm.cgid = host_ds.sem_perm.cgid;
+            guest_ds.sem_perm.mode = host_ds.sem_perm.mode;
+            guest_ds.sem_perm.pad1 = host_ds.sem_perm.__pad1;
+            guest_ds.sem_perm.seq = host_ds.sem_perm.__seq;
+            guest_ds.sem_perm.pad2 = host_ds.sem_perm.__pad2;
+            guest_ds.sem_perm.unused1 = host_ds.sem_perm.__unused1;
+            guest_ds.sem_perm.unused2 = host_ds.sem_perm.__unused1;
+            guest_ds.sem_otime = host_ds.sem_otime;
+            guest_ds.unused1 = host_ds.__unused1;
+            guest_ds.sem_ctime = host_ds.sem_ctime;
+            guest_ds.unused2 = host_ds.__unused2;
+            guest_ds.sem_nsems = host_ds.sem_nsems;
+            guest_ds.unused3 = host_ds.__unused3;
+            guest_ds.unused4 = host_ds.__unused4;
+            if (sizeof(guest_ds)!=get_process()->mem_write(&guest_ds, guest_semun.ptr, sizeof guest_ds)) {
+                syscall_return(-EFAULT);
+                return;
+            }
+                        
+            syscall_return(result);
+            break;
+        };
+
+        case 1: {       /* IPC_SET */
+            semid64_ds_32 guest_ds;
+            if (sizeof(guest_ds)!=get_process()->mem_read(&guest_ds, guest_semun.ptr, sizeof(guest_ds))) {
+                syscall_return(-EFAULT);
+                return;
+            }
+#ifdef SYS_ipc  /* i686 */
+            ROSE_ASSERT(version!=0);
+            semun_native semun;
+            semun.ptr = &guest_ds;
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
+#else           /* amd64 */
+            semid_ds host_ds;
+            host_ds.sem_perm.__key = guest_ds.sem_perm.key;
+            host_ds.sem_perm.uid = guest_ds.sem_perm.uid;
+            host_ds.sem_perm.gid = guest_ds.sem_perm.gid;
+            host_ds.sem_perm.cuid = guest_ds.sem_perm.cuid;
+            host_ds.sem_perm.cgid = guest_ds.sem_perm.cgid;
+            host_ds.sem_perm.mode = guest_ds.sem_perm.mode;
+            host_ds.sem_perm.__pad1 = guest_ds.sem_perm.pad1;
+            host_ds.sem_perm.__seq = guest_ds.sem_perm.seq;
+            host_ds.sem_perm.__pad2 = guest_ds.sem_perm.pad2;
+            host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused1;
+            host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused2;
+            host_ds.sem_otime = guest_ds.sem_otime;
+            host_ds.__unused1 = guest_ds.unused1;
+            host_ds.sem_ctime = guest_ds.sem_ctime;
+            host_ds.__unused2 = guest_ds.unused2;
+            host_ds.sem_nsems = guest_ds.sem_nsems;
+            host_ds.__unused3 = guest_ds.unused3;
+            host_ds.__unused4 = guest_ds.unused4;
+            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
+#endif
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 13: {      /* GETALL */
+            semid_ds host_ds;
+            int result = semctl(semid, -1, IPC_STAT, &host_ds);
+            if (-1==result) {
+                syscall_return(-errno);
+                return;
+            }
+            if (host_ds.sem_nsems<1) {
+                syscall_return(-EINVAL);
+                return;
+            }
+            size_t nbytes = 2 * host_ds.sem_nsems;
+            if (NULL==get_process()->my_addr(guest_semun.ptr, nbytes)) {
+                syscall_return(-EFAULT);
+                return;
+            }
+            uint16_t *sem_values = new uint16_t[host_ds.sem_nsems];
+#ifdef SYS_ipc  /* i686 */
+            semun_native semun;
+            semun.ptr = sem_values;
+            result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
+#else
+            result = syscall(SYS_semctl, semid, semnum, cmd, sem_values);
+#endif
+            if (-1==result) {
+                delete[] sem_values;
+                syscall_return(-errno);
+                return;
+            }
+            if (nbytes!=get_process()->mem_write(sem_values, guest_semun.ptr, nbytes)) {
+                delete[] sem_values;
+                syscall_return(-EFAULT);
+                return;
+            }
+            if (tracing(TRACE_SYSCALL)) {
+                fprintf(tracing(TRACE_SYSCALL), "<continued...>\n");
+                for (size_t i=0; i<host_ds.sem_nsems; i++) {
+                    fprintf(tracing(TRACE_SYSCALL), "    value[%zu] = %"PRId16"\n", i, sem_values[i]);
+                }
+                fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
+            }
+            delete[] sem_values;
+            syscall_return(result);
+            break;
+        }
+            
+        case 17: {      /* SETALL */
+            semid_ds host_ds;
+            int result = semctl(semid, -1, IPC_STAT, &host_ds);
+            if (-1==result) {
+                syscall_return(-errno);
+                return;
+            }
+            if (host_ds.sem_nsems<1) {
+                syscall_return(-EINVAL);
+                return;
+            }
+            uint16_t *sem_values = new uint16_t[host_ds.sem_nsems];
+            size_t nbytes = 2 * host_ds.sem_nsems;
+            if (nbytes!=get_process()->mem_read(sem_values, guest_semun.ptr, nbytes)) {
+                delete[] sem_values;
+                syscall_return(-EFAULT);
+                return;
+            }
+            if (tracing(TRACE_SYSCALL)) {
+                fprintf(tracing(TRACE_SYSCALL), "<continued...>\n");
+                for (size_t i=0; i<host_ds.sem_nsems; i++) {
+                    fprintf(tracing(TRACE_SYSCALL), "    value[%zu] = %"PRId16"\n", i, sem_values[i]);
+                }
+                fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
+            }
+#ifdef SYS_ipc  /* i686 */
+            semun_native semun;
+            semun.ptr = sem_values;
+            result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
+#else
+            result = syscall(SYS_semctl, semid, semnum, cmd, sem_values);
+#endif
+            syscall_return(-1==result?-errno:result);
+            delete[] sem_values;
+            break;
+        }
+
+        case 11:        /* GETPID */
+        case 12:        /* GETVAL */
+        case 15:        /* GETZCNT */
+        case 14: {      /* GETNCNT */
+            int result = semctl(semid, semnum, cmd, NULL);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 16: {      /* SETVAL */
+#ifdef SYS_ipc  /* i686 */
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &guest_semun);
+#else
+            int result = syscall(SYS_semctl, semid, semnum, cmd, guest_semun.val);
+#endif
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 0: {       /* IPC_RMID */
+#ifdef SYS_ipc /* i686 */
+            semun_native host_semun;
+            memset(&host_semun, 0, sizeof host_semun);
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
+#else
+            int result = semctl(semid, semnum, cmd, NULL);
+#endif
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        default:
+            syscall_return(-EINVAL);
+            return;
+    }
+}
+
+
+void
+RSIM_Thread::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgflg)
+{
+    if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
+        syscall_return(-EINVAL);
+        return;
+    }
+
+    /* Read the message buffer from the specimen. */
+    uint8_t *buf = new uint8_t[msgsz+8]; /* msgsz does not include "long mtype", only "char mtext[]" */
+    if (!buf) {
+        syscall_return(-ENOMEM);
+        return;
+    }
+    if (4+msgsz!=get_process()->mem_read(buf, msgp_va, 4+msgsz)) {
+        delete[] buf;
+        syscall_return(-EFAULT);
+        return;
+    }
+
+    /* Message type must be positive */
+    if (*(int32_t*)buf <= 0) {
+        delete[] buf;
+        syscall_return(-EINVAL);
+        return;
+    }
+
+    /* Convert message type from four to eight bytes if necessary */
+    if (4!=sizeof(long)) {
+        ROSE_ASSERT(8==sizeof(long));
+        memmove(buf+8, buf+4, msgsz);
+        memset(buf+4, 0, 4);
+    }
+
+    /* Try to send the message */
+    int result = msgsnd(msqid, buf, msgsz, msgflg);
+    if (-1==result) {
+        delete[] buf;
+        syscall_return(-errno);
+        return;
+    }
+
+    delete[] buf;
+    syscall_return(result);
+}
+
+void
+RSIM_Thread::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgtyp, uint32_t msgflg)
+{
+    if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
+        syscall_return(-EINVAL);
+        return;
+    }
+
+    uint8_t *buf = new uint8_t[msgsz+8]; /* msgsz does not include "long mtype", only "char mtext[]" */
+    int result = msgrcv(msqid, buf, msgsz, msgtyp, msgflg);
+    if (-1==result) {
+        delete[] buf;
+        syscall_return(-errno);
+        return;
+    }
+
+    if (4!=sizeof(long)) {
+        ROSE_ASSERT(8==sizeof(long));
+        uint64_t type = *(uint64_t*)buf;
+        ROSE_ASSERT(0 == (type >> 32));
+        memmove(buf+4, buf+8, msgsz);
+    }
+
+    if (4+msgsz!=get_process()->mem_write(buf, msgp_va, 4+msgsz)) {
+        delete[] buf;
+        syscall_return(-EFAULT);
+        return;
+    }
+
+    delete[] buf;
+    syscall_return(result);
+}
+
+void
+RSIM_Thread::sys_msgget(uint32_t key, uint32_t msgflg)
+{
+    int result = msgget(key, msgflg);
+    syscall_return(-1==result?-errno:result);
+}
+
+void
+RSIM_Thread::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
+{
+    int version = cmd & 0x0100/*IPC_64*/;
+    cmd &= ~0x0100;
+
+    switch (cmd) {
+        case 3:    /* IPC_INFO */
+        case 12: { /* MSG_INFO */
+            syscall_return(-ENOSYS);              /* FIXME */
+            break;
+        }
+
+        case 2:    /* IPC_STAT */
+        case 11: { /* MSG_STAT */
+            ROSE_ASSERT(0x0100==version); /* we're assuming ipc64_perm and msqid_ds from the kernel */
+            static msqid_ds host_ds;
+            int result = msgctl(msqid, cmd, &host_ds);
+            if (-1==result) {
+                syscall_return(-errno);
+                break;
+            }
+
+            msqid64_ds_32 guest_ds;
+            guest_ds.msg_perm.key = host_ds.msg_perm.__key;
+            guest_ds.msg_perm.uid = host_ds.msg_perm.uid;
+            guest_ds.msg_perm.gid = host_ds.msg_perm.gid;
+            guest_ds.msg_perm.cuid = host_ds.msg_perm.cuid;
+            guest_ds.msg_perm.cgid = host_ds.msg_perm.cgid;
+            guest_ds.msg_perm.mode = host_ds.msg_perm.mode;
+            guest_ds.msg_perm.pad1 = host_ds.msg_perm.__pad1;
+            guest_ds.msg_perm.seq = host_ds.msg_perm.__seq;
+            guest_ds.msg_perm.pad2 = host_ds.msg_perm.__pad2;
+            guest_ds.msg_perm.unused1 = host_ds.msg_perm.__unused1;
+            guest_ds.msg_perm.unused2 = host_ds.msg_perm.__unused2;
+            guest_ds.msg_stime = host_ds.msg_stime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused1 = host_ds.__unused1;
+#endif
+            guest_ds.msg_rtime = host_ds.msg_rtime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused2 = host_ds.__unused2;
+#endif
+            guest_ds.msg_ctime = host_ds.msg_ctime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused3 = host_ds.__unused3;
+#endif
+            guest_ds.msg_cbytes = host_ds.__msg_cbytes;
+            guest_ds.msg_qnum = host_ds.msg_qnum;
+            guest_ds.msg_qbytes = host_ds.msg_qbytes;
+            guest_ds.msg_lspid = host_ds.msg_lspid;
+            guest_ds.msg_lrpid = host_ds.msg_lrpid;
+            guest_ds.unused4 = host_ds.__unused4;
+            guest_ds.unused5 = host_ds.__unused5;
+
+            if (sizeof(guest_ds)!=get_process()->mem_write(&guest_ds, buf_va, sizeof guest_ds)) {
+                syscall_return(-EFAULT);
+                break;
+            }
+
+            syscall_return(result);
+            break;
+        }
+
+        case 0: { /* IPC_RMID */
+            /* NOTE: syscall tracing will not show "IPC_RMID" if the IPC_64 flag is also present */
+            int result = msgctl(msqid, cmd, NULL);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 1: { /* IPC_SET */
+            msqid64_ds_32 guest_ds;
+            if (sizeof(guest_ds)!=get_process()->mem_read(&guest_ds, buf_va, sizeof guest_ds)) {
+                syscall_return(-EFAULT);
+                break;
+            }
+
+            static msqid_ds host_ds;
+            host_ds.msg_perm.__key = guest_ds.msg_perm.key;
+            host_ds.msg_perm.uid = guest_ds.msg_perm.uid;
+            host_ds.msg_perm.gid = guest_ds.msg_perm.gid;
+            host_ds.msg_perm.cuid = guest_ds.msg_perm.cuid;
+            host_ds.msg_perm.cgid = guest_ds.msg_perm.cgid;
+            host_ds.msg_perm.mode = guest_ds.msg_perm.mode;
+            host_ds.msg_perm.__seq = guest_ds.msg_perm.seq;
+            host_ds.msg_stime = guest_ds.msg_stime;
+            host_ds.msg_rtime = guest_ds.msg_rtime;
+            host_ds.msg_ctime = guest_ds.msg_ctime;
+            host_ds.__msg_cbytes = guest_ds.msg_cbytes;
+            host_ds.msg_qnum = guest_ds.msg_qnum;
+            host_ds.msg_qbytes = guest_ds.msg_qbytes;
+            host_ds.msg_lspid = guest_ds.msg_lspid;
+            host_ds.msg_lrpid = guest_ds.msg_lrpid;
+
+            int result = msgctl(msqid, cmd, &host_ds);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        default: {
+            syscall_return(-EINVAL);
+            break;
+        }
+    }
+}
+
+void
+RSIM_Thread::sys_shmdt(uint32_t shmaddr_va)
+{
+    int result = -ENOSYS;
+
+    RTS_WRITE(get_process()->rwlock()) {
+        const MemoryMap::MapElement *me = get_process()->get_memory()->find(shmaddr_va);
+        if (!me || me->get_va()!=shmaddr_va || me->get_offset()!=0 || me->is_anonymous()) {
+            result = -EINVAL;
+            break;
+        }
+
+        result = shmdt(me->get_base());
+        if (-1==result) {
+            result = -errno;
+            break;
+        }
+
+        get_process()->mem_unmap(me->get_va(), me->get_size());
+        result = 0;
+    } RTS_WRITE_END;
+    syscall_return(result);
+}
+
+void
+RSIM_Thread::sys_shmget(uint32_t key, uint32_t size, uint32_t shmflg)
+{
+    int result = shmget(key, size, shmflg);
+    syscall_return(-1==result?-errno:result);
+}
+
+void
+RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
+{
+    int version = cmd & 0x0100/*IPC_64*/;
+    cmd &= ~0x0100;
+
+    switch (cmd) {
+        case 13:  /* SHM_STAT */
+        case 2: { /* IPC_STAT */
+            ROSE_ASSERT(0x0100==version); /* we're assuming ipc64_perm and shmid_ds from the kernel */
+            static shmid_ds host_ds;
+            int result = shmctl(shmid, cmd, &host_ds);
+            if (-1==result) {
+                syscall_return(-errno);
+                break;
+            }
+
+            shmid64_ds_32 guest_ds;
+            guest_ds.shm_perm.key = host_ds.shm_perm.__key;
+            guest_ds.shm_perm.uid = host_ds.shm_perm.uid;
+            guest_ds.shm_perm.gid = host_ds.shm_perm.gid;
+            guest_ds.shm_perm.cuid = host_ds.shm_perm.cuid;
+            guest_ds.shm_perm.cgid = host_ds.shm_perm.cgid;
+            guest_ds.shm_perm.mode = host_ds.shm_perm.mode;
+            guest_ds.shm_perm.pad1 = host_ds.shm_perm.__pad1;
+            guest_ds.shm_perm.seq = host_ds.shm_perm.__seq;
+            guest_ds.shm_perm.pad2 = host_ds.shm_perm.__pad2;
+            guest_ds.shm_perm.unused1 = host_ds.shm_perm.__unused1;
+            guest_ds.shm_perm.unused2 = host_ds.shm_perm.__unused2;
+            guest_ds.shm_segsz = host_ds.shm_segsz;
+            guest_ds.shm_atime = host_ds.shm_atime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused1 = host_ds.__unused1;
+#endif
+            guest_ds.shm_dtime = host_ds.shm_dtime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused2 = host_ds.__unused2;
+#endif
+            guest_ds.shm_ctime = host_ds.shm_ctime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused3 = host_ds.__unused3;
+#endif
+            guest_ds.shm_cpid = host_ds.shm_cpid;
+            guest_ds.shm_lpid = host_ds.shm_lpid;
+            guest_ds.shm_nattch = host_ds.shm_nattch;
+            guest_ds.unused4 = host_ds.__unused4;
+            guest_ds.unused5 = host_ds.__unused5;
+
+            if (sizeof(guest_ds)!=get_process()->mem_write(&guest_ds, buf_va, sizeof guest_ds)) {
+                syscall_return(-EFAULT);
+                break;
+            }
+
+            syscall_return(result);
+            break;
+        }
+
+        case 14: { /* SHM_INFO */
+            shm_info host_info;
+            int result = shmctl(shmid, cmd, (shmid_ds*)&host_info);
+            if (-1==result) {
+                syscall_return(-errno);
+                break;
+            }
+
+            shm_info_32 guest_info;
+            guest_info.used_ids = host_info.used_ids;
+            guest_info.shm_tot = host_info.shm_tot;
+            guest_info.shm_rss = host_info.shm_rss;
+            guest_info.shm_swp = host_info.shm_swp;
+            guest_info.swap_attempts = host_info.swap_attempts;
+            guest_info.swap_successes = host_info.swap_successes;
+
+            if (sizeof(guest_info)!=get_process()->mem_write(&guest_info, buf_va, sizeof guest_info)) {
+                syscall_return(-EFAULT);
+                break;
+            }
+
+            syscall_return(result);
+            break;
+        }
+
+        case 3: { /* IPC_INFO */
+            shminfo64_native host_info;
+            int result = shmctl(shmid, cmd, (shmid_ds*)&host_info);
+            if (-1==result) {
+                syscall_return(-errno);
+                return;
+            }
+
+            shminfo64_32 guest_info;
+            guest_info.shmmax = host_info.shmmax;
+            guest_info.shmmin = host_info.shmmin;
+            guest_info.shmmni = host_info.shmmni;
+            guest_info.shmseg = host_info.shmseg;
+            guest_info.shmall = host_info.shmall;
+            guest_info.unused1 = host_info.unused1;
+            guest_info.unused2 = host_info.unused2;
+            guest_info.unused3 = host_info.unused3;
+            guest_info.unused4 = host_info.unused4;
+            if (sizeof(guest_info)!=get_process()->mem_write(&guest_info, buf_va, sizeof guest_info)) {
+                syscall_return(-EFAULT);
+                return;
+            }
+
+            syscall_return(result);
+            break;
+        }
+
+        case 11:   /* SHM_LOCK */
+        case 12: { /* SHM_UNLOCK */
+            int result = shmctl(shmid, cmd, NULL);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 1: { /* IPC_SET */
+            ROSE_ASSERT(version!=0);
+            shmid64_ds_32 guest_ds;
+            if (sizeof(guest_ds)!=get_process()->mem_read(&guest_ds, buf_va, sizeof guest_ds)) {
+                syscall_return(-EFAULT);
+                return;
+            }
+            shmid_ds host_ds;
+            host_ds.shm_perm.__key = guest_ds.shm_perm.key;
+            host_ds.shm_perm.uid = guest_ds.shm_perm.uid;
+            host_ds.shm_perm.gid = guest_ds.shm_perm.gid;
+            host_ds.shm_perm.cuid = guest_ds.shm_perm.cuid;
+            host_ds.shm_perm.cgid = guest_ds.shm_perm.cgid;
+            host_ds.shm_perm.mode = guest_ds.shm_perm.mode;
+            host_ds.shm_perm.__pad1 = guest_ds.shm_perm.pad1;
+            host_ds.shm_perm.__seq = guest_ds.shm_perm.seq;
+            host_ds.shm_perm.__pad2 = guest_ds.shm_perm.pad2;
+            host_ds.shm_perm.__unused1 = guest_ds.shm_perm.unused1;
+            host_ds.shm_perm.__unused2 = guest_ds.shm_perm.unused2;
+            host_ds.shm_segsz = guest_ds.shm_segsz;
+            host_ds.shm_atime = guest_ds.shm_atime;
+#if 4==SIZEOF_LONG
+            host_ds.__unused1 = guest_ds.unused1;
+#endif
+            host_ds.shm_dtime = guest_ds.shm_dtime;
+#if 4==SIZEOF_LONG
+            host_ds.__unused2 = guest_ds.unused2;
+#endif
+            host_ds.shm_ctime = guest_ds.shm_ctime;
+#if 4==SIZEOF_LONG
+            host_ds.__unused3 = guest_ds.unused3;
+#endif
+            host_ds.shm_cpid = guest_ds.shm_cpid;
+            host_ds.shm_lpid = guest_ds.shm_lpid;
+            host_ds.shm_nattch = guest_ds.shm_nattch;
+            host_ds.__unused4 = guest_ds.unused4;
+            host_ds.__unused5 = guest_ds.unused5;
+
+            int result = shmctl(shmid, cmd, &host_ds);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 0: { /* IPC_RMID */
+            int result = shmctl(shmid, cmd, NULL);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        default: {
+            syscall_return(-EINVAL);
+            break;
+        }
+    }
+}
+
+void
+RSIM_Thread::sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, uint32_t shmaddr)
+{
+    int result = -ENOSYS;
+
+    RTS_WRITE(get_process()->rwlock()) {
+        if (0==shmaddr) {
+            shmaddr = get_process()->get_memory()->find_last_free();
+        } else if (shmflg & SHM_RND) {
+            shmaddr = ALIGN_DN(shmaddr, SHMLBA);
+        } else if (ALIGN_DN(shmaddr, 4096)!=shmaddr) {
+            result = -EINVAL;
+            break;
+        }
+
+        /* We don't handle SHM_REMAP */
+        if (shmflg & SHM_REMAP) {
+            result = -EINVAL;
+            break;
+        }
+
+        /* Map shared memory into the simulator. It's OK to hold the write lock here because this syscall doesn't block. */
+        void *buf = shmat(shmid, NULL, shmflg);
+        if (!buf) {
+            result = -errno;
+            break;
+        }
+
+        /* Map simulator's shared memory into the specimen */
+        shmid_ds ds;
+        int status = shmctl(shmid, IPC_STAT, &ds); // does not block
+        ROSE_ASSERT(status>=0);
+        ROSE_ASSERT(ds.shm_segsz>0);
+        unsigned perms = MemoryMap::MM_PROT_READ | ((shmflg & SHM_RDONLY) ? 0 : MemoryMap::MM_PROT_WRITE);
+        MemoryMap::MapElement shm(shmaddr, ds.shm_segsz, buf, 0, perms);
+        shm.set_name("shmat("+StringUtility::numberToString(shmid)+")");
+        get_process()->get_memory()->insert(shm);
+
+        /* Return values */
+        if (4!=get_process()->mem_write(&shmaddr, result_va, 4)) {
+            result = -EFAULT;
+            break;
+        }
+        syscall_return(shmaddr);
+        result = 0;
+    } RTS_WRITE_END;
+    if (result)
+        syscall_return(result);
+}
+
+void
+RSIM_Thread::sys_socket(int family, int type, int protocol)
+{
+#ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
+    int a[3];
+    a[0] = family;
+    a[1] = type;
+    a[2] = protocol;
+    int result = syscall(SYS_socketcall, 1/*SYS_SOCKET*/, a);
+#else /* amd64 */
+    int result = syscall(SYS_socket, family, type, protocol);
+#endif
+    syscall_return(-1==result?-errno:result);
+}
+
+void
+RSIM_Thread::sys_bind(int fd, uint32_t addr_va, uint32_t addrlen)
+{
+    if (addrlen<1 || addrlen>4096) {
+        syscall_return(-EINVAL);
+        return;
+    }
+    uint8_t *addrbuf = new uint8_t[addrlen];
+    if (addrlen!=get_process()->mem_read(addrbuf, addr_va, addrlen)) {
+        syscall_return(-EFAULT);
+        delete[] addrbuf;
+        return;
+    }
+
+#ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
+    ROSE_ASSERT(4==sizeof(void*));
+    int a[3];
+    a[0] = fd;
+    a[1] = (int)addrbuf;
+    a[2] = addrlen;
+    int result = syscall(SYS_socketcall, 2/*SYS_BIND*/, a);
+#else /* amd64 */
+    int result = syscall(SYS_bind, fd, addrbuf, addrlen);
+#endif
+    syscall_return(-1==result?-errno:result);
+    delete[] addrbuf;
+}
+
+void
+RSIM_Thread::sys_listen(int fd, int backlog)
+{
+#ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
+    int a[2];
+    a[0] = fd;
+    a[1] = backlog;
+    int result = syscall(SYS_socketcall, 4/*SYS_LISTEN*/, a);
+#else /* amd64 */
+    int result = syscall(SYS_listen, fd, backlog);
+#endif
+    syscall_return(-1==result?-errno:result);
+}
+
+void
 RSIM_Thread::emulate_syscall()
 {
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
@@ -74,36 +899,36 @@ RSIM_Thread::emulate_syscall()
 
         case 3: { /*read*/
             syscall_enter("read", "dpd");
-            int fd=arg(0);
-            uint32_t buf_va=arg(1), size=arg(2);
+            int fd=syscall_arg(0);
+            uint32_t buf_va=syscall_arg(1), size=syscall_arg(2);
             char buf[size];
             ssize_t nread = read(fd, buf, size);
             if (-1==nread) {
-                sys_return(-errno);
-            } else if (process->get_memory()->write(buf, buf_va, (size_t)nread)!=(size_t)nread) {
-                sys_return(-EFAULT);
+                syscall_return(-errno);
+            } else if (get_process()->mem_write(buf, buf_va, (size_t)nread)!=(size_t)nread) {
+                syscall_return(-EFAULT);
             } else {
-                sys_return(nread);
+                syscall_return(nread);
             }
             syscall_leave("d-b", nread>0?nread:0);
             break;
         }
 
         case 4: { /*write*/
-            syscall_enter("write", "dbd", arg(2));
-            int fd=arg(0);
-            uint32_t buf_va=arg(1);
-            size_t size=arg(2);
+            syscall_enter("write", "dbd", syscall_arg(2));
+            int fd=syscall_arg(0);
+            uint32_t buf_va=syscall_arg(1);
+            size_t size=syscall_arg(2);
             uint8_t buf[size];
-            size_t nread = process->get_memory()->read(buf, buf_va, size);
+            size_t nread = get_process()->mem_read(buf, buf_va, size);
             if (nread!=size) {
-                sys_return(-EFAULT);
+                syscall_return(-EFAULT);
             } else {
                 ssize_t nwritten = write(fd, buf, size);
                 if (-1==nwritten) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                 } else {
-                    sys_return(nwritten);
+                    syscall_return(nwritten);
                 }
             }
             syscall_leave("d");
@@ -113,21 +938,21 @@ RSIM_Thread::emulate_syscall()
         case 5: { /*open*/
             syscall_enter("open", "sf", open_flags);
             do {
-                uint32_t filename_va=arg(0);
+                uint32_t filename_va=syscall_arg(0);
                 bool error;
-                std::string filename = read_string(filename_va, 0, &error);
+                std::string filename = get_process()->read_string(filename_va, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
-                uint32_t flags=arg(1), mode=(flags & O_CREAT)?arg(2):0;
+                uint32_t flags=syscall_arg(1), mode=(flags & O_CREAT)?syscall_arg(2):0;
                 int fd = open(filename.c_str(), flags, mode);
                 if (-1==fd) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
-                sys_return(fd);
+                syscall_return(fd);
             } while (0);
             syscall_leave("d");
             break;
@@ -135,13 +960,13 @@ RSIM_Thread::emulate_syscall()
 
         case 6: { /*close*/
             syscall_enter("close", "d");
-            int fd=arg(0);
+            int fd=syscall_arg(0);
             if (1==fd || 2==fd) {
                 /* ROSE is using these */
-                sys_return(-EPERM);
+                syscall_return(-EPERM);
             } else {
                 int status = close(fd);
-                sys_return(status<0 ? -errno : status);
+                syscall_return(status<0 ? -errno : status);
             }
             syscall_leave("d");
             break;
@@ -150,9 +975,9 @@ RSIM_Thread::emulate_syscall()
         case 7: { // waitpid
             static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
             syscall_enter("waitpid", "dpf", wflags);
-            pid_t pid=arg(0);
-            uint32_t status_va=arg(1);
-            int options=arg(2);
+            pid_t pid=syscall_arg(0);
+            uint32_t status_va=syscall_arg(1);
+            int options=syscall_arg(2);
             int sys_status;
             int result = waitpid(pid, &sys_status, options);
             if (result == -1) {
@@ -160,10 +985,10 @@ RSIM_Thread::emulate_syscall()
             } else if (status_va) {
                 uint32_t status_le;
                 SgAsmExecutableFileFormat::host_to_le(sys_status, &status_le);
-                size_t nwritten = process->get_memory()->write(&status_le, status_va, 4);
+                size_t nwritten = get_process()->mem_write(&status_le, status_va, 4);
                 ROSE_ASSERT(4==nwritten);
             }
-            sys_return(result);
+            syscall_return(result);
             syscall_leave("d");
             break;
         }
@@ -171,22 +996,22 @@ RSIM_Thread::emulate_syscall()
         case 8: { /* 0x8, creat */
             syscall_enter("creat", "sd");
             do {
-                uint32_t filename = arg(0);
+                uint32_t filename = syscall_arg(0);
                 bool error;
-                std::string sys_filename = read_string(filename, 0, &error);
+                std::string sys_filename = get_process()->read_string(filename, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
-	        mode_t mode = arg(1);
+	        mode_t mode = syscall_arg(1);
 
 	        int result = creat(sys_filename.c_str(), mode);
                 if (result == -1) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -196,19 +1021,19 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("link", "ss");
             bool error;
 
-            std::string oldpath = read_string(arg(0), 0, &error);
+            std::string oldpath = get_process()->read_string(syscall_arg(0), 0, &error);
 	    if (error) {
-		    sys_return(-EFAULT);
+		    syscall_return(-EFAULT);
 		    break;
 	    }
-            std::string newpath = read_string(arg(1), 0, &error);
+            std::string newpath = get_process()->read_string(syscall_arg(1), 0, &error);
 	    if (error) {
-		    sys_return(-EFAULT);
+		    syscall_return(-EFAULT);
 		    break;
 	    }
 
             int result = syscall(SYS_link,oldpath.c_str(), newpath.c_str());
-            sys_return(-1==result?-errno:result);
+            syscall_return(-1==result?-errno:result);
 
             syscall_leave("d");
             break;
@@ -217,21 +1042,21 @@ RSIM_Thread::emulate_syscall()
         case 10: { /*0xa, unlink*/
             syscall_enter("unlink", "s");
             do {
-                uint32_t filename_va = arg(0);
+                uint32_t filename_va = syscall_arg(0);
                 bool error;
-                std::string filename = read_string(filename_va, 0, &error);
+                std::string filename = get_process()->read_string(filename_va, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
 
                 int result = unlink(filename.c_str());
                 if (result == -1) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
                 
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -243,14 +1068,14 @@ RSIM_Thread::emulate_syscall()
                 bool error;
 
                 /* Name of executable */
-                std::string filename = read_string(arg(0), 0, &error);
+                std::string filename = get_process()->read_string(syscall_arg(0), 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
 
                 /* Argument vector */
-                std::vector<std::string> argv = read_string_vector(arg(1), &error);
+                std::vector<std::string> argv = get_process()->read_string_vector(syscall_arg(1), &error);
                 if (tracing(TRACE_SYSCALL)) {
                     if (!argv.empty())
                         fputs("continued below...\n", tracing(TRACE_SYSCALL));
@@ -261,7 +1086,7 @@ RSIM_Thread::emulate_syscall()
                     }
                 }
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
                 std::vector<char*> sys_argv;
@@ -270,7 +1095,7 @@ RSIM_Thread::emulate_syscall()
                 sys_argv.push_back(NULL);
 
                 /* Environment vector */
-                std::vector<std::string> envp = read_string_vector(arg(2), &error);
+                std::vector<std::string> envp = get_process()->read_string_vector(syscall_arg(2), &error);
                 if (tracing(TRACE_SYSCALL)) {
                     if (argv.empty() && !envp.empty())
                         fputs("continued below...\n", tracing(TRACE_SYSCALL));
@@ -281,7 +1106,7 @@ RSIM_Thread::emulate_syscall()
                     }
                 }
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
                 std::vector<char*> sys_envp;
@@ -292,7 +1117,7 @@ RSIM_Thread::emulate_syscall()
                 /* The real system call */
                 int result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
                 ROSE_ASSERT(-1==result);
-                sys_return(-errno);
+                syscall_return(-errno);
                 if (tracing(TRACE_SYSCALL) && (!argv.empty() || !envp.empty()))
                     fputs("execve failed with ", tracing(TRACE_SYSCALL));
             } while (0);
@@ -303,21 +1128,21 @@ RSIM_Thread::emulate_syscall()
 	case 12: { /* 0xc, chdir */
             syscall_enter("chdir", "s");
             do {
-                uint32_t path = arg(0);
+                uint32_t path = syscall_arg(0);
                 bool error;
-                std::string sys_path = read_string(path, 0, &error);
+                std::string sys_path = get_process()->read_string(path, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
 
                 int result = chdir(sys_path.c_str());
                 if (result == -1) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -326,13 +1151,13 @@ RSIM_Thread::emulate_syscall()
         case 13: { /*0xd, time */
             syscall_enter("time", "p");
             time_t result = time(NULL);
-            if (arg(0)) {
+            if (syscall_arg(0)) {
                 uint32_t t_le;
                 SgAsmExecutableFileFormat::host_to_le(result, &t_le);
-                size_t nwritten = process->get_memory()->write(&t_le, arg(0), 4);
+                size_t nwritten = get_process()->mem_write(&t_le, syscall_arg(0), 4);
                 ROSE_ASSERT(4==nwritten);
             }
-            sys_return(result);
+            syscall_return(result);
             syscall_leave("t");
             break;
         }
@@ -340,17 +1165,17 @@ RSIM_Thread::emulate_syscall()
         case 14: { /*0xe, mknod*/
             syscall_enter("mknod", "sfd", file_mode_flags);
             do {
-                uint32_t path_va = arg(0);
-                int mode = arg(1);
-                unsigned dev = arg(2);
+                uint32_t path_va = syscall_arg(0);
+                int mode = syscall_arg(1);
+                unsigned dev = syscall_arg(2);
                 bool error;
-                std::string path = read_string(path_va, 0, &error);
+                std::string path = get_process()->read_string(path_va, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
                 int result = mknod(path.c_str(), mode, dev);
-                sys_return(-1==result ? -errno : result);
+                syscall_return(-1==result ? -errno : result);
             } while (0);
             syscall_leave("d");
             break;
@@ -359,17 +1184,17 @@ RSIM_Thread::emulate_syscall()
 	case 15: { /* 0xf, chmod */
             syscall_enter("chmod", "sd");
             do {
-                uint32_t filename = arg(0);
+                uint32_t filename = syscall_arg(0);
                 bool error;
-                std::string sys_filename = read_string(filename, 0, &error);
+                std::string sys_filename = get_process()->read_string(filename, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
-                mode_t mode = arg(1);
+                mode_t mode = syscall_arg(1);
                 int result = chmod(sys_filename.c_str(), mode);
                 if (result == -1) result = -errno;
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -377,30 +1202,30 @@ RSIM_Thread::emulate_syscall()
 
         case 19: { /* 0x13, lseek(int fd, off_t offset, int whence) */
             syscall_enter("lseek", "ddf", seek_whence);
-            off_t result = lseek(arg(0), arg(1), arg(2));
-            sys_return(-1==result?-errno:result);
+            off_t result = lseek(syscall_arg(0), syscall_arg(1), syscall_arg(2));
+            syscall_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
 
         case 20: { /*0x14, getpid*/
             syscall_enter("getpid", "");
-            sys_return(getpid());
+            syscall_return(getpid());
             syscall_leave("d");
             break;
         }
 
         case 24: { /*0x18, getuid*/
             syscall_enter("getuid", "");
-            sys_return(getuid());
+            syscall_return(getuid());
             syscall_leave("d");
             break;
         }
 
         case 27: { /* 0x1b, alarm */
             syscall_enter("alarm", "d");
-            int result = alarm(arg(0));
-            sys_return(result);
+            int result = alarm(syscall_arg(0));
+            syscall_return(result);
             syscall_leave("d");
             break;
         }
@@ -408,7 +1233,7 @@ RSIM_Thread::emulate_syscall()
         case 29: { /* 0x1d, pause */
             syscall_enter("pause", "");
             signal_pause();
-            sys_return(-EINTR);
+            syscall_return(-EINTR);
             syscall_leave("d");
             break;
         }
@@ -434,15 +1259,15 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("utime", "sp");
             do {
                 bool error;
-                std::string filename = read_string(arg(0), 0, &error);
+                std::string filename = get_process()->read_string(syscall_arg(0), 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
 
                 //Check to see if times is NULL
                 uint8_t byte;
-                size_t nread = process->get_memory()->read(&byte, arg(1), 1);
+                size_t nread = get_process()->mem_read(&byte, syscall_arg(1), 1);
                 ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
 
                 int result;
@@ -453,7 +1278,7 @@ RSIM_Thread::emulate_syscall()
                     };
 
                     kernel_utimebuf ubuf;
-                    size_t nread = process->get_memory()->read(&ubuf, arg(1), sizeof(kernel_utimebuf));
+                    size_t nread = get_process()->mem_read(&ubuf, syscall_arg(1), sizeof(kernel_utimebuf));
                     ROSE_ASSERT(nread == sizeof(kernel_utimebuf));
 
                     utimbuf ubuf64;
@@ -465,7 +1290,7 @@ RSIM_Thread::emulate_syscall()
                 } else {
                     result = utime(filename.c_str(), NULL);
                 }
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -475,17 +1300,17 @@ RSIM_Thread::emulate_syscall()
             static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
             syscall_enter("access", "sf", flags);
             do {
-                uint32_t name_va=arg(0);
+                uint32_t name_va=syscall_arg(0);
                 bool error;
-                std::string name = read_string(name_va, 0, &error);
+                std::string name = get_process()->read_string(name_va, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
-                int mode=arg(1);
+                int mode=syscall_arg(1);
                 int result = access(name.c_str(), mode);
                 if (-1==result) result = -errno;
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -494,18 +1319,18 @@ RSIM_Thread::emulate_syscall()
             //  void sync(void);
             syscall_enter("sync", "");
             sync();
-            sys_return(0);
+            syscall_return(0);
             syscall_leave("d");
             break;
         }
 
 	case 37: { /* 0x25, kill */
             syscall_enter("kill", "df", signal_names);
-            pid_t pid=arg(0);
-            int sig=arg(1);
+            pid_t pid=syscall_arg(0);
+            int sig=syscall_arg(1);
             int result = kill(pid, sig);
             if (result == -1) result = -errno;
-            sys_return(result);
+            syscall_return(result);
             syscall_leave("d");
             break;
         }
@@ -514,19 +1339,19 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("rename", "ss");
             bool error;
 
-            std::string oldpath = read_string(arg(0), 0, &error);
+            std::string oldpath = get_process()->read_string(syscall_arg(0), 0, &error);
 	    if (error) {
-		    sys_return(-EFAULT);
+		    syscall_return(-EFAULT);
 		    break;
 	    }
-            std::string newpath = read_string(arg(1), 0, &error);
+            std::string newpath = get_process()->read_string(syscall_arg(1), 0, &error);
 	    if (error) {
-		    sys_return(-EFAULT);
+		    syscall_return(-EFAULT);
 		    break;
 	    }
 
             int result = syscall(SYS_rename,oldpath.c_str(), newpath.c_str());
-            sys_return(-1==result?-errno:result);
+            syscall_return(-1==result?-errno:result);
 
             syscall_leave("d");
             break;
@@ -536,18 +1361,18 @@ RSIM_Thread::emulate_syscall()
 	case 39: { /* 0x27, mkdir */
             syscall_enter("mkdir", "sd");
             do {
-                uint32_t pathname = arg(0);
+                uint32_t pathname = syscall_arg(0);
                 bool error;
-                std::string sys_pathname = read_string(pathname, 0, &error);
+                std::string sys_pathname = get_process()->read_string(pathname, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
-                mode_t mode = arg(1);
+                mode_t mode = syscall_arg(1);
 
                 int result = mkdir(sys_pathname.c_str(), mode);
                 if (result == -1) result = -errno;
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -556,17 +1381,17 @@ RSIM_Thread::emulate_syscall()
 	case 40: { /* 0x28, rmdir */
             syscall_enter("rmdir", "s");
             do {
-                uint32_t pathname = arg(0);
+                uint32_t pathname = syscall_arg(0);
                 bool error;
-                std::string sys_pathname = read_string(pathname, 0, &error);
+                std::string sys_pathname = get_process()->read_string(pathname, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
 
                 int result = rmdir(sys_pathname.c_str());
                 if (result == -1) result = -errno;
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -574,10 +1399,10 @@ RSIM_Thread::emulate_syscall()
 
         case 41: { /*0x29, dup*/
             syscall_enter("dup", "d");
-            uint32_t fd = arg(0);
+            uint32_t fd = syscall_arg(0);
             int result = dup(fd);
             if (-1==result) result = -errno;
-            sys_return(result);
+            syscall_return(result);
             syscall_leave("d");
             break;
         }
@@ -604,69 +1429,47 @@ RSIM_Thread::emulate_syscall()
             filedes_kernel[0] = filedes[0];
             filedes_kernel[1] = filedes[1];
 
-            process->get_memory()->write(filedes_kernel, arg(0), size_filedes);
+            get_process()->mem_write(filedes_kernel, syscall_arg(0), size_filedes);
 
 
             if (-1==result) result = -errno;
-            sys_return(result);
+            syscall_return(result);
             syscall_leave("d");
             break;
         }
 
         case 45: { /*0x2d, brk*/
             syscall_enter("brk", "x");
-            uint32_t newbrk = arg(0);
-            int retval = 0;
-
-            if (newbrk >= 0xb0000000ul) {
-                retval = -ENOMEM;
-            } else {
-                if (newbrk > process->brk_va) {
-                    MemoryMap::MapElement melmt(process->brk_va, newbrk-process->brk_va,
-                                                MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
-                    melmt.set_name("[heap]");
-                    process->get_memory()->insert(melmt);
-                    process->brk_va = newbrk;
-                } else if (newbrk>0 && newbrk<process->brk_va) {
-                    process->get_memory()->erase(MemoryMap::MapElement(newbrk, process->brk_va-newbrk));
-                    process->brk_va = newbrk;
-                }
-                retval= process->brk_va;
-            }
-            if (newbrk!=0 && tracing(TRACE_MMAP)) {
-                fprintf(tracing(TRACE_MMAP), "  memory map after brk syscall:\n");
-                process->get_memory()->dump(tracing(TRACE_MMAP), "    ");
-            }
-
-            sys_return(retval);
+            uint32_t newbrk = syscall_arg(0);
+            syscall_return(get_process()->mem_setbrk(newbrk));
             syscall_leave("p");
             break;
         }
 
         case 47: { /*0x2f, getgid*/
             syscall_enter("getgid", "");
-            sys_return(getgid());
+            syscall_return(getgid());
             syscall_leave("d");
             break;
         }
 
         case 49: { /*0x31, geteuid*/
             syscall_enter("geteuid", "");
-            sys_return(geteuid());
+            syscall_return(geteuid());
             syscall_leave("d");
             break;
         }
 
         case 50: { /*0x32, getegid*/
             syscall_enter("getegid", "");
-            sys_return(getegid());
+            syscall_return(getegid());
             syscall_leave("d");
             break;
         }
 
         case 54: { /*0x36, ioctl*/
-            int fd=arg(0);
-            uint32_t cmd=arg(1);
+            int fd=syscall_arg(0);
+            uint32_t cmd=syscall_arg(1);
 
             switch (cmd) {
                 case TCGETS: { /* 0x00005401, tcgetattr*/
@@ -675,7 +1478,7 @@ RSIM_Thread::emulate_syscall()
                         termios_native host_ti;
                         int result = syscall(SYS_ioctl, fd, cmd, &host_ti);
                         if (-1==result) {
-                            sys_return(-errno);
+                            syscall_return(-errno);
                             break;
                         }
                         termios_32 guest_ti;
@@ -686,11 +1489,11 @@ RSIM_Thread::emulate_syscall()
                         guest_ti.c_line = host_ti.c_line;
                         for (int i=0; i<19; i++)
                             guest_ti.c_cc[i] = host_ti.c_cc[i];
-                        if (sizeof(guest_ti)!=process->get_memory()->write(&guest_ti, arg(2), sizeof guest_ti)) {
-                            sys_return(-EFAULT);
+                        if (sizeof(guest_ti)!=get_process()->mem_write(&guest_ti, syscall_arg(2), sizeof guest_ti)) {
+                            syscall_return(-EFAULT);
                             break;
                         }
-                        sys_return(result);
+                        syscall_return(result);
                     } while (0);
                     syscall_leave("d--P", sizeof(termios_32), print_termios_32);
                     break;
@@ -702,8 +1505,8 @@ RSIM_Thread::emulate_syscall()
                     syscall_enter("ioctl", "dfP", ioctl_commands, sizeof(termios_32), print_termios_32);
                     do {
                         termios_32 guest_ti;
-                        if (sizeof(guest_ti)!=process->get_memory()->read(&guest_ti, arg(2), sizeof guest_ti)) {
-                            sys_return(-EFAULT);
+                        if (sizeof(guest_ti)!=get_process()->mem_read(&guest_ti, syscall_arg(2), sizeof guest_ti)) {
+                            syscall_return(-EFAULT);
                             break;
                         }
                         termios_native host_ti;
@@ -715,7 +1518,7 @@ RSIM_Thread::emulate_syscall()
                         for (int i=0; i<19; i++)
                             host_ti.c_cc[i] = guest_ti.c_cc[i];
                         int result = syscall(SYS_ioctl, fd, cmd, &host_ti);
-                        sys_return(-1==result?-errno:result);
+                        syscall_return(-1==result?-errno:result);
                     } while (0);
                     syscall_leave("d");
                     break;
@@ -743,11 +1546,11 @@ RSIM_Thread::emulate_syscall()
                     if (-1==result) {
                         result = -errno;
                     } else {
-                        size_t nwritten = process->get_memory()->write(&to, arg(2), sizeof to);
+                        size_t nwritten = get_process()->mem_write(&to, syscall_arg(2), sizeof to);
                         ROSE_ASSERT(nwritten==sizeof to);
                     }
 
-                    sys_return(result);
+                    syscall_return(result);
                     syscall_leave("d");
                     break;
                 }
@@ -764,14 +1567,14 @@ RSIM_Thread::emulate_syscall()
                     do {
                         pid_t pgrp = tcgetpgrp(fd);
                         if (-1==pgrp) {
-                            sys_return(-errno);
+                            syscall_return(-errno);
                             break;
                         }
                         uint32_t pgrp_le;
                         SgAsmExecutableFileFormat::host_to_le(pgrp, &pgrp_le);
-                        size_t nwritten = process->get_memory()->write(&pgrp_le, arg(2), 4);
+                        size_t nwritten = get_process()->mem_write(&pgrp_le, syscall_arg(2), 4);
                         ROSE_ASSERT(4==nwritten);
-                        sys_return(pgrp);
+                        syscall_return(pgrp);
                     } while (0);
                     syscall_leave("d");
                     break;
@@ -780,13 +1583,13 @@ RSIM_Thread::emulate_syscall()
                 case TIOCSPGRP: { /* 0x5410, tcsetpgrp*/
                     syscall_enter("ioctl", "dfd", ioctl_commands);
                     uint32_t pgid_le;
-                    size_t nread = process->get_memory()->read(&pgid_le, arg(2), 4);
+                    size_t nread = get_process()->mem_read(&pgid_le, syscall_arg(2), 4);
                     ROSE_ASSERT(4==nread);
                     pid_t pgid = SgAsmExecutableFileFormat::le_to_host(pgid_le);
                     int result = tcsetpgrp(fd, pgid);
                     if (-1==result)
                         result = -errno;
-                    sys_return(result);
+                    syscall_return(result);
                     syscall_leave("d");
                     break;
                 }
@@ -795,8 +1598,8 @@ RSIM_Thread::emulate_syscall()
                     syscall_enter("ioctl", "dfP", ioctl_commands, sizeof(winsize_32), print_winsize_32);
                     do {
                         winsize_32 guest_ws;
-                        if (sizeof(guest_ws)!=process->get_memory()->read(&guest_ws, arg(2), sizeof guest_ws)) {
-                            sys_return(-EFAULT);
+                        if (sizeof(guest_ws)!=get_process()->mem_read(&guest_ws, syscall_arg(2), sizeof guest_ws)) {
+                            syscall_return(-EFAULT);
                             break;
                         }
 
@@ -807,7 +1610,7 @@ RSIM_Thread::emulate_syscall()
                         host_ws.ws_ypixel = guest_ws.ws_ypixel;
 
                         int result = syscall(SYS_ioctl, fd, cmd, &host_ws);
-                        sys_return(-1==result?-errno:result);
+                        syscall_return(-1==result?-errno:result);
                     } while (0);
                     syscall_leave("d");
                     break;
@@ -819,7 +1622,7 @@ RSIM_Thread::emulate_syscall()
                         winsize_native host_ws;
                         int result = syscall(SYS_ioctl, fd, cmd, &host_ws);
                         if (-1==result) {
-                            sys_return(-errno);
+                            syscall_return(-errno);
                             break;
                         }
 
@@ -828,12 +1631,12 @@ RSIM_Thread::emulate_syscall()
                         guest_ws.ws_col = host_ws.ws_col;
                         guest_ws.ws_xpixel = host_ws.ws_xpixel;
                         guest_ws.ws_ypixel = host_ws.ws_ypixel;
-                        if (sizeof(guest_ws)!=process->get_memory()->write(&guest_ws, arg(2), sizeof guest_ws)) {
-                            sys_return(-EFAULT);
+                        if (sizeof(guest_ws)!=get_process()->mem_write(&guest_ws, syscall_arg(2), sizeof guest_ws)) {
+                            syscall_return(-EFAULT);
                             break;
                         }
 
-                        sys_return(result);
+                        syscall_return(result);
                     } while (0);
                     syscall_leave("d--P", sizeof(winsize_32), print_winsize_32);
                     break;
@@ -850,10 +1653,10 @@ RSIM_Thread::emulate_syscall()
 
         case 57: { /*0x39, setpgid*/
             syscall_enter("setpgid", "dd");
-            pid_t pid=arg(0), pgid=arg(1);
+            pid_t pid=syscall_arg(0), pgid=syscall_arg(1);
             int result = setpgid(pid, pgid);
             if (-1==result) { result = -errno; }
-            sys_return(result);
+            syscall_return(result);
             syscall_leave("d");
             break;
         }
@@ -866,11 +1669,11 @@ RSIM_Thread::emulate_syscall()
                This system call always succeeds and the previous value of the mask is returned.
             */
             syscall_enter("umask", "d");
-	    mode_t mode = arg(0);
+	    mode_t mode = syscall_arg(0);
 
 	    int result = syscall(SYS_umask, mode); 
             if (result == -1) result = -errno;
-            sys_return(result);
+            syscall_return(result);
 
             syscall_leave("d");
             break;
@@ -878,38 +1681,38 @@ RSIM_Thread::emulate_syscall()
 
         case 63: { /* 0x3f, dup2 */
             syscall_enter("dup2", "dd");
-            int result = dup2(arg(0), arg(1));
-            sys_return(-1==result?-errno:result);
+            int result = dup2(syscall_arg(0), syscall_arg(1));
+            syscall_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
             
         case 64: { /*0x40, getppid*/
             syscall_enter("getppid", "");
-            sys_return(getppid());
+            syscall_return(getppid());
             syscall_leave("d");
             break;
         }
 
         case 65: { /*0x41, getpgrp*/
             syscall_enter("getpgrp", "");
-            sys_return(getpgrp());
+            syscall_return(getpgrp());
             syscall_leave("d");
             break;
         }
 
         case 75: { /*0x4B, setrlimit */
             syscall_enter("setrlimit", "fP", rlimit_resources, 8, print_rlimit);
-            int resource = arg(0);
-            uint32_t rlimit_va = arg(1);
+            int resource = syscall_arg(0);
+            uint32_t rlimit_va = syscall_arg(1);
             uint32_t rlimit_guest[2];
-            size_t nread = process->get_memory()->read(rlimit_guest, rlimit_va, sizeof rlimit_guest);
+            size_t nread = get_process()->mem_read(rlimit_guest, rlimit_va, sizeof rlimit_guest);
             ROSE_ASSERT(nread==sizeof rlimit_guest);
             struct rlimit rlimit_native;
             rlimit_native.rlim_cur = rlimit_guest[0];
             rlimit_native.rlim_max = rlimit_guest[1];
             int result = setrlimit(resource, &rlimit_native);
-            sys_return(-1==result ? -errno : result);
+            syscall_return(-1==result ? -errno : result);
             syscall_leave("d");
             break;
         }
@@ -923,24 +1726,24 @@ RSIM_Thread::emulate_syscall()
         case 76: {  /*0x4c, getrlimit*/
             syscall_enter("getrlimit", "fp", rlimit_resources);
             do {
-                int resource = arg(0);
-                uint32_t rlimit_va = arg(1);
+                int resource = syscall_arg(0);
+                uint32_t rlimit_va = syscall_arg(1);
                 struct rlimit rlimit_native;
                 int result = getrlimit(resource, &rlimit_native);
                 if (-1==result) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
                 uint32_t rlimit_guest[2];
                 rlimit_guest[0] = rlimit_native.rlim_cur;
                 rlimit_guest[1] = rlimit_native.rlim_max;
-                if (8!=process->get_memory()->write(rlimit_guest, rlimit_va, 8)) {
-                    sys_return(-EFAULT);
+                if (8!=get_process()->mem_write(rlimit_guest, rlimit_va, 8)) {
+                    syscall_return(-EFAULT);
                     break;
                 }
 
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d-P", 8, print_rlimit);
             break;
@@ -948,7 +1751,7 @@ RSIM_Thread::emulate_syscall()
 
         case 78: { /*0x4e, gettimeofday*/       
             syscall_enter("gettimeofday", "p");
-            uint32_t tp = arg(0);
+            uint32_t tp = syscall_arg(0);
             struct timeval host_time;
             struct timeval_32 guest_time;
 
@@ -958,11 +1761,11 @@ RSIM_Thread::emulate_syscall()
             } else {
                 guest_time.tv_sec = host_time.tv_sec;
                 guest_time.tv_usec = host_time.tv_usec;
-                if (sizeof(guest_time) != process->get_memory()->write(&guest_time, tp, sizeof guest_time))
+                if (sizeof(guest_time) != get_process()->mem_write(&guest_time, tp, sizeof guest_time))
                     result = -EFAULT;
             }
 
-            sys_return(result);
+            syscall_return(result);
             syscall_leave("dP", sizeof guest_time, print_timeval_32);
             break;
         }
@@ -970,21 +1773,21 @@ RSIM_Thread::emulate_syscall()
         case 83: { /*0x53, symlink*/
             syscall_enter("symlink", "ss");
             do {
-                uint32_t oldpath=arg(0), newpath=arg(1);
+                uint32_t oldpath=syscall_arg(0), newpath=syscall_arg(1);
                 bool error;
-                std::string sys_oldpath = read_string(oldpath, 0, &error);
+                std::string sys_oldpath = get_process()->read_string(oldpath, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
-                std::string sys_newpath = read_string(newpath, 0, &error);
+                std::string sys_newpath = get_process()->read_string(newpath, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
                 int result = symlink(sys_oldpath.c_str(),sys_newpath.c_str());
                 if (result == -1) result = -errno;
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -993,22 +1796,22 @@ RSIM_Thread::emulate_syscall()
         case 85: { /*0x55, readlink*/
             syscall_enter("readlink", "spd");
             do {
-                uint32_t path=arg(0), buf_va=arg(1), bufsize=arg(2);
+                uint32_t path=syscall_arg(0), buf_va=syscall_arg(1), bufsize=syscall_arg(2);
                 char sys_buf[bufsize];
                 bool error;
-                std::string sys_path = read_string(path, 0, &error);
+                std::string sys_path = get_process()->read_string(path, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
                 int result = readlink(sys_path.c_str(), sys_buf, bufsize);
                 if (result == -1) {
                     result = -errno;
                 } else {
-                    size_t nwritten = process->get_memory()->write(sys_buf, buf_va, result);
+                    size_t nwritten = get_process()->mem_write(sys_buf, buf_va, result);
                     ROSE_ASSERT(nwritten == (size_t)result);
                 }
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -1017,51 +1820,30 @@ RSIM_Thread::emulate_syscall()
         case 91: { /*0x5b, munmap*/
             syscall_enter("munmap", "pd");
             do {
-                uint32_t va=arg(0);
-                uint32_t sz=arg(1);
+                uint32_t va=syscall_arg(0);
+                uint32_t sz=syscall_arg(1);
                 uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
                 uint32_t aligned_sz = ALIGN_UP(sz+va-aligned_va, PAGE_SIZE);
-                void *rose_addr = my_addr(aligned_va, aligned_sz);
 
                 /* Check ranges */
                 if (aligned_va+aligned_sz <= aligned_va) { /* FIXME: not sure if sz==0 is an error */
-                    sys_return(-EINVAL);
+                    syscall_return(-EINVAL);
                     break;
                 }
 
-                /* Make sure that the specified memory range is actually mapped, or return -ENOMEM. */
-                ExtentMap extents;
-                extents.insert(ExtentPair(aligned_va, aligned_sz));
-                extents.erase(process->get_memory()->va_extents());
-                if (!extents.empty()) {
-                    sys_return(-ENOMEM);
-                    break;
-                }
-
-                /* Erase the mapping from the simulation */
-                process->get_memory()->erase(MemoryMap::MapElement(aligned_va, aligned_sz));
-
-                /* Also unmap for real, because if we don't, and the mapping was not anonymous, and the file that was mapped is
-                 * unlinked, and we're on NFS, an NFS temp file is created in place of the unlinked file. */
-                if (rose_addr && ALIGN_UP((uint64_t)rose_addr, (uint64_t)PAGE_SIZE)==(uint64_t)rose_addr)
-                    (void)munmap(rose_addr, aligned_sz);
-
-                sys_return(0);
+                int status = get_process()->mem_unmap(aligned_va, aligned_sz);
+                syscall_return(status);
             } while (0);
-            if (tracing(TRACE_MMAP)) {
-                fprintf(tracing(TRACE_MMAP), " memory map after munmap syscall:\n");
-                process->get_memory()->dump(tracing(TRACE_MMAP), "    ");
-            }
             syscall_leave("d");
             break;
         }
 
         case 93: { /* 0x5c, ftruncate */
             syscall_enter("ftruncate", "dd");
-            int fd = arg(0);
-            off_t len = arg(1);
+            int fd = syscall_arg(0);
+            off_t len = syscall_arg(1);
             int result = ftruncate(fd, len);
-            sys_return(-1==result ? -errno : result);
+            syscall_return(-1==result ? -errno : result);
             syscall_leave("d");
             break;
         }
@@ -1075,12 +1857,12 @@ RSIM_Thread::emulate_syscall()
                          descriptor fd.
             */
             syscall_enter("fchmod", "dd");
-	        uint32_t fd = arg(0);
-	        mode_t mode = arg(1);
+	        uint32_t fd = syscall_arg(0);
+	        mode_t mode = syscall_arg(1);
 
 	        int result = fchmod(fd, mode);
             if (result == -1) result = -errno;
-            sys_return(result);
+            syscall_return(result);
 
             syscall_leave("d");
             break;
@@ -1093,11 +1875,11 @@ RSIM_Thread::emulate_syscall()
              *
              * fchown() changes the ownership of the file referred to by the open file descriptor fd. */
             syscall_enter("fchown", "ddd");
-            uint32_t fd = arg(0);
-            int user = arg(1);
-            int group = arg(2);
+            uint32_t fd = syscall_arg(0);
+            int user = syscall_arg(1);
+            int group = syscall_arg(2);
             int result = syscall(SYS_fchown, fd, user, group);
-            sys_return(-1==result?-errno:result);
+            syscall_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
@@ -1117,9 +1899,9 @@ RSIM_Thread::emulate_syscall()
                 if(99==callno){
 
                   bool error;
-                  std::string path = read_string(arg(0), 0, &error);
+                  std::string path = get_process()->read_string(syscall_arg(0), 0, &error);
                   if (error) {
-                      sys_return(-EFAULT);
+                      syscall_return(-EFAULT);
                       break;
                   }
 
@@ -1131,15 +1913,15 @@ RSIM_Thread::emulate_syscall()
                 }else{
 
 #ifdef SYS_statfs64 /* host is 32-bit machine */
-                  result = syscall(SYS_fstatfs64 ,arg(0), sizeof host_statfs, &host_statfs);
+                  result = syscall(SYS_fstatfs64 ,syscall_arg(0), sizeof host_statfs, &host_statfs);
 #else             /* host is 64-bit machine */
-                  result = syscall(SYS_fstatfs, arg(0), &host_statfs);
+                  result = syscall(SYS_fstatfs, syscall_arg(0), &host_statfs);
 #endif
 
                 }
 
                 if (-1==result) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
@@ -1160,12 +1942,12 @@ RSIM_Thread::emulate_syscall()
                 guest_statfs.f_spare[1] = host_statfs.f_spare[1];
                 guest_statfs.f_spare[2] = host_statfs.f_spare[2];
                 guest_statfs.f_spare[3] = host_statfs.f_spare[3];
-                if (sizeof(guest_statfs)!=process->get_memory()->write(&guest_statfs, arg(1), sizeof guest_statfs)) {
-                    sys_return(-EFAULT);
+                if (sizeof(guest_statfs)!=get_process()->mem_write(&guest_statfs, syscall_arg(1), sizeof guest_statfs)) {
+                    syscall_return(-EFAULT);
                     break;
                 }
 
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d-P", sizeof(statfs_32), print_statfs_32);
             break;
@@ -1198,10 +1980,10 @@ RSIM_Thread::emulate_syscall()
             };
 
             uint32_t a[6];
-            switch (arg(0)) {
+            switch (syscall_arg(0)) {
                 case 1: { /* SYS_SOCKET */
-                    if (12!=process->get_memory()->read(a, arg(1), 12)) {
-                        sys_return(-EFAULT);
+                    if (12!=get_process()->mem_read(a, syscall_arg(1), 12)) {
+                        syscall_return(-EFAULT);
                         goto socketcall_error;
                     }
                     syscall_enter(a, "socket", "fff", protocol_families, socket_types, socket_protocols);
@@ -1210,8 +1992,8 @@ RSIM_Thread::emulate_syscall()
                 }
                     
                 case 2: { /* SYS_BIND */
-                    if (12!=process->get_memory()->read(a, arg(1), 12)) {
-                        sys_return(-EFAULT);
+                    if (12!=get_process()->mem_read(a, syscall_arg(1), 12)) {
+                        syscall_return(-EFAULT);
                         goto socketcall_error;
                     }
                     syscall_enter(a, "bind", "dpd");    /* FIXME: we could do a better job printing the address [RPM 2011-01-04] */
@@ -1220,8 +2002,8 @@ RSIM_Thread::emulate_syscall()
                 }
 
                 case 4: { /* SYS_LISTEN */
-                    if (8!=process->get_memory()->read(a, arg(1), 8)) {
-                        sys_return(-EFAULT);
+                    if (8!=get_process()->mem_read(a, syscall_arg(1), 8)) {
+                        syscall_return(-EFAULT);
                         goto socketcall_error;
                     }
                     syscall_enter(a, "listen", "dd");
@@ -1245,10 +2027,10 @@ RSIM_Thread::emulate_syscall()
                 case 17: /* SYS_RECVMSG */
                 case 18: /* SYS_ACCEPT4 */
                 case 19: /* SYS_RECVMMSG */
-                    sys_return(-ENOSYS);
+                    syscall_return(-ENOSYS);
                     goto socketcall_error;
                 default:
-                    sys_return(-EINVAL);
+                    syscall_return(-EINVAL);
                     goto socketcall_error;
             }
             syscall_leave("d");
@@ -1263,9 +2045,9 @@ RSIM_Thread::emulate_syscall()
         case 114: { /*0x72, wait4*/
             static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
             syscall_enter("wait4", "dpfp", wflags);
-            pid_t pid=arg(0);
-            uint32_t status_va=arg(1), rusage_va=arg(3);
-            int options=arg(2);
+            pid_t pid=syscall_arg(0);
+            uint32_t status_va=syscall_arg(1), rusage_va=syscall_arg(3);
+            int options=syscall_arg(2);
             int status;
             struct rusage rusage;
             int result = wait4(pid, &status, options, &rusage);
@@ -1273,7 +2055,7 @@ RSIM_Thread::emulate_syscall()
                 result = -errno;
             } else {
                 if (status_va != 0) {
-                    size_t nwritten = process->get_memory()->write(&status, status_va, 4);
+                    size_t nwritten = get_process()->mem_write(&status, status_va, 4);
                     ROSE_ASSERT(nwritten == 4);
                 }
                 if (rusage_va != 0) {
@@ -1316,11 +2098,11 @@ RSIM_Thread::emulate_syscall()
                     out.nsignals = rusage.ru_nsignals;
                     out.nvcsw = rusage.ru_nvcsw;
                     out.nivcsw = rusage.ru_nivcsw;
-                    size_t nwritten = process->get_memory()->write(&out, rusage_va, sizeof out);
+                    size_t nwritten = get_process()->mem_write(&out, rusage_va, sizeof out);
                     ROSE_ASSERT(nwritten == sizeof out);
                 }
             }
-            sys_return(result);
+            syscall_return(result);
             syscall_leave("d");
             break;
         }
@@ -1369,7 +2151,7 @@ RSIM_Thread::emulate_syscall()
             int result  = syscall(SYS_sysinfo, &host_sys);
 
             if (-1==result) {
-                sys_return(-errno);
+                syscall_return(-errno);
             } else {
                 guest_sysinfo guest_sys;
                 guest_sys.uptime = host_sys.uptime;
@@ -1388,11 +2170,11 @@ RSIM_Thread::emulate_syscall()
                 memset(guest_sys._f, 0, sizeof(guest_sys._f));
                 memcpy(guest_sys._f, host_sys._f, std::min(guest_extra, host_extra));
 
-                size_t nwritten = process->get_memory()->write(&guest_sys, arg(0), sizeof(guest_sys));
+                size_t nwritten = get_process()->mem_write(&guest_sys, syscall_arg(0), sizeof(guest_sys));
                 if (nwritten!=sizeof(guest_sys)) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                 } else {
-                    sys_return(result);
+                    syscall_return(result);
                 }
             }
             syscall_leave("d");
@@ -1403,9 +2185,9 @@ RSIM_Thread::emulate_syscall()
         case 117: { /* 0x75, ipc */
             /* Return value is written to eax by these helper functions. The structure of this code closely follows that in the
              * Linux kernel. */
-            unsigned call = arg(0) & 0xffff;
-            int version = arg(0) >> 16;
-            uint32_t first=arg(1), second=arg(2), third=arg(3), ptr=arg(4), fifth=arg(5);
+            unsigned call = syscall_arg(0) & 0xffff;
+            int version = syscall_arg(0) >> 16;
+            uint32_t first=syscall_arg(1), second=syscall_arg(2), third=syscall_arg(3), ptr=syscall_arg(4), fifth=syscall_arg(5);
             switch (call) {
                 case 1: /* SEMOP */
                     syscall_enter("ipc", "fdd-p", ipc_commands);
@@ -1435,7 +2217,7 @@ RSIM_Thread::emulate_syscall()
                     syscall_leave("d");
                     break;
                 case 11: /* MSGSND */
-                    syscall_enter("ipc", "fddfb", ipc_commands, ipc_flags, (size_t)(4+arg(2)));
+                    syscall_enter("ipc", "fddfb", ipc_commands, ipc_flags, (size_t)(4+syscall_arg(2)));
                     sys_msgsnd(first, ptr, second, third);
                     syscall_leave("d");
                     break;
@@ -1443,8 +2225,8 @@ RSIM_Thread::emulate_syscall()
                     if (0==version) {
                         syscall_enter("ipc", "fddfP", ipc_commands, ipc_flags, sizeof(ipc_kludge_32), print_ipc_kludge_32);
                         ipc_kludge_32 kludge;
-                        if (8!=process->get_memory()->read(&kludge, arg(4), 8)) {
-                            sys_return(-ENOSYS);
+                        if (8!=get_process()->mem_read(&kludge, syscall_arg(4), 8)) {
+                            syscall_return(-ENOSYS);
                         } else {
                             sys_msgrcv(first, kludge.msgp, second, kludge.msgtyp, third);
                         }
@@ -1493,26 +2275,20 @@ RSIM_Thread::emulate_syscall()
                     if (1==version) {
                         /* This was the entry point for kernel-originating calls from iBCS2 in 2.2 days */
                         syscall_enter("ipc", "fdddpd", ipc_commands);
-                        sys_return(-EINVAL);
+                        syscall_return(-EINVAL);
                         syscall_leave("d");
                     } else {
                         syscall_enter("ipc", "fdfpp", ipc_commands, ipc_flags);
                         sys_shmat(first, second, third, ptr);
                         syscall_leave("p");
-                        if (tracing(TRACE_MMAP)) {
-                            fprintf(tracing(TRACE_MMAP), "  memory map after shmat:\n");
-                            process->get_memory()->dump(tracing(TRACE_MMAP), "    ");
-                        }
+                        get_process()->mem_showmap(tracing(TRACE_MMAP), "  memory map after shmat:\n");
                     }
                     break;
                 case 22: /* SHMDT */
                     syscall_enter("ipc", "f---p", ipc_commands);
                     sys_shmdt(ptr);
                     syscall_leave("d");
-                    if (tracing(TRACE_MMAP)) {
-                        fprintf(tracing(TRACE_MMAP), "  memory map after shmdt:\n");
-                        process->get_memory()->dump(tracing(TRACE_MMAP), "    ");
-                    }
+                    get_process()->mem_showmap(tracing(TRACE_MMAP), "  memory map after shmdt:\n");
                     break;
                 case 23: /* SHMGET */
                     syscall_enter("ipc", "fpdf", ipc_commands, ipc_flags); /* arg1 "p" for consistency with strace and ipcs */
@@ -1557,7 +2333,7 @@ RSIM_Thread::emulate_syscall()
                 }
                 default:
                     syscall_enter("ipc", "fdddpd", ipc_commands);
-                    sys_return(-ENOSYS);
+                    syscall_return(-ENOSYS);
                     syscall_leave("d");
                     break;
             }
@@ -1569,8 +2345,8 @@ RSIM_Thread::emulate_syscall()
                 int fsync(int fd);
             */
             syscall_enter("fsync", "d");
-            int result = fsync( arg(0));
-            sys_return(-1==result?-errno:result);
+            int result = fsync( syscall_arg(0));
+            syscall_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
@@ -1582,21 +2358,21 @@ RSIM_Thread::emulate_syscall()
              */
             syscall_enter("clone", "fpppp", clone_flags);
             do {
-                unsigned flags = arg(0);
-                unsigned newsp = arg(1);
-                unsigned parent_tid_va = arg(2);
-                unsigned child_tid_va = arg(3);
-                unsigned regs_va = arg(4);
+                unsigned flags = syscall_arg(0);
+                unsigned newsp = syscall_arg(1);
+                unsigned parent_tid_va = syscall_arg(2);
+                unsigned child_tid_va = syscall_arg(3);
+                unsigned regs_va = syscall_arg(4);
                 
                 /* We cannot handle multiple threads yet. */
                 if (newsp || parent_tid_va || child_tid_va || (flags & (CLONE_VM|CLONE_THREAD))) {
-                    sys_return(-EINVAL);
+                    syscall_return(-EINVAL);
                     break;
                 }
 
                 /* ROSE simulates signal handling, therefore signal handlers cannot be shared. */
                 if (flags & CLONE_SIGHAND) {
-                    sys_return(-EINVAL);
+                    syscall_return(-EINVAL);
                     break;
                 }
 
@@ -1610,7 +2386,7 @@ RSIM_Thread::emulate_syscall()
                  * function for it to execute. We want fork-like semantics. */
                 pid_t pid = fork();
                 if (-1==pid) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
@@ -1619,11 +2395,8 @@ RSIM_Thread::emulate_syscall()
                     signal_pending = 0;
 
                     /* Open new log files if necessary */
-                    process->open_trace_file();
-                    if (process->btrace_file) {
-                        fclose(process->btrace_file);
-                        process->btrace_file = NULL;
-                    }
+                    get_process()->open_trace_file();
+                    get_process()->btrace_close();
 
                     /* Thread-related things. ROSE isn't multi-threaded and the simulator doesn't support multi-threading, but
                      * we still have to initialize a few data structures because the specimen may be using a thread-aware
@@ -1632,7 +2405,7 @@ RSIM_Thread::emulate_syscall()
                         set_child_tid = child_tid_va;
                         if (set_child_tid) {
                             uint32_t pid32 = getpid();
-                            size_t nwritten = process->get_memory()->write(&pid32, set_child_tid, 4);
+                            size_t nwritten = get_process()->mem_write(&pid32, set_child_tid, 4);
                             ROSE_ASSERT(4==nwritten);
                         }
                     }
@@ -1661,13 +2434,13 @@ RSIM_Thread::emulate_syscall()
                             flags |= (1u<<i);
                         }
                     }
-                    if (sizeof(regs)!=process->get_memory()->write(&regs, regs_va, sizeof regs)) {
-                        sys_return(-EFAULT);
+                    if (sizeof(regs)!=get_process()->mem_write(&regs, regs_va, sizeof regs)) {
+                        syscall_return(-EFAULT);
                         break;
                     }
                 }
 
-                sys_return(pid);
+                syscall_return(pid);
             } while (0);
 
             if (policy.readGPR(x86_gpr_ax).known_value()) {
@@ -1682,7 +2455,7 @@ RSIM_Thread::emulate_syscall()
 
         case 122: { /*0x7a, uname*/
             syscall_enter("uname", "p");
-            uint32_t dest_va=arg(0);
+            uint32_t dest_va=syscall_arg(0);
             char buf[6*65];
             memset(buf, ' ', sizeof buf);
             strcpy(buf+0*65, "Linux");                                  /*sysname*/
@@ -1691,25 +2464,25 @@ RSIM_Thread::emulate_syscall()
             strcpy(buf+3*65, "#1 SMP Wed Jun 18 12:35:02 EDT 2008");    /*version*/
             strcpy(buf+4*65, "i386");                                   /*machine*/
             strcpy(buf+5*65, "example.com");                            /*domainname*/
-            size_t nwritten = process->get_memory()->write(buf, dest_va, sizeof buf);
+            size_t nwritten = get_process()->mem_write(buf, dest_va, sizeof buf);
             if( nwritten <= 0 ) {
-              sys_return(-EFAULT);
+              syscall_return(-EFAULT);
               break;
             }
 
             ROSE_ASSERT(nwritten==sizeof buf);
-            sys_return(0);
+            syscall_return(0);
             syscall_leave("d");
             break;
         }
 
 	case 133: { /* 0x85, fchdir */
             syscall_enter("fchdir", "d");
-	    uint32_t file_descriptor = arg(0);
+	    uint32_t file_descriptor = syscall_arg(0);
 
 	    int result = fchdir(file_descriptor);
             if (result == -1) result = -errno;
-            sys_return(result);
+            syscall_return(result);
 
             syscall_leave("d");
             break;
@@ -1718,37 +2491,19 @@ RSIM_Thread::emulate_syscall()
         case 125: { /*0x7d, mprotect*/
             static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
             syscall_enter("mprotect", "pdf", pflags);
-            uint32_t va=arg(0), size=arg(1), perms=arg(2);
-            unsigned rose_perms = ((perms & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
-                                  ((perms & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
-                                  ((perms & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
+            uint32_t va=syscall_arg(0), size=syscall_arg(1), real_perms=syscall_arg(2);
+            unsigned rose_perms = ((real_perms & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
+                                  ((real_perms & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
+                                  ((real_perms & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
             if (va % PAGE_SIZE) {
-                sys_return(-EINVAL);
+                syscall_return(-EINVAL);
             } else {
                 uint32_t aligned_sz = ALIGN_UP(size, PAGE_SIZE);
-
-                /* Set protection in the underlying real memory (to catch things like trying to add write permission to memory
-                 * that's mapped from a read-only file), then also set the protection in the simulated memory map so the simulator
-                 * can make queries about memory access.  Some of the underlying memory points to parts of an ELF file that was
-                 * read into ROSE's memory in such a way that segments are not aligned on page boundaries. We cannot change
-                 * protections on these non-aligned sections. */
-                if (-1==mprotect(my_addr(va, size), size, perms) && EINVAL!=errno) {
-                    sys_return(-errno);
-                } else {
-                    try {
-                        process->get_memory()->mprotect(MemoryMap::MapElement(va, aligned_sz, rose_perms));
-                        sys_return(0);
-                    } catch (const MemoryMap::NotMapped &e) {
-                        sys_return(-ENOMEM);
-                    }
-                }
+                syscall_return(get_process()->mem_protect(va, aligned_sz, rose_perms, real_perms));
             }
 
             syscall_leave("d");
-            if (tracing(TRACE_MMAP)) {
-                fprintf(tracing(TRACE_MMAP), "  memory map after mprotect syscall:\n");
-                process->get_memory()->dump(tracing(TRACE_MMAP), "    ");
-            }
+            get_process()->mem_showmap(tracing(TRACE_MMAP), "  memory map after mprotect syscall:\n");
             break;
         }
 
@@ -1761,17 +2516,17 @@ RSIM_Thread::emulate_syscall()
              *      unsigned int origin             // whence specified offset is measured
              */
             syscall_enter("llseek","dddpf", seek_whence);
-            int fd = arg(0);
-            off64_t offset = ((off64_t)arg(1) << 32) | arg(2);
-            uint32_t result_va = arg(3);
-            int whence = arg(4);
+            int fd = syscall_arg(0);
+            off64_t offset = ((off64_t)syscall_arg(1) << 32) | syscall_arg(2);
+            uint32_t result_va = syscall_arg(3);
+            int whence = syscall_arg(4);
 
             off64_t result = lseek64(fd, offset, whence);
             if (-1==result) {
-                sys_return(-errno);
+                syscall_return(-errno);
             } else {
-                sys_return(0);
-                size_t nwritten = process->get_memory()->write(&result, result_va, sizeof result);
+                syscall_return(0);
+                size_t nwritten = get_process()->mem_write(&result, result_va, sizeof result);
                 ROSE_ASSERT(nwritten==sizeof result);
             }
             syscall_leave("d");
@@ -1779,10 +2534,10 @@ RSIM_Thread::emulate_syscall()
         };
  	case 141: {     /* 0xdc, getdents(int fd, struct linux_dirent*, unsigned int count) */
             syscall_enter("getdents", "dpd");
-            int fd = arg(0), sz = arg(2);
-            uint32_t dirent_va = arg(1);
+            int fd = syscall_arg(0), sz = syscall_arg(2);
+            uint32_t dirent_va = syscall_arg(1);
             int status = getdents_syscall<dirent32_t>(fd, dirent_va, sz);
-            sys_return(status);
+            syscall_return(status);
             syscall_leave("d-P", status>0?status:0, print_dentries_32);
             break;
         }
@@ -1800,25 +2555,25 @@ RSIM_Thread::emulate_syscall()
                           sizeof(fd_set), print_bitvec,
                           sizeof(timeval_32), print_timeval_32);
             do {
-                int fd = arg(0);
-                uint32_t in_va=arg(1), out_va=arg(2), ex_va=arg(3), tv_va=arg(4);
+                int fd = syscall_arg(0);
+                uint32_t in_va=syscall_arg(1), out_va=syscall_arg(2), ex_va=syscall_arg(3), tv_va=syscall_arg(4);
 
                 fd_set in, out, ex;
                 fd_set *inp=NULL, *outp=NULL, *exp=NULL;
 
                 ROSE_ASSERT(128==sizeof(fd_set)); /* 128 bytes = 1024 file descriptor bits */
-                if (in_va && sizeof(in)==process->get_memory()->read(&in, in_va, sizeof in))
+                if (in_va && sizeof(in)==get_process()->mem_read(&in, in_va, sizeof in))
                     inp = &in;
-                if (out_va && sizeof(out)==process->get_memory()->read(&out, out_va, sizeof out))
+                if (out_va && sizeof(out)==get_process()->mem_read(&out, out_va, sizeof out))
                     outp = &out;
-                if (ex_va && sizeof(ex)==process->get_memory()->read(&ex, ex_va, sizeof ex))
+                if (ex_va && sizeof(ex)==get_process()->mem_read(&ex, ex_va, sizeof ex))
                     exp = &ex;
 
                 timeval_32 guest_timeout;
                 timeval host_timeout, *tvp=NULL;
                 if (tv_va) {
-                    if (sizeof(guest_timeout)!=process->get_memory()->read(&guest_timeout, tv_va, sizeof guest_timeout)) {
-                        sys_return(-EFAULT);
+                    if (sizeof(guest_timeout)!=get_process()->mem_read(&guest_timeout, tv_va, sizeof guest_timeout)) {
+                        syscall_return(-EFAULT);
                         break;
                     } else {
                         host_timeout.tv_sec = guest_timeout.tv_sec;
@@ -1829,22 +2584,22 @@ RSIM_Thread::emulate_syscall()
 
                 int result = select(fd, inp, outp, exp, tvp);
                 if (-1==result) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
-                if ((in_va  && sizeof(in) !=process->get_memory()->write(inp,  in_va,  sizeof in))  ||
-                    (out_va && sizeof(out)!=process->get_memory()->write(outp, out_va, sizeof out)) ||
-                    (ex_va  && sizeof(ex) !=process->get_memory()->write(exp,  ex_va,  sizeof ex))) {
-                    sys_return(-EFAULT);
+                if ((in_va  && sizeof(in) !=get_process()->mem_write(inp,  in_va,  sizeof in))  ||
+                    (out_va && sizeof(out)!=get_process()->mem_write(outp, out_va, sizeof out)) ||
+                    (ex_va  && sizeof(ex) !=get_process()->mem_write(exp,  ex_va,  sizeof ex))) {
+                    syscall_return(-EFAULT);
                     break;
                 }
 
                 if (tvp) {
                     guest_timeout.tv_sec = tvp->tv_sec;
                     guest_timeout.tv_usec = tvp->tv_usec;
-                    if (sizeof(guest_timeout)!=process->get_memory()->write(&guest_timeout, tv_va, sizeof guest_timeout)) {
-                        sys_return(-EFAULT);
+                    if (sizeof(guest_timeout)!=get_process()->mem_write(&guest_timeout, tv_va, sizeof guest_timeout)) {
+                        syscall_return(-EFAULT);
                         break;
                     }
                 }
@@ -1860,29 +2615,27 @@ RSIM_Thread::emulate_syscall()
         case 144: { /* 0x90, int msync(void *addr, size_t length, int flags) */
             static const Translate msync_flags[] = { TF(MS_ASYNC), TF(MS_SYNC), TF(MS_INVALIDATE), T_END };
             syscall_enter("msync", "pdf", msync_flags);
-            do {
-                if (arg(0) % 4096) {
-                    sys_return(-EINVAL);
-                    break;
-                }
+            if (syscall_arg(0) % 4096) {
+                syscall_return(-EINVAL);
+                break;
+            }
 
-                void *addr = my_addr(arg(0), arg(1));
-                if (!addr) {
-                    sys_return(-ENOMEM);
-                    break;
-                }
-                
-                int result = msync(addr, arg(1), arg(2));
-                sys_return(-1==result?-errno:result);
-            } while (0);
+            void *addr = get_process()->my_addr(syscall_arg(0), syscall_arg(1));
+            if (!addr) {
+                syscall_return(-ENOMEM);
+            } else if (-1==msync(addr, syscall_arg(1), syscall_arg(2))) {
+                syscall_return(-errno);
+            } else {
+                syscall_return(0);
+            }
             syscall_leave("d");
             break;
         }
 
         case 146: { /*0x92, writev*/
             syscall_enter("writev", "dpd");
-            uint32_t fd=arg(0), iov_va=arg(1);
-            int niov=arg(2), idx=0;
+            uint32_t fd=syscall_arg(0), iov_va=syscall_arg(1);
+            int niov=syscall_arg(2), idx=0;
             uint32_t retval = 0;
             if (niov<0 || niov>1024) {
                 retval = -EINVAL;
@@ -1890,7 +2643,7 @@ RSIM_Thread::emulate_syscall()
                 for (idx=0; idx<niov; idx++) {
                     /* Obtain buffer address and size */
                     uint32_t buf_va;
-                    if (4 != process->get_memory()->read(&buf_va, iov_va+idx*8+0, 4)) {
+                    if (4 != get_process()->mem_read(&buf_va, iov_va+idx*8+0, 4)) {
                         if (0==idx)
                             retval = -EFAULT;
                         if (tracing(TRACE_SYSCALL))
@@ -1899,7 +2652,7 @@ RSIM_Thread::emulate_syscall()
                     }
 
                     uint32_t buf_sz;
-                    if (4 != process->get_memory()->read(&buf_sz, iov_va+idx*8+4, 4)) {
+                    if (4 != get_process()->mem_read(&buf_sz, iov_va+idx*8+4, 4)) {
                         if (0==idx)
                             retval = -EFAULT;
                         if (tracing(TRACE_SYSCALL))
@@ -1924,7 +2677,7 @@ RSIM_Thread::emulate_syscall()
                     /* Copy data from guest to host because guest memory might not be contiguous in the host. Perhaps a more
                      * efficient way to do this would be to copy chunks of host-contiguous data in a loop instead. */
                     uint8_t buf[buf_sz];
-                    if (buf_sz != process->get_memory()->read(buf, buf_va, buf_sz)) {
+                    if (buf_sz != get_process()->mem_read(buf, buf_va, buf_sz)) {
                         if (0==idx)
                             retval = -EFAULT;
                         if (tracing(TRACE_SYSCALL))
@@ -1951,7 +2704,7 @@ RSIM_Thread::emulate_syscall()
                         fputc('\n', tracing(TRACE_SYSCALL));
                 }
             }
-            sys_return(retval);
+            syscall_return(retval);
             if (tracing(TRACE_SYSCALL) && niov>0 && niov<=1024)
                 fprintf(tracing(TRACE_SYSCALL), "%*s = ", 51, ""); /* align for return value */
             syscall_leave("d");
@@ -1963,27 +2716,27 @@ RSIM_Thread::emulate_syscall()
             do {
                 timespec_32 guest_ts;
                 timespec host_ts_in, host_ts_out;
-                if (sizeof(guest_ts)!=process->get_memory()->read(&guest_ts, arg(0), sizeof guest_ts)) {
-                    sys_return(-EFAULT);
+                if (sizeof(guest_ts)!=get_process()->mem_read(&guest_ts, syscall_arg(0), sizeof guest_ts)) {
+                    syscall_return(-EFAULT);
                     break;
                 }
                 if (guest_ts.tv_sec<0 || (unsigned long)guest_ts.tv_nsec >= 1000000000L) {
-                    sys_return(-EINVAL);
+                    syscall_return(-EINVAL);
                     break;
                 }
                 host_ts_in.tv_sec = guest_ts.tv_sec;
                 host_ts_in.tv_nsec = guest_ts.tv_nsec;
 
                 int result = nanosleep(&host_ts_in, &host_ts_out);
-                if (arg(1) && -1==result && EINTR==errno) {
+                if (syscall_arg(1) && -1==result && EINTR==errno) {
                     guest_ts.tv_sec = host_ts_out.tv_sec;
                     guest_ts.tv_nsec = host_ts_out.tv_nsec;
-                    if (sizeof(guest_ts)!=process->get_memory()->write(&guest_ts, arg(1), sizeof guest_ts)) {
-                        sys_return(-EFAULT);
+                    if (sizeof(guest_ts)!=get_process()->mem_write(&guest_ts, syscall_arg(1), sizeof guest_ts)) {
+                        syscall_return(-EFAULT);
                         break;
                     }
                 }
-                sys_return(-1==result?-errno:result);
+                syscall_return(-1==result?-errno:result);
             } while (0);
             syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
             break;
@@ -1992,28 +2745,28 @@ RSIM_Thread::emulate_syscall()
         case 174: { /*0xae, rt_sigaction*/
             syscall_enter("rt_sigaction", "fPpd", signal_names, sizeof(sigaction_32), print_sigaction_32);
             do {
-                int signum=arg(0);
-                uint32_t action_va=arg(1), oldact_va=arg(2);
-                size_t sigsetsize=arg(3);
+                int signum=syscall_arg(0);
+                uint32_t action_va=syscall_arg(1), oldact_va=syscall_arg(2);
+                size_t sigsetsize=syscall_arg(3);
 
                 if (sigsetsize!=8 || signum<1 || signum>_NSIG) {
-                    sys_return(-EINVAL);
+                    syscall_return(-EINVAL);
                     break;
                 }
 
 
                 sigaction_32 tmp;
-                if (action_va && sizeof(tmp) != process->get_memory()->read(&tmp, action_va, sizeof tmp)) {
-                    sys_return(-EFAULT);
+                if (action_va && sizeof(tmp) != get_process()->mem_read(&tmp, action_va, sizeof tmp)) {
+                    syscall_return(-EFAULT);
                     break;
                 }
-                if (oldact_va && sizeof(tmp) != process->get_memory()->write(signal_action+signum-1, oldact_va, sizeof tmp)) {
-                    sys_return(-EFAULT);
+                if (oldact_va && sizeof(tmp) != get_process()->mem_write(signal_action+signum-1, oldact_va, sizeof tmp)) {
+                    syscall_return(-EFAULT);
                     break;
                 }
                 if (action_va)
                     signal_action[signum-1] = tmp;
-                sys_return(0);
+                syscall_return(0);
             } while (0);
             syscall_leave("d--P", sizeof(sigaction_32), print_sigaction_32);
             break;
@@ -2023,14 +2776,14 @@ RSIM_Thread::emulate_syscall()
             static const Translate flags[] = { TF(SIG_BLOCK), TF(SIG_UNBLOCK), TF(SIG_SETMASK), T_END };
             syscall_enter("rt_sigprocmask", "fPp", flags, (size_t)8, print_sigmask);
 
-            int how=arg(0);
-            uint32_t set_va=arg(1), get_va=arg(2);
-            //size_t sigsetsize=arg(3);
+            int how=syscall_arg(0);
+            uint32_t set_va=syscall_arg(1), get_va=syscall_arg(2);
+            //size_t sigsetsize=syscall_arg(3);
 
             uint64_t saved=signal_mask, sigset=0;
             if ( set_va != 0 ) {
 
-                size_t nread = process->get_memory()->read(&sigset, set_va, sizeof sigset);
+                size_t nread = get_process()->mem_read(&sigset, set_va, sizeof sigset);
                 ROSE_ASSERT(nread==sizeof sigset);
 
                 if (0==how) {
@@ -2043,7 +2796,7 @@ RSIM_Thread::emulate_syscall()
                     /* SIG_SETMASK */
                     signal_mask = sigset;
                 } else {
-                    sys_return(-EINVAL);
+                    syscall_return(-EINVAL);
                     break;
                 }
                 if (signal_mask!=saved)
@@ -2051,22 +2804,22 @@ RSIM_Thread::emulate_syscall()
             }
 
             if (get_va) {
-                size_t nwritten = process->get_memory()->write(&saved, get_va, sizeof saved);
+                size_t nwritten = get_process()->mem_write(&saved, get_va, sizeof saved);
                 ROSE_ASSERT(nwritten==sizeof saved);
             }
-            sys_return(0);
+            syscall_return(0);
             syscall_leave("d--P", (size_t)8, print_sigmask);
             break;
         }
 
         case 176: { /* 0xb0, rt_sigpending */
             syscall_enter("rt_sigpending", "p");
-            uint32_t sigset_va=arg(0);
+            uint32_t sigset_va=syscall_arg(0);
             ROSE_ASSERT(8==sizeof(signal_pending));
-            if (8!=process->get_memory()->write(&signal_pending, sigset_va, 8)) {
-                sys_return(-EFAULT);
+            if (8!=get_process()->mem_write(&signal_pending, sigset_va, 8)) {
+                syscall_return(-EFAULT);
             } else {
-                sys_return(0);
+                syscall_return(0);
             }
             syscall_leave("dP", sizeof(uint64_t), print_sigmask);
             break;
@@ -2075,18 +2828,18 @@ RSIM_Thread::emulate_syscall()
         case 179: { /* 0xb3, rt_sigsuspend */
             syscall_enter("rt_sigsuspend", "Pd", (size_t)8, print_sigmask);
             do {
-                ROSE_ASSERT(8==arg(1));
+                ROSE_ASSERT(8==syscall_arg(1));
                 ROSE_ASSERT(8==sizeof(signal_pending));
                 uint64_t new_signal_mask;
-                if (8!=process->get_memory()->read(&new_signal_mask, arg(0), 8)) {
-                    sys_return(-EFAULT);
+                if (8!=get_process()->mem_read(&new_signal_mask, syscall_arg(0), 8)) {
+                    syscall_return(-EFAULT);
                     break;
                 }
                 uint64_t old_signal_mask = signal_mask;
                 signal_mask = new_signal_mask;
                 signal_pause();
                 signal_mask = old_signal_mask;
-                sys_return(-EINTR);
+                syscall_return(-EINTR);
             } while (0);
             syscall_leave("d");
             break;
@@ -2098,22 +2851,22 @@ RSIM_Thread::emulate_syscall()
                 static char buf[4096]; /* page size in kernel */
                 int result = syscall(SYS_getcwd, buf, sizeof buf);
                 if (-1==result) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
                 size_t len = strlen(buf) + 1;
-                if (len > arg(1)) {
-                    sys_return(-ERANGE);
+                if (len > syscall_arg(1)) {
+                    syscall_return(-ERANGE);
                     break;
                 }
 
-                if (len!=process->get_memory()->write(buf, arg(0), len)) {
-                    sys_return(-EFAULT);
+                if (len!=get_process()->mem_write(buf, syscall_arg(0), len)) {
+                    syscall_return(-EFAULT);
                     break;
                 }
 
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("ds");
             break;
@@ -2122,7 +2875,7 @@ RSIM_Thread::emulate_syscall()
         case 186: { /* 0xba, sigaltstack*/
             syscall_enter("sigaltstack", "Pp", sizeof(stack_32), print_stack_32);
             do {
-                uint32_t new_stack_va=arg(0), old_stack_va=arg(1);
+                uint32_t new_stack_va=syscall_arg(0), old_stack_va=syscall_arg(1);
 
                 /* Are we currently executing on the alternate stack? */
                 uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
@@ -2134,8 +2887,8 @@ RSIM_Thread::emulate_syscall()
                     stack_32 tmp = signal_stack;
                     tmp.ss_flags &= ~SS_ONSTACK;
                     if (on_stack) tmp.ss_flags |= SS_ONSTACK;
-                    if (sizeof(tmp)!=process->get_memory()->write(&tmp, old_stack_va, sizeof tmp)) {
-                        sys_return(-EFAULT);
+                    if (sizeof(tmp)!=get_process()->mem_write(&tmp, old_stack_va, sizeof tmp)) {
+                        syscall_return(-EFAULT);
                         break;
                     }
                 }
@@ -2143,24 +2896,24 @@ RSIM_Thread::emulate_syscall()
                 if (new_stack_va) {
                     stack_32 tmp;
                     tmp.ss_flags &= ~SS_ONSTACK;
-                    if (sizeof(tmp)!=process->get_memory()->read(&tmp, new_stack_va, sizeof tmp)) {
-                        sys_return(-EFAULT);
+                    if (sizeof(tmp)!=get_process()->mem_read(&tmp, new_stack_va, sizeof tmp)) {
+                        syscall_return(-EFAULT);
                         break;
                     }
                     if (on_stack) {
-                        sys_return(-EINVAL);  /* can't set alt stack while we're using it */
+                        syscall_return(-EINVAL);  /* can't set alt stack while we're using it */
                         break;
                     } else if ((tmp.ss_flags & ~(SS_DISABLE|SS_ONSTACK))) {
-                        sys_return(-EINVAL);  /* invalid flags */
+                        syscall_return(-EINVAL);  /* invalid flags */
                         break;
                     } else if (0==(tmp.ss_flags & SS_DISABLE) && tmp.ss_size < 4096) {
-                        sys_return(-ENOMEM);  /* stack must be at least one page large */
+                        syscall_return(-ENOMEM);  /* stack must be at least one page large */
                         break;
                     }
                     signal_stack = tmp;
                 }
 
-                sys_return(0);
+                syscall_return(0);
             } while (0);
             syscall_leave("d-P", sizeof(stack_32), print_stack_32);
             break;
@@ -2178,67 +2931,13 @@ RSIM_Thread::emulate_syscall()
 #endif
                                                 TF(MAP_POPULATE), T_END };
             syscall_enter("mmap2", "pdffdd", pflags, mflags);
-            uint32_t start=arg(0), size=arg(1), prot=arg(2), flags=arg(3), offset=arg(5)*PAGE_SIZE;
-            int fd=arg(4);
-            size_t aligned_size = ALIGN_UP(size, PAGE_SIZE);
-            void *buf = NULL;
-            unsigned rose_perms = ((prot & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
-                                  ((prot & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
-                                  ((prot & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
-            //prot |= PROT_READ | PROT_WRITE | PROT_EXEC; /* ROSE takes care of permissions checking */
-
-            if (!start) {
-                try {
-                    start = process->get_memory()->find_free(process->mmap_start, aligned_size, PAGE_SIZE);
-                } catch (const MemoryMap::NoFreeSpace &e) {
-                    sys_return(-ENOMEM);
-                    goto mmap2_done;
-                }
-            }
-            if (!process->mmap_recycle)
-                process->mmap_start = std::max(process->mmap_start, start);
-
-            if (flags & MAP_ANONYMOUS) {
-                buf = mmap(NULL, size, prot, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-            } else {
-                buf = mmap(NULL, size, prot, flags & ~MAP_FIXED, fd, offset);
-            }
-            if (MAP_FAILED==buf) {
-                sys_return(-errno);
-            } else {
-                /* Try to figure out a reasonable name for the map element. If we're mapping a file, we can get the file name
-                 * from the proc filesystem. The name is only used to aid debugging. */
-                std::string melmt_name = "anonymous";
-                if (fd>=0 && 0==(flags & MAP_ANONYMOUS)) {
-                    char fd_namebuf[4096];
-                    ssize_t nread = readlink(("/proc/self/fd/"+StringUtility::numberToString(fd)).c_str(),
-                                             fd_namebuf, sizeof(fd_namebuf)-1);
-                    if (nread>45) {
-                        fd_namebuf[nread] = '\0';
-                        char *slash = strrchr(fd_namebuf, '/');
-                        melmt_name = slash ? slash+1 : fd_namebuf;
-                    } else if (nread>0) {
-                        fd_namebuf[nread] = '\0';
-                        melmt_name = fd_namebuf;
-                    } else {
-                        melmt_name = "fd=" + StringUtility::numberToString(fd);
-                    }
-                }
-
-                MemoryMap::MapElement melmt(start, aligned_size, buf, 0, rose_perms);
-                melmt.set_name("mmap2("+melmt_name+")");
-                process->get_memory()->erase(melmt); /*clear space space first to avoid MemoryMap::Inconsistent exception*/
-                process->get_memory()->insert(melmt);
-                sys_return(start);
-            }
-
-        mmap2_done:
+            uint32_t start=syscall_arg(0), size=syscall_arg(1), prot=syscall_arg(2), flags=syscall_arg(3);
+            uint32_t offset=syscall_arg(5)*PAGE_SIZE;
+            int fd=syscall_arg(4);
+            uint32_t result = get_process()->mem_map(start, size, prot, flags, offset, fd);
+            syscall_return(result);
             syscall_leave("p");
-            if (tracing(TRACE_MMAP)) {
-                fprintf(tracing(TRACE_MMAP), "  memory map after mmap2 syscall:\n");
-                process->get_memory()->dump(tracing(TRACE_MMAP), "    ");
-            }
-
+            get_process()->mem_showmap(tracing(TRACE_MMAP), "  memory map after mmap2 syscall:\n");
             break;
         }
 
@@ -2282,17 +2981,17 @@ RSIM_Thread::emulate_syscall()
             /* Make the system call without going through the C library. Well, we go through syscall(), but nothing else. */
                 if (195==callno || 196==callno) {
                     bool error;
-                    std::string name = read_string(arg(0), 0, &error);
+                    std::string name = get_process()->read_string(syscall_arg(0), 0, &error);
                     if (error) {
-                        sys_return(-EFAULT);
+                        syscall_return(-EFAULT);
                         break;
                     }
                     result = syscall(host_callno, (unsigned long)name.c_str(), (unsigned long)kernel_stat);
                 } else {
-                    result = syscall(host_callno, (unsigned long)arg(0), (unsigned long)kernel_stat);
+                    result = syscall(host_callno, (unsigned long)syscall_arg(0), (unsigned long)kernel_stat);
                 }
                 if (-1==result) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
@@ -2332,12 +3031,12 @@ RSIM_Thread::emulate_syscall()
                     out.ctim_sec = in->ctim_sec;
                     out.ctim_nsec = in->ctim_nsec;
                     out.ino = in->ino;
-                    process->get_memory()->write(&out, arg(1), sizeof out);
+                    get_process()->mem_write(&out, syscall_arg(1), sizeof out);
                 } else {
-                    process->get_memory()->write(kernel_stat, arg(1), kernel_stat_size);
+                    get_process()->mem_write(kernel_stat, syscall_arg(1), kernel_stat_size);
                 }
 
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d-P", sizeof(kernel_stat_32), print_kernel_stat_32);
             break;
@@ -2346,7 +3045,7 @@ RSIM_Thread::emulate_syscall()
 	case 199: { /*0xc7, getuid32 */
             syscall_enter("getuid32", "");
             uid_t id = getuid();
-            sys_return(id);
+            syscall_return(id);
             syscall_leave("d");
 	    break;
 	}
@@ -2354,7 +3053,7 @@ RSIM_Thread::emulate_syscall()
 	case 200: { /*0xc8, getgid32 */
             syscall_enter("getgid32", "");
             uid_t id = getgid();
-            sys_return(id);
+            syscall_return(id);
             syscall_leave("d");
             break;
         }
@@ -2362,7 +3061,7 @@ RSIM_Thread::emulate_syscall()
 	case 201: { /*0xc9, geteuid32 */
             syscall_enter("geteuid32", "");
             uid_t id = geteuid();
-            sys_return(id);
+            syscall_return(id);
             syscall_leave("d");
             break;
         }
@@ -2370,7 +3069,7 @@ RSIM_Thread::emulate_syscall()
         case 202: { /*0xca, getegid32 */
             syscall_enter("getegid32", "");
             uid_t id = getegid();
-            sys_return(id);
+            syscall_return(id);
             syscall_leave("d");
             break;
         }
@@ -2380,12 +3079,12 @@ RSIM_Thread::emulate_syscall()
                int getgroups(int size, gid_t list[]); 
             */
             syscall_enter("getgroups32", "d-");
-            gid_t list[arg(0)];
-            int result = getgroups( arg(0), list);
-            size_t nwritten = process->get_memory()->write(list, arg(1), arg(0));
-            ROSE_ASSERT(nwritten == (size_t)arg(0));
+            gid_t list[syscall_arg(0)];
+            int result = getgroups( syscall_arg(0), list);
+            size_t nwritten = get_process()->mem_write(list, syscall_arg(1), syscall_arg(0));
+            ROSE_ASSERT(nwritten == (size_t)syscall_arg(0));
 
-            sys_return(result);
+            syscall_return(result);
             syscall_leave("d");
             break;
         }
@@ -2395,11 +3094,11 @@ RSIM_Thread::emulate_syscall()
                int setgroups(size_t size, const gid_t *list);
             */
             syscall_enter("setgroups32", "d-");
-            gid_t list[arg(0)];
-            size_t nread = process->get_memory()->write(&list, arg(1), arg(0));
-            ROSE_ASSERT(nread == arg(0));
-            int result = setgroups( arg(0), list);
-            sys_return(-1==result?-errno:result);
+            gid_t list[syscall_arg(0)];
+            size_t nread = get_process()->mem_write(&list, syscall_arg(1), syscall_arg(0));
+            ROSE_ASSERT(nread == syscall_arg(0));
+            int result = setgroups( syscall_arg(0), list);
+            syscall_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
@@ -2412,9 +3111,9 @@ RSIM_Thread::emulate_syscall()
              *
              * fchown() changes the ownership of the file referred to by the open file descriptor fd. */
             syscall_enter("fchown32", "ddd");
-            int fd=arg(0), user=arg(1), group=arg(2);
+            int fd=syscall_arg(0), user=syscall_arg(1), group=syscall_arg(2);
             int result = syscall(SYS_fchown, fd, user, group);
-            sys_return(-1==result?-errno:result);
+            syscall_return(-1==result?-errno:result);
             syscall_leave("d");
             break;
         }
@@ -2423,15 +3122,15 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("chown", "sdd");
             do {
                 bool error;
-                std::string filename = read_string(arg(0), 0, &error);
+                std::string filename = get_process()->read_string(syscall_arg(0), 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
-                uid_t user = arg(1);
-                gid_t group = arg(2);
+                uid_t user = syscall_arg(1);
+                gid_t group = syscall_arg(2);
                 int result = chown(filename.c_str(),user,group);
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -2439,10 +3138,10 @@ RSIM_Thread::emulate_syscall()
 
  	case 220: {     /* 0xdc, getdents64(int fd, struct linux_dirent*, unsigned int count) */
             syscall_enter("getdents64", "dpd");
-            int fd = arg(0), sz = arg(2);
-            uint32_t dirent_va = arg(1);
+            int fd = syscall_arg(0), sz = syscall_arg(2);
+            uint32_t dirent_va = syscall_arg(1);
             int status = getdents_syscall<dirent64_t>(fd, dirent_va, sz);
-            sys_return(status);
+            syscall_return(status);
             syscall_leave("d-P", status>0?status:0, print_dentries_64);
             break;
         }
@@ -2462,7 +3161,7 @@ RSIM_Thread::emulate_syscall()
                                                     TE(F_DUPFD_CLOEXEC),
 #endif
                                                     T_END};
-            int fd=arg(0), cmd=arg(1), other=arg(2), result=-EINVAL;
+            int fd=syscall_arg(0), cmd=syscall_arg(1), other=syscall_arg(2), result=-EINVAL;
             switch (cmd) {
                 case F_DUPFD:
 #ifdef F_DUPFD_CLOEXEC
@@ -2474,7 +3173,7 @@ RSIM_Thread::emulate_syscall()
                 case F_GETSIG: {
                     syscall_enter("fcntl64", "df", fcntl_cmds);
                     result = fcntl(fd, cmd, other);
-                    sys_return(-1==result?-errno:result);
+                    syscall_return(-1==result?-errno:result);
                     syscall_leave("d");
                     break;
                 }
@@ -2482,21 +3181,21 @@ RSIM_Thread::emulate_syscall()
                 case F_SETOWN: {
                     syscall_enter("fcntl64", "dfd", fcntl_cmds);
                     result = fcntl(fd, cmd, other);
-                    sys_return(-1==result?-errno:result);
+                    syscall_return(-1==result?-errno:result);
                     syscall_leave("d");
                     break;
                 }
                 case F_SETFL: {
                     syscall_enter("fcntl64", "dff", fcntl_cmds, open_flags);
                     result = fcntl(fd, cmd, other);
-                    sys_return(-1==result?-errno:result);
+                    syscall_return(-1==result?-errno:result);
                     syscall_leave("d");
                     break;
                 }
                 case F_SETSIG: {
                     syscall_enter("fcntl64", "dff", fcntl_cmds, signal_names);
                     result = fcntl(fd, cmd, other);
-                    sys_return(-1==result?-errno:result);
+                    syscall_return(-1==result?-errno:result);
                     syscall_leave("d");
                     break;
                 }
@@ -2507,8 +3206,8 @@ RSIM_Thread::emulate_syscall()
                     do {
                         flock_32 guest_fl;
                         static flock_native host_fl;
-                        if (sizeof(guest_fl)!=process->get_memory()->read(&guest_fl, arg(2), sizeof guest_fl)) {
-                            sys_return(-EFAULT);
+                        if (sizeof(guest_fl)!=get_process()->mem_read(&guest_fl, syscall_arg(2), sizeof guest_fl)) {
+                            syscall_return(-EFAULT);
                             break;
                         }
                         host_fl.l_type = guest_fl.l_type;
@@ -2522,7 +3221,7 @@ RSIM_Thread::emulate_syscall()
                         result = syscall(SYS_fcntl, fd, cmd, &host_fl);
 #endif
                         if (-1==result) {
-                            sys_return(-errno);
+                            syscall_return(-errno);
                             break;
                         }
                         if (F_GETLK==cmd) {
@@ -2531,13 +3230,13 @@ RSIM_Thread::emulate_syscall()
                             guest_fl.l_start = host_fl.l_start;
                             guest_fl.l_len = host_fl.l_len;
                             guest_fl.l_pid = host_fl.l_pid;
-                            if (sizeof(guest_fl)!=process->get_memory()->write(&guest_fl, arg(2), sizeof guest_fl)) {
-                                sys_return(-EFAULT);
+                            if (sizeof(guest_fl)!=get_process()->mem_write(&guest_fl, syscall_arg(2), sizeof guest_fl)) {
+                                syscall_return(-EFAULT);
                                 break;
                             }
                         }
 
-                        sys_return(result);
+                        syscall_return(result);
                     } while (0);
                     if (F_GETLK==cmd) {
                         syscall_leave("d--P", sizeof(flock_32), print_flock_32);
@@ -2548,7 +3247,7 @@ RSIM_Thread::emulate_syscall()
                 }
                 default:
                     syscall_enter("fcntl64", "dfd", fcntl_cmds);
-                    sys_return(-EINVAL);
+                    syscall_return(-EINVAL);
                     syscall_leave("d");
                     break;
             }
@@ -2558,7 +3257,7 @@ RSIM_Thread::emulate_syscall()
         case 224: { /*0xe0, gettid*/
             // We have no concept of threads
             syscall_enter("gettid", "");
-            sys_return(getpid());
+            syscall_return(getpid());
             syscall_leave("d");
             break;
        }
@@ -2583,7 +3282,7 @@ RSIM_Thread::emulate_syscall()
             };
 
             /* Variable arguments */
-            unsigned arg1 = arg(1);
+            unsigned arg1 = syscall_arg(1);
             arg1 &= 0x7f;
             switch (arg1) {
                 case 0: /*FUTEX_WAIT*/
@@ -2607,14 +3306,14 @@ RSIM_Thread::emulate_syscall()
                     break;
             }
 
-            uint32_t futex1_va=arg(0), op=arg(1), val1=arg(2), timeout_va=arg(3), futex2_va=arg(4), val3=arg(5);
-            uint32_t *futex1 = (uint32_t*)my_addr(futex1_va, 4);
-            uint32_t *futex2 = (uint32_t*)my_addr(futex2_va, 4);
+            uint32_t futex1_va=syscall_arg(0), op=syscall_arg(1), val1=syscall_arg(2), timeout_va=syscall_arg(3), futex2_va=syscall_arg(4), val3=syscall_arg(5);
+            uint32_t *futex1 = (uint32_t*)get_process()->my_addr(futex1_va, 4);
+            uint32_t *futex2 = (uint32_t*)get_process()->my_addr(futex2_va, 4);
 
             struct timespec timespec_buf, *timespec=NULL;
             if (timeout_va) {
                 timespec_32 ts;
-                size_t nread = process->get_memory()->read(&ts, timeout_va, sizeof ts);
+                size_t nread = get_process()->mem_read(&ts, timeout_va, sizeof ts);
                 ROSE_ASSERT(nread==sizeof ts);
                 timespec_buf.tv_sec = ts.tv_sec;
                 timespec_buf.tv_nsec = ts.tv_nsec;
@@ -2634,31 +3333,34 @@ RSIM_Thread::emulate_syscall()
 #endif
             int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val3);
             if (-1==result) result = -errno;
-            sys_return(result);
+            syscall_return(result);
             syscall_leave("d");
             break;
         }
 
         case 243: { /*0xf3, set_thread_area*/
             syscall_enter("set_thread_area", "P", sizeof(user_desc_32), print_user_desc_32);
-            user_desc_32 ud;
-            size_t nread = process->get_memory()->read(&ud, arg(0), sizeof ud);
-            ROSE_ASSERT(nread==sizeof ud);
-            if (ud.entry_number==(unsigned)-1) {
-                for (ud.entry_number=0x33>>3; ud.entry_number<process->n_gdt; ud.entry_number++) {
-                    if (!process->gdt[ud.entry_number].useable) break;
+            do {
+                user_desc_32 ud;
+                size_t nread = get_process()->mem_read(&ud, syscall_arg(0), sizeof ud);
+                if (nread!=sizeof ud) {
+                    syscall_return(-EFAULT);
+                    break;
                 }
-                ROSE_ASSERT(ud.entry_number<8192);
-                if (tracing(TRACE_SYSCALL))
-                    fprintf(tracing(TRACE_SYSCALL), "[entry #%d] ", (int)ud.entry_number);
-            }
-            process->gdt[ud.entry_number] = ud;
-            size_t nwritten = process->get_memory()->write(&ud, arg(0), sizeof ud);
-            ROSE_ASSERT(nwritten==sizeof ud);
-            sys_return(0);
-            /* Reload all the segreg shadow values from the (modified) descriptor table */
-            for (size_t i=0; i<6; i++)
-                policy.writeSegreg((X86SegmentRegister)i, policy.readSegreg((X86SegmentRegister)i));
+                get_process()->set_gdt(&ud);
+
+                /* Write ud back to specimen because set_gdt might have changed it. */
+                size_t nwritten = get_process()->mem_write(&ud, syscall_arg(0), sizeof ud);
+                if (nwritten!=sizeof ud) {
+                    syscall_return(-EFAULT);
+                    break;
+                }
+
+                /* Reload all the segreg shadow values from the (modified) descriptor table */
+                for (size_t i=0; i<6; i++)
+                    policy.writeSegreg((X86SegmentRegister)i, policy.readSegreg((X86SegmentRegister)i));
+                syscall_return(0);
+            } while (0);
             syscall_leave("d");
             break;
         }
@@ -2682,14 +3384,14 @@ RSIM_Thread::emulate_syscall()
             }
 
             if (tracing(TRACE_SYSCALL)) fputs("(throwing...)\n", tracing(TRACE_SYSCALL));
-            int status=arg(0);
+            int status=syscall_arg(0);
             throw Exit(__W_EXITCODE(status, 0));
         }
 
         case 258: { /*0x102, set_tid_address*/
             syscall_enter("set_tid_address", "p");
-            clear_child_tid = arg(0);
-            sys_return(getpid());
+            clear_child_tid = syscall_arg(0);
+            syscall_return(getpid());
             syscall_leave("d");
             break;
         }
@@ -2698,16 +3400,16 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("clock_settime", "eP", clock_names, sizeof(timespec_32), print_timespec_32);
             do {
                 timespec_32 guest_ts;
-                if (sizeof(guest_ts)!=process->get_memory()->read(&guest_ts, arg(1), sizeof guest_ts)) {
-                    sys_return(-EFAULT);
+                if (sizeof(guest_ts)!=get_process()->mem_read(&guest_ts, syscall_arg(1), sizeof guest_ts)) {
+                    syscall_return(-EFAULT);
                     break;
                 }
 
                 static timespec host_ts;
                 host_ts.tv_sec = guest_ts.tv_sec;
                 host_ts.tv_nsec = guest_ts.tv_nsec;
-                int result = syscall(SYS_clock_settime, arg(0), &host_ts);
-                sys_return(-1==result?-errno:result);
+                int result = syscall(SYS_clock_settime, syscall_arg(0), &host_ts);
+                syscall_return(-1==result?-errno:result);
             } while (0);
             syscall_leave("d");
             break;
@@ -2717,21 +3419,21 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("clock_gettime", "ep", clock_names);
             do {
                 static timespec host_ts;
-                int result = syscall(SYS_clock_gettime, arg(0), &host_ts);
+                int result = syscall(SYS_clock_gettime, syscall_arg(0), &host_ts);
                 if (-1==result) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
                 timespec_32 guest_ts;
                 guest_ts.tv_sec = host_ts.tv_sec;
                 guest_ts.tv_nsec = host_ts.tv_nsec;
-                if (sizeof(guest_ts)!=process->get_memory()->write(&guest_ts, arg(1), sizeof guest_ts)) {
-                    sys_return(-EFAULT);
+                if (sizeof(guest_ts)!=get_process()->mem_write(&guest_ts, syscall_arg(1), sizeof guest_ts)) {
+                    syscall_return(-EFAULT);
                     break;
                 }
 
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
             break;
@@ -2741,24 +3443,24 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("clock_getres", "ep", clock_names);
             do {
                 static timespec host_ts;
-                timespec *host_tsp = arg(1) ? &host_ts : NULL;
-                int result = syscall(SYS_clock_getres, arg(0), host_tsp);
+                timespec *host_tsp = syscall_arg(1) ? &host_ts : NULL;
+                int result = syscall(SYS_clock_getres, syscall_arg(0), host_tsp);
                 if (-1==result) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
-                if (arg(1)) {
+                if (syscall_arg(1)) {
                     timespec_32 guest_ts;
                     guest_ts.tv_sec = host_ts.tv_sec;
                     guest_ts.tv_nsec = host_ts.tv_nsec;
-                    if (sizeof(guest_ts)!=process->get_memory()->write(&guest_ts, arg(1), sizeof guest_ts)) {
-                        sys_return(-EFAULT);
+                    if (sizeof(guest_ts)!=get_process()->mem_write(&guest_ts, syscall_arg(1), sizeof guest_ts)) {
+                        syscall_return(-EFAULT);
                         break;
                     }
                 }
 
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
             break;
@@ -2766,12 +3468,12 @@ RSIM_Thread::emulate_syscall()
 
         case 268: { /* 0x10c, statfs64 */
             syscall_enter("statfs64", "sdp");
-            ROSE_ASSERT(arg(1)==sizeof(statfs64_32));
+            ROSE_ASSERT(syscall_arg(1)==sizeof(statfs64_32));
             do {
                 bool error;
-                std::string path = read_string(arg(0), 0, &error);
+                std::string path = get_process()->read_string(syscall_arg(0), 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
 
@@ -2782,7 +3484,7 @@ RSIM_Thread::emulate_syscall()
                 int result = syscall(SYS_statfs, path.c_str(), &host_statfs);
 #endif
                 if (-1==result) {
-                    sys_return(-errno);
+                    syscall_return(-errno);
                     break;
                 }
 
@@ -2803,12 +3505,12 @@ RSIM_Thread::emulate_syscall()
                 guest_statfs.f_spare[1] = host_statfs.f_spare[1];
                 guest_statfs.f_spare[2] = host_statfs.f_spare[2];
                 guest_statfs.f_spare[3] = host_statfs.f_spare[3];
-                if (sizeof(guest_statfs)!=process->get_memory()->write(&guest_statfs, arg(2), sizeof guest_statfs)) {
-                    sys_return(-EFAULT);
+                if (sizeof(guest_statfs)!=get_process()->mem_write(&guest_statfs, syscall_arg(2), sizeof guest_statfs)) {
+                    syscall_return(-EFAULT);
                     break;
                 }
 
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d--P", sizeof(statfs64_32), print_statfs64_32);
             break;
@@ -2816,7 +3518,7 @@ RSIM_Thread::emulate_syscall()
 
         case 270: { /*0x10e tgkill*/
             syscall_enter("tgkill", "ddf", signal_names);
-            uint32_t /*tgid=arg(0), pid=arg(1),*/ sig=arg(2);
+            uint32_t /*tgid=syscall_arg(0), pid=syscall_arg(1),*/ sig=syscall_arg(2);
             // TODO: Actually check thread group and kill properly
             if (tracing(TRACE_SYSCALL)) fputs("(throwing...)\n", tracing(TRACE_SYSCALL));
             throw Exit(__W_EXITCODE(0, sig));
@@ -2846,15 +3548,15 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("utimes", "s");
             do {
                 bool error;
-                std::string filename = read_string(arg(0), 0, &error);
+                std::string filename = get_process()->read_string(syscall_arg(0), 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
 
                 //Check to see if times is NULL
                 uint8_t byte;
-                size_t nread = process->get_memory()->read(&byte, arg(1), 1);
+                size_t nread = get_process()->mem_read(&byte, syscall_arg(1), 1);
                 ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
 
                 int result;
@@ -2864,7 +3566,7 @@ RSIM_Thread::emulate_syscall()
 
                     timeval_32 ubuf[1];
 
-                    size_t nread = process->get_memory()->read(&ubuf, arg(1), size_timeval_sample);
+                    size_t nread = get_process()->mem_read(&ubuf, syscall_arg(1), size_timeval_sample);
 
 
                     timeval timeval64[1];
@@ -2881,7 +3583,7 @@ RSIM_Thread::emulate_syscall()
                     result = utimes(filename.c_str(), NULL);
                 }
 
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -2891,20 +3593,20 @@ RSIM_Thread::emulate_syscall()
 	case 306: { /* 0x132, fchmodat */
             syscall_enter("fchmodat", "dsdd");
             do {
-                int dirfd = arg(0);
-                uint32_t path = arg(1);
+                int dirfd = syscall_arg(0);
+                uint32_t path = syscall_arg(1);
                 bool error;
-                std::string sys_path = read_string(path, 0, &error);
+                std::string sys_path = get_process()->read_string(path, 0, &error);
                 if (error) {
-                    sys_return(-EFAULT);
+                    syscall_return(-EFAULT);
                     break;
                 }
-                mode_t mode = arg(2);
-                int flags = arg(3);
+                mode_t mode = syscall_arg(2);
+                int flags = syscall_arg(3);
 
                 int result = syscall( 306, dirfd, (long) sys_path.c_str(), mode, flags);
                 if (result == -1) result = -errno;
-                sys_return(result);
+                syscall_return(result);
             } while (0);
             syscall_leave("d");
             break;
@@ -2913,15 +3615,15 @@ RSIM_Thread::emulate_syscall()
         case 311: { /*0x137, set_robust_list*/
             syscall_enter("set_robust_list", "Pd", sizeof(robust_list_head_32), print_robust_list_head_32);
             do {
-                uint32_t head_va=arg(0), len=arg(1);
+                uint32_t head_va=syscall_arg(0), len=syscall_arg(1);
                 if (len!=sizeof(robust_list_head_32)) {
-                    sys_return(-EINVAL);
+                    syscall_return(-EINVAL);
                     break;
                 }
 
                 robust_list_head_32 guest_head;
-                if (sizeof(guest_head)!=process->get_memory()->read(&guest_head, head_va, sizeof(guest_head))) {
-                    sys_return(-EFAULT);
+                if (sizeof(guest_head)!=get_process()->mem_read(&guest_head, head_va, sizeof(guest_head))) {
+                    syscall_return(-EFAULT);
                     break;
                 }
 
@@ -2930,7 +3632,7 @@ RSIM_Thread::emulate_syscall()
                  * fact, we can't tell the kernel because that would cause our own list (set by libc) to be removed from the
                  * kernel. */
                 robust_list_head_va = head_va;
-                sys_return(0);
+                syscall_return(0);
             } while (0);
             syscall_leave("d");
             break;
@@ -2939,9 +3641,9 @@ RSIM_Thread::emulate_syscall()
         default: {
             fprintf(stderr, "syscall_%u(", callno);
             for (int i=0; i<6; i++)
-                fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", arg(i));
+                fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
             fprintf(stderr, ") is not implemented yet\n\n");
-            process->dump_core(SIGSYS);
+            get_process()->dump_core(SIGSYS);
             abort();
         }
     }

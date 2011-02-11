@@ -10,32 +10,29 @@
 
 /* NOTE: not yet tested for guest_dirent_t == dirent64_t; i.e., the getdents64() syscall. [RPM 2010-11-17] */
 template<class guest_dirent_t> /* either dirent32_t or dirent64_t */
-int RSIM_Thread::getdents_syscall(int fd, uint32_t dirent_va, long sz)
+int RSIM_Thread::getdents_syscall(int fd, uint32_t dirent_va, size_t sz)
 {
     ROSE_ASSERT(sizeof(dirent64_t)>=sizeof(guest_dirent_t));
 
-    /* Obtain guest's buffer and make sure we can write to it. The write check is necessary because we'll be accessing
-     * the buffer directly below rather than going through the MemoryMap object. */
-    long at = 0; /* position when filling specimen's buffer */
-    uint8_t *guest_buf = (uint8_t*)my_addr(dirent_va, sz);
-    char junk;
-    if (NULL==guest_buf || 1!=process->get_memory()->read(&junk, dirent_va, 1))
-        return -EFAULT;
+    size_t at = 0; /* position when filling specimen's buffer */
+    uint8_t guest_buf[sz];
+    uint8_t host_buf[sz];
 
     /* Read dentries from host kernel and copy to specimen's buffer. We must do this one dentry at a time because we don't want
      * to over read (there's no easy way to back up).  In other words, we read a dentry (but not more than what would fit in
      * the specimen) and if successful we copy to the specimen, translating from 64- to 32-bit.  The one-at-a-time requirement
-     * is due to the return value being run-length encoded. */
+     * is due to the return buffer value being run-length encoded. */
     long status = -EINVAL; /* buffer too small */
-    while (at+(long)sizeof(guest_dirent_t)<sz) {
-        /* Read one dentry if possible */
-        uint8_t host_buf[sz];
+    while (at+sizeof(guest_dirent_t)<sz) {
+
+        /* Read one dentry from host if possible */
         dirent64_t *host_dirent = (dirent64_t*)host_buf;
-        int limit = sizeof(*host_dirent);
+        size_t limit = sizeof(*host_dirent);
         status = -EINVAL; /* buffer too small */
         while (limit<=sz-at && -EINVAL==status) {
             status = syscall(SYS_getdents64, fd, host_buf, limit++);
-            if (-1==status) status = -errno;
+            if (-1==status)
+                status = -errno;
         }
 
         /* Convert and copy the host dentry into the specimen memory. */
@@ -49,7 +46,7 @@ int RSIM_Thread::getdents_syscall(int fd, uint32_t dirent_va, long sz)
             char *name_dst = (char*)guest_dirent + sizeof(*guest_dirent);
             size_t name_sz = host_dirent->d_reclen - sizeof(*host_dirent);
             memcpy(name_dst, name_src, name_sz);
-            
+
             /* inode */
             ROSE_ASSERT(host_dirent->d_ino == (host_dirent->d_ino & 0xffffffff));
             guest_dirent->d_ino = host_dirent->d_ino;
@@ -71,10 +68,13 @@ int RSIM_Thread::getdents_syscall(int fd, uint32_t dirent_va, long sz)
             at += guest_dirent->d_reclen;
             guest_dirent->d_off = at;
         }
-                
+
         /* Termination conditions */
         if (status<=0) break;
     }
+
+    if ((size_t)at!=get_process()->mem_write(guest_buf, dirent_va, at))
+        return -EFAULT;
 
     return at>0 ? at : status;
 }
@@ -83,15 +83,16 @@ template <size_t Len> VirtualMachineSemantics::ValueType<Len>
 RSIM_SemanticPolicy::readMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
                                 const VirtualMachineSemantics::ValueType<1> cond) {
     ROSE_ASSERT(0==Len % 8 && Len<=64);
-    uint32_t base = thread->process->segreg_shadow[sr].base;
+    RSIM_Process *process = thread->get_process();
+    RSIM_Process::SegmentInfo segment = process->get_segment(sr);
     uint32_t offset = addr.known_value();
-    ROSE_ASSERT(offset <= thread->process->segreg_shadow[sr].limit);
-    ROSE_ASSERT(offset + (Len/8) - 1 <= thread->process->segreg_shadow[sr].limit);
+    ROSE_ASSERT(offset <= segment.limit);
+    ROSE_ASSERT(offset + (Len/8) - 1 <= segment.limit);
 
     ROSE_ASSERT(cond.is_known());
     if (cond.known_value()) {
         uint8_t buf[Len/8];
-        size_t nread = thread->process->get_memory()->read(buf, base+offset, Len/8);
+        size_t nread = process->mem_read(buf, segment.base+offset, Len/8);
         if (nread!=Len/8)
             throw Signal(SIGSEGV);
         uint64_t result = 0;
@@ -99,7 +100,8 @@ RSIM_SemanticPolicy::readMemory(X86SegmentRegister sr, const VirtualMachineSeman
             result |= buf[j] << i;
         if (tracing(TRACE_MEM)) {
             fprintf(tracing(TRACE_MEM), "  readMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32") -> 0x%08"PRIx64"\n",
-                    Len, base, offset, base+offset, VirtualMachineSemantics::ValueType<Len>(result).known_value());
+                    Len, segment.base, offset, segment.base+offset,
+                    VirtualMachineSemantics::ValueType<Len>(result).known_value());
         }
         return result;
     } else {
@@ -112,26 +114,30 @@ template <size_t Len> void
 RSIM_SemanticPolicy::writeMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
                                  const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond) {
     ROSE_ASSERT(0==Len % 8 && Len<=64);
-    uint32_t base = thread->process->segreg_shadow[sr].base;
+    RSIM_Process *process = thread->get_process();
+    RSIM_Process::SegmentInfo segment = process->get_segment(sr);
     uint32_t offset = addr.known_value();
-    ROSE_ASSERT(offset <= thread->process->segreg_shadow[sr].limit);
-    ROSE_ASSERT(offset + (Len/8) - 1 <= thread->process->segreg_shadow[sr].limit);
+    ROSE_ASSERT(offset <= segment.limit);
+    ROSE_ASSERT(offset + (Len/8) - 1 <= segment.limit);
     ROSE_ASSERT(data.is_known());
     ROSE_ASSERT(cond.is_known());
+
     if (cond.known_value()) {
         if (tracing(TRACE_MEM)) {
             fprintf(tracing(TRACE_MEM), "  writeMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32", 0x%08"PRIx64")\n",
-                    Len, base, offset, base+offset, data.known_value());
+                    Len, segment.base, offset, segment.base+offset, data.known_value());
         }
+            
         uint8_t buf[Len/8];
         for (size_t i=0, j=0; i<Len; i+=8, j++)
             buf[j] = (data.known_value() >> i) & 0xff;
-        size_t nwritten = thread->process->get_memory()->write(buf, base+offset, Len/8);
+
+        size_t nwritten = process->mem_write(buf, segment.base+offset, Len/8);
         if (nwritten!=Len/8) {
 #if 0   /* First attempt, according to Section 24.2.1 "Program Error Signals" of glibc documentation */
             /* Writing to mem that's not mapped results in SIGBUS; writing to mem that's mapped without write permission
              * results in SIGSEGV. */
-            if (thread->process->get_memory()->find(base+offset)) {
+            if (process->mem_is_mapped(base+offset)) {
                 throw Signal(SIGSEGV);
             } else {
                 throw Signal(SIGBUS);

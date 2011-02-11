@@ -4,7 +4,8 @@
 
 #include <sys/wait.h>
 
-RSIM_Simulator *RSIM_Simulator::active_sim;
+RTS_rwlock_t RSIM_Simulator::class_rwlock = RTS_RWLOCK_INITIALIZER;
+RSIM_Simulator *RSIM_Simulator::active_sim = NULL;
 
 void
 RSIM_Simulator::ctor(int argc, char **argv, char **envp)
@@ -17,7 +18,7 @@ RSIM_Simulator::ctor(int argc, char **argv, char **envp)
     entry_va = fhdr->get_base_va()+fhdr->get_entry_rva();
 
     RSIM_Thread *main_thread = process->get_thread(getpid());
-    main_thread->initialize_stack(fhdr, argc-argno, argv+argno);
+    process->initialize_stack(fhdr, argc-argno, argv+argno);
 
     process->binary_trace_start();
 
@@ -222,60 +223,88 @@ RSIM_Simulator::create_process()
 void
 RSIM_Simulator::activate()
 {
-    ROSE_ASSERT(!which_active());               /* no simulator (including this one) should be active */
-    
-    struct sigaction sa;
-    sa.sa_handler = signal_handler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
+    RTS_WRITE(class_rwlock) {
+        if (!active_sim) {
+            ROSE_ASSERT(0==active);
 
-    for (int i=1; i<=_NSIG; i++)
-        signal_installed[i] = -1==sigaction(i, &sa, signal_restore+i) ? -errno : 0;
+            /* Make this simulator active before we install the signal handlers. This is necessary because the signal handlers
+             * reference this without using a mutex lock.  On the other hand, increment the "active" counter at the end of the
+             * function, which allows the signal handler to determine when the sigaction vector is not fully initialized. */
+            active_sim = this;
 
-    active_sim = this;
-    this->active = true;
+            struct sigaction sa;
+            sa.sa_handler = signal_handler;
+            sigemptyset(&sa.sa_mask);
+            sa.sa_flags = SA_RESTART;
+
+            for (int i=1; i<=_NSIG; i++)
+                signal_installed[i] = -1==sigaction(i, &sa, signal_restore+i) ? -errno : 0;
+
+        } else {
+            ROSE_ASSERT(active_sim==this);
+        }
+        active++;
+    } RTS_WRITE_END;
 }
 
 void
 RSIM_Simulator::deactivate()
 {
-    ROSE_ASSERT(this==which_active());
-    for (int i=1; i<=_NSIG; i++) {
-        if (signal_installed[i]>=0) {
-            int status = sigaction(i, signal_restore+i, NULL);
-            ROSE_ASSERT(status>=0);
+    RTS_WRITE(class_rwlock) {
+        /* The "active_sim" and "active" data members are adjusted in the opposite order as activate() in order that the signal
+         * handlers can detect the current state of activation without using thread synchronization. */
+        ROSE_ASSERT(this==active_sim);
+        ROSE_ASSERT(active>0);
+        if (0==--active) {
+            for (int i=1; i<=_NSIG; i++) {
+                if (signal_installed[i]>=0) {
+                    int status = sigaction(i, signal_restore+i, NULL);
+                    ROSE_ASSERT(status>=0);
+                }
+            }
+            active_sim = NULL;
         }
-    }
+    } RTS_WRITE_END;
+}
 
-    active_sim = NULL;
-    this->active = false;
+bool
+RSIM_Simulator::is_active() const
+{
+    bool retval;
+    RTS_READ(class_rwlock) {
+        retval = active!=0;
+    } RTS_READ_END;
+    return retval;
 }
 
 /* Class method */
+RSIM_Simulator *
+RSIM_Simulator::which_active() 
+{
+    RSIM_Simulator *retval = NULL;
+    RTS_READ(class_rwlock) {
+        retval = active_sim;
+    } RTS_READ_END;
+    return retval;
+}
+
+/* Class method. This is a signal handler -- do not use thread synchronization. */
 void
 RSIM_Simulator::signal_handler(int signo)
 {
-    RSIM_Simulator *simulator = which_active();
-    if (simulator) {
-        //FIXME: this sends all signals to the main thread
-        simulator->get_process()->get_thread(getpid())->signal_generate(signo);
-    } else {
-        fprintf(stderr, "RSIM::Simulator::signal_handler(): received ");
-        print_enum(stderr, signal_names, signo);
-        fprintf(stderr, "(%d); this signal cannot be delivered so we're taking it ourselves\n", signo);
-        struct sigaction sa, old_sa;
-        sa.sa_handler = SIG_DFL;
-        sigemptyset(&sa.sa_mask);
-        sa.sa_flags = SA_RESTART;
-        sigaction(signo, &sa, &old_sa);
-        sigset_t ss, old_ss;
-        sigemptyset(&ss);
-        sigaddset(&ss, signo);
-        sigprocmask(SIG_UNBLOCK, &ss, &old_ss);
-        raise(signo);
-        sigprocmask(SIG_SETMASK, &old_ss, NULL);
-        sigaction(signo, &old_sa, NULL);
-    }
+    /* In order for this signal handler to be installed, there must be an active simulator. This is because the activate()
+     * method installs the signal handler and the deactivate() removes it.  The active_sim is set before the signal handler is
+     * installed and reset after it is removed. */
+    RSIM_Simulator *simulator = active_sim;
+    assert(simulator!=NULL);
+
+#if 0   /* not async signal safe */
+    if (0==simulator->active)
+        fprintf(stderr, "RSIM_Simulator::signal_handler: warning: called during activation/deactivation\n");
+#endif
+
+    //FIXME: this sends all signals to the main thread; not async signal safe
+    simulator->get_process()->get_thread(getpid())->signal_generate(signo);
 }
 
 void
