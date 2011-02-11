@@ -10,6 +10,7 @@ libroseBinaryLoader_la_DEPENDENCIES =
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseBinaryLoader_la_SOURCES = BinaryLoader.C BinaryLoaderElf.C BinaryLoaderElfObj.C BinaryLoaderPe.C
 else
-   libroseBinaryLoader_la_SOURCES = 
+   libroseBinaryLoader_la_SOURCES = dummyBinaryLoader.C
 endif
 
+EXTRA_DIST = dummyBinaryLoader.C

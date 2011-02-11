@@ -33,7 +33,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
       RoseBin_buildTree.cpp RoseBin_IDAPRO_buildTree.cpp \
       AST_BIN_Traversal.C
 else
-   libbinaryFrontend_la_SOURCES = 
+   libbinaryFrontend_la_SOURCES = dummyBinaryFrontend.C
 endif
 
 
@@ -78,7 +78,7 @@ endif
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 
-EXTRA_DIST = CMakeLists.txt make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86
+EXTRA_DIST = CMakeLists.txt make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86 dummyBinaryFrontend.C
 
 # DQ (9/30/2009): Added automake conditional to handle machines where we test and "tclsh" is not availble.
 # Rule for maintainers (requires Tcl interpreter)

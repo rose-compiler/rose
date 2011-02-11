@@ -24,7 +24,7 @@ libbinaryMidend_la_SOURCES = \
      instructionSemantics/VirtualMachineSemantics.C \
      GraphAlgorithms.C
 else
-libbinaryMidend_la_SOURCES = 
+libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
 endif
 
 if ROSE_USE_SQLITE_DATABASE
@@ -62,4 +62,4 @@ include_HEADERS = \
    ether.h
 
 
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt dummyBinaryMidend.C
