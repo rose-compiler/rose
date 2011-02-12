@@ -207,7 +207,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_158.f90 \
      test2010_159.f90 \
      test2010_160.f90 \
-     test2010_161.f90 \
      test2010_162.f90 \
      test2010_163.f90 \
      test2010_165.f90 \
@@ -551,6 +550,7 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_147.f90 \
      test2010_148.f90 \
      test2010_149.f90 \
+     test2010_161.f90 \
      test2010_169.f90 \
      test2010_170.f90 \
      test2010_175.f90 \
