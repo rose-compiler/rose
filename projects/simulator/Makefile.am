@@ -970,15 +970,14 @@ $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 .PHONY: test_inputs_pthread
 test_inputs_pthread: $(PTHREAD_TEST_INPUTS)
 
+# Liao 2/10/2011. Must put PTHREAD_TEST_TARGETS into the same if .. else...endif
+# The order may be rearranged by automake if the PTHREAD_TEST_TARGETS is put into two lines.
+if ENABLE_I386
+
 PTHREAD_TEST_TARGETS = $(addsuffix .passed, $(PTHREAD_TEST_INPUTS))
 MOSTLYCLEANFILES += $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS)) \
                     $(addsuffix .o, $(PTHREAD_TEST_INPUTS)) \
 	 	    $(addsuffix .o, $(basename $(notdir $(PTHREAD__TEST_SUPPORT_SRC))))
-
-
-
-
-if ENABLE_I386
 $(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
 
@@ -986,8 +985,8 @@ $(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 else
 
 PTHREAD_TEST_TARGETS = warn_no_tests
+endif	
 
-endif
 
 check-pthread:  $(PTHREAD_TEST_TARGETS)
 	@$(RTH_STATS)
