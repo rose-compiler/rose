@@ -3866,7 +3866,7 @@ SgArrayType::get_mangled(void) const
             else
              {
                index_name = index_exp->unparseToString();
-               printf ("In SgArrayType::get_mangled(): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
+            // printf ("In SgArrayType::get_mangled(): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
              }
         }
 
