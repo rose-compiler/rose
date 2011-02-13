@@ -2,7 +2,7 @@
 ! Initializing a variable of derived type with a constructor causes the front end to fail an assertion:
 ! FortranParserActionROSE.C:3554: ... Assertion `false' failed.
 
-module m
+module m_test2011_71
 
   type t
     integer c

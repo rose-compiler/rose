@@ -1,5 +1,5 @@
 ! Bug report from Jean (ANL) nameListDecl_2.f90
-module m
+module m_test2011_70
 
    implicit none
    save
@@ -12,6 +12,6 @@ module m
 end module 
 
 program p 
-  use m
+  use m_test2011_70
   print *,'OK' ! parser test for namelist only
 end program

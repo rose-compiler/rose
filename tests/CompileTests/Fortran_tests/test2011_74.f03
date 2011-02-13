@@ -2,7 +2,7 @@
 ! Defining a component with the same name as that of an existing function,
 ! causes the function to be unparsed without its return type.
 
-module m
+module m_test2011_74
 
   type t
     integer :: k
