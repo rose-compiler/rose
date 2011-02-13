@@ -1305,6 +1305,9 @@ AM_CONDITIONAL(ROSE_USE_TRACE_ANALYSIS, [test "x$trace_support" = xyes])
 # Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
 ROSE_SUPPORT_YICES
 
+# Call supporting macro to check for "--enable-i386" switch
+ROSE_SUPPORT_I386
+
 # Call supporting macro to internal Satisfiability (SAT) Solver
 ROSE_SUPPORT_SAT
 
