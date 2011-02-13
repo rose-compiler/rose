@@ -237,7 +237,13 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      canonicalExample.f90
 
 # DQ (2/12/2011): This test codes appears to randomly fail (failed on GNU 4.1.2)
-# I will look into this separately.
+# I will look into this separately. 
+# Within Hudson is has failed for:
+#       test#2044 on hudson-rose-04 using GNU 4.3.2
+#       test#2056 on tux284 using GNU 4.1.2
+# It passes without error using Valgrind and I can't get it to fail locally 
+# on tux321 (using GNU 4.2.4).  One intermediate step would be to have it be 
+# tested by Hudson on only 4.2.4 machines.
 #    test2010_161.f90
 
 # DQ (1/31/2011): Some F90 testcodes need to be be F03 testcodes.  These are
@@ -303,6 +309,14 @@ if !ROSE_USING_GFORTRAN_VERSION_4_4
      test2011_37.f90 
 endif
 
+# DQ (2/13/2011): GNU gfortran 4.2 is a gnu configuration where I want to have test2010_161.f90 be tested.
+# It has previously demonstrated a statistical failure on 4.1.2 and 4.3.2 (running it on 4.2 machines
+# is an incremental step to getting it into more uniform testing, since I can't get it to fail locally).
+# It also passes valgrind just fine, so this is a bit of a mystery at present.
+if ROSE_USING_GFORTRAN_VERSION_4_2
+   F90_TESTCODES_REQUIRED_TO_PASS += \
+     test2010_161.f90
+endif
 
 F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS = 
 
@@ -554,6 +568,7 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_147.f90 \
      test2010_148.f90 \
      test2010_149.f90 \
+     test2010_161.f90 \
      test2010_169.f90 \
      test2010_170.f90 \
      test2010_175.f90 \
