@@ -589,6 +589,13 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2011_66.f90 \
      test2011_67.f90 \
      test2011_68.f90 \
+     test2011_69.f90 \
+     test2011_70.f90 \
+     test2011_71.f90 \
+     test2011_72.f90 \
+     test2011_73.f90 \
+     test2011_75.f90 \
+     test2011_76.f90 \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
@@ -651,6 +658,7 @@ F03_TESTCODES_CURRENTLY_FAILING = \
      test2010_126.f03 \
      test2010_171.f03 \
      test2011_26.f03 \
+     test2011_74.f03 \
      X-lost-func-return-type.f03 \
      X-constructor-inititalizer.f03
 
