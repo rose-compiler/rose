@@ -315,8 +315,10 @@ HEADER_VALUE_EXPRESSION_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
+       // DQ (2/12/2011): Added const so that this could be called in get_mangled() (and more generally).
        // DQ (8/18/2009): Added support to get the constant folded value as a string instead of the expression tree.
-          std::string get_constant_folded_value_as_string();
+       // std::string get_constant_folded_value_as_string();
+          std::string get_constant_folded_value_as_string() const;
 
 HEADER_VALUE_EXPRESSION_END
 
@@ -1146,12 +1148,21 @@ HEADER_DESIGNATED_INITIALIZER_START
 HEADER_DESIGNATED_INITIALIZER_END
 
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_START
+//        virtual unsigned int cfgIndexForEnd() const;
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_END
 
 HEADER_UPC_BLOCK_SIZEOF_EXPRESSION_START
+//        virtual unsigned int cfgIndexForEnd() const;
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_UPC_BLOCK_SIZEOF_EXPRESSION_END
 
 HEADER_UPC_ELEM_SIZEOF_EXPRESSION_START
+//        virtual unsigned int cfgIndexForEnd() const;
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_UPC_ELEM_SIZEOF_EXPRESSION_END
 
 HEADER_USER_DEFINED_UNARY_EXPRESSION_START
@@ -5386,6 +5397,21 @@ SgUpcLocalsizeofExpression::post_construction_initialization()
    {
    }
 
+// DQ (2/12/2011): Copied this version from SgSizeOfOp::get_type().
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an unsigned integer representing the size of type 
+  // (the unsigned int should match size_t, which may or may not be defined).
+
+     ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
+     SgType* returnType = SgTypeUnsignedInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+#if 0
 SgType*
 $CLASSNAME::get_type() const
    {
@@ -5393,6 +5419,7 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
+#endif
 
 SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION_END
 
@@ -5403,6 +5430,21 @@ SgUpcBlocksizeofExpression::post_construction_initialization()
    {
    }
 
+// DQ (2/12/2011): Copied this version from SgSizeOfOp::get_type().
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an unsigned integer representing the size of type 
+  // (the unsigned int should match size_t, which may or may not be defined).
+
+     ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
+     SgType* returnType = SgTypeUnsignedInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+#if 0
 SgType*
 $CLASSNAME::get_type() const
    {
@@ -5410,6 +5452,7 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
+#endif
 
 SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION_END
 
@@ -5419,6 +5462,21 @@ SgUpcElemsizeofExpression::post_construction_initialization()
    {
    }
 
+// DQ (2/12/2011): Copied this version from SgSizeOfOp::get_type().
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an unsigned integer representing the size of type 
+  // (the unsigned int should match size_t, which may or may not be defined).
+
+     ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
+     SgType* returnType = SgTypeUnsignedInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+#if 0
 SgType*
 $CLASSNAME::get_type() const
    {
@@ -5426,6 +5484,7 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
+#endif
 
 SOURCE_UPC_ELEM_SIZEOF_EXPRESSION_END
 
