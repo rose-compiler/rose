@@ -971,19 +971,13 @@ $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 test_inputs_pthread: $(PTHREAD_TEST_INPUTS)
 # Liao 2/11/2011, ensure PTHREAD_TEST_TARGETS = warn_no_tests on MAC
 # Without this, the order of this statement and the following if-ENABLE_I386 may be rearranged on MAC
-if !OS_MACOSX
+
+if ENABLE_I386
 PTHREAD_TEST_TARGETS = $(addsuffix .passed, $(PTHREAD_TEST_INPUTS))
 MOSTLYCLEANFILES += $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS)) \
                     $(addsuffix .o, $(PTHREAD_TEST_INPUTS)) \
 	 	    $(addsuffix .o, $(basename $(notdir $(PTHREAD__TEST_SUPPORT_SRC))))
-else
 
-PTHREAD_TEST_TARGETS = warn_no_tests
-endif
-
-
-
-if ENABLE_I386
 $(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
 
