@@ -43,7 +43,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_26.f90 \
      test2007_27.f90 \
      test2007_28.f90 \
-     test2007_29.f90 \
      test2007_32.f90 \
      test2007_33.f90 \
      test2007_34.f90 \
@@ -139,7 +138,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_249.f90 \
      test2007_250.f90 \
      test2007_262.f90 \
-     test2010_01.f90 \
      test2010_02.f90 \
      test2010_15.f90 \
      test2010_16.f90 \
@@ -162,7 +160,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_46.f90 \
      test2010_47.f90 \
      test2010_49.f90 \
-     test2010_50.f90 \
      test2010_59.f90 \
      test2010_60.f90 \
      test2010_61.f90 \
@@ -236,7 +233,13 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_39.f90 \
      test2011_40.f90 \
      canonicalExample.f90
-
+#Liao 2/11/2010, 'include' issue on gfortran 4.2.0 of Mac OS X
+if !OS_MACOSX
+  F90_TESTCODES_REQUIRED_TO_PASS += \
+       test2007_29.f90 \
+       test2010_01.f90 \
+       test2010_50.f90
+endif
 # DQ (1/31/2011): Some F90 testcodes need to be be F03 testcodes.  These are
 # fixed as only F03 codes (note that test2011_26.f03 is already a F03 code).
 #     test2011_24.f90
@@ -604,8 +607,11 @@ F90_TESTCODES_CURRENTLY_FAILING = \
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
 #    test2008_02.f
 
-F90_TESTCODES_REQUIRING_PREPROCESSOR_CURRENTLY_FAILING = \
-     test2008_01.F90
+F90_TESTCODES_REQUIRING_PREPROCESSOR_CURRENTLY_FAILING = 
+if !OS_MACOSX
+  # Liao 2/11/2011. gfortran 4.2.0 on Mac cannot handle include '/long/absolute/path/file.h'
+  F90_TESTCODES_REQUIRING_PREPROCESSOR_CURRENTLY_FAILING += test2008_01.F90
+endif
 
 
 F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \

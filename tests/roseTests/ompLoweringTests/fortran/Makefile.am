@@ -7,29 +7,35 @@ GOMP_PATH = @gomp_omp_runtime_library_path@
 OMNI_PATH = @omni_omp_runtime_support_path@
 
 F77_TESTCODES_REQUIRED_TO_COMPILE = \
-  array-one.f \
-  shared-array.f
+  array-one.f 
 
+if !OS_MACOSX
+F77_TESTCODES_REQUIRED_TO_COMPILE += \
+  shared-array.f
+endif
 F90_TESTCODES_REQUIRED_TO_COMPILE = 
 
 F77_TESTCODES_REQUIRED_TO_RUN = \
   array_initialize.f \
   helloworld.f \
   jacobi.f \
-  master.f \
+  reduction.f
+
+if !OS_MACOSX
+F77_TESTCODES_REQUIRED_TO_RUN += \
   ompdo-default.f \
   ompdo-decremental.f \
   ompdo-static.f \
   ompdo-orphaned.f \
-  ompdo-multiple.f \
-  private.f \
-  reduction.f \
-  shared.f \
   single.f \
+  ompdo-multiple.f \
+  master.f \
+  private.f \
+  shared.f \
   task_largenumber.f \
   task_scalar.f \
   task_simplest.f
-
+endif
 F90_TESTCODES_REQUIRED_TO_RUN = 
 
 TESTCODE_CURRENTLY_FAILING = 
