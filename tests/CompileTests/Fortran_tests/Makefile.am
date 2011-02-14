@@ -232,6 +232,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_39.f90 \
      test2011_40.f90 \
      canonicalExample.f90
+
 #Liao 2/11/2010, 'include' issue on gfortran 4.2.0 of Mac OS X
 if !OS_MACOSX
   F90_TESTCODES_REQUIRED_TO_PASS += \
@@ -239,6 +240,17 @@ if !OS_MACOSX
        test2010_01.f90 \
        test2010_50.f90
 endif
+
+# DQ (2/12/2011): This test codes appears to randomly fail (failed on GNU 4.1.2)
+# I will look into this separately. 
+# Within Hudson is has failed for:
+#       test#2044 on hudson-rose-04 using GNU 4.3.2
+#       test#2056 on tux284 using GNU 4.1.2
+# It passes without error using Valgrind and I can't get it to fail locally 
+# on tux321 (using GNU 4.2.4).  One intermediate step would be to have it be 
+# tested by Hudson on only 4.2.4 machines.
+#    test2010_161.f90
+
 # DQ (1/31/2011): Some F90 testcodes need to be be F03 testcodes.  These are
 # fixed as only F03 codes (note that test2011_26.f03 is already a F03 code).
 #     test2011_24.f90
@@ -302,6 +314,14 @@ if !ROSE_USING_GFORTRAN_VERSION_4_4
      test2011_37.f90 
 endif
 
+# DQ (2/13/2011): GNU gfortran 4.2 is a gnu configuration where I want to have test2010_161.f90 be tested.
+# It has previously demonstrated a statistical failure on 4.1.2 and 4.3.2 (running it on 4.2 machines
+# is an incremental step to getting it into more uniform testing, since I can't get it to fail locally).
+# It also passes valgrind just fine, so this is a bit of a mystery at present.
+if ROSE_USING_GFORTRAN_VERSION_4_2
+   F90_TESTCODES_REQUIRED_TO_PASS += \
+     test2010_161.f90
+endif
 
 F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS = 
 
@@ -592,6 +612,13 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2011_66.f90 \
      test2011_67.f90 \
      test2011_68.f90 \
+     test2011_69.f90 \
+     test2011_70.f90 \
+     test2011_71.f90 \
+     test2011_72.f90 \
+     test2011_73.f90 \
+     test2011_75.f90 \
+     test2011_76.f90 \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
@@ -657,6 +684,7 @@ F03_TESTCODES_CURRENTLY_FAILING = \
      test2010_126.f03 \
      test2010_171.f03 \
      test2011_26.f03 \
+     test2011_74.f03 \
      X-lost-func-return-type.f03 \
      X-constructor-inititalizer.f03
 

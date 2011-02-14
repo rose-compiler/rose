@@ -225,6 +225,12 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseUnaryMinusOp            (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseUnaryAddOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseSizeOfOp                (SgExpression* expr, SgUnparse_Info& info);  
+
+       // DQ (2/12/2011): Added support for UPC specific sizeof operators.
+          virtual void unparseUpcLocalSizeOfOp        (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseUpcBlockSizeOfOp        (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseUpcElemSizeOfOp         (SgExpression* expr, SgUnparse_Info& info);
+
           virtual void unparseTypeIdOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseNotOp                   (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseDerefOp                 (SgExpression* expr, SgUnparse_Info& info);  
