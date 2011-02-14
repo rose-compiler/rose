@@ -4,7 +4,7 @@
 
 // TOO (2/14/11): thrifty compiler (gcc 3.4.4) does not
 // support thread-local storage
-#if __GNUC__ >= 4
+#if GNU_CC >= 4
 __thread int b;
 extern __thread int a;
 static __thread int c;
