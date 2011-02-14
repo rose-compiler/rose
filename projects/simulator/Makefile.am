@@ -970,15 +970,8 @@ $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 .PHONY: test_inputs_pthread
 test_inputs_pthread: $(PTHREAD_TEST_INPUTS)
 
-PTHREAD_TEST_TARGETS = $(addsuffix .passed, $(PTHREAD_TEST_INPUTS))
-MOSTLYCLEANFILES += $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS)) \
-                    $(addsuffix .o, $(PTHREAD_TEST_INPUTS)) \
-	 	    $(addsuffix .o, $(basename $(notdir $(PTHREAD__TEST_SUPPORT_SRC))))
-
-
-
-
 if ENABLE_I386
+PTHREAD_TEST_TARGETS = $(addsuffix .passed, $(PTHREAD_TEST_INPUTS))
 $(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
 
@@ -988,6 +981,12 @@ else
 PTHREAD_TEST_TARGETS = warn_no_tests
 
 endif
+
+MOSTLYCLEANFILES += $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS)) \
+                    $(addsuffix .o, $(PTHREAD_TEST_INPUTS)) \
+	 	    $(addsuffix .o, $(basename $(notdir $(PTHREAD__TEST_SUPPORT_SRC))))
+
+
 
 check-pthread:  $(PTHREAD_TEST_TARGETS)
 	@$(RTH_STATS)
