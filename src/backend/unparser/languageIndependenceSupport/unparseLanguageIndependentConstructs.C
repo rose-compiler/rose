@@ -1587,6 +1587,19 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
       curprint ( string("\n /*                              rhs class name  = ") + binary_op->get_rhs_operand()->class_name() + " */ \n");
 #endif
 
+  // DQ (2/7/2011): Unparser support for more general originalExpressionTree handling.
+     SgExpression* expressionTree = binary_op->get_originalExpressionTree();
+     if (expressionTree != NULL && info.SkipConstantFoldedExpressions() == false)
+        {
+#if 0
+          printf ("Found and expression tree representing a cast expression (unfolded constant expression requiring a cast) expressionTree = %p = %s \n",
+               expressionTree,expressionTree->class_name().c_str());
+#endif
+
+          unparseExpression(expressionTree,info);
+          return;
+        }
+
   // int toplevel_expression = !info.get_nested_expression();
      bool iostream_op = false;
 
