@@ -211,7 +211,6 @@ SYS_TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/syscall_tests/syscall_tst.179.1.c \
 		   $(srcdir)/syscall_tests/syscall_tst.183.1.c \
 		   $(srcdir)/syscall_tests/syscall_tst.183.2.c \
-		   $(srcdir)/syscall_tests/syscall_tst.183.3.c \
 		   $(srcdir)/syscall_tests/syscall_tst.186.1.c \
 		   $(srcdir)/syscall_tests/syscall_tst.186.2.c \
 		   $(srcdir)/syscall_tests/syscall_tst_18.c \
@@ -362,6 +361,11 @@ SYS_TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/syscall_tests/syscall_tst.94.2.c \
 		   $(srcdir)/syscall_tests/syscall_tst.99.1.c \
 		   $(srcdir)/syscall_tests/syscall_tst.99.2.c
+
+# DQ (2/13/2011): This test fails to terminate when run on Hudson 
+# (failed on hudson-rose-07, email with error details sent morning of 2/13/2011 to Robb and Andreas).
+#		   $(srcdir)/syscall_tests/syscall_tst.183.3.c
+
 
 # These cannot be run reliably (at least not concurrently with other tests.
 #		   $(srcdir)/syscall_tests/syscall_tst.117.msgget.03.c
@@ -970,8 +974,8 @@ $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 .PHONY: test_inputs_pthread
 test_inputs_pthread: $(PTHREAD_TEST_INPUTS)
 # Liao 2/11/2011, ensure PTHREAD_TEST_TARGETS = warn_no_tests on MAC
+# The assignment of PTHREAD_TEST_TARGETS must be in the same if -statement.
 # Without this, the order of this statement and the following if-ENABLE_I386 may be rearranged on MAC
-
 if ENABLE_I386
 PTHREAD_TEST_TARGETS = $(addsuffix .passed, $(PTHREAD_TEST_INPUTS))
 MOSTLYCLEANFILES += $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS)) \
@@ -987,6 +991,8 @@ else
 PTHREAD_TEST_TARGETS = warn_no_tests
 
 endif
+
+
 
 check-pthread:  $(PTHREAD_TEST_TARGETS)
 	@$(RTH_STATS)
