@@ -947,7 +947,6 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
 
   // 2. return all nodes of type VariantT following the source node
   std::vector<SgNode*> getAllNextSgNode( const SgNode* astSourceNode, VariantT=V_SgNode, SgNode* astEndNode=NULL);
-
 #endif
 
 //@}
