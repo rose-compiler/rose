@@ -19251,9 +19251,6 @@ void c_action_rice_finish_stmt(Token_t *label, Token_t *teamToken, Token_t *eos)
 
 static const char * SPAWN_SUBR_NAME = "CAF_SPAWN";
 
-// DQ (12/2/2010): This is not used and so causes a warning.
-// static const char * TEAM_DEFAULT_NAME = "TEAM_DEFAULT";
-
 void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
 {
 #if 1
