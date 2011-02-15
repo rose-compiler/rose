@@ -9,19 +9,28 @@
 inline
 bool operator<(const Address& lhs, const Address& rhs)
 {
-  return lhs.local < rhs.local;
+  return (  lhs.local < rhs.local
+#if WITH_RTED
+         || (lhs.local == rhs.local && lhs.thread_id < rhs.thread_id)
+#endif /* WITH_RTED */
+         );
 }
 
 inline
 bool operator<=(const Address& lhs, const Address& rhs)
 {
-  return lhs.local <= rhs.local;
+  return !(rhs < lhs);
 }
+
 
 inline
 bool operator==(const Address& lhs, const Address& rhs)
 {
-  return lhs.local == rhs.local;
+  return (  lhs.local == rhs.local
+#if WITH_RTED
+         && lhs.thread_id == rhs.thread_id
+#endif /* WITH_RTED */
+         );
 }
 
 inline
@@ -63,34 +72,15 @@ std::ostream& operator<<(std::ostream& s, const Address& obj)
 {
   const void* addr = obj.local;
 
-  return s << std::setfill('0') << std::setw(6) << std::hex << addr;
-  // return s << obj.local;
-}
+  s << addr;
 
-template <class T>
-inline
-const T* point_to(const Address& addr)
-{
-  return reinterpret_cast<const T*>(addr.local);
-}
+#if WITH_UPC
+  s << " @" << obj.thread_id;
 
-inline
-Address memAddr(size_t sysaddr)
-{
-  Address tmp;
+  if (rted_isLocal(obj)) s << " (local)";
+#endif /* WITH_UPC */
 
-  tmp.local = reinterpret_cast<char*>(sysaddr);
-  return tmp;
-}
-
-template <class T>
-inline
-Address memAddr(const T* t)
-{
-  Address tmp;
-
-  tmp.local = reinterpret_cast<const char*>(t);
-  return tmp;
+  return s;
 }
 
 inline

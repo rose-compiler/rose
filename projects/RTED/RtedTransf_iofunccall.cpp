@@ -21,54 +21,54 @@ using namespace SageBuilder;
 
 
 void
-RtedTransformation::insertIOFuncCall(RtedArguments* args)
+RtedTransformation::insertIOFuncCall(RtedArguments& args)
 {
   static const std::string comment("RS : Calling Function, parameters: (#args, function name, filename, linenr, linenrTransformed, error message, left hand var, other parameters)");
 
-  SgStatement*                stmt = args->stmt;
+  SgStatement*                stmt = args.stmt;
   ROSE_ASSERT(stmt);
 
   SgScopeStatement*           scope = stmt->get_scope();
   ROSE_ASSERT(scope);
 
-  SgExpression*               arg_name = buildStringVal(args->f_name);
+  SgExpression*               arg_name = buildStringVal(args.f_name);
   SgExprListExp*              arg_list = buildExprListExp();
 
   SI::appendExpression(arg_list, arg_name);
 
   // \pp the two following arguments are currently not used (as of 01/01/11)
   {
-    SgExpression*  arg_lhs_exprstr = (args->leftHandSideAssignmentExprStr != NULL)
-                                            ? args->leftHandSideAssignmentExprStr
+    SgExpression*  arg_lhs_exprstr = (args.leftHandSideAssignmentExprStr != NULL)
+                                            ? args.leftHandSideAssignmentExprStr
                                             : buildStringVal("NoAssignmentVar")
                                             ;
 
-    std::cerr << " ... Left hand side variable : " <<  args->leftHandSideAssignmentExpr << std::endl;
+    std::cerr << " ... Left hand side variable : " <<  args.leftHandSideAssignmentExpr << std::endl;
     SI::appendExpression(arg_list, buildStringVal(removeSpecialChar(stmt->unparseToString())));
     SI::appendExpression(arg_list, arg_lhs_exprstr);
   }
 
   bool                        insertBefore = true;
-  SgExpressionPtrList&        roseArgs = args->arguments;
+  SgExpressionPtrList&        roseArgs = args.arguments;
   SgExpression*               arg_file = NULL;
   SgExpression*               arg_1 = NULL;
   SgExpression*               arg_2 = NULL;
 
   // generate the arguments based on the actual function being called
-  // \pp I do not understand why some expressions are cloned / copied
-  //     before being added to the exprlist, and others are not.
-  if (args->f_name=="fopen")
+  // \pp \note \todo I do not understand why some expressions are
+  //     cloned / copied before being added to the exprlist, and others are not.
+  if (args.f_name=="fopen")
   {
     ROSE_ASSERT(roseArgs.size() == 2);
 
     // file handle
-    arg_file = args->leftHandSideAssignmentExpr;
+    arg_file = args.leftHandSideAssignmentExpr;
     arg_1 = SI::deepCopy(roseArgs.front());
     arg_2 = SI::deepCopy(roseArgs.back());
     insertBefore = false;
   }
-  else if (  args->f_name=="fclose"
-          || args->f_name=="fgetc"
+  else if (  args.f_name=="fclose"
+          || args.f_name=="fgetc"
           )
   {
     ROSE_ASSERT(roseArgs.size() == 1);
@@ -78,7 +78,7 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args)
     arg_1 = buildStringVal("NULL");
     arg_2 = buildStringVal("NULL");
   }
-  else if (args->f_name=="fputc")
+  else if (args.f_name=="fputc")
   {
     ROSE_ASSERT(roseArgs.size() == 2);
 
@@ -96,7 +96,7 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args)
     arg_1 = buildAddressOfOp(SI::deepCopy(roseArgs.front()));
     arg_2 = buildStringVal("NULL");
   }
-  else if (args->f_name=="std::fstream")
+  else if (args.f_name=="std::fstream")
   {
     // \pp this code seems to be broken ...
     //     not sure what we should test with C++ fstreams
@@ -108,11 +108,11 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args)
 
     std::cerr << " Detected fstream" << std::endl;
 
-    arg_file = args->varRefExp;
+    arg_file = args.varRefExp;
     arg_1 = SI::deepCopy(roseArgs.front());
     arg_2 = buildStringVal("NULL");
   } else {
-    std::cerr <<"Unknown io function call " << args->f_name << std::endl;
+    std::cerr <<"Unknown io function call " << args.f_name << std::endl;
     abort();
   }
 

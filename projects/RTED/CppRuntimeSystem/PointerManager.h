@@ -19,7 +19,7 @@ class PointerManager;
 class PointerInfo
 {
     public:
-        typedef const char* Location;
+        typedef Address Location;
 
         friend class PointerManager; // because of protected constructors
 
@@ -69,7 +69,7 @@ class PointerManager
         static const bool check = true;
         static const bool nocheck = !check;
 
-        typedef PointerInfo::Location Location;
+        typedef Address Location;
 
         /// Registers a memory region  from sourceAddress to sourceAddress+sizeof(void*)
         /// which stores another address

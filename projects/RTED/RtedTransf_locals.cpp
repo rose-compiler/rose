@@ -29,8 +29,7 @@ std::string scope_name(SgStatement* stmt) {
       return "do";
     } else {
       //cerr << " Trying to query stmt : " << stmt->class_name() << endl;
-      vector<SgNode*> calls
-        = NodeQuery::querySubTree( stmt, V_SgFunctionCallExp);
+      const SgNodePtrList& calls = NodeQuery::querySubTree( stmt, V_SgFunctionCallExp);
 
       if( calls.size() > 0) {
         SgFunctionCallExp* fncall = isSgFunctionCallExp( calls[0]);

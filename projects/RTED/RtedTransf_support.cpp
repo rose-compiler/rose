@@ -94,7 +94,7 @@ SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol
 
 SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args, const std::string& comment)
 {
-  SgExprStatement* exprStmt = insertCheck(ilBefore, stmt, checker, args);
+  SgExprStatement* exprStmt = insertCheck(iloc, stmt, checker, args);
 
   attachComment(exprStmt, "", PreprocessingInfo::before);
   attachComment(exprStmt, comment, PreprocessingInfo::before);
@@ -143,6 +143,17 @@ SgType* skip_ReferencesAndTypedefs( SgType* type ) {
 
     return type;
 }
+
+
+SgBasicBlock& requiresParentIsBasicBlock(SgStatement& stmt)
+{
+  SgLocatedNode* block = ensureBasicBlockAsParent(&stmt);
+  SgBasicBlock*  res = isSgBasicBlock(block);
+
+  ROSE_ASSERT(res);
+  return *res;
+}
+
 
 //
 //
@@ -229,6 +240,7 @@ bool isUpcShared(const SgType* n)
 
   return res;
 }
+
 
 /// \brief adds an AddressDesc for a single ptr/arr indirection
 /// \param the base type (already after the indirection)
@@ -1351,7 +1363,7 @@ bool traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt)
 {
   if (stmt==NULL) return false;
 
-  const SgNodePtrList           nodes = NodeQuery::querySubTree(stmt,V_SgExpression);
+  const SgNodePtrList&          nodes = NodeQuery::querySubTree(stmt,V_SgExpression);
   SgNodePtrList::const_iterator zz = nodes.end();
   SgNodePtrList::const_iterator pos = std::find(nodes.begin(), zz, varRef);
 
@@ -1363,7 +1375,7 @@ bool traverseAllChildrenAndFind(SgInitializedName* varRef, SgStatement* stmt)
   // \pp \todo replace this and the previous function with isAncestorOf implementation
   if (stmt == NULL) return false;
 
-  const SgNodePtrList           nodes = NodeQuery::querySubTree(stmt,V_SgInitializedName);
+  const SgNodePtrList&          nodes = NodeQuery::querySubTree(stmt,V_SgInitializedName);
   SgNodePtrList::const_iterator zz = nodes.end();
   SgNodePtrList::const_iterator pos = std::find(nodes.begin(), zz, varRef);
 

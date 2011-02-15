@@ -18,6 +18,7 @@ std::string ToString(T t)
   return myStream.str(); //returns the string form of the stringstream object
 }
 
+/*
 template<typename T>
 inline
 std::string HexToString(T t)
@@ -26,14 +27,7 @@ std::string HexToString(T t)
   myStream << std::hex << t ;
   return myStream.str(); //returns the string form of the stringstream object
 }
-
-inline
-const void* HexToString(const char* l)
-{
-  return l;
-}
-
-
+*/
 
 /**
  * This class represents a position in a sourcefile

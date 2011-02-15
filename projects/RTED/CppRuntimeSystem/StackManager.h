@@ -15,7 +15,7 @@ class VariablesType;
 
 class StackManager
 {
-    typedef const char* Location;
+    typedef Address Location;
 
     public:
         StackManager();

@@ -19,12 +19,10 @@ bool RtedTransformation::hasClassConstructor(SgClassDeclaration* classdec) {
 	// find all functions in class and if there is a function that
 	// has the same name as the class --- bingo
 
-	vector<SgNode*> results = NodeQuery::querySubTree(classdec,
-			V_SgMemberFunctionDeclaration);
-	vector<SgNode*>::const_iterator classIt = results.begin();
-	for (; classIt != results.end(); classIt++) {
-		SgMemberFunctionDeclaration* mf = isSgMemberFunctionDeclaration(
-				*classIt);
+	const SgNodePtrList&          results = NodeQuery::querySubTree(classdec, V_SgMemberFunctionDeclaration);
+	SgNodePtrList::const_iterator classIt = results.begin();
+	for (; classIt != results.end(); ++classIt) {
+		SgMemberFunctionDeclaration* mf = isSgMemberFunctionDeclaration(*classIt);
 		std::string funcname = mf->get_name().str();
 		//cerr << " ++++++++++++++++ comparing class : " << classname << " against func: " << funcname << endl;
 		if (classname == funcname) {

@@ -8,17 +8,22 @@
 
 using namespace std;
 
-// \pp todo: replace the ctor with one that takes a location instead of the address
 VariablesType::VariablesType( const std::string & name_,
                               const std::string & mangledName_,
                               RsType * type_,
                               Address address_
                             )
-: name(name_), mangledName(mangledName_), type(type_), address(address_.local)
+: name(name_), mangledName(mangledName_), type(type_), address(address_)
 {
   assert(type != NULL);
 
   RsClassType*   class_type = dynamic_cast< RsClassType* >( type );
+
+  // Variables are allocated statically. However, in UPC they can be shared
+  //   if allocated on the file scope. Thus, the locality holds only for
+  //   non UPC types (e.g., C++ classes).
+  assert(class_type == NULL || rted_isLocal(address));
+
   RuntimeSystem* rs = RuntimeSystem::instance();
   const bool     isCtorCall = (  class_type != NULL
                               && rs->getMemManager()->getMemoryType(address) != NULL
@@ -34,11 +39,9 @@ VariablesType::VariablesType( const std::string & name_,
 }
 
 
-
-
 VariablesType::~VariablesType()
 {
-    RuntimeSystem::instance()->freeMemory(rted_Addr(address), akStack);
+    RuntimeSystem::instance()->freeMemory(address, akStack);
 }
 
 MemoryType * VariablesType::getAllocation() const
@@ -78,7 +81,7 @@ PointerInfo * VariablesType::getPointerInfo() const
 
 void VariablesType::print(ostream & os) const
 {
-    os << "0x" << hex << setw(6) << setfill('0') << HexToString(address)
+    os << setw(6) << setfill('0') << address
        << "\t" << name << "(" << mangledName <<")"
        << " Type: " << type->getName()  ;
 }

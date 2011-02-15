@@ -38,94 +38,6 @@ RtedTransformation::insertMainCloseCall()
 
 
 
-/* -----------------------------------------------------------
- * Insert the header files (Step 1)
- * -----------------------------------------------------------*/
-void RtedTransformation::insertProlog(SgProject* proj) {
-  std::cout << "Inserting headers ... " << std::endl;
-  // grep all source (.c) files and insert headers
-
-#if NOT_YET_OPERATIONAL
-  SgFileList*    projfile_list = proj->get_fileList_ptr();
-  SgFilePtrList& projfiles = projfile_list->get_listOfFiles();
-  SgFilePtrList::iterator it = projfiles.begin();
-
-  for (;it!=projfiles.end();++it)
-  {
-    SgSourceFile* source = isSgSourceFile(*it);
-
-    if (source)
-    {
-#endif /* NOT_YET_OPERATIONAL */
-
-  std::vector<SgNode*> results = NodeQuery::querySubTree(proj, V_SgSourceFile);
-   // insert at top of all source files in reverse order
-   // only if the class has private members and if it is declared in a header file
-  std::vector<SgNode*>::iterator it = results.begin();
-  for (; it != results.end(); it++) {
-      SgSourceFile* source = isSgSourceFile(*it);
-      ROSE_ASSERT(source);
-
-      std::cerr << "Creating pdf..." << std::endl;
-      AstPDFGeneration pdf;
-      pdf.generateWithinFile(source);
-      SgGlobal* globalScope = source->get_globalScope();
-      pushScopeStack(globalScope);
-      // this needs to be fixed
-      //buildCpreprocessorDefineDeclaration(globalScope, "#define EXITCODE_OK 0");
-
-#if 0
-      // currently doesnt work -- crashes somewhere in wave
-      insertHeader("rose.h",PreprocessingInfo::before,false,globalScope);
-#else
-      insertHeader("RuntimeSystem.h",PreprocessingInfo::before,false,globalScope);
-      //insertHeader("iostream",PreprocessingInfo::before,true,globalScope);
-      //insertHeader("map",PreprocessingInfo::before,true,globalScope);
-      //insertHeader("string",PreprocessingInfo::before,true,globalScope);
-#endif
-
-      popScopeStack();
-    }
-
-#if NOT_YET_OPERATIONAL
-    }
-  }
-#endif /* NOT_YET_OPERATIONAL */
-}
-
-/* -----------------------------------------------------------
- * Insert
- * RuntimeSystem* runtimeSystem = new RuntimeSystem();
- * -----------------------------------------------------------*/
-void RtedTransformation::insertRuntimeSystemClass() {
-#if 0
-
-  Sg_File_Info* fileInfo = globalScope->get_file_info();
-  ROSE_ASSERT(runtimeClassSymbol);
-  ROSE_ASSERT(runtimeClassSymbol->get_type());
-  SgType* type = runtimeClassSymbol->get_type();
-  //SgType* type  = new SgClassType();
-  std::cerr << "Found type : " << type->class_name() << std::endl;
-
-  SgExprListExp* exprList = buildExprListExp();
-  ROSE_ASSERT(roseCreateArray->get_declaration());
-
-  SgConstructorInitializer* constr = buildConstructorInitializer(roseCreateArray->get_declaration(),
-								 exprList,type,false,false,false,false);
-  SgExprListExp* exprList2 = buildExprListExp();
-  //  SgNewExp* newexp = new SgNewExp(fileInfo,type,exprList2,constr,NULL,0,NULL);
-  SgNewExp* newexp = buildNewExp(type,NULL,constr,NULL,0,NULL);
-  SgAssignInitializer* init = buildAssignInitializer(newexp);
-
-  SgVariableDeclaration* variable =
-    buildVariableDeclaration("runtimeSystem",buildPointerType(type),init);
-  SgStatement* st = isSgStatement(rememberTopNode->get_parent());
-  insertStatement(st,variable,true);
-#endif
-}
-
-
-
 void RtedTransformation::visit_checkIsMain(SgFunctionDefinition* const mainFunc)
 {
     ROSE_ASSERT(mainFunc);
@@ -198,7 +110,7 @@ void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
                                                     body
                                                   );
   appendStatement(st, body);
-  insertCheck(ilBefore, st, symbols.roseUpcInitialize, buildExprListExp());
+  insertCheck(ilBefore, st, symbols.roseUpcAllInitialize, buildExprListExp());
 
   SgExprListExp*     arg_list2 = buildExprListExp();
   appendExpression(arg_list2, buildStringVal("RuntimeSystem.cpp:main"));
@@ -209,11 +121,11 @@ void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
   appendStatement(stmt5, body);
 
   // return 0;
-  SgReturnStmt * stmt2 = buildReturnStmt(buildVarRefExp("exit_code",body));
+  SgReturnStmt *     stmt2 = buildReturnStmt(buildVarRefExp("exit_code",body));
   appendStatement(stmt2, body);
 
   // rename it
-  SgName new_name = SgName("RuntimeSystem_original_main");
+  SgName             new_name("RuntimeSystem_original_main");
   sg_func->set_name(new_name);
   sg_func->get_declarationModifier().get_storageModifier().setExtern();
 

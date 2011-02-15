@@ -16,9 +16,9 @@ MemoryType::MemoryType(Location _addr, size_t _size, AllocKind wherehow, const S
 
   std::stringstream msg;
 
-  msg << "	***** Allocate Memory ::: " << HexToString(_addr)
-      << "  size:" << ToString(_size)
-      << "  pos1:" + ToString(_pos.getLineInOrigFile());
+  msg << "	***** Allocate Memory ::: " << _addr
+      << "  size:" << _size
+      << "  pos1:" + _pos.getLineInOrigFile();
 
   rs->printMessage(msg.str());
 }
@@ -339,7 +339,7 @@ void MemoryType::print() const
 // extra print function because operator<< cannot be member-> no access to privates
 void MemoryType::print(std::ostream & os) const
 {
-    os << "0x" << HexToString(startAddress);
+    os << "0x" << startAddress;
     os << " Size " << std::dec << size;
     os <<  "\t" << getInitString() << "\tAllocated at " << allocPos;
     os << std::endl;
@@ -357,7 +357,7 @@ void MemoryType::print(std::ostream & os) const
             if(vt)
                 os << "\t" << vt->getName() << " ";
             else
-                os << "\t" << "Addr:0x" << HexToString(it->second->getSourceAddress()) << " ";
+                os << "\t" << "Addr:0x" << it->second->getSourceAddress() << " ";
         }
         os <<std::endl;
     }
@@ -477,7 +477,7 @@ std::string allocDisplayName(AllocKind ak)
     case akUpcAlloc       : res = "upc_alloc/upc_local_alloc"; break;
     case akUpcGlobalAlloc : res = "upc_global_alloc"; break;
     case akUpcAllAlloc    : res = "upc_all_alloc"; break;
-    default: ;
+    default               : res = "unknown allocation method";
   }
 
   assert(res != NULL);
@@ -491,7 +491,7 @@ std::string freeDisplayName(AllocKind ak)
 
   switch (ak)
   {
-    case akStack          : res = "Stack"; break;
+    case akStack          : res = "stack (rted bug?) free"; break;
     case akCHeap          : res = "free"; break;
 
     /* C++ */
@@ -500,7 +500,7 @@ std::string freeDisplayName(AllocKind ak)
 
     /* UPC */
     case akUpcSharedHeap  : res = "upc_free"; break;
-    default: ;
+    default               : res = "unknown deallocation method";
   }
 
   assert(res != NULL);
@@ -540,8 +540,9 @@ void MemoryManager::freeMemory(Location addr, MemoryType::AllocKind freekind)
     if (m == NULL)
     {
         std::stringstream desc;
-        desc << "Free was called with address " << "0x" << HexToString(addr) <<std::endl;
-        desc << "Allocated Memory Regions:" <<std::endl;
+        desc << freeDisplayName(freekind);
+        desc << "was called with unknown address " << addr <<std::endl;
+        desc << "Allocated Memory Regions:" << std::endl;
         print(desc);
         rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
         return;
@@ -551,7 +552,8 @@ void MemoryManager::freeMemory(Location addr, MemoryType::AllocKind freekind)
     if (m->getAddress() != addr)
     {
         std::stringstream desc;
-        desc << "Free was called with an address inside of an allocated block (Offset:"
+        desc << freeDisplayName(freekind);
+        desc << "was called with an address inside of an allocated block (Offset:"
              << "0x" << std::hex << (addr - m->getAddress()) <<")" <<std::endl;
         desc << "Allocated Block: " << *m <<std::endl;
 
@@ -593,7 +595,7 @@ MemoryType* MemoryManager::checkAccess(Location addr, size_t size, RsType * t, R
     {
         std::stringstream desc;
         desc << "Trying to access non-allocated MemoryRegion "
-             << "(Address " << "0x" << HexToString(addr)
+             << "(Address " << "0x" << addr
              << " of size " << std::dec << size << ")"
              << std::endl;
 
@@ -608,7 +610,7 @@ MemoryType* MemoryManager::checkAccess(Location addr, size_t size, RsType * t, R
     {
       std::stringstream msg;
 
-      msg << "   ++ found memory addr : " << HexToString(addr) << " size:" << ToString(size);
+      msg << "   ++ found memory addr : " << addr << " size:" << ToString(size);
       rs->printMessage(msg.str());
 
     	res->registerMemType(addr - res->getAddress(), t);
@@ -635,7 +637,7 @@ void MemoryManager::checkRead(Location addr, size_t size, RsType * t)
 
       std::stringstream desc;
       desc << "Trying to read from uninitialized MemoryRegion "
-           << "(Address " << "0x" << HexToString(addr)
+           << "(Address " << "0x" << addr
            << " of size " << std::dec << size << ")"
            << std::endl;
 
@@ -650,7 +652,7 @@ void MemoryManager::checkWrite(Location addr, size_t size, RsType * t)
     RuntimeSystem *   rs = RuntimeSystem::instance();
     std::stringstream msg;
 
-    msg << "   ++ checkWrite : " << HexToString(addr) << " size:" << ToString(size);
+    msg << "   ++ checkWrite : " << addr << " size:" << size;
     rs->printMessage(msg.str());
 
     MemoryType *    mt = checkAccess(addr,size,t,RuntimeViolation::INVALID_WRITE);
@@ -702,8 +704,7 @@ bool MemoryManager::checkIfSameChunk( Location addr1,
     {
         std::stringstream ss;
         ss << "Pointer changed allocation block from "
-           << "0x" << HexToString(addr1) << " to "
-           << "0x" << HexToString(addr2)
+           << addr1 << " to " << addr2
            << std::endl;
 
         rs->violationHandler( violation, ss.str() );

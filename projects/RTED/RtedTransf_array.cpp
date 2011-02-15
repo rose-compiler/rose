@@ -106,6 +106,7 @@ std::string enumstring(AllocKind ak)
 
   switch (ak)
   {
+    case akUndefined:      res = "akUndefined"; break;
     case akStack:          res = "akStack"; break;
     case akCHeap:          res = "akCHeap"; break;
 
@@ -415,8 +416,6 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* 
 
   appendAddress(arg_list, array_base);
   appendAddressAndSize(arg_list, Whole, NULL, arrRefExp, NULL);
-
-  appendExpression(arg_list, ctorAddressDesc(mkAddressDesc(array_base)));
   appendExpression(arg_list, buildIntVal(read_write_mask));
   appendFileInfo(arg_list, stmt);
 
@@ -465,14 +464,16 @@ void RtedTransformation::populateDimensions(RtedArray* array, SgInitializedName*
    }
 }
 
+
+// obsolete
 void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* const n)
 {
    ROSE_ASSERT(n);
 
-   SgExpression*        right = n->get_operand();
+   SgExpression*                 right = n->get_operand();
    // right hand side should contain some VarRefExp
-   std::vector<SgNode*> vars = NodeQuery::querySubTree(right, V_SgVarRefExp);
-   std::vector<SgNode*>::const_iterator it = vars.begin();
+   const SgNodePtrList&          vars = NodeQuery::querySubTree(right, V_SgVarRefExp);
+   SgNodePtrList::const_iterator it = vars.begin();
 
    for (; it != vars.end(); ++it) {
       SgVarRefExp*  varRef = isSgVarRefExp(*it);
@@ -487,7 +488,6 @@ void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* const n)
 
       if (dotExp)
       {
-         // \pp is this correct? why not get_lhs_operand
          left = dotExp->get_rhs_operand();
       }
       else if (arrowExp)
@@ -515,8 +515,8 @@ void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* const n)
    }
 
 #if 1
-   std::vector<SgNode*>                 vars2 = NodeQuery::querySubTree(right, V_SgThisExp);
-   std::vector<SgNode*>::const_iterator it2 = vars2.begin();
+   const SgNodePtrList&          vars2 = NodeQuery::querySubTree(right, V_SgThisExp);
+   SgNodePtrList::const_iterator it2 = vars2.begin();
    for (; it2 != vars2.end(); ++it2) {
       SgThisExp* varRef = isSgThisExp(*it2);
       ROSE_ASSERT(varRef);
@@ -537,8 +537,8 @@ void RtedTransformation::visit_isSgArrowExp(SgArrowExp* const n)
    SgExpression* left = isSgExpression(n->get_lhs_operand());
    ROSE_ASSERT(left);
    // left hand side should be a varrefexp or a thisOp
-   std::vector<SgNode*> vars = NodeQuery::querySubTree(left, V_SgVarRefExp);
-   std::vector<SgNode*>::const_iterator it = vars.begin();
+   const SgNodePtrList&          vars = NodeQuery::querySubTree(left, V_SgVarRefExp);
+   SgNodePtrList::const_iterator it = vars.begin();
 
    for (; it != vars.end(); ++it) {
       SgVarRefExp* varRef = isSgVarRefExp(*it);
@@ -558,8 +558,8 @@ void RtedTransformation::visit_isSgArrowExp(SgArrowExp* const n)
       //exit(1);
    }
 #if 1
-   std::vector<SgNode*> vars2 = NodeQuery::querySubTree(left, V_SgThisExp);
-   std::vector<SgNode*>::const_iterator it2 = vars2.begin();
+   const SgNodePtrList&          vars2 = NodeQuery::querySubTree(left, V_SgThisExp);
+   SgNodePtrList::const_iterator it2 = vars2.begin();
    for (; it2 != vars2.end(); ++it2) {
       SgThisExp* varRef = isSgThisExp(*it2);
       ROSE_ASSERT(varRef);
@@ -847,7 +847,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
          ROSE_ASSERT(!initName || varRef);
       }// ------------------------------------------------------------
       else if (isSgCastExp(exp)) {
-         std::vector<SgNode*> vars = NodeQuery::querySubTree(exp, V_SgVarRefExp);
+         const SgNodePtrList& vars = NodeQuery::querySubTree(exp, V_SgVarRefExp);
          ROSE_ASSERT( vars.size() > 0 );
 
          varRef = isSgVarRefExp(vars[0]);
@@ -909,8 +909,8 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
    ROSE_ASSERT(initName);
 
    // handle MALLOC: function call
-   AllocKind                     last_alloc = akCxxNew; // \pp should this be akUndefined?
-   SgNodePtrList                 calls = NodeQuery::querySubTree(expr_r, V_SgFunctionCallExp);
+   AllocKind                     last_alloc = akUndefined; // \pp should this be akUndefined?
+   const SgNodePtrList&          calls = NodeQuery::querySubTree(expr_r, V_SgFunctionCallExp);
    SgNodePtrList::const_iterator it = calls.begin();
    for (; it != calls.end(); ++it) {
       SgFunctionCallExp* funcc = isSgFunctionCallExp(*it);
@@ -921,7 +921,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
 
       // find if sizeof present in size operator
       // \pp why do we require that there is exactly one sizeof operand?
-      vector<SgNode*> results = NodeQuery::querySubTree(size, V_SgSizeOfOp);
+      const SgNodePtrList& results = NodeQuery::querySubTree(size, V_SgSizeOfOp);
       ROSE_ASSERT_MSG(results.size() == 1, "Expected to find excactly 1 sizeof operand. Abort.");
 
       SgExpression*      func = funcc->get_function();

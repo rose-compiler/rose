@@ -33,7 +33,7 @@ class RsType;
 class MemoryType
 {
     public:
-        typedef const char*               Location;
+        typedef Address                   Location;
         typedef std::map<size_t, RsType*> TypeInfoMap;
         typedef TypeInfoMap::iterator     TiIter;
 
@@ -170,7 +170,7 @@ std::ostream& operator<< (std::ostream &os, const MemoryType & m);
 class MemoryManager
 {
     public:
-        typedef const char* Location;
+        typedef Address Location;
 
         MemoryManager();
 
@@ -249,7 +249,7 @@ class MemoryManager
         const T* readMemory(Location address)
         {
             checkRead(address, sizeof(T));
-            return reinterpret_cast<const T*>(address);
+            return reinterpret_cast<const T*>(address.local);
         }
 
 

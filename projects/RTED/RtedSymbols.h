@@ -35,8 +35,11 @@ struct RtedSymbols : AstSimpleProcessing {
 	SgFunctionSymbol*   roseClose;
 
 	// symbols for UPC
-	SgFunctionSymbol*   roseProcessMsg;
-	SgFunctionSymbol*   roseUpcInitialize;
+	SgFunctionSymbol*   roseUpcExitWorkzone;
+	SgFunctionSymbol*   roseUpcEnterWorkzone;
+	SgFunctionSymbol*   roseUpcAllInitialize;
+	SgFunctionSymbol*   roseUpcBeginExclusive;
+	SgFunctionSymbol*   roseUpcEndExclusive;
 
 	SgEnumDeclaration*  roseAllocKind;
 
@@ -70,8 +73,11 @@ struct RtedSymbols : AstSimpleProcessing {
 		roseAddrSh(NULL),
 		roseClose(NULL),
 
-		roseProcessMsg(NULL),
-		roseUpcInitialize(NULL),
+    roseUpcExitWorkzone(NULL),
+		roseUpcEnterWorkzone(NULL),
+		roseUpcAllInitialize(NULL),
+		roseUpcBeginExclusive(NULL),
+		roseUpcEndExclusive(NULL),
 
 		roseAllocKind(NULL),
 

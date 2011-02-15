@@ -615,39 +615,41 @@ std::string RsBasicType::getDisplayName() const
 
 std::string RsBasicType::readValueAt(Address addr) const
 {
-    std::stringstream str;
+    if (!rted_isLocal(addr))
+    {
+      return "todo: cannot read non-local address.";
+    }
 
     // \pp \todo we need to know whether the adress is shared or not
-    MemoryManager::Location loc = rted_system_addr(addr, rted_ptr());
+    std::stringstream       str;
     MemoryManager *         m = RuntimeSystem::instance()->getMemManager();
 
-    if (! m->isInitialized(loc, getByteSize()))
+    if (! m->isInitialized(addr, getByteSize()))
       return "Not initialized";
-
 
     switch (type)
     {
-        case SgTypeBool:             str <<  *m->readMemory<bool>(loc);                break;
-        case SgTypeChar:             str <<  *m->readMemory<char>(loc);                break;
-        case SgTypeWchar:            str <<  *m->readMemory<wchar_t>(loc);             break;
-        case SgTypeDouble:           str <<  *m->readMemory<double>(loc);              break;
-        case SgTypeFloat:            str <<  *m->readMemory<float>(loc);               break;
-        case SgTypeInt:              str <<  *m->readMemory<int>(loc);                 break;
-        case SgTypeLong:             str <<  *m->readMemory<long>(loc);                break;
-        case SgTypeLongDouble:       str <<  *m->readMemory<long double>(loc);         break;
-        case SgTypeLongLong:         str <<  *m->readMemory<long long>(loc);           break;
-        case SgTypeShort:            str <<  *m->readMemory<short>(loc);               break;
-        case SgTypeSignedChar:       str <<  *m->readMemory<signed char>(loc);         break;
-        case SgTypeSignedInt:        str <<  *m->readMemory<signed int>(loc);          break;
-        case SgTypeSignedLong:       str <<  *m->readMemory<signed long>(loc);         break;
-        case SgTypeSignedLongLong:   str <<  *m->readMemory<signed long long>(loc);    break;
-        case SgTypeSignedShort:      str <<  *m->readMemory<signed short>(loc);        break;
-        case SgTypeUnsignedChar:     str <<  *m->readMemory<unsigned char>(loc);       break;
-        case SgTypeUnsignedInt:      str <<  *m->readMemory<unsigned int>(loc);        break;
-        case SgTypeUnsignedLong:     str <<  *m->readMemory<unsigned long>(loc);       break;
-        case SgTypeUnsignedLongLong: str <<  *m->readMemory<unsigned long long>(loc);  break;
-        case SgTypeUnsignedShort:    str <<  *m->readMemory<unsigned short>(loc);      break;
-        case SgTypeString:           str <<  *m->readMemory<char*>(loc);               break;
+        case SgTypeBool:             str <<  *m->readMemory<bool>(addr);                break;
+        case SgTypeChar:             str <<  *m->readMemory<char>(addr);                break;
+        case SgTypeWchar:            str <<  *m->readMemory<wchar_t>(addr);             break;
+        case SgTypeDouble:           str <<  *m->readMemory<double>(addr);              break;
+        case SgTypeFloat:            str <<  *m->readMemory<float>(addr);               break;
+        case SgTypeInt:              str <<  *m->readMemory<int>(addr);                 break;
+        case SgTypeLong:             str <<  *m->readMemory<long>(addr);                break;
+        case SgTypeLongDouble:       str <<  *m->readMemory<long double>(addr);         break;
+        case SgTypeLongLong:         str <<  *m->readMemory<long long>(addr);           break;
+        case SgTypeShort:            str <<  *m->readMemory<short>(addr);               break;
+        case SgTypeSignedChar:       str <<  *m->readMemory<signed char>(addr);         break;
+        case SgTypeSignedInt:        str <<  *m->readMemory<signed int>(addr);          break;
+        case SgTypeSignedLong:       str <<  *m->readMemory<signed long>(addr);         break;
+        case SgTypeSignedLongLong:   str <<  *m->readMemory<signed long long>(addr);    break;
+        case SgTypeSignedShort:      str <<  *m->readMemory<signed short>(addr);        break;
+        case SgTypeUnsignedChar:     str <<  *m->readMemory<unsigned char>(addr);       break;
+        case SgTypeUnsignedInt:      str <<  *m->readMemory<unsigned int>(addr);        break;
+        case SgTypeUnsignedLong:     str <<  *m->readMemory<unsigned long>(addr);       break;
+        case SgTypeUnsignedLongLong: str <<  *m->readMemory<unsigned long long>(addr);  break;
+        case SgTypeUnsignedShort:    str <<  *m->readMemory<unsigned short>(addr);      break;
+        case SgTypeString:           str <<  *m->readMemory<char*>(addr);               break;
         default:                     std::cerr << "RsBasicType::readValueAt with unknown type";
                                      assert(false);
     }

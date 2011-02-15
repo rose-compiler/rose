@@ -3,7 +3,8 @@
  runtimesystem=""
  stdlib=""
  rtedlib=""
- upcflags="-O0 -g -dwarf-2-upc"
+ upcflags="-O0 -g -dwarf-2-upc -DWITH_UPC=1 -Wall -Wextra"
+ cxxflags="-O0 -g -DWITH_UPC=1 -Wall -Wextra"
 
  for var in "$@"
  do
@@ -28,7 +29,7 @@
       inpfiles="$inpfiles $parameter"
       objfiles="$objfiles $filename.o"
     elif [[ $parameter == *.bin ]]; then
-     executable=$parameter;
+      executable="-o $parameter"
     else
       newOption=$newOption" "$parameter;
     fi
@@ -41,21 +42,23 @@
 
 # compiling with C++ and RTED runtime?
 if [ "$runtimesystem" != "" ]; then
-  echo "g++ -g -DWITH_UPC=1 -c $runtimesystem"
-  g++ -g -DWITH_UPC=1 -c $runtimesystem
+  rtedsrcdir=`dirname $runtimesystem`
 
-  echo "upc $upcflags -DWITH_UPC=1 -c ParallelRTS.upc"
-  upc $upcflags -DWITH_UPC=1 -c ParallelRTS.upc
+  echo "g++ $cxxflags -c $runtimesystem"
+  g++ $cxxflags -c $runtimesystem
 
-  # find the libstdc++ that the C++ compiler would use
-  rtedlib="ParallelRTS.o RuntimeSystem.o -L./CppRuntimeSystem/.libs/ -lCppRuntimeSystem"
+  echo "upc $upcflags -c $rtedsrcdir/ParallelRTS.upc $rtedsrcdir/workzone.upc"
+  upc $upcflags -c $rtedsrcdir/ParallelRTS.upc $rtedsrcdir/workzone.upc
+
+  rtedlib="-L./CppRuntimeSystem/.libs/ -lCppRuntimeSystem"
+  objfiles="$objfiles ParallelRTS.o workzone.o RuntimeSystem.o"
 fi
 
-echo "upc -O0 -dwarf-2-upc $newOption -c $inpfiles"
+echo "upc $upcflags $newOption -c $inpfiles"
 upc $upcflags $newOption -c $inpfiles
 
-echo "upc++link -o $executable $objfiles $rtedlib $stdlib"
-upc++link -dwarf-2-upc -o $executable $objfiles $rtedlib
+echo "upc++link -dwarf-2-upc $executable $objfiles $rtedlib"
+upc++link -dwarf-2-upc $executable $objfiles $rtedlib
 
-echo "$objfiles"
-rm $objfiles
+#echo "rm $objfiles"
+#rm $objfiles

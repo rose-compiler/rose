@@ -60,8 +60,8 @@ void RtedTransformation::executeTransformations() {
     if (istemplate) {
       SgGlobal* gl = isSgGlobal(istemplate->get_parent());
       ROSE_ASSERT(gl);
-      std::vector<SgNode*> nodes2 = NodeQuery::querySubTree(istemplate, V_SgLocatedNode);
-      std::vector<SgNode*>::const_iterator nodesIT2 = nodes2.begin();
+      const SgNodePtrList&          nodes2 = NodeQuery::querySubTree(istemplate, V_SgLocatedNode);
+      SgNodePtrList::const_iterator nodesIT2 = nodes2.begin();
       for (; nodesIT2 != nodes2.end(); nodesIT2++) {
         SgLocatedNode* node = isSgLocatedNode(*nodesIT2);
         ROSE_ASSERT(node);
@@ -70,8 +70,8 @@ void RtedTransformation::executeTransformations() {
       }
       // insert after template declaration
       // find last template declaration, which should be part of SgGlobal
-      std::vector<SgNode*> nodes3 = NodeQuery::querySubTree(gl, V_SgTemplateInstantiationFunctionDecl);
-      std::vector<SgNode*>::const_iterator nodesIT3 = nodes3.begin();
+      const SgNodePtrList&          nodes3 = NodeQuery::querySubTree(gl, V_SgTemplateInstantiationFunctionDecl);
+      SgNodePtrList::const_iterator nodesIT3 = nodes3.begin();
       SgTemplateInstantiationFunctionDecl* templ = NULL;
       for (; nodesIT3 != nodes3.end(); nodesIT3++) {
         SgTemplateInstantiationFunctionDecl* temp = isSgTemplateInstantiationFunctionDecl(*nodesIT3);
@@ -194,14 +194,18 @@ void RtedTransformation::executeTransformations() {
   }
 
   if (RTEDDEBUG()) std::cerr << "\n # Elements in funccall_call : " << function_call.size() << std::endl;
-  BOOST_FOREACH( RtedArguments* funcs, function_call) {
-    if (isStringModifyingFunctionCall(funcs->f_name) ) {
-      //if (RTEDDEBUG()) std::cerr << " .... Inserting Function Call : " << name << std::endl;
+  BOOST_FOREACH( RtedArguments& funcs, function_call) {
+    if (isStringModifyingFunctionCall(funcs.f_name) ) {
       insertFuncCall(funcs);
-    } else if (isFileIOFunctionCall(funcs->f_name)) {
+    } else if (isFileIOFunctionCall(funcs.f_name)) {
       insertIOFuncCall(funcs);
-    } else if (isFunctionCallOnIgnoreList(funcs->f_name)) {
-      // dont do anything.
+    } else if (isGlobalFunctionOnIgnoreList(funcs.f_name)) {
+      // \pp \todo eliminate this branch
+    }
+    else
+    {
+      // \pp and what else ???
+      // can we eliminate this branch too?
     }
   }
 
@@ -210,14 +214,14 @@ void RtedTransformation::executeTransformations() {
     insertFreeCall( releaseOp.first, releaseOp.second );
   }
 
-  BOOST_FOREACH( SgFunctionCallExp* fcallexp, reallocs)
+  BOOST_FOREACH( SgFunctionCallExp* fcallexp, reallocs )
   {
     insertReallocateCall( fcallexp );
   }
 
-  std::for_each( upcbarriers.begin(),
-                 upcbarriers.end(),
-                 std::bind1st(std::mem_fun(&RtedTransformation::transformUpcBarriers), this)
+  std::for_each( upcBlockingOps.begin(),
+                 upcBlockingOps.end(),
+                 std::bind1st(std::mem_fun(&RtedTransformation::transformUpcBlockingOps), this)
                );
 
   if (RTEDDEBUG())  std::cerr << "Inserting main close call" << std::endl;

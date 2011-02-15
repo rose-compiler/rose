@@ -5,12 +5,39 @@
 
 #include <stdlib.h>
 
+// \todo remove the define from here and make it a define
+//       in the ROSE configuration
+#define WITH_UPC 1
+
+#if __UPC__
+
+#include <upc.h>
+
+#endif /* __UPC__ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-#define MAX_INDIRECTIONS (sizeof(size_t) * CHAR_BIT)
-#define SIZEOF_MEMORY_ADDRESS (sizeof(char*))
+
+
+#if __UPC__
+
+static inline
+size_t rted_ThisThread(void)
+{
+  return MYTHREAD;
+}
+
+#else /* __UPC__ */
+
+static inline
+size_t rted_ThisThread(void)
+{
+  return 0;
+}
+
+#endif /* __UPC__ */
 
 static const size_t MASK_SHARED = 1;
 
@@ -22,23 +49,18 @@ struct rted_AddressDesc
                          ///  shared_mask & (1 << l) == 0 otherwise
 };
 
-union rted_Address
+struct rted_Address
 {
-  char          raw[SIZEOF_MEMORY_ADDRESS];  ///< must be >= the largest field in the union
-                                             ///  this field is not directly accessed, but let
-                                             ///  the non-UPC compiler generate code without
-                                             ///  potentially truncating shared pointers
+#if WITH_UPC
+  size_t              thread_id;                   ///< owning thread
+#endif
 
   const char *        local;                       ///< ordinary local pointer
-
-#ifdef __UPC__
-  shared const char * global;                      ///< UPC shared ptr (not sure if really needed)
-#endif /* __UPC__ */
 };
 
 #ifndef __cplusplus
 
-typedef union rted_Address      rted_Address;
+typedef struct rted_Address     rted_Address;
 typedef struct rted_AddressDesc rted_AddressDesc;
 
 #endif /* __cplusplus */
@@ -51,29 +73,18 @@ rted_AddressDesc rted_deref_desc(rted_AddressDesc desc);
 /// \return a new Indirection Descriptor
 rted_Address rted_deref(rted_Address addr, rted_AddressDesc desc);
 
-/// \brief returns the size of the Address abstractions
-/// \note  in particular if this is compiled with UPC we need to make sure that
-///        sizeof(Address) is consistent across all compilers (g++, C,
-///        UPC) This is done in the Rted-Runtimesystem, where we check that
-///        sizeof_Address_UPC() == sizeof(Address) at startup-time.
-size_t sizeof_Address_UPC(void);
-
 rted_AddressDesc rted_ptr(void);
 
 rted_AddressDesc rted_upc_address_of(rted_AddressDesc desc, size_t shared_mask);
 
-const char*
-rted_system_addr(rted_Address addr, rted_AddressDesc desc);
-
 int rted_isPtr(rted_AddressDesc addr);
+
+void rted_setIntVal(rted_Address addr, int v);
 
 static inline
 rted_Address rted_Addr(const void* ptr)
 {
-  rted_Address addr;
-
-  addr.local = (const char*)ptr;
-  return addr;
+  return (rted_Address) { rted_ThisThread(), (const char*)ptr };
 }
 
 static inline
@@ -96,16 +107,36 @@ rted_AddressDesc rted_address_of(rted_AddressDesc desc)
   return desc;
 }
 
-#ifdef __UPC__
+void rted_exit(int exitcode);
+
+#if WITH_UPC
 
 static inline
-rted_Address rted_AddrSh(shared const char* ptr)
+int rted_isLocal(rted_Address addr)
 {
-  rted_Address addr;
-
-  addr.global = ptr;
-  return addr;
+  return addr.thread_id == rted_ThisThread();
 }
+
+#else /* WITH_UPC */
+
+static inline
+int rted_isLocal(rted_Address addr)
+{
+  return 1;
+}
+
+#endif /* WITH_UPC */
+
+#ifdef __UPC__
+
+/// \brief get's the lower boundary for this thread's shared memory
+const char* rted_ThisShmemBase(void);
+
+/// \brief get's the upper boundary for this thread's shared memory
+const char* rted_ThisShmemLimit(void);
+
+/// \brief takes a shared Address and convert it into the rted internal representation
+rted_Address rted_AddrSh(shared const char* ptr);
 
 #endif /* __UPC__ */
 

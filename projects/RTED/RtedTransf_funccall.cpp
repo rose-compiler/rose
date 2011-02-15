@@ -4,11 +4,14 @@
 #ifndef USE_ROSE
 
 #include <string>
+#include <boost/algorithm/string/predicate.hpp>
+
+#include "rosez.hpp"
+
+#include "RtedTransformation.h"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
-#include "RtedTransformation.h"
-//#include "RuntimeSystem.h"
 
 using namespace std;
 using namespace SageInterface;
@@ -80,7 +83,7 @@ bool isFileIOFunctionCall(const std::string& name) {
           );
 }
 
-bool isFunctionCallOnIgnoreList(const std::string& name) {
+bool isGlobalFunctionOnIgnoreList(const std::string& name) {
    return (  name == "calloc"
           || name == "free"
           || name == "malloc"
@@ -94,7 +97,7 @@ bool isFunctionCallOnIgnoreList(const std::string& name) {
           );
 }
 
-void RtedTransformation::insertFuncCall(RtedArguments* args)
+void RtedTransformation::insertFuncCall(RtedArguments& args)
 {
   // fixed arguments
   // 1 = name
@@ -104,13 +107,13 @@ void RtedTransformation::insertFuncCall(RtedArguments* args)
   // 5 = number of the following arguments (\pp ??)
 
   //  SgStatement* stmt = getSurroundingStatement(args->varRefExp);
-  SgStatement*      stmt = args->stmt;
+  SgStatement*      stmt = args.stmt;
   ROSE_ASSERT(stmt);
 
   SgScopeStatement* scope = stmt->get_scope();
   ROSE_ASSERT(scope);
 
-  SgExpression*     callNameExp = buildStringVal(args->f_name);
+  SgExpression*     callNameExp = buildStringVal(args.f_name);
   SgExprListExp*    arg_list = buildExprListExp();
 
   appendExpression(arg_list, callNameExp);
@@ -118,17 +121,17 @@ void RtedTransformation::insertFuncCall(RtedArguments* args)
 
   // this one is new, it indicates the variable on the left hand side of the statment,
   // if available
-  ROSE_ASSERT(args->leftHandSideAssignmentExprStr);
-  appendExpression(arg_list, args->leftHandSideAssignmentExprStr);
-  cerr << " ... Left hand side variable : " << args->leftHandSideAssignmentExprStr << endl;
+  ROSE_ASSERT(args.leftHandSideAssignmentExprStr);
+  appendExpression(arg_list, args.leftHandSideAssignmentExprStr);
+  cerr << " ... Left hand side variable : " << args.leftHandSideAssignmentExprStr << endl;
 
   appendFileInfo(arg_list, stmt);
 
   // how many additional arguments does this function need?
-  const size_t         dimFuncCall = getDimensionForFuncCall(args->f_name);
+  const size_t         dimFuncCall = getDimensionForFuncCall(args.f_name);
 
   // nr of args + 2 (for sepcialFunctions) + 6 =  args+6;
-  SgExpressionPtrList& rose_args = args->arguments;
+  SgExpressionPtrList& rose_args = args.arguments;
   const size_t         size = dimFuncCall + rose_args.size();
   SgIntVal*            sizeExp = buildIntVal(size);
 
@@ -142,7 +145,7 @@ void RtedTransformation::insertFuncCall(RtedArguments* args)
   //     dimIsTwo is newly introduced and is true when the original code had
   //       dimFuncCall = 2.
   //     Subsequently, dimIsTwo replaces all occurances of (dimFuncCall == 2).
-  const bool                          dimIsTwo = (dimFuncCall == 2) || isStringModifyingFunctionCall(args->f_name);
+  const bool                          dimIsTwo = (dimFuncCall == 2) || isStringModifyingFunctionCall(args.f_name);
 
   // iterate over all arguments of the function call, e.g. strcpy(arg1, arg2);
   SgExpressionPtrList::const_iterator it = rose_args.begin();
@@ -407,9 +410,10 @@ void RtedTransformation::insertFreeCall(SgExpression* freeExp, AllocKind ak)
    SgStatement*  stmt = getSurroundingStatement(freeExp);
    SgExpression* address_expression = NULL;
 
+   requiresParentIsBasicBlock(*stmt);
+
    if ((ak & akCxxHeap) == akCxxHeap)
    {
-     // \pp \todo what about delete[] ?
      SgDeleteExp* delExp = isSgDeleteExp(freeExp);
      ROSE_ASSERT(delExp);
 
@@ -437,6 +441,13 @@ void RtedTransformation::insertFreeCall(SgExpression* freeExp, AllocKind ak)
 
    // have to check validity of call to free before the call itself
    insertCheck(ilBefore, stmt, symbols.roseFreeMemory, arg_list);
+
+   // upc_free requires the thread to be the only operator on the heap
+   if (upcShared)
+   {
+     insertCheck(ilBefore, stmt, symbols.roseUpcBeginExclusive, buildExprListExp());
+     insertCheck(ilAfter,  stmt, symbols.roseUpcEndExclusive,   buildExprListExp());
+   }
 }
 
 void RtedTransformation::insertReallocateCall(SgFunctionCallExp* realloc_call)
@@ -487,7 +498,7 @@ std::string
 getMangledNameOfExpression(SgExpression* expr) {
   string manglName;
   // look for varRef in the expr and return its mangled name
-  SgNodePtrList var_refs = NodeQuery::querySubTree(expr,V_SgVarRefExp);
+  const SgNodePtrList& var_refs = NodeQuery::querySubTree(expr,V_SgVarRefExp);
   if (var_refs.size()==0) {
     // there should be at least one var ref
     cerr << " getMangledNameOfExpression: varRef on left hand side not found : " << expr->unparseToString() << endl;
@@ -505,23 +516,130 @@ getMangledNameOfExpression(SgExpression* expr) {
 }
 
 
-void RtedTransformation::addFileIOFunctionCall(SgVarRefExp* n, bool read) {
+void RtedTransformation::addFileIOFunctionCall(SgVarRefExp* n, bool read)
+{
    // treat the IO variable as a function call
-   SgInitializedName *name = n -> get_symbol() -> get_declaration();
-   string fname = name->get_type()->unparseToString();
-   string readstr = "r";
-   if (!read)
-      readstr = "w";
-   SgExpression* ex = buildStringVal(readstr);
-   SgStatement* stmt = getSurroundingStatement(n);
+   SgInitializedName*         name = n -> get_symbol() -> get_declaration();
+   std::string                fname = name->get_type()->unparseToString();
+   const char*                readstr = (read ? "r" : "w");
+
+   SgExpression*              ex = buildStringVal(readstr);
+   SgStatement*               stmt = getSurroundingStatement(n);
    std::vector<SgExpression*> args;
+
    args.push_back(ex);
-   SgExpression* pexpr = n;
-   RtedArguments* funcCall = new RtedArguments(stmt, fname, readstr, "", "", pexpr, NULL, NULL, NULL, args);
-   ROSE_ASSERT(funcCall);
-   cerr << " Is a interesting function : " << fname << endl;
-   function_call.push_back(funcCall);
+
+   function_call.push_back(RtedArguments(stmt, fname, readstr, "", "", n, NULL, NULL, NULL, args));
 }
+
+static
+bool upcHeapManagementNeeded(const std::string& fnname)
+{
+  // in order to avoid deadlocks we need to exit UPC reader locks for
+  //   the heap when a thread can get blocked.
+  //   The general deadlock scenario is:
+  //   Thread 1: holds the heap lock (e.g., as reader) and waits at some
+  //             synchronized function (e.g., collective call, lock acquisition).
+  //   Thread 2: calls upc_free just before calling the collective
+  //             function.
+  static const std::string upc_prefix = "upc_";
+  static const std::string upc_collective_prefix = "upc_all_";
+
+  if (!boost::starts_with(fnname, upc_prefix)) return false;
+
+  return (  fnname == "upc_lock"
+         || boost::starts_with(fnname, upc_collective_prefix)
+         );
+}
+
+struct FunctionCallInfo
+{
+  RtedTransformation&  trans;
+  bool                 memberCall;
+  std::string          name;
+  std::string          mangled_name;
+  SgExpression*        target;
+
+  explicit
+  FunctionCallInfo(RtedTransformation& master)
+  : trans(master), memberCall(false), name(), mangled_name(), target(NULL)
+  {}
+
+  void memberFunctionCall(SgBinaryOp& n);
+  void ptrToMemberFunctionCall(SgBinaryOp& n);
+
+  void handle(SgNode&) { ROSE_ASSERT(false); }
+
+  void handle(SgExpression& n)
+  {
+    // this is a computed function (e.g., through a function pointer)
+  }
+
+  void handle(SgFunctionRefExp& n)
+  {
+    SgFunctionDeclaration* decl = n.getAssociatedFunctionDeclaration();
+
+    name = decl->get_name();
+    mangled_name = decl->get_mangled_name().str();
+    target = &n;
+  }
+
+  void handle(SgArrowExp& n) { memberFunctionCall(n); }
+  void handle(SgDotExp& n) { memberFunctionCall(n); }
+
+  void handle(SgMemberFunctionRefExp& n)
+  {
+    // \pp \todo remove this function; it was in the original RTED code
+    //           (compare memberFunctionDispatch) but I believe it is dead code
+    //           b/c a SgMemberFunctionRefExp can only occur in the context
+    //           of a Dot or Arrow expression.
+    ROSE_ASSERT(false);
+  }
+
+  void handle(SgDotStarOp& n) { ptrToMemberFunctionCall(n); }
+  void handle(SgArrowStarOp& n) { ptrToMemberFunctionCall(n); }
+};
+
+void FunctionCallInfo::memberFunctionCall(SgBinaryOp& n)
+{
+   SgMemberFunctionRefExp*      mrefExp = isSgMemberFunctionRefExp(n.get_rhs_operand());
+   ROSE_ASSERT(mrefExp);
+
+   SgMemberFunctionDeclaration* mdecl = mrefExp->getAssociatedMemberFunctionDeclaration();
+
+   memberCall = true;
+   name = mdecl->get_name();
+   mangled_name = mdecl->get_mangled_name().str();
+   target = mrefExp;
+}
+
+void FunctionCallInfo::ptrToMemberFunctionCall(SgBinaryOp& n)
+{
+   // \pp \todo this needs to be handled appropriately
+   // e.g. : (testclassA.*testclassAPtr)()
+   SgExpression* right = n.get_rhs_operand();
+   // we want to make sure that the right hand side is not NULL
+   //	abort();
+   // tps (09/24/2009) : this part is new and needs to be tested
+   // testcode breaks at different location right now.
+   SgVarRefExp* varrefRight = isSgVarRefExp(right);
+   if (varrefRight)
+   {
+      trans.variable_access_varref.push_back(varrefRight);
+   }
+}
+
+
+static
+void store_if_needed( RtedTransformation::UpcBlockingOpsContainer& cont, SgFunctionCallExp& call )
+{
+  SgStatement* stmt = getSurroundingStatement( &call );
+  SgStatement* last = cont.empty() ? NULL : cont.back();
+
+  // if the stmt is already going to be protected, then we can skip it
+  if (last != stmt) cont.push_back( stmt );
+}
+
 
 /***************************************************************
  * Check if the current node is a "interesting" function call
@@ -530,132 +648,108 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
 {
   ROSE_ASSERT(fcexp);
 
-  SgExprListExp* const     exprlist = isSgExprListExp(fcexp->get_args());
-  SgExpression*            callee = fcexp->get_function();
-  SgFunctionRefExp*        refExp = isSgFunctionRefExp(callee);
-  SgMemberFunctionRefExp*  mrefExp = isSgMemberFunctionRefExp(callee);
-  SgDotExp*                dotExp = isSgDotExp(callee);
-  SgArrowExp*              arrowExp = isSgArrowExp(callee);
-  SgBinaryOp*              binop = isSgBinaryOp(callee);
-  SgDotStarOp*             dotStar = isSgDotStarOp(callee);
-  string                   name;
-  string                   mangled_name;
+  SgExpression* const                 fun = fcexp->get_function();
+  const FunctionCallInfo              callee = ez::visitSgNode(FunctionCallInfo(*this), fun);
 
-  if (refExp) {
-     SgFunctionDeclaration* decl = NULL;
-     decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration());
-     name = decl->get_name();
-     mangled_name = decl->get_mangled_name().str();
-     //		cerr << " ### Found FuncRefExp: " <<refExp->get_symbol()->get_declaration()->get_name().str() << endl;
-  } else if (dotExp || arrowExp) {
-     SgMemberFunctionDeclaration* mdecl = NULL;
-     mrefExp = isSgMemberFunctionRefExp(binop->get_rhs_operand());
-     ROSE_ASSERT(mrefExp);
-     mdecl = isSgMemberFunctionDeclaration(mrefExp->getAssociatedMemberFunctionDeclaration());
-     name = mdecl->get_name();
-     mangled_name = mdecl->get_mangled_name().str();
-#if 0
-     cerr << "### DotExp :   left : " <<binop->get_lhs_operand()->class_name() <<
-     ":   right : " <<binop->get_rhs_operand()->class_name() << endl;
-     cerr << "### DotExp :   left : " <<binop->get_lhs_operand()->unparseToString() <<
-     ":   right : " <<binop->get_rhs_operand()->unparseToString() << endl;
-#endif
-  } else if (mrefExp) {
-     SgMemberFunctionDeclaration* mdecl = NULL;
-     ROSE_ASSERT(mrefExp);
-     mdecl = isSgMemberFunctionDeclaration(mrefExp->getAssociatedMemberFunctionDeclaration());
-     name = mdecl->get_name();
-     mangled_name = mdecl->get_mangled_name().str();
-  } else if (dotStar) {
-     // \pp \todo what about dot arrow expressions?
-     // e.g. : (testclassA.*testclassAPtr)()
-     SgExpression* right = dotStar->get_rhs_operand();
-     // we want to make sure that the right hand side is not NULL
-     //	abort();
-     // tps (09/24/2009) : this part is new and needs to be tested
-     // testcode breaks at different location right now.
-     SgVarRefExp * varrefRight = isSgVarRefExp(right);
-     if (varrefRight)
-        variable_access_varref.push_back(varrefRight);
-     return;
-  } else {
-     cerr << "This case is not yet handled : " << fcexp->get_function()->class_name() << endl;
-     exit(1);
-  }
+  // \pp \todo \note The current implementation cannot handle function targets
+  //                 determined at runtime (e.g., function pointer).
+  if (!callee.target) return;
+
+  // \pp \todo the rest of this function's logic could/should be pushed
+  //           into FunctionCallInfo.
 
   // find out if this is a IO-CALL like : myfile << "something" ;
   // with fstream myfile;
+  SgExprListExp* const                exprlist = isSgExprListExp(fcexp->get_args());
+  ROSE_ASSERT(exprlist);
 
-  // \pp why not ROSE_ASSERT(exprlist) ???
-  if (exprlist)
+  SgExpressionPtrList&                args = exprlist->get_expressions();
+  SgExpressionPtrList::const_iterator it = args.begin();
+
+  for (; it!=args.end(); ++it)
   {
-     SgExpressionPtrList&                args = exprlist->get_expressions();
-     SgExpressionPtrList::const_iterator it = args.begin();
+    SgExpression* fre = *it;
+    SgVarRefExp*  varRef = isSgVarRefExp(fre);
 
-     for (; it!=args.end(); ++it)
-     {
-        SgExpression* fre = isSgExpression(*it);
-        const bool    isFileIO = isFileIOVariable(fre->get_type());
-        SgVarRefExp*  varRef = isSgVarRefExp(fre);
-
-        cerr << "$$ THe first FuncCallExp has expressions: "
-             << fre->unparseToString() << "  type: " << fre->get_type()->class_name()
-             << "   isFileIO : " << isFileIO << "   class : " << fre->class_name()
-             << endl;
-
-        if (isFileIO && varRef)
-        {
-          // indicate whether this is a stream operator
-          addFileIOFunctionCall(varRef, name == "operator>>");
-        }
-     }
+    if (varRef && isFileIOVariable(fre->get_type()))
+    {
+      // indicate whether this is a stream operator
+      addFileIOFunctionCall(varRef, callee.name == "operator>>");
+    }
   }
 
-  ROSE_ASSERT(refExp || mrefExp);
-  cerr << "\n@@@@ Found a function call: " << name;
-  cerr << "   : fcexp->get_function() : " << fcexp->get_function()->class_name()
+  cerr << "\n@@@@ Found a function call: " << callee.name;
+  cerr << "   : fcexp->get_function() : " << fun->class_name()
        << "   parent : " << fcexp->get_parent()->class_name() << "  : " << fcexp->get_parent()->unparseToString()
-       << "\n   : type: : " << fcexp->get_function()->get_type()->class_name()
-       << "   : parent type: : " << isSgExpression(fcexp->get_function()->get_parent())->get_type()->class_name()
+       << "\n   : type: : " << fun->get_type()->class_name()
+       << "   : parent type: : " << isSgExpression(fun->get_parent())->get_type()->class_name()
        << "   unparse: " << fcexp->unparseToString()
        << endl;
 
-  if (isStringModifyingFunctionCall(name) || isFileIOFunctionCall(name))
+  // \pp \todo this should ask whether the function was defined in global scope
+  //           or within namespace std (instead of asking for membership).
+  //           This is to avoid false positives on functions with the same name
+  //           but declared within a namespace.
+  bool handled = !callee.memberCall;
+
+  if (!callee.memberCall)
   {
-     // if this is a function call that has a variable on the left hand size,
-     // then we want to push that variable first,
-     // this is used, e.g. with  File* fp = fopen("file","r");
-     // Therefore we need to go up and see if there is an AssignmentOperator
-     // and get the var on the left side
-     SgExpression*  varOnLeft = getExpressionLeftOfAssignmentFromChildOnRight(fcexp);
-     SgExpression*  varOnLeftStr=NULL;
-     if (varOnLeft) {
-        // need to get the mangled_name of the varRefExp on left hand side
-        varOnLeftStr = buildStringVal(getMangledNameOfExpression(varOnLeft));
-     } else {
-        varOnLeftStr = buildStringVal("NoAssignmentVar");
-     }
+    handled = true;
 
-     SgExpression*  pexpr = mrefExp ? static_cast<SgExpression*>(mrefExp) : refExp;
-     SgStatement*   stmt = getSurroundingStatement(pexpr);
+    if (isStringModifyingFunctionCall(callee.name) || isFileIOFunctionCall(callee.name))
+    {
+       // if this is a function call that has a variable on the left hand size,
+       // then we want to push that variable first,
+       // this is used, e.g. with  File* fp = fopen("file","r");
+       // Therefore we need to go up and see if there is an AssignmentOperator
+       // and get the var on the left side
+       SgStatement*   stmt = getSurroundingStatement( fcexp );
+       SgExpression*  varOnLeft = getExpressionLeftOfAssignmentFromChildOnRight(fcexp);
+       SgExpression*  varOnLeftStr=NULL;
+       if (varOnLeft) {
+          // need to get the mangled_name of the varRefExp on left hand side
+          varOnLeftStr = buildStringVal(getMangledNameOfExpression(varOnLeft));
+       } else {
+          varOnLeftStr = buildStringVal("NoAssignmentVar");
+       }
 
-     ROSE_ASSERT(varOnLeftStr && stmt && pexpr);
-     RtedArguments* funcCall = new RtedArguments( stmt,
-                                                  name, //func_name
-                                                  mangled_name,
-                                                  "",
-                                                  "",
-                                                  pexpr, //refExp,
-                                                  varOnLeftStr,
-                                                  varOnLeft,
-                                                  exprlist,
-                                                  exprlist->get_expressions()
-                                                );
-     ROSE_ASSERT(funcCall);
-     cerr << " Is a interesting function : " << name << endl;
-     function_call.push_back(funcCall);
+       ROSE_ASSERT(varOnLeftStr && stmt );
+       function_call.push_back( RtedArguments( stmt,
+                                               callee.name,
+                                               callee.mangled_name,
+                                               "",
+                                               "",
+                                               callee.target,
+                                               varOnLeftStr,
+                                               varOnLeft,
+                                               exprlist,
+                                               exprlist->get_expressions()
+                                             )
+                              );
+    }
+    else if ("free" == callee.name)
+    {
+       frees.push_back( Deallocations::value_type(fcexp, akCHeap) );
+    }
+    else if( "realloc" == callee.name )
+    {
+       reallocs.push_back( fcexp );
+    }
+    else if( "upc_free" == callee.name )
+    {
+       frees.push_back( Deallocations::value_type(fcexp, akUpcSharedHeap) );
+    }
+    else if (upcHeapManagementNeeded(callee.name))
+    {
+      store_if_needed( upcBlockingOps, *fcexp );
+    }
+    else if (!isGlobalFunctionOnIgnoreList(callee.name))
+    {
+      handled = false;
+    }
   }
-  else if (!isFunctionCallOnIgnoreList( name))
+
+  if (!handled)
   {
      SgStatement* fncallStmt = getSurroundingStatement( fcexp );
      ROSE_ASSERT( fncallStmt );
@@ -669,6 +763,9 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
      }
      else
      {
+        // \pp C++ member calls should always have a defining declaration
+        ROSE_ASSERT(!callee.memberCall);
+
         end_of_scope = fcexp;
         // FIXME 2: We may be adding a lot of unnecessary signature checks
         // If we don't have the definition, we must be doing separate
@@ -678,18 +775,6 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
      }
 
      scopes[ fncallStmt ] = end_of_scope;
-  }
-  else if( "free" == name )
-  {
-     frees.push_back( Deallocations::value_type(fcexp, akCHeap) );
-  }
-  else if( "upc_free" == name )
-  {
-     frees.push_back( Deallocations::value_type(fcexp, akUpcSharedHeap) );
-  }
-  else if( "realloc" == name )
-  {
-     reallocs.push_back( fcexp );
   }
 }
 

@@ -5,11 +5,8 @@
 #include <stdio.h>
 
 #include "ParallelRTS.h"
+#include "workzone.h"
 #include "RuntimeSystem.h"
-
-#ifndef __UPC__
-#error File compiles with UPC
-#endif
 
 //
 // types
@@ -18,7 +15,8 @@ enum rted_MsgKind
 {
   mskFreeMemory,
   mskCreateHeapPtr,
-  mskInitVariable
+  mskInitVariable,
+  mskMovePointer
 };
 
 typedef enum rted_MsgKind rted_MsgKind;
@@ -44,9 +42,9 @@ typedef struct rted_MsgHeader rted_MsgHeader;
 
 struct rted_MsgSourceInfoHeader
 {
-  size_t       len;
-  size_t       src_line;
-  size_t       rted_line;
+  size_t len;
+  size_t src_line;
+  size_t rted_line;
 };
 
 typedef struct rted_MsgSourceInfoHeader rted_MsgSourceInfoHeader;
@@ -69,6 +67,55 @@ struct rted_MsgTypeDescHeader
 
 typedef struct rted_MsgTypeDescHeader rted_MsgTypeDescHeader;
 
+//
+// shared heap protection (Workzone)
+//
+
+workzone_policy_t* workzone = 0;
+
+static
+void rted_UpcAllInitWorkzone(void)
+{
+  assert(!workzone);
+
+  workzone = wzp_all_alloc();
+}
+
+void rted_UpcEnterWorkzone(void)
+{
+  assert(workzone);
+
+  wzp_enter(workzone);
+}
+
+void rted_UpcExitWorkzone(void)
+{
+  assert(workzone);
+
+  wzp_exit(workzone);
+}
+
+void rted_UpcBeginExclusive(void)
+{
+  assert(workzone);
+
+  wzp_beginExperiment(workzone);
+}
+
+void rted_UpcEndExclusive(void)
+{
+  assert(workzone);
+
+  wzp_endExperiment(workzone);
+}
+
+static
+void rted_staySafe(void)
+{
+  assert(workzone);
+
+  wzp_staySafe(workzone);
+}
 
 //
 // Messaging Infrastructure - Single Reader/Multiple Writer Queue
@@ -88,7 +135,8 @@ shared[1] MsgQSingleReadMultipleWrite msgQueue[THREADS];
 //
 // Queue operations
 
-void all_initMsgQueue(void)
+static
+void upcAllInitMsgQueue(void)
 {
   msgQueue[MYTHREAD].head = NULL;
   msgQueue[MYTHREAD].tail = NULL;
@@ -171,6 +219,21 @@ rted_Address msgr_Address(const char* buf)
 }
 
 
+// AddressDesc
+
+static
+void msgw_AddressDesc(char* buf, rted_AddressDesc desc)
+{
+  *((rted_AddressDesc*) buf) = desc;
+}
+
+static
+rted_AddressDesc msgr_AddressDesc(const char* buf)
+{
+  return *((rted_AddressDesc*) buf);
+}
+
+
 // AllocKind
 
 static
@@ -215,9 +278,14 @@ void msgw_TypeDesc(char* buf, rted_TypeDesc td, rted_szTypeDesc sz)
 static
 rted_TypeDesc msgr_TypeDesc(const char* buf)
 {
+  static const char* foo = "foo";
+
   rted_MsgTypeDescHeader head = *((const rted_MsgTypeDescHeader*)buf);
   const char* const      name_loc = buf + sizeof(rted_MsgTypeDescHeader);
   const char* const      base_loc = name_loc + head.name_len;
+
+  printf("%i -name %s\n", MYTHREAD, foo);
+  printf("%i -base %s\n", MYTHREAD, foo);
 
   // \note we do not copy the string, but just set the pointer to the buffer on
   //       the stack.
@@ -265,21 +333,41 @@ rted_SourceInfo msgr_SourceInfo(const char* buf)
 // built-in types
 
 static
-void msgw_SizeOf(char* buf, size_t s)
+void msgw_SizeT(char* buf, size_t s)
 {
   *((size_t*)buf) = s;
 }
 
 static
-size_t msgr_SizeOf(const char* buf)
+size_t msgr_SizeT(const char* buf)
 {
   return *((const size_t*)buf);
 }
 
 static
+void msgw_Int(char* buf, int i)
+{
+  *((size_t*)buf) = i;
+}
+
+static
+int msgr_Int(const char* buf)
+{
+  return *((const int*)buf);
+}
+
+static
+size_t msgsz_String(const char* s)
+{
+  return sizeof(size_t) + strlen(s) + 1;
+}
+
+static
 void msgw_String(char* buf, const char* s, size_t len)
 {
-  strncpy( buf, s, len );
+  *((size_t*) buf) = len;
+
+  strncpy( buf + sizeof(size_t), s, len );
 }
 
 static
@@ -291,22 +379,14 @@ const char* msgr_String(const char* buf)
 static
 size_t msglen_String(const char* buf)
 {
-  return *((const size_t*)buf);
+  return sizeof(size_t) + *((const size_t*)buf);
 }
-
-
 
 //
 // communication function
 
-
 static
 void msgBroadcast(const char* msg, const size_t len);
-
-//
-//
-//
-
 
 static
 void rcv_FreeMemory( const rted_MsgHeader* msg )
@@ -327,10 +407,11 @@ void snd_FreeMemory( rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo
   // nothing to communicate on local frees (even if they were erroneous)
   if ((freeKind & akUpcSharedHeap) != akUpcSharedHeap) return;
 
+  const size_t si_len = msgsz_SourceInfo(si);
+
   const size_t ad_ofs = sizeof(rted_MsgHeader);
   const size_t ak_ofs = ad_ofs + sizeof(rted_Address);
   const size_t si_ofs = ak_ofs + sizeof(rted_AllocKind);
-  const size_t si_len = msgsz_SourceInfo(si);
   const size_t blocksz  = si_ofs + si_len;
   char         msg[blocksz];
 
@@ -358,45 +439,31 @@ void rcv_CreateHeapPtr( const rted_MsgHeader* msg )
   const char*  buf = (const char*) msg;
   const size_t td_ofs = sizeof(rted_MsgHeader);
   const size_t ad_ofs = td_ofs + msglen_Typedesc(buf + td_ofs);
-  const size_t sz_ofs = ad_ofs + sizeof(rted_Address);
+  const size_t ha_ofs = ad_ofs + sizeof(rted_Address);
+  const size_t hd_ofs = ha_ofs + sizeof(rted_Address);
+  const size_t sz_ofs = hd_ofs + sizeof(rted_AddressDesc);
   const size_t ma_ofs = sz_ofs + sizeof(size_t);
   const size_t ak_ofs = ma_ofs + sizeof(size_t);
   const size_t cn_ofs = ak_ofs + sizeof(rted_AllocKind);
   const size_t si_ofs = cn_ofs + msglen_String(buf + cn_ofs);
 
-  _rted_CreateHeapPtr( msgr_TypeDesc  (buf + td_ofs),
-                       msgr_Address   (buf + ad_ofs),
-                       msgr_SizeOf    (buf + sz_ofs),
-                       msgr_SizeOf    (buf + ma_ofs),
-                       msgr_AllocKind (buf + ak_ofs),
-                       msgr_String    (buf + cn_ofs),
-                       msgr_SourceInfo(buf + si_ofs)
+  _rted_CreateHeapPtr( msgr_TypeDesc   (buf + td_ofs),
+                       msgr_Address    (buf + ad_ofs),
+                       msgr_Address    (buf + ha_ofs),
+                       msgr_AddressDesc(buf + hd_ofs),
+                       msgr_SizeT      (buf + sz_ofs),
+                       msgr_SizeT      (buf + ma_ofs),
+                       msgr_AllocKind  (buf + ak_ofs),
+                       msgr_String     (buf + cn_ofs),
+                       msgr_SourceInfo (buf + si_ofs)
                      );
 }
 
-void rcv_InitVariable( const rted_MsgHeader* msg )
-{
-  const char*  buf = (const char*) msg;
-  const size_t td_ofs = sizeof(rted_MsgHeader);
-  const size_t ad_ofs = td_ofs + msglen_Typedesc(buf + td_ofs);
-  const size_t sz_ofs = ad_ofs + sizeof(rted_Address);
-  const size_t pc_ofs = sz_ofs + sizeof(size_t);
-  const size_t ak_ofs = pc_ofs + sizeof(size_t);
-  const size_t cn_ofs = ak_ofs + sizeof(rted_AllocKind);
-  const size_t si_ofs = cn_ofs + msglen_String(buf + cn_ofs);
-
-  _rted_InitVariable( msgr_TypeDesc  (buf + td_ofs),
-                      msgr_Address   (buf + ad_ofs),
-                      msgr_SizeOf    (buf + sz_ofs),
-                      msgr_Int       (buf + pc_ofs),
-                      msgr_AllocKind (buf + ak_ofs),
-                      msgr_String    (buf + cn_ofs),
-                      msgr_SourceInfo(buf + si_ofs)
-                    );
-}
 
 void snd_CreateHeapPtr( rted_TypeDesc    td,
                         rted_Address     address,
+                        rted_Address     heap_address,
+                        rted_AddressDesc heap_desc,
                         size_t           size,
                         size_t           mallocSize,
                         rted_AllocKind   allocKind,
@@ -407,66 +474,157 @@ void snd_CreateHeapPtr( rted_TypeDesc    td,
   if (!shareHeapAllocInfo(allocKind, td)) return;
 
   const rted_szTypeDesc td_len = msgsz_TypeDesc(td);
+  const size_t          cn_len = msgsz_String(class_name);
+  const size_t          si_len = msgsz_SourceInfo(si);
+
   const size_t          td_ofs = sizeof(rted_MsgHeader);
   const size_t          ad_ofs = td_ofs + td_len.total;
-  const size_t          sz_ofs = ad_ofs + sizeof(rted_Address);
+  const size_t          ha_ofs = ad_ofs + sizeof(rted_Address);
+  const size_t          hd_ofs = ha_ofs + sizeof(rted_Address);
+  const size_t          sz_ofs = hd_ofs + sizeof(rted_AddressDesc);
   const size_t          ma_ofs = sz_ofs + sizeof(size_t);
   const size_t          ak_ofs = ma_ofs + sizeof(size_t);
   const size_t          cn_ofs = ak_ofs + sizeof(rted_AllocKind);
-  const size_t          cn_len = strlen(class_name) + 1;
   const size_t          si_ofs = cn_ofs + cn_len;
-  const size_t          si_len = msgsz_SourceInfo(si);
   const size_t          blocksz = si_ofs + si_len;
   char                  msg[blocksz];
 
-  msgw_Header    (msg,          msgHeader(mskCreateHeapPtr, MYTHREAD, blocksz));
-  msgw_TypeDesc  (msg + td_ofs, td, td_len);
-  msgw_Address   (msg + ad_ofs, address);
-  msgw_SizeOf    (msg + sz_ofs, size);
-  msgw_SizeOf    (msg + ma_ofs, mallocSize);
-  msgw_AllocKind (msg + ak_ofs, allocKind);
-  msgw_String    (msg + cn_ofs, class_name, cn_len);
-  msgw_SourceInfo(msg + si_ofs, si, si_len);
+  msgw_Header     (msg,          msgHeader(mskCreateHeapPtr, MYTHREAD, blocksz));
+  msgw_TypeDesc   (msg + td_ofs, td, td_len);
+  msgw_Address    (msg + ad_ofs, address);
+  msgw_Address    (msg + ha_ofs, heap_address);
+  msgw_AddressDesc(msg + hd_ofs, heap_desc);
+  msgw_SizeT      (msg + sz_ofs, size);
+  msgw_SizeT      (msg + ma_ofs, mallocSize);
+  msgw_AllocKind  (msg + ak_ofs, allocKind);
+  msgw_String     (msg + cn_ofs, class_name, cn_len);
+  msgw_SourceInfo (msg + si_ofs, si, si_len);
 
   msgBroadcast(msg, blocksz);
 }
 
 
-void snd_InitVariable( rted_TypeDesc   td,
-                       rted_Address    address,
-                       size_t          size,
-                       int             pointer_changed,
-                       rted_AllocKind  allocKind,
-                       const char*     class_name,
-                       rted_SourceInfo si
+void rcv_InitVariable( const rted_MsgHeader* msg )
+{
+  const char*  buf = (const char*) msg;
+  const size_t td_ofs = sizeof(rted_MsgHeader);
+  const size_t ad_ofs = td_ofs + msglen_Typedesc(buf + td_ofs);
+  const size_t ha_ofs = ad_ofs + sizeof(rted_Address);
+  const size_t hd_ofs = ha_ofs + sizeof(rted_Address);
+  const size_t sz_ofs = hd_ofs + sizeof(rted_AddressDesc);
+  const size_t pm_ofs = sz_ofs + sizeof(size_t);
+  const size_t cn_ofs = pm_ofs + sizeof(int);
+  const size_t si_ofs = cn_ofs + msglen_String(buf + cn_ofs);
+
+  _rted_InitVariable( msgr_TypeDesc   (buf + td_ofs),
+                      msgr_Address    (buf + ad_ofs),
+                      msgr_Address    (buf + ha_ofs),
+                      msgr_AddressDesc(buf + hd_ofs),
+                      msgr_SizeT      (buf + sz_ofs),
+                      msgr_Int        (buf + pm_ofs),
+                      msgr_String     (buf + cn_ofs),
+                      msgr_SourceInfo (buf + si_ofs)
+                    );
+}
+
+
+void snd_InitVariable( rted_TypeDesc    td,
+                       rted_Address     address,
+                       rted_Address     heap_address,
+                       rted_AddressDesc heap_desc,
+                       size_t           size,
+                       int              pointer_move,
+                       const char*      class_name,
+                       rted_SourceInfo  si
                      )
 {
-  // \pp \todo can we eliminate unneeded messages?
-  // if (!shareHeapAllocInfo(allocKind, td)) return;
+  // other threads can only deref shared addresses;
+  //   \todo the current impl might fail for shared pointers that are converted
+  //         to local pointers.
+  //         make and run testcase
+  if ((td.desc.shared_mask & 1) == 0) return;
 
-  // note, the following code is a clone from snd_CreateHeapPtr, with
-  //       pointer_changed replacing mallocSize.
   const rted_szTypeDesc td_len = msgsz_TypeDesc(td);
+  const size_t          cn_len = msgsz_String(class_name);
+  const size_t          si_len = msgsz_SourceInfo(si);
+
   const size_t          td_ofs = sizeof(rted_MsgHeader);
   const size_t          ad_ofs = td_ofs + td_len.total;
-  const size_t          sz_ofs = ad_ofs + sizeof(rted_Address);
-  const size_t          pc_ofs = sz_ofs + sizeof(size_t);
-  const size_t          ak_ofs = pc_ofs + sizeof(int);
-  const size_t          cn_ofs = ak_ofs + sizeof(rted_AllocKind);
-  const size_t          cn_len = strlen(class_name) + 1;
+  const size_t          ha_ofs = ad_ofs + sizeof(rted_Address);
+  const size_t          hd_ofs = ha_ofs + sizeof(rted_Address);
+  const size_t          sz_ofs = hd_ofs + sizeof(rted_AddressDesc);
+  const size_t          pm_ofs = sz_ofs + sizeof(size_t);
+  const size_t          cn_ofs = pm_ofs + sizeof(int);
   const size_t          si_ofs = cn_ofs + cn_len;
-  const size_t          si_len = msgsz_SourceInfo(si);
   const size_t          blocksz = si_ofs + si_len;
   char                  msg[blocksz];
 
-  msgw_Header    (msg,          msgHeader(mskInitVariable, MYTHREAD, blocksz));
-  msgw_TypeDesc  (msg + td_ofs, td, td_len);
-  msgw_Address   (msg + ad_ofs, address);
-  msgw_SizeOf    (msg + sz_ofs, size);
-  msgw_Int       (msg + ma_ofs, pointer_changed);
-  msgw_AllocKind (msg + ak_ofs, allocKind);
-  msgw_String    (msg + cn_ofs, class_name, cn_len);
-  msgw_SourceInfo(msg + si_ofs, si, si_len);
+  msgw_Header     (msg,          msgHeader(mskInitVariable, MYTHREAD, blocksz));
+  msgw_TypeDesc   (msg + td_ofs, td, td_len);
+  msgw_Address    (msg + ad_ofs, address);
+  msgw_Address    (msg + ha_ofs, heap_address);
+  msgw_AddressDesc(msg + hd_ofs, heap_desc);
+  msgw_SizeT      (msg + sz_ofs, size);
+  msgw_Int        (msg + pm_ofs, pointer_move);
+  msgw_String     (msg + cn_ofs, class_name, cn_len);
+  msgw_SourceInfo (msg + si_ofs, si, si_len);
+
+  msgBroadcast(msg, blocksz);
+}
+
+void rcv_MovePointer( const rted_MsgHeader* msg )
+{
+  const char*  buf = (const char*) msg;
+  const size_t td_ofs = sizeof(rted_MsgHeader);
+  const size_t ad_ofs = td_ofs + msglen_Typedesc(buf + td_ofs);
+  const size_t ha_ofs = ad_ofs + sizeof(rted_Address);
+  const size_t hd_ofs = ha_ofs + sizeof(rted_Address);
+  const size_t cn_ofs = hd_ofs + sizeof(rted_AddressDesc);
+  const size_t si_ofs = cn_ofs + msglen_String(buf + cn_ofs);
+
+  _rted_MovePointer( msgr_TypeDesc   (buf + td_ofs),
+                     msgr_Address    (buf + ad_ofs),
+                     msgr_Address    (buf + ha_ofs),
+                     msgr_AddressDesc(buf + hd_ofs),
+                     msgr_String     (buf + cn_ofs),
+                     msgr_SourceInfo (buf + si_ofs)
+                   );
+}
+
+
+
+void snd_MovePointer( rted_TypeDesc td,
+                      rted_Address address,
+                      rted_Address heap_address,
+                      rted_AddressDesc heap_desc,
+                      const char* class_name,
+                      rted_SourceInfo si
+                    )
+{
+  // Sharing info about pointer moves is only needed when the pointer itself
+  //   is shared.
+  if ((td.desc.shared_mask & 1) == 0) return;
+
+  const rted_szTypeDesc td_len = msgsz_TypeDesc(td);
+  const size_t          cn_len = msgsz_String(class_name);
+  const size_t          si_len = msgsz_SourceInfo(si);
+
+  const size_t          td_ofs = sizeof(rted_MsgHeader);
+  const size_t          ad_ofs = td_ofs + td_len.total;
+  const size_t          ha_ofs = ad_ofs + sizeof(rted_Address);
+  const size_t          hd_ofs = ha_ofs + sizeof(rted_Address);
+  const size_t          cn_ofs = hd_ofs + sizeof(rted_AddressDesc);
+  const size_t          si_ofs = cn_ofs + cn_len;
+  const size_t          blocksz = si_ofs + si_len;
+  char                  msg[blocksz];
+
+  msgw_Header     (msg,          msgHeader(mskMovePointer, MYTHREAD, blocksz));
+  msgw_TypeDesc   (msg + td_ofs, td, td_len);
+  msgw_Address    (msg + ad_ofs, address);
+  msgw_Address    (msg + ha_ofs, heap_address);
+  msgw_AddressDesc(msg + hd_ofs, heap_desc);
+  msgw_String     (msg + cn_ofs, class_name, cn_len);
+  msgw_SourceInfo (msg + si_ofs, si, si_len);
 
   msgBroadcast(msg, blocksz);
 }
@@ -568,6 +726,10 @@ void msgReceive()
       rcv_InitVariable(msg);
       break;
 
+    case mskMovePointer:
+      rcv_MovePointer(msg);
+      break;
+
     default:
       assert(0);
   }
@@ -577,30 +739,20 @@ void msgReceive()
 
 void rted_ProcessMsg()
 {
+  rted_staySafe();
+
   while (!msgQueueEmpty())
   {
     msgReceive();
   }
 }
 
-void rted_UpcInitialize()
+void rted_UpcAllInitialize()
 {
-  msgQueue[MYTHREAD].head = NULL;
-  msgQueue[MYTHREAD].tail = NULL;
-  msgQueue[MYTHREAD].tail_lock = upc_global_lock_alloc();
+  // create the messageing system for the current thread
+  upcAllInitMsgQueue();
+
+  // initialize the heap protection
+  rted_UpcAllInitWorkzone();
+  rted_UpcEnterWorkzone();
 }
-
-
-
-#if OBSOLETE_CODE
-static
-size_t msgAlignBlockSize(size_t i)
-{
-  const size_t allignment = 4;
-  const size_t a = allignment - 1;
-  const size_t newsz = (i + a) & ~a;
-
-  assert(newsz >= i);
-  return newsz;
-}
-#endif /* OBSOLETE_CODE */

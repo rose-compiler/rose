@@ -29,25 +29,8 @@
  *  Convert to string
  *********************************************************/
 
-static
-std::string AsString(Address addr, AddressDesc desc)
-{
-  std::ostringstream myStream; //creates an ostringstream object
-
-	if ((desc.shared_mask & MASK_SHARED) == MASK_SHARED)
-	{
-		myStream << "/* shm = " << std::bitset<64>(desc.shared_mask) << "*/ ";
-	}
-	else
-	{
-		myStream << std::hex << ((void*)addr.local);
-  }
-
-  return myStream.str(); //returns the string form of the stringstream object
-}
 
 enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
-
 
 /*********************************************************
  * This function is closed when RTED finishes (Destructor)
@@ -170,7 +153,7 @@ static bool initialize_next_array = false;
 
 // FIXME 3: This is not threadsafe.  At the moment, because createVariable and
 // createArray are called for stack and pointer arrays and because
-// createVariable can't call rs -> createArray without the dimension
+// createVariable can't call rs->createArray without the dimension
 // information, this hack exists.  It will not be necessary after the
 // transformation is refactored.
 
@@ -188,21 +171,21 @@ static bool initialize_next_array = false;
  * line      : linenumber
  ********************************************************/
 
-void  rted_CreateHeapArr( rted_TypeDesc      td,
-												  rted_Address       address,
-												  size_t             elemsize,    /* \pp always 0 ? */
-												  size_t             totalsize,
-												  const size_t*      dimDescr,
-												  const char*        name,
-												  const char*        mangl_name,
-												  const char*        class_name,
-												  rted_SourceInfo    si
-											  )
+void rted_CreateHeapArr( rted_TypeDesc      td,
+												 rted_Address       address,
+												 size_t             elemsize,    /* \pp always 0 ? */
+												 size_t             totalsize,
+												 const size_t*      dimDescr,
+												 const char*        name,
+												 const char*        mangl_name,
+												 const char*        class_name,
+												 rted_SourceInfo    si
+											 )
 {
 	assert(std::string("SgArrayType") == td.name);
 
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs->checkpoint(SourcePosition(si) );
+  rs->checkpoint( SourcePosition(si) );
 
   std::string     base_type(td.base);
   if( base_type == "SgClassType" )
@@ -211,10 +194,10 @@ void  rted_CreateHeapArr( rted_TypeDesc      td,
 	// Aug 6 : TODO : move this to createVariable
 	RsArrayType* rstype = rs_getArrayType(*rs->getTypeSystem(), dimDescr, totalsize, base_type);
 
-	rs -> createArray( address, td.desc, name, mangl_name, rstype );
+	rs->createArray( address, td.desc, name, mangl_name, rstype );
 
 	if (initialize_next_array) {
-		rs -> checkMemWrite( address, td.desc, elemsize );
+		rs->checkMemWrite( address, elemsize );
 		initialize_next_array = false;
 	}
 }
@@ -223,7 +206,9 @@ void  rted_CreateHeapArr( rted_TypeDesc      td,
 
 void _rted_CreateHeapPtr( rted_TypeDesc    td,
 											    rted_Address     address,
-											    size_t           size,
+	                        rted_Address     heap_address,
+	                        rted_AddressDesc heap_desc,
+											    size_t           /*size*/,
 											    size_t           mallocSize,
 											    rted_AllocKind   allocKind,
 											    const char*      class_name,
@@ -233,7 +218,7 @@ void _rted_CreateHeapPtr( rted_TypeDesc    td,
   assert(std::string("SgPointerType") == td.name);
 
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs->checkpoint(SourcePosition(si) );
+  rs->checkpoint( SourcePosition(si) );
 
   std::string base_type(td.base);
   if( base_type == "SgClassType" )
@@ -242,33 +227,27 @@ void _rted_CreateHeapPtr( rted_TypeDesc    td,
 	RsType*        rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
 	RsPointerType* rs_ptr_type = static_cast< RsPointerType* >(rs_type);
 	RsClassType*   class_type = dynamic_cast< RsClassType* >(rs_ptr_type->getBaseType());
-	Address        heap_address = rted_deref(address, td.desc);
-	AddressDesc    heap_desc = rted_deref_desc(td.desc);
 
 	std::cerr << " registering heap type:" << td.name
 						<< "   basetype: " << td.base
 						<< "   class_name: " << class_name
 						<< "   indirection_level: " << ToString(td.desc.levels)
-						<< "   address: " << AsString(heap_address, heap_desc)
-						<< "   malloc size: " << ToString(mallocSize)
+						<< "   address: " << heap_address
+						<< "   malloc size: " << mallocSize
 						<< std::endl;
 
 	// A class might have had its memory allocation registered in the
 	// constructor.  If there was no explicit constructor, however, we still
 	// have to allocate the memory here.
-	MemoryManager::Location loc = rted_system_addr(heap_address, heap_desc);
-
-  std::cerr << " <<<<:" << HexToString(loc) << "  -- " << allocKind << std::endl;
-
-	if(!class_type || rs->getMemManager()->findContainingMem(loc, 1) == NULL)
+	if(!class_type || rs->getMemManager()->findContainingMem(heap_address, 1) == NULL)
 	{
 		// FIXME 2: This won't handle the unlikely case of a C++ object being
 		// allocated via malloc and then freed with delete.
 
-		rs -> createMemory( heap_address, mallocSize, allocKind );
+		rs->createMemory( heap_address, mallocSize, allocKind );
 	}
 
-	rs -> registerPointerChange(
+	rs->registerPointerChange(
 			address,
 			td.desc,
 			heap_address,
@@ -289,19 +268,28 @@ void rted_CreateHeapPtr( rted_TypeDesc    td,
 											 )
 {
 	rted_ProcessMsg();
-	snd_CreateHeapPtr(td, address, size, mallocSize, allocKind, class_name, si);
-	_rted_CreateHeapPtr(td, address, size, mallocSize, allocKind, class_name, si);
+
+  // \note the calculation of heap_address and heap_desc has to be
+	//       carried out by thread where the operation is performed;
+	//       Only the local thread can safely deref local pointers.
+	//       if we can discern all pointers on the shared heap, we might
+	//       move this code back into _rted_CreateHeapPtr
+  Address     heap_address = rted_deref(address, td.desc);
+  AddressDesc heap_desc = rted_deref_desc(td.desc);
+
+	snd_CreateHeapPtr(td, address, heap_address, heap_desc, size, mallocSize, allocKind, class_name, si);
+	_rted_CreateHeapPtr(td, address, heap_address, heap_desc, size, mallocSize, allocKind, class_name, si);
 }
 
 
 static
-void rs_checkMemoryAccess(RuntimeSystem& rs, Address addr, AddressDesc desc, size_t size, int read_write_mask)
+void rs_checkMemoryAccess(RuntimeSystem& rs, Address addr, size_t size, int read_write_mask)
 {
   if (read_write_mask & Read)
-    rs.checkMemRead( addr, desc, size );
+    rs.checkMemRead( addr, size );
 
   if (read_write_mask & Write)
-    rs.checkMemWrite( addr, desc, size );
+    rs.checkMemWrite( addr, size );
 }
 
 
@@ -317,7 +305,6 @@ void rs_checkMemoryAccess(RuntimeSystem& rs, Address addr, AddressDesc desc, siz
 void rted_AccessHeap( rted_Address     base_address, // &( array[ 0 ])
 										  rted_Address     address,
 											size_t           size,
-											rted_AddressDesc desc,
 											int              read_write_mask,  // 1 = read, 2 = write
 											rted_SourceInfo  si
 										)
@@ -325,16 +312,13 @@ void rted_AccessHeap( rted_Address     base_address, // &( array[ 0 ])
 	rted_ProcessMsg();
 
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs->checkpoint(SourcePosition(si) );
+  rs->checkpoint( SourcePosition(si) );
 
-	rs_checkMemoryAccess(*rs, address, desc, size, read_write_mask);
+	rs_checkMemoryAccess(*rs, address, size, read_write_mask);
 
   if( read_write_mask & BoundsCheck )
 	{
-		MemoryManager::Location loc_base = rted_system_addr(base_address, desc);
-		MemoryManager::Location loc_addr = rted_system_addr(address, desc);
-
-    rs->getMemManager()->checkIfSameChunk(loc_base, loc_addr, size);
+    rs->getMemManager()->checkIfSameChunk(base_address, address, size);
   }
 }
 
@@ -363,7 +347,7 @@ void rted_AssertFunctionSignature( const char* name,
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
-  rs -> checkpoint( SourcePosition(si) );
+  rs->checkpoint( SourcePosition(si) );
 
   std::vector< RsType* > types;
 
@@ -394,13 +378,12 @@ void RuntimeSystem_ensure_allocated_and_initialized( Address addr, size_t size)
 
 	// We trust that anything allocated is properly initialized -- we're not
   // working around a string constant so there's no need for us to do anything.
-	MemoryManager::Location loc = rted_system_addr(addr, desc);
-  if(rs->getMemManager()->findContainingMem(loc, 1) != NULL)
+  if (rs->getMemManager()->findContainingMem(addr, 1) != NULL)
     return;
 
   // \pp ???
   rs->createArray(addr, desc, "StringConstant", "MangledStringConstant", "SgTypeChar", size);
-  rs->checkMemWrite(addr, desc, size);
+  rs->checkMemWrite(addr, size);
 }
 
 
@@ -432,9 +415,7 @@ void handle_string_constant(const char** args, size_t i)
 {
   if (isdigit(args[ i + 1 ][0]))
 	{
-		Address addr;
-
-		addr.local = (char*) args[i];
+		Address addr = rted_Addr((char*) args[i]);
 
     RuntimeSystem_ensure_allocated_and_initialized(addr, numval(args[ i + 1 ]));
 	}
@@ -475,7 +456,7 @@ void rted_FunctionCall( const char* fname,
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
-  rs -> checkpoint( SourcePosition( si));
+  rs->checkpoint( SourcePosition( si));
 
     // FIXME 2: The current transformation outsputs num (for, e.g. strncat) as
     //    (expr), (size in str)
@@ -512,7 +493,7 @@ void rted_FunctionCall( const char* fname,
       rs->check_strlen((const char*) args[0]);
     } else {
       std::cerr << "Function " << fname << " not yet handled." << std::endl;
-      exit(1);
+      rted_exit(1);
     }
 }
 
@@ -546,7 +527,7 @@ void rted_IOFunctionCall( const char* fname,
   // will have FILE* as parameter
   RuntimeSystem * rs = RuntimeSystem::instance();
 
-  rs -> checkpoint( SourcePosition(si) );
+  rs->checkpoint( SourcePosition(si) );
 
     // not handled (yet?)
     //  fclearerr
@@ -576,13 +557,13 @@ void rted_IOFunctionCall( const char* fname,
     //  vsprintf
 
     if ( 0 == strcmp("fclose", fname)) {
-      rs -> registerFileClose( (FILE*)file );
+      rs->registerFileClose( (FILE*)file );
     } else if ( 0 == strcmp("fflush", fname)) {
-      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
+      rs->checkFileAccess( (FILE*)file, false /* is_read? */);
     } else if ( 0 == strcmp("fgetc", fname)) {
-      rs -> checkFileAccess( (FILE*)file, true /* is_read? */);
+      rs->checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("fgets", fname)) {
-      rs -> checkFileAccess( (FILE*)file, true /* is_read? */);
+      rs->checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("fopen", fname)) {
       const char *filen = arg1;
       const char *mode = arg2;
@@ -593,23 +574,23 @@ void rted_IOFunctionCall( const char* fname,
         openMode=WRITE;
       rs->registerFileOpen((FILE*)file, filen, openMode);
     } else if ( 0 == strcmp("fprintf", fname)) {
-      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
+      rs->checkFileAccess( (FILE*)file, false /* is_read? */);
     } else if ( 0 == strcmp("fputc", fname)) {
-      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
+      rs->checkFileAccess( (FILE*)file, false /* is_read? */);
     } else if ( 0 == strcmp("fputs", fname)) {
-      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
+      rs->checkFileAccess( (FILE*)file, false /* is_read? */);
     } else if ( 0 == strcmp("fread", fname)) {
-      rs -> checkFileAccess( (FILE*)file, true /* is_read? */);
+      rs->checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("fscanf", fname)) {
-      rs -> checkFileAccess( (FILE*)file, true /* is_read? */);
+      rs->checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("fwrite", fname)) {
-      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
+      rs->checkFileAccess( (FILE*)file, false /* is_read? */);
     } else if ( 0 == strcmp("getc", fname)) {
-      rs -> checkFileAccess( (FILE*)file, true /* is_read? */);
+      rs->checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("putc", fname)) {
-      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
+      rs->checkFileAccess( (FILE*)file, false /* is_read? */);
     } else if ( 0 == strcmp("std::fstream", fname)) {
-			 rs -> checkFileAccess((std::fstream&) file, strcmp(arg1,"r") == 0 /* is_read? */);
+			 rs->checkFileAccess((std::fstream&) file, strcmp(arg1,"r") == 0 /* is_read? */);
     } else {
 			// \pp does a fall through indicate an error?
 		}
@@ -627,7 +608,7 @@ void rted_EnterScope(const char* name)
 	rted_ProcessMsg();
 
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs -> beginScope( name );
+  rs->beginScope( name );
 }
 
 void rted_ExitScope(const char*, SourceInfo si)
@@ -636,8 +617,8 @@ void rted_ExitScope(const char*, SourceInfo si)
 
   RuntimeSystem * rs = RuntimeSystem::instance();
 
-	rs -> checkpoint( SourcePosition( si ));
-	rs -> endScope();
+	rs->checkpoint( SourcePosition(si) );
+	rs->endScope();
 }
 
 
@@ -664,7 +645,7 @@ int rted_CreateVariable( TypeDesc td,
 	rted_ProcessMsg();
 
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs -> checkpoint( SourcePosition( si ));
+  rs->checkpoint( SourcePosition(si) );
 
 	std::string type_name(td.name);
   assert( type_name != "" );
@@ -690,7 +671,7 @@ int rted_CreateVariable( TypeDesc td,
     if( type_name == "SgArrayType" )
       initialize_next_array = true;
     else
-      rs -> checkMemWrite( address, td.desc, size );
+      rs->checkMemWrite( address, size );
   }
 
   // can be invoked as part of an expression
@@ -705,7 +686,7 @@ int rted_CreateObject( TypeDesc td, Address address, SourceInfo si )
 	assert(td.desc.shared_mask == 0); // no objects in UPC
 
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs -> checkpoint( SourcePosition( si ));
+  rs->checkpoint( SourcePosition(si) );
 
 	RsType*         rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, "", td.desc);
   RsClassType*    rs_classtype = static_cast< RsClassType* >(rs_type);
@@ -733,57 +714,65 @@ int rted_InitVariable( rted_TypeDesc   td,
 										 )
 {
   rted_ProcessMsg();
-	snd_InitVariable         ( td, address, size, pointer_changed, allocKind, class_name, si );
 
-	return _rted_InitVariable( td, address, size, pointer_changed, allocKind, class_name, si );
+	const int      pointer_move = (  (allocKind & akUndefined) == akUndefined
+	                              && pointer_changed == 1
+	                              && strcmp( "SgPointerType", td.name) == 0
+																);
+  Address        heap_address = nullAddr();
+	AddressDesc    heap_desc = {0, 0};
+
+	if (pointer_move)
+	{
+		heap_address = rted_deref(address, td.desc);
+		heap_desc = rted_deref_desc(td.desc);
+	}
+
+  snd_InitVariable(td, address, heap_address, heap_desc, size, pointer_move, class_name, si);
+	return _rted_InitVariable( td, address, heap_address, heap_desc, size, pointer_move, class_name, si );
 }
 
 
-int _rted_InitVariable( rted_TypeDesc   td,
-		                    rted_Address    address,
-											  size_t          size,
-											  int             pointer_changed,
-											  rted_AllocKind  allocKind,
-											  const char*     class_name,
-											  rted_SourceInfo si
+int _rted_InitVariable( rted_TypeDesc    td,
+		                    rted_Address     address,
+												rted_Address     heap_address,
+												rted_AddressDesc heap_desc,
+											  size_t           size,
+											  int              pointer_move,
+											  const char*      class_name,
+											  rted_SourceInfo  si
 										  )
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
-  rs -> checkpoint( SourcePosition( si ));
+  rs->checkpoint( SourcePosition(si) );
 
 	std::stringstream message;
 
-	message << "   Init Var at address:  " << HexToString(address.local)
-					<< "  type:" << td.name
-					<< "   size: " << ToString(size);
+	message << "   Init Var at address:  " << address
+					<< "   type: " << td.name
+					<< "   size: " << size;
   rs->printMessage(message.str());
 
   RsType* rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
-  rs -> checkMemWrite( address, td.desc, size, rs_type );
+  rs->checkMemWrite( address, size, rs_type );
 
   // This assumes roseInitVariable is called after the assignment has taken
   // place (otherwise we wouldn't get the new heap address).
   //
   // Note that we cannot call registerPointerChange until after the memory
   // creation is registered, which is done in roseCreateHeap.
-
-  if (  (allocKind & akCxxHeap) == akCxxHeap
-	   && pointer_changed == 1
-	   && strcmp( "SgPointerType", td.name) == 0
-		 )
+  if ( pointer_move )
 	{
-    Address        heap_address = rted_deref(address, td.desc);
-		AddressDesc    heap_desc = rted_deref_desc(td.desc);
-		RsPointerType* rp = dynamic_cast<RsPointerType*>(rs_type);
+		RsPointerType* rp = &dynamic_cast<RsPointerType&>(*rs_type);
 
-    assert(rp);
     rs->registerPointerChange( address, td.desc, heap_address, heap_desc, rp, false, true );
   }
 
   // can be invoked as part of an expression
   return 0;
 }
+
 
 // we want to catch errors like the following:
 //    int x[2] = { 0, 1 };
@@ -800,16 +789,31 @@ void rted_MovePointer( TypeDesc    td,
 {
 	rted_ProcessMsg();
 
-  RuntimeSystem * rs = RuntimeSystem::instance();
-  rs -> checkpoint( SourcePosition( si ));
-
   Address        heap_address = rted_deref(address, td.desc);
 	AddressDesc    heap_desc = rted_deref_desc(td.desc);
+
+  snd_MovePointer(td, address, heap_address, heap_desc, class_name, si);
+	_rted_MovePointer(td, address, heap_address, heap_desc, class_name, si);
+}
+
+
+void _rted_MovePointer( TypeDesc    td,
+										    Address     address,
+											  Address     heap_address,
+											  AddressDesc heap_desc,
+										    const char* class_name,
+										    SourceInfo  si
+										  )
+{
+  RuntimeSystem * rs = RuntimeSystem::instance();
+  rs->checkpoint( SourcePosition(si) );
+
   RsType*        rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
-	RsPointerType* rp = dynamic_cast<RsPointerType*>(rs_type);
+	RsPointerType* rp = &dynamic_cast<RsPointerType&>(*rs_type);
 
   rs->registerPointerChange( address, td.desc, heap_address, heap_desc, rp, true, false );
 }
+
 
 
 /*********************************************************
@@ -826,10 +830,10 @@ void rted_AccessVariable( Address address,
 	rted_ProcessMsg();
 
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs->checkpoint( SourcePosition( si ));
+  rs->checkpoint( SourcePosition(si) );
 
-	rs_checkMemoryAccess(*rs, address, rted_obj(), size, read_write_mask & Read);
-  rs_checkMemoryAccess(*rs, write_address, rted_obj(), write_size, read_write_mask & Write);
+	rs_checkMemoryAccess(*rs, address, size, read_write_mask & Read);
+  rs_checkMemoryAccess(*rs, write_address, write_size, read_write_mask & Write);
 }
 
 // ***************************************** VARIABLE DECLARATIONS *************************************
@@ -841,7 +845,7 @@ void rted_Checkpoint(SourceInfo si)
 	rted_ProcessMsg();
 
   RuntimeSystem * rs = RuntimeSystem::instance();
-  rs -> checkpoint( SourcePosition( si ));
+  rs->checkpoint( SourcePosition(si) );
 }
 
 void rted_RegisterTypeCall( const char* nameC,
@@ -865,7 +869,7 @@ void rted_RegisterTypeCall( const char* nameC,
 
 	va_start(vl, argc);
 
-  rs -> checkpoint( SourcePosition( si ));
+  rs->checkpoint( SourcePosition(si) );
 
   RsClassType*   classType = static_cast< RsClassType* >(ts.getTypeInfo( nameC ));
 
@@ -875,8 +879,8 @@ void rted_RegisterTypeCall( const char* nameC,
     ts.registerType(classType);
   } else {
     // a stub was registered, we have to fix up its properties
-    classType -> setByteSize( sizeC );
-    classType -> setUnionType( isUnion );
+    classType->setByteSize( sizeC );
+    classType->setUnionType( isUnion );
   }
 
 	size_t          argctr = 0;
@@ -923,9 +927,9 @@ void rted_RegisterTypeCall( const char* nameC,
       assert(t != NULL);
       std::stringstream message;
 
-			 message << "   Register class-member:  " << name
-			         << "  offset:" << HexToString(offset)
-							 << "   size: " + ToString(size);
+			message << "   Register class-member:  " << name
+							<< " offset:" << offset
+						  << " size: " << size;
 
 			rs->printMessage(message.str());
       classType->addMember(name, t, offset);
@@ -959,8 +963,8 @@ void rted_ReallocateMemory( void* ptr, size_t size, SourceInfo si )
   RuntimeSystem * rs = RuntimeSystem::instance();
   rs->checkpoint( SourcePosition(si) );
 
-	rs->freeMemory( memAddr(ptr), akCHeap );
-	rs->createMemory( memAddr(ptr), size, akCHeap );
+	rs->freeMemory( rted_Addr(ptr), akCHeap );
+	rs->createMemory( rted_Addr(ptr), size, akCHeap );
 }
 
 
@@ -970,6 +974,6 @@ void rted_CheckIfThisNULL( void* thisExp, SourceInfo si)
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
 
-	rs->checkpoint( SourcePosition( si ));
+	rs->checkpoint( SourcePosition(si) );
 	rs->checkIfThisisNULL(thisExp);
 }

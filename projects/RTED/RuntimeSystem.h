@@ -61,21 +61,21 @@ void rted_CreateHeapPtr( rted_TypeDesc   td,
 											 );
 
 /// \brief internal variant
-void _rted_CreateHeapPtr( rted_TypeDesc   td,
-											    rted_Address    address,
-											    size_t          size,
-											    size_t          mallocSize,
-											    rted_AllocKind  allocKind,
-											    const char*     class_name,
-											    rted_SourceInfo si
+void _rted_CreateHeapPtr( rted_TypeDesc    td,
+											    rted_Address     address,
+	                        rted_Address     heap_address,
+	                        rted_AddressDesc heap_desc,
+											    size_t           /*size*/,
+											    size_t           mallocSize,
+											    rted_AllocKind   allocKind,
+											    const char*      class_name,
+											    rted_SourceInfo  si
 											  );
-
 
 
 void rted_AccessHeap( rted_Address     base_address, // &( array[ 0 ])
 										  rted_Address     address,
 											size_t           size,
-											rted_AddressDesc desc,
 											int              read_write_mask,  // 1 = read, 2 = write
 											rted_SourceInfo  si
 										);
@@ -184,13 +184,14 @@ int rted_InitVariable( rted_TypeDesc   td,
 										 );
 
 /// \brief internal version
-int _rted_InitVariable( rted_TypeDesc   td,
-		                    rted_Address    address,
-											  size_t          size,
-											  int             pointer_changed,
-											  rted_AllocKind  allocKind,
-											  const char*     class_name,
-											  rted_SourceInfo si
+int _rted_InitVariable( rted_TypeDesc    td,
+		                    rted_Address     address,
+												rted_Address     heap_address,
+												rted_AddressDesc heap_desc,
+											  size_t           size,
+											  int              pointer_move,
+											  const char*      class_name,
+											  rted_SourceInfo  si
 										  );
 
 
@@ -218,6 +219,16 @@ void rted_MovePointer( rted_TypeDesc    td,
 										   const char*      class_name,
 										   rted_SourceInfo  si
 										 );
+
+/// \brief internal version
+void _rted_MovePointer( rted_TypeDesc    td,
+										    rted_Address     address,
+											  rted_Address     heap_address,
+											  rted_AddressDesc heap_desc,
+										    const char* class_name,
+										    rted_SourceInfo  si
+										  );
+
 
 void rted_AccessVariable( rted_Address    address,
 													size_t          size,

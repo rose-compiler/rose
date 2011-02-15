@@ -19,19 +19,6 @@ using namespace std;
 
 RuntimeSystem * RuntimeSystem::single = NULL;
 
-
-static
-MemoryManager::Location
-location(Address addr, MemoryType::AllocKind ak)
-{
-  AddressDesc desc;
-
-  desc.levels = 1;
-  desc.shared_mask = ((ak & akUpcSharedHeap) == akUpcSharedHeap);
-
-  return rted_system_addr(addr, desc);
-}
-
 RuntimeSystem* RuntimeSystem::instance()
 {
     if (!single)
@@ -193,7 +180,7 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
         if( testingMode )
             throw vio;
         else
-            exit( 0 );
+            rted_exit( 0 );
     }
 
     return;
@@ -228,19 +215,6 @@ void RuntimeSystem::clearStatus()
 
 // --------------------- Mem Checking ---------------------------------
 
-static
-AddressDesc asDesc(MemoryType::AllocKind kind)
-{
-  if ((kind & akUpcSharedHeap) == 0) return rted_obj();
-
-  AddressDesc desc;
-
-  desc.shared_mask = 1;
-  desc.levels = 1;
-
-  return desc;
-}
-
 
 void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKind kind, RsType * type)
 {
@@ -249,10 +223,8 @@ void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKin
   //     why do not we get types for C++ new?
   //     is alloca handled?
 
-  // \pp \todo replace the call to rted_obj with sth that describes the kind
-  //           of memory and allocation kind.
-  MemoryManager::Location loc = rted_system_addr(addr, asDesc(kind));
-  MemoryType*             nb = memManager.allocateMemory(loc, size, kind, curPos);
+  // \pp \todo move the registerMemType call into allocateMemory
+  MemoryType*             nb = memManager.allocateMemory(addr, size, kind, curPos);
 
   if (kind == akStack && nb != NULL)
   {
@@ -276,22 +248,18 @@ void RuntimeSystem::createStackMemory(Address addr, size_t size, const std::stri
 
 void RuntimeSystem::freeMemory(Address addr, MemoryType::AllocKind kind)
 {
-    memManager.freeMemory(location(addr, kind), kind);
+    memManager.freeMemory(addr, kind);
 }
 
 
-void RuntimeSystem::checkMemRead(Address addr, AddressDesc desc, size_t size, RsType* t)
+void RuntimeSystem::checkMemRead(Address addr, size_t size, RsType* t)
 {
-    MemoryManager::Location loc = rted_system_addr(addr, desc);
-
-    memManager.checkRead(loc, size, t);
+    memManager.checkRead(addr, size, t);
 }
 
-void RuntimeSystem::checkMemWrite(Address addr, AddressDesc desc, size_t size, RsType * t)
+void RuntimeSystem::checkMemWrite(Address addr, size_t size, RsType * t)
 {
-    MemoryManager::Location loc = rted_system_addr(addr, desc);
-
-    memManager.checkWrite(loc, size, t);
+    memManager.checkWrite(addr, size, t);
 }
 
 
@@ -364,7 +332,7 @@ void RuntimeSystem::createArray( Address address,
 
 
 void RuntimeSystem::createArray( Address address,
-                                 AddressDesc desc,
+                                 AddressDesc, // \pp \todo remove
                                  const std::string& name,
                                  const std::string& mangledName,
                                  RsArrayType * type
@@ -372,30 +340,28 @@ void RuntimeSystem::createArray( Address address,
 {
   assert(type);
 
-  PointerManager::Location loc = rted_system_addr(address, desc);
-
   // \pp why is the stackmanager invoked?
   stackManager.addVariable( new VariablesType( name, mangledName, type, address ));
 
-  pointerManager.createPointer( loc, type -> getBaseType() );
+  pointerManager.createPointer( address, type -> getBaseType() );
 
   // View an array as a pointer, which is stored at the address and which points at the address
-  pointerManager.registerPointerChange( loc, loc, false, false);
+  pointerManager.registerPointerChange( address, address, false, false);
 }
 
 
-void RuntimeSystem::createObject(Address address, RsClassType* type )
+void RuntimeSystem::createObject(Address address, RsClassType* type)
 {
+    // \pp \todo It might be necessary to extend the parameter list with an
+    //           allocation kind, so we can distinguish between C++ new
+    //           and C++ new[] ...
     assert(type != NULL);
 
-    // \pp \note we assume that UPC has no constructors, thus the address is
-    //           always local
-    MemoryType::Location loc = address.local;
     const size_t         szObj = type->getByteSize();
-    MemoryType*          mt = memManager.findContainingMem(loc, 1);
+    MemoryType*          mt = memManager.findContainingMem(address, 1);
 
     if (mt) {
-        const bool base_ctor = szObj > mt->getSize() && loc == mt->getAddress();
+        const bool base_ctor = szObj > mt->getSize() && address == mt->getAddress();
 
         if (base_ctor) {
             // Same address, larger size.  We assume that a base type was
@@ -410,7 +376,7 @@ void RuntimeSystem::createObject(Address address, RsClassType* type )
     }
 
     // create a new entry
-    MemoryType* nb = memManager.allocateMemory(loc, szObj, akCxxNew, curPos);
+    MemoryType* nb = memManager.allocateMemory(address, szObj, akCxxNew, curPos);
 
     // after the new block is allocated (and if the allocation succeeded)
     //   register the proper memory layout
@@ -436,23 +402,20 @@ void RuntimeSystem::endScope ()
 
 
 void RuntimeSystem::registerPointerChange( Address     src,
-                                           AddressDesc src_desc,
+                                           AddressDesc, // \pp \todo remove
                                            Address     tgt,
-                                           AddressDesc tgt_desc,
+                                           AddressDesc, // \pp \todo remove
                                            bool        checkPointerMove,
                                            bool        checkMemLeaks
                                          )
 {
-    MemoryManager::Location loc_src = rted_system_addr(src, src_desc);
-    MemoryManager::Location loc_tgt = rted_system_addr(tgt, tgt_desc);
-
-    pointerManager.registerPointerChange(loc_src,loc_tgt,checkPointerMove, checkMemLeaks);
+    pointerManager.registerPointerChange(src,tgt,checkPointerMove, checkMemLeaks);
 }
 
 void RuntimeSystem::registerPointerChange( Address        src,
-                                           AddressDesc    src_desc,
+                                           AddressDesc, // \pp \todo remove
                                            Address        tgt,
-                                           AddressDesc    tgt_desc,
+                                           AddressDesc, // \pp \todo remove
                                            RsPointerType* pt,
                                            bool           checkPointerMove,
                                            bool           checkMemLeaks
@@ -460,18 +423,14 @@ void RuntimeSystem::registerPointerChange( Address        src,
 {
     assert( pt );
 
-    MemoryManager::Location loc_src = rted_system_addr(src, src_desc);
-    MemoryManager::Location loc_tgt = rted_system_addr(tgt, tgt_desc);
-
-    pointerManager.registerPointerChange(loc_src, loc_tgt, pt->getBaseType(), checkPointerMove, checkMemLeaks);
+    pointerManager.registerPointerChange(src, tgt, pt->getBaseType(), checkPointerMove, checkMemLeaks);
 }
 
-void RuntimeSystem::checkPointerDereference( Address src, AddressDesc src_desc, Address derefed_address, AddressDesc derefed_desc )
-{
-    MemoryManager::Location loc_source = rted_system_addr(src, src_desc);
-    MemoryManager::Location loc_deref  = rted_system_addr(derefed_address, derefed_desc);
 
-    pointerManager.checkPointerDereference(loc_source, loc_deref);
+// \pp \todo remove superfluous parameter
+void RuntimeSystem::checkPointerDereference(Address src, AddressDesc, Address derefed_address, AddressDesc)
+{
+    pointerManager.checkPointerDereference(src, derefed_address);
 }
 
 void RuntimeSystem::checkIfThisisNULL(void* thisExp) {
@@ -533,10 +492,8 @@ void RuntimeSystem::expectFunctionSignature(const std::string & name, const std:
     nextCallFunctionTypes = types;
 }
 
-void RuntimeSystem::confirmFunctionSignature(
-            const std::string & name,
-            const std::vector< RsType* > types ) {
-
+void RuntimeSystem::confirmFunctionSignature(const std::string & name, const std::vector< RsType* >& types )
+{
     if( !( name == nextCallFunctionName ))
         // nothing to confirm
         return;

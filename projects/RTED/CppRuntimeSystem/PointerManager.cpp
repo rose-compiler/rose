@@ -2,31 +2,32 @@
 #include "PointerManager.h"
 #include "CppRuntimeSystem.h"
 
+#include <iomanip>
 #include <cassert>
 
 // -------------------------- Pointer Info -------------------------------
 
 static
+void zeroIntValueAt(Address addr)
+{
+  rted_setIntVal(addr, 0);
+}
+
+static
 void insert(PointerManager::TargetToPointerMap& m, const PointerManager::TargetToPointerMap::value_type& val)
 {
-  if (val.first != val.second->getTargetAddress())
-  {
-    std::cout << HexToString(val.first) << " <---> "
-              << HexToString(val.second->getTargetAddress())
-              << std::endl;
-    assert(val.first == val.second->getTargetAddress());
-  }
+  assert(val.first == val.second->getTargetAddress());
 
   m.insert(val);
 }
 
 
 PointerInfo::PointerInfo(Location s)
-: source(s), target(NULL), baseType(NULL)
+: source(s), target(nullAddr()), baseType(NULL)
 {}
 
 PointerInfo::PointerInfo(Location s, Location t, RsType * type)
-: source(s), target(NULL), baseType(type)
+: source(s), target(nullAddr()), baseType(type)
 {
     setTargetAddress(t);
 }
@@ -37,8 +38,8 @@ PointerInfo::~PointerInfo()
   // \pp ???
 
   // If still valid, invalidate the pointer
-  if(target)
-     setTargetAddress(NULL);
+  if (!isNullAddr(target))
+     setTargetAddress(nullAddr());
 }
 
 VariablesType * PointerInfo::getVariable() const
@@ -59,29 +60,19 @@ void PointerInfo::setTargetAddress(Location newAddr, bool doCheck)
     const size_t   objsz = baseType->getByteSize();
     MemoryType*    newMem = mm->findContainingMem(newAddr, objsz);
 
-    std::cerr << "size(mm) = " << mm->getAllocationSet().size()
-              << " @ " << HexToString(newAddr)
-              << " == ";
-
-    if (newMem) std::cerr << HexToString(newMem->getAddress());
-    else std::cerr << "<null>";
-    std::cerr << std::endl;
-
-    if (!newMem && newAddr) //new address is invalid
+    if (!newMem && !isNullAddr(newAddr)) //new address is invalid
     {
-      std::cerr << "{NULL" << std::endl;
       std::stringstream ss;
       ss << "Tried to assign non allocated address 0x" << newAddr;
       VariablesType * var = getVariable();
       if (var)
           ss << " to pointer " << var->getName();
       else
-          ss << " to pointer at address 0x" << HexToString(source);
+          ss << " to pointer at address 0x" << source;
 
       ss << std::endl;
 
-      target = NULL;
-      std::cerr << "NULL}" << std::endl;
+      target = nullAddr();
       rs->violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN, ss.str());
       return;
     }
@@ -91,17 +82,14 @@ void PointerInfo::setTargetAddress(Location newAddr, bool doCheck)
     // definitely illegal (e.g. an int pointer pointing to a known double).
     if (newMem)
     {
-      std::cerr << "{bbb" << std::endl;
       // FIXME 2: This should really only check, and not merge
       assert(newMem->getAddress() <= newAddr);
       newMem->checkAndMergeMemType(newAddr - newMem->getAddress(), baseType);
-      std::cerr << "bbb}" << std::endl;
     }
 
     // if old target is valid
-    if (target)
+    if (!isNullAddr(target))
     {
-      std::cerr << "{aaa" << std::endl;
       // has to hold, because checked when set
       assert(mm->findContainingMem(target, objsz) != NULL);
 
@@ -110,18 +98,16 @@ void PointerInfo::setTargetAddress(Location newAddr, bool doCheck)
       {
         mm->checkIfSameChunk(target, newAddr, baseType);
       }
-      std::cerr << "aaa}" << std::endl;
     }
 
-    std::cerr << "target-set" << HexToString(newAddr) << std::endl;
     target = newAddr;
 }
 
 
 void PointerInfo::print(std::ostream& os) const
 {
-    os << "0x" << HexToString(getSourceAddress()) << "\t"
-       << "0x" << HexToString(getTargetAddress()) << "\t"
+    os << std::setw(6) << std::setfill('0') << getSourceAddress() << "\t"
+       << std::setw(6) << std::setfill('0') << getTargetAddress() << "\t"
        << getBaseType()->getName();
 
     VariablesType * var = getVariable();
@@ -142,7 +128,7 @@ std::ostream& operator<< (std::ostream& os, const PointerInfo& m)
 
 void PointerManager::createDereferentiableMem(Location sourceAddress, RsType * type)
 {
-    PointerInfo * pi = new PointerInfo(sourceAddress, NULL, type);
+    PointerInfo * pi = new PointerInfo(sourceAddress, nullAddr(), type);
     std::pair<PointerSet::iterator, bool>  res = pointerInfoSet.insert(pi);
     if(!res.second)//pointer was already registered
     {
@@ -150,7 +136,7 @@ void PointerManager::createDereferentiableMem(Location sourceAddress, RsType * t
         return;
     }
 
-    insert(targetToPointerMap, TargetToPointerMap::value_type(NULL, pi));
+    insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi));
 }
 
 
@@ -281,10 +267,10 @@ void PointerManager::registerPointerChange( Location src, Location target, bool 
                 // Don't complain now, but invalidate the pointer so that subsequent
                 // reads or writes without first registering a pointer change will
                 // be treated as invalid
-                pi -> setTargetAddressForce( NULL );
-                insert(targetToPointerMap, TargetToPointerMap::value_type( NULL, pi ));
+                pi -> setTargetAddressForce( nullAddr() );
+                insert(targetToPointerMap, TargetToPointerMap::value_type( nullAddr(), pi ));
                 if( !( rs -> testingMode ))
-                  *const_cast<int*>(reinterpret_cast<const int*>(pi->getSourceAddress())) = 0;
+                  zeroIntValueAt(pi->getSourceAddress());
             } else {
                 // repeat check but throw invalid ptr assign
                 mm -> checkIfSameChunk(
@@ -309,14 +295,12 @@ void PointerManager::registerPointerChange( Location src, Location target, bool 
             pi->setTargetAddress(target);
         } catch(RuntimeViolation & vio) {
             // if target could not been set, then set pointer to null
-            pi->setTargetAddressForce(NULL);
-            insert(targetToPointerMap, TargetToPointerMap::value_type(NULL, pi));
+            pi->setTargetAddressForce( nullAddr() );
+            insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi));
             throw vio;
         }
         // ...and insert it again with changed target
-        std::cerr << "here$$$" << std::endl;
         insert(targetToPointerMap, TargetToPointerMap::value_type(target, pi));
-        std::cerr << "there$$$" << std::endl;
     }
 
 
@@ -414,8 +398,8 @@ void PointerManager::invalidatePointerToRegion(Location from, Location to, bool 
         }
         else
         {
-            pi->setTargetAddress(NULL);
-            insert(targetToPointerMap, TargetToPointerMap::value_type(NULL, pi));
+            pi->setTargetAddress( nullAddr() );
+            insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi));
         }
     }
 
@@ -465,7 +449,7 @@ void PointerManager::clearStatus()
     for(PointerSet::iterator it = pointerInfoSet.begin();
             it != pointerInfoSet.end(); ++it)
     {
-        (*it)->setTargetAddressForce(NULL); // skip pointer checks on delete
+        (*it)->setTargetAddressForce( nullAddr() ); // skip pointer checks on delete
         delete *it;
     }
     pointerInfoSet.clear();

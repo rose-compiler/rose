@@ -15,25 +15,29 @@
 using namespace std;
 using namespace SageBuilder;
 
-void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vector<SgClassDeclaration*>& traverseClasses) {
-
+void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vector<SgClassDeclaration*>& traverseClasses)
+{
    //*******************************************
    // for all of the sourcefiles create a namespace at the top of the file
    // add to top of each source file
-   vector<SgNode*> resSF = NodeQuery::querySubTree(project,V_SgSourceFile);
    // insert at top of all C files in reverse order
    // only if the class has a constructor and if it is declared in a header file
-   vector<SgNode*>::const_iterator resSFIt = resSF.begin();
-   for (;resSFIt!=resSF.end();resSFIt++) {
-      SgSourceFile* sf = isSgSourceFile(*resSFIt);
-      ROSE_ASSERT(sf);
-      bool isInSourceFileSet = isInInstrumentedFile(sf);
-      if (isInSourceFileSet) {
+   std::vector<SgSourceFile*>::const_iterator aa = srcfiles.begin();
+   std::vector<SgSourceFile*>::const_iterator zz = srcfiles.end();
+   for (;aa != zz; ++aa)
+   {
+      SgSourceFile* sf = *aa;
+      bool          isInSourceFileSet = isInInstrumentedFile(sf);
+
+      if (isInSourceFileSet)
+      {
          // we should only do this for C++!
          std::string filename = sf->get_file_info()->get_filename();
-         if ((filename.find(".cxx")!=std::string::npos ||
-               filename.find(".cpp")!=std::string::npos ||
-               filename.find(".C")!=std::string::npos  ) ) {
+         if (  filename.find(".cxx") != std::string::npos
+            || filename.find(".cpp") != std::string::npos
+            || filename.find(".C")!=std::string::npos
+            )
+         {
             // if it is not a C but C++ program, then insert namespace
             if (RTEDDEBUG()) cerr << " **** Inserting file into sourceFileRoseNamespaceMap:" << sf -> get_file_info() -> get_filename() << endl;
             //if (filename.find("_s.cpp")!=std::string::npos)
@@ -43,8 +47,9 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
          }
       }
    }
+
    if (RTEDDEBUG())  cerr << "Deep copy of all C++ class declarations to allow offsetof to be used." << endl;
-   vector<SgNode*> results = NodeQuery::querySubTree(project,V_SgClassDeclaration);
+   const SgNodePtrList& results = NodeQuery::querySubTree(project,V_SgClassDeclaration);
    // insert at top of all C files in reverse order
    // only if the class has a constructor and if it is declared in a header file
    // \pp why?
@@ -53,14 +58,14 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
    // tps (11/06/2009) : it seems that the reverse iterator does not work on MAC OS, so I added another loop to get the reverse vector
    vector<SgNode*>::const_iterator classItR = results.begin();
    vector<SgNode*> resultsInv;
-   for (;classItR!=results.end();classItR++) {
+   for (;classItR!=results.end(); ++classItR) {
       resultsInv.insert(resultsInv.begin(),*classItR);
    }
    ROSE_ASSERT(resultsInv.size()==results.size());
 #endif
 
-   vector<SgNode*>::reverse_iterator classIt = results.rbegin();
-   for (;classIt!=results.rend();classIt++)
+   SgNodePtrList::const_reverse_iterator classIt = results.rbegin();
+   for (;classIt!=results.rend(); ++classIt)
    {
       SgClassDeclaration* classDecl = isSgClassDeclaration(*classIt);
       if (  classDecl->get_definingDeclaration() == classDecl
@@ -107,13 +112,13 @@ SgStatement* getStatementLevelNode(SgLocatedNode& n)
 }
 
 
-void RtedTransformation::moveupPreprocessingInfo(SgProject* project) {
-   vector<SgNode*> results = NodeQuery::querySubTree(project, V_SgSourceFile);
-   vector<SgNode*>::const_iterator classIt = results.begin();
-   for (; classIt != results.end(); classIt++)
+void RtedTransformation::moveupPreprocessingInfo(SgProject* project)
+{
+   std::vector<SgSourceFile*>::const_iterator aa = srcfiles.begin();
+   std::vector<SgSourceFile*>::const_iterator zz = srcfiles.end();
+   for (; aa != zz; ++aa)
    {
-      SgSourceFile* sf = isSgSourceFile(*classIt);
-      ROSE_ASSERT(sf);
+      SgSourceFile* sf = *aa;
 
       if (!isInInstrumentedFile(sf)) continue;
 
@@ -121,14 +126,15 @@ void RtedTransformation::moveupPreprocessingInfo(SgProject* project) {
       // otherwise move the info up to the first one
       if (RTEDDEBUG()) cerr << "Moving up preprocessing info for file : "        << sf->get_file_info()->get_filename() << endl;
 
-      const vector<SgNode*>           nodes = NodeQuery::querySubTree(sf, V_SgLocatedNode);
+      // \pp this flattens the entire tree ...
+      const SgNodePtrList&            nodes = NodeQuery::querySubTree(sf, V_SgLocatedNode);
       if (nodes.empty()) continue; // go to next file
 
-      vector<SgNode*>::const_iterator nodesIT = nodes.begin();
+      SgNodePtrList::const_iterator   nodesIT = nodes.begin();
       SgLocatedNode*                  firstNode = isSgLocatedNode(*nodesIT);
       AttachedPreprocessingInfoType*  info =	firstNode->getAttachedPreprocessingInfo();
 
-      // \pp why is the first node handled specially??
+      // if the first node already has the preprocessing info we are done
       if (info && info->size() > 0) continue; // we are done
 
       // otherwise find located node with info and move up
@@ -152,9 +158,9 @@ void RtedTransformation::moveupPreprocessingInfo(SgProject* project) {
 }
 
 bool RtedTransformation::hasPrivateDataMembers(SgClassDeclaration* cd_copy) {
-   vector<SgNode*> variables = NodeQuery::querySubTree(cd_copy,  V_SgVariableDeclaration);
-   vector<SgNode*>::const_iterator varIt = variables.begin();
-   for (; varIt != variables.end(); varIt++) {
+   const SgNodePtrList&          variables = NodeQuery::querySubTree(cd_copy,  V_SgVariableDeclaration);
+   SgNodePtrList::const_iterator varIt = variables.begin();
+   for (; varIt != variables.end(); ++varIt) {
       SgVariableDeclaration* node = isSgVariableDeclaration(*varIt);
       SgAccessModifier am =  node->get_declarationModifier().get_accessModifier();
       if (am.isPrivate())
@@ -187,9 +193,9 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
    // SgClassType* type_copy = new SgClassType(cd_copy);
    //cd_copy->set_type(type_copy);
    ROSE_ASSERT(cd_copy);
-   vector<SgNode*> nodes2 = NodeQuery::querySubTree(cd_copy, V_SgLocatedNode);
-   vector<SgNode*>::const_iterator nodesIT2 = nodes2.begin();
-   for (; nodesIT2 != nodes2.end(); nodesIT2++) {
+   const SgNodePtrList&          nodes2 = NodeQuery::querySubTree(cd_copy, V_SgLocatedNode);
+   SgNodePtrList::const_iterator nodesIT2 = nodes2.begin();
+   for (; nodesIT2 != nodes2.end(); ++nodesIT2) {
       SgLocatedNode* node = isSgLocatedNode(*nodesIT2);
       ROSE_ASSERT(node);
       Sg_File_Info* file_info = node->get_file_info();
@@ -202,9 +208,9 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
    SgClassDeclaration* cdn_copy = SageInterface::deepCopy(nondefDecl);
    ROSE_ASSERT(cdn_copy);
 
-   vector<SgNode*> nodes = NodeQuery::querySubTree(cdn_copy, V_SgLocatedNode);
-   vector<SgNode*>::const_iterator nodesIT = nodes.begin();
-   for (; nodesIT != nodes.end(); nodesIT++) {
+   const SgNodePtrList&          nodes = NodeQuery::querySubTree(cdn_copy, V_SgLocatedNode);
+   SgNodePtrList::const_iterator nodesIT = nodes.begin();
+   for (; nodesIT != nodes.end(); ++nodesIT) {
       SgLocatedNode* node = isSgLocatedNode(*nodesIT);
       ROSE_ASSERT(node);
       Sg_File_Info* file_info = node->get_file_info();
@@ -231,78 +237,68 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
    }
    // **********************
    // add to top of each source file
-   vector<SgNode*> results = NodeQuery::querySubTree(project, V_SgSourceFile);
+
    // insert at top of all source files in reverse order
    // only if the class has private members and if it is declared in a header file
-   vector<SgNode*>::const_iterator classIt = results.begin();
-   for (; classIt != results.end(); classIt++) {
-      SgSourceFile* sf = isSgSourceFile(*classIt);
-      ROSE_ASSERT(sf);
-      bool isInSourceFileSet = isInInstrumentedFile(sf);
-      if (isInSourceFileSet) {
-         if (RTEDDEBUG()) cerr << "Looking through sourcefile: " << sf -> get_file_info() -> get_filename() << endl;
-         // once we have the new class_decl inserted, we remove all functions and the constructor and destructor
-         vector<SgNode*> remNodes = NodeQuery::querySubTree(cd_copy,
-               V_SgFunctionDeclaration);
-         vector<SgNode*>::const_iterator remNodesIt = remNodes.begin();
-         for (; remNodesIt != remNodes.end(); remNodesIt++) {
-            SgFunctionDeclaration* node = isSgFunctionDeclaration(*remNodesIt);
-            ROSE_ASSERT(node);
-            SageInterface::removeStatement(node);
-#if 0
-            // since SgFunctionDeclaration is a SgStatement, we can remove the call
-            // to getSurroundingStatement
-            SgStatement* stmt = getSurroundingStatement(node);
-            SageInterface::removeStatement(stmt);
-#endif
-         }
+   std::vector<SgSourceFile*>::const_iterator aa = srcfiles.begin();
+   std::vector<SgSourceFile*>::const_iterator zz = srcfiles.end();
+   for (; aa != zz; ++aa)
+   {
+      SgSourceFile* sf = *aa;
+      bool          isInSourceFileSet = isInInstrumentedFile(sf);
 
-         if (RTEDDEBUG()) cerr << "  changing privates to public" << endl;
-         // change each private: to public:
-         SgClassDefinition* cd_def = cd_copy->get_definition();
-         ROSE_ASSERT(cd_def);
-         SgDeclarationStatementPtrList decls = cd_def->get_members();
-         SgDeclarationStatementPtrList::const_iterator itDecls = decls.begin();
-         for (;itDecls!=decls.end();++itDecls) {
-            SgVariableDeclaration* node = isSgVariableDeclaration(*itDecls);
-            if (node) {
-               SgDeclarationModifier& mod = node->get_declarationModifier();
-               SgAccessModifier& am = mod.get_accessModifier();
-               if (am.isPrivate() || am.isProtected())
-                  am.setPublic();
-            }
-         }
+      if (!isInSourceFileSet) continue;
 
-         // get the namespace RTED to put new class into
-         if (RTEDDEBUG()) cerr << "Finding Namespace RTED  "  <<  endl;
-         //typedef std::pair < SgNamespaceDeclarationStatement*,
-         //  SgNamespaceDeclarationStatement* > Namesp;
-         SourceFileRoseNMType::const_iterator pit = sourceFileRoseNamespaceMap.find(sf);
-         if (pit!=sourceFileRoseNamespaceMap.end()) {
-            //Namesp p = pit->second;
-            //SgNamespaceDeclarationStatement* firstNamespace = p.second;
-            //SgNamespaceDeclarationStatement* secondNamespace = p.first;
-            SgNamespaceDeclarationStatement* firstNamespace = pit->second;
-
-            // insert at top of file - after includes
-            if (RTEDDEBUG()) cerr << " Prepending to source file: " << sf -> get_file_info() -> get_filename() <<
-                  "   class : " << cd_copy->get_name().str() << endl;
-            // we prepend it to the top of the file and later move the include back up
-            //SageInterface::prependStatement(cd_copy, secondNamespace->get_definition() );
-            //SageInterface::prependStatement(cdn_copy,firstNamespace->get_definition());
-            SageInterface::prependStatement(cdn_copy,firstNamespace->get_definition());
-            SageInterface::appendStatement(cd_copy, firstNamespace->get_definition() );
-            ROSE_ASSERT(cdn_copy->get_symbol_from_symbol_table() != NULL);
-
-            classesInRTEDNamespace[classDecl->get_definition()] = cd_def;
-            //	    classesInRTEDNamespace[cd_def] = cd_def;
-
-         } else {
-            cerr << "ERROR ::: No sourceFile in sourceFileNamespaceMap found for :" <<sf-> get_file_info() -> get_filename() <<endl;
-            exit(1);
-         }
+      if (RTEDDEBUG()) cerr << "Looking through sourcefile: " << sf -> get_file_info() -> get_filename() << endl;
+      // once we have the new class_decl inserted, we remove all functions and the constructor and destructor
+      const SgNodePtrList&          remNodes = NodeQuery::querySubTree(cd_copy, V_SgFunctionDeclaration);
+      SgNodePtrList::const_iterator remNodesIt = remNodes.begin();
+      for (; remNodesIt != remNodes.end(); ++remNodesIt) {
+        SgFunctionDeclaration* node = isSgFunctionDeclaration(*remNodesIt);
+        ROSE_ASSERT(node);
+        SageInterface::removeStatement(node);
       }
+
+      if (RTEDDEBUG()) cerr << "  changing privates to public" << endl;
+      // change each private: to public:
+      SgClassDefinition* cd_def = cd_copy->get_definition();
+      ROSE_ASSERT(cd_def);
+      SgDeclarationStatementPtrList decls = cd_def->get_members();
+      SgDeclarationStatementPtrList::const_iterator itDecls = decls.begin();
+      for (;itDecls!=decls.end();++itDecls) {
+        SgVariableDeclaration* node = isSgVariableDeclaration(*itDecls);
+        if (node) {
+           SgDeclarationModifier& mod = node->get_declarationModifier();
+           SgAccessModifier& am = mod.get_accessModifier();
+           if (am.isPrivate() || am.isProtected())
+              am.setPublic();
+        }
+      }
+
+      // get the namespace RTED to put new class into
+      if (RTEDDEBUG()) cerr << "Finding Namespace RTED  "  <<  endl;
+
+      SourceFileRoseNMType::const_iterator pit = sourceFileRoseNamespaceMap.find(sf);
+      ROSE_ASSERT(pit!=sourceFileRoseNamespaceMap.end());
+
+      SgNamespaceDeclarationStatement* firstNamespace = pit->second;
+
+      // insert at top of file - after includes
+      if (RTEDDEBUG())
+      {
+         cerr << " Prepending to source file: " << sf -> get_file_info() -> get_filename()
+              << "   class : " << cd_copy->get_name().str()
+              << endl;
+      }
+
+      // we prepend it to the top of the file and later move the include back up
+      SageInterface::prependStatement(cdn_copy,firstNamespace->get_definition());
+      SageInterface::appendStatement(cd_copy, firstNamespace->get_definition() );
+
+      ROSE_ASSERT(cdn_copy->get_symbol_from_symbol_table() != NULL);
+      classesInRTEDNamespace[classDecl->get_definition()] = cd_def;
    }
+
    return cd_copy;
 }
 

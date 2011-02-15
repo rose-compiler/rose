@@ -380,6 +380,9 @@ TRANSFORMING_FILES += rm $(patsubst %_rose$(strip $(1)), %.bin, $@);
 TRANSFORMING_FILES += echo " done.";
 TRANSFORMING_FILES += echo -n "    running transformation ... $(patsubst %_rose$(strip $(1)), %.bin, $@)";
 
+# \pp \todo calling runtimeCheck 2 seems like a bug for cases where we have
+#     only a single source file.
+
 TRANSFORMING_FILES += ./runtimeCheck 2 $(filter rted_source/%$(strip $(1)), $^) \
 				       -rose:$(strip $(3)) \
 				       -c \
@@ -400,10 +403,12 @@ TRANSFORMING_FILES += echo " done.";
 #was:TRANSFORMING_FILES += cat rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) ) | \
 #was:			  nl -p -b 'a' | \
 #was:			  sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@;
+# \pp \todo remove the cat and write previous output already to $@
 TRANSFORMING_FILES += cat rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) ) > $@;
 
 TRANSFORMING_FILES += rm rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) );
 
+# \pp \todo modify along the line of the previous modifications
 TRANSFORMING_FILES += SUPPORT_FILE='rose_$(notdir $(patsubst %_rose$(strip $(1)), %_s$(strip $(1)), $@ ) )'; \
 		      if [ -f $$SUPPORT_FILE ]; \
 		      then \

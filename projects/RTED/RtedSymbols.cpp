@@ -67,8 +67,11 @@ void initialize(SgScopeStatement& n, RtedSymbols& rtedsym)
   lookup(n, "Addr",                     rtedsym.roseAddr);
   lookup(n, "AddrSh",                   rtedsym.roseAddrSh);
   lookup(n, "Close",                    rtedsym.roseClose);
-  lookup(n, "ProcessMsg",               rtedsym.roseProcessMsg);
-  lookup(n, "UpcInitialize",            rtedsym.roseUpcInitialize);
+  lookup(n, "UpcExitWorkzone",          rtedsym.roseUpcExitWorkzone);
+  lookup(n, "UpcEnterWorkzone",         rtedsym.roseUpcEnterWorkzone);
+  lookup(n, "UpcAllInitialize",         rtedsym.roseUpcAllInitialize);
+  lookup(n, "UpcBeginExclusive",        rtedsym.roseUpcBeginExclusive);
+  lookup(n, "UpcEndExclusive",          rtedsym.roseUpcEndExclusive);
 }
 
 struct RtedSymbolWrapper

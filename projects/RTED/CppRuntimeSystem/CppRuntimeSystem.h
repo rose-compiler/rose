@@ -327,23 +327,23 @@ class RuntimeSystem
          *                 (SgVoidType if void), and the remaining, the types
          *                 of the parameters.
          */
-        void expectFunctionSignature( const std::string & name, const std::vector< RsType* > types );
+        void expectFunctionSignature( const std::string & name, const std::vector< RsType* >& types );
 
         /** This function should be called at all function definitions, to
          * verify the signature of separately compiled callsites, if necessary.
          * Only applicable to C programs.
          */
-        void confirmFunctionSignature( const std::string & name, const std::vector< RsType* > types );
+        void confirmFunctionSignature( const std::string & name, const std::vector< RsType* >& types );
 
         // --------------------------------  Check Functions ------------------------------------------------------------
 
         /// Checks if a specific memory region can be read (useful to check pointer derefs)
         /// true when region lies in allocated and initialized memory chunk
-        void checkMemRead(Address addr, AddressDesc desc, size_t size, RsType* t = NULL);
+        void checkMemRead(Address addr, size_t size, RsType* t = NULL);
 
         /// Checks if a specific memory region can be safely written
         /// true when region lies in allocated memory chunk
-        void checkMemWrite(Address addr, AddressDesc desc, size_t size, RsType* t = NULL);
+        void checkMemWrite(Address addr, size_t size, RsType* t = NULL);
 
 
 

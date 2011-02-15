@@ -20,7 +20,7 @@ class PointerInfo;
 /// \details variables are names that have a stack address associated
 class VariablesType
 {
-  typedef const char* Location;
+  typedef Address Location;
 
     public:
         VariablesType( const std::string & name,

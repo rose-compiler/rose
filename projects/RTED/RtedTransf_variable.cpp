@@ -185,7 +185,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
 
         // extern variables are not handled; they will be handled in the
         // defining translation unit.
-        // \pp \todo shall control for having the defining translation unit?
+        // \pp \todo shall we control if we have the defining translation unit?
         if (isGlobalExternVariable(stmt)) return;
 
         SgScopeStatement* scope = stmt->get_scope();
