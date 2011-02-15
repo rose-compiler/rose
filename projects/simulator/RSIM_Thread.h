@@ -93,9 +93,12 @@ public:
      * itself (which might only be valid until syscall_return() is invoked. */
     uint32_t syscall_arg(int idx);
 
+    //@{
     /** Sets the return value for a system call.  The system call does not actually return by calling this function, it only
      *  sets the value which will eventually be returned. */
     void syscall_return(const RSIM_SEMANTIC_VTYPE<32> &value);
+    void syscall_return(int value);
+    //@}
 
     /** Print the return value of a system call in a manner like strace.  The format is the same as for the syscall_enter()
      *  methods except the first letter refers to the system call return value (the remaining letters are the arguments). The

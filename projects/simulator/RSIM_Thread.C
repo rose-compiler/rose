@@ -409,8 +409,14 @@ RSIM_Thread::report_progress_maybe()
 }
 
 void
-RSIM_Thread::syscall_return(const RSIM_SEMANTIC_VTYPE<32>& retval)
+RSIM_Thread::syscall_return(const RSIM_SEMANTIC_VTYPE<32> &retval)
 {
     policy.writeGPR(x86_gpr_ax, retval);
+}
+
+void
+RSIM_Thread::syscall_return(int retval)
+{
+    policy.writeGPR(x86_gpr_ax, policy.number<32>(retval));
 }
 

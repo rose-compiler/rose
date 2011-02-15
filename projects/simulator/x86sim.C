@@ -1085,7 +1085,7 @@ RSIM_Thread::emulate_syscall()
                     }
 
 #ifdef SYS_statfs64 /* host is 32-bit machine */
-                    static statfs_64_native host_statfs;
+                    static statfs64_native host_statfs;
                     result = syscall(SYS_statfs64 , path.c_str(), sizeof host_statfs, &host_statfs);
                     convert(&guest_statfs, &host_statfs);
 #else               /* host is 64-bit machine */
@@ -1096,7 +1096,7 @@ RSIM_Thread::emulate_syscall()
                 } else {
 
 #ifdef SYS_statfs64 /* host is 32-bit machine */
-                    static statfs_64_native host_statfs;
+                    static statfs64_native host_statfs;
                     result = syscall(SYS_fstatfs64 ,syscall_arg(0), sizeof host_statfs, &host_statfs);
                     convert(&guest_statfs, &host_statfs);
 #else               /* host is 64-bit machine */
